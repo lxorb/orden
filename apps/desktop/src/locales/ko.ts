@@ -729,6 +729,8 @@ export const ko: Dictionary = {
   '{done} of {total}': '{total} 중 {done}',
   'Sync failed': '동기화 실패',
   '{name} could not be written.': '{name}을(를) 쓸 수 없었습니다.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name}을(를) 쓸 수 없었습니다: 파일을 읽을 수 없습니다. 64 MB를 넘었거나 UTF-8 텍스트가 아닐 수 있습니다.',
   '{name} could not be read.': '{name}을(를) 읽을 수 없었습니다.',
   'Text size': '글자 크기',
   'Line spacing': '줄 간격',
@@ -1958,7 +1960,7 @@ export const ko: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     '이 보고서에는 설명, Orden 버전, 플랫폼, 최근 앱 로그가 포함되며 파일 경로는 제거됩니다.',
   'Its space is archived': '이 스페이스는 보관되었습니다',
-  'Back as {name}, edits and all': '{name}(으)로 돌아왔습니다. 편집 내용도 그대로입니다',
+  'Back as {name}': '{name}(으)로 돌아왔습니다',
   'Send into the running answer': '진행 중인 답변에 보내기',
   'Stop the answer': '답변 중지',
   'Open every step': '모든 단계 펼치기',

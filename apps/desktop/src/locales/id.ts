@@ -730,6 +730,8 @@ export const id: Dictionary = {
   '{done} of {total}': '{done} dari {total}',
   'Sync failed': 'Sinkronisasi gagal',
   '{name} could not be written.': '{name} tidak dapat ditulis.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} tidak dapat ditulis: filenya tidak dapat dibaca. Mungkin lebih dari 64 MB atau bukan teks UTF-8.',
   '{name} could not be read.': '{name} tidak dapat dibaca.',
   'Text size': 'Ukuran teks',
   'Line spacing': 'Spasi baris',
@@ -1979,7 +1981,7 @@ export const id: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'Laporan ini berisi deskripsi Anda, versi Orden, platform Anda, dan log aplikasi terbaru, tanpa jalur file.',
   'Its space is archived': 'Ruangnya diarsipkan',
-  'Back as {name}, edits and all': 'Kembali sebagai {name}, beserta editannya',
+  'Back as {name}': 'Kembali sebagai {name}',
   'Send into the running answer': 'Kirim ke jawaban yang sedang berjalan',
   'Stop the answer': 'Hentikan jawaban',
   'Open every step': 'Buka semua langkah',

@@ -732,6 +732,8 @@ export const my: Dictionary = {
   '{done} of {total}': '{total} အထဲ {done}',
   'Sync failed': 'ချိန်ကိုက်မှုမအောင်',
   '{name} could not be written.': '{name} ကို ရေးမရပါ။',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} ကို ရေးမရပါ- ၎င်း၏ ဖိုင်ကို ဖတ်မရပါ။ 64 MB ထက်ကျော်နေခြင်း သို့မဟုတ် UTF-8 စာသား မဟုတ်ခြင်း ဖြစ်နိုင်သည်။',
   '{name} could not be read.': '{name} ကို ဖတ်မရပါ။',
   'Text size': 'စာလုံးအရွယ်',
   'Line spacing': 'လိုင်းအကွာ',
@@ -1970,7 +1972,7 @@ export const my: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'ဤအစီရင်ခံစာတွင် သင့်ဖော်ပြချက်၊ Orden ဗားရှင်း၊ သင့်ပလက်ဖောင်းနှင့် မကြာသေးမီက အက်ပ်မှတ်တမ်းတို့ ပါဝင်ပြီး ဖိုင်လမ်းကြောင်းများကို ဖယ်ရှားထားသည်။',
   'Its space is archived': '၎င်း၏ space ကို သိမ်းဆည်းထားသည်',
-  'Back as {name}, edits and all': '{name} အဖြစ် ပြန်လာပြီ၊ တည်းဖြတ်မှုများနှင့်အတူ',
+  'Back as {name}': '{name} အဖြစ် ပြန်လာပြီ',
   'Send into the running answer': 'လုပ်ဆောင်နေသော အဖြေထဲ ပို့ရန်',
   'Stop the answer': 'အဖြေကို ရပ်ရန်',
   'Open every step': 'အဆင့်တိုင်း ဖွင့်ရန်',

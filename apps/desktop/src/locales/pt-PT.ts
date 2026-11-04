@@ -752,6 +752,8 @@ export const ptPT: Dictionary = {
   '{done} of {total}': '{done} de {total}',
   'Sync failed': 'A sincronização falhou',
   '{name} could not be written.': 'Não foi possível escrever {name}.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    'Não foi possível escrever {name}: o ficheiro não pode ser lido. Talvez tenha mais de 64 MB ou não seja texto UTF-8.',
   '{name} could not be read.': 'Não foi possível ler {name}.',
   'Text size': 'Tamanho do texto',
   'Line spacing': 'Entrelinha',
@@ -2042,7 +2044,7 @@ export const ptPT: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'Este relatório inclui a sua descrição, a versão do Orden, a sua plataforma e o registo recente da app, sem os caminhos de ficheiros.',
   'Its space is archived': 'O espaço está arquivado',
-  'Back as {name}, edits and all': 'De volta como {name}, com as edições',
+  'Back as {name}': 'De volta como {name}',
   'Send into the running answer': 'Enviar para a resposta em curso',
   'Stop the answer': 'Parar a resposta',
   'Open every step': 'Abrir todos os passos',

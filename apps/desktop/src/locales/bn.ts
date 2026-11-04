@@ -736,6 +736,8 @@ export const bn: Dictionary = {
   '{done} of {total}': '{total}-এর {done}',
   'Sync failed': 'সিংক ব্যর্থ',
   '{name} could not be written.': '{name} লেখা গেল না।',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} লেখা গেল না: এর ফাইল পড়া যাচ্ছে না। এটি 64 MB-এর বেশি বা UTF-8 লেখা নয় হতে পারে।',
   '{name} could not be read.': '{name} পড়া গেল না।',
   'Text size': 'টেক্সটের আকার',
   'Line spacing': 'লাইন ফাঁক',
@@ -1987,7 +1989,7 @@ export const bn: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'এই রিপোর্টে আপনার বিবরণ, Orden-এর সংস্করণ, আপনার প্ল্যাটফর্ম এবং সাম্প্রতিক অ্যাপ লগ থাকে, ফাইল পাথ বাদ দিয়ে।',
   'Its space is archived': 'এর স্পেস আর্কাইভ করা আছে',
-  'Back as {name}, edits and all': '{name} নামে ফিরে এসেছে, সম্পাদনাসহ',
+  'Back as {name}': '{name} নামে ফিরে এসেছে',
   'Send into the running answer': 'চলমান উত্তরে পাঠান',
   'Stop the answer': 'উত্তর থামান',
   'Open every step': 'প্রতিটি ধাপ খুলুন',

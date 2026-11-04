@@ -742,6 +742,8 @@ export const fil: Dictionary = {
   '{done} of {total}': '{done} ng {total}',
   'Sync failed': 'Nabigo ang sync',
   '{name} could not be written.': 'Hindi naisulat ang {name}.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    'Hindi naisulat ang {name}: hindi mabasa ang file nito. Maaaring lampas ito sa 64 MB o hindi UTF-8 na teksto.',
   '{name} could not be read.': 'Hindi nabasa ang {name}.',
   'Text size': 'Laki ng teksto',
   'Line spacing': 'Espasyo ng linya',
@@ -2030,7 +2032,7 @@ export const fil: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'Kasama sa ulat na ito ang iyong paglalarawan, bersyon ng Orden, iyong platform at ang kamakailang log ng app, nang wala ang mga path ng file.',
   'Its space is archived': 'Naka-archive ang space nito',
-  'Back as {name}, edits and all': 'Bumalik bilang {name}, kasama ang mga edit',
+  'Back as {name}': 'Bumalik bilang {name}',
   'Send into the running answer': 'Ipadala sa tumatakbong sagot',
   'Stop the answer': 'Ihinto ang sagot',
   'Open every step': 'Buksan ang bawat hakbang',

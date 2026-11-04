@@ -739,6 +739,8 @@ export const pa: Dictionary = {
   '{done} of {total}': '{total} ਵਿੱਚੋਂ {done}',
   'Sync failed': 'ਸਮਕਾਲ ਨਾਕਾਮ',
   '{name} could not be written.': '{name} ਨਹੀਂ ਲਿਖੀ ਜਾ ਸਕੀ।',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} ਨਹੀਂ ਲਿਖੀ ਜਾ ਸਕੀ: ਇਸ ਦੀ ਫ਼ਾਈਲ ਪੜ੍ਹੀ ਨਹੀਂ ਜਾ ਸਕਦੀ। ਇਹ 64 MB ਤੋਂ ਵੱਡੀ ਜਾਂ UTF-8 ਤੋਂ ਬਿਨਾਂ ਲਿਖਤ ਹੋ ਸਕਦੀ ਹੈ।',
   '{name} could not be read.': '{name} ਨਹੀਂ ਪੜ੍ਹੀ ਜਾ ਸਕੀ।',
   'Text size': 'ਲਿਖਤ ਦਾ ਆਕਾਰ',
   'Line spacing': 'ਲਾਈਨ ਵਿੱਥ',
@@ -1992,7 +1994,7 @@ export const pa: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'ਇਸ ਰਿਪੋਰਟ ਵਿੱਚ ਤੁਹਾਡਾ ਵੇਰਵਾ, Orden ਦਾ ਸੰਸਕਰਣ, ਤੁਹਾਡਾ ਪਲੇਟਫਾਰਮ ਅਤੇ ਹਾਲੀਆ ਐਪ ਲੌਗ ਸ਼ਾਮਲ ਹੈ, ਫਾਈਲ ਪਾਥ ਹਟਾ ਕੇ।',
   'Its space is archived': 'ਇਸਦੀ ਸਪੇਸ ਪੁਰਾਲੇਖ ਕੀਤੀ ਗਈ ਹੈ',
-  'Back as {name}, edits and all': '{name} ਵਜੋਂ ਵਾਪਸ, ਸੋਧਾਂ ਸਮੇਤ',
+  'Back as {name}': '{name} ਵਜੋਂ ਵਾਪਸ',
   'Send into the running answer': 'ਚੱਲ ਰਹੇ ਜਵਾਬ ਵਿੱਚ ਭੇਜੋ',
   'Stop the answer': 'ਜਵਾਬ ਰੋਕੋ',
   'Open every step': 'ਹਰ ਕਦਮ ਖੋਲ੍ਹੋ',

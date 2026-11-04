@@ -730,6 +730,8 @@ export const ja: Dictionary = {
   '{done} of {total}': '{total} 件中 {done} 件',
   'Sync failed': '同期に失敗しました',
   '{name} could not be written.': '{name} を書き込めませんでした。',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} を書き込めませんでした: ファイルを読み取れません。64 MB を超えているか、UTF-8 のテキストではない可能性があります。',
   '{name} could not be read.': '{name} を読み込めませんでした。',
   'Text size': '文字サイズ',
   'Line spacing': '行間',
@@ -1975,7 +1977,7 @@ export const ja: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'このレポートには、説明、Orden のバージョン、プラットフォーム、最近のアプリのログが含まれます。ファイルのパスは取り除かれます。',
   'Its space is archived': 'そのスペースはアーカイブされています',
-  'Back as {name}, edits and all': '{name} として戻りました(編集を含む)',
+  'Back as {name}': '{name} として戻りました',
   'Send into the running answer': '実行中の回答に送る',
   'Stop the answer': '回答を停止',
   'Open every step': 'すべてのステップを開く',

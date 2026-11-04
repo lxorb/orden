@@ -729,6 +729,8 @@ export const th: Dictionary = {
   '{done} of {total}': '{done} จาก {total}',
   'Sync failed': 'ซิงก์ไม่สำเร็จ',
   '{name} could not be written.': 'เขียน {name} ไม่ได้',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    'เขียน {name} ไม่ได้: อ่านไฟล์ไม่ได้ ไฟล์อาจใหญ่เกิน 64 MB หรือไม่ใช่ข้อความ UTF-8',
   '{name} could not be read.': 'อ่าน {name} ไม่ได้',
   'Text size': 'ขนาดตัวอักษร',
   'Line spacing': 'ระยะบรรทัด',
@@ -1947,7 +1949,7 @@ export const th: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'รายงานนี้มีคำอธิบายของคุณ เวอร์ชันของ Orden แพลตฟอร์มของคุณ และบันทึกล่าสุดของแอป โดยนำเส้นทางไฟล์ออกแล้ว',
   'Its space is archived': 'พื้นที่ของรายการนี้ถูกเก็บถาวร',
-  'Back as {name}, edits and all': 'กลับมาเป็น {name} พร้อมการแก้ไข',
+  'Back as {name}': 'กลับมาเป็น {name}',
   'Send into the running answer': 'ส่งเข้าไปในคำตอบที่กำลังทำ',
   'Stop the answer': 'หยุดคำตอบ',
   'Open every step': 'เปิดทุกขั้นตอน',

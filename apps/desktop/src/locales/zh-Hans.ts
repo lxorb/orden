@@ -727,6 +727,8 @@ export const zhHans: Dictionary = {
   '{done} of {total}': '{done}/{total}',
   'Sync failed': '同步失败',
   '{name} could not be written.': '无法写入 {name}。',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '无法写入 {name}:无法读取其文件。文件可能超过 64 MB,或不是 UTF-8 文本。',
   '{name} could not be read.': '无法读取 {name}。',
   'Text size': '字号',
   'Line spacing': '行距',
@@ -1937,7 +1939,7 @@ export const zhHans: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     '此报告包含你的描述、Orden 版本、你的平台和最近的应用日志,文件路径已移除。',
   'Its space is archived': '它的空间已归档',
-  'Back as {name}, edits and all': '已恢复为 {name},编辑内容仍在',
+  'Back as {name}': '已恢复为 {name}',
   'Send into the running answer': '发送到正在进行的回答',
   'Stop the answer': '停止回答',
   'Open every step': '展开所有步骤',

@@ -770,6 +770,8 @@ export const uk: Dictionary = {
   '{done} of {total}': '{done} з {total}',
   'Sync failed': 'Збій синхронізації',
   '{name} could not be written.': 'Не вдалося записати {name}.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    'Не вдалося записати {name}: файл не читається. Можливо, він більший за 64 МБ або це не текст в UTF-8.',
   '{name} could not be read.': 'Не вдалося прочитати {name}.',
   'Text size': 'Розмір тексту',
   'Line spacing': 'Міжрядковий інтервал',
@@ -2067,7 +2069,7 @@ export const uk: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'Цей звіт містить ваш опис, версію Orden, вашу платформу й недавній журнал застосунку, без шляхів до файлів.',
   'Its space is archived': 'Його простір в архіві',
-  'Back as {name}, edits and all': 'Повернулася як {name}, разом із правками',
+  'Back as {name}': 'Повернулася як {name}',
   'Send into the running answer': 'Надіслати в поточну відповідь',
   'Stop the answer': 'Зупинити відповідь',
   'Open every step': 'Розгорнути всі кроки',

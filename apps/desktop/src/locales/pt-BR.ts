@@ -747,6 +747,8 @@ export const ptBR: Dictionary = {
   '{done} of {total}': '{done} de {total}',
   'Sync failed': 'Falha na sincronização',
   '{name} could not be written.': 'Não foi possível gravar {name}.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    'Não foi possível gravar {name}: o arquivo não pode ser lido. Talvez tenha mais de 64 MB ou não seja texto UTF-8.',
   '{name} could not be read.': 'Não foi possível ler {name}.',
   'Text size': 'Tamanho do texto',
   'Line spacing': 'Entrelinha',
@@ -2028,7 +2030,7 @@ export const ptBR: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'Este relatório inclui sua descrição, a versão do Orden, sua plataforma e o registro recente do app, sem os caminhos de arquivos.',
   'Its space is archived': 'O espaço dela está arquivado',
-  'Back as {name}, edits and all': 'De volta como {name}, com as edições',
+  'Back as {name}': 'De volta como {name}',
   'Send into the running answer': 'Enviar para a resposta em andamento',
   'Stop the answer': 'Parar a resposta',
   'Open every step': 'Abrir todas as etapas',

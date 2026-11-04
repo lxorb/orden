@@ -27,7 +27,7 @@ import type { Selected } from './anchors'
 import { type Desk, type Located, located, type NoteAt, openNote, wordsOf } from './desk'
 import { type Planned, plan, readEdits, type Replacement } from './edits'
 import { type Agent, showAgent } from './presence'
-import { movedTo, within } from '../../space-paths'
+import { folderOf, movedTo, nameOf, samePath, within } from '../../space-paths'
 import { DocError } from './problem'
 import { revOf } from './rev'
 import { touch, touchedBy, touchedMoved, type Touched } from './touched'
@@ -168,25 +168,43 @@ export function tracksRemoved(path: string): void {
   }
 }
 
-/** A file came to be: a note deleted and put back has its track again, and any other is a
- *  new note, whatever its name was before. Asked of its words only where one is waiting. */
+/** Whether `path` is a name a note at `at` is put back under where something holds `at`:
+ *  `A 2.md` beside `A.md`. */
+function besideName(at: string, path: string): boolean {
+  if (!samePath(folderOf(at), folderOf(path))) return false
+  const name = nameOf(at)
+  const dot = name.lastIndexOf('.')
+  const [stem, end] = dot > 0 ? [name.slice(0, dot), name.slice(dot)] : [name, '']
+  const there = nameOf(path)
+  return (
+    there.startsWith(`${stem} `) &&
+    there.endsWith(end) &&
+    /^[1-9]\d*$/.test(there.slice(stem.length + 1, there.length - end.length))
+  )
+}
+
+/** A file came to be: a note deleted and put back has its track again, there or beside its
+ *  name, and any other is a new note, whatever its name was before. Asked of its words only
+ *  where one is waiting. */
 export async function tracksCame(
   path: string,
   read: (path: string) => Promise<string | null>,
 ): Promise<void> {
   for (const [key, held] of [...aside]) {
-    const [agent, at] = partsOf(key)
-    if (within(path, at) === null || tracks.has(key)) continue
+    const [agent, was] = partsOf(key)
+    const at = within(path, was) === null && besideName(was, path) ? path : was
+    const now = keyOf(agent, at)
+    if (within(path, at) === null || tracks.has(now)) continue
 
     const words = await read(at)
-    if (words === null || tracks.has(key)) continue
+    if (words === null || tracks.has(now)) continue
     const says = words.replace(/\r\n?/g, '\n')
     const back = [...held].reverse().find((one) => one.track.says === says)
     if (!back) continue
 
     held.splice(held.indexOf(back), 1)
     if (!held.length) aside.delete(key)
-    tracks.set(key, back.track)
+    tracks.set(now, back.track)
     placed.set(back.track, at)
     if (back.row) touch(at, back.row, back.row.edits)
     for (const listener of listeners) listener(agent, at)

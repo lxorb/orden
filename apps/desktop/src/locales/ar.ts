@@ -786,6 +786,8 @@ export const ar: Dictionary = {
   '{done} of {total}': '{done} من {total}',
   'Sync failed': 'فشلت المزامنة',
   '{name} could not be written.': 'تعذّرت كتابة {name}.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    'تعذّرت كتابة {name}: تتعذّر قراءة ملفها. قد يتجاوز حجمه 64 MB أو لا يكون نصًا بترميز UTF-8.',
   '{name} could not be read.': 'تعذّرت قراءة {name}.',
   'Text size': 'حجم النص',
   'Line spacing': 'تباعد الأسطر',
@@ -2103,7 +2105,7 @@ export const ar: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'يتضمن هذا التقرير وصفك وإصدار Orden ومنصتك وسجل التطبيق الأخير، بعد إزالة مسارات الملفات.',
   'Its space is archived': 'مساحتها مؤرشفة',
-  'Back as {name}, edits and all': 'عادت باسم {name}، مع تعديلاتها',
+  'Back as {name}': 'عادت باسم {name}',
   'Send into the running answer': 'إرسال إلى الإجابة الجارية',
   'Stop the answer': 'إيقاف الإجابة',
   'Open every step': 'فتح كل الخطوات',

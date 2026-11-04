@@ -732,6 +732,8 @@ export const am: Dictionary = {
   '{done} of {total}': 'ከ{total} {done}',
   'Sync failed': 'ማመሳሰል አልተሳካም',
   '{name} could not be written.': '{name} መጻፍ አልተቻለም።',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} መጻፍ አልተቻለም፦ ፋይሉን ማንበብ አይቻልም። ከ64 MB በላይ ወይም UTF-8 ያልሆነ ጽሑፍ ሊሆን ይችላል።',
   '{name} could not be read.': '{name} ማንበብ አልተቻለም።',
   'Text size': 'የጽሑፍ መጠን',
   'Line spacing': 'የመስመር ክፍተት',
@@ -1964,7 +1966,7 @@ export const am: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'ይህ ሪፖርት መግለጫዎን፣ የOrden ስሪትን፣ መድረክዎን እና የቅርብ ጊዜውን የመተግበሪያ ምዝግብ ያካትታል፤ የፋይል መንገዶች ተወግደዋል።',
   'Its space is archived': 'ቦታው በማህደር ተቀምጧል',
-  'Back as {name}, edits and all': 'እንደ {name} ተመልሷል፣ ከአርትዖቶቹ ጋር',
+  'Back as {name}': 'እንደ {name} ተመልሷል',
   'Send into the running answer': 'ወደ ሚሄደው መልስ ላክ',
   'Stop the answer': 'መልሱን አቁም',
   'Open every step': 'እያንዳንዱን ደረጃ ክፈት',

@@ -741,6 +741,8 @@ export const kn: Dictionary = {
   '{done} of {total}': '{total}ರಲ್ಲಿ {done}',
   'Sync failed': 'ಸಿಂಕ್ ವಿಫಲವಾಯಿತು',
   '{name} could not be written.': '{name} ಬರೆಯಲಾಗಲಿಲ್ಲ.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} ಬರೆಯಲಾಗಲಿಲ್ಲ: ಅದರ ಫೈಲ್ ಓದಲಾಗುತ್ತಿಲ್ಲ. ಅದು 64 MB ಗಿಂತ ದೊಡ್ಡದಾಗಿರಬಹುದು ಅಥವಾ UTF-8 ಪಠ್ಯವಲ್ಲದಿರಬಹುದು.',
   '{name} could not be read.': '{name} ಓದಲಾಗಲಿಲ್ಲ.',
   'Text size': 'ಪಠ್ಯ ಗಾತ್ರ',
   'Line spacing': 'ಸಾಲಿನ ಅಂತರ',
@@ -2007,7 +2009,7 @@ export const kn: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'ಈ ವರದಿಯಲ್ಲಿ ನಿಮ್ಮ ವಿವರಣೆ, Orden ಆವೃತ್ತಿ, ನಿಮ್ಮ ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ಮತ್ತು ಇತ್ತೀಚಿನ ಆ್ಯಪ್ ಲಾಗ್ ಇರುತ್ತದೆ, ಫೈಲ್ ಪಾತ್‌ಗಳನ್ನು ತೆಗೆದು.',
   'Its space is archived': 'ಇದರ ಸ್ಪೇಸ್ ಆರ್ಕೈವ್ ಆಗಿದೆ',
-  'Back as {name}, edits and all': '{name} ಆಗಿ ಮರಳಿದೆ, ಸಂಪಾದನೆಗಳೊಂದಿಗೆ',
+  'Back as {name}': '{name} ಆಗಿ ಮರಳಿದೆ',
   'Send into the running answer': 'ನಡೆಯುತ್ತಿರುವ ಉತ್ತರಕ್ಕೆ ಕಳುಹಿಸಿ',
   'Stop the answer': 'ಉತ್ತರ ನಿಲ್ಲಿಸಿ',
   'Open every step': 'ಪ್ರತಿ ಹಂತ ತೆರೆಯಿರಿ',

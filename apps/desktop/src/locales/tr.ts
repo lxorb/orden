@@ -738,6 +738,8 @@ export const tr: Dictionary = {
   '{done} of {total}': '{total} içinde {done}',
   'Sync failed': 'Eşitleme başarısız',
   '{name} could not be written.': '{name} yazılamadı.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} yazılamadı: dosyası okunamıyor. 64 MB’tan büyük ya da UTF-8 metin olmayabilir.',
   '{name} could not be read.': '{name} okunamadı.',
   'Text size': 'Metin boyutu',
   'Line spacing': 'Satır aralığı',
@@ -1999,7 +2001,7 @@ export const tr: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'Bu rapor açıklamanızı, Orden sürümünü, platformunuzu ve son uygulama günlüğünü dosya yolları çıkarılmış olarak içerir.',
   'Its space is archived': 'Alanı arşivlendi',
-  'Back as {name}, edits and all': '{name} olarak geri döndü, düzenlemeleriyle',
+  'Back as {name}': '{name} olarak geri döndü',
   'Send into the running answer': 'Süren yanıta gönder',
   'Stop the answer': 'Yanıtı durdur',
   'Open every step': 'Tüm adımları aç',

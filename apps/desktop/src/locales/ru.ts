@@ -771,6 +771,8 @@ export const ru: Dictionary = {
   '{done} of {total}': '{done} из {total}',
   'Sync failed': 'Сбой синхронизации',
   '{name} could not be written.': 'Не удалось записать {name}.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    'Не удалось записать {name}: файл не читается. Возможно, он больше 64 МБ или это не текст в UTF-8.',
   '{name} could not be read.': 'Не удалось прочитать {name}.',
   'Text size': 'Размер текста',
   'Line spacing': 'Межстрочный интервал',
@@ -2073,7 +2075,7 @@ export const ru: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'Этот отчёт содержит ваше описание, версию Orden, вашу платформу и недавний журнал приложения, без путей к файлам.',
   'Its space is archived': 'Его пространство в архиве',
-  'Back as {name}, edits and all': 'Вернулась как {name}, вместе с правками',
+  'Back as {name}': 'Вернулась как {name}',
   'Send into the running answer': 'Отправить в текущий ответ',
   'Stop the answer': 'Остановить ответ',
   'Open every step': 'Раскрыть все шаги',

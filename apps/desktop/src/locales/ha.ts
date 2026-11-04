@@ -740,6 +740,8 @@ export const ha: Dictionary = {
   '{done} of {total}': '{done} daga {total}',
   'Sync failed': 'Daidaitawa ta gaza',
   '{name} could not be written.': 'Ba a iya rubuta {name} ba.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    'Ba a iya rubuta {name} ba: ba a iya karanta fayil ɗinsa. Wataƙila ya wuce 64 MB ko ba rubutun UTF-8 ba ne.',
   '{name} could not be read.': 'Ba a iya karanta {name} ba.',
   'Text size': 'Girman rubutu',
   'Line spacing': 'Tazarar layi',
@@ -2017,7 +2019,7 @@ export const ha: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'Wannan rahoton ya ƙunshi bayaninka, sigar Orden, dandalinka da rajistar manhaja ta kwanan nan, ba tare da hanyoyin fayiloli ba.',
   'Its space is archived': 'An adana sararinsa a ma’ajiya',
-  'Back as {name}, edits and all': 'Ya dawo a matsayin {name}, tare da gyare-gyarensa',
+  'Back as {name}': 'Ya dawo a matsayin {name}',
   'Send into the running answer': 'Aika cikin amsar da ke gudana',
   'Stop the answer': 'Dakatar da amsar',
   'Open every step': 'Buɗe kowane mataki',

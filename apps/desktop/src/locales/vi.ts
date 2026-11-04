@@ -729,6 +729,8 @@ export const vi: Dictionary = {
   '{done} of {total}': '{done} trên {total}',
   'Sync failed': 'Đồng bộ thất bại',
   '{name} could not be written.': 'Không ghi được {name}.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    'Không ghi được {name}: không đọc được tệp của nó. Tệp có thể lớn hơn 64 MB hoặc không phải văn bản UTF-8.',
   '{name} could not be read.': 'Không đọc được {name}.',
   'Text size': 'Cỡ chữ',
   'Line spacing': 'Giãn dòng',
@@ -1965,7 +1967,7 @@ export const vi: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'Báo cáo này gồm mô tả của bạn, phiên bản Orden, nền tảng của bạn và nhật ký ứng dụng gần đây, đã bỏ đường dẫn tệp.',
   'Its space is archived': 'Không gian của nó đã được lưu trữ',
-  'Back as {name}, edits and all': 'Đã trở lại với tên {name}, kèm các chỉnh sửa',
+  'Back as {name}': 'Đã trở lại với tên {name}',
   'Send into the running answer': 'Gửi vào câu trả lời đang chạy',
   'Stop the answer': 'Dừng câu trả lời',
   'Open every step': 'Mở mọi bước',

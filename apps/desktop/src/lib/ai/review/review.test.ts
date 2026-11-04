@@ -559,8 +559,40 @@ describe('a rewind over a thread that did things in any order', () => {
       thread,
       review.files(thread).filter((one) => one.kind === 'trashed'),
     )
-    expect(files()['A 2.md']).toBe('EDITED')
+    expect(files()['A 2.md']).toBe('original')
+    expect(files()['A.md']).toBe('new')
     expect(busy.trouble).toContain('A 2')
+  })
+
+  test('put back beside a new note at its name: its track goes with it, its edit a row there', async () => {
+    const thread = aThread()
+    await running(thread, [
+      () => acts.edit(thread, 'A.md', 'original', 'EDITED'),
+      () => acts.trash('A.md'),
+      () => acts.make('A.md', 'new'),
+    ])
+    const { tracksRemoved } = await import('../../agents/docs/edit')
+    tracksRemoved('/space/A.md')
+    await review.undoFiles(
+      thread,
+      review.files(thread).filter((one) => one.kind === 'trashed'),
+    )
+    expect(files()['A 2.md']).toBe('EDITED')
+    expect(review.notes(thread).map((one) => one.path)).toContain('/space/A 2.md')
+  })
+
+  test('a file beside the name that does not say what the track last said is another note', async () => {
+    const thread = aThread()
+    await running(thread, [
+      () => acts.edit(thread, 'A.md', 'original', 'EDITED'),
+      () => acts.trash('A.md'),
+    ])
+    const { tracksRemoved, tracksOf, tracksCame } = await import('../../agents/docs/edit')
+    tracksRemoved('/space/A.md')
+    fake.desk.disk.set('/space/A 2.md', 'something else')
+    await tracksCame('/space/A 2.md', (at) => Promise.resolve(fake.desk.disk.get(at) ?? null))
+
+    expect([...tracksOf(thread.id).keys()]).not.toContain('/space/A 2.md')
   })
 
   test('edited, moved and edited again: back whole, and Redo does all three', async () => {

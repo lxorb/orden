@@ -731,6 +731,8 @@ export const jv: Dictionary = {
   '{done} of {total}': '{done} saka {total}',
   'Sync failed': 'Panyelarasan gagal',
   '{name} could not be written.': '{name} ora bisa ditulis.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} ora bisa ditulis: berkasé ora bisa diwaca. Bisa uga luwih saka 64 MB utawa dudu teks UTF-8.',
   '{name} could not be read.': '{name} ora bisa diwaca.',
   'Text size': 'Ukuran teks',
   'Line spacing': 'Jarak larik',
@@ -1973,7 +1975,7 @@ export const jv: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'Laporan iki ngemot katrangan panjenengan, versi Orden, platform panjenengan lan log aplikasi pungkasan, tanpa path berkas.',
   'Its space is archived': 'Papané diarsipaké',
-  'Back as {name}, edits and all': 'Bali dadi {name}, sakèhing suntingané',
+  'Back as {name}': 'Bali dadi {name}',
   'Send into the running answer': 'Kirim menyang wangsulan sing lagi mlaku',
   'Stop the answer': 'Mandhegake wangsulan',
   'Open every step': 'Bukak kabeh langkah',

@@ -737,6 +737,8 @@ export const ta: Dictionary = {
   '{done} of {total}': '{total} இல் {done}',
   'Sync failed': 'ஒத்திசைவு தோல்வி',
   '{name} could not be written.': '{name} ஐ எழுத முடியவில்லை.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} ஐ எழுத முடியவில்லை: அதன் கோப்பைப் படிக்க முடியவில்லை. அது 64 MB-ஐ விடப் பெரியதாகவோ UTF-8 உரை அல்லாததாகவோ இருக்கலாம்.',
   '{name} could not be read.': '{name} ஐப் படிக்க முடியவில்லை.',
   'Text size': 'உரை அளவு',
   'Line spacing': 'வரி இடைவெளி',
@@ -2019,7 +2021,7 @@ export const ta: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'இந்த அறிக்கையில் உங்கள் விளக்கம், Orden பதிப்பு, உங்கள் தளம் மற்றும் சமீபத்திய செயலி பதிவு அடங்கும், கோப்புப் பாதைகள் நீக்கப்பட்டு.',
   'Its space is archived': 'அதன் இடம் காப்பகப்படுத்தப்பட்டுள்ளது',
-  'Back as {name}, edits and all': '{name} என மீண்டது, திருத்தங்களுடன்',
+  'Back as {name}': '{name} என மீண்டது',
   'Send into the running answer': 'நடக்கும் பதிலுக்குள் அனுப்பு',
   'Stop the answer': 'பதிலை நிறுத்து',
   'Open every step': 'எல்லா படிகளையும் திற',

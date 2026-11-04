@@ -771,6 +771,8 @@ export const pl: Dictionary = {
   '{done} of {total}': '{done} z {total}',
   'Sync failed': 'Synchronizacja nieudana',
   '{name} could not be written.': 'Nie udało się zapisać {name}.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    'Nie udało się zapisać {name}: nie można odczytać pliku. Może mieć ponad 64 MB albo nie być tekstem UTF-8.',
   '{name} could not be read.': 'Nie udało się odczytać {name}.',
   'Text size': 'Rozmiar tekstu',
   'Line spacing': 'Interlinia',
@@ -2074,7 +2076,7 @@ export const pl: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'Ten raport zawiera Twój opis, wersję Orden, Twoją platformę i najnowszy dziennik aplikacji, bez ścieżek plików.',
   'Its space is archived': 'Jej przestrzeń jest zarchiwizowana',
-  'Back as {name}, edits and all': 'Wróciła jako {name}, ze zmianami',
+  'Back as {name}': 'Wróciła jako {name}',
   'Send into the running answer': 'Wyślij do trwającej odpowiedzi',
   'Stop the answer': 'Zatrzymaj odpowiedź',
   'Open every step': 'Rozwiń wszystkie kroki',

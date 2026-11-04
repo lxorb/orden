@@ -742,6 +742,8 @@ export const de: Dictionary = {
   '{done} of {total}': '{done} von {total}',
   'Sync failed': 'Synchronisierung fehlgeschlagen',
   '{name} could not be written.': '{name} konnte nicht geschrieben werden.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} konnte nicht geschrieben werden: Die Datei lässt sich nicht lesen. Sie ist vielleicht größer als 64 MB oder kein UTF-8-Text.',
   '{name} could not be read.': '{name} konnte nicht gelesen werden.',
   'Text size': 'Textgröße',
   'Line spacing': 'Zeilenabstand',
@@ -2030,7 +2032,7 @@ export const de: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'Dieser Bericht enthält deine Beschreibung, die Version von Orden, deine Plattform und das aktuelle App-Protokoll, ohne Dateipfade.',
   'Its space is archived': 'Sein Space ist archiviert',
-  'Back as {name}, edits and all': 'Zurück als {name}, mit den Änderungen',
+  'Back as {name}': 'Zurück als {name}',
   'Send into the running answer': 'In die laufende Antwort senden',
   'Stop the answer': 'Antwort anhalten',
   'Open every step': 'Alle Schritte öffnen',

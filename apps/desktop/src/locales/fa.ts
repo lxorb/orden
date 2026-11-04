@@ -736,6 +736,8 @@ export const fa: Dictionary = {
   '{done} of {total}': '{done} از {total}',
   'Sync failed': 'همگام‌سازی نشد',
   '{name} could not be written.': '{name} نوشته نشد.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} نوشته نشد: فایل آن خوانده نمی‌شود. شاید بیش از 64 MB باشد یا متن UTF-8 نباشد.',
   '{name} could not be read.': '{name} خوانده نشد.',
   'Text size': 'اندازه نوشته',
   'Line spacing': 'فاصله خط',
@@ -1990,7 +1992,7 @@ export const fa: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'این گزارش شامل توضیح شما، نسخهٔ Orden، سکوی شما و گزارش اخیر برنامه است، بدون مسیر فایل‌ها.',
   'Its space is archived': 'فضای آن بایگانی شده است',
-  'Back as {name}, edits and all': 'با نام {name} برگشت، همراه با ویرایش‌ها',
+  'Back as {name}': 'با نام {name} برگشت',
   'Send into the running answer': 'ارسال به پاسخ در حال اجرا',
   'Stop the answer': 'توقف پاسخ',
   'Open every step': 'باز کردن همه مراحل',

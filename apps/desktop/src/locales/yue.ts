@@ -727,6 +727,8 @@ export const yue: Dictionary = {
   '{done} of {total}': '{done}/{total}',
   'Sync failed': '同步失敗',
   '{name} could not be written.': '冇辦法寫入 {name}。',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '冇辦法寫入 {name}:讀唔到個檔案。可能超過 64 MB,或者唔係 UTF-8 文字。',
   '{name} could not be read.': '冇辦法讀取 {name}。',
   'Text size': '字體大小',
   'Line spacing': '行距',
@@ -1934,7 +1936,7 @@ export const yue: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     '呢份報告包括你嘅描述、Orden 版本、你嘅平台同最近嘅 App 記錄,檔案路徑已經移除。',
   'Its space is archived': '佢嘅空間已經封存',
-  'Back as {name}, edits and all': '以 {name} 返嚟,連埋啲修改',
+  'Back as {name}': '以 {name} 返嚟',
   'Send into the running answer': '傳入去進行緊嘅回答',
   'Stop the answer': '停咗個回答',
   'Open every step': '打開晒所有步驟',

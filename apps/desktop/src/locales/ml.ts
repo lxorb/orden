@@ -743,6 +743,8 @@ export const ml: Dictionary = {
   '{done} of {total}': '{total}ൽ {done}',
   'Sync failed': 'സിങ്ക് പരാജയപ്പെട്ടു',
   '{name} could not be written.': '{name} എഴുതാനായില്ല.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} എഴുതാനായില്ല: അതിന്റെ ഫയൽ വായിക്കാനാകുന്നില്ല. അത് 64 MB-യിൽ കൂടുതലോ UTF-8 അല്ലാത്ത എഴുത്തോ ആകാം.',
   '{name} could not be read.': '{name} വായിക്കാനായില്ല.',
   'Text size': 'ടെക്സ്റ്റ് വലുപ്പം',
   'Line spacing': 'വരി അന്തരം',
@@ -2013,7 +2015,7 @@ export const ml: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'ഈ റിപ്പോർട്ടിൽ നിങ്ങളുടെ വിവരണം, Orden പതിപ്പ്, നിങ്ങളുടെ പ്ലാറ്റ്ഫോം, സമീപകാല ആപ്പ് ലോഗ് എന്നിവ ഉൾപ്പെടുന്നു, ഫയൽ പാത്തുകൾ നീക്കം ചെയ്ത്.',
   'Its space is archived': 'അതിന്റെ സ്പേസ് ആർക്കൈവ് ചെയ്തു',
-  'Back as {name}, edits and all': '{name} ആയി തിരിച്ചെത്തി, തിരുത്തലുകളോടെ',
+  'Back as {name}': '{name} ആയി തിരിച്ചെത്തി',
   'Send into the running answer': 'നടക്കുന്ന ഉത്തരത്തിലേക്ക് അയയ്ക്കുക',
   'Stop the answer': 'ഉത്തരം നിർത്തുക',
   'Open every step': 'എല്ലാ ഘട്ടവും തുറക്കുക',

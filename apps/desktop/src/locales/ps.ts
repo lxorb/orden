@@ -736,6 +736,8 @@ export const ps: Dictionary = {
   '{done} of {total}': '{done} له {total}',
   'Sync failed': 'همغږي پاتې راغله',
   '{name} could not be written.': '{name} ونه ليکل شو.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} ونه ليکل شو: د هغې فايل نه لوستل کېږي. کېدای شي له 64 MB لوی وي يا UTF-8 متن نه وي.',
   '{name} could not be read.': '{name} ونه لوستل شو.',
   'Text size': 'د متن کچه',
   'Line spacing': 'د کرښو واټن',
@@ -1990,7 +1992,7 @@ export const ps: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'دا راپور ستاسو تشریح، د Orden نسخه، ستاسو پلیټفارم او د اپ وروستی لاګ لري، د فایل لارو پرته.',
   'Its space is archived': 'د هغې ځای آرشیف شوی',
-  'Back as {name}, edits and all': 'د {name} په نوم راستون شو، له سمونونو سره',
+  'Back as {name}': 'د {name} په نوم راستون شو',
   'Send into the running answer': 'روان ځواب ته لېږل',
   'Stop the answer': 'ځواب ودرول',
   'Open every step': 'ټول پړاوونه پرانیستل',

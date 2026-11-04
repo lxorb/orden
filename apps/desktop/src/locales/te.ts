@@ -737,6 +737,8 @@ export const te: Dictionary = {
   '{done} of {total}': '{total}లో {done}',
   'Sync failed': 'సింక్ విఫలమైంది',
   '{name} could not be written.': '{name} రాయలేకపోయింది.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} రాయలేకపోయింది: దాని ఫైల్‌ను చదవలేకపోతోంది. అది 64 MB కంటే పెద్దది కావచ్చు లేదా UTF-8 పాఠ్యం కాకపోవచ్చు.',
   '{name} could not be read.': '{name} చదవలేకపోయింది.',
   'Text size': 'టెక్స్ట్ పరిమాణం',
   'Line spacing': 'పంక్తి అంతరం',
@@ -1999,7 +2001,7 @@ export const te: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'ఈ నివేదికలో మీ వివరణ, Orden వెర్షన్, మీ ప్లాట్‌ఫామ్ మరియు ఇటీవలి యాప్ లాగ్ ఉంటాయి, ఫైల్ పాత్‌లు తీసివేసి.',
   'Its space is archived': 'దాని స్పేస్ ఆర్కైవ్ చేయబడింది',
-  'Back as {name}, edits and all': '{name}గా తిరిగి వచ్చింది, సవరణలతో',
+  'Back as {name}': '{name}గా తిరిగి వచ్చింది',
   'Send into the running answer': 'నడుస్తున్న సమాధానంలోకి పంపండి',
   'Stop the answer': 'సమాధానాన్ని ఆపండి',
   'Open every step': 'ప్రతి దశను తెరవండి',

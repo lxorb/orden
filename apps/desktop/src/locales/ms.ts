@@ -731,6 +731,8 @@ export const ms: Dictionary = {
   '{done} of {total}': '{done} daripada {total}',
   'Sync failed': 'Penyegerakan gagal',
   '{name} could not be written.': '{name} tidak dapat ditulis.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} tidak dapat ditulis: failnya tidak dapat dibaca. Mungkin melebihi 64 MB atau bukan teks UTF-8.',
   '{name} could not be read.': '{name} tidak dapat dibaca.',
   'Text size': 'Saiz teks',
   'Line spacing': 'Jarak baris',
@@ -1981,7 +1983,7 @@ export const ms: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'Laporan ini mengandungi penerangan anda, versi Orden, platform anda dan log aplikasi terkini, tanpa laluan fail.',
   'Its space is archived': 'Ruangnya diarkibkan',
-  'Back as {name}, edits and all': 'Kembali sebagai {name}, bersama suntingannya',
+  'Back as {name}': 'Kembali sebagai {name}',
   'Send into the running answer': 'Hantar ke jawapan yang sedang berjalan',
   'Stop the answer': 'Hentikan jawapan',
   'Open every step': 'Buka semua langkah',

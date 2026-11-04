@@ -737,6 +737,8 @@ export const hi: Dictionary = {
   '{done} of {total}': '{total} में {done}',
   'Sync failed': 'सिंक विफल',
   '{name} could not be written.': '{name} लिखा नहीं जा सका।',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} लिखा नहीं जा सका: इसकी फ़ाइल पढ़ी नहीं जा सकती। यह 64 MB से बड़ी या UTF-8 से अलग टेक्स्ट हो सकती है।',
   '{name} could not be read.': '{name} पढ़ा नहीं जा सका।',
   'Text size': 'टेक्स्ट आकार',
   'Line spacing': 'पंक्ति दूरी',
@@ -1985,7 +1987,7 @@ export const hi: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'इस रिपोर्ट में आपका विवरण, Orden का संस्करण, आपका प्लेटफ़ॉर्म और हाल का ऐप लॉग शामिल है, फ़ाइल पाथ हटाकर।',
   'Its space is archived': 'इसका स्पेस संग्रहित है',
-  'Back as {name}, edits and all': '{name} के रूप में वापस, संपादनों के साथ',
+  'Back as {name}': '{name} के रूप में वापस',
   'Send into the running answer': 'चल रहे उत्तर में भेजें',
   'Stop the answer': 'उत्तर रोकें',
   'Open every step': 'हर चरण खोलें',

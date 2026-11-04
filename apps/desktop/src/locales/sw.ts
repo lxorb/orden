@@ -741,6 +741,8 @@ export const sw: Dictionary = {
   '{done} of {total}': '{done} ya {total}',
   'Sync failed': 'Usawazishaji umeshindikana',
   '{name} could not be written.': '{name} haikuandikwa.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} haikuandikwa: faili yake haisomeki. Huenda inazidi MB 64 au si maandishi ya UTF-8.',
   '{name} could not be read.': '{name} haikusomeka.',
   'Text size': 'Ukubwa wa maandishi',
   'Line spacing': 'Nafasi kati ya mistari',
@@ -2017,7 +2019,7 @@ export const sw: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'Ripoti hii inajumuisha maelezo yako, toleo la Orden, jukwaa lako na kumbukumbu ya hivi karibuni ya programu, bila njia za faili.',
   'Its space is archived': 'Nafasi yake imehifadhiwa kwenye kumbukumbu',
-  'Back as {name}, edits and all': 'Imerudi kama {name}, pamoja na mabadiliko',
+  'Back as {name}': 'Imerudi kama {name}',
   'Send into the running answer': 'Tuma ndani ya jibu linaloendelea',
   'Stop the answer': 'Simamisha jibu',
   'Open every step': 'Fungua kila hatua',

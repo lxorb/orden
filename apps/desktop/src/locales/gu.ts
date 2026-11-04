@@ -736,6 +736,8 @@ export const gu: Dictionary = {
   '{done} of {total}': '{total}માંથી {done}',
   'Sync failed': 'સમન્વય નિષ્ફળ',
   '{name} could not be written.': '{name} લખાઈ નહીં.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} લખાઈ નહીં: તેની ફાઇલ વાંચી શકાતી નથી. તે 64 MB કરતાં મોટી હોઈ શકે અથવા UTF-8 લખાણ ન હોઈ શકે.',
   '{name} could not be read.': '{name} વાંચી શકાઈ નહીં.',
   'Text size': 'લખાણનું માપ',
   'Line spacing': 'લીટી અંતર',
@@ -1979,7 +1981,7 @@ export const gu: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'આ રિપોર્ટમાં તમારું વર્ણન, Orden નું વર્ઝન, તમારું પ્લેટફોર્મ અને તાજેતરનો ઍપ લૉગ શામેલ છે, ફાઇલ પાથ વિના.',
   'Its space is archived': 'તેની સ્પેસ આર્કાઇવ કરેલી છે',
-  'Back as {name}, edits and all': '{name} તરીકે પાછું આવ્યું, સંપાદનો સાથે',
+  'Back as {name}': '{name} તરીકે પાછું આવ્યું',
   'Send into the running answer': 'ચાલુ જવાબમાં મોકલો',
   'Stop the answer': 'જવાબ રોકો',
   'Open every step': 'દરેક પગલું ખોલો',

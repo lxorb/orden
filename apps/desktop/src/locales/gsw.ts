@@ -737,6 +737,8 @@ export const gsw: Dictionary = {
   '{done} of {total}': '{done} vo {total}',
   'Sync failed': 'Synchronisierig het nod klappt',
   '{name} could not be written.': '{name} het sich nöd schriibe laa.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} het sich nöd schriibe laa: D Datei laat sich nöd läse. Si isch vilicht grösser als 64 MB oder kän UTF-8-Täxt.',
   '{name} could not be read.': '{name} het sich nöd läse laa.',
   'Text size': 'Textgrössi',
   'Line spacing': 'Ziilenabstand',
@@ -1999,7 +2001,7 @@ export const gsw: Dictionary = {
   'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
     'Dä Bricht enthaltet dini Beschribig, d Version vo Orden, dini Plattform und s aktuelle App-Protokoll, ohni Dateipfäd.',
   'Its space is archived': 'Sin Space isch archiviert',
-  'Back as {name}, edits and all': 'Zrugg als {name}, mit de Änderige',
+  'Back as {name}': 'Zrugg als {name}',
   'Send into the running answer': 'I die laufend Antwort schicke',
   'Stop the answer': 'Antwort aahalte',
   'Open every step': 'Alli Schritt uftue',
