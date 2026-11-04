@@ -195,21 +195,3 @@ export function splitTabs<T>(items: readonly T[], shown: number, isOn: (item: T)
 
   return { drawn, behind: items.filter((item) => !drawn.includes(item)) }
 }
-
-/** The sides a choice leaves, the chat standing over what a space keeps there (#332): shut,
- *  it shows that; anything else chosen or the chat moved away, what stood under it is over. */
-export function chatLeaving(
-  was: Sides,
-  next: Sides,
-  under: Panel | null,
-): { sides: Sides; under: Panel | null } {
-  if (under === null) return { sides: next, under }
-  const side = sideOf(was.right, 'ask')
-  if (sideOf(next.right, 'ask') !== side) return { sides: next, under: null }
-
-  const held = heldOn(next, side)
-  if (held === 'ask') return { sides: next, under }
-  if (held !== null) return { sides: next, under: null }
-  const sides = side === 'right' ? { ...next, rightPanel: under } : { ...next, panel: under }
-  return { sides, under: null }
-}

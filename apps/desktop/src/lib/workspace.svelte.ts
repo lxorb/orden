@@ -393,9 +393,6 @@ class Workspace {
    *  about this screen, the way the sidebar's width is. */
   right = $state<Panel[]>(panels.rightFrom(undefined))
   rightPanel = $state<Panel | null>(null)
-  /** What this space keeps at the side the chat came over it on, a space being another
-   *  (#332): shown when the chat is shut, and put aside with the space. See sets.svelte.ts. */
-  underChat: Panel | null = null
   /** What the right side showed last, so its button goes back there. Nothing on
    *  screen reads it. */
   lastRight: Panel | null = null
@@ -5293,9 +5290,7 @@ class Workspace {
     return { panel: this.panel, rightPanel: this.rightPanel, right: this.right, covered: pad.on }
   }
 
-  private set sides(asked: Sides) {
-    const { sides: next, under } = panels.chatLeaving(this.sides, asked, this.underChat)
-    this.underChat = under
+  private set sides(next: Sides) {
     this.panel = next.panel
     this.rightPanel = next.rightPanel
     this.right = next.right
