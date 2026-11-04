@@ -1230,8 +1230,12 @@ function holds(tail: string): boolean {
  *  a foldable strip at the top of the note, and a footnote's mark showing its words and
  *  going to its definition and back (live-preview/properties.ts and the new
  *  live-preview/footnotes.ts in @orden/editor). Both are the note's own drawing, which
- *  arrives with the note. Measured 3,598,326. */
-const BUDGET = 3_600_000
+ *  arrives with the note. Measured 3,598,326.
+ *
+ *  Raised 2026-11-04, to 3,602,000, for #1123: the sidebars are the window's across
+ *  spaces, and the space switcher walks with the key that opened it still held
+ *  (workspace/sets.svelte.ts, workspace/spaces.ts, roving.ts). Measured 3,600,780. */
+const BUDGET = 3_602_000
 const MOST_FILES = 395
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
