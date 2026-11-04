@@ -1917,6 +1917,9 @@ export const bn: Dictionary = {
   'Exited with code {code}': 'কোড {code} দিয়ে বন্ধ হয়েছে',
   'Could not start {shell}': '{shell} চালু করা যায়নি',
   'Restore history': 'ইতিহাস পুনরুদ্ধার করুন',
+  'Colours follow the theme': 'রং থিম অনুসরণ করে',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'টার্মিনালগুলো থিমের রঙে রাঙায়; বন্ধ থাকলে একটি স্থির রঙের প্যালেট থাকে।',
   'Restored {time}': 'পুনরুদ্ধার করা হয়েছে {time}',
   'Stop what is running in {name}?': '{name}-এ যা চলছে তা বন্ধ করবেন?',
   'Stop what is running in these terminals?': 'এই টার্মিনালগুলিতে যা চলছে তা বন্ধ করবেন?',

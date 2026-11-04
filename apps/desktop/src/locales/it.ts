@@ -1978,6 +1978,9 @@ export const it: Dictionary = {
   'Exited with code {code}': 'Terminato con codice {code}',
   'Could not start {shell}': 'Impossibile avviare {shell}',
   'Restore history': 'Ripristina cronologia',
+  'Colours follow the theme': 'I colori seguono il tema',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Colora i terminali con i colori del tema; se disattivato mantiene una tavolozza fissa.',
   'Restored {time}': 'Ripristinato {time}',
   'Stop what is running in {name}?': 'Interrompere ciò che è in esecuzione in {name}?',
   'Stop what is running in these terminals?':

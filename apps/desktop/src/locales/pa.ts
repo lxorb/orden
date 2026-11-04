@@ -1925,6 +1925,9 @@ export const pa: Dictionary = {
   'Exited with code {code}': 'ਕੋਡ {code} ਨਾਲ ਬੰਦ ਹੋਇਆ',
   'Could not start {shell}': '{shell} ਸ਼ੁਰੂ ਨਹੀਂ ਹੋ ਸਕਿਆ',
   'Restore history': 'ਇਤਿਹਾਸ ਬਹਾਲ ਕਰੋ',
+  'Colours follow the theme': 'ਰੰਗ ਥੀਮ ਦੀ ਪਾਲਣਾ ਕਰਦੇ ਹਨ',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'ਟਰਮੀਨਲਾਂ ਨੂੰ ਥੀਮ ਦੇ ਰੰਗਾਂ ਵਿੱਚ ਰੰਗਦਾ ਹੈ; ਬੰਦ ਹੋਣ ’ਤੇ ਇੱਕ ਸਥਿਰ ਪੈਲੇਟ ਰਹਿੰਦਾ ਹੈ।',
   'Restored {time}': 'ਬਹਾਲ ਕੀਤਾ {time}',
   'Stop what is running in {name}?': '{name} ਵਿੱਚ ਜੋ ਚੱਲ ਰਿਹਾ ਹੈ ਉਸਨੂੰ ਰੋਕੀਏ?',
   'Stop what is running in these terminals?': 'ਇਹਨਾਂ ਟਰਮੀਨਲਾਂ ਵਿੱਚ ਜੋ ਚੱਲ ਰਿਹਾ ਹੈ ਉਸਨੂੰ ਰੋਕੀਏ?',

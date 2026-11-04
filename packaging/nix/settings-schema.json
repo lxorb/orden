@@ -429,6 +429,11 @@
     "default": 13,
     "description": "How large the text in terminals is."
   },
+  "general.terminalThemed": {
+    "type": "boolean",
+    "default": true,
+    "description": "Paints terminals in the theme’s colours; off keeps one fixed palette."
+  },
   "general.undatedInToday": {
     "type": "boolean",
     "default": false,

@@ -1951,6 +1951,9 @@ export const ha: Dictionary = {
   'Exited with code {code}': 'An ƙare da lamba {code}',
   'Could not start {shell}': 'Ba a iya fara {shell} ba',
   'Restore history': 'Maido da tarihi',
+  'Colours follow the theme': 'Launuka suna bin jigo',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Yana zana tasha da launukan jigo; idan a kashe, ana riƙe launuka guda ɗaya tsayayye.',
   'Restored {time}': 'An maido {time}',
   'Stop what is running in {name}?': 'A dakatar da abin da ke gudana a {name}?',
   'Stop what is running in these terminals?': 'A dakatar da abin da ke gudana a waɗannan tashoshi?',

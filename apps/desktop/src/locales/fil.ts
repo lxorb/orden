@@ -1959,6 +1959,9 @@ export const fil: Dictionary = {
   'Exited with code {code}': 'Natapos na may code {code}',
   'Could not start {shell}': 'Hindi masimulan ang {shell}',
   'Restore history': 'Ibalik ang history',
+  'Colours follow the theme': 'Sumusunod ang mga kulay sa tema',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Kinukulayan ang mga terminal ng mga kulay ng tema; kapag naka-off, isang nakapirming palette ang nananatili.',
   'Restored {time}': 'Naibalik {time}',
   'Stop what is running in {name}?': 'Ihinto ang tumatakbo sa {name}?',
   'Stop what is running in these terminals?': 'Ihinto ang tumatakbo sa mga terminal na ito?',

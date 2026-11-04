@@ -2026,6 +2026,9 @@ export const ar: Dictionary = {
   'Exited with code {code}': 'انتهى بالرمز {code}',
   'Could not start {shell}': 'تعذّر تشغيل {shell}',
   'Restore history': 'استعادة السجل',
+  'Colours follow the theme': 'الألوان تتبع السمة',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'يلوّن الطرفيات بألوان السمة؛ عند الإيقاف تبقى لوحة ألوان ثابتة واحدة.',
   'Restored {time}': 'تمت الاستعادة {time}',
   'Stop what is running in {name}?': 'إيقاف ما يعمل في {name}؟',
   'Stop what is running in these terminals?': 'إيقاف ما يعمل في هذه الطرفيات؟',

@@ -1898,6 +1898,9 @@ export const am: Dictionary = {
   'Exited with code {code}': 'በኮድ {code} ተጠናቋል',
   'Could not start {shell}': '{shell}ን ማስጀመር አልተቻለም',
   'Restore history': 'ታሪክን መልስ',
+  'Colours follow the theme': 'ቀለሞች ገጽታውን ይከተላሉ',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'ተርሚናሎችን በገጽታው ቀለሞች ይቀባል፤ ሲጠፋ አንድ ቋሚ የቀለም ስብስብ ይይዛል።',
   'Restored {time}': 'ተመልሷል {time}',
   'Stop what is running in {name}?': 'በ{name} ውስጥ የሚሰራው ይቁም?',
   'Stop what is running in these terminals?': 'በእነዚህ ተርሚናሎች ውስጥ የሚሰራው ይቁም?',

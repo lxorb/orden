@@ -1894,6 +1894,9 @@ export const ko: Dictionary = {
   'Exited with code {code}': '코드 {code}(으)로 종료됨',
   'Could not start {shell}': '{shell}을(를) 시작할 수 없음',
   'Restore history': '기록 복원',
+  'Colours follow the theme': '색상이 테마를 따름',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    '터미널을 테마 색상으로 칠합니다. 끄면 고정된 팔레트 하나를 유지합니다.',
   'Restored {time}': '{time} 복원됨',
   'Stop what is running in {name}?': '{name}에서 실행 중인 것을 중지할까요?',
   'Stop what is running in these terminals?': '이 터미널들에서 실행 중인 것을 중지할까요?',

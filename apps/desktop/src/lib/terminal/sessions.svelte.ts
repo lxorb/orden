@@ -277,7 +277,7 @@ class Session {
       cursorInactiveStyle: 'outline',
       minimumContrastRatio: terminalContrast(),
       rightClickSelectsWord: false,
-      theme: terminalTheme(),
+      theme: terminalTheme(document.documentElement, !shells.themed),
       // A link a program marked itself (OSC 8) is followed the way any other is, with the
       // whole address it carries, and not through xterm.js's own confirm box: by the
       // press, like every link here (`pressLink`), so its activation does nothing.
@@ -1576,10 +1576,10 @@ function watch() {
 
   let frame = 0
   let painted = ''
-  const repaint = () => {
+  const repaint = (themed = shells.themed) => {
     cancelAnimationFrame(frame)
     frame = requestAnimationFrame(() => {
-      const theme = terminalTheme()
+      const theme = terminalTheme(document.documentElement, !themed)
       const family = monospace()
       const contrast = terminalContrast()
       // The page's style moves for other reasons too - the zoom, the keyboard on a
@@ -1590,7 +1590,18 @@ function watch() {
       for (const one of sessions.values()) one.repaint(theme, family, contrast)
     })
   }
-  const page = new MutationObserver(repaint)
+  // And a reader keeping one palette, or giving it up, in Settings: only when that
+  // changes, so a terminal that has just been drawn is not drawn a second time for it.
+  let themedWas = shells.themed
+  $effect.root(() => {
+    $effect(() => {
+      const themed = shells.themed
+      if (themed === themedWas) return
+      themedWas = themed
+      untrack(() => repaint(themed))
+    })
+  })
+  const page = new MutationObserver(() => repaint())
   page.observe(document.documentElement, {
     attributes: true,
     attributeFilter: ['data-theme', 'style', 'class'],

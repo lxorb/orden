@@ -1909,6 +1909,9 @@ export const jv: Dictionary = {
   'Exited with code {code}': 'Rampung kanthi kode {code}',
   'Could not start {shell}': 'Ora bisa miwiti {shell}',
   'Restore history': 'Balèkaké riwayat',
+  'Colours follow the theme': 'Werna ngetutké tema',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Mènèhi werna terminal nganggo werna tema; yèn dipatèni, siji palet tetep dijaga.',
   'Restored {time}': 'Dibalèkaké {time}',
   'Stop what is running in {name}?': 'Mandhegake sing mlaku ing {name}?',
   'Stop what is running in these terminals?': 'Mandhegake sing mlaku ing terminal iki?',

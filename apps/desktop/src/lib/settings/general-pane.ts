@@ -91,6 +91,17 @@ function terminalGroup(): Group {
       },
       {
         kind: 'switch',
+        key: 'general.terminalThemed',
+        store: { on: shells, name: 'themed' },
+        label: t('Colours follow the theme'),
+        hint: t('Paints terminals in the theme’s colours; off keeps one fixed palette.'),
+        words: ['colour', 'color', 'palette', 'ansi', 'theme', 'dark', 'light'],
+        initial: true,
+        get: () => shells.themed,
+        set: (on) => shells.setThemed(on),
+      },
+      {
+        kind: 'switch',
         key: 'general.restoreTerminalHistory',
         store: { on: shells, name: 'restoring' },
         label: t('Restore history'),

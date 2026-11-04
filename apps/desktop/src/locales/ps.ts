@@ -1923,6 +1923,9 @@ export const ps: Dictionary = {
   'Exited with code {code}': 'د {code} کوډ سره پای ته ورسید',
   'Could not start {shell}': '{shell} پیل نشو',
   'Restore history': 'تاریخچه بېرته راوړل',
+  'Colours follow the theme': 'رنګونه د موضوع پیروي کوي',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'ټرمینلونه د موضوع په رنګونو رنګوي؛ بند وي نو یوه ثابته رنګ‌پاڼه ساتي.',
   'Restored {time}': 'بېرته راوړل شو {time}',
   'Stop what is running in {name}?': 'په {name} کې روان کار ودرول شي؟',
   'Stop what is running in these terminals?': 'په دې ټرمینلونو کې روان کار ودرول شي؟',

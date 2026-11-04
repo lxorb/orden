@@ -1929,6 +1929,9 @@ export const tr: Dictionary = {
   'Exited with code {code}': '{code} koduyla sonlandı',
   'Could not start {shell}': '{shell} başlatılamadı',
   'Restore history': 'Geçmişi geri yükle',
+  'Colours follow the theme': 'Renkler temayı izler',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Terminalleri temanın renkleriyle boyar; kapalıyken tek bir sabit palet kullanır.',
   'Restored {time}': 'Geri yüklendi {time}',
   'Stop what is running in {name}?': '{name} içinde çalışan durdurulsun mu?',
   'Stop what is running in these terminals?': 'Bu terminallerde çalışan durdurulsun mu?',

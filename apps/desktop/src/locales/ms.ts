@@ -1917,6 +1917,9 @@ export const ms: Dictionary = {
   'Exited with code {code}': 'Tamat dengan kod {code}',
   'Could not start {shell}': 'Tidak dapat memulakan {shell}',
   'Restore history': 'Pulihkan sejarah',
+  'Colours follow the theme': 'Warna mengikut tema',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Mewarnakan terminal dengan warna tema; jika dimatikan, satu palet tetap dikekalkan.',
   'Restored {time}': 'Dipulihkan {time}',
   'Stop what is running in {name}?': 'Hentikan yang sedang berjalan dalam {name}?',
   'Stop what is running in these terminals?': 'Hentikan yang sedang berjalan dalam terminal ini?',

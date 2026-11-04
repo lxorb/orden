@@ -2000,6 +2000,9 @@ export const pl: Dictionary = {
   'Exited with code {code}': 'Zakończono z kodem {code}',
   'Could not start {shell}': 'Nie udało się uruchomić {shell}',
   'Restore history': 'Przywracaj historię',
+  'Colours follow the theme': 'Kolory zgodne z motywem',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Barwi terminale kolorami motywu; wyłączone zachowuje jedną stałą paletę.',
   'Restored {time}': 'Przywrócono {time}',
   'Stop what is running in {name}?': 'Zatrzymać to, co działa w {name}?',
   'Stop what is running in these terminals?': 'Zatrzymać to, co działa w tych terminalach?',

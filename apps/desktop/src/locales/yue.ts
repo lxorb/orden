@@ -1871,6 +1871,9 @@ export const yue: Dictionary = {
   'Exited with code {code}': '以代碼 {code} 結束咗',
   'Could not start {shell}': '開唔到 {shell}',
   'Restore history': '還原歷史紀錄',
+  'Colours follow the theme': '顏色跟主題',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    '用主題嘅顏色畫終端機；熄咗就用一套固定嘅色板。',
   'Restored {time}': '已還原 {time}',
   'Stop what is running in {name}?': '要停止 {name} 入面運行緊嘅嘢嗎？',
   'Stop what is running in these terminals?': '要停止呢啲終端機入面運行緊嘅嘢嗎？',

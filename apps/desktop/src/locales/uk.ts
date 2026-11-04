@@ -1993,6 +1993,9 @@ export const uk: Dictionary = {
   'Exited with code {code}': 'Завершено з кодом {code}',
   'Could not start {shell}': 'Не вдалося запустити {shell}',
   'Restore history': 'Відновлювати історію',
+  'Colours follow the theme': 'Кольори відповідають темі',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Фарбує термінали в кольори теми; якщо вимкнено, лишається одна стала палітра.',
   'Restored {time}': 'Відновлено {time}',
   'Stop what is running in {name}?': 'Зупинити те, що виконується в {name}?',
   'Stop what is running in these terminals?': 'Зупинити те, що виконується в цих терміналах?',

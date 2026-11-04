@@ -1915,6 +1915,9 @@ export const id: Dictionary = {
   'Exited with code {code}': 'Selesai dengan kode {code}',
   'Could not start {shell}': 'Tidak dapat memulai {shell}',
   'Restore history': 'Pulihkan riwayat',
+  'Colours follow the theme': 'Warna mengikuti tema',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Mewarnai terminal dengan warna tema; jika mati, satu palet tetap dipertahankan.',
   'Restored {time}': 'Dipulihkan {time}',
   'Stop what is running in {name}?': 'Hentikan yang berjalan di {name}?',
   'Stop what is running in these terminals?': 'Hentikan yang berjalan di terminal ini?',

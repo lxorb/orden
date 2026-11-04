@@ -1938,6 +1938,9 @@ export const kn: Dictionary = {
   'Exited with code {code}': 'ಕೋಡ್ {code} ನೊಂದಿಗೆ ಮುಗಿಯಿತು',
   'Could not start {shell}': '{shell} ಪ್ರಾರಂಭಿಸಲಾಗಲಿಲ್ಲ',
   'Restore history': 'ಇತಿಹಾಸವನ್ನು ಮರುಸ್ಥಾಪಿಸಿ',
+  'Colours follow the theme': 'ಬಣ್ಣಗಳು ಥೀಮ್ ಅನುಸರಿಸುತ್ತವೆ',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'ಟರ್ಮಿನಲ್‌ಗಳನ್ನು ಥೀಮ್‌ನ ಬಣ್ಣಗಳಲ್ಲಿ ಬಣ್ಣಿಸುತ್ತದೆ; ಆಫ್ ಆದರೆ ಒಂದು ಸ್ಥಿರ ಪ್ಯಾಲೆಟ್ ಉಳಿಯುತ್ತದೆ.',
   'Restored {time}': 'ಮರುಸ್ಥಾಪಿಸಲಾಗಿದೆ {time}',
   'Stop what is running in {name}?': '{name} ನಲ್ಲಿ ನಡೆಯುತ್ತಿರುವುದನ್ನು ನಿಲ್ಲಿಸಬೇಕೆ?',
   'Stop what is running in these terminals?': 'ಈ ಟರ್ಮಿನಲ್‌ಗಳಲ್ಲಿ ನಡೆಯುತ್ತಿರುವುದನ್ನು ನಿಲ್ಲಿಸಬೇಕೆ?',

@@ -1950,6 +1950,9 @@ export const sw: Dictionary = {
   'Exited with code {code}': 'Imemalizika kwa msimbo {code}',
   'Could not start {shell}': 'Imeshindwa kuanzisha {shell}',
   'Restore history': 'Rejesha historia',
+  'Colours follow the theme': 'Rangi zinafuata mandhari',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Hupaka vituo kwa rangi za mandhari; ikizimwa, huweka paleti moja isiyobadilika.',
   'Restored {time}': 'Imerejeshwa {time}',
   'Stop what is running in {name}?': 'Simamisha kinachoendeshwa katika {name}?',
   'Stop what is running in these terminals?': 'Simamisha kinachoendeshwa katika terminali hizi?',

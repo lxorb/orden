@@ -1907,6 +1907,9 @@ export const my: Dictionary = {
   'Exited with code {code}': 'ကုဒ် {code} ဖြင့် ပြီးဆုံးသည်',
   'Could not start {shell}': '{shell} ကို စတင်၍ မရပါ',
   'Restore history': 'မှတ်တမ်းကို ပြန်ယူရန်',
+  'Colours follow the theme': 'အရောင်များသည် အပြင်အဆင်ကို လိုက်သည်',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'တာမီနယ်များကို အပြင်အဆင်၏ အရောင်များဖြင့် ခြယ်သည်။ ပိတ်ထားလျှင် ပုံသေအရောင်စု တစ်ခုကို ထားသည်။',
   'Restored {time}': 'ပြန်ယူထားသည် {time}',
   'Stop what is running in {name}?': '{name} တွင် လုပ်ဆောင်နေသည်ကို ရပ်မလား?',
   'Stop what is running in these terminals?': 'ဤတာမင်နယ်များတွင် လုပ်ဆောင်နေသည်ကို ရပ်မလား?',

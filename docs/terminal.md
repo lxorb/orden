@@ -477,9 +477,18 @@ word, as it does in every terminal there is. Cmd+W closes the tab on a Mac.
 The note's ground and ink, the accent as the cursor (a bar, as the editor's caret is, an
 outline while the window is elsewhere), the selection every surface draws, and the
 sixteen colours out of the canvas's six and the syntax blue, in whichever scheme the app
-is in, following a theme as it changes. A program that asks for white on a light ground
-is rescued by a minimum contrast of 4.5 to one, WCAG's AA, VS Code's default. The type is
-the app's monospace, the one a code block is set in. Wide characters and emoji are
+is in, following a theme as it changes - a local terminal and an online one alike, live,
+the shell and the scrollback untouched (#1069). Each hue is moved towards the ink until it
+reads on the ground at 4.5 to one, WCAG's AA, and its bright half further, kept apart from
+it; bright black, a program's quiet words, reads at 3. That is one function,
+`terminalPalette`, from a theme's tokens to the terminal's colours. A theme may set any of
+them itself as `--terminal-<name>` (`--terminal-red`, `--terminal-brightBlue`,
+`--terminal-background`, `--terminal-selectionBackground`...), taken as written. A program
+that asks what the colours are (OSC 4, 10, 11: vim, fzf) is answered by xterm.js with
+these. A program that asks for white on a light ground is still rescued by a minimum
+contrast of 4.5 to one, VS Code's default. Settings, Terminal, "Colours follow the theme"
+off keeps one fixed dark palette (`FIXED_PALETTE`) whatever the theme. The type is the
+app's monospace, the one a code block is set in, at Settings' terminal text size. Wide characters and emoji are
 measured by Unicode 11, and an input method composes in xterm.js's own field. The
 renderer is xterm.js's DOM one: WebGL is what crashes a tab on this machine's GPU for a
 big texture, and a terminal is no reason to risk it. See `lib/terminal/look.ts`.

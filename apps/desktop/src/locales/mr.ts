@@ -1923,6 +1923,9 @@ export const mr: Dictionary = {
   'Exited with code {code}': 'कोड {code} सह बंद झाले',
   'Could not start {shell}': '{shell} सुरू करता आले नाही',
   'Restore history': 'इतिहास पुनर्संचयित करा',
+  'Colours follow the theme': 'रंग थीमचे अनुसरण करतात',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'टर्मिनलना थीमच्या रंगांत रंगवते; बंद असल्यास एक ठरलेली रंगसंगती राहते.',
   'Restored {time}': 'पुनर्संचयित {time}',
   'Stop what is running in {name}?': '{name} मध्ये चालू असलेले थांबवायचे?',
   'Stop what is running in these terminals?': 'या टर्मिनलमध्ये चालू असलेले थांबवायचे?',

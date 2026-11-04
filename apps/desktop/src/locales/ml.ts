@@ -1946,6 +1946,9 @@ export const ml: Dictionary = {
   'Exited with code {code}': 'കോഡ് {code} ഉപയോഗിച്ച് അവസാനിച്ചു',
   'Could not start {shell}': '{shell} ആരംഭിക്കാനായില്ല',
   'Restore history': 'ചരിത്രം പുനഃസ്ഥാപിക്കുക',
+  'Colours follow the theme': 'നിറങ്ങൾ തീം പിന്തുടരുന്നു',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'ടെർമിനലുകൾക്ക് തീമിന്റെ നിറങ്ങൾ നൽകുന്നു; ഓഫാക്കിയാൽ ഒരു സ്ഥിര പാലറ്റ് നിലനിർത്തും.',
   'Restored {time}': 'പുനഃസ്ഥാപിച്ചു {time}',
   'Stop what is running in {name}?': '{name}-ൽ പ്രവർത്തിക്കുന്നത് നിർത്തണോ?',
   'Stop what is running in these terminals?': 'ഈ ടെർമിനലുകളിൽ പ്രവർത്തിക്കുന്നത് നിർത്തണോ?',

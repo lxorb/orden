@@ -1932,6 +1932,9 @@ export const gsw: Dictionary = {
   'Exited with code {code}': 'Beändet mit Code {code}',
   'Could not start {shell}': '{shell} het nöd chöne gstartet wärde',
   'Restore history': 'Verlauf widerherstelle',
+  'Colours follow the theme': 'Farbe folged em Design',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'Färbt Terminals i de Farbe vom Design; uus bhaltet ei feschti Palette.',
   'Restored {time}': 'Widerhergstellt {time}',
   'Stop what is running in {name}?': 'Beände, was i {name} lauft?',
   'Stop what is running in these terminals?': 'Beände, was i dene Terminals lauft?',

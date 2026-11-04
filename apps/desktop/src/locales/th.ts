@@ -1884,6 +1884,9 @@ export const th: Dictionary = {
   'Exited with code {code}': 'จบด้วยรหัส {code}',
   'Could not start {shell}': 'ไม่สามารถเริ่ม {shell}',
   'Restore history': 'กู้คืนประวัติ',
+  'Colours follow the theme': 'สีตามธีม',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'ระบายสีเทอร์มินัลด้วยสีของธีม ถ้าปิดจะใช้ชุดสีคงที่ชุดเดียว',
   'Restored {time}': 'กู้คืนแล้ว {time}',
   'Stop what is running in {name}?': 'หยุดสิ่งที่กำลังทำงานใน {name} หรือไม่',
   'Stop what is running in these terminals?': 'หยุดสิ่งที่กำลังทำงานในเทอร์มินัลเหล่านี้หรือไม่',

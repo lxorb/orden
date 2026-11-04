@@ -1924,6 +1924,9 @@ export const fa: Dictionary = {
   'Exited with code {code}': 'با کد {code} پایان یافت',
   'Could not start {shell}': '{shell} اجرا نشد',
   'Restore history': 'بازیابی تاریخچه',
+  'Colours follow the theme': 'رنگ‌ها از پوسته پیروی می‌کنند',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'پایانه‌ها را با رنگ‌های پوسته رنگ می‌کند؛ خاموش، یک جعبه‌رنگ ثابت نگه می‌دارد.',
   'Restored {time}': 'بازیابی‌شده {time}',
   'Stop what is running in {name}?': 'آنچه در {name} اجرا می‌شود متوقف شود؟',
   'Stop what is running in these terminals?': 'آنچه در این ترمینال‌ها اجرا می‌شود متوقف شود؟',

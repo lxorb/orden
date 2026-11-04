@@ -1952,6 +1952,9 @@ export const ta: Dictionary = {
   'Exited with code {code}': 'குறியீடு {code} உடன் முடிந்தது',
   'Could not start {shell}': '{shell} ஐத் தொடங்க முடியவில்லை',
   'Restore history': 'வரலாற்றை மீட்டமை',
+  'Colours follow the theme': 'வண்ணங்கள் தீமைப் பின்பற்றும்',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'முனையங்களைத் தீமின் வண்ணங்களில் தீட்டும்; அணைத்தால் ஒரு நிலையான வண்ணத் தொகுப்பு இருக்கும்.',
   'Restored {time}': 'மீட்டமைக்கப்பட்டது {time}',
   'Stop what is running in {name}?': '{name} இல் இயங்குவதை நிறுத்தவா?',
   'Stop what is running in these terminals?': 'இந்த முனையங்களில் இயங்குவதை நிறுத்தவா?',

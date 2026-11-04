@@ -1873,6 +1873,9 @@ export const zhHantHK: Dictionary = {
   'Exited with code {code}': '已結束，代碼 {code}',
   'Could not start {shell}': '無法啟動 {shell}',
   'Restore history': '還原歷史紀錄',
+  'Colours follow the theme': '顏色跟隨主題',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    '以主題的顏色繪製終端機；關閉則保留一套固定的調色盤。',
   'Restored {time}': '已還原 {time}',
   'Stop what is running in {name}?': '要停止 {name} 中正在執行的內容嗎？',
   'Stop what is running in these terminals?': '要停止這些終端機中正在執行的內容嗎？',

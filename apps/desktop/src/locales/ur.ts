@@ -1918,6 +1918,9 @@ export const ur: Dictionary = {
   'Exited with code {code}': 'کوڈ {code} کے ساتھ ختم ہوا',
   'Could not start {shell}': '{shell} شروع نہیں ہو سکا',
   'Restore history': 'ہسٹری بحال کریں',
+  'Colours follow the theme': 'رنگ تھیم کی پیروی کرتے ہیں',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'ٹرمینلز کو تھیم کے رنگوں میں رنگتا ہے؛ بند ہو تو ایک مقررہ پیلیٹ رہتا ہے۔',
   'Restored {time}': 'بحال کیا گیا {time}',
   'Stop what is running in {name}?': '{name} میں جو چل رہا ہے اسے روکیں؟',
   'Stop what is running in these terminals?': 'ان ٹرمینلز میں جو چل رہا ہے اسے روکیں؟',

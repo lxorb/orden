@@ -1918,6 +1918,9 @@ export const hi: Dictionary = {
   'Exited with code {code}': 'कोड {code} के साथ बंद हुआ',
   'Could not start {shell}': '{shell} शुरू नहीं हो सका',
   'Restore history': 'इतिहास पुनर्स्थापित करें',
+  'Colours follow the theme': 'रंग थीम का पालन करते हैं',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'टर्मिनलों को थीम के रंगों में रंगता है; बंद होने पर एक स्थिर पैलेट रहता है।',
   'Restored {time}': 'पुनर्स्थापित {time}',
   'Stop what is running in {name}?': '{name} में जो चल रहा है उसे रोकें?',
   'Stop what is running in these terminals?': 'इन टर्मिनलों में जो चल रहा है उसे रोकें?',

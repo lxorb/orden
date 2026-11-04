@@ -1912,6 +1912,9 @@ export const gu: Dictionary = {
   'Exited with code {code}': 'કોડ {code} સાથે બંધ થયું',
   'Could not start {shell}': '{shell} શરૂ કરી શકાયું નહીં',
   'Restore history': 'ઇતિહાસ પુનઃસ્થાપિત કરો',
+  'Colours follow the theme': 'રંગો થીમને અનુસરે છે',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'ટર્મિનલને થીમના રંગોમાં રંગે છે; બંધ હોય ત્યારે એક નિશ્ચિત પૅલેટ રહે છે.',
   'Restored {time}': 'પુનઃસ્થાપિત {time}',
   'Stop what is running in {name}?': '{name} માં જે ચાલે છે તે બંધ કરવું?',
   'Stop what is running in these terminals?': 'આ ટર્મિનલોમાં જે ચાલે છે તે બંધ કરવું?',

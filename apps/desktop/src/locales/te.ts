@@ -1929,6 +1929,9 @@ export const te: Dictionary = {
   'Exited with code {code}': 'కోడ్ {code}తో ముగిసింది',
   'Could not start {shell}': '{shell}ను ప్రారంభించలేకపోయాము',
   'Restore history': 'చరిత్రను పునరుద్ధరించు',
+  'Colours follow the theme': 'రంగులు థీమ్‌ను అనుసరిస్తాయి',
+  'Paints terminals in the theme’s colours; off keeps one fixed palette.':
+    'టెర్మినల్‌లకు థీమ్ రంగులను వేస్తుంది; ఆపివేస్తే ఒక స్థిర పాలెట్ ఉంటుంది.',
   'Restored {time}': 'పునరుద్ధరించబడింది {time}',
   'Stop what is running in {name}?': '{name}లో నడుస్తున్నదాన్ని ఆపాలా?',
   'Stop what is running in these terminals?': 'ఈ టెర్మినల్స్‌లో నడుస్తున్నదాన్ని ఆపాలా?',
