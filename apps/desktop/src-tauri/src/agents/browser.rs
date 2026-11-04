@@ -276,6 +276,7 @@ fn gate<'a>(
             Caller::Reader => None,
         },
         credentials: std::sync::atomic::AtomicBool::new(cleared),
+        worlds: std::sync::Mutex::new(std::collections::HashMap::new()),
     };
     if let Caller::Agent(grant) = caller {
         if let Err(why) = policy::site_allowed(grant, &page.url(), place.store()) {
@@ -430,6 +431,96 @@ fn judged(
         place.id(),
         &key,
     ))
+}
+
+/// One press, however many times it is looked at on its way: one question. The look before
+/// the move, the look after it, each end of a drag and a tick judged before its form is set
+/// all come here, and what has been answered for this press is not asked again. An
+/// allowance is spent by being asked for, so a second question with the same words would
+/// never find one.
+struct OnePress<'a, 'p> {
+    app: &'a AppHandle,
+    caller: &'a Caller,
+    page: &'a Page<'p>,
+    place: &'a Place,
+    key: String,
+    /// Asks only for what is more than a write: a tick's form has had that question.
+    graver_only: bool,
+    answered: std::cell::RefCell<Vec<(Category, String)>>,
+}
+
+impl<'a, 'p> OnePress<'a, 'p> {
+    fn new(
+        app: &'a AppHandle,
+        caller: &'a Caller,
+        page: &'a Page<'p>,
+        place: &'a Place,
+        key: String,
+    ) -> Self {
+        Self {
+            app,
+            caller,
+            page,
+            place,
+            key,
+            graver_only: false,
+            answered: std::cell::RefCell::new(Vec::new()),
+        }
+    }
+
+    fn landed(&self, on: &Element) -> Result<(), Answer> {
+        self.judge(&self.page.facts_of_press(on)?)
+    }
+
+    fn judge(&self, facts: &Facts) -> Result<(), Answer> {
+        let Caller::Agent(grant) = self.caller else {
+            return judged(
+                self.app,
+                self.caller,
+                self.page,
+                self.place,
+                facts,
+                Act::Press,
+                &self.key,
+            );
+        };
+        self.page.may_act_in(facts)?;
+        let hosts = page_hosts(self.page);
+        let question = policy::judge(grant, facts, Act::Press, &self.page.url(), &hosts);
+        let Some(question) = question else {
+            return if self.graver_only {
+                Ok(())
+            } else {
+                judged(
+                    self.app,
+                    self.caller,
+                    self.page,
+                    self.place,
+                    facts,
+                    Act::Press,
+                    &self.key,
+                )
+            };
+        };
+        if self.graver_only && question.category == Category::Writing {
+            return Ok(());
+        }
+        let said = (question.category, question.summary);
+        if self.answered.borrow().contains(&said) {
+            return Ok(());
+        }
+        judged(
+            self.app,
+            self.caller,
+            self.page,
+            self.place,
+            facts,
+            Act::Press,
+            &self.key,
+        )?;
+        self.answered.borrow_mut().push(said);
+        Ok(())
+    }
 }
 
 /// Asks the reader; see `approvals`.
@@ -627,17 +718,14 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 };
                 let count = click.count.unwrap_or(1).clamp(1, 3);
                 let held = modifiers(&click.modifiers);
-                let gated = |landed: &Element, key: &str| {
-                    let facts = page.facts_of_press(landed)?;
-                    judged(app, caller, page, place, &facts, Act::Press, key)
-                };
                 match (&click.element, click.x, click.y) {
                     // By what it lands on, whatever the ref is of, and again by whatever
                     // the page has put there when the pointer arrives (9.3).
                     (Some(reference), None, None) => {
                         let target = element(page, reference)?;
                         let key = approvals::key("browser_click", Some(&tab), Some(reference));
-                        page.click(&target, button, count, held, &|landed| gated(landed, &key))?;
+                        let press = OnePress::new(app, caller, page, place, key);
+                        page.click(&target, button, count, held, &|on| press.landed(on))?;
                     }
                     // A point instead, which the press is judged by what lands there, as
                     // a press on that element by ref would be (#373).
@@ -645,9 +733,10 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         let target = page.element_at((x, y))?;
                         let reference = format!("e{}", target.backend);
                         let key = approvals::key("browser_click", Some(&tab), Some(&reference));
-                        gated(&target, &key)?;
-                        page.click_at((x, y), &target, button, count, held, &|landed| {
-                            gated(landed, &key)
+                        let press = OnePress::new(app, caller, page, place, key);
+                        press.landed(&target)?;
+                        page.click_at((x, y), &target, button, count, held, &|on| {
+                            press.landed(on)
                         })?;
                     }
                     _ => {
@@ -755,33 +844,33 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     judged(app, caller, page, place, facts, Act::Write, &key)?;
                 }
                 // A tick is a press, and what it is called is what it does; the question
-                // for every write under Confirm is the one the form has already had.
-                let tick_key =
-                    |field: &str| approvals::key("browser_fill_form_tick", Some(&tab), Some(field));
-                let ticked = |landed: &Element, key: &str| -> Result<(), Answer> {
-                    let Caller::Agent(grant) = caller else {
-                        return Ok(());
-                    };
-                    let facts = page.facts_of_press(landed)?;
-                    let grave =
-                        policy::judge(grant, &facts, Act::Press, &page.url(), &page_hosts(page))
-                            .is_some_and(|question| question.category != Category::Writing);
-                    if grave {
-                        judged(app, caller, page, place, &facts, Act::Press, key)?;
-                    }
-                    Ok(())
-                };
-                // All of them before any is set, so a question leaves the form as it was.
-                for ((target, _), field) in targets.iter().zip(&form.fields) {
+                // for every write under Confirm is the one the form has already had. Each
+                // one is asked before any is set, so a question leaves the form as it was,
+                // and not again when the tick is made.
+                let ticks: Vec<OnePress<'_, '_>> = form
+                    .fields
+                    .iter()
+                    .map(|field| {
+                        let key = approvals::key(
+                            "browser_fill_form_tick",
+                            Some(&tab),
+                            Some(&field.element),
+                        );
+                        OnePress {
+                            graver_only: true,
+                            ..OnePress::new(app, caller, page, place, key)
+                        }
+                    })
+                    .collect();
+                for (((target, _), field), press) in targets.iter().zip(&form.fields).zip(&ticks) {
                     if let FieldValue::Ticked(wanted) = &field.value {
                         if page.tick_changes(target, *wanted)? {
-                            ticked(&page.aim(target)?.on, &tick_key(&field.element))?;
+                            press.landed(&page.aim(target)?.on)?;
                         }
                     }
                 }
-                for ((target, _), field) in targets.iter().zip(&form.fields) {
-                    let key = tick_key(&field.element);
-                    page.fill(target, &field.value, &|landed| ticked(landed, &key))?;
+                for (((target, _), field), press) in targets.iter().zip(&form.fields).zip(&ticks) {
+                    page.fill(target, &field.value, &|on| press.landed(on))?;
                 }
                 acted(page)
             }
@@ -823,20 +912,21 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 };
                 let ends = format!("{}>{}", drag.from, drag.to);
                 let key = approvals::key("browser_drag", Some(&tab), Some(&ends));
-                judged(app, caller, page, place, judged_by, Act::Press, &key)?;
+                let press = OnePress::new(app, caller, page, place, key);
+                press.judge(judged_by)?;
                 // And again for what the page has put under the pointer at either end.
                 let at_start = |landed: &Element| -> Result<(), Answer> {
                     let mut facts = page.facts_of_press(landed)?;
                     if carried && !facts.control {
                         facts.name.clear();
                     }
-                    judged(app, caller, page, place, &facts, Act::Press, &key)
+                    press.judge(&facts)
                 };
                 let at_end = |landed: &Element| -> Result<(), Answer> {
                     let facts = page.facts_of_press(landed)?;
                     page.may_act_in(&facts)?;
                     if facts.control {
-                        judged(app, caller, page, place, &facts, Act::Press, &key)?;
+                        press.judge(&facts)?;
                     }
                     Ok(())
                 };
@@ -858,9 +948,10 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         &page.url(),
                         "",
                     );
+                    // Only looked at, as the press may yet ask: spent once nothing else does.
                     if !outside.is_empty()
                         && grant.asks(Category::Files)
-                        && !approvals::allowed(&grant.id, &key)
+                        && !approvals::is_allowed(&grant.id, &key)
                     {
                         let summary = format!(
                             "Hand {} to {}",
@@ -888,15 +979,23 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     .iter()
                     .map(|(path, _)| path.to_string_lossy().into_owned())
                     .collect();
-                let key = approvals::on_page(
-                    &approvals::key("browser_upload", Some(&tab), Some(&upload.files.join("|"))),
-                    &page.url(),
-                    "",
-                );
-                page.upload(&target, &paths, &|landed| {
-                    let facts = page.facts_of_press(landed)?;
-                    judged(app, caller, page, place, &facts, Act::Press, &key)
-                })?;
+                let key = approvals::key("browser_upload_press", Some(&tab), Some(&upload.element));
+                let press = OnePress::new(app, caller, page, place, key);
+                page.upload(&target, &paths, &|on| press.landed(on))?;
+                if let Caller::Agent(grant) = caller {
+                    let _ = approvals::allowed(
+                        &grant.id,
+                        &approvals::on_page(
+                            &approvals::key(
+                                "browser_upload",
+                                Some(&tab),
+                                Some(&upload.files.join("|")),
+                            ),
+                            &page.url(),
+                            "",
+                        ),
+                    );
+                }
                 acted(page)
             }
             Verb::Screenshot(shot) => {

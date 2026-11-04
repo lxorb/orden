@@ -37,7 +37,7 @@ const SCRIPTS = [
 ]
 
 /** A package's own script by its shape: no program on a path is called `test:unit`. */
-const SCRIPT_BY_SHAPE = /^[\w-]+:[\w:.-]+$/
+const SCRIPT_BY_SHAPE = /^[\w-]+:[\w:-]+$/
 
 /** What pnpm and yarn start out of the package's own `node_modules/.bin`, by the names
  *  everyone's toolchain has. Their options are held to the same list as any. */
@@ -483,9 +483,9 @@ function gitStays(plain: readonly string[]): boolean {
   return true
 }
 
-/** A line's words as a POSIX shell hands them over: quotes and backslashes gone, and what
- *  they held one word. `null` for a quote left open, which the shell would go on reading
- *  past Enter. */
+/** A line's words as a POSIX shell hands them over: parted by a space or a tab and nothing
+ *  else, quotes and backslashes gone, and what they held one word. `null` for a quote left
+ *  open, which the shell would go on reading past Enter. */
 function wordsOf(line: string): string[] | null {
   const words: string[] = []
   let word: string | null = null
@@ -506,7 +506,7 @@ function wordsOf(line: string): string[] | null {
       word ??= ''
     } else if (one === '\\') {
       word = (word ?? '') + line.charAt(++at)
-    } else if (/\s/.test(one)) {
+    } else if (one === ' ' || one === '\t') {
       if (word !== null) words.push(word)
       word = null
     } else {
@@ -601,6 +601,9 @@ export function onTheList(command: string, programs: readonly string[]): boolean
   const program = programOf(command)
   if (program === '' || !programs.some((one) => one.toLowerCase() === program)) return false
 
+  // A space of another kind is part of a word to the shell, and no way to read a line by eye.
+  if (/(?! )\p{Zs}/u.test(command)) return false
+
   const words = wordsOf(command.trim())
   return words !== null && argumentsStay(program, words.slice(1))
 }
@@ -615,7 +618,7 @@ export function onTheList(command: string, programs: readonly string[]): boolean
  *  shell, Ctrl+U clears what came before it, Ctrl+O runs it, a backspace rubs it out and
  *  a tab completes it, so the words before Enter are not the words that run. */
 export function startsOnlyOne(command: string): boolean {
-  return !/[;&|`<>!(){}$*?[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(command)
+  return !/[;&|`<>!(){}$*?[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]|(?! )\p{Zs}/u.test(command)
 }
 
 /** What a terminal printed, as words: the escapes that colour and move things on a

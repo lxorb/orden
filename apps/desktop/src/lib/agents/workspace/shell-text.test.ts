@@ -482,3 +482,35 @@ describe('a bare name that may be on the path', () => {
     expect(onTheList(line, listed)).toBe(true)
   })
 })
+
+describe('a space the shell does not split on', () => {
+  const listed = ['git', 'npm', 'pnpm', 'yarn', 'bun']
+
+  test.each([
+    'npm --prefix ./\u00a0run\u00a0/.. exec touch pwn',
+    'npm --prefix ./\u2003run\u2003/.. exec touch pwn',
+    'pnpm --dir ./\u00a0run\u00a0/.. exec touch pwn',
+    'pnpm --filter ./\u00a0run\u00a0/.. exec touch pwn',
+    'bun --cwd ./\u00a0test\u00a0/.. ./e.js',
+    'npm\u00a0exec touch',
+    'git log\u00a0-c',
+  ])('is no space, and asks: %j', (line) => {
+    expect(onTheList(line, listed) && startsOnlyOne(line)).toBe(false)
+  })
+
+  test('a tab and a space still part words', () => {
+    expect(onTheList('git  status', listed)).toBe(true)
+  })
+})
+
+describe('a colon name that is a file', () => {
+  const listed = ['pnpm', 'yarn', 'bun']
+
+  test.each(['bun a:b.js', 'bun run a:b.js', 'pnpm a:b.js', 'yarn a:b.js'])('asks: %s', (line) => {
+    expect(onTheList(line, listed)).toBe(false)
+  })
+
+  test.each(['bun run test:unit', 'bun db:migrate', 'pnpm build:web'])('goes: %s', (line) => {
+    expect(onTheList(line, listed)).toBe(true)
+  })
+})

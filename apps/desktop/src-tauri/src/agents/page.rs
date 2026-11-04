@@ -67,7 +67,8 @@ const TALLEST: f64 = 16_384.0;
 const FIELDS: &str = r"
   const text = (one) => String(one || '').replace(/\s+/g, ' ').trim()
   const CONTROLS = 'button, a, [role=button], [role=link], [role=menuitem], input[type=submit], input[type=button], input[type=image], summary'
-  const TAKES_A_PRESS = '[onclick], [onmousedown], [onmouseup], [onpointerdown], [onpointerup], [tabindex]:not([tabindex^=\x22-\x22]), [role=option], [role=tab], [role=treeitem], [role=menuitemcheckbox], [role=menuitemradio], [role=checkbox], [role=radio], [role=switch]'
+  const BUILT_TO_PRESS = '[onclick], [onmousedown], [onmouseup], [onpointerdown], [onpointerup], [role=option], [role=tab], [role=treeitem], [role=menuitemcheckbox], [role=menuitemradio], [role=checkbox], [role=radio], [role=switch]'
+  const TAKES_A_PRESS = BUILT_TO_PRESS + ', [tabindex]:not([tabindex^=\x22-\x22])'
   const labelOf = (field) => {
     const parts = [field.getAttribute('aria-label')]
     if (field.labels) for (const one of field.labels) parts.push(one.innerText)
@@ -82,7 +83,7 @@ const FIELDS: &str = r"
   const describe = (one) => {
     const tag = one.tagName.toLowerCase()
     const role = String(one.getAttribute('role') || '').toLowerCase()
-    const box = tag === 'textarea' || (!!one.isContentEditable && tag !== 'input')
+    const box = tag === 'textarea' || ((!!one.isContentEditable || role === 'textbox') && tag !== 'input')
     let type = tag === 'input' ? String(one.type || 'text').toLowerCase() : tag === 'textarea' ? 'textarea' : box ? 'editable' : tag
     if (role === 'searchbox' || (box && role === 'combobox')) type = 'search'
     const label = labelOf(one) || text(one.getAttribute('placeholder'))
@@ -175,15 +176,23 @@ const FACTS_BODY: &str = r"
     }
     return null
   }
-  // Its lines as they show, short of a control of its own, which is pressed for itself: a mail's row is not called Delete for the icon in it. Through a shadow root: an open one, and the one the hit itself is in, closed or not.
+  // Its lines as they show, short of a control of its own, which is pressed for itself: a mail's row is not called Delete for the icon in it. Through a shadow root: an open one, and the one the hit itself is in, closed or not. The words of its pseudo-elements, which is all some labels are.
   const rootOf = (one) => {
     if (one.shadowRoot) return one.shadowRoot
     for (let at = el.getRootNode(); at && at.host; at = at.host.getRootNode()) if (at.host === one) return at
     return null
   }
   const MOST_HELD = 400
-  const linesOf = (one) => {
-    const lines = ['']
+  const pseudoWords = (one) => {
+    const said = []
+    for (const part of ['::before', '::after', '::marker']) {
+      const words = /^\x22(.*)\x22$/.exec(String(one.ownerDocument.defaultView.getComputedStyle(one, part).content || ''))
+      if (words && words[1]) said.push(words[1])
+    }
+    return said
+  }
+  const linesOf = (one, leaving) => {
+    const lines = [...pseudoWords(one), '']
     let seen = 0
     const walk = (nodes) => {
       for (const node of nodes) {
@@ -192,7 +201,7 @@ const FACTS_BODY: &str = r"
           lines[lines.length - 1] += node.textContent
           seen += node.textContent.length
         }
-        if (node.nodeType !== 1 || node.matches(CONTROLS) || ['SCRIPT', 'STYLE'].includes(node.tagName)) continue
+        if (node.nodeType !== 1 || node === leaving || node.matches(CONTROLS) || ['SCRIPT', 'STYLE'].includes(node.tagName)) continue
         const shown = one.ownerDocument.defaultView.getComputedStyle(node).display
         if (shown === 'none' || (shown !== 'contents' && !node.getClientRects().length)) continue
         const inline = shown.startsWith('inline') || shown === 'contents'
@@ -203,20 +212,26 @@ const FACTS_BODY: &str = r"
       }
     }
     walk((rootOf(one) || one).childNodes)
-    return { lines: lines.map(text).filter(Boolean), seen }
+    return lines.map(text).filter(Boolean)
   }
-  // Called what it says first, a price or a count aside: a part of a Pay button is Pay, and a row's other cells, a help card's other line and a card's further words are not what pressing it does. Too much, or too many controls, and it is no one control: a column, or an app's root with its listener.
+  // What it says for itself, with the words of the hit. Its lines are the policy's to read, with what is too long to be a name left out: built to be pressed, any of them may say what it does, as a Pay tile says Order summary and then Pay now; a row, or what only a listener round it or a place in the tab order says takes a press, by its first alone, as a row is not called Pay for its second cell and an app's root not Delete for its menu. Too many controls and it is no one control, as a column of cards is not.
   const SHORT = 60
-  const actingName = (one) => {
-    const hit = plainName(el)
-    const { lines, seen } = linesOf(one)
-    if (seen > MOST_HELD || one.querySelectorAll(CONTROLS).length > 2) return hit
-    const first = lines.find((line) => !/\d/.test(line)) || lines[0] || ''
-    const own = text(labelOf(one) || (first.length > SHORT ? '' : first) || one.getAttribute('title') || (first ? '' : onlyPicture(one)))
-    return own.includes(hit) ? own : text(own + ' ' + hit)
+  const actingName = (one) => text(labelOf(one) || one.getAttribute('title') || (linesOf(one).length ? '' : onlyPicture(one)))
+  const heldBy = (one) => {
+    if (one.querySelectorAll(CONTROLS).length > 2) return []
+    const lines = linesOf(one)
+    const built = one.matches(BUILT_TO_PRESS) || (one !== heard && !one.matches(TAKES_A_PRESS))
+    const row = ['TR', 'TD', 'TH'].includes(one.tagName)
+    return (built && !row ? lines.slice(0, 8) : lines.slice(0, 1)).filter((line) => line.length <= SHORT)
   }
   const actor = acting()
-  const name = actor ? actingName(actor).slice(0, 200) : nameOf(pressed)
+  const held = actor ? heldBy(actor) : []
+  const named = () => {
+    const hit = plainName(el)
+    const own = actingName(actor)
+    return own.includes(hit) ? own : text(own + ' ' + hit)
+  }
+  const name = (actor ? named() : nameOf(pressed)).slice(0, 200)
   // Through the shadow roots it is in: a design system's button is in the form round its host.
   const formOf = () => {
     if (el.form) return el.form
@@ -237,7 +252,9 @@ const FACTS_BODY: &str = r"
   const first = form && form.elements ? Array.from(form.elements).find((one) => ['BUTTON', 'INPUT'].includes(one.tagName) && ['submit', 'image'].includes(String(one.type).toLowerCase())) : null
   // A closed shadow root's host: it has the keyboard and shows nothing to read, not even that it has a root.
   const native = ['input', 'select', 'textarea', 'button', 'a', 'area', 'summary', 'body', 'html', 'iframe', 'frame', 'object', 'embed', 'img', 'video', 'audio', 'canvas']
-  const opaque = !native.includes(tag) && !el.shadowRoot && !el.children.length && !text(el.innerText) && !name && !!root && root.activeElement === el
+  // And what draws its own face and acts on a press: a canvas, or a component showing nothing that can be read. An empty div with a listener is a backdrop, or a tile nobody named, and goes.
+  const drawn = !!actor && !name && !held.length && (tag === 'canvas' || tag.includes('-')) && !el.children.length && !text(el.innerText)
+  const opaque = drawn || (!native.includes(tag) && !el.shadowRoot && !el.children.length && !text(el.innerText) && !name && !!root && root.activeElement === el)
   // The form's fields, or the page's when it is in none: a webmail's Send and a chat
   // widget's are in no form, and their message box is an editable region.
   // Into the open shadow roots under it; a closed one is the crate's (`closed_fields`).
@@ -248,24 +265,28 @@ const FACTS_BODY: &str = r"
     for (const one of under.querySelectorAll('*')) {
       if (fields.length >= 200 || walked >= 50000) return
       walked += 1
-      if (one.matches('input, select, textarea, [contenteditable]:not([contenteditable=false])')) fields.push(describe(one))
+      if (one.matches('input, select, textarea, [contenteditable]:not([contenteditable=false]), [role=textbox]')) fields.push(describe(one))
       if (one.shadowRoot) fieldsIn(one.shadowRoot)
     }
   }
   fieldsIn(form || el.ownerDocument)
-  // The dialog a control is in, by its label, its heading or its first words: its Confirm does what the dialog says.
+  // What the dialog a press is in says: its label and its own lines. Its Confirm does what the dialog says.
   const dialogOf = () => {
-    if (!control) return ''
+    if (!control && !actor) return ''
     for (let at = el; at; at = at.getRootNode().host) {
       const box = at.closest('dialog, [role=dialog], [role=alertdialog]')
-      if (box) return (labelOf(box) || text((box.querySelector('h1, h2, h3, h4, [role=heading]') || {}).textContent) || linesOf(box).lines[0] || '').slice(0, 200)
+      if (box) {
+        const label = labelOf(box)
+        const lines = linesOf(box, actor).filter((line) => line !== label)
+        return text([label, ...lines].join(' ')).slice(0, 200)
+      }
     }
     return ''
   }
   // The document it is in and the origins round it, which is the frame it is in.
   const place = el.ownerDocument.location
   const at = place ? [place.href, ...Array.from(place.ancestorOrigins || [])] : []
-  return { at, cut: walked >= 50000, control: !!control, tag, type: kind, name, autocomplete: String(el.getAttribute('autocomplete') || '').toLowerCase(), submit, link, editable, in_form: !!form, fields, field: describe(el), default_button: first ? nameOf(first) : '', opaque, dialog: dialogOf() }
+  return { at, cut: walked >= 50000, control: !!control, tag, type: kind, name, autocomplete: String(el.getAttribute('autocomplete') || '').toLowerCase(), submit, link, editable, in_form: !!form, fields, field: describe(el), default_button: first ? nameOf(first) : '', opaque, dialog: dialogOf(), held }
 ";
 
 /// `FACTS_BODY` with `FIELDS` in front of it, as the function the protocol runs: `heard`
@@ -275,7 +296,7 @@ static FACTS: LazyLock<String> =
 
 /// What is round an element that a press on it reaches, up to the page itself, whose
 /// listeners are every framework's and say nothing of this press.
-const ROUND_IT: &str = "function () { const el = this.nodeType === 1 ? this : this.parentElement || this.element; if (!el) return null; const up = el.parentElement || el.getRootNode().host || null; return !up || ['BODY', 'HTML'].includes(up.tagName) ? null : up }";
+const ROUND_IT: &str = "function () { const el = this.nodeType === 1 ? this : this.parentElement || this.element || this.host; if (!el) return null; const up = el.parentElement || el.getRootNode().host || null; return !up || ['BODY', 'HTML'].includes(up.tagName) ? null : up }";
 
 /// How far up the engine is asked what listens: past that a thing held is no part of it.
 const MOST_LISTENED_ROUND: usize = 6;
@@ -321,7 +342,7 @@ static PRESSED: LazyLock<String> = LazyLock::new(|| {
     [
         "function () {",
         FIELDS,
-        "const el = this.nodeType === 1 ? this : this.parentElement || this.element; return el ? el.closest(CONTROLS) : null }",
+        "const el = this.nodeType === 1 ? this : this.parentElement || this.element || this.host; return el ? el.closest(CONTROLS) : null }",
     ]
     .concat()
 });
@@ -399,7 +420,7 @@ const UNVALUED: &str = r"const unvalued = (root) => {
 
 /// What a secret editable region is told apart by: the regions of a document in order, the
 /// same in the document and in a clone of it. `hidden` is which of them the policy named.
-const REGIONS: &str = r"[contenteditable]:not([contenteditable=false i])";
+const REGIONS: &str = r"[contenteditable]:not([contenteditable=false i]), [role=textbox]";
 
 /// The regions of a document, each said for the policy.
 static REGIONS_SAID: LazyLock<String> = LazyLock::new(|| {
@@ -418,10 +439,11 @@ static REGIONS_SAID: LazyLock<String> = LazyLock::new(|| {
 /// other word as it stands: only such a region is cut, by node, whatever else on the page
 /// reads the same. Run only on a page with one, where it costs `innerText`'s fine points.
 const MASKED_TEXT: &str = r"
-  const all = Array.from(document.body.querySelectorAll('[contenteditable]:not([contenteditable=false i])'))
+  const all = Array.from(document.body.querySelectorAll('[contenteditable]:not([contenteditable=false i]), [role=textbox]'))
   const secret = hidden.map((at) => all[at]).filter(Boolean)
   const say = (one) => {
     if (secret.includes(one)) return '[hidden]'
+    if (one.ownerDocument.defaultView.getComputedStyle(one).display === 'none') return ''
     if (!secret.some((held) => one.contains(held))) return one.getClientRects().length ? one.innerText : ''
     let said = ''
     for (const node of one.childNodes) {
@@ -439,7 +461,7 @@ const MASKED_TEXT: &str = r"
 
 /// The same on a clone of the body: `copy` has the regions in the document's order.
 const MASKED_CLONE: &str = r"
-  const all = Array.from(copy.querySelectorAll('[contenteditable]:not([contenteditable=false i])'))
+  const all = Array.from(copy.querySelectorAll('[contenteditable]:not([contenteditable=false i]), [role=textbox]'))
   for (const at of hidden) if (all[at]) all[at].textContent = '[hidden]'
 ";
 
@@ -533,6 +555,67 @@ pub struct Page<'a> {
     /// focused password field, print a page with a filled one. Set by the one decision
     /// (`judged` in browser.rs, from the grant's mode, #1072), never by the page.
     pub credentials: AtomicBool,
+    /// nib's own world in each session the call has been in, where everything the gate goes
+    /// by is read: the page has no reach into it, however it dresses its own objects.
+    pub worlds: Mutex<HashMap<Option<String>, i64>>,
+}
+
+/// How a frame's own points sit in the page: its top left, and where a step along each of
+/// its axes goes. From the quad the engine draws it in and the frame's own size, so a
+/// `transform` or a `zoom` round it moves a point as it moves the frame.
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct FrameMap {
+    origin: (f64, f64),
+    across: (f64, f64),
+    down: (f64, f64),
+}
+
+impl FrameMap {
+    fn same() -> Self {
+        Self {
+            origin: (0.0, 0.0),
+            across: (1.0, 0.0),
+            down: (0.0, 1.0),
+        }
+    }
+
+    /// `None` for a quad no straight mapping describes: `perspective`, or nothing drawn.
+    fn of(quad: &[f64], width: f64, height: f64) -> Option<Self> {
+        if quad.len() != 8 || width <= 0.0 || height <= 0.0 {
+            return None;
+        }
+        let parallel = (quad[0] + quad[4] - quad[2] - quad[6]).abs() < 1.0
+            && (quad[1] + quad[5] - quad[3] - quad[7]).abs() < 1.0;
+        let map = Self {
+            origin: (quad[0], quad[1]),
+            across: ((quad[2] - quad[0]) / width, (quad[3] - quad[1]) / width),
+            down: ((quad[6] - quad[0]) / height, (quad[7] - quad[1]) / height),
+        };
+        (parallel && map.determinant().abs() > 1e-6).then_some(map)
+    }
+
+    fn determinant(&self) -> f64 {
+        self.across.0 * self.down.1 - self.across.1 * self.down.0
+    }
+
+    fn into_page(&self, (x, y): (f64, f64)) -> (f64, f64) {
+        (
+            self.origin.0 + self.across.0 * x + self.down.0 * y,
+            self.origin.1 + self.across.1 * x + self.down.1 * y,
+        )
+    }
+
+    fn into_frame(&self, (x, y): (f64, f64)) -> Option<(f64, f64)> {
+        let det = self.determinant();
+        if det.abs() <= 1e-6 {
+            return None;
+        }
+        let (dx, dy) = (x - self.origin.0, y - self.origin.1);
+        Some((
+            (dx * self.down.1 - dy * self.down.0) / det,
+            (dy * self.across.0 - dx * self.across.1) / det,
+        ))
+    }
 }
 
 /// What a press is put to the question by, for each element it finds under the pointer
@@ -617,8 +700,34 @@ impl Page<'_> {
             })
     }
 
-    /// A handle to an element in the page, for a function to run on.
+    /// A handle to an element in nib's own world, for a function to run on: what it reads
+    /// is the engine's own, whatever the page has defined on the same objects (9.3).
     fn object(&self, element: &Element) -> Result<String, Answer> {
+        let resolve = |world: i64| {
+            self.call_on(
+                element,
+                "DOM.resolveNode",
+                &json!({ "backendNodeId": element.backend, "objectGroup": WORLD, "executionContextId": world }),
+            )
+        };
+        let session = element.session.as_deref();
+        let world = self.world_in(session, element.frame.as_deref())?;
+        // A world goes with its document: a navigation since the last look takes it.
+        let resolved = resolve(world).or_else(|_| {
+            self.forget_world(session);
+            resolve(self.world_in(session, element.frame.as_deref())?)
+        })?;
+        resolved
+            .pointer("/object/objectId")
+            .and_then(Value::as_str)
+            .map(str::to_string)
+            .ok_or_else(|| stale("the element has no object"))
+    }
+
+    /// A handle to an element in the page's own world, which is what its listeners are told
+    /// in and what a script that changes its fields runs in. Nothing is judged by what runs
+    /// there: `Page::object` is for that.
+    fn page_object(&self, element: &Element) -> Result<String, Answer> {
         let resolved = self.call_on(
             element,
             "DOM.resolveNode",
@@ -631,14 +740,81 @@ impl Page<'_> {
             .ok_or_else(|| stale("the element has no object"))
     }
 
-    /// Runs a function on an element, with arguments, answering its value.
+    /// nib's own world in a session: the page's when none, and a frame's by its id or as
+    /// the session's top frame. One to a call, in the frame's own process.
+    fn world_in(&self, session: Option<&str>, frame: Option<&str>) -> Result<i64, Answer> {
+        let key = session.map(str::to_string);
+        if let Some(world) = self
+            .worlds
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .get(&key)
+        {
+            return Ok(*world);
+        }
+        let call = |method: &str, params: &Value| {
+            cdp::call_in(self.view, session, method, params, cdp::PATIENCE)
+                .map_err(|why| stale(&why))
+        };
+        let frame = match (session, frame) {
+            (None, _) => self.main_frame()?,
+            (Some(_), Some(frame)) => frame.to_string(),
+            (Some(_), None) => call("Page.getFrameTree", &json!({}))?
+                .pointer("/frameTree/frame/id")
+                .and_then(Value::as_str)
+                .ok_or_else(|| Answer::error(Code::Failed, "the frame has no world for nib"))?
+                .to_string(),
+        };
+        let made = call(
+            "Page.createIsolatedWorld",
+            &json!({ "frameId": frame, "worldName": WORLD }),
+        )?;
+        let world = made
+            .get("executionContextId")
+            .and_then(Value::as_i64)
+            .ok_or_else(|| Answer::error(Code::Failed, "the page has no world for nib"))?;
+        self.worlds
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .insert(key, world);
+        Ok(world)
+    }
+
+    fn forget_world(&self, session: Option<&str>) {
+        self.worlds
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .remove(&session.map(str::to_string));
+    }
+
+    /// Runs a function on an element in nib's own world, answering its value.
     fn run_on(
         &self,
         element: &Element,
         function: &str,
         arguments: &[Value],
     ) -> Result<Value, Answer> {
-        let object = self.object(element)?;
+        self.run_with(element, &self.object(element)?, function, arguments)
+    }
+
+    /// Runs a function on an element in the page's own world, for what it does to a field,
+    /// which the page's own frameworks must see done. Nothing it answers is judged.
+    fn run_in_page(
+        &self,
+        element: &Element,
+        function: &str,
+        arguments: &[Value],
+    ) -> Result<Value, Answer> {
+        self.run_with(element, &self.page_object(element)?, function, arguments)
+    }
+
+    fn run_with(
+        &self,
+        element: &Element,
+        object: &str,
+        function: &str,
+        arguments: &[Value],
+    ) -> Result<Value, Answer> {
         let arguments: Vec<Value> = arguments
             .iter()
             .map(|one| json!({ "value": one }))
@@ -672,7 +848,8 @@ impl Page<'_> {
     /// own answer and a field its own.
     pub fn facts_of_press(&self, element: &Element) -> Result<Facts, Answer> {
         let mut facts = self.facts(element)?;
-        // A link with a listener of its own may do more than go.
+        // A link with a listener of its own may do more than go. All of this reads the page in
+        // nib's own world and the engine's own lists.
         if facts.link && self.link_listens(element) {
             facts.link = false;
         }
@@ -715,11 +892,35 @@ impl Page<'_> {
                 .as_str()
                 .map(str::to_string)
         });
-        control.is_some_and(|object| {
+        control.is_some_and(|object| self.hears(element, &object))
+    }
+
+    /// Whether the node behind a handle of nib's has a listener for a press. A listener is
+    /// told only in the world it was added in, so the page's: the engine's list, and no
+    /// script of the page's runs for it.
+    fn hears(&self, element: &Element, object: &str) -> bool {
+        let page_side = (|| {
+            let node = self
+                .call_on(element, "DOM.describeNode", &json!({ "objectId": object }))
+                .ok()?;
+            let backend = node.pointer("/node/backendNodeId")?.as_u64()?;
+            let handle = self
+                .call_on(
+                    element,
+                    "DOM.resolveNode",
+                    &json!({ "backendNodeId": backend, "objectGroup": WORLD }),
+                )
+                .ok()?;
+            handle
+                .pointer("/object/objectId")?
+                .as_str()
+                .map(str::to_string)
+        })();
+        page_side.is_some_and(|handle| {
             self.call_on(
                 element,
                 "DOMDebugger.getEventListeners",
-                &json!({ "objectId": object }),
+                &json!({ "objectId": handle }),
             )
             .is_ok_and(|said| hears_a_press(&said))
         })
@@ -729,14 +930,7 @@ impl Page<'_> {
     fn listening(&self, element: &Element) -> Option<String> {
         let mut object = self.object(element).ok()?;
         for _ in 0..MOST_LISTENED_ROUND {
-            let said = self
-                .call_on(
-                    element,
-                    "DOMDebugger.getEventListeners",
-                    &json!({ "objectId": object }),
-                )
-                .ok()?;
-            if hears_a_press(&said) {
+            if self.hears(element, &object) {
                 return Some(object);
             }
             let round = self
@@ -855,7 +1049,11 @@ impl Page<'_> {
             .filter_map(|backend| {
                 let field = call(
                     "DOM.resolveNode",
-                    &json!({ "backendNodeId": backend, "objectGroup": WORLD }),
+                    &json!({
+                        "backendNodeId": backend,
+                        "objectGroup": WORLD,
+                        "executionContextId": self.world_in(session, element.frame.as_deref()).ok()?,
+                    }),
                 )?;
                 let said = call(
                     "Runtime.callFunctionOn",
@@ -949,11 +1147,14 @@ impl Page<'_> {
             if !facts.pressable() && !facts.editable {
                 continue;
             }
+            let Ok(world) = self.world_in(Some(&frame.session), Some(&frame.id)) else {
+                continue;
+            };
             let focused = cdp::call_in(
                 self.view,
                 Some(&frame.session),
                 "Runtime.evaluate",
-                &json!({ "expression": "document.hasFocus()", "returnByValue": true }),
+                &json!({ "expression": "document.hasFocus()", "returnByValue": true, "contextId": world }),
                 cdp::PATIENCE,
             )
             .ok()
@@ -976,10 +1177,11 @@ impl Page<'_> {
             cdp::call_in(self.view, session, method, params, cdp::PATIENCE)
                 .map_err(|why| stale(&why))
         };
-        let mut asked = json!({ "expression": ACTIVE, "returnByValue": false });
-        if let Some(world) = world {
-            asked["contextId"] = json!(world);
-        }
+        let world = match world {
+            Some(world) => i64::try_from(world).unwrap_or_default(),
+            None => self.world_in(session, None)?,
+        };
+        let asked = json!({ "expression": ACTIVE, "returnByValue": false, "contextId": world });
         let found = call("Runtime.evaluate", &asked)?;
         let Some(object) = found.pointer("/result/objectId").and_then(Value::as_str) else {
             return Ok(None);
@@ -1007,16 +1209,21 @@ impl Page<'_> {
 
     /// Runs an expression in nib's own world in the page's frame, answering its value.
     pub fn isolated(&self, expression: &str) -> Result<Value, Answer> {
-        let context = self.world()?;
-        let answered = self.call(
-            "Runtime.evaluate",
-            &json!({
-                "expression": expression,
-                "contextId": context,
-                "returnByValue": true,
-                "awaitPromise": true,
-            }),
-        )?;
+        let run = |context: i64| {
+            self.call(
+                "Runtime.evaluate",
+                &json!({
+                    "expression": expression,
+                    "contextId": context,
+                    "returnByValue": true,
+                    "awaitPromise": true,
+                }),
+            )
+        };
+        let answered = run(self.world()?).or_else(|_| {
+            self.forget_world(None);
+            run(self.world()?)
+        })?;
         thrown(&answered)?;
         Ok(answered
             .pointer("/result/value")
@@ -1026,17 +1233,9 @@ impl Page<'_> {
 
     /// nib's own world in the page's frame: the page's document, none of its globals.
     fn world(&self) -> Result<i64, Answer> {
-        let frame = self.main_frame()?;
-        let made = self.call(
-            "Page.createIsolatedWorld",
-            &json!({ "frameId": frame, "worldName": WORLD }),
-        )?;
-        made.get("executionContextId")
-            .and_then(Value::as_i64)
-            .ok_or_else(|| Answer::error(Code::Failed, "the page has no world for nib"))
+        self.world_in(None, None)
     }
 
-    /// The page's own frame.
     fn main_frame(&self) -> Result<String, Answer> {
         if let Some(frame) = self
             .heard()
@@ -1166,10 +1365,10 @@ impl Page<'_> {
                     "the element is not visible: nothing of it is on the page",
                 )
             })?;
-        let (dx, dy) = self.frame_offset(element)?;
+        let map = self.frame_map(element)?;
         Ok(pressable(&quad)
             .into_iter()
-            .map(|(x, y)| (x + dx, y + dy))
+            .map(|point| map.into_page(point))
             .collect())
     }
 
@@ -1254,28 +1453,37 @@ impl Page<'_> {
         Some(self.originating(None, backend))
     }
 
-    /// The element a pseudo-element hangs on, for a hit on one: a `::after` over a button
-    /// is the button, as it is to the press. Anything else is itself; a pseudo-element that
-    /// will not say stays one, which `FACTS` answers nothing about, and that asks.
+    /// The element a pseudo-element or a shadow root hangs on, for a hit on one: a `::after`
+    /// over a button is the button, as it is to the press, and words directly under a shadow
+    /// root are its host's. Anything else is itself; one that will not say stays one, which
+    /// `FACTS` answers nothing about, and that asks.
     fn originating(&self, session: Option<&str>, backend: u64) -> u64 {
         let call = |method: &str, params: &Value| {
             cdp::call_in(self.view, session, method, params, cdp::PATIENCE).ok()
         };
-        let pseudo = call("DOM.describeNode", &json!({ "backendNodeId": backend }))
-            .is_some_and(|said| said.pointer("/node/pseudoType").is_some());
-        if !pseudo {
+        let hangs =
+            call("DOM.describeNode", &json!({ "backendNodeId": backend })).is_some_and(|said| {
+                said.pointer("/node/pseudoType").is_some()
+                    || said.pointer("/node/nodeName").and_then(Value::as_str)
+                        == Some("#document-fragment")
+            });
+        if !hangs {
             return backend;
         }
         let holder = || {
             let resolved = call(
                 "DOM.resolveNode",
-                &json!({ "backendNodeId": backend, "objectGroup": WORLD }),
+                &json!({
+                    "backendNodeId": backend,
+                    "objectGroup": WORLD,
+                    "executionContextId": self.world_in(session, None).ok()?,
+                }),
             )?;
             let on = call(
                 "Runtime.callFunctionOn",
                 &json!({
                     "objectId": resolved.pointer("/object/objectId")?.as_str()?,
-                    "functionDeclaration": "function () { return this.element || null }",
+                    "functionDeclaration": "function () { return this.element || this.host || null }",
                 }),
             )?;
             let said = call(
@@ -1302,16 +1510,19 @@ impl Page<'_> {
         };
         let described = self.call("DOM.describeNode", &json!({ "backendNodeId": backend }))?;
         // A frame by what it holds, whatever its tag: `<object>` and `<embed>` hold one too.
-        let Some(frame) = described.pointer("/node/frameId").and_then(Value::as_str) else {
+        // A document has the id of the frame it is, and is no holder.
+        let node = described.get("node").cloned().unwrap_or_default();
+        let holder = node.get("nodeName").and_then(Value::as_str) != Some("#document");
+        let Some(frame) = node
+            .get("frameId")
+            .and_then(Value::as_str)
+            .filter(|_| holder)
+        else {
             return Ok(element);
         };
-        // A frame the page can read is hit through: what came back is its edge.
-        let own = self.run_on(
-            &element,
-            "function () { try { return !!this.contentDocument } catch (_) { return false } }",
-            &[],
-        )?;
-        if own.as_bool() == Some(true) {
+        // A frame in this process is hit through, so what came back is its edge. The
+        // engine says so, as it gives its document only for one here.
+        if node.get("contentDocument").is_some() {
             return Ok(element);
         }
         self.element_in_frame(frame, point).ok_or_else(|| {
@@ -1331,7 +1542,7 @@ impl Page<'_> {
             frame: Some(frame.to_string()),
             backend: 0,
         };
-        let (left, top) = self.frame_offset(&inner).ok()?;
+        let (x, y) = self.frame_map(&inner).ok()?.into_frame((x, y))?;
         let call = |method: &str, params: &Value| {
             cdp::call_in(self.view, Some(&session), method, params, cdp::PATIENCE).ok()
         };
@@ -1340,8 +1551,8 @@ impl Page<'_> {
         let hit = call(
             "DOM.getNodeForLocation",
             &json!({
-                "x": whole(x - left + scrolled("/cssLayoutViewport/pageX")),
-                "y": whole(y - top + scrolled("/cssLayoutViewport/pageY")),
+                "x": whole(x + scrolled("/cssLayoutViewport/pageX")),
+                "y": whole(y + scrolled("/cssLayoutViewport/pageY")),
                 "includeUserAgentShadowDOM": false,
                 "ignorePointerEventsNone": false,
             }),
@@ -1354,25 +1565,35 @@ impl Page<'_> {
             .then_some(Element { backend, ..inner })
     }
 
-    /// Where a frame in a process of its own sits in the page, for its elements' points.
-    fn frame_offset(&self, element: &Element) -> Result<(f64, f64), Answer> {
+    /// How a frame in a process of its own sits in the page, for its elements' points, by
+    /// the engine's own quad for it: a transform or a zoom round it included.
+    fn frame_map(&self, element: &Element) -> Result<FrameMap, Answer> {
         let Some(frame) = &element.frame else {
-            return Ok((0.0, 0.0));
+            return Ok(FrameMap::same());
         };
         let owner = self.call("DOM.getFrameOwner", &json!({ "frameId": frame }))?;
         let Some(backend) = owner.get("backendNodeId").and_then(Value::as_u64) else {
-            return Ok((0.0, 0.0));
+            return Ok(FrameMap::same());
         };
-        let model = self.call("DOM.getBoxModel", &json!({ "backendNodeId": backend }))?;
-        let content: Vec<f64> = model
-            .pointer("/model/content")
+        let quads = self.call("DOM.getContentQuads", &json!({ "backendNodeId": backend }))?;
+        let quad: Vec<f64> = quads
+            .pointer("/quads/0")
             .and_then(Value::as_array)
             .map(|all| all.iter().filter_map(Value::as_f64).collect())
             .unwrap_or_default();
-        Ok((
-            content.first().copied().unwrap_or_default(),
-            content.get(1).copied().unwrap_or_default(),
-        ))
+        let metrics = self.call_on(element, "Page.getLayoutMetrics", &json!({}))?;
+        let size = |path: &str| metrics.pointer(path).and_then(Value::as_f64).unwrap_or(0.0);
+        FrameMap::of(
+            &quad,
+            size("/cssLayoutViewport/clientWidth"),
+            size("/cssLayoutViewport/clientHeight"),
+        )
+        .ok_or_else(|| {
+            Answer::error(
+                Code::Failed,
+                "that frame is drawn in a way Orden cannot follow: press something else",
+            )
+        })
     }
 
     /// Whether the element is what a press at the point lands on - it, something inside
@@ -1610,7 +1831,7 @@ impl Page<'_> {
         // between, where it would have sent the words into the reader's field (7.3). An
         // agent's own tab has nobody else in it and keeps the engine's insert.
         if !self.own && !text.is_empty() {
-            let put = self.run_on(
+            let put = self.run_in_page(
                 element,
                 &format!("function (text) {{ this.focus(); ({placing}).call(this); return document.execCommand('insertText', false, text) }}"),
                 &[json!(text)],
@@ -1624,7 +1845,7 @@ impl Page<'_> {
             "DOM.focus",
             &json!({ "backendNodeId": element.backend }),
         )?;
-        self.run_on(element, placing, &[])?;
+        self.run_in_page(element, placing, &[])?;
         if text.is_empty() {
             if replace {
                 self.press_key(
@@ -1640,7 +1861,7 @@ impl Page<'_> {
     /// A value set through the page, with the events a person's choice raises: for the
     /// fields whose own picker is a window (a date, a time, a colour).
     fn set_value(&self, element: &Element, text: &str) -> Result<(), Answer> {
-        let said = self.run_on(
+        let said = self.run_in_page(
             element,
             "function (value) { const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(this), 'value').set; setter.call(this, value); this.dispatchEvent(new Event('input', { bubbles: true })); this.dispatchEvent(new Event('change', { bubbles: true })); return this.value }",
             &[json!(text)],
@@ -1657,7 +1878,7 @@ impl Page<'_> {
 
     /// Options of a `<select>` chosen through the page, never by opening its list.
     pub fn select(&self, element: &Element, values: &[String]) -> Result<Vec<String>, Answer> {
-        let said = self.run_on(
+        let said = self.run_in_page(
             element,
             r"function (values) {
   if (this.tagName !== 'SELECT') return { error: 'that is not a <select>: press it and then the option you want' }
@@ -2084,10 +2305,14 @@ impl Page<'_> {
                 "the element is not on the page",
             ));
         }
-        let (offset_x, offset_y) = self.frame_offset(element)?;
+        let map = self.frame_map(element)?;
         let (_, _, x, y) = self.viewport()?;
-        let xs = [border[0], border[2], border[4], border[6]];
-        let ys = [border[1], border[3], border[5], border[7]];
+        let corners: Vec<(f64, f64)> = border
+            .chunks(2)
+            .map(|one| map.into_page((one[0], one[1])))
+            .collect();
+        let xs: Vec<f64> = corners.iter().map(|one| one.0).collect();
+        let ys: Vec<f64> = corners.iter().map(|one| one.1).collect();
         let (left, right) = (
             xs.iter().copied().fold(f64::INFINITY, f64::min),
             xs.iter().copied().fold(f64::NEG_INFINITY, f64::max),
@@ -2096,8 +2321,7 @@ impl Page<'_> {
             ys.iter().copied().fold(f64::INFINITY, f64::min),
             ys.iter().copied().fold(f64::NEG_INFINITY, f64::max),
         );
-        let (dx, dy) = (offset_x + x, offset_y + y);
-        Ok([left + dx, top + dy, right + dx, bottom + dy])
+        Ok([left + x, top + y, right + x, bottom + y])
     }
 
     /// A picture of the page with every filled secret field in it painted over (9.4): a
@@ -2288,14 +2512,18 @@ impl Page<'_> {
     /// Where a frame in a process of its own is now, as the frame says: the address it was
     /// attached at may be older than a navigation inside it.
     fn frame_address(&self, frame: &cdp::Frame) -> Vec<String> {
-        cdp::call_in(
-            self.view,
-            Some(&frame.session),
-            "Runtime.evaluate",
-            &json!({ "expression": "[location.href, ...Array.from(location.ancestorOrigins || [])]", "returnByValue": true }),
-            cdp::PATIENCE,
-        )
-        .ok()
+        let world = self.world_in(Some(&frame.session), Some(&frame.id)).ok();
+        world
+            .and_then(|world| {
+                cdp::call_in(
+                    self.view,
+                    Some(&frame.session),
+                    "Runtime.evaluate",
+                    &json!({ "expression": "[location.href, ...Array.from(location.ancestorOrigins || [])]", "returnByValue": true, "contextId": world }),
+                    cdp::PATIENCE,
+                )
+                .ok()
+            })
         .and_then(|said| serde_json::from_value(said.pointer("/result/value")?.clone()).ok())
         .unwrap_or_else(|| vec![frame.url.clone()])
     }
@@ -2366,9 +2594,12 @@ impl Page<'_> {
                     });
                     continue;
                 }
+                let Ok(world) = self.world_in(session.as_deref(), None) else {
+                    continue;
+                };
                 let Some(field) = call(
                     "DOM.resolveNode",
-                    &json!({ "backendNodeId": backend, "objectGroup": SECRETS }),
+                    &json!({ "backendNodeId": backend, "objectGroup": SECRETS, "executionContextId": world }),
                 )
                 .ok()
                 .and_then(|value| {
@@ -2861,7 +3092,13 @@ fn thrown(answered: &Value) -> Result<(), Answer> {
 fn facts_read(said: &Value) -> Facts {
     let named = said.get("tag").and_then(Value::as_str).is_some();
     match serde_json::from_value::<Facts>(said.clone()) {
-        Ok(facts) if named => facts,
+        Ok(mut facts) if named => {
+            // The line that says what it does, for the policy: nothing to the others.
+            if let Some(line) = facts.held.iter().find(|line| policy::leads(line)) {
+                facts.name = joined_name(&facts.name, line);
+            }
+            facts
+        }
         _ => Facts {
             opaque: true,
             ..Facts::default()
@@ -2976,15 +3213,22 @@ fn edited(node: &Value) -> bool {
     let Some(attributes) = node.get("attributes").and_then(Value::as_array) else {
         return false;
     };
-    attributes.chunks(2).any(|pair| {
-        pair[0]
-            .as_str()
-            .is_some_and(|name| name.eq_ignore_ascii_case("contenteditable"))
-            && pair
-                .get(1)
-                .and_then(Value::as_str)
-                .is_none_or(|value| !value.eq_ignore_ascii_case("false"))
-    })
+    let name_of = node.get("nodeName").and_then(Value::as_str);
+    let textbox = !matches!(name_of, Some("INPUT" | "TEXTAREA"))
+        && attributes.chunks(2).any(|pair| {
+            pair[0].as_str() == Some("role")
+                && pair.get(1).and_then(Value::as_str) == Some("textbox")
+        });
+    textbox
+        || attributes.chunks(2).any(|pair| {
+            pair[0]
+                .as_str()
+                .is_some_and(|name| name.eq_ignore_ascii_case("contenteditable"))
+                && pair
+                    .get(1)
+                    .and_then(Value::as_str)
+                    .is_none_or(|value| !value.eq_ignore_ascii_case("false"))
+        })
 }
 
 /// Whether an input's `type`, in a node's flat list of attributes, is one that holds words.
@@ -3284,6 +3528,58 @@ mod tests {
     }
 
     #[test]
+    fn a_frame_under_a_transform_is_mapped_by_its_quad() {
+        // scale(.5) of a 200 by 100 frame.
+        let half = FrameMap::of(
+            &[0.0, 0.0, 100.0, 0.0, 100.0, 50.0, 0.0, 50.0],
+            200.0,
+            100.0,
+        )
+        .expect("a straight quad");
+        assert_eq!(half.into_frame((75.0, 25.0)), Some((150.0, 50.0)));
+        assert_eq!(half.into_page((150.0, 50.0)), (75.0, 25.0));
+        // Moved and scaled, as translateX(50px) scale(.5).
+        let moved = FrameMap::of(
+            &[50.0, 0.0, 150.0, 0.0, 150.0, 50.0, 50.0, 50.0],
+            200.0,
+            100.0,
+        )
+        .expect("a straight quad");
+        assert_eq!(moved.into_frame((75.0, 25.0)), Some((50.0, 50.0)));
+        // Turned a quarter.
+        let turned = FrameMap::of(
+            &[100.0, 0.0, 100.0, 200.0, 0.0, 200.0, 0.0, 0.0],
+            200.0,
+            100.0,
+        )
+        .expect("a straight quad");
+        assert_eq!(turned.into_page((10.0, 20.0)), (80.0, 10.0));
+        assert_eq!(turned.into_frame((80.0, 10.0)), Some((10.0, 20.0)));
+        // Nothing, or what a straight mapping cannot follow.
+        assert!(FrameMap::of(
+            &[0.0, 0.0, 100.0, 10.0, 90.0, 50.0, 10.0, 40.0],
+            200.0,
+            100.0
+        )
+        .is_none());
+        assert!(FrameMap::of(&[0.0; 8], 200.0, 100.0).is_none());
+        assert!(FrameMap::of(&[], 200.0, 100.0).is_none());
+        assert_eq!(FrameMap::same().into_page((3.0, 4.0)), (3.0, 4.0));
+    }
+
+    #[test]
+    fn a_line_that_says_what_it_does_names_what_acts() {
+        let read = facts_read(
+            &json!({ "tag": "div", "name": "Order summary", "held": ["Order summary", "Pay now"] }),
+        );
+        assert_eq!(read.name, "Order summary Pay now");
+        let plain = facts_read(
+            &json!({ "tag": "div", "name": "Stripe", "held": ["Stripe", "Help center"] }),
+        );
+        assert_eq!(plain.name, "Stripe");
+    }
+
+    #[test]
     fn a_listener_for_a_press_is_told_from_any_other() {
         assert!(hears_a_press(
             &json!({ "listeners": [{ "type": "scroll" }, { "type": "click" }] })
@@ -3307,6 +3603,15 @@ mod tests {
         assert!(!edited(&node(json!(["contenteditable", "false"]))));
         assert!(!edited(&node(json!(["id", "contenteditable"]))));
         assert!(!edited(&json!({ "nodeName": "DIV" })));
+        assert!(edited(&node(json!([
+            "role",
+            "textbox",
+            "aria-label",
+            "PIN"
+        ]))));
+        assert!(!edited(
+            &json!({ "nodeName": "INPUT", "attributes": ["role", "textbox"] })
+        ));
     }
 
     #[test]

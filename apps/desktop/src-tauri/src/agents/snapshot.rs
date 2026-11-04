@@ -105,7 +105,13 @@ impl<'a> Node<'a> {
             .and_then(Value::as_array)
             .into_iter()
             .flatten()
-            .filter_map(|source| source.pointer("/attributeValue/relatedNodes"))
+            .flat_map(|source| {
+                [
+                    source.pointer("/attributeValue/relatedNodes"),
+                    source.pointer("/nativeSourceValue/relatedNodes"),
+                ]
+            })
+            .flatten()
             .filter_map(Value::as_array)
             .flatten()
             .filter_map(|one| one.get("backendDOMNodeId").and_then(Value::as_u64))
@@ -1022,6 +1028,48 @@ mod tests {
         );
         assert_eq!(named.len(), 1);
         assert_eq!(named[0].name, "Pay with [hidden]");
+    }
+
+    /// A `<label>` that holds a secret names another field: the engine says so as a native source.
+    #[test]
+    fn a_label_holding_a_secret_cuts_it_from_the_field_it_names() {
+        let label = node("2", "LabelText", "Code 123456", 2, &["3"]);
+        let held = with(
+            node("3", "textbox", "x", 3, &[]),
+            "value",
+            json!({ "type": "string", "value": "123456" }),
+        );
+        let named = with(
+            node("4", "textbox", "Code 123456", 4, &[]),
+            "name",
+            json!({
+                "value": "Code 123456",
+                "sources": [{ "nativeSourceValue": { "relatedNodes": [{ "backendDOMNodeId": 2 }] } }],
+            }),
+        );
+        let parts = vec![Part {
+            prefix: String::new(),
+            nodes: vec![
+                node("1", "RootWebArea", "", 1, &["2", "4"]),
+                label,
+                held,
+                named,
+            ],
+            owner: None,
+        }];
+        let secret: HashSet<(String, u64)> = [(String::new(), 3)].into_iter().collect();
+        let text = render(
+            &parts,
+            &Asked {
+                under: None,
+                most: MOST,
+                secret: &secret,
+                origin: "https://a.example",
+            },
+        )
+        .text;
+        assert!(!text.contains("123456"), "{text}");
+        assert!(text.contains("Code [hidden]"), "{text}");
     }
 
     /// A secret's value is cut only from a name built out of it. The same words anywhere

@@ -257,8 +257,11 @@ pub struct Facts {
     /// Whether it is, or is in, a control: a button, a link, a role that says so. What is
     /// not has only its own short words for a name.
     pub control: bool,
-    /// What the dialog a control is in calls itself: its Confirm does what that says.
+    /// What the dialog a press is in says: its label and its own lines.
     pub dialog: String,
+    /// Where it is no control: the short lines of what acts for the press, each of which
+    /// `leads` may find says what it does.
+    pub held: Vec<String>,
     /// Whether the page was too big to read all its fields, so its form cannot be judged.
     pub cut: bool,
     /// The address of the document it is in, then the origin of each frame round that:
@@ -353,10 +356,19 @@ fn card_field(field: &Field) -> bool {
         || (says(&plain_said(&field.said), CARD_WORDS) && !says(&said, NO_PAYMENT_CARD))
 }
 
-/// What a field says with the marks between its words read as spaces, as a person reads
-/// `SMS-Code` and `card_no`.
+/// What a field says with the marks between its words read as spaces, and a name's humps,
+/// as a person reads `SMS-Code`, `card_no` and `userPin`.
 fn plain_said(said: &str) -> String {
-    said.replace(['-', '_'], " ")
+    let mut plain = String::with_capacity(said.len() + 4);
+    let mut lower = false;
+    for one in said.chars() {
+        if lower && one.is_uppercase() {
+            plain.push(' ');
+        }
+        lower = one.is_lowercase();
+        plain.push(if matches!(one, '-' | '_') { ' ' } else { one });
+    }
+    plain
 }
 
 /// Whether a field asks for a one-time code or a PIN, by what it is called (9.4).
@@ -368,25 +380,34 @@ fn one_time(field: &Field) -> bool {
     {
         return false;
     }
-    says(&plain_said(&field.said), ONE_TIME)
-        || alone(&field.label, ONE_TIME_ALONE)
-        // In its capitals, or as a field's name: `Pin notes` and a colour called Tan are not.
-        || field.said.split(|one: char| !one.is_alphanumeric()).any(|word| {
-            word.ends_with("TAN") || (!body(field) && matches!(word, "PIN" | "pin"))
+    let said = plain_said(&field.said);
+    if says(&said, ONE_TIME)
+        || alone(&plain_said(&field.label), ONE_TIME_ALONE)
+        || alone(&said, ONE_TIME_ALONE)
+    {
+        return true;
+    }
+    // Word by word, with a number after it as `pin1` has: a PIN in any case but `Pin to top`,
+    // and a TAN only in its capitals, as Tan is a colour.
+    said.split(|one: char| !one.is_alphanumeric())
+        .map(|word| word.trim_end_matches(|one: char| one.is_ascii_digit()))
+        .any(|word| {
+            word.ends_with("TAN")
+                || word.eq_ignore_ascii_case("otp")
+                || (word.eq_ignore_ascii_case("pin") && !body(field) && !says(&said, NOT_A_PIN))
         })
 }
 
-/// Whether a field holds a credential: a password by its type or its `autocomplete`, or
-/// a field the page masks the way it would one. A show-password toggle turns the type to
-/// `text` and leaves the other two.
-fn credential(field: &Field) -> bool {
-    field.kind == "password"
-        || field.masked
-        || field
-            .autocomplete
-            .split_whitespace()
-            .any(|one| matches!(one, "current-password" | "new-password"))
-}
+/// What has a pin in it and no secret.
+const NOT_A_PIN: &[&str] = &[
+    "pin to",
+    "pin notes",
+    "pin note",
+    "pin this",
+    "pin it",
+    "pin on",
+    "pin board",
+];
 
 /// Whether a field's value is nobody's but the reader's (9.4): a credential, a one-time
 /// code, or a card's number, expiry or security code. Nothing reads it back to an agent:
@@ -611,20 +632,25 @@ pub fn judge(
         }
     }
 
-    // A dialog's Confirm does what the dialog says it does: the second step of a delete.
-    let confirming = act == Act::Press
-        && facts.control
+    // A dialog's Confirm does what the dialog says it does: the second step of a delete or
+    // of a payment, whatever the button is called.
+    if act == Act::Press
         && !facts.link
         && !facts.editable
-        && says(&facts.dialog, DELETING)
-        && !says(&facts.name, DISMISSING)
-        && !alone(&facts.name, DISMISSING_ALONE);
-    if confirming {
-        if let Some(question) = ask(
-            Category::Deleting,
-            on(&short(&facts.dialog), "Delete", &site),
-        ) {
-            return Some(question);
+        && !facts.dialog.is_empty()
+        && confirms(&facts.name)
+        && !says(&facts.dialog, NOT_ABOUT_THE_PRESS)
+    {
+        let said = short(&facts.dialog);
+        if says(&facts.dialog, PAYING) {
+            if let Some(question) = ask(Category::Paying, on(&said, "Pay", &site)) {
+                return Some(question);
+            }
+        }
+        if says(&facts.dialog, DELETING) {
+            if let Some(question) = ask(Category::Deleting, on(&said, "Delete", &site)) {
+                return Some(question);
+            }
         }
     }
 
@@ -830,6 +856,11 @@ const ONE_TIME: &[&str] = &[
     "sign in code",
     "recovery code",
     "backup code",
+    "enter code",
+    "your code",
+    "einmal code",
+    "two step code",
+    "security key",
     "code we sent",
     "code you received",
     "pincode",
@@ -851,7 +882,7 @@ const ONE_TIME: &[&str] = &[
 ];
 
 /// What is a one-time code only as a field's whole label.
-const ONE_TIME_ALONE: &[&str] = &["code", "otp", "pin", "tan"];
+const ONE_TIME_ALONE: &[&str] = &["code", "otp", "pin", "tan", "one time", "authenticator"];
 
 /// More of what card fields are called, as whole words with their marks read as spaces:
 /// `card no` is in `card notes`.
@@ -879,32 +910,64 @@ const NO_PAYMENT_CARD: &[&str] = &[
     "gift",
 ];
 
-/// What a press in a dialog does when it is the way out of it, whatever the dialog is about.
-const DISMISSING: &[&str] = &[
-    "cancel",
-    "close",
-    "dismiss",
-    "keep",
-    "no",
-    "not now",
-    "back",
-    "abbrechen",
-    "schlie\u{df}en",
-    "nein",
-    "behalten",
-    "zur\u{fc}ck",
-    "annuler",
-    "fermer",
-    "non",
-    "garder",
-    "cancelar",
-    "cerrar",
-    "annulla",
-    "chiudi",
+/// What goes ahead with whatever a dialog is asking, by how it starts. Anything else in a
+/// dialog that talks of a delete is no answer to it: Got it, Accept all, Learn more, an icon
+/// with no name.
+const CONFIRMING: &[&str] = &[
+    "confirm",
+    "yes",
+    "ok",
+    "okay",
+    "proceed",
+    "i understand",
+    "i'm sure",
+    "ja",
+    "best\u{e4}tigen",
+    "oui",
+    "confirmer",
+    "s\u{ed}",
+    "confirmar",
+    "s\u{ec}",
+    "conferma",
 ];
 
-/// The same in a mark.
-const DISMISSING_ALONE: &[&str] = &["x", "\u{d7}", "\u{2715}"];
+/// The same as its whole name: `Continue shopping` is no answer to one.
+const CONFIRMING_ALONE: &[&str] = &[
+    "continue",
+    "weiter",
+    "continuer",
+    "continuar",
+    "continua",
+    "submit",
+    "absenden",
+    "go ahead",
+    "keep going",
+    "close account",
+    "close my account",
+];
+
+/// What makes a dialog's talk of deleting no question of its own: a notice about cookies.
+const NOT_ABOUT_THE_PRESS: &[&str] = &["cookie", "cookies"];
+
+/// Whether a press goes ahead with what a dialog says.
+fn confirms(name: &str) -> bool {
+    alone(name, CONFIRMING_ALONE) || starts_with_any(name, CONFIRMING)
+}
+
+fn starts_with_any(line: &str, words: &[&str]) -> bool {
+    let line = line.trim().to_lowercase();
+    words.iter().any(|word| {
+        line.strip_prefix(word)
+            .is_some_and(|rest| !rest.chars().next().is_some_and(char::is_alphanumeric))
+    })
+}
+
+/// Whether a line opens by saying it pays or deletes: `Pay now`, `Delete 3 files`, and not
+/// `How to delete your account` or `Payment details`, which a tile may hold in its other
+/// lines and do neither.
+pub fn leads(line: &str) -> bool {
+    starts_with_any(line, PAYING) || starts_with_any(line, DELETING)
+}
 
 /// What card fields are called, in names, ids and labels.
 const CARD: &[&str] = &[
@@ -1672,7 +1735,6 @@ mod tests {
     fn a_dialog_that_deletes_asks_of_its_confirm_and_not_of_its_way_out() {
         let url = "https://app.example/";
         let in_dialog = |name: &str, dialog: &str| Facts {
-            control: true,
             dialog: dialog.into(),
             ..press(name)
         };
@@ -1704,6 +1766,78 @@ mod tests {
     }
 
     #[test]
+    fn a_dialog_is_answered_by_what_goes_ahead_with_it() {
+        let url = "https://app.example/";
+        let in_dialog = |name: &str, dialog: &str| Facts {
+            dialog: dialog.into(),
+            ..press(name)
+        };
+        // The commonest shape of a second step, and a payment's.
+        assert_eq!(
+            category(
+                &in_dialog("Confirm", "Are you sure? This will delete your account."),
+                url
+            ),
+            Some(Category::Deleting)
+        );
+        assert_eq!(
+            category(&in_dialog("OK", "Pay 20.00 EUR?"), url),
+            Some(Category::Paying)
+        );
+        for name in [
+            "Confirm and close",
+            "Yes, no going back",
+            "Keep going",
+            "Close account",
+        ] {
+            assert_eq!(
+                category(&in_dialog(name, "Delete your account?"), url),
+                Some(Category::Deleting),
+                "{name}"
+            );
+        }
+        // Everyday ones.
+        for (name, dialog) in [
+            ("Got it", "How to delete your data"),
+            (
+                "Accept all",
+                "We use cookies. You can delete them in your browser.",
+            ),
+            ("OK", "We use cookies. You can delete them in your browser."),
+            ("Learn more", "Delete account?"),
+            ("", "Remove item from cart?"),
+            ("Next page", "Recently deleted items"),
+            ("Continue shopping", "Item removed"),
+            ("Cancel", "Delete your account?"),
+        ] {
+            assert_eq!(category(&in_dialog(name, dialog), url), None, "{name}");
+        }
+    }
+
+    #[test]
+    fn a_line_leads_by_how_it_opens() {
+        for line in [
+            "Pay now",
+            "Pay 20.00 EUR",
+            "Delete 3 files",
+            "Remove item",
+            "Kaufen",
+            "pay",
+        ] {
+            assert!(leads(line), "{line}");
+        }
+        for line in [
+            "How to delete your account",
+            "Payment details",
+            "Help center",
+            "Order summary",
+            "Display",
+        ] {
+            assert!(!leads(line), "{line}");
+        }
+    }
+
+    #[test]
     fn what_says_nothing_of_itself_asks() {
         let unread = Facts {
             opaque: true,
@@ -1726,7 +1860,6 @@ mod tests {
             "One-time donation",
             "Authenticator app name",
             "Tan",
-            "tan",
             "Library card no",
             "Discount code",
             "Pin to top",
@@ -1740,6 +1873,33 @@ mod tests {
             ..called("PIN code", "text")
         };
         assert!(!secret(&postal));
+    }
+
+    #[test]
+    fn a_name_in_any_case_or_with_a_number_is_a_code() {
+        for said in [
+            "Your Pin",
+            "Enter your Pin",
+            "pin1",
+            "otp1",
+            "userPin",
+            "tan",
+            "code",
+            "Authenticator",
+            "One-time",
+            "Enter code",
+            "Your code",
+            "Einmal-Code",
+            "Two-step code",
+            "Security key",
+        ] {
+            let field = Field {
+                kind: "text".into(),
+                said: said.into(),
+                ..Field::default()
+            };
+            assert!(secret(&field), "{said}");
+        }
     }
 
     #[test]
