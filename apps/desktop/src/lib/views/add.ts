@@ -8,7 +8,15 @@
  *  status is more than quick add can carry, and there the view's own add row writes
  *  the words as they were typed, with the prefill's fields, through `addTask`. */
 
-import { addDays, type Base, isWhen, nextId, type Priority, rowsInBase, type Value } from '@orden/bases'
+import {
+  addDays,
+  type Base,
+  isWhen,
+  nextId,
+  type Priority,
+  rowsInBase,
+  type Value,
+} from '@orden/bases'
 import { noteName, plainValue, rowPlace, withProperties } from '@orden/bases/agent'
 import { joinPath } from '../tauri'
 import { insideOnly } from '../automation/inside'

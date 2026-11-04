@@ -7,7 +7,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 const tabs = vi.hoisted(() => [] as ReturnType<typeof tabOf>[])
 const place = vi.hoisted(() => ({
   spaces: [{ id: 'j', name: 'Job', root: '/s/Job' }],
-  active: 'Job' as string | null,
+  active: 'Job',
 }))
 function tabOf(doc: string) {
   const tab = {

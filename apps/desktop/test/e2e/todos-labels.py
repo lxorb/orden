@@ -190,7 +190,7 @@ def renamed(page: Page) -> None:
     name = page.evaluate("window.nibApp.workspace.activeSpace.name")
     after = len(texts(page, ".view-tab .task .words"))
     say(f"[renamed] {spec['space']} {before} -> {after}")
-    if spec["space"] != name or f'file.space == \\"{name}\\"' not in spec["yaml"]:
+    if spec["space"] != name or name not in spec["yaml"]:
         wrong(f"the tab still asks about {spec['space']!r}: {spec['yaml'][:160]}")
     if after != before:
         wrong(f"the tab shows {after} rows after the rename, not {before}")

@@ -1040,12 +1040,14 @@ export function blockAnchorsDrawn(html: string): string {
   const mark = `${ANCHOR_OPEN}([\\w-]+)${ANCHOR_CLOSE}`
   const anywhere = new RegExp(`\\s?${mark}`, 'g')
   const anchor = (id: string) => `<span id="^${id}"></span>`
-  return html
-    // No further than the next tag opening, or `<a ` thirty thousand times is read to its
-    // end from each one of them. A mark past a stray `<` in a tag is in the one it opens.
-    .replace(/<[a-z/](?:"[^"]*"|'[^']*'|[^'"<>])*>/gi, (tag) => tag.replace(anywhere, ''))
-    .replace(new RegExp(`<p>\\s*${mark}\\s*</p>`, 'g'), (_, id: string) => anchor(id))
-    .replace(new RegExp(mark, 'g'), (_, id: string) => anchor(id))
+  return (
+    html
+      // No further than the next tag opening, or `<a ` thirty thousand times is read to its
+      // end from each one of them. A mark past a stray `<` in a tag is in the one it opens.
+      .replace(/<[a-z/](?:"[^"]*"|'[^']*'|[^'"<>])*>/gi, (tag) => tag.replace(anywhere, ''))
+      .replace(new RegExp(`<p>\\s*${mark}\\s*</p>`, 'g'), (_, id: string) => anchor(id))
+      .replace(new RegExp(mark, 'g'), (_, id: string) => anchor(id))
+  )
 }
 
 function replacingBlockIds(

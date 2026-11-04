@@ -294,7 +294,7 @@ views:
     expect(by).not.toBe('formula.when')
     expect(made.formulas[by.replace('formula.', '')]).toBe(WHEN)
     expect(isWhen(by)).toBe(true)
-    expect(groupingOf(made.views[0] as View, null)).toBe('due')
+    expect(groupingOf(made.views[0]!, null)).toBe('due')
   })
 
   test('a base with none, or with Todos\u2019 own, is as it was', () => {
