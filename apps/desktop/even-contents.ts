@@ -397,9 +397,9 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  plan's `discard` in space-plan.ts). Measured 5,848,312.
  *
  *  The code raised on 2026-11-04, to 5,912,000, for one note across windows (a file's turn
- *  and a note's one line ending; the plugin carries no merge). Before it, to 5,899,500, for the bug hunt's two rounds and the
- *  above being in one build at last, on claude/hunt-round-1: nothing new, the two sums
- *  together. Measured 5,899,267.
+ *  and a note's one line ending; the plugin carries no merge). Before it, to 5,899,500, for
+ *  the bug hunt's two rounds and the above being in one build at last, on
+ *  claude/hunt-round-1: nothing new, the two sums together. Measured 5,899,267.
  *
  *  The code raised on 2026-11-04, to 5,855,000, for the sync hunt's round three: a note the
  *  disk refuses staying wanted, a space's trouble being that space's. Measured 5,854,964.
@@ -507,9 +507,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The catalogues raised on 2026-11-04, to 967,400, for #1041: the switch that shows every
  *  tab but the one in front as its icon, with its hint, in every catalogue
  *  (general-pane.ts). Measured 967,294.
+ *
+ *  The code raised on 2026-11-04, to 5,965,400, for the bug hunt's third round, the sums above
+ *  and what came to unstable meanwhile in one build at last, on claude/hunt-round-1: nothing
+ *  new beyond one guard fewer for a launch's first write. Measured 5,965,187.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_915_000,
+  code: 5_965_400,
   catalogues: 967_400,
   styles: 290_000,
   fonts: 260_000,

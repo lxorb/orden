@@ -1225,9 +1225,14 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 394 modules, for #1041: every tab but the one in front is its
  *  icon, opening out to its name under the pointer, with a letter on look-alikes
  *  (tab-strip/icon-tabs.svelte.ts, tab-strip/twins.ts). Measured 3,556,835, 393 modules.
+ *
+ *  Raised on 2026-11-04, to 3,645,200, and to 395 modules, for the bug hunt's third round, the
+ *  sums above and what came to unstable meanwhile in one build at last, on
+ *  claude/hunt-round-1: nothing new beyond one guard fewer for a launch's first write.
+ *  Measured 3,645,071, 394 modules.
  */
-const BUDGET = 3_581_100
-const MOST_FILES = 394
+const BUDGET = 3_645_200
+const MOST_FILES = 395
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

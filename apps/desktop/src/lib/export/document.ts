@@ -507,7 +507,7 @@ function entitiesRead(text: string): string {
 
 /** The words of a block of raw HTML, a paragraph for each block element in it. No DOM,
  *  since this reading of a note is pure, and no more of HTML than where words are. */
-export function wordsOfHtml(html: string): string[] {
+function wordsOfHtml(html: string): string[] {
   const out: string[] = []
   let line = ''
   /** The element being passed over, and how many of its name are open inside it. */
