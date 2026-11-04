@@ -447,10 +447,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *
  *  The catalogues raised on 2026-11-04, to 964,800, for #1098: Reset to site icon, the row
  *  that gives a web note back the site's own mark, in every catalogue. Measured 964,739.
+ *
+ *  The code raised on 2026-11-04, to 5,869,600, and the catalogues to 965,200, for
+ *  #331: a window of the tab overview lying wherever it was let go, the others pushed out
+ *  of its way, and Tidy up (overview/free.ts) in every language. Measured 5,869,405 and
+ *  965,023.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_868_500,
-  catalogues: 964_800,
+  code: 5_869_600,
+  catalogues: 965_200,
   styles: 290_000,
   fonts: 260_000,
   pages: 40_000,
