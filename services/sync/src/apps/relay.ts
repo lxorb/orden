@@ -9,7 +9,10 @@
  *  the input then go between the two of them directly (WebRTC), never through here.
  *
  *  It never starts anything itself: the application lives on its host, goes on when every
- *  viewer leaves, and is said to be there or not by whether the host's socket is. */
+ *  viewer leaves, and is said to be there or not by whether the host's socket is.
+ *
+ *  A door checks a socket once, so each minute with a socket here (`alarm`) asks again
+ *  whether its sign-in lives and the file is still the person's, and looks at the lock. */
 
 import {
   type AppState,
@@ -22,14 +25,21 @@ import {
 import { note } from '../failed'
 import type { Env } from '../types'
 import { type Holder, SocketLock } from '../locks/sockets'
+import { ASK_SIGNINS_EVERY, SIGNED_OUT, stillSignedIn } from '../signins'
+import { OWNED } from './door'
 
 /** What the door decided about a socket, kept on it across a hibernation. */
 export interface Party extends Holder {
   role: 'host' | 'viewer'
+  /** The hash of the sign-in it arrived with; see `alarm`. */
+  login?: string
   /** Whether a viewer's hello said it takes part in the lock. */
   hold?: boolean
   view?: View
 }
+
+/** What a socket on a file no longer the person's is closed with. */
+const NOT_THEIRS = 4404
 
 /** Where the application stood, as its host last said it. */
 const STATE = 'state'
@@ -88,6 +98,9 @@ export class AppRelay implements DurableObject {
   async enter(socket: WebSocket, party: Party): Promise<void> {
     this.ctx.acceptWebSocket(socket, [party.session, party.role])
     socket.serializeAttachment(party)
+    if ((await this.ctx.storage.getAlarm()) === null) {
+      await this.ctx.storage.setAlarm(Date.now() + ASK_SIGNINS_EVERY)
+    }
     if (party.role === 'host') {
       // One host at a time: a host that comes back replaces the socket it left.
       for (const other of this.hosts(party.session)) {
@@ -148,6 +161,43 @@ export class AppRelay implements DurableObject {
 
   async webSocketError(socket: WebSocket): Promise<void> {
     await this.gone(socket)
+  }
+
+  /** The object's minute: what no longer reaches the application closes, a holder gone
+   *  quiet is let go of, and it stops once nobody is here. Not asked is not ended: a
+   *  database that did not answer is asked again the next minute. */
+  async alarm(): Promise<void> {
+    const sockets = this.ctx.getWebSockets().flatMap((socket) => {
+      const party = partyOf(socket)
+      return party ? [{ socket, party }] : []
+    })
+    const first = sockets[0]?.party
+    if (!first) return
+
+    const live = await stillSignedIn(
+      this.env,
+      sockets.flatMap(({ party }) => party.login ?? []),
+    ).catch(() => null)
+    const owned = await this.env.DB.prepare(OWNED)
+      .bind(first.session, first.who)
+      .first()
+      .catch(() => undefined)
+    for (const { socket, party } of sockets) {
+      const ended = live && party.login !== undefined && !live.has(party.login)
+      if (!ended && owned !== null) continue
+      if (ended) socket.close(SIGNED_OUT, 'signed out')
+      else socket.close(NOT_THEIRS, 'this application is gone')
+      await this.gone(socket)
+    }
+
+    const held = await this.lock.holder(first.session)
+    await this.lock.settle(first.session)
+    const holds = await this.lock.holder(first.session)
+    if (holds?.device !== held?.device) await this.toldWho(first.session)
+
+    if (this.ctx.getWebSockets().some((socket) => socket.readyState === OPEN)) {
+      await this.ctx.storage.setAlarm(Date.now() + ASK_SIGNINS_EVERY)
+    }
   }
 
   private async gone(socket: WebSocket): Promise<void> {
@@ -250,6 +300,7 @@ function partyFrom(headers: Headers): Party {
     session: headers.get('x-nib-app-id') ?? '',
     device: headers.get('x-nib-device') ?? '',
     who: headers.get('x-nib-who') ?? '',
+    login: headers.get('x-nib-login') ?? undefined,
     name,
     seen: Date.now(),
   }
