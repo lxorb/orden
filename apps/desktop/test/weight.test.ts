@@ -1112,8 +1112,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,519,800, for #1039: a second press on what opened a menu or a
  *  popover closes it, the control noticed by overlays.ts as its click goes by, and a
- *  menu a button opens hangs from the button (menu.svelte.ts). Measured 3,519,657. */
-const BUDGET = 3_519_800
+ *  menu a button opens hangs from the button (menu.svelte.ts). Measured 3,519,657.
+ *
+ *  Raised 2026-11-04, to 3,525,800, for #1042: a note that says nothing yet wears the empty
+ *  page, and Lucide's folder where it holds notes, read on the scan the index already
+ *  makes (`saysNothing` in scan-note.ts) and decided in `sourceMark` (chosen-icon.ts).
+ *  Measured 3,525,768. */
+const BUDGET = 3_525_800
 const MOST_FILES = 389
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

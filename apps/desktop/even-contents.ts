@@ -409,9 +409,14 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,859,300, for #1056: the value box and column every
  *  setting's value is drawn in (`.nib-field.is-value`, `--setting-value` in base.css),
  *  which the stylesheet's raw text carries for export. Measured 5,859,138.
+ *
+ *  The code raised on 2026-11-04, to 5,860,400, for #1042: a note that says nothing yet
+ *  wears the empty page, and Lucide's folder where it holds notes, read on the scan the
+ *  index makes (`saysNothing` in scan-note.ts) and decided in `sourceMark`
+ *  (chosen-icon.ts). Measured 5,860,304.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_859_300,
+  code: 5_860_400,
   catalogues: 964_400,
   styles: 290_000,
   fonts: 260_000,
