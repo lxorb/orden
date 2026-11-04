@@ -548,7 +548,7 @@ impl Page<'_> {
     /// What an element says about itself and its form.
     pub fn facts(&self, element: &Element) -> Result<Facts, Answer> {
         let said = self.run_on(element, &FACTS, &[])?;
-        self.facts_from(element, &said)
+        Ok(self.facts_from(element, &said))
     }
 
     /// What a press landing on an element would press, as `facts` says it, and with what
@@ -577,7 +577,7 @@ impl Page<'_> {
             .pointer("/result/value")
             .cloned()
             .unwrap_or_default();
-        self.facts_from(element, &said)
+        Ok(self.facts_from(element, &said))
     }
 
     /// The nearest of an element and what is round it that listens for a press.
@@ -606,7 +606,7 @@ impl Page<'_> {
         None
     }
 
-    fn facts_from(&self, element: &Element, said: &Value) -> Result<Facts, Answer> {
+    fn facts_from(&self, element: &Element, said: &Value) -> Facts {
         let mut facts: Facts = serde_json::from_value(said.clone()).unwrap_or_default();
         if !facts.cut {
             facts.fields.extend(self.closed_fields(element));
@@ -616,7 +616,7 @@ impl Page<'_> {
                 facts.name = joined_name(&facts.name, &name);
             }
         }
-        Ok(facts)
+        facts
     }
 
     /// What the engine's own tree calls the control an element is in, which is what the
