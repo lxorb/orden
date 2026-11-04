@@ -469,9 +469,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  button is drawn with (`.nib-tag`, `.nib-setting-mark`, `.nib-glyph.is-danger`, a
  *  busy `.nib-chip` in base.css), which the stylesheet's raw text carries for export.
  *  Measured 5,875,013.
+ *
+ *  The code raised on 2026-11-04, to 5,875,900, for #331: the cross on a window of the tab overview that
+ *  closes its tab (overview/Overview.svelte).
+ *  Measured 5,875,759.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_875_200,
+  code: 5_875_900,
   catalogues: 965_200,
   styles: 290_000,
   fonts: 260_000,
