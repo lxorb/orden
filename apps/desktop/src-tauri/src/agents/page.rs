@@ -401,9 +401,6 @@ const UNVALUED: &str = r"const unvalued = (root) => {
 /// same in the document and in a clone of it. `hidden` is which of them the policy named.
 const REGIONS: &str = r"[contenteditable]:not([contenteditable=false i])";
 
-/// The mark a secret leaves where it was: the reader can see words are missing.
-const HIDDEN_MARK: &str = "[hidden]";
-
 /// The regions of a document, each said for the policy.
 static REGIONS_SAID: LazyLock<String> = LazyLock::new(|| {
     [
@@ -416,7 +413,8 @@ static REGIONS_SAID: LazyLock<String> = LazyLock::new(|| {
     .concat()
 });
 
-/// `document.body`'s words as `innerText` has them, the regions in `hidden` a mark and each
+/// `document.body`'s words as `innerText` has them, the regions in `hidden` the mark a secret
+/// leaves, so the reader can see words are missing, and each
 /// other word as it stands: only such a region is cut, by node, whatever else on the page
 /// reads the same. Run only on a page with one, where it costs `innerText`'s fine points.
 const MASKED_TEXT: &str = r"
@@ -3278,10 +3276,11 @@ mod tests {
 
     #[test]
     fn a_clip_is_the_clip_buttons_own_script_and_no_field_value() {
-        assert_eq!(*CLIPPED, crate::web_tabs::reader(false));
-        assert!(CLIPPED.contains("input[type=password]"));
-        assert!(CLIPPED.contains("removeAttribute('value')"));
-        assert!(WHOLE.contains("unvalued(document.body"));
+        let clipped = clipped_hiding(&[]);
+        assert!(clipped.contains("input[type=password]"));
+        assert!(clipped.contains("removeAttribute('value')"));
+        assert!(!clipped.contains("__HIDE__"));
+        assert!(whole_hiding(&[]).contains("unvalued(copy)"));
     }
 
     #[test]
@@ -3316,7 +3315,7 @@ mod tests {
         assert!(text_hiding(&[2]).contains("const hidden = [2]"));
         assert!(whole_hiding(&[2]).contains("const hidden = [2]"));
         assert!(clipped_hiding(&[2]).contains("const hidden = [2]"));
-        assert!(MASKED_TEXT.contains(HIDDEN_MARK) && MASKED_CLONE.contains(HIDDEN_MARK));
+        assert!(MASKED_TEXT.contains("[hidden]") && MASKED_CLONE.contains("[hidden]"));
         assert!(MASKED_TEXT.contains(REGIONS) && MASKED_CLONE.contains(REGIONS));
     }
 

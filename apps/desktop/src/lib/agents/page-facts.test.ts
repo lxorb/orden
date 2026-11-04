@@ -22,6 +22,7 @@ function constant(name: string): string {
 const script = constant('FIELDS') + constant('FACTS_BODY')
 
 interface Said {
+  tag: string
   name: string
   in_form: boolean
   submit: boolean

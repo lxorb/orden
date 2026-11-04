@@ -27,9 +27,7 @@
       },
       "expect": {
         "status": "ok",
-        "has": [
-          "result.matches.0.ref"
-        ]
+        "has": ["result.matches.0.ref"]
       },
       "save": {
         "wrapper": "result.matches.0.ref"
@@ -43,9 +41,7 @@
       },
       "expect": {
         "status": "needs_approval",
-        "has": [
-          "approval"
-        ]
+        "has": ["approval"]
       }
     },
     {
@@ -60,9 +56,7 @@
       },
       "expect": {
         "status": "ok",
-        "has": [
-          "result.matches.0.ref"
-        ]
+        "has": ["result.matches.0.ref"]
       },
       "save": {
         "part": "result.matches.0.ref"
@@ -76,9 +70,7 @@
       },
       "expect": {
         "status": "needs_approval",
-        "has": [
-          "approval"
-        ]
+        "has": ["approval"]
       }
     },
     {
@@ -93,9 +85,7 @@
       },
       "expect": {
         "status": "ok",
-        "has": [
-          "result.matches.0.ref"
-        ]
+        "has": ["result.matches.0.ref"]
       },
       "save": {
         "words": "result.matches.0.ref"
@@ -120,9 +110,7 @@
       },
       "expect": {
         "status": "ok",
-        "has": [
-          "result.matches.0.ref"
-        ]
+        "has": ["result.matches.0.ref"]
       },
       "save": {
         "guide": "result.matches.0.ref"
