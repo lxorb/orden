@@ -2,6 +2,7 @@ import { type Context, Hono } from 'hono'
 import { NOT_A_PATH, NO_SUCH_NOTE, OUT_OF_SPACE, ROOM_AWAY } from './refused'
 import { mergeCanvasFiles } from '@orden/markdown/canvas-merge'
 import { isPagesTarget } from '@orden/markdown/links'
+import { isName } from '@orden/sync-core'
 import { conflictPath, freePath, numbered } from '@orden/markdown/paths'
 import { objectBody, readBody } from './body'
 import { FRONT_REV, readFront, titleFrom, writeFront } from './blog/front'
@@ -95,8 +96,11 @@ const NOTE_PATH = /\.(md|markdown|mdown|mkd|canvas|pages|url|webloc|chat)$/i
  *  has none: the path travels into a published page, a mail, a listing and a file
  *  on somebody's disk, and a newline in one is not a folder. Refused rather than
  *  stripped, because a client that sent one did not mean the name that would be
- *  left and should be told so. */
-export function cleanPath(input: string): string | null {
+ *  left and should be told so.
+ *
+ *  This is what a note found by its path has to be: one written before `cleanPath` held
+ *  names to `isName` still reads. */
+export function readablePath(input: string): string | null {
   const path = input.replace(/\\/g, '/').replace(/^\/+/, '').trim()
 
   if (!path || path.length > PATH_LIMIT) return null
@@ -105,6 +109,13 @@ export function cleanPath(input: string): string | null {
   if (!NOTE_PATH.test(path)) return null
 
   return path
+}
+
+/** A path a note may be put at: each of its names one every device can hold. The feed
+ *  carries names one by one, and a device reads none past `LONGEST_NAME` (`isName`). */
+export function cleanPath(input: string): string | null {
+  const path = readablePath(input)
+  return path?.split('/').every(isName) ? path : null
 }
 
 export function noteKey(spaceId: string, noteId: string): string {
@@ -514,8 +525,7 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
   if (size > MAX_NOTE_BYTES) return context.json({ error: TOO_LARGE }, 413)
 
   const taken = await noteAt(context.env, space.id, path)
-  if (taken)
-    return context.json({ error: 'a note already lives there', note: presentNote(taken) }, 409)
+  if (taken) return await alreadyThere(context, taken)
 
   // A limit nobody enforces is a number on a settings page. Counted against
   // whoever owns the space rather than whoever is writing: the bytes land in
@@ -547,12 +557,31 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
         : await noteAt(context.env, space.id, path)
     if (!won) throw error
 
-    return context.json({ error: 'a note already lives there', note: presentNote(won) }, 409)
+    return await alreadyThere(context, won)
   }
 
   await pokeSpace(context.env, laterOf(context), space.id, note.seq, device)
   return context.json({ note: presentNote(note) }, 201)
 })
+
+/** The 409 a create that met a note gets: that note, with its bytes, the same as the 409
+ *  a save that lost (`conflict`). Two devices made one path with different words, and the
+ *  one that lost keeps both copies from here; with no words here, an app takes the other
+ *  device's for empty and writes its own over them. */
+async function alreadyThere(
+  context: Context<{ Bindings: Env; Variables: Variables }>,
+  note: Note,
+): Promise<Response> {
+  const object = await context.env.NOTES.get(noteKey(note.space_id, note.id))
+  return context.json(
+    {
+      error: 'a note already lives there',
+      note: presentNote(note),
+      content: object ? await object.text() : '',
+    },
+    409,
+  )
+}
 
 /** A note this person can reach, together with the space it sits in and the
  *  role held there. Null when the note is not there or is in a space they have
@@ -884,7 +913,9 @@ notes.put('/notes/:id', async (context) => {
     return context.json({ error: TOO_LARGE }, 413)
   }
 
-  const path = given === undefined ? note.path : cleanPath(given)
+  // The path it already has is no new name: a note from before `cleanPath` held names to
+  // `isName` is still written where it is.
+  const path = given === undefined || given === note.path ? note.path : cleanPath(given)
   if (!path) return context.json({ error: NOT_A_PATH }, 400)
 
   // Somebody who was handed this one file may write in it and may not move it.

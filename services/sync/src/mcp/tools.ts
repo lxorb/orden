@@ -13,6 +13,7 @@ import { pokeNow } from '../hub/poke'
 import {
   addNote,
   cleanPath,
+  readablePath,
   MAX_NOTE_BYTES,
   MOVED,
   NoteTaken,
@@ -267,7 +268,7 @@ async function listNotes(env: Env, space: Space): Promise<string> {
 }
 
 async function readNote(env: Env, space: Space, args: Record<string, unknown>): Promise<string> {
-  const path = cleanPath(text(args, 'path') ?? '')
+  const path = readablePath(text(args, 'path') ?? '')
   if (!path) return 'That is not a note path.'
 
   const note = await env.DB.prepare(
@@ -341,7 +342,7 @@ async function listBacklinks(
   space: Space,
   args: Record<string, unknown>,
 ): Promise<string> {
-  const path = cleanPath(text(args, 'path') ?? '')
+  const path = readablePath(text(args, 'path') ?? '')
   if (!path) return 'That is not a note path.'
 
   const names = new Set<string>()

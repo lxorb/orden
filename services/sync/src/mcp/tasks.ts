@@ -535,7 +535,10 @@ async function addRow(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
   const name = noteName(words(args, 'title') ?? 'Untitled')
   for (let counter = 1; counter < 100; counter++) {
     const file = counter === 1 ? `${name}.md` : `${name} ${counter}.md`
-    const path = folder ? `${folder}/${file}` : file
+    // A base's filter names the folder, and whoever can write a base can write that.
+    const asked = folder ? `${folder}/${file}` : file
+    const path = cleanPath(asked)
+    if (!path) throw new Said(`${asked} is not a note path.`)
     if ((await wordsAt(env, space, path)) !== null) continue
     let landed
     try {

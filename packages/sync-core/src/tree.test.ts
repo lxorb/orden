@@ -29,6 +29,32 @@ function live(state: TreeState, id: string): boolean {
 }
 
 describe('tree', () => {
+  test('the number of a name that is taken still leaves a name', () => {
+    const state = treeState()
+    const long = `${'x'.repeat(252)}.md`
+    create(state, 'n1', long)
+    const second = create(state, 'n2', long)
+    const name = 'name' in second ? second.name : ''
+    expect(name.length).toBeLessThanOrEqual(255)
+    expect(name).not.toBe(long)
+    expect(name.endsWith('.md')).toBe(true)
+    const third = create(state, 'n3', long)
+    expect('name' in third && third.name.length <= 255).toBe(true)
+    expect(state.entries.get('n3')?.name).not.toBe(name)
+
+    const folder = 'y'.repeat(255)
+    mkdir(state, 'f1', folder)
+    const again = mkdir(state, 'f2', folder)
+    expect('name' in again && again.name.length <= 255).toBe(true)
+    expect('name' in again && again.name).not.toBe(folder)
+
+    // Half a character is not left behind.
+    const emoji = `${'😀'.repeat(127)}.md`
+    create(state, 'n4', emoji)
+    const cut = create(state, 'n5', emoji)
+    expect('name' in cut && cut.name.isWellFormed() && cut.name.length <= 255).toBe(true)
+  })
+
   test('nameKey is NFC and without case', () => {
     expect(nameKey('Café.md')).toBe(nameKey('café.MD'))
   })

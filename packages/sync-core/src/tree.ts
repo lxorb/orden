@@ -34,7 +34,7 @@
  *  a batch and writes back, and the only numbers that move are the space's cursor. */
 
 import { freePath } from '@orden/markdown/paths'
-import type { EntryKind, Op, OpResult } from './wire'
+import { type EntryKind, LONGEST_NAME, type Op, type OpResult } from './wire'
 
 export interface TreeEntry {
   id: string
@@ -133,13 +133,33 @@ function freeName(
 ): string {
   const taken = takenIn(state, parent, except)
   const free = (candidate: string) => !taken.has(nameKey(candidate))
-
-  if (kind !== 'folder') return freePath(wanted, (candidate) => !free(candidate))
-  if (free(wanted)) return wanted
-  for (let counter = 2; ; counter += 1) {
-    const candidate = `${wanted} ${String(counter)}`
-    if (free(candidate)) return candidate
+  const first = (name: string): string => {
+    if (kind !== 'folder') return freePath(name, (candidate) => !free(candidate))
+    if (free(name)) return name
+    for (let counter = 2; ; counter += 1) {
+      const candidate = `${name} ${String(counter)}`
+      if (free(candidate)) return candidate
+    }
   }
+
+  // The number has to fit too: past `LONGEST_NAME` the feed carries a name no device reads.
+  let name = wanted
+  for (;;) {
+    const found = first(name)
+    if (found.length <= LONGEST_NAME) return found
+    name = shortened(name, found.length - LONGEST_NAME, kind)
+  }
+}
+
+/** A name with `by` code units less, off the end of its stem. */
+function shortened(name: string, by: number, kind: EntryKind): string {
+  const dot = kind === 'folder' ? -1 : name.lastIndexOf('.')
+  // An ending too long to leave a stem goes with it.
+  const stemEnd = dot > by ? dot : name.length
+  let cut = stemEnd - by
+  // Not between the two halves of one character.
+  if (/[\uD800-\uDBFF]/.test(name.charAt(cut - 1)) && cut > 1) cut -= 1
+  return name.slice(0, cut) + name.slice(stemEnd)
 }
 
 /** Whether `ancestor` is `id` or holds it, however deep. Deleted folders count: a

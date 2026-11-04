@@ -81,7 +81,10 @@ function ordered<T extends { path: string }>(
 function placeable(path: string): boolean {
   if (!path || /^[a-zA-Z]:/.test(path) || /^[\\/]/.test(path)) return false
 
-  return path.split(/[\\/]/).every((part) => part !== '' && part !== '.' && part !== '..')
+  // Nor a name no disk holds, which only says so once the write is refused.
+  return path
+    .split(/[\\/]/)
+    .every((part) => part !== '' && part !== '.' && part !== '..' && part.length <= 255)
 }
 
 /** Whether a file on this disk is the same words the account's hash names.
@@ -1623,6 +1626,7 @@ async function create(
   // For the reason the push gives: a create whose answer is lost leaves the account
   // holding a note this machine has no entry for and made itself.
   const offered = await sha256(content)
+  const earlier = mirror.offered[path]
   mirror.offered = { ...mirror.offered, [path]: offered }
 
   try {
@@ -1638,13 +1642,13 @@ async function create(
     if (!isString(theirs?.id) || !isNumber(theirs.version) || !isString(theirs.hash)) throw error
 
     const tracked: Tracked = { id: theirs.id, version: theirs.version, hash: theirs.hash }
-    mirror.notes[path] = tracked
 
     // The same words on both sides: paired, and there is nothing to send. Told by
     // the account's own hash rather than by hashing again, which is what the rest
     // of this file compares against too.
     const hash = await sha256(content)
     if (hash === tracked.hash) {
+      mirror.notes[path] = tracked
       mirror.offered = without(mirror.offered, path)
       return false
     }
@@ -1653,12 +1657,41 @@ async function create(
     // never arrived - the create landed, the reply did not, and there is no entry
     // because of it. Paired and left to the next push, which offers what the file
     // says now. A second copy of somebody's own note is not an answer to anything.
-    if (mirror.offered[path] && tracked.hash === mirror.offered[path]) return false
+    // What it offered before this try: this try's own is what the account just refused.
+    if (earlier && tracked.hash === earlier) {
+      mirror.notes[path] = tracked
+      mirror.offered = without(mirror.offered, path)
+      return false
+    }
 
     // Two notes at one path with different words is the conflict this file has
-    // always had an answer for: neither is dropped.
-    await keepBoth(mirror, path, tracked, body, token, null)
+    // always had an answer for: neither is dropped. Their words are what the copy is, so
+    // an answer without them is asked again, and until they are here the note stays
+    // unpaired: paired, the next push would send this file over words nobody kept.
+    const held = isString(body.content) ? body : await wordsOf(token, tracked.id, body)
+    if (!held) {
+      mirror.offered = without(mirror.offered, path)
+      return false
+    }
+    mirror.notes[path] = tracked
+    await keepBoth(mirror, path, tracked, held, token, null)
     return true
+  }
+}
+
+/** A create's refusal with the words of the note it named, read from the account: null
+ *  while it will not say. */
+async function wordsOf(
+  token: string,
+  id: string,
+  body: Record<string, unknown>,
+): Promise<Record<string, unknown> | null> {
+  try {
+    const { content } = await api.readNote(token, id)
+    return { ...body, content }
+  } catch (error) {
+    log('warn', `sync: ${id} not read for a copy - ${String(error)}`)
+    return null
   }
 }
 
@@ -1699,12 +1732,15 @@ async function keepBoth(
   const here = joinPath(mirror.root, path)
   const sent = isString(server.content) ? server.content : ''
   const ours = await invoke<string>('read_note', { path: here })
+  // Where the account has it now: renamed elsewhere since the pull, that name stands, and
+  // the next pull moves the file there. Sent as it is here, the write takes the rename back.
+  const place = theirs.id === tracked.id && isString(theirs.path) ? theirs.path : path
 
   // This device's write is the newer one: it is being made now.
   const together = await settled(path, ours, sent, () => Promise.resolve(false))
   if (together !== null) {
     await writeDown(here, together, ours)
-    const { note } = await api.writeNote(token, tracked.id, path, together, theirs.version)
+    const { note } = await api.writeNote(token, tracked.id, place, together, theirs.version)
     mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
     return
   }
@@ -1712,7 +1748,7 @@ async function keepBoth(
   const merged = base === null ? null : await mergedOver(token, here, tracked.id, base, ours, sent)
   if (merged !== null) {
     await writeDown(here, merged, ours)
-    const { note } = await api.writeNote(token, tracked.id, path, merged, theirs.version)
+    const { note } = await api.writeNote(token, tracked.id, place, merged, theirs.version)
     mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
     return
   }
@@ -1722,7 +1758,7 @@ async function keepBoth(
   if (carriedOwn(path)) {
     const both = withTasksOf(ours, sent)
     await writeDown(here, both, ours)
-    const { note } = await api.writeNote(token, tracked.id, path, both, theirs.version)
+    const { note } = await api.writeNote(token, tracked.id, place, both, theirs.version)
     mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
     return
   }
@@ -1730,6 +1766,6 @@ async function keepBoth(
   await writeDown(conflictPath(here), sent)
 
   // Our version is now the newer one; write it over the server's.
-  const { note } = await api.writeNote(token, tracked.id, path, ours, theirs.version)
+  const { note } = await api.writeNote(token, tracked.id, place, ours, theirs.version)
   mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
 }

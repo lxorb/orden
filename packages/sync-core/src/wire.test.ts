@@ -6,6 +6,7 @@ import {
   deviceRowsOf,
   epochFrame,
   feedPageOf,
+  GONE_NAME,
   frame,
   type Framed,
   hubFrameOf,
@@ -184,6 +185,31 @@ describe('entry ids', () => {
     }
     const page = feedPageOf({ items: [gone], cursor: 1, more: false })
     expect(page?.items.map((one) => one.id)).toEqual(['../../x'])
+  })
+
+  test('a name no disk holds is left out, and the page still reads', () => {
+    const item = (id: string, name: string, deleted = false) => ({
+      id,
+      kind: 'note',
+      parent: null,
+      name,
+      deleted,
+      seq: 1,
+      hash: '',
+      size: 0,
+      by: '',
+      at: 0,
+    })
+    const page = feedPageOf({
+      items: [item('a', 'x'.repeat(300)), item('b', '..'), item('c', 'kept.md')],
+      cursor: 3,
+      more: false,
+    })
+    expect(page?.items.map((one) => one.id)).toEqual(['c'])
+    expect(page?.cursor).toBe(3)
+
+    const gone = feedPageOf({ items: [item('a', '..', true)], cursor: 1, more: false })
+    expect(gone?.items[0]).toMatchObject({ id: 'a', name: GONE_NAME, deleted: true })
   })
 })
 
