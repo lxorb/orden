@@ -116,6 +116,27 @@ def drive(browser: Browser) -> None:
     DRIVE.open(page)
     ids = page.evaluate(SEED)
 
+    # The camera left on this space, and the other one's windows.
+    open_overview(page)
+    page.get_by_role("combobox", name="Spaces").click()
+    page.get_by_role("option", name="This space").click()
+    page.wait_for_timeout(600)
+    close_overview(page)
+    page.evaluate("async (id) => { await window.nibApp.workspace.showSpace(id) }", ids["bee"])
+    page.wait_for_timeout(400)
+    open_overview(page)
+    visible = on_screen(page)
+    say(f"in Bee the overview shows {visible}")
+    shot(page, "other-space")
+    if "B1" not in visible and "B2" not in visible:
+        wrong(f"the overview opened on nothing of the space worked in: {visible}")
+    page.get_by_role("combobox", name="Spaces").click()
+    page.get_by_role("option", name="All spaces").click()
+    page.wait_for_timeout(400)
+    close_overview(page)
+    page.evaluate("async (id) => { await window.nibApp.workspace.showSpace(id) }", ids["home"])
+    page.wait_for_timeout(400)
+
     # A window carried to the other space, and Ctrl+Z.
     open_overview(page)
     all_spaces(page)
@@ -165,22 +186,6 @@ def drive(browser: Browser) -> None:
         }""",
         ids["beeRoot"],
     )
-
-    # The camera left on this space, and the other one's windows.
-    open_overview(page)
-    page.get_by_role("combobox", name="Spaces").click()
-    page.get_by_role("option", name="This space").click()
-    page.wait_for_timeout(600)
-    close_overview(page)
-    page.evaluate("async (id) => { await window.nibApp.workspace.showSpace(id) }", ids["bee"])
-    page.wait_for_timeout(400)
-    open_overview(page)
-    visible = on_screen(page)
-    say(f"in Bee the overview shows {visible}")
-    shot(page, "other-space")
-    if "B1" not in visible and "B2" not in visible:
-        wrong(f"the overview opened on nothing of the space worked in: {visible}")
-    close_overview(page)
 
     # Closed here, reopened from the other space.
     page.evaluate(
