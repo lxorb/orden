@@ -20,6 +20,7 @@ import {
 import { readingFactor } from './direction'
 import { fullscreen } from './fullscreen.svelte'
 import { dur } from './motion'
+import { isThumbCarrying } from './views/drag.svelte'
 import { viewport } from './viewport.svelte'
 import { drawer, rightDrawer } from './drawer.svelte'
 
@@ -172,6 +173,12 @@ export function followDrawers(host: HTMLElement): () => void {
     const dy = touch.clientY - startY
 
     if (!claimed) {
+      // A card lifted by a hold within the edge strip is being carried, not pulled at.
+      if (isThumbCarrying()) {
+        letGo()
+        return
+      }
+
       // Settled once: a scroll stays a scroll for the whole gesture, and a
       // drag stays a drag. Going vertical first gives the drawers up.
       if (Math.abs(dy) > CLAIM) {

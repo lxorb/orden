@@ -159,7 +159,6 @@ def drive(browser: Browser) -> None:
     wait_for(page, "window.nibApp.workspace.tabs.find((o) => o.shown === 'A2').path.startsWith('/Notes')", "Ctrl+Z from the view")
     page.wait_for_timeout(400)
     drag(page, box(page, "A2"), box(page, "B2"))
-    words = page.evaluate("() => window.nibApp.workspace.active?.doc")
     page.locator(".toast button.undo").click()
     wait_for(page, "window.nibApp.workspace.tabs.find((o) => o.shown === 'A2').path.startsWith('/Notes')", "the toast's Undo")
     page.wait_for_timeout(500)
@@ -168,7 +167,7 @@ def drive(browser: Browser) -> None:
         wrong(f"the toast's Undo left the keyboard on {keyboard(page)}")
     page.keyboard.type("LEAK")
     page.wait_for_timeout(300)
-    if page.evaluate("() => window.nibApp.workspace.active?.doc") != words:
+    if page.evaluate("() => [...document.querySelectorAll('.cm-content')].some((one) => one.textContent.includes('LEAK'))"):
         wrong("words typed over the view landed in the note behind it")
     page.keyboard.press("Escape")
     page.wait_for_timeout(800)

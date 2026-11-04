@@ -1973,8 +1973,10 @@ export const gu: Dictionary = {
   'Send feedback': 'પ્રતિસાદ મોકલો',
   'Describe the issue': 'સમસ્યાનું વર્ણન કરો',
   Sent: 'મોકલ્યું',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'આ અહેવાલમાં તમારું વર્ણન, Orden ની આવૃત્તિ, તમારું પ્લેટફોર્મ અને એપનો તાજેતરનો લોગ હોય છે. તમારી નોંધો ક્યારેય નહીં.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'આ રિપોર્ટમાં તમારું વર્ણન, Orden નું વર્ઝન, તમારું પ્લેટફોર્મ અને તાજેતરનો ઍપ લૉગ શામેલ છે, ફાઇલ પાથ વિના.',
+  'Its space is archived': 'તેની સ્પેસ આર્કાઇવ કરેલી છે',
+  'Back as {name}, edits and all': '{name} તરીકે પાછું આવ્યું, સંપાદનો સાથે',
   'Send into the running answer': 'ચાલુ જવાબમાં મોકલો',
   'Stop the answer': 'જવાબ રોકો',
   'Open every step': 'દરેક પગલું ખોલો',

@@ -514,10 +514,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *
  *  The code raised on 2026-11-04, to 5,971,000, for the bug hunt's fourth round: mostly a
  *  report's log with the reader's paths out of it (feedback-log.ts). Measured 5,970,582.
+ *
+ *  Raised on 2026-11-04 after that round's review: the code to 5,975,200, the scrubber's
+ *  addresses and quotes and a closed tab's way back (moving-space.ts), measured 5,975,028;
+ *  the catalogues to 975,800, the sheet's new words and two messages in every catalogue,
+ *  measured 975,705.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_971_000,
-  catalogues: 967_400,
+  code: 5_975_200,
+  catalogues: 975_800,
   styles: 290_000,
   fonts: 260_000,
   pages: 40_000,

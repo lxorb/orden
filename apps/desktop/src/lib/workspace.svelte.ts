@@ -3613,15 +3613,12 @@ class Workspace {
           if (!(await untrash(trashed))) continue
         }
 
-        // Back in its own space, as Chrome's comes back in its own window: a note of another
-        // space among this one's tabs is a tab no switch would find where it belongs.
-        const { ownerOf } = await import('./workspace/sets')
-        const owner = ownerOf(closed.draft.path, closed.draft.space ?? null, this.shownSpaces)
-        const away = owner !== null && owner !== this.activeSpaceId
-        if (away && this.shownSpaces.some((one) => one.id === owner)) await this.showSpace(owner)
+        const { reopening } = await import('./workspace/moving-space')
+        const draft = await reopening(closed.draft)
+        if (!draft) continue
 
         const paneId = this.panes.at(closed.paneId) ? closed.paneId : this.panes.focusedId
-        const [tab] = await this.tabsFrom([closed.draft], paneId)
+        const [tab] = await this.tabsFrom([draft], paneId)
         if (!tab) continue
 
         this.tabs = this.placed(tab, paneId, closed.at)

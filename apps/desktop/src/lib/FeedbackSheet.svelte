@@ -217,7 +217,7 @@
 
         <p class="detail">
           {t(
-            'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.',
+            'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.',
           )}
         </p>
 

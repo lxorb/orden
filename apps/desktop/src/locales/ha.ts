@@ -2011,8 +2011,10 @@ export const ha: Dictionary = {
   'Send feedback': 'Aika ra’ayi',
   'Describe the issue': 'Bayyana matsalar',
   Sent: 'An aika',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Wannan rahoton ya ƙunshi bayaninka, sigar Orden, dandalinka da sabon log na manhaja. Ba ya taɓa ƙunsar bayanan ka.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Wannan rahoton ya ƙunshi bayaninka, sigar Orden, dandalinka da rajistar manhaja ta kwanan nan, ba tare da hanyoyin fayiloli ba.',
+  'Its space is archived': 'An adana sararinsa a ma’ajiya',
+  'Back as {name}, edits and all': 'Ya dawo a matsayin {name}, tare da gyare-gyarensa',
   'Send into the running answer': 'Aika cikin amsar da ke gudana',
   'Stop the answer': 'Dakatar da amsar',
   'Open every step': 'Buɗe kowane mataki',

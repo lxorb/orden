@@ -2024,8 +2024,10 @@ export const fil: Dictionary = {
   'Send feedback': 'Magpadala ng feedback',
   'Describe the issue': 'Ilarawan ang problema',
   Sent: 'Naipadala',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Kasama sa ulat na ito ang iyong paglalarawan, ang bersyon ng Orden, ang iyong platform at ang kamakailang log ng app. Hindi kailanman kasama ang iyong mga tala.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Kasama sa ulat na ito ang iyong paglalarawan, bersyon ng Orden, iyong platform at ang kamakailang log ng app, nang wala ang mga path ng file.',
+  'Its space is archived': 'Naka-archive ang space nito',
+  'Back as {name}, edits and all': 'Bumalik bilang {name}, kasama ang mga edit',
   'Send into the running answer': 'Ipadala sa tumatakbong sagot',
   'Stop the answer': 'Ihinto ang sagot',
   'Open every step': 'Buksan ang bawat hakbang',

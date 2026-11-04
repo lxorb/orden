@@ -1984,8 +1984,10 @@ export const ps: Dictionary = {
   'Send feedback': 'نظر ولېږئ',
   'Describe the issue': 'ستونزه بیان کړئ',
   Sent: 'ولېږل شو',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'په دې راپور کې ستاسو تشریح، د Orden نسخه، ستاسو پلاتفورم او د اپ وروستی لاګ شامل دي. ستاسو یادښتونه هېڅکله نه.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'دا راپور ستاسو تشریح، د Orden نسخه، ستاسو پلیټفارم او د اپ وروستی لاګ لري، د فایل لارو پرته.',
+  'Its space is archived': 'د هغې ځای آرشیف شوی',
+  'Back as {name}, edits and all': 'د {name} په نوم راستون شو، له سمونونو سره',
   'Send into the running answer': 'روان ځواب ته لېږل',
   'Stop the answer': 'ځواب ودرول',
   'Open every step': 'ټول پړاوونه پرانیستل',

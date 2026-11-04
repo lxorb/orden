@@ -1941,8 +1941,10 @@ export const th: Dictionary = {
   'Send feedback': 'ส่งความคิดเห็น',
   'Describe the issue': 'อธิบายปัญหา',
   Sent: 'ส่งแล้ว',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'รายงานนี้มีคำอธิบายของคุณ เวอร์ชันของ Orden แพลตฟอร์มของคุณ และบันทึกล่าสุดของแอป ไม่มีโน้ตของคุณเลย',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'รายงานนี้มีคำอธิบายของคุณ เวอร์ชันของ Orden แพลตฟอร์มของคุณ และบันทึกล่าสุดของแอป โดยนำเส้นทางไฟล์ออกแล้ว',
+  'Its space is archived': 'พื้นที่ของรายการนี้ถูกเก็บถาวร',
+  'Back as {name}, edits and all': 'กลับมาเป็น {name} พร้อมการแก้ไข',
   'Send into the running answer': 'ส่งเข้าไปในคำตอบที่กำลังทำ',
   'Stop the answer': 'หยุดคำตอบ',
   'Open every step': 'เปิดทุกขั้นตอน',

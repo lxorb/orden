@@ -1984,8 +1984,10 @@ export const mr: Dictionary = {
   'Send feedback': 'अभिप्राय पाठवा',
   'Describe the issue': 'समस्या सांगा',
   Sent: 'पाठवले',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'या अहवालात तुमचे वर्णन, Orden ची आवृत्ती, तुमचा प्लॅटफॉर्म आणि ॲपचा अलीकडील लॉग असतो. तुमच्या नोंदी कधीच नसतात.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'या अहवालात तुमचे वर्णन, Orden ची आवृत्ती, तुमचे प्लॅटफॉर्म आणि अलीकडील ॲप लॉग असतो, फाइल पाथ काढून.',
+  'Its space is archived': 'त्याची स्पेस संग्रहित आहे',
+  'Back as {name}, edits and all': '{name} म्हणून परत आले, संपादनांसह',
   'Send into the running answer': 'चालू उत्तरात पाठवा',
   'Stop the answer': 'उत्तर थांबवा',
   'Open every step': 'प्रत्येक पायरी उघडा',

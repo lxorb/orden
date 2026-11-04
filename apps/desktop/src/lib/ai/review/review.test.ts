@@ -555,7 +555,10 @@ describe('a rewind over a thread that did things in any order', () => {
     ])
     const { tracksRemoved } = await import('../../agents/docs/edit')
     tracksRemoved('/space/A.md')
-    await review.undoAll(thread, review.files(thread).filter((one) => one.kind === 'trashed'))
+    await review.undoAll(
+      thread,
+      review.files(thread).filter((one) => one.kind === 'trashed'),
+    )
     expect(files()['A 2.md']).toBe('EDITED')
     expect(busy.trouble).toContain('A 2')
   })

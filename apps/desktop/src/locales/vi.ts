@@ -1959,8 +1959,10 @@ export const vi: Dictionary = {
   'Send feedback': 'Gửi phản hồi',
   'Describe the issue': 'Mô tả sự cố',
   Sent: 'Đã gửi',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Báo cáo này gồm mô tả của bạn, phiên bản Orden, nền tảng của bạn và nhật ký gần đây của ứng dụng. Không bao giờ gồm ghi chú của bạn.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Báo cáo này gồm mô tả của bạn, phiên bản Orden, nền tảng của bạn và nhật ký ứng dụng gần đây, đã bỏ đường dẫn tệp.',
+  'Its space is archived': 'Không gian của nó đã được lưu trữ',
+  'Back as {name}, edits and all': 'Đã trở lại với tên {name}, kèm các chỉnh sửa',
   'Send into the running answer': 'Gửi vào câu trả lời đang chạy',
   'Stop the answer': 'Dừng câu trả lời',
   'Open every step': 'Mở mọi bước',

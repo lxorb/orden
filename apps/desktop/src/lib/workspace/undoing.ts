@@ -484,6 +484,9 @@ function carriedPast(
 /** Puts a rename or a move back: the file where it was, and the links that
  *  followed it pointed at the old name again. */
 async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' | 'rename' }>) {
+  if (action.kind === 'move' && action.carries) {
+    ;(await import('./moving-space')).followsTo(action.from)
+  }
   const kind = ws.entryAt(action.to)?.is_dir === true ? 'folder' : 'file'
   // A move back into another space takes its chats back first, as the move did, and
   // the account refusing keeps the step to be asked for again; see chat-leaving.ts.

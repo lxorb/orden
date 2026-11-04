@@ -1,4 +1,5 @@
 import { type Panel, type PanelSide, workspace } from './workspace.svelte'
+import { TAB_KINDS } from './workspace/tab-kinds'
 
 /** The sidebars as a phone shows them: drawers that follow the thumb.
  *
@@ -65,9 +66,14 @@ class Drawer {
    *  file list; the other side exists only once a panel has been moved over - a
    *  window nobody has arranged has no right side, not an empty one - so until
    *  then a drag from that edge means nothing, which is what it meant before
-   *  this drawer existed. */
+   *  this drawer existed. Nor one with nothing to show: an outline where the tab in
+   *  front has no words to draw one from. */
   get there(): boolean {
-    return this.side === 'left' || workspace.right.length > 0
+    if (this.side === 'left') return true
+    const next = workspace.nextRight
+    if (next === null) return false
+    const kind = workspace.active?.kind
+    return next !== 'outline' || kind === undefined || kind === 'pages' || TAB_KINDS[kind].editor
   }
 
   /** How far out the drawer is as a fraction, or nothing while no finger is

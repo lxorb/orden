@@ -1,6 +1,6 @@
 /** Send feedback (#548): the bug at the foot of the sidebar and the palette's row open a
  *  sheet that sends what somebody wrote about a problem to the service, with Orden's
- *  version, the platform and the recent app log - and nothing of their notes.
+ *  version, the platform and the recent app log, with file paths out of it.
  *
  *  Emil: *"add this to the bottom left to orden as well please"*. Signed in or not: a
  *  report from somebody who cannot sign in is often the one that matters. The account's

@@ -1992,8 +1992,10 @@ export const tr: Dictionary = {
   'Send feedback': 'Geri bildirim gönder',
   'Describe the issue': 'Sorunu açıklayın',
   Sent: 'Gönderildi',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Bu rapor açıklamanızı, Orden sürümünü, platformunuzu ve uygulamanın son günlüğünü içerir. Notlarınızı asla içermez.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Bu rapor açıklamanızı, Orden sürümünü, platformunuzu ve son uygulama günlüğünü dosya yolları çıkarılmış olarak içerir.',
+  'Its space is archived': 'Alanı arşivlendi',
+  'Back as {name}, edits and all': '{name} olarak geri döndü, düzenlemeleriyle',
   'Send into the running answer': 'Süren yanıta gönder',
   'Stop the answer': 'Yanıtı durdur',
   'Open every step': 'Tüm adımları aç',

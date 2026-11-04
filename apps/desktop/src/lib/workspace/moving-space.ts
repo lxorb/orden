@@ -10,6 +10,7 @@
  *
  *  Fetched with the first move. */
 
+import { t } from '../i18n.svelte'
 import { log } from '../log'
 import { isAgentsName } from '../note-name'
 import { nameOf, samePath } from '../space-paths'
@@ -19,6 +20,7 @@ import { readSpec } from '../terminal/spec'
 import type { Tab } from '../workspace.svelte'
 import { workspace } from '../workspace.svelte'
 import { mayCarry } from './chat-carry'
+import type { Draft } from './session'
 import { ownerOf } from './sets'
 import { carried, movingOf, spacesFor } from './space-move'
 
@@ -61,6 +63,37 @@ export async function moveToSpace(ids: readonly string[], space: string): Promis
     failed.tell(() => void moveToSpace(refused, space))
   }
   return tabs.every((tab) => moved.includes(tab))
+}
+
+/** A closed tab's draft on its way back, in its own space, as Chrome's comes back in its
+ *  own window: a note of another space among this one's tabs is a tab no switch would find
+ *  where it belongs. Null where it does not come back: a file gone since switches to
+ *  nothing, and a file in a space archived since stays with it, which is said. A draft
+ *  whose space has gone comes back here: its words are nowhere else. */
+export async function reopening(draft: Draft): Promise<Draft | null> {
+  const ws = workspace
+  const owner = ownerOf(draft.path, draft.space ?? null, ws.spaces)
+  if (owner === null || owner === ws.activeSpaceId) return draft
+  if (!ws.shownSpaces.some((one) => one.id === owner)) {
+    if (draft.path === null) return { ...draft, space: ws.activeSpaceId ?? undefined }
+    const { busy } = await import('../busy.svelte')
+    busy.failed(t('Its space is archived'))
+    return null
+  }
+  if (draft.path !== null && !draft.dirty) {
+    const { onDisk } = await import('../on-disk')
+    if (!(await onDisk(draft.path))) return null
+  }
+  await ws.showSpace(owner)
+  return draft
+}
+
+/** Throws where a move's tabs could not follow its file to `path`: a space archived or
+ *  gone since is no set on screen or to switch to, and a tab sent there would vanish. So
+ *  the step stays, to be said and asked for again. */
+export function followsTo(path: string): void {
+  const held = workspace.shownSpaces.some((one) => one.id === ownerOf(path, null, workspace.spaces))
+  if (!held) throw new Error(`the space of ${path} is not here`)
 }
 
 /** The tabs of the file at `path` into the set of the space holding it now: a move between

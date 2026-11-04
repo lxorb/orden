@@ -1979,8 +1979,10 @@ export const hi: Dictionary = {
   'Send feedback': 'प्रतिक्रिया भेजें',
   'Describe the issue': 'समस्या बताएँ',
   Sent: 'भेज दिया',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'इस रिपोर्ट में आपका विवरण, Orden का संस्करण, आपका प्लेटफ़ॉर्म और ऐप का हाल का लॉग होता है। आपके नोट कभी नहीं।',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'इस रिपोर्ट में आपका विवरण, Orden का संस्करण, आपका प्लेटफ़ॉर्म और हाल का ऐप लॉग शामिल है, फ़ाइल पाथ हटाकर।',
+  'Its space is archived': 'इसका स्पेस संग्रहित है',
+  'Back as {name}, edits and all': '{name} के रूप में वापस, संपादनों के साथ',
   'Send into the running answer': 'चल रहे उत्तर में भेजें',
   'Stop the answer': 'उत्तर रोकें',
   'Open every step': 'हर चरण खोलें',

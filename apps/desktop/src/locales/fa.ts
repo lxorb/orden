@@ -1984,8 +1984,10 @@ export const fa: Dictionary = {
   'Send feedback': 'ارسال بازخورد',
   'Describe the issue': 'مشکل را شرح دهید',
   Sent: 'ارسال شد',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'این گزارش شامل توضیح شما، نسخهٔ Orden، پلتفرم شما و گزارش اخیر برنامه است و هرگز یادداشت‌های شما را در بر نمی‌گیرد.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'این گزارش شامل توضیح شما، نسخهٔ Orden، سکوی شما و گزارش اخیر برنامه است، بدون مسیر فایل‌ها.',
+  'Its space is archived': 'فضای آن بایگانی شده است',
+  'Back as {name}, edits and all': 'با نام {name} برگشت، همراه با ویرایش‌ها',
   'Send into the running answer': 'ارسال به پاسخ در حال اجرا',
   'Stop the answer': 'توقف پاسخ',
   'Open every step': 'باز کردن همه مراحل',

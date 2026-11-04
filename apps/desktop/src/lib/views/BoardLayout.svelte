@@ -1135,6 +1135,14 @@
     width: 100%;
   }
 
+  /* Up and down are the browser's, and sideways the page turn's: left to the browser it
+     cancels the pointer as it decides, and `swipeEnd` never hears the swipe end. On the
+     column's scroller as well, as an element's own decides for a pan up to its scroller. */
+  .one,
+  .one :global(.scroll) {
+    touch-action: pan-y pinch-zoom;
+  }
+
   .lanes {
     display: flex;
     flex-direction: column;

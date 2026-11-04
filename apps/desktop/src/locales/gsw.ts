@@ -1993,8 +1993,10 @@ export const gsw: Dictionary = {
   'Send feedback': 'Feedback schicke',
   'Describe the issue': 'Beschrieb s Problem',
   Sent: 'Gschickt',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'De Bricht enthaltet dini Beschriibig, d Version vo Orden, dini Plattform und s aktuelle App-Protokoll. Dini Notize enthaltet er nie.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Dä Bricht enthaltet dini Beschribig, d Version vo Orden, dini Plattform und s aktuelle App-Protokoll, ohni Dateipfäd.',
+  'Its space is archived': 'Sin Space isch archiviert',
+  'Back as {name}, edits and all': 'Zrugg als {name}, mit de Änderige',
   'Send into the running answer': 'I die laufend Antwort schicke',
   'Stop the answer': 'Antwort aahalte',
   'Open every step': 'Alli Schritt uftue',

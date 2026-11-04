@@ -34,7 +34,9 @@ export async function redoLastFileAction(ws: DoesAgain): Promise<void> {
     await ws.undone.batch(() => again(ws, action))
   } catch {
     // Something has taken the place since; the redo stays where it was, to be
-    // asked for again.
+    // asked for again, and says so.
+    const { failed } = await import('../views/failed.svelte')
+    failed.tell(() => void redoLastFileAction(ws), true)
     return
   }
 
@@ -49,6 +51,7 @@ async function again(ws: DoesAgain, action: FileAction): Promise<void> {
     case 'move':
       // A move the one before it caused comes about again with that one.
       if (action.follows) break
+      if (action.carries) (await import('./moving-space')).followsTo(action.to)
       await ws.move(action.from, folderOf(action.to), action.carries ? 'carries' : undefined)
       if (action.carries) await (await import('./moving-space')).tabsFollow(action.to)
       break

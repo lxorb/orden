@@ -2013,8 +2013,10 @@ export const ta: Dictionary = {
   'Send feedback': 'கருத்தை அனுப்பு',
   'Describe the issue': 'சிக்கலை விவரிக்கவும்',
   Sent: 'அனுப்பப்பட்டது',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'இந்த அறிக்கையில் உங்கள் விவரம், Orden பதிப்பு, உங்கள் தளம், ஆப்பின் சமீபத்திய பதிவு ஆகியவை இருக்கும். உங்கள் குறிப்புகள் ஒருபோதும் இருக்காது.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'இந்த அறிக்கையில் உங்கள் விளக்கம், Orden பதிப்பு, உங்கள் தளம் மற்றும் சமீபத்திய செயலி பதிவு அடங்கும், கோப்புப் பாதைகள் நீக்கப்பட்டு.',
+  'Its space is archived': 'அதன் இடம் காப்பகப்படுத்தப்பட்டுள்ளது',
+  'Back as {name}, edits and all': '{name} என மீண்டது, திருத்தங்களுடன்',
   'Send into the running answer': 'நடக்கும் பதிலுக்குள் அனுப்பு',
   'Stop the answer': 'பதிலை நிறுத்து',
   'Open every step': 'எல்லா படிகளையும் திற',

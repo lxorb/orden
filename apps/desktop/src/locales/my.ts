@@ -1964,8 +1964,10 @@ export const my: Dictionary = {
   'Send feedback': 'အကြံပြုချက် ပို့ရန်',
   'Describe the issue': 'ပြဿနာကို ဖော်ပြပါ',
   Sent: 'ပို့ပြီး',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'ဤအစီရင်ခံစာတွင် သင့်ဖော်ပြချက်၊ Orden ဗားရှင်း၊ သင့်ပလက်ဖောင်းနှင့် အက်ပ်၏ မကြာသေးမီ log ပါဝင်သည်။ သင့်မှတ်စုများ ဘယ်တော့မှ မပါဝင်ပါ။',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'ဤအစီရင်ခံစာတွင် သင့်ဖော်ပြချက်၊ Orden ဗားရှင်း၊ သင့်ပလက်ဖောင်းနှင့် မကြာသေးမီက အက်ပ်မှတ်တမ်းတို့ ပါဝင်ပြီး ဖိုင်လမ်းကြောင်းများကို ဖယ်ရှားထားသည်။',
+  'Its space is archived': '၎င်း၏ space ကို သိမ်းဆည်းထားသည်',
+  'Back as {name}, edits and all': '{name} အဖြစ် ပြန်လာပြီ၊ တည်းဖြတ်မှုများနှင့်အတူ',
   'Send into the running answer': 'လုပ်ဆောင်နေသော အဖြေထဲ ပို့ရန်',
   'Stop the answer': 'အဖြေကို ရပ်ရန်',
   'Open every step': 'အဆင့်တိုင်း ဖွင့်ရန်',

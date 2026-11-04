@@ -1958,8 +1958,10 @@ export const am: Dictionary = {
   'Send feedback': 'አስተያየት ላክ',
   'Describe the issue': 'ችግሩን ይግለጹ',
   Sent: 'ተልኳል',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'ይህ ሪፖርት መግለጫዎን፣ የOrden ዕትምን፣ መድረክዎን እና የቅርብ ጊዜውን የመተግበሪያ ምዝግብ ያካትታል። ማስታወሻዎችዎን ፈጽሞ አያካትትም።',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'ይህ ሪፖርት መግለጫዎን፣ የOrden ስሪትን፣ መድረክዎን እና የቅርብ ጊዜውን የመተግበሪያ ምዝግብ ያካትታል፤ የፋይል መንገዶች ተወግደዋል።',
+  'Its space is archived': 'ቦታው በማህደር ተቀምጧል',
+  'Back as {name}, edits and all': 'እንደ {name} ተመልሷል፣ ከአርትዖቶቹ ጋር',
   'Send into the running answer': 'ወደ ሚሄደው መልስ ላክ',
   'Stop the answer': 'መልሱን አቁም',
   'Open every step': 'እያንዳንዱን ደረጃ ክፈት',

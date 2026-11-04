@@ -1993,8 +1993,10 @@ export const te: Dictionary = {
   'Send feedback': 'అభిప్రాయం పంపండి',
   'Describe the issue': 'సమస్యను వివరించండి',
   Sent: 'పంపబడింది',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'ఈ నివేదికలో మీ వివరణ, Orden వెర్షన్, మీ ప్లాట్‌ఫామ్, యాప్ ఇటీవలి లాగ్ ఉంటాయి. మీ నోట్‌లు ఎప్పుడూ ఉండవు.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'ఈ నివేదికలో మీ వివరణ, Orden వెర్షన్, మీ ప్లాట్‌ఫామ్ మరియు ఇటీవలి యాప్ లాగ్ ఉంటాయి, ఫైల్ పాత్‌లు తీసివేసి.',
+  'Its space is archived': 'దాని స్పేస్ ఆర్కైవ్ చేయబడింది',
+  'Back as {name}, edits and all': '{name}గా తిరిగి వచ్చింది, సవరణలతో',
   'Send into the running answer': 'నడుస్తున్న సమాధానంలోకి పంపండి',
   'Stop the answer': 'సమాధానాన్ని ఆపండి',
   'Open every step': 'ప్రతి దశను తెరవండి',

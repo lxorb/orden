@@ -59,6 +59,7 @@
   import { shapeOf as membraneOf } from './membrane'
   import { keep, storedText } from '../stored'
   import { canWriteAt } from '../sharing.svelte'
+  import { shortcuts } from '../shortcuts.svelte'
   import { mayCarry } from '../workspace/chat-carry'
   import type { Frame } from '../workspace/pane-tree'
   import { movingOf, spacesFor } from '../workspace/space-move'
@@ -688,7 +689,43 @@
     else if (untrack(() => shown)) untrack(leave)
   })
 
-  $effect(() => (shown && tabOverview.open ? overlays.show(close) : undefined))
+  /** How many layers there are with this one the top of them: a sheet or a menu over it
+   *  has the keyboard, and what is on the view's keys is not asked. */
+  let layers = 0
+  $effect(() => {
+    if (!shown || !tabOverview.open) return
+    const gone = overlays.show(close)
+    layers = overlays.depth
+    return gone
+  })
+
+  /** The keyboard on the window it was on, or on the view. */
+  function holdKeys() {
+    ;(elements.get(at ?? '')?.window ?? canvasNode)?.focus({ preventScroll: true })
+  }
+
+  /** The keyboard dropped on the page, the window or the toast that had it gone: it stays
+   *  with the view, which is what Escape and Ctrl+Z are about. */
+  function keysLost() {
+    if (!shown || !tabOverview.open || overlays.depth > layers) return
+    const at = document.activeElement
+    if (at === null || at === document.body) holdKeys()
+  }
+  $effect(() => {
+    void windows
+    queueMicrotask(keysLost)
+  })
+
+  /** The view covers the app, so nothing behind it has the keyboard: a toast going hands it
+   *  back to the note (UndoToast.svelte), where words typed would land unseen. Its own row
+   *  is over the view, and so is anything opened over it. */
+  function keptFromBehind(event: FocusEvent) {
+    if (!shown || !tabOverview.open || overlays.depth > layers) return
+    const to = event.target
+    if (!(to instanceof Element) || !to.closest('[data-region]')) return
+    if (to.closest('[data-notices], [role="dialog"], [role="alertdialog"]')) return
+    holdKeys()
+  }
   $effect(() => closeOnBack(shown && tabOverview.open, close))
 
   /** A window gets its flight the first time it is drawn: from its home on the way out,
@@ -913,6 +950,18 @@
   }
 
   function keyed(event: KeyboardEvent) {
+    if (overlays.depth > layers) return
+    // Undo and redo of what a drop did, which the sidebars' keys do not reach from here.
+    const undo = shortcuts.pressed('edit.undo', event)
+    if (
+      undo ||
+      shortcuts.pressed('edit.redo', event) ||
+      shortcuts.pressed('edit.redo.alt', event)
+    ) {
+      event.preventDefault()
+      void (undo ? workspace.undoFileAction() : workspace.redoFileAction())
+      return
+    }
     const way = wayOf(event.key)
     if (!way || chorded(event)) return
     const from = windows.findIndex((one) => one.tab.id === at)
@@ -1037,6 +1086,12 @@
   onresize={() => {
     width = window.innerWidth
     height = window.innerHeight
+  }}
+  onfocusin={keptFromBehind}
+  onfocusout={() => setTimeout(keysLost, 0)}
+  onkeydown={(event) => {
+    // The keyboard nowhere, as a window taking it away leaves it: the view's all the same.
+    if (shown && tabOverview.open && event.target === document.body) keyed(event)
   }}
 />
 

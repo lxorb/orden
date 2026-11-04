@@ -274,6 +274,13 @@ class Review {
     await this.undo(this.changes(thread, false))
   }
 
+  /** All of a thread's card kept, the edits of a note deleted with it: back, it does not
+   *  ask again about what was kept. */
+  keepAll(thread: Reviewed, files: readonly FileChange[]): void {
+    this.keep(this.changes(thread))
+    this.keepFiles(files)
+  }
+
   /** Moves and deletes the reader has read: they leave the list. */
   keepFiles(files: readonly FileChange[]): void {
     for (const one of files) this.filesDone.add(one.id)

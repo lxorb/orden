@@ -2097,8 +2097,10 @@ export const ar: Dictionary = {
   'Send feedback': 'إرسال ملاحظات',
   'Describe the issue': 'صف المشكلة',
   Sent: 'أُرسلت',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'يتضمن هذا التقرير وصفك وإصدار Orden ومنصتك وسجل التطبيق الأخير، ولا يتضمن ملاحظاتك أبدًا.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'يتضمن هذا التقرير وصفك وإصدار Orden ومنصتك وسجل التطبيق الأخير، بعد إزالة مسارات الملفات.',
+  'Its space is archived': 'مساحتها مؤرشفة',
+  'Back as {name}, edits and all': 'عادت باسم {name}، مع تعديلاتها',
   'Send into the running answer': 'إرسال إلى الإجابة الجارية',
   'Stop the answer': 'إيقاف الإجابة',
   'Open every step': 'فتح كل الخطوات',

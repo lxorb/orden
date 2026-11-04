@@ -1973,8 +1973,10 @@ export const id: Dictionary = {
   'Send feedback': 'Kirim masukan',
   'Describe the issue': 'Jelaskan masalahnya',
   Sent: 'Terkirim',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Laporan ini berisi deskripsi Anda, versi Orden, platform Anda, dan log aplikasi terbaru. Catatan Anda tidak pernah disertakan.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Laporan ini berisi deskripsi Anda, versi Orden, platform Anda, dan log aplikasi terbaru, tanpa jalur file.',
+  'Its space is archived': 'Ruangnya diarsipkan',
+  'Back as {name}, edits and all': 'Kembali sebagai {name}, beserta editannya',
   'Send into the running answer': 'Kirim ke jawaban yang sedang berjalan',
   'Stop the answer': 'Hentikan jawaban',
   'Open every step': 'Buka semua langkah',

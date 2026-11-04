@@ -1981,8 +1981,10 @@ export const bn: Dictionary = {
   'Send feedback': 'মতামত পাঠান',
   'Describe the issue': 'সমস্যাটি বর্ণনা করুন',
   Sent: 'পাঠানো হয়েছে',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'এই রিপোর্টে আপনার বর্ণনা, Orden-এর সংস্করণ, আপনার প্ল্যাটফর্ম আর অ্যাপের সাম্প্রতিক লগ থাকে। আপনার নোট কখনো থাকে না।',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'এই রিপোর্টে আপনার বিবরণ, Orden-এর সংস্করণ, আপনার প্ল্যাটফর্ম এবং সাম্প্রতিক অ্যাপ লগ থাকে, ফাইল পাথ বাদ দিয়ে।',
+  'Its space is archived': 'এর স্পেস আর্কাইভ করা আছে',
+  'Back as {name}, edits and all': '{name} নামে ফিরে এসেছে, সম্পাদনাসহ',
   'Send into the running answer': 'চলমান উত্তরে পাঠান',
   'Stop the answer': 'উত্তর থামান',
   'Open every step': 'প্রতিটি ধাপ খুলুন',

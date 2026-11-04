@@ -1930,8 +1930,10 @@ export const zhHantHK: Dictionary = {
   'Send feedback': '傳送意見',
   'Describe the issue': '描述問題',
   Sent: '已傳送',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    '此報告包括你的描述、Orden 的版本、你的平台和應用程式最近的記錄，絕不包括你的筆記。',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    '此報告包含你的描述、Orden 版本、你的平台和最近的應用程式記錄,檔案路徑已移除。',
+  'Its space is archived': '它的空間已封存',
+  'Back as {name}, edits and all': '已恢復為 {name},編輯內容仍在',
   'Send into the running answer': '傳送到進行中的回答',
   'Stop the answer': '停止回答',
   'Open every step': '展開所有步驟',

@@ -84,9 +84,9 @@ test('a name in capitals, or with spaces and no extension, goes all the same', (
 })
 
 test('an address keeps where it goes, not who or what it carries', () => {
-  expect(scrubbedLog('12:00 WARN  https://anna:hunter2@example.org/a/b?token=SECRET&x=1#y failed')).toBe(
-    '12:00 WARN  https://example.org/… failed',
-  )
+  expect(
+    scrubbedLog('12:00 WARN  https://anna:hunter2@example.org/a/b?token=SECRET&x=1#y failed'),
+  ).toBe('12:00 WARN  https://example.org/… failed')
   expect(scrubbedLog('12:00 WARN  https://api.orden.example/v1/push?token=SECRET failed')).toBe(
     '12:00 WARN  https://api.orden.example/v1/push failed',
   )
@@ -102,9 +102,11 @@ test('an address keeps where it goes, not who or what it carries', () => {
 })
 
 test('an error quoting words has them taken out', () => {
-  expect(scrubbedLog(`12:00 ERROR SyntaxError: Unexpected token 'D', "Dear lawyer, I"... is not valid JSON`)).toBe(
-    `12:00 ERROR SyntaxError: Unexpected token <quoted>, <quoted>... is not valid JSON`,
-  )
+  expect(
+    scrubbedLog(
+      `12:00 ERROR SyntaxError: Unexpected token 'D', "Dear lawyer, I"... is not valid JSON`,
+    ),
+  ).toBe(`12:00 ERROR SyntaxError: Unexpected token <quoted>, <quoted>... is not valid JSON`)
 })
 
 test('what is said around a path stays', () => {

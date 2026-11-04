@@ -40,6 +40,11 @@ function keepThumb(event: TouchEvent) {
   if (thumbCarrying && event.cancelable) event.preventDefault()
 }
 
+/** Whether a held thumb is carrying something, which is no one else's gesture. */
+export function isThumbCarrying(): boolean {
+  return thumbCarrying
+}
+
 const listening = new WeakMap<HTMLElement, number>()
 
 /** Keeps a thumb that has been held long enough from the browser: Trello's and Todoist's
