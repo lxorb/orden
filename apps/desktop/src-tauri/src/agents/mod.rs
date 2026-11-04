@@ -196,14 +196,29 @@ impl Caller {
 }
 
 /// Who a bearer token belongs to, other than the installation's secret: an agent, or
-/// nobody. A token the app lent one of the sidebar's own sessions is that provider's
-/// agent in that session's mode.
+/// nobody. A client paired over MCP has Full permissions (`connected`); a token the app
+/// lent one of the sidebar's own sessions is that provider's agent in that session's mode.
 pub fn caller_for(app: &AppHandle, token: &str) -> Option<Caller> {
-    state(app)
-        .grants
-        .by_token(app, token)
-        .or_else(|| crate::ai_agent::lent(app, token))
-        .map(|grant| Caller::Agent(Box::new(grant)))
+    if let Some(grant) = state(app).grants.by_token(app, token) {
+        return Some(Caller::Agent(Box::new(connected(grant))));
+    }
+    crate::ai_agent::lent(app, token).map(|grant| Caller::Agent(Box::new(grant)))
+}
+
+/// A client that connected over MCP (#1099), as every guard reads it: Full permissions.
+/// The agent on the other end - Claude Code, Codex - has a permission system of its own,
+/// which the reader set up there and which is answerable for what it does; Orden asking
+/// again was a second question for every call, all the time. So it is never asked,
+/// handed a step back, or refused on the grounds of the grant: the one decision is
+/// `Grant::holds` and `Grant::asks` (#1072), which `Mode::Autonomous` answers, and no
+/// tool has a rule of its own. What the reader set as limits of their own still holds -
+/// the spaces it reaches, the sites they blocked (`policy::site_allowed`), the calls a
+/// minute - and so does what is never handed to a model whoever asks: a password's
+/// value, a card's number. Only the reader's own agents connect: the endpoint answers on
+/// this machine alone, and a client is paired once by the reader's Allow (9.1).
+fn connected(mut grant: Grant) -> Grant {
+    grant.mode = grants::Mode::Autonomous;
+    grant
 }
 
 /// Answers one verb of the crate's own, and writes it in the log.
@@ -721,6 +736,45 @@ mod tests {
 
         // The reader's own command line is not an agent.
         assert!(may_ask_the_window(&Caller::Reader, "files.write").is_ok());
+    }
+
+    /// #1099: whatever the grant kept says, a client connected over MCP is asked nothing
+    /// and holds every scope, while the reader's blocked sites and spaces still hold.
+    #[test]
+    fn a_client_connected_over_mcp_is_asked_nothing() {
+        let mut kept = Grant::third_party("codex".into(), "Codex");
+        kept.asks.insert(Category::Deleting, true);
+        kept.sites
+            .insert("bank.example".into(), grants::SiteRule::Deny);
+        kept.spaces = grants::Spaces::Named(vec!["Work".into()]);
+        let grant = connected(kept);
+
+        for category in [
+            Category::Paying,
+            Category::Sending,
+            Category::Publishing,
+            Category::Deleting,
+            Category::SigningIn,
+            Category::Settings,
+            Category::Terminal,
+            Category::Files,
+            Category::Writing,
+            Category::Showing,
+            Category::Takeover,
+        ] {
+            assert!(!grant.asks(category), "{category:?}");
+        }
+        assert!(grant.asks_nothing());
+        for scope in Scope::ALL {
+            assert!(grant.holds(scope), "{scope:?}");
+        }
+        let agent = Caller::Agent(Box::new(grant.clone()));
+        assert!(may_ask_the_window(&agent, "write_setting").is_ok());
+
+        assert!(
+            policy::site_allowed(&grant, "https://bank.example/", verbs::Store::Reader).is_err()
+        );
+        assert!(!grant.spaces.reach("Home"));
     }
 
     #[test]

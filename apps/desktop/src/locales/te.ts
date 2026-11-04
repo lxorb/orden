@@ -2078,6 +2078,8 @@ export const te: Dictionary = {
   'Every space': 'ప్రతి స్పేస్',
   Sites: 'సైట్‌లు',
   'Asks first': 'ముందుగా అడుగుతుంది',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'ఇది MCP ద్వారా కలుస్తుంది మరియు అక్కడ తన అనుమతులను తానే చూసుకుంటుంది: Orden దీనిని ఏమీ అడగదు. కింద ఉన్న మీ స్పేస్‌లు, బ్లాక్ చేసిన సైట్‌లు, పరిమితులు ఇప్పటికీ వర్తిస్తాయి.',
   Limits: 'పరిమితులు',
   'Clear what {name} did?': '{name} చేసినదాన్ని క్లియర్ చేయాలా?',
   'Show earlier': 'మునుపటివి చూపించు',

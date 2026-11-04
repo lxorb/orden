@@ -2110,6 +2110,8 @@ export const de: Dictionary = {
   'Every space': 'Alle Bereiche',
   Sites: 'Websites',
   'Asks first': 'Fragt vorher',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Es verbindet sich über MCP und regelt seine Berechtigungen dort selbst: Orden fragt es nichts. Deine Spaces, gesperrten Websites und Grenzen unten gelten weiterhin.',
   Limits: 'Grenzen',
   'Clear what {name} did?': 'Löschen, was {name} getan hat?',
   'Show earlier': 'Frühere anzeigen',

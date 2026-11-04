@@ -2070,6 +2070,8 @@ export const mr: Dictionary = {
   'Every space': 'प्रत्येक स्पेस',
   Sites: 'साइट्स',
   'Asks first': 'आधी विचारतो',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'हे MCP द्वारे जोडले जाते आणि तिथे स्वतःच्या परवानग्या स्वतः सांभाळते: Orden याला काहीही विचारत नाही. खालील तुमचे स्पेस, ब्लॉक केलेल्या साइट आणि मर्यादा तरीही लागू राहतात.',
   Limits: 'मर्यादा',
   'Clear what {name} did?': '{name} ने जे केले ते साफ करायचे?',
   'Show earlier': 'आधीचे दाखवा',

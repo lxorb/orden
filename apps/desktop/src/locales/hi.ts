@@ -2064,6 +2064,8 @@ export const hi: Dictionary = {
   'Every space': 'हर स्पेस',
   Sites: 'साइटें',
   'Asks first': 'पहले पूछता है',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'यह MCP से जुड़ता है और वहीं अपनी अनुमतियाँ खुद सँभालता है: Orden इससे कुछ नहीं पूछता। नीचे आपके स्पेस, ब्लॉक की गई साइटें और सीमाएँ फिर भी लागू रहती हैं।',
   Limits: 'सीमाएँ',
   'Clear what {name} did?': '{name} ने जो किया उसे साफ़ करें?',
   'Show earlier': 'पहले के दिखाएँ',

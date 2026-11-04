@@ -2098,6 +2098,8 @@ export const ha: Dictionary = {
   'Every space': 'Kowane wuri',
   Sites: 'Shafuka',
   'Asks first': 'Yana tambaya da farko',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Yana haɗuwa ta MCP kuma yana sarrafa izininsa da kansa a can: Orden ba ya tambayarsa komai. Wurarenka, shafukan da ka toshe da iyakoki a ƙasa suna nan daram.',
   Limits: 'Iyakoki',
   'Clear what {name} did?': 'Share abin da {name} ya yi?',
   'Show earlier': 'Nuna na baya',

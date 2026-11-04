@@ -2072,6 +2072,8 @@ export const pa: Dictionary = {
   'Every space': 'ਹਰ ਥਾਂ',
   Sites: 'ਸਾਈਟਾਂ',
   'Asks first': 'ਪਹਿਲਾਂ ਪੁੱਛਦਾ ਹੈ',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'ਇਹ MCP ਰਾਹੀਂ ਜੁੜਦਾ ਹੈ ਅਤੇ ਉੱਥੇ ਆਪਣੀਆਂ ਇਜਾਜ਼ਤਾਂ ਆਪ ਸੰਭਾਲਦਾ ਹੈ: Orden ਇਸ ਤੋਂ ਕੁਝ ਨਹੀਂ ਪੁੱਛਦਾ। ਹੇਠਾਂ ਤੁਹਾਡੇ ਸਪੇਸ, ਬਲੌਕ ਕੀਤੀਆਂ ਸਾਈਟਾਂ ਅਤੇ ਸੀਮਾਵਾਂ ਫਿਰ ਵੀ ਲਾਗੂ ਰਹਿੰਦੀਆਂ ਹਨ।',
   Limits: 'ਹੱਦਾਂ',
   'Clear what {name} did?': '{name} ਨੇ ਜੋ ਕੀਤਾ ਉਹ ਸਾਫ਼ ਕਰਨਾ ਹੈ?',
   'Show earlier': 'ਪਹਿਲਾਂ ਵਾਲੇ ਦਿਖਾਓ',

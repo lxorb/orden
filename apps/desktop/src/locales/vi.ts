@@ -2045,6 +2045,8 @@ export const vi: Dictionary = {
   'Every space': 'Mọi không gian',
   Sites: 'Trang web',
   'Asks first': 'Hỏi trước',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Nó kết nối qua MCP và tự quản lý quyền của mình ở đó: Orden không hỏi gì. Các không gian, trang đã chặn và giới hạn bên dưới vẫn có hiệu lực.',
   Limits: 'Giới hạn',
   'Clear what {name} did?': 'Xóa những gì {name} đã làm?',
   'Show earlier': 'Hiện cũ hơn',

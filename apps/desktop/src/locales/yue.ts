@@ -2012,6 +2012,8 @@ export const yue: Dictionary = {
   'Every space': '所有空間',
   Sites: '網站',
   'Asks first': '先問',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    '佢經 MCP 連接，喺嗰邊自己管理權限：Orden 乜都唔會問。下面你嘅空間、封鎖咗嘅網站同上限照樣有效。',
   Limits: '限制',
   'Clear what {name} did?': '清除 {name} 做過嘅嘢？',
   'Show earlier': '顯示更早',

@@ -2052,6 +2052,8 @@ export const jv: Dictionary = {
   'Every space': 'Saben papan',
   Sites: 'Situs',
   'Asks first': 'Takon dhisik',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Iki nyambung liwat MCP lan ngatur idin dhewe ing kana: Orden ora takon apa-apa. Space, situs sing diblokir lan watesan ing ngisor tetep ditrapake.',
   Limits: 'Watesan',
   'Clear what {name} did?': 'Busak apa sing ditindakake {name}?',
   'Show earlier': 'Tampilake sadurunge',

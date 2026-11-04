@@ -2108,6 +2108,8 @@ export const ptBR: Dictionary = {
   'Every space': 'Todos os espaços',
   Sites: 'Sites',
   'Asks first': 'Pergunta antes',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Ele se conecta por MCP e gerencia as próprias permissões lá: o Orden não pergunta nada. Seus espaços, sites bloqueados e limites abaixo continuam valendo.',
   Limits: 'Limites',
   'Clear what {name} did?': 'Apagar o que {name} fez?',
   'Show earlier': 'Mostrar anteriores',

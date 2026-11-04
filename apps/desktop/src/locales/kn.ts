@@ -2088,6 +2088,8 @@ export const kn: Dictionary = {
   'Every space': 'ಪ್ರತಿ ಸ್ಪೇಸ್',
   Sites: 'ಸೈಟ್‌ಗಳು',
   'Asks first': 'ಮೊದಲು ಕೇಳುತ್ತದೆ',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'ಇದು MCP ಮೂಲಕ ಸಂಪರ್ಕಿಸುತ್ತದೆ ಮತ್ತು ಅಲ್ಲಿ ತನ್ನ ಅನುಮತಿಗಳನ್ನು ತಾನೇ ನಿರ್ವಹಿಸುತ್ತದೆ: Orden ಏನನ್ನೂ ಕೇಳುವುದಿಲ್ಲ. ಕೆಳಗಿನ ನಿಮ್ಮ ಸ್ಪೇಸ್‌ಗಳು, ನಿರ್ಬಂಧಿಸಿದ ಸೈಟ್‌ಗಳು ಮತ್ತು ಮಿತಿಗಳು ಇನ್ನೂ ಅನ್ವಯಿಸುತ್ತವೆ.',
   Limits: 'ಮಿತಿಗಳು',
   'Clear what {name} did?': '{name} ಮಾಡಿದ್ದನ್ನು ಅಳಿಸಬೇಕೆ?',
   'Show earlier': 'ಹಿಂದಿನವನ್ನು ತೋರಿಸಿ',

@@ -2070,6 +2070,8 @@ export const ps: Dictionary = {
   'Every space': 'هر ځای',
   Sites: 'سایټونه',
   'Asks first': 'لومړی پوښتي',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'دا د MCP له لارې نښلي او هلته خپل اجازې پخپله اداره کوي: Orden ترې هېڅ نه پوښتي. لاندې ستاسو ځایونه، بند شوي سایټونه او حدونه لا هم پلي دي.',
   Limits: 'حدونه',
   'Clear what {name} did?': 'هغه څه پاک شي چې {name} کړي؟',
   'Show earlier': 'پخواني وښیئ',

@@ -2098,6 +2098,8 @@ export const sw: Dictionary = {
   'Every space': 'Kila nafasi',
   Sites: 'Tovuti',
   'Asks first': 'Huuliza kwanza',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Huunganishwa kupitia MCP na husimamia ruhusa zake huko yenyewe: Orden haiulizi chochote. Nafasi zako, tovuti ulizozuia na mipaka iliyo hapa chini bado inatumika.',
   Limits: 'Vikomo',
   'Clear what {name} did?': 'Futa alichofanya {name}?',
   'Show earlier': 'Onyesha za awali',

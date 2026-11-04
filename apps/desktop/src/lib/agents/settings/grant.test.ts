@@ -6,7 +6,6 @@ import { describe, expect, it } from 'vitest'
 import type { Grant, Scope } from '../verbs'
 import { readGrant } from './crate'
 import {
-  askApplies,
   asks,
   ownGrant,
   reaches,
@@ -14,7 +13,6 @@ import {
   sitesOf,
   thirdPartyGrant,
   trifecta,
-  withAsk,
   withEverySpace,
   withLimit,
   withListed,
@@ -131,20 +129,6 @@ describe('the AI sidebar’s own agents', () => {
 })
 
 describe('the rest of a grant', () => {
-  it('asks unless the reader turned a question off, and keeps on as nothing', () => {
-    const off = withAsk(own(), 'sending', false)
-    expect(off.asks).toEqual({ sending: false })
-    expect(asks(off, 'sending')).toBe(false)
-    expect(withAsk(off, 'sending', true).asks).toEqual({})
-  })
-
-  it('offers a question only where it can come up', () => {
-    expect(askApplies(only('notes.read'), 'paying')).toBe(false)
-    expect(askApplies(only('browser.reader'), 'paying')).toBe(true)
-    expect(askApplies(own(), 'settings')).toBe(false)
-    expect(askApplies(only('settings'), 'settings')).toBe(true)
-  })
-
   it('names itself, but never with nothing', () => {
     expect(withName(own(), '  Research  ').name).toBe('Research')
     expect(withName(own(), '   ').name).toBe('Claude Code')

@@ -2182,6 +2182,8 @@ export const ar: Dictionary = {
   'Every space': 'كل المساحات',
   Sites: 'المواقع',
   'Asks first': 'يسأل أولًا',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'يتصل عبر MCP ويدير أذوناته بنفسه هناك: لا يسأله Orden شيئًا. لكن مساحاتك والمواقع المحظورة والحدود أدناه تبقى سارية.',
   Limits: 'الحدود',
   'Clear what {name} did?': 'مسح ما فعله {name}؟',
   'Show earlier': 'عرض الأقدم',

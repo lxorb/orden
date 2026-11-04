@@ -2014,6 +2014,8 @@ export const zhHantHK: Dictionary = {
   'Every space': '所有空間',
   Sites: '網站',
   'Asks first': '先詢問',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    '它經 MCP 連接，並在那裏自行管理權限：Orden 不會詢問它任何事。下方的空間、已封鎖的網站和限制依然有效。',
   Limits: '限制',
   'Clear what {name} did?': '清除 {name} 的活動？',
   'Show earlier': '顯示較早',

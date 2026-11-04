@@ -2062,6 +2062,8 @@ export const ms: Dictionary = {
   'Every space': 'Setiap ruang',
   Sites: 'Laman',
   'Asks first': 'Bertanya dahulu',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Ia bersambung melalui MCP dan mengurus kebenarannya sendiri di sana: Orden tidak bertanya apa-apa. Ruang, laman yang disekat dan had di bawah masih terpakai.',
   Limits: 'Had',
   'Clear what {name} did?': 'Kosongkan apa yang {name} lakukan?',
   'Show earlier': 'Tunjukkan lebih awal',

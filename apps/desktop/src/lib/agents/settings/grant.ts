@@ -59,21 +59,6 @@ const ALL_SCOPES: readonly Scope[] = [
   'agents',
 ]
 
-/** The questions the reader may turn off, and what an agent needs to hold for the
- *  question ever to come up: asking before paying means nothing to an agent with no
- *  browser. Signing in is one like the rest (#1072): pressing a sign-in form's button
- *  once a password manager has filled it, or typing into one, asks as this says. */
-export const ASKS: readonly { category: Category; needs: readonly Scope[] }[] = [
-  { category: 'paying', needs: ['browser', 'browser.reader'] },
-  { category: 'sending', needs: ['browser', 'browser.reader'] },
-  { category: 'signing_in', needs: ['browser', 'browser.reader'] },
-  { category: 'publishing', needs: ['workspace', 'chats.write'] },
-  { category: 'deleting', needs: ['browser', 'browser.reader', 'tree'] },
-  { category: 'files', needs: ['browser', 'browser.reader'] },
-  { category: 'settings', needs: ['settings'] },
-  { category: 'terminal', needs: ['terminal'] },
-]
-
 /** The limits a slider may set: the crate's defaults sit inside each. Eight tabs is the
  *  most every agent together keeps open (6.4). Memory is the browser's, in MB, past
  *  which the agent opens no tab: 0, where it starts, is no ceiling at all, because a
@@ -122,20 +107,8 @@ export function withScope(grant: Grant, scope: Scope, on: boolean): Grant {
   return { ...grant, scopes: ALL_SCOPES.filter((one) => holds(scopes, one)) }
 }
 
-/** Whether a question can come up for this agent at all. */
-export function askApplies(grant: Grant, category: Category): boolean {
-  const needs = ASKS.find((one) => one.category === category)?.needs ?? []
-  return needs.some((one) => holds(grant.scopes, one))
-}
-
 /** Whether the agent asks before this: on unless the reader turned it off. */
 export const asks = (grant: Grant, category: Category): boolean => grant.asks[category] ?? true
-
-/** A question on or off. On is what nothing says, so it is kept as nothing. */
-export function withAsk(grant: Grant, category: Category, on: boolean): Grant {
-  const rest = Object.fromEntries(Object.entries(grant.asks).filter(([one]) => one !== category))
-  return { ...grant, asks: on ? rest : { ...rest, [category]: false } }
-}
 
 /** How the AI sidebar's own agent for a provider is filed: "Orden · Claude"
  *  (src-tauri/src/ai_agent.rs), and "nib · Claude" by a crate from before the rename,
@@ -146,11 +119,6 @@ const SIDEBAR = ['Orden · ', 'nib · ']
  *  is the thread's mode, not the grant's. */
 export const sidebars = (grant: Grant): boolean =>
   SIDEBAR.some((prefix) => grant.client.startsWith(prefix))
-
-export const withMode = (grant: Grant, confirm: boolean): Grant => ({
-  ...grant,
-  mode: confirm ? 'confirm' : 'unsupervised',
-})
 
 export const withName = (grant: Grant, name: string): Grant => {
   const trimmed = name.trim()

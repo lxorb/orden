@@ -17,26 +17,21 @@
   import { prompt } from '../../prompt.svelte'
   import Select from '../../Select.svelte'
   import { workspace } from '../../workspace.svelte'
-  import type { Category, Grant, Scope } from '../verbs'
+  import type { Grant, Scope } from '../verbs'
   import AgentLog from './AgentLog.svelte'
   import AgentMark from './AgentMark.svelte'
   import {
-    ASKS,
     LIMITS,
     LIMIT_NAMES,
     type Limit,
     SCOPE_GROUPS,
-    askApplies,
-    asks,
     reaches,
     sidebars,
     sitesOf,
     trifecta,
-    withAsk,
     withEverySpace,
     withLimit,
     withListed,
-    withMode,
     withName,
     withoutAlways,
     withScope,
@@ -81,7 +76,6 @@
       )
     })
   })
-  const asked = $derived(ASKS.filter((one) => askApplies(grant, one.category)))
   const ruleChoices = $derived(
     (['allow', 'deny', 'agent-store'] as const).map((value) => ({
       value,
@@ -108,10 +102,6 @@
 
   function toggleScope(scope: Scope) {
     change((one) => withScope(one, scope, !one.scopes.includes(scope)))
-  }
-
-  function toggleAsk(category: Category) {
-    change((one) => withAsk(one, category, !asks(one, category)))
   }
 
   async function remove() {
@@ -203,7 +193,20 @@
 <h3>{t('Activity')}</h3>
 <AgentLog {pane} {grant} />
 
-{#each SCOPE_GROUPS as group (group.id)}
+<!-- A client connected over MCP has Full permissions: the agent on the other end has a
+     permission system of its own and answers for what it does, so Orden asks it nothing
+     and there is nothing to switch (#1099; `connected` in src-tauri/src/agents/mod.rs).
+     Its spaces, its blocked sites and its limits are the reader's own and stay. The AI
+     sidebar's own agents ask as their thread's mode says, and reach what these grant. -->
+{#if !sidebars(grant)}
+  <p class="connected">
+    {t(
+      'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.',
+    )}
+  </p>
+{/if}
+
+{#each sidebars(grant) ? SCOPE_GROUPS : [] as group (group.id)}
   <h3>{GROUP_WORDS[group.id]()}</h3>
   <div class="card">
     {#each group.scopes as scope (scope)}
@@ -301,20 +304,6 @@
     onremove={() => undefined}
   />
 </div>
-
-{#if !sidebars(grant)}
-  <h3>{t('Asks first')}</h3>
-  <div class="card">
-    {@render toggle(CATEGORY_WORDS.writing(), grant.mode === 'confirm', () => {
-      change((one) => withMode(one, one.mode !== 'confirm'))
-    })}
-    {#each asked as { category } (category)}
-      {@render toggle(CATEGORY_WORDS[category](), asks(grant, category), () => {
-        toggleAsk(category)
-      })}
-    {/each}
-  </div>
-{/if}
 
 <h3>{t('Limits')}</h3>
 <div class="card">
@@ -431,6 +420,15 @@
   }
 
   /* The one warning on the page, in the colour a callout warns in. */
+  /* What a client connected over MCP is told instead of switches: quiet words. */
+  .connected {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
   .trifecta {
     display: flex;
     align-items: flex-start;

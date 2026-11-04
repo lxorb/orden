@@ -2094,6 +2094,8 @@ export const ml: Dictionary = {
   'Every space': 'എല്ലാ സ്പേസും',
   Sites: 'സൈറ്റുകൾ',
   'Asks first': 'ആദ്യം ചോദിക്കും',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'ഇത് MCP വഴി ബന്ധിപ്പിക്കുകയും അവിടെ സ്വന്തം അനുമതികൾ സ്വയം കൈകാര്യം ചെയ്യുകയും ചെയ്യുന്നു: Orden ഒന്നും ചോദിക്കില്ല. താഴെയുള്ള നിങ്ങളുടെ സ്പേസുകൾ, തടഞ്ഞ സൈറ്റുകൾ, പരിധികൾ എന്നിവ ഇപ്പോഴും ബാധകമാണ്.',
   Limits: 'പരിധികൾ',
   'Clear what {name} did?': '{name} ചെയ്തത് മായ്ക്കണോ?',
   'Show earlier': 'മുമ്പത്തേത് കാണിക്കുക',

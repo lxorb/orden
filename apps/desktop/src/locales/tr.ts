@@ -2078,6 +2078,8 @@ export const tr: Dictionary = {
   'Every space': 'Her alan',
   Sites: 'Siteler',
   'Asks first': 'Önce sorar',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'MCP üzerinden bağlanır ve izinlerini orada kendisi yönetir: Orden ona hiçbir şey sormaz. Aşağıdaki alanların, engellediğin siteler ve sınırlar yine geçerlidir.',
   Limits: 'Sınırlar',
   'Clear what {name} did?': '{name} ne yaptıysa silinsin mi?',
   'Show earlier': 'Öncekileri göster',

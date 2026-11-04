@@ -1006,6 +1006,21 @@ scope, and refuses nothing on the grounds of the grant or of a step kept to the 
 hands. The one decision is `Grant::asks` and `Grant::holds` in the crate, and
 `fullPermissions` and `asked` in `lib/agents/workspace/asks.ts`, which every guard reads.
 
+**A client connected over MCP manages its own permissions** (#1099). Claude Code, Codex and
+any other agent that connects through `nib mcp` or with a pasted token has a permission
+system of its own, which the reader set up there and which answers for what it does; Orden
+asking again was a second question on every call. So such a caller is Full permissions
+whatever its grant kept says: `connected` in `agents/mod.rs` lays `autonomous` over the
+grant as the token is read, and from there the one decision above answers - nothing asks,
+nothing is handed back, nothing is refused on the grounds of a scope, and no tool has a
+rule of its own. What the reader set as limits stays: the spaces it reaches, the sites they
+blocked, the calls a minute; and so does what never reaches a model whoever asks, a
+password's value and a card's number (9.4). Only the reader's own agents connect: the
+endpoint answers on this machine alone, a token is proved before anything is said to it,
+and a client is paired once by the reader's Allow. Settings > Agents says so in place of
+the scope switches and the questions for such an agent. The AI sidebar's own agents are
+unchanged: they ask as their thread's mode says.
+
 ### 9.2 Sites
 
 A denied site cannot be opened, navigated to, or acted in, in an agent tab or a reader's;

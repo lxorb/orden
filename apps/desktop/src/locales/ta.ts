@@ -2099,6 +2099,8 @@ export const ta: Dictionary = {
   'Every space': 'ஒவ்வொரு இடமும்',
   Sites: 'தளங்கள்',
   'Asks first': 'முதலில் கேட்கும்',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'இது MCP வழியாக இணைந்து, அங்கேயே தன் அனுமதிகளைத் தானே நிர்வகிக்கிறது: Orden எதையும் கேட்பதில்லை. கீழே உள்ள உங்கள் ஸ்பேஸ்கள், தடுத்த தளங்கள், வரம்புகள் இன்னும் பொருந்தும்.',
   Limits: 'வரம்புகள்',
   'Clear what {name} did?': '{name} செய்ததை அழிக்கவா?',
   'Show earlier': 'முந்தையவற்றைக் காட்டு',

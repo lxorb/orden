@@ -2110,6 +2110,8 @@ export const fil: Dictionary = {
   'Every space': 'Bawat espasyo',
   Sites: 'Mga site',
   'Asks first': 'Nagtatanong muna',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Kumokonekta ito sa MCP at doon nito pinamamahalaan ang sarili nitong mga pahintulot: walang itinatanong dito ang Orden. Nananatili ang iyong mga space, mga naka-block na site at mga limitasyon sa ibaba.',
   Limits: 'Mga limitasyon',
   'Clear what {name} did?': 'Burahin ang ginawa ni {name}?',
   'Show earlier': 'Ipakita ang mas nauna',

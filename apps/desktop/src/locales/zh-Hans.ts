@@ -2015,6 +2015,8 @@ export const zhHans: Dictionary = {
   'Every space': '所有空间',
   Sites: '网站',
   'Asks first': '先询问',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    '它通过 MCP 连接，并在那里自行管理权限：Orden 不会询问它任何事。下方的空间、已屏蔽的网站和限制依然有效。',
   Limits: '限制',
   'Clear what {name} did?': '清除 {name} 的活动？',
   'Show earlier': '显示更早',

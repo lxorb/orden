@@ -2056,6 +2056,8 @@ export const ja: Dictionary = {
   'Every space': 'すべてのスペース',
   Sites: 'サイト',
   'Asks first': '先に確認',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'MCP で接続し、権限はそちら側で自分で管理します。Orden は何も尋ねません。下のスペース、ブロックしたサイト、上限はそのまま有効です。',
   Limits: '上限',
   'Clear what {name} did?': '{name} の操作記録を消去しますか？',
   'Show earlier': '以前のものを表示',

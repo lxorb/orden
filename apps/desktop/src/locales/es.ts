@@ -2124,6 +2124,8 @@ export const es: Dictionary = {
   'Every space': 'Todos los espacios',
   Sites: 'Sitios',
   'Asks first': 'Pregunta antes',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Se conecta por MCP y gestiona allí sus propios permisos: Orden no le pregunta nada. Tus espacios, sitios bloqueados y límites de abajo siguen valiendo.',
   Limits: 'Límites',
   'Clear what {name} did?': '¿Borrar lo que hizo {name}?',
   'Show earlier': 'Mostrar anteriores',

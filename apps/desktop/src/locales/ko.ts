@@ -2038,6 +2038,8 @@ export const ko: Dictionary = {
   'Every space': '모든 공간',
   Sites: '사이트',
   'Asks first': '먼저 묻기',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'MCP로 연결되며 권한은 그쪽에서 스스로 관리합니다. Orden은 아무것도 묻지 않습니다. 아래의 스페이스, 차단한 사이트, 한도는 그대로 적용됩니다.',
   Limits: '한도',
   'Clear what {name} did?': '{name}의 활동을 지울까요?',
   'Show earlier': '이전 항목 보기',

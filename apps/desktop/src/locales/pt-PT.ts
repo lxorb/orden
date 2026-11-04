@@ -2122,6 +2122,8 @@ export const ptPT: Dictionary = {
   'Every space': 'Todos os espaços',
   Sites: 'Sites',
   'Asks first': 'Pergunta antes',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Liga-se por MCP e gere lá as suas próprias permissões: o Orden não lhe pergunta nada. Os seus espaços, sites bloqueados e limites abaixo continuam a aplicar-se.',
   Limits: 'Limites',
   'Clear what {name} did?': 'Apagar o que {name} fez?',
   'Show earlier': 'Mostrar anteriores',

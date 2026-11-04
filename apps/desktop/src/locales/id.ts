@@ -2060,6 +2060,8 @@ export const id: Dictionary = {
   'Every space': 'Setiap ruang',
   Sites: 'Situs',
   'Asks first': 'Bertanya dulu',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Ia terhubung lewat MCP dan mengatur izinnya sendiri di sana: Orden tidak menanyakan apa pun. Space, situs yang diblokir, dan batas di bawah tetap berlaku.',
   Limits: 'Batas',
   'Clear what {name} did?': 'Hapus apa yang dilakukan {name}?',
   'Show earlier': 'Tampilkan sebelumnya',

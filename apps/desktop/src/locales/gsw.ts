@@ -2079,6 +2079,8 @@ export const gsw: Dictionary = {
   'Every space': 'All Ablage',
   Sites: 'Websiite',
   'Asks first': 'Fragt vorher',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Es verbindet sich über MCP und regelt sini Berächtigunge det sälber: Orden fröggt’s nüt. Dini Spaces, gsperrte Websites und Gränze une gälte witerhin.',
   Limits: 'Gränze',
   'Clear what {name} did?': 'Lösche, was {name} gmacht hät?',
   'Show earlier': 'Früecheri aazeige',

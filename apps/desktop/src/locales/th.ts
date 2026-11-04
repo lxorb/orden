@@ -2028,6 +2028,8 @@ export const th: Dictionary = {
   'Every space': 'ทุกพื้นที่',
   Sites: 'เว็บไซต์',
   'Asks first': 'ถามก่อน',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'เชื่อมต่อผ่าน MCP และจัดการสิทธิ์ของตัวเองที่นั่น: Orden จะไม่ถามอะไร ส่วนพื้นที่ เว็บไซต์ที่บล็อก และขีดจำกัดด้านล่างยังมีผลอยู่',
   Limits: 'ขีดจำกัด',
   'Clear what {name} did?': 'ล้างสิ่งที่ {name} ทำไหม',
   'Show earlier': 'แสดงก่อนหน้า',

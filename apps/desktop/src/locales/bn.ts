@@ -2067,6 +2067,8 @@ export const bn: Dictionary = {
   'Every space': 'প্রতিটি স্পেস',
   Sites: 'সাইট',
   'Asks first': 'আগে জিজ্ঞাসা করে',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'এটি MCP দিয়ে যুক্ত হয় এবং সেখানে নিজের অনুমতি নিজেই সামলায়: Orden একে কিছু জিজ্ঞেস করে না। নিচের তোমার স্পেস, ব্লক করা সাইট ও সীমা তবুও বহাল থাকে।',
   Limits: 'সীমা',
   'Clear what {name} did?': '{name} যা করেছে তা মুছবেন?',
   'Show earlier': 'আগের গুলো দেখান',

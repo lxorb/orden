@@ -2153,6 +2153,8 @@ export const ru: Dictionary = {
   'Every space': 'Все пространства',
   Sites: 'Сайты',
   'Asks first': 'Спрашивает сначала',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'Он подключается через MCP и сам управляет своими разрешениями там: Orden ни о чём его не спрашивает. Ваши пространства, заблокированные сайты и лимиты ниже по-прежнему действуют.',
   Limits: 'Ограничения',
   'Clear what {name} did?': 'Стереть то, что сделал {name}?',
   'Show earlier': 'Показать раньше',

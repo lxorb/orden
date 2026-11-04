@@ -2071,6 +2071,8 @@ export const fa: Dictionary = {
   'Every space': 'همه فضاها',
   Sites: 'سایت‌ها',
   'Asks first': 'اول می‌پرسد',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'از راه MCP وصل می‌شود و مجوزهایش را همان‌جا خودش مدیریت می‌کند: Orden چیزی از آن نمی‌پرسد. فضاها، سایت‌های مسدود و محدودیت‌های زیر همچنان برقرارند.',
   Limits: 'محدودیت‌ها',
   'Clear what {name} did?': 'آنچه {name} کرده پاک شود؟',
   'Show earlier': 'نمایش قدیمی‌تر',

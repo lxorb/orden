@@ -2059,6 +2059,8 @@ export const gu: Dictionary = {
   'Every space': 'દરેક જગ્યા',
   Sites: 'સાઇટ્સ',
   'Asks first': 'પહેલાં પૂછે છે',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'તે MCP દ્વારા જોડાય છે અને ત્યાં પોતાની પરવાનગીઓ જાતે સંભાળે છે: Orden તેને કંઈ પૂછતું નથી. નીચેની તમારી સ્પેસ, બ્લૉક કરેલી સાઇટ અને મર્યાદાઓ હજુ લાગુ રહે છે.',
   Limits: 'મર્યાદાઓ',
   'Clear what {name} did?': '{name}એ જે કર્યું તે સાફ કરીએ?',
   'Show earlier': 'પહેલાંના બતાવો',

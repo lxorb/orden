@@ -2051,6 +2051,8 @@ export const my: Dictionary = {
   'Every space': 'အလုပ်ခွင်တိုင်း',
   Sites: 'ဆိုက်များ',
   'Asks first': 'ဦးစွာမေးသည်',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    '၎င်းသည် MCP ဖြင့် ချိတ်ဆက်ပြီး ခွင့်ပြုချက်များကို ထိုနေရာတွင် ကိုယ်တိုင် စီမံသည်- Orden က ဘာမျှ မမေးပါ။ အောက်ပါ သင့် space များ၊ ပိတ်ထားသော ဆိုက်များနှင့် ကန့်သတ်ချက်များ ဆက်လက် သက်ရောက်ပါသည်။',
   Limits: 'ကန့်သတ်ချက်များ',
   'Clear what {name} did?': '{name} လုပ်ခဲ့သည်များကို ရှင်းလင်းမလား။',
   'Show earlier': 'အစောပိုင်းများ ပြရန်',

@@ -2065,6 +2065,8 @@ export const ur: Dictionary = {
   'Every space': 'ہر اسپیس',
   Sites: 'سائٹس',
   'Asks first': 'پہلے پوچھتا ہے',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'یہ MCP کے ذریعے جڑتا ہے اور وہیں اپنی اجازتیں خود سنبھالتا ہے: Orden اس سے کچھ نہیں پوچھتا۔ نیچے آپ کی اسپیسز، بلاک کی گئی سائٹیں اور حدود پھر بھی لاگو رہتی ہیں۔',
   Limits: 'حدود',
   'Clear what {name} did?': 'جو {name} نے کیا وہ صاف کریں؟',
   'Show earlier': 'پرانے دکھائیں',

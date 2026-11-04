@@ -2043,6 +2043,8 @@ export const am: Dictionary = {
   'Every space': 'ሁሉም ቦታዎች',
   Sites: 'ጣቢያዎች',
   'Asks first': 'መጀመሪያ ይጠይቃል',
+  'It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and limits below still hold.':
+    'በMCP ይገናኛል እና ፈቃዶቹን እዚያ ራሱ ያስተዳድራል፤ Orden ምንም አይጠይቀውም። ከታች ያሉት ቦታዎችህ፣ የታገዱ ጣቢያዎች እና ገደቦች ግን ይቀጥላሉ።',
   Limits: 'ገደቦች',
   'Clear what {name} did?': '{name} ያደረገውን ይጽዱ?',
   'Show earlier': 'ቀደም ያሉትን አሳይ',
