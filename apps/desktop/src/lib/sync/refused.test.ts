@@ -171,7 +171,11 @@ beforeEach(async () => {
     const asked = new Request(url, init)
     const offered = await offeredIn(asked)
     if (offered !== null) offers.push(offered)
-    if (answering && answering.left > 0 && answering.to.test(`${asked.method} ${asked.url} ${String(offered)}`)) {
+    if (
+      answering &&
+      answering.left > 0 &&
+      answering.to.test(`${asked.method} ${asked.url} ${String(offered)}`)
+    ) {
       answering.left -= 1
       return new Response('{"error":"no"}', { status: answering.status })
     }
@@ -347,9 +351,13 @@ test('a network that is down is not taken for a refusal', async () => {
 
   await pass(mirror)
   expect(told).toEqual([])
-  const words = await call<{ content: string }>(env, `/v1/notes/${mirror.notes['a.md']?.id ?? ''}`, {
-    token,
-  })
+  const words = await call<{ content: string }>(
+    env,
+    `/v1/notes/${mirror.notes['a.md']?.id ?? ''}`,
+    {
+      token,
+    },
+  )
   expect(words.json.content).toBe('second\n')
 })
 
