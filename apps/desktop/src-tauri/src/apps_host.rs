@@ -40,6 +40,8 @@ mod input;
 mod installed;
 #[cfg(target_os = "linux")]
 mod stream;
+#[cfg(target_os = "linux")]
+mod stun;
 
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;

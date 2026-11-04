@@ -11,8 +11,9 @@
 //! own: one lock round it, fed by a thread for each socket and one for its timers, and
 //! written to by the encoder's. One socket for each address this computer has, since
 //! `str0m` has to be told which address a datagram came in on. It gathers nothing, so
-//! the addresses are found here, and it has no TURN client, which a host does not need:
-//! the viewer's engine does TURN, and a relayed candidate is answered from here.
+//! the addresses are found here, each also as the internet sees it (`stun.rs`), and it
+//! has no TURN client, which a host does not need: the viewer's engine does TURN, and a
+//! relayed candidate is answered from here.
 //!
 //! **The picture** is ffmpeg's: it reads the application's display (`x11grab`, over
 //! `XShm`), encodes VP8 in libvpx's realtime mode with nothing held back, and writes
@@ -40,7 +41,7 @@ use str0m::net::{Protocol, Receive};
 use str0m::{Candidate, Event, IceConnectionState, Input, Output, Rtc, RtcConfig};
 
 use super::input::Input as HolderInput;
-use super::Screen;
+use super::{stun, Screen};
 
 /// How long a viewer has to connect once it has the answer.
 const CONNECT_WITHIN: Duration = Duration::from_secs(30);
@@ -199,6 +200,27 @@ impl Peer {
         }
         if sockets.is_empty() {
             return Err(Cannot::Network);
+        }
+        // And each address as the internet sees it, asked for all at once, for a viewer
+        // outside this network.
+        let seen: Vec<(SocketAddr, SocketAddr)> = std::thread::scope(|scope| {
+            let asking: Vec<_> = sockets
+                .iter()
+                .filter_map(|socket| socket.local_addr().ok().map(|local| (socket, local)))
+                .filter(|(_, local)| !local.ip().is_loopback())
+                .map(|(socket, local)| {
+                    scope.spawn(move || Some((stun::reflexive(socket, stun::SERVER)?, local)))
+                })
+                .collect();
+            asking
+                .into_iter()
+                .filter_map(|one| one.join().ok().flatten())
+                .collect()
+        });
+        for (outside, local) in seen {
+            if let Ok(candidate) = Candidate::server_reflexive(outside, local, "udp") {
+                let _ = rtc.add_local_candidate(candidate);
+            }
         }
         let answer = rtc
             .sdp_api()

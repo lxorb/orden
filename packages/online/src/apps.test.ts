@@ -3,6 +3,7 @@ import {
   type AppFile,
   catalogueOf,
   fromHostOf,
+  iceServersOf,
   inputText,
   MOST_ICON,
   MOST_INSTALLED,
@@ -179,5 +180,29 @@ describe('the holder’s input', () => {
     expect(inputText({ t: 'key', key: 'a', code: 'KeyA', down: true })).toBe(
       '{"t":"key","key":"a","code":"KeyA","down":true}',
     )
+  })
+})
+
+describe('the servers a viewer is handed', () => {
+  it('keeps STUN and TURN addresses, a list or one, with a TURN server’s credentials', () => {
+    expect(
+      iceServersOf([
+        { urls: 'stun:stun.cloudflare.com:3478' },
+        {
+          urls: ['turn:turn.example:3478?transport=udp', 'https://x'],
+          username: 'u',
+          credential: 'c',
+        },
+        { urls: ['ftp://x'] },
+        'nope',
+      ]),
+    ).toEqual([
+      { urls: ['stun:stun.cloudflare.com:3478'] },
+      { urls: ['turn:turn.example:3478?transport=udp'], username: 'u', credential: 'c' },
+    ])
+    expect(iceServersOf({ urls: 'turns:turn.example:443' })).toEqual([
+      { urls: ['turns:turn.example:443'] },
+    ])
+    expect(iceServersOf(null)).toEqual([])
   })
 })

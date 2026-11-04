@@ -56,8 +56,11 @@ function world(engine = true) {
   const peers: FakePeer[] = []
   const timers: { at: number; run: () => void; gone: boolean }[] = []
   const said: string[] = []
+  const offered: unknown[] = []
   const made: PeerWorld = {
-    make: () => {
+    servers: () => Promise.resolve([{ urls: ['stun:stun.example:3478'] }]),
+    make: (servers) => {
+      offered.push(servers)
       if (!engine) return null
       const peer = new FakePeer()
       peers.push(peer)
@@ -80,7 +83,7 @@ function world(engine = true) {
       else timers.push(timer)
     }
   }
-  return { picture, peers, said, wait }
+  return { picture, peers, said, wait, offered }
 }
 
 describe('an application’s picture', () => {
@@ -189,9 +192,28 @@ describe('an application’s picture', () => {
     expect(channel?.sent).toHaveLength(1)
   })
 
-  test('an engine without WebRTC says so', () => {
+  test('an engine without WebRTC says so', async () => {
     const here = world(false)
     here.picture.want(true)
+    await tick()
     expect(here.picture.status).toEqual({ is: 'unsupported' })
+  })
+
+  test('connects through the servers the account handed out', async () => {
+    const here = world()
+    here.picture.want(true)
+    await tick()
+    expect(here.offered).toEqual([[{ urls: ['stun:stun.example:3478'] }]])
+  })
+
+  test('wanted, then not, then again while the servers are asked for, makes one connection', async () => {
+    const here = world()
+    here.picture.want(true)
+    here.picture.want(false)
+    here.picture.want(true)
+    await tick()
+    await tick()
+    expect(here.peers).toHaveLength(1)
+    expect(here.said.filter((one) => one.includes('offer'))).toHaveLength(1)
   })
 })

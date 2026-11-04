@@ -9,7 +9,11 @@
  *  picture is not asked again until the picture is wanted afresh. */
 
 import {
+  FALLBACK_ICE,
   fromHostOf,
+  ICE_PATH,
+  type IceServer,
+  iceServersOf,
   type InputEvent,
   inputText,
   type NoPicture,
@@ -36,14 +40,30 @@ export const SHOWN_WITHIN = 20_000
 /** As much of the engine's `RTCPeerConnection` as the picture uses, so a test can hand
  *  in its own. */
 export interface PeerWorld {
-  /** A new connection, or null where the engine has none. */
-  make(): RTCPeerConnection | null
+  /** The servers a connection may use, as the account hands them out. */
+  servers(): Promise<IceServer[]>
+  /** A new connection through them, or null where the engine has none. */
+  make(servers: IceServer[]): RTCPeerConnection | null
   after(ms: number, run: () => void): () => void
 }
 
 const pageWorld: PeerWorld = {
-  make: () =>
-    typeof RTCPeerConnection === 'function' ? new RTCPeerConnection({ iceServers: [] }) : null,
+  // An account that does not know the route answers 404, and the connection makes do
+  // with the STUN anybody may use.
+  async servers() {
+    const [{ account }, { request }] = await Promise.all([
+      import('../account.svelte'),
+      import('../api'),
+    ])
+    const token = account.accountToken
+    const answer = token
+      ? await request<{ iceServers?: unknown }>(ICE_PATH, { token }).catch(() => null)
+      : null
+    const servers = iceServersOf(answer?.iceServers)
+    return servers.length > 0 ? servers : [...FALLBACK_ICE]
+  },
+  make: (servers) =>
+    typeof RTCPeerConnection === 'function' ? new RTCPeerConnection({ iceServers: servers }) : null,
   after: (ms, run) => {
     const timer = setTimeout(run, ms)
     return () => {
@@ -62,6 +82,8 @@ export class Picture {
   private wanted = false
   /** The one timer: the connection's deadline, or the next try. */
   private cancelTimer: (() => void) | null = null
+  /** Counted up by every close, so a beginning that was waiting knows it is stale. */
+  private turn = 0
 
   constructor(
     private readonly say: (data: string) => void,
@@ -110,13 +132,17 @@ export class Picture {
 
   private async begin(): Promise<void> {
     this.close()
-    const peer = this.world.make()
+    const turn = this.turn
+    this.status = { is: 'connecting' }
+    const servers = await this.world.servers().catch(() => [...FALLBACK_ICE])
+    // Not wanted any more, or begun again, while the servers were asked for.
+    if (turn !== this.turn || !this.wanted) return
+    const peer = this.world.make(servers)
     if (!peer) {
       this.status = { is: 'unsupported' }
       return
     }
     this.peer = peer
-    this.status = { is: 'connecting' }
     this.cancelTimer = this.world.after(SHOWN_WITHIN, () => {
       this.cancelTimer = null
       if (this.peer === peer && this.status.is !== 'showing') this.lost()
@@ -166,6 +192,7 @@ export class Picture {
   }
 
   private close(): void {
+    this.turn += 1
     this.cancelTimer?.()
     this.cancelTimer = null
     const peer = this.peer

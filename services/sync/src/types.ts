@@ -22,6 +22,11 @@ export interface Env {
   CHATS?: DurableObjectNamespace
   /** One per application, named by its owner and file (apps/relay.ts, issue 1063). */
   APPS?: DurableObjectNamespace
+  /** A Cloudflare TURN key, its id and its API token, secrets the owner sets: where both
+   *  are there, a viewer of an application is handed TURN credentials as well as STUN
+   *  (apps/ice.ts). */
+  TURN_KEY_ID?: string
+  TURN_KEY_TOKEN?: string
 
   /** One `Machine` per online terminal machine (docs/online-terminal.md): where it is
    *  absent, the online routes answer 404. See machines/. */

@@ -117,3 +117,10 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
   it, so the holder's layout decides what is typed; what was pressed is what is let go, and
   everything held is let go when the picture ends. `AltGraph` is not passed on, since the
   character it chose is. Input methods, touch, pen and precise scrolling are step 5.
+- **Across networks**: the host asks Cloudflare's STUN, once for each of its sockets, what
+  address the internet sees it at (`apps_host/stun.rs`), and puts that in the answer beside its
+  own; the viewer asks the account for its servers, `GET /v2/apps/ice`
+  (`services/sync/src/apps/ice.ts`, behind the door's switch): Cloudflare's STUN, and TURN with
+  credentials that last a day where the Worker has a TURN key (the secrets `TURN_KEY_ID` and
+  `TURN_KEY_TOKEN`). Only the viewer relays; the host answers a relayed candidate from its own
+  address. An older account answers 404, and the viewer makes do with the STUN.

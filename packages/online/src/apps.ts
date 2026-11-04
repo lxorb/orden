@@ -416,3 +416,44 @@ export type InputEvent =
 export function inputText(event: InputEvent): string {
   return JSON.stringify(event)
 }
+
+// ---------------------------------------------------------------------------
+// The servers a viewer's connection is offered (step 4)
+
+/** Where the account hands a viewer the servers its connection may use: STUN, and TURN
+ *  with short-lived credentials where the service has them. */
+export const ICE_PATH = '/v2/apps/ice'
+
+/** One server, as `RTCIceServer` takes it. */
+export interface IceServer {
+  urls: string[]
+  username?: string
+  credential?: string
+}
+
+/** What a viewer uses when the account says nothing, as an older one does: Cloudflare's
+ *  STUN, which needs no account. */
+export const FALLBACK_ICE: readonly IceServer[] = [{ urls: ['stun:stun.cloudflare.com:3478'] }]
+
+const ICE_URL = /^(stun|stuns|turn|turns):[^\s]{1,250}$/
+
+/** The servers that check, at most eight of them: `urls` a STUN or TURN address or a
+ *  list of them, and a TURN server's username and credential as text. A list or a
+ *  single server is read, as Cloudflare answers either. */
+export function iceServersOf(value: unknown): IceServer[] {
+  const list = Array.isArray(value) ? value : isRecord(value) ? [value] : []
+  const servers: IceServer[] = []
+  for (const one of list.slice(0, 8)) {
+    if (!isRecord(one)) continue
+    const raw = Array.isArray(one.urls) ? one.urls : [one.urls]
+    const urls = raw.filter((url): url is string => typeof url === 'string' && ICE_URL.test(url))
+    if (urls.length === 0) continue
+    const { username, credential } = one
+    servers.push({
+      urls: urls.slice(0, 8),
+      ...(typeof username === 'string' && username.length <= 512 ? { username } : {}),
+      ...(typeof credential === 'string' && credential.length <= 512 ? { credential } : {}),
+    })
+  }
+  return servers
+}
