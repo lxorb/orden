@@ -512,11 +512,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,903,500, for #1120: the editor's properties
  *  strip and a footnote's card and jump, which the plugin's notes draw too. Measured
  *  5,902,056.
+ *
+ *  The styles raised on 2026-11-04, to 290,400, for #331: the tab overview's close button
+ *  as the app's quiet grey one with its cross red, its hover and its press
+ *  (overview/Overview.svelte). Measured 290,153.
  */
 export const BUDGETS: Record<Part, number> = {
   code: 5_903_500,
   catalogues: 973_000,
-  styles: 290_000,
+  styles: 290_400,
   fonts: 260_000,
   pages: 40_000,
 }
