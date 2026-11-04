@@ -10,6 +10,7 @@
  *  anybody can see. See ask.ts, which is the stub that gets here. */
 
 import type { AiAsk } from '@orden/editor'
+import { TexDelimiters } from '@orden/markdown/streamed'
 import { busy } from '../busy.svelte'
 import { message, t } from '../i18n.svelte'
 import { complete, wasStopped } from './complete'
@@ -25,11 +26,14 @@ import { ai } from './store.svelte'
  *  language the app has without a dictionary entry.
  *
  *  No code fence around the whole answer, because the answer is written into the
- *  note as markdown: one that came back fenced would render as a block of grey. */
+ *  note as markdown: one that came back fenced would render as a block of grey. And
+ *  maths in the note's own spelling, which is what the note draws; a model that writes
+ *  LaTeX's `\(…\)` anyway is spelled the note's way on the way in (`TexDelimiters`). */
 const SYSTEM = [
   'You are answering inside a markdown note, and your answer is written straight',
   'into it. Reply in markdown, in the same language the question is written in.',
   'No preamble, no sign-off, and never wrap the whole reply in a code fence.',
+  'Write maths as $…$ inline and $$…$$ on lines of their own.',
 ].join(' ')
 
 /** How the note is handed over for a question that said `@note`. Fenced, so the
@@ -57,13 +61,18 @@ export async function answer(ask: AiAsk, signal: AbortSignal) {
   // below and read outside it: the compiler can see a field change and cannot see
   // a local one, and read it back as false for ever.
   const began = { yet: false, model: provider.model }
-  const wrote = (piece: string) => {
+  const write = (piece: string) => {
+    if (!piece) return
     if (!began.yet) {
       began.yet = true
       ask.started(began.model)
     }
     ask.wrote(piece)
   }
+  // The answer is note text, so its formulas are spelled the way the note draws them,
+  // as they arrive; see @orden/markdown/streamed.
+  const spelling = new TexDelimiters()
+  const wrote = (piece: string) => write(spelling.push(piece))
 
   try {
     await complete({
@@ -81,11 +90,14 @@ export async function answer(ask: AiAsk, signal: AbortSignal) {
       },
       signal,
     })
+    write(spelling.end())
 
     // A stream that ended without a word in it. Nothing was written, so without a
     // line saying so the press would look like nothing happened at all.
     if (!began.yet) busy.failed(t('The model did not answer.'))
   } catch (error) {
+    // What had arrived stays, the last character of it too.
+    if (began.yet) write(spelling.end())
     // Stopping is not a failure: the reader pressed the square, and what arrived
     // before they did is in the note where they can see it.
     if (!wasStopped(error)) busy.failed(message(error, t('The model did not answer.')))

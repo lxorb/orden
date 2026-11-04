@@ -637,7 +637,33 @@ about a page and Notion's space bar are the four it was modelled on.
 
 The store is `ai/quick.svelte.ts`, the sheet `QuickQuestion.svelte`, and an answer is
 drawn by `ai/Answer.svelte` and `ai/drawn.ts`, the Ask panel's own: escaped, and with
-nothing to load.
+nothing loaded the reader did not ask for.
+
+## How an answer is drawn
+
+Every surface that shows a model's words - the panel, the quick question, a chat an agent
+writes in - draws them the way a note is read (#1122): through `markdown-view.svelte.ts`,
+which is the reading view's renderer with its fences (`fenceFrom` in `before-render.ts`:
+the same coloured blocks and drawn diagrams), the formula engine, footnotes, and the note
+page's own stylesheet (`nib-write`) at the panel's size. An `ai` block's answer is note text
+and is drawn by the note itself.
+
+- **One spelling of maths.** A model writes `\(…\)` and `\[…\]` as often as `$…$` and
+  `$$…$$`; a note's grammar keeps the backslash for CommonMark's escapes. So the answer is
+  spelled the note's way on its way in (`@orden/markdown/streamed`), over the stream for an
+  `ai` block and for what Copy, Insert and Save as a note write. Nothing in code is touched.
+- **Drawn as it arrives.** What the last line left open - a `$$` block, a formula, a code
+  span, a bold run - is drawn closed while it streams; an unclosed fence is already code
+  to the end. A formula that cannot parse yet is its source in the muted colour, not red.
+- **From the first frame.** The renderer draws from whatever has landed and asks for the
+  rest; the formula engine and the fence languages are fetched as a surface that draws
+  answers opens, and when a part lands every answer on the screen is drawn again
+  (`drawing.version`). Until the engine is here a formula keeps its place unseen rather
+  than show its TeX.
+- **Pictures.** One of the reader's own, a file in the space or a `data:` one, is drawn
+  as the note draws it. One from elsewhere is a button with its words on it until it is
+  pressed, so a note that talks a model into `![](https://somewhere/?what-you-wrote)` sends
+  nothing. Frames and players are taken out.
 
 ## Rewriting a selection
 

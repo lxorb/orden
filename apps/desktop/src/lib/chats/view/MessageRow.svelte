@@ -22,6 +22,7 @@
   import { links } from '../../link-index.svelte'
   import { workspace } from '../../workspace.svelte'
   import { bodyHtml, firstLine, onlyEmoji } from './body'
+  import { drawing } from '../../markdown-view.svelte'
   import type { ChatPage } from './chat.svelte'
   import Gallery from './Gallery.svelte'
   import Glyph from './Glyph.svelte'
@@ -102,7 +103,13 @@
    *  and when the index does, which is when another space's links come to resolve. */
   function words(
     node: HTMLElement,
-    said: { body: string; edited: boolean; from: string | null; version: number },
+    said: {
+      body: string
+      edited: boolean
+      from: string | null
+      version: number
+      drawn: number
+    },
   ) {
     let untip: { destroy: () => void } | null = null
     const draw = (next: { body: string; edited: boolean; from: string | null }) => {
@@ -233,6 +240,7 @@
             edited: message.editedAt !== undefined,
             from: home,
             version: links.version,
+            drawn: drawing.version,
           }}
           onclick={follow}
         ></div>
