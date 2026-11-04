@@ -22,7 +22,26 @@
    *  Where it is drawn is whole pixels of the screen, so the circle, its ring and the
    *  arrow are drawn sharp at 125 and 150 per cent as well as at 100 and 200. */
   import ArrowLeft from 'lucide/dist/esm/icons/arrow-left.mjs'
+  import { workspace } from '../workspace.svelte'
+  import { swipeChoice } from './choice.svelte'
   import { swiping } from './shown.svelte'
+
+  /** Said when the tab the arrow is over stops being the one its pane shows, or swiping
+   *  is turned off. */
+  const { unseen }: { unseen: () => void } = $props()
+
+  /** Whether the tab the arrow is over is still what its pane shows: another tab chosen
+   *  in it, the tab closed or the pane gone - or the setting turned off - and the arrow
+   *  is not drawn at all, and its stream ends (#1119). */
+  const seen = $derived(
+    swipeChoice.on &&
+      swiping.tab !== null &&
+      swiping.pane !== null &&
+      workspace.showing(swiping.pane)?.id === swiping.tab,
+  )
+  $effect(() => {
+    if (swiping.tab !== null && !seen) unseen()
+  })
 
   /** How much further than where letting go goes the circle may be pulled. */
   const EXTRA = 72
@@ -72,7 +91,7 @@
   const filled = $derived(Math.min(1, Math.max(0, swiping.progress)))
 </script>
 
-{#if swiping.room}
+{#if swiping.room && seen}
   <div
     class="track"
     class:nib-swipe-room={swiping.stage !== 'went'}

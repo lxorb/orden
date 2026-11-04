@@ -9,6 +9,7 @@
  *  swipe said by the crate, and the arrow played out and gone. See src/lib/back-swipe. */
 
 import { flushSync } from 'svelte'
+import { SvelteMap } from 'svelte/reactivity'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import recorded from './swipe-replays.json'
 
@@ -25,11 +26,13 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
 const pressed: string[] = []
 const note = { id: 'n1', kind: 'note', paneId: 'p1', canGoBack: true, canGoForward: false }
 const site = { id: 'w1', kind: 'web', paneId: 'p2', canGoBack: false, canGoForward: false }
+/** What each pane shows: another tab chosen in it, or none, is written here. */
+const shownIn = new SvelteMap<string, unknown>()
 
 vi.mock('../../src/lib/workspace.svelte', () => ({
   workspace: {
     tabs: [note, site],
-    showing: (pane: string) => (pane === 'p1' ? note : pane === 'p2' ? site : null),
+    showing: (pane: string) => shownIn.get(pane) ?? null,
     goBack: (id: string) => {
       pressed.push(`back ${id}`)
       note.canGoForward = true
@@ -50,11 +53,12 @@ Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
   return { ...rect, top: 0, left: 0, right: 800, bottom: rect.height, toJSON: () => rect }
 }
 
-const { listen, pageSaid, PLAYS, readFingers, touchpad } =
+const { HOLD, listen, pageSaid, PLAYS, readFingers, touchpad } =
   await import('../../src/lib/back-swipe/swipes')
 const { QUIET, SETTLE } = await import('../../src/lib/back-swipe/gesture')
 const { swipeChoice } = await import('../../src/lib/back-swipe/choice.svelte')
 const { swiping } = await import('../../src/lib/back-swipe/shown.svelte')
+const { overlays } = await import('../../src/lib/overlays')
 
 let stop: () => void
 let words: HTMLElement
@@ -64,6 +68,8 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
   pressed.length = 0
   note.canGoForward = false
+  shownIn.set('p1', note)
+  shownIn.set('p2', site)
   swipeChoice.set(true)
   document.body.innerHTML = `
     <div data-pane="p1">
@@ -453,5 +459,155 @@ describe('gestures replayed on a precision touchpad, which says when the fingers
     for (const wrong of [null, 2, {}, { fingers: -1 }, { fingers: 1.5 }, { fingers: '2' }]) {
       expect(readFingers(wrong)).toBeNull()
     }
+  })
+})
+
+/** Every swipe ends (#1119): however its stream stops, the arrow plays out and goes, and
+ *  nothing is left for the window to draw. */
+describe('every swipe ends', () => {
+  /** A finger on the screen, over the note. */
+  const touch = (type: string, x: number) => {
+    const event = stamped(new Event(type, { bubbles: true })) as Event & { touches: unknown[] }
+    Object.defineProperty(event, 'touches', {
+      value: type === 'touchend' || type === 'touchcancel' ? [] : [{ clientX: x, clientY: 300 }],
+    })
+    words.dispatchEvent(event)
+    flushSync()
+  }
+
+  /** A moment later there is no arrow, and nothing says there is one. */
+  function over() {
+    flushSync()
+    // Played out, if it is there at all: never still with the fingers.
+    const left = arrow()
+    if (left) expect(['went', 'stayed'].some((one) => left.classList.contains(one))).toBe(true)
+    vi.advanceTimersByTime(PLAYS + 1)
+    flushSync()
+    expect(arrow()).toBeNull()
+    expect(swiping.tab).toBeNull()
+    expect(swiping.room).toBeNull()
+  }
+
+  test('let go while it only leaned sideways, before it was a swipe', () => {
+    sweep(words, 4, -10)
+    expect(arrow()).not.toBeNull()
+    letGo()
+    over()
+    expect(pressed).toEqual([])
+  })
+
+  test('two fingers lifted from a precision touchpad while it only leaned', () => {
+    touchpad(2)
+    sweep(words, 4, -10)
+    expect(arrow()).not.toBeNull()
+    touchpad(0)
+    over()
+    expect(pressed).toEqual([])
+  })
+
+  test('a precision touchpad whose lift never comes', () => {
+    touchpad(2)
+    sweep(words, 40, -10)
+    expect(arrow()?.classList.contains('armed')).toBe(true)
+    vi.advanceTimersByTime(HOLD - 1)
+    flushSync()
+    expect(arrow()?.classList.contains('stayed')).toBe(false)
+    vi.advanceTimersByTime(1)
+    over()
+    expect(pressed).toEqual([])
+  })
+
+  test('a finger lifted while it only leaned', () => {
+    touch('touchstart', 4)
+    for (let x = 14; x <= 44; x += 10) touch('touchmove', x)
+    expect(arrow()).not.toBeNull()
+    touch('touchend', 44)
+    over()
+    expect(pressed).toEqual([])
+  })
+
+  test('a finger cancelled past the distance goes nowhere', () => {
+    touch('touchstart', 4)
+    for (let x = 14; x <= 404; x += 10) touch('touchmove', x)
+    expect(arrow()?.classList.contains('armed')).toBe(true)
+    touch('touchcancel', 404)
+    over()
+    expect(pressed).toEqual([])
+  })
+
+  test('a finger whose lift was never heard, landing again', () => {
+    touch('touchstart', 4)
+    for (let x = 14; x <= 204; x += 10) touch('touchmove', x)
+    touch('touchstart', 300)
+    over()
+    expect(pressed).toEqual([])
+  })
+
+  test('a finger whose lift never comes', () => {
+    touch('touchstart', 4)
+    for (let x = 14; x <= 204; x += 10) touch('touchmove', x)
+    vi.advanceTimersByTime(HOLD)
+    over()
+    expect(pressed).toEqual([])
+  })
+
+  test('the window out of sight', () => {
+    touchpad(2)
+    sweep(words, 20, -10)
+    const hidden = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
+    document.dispatchEvent(new Event('visibilitychange'))
+    hidden.mockRestore()
+    over()
+    touchpad(0)
+    expect(pressed).toEqual([])
+  })
+
+  for (const [what, then] of [
+    ['another tab chosen in the pane', { id: 'n2', kind: 'terminal', paneId: 'p1' }],
+    ['the tab closed', null],
+  ] as const) {
+    test(`${what}: the arrow goes at once, and its lift steps nothing`, () => {
+      touchpad(2)
+      sweep(words, 40, -10)
+      expect(arrow()).not.toBeNull()
+      shownIn.set('p1', then)
+      flushSync()
+      expect(arrow()).toBeNull()
+      expect(swiping.tab).toBeNull()
+      touchpad(0)
+      flushSync()
+      expect(pressed).toEqual([])
+      expect(arrow()).toBeNull()
+    })
+  }
+
+  test('a page whose lift comes while a layer is up', () => {
+    pageSaid({ tab: 'w1', kind: 'touch', dx: -10, dy: 0, at: 0, left: false, right: false })
+    for (let at = 1; at < 20; at++) {
+      pageSaid({ tab: 'w1', kind: 'touch', dx: -10, dy: 0, at: at * 8, left: false, right: false })
+    }
+    expect(swiping.tab).toBe('w1')
+    const close = overlays.show(() => undefined)
+    pageSaid({ tab: 'w1', kind: 'lift', dx: 0, dy: 0, at: 200, left: false, right: false })
+    close()
+    over()
+    expect(pressed).toEqual(['back w1'])
+  })
+
+  test('a page whose end the engine never says', () => {
+    for (let at = 0; at < 20; at++) {
+      pageSaid({ tab: 'w1', kind: 'touch', dx: -10, dy: 0, at: at * 8, left: false, right: false })
+    }
+    expect(swiping.tab).toBe('w1')
+    vi.advanceTimersByTime(HOLD)
+    over()
+    expect(pressed).toEqual([])
+  })
+
+  test('the setting turned off half way', () => {
+    sweep(words, 20, -10)
+    swipeChoice.set(false)
+    over()
+    expect(pressed).toEqual([])
   })
 })
