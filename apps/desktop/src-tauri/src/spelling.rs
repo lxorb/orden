@@ -25,9 +25,6 @@ pub fn spell_languages(app: AppHandle, languages: Vec<String>) {
         return;
     }
     for page in app.webviews().into_values() {
-        if crate::page_window::has_none(page.label()) {
-            continue;
-        }
         let languages = languages.clone();
         let _ = page.with_webview(move |platform| engine::use_dictionaries(&platform, &languages));
     }

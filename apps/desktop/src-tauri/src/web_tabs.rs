@@ -1702,7 +1702,7 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
     #[cfg(not(all(windows, not(feature = "cef"))))]
     let _ = store;
 
-    let Ok(view) = found(app, tab) else {
+    let Some(view) = app.get_webview(&label_of(tab)) else {
         return;
     };
 
@@ -1730,46 +1730,48 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
     let label = view.label().to_string();
     let asking = app.clone();
     let named = tab.to_string();
-    let _ = view.with_webview(move |platform| {
-        // The session every web tab shares is the environment the first page was built
-        // on, captured here once and handed to every tab after it, so a note closed and
-        // opened again keeps its login; see `session`. Kept before `ask` looks at the
-        // page because both want the one thread this runs on.
-        #[cfg(all(windows, not(feature = "cef")))]
-        session::keep(store.as_deref(), platform.environment());
-        // The store's extensions, handed to its profile the first time a page is built
-        // there this run; see extensions/webview2.rs.
-        #[cfg(all(windows, not(feature = "cef")))]
-        crate::extensions::webview2::seen(&asking, store.as_deref(), &platform);
-        // And a window asked for in it while an extension arrives, held back unless a
-        // person asked: the page an extension opens about its own install; see
-        // extensions/welcome.rs.
-        #[cfg(windows)]
-        crate::extensions::welcome::listen(&platform, store.as_deref(), &named);
-        // The browser's own chords, which the page is never offered, on a page in any
-        // store; see web_keys.rs.
-        crate::web_keys::listen(&platform, asking.clone(), window.clone());
-        // Whether it has the keyboard, which is where it goes back to; see keyboard.rs.
-        crate::keyboard::page(&asking, &platform, &label, &window);
-        // How a window it asks for was pressed for; see web_opens.rs.
-        crate::web_opens::listen(&platform, asking.clone(), named.clone(), window.clone());
-        // Its sound, its full screen and its zoom; see web_page.rs. And finding in it;
-        // see web_find.rs.
-        crate::web_page::listen(&platform, asking.clone(), named.clone(), window.clone());
-        crate::web_find::listen(&platform, asking.clone(), named.clone(), window.clone());
-        crate::downloads::listen(&platform, asking.clone(), window.clone());
-        // The site's own mark, followed for as long as the page is open; see
-        // web_icons.rs.
-        crate::web_icons::listen(&platform, asking.clone(), named.clone(), window.clone());
-        // Its `alert`, `confirm` and `prompt`, in Orden's own card; see web_dialogs.rs.
-        crate::web_dialogs::listen(&platform, asking.clone(), named.clone(), window.clone());
-        ask::listen(&platform, asking, named, window);
+    let _ = on_the_page(app, &label_of(tab), move |view| {
+        let _ = view.with_webview(move |platform| {
+            // The session every web tab shares is the environment the first page was built
+            // on, captured here once and handed to every tab after it, so a note closed and
+            // opened again keeps its login; see `session`. Kept before `ask` looks at the
+            // page because both want the one thread this runs on.
+            #[cfg(all(windows, not(feature = "cef")))]
+            session::keep(store.as_deref(), platform.environment());
+            // The store's extensions, handed to its profile the first time a page is built
+            // there this run; see extensions/webview2.rs.
+            #[cfg(all(windows, not(feature = "cef")))]
+            crate::extensions::webview2::seen(&asking, store.as_deref(), &platform);
+            // And a window asked for in it while an extension arrives, held back unless a
+            // person asked: the page an extension opens about its own install; see
+            // extensions/welcome.rs.
+            #[cfg(windows)]
+            crate::extensions::welcome::listen(&platform, store.as_deref(), &named);
+            // The browser's own chords, which the page is never offered, on a page in any
+            // store; see web_keys.rs.
+            crate::web_keys::listen(&platform, asking.clone(), window.clone());
+            // Whether it has the keyboard, which is where it goes back to; see keyboard.rs.
+            crate::keyboard::page(&asking, &platform, &label, &window);
+            // How a window it asks for was pressed for; see web_opens.rs.
+            crate::web_opens::listen(&platform, asking.clone(), named.clone(), window.clone());
+            // Its sound, its full screen and its zoom; see web_page.rs. And finding in it;
+            // see web_find.rs.
+            crate::web_page::listen(&platform, asking.clone(), named.clone(), window.clone());
+            crate::web_find::listen(&platform, asking.clone(), named.clone(), window.clone());
+            crate::downloads::listen(&platform, asking.clone(), window.clone());
+            // The site's own mark, followed for as long as the page is open; see
+            // web_icons.rs.
+            crate::web_icons::listen(&platform, asking.clone(), named.clone(), window.clone());
+            // Its `alert`, `confirm` and `prompt`, in Orden's own card; see web_dialogs.rs.
+            crate::web_dialogs::listen(&platform, asking.clone(), named.clone(), window.clone());
+            ask::listen(&platform, asking, named, window);
 
-        #[cfg(not(feature = "cef"))]
-        if let Some((address, scripts)) = onward {
-            let cleared = crate::web_worlds::sent(&platform, address.as_str(), &scripts);
-            crate::trace::mark(&format!("web tab: {}", cleared.said()));
-        }
+            #[cfg(not(feature = "cef"))]
+            if let Some((address, scripts)) = onward {
+                let cleared = crate::web_worlds::sent(&platform, address.as_str(), &scripts);
+                crate::trace::mark(&format!("web tab: {}", cleared.said()));
+            }
+        });
     });
 }
 
@@ -2528,13 +2530,34 @@ fn let_go(label: &str) {
 /// The webview for a tab, or a reason there is none. A tab whose page has been
 /// unloaded to give the memory back is the ordinary case rather than a failure, and
 /// the window opens it again instead of reporting anything.
-#[track_caller]
 pub(crate) fn found(app: &AppHandle, tab: &str) -> Result<Webview, String> {
-    let label = label_of(tab);
-    // A page with no window is one the runtime would stop the app over; see page_window.rs.
-    app.get_webview(&label)
-        .filter(|_| !crate::page_window::has_none(&label))
+    app.get_webview(&label_of(tab))
         .ok_or_else(|| "that tab has no page open".to_string())
+}
+
+/// Hands a tab's page to `then` on the window's own thread, if it is still there by then.
+///
+/// **For anything asked of a page from another thread that reads its window** - `with_webview`,
+/// `hide`, `show`, `set_bounds`. Asked directly from there, it joins the queue of a thread
+/// busy building other pages, whatever has become of the page in the meantime, and the page
+/// may be closed in between: the close is taken first, and the browser goes while the message
+/// waits. `tauri-runtime-cef` on Linux then reads the window of a browser that has none and
+/// asserts (`failed to get XID`, `platform/linux/webview.rs` in 3.0.0-alpha.6), on a queued
+/// message nothing can catch. Web tabs closed while they came up took the whole app down so:
+/// a close waiting for a page's build runs at the very moment `web_open` goes on to `listening`.
+/// On that thread a close has either run, and the page is not found, or has not, and whatever
+/// is asked here runs before it does.
+pub(crate) fn on_the_page(
+    app: &AppHandle,
+    label: &str,
+    then: impl FnOnce(Webview) + Send + 'static,
+) -> tauri::Result<()> {
+    let (asking, label) = (app.clone(), label.to_owned());
+    app.run_on_main_thread(move || {
+        if let Some(view) = asking.get_webview(&label) {
+            then(view);
+        }
+    })
 }
 
 /// Asking the reader what a site may do, the way a browser asks.
@@ -3313,6 +3336,33 @@ mod tests {
     /// #1074: every way a page asks for a window, and what it becomes. What a person
     /// pressed for is a tab; what the page opened itself with no press behind it is
     /// blocked and said; anything else the page opened itself is the engine's own window,
+    /// Asked from a command's thread, what reads a page's window lands behind the page's
+    /// close, and on Linux the runtime asserts on the window that has gone by then: Ctrl+W
+    /// through web tabs coming up took the whole app down (`scripts/closing-drive.py`).
+    #[test]
+    fn what_reads_a_page_from_a_command_thread_goes_by_the_windows_own() {
+        let tabs = include_str!("web_tabs.rs").replace('\r', "");
+        let listening = tabs
+            .split("fn listening(")
+            .nth(1)
+            .and_then(|rest| rest.split("\n}\n").next())
+            .unwrap_or_default();
+        let (before, after) = listening
+            .split_once("on_the_page(")
+            .expect("`listening` reaches the page directly");
+        assert!(!before.contains("with_webview("), "asked before going over");
+        assert!(after.contains("with_webview("));
+        for (file, source) in [
+            ("web_certificate.rs", include_str!("web_certificate.rs")),
+            ("web_pause.rs", include_str!("web_pause.rs")),
+        ] {
+            assert!(
+                source.contains("on_the_page("),
+                "{file} reaches the page directly"
+            );
+        }
+    }
+
     /// opener and all, so `window.open` hands the page what it asked for; nothing else is
     /// opened.
     #[test]

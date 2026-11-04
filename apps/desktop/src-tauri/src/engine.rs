@@ -401,13 +401,13 @@ pub(crate) fn add_child<R: Runtime>(
     size: impl Into<tauri::Size>,
 ) -> tauri::Result<tauri::Webview<R>> {
     #[cfg(not(feature = "cef"))]
-    let built = window.add_child(builder, position, size);
-    #[cfg(feature = "cef")]
-    let built = window.add_child(builder.position(position).size(size));
-    if let Ok(view) = &built {
-        crate::page_window::built(view);
+    {
+        window.add_child(builder, position, size)
     }
-    built
+    #[cfg(feature = "cef")]
+    {
+        window.add_child(builder.position(position).size(size))
+    }
 }
 
 /// The window the config describes, taken out of it so it is built by our own code
