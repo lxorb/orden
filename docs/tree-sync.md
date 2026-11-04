@@ -77,6 +77,20 @@ writer the last to change it, but not the one who put it in its folder: a device
 wrote in a note somebody else had moved into a folder, never having seen it there, has
 still not seen it there, and its delete of the folder leaves it.
 
+## Putting a delete back
+
+A delete made here is said to the engine with a word to put it back by: the trash's id
+for what it holds, or the undo's own. The engine keeps where the entry and everything in
+it were on this disk (`gone:<space>` in the sync store's `meta`, the newest two hundred),
+so when the trash or an undo puts the files back and says so with that word, each comes
+back as the entry it was, under its id: a `restore` to the account, which brings it back
+with the folders above it, over a delete that had not seen it, and its words come down
+again by the next pull, what the file said kept as a version where they differ. One made
+here whose making has not gone yet loses the delete behind it instead, its words its
+file's; one the account never heard of, or no longer has, is made again under its id
+with what its file says. A file put back by no such word, or where something else is now,
+is a file made.
+
 A delete is a fact, not an absence: the account keeps the entry with a tombstone and the
 cursor it was deleted at, so a device that comes back after a week does not send up the
 entry it still holds as though it were new. Deleted entries go to Recently deleted, where
@@ -107,9 +121,6 @@ and with the app's own sync engine as every device (`apps/desktop/src/lib/sync2/
 What the tree walks found when they were first run, each pinned as an expected failure
 until the step of #1068 that removes it lands:
 
-- **A restore from this device's trash makes a new note.** The trash puts the files back
-  on the disk and the engine hears them as files made, so the note comes back under a new
-  id, beside its own tombstone. Restoring has to be an operation on the id.
 - **An older app's drag in a folder that has places is not read.** Builds from before
   places still keep the order per folder path as a list of names (`arranged`, synced
   through the account, last writer per folder), and newer devices write that list from

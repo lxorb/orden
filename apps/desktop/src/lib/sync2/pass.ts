@@ -21,6 +21,7 @@ import { recoverLost, sendMade, settleFiles } from './files'
 import { coalesce } from '@orden/sync-core/outbox'
 import {
   type DocRefusal,
+  type EntryKind,
   feedPageOf,
   type FeedItem,
   OPS_BATCH,
@@ -38,7 +39,8 @@ import { Core, type Holding } from './core'
 import type { Doc } from './docs'
 import { MINE } from './docs'
 import { foldIn } from './ingest'
-import { fileOfUpdates, judge, shapeOf, turn, unixLines } from './kinds'
+import { fileOfUpdates, holdsDocument, judge, shapeOf, turn, unixLines } from './kinds'
+import { made } from './create'
 import { type Outboxed, settle, type SpaceState } from './places'
 import { project } from './project'
 import { againstBytes, type Merging, type Outgoing, outgoingBytes } from './records'
@@ -242,7 +244,7 @@ async function sendOps(
         continue
       }
       if ('refused' in result) {
-        done.push(...refused(core, space, op, result.refused))
+        done.push(...(await refused(core, space, op, result.refused)))
         continue
       }
       done.push(...core.entryChanges(space.answered(op, result)))
@@ -300,7 +302,7 @@ function changesOf(core: Core, space: SpaceState, batch: readonly Outboxed[]): C
 
 /** An op the account would not apply. Nothing of this device's is lost by any of them:
  *  the op comes out of what is shown, and the tree reads as the account has it. */
-function refused(core: Core, space: SpaceState, op: Op, why: string): Change[] {
+async function refused(core: Core, space: SpaceState, op: Op, why: string): Promise<Change[]> {
   // A delete of something another device had written in since: the note stays, and
   // this device is told so once its words are back.
   if (op.t === 'delete' && why === 'edited') {
@@ -325,7 +327,29 @@ function refused(core: Core, space: SpaceState, op: Op, why: string): Change[] {
     space.outbox.push(one)
     return [change, core.counterRow()]
   }
+  // Something back from this device's trash that the account no longer has at all:
+  // made again under its id, with what its file says (#1068).
+  if (op.t === 'restore' && why === 'gone') return await remade(core, space, op.id)
   return []
+}
+
+/** An entry made again on the account under its id, where its file is on this disk. */
+async function remade(core: Core, space: SpaceState, id: string): Promise<Change[]> {
+  const entry = space.entries.get(id)
+  if (!entry?.local_path) return []
+  const full = core.world.join(space.row.root, entry.local_path)
+  const text = holdsDocument(entry.kind) ? await core.world.disk.read(full) : undefined
+  if (text === null) return []
+  const path = entry.local_path
+  entry.local_path = ''
+  const again = await made(core, space, {
+    path,
+    folder: entry.kind === 'folder',
+    id,
+    kind: entry.kind as EntryKind,
+    ...(text === undefined ? {} : { text }),
+  })
+  return again.changes
 }
 
 /** Reads the feed from the space's cursor to its end, each page written down with the

@@ -35,6 +35,9 @@ export type FileOp =
       kind: Exclude<Kind, 'space'>
       root: string | null
       key?: string
+      /** A delete put back - out of the trash, or undone - by the word it was said
+       *  with, so sync brings back the entries it was rather than new ones (#1068). */
+      back?: string
     }
   | {
       op: 'moved'
@@ -44,7 +47,14 @@ export type FileOp =
       root: string | null
       into?: string | null
     }
-  | { op: 'removed'; path: string; kind: Kind; root: string | null }
+  | {
+      op: 'removed'
+      path: string
+      kind: Kind
+      root: string | null
+      /** The word the trash or the undo keeps to put it back by; see `created`. */
+      back?: string
+    }
 
 /** Whatever keeps files by path. What it has left to do - telling the account - it
  *  answers as a promise, which the operation waits for before it goes on, so two

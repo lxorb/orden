@@ -4446,13 +4446,23 @@ class Workspace {
     await this.fileOps.tell({ op: 'moved', from, to, kind, root, into })
   }
 
-  async fileGone(path: string, kind: Kind) {
-    await this.fileOps.tell({ op: 'removed', path, kind, root: this.rootHolding(path) })
+  /** `back`: the word to put it back by; see workspace/file-ops.ts. */
+  async fileGone(path: string, kind: Kind, back?: string) {
+    const root = this.rootHolding(path)
+    await this.fileOps.tell({ op: 'removed', path, kind, root, ...(back ? { back } : {}) })
   }
 
-  async fileCame(path: string, kind: 'file' | 'folder', key?: string) {
+  /** `back`: a delete put back, by the word it was said with. */
+  async fileCame(path: string, kind: 'file' | 'folder', key?: string, back?: string) {
     const root = this.rootHolding(path)
-    await this.fileOps.tell({ op: 'created', path, kind, root, ...(key ? { key } : {}) })
+    await this.fileOps.tell({
+      op: 'created',
+      path,
+      kind,
+      root,
+      ...(key ? { key } : {}),
+      ...(back ? { back } : {}),
+    })
   }
 
   /** The root of the space holding `path`, else the active one's. Asked by anything
@@ -4478,9 +4488,14 @@ class Workspace {
       this.hideEntry(path)
 
       const kept = await this.bin(path, isFolder, { source })
-      if (kept) this.undone.record({ kind: 'delete', path, ...kept })
+      // The word sync keeps to bring back the entries it was, should the delete be put
+      // back: the trash's own id for it, where it went there.
+      const back = kept?.trashId ?? crypto.randomUUID()
+      if (kept) {
+        this.undone.record({ kind: 'delete', path, ...kept, ...(kept.trashId ? {} : { back }) })
+      }
 
-      await this.fileGone(path, isFolder ? 'folder' : 'file')
+      await this.fileGone(path, isFolder ? 'folder' : 'file', back)
       await this.loadTree()
       // The row deleted may have been the last thing keeping a nested note nested.
       await this.unnest(folderOf(path))

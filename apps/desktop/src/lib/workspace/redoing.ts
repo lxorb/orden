@@ -17,7 +17,7 @@ export interface DoesAgain extends Copies {
   move(from: string, intoFolder: string): Promise<void>
   rename(path: string, name: string): Promise<void>
   remove(path: string, isFolder: boolean): Promise<void>
-  fileCame(path: string, kind: 'file' | 'folder'): Promise<void>
+  fileCame(path: string, kind: 'file' | 'folder', key?: string, back?: string): Promise<void>
   readonly bookmarks: { put(root: string, list: Bookmark[]): void }
   loadTree(): Promise<void>
   persist(): void
@@ -59,7 +59,7 @@ async function again(ws: DoesAgain, action: FileAction): Promise<void> {
     case 'create': {
       // Back out of Recently deleted, or written again from what it said.
       const path = await putBack({ ...action, kind: 'delete', content: action.content ?? '' })
-      await ws.fileCame(path, 'file')
+      await ws.fileCame(path, 'file', undefined, action.back ?? action.trashId)
       ws.undone.record({ kind: 'create', path })
       break
     }

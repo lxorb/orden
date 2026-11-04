@@ -679,7 +679,10 @@ class Runner {
         // A day's note the append action made starts from nothing, which is what two of
         // them made apart are merged against.
         const mergeable = this.mergeables.delete(op.path) ? '' : undefined
-        await engine.created(op.path, op.kind === 'folder', text, mergeable)
+        // A delete put back comes back as the entries it was, where the engine has it.
+        if (!(op.back && (await engine.restored(op.path, op.back)))) {
+          await engine.created(op.path, op.kind === 'folder', text, mergeable)
+        }
         this.rebind()
       } else if (op.op === 'moved') {
         if (op.kind === 'space') {
@@ -689,7 +692,7 @@ class Runner {
           await engine.moved(op.from, op.to)
         }
       } else if (op.kind !== 'space') {
-        await engine.removed(op.path)
+        await engine.removed(op.path, op.back)
       }
       this.nudge()
     })()

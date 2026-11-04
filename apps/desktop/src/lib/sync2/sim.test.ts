@@ -276,14 +276,11 @@ describe('random walks, the engine as every device', () => {
 })
 
 /** The tree walked at random (#1068): moves, renames, deletes and restores crossing on
- *  four devices, the engine as every one. A restore here is what the app's trash does
- *  today - the files put back where they were, and heard as files made - so a note comes
- *  back under a new id: the step of #1068 that has the file list say what it did by id
- *  makes it come back as itself. Until then that one failure is expected and every other
- *  check holds. */
+ *  four devices, the engine as every one. A restore here is what the app's trash does -
+ *  the files put back where they were, or beside what took their name, and the engine
+ *  told by the word the delete was said with - so what was deleted comes back as itself. */
 describe('the tree walked at random, the engine as every device', () => {
   const SEEDS = 40
-  const AS_ITSELF = 'was restored and is not there'
 
   async function treeWalk(seed: number): Promise<string[]> {
     const report = await simulate({
@@ -299,7 +296,7 @@ describe('the tree walked at random, the engine as every device', () => {
   test(`${String(SEEDS)} seeds converge with nothing duplicated, lost or cycled`, async () => {
     const failed: string[] = []
     for (let seed = 1; seed <= SEEDS; seed++) {
-      const said = (await treeWalk(seed)).filter((one) => !one.endsWith(AS_ITSELF))
+      const said = await treeWalk(seed)
       if (said.length) failed.push(`seed ${String(seed)}: ${said.join('; ')}`)
     }
     expect(failed).toEqual([])
@@ -332,7 +329,7 @@ describe('the tree walked at random, the engine as every device', () => {
     expect(report.account.entries.map((one) => one.name).sort()).toEqual(['Ideas.md', 'Work'])
   })
 
-  test.fails('a note restored from the trash comes back as itself', async () => {
+  test('a note restored from the trash comes back as itself', async () => {
     // Seed 3 restores the seeded Plan.md (n1) on one device.
     expect(await treeWalk(3)).toEqual([])
   })
@@ -344,7 +341,6 @@ describe('the tree walked at random, the engine as every device', () => {
  *  it by name as the file list says it (`arrange`). */
 describe('rows arranged at random, the engine as every device', () => {
   const SEEDS = 30
-  const AS_ITSELF = 'was restored and is not there'
 
   test(`${String(SEEDS)} seeds end with every row in the same place everywhere`, async () => {
     const failed: string[] = []
@@ -356,8 +352,9 @@ describe('rows arranged at random, the engine as every device', () => {
         mix: 'order',
         device: (id, clock, random, seeded) => new EngineDevice(id, clock, random, seeded),
       })
-      const said = report.failures.filter((one) => !one.endsWith(AS_ITSELF))
-      if (said.length) failed.push(`seed ${String(seed)}: ${said.join('; ')}`)
+      if (report.failures.length) {
+        failed.push(`seed ${String(seed)}: ${report.failures.join('; ')}`)
+      }
     }
     expect(failed).toEqual([])
   }, 600_000)

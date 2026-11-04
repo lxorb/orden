@@ -27,13 +27,16 @@ export type FileAction =
       path: string
       content: string
       trashId?: string
+      /** The word sync was told the delete with, to bring back the entries it was
+       *  (#1068); see `back` in workspace/file-ops.ts. */
+      back?: string
       /** Signed in, a folder's words and folders as it went. */
       folder?: boolean
       notes?: { path: string; content: string }[]
       folders?: string[]
     }
   /** A file made; what Recently deleted kept of it once undone (#399). */
-  | { kind: 'create'; path: string; content?: string; trashId?: string }
+  | { kind: 'create'; path: string; content?: string; trashId?: string; back?: string }
   /** One gesture of several operations (#399). */
   | { kind: 'many'; steps: FileAction[] }
   /** A space's Essentials as they were and became (#412). */

@@ -22,7 +22,7 @@ import { repositioned } from '@orden/sync-core/order'
 import type { TreeEntry } from '@orden/sync-core/tree'
 import type { EngineEvents, Engine as AskedEngine } from './asking.svelte'
 import { Core } from './core'
-import { atOrUnder, made, moved, placed as placedRows, removed, unsynced } from './create'
+import { atOrUnder, made, moved, placed as placedRows, removed, restored, unsynced } from './create'
 import type { Doc } from './docs'
 import { HeldList, type Names } from './held'
 import { holdsDocument } from './kinds'
@@ -371,14 +371,36 @@ export class Engine implements AskedEngine {
     return holder !== null && (await this.core.world.disk.read(holder)) !== null
   }
 
-  removed(path: string): Promise<void> {
-    return this.core.use(() => this.remove(path))
+  /** A file or folder deleted here. `back`: the word its trash or its undo keeps to put
+   *  it back by (`restored`). */
+  removed(path: string, back?: string): Promise<void> {
+    return this.core.use(() => this.remove(path, back))
   }
 
-  private async remove(path: string): Promise<void> {
+  /** What this device deleted, back at `path` as the entries it was - a folder with what
+   *  it held (`restored` in create.ts): the delete said with `back` (`removed`), the word
+   *  its trash or its undo keeps. Answers false where it cannot be: no delete of this
+   *  space was said with that word, or something else is there; what is there is then a
+   *  file made, which the caller says instead. */
+  restored(path: string, back: string): Promise<boolean> {
+    return this.core.use(async () => {
+      const placed = this.placed(path)
+      if (!placed) return false
+      let id: string | null = null
+      for (const [one, went] of placed.space.gone) if (went.back === back) id = one
+      if (id === null) return false
+      const changes = await restored(this.core, placed.space, id, placed.path)
+      if (changes === null) return false
+      await this.core.commit(changes)
+      await this.settle(placed.space)
+      return true
+    })
+  }
+
+  private async remove(path: string, back?: string): Promise<void> {
     const placed = this.placed(path)
     if (!placed) return
-    await this.core.commit(removed(this.core, placed.space, placed.path))
+    await this.core.commit(removed(this.core, placed.space, placed.path, back))
     await this.settle(placed.space)
     await this.held.refresh()
   }

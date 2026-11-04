@@ -379,20 +379,26 @@ export class EngineDevice implements DeviceAdapter {
         if (!target || !path) return
         this.trashed(engine, target.id, path)
         await this.disk.remove(this.full(path))
-        await engine.removed(this.full(path))
+        // The trash's word for it is the id the person will ask for back by.
+        await engine.removed(this.full(path), target.id)
         return
       }
       case 'restore': {
-        // As the app's trash does it today (trash.svelte.ts): what was deleted is put back
-        // on the disk where it was, and the engine hears of it as files made (#1068).
+        // As the app's trash does it (trash.svelte.ts): what was deleted is put back on
+        // the disk where it was, and the engine is told which entry it is (#1068).
         const item = this.trash.find((one) => one.ids.includes(action.id))
         if (!item) return
         this.trash = this.trash.filter((one) => one !== item)
-        if (await this.disk.exists(this.full(item.path))) return
-        for (const folder of item.folders) await this.disk.mkdir(this.full(folder))
-        for (const [path, text] of item.files) await this.disk.write(this.full(path), text)
-        for (const folder of item.folders) await engine.created(this.full(folder), true)
-        for (const [path, text] of item.files) await engine.created(this.full(path), false, text)
+        // Beside whatever took its name meanwhile, as the trash puts it back.
+        const at = freeIn(this.taken(engine), folderOf(item.path), nameOf(item.path))
+        const moved = (path: string) => `${at}${path.slice(item.path.length)}`
+        for (const folder of item.folders) await this.disk.mkdir(this.full(moved(folder)))
+        for (const [path, text] of item.files) await this.disk.write(this.full(moved(path)), text)
+        if (await engine.restored(this.full(at), item.id)) return
+        for (const folder of item.folders) await engine.created(this.full(moved(folder)), true)
+        for (const [path, text] of item.files) {
+          await engine.created(this.full(moved(path)), false, text)
+        }
         return
       }
       case 'place': {
@@ -458,8 +464,13 @@ export class EngineDevice implements DeviceAdapter {
 
   /** What the person deleted here, as the trash keeps it: the files and folders under
    *  what went, by path, and the ids they had. */
-  private trash: { path: string; ids: string[]; folders: string[]; files: [string, string][] }[] =
-    []
+  private trash: {
+    path: string
+    id: string
+    ids: string[]
+    folders: string[]
+    files: [string, string][]
+  }[] = []
 
   private trashed(engine: Engine, id: string, path: string) {
     const inside = (one: string) => one === path || one.startsWith(`${path}/`)
@@ -476,7 +487,7 @@ export class EngineDevice implements DeviceAdapter {
     const files = [...this.disk.files]
       .map(([one, text]): [string | null, string] => [this.relativeOf(one), text])
       .filter((one): one is [string, string] => one[0] !== null && inside(one[0]))
-    this.trash.push({ path, ids, folders, files })
+    this.trash.push({ path, id, ids, folders, files })
   }
 
   /** A full path on this disk, as the space speaks it; null outside the space. */

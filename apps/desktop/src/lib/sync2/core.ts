@@ -17,6 +17,8 @@ import { holdsDocument, shapeOf, type Shape } from './kinds'
 import { SpaceState, type Outboxed } from './places'
 import {
   againstOf,
+  goneKey,
+  goneOf,
   numbersKey,
   numbersOf,
   numbersRow,
@@ -30,6 +32,7 @@ import {
   wantedRow,
   type Against,
   type DocNumbers,
+  type Gone,
   type Ordering,
   type Outgoing,
   type Wanted,
@@ -145,9 +148,12 @@ export class Core {
     ])
 
     const orderings = new Map<string, Ordering>()
+    const gones = new Map<string, Gone>()
     for (const row of meta) {
       const ordering = orderingOf(row)
       if (ordering) orderings.set(ordering.space, ordering.ordering)
+      const gone = goneOf(row)
+      if (gone) gones.set(gone.space, gone.gone)
       const read = numbersOf(row)
       if (read) core.numbers.set(read.id, read.numbers)
       if (row.key.startsWith(GEN)) {
@@ -172,10 +178,16 @@ export class Core {
         const record = outgoingOf(row.op)
         if (record) waiting.push({ row, record })
       }
-      core.spaces.set(
-        space.space_id,
-        new SpaceState(space, mine, waiting, core.device, world, orderings.get(space.space_id)),
+      const state = new SpaceState(
+        space,
+        mine,
+        waiting,
+        core.device,
+        world,
+        orderings.get(space.space_id),
       )
+      state.gone = gones.get(space.space_id) ?? state.gone
+      core.spaces.set(space.space_id, state)
     }
 
     for (const row of held) {
@@ -249,6 +261,7 @@ export class Core {
       remove('spaces', spaceId),
       remove('meta', wantKey(spaceId)),
       remove('meta', orderKey(spaceId)),
+      remove('meta', goneKey(spaceId)),
     )
     return changes
   }

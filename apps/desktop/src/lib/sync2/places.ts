@@ -18,7 +18,7 @@ import { inForeignCopy } from '@orden/sync-core/foreign'
 import { byPosition } from '@orden/sync-core/order'
 import { applyOp, nameKey, type TreeEntry, type TreeState, treeState } from '@orden/sync-core/tree'
 import { isReserved } from '../naming'
-import type { Ordering, Outgoing } from './records'
+import type { Gone, Ordering, Outgoing } from './records'
 import type { EntryRow, OutboxRow, SpaceRow } from './store'
 import type { Disk, FileKind, World } from './world'
 
@@ -70,6 +70,8 @@ export class SpaceState {
    *  records.ts). Off until the feed says so: an account from before positions is sent
    *  none. */
   ordering: Ordering
+  /** Where what this device deleted was on this disk (`Gone` in records.ts). */
+  gone: Gone = new Map()
   /** When the files held in step here were last checked against what the account
    *  keeps; see `recoverLost` in files.ts. Never, at launch. */
   lostCheckedAt = -Infinity
@@ -212,6 +214,11 @@ export class SpaceState {
       out.set(nameOf(path), entry)
     }
     return out
+  }
+
+  /** How a name the account holds is spelled on this disk. */
+  spelled(name: string): string {
+    return localName(name, this.world.platform)
   }
 
   /** How this disk compares two paths. */

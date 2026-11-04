@@ -145,8 +145,14 @@ class Trash {
         // And what came back is said like any file that came to be, so the links to
         // it resolve again at once. A space is read whole when it is opened, like
         // any other.
+        // Sync brings back the entries it was, by the trash's id it was deleted with.
         if (item.kind !== 'space') {
-          await workspace.fileCame(at, item.kind === 'folder' ? 'folder' : 'file')
+          await workspace.fileCame(
+            at,
+            item.kind === 'folder' ? 'folder' : 'file',
+            undefined,
+            item.ref,
+          )
         }
         return
       }
