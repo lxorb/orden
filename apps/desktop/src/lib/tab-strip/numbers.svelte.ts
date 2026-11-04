@@ -18,15 +18,18 @@
  *  any key or press of the pointer says it is up, and when the window loses the keyboard.
  *  Which number, and when a hold is a hold, is numbers.ts.
  *
- *  Keys pressed inside a web tab's page are the page's, but on `WebView2` Alt going down
- *  there, every key pressed while it is held and its release are told to the window by
- *  the crate (`told` and `meaning` in web_keys.rs), played here as the keys they were, so
- *  the numbers come over a page as they do over a note - and the keyboard going into a
- *  page, which this document hears as its own blur, is no word of Alt there. Orden's own
- *  Chromium and WebKitGTK say nothing of Alt inside a page, so there that blur still puts
- *  them away, rather than leave them up over a release nobody heard. A terminal hands Alt
- *  and a digit to the app rather than to the shell (terminal/keys.ts), so it shows them
- *  too.
+ *  Keys pressed inside a web tab's page are the page's, but Alt going down there, every
+ *  key pressed while it is held and its release are told to the window by the crate
+ *  (`told`, `meaning` and `heard_raw` in web_keys.rs), played here as the keys they were,
+ *  so the numbers come over a page as they do over a note - and the keyboard going into
+ *  a page, which this document hears as its own blur, is no word of Alt there. And Alt
+ *  and a digit or an Essential's letter is taken from the page and said as itself, so it
+ *  does here what it does anywhere: the letters are said to the crate as they change
+ *  (`web_keys_take`). Its answer is whether a page says Alt at all - `WebView2` does, and
+ *  Orden's own Chromium where the X server has its input extension - and where none does
+ *  that blur still puts them away, rather than leave them up over a release nobody
+ *  heard. A terminal hands Alt and a digit to the app rather than to the shell
+ *  (terminal/keys.ts), so it shows them too.
  *
  *  Fetched at the launch's last turn, where it listens for itself and puts its component
  *  up empty, so the first Alt after the launch has nothing left to load or build; nothing
@@ -36,7 +39,7 @@ import { mount, untrack } from 'svelte'
 import { i18n } from '../i18n.svelte'
 import { shortcuts } from '../shortcuts.svelte'
 import { tabOverview } from '../surfaces.svelte'
-import { isDesktop } from '../tauri'
+import { invoke, isDesktop } from '../tauri'
 import { viewport } from '../viewport.svelte'
 import { workspace } from '../workspace.svelte'
 import { letterOf } from './letters'
@@ -57,6 +60,9 @@ class Numbers {
 
   private readonly hold = new AltHold()
   private frame = 0
+  /** Whether a web page says Alt held and let go of inside it; see the top of this file.
+   *  `WebView2` always does, and the crate's answer to the letters says for the rest. */
+  private pageTells = isDesktop && shortcuts.platform === 'win'
 
   constructor() {
     // Capturing, so a terminal or a list that stops a key on its way cannot hide it.
@@ -71,11 +77,10 @@ class Numbers {
     }
     // The window's own blur, and not a field's, which the capturing turn hears too: the
     // keyboard gone into a web page, which says nothing of Alt there but on `WebView2`.
-    const pageTells = isDesktop && shortcuts.platform === 'win'
     addEventListener(
       'blur',
       (event) => {
-        if (!(event.target instanceof Element) && !pageTells) this.released()
+        if (!(event.target instanceof Element) && !this.pageTells) this.released()
       },
       options,
     )
@@ -86,6 +91,18 @@ class Numbers {
         const front = `${workspace.panes.focusedId}:${workspace.activeTabId}:${workspace.tabs.length}`
         if (front && untrack(() => this.hold.holding)) this.place()
       })
+      // The Essentials' letters, taken from a page as they change; see the top.
+      if (isDesktop) {
+        $effect(() => {
+          const chords = Object.values(essentialLetters.given).map((letter) => ({
+            code: `Key${letter}`,
+            alt: true,
+          }))
+          void invoke<boolean>('web_keys_take', { chords })
+            .then((tells) => (this.pageTells = tells))
+            .catch(() => undefined)
+        })
+      }
     })
     document.addEventListener('visibilitychange', () => this.released())
     // The window losing the keyboard while it is in a web page, which this document is

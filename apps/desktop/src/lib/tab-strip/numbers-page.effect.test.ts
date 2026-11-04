@@ -6,7 +6,7 @@ import { expect, test, vi } from 'vitest'
 
 const opened = vi.hoisted(() => [] as string[])
 
-vi.mock('../tauri', () => ({ isDesktop: true }))
+vi.mock('../tauri', () => ({ isDesktop: true, invoke: () => Promise.resolve(true) }))
 /** The window's own word of losing the keyboard, which the test says. */
 const focus = vi.hoisted(() => ({ changed: (_payload: boolean): void => undefined }))
 vi.mock('@tauri-apps/api/window', () => ({
@@ -27,7 +27,10 @@ vi.mock('../workspace.svelte', () => ({
   workspace: { panes: { focusedId: 'pane' }, activeTabId: null, tabs: [], tabsIn: () => [] },
 }))
 vi.mock('./letters.svelte', () => ({
-  essentialLetters: { pathOf: (letter: string) => (letter === 'N' ? '/space/Notes.md' : null) },
+  essentialLetters: {
+    given: { '/space/Notes.md': 'N' },
+    pathOf: (letter: string) => (letter === 'N' ? '/space/Notes.md' : null),
+  },
 }))
 vi.mock('../essentials.svelte', () => ({
   openEssential: (path: string) => void opened.push(path),
