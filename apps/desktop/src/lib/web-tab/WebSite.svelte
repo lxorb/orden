@@ -2,8 +2,9 @@
   /** What this site is: the popover behind the mark at the left of the address field.
    *
    *  Chrome's site information bubble, kept to what Orden can honestly say: whether the
-   *  connection is the secure kind, the certificate it was made with where the engine
-   *  says (#776), what the site has been allowed or refused, and one row that forgets
+   *  connection is the secure kind, the certificates it was made with - pressing that
+   *  line shows the chain, the site's own up to the root, as a browser's viewer does
+   *  (#776) - what the site has been allowed or refused, and one row that forgets
    *  all of it. A site that has never asked for anything shows the first
    *  line and nothing else, which is the common case and reads as "there is nothing to
    *  know here".
@@ -16,6 +17,7 @@
   import { cubicOut } from 'svelte/easing'
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
+  import ChevronRight from 'lucide/dist/esm/icons/chevron-right.mjs'
   import { i18n, t } from '../i18n.svelte'
   import { shownSite } from './idn'
   import { invoke } from '../tauri'
@@ -45,16 +47,35 @@
     organization: string[]
   }
 
-  /** The certificate the page came with, as web_certificate.rs reads it. */
-  interface Certificate {
-    secure: boolean
+  /** One certificate of the chain; see web_certificate.rs. */
+  interface Link {
     to: Party
     by: Party
     from: number
     until: number
     serial: string
     sha256: string
+    root: boolean
   }
+
+  /** The certificates the page came with, the site's first, as web_certificate.rs
+   *  reads them. `separately` where the engine said nothing of the page's and the
+   *  chain was read from the site over a connection of the app's own. */
+  interface Certificate {
+    secure: boolean
+    separately: boolean
+    chain: Link[]
+  }
+
+  /** What each certificate of a chain is, by where it stands in it. */
+  type Role = 'site' | 'intermediate' | 'root'
+  const ROLES: Record<Role, () => string> = {
+    site: () => t('Site'),
+    intermediate: () => t('Intermediate'),
+    root: () => t('Root'),
+  }
+  const role = (link: Link, index: number): Role =>
+    index === 0 ? 'site' : link.root ? 'root' : 'intermediate'
 
   /** What each one is called on a row that says what a site may do. Chrome's words, so
    *  a reader who has turned one of these off in Chrome finds the same name here. */
@@ -71,27 +92,38 @@
     windows: () => t('Window management'),
   }
 
-  /** Asked for as the popover opens, about the page as it is then. Null where the
-   *  engine does not say, and then the address is all there is to go on. */
+  const https = $derived(url?.startsWith('https:') === true)
+
+  /** Asked for as the popover opens, about the page as it is then. Null where nothing
+   *  could be read, and then the address is all there is to go on. */
   let certificate = $state<Certificate | null>(null)
+  let asked = $state(false)
   $effect(() => {
-    if (!url?.startsWith('https:')) return
+    if (!https || !url) return
     let gone = false
-    void invoke<Certificate | null>('web_certificate', { tab })
+    void invoke<Certificate | null>('web_certificate', { tab, address: url })
       .then((said) => {
         if (!gone) certificate = said
       })
       .catch(() => undefined)
+      .finally(() => {
+        if (!gone) asked = true
+      })
     return () => (gone = true)
   })
+  /** Whether the line about the connection has been pressed open, and which
+   *  certificate of the chain is shown: the site's until another is chosen. */
   let showingCertificate = $state(false)
+  let chosen = $state(0)
+  const at = $derived(certificate && chosen < certificate.chain.length ? chosen : 0)
+  const shown = $derived(certificate?.chain[at])
 
-  const secure = $derived(certificate ? certificate.secure : url?.startsWith('https:') === true)
+  const secure = $derived(certificate ? certificate.secure : https)
 
   /** A party as a browser names it: the name, then its organisation where it has one. */
   const named = (party: Party) =>
     [party.name, ...party.organization].filter((one) => one !== '').join(' · ')
-  const day = (at: number) => i18n.when(at, { dateStyle: 'long' })
+  const day = (when: number) => i18n.when(when, { dateStyle: 'long' })
   const said = $derived(grants.of(site, privately))
   const decided = $derived(ASKS.filter((ask) => said[ask] !== undefined))
 
@@ -111,37 +143,79 @@
   aria-label={shownSite(site)}
   transition:fly={{ y: -6, duration: dur(120), easing: cubicOut }}
 >
-  <p class="how" class:risky={!secure}>
+  {#snippet how()}
     <svg viewBox="0 0 24 24" aria-hidden="true">
       {#each secure ? Lock : TriangleAlert as [tag, attrs], index (index)}
         <svelte:element this={tag} {...attrs} />
       {/each}
     </svg>
-    {secure ? t('Connection is secure') : t('Connection is not secure')}
-  </p>
+    <span class="said">{secure ? t('Connection is secure') : t('Connection is not secure')}</span>
+  {/snippet}
 
-  {#if certificate}
+  <!-- Over https the line is the way in to the certificate, as a browser's is: pressed,
+       it shows the chain the page came with. A plain http page has none to show. -->
+  {#if https}
     <button
-      class="nib-button is-quiet certificate"
+      class="nib-button is-quiet how"
+      class:risky={!secure}
       aria-expanded={showingCertificate}
       onclick={() => (showingCertificate = !showingCertificate)}
     >
-      {t('Certificate')}
+      {@render how()}
+      <svg class="chevron" class:open={showingCertificate} viewBox="0 0 24 24" aria-hidden="true">
+        {#each ChevronRight as [tag, attrs], index (index)}
+          <svelte:element this={tag} {...attrs} />
+        {/each}
+      </svg>
     </button>
-    {#if showingCertificate}
-      <dl class="details">
-        <dt>{t('Issued to')}</dt>
-        <dd>{named(certificate.to)}</dd>
-        <dt>{t('Issued by')}</dt>
-        <dd>{named(certificate.by)}</dd>
-        <dt>{t('Valid from')}</dt>
-        <dd>{day(certificate.from)}</dd>
-        <dt>{t('Valid until')}</dt>
-        <dd>{day(certificate.until)}</dd>
-        <dt>{t('SHA-256 fingerprint')}</dt>
-        <dd class="hex">{certificate.sha256}</dd>
-      </dl>
-    {/if}
+  {:else}
+    <p class="how" class:risky={!secure}>{@render how()}</p>
+  {/if}
+
+  {#if showingCertificate}
+    <section class="certificate" aria-label={t('Certificate')}>
+      {#if certificate && shown}
+        <ol class="chain" aria-label={t('Certificate chain')}>
+          {#each certificate.chain as link, index (index)}
+            <li style:--depth={index}>
+              <button
+                class="nib-button is-quiet"
+                class:chosen={index === at}
+                aria-pressed={index === at}
+                data-role={role(link, index)}
+                onclick={() => (chosen = index)}
+              >
+                <span class="role">{ROLES[role(link, index)]()}</span>
+                <span class="name">{named(link.to)}</span>
+              </button>
+            </li>
+          {/each}
+        </ol>
+        {#if certificate.separately}
+          <p class="note">
+            {t(
+              'Read from the site separately: the browser engine does not say which certificate this page came with.',
+            )}
+          </p>
+        {/if}
+        <dl class="details">
+          <dt>{t('Issued to')}</dt>
+          <dd>{named(shown.to)}</dd>
+          <dt>{t('Issued by')}</dt>
+          <dd>{named(shown.by)}</dd>
+          <dt>{t('Valid from')}</dt>
+          <dd>{day(shown.from)}</dd>
+          <dt>{t('Valid until')}</dt>
+          <dd>{day(shown.until)}</dd>
+          <dt>{t('Serial number')}</dt>
+          <dd class="hex">{shown.serial}</dd>
+          <dt>{t('SHA-256 fingerprint')}</dt>
+          <dd class="hex">{shown.sha256}</dd>
+        </dl>
+      {:else if asked}
+        <p class="note">{t('The certificate could not be read.')}</p>
+      {/if}
+    </section>
   {/if}
 
   {#if decided.length}
@@ -200,6 +274,7 @@
   }
 
   .how > svg {
+    flex: none;
     width: var(--icon-md);
     height: var(--icon-md);
     fill: none;
@@ -209,14 +284,91 @@
     stroke-linejoin: round;
   }
 
+  /* The line as a row to press: the width of the bubble, its words at the start and
+     the chevron at the end, turned down while the certificate is open under it. */
+  button.how {
+    min-height: 0;
+    margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-2));
+    padding: var(--space-1) var(--space-2);
+    justify-content: flex-start;
+    color: var(--text-strong);
+    font-size: var(--text-row);
+    text-align: start;
+  }
+
+  .how > .said {
+    flex: 1;
+  }
+
+  .how > .chevron {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    color: var(--text-muted);
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+
+  .how > .chevron.open {
+    transform: rotate(90deg);
+  }
+
   /* An `http:` page is the one thing about an address worth warning somebody about, so
      the line says so in the colour a callout warns in. */
-  .risky {
+  .risky,
+  button.how.risky {
     color: var(--callout-warning);
   }
 
   .certificate {
-    align-self: flex-start;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  /* The chain as a browser's viewer draws it: each certificate a step in from the one
+     it issued, the site's at the top. */
+  .chain {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .chain > li {
+    padding-inline-start: calc(var(--depth) * var(--space-2));
+  }
+
+  .chain button {
+    width: 100%;
+    min-height: 0;
+    padding: var(--space-1) var(--space-2);
+    justify-content: flex-start;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    text-align: start;
+  }
+
+  .chain button.chosen {
+    background: var(--surface-2);
+    color: var(--text-strong);
+  }
+
+  .chain .role {
+    flex: none;
+    color: var(--text-muted);
+  }
+
+  .chain .name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .note {
+    margin: 0;
+    color: var(--text-muted);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
   }
 
   /* What a browser's certificate viewer leads with, a label over each answer. */
