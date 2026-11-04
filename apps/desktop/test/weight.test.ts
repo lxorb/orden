@@ -1112,9 +1112,14 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,519,800, for #1039: a second press on what opened a menu or a
  *  popover closes it, the control noticed by overlays.ts as its click goes by, and a
- *  menu a button opens hangs from the button (menu.svelte.ts). Measured 3,519,657. */
-const BUDGET = 3_519_800
-const MOST_FILES = 389
+ *  menu a button opens hangs from the button (menu.svelte.ts). Measured 3,519,657.
+ *
+ *  Raised 2026-11-04, to 3,522,500, and to 390 modules, for #1066: the file list's button
+ *  said and not shown where a swipe from the edge pulls the list out, on the swipe's own
+ *  condition, asked in one place (swipe-opens.ts, Titlebar.svelte, SidebarToggle.svelte).
+ *  Measured 3,522,383, 389 modules. */
+const BUDGET = 3_522_500
+const MOST_FILES = 390
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

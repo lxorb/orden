@@ -405,9 +405,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,853,500, for #1039: a second press on what
  *  opened a menu or a popover closes it (overlays.ts, menu.svelte.ts). Measured
  *  5,853,362.
+ *
+ *  The code raised on 2026-11-04, to 5,855,300, for #1066: the file list's button said and
+ *  not shown where a swipe from the edge pulls the list out, and the one hint about the
+ *  swipe (Titlebar.svelte, SidebarToggle.svelte, hints.svelte.ts). Measured 5,855,166.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_853_500,
+  code: 5_855_300,
   catalogues: 964_400,
   styles: 290_000,
   fonts: 260_000,
