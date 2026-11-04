@@ -36,6 +36,8 @@ const spaceAt = (root: string) => workspace.spaces.find((one) => samePath(one.ro
 
 workspace.fileOps.follow(
   keeping({
+    // The tabs have followed the space's name (`renameSpace`, space-follow.ts).
+    spaceMoved: () => workspace.scheduleSession(),
     moved(from, to, root, into) {
       const space = root === null ? undefined : spaceAt(root)
       if (!space || root === null) return

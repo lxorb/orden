@@ -74,6 +74,8 @@ export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
   // for their writes and holds them until they have been told; see `move` in
   // workspace.svelte.ts.
   const done = { moved: false }
+  // Fetched before the folder moves: from then on there is no moment to wait in.
+  const { followSpaceName } = await import('../views/space-follow')
   await ws.holdingUnder(space.root, async () => {
     const renamed = await invoke<{ name: string; path: string }>('rename_space', {
       from: space.root,
@@ -89,8 +91,16 @@ export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
     // note is never for a moment at a path the account has no id for. See
     // workspace/file-ops.ts, and the space-rename drive for what that moment cost.
     const from = space.root
+    const was = space.name
     space.name = renamed.name
     space.root = renamed.path
+    // A view asks about a space by its name, which only this knows has changed.
+    followSpaceName(
+      was,
+      renamed.name,
+      ws.tabs,
+      ws.spaces.filter((one) => one !== space),
+    )
     await ws.fileMoved(from, renamed.path, 'space')
     done.moved = true
   })

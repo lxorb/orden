@@ -17,6 +17,7 @@ let listed: { name: string; path: string }[] = []
 let refuses = false
 
 vi.mock('../tauri', () => ({
+  isNative: false,
   invoke: (command: string, args?: Record<string, unknown>) => {
     sent.push({ command, args: args ?? {} })
 
@@ -171,6 +172,17 @@ describe('a space renamed', () => {
 
     expect(ws.spaces[0]).toEqual({ id: 'w', name: 'Studio', root: '/spaces/Studio' })
     expect(told).toEqual(['moved space /spaces/Work -> /spaces/Studio'])
+  })
+
+  test('and the views kept under its name, whichever of its tabs show them', async () => {
+    const { memoryStorage } = await import('../../../test/disk')
+    vi.stubGlobal('localStorage', memoryStorage())
+    const { todosView, keepTodosView } = await import('../views/kept-views')
+    keepTodosView('Work', 'views: []\n')
+    const { ws } = store([WORK])
+    await renameSpace(ws, 'w', 'Studio')
+    expect(todosView('Work')).toBeUndefined()
+    expect(todosView('Studio')).toBeDefined()
   })
 
   test('and the field it was typed in is done with, whatever the folder answers', async () => {

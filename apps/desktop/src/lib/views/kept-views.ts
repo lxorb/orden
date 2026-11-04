@@ -72,6 +72,33 @@ export function keepTodosView(space: string, words: string | undefined): void {
   keepJson(TODOS, all)
 }
 
+/** What is kept under a space's name, moved to the name it has now: its Todos, its
+ *  projects, and which of their groups are folded. `follow` answers the words about it
+ *  there. */
+export function followSpaceViews(
+  from: string,
+  to: string,
+  follow: (words: string) => string,
+): void {
+  const todos = read(TODOS)
+  const words = todos[from]
+  if (typeof words === 'string') {
+    const rest = Object.fromEntries(Object.entries(todos).filter(([one]) => one !== from))
+    keepJson(TODOS, { ...rest, [to]: follow(words) })
+  }
+  followProjectViews(from, (path) => path, follow, to)
+  const folds = read(FOLDS)
+  const project = `project:${from}/`
+  const moved = Object.entries(folds).map(([key, groups]): [string, unknown] => {
+    if (key === `todos:${from}`) return [`todos:${to}`, groups]
+    return key.startsWith(project)
+      ? [`project:${to}/${key.slice(project.length)}`, groups]
+      : [key, groups]
+  })
+  if (moved.some(([key], at) => key !== Object.keys(folds)[at]))
+    keepJson(FOLDS, Object.fromEntries(moved))
+}
+
 /** The layouts kept for a space's projects, moved along with their notes: `moved` answers
  *  where a path is now (or null where it did not move), `follow` the words about it there,
  *  and `into` the space it is in now, for a note moved into another one. */

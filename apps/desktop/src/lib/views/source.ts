@@ -22,6 +22,7 @@ import type { Tab } from '../workspace/documents.svelte'
 import { noteText, writeNoteText } from '../workspace/note-text'
 import { keepProjectView, keepTodosView, projectView, todosView } from './kept-views'
 import type { Shown, Source } from './live.svelte'
+import { followSpaceName } from './space-follow'
 import { asShipped, readSpec, type ViewSpec, writeSpec } from './spec'
 
 /** Today as Settings has it: with the tasks that have no start date in it, or not (#408). */
@@ -131,13 +132,27 @@ function keepChange(spec: ViewSpec, yaml: string): void {
   }
 }
 
+/** A tab about a space no space here is called: a space renamed behind it, since deleting
+ *  one closes its tabs. It is the open space's now, and so what was kept under that name,
+ *  rather than an empty list for good. */
+function followLost(tab: Tab): void {
+  const name = readSpec(tab.doc)?.space
+  const open = workspace.activeSpace
+  if (name === undefined || !open || workspace.spaces.some((one) => one.name === name)) return
+  followSpaceName(name, open.name, workspace.tabs, [])
+  workspace.scheduleSession()
+}
+
 /** A built-in view in a tab: what it changes is kept in the tab's words, and is the
  *  tab's own until "Copy to a base" writes it to a file. */
 export function tabSource(tab: Tab): Source {
   const spec = () => readSpec(tab.doc) ?? {}
   return {
     scope: null,
-    load: () => Promise.resolve(builtinBase(spec())),
+    load: () => {
+      followLost(tab)
+      return Promise.resolve(builtinBase(spec()))
+    },
     save(next) {
       const now = spec()
       const yaml = writeBase(next)
