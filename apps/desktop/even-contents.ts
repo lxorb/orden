@@ -513,7 +513,7 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  new beyond one guard fewer for a launch's first write. Measured 5,965,187.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_965_400,
+  code: 5_971_000,
   catalogues: 967_400,
   styles: 290_000,
   fonts: 260_000,

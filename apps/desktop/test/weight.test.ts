@@ -1230,8 +1230,12 @@ function holds(tail: string): boolean {
  *  sums above and what came to unstable meanwhile in one build at last, on
  *  claude/hunt-round-1: nothing new beyond one guard fewer for a launch's first write.
  *  Measured 3,645,071, 394 modules.
+ *
+ *  Raised on 2026-11-04, to 3,646,100, for the bug hunt's fourth round: a move's step that
+ *  knows its tabs went with it, a closed tab that goes back to its space, the notices over
+ *  the overview, a board's page turn giving way to a drawer's edge. Measured 3,645,970.
  */
-const BUDGET = 3_645_200
+const BUDGET = 3_646_100
 const MOST_FILES = 395
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

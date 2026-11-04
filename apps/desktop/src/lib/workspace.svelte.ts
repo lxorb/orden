@@ -76,7 +76,6 @@ import { Layouts } from './workspace/layouts.svelte'
 import { OpenDocuments, secondWebTabs } from './workspace/open'
 import { type Along, type Frame, panesIn, withoutPane } from './workspace/pane-tree'
 import { successor } from './workspace/recency'
-import { ownerOf } from './workspace/sets'
 import { type Landing, Panes } from './workspace/panes.svelte'
 import { type Around, closedAround } from './workspace/closing-around'
 import { alongOf, madeFirst, type Side } from './workspace/zones'
@@ -3616,6 +3615,7 @@ class Workspace {
 
         // Back in its own space, as Chrome's comes back in its own window: a note of another
         // space among this one's tabs is a tab no switch would find where it belongs.
+        const { ownerOf } = await import('./workspace/sets')
         const owner = ownerOf(closed.draft.path, closed.draft.space ?? null, this.shownSpaces)
         const away = owner !== null && owner !== this.activeSpaceId
         if (away && this.shownSpaces.some((one) => one.id === owner)) await this.showSpace(owner)
