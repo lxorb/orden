@@ -19,13 +19,14 @@ const APART_Y = 60
  *  run down a row of a dozen windows. */
 const ROUNDS = 200
 
-/** How far `b` must move, at least, to be clear of `a`: along whichever axis is the
- *  shorter way out, away from `a`; null where they are already clear. */
-function clearOf(a: Box, b: Box): { x: number; y: number } | null {
+/** How far `b` must move, at least, to be clear of `a`, with `under` kept below each
+ *  for its name: along whichever axis is the shorter way out, away from `a`; null where
+ *  they are already clear. */
+function clearOf(a: Box, b: Box, under = APART_Y): { x: number; y: number } | null {
   const right = a.x + a.w + APART_X - b.x
   const left = b.x + b.w + APART_X - a.x
-  const down = a.y + a.h + APART_Y - b.y
-  const up = b.y + b.h + APART_Y - a.y
+  const down = a.y + a.h + under - b.y
+  const up = b.y + b.h + under - a.y
   // A hair is not an overlap: what a push leaves of one is rounding, not a window.
   if (Math.min(right, left, down, up) <= 0.5) return null
   const ax = a.x + a.w / 2
@@ -35,15 +36,20 @@ function clearOf(a: Box, b: Box): { x: number; y: number } | null {
   const x = bx >= ax ? right : -left
   const y = by >= ay ? down : -up
   // Out sideways, or out up or down, whichever is less of a move; level ones go aside.
-  return Math.abs(x) * (APART_Y / APART_X) <= Math.abs(y) ? { x, y: 0 } : { x: 0, y }
+  return Math.abs(x) * (under / APART_X) <= Math.abs(y) ? { x, y: 0 } : { x: 0, y }
 }
 
-/** The windows with none on another: each one in `still` where it is, the others moved
- *  the least they can be, a pair of movable ones each half the way. */
+/** The windows with none on another, nor on the name under another: each one in `still`
+ *  where it is, the others moved the least they can be, a pair of movable ones each half
+ *  the way. `named` is how much room a window's name takes under it on the canvas, which
+ *  grows as the camera draws back and the names stay their size on the screen; never
+ *  less than `APART_Y` is kept. */
 export function settled<T extends Box & { id: string }>(
   windows: readonly T[],
   still: ReadonlySet<string>,
+  named = 0,
 ): T[] {
+  const under = Math.max(APART_Y, named)
   const out = windows.map((one) => ({ ...one }))
   for (let round = 0; round < ROUNDS; round++) {
     let moved = false
@@ -52,7 +58,7 @@ export function settled<T extends Box & { id: string }>(
         const a = out[i]
         const b = out[j]
         if (!a || !b) continue
-        const away = clearOf(a, b)
+        const away = clearOf(a, b, under)
         if (!away) continue
         const holdA = still.has(a.id)
         const holdB = still.has(b.id)
@@ -109,7 +115,8 @@ export function stripLanding(
   return { paneId, before: after?.id ?? null }
 }
 
-/** Whether two boxes lie on each other, counting the room kept between windows. */
-export function overlaps(a: Box, b: Box): boolean {
-  return clearOf(a, b) !== null
+/** Whether two boxes lie on each other, counting the room kept between windows, and
+ *  `named` under each for its name. */
+export function overlaps(a: Box, b: Box, named = 0): boolean {
+  return clearOf(a, b, Math.max(APART_Y, named)) !== null
 }

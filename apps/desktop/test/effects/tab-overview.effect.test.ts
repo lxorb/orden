@@ -273,3 +273,13 @@ test('a window’s cross sits on its corner, red, and answers the pointer', asyn
     true,
   )
 })
+
+test('every window’s name is drawn under every window, so none lies on another window', async () => {
+  await opened()
+  const world = document.querySelector('.world')
+  const order = [...(world?.children ?? [])].map((one) => one.classList[0])
+  const lastName = order.lastIndexOf('caption')
+  const firstWindow = order.indexOf('window')
+  expect(lastName).toBeGreaterThan(-1)
+  expect(lastName).toBeLessThan(firstWindow)
+})

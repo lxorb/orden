@@ -94,3 +94,13 @@ test('windows moved anywhere still have a seam between a split’s sides, where 
   // One side's window moved in among the other's: no line across a window.
   expect(seamsAmong(frame, [slot('a', 'left', 0, 0), slot('b', 'right', 50, 100)])).toEqual([])
 })
+
+test('the rows leave room for the names under them, however much the names take', () => {
+  const named = 180
+  const laid = lay(pane('p'), room, { ...panes({ p: ['a', 'b', 'c', 'd', 'e'] }), named })
+  const tops = [...new Set(laid.slots.map((one) => Math.round(one.y)))].sort((a, b) => a - b)
+  expect(tops.length).toBeGreaterThan(1)
+  const [first] = laid.slots
+  for (let i = 1; i < tops.length; i++)
+    expect((tops[i] ?? 0) - (tops[i - 1] ?? 0)).toBeGreaterThanOrEqual((first?.h ?? 0) + named - 1)
+})

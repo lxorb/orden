@@ -57,7 +57,7 @@ const COS = Float64Array.from({ length: N }, (_, i) => Math.cos((i / N) * TAU))
 const SIN = Float64Array.from({ length: N }, (_, i) => Math.sin((i / N) * TAU))
 
 /** How far out along each direction some boxes reach, grown by `by`; null for none. */
-export function reachOf(boxes: readonly Box[], by: number): Float64Array | null {
+function reachOf(boxes: readonly Box[], by: number): Float64Array | null {
   if (!boxes.length) return null
   const out = new Float64Array(N).fill(Number.NEGATIVE_INFINITY)
   for (const box of boxes) {

@@ -45,6 +45,10 @@ export interface Panes {
   tabsOf: (paneId: string) => readonly string[]
   /** Width over height of what a pane shows, which each of its windows takes. */
   shapeOf: (paneId: string) => number
+  /** How much room a window's name takes under it on the canvas, where that is more than
+   *  the gap between two rows: the camera drawn back, the names their size on the
+   *  screen. */
+  named?: number
 }
 
 /** The room between two windows, and between a split's sides, which the seam runs in. */
@@ -72,12 +76,12 @@ function countIn(frame: Frame, panes: Panes): number {
 
 /** The grid that gives `count` windows of `shape` the most room in `room`: how many
  *  across, and how wide each is. */
-export function gridFor(count: number, shape: number, room: Box, widest: number) {
+export function gridFor(count: number, shape: number, room: Box, widest: number, rowGap = ROW_GAP) {
   let best = { across: 1, w: 0 }
   for (let across = 1; across <= Math.max(count, 1); across++) {
     const down = Math.ceil(count / across)
     const byWidth = (room.w - (across - 1) * GAP) / across
-    const byHeight = ((room.h - (down - 1) * ROW_GAP) / down) * shape
+    const byHeight = ((room.h - (down - 1) * rowGap) / down) * shape
     const w = Math.min(byWidth, byHeight, widest)
     if (w > best.w + 0.5) best = { across, w }
   }
@@ -88,10 +92,11 @@ export function gridFor(count: number, shape: number, room: Box, widest: number)
 function grid(paneId: string, room: Box, panes: Panes, widest: number): Slot[] {
   const ids = panes.tabsOf(paneId)
   const shape = panes.shapeOf(paneId)
-  const { across, w } = gridFor(ids.length, shape, room, widest)
+  const rowGap = Math.max(ROW_GAP, panes.named ?? 0)
+  const { across, w } = gridFor(ids.length, shape, room, widest, rowGap)
   const h = w / shape
   const down = Math.ceil(ids.length / across)
-  const tall = down * h + (down - 1) * ROW_GAP
+  const tall = down * h + (down - 1) * rowGap
   const top = room.y + (room.h - tall) / 2
 
   return ids.map((id, index) => {
@@ -103,7 +108,7 @@ function grid(paneId: string, room: Box, panes: Panes, widest: number): Slot[] {
       id,
       paneId,
       x: left + (index % across) * (w + GAP),
-      y: top + row * (h + ROW_GAP),
+      y: top + row * (h + rowGap),
       w,
       h,
     }

@@ -254,7 +254,13 @@
       const panesOf = own ? frame : sets?.frameOf(key)
       if (!panesOf) return []
       const place = own ? room : (places.at(key) ?? room)
-      return [{ key, frame: panesOf, slots: lay(panesOf, place, { tabsOf, shapeOf }).slots }]
+      return [
+        {
+          key,
+          frame: panesOf,
+          slots: lay(panesOf, place, { tabsOf, shapeOf, named: namedRoom }).slots,
+        },
+      ]
     }),
   )
 
@@ -267,7 +273,7 @@
       const box = put[slot.id]
       return box ? { ...slot, x: box.x, y: box.y, w: box.w, h: box.h } : slot
     })
-    return settled(lying, new Set(all.filter((one) => put[one.id]).map((one) => one.id)))
+    return settled(lying, new Set(all.filter((one) => put[one.id]).map((one) => one.id)), namedRoom)
   })
 
   /** And with one held: that one under the hand, where it stays when it is let go, and
@@ -277,7 +283,7 @@
     const id = held?.id
     if (!hand || !id) return resting
     const lying = resting.map((slot) => (slot.id === id ? { ...slot, ...hand } : slot))
-    return settled(lying, new Set([id]))
+    return settled(lying, new Set([id]), namedRoom)
   })
 
   /** Which cell each window lies in, by tab: its space's, or the one the held window is
@@ -346,6 +352,20 @@
 
   /** How much room a window's name takes under it on the screen, at most. */
   const CAPTION_ROOM = 36
+
+  /** The room the windows are laid out with under each for its name, on the canvas: as
+   *  much as the name takes at the zoom the camera came to rest at, so no window lies on
+   *  another's name. Followed once a zoom has stopped, not on every step of it, so the
+   *  windows make room once rather than shuffling under the fingers (free.ts). */
+  let namedZoom = $state(1)
+  const namedRoom = $derived(CAPTION_ROOM * Math.max(1, 1 / namedZoom) + 12)
+  let namedLater: ReturnType<typeof setTimeout> | undefined
+  $effect(() => {
+    const zoom = camera.zoom
+    clearTimeout(namedLater)
+    if (zoom !== untrack(() => namedZoom)) namedLater = setTimeout(() => (namedZoom = zoom), 250)
+    return () => clearTimeout(namedLater)
+  })
 
   /** A window's box with its name under it, which its cell holds as well. */
   function captioned(box: Box): Box {
@@ -615,6 +635,7 @@
       measure()
       lookAtSpace()
       camera = places.camera ?? camera
+      namedZoom = camera.zoom
       const copies: Record<string, HTMLElement> = {}
       for (const pane of workspace.panes.all) {
         const tab = pane.activeTabId ? byId.get(pane.activeTabId) : undefined
@@ -1102,6 +1123,20 @@
         {/each}
       </svg>
 
+      <!-- The names under the windows, all of them before any window: a window is never
+           under a name, whichever comes later (issue #331). -->
+      {#each windows as { slot, tab } (tab.id)}
+        <span
+          class="caption"
+          style:translate="{slot.x}px {slot.y + slot.h + 8}px"
+          style:width="calc({slot.w}px / var(--overview-unzoom))"
+          aria-hidden="true"
+          use:named={tab.id}
+        >
+          <TabMark {tab} /><span class="caption-name">{tab.shown}</span>
+        </span>
+      {/each}
+
       {#each windows as { slot, tab } (tab.id)}
         {@const face = faceOf(slot)}
         <button
@@ -1160,15 +1195,6 @@
         >
           <Cross />
         </button>
-        <span
-          class="caption"
-          style:translate="{slot.x}px {slot.y + slot.h + 8}px"
-          style:width="calc({slot.w}px / var(--overview-unzoom))"
-          aria-hidden="true"
-          use:named={tab.id}
-        >
-          <TabMark {tab} /><span class="caption-name">{tab.shown}</span>
-        </span>
       {/each}
     </div>
   </div>
