@@ -401,9 +401,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,852,200, for #1051: the Essentials' Alt letters
  *  (tab-strip/letters.ts, tab-strip/letters.svelte.ts) and a double click that keeps an
  *  Essential as a tab. Measured 5,852,018.
+ *
+ *  The code raised on 2026-11-04, to 5,853,500, for #1039: a second press on what
+ *  opened a menu or a popover closes it (overlays.ts, menu.svelte.ts). Measured
+ *  5,853,362.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_852_200,
+  code: 5_853_500,
   catalogues: 964_400,
   styles: 290_000,
   fonts: 260_000,
