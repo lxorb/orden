@@ -18,9 +18,12 @@
  *  - **A mergeable create** ("this note, if it is not there yet": the append action,
  *    the journal) that lands on a live note of the same name is answered `merged`
  *    with that note's id, and the device merges its words into it.
- *  - **An edit beats a delete.** A note written in after the delete's `seen` is not
- *    deleted (`edited`). A folder delete takes only what its device had seen; what
- *    was made, moved in, renamed or written in since stays, and keeps the folder.
+ *  - **An edit beats a delete, and so does anything else the deleting device had not
+ *    seen.** A delete takes only what its device had seen: a note another device wrote
+ *    in, restored, renamed or moved after the delete's `seen` is not deleted (`edited`),
+ *    and a folder delete leaves what was made, moved in, renamed, restored or written in
+ *    since, which keeps the folder. A restore is a person asking for the note back; a
+ *    delete that never knew of it does not undo that (#1068).
  *    A content change landing on a deleted note brings it back.
  *  - **A move or a create into a deleted folder brings the folder back**, with its
  *    ancestors.
@@ -245,6 +248,15 @@ function changedSince(entry: TreeEntry, seen: number, device: string | undefined
   return (entry.seq > seen && byOther) || writtenSince(entry, seen, device)
 }
 
+/** Whether a delete of the entry itself has to leave it: another device wrote in it,
+ *  restored, renamed or moved it after `seen` (#1068). Only a device's change counts:
+ *  the account's own bookkeeping - folders it made from paths when the space moved to
+ *  v2 - is nobody's word against a delete. */
+function othersSince(entry: TreeEntry, seen: number, device: string | undefined): boolean {
+  const byOther = entry.by !== undefined && (device === undefined || entry.by !== device)
+  return (entry.seq > seen && byOther) || writtenSince(entry, seen, device)
+}
+
 /** The rules, with one op's device in hand. */
 class Rules {
   constructor(
@@ -338,12 +350,16 @@ class Rules {
     if (entry.deleted) return { op: op.op, ok: true }
 
     if (entry.kind !== 'folder') {
-      if (writtenSince(entry, op.seen, device)) return { op: op.op, refused: 'edited' }
+      if (othersSince(entry, op.seen, device)) return { op: op.op, refused: 'edited' }
       entry.deleted = true
       changed(state, entry, device)
       entry.deletedIn = entry.seq
       return { op: op.op, ok: true }
     }
+
+    // A folder another device brought back, renamed or moved since stays whole, as a
+    // note does (#1068).
+    if (othersSince(entry, op.seen, device)) return { op: op.op, refused: 'edited' }
 
     // What the deleting device had not seen stays, and so does every folder between
     // it and the one deleted.
@@ -378,7 +394,13 @@ class Rules {
     const { state, device } = this
     const entry = state.entries.get(op.id)
     if (!entry) return { op: op.op, refused: 'gone' }
-    if (!entry.deleted) return placement(op, entry)
+    // Back already, by somebody else's restore: still a person asking for it, and noted
+    // as a change of theirs - whatever they had seen - so a delete that had not seen this
+    // one leaves it (#1068).
+    if (!entry.deleted) {
+      changed(state, entry, device)
+      return placement(op, entry)
+    }
 
     const batch = entry.deletedIn
     reviveAbove(state, entry.parent, device)

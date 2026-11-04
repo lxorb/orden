@@ -41,9 +41,10 @@ the same tree. An operation carries its own id, so one that arrives twice is app
 | rename and rename | The later to arrive decides the name. |
 | two names one folder cannot both hold | The second is numbered (`Plan 2.md`), compared as the disk compares names: case and accents folded. |
 | move and delete | A move made without having seen the delete brings the entry back; a move the device made knowing of the delete cannot, since it no longer shows the entry. |
-| delete of a folder and a change inside it | Whatever another device created, moved in, renamed or edited inside since the deleting device last looked stays, and keeps the folder. |
+| delete of a folder and a change inside it | Whatever another device created, moved in, renamed, restored or edited inside since the deleting device last looked stays, and keeps the folder. |
 | edit and delete | The edit wins: a delete of a note whose words changed since the deleting device last pulled them is refused, and that device puts the note back. |
-| delete and restore | The restore brings the entry back under its id, with its folders. |
+| a rename, move or restore and a delete that had not seen it | The other change wins, as an edit does: a delete takes only what its device had seen. A device's own changes never stand against its own delete, and neither does the account's bookkeeping (folders made from paths at the move to v2). |
+| delete and restore | The restore brings the entry back under its id, with its folders. A restore of something already back still counts as that person's change, so a delete that had not seen it leaves the entry. |
 | two creates of the day's note | One note, both texts merged (docs/sync-v2.md 5.9). |
 
 A delete is a fact, not an absence: the account keeps the entry with a tombstone and the
@@ -74,9 +75,12 @@ and with the app's own sync engine as every device (`apps/desktop/src/lib/sync2/
 What the tree walks found when they were first run, each pinned as an expected failure
 until the step of #1068 that removes it lands:
 
-- **A stale delete after a restore.** A delete made on a device that had not heard of a
-  restore, arriving after it, takes the entry again. A restore should stand against a
-  delete that had not seen it, as an edit does.
+- **A folder delete takes a note its device wrote in but never saw there.** A note
+  another device moved into a folder, written in by a device that never heard of the move,
+  goes with the folder when that device deletes it: a content change makes the writing
+  device the entry's last changer, so the folder delete reads the note as its own. The
+  account has to keep who last placed an entry apart from who last wrote in it (reference
+  seed 632).
 - **A restore from this device's trash makes a new note.** The trash puts the files back
   on the disk and the engine hears them as files made, so the note comes back under a new
   id, beside its own tombstone. Restoring has to be an operation on the id.

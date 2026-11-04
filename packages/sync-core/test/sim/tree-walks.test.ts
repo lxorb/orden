@@ -8,39 +8,33 @@ import { simulate } from './run'
 
 const SEEDS = 200
 
-/** Seeds that fail today, each for the one reason the next steps of #1068 take away: a
- *  delete made before a restore, on a device that had not heard of the restore, arrives
- *  after it and takes the note again. The account's rules (`deleted` in src/tree.ts) let
- *  a stale delete stand against a restore as they do not against an edit. */
-const STALE_DELETE_AFTER_RESTORE = [113, 122, 146, 188]
-
-async function failures(seed: number): Promise<string[]> {
-  return (await simulate({ seed, devices: 5, steps: 80, mix: 'tree' })).failures
-}
-
 describe('the tree, walked at random on five devices', () => {
   test('converges with nothing duplicated, lost, cycled or left deleted', async () => {
     const failed: string[] = []
     for (let seed = 1; seed <= SEEDS; seed++) {
-      if (STALE_DELETE_AFTER_RESTORE.includes(seed)) continue
-      const said = await failures(seed)
-      if (said.length) failed.push(`seed ${String(seed)}: ${said.join('; ')}`)
+      const report = await simulate({ seed, devices: 5, steps: 80, mix: 'tree' })
+      if (report.failures.length) failed.push(`seed ${String(seed)}: ${report.failures.join('; ')}`)
     }
     expect(failed).toEqual([])
   })
 
-  test.fails.each(STALE_DELETE_AFTER_RESTORE)(
-    'seed %i: a restore stands against a delete that had not seen it',
+  /** Each once took a restore again with a delete that had not seen it, arriving after:
+   *  the account let a stale delete stand against a restore as it never let one stand
+   *  against an edit (#1068). */
+  test.each([113, 122, 146, 149, 188, 720, 1151])(
+    'seed %i keeps what was restored',
     async (seed) => {
-      expect(await failures(seed)).toEqual([])
+      expect((await simulate({ seed, devices: 5, steps: 80, mix: 'tree' })).failures).toEqual([])
     },
   )
 
-  test('the seeds pinned above fail only for that reason', async () => {
-    for (const seed of STALE_DELETE_AFTER_RESTORE) {
-      const said = await failures(seed)
-      expect(said.length, String(seed)).toBeGreaterThan(0)
-      for (const one of said) expect(one, String(seed)).toMatch(/was restored and is not there$/)
-    }
+  /** A note another device moved into a folder, which this device then wrote in without
+   *  ever having seen it there, is taken with the folder when this device deletes it, words
+   *  and all: a content change makes the writing device the entry's last changer, so the
+   *  folder delete reads the note as its own to take. The rule (`changedSince` in
+   *  src/tree.ts) needs the device that last placed an entry apart from the one that last
+   *  wrote in it, which is a column of the account's; a step of #1068 of its own. */
+  test.fails('seed 632 loses no words to a folder delete', async () => {
+    expect((await simulate({ seed: 632, devices: 5, steps: 80, mix: 'tree' })).failures).toEqual([])
   })
 })

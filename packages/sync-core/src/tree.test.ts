@@ -185,6 +185,70 @@ describe('tree', () => {
     expect(live(state, 'gone-before')).toBe(false)
   })
 
+  /** #1068: a restore is a person asking for the note back, and a delete made on a device
+   *  that had not seen it does not undo that - for a note, a folder, and a restore made of
+   *  something already back. */
+  test('a restore stands against a delete that had not seen it', () => {
+    const state = treeState()
+    create(state, 'n', 'Plan.md')
+    mkdir(state, 'f', 'Work')
+    const seen = state.cursor
+    applyOp(state, { op: opId(), t: 'delete', id: 'n', seen }, OWNER)
+    applyOp(state, { op: opId(), t: 'delete', id: 'f', seen }, OWNER)
+    applyOp(state, { op: opId(), t: 'restore', id: 'n', seen: state.cursor }, OWNER)
+    applyOp(state, { op: opId(), t: 'restore', id: 'f', seen: state.cursor }, OWNER)
+
+    expect(applyOp(state, { op: opId(), t: 'delete', id: 'n', seen }, PHONE)).toMatchObject({
+      refused: 'edited',
+    })
+    expect(applyOp(state, { op: opId(), t: 'delete', id: 'f', seen }, PHONE)).toMatchObject({
+      refused: 'edited',
+    })
+    expect([live(state, 'n'), live(state, 'f')]).toEqual([true, true])
+
+    // Having seen the restore, the delete stands.
+    applyOp(state, { op: opId(), t: 'delete', id: 'n', seen: state.cursor }, PHONE)
+    expect(live(state, 'n')).toBe(false)
+  })
+
+  test('a restore of something already back still stands against a stale delete', () => {
+    const state = treeState()
+    create(state, 'n', 'Plan.md')
+    const seen = state.cursor
+    applyOp(state, { op: opId(), t: 'delete', id: 'n', seen }, OWNER)
+    applyOp(state, { op: opId(), t: 'restore', id: 'n', seen: state.cursor }, OWNER)
+    const restored = state.cursor
+    // Another device restores it too, without having heard of the first restore.
+    applyOp(state, { op: opId(), t: 'restore', id: 'n', seen }, PHONE)
+
+    // The first device deletes it, having seen only its own restore.
+    expect(
+      applyOp(state, { op: opId(), t: 'delete', id: 'n', seen: restored }, OWNER),
+    ).toMatchObject({ refused: 'edited' })
+    expect(live(state, 'n')).toBe(true)
+  })
+
+  test('a delete of a note another device renamed or moved unseen leaves it', () => {
+    const state = treeState()
+    create(state, 'n', 'Plan.md')
+    mkdir(state, 'f', 'Work')
+    const seen = state.cursor
+    applyOp(state, { op: opId(), t: 'move', id: 'n', parent: 'f', seen }, PHONE)
+    expect(applyOp(state, { op: opId(), t: 'delete', id: 'n', seen }, OWNER)).toMatchObject({
+      refused: 'edited',
+    })
+    expect(live(state, 'n')).toBe(true)
+  })
+
+  test('the account’s own bookkeeping is nobody’s word against a delete', () => {
+    // A folder made from paths when the space moved to v2 has no device behind it.
+    const state = treeState([
+      { id: 'f', kind: 'folder', parent: null, name: 'Before', deleted: false, seq: 5, docSeq: 0 },
+    ])
+    applyOp(state, { op: opId(), t: 'delete', id: 'f', seen: 1 }, OWNER)
+    expect(live(state, 'f')).toBe(false)
+  })
+
   test('a create or a move into a deleted folder brings it back with its ancestors', () => {
     const state = treeState()
     mkdir(state, 'a', 'A')

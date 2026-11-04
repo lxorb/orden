@@ -93,6 +93,9 @@ interface Store {
   clean: boolean
   /** What the person deleted here, kept to bring back: where it was, and its words. */
   trash: Map<string, Trashed>
+  /** What a restore in the air may have to make again, should the account never have
+   *  had it. */
+  restoring: Map<string, Trashed>
 }
 
 /** One thing in this device's trash. */
@@ -192,6 +195,7 @@ export class ReferenceDevice implements DeviceAdapter {
       pushes: 0,
       clean: true,
       trash: new Map(),
+      restoring: new Map(),
     }
     this.build()
   }
@@ -271,18 +275,20 @@ export class ReferenceDevice implements DeviceAdapter {
     this.store.written.delete(id)
   }
 
-  /** Back from the trash, under the id it had (#1068). One the account holds comes back
-   *  by a restore, with its folders, and the feed brings its words down again (section
-   *  5.9); one the account never heard of - made and deleted before a pass - is made
-   *  again under the same id, where it was, with the words it had. */
+  /** Back from the trash, under the id it had (#1068): a restore, which the account
+   *  answers by bringing it back with its folders, and the feed brings its words down
+   *  again (section 5.9). Where the account answers that it never had it - made and
+   *  deleted here before a pass - it is made again under the same id, where it was, with
+   *  the words it had; see `sendOps`. */
   private restore(id: string) {
     const kept = this.store.trash.get(id)
     this.store.trash.delete(id)
-    if (this.store.entries.has(id)) {
-      this.queue({ op: this.nextOp(), t: 'restore', id, seen: this.store.cursor })
-      return
-    }
-    if (!kept) return
+    if (kept) this.store.restoring.set(id, kept)
+    this.queue({ op: this.nextOp(), t: 'restore', id, seen: this.store.cursor })
+  }
+
+  /** Makes again what the account never had, from the trash. */
+  private remade(id: string, kept: Trashed) {
     const shown = this.shown().entries
     const parent =
       kept.parent !== null && shown.get(kept.parent)?.deleted === false ? kept.parent : null
@@ -636,6 +642,13 @@ export class ReferenceDevice implements DeviceAdapter {
         this.store.merging.set(one.op.id, { into: result.merged, create: one.op })
       } else if ('ok' in result && (one.op.t === 'create' || one.op.t === 'mkdir')) {
         this.store.known.add(one.op.id)
+      }
+      if (one.op.t === 'restore') {
+        const kept = this.store.restoring.get(one.op.id)
+        this.store.restoring.delete(one.op.id)
+        if (kept && 'refused' in result && !this.store.known.has(one.op.id)) {
+          this.remade(one.op.id, kept)
+        }
       }
     }
     return true
