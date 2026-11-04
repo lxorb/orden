@@ -520,9 +520,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The styles raised on 2026-11-04, to 290,700, for #331: the tab overview happens in the
  *  window, its sidebars sliding away under its spring and its canvas a clear scrim under
  *  the bar (overview/Overview.svelte). Measured 290,456.
+ *
+ *  The code raised on 2026-11-04, to 5,904,800, for #331: each pane shrinks where it is
+ *  into its own window in the tab overview (`paneDrawn` in overview/flight.ts, the layer
+ *  under the panes in overview/Overview.svelte). Measured 5,904,611.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_903_500,
+  code: 5_904_800,
   catalogues: 973_000,
   styles: 290_700,
   fonts: 260_000,
