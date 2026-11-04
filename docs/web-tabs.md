@@ -1365,8 +1365,8 @@ the history alone.
 (docs/backlog.md, Q3), a new tab's New private tab card (I), the dots and the palette. Its
 page runs in the engine's own private mode - `WebView2`'s InPrivate profile, a data store
 of the page's own on a Mac and on Linux - so nothing it stores reaches the disk. And Orden writes nothing of it either: no history, no
-favicon, no place on the page, no session that would bring it back after a restart, no
-closed tab for Ctrl+Shift+T, no web note - Save is refused for it. Memory saver never
+favicon, no place on the page, no picture or name in the overview, no session that would
+bring it back after a restart, no closed tab for Ctrl+Shift+T, no web note - Save is refused for it. Memory saver never
 parks it, because a page built again would have forgotten everything. A link out of it
 opens privately too. It wears Chrome's own mark, the hat and the glasses, on the tab and
 at the left of its address field.

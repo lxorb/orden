@@ -188,9 +188,19 @@ def board_on(browser, width, height, name):
     # bar it is the way to the file list from a board, and the column stays as it was.
     if name == "phone":
         column = page.evaluate("() => document.querySelector('.strip [aria-selected=true]')?.textContent")
-        touch(cdp, "touchStart", [(6, 500)])
+        # On the column itself, the card it holds, not any margin beside it.
+        left = page.evaluate(
+            "() => document.querySelector('[data-turns-pages]').getBoundingClientRect().x"
+        )
+        start = box(page, ".face", "B")["y"] if in_column(page, "B") == column else 300
+        x0, y0 = max(left + 2, 2), start
+        say(f"[{name}] column starts at {left}, under ({x0}, {y0}):" + page.evaluate(
+            "([x, y]) => { const e = document.elementFromPoint(x, y); return e.tagName + '.' + e.className + (e.closest('[data-turns-pages]') ? ' in the column' : ' outside') }",
+            [x0, y0],
+        ))
+        touch(cdp, "touchStart", [(x0, y0)])
         for step in range(1, 13):
-            touch(cdp, "touchMove", [(6 + 26 * step, 500)])
+            touch(cdp, "touchMove", [(x0 + 26 * step, y0)])
             page.wait_for_timeout(16)
         touch(cdp, "touchEnd", [])
         page.wait_for_timeout(600)

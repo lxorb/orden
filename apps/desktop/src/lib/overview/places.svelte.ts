@@ -67,8 +67,8 @@ export function nextPlace(all: Record<string, Box>, size: { w: number; h: number
 /** What an earlier version wrote, without the name of any web page that had no file: a
  *  private tab's title is one of those, and nothing tells which. At launch. */
 export function upgradeWindows() {
-  const before = readPlaces(stored(WINDOWS_BEFORE))
   if (storedText(WINDOWS_BEFORE) === null) return
+  const before = readPlaces(stored(WINDOWS_BEFORE))
   const left = Object.entries(before).filter(([name]) => !name.startsWith('web:~'))
   keepJson(WINDOWS, Object.fromEntries(left))
   forget(WINDOWS_BEFORE)
