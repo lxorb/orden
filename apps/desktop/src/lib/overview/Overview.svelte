@@ -1394,10 +1394,12 @@
     border: 2px solid var(--accent);
   }
 
-  /* A window's cross: red, small, on its top right corner itself, at the same size on the
-     screen whatever the zoom, there while the pointer is on the window or on the cross,
-     and only once the window is in its place. Under the pointer it darkens and grows a
-     little, so it is plain that a press closes the tab. */
+  /* A window's cross: the app's quiet grey button with the cross in it red, small, on
+     the window's top right corner itself, at the same size on the screen whatever the
+     zoom, there while the pointer is on the window or on the cross, and only once the
+     window is in its place. Under the pointer the button lights as a quiet one does, its
+     cross goes a step deeper and it grows a little, so it is plain that a press closes
+     the tab. */
   .closer {
     --closer-size: 22px;
     position: absolute;
@@ -1409,12 +1411,12 @@
     width: var(--closer-size);
     height: var(--closer-size);
     padding: 0;
-    border: 0;
+    border: 1px solid var(--line);
     border-radius: 50%;
-    /* The ink a strong colour is written on in this theme, as on the accent. */
-    color: var(--accent-ink);
-    background: var(--danger);
-    box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+    color: var(--danger);
+    /* Solid, half of it being over the canvas and half over the window. */
+    background: var(--surface-2);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.22);
     transform-origin: 0 0;
     scale: var(--overview-unzoom);
     /* Its middle on the corner: scaled about that point, so it grows in place. */
@@ -1423,7 +1425,8 @@
     pointer-events: none;
     transition:
       opacity var(--dur-fast) var(--ease-out),
-      background-color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
       transform var(--dur-fast) var(--ease-out);
   }
 
@@ -1444,13 +1447,17 @@
     visibility: hidden;
   }
 
+  /* The quiet button's hover and press, laid on its own grey so it stays solid; the
+     cross deeper towards the ink, as a button that deletes is (base.css). */
   .closer:hover,
   .closer:focus-visible {
-    background: color-mix(in srgb, var(--danger) 80%, black);
+    color: color-mix(in srgb, var(--danger) 86%, var(--text-strong));
+    background: linear-gradient(var(--surface-hover), var(--surface-hover)), var(--surface-2);
     transform: scale(1.18) translate(-50%, -50%);
   }
 
   .closer:active {
+    background: linear-gradient(var(--surface-press), var(--surface-press)), var(--surface-2);
     transform: scale(0.94) translate(-50%, -50%);
   }
 

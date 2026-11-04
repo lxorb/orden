@@ -255,23 +255,31 @@ test('a window’s cross sits on its corner, red, and answers the pointer', asyn
     .map(Number)
   const width = parseFloat(window?.style.width ?? '0')
   expect(cross?.style.translate).toBe(`${String((x ?? 0) + width)}px ${String(y)}px`)
-  // Red and small, and under the pointer darker and a little larger: its own rules, as
-  // the component declares them (jsdom lays nothing out and hovers nothing).
+  // The app's quiet grey button, only its cross red, small, and under the pointer lit
+  // and a little larger: its own rules, as the component declares them (jsdom lays
+  // nothing out and hovers nothing).
   const { default: source } = await import('../../src/lib/overview/Overview.svelte?raw')
   /** The body of the rule whose selectors start `head`, up to its brace. */
   const rule = (head: string) => {
     const at = source.indexOf(`\n  ${head}`)
     return at < 0 ? '' : source.slice(source.indexOf('{', at), source.indexOf('}', at))
   }
-  expect(rule('.closer {')).toContain('background: var(--danger)')
+  expect(rule('.closer {')).toContain('color: var(--danger)')
+  expect(rule('.closer {')).toContain('background: var(--surface-2)')
+  expect(rule('.closer {')).not.toMatch(/background:[^;]*--danger/)
   expect(rule('.closer {')).toContain('translate(-50%, -50%)')
   expect(rule('.closer {')).toMatch(/--closer-size: 2[0-4]px/)
   const hovered = [...source.matchAll(/\n {2}([^{}]*\.closer:hover[^{}]*)\{([^}]*)\}/g)].map(
     (one) => one[2] ?? '',
   )
-  expect(hovered.some((one) => one.includes('background:') && one.includes('scale(1.18)'))).toBe(
-    true,
-  )
+  expect(
+    hovered.some(
+      (one) =>
+        one.includes('--surface-hover') &&
+        one.includes('scale(1.18)') &&
+        !/background:[^;]*--danger/.test(one),
+    ),
+  ).toBe(true)
 })
 
 test('every window’s name is drawn under every window, so none lies on another window', async () => {
