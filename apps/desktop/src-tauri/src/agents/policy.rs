@@ -2016,7 +2016,15 @@ mod tests {
                 "{name}: {dialog}"
             );
         }
-        // Each of these asks: only what is plainly the way out goes free.
+    }
+
+    #[test]
+    fn only_what_is_plainly_the_way_out_goes_free() {
+        let url = "https://app.example/";
+        let in_dialog = |name: &str, dialog: &str| Facts {
+            dialog: dialog.into(),
+            ..press(name)
+        };
         for (name, dialog, asked) in [
             (
                 "Accept",
