@@ -74,7 +74,7 @@ describe('unwritten words meeting an open document', () => {
   })
 
   test('a note on its way open, its read not answered yet, takes them as well', async () => {
-    let go = () => {}
+    let go: () => void = () => undefined
     slow.hold = new Promise((open) => (go = open))
     const opening = workspace.open(PATH)
     const arriving = workspace.applyLayout(layout(tab()), false)

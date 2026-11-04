@@ -1141,11 +1141,11 @@ class Workspace {
         // A file that was clean is read again, so an edit made elsewhere shows up,
         // and the read is the round trip a second open of the same file waits out. One
         // with unwritten words is read as well: the file may have gone on without them.
-        let reading = false
+        const open = { read: false }
         const note =
           holdsWords(draft.kind) && draft.path
             ? await this.opened.opening(draft.path, () => {
-                reading = true
+                open.read = true
                 return draft.dirty ? this.unwrittenBack(draft) : this.drafted(draft)
               })
             : this.opened.make({
@@ -1158,7 +1158,7 @@ class Workspace {
               })
 
         // A click on the list got there first, and that read answered for this one too.
-        if (draft.dirty && draft.path && !reading && holdsWords(draft.kind)) {
+        if (draft.dirty && draft.path && !open.read && holdsWords(draft.kind)) {
           const back = note
             ? await this.wordsMeet(note, draft)
             : await this.opened.opening(draft.path, () => this.unwrittenBack(draft))

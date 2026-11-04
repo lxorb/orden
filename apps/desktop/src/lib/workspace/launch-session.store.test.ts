@@ -43,7 +43,7 @@ vi.mock('../tauri', async (importOriginal) => ({
 vi.mock('../startup.svelte', async (importOriginal) => {
   const real = await importOriginal<typeof import('../startup.svelte')>()
   const turn = real.startup.turn.bind(real.startup)
-  real.startup.turn = (stage) => (stage === 'doors' ? new Promise(() => {}) : turn(stage))
+  real.startup.turn = (stage) => (stage === 'doors' ? new Promise(() => undefined) : turn(stage))
   return real
 })
 const { Disk, memoryStorage } = await import('../../../test/disk')
@@ -197,7 +197,7 @@ describe('a persist while the session is coming back', () => {
     // The window closes, or something writes the session, while one read has not answered.
     for (let at = 0; at < trips; at += 1) {
       freshRound()
-      let open = () => {}
+      let open: () => void = () => undefined
       held.gate = new Promise((go) => (open = go))
       held.reached = false
       held.count = 0
@@ -235,7 +235,7 @@ describe('a persist while the session is coming back', () => {
   test('a tab opened meanwhile is written with what is coming, and lands once', async () => {
     freshRound()
     d.files.set(`${ONE}/gap.md`, 'gap\n')
-    let open = () => {}
+    let open: () => void = () => undefined
     held.gate = new Promise((go) => (open = go))
     held.reached = false
     held.stopAt = -1
@@ -273,7 +273,7 @@ describe('a persist while the session is coming back', () => {
     ['a list of paths', { openPaths: [`${ONE}/slow.md`], activePath: `${ONE}/slow.md` }, 'slow.md'],
   ])('holds for a session written as %s', async (_, shape, words) => {
     freshRound({ spaces: SESSION.spaces, activeSpace: 'one', panel: null, ...shape })
-    let open = () => {}
+    let open: () => void = () => undefined
     held.gate = new Promise((go) => (open = go))
     held.reached = false
     held.count = 0
