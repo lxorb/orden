@@ -110,14 +110,21 @@ jobs:
       # With the release secrets it is signed with Emil's own key and every build
       # can replace the last; without them the job makes a key of its own, which
       # is enough to install but changes from run to run, so the old app has to
-      # come off before the new one goes on. See docs/mobile.md.
+      # come off before the new one goes on. See docs/mobile.md. That is for a fork:
+      # in lxorb/orden, whose builds people have installed, an APK under a key of its own
+      # is one that cannot replace theirs, so a missing key is red (#1112).
       - name: A key to sign with
         working-directory: apps/desktop/src-tauri/gen/android
         env:
           KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          REPOSITORY: ${{ github.repository }}
         run: |
+          if [ -z "$KEYSTORE" ] && [ "$REPOSITORY" = lxorb/orden ]; then
+            echo "::error::ANDROID_KEYSTORE is not set: an APK signed with a key of its own cannot replace the installed one."
+            exit 1
+          fi
           if [ -n "$KEYSTORE" ]; then
             echo "$KEYSTORE" | base64 -d >release.jks
             store=$PWD/release.jks

@@ -62,8 +62,10 @@ jobs:
     outputs:
       go: ${{ steps.check.outputs.go }}
     steps:
-      # A suite takes only its own kind of release, and a run with no key or no token
-      # is skipped rather than failed, as publish.yml skips a manager with none.
+      # A suite takes only its own kind of release. A run with no key or no token is
+      # skipped rather than failed in a fork, which has neither; in lxorb/orden, where the
+      # APT repository is live, it is red: a release the repository never got is not a
+      # green run with a notice in it (#1112).
       - id: check
         env:
           SUITE: ${{ inputs.suite }}
@@ -71,6 +73,7 @@ jobs:
           APT_SIGNING_KEY: ${{ secrets.APT_SIGNING_KEY }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           PACKAGING_TOKEN: ${{ secrets.PACKAGING_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
         run: |
           if [[ $SUITE == move ]]; then
             if [[ -z $APT_SIGNING_KEY || -z $PACKAGING_TOKEN ]]; then
@@ -79,6 +82,10 @@ jobs:
             fi
             echo 'go=true' >>"$GITHUB_OUTPUT"
           elif [[ -z $APT_SIGNING_KEY || -z $CLOUDFLARE_API_TOKEN ]]; then
+            if [[ $REPOSITORY == lxorb/orden ]]; then
+              echo "::error::APT_SIGNING_KEY or CLOUDFLARE_API_TOKEN is not set - $TAG did not reach the APT repository."
+              exit 1
+            fi
             echo "::notice::APT_SIGNING_KEY or CLOUDFLARE_API_TOKEN is not set - nothing to publish."
             echo 'go=false' >>"$GITHUB_OUTPUT"
           elif [[ $SUITE == stable && $TAG == v*.*.* && $TAG != *-* ]] || [[ $SUITE == unstable && $TAG == edge ]]; then
