@@ -197,6 +197,7 @@ const FACTS_BODY: &str = r"
   }
   const MOST_HELD = 400
   const MOST_IN_A_DIALOG = 4000
+  const OWN_WORDS = 'input, select, textarea, [contenteditable]:not([contenteditable=false i]), [role=textbox]'
   const pseudoWords = (one) => {
     const said = []
     for (const part of ['::before', '::after', '::marker']) {
@@ -216,8 +217,11 @@ const FACTS_BODY: &str = r"
           seen += read(node, 'textContent').length
         }
         if (read(node, 'tagName') === 'BR') lines.push('')
-        if (read(node, 'nodeType') !== 1 || node === leaving || call(node, 'matches', CONTROLS) || ['SCRIPT', 'STYLE'].includes(read(node, 'tagName'))) continue
-        const shown = read(one, 'ownerDocument').defaultView.getComputedStyle(node).display
+        // Nor a field's words, which may be a secret's and are not what the page says: these lines are quoted to whoever asks.
+        if (read(node, 'nodeType') !== 1 || node === leaving || call(node, 'matches', CONTROLS) || call(node, 'matches', OWN_WORDS) || ['SCRIPT', 'STYLE'].includes(read(node, 'tagName'))) continue
+        const style = read(one, 'ownerDocument').defaultView.getComputedStyle(node)
+        if (String(style.webkitTextSecurity || 'none') !== 'none') continue
+        const shown = style.display
         if (shown === 'none' || (shown !== 'contents' && !call(node, 'getClientRects').length)) continue
         const inline = shown.startsWith('inline') || shown === 'contents'
         if (!inline) lines.push('')
@@ -273,7 +277,7 @@ const FACTS_BODY: &str = r"
   // The form's fields, or the page's when it is in none: a webmail's Send and a chat
   // widget's are in no form, and their message box is an editable region.
   // Into the open shadow roots under it; a closed one is the crate's (`closed_fields`).
-  // So far and no further on a page of a million nodes, and it says so: the press then asks.
+  // So far and no further on a page of a million nodes or a form of hundreds of fields, and it says so: a submit then asks.
   const fields = []
   let walked = 0
   const fieldsIn = (under) => {
@@ -287,7 +291,7 @@ const FACTS_BODY: &str = r"
   fieldsIn(form || read(el, 'ownerDocument'))
   // What the dialog a press is in says: its label and its own lines. Its Confirm does what the dialog says.
   const dialogOf = () => {
-    if (!control && !actor) return ''
+    if (!control && !actor && !editable) return ''
     for (let at = el; at; at = call(at, 'getRootNode').host) {
       const box = call(at, 'closest', 'dialog, [role=dialog], [role=alertdialog]')
       if (box) {
@@ -301,7 +305,7 @@ const FACTS_BODY: &str = r"
   // The document it is in and the origins round it, which is the frame it is in.
   const place = read(el, 'ownerDocument').location
   const at = place ? [place.href, ...Array.from(place.ancestorOrigins || [])] : []
-  return { at, cut: walked >= 50000, control: !!control, tag, type: kind, name, autocomplete: String(call(el, 'getAttribute', 'autocomplete') || '').toLowerCase(), submit, link, editable, in_form: !!form, fields, field: describe(el), default_button: first ? nameOf(first) : '', opaque, dialog: dialogOf(), held }
+  return { at, cut: walked >= 50000 || fields.length >= 200, control: !!control, tag, type: kind, name, autocomplete: String(call(el, 'getAttribute', 'autocomplete') || '').toLowerCase(), submit, link, editable, in_form: !!form, fields, field: describe(el), default_button: first ? nameOf(first) : '', opaque, dialog: dialogOf(), held }
 ";
 
 /// `FACTS_BODY` with `FIELDS` in front of it, as the function the protocol runs: `heard`
@@ -401,6 +405,14 @@ fn patience_in(session: Option<&str>) -> Duration {
 /// The node of the secret that stands for a whole part of the page no field of which could
 /// be told: nothing of that part is written, and no picture of the page is taken.
 const UNREAD: u64 = 0;
+
+/// The part an `UNREAD` secret names where a read left a frame out and the rest stands.
+const LEFT_OUT: &str = "left out";
+
+/// Whether a read of the page has left a part of it out, whichever part.
+pub fn left_a_part_out(secret: &HashSet<(String, u64)>) -> bool {
+    secret.iter().any(|(_, node)| *node == UNREAD)
+}
 
 /// How many fields of one page are each asked about themselves, one by one. Past it, each
 /// counts as a secret: over-careful about a page of a thousand inputs, and never a leak.
@@ -658,6 +670,34 @@ impl FrameMap {
         (parallel && map.determinant().abs() > 1e-6).then_some(map)
     }
 
+    /// Whether a frame with this quad and size shows nothing at all: no map is wanted of it,
+    /// as nothing in it can be seen or pressed.
+    fn nothing_drawn(quad: &[f64], width: f64, height: f64) -> bool {
+        if quad.len() != 8 || width <= 0.0 || height <= 0.0 {
+            return true;
+        }
+        let area = (quad[0] * quad[3] - quad[2] * quad[1])
+            + (quad[2] * quad[5] - quad[4] * quad[3])
+            + (quad[4] * quad[7] - quad[6] * quad[5])
+            + (quad[6] * quad[1] - quad[0] * quad[7]);
+        area.abs() < 1e-6
+    }
+
+    /// This frame's map to the page, from its map to the frame holding it and that frame's.
+    fn within(self, outer: Self) -> Self {
+        let step = |(x, y): (f64, f64)| {
+            (
+                outer.across.0 * x + outer.down.0 * y,
+                outer.across.1 * x + outer.down.1 * y,
+            )
+        };
+        Self {
+            origin: outer.to_page(self.origin),
+            across: step(self.across),
+            down: step(self.down),
+        }
+    }
+
     fn determinant(self) -> f64 {
         self.across.0 * self.down.1 - self.across.1 * self.down.0
     }
@@ -884,7 +924,7 @@ impl Page<'_> {
                 session,
                 "Page.getFrameTree",
                 &json!({}),
-                cdp::PATIENCE,
+                FRAME_PATIENCE,
             )
             .map_err(|why| stale(&why))?
             .pointer("/frameTree/frame/id")
@@ -1732,13 +1772,23 @@ impl Page<'_> {
         let Some(frame) = &element.frame else {
             return Ok(FrameMap::same());
         };
-        let owner = self.call("DOM.getFrameOwner", &json!({ "frameId": frame }))?;
+        // Its owner is in the frame holding it, which sits in the page in its turn.
+        let holder = self.frame_holding(frame)?;
+        let ask = |method: &str, params: &Value| match &holder {
+            Some(holder) => self.call_on(holder, method, params),
+            None => self.call(method, params),
+        };
+        let owner = ask("DOM.getFrameOwner", &json!({ "frameId": frame }))?;
         let Some(backend) = owner.get("backendNodeId").and_then(Value::as_u64) else {
-            return Ok(FrameMap::same());
+            return if holder.is_some() {
+                Err(stale("the frame has no owner"))
+            } else {
+                Ok(FrameMap::same())
+            };
         };
         // Its content box, inside its border and padding, which is what the frame's own
         // points are drawn in: `getContentQuads` of a frame owner has them in.
-        let boxes = self.call("DOM.getBoxModel", &json!({ "backendNodeId": backend }))?;
+        let boxes = ask("DOM.getBoxModel", &json!({ "backendNodeId": backend }))?;
         let quad: Vec<f64> = boxes
             .pointer("/model/content")
             .and_then(Value::as_array)
@@ -1753,12 +1803,50 @@ impl Page<'_> {
             &json!({ "expression": "[innerWidth, innerHeight]", "returnByValue": true, "contextId": self.world_of_frame(session, frame)? }),
         )?;
         let size = |at: &str| said.pointer(at).and_then(Value::as_f64).unwrap_or(0.0);
-        FrameMap::of(&quad, size("/result/value/0"), size("/result/value/1")).ok_or_else(|| {
+        let (width, height) = (size("/result/value/0"), size("/result/value/1"));
+        let map = FrameMap::of(&quad, width, height).ok_or_else(|| {
             Answer::error(
                 Code::Failed,
-                "that frame is drawn in a way Orden cannot follow: press something else",
+                if FrameMap::nothing_drawn(&quad, width, height) {
+                    "that frame is not on the page"
+                } else {
+                    "that frame is drawn in a way Orden cannot follow: press something else"
+                },
             )
-        })
+        })?;
+        match &holder {
+            Some(holder) => Ok(map.within(self.frame_map(holder)?)),
+            None => Ok(map),
+        }
+    }
+
+    /// The frame a frame in a process of its own is attached under, where it is another of
+    /// those and not the page's own document.
+    fn frame_holding(&self, frame: &str) -> Result<Option<Element>, Answer> {
+        let frames = self
+            .heard()
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .frames();
+        let parent = frames
+            .iter()
+            .find(|(_, one)| one.id == frame)
+            .map(|(_, one)| one.parent.as_str())
+            .unwrap_or_default();
+        if parent.is_empty() {
+            return Ok(None);
+        }
+        frames
+            .iter()
+            .find(|(_, one)| one.session == parent)
+            .map(|(_, one)| {
+                Some(Element {
+                    session: Some(one.session.clone()),
+                    frame: Some(one.id.clone()),
+                    backend: UNREAD,
+                })
+            })
+            .ok_or_else(|| stale("the frame round it is gone"))
     }
 
     /// Whether the element is what a press at the point lands on - it, something inside
@@ -1951,7 +2039,9 @@ impl Page<'_> {
                 Err(_) if press > 1 => break,
                 Err(refused) => return Err(refused),
             };
-            if now != last {
+            // The first press again whatever it is: the move may have changed what the same
+            // node says it is, and one question is still one (`OnePress`).
+            if press == 1 || now != last {
                 gate(&now)?;
                 self.refuse_picker(&now)?;
                 last = now.clone();
@@ -1973,7 +2063,8 @@ impl Page<'_> {
     }
 
     /// What the frame an element is in says the pointer is over, by `:hover`, the engine's
-    /// own: the deepest of it. `None` for an element of the page's own document.
+    /// own: the deepest of it, and not a label's control, which shows it too when only its
+    /// label is under the pointer. `None` for an element of the page's own document.
     fn pointer_over(&self, element: &Element) -> Option<Element> {
         let (session, frame) = (element.session.as_deref()?, element.frame.as_deref()?);
         let world = self.world_of_frame(Some(session), frame).ok()?;
@@ -1983,7 +2074,7 @@ impl Page<'_> {
         let said = call(
             "Runtime.evaluate",
             &json!({
-                "expression": "(() => { const all = document.querySelectorAll(':hover'); return all[all.length - 1] || null })()",
+                "expression": "(() => { const all = [...document.querySelectorAll(':hover')]; const over = all.filter((one) => !all.some((label) => label.tagName === 'LABEL' && label.control === one && !label.contains(one))); return over[over.length - 1] || null })()",
                 "contextId": world,
             }),
         )?;
@@ -2497,6 +2588,8 @@ impl Page<'_> {
             ));
         }
         let wanted = scale.unwrap_or(1.0).clamp(0.1, 4.0);
+        // Before the picture and after it: a field that goes in between is in it all the same.
+        let hidden = self.hidden_rects()?;
         let shot = self.call(
             "Page.captureScreenshot",
             &json!({
@@ -2511,7 +2604,7 @@ impl Page<'_> {
             .unwrap_or_default()
             .to_string();
         let (width, height) = png_size(&png).unwrap_or_default();
-        let png = self.painted_over(png, clip, (width, height))?;
+        let png = self.painted_over(png, clip, (width, height), hidden)?;
         Ok(Picture { png, width, height })
     }
 
@@ -2562,10 +2655,39 @@ impl Page<'_> {
         png: String,
         clip: (f64, f64, f64, f64),
         size: (u32, u32),
+        before: Vec<[f64; 4]>,
     ) -> Result<String, Answer> {
         let (across, down) = (f64::from(size.0) / clip.2, f64::from(size.1) / clip.3);
+        let rects: Vec<[f64; 4]> = before
+            .into_iter()
+            .chain(self.hidden_rects()?)
+            .map(|[left, top, right, bottom]| {
+                [
+                    (left - clip.0) * across,
+                    (top - clip.1) * down,
+                    (right - clip.0) * across,
+                    (bottom - clip.1) * down,
+                ]
+            })
+            .collect();
+        if rects.is_empty() {
+            return Ok(png);
+        }
+        paint_over(&png, &rects).map_err(|why| {
+            Answer::error(
+                Code::Failed,
+                format!(
+                    "a secret field could not be hidden in the picture, so there is none: {why}"
+                ),
+            )
+        })
+    }
+
+    /// Where on the page a picture of it is to be painted over, in CSS pixels: each filled
+    /// secret field and each frame of a denied site. What cannot be told refuses the picture.
+    fn hidden_rects(&self) -> Result<Vec<[f64; 4]>, Answer> {
         let secrets: Vec<Secret> = self
-            .secrets(self.every_part())
+            .secrets(self.every_part()?)
             .into_iter()
             .filter(|one| one.filled)
             .collect();
@@ -2593,34 +2715,24 @@ impl Page<'_> {
                 Err(refused) => return Err(refused),
             }
         }
-        let rects: Vec<[f64; 4]> = drawn
-            .into_iter()
-            .chain(self.denied_frames())
-            .map(|[left, top, right, bottom]| {
-                [
-                    (left - clip.0) * across,
-                    (top - clip.1) * down,
-                    (right - clip.0) * across,
-                    (bottom - clip.1) * down,
-                ]
-            })
-            .collect();
-        if rects.is_empty() {
-            return Ok(png);
-        }
-        paint_over(&png, &rects).map_err(|why| {
+        drawn.extend(self.denied_frames()?);
+        Ok(drawn)
+    }
+
+    /// Follows every frame down, however deep, or says a part of the page cannot be reached.
+    fn nested_followed(&self) -> Result<(), Answer> {
+        cdp::follow_nested(self.view, &self.label, FRAME_PATIENCE).map_err(|why| {
             Answer::error(
                 Code::Failed,
-                format!(
-                    "a secret field could not be hidden in the picture, so there is none: {why}"
-                ),
+                format!("a part of this page could not be reached, so there is no picture or print of it: {why}"),
             )
         })
     }
 
     /// The prefix of every part of the page: its own document, and each frame in a
-    /// process of its own.
-    fn every_part(&self) -> Vec<String> {
+    /// process of its own, at any depth.
+    fn every_part(&self) -> Result<Vec<String>, Answer> {
+        self.nested_followed()?;
         let mut prefixes = vec![String::new()];
         prefixes.extend(
             self.heard()
@@ -2630,7 +2742,7 @@ impl Page<'_> {
                 .into_iter()
                 .map(|(number, _)| format!("f{number}")),
         );
-        prefixes
+        Ok(prefixes)
     }
 
     /// The page's accessibility tree, with its frames, as the parts `snapshot` writes.
@@ -2648,6 +2760,12 @@ impl Page<'_> {
             .unwrap_or_else(PoisonError::into_inner)
             .frames();
         let away_ids: HashSet<String> = away.iter().map(|(_, frame)| frame.id.clone()).collect();
+        // A frame inside another's process is not written: nothing in it can be pressed by ref,
+        // as a point there is refused. A read says it left a part out.
+        let mut whole = away.iter().all(|(_, frame)| frame.parent.is_empty());
+        let away = away
+            .into_iter()
+            .filter(|(_, frame)| frame.parent.is_empty());
 
         // Frames in the page's own process: a tree each, under their frame element.
         let tree = self.call("Page.getFrameTree", &json!({}))?;
@@ -2671,6 +2789,7 @@ impl Page<'_> {
             // The whole read is held to a budget: frames that reload as they are asked lose
             // each question, and the rest of the page is not kept waiting on them.
             if started.elapsed() > MOST_ON_FRAMES {
+                whole = false;
                 break;
             }
             let Ok(nodes) = cdp::call_in(
@@ -2680,6 +2799,7 @@ impl Page<'_> {
                 &json!({ "frameId": frame }),
                 FRAME_PATIENCE,
             ) else {
+                whole = false;
                 continue;
             };
             let owner = self.owner_in(&parts, &frame);
@@ -2692,6 +2812,7 @@ impl Page<'_> {
         // Frames in processes of their own, through their sessions.
         for (number, frame) in away {
             if started.elapsed() > MOST_ON_FRAMES {
+                whole = false;
                 break;
             }
             let at = self.frame_address(&frame);
@@ -2705,6 +2826,7 @@ impl Page<'_> {
                 &json!({}),
                 FRAME_PATIENCE,
             ) else {
+                whole = false;
                 continue;
             };
             let owner = self.owner_in(&parts, &frame.id);
@@ -2714,7 +2836,7 @@ impl Page<'_> {
                 owner,
             });
         }
-        let secret = self.secret_fields(&parts);
+        let mut secret = self.secret_fields(&parts);
         if secret.contains(&(String::new(), UNREAD)) {
             return Err(Answer::error(
                 Code::Failed,
@@ -2722,15 +2844,19 @@ impl Page<'_> {
             ));
         }
         parts.retain(|part| !secret.contains(&(part.prefix.clone(), UNREAD)));
+        if !whole {
+            secret.insert((LEFT_OUT.to_string(), UNREAD));
+        }
         Ok((parts, secret))
     }
 
     /// Where each frame on a site the agent may not reach is on the page, to paint over: a
     /// picture of a page is a reading of it. Its owner's box, in the page's own document.
-    fn denied_frames(&self) -> Vec<[f64; 4]> {
+    fn denied_frames(&self) -> Result<Vec<[f64; 4]>, Answer> {
         if self.limits.is_none() {
-            return Vec::new();
+            return Ok(Vec::new());
         }
+        self.nested_followed()?;
         let mut frames: Vec<(String, Vec<String>)> = Vec::new();
         if let Ok(tree) = self.call("Page.getFrameTree", &json!({})) {
             let mut places = HashMap::new();
@@ -2749,21 +2875,31 @@ impl Page<'_> {
         for (_, frame) in away {
             frames.push((frame.id.clone(), self.frame_address(&frame)));
         }
-        frames
-            .into_iter()
-            .filter(|(_, at)| !self.may_read_frame(at))
-            .filter_map(|(id, _)| {
-                let owner = self
-                    .call("DOM.getFrameOwner", &json!({ "frameId": id }))
-                    .ok()?;
-                self.page_rect(&Element {
-                    session: None,
-                    frame: None,
-                    backend: owner.get("backendNodeId")?.as_u64()?,
-                })
-                .ok()
-            })
-            .collect()
+        let mut rects = Vec::new();
+        for (id, _) in frames.iter().filter(|(_, at)| !self.may_read_frame(at)) {
+            // Its owner is where the frame holding it says, and sits in the page through that.
+            let holder = self.frame_holding(id)?;
+            let params = json!({ "frameId": id });
+            let owner = match &holder {
+                Some(holder) => self.call_on(holder, "DOM.getFrameOwner", &params),
+                None => self.call("DOM.getFrameOwner", &params),
+            }?;
+            let backend = owner
+                .get("backendNodeId")
+                .and_then(Value::as_u64)
+                .ok_or_else(|| stale("the frame has no owner"))?;
+            let (session, frame) = holder.map_or((None, None), |one| (one.session, one.frame));
+            match self.page_rect(&Element {
+                session,
+                frame,
+                backend,
+            }) {
+                Ok(rect) => rects.push(rect),
+                Err(Answer::Error { message, .. }) if undrawn(&message) => {}
+                Err(refused) => return Err(refused),
+            }
+        }
+        Ok(rects)
     }
 
     /// Whether a row of the console or the network is about a site the agent may read.
@@ -2809,9 +2945,11 @@ impl Page<'_> {
     /// nothing of theirs is written whatever the tree says.
     fn secret_fields(&self, parts: &[Part]) -> HashSet<(String, u64)> {
         let prefixes: HashSet<String> = parts.iter().map(|part| part.prefix.clone()).collect();
-        self.secrets(prefixes)
+        let (found, seen) = self.scanned(prefixes);
+        found
             .into_iter()
             .map(|one| (one.prefix, one.backend))
+            .chain(gone_fields(parts, &seen))
             .collect()
     }
 
@@ -2833,8 +2971,18 @@ impl Page<'_> {
     /// or closed, and a frame sharing the process, of any origin, hide none of them from
     /// this; each describes itself and the policy judges.
     fn secrets(&self, prefixes: impl IntoIterator<Item = String>) -> Vec<Secret> {
+        self.scanned(prefixes).0
+    }
+
+    /// `secrets`, and every node the scan saw, by part prefix: what a tree read before it has
+    /// and it does not has gone in between, and nothing said any more whether it was a secret.
+    fn scanned(
+        &self,
+        prefixes: impl IntoIterator<Item = String>,
+    ) -> (Vec<Secret>, HashSet<(String, u64)>) {
         let started = Instant::now();
         let mut found = Vec::new();
+        let mut seen = HashSet::new();
         for prefix in prefixes {
             if prefix_past_budget(&prefix, started) {
                 found.push(Secret {
@@ -2863,6 +3011,11 @@ impl Page<'_> {
                 });
                 continue;
             };
+            seen.extend(
+                nodes_in_capture(&capture)
+                    .into_iter()
+                    .map(|backend| (prefix.clone(), backend)),
+            );
             let fields = fields_in_capture(&capture, None);
             for (at, backend) in fields.into_iter().enumerate() {
                 // Past the most, past the time, or what no world of ours can describe: a
@@ -2901,7 +3054,7 @@ impl Page<'_> {
                 &json!({ "objectGroup": SECRETS }),
             );
         }
-        found
+        (found, seen)
     }
 
     /// Which of the document's editable regions (`REGIONS`) are secrets with words in them:
@@ -2928,6 +3081,23 @@ impl Page<'_> {
             .collect())
     }
 
+    /// A read of the page with its secret regions left out, by their place among the regions:
+    /// a region that comes or goes between the look and the read moves every place after it,
+    /// so what the look found has to be what is there after. Failing twice, no read.
+    fn read_hiding(&self, reading: fn(&[usize]) -> String) -> Result<Value, Answer> {
+        for _ in 0..2 {
+            let hidden = self.secret_regions()?;
+            let said = self.isolated(&reading(&hidden))?;
+            if self.secret_regions()? == hidden {
+                return Ok(said);
+            }
+        }
+        Err(Answer::error(
+            Code::Failed,
+            "the page's fields keep changing, so its words cannot be read",
+        ))
+    }
+
     /// The page as text, as markdown, or its article as markdown. Markdown is the
     /// clipper's own converter's, asked of the window; without a window it is the text.
     pub fn read(
@@ -2936,12 +3106,11 @@ impl Page<'_> {
         shape: super::verbs::ReadAs,
     ) -> Result<(String, String, String), Answer> {
         use super::verbs::ReadAs;
-        let hidden = self.secret_regions()?;
-        let said = match shape {
-            ReadAs::Text => self.isolated(&text_hiding(&hidden))?,
-            ReadAs::Markdown => self.isolated(&whole_hiding(&hidden))?,
-            ReadAs::Article => self.isolated(&clipped_hiding(&hidden))?,
-        };
+        let said = self.read_hiding(match shape {
+            ReadAs::Text => text_hiding,
+            ReadAs::Markdown => whole_hiding,
+            ReadAs::Article => clipped_hiding,
+        })?;
         let text_at = |key: &str| {
             said.get(key)
                 .and_then(Value::as_str)
@@ -2989,7 +3158,7 @@ impl Page<'_> {
     /// clipper's own converter, so a clip of an agent's tab and of the reader's are the
     /// same words.
     pub fn clip(&self) -> Result<(String, String, String), Answer> {
-        let said = self.isolated(&clipped_hiding(&self.secret_regions()?))?;
+        let said = self.read_hiding(clipped_hiding)?;
         Ok((
             text(&said, "url"),
             text(&said, "title"),
@@ -3007,14 +3176,17 @@ impl Page<'_> {
     /// the agent is told to take the picture instead, rather than handed a weaker print.
     pub fn pdf(&self, paper: &PdfPage) -> Result<String, Answer> {
         // A picture paints a denied frame over; a print has no way to.
-        if !self.denied_frames().is_empty() {
+        if !self.denied_frames()?.is_empty() {
             return Err(Answer::error(
                 Code::SiteDenied,
                 "a frame of a denied site is on the page, and a PDF would print it: capture a screenshot, which paints it over",
             ));
         }
         if !self.may_touch_credentials()
-            && self.secrets(self.every_part()).iter().any(|one| one.filled)
+            && self
+                .secrets(self.every_part()?)
+                .iter()
+                .any(|one| one.filled)
         {
             return Err(Answer::error(
                 Code::PasswordField,
@@ -3510,6 +3682,36 @@ fn frame_places(tree: &Value, around: &[String], out: &mut HashMap<String, Vec<S
     }
 }
 
+/// Every node the engine's flat copy holds, in every document in it.
+fn nodes_in_capture(capture: &Value) -> Vec<u64> {
+    capture
+        .get("documents")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|document| document.pointer("/nodes/backendNodeId")?.as_array())
+        .flatten()
+        .filter_map(Value::as_u64)
+        .collect()
+}
+
+/// The nodes of a tree that hold words of their own and that the scan after it did not see: a
+/// field remounted or taken away in between. Nothing can now say it was no secret, so it counts
+/// as one, by what the tree says of it.
+fn gone_fields(parts: &[Part], seen: &HashSet<(String, u64)>) -> Vec<(String, u64)> {
+    parts
+        .iter()
+        .flat_map(|part| {
+            part.nodes
+                .iter()
+                .filter(|node| snapshot::holds_words(node))
+                .filter_map(|node| node.get("backendDOMNodeId").and_then(Value::as_u64))
+                .filter(|backend| !seen.contains(&(part.prefix.clone(), *backend)))
+                .map(|backend| (part.prefix.clone(), backend))
+        })
+        .collect()
+}
+
 /// The fields words can be typed into in the engine's flat copy of a process's documents
 /// (`Page::capture`), by node. With no `under`, every one, as the secret scan wants: each
 /// document, each shadow root of either kind. With `under`, only those inside it and inside
@@ -3798,6 +4000,78 @@ fn strip_tags(html: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_frame_inside_a_frame_maps_through_both() {
+        let outer = FrameMap::of(
+            &[10.0, 20.0, 210.0, 20.0, 210.0, 120.0, 10.0, 120.0],
+            100.0,
+            50.0,
+        )
+        .expect("drawn");
+        let inner =
+            FrameMap::of(&[5.0, 5.0, 25.0, 5.0, 25.0, 15.0, 5.0, 15.0], 20.0, 10.0).expect("drawn");
+        let map = inner.within(outer);
+        // The inner frame's own (1, 1) is (6, 6) of the outer, which draws at twice its size.
+        assert_eq!(map.to_page((1.0, 1.0)), (22.0, 32.0));
+        assert_eq!(map.to_frame((22.0, 32.0)), Some((1.0, 1.0)));
+    }
+
+    #[test]
+    fn a_frame_of_no_size_shows_nothing_and_one_in_perspective_is_shown() {
+        let flat = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
+        let line = [0.0, 0.0, 100.0, 0.0, 100.0, 0.0, 0.0, 0.0];
+        let square = [0.0, 0.0, 100.0, 0.0, 100.0, 100.0, 0.0, 100.0];
+        let tilted = [0.0, 0.0, 100.0, 10.0, 90.0, 80.0, 10.0, 100.0];
+        assert!(FrameMap::nothing_drawn(&flat, 0.0, 0.0));
+        assert!(FrameMap::nothing_drawn(&line, 100.0, 100.0));
+        assert!(FrameMap::nothing_drawn(&square, 100.0, 0.0));
+        assert!(FrameMap::nothing_drawn(&[], 100.0, 100.0));
+        assert!(!FrameMap::nothing_drawn(&square, 100.0, 100.0));
+        assert!(!FrameMap::nothing_drawn(&tilted, 100.0, 100.0));
+    }
+
+    #[test]
+    fn a_field_gone_by_the_scan_is_a_secret_by_what_the_tree_says() {
+        let field = |backend: u64, value: &str| json!({ "backendDOMNodeId": backend, "value": { "value": value } });
+        let parts = [
+            Part {
+                prefix: String::new(),
+                nodes: vec![
+                    field(1, "4111111111111111"),
+                    field(2, "seen"),
+                    field(3, ""),
+                    json!({ "backendDOMNodeId": 4 }),
+                    json!({ "backendDOMNodeId": 5, "properties": [{ "name": "editable", "value": { "value": "plaintext" } }] }),
+                ],
+                owner: None,
+            },
+            Part {
+                prefix: "f1".into(),
+                nodes: vec![field(2, "gone in this part")],
+                owner: None,
+            },
+        ];
+        let seen: HashSet<(String, u64)> = [(String::new(), 2)].into_iter().collect();
+        let gone = gone_fields(&parts, &seen);
+        assert_eq!(
+            gone,
+            [
+                (String::new(), 1),
+                (String::new(), 5),
+                ("f1".to_string(), 2),
+            ]
+        );
+    }
+
+    #[test]
+    fn a_capture_says_every_node_in_every_document() {
+        let capture = json!({ "documents": [
+            { "nodes": { "backendNodeId": [1, 2] } },
+            { "nodes": { "backendNodeId": [3] } },
+        ] });
+        assert_eq!(nodes_in_capture(&capture), [1, 2, 3]);
+    }
 
     #[test]
     fn a_press_tries_the_middle_and_then_each_quarter() {

@@ -461,14 +461,71 @@ fn said_times(summary: String, times: u8) -> String {
     }
 }
 
-/// What an allowance is for: the category, the control's name, the words it answers to and
-/// how it was put. No more of what is round it: a clock in a dialog changes nothing asked,
-/// and each tick a question would be a pile of the same one in front of the reader.
+/// What an allowance is for: the category, the control's name, what its dialog says and how
+/// it was put, short of what ticks. Another file named in the dialog or another amount is
+/// another question; a clock changes nothing asked, and each tick a question would be a pile of
+/// the same one in front of the reader.
 fn question_key(question: &policy::Question, summary: &str, facts: &Facts) -> String {
-    format!(
+    steady(&format!(
         "{} {:?} {} {summary}",
-        facts.name, question.category, question.words
-    )
+        facts.name, question.category, facts.dialog
+    ))
+}
+
+/// Words with what ticks taken out of them: a time of day or a countdown, a percentage, and
+/// what is no word at all, as a spinner is. Every other number stays, an amount or a count of
+/// files being the difference between two questions.
+fn steady(words: &str) -> String {
+    const UNITS: &[&str] = &[
+        "s", "sec", "secs", "second", "seconds", "min", "mins", "minute", "minutes", "h", "hr",
+        "hrs", "hour", "hours", "sek", "sekunde", "sekunden", "minuten", "std", "stunde",
+        "stunden", "seconde", "secondes", "heure", "heures", "segundo", "segundos", "minuto",
+        "minutos", "hora", "horas", "secondo", "secondi", "minuti", "ora", "ore",
+    ];
+    let bare = |word: &str| -> String {
+        word.trim_matches(|one: char| !one.is_alphanumeric())
+            .to_lowercase()
+    };
+    let number = |word: &str| {
+        !word.is_empty()
+            && word
+                .chars()
+                .all(|one| one.is_ascii_digit() || one == '.' || one == ',')
+            && word.starts_with(|one: char| one.is_ascii_digit())
+    };
+    let ticks = |word: &str| {
+        let word = word.trim_matches(|one: char| matches!(one, '(' | ')' | ',' | '.' | ';'));
+        let clock = word.contains(':')
+            && word
+                .split(':')
+                .all(|one| !one.is_empty() && one.chars().all(|digit| digit.is_ascii_digit()));
+        let percent = word.strip_suffix('%').is_some_and(number);
+        let timed = word
+            .find(|one: char| !one.is_ascii_digit() && one != '.' && one != ',')
+            .is_some_and(|at| at > 0 && number(&word[..at]) && UNITS.contains(&&word[at..]));
+        clock || percent || timed
+    };
+    let all: Vec<&str> = words.split_whitespace().collect();
+    let mut kept = Vec::with_capacity(all.len());
+    let mut at = 0;
+    while at < all.len() {
+        let word = all[at];
+        at += 1;
+        if ticks(word) || bare(word).is_empty() {
+            continue;
+        }
+        // A number and its unit apart: `58 seconds`, `45 %`.
+        if number(&bare(word)) && word.chars().next().is_some_and(|one| one.is_ascii_digit()) {
+            if let Some(next) = all.get(at) {
+                if *next == "%" || UNITS.contains(&bare(next).as_str()) {
+                    at += 1;
+                    continue;
+                }
+            }
+        }
+        kept.push(word);
+    }
+    kept.join(" ")
 }
 
 /// One press, however many times it is looked at on its way: one question. The look before
@@ -719,7 +776,8 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     url,
                     title: page.title(),
                     text: written.text,
-                    truncated: written.truncated,
+                    // A part of the page it left out, as much as one it had no room for.
+                    truncated: written.truncated || super::page::left_a_part_out(&secret),
                 }))
             }
             Verb::Find(asked) => {
@@ -1399,7 +1457,10 @@ mod tests {
                 "Delete 40 files Time left 9:59",
             ),
             ("Removing files 0%", "Removing files 45 %"),
-            ("Pay now. Offer ends in 58 seconds", "Pay now. Offer ends in 1 minute"),
+            (
+                "Pay now. Offer ends in 58 seconds",
+                "Pay now. Offer ends in 1 minute",
+            ),
             ("Pay now. Ends in 58s", "Pay now. Ends in 57s"),
             ("Delete draft |", "Delete draft /"),
         ] {
@@ -1410,7 +1471,10 @@ mod tests {
                 "Delete this item? report-draft.txt",
                 "Delete this item? ALL PROJECTS",
             ),
-            ("Confirm purchase. Total: 20 EUR", "Confirm purchase. Total: 20000 EUR"),
+            (
+                "Confirm purchase. Total: 20 EUR",
+                "Confirm purchase. Total: 20000 EUR",
+            ),
             ("Pay $20", "Pay $20000"),
             ("Delete 3 files", "Delete 3000 files"),
             ("Pay 1.299,00 EUR", "Pay 9.299,00 EUR"),

@@ -418,7 +418,9 @@ number or code - is one line that says only whether it holds anything, `[filled]
 nothing under it (9.4). Frames in
 the page's own process are in the page's tree under their frame element; a frame in a
 process of its own (another site, as Chromium isolates them) is reached through the
-session `Target.setAutoAttach` gives it, and its refs are `f<n>e<id>`.
+session `Target.setAutoAttach` gives it, and its refs are `f<n>e<id>`. A frame in a process of its
+own inside another such frame is not written, and the snapshot says `truncated`, as it does for a
+frame it could not read; a press there by point is refused.
 
 ### 5.3 Notes
 
@@ -1072,10 +1074,12 @@ that very frame, through each interface's own getters, or from the engine's own 
 `closest` on its own objects, or name a form's field `elements` or `parentNode`, and none of it
 is seen here. Its content is another matter: a page calls its own button what it likes.
 
-An allowance is for the question asked: its category, the control's name and the words it answers
-to. The same button when a dialog's sentence changes, or in a form that has grown a card field,
-asks again; a clock elsewhere in the dialog does not. A press made more than once says how many
-times, and asks again for another count.
+An allowance is for the question asked: its category, the control's name and everything its dialog
+says, short of what ticks: a time of day or a countdown (`9:58`, `58 seconds`), a percentage, a
+spinner. The same button when another file is named, when an amount or a count changes, or in a form
+that has grown a card field, asks again; a clock anywhere in the dialog does not. A bare counter with
+no unit is a number like any and asks each time. A press made more than once says how many times,
+and asks again for another count.
 
 So a paragraph round a Pay button asks and a section whose middle is empty does not, and a
 frame's ref is a press of what is in the frame. Where no control holds the press, what acts for
@@ -1095,11 +1099,19 @@ page's own script behind a button called OK is not seen by anything here.
 A link that only goes is no delete, as the press that deletes is on the page it goes to; one
 with `data-method`, `data-turbo-method`, `role=button` or a handler or listener of its own is a
 press, while a plain `<a href=/delete-account>` still goes. In a dialog that talks of paying or deleting anywhere in it, every control asks except the way
-out, a closed list (Cancel, Close, No, Got it, Accept all, Learn more and their like), an icon
-with no name included. It is not read for what it means, as that lets honest second steps by:
-`You can remove your data at any time` and OK cost one question. The question quotes the first
-sentence that says so. A tick by `browser_fill_form` is a press like one by
-`browser_click`, on top of the form's one question.
+out, a closed list (Cancel, Close, Close dialog, No, Stay, Got it, Next, Learn more and their like),
+an icon with no name included. `Keep` is the way out of a dialog about deleting and of none about
+paying, where `Keep your plan and be billed` is a yes, and `Accept` is one only where the dialog is
+about cookies: OK, Accept, Allow all or Agree go where it opens on cookies or consent, or says so in
+the sentence naming the word, and that sentence does not lead with it. It is not read for what it
+means past that, as that lets honest second steps by: `You can remove your data at any time` and OK
+cost one question. `free of charge`, `in charge` and `pay attention` are not the word. Enter in a
+field of such a dialog is a press too, of its form's first submit button or of none, so
+type-to-confirm asks like its Confirm. The question quotes the first sentence that says so, and
+never what a field holds: a dialog's words leave out every field's, and a secret's own name, which
+may be what it holds, is not said. A form of 200 fields or more has not been read to its end, so a
+submit in it asks. A tick by `browser_fill_form` is a press like one by `browser_click`, on top of
+the form's one question.
 
 Recognising these from the page rather than from the agent's own account of what it is
 doing is the point. An agent that has been talked into buying something will describe the
@@ -1118,13 +1130,17 @@ each by its `autocomplete` or by what it is called, and in a box, an editable re
 `role=textbox` alike -
 by any road, at any depth of page, and a field that cannot be described, whatever frame it is in,
 counts as one (a part of the page whose fields cannot be read at all is not written, and no picture
-of the page is taken): `browser_snapshot` writes such a field as `[filled]` or nothing, and nothing
+of the page is taken; a frame inside a frame in another process is followed down for this, and one
+that cannot be reached keeps the picture back too): `browser_snapshot` writes such a field as `[filled]` or nothing, and nothing
 under it (the engine's own value for a password is one bullet a character, and its words
 inside the field the same, so either would say how long it is); `browser_find` never looks
 inside one; a name the engine builds out of a field's value has the value taken out; and
 `browser_read` and a clip carry no field's value in any shape, and a secret editable region
 leaves `[hidden]` (in markdown, `\[hidden\]`), by the node and never by its words: every other
-word of the page stands as it is, whatever a field holds. The value is cut only from a name the
+word of the page stands as it is, whatever a field holds. What holds a value in the tree and has gone by the scan after it, a field remounted while the page
+was being read, is written as a secret too, as nothing can now say it is not; a picture is painted
+for what was there before it and after it; and a read whose secret regions change while it is made
+is made again once and then refused. The value is cut only from a name the
 engine builds out of that field, by the engine's own account of where a name came from, and
 leaves `[hidden]` there too; the same words the page prints anywhere else, an `<output>` of the
 code it just took included, are the page's own and are read. `[filled]` costs an agent reading back what is under a name like `PIN code`, also a

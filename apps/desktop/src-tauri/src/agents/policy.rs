@@ -558,8 +558,6 @@ pub struct Question {
     pub category: Category,
     /// `Place order on shop.example`.
     pub summary: String,
-    /// The words of a dialog it answers to, in full, where a summary is cut for reading.
-    pub words: String,
 }
 
 /// What an agent is doing to the element the facts are about.
@@ -585,18 +583,16 @@ pub fn judge(
 ) -> Option<Question> {
     let host = host_of(url).unwrap_or_default();
     let site = site_of(&host);
-    // Enter's element is the field, whose label is no name for what the key does.
-    let label = if act == Act::Enter {
+    // Enter's element is the field, whose label is no name for what the key does. A secret's
+    // name may be what it holds, and what is said here goes to the agent.
+    let label = if act == Act::Enter || secret(&facts.field) {
         String::new()
     } else {
         short(&facts.name)
     };
     let ask = |category: Category, summary: String| {
-        (grant.asks(category) && !grant.always(&site, category)).then_some(Question {
-            category,
-            summary,
-            words: String::new(),
-        })
+        (grant.asks(category) && !grant.always(&site, category))
+            .then_some(Question { category, summary })
     };
 
     // Signing in, and words into a sign-in form, ask as the mode says (#1072): a takeover
@@ -608,9 +604,10 @@ pub fn judge(
     }
 
     // Enter that submits presses the form's default button, which is judged as a press of
-    // it, by its name: Enter in a field is no way round the Delete account beside it.
-    if act == Act::Enter && facts.submit && !facts.default_button.is_empty() && !body(&facts.field)
-    {
+    // it, by its name: Enter in a field is no way round the Delete account beside it. In a dialog
+    // that talks of paying or deleting it is a press of what the dialog says, a button or none.
+    let presses = (facts.submit && !facts.default_button.is_empty()) || !facts.dialog.is_empty();
+    if act == Act::Enter && presses && !body(&facts.field) {
         let pressed = Facts {
             name: facts.default_button.clone(),
             editable: false,
@@ -654,16 +651,22 @@ pub fn judge(
     // A press in a dialog that talks of paying or deleting does what the dialog says, whatever
     // it is called, unless it is the way out. Not by reading what the dialog means: that lets
     // honest second steps by, and a press too many asked about costs one question.
-    if act == Act::Press && !facts.link && !facts.editable && !dismisses(&facts.name) {
+    if act == Act::Press && !facts.link && !facts.editable {
         for (words, inflected, category, fallback) in [
             (PAYING, DIALOG_PAYING, Category::Paying, "Pay"),
             (DELETING, DIALOG_DELETING, Category::Deleting, "Delete"),
         ] {
-            if let Some(said) = mention(&facts.dialog, words, inflected) {
-                if let Some(mut question) = ask(category, on(&short(said), fallback, &site)) {
-                    question.words = said.to_string();
-                    return Some(question);
-                }
+            let Some(said) = mention(&facts.dialog, words, inflected) else {
+                continue;
+            };
+            let way_out = dismisses(&facts.name)
+                || (category == Category::Deleting && alone(&facts.name, KEEPING))
+                || consents(&facts.name, &facts.dialog, said, words);
+            if way_out {
+                continue;
+            }
+            if let Some(question) = ask(category, on(&short(said), fallback, &site)) {
+                return Some(question);
             }
         }
     }
@@ -749,11 +752,8 @@ pub fn answering(
     }
     let site = site_of(&host_of(url).unwrap_or_default());
     let ask = |category: Category, summary: String| {
-        (grant.asks(category) && !grant.always(&site, category)).then_some(Question {
-            category,
-            summary,
-            words: String::new(),
-        })
+        (grant.asks(category) && !grant.always(&site, category))
+            .then_some(Question { category, summary })
     };
     if kind.signs_in() {
         return ask(Category::SigningIn, on("", "Sign in", &site));
@@ -933,22 +933,27 @@ const NO_PAYMENT_CARD: &[&str] = &[
 const DISMISSING: &[&str] = &[
     "cancel",
     "close",
+    "close dialog",
+    "close modal",
+    "close window",
+    "close popup",
     "dismiss",
-    "keep",
     "no",
+    "stay",
+    "stay here",
+    "continue shopping",
     "not now",
     "back",
     "go back",
     "never mind",
     "got it",
-    "accept",
-    "accept all",
     "reject",
     "reject all",
     "decline",
     "learn more",
     "more info",
     "details",
+    "next",
     "next page",
     "previous page",
     "skip",
@@ -960,20 +965,72 @@ const DISMISSING: &[&str] = &[
     "abbrechen",
     "schlie\u{df}en",
     "nein",
-    "behalten",
     "zur\u{fc}ck",
     "sp\u{e4}ter",
     "verstanden",
-    "alle akzeptieren",
     "annuler",
     "fermer",
     "non",
-    "garder",
     "cancelar",
     "cerrar",
     "annulla",
     "chiudi",
+    "annuleren",
+    "sluiten",
+    "fechar",
+    "\u{30ad}\u{30e3}\u{30f3}\u{30bb}\u{30eb}",
+    "\u{9589}\u{3058}\u{308b}",
+    "\u{53d6}\u{6d88}",
+    "\u{5173}\u{95ed}",
+    "\u{43e}\u{442}\u{43c}\u{435}\u{43d}\u{430}",
+    "\u{437}\u{430}\u{43a}\u{440}\u{44b}\u{442}\u{44c}",
 ];
+
+/// The way out of a dialog about deleting, and of none about paying, where `Keep your plan and
+/// be billed` is a yes.
+const KEEPING: &[&str] = &["keep", "behalten", "garder"];
+
+/// What says yes to cookies, which is all it says where a dialog is about them (`consents`), and
+/// says yes to anything elsewhere.
+const CONSENTING: &[&str] = &[
+    "ok",
+    "okay",
+    "accept",
+    "accept all",
+    "accept cookies",
+    "accept all cookies",
+    "allow",
+    "allow all",
+    "allow cookies",
+    "allow all cookies",
+    "agree",
+    "i agree",
+    "i accept",
+    "agree and close",
+    "agree and continue",
+    "akzeptieren",
+    "alle akzeptieren",
+    "zustimmen",
+    "einverstanden",
+    "accepter",
+    "tout accepter",
+    "aceptar",
+    "aceptar todo",
+    "accetta",
+    "accetta tutti",
+];
+
+/// What a dialog about cookies calls them.
+const ABOUT_COOKIES: &[&str] = &["cookie", "cookies", "consent", "einwilligung"];
+
+/// Whether a press says yes to cookies in a dialog about them: one that opens on them, or whose
+/// sentence naming the word does, and does not lead with the word: `We use cookies. You can
+/// delete them`, and not `Your card is charged. We use cookies`.
+fn consents(name: &str, dialog: &str, said: &str, words: &[&str]) -> bool {
+    alone(name, CONSENTING)
+        && !starts_with_any(said, words)
+        && (says(said, ABOUT_COOKIES) || says(first_sentence(dialog), ABOUT_COOKIES))
+}
 
 /// Whether a press is the way out of a dialog. An arrow or a tick round it is no word.
 fn dismisses(name: &str) -> bool {
@@ -981,12 +1038,28 @@ fn dismisses(name: &str) -> bool {
         return true;
     }
     let name = name.trim_matches(|one: char| !one.is_alphanumeric());
-    alone(name.split(',').next().unwrap_or_default(), DISMISSING)
+    // `Close Close`: a titled picture beside the word, or a title on the word's own svg.
+    let words: Vec<&str> = name.split_whitespace().collect();
+    let (half, other) = words.split_at(words.len() / 2);
+    if half.join(" ").eq_ignore_ascii_case(&other.join(" ")) && alone(&half.join(" "), DISMISSING) {
+        return true;
+    }
+    // `No, keep it`, and not `No, thanks and charge me`.
+    let (first, rest) = name.split_once(',').unwrap_or((name, ""));
+    alone(first, DISMISSING)
+        && !talks_of(rest, PAYING, DIALOG_PAYING)
+        && !talks_of(rest, DELETING, DIALOG_DELETING)
 }
 
 /// What a dialog's words may be in, past the commands the press lists have: `Your files get
 /// deleted`, `Your card is charged`.
 const DIALOG_DELETING: &[&str] = &[
+    "eliminada",
+    "eliminados",
+    "eliminadas",
+    "borrada",
+    "supprim\u{e9}s",
+    "supprim\u{e9}es",
     "deleted",
     "deletes",
     "deleting",
@@ -1007,28 +1080,71 @@ const DIALOG_DELETING: &[&str] = &[
     "rimosso",
 ];
 const DIALOG_PAYING: &[&str] = &[
-    "charged", "charge", "billed", "paid", "payment", "bezahlt", "zahlung",
+    "charged",
+    "charge",
+    "billed",
+    "paid",
+    "paying",
+    "payment",
+    "purchased",
+    "bezahlt",
+    "zahlung",
 ];
 
+/// What says none of these words in the sense meant: the phrase is taken out, and the same word
+/// elsewhere in the dialog still counts.
+const IN_ANOTHER_SENSE: &[&str] = &[
+    "free of charge",
+    "no charge",
+    "without charge",
+    "in charge",
+    "pay attention",
+];
+
+/// A word on the paying list that says something else in a sentence: Hausa's `saya`, buy, as a
+/// button's whole name, is Indonesian's I.
+const ONLY_AS_A_NAME: &[&str] = &["saya"];
+
+/// Whether what a dialog says has one of these words in it, as `mention` means it.
+fn talks_of(said: &str, words: &[&str], inflected: &[&str]) -> bool {
+    let mut said = said.to_lowercase();
+    for phrase in IN_ANOTHER_SENSE {
+        said = said.replace(phrase, " ");
+    }
+    words
+        .iter()
+        .chain(inflected)
+        .filter(|word| !ONLY_AS_A_NAME.contains(word))
+        .any(|word| says(&said, &[word]))
+}
+
+/// Where a dialog's sentences end: at a stop with a space after it or at its end, so
+/// `Pay 1.299,00 EUR` stays whole.
+fn stops(dialog: &str) -> impl Iterator<Item = usize> + '_ {
+    dialog.char_indices().filter_map(|(at, one)| {
+        let end = at + one.len_utf8();
+        (matches!(one, '.' | '!' | '?' | '\u{ff1f}')
+            && dialog[end..].chars().next().is_none_or(char::is_whitespace))
+        .then_some(end)
+    })
+}
+
+/// A dialog's first sentence.
+fn first_sentence(dialog: &str) -> &str {
+    &dialog[..stops(dialog).next().unwrap_or(dialog.len())]
+}
+
 /// The first sentence of a dialog with one of these words in it, to quote to the reader: to a
-/// stop with a space after it or the end, so `Pay 1.299,00 EUR` stays whole. Whether it asks
-/// is whether there is one; nothing is read from which sentence or how it is put.
+/// stop with a space after it or the end. Whether it asks is whether there is one; nothing is
+/// read from which sentence or how it is put.
 fn mention<'d>(dialog: &'d str, words: &[&str], inflected: &[&str]) -> Option<&'d str> {
-    if !says(dialog, words) && !says(dialog, inflected) {
+    if !talks_of(dialog, words, inflected) {
         return None;
     }
     let mut start = 0;
-    let stops = dialog.char_indices().filter(|(at, one)| {
-        matches!(one, '.' | '!' | '?' | '\u{ff1f}')
-            && dialog[at + one.len_utf8()..]
-                .chars()
-                .next()
-                .is_none_or(char::is_whitespace)
-    });
-    for (at, one) in stops {
-        let end = at + one.len_utf8();
+    for end in stops(dialog) {
         let sentence = dialog[start..end].trim();
-        if says(sentence, words) || says(sentence, inflected) {
+        if talks_of(sentence, words, inflected) {
             return Some(sentence);
         }
         start = end;
@@ -1939,7 +2055,10 @@ mod tests {
             ("Continue shopping", "Item removed"),
             ("Stay", "Delete your account?"),
             ("Sluiten", "Delete your account?"),
-            ("\u{30ad}\u{30e3}\u{30f3}\u{30bb}\u{30eb}", "Delete your account?"),
+            (
+                "\u{30ad}\u{30e3}\u{30f3}\u{30bb}\u{30eb}",
+                "Delete your account?",
+            ),
             ("Keep", "Delete this item?"),
             ("No, keep it", "Delete your account?"),
         ] {
@@ -1968,11 +2087,7 @@ mod tests {
             ),
             ("Accept all", "Delete your account?", Category::Deleting),
             ("OK", "Delete your account?", Category::Deleting),
-            (
-                "No, thanks and charge me",
-                "Pay 99 EUR?",
-                Category::Paying,
-            ),
+            ("No, thanks and charge me", "Pay 99 EUR?", Category::Paying),
             // Cookies in the same dialog are no way past what it asks.
             (
                 "OK",
@@ -1989,7 +2104,11 @@ mod tests {
                 "Free of charge for a month, then you are charged 9 EUR.",
                 Category::Paying,
             ),
-            ("Continue", "This upgrade is 20 EUR. Pay now?", Category::Paying),
+            (
+                "Continue",
+                "This upgrade is 20 EUR. Pay now?",
+                Category::Paying,
+            ),
         ] {
             assert_eq!(
                 category(&in_dialog(name, dialog), url),
@@ -2019,7 +2138,12 @@ mod tests {
             field(true, "", "Delete your account?"),
             field(false, "", "Delete your account?"),
         ] {
-            assert_eq!(enter(&facts), Some(Category::Deleting), "{}", facts.default_button);
+            assert_eq!(
+                enter(&facts),
+                Some(Category::Deleting),
+                "{}",
+                facts.default_button
+            );
         }
         assert_eq!(enter(&field(true, "Cancel", "Delete your account?")), None);
         assert_eq!(enter(&field(true, "", "Change your name?")), None);
@@ -2045,6 +2169,22 @@ mod tests {
         let summary = question.map(|one| one.summary).unwrap_or_default();
         assert!(!summary.is_empty());
         assert!(!summary.contains("4111"), "{summary}");
+    }
+
+    #[test]
+    fn a_dialog_is_read_in_its_inflections() {
+        let url = "https://app.example/";
+        let in_dialog = |dialog: &str| Facts {
+            dialog: dialog.into(),
+            ..press("OK")
+        };
+        for (dialog, asked) in [
+            ("Tu cuenta sera eliminada", Category::Deleting),
+            ("Paying 20 EUR", Category::Paying),
+            ("Purchased", Category::Paying),
+        ] {
+            assert_eq!(category(&in_dialog(dialog), url), Some(asked), "{dialog}");
+        }
     }
 
     #[test]

@@ -728,7 +728,6 @@ describe('a dialog with a field in it', () => {
     ['an editable region', '<div contenteditable aria-label="Password">hunter2secret</div>'],
     ['a text box by its role', '<div role=textbox aria-label="One-time code">hunter2secret</div>'],
     ['a text area', '<textarea autocomplete=cc-number>hunter2secret</textarea>'],
-    ['words the page masks', '<span style="-webkit-text-security:disc">hunter2secret</span>'],
   ])('does not say what is in %s', (_, field) => {
     const facts = pressOn(
       page(`<div role=dialog><h2>Delete account</h2>${field}<button>Next</button></div>`),

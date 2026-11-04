@@ -158,6 +158,13 @@ impl<'a> Node<'a> {
     }
 }
 
+/// Whether a node of the tree holds words of its own a field's would be: a value, or being
+/// editable, as a region's words are in the nodes under it.
+pub fn holds_words(raw: &Value) -> bool {
+    let node = Node { raw };
+    node.value().is_some_and(|value| !value.is_empty()) || node.property("editable").is_some()
+}
+
 /// A role as the agent reads it: the protocol's own words, but `document`, `iframe`,
 /// `text` and `label` for the four it spells as internal names.
 fn spoken_role(raw: &str) -> String {
