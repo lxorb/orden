@@ -2123,6 +2123,8 @@ export const ha: Dictionary = {
   'Run scripts in pages': 'Gudanar da rubutun umarni a shafuka',
   'Change settings': 'Canza saituna',
   'Run commands': 'Gudanar da umarni',
+  'Read and change files anywhere on this computer':
+    'Karanta da canza fayiloli a ko’ina a wannan kwamfuta',
   Paying: 'Biyan kuɗi',
   'Sending messages': 'Aika saƙonni',
   'Publishing and sharing': 'Wallafa da rabawa',

@@ -2039,6 +2039,7 @@ export const zhHantHK: Dictionary = {
   'Run scripts in pages': '在頁面中執行指令碼',
   'Change settings': '更改設定',
   'Run commands': '執行指令',
+  'Read and change files anywhere on this computer': '讀取及更改此電腦上任何位置的檔案',
   Paying: '付款',
   'Sending messages': '傳送訊息',
   'Publishing and sharing': '發佈及共享',

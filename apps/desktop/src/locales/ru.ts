@@ -2178,6 +2178,8 @@ export const ru: Dictionary = {
   'Run scripts in pages': 'Запускать скрипты на страницах',
   'Change settings': 'Менять настройки',
   'Run commands': 'Выполнять команды',
+  'Read and change files anywhere on this computer':
+    'Читать и изменять файлы в любом месте этого компьютера',
   Paying: 'Оплата',
   'Sending messages': 'Отправка сообщений',
   'Publishing and sharing': 'Публикация и доступ',

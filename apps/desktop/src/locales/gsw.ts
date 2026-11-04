@@ -2104,6 +2104,8 @@ export const gsw: Dictionary = {
   'Run scripts in pages': 'Skripts i Siite uusfüere',
   'Change settings': 'Iistellige ändere',
   'Run commands': 'Befehl uusfüere',
+  'Read and change files anywhere on this computer':
+    'Dateie überall uf däm Computer läse und ändere',
   Paying: 'Zahle',
   'Sending messages': 'Nachrichte schicke',
   'Publishing and sharing': 'Veröffentliche und Teile',

@@ -2095,6 +2095,8 @@ export const ps: Dictionary = {
   'Run scripts in pages': 'په پاڼو کې سکرېپټونه چلول',
   'Change settings': 'امستنې بدلول',
   'Run commands': 'امرونه چلول',
+  'Read and change files anywhere on this computer':
+    'په دې کمپیوټر کې هر چېرته فایلونه لوستل او بدلول',
   Paying: 'تادیه',
   'Sending messages': 'پیغامونه لېږل',
   'Publishing and sharing': 'خپرول او شریکول',

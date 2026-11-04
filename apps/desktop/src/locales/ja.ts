@@ -2081,6 +2081,8 @@ export const ja: Dictionary = {
   'Run scripts in pages': 'ページでスクリプトを実行する',
   'Change settings': '設定を変更する',
   'Run commands': 'コマンドを実行する',
+  'Read and change files anywhere on this computer':
+    'このコンピュータのどこにあるファイルでも読み書きする',
   Paying: '支払い',
   'Sending messages': 'メッセージの送信',
   'Publishing and sharing': '公開と共有',

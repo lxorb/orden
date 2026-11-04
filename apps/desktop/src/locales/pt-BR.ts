@@ -2133,6 +2133,8 @@ export const ptBR: Dictionary = {
   'Run scripts in pages': 'Executar scripts nas páginas',
   'Change settings': 'Alterar configurações',
   'Run commands': 'Executar comandos',
+  'Read and change files anywhere on this computer':
+    'Ler e alterar arquivos em qualquer lugar deste computador',
   Paying: 'Pagar',
   'Sending messages': 'Enviar mensagens',
   'Publishing and sharing': 'Publicar e compartilhar',

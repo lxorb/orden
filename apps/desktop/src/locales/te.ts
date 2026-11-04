@@ -2104,6 +2104,8 @@ export const te: Dictionary = {
   'Run scripts in pages': 'పేజీలలో స్క్రిప్ట్‌లు నడపడం',
   'Change settings': 'సెట్టింగ్‌లు మార్చడం',
   'Run commands': 'ఆదేశాలు నడపడం',
+  'Read and change files anywhere on this computer':
+    'ఈ కంప్యూటర్‌లో ఎక్కడైనా ఫైళ్లను చదవడం మరియు మార్చడం',
   Paying: 'చెల్లింపు',
   'Sending messages': 'సందేశాలు పంపడం',
   'Publishing and sharing': 'ప్రచురించడం, షేర్ చేయడం',

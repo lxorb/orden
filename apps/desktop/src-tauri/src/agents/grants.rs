@@ -74,6 +74,9 @@ pub enum Scope {
     /// The terminal.
     #[serde(rename = "terminal")]
     Terminal,
+    /// Files and folders anywhere the user account reaches, outside the spaces (#1078).
+    #[serde(rename = "files")]
+    Files,
     /// Helpers on the reader's AI accounts: another model, Claude's or `OpenAI`'s, started
     /// on a task, whose answer comes back (`run_agent`; docs/ai.md, "Helpers").
     #[serde(rename = "agents")]
@@ -82,7 +85,7 @@ pub enum Scope {
 
 impl Scope {
     /// Every scope, in the settings pane's order.
-    pub const ALL: [Scope; 16] = [
+    pub const ALL: [Scope; 17] = [
         Scope::Context,
         Scope::NotesRead,
         Scope::NotesWrite,
@@ -98,6 +101,7 @@ impl Scope {
         Scope::BrowserStorage,
         Scope::Settings,
         Scope::Terminal,
+        Scope::Files,
         Scope::Agents,
     ];
 }
@@ -270,6 +274,7 @@ impl Grant {
                     | Scope::ChatsWrite
                     | Scope::Agents
                     | Scope::Terminal
+                    | Scope::Files
             )
         });
         grant.mode = Mode::Confirm;
@@ -850,6 +855,10 @@ mod tests {
         assert!(own.holds(Scope::Terminal));
         assert!(own.holds(Scope::ChatsRead) && own.holds(Scope::ChatsWrite));
         assert!(own.holds(Scope::Agents));
+        // Files anywhere (#1078): the reader's own agents, asking before a file outside the
+        // spaces is touched; a third party only once the reader grants it.
+        assert!(own.holds(Scope::Files));
+        assert!(own.asks(Category::Files));
         assert_eq!(own.mode, Mode::Unsupervised);
         assert!(own.asks(Category::Paying));
         assert_eq!(
@@ -867,6 +876,7 @@ mod tests {
         assert!(!other.holds(Scope::BrowserReader));
         assert!(!other.holds(Scope::ChatsRead) && !other.holds(Scope::ChatsWrite));
         assert!(!other.holds(Scope::Agents));
+        assert!(!other.holds(Scope::Files));
         assert_eq!(other.mode, Mode::Confirm);
     }
 

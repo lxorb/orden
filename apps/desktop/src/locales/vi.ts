@@ -2070,6 +2070,8 @@ export const vi: Dictionary = {
   'Run scripts in pages': 'Chạy tập lệnh trong trang',
   'Change settings': 'Đổi cài đặt',
   'Run commands': 'Chạy lệnh',
+  'Read and change files anywhere on this computer':
+    'Đọc và thay đổi tệp ở bất kỳ đâu trên máy tính này',
   Paying: 'Thanh toán',
   'Sending messages': 'Gửi tin nhắn',
   'Publishing and sharing': 'Xuất bản và chia sẻ',

@@ -2147,6 +2147,8 @@ export const ptPT: Dictionary = {
   'Run scripts in pages': 'Executar scripts nas páginas',
   'Change settings': 'Alterar definições',
   'Run commands': 'Executar comandos',
+  'Read and change files anywhere on this computer':
+    'Ler e alterar ficheiros em qualquer local deste computador',
   Paying: 'Pagar',
   'Sending messages': 'Enviar mensagens',
   'Publishing and sharing': 'Publicar e partilhar',

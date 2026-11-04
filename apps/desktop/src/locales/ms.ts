@@ -2087,6 +2087,8 @@ export const ms: Dictionary = {
   'Run scripts in pages': 'Menjalankan skrip dalam halaman',
   'Change settings': 'Menukar tetapan',
   'Run commands': 'Menjalankan arahan',
+  'Read and change files anywhere on this computer':
+    'Baca dan ubah fail di mana-mana pada komputer ini',
   Paying: 'Membayar',
   'Sending messages': 'Menghantar mesej',
   'Publishing and sharing': 'Menerbitkan dan berkongsi',

@@ -2092,6 +2092,8 @@ export const bn: Dictionary = {
   'Run scripts in pages': 'পেজে স্ক্রিপ্ট চালানো',
   'Change settings': 'সেটিংস বদলানো',
   'Run commands': 'কমান্ড চালানো',
+  'Read and change files anywhere on this computer':
+    'এই কম্পিউটারের যেকোনো জায়গার ফাইল পড়া ও বদলানো',
   Paying: 'অর্থ প্রদান',
   'Sending messages': 'বার্তা পাঠানো',
   'Publishing and sharing': 'প্রকাশ ও শেয়ার করা',

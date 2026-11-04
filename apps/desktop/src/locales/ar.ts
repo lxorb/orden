@@ -2207,6 +2207,8 @@ export const ar: Dictionary = {
   'Run scripts in pages': 'تشغيل نصوص برمجية في الصفحات',
   'Change settings': 'تغيير الإعدادات',
   'Run commands': 'تشغيل الأوامر',
+  'Read and change files anywhere on this computer':
+    'قراءة الملفات وتغييرها في أي مكان على هذا الكمبيوتر',
   Paying: 'الدفع',
   'Sending messages': 'إرسال الرسائل',
   'Publishing and sharing': 'النشر والمشاركة',

@@ -2053,6 +2053,8 @@ export const th: Dictionary = {
   'Run scripts in pages': 'เรียกใช้สคริปต์ในหน้าเว็บ',
   'Change settings': 'เปลี่ยนการตั้งค่า',
   'Run commands': 'เรียกใช้คำสั่ง',
+  'Read and change files anywhere on this computer':
+    'อ่านและเปลี่ยนไฟล์ได้ทุกที่ในคอมพิวเตอร์เครื่องนี้',
   Paying: 'การชำระเงิน',
   'Sending messages': 'การส่งข้อความ',
   'Publishing and sharing': 'การเผยแพร่และแชร์',

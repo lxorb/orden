@@ -2120,6 +2120,8 @@ export const ml: Dictionary = {
   'Run scripts in pages': 'പേജുകളിൽ സ്ക്രിപ്റ്റ് പ്രവർത്തിപ്പിക്കൽ',
   'Change settings': 'ക്രമീകരണങ്ങൾ മാറ്റൽ',
   'Run commands': 'കമാൻഡുകൾ പ്രവർത്തിപ്പിക്കൽ',
+  'Read and change files anywhere on this computer':
+    'ഈ കമ്പ്യൂട്ടറിൽ എവിടെയുമുള്ള ഫയലുകൾ വായിക്കാനും മാറ്റാനും',
   Paying: 'പണമടയ്ക്കൽ',
   'Sending messages': 'സന്ദേശങ്ങൾ അയയ്ക്കൽ',
   'Publishing and sharing': 'പ്രസിദ്ധീകരിക്കലും പങ്കിടലും',

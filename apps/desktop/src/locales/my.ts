@@ -2077,6 +2077,8 @@ export const my: Dictionary = {
   'Run scripts in pages': 'စာမျက်နှာများတွင် စခရစ် လုပ်ဆောင်ရန်',
   'Change settings': 'ဆက်တင်များ ပြောင်းရန်',
   'Run commands': 'အမိန့်များ လုပ်ဆောင်ရန်',
+  'Read and change files anywhere on this computer':
+    'ဤကွန်ပျူတာပေါ်ရှိ မည်သည့်နေရာမှ ဖိုင်များကိုမဆို ဖတ်ပြီး ပြောင်းရန်',
   Paying: 'ငွေပေးချေခြင်း',
   'Sending messages': 'မက်ဆေ့ချ် ပို့ခြင်း',
   'Publishing and sharing': 'ထုတ်ဝေခြင်းနှင့် မျှဝေခြင်း',

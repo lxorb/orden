@@ -2090,6 +2090,8 @@ export const ur: Dictionary = {
   'Run scripts in pages': 'صفحات میں اسکرپٹس چلانا',
   'Change settings': 'ترتیبات بدلنا',
   'Run commands': 'کمانڈز چلانا',
+  'Read and change files anywhere on this computer':
+    'اس کمپیوٹر پر کہیں بھی فائلیں پڑھنا اور بدلنا',
   Paying: 'ادائیگی',
   'Sending messages': 'پیغامات بھیجنا',
   'Publishing and sharing': 'شائع کرنا اور شیئر کرنا',

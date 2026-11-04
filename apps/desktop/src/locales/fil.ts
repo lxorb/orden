@@ -2136,6 +2136,8 @@ export const fil: Dictionary = {
   'Run scripts in pages': 'Magpatakbo ng script sa mga page',
   'Change settings': 'Magbago ng mga setting',
   'Run commands': 'Magpatakbo ng mga command',
+  'Read and change files anywhere on this computer':
+    'Basahin at baguhin ang mga file saanman sa computer na ito',
   Paying: 'Pagbabayad',
   'Sending messages': 'Pagpapadala ng mensahe',
   'Publishing and sharing': 'Pag-publish at pagbabahagi',

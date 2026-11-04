@@ -490,6 +490,7 @@ the AI sidebar, with the chat attached, and the answer comes back as a draft (de
 | `pdf_highlights` | `path`, `op`: `list`, `add` (`quote`, `page`, `colour`, `comment`) | |
 | `read_setting`, `write_setting` | `key`, `value` | an allowlist of keys (8.8); writing asks |
 | `capture_to_note` | `tab`, `note`?, `as`: `clip`, `screenshot`, `pdf`, `link`; `under`?, `full_page`?, `folder`?, `space`? | a page into a note, from an agent's tab or the reader's: the clipper's markdown with `source:`, a screenshot or a PDF kept beside the note and embedded, or the address; answers the note |
+| `files` | `op`: `read`, `write`, `append`, `list`, `stat`, `mkdir`, `move`, `copy`, `delete`, `search`, `changes`; `path`, `to`?, `content`?, `base64`?, `glob`?, `text`?, `since`? | files and folders anywhere the user account reaches, outside the spaces, with `files` (8.11) |
 | `run_terminal` | `command`, `cwd`? | only when the terminal tab exists, and only with `terminal` (8.9) |
 | `read_terminal` | `tab`, `lines`? | one of the reader's terminal tabs as words: scrollback and screen, wrapped lines joined, marked as the terminal's; one not shown since a restart answers the lines it came back with. `context` (8.9) |
 | `type_terminal` | `tab`, `text`?, `enter`?, `keys`?, `wait_ms`? | one line typed into the reader's own shell, Enter unless told otherwise, then named keys (`Ctrl+C`, the arrows, `Tab`...); answers what it printed until it went quiet. `terminal`, and it asks like `run_terminal` (8.9) |
@@ -963,6 +964,36 @@ awareness state; the reader's last two seconds are the updates of the reader's o
 kept as relative positions. `anchors.ts`, `edits.ts`, `read.ts` and `rev.ts` stay as they
 are.
 
+### 8.11 Files anywhere
+
+An agent reaches the rest of the disk as a VS Code extension's `workspace.fs` does (#1078):
+`files` reads, writes, appends, lists, stats, makes folders, moves, copies, deletes and
+searches anywhere the user account can, by an absolute path or one under `~/`, and
+`changes` answers what changed under a folder since the last answer's `now` - a watch with
+no connection held open. It is the `files` scope, which the reader's own agents hold and a
+third party is granted.
+
+- **Outside the spaces.** A path in the spaces folder is refused with the note tools'
+  names: `read_note`, `write_note`, `move_file`, `trash_file` and `create_folder` keep
+  links, undo, versions and sync right, and a write beside them would not. A search or a
+  watch of a folder holding the spaces walks round them.
+- **Never Orden's own folders**, whatever the mode: the config and data folders hold the
+  agents' grants, the endpoint's secret, the web tabs' cookies and on a Mac the AI keys,
+  and a grant that could rewrite itself or another's would be no grant. Moving, copying or
+  deleting a folder that holds one is refused too, and a link is no way round: a path is
+  checked where its links lead as well as by its name, a walk does not enter a folder
+  that leads inside, and a copy copies a link as a link, never what it points at.
+- **Asked as #1072 decided** (`files.rs`): every call asks under *files from outside your
+  spaces* unless the reader said Always for a folder it is in, `delete` asks under
+  *deleting for good* (nothing here goes to a trash), and in `confirm` mode every change
+  asks as every write does. Each question is `Grant::asks`, so Full permissions, which a
+  client connected over MCP always has (#1099), asks nothing; the fences above hold for
+  it all the same.
+- **Bounded**: a read answers at most a megabyte (text, or base64 for what is not text or
+  where `base64` asks for it), a list or a search at most 500 entries, and a walk at most
+  20 000, skipping `.git` and `node_modules`; each says `truncated` when it was cut. What a
+  file says is the file's words, marked untrusted as a page's are (9.6).
+
 ---
 
 ## 9. Safety and permissions
@@ -980,7 +1011,7 @@ Each agent holds:
 
 | part | what it is | Emil's default |
 | --- | --- | --- |
-| scopes | `context`, `notes.read`, `notes.write`, `chats.read`, `chats.write`, `tree`, `workspace`, `workspace.focus`, `browser`, `browser.reader`, `browser.script`, `browser.network`, `browser.storage`, `settings`, `terminal` | all but `browser.script`, `browser.storage`, `settings`, `terminal` |
+| scopes | `context`, `notes.read`, `notes.write`, `chats.read`, `chats.write`, `tree`, `workspace`, `workspace.focus`, `browser`, `browser.reader`, `browser.script`, `browser.network`, `browser.storage`, `settings`, `terminal`, `files`, `agents` | all but `browser.script`, `browser.storage`, `settings` |
 | spaces | which spaces it may reach; another space's tabs and notes do not exist to it | every space |
 | sites | allow, deny, and "agent store only", by site (registrable domain, as `siteOf`) | none set |
 | mode | `unsupervised` or `confirm` | unsupervised |
@@ -988,7 +1019,8 @@ Each agent holds:
 | limits | tabs, calls a minute, pages a minute, browser memory | 4 tabs, 600 calls, 60 navigations, no memory limit |
 
 A third-party agent starts with `context` off, `browser.reader` off, both chats scopes off
-(a chat is other people's words) and `confirm` mode. A grant kept from before chats were
+(a chat is other people's words), the terminal, helpers and files anywhere off, and
+`confirm` mode. A grant kept from before #1078 has no `files` until the reader turns it on. A grant kept from before chats were
 is given `chats.read` and `chats.write` where it holds `notes.read` and `notes.write` and is
 the reader's own (it holds `context`); once the file has been written with them, a scope
 taken away stays away. "Always in this chat" is kept the way "Always on this site" is, under

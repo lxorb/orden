@@ -2171,6 +2171,8 @@ export const uk: Dictionary = {
   'Run scripts in pages': 'Запускати скрипти на сторінках',
   'Change settings': 'Змінювати налаштування',
   'Run commands': 'Виконувати команди',
+  'Read and change files anywhere on this computer':
+    'Читати й змінювати файли будь-де на цьому комп’ютері',
   Paying: 'Оплата',
   'Sending messages': 'Надсилання повідомлень',
   'Publishing and sharing': 'Публікація й поширення',

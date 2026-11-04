@@ -2135,6 +2135,8 @@ export const de: Dictionary = {
   'Run scripts in pages': 'Skripte in Seiten ausführen',
   'Change settings': 'Einstellungen ändern',
   'Run commands': 'Befehle ausführen',
+  'Read and change files anywhere on this computer':
+    'Dateien überall auf diesem Computer lesen und ändern',
   Paying: 'Bezahlen',
   'Sending messages': 'Nachrichten senden',
   'Publishing and sharing': 'Veröffentlichen und Teilen',

@@ -2123,6 +2123,8 @@ export const sw: Dictionary = {
   'Run scripts in pages': 'Kuendesha hati kwenye kurasa',
   'Change settings': 'Kubadilisha mipangilio',
   'Run commands': 'Kuendesha amri',
+  'Read and change files anywhere on this computer':
+    'Kusoma na kubadilisha faili popote kwenye kompyuta hii',
   Paying: 'Kulipa',
   'Sending messages': 'Kutuma ujumbe',
   'Publishing and sharing': 'Kuchapisha na kushiriki',

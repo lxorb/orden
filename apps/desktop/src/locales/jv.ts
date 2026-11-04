@@ -2078,6 +2078,8 @@ export const jv: Dictionary = {
   'Run scripts in pages': 'Mbukak skrip ing kaca',
   'Change settings': 'Ngowahi setelan',
   'Run commands': 'Mbukak prentah',
+  'Read and change files anywhere on this computer':
+    'Maca lan ngowahi file ing ngendi wae ing komputer iki',
   Paying: 'Mbayar',
   'Sending messages': 'Ngirim pesen',
   'Publishing and sharing': 'Nerbitake lan nuduhake',

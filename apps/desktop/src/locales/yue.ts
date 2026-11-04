@@ -2037,6 +2037,7 @@ export const yue: Dictionary = {
   'Run scripts in pages': '喺網頁行指令碼',
   'Change settings': '改設定',
   'Run commands': '行指令',
+  'Read and change files anywhere on this computer': '讀取同修改呢部電腦任何地方嘅檔案',
   Paying: '俾錢',
   'Sending messages': '發訊息',
   'Publishing and sharing': '發佈同分享',

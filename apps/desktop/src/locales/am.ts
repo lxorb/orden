@@ -2068,6 +2068,7 @@ export const am: Dictionary = {
   'Run scripts in pages': 'በገጾች ውስጥ ስክሪፕቶችን ማስኬድ',
   'Change settings': 'ቅንብሮችን መቀየር',
   'Run commands': 'ትዕዛዞችን ማስኬድ',
+  'Read and change files anywhere on this computer': 'በዚህ ኮምፒውተር ላይ የትም ያሉ ፋይሎችን ማንበብና መቀየር',
   Paying: 'መክፈል',
   'Sending messages': 'መልዕክቶችን መላክ',
   'Publishing and sharing': 'ማተም እና ማጋራት',

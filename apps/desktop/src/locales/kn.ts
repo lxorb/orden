@@ -2114,6 +2114,8 @@ export const kn: Dictionary = {
   'Run scripts in pages': 'ಪುಟಗಳಲ್ಲಿ ಸ್ಕ್ರಿಪ್ಟ್ ಚಲಾಯಿಸುವುದು',
   'Change settings': 'ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಬದಲಿಸುವುದು',
   'Run commands': 'ಆದೇಶಗಳನ್ನು ಚಲಾಯಿಸುವುದು',
+  'Read and change files anywhere on this computer':
+    'ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ ಎಲ್ಲಿಯಾದರೂ ಫೈಲ್‌ಗಳನ್ನು ಓದಿ ಬದಲಿಸಿ',
   Paying: 'ಪಾವತಿ',
   'Sending messages': 'ಸಂದೇಶಗಳನ್ನು ಕಳುಹಿಸುವುದು',
   'Publishing and sharing': 'ಪ್ರಕಟಿಸುವುದು ಮತ್ತು ಹಂಚಿಕೊಳ್ಳುವುದು',

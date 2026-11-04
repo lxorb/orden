@@ -577,6 +577,112 @@ pub struct Takeover {
     pub reason: String,
 }
 
+/// `files`: one thing done to a file or a folder anywhere the user account reaches
+/// (#1078), outside the spaces; a space's own files go through the note tools. See
+/// files.rs.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Files {
+    /// What to do.
+    pub op: FilesOp,
+    /// The file or folder: absolute, or under the home folder with `~/`.
+    pub path: String,
+    /// Where `move` and `copy` put it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub to: Option<String>,
+    /// What `write` and `append` put in it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub content: Option<String>,
+    /// Whether `content`, and what `read` answers, is base64 rather than text.
+    #[serde(default)]
+    pub base64: bool,
+    /// What `search` looks for in names: a glob, `*.rs`, `**/notes/*.md`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub glob: Option<String>,
+    /// What `search` looks for inside text files.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub text: Option<String>,
+    /// For `changes`: what changed after this time, in milliseconds since 1970, as the
+    /// last answer's `now` said it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub since: Option<u64>,
+}
+
+/// What `files` does.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FilesOp {
+    /// A file's content.
+    Read,
+    /// A file's content replaced, the file and its folders made where there are none.
+    Write,
+    /// Words added at the end of a file.
+    Append,
+    /// What a folder holds.
+    List,
+    /// What a path is: kind, size, when it changed.
+    Stat,
+    /// A folder, with the folders it is in.
+    Mkdir,
+    /// A file or folder to `to`.
+    Move,
+    /// A file or folder copied to `to`.
+    Copy,
+    /// A file or folder gone, for good: asks as deleting for good does.
+    Delete,
+    /// The files under a folder whose names match `glob` or that hold `text`.
+    Search,
+    /// What changed under a folder since `since`: a watch without a held connection.
+    Changes,
+}
+
+/// What `files` answers.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FilesDone {
+    /// The path it was about, as it was read.
+    pub path: String,
+    /// What `read` read.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub content: Option<String>,
+    /// Whether `content` is base64: asked for, or a file that is not text.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub base64: bool,
+    /// Whether `content`, or the list, was cut short.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub truncated: bool,
+    /// What `list`, `search` and `changes` found, and `stat`'s one.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub entries: Vec<FileEntry>,
+    /// When this was answered, for the next `changes`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub now: Option<u64>,
+}
+
+/// One file or folder, as `files` lists it.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FileEntry {
+    /// Where it is.
+    pub path: String,
+    /// What it is.
+    pub kind: FileKind,
+    /// How large, in bytes; nought for a folder.
+    pub size: u64,
+    /// When it last changed, in milliseconds since 1970.
+    pub modified: u64,
+}
+
+/// What a path is.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FileKind {
+    /// A file.
+    File,
+    /// A folder.
+    Folder,
+    /// A symbolic link, never followed.
+    Link,
+}
+
 /// `approval_status`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -700,6 +806,8 @@ verbs! {
     "browser_show" => Show(OnTab) -> Acted,
     /// The reader asked to do one step; asks.
     "browser_takeover" => Takeover(Takeover) -> Acted,
+    /// Files and folders anywhere the user account reaches (#1078).
+    "files" => Files(Files) -> FilesDone,
     /// This agent's grant, tabs, questions and pauses.
     "agent_status" => Status(Nothing) -> Status,
     /// What the reader answered.

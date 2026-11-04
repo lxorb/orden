@@ -18,6 +18,7 @@ export const GROUP_WORDS: Record<ScopeGroup, () => string> = {
   scripts: () => t('Scripts'),
   settings: () => t('Settings'),
   terminal: () => t('Terminal'),
+  files: () => t('Files'),
   helpers: () => t('Helpers'),
 }
 
@@ -37,6 +38,7 @@ export const SCOPE_WORDS: Record<Scope, () => string> = {
   'browser.script': () => t('Run scripts in pages'),
   settings: () => t('Change settings'),
   terminal: () => t('Run commands'),
+  files: () => t('Read and change files anywhere on this computer'),
   agents: () => t('Start helpers on your AI accounts'),
 }
 

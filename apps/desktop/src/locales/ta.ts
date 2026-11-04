@@ -2125,6 +2125,8 @@ export const ta: Dictionary = {
   'Run scripts in pages': 'பக்கங்களில் ஸ்கிரிப்ட் இயக்குதல்',
   'Change settings': 'அமைப்புகளை மாற்றுதல்',
   'Run commands': 'கட்டளைகளை இயக்குதல்',
+  'Read and change files anywhere on this computer':
+    'இந்தக் கணினியில் எங்கும் உள்ள கோப்புகளைப் படித்து மாற்றுதல்',
   Paying: 'பணம் செலுத்துதல்',
   'Sending messages': 'செய்திகளை அனுப்புதல்',
   'Publishing and sharing': 'வெளியிடுதல், பகிர்தல்',

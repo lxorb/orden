@@ -2084,6 +2084,8 @@ export const gu: Dictionary = {
   'Run scripts in pages': 'પેજમાં સ્ક્રિપ્ટ ચલાવવી',
   'Change settings': 'સેટિંગ્સ બદલવી',
   'Run commands': 'આદેશો ચલાવવા',
+  'Read and change files anywhere on this computer':
+    'આ કમ્પ્યુટર પર ક્યાંય પણ ફાઇલો વાંચવી અને બદલવી',
   Paying: 'ચુકવણી',
   'Sending messages': 'સંદેશા મોકલવા',
   'Publishing and sharing': 'પ્રકાશિત અને શેર કરવું',

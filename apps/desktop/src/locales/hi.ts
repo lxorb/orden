@@ -2090,6 +2090,8 @@ export const hi: Dictionary = {
   'Run scripts in pages': 'पेजों में स्क्रिप्ट चलाना',
   'Change settings': 'सेटिंग बदलना',
   'Run commands': 'कमांड चलाना',
+  'Read and change files anywhere on this computer':
+    'इस कंप्यूटर पर कहीं भी फ़ाइलें पढ़ें और बदलें',
   Paying: 'भुगतान',
   'Sending messages': 'संदेश भेजना',
   'Publishing and sharing': 'प्रकाशित और साझा करना',

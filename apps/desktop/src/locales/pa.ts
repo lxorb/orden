@@ -2097,6 +2097,8 @@ export const pa: Dictionary = {
   'Run scripts in pages': 'ਪੰਨਿਆਂ ਵਿੱਚ ਸਕ੍ਰਿਪਟ ਚਲਾਉਣਾ',
   'Change settings': 'ਸੈਟਿੰਗਾਂ ਬਦਲਣਾ',
   'Run commands': 'ਕਮਾਂਡਾਂ ਚਲਾਉਣਾ',
+  'Read and change files anywhere on this computer':
+    'ਇਸ ਕੰਪਿਊਟਰ ਉੱਤੇ ਕਿਤੇ ਵੀ ਫ਼ਾਈਲਾਂ ਪੜ੍ਹੋ ਅਤੇ ਬਦਲੋ',
   Paying: 'ਭੁਗਤਾਨ',
   'Sending messages': 'ਸੁਨੇਹੇ ਭੇਜਣਾ',
   'Publishing and sharing': 'ਪ੍ਰਕਾਸ਼ਿਤ ਅਤੇ ਸਾਂਝਾ ਕਰਨਾ',
