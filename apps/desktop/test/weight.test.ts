@@ -1070,8 +1070,12 @@ function holds(tail: string): boolean {
  *  links, a thread written down while it runs), what a base may cost, a tile's move, the
  *  sync's scans, an undo that waits for every gesture landing, one definition of front
  *  matter (front-matter-lines.ts) and one device's windows being one. What could wait went
- *  behind a door on the branches. Measured 3,550,937, 386 modules. */
-const BUDGET = 3_551_100
+ *  behind a door on the branches. Measured 3,550,937, 386 modules.
+ *
+ *  Raised on 2026-11-04, to 3,552,000, for the sync hunt's round three: v1 going past a space
+ *  that throws and telling of a note the disk refuses. Measured 3,551,945.
+ */
+const BUDGET = 3_552_000
 const MOST_FILES = 387
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
