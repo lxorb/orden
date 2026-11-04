@@ -83,6 +83,12 @@ def box(page: Page, name: str) -> dict | None:
     )
 
 
+def keyboard(page: Page) -> str:
+    return page.evaluate(
+        "() => { const at = document.activeElement; return at.closest('.canvas') ? 'canvas ' + at.className : at.tagName + ' ' + at.className }"
+    )
+
+
 def on_screen(page: Page) -> list[str]:
     return page.evaluate(
         """() => [...document.querySelectorAll('.canvas .window')].filter((one) => {
@@ -143,6 +149,34 @@ def drive(browser: Browser) -> None:
     drag(page, box(page, "A2"), box(page, "B2"))
     if tab(page, "A2")["here"] or not tab(page, "A2")["path"].startswith(ids["beeRoot"]):
         wrong(f"the drag did not move the tab and its file: {tab(page, 'A2')}")
+
+    # The keyboard stays with the view, the window it was on gone: Ctrl+Z takes the move
+    # back from there, and the toast's Undo does not hand it to the note behind.
+    say(f"after a drop the keyboard is on {keyboard(page)}")
+    if not keyboard(page).startswith("canvas"):
+        wrong(f"a drop left the keyboard on {keyboard(page)}")
+    page.keyboard.press("Control+z")
+    wait_for(page, "window.nibApp.workspace.tabs.find((o) => o.shown === 'A2').path.startsWith('/Notes')", "Ctrl+Z from the view")
+    page.wait_for_timeout(400)
+    drag(page, box(page, "A2"), box(page, "B2"))
+    words = page.evaluate("() => window.nibApp.workspace.active?.doc")
+    page.locator(".toast button.undo").click()
+    wait_for(page, "window.nibApp.workspace.tabs.find((o) => o.shown === 'A2').path.startsWith('/Notes')", "the toast's Undo")
+    page.wait_for_timeout(500)
+    say(f"after the toast's Undo the keyboard is on {keyboard(page)}")
+    if not keyboard(page).startswith("canvas"):
+        wrong(f"the toast's Undo left the keyboard on {keyboard(page)}")
+    page.keyboard.type("LEAK")
+    page.wait_for_timeout(300)
+    if page.evaluate("() => window.nibApp.workspace.active?.doc") != words:
+        wrong("words typed over the view landed in the note behind it")
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(800)
+    if page.evaluate("async () => (await import('/src/lib/surfaces.svelte.ts')).tabOverview.open"):
+        wrong("Escape did not put the view away")
+    open_overview(page)
+    all_spaces(page)
+    drag(page, box(page, "A2"), box(page, "B2"))
     close_overview(page)
     page.evaluate("async () => { await window.nibApp.workspace.undoFileAction() }")
     moved = tab(page, "A2")

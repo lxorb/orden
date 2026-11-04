@@ -531,6 +531,35 @@ describe('a rewind over a thread that did things in any order', () => {
     expect(busy.trouble).toBeNull()
   })
 
+  test('edited and then deleted, Keep on the card: the edit stays kept once the note is back', async () => {
+    const thread = aThread()
+    await running(thread, [
+      () => acts.edit(thread, 'A.md', 'original', 'EDITED'),
+      () => acts.trash('A.md'),
+    ])
+    const { tracksRemoved, tracksCame } = await import('../../agents/docs/edit')
+    tracksRemoved('/space/A.md')
+
+    review.keepAll(thread, review.files(thread))
+    fake.desk.disk.set('/space/A.md', 'EDITED')
+    await tracksCame('/space/A.md', (at) => Promise.resolve(fake.desk.disk.get(at) ?? null))
+    expect(review.notes(thread)).toEqual([])
+  })
+
+  test('deleted, a new note at its name: Undo says it came back under another', async () => {
+    const thread = aThread()
+    await running(thread, [
+      () => acts.edit(thread, 'A.md', 'original', 'EDITED'),
+      () => acts.trash('A.md'),
+      () => acts.make('A.md', 'new'),
+    ])
+    const { tracksRemoved } = await import('../../agents/docs/edit')
+    tracksRemoved('/space/A.md')
+    await review.undoAll(thread, review.files(thread).filter((one) => one.kind === 'trashed'))
+    expect(files()['A 2.md']).toBe('EDITED')
+    expect(busy.trouble).toContain('A 2')
+  })
+
   test('edited, moved and edited again: back whole, and Redo does all three', async () => {
     fake.desk = deskWith({ 'A.md': 'one two' })
     const thread = aThread()
