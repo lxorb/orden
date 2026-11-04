@@ -712,8 +712,7 @@
     if (at === null || at === document.body) holdKeys()
   }
   $effect(() => {
-    void windows
-    queueMicrotask(keysLost)
+    if (windows.length) queueMicrotask(keysLost)
   })
 
   /** The view covers the app, so nothing behind it has the keyboard: a toast going hands it
@@ -1089,7 +1088,7 @@
   }}
   onfocusin={keptFromBehind}
   onfocusout={() => setTimeout(keysLost, 0)}
-  onkeydown={(event) => {
+  onkeydown={(event: KeyboardEvent) => {
     // The keyboard nowhere, as a window taking it away leaves it: the view's all the same.
     if (shown && tabOverview.open && event.target === document.body) keyed(event)
   }}

@@ -252,7 +252,7 @@ def board_on(browser, width, height, name):
         page.evaluate(WRITE, [[[f"Items/Long {n}.md", "---\nstatus: To do\n---\n\nwords\n"] for n in range(30)]])
         page.wait_for_timeout(1200)
         scroller = page.evaluate(
-            """() => { const s = [...document.querySelectorAll('[data-turns-pages] *')].find((o) => o.scrollHeight > o.clientHeight + 40); if (!s) return null; s.dataset.long = '1'; return { top: s.scrollTop } }"""
+            """() => { const s = [...document.querySelectorAll('[data-turns-pages] *')].find((o) => o.scrollHeight > o.clientHeight + 40); if (!s) return null; window.__long = s; return { top: s.scrollTop } }"""
         )
         if not scroller:
             wrong(f"[{name}] no long column to scroll")
@@ -264,7 +264,7 @@ def board_on(browser, width, height, name):
                 page.wait_for_timeout(16)
             touch(cdp, "touchEnd", [])
             page.wait_for_timeout(500)
-            top = page.evaluate("() => document.querySelector('[data-long]').scrollTop")
+            top = page.evaluate("() => window.__long.scrollTop")
             say(f"[{name}] a thumb up the column: scrolled to {top}")
             if top <= 0:
                 wrong(f"[{name}] a thumb up the column did not scroll it")
