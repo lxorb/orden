@@ -260,7 +260,10 @@ export class TheWatch {
  *  the way to stop hearing. */
 export function hearsUnwatched(
   watch: TheWatch,
-  line: Pick<typeof windows, 'say' | 'hear'> = windows,
+  line: {
+    say(kind: string): void
+    hear(kind: string, listener: () => void): () => unknown
+  } = windows,
 ): () => void {
   const told = onUnwatched(() => {
     watch.letGoOfByEngine()

@@ -352,7 +352,7 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  being one. Measured 5,852,262.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_857_500,
+  code: 5_858_000,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,

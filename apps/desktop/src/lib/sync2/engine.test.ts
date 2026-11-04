@@ -285,6 +285,22 @@ describe('a full store (road 7)', () => {
 })
 
 describe('an open note', () => {
+  test('another window\u2019s write is news it has yet to take in, not words it knows', async () => {
+    const one = await device()
+    const path = `${ROOT}/Plan.md`
+    const before = one.disk.files.get(path) ?? ''
+    const note = new NoteDoc(
+      { kind: 'note', path, name: 'Plan.md', text: before, dirty: false },
+      () => undefined,
+    )
+    const part = await attach(one.engine, PLAN, note, () => true)
+    const theirs = `${before}\nFROM THE OTHER WINDOW\n`
+    one.disk.files.set(path, theirs)
+    await one.engine.saved(path, theirs)
+    expect(note.onDisk).toBe(before)
+    part?.()
+  })
+
   test('a foreign edit it took in is not merged in again by the note\u2019s next write', async () => {
     const one = await device()
     const path = `${ROOT}/Plan.md`

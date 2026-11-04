@@ -181,9 +181,13 @@ export async function attach(
 
   // A file the engine read or wrote, whose words have reached the note through the join.
   // The note's next write merges against what it knows the file says, and an edit of
-  // another program's it did not know of was merged in a second time beside its own.
+  // another program's it did not know of was merged in a second time beside its own. Only
+  // where the note says those words: another window's write is news of a file this note
+  // has yet to take in (across.ts), and marked as known here it never would.
   const unheard = engine.on('file', (event) => {
-    if (event.id === id && unbind && !gone()) note.onDisk = event.text
+    if (event.id === id && unbind && !gone() && note.latest === event.text) {
+      note.onDisk = event.text
+    }
   })
 
   // The account's words taken over this device's, or a new epoch: the same note, a new
