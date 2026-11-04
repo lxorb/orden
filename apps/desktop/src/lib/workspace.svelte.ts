@@ -2977,7 +2977,7 @@ class Workspace {
   }
 
   /** Moves a note or folder into another folder; `how`, see undo.svelte.ts. */
-  async move(from: string, intoFolder: string, how?: 'follows' | 'nests') {
+  async move(from: string, intoFolder: string, how?: 'follows' | 'nests' | 'carries') {
     const name = nameOf(from)
     const target = joinPath(intoFolder, name)
 

@@ -518,6 +518,10 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
   if (action.nests) {
     await invoke('remove_empty_folder', { path: folderOf(action.to) }).catch(() => undefined)
   }
+  // Its tabs went to the other space with it, and come back with it.
+  if (action.kind === 'move' && action.carries) {
+    await (await import('./moving-space')).tabsFollow(action.from)
+  }
 }
 
 /** Puts a merge back: both notes as they were, and the note that was folded

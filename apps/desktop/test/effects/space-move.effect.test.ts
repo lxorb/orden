@@ -214,17 +214,17 @@ describe('a move taken back', () => {
     await workspace.openEntry(IDEAS)
     await workspace.openEntry(PLAN)
     await moveToSpace([tabAt(PLAN).id], 'home')
-    expect(onScreen()).not.toContain('Plan')
+    expect(onScreen()).not.toContain('Plan.md')
 
     await workspace.undoFileAction()
     expect(files().has(PLAN)).toBe(true)
-    expect(onScreen()).toContain('Plan')
+    expect(onScreen()).toContain('Plan.md')
 
     await workspace.redoFileAction()
     expect(files().has('/spaces/Home/Plan.md')).toBe(true)
-    expect(onScreen()).not.toContain('Plan')
+    expect(onScreen()).not.toContain('Plan.md')
     await workspace.showSpace('home')
-    expect(onScreen()).toContain('Plan')
+    expect(onScreen()).toContain('Plan.md')
   })
 
   test('a move within a space stays the tab’s own business', async () => {
@@ -233,7 +233,7 @@ describe('a move taken back', () => {
     await workspace.openEntry(PLAN)
     await workspace.move(PLAN, '/spaces/Work/Old')
     await workspace.undoFileAction()
-    expect(onScreen()).toContain('Plan')
+    expect(onScreen()).toContain('Plan.md')
   })
 })
 
@@ -245,12 +245,37 @@ describe('a move that was refused', () => {
     await workspace.openEntry(PLAN)
     expect(await moveToSpace([tabAt(PLAN).id], 'home')).toBe(false)
     expect(failed.retry).not.toBe(null)
-    expect(onScreen()).toContain('Plan')
+    expect(onScreen()).toContain('Plan.md')
     failed.dismiss()
 
     files().delete('/spaces/Home/Plan.md')
     expect(await moveToSpace([tabAt(PLAN).id], 'home')).toBe(true)
     expect(failed.retry).toBe(null)
+  })
+})
+
+describe('a tab closed in another space, reopened', () => {
+  test('goes back to its space, not into the strip on screen', async () => {
+    await workspace.showSpace('home')
+    await workspace.openEntry(FOOD)
+    workspace.close(tabAt(FOOD).id)
+    await workspace.showSpace('work')
+    await workspace.openEntry(PLAN)
+
+    await workspace.reopenClosed()
+    expect(workspace.activeSpaceId).toBe('home')
+    expect(onScreen()).toContain('Food.md')
+    expect(workspace.active?.path).toBe(FOOD)
+    await workspace.showSpace('work')
+    expect(onScreen()).toEqual(['Plan.md'])
+  })
+
+  test('one closed in the space on screen stays where it is', async () => {
+    await workspace.openEntry(PLAN)
+    workspace.close(tabAt(PLAN).id)
+    await workspace.reopenClosed()
+    expect(workspace.activeSpaceId).toBe('work')
+    expect(onScreen()).toContain('Plan.md')
   })
 })
 

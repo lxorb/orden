@@ -14,7 +14,7 @@ import type { Bookmark } from './bookmarks.svelte'
 /** What doing an undone operation again needs of the store: the operations
  *  themselves, which record themselves as they always do. */
 export interface DoesAgain extends Copies {
-  move(from: string, intoFolder: string): Promise<void>
+  move(from: string, intoFolder: string, how?: 'carries'): Promise<void>
   rename(path: string, name: string): Promise<void>
   remove(path: string, isFolder: boolean): Promise<void>
   fileCame(path: string, kind: 'file' | 'folder'): Promise<void>
@@ -48,7 +48,9 @@ async function again(ws: DoesAgain, action: FileAction): Promise<void> {
   switch (action.kind) {
     case 'move':
       // A move the one before it caused comes about again with that one.
-      if (!action.follows) await ws.move(action.from, folderOf(action.to))
+      if (action.follows) break
+      await ws.move(action.from, folderOf(action.to), action.carries ? 'carries' : undefined)
+      if (action.carries) await (await import('./moving-space')).tabsFollow(action.to)
       break
     case 'rename':
       await ws.rename(action.from, nameOf(action.to))
