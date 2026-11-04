@@ -1231,20 +1231,15 @@ function holds(tail: string): boolean {
  *  claude/hunt-round-1: nothing new beyond one guard fewer for a launch's first write.
  *  Measured 3,645,071, 394 modules.
  *
- *  Raised on 2026-11-04, to 3,646,500, for the bug hunt's fourth round on views: a block's
- *  name found by where its line is (`anchored`), a chat's state told apart from other
- *  windows' (`heard`, `settled`), and text escaped whatever marked says of it. Measured
- *  3,646,423, 394 modules.
- *
- *  Raised on 2026-11-04, to 3,646,100, for the bug hunt's fourth round: a move's step that
- *  knows its tabs went with it, a closed tab that goes back to its space, the notices over
- *  the overview, a board's page turn giving way to a drawer's edge. Measured 3,645,970.
- *
- *  Raised on 2026-11-04, to 3,653,000, for the hunt's fourth round: a session written in a launch
- *  keeps what it read until each piece is back (workspace/session.ts), and unwritten words
- *  meeting an open document merge or stay beside it. No new module. Measured 3,652,872.
+ *  Raised on 2026-11-04, to 3,655,400, for the bug hunt's fourth round, whose four branches came
+ *  together on claude/hunt-round-1: a block's name found by where its line is (`anchored`), a
+ *  chat's state told apart from other windows' (`heard`, `settled`), text escaped whatever marked
+ *  says of it; a move's step that knows its tabs went with it, a closed tab that goes back to its
+ *  space, a board's page turn giving way to a drawer's edge; a session written in a launch
+ *  meeting an open document merge or stay beside it. No new module. Measured 3,655,190, 394
+ *  modules.
  */
-const BUDGET = 3_653_000
+const BUDGET = 3_655_400
 const MOST_FILES = 395
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

@@ -97,6 +97,31 @@ describe('unwritten words meeting an open document', () => {
     expect(workspace.closed.stack).toHaveLength(0)
   })
 
+  test('a closed entry of another space goes back there, and meets the note open in it', async () => {
+    const OTHER = '/spaces/Two'
+    const THERE = `${OTHER}/a.md`
+    d.folders.add(OTHER)
+    d.files.set(THERE, 'base\n')
+    workspace.spaces = [...workspace.spaces, { id: 'two', name: 'Two', root: OTHER }]
+    await workspace.showSpace('two')
+    await workspace.open(THERE)
+    const open = workspace.tabs.find((one) => one.path === THERE)!.note
+    await workspace.showSpace('one')
+    workspace.closed.restore([
+      { paneId: workspace.panes.focusedId, at: 0, draft: tab({ path: THERE, space: 'two' }) },
+    ])
+
+    await workspace.reopenClosed()
+    await workspace.writesSettled()
+
+    expect(workspace.activeSpaceId).toBe('two')
+    expect(workspace.active?.note).toBe(open)
+    expect(open.latest).toBe('base\ntyped\n')
+    expect(d.files.get(THERE)).toBe('base\ntyped\n')
+    expect(workspace.closed.stack).toHaveLength(0)
+    await workspace.showSpace('one')
+  })
+
   test('what the open document has typed itself stays beside them', async () => {
     await workspace.open(PATH)
     workspace.tabs[0]!.note.replace('intro\nbase\n')
