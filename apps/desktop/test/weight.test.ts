@@ -1207,8 +1207,13 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,568,500, for #1054 and #1116: the icon picker's Web icons, the
  *  account's sites first in the grid and a site's mark drawn as a picture, and a cell's
  *  marks on its own box (IconPicker.svelte, Icon.svelte). The list and its pictures are a
- *  chunk of their own. Measured 3,567,023. */
-const BUDGET = 3_568_500
+ *  chunk of their own. Measured 3,567,023.
+ *
+ *  Raised 2026-11-04, to 3,572,000, for #1063: an application is a kind of file and tab
+ *  in developer mode - its row's mark, its opener, its tab's traits, its name shown
+ *  without its ending and the new tab's card (links.ts, file-mark.ts, openers.ts,
+ *  note-name.ts, tab-kinds.ts, new-kinds.ts). Measured 3,571,413. */
+const BUDGET = 3_572_000
 const MOST_FILES = 394
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

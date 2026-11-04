@@ -495,9 +495,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  drawn as pictures, in every catalogue - and a cell's marks on its own box
  *  (web-tab/site-icons.svelte.ts, IconPicker.svelte, Icon.svelte). Measured 5,891,756
  *  and 968,905.
+ *
+ *  The code raised on 2026-11-04, to 5,894,100, for #1063: an application as a kind of
+ *  file and tab in developer mode, which the plugin never opens. Its words fit in the
+ *  catalogues' room. Measured 5,893,553.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_892_500,
+  code: 5_894_100,
   catalogues: 969_500,
   styles: 290_000,
   fonts: 260_000,
