@@ -2785,4 +2785,6 @@ export const fil: Dictionary = {
     'Hindi naipadala. Naitabi ang iyong teksto kaya maaari mong subukan ulit.',
   'Reset to site icon': 'Ibalik sa icon ng site',
   'One colour': 'Isang kulay',
+  'Web icons': 'Mga web icon',
+  'Sites you visit will appear here': 'Lalabas dito ang mga site na binibisita mo',
 }

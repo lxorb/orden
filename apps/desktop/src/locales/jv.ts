@@ -2712,4 +2712,6 @@ export const jv: Dictionary = {
     'Ora kekirim. Tulisanmu isih disimpen, dadi kowé bisa nyoba manèh.',
   'Reset to site icon': 'Balekake menyang lambang situs',
   'One colour': 'Siji werna',
+  'Web icons': 'Lambang web',
+  'Sites you visit will appear here': 'Situs sing sampeyan bukak bakal katon ing kene',
 }

@@ -24,6 +24,7 @@
    *  the last row, which says what the thing falls back to when it wears nothing - a
    *  letter for a space, and for everything in the file list the mark that says what
    *  it is. */
+  import { account } from './account.svelte'
   import { ACCENTS } from './accents'
   import { closeOnBack } from './backstack.svelte'
   import { chosenIcon, chosenTint } from './chosen-icon'
@@ -33,7 +34,16 @@
   import { iconLibrary } from './icon-library.svelte'
   import { iconRecent } from './icon-recent.svelte'
   import { LATER_SETS, type LoadedSet, mergeSets, PICKER_SETS, pickerCredit } from './icon-sets'
-  import { EMOJI_OUTLINE, rankIcons, readIcon, sameIcon, takesTint, writtenIcon } from './icons'
+  import {
+    EMOJI_OUTLINE,
+    type IconEntry,
+    rankIcons,
+    readIcon,
+    sameIcon,
+    SITE_ICONS,
+    takesTint,
+    writtenIcon,
+  } from './icons'
   import { t } from './i18n.svelte'
   import { dur, LAYER } from './motion'
   import { overlays } from './overlays'
@@ -61,6 +71,10 @@
   /** How many a search answers with. Past this nobody is reading, they are typing
    *  another word - and the ranking is over every icon in the set either way. */
   const FOUND = 300
+
+  /** How many rows the Web icons take before anything is typed (#1054): the sites seen
+   *  last, which are the ones reached for. The rest are a search away. */
+  const SITE_ROWS = 2
 
   let query = $state('')
   let field = $state<HTMLInputElement>()
@@ -126,18 +140,44 @@
     return parts.length ? mergeSets(parts) : null
   })
 
-  /** Every cell of the open tab, in the order it is shown: what a search found, or the
-   *  tab's own order when nothing has been typed. */
-  const cells = $derived(
-    held ? rankIcons(held.entries, query, query ? FOUND : held.entries.length) : [],
-  )
+  /** Whether there is an account whose sites the Web icons are (#1054): a device nobody
+   *  is signed in on has no list, and says nothing about one. */
+  const signedIn = $derived(account.accountToken !== null)
+
+  /** The account's sites as a set, where there is an account and its service keeps
+   *  them: a service from before the Web icons leaves the section out altogether. */
+  const siteSet = $derived.by(() => {
+    const set = signedIn ? iconLibrary.loaded[SITE_ICONS] : undefined
+    return set && !set.unoffered ? set : null
+  })
+
+  /** The Web icons (#1054): the marks of the sites the account has been to, the most
+   *  recently seen first, under the values a cell writes. Read off the account's list,
+   *  so one seen on another device is here without having been opened on this one. */
+  const sites = $derived.by((): IconEntry[] => {
+    return (siteSet?.entries ?? []).map((one) => ({
+      ...one,
+      name: writtenIcon(SITE_ICONS, one.name),
+    }))
+  })
 
   const columns = $derived(Math.max(1, Math.floor((width || cell * 8) / cell)))
+
+  /** The Web icons shown before anything is typed. */
+  const siteRow = $derived(sites.slice(0, columns * SITE_ROWS))
+
+  /** Every cell, in the order it is shown: what a search found among every set and the
+   *  sites, or with nothing typed the latest sites and then the sets' own order. */
+  const cells = $derived.by(() => {
+    if (!held) return []
+    if (query) return rankIcons([...sites, ...held.entries], query, FOUND)
+    return [...siteRow.map((one) => one.name), ...held.entries.map((one) => one.name)]
+  })
 
   /** A row of the grid: a heading where a group begins, or a run of cells. Every row is
    *  one cell tall, headings included, which is what lets the window be worked out
    *  with one division rather than a table of heights. */
-  type Row = { head: string } | { names: string[] }
+  type Row = { head: string } | { names: string[] } | { note: string }
 
   /** Groups only where the set has them and nothing has been typed. A search is
    *  already an order - the best answer first - and cutting it into Unicode's
@@ -156,7 +196,20 @@
 
     if (query || !held.groups.length) return runs(cells)
 
-    return held.groups.flatMap((group) => [{ head: group.label }, ...runs(group.names)])
+    // The sites first, as a group of their own, and a line where there are none yet.
+    const web: Row[] = !siteSet
+      ? []
+      : [
+          { head: t('Web icons') },
+          ...(siteRow.length
+            ? runs(siteRow.map((one) => one.name))
+            : [{ note: t('Sites you visit will appear here') }]),
+        ]
+
+    return [
+      ...web,
+      ...held.groups.flatMap((group) => [{ head: group.label }, ...runs(group.names)]),
+    ]
   })
 
   /** What each cell is called, for a reader who cannot see it. The set's own words
@@ -167,6 +220,7 @@
     const map = new Map<string, string>()
 
     for (const entry of held?.entries ?? []) map.set(entry.name, entry.words)
+    for (const entry of sites) map.set(entry.name, entry.words)
 
     return map
   })
@@ -226,6 +280,12 @@
       asked.kind === 'space' ? workspace.tintFor(asked.id) : chosenTint(asked.path),
     )
 
+    // The account's sites again, for a picker opened after they were first asked for:
+    // one seen on another device since then. At most every so often; see site-icons.
+    if (untrack(() => iconLibrary.loaded[SITE_ICONS])) {
+      void import('./web-tab/site-icons.svelte').then((one) => one.siteIcons.refresh())
+    }
+
     clearTimeout(focusing)
     focusing = setTimeout(() => field?.focus(), dur(FOCUS))
   })
@@ -236,6 +296,7 @@
     if (!target) return
     const all = wanted || query.trim() !== ''
     for (const id of PICKER_SETS) if (all || !LATER_SETS.has(id)) iconLibrary.load(id)
+    if (signedIn) iconLibrary.load(SITE_ICONS)
     if (outlined) iconLibrary.load(EMOJI_OUTLINE)
   })
 
@@ -399,6 +460,8 @@
             <div class="row" style:top="{(shown.from + index) * cell}px">
               {#if 'head' in row}
                 <span class="head">{row.head}</span>
+              {:else if 'note' in row}
+                <span class="note">{row.note}</span>
               {:else}
                 {#each row.names as written (written)}
                   <!-- What this icon is called, once: the cell asked twice, over a
@@ -529,6 +592,13 @@
     padding: 0 4px;
     font-size: var(--text-sm);
     font-weight: var(--weight-strong);
+    color: var(--muted);
+  }
+
+  /* What the Web icons say while there are none yet (#1054). */
+  .note {
+    padding: 0 4px;
+    font-size: var(--text-sm);
     color: var(--muted);
   }
 

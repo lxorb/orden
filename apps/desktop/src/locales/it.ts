@@ -2806,4 +2806,6 @@ export const it: Dictionary = {
     'Non inviata. Il tuo testo resta qui, così puoi riprovare.',
   'Reset to site icon': 'Ripristina l’icona del sito',
   'One colour': 'Un colore',
+  'Web icons': 'Icone web',
+  'Sites you visit will appear here': 'I siti che visiti appariranno qui',
 }

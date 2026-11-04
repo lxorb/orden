@@ -156,6 +156,8 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   ],
   ['feedback', 'delete from feedback where user_id = ?1'],
   ['mcp_tokens', 'delete from mcp_tokens where user_id = ?1'],
+  // The marks of the sites it has been to, for the icon picker (#1054).
+  ['site_icons', 'delete from site_icons where user_id = ?1'],
   ['oauth_codes', 'delete from oauth_codes where user_id = ?1'],
   ['oauth_grants', 'delete from oauth_grants where user_id = ?1'],
   ['recovery_codes', 'delete from recovery_codes where user_id = ?1'],

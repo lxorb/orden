@@ -2730,4 +2730,6 @@ export const mr: Dictionary = {
     'पाठवला नाही. तुमचा मजकूर जपून ठेवला आहे, पुन्हा प्रयत्न करू शकता.',
   'Reset to site icon': 'साइटच्या आयकॉनवर परत जा',
   'One colour': 'एक रंग',
+  'Web icons': 'वेब आयकॉन',
+  'Sites you visit will appear here': 'तुम्ही भेट दिलेल्या साइट्स इथे दिसतील',
 }

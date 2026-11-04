@@ -80,6 +80,10 @@
     <!-- eslint-disable-next-line svelte/no-at-html-tags -- a shipped icon set, not content -->
     {@html drawing.body}
   </svg>
+{:else if drawing?.kind === 'picture'}
+  <!-- A site's mark (#1054): a picture the account holds, as a `data:` address, drawn in
+       an image, where an SVG among them runs nothing. Its own colours, never a tint. -->
+  <img class="glyph picture" src={drawing.src} alt="" draggable="false" />
 {:else if stroked}
   <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true" style:color={colour}>
     {#each stroked as [tag, attrs] (JSON.stringify(attrs))}
@@ -120,6 +124,10 @@
   .drawn {
     fill: currentColor;
     stroke: none;
+  }
+
+  .picture {
+    object-fit: contain;
   }
 
   .emoji {

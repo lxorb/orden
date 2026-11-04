@@ -1575,6 +1575,9 @@ class Pages {
         // Never a private page's: it writes nothing down; see private.ts.
         if (said.icon && !page.inPrivate) {
           void import('./favicons').then((one) => one.saw(at, said.icon))
+          // And the account's, for the icon picker's Web icons on every device (#1054).
+          const title = page.title
+          void import('./site-icons.svelte').then((one) => one.siteIcons.saw(at, title, said.icon))
         }
         // And under where the tab's file points, which its row asks once the tab has
         // closed: a site that moved on within itself - another Slack channel - would leave

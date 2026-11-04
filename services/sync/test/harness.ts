@@ -536,6 +536,9 @@ export interface Reply {
   token_type: string
   expires_in: number
   scope: string
+
+  // The marks of the sites the account has been to (#1054).
+  sites: { site: string; label: string; seen: number; hash: string | null }[]
 }
 
 /** Who else may reach a space, as the Share sheet reads it. Exactly one of

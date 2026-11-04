@@ -2779,4 +2779,6 @@ export const ptBR: Dictionary = {
     'Não enviado. Seu texto foi mantido para você tentar de novo.',
   'Reset to site icon': 'Voltar ao ícone do site',
   'One colour': 'Uma cor',
+  'Web icons': 'Ícones da web',
+  'Sites you visit will appear here': 'Os sites que você visitar aparecerão aqui',
 }

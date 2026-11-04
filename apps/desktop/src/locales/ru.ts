@@ -2822,4 +2822,6 @@ export const ru: Dictionary = {
     'Не отправлено. Ваш текст сохранён, можно попробовать ещё раз.',
   'Reset to site icon': 'Вернуть значок сайта',
   'One colour': 'Одноцветные',
+  'Web icons': 'Значки сайтов',
+  'Sites you visit will appear here': 'Здесь появятся сайты, которые вы посещаете',
 }

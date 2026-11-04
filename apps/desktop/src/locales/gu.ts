@@ -2714,4 +2714,6 @@ export const gu: Dictionary = {
     'મોકલાયો નથી. તમારું લખાણ સાચવેલું છે, તમે ફરી પ્રયાસ કરી શકો છો.',
   'Reset to site icon': 'સાઇટના આઇકન પર પાછા જાઓ',
   'One colour': 'એક રંગ',
+  'Web icons': 'વેબ આઇકન',
+  'Sites you visit will appear here': 'તમે મુલાકાત લો છો તે સાઇટ અહીં દેખાશે',
 }

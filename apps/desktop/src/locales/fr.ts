@@ -2811,4 +2811,6 @@ export const fr: Dictionary = {
     'Non envoyé. Votre texte est conservé, vous pouvez réessayer.',
   'Reset to site icon': 'Rétablir l’icône du site',
   'One colour': 'Une couleur',
+  'Web icons': 'Icônes web',
+  'Sites you visit will appear here': 'Les sites que vous visitez apparaîtront ici',
 }

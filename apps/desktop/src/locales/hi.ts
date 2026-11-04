@@ -2727,4 +2727,6 @@ export const hi: Dictionary = {
     'नहीं भेजी गई। आपका लिखा हुआ सुरक्षित है, आप फिर से कोशिश कर सकते हैं।',
   'Reset to site icon': 'साइट के आइकन पर लौटें',
   'One colour': 'एक रंग',
+  'Web icons': 'वेब आइकन',
+  'Sites you visit will appear here': 'आप जिन साइटों पर जाते हैं, वे यहाँ दिखेंगी',
 }

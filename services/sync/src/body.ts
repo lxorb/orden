@@ -110,9 +110,16 @@ function parsedOr(raw: string | null | undefined): unknown {
  *  registry. `content-length` is consulted first, so an answer that declares
  *  itself too big is dropped without being read at all. */
 export async function textAtMost(response: Response, limit: number): Promise<string | null> {
+  const bytes = await bytesAtMost(response, limit)
+  return bytes === null ? null : new TextDecoder().decode(bytes)
+}
+
+/** The same read, as the bytes themselves: a picture fetched from a host somebody else
+ *  named (site-icons.ts) is bounded exactly as a document is. */
+export async function bytesAtMost(response: Response, limit: number): Promise<Uint8Array | null> {
   const declared = Number(response.headers.get('content-length') ?? '')
   if (Number.isFinite(declared) && declared > limit) return null
-  if (!response.body) return ''
+  if (!response.body) return new Uint8Array()
 
   // Typed here rather than trusted from the stream: what a reader hands back is
   // `any` to the runtime's own types, and a chunk is bytes or it is nothing.
@@ -143,7 +150,7 @@ export async function textAtMost(response: Response, limit: number): Promise<str
     at += piece.length
   }
 
-  return new TextDecoder().decode(whole)
+  return whole
 }
 
 export interface Body {

@@ -2767,4 +2767,6 @@ export const sw: Dictionary = {
     'Haijatumwa. Maandishi yako yamehifadhiwa, kwa hivyo unaweza kujaribu tena.',
   'Reset to site icon': 'Rudisha ikoni ya tovuti',
   'One colour': 'Rangi moja',
+  'Web icons': 'Aikoni za wavuti',
+  'Sites you visit will appear here': 'Tovuti unazotembelea zitaonekana hapa',
 }

@@ -137,6 +137,12 @@ export const BRANDS = 'simple-icons'
  *  line; see `takesTint`. */
 export const EMOJI_OUTLINE = 'fluent-emoji-high-contrast'
 
+/** The id the marks of the sites the account has been to go by (#1054): the icon
+ *  picker's Web icons. A value is `site:github.com`, the site as the sync service keeps
+ *  it (services/sync/src/site-icons.ts), drawn from the picture the account holds for it;
+ *  see web-tab/site-icons.svelte.ts. A picture in its own colours, never tinted. */
+export const SITE_ICONS = 'site'
+
 /** The sets drawn in one colour that a tint paints, beside the line set: a picture
  *  without colours of its own to paint over. */
 const TINTED_SETS: ReadonlySet<string> = new Set([EMOJI_OUTLINE])

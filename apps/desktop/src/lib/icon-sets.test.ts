@@ -7,6 +7,7 @@ import {
   LUCIDE,
   rankIcons,
   readIcon,
+  SITE_ICONS,
   takesTint,
   writtenIcon,
 } from './icons'
@@ -30,12 +31,13 @@ import {
  *  Slow-ish, and worth it: a set whose names or groups came out wrong is a picker full
  *  of blank cells, and nothing else in the app would notice. */
 describe('the sets an icon can come from', () => {
-  test('are the five the picker offers, each with an id nothing else uses', () => {
+  test('are the six the picker offers, each with an id nothing else uses', () => {
     expect(ICON_SETS.map((one) => one.id)).toEqual([
       LUCIDE,
       EMOJI_SET,
       FLAT_COLOUR,
       EMOJI_OUTLINE,
+      SITE_ICONS,
       BRANDS,
     ])
     expect(new Set(ICON_SETS.map((one) => one.id)).size).toBe(ICON_SETS.length)
@@ -227,8 +229,11 @@ describe('the stroked set', () => {
 /** One search over every set, and no tabs (#1096). */
 describe('the sets the picker searches', () => {
   test('are every set, each once, the brands waiting for a search', () => {
-    // The emoji's outlines are drawn in the emoji's own cells, not as cells of their own.
-    expect([...PICKER_SETS, EMOJI_OUTLINE].sort()).toEqual(ICON_SETS.map((one) => one.id).sort())
+    // The emoji's outlines are drawn in the emoji's own cells, not as cells of their own,
+    // and the Web icons are the account's, a section the picker draws first (#1054).
+    expect([...PICKER_SETS, EMOJI_OUTLINE, SITE_ICONS].sort()).toEqual(
+      ICON_SETS.map((one) => one.id).sort(),
+    )
     expect(new Set(PICKER_SETS).size).toBe(PICKER_SETS.length)
     expect([...LATER_SETS]).toEqual([BRANDS])
   })

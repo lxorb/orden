@@ -41,6 +41,7 @@ import { onlineDoor } from './machines/door'
 import { appsDoor } from './apps/door'
 import { isMachineHost, machineDomain } from './machines/hetzner-host'
 import { online } from './machines/routes'
+import { siteIcons } from './site-icons'
 import { settings } from './settings'
 import { v2Docs, v2Spaces } from './sync2'
 import { syncAdmin } from './sync2/admin'
@@ -289,6 +290,8 @@ app.route('/v1/shared', sharedWithMe)
 app.route('/v1/spaces', spaces)
 app.route('/v1/trash', trash)
 app.route('/v1/settings', settings)
+// The marks of the sites the account has been to, for the icon picker (#1054).
+app.route('/v2/site-icons', siteIcons)
 app.route('/v1/mcp', mcpAdmin)
 // Which devices are signed in, and the second factor. Behind the guard, where
 // everything about the account is; see auth.ts and second.ts.

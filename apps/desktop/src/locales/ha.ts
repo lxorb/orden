@@ -2768,4 +2768,6 @@ export const ha: Dictionary = {
     'Ba a aika ba. An adana rubutunka, don haka za ka iya sake gwadawa.',
   'Reset to site icon': 'Mayar da gunkin shafin',
   'One colour': 'Launi ɗaya',
+  'Web icons': 'Gumakan yanar gizo',
+  'Sites you visit will appear here': 'Shafukan da ka ziyarta za su bayyana a nan',
 }

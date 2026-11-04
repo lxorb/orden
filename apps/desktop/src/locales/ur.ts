@@ -2723,4 +2723,6 @@ export const ur: Dictionary = {
     'نہیں بھیجی گئی۔ آپ کا متن محفوظ ہے، دوبارہ کوشش کر سکتے ہیں۔',
   'Reset to site icon': 'سائٹ کے آئیکن پر واپس جائیں',
   'One colour': 'ایک رنگ',
+  'Web icons': 'ویب آئیکنز',
+  'Sites you visit will appear here': 'آپ جن سائٹس پر جاتے ہیں وہ یہاں دکھائی دیں گی',
 }

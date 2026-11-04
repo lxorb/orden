@@ -2671,4 +2671,6 @@ export const th: Dictionary = {
     'ยังไม่ได้ส่ง ข้อความของคุณยังอยู่ ลองอีกครั้งได้',
   'Reset to site icon': 'กลับไปใช้ไอคอนของเว็บไซต์',
   'One colour': 'สีเดียว',
+  'Web icons': 'ไอคอนเว็บ',
+  'Sites you visit will appear here': 'เว็บไซต์ที่คุณเข้าชมจะแสดงที่นี่',
 }

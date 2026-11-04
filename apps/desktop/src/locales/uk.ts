@@ -2815,4 +2815,6 @@ export const uk: Dictionary = {
     'Не надіслано. Ваш текст збережено, можна спробувати ще раз.',
   'Reset to site icon': 'Повернути значок сайту',
   'One colour': 'Одноколірні',
+  'Web icons': 'Значки сайтів',
+  'Sites you visit will appear here': 'Тут з’являться сайти, які ви відвідуєте',
 }
