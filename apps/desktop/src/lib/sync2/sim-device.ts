@@ -12,6 +12,7 @@
  *
  *  So a seed that fails here is the engine failing, and replays as one. */
 
+import { byPosition } from '@orden/sync-core/order'
 import { nameKey } from '@orden/sync-core/tree'
 import { hash32, seedUpdate } from '@orden/sync-core/seed'
 import { textops } from '@orden/sync-core/textops'
@@ -394,6 +395,23 @@ export class EngineDevice implements DeviceAdapter {
         for (const [path, text] of item.files) await engine.created(this.full(path), false, text)
         return
       }
+      case 'place': {
+        // As the file list's drag does it: the folder's rows as drawn, the target lifted
+        // out and put back where it was let go of, said to the engine by name.
+        const entries = this.live(engine)
+        const target = this.chosen(entries, action.target)
+        const folder = target ? this.pathOf(engine, target.parent) : null
+        const paths = engine.core.spaces.get(SPACE)?.paths()
+        if (!target || folder === null || !paths) return
+        const rows = entries
+          .filter((entry) => entry.parent === target.parent && entry.id !== target.id)
+          .sort(byPosition)
+        const at = Math.min(rows.length, Math.floor(action.at * (rows.length + 1)))
+        rows.splice(at, 0, target)
+        const names = rows.map((entry) => nameOf(paths.get(entry.id) ?? ''))
+        await engine.arrange(this.full(folder), names, at + 1)
+        return
+      }
       case 'append-day': {
         const day = this.live(engine).find(
           (entry) =>
@@ -537,11 +555,12 @@ export class EngineDevice implements DeviceAdapter {
     const engine = await this.ready()
     if (!engine) return { entries: [], texts: {} }
     return await engine.core.use(async () => {
-      const entries = this.live(engine).map(({ id, kind, parent, name }) => ({
+      const entries = this.live(engine).map(({ id, kind, parent, name, pos }) => ({
         id,
         kind,
         parent,
         name,
+        ...(pos === undefined ? {} : { pos }),
       }))
       const texts: Record<string, string> = {}
       for (const entry of entries) {

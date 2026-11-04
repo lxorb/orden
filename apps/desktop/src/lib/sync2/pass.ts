@@ -154,10 +154,13 @@ async function sendOps(
     // What has not gone yet is folded, a create waiting for its bytes too; what may have
     // gone goes again as it was.
     const waiting = space.outbox.filter((one) => one.record.t === 'op' && !one.record.sent)
-    const folded = coalesce(
-      waiting
-        .map((one) => (one.record.t === 'op' ? one.record.op : null))
-        .filter((op): op is Op => op !== null),
+    const folded = fitted(
+      space,
+      coalesce(
+        waiting
+          .map((one) => (one.record.t === 'op' ? one.record.op : null))
+          .filter((op): op is Op => op !== null),
+      ),
     )
     const changes: Change[] = []
     const kept = new Map(folded.map((op) => [op.op, op]))
@@ -205,7 +208,14 @@ async function sendOps(
     if (!alive()) return false
 
     const sent = batch.flatMap((one) => (one.record.t === 'op' ? [one.record.op] : []))
-    const reply = await ask(core, space, 'ops', { ops: sent })
+    let reply: unknown
+    try {
+      reply = await ask(core, space, 'ops', { ops: sent })
+    } catch (error) {
+      if (!(error instanceof Refused) || !unplaced(space, batch, error)) throw error
+      await core.commit(changesOf(core, space, batch))
+      continue
+    }
     if (!alive() || reply === null) return false
     const answer = opsResponseOf(reply)
     if (!answer) throw new Error('the account answered the ops with something else')
@@ -237,12 +247,55 @@ async function sendOps(
       }
       done.push(...core.entryChanges(space.answered(op, result)))
     }
+    done.push(...core.orderChanges(space))
     space.changed()
     await core.commit(done)
     if (!alive()) return false
     // An op the account never answered (a batch cut short) goes again next round.
   }
   return true
+}
+
+/** The ops as this space's account can take them: an account that does not say it keeps
+ *  places (#1068) - one from before them, or one put back to such a build - is sent no
+ *  `place` and no position, which it would not read; the rest of each op goes. */
+function fitted(space: SpaceState, ops: Op[]): Op[] {
+  if (space.ordering.on) return ops
+  return ops.flatMap((op): Op[] => {
+    if (op.t === 'place') return []
+    if ((op.t === 'move' || op.t === 'mkdir' || op.t === 'create') && op.pos !== undefined) {
+      const bare = { ...op }
+      delete bare.pos
+      return [bare]
+    }
+    return [op]
+  })
+}
+
+/** A batch the account could not read, holding places: an account put back to a build
+ *  from before them since its feed last said it keeps them. Nothing of the batch was
+ *  applied, so it goes again without them, and no places go until the feed says so
+ *  again (#1068). Answers whether that was it. */
+function unplaced(space: SpaceState, batch: readonly Outboxed[], error: Refused) {
+  if (error.status !== 400 || !space.ordering.on) return false
+  const placing = (op: Op) =>
+    op.t === 'place' ||
+    ((op.t === 'move' || op.t === 'mkdir' || op.t === 'create') && op.pos !== undefined)
+  if (!batch.some((one) => one.record.t === 'op' && placing(one.record.op))) return false
+  space.ordering.on = false
+  space.repositioned = true
+  for (const one of batch) {
+    if (one.record.t !== 'op') continue
+    one.record = { t: 'op', op: one.record.op }
+    one.row = { ...one.row, op: outgoingBytes(one.record) }
+  }
+  space.changed()
+  return true
+}
+
+/** The rows of a batch put back, with the space's places. */
+function changesOf(core: Core, space: SpaceState, batch: readonly Outboxed[]): Change[] {
+  return [...batch.map((one) => put('outbox', one.row)), ...core.orderChanges(space)]
 }
 
 /** An op the account would not apply. Nothing of this device's is lost by any of them:
@@ -320,6 +373,11 @@ export async function readFeed(
         entry.file_key = item.hash || null
         entry.size = item.size
       }
+      if (space.ordering.positions.get(item.id) !== item.pos) {
+        if (item.pos === undefined) space.ordering.positions.delete(item.id)
+        else space.ordering.positions.set(item.id, item.pos)
+        space.repositioned = true
+      }
       space.entries.set(item.id, entry)
       changes.push(put('entries', { ...entry }))
 
@@ -332,9 +390,19 @@ export async function readFeed(
       }
     }
 
+    // An account that keeps places says so on every page; one put back to a build from
+    // before them stops saying it, and is sent none again.
+    if (space.ordering.on !== (read.order === true)) {
+      space.ordering.on = read.order === true
+      space.repositioned = true
+    }
     const asked = space.row.cursor
     space.row.cursor = Math.max(space.row.cursor, read.cursor)
-    changes.push(put('spaces', { ...space.row }), core.wantChange(space.id))
+    changes.push(
+      put('spaces', { ...space.row }),
+      core.wantChange(space.id),
+      ...core.orderChanges(space),
+    )
     space.changed()
     await core.commit(changes)
     if (!alive()) return false

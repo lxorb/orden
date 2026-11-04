@@ -18,9 +18,11 @@
  *  - migrate.ts - the first v2 pass of a space that v1 kept, and the way back. */
 
 import { foreignCopy, inForeignCopy } from '@orden/sync-core/foreign'
+import { repositioned } from '@orden/sync-core/order'
+import type { TreeEntry } from '@orden/sync-core/tree'
 import type { EngineEvents, Engine as AskedEngine } from './asking.svelte'
 import { Core } from './core'
-import { atOrUnder, made, moved, removed, unsynced } from './create'
+import { atOrUnder, made, moved, placed as placedRows, removed, unsynced } from './create'
 import type { Doc } from './docs'
 import { HeldList, type Names } from './held'
 import { holdsDocument } from './kinds'
@@ -219,6 +221,65 @@ export class Engine implements AskedEngine {
       const changes = copies.flatMap(({ space, entry }) => unsynced(this.core, space, entry))
       await this.core.commit(changes)
       return copies.length
+    })
+  }
+
+  /** The space a folder on this disk is in, or is the top of, and where in it. */
+  private folderPlaced(folder: string): Placed | null {
+    for (const space of this.core.spaces.values()) {
+      if (sameFolder(space.row.root, folder)) return { space, path: '' }
+    }
+    return this.placed(folder)
+  }
+
+  /** The names of a folder's rows somebody put somewhere, in the order their places put
+   *  them: what the file list draws a hand-arranged folder by (#1068). Null where the
+   *  space's account keeps no places, or nobody put a row of this folder anywhere; the
+   *  file list then reads the order it kept before places. */
+  placedIn(folder: string): string[] | null {
+    const placed = this.folderPlaced(folder)
+    if (!placed?.space.ordering.on) return null
+    return placed.space.placedNames().get(placed.space.key(placed.path))?.names ?? null
+  }
+
+  /** Every folder of the space at `root` with rows somebody put somewhere, by its path in
+   *  the space, and their names in order. Empty where the account keeps no places. */
+  placedFolders(root: string): Map<string, string[]> {
+    const placed = this.folderPlaced(root)
+    const out = new Map<string, string[]>()
+    if (!placed?.space.ordering.on || placed.path) return out
+    for (const { folder, names } of placed.space.placedNames().values()) out.set(folder, names)
+    return out
+  }
+
+  /** Whether the space a folder is in keeps places, and has the folder in its tree. */
+  keepsPlaces(folder: string): boolean {
+    const placed = this.folderPlaced(folder)
+    return !!placed?.space.ordering.on && placed.space.folderAt(placed.path) !== undefined
+  }
+
+  /** A folder's rows drawn in this order from now on: `order` its rows' names as they
+   *  are to be drawn, the first `count` of them put there by hand. Each row whose place
+   *  has to change for it is given a new one, as few as can be (`repositioned` in
+   *  @orden/sync-core/order), and goes up as a `place`. Answers false, sending nothing,
+   *  where the account keeps no places or the folder is not in its tree. */
+  arrange(folder: string, order: readonly string[], count: number): Promise<boolean> {
+    return this.core.use(async () => {
+      const placed = this.folderPlaced(folder)
+      if (!placed?.space.ordering.on) return false
+      const { space } = placed
+      const children = space.childrenAt(placed.path)
+      if (!children) return false
+      const rows: TreeEntry[] = []
+      let standing = 0
+      for (const [at, name] of order.entries()) {
+        const entry = children.get(name)
+        if (!entry || rows.includes(entry)) continue
+        rows.push(entry)
+        if (at < count) standing = rows.length
+      }
+      await this.core.commit(placedRows(this.core, space, repositioned(rows, standing)))
+      return true
     })
   }
 
@@ -508,9 +569,15 @@ export class Engine implements AskedEngine {
   }
 }
 
+const norm = (value: string) => value.replace(/\\/g, '/').replace(/\/+$/, '')
+
+/** Whether two paths are one folder, as `relative` compares them. */
+function sameFolder(one: string, other: string): boolean {
+  return norm(one).toLowerCase() === norm(other).toLowerCase()
+}
+
 /** A path relative to a root, with `/` between folders, or null outside it. */
 export function relative(root: string, path: string): string | null {
-  const norm = (value: string) => value.replace(/\\/g, '/').replace(/\/+$/, '')
   const base = norm(root)
   const full = norm(path)
   if (full.length <= base.length) return null

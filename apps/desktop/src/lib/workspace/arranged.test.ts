@@ -324,3 +324,79 @@ describe('reading a map out of an unknown', () => {
     expect(arrangedMap(['a.md'])).toEqual({})
   })
 })
+
+/** A space whose account keeps each row's own place (#1068): the folder is drawn by the
+ *  places, a drop is turned into them, and the map is still written for the builds that
+ *  read nothing else. The engine's half is sync2/placing.test.ts. */
+describe('a space that keeps places', () => {
+  /** Places in memory, a folder's names in order, and every order asked for. */
+  function places(start: Record<string, string[]> = {}) {
+    const held = new Map(Object.entries(start))
+    const asked: { folder: string; names: readonly string[] }[] = []
+    let land: () => void = () => undefined
+    const positioned = {
+      namesIn: (_root: string, folder: string) => held.get(folder) ?? null,
+      folders: () => held,
+      arrange(_root: string, folder: string, names: readonly string[]) {
+        asked.push({ folder, names })
+        const done = new Promise<void>((resolve) => {
+          land = () => {
+            held.set(folder, [...names])
+            resolve()
+          }
+        })
+        return { drawn: [...names, 'rest.md'], done }
+      },
+    }
+    return { held, asked, positioned, land: () => land() }
+  }
+
+  test('draws a folder by its places, ahead of the map', () => {
+    arranged.set('/space/Work', ['b.md', 'a.md'])
+    const { positioned } = places({ Work: ['a.md', 'b.md'] })
+    const stop = arranged.placeBy(positioned)
+
+    expect(arranged.listOf('/space/Work')).toEqual(['a.md', 'b.md'])
+    expect(arranged.savedList('/space/Work')).toEqual(['a.md', 'b.md'])
+    stop()
+    expect(arranged.listOf('/space/Work')).toEqual(['b.md', 'a.md'])
+  })
+
+  test('a folder nobody placed a row of reads the map', () => {
+    arranged.set('/space/Work', ['b.md', 'a.md'])
+    arranged.placeBy(places().positioned)
+
+    expect(arranged.listOf('/space/Work')).toEqual(['b.md', 'a.md'])
+  })
+
+  test('a drop is drawn at once, turned into places, and written in the map too', async () => {
+    const one = places()
+    arranged.placeBy(one.positioned)
+
+    arranged.set('/space/Work', ['c.md', 'a.md'])
+    expect(one.asked).toEqual([{ folder: 'Work', names: ['c.md', 'a.md'] }])
+    expect(arranged.listOf('/space/Work')).toEqual(['c.md', 'a.md', 'rest.md'])
+    expect(arranged.of(ROOT)).toEqual({ Work: ['c.md', 'a.md'] })
+
+    one.land()
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(arranged.listOf('/space/Work')).toEqual(['c.md', 'a.md'])
+  })
+
+  test('after a pass, an order from before places becomes places once, and places are written in the map', () => {
+    arranged.set('/space/Old', ['y.md', 'x.md'])
+    const one = places({ Work: ['b.md', 'a.md'] })
+    arranged.placeBy(one.positioned)
+
+    arranged.fromPlaces(ROOT)
+    expect(one.asked).toEqual([{ folder: 'Old', names: ['y.md', 'x.md'] }])
+    expect(arranged.of(ROOT)).toEqual({ Old: ['y.md', 'x.md'], Work: ['b.md', 'a.md'] })
+
+    // Once Old has places, the next pass leaves it be.
+    one.land()
+    one.asked.length = 0
+    arranged.fromPlaces(ROOT)
+    expect(one.asked).toEqual([])
+  })
+})

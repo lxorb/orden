@@ -156,9 +156,36 @@ interface Showing {
   names: string[]
 }
 
+/** Where the account keeps each row's own place among the rest of its folder, by id
+ *  (#1068): sync v2's engine, for a space whose account says it keeps places. What
+ *  this store reads a folder's order from where it can, ahead of its own map, which it
+ *  still writes for the builds that read nothing else. See sync2/placing.ts. */
+export interface Positioned {
+  /** The names of a folder's rows somebody put somewhere, in order; null where the
+   *  space keeps no places or nobody put one of this folder's rows anywhere. */
+  namesIn(root: string, folder: string): readonly string[] | null
+  /** Every folder of the space that has such rows, and their names in order. */
+  folders(root: string): ReadonlyMap<string, readonly string[]>
+  /** The folder's rows drawn in this order from now on, `names` the front of it that
+   *  somebody arranged. Answers the order to draw while the places are written, and
+   *  when they are; null where the space keeps no places, and nothing is sent. */
+  arrange(
+    root: string,
+    folder: string,
+    names: readonly string[],
+  ): { drawn: readonly string[]; done: Promise<unknown> } | null
+}
+
 export class Arranged {
   private spaces = $state<Record<string, Kept>>(read())
   private showing = $state<Showing | null>(null)
+  /** Where the places come from, while there is an engine to keep them. */
+  private positioned: Positioned | null = null
+  /** Bumped when the places changed, here or elsewhere: what a folder drawn by them is
+   *  drawn again by, since the engine that keeps them is not reactive. */
+  private placings = $state(0)
+  /** The order a drop asked for, by space and folder, while its places are written. */
+  private placing = $state.raw<Record<string, readonly string[]>>({})
   /** A push waiting for the dragging to stop, per space. Bookkeeping rather than
    *  state: nothing on screen is drawn from it. */
   private pushing: Record<string, ReturnType<typeof setTimeout>> = {}
@@ -181,6 +208,49 @@ export class Arranged {
     return this.spaces[root]?.folders ?? {}
   }
 
+  /** The places to read from now on, or none; answers how to stop. */
+  placeBy(positioned: Positioned): () => void {
+    this.positioned = positioned
+    this.repositioned()
+    return () => {
+      if (this.positioned !== positioned) return
+      this.positioned = null
+      this.repositioned()
+    }
+  }
+
+  /** The places changed: every folder drawn by them is drawn again. */
+  repositioned() {
+    this.placings += 1
+  }
+
+  /** A folder's order by its rows' own places, where the space keeps them and somebody
+   *  put one of its rows somewhere; null for the map. */
+  private placed(root: string, at: string): readonly string[] | null {
+    const pending = this.placing[placingKey(root, at)]
+    if (pending) return pending
+    // The count read first, so whatever draws from this is drawn again when it moves.
+    const positioned = this.placings >= 0 ? this.positioned : null
+    return positioned?.namesIn(root, at) ?? null
+  }
+
+  /** The map brought into line with the places, after a pass over the space (#1068).
+   *
+   *  A folder arranged before its space kept places, which nobody has put a row of
+   *  anywhere since, has its order turned into places, once: only rows without one are
+   *  given one, so two devices doing it at once send the same. And every folder that
+   *  has places has the map written from them, for the builds that read nothing else;
+   *  an order such a build writes into the map of a folder that has places is not read
+   *  back, since the places are what everybody newer reads. */
+  fromPlaces(root: string) {
+    const positioned = this.positioned
+    if (!positioned) return
+    for (const [at, names] of Object.entries(this.of(root))) {
+      if (positioned.namesIn(root, at) === null) positioned.arrange(root, at, names)
+    }
+    for (const [at, names] of positioned.folders(root)) this.keep(root, at, [...names])
+  }
+
   /** The names one folder's rows are drawn in, as far as anybody arranged them.
    *  Takes the folder's path as the app holds one; empty for a folder nobody has
    *  arranged, which reads in name order.
@@ -195,7 +265,7 @@ export class Arranged {
     const shown = this.showing
     if (shown && samePath(shown.root, root) && shown.folder === at) return shown.names
 
-    return this.of(root)[at] ?? []
+    return this.placed(root, at) ?? this.of(root)[at] ?? []
   }
 
   /** The same list, ignoring whatever a drag is showing.
@@ -208,7 +278,8 @@ export class Arranged {
     const root = this.root()
     if (root === null) return []
 
-    return this.of(root)[relativeTo(root, folder)] ?? []
+    const at = relativeTo(root, folder)
+    return this.placed(root, at) ?? this.of(root)[at] ?? []
   }
 
   /** Whether a drag is showing an order it has not committed to. */
@@ -261,6 +332,24 @@ export class Arranged {
   }
 
   private write(root: string, at: string, names: string[]) {
+    // Where the space keeps places, the rows whose places the order needs are given new
+    // ones, and the folder is drawn in it until they are written. The map is written as
+    // well, for the builds that read nothing else.
+    const placing = this.positioned?.arrange(root, at, names)
+    if (placing) {
+      const key = placingKey(root, at)
+      this.placing = { ...this.placing, [key]: placing.drawn }
+      const done = () => {
+        if (this.placing[key] === placing.drawn) this.placing = without(this.placing, key)
+        this.repositioned()
+      }
+      placing.done.then(done, done)
+    }
+    this.keep(root, at, names)
+  }
+
+  /** One folder's list in the map, as it now stands. */
+  private keep(root: string, at: string, names: string[]) {
     const held = this.of(root)
     const kept = namesIn(names)
     const there = held[at] ?? []
@@ -474,6 +563,11 @@ export class Arranged {
   private writeAll() {
     keepJson(STORAGE_KEY, this.spaces)
   }
+}
+
+/** Which drop a folder's places are being written for: its space and the folder. */
+function placingKey(root: string, at: string): string {
+  return `${root}\u0000${at}`
 }
 
 /** The key of the folder a relative path sits in. The top of the space is the

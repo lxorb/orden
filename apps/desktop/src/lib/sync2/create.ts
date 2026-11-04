@@ -211,6 +211,24 @@ export function moved(core: Core, space: SpaceState, from: string, to: string): 
   return changes
 }
 
+/** Entries put somewhere else among the rest of their folder, by hand (#1068): one
+ *  `place` each, which the outbox folds to the last of a row's drags. */
+export function placed(
+  core: Core,
+  space: SpaceState,
+  places: ReadonlyMap<string, string>,
+): Change[] {
+  const changes: Change[] = []
+  for (const [id, pos] of places) {
+    changes.push(
+      ...queue(core, space, { op: core.nextId('o'), t: 'place', id, pos, seen: space.row.cursor }),
+    )
+  }
+  if (places.size) core.reorders += 1
+  space.changed()
+  return changes
+}
+
 /** Another sync tool's copy taken off the account, which the person asked for in the
  *  Sync pane: it goes to the account's Recently deleted and its file stays where it is,
  *  here and on every disk (`settle` in places.ts). Seen up to the cursor, because this

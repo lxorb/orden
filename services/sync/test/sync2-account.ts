@@ -132,9 +132,9 @@ export class WorkerAccount implements AccountAdapter {
     const db = this.env.db
     const folders = db
       .prepare(
-        'select id, parent_id as parent, name from folders where space_id = ? and deleted = 0',
+        'select id, parent_id as parent, name, pos from folders where space_id = ? and deleted = 0',
       )
-      .all(this.space) as { id: string; parent: string | null; name: string }[]
+      .all(this.space) as { id: string; parent: string | null; name: string; pos: string | null }[]
     const notes = db
       .prepare('select * from notes where space_id = ? and deleted = 0')
       .all(this.space) as unknown as Note[]
@@ -167,12 +167,14 @@ export class WorkerAccount implements AccountAdapter {
           kind: 'folder' as const,
           parent: one.parent,
           name: one.name,
+          ...(one.pos === null ? {} : { pos: one.pos }),
         })),
         ...notes.map((one) => ({
           id: one.id,
           kind: 'note' as const,
           parent: one.folder_id ?? null,
           name: one.name ?? one.path,
+          ...(placeOf(one) === null ? {} : { pos: placeOf(one) ?? '' }),
         })),
       ],
       texts,
@@ -183,4 +185,10 @@ export class WorkerAccount implements AccountAdapter {
   close() {
     this.env.close()
   }
+}
+
+/** Where a note was put among the rest of its folder (#1068), read past the row's type. */
+function placeOf(note: Note): string | null {
+  const pos = (note as unknown as { pos?: unknown }).pos
+  return typeof pos === 'string' ? pos : null
 }

@@ -18,6 +18,7 @@ import { type Divergence, diverge, type Times } from '../../src/diverge'
 import { coalesce } from '../../src/outbox'
 import { seedUpdate } from '../../src/seed'
 import { textops } from '../../src/textops'
+import { byPosition, repositioned } from '../../src/order'
 import { applyOp, nameKey, type TreeEntry, type TreeState, treeState } from '../../src/tree'
 import {
   feedPageOf,
@@ -504,6 +505,22 @@ export class ReferenceDevice implements DeviceAdapter {
       case 'restore':
         this.restore(action.id)
         return
+      case 'place': {
+        const target = this.chosen(this.liveEntries('any'), action.target)
+        if (!target) return
+        // The folder's rows as this device draws them, the target lifted out and put
+        // back where the drag let go of it; the positions that order needs are what is
+        // sent, as many as the drag moved (order.ts).
+        const rows = this.liveEntries('any')
+          .filter((entry) => entry.parent === target.parent && entry.id !== target.id)
+          .sort(byPosition)
+        const at = Math.min(rows.length, Math.floor(action.at * (rows.length + 1)))
+        rows.splice(at, 0, target)
+        for (const [id, pos] of repositioned(rows, at + 1)) {
+          this.queue({ op: this.nextOp(), t: 'place', id, pos, seen: this.store.cursor })
+        }
+        return
+      }
       case 'append-day': {
         const day = this.liveEntries('note').find(
           (entry) => entry.parent === null && nameKey(entry.name) === nameKey(action.name),
@@ -672,6 +689,7 @@ export class ReferenceDevice implements DeviceAdapter {
           deleted: item.deleted,
           seq: item.seq,
           docSeq: item.docSeq ?? 0,
+          ...(item.pos === undefined ? {} : { pos: item.pos }),
         })
         this.store.known.add(item.id)
 
@@ -973,11 +991,12 @@ export class ReferenceDevice implements DeviceAdapter {
   // What it holds
 
   async view(): Promise<View> {
-    const entries = this.liveEntries('any').map(({ id, kind, parent, name }) => ({
+    const entries = this.liveEntries('any').map(({ id, kind, parent, name, pos }) => ({
       id,
       kind,
       parent,
       name,
+      ...(pos === undefined ? {} : { pos }),
     }))
     const texts: Record<string, string> = {}
     for (const entry of entries) {

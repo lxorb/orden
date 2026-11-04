@@ -337,3 +337,28 @@ describe('the tree walked at random, the engine as every device', () => {
     expect(await treeWalk(3)).toEqual([])
   })
 })
+
+/** Rows dragged among the rest of their folders as well as the tree walked (#1068): every
+ *  device ends with each row where the account has it, so two people arranging one
+ *  folder at once both keep what they did. The engine as every device, the drag said to
+ *  it by name as the file list says it (`arrange`). */
+describe('rows arranged at random, the engine as every device', () => {
+  const SEEDS = 30
+  const AS_ITSELF = 'was restored and is not there'
+
+  test(`${String(SEEDS)} seeds end with every row in the same place everywhere`, async () => {
+    const failed: string[] = []
+    for (let seed = 1; seed <= SEEDS; seed++) {
+      const report = await simulate({
+        seed,
+        devices: 4,
+        steps: 60,
+        mix: 'order',
+        device: (id, clock, random, seeded) => new EngineDevice(id, clock, random, seeded),
+      })
+      const said = report.failures.filter((one) => !one.endsWith(AS_ITSELF))
+      if (said.length) failed.push(`seed ${String(seed)}: ${said.join('; ')}`)
+    }
+    expect(failed).toEqual([])
+  }, 600_000)
+})

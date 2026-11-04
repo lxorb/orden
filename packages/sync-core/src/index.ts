@@ -12,7 +12,7 @@ export {
 } from './diverge'
 export { merge3, type Edit, type Meeting, type Merged, type Span, type Whose } from './merge3'
 export { coalesce } from './outbox'
-export { between, byPosition, isPosition, MOST_POSITION } from './order'
+export { between, byPosition, isPosition, MOST_POSITION, repositioned, spread } from './order'
 export { divergePlane, type PlaneDivergence, type PlaneOverlap } from './plane-diverge'
 export { hash32, seedPlane, seedUpdate } from './seed'
 export { textops } from './textops'

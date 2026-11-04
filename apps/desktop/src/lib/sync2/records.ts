@@ -8,7 +8,8 @@
  *  ops, the losing side of an answer or a minor overlap on its way to `/v2/docs/keep`,
  *  and a day's note the account merged into one that was there, each a row of the
  *  `outbox` in the order it was made. And what a held note was held against, in the
- *  `held` row's `remote`.
+ *  `held` row's `remote`. Beside them, where each entry was put among the rest of its
+ *  folder (`order:<space>`).
  *
  *  All of it framed the way sync v2 frames a request (`frame` in @orden/sync-core), so a
  *  Yjs update inside a record is bytes and not a list of numbers, and read back through
@@ -22,6 +23,7 @@ import {
   opOf,
   unframe,
 } from '@orden/sync-core/wire'
+import { isPosition } from '@orden/sync-core/order'
 import type { MetaRow } from './store'
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -187,6 +189,54 @@ export function wantedRow(space: string, wanted: ReadonlyMap<string, Wanted>): M
   const out: Record<string, [number, number]> = {}
   for (const [id, one] of wanted) out[id] = [one.docSeq, one.epoch]
   return { key: wantKey(space), value: JSON.stringify(out) }
+}
+
+// ---------------------------------------------------------------------------
+// Where each entry was put among the rest of its folder
+
+/** Whether a space's account keeps where somebody put each entry among the rest of its
+ *  folder (its feed said `order`), and the place the account confirmed for every entry
+ *  that has one (#1068). Kept per space in `meta` as `order:<space>`, written with the
+ *  feed page or the answer that changed it.
+ *
+ *  A row of `meta` rather than a column of `entries`: a new column is a new schema,
+ *  which a store at it shuts an older Orden out of (`Newer` in sync_store/store.rs), and
+ *  an entry row with a field the older build does not know is one it refuses to read
+ *  (`rowOf` in store.ts). An older build reads past a `meta` row it has no use for, so
+ *  going back to one costs the places and nothing else. */
+export interface Ordering {
+  on: boolean
+  positions: Map<string, string>
+}
+
+const ORDER = 'order:'
+
+export function orderKey(space: string): string {
+  return `${ORDER}${space}`
+}
+
+export function orderingOf(row: MetaRow): { space: string; ordering: Ordering } | null {
+  if (!row.key.startsWith(ORDER) || typeof row.value !== 'string') return null
+  try {
+    const value: unknown = JSON.parse(row.value)
+    if (!isRecord(value)) return null
+    const positions = new Map<string, string>()
+    if (isRecord(value.pos)) {
+      for (const [id, pos] of Object.entries(value.pos)) {
+        if (isPosition(pos)) positions.set(id, pos)
+      }
+    }
+    return { space: row.key.slice(ORDER.length), ordering: { on: value.on === true, positions } }
+  } catch {
+    return null
+  }
+}
+
+export function orderingRow(space: string, ordering: Ordering): MetaRow {
+  return {
+    key: orderKey(space),
+    value: JSON.stringify({ on: ordering.on, pos: Object.fromEntries(ordering.positions) }),
+  }
 }
 
 // ---------------------------------------------------------------------------
