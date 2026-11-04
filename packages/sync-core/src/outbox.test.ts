@@ -43,6 +43,18 @@ describe('coalesce', () => {
     expect(coalesce(ops)).toEqual([rename('3', 'n', 'Plan')])
   })
 
+  test('drags of one row within its folder are one place, the last (#1068)', () => {
+    const place = (op: string, id: string, pos: string): Op => ({
+      op,
+      t: 'place',
+      id,
+      pos,
+      seen: 0,
+    })
+    const ops = [place('1', 'n', 'G'), place('2', 'm', 'H'), place('3', 'n', 'K')]
+    expect(coalesce(ops).map((one) => one.op)).toEqual(['2', '3'])
+  })
+
   test('renames of one id with something else done to it between stay apart', () => {
     const ops = [rename('1', 'n', 'A'), move('2', 'n', 'f'), rename('3', 'n', 'B')]
     expect(coalesce(ops)).toEqual(ops)

@@ -99,6 +99,7 @@ function snapshotOf(entry: TreeEntry): Snapshot {
   if (entry.deletedIn !== undefined) snapshot.deletedIn = entry.deletedIn
   if (entry.placedSeq !== undefined) snapshot.placedSeq = entry.placedSeq
   if (entry.placedBy !== undefined) snapshot.placedBy = entry.placedBy
+  if (entry.pos !== undefined) snapshot.pos = entry.pos
   return snapshot
 }
 
@@ -113,7 +114,8 @@ function sameAs(entry: TreeEntry, before: Snapshot): boolean {
     entry.docBy === before.docBy &&
     entry.deletedIn === before.deletedIn &&
     entry.placedSeq === before.placedSeq &&
-    entry.placedBy === before.placedBy
+    entry.placedBy === before.placedBy &&
+    entry.pos === before.pos
   )
 }
 
@@ -125,6 +127,7 @@ interface FolderRow {
   seq: number
   updated_by: string | null
   deleted_in: number | null
+  pos: string | null
 }
 
 interface NoteRow {
@@ -140,6 +143,7 @@ interface NoteRow {
   deleted_in: number | null
   placed_seq: number | null
   placed_by: string | null
+  pos: string | null
   path: string
   epoch: number
 }
@@ -372,6 +376,7 @@ export class Tree {
         gone,
         deletedIn: entry.deletedIn ?? null,
         by: entry.by ?? null,
+        pos: entry.pos ?? null,
       }
 
       if (entry.kind === 'folder') {
@@ -542,11 +547,11 @@ function updateFolders(
       `update folders set parent_id = c.parent, name = c.name, name_key = c.key, seq = c.seq,
               deleted = c.deleted,
               deleted_at = case c.gone when 1 then ?2 when 0 then null else folders.deleted_at end,
-              deleted_in = c.deleted_in, updated_at = ?2, updated_by = c.by
+              deleted_in = c.deleted_in, updated_at = ?2, updated_by = c.by, pos = c.pos
          from (select ${field('id')} as fid, ${field('parent')} as parent, ${field('name')} as name,
                       ${field('key')} as key, ${field('seq')} as seq, ${field('deleted')} as deleted,
                       ${field('gone')} as gone, ${field('deletedIn')} as deleted_in,
-                      ${field('by')} as by
+                      ${field('by')} as by, ${field('pos')} as pos
                  from json_each(?3)) as c
         where folders.id = c.fid and folders.space_id = ?1`,
     )
@@ -562,11 +567,11 @@ function insertFolders(
   return db
     .prepare(
       `insert into folders (id, space_id, parent_id, name, name_key, seq, deleted, deleted_at,
-                            deleted_in, updated_at, updated_by)
+                            deleted_in, updated_at, updated_by, pos)
        select ${field('id')}, ?1, ${field('parent')}, ${field('name')}, ${field('key')},
               ${field('seq')}, ${field('deleted')},
               case ${field('deleted')} when 1 then ?2 else null end,
-              ${field('deletedIn')}, ?2, ${field('by')}
+              ${field('deletedIn')}, ?2, ${field('by')}, ${field('pos')}
          from json_each(?3)`,
     )
     .bind(space, at, JSON.stringify(rows))
@@ -584,7 +589,7 @@ function updateNotes(
               path = c.path, seq = c.seq, deleted = c.deleted,
               deleted_at = case c.gone when 1 then ?2 when 0 then null else notes.deleted_at end,
               deleted_in = c.deleted_in, updated_by = c.by, doc_seq = c.doc_seq,
-              doc_by = c.doc_by, placed_seq = c.placed_seq, placed_by = c.placed_by,
+              doc_by = c.doc_by, placed_seq = c.placed_seq, placed_by = c.placed_by, pos = c.pos,
               version = notes.version + c.bump,
               updated_at = case c.bump when 1 then ?2 else notes.updated_at end
          from (select ${field('id')} as nid, ${field('parent')} as parent, ${field('name')} as name,
@@ -593,7 +598,8 @@ function updateNotes(
                       ${field('gone')} as gone, ${field('deletedIn')} as deleted_in,
                       ${field('by')} as by, ${field('docSeq')} as doc_seq,
                       ${field('docBy')} as doc_by, ${field('placedSeq')} as placed_seq,
-                      ${field('placedBy')} as placed_by, ${field('bump')} as bump
+                      ${field('placedBy')} as placed_by, ${field('pos')} as pos,
+                      ${field('bump')} as bump
                  from json_each(?3)) as c
         where notes.id = c.nid and notes.space_id = ?1`,
     )
@@ -610,13 +616,13 @@ function insertNotes(
     .prepare(
       `insert into notes (id, space_id, path, seq, version, updated_at, deleted, deleted_at, size,
                           hash, front, folder_id, name, name_key, kind, epoch, epoch_base,
-                          doc_seq, doc_by, updated_by, deleted_in, placed_seq, placed_by)
+                          doc_seq, doc_by, updated_by, deleted_in, placed_seq, placed_by, pos)
        select ${field('id')}, ?1, ${field('path')}, ${field('seq')}, 1, ?2, ${field('deleted')},
               case ${field('deleted')} when 1 then ?2 else null end, ${field('size')},
               ${field('hash')}, ${field('front')}, ${field('parent')}, ${field('name')},
               ${field('key')}, ${field('kind')}, ${field('epoch')}, ${field('epochBase')},
               ${field('docSeq')}, ${field('docBy')}, ${field('by')}, ${field('deletedIn')},
-              ${field('placedSeq')}, ${field('placedBy')}
+              ${field('placedSeq')}, ${field('placedBy')}, ${field('pos')}
          from json_each(?3)`,
     )
     .bind(space, at, JSON.stringify(rows))
@@ -634,6 +640,7 @@ function folderEntry(row: FolderRow): TreeEntry {
   }
   if (row.updated_by !== null) entry.by = row.updated_by
   if (row.deleted_in !== null) entry.deletedIn = row.deleted_in
+  if (row.pos !== null) entry.pos = row.pos
   return entry
 }
 
@@ -654,6 +661,7 @@ function noteEntry(row: NoteRow, name: string): TreeEntry {
   if (row.deleted_in !== null) entry.deletedIn = row.deleted_in
   if (row.placed_seq !== null) entry.placedSeq = row.placed_seq
   if (row.placed_by !== null) entry.placedBy = row.placed_by
+  if (row.pos !== null) entry.pos = row.pos
   return entry
 }
 
@@ -664,14 +672,14 @@ export async function readTree(env: Env, spaceId: string, device?: string): Prom
     .bind(spaceId)
     .first<{ next: number }>()
   const folders = await env.DB.prepare(
-    `select id, parent_id, name, deleted, seq, updated_by, deleted_in
+    `select id, parent_id, name, deleted, seq, updated_by, deleted_in, pos
        from folders where space_id = ?`,
   )
     .bind(spaceId)
     .all<FolderRow>()
   const notes = await env.DB.prepare(
     `select id, kind, folder_id, name, deleted, seq, doc_seq, updated_by, doc_by, deleted_in,
-            placed_seq, placed_by, path, epoch
+            placed_seq, placed_by, pos, path, epoch
        from notes where space_id = ? and not (deleted = 1 and deleted_at is null)`,
   )
     .bind(spaceId)

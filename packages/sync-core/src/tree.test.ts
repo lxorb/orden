@@ -310,6 +310,32 @@ describe('tree', () => {
     })
   })
 
+  /** #1068: a position is the entry's own. Two devices dragging different rows of one
+   *  folder each move only their row; the later of two drags of one row stands; a rename
+   *  keeps it; a move elsewhere leaves it behind unless it says where it was dropped. */
+  test('positions: each drag moves only its row, and stays with it through a rename', () => {
+    const state = treeState()
+    create(state, 'a', 'A.md')
+    create(state, 'b', 'B.md')
+    mkdir(state, 'f', 'Work')
+    const seen = state.cursor
+    applyOp(state, { op: opId(), t: 'place', id: 'a', pos: 'k', seen }, OWNER)
+    applyOp(state, { op: opId(), t: 'place', id: 'b', pos: 'G', seen }, PHONE)
+    applyOp(state, { op: opId(), t: 'place', id: 'b', pos: 'K', seen }, OWNER)
+    applyOp(state, { op: opId(), t: 'rename', id: 'a', name: 'Z.md', seen }, PHONE)
+    expect([state.entries.get('a')?.pos, state.entries.get('b')?.pos]).toEqual(['k', 'K'])
+
+    applyOp(state, { op: opId(), t: 'move', id: 'a', parent: 'f', seen }, OWNER)
+    expect(state.entries.get('a')?.pos).toBeUndefined()
+    applyOp(state, { op: opId(), t: 'move', id: 'b', parent: 'f', pos: 'V', seen }, OWNER)
+    expect(state.entries.get('b')?.pos).toBe('V')
+
+    applyOp(state, { op: opId(), t: 'delete', id: 'b', seen: state.cursor }, OWNER)
+    expect(
+      applyOp(state, { op: opId(), t: 'place', id: 'b', pos: 'W', seen: state.cursor }, OWNER),
+    ).toMatchObject({ refused: 'gone' })
+  })
+
   test('rename against rename: the later wins', () => {
     const state = treeState()
     create(state, 'n', 'Plan.md')

@@ -64,6 +64,9 @@ export interface TreeEntry {
    *  Nothing where its latest change was to its place, which `seq` and `by` then say. */
   placedSeq?: number
   placedBy?: string
+  /** Where somebody put it among the others in its folder, by hand (order.ts); nothing
+   *  where nobody has, and then it stands after every entry that has one. */
+  pos?: string
 }
 
 export interface TreeState {
@@ -293,7 +296,14 @@ class Rules {
 
   /** Places a new entry: its parent brought back if it was deleted, its name
    *  numbered if taken. */
-  made(op: Op, id: string, kind: EntryKind, parent: string | null, wanted: string): OpResult {
+  made(
+    op: Op,
+    id: string,
+    kind: EntryKind,
+    parent: string | null,
+    wanted: string,
+    pos?: string,
+  ): OpResult {
     const { state, device } = this
     const existing = state.entries.get(id)
     if (existing) return existing.deleted ? { op: op.op, refused: 'gone' } : placement(op, existing)
@@ -309,6 +319,7 @@ class Rules {
       seq: 0,
       docSeq: 0,
     }
+    if (pos !== undefined) entry.pos = pos
     changed(state, entry, device)
     state.entries.set(id, entry)
     return placement(op, entry)
@@ -361,10 +372,28 @@ class Rules {
     if (!isEntry(entry)) return entry
     reviveAbove(state, op.parent, device)
     const name = freeName(state, op.parent, op.name ?? entry.name, entry.kind, entry.id)
-    if (name !== entry.name || op.parent !== entry.parent) {
+    // A move that does not say where it was dropped keeps the position it had only in
+    // the folder it had it in: carried elsewhere, it stands with the unplaced.
+    const pos = op.pos ?? (op.parent === entry.parent ? entry.pos : undefined)
+    if (name !== entry.name || op.parent !== entry.parent || pos !== entry.pos) {
       entry.name = name
       entry.parent = op.parent
+      if (pos === undefined) delete entry.pos
+      else entry.pos = pos
       changed(state, entry, device, op.seen)
+    }
+    return placement(op, entry)
+  }
+
+  /** Put somewhere else in its folder (#1068). The later of two such to arrive stands,
+   *  as with a rename; two moved into one gap stand side by side, the ids between them.
+   *  Nothing to put where the entry is gone. */
+  placed(op: Op & { t: 'place' }): OpResult {
+    const entry = this.state.entries.get(op.id)
+    if (!entry || entry.deleted) return { op: op.op, refused: 'gone' }
+    if (entry.pos !== op.pos) {
+      entry.pos = op.pos
+      changed(this.state, entry, this.device, op.seen)
     }
     return placement(op, entry)
   }
@@ -444,9 +473,9 @@ class Rules {
   applied(op: Op): OpResult {
     switch (op.t) {
       case 'mkdir':
-        return this.made(op, op.id, 'folder', op.parent, op.name)
+        return this.made(op, op.id, 'folder', op.parent, op.name, op.pos)
       case 'create':
-        return this.merged(op) ?? this.made(op, op.id, op.kind, op.parent, op.name)
+        return this.merged(op) ?? this.made(op, op.id, op.kind, op.parent, op.name, op.pos)
       case 'rename':
         return this.renamed(op)
       case 'move':
@@ -455,6 +484,8 @@ class Rules {
         return this.deleted(op)
       case 'restore':
         return this.restored(op)
+      case 'place':
+        return this.placed(op)
     }
   }
 }

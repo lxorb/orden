@@ -346,6 +346,41 @@ describe('tree operations', () => {
     expect(folders()[0]?.deleted).toBe(0)
   })
 
+  /** #1068: where somebody put an entry among the rest of its folder is the entry's own,
+   *  kept through a rename, said in the feed, and only what was dragged moves. */
+  test('keep a position on the entry, through a rename, in the feed', async () => {
+    const { cursor } = await ops([
+      op('mkdir', { id: 'f', parent: null, name: 'Folder', pos: 'V' }),
+      op('create', { id: 'a', kind: 'note', parent: null, name: 'A.md', pos: 'G' }),
+      op('create', { id: 'b', kind: 'note', parent: null, name: 'B.md' }),
+    ])
+    expect(await one(op('place', { id: 'b', pos: 'K' }, cursor))).toMatchObject({ ok: true })
+    // Two devices dragging different rows of one folder at once: both stand.
+    await one(op('place', { id: 'a', pos: 'k' }, cursor), other)
+    await one(op('rename', { id: 'a', name: 'Renamed.md' }, cursor))
+
+    const page = await feed()
+    expect(page.order).toBe(true)
+    const pos = Object.fromEntries(page.items.map((item) => [item.id, item.pos]))
+    expect(pos).toMatchObject({ f: 'V', a: 'k', b: 'K' })
+    const refused = await call(env, `/v2/spaces/${space}/ops`, {
+      token,
+      body: { ops: [op('place', { id: 'b', pos: 'bad-' }, cursor)] },
+    })
+    expect(refused.status).toBe(400)
+  })
+
+  test('keep a position only in the folder it was given in, unless a move says another', async () => {
+    const { cursor } = await ops([
+      op('mkdir', { id: 'f', parent: null, name: 'Folder' }),
+      op('create', { id: 'n', kind: 'note', parent: null, name: 'N.md', pos: 'G' }),
+    ])
+    await one(op('move', { id: 'n', parent: 'f' }, cursor))
+    expect((await feed()).items.find((item) => item.id === 'n')?.pos).toBeUndefined()
+    await one(op('move', { id: 'n', parent: null, pos: 'h' }, cursor))
+    expect((await feed()).items.find((item) => item.id === 'n')?.pos).toBe('h')
+  })
+
   test('keep the path of five hundred notes current when their folder is renamed', async () => {
     const creates = Array.from({ length: 500 }, (_, at) =>
       op('create', {

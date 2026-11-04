@@ -27,6 +27,9 @@ had seen when it did it (`seen`):
 | `move` | an entry's new folder, and a name where the old one is taken there |
 | `delete` | an entry gone, and for a folder everything in it the device had seen |
 | `restore` | a deleted entry back, with the folders above it, and for a folder what was deleted with it |
+| `place` | an entry put somewhere else among the rest of its folder, by hand (its new position) |
+
+`mkdir`, `create` and `move` may carry a position too: where the entry was dropped.
 
 The account applies operations in the order they arrive and answers each with what became
 of it; every device applies the account's feed in that same order, so every device ends on
@@ -46,6 +49,17 @@ the same tree. An operation carries its own id, so one that arrives twice is app
 | a rename, move or restore and a delete that had not seen it | The other change wins, as an edit does: a delete takes only what its device had seen. A device's own changes never stand against its own delete, and neither does the account's bookkeeping (folders made from paths at the move to v2). |
 | delete and restore | The restore brings the entry back under its id, with its folders. A restore of something already back still counts as that person's change, so a delete that had not seen it leaves the entry. |
 | two creates of the day's note | One note, both texts merged (docs/sync-v2.md 5.9). |
+| reorder and reorder | Each drag moves only the row that was dragged, so two people arranging one folder at once both keep what they did; two drags of one row, the later to arrive stands; two rows dropped into one gap stand side by side, their ids deciding which first. |
+| reorder and rename, or move | The position is the entry's, so a rename keeps it. A move to another folder leaves it behind unless the move says where the entry was dropped there. |
+
+## Order
+
+A folder's rows stand in the order somebody dragged them into, where anybody did: each
+entry may carry a position (`pos`), a fractional index (`@orden/sync-core/order`) - a
+short string of base-62 digits that sorts as text, so a row dropped between two others
+gets a position between theirs and nothing else is renumbered. Rows with a position come
+first, by position and then by id; rows nobody placed follow, in the folder's own order
+(by name, by time).
 
 Who last put an entry where it is and who last wrote in it are two things the account
 keeps apart (`placed_seq` and `placed_by` on a note, 0068). Writing in a note makes its
@@ -84,7 +98,9 @@ until the step of #1068 that removes it lands:
 - **A restore from this device's trash makes a new note.** The trash puts the files back
   on the disk and the engine hears them as files made, so the note comes back under a new
   id, beside its own tombstone. Restoring has to be an operation on the id.
-- **Order is not part of the tree.** The order somebody dragged a folder's rows into is
-  kept per folder path as a list of names (`arranged`), last writer wins per folder: two
-  people reordering one folder overwrite each other, and a rename or a move loses the
-  place. It becomes a position on each entry.
+- **Order is not on the devices yet.** The account keeps positions (`pos` on folders and
+  notes, 0069, and the `place` operation), and says so in its feed (`order: true`), but
+  the file list still keeps the order somebody dragged a folder's rows into per folder
+  path as a list of names (`arranged`), last writer wins per folder: two people
+  reordering one folder overwrite each other, and a rename or a move loses the place.
+  The devices move to positions next.
