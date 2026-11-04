@@ -352,7 +352,7 @@ export function refusing<T>(run: () => T): { value: T; partial: boolean } {
 
 /** One evaluation of an expression: the steps start over here, and a formula it reads
  *  is part of it. Nothing at all where no guarded base is running. */
-export function evaluation<T, A>(run: (arg: A) => T, arg: A): T {
+export function evaluation<T, A>(run: (arg: A) => T, arg: A, weigh: (made: T) => void): T {
   if (guarding === 0 || evaluating) return run(arg)
 
   lookedAt = performance.now()
@@ -363,20 +363,25 @@ export function evaluation<T, A>(run: (arg: A) => T, arg: A): T {
   stepsOne = 0
   evaluating = true
   try {
-    return run(arg)
+    const made = run(arg)
+    weigh(made)
+    return made
   } finally {
     evaluating = false
   }
 }
 
 /** Counts steps about to be taken. Throws, which answers nothing for that row, where a
- *  guarded base may not take them. Asked before what is costly, so it is never built. */
+ *  guarded base may not take them. Asked before what is costly, so it is never built. Only
+ *  an evaluation counts: nothing around it is there to take the no, and what it handed out
+ *  has been paid for (`weigh` in runtime.ts). */
 export function spend(steps: number): void {
-  if (guarding === 0) return
+  if (guarding === 0 || !evaluating) return
+  // Not `>`'s opposite, so that a count that is no number is refused too, and before
+  // it is added, since the count of what is unseen outlives the evaluation.
+  if (!(stepsOne + steps <= MOST_STEPS_ONE)) throw tooLong()
   stepsOne += steps
   stepsUnseen += steps
-  // Not `>`'s opposite, so that a count that is no number is refused too.
-  if (!(stepsOne <= MOST_STEPS_ONE)) throw tooLong()
   if (stepsUnseen >= STEPS_A_LOOK) {
     stepsUnseen = 0
     const now = performance.now()
