@@ -53,7 +53,7 @@ async function rowsOfSpace(
 function row(task: Row, root: string): string {
   const fields = task.task
   if (!fields || !task.anchor) return ''
-  const where = `data-path="${escapeAll(insideSpace(root, task.path))}" data-line="${task.anchor.line}"`
+  const where = `data-path="${escapeAll(insideSpace(root, task.path))}" data-line="${task.anchor.line}" data-hash="${escapeAll(task.anchor.hash)}"`
   const box =
     `<input type="checkbox" class="nib-checkbox" data-task ${where}` +
     `${fields.done ? ' checked' : ''} aria-label="${escapeAll(fields.text)}">`

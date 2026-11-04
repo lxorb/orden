@@ -1217,3 +1217,20 @@ describe('a table with a cell over several rows', () => {
     )
   })
 })
+
+describe('a form', () => {
+  test('its words are kept and its controls are not', () => {
+    const said = htmlToMarkdown('<p>intro</p><form><p>body</p><input><button>Send</button></form>')
+    expect(said).toContain('intro')
+    expect(said).toContain('body')
+    expect(said).not.toContain('Send')
+  })
+
+  test('with nothing but controls and what names them is nothing', () => {
+    expect(
+      htmlToMarkdown(
+        '<p>intro</p><form><label>Mail</label><input><select><option>a</option></select></form>',
+      ),
+    ).toBe('intro')
+  })
+})

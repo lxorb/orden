@@ -189,9 +189,9 @@ function spansOfToken(token: Token, marks: Marks): Span[] {
       return [{ ...marks, text: '\n' }]
 
     case 'html':
-      // Raw HTML is markup, not words. A page break is the one piece of it that
-      // means something to a writer, and it is picked up as a block.
-      return []
+      // A tag in a line is markup, and the words around it are tokens of their own. A
+      // line break is the one that says something, and in a table cell the only way to.
+      return /^<br\s*\/?>$/i.test(token.raw.trim()) ? [{ ...marks, text: '\n' }] : []
 
     case 'text':
     case 'escape':
@@ -402,11 +402,20 @@ function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {
         out.push({ kind: 'rule' })
         break
 
-      case 'html':
-        if (PAGE_BREAK.test(String((token as Tokens.Generic).text ?? ''))) {
-          out.push({ kind: 'break' })
+      case 'html': {
+        // A page break is the one piece of markup that means something to a writer, and
+        // the words a block holds are words here too: every other surface shows them.
+        const html = String((token as Tokens.Generic).text ?? '')
+        if (PAGE_BREAK.test(html)) out.push({ kind: 'break' })
+        for (const words of wordsOfHtml(html)) {
+          // A break is a span of its own, as `br` is above.
+          const spans = words
+            .split('\n')
+            .flatMap((text, at) => (at ? [{ text: '\n' }, { text }] : [{ text }]))
+          out.push({ kind: 'paragraph', spans })
         }
         break
+      }
 
       default: {
         const spans = spansOf((token as Tokens.Generic).tokens)
@@ -415,6 +424,76 @@ function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {
       }
     }
   }
+
+  return out
+}
+
+/** Elements whose words are no words of the page. */
+const NOT_SHOWN =
+  /^(?:script|style|template|head|title|noscript|textarea|select|svg|canvas|object)$/i
+
+/** Elements that start a line of their own. A cell does not: a row is the line. */
+const STARTS_LINE =
+  /^(?:address|article|aside|blockquote|center|dd|details|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hr|li|main|menu|nav|ol|p|pre|section|summary|table|tbody|tfoot|thead|tr|ul)$/i
+
+const ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+}
+
+function entitiesRead(text: string): string {
+  return text.replace(/&(?:#(\d+)|#x([\da-f]+)|(\w+));/gi, (whole, ten, hex, name: string) => {
+    if (name) return ENTITIES[name.toLowerCase()] ?? whole
+    const code = ten ? Number(ten) : Number.parseInt(String(hex), 16)
+    return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole
+  })
+}
+
+/** The words of a block of raw HTML, a paragraph for each block element in it. No DOM,
+ *  since this reading of a note is pure, and no more of HTML than where words are. */
+export function wordsOfHtml(html: string): string[] {
+  const out: string[] = []
+  let line = ''
+  let skipping: string | null = null
+  let pre = 0
+  let at = 0
+
+  const read = (raw: string) => {
+    if (skipping !== null) return
+    line += entitiesRead(pre ? raw : raw.replace(/\s+/g, ' '))
+  }
+  const end = () => {
+    const said = line.replace(/[ \t]*\n[ \t]*/g, '\n').trim()
+    if (said) out.push(said)
+    line = ''
+  }
+
+  for (const found of html.matchAll(
+    /<!--[\s\S]*?(?:-->|$)|<(\/?)([a-z][\w-]*)(?:"[^"]*"|'[^']*'|[^'">])*>/gi,
+  )) {
+    read(html.slice(at, found.index))
+    at = found.index + found[0].length
+
+    const [, closing, name = ''] = found
+    if (!name) continue
+    if (skipping !== null) {
+      if (closing && name.toLowerCase() === skipping) skipping = null
+      continue
+    }
+    if (NOT_SHOWN.test(name)) {
+      if (!closing && !found[0].endsWith('/>')) skipping = name.toLowerCase()
+    } else if (/^br$/i.test(name)) line += '\n'
+    else if (STARTS_LINE.test(name)) {
+      end()
+      if (/^pre$/i.test(name)) pre += closing ? -1 : 1
+    } else if (/^t[dh]$/i.test(name) && !closing && line.trim()) line += ' '
+  }
+  read(html.slice(at))
+  end()
 
   return out
 }

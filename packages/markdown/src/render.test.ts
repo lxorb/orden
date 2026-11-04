@@ -1136,3 +1136,43 @@ describe('a markdown picture with a size after a bar', () => {
     expect(renderMarkdown('![a|b](a.png)')).toContain('alt="a|b"')
   })
 })
+
+describe('a named block on a page a link to it is followed on', () => {
+  const anchored = (source: string) => renderMarkdown(source, { blockAnchors: true })
+
+  test('has an id of its name, at the end of its words', () => {
+    expect(anchored('Words ^abc\n')).toBe('<p>Words <span id="^abc"></span></p>\n')
+    expect(anchored('- one ^abc\n- two\n')).toContain('one <span id="^abc"></span>')
+    expect(anchored('> said ^abc\n')).toContain('said <span id="^abc"></span>')
+    expect(anchored('_said_ ^abc\n')).toContain('<em>said</em>')
+    expect(anchored('Words\n\n^abc\n')).toContain('<p>Words</p>\n<span id="^abc"></span>')
+  })
+
+  test('is drawn as without one, where a line cannot hold it', () => {
+    for (const [named, plain] of [
+      ['# Title ^abc\n', '# Title\n'],
+      ['Title ^abc\n===\n', 'Title\n===\n'],
+      ['| a |\n| --- |\n| 1 | ^abc\n', '| a |\n| --- |\n| 1 |\n'],
+      ['> [!note] ^abc\n> said\n', '> [!note]\n> said\n'],
+      ['```ts\ncode\n``` ^abc\n', '```ts\ncode\n```\n'],
+      ['<div title="a ^abc\n"></div>\n', '<div title="a\n"></div>\n'],
+    ] as const) {
+      expect(anchored(named)).toBe(renderMarkdown(plain))
+    }
+  })
+
+  test('nobody else asked for one', () => {
+    expect(renderMarkdown('Words ^abc\n')).toBe('<p>Words</p>\n')
+  })
+})
+
+describe('a link to a block', () => {
+  const page = (source: string) =>
+    renderMarkdown(source, { resolveLink: (link) => ({ href: link.target, text: 'words' }) })
+
+  test('says the block', () => {
+    expect(page('[[Note#^x]]\n')).toContain('href="Note#%5Ex"')
+    expect(page('[[#^abc]]\n')).toContain('href="#%5Eabc"')
+    expect(page('[[Note#Part]]\n')).toContain('href="Note#part"')
+  })
+})

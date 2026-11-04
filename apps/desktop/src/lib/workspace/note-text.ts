@@ -122,12 +122,26 @@ export async function noteText(ws: HoldsNotes, path: string): Promise<string | n
  *
  *  Answers whether there was a box: the line is read again here rather than
  *  trusted from the row, so a note edited since the list was drawn is ticked
- *  where it says a task is now, or not at all. */
-export async function toggleTaskAt(ws: HoldsNotes, path: string, line: number): Promise<boolean> {
+ *  where it says a task is now, or not at all. With `hash`, the `taskHash` of the words
+ *  a row was drawn from, that task wherever it stands now: one ticked a moment ago may
+ *  have put its next occurrence above the row, before the row could be drawn again. */
+export async function toggleTaskAt(
+  ws: HoldsNotes,
+  path: string,
+  asked: number,
+  hash?: string,
+): Promise<boolean> {
   const before = await noteText(ws, path)
   if (before === null) return false
 
   const starts = lineStarts(before)
+  let line = asked
+  if (hash !== undefined) {
+    const { taskLine } = await import('../rows/write')
+    const found = taskLine(before, { line, hash })
+    if (!found) return false
+    line = starts.lastIndexOf(found.from)
+  }
   const from = starts[line]
   if (from === undefined) return false
 

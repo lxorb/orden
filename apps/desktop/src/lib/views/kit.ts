@@ -101,7 +101,7 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
     writes,
     get writable() {
       const at = live.writtenAt
-      return at === null || canWriteAt(at)
+      return !live.fixed && (at === null || canWriteAt(at))
     },
     get adds() {
       if (!kit.writable) return false

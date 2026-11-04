@@ -4110,8 +4110,8 @@ class Workspace {
   }
 
   /** Ticks or clears the box on one line of a note, without opening it. */
-  async toggleTaskAt(path: string, line: number): Promise<boolean> {
-    return text.toggleTaskAt(this, path, line)
+  async toggleTaskAt(path: string, line: number, hash?: string): Promise<boolean> {
+    return text.toggleTaskAt(this, path, line, hash)
   }
 
   /** Writes a replacement across the space, as one thing to undo. `keeping` says

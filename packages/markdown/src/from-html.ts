@@ -50,7 +50,6 @@ export const NEVER = [
   'iframe',
   'object',
   'embed',
-  'form',
   'button',
   'select',
   'textarea',
@@ -59,6 +58,23 @@ export const NEVER = [
   'video',
   'audio',
 ]
+
+/** What only a form's own controls say. */
+const CONTROL_WORDS = new Set(['label', 'legend', 'option', 'button', 'select', 'textarea'])
+
+/** Whether a form holds words or a picture of the page's, outside what its controls say.
+ *  ASP.NET wraps a whole page in one, and a search page its results; a sign-up box is a
+ *  label and a field, and no part of an article. */
+export function formSays(node: Node): boolean {
+  for (const one of node.childNodes) {
+    if (one.nodeType === 3 && one.textContent?.trim()) return true
+    if (one.nodeType !== 1) continue
+    const name = one.nodeName.toLowerCase()
+    if (name === 'img' || name === 'picture') return true
+    if (!CONTROL_WORDS.has(name) && !NEVER.includes(name) && formSays(one)) return true
+  }
+  return false
+}
 
 export interface FromHtmlOptions {
   /** What a picture becomes. The default writes the address the page gave it. */
@@ -750,7 +766,10 @@ function converter(options: FromHtmlOptions): TurndownService {
   // the list is one. For a clip this is a second line of defence behind the
   // extractor's own DOM cleaning; for a paste it is the only one, since a clipboard's HTML
   // arrives as a whole document with a head on it.
-  service.remove((node) => NEVER.includes(node.nodeName.toLowerCase()))
+  service.remove((node) => {
+    const name = node.nodeName.toLowerCase()
+    return NEVER.includes(name) || (name === 'form' && !formSays(node))
+  })
 
   // Turndown asks its rules before what it removes, so the elements of the list
   // that point at a file are links instead for the caller that keeps the files.

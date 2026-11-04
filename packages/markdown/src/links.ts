@@ -989,15 +989,53 @@ export function withoutBlockIds(text: string): string {
  *  what it was. Only where the line ends its paragraph: two blanks before a line of the
  *  same paragraph would break it there. */
 export function blockIdsBlanked(text: string): string {
-  return replacingBlockIds(text, (length, end) => {
-    const next = text.indexOf('\n', end)
-    const under = text.indexOf('\n', next + 1)
-    const below = next === -1 ? '' : text.slice(next + 1, under === -1 ? text.length : under)
-    return below.trim() === '' ? ' '.repeat(length) : ''
+  return replacingBlockIds(text, (length, end) =>
+    lineBelow(text, end).trim() === '' ? ' '.repeat(length) : '',
+  )
+}
+
+/** The line under the one `at` is on, empty at the end of the text. */
+function lineBelow(text: string, at: number): string {
+  const next = text.indexOf('\n', at)
+  if (next === -1) return ''
+  const under = text.indexOf('\n', next + 1)
+  return text.slice(next + 1, under === -1 ? text.length : under)
+}
+
+/** Around a block's name while a page is rendered. */
+const ANCHOR_OPEN = '\uE0F0'
+const ANCHOR_CLOSE = '\uE0F1'
+
+/** A line a mark cannot stand on: a heading takes its words for its id, a table row would
+ *  have one cell more, a callout a title and raw HTML one inside a tag. */
+const NO_ANCHOR_IN = /^\s*(?:>\s*)*(?:#{1,6}\s|\||<|\[!)|\|\s*(?:\^[\w-]*)?\s*$/
+
+/** The same with each name left as a mark `blockAnchorsDrawn` makes an id of, where a
+ *  line of words can hold one: a link to the block lands on it. After a blank, so what
+ *  closes an emphasis is still at the end of a word. */
+export function blockIdsAnchored(text: string): string {
+  return replacingBlockIds(text, (_length, end, row, id) => {
+    const heading = /^\s*(?:=+|-+)\s*$/.test(lineBelow(text, end))
+    return row.code || heading || NO_ANCHOR_IN.test(row.text)
+      ? ''
+      : ` ${ANCHOR_OPEN}${id}${ANCHOR_CLOSE}`
   })
 }
 
-function replacingBlockIds(text: string, by: (length: number, end: number) => string): string {
+/** The marks of `blockIdsAnchored` as the empty elements a page scrolls to. */
+export function blockAnchorsDrawn(html: string): string {
+  if (!html.includes(ANCHOR_OPEN)) return html
+  const anchor = (id: string) => `<span id="^${id}"></span>`
+  const mark = `${ANCHOR_OPEN}([\\w-]+)${ANCHOR_CLOSE}`
+  return html
+    .replace(new RegExp(`<p>\\s*${mark}\\s*</p>`, 'g'), (_, id: string) => anchor(id))
+    .replace(new RegExp(mark, 'g'), (_, id: string) => anchor(id))
+}
+
+function replacingBlockIds(
+  text: string,
+  by: (length: number, end: number, row: Row, id: string) => string,
+): string {
   let out = ''
   let at = 0
 
@@ -1011,7 +1049,7 @@ function replacingBlockIds(text: string, by: (length: number, end: number) => st
     const before = text[caret - 1]
     const from = before === ' ' || before === '\t' ? caret - 1 : caret
 
-    out += text.slice(at, from) + by(end - from, end)
+    out += text.slice(at, from) + by(end - from, end, row, id)
     at = end
   }
 

@@ -14,7 +14,14 @@ import { coverFigure, coverOf } from './cover'
 import { stripFrontMatter } from './front-matter'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
 import { htmlBlockCard, ownMarkup } from './html-block'
-import { isNoteTarget, sizedAlt, slugify, withoutBlockIds } from './links'
+import {
+  blockAnchorsDrawn,
+  blockIdsAnchored,
+  isNoteTarget,
+  sizedAlt,
+  slugify,
+  withoutBlockIds,
+} from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
 import { hashtags, type TagHref } from './tags'
 import { iframeCard, isIframeTag, splitIframe, webCard } from './web-embed'
@@ -64,6 +71,9 @@ export interface RenderOptions {
    *  leave it to the default. An export uses this to draw diagrams and to
    *  colour code, which need more than a renderer has. */
   code?: (code: string, language: string) => string | null
+  /** Whether a named block gets an id of `^` and its name, for a page a `[[#^name]]` link
+   *  is followed on. */
+  blockAnchors?: boolean
   /** Where a `[[wikilink]]` points on this page. Without it a wikilink renders
    *  as the words it showed, which is what an export wants: a document has no
    *  space around it to point into. */
@@ -507,6 +517,7 @@ function inside(options: RenderOptions): RenderOptions {
   // And no banner: a cover is the top of the note it belongs to, not a picture
   // pushed into the middle of whichever note quotes it.
   delete rest.cover
+  delete rest.blockAnchors
   return rest
 }
 
@@ -537,12 +548,16 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
   // Front matter is metadata, a block's name is a marker and a comment is a note
   // to the writer; none of the three is a word of the note, so none of them
   // reaches the page. See comments.ts for why the comment goes before the parse.
-  const body = withoutComments(withoutBlockIds(stripFrontMatter(source)))
+  const words = stripFrontMatter(source)
+  const body = withoutComments(
+    options.blockAnchors ? blockIdsAnchored(words) : withoutBlockIds(words),
+  )
   // `breaks` is asked for per parse rather than built into the renderer, so the
   // two shared ones above serve a deck as well as a document: marked merges a
   // call's options over the instance's and leaves the instance alone. A caller
   // that says nothing gets the reader's own answer; see `setHardBreaks`.
   let html = parsedOrPlain(marked, body, options.breaks ?? hardBreaks())
+  if (options.blockAnchors) html = blockAnchorsDrawn(html)
 
   html = markAbbreviations(html, collectAbbreviations(body))
 

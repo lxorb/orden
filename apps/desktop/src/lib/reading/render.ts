@@ -114,6 +114,7 @@ export async function readingHtml(
   const html = withPictures(
     renderMarkdown(note.text, {
       footnotes: true,
+      blockAnchors: true,
       // The note's own metadata, the way the reader asked for it in the editor -
       // rows, source, or neither. Reading a note is being in the app looking at it,
       // so it says the same thing either way; a document that has left does not, and

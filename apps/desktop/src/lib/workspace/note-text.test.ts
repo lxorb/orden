@@ -252,6 +252,17 @@ describe('a space shared to be read', () => {
     expect(ws.undone.stack).toHaveLength(0)
   })
 
+  test('a row keeps its own task when a tick above it has moved the lines', async () => {
+    const { taskHash } = await import('@orden/bases')
+    readOnly.delete(SPACE)
+    const { ws } = space({ [`${SPACE}/todo.md`]: '- [ ] new\n- [ ] Alpha\n- [ ] Bravo\n' })
+    // Drawn when Bravo was on line 1.
+    expect(await toggleTaskAt(ws, `${SPACE}/todo.md`, 1, taskHash('Bravo'))).toBe(true)
+    const said = (await noteText(ws, `${SPACE}/todo.md`)) ?? ''
+    expect(said).toMatch(/^- \[ \] new\n- \[ \] Alpha\n- \[x\] Bravo/)
+    expect(await toggleTaskAt(ws, `${SPACE}/todo.md`, 0, taskHash('gone'))).toBe(false)
+  })
+
   test('ticks no task', async () => {
     const { ws } = space({ [`${SPACE}/todo.md`]: '- [ ] wash up\n' })
     readOnly.add(SPACE)

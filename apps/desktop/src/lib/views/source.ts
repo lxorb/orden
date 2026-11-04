@@ -121,18 +121,22 @@ export function tabSource(tab: Tab): Source {
   }
 }
 
-/** The fence a base came from, found again in its note: the first ` ```base ` fence
- *  holding exactly these words. */
-function fenceAt(text: string, code: string): { from: number; to: number } | null {
+/** The fence a base came from, found again in its note: the one ` ```base ` fence at
+ *  the margin holding exactly these words. Null for one this cannot find to write into,
+ *  in a quote or a list item, and for two with the same words, where nothing says which. */
+export function fenceAt(text: string, code: string): { from: number; to: number } | null {
   const fences = /^(`{3,}|~{3,})base[ \t]*\r?\n([\s\S]*?)^\1[ \t]*$/gm
+  const words = (body: string) => body.replace(/\r?\n$/, '').replace(/\r\n/g, '\n')
+  let one: { from: number; to: number } | null = null
   for (let found = fences.exec(text); found; found = fences.exec(text)) {
     const body = found[2] ?? ''
-    if (body.replace(/\r?\n$/, '') === code.replace(/\r?\n$/, '')) {
+    if (words(body) === words(code)) {
+      if (one) return null
       const from = found.index + found[0].indexOf(body)
-      return { from, to: from + body.length }
+      one = { from, to: from + body.length }
     }
   }
-  return null
+  return one
 }
 
 /** Where the reader was in each fence, by its note and its words. The editor draws a
@@ -166,17 +170,25 @@ export function fenceSource(code: string, path: string | null, stranger = false)
   let words = code
   let shown = path === null ? undefined : fenceViews.get(fenceKey(path, code))
   const space = path === null ? workspace.activeSpace : spaceOf(path)
+  let fixed = true
   return {
     scope: space?.name ?? null,
     path,
     stranger,
+    fixed: () => fixed,
     self: () => rowAt(path),
     shown: () => shown,
     keep(now) {
       shown = now
       if (path !== null) remember(fenceKey(path, words), now)
     },
-    load: () => Promise.resolve(readBase(words)),
+    async load() {
+      // A change to a view this could not write back would show, and be gone at the
+      // next draw, so the view is not offered as one to change.
+      const text = path === null ? null : await noteText(workspace, path).catch(() => null)
+      fixed = text === null || fenceAt(text, words) === null
+      return readBase(words)
+    },
     async save(next, now) {
       if (path === null) return
       const text = await noteText(workspace, path)
