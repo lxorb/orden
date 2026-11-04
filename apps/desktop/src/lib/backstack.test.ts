@@ -28,8 +28,10 @@ test('the drawer is registered on whether a side is covered, not on which panel'
   expect(app).toContain('const covered = $derived(!!workspace.panel)')
   expect(app).toContain('closeOnBack(covered, () => workspace.closePanel())')
 
-  expect(app).toContain("const coveredRight = $derived(!!workspace.openOn('right'))")
-  expect(app).toContain("closeOnBack(coveredRight, () => workspace.closePanel('right'))")
+  // The right side is covered while it shows anything, the scratchpad's card too, and
+  // back shuts it whole (#1032).
+  expect(app).toContain('const coveredRight = $derived(rightOpen)')
+  expect(app).toContain('closeOnBack(coveredRight, () => workspace.closeRight())')
 })
 
 test('and never on the panel itself, which is what took the app away', () => {

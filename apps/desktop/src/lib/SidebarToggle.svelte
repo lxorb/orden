@@ -27,7 +27,8 @@
 
   const { side = 'left' }: { side?: PanelSide } = $props()
 
-  const open = $derived(!!workspace.openOn(side))
+  /** The right side is open while it shows anything, the scratchpad too (#1032). */
+  const open = $derived(side === 'right' ? workspace.rightShows !== null : !!workspace.openOn(side))
   /** Which side it is said in words, since the glyph says it only by which way it
    *  faces: two buttons both called "Show sidebar" were two buttons nobody could tell
    *  apart without pressing them. */
@@ -51,7 +52,7 @@
 
   function pressed(event: MouseEvent) {
     workspace.toggleSidebar(side)
-    opened = event.detail === 0 && !!workspace.openOn(side)
+    opened = event.detail === 0 && open
   }
 
   /** Tab into the side just opened, and Shift+Tab from there back to here. */

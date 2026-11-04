@@ -1,7 +1,8 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** The scratchpad as a switch in the bar and a card at the window's edge, never a tab.
+/** The scratchpad as one of the right side's tabs and a card in it, never a tab of the
+ *  notes'.
  *
  *  Emil, 2026-10-05: *"The scratchpad should never open as a tab. It should be basically
  *  a thing in the top right that you can click, and then it is selected or it isn't."*
@@ -45,6 +46,7 @@ globalThis.ResizeObserver = class {
 
 const { Disk } = await import('../disk')
 const { default: Titlebar } = await import('../../src/lib/Titlebar.svelte')
+const { default: Sidebar } = await import('../../src/lib/Sidebar.svelte')
 const { default: ScratchpadCard } = await import('../../src/lib/scratchpad/ScratchpadCard.svelte')
 const { shown, toggleScratchpad } = await import('../../src/lib/scratchpad/is.svelte')
 const { scratchpad } = await import('../../src/lib/scratchpad/pad')
@@ -94,33 +96,41 @@ async function card() {
   return column
 }
 
-const glyph = () => target.querySelector<HTMLButtonElement>('header button.pad')
+const rightButton = () =>
+  target.querySelector<HTMLButtonElement>('header button[aria-label$="right sidebar"]')
 
-test('the switch in the bar is pressed while the card is up, and makes no tab', () => {
+/** #1032: the scratchpad's own switch and the right side's fought, each turning the edge
+ *  into the other. A desktop's bar has one button for the right side now, and the
+ *  scratchpad is one of the side's tabs. */
+test('the bar has one button for the right side and no switch of the scratchpad’s', () => {
   bar()
-  const tabs = workspace.tabs.length
-
-  expect(glyph()?.getAttribute('aria-pressed')).toBe('false')
-  expect(glyph()?.getAttribute('aria-label')).toBe('Scratchpad')
-
-  glyph()?.click()
-  flushSync()
-  expect(shown.on).toBe(true)
-  expect(glyph()?.getAttribute('aria-pressed')).toBe('true')
-  expect(glyph()?.classList.contains('is-on')).toBe(true)
-  expect(workspace.tabs.length).toBe(tabs)
-
-  glyph()?.click()
-  flushSync()
-  expect(shown.on).toBe(false)
-  expect(glyph()?.getAttribute('aria-pressed')).toBe('false')
+  expect(target.querySelector('header button.pad')).toBeNull()
+  expect(target.querySelectorAll('header button[aria-label$="right sidebar"]')).toHaveLength(1)
 })
 
-test('a press on the switch leaves the keyboard where it is', () => {
+test('pressed with the card up it shuts the side whole, and again it brings the card back', () => {
   bar()
-  const press = new PointerEvent('pointerdown', { bubbles: true, cancelable: true })
-  glyph()?.dispatchEvent(press)
-  expect(press.defaultPrevented).toBe(true)
+  const tabs = workspace.tabs.length
+  workspace.showRight('outline')
+  workspace.showRight('scratchpad', false)
+  flushSync()
+  expect(rightButton()?.getAttribute('aria-pressed')).toBe('true')
+
+  rightButton()?.click()
+  flushSync()
+  expect(shown.on).toBe(false)
+  expect(workspace.rightShows).toBeNull()
+  expect(rightButton()?.getAttribute('aria-pressed')).toBe('false')
+
+  rightButton()?.click()
+  flushSync()
+  expect(shown.on).toBe(true)
+  expect(workspace.rightShows).toBe('scratchpad')
+  expect(workspace.tabs.length).toBe(tabs)
+
+  rightButton()?.click()
+  flushSync()
+  expect(workspace.rightShows).toBeNull()
 })
 
 test('opening its file from anywhere shows the card instead of a tab', async () => {
@@ -238,12 +248,16 @@ const TWO_SPACES = [
 
 // lxorb, issue #231: "when right clicking on the scratchpad there's 'move to space' which
 // doesn't make sense". It is in no space and no tab, so a tab's or a file's rows are not its.
-test('a right click on the switch offers nothing, Move to space least of all', async () => {
+test('a right click on the scratchpad’s tab offers nothing, Move to space least of all', async () => {
   workspace.spaces = TWO_SPACES
-  bar()
+  const made = mount(Sidebar, { target, props: { side: 'right' } })
+  flushSync()
+  undo.push(() => void unmount(made, { outro: false }))
+  const tab = target.querySelector<HTMLButtonElement>('[role=tab][aria-label="Scratchpad"]')
+  expect(tab).not.toBeNull()
 
   const click = new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
-  glyph()?.dispatchEvent(click)
+  tab?.dispatchEvent(click)
   await vi.dynamicImportSettled()
   flushSync()
   expect(menu.open).toBe(false)

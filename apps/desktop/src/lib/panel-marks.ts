@@ -54,3 +54,8 @@ export const CHATS_MARK = 'M11.2 8.4a1 1 0 0 1-1 1H4.1l-2.3 2V2.8a1 1 0 0 1 1-1h
 /** A box with a tick in it: the Tasks panel, a list of things to do. */
 export const TASKS_MARK =
   'M3 1.8h7a1.2 1.2 0 0 1 1.2 1.2v7a1.2 1.2 0 0 1-1.2 1.2H3A1.2 1.2 0 0 1 1.8 10V3A1.2 1.2 0 0 1 3 1.8zM4.2 6.6l1.7 1.7 3-3.4'
+
+/** The scratchpad, as the right side's tab (#1032): a pad with its two rings and two
+ *  lines, the title bar's old switch drawn on the panels' grid. */
+export const SCRATCHPAD_MARK =
+  'M3.2 2.6h6.6a1.2 1.2 0 0 1 1.2 1.2v7a1.2 1.2 0 0 1-1.2 1.2H3.2A1.2 1.2 0 0 1 2 10.8v-7a1.2 1.2 0 0 1 1.2-1.2zM4.8 1.2v2.6M8.2 1.2v2.6M4.6 6.6h3.8M4.6 9h2.4'

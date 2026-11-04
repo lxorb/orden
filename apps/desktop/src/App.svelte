@@ -150,9 +150,17 @@
    *  unbuilt. */
   const built = { left: false, right: false }
   const keptLeft = $derived((built.left ||= workspace.panel !== null || startup.reached('left')))
+  /** Whether the scratchpad is the right side's tab, which a desktop's is (#1032). */
+  const padDocked = $derived(!viewport.touch && !__EVEN_PLUGIN__)
+  /** Whether the right side is open: showing a panel, or on a desktop the scratchpad. */
+  const rightOpen = $derived(
+    padDocked ? workspace.rightShows !== null : workspace.openOn('right') !== null,
+  )
   const keptRight = $derived(
     (built.right ||=
-      workspace.rightPanel !== null || (startup.reached('right') && workspace.nextRight !== null)),
+      workspace.rightPanel !== null ||
+      (padDocked && pad.on) ||
+      (startup.reached('right') && (workspace.nextRight !== null || padDocked))),
   )
   let palette = $state(false)
   /** The palette itself, for the one thing a flag cannot say: Ctrl+Shift+P opens it
@@ -425,9 +433,7 @@
   // The same for the other side, which is a drawer over the note wherever the
   // left one is; see the right-hand rules in the stylesheet below.
   $effect(() =>
-    viewport.drawer && workspace.openOn('right')
-      ? overlays.show(() => workspace.closePanel('right'))
-      : undefined,
+    viewport.drawer && rightOpen ? overlays.show(() => workspace.closeRight()) : undefined,
   )
 
   // On a phone each of these is a screen of its own, so back closes it rather
@@ -443,10 +449,10 @@
   // only wakes what reads it when its own value changes, so a drawer that stays
   // open through three panels is one layer and one entry.
   const covered = $derived(!!workspace.panel)
-  const coveredRight = $derived(!!workspace.openOn('right'))
+  const coveredRight = $derived(rightOpen)
 
   $effect(() => closeOnBack(covered, () => workspace.closePanel()))
-  $effect(() => closeOnBack(coveredRight, () => workspace.closePanel('right')))
+  $effect(() => closeOnBack(coveredRight, () => workspace.closeRight()))
   $effect(() =>
     closeOnBack(palette, () => {
       palette = false
@@ -1105,7 +1111,7 @@
       style:--shade={drawer.progress === null ? undefined : 1 - drawer.progress}
       ontransitionend={(event) => drawer.arrived(event)}
     >
-      {#if (workspace.panel ?? workspace.openOn('right')) !== null && !bare}
+      {#if (workspace.panel !== null || rightOpen) && !bare}
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
         <!-- One scrim for both drawers, which is why it fades with whichever of
              them a finger is on. Only one can be moving: a gesture belongs to one
@@ -1114,13 +1120,13 @@
              was drawn over the drawer it was meant to be under. -->
         <div
           class="scrim"
-          class:over={!!workspace.openOn('right')}
+          class:over={rightOpen}
           class:held={drawer.held || rightDrawer.held}
           class:dragging={drawer.at !== null || rightDrawer.at !== null}
           style:opacity={drawer.progress ?? rightDrawer.progress ?? undefined}
           onclick={() => {
             workspace.closePanel()
-            workspace.closePanel('right')
+            workspace.closeRight()
           }}
         ></div>
       {/if}
@@ -1172,18 +1178,19 @@
           {/if}
         </div>
 
-        <!-- Docked, so a web page narrows rather than covers it; see scratchpad/pad.ts. -->
-        {#if !bare && !filled && !__EVEN_PLUGIN__}
+        <!-- A phone's and a tablet's card, over the note; see scratchpad/pad.ts. On a
+             desktop the card is the right side's own tab, in the column below (#1032). -->
+        {#if !bare && !filled && !__EVEN_PLUGIN__ && viewport.touch}
           <PadColumn />
         {/if}
 
-        {#if workspace.right.length && !bare && !filled}
+        {#if (workspace.right.length || padDocked) && !bare && !filled}
           <div
             class="panels right"
             data-chrome="end"
             data-theme={chrome.theme}
-            inert={viewport.drawer && !workspace.openOn('right')}
-            class:open={!!workspace.openOn('right')}
+            inert={viewport.drawer && !rightOpen}
+            class:open={rightOpen}
             class:held={rightDrawer.held}
             class:dragging={rightDrawer.at !== null}
             class:settling={rightDrawer.settle !== null}

@@ -193,7 +193,7 @@ const { Tab } = await import('./workspace/documents.svelte')
 const { isDraft } = await import('./workspace/drafts')
 const { apartOf, readShortcut, readWebloc, writeShortcut } = await import('./web-tab/shortcut')
 const { STARTS_RIGHT } = await import('./workspace/panels')
-const { shown: pad } = await import('./scratchpad/is.svelte')
+const { shown: pad, toggleScratchpad, closeScratchpad } = await import('./scratchpad/is.svelte')
 type Entry = import('./workspace.svelte').Entry
 
 /** A single click in the file list, and the tab it lands in. */
@@ -658,12 +658,8 @@ describe('the right side and the scratchpad take turns', () => {
     expect(workspace.openOn('right')).toBe('outline')
   })
 
-  test("the side's button, a panel's own command and its tab each put the card away", () => {
-    const roads = [
-      () => workspace.toggleSidebar('right'),
-      () => workspace.showPanel('links'),
-      () => workspace.togglePanel('links'),
-    ]
+  test("a panel's own command and its tab each put the card away", () => {
+    const roads = [() => workspace.showPanel('links'), () => workspace.togglePanel('links')]
     for (const road of roads) {
       workspace.rightPanel = null
       pad.show(false)
@@ -673,12 +669,52 @@ describe('the right side and the scratchpad take turns', () => {
     }
   })
 
-  test('the button over a kept panel shows that panel, never shuts it', () => {
+  /** #1032: the side's one button shuts the side whole, the card and what is under it,
+   *  and does not turn the card into the panel under it. */
+  test('the button over a kept panel shuts the side whole, and nothing comes back', () => {
     workspace.showPanel('ask')
     pad.show(false)
     workspace.toggleSidebar('right')
     expect(pad.on).toBe(false)
-    expect(workspace.openOn('right')).toBe('ask')
+    expect(workspace.rightShows).toBeNull()
+  })
+
+  test('and opens it again on the card where the card is what it shut', () => {
+    workspace.showPanel('ask')
+    pad.show(false)
+    workspace.toggleSidebar('right')
+    workspace.toggleSidebar('right')
+    expect(pad.on).toBe(true)
+    expect(workspace.rightShows).toBe('scratchpad')
+    workspace.toggleSidebar('right')
+    expect(workspace.rightShows).toBeNull()
+  })
+
+  test('and on the panel where the panel is what it shut', () => {
+    pad.show(false)
+    workspace.showRight('outline')
+    workspace.toggleSidebar('right')
+    workspace.toggleSidebar('right')
+    expect(pad.on).toBe(false)
+    expect(workspace.rightShows).toBe('outline')
+  })
+
+  test('its key opens it in the side, and its Escape shuts the side whole', () => {
+    workspace.showRight('ask')
+    toggleScratchpad()
+    expect(workspace.rightShows).toBe('scratchpad')
+    closeScratchpad()
+    expect(pad.on).toBe(false)
+    expect(workspace.rightShows).toBeNull()
+  })
+
+  test('the scratchpad is one of the side’s tabs, and a tab shows one or the other', () => {
+    workspace.showRight('outline')
+    workspace.showRight('scratchpad', false)
+    expect(workspace.rightShows).toBe('scratchpad')
+    workspace.showRight('links')
+    expect(pad.on).toBe(false)
+    expect(workspace.rightShows).toBe('links')
   })
 
   test('the card does not come back when the side shuts', () => {

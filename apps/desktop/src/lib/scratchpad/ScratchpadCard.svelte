@@ -28,8 +28,12 @@
   import { shortcuts } from '../shortcuts.svelte'
   import { afterQuiet } from '../timing'
   import { scratchpad } from './pad'
-  import { shown, WIDTH } from './is.svelte'
+  import { closeScratchpad, shown, WIDTH } from './is.svelte'
   import { viewport } from '../viewport.svelte'
+
+  /** `docked` in the right side's body, as its tab (#1032): the side's width, so no edge
+   *  of its own to drag, and the side's height. */
+  const { docked = false }: { docked?: boolean } = $props()
 
   const NARROWEST = 240
   const WIDEST = 560
@@ -137,12 +141,13 @@
     })
   })
 
-  /** Escape the editor had no use for puts the card away. */
+  /** Escape the editor had no use for puts the card away, and the right side with it
+   *  (#1032). */
   function onKey(event: KeyboardEvent) {
     if (event.key !== 'Escape' || event.defaultPrevented) return
     event.preventDefault()
     event.stopPropagation()
-    shown.hide()
+    closeScratchpad()
   }
 
   /** The edge faces the note, so dragging it towards the note widens the card. */
@@ -173,9 +178,10 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="card nib-layer" class:resizing onkeydown={onKey}>
-  <!-- No width to drag on a phone or a tablet, where the card is the one note there is. -->
-  {#if !viewport.touch}
+<div class="card nib-layer" class:resizing class:docked data-scratchpad-card onkeydown={onKey}>
+  <!-- No width to drag on a phone or a tablet, where the card is the one note there is,
+       nor in the right side, whose own edge it is. -->
+  {#if !viewport.touch && !docked}
     <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
     <div
       class="edge"
@@ -246,6 +252,12 @@
     min-width: 0;
     overflow: hidden;
     background: var(--content-ground, var(--bg));
+  }
+
+  .card.docked {
+    width: 100%;
+    height: 100%;
+    margin: 0;
   }
 
   /* Over the note there, so see-through paper would show the note's words through its

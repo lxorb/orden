@@ -203,16 +203,17 @@
     <!-- What the window is dragged by, while the panes have the strips. A strip up here
          is the caption itself, and keeps the sliver it can always be dragged by ahead of
          its own buttons (Tabs.svelte), so they and the switches after them are one row
-         (#1060). Then the scratchpad's switch. -->
+         (#1060). -->
     {#if !only}
       <div class="drag" data-tauri-drag-region></div>
     {/if}
     {@render edgeMark()}
-    {@render padGlyph()}
   {/if}
 
-  <!-- The other side's own button, while that side holds a panel. -->
-  {#if workspace.right.length}
+  <!-- The right side's one button, whatever it shows: the scratchpad is one of its tabs
+       on a desktop, so this opens it on what it showed last and shuts it whole (#1032).
+       A phone keeps the scratchpad's own switch above, for now (#1030). -->
+  {#if workspace.right.length || (!viewport.touch && !__EVEN_PLUGIN__)}
     <SidebarToggle side="right" />
   {/if}
 

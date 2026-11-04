@@ -16,7 +16,8 @@ export function isScratchpad(path: string | null | undefined): boolean {
 
 // Guarded for the workspace's tests, which have no page.
 const inCard = () =>
-  typeof document !== 'undefined' && !!document.activeElement?.closest('[data-scratchpad]')
+  typeof document !== 'undefined' &&
+  !!document.activeElement?.closest('[data-scratchpad], [data-scratchpad-card]')
 
 class Shown {
   on = $state(false)
@@ -68,9 +69,16 @@ class Shown {
 export const shown = new Shown()
 
 /** Up with the keyboard elsewhere, the keyboard in (VS Code's terminal key); else the
- *  switch. */
+ *  switch. Shut, it shuts the right side it is shown in, and nothing comes back from
+ *  under it (#1032); see `toggleSidebar` in the workspace. */
 export function toggleScratchpad(): void {
   if (__EVEN_PLUGIN__) return
   if (shown.on && !inCard()) shown.calling = true
-  else shown.toggle()
+  else if (shown.on) workspace.closeRight()
+  else workspace.showRight('scratchpad')
+}
+
+/** The card put away by its own Escape: the right side it is, shut. */
+export function closeScratchpad(): void {
+  if (shown.on) workspace.closeRight()
 }

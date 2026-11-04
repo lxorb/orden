@@ -5042,14 +5042,56 @@ class Workspace {
     this.sides = panels.moving(this.sides, panel, side)
   }
 
-  /** Opens or shuts one side: the left on the file list, the right on `nextRight`. */
-  toggleSidebar(side: PanelSide = 'left') {
-    if (this.unfill() && this.openOn(side)) return
-    if (side === 'right') {
-      const next = this.nextRight
-      if (next) this.togglePanel(next)
+  /** What the right side shows: the scratchpad's card, one of its panels, or nothing
+   *  (#1032). The card goes over the panel kept under it, so it is the card while it
+   *  is up. */
+  get rightShows(): Panel | 'scratchpad' | null {
+    return pad.on ? 'scratchpad' : this.openOn('right')
+  }
+
+  /** What the right side showed when it was last shut, which it opens on again. */
+  private rightLast: Panel | 'scratchpad' | null = null
+
+  /** Shows the scratchpad or a panel on the right: the side's own tabs, the
+   *  scratchpad's key. One of the two, never both; see workspace/panels.ts. */
+  showRight(what: Panel | 'scratchpad', take = true) {
+    if (what !== 'scratchpad') {
+      this.showPanel(what)
       return
     }
+    this.unfill()
+    if (!pad.on) pad.show(take)
+  }
+
+  /** Shuts the right side whatever it shows, the card and the panel under it both, so
+   *  nothing comes back from under what was shut (#1032). */
+  closeRight() {
+    const shows = this.rightShows
+    if (shows === null) return
+    this.rightLast = shows
+    this.sides = { ...this.sides, rightPanel: null, covered: false }
+  }
+
+  /** Opens or shuts one side: the left on the file list. The right is one side
+   *  whatever it holds (#1032): shut whole if it shows anything, the scratchpad or a
+   *  panel, and otherwise opened on what it showed last - the scratchpad, or
+   *  `nextRight`. The one rule for the bar's button, the key and the menu. */
+  toggleSidebar(side: PanelSide = 'left') {
+    if (side === 'right') {
+      if (this.unfill() && this.rightShows !== null) return
+      if (this.rightShows !== null) {
+        this.closeRight()
+        return
+      }
+      if (this.rightLast === 'scratchpad') {
+        this.showRight('scratchpad')
+        return
+      }
+      const next = this.nextRight
+      if (next) this.showPanel(next)
+      return
+    }
+    if (this.unfill() && this.openOn(side)) return
 
     this.panel = this.panel ? null : 'tree'
     this.panelChosen = true

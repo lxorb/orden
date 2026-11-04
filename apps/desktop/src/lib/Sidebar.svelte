@@ -25,6 +25,7 @@
     ORDER_MARK,
     OUTLINE_MARK,
     PROPERTIES_MARK,
+    SCRATCHPAD_MARK,
     TASKS_MARK,
   } from './panel-marks'
   import { newSpace } from './space-actions'
@@ -42,9 +43,11 @@
     linksPanel,
     pagesNavigator,
     propertiesPanel,
+    scratchpadCard,
     searchPanel,
     tasksPanel,
   } from './surfaces.svelte'
+  import { shown as pad } from './scratchpad/is.svelte'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { roving } from './roving'
   import type { Panel, PanelSide } from './workspace.svelte'
@@ -140,7 +143,13 @@
 
   /** Whether this side is open. Shut, the panel stays where it is, built and laid
    *  out, and only its column closes over it; see `.column`. */
-  const open = $derived(workspace.openOn(side) !== null)
+  /** Whether the scratchpad is one of this side's tabs: the right side's, on a desktop.
+   *  A phone's card is the one note there is, with a switch of its own (#1030). */
+  const padHere = $derived(side === 'right' && !viewport.touch && !__EVEN_PLUGIN__)
+
+  const open = $derived(
+    side === 'right' ? workspace.rightShows !== null : workspace.openOn(side) !== null,
+  )
 
   /** The panel showing on this side, which every row below reads instead of
    *  `workspace.panel`: the left side's is that, and the right side's is its
@@ -151,7 +160,9 @@
    *  and a right side built on the file list - which never lives there - was a second
    *  tree made for nothing and torn down by the first press. */
   let lastShown: Panel = untrack(() => workspace.openOn(side)) ?? 'tree'
-  const showing = $derived.by(() => {
+  const showing = $derived.by((): Panel | 'scratchpad' => {
+    // The scratchpad's card is the right side's while it is up (#1032).
+    if (side === 'right' && padHere && pad.on) return 'scratchpad'
     const open = workspace.openOn(side)
     if (open) return (lastShown = open)
     return side === 'right' ? (workspace.nextRight ?? lastShown) : lastShown
@@ -306,22 +317,32 @@
       PANELS.map((one) => one.id),
     )
 
-    // The agents' tab only once one has spoken; see agent-marks.svelte.ts.
-    return held.flatMap((id) =>
-      PANELS.filter(
-        (one) =>
-          one.id === id &&
-          (id !== 'agents' || agentMarks.heard) &&
-          (id !== 'chats' || !!account.accountToken) &&
-          // The AI panel is the desktop's and the browser's; the glasses' plugin has none.
-          (id !== 'ask' || !__EVEN_PLUGIN__),
-      ),
+    // The agents' tab only once one has spoken; see agent-marks.svelte.ts. The
+    // scratchpad last on the right, the one tab that is no panel (#1032).
+    const pads: { id: Panel | 'scratchpad'; label: string; path: string }[] = padHere
+      ? [{ id: 'scratchpad', label: t('Scratchpad'), path: SCRATCHPAD_MARK }]
+      : []
+    const panelsHere: { id: Panel | 'scratchpad'; label: string; path: string }[] = held.flatMap(
+      (id) =>
+        PANELS.filter(
+          (one) =>
+            one.id === id &&
+            (id !== 'agents' || agentMarks.heard) &&
+            (id !== 'chats' || !!account.accountToken) &&
+            // The AI panel is the desktop's and the browser's; the glasses' plugin has none.
+            (id !== 'ask' || !__EVEN_PLUGIN__),
+        ),
     )
+    return [...panelsHere, ...pads]
   })
 
   /** The shortcut a panel's tab opens it with: the Files tab's command is older than
    *  the panel's id. */
-  const commandOf = (id: Panel) => `app.${id === 'tree' ? 'files' : id}`
+  const commandOf = (id: Panel | 'scratchpad') => `app.${id === 'tree' ? 'files' : id}`
+
+  /** A tab pressed: its panel, or the scratchpad, on this side; see `showRight`. */
+  const choose = (id: Panel | 'scratchpad') =>
+    id === 'scratchpad' ? workspace.showRight('scratchpad') : workspace.showPanel(id)
 
   /** The row, its tools and a tab's mark, measured: the pill gets the row less its
    *  `--space-1` padding and the tools, and a tab gives down to its mark and
@@ -353,7 +374,7 @@
       strip.behind.map((item) => ({
         label: item.label,
         hint: shortcuts.hint(commandOf(item.id)),
-        run: () => workspace.showPanel(item.id),
+        run: () => choose(item.id),
       })),
       { title: t('More') },
     )
@@ -439,7 +460,7 @@
    *  the same hold and two copies of one rule is one of them going stale; see
    *  `holdable` there for which panels and which machines. */
   const held = $derived(workspace.held)
-  const holdable = $derived(workspace.holdable(showing))
+  const holdable = $derived(showing !== 'scratchpad' && workspace.holdable(showing))
 
   /** The palette's keys as this reader has them, for its hint; none, no hint. */
   const paletteKey = $derived(shortcuts.hint('app.palette'))
@@ -774,9 +795,13 @@
               ? t('{title}, unread', { title: item.label })
               : item.label}
             aria-selected={showing === item.id}
-            onclick={() => workspace.showPanel(item.id)}
-            oncontextmenu={(event) => showTabMenu(event, item.id, item.label)}
-            use:longPress={(event) => showTabMenu(event, item.id, item.label)}
+            onclick={() => choose(item.id)}
+            oncontextmenu={(event) => {
+              if (item.id !== 'scratchpad') showTabMenu(event, item.id, item.label)
+            }}
+            use:longPress={(event) => {
+              if (item.id !== 'scratchpad') showTabMenu(event, item.id, item.label)
+            }}
           >
             <svg viewBox="0 0 13 13"><path d={item.path} /></svg>
             <!-- The questions agents are waiting on. -->
@@ -1179,6 +1204,12 @@
           {:else if showing === 'links'}
             {#await linksPanel() then Links}
               <Links {ongoto} graph={graphing} {depth} onlist={() => (graphing = false)} />
+            {/await}
+          {:else if showing === 'scratchpad'}
+            <!-- The scratchpad's card, as the right side's own (#1032): the side's width,
+                 and no edge of its own to drag. -->
+            {#await scratchpadCard() then Card}
+              <Card docked />
             {/await}
           {:else if showing === 'search'}
             <!-- The one panel with a ranking engine behind it, fetched the first time
