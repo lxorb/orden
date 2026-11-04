@@ -2698,4 +2698,5 @@ export const vi: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'Chưa gửi được. Nội dung của bạn vẫn được giữ, bạn có thể thử lại.',
   'Reset to site icon': 'Đặt lại biểu tượng trang web',
+  'One colour': 'Một màu',
 }

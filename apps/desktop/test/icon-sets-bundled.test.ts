@@ -26,16 +26,19 @@ import { describe, expect, test } from 'vitest'
 const APP = fileURLToPath(new URL('..', import.meta.url))
 const SOURCE = join(APP, 'src')
 
-/** The set data, by the specifier that asks for it. The same five names
+/** The set data, by the specifier that asks for it. The same seven names
  *  `vite.even.config.ts` leaves out, which is what the last test holds.
  *
- *  Three of them are the sets themselves and two are what the sets are searched by:
+ *  Four of them are the sets themselves, one the characters the emoji's outlines are
+ *  filed under (#1097), and two are what the sets are searched by:
  *  Lucide's tags and the emoji's keywords, neither of any use until somebody has
  *  typed something into the picker. */
 const DATA = [
   'unicode-emoji-json/data-by-group.json',
   '@iconify-json/flat-color-icons/icons.json',
   '@iconify-json/simple-icons/icons.json',
+  '@iconify-json/fluent-emoji-high-contrast/icons.json',
+  '@iconify-json/fluent-emoji-high-contrast/chars.json',
   'lucide-static/tags.json',
   'emojilib/emojis.json',
 ]

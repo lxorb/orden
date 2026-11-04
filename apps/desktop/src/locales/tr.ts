@@ -2744,4 +2744,5 @@ export const tr: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'Gönderilmedi. Metniniz duruyor, yeniden deneyebilirsiniz.',
   'Reset to site icon': 'Site simgesine dön',
+  'One colour': 'Tek renk',
 }

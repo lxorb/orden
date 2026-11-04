@@ -2679,4 +2679,5 @@ export const am: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'አልተላከም። ጽሑፍህ ተቀምጧል፣ ስለዚህ እንደገና መሞከር ትችላለህ።',
   'Reset to site icon': 'ወደ የጣቢያው አዶ መልስ',
+  'One colour': 'ባለ አንድ ቀለም',
 }

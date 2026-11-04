@@ -2729,4 +2729,5 @@ export const mr: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'पाठवला नाही. तुमचा मजकूर जपून ठेवला आहे, पुन्हा प्रयत्न करू शकता.',
   'Reset to site icon': 'साइटच्या आयकॉनवर परत जा',
+  'One colour': 'एक रंग',
 }

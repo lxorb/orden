@@ -2689,4 +2689,5 @@ export const ko: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     '보내지 못했습니다. 입력한 내용은 남아 있으니 다시 시도하세요.',
   'Reset to site icon': '사이트 아이콘으로 되돌리기',
+  'One colour': '단색',
 }

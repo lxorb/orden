@@ -2711,4 +2711,5 @@ export const jv: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'Ora kekirim. Tulisanmu isih disimpen, dadi kowé bisa nyoba manèh.',
   'Reset to site icon': 'Balekake menyang lambang situs',
+  'One colour': 'Siji werna',
 }

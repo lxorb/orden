@@ -33,10 +33,11 @@
   import { iconLibrary } from './icon-library.svelte'
   import { iconRecent } from './icon-recent.svelte'
   import { LATER_SETS, type LoadedSet, mergeSets, PICKER_SETS, pickerCredit } from './icon-sets'
-  import { rankIcons, readIcon, sameIcon } from './icons'
+  import { EMOJI_OUTLINE, rankIcons, readIcon, sameIcon, takesTint, writtenIcon } from './icons'
   import { t } from './i18n.svelte'
   import { dur, LAYER } from './motion'
   import { overlays } from './overlays'
+  import { segmented } from './slide'
   import { trap } from './trap'
   import { viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
@@ -72,6 +73,11 @@
   /** The colour the next pick is drawn in. Starts as the one the thing already wears,
    *  so changing the icon keeps the colour and changing the colour keeps the icon. */
   let tint = $state<string | null>(null)
+  /** Whether the emoji are offered in one colour (#1097): each cell of an emoji the
+   *  outlines draw holds its outline instead, written as its own value, so the one
+   *  search finds an emoji either way and this says which of the two a pick is. Kept
+   *  from one opening to the next, and set by what the thing wears where it is one. */
+  let outlined = $state(false)
 
   const cell = $derived(viewport.touch ? TOUCH_CELL : POINTER_CELL)
   const target = $derived(iconChoice.target)
@@ -89,6 +95,17 @@
   )
 
   const written = $derived(readIcon(worn))
+
+  /** The outlines, once asked for and here. */
+  const twins = $derived(outlined ? (iconLibrary.loaded[EMOJI_OUTLINE] ?? null) : null)
+
+  /** What a cell writes: the emoji's outline in its place where they are asked for and
+   *  it has one, else the value the cell holds. A flag, which has no outline, stays the
+   *  flag it is. */
+  const variant = (name: string): string => {
+    const twin = twins?.twin?.(name)
+    return twin ? writtenIcon(EMOJI_OUTLINE, twin) : name
+  }
 
   /** Whether a set the sheet opens with is still on its way. A set this build leaves
    *  out does not hold the others back, and nor does one that waits for a search: the
@@ -197,11 +214,17 @@
     )
     const set = iconLibrary.setFor(wears)
     wanted = set !== null && LATER_SETS.has(set)
+    if (set === EMOJI_OUTLINE) outlined = true
+    else if (wears?.kind === 'emoji') outlined = false
 
     query = ''
     at = 0
     top = 0
-    tint = asked.kind === 'space' ? workspace.tintFor(asked.id) : chosenTint(asked.path)
+    // Read once too: a colour painted while the sheet is up is written to the thing at
+    // once, and following it would start the sheet over under the reader's search.
+    tint = untrack(() =>
+      asked.kind === 'space' ? workspace.tintFor(asked.id) : chosenTint(asked.path),
+    )
 
     clearTimeout(focusing)
     focusing = setTimeout(() => field?.focus(), dur(FOCUS))
@@ -213,6 +236,7 @@
     if (!target) return
     const all = wanted || query.trim() !== ''
     for (const id of PICKER_SETS) if (all || !LATER_SETS.has(id)) iconLibrary.load(id)
+    if (outlined) iconLibrary.load(EMOJI_OUTLINE)
   })
 
   // Scrolled to within a screen of the end: the rest is wanted.
@@ -240,8 +264,8 @@
     const asked = iconChoice.target
     if (!asked) return
 
-    // A colour goes only with a line, the one kind of icon that takes one.
-    const colour = said !== null && readIcon(said)?.kind === 'lucide' ? tint : null
+    // A colour goes only with an icon that takes one: a line, an emoji's outline.
+    const colour = takesTint(readIcon(said)) ? tint : null
 
     if (asked.kind === 'space') workspace.setIcon(asked.id, said, colour)
     else if (asked.kind === 'folder') workspace.setFolderIcon(asked.path, said, colour)
@@ -251,14 +275,15 @@
     iconChoice.close()
   }
 
-  /** A colour on its own, which only means anything for something already wearing a
-   *  stroked icon: an emoji and a coloured drawing have their own colours. Written at
-   *  once, so a row of dots reads as a row of dots rather than as a setting to confirm. */
+  /** A colour on its own, which only means anything for something already wearing an
+   *  icon that takes one (`takesTint`): an emoji and a coloured drawing have their own
+   *  colours. Written at once, so a row of dots reads as a row of dots rather than as a
+   *  setting to confirm. */
   function paint(colour: string | null) {
     tint = colour
 
     const asked = iconChoice.target
-    if (!asked || written?.kind !== 'lucide' || worn === null) return
+    if (!asked || !takesTint(written) || worn === null) return
 
     if (asked.kind === 'space') workspace.setIcon(asked.id, worn, colour)
     else if (asked.kind === 'folder') workspace.setFolderIcon(asked.path, worn, colour)
@@ -287,7 +312,7 @@
     const here = cells[at]
     if (event.key === 'Enter' && here !== undefined) {
       event.preventDefault()
-      chose(here)
+      chose(variant(here))
     }
   }
 
@@ -377,18 +402,20 @@
               {:else}
                 {#each row.names as written (written)}
                   <!-- What this icon is called, once: the cell asked twice, over a
-                       window of a few hundred cells. -->
+                       window of a few hundred cells. And what it writes, which is the
+                       emoji's outline where those are asked for. -->
                   {@const label = called(written)}
+                  {@const value = variant(written)}
                   <button
                     type="button"
                     class="cell"
                     title={label}
                     aria-label={label}
-                    class:active={sameIcon(written, worn)}
+                    class:active={sameIcon(value, worn)}
                     class:at={cells[at] === written}
-                    onclick={() => chose(written)}
+                    onclick={() => chose(value)}
                   >
-                    <span class="glyph"><Icon icon={readIcon(written)} {tint} /></span>
+                    <span class="glyph"><Icon icon={readIcon(value)} {tint} /></span>
                   </button>
                 {/each}
               {/if}
@@ -398,10 +425,36 @@
       {/if}
     </div>
 
-    <!-- The colour a line icon is drawn in. Only a line takes it: an emoji, a coloured
-         drawing and a logo are already pictures in their own colours, and painting over
-         one would be painting over somebody's drawing. Chosen before or after the line,
-         which is why the dots are always there. -->
+    <!-- The emoji in their own colours or in one (#1097): a choice of drawing for the
+         same emoji the one search found, not a tab of its own. Left out where this build
+         has no outlines, the plugin's. -->
+    {#if !iconLibrary.absent[EMOJI_OUTLINE]}
+      <div class="nib-segmented variant" role="radiogroup" aria-label={t('Emoji')} use:segmented>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={!outlined}
+          class:on={!outlined}
+          onclick={() => (outlined = false)}
+        >
+          {t('Colour')}
+        </button>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={outlined}
+          class:on={outlined}
+          onclick={() => (outlined = true)}
+        >
+          {t('One colour')}
+        </button>
+      </div>
+    {/if}
+
+    <!-- The colour a line icon, or an emoji's outline, is drawn in. Only those take it:
+         an emoji, a coloured drawing and a logo are already pictures in their own
+         colours, and painting over one would be painting over somebody's drawing.
+         Chosen before or after the icon, which is why the dots are always there. -->
     <div class="tints" role="group" aria-label={t('Colour')}>
       <button
         type="button"
@@ -549,6 +602,11 @@
   .tints {
     display: flex;
     gap: 6px;
+  }
+
+  /* As wide as its two words, not the sheet: a choice beside the grid, not a tab strip. */
+  .variant {
+    align-self: flex-start;
   }
 
   .tint {

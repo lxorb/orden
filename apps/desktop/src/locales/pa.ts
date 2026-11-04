@@ -2736,4 +2736,5 @@ export const pa: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'ਨਹੀਂ ਭੇਜੀ ਗਈ। ਤੁਹਾਡਾ ਲਿਖਿਆ ਸੰਭਾਲਿਆ ਹੈ, ਤੁਸੀਂ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰ ਸਕਦੇ ਹੋ।',
   'Reset to site icon': 'ਸਾਈਟ ਦੇ ਆਈਕਨ ’ਤੇ ਵਾਪਸ ਜਾਓ',
+  'One colour': 'ਇੱਕ ਰੰਗ',
 }

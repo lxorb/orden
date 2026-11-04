@@ -2743,4 +2743,5 @@ export const te: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'పంపలేదు. మీ వచనం అలాగే ఉంది, మళ్లీ ప్రయత్నించవచ్చు.',
   'Reset to site icon': 'సైట్ చిహ్నానికి రీసెట్ చేయండి',
+  'One colour': 'ఒకే రంగు',
 }

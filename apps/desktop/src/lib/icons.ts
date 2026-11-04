@@ -130,6 +130,25 @@ export const EMOJI_SET = 'emoji'
  *  with (#1082). A value is `simple-icons:github`. */
 export const BRANDS = 'simple-icons'
 
+/** The id the emoji's outlines go by (#1097): Microsoft's Fluent Emoji High Contrast, every
+ *  emoji drawn again in one colour, under the prefix Iconify publishes the set with. A value
+ *  is `fluent-emoji-high-contrast:thinking-face`, its own value beside the emoji's, so an
+ *  icon chosen as a colour emoji stays one. Drawn in the text's colour, and tinted like a
+ *  line; see `takesTint`. */
+export const EMOJI_OUTLINE = 'fluent-emoji-high-contrast'
+
+/** The sets drawn in one colour that a tint paints, beside the line set: a picture
+ *  without colours of its own to paint over. */
+const TINTED_SETS: ReadonlySet<string> = new Set([EMOJI_OUTLINE])
+
+/** Whether an icon takes a tint (#1097): a line, and a drawing in one colour that is
+ *  drawn in the text's colour for it. An emoji, a coloured drawing and a logo keep their
+ *  own colours, and their value is written without one. */
+export function takesTint(icon: WrittenIcon | null): boolean {
+  if (!icon) return false
+  return icon.kind === 'lucide' || (icon.kind === 'set' && TINTED_SETS.has(icon.set))
+}
+
 /** The written value of a brand's logo, by Simple Icons' slug - `github`, `claude`,
  *  `openai` - for code that wants a company's mark by its name rather than an icon
  *  somebody chose: a website with no favicon of its own, an AI chat's provider (#1089).
@@ -320,8 +339,9 @@ export const ICON_COLOUR_KEY = 'icon-color'
  *  file that names one still means something in next year's palette. See
  *  accents.ts, which is where the shades live.
  *
- *  Only for the stroked set. An emoji and a coloured drawing already have their own
- *  colours, and tinting either would be painting over somebody's picture. */
+ *  Only for the stroked set and the emoji's outlines (`takesTint`). An emoji and a
+ *  coloured drawing already have their own colours, and tinting either would be painting
+ *  over somebody's picture. */
 export function isIconTint(value: string | null | undefined): boolean {
   const said = (value ?? '').trim().toLowerCase()
   return !!said && ACCENTS.some((accent) => accent.id === said)

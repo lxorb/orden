@@ -2723,4 +2723,5 @@ export const bn: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'পাঠানো হয়নি। আপনার লেখা রাখা আছে, আবার চেষ্টা করতে পারেন।',
   'Reset to site icon': 'সাইটের আইকনে ফিরুন',
+  'One colour': 'এক রঙে',
 }

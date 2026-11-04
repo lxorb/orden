@@ -2776,4 +2776,5 @@ export const ta: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'அனுப்பப்படவில்லை. உங்கள் உரை வைக்கப்பட்டுள்ளது, மீண்டும் முயலலாம்.',
   'Reset to site icon': 'தளத்தின் ஐகானுக்குத் திரும்பு',
+  'One colour': 'ஒற்றை நிறம்',
 }

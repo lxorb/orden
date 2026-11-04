@@ -2647,4 +2647,5 @@ export const zhHant: Dictionary = {
   'View your report': '查看你的回報',
   'Not sent. Your text is kept, so you can try again.': '未送出。你的文字已保留，可以再試一次。',
   'Reset to site icon': '還原為網站圖示',
+  'One colour': '單色',
 }

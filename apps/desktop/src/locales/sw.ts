@@ -2766,4 +2766,5 @@ export const sw: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'Haijatumwa. Maandishi yako yamehifadhiwa, kwa hivyo unaweza kujaribu tena.',
   'Reset to site icon': 'Rudisha ikoni ya tovuti',
+  'One colour': 'Rangi moja',
 }

@@ -2792,4 +2792,5 @@ export const ptPT: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'Não enviado. O seu texto foi mantido para poder tentar de novo.',
   'Reset to site icon': 'Repor o ícone do site',
+  'One colour': 'Uma cor',
 }

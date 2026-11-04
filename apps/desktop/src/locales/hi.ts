@@ -2726,4 +2726,5 @@ export const hi: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'नहीं भेजी गई। आपका लिखा हुआ सुरक्षित है, आप फिर से कोशिश कर सकते हैं।',
   'Reset to site icon': 'साइट के आइकन पर लौटें',
+  'One colour': 'एक रंग',
 }

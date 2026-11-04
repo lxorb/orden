@@ -2639,4 +2639,5 @@ export const yue: Dictionary = {
   'View your report': '睇你嘅報告',
   'Not sent. Your text is kept, so you can try again.': '未送出。你寫嘅嘢仲喺度，可以再試多次。',
   'Reset to site icon': '還原做網站圖示',
+  'One colour': '單色',
 }

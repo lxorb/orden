@@ -1,5 +1,15 @@
 import { describe, expect, test } from 'vitest'
-import { BRANDS, brandIcon, EMOJI_SET, LUCIDE, rankIcons, readIcon } from './icons'
+import {
+  BRANDS,
+  brandIcon,
+  EMOJI_OUTLINE,
+  EMOJI_SET,
+  LUCIDE,
+  rankIcons,
+  readIcon,
+  takesTint,
+  writtenIcon,
+} from './icons'
 import { BESIDE, LOOSE, SAME } from './flat-colour-places'
 import {
   FLAT_COLOUR,
@@ -20,8 +30,14 @@ import {
  *  Slow-ish, and worth it: a set whose names or groups came out wrong is a picker full
  *  of blank cells, and nothing else in the app would notice. */
 describe('the sets an icon can come from', () => {
-  test('are the four the picker offers, each with an id nothing else uses', () => {
-    expect(ICON_SETS.map((one) => one.id)).toEqual([LUCIDE, EMOJI_SET, FLAT_COLOUR, BRANDS])
+  test('are the five the picker offers, each with an id nothing else uses', () => {
+    expect(ICON_SETS.map((one) => one.id)).toEqual([
+      LUCIDE,
+      EMOJI_SET,
+      FLAT_COLOUR,
+      EMOJI_OUTLINE,
+      BRANDS,
+    ])
     expect(new Set(ICON_SETS.map((one) => one.id)).size).toBe(ICON_SETS.length)
   })
 
@@ -211,7 +227,8 @@ describe('the stroked set', () => {
 /** One search over every set, and no tabs (#1096). */
 describe('the sets the picker searches', () => {
   test('are every set, each once, the brands waiting for a search', () => {
-    expect([...PICKER_SETS].sort()).toEqual(ICON_SETS.map((one) => one.id).sort())
+    // The emoji's outlines are drawn in the emoji's own cells, not as cells of their own.
+    expect([...PICKER_SETS, EMOJI_OUTLINE].sort()).toEqual(ICON_SETS.map((one) => one.id).sort())
     expect(new Set(PICKER_SETS).size).toBe(PICKER_SETS.length)
     expect([...LATER_SETS]).toEqual([BRANDS])
   })
@@ -445,5 +462,93 @@ describe('the brands', () => {
     expect(drawn?.kind).toBe('drawn')
     expect(drawn?.kind === 'drawn' && drawn.body).toContain('currentColor')
     expect(drawn?.kind === 'drawn' && drawn.box).toBe('0 0 24 24')
+  })
+})
+
+/** Every emoji drawn again in one colour (#1097), offered in the emoji's own cells. */
+describe('the emoji in one colour', () => {
+  let held: LoadedSet | null = null
+  const outlines = async () => (held ??= await setNamed(EMOJI_OUTLINE)!.load())
+
+  test('draw nearly every emoji but the flags, each by its own character', async () => {
+    const set = await outlines()
+    const emoji = await setNamed(EMOJI_SET)!.load()
+    const flags = emoji.groups.find((one) => one.label === 'Flags')!.names
+    const others = emoji.groups.filter((one) => one.label !== 'Flags').flatMap((one) => one.names)
+
+    expect(set.twin?.('🤔')).toBe('thinking-face')
+    expect(set.twin?.('❤️')).toBe('red-heart')
+    // Filed under another name than its character.
+    expect(set.twin?.('👉')).toBe('backhand-index-pointing-right')
+    expect(set.twin?.('🇨🇭')).toBeNull()
+    expect(set.twin?.('rocket')).toBeNull()
+    const drawn = others.filter((one) => set.twin?.(one))
+    expect(drawn.length / others.length).toBeGreaterThan(0.95)
+    for (const one of drawn) expect(set.shape(set.twin!(one)!)?.kind, one).toBe('drawn')
+    // A country's flag is two letters, drawn in its colours or not at all.
+    const countries = flags.filter((one) => /^\p{Regional_Indicator}+$/u.test(one))
+    expect(countries.length).toBeGreaterThan(250)
+    expect(countries.some((one) => set.twin?.(one))).toBe(false)
+  })
+
+  /** A mask and a clip path are drawn in black and white to say what shows, which is no
+   *  colour on screen; everything else is the text's. */
+  test('are drawn in the text s colour alone, so a tint paints them', async () => {
+    const set = await outlines()
+
+    for (const { name } of set.entries) {
+      const shape = set.shape(name)
+      if (shape?.kind !== 'drawn') throw new Error(name)
+      const shown = shape.body.replace(/<(mask|clipPath)\b.*?<\/\1>/g, '')
+      expect(shown, name).not.toMatch(/fill="#|stroke="#|fill="(?!currentColor|none)/)
+    }
+  })
+
+  /** Every drawing is inline in the one page, so an id two of them share is one
+   *  drawing's mask cutting another. */
+  test('keep the ids of their masks to themselves', async () => {
+    const set = await outlines()
+    const owners = new Map<string, string>()
+
+    for (const { name } of set.entries) {
+      const shape = set.shape(name)
+      if (shape?.kind !== 'drawn') continue
+      for (const [, id] of shape.body.matchAll(/\bid="([^"]+)"/g)) {
+        const owner = owners.get(id!)
+        // An alias is the same drawing under a second name.
+        if (owner && set.shape(owner) !== shape) {
+          if (shape.body !== (set.shape(owner) as { body: string }).body)
+            throw new Error(`${id} in ${owner} and ${name}`)
+        }
+        owners.set(id!, name)
+      }
+      for (const [, id] of shape.body.matchAll(/url\(#([^)]+)\)/g))
+        expect(shape.body, name).toContain(`id="${id}"`)
+    }
+  })
+
+  test('are a value of their own, beside the emoji', () => {
+    const value = writtenIcon(EMOJI_OUTLINE, 'thinking-face')
+
+    expect(value).toBe('fluent-emoji-high-contrast:thinking-face')
+    expect(readIcon(value)).toEqual({ kind: 'set', set: EMOJI_OUTLINE, name: 'thinking-face' })
+    expect(readIcon('🤔')).toEqual({ kind: 'emoji', text: '🤔' })
+  })
+
+  test('take a tint as a line does, where an emoji, a drawing and a logo take none', () => {
+    expect(takesTint(readIcon('fluent-emoji-high-contrast:thinking-face'))).toBe(true)
+    expect(takesTint(readIcon('rocket'))).toBe(true)
+    expect(takesTint(readIcon('🤔'))).toBe(false)
+    expect(takesTint(readIcon('flat-color-icons:calendar'))).toBe(false)
+    expect(takesTint(readIcon('simple-icons:github'))).toBe(false)
+    expect(takesTint(null)).toBe(false)
+  })
+
+  test('credit Microsoft and the licence', () => {
+    const credit = setNamed(EMOJI_OUTLINE)!.credit
+
+    expect(credit).toContain('Fluent Emoji High Contrast')
+    expect(credit).toContain('MIT')
+    expect(pickerCredit()).toContain(credit)
   })
 })

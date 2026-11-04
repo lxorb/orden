@@ -2767,4 +2767,5 @@ export const ha: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'Ba a aika ba. An adana rubutunka, don haka za ka iya sake gwadawa.',
   'Reset to site icon': 'Mayar da gunkin shafin',
+  'One colour': 'Launi ɗaya',
 }

@@ -2670,4 +2670,5 @@ export const th: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'ยังไม่ได้ส่ง ข้อความของคุณยังอยู่ ลองอีกครั้งได้',
   'Reset to site icon': 'กลับไปใช้ไอคอนของเว็บไซต์',
+  'One colour': 'สีเดียว',
 }

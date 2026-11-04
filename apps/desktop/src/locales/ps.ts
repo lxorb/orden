@@ -2728,4 +2728,5 @@ export const ps: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'ونه لېږل شو. ستاسو متن ساتل شوی، بیا هڅه کولی شئ.',
   'Reset to site icon': 'د سایټ نښې ته بیرته راګرځول',
+  'One colour': 'یو رنګ',
 }

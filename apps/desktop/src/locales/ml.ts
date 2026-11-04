@@ -2766,4 +2766,5 @@ export const ml: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'അയച്ചില്ല. നിങ്ങളുടെ എഴുത്ത് സൂക്ഷിച്ചിട്ടുണ്ട്, വീണ്ടും ശ്രമിക്കാം.',
   'Reset to site icon': 'സൈറ്റിന്റെ ഐക്കണിലേക്ക് മടങ്ങുക',
+  'One colour': 'ഒറ്റ നിറം',
 }

@@ -2820,4 +2820,5 @@ export const pl: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'Nie wysłano. Twój tekst został zachowany, możesz spróbować ponownie.',
   'Reset to site icon': 'Przywróć ikonę witryny',
+  'One colour': 'Jeden kolor',
 }

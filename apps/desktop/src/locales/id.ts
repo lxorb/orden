@@ -2722,4 +2722,5 @@ export const id: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'Tidak terkirim. Teks Anda tetap disimpan, jadi Anda bisa mencoba lagi.',
   'Reset to site icon': 'Kembalikan ke ikon situs',
+  'One colour': 'Satu warna',
 }

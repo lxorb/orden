@@ -2821,4 +2821,5 @@ export const ru: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'Не отправлено. Ваш текст сохранён, можно попробовать ещё раз.',
   'Reset to site icon': 'Вернуть значок сайта',
+  'One colour': 'Одноцветные',
 }

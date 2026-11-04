@@ -2715,4 +2715,5 @@ export const my: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'မပို့ရသေးပါ။ သင့်စာသားကို သိမ်းထားသဖြင့် ထပ်မံကြိုးစားနိုင်သည်။',
   'Reset to site icon': 'ဆိုက်၏ အိုင်ကွန်သို့ ပြန်ထားရန်',
+  'One colour': 'အရောင်တစ်ရောင်',
 }

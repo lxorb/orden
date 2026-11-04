@@ -2700,4 +2700,5 @@ export const ja: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     '送信できませんでした。入力内容は残っているので、もう一度お試しください。',
   'Reset to site icon': 'サイトのアイコンに戻す',
+  'One colour': '単色',
 }

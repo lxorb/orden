@@ -106,8 +106,9 @@ first: a note keeps it under `icon-color:`, a canvas under `nib.iconColor`, a ch
 under `iconColor` in its pointer, a space and a folder in the columns above. Two keys so that an app reading the note still
 finds the icon and simply ignores the colour. The value is one of the app's own
 accents by its id, so it has a shade for black and one for white and still means
-something in next year's palette. An emoji and a coloured drawing take no colour:
-they are already pictures in their own colours.
+something in next year's palette. An emoji's outline takes one too (`takesTint` in
+`icons.ts`). An emoji, a coloured drawing and a logo take no colour: they are already
+pictures in their own colours.
 
 ## The sets
 
@@ -116,6 +117,7 @@ they are already pictures in their own colours.
 | Emoji | The whole Unicode set, drawn by the platform's own colour font. The breadth is the point, and the drawings cost nothing to ship. | 422 KB of index (`unicode-emoji-json`, MIT) | the font is the platform's; the index is MIT |
 | Lucide | The stroked set the interface itself is drawn in, so a chosen icon sits beside the app's own marks without looking borrowed. The one set a colour applies to. | already in the app | ISC |
 | Flat Color Icons | Everyday objects drawn flat and in colour: a calendar, a graph, a suitcase. Where Lucide is a line and an emoji is a face, this is the drawing you would put on a filing cabinet. | 166 KB, 329 icons | MIT, by Icons8 |
+| Fluent Emoji High Contrast | Every emoji drawn again in one colour, in the text's colour, so it follows the theme and takes a tint like a line (#1097). Not cells of its own: the picker's Colour / One colour pair draws each emoji's cell as its outline, written as its own value (`fluent-emoji-high-contrast:thinking-face`). No flags, and not the newest emoji, which stay in colour. | 2.8 MB, 1,595 drawings | MIT, by Microsoft |
 | Simple Icons | The logos of products and companies: GitHub, Blender, Claude, OpenAI, YouTube. One filled drawing per brand, drawn in the colour of the text around it, so a black mark stays visible on a dark theme. | 4.7 MB, 3,700 logos | CC0 1.0; the marks themselves stay their owners' trademarks, which the credit says |
 
 The picker shows them in three tabs: **Line** (Lucide), **Emoji** (the emoji with

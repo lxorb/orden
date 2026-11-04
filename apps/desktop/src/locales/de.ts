@@ -2786,4 +2786,5 @@ export const de: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'Nicht gesendet. Dein Text bleibt erhalten, du kannst es noch einmal versuchen.',
   'Reset to site icon': 'Auf Website-Symbol zurücksetzen',
+  'One colour': 'Einfarbig',
 }

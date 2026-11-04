@@ -2722,4 +2722,5 @@ export const ms: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'Tidak dihantar. Teks anda disimpan, jadi anda boleh cuba lagi.',
   'Reset to site icon': 'Kembali kepada ikon laman',
+  'One colour': 'Satu warna',
 }

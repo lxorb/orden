@@ -2645,4 +2645,5 @@ export const zhHans: Dictionary = {
   'View your report': '查看你的报告',
   'Not sent. Your text is kept, so you can try again.': '未发送。你的文字已保留，可以再试一次。',
   'Reset to site icon': '恢复为网站图标',
+  'One colour': '单色',
 }

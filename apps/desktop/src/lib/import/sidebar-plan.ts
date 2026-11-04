@@ -11,7 +11,7 @@ import type { Sidebar, SidebarFolder, SidebarSpace, SidebarTab } from './sidebar
 import { zenIcon, zenTint } from './zen-icons'
 import { isWebAddress } from '../web-tab/address'
 import { writeShortcut } from '../web-tab/shortcut'
-import { readIcon } from '../icons'
+import { readIcon, takesTint } from '../icons'
 
 /** One of the browser's spaces as an Orden space. */
 export interface SpacePlan {
@@ -85,7 +85,7 @@ function spacePlan(
   const plan: SpacePlan = {
     name: space.name,
     icon,
-    tint: icon && readIcon(icon)?.kind === 'lucide' ? zenTint(space.colour) : null,
+    tint: takesTint(readIcon(icon)) ? zenTint(space.colour) : null,
     files: [],
     order: {},
     bookmarks: [],

@@ -2748,4 +2748,5 @@ export const gsw: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'Nöd gschickt. Din Text bliibt, so chasch es nomal probiere.',
   'Reset to site icon': 'Uf s Websiite-Symbol zruggsetze',
+  'One colour': 'Eifarbig',
 }
