@@ -2725,9 +2725,10 @@ class Workspace {
     await spaces.selectSpace(this, id)
   }
 
-  /** The switcher's way in: the space, and the sidebar it is read in. */
+  /** The switcher's way in, which is every switch's: the sidebars stay as they are
+   *  (#1123). */
   async showSpace(id: string) {
-    await spaces.showSpace(this, id)
+    await spaces.selectSpace(this, id)
   }
 
   /** Deletes the space's folder, or puts it in this device's trash. */

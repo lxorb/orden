@@ -15,7 +15,7 @@
 import { spacesAhead } from './ahead'
 import { identifier } from '../identifier'
 import { invoke } from '../tauri'
-import type { Entry, Naming, Panel, Space } from '../workspace.svelte'
+import type { Entry, Naming, Space } from '../workspace.svelte'
 import type { Tab } from './documents.svelte'
 
 /** What the list of spaces needs of the store holding it. */
@@ -24,7 +24,6 @@ export interface HoldsSpaces {
   activeSpaceId: string | null
   tree: Entry | null
   naming: Naming | null
-  panel: Panel | null
   readonly notes: Entry[]
   readonly tabs: Tab[]
   setsRead: unknown
@@ -119,26 +118,25 @@ export const TABS_KEY = 'nib:space-tabs'
 /** Whether this window has fetched sets.svelte.ts, which every switch goes through then. */
 export const tabSets = { fetched: false }
 
-/** `shown` is the switcher's way in. Picking a space with the sidebar closed showed
- *  nothing, so the sidebar comes up with the tree, as Ctrl+Shift+L opens it.
+/** The switch to a space, from the switcher, the palette or anywhere else.
  *
  *  Every space keeps its own tabs (#674), so a switch with any tab open puts them aside
  *  and brings the space's own in (sets.svelte.ts), fetched with the first such switch.
  *  A window with nothing open and no sets yet has nothing to put aside, and only says
- *  which space it is in. */
-export async function selectSpace(ws: HoldsSpaces, id: string, shown = false) {
+ *  which space it is in.
+ *
+ *  The sidebars are left as they are, shut or open, on the panel they show (#1123). A
+ *  switch from the switcher used to open a shut file list on the tree, so the window
+ *  changed its frame under a key that only meant another space's notes; the file list
+ *  has its own key, Ctrl+Shift+L. */
+export async function selectSpace(ws: HoldsSpaces, id: string) {
   if (tabSets.fetched || ws.tabs.length) {
     const { sets } = await import('./sets.svelte')
-    return sets.toSpace(id, shown)
+    return sets.toSpace(id)
   }
 
-  if (shown) ws.panel ??= 'tree'
   ws.activeSpaceId = id
   ws.clearSelection()
   await ws.loadTree()
   ws.persist()
-}
-
-export async function showSpace(ws: HoldsSpaces, id: string) {
-  await selectSpace(ws, id, true)
 }

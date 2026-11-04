@@ -175,11 +175,84 @@ def switching(page: Page, scheme: str) -> None:
     gone(page, scheme, "with the panel shut")
 
 
+#: The name on the row the keyboard is on, or None where it is on no row of the switcher.
+STANDING = """() => {
+  const at = document.activeElement
+  return at?.closest?.('.picker') ? (at.querySelector('.nib-row-label')?.textContent ?? '') : null
+}"""
+
+
+def walking(page: Page, scheme: str) -> None:
+    """The arrows walk the rows from the space on screen, Enter goes to the row the
+    keyboard is on and Escape puts the switcher away where it was, on a Mac's keys as
+    on every other system's, with the key that opened it let go of or still held (#1123). A switch from here leaves both sides of the window
+    as they were: the left shut stays shut, the right open stays open on its panel."""
+    names = page.evaluate("() => window.nibApp.workspace.shownSpaces.map((one) => one.name)")
+    here = page.evaluate(HERE)
+    at = names.index(here)
+
+    opened(page, scheme, "the arrows")
+    if page.evaluate(STANDING) != here:
+        wrong(f"[{scheme}] the switcher opened with the keyboard on {page.evaluate(STANDING)!r}, not {here!r}")
+    page.keyboard.press("ArrowDown")
+    below = names[(at + 1) % len(names)]
+    if page.evaluate(STANDING) != below:
+        wrong(f"[{scheme}] ArrowDown from {here!r} stood on {page.evaluate(STANDING)!r}, not {below!r}")
+    page.keyboard.press("ArrowUp")
+    page.keyboard.press("ArrowUp")
+    above = names[(at - 1) % len(names)]
+    say(f"[{scheme}] down and up twice from {here!r}: {page.evaluate(STANDING)!r}")
+    if page.evaluate(STANDING) != above:
+        wrong(f"[{scheme}] ArrowUp twice stood on {page.evaluate(STANDING)!r}, not {above!r}")
+    if page.evaluate(HERE) != here:
+        wrong(f"[{scheme}] an arrow switched the space")
+    page.keyboard.press("Escape")
+    gone(page, scheme, "on Escape after the arrows")
+    if page.evaluate(HERE) != here:
+        wrong(f"[{scheme}] Escape after the arrows went to {page.evaluate(HERE)!r}")
+
+    page.evaluate(
+        "() => { const ws = window.nibApp.workspace;"
+        " ws.movePanel('outline', 'right'); ws.showPanel('outline'); ws.closePanel('left') }"
+    )
+    sides = "() => [window.nibApp.workspace.panel, window.nibApp.workspace.openOn('right')]"
+    before = page.evaluate(sides)
+    opened(page, scheme, "Enter on a row")
+    page.keyboard.press("ArrowDown")
+    page.keyboard.press("Enter")
+    gone(page, scheme, "on Enter on a row")
+    if page.evaluate(HERE) != below:
+        wrong(f"[{scheme}] ArrowDown and Enter went to {page.evaluate(HERE)!r}, not {below!r}")
+    page.wait_for_timeout(300)
+    after = page.evaluate(sides)
+    say(f"[{scheme}] the sides before the switch {before}, after it {after}")
+    if after != before:
+        wrong(f"[{scheme}] the switch changed the sides of the window: {before} -> {after}")
+
+    # Walked with the key's modifiers still down, Cmd and Shift on a Mac, as Cmd+Tab is.
+    names = page.evaluate("() => window.nibApp.workspace.shownSpaces.map((one) => one.name)")
+    at = names.index(page.evaluate(HERE))
+    opened(page, scheme, "the arrows with the key held")
+    page.keyboard.down("Control")
+    page.keyboard.down("Shift")
+    page.keyboard.press("ArrowDown")
+    page.keyboard.press("ArrowDown")
+    page.keyboard.press("Enter")
+    page.keyboard.up("Shift")
+    page.keyboard.up("Control")
+    gone(page, scheme, "on Enter with the key held")
+    two = names[(at + 2) % len(names)]
+    say(f"[{scheme}] two rows down with the key held: {page.evaluate(HERE)!r}")
+    if page.evaluate(HERE) != two:
+        wrong(f"[{scheme}] the arrows with the key held went to {page.evaluate(HERE)!r}, not {two!r}")
+
+
 def drive(browser: Browser) -> None:
     for scheme in ("light", "dark"):
         page = DRIVE.page(browser, viewport={"width": 1180, "height": 800})
         DRIVE.open(page)
         switching(page, scheme)
+        walking(page, scheme)
         page.context.close()
 
 
