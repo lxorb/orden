@@ -27,6 +27,7 @@
   import { draggable, droppable, type Point } from './drag.svelte'
   import { plain } from './inline'
   import type { Kit } from './kit'
+  import { everyRow } from './list-items'
   import { priorityTone } from '../quick-add/labels'
   import { dayIn } from './values'
   import { arrive } from '../slide'
@@ -58,7 +59,7 @@
   const days = $derived(daysShown(mode, anchor, first))
   /** The property a row is placed by. */
   const dateProperty = $derived(view?.nib.date ?? 'task.date')
-  const rows = $derived((live.answer?.groups ?? []).flatMap((group) => group.rows))
+  const rows = $derived(everyRow(live.answer?.groups ?? []))
   const placed = $derived(
     placedByDay(rows, days, (row) => {
       const base = live.base

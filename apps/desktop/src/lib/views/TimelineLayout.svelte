@@ -13,6 +13,7 @@
   import { dateAt } from './days'
   import { plain } from './inline'
   import type { Kit } from './kit'
+  import { everyRow } from './list-items'
   import { carryThumb, HOLD, holdsThumb, THUMB_SLOP } from './drag.svelte'
   import {
     arrowsOf,
@@ -40,7 +41,7 @@
     quarter: t('Quarters'),
   }
 
-  const rows = $derived((live.answer?.groups ?? []).flatMap((group) => group.rows))
+  const rows = $derived(everyRow(live.answer?.groups ?? []))
   const bars = $derived.by((): Bar[] => {
     const base = live.base
     if (!base) return []

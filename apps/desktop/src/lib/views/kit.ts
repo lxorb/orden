@@ -11,6 +11,7 @@ import { workspace } from '../workspace.svelte'
 import { dropRow, tickRow, writeRow } from './act'
 import { addNote, openQuickAdd, type Prefill, prefillOf } from './add'
 import { dropInto } from './drop'
+import { everyRow } from './list-items'
 import { pressButton } from './press'
 import type { LiveView } from './live.svelte'
 import type { ViewSpec } from './spec'
@@ -50,8 +51,10 @@ export interface Kit {
   /** A button cell pressed: `column` is `button.<name>`. */
   press(row: Row, column: string): void
   /** A row dropped into the group keyed `key` of the view's grouping (or of
-   *  `property` where a layout groups by one of its own, a calendar's day). */
-  drop(row: Row, key: Value, property?: string): void
+   *  `property` where a layout groups by one of its own, a calendar's day), `from` the
+   *  group it left: a list property swaps that member, and carried from nowhere this view
+   *  knows, takes none off. */
+  drop(row: Row, key: Value, property?: string, from?: Value): void
   /** Adds to the view, in a group where one is named; a note of a view of notes from
    *  `template` where one is named (null for a blank one). Answers the prefill where the
    *  view's own add row should take the words (no quick add yet), else null. */
@@ -128,7 +131,7 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
       })
     },
     openTask(row, comment = false) {
-      const list = (live.answer?.groups ?? []).flatMap((group) => group.rows)
+      const list = everyRow(live.answer?.groups ?? [])
       void import('./task-view/viewing.svelte').then((one) => one.showTask(row, kit, list, comment))
     },
     choose(row, tab = false) {
@@ -144,10 +147,10 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
     press(row, column) {
       if (live.base && writes(row)) void pressButton(live.base, column.slice(BUTTON.length), row)
     },
-    drop(row, key, property) {
+    drop(row, key, property, from) {
       const by = property ?? live.view?.groupBy?.property
       if (by === undefined || !writes(row)) return
-      const drop = dropInto(by, key, row, live.today)
+      const drop = dropInto(by, key, row, live.today, from ?? null)
       if (drop) void dropRow(row, drop)
     },
     add(group, template) {

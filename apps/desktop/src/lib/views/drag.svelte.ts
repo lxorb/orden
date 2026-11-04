@@ -11,7 +11,7 @@
  *  Escape, or a release over nothing that takes it, puts the row back where it was:
  *  nothing is written until a drop lands. */
 
-import type { Row } from '@orden/bases'
+import type { Row, Value } from '@orden/bases'
 
 /** Where a drop landed, in the window's pixels. */
 export interface Point {
@@ -19,7 +19,7 @@ export interface Point {
   y: number
 }
 
-type Take = (row: Row, at: Point, place: HTMLElement) => void
+type Take = (row: Row, at: Point, place: HTMLElement, from: Value | undefined) => void
 
 /** How far a mouse moves before a press is a drag rather than a click. */
 const SLOP = 4
@@ -151,6 +151,8 @@ export interface Carry {
   row: Row
   label: string
   disabled?: boolean
+  /** The group it is carried out of, where it stands under several. */
+  from?: Value | undefined
 }
 
 /** A row that can be carried. The press that does not become a drag is left alone,
@@ -226,7 +228,7 @@ export function draggable(node: HTMLElement, start: Carry) {
     window.addEventListener('click', swallow, { capture: true, once: true })
     setTimeout(() => window.removeEventListener('click', swallow, true), 0)
     if (event && target && row)
-      takers.get(target)?.(row, { x: event.clientX, y: event.clientY }, target)
+      takers.get(target)?.(row, { x: event.clientX, y: event.clientY }, target, carry.from)
   }
 
   const up = (event: PointerEvent) => finish(event)
