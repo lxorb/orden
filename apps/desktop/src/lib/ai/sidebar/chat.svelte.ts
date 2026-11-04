@@ -30,7 +30,9 @@ import {
   chatsOf,
   deleteThread,
   findParents,
+  headOf as listedHeadOf,
   unreadOf,
+  wordsOf,
   isDeleted,
   staysDeleted,
   keepThread,
@@ -308,9 +310,10 @@ class Chat implements Panel {
   private async arrive(opening: boolean): Promise<void> {
     const spaces = this.spaces
     for (const space of spaces) await this.adoptOldAsk(space)
-    const heads = await listEveryThread(spaces).catch(() => this.every)
+    const read = await listEveryThread(spaces).catch(() => this.every)
     if (this.spaces !== spaces) return
-    this.every = heads.map((one) => this.settled(one))
+    this.every = this.merged(read)
+    const heads = this.every
     void this.findParentsOnce(spaces)
     if (!opening) return
     const { last, before } = lastOpen()
@@ -336,7 +339,46 @@ class Chat implements Panel {
   private async refreshHeads(): Promise<void> {
     const spaces = this.spaces
     const heads = await listEveryThread(spaces).catch(() => this.every)
-    if (this.spaces === spaces) this.every = heads.map((one) => this.settled(one))
+    if (this.spaces === spaces) this.every = this.merged(heads)
+  }
+
+  /** The list drawn again from the threads in hand, at once (#1111): a chat made,
+   *  renamed, archived, pinned or deleted is there as it is now, never only once its
+   *  file is written and read back. */
+  private relist(): void {
+    this.every = this.merged(this.every)
+  }
+
+  /** A thread's words for the list's search, worked out again only once it has changed:
+   *  the list is drawn again from every thread in hand, and a long one has many. */
+  private words = new WeakMap<Thread, { at: string; words: string }>()
+
+  private wordsIn(thread: Thread): string {
+    const at = `${thread.updated}:${thread.turns.length}:${thread.turns.at(-1)?.parts.length ?? 0}`
+    const known = this.words.get(thread)
+    if (known?.at === at) return known.words
+    const words = wordsOf(thread)
+    this.words.set(thread, { at, words })
+    return words
+  }
+
+  /** What is read of the list, under the threads this run holds (#1111): a thread in hand
+   *  is newer than its file, which may still be on its way or read before the change, so
+   *  its line is the thread's own; a thread deleted is in no list, whatever was read. A
+   *  thread is listed once it has been sent something, its first message on its way too
+   *  (`begin`), as the file has it once it is written. */
+  private merged(read: readonly Listed[]): Listed[] {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and read here, never drawn
+    const lines = new Map<string, Listed>()
+    for (const one of read) if (!isDeleted(one.id)) lines.set(one.id, one)
+    for (const thread of this.live.values()) {
+      if (isDeleted(thread.id)) continue
+      const listed = thread.turns.length > 0 || this.running.includes(thread.id)
+      if (listed && this.spaces.includes(thread.space)) {
+        lines.set(thread.id, { ...listedHeadOf(thread, this.wordsIn(thread)), space: thread.space })
+      } else lines.delete(thread.id)
+    }
+    return [...lines.values()].sort((a, b) => b.updated - a.updated).map((one) => this.settled(one))
   }
 
   /** A head as this run knows it: a chat written down as at work that nothing in this
@@ -363,10 +405,7 @@ class Chat implements Panel {
       delete thread.archived
       thread.state = now
     }
-    const archived = !!thread.archived
-    this.every = this.every.map((one) =>
-      one.id === thread.id ? { ...one, state: thread.state ?? FIRST_STATE, archived } : one,
-    )
+    this.relist()
     if (thread === this.open) this.head = headOf(thread)
     if (thread.turns.length) void keepThread(thread).catch(() => undefined)
   }
@@ -385,13 +424,7 @@ class Chat implements Panel {
     if (!thread) return
     if (on) thread.pinned = Date.now()
     else delete thread.pinned
-    const pinned = thread.pinned
-    this.every = this.every.map((one) => {
-      if (one.id !== id) return one
-      const rest = { ...one }
-      delete rest.pinned
-      return pinned ? { ...rest, pinned } : rest
-    })
+    this.relist()
     await keepThread(thread).catch(() => undefined)
   }
 
@@ -502,6 +535,7 @@ class Chat implements Panel {
       this.listing = false
       this.show(thread)
     }
+    this.relist()
     void keepThread(thread)
       .catch(() => undefined)
       .then(() => this.refreshHeads())
@@ -525,6 +559,7 @@ class Chat implements Panel {
    *  again where it is open, and written down. */
   touched(thread: Thread): void {
     this.live.set(thread.id, thread)
+    this.relist()
     if (thread === this.open) {
       this.everything = true
       this.draw()
@@ -535,14 +570,10 @@ class Chat implements Panel {
   /** The agent said something new in `thread` (an answer, a question for the reader):
    *  unread until the reader sees it (#1064). Written down with what it said. */
   answered(thread: Thread): void {
-    const answered = Date.now()
-    thread.answered = answered
-    const listed = this.every.some((one) => one.id === thread.id)
-    this.every = this.every.map((one) => (one.id === thread.id ? { ...one, answered } : one))
-    if (!thread.turns.length) return
-    // A thread not in the list yet (its first answer still on its way) is put there.
-    const kept = keepThread(thread).catch(() => undefined)
-    if (!listed) void kept.then(() => this.refreshHeads())
+    thread.answered = Date.now()
+    this.live.set(thread.id, thread)
+    this.relist()
+    if (thread.turns.length) void keepThread(thread).catch(() => undefined)
   }
 
   /** The reader has the thread in view with its latest answer (Conversation.svelte):
@@ -552,7 +583,7 @@ class Chat implements Panel {
     if (!thread) return
     const seen = Date.now()
     thread.seen = seen
-    this.every = this.every.map((one) => (one.id === id ? { ...one, seen } : one))
+    this.relist()
     if (thread.turns.length) await keepThread(thread).catch(() => undefined)
   }
 
@@ -880,6 +911,8 @@ class Chat implements Panel {
       this.following.add(thread.id)
     this.running = [...this.running, thread.id]
     if (text !== undefined) this.pending = { ...this.pending, [thread.id]: text }
+    this.live.set(thread.id, thread)
+    this.relist()
     this.move(thread, { type: 'start' })
     return stopper
   }
@@ -890,6 +923,7 @@ class Chat implements Panel {
     if (replied && thread.turns.at(-1)?.role === 'model') thread.answered = Date.now()
     this.stoppers.delete(thread.id)
     this.running = this.running.filter((one) => one !== thread.id)
+    this.relist()
     this.move(thread, { type: 'end', stop, busy: tasks.of(thread.id).length > 0 })
     this.pending = without(this.pending, thread.id)
     // Words steered in that the answer never took (sent before it was ready for them, or
@@ -1301,6 +1335,7 @@ class Chat implements Panel {
   /** A change to what the controls show, written down where the thread is kept. */
   private changedHead(thread: Thread): void {
     if (thread === this.open) this.head = headOf(thread)
+    this.relist()
     if (thread.turns.length) void keepThread(thread).catch(() => undefined)
   }
 
@@ -1365,6 +1400,7 @@ class Chat implements Panel {
     if (!thread || !last) return
     const copy = branchThread(thread, last.id, name ?? thread.title)
     this.show(copy)
+    this.relist()
     rememberOpen(copy.id)
     void keepThread(copy).then(() => this.refreshHeads())
     this.focus()
@@ -1389,7 +1425,17 @@ class Chat implements Panel {
 
   /** A thread by id: the one in hand, else the one kept. */
   private async held(id: string): Promise<Thread | null> {
-    return this.live.get(id) ?? (await readThread(this.spaceOf(id), id).catch(() => null))
+    const live = this.live.get(id)
+    if (live) return live
+    const read = await readThread(this.spaceOf(id), id).catch(() => null)
+    // In hand from now on, so what changes it is the list's at once (`merged`); one
+    // taken meanwhile is the one changed.
+    if (read && !isDeleted(id)) {
+      const now = this.live.get(id)
+      if (now) return now
+      this.live.set(id, read)
+    }
+    return read
   }
 
   async exportThread(): Promise<void> {
@@ -1460,6 +1506,7 @@ class Chat implements Panel {
       () => true,
       () => false,
     )
+    this.relist()
     this.stoppers.get(id)?.abort()
     this.unwait(id)
     this.forgetEdit(id)
@@ -1468,6 +1515,7 @@ class Chat implements Panel {
     this.queued = without(this.queued, id)
     // A delete the crate refused leaves the chat as it is, in the list.
     if (!(await deleting)) {
+      this.relist()
       await this.refreshHeads()
       return
     }
