@@ -1058,8 +1058,9 @@ same way, batched: an agent's ten form fields are one question.
 A press is judged by **what it lands on**, not by the ref it was named by: the element the
 engine finds at the point with the hit test the press itself goes by, so through a
 `pointer-events: none` layer, a pseudo-element or a shadow root as what it hangs on, and in a
-frame the frame's element, by the frame's site, the point followed through any `transform` or
-`zoom` by the engine's own quad. The pointer is brought there first and the point looked at
+frame the frame's element, by the frame's site, the point followed through any `transform`, `zoom`,
+border or padding by the engine's own content box. And in such a frame what the frame itself says
+the pointer is over is asked too, which owes nothing to that mapping. The pointer is brought there first and the point looked at
 again, as the page may answer the move: anything new there is put to the same question before
 the button goes down. One press is one question, however many times it is looked at. A page's
 own timer can still swap the target in the moment between that look and the press, which no
@@ -1071,9 +1072,10 @@ that very frame, through each interface's own getters, or from the engine's own 
 `closest` on its own objects, or name a form's field `elements` or `parentNode`, and none of it
 is seen here. Its content is another matter: a page calls its own button what it likes.
 
-An allowance is for the question asked, every word of it: the same button in a dialog whose
-words changed, or in a form that has grown a card field, asks again, and a press made more than
-once says how many times, and asks again for another count.
+An allowance is for the question asked: its category, the control's name and the words it answers
+to. The same button when a dialog's sentence changes, or in a form that has grown a card field,
+asks again; a clock elsewhere in the dialog does not. A press made more than once says how many
+times, and asks again for another count.
 
 So a paragraph round a Pay button asks and a section whose middle is empty does not, and a
 frame's ref is a press of what is in the frame. Where no control holds the press, what acts for
@@ -1092,10 +1094,11 @@ page's own script behind a button called OK is not seen by anything here.
 
 A link that only goes is no delete, as the press that deletes is on the page it goes to; one
 with `data-method`, `data-turbo-method`, `role=button` or a handler or listener of its own is a
-press, while a plain `<a href=/delete-account>` still goes. In a dialog, what goes ahead (Confirm,
-OK, Yes, Continue) asks if the dialog says it is about to pay or delete: a sentence that asks, or says it will, or
-its opening words, a notice about cookies aside. `You can remove your data at any time` does not. Got it, Accept all, Learn more and a nameless icon do not, and so a dialog whose
-real button is called something else goes. A tick by `browser_fill_form` is a press like one by
+press, while a plain `<a href=/delete-account>` still goes. In a dialog that talks of paying or deleting anywhere in it, every control asks except the way
+out, a closed list (Cancel, Close, No, Got it, Accept all, Learn more and their like), an icon
+with no name included. It is not read for what it means, as that lets honest second steps by:
+`You can remove your data at any time` and OK cost one question. The question quotes the first
+sentence that says so. A tick by `browser_fill_form` is a press like one by
 `browser_click`, on top of the form's one question.
 
 Recognising these from the page rather than from the agent's own account of what it is
@@ -1113,7 +1116,9 @@ is not printed to a PDF at all, where nothing could paint it over. Nor does it
 read any other secret - a one-time code or a PIN and a card's number, expiry or security code,
 each by its `autocomplete` or by what it is called, and in a box, an editable region or a
 `role=textbox` alike -
-by any road, and a field that cannot be described, whatever frame it is in, counts as one: `browser_snapshot` writes such a field as `[filled]` or nothing, and nothing
+by any road, at any depth of page, and a field that cannot be described, whatever frame it is in,
+counts as one (a part of the page whose fields cannot be read at all is not written, and no picture
+of the page is taken): `browser_snapshot` writes such a field as `[filled]` or nothing, and nothing
 under it (the engine's own value for a password is one bullet a character, and its words
 inside the field the same, so either would say how long it is); `browser_find` never looks
 inside one; a name the engine builds out of a field's value has the value taken out; and

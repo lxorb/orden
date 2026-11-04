@@ -40,6 +40,9 @@ const LONGEST_NAME: usize = 160;
 /// words and digits out of the page with it, and says next to nothing.
 const SHORTEST_ECHO: usize = 3;
 
+/// How far down a page's tree is walked.
+const DEEPEST: usize = 256;
+
 /// The mark a secret leaves in a name: the reader can see words are missing.
 const HIDDEN: &str = "[hidden]";
 
@@ -498,6 +501,7 @@ pub fn render(parts: &[Part], asked: &Asked<'_>) -> Written {
         text: String::new(),
         most: asked.most,
         truncated: false,
+        down: 0,
         origin: asked.origin,
     };
 
@@ -550,6 +554,8 @@ struct Writer<'a> {
     most: usize,
     truncated: bool,
     origin: &'a str,
+    /// How far down the tree the walk is.
+    down: usize,
 }
 
 /// Where a node is being written: how deep, and what around it already says.
@@ -568,6 +574,17 @@ impl Writer<'_> {
         if self.truncated {
             return;
         }
+        // Past this a tree is cut and says so, rather than run out of stack.
+        if self.down >= DEEPEST {
+            self.truncated = true;
+            return;
+        }
+        self.down += 1;
+        self.walked(forest, part, raw, around);
+        self.down -= 1;
+    }
+
+    fn walked(&mut self, forest: &Forest<'_>, part: usize, raw: &Value, around: &Around<'_>) {
         let node = Node { raw };
         let role = node.role();
         let name = forest.said_of(part, &node);
@@ -673,7 +690,14 @@ pub fn find(parts: &[Part], secret: &HashSet<(String, u64)>, wanted: &Wanted<'_>
     let mut found = Vec::new();
     let mut seen = HashSet::new();
     if let Some(root) = forest.root(0) {
-        search(&forest, 0, root, None, wanted, &mut (&mut found, &mut seen));
+        search(
+            &forest,
+            0,
+            root,
+            None,
+            wanted,
+            &mut (&mut found, &mut seen, 0),
+        );
     }
     found
 }
@@ -682,9 +706,25 @@ pub fn find(parts: &[Part], secret: &HashSet<(String, u64)>, wanted: &Wanted<'_>
 type Holder = (String, String, String);
 
 /// What `search` fills: the matches, and the refs already in them.
-type Found<'a> = (&'a mut Vec<Match>, &'a mut HashSet<String>);
+type Found<'a> = (&'a mut Vec<Match>, &'a mut HashSet<String>, usize);
 
 fn search(
+    forest: &Forest<'_>,
+    part: usize,
+    raw: &Value,
+    holder: Option<&Holder>,
+    wanted: &Wanted<'_>,
+    found: &mut Found<'_>,
+) {
+    // Past this a tree is not looked in, rather than run out of stack.
+    if found.2 < DEEPEST {
+        found.2 += 1;
+        searched(forest, part, raw, holder, wanted, found);
+        found.2 -= 1;
+    }
+}
+
+fn searched(
     forest: &Forest<'_>,
     part: usize,
     raw: &Value,

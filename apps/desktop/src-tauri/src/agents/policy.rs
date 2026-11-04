@@ -558,6 +558,8 @@ pub struct Question {
     pub category: Category,
     /// `Place order on shop.example`.
     pub summary: String,
+    /// The words of a dialog it answers to, in full, where a summary is cut for reading.
+    pub words: String,
 }
 
 /// What an agent is doing to the element the facts are about.
@@ -590,8 +592,11 @@ pub fn judge(
         short(&facts.name)
     };
     let ask = |category: Category, summary: String| {
-        (grant.asks(category) && !grant.always(&site, category))
-            .then_some(Question { category, summary })
+        (grant.asks(category) && !grant.always(&site, category)).then_some(Question {
+            category,
+            summary,
+            words: String::new(),
+        })
     };
 
     // Signing in, and words into a sign-in form, ask as the mode says (#1072): a takeover
@@ -646,23 +651,19 @@ pub fn judge(
         }
     }
 
-    // A dialog's Confirm does what the dialog says it does: the second step of a delete or
-    // of a payment, whatever the button is called.
-    if act == Act::Press
-        && !facts.link
-        && !facts.editable
-        && !facts.dialog.is_empty()
-        && confirms(&facts.name)
-        && !says(&facts.dialog, NOT_ABOUT_THE_PRESS)
-    {
-        if let Some(said) = dialog_commits(&facts.dialog, PAYING) {
-            if let Some(question) = ask(Category::Paying, on(&short(said), "Pay", &site)) {
-                return Some(question);
-            }
-        }
-        if let Some(said) = dialog_commits(&facts.dialog, DELETING) {
-            if let Some(question) = ask(Category::Deleting, on(&short(said), "Delete", &site)) {
-                return Some(question);
+    // A press in a dialog that talks of paying or deleting does what the dialog says, whatever
+    // it is called, unless it is the way out. Not by reading what the dialog means: that lets
+    // honest second steps by, and a press too many asked about costs one question.
+    if act == Act::Press && !facts.link && !facts.editable && !dismisses(&facts.name) {
+        for (words, inflected, category, fallback) in [
+            (PAYING, DIALOG_PAYING, Category::Paying, "Pay"),
+            (DELETING, DIALOG_DELETING, Category::Deleting, "Delete"),
+        ] {
+            if let Some(said) = mention(&facts.dialog, words, inflected) {
+                if let Some(mut question) = ask(category, on(&short(said), fallback, &site)) {
+                    question.words = said.to_string();
+                    return Some(question);
+                }
             }
         }
     }
@@ -748,8 +749,11 @@ pub fn answering(
     }
     let site = site_of(&host_of(url).unwrap_or_default());
     let ask = |category: Category, summary: String| {
-        (grant.asks(category) && !grant.always(&site, category))
-            .then_some(Question { category, summary })
+        (grant.asks(category) && !grant.always(&site, category)).then_some(Question {
+            category,
+            summary,
+            words: String::new(),
+        })
     };
     if kind.signs_in() {
         return ask(Category::SigningIn, on("", "Sign in", &site));
@@ -923,81 +927,113 @@ const NO_PAYMENT_CARD: &[&str] = &[
     "gift",
 ];
 
-/// What goes ahead with whatever a dialog is asking, by how it starts. Anything else in a
-/// dialog that talks of a delete is no answer to it: Got it, Accept all, Learn more, an icon
-/// with no name.
-const CONFIRMING: &[&str] = &[
-    "confirm",
-    "yes",
-    "ok",
-    "okay",
-    "proceed",
-    "i understand",
-    "i'm sure",
-    "ja",
-    "best\u{e4}tigen",
-    "oui",
-    "confirmer",
-    "s\u{ed}",
-    "confirmar",
-    "s\u{ec}",
-    "conferma",
+/// What in a dialog is the way out of it, as its whole name or the first clause of it: `Close`
+/// and `No, keep it`, and not `Close account` or `Keep going`. A closed list: all else in a
+/// dialog that talks of paying or deleting asks, an icon with no name included.
+const DISMISSING: &[&str] = &[
+    "cancel",
+    "close",
+    "dismiss",
+    "keep",
+    "no",
+    "not now",
+    "back",
+    "go back",
+    "never mind",
+    "got it",
+    "accept",
+    "accept all",
+    "reject",
+    "reject all",
+    "decline",
+    "learn more",
+    "more info",
+    "details",
+    "next page",
+    "previous page",
+    "skip",
+    "later",
+    "maybe later",
+    "x",
+    "\u{d7}",
+    "\u{2715}",
+    "abbrechen",
+    "schlie\u{df}en",
+    "nein",
+    "behalten",
+    "zur\u{fc}ck",
+    "sp\u{e4}ter",
+    "verstanden",
+    "alle akzeptieren",
+    "annuler",
+    "fermer",
+    "non",
+    "garder",
+    "cancelar",
+    "cerrar",
+    "annulla",
+    "chiudi",
 ];
 
-/// The same as its whole name: `Continue shopping` is no answer to one.
-const CONFIRMING_ALONE: &[&str] = &[
-    "continue",
-    "weiter",
-    "continuer",
-    "continuar",
-    "continua",
-    "submit",
-    "absenden",
-    "go ahead",
-    "keep going",
-    "close account",
-    "close my account",
-];
-
-/// What makes a dialog's talk of deleting no question of its own: a notice about cookies.
-const NOT_ABOUT_THE_PRESS: &[&str] = &["cookie", "cookies"];
-
-/// Whether a press goes ahead with what a dialog says. An arrow or a tick after it is no word.
-fn confirms(name: &str) -> bool {
+/// Whether a press is the way out of a dialog. An arrow or a tick round it is no word.
+fn dismisses(name: &str) -> bool {
+    if alone(name, DISMISSING) {
+        return true;
+    }
     let name = name.trim_matches(|one: char| !one.is_alphanumeric());
-    alone(name, CONFIRMING_ALONE) || starts_with_any(name, CONFIRMING)
+    alone(name.split(',').next().unwrap_or_default(), DISMISSING)
 }
 
-/// What makes a sentence about paying or deleting a thing about to be done, and not a thing
-/// that may be done some day (`You can remove your data at any time`).
-const COMMITS: &[&str] = &[
-    "will",
-    "permanently",
-    "forever",
-    "cannot be undone",
-    "can't be undone",
-    "are you sure",
-    "want to",
-    "wirklich",
-    "endg\u{fc}ltig",
-    "wird",
-    "definitivement",
-    "permanentemente",
+/// What a dialog's words may be in, past the commands the press lists have: `Your files get
+/// deleted`, `Your card is charged`.
+const DIALOG_DELETING: &[&str] = &[
+    "deleted",
+    "deletes",
+    "deleting",
+    "removed",
+    "removes",
+    "removing",
+    "erased",
+    "erases",
+    "erasing",
+    "gel\u{f6}scht",
+    "entfernt",
+    "supprim\u{e9}",
+    "supprim\u{e9}e",
+    "eliminado",
+    "borrado",
+    "eliminato",
+    "cancellato",
+    "rimosso",
+];
+const DIALOG_PAYING: &[&str] = &[
+    "charged", "charge", "billed", "paid", "payment", "bezahlt", "zahlung",
 ];
 
-/// What a dialog says of what its button goes ahead with, in these words: a sentence that
-/// asks (`Delete your account?`), one that says it will (`This will delete your account.`),
-/// or its opening words, as a heading does (`Pay 20.00 EUR`). That sentence, for the question.
-fn dialog_commits<'d>(dialog: &'d str, words: &[&str]) -> Option<&'d str> {
-    let mut sentences = dialog
-        .split_inclusive(['.', '!', '?', '\u{ff1f}'])
-        .map(str::trim);
-    if starts_with_any(dialog, words) {
-        return sentences.next();
+/// The first sentence of a dialog with one of these words in it, to quote to the reader: to a
+/// stop with a space after it or the end, so `Pay 1.299,00 EUR` stays whole. Whether it asks
+/// is whether there is one; nothing is read from which sentence or how it is put.
+fn mention<'d>(dialog: &'d str, words: &[&str], inflected: &[&str]) -> Option<&'d str> {
+    if !says(dialog, words) && !says(dialog, inflected) {
+        return None;
     }
-    sentences.find(|sentence| {
-        says(sentence, words) && (sentence.ends_with(['?', '\u{ff1f}']) || says(sentence, COMMITS))
-    })
+    let mut start = 0;
+    let stops = dialog.char_indices().filter(|(at, one)| {
+        matches!(one, '.' | '!' | '?' | '\u{ff1f}')
+            && dialog[at + one.len_utf8()..]
+                .chars()
+                .next()
+                .is_none_or(char::is_whitespace)
+    });
+    for (at, one) in stops {
+        let end = at + one.len_utf8();
+        let sentence = dialog[start..end].trim();
+        if says(sentence, words) || says(sentence, inflected) {
+            return Some(sentence);
+        }
+        start = end;
+    }
+    Some(dialog[start..].trim())
 }
 
 fn starts_with_any(line: &str, words: &[&str]) -> bool {
@@ -1779,117 +1815,110 @@ mod tests {
     }
 
     #[test]
-    fn a_dialog_that_deletes_asks_of_its_confirm_and_not_of_its_way_out() {
+    fn a_dialog_that_talks_of_paying_or_deleting_asks_of_all_but_its_way_out() {
         let url = "https://app.example/";
         let in_dialog = |name: &str, dialog: &str| Facts {
             dialog: dialog.into(),
             ..press(name)
         };
-        for name in ["Confirm", "OK", "Yes", "Continue"] {
-            assert_eq!(
-                category(&in_dialog(name, "Delete your account?"), url),
-                Some(Category::Deleting),
-                "{name}"
-            );
-        }
-        for name in [
-            "Cancel",
-            "No, keep it",
-            "Close",
-            "x",
-            "Abbrechen",
-            "Not now",
-        ] {
-            assert_eq!(
-                category(&in_dialog(name, "Delete your account?"), url),
-                None,
-                "{name}"
-            );
-        }
-        assert_eq!(
-            category(&in_dialog("Confirm", "Change your name?"), url),
-            None
-        );
-    }
-
-    #[test]
-    fn a_dialog_is_answered_by_what_goes_ahead_with_it() {
-        let url = "https://app.example/";
-        let in_dialog = |name: &str, dialog: &str| Facts {
-            dialog: dialog.into(),
-            ..press(name)
-        };
-        // The commonest shape of a second step, and a payment's.
-        assert_eq!(
-            category(
-                &in_dialog("Confirm", "Are you sure? This will delete your account."),
-                url
+        for (name, dialog, asked) in [
+            (
+                "Confirm",
+                "You are about to delete your account.",
+                Category::Deleting,
             ),
-            Some(Category::Deleting)
-        );
-        assert_eq!(
-            category(&in_dialog("OK", "Pay 20.00 EUR?"), url),
-            Some(Category::Paying)
-        );
-        for name in [
-            "Confirm and close",
-            "Yes, no going back",
-            "Keep going",
-            "Close account",
+            (
+                "Confirm",
+                "Warning. Delete your account.",
+                Category::Deleting,
+            ),
+            (
+                "Yes",
+                "Confirmation Delete your account.",
+                Category::Deleting,
+            ),
+            ("OK", "Please confirm: delete account", Category::Deleting),
+            (
+                "OK",
+                "Are you sure? All your files get deleted.",
+                Category::Deleting,
+            ),
+            (
+                "Confirm",
+                "Order summary. Total 99 EUR. Pay with Visa ending 4242.",
+                Category::Paying,
+            ),
+            (
+                "OK",
+                "Your card is charged 99 EUR. Purchase details below.",
+                Category::Paying,
+            ),
+            (
+                "Continue \u{2192}",
+                "Delete your account?",
+                Category::Deleting,
+            ),
+            (
+                "Confirm and close",
+                "Delete your account?",
+                Category::Deleting,
+            ),
+            ("Keep going", "Delete your account?", Category::Deleting),
+            ("Close account", "Delete your account?", Category::Deleting),
+            (
+                "Yes, no going back",
+                "Delete your account?",
+                Category::Deleting,
+            ),
+            (
+                "Done",
+                "You can remove your data at any time.",
+                Category::Deleting,
+            ),
+            ("", "Remove item from cart?", Category::Deleting),
         ] {
             assert_eq!(
-                category(&in_dialog(name, "Delete your account?"), url),
-                Some(Category::Deleting),
-                "{name}"
+                category(&in_dialog(name, dialog), url),
+                Some(asked),
+                "{name}: {dialog}"
             );
         }
-        // Everyday ones.
         for (name, dialog) in [
             ("Got it", "How to delete your data"),
             (
                 "Accept all",
                 "We use cookies. You can delete them in your browser.",
             ),
-            ("OK", "We use cookies. You can delete them in your browser."),
             ("Learn more", "Delete account?"),
-            ("", "Remove item from cart?"),
             ("Next page", "Recently deleted items"),
-            ("Continue shopping", "Item removed"),
             ("Cancel", "Delete your account?"),
+            ("No, keep it", "Delete your account?"),
+            ("Close", "Pay 20.00 EUR"),
+            ("x", "Delete your account?"),
+            ("Abbrechen", "Konto l\u{f6}schen?"),
+            ("Confirm", "Change your name?"),
         ] {
-            assert_eq!(category(&in_dialog(name, dialog), url), None, "{name}");
+            assert_eq!(
+                category(&in_dialog(name, dialog), url),
+                None,
+                "{name}: {dialog}"
+            );
         }
     }
 
     #[test]
-    fn a_dialog_commits_by_what_it_says_will_happen() {
-        for dialog in [
-            "Delete your account?",
-            "Are you sure? This will delete your account.",
-            "Confirmation Delete your account?",
-            "Pay 20.00 EUR",
-            "Pay 20.00 EUR?",
-        ] {
-            assert!(
-                dialog_commits(dialog, DELETING).is_some()
-                    || dialog_commits(dialog, PAYING).is_some(),
-                "{dialog}"
-            );
-        }
-        for dialog in [
-            "Your subscription: pay nothing for 30 days.",
-            "Privacy You can remove your data at any time.",
-            "Added to cart Buy 2 more for free shipping",
-        ] {
-            assert!(
-                dialog_commits(dialog, DELETING).is_none()
-                    && dialog_commits(dialog, PAYING).is_none(),
-                "{dialog}"
-            );
-        }
-        assert!(confirms("Continue \u{2192}"));
-        assert!(confirms("Yes \u{2713}"));
-        assert!(!confirms("Continue shopping"));
+    fn a_dialog_is_quoted_whole_and_amounts_stay_whole() {
+        let quoted = |dialog: &str| mention(dialog, PAYING, DIALOG_PAYING).map(str::to_string);
+        assert_eq!(
+            quoted("Pay 1.299,00 EUR to Mallory").as_deref(),
+            Some("Pay 1.299,00 EUR to Mallory")
+        );
+        assert_eq!(quoted("Pay 20.00 EUR").as_deref(), Some("Pay 20.00 EUR"));
+        assert_eq!(
+            quoted("This will charge 1,299.00 EUR to your card. Pay now?").as_deref(),
+            Some("This will charge 1,299.00 EUR to your card.")
+        );
+        assert_eq!(quoted("Nothing about it."), None);
     }
 
     #[test]

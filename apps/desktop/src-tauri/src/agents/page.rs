@@ -59,7 +59,7 @@ static INSIDE: LazyLock<String> = LazyLock::new(|| {
     [
         "function (place) { ",
         NATIVE,
-        "const target = read(place, 'element') || place; const up = (one) => read(one, 'parentNode') || read(one, 'host') || null; const holds = (outer, inner) => { for (let one = inner; one; one = up(one)) if (one === outer) return true; return false }; const el = read(this, 'nodeType') === 1 ? this : read(this, 'parentElement') || read(this, 'element') || read(this, 'host'); if (!el) return true; if (holds(target, el) || holds(el, target)) return true; const label = call(el, 'closest', 'label'); if (label && (read(label, 'control') === target || holds(label, target))) return true; return ['IFRAME', 'FRAME'].includes(read(el, 'tagName')) }",
+        "const target = read(place, 'element') || place; const up = (one) => read(one, 'assignedSlot') || read(one, 'parentNode') || read(one, 'host') || null; const holds = (outer, inner) => { for (let one = inner; one; one = up(one)) if (one === outer) return true; return false }; const el = read(this, 'nodeType') === 1 ? this : read(this, 'parentElement') || read(this, 'element') || read(this, 'host'); if (!el) return true; if (holds(target, el) || holds(el, target)) return true; const label = call(el, 'closest', 'label'); if (label && (read(label, 'control') === target || holds(label, target))) return true; return ['IFRAME', 'FRAME'].includes(read(el, 'tagName')) }",
     ]
     .concat()
 });
@@ -376,6 +376,10 @@ static PRESSED: LazyLock<String> = LazyLock::new(|| {
     .concat()
 });
 
+/// The node of the secret that stands for a whole part of the page no field of which could
+/// be told: nothing of that part is written, and no picture of the page is taken.
+const UNREAD: u64 = 0;
+
 /// How many fields of one page are each asked about themselves, one by one. Past it, each
 /// counts as a secret: over-careful about a page of a thousand inputs, and never a leak.
 const MOST_FIELDS_ASKED: usize = 500;
@@ -591,6 +595,9 @@ pub struct Page<'a> {
     /// nib's own world in each session the call has been in, where everything the gate goes
     /// by is read: the page has no reach into it, however it dresses its own objects.
     pub worlds: Mutex<HashMap<(Option<String>, String), i64>>,
+    /// The frames of each session, once for the call, with the one that last read a node
+    /// first: a page of many frames or fields asks once, and not for each of them.
+    pub frame_lists: Mutex<HashMap<Option<String>, Vec<String>>>,
 }
 
 /// How a frame's own points sit in the page: its top left, and where a step along each of
@@ -768,6 +775,7 @@ impl Page<'_> {
             }
             for frame in self.frames_of(session) {
                 if let Some(handle) = self.world_of_frame(session, &frame).ok().and_then(resolve) {
+                    self.frame_read(session, &frame);
                     return Some(handle);
                 }
             }
@@ -777,6 +785,15 @@ impl Page<'_> {
 
     /// The frames a session has in its process, the top one first.
     fn frames_of(&self, session: Option<&str>) -> Vec<String> {
+        let key = session.map(str::to_string);
+        if let Some(known) = self
+            .frame_lists
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .get(&key)
+        {
+            return known.clone();
+        }
         let tree = cdp::call_in(
             self.view,
             session,
@@ -788,34 +805,43 @@ impl Page<'_> {
         if let Ok(tree) = tree {
             frames_under(tree.get("frameTree").unwrap_or(&Value::Null), &mut frames);
         }
+        self.frame_lists
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .insert(key, frames.clone());
         frames
     }
 
-    /// A handle to an element in the page's own world, which is what its listeners are told
-    /// in and what a script that changes its fields runs in. Nothing is judged by what runs
-    /// there: `Page::object` is for that.
-    fn page_object(&self, element: &Element) -> Result<String, Answer> {
-        let resolved = self.call_on(
-            element,
-            "DOM.resolveNode",
-            &json!({ "backendNodeId": element.backend, "objectGroup": WORLD }),
-        )?;
-        resolved
-            .pointer("/object/objectId")
-            .and_then(Value::as_str)
-            .map(str::to_string)
-            .ok_or_else(|| stale("the element has no object"))
+    /// Puts the frame that read a node first, for the next: fields go together.
+    fn frame_read(&self, session: Option<&str>, frame: &str) {
+        if let Some(known) = self
+            .frame_lists
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .get_mut(&session.map(str::to_string))
+        {
+            if let Some(at) = known.iter().position(|one| one == frame) {
+                known[..=at].rotate_right(1);
+            }
+        }
     }
 
     /// nib's own world in a session's top frame.
     fn world_in(&self, session: Option<&str>) -> Result<i64, Answer> {
         let frame = match session {
             None => self.main_frame()?,
-            Some(_) => self
-                .frames_of(session)
-                .into_iter()
-                .next()
-                .ok_or_else(|| Answer::error(Code::Failed, "the frame has no world for nib"))?,
+            Some(_) => cdp::call_in(
+                self.view,
+                session,
+                "Page.getFrameTree",
+                &json!({}),
+                cdp::PATIENCE,
+            )
+            .map_err(|why| stale(&why))?
+            .pointer("/frameTree/frame/id")
+            .and_then(Value::as_str)
+            .ok_or_else(|| Answer::error(Code::Failed, "the frame has no world for nib"))?
+            .to_string(),
         };
         self.world_of_frame(session, &frame)
     }
@@ -855,6 +881,10 @@ impl Page<'_> {
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .retain(|(of, _), _| of.as_deref() != session);
+        self.frame_lists
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .remove(&session.map(str::to_string));
     }
 
     /// Runs a function on an element in nib's own world, answering its value.
@@ -1039,7 +1069,11 @@ impl Page<'_> {
     fn facts_from(&self, element: &Element, said: &Value) -> Facts {
         let mut facts = facts_read(said);
         if !facts.cut {
-            facts.fields.extend(self.closed_fields(element));
+            match self.closed_fields(element) {
+                Some(closed) => facts.fields.extend(closed),
+                // What it is beside cannot be told: a press on it is unread.
+                None => facts.opaque = true,
+            }
         }
         if facts.control {
             if let Some(name) = self.engine_name(element) {
@@ -1106,34 +1140,22 @@ impl Page<'_> {
 
     /// The fields of an element's form, or its page, inside a closed shadow root, which no
     /// script of the page's can see into and the engine can.
-    fn closed_fields(&self, element: &Element) -> Vec<Field> {
+    fn closed_fields(&self, element: &Element) -> Option<Vec<Field>> {
         let session = element.session.as_deref();
         let call = |method: &str, params: &Value| {
             cdp::call_in(self.view, session, method, params, cdp::PATIENCE).ok()
         };
-        let Ok(object) = self.object(element) else {
-            return Vec::new();
-        };
-        let Some(scope) = call(
+        let object = self.object(element).ok()?;
+        let scope = call(
             "Runtime.callFunctionOn",
             &json!({ "objectId": object, "functionDeclaration": FIELDS_SCOPE.as_str() }),
-        )
-        .and_then(|said| {
-            said.pointer("/result/objectId")
-                .and_then(Value::as_str)
-                .map(str::to_string)
-        }) else {
-            return Vec::new();
-        };
-        let Some(tree) = call(
+        )?;
+        let scope = call(
             "DOM.describeNode",
-            &json!({ "objectId": scope, "depth": -1, "pierce": true }),
-        )
-        .and_then(|said| said.get("node").cloned()) else {
-            return Vec::new();
-        };
-        let mut backends = Vec::new();
-        typed_into(&tree, false, false, &mut backends);
+            &json!({ "objectId": scope.pointer("/result/objectId")?.as_str()? }),
+        )?;
+        let scope = scope.pointer("/node/backendNodeId")?.as_u64()?;
+        let backends = fields_in_capture(&self.capture(session)?, Some(scope));
         backends
             .into_iter()
             .take(200)
@@ -1149,7 +1171,24 @@ impl Page<'_> {
                 )?;
                 serde_json::from_value(said.pointer("/result/value")?.clone()).ok()
             })
-            .collect()
+            .collect::<Vec<_>>()
+            .into()
+    }
+
+    /// The engine's flat copy of what a session's process holds of the page: every node of
+    /// every document in it, shadow roots of either kind included, each with its parent's
+    /// index. Flat so that no depth of page can reach this: a nested reply past the parser's
+    /// limit is simply lost, about 60 levels down, and a page's secrets with it. `None` is
+    /// a page that cannot be read, which the callers take as the worst.
+    fn capture(&self, session: Option<&str>) -> Option<Value> {
+        cdp::call_in(
+            self.view,
+            session,
+            "DOMSnapshot.captureSnapshot",
+            &json!({ "computedStyles": [] }),
+            cdp::PATIENCE,
+        )
+        .ok()
     }
 
     /// What the element with the keyboard says about itself, if one has it.
@@ -1646,9 +1685,11 @@ impl Page<'_> {
         let Some(backend) = owner.get("backendNodeId").and_then(Value::as_u64) else {
             return Ok(FrameMap::same());
         };
-        let quads = self.call("DOM.getContentQuads", &json!({ "backendNodeId": backend }))?;
-        let quad: Vec<f64> = quads
-            .pointer("/quads/0")
+        // Its content box, inside its border and padding, which is what the frame's own
+        // points are drawn in: `getContentQuads` of a frame owner has them in.
+        let boxes = self.call("DOM.getBoxModel", &json!({ "backendNodeId": backend }))?;
+        let quad: Vec<f64> = boxes
+            .pointer("/model/content")
             .and_then(Value::as_array)
             .map(|all| all.iter().filter_map(Value::as_f64).collect())
             .unwrap_or_default();
@@ -1862,13 +1903,66 @@ impl Page<'_> {
             if now != last {
                 gate(&now)?;
                 self.refuse_picker(&now)?;
-                last = now;
+                last = now.clone();
+            }
+            // The look above went through this crate's mapping of a frame's points. The
+            // frame's own account of where the pointer is did not, and a press goes there.
+            if let Some(over) = self
+                .pointer_over(&now)
+                .filter(|over| !self.same_press(over, &now))
+            {
+                gate(&over)?;
+                self.refuse_picker(&over)?;
             }
             self.mouse("mousePressed", point, button, press, modifiers)?;
             self.mouse("mouseReleased", point, button, press, modifiers)?;
         }
         self.settle(before);
         Ok(())
+    }
+
+    /// What the frame an element is in says the pointer is over, by `:hover`, the engine's
+    /// own: the deepest of it. `None` for an element of the page's own document.
+    fn pointer_over(&self, element: &Element) -> Option<Element> {
+        let (session, frame) = (element.session.as_deref()?, element.frame.as_deref()?);
+        let world = self.world_of_frame(Some(session), frame).ok()?;
+        let call = |method: &str, params: &Value| {
+            cdp::call_in(self.view, Some(session), method, params, cdp::PATIENCE).ok()
+        };
+        let said = call(
+            "Runtime.evaluate",
+            &json!({
+                "expression": "(() => { const all = document.querySelectorAll(':hover'); return all[all.length - 1] || null })()",
+                "contextId": world,
+            }),
+        )?;
+        let object = said.pointer("/result/objectId")?.as_str()?;
+        let node = call("DOM.describeNode", &json!({ "objectId": object }))?;
+        Some(Element {
+            backend: node.pointer("/node/backendNodeId")?.as_u64()?,
+            ..element.clone()
+        })
+    }
+
+    /// Whether a press at one is a press at the other: `INSIDE`, either way round.
+    fn same_press(&self, one: &Element, other: &Element) -> bool {
+        if one == other {
+            return true;
+        }
+        let (Ok(one_held), Ok(other_held)) = (self.object(one), self.object(other)) else {
+            return false;
+        };
+        self.call_on(
+            one,
+            "Runtime.callFunctionOn",
+            &json!({
+                "objectId": one_held,
+                "functionDeclaration": INSIDE.as_str(),
+                "arguments": [{ "objectId": other_held }],
+                "returnByValue": true,
+            }),
+        )
+        .is_ok_and(|said| said.pointer("/result/value").and_then(Value::as_bool) != Some(false))
     }
 
     pub fn hover(&self, element: &Element) -> Result<(), Answer> {
@@ -2424,20 +2518,32 @@ impl Page<'_> {
             .into_iter()
             .filter(|one| one.filled)
             .collect();
+        if secrets.iter().any(|one| one.backend == UNREAD) {
+            return Err(Answer::error(
+                Code::Failed,
+                "a part of this page's fields could not be read, so there is no picture of it",
+            ));
+        }
         if secrets.len() > MOST_PAINTED {
             return Err(Answer::error(
                 Code::Failed,
                 "this page has too many secret fields to hide in a picture, so there is none",
             ));
         }
-        let rects: Vec<[f64; 4]> = secrets
+        // One that is not drawn is not in the picture. One that cannot be told keeps it back.
+        let mut drawn = Vec::with_capacity(secrets.len());
+        for one in secrets {
+            let Ok(element) = self.element(&format!("{}e{}", one.prefix, one.backend)) else {
+                continue;
+            };
+            match self.page_rect(&element) {
+                Ok(rect) => drawn.push(rect),
+                Err(Answer::Error { message, .. }) if undrawn(&message) => {}
+                Err(refused) => return Err(refused),
+            }
+        }
+        let rects: Vec<[f64; 4]> = drawn
             .into_iter()
-            .filter_map(|one| {
-                let element = self
-                    .element(&format!("{}e{}", one.prefix, one.backend))
-                    .ok()?;
-                self.page_rect(&element).ok()
-            })
             .chain(self.denied_frames())
             .map(|[left, top, right, bottom]| {
                 [
@@ -2544,6 +2650,13 @@ impl Page<'_> {
             });
         }
         let secret = self.secret_fields(&parts);
+        if secret.contains(&(String::new(), UNREAD)) {
+            return Err(Answer::error(
+                Code::Failed,
+                "this page's fields could not be read, so neither can it be",
+            ));
+        }
+        parts.retain(|part| !secret.contains(&(part.prefix.clone(), UNREAD)));
         Ok((parts, secret))
     }
 
@@ -2661,20 +2774,16 @@ impl Page<'_> {
             let call = |method: &str, params: &Value| {
                 cdp::call_in(self.view, session.as_deref(), method, params, cdp::PATIENCE)
             };
-            let Some(tree) = call("DOM.getDocument", &json!({ "depth": -1, "pierce": true }))
-                .ok()
-                .and_then(|value| value.get("root").cloned())
-            else {
-                // A part that cannot be read may hold anything: a filled secret, of no node.
+            let Some(capture) = self.capture(session.as_deref()) else {
+                // A part that cannot be read may hold anything (`UNREAD`).
                 found.push(Secret {
                     prefix: prefix.clone(),
-                    backend: 0,
+                    backend: UNREAD,
                     filled: true,
                 });
                 continue;
             };
-            let mut fields = Vec::new();
-            typed_into(&tree, false, true, &mut fields);
+            let fields = fields_in_capture(&capture, None);
             for (at, backend) in fields.into_iter().enumerate() {
                 // Past the most, or what no world of ours can describe: a secret that is
                 // filled, as asking found nothing out. Never a field let by.
@@ -3211,6 +3320,13 @@ fn control_in_tree(nodes: &[Value]) -> Option<String> {
     None
 }
 
+/// Whether a box could not be given because the element has none.
+fn undrawn(message: &str) -> bool {
+    message.contains("Could not compute box model")
+        || message.contains("is not on the page")
+        || message.contains("gone")
+}
+
 /// Whether what a field said cannot be read as a field, which counts as a secret.
 fn judged_failed(said: &Value) -> bool {
     serde_json::from_value::<Field>(said.clone()).is_err()
@@ -3314,83 +3430,119 @@ fn frame_places(tree: &Value, around: &[String], out: &mut HashMap<String, Vec<S
     }
 }
 
-/// The fields words can be typed into in a node tree the engine gave with `pierce`, by
-/// node. `everywhere` is the secret scan's, which takes every shadow root and the frames
-/// sharing the process; otherwise only what a closed shadow root holds, which is all a
-/// script of the page's cannot reach, in the document it was asked about. The inside of an
-/// engine's own control is no field of the page's, and a type that takes no words is none.
-fn typed_into(node: &Value, closed: bool, everywhere: bool, out: &mut Vec<u64>) {
-    let name = node
-        .get("nodeName")
-        .and_then(Value::as_str)
+/// The fields words can be typed into in the engine's flat copy of a process's documents
+/// (`Page::capture`), by node. With no `under`, every one, as the secret scan wants: each
+/// document, each shadow root of either kind. With `under`, only those inside it and inside
+/// a closed shadow root in its document, which is all a script of the page's cannot reach.
+/// The inside of an engine's own control is no field of the page's, and a type that takes
+/// no words is none. Parent before child, in one pass: no page is too deep for it.
+fn fields_in_capture(capture: &Value, under: Option<u64>) -> Vec<u64> {
+    let strings: Vec<&str> = capture
+        .get("strings")
+        .and_then(Value::as_array)
+        .map(|all| {
+            all.iter()
+                .map(|one| one.as_str().unwrap_or_default())
+                .collect()
+        })
         .unwrap_or_default();
-    let words = matches!(name, "INPUT" | "TEXTAREA") && takes_words(node);
-    if (everywhere || closed) && (words || edited(node)) {
-        if let Some(backend) = node.get("backendNodeId").and_then(Value::as_u64) {
-            out.push(backend);
-        }
-    }
-    let list = |key: &str| {
-        node.get(key)
-            .and_then(Value::as_array)
-            .cloned()
+    let string = |at: Option<&Value>| {
+        at.and_then(Value::as_u64)
+            .and_then(|at| strings.get(usize::try_from(at).ok()?).copied())
             .unwrap_or_default()
     };
-    for child in list("children") {
-        typed_into(&child, closed, everywhere, out);
-    }
-    for root in list("shadowRoots") {
-        match root.get("shadowRootType").and_then(Value::as_str) {
-            Some("user-agent") => {}
-            Some("closed") => typed_into(&root, true, everywhere, out),
-            _ => typed_into(&root, closed, everywhere, out),
+    let mut out = Vec::new();
+    for document in capture
+        .get("documents")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+    {
+        let Some(nodes) = document.get("nodes") else {
+            continue;
+        };
+        let list = |key: &str| nodes.get(key).and_then(Value::as_array);
+        let (Some(parents), Some(names), Some(backends)) =
+            (list("parentIndex"), list("nodeName"), list("backendNodeId"))
+        else {
+            continue;
+        };
+        let mut roots: HashMap<u64, &str> = HashMap::new();
+        if let Some(rare) = nodes.get("shadowRootType") {
+            let at = rare.get("index").and_then(Value::as_array);
+            let kind = rare.get("value").and_then(Value::as_array);
+            for (at, kind) in at.into_iter().flatten().zip(kind.into_iter().flatten()) {
+                if let Some(at) = at.as_u64() {
+                    roots.insert(at, string(Some(kind)));
+                }
+            }
+        }
+        let empty = Vec::new();
+        let attributes = list("attributes").unwrap_or(&empty);
+        // Per node: whether in a closed root, in an engine's own, and under `under`.
+        let mut seen: Vec<(bool, bool, bool)> = Vec::with_capacity(backends.len());
+        for (at, backend) in backends.iter().enumerate() {
+            let parent = parents
+                .get(at)
+                .and_then(Value::as_i64)
+                .and_then(|one| usize::try_from(one).ok())
+                .and_then(|one| seen.get(one).copied())
+                .unwrap_or((false, false, false));
+            let kind = roots.get(&(at as u64)).copied().unwrap_or_default();
+            let backend = backend.as_u64().unwrap_or_default();
+            let here = (
+                parent.0 || kind == "closed",
+                parent.1 || kind == "user-agent",
+                parent.2 || under == Some(backend),
+            );
+            seen.push(here);
+            if here.1 {
+                continue;
+            }
+            let wanted = match under {
+                None => true,
+                Some(_) => here.0 && here.2,
+            };
+            if !wanted {
+                continue;
+            }
+            let said: Vec<&str> = attributes
+                .get(at)
+                .and_then(Value::as_array)
+                .map(|all| all.iter().map(|one| string(Some(one))).collect())
+                .unwrap_or_default();
+            let name = local_name(string(names.get(at)));
+            if (matches!(name.as_str(), "INPUT" | "TEXTAREA") && takes_words(&said))
+                || edited(&name, &said)
+            {
+                out.push(backend);
+            }
         }
     }
-    if everywhere {
-        if let Some(document) = node.get("contentDocument") {
-            typed_into(document, closed, everywhere, out);
-        }
-    }
+    out
+}
+
+/// A node's name as HTML writes it: XML keeps a tag's case and may put a prefix on it.
+fn local_name(name: &str) -> String {
+    name.rsplit(':').next().unwrap_or(name).to_ascii_uppercase()
 }
 
 /// Whether a node's flat list of attributes makes it an editable region, a field of its own.
-fn edited(node: &Value) -> bool {
-    let Some(attributes) = node.get("attributes").and_then(Value::as_array) else {
-        return false;
-    };
-    let name_of = node.get("nodeName").and_then(Value::as_str);
-    let textbox = !matches!(name_of, Some("INPUT" | "TEXTAREA"))
-        && attributes.chunks(2).any(|pair| {
-            pair[0].as_str() == Some("role")
-                && pair.get(1).and_then(Value::as_str) == Some("textbox")
-        });
-    textbox
-        || attributes.chunks(2).any(|pair| {
-            pair[0]
-                .as_str()
-                .is_some_and(|name| name.eq_ignore_ascii_case("contenteditable"))
-                && pair
-                    .get(1)
-                    .and_then(Value::as_str)
-                    .is_none_or(|value| !value.eq_ignore_ascii_case("false"))
-        })
+fn edited(name: &str, attributes: &[&str]) -> bool {
+    attributes.chunks(2).any(|pair| {
+        let value = pair.get(1).copied().unwrap_or_default();
+        (pair[0].eq_ignore_ascii_case("contenteditable") && !value.eq_ignore_ascii_case("false"))
+            || (pair[0] == "role" && value == "textbox" && !matches!(name, "INPUT" | "TEXTAREA"))
+    })
 }
 
 /// Whether an input's `type`, in a node's flat list of attributes, is one that holds words.
-fn takes_words(node: &Value) -> bool {
-    let attributes = node
-        .get("attributes")
-        .and_then(Value::as_array)
-        .cloned()
-        .unwrap_or_default();
+fn takes_words(attributes: &[&str]) -> bool {
     let kind = attributes
         .chunks(2)
-        .find(|pair| {
-            pair[0]
-                .as_str()
-                .is_some_and(|name| name.eq_ignore_ascii_case("type"))
-        })
-        .and_then(|pair| pair.get(1)?.as_str())
+        .find(|pair| pair[0].eq_ignore_ascii_case("type"))
+        .and_then(|pair| pair.get(1))
+        .copied()
         .unwrap_or_default()
         .to_ascii_lowercase();
     !matches!(
@@ -3796,22 +3948,16 @@ mod tests {
 
     #[test]
     fn an_editable_region_is_a_field_and_false_says_it_is_not() {
-        let node = |attributes: Value| json!({ "nodeName": "DIV", "attributes": attributes });
-        assert!(edited(&node(json!(["contenteditable", ""]))));
-        assert!(edited(&node(json!(["id", "x", "contentEditable", "true"]))));
-        assert!(edited(&node(json!(["contenteditable", "plaintext-only"]))));
-        assert!(!edited(&node(json!(["contenteditable", "false"]))));
-        assert!(!edited(&node(json!(["id", "contenteditable"]))));
-        assert!(!edited(&json!({ "nodeName": "DIV" })));
-        assert!(edited(&node(json!([
-            "role",
-            "textbox",
-            "aria-label",
-            "PIN"
-        ]))));
-        assert!(!edited(
-            &json!({ "nodeName": "INPUT", "attributes": ["role", "textbox"] })
-        ));
+        assert!(edited("DIV", &["contenteditable", ""]));
+        assert!(edited("DIV", &["id", "x", "contentEditable", "true"]));
+        assert!(edited("DIV", &["contenteditable", "plaintext-only"]));
+        assert!(!edited("DIV", &["contenteditable", "false"]));
+        assert!(!edited("DIV", &["id", "contenteditable"]));
+        assert!(!edited("DIV", &[]));
+        assert!(edited("DIV", &["role", "textbox", "aria-label", "PIN"]));
+        assert!(!edited("INPUT", &["role", "textbox"]));
+        assert_eq!(local_name("input"), "INPUT");
+        assert_eq!(local_name("html:input"), "INPUT");
     }
 
     #[test]
@@ -3854,32 +4000,80 @@ mod tests {
         assert!(!cookie_fits("op.example", "shop.example"));
     }
 
+    /// A flat copy as `DOMSnapshot.captureSnapshot` answers: `(parent, name, backend,
+    /// attributes)` in order, and which nodes are roots of what kind.
+    fn captured(nodes: &[(i64, &str, u64, &[&str])], roots: &[(u64, &str)]) -> Value {
+        let mut strings: Vec<String> = Vec::new();
+        let mut index = |word: &str| {
+            let at = strings
+                .iter()
+                .position(|one| one == word)
+                .unwrap_or_else(|| {
+                    strings.push(word.to_string());
+                    strings.len() - 1
+                });
+            json!(at)
+        };
+        let names: Vec<Value> = nodes.iter().map(|one| index(one.1)).collect();
+        let attributes: Vec<Vec<Value>> = nodes
+            .iter()
+            .map(|one| one.3.iter().map(|word| index(word)).collect())
+            .collect();
+        let kinds: Vec<Value> = roots.iter().map(|one| index(one.1)).collect();
+        json!({
+            "strings": strings,
+            "documents": [{ "nodes": {
+                "parentIndex": nodes.iter().map(|one| one.0).collect::<Vec<_>>(),
+                "nodeName": names,
+                "backendNodeId": nodes.iter().map(|one| one.2).collect::<Vec<_>>(),
+                "attributes": attributes,
+                "shadowRootType": {
+                    "index": roots.iter().map(|one| one.0).collect::<Vec<_>>(),
+                    "value": kinds,
+                },
+            } }],
+        })
+    }
+
     #[test]
     fn every_field_is_found_through_roots_and_frames() {
-        let input = |id: u64, kind: &str| json!({ "nodeName": "INPUT", "backendNodeId": id, "attributes": ["type", kind] });
-        let tree = json!({ "nodeName": "#document", "children": [
-            input(1, "text"),
-            input(2, "hidden"),
-            { "nodeName": "X-CARD", "shadowRoots": [
-                { "nodeName": "#document-fragment", "shadowRootType": "open", "children": [input(3, "text")] },
-            ] },
-            { "nodeName": "X-PW", "shadowRoots": [
-                { "nodeName": "#document-fragment", "shadowRootType": "closed", "children": [input(4, "password")] },
-            ] },
-            { "nodeName": "INPUT", "backendNodeId": 5, "shadowRoots": [
-                { "nodeName": "#document-fragment", "shadowRootType": "user-agent", "children": [input(6, "text")] },
-            ] },
-            { "nodeName": "IFRAME", "contentDocument": { "nodeName": "#document", "children": [input(7, "text")] } },
-        ] });
+        let capture = captured(
+            &[
+                (-1, "#document", 100, &[]),
+                (0, "INPUT", 1, &["type", "text"]),
+                (0, "INPUT", 2, &["type", "hidden"]),
+                (0, "X-CARD", 101, &[]),
+                (3, "#document-fragment", 102, &[]),
+                (4, "INPUT", 3, &["type", "text"]),
+                (0, "X-PW", 103, &[]),
+                (6, "#document-fragment", 104, &[]),
+                (7, "INPUT", 4, &["type", "password"]),
+                (0, "INPUT", 5, &[]),
+                (9, "#document-fragment", 105, &[]),
+                (10, "INPUT", 6, &["type", "text"]),
+                (0, "input", 7, &[]),
+            ],
+            &[(4, "open"), (7, "closed"), (10, "user-agent")],
+        );
+        assert_eq!(fields_in_capture(&capture, None), [1, 3, 4, 5, 7]);
+        // The closed root alone, under what was asked about.
+        assert_eq!(fields_in_capture(&capture, Some(100)), [4]);
+        assert_eq!(fields_in_capture(&capture, Some(101)), Vec::<u64>::new());
+    }
 
-        let mut every = Vec::new();
-        typed_into(&tree, false, true, &mut every);
-        assert_eq!(every, [1, 3, 4, 5, 7]);
-
-        // The closed root alone, and nothing of another document, for what a script missed.
-        let mut closed = Vec::new();
-        typed_into(&tree, false, false, &mut closed);
-        assert_eq!(closed, [4]);
+    /// No page is too deep: the reply is flat, and so is the walk.
+    #[test]
+    fn a_field_a_thousand_levels_down_is_found() {
+        let mut nodes: Vec<(i64, &str, u64, &[&str])> = vec![(-1, "#document", 5000, &[])];
+        for level in 0..1000u64 {
+            nodes.push((level as i64, "DIV", 6000 + level, &[]));
+        }
+        nodes.push((1000, "INPUT", 7, &["autocomplete", "cc-number"]));
+        let capture = captured(&nodes, &[]);
+        let text = serde_json::to_string(&capture).expect("written");
+        let read: Value =
+            serde_json::from_str(&text).expect("a flat reply is within the parser's limit");
+        assert_eq!(fields_in_capture(&read, None), [7]);
     }
 
     #[test]

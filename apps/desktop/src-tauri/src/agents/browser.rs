@@ -277,6 +277,7 @@ fn gate<'a>(
         },
         credentials: std::sync::atomic::AtomicBool::new(cleared),
         worlds: std::sync::Mutex::new(std::collections::HashMap::new()),
+        frame_lists: std::sync::Mutex::new(std::collections::HashMap::new()),
     };
     if let Caller::Agent(grant) = caller {
         if let Err(why) = policy::site_allowed(grant, &page.url(), place.store()) {
@@ -435,11 +436,7 @@ fn judged_times(
     let summary = said_times(question.summary, times);
     // An allowance is for what was asked: the same button with other words round it, in a
     // form that has grown a card field, or pressed more often, is another question.
-    let key = approvals::on_page(
-        key,
-        &page.url(),
-        &question_key(question.category, &summary, facts),
-    );
+    let key = approvals::on_page(key, &page.url(), &question_key(&question, &summary, facts));
     if approvals::allowed(&grant.id, &key) {
         return cleared();
     }
@@ -463,9 +460,14 @@ fn said_times(summary: String, times: u8) -> String {
     }
 }
 
-/// What an allowance is for, in full: a summary is cut short for reading.
-fn question_key(category: Category, summary: &str, facts: &Facts) -> String {
-    format!("{} {} {category:?} {summary}", facts.name, facts.dialog)
+/// What an allowance is for: the category, the control's name, the words it answers to and
+/// how it was put. No more of what is round it: a clock in a dialog changes nothing asked,
+/// and each tick a question would be a pile of the same one in front of the reader.
+fn question_key(question: &policy::Question, summary: &str, facts: &Facts) -> String {
+    format!(
+        "{} {:?} {} {summary}",
+        facts.name, question.category, question.words
+    )
 }
 
 /// One press, however many times it is looked at on its way: one question. The look before
@@ -544,7 +546,7 @@ impl<'a, 'p> OnePress<'a, 'p> {
             return Ok(());
         }
         // Every word of it, as two long names alike at the start read the same when cut.
-        let said = question_key(question.category, &question.summary, facts);
+        let said = question_key(&question, &question.summary, facts);
         if self.answered.borrow().contains(&said) {
             return Ok(());
         }
