@@ -43,6 +43,10 @@
       // as it stands with a full-text index, and its sockets (docs/chats.md 4.3).
       // SQLite-backed and hibernating, as the rooms and the hubs are; its own tag.
       { "name": "CHATS", "class_name": "ChatLog" },
+      // One per application (issue 1063), named by its owner and its file: the lock
+      // between the viewers and the signalling to the device it runs on. Hibernating,
+      // SQLite-backed; its own tag.
+      { "name": "APPS", "class_name": "AppRelay" },
     ],
   },
   "migrations": [
@@ -50,6 +54,7 @@
     { "tag": "v2", "new_sqlite_classes": ["AccountHub"] },
     { "tag": "v3", "new_sqlite_classes": ["Machine"] },
     { "tag": "v4", "new_sqlite_classes": ["ChatLog"] },
+    { "tag": "v5", "new_sqlite_classes": ["AppRelay"] },
   ],
 
   // The machines' container application. `durable_object` scheduling: each `Machine`

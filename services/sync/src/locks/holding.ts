@@ -1,20 +1,21 @@
-/** Who holds an online terminal's session: one device at a time (issue 1055).
+/** Who holds a session: one device at a time (issue 1055) - an online terminal's in
+ *  `Machine`, an application's in `AppRelay` (issue 1063).
  *
- *  Any device that may type in a session can open it, but only one drives it at once.
+ *  Any device that may drive a session can open it, but only one drives it at once.
  *  The others are told who has it and since when, and are sent nothing of it until they
  *  take it over, which hands it to them at once and tells the one that had it so. The
  *  session itself - its shell, its programs, its screen and scrollback - is `nibd`'s and
  *  never notices: the new holder says `hello` with what it last drew and is sent the
  *  rest, or the screen.
  *
- *  The lock is kept in the `Machine`'s storage, one key a session, and every change to
- *  it is made in `Machine`'s one queue, so two devices taking over at once end with one
+ *  The lock is kept in the object's storage, one key a session, and every change to it
+ *  is made in one queue (sockets.ts), so two devices taking over at once end with one
  *  holder: whoever's frame came second. A holder that leaves - the tab closed - lets go
  *  at once; one whose socket dropped or went quiet keeps it for `HOLD_GRACE`, to come
  *  back to, and then it is free, so a device that crashed never holds it for ever.
  *
  *  Pure: what is decided here is decided from the record, the claim and whether the
- *  holder is still there, which `Machine` works out from its sockets. */
+ *  holder is still there, which sockets.ts works out from the object's sockets. */
 
 import { HOLD_GRACE } from '@orden/online/wire'
 

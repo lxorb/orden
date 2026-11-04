@@ -19,6 +19,7 @@ import { SIGN_IN } from '../refused'
 import type { Env } from '../types'
 import { askMachine } from './ask'
 import { whyNotWake } from './gate'
+import { deviceName } from '../locks/device-name'
 import { DOOR, reachedOf, type Row, WHO } from './reach'
 import { refusedSocket } from './refuse'
 import { serviceOf } from './service'
@@ -33,19 +34,6 @@ function deviceProtocol(header: string | undefined): string | null {
   const offered = (header ?? '').split(',').map((one) => one.trim())
   const id = offered.find((one) => one.startsWith(DEVICE_PROTOCOL))?.slice(DEVICE_PROTOCOL.length)
   return id && DEVICE.test(id) ? id : null
-}
-
-/** The name a person's device gave itself, as a header carries it; empty where it has
- *  none here. Never one of somebody else's devices, whatever id a socket names. */
-async function deviceName(env: Env, device: string, who: string): Promise<string> {
-  const row = await env.DB.prepare(
-    'select name from devices where id = ?1 and user_id = ?2 and revoked_at is null',
-  )
-    .bind(device, who)
-    .first<{ name: string }>()
-    .catch(() => null)
-  // Escaped: a header carries no `’`, which a device's name often has.
-  return encodeURIComponent((row?.name ?? '').slice(0, 100))
 }
 
 export const onlineDoor = new Hono<{ Bindings: Env }>()
@@ -81,7 +69,7 @@ onlineDoor.get('/:term/socket', async (context) => {
   if (!reached) return refusedSocket('gone', `${DEVICE_PROTOCOL}${device}`)
 
   // Asked at once: whether the owner may wake the machine, and what the device is called,
-  // which another device holding the session off is told it by (machines/holding.ts).
+  // which another device holding the session off is told it by (locks/holding.ts).
   const [wake, name] = await Promise.all([
     reached.owns ? whyNotWake(env, reached.owner, at, service).then((why) => why ?? 'yes') : 'no',
     deviceName(env, device, reached.who),

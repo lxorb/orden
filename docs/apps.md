@@ -1,0 +1,27 @@
+# Applications
+
+Issue 1063, lxorb: a desktop application running on one of the reader's devices, used as an
+Orden tab from any other, one device at a time, and driven by an agent as the reader drives
+it. Developer mode only. The step plan is on the issue; this says what has landed.
+
+## The relay (step 1)
+
+- **`AppRelay`** (`services/sync/src/apps/relay.ts`) is a hibernating Durable Object, one per
+  application, named by its owner and its file's id. Every party has one socket to it at
+  `GET /v2/apps/:app/socket` (`services/sync/src/apps/door.ts`): the **host**, the device the application runs
+  on, naming itself `nib.role.host`, and the **viewers**, every device with the tab open.
+- **Only the reader's own**: the file must be in a space the person owns and not deleted, and
+  only their signed-in devices come in. While `apps` is not `on` in `online_service`, or where
+  the `APPS` binding is absent, the door answers 404.
+- **The lock is the online terminal's** (`services/sync/src/locks/`, docs/online-terminal.md
+  4.17): the same rules, the same frames (`hello {hold}`, `take`, `leave`, `held`, `hold`),
+  the same grace and quiet times. Two Take overs at once end with one holder.
+- **Signalling only**: the holder's `signal` (WebRTC offers and ICE candidates), `view` (the
+  tab's size, pixel ratio and refresh rate) and `run` (start, stop, restart) reach the host,
+  and the host's `signal` reaches the holder; nobody else's goes anywhere. The picture and the
+  input go between the two directly. The host is told who holds the application whenever
+  that changes (`viewer`), and that device's view.
+- **The host's presence** is its socket: viewers are told `host {up}` as it comes and goes, and
+  `state` (stopped, starting, running, exited) is kept for whoever joins later. A second host
+  socket replaces the first. The application never stops because a viewer left.
+- The wire is `@orden/online/apps`.

@@ -1,6 +1,6 @@
 import { HOLD_GRACE } from '@orden/online/wire'
 import { describe, expect, test } from 'vitest'
-import { claimed, type Hold, holdOf, standing } from '../src/machines/holding'
+import { claimed, type Hold, holdOf, standing } from '../src/locks/holding'
 
 const laptop: Hold = { device: 'laptop', who: 'u', name: 'Laptop', since: 100, left: null }
 const phone = { device: 'phone', who: 'u', name: 'Phone', take: false }

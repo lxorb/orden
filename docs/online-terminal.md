@@ -939,7 +939,7 @@ reopened on every device, and **one device at a time** drives it.
   in `web/commands.ts`) wearing the terminal's mark. It was neither: no row, and a phone's or
   a browser's mirror, which walks that list, never sent it to the reader's other devices.
   `web/commands.test.ts` lists a file of every `Opener` kind, so a new kind fails until listed.
-- **The lock** is `Machine`'s (`services/sync/src/machines/holding.ts`), one storage key a
+- **The lock** is `Machine`'s (`services/sync/src/locks/`, shared with applications' `AppRelay`, issue 1063), one storage key a
   session, every change made in one queue: two Take overs at once end with the second's device
   holding it. It is among the sockets that may type and whose hello says `hold`; who may only
   watch, and an Orden from before it, are never held off, so old and new apps and servers meet

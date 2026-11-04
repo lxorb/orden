@@ -20,6 +20,8 @@ export interface Env {
    *  Where it is absent a chat's routes answer that the chat is not answering, and the
    *  tests that need one hand in their own; see chats/log.ts. */
   CHATS?: DurableObjectNamespace
+  /** One per application, named by its owner and file (apps/relay.ts, issue 1063). */
+  APPS?: DurableObjectNamespace
 
   /** One `Machine` per online terminal machine (docs/online-terminal.md): where it is
    *  absent, the online routes answer 404. See machines/. */
