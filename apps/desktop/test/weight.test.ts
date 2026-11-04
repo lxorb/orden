@@ -1170,8 +1170,11 @@ function holds(tail: string): boolean {
  *  3,556,148, 392 modules.
  *
  *  Raised 2026-11-04, to 3,556,800, for #1088: a web tab's page given its rounded card's
- *  corner with every placement (`cardCorner` in pages.svelte.ts). Measured 3,556,693. */
-const BUDGET = 3_556_800
+ *  corner with every placement (`cardCorner` in pages.svelte.ts). Measured 3,556,693.
+ *
+ *  Raised 2026-11-04, to 3,557,900, for #1100: Send feedback's bug back in the sidebar's
+ *  foot on every device (SidebarFoot.svelte). Measured 3,557,767. */
+const BUDGET = 3_557_900
 const MOST_FILES = 393
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

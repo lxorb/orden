@@ -461,9 +461,12 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  said and not shown where a swipe from the edge pulls the list out, and the one hint
  *  about the swipe (Titlebar.svelte, SidebarToggle.svelte, hints.svelte.ts), put back
  *  after the #1056 rebase dropped them. Measured 5,872,382.
+ *
+ *  The code raised on 2026-11-04, to 5,873,000, for #1100: Send feedback's bug back in
+ *  the sidebar's foot (SidebarFoot.svelte). Measured 5,872,846.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_872_500,
+  code: 5_873_000,
   catalogues: 965_200,
   styles: 290_000,
   fonts: 260_000,
