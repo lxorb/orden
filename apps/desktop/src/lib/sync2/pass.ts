@@ -443,6 +443,7 @@ async function settleDisk(core: Core, space: SpaceState) {
     join: (folder, path) => core.world.join(folder, path),
     keeps: (id) => core.hasPending(id) || core.isHeld(id),
     forget: (id) => forgets.push(...core.forgetChanges(id)),
+    busy: (id) => core.inHand.has(id),
   })
   await core.commit([...core.entryChanges(moved), ...forgets])
 }

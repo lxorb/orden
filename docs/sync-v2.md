@@ -651,6 +651,12 @@ file identity, new path) is a move. File identity is the volume and file id on W
 (`GetFileInformationByHandle`) and the device and inode elsewhere; a move across volumes
 is recognised by hash against what was deleted in the same scan.
 
+What Orden does to the folder itself is never read this way (docs/tree-sync.md, "What
+this device does"): a move or a delete in the file list is said to the engine before the
+disk has it, and the engine's own are in its tree before they are on the disk, so whatever
+the watcher hears where the tree and the disk do not agree yet is that work under way. Each
+message is read against the disk as it is when it is read, not as it says things were.
+
 With `no-local-files` shipping, Orden opens nothing outside a space, so `watch.svelte.ts`'s
 clash for outside files is retired and this is the only road for foreign edits.
 

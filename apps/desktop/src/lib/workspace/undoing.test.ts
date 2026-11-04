@@ -93,6 +93,11 @@ function store(action: FileAction): PutsBack & { loaded: number; wrote: number }
     reload: (path: string) => void told.push(`reloaded ${path}`),
     // Nothing is open, so a move holds nothing and runs straight away.
     holdingUnder: (_path: string, run: () => Promise<void>) => run(),
+    // The disk's part of a move, which the store says to sync first.
+    renameOnDisk: async (from: string, to: string) => {
+      const { invoke } = await import('../tauri')
+      await invoke('rename_note', { from, to })
+    },
     // A creation undone goes to Recently deleted, which keeps it under an id.
     bin: (path: string, folder: boolean) => {
       told.push(folder ? `binned folder ${path}` : `binned ${path}`)

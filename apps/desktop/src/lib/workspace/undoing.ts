@@ -44,6 +44,8 @@ export interface PutsBack {
   fileMoved(from: string, to: string, kind: Kind): Promise<void>
   fileGone(path: string, kind: 'file' | 'folder', back?: string): Promise<void>
   fileCame(path: string, kind: 'file' | 'folder', key?: string, back?: string): Promise<void>
+  /** A move on the disk, said to sync first; see `renameOnDisk` in workspace.svelte.ts. */
+  renameOnDisk(from: string, to: string, kind: Kind): Promise<void>
   /** One file operation on everything open at or under a path, after whatever write
    *  of any of it is in the air; see `holdingUnder` in workspace/saving.svelte.ts. */
   holdingUnder(path: string, run: () => Promise<void>): Promise<void>
@@ -99,15 +101,12 @@ async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
         // Into Recently deleted, and what that kept goes on the step for a redo.
         const kept = await ws.bin(action.path, false)
         action.content = kept?.content ?? ''
-        // Put back by the trash's id where it went there, else by a word of its own.
-        if (kept?.trashId) {
-          action.trashId = kept.trashId
-          delete action.back
-        } else {
-          delete action.trashId
-          action.back = crypto.randomUUID()
-        }
-        await ws.fileGone(action.path, 'file', action.back ?? action.trashId)
+        // Put back by the trash's id where it went there, else by the word it went with.
+        if (kept?.trashId) action.trashId = kept.trashId
+        else delete action.trashId
+        if (kept?.back) action.back = kept.back
+        else delete action.back
+        await ws.fileGone(action.path, 'file', kept?.trashId ?? kept?.back)
         break
       }
       case 'many':
@@ -455,12 +454,10 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
   const { moving: underWay } = await import('../views/moving')
   await underWay(action.from, () =>
     ws.holdingUnder(action.to, async () => {
-      await invoke('rename_note', { from: action.to, to: action.from }).catch(
-        async (error: unknown) => {
-          await back?.()
-          throw error
-        },
-      )
+      await ws.renameOnDisk(action.to, action.from, kind).catch(async (error: unknown) => {
+        await back?.()
+        throw error
+      })
 
       // The rename rewrote every link that pointed at the note; putting the name
       // back has to put those back too, which is the same rewrite the other way

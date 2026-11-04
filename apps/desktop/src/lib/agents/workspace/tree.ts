@@ -175,7 +175,7 @@ async function movedAway(place: Place, from: string, to: string, folder: boolean
     // After whatever write of a note open in it is in the air; see `holdingUnder` in
     // workspace/saving.svelte.ts.
     workspace.holdingUnder(from, async () => {
-      await invoke('rename_note', { from, to })
+      await workspace.renameOnDisk(from, to, folder ? 'folder' : 'file')
       // A rewrite that fails leaves the note moved all the same, and told so; see
       // `retargetMoved` in workspace.svelte.ts.
       await index

@@ -14,7 +14,7 @@ import { put, scan, StoreError, type Change } from './store'
 import { numbersRow, wantedRow } from './records'
 import { seedUpdate } from '@orden/sync-core/seed'
 import type { Disk, World } from './world'
-import type { SpaceNews } from '../space-watch'
+import type { SpaceChange, SpaceNews } from '../space-watch'
 import * as Y from 'yjs'
 
 const watch = vi.hoisted(() => vi.fn())
@@ -854,7 +854,6 @@ describe('the folder watcher', () => {
     })
     const watched = watchFolders({
       engine: here.engine,
-      own: () => false,
       ready: () => true,
       changed: () => undefined,
     })
@@ -883,6 +882,114 @@ describe('the folder watcher', () => {
     expect(await here.disk.exists(`${ROOT}/Work/Plan.md`)).toBe(true)
   })
 
+  /** A watch whose messages the test says, and a way to wait for them to be read. */
+  function listening(engine: Engine) {
+    const heard: ((news: SpaceNews) => void)[] = []
+    watch.mockImplementation((_roots: readonly string[], hear: (news: SpaceNews) => void) => {
+      heard.push(hear)
+      return Promise.resolve()
+    })
+    const watched = watchFolders({ engine, ready: () => true, changed: () => undefined })
+    const say = async (...changes: SpaceChange[]) => {
+      for (const hear of heard) hear({ root: ROOT, changes, scan: false, gone: false })
+      await settled()
+    }
+    return { say, stop: () => watched.stop() }
+  }
+  const removed = (path: string): SpaceChange => ({ kind: 'removed', path, dir: false, id: null })
+  const created = (path: string): SpaceChange => ({
+    kind: 'created',
+    path,
+    dir: false,
+    size: 0,
+    mtime: 0,
+    id: null,
+  })
+
+  test('hears a rename the file list makes, halfway, as nothing: one rename, the note itself (#1068)', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const here = await device(account, 'd0')
+    const { say, stop } = listening(here.engine)
+
+    // The watcher's word on a rename can come as the old file gone and a new one made,
+    // and it came before the file list had said what it did: a delete and a new note.
+    await here.engine.moving(`${ROOT}/Plan.md`, `${ROOT}/Goals.md`, async () => {
+      await here.disk.move(`${ROOT}/Plan.md`, `${ROOT}/Goals.md`)
+      await say(removed(`${ROOT}/Plan.md`), created(`${ROOT}/Goals.md`))
+    })
+    await say(removed(`${ROOT}/Plan.md`), created(`${ROOT}/Goals.md`))
+    await here.engine.pass(SPACE)
+    stop()
+
+    const live = (await account.view()).entries
+    expect(live.map((entry) => [entry.id, entry.name]).sort()).toEqual([
+      ['n1', 'Goals.md'],
+      ['n2', 'Ideas.md'],
+    ])
+    expect(here.engine.entryAt(`${ROOT}/Goals.md`)?.id).toBe(PLAN)
+  })
+
+  test('reads a message that comes late against the disk as it is now (#1068)', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const here = await device(account, 'd0')
+    const { say, stop } = listening(here.engine)
+
+    await here.engine.moving(`${ROOT}/Plan.md`, `${ROOT}/Goals.md`, () =>
+      here.disk.move(`${ROOT}/Plan.md`, `${ROOT}/Goals.md`),
+    )
+    // A new note at the old name, and only then the watcher's word on the rename.
+    await here.disk.write(`${ROOT}/Plan.md`, 'fresh mk3z')
+    const fresh = await here.engine.created(`${ROOT}/Plan.md`, false, 'fresh mk3z')
+    await say(removed(`${ROOT}/Plan.md`), created(`${ROOT}/Goals.md`))
+    await here.engine.pass(SPACE)
+    stop()
+
+    const live = (await account.view()).entries.map((entry) => entry.id)
+    expect(live.sort()).toEqual([PLAN, 'n2', fresh].sort())
+  })
+
+  test('hears a rename the engine makes for another device, halfway, as nothing (#1068)', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const here = await device(account, 'd0')
+    const there = await device(account, 'd1')
+    await there.engine.moving(`${ROOT}/Plan.md`, `${ROOT}/Goals.md`, () =>
+      there.disk.move(`${ROOT}/Plan.md`, `${ROOT}/Goals.md`),
+    )
+    await there.engine.pass(SPACE)
+
+    const { say, stop } = listening(here.engine)
+    const move = here.disk.move.bind(here.disk)
+    here.disk.move = async (from: string, to: string) => {
+      await move(from, to)
+      await say(removed(from), created(to))
+    }
+    await here.engine.pass(SPACE)
+    await here.engine.pass(SPACE)
+    stop()
+
+    const live = (await account.view()).entries.map((entry) => [entry.id, entry.name])
+    expect(live.sort()).toEqual([
+      ['n1', 'Goals.md'],
+      ['n2', 'Ideas.md'],
+    ])
+    expect(here.engine.entryAt(`${ROOT}/Goals.md`)?.id).toBe(PLAN)
+  })
+
+  test('puts a rename back where the disk would not make it (#1068)', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const here = await device(account, 'd0')
+    await expect(
+      here.engine.moving(`${ROOT}/Plan.md`, `${ROOT}/Goals.md`, () =>
+        Promise.reject(new Error('in use')),
+      ),
+    ).rejects.toThrow('in use')
+    await here.engine.pass(SPACE)
+
+    const live = (await account.view()).entries.map((entry) => entry.name)
+    expect(live.sort()).toEqual(['Ideas.md', 'Plan.md'])
+    expect(here.engine.entryAt(`${ROOT}/Plan.md`)?.id).toBe(PLAN)
+  })
+
   test('hears the space’s own hidden inbox, and no other hidden file (#1044)', async () => {
     const here = await device()
     const heard: ((news: SpaceNews) => void)[] = []
@@ -892,7 +999,6 @@ describe('the folder watcher', () => {
     })
     const watched = watchFolders({
       engine: here.engine,
-      own: () => false,
       ready: () => true,
       changed: () => undefined,
     })
@@ -933,7 +1039,6 @@ describe('the folder watcher', () => {
     told.mockReset()
     const watched = watchFolders({
       engine: here.engine,
-      own: () => false,
       ready: () => true,
       changed: () => undefined,
     })
@@ -959,7 +1064,6 @@ describe('the folder watcher', () => {
     watch.mockImplementation(() => Promise.resolve())
     const watched = watchFolders({
       engine: here.engine,
-      own: () => false,
       ready: () => true,
       changed: () => undefined,
     })

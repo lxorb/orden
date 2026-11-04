@@ -2842,7 +2842,7 @@ class Workspace {
           // until it is read again the row is sitting in a folder that does not hold
           // it; see `remove`, which puts a row back the same way.
           try {
-            await invoke('rename_note', { from, to: target })
+            await this.renameOnDisk(from, target, kind)
           } catch (error) {
             await back()
             await this.loadTree()
@@ -4371,7 +4371,7 @@ class Workspace {
     // which is the same file to Windows and to a Mac - and the row wore a name
     // nothing answered to until the next listing. See `move` and `remove`.
     try {
-      await invoke('rename_note', { from: path, to: target, ...(hold ? { hold } : {}) })
+      await this.renameOnDisk(path, target, kind, hold ? { hold } : {})
     } catch (error) {
       await this.loadTree()
       throw error
@@ -4414,6 +4414,23 @@ class Workspace {
     await this.fileMoved(path, target, kind)
     await this.loadTree()
     this.persist()
+  }
+
+  /** A file or a folder moved on the disk (`rename_note`), said to sync by what is
+   *  there before the disk has it; see `doing` in workspace/file-ops.ts. Everything
+   *  kept by path still hears of it after, from `fileMoved`. */
+  async renameOnDisk(from: string, to: string, kind: Kind, how: { hold?: boolean } = {}) {
+    const op = {
+      op: 'moved',
+      from,
+      to,
+      kind,
+      root: this.rootHolding(from),
+      into: this.rootHolding(to),
+    } as const
+    await this.fileOps.doing(op, async () => {
+      await invoke('rename_note', { from, to, ...how })
+    })
   }
 
   /** Every link to a note that has moved pointed at it again; whether any was. A rewrite
@@ -4488,14 +4505,9 @@ class Workspace {
       this.hideEntry(path)
 
       const kept = await this.bin(path, isFolder, { source })
-      // The word sync keeps to bring back the entries it was, should the delete be put
-      // back: the trash's own id for it, where it went there.
-      const back = kept?.trashId ?? crypto.randomUUID()
-      if (kept) {
-        this.undone.record({ kind: 'delete', path, ...kept, ...(kept.trashId ? {} : { back }) })
-      }
+      if (kept) this.undone.record({ kind: 'delete', path, ...kept })
 
-      await this.fileGone(path, isFolder ? 'folder' : 'file', back)
+      await this.fileGone(path, isFolder ? 'folder' : 'file', kept?.trashId ?? kept?.back)
       await this.loadTree()
       // The row deleted may have been the last thing keeping a nested note nested.
       await this.unnest(folderOf(path))
@@ -4532,17 +4544,34 @@ class Workspace {
     const held =
       toAccount && isFolder ? await (await import('./workspace/undoing')).heldIn(path) : null
 
+    // Said to sync before the disk has it, with the word to put it back by: the trash's
+    // id for it, or one of its own for a delete the account keeps; see `doing` in
+    // workspace/file-ops.ts.
+    const gone = {
+      op: 'removed',
+      path,
+      kind: isFolder ? 'folder' : 'file',
+      root: this.rootHolding(path),
+    } as const
     try {
       if (toAccount) {
-        await invoke(isFolder ? 'delete_folder' : 'delete_note', { path })
-        if (isFolder) return held && { content: '', folder: true, ...held }
-        return words ? { content: content ?? '' } : null
+        const back = crypto.randomUUID()
+        await this.fileOps.doing({ ...gone, back }, async () => {
+          await invoke(isFolder ? 'delete_folder' : 'delete_note', { path })
+        })
+        if (isFolder) return held && { content: '', folder: true, ...held, back }
+        return words ? { content: content ?? '', back } : null
       }
-      const entry = await invoke<{ id: string }>('trash_item', {
-        path,
-        kind: isFolder ? 'folder' : 'note',
+      let trashId = ''
+      await this.fileOps.doing(gone, async () => {
+        const entry = await invoke<{ id: string }>('trash_item', {
+          path,
+          kind: isFolder ? 'folder' : 'note',
+        })
+        trashId = entry.id
+        return entry.id
       })
-      return { content: content ?? '', trashId: entry.id, ...(isFolder ? { folder: true } : {}) }
+      return { content: content ?? '', trashId, ...(isFolder ? { folder: true } : {}) }
     } catch (error) {
       // The row was hidden before the file was asked to go, so a delete that
       // did not happen has to put it back: the listing is what the tree really

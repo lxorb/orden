@@ -77,6 +77,25 @@ writer the last to change it, but not the one who put it in its folder: a device
 wrote in a note somebody else had moved into a folder, never having seen it there, has
 still not seen it there, and its delete of the folder leaves it.
 
+## What this device does
+
+A move, a rename or a delete made in the file list, by an agent or by an undo is said to
+the engine by the id of what is there before the disk has it (`moving` and `removing` in
+the engine, through `doing` in workspace/file-ops.ts): the op is in the outbox and shown at
+once, and the entry and everything in it are in hand while the file moves, so a pass
+leaves them alone and the folder's watcher hears nothing there that needs reading. Where
+the file is is written down once the disk has it; a move the disk refuses is put back the
+same way. Should Orden stop halfway, the next pass finds the entry shown where the op put
+it and moves the file there itself.
+
+The watcher reads what it hears against the tree and the disk as they are, never against
+how long ago anything happened: a path where the tree and the disk do not agree yet - an
+entry whose file is somewhere the tree no longer shows it, or a place the tree shows one
+whose file is not there yet - is the engine's own work under way and nothing to read
+(`ownWork`), a file heard gone that is there again was taken again since, and one heard
+made that is gone again went again. What is left is somebody else's doing: a program, or
+a person in Explorer or Finder.
+
 ## Putting a delete back
 
 A delete made here is said to the engine with a word to put it back by: the trash's id

@@ -23,9 +23,6 @@ import { syncDeletes } from '../sync/deletes'
 
 /** What the engine's own changes to the disk owe the rest of the app. */
 export interface Telling {
-  /** A path the engine is about to move or take away: what the folder's watcher will
-   *  report next is the engine's own doing. */
-  touching(path: string): void
   /** A move the engine makes, after the writes in the air of what is open in it, and
    *  `stalled` in its place under one that has not answered; see `holdingWrites` in
    *  workspace/saving.svelte.ts. */
@@ -64,8 +61,6 @@ function diskOf(telling: Telling): Disk {
         () => undefined,
       ),
     async move(from, to, kind) {
-      telling.touching(from)
-      telling.touching(to)
       await invoke('create_folder', { path: parentOf(to) }).catch(() => undefined)
       // A file the account holds as a page note's paper, `X.pages.pdf` beside
       // `X.pages`: a PDF another device turned into that note. The crate refuses a PDF
@@ -88,7 +83,6 @@ function diskOf(telling: Telling): Disk {
       )
     },
     async remove(path, kind) {
-      telling.touching(path)
       // A version of the words kept first, the way a delete made here keeps one.
       if (kind === 'file') {
         const words = await invoke<string>('read_note', { path }).catch(() => null)
@@ -197,7 +191,6 @@ export function appWorld(token: () => string | null, telling: Telling): World {
       },
       async write(path, bytes) {
         const fresh = !(await stamped(path))
-        telling.touching(path)
         await invoke('create_folder', { path: parentOf(path) }).catch(() => undefined)
         await invoke('write_bytes', { path, base64: toBase64(bytes) })
         telling.written(path, fresh)

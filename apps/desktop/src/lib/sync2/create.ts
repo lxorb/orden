@@ -1,9 +1,9 @@
 /** What this device does to a space's tree, told to the account as operations on ids
  *  (docs/sync-v2.md sections 5.9 and 5.13).
  *
- *  Every one arrives after the disk has it - the workspace made, renamed, moved or
- *  deleted the file and says so once (`workspace/file-ops.ts`), and the simulator's
- *  person does the same - so the entry takes its new place here, the op waits in the
+ *  A move, a rename or a delete arrives before the disk has it (`moving` and `removing`
+ *  in engine.ts, `intended` here), a file made after - and anything another program did,
+ *  after (`watching.ts`) - so the entry takes its new place here, the op waits in the
  *  outbox, and what is shown is the tree with the op applied, exactly as the account
  *  will apply it.
  *
@@ -194,29 +194,54 @@ export function moved(core: Core, space: SpaceState, from: string, to: string): 
   if (inForeignCopy(to) && !inForeignCopy(from)) return []
   const changes: Change[] = []
   const parent = folderFor(core, space, folderOf(to), changes)
-  const name = nameOf(to)
-
   // Everything under it is where it is now, before the op is shown.
+  changes.push(...carried(space, from, to))
+  changes.push(...placing(core, space, entry, parent, nameOf(to)))
+  space.changed()
+  return changes
+}
+
+/** The op that puts an entry at `to`, shown at once, before its file is there: what
+ *  the file list does is said before the disk has it (`moving` in engine.ts), so
+ *  nothing the folder's watcher hears meanwhile is a guess. Where the file is stays as
+ *  it was until `carried`. */
+export function intended(core: Core, space: SpaceState, entry: EntryRow, to: string): Change[] {
+  const changes: Change[] = []
+  const parent = folderFor(core, space, folderOf(to), changes)
+  changes.push(...placing(core, space, entry, parent, nameOf(to)))
+  space.changed()
+  return changes
+}
+
+/** Everything at or under `from` is at `to` on this disk now. */
+export function carried(space: SpaceState, from: string, to: string): Change[] {
+  const changes: Change[] = []
   for (const one of atOrUnder(space, from)) {
     one.local_path = `${to}${one.local_path.slice(from.length)}`
     changes.push(put('entries', { ...one }))
   }
+  space.changed()
+  return changes
+}
 
+/** A rename, or a move, of an entry to `name` in `parent`, where what is shown does not
+ *  have it there already. */
+function placing(
+  core: Core,
+  space: SpaceState,
+  entry: EntryRow,
+  parent: string | null,
+  name: string,
+): Change[] {
   const seen = space.row.cursor
   const shown = space.shown().entries.get(entry.id)
   if (shown?.parent === parent) {
-    if (shown.name !== name) {
-      changes.push(
-        ...queue(core, space, { op: core.nextId('o'), t: 'rename', id: entry.id, name, seen }),
-      )
-    }
-  } else {
-    const op: Op = { op: core.nextId('o'), t: 'move', id: entry.id, parent, seen }
-    if (shown?.name !== name) op.name = name
-    changes.push(...queue(core, space, op))
+    if (shown.name === name) return []
+    return queue(core, space, { op: core.nextId('o'), t: 'rename', id: entry.id, name, seen })
   }
-  space.changed()
-  return changes
+  const op: Op = { op: core.nextId('o'), t: 'move', id: entry.id, parent, seen }
+  if (shown?.name !== name) op.name = name
+  return queue(core, space, op)
 }
 
 /** Entries put somewhere else among the rest of their folder, by hand (#1068): one

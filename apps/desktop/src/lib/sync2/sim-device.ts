@@ -5,10 +5,11 @@
  *  store tables (in memory, surviving a crash the way the SQLite file does), the same
  *  files on a disk - with nothing standing in but the disk (a map of files), the network
  *  (the simulator's) and the person. What the person does is what the app would hear:
- *  typing goes into the document the way the editor's binding puts it there, a file made,
- *  renamed, moved or deleted is done to the disk first and then said to the engine the
- *  way `workspace.fileOps` says it, another program's edit is a file written behind the
- *  engine's back and then noticed.
+ *  typing goes into the document the way the editor's binding puts it there, a file made
+ *  is made on the disk and then said, one renamed, moved or deleted is said to the engine
+ *  with the disk's part inside (`moving`, `removing`) the way `workspace.fileOps` does
+ *  it, another program's edit is a file written behind the engine's back and then
+ *  noticed.
  *
  *  So a seed that fails here is the engine failing, and replays as one. */
 
@@ -352,8 +353,10 @@ export class EngineDevice implements DeviceAdapter {
         const to =
           nameKey(wanted) === nameKey(from) ? wanted : freeIn(taken, folderOf(from), action.name)
         if (to === from) return
-        await this.disk.move(this.full(from), this.full(to))
-        await engine.moved(this.full(from), this.full(to))
+        // As the file list does it: said to the engine first, the disk moved inside.
+        await engine.moving(this.full(from), this.full(to), () =>
+          this.disk.move(this.full(from), this.full(to)),
+        )
         return
       }
       case 'move': {
@@ -369,8 +372,9 @@ export class EngineDevice implements DeviceAdapter {
         if (into === from || into.startsWith(`${from}/`)) return
         if (folderOf(from) === into) return
         const to = freeIn(this.taken(engine), into, nameOf(from))
-        await this.disk.move(this.full(from), this.full(to))
-        await engine.moved(this.full(from), this.full(to))
+        await engine.moving(this.full(from), this.full(to), () =>
+          this.disk.move(this.full(from), this.full(to)),
+        )
         return
       }
       case 'delete': {
@@ -378,9 +382,11 @@ export class EngineDevice implements DeviceAdapter {
         const path = target ? this.pathOf(engine, target.id) : null
         if (!target || !path) return
         this.trashed(engine, target.id, path)
-        await this.disk.remove(this.full(path))
         // The trash's word for it is the id the person will ask for back by.
-        await engine.removed(this.full(path), target.id)
+        await engine.removing(this.full(path), async () => {
+          await this.disk.remove(this.full(path))
+          return target.id
+        })
         return
       }
       case 'restore': {
