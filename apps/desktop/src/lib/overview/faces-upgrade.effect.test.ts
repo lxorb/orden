@@ -38,7 +38,11 @@ test('an upgrade wipes every name a private tab could have left among the window
   const box = { x: 1, y: 2, w: 3, h: 4 }
   localStorage.setItem(
     'nib:overview-windows',
-    JSON.stringify({ 'web:~Secret Bank Login': box, 'web:/notes/kept.url': box, 'note:/a.md': box }),
+    JSON.stringify({
+      'web:~Secret Bank Login': box,
+      'web:/notes/kept.url': box,
+      'note:/a.md': box,
+    }),
   )
   const { upgradeWindows } = await import('./places.svelte')
   upgradeWindows()

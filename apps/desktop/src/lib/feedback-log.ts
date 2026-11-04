@@ -41,7 +41,8 @@ const NAMED = new RegExp(
 
 /** A word with a slash in it that is left: a folder relative to its space. Not an address,
  *  which has a colon NOT_INSIDE refuses, nor a kind of file such as `text/plain`. */
-const FOLDER = /(?<![\w/\\:.~<-])(?!(?:text|image|audio|video|application)\/)[^\s"'`<>|:;,()]*[\\/][^\s"'`<>|:;,()]+/g
+const FOLDER =
+  /(?<![\w/\\:.~<-])(?!(?:text|image|audio|video|application)\/)[^\s"'`<>|:;,()]*[\\/][^\s"'`<>|:;,()]+/g
 
 /** A stack's frame or a line of the app's own source, which is no reader's. */
 const THE_APPS = /\.(?:ts|js|mjs|svelte|rs|tsx|jsx)$/i

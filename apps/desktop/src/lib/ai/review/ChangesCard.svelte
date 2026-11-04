@@ -44,9 +44,8 @@
         >
         <Tally {added} {removed} />
       </button>
-      <button
-        class="nib-chip is-quiet"
-        onclick={() => void review.undoAll(thread, files)}>{t('Undo')}</button
+      <button class="nib-chip is-quiet" onclick={() => void review.undoAll(thread, files)}
+        >{t('Undo')}</button
       >
       <button
         class="nib-chip"
