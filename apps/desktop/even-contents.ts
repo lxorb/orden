@@ -426,9 +426,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,865,000, for #1034: the shut file list comes out
  *  over the note when the pointer rests at the window's edge (edge-peek.svelte.ts,
  *  Sidebar.svelte). Measured 5,864,844.
+ *
+ *  The code raised on 2026-11-04, to 5,865,700, for #1059: the palette finds a website
+ *  by its address as well as its name (kinds.ts), and the index says which websites the
+ *  space holds (link-index.svelte.ts). Measured 5,865,507.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_865_000,
+  code: 5_865_700,
   catalogues: 964_400,
   styles: 290_000,
   fonts: 260_000,

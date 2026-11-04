@@ -1130,8 +1130,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,537,900, and to 390 modules, for #1034: the shut file list
  *  comes out over the note when the pointer rests at the window's edge, and goes once it
- *  leaves (edge-peek.svelte.ts, Sidebar.svelte). Measured 3,537,714, 389 modules. */
-const BUDGET = 3_537_900
+ *  leaves (edge-peek.svelte.ts, Sidebar.svelte). Measured 3,537,714, 389 modules.
+ *
+ *  Raised 2026-11-04, to 3,538,300, for #1059: the palette finds a website by its address
+ *  as well as its name (kinds.ts, Palette.svelte), and the index says which websites the
+ *  space holds (`websitesHere` in link-index.svelte.ts). Measured 3,538,162. */
+const BUDGET = 3_538_300
 const MOST_FILES = 390
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
