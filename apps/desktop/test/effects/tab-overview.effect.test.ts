@@ -132,3 +132,30 @@ test('a web tab’s window shows its page as it was left, a tab nowhere in the f
   // Every tab here is a draft or a page nobody kept.
   expect(windows().every((one) => one.classList.contains('unsaved'))).toBe(true)
 })
+
+test('nothing in it is chosen as text, and a drag is never the browser’s own', async () => {
+  await opened()
+  for (const at of [layer(), windows()[0], document.querySelector('.caption')]) {
+    for (const kind of ['selectstart', 'dragstart']) {
+      const event = new Event(kind, { bubbles: true, cancelable: true })
+      at?.dispatchEvent(event)
+      expect(event.defaultPrevented).toBe(true)
+    }
+  }
+})
+
+test('it comes back where the camera was left', async () => {
+  await opened()
+  const world = () => document.querySelector<HTMLElement>('.world')?.style.transform
+  const canvas = layer()
+  canvas?.dispatchEvent(
+    new WheelEvent('wheel', { deltaX: 120, deltaY: 40, bubbles: true, cancelable: true }),
+  )
+  flushSync()
+  const moved = world()
+  expect(overlays.escape()).toBe(true)
+  flushSync()
+  await tick()
+  await opened()
+  expect(world()).toBe(moved)
+})

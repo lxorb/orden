@@ -34,16 +34,9 @@ export interface Seam {
   to: { x: number; y: number }
 }
 
-/** The room a pane's windows were given: where a window dropped against its side
- *  makes a pane there. */
-export interface Room extends Box {
-  paneId: string
-}
-
 export interface Laid {
   slots: Slot[]
   seams: Seam[]
-  rooms: Room[]
 }
 
 /** What `lay` needs to know of the panes. */
@@ -132,7 +125,6 @@ function layIn(frame: Frame, room: Box, panes: Panes, widest: number): Laid {
     return {
       slots: grid(frame.id, room, panes, widest),
       seams: [],
-      rooms: [{ ...room, paneId: frame.id }],
     }
   }
 
@@ -150,7 +142,6 @@ function layIn(frame: Frame, room: Box, panes: Panes, widest: number): Laid {
   const right = layIn(second, b, panes, widest)
   const slots = [...left.slots, ...right.slots]
   const seams = [...left.seams, ...right.seams]
-  const rooms = [...left.rooms, ...right.rooms]
 
   // Down the middle of the gap, as long as the windows on either side reach.
   const reach = around(slots)
@@ -173,7 +164,7 @@ function layIn(frame: Frame, room: Box, panes: Panes, widest: number): Laid {
     )
   }
 
-  return { slots, seams, rooms }
+  return { slots, seams }
 }
 
 /** Every window and seam of `frame` in `room`. */

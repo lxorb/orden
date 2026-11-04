@@ -29,7 +29,7 @@
   import { chorded } from '../keys'
   import { stillness } from '../motion'
   import { overlays } from '../overlays'
-  import SpaceBadge from '../SpaceBadge.svelte'
+  import Select from '../Select.svelte'
   import { tabOverview } from '../surfaces.svelte'
   import TabMark from '../TabMark.svelte'
   import { trap } from '../trap'
@@ -39,7 +39,10 @@
   import {
     boxToCanvas,
     type Camera,
+    eased,
+    isNotch,
     lookingAt,
+    notched,
     pinched,
     type Point,
     showing,
@@ -47,10 +50,11 @@
     turned,
     moved as panned,
   } from './camera'
-  import { isDrag, type Landing, landingAt, MADE, withLanding, withMoved } from './drag'
+  import { isDrag, type Landing, landingAt, withMoved } from './drag'
   import { places } from './places.svelte'
   import { type Cell, cellAt, withPlop } from './cells'
   import Cells from './Cells.svelte'
+  import { shapeOf as membraneOf } from './membrane'
   import { keep, storedText } from '../stored'
   import { canWriteAt } from '../sharing.svelte'
   import { mayCarry } from '../workspace/chat-carry'
@@ -71,8 +75,8 @@
   let width = $state(window.innerWidth)
   let height = $state(window.innerHeight)
 
-  /** The room the windows are laid out in: the window, less a margin and the row of
-   *  spaces at the top. */
+  /** The room the windows are laid out in: the window, less a margin and the row at
+   *  the top. */
   const MARGIN = 56
   const TOP = 88
 
@@ -105,15 +109,19 @@
   function lookAtSpace() {
     const place = places.place(spaceKey, { w: screenRoom.w, h: screenRoom.h })
     camera = lookingAt(place, screenRoom)
+    // Then all of its cell, membrane, name and all, where it is drawn as one, never
+    // nearer than one to one.
+    const cell = cellBoxes.find((one) => one.key === spaceKey)
+    if (!all || !cell) return
+    const { cx, cy, a, b } = membraneOf(cell.box)
+    const named = NAME_ROOM * Math.max(1, 1 / camera.zoom)
+    camera = lookingAt({ x: cx - a, y: cy - b - named, w: 2 * a, h: 2 * b + named }, screenRoom)
   }
 
+  /** The room a cell's name takes over its membrane. */
+  const NAME_ROOM = 48
+
   const shapeOf = (paneId: string): number => {
-    // The pane a window against a side would make: half the pane it splits.
-    const landing = held?.landing
-    if (paneId === MADE && landing?.kind === 'side') {
-      const half = shapeOf(landing.paneId)
-      return landing.side === 'left' || landing.side === 'right' ? half / 2 : half * 2
-    }
     const measured = shownBox(paneId)
     const box = panes[paneId] ?? (measured && { w: measured.width, h: measured.height })
     return box && box.w > 0 && box.h > 0 ? box.w / box.h : 16 / 10
@@ -121,14 +129,15 @@
 
   const tabsOf = (paneId: string) => workspace.tabsIn(paneId).map((tab) => tab.id)
 
-  /** Current space or All spaces: whether the other spaces' cells are shown as well. The
-   *  same view either way. Remembered on this device. */
-  const ALL = 'nib:overview-all'
-  let all = $state(storedText(ALL) === 'yes')
+  /** All spaces or This space: whether the other spaces' cells are shown as well. The
+   *  same view either way. All spaces unless This space was picked, remembered on this
+   *  device (Emil, 2026-11-04: All spaces is the default). */
+  const ALL = 'nib:overview-spaces'
+  let all = $state(storedText(ALL) !== 'this')
 
   function showAll(on: boolean) {
     all = on
-    keep(ALL, on ? 'yes' : 'no')
+    keep(ALL, on ? 'all' : 'this')
   }
 
   /** The other spaces' panes, which the store of every space's set holds; fetched the
@@ -174,8 +183,7 @@
       : null,
   )
 
-  /** The canvas as it is, or with the held window where it would land - in a pane of
-   *  its own where it is against a side of one (drag.ts). */
+  /** The canvas as it is, or with the held window where it would land (drag.ts). */
   const laidCells = $derived(
     shownKeys.flatMap((key) => {
       const own = key === spaceKey
@@ -189,16 +197,14 @@
         const first = key === plop.key ? (panesIn(panesOf)[0]?.id ?? null) : null
         ofCell = withPlop(tabsOf, held.id, first)
       } else if (held && own) ofCell = withMoved(tabsOf, held.id, held.landing)
-      const shown = own && !plop ? withLanding(frame, held?.landing ?? null) : panesOf
-      return [{ key, laid: lay(shown, place, { tabsOf: ofCell, shapeOf }) }]
+      return [{ key, laid: lay(panesOf, place, { tabsOf: ofCell, shapeOf }) }]
     }),
   )
 
-  /** Every cell's windows, lines and rooms on the one canvas. */
+  /** Every cell's windows and lines on the one canvas. */
   const laid = $derived({
     slots: laidCells.flatMap((one) => one.laid.slots),
     seams: laidCells.flatMap((one) => one.laid.seams),
-    rooms: laidCells.flatMap((one) => one.laid.rooms),
   })
 
   /** Which cell each window lies in, by tab. */
@@ -405,8 +411,10 @@
     const again = shown
     if (!again) {
       corner = cardCorner()
-      lookAtSpace()
+      // Where it was left, once there is somewhere; the space worked in the first time.
       measure()
+      lookAtSpace()
+      camera = places.camera ?? camera
       const copies: Record<string, HTMLElement> = {}
       for (const pane of workspace.panes.all) {
         const tab = pane.activeTabId ? byId.get(pane.activeTabId) : undefined
@@ -447,6 +455,12 @@
   function leave() {
     held = null
     pressed = null
+    // A notch still on its way is where it was going.
+    if (zoomGoal) camera = eased(camera, zoomGoal.zoom, zoomGoal.at, Number.POSITIVE_INFINITY)
+    zoomGoal = null
+    cancelAnimationFrame(zoomFrame)
+    zoomFrame = 0
+    places.remember(camera)
     out = false
     arrived.clear()
     aimAll()
@@ -563,16 +577,16 @@
       at = id
     }
     hand = toCanvas(camera, { x: event.clientX, y: event.clientY })
-    const landing = landingFor(id, hand)
+    const landing = landingFor(hand)
     if (JSON.stringify(landing) !== JSON.stringify(held.landing)) held = { ...held, landing }
     follow()
     fly()
   }
 
   /** Where the held window would land with the pointer at `point`: in another space's
-   *  cell once it is well inside it, else in its own - in a strip or against a side, where
-   *  its own is the space worked in, whose panes are the window's. */
-  function landingFor(id: string, point: Point): Landing | null {
+   *  cell once it is well inside it, else in its own - in a strip, where its own is the
+   *  space worked in, whose panes are the window's. */
+  function landingFor(point: Point): Landing | null {
     if (!held) return null
     const from = held.from
     const goes = held.goes
@@ -581,9 +595,7 @@
     const cell = all ? cellAt(cells, now, point.x, point.y) : from
     if (cell !== from) return { kind: 'space', key: cell }
     if (from !== spaceKey) return null
-    return landingAt(without?.slots ?? [], without?.rooms ?? [], point.x, point.y, (paneId, side) =>
-      workspace.canLand(side, paneId, id),
-    )
+    return landingAt(without?.slots ?? [], point.x, point.y)
   }
 
   /** The held window and the cell it is in now, for the membranes. */
@@ -637,12 +649,6 @@
       void import('../workspace/moving-space').then((one) => one.moveToSpace([id], landing.key))
       return
     }
-    if (landing.kind === 'side') {
-      workspace.dropTab(id, { kind: 'pane', paneId: landing.paneId, zone: landing.side })
-      // The panes have new shapes once the split is laid out.
-      requestAnimationFrame(measure)
-      return
-    }
     const strip = tabsOf(landing.paneId)
     const back = strip.filter((one) => one !== id)
     const into = landing.before === null ? back.length : back.indexOf(landing.before)
@@ -677,21 +683,54 @@
 
   const spaces = $derived(workspace.shownSpaces)
 
-  /** The wheel and two fingers on a touchpad move the canvas, a pinch brings it nearer.
-   *  Listened for by hand, since a passive listener cannot keep the page from zooming. */
+  /** Where a notch of the wheel with Ctrl is taking the zoom, and about which point of
+   *  the screen; eased there a frame at a time (camera.ts). */
+  let zoomGoal: { zoom: number; at: Point } | null = null
+  let zoomFrame = 0
+  let zoomLast = 0
+
+  function zooming(now: number) {
+    const goal = zoomGoal
+    if (!goal) return (zoomFrame = 0)
+    // A frame dropped is a frame's worth of the way, not a leap.
+    camera = eased(
+      camera,
+      goal.zoom,
+      goal.at,
+      Math.min(1 / 30, Math.max(0, (now - zoomLast) / 1000)),
+    )
+    zoomLast = now
+    if (camera.zoom === goal.zoom) {
+      zoomGoal = null
+      zoomFrame = 0
+    } else zoomFrame = requestAnimationFrame(zooming)
+  }
+
+  /** The wheel and two fingers on a touchpad move the canvas, a pinch brings it nearer
+   *  under the fingers, and a notch of the wheel with Ctrl eases it nearer, as a page's
+   *  zoom does, never in steps. Listened for by hand, since a passive listener cannot
+   *  keep the page from zooming. */
   function wheeled(node: HTMLElement) {
     const turn = (event: WheelEvent) => {
       event.preventDefault()
       const { deltaX, deltaY, deltaMode, ctrlKey, metaKey, clientX, clientY } = event
-      camera = turned(camera, {
-        deltaX,
-        deltaY,
-        deltaMode,
-        ctrlKey,
-        metaKey,
-        x: clientX,
-        y: clientY,
-      })
+      const said = { deltaX, deltaY, deltaMode, ctrlKey, metaKey, x: clientX, y: clientY }
+      if ((ctrlKey || metaKey) && isNotch(said)) {
+        const zoom = notched(zoomGoal?.zoom ?? camera.zoom, said)
+        if (stillness()) {
+          camera = eased(camera, zoom, said, Number.POSITIVE_INFINITY)
+          return
+        }
+        zoomGoal = { zoom, at: { x: clientX, y: clientY } }
+        if (!zoomFrame) {
+          zoomLast = performance.now()
+          zoomFrame = requestAnimationFrame(zooming)
+        }
+        return
+      }
+      // A pinch or a pan takes over from a notch on its way.
+      if (ctrlKey || metaKey) zoomGoal = null
+      camera = turned(camera, said)
     }
     node.addEventListener('wheel', turn, { passive: false })
     return {
@@ -708,7 +747,7 @@
   let panning = false
 
   function grounded(event: PointerEvent) {
-    if (!(event.target instanceof Element) || event.target.closest('.window, .spaces')) return
+    if (!(event.target instanceof Element) || event.target.closest('.window, .top')) return
     touching.set(event.pointerId, { x: event.clientX, y: event.clientY })
     ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
     panning = touching.size > 1
@@ -765,37 +804,21 @@
     onpointermove={dragging}
     onpointerup={letGo}
     onpointercancel={letGo}
+    onselectstart={(event) => event.preventDefault()}
+    ondragstart={(event) => event.preventDefault()}
   >
     {#if spaces.length > 1}
-      <div class="spaces" class:is-out={out} role="group" aria-label={t('Spaces')}>
-        <!-- Current space or All spaces: whether the other spaces' cells are there too. -->
-        <div class="which" role="radiogroup" aria-label={t('Spaces')}>
-          <button
-            class="space"
-            class:is-on={!all}
-            role="radio"
-            aria-checked={!all}
-            onclick={() => showAll(false)}>{t('This space')}</button
-          >
-          <button
-            class="space"
-            class:is-on={all}
-            role="radio"
-            aria-checked={all}
-            onclick={() => showAll(true)}>{t('All spaces')}</button
-          >
-        </div>
-        {#each spaces as space (space.id)}
-          <button
-            class="space"
-            class:is-on={space.id === workspace.activeSpaceId}
-            aria-pressed={space.id === workspace.activeSpaceId}
-            onclick={() => void workspace.selectSpace(space.id)}
-          >
-            <SpaceBadge {space} on={space.id === workspace.activeSpaceId} />
-            <span class="space-name">{space.name}</span>
-          </button>
-        {/each}
+      <!-- All spaces or This space: whether the other spaces' cells are there too. -->
+      <div class="top" class:is-out={out}>
+        <Select
+          value={all ? 'all' : 'this'}
+          options={[
+            { value: 'all', label: t('All spaces') },
+            { value: 'this', label: t('This space') },
+          ]}
+          onchange={(value) => showAll(value === 'all')}
+          label={t('Spaces')}
+        />
       </div>
     {/if}
 
@@ -891,16 +914,20 @@
     overflow: hidden;
     outline: none;
     touch-action: none;
+    /* Windows are pictures of their tabs, not their words: nothing here is chosen as
+       text, and a drag is the overview's own, never the browser's. */
+    user-select: none;
+    -webkit-user-select: none;
   }
 
-  .spaces {
+  .top {
     position: absolute;
-    top: var(--space-6);
+    z-index: var(--z-raised);
+    top: var(--space-5);
     left: 50%;
     display: flex;
     gap: var(--space-2);
-    max-width: calc(100% - 2 * var(--space-6));
-    overflow-x: auto;
+    align-items: center;
     translate: -50% -8px;
     opacity: 0;
     transition:
@@ -908,40 +935,9 @@
       translate var(--dur-base) var(--ease-out);
   }
 
-  .spaces.is-out {
+  .top.is-out {
     translate: -50% 0;
     opacity: 1;
-  }
-
-  /* The switch between the two, a pill of two halves before the spaces. */
-  .which {
-    display: flex;
-    flex: none;
-    gap: 2px;
-    margin-inline-end: var(--space-4);
-  }
-
-  .space {
-    display: flex;
-    flex: none;
-    align-items: center;
-    gap: var(--space-2);
-    height: var(--row-height);
-    padding: 0 var(--space-3) 0 var(--space-2);
-    border: 1px solid transparent;
-    border-radius: calc(var(--row-height) / 2);
-    color: var(--muted);
-    background: color-mix(in srgb, var(--surface) 70%, transparent);
-  }
-
-  .space:hover {
-    color: var(--text);
-  }
-
-  .space.is-on {
-    color: var(--text-strong);
-    border-color: var(--line);
-    background: var(--surface);
   }
 
   /* The one canvas, which the camera moves and scales; see camera.ts. */

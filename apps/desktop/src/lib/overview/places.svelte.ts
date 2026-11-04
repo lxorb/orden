@@ -11,9 +11,14 @@
  *  Kept on this device, under `KEY`, through stored.ts. */
 
 import { keepJson, stored } from '../stored'
+import type { Camera } from './camera'
 import type { Box } from './layout'
 
 const KEY = 'nib:overview-places'
+
+/** Where the camera was as the view was last put away, which it opens at again (Emil,
+ *  2026-11-04). */
+const CAMERA = 'nib:overview-camera'
 
 /** The room between two spaces' places. */
 const APART = 360
@@ -33,6 +38,14 @@ export function readPlaces(value: unknown): Record<string, Box> {
   return out
 }
 
+/** The camera as written, or null where it is not one. */
+export function readCamera(value: unknown): Camera | null {
+  if (typeof value !== 'object' || value === null) return null
+  const { x, y, zoom } = value as Record<string, unknown>
+  const fine = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n)
+  return fine(x) && fine(y) && fine(zoom) && zoom > 0 ? { x, y, zoom } : null
+}
+
 /** Where a space not placed yet goes: right of every other, level with the first. */
 export function nextPlace(all: Record<string, Box>, size: { w: number; h: number }): Box {
   const placed = Object.values(all)
@@ -44,6 +57,18 @@ export function nextPlace(all: Record<string, Box>, size: { w: number; h: number
 
 class Places {
   private all = $state.raw<Record<string, Box>>(readPlaces(stored(KEY)))
+  private kept: Camera | null = readCamera(stored(CAMERA))
+
+  /** Where the camera was as the view was last put away, or null the first time. */
+  get camera(): Camera | null {
+    return this.kept
+  }
+
+  /** Keeps where the camera is, for the next time the view comes up. */
+  remember(camera: Camera) {
+    this.kept = { ...camera }
+    keepJson(CAMERA, this.kept)
+  }
 
   /** The place of `space`, or null before it has one. */
   at(space: string): Box | null {
