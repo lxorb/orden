@@ -183,16 +183,18 @@ function besideName(at: string, path: string): boolean {
   )
 }
 
-/** A file came to be: a note deleted and put back has its track again, there or beside its
- *  name, and any other is a new note, whatever its name was before. Asked of its words only
- *  where one is waiting. */
+/** A file came to be: a note deleted and put back has its track again, there or, said to be
+ *  a put back (`putBack`), beside its name; a reader's own copy there saying the same words
+ *  is not the note. Any other is a new note, whatever its name was before. Asked of its words
+ *  only where one is waiting. */
 export async function tracksCame(
   path: string,
   read: (path: string) => Promise<string | null>,
+  putBack = false,
 ): Promise<void> {
   for (const [key, held] of [...aside]) {
     const [agent, was] = partsOf(key)
-    const at = within(path, was) === null && besideName(was, path) ? path : was
+    const at = putBack && within(path, was) === null && besideName(was, path) ? path : was
     const now = keyOf(agent, at)
     if (within(path, at) === null || tracks.has(now)) continue
 

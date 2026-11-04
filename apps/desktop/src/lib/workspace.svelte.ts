@@ -4779,7 +4779,13 @@ class Workspace {
   }
 
   /** `back`: a delete put back, by the word it was said with. */
-  async fileCame(path: string, kind: 'file' | 'folder', key?: string, back?: string) {
+  async fileCame(
+    path: string,
+    kind: 'file' | 'folder',
+    key?: string,
+    back?: string,
+    putBack = !!back,
+  ) {
     const root = this.rootHolding(path)
     await this.fileOps.tell({
       op: 'created',
@@ -4788,6 +4794,7 @@ class Workspace {
       root,
       ...(key ? { key } : {}),
       ...(back ? { back } : {}),
+      ...(putBack ? { putBack } : {}),
     })
   }
 

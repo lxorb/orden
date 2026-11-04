@@ -38,6 +38,9 @@ export type FileOp = (
       /** A delete put back - out of the trash, or undone - by the word it was said
        *  with, so sync brings back the entries it was rather than new ones (#1068). */
       back?: string
+      /** Came as a delete put back, whatever word it has, so what kept the note follows it
+       *  to a name beside its own. */
+      putBack?: true
     }
   | {
       op: 'moved'

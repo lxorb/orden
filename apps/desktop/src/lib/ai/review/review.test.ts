@@ -71,9 +71,15 @@ vi.mock('../../workspace.svelte', () => ({
       return fake.undone
     },
     // A note back has its tracks again, as `workspace.fileOps` tells agents/docs.
-    fileCame: async (path: string) => {
+    fileCame: async (
+      path: string,
+      _kind: string,
+      _key?: string,
+      _back?: string,
+      putBack?: boolean,
+    ) => {
       const { tracksCame } = await import('../../agents/docs/edit')
-      await tracksCame(path, (at) => Promise.resolve(fake.desk.disk.get(at) ?? null))
+      await tracksCame(path, (at) => Promise.resolve(fake.desk.disk.get(at) ?? null), putBack)
     },
     open: (path: string) => {
       fake.opened.push(path)
@@ -581,18 +587,52 @@ describe('a rewind over a thread that did things in any order', () => {
     expect(review.notes(thread).map((one) => one.path)).toContain('/space/A 2.md')
   })
 
-  test('a file beside the name that does not say what the track last said is another note', async () => {
+  test('a file beside the name that nobody put back is the reader’s, whatever it says', async () => {
     const thread = aThread()
     await running(thread, [
       () => acts.edit(thread, 'A.md', 'original', 'EDITED'),
       () => acts.trash('A.md'),
     ])
-    const { tracksRemoved, tracksOf, tracksCame } = await import('../../agents/docs/edit')
+    const { tracksRemoved, tracksCame } = await import('../../agents/docs/edit')
     tracksRemoved('/space/A.md')
-    fake.desk.disk.set('/space/A 2.md', 'something else')
+    fake.desk.disk.set('/space/A 2.md', 'EDITED')
     await tracksCame('/space/A 2.md', (at) => Promise.resolve(fake.desk.disk.get(at) ?? null))
 
-    expect([...tracksOf(thread.id).keys()]).not.toContain('/space/A 2.md')
+    expect(review.notes(thread).map((one) => one.path)).toEqual([])
+  })
+
+  test('put back beside a file saying something else: that one has no track', async () => {
+    const thread = aThread()
+    await running(thread, [
+      () => acts.edit(thread, 'A.md', 'original', 'EDITED'),
+      () => acts.trash('A.md'),
+    ])
+    const { tracksRemoved, tracksCame } = await import('../../agents/docs/edit')
+    tracksRemoved('/space/A.md')
+    fake.desk.disk.set('/space/A 2.md', 'something else')
+    const read = (at: string) => Promise.resolve(fake.desk.disk.get(at) ?? null)
+    await tracksCame('/space/A 2.md', read, true)
+
+    expect(review.notes(thread).map((one) => one.path)).toEqual([])
+  })
+
+  test('the reader’s own note at the name: a rewind comes back beside it, and Redo deletes that', async () => {
+    const thread = aThread()
+    await running(thread, [
+      () => acts.edit(thread, 'A.md', 'original', 'EDITED'),
+      () => acts.trash('A.md'),
+    ])
+    const { tracksRemoved } = await import('../../agents/docs/edit')
+    tracksRemoved('/space/A.md')
+    fake.desk.disk.set('/space/A.md', 'mine')
+
+    await review.rewind(thread, 'go', 'notes', null)
+    expect(files()['A.md']).toBe('mine')
+    expect(files()['A 2.md']).toBeDefined()
+
+    await review.putBack(thread, null)
+    expect(files()['A.md']).toBe('mine')
+    expect(files()['A 2.md']).toBeUndefined()
   })
 
   test('edited, moved and edited again: back whole, and Redo does all three', async () => {

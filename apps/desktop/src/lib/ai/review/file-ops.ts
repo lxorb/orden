@@ -77,7 +77,8 @@ export async function undoFile(
           ? [{ ...one, steps: one.steps.filter((x) => x !== step) }]
           : [one],
     )
-    await workspace.fileCame(back, 'file')
+    cameBackAt.set(change, back)
+    await workspace.fileCame(back, 'file', undefined, undefined, true)
     await workspace.loadTree()
     // Something else took the name since, so it came back beside that, and its track with
     // it (`tracksCame`): where it is now is worth saying.
@@ -92,11 +93,15 @@ export async function undoFile(
   }
 }
 
+/** Where a delete taken back landed, for a Redo: beside whatever took its name, which is the
+ *  reader's and is not what the agent deleted. */
+const cameBackAt = new WeakMap<FileChange, string>()
+
 /** Does a change taken back again: the move made again, the note deleted again. Throws
  *  where it could not, for the Redo to stop and say. */
 export async function redoFile(change: FileChange, thread: Pick<Thread, 'space'>): Promise<void> {
   const root = rootOf(change, thread)
   if (!root) throw new Error(`the space of ${change.path} is not here`)
   if (change.kind === 'moved') await moved(root, change.from, change.path)
-  else await workspace.remove(insideSpace(root, change.path), false)
+  else await workspace.remove(cameBackAt.get(change) ?? insideSpace(root, change.path), false)
 }

@@ -53,7 +53,11 @@ workspace.fileOps.follow((op) => {
   if (op.op !== 'created') return undefined
   // A draft given its place: what an agent did in it goes on under its file's name.
   if (op.key) tracksMoved(`unsaved:${op.key}`, op.path)
-  return tracksCame(op.path, (path) => invoke<string>('read_note', { path }).catch(() => null))
+  return tracksCame(
+    op.path,
+    (path) => invoke<string>('read_note', { path }).catch(() => null),
+    op.putBack === true,
+  )
 })
 
 /** What an agent can do with notes. */

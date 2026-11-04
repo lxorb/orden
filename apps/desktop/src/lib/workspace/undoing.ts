@@ -44,7 +44,13 @@ export interface PutsBack {
    *  come back, and an import or a copy taken back is files gone. */
   fileMoved(from: string, to: string, kind: Kind): Promise<void>
   fileGone(path: string, kind: 'file' | 'folder', back?: string): Promise<void>
-  fileCame(path: string, kind: 'file' | 'folder', key?: string, back?: string): Promise<void>
+  fileCame(
+    path: string,
+    kind: 'file' | 'folder',
+    key?: string,
+    back?: string,
+    putBack?: boolean,
+  ): Promise<void>
   /** Asks for the same undo again. */
   undoFileAction(): Promise<void>
   /** A move on the disk, said to sync first; see `renameOnDisk` in workspace.svelte.ts. */
@@ -114,6 +120,7 @@ async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
           action.folder ? 'folder' : 'file',
           undefined,
           action.back ?? action.trashId,
+          true,
         )
         break
       case 'create': {
