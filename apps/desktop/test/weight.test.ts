@@ -1231,11 +1231,11 @@ function holds(tail: string): boolean {
  *  claude/hunt-round-1: nothing new beyond one guard fewer for a launch's first write.
  *  Measured 3,645,071, 394 modules.
  *
- *  Raised on 2026-11-04, to 3,652,300, for the hunt's fourth round: a session written in a launch
+ *  Raised on 2026-11-04, to 3,653,000, for the hunt's fourth round: a session written in a launch
  *  keeps what it read until each piece is back (workspace/session.ts), and unwritten words
- *  meeting an open document merge or stay beside it. No new module. Measured 3,652,057.
+ *  meeting an open document merge or stay beside it. No new module. Measured 3,652,872.
  */
-const BUDGET = 3_652_300
+const BUDGET = 3_653_000
 const MOST_FILES = 395
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
