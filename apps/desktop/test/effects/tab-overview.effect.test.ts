@@ -186,3 +186,20 @@ test('a window put by hand is found again by the next run, whose tabs have new i
   places.recall(again)
   expect(places.windows[`${first?.id}-again`]).toEqual({ x: 3000, y: 10, w: 300, h: 200 })
 })
+
+test('a window’s cross closes its tab the strip’s way, which asks where that asks, and the view stays', async () => {
+  await opened()
+  const closing = vi.spyOn(workspace, 'closeAsking')
+  const [first] = windows()
+  const id = workspace.tabs.find((one) => one.shown === first?.getAttribute('aria-label'))?.id
+  const cross = first?.nextElementSibling as HTMLButtonElement | null
+  expect(cross?.classList.contains('closer')).toBe(true)
+  expect(cross?.getAttribute('aria-label')).toBe('Close')
+  cross?.click()
+  flushSync()
+  await tick()
+  expect(closing).toHaveBeenCalledWith(id)
+  // The press was the cross's: the window was not opened and the view is still up.
+  expect(tabOverview.open).toBe(true)
+  expect(layer()).not.toBe(null)
+})

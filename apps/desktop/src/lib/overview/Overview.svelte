@@ -29,6 +29,7 @@
   import { chorded } from '../keys'
   import { stillness } from '../motion'
   import { overlays } from '../overlays'
+  import Cross from '../Cross.svelte'
   import Select from '../Select.svelte'
   import { tabOverview } from '../surfaces.svelte'
   import TabMark from '../TabMark.svelte'
@@ -347,6 +348,8 @@
   const elements = new Map<string, { window: HTMLElement; face: HTMLElement; chip: HTMLElement }>()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
   const captions = new Map<string, HTMLElement>()
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
+  const closers = new Map<string, HTMLElement>()
   /** The windows that have come to rest on the canvas since it came up, which are where
    *  they are drawn from then on; one still on its way out of the strip is where it is
    *  going, as far as its cell is concerned. */
@@ -447,17 +450,16 @@
     Object.assign(parts.window.style, styles.window)
     Object.assign(parts.face.style, styles.face)
     Object.assign(parts.chip.style, styles.chip)
-    // The name under a window only once it is nearly in its place.
+    // The name under a window, and its cross, only once it is nearly in its place.
+    const off =
+      Math.abs(pose.x - slot.x) +
+      Math.abs(pose.y - slot.y) +
+      Math.abs(pose.w - slot.w) +
+      Math.abs(pose.h - slot.h)
+    const near = Math.max(0, 1 - off / CAPTION_NEAR) * Math.max(0, 1 - pose.tab * 3) * pose.alpha
     const caption = captions.get(id)
-    if (caption) {
-      const off =
-        Math.abs(pose.x - slot.x) +
-        Math.abs(pose.y - slot.y) +
-        Math.abs(pose.w - slot.w) +
-        Math.abs(pose.h - slot.h)
-      const near = Math.max(0, 1 - off / CAPTION_NEAR)
-      caption.style.opacity = String(near * Math.max(0, 1 - pose.tab * 3) * pose.alpha)
-    }
+    if (caption) caption.style.opacity = String(near)
+    closers.get(id)?.style.setProperty('--near', String(near))
   }
 
   /** Sends every window where it goes: onto the canvas, or home. */
@@ -598,6 +600,23 @@
         captions.delete(id)
       },
     }
+  }
+
+  function closing(node: HTMLElement, id: string) {
+    closers.set(id, node)
+    return {
+      destroy() {
+        closers.delete(id)
+      },
+    }
+  }
+
+  /** The cross on a window: its tab closed the way the strip's cross closes one, asking
+   *  first where that asks - a note with words and no file, a terminal still running
+   *  something (workspace.closeAsking). Its window goes with it. */
+  function shut(event: MouseEvent, tab: Tab) {
+    event.stopPropagation()
+    void workspace.closeAsking(tab.id)
   }
 
   /** The layout changed under the windows - a resize, a space switched - so each goes to
@@ -847,7 +866,7 @@
   let panning = false
 
   function grounded(event: PointerEvent) {
-    if (!(event.target instanceof Element) || event.target.closest('.window, .top')) return
+    if (!(event.target instanceof Element) || event.target.closest('.window, .closer, .top')) return
     handTakes()
     touching.set(event.pointerId, { x: event.clientX, y: event.clientY })
     ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
@@ -978,6 +997,22 @@
           </span>
           <span class="ring" aria-hidden="true"></span>
         </button>
+        <!-- Its cross, over its corner while the pointer is on it: beside the window and not
+             in it, a button in a button being no button at all. -->
+        <button
+          class="closer"
+          class:is-held={held?.id === tab.id}
+          type="button"
+          tabindex="-1"
+          title={t('Close')}
+          aria-label={t('Close')}
+          style:translate="{slot.x + slot.w}px {slot.y}px"
+          onpointerdown={(event) => event.stopPropagation()}
+          onclick={(event) => shut(event, tab)}
+          use:closing={tab.id}
+        >
+          <Cross />
+        </button>
         <span
           class="caption"
           style:translate="{slot.x}px {slot.y + slot.h + 8}px"
@@ -1014,7 +1049,10 @@
     --overview-cell-name: calc(var(--text-base) * 1.6);
     position: fixed;
     inset: 0;
-    z-index: var(--z-sheet);
+    /* Over the whole app, and just under a sheet: what the overview asks - a terminal
+       still running, words with no file, closed by a window's cross - comes up over
+       it, and is answered there. */
+    z-index: calc(var(--z-sheet) - 1);
     overflow: hidden;
     outline: none;
     touch-action: none;
@@ -1167,6 +1205,47 @@
 
   .window.is-at:focus-visible .ring {
     border: 2px solid var(--accent);
+  }
+
+  /* A window's cross: in its top right corner, at the size of the strip's whatever the
+     zoom, there while the pointer is on the window or on the cross itself, and only
+     once the window is in its place. */
+  .closer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--row-height);
+    height: var(--row-height);
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    color: var(--text);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    box-shadow: var(--shadow-sm, 0 1px 3px rgb(0 0 0 / 0.15));
+    transform-origin: 0 0;
+    scale: var(--overview-unzoom);
+    transform: translate(calc(-100% - var(--space-2)), var(--space-2));
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  .window:hover + .closer,
+  .closer:hover,
+  .closer:focus-visible {
+    opacity: var(--near, 1);
+    pointer-events: auto;
+  }
+
+  .closer.is-held {
+    visibility: hidden;
+  }
+
+  .closer:hover {
+    border-color: var(--line-strong);
   }
 
   .caption {
