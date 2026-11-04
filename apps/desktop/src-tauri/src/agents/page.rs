@@ -424,6 +424,9 @@ const MOST_PAINTED: usize = 500;
 /// The grey a filled secret field is painted in a picture of the page.
 const PAINTED: [u8; 3] = [128, 128, 128];
 
+/// Which secrets a picture hides, by part prefix and node, and the places it paints over.
+type Hidden = (HashSet<(String, u64)>, Vec<[f64; 4]>);
+
 /// A secret field on the page: which node, and whether anything is in it.
 struct Secret {
     /// Its part's prefix, as its ref starts.
@@ -2662,7 +2665,7 @@ impl Page<'_> {
     /// secrets those are: each filled secret field, as a password's bullets say how long it is
     /// and a card's number is its digits, and each frame of a denied site. A field that is not
     /// drawn is not in the picture; what cannot be told keeps the picture from being handed out.
-    fn hidden_rects(&self) -> Result<(HashSet<(String, u64)>, Vec<[f64; 4]>), Answer> {
+    fn hidden_rects(&self) -> Result<Hidden, Answer> {
         let secrets: Vec<Secret> = self
             .secrets(self.every_part()?)
             .into_iter()

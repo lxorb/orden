@@ -583,9 +583,9 @@ pub fn judge(
 ) -> Option<Question> {
     let host = host_of(url).unwrap_or_default();
     let site = site_of(&host);
-    // Enter's element is the field, whose label is no name for what the key does. A secret's
-    // name may be what it holds, and what is said here goes to the agent.
-    let label = if act == Act::Enter || secret(&facts.field) {
+    // Enter's element is the field, whose label is no name for what the key does. A secret with
+    // no label is named by what it holds, and what is said here goes to the agent.
+    let label = if act == Act::Enter || (secret(&facts.field) && facts.name != facts.field.label) {
         String::new()
     } else {
         short(&facts.name)
@@ -606,8 +606,8 @@ pub fn judge(
     // Enter that submits presses the form's default button, which is judged as a press of
     // it, by its name: Enter in a field is no way round the Delete account beside it. In a dialog
     // that talks of paying or deleting it is a press of what the dialog says, a button or none.
-    let presses = (facts.submit && !facts.default_button.is_empty()) || !facts.dialog.is_empty();
-    if act == Act::Enter && presses && !body(&facts.field) {
+    let is_a_press = (facts.submit && !facts.default_button.is_empty()) || !facts.dialog.is_empty();
+    if act == Act::Enter && is_a_press && !body(&facts.field) {
         let pressed = Facts {
             name: facts.default_button.clone(),
             editable: false,
