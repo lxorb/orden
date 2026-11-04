@@ -28,10 +28,9 @@ function page() {
 }
 
 function field() {
-  return { focus: vi.fn(), select: vi.fn() } as unknown as HTMLInputElement & {
-    focus: ReturnType<typeof vi.fn>
-    select: ReturnType<typeof vi.fn>
-  }
+  const focus = vi.fn()
+  const select = vi.fn()
+  return { node: { focus, select } as unknown as HTMLInputElement, focus, select }
 }
 
 describe('a name field as it arrives', () => {
@@ -46,35 +45,35 @@ describe('a name field as it arrives', () => {
   })
 
   test('takes the focus at once and again a frame later, for a value filled in after', () => {
-    const name = field()
-    selectAll(name)
-    expect(name.focus).toHaveBeenCalledTimes(1)
+    const { node, focus, select } = field()
+    selectAll(node)
+    expect(focus).toHaveBeenCalledTimes(1)
 
     around.frame()
 
-    expect(name.focus).toHaveBeenCalledTimes(2)
-    expect(name.select).toHaveBeenCalledTimes(2)
+    expect(focus).toHaveBeenCalledTimes(2)
+    expect(select).toHaveBeenCalledTimes(2)
   })
 
   /** Tab pressed inside that frame went to the hint, and the field took it straight back. */
   test.each(['keydown', 'pointerdown'])('leaves it alone after a %s inside the frame', (kind) => {
-    const name = field()
-    selectAll(name)
+    const { node, focus } = field()
+    selectAll(node)
 
     around.does(kind)
     around.frame()
 
-    expect(name.focus).toHaveBeenCalledTimes(1)
+    expect(focus).toHaveBeenCalledTimes(1)
   })
 
   test('listens no longer once the frame is past, or the field has gone', () => {
-    const passed = selectAll(field())
+    const passed = selectAll(field().node)
     expect(around.listening()).toBeGreaterThan(0)
     around.frame()
     expect(around.listening()).toBe(0)
     passed.destroy()
 
-    const gone = selectAll(field())
+    const gone = selectAll(field().node)
     gone.destroy()
     expect(around.listening()).toBe(0)
   })
