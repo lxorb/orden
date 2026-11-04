@@ -64,8 +64,10 @@ def run(code):
 
 
 # The crate's own watch of the space, asked for here as the window asks for it (see
-# lib/space-watch.ts), and every message it sends kept on the page: the window starts it
-# only for a signed-in account's spaces, which a run has none of.
+# lib/space-watch.ts), and every message it sends kept on the page. The crate keeps one
+# watch and the window has started it by the end of its launch, signed in or not (see
+# lib/workspace/outside.svelte.ts). So that one is ended first and its folders given back:
+# a watch made while it holds them finds the lowered limit spent before its first folder.
 ARM = """(() => { window.nibHeard = []; const internals = window.__TAURI_INTERNALS__;
   const id = internals.transformCallback((raw) => { if (raw && 'message' in raw) window.nibHeard.push(raw.message) });
   return internals.invoke('space_watch', { roots: [ROOT], news: '__CHANNEL__:' + id })
@@ -76,6 +78,14 @@ def heard():
     return run("JSON.stringify(window.nibHeard ?? [])") or "[]"
 
 
+for _ in range(120):
+    if run("performance.getEntriesByName('nib: launch order finished').length > 0"):
+        break
+    time.sleep(0.5)
+else:
+    fail("the launch never finished")
+run("window.__TAURI_INTERNALS__.invoke('space_unwatch').then(() => 'ended')")
+time.sleep(2)
 armed = run(ARM.replace("ROOT", json.dumps(str(SPACE))))
 print(f"{PHASE}: the space's watch: {armed}")
 if armed != "armed":
