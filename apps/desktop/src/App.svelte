@@ -667,6 +667,12 @@
                 ]).then(([{ chats }, open]) => ({ chats, ...open })),
           agents: { standIn },
           ai,
+          // The AI panel's chats, which a drive lays out without a provider to make them
+          // with; see test/e2e/chat-rows.py.
+          aiChats: () =>
+            __EVEN_PLUGIN__
+              ? Promise.reject(new Error('no AI panel in the Even Realities plugin'))
+              : import('./lib/ai/sidebar/chat.svelte').then(({ chat }) => chat),
           // The AI accounts on every device, which a drive of two devices reads and
           // steers; see test/e2e/ai-vault.py.
           aiVault: () =>
