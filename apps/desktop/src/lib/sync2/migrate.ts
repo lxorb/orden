@@ -67,11 +67,18 @@ interface Matched {
 }
 
 /** The first v2 pass of a space. Answers whether it got through; a pass that met no
- *  account is asked again next time, from the top. */
+ *  account is asked again next time, from the top.
+ *
+ *  `carried` is the ids what is in the folder had while it was used signed out, by its
+ *  path as this disk compares paths (`carriedIds` in local.ts; #1068, step 4b): what
+ *  the account has never heard of is made there under the id it had here, as the
+ *  account takes the id a device chooses for what it makes. What the account already
+ *  has stays the account's, under its own id. */
 export async function firstPass(
   core: Core,
   space: SpaceState,
   v1: V1Space | null,
+  carried: ReadonlyMap<string, string> = new Map(),
 ): Promise<boolean> {
   const life = core.life
   const alive = () => core.life === life
@@ -163,11 +170,20 @@ export async function firstPass(
     if (read !== null) await match(entry, unixLines(read), v1?.notes[listed.path])
   }
 
+  // The id a stray had here signed out, unless something this store holds has it.
+  const idOf = (path: string): { id?: string } => {
+    const id = carried.get(space.key(path))
+    return id !== undefined && !core.entry(id) && !claimed.has(id) ? { id } : {}
+  }
   // Folders the account has never heard of are made there first, shallow before deep, so
   // whatever moved into them has somewhere to go.
-  for (const stray of strays) {
-    if (!stray.dir || space.folderAt(stray.path) !== undefined) continue
-    changes.push(...(await made(core, space, { path: stray.path, folder: true })).changes)
+  const depth = (path: string) => path.split('/').length
+  for (const stray of strays
+    .filter((one) => one.dir)
+    .sort((a, b) => depth(a.path) - depth(b.path))) {
+    if (space.folderAt(stray.path) !== undefined) continue
+    const folder = { path: stray.path, folder: true, ...idOf(stray.path) }
+    changes.push(...(await made(core, space, folder)).changes)
   }
 
   // Notes v1 renamed or moved while it could not reach the account: v1 still knows each
@@ -252,6 +268,7 @@ export async function firstPass(
     const madeHere = await made(core, space, {
       path: stray.path,
       folder: false,
+      ...idOf(stray.path),
       ...(text === null || text === undefined ? {} : { text: unixLines(text) }),
     })
     changes.push(...madeHere.changes)
