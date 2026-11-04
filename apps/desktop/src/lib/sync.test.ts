@@ -770,6 +770,29 @@ describe('a note that is open in its room while a pass runs', () => {
 /** Another device deleted a whole space. What this machine holds of it may be more
  *  than the account ever saw - words typed offline, a picture that never travels -
  *  so the folder goes where it can be had back from rather than off the disk. */
+describe('a space a pass cannot get through', () => {
+  test('leaves the others their turn, and is said', async () => {
+    fake.remote.spaces.push({ id: 's-Broken', name: 'Broken' }, { id: 's-Fine', name: 'Fine' })
+    fake.addRemoteNote('s-Broken', 'One.md', 'one')
+    fake.addRemoteNote('s-Fine', 'Two.md', 'two')
+    const changes = fake.api.changes
+    fake.api.changes = (token: string, spaceId: string, since: number) =>
+      spaceId === 's-Broken'
+        ? Promise.reject(new Error('it stopped'))
+        : changes(token, spaceId, since)
+    try {
+      await signIn()
+      account.settled()
+      await sync.pass()
+      expect(fake.disk.get('/Fine/Two.md')).toBe('two')
+      expect(sync.status).toBe('error')
+      expect(sync.lastError).toBe('it stopped')
+    } finally {
+      fake.api.changes = changes
+    }
+  })
+})
+
 describe('a space deleted on another device', () => {
   test('leaves its folder in this device’s trash, with the words typed here', async () => {
     accountWithNotes()

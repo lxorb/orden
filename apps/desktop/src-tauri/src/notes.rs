@@ -79,11 +79,17 @@ pub fn words_stamped(target: &Path) -> Result<(String, fs::Metadata), String> {
 ///
 /// The line endings the file already had are kept; see `as_written`.
 #[tauri::command(async)]
-pub fn write_note(app: AppHandle, path: String, content: String) -> Result<(), String> {
+pub fn write_note(
+    app: AppHandle,
+    path: String,
+    content: String,
+    arrived: Option<bool>,
+) -> Result<(), String> {
     let target = chosen(&app, &path)?;
     // A note made in a space is held to a name every machine can hold (#477); one already
-    // there, and a file outside the spaces, are written as they are.
-    if !target.exists() && target.starts_with(spaces_dir(&app)?) {
+    // there, and a file outside the spaces, are written as they are. So is one sync brings
+    // under the name it has on the account, where this platform can hold it.
+    if !may_arrive(arrived) && !target.exists() && target.starts_with(spaces_dir(&app)?) {
         named_for_every_machine(&target)?;
     }
     note_written(&target, &path, &content)
@@ -221,18 +227,37 @@ pub fn rename_note(
     to: String,
     hold: Option<bool>,
     alone: Option<bool>,
+    arrived: Option<bool>,
 ) -> Result<(), String> {
     let source = in_spaces(&app, &from)?;
     let target = in_spaces(&app, &to)?;
-    renamed(&source, &target, hold == Some(true), alone == Some(true))
+    renamed_as(
+        &source,
+        &target,
+        hold == Some(true),
+        alone == Some(true),
+        may_arrive(arrived),
+    )
 }
 
 /// `rename_note` past its gate, which wants an app around it.
+#[cfg(test)]
 fn renamed(source: &Path, target: &Path, hold: bool, alone: bool) -> Result<(), String> {
+    renamed_as(source, target, hold, alone, false)
+}
+
+/// `renamed`, `arrived` saying the new name is the account's rather than the reader's.
+fn renamed_as(
+    source: &Path,
+    target: &Path,
+    hold: bool,
+    alone: bool,
+    arrived: bool,
+) -> Result<(), String> {
     let respelling = respelled(source, target, same_entry);
     // A new name is held to what every machine can hold (#477); a move that keeps the
-    // name is not a new name.
-    if source.file_name() != target.file_name() {
+    // name is not a new name, and nor is the name a note arrived under.
+    if !arrived && source.file_name() != target.file_name() {
         named_for_every_machine(target)?;
     }
 
@@ -410,8 +435,11 @@ fn copied(source: &Path, target: &Path) -> Result<(), String> {
 
 /// Makes a folder inside a space, and every folder above it.
 #[tauri::command(async)]
-pub fn create_folder(app: AppHandle, path: String) -> Result<(), String> {
+pub fn create_folder(app: AppHandle, path: String, arrived: Option<bool>) -> Result<(), String> {
     let target = in_spaces(&app, &path)?;
+    if may_arrive(arrived) {
+        return made(&target);
+    }
     folder_made(&target)
 }
 
@@ -473,6 +501,14 @@ pub struct Stamp {
 #[tauri::command(async)]
 pub fn file_stamp(app: AppHandle, path: String) -> Result<Option<Stamp>, String> {
     Ok(stamp_of(&openable(&app, &path)?))
+}
+
+/// Whether a name's only fault is that Windows keeps it, for a note sync brings: "a note that
+/// arrived under one is still written and moved" (`named_for_every_machine`), and nothing
+/// anybody wrote is lost for the name it came with. Not on Windows, which cannot hold it and
+/// where the engine spells it otherwise first.
+fn may_arrive(arrived: Option<bool>) -> bool {
+    arrived == Some(true) && !cfg!(windows)
 }
 
 /// Whether anything is at a path in a space, or nobody could look: sync's question before it
@@ -572,6 +608,24 @@ mod tests {
     }
 
     #[test]
+    fn a_name_windows_keeps_lands_when_it_arrived_and_not_when_it_is_new() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let from = dir.path().join("plain.md");
+        fs::write(&from, "words").expect("the file");
+        let to = dir.path().join("Con.md");
+
+        assert!(super::renamed(&from, &to, false, false).is_err());
+        assert!(!super::may_arrive(None));
+        if cfg!(windows) {
+            assert!(!super::may_arrive(Some(true)));
+        } else {
+            assert!(super::may_arrive(Some(true)));
+            super::renamed_as(&from, &to, false, false, true).expect("it arrived under that name");
+            assert!(to.exists());
+        }
+    }
+
+    #[test]
     fn a_path_nobody_could_look_at_is_not_gone() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let file = dir.path().join("note.md");
@@ -581,6 +635,10 @@ mod tests {
         assert!(
             !super::there_or_unsure(&file.join("under.md")),
             "a file where a folder was is gone too"
+        );
+        assert!(
+            !super::there_or_unsure(&dir.path().join("x".repeat(300))),
+            "a name no disk holds is nothing there"
         );
 
         #[cfg(unix)]

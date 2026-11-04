@@ -520,26 +520,43 @@ function feedItemOf(value: unknown): FeedItem | null {
 }
 
 /** Whether a feed item is one a writer made under an id that reads as a path, or put
- *  in a folder that has one, before the account refused them, or under a name no disk
- *  holds (over `LONGEST_NAME`, or `..`). Its delete is not: a device that took it in
- *  before hears it, and it goes to the trash from where it is. */
-function refusedBefore(value: unknown): boolean {
+ *  in a folder that has one, before the account refused them. Its delete is not: a device
+ *  that took it in before hears it, and it goes to the trash from where it is. */
+function namedAsPath(value: unknown): boolean {
   if (!isRecord(value) || value.deleted === true) return false
-  const { id, parent, name } = value
+  const { id, parent } = value
   if (typeof id === 'string' && !isEntryId(id)) return true
-  if (typeof name === 'string' && !isName(name)) return true
   return typeof parent === 'string' && !isEntryId(parent)
 }
 
-/** The name a deleted entry is told under when the one it had is not a name. A device
- *  that holds it holds it under an earlier one, and takes it away from where that is. */
-export const GONE_NAME = 'deleted'
+/** A name with `by` code units less, off the end of its stem. */
+export function shortened(name: string, by: number, kind: EntryKind): string {
+  const dot = kind === 'folder' ? -1 : name.lastIndexOf('.')
+  // An ending too long to leave a stem goes with it.
+  const stemEnd = dot > by ? dot : name.length
+  let cut = stemEnd - by
+  // Not between the two halves of one character.
+  if (/[\uD800-\uDBFF]/.test(name.charAt(cut - 1)) && cut > 1) cut -= 1
+  return name.slice(0, cut) + name.slice(stemEnd)
+}
 
-function withReadableName(value: unknown): unknown {
-  if (!isRecord(value) || value.deleted !== true) return value
-  return typeof value.name !== 'string' || isName(value.name)
-    ? value
-    : { ...value, name: GONE_NAME }
+/** What a device is told a name is, for an entry written before the account held names to
+ *  `isName`: the nearest that is one. On the account it stays as it was until somebody
+ *  renames it. Left out instead, the note was on no device, and neither was what its folder
+ *  holds. */
+export function heldName(name: string): string {
+  const given: unknown = name
+  if (isName(given)) return name
+  if (name === '') return '_'
+  if (name === '.' || name === '..') return '_'.repeat(name.length)
+  const plain = name.split('/').join('_').split('\u0000').join('_')
+  return plain.length > LONGEST_NAME ? shortened(plain, plain.length - LONGEST_NAME, 'note') : plain
+}
+
+function withHeldName(value: unknown): unknown {
+  return isRecord(value) && typeof value.name === 'string'
+    ? { ...value, name: heldName(value.name) }
+    : value
 }
 
 /** One page of a space's feed, as a device reads it. Such an item is left out, and the
@@ -547,10 +564,7 @@ function withReadableName(value: unknown): unknown {
 export function feedPageOf(value: unknown): FeedPage | null {
   if (!isRecord(value) || !isCount(value.cursor) || typeof value.more !== 'boolean') return null
   if (!Array.isArray(value.items) || value.items.length > FEED_PAGE) return null
-  const items = listOf(
-    value.items.filter((one) => !refusedBefore(one)).map(withReadableName),
-    feedItemOf,
-  )
+  const items = listOf(value.items.filter((one) => !namedAsPath(one)).map(withHeldName), feedItemOf)
   return items ? { items, cursor: value.cursor, more: value.more } : null
 }
 

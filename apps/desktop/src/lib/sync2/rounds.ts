@@ -78,22 +78,29 @@ export async function sentAll(
   return true
 }
 
-/** Each space's listing, and the spaces the account answers none for: taken out of a
- *  shared space, or the space erased, while this device was closed. There is no mirror
- *  to write for one, and nothing it holds to send anywhere. Its files stay on the disk. */
+/** Each space's listing, and the spaces gone: taken out of a shared space, or the space
+ *  erased, while this device was closed. There is no mirror to write for one, and nothing it
+ *  holds to send anywhere. Its files stay on the disk.
+ *
+ *  A refused listing alone does not say so, a proxy or a captive portal answers 403 too, and
+ *  what goes with a space is its mirror. The account's own list of spaces says; one that is
+ *  on it keeps its mirror, from what this device confirmed, with no listing here. */
 export async function reachable<T>(
   spaces: ReadonlySet<string>,
   listing: (id: string) => Promise<T>,
+  listed: () => Promise<readonly string[]>,
 ): Promise<{ listings: ReadonlyMap<string, T>; gone: ReadonlySet<string> }> {
   const listings = new Map<string, T>()
-  const gone = new Set<string>()
+  const refused: string[] = []
   for (const id of spaces) {
     try {
       listings.set(id, await listing(id))
     } catch (error) {
       if (!outOfReach(error)) throw error
-      gone.add(id)
+      refused.push(id)
     }
   }
-  return { listings, gone }
+  if (!refused.length) return { listings, gone: new Set() }
+  const held = new Set(await listed())
+  return { listings, gone: new Set(refused.filter((id) => !held.has(id))) }
 }

@@ -65,7 +65,7 @@ export interface World {
   /** Everything in a space's folder, relative to its root with `/` between folders:
    *  what a first v2 pass of a space matches against the account. Null where it could
    *  not be read, which says nothing about what is there. */
-  list?(root: string): Promise<{ path: string; dir: boolean; unlisted?: boolean }[] | null>
+  list?(root: string): Promise<{ path: string; dir: boolean }[] | null>
   /** The words a note had when they hashed to `hash`, from the account's versions, or
    *  null: the ancestor a v1 device's offline edits are merged against (section 11). */
   ancestor?(id: string, hash: string): Promise<string | null>

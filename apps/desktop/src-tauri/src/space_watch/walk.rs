@@ -83,16 +83,25 @@ pub fn ignored_path(rel: &Path) -> bool {
 /// What is at `rel` inside `root` now, or None where nothing sync keeps is there: no
 /// file, a link, a name it leaves alone, a name that is not text.
 pub fn found(root: &Path, rel: &Path) -> Option<Found> {
+    looked(root, rel).ok().flatten()
+}
+
+/// `found`, with a look that could not be made told from nothing being there.
+fn looked(root: &Path, rel: &Path) -> std::io::Result<Option<Found>> {
     if rel.as_os_str().is_empty() || ignored_path(rel) {
-        return None;
+        return Ok(None);
     }
     let path = root.join(rel);
-    let meta = fs::symlink_metadata(&path).ok()?;
+    let meta = match fs::symlink_metadata(&path) {
+        Ok(meta) => meta,
+        Err(error) if says_gone(&error) => return Ok(None),
+        Err(error) => return Err(error),
+    };
     if meta.file_type().is_symlink() {
-        return None;
+        return Ok(None);
     }
 
-    Some(Found {
+    Ok(Some(Found {
         rel: rel.to_path_buf(),
         dir: meta.is_dir(),
         size: if meta.is_dir() { 0 } else { meta.len() },
@@ -104,7 +113,7 @@ pub fn found(root: &Path, rel: &Path) -> Option<Found> {
             .map_or(0, |since| since.as_nanos()),
         id: identity(&path),
         unlisted: false,
-    })
+    }))
 }
 
 /// Whether a failed look at a path says nothing is there. Any other failure (no permission,
@@ -112,7 +121,10 @@ pub fn found(root: &Path, rel: &Path) -> Option<Found> {
 pub fn says_gone(error: &std::io::Error) -> bool {
     matches!(
         error.kind(),
-        std::io::ErrorKind::NotFound | std::io::ErrorKind::NotADirectory
+        std::io::ErrorKind::NotFound
+            | std::io::ErrorKind::NotADirectory
+            // No disk holds such a name, so nothing is there by it.
+            | std::io::ErrorKind::InvalidFilename
     )
 }
 
@@ -128,9 +140,17 @@ pub fn present(root: &Path, rel: &Path) -> bool {
         }
 }
 
-/// The names sync keeps in a folder, in order. An error partway through the listing is the
-/// listing failing: what it had got to is not all that is there.
-fn names_in(root: &Path, rel: &Path) -> std::io::Result<Vec<String>> {
+/// What a folder holds, in the order of its names, and whether that is all of it.
+struct Listing {
+    found: Vec<Found>,
+    whole: bool,
+}
+
+/// What sync keeps in a folder. An error partway through the listing is the listing failing:
+/// what it had got to is not all that is there. A child that will not say what it is (a
+/// folder that lists and will not stat, mode r--, or an ACL that says as much) is not there
+/// to be handed over, and the folder is not whole.
+fn listed_in(root: &Path, rel: &Path) -> std::io::Result<Listing> {
     let mut names = Vec::new();
     for entry in fs::read_dir(root.join(rel))? {
         if let Ok(name) = entry?.file_name().into_string() {
@@ -140,7 +160,19 @@ fn names_in(root: &Path, rel: &Path) -> std::io::Result<Vec<String>> {
         }
     }
     names.sort_unstable();
-    Ok(names)
+
+    let mut listing = Listing {
+        found: Vec::with_capacity(names.len()),
+        whole: true,
+    };
+    for name in names {
+        match looked(root, &rel.join(name)) {
+            Ok(Some(one)) => listing.found.push(one),
+            Ok(None) => {}
+            Err(_) => listing.whole = false,
+        }
+    }
+    Ok(listing)
 }
 
 /// Everything under `rel` inside `root`, `rel` itself left out, handed to `visit` a
@@ -158,8 +190,8 @@ pub fn walk(
     if rel.components().count() >= MAX_DEPTH {
         return Ok(());
     }
-    match names_in(root, rel) {
-        Ok(names) => walk_names(root, rel, names, left, visit),
+    match listed_in(root, rel) {
+        Ok(listing) => walk_listing(root, listing, left, visit),
         Err(error) if says_gone(&error) => Ok(()),
         Err(error) => Err(format!(
             "{} would not list: {error}",
@@ -168,34 +200,30 @@ pub fn walk(
     }
 }
 
-fn walk_names(
+fn walk_listing(
     root: &Path,
-    rel: &Path,
-    names: Vec<String>,
+    listing: Listing,
     left: &mut usize,
     visit: &mut dyn FnMut(Found),
 ) -> Result<(), String> {
-    for name in names {
-        let child = rel.join(&name);
-        let Some(mut one) = found(root, &child) else {
-            continue;
-        };
+    for mut one in listing.found {
         *left = left
             .checked_sub(1)
             .ok_or_else(|| format!("this space holds more than {MAX_ENTRIES} files and folders"))?;
 
         // Listed before it is handed over, which is when it has to say whether it could be.
+        let child = one.rel.clone();
         let inside =
-            (one.dir && child.components().count() < MAX_DEPTH).then(|| names_in(root, &child));
+            (one.dir && child.components().count() < MAX_DEPTH).then(|| listed_in(root, &child));
         one.unlisted = one.dir
             && match &inside {
                 None => true,
                 Some(Err(error)) => !says_gone(error),
-                Some(Ok(_)) => false,
+                Some(Ok(listing)) => !listing.whole,
             };
         visit(one);
-        if let Some(Ok(names)) = inside {
-            walk_names(root, &child, names, left, visit)?;
+        if let Some(Ok(listing)) = inside {
+            walk_listing(root, listing, left, visit)?;
         }
     }
 
@@ -382,6 +410,33 @@ mod tests {
         );
         assert!(!present(root, Path::new("Open.md/Inside.md")));
         assert!(!present(root, Path::new("Never.md")));
+    }
+
+    /// Lists, and will not say what any of it is: mode r--.
+    #[cfg(unix)]
+    #[test]
+    fn a_folder_whose_children_will_not_stat_is_unlisted_too() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().expect("a folder");
+        let root = dir.path();
+        let half = root.join("Half");
+        fs::create_dir_all(&half).expect("a folder");
+        fs::write(half.join("Inside.md"), "words").expect("a note");
+        fs::set_permissions(&half, fs::Permissions::from_mode(0o444)).expect("half shut");
+        // Root reads through permissions, and then this says nothing.
+        if fs::symlink_metadata(half.join("Inside.md")).is_ok() {
+            fs::set_permissions(&half, fs::Permissions::from_mode(0o755)).expect("opened");
+            return;
+        }
+
+        let all = everything(root).expect("a walk");
+        fs::set_permissions(&half, fs::Permissions::from_mode(0o755)).expect("opened");
+        let folder = all
+            .iter()
+            .find(|one| one.rel == Path::new("Half"))
+            .expect("the folder itself");
+        assert!(folder.unlisted);
+        assert!(!all.iter().any(|one| one.rel.ends_with("Inside.md")));
     }
 
     #[cfg(unix)]

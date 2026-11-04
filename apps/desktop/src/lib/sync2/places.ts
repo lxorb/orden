@@ -62,15 +62,6 @@ function localName(name: string, platform: World['platform']): string {
   return name
 }
 
-/** A local path without the spelling `spelled` gives a reserved name: where a file already
- *  on this disk under the account's own name meets its entry in a first pass. */
-export function asOnAccount(path: string): string {
-  return path
-    .split(SEP)
-    .map((part) => (part.startsWith('_') && isReserved(part.slice(1)) ? part.slice(1) : part))
-    .join(SEP)
-}
-
 /** Whether a root is a Windows path, the one place `\\` is a separator. Anywhere else it is
  *  a character of a name. */
 export function windowsPath(root: string): boolean {
@@ -159,11 +150,10 @@ export class SpaceState {
       const siblings = (children.get(parent) ?? []).sort((a, b) => (a.id < b.id ? -1 : 1))
       const taken = new Set<string>()
       for (const entry of siblings) {
-        const spelled = this.spelled(entry)
-        let name = spelled
+        let name = localName(entry.name, this.world.platform)
         // Two account names one spelling here: the later id steps aside.
         for (let counter = 2; taken.has(this.key(name)); counter += 1) {
-          name = numbered(spelled, counter)
+          name = numbered(localName(entry.name, this.world.platform), counter)
         }
         taken.add(this.key(name))
         const path = joined(folder, name)
@@ -174,17 +164,6 @@ export class SpaceState {
     walk(null, '')
     this.pathsCache = out
     return out
-  }
-
-  /** How an entry's name is spelled here. A name only Windows cannot hold (`CON`) is one the
-   *  app makes no new file of on any platform (`write_note`, #477), so one arriving here
-   *  takes the spelling Windows gives it. One already on this disk under that name stays:
-   *  the file is the reader's, and a folder called `aux` is somebody's program's. */
-  private spelled(entry: TreeEntry): string {
-    const name = localName(entry.name, this.world.platform)
-    if (this.world.platform === 'windows' || !isReserved(name)) return name
-    const here = this.entries.get(entry.id)?.local_path
-    return here && nameOf(here) === name ? name : `_${name}`
   }
 
   /** How this disk compares two paths. */

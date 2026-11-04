@@ -111,9 +111,11 @@ export async function project(
     return []
   }
   if (same) {
+    const placed = !entry.local_path
     entry.local_path = path
     const digest = await core.world.digest(unixLines(text))
-    return entry.written_hash === digest ? [] : await wrote(core, entry, text)
+    // A place newly given is news to the store, whatever the words.
+    return entry.written_hash === digest && !placed ? [] : await wrote(core, entry, text)
   }
 
   try {

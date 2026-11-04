@@ -67,16 +67,42 @@ describe('the way back to v1', () => {
     expect(await sentAll(away, new Set(['one']), 4, () => Promise.resolve())).toBe(false)
   })
 
-  test('the listing says which are gone, and an account out of reach says nothing', async () => {
-    const { listings, gone } = await reachable(new Set(['lost', 'erased', 'kept']), (id) =>
-      id === 'kept'
-        ? Promise.resolve(1)
-        : Promise.reject(new ApiError(id === 'lost' ? 403 : 404, 'no', null)),
+  const refused = (status: number) => Promise.reject(new ApiError(status, 'no', null))
+
+  test('gone is a refused listing and a list of spaces without it', async () => {
+    const { listings, gone } = await reachable(
+      new Set(['lost', 'erased', 'kept']),
+      (id) => (id === 'kept' ? Promise.resolve(1) : refused(id === 'lost' ? 403 : 404)),
+      () => Promise.resolve(['kept']),
     )
     expect([...listings.keys()]).toEqual(['kept'])
     expect([...gone]).toEqual(['lost', 'erased'])
+  })
+
+  test('a stray 403 on a space the account still lists takes nothing away', async () => {
+    const { listings, gone } = await reachable(
+      new Set(['one']),
+      () => refused(403),
+      () => Promise.resolve(['one']),
+    )
+    expect(listings.size).toBe(0)
+    expect(gone.size).toBe(0)
+  })
+
+  test('a list that does not answer either says nothing, and an account out of reach waits', async () => {
     await expect(
-      reachable(new Set(['one']), () => Promise.reject(new ApiError(503, 'away', null))),
+      reachable(
+        new Set(['one']),
+        () => refused(403),
+        () => refused(403),
+      ),
+    ).rejects.toMatchObject({ status: 403 })
+    await expect(
+      reachable(
+        new Set(['one']),
+        () => refused(503),
+        () => Promise.resolve([]),
+      ),
     ).rejects.toMatchObject({ status: 503 })
   })
 })

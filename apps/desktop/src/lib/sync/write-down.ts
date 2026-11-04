@@ -1,5 +1,16 @@
 import { invoke } from '../tauri'
 
+/** The disk would not take a note's words: a name too long for it, a read-only folder, a
+ *  full disk. One note's trouble, which a pass goes past; see `pull`. */
+export class NotWritten extends Error {
+  constructor(
+    readonly path: string,
+    cause: unknown,
+  ) {
+    super(cause instanceof Error ? cause.message : String(cause))
+  }
+}
+
 /** Writes a note that came from elsewhere, keeping whatever the file said before
  *  it as a version first.
  *
@@ -31,5 +42,9 @@ export async function writeDown(path: string, content: string, was?: string | nu
     await invoke('snapshot_note', { path, content: previous }).catch(() => undefined)
   }
 
-  await invoke('write_note', { path, content })
+  // `arrived`: these words came from elsewhere, so a name the crate makes no new note of
+  // is still written where this platform can hold it (`write_note`).
+  await invoke('write_note', { path, content, arrived: true }).catch((error: unknown) => {
+    throw new NotWritten(path, error)
+  })
 }

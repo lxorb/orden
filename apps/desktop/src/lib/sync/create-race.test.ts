@@ -21,6 +21,10 @@ const world = vi.hoisted(() => {
     /** Folders that will not list, and whether the space itself will. */
     shut = new Set<string>()
     rootShut = false
+    /** Paths the disk refuses a new file at, as a name too long for it. */
+    refused = new Set<string>()
+    /** And every conflict copy. */
+    refusedCopies = false
 
     keep(path: string, content: string) {
       if (!content.trim()) return
@@ -42,6 +46,14 @@ const world = vi.hoisted(() => {
         return held === undefined ? Promise.reject(new Error(`no ${path}`)) : answer(held)
       }
       case 'write_note':
+        if (here.refusedCopies && path.includes('from another device')) {
+          return Promise.reject(new Error(`refused ${path}`))
+        }
+        if (here.refused.has(path)) return Promise.reject(new Error(`refused ${path}`))
+        // The crate's rule: no new file of a name Windows keeps, but for one that arrived.
+        if (!here.disk.has(path) && /\/(con|aux)(\.[^/]*)?$/i.test(path) && args.arrived !== true) {
+          return Promise.reject(new Error('a name Windows keeps'))
+        }
         here.disk.set(path, text(args.content))
         return answer(undefined)
       case 'snapshot_note':
@@ -64,6 +76,11 @@ const world = vi.hoisted(() => {
       case 'trash_item':
         here.disk.delete(path)
         return answer(undefined)
+      case 'delete_note':
+        here.disk.delete(path)
+        return answer(undefined)
+      case 'read_file':
+        return answer(new TextEncoder().encode(here.disk.get(path) ?? '').buffer)
       case 'read_tree': {
         const root = text(args.root)
         const shut = [...here.shut]
@@ -162,13 +179,17 @@ const INBOX = `${ROOT}/.Inbox.md`
 
 let env: Env
 /** What the account does otherwise than the Worker in this tree. */
-let account = { wordless: false, readsAway: false }
+let account = { wordless: false, readsAway: false, filesSaid: [] as string[] }
 
 beforeEach(() => {
   env = testEnv()
-  account = { wordless: false, readsAway: false }
+  account = { wordless: false, readsAway: false, filesSaid: [] as string[] }
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
     const asked = new Request(url, init)
+    if (asked.method === 'PUT' && asked.url.endsWith('/files')) {
+      const { files } = (await asked.clone().json()) as { files: { path: string }[] }
+      account.filesSaid = files.map((one) => one.path)
+    }
     if (account.readsAway && asked.method === 'GET' && /\/v1\/notes\/[^/]+$/.test(asked.url)) {
       return new Response('{"error":"away"}', { status: 503 })
     }
@@ -407,5 +428,102 @@ describe('a folder that will not list', () => {
     device.rootShut = true
     await push(mirror, me.token, NOBODY)
     expect((await accountHolds(me.token, spaceId)).paths).toHaveLength(3)
+  })
+})
+
+describe('a note the disk refuses on v1', () => {
+  async function arrivals(...paths: string[]) {
+    const me = await person('e@example.com')
+    const spaceId = await spaceOf(me.token)
+    for (const path of paths) {
+      await call(env, `/v1/spaces/${spaceId}/notes`, {
+        token: me.token,
+        body: { path, content: `words of ${path}\n` },
+      })
+    }
+    return { me, spaceId, device: new world.Device(), mirror: newMirror(spaceId, ROOT) }
+  }
+
+  test('the rest of the page lands, the cursor waits, and it lands once it can', async () => {
+    const { me, device, mirror } = await arrivals('a.md', 'blocked.md', 'z.md')
+    device.refused.add(`${ROOT}/blocked.md`)
+    world.use(device)
+    const told: string[] = []
+    await pull(mirror, me.token, NOBODY, { notWritten: (path) => told.push(path) })
+    expect(told).toEqual(['blocked.md'])
+    expect(device.disk.get(`${ROOT}/a.md`)).toBe('words of a.md\n')
+    expect(device.disk.get(`${ROOT}/z.md`)).toBe('words of z.md\n')
+    expect(mirror.cursor).toBe(0)
+    expect(mirror.notes['blocked.md']).toBeUndefined()
+
+    device.refused.clear()
+    await pull(mirror, me.token, NOBODY)
+    expect(device.disk.get(`${ROOT}/blocked.md`)).toBe('words of blocked.md\n')
+    expect(mirror.cursor).toBeGreaterThan(0)
+  })
+
+  test('and the push of the same pass goes on: it comes back as nothing new', async () => {
+    const { me, spaceId, device, mirror } = await arrivals('blocked.md')
+    device.refused.add(`${ROOT}/blocked.md`)
+    device.disk.set(`${ROOT}/mine.md`, 'mine\n')
+    await pass(device, mirror, me.token)
+    const held = await accountHolds(me.token, spaceId)
+    expect(held.paths).toEqual(['blocked.md', 'mine.md'])
+  })
+
+  test('a name Windows keeps lands under that name, and is the note', async () => {
+    const { me, spaceId, device, mirror } = await arrivals('Con.md')
+    await pass(device, mirror, me.token)
+    expect(device.disk.get(`${ROOT}/Con.md`)).toBe('words of Con.md\n')
+    expect(mirror.notes['Con.md']).toBeDefined()
+    await pass(device, mirror, me.token)
+    expect((await accountHolds(me.token, spaceId)).paths).toEqual(['Con.md'])
+  })
+
+  test('a create whose copy the disk refuses stays unpaired, its words not written over', async () => {
+    const { me, spaceId, device, mirror } = await meetingInTheGap('plan.md', 'A\n', 'B\n')
+    device.refusedCopies = true
+    await push(mirror, me.token, NOBODY)
+    expect(mirror.notes['plan.md']).toBeUndefined()
+    expect((await accountHolds(me.token, spaceId)).content).toBe('B\n')
+    device.refusedCopies = false
+    await push(mirror, me.token, NOBODY)
+    expect(device.disk.get(copies(device)[0] ?? '')).toBe('B\n')
+  })
+
+  test('a delete told under a name no disk holds still takes the file it knew', async () => {
+    const me = await person('f@example.com')
+    const spaceId = await spaceOf(me.token)
+    const device = new world.Device()
+    device.disk.set(NOTE, 'first\n')
+    const mirror = newMirror(spaceId, ROOT)
+    await pass(device, mirror, me.token)
+    const { id } = await accountHolds(me.token, spaceId)
+    env.db.exec(
+      `update notes set path = '${'x'.repeat(300)}.md', deleted = 1, deleted_at = 1,
+                        seq = seq + 100 where id = '${id}'`,
+    )
+    world.use(device)
+    await pull(mirror, me.token, NOBODY)
+    expect(device.disk.has(NOTE)).toBe(false)
+  })
+})
+
+describe('the files of a site under a folder that will not list', () => {
+  test('stay on the list the account is told', async () => {
+    const me = await person('g@example.com')
+    const spaceId = await spaceOf(me.token)
+    const device = new world.Device()
+    device.disk.set(`${ROOT}/shut/paper.pdf`, 'bytes')
+    device.disk.set(`${ROOT}/open.pdf`, 'other bytes')
+    const mirror = newMirror(spaceId, ROOT)
+    await pass(device, mirror, me.token)
+    expect(Object.keys(mirror.files).sort()).toEqual(['open.pdf', 'shut/paper.pdf'])
+
+    device.shut.add(`${ROOT}/shut`)
+    device.disk.delete(`${ROOT}/open.pdf`)
+    await push(mirror, me.token, NOBODY)
+    expect(Object.keys(mirror.files)).toEqual(['shut/paper.pdf'])
+    expect(account.filesSaid).toEqual(['shut/paper.pdf'])
   })
 })

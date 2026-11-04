@@ -7,7 +7,7 @@
  *  document's words moving shows as its `docSeq` moving, which happens when its room
  *  settles - the moment its snapshot is there to pull. */
 
-import { FEED_PAGE, type FeedItem, GONE_NAME, isEntryId, isName } from '@orden/sync-core'
+import { FEED_PAGE, type FeedItem, heldName, isEntryId } from '@orden/sync-core'
 import type { Env } from '../types'
 import { kindOfName } from './tree'
 import { prepareSpace } from './prepare'
@@ -55,18 +55,17 @@ export async function feedPage(
   }
 
   const page = rows.slice(0, FEED_PAGE)
-  // One made under an id that reads as a path before `opOf` refused them, or under a name
-  // no disk holds before `cleanPath` did, is not handed to a device from before
-  // `feedPageOf` left them out, but for its delete: such a device throws the whole page
-  // away for one item, for good. The cursor moves past it all the same.
-  const safe = (row: Row, name: string) =>
-    row.deleted === 1 ||
-    (isEntryId(row.id) && isName(name) && (row.parent === null || isEntryId(row.parent)))
+  // One made under an id that reads as a path before `opOf` refused them is not handed
+  // to a device from before `feedPageOf` left them out, but for its delete. One under a name
+  // no disk holds, from before `cleanPath` refused it, goes under the nearest that is one:
+  // such a device throws the whole page away for one item it cannot read, for good.
+  const safe = (row: Row) =>
+    row.deleted === 1 || (isEntryId(row.id) && (row.parent === null || isEntryId(row.parent)))
   return {
     items: page.flatMap((row) =>
-      row.name === null || !safe(row, row.name)
+      row.name === null || !safe(row)
         ? []
-        : [{ ...itemOf(row, row.name), name: isName(row.name) ? row.name : GONE_NAME }],
+        : [{ ...itemOf(row, row.name), name: heldName(row.name) }],
     ),
     cursor: page.at(-1)?.seq ?? since,
     more: rows.length > FEED_PAGE,

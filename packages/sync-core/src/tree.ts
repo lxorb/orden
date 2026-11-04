@@ -34,7 +34,7 @@
  *  a batch and writes back, and the only numbers that move are the space's cursor. */
 
 import { freePath } from '@orden/markdown/paths'
-import { type EntryKind, LONGEST_NAME, type Op, type OpResult } from './wire'
+import { type EntryKind, heldName, LONGEST_NAME, type Op, type OpResult, shortened } from './wire'
 
 export interface TreeEntry {
   id: string
@@ -143,23 +143,12 @@ function freeName(
   }
 
   // The number has to fit too: past `LONGEST_NAME` the feed carries a name no device reads.
-  let name = wanted
+  let name = heldName(wanted)
   for (;;) {
     const found = first(name)
     if (found.length <= LONGEST_NAME) return found
     name = shortened(name, found.length - LONGEST_NAME, kind)
   }
-}
-
-/** A name with `by` code units less, off the end of its stem. */
-export function shortened(name: string, by: number, kind: EntryKind): string {
-  const dot = kind === 'folder' ? -1 : name.lastIndexOf('.')
-  // An ending too long to leave a stem goes with it.
-  const stemEnd = dot > by ? dot : name.length
-  let cut = stemEnd - by
-  // Not between the two halves of one character.
-  if (/[\uD800-\uDBFF]/.test(name.charAt(cut - 1)) && cut > 1) cut -= 1
-  return name.slice(0, cut) + name.slice(stemEnd)
 }
 
 /** Whether `ancestor` is `id` or holds it, however deep. Deleted folders count: a

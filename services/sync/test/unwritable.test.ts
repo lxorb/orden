@@ -60,6 +60,10 @@ interface Kit {
     files?: Record<string, string | Uint8Array>
   }): Promise<Device>
   firstPass(core: Core, space: unknown, v1: unknown): Promise<boolean>
+  mirrorsFrom(
+    core: Core,
+    listings: null,
+  ): Promise<Record<string, { notes: Record<string, unknown> }>>
   Engine: { start(world: unknown, store: unknown): Promise<Device['engine']> }
 }
 
@@ -263,44 +267,53 @@ test('a file in step that refuses one write is written the next pass', async () 
   expect(desk.disk.files.get(`${desk.root}/one.md`)).toBe('one\nlaptop words\n')
 })
 
-test('a name Windows keeps arrives under its spelling, and goes on being the note', async () => {
+test('a name Windows keeps arrives under that name everywhere else, and the way back knows it', async () => {
   const laptop = await device('laptop', { 'one.md': 'one\n' })
   await passed(laptop)
   await tool({ path: 'Con.md', content: 'pros and cons\n' })
   await tool({ path: 'aux/inside.md', content: 'inside\n' })
 
-  // What `write_note` answers for a new file of such a name on every platform.
-  const desk = await newDevice('desk', (path) => /\/(con|aux)(\.[^/]*)?(\/|$)/i.test(path))
-  await passed(desk)
-  expect(desk.disk.files.get(`${desk.root}/_Con.md`)).toBe('pros and cons\n')
-  expect(desk.disk.files.get(`${desk.root}/_aux/inside.md`)).toBe('inside\n')
-
-  await desk.disk.write(`${desk.root}/_Con.md`, 'pros and cons\nedited\n')
-  await desk.engine.foreign(`${desk.root}/_Con.md`)
-  await passed(desk, laptop)
-  // The account's name is the account's: the local spelling goes nowhere.
-  expect(await accountPaths()).toEqual(['Con.md', 'aux/inside.md', 'one.md'])
-  const held = await env.DB.prepare('select version from notes where path = ?')
-    .bind('Con.md')
-    .first<{ version: number }>()
-  expect(held?.version).toBeGreaterThan(0)
-})
-
-test('a file already here under such a name stays there and is met, not made again', async () => {
-  const laptop = await device('laptop', { 'one.md': 'one\n' })
-  await passed(laptop)
-  await tool({ path: 'Con.md', content: 'pros and cons\n' })
-  await tool({ path: 'aux/inside.md', content: 'inside\n' })
-
-  const desk = await device('desk', {
-    'Con.md': 'pros and cons\n',
-    'aux/inside.md': 'inside\n',
-  })
+  const desk = await device('desk')
   await passed(desk)
   expect(desk.disk.files.get(`${desk.root}/Con.md`)).toBe('pros and cons\n')
   expect(desk.disk.files.get(`${desk.root}/aux/inside.md`)).toBe('inside\n')
-  expect([...desk.disk.files.keys()].filter((path) => path.includes('_'))).toEqual([])
   expect(await accountPaths()).toEqual(['Con.md', 'aux/inside.md', 'one.md'])
+
+  const k = await kit()
+  const mirrors = await k.mirrorsFrom(desk.engine.core, null)
+  expect(Object.keys(mirrors[desk.root]?.notes ?? {}).sort()).toEqual([
+    'Con.md',
+    'aux/inside.md',
+    'one.md',
+  ])
+})
+
+test('a note moved on Windows keeps the name the account has for it', async () => {
+  const laptop = await device('laptop', { 'one.md': 'one\n' })
+  await passed(laptop)
+  await tool({ path: 'Con.md', content: 'pros and cons\n' })
+
+  const k = await kit()
+  const desk = await k.testDevice({
+    fetch: async (request) => await app.fetch(request, env),
+    token,
+    name: 'desk',
+  })
+  const world = desk.engine.core.world as { platform: string }
+  world.platform = 'windows'
+  const core = desk.engine.core
+  await core.commit(core.addSpace(space, desk.root, 'owner'))
+  expect(await k.firstPass(core, core.spaces.get(space), null)).toBe(true)
+  await desk.engine.pass(space)
+  expect(desk.disk.files.has(`${desk.root}/_Con.md`)).toBe(true)
+
+  await desk.disk.mkdir(`${desk.root}/sub`)
+  await desk.engine.created(`${desk.root}/sub`, true)
+  await desk.disk.move(`${desk.root}/_Con.md`, `${desk.root}/sub/_Con.md`)
+  await desk.engine.moved(`${desk.root}/_Con.md`, `${desk.root}/sub/_Con.md`)
+  await desk.engine.pass(space)
+  await rooms.settle()
+  expect(await accountPaths()).toEqual(['one.md', 'sub/Con.md'])
 })
 
 test('a row a device cannot read does not stop its passes, whatever hangs under it', async () => {
@@ -332,11 +345,16 @@ test('a row a device cannot read does not stop its passes, whatever hangs under 
   await passed(laptop, desk)
 
   expect(desk.disk.files.get(`${desk.root}/after.md`)).toBe('after\n')
-  expect([...desk.disk.files.keys()].some((path) => path.includes('pwn'))).toBe(false)
+  // A good note under a bad folder is not lost to the device: both have a name here.
+  expect([...desk.disk.files.keys()].some((path) => path.endsWith('/__/pwn.md'))).toBe(true)
+  const long2 = [...desk.disk.files.keys()].find((path) => path.includes('xxxx'))
+  expect(long2?.slice(desk.root.length + 1).length).toBeLessThanOrEqual(255)
   expect((await desk.engine.pass(space))?.finished).toBe(true)
 })
 
-test('a first pass deletes nothing v1 knew under a folder that would not list, and then meets it', async () => {
+/** A first pass over a v1 space where `shut/inside.md` will not read or list, as a folder
+ *  with no permission answers. */
+async function firstPassOverShut(words: string) {
   const laptop = await device('laptop', { 'shut/inside.md': 'inside\n', 'open.md': 'open\n' })
   await passed(laptop)
   const rows = await env.DB.prepare('select id, path, version, hash from notes where space_id = ?')
@@ -345,48 +363,100 @@ test('a first pass deletes nothing v1 knew under a folder that would not list, a
   const notes = Object.fromEntries(
     rows.results.map((row) => [row.path, { id: row.id, version: row.version, hash: row.hash }]),
   )
-  const cursor = 1000
-
   const k = await kit()
   const desk = await k.testDevice({
     fetch: async (request) => await app.fetch(request, env),
     token,
     name: 'desk',
-    files: { 'shut/inside.md': 'inside\n', 'open.md': 'open\n' },
+    files: { 'shut/inside.md': words, 'open.md': 'open\n' },
   })
   const core = desk.engine.core as Core & {
-    world: { list(root: string): Promise<unknown[]> }
+    world: { list(root: string): Promise<{ path: string; dir: boolean }[]> }
   }
   const shut = `${desk.root}/shut/`
   const { read, exists } = {
     read: desk.disk.read.bind(desk.disk),
     exists: desk.disk.exists.bind(desk.disk),
   }
-  let locked = true
-  desk.disk.read = (path) => (locked && path.startsWith(shut) ? Promise.resolve(null) : read(path))
+  const state = { locked: true }
+  desk.disk.read = (path) =>
+    state.locked && path.startsWith(shut) ? Promise.resolve(null) : read(path)
   desk.disk.exists = (path) =>
-    locked && path.startsWith(shut) ? Promise.resolve(true) : exists(path)
-  core.world.list = () =>
-    Promise.resolve([
-      { path: 'shut', dir: true, unlisted: true },
-      { path: 'open.md', dir: false },
-    ])
+    state.locked && path.startsWith(shut) ? Promise.resolve(true) : exists(path)
+  const open = core.world.list.bind(core.world)
+  core.world.list = async (root) =>
+    (await open(root)).filter((one) => !state.locked || !one.path.startsWith('shut/'))
   await core.commit(core.addSpace(space, desk.root, 'owner'))
-  expect(
-    await k.firstPass(core, core.spaces.get(space), { cursor, notes, untold: {}, files: {} }),
-  ).toBe(true)
-  await rooms.settle()
-  await desk.engine.pass(space)
+  const v1 = { cursor: 1000, notes, untold: {} }
+  const first = () => k.firstPass(core, core.spaces.get(space), v1)
+  return { k, desk, core, state, first }
+}
+
+test('a first pass waits for a note v1 knew that will not read, and deletes nothing', async () => {
+  const { desk, core, state, first } = await firstPassOverShut('inside\n')
+  expect(await first()).toBe(false)
   await rooms.settle()
   expect(await accountPaths()).toEqual(['open.md', 'shut/inside.md'])
-  expect(placed(core).find((one) => one.name === 'inside.md')?.local_path).toBe('')
 
-  // The folder lists again: that file is that note, and no second one comes of it.
-  locked = false
-  await desk.engine.pass(space)
-  await rooms.settle()
+  state.locked = false
+  expect(await first()).toBe(true)
   expect(placed(core).find((one) => one.name === 'inside.md')?.local_path).toBe('shut/inside.md')
   await desk.engine.pass(space)
   await rooms.settle()
   expect(await accountPaths()).toEqual(['open.md', 'shut/inside.md'])
+})
+
+test('and when it reads with other words, they are the note edited, not a second note', async () => {
+  const { desk, core, state, first } = await firstPassOverShut('inside\nwritten offline\n')
+  expect(await first()).toBe(false)
+  state.locked = false
+  expect(await first()).toBe(true)
+  await desk.engine.pass(space)
+  await rooms.settle()
+  await desk.engine.pass(space)
+  await rooms.settle()
+  expect(await accountPaths()).toEqual(['open.md', 'shut/inside.md'])
+  expect(placed(core).find((one) => one.name === 'inside.md')?.local_path).toBe('shut/inside.md')
+})
+
+test('a note v1 knew that no listing shows but still reads is the note, not a delete', async () => {
+  const { desk, core, first } = await firstPassOverShut('inside\n')
+  // Past the depth a listing goes, or a link no listing follows: it reads all the same.
+  const read = desk.disk.read.bind(desk.disk)
+  desk.disk.read = (path) =>
+    path.endsWith('/shut/inside.md') ? Promise.resolve('inside\n') : read(path)
+  expect(await first()).toBe(true)
+  await desk.engine.pass(space)
+  await rooms.settle()
+  expect(await accountPaths()).toEqual(['open.md', 'shut/inside.md'])
+  expect(placed(core).find((one) => one.name === 'inside.md')?.local_path).toBe('shut/inside.md')
+})
+
+test('a file met in step that has no place yet keeps the place it is given over a restart', async () => {
+  const laptop = await device('laptop', { 'one.md': 'one\n' })
+  const desk = await device('desk')
+  await passed(laptop, desk)
+  const core = desk.engine.core
+  const entry = placed(core).find((one) => one.name === 'one.md') as unknown as {
+    id: string
+    local_path: string
+  }
+  // Its record lost its place, the words of the file and of the note still one.
+  entry.local_path = ''
+  const live = core as unknown as {
+    wanted(space: string): Map<string, { docSeq: number; epoch: number }>
+    commit(changes: unknown[]): Promise<void>
+    entryChanges(rows: unknown[]): unknown[]
+  }
+  await live.commit(live.entryChanges([entry]))
+  live.wanted(space).set(entry.id, { docSeq: 0, epoch: 1 })
+  await desk.engine.pass(space)
+  expect(entry.local_path).toBe('one.md')
+
+  await desk.engine.quit()
+  desk.engine.stop()
+  const k = await kit()
+  const again = await k.Engine.start(core.world, desk.store.open())
+  expect(placed(again.core).find((one) => one.name === 'one.md')?.local_path).toBe('one.md')
+  again.stop()
 })

@@ -63,8 +63,10 @@ function diskOf(telling: Telling): Disk {
     read: (path) => invoke<string>('read_note', { path }).catch(() => null),
     async write(path, text) {
       const fresh = !(await stamped(path))
-      await invoke('create_folder', { path: parentOf(path) }).catch(() => undefined)
-      const write = () => invoke('write_note', { path, content: text })
+      await invoke('create_folder', { path: parentOf(path), arrived: true }).catch(() => undefined)
+      // `arrived`: the account's name, so one the crate makes no new note of still lands where
+      // this platform can hold it. Windows spells it otherwise first (`localName`).
+      const write = () => invoke('write_note', { path, content: text, arrived: true })
       await (telling.writing ? telling.writing(path, text, write) : write())
       links.noteSaved(path, text)
       telling.written(path, fresh)
@@ -77,7 +79,7 @@ function diskOf(telling: Telling): Disk {
     async move(from, to, kind) {
       telling.touching(from)
       telling.touching(to)
-      await invoke('create_folder', { path: parentOf(to) }).catch(() => undefined)
+      await invoke('create_folder', { path: parentOf(to), arrived: true }).catch(() => undefined)
       // A file the account holds as a page note's paper, `X.pages.pdf` beside
       // `X.pages`: a PDF another device turned into that note. The crate refuses a PDF
       // put where a page note takes it for its paper unless it is held there on
@@ -92,7 +94,13 @@ function diskOf(telling: Telling): Disk {
       await telling.holdingWrites(
         from,
         async () => {
-          await invoke('rename_note', { from, to, alone: true, ...(hold ? { hold } : {}) })
+          await invoke('rename_note', {
+            from,
+            to,
+            alone: true,
+            arrived: true,
+            ...(hold ? { hold } : {}),
+          })
           await telling.moved(from, to, kind)
         },
         () => Promise.reject(new Error(`${from} has a write that has not answered`)),
@@ -126,7 +134,7 @@ function diskOf(telling: Telling): Disk {
         })
       await telling.gone(path, kind)
     },
-    mkdir: (path) => invoke('create_folder', { path }).then(() => undefined),
+    mkdir: (path) => invoke('create_folder', { path, arrived: true }).then(() => undefined),
     exists: thereOrUnsure,
     evicted: evictedHere,
   }
@@ -140,9 +148,7 @@ interface Listed {
   children?: Listed[]
 }
 
-async function listed(
-  root: string,
-): Promise<{ path: string; dir: boolean; unlisted?: boolean }[] | null> {
+async function listed(root: string): Promise<{ path: string; dir: boolean }[] | null> {
   const slashed = (path: string) => (windowsPath(root) ? path.replace(/\\/g, '/') : path)
   const base = slashed(root).replace(/\/+$/, '')
   const inside = (path: string): string | null => {
@@ -157,7 +163,7 @@ async function listed(
     if (all) {
       return all.flatMap((one) => {
         const path = inside(one.path)
-        return path === null ? [] : [{ path, dir: one.dir, unlisted: one.unlisted === true }]
+        return path === null ? [] : [{ path, dir: one.dir }]
       })
     }
   }
@@ -167,12 +173,12 @@ async function listed(
     root,
     options: { showHidden: false, papers: true },
   }).catch(() => null)
-  const out: { path: string; dir: boolean; unlisted?: boolean }[] = []
+  const out: { path: string; dir: boolean }[] = []
   const walk = (node: Listed) => {
     for (const child of node.children ?? []) {
       const path = inside(child.path)
       if (path === null) continue
-      out.push({ path, dir: child.is_dir, unlisted: child.unlisted === true })
+      out.push({ path, dir: child.is_dir })
       if (child.is_dir) walk(child)
     }
   }
@@ -220,7 +226,9 @@ export function appWorld(token: () => string | null, telling: Telling): World {
       async write(path, bytes) {
         const fresh = !(await stamped(path))
         telling.touching(path)
-        await invoke('create_folder', { path: parentOf(path) }).catch(() => undefined)
+        await invoke('create_folder', { path: parentOf(path), arrived: true }).catch(
+          () => undefined,
+        )
         await invoke('write_bytes', { path, base64: toBase64(bytes) })
         telling.written(path, fresh)
       },

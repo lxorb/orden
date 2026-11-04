@@ -3,7 +3,7 @@
  *  one item it cannot read, and every device of every member stops at that page. */
 
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { feedPageOf, GONE_NAME, isName, type FeedItem } from '@orden/sync-core'
+import { feedPageOf, isName, type FeedItem } from '@orden/sync-core'
 import { sha256 } from '../src/crypto'
 import { cleanPath, noteBeside } from '../src/notes'
 import type { Note } from '../src/types'
@@ -115,8 +115,8 @@ test('a folder of a base cannot name its way out of the space', async () => {
   expect(read).not.toBeNull()
 })
 
-test('a page holding names from before reads, and the cursor gets past them', async () => {
-  const good = await call(env, `/v1/spaces/${space}/notes`, {
+test('a page holding names from before reads, each under a name a device can hold', async () => {
+  await call(env, `/v1/spaces/${space}/notes`, {
     token,
     body: { path: 'good.md', content: 'words' },
   })
@@ -124,18 +124,22 @@ test('a page holding names from before reads, and the cursor gets past them', as
   await badRow('folders', 'b'.repeat(32), '..')
 
   const { read, raw } = await feed()
-  expect(read).not.toBeNull()
-  expect(raw.map((one) => one.name)).toEqual(['good.md'])
+  expect(read?.items).toHaveLength(3)
+  expect(raw.every((one) => isName(one.name))).toBe(true)
+  const names = raw.map((one) => one.name)
+  expect(names).toContain('good.md')
+  expect(names).toContain('__')
+  expect(names.find((one) => one.startsWith('xxx'))?.endsWith('.md')).toBe(true)
   const page = await call(env, `/v2/spaces/${space}/feed?since=0`, { token })
-  expect((page.json as { cursor: number }).cursor).toBe(902)
-  expect(good.status).toBe(201)
+  expect((page.json as unknown as { cursor: number }).cursor).toBe(902)
 })
 
-test('the delete of such a name is still told, under a name every device reads', async () => {
+test('the delete of such a name is told too', async () => {
   await badRow('notes', 'c'.repeat(32), LONG, 1)
   const { read, raw } = await feed()
   expect(raw).toHaveLength(1)
-  expect(raw[0]).toMatchObject({ id: 'c'.repeat(32), name: GONE_NAME, deleted: true })
+  expect(raw[0]).toMatchObject({ id: 'c'.repeat(32), deleted: true })
+  expect(isName(raw[0]?.name)).toBe(true)
   expect(read?.items).toHaveLength(1)
 })
 

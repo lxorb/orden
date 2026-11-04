@@ -368,7 +368,11 @@ class Runner {
       if (!kept.size) return (back = true)
       const settling = () => waited(SETTLING)
       if (!(await sentAll(engine, kept, SENDING_ROUNDS, settling))) return false
-      const { listings, gone } = await reachable(kept, (id) => listingOf(token, id))
+      const { listings, gone } = await reachable(
+        kept,
+        (id) => listingOf(token, id),
+        async () => (await api.listSpaces(token)).spaces.map((one) => one.id),
+      )
       const done = new Set([...kept].filter((id) => !gone.has(id)))
       const mirrors = await this.mirrorsNow(engine, user.id, listings, done, gone)
       back = keep(MIRRORS, JSON.stringify({ account: user.id, seen: true, mirrors }))

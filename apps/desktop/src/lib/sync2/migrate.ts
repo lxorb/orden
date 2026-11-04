@@ -38,7 +38,7 @@ import { kindOfName, made, moved } from './create'
 import { MINE } from './docs'
 import { readFeed } from './pass'
 import { fileOfUpdates, judge, readable, seedOf, shapeOf, turn, unixLines } from './kinds'
-import { asOnAccount, type SpaceState } from './places'
+import type { SpaceState } from './places'
 import { againstBytes } from './records'
 import { keepLosers } from './rejoin'
 import { project, wrote } from './project'
@@ -97,18 +97,20 @@ export async function firstPass(
   // would be a delete sent to the account.
   const listed = world.list ? await world.list(space.row.root) : []
   if (listed === null || !alive()) return false
-  const everything = listed
-  // A note v1 knew under a folder that would not list is not known to be gone, or moved: it
-  // stays as it is until its file can be read (`project` waits for it), and no delete goes.
-  const unread = everything.filter((one) => one.unlisted).map((one) => `${space.key(one.path)}/`)
-  if (v1 && unread.length) {
-    v1 = {
-      ...v1,
-      notes: Object.fromEntries(
-        Object.entries(v1.notes).filter(
-          ([path]) => !unread.some((folder) => space.key(path).startsWith(folder)),
-        ),
-      ),
+  // A note v1 knew that the listing does not show is gone only if the disk says so: a folder
+  // that would not list, or would not say what is in it, past the depth a listing goes, a
+  // link a listing leaves alone. One that reads is here. One nobody can look at waits, the
+  // pass with it: let through, its pairing with v1 is lost, and later it reads as a new note
+  // (or now, as a delete on every device).
+  const everything = [...listed]
+  const shown = new Set(listed.map((one) => space.key(one.path)))
+  for (const path of Object.keys(v1?.notes ?? {})) {
+    if (shown.has(space.key(path))) continue
+    if ((await world.disk.read(full(path))) !== null) {
+      everything.push({ path, dir: false })
+      shown.add(space.key(path))
+    } else if (await world.disk.exists(full(path))) {
+      return false
     }
   }
   const notes = new Set(everything.filter((one) => !one.dir).map((one) => space.key(one.path)))
@@ -149,8 +151,7 @@ export async function firstPass(
   const byPlace = (path: string, folder: boolean): EntryRow | null => {
     const key = space.key(path)
     for (const [id, at] of wanted) {
-      if (claimed.has(id) || away.has(id)) continue
-      if (space.key(at) !== key && space.key(asOnAccount(at)) !== key) continue
+      if (claimed.has(id) || away.has(id) || space.key(at) !== key) continue
       const entry = space.entries.get(id)
       if (entry && (entry.kind === 'folder') === folder) return entry
     }
