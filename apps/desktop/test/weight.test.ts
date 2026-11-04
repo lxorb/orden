@@ -1101,8 +1101,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,566,700, and to 388 modules, for the bug hunt's two rounds and
  *  the raises above being in one build at last, on claude/hunt-round-1: nothing new, the
- *  two sums together. Measured 3,566,575, 387 modules. */
-const BUDGET = 3_566_700
+ *  two sums together. Measured 3,566,575, 387 modules.
+ *
+ *  Raised 2026-11-04, to 3,573,500, for the bug hunt's third round on the views: a value
+ *  across lines read by the block's own rule, the id a named block gets on the page, what
+ *  a file shared on its own is held to, and a tick written one at a time, all in modules
+ *  the first paint already has. Measured 3,573,314, 387 modules. */
+const BUDGET = 3_573_500
 const MOST_FILES = 388
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
