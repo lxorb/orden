@@ -422,9 +422,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,862,600, for #1051: an essential let go of on
  *  a strip of tabs kept as a tab where it landed (tab-strip/essential-drop.ts, Tabs.svelte).
  *  Measured 5,862,455.
+ *
+ *  The code raised on 2026-11-04, to 5,865,000, for #1034: the shut file list comes out
+ *  over the note when the pointer rests at the window's edge (edge-peek.svelte.ts,
+ *  Sidebar.svelte). Measured 5,864,844.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_862_600,
+  code: 5_865_000,
   catalogues: 964_400,
   styles: 290_000,
   fonts: 260_000,

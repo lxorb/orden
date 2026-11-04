@@ -1126,9 +1126,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,528,400, for #1051: a strip of tabs taking an
  *  essential let go of on it, and fetching what keeps it as a tab (Tabs.svelte). Measured
- *  3,528,260, 388 modules. */
-const BUDGET = 3_528_400
-const MOST_FILES = 389
+ *  3,528,260, 388 modules.
+ *
+ *  Raised 2026-11-04, to 3,537,900, and to 390 modules, for #1034: the shut file list
+ *  comes out over the note when the pointer rests at the window's edge, and goes once it
+ *  leaves (edge-peek.svelte.ts, Sidebar.svelte). Measured 3,537,714, 389 modules. */
+const BUDGET = 3_537_900
+const MOST_FILES = 390
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
