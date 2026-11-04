@@ -45,24 +45,27 @@ export interface ListOptions {
   parentOf?: (row: Row) => string | null
 }
 
-/** A group's rows in tree order, each with its depth. */
+/** A group's rows in tree order, each with its depth. A view across spaces can hold one
+ *  path in two of them, so a row is known here with its space. */
 function tree(
   rows: readonly Row[],
   shut: ReadonlySet<string>,
   parentOf?: (row: Row) => string | null,
 ): { row: Row; depth: number; parent: boolean }[] {
-  const present = new Set(rows.map(rowId))
+  const keyOf = (row: Row) => `${row.space}\n${rowId(row)}`
+  const present = new Set(rows.map(keyOf))
   const children = new Map<string, Row[]>()
   const roots: Row[] = []
   for (const row of rows) {
     const parent = row.task?.parent
-    const parentId = row.task
+    const said = row.task
       ? parent === undefined
         ? null
         : `${row.path}#${parent}`
       : (parentOf?.(row) ?? null)
-    if (parentId !== null && present.has(parentId)) {
-      children.set(parentId, [...(children.get(parentId) ?? []), row])
+    const parentKey = said === null ? null : `${row.space}\n${said}`
+    if (parentKey !== null && present.has(parentKey)) {
+      children.set(parentKey, [...(children.get(parentKey) ?? []), row])
     } else roots.push(row)
   }
 
@@ -70,14 +73,14 @@ function tree(
   // such ring is shown at the top rather than lost.
   const reached = new Set<string>()
   const reach = (row: Row) => {
-    const id = rowId(row)
-    if (reached.has(id)) return
-    reached.add(id)
-    for (const child of children.get(id) ?? []) reach(child)
+    const key = keyOf(row)
+    if (reached.has(key)) return
+    reached.add(key)
+    for (const child of children.get(key) ?? []) reach(child)
   }
   for (const root of roots) reach(root)
   for (const row of rows) {
-    if (reached.has(rowId(row))) continue
+    if (reached.has(keyOf(row))) continue
     roots.push(row)
     reach(row)
   }
@@ -85,14 +88,14 @@ function tree(
   const out: { row: Row; depth: number; parent: boolean }[] = []
   const placed = new Set<string>()
   const walk = (row: Row, depth: number) => {
-    const id = rowId(row)
-    placed.add(id)
-    const under = (children.get(id) ?? []).filter((child) => !placed.has(rowId(child)))
+    const key = keyOf(row)
+    placed.add(key)
+    const under = (children.get(key) ?? []).filter((child) => !placed.has(keyOf(child)))
     out.push({ row, depth, parent: under.length > 0 })
-    if (shut.has(id)) return
-    for (const child of under) if (!placed.has(rowId(child))) walk(child, depth + 1)
+    if (shut.has(rowId(row))) return
+    for (const child of under) if (!placed.has(keyOf(child))) walk(child, depth + 1)
   }
-  for (const root of roots) if (!placed.has(rowId(root))) walk(root, 0)
+  for (const root of roots) if (!placed.has(keyOf(root))) walk(root, 0)
   return out
 }
 

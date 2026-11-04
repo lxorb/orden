@@ -1,4 +1,4 @@
-import { answer, builtinView, isWhen, readBase, type View, WHEN } from '@orden/bases'
+import { answer, builtinView, isWhen, readBase, WHEN } from '@orden/bases'
 import { taskRowsOfText } from '@orden/bases/tasks'
 import { describe, expect, test } from 'vitest'
 import { contextFor } from './context'

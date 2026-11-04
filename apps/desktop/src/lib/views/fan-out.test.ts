@@ -1,5 +1,6 @@
-import { type Group, type Row } from '@orden/bases'
+import { type Group, readBase, type Row } from '@orden/bases'
 import { describe, expect, test } from 'vitest'
+import { columnsOf } from './columns'
 import { dropInto } from './drop'
 import { taskRow } from './fixture'
 import { distinctKeys, everyRow, listItems } from './list-items'
@@ -64,5 +65,23 @@ describe('a row carried out of a group of a list', () => {
     expect(dropInto('task.tags', 'c', TWO, today, null)).toEqual({
       change: { task: { tags: ['a', 'b', 'c'] } },
     })
+  })
+})
+
+describe('a list a file names twice', () => {
+  test('a column is drawn once', () => {
+    const base = readBase('views:\n  - type: table\n    name: T\n    order: [a, b, a]\n')
+    expect(columnsOf(base, 0, [])).toEqual(['a', 'b'])
+  })
+})
+
+describe('two spaces with one path', () => {
+  test('both rows stand in a list', () => {
+    const mine = taskRow('E.md', '- [ ] Mine', 1, { space: 'A' })
+    const theirs = taskRow('E.md', '- [ ] Theirs', 1, { space: 'B' })
+    const rows = listItems([under(null, mine, theirs)], { ...OPTIONS, grouped: false }).filter(
+      (one) => one.kind === 'row',
+    )
+    expect(rows).toHaveLength(2)
   })
 })

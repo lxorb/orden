@@ -5,10 +5,12 @@ const { memoryStorage } = await import('../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
 
 const tabs = vi.hoisted(() => [] as ReturnType<typeof tabOf>[])
-const place = vi.hoisted(() => ({
-  spaces: [{ id: 'j', name: 'Job', root: '/s/Job' }],
-  active: 'Job',
-}))
+const place = vi.hoisted(
+  (): { spaces: { id: string; name: string; root: string }[]; active: string | null } => ({
+    spaces: [{ id: 'j', name: 'Job', root: '/s/Job' }],
+    active: 'Job',
+  }),
+)
 function tabOf(doc: string) {
   const tab = {
     kind: 'view',
