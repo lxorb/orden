@@ -108,9 +108,6 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
     documents: [],
     active: null,
     previewTabId: null,
-    get tree() {
-      return tree
-    },
     persisted: 0,
     lists: 0,
     keep: () => undefined,
@@ -138,6 +135,7 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
     },
     born: () => undefined,
     touched: () => undefined,
+    wroteAll: () => undefined,
     fileCame(path: string, _kind: 'file' | 'folder', key?: string) {
       came.push({ path, key })
       return Promise.resolve()
@@ -156,10 +154,11 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
   ws.documents.push(note)
   Object.defineProperty(ws, 'active', { get: () => tab })
 
-  /** The note deleted, as the store deletes one: the row leaves the listing and
-   *  the tab it was open in is closed, both before the file itself goes. */
+  /** The note deleted, as the store deletes one: the row leaves the listing, the delete
+   *  is said, and the tab it was open in is closed. */
   const deleted = () => {
     tree = listing([])
+    saving.follow({ op: 'removed', path: note.path ?? '', kind: 'file', root: SPACE })
     ws.tabs.length = 0
     ws.documents.length = 0
   }
@@ -468,6 +467,21 @@ describe('what is worth keeping a version of', () => {
 describe('a write the disk refuses', () => {
   const A = `${SPACE}/a.md`
   const B = `${SPACE}/b.md`
+
+  test('told on the light, and the light goes back when the write lands', async () => {
+    vi.useFakeTimers()
+    const { note, saving } = open(A)
+    refusing.set(A, 3)
+    note.replace('# a\n\nrefused')
+    await vi.advanceTimersByTimeAsync(400 + 2000 + 4000)
+    expect(light.status).toBe('error')
+
+    await vi.advanceTimersByTimeAsync(60_000)
+    await saving.settled()
+    expect(written(A).at(-1)?.content).toBe('# a\n\nrefused')
+    expect(light.status).toBe('off')
+    expect(light.lastError).toBe(null)
+  })
 
   test('is tried again a moment later without another keystroke', async () => {
     vi.useFakeTimers()

@@ -13,15 +13,19 @@ class Failed {
   /** Whether what did not happen was an undo, rather than a move. */
   undoing = $state(false)
 
+  /** What a press of Skip does, where what did not happen can be let go of. */
+  skip = $state.raw<(() => void) | null>(null)
+
   private timer: ReturnType<typeof setTimeout> | undefined
 
   /** The newest news has the toast: an Undo up for something before this goes (Ctrl+Z
    *  still takes it back), and one for something after this takes the toast in turn. */
-  tell(retry: () => void, undoing = false) {
+  tell(retry: () => void, undoing = false, skip: (() => void) | null = null) {
     if (!__EVEN_PLUGIN__) void undoToastNotice.ask()
     undoToast.dismiss()
     this.retry = retry
     this.undoing = undoing
+    this.skip = skip
     clearTimeout(this.timer)
     this.timer = setTimeout(() => this.dismiss(), UNDO_LINGER)
   }
@@ -33,8 +37,16 @@ class Failed {
     retry?.()
   }
 
+  /** Skip pressed: the toast goes, and what would not happen with it. */
+  giveUp() {
+    const skip = this.skip
+    this.dismiss()
+    skip?.()
+  }
+
   dismiss() {
     this.retry = null
+    this.skip = null
     clearTimeout(this.timer)
   }
 }

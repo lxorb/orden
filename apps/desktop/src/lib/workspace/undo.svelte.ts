@@ -27,6 +27,9 @@ export type FileAction =
       path: string
       content: string
       trashId?: string
+      /** Where the trash will put it back, where that is no longer `path`: the whole of
+       *  what moved since has gone from under it (`root`). */
+      trashedAt?: { path: string; root: string }
       /** Signed in, a folder's words and folders as it went. */
       folder?: boolean
       notes?: { path: string; content: string }[]
@@ -111,7 +114,8 @@ export interface Copied {
 }
 
 import { shownName } from '../note-name'
-import { nameOf, samePath } from '../space-paths'
+import { movedTo, nameOf, samePath } from '../space-paths'
+import type { FileOp } from './file-ops'
 
 /** Twenty is far more than anyone reaches back through, and stops a long
  *  session from holding the text of every note it ever deleted. */
@@ -196,6 +200,28 @@ export class FileActions {
     })
   }
 
+  /** An operation said to everything kept by path. The stack holds paths, and a move
+   *  nobody here will undo in its turn changes every step under it: a space renamed, which
+   *  is no step of its own, or a file moved in another window or by another program. A
+   *  move on the stack puts itself back in order, and needs nothing rewritten. */
+  follow(op: FileOp) {
+    if (op.op === 'moved' && (op.heard || op.kind === 'space')) this.moved(op.from, op.to)
+  }
+
+  /** A move no step here records: the steps' paths follow it, in place, since what offers
+   *  to undo a step knows it by itself. */
+  moved(from: string, to: string) {
+    for (const action of [...this.stack, ...this.ahead, ...(this.#held ?? [])]) {
+      rewritten(action, from, to)
+    }
+  }
+
+  /** A step that will not go back, let go of at the reader's word: everything under it
+   *  waits behind it otherwise. */
+  giveUp(action: FileAction) {
+    this.stack = this.stack.filter((one) => one !== action)
+  }
+
   /** Drops the newest one, once it has actually been put back, and keeps it to do
    *  again where that means something; one that cannot be ends the redo there. */
   drop() {
@@ -241,6 +267,67 @@ export class FileActions {
   /** Whether there is anything to do again. */
   get canRedo(): boolean {
     return this.next !== undefined
+  }
+}
+
+/** Every path a step holds, where it is after a move. */
+function rewritten(action: FileAction, from: string, to: string) {
+  const at = (path: string) => movedTo(path, from, to) ?? path
+  switch (action.kind) {
+    case 'move':
+    case 'rename':
+      action.from = at(action.from)
+      action.to = at(action.to)
+      break
+    case 'delete':
+      if (action.trashId && at(action.path) !== action.path) {
+        action.trashedAt ??= { path: action.path, root: from }
+      }
+      action.path = at(action.path)
+      for (const note of action.notes ?? []) note.path = at(note.path)
+      if (action.folders) action.folders = action.folders.map(at)
+      break
+    case 'create':
+      action.path = at(action.path)
+      break
+    case 'many':
+      for (const step of action.steps) rewritten(step, from, to)
+      break
+    case 'keep':
+      action.root = at(action.root)
+      break
+    case 'merge':
+      action.from = at(action.from)
+      action.into = at(action.into)
+      if (action.relinked) action.relinked = action.relinked.map(at)
+      break
+    case 'split':
+    case 'extract':
+      action.from = at(action.from)
+      action.created = at(action.created)
+      break
+    case 'replace':
+      for (const note of action.notes) note.path = at(note.path)
+      break
+    case 'import':
+      action.paths = action.paths.map(at)
+      action.wrote = Object.fromEntries(
+        Object.entries(action.wrote).map(([path, hash]) => [at(path), hash]),
+      )
+      break
+    case 'copy':
+      for (const one of action.made) {
+        one.path = at(one.path)
+        if (one.from !== undefined) one.from = at(one.from)
+      }
+      break
+    case 'archive':
+    case 'unarchive':
+      action.root = at(action.root)
+      action.archived = action.archived.map(at)
+      action.restored = action.restored.map(at)
+      action.closed = action.closed.map(at)
+      break
   }
 }
 

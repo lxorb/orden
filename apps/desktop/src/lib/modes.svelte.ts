@@ -1625,7 +1625,13 @@ class Modes {
   /** The sliders in preferences set a value outright; the keyboard steps
    *  through the same range. Both land in the same place. */
   setZoom(value: number) {
-    this.zoom = clamp(value, ZOOM_STEPS)
+    // Asked for past where it is and nearest to where it is: an arrow key on the slider,
+    // whose own step is smaller than a rung. That is the next rung, or it could not move.
+    const nearest = clamp(value, ZOOM_STEPS)
+    this.zoom =
+      nearest === this.zoom && value !== nearest
+        ? step(ZOOM_STEPS, nearest, value > nearest ? 1 : -1, DEFAULTS.zoom)
+        : nearest
     this.applyZoom()
     this.persist()
   }

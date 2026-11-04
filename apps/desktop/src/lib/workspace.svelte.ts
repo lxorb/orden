@@ -515,6 +515,7 @@ class Workspace {
     this.fileOps.follow((op) => this.positions.follow(op))
     this.fileOps.follow((op) => this.device.follow(op))
     this.fileOps.follow((op) => this.closed.follow(op))
+    this.fileOps.follow((op) => this.undone.follow(op))
     // An essential follows its file before the Essentials hear, or they would release it.
     this.fileOps.follow((op) => {
       if (op.op !== 'moved' || op.kind === 'space') return
@@ -1297,6 +1298,19 @@ class Workspace {
     // is why this is read now and not before.
     const rescued = asked ? open.filter((tab) => tab.dirty) : open
     const inFront = asked ? null : this.active
+
+    // What it replaces can be reopened, as a tab closed by hand can, all of it at once.
+    if (asked) {
+      const batch = Date.now()
+      for (const tab of open) {
+        if (rescued.includes(tab) || made.some((one) => one.note === tab.note)) continue
+        if (worthReopening(tab)) {
+          const at = Math.max(this.tabsIn(tab.paneId).indexOf(tab), 0)
+          this.closed.record({ draft: this.draftOf(tab), paneId: tab.paneId, at, batch })
+        }
+        if (tab.kind === 'web') pages.forget(tab.id)
+      }
+    }
 
     this.tabs = [...made, ...aside]
     this.panes.restore(frame, layout.focused)
@@ -2966,6 +2980,9 @@ class Workspace {
     const entry = this.entryAt(folder)
     const back = entry && unnesting(entry)
     if (!back) return
+    // The name above is taken, by a note beside the folder: it stays nested. Moving onto
+    // that was refused after the delete that brought this on had been done.
+    if (this.entryAt(joinPath(back.into, nameOf(back.note)))) return
 
     await this.move(back.note, back.into, 'follows')
 
@@ -3808,12 +3825,24 @@ class Workspace {
       this.clearSelection()
       return false
     }
+    // A row refused - something already has its name there - stays and is said, and the
+    // rest go on: it went as an unhandled rejection, with no word, taking the rest with it.
+    const stayed: string[] = []
     await this.undone.batch(async () => {
       await this.nestFor(intoFolder, paths)
-      for (const path of outermost(paths)) await this.move(path, intoFolder)
+      for (const path of outermost(paths)) {
+        await this.move(path, intoFolder).catch((error: unknown) => {
+          log('warn', `${path} not moved into ${intoFolder} - ${String(error)}`)
+          stayed.push(path)
+        })
+      }
     })
     this.clearSelection()
-    return true
+    if (!stayed.length) return true
+
+    const { failed } = await import('./views/failed.svelte')
+    failed.tell(() => void this.moveMany(stayed, intoFolder, undoing))
+    return false
   }
 
   /** A drop on a note lands in the folder that note is about to become, so the
@@ -5415,7 +5444,19 @@ class Workspace {
 
   async useLayout(name: string) {
     const layout = this.layouts.of(name)
-    if (layout) await this.applyLayout(layout)
+    if (!layout) return
+    // A layout replaces what is open, and a terminal running something asks first, as
+    // for any way a tab closes (`mayClose`). A shell in the layout is a fresh one, so
+    // every terminal open now is one that goes.
+    const kept = panesOf(layout.frame).flatMap((pane) => pane.tabs.map((tab) => tab.path))
+    const going = this.tabs.filter(
+      (tab) =>
+        this.panes.at(tab.paneId) &&
+        !tab.dirty &&
+        (tab.path === null || !kept.some((path) => samePath(path, tab.path))),
+    )
+    if (!(await this.mayClose(going))) return
+    await this.applyLayout(layout)
   }
 }
 

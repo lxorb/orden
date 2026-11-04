@@ -363,6 +363,16 @@ export class Track {
     this.seen = null
   }
 
+  /** Its note was deleted: what it says stays as it last was. */
+  setAside() {
+    this.letGo()
+  }
+
+  /** What its note said when last heard of, in the editor's line endings. */
+  get says(): string | null {
+    return this.held ? this.held.note.live.text.toString() : this.seen
+  }
+
   private letGo() {
     if (!this.held) return
 
