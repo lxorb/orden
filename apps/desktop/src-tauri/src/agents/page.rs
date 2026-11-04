@@ -383,7 +383,7 @@ const FRAME_PATIENCE: Duration = Duration::from_secs(8);
 
 /// How long one read of a page spends on its frames: the frames it did not come to are not
 /// written, as a frame on a denied site is not.
-const MOST_ON_FRAMES: Duration = Duration::from_secs(15);
+const MOST_ON_FRAMES: Duration = Duration::from_secs(10);
 
 /// Whether a part of the page is past what a read spends on frames. Never the page's own.
 fn prefix_past_budget(prefix: &str, started: Instant) -> bool {
@@ -620,6 +620,8 @@ pub struct Page<'a> {
     /// The frames of each session, once for the call, with the one that last read a node
     /// first: a page of many frames or fields asks once, and not for each of them.
     pub frame_lists: Mutex<HashMap<Option<String>, Vec<String>>>,
+    /// Whether the call has looked again with new worlds, which it does once.
+    pub worlds_renewed: AtomicBool,
 }
 
 /// How a frame's own points sit in the page: its top left, and where a step along each of
@@ -792,8 +794,13 @@ impl Page<'_> {
         };
         let started = Instant::now();
         // A world goes with its document, so one more look with new ones after a navigation.
+        // Once for the call: a node that has gone with a reloading frame is no reason to ask
+        // for every frame's world again, field after field.
         for fresh in [false, true] {
             if fresh {
+                if self.worlds_renewed.swap(true, Ordering::Relaxed) {
+                    return None;
+                }
                 self.forget_worlds(session);
             }
             for frame in self.frames_of(session) {

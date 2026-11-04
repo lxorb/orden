@@ -278,6 +278,7 @@ fn gate<'a>(
         credentials: std::sync::atomic::AtomicBool::new(cleared),
         worlds: std::sync::Mutex::new(std::collections::HashMap::new()),
         frame_lists: std::sync::Mutex::new(std::collections::HashMap::new()),
+        worlds_renewed: std::sync::atomic::AtomicBool::new(false),
     };
     if let Caller::Agent(grant) = caller {
         if let Err(why) = policy::site_allowed(grant, &page.url(), place.store()) {
