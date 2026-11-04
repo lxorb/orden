@@ -1205,10 +1205,13 @@ impl Page<'_> {
         )?;
         let scope = scope.pointer("/node/backendNodeId")?.as_u64()?;
         let backends = fields_in_capture(&self.capture(session)?, Some(scope));
+        // One it cannot describe, or too many to ask about, and it cannot tell what is here.
+        if backends.len() > 200 {
+            return None;
+        }
         backends
             .into_iter()
-            .take(200)
-            .filter_map(|backend| {
+            .map(|backend| {
                 let field = self.handle_in_world(session, backend, WORLD)?;
                 let said = call(
                     "Runtime.callFunctionOn",
@@ -1220,8 +1223,7 @@ impl Page<'_> {
                 )?;
                 serde_json::from_value(said.pointer("/result/value")?.clone()).ok()
             })
-            .collect::<Vec<_>>()
-            .into()
+            .collect()
     }
 
     /// The engine's flat copy of what a session's process holds of the page: every node of
