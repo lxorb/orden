@@ -73,6 +73,17 @@ describe.each(Object.entries(BROKEN))('with locks %s', (_name, locks) => {
 })
 
 describe('with locks that work', () => {
+  test('a turn whose work throws at once is refused, and is over', async () => {
+    vi.stubGlobal('navigator', {
+      locks: { request: (_name: string, run: () => unknown) => Promise.resolve(run()) },
+    })
+    await expect(
+      oneWriteAt('/a.md', () => {
+        throw new Error('refused')
+      }),
+    ).rejects.toThrow('refused')
+  })
+
   /** One holder per name, the way the browser's are, and nobody waits. */
   function working(): LockManager {
     const holders = new Set<string>()

@@ -5,16 +5,25 @@
  *  write-file.ts tells. */
 
 import { invoke } from '../tauri'
-import { oneWriteAt, windows } from '../windows'
+
+/** The windows' bus, behind a door: the first paint writes nothing. */
+const others = () => import('../windows')
+
+/** `run` in a file's turn; see `oneWriteAt`. */
+export async function inFileTurn<T>(path: string, run: () => Promise<T>): Promise<T> {
+  const { oneWriteAt } = await others()
+  return oneWriteAt(path, run)
+}
 
 /** The write, for a caller that holds the file's turn already, because of what it read
- *  first; see `oneWriteAt`. */
+ *  first. */
 export async function writeInTurn(path: string, content: string): Promise<void> {
   await invoke('write_note', { path, content })
+  const { windows } = await others()
   if (!windows.alone) windows.say('words', { path, text: content })
 }
 
 /** The write and the turn. */
 export function writeTaking(path: string, content: string): Promise<void> {
-  return oneWriteAt(path, () => writeInTurn(path, content))
+  return inFileTurn(path, () => writeInTurn(path, content))
 }

@@ -1100,11 +1100,7 @@ function holds(tail: string): boolean {
  *  behind a door on the branches. Measured 3,550,937, 386 modules.
  *
  *  Raised 2026-11-04, to 3,566,700, and to 388 modules, for the bug hunt's two rounds and
- *  the raises above being in one build at last, on claude/hunt-round-1: nothing new, the
- *  two sums together. Measured 3,566,575, 387 modules. */
-const BUDGET = 3_566_700
-const MOST_FILES = 388
-
+ *XX
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
  *

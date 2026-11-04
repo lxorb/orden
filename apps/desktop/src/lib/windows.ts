@@ -119,7 +119,9 @@ export function oneWriteAt<T>(path: string, run: () => Promise<T>): Promise<T> {
       if (started) return undefined
       started = true
       clearTimeout(timer)
-      const running = run()
+      // A `run` that throws before its first wait is a refusal like any other, not a turn
+      // that never ends.
+      const running = (async () => run())()
       running.then(resolve, reject)
       return running.then(
         () => undefined,

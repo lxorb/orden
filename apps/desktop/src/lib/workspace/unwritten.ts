@@ -68,7 +68,8 @@ export async function cameBack(draft: Draft & { path: string }, asks: Asks): Pro
     return onFile(true, null)
   }
   if (disk === base) return onFile(true, base)
-  if (draft.kind !== 'note') return asDraft()
+  // The plugin carries no merge: it has one window and nothing writing beside it.
+  if (draft.kind !== 'note' || __EVEN_PLUGIN__) return asDraft()
 
   const merged = await mergedOver(base, words, disk)
   return onFile(merged !== disk, disk, merged)
@@ -89,6 +90,7 @@ export async function mergedOver(base: string, words: string, disk: string): Pro
     if (disk.includes(left + typed.insert) && (left !== '' || disk.includes(typed.insert + right)))
       return disk
   }
+  if (__EVEN_PLUGIN__) return words
   const { merge3 } = await import('@orden/sync-core/merge3')
   return merge3(base, words, disk).text
 }

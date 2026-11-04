@@ -14,7 +14,6 @@ import { freePath } from '@orden/markdown/paths'
 import { openerFor, sharedKind } from './openers'
 import { links, type Retargeting } from './link-index.svelte'
 import { onDisk } from './on-disk'
-import { oneWriteAt } from './windows'
 import { noteId } from './note-id'
 import { insideOnly } from './automation/inside'
 import {
@@ -95,6 +94,7 @@ import { draftFile, hasWords, isDraft, isUnsaved, worthAFile } from './workspace
 import { TAB_KINDS } from './workspace/tab-kinds'
 import type { Picked } from './import/sources'
 import { type Binning, type FileAction, FileActions, type Kept } from './workspace/undo.svelte'
+import { inFileTurn } from './workspace/in-turn'
 import { writeFile } from './workspace/write-file'
 import { isScratchpad, shown as pad } from './scratchpad/is.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
@@ -2968,7 +2968,7 @@ class Workspace {
           // until it is read again the row is sitting in a folder that does not hold
           // it; see `remove`, which puts a row back the same way.
           try {
-            await oneWriteAt(from, () => invoke('rename_note', { from, to: target }))
+            await inFileTurn(from, () => invoke('rename_note', { from, to: target }))
           } catch (error) {
             await back()
             await this.loadTree()
@@ -4558,7 +4558,7 @@ class Workspace {
     try {
       // In the file's turn: another window's write that has read it lands first or finds
       // it gone, and does not put it back; see workspace/across.ts.
-      await oneWriteAt(path, () =>
+      await inFileTurn(path, () =>
         invoke('rename_note', { from: path, to: target, ...(hold ? { hold } : {}) }),
       )
     } catch (error) {
@@ -4713,11 +4713,11 @@ class Workspace {
 
     try {
       if (toAccount) {
-        await oneWriteAt(path, () => invoke(isFolder ? 'delete_folder' : 'delete_note', { path }))
+        await inFileTurn(path, () => invoke(isFolder ? 'delete_folder' : 'delete_note', { path }))
         if (isFolder) return held && { content: '', folder: true, ...held }
         return words ? { content: content ?? '' } : null
       }
-      const entry = await oneWriteAt(path, () =>
+      const entry = await inFileTurn(path, () =>
         invoke<{ id: string }>('trash_item', {
           path,
           kind: isFolder ? 'folder' : 'note',

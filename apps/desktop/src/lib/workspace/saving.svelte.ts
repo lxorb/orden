@@ -20,7 +20,6 @@ import { SAVE_AT_MOST, SAVE_DELAY, saveRetryDelay } from '../backoff'
 import { flushCardEdits } from '../canvas/writing'
 import { t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
-import { holdIfFree } from '../locks'
 import { log } from '../log'
 import { onDisk } from '../on-disk'
 import { owesLast, surfacesToWords, writeOwed } from '../parting'
@@ -526,6 +525,7 @@ export class Saving {
     // Fetched here rather than imported at the top: saving is in the first paint, and a
     // draft given a place is not.
     const { pairOf } = await import('../pages/held')
+    const { holdIfFree } = await import('../locks')
     const found: string[] = []
     for (;;) {
       const name = freePath(

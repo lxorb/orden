@@ -33,9 +33,8 @@ import { invoke } from '../tauri'
 import type { Entry, Space } from '../workspace.svelte'
 import type { NoteDoc } from './documents.svelte'
 import type { FileAction, FileActions } from './undo.svelte'
-import { oneWriteAt } from '../windows'
 import type { Across } from './across'
-import { writeInTurn } from './in-turn'
+import { inFileTurn, writeInTurn } from './in-turn'
 import { writeFile } from './write-file'
 
 /** What writing across a space needs of the store it belongs to. */
@@ -329,7 +328,7 @@ async function writeClosed(
 ): Promise<Undone | null> {
   // One turn of the file, from the read to the write: what another window writes between
   // the two would otherwise be replaced by words worked out without it.
-  const turn = await oneWriteAt(change.path, async () => {
+  const turn = await inFileTurn(change.path, async () => {
     const read = await invoke<string>('read_note', { path: change.path }).catch(() => null)
     if (read === null) return null
 
