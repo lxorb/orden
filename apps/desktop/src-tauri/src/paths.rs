@@ -160,6 +160,15 @@ pub fn is_term(path: &Path) -> bool {
         .is_some_and(|extension| extension.eq_ignore_ascii_case("term"))
 }
 
+/// Whether a path names an application: one line of JSON naming the device it runs on
+/// and what it runs there (docs/apps.md). Text, listed and opened as the online
+/// terminal's file is, and for the same reason.
+pub fn is_application(path: &Path) -> bool {
+    path.extension()
+        .and_then(OsStr::to_str)
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("application"))
+}
+
 /// Whether a path names a website: a shortcut file rather than words.
 ///
 /// `.url` is the Windows Internet Shortcut - an INI file with an address in it,

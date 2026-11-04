@@ -6,6 +6,40 @@
     "annotations": { "readOnlyHint": true, "openWorldHint": false }
   },
   {
+    "name": "files",
+    "description": "Files and folders anywhere on this computer outside the spaces (inside them use the note tools). Paths absolute or ~/. Asks first unless the reader allowed the folder; delete is for good.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "type": "string",
+          "enum": [
+            "read",
+            "write",
+            "append",
+            "list",
+            "stat",
+            "mkdir",
+            "move",
+            "copy",
+            "delete",
+            "search",
+            "changes"
+          ]
+        },
+        "path": { "type": "string" },
+        "to": { "type": "string" },
+        "content": { "type": "string" },
+        "base64": { "type": "boolean", "description": "content and read as base64" },
+        "glob": { "type": "string", "description": "search: names, e.g. **/*.md" },
+        "text": { "type": "string", "description": "search: words inside" },
+        "since": { "type": "integer", "description": "changes: ms, the last answer's now" }
+      },
+      "required": ["op", "path"]
+    },
+    "annotations": { "destructiveHint": true, "openWorldHint": false }
+  },
+  {
     "name": "agent_status",
     "description": "Your grant (what you may reach), your tabs, the questions waiting for the reader, and whether you are stopped.",
     "inputSchema": { "type": "object", "properties": {} },

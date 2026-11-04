@@ -2144,6 +2144,8 @@ export const fil: Dictionary = {
   'Run scripts in pages': 'Magpatakbo ng script sa mga page',
   'Change settings': 'Magbago ng mga setting',
   'Run commands': 'Magpatakbo ng mga command',
+  'Read and change files anywhere on this computer':
+    'Basahin at baguhin ang mga file saanman sa computer na ito',
   Paying: 'Pagbabayad',
   'Sending messages': 'Pagpapadala ng mensahe',
   'Publishing and sharing': 'Pag-publish at pagbabahagi',
@@ -2380,6 +2382,21 @@ export const fil: Dictionary = {
   'Open on {device} since {time}': 'Bukas sa {device} mula {time}',
   'Take over': 'Kunin',
   'Take back': 'Bawiin',
+  // Applications, in developer mode (docs/apps.md)
+  'New application': 'Bagong application',
+  Application: 'Application',
+  'This application’s file is damaged': 'Sira ang file ng application na ito',
+  'Waiting for {device}': 'Hinihintay ang {device}',
+  'Running on {device}': 'Tumatakbo sa {device}',
+  'Starting on {device}…': 'Nagsisimula sa {device}…',
+  'Not running on {device}': 'Hindi tumatakbo sa {device}',
+  'Its picture is not shown here yet.': 'Hindi pa ipinapakita rito ang larawan nito.',
+  'None of your devices can run an application yet':
+    'Wala pa sa mga device mo ang makakapagpatakbo ng application',
+  'Where does it run?': 'Saan ito tatakbo?',
+  'What does it run?': 'Ano ang patatakbuhin nito?',
+  'A program’s path, and its arguments': 'Path ng isang program, at ang mga argument nito',
+  '{device} (this device)': '{device} (ang device na ito)',
   'Start online machine': 'Simulan ang online na makina',
   'Stop online machine': 'Ihinto ang online na makina',
   Resume: 'Ituloy',
@@ -2741,6 +2758,13 @@ export const fil: Dictionary = {
   'Valid from': 'Bisa mula',
   'Valid until': 'Bisa hanggang',
   'SHA-256 fingerprint': 'SHA-256 na fingerprint',
+  Intermediate: 'Intermediate',
+  Root: 'Root',
+  'Certificate chain': 'Chain ng certificate',
+  'Serial number': 'Serial number',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'Hiwalay na binasa mula sa site: hindi sinasabi ng browser engine kung aling certificate ang dala ng page na ito.',
+  'The certificate could not be read.': 'Hindi mabasa ang certificate.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'Kung paano hinahanap ng mga web page ang address ng mga site. Sa HTTPS, walang sinuman sa pagitan mo at ng provider ang makakabasa o makakapagbago ng mga paghahanap.',
@@ -2784,8 +2808,6 @@ export const fil: Dictionary = {
   'Part of this could not be undone': 'Hindi na-undo ang bahagi nito',
   'Add images': 'Magdagdag ng mga larawan',
   'Remove image': 'Alisin ang larawan',
-  'Paste, drop or add images (up to 4).':
-    'I-paste, i-drop, o magdagdag ng mga larawan (hanggang 4).',
   'That is more than 4 images.': 'Lampas na iyan sa 4 na larawan.',
   'That file could not be used as an image.': 'Hindi magagamit bilang larawan ang file na iyan.',
   'Report received': 'Natanggap ang ulat',

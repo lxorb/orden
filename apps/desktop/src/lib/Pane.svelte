@@ -50,6 +50,7 @@
   import { rooms } from './rooms.svelte'
   import { settings } from './settings.svelte'
   import {
+    applicationSurface,
     archivedStrip,
     askPanel,
     canvasSurface,
@@ -580,6 +581,15 @@
     {#key tab.id}
       {#await terminalSurface() then TerminalTab}
         <TerminalTab {tab} focused={workspace.panes.focusedId === pane.id} />
+      {:catch}
+        {@render unreachable()}
+      {/await}
+    {/key}
+  {:else if tab?.kind === 'application'}
+    <!-- An application on one of the reader's devices; see apps/ApplicationTab.svelte. -->
+    {#key tab.id}
+      {#await applicationSurface() then ApplicationTab}
+        <ApplicationTab {tab} />
       {:catch}
         {@render unreachable()}
       {/await}

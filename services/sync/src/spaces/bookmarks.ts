@@ -51,6 +51,19 @@ export interface Bookmark {
   /** What a graph bookmark is a bookmark of: one whole set of graph settings, as
    *  the app writes them. Absent on every other kind. */
   view?: string
+  /** The id of the tree entry a bookmark of a note or a folder points at, where the app
+   *  knew it (#1068): what its path is written again from when the tree moves; see
+   *  `projected` in sync2/maps.ts. A bad one is left off rather than refusing the list,
+   *  since it says nothing a path does not. */
+  id?: string
+}
+
+/** The longest id a bookmark carries: an entry id is a UUID. */
+const LONGEST_ID = 64
+
+/** The id a bookmark carries, kept only where it may be one. */
+export function bookmarkId(value: unknown): string | null {
+  return typeof value === 'string' && value.length > 0 && value.length <= LONGEST_ID ? value : null
 }
 
 /** What is wrong with the list that arrived, as one sentence the app can show,
@@ -114,13 +127,17 @@ bookmarks.put('/:id/bookmarks', atLeast('write'), async (context) => {
 
   // Written from the fields that were checked rather than from what arrived, so
   // nothing else a client sent along ends up in the column.
-  const kept = (sent as Bookmark[]).map(({ kind, path, text, parent, view }) => ({
-    kind,
-    path,
-    text,
-    ...(parent ? { parent } : {}),
-    ...(view ? { view } : {}),
-  }))
+  const kept = (sent as Bookmark[]).map(({ kind, path, text, parent, view, id }) => {
+    const entry = bookmarkId(id)
+    return {
+      kind,
+      path,
+      text,
+      ...(parent ? { parent } : {}),
+      ...(view ? { view } : {}),
+      ...(entry ? { id: entry } : {}),
+    }
+  })
   const written = JSON.stringify(kept)
   if (!fits(written, 'bookmarks')) {
     return context.json({ error: 'that is more bookmarks than a space holds' }, 413)

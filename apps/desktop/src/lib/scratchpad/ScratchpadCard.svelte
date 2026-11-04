@@ -240,9 +240,12 @@
     min-width: calc(var(--pad-width) - 2 * var(--space-2));
   }
 
-  /* A note, so it stands on the paper a note stands on (Pane.svelte), not the surface a
-     menu floats on: the page's own ground in every theme, and under glass and the
-     wallpaper as see-through as the Content row leaves the note beside it. */
+  /* A note, so it stands on the paper a note stands on, not the surface a menu floats
+     on: the page's own ground in every theme, whole. See-through, as the Content row
+     leaves a pane under glass and the wallpaper, a card this narrow and this tall is a
+     strip of whatever is behind the window - glass's pair turning to its second colour
+     towards the bottom corner - and read as a second ground under its lower half
+     (#1110). One paper, top to bottom. */
   .card {
     position: relative;
     flex: none;
@@ -251,19 +254,13 @@
     display: flex;
     min-width: 0;
     overflow: hidden;
-    background: var(--content-ground, var(--bg));
+    background: var(--bg);
   }
 
   .card.docked {
     width: 100%;
     height: 100%;
     margin: 0;
-  }
-
-  /* Over the note there, so see-through paper would show the note's words through its
-     own: the same paper, whole. */
-  :global(:is([data-drawer], [data-narrow]) [data-scratchpad]) .card {
-    background: var(--bg);
   }
 
   .host {

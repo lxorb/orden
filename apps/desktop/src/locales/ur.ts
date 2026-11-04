@@ -2098,6 +2098,8 @@ export const ur: Dictionary = {
   'Run scripts in pages': 'صفحات میں اسکرپٹس چلانا',
   'Change settings': 'ترتیبات بدلنا',
   'Run commands': 'کمانڈز چلانا',
+  'Read and change files anywhere on this computer':
+    'اس کمپیوٹر پر کہیں بھی فائلیں پڑھنا اور بدلنا',
   Paying: 'ادائیگی',
   'Sending messages': 'پیغامات بھیجنا',
   'Publishing and sharing': 'شائع کرنا اور شیئر کرنا',
@@ -2334,6 +2336,21 @@ export const ur: Dictionary = {
   'Open on {device} since {time}': '{time} سے {device} پر کھلا',
   'Take over': 'سنبھالیں',
   'Take back': 'واپس لیں',
+  // Applications, in developer mode (docs/apps.md)
+  'New application': 'نئی ایپلیکیشن',
+  Application: 'ایپلیکیشن',
+  'This application’s file is damaged': 'اس ایپلیکیشن کی فائل خراب ہے',
+  'Waiting for {device}': '{device} کا انتظار',
+  'Running on {device}': '{device} پر چل رہی ہے',
+  'Starting on {device}…': '{device} پر شروع ہو رہی ہے…',
+  'Not running on {device}': '{device} پر نہیں چل رہی',
+  'Its picture is not shown here yet.': 'اس کی تصویر ابھی یہاں نہیں دکھائی جاتی۔',
+  'None of your devices can run an application yet':
+    'آپ کا کوئی بھی آلہ ابھی ایپلیکیشن نہیں چلا سکتا',
+  'Where does it run?': 'یہ کہاں چلے؟',
+  'What does it run?': 'یہ کیا چلائے؟',
+  'A program’s path, and its arguments': 'کسی پروگرام کا پاتھ، اور اس کے آرگیومنٹس',
+  '{device} (this device)': '{device} (یہ آلہ)',
   'Start online machine': 'آن لائن مشین شروع کریں',
   'Stop online machine': 'آن لائن مشین روکیں',
   Resume: 'دوبارہ شروع کریں',
@@ -2680,6 +2697,13 @@ export const ur: Dictionary = {
   'Valid from': 'سے درست',
   'Valid until': 'تک درست',
   'SHA-256 fingerprint': 'SHA-256 فنگر پرنٹ',
+  Intermediate: 'درمیانی',
+  Root: 'روٹ',
+  'Certificate chain': 'سرٹیفکیٹ زنجیر',
+  'Serial number': 'سیریل نمبر',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'سائٹ سے الگ سے پڑھا گیا: براؤزر انجن نہیں بتاتا کہ یہ صفحہ کس سرٹیفکیٹ کے ساتھ آیا۔',
+  'The certificate could not be read.': 'سرٹیفکیٹ پڑھا نہیں جا سکا۔',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'ویب صفحات سائٹس کے پتے کیسے تلاش کرتے ہیں۔ HTTPS کے ذریعے آپ اور فراہم کنندہ کے درمیان کوئی بھی تلاش کو پڑھ یا بدل نہیں سکتا۔',
@@ -2722,8 +2746,6 @@ export const ur: Dictionary = {
   'Part of this could not be undone': 'اس کا کچھ حصہ واپس نہیں ہو سکا',
   'Add images': 'تصاویر شامل کریں',
   'Remove image': 'تصویر ہٹائیں',
-  'Paste, drop or add images (up to 4).':
-    'تصاویر پیسٹ کریں، گھسیٹ کر چھوڑیں یا شامل کریں (زیادہ سے زیادہ 4)۔',
   'That is more than 4 images.': 'یہ 4 تصاویر سے زیادہ ہیں۔',
   'That file could not be used as an image.': 'یہ فائل تصویر کے طور پر استعمال نہیں ہو سکتی۔',
   'Report received': 'رپورٹ موصول ہو گئی',

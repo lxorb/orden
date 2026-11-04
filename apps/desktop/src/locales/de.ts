@@ -2143,6 +2143,8 @@ export const de: Dictionary = {
   'Run scripts in pages': 'Skripte in Seiten ausführen',
   'Change settings': 'Einstellungen ändern',
   'Run commands': 'Befehle ausführen',
+  'Read and change files anywhere on this computer':
+    'Dateien überall auf diesem Computer lesen und ändern',
   Paying: 'Bezahlen',
   'Sending messages': 'Nachrichten senden',
   'Publishing and sharing': 'Veröffentlichen und Teilen',
@@ -2380,6 +2382,21 @@ export const de: Dictionary = {
   'Open on {device} since {time}': 'Offen auf {device} seit {time}',
   'Take over': 'Übernehmen',
   'Take back': 'Zurückholen',
+  // Applications, in developer mode (docs/apps.md)
+  'New application': 'Neue Anwendung',
+  Application: 'Anwendung',
+  'This application’s file is damaged': 'Die Datei dieser Anwendung ist beschädigt',
+  'Waiting for {device}': 'Warte auf {device}',
+  'Running on {device}': 'Läuft auf {device}',
+  'Starting on {device}…': 'Startet auf {device}…',
+  'Not running on {device}': 'Läuft nicht auf {device}',
+  'Its picture is not shown here yet.': 'Ihr Bild wird hier noch nicht gezeigt.',
+  'None of your devices can run an application yet':
+    'Noch keines deiner Geräte kann eine Anwendung ausführen',
+  'Where does it run?': 'Wo läuft sie?',
+  'What does it run?': 'Was führt sie aus?',
+  'A program’s path, and its arguments': 'Pfad eines Programms und seine Argumente',
+  '{device} (this device)': '{device} (dieses Gerät)',
   'Start online machine': 'Online-Maschine starten',
   'Stop online machine': 'Online-Maschine stoppen',
   Resume: 'Fortsetzen',
@@ -2743,6 +2760,13 @@ export const de: Dictionary = {
   'Valid from': 'Gültig ab',
   'Valid until': 'Gültig bis',
   'SHA-256 fingerprint': 'SHA-256-Fingerabdruck',
+  Intermediate: 'Zwischenzertifikat',
+  Root: 'Stammzertifikat',
+  'Certificate chain': 'Zertifikatskette',
+  'Serial number': 'Seriennummer',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'Separat von der Website gelesen: Die Browser-Engine sagt nicht, mit welchem Zertifikat diese Seite kam.',
+  'The certificate could not be read.': 'Das Zertifikat konnte nicht gelesen werden.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'Wie Webseiten die Adressen von Websites nachschlagen. Über HTTPS kann niemand zwischen dir und dem Anbieter die Anfragen lesen oder verändern.',
@@ -2786,8 +2810,6 @@ export const de: Dictionary = {
   'Part of this could not be undone': 'Ein Teil davon konnte nicht rückgängig gemacht werden',
   'Add images': 'Bilder hinzufügen',
   'Remove image': 'Bild entfernen',
-  'Paste, drop or add images (up to 4).':
-    'Bilder einfügen, hineinziehen oder hinzufügen (bis zu 4).',
   'That is more than 4 images.': 'Das sind mehr als 4 Bilder.',
   'That file could not be used as an image.': 'Diese Datei lässt sich nicht als Bild verwenden.',
   'Report received': 'Bericht erhalten',

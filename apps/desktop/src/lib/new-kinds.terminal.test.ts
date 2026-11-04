@@ -52,7 +52,7 @@ describe('a terminal, as a kind a new tab can be', () => {
   test('starts the second line, with Remote and Online after it', () => {
     expect(kindLines(newKinds()).map((line) => line.map((one) => one.kind))).toEqual([
       ['note', 'canvas', 'pages'],
-      ['terminal', 'remote', 'online'],
+      ['terminal', 'remote', 'online', 'application'],
       ['web', 'private'],
     ])
   })

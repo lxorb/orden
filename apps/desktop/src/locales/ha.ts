@@ -2130,6 +2130,8 @@ export const ha: Dictionary = {
   'Run scripts in pages': 'Gudanar da rubutun umarni a shafuka',
   'Change settings': 'Canza saituna',
   'Run commands': 'Gudanar da umarni',
+  'Read and change files anywhere on this computer':
+    'Karanta da canza fayiloli a ko’ina a wannan kwamfuta',
   Paying: 'Biyan kuɗi',
   'Sending messages': 'Aika saƙonni',
   'Publishing and sharing': 'Wallafa da rabawa',
@@ -2366,6 +2368,21 @@ export const ha: Dictionary = {
   'Open on {device} since {time}': 'A buɗe a {device} tun {time}',
   'Take over': 'Karɓe',
   'Take back': 'Mayar',
+  // Applications, in developer mode (docs/apps.md)
+  'New application': 'Sabuwar manhaja',
+  Application: 'Manhaja',
+  'This application’s file is damaged': 'Fayil ɗin wannan manhaja ya lalace',
+  'Waiting for {device}': 'Ana jiran {device}',
+  'Running on {device}': 'Yana gudana a {device}',
+  'Starting on {device}…': 'Yana farawa a {device}…',
+  'Not running on {device}': 'Ba ya gudana a {device}',
+  'Its picture is not shown here yet.': 'Ba a nuna hotonsa a nan ba tukuna.',
+  'None of your devices can run an application yet':
+    'Babu ɗaya daga cikin na’urorinka da zai iya gudanar da manhaja tukuna',
+  'Where does it run?': 'Ina zai gudana?',
+  'What does it run?': 'Me zai gudanar?',
+  'A program’s path, and its arguments': 'Hanyar shiri, da muhawarorinsa',
+  '{device} (this device)': '{device} (wannan na’urar)',
   'Start online machine': 'Kunna na’urar kan layi',
   'Stop online machine': 'Dakatar da na’urar kan layi',
   Resume: 'Ci gaba',
@@ -2724,6 +2741,13 @@ export const ha: Dictionary = {
   'Valid from': 'Yana aiki daga',
   'Valid until': 'Yana aiki har zuwa',
   'SHA-256 fingerprint': 'Hoton yatsa na SHA-256',
+  Intermediate: 'Na tsakiya',
+  Root: 'Tushe',
+  'Certificate chain': 'Sarkar takardar shaida',
+  'Serial number': 'Lambar serial',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'An karanta daga shafin daban: injin burauza bai faɗi da wace takardar shaida wannan shafi ya zo ba.',
+  'The certificate could not be read.': 'Ba a iya karanta takardar shaidar ba.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'Yadda shafukan yanar gizo ke neman adiresoshin shafuka. Ta HTTPS, babu wanda ke tsakaninka da mai bayarwa da zai iya karanta ko canza binciken.',
@@ -2766,7 +2790,6 @@ export const ha: Dictionary = {
   'Part of this could not be undone': 'Ba a iya soke wani ɓangare na wannan ba',
   'Add images': 'Ƙara hotuna',
   'Remove image': 'Cire hoton',
-  'Paste, drop or add images (up to 4).': 'Liƙa, ja ka sauke ko ƙara hotuna (har zuwa 4).',
   'That is more than 4 images.': 'Hotunan sun wuce 4.',
   'That file could not be used as an image.':
     'Ba za a iya amfani da wannan fayil a matsayin hoto ba.',

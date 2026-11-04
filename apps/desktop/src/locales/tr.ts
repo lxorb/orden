@@ -2111,6 +2111,8 @@ export const tr: Dictionary = {
   'Run scripts in pages': 'Sayfalarda betik çalıştırmak',
   'Change settings': 'Ayarları değiştirmek',
   'Run commands': 'Komut çalıştırmak',
+  'Read and change files anywhere on this computer':
+    'Bu bilgisayarın her yerindeki dosyaları okuma ve değiştirme',
   Paying: 'Ödeme',
   'Sending messages': 'Mesaj gönderme',
   'Publishing and sharing': 'Yayımlama ve paylaşma',
@@ -2347,6 +2349,21 @@ export const tr: Dictionary = {
   'Open on {device} since {time}': '{time} saatinden beri {device} üzerinde açık',
   'Take over': 'Devral',
   'Take back': 'Geri al',
+  // Applications, in developer mode (docs/apps.md)
+  'New application': 'Yeni uygulama',
+  Application: 'Uygulama',
+  'This application’s file is damaged': 'Bu uygulamanın dosyası bozuk',
+  'Waiting for {device}': '{device} bekleniyor',
+  'Running on {device}': '{device} üzerinde çalışıyor',
+  'Starting on {device}…': '{device} üzerinde başlatılıyor…',
+  'Not running on {device}': '{device} üzerinde çalışmıyor',
+  'Its picture is not shown here yet.': 'Görüntüsü henüz burada gösterilmiyor.',
+  'None of your devices can run an application yet':
+    'Cihazlarınızın hiçbiri henüz uygulama çalıştıramıyor',
+  'Where does it run?': 'Nerede çalışsın?',
+  'What does it run?': 'Neyi çalıştırsın?',
+  'A program’s path, and its arguments': 'Bir programın yolu ve argümanları',
+  '{device} (this device)': '{device} (bu cihaz)',
   'Start online machine': 'Çevrimiçi makineyi başlat',
   'Stop online machine': 'Çevrimiçi makineyi durdur',
   Resume: 'Devam et',
@@ -2701,6 +2718,13 @@ export const tr: Dictionary = {
   'Valid from': 'Geçerlilik başlangıcı',
   'Valid until': 'Geçerlilik bitişi',
   'SHA-256 fingerprint': 'SHA-256 parmak izi',
+  Intermediate: 'Ara',
+  Root: 'Kök',
+  'Certificate chain': 'Sertifika zinciri',
+  'Serial number': 'Seri numarası',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'Siteden ayrıca okundu: tarayıcı motoru bu sayfanın hangi sertifikayla geldiğini söylemiyor.',
+  'The certificate could not be read.': 'Sertifika okunamadı.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'Web sayfalarının sitelerin adreslerini nasıl bulduğu. HTTPS üzerinden, sizinle sağlayıcı arasındaki hiç kimse sorguları okuyamaz ya da değiştiremez.',
@@ -2743,8 +2767,6 @@ export const tr: Dictionary = {
   'Part of this could not be undone': 'Bunun bir kısmı geri alınamadı',
   'Add images': 'Görsel ekle',
   'Remove image': 'Görseli kaldır',
-  'Paste, drop or add images (up to 4).':
-    'Görsel yapıştırın, sürükleyin ya da ekleyin (en fazla 4).',
   'That is more than 4 images.': 'Bu, 4 görselden fazla.',
   'That file could not be used as an image.': 'Bu dosya görsel olarak kullanılamıyor.',
   'Report received': 'Rapor alındı',

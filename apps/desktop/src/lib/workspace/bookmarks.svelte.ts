@@ -12,6 +12,7 @@
 import { movedTo, relativeTo, samePath, within } from '../space-paths'
 import { type Folded, type Folding, meet, readSpaces, without } from '../records'
 import { isRecord, isString, keepJson } from '../stored'
+import { type EntryIds, entryIds } from './entry-ids'
 import { carried, moving } from './file-ops'
 
 const STORAGE_KEY = 'nib:bookmarks'
@@ -60,7 +61,16 @@ export interface Bookmark {
    *  after its own filter would be a row called `tag:work path:Notes`. See
    *  workspace/graph-settings.svelte.ts, which is what reads it. */
   view?: string
+  /** The id of the entry it points at, as sync knows it (#1068): what finds the note or
+   *  folder again where the path names nothing any more, because it was moved or
+   *  renamed somewhere this list did not hear of. Absent where sync has no id for it -
+   *  signed out, or not handed over yet - and for every kind that points at no file. An
+   *  older build drops it when it reads the list, and so does an older account. */
+  id?: string
 }
+
+/** The longest id a bookmark carries: an entry id is a UUID. */
+const LONGEST_ID = 64
 
 /** How long the settings of a bookmarked view may be, as JSON. A filter, six
  *  colour groups and a handful of numbers; the service holds a space to the same
@@ -76,6 +86,11 @@ export function isBookmark(value: unknown): value is Bookmark {
     (value.parent === undefined || isString(value.parent)) &&
     (value.view === undefined || (isString(value.view) && value.view.length <= LONGEST_VIEW))
   )
+}
+
+/** An id a bookmark may carry; anything else is left off rather than costing the row. */
+function idIn(value: unknown): string | null {
+  return isString(value) && value.length > 0 && value.length <= LONGEST_ID ? value : null
 }
 
 /** A name no group in this space has: what a group is filed under, and what its
@@ -104,14 +119,52 @@ export function bookmarkList(value: unknown): Bookmark[] {
 
   return value
     .filter(isBookmark)
-    .map((one) => ({
-      kind: one.kind,
-      path: one.path,
-      text: one.text,
-      ...(one.parent ? { parent: one.parent } : {}),
-      ...(one.view ? { view: one.view } : {}),
-    }))
+    .map((one) => {
+      const id = POINTS_AT_A_FILE.has(one.kind) ? idIn(one.id) : null
+      return {
+        kind: one.kind,
+        path: one.path,
+        text: one.text,
+        ...(one.parent ? { parent: one.parent } : {}),
+        ...(one.view ? { view: one.view } : {}),
+        ...(id ? { id } : {}),
+      }
+    })
     .slice(0, MOST_BOOKMARKS)
+}
+
+/** A list with each bookmark of a file where sync says that file is (#1068): one whose
+ *  path names nothing in the space while its id names an entry somewhere else is moved
+ *  there, and one with no id is given the id of what its path names. The path is what
+ *  is read where sync knows neither, so a list from an older build, an older account or
+ *  a space signed out reads exactly as it did. One that lands on a bookmark already
+ *  held is dropped, as a move here drops it. `moves` false only fills in ids. */
+export function located(
+  root: string,
+  list: readonly Bookmark[],
+  ids: EntryIds,
+  { moves = true }: { moves?: boolean } = {},
+): Bookmark[] {
+  const found = list.map((mark) => {
+    if (!POINTS_AT_A_FILE.has(mark.kind)) return mark
+
+    const file = fileOf(mark)
+    const here = ids.idOf(root, file)
+    if (here !== null) return here === mark.id ? mark : { ...mark, id: here }
+    if (!mark.id || !moves) return mark
+
+    const there = ids.pathOf(root, mark.id)
+    return there === null || there === file
+      ? mark
+      : { ...mark, path: there + mark.path.slice(file.length) }
+  })
+  // One moved onto a bookmark already held is that bookmark twice; the first stays.
+  return found.filter((one, at) => found.findIndex((other) => sameBookmark(one, other)) === at)
+}
+
+/** Whether two lists say the same down to the ids, which `sameList` does not ask. */
+function sameIds(one: readonly Bookmark[], other: readonly Bookmark[]): boolean {
+  return one.length === other.length && one.every((mark, at) => mark.id === other[at]?.id)
 }
 
 /** A file at the top of the list, which is an essential's tile; one in a group is a
@@ -170,6 +223,12 @@ const LISTS: Folding<Bookmark[]> = { fold: mergeBookmarks, same: sameList }
 
 export class Bookmarks {
   private spaces = $state<Record<string, Kept>>(read())
+
+  /** Sync's ids, which a list is located by as it is read from the account and as it
+   *  is written; see `located` and entry-ids.ts. */
+  private get ids(): EntryIds | null {
+    return entryIds()
+  }
 
   /** What the last change is still offering to the account; see `put`. The offer
    *  outlives the call that caused it - the row answers in the frame the click
@@ -444,10 +503,22 @@ export class Bookmarks {
   adopt(root: string, theirs: Bookmark[], accountId: string): Bookmark[] | null {
     // Read rather than trusted: the service is deployed on its own, so a build
     // of it older than this app answers with no bookmarks at all.
-    const account = bookmarkList(theirs)
+    const said = bookmarkList(theirs)
+    // Where the account's paths name nothing here and sync knows where their ids went,
+    // the list is read with them there. Only read so: the device that moved the file is
+    // the one that writes the list again, so two devices do not answer each other's
+    // pull.
+    const account = this.ids ? located(root, said, this.ids) : said
     const held = this.spaces[root]
     const met = meet(held, accountId, held?.list ?? [], account, LISTS)
-    if (!met) return null
+    if (!met) {
+      // The same list, perhaps with ids this copy had not got yet.
+      if (held && !sameIds(held.list, account)) {
+        this.spaces = { ...this.spaces, [root]: { ...held, list: account } }
+        this.write()
+      }
+      return null
+    }
 
     this.spaces = { ...this.spaces, [root]: { list: met.value, account: accountId } }
     this.write()
@@ -455,7 +526,10 @@ export class Bookmarks {
     return met.tell ? met.value : null
   }
 
-  put(root: string, list: Bookmark[]) {
+  put(root: string, given: Bookmark[]) {
+    // Ids only: a list written here says where its bookmarks are, and a move made here
+    // reaches it while sync may still have the file where it was.
+    const list = this.ids ? located(root, given, this.ids, { moves: false }) : given
     this.spaces = { ...this.spaces, [root]: { list, account: this.spaces[root]?.account ?? null } }
     this.write()
 

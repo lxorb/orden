@@ -2105,6 +2105,8 @@ export const pa: Dictionary = {
   'Run scripts in pages': 'ਪੰਨਿਆਂ ਵਿੱਚ ਸਕ੍ਰਿਪਟ ਚਲਾਉਣਾ',
   'Change settings': 'ਸੈਟਿੰਗਾਂ ਬਦਲਣਾ',
   'Run commands': 'ਕਮਾਂਡਾਂ ਚਲਾਉਣਾ',
+  'Read and change files anywhere on this computer':
+    'ਇਸ ਕੰਪਿਊਟਰ ਉੱਤੇ ਕਿਤੇ ਵੀ ਫ਼ਾਈਲਾਂ ਪੜ੍ਹੋ ਅਤੇ ਬਦਲੋ',
   Paying: 'ਭੁਗਤਾਨ',
   'Sending messages': 'ਸੁਨੇਹੇ ਭੇਜਣਾ',
   'Publishing and sharing': 'ਪ੍ਰਕਾਸ਼ਿਤ ਅਤੇ ਸਾਂਝਾ ਕਰਨਾ',
@@ -2341,6 +2343,21 @@ export const pa: Dictionary = {
   'Open on {device} since {time}': '{time} ਤੋਂ {device} ’ਤੇ ਖੁੱਲ੍ਹਾ',
   'Take over': 'ਸੰਭਾਲੋ',
   'Take back': 'ਵਾਪਸ ਲਓ',
+  // Applications, in developer mode (docs/apps.md)
+  'New application': 'ਨਵੀਂ ਐਪਲੀਕੇਸ਼ਨ',
+  Application: 'ਐਪਲੀਕੇਸ਼ਨ',
+  'This application’s file is damaged': 'ਇਸ ਐਪਲੀਕੇਸ਼ਨ ਦੀ ਫ਼ਾਈਲ ਖ਼ਰਾਬ ਹੈ',
+  'Waiting for {device}': '{device} ਦੀ ਉਡੀਕ',
+  'Running on {device}': '{device} ’ਤੇ ਚੱਲ ਰਹੀ ਹੈ',
+  'Starting on {device}…': '{device} ’ਤੇ ਸ਼ੁਰੂ ਹੋ ਰਹੀ ਹੈ…',
+  'Not running on {device}': '{device} ’ਤੇ ਨਹੀਂ ਚੱਲ ਰਹੀ',
+  'Its picture is not shown here yet.': 'ਇਸਦੀ ਤਸਵੀਰ ਅਜੇ ਇੱਥੇ ਨਹੀਂ ਦਿਖਦੀ।',
+  'None of your devices can run an application yet':
+    'ਤੁਹਾਡਾ ਕੋਈ ਵੀ ਡਿਵਾਈਸ ਅਜੇ ਐਪਲੀਕੇਸ਼ਨ ਨਹੀਂ ਚਲਾ ਸਕਦਾ',
+  'Where does it run?': 'ਇਹ ਕਿੱਥੇ ਚੱਲੇ?',
+  'What does it run?': 'ਇਹ ਕੀ ਚਲਾਏ?',
+  'A program’s path, and its arguments': 'ਕਿਸੇ ਪ੍ਰੋਗਰਾਮ ਦਾ ਪਾਥ, ਅਤੇ ਉਸਦੇ ਆਰਗੂਮੈਂਟ',
+  '{device} (this device)': '{device} (ਇਹ ਡਿਵਾਈਸ)',
   'Start online machine': 'ਔਨਲਾਈਨ ਮਸ਼ੀਨ ਸ਼ੁਰੂ ਕਰੋ',
   'Stop online machine': 'ਔਨਲਾਈਨ ਮਸ਼ੀਨ ਰੋਕੋ',
   Resume: 'ਮੁੜ ਸ਼ੁਰੂ ਕਰੋ',
@@ -2694,6 +2711,13 @@ export const pa: Dictionary = {
   'Valid from': 'ਤੋਂ ਵੈਧ',
   'Valid until': 'ਤੱਕ ਵੈਧ',
   'SHA-256 fingerprint': 'SHA-256 ਫਿੰਗਰਪ੍ਰਿੰਟ',
+  Intermediate: 'ਵਿਚਕਾਰਲਾ',
+  Root: 'ਰੂਟ',
+  'Certificate chain': 'ਸਰਟੀਫਿਕੇਟ ਲੜੀ',
+  'Serial number': 'ਸੀਰੀਅਲ ਨੰਬਰ',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'ਸਾਈਟ ਤੋਂ ਵੱਖਰੇ ਤੌਰ ਤੇ ਪੜ੍ਹਿਆ: ਬ੍ਰਾਊਜ਼ਰ ਇੰਜਣ ਨਹੀਂ ਦੱਸਦਾ ਕਿ ਇਹ ਪੰਨਾ ਕਿਸ ਸਰਟੀਫਿਕੇਟ ਨਾਲ ਆਇਆ।',
+  'The certificate could not be read.': 'ਸਰਟੀਫਿਕੇਟ ਪੜ੍ਹਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'ਵੈੱਬ ਪੰਨੇ ਸਾਈਟਾਂ ਦੇ ਪਤੇ ਕਿਵੇਂ ਲੱਭਦੇ ਹਨ। HTTPS ਰਾਹੀਂ ਤੁਹਾਡੇ ਅਤੇ ਪ੍ਰਦਾਤਾ ਵਿਚਕਾਰ ਕੋਈ ਵੀ ਖੋਜਾਂ ਨੂੰ ਪੜ੍ਹ ਜਾਂ ਬਦਲ ਨਹੀਂ ਸਕਦਾ।',
@@ -2736,8 +2760,6 @@ export const pa: Dictionary = {
   'Part of this could not be undone': 'ਇਸਦਾ ਕੁਝ ਹਿੱਸਾ ਵਾਪਸ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ',
   'Add images': 'ਤਸਵੀਰਾਂ ਜੋੜੋ',
   'Remove image': 'ਤਸਵੀਰ ਹਟਾਓ',
-  'Paste, drop or add images (up to 4).':
-    'ਤਸਵੀਰਾਂ ਪੇਸਟ ਕਰੋ, ਖਿੱਚ ਕੇ ਛੱਡੋ ਜਾਂ ਜੋੜੋ (ਵੱਧ ਤੋਂ ਵੱਧ 4)।',
   'That is more than 4 images.': 'ਇਹ 4 ਤੋਂ ਵੱਧ ਤਸਵੀਰਾਂ ਹਨ।',
   'That file could not be used as an image.': 'ਇਸ ਫ਼ਾਈਲ ਨੂੰ ਤਸਵੀਰ ਵਜੋਂ ਨਹੀਂ ਵਰਤਿਆ ਜਾ ਸਕਦਾ।',
   'Report received': 'ਰਿਪੋਰਟ ਮਿਲ ਗਈ',

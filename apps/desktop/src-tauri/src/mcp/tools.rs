@@ -96,6 +96,8 @@ pub fn reaches(grant: &Grant, name: &str) -> bool {
                 && (grant.asks_nothing() || !grant.scripts.is_empty())
         }
         name if name.starts_with("browser_") => browsing,
+        // Files anywhere outside the spaces (#1078).
+        "files" => grant.holds(Scope::Files),
         name => AGENT_VERBS
             .iter()
             .find(|(verb, _)| *verb == name)
@@ -463,7 +465,11 @@ mod tests {
     /// (Emil: "claude can create subagents of openai models"): two tools, about 1 000
     /// characters, listed only to a grant holding agents. Raised to 35 000 on 2026-10-18
     /// for a task's start date and deadline (#371): `add_task` names both marks, 56
-    /// characters, from a table at 34 499.
+    /// characters, from a table at 34 499. Raised to 35 900 on 2026-11-04 for files
+    /// anywhere (#1078: an agent does everything a VS Code extension can): one tool,
+    /// `files`, 829 characters, listed only to a grant holding files, from a table at
+    /// 34 968. The other rows were read for what they could give back first: each says
+    /// what its model needs and nothing twice, so the room is the new tool's own.
     #[test]
     fn the_table_stays_small() {
         let mut sizes = BTreeMap::new();
@@ -472,7 +478,7 @@ mod tests {
         }
         let total: usize = sizes.values().sum();
         assert!(
-            total < 35_000,
+            total < 35_900,
             "the tools are {total} characters: {sizes:?}"
         );
         for (name, size) in &sizes {

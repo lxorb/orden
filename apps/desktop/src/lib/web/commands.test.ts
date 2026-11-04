@@ -635,6 +635,7 @@ describe('the tree', () => {
       view: 'Bugs.base',
       chat: 'Team.chat',
       term: 'Build.term',
+      application: 'GIMP.application',
     }
     const build = { evenBuild: false, isPlugin: false }
     for (const [kind, name] of Object.entries(one)) {

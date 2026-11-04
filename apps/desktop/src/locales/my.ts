@@ -2084,6 +2084,8 @@ export const my: Dictionary = {
   'Run scripts in pages': 'စာမျက်နှာများတွင် စခရစ် လုပ်ဆောင်ရန်',
   'Change settings': 'ဆက်တင်များ ပြောင်းရန်',
   'Run commands': 'အမိန့်များ လုပ်ဆောင်ရန်',
+  'Read and change files anywhere on this computer':
+    'ဤကွန်ပျူတာပေါ်ရှိ မည်သည့်နေရာမှ ဖိုင်များကိုမဆို ဖတ်ပြီး ပြောင်းရန်',
   Paying: 'ငွေပေးချေခြင်း',
   'Sending messages': 'မက်ဆေ့ချ် ပို့ခြင်း',
   'Publishing and sharing': 'ထုတ်ဝေခြင်းနှင့် မျှဝေခြင်း',
@@ -2315,6 +2317,21 @@ export const my: Dictionary = {
   'Open on {device} since {time}': '{time} မှစ၍ {device} တွင် ဖွင့်ထားသည်',
   'Take over': 'လွှဲယူရန်',
   'Take back': 'ပြန်ယူရန်',
+  // Applications, in developer mode (docs/apps.md)
+  'New application': 'အပလီကေးရှင်းအသစ်',
+  Application: 'အပလီကေးရှင်း',
+  'This application’s file is damaged': 'ဤအပလီကေးရှင်း၏ ဖိုင် ပျက်စီးနေသည်',
+  'Waiting for {device}': '{device} ကို စောင့်နေသည်',
+  'Running on {device}': '{device} တွင် လည်ပတ်နေသည်',
+  'Starting on {device}…': '{device} တွင် စတင်နေသည်…',
+  'Not running on {device}': '{device} တွင် မလည်ပတ်ပါ',
+  'Its picture is not shown here yet.': '၎င်း၏ ပုံကို ဤနေရာတွင် မပြသေးပါ။',
+  'None of your devices can run an application yet':
+    'သင့်စက်များထဲမှ မည်သည့်စက်မျှ အပလီကေးရှင်း မလည်ပတ်နိုင်သေးပါ',
+  'Where does it run?': 'ဘယ်မှာ လည်ပတ်မလဲ?',
+  'What does it run?': 'ဘာကို လည်ပတ်မလဲ?',
+  'A program’s path, and its arguments': 'ပရိုဂရမ်၏ လမ်းကြောင်းနှင့် ၎င်း၏ argument များ',
+  '{device} (this device)': '{device} (ဤစက်)',
   'Start online machine': 'အွန်လိုင်း စက်ကို စတင်ရန်',
   'Stop online machine': 'အွန်လိုင်း စက်ကို ရပ်ရန်',
   Resume: 'ဆက်လုပ်ရန်',
@@ -2671,6 +2688,13 @@ export const my: Dictionary = {
   'Valid from': 'စတင်အကျုံးဝင်သည့်နေ့',
   'Valid until': 'ကုန်ဆုံးသည့်နေ့',
   'SHA-256 fingerprint': 'SHA-256 လက်ဗွေ',
+  Intermediate: 'အလယ်အလတ်',
+  Root: 'အမြစ်',
+  'Certificate chain': 'လက်မှတ် ကွင်းဆက်',
+  'Serial number': 'အမှတ်စဉ်',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'ဆိုက်မှ သီးခြား ဖတ်ထားသည်- ဤစာမျက်နှာသည် မည်သည့်လက်မှတ်ဖြင့် ရောက်လာသည်ကို ဘရောက်ဇာ အင်ဂျင်က မပြောပါ။',
+  'The certificate could not be read.': 'လက်မှတ်ကို ဖတ်၍ မရပါ။',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'ဝဘ်စာမျက်နှာများက ဆိုက်လိပ်စာများကို ရှာပုံ။ HTTPS ဖြင့်ဆိုလျှင် သင်နှင့် ပံ့ပိုးသူကြားရှိ မည်သူမျှ ရှာဖွေမှုများကို မဖတ်နိုင်၊ မပြောင်းနိုင်ပါ။',
@@ -2714,8 +2738,6 @@ export const my: Dictionary = {
   'Part of this could not be undone': 'ဤအရာ၏ တစ်စိတ်တစ်ပိုင်းကို ပြန်ဖျက်၍ မရပါ',
   'Add images': 'ပုံများ ထည့်ရန်',
   'Remove image': 'ပုံကို ဖယ်ရန်',
-  'Paste, drop or add images (up to 4).':
-    'ပုံများကို ကူးထည့်ပါ၊ ဆွဲချပါ သို့မဟုတ် ထည့်ပါ (အများဆုံး 4 ပုံ)။',
   'That is more than 4 images.': 'ပုံ 4 ပုံထက် ပိုနေသည်။',
   'That file could not be used as an image.': 'ဤဖိုင်ကို ပုံအဖြစ် အသုံးမပြုနိုင်ပါ။',
   'Report received': 'အစီရင်ခံစာ ရရှိပါပြီ',

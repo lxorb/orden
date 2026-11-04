@@ -19,6 +19,7 @@ describe('the mark a file wears', () => {
     expect(fileMark('shot.png')).toBe('picture')
     // An online terminal's file, as its tab is (issue 1055).
     expect(fileMark('Build.term')).toBe('terminal')
+    expect(fileMark('GIMP.application')).toBe('application')
   })
 
   test('every extension a picture is written in', () => {
@@ -105,6 +106,7 @@ describe('the marks a row wears', () => {
     'remote',
     'base',
     'chat',
+    'application',
   ]
 
   /** The folder among them is no kind of row: it is what a note that says nothing yet
@@ -129,14 +131,16 @@ describe('the marks a row wears', () => {
    *  need not be the same array; see file-mark.ts.
    *
    *  All but the canvas, which is the library's `workflow` on the family's grid: the
-   *  drawing is Lucide's and the size is the set's. What that is and why is below. And
-   *  the PDF, which is Lucide's page with its name on it; also below. */
+   *  drawing is Lucide's and the size is the set's. What that is and why is below. The
+   *  application's window, `panel-top` on the same grid for the same reason. And the PDF,
+   *  which is Lucide's page with its name on it; also below. */
   test('all of them come from the icon library rather than being drawn here', () => {
     const library = Object.values(lucide)
       .filter(Array.isArray)
       .map((one) => JSON.stringify(one))
 
-    for (const name of MARK_NAMES.filter((one) => one !== 'canvas' && one !== 'pdf')) {
+    const resized = ['canvas', 'application', 'pdf']
+    for (const name of MARK_NAMES.filter((one) => !resized.includes(one))) {
       expect(library, name).toContain(JSON.stringify(MARKS[name]))
     }
   })
@@ -165,6 +169,16 @@ describe('the marks a row wears', () => {
       // A quarter of the card, which is the corner Lucide drew on a card of eight.
       expect(card?.[1].rx).toBe('2.25')
     }
+  })
+
+  /** An application's window, which Lucide draws to eighteen units as it does the canvas:
+   *  the same shapes, as tall as the rest of the set, so its button in an empty pane is
+   *  the height of the note's beside it (test/e2e/new-tabs.py measures them drawn). */
+  test("the application's window is Lucide's panel-top on the grid the rest of the set fills", () => {
+    const [frame, bar] = MARKS.application
+    expect(MARKS.application.map(([tag]) => tag)).toEqual(['rect', 'path'])
+    expect(frame?.[1]).toMatchObject({ x: '3', y: '2', width: '18', height: '20', rx: '2' })
+    expect(bar?.[1].d).toBe('M3 9h18')
   })
 
   /** #676: a PDF says it is one. The page is Lucide's own - the same outline as `file`

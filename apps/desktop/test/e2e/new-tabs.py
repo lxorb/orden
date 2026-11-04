@@ -245,8 +245,12 @@ def heading_key(page) -> None:
 
 
 # The kinds a browser build offers, line by line: no shell of its own, so the middle line
-# is the online terminal alone, and no private tab.
-LINES = [["New note", "New canvas", "New page note"], ["Online terminal"], ["New web note"]]
+# is the online terminal and an application (docs/apps.md), and no private tab.
+LINES = [
+    ["New note", "New canvas", "New page note"],
+    ["Online terminal", "New application"],
+    ["New web note"],
+]
 
 
 def chooser(page) -> None:
@@ -271,7 +275,7 @@ def chooser(page) -> None:
         wrong(f"the kinds are not in Emil's lines: {new['lines']}")
     else:
         say(f"the lines              -> {new['lines']}")
-    if new["letters"] != ["N", "C", "P", "O", "W"]:
+    if new["letters"] != ["N", "C", "P", "O", "A", "W"]:
         wrong(f"the cards do not wear their letters: {new['letters']}")
     # Issue #241: called what it is, in the strip and on the window, as a browser's is.
     settles(page, f"() => ({CALLED})().title === 'New tab'")

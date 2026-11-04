@@ -148,6 +148,89 @@ describe('entries of a map', () => {
   })
 })
 
+describe('a bookmark that says which entry it points at (#1068)', () => {
+  test('follows a rename and a move on another device, and keeps its id through a v1 write', async () => {
+    await prepare()
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token: laptop,
+      body: { path: 'Work/Plan.md', content: 'plan' },
+    })
+    const note = env.db
+      .prepare("select id from notes where space_id = ? and path = 'Work/Plan.md'")
+      .get(space) as { id: string }
+
+    await call(env, `/v1/spaces/${space}/bookmarks`, {
+      method: 'PUT',
+      token: laptop,
+      body: {
+        bookmarks: [
+          { kind: 'note', path: 'Work/Plan.md', text: '', id: note.id },
+          { kind: 'block', path: 'Work/Plan.md#^a1', text: 'a block', id: note.id },
+          { kind: 'search', path: '', text: 'plan' },
+        ],
+      },
+    })
+
+    await call(env, `/v2/spaces/${space}/ops`, {
+      token: phone,
+      body: { ops: [{ op: 'r1', t: 'rename', id: note.id, name: 'Goals.md', seen: 0 }] },
+    })
+    expect((await listed()).bookmarks.map((one) => one.path)).toEqual([
+      'Work/Goals.md',
+      'Work/Goals.md#^a1',
+      '',
+    ])
+
+    // A v1 app writes back what it read, with no ids: the entries keep theirs.
+    await call(env, `/v1/spaces/${space}/bookmarks`, {
+      method: 'PUT',
+      token: phone,
+      body: {
+        bookmarks: [
+          { kind: 'note', path: 'Work/Goals.md', text: '' },
+          { kind: 'block', path: 'Work/Goals.md#^a1', text: 'a block' },
+          { kind: 'search', path: '', text: 'plan' },
+        ],
+      },
+    })
+    const kept = (await entries()).entries.filter(
+      (one) => one.map === 'bookmark' && one.value !== null,
+    )
+    expect(kept.map((one) => (one.value as { id?: string }).id)).toEqual(
+      expect.arrayContaining([note.id, note.id]),
+    )
+
+    await call(env, `/v2/spaces/${space}/ops`, {
+      token: phone,
+      body: { ops: [{ op: 'r2', t: 'move', id: note.id, parent: null, seen: 0 }] },
+    })
+    expect((await listed()).bookmarks.map((one) => one.path)).toEqual([
+      'Goals.md',
+      'Goals.md#^a1',
+      '',
+    ])
+  })
+
+  test('with an id that is no entry, or none, keeps the path it was written with', async () => {
+    await prepare()
+    await call(env, `/v1/spaces/${space}/bookmarks`, {
+      method: 'PUT',
+      token: laptop,
+      body: {
+        bookmarks: [
+          { kind: 'note', path: 'a.md', text: '', id: 'nothing-here' },
+          { kind: 'note', path: 'b.md', text: '', id: 7 },
+        ],
+      },
+    })
+    const { bookmarks } = await listed()
+    expect(bookmarks).toEqual([
+      { kind: 'note', path: 'a.md', text: '', id: 'nothing-here' },
+      { kind: 'note', path: 'b.md', text: '' },
+    ])
+  })
+})
+
 describe('a v1 app writing a whole value', () => {
   test('is read as every entry changed', async () => {
     await prepare()

@@ -2133,6 +2133,8 @@ export const ta: Dictionary = {
   'Run scripts in pages': 'பக்கங்களில் ஸ்கிரிப்ட் இயக்குதல்',
   'Change settings': 'அமைப்புகளை மாற்றுதல்',
   'Run commands': 'கட்டளைகளை இயக்குதல்',
+  'Read and change files anywhere on this computer':
+    'இந்தக் கணினியில் எங்கும் உள்ள கோப்புகளைப் படித்து மாற்றுதல்',
   Paying: 'பணம் செலுத்துதல்',
   'Sending messages': 'செய்திகளை அனுப்புதல்',
   'Publishing and sharing': 'வெளியிடுதல், பகிர்தல்',
@@ -2370,6 +2372,21 @@ export const ta: Dictionary = {
   'Open on {device} since {time}': '{time} முதல் {device} இல் திறந்துள்ளது',
   'Take over': 'எடுத்துக்கொள்',
   'Take back': 'திரும்பப் பெறு',
+  // Applications, in developer mode (docs/apps.md)
+  'New application': 'புதிய பயன்பாடு',
+  Application: 'பயன்பாடு',
+  'This application’s file is damaged': 'இந்தப் பயன்பாட்டின் கோப்பு சேதமடைந்துள்ளது',
+  'Waiting for {device}': '{device}க்காகக் காத்திருக்கிறது',
+  'Running on {device}': '{device} இல் இயங்குகிறது',
+  'Starting on {device}…': '{device} இல் தொடங்குகிறது…',
+  'Not running on {device}': '{device} இல் இயங்கவில்லை',
+  'Its picture is not shown here yet.': 'அதன் படம் இன்னும் இங்கே காட்டப்படவில்லை.',
+  'None of your devices can run an application yet':
+    'உங்கள் எந்தச் சாதனமும் இன்னும் பயன்பாட்டை இயக்க முடியாது',
+  'Where does it run?': 'இது எங்கே இயங்கும்?',
+  'What does it run?': 'இது எதை இயக்கும்?',
+  'A program’s path, and its arguments': 'ஒரு நிரலின் பாதை, அதன் அளவுருக்கள்',
+  '{device} (this device)': '{device} (இந்தச் சாதனம்)',
   'Start online machine': 'ஆன்லைன் இயந்திரத்தைத் தொடங்கு',
   'Stop online machine': 'ஆன்லைன் இயந்திரத்தை நிறுத்து',
   Resume: 'தொடர்',
@@ -2733,6 +2750,13 @@ export const ta: Dictionary = {
   'Valid from': 'செல்லுபடி தொடக்கம்',
   'Valid until': 'செல்லுபடி முடிவு',
   'SHA-256 fingerprint': 'SHA-256 கைரேகை',
+  Intermediate: 'இடைநிலை',
+  Root: 'ரூட்',
+  'Certificate chain': 'சான்றிதழ் சங்கிலி',
+  'Serial number': 'வரிசை எண்',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'தளத்திலிருந்து தனியாகப் படிக்கப்பட்டது: இந்தப் பக்கம் எந்தச் சான்றிதழுடன் வந்தது என்பதை உலாவி இயந்திரம் சொல்வதில்லை.',
+  'The certificate could not be read.': 'சான்றிதழைப் படிக்க முடியவில்லை.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'இணையப் பக்கங்கள் தளங்களின் முகவரியை எப்படித் தேடுகின்றன. HTTPS வழியாக உங்களுக்கும் வழங்குநருக்கும் இடையில் யாரும் தேடல்களைப் படிக்கவோ மாற்றவோ முடியாது.',
@@ -2776,8 +2800,6 @@ export const ta: Dictionary = {
   'Part of this could not be undone': 'இதன் ஒரு பகுதியைச் செயல்தவிர்க்க முடியவில்லை',
   'Add images': 'படங்களைச் சேர்',
   'Remove image': 'படத்தை அகற்று',
-  'Paste, drop or add images (up to 4).':
-    'படங்களை ஒட்டவும், இழுத்து விடவும் அல்லது சேர்க்கவும் (அதிகபட்சம் 4).',
   'That is more than 4 images.': 'இவை 4 படங்களுக்கு மேல்.',
   'That file could not be used as an image.': 'இந்தக் கோப்பைப் படமாகப் பயன்படுத்த முடியாது.',
   'Report received': 'அறிக்கை பெறப்பட்டது',

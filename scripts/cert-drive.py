@@ -5,9 +5,11 @@ seen.
 
 Run with Orden up on scripts/wayland-launch.sh's site for it (CERT=1), a site served
 over https. The popover behind the mark at the left of the address field is opened, its
-Certificate pressed, and what it says has to be the certificate the site serves - whom
-it was issued to and by, as a TLS connection made here reads them - with a SHA-256
-fingerprint, and the connection has to be said to be secure.
+"Connection is secure" line pressed, and what it shows has to be the certificate the
+site serves - whom it was issued to and by, as a TLS connection made here reads them -
+with a SHA-256 fingerprint, and the chain it was trusted through: the site's first,
+then the one that issued it, up to a root, read from the page's own connection and not
+separately.
 
     python3 scripts/cert-drive.py <out folder> <host>
 """
@@ -91,16 +93,25 @@ said = run("document.querySelector('.site.nib-bubble')?.innerText ?? ''") or ""
 if "Connection is secure" not in said:
     fail(f"the popover does not say the connection is secure: {said!r}")
 
-pressed = None
+# The line itself is what is pressed, as in a browser.
+pressed = run("(() => { const one = document.querySelector('.site.nib-bubble button.how'); if (!one) return false; one.click(); return true })()")
+if not pressed:
+    fail("the line saying the connection is secure cannot be pressed")
+chain = []
 for _ in range(20):
-    pressed = run("(() => { const one = document.querySelector('.site.nib-bubble button.certificate'); if (!one) return false; one.click(); return true })()")
-    if pressed:
+    chain = run("[...document.querySelectorAll('.site.nib-bubble .chain button')].map((one) => [one.dataset.role, one.querySelector('.name')?.innerText ?? ''])") or []
+    if chain:
         break
     time.sleep(0.5)
-if not pressed:
-    fail("the popover offers no certificate")
+if not chain:
+    fail("pressing the line shows no chain of certificates")
 time.sleep(1)
 subprocess.run(["grim", str(OUT / "certificate.png")], check=False)
+print("the popover's chain:")
+for role, name in chain:
+    print(f"  {role}: {name}")
+if run("!!document.querySelector('.site.nib-bubble .certificate .note')"):
+    fail("the chain was read separately, not from the page's own connection")
 
 details = run("document.querySelector('.site.nib-bubble .details')?.innerText ?? ''") or ""
 (OUT / "certificate.txt").write_text(details)
@@ -117,5 +128,16 @@ for label in ("Valid from", "Valid until"):
         fail(f"{label} gives no date")
 if not re.search(r"SHA-256 fingerprint\s*\n([0-9A-F]{2}:){31}[0-9A-F]{2}", details):
     fail("there is no SHA-256 fingerprint")
+if not re.search(r"Serial number\s*\n([0-9A-F]{2})(:[0-9A-F]{2})*", details):
+    fail("there is no serial number")
+
+# The chain: the site's, then the one that issued it, and a root at the top.
+roles = [role for role, _ in chain]
+if len(chain) < 2 or roles[0] != "site":
+    fail(f"the chain is not the site's and its issuers: {chain!r}")
+elif by not in chain[1][1]:
+    fail(f"the second of the chain is {chain[1][1]!r}, not the site's issuer {by!r}")
+if roles and roles[-1] != "root":
+    fail(f"the chain ends at {roles[-1]!r}, not at a root")
 
 sys.exit(1 if failures else 0)

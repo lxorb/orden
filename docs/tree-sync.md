@@ -96,6 +96,17 @@ whose file is not there yet - is the engine's own work under way and nothing to 
 made that is gone again went again. What is left is somebody else's doing: a program, or
 a person in Explorer or Finder.
 
+## What is kept about an entry
+
+A folder's icon and its colour are kept on the account by the folder's id, and a
+bookmark of a note, a folder, a heading or a block carries the id of what it points at
+(`id`, where sync knows it). So when the tree moves, the account writes each list again
+from where its entries now are (`reproject` in the Worker's sync2/maps.ts), and an older
+app reads the paths it always did. On a device, a bookmark whose path names nothing is
+read where its id now is (`located` in workspace/bookmarks.svelte.ts); a path is still
+what is read where there is no id. An older app drops the id as it reads, and the account
+keeps it through that app's writing the list back.
+
 ## Putting a delete back
 
 A delete made here is said to the engine with a word to put it back by: the trash's id

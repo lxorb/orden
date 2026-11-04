@@ -15,6 +15,7 @@
  *  see the workspace section of docs/conventions.md. */
 
 import {
+  isApplicationTarget,
   isBaseTarget,
   isCanvasTarget,
   isChatTarget,
@@ -26,7 +27,8 @@ import {
 import { isMarkdownPath } from './space-paths'
 
 /** What opens a path, or null where this build cannot show it. */
-export type Opener = 'pdf' | 'web' | 'pages' | 'canvas' | 'view' | 'chat' | 'term' | 'note'
+export type Opener =
+  'pdf' | 'web' | 'pages' | 'canvas' | 'view' | 'chat' | 'term' | 'application' | 'note'
 
 /** What the build is, for the two kinds a pair of glasses cannot draw.
  *
@@ -69,6 +71,7 @@ export function openerFor(
   if (isBaseTarget(path)) return build.isPlugin ? null : 'view'
   if (isChatTarget(path)) return build.isPlugin ? null : 'chat'
   if (isTermTarget(path)) return build.isPlugin ? null : 'term'
+  if (isApplicationTarget(path)) return build.isPlugin ? null : 'application'
 
   return 'note'
 }

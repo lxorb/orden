@@ -1276,6 +1276,15 @@ function holds(tail: string): boolean {
  *
  *  Raised on 2026-11-04, to 3,669,000, as those came to claude/hunt-round-1, on the 3,666,714
  *  above. Measured 3,668,789.
+ *
+ *  Raised 2026-11-04, to 3,572,000, for #1063: an application is a kind of file and tab
+ *  in developer mode - its row's mark, its opener, its tab's traits, its name shown
+ *  without its ending and the new tab's card (links.ts, file-mark.ts, openers.ts,
+ *  note-name.ts, tab-kinds.ts, new-kinds.ts). Measured 3,571,413.
+ *
+ *  Raised 2026-11-04, to 3,577,000, for #1068: a bookmark keeps the id of what it points
+ *  at, and is found by it where its path names nothing (workspace/bookmarks.svelte.ts,
+ *  workspace/entry-ids.ts). Measured 3,576,390.
  */
 const BUDGET = 3_669_000
 const MOST_FILES = 395

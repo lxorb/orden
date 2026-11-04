@@ -54,6 +54,14 @@ export function start(): () => void {
   // A frame the page could not draw for a second is written down with what ran in it,
   // from the launch's own frames on; set going once the launch is drawn. See stalls.ts.
   void startup.turn('doors').then(async () => (await import('./stalls')).watchStalls())
+  // The store's themes kept at the catalogue's versions, and the given ones put in, once
+  // the launch is drawn: the store and its reviewer stay out of the first paint (#1110).
+  if (!__EVEN_PLUGIN__) {
+    void startup
+      .turn('doors')
+      .then(async () => (await import('./themes/store.svelte')).store.keepUp())
+      .catch((error: unknown) => log('warn', `themes: ${String(error)}`))
+  }
   // And what the launch opened, said beside its phases in the log's line about it.
   factsOfLaunch(() => `${workspace.spaces.length} spaces, ${workspace.tabs.length} tabs`)
   viewport.start()

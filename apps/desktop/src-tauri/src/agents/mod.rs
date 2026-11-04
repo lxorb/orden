@@ -59,6 +59,7 @@ mod approvals;
     )
 )]
 mod capture;
+mod files;
 #[cfg_attr(
     not(any(windows, feature = "cef")),
     allow(
@@ -309,6 +310,10 @@ fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
                 Err(()) => return Answer::error(Code::Stopped, "the reader pressed the stop"),
                 Ok(true) => said_waiting(app, caller, "calls"),
                 Ok(false) => {}
+            }
+            // Files anywhere need no engine: answered here, on every desktop (#1078).
+            if let Verb::Files(asked) = &browsing {
+                return files::answer(app, caller, asked);
             }
             browse(app, caller, browsing, since)
         }

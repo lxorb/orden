@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 /** The store writes to the browser's storage and offers every change to the
  *  account, so both are stood in for before it is imported. */
@@ -35,10 +35,12 @@ const {
   Bookmarks,
   bookmarkList,
   isBookmark,
+  located,
   mergeBookmarks,
   MOST_BOOKMARKS,
   sameBookmark,
 } = await import('./bookmarks.svelte')
+const { sayEntryIds } = await import('./entry-ids')
 
 type Bookmark = import('./bookmarks.svelte').Bookmark
 
@@ -310,5 +312,76 @@ describe('changing the list around a graph view', () => {
     marks.remove(note('b.md'))
 
     expect(marks.list[0]).toEqual({ ...newer, parent: group.path })
+  })
+})
+
+describe('a bookmark found by the id of what it points at (#1068)', () => {
+  const ROOT = '/spaces/Work'
+  beforeEach(() => sayEntryIds(ids))
+  afterEach(() => sayEntryIds(null))
+  /** Sync's ids for one space: `Plan.md` is entry p, which moved from `Old.md`. */
+  const ids = {
+    idOf: (_root: string, path: string) =>
+      (({ 'Notes/Plan.md': 'p', Notes: 'n' }) as Record<string, string>)[path] ?? null,
+    pathOf: (_root: string, id: string) =>
+      (({ p: 'Notes/Plan.md', n: 'Notes' }) as Record<string, string>)[id] ?? null,
+  }
+
+  test('one whose path names nothing goes where its id is, a block keeping its part', () => {
+    expect(
+      located(
+        ROOT,
+        [
+          { ...note('Old.md'), id: 'p' },
+          { kind: 'block', path: 'Old.md#^a1', text: 'a', id: 'p' },
+          { ...heading('Old.md', 'Goals'), id: 'p' },
+        ],
+        ids,
+      ).map((one) => one.path),
+    ).toEqual(['Notes/Plan.md', 'Notes/Plan.md#^a1', 'Notes/Plan.md'])
+  })
+
+  test('one with no id is given the id of what its path names', () => {
+    expect(located(ROOT, [note('Notes/Plan.md'), folder('Notes')], ids)).toEqual([
+      { ...note('Notes/Plan.md'), id: 'p' },
+      { ...folder('Notes'), id: 'n' },
+    ])
+  })
+
+  test('and the path is read where sync knows neither, or for what points at no file', () => {
+    const list = [note('Gone.md'), { ...note('Lost.md'), id: 'x' }, search('plan')]
+    expect(located(ROOT, list, ids)).toEqual(list)
+  })
+
+  test('the id survives a read, and is left off where it cannot be one', () => {
+    expect(
+      bookmarkList([
+        { kind: 'note', path: 'a.md', text: '', id: 'p' },
+        { kind: 'note', path: 'b.md', text: '', id: 7 },
+        { kind: 'search', path: '', text: 'x', id: 'p' },
+      ]),
+    ).toEqual([{ kind: 'note', path: 'a.md', text: '', id: 'p' }, note('b.md'), search('x')])
+  })
+
+  test("the account's list is read with its moved bookmarks where they are now", () => {
+    const store = new Bookmarks(() => ROOT)
+    store.adopt(ROOT, [], 'acct')
+    // Moved onto one the list already holds, it is that one.
+    store.adopt(ROOT, [{ ...note('Old.md'), id: 'p' }, note('Notes/Plan.md')], 'acct')
+    expect(store.of(ROOT)).toEqual([{ ...note('Notes/Plan.md'), id: 'p' }])
+  })
+
+  test('a list written here is not moved, only given ids', () => {
+    const store = new Bookmarks(() => ROOT)
+    store.put(ROOT, [{ ...note('New.md'), id: 'p' }, note('Other.md')])
+    expect(store.of(ROOT)).toEqual([{ ...note('New.md'), id: 'p' }, note('Other.md')])
+    store.put(ROOT, [folder('Notes')])
+    expect(store.of(ROOT)).toEqual([{ ...folder('Notes'), id: 'n' }])
+  })
+
+  test('a bookmark made here carries the id sync has for it', () => {
+    const store = new Bookmarks(() => ROOT)
+    store.toggle(note('Notes/Plan.md'))
+    expect(store.of(ROOT)).toEqual([{ ...note('Notes/Plan.md'), id: 'p' }])
   })
 })

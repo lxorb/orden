@@ -2128,6 +2128,8 @@ export const ml: Dictionary = {
   'Run scripts in pages': 'പേജുകളിൽ സ്ക്രിപ്റ്റ് പ്രവർത്തിപ്പിക്കൽ',
   'Change settings': 'ക്രമീകരണങ്ങൾ മാറ്റൽ',
   'Run commands': 'കമാൻഡുകൾ പ്രവർത്തിപ്പിക്കൽ',
+  'Read and change files anywhere on this computer':
+    'ഈ കമ്പ്യൂട്ടറിൽ എവിടെയുമുള്ള ഫയലുകൾ വായിക്കാനും മാറ്റാനും',
   Paying: 'പണമടയ്ക്കൽ',
   'Sending messages': 'സന്ദേശങ്ങൾ അയയ്ക്കൽ',
   'Publishing and sharing': 'പ്രസിദ്ധീകരിക്കലും പങ്കിടലും',
@@ -2364,6 +2366,21 @@ export const ml: Dictionary = {
   'Open on {device} since {time}': '{time} മുതൽ {device}-ൽ തുറന്നിരിക്കുന്നു',
   'Take over': 'ഏറ്റെടുക്കുക',
   'Take back': 'തിരിച്ചെടുക്കുക',
+  // Applications, in developer mode (docs/apps.md)
+  'New application': 'പുതിയ ആപ്ലിക്കേഷൻ',
+  Application: 'ആപ്ലിക്കേഷൻ',
+  'This application’s file is damaged': 'ഈ ആപ്ലിക്കേഷന്റെ ഫയൽ കേടാണ്',
+  'Waiting for {device}': '{device} കാത്തിരിക്കുന്നു',
+  'Running on {device}': '{device}-ൽ പ്രവർത്തിക്കുന്നു',
+  'Starting on {device}…': '{device}-ൽ ആരംഭിക്കുന്നു…',
+  'Not running on {device}': '{device}-ൽ പ്രവർത്തിക്കുന്നില്ല',
+  'Its picture is not shown here yet.': 'ഇതിന്റെ ചിത്രം ഇവിടെ ഇതുവരെ കാണിക്കുന്നില്ല.',
+  'None of your devices can run an application yet':
+    'നിങ്ങളുടെ ഒരു ഉപകരണത്തിനും ഇതുവരെ ആപ്ലിക്കേഷൻ പ്രവർത്തിപ്പിക്കാൻ കഴിയില്ല',
+  'Where does it run?': 'ഇത് എവിടെ പ്രവർത്തിക്കും?',
+  'What does it run?': 'ഇത് എന്ത് പ്രവർത്തിപ്പിക്കും?',
+  'A program’s path, and its arguments': 'ഒരു പ്രോഗ്രാമിന്റെ പാത്ത്, അതിന്റെ ആർഗ്യുമെന്റുകൾ',
+  '{device} (this device)': '{device} (ഈ ഉപകരണം)',
   'Start online machine': 'ഓൺലൈൻ മെഷീൻ ആരംഭിക്കുക',
   'Stop online machine': 'ഓൺലൈൻ മെഷീൻ നിർത്തുക',
   Resume: 'തുടരുക',
@@ -2724,6 +2741,13 @@ export const ml: Dictionary = {
   'Valid from': 'സാധുത ആരംഭം',
   'Valid until': 'സാധുത അവസാനം',
   'SHA-256 fingerprint': 'SHA-256 ഫിംഗർപ്രിന്റ്',
+  Intermediate: 'ഇടനില',
+  Root: 'റൂട്ട്',
+  'Certificate chain': 'സർട്ടിഫിക്കറ്റ് ശൃംഖല',
+  'Serial number': 'സീരിയൽ നമ്പർ',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'സൈറ്റിൽ നിന്ന് വേറിട്ട് വായിച്ചു: ഈ പേജ് ഏത് സർട്ടിഫിക്കറ്റുമായാണ് വന്നതെന്ന് ബ്രൗസർ എഞ്ചിൻ പറയുന്നില്ല.',
+  'The certificate could not be read.': 'സർട്ടിഫിക്കറ്റ് വായിക്കാനായില്ല.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'വെബ് പേജുകൾ സൈറ്റുകളുടെ വിലാസം എങ്ങനെ കണ്ടെത്തുന്നു. HTTPS വഴിയാകുമ്പോൾ നിങ്ങൾക്കും ദാതാവിനും ഇടയിലുള്ള ആർക്കും തിരച്ചിലുകൾ വായിക്കാനോ മാറ്റാനോ കഴിയില്ല.',
@@ -2766,8 +2790,6 @@ export const ml: Dictionary = {
   'Part of this could not be undone': 'ഇതിന്റെ ഒരു ഭാഗം പഴയപടിയാക്കാനായില്ല',
   'Add images': 'ചിത്രങ്ങൾ ചേർക്കുക',
   'Remove image': 'ചിത്രം നീക്കുക',
-  'Paste, drop or add images (up to 4).':
-    'ചിത്രങ്ങൾ ഒട്ടിക്കുക, വലിച്ചിടുക അല്ലെങ്കിൽ ചേർക്കുക (പരമാവധി 4).',
   'That is more than 4 images.': 'ഇത് 4 ചിത്രങ്ങളിൽ കൂടുതലാണ്.',
   'That file could not be used as an image.': 'ഈ ഫയൽ ചിത്രമായി ഉപയോഗിക്കാനാകില്ല.',
   'Report received': 'റിപ്പോർട്ട് ലഭിച്ചു',

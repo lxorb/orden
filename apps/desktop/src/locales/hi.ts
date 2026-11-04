@@ -2098,6 +2098,8 @@ export const hi: Dictionary = {
   'Run scripts in pages': 'पेजों में स्क्रिप्ट चलाना',
   'Change settings': 'सेटिंग बदलना',
   'Run commands': 'कमांड चलाना',
+  'Read and change files anywhere on this computer':
+    'इस कंप्यूटर पर कहीं भी फ़ाइलें पढ़ें और बदलें',
   Paying: 'भुगतान',
   'Sending messages': 'संदेश भेजना',
   'Publishing and sharing': 'प्रकाशित और साझा करना',
@@ -2334,6 +2336,21 @@ export const hi: Dictionary = {
   'Open on {device} since {time}': '{time} से {device} पर खुला',
   'Take over': 'अपने हाथ लें',
   'Take back': 'वापस लें',
+  // Applications, in developer mode (docs/apps.md)
+  'New application': 'नया एप्लिकेशन',
+  Application: 'एप्लिकेशन',
+  'This application’s file is damaged': 'इस एप्लिकेशन की फ़ाइल खराब है',
+  'Waiting for {device}': '{device} की प्रतीक्षा',
+  'Running on {device}': '{device} पर चल रहा है',
+  'Starting on {device}…': '{device} पर शुरू हो रहा है…',
+  'Not running on {device}': '{device} पर नहीं चल रहा',
+  'Its picture is not shown here yet.': 'इसकी तस्वीर अभी यहाँ नहीं दिखती।',
+  'None of your devices can run an application yet':
+    'आपका कोई भी डिवाइस अभी एप्लिकेशन नहीं चला सकता',
+  'Where does it run?': 'यह कहाँ चले?',
+  'What does it run?': 'यह क्या चलाए?',
+  'A program’s path, and its arguments': 'किसी प्रोग्राम का पाथ, और उसके आर्ग्युमेंट',
+  '{device} (this device)': '{device} (यह डिवाइस)',
   'Start online machine': 'ऑनलाइन मशीन शुरू करें',
   'Stop online machine': 'ऑनलाइन मशीन रोकें',
   Resume: 'फिर से शुरू करें',
@@ -2684,6 +2701,13 @@ export const hi: Dictionary = {
   'Valid from': 'इस तारीख से मान्य',
   'Valid until': 'इस तारीख तक मान्य',
   'SHA-256 fingerprint': 'SHA-256 फ़िंगरप्रिंट',
+  Intermediate: 'मध्यवर्ती',
+  Root: 'रूट',
+  'Certificate chain': 'प्रमाणपत्र शृंखला',
+  'Serial number': 'सीरियल नंबर',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'साइट से अलग से पढ़ा गया: ब्राउज़र इंजन यह नहीं बताता कि यह पेज किस प्रमाणपत्र के साथ आया।',
+  'The certificate could not be read.': 'प्रमाणपत्र पढ़ा नहीं जा सका।',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'वेब पेज साइटों के पते कैसे ढूँढते हैं। HTTPS पर आपके और प्रदाता के बीच कोई भी इन खोजों को पढ़ या बदल नहीं सकता।',
@@ -2726,7 +2750,6 @@ export const hi: Dictionary = {
   'Part of this could not be undone': 'इसका एक हिस्सा पहले जैसा नहीं किया जा सका',
   'Add images': 'चित्र जोड़ें',
   'Remove image': 'चित्र हटाएँ',
-  'Paste, drop or add images (up to 4).': 'चित्र पेस्ट करें, खींचकर छोड़ें या जोड़ें (अधिकतम 4)।',
   'That is more than 4 images.': 'ये 4 से ज़्यादा चित्र हैं।',
   'That file could not be used as an image.':
     'इस फ़ाइल को चित्र के रूप में इस्तेमाल नहीं किया जा सकता।',

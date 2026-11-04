@@ -113,6 +113,17 @@
     else kit.openTask(row)
   }
 
+  /** A press anywhere else on the row, past its controls, selects it as one on the words
+   *  does: with Ctrl or Cmd, Shift, or while any are selected (#1110). In a narrow list -
+   *  the Tasks panel's - the words are a short run and the actions lie over their end. */
+  function press(event: MouseEvent) {
+    if (!onpick || !(event.target instanceof Element)) return
+    if (event.target.closest('button, a, input, textarea, [contenteditable="true"]')) return
+    if (!(event.shiftKey || linkModifier(event) || picking)) return
+    onselect?.()
+    onpick(event.shiftKey)
+  }
+
   /** The middle button: its note in a tab, as a link opens. */
   function aux(event: MouseEvent) {
     if (event.button !== 1) return
@@ -141,6 +152,9 @@
         ><Glyph icon={Calendar} /></span
       ></span
     >
+    <!-- The keyboard selects a row with x, heard by the list (row-keys.ts); the press is
+         the pointer's way to the same. -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
       class="task"
       class:is-on={selected}
@@ -163,12 +177,15 @@
         left: (box) => scheduleRows([row], box, kit),
       }}
       onfocus={() => onselect?.()}
+      onclick={press}
       oncontextmenu={more}
       onauxclick={aux}
     >
+      <!-- Todoist's grip: the row is carried from anywhere on it, and this says so. In the
+           row's own margin, so the row is what it is placed in: inside the head, which
+           holds the actions over the words, it lay over the box (#1110). -->
+      <span class="grip" aria-hidden="true"><Glyph icon={Grip} /></span>
       <div class="head">
-        <!-- Todoist's grip: the row is carried from anywhere on it, and this says so. -->
-        <span class="grip" aria-hidden="true"><Glyph icon={Grip} /></span>
         {#if twist}
           <button
             type="button"

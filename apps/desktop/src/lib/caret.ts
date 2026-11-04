@@ -16,7 +16,17 @@ export interface Showing {
    *  the graph, a page in a web tab and a terminal each take the keyboard themselves,
    *  and already do. */
   kind:
-    'note' | 'canvas' | 'pages' | 'pdf' | 'graph' | 'web' | 'terminal' | 'view' | 'chat' | 'channel'
+    | 'note'
+    | 'canvas'
+    | 'pages'
+    | 'pdf'
+    | 'graph'
+    | 'web'
+    | 'terminal'
+    | 'view'
+    | 'chat'
+    | 'channel'
+    | 'application'
   /** A note being read is a page, and a page has no caret to put anywhere. */
   reading: boolean
 }

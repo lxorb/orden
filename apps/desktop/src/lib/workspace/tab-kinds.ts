@@ -215,6 +215,27 @@ export const TAB_KINDS = {
     outsideTitle: false,
     preview: 'picture',
   },
+  /** An application running on one of the reader's devices, by its `.application` file
+   *  (docs/apps.md). */
+  application: {
+    words: false,
+    extension: null,
+    statusBar: true,
+    mark: 'application',
+    glyph: null,
+    liveMark: false,
+    editor: false,
+    takesDrops: false,
+    ownBar: false,
+    fileDocument: true,
+    plane: false,
+    exports: 'none',
+    selection: null,
+    outsideTitle: false,
+    // What it last drew, kept: the application's state and who holds it. The picture
+    // the host streams (step 4) is a video frame nothing here can draw again.
+    preview: 'picture',
+  },
 } as const satisfies Record<string, TabKindTraits>
 
 /** What a tab holds; see documents.svelte.ts for what each kind is. */
