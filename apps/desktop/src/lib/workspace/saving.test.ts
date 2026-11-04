@@ -483,6 +483,21 @@ describe('a write the disk refuses', () => {
     expect(light.lastError).toBe(null)
   })
 
+  test('says why where the file has gone past reading: nothing in the tab mends that', async () => {
+    vi.useFakeTimers()
+    const { note, saving } = open(A)
+    saving.across = {
+      writing: () =>
+        Promise.reject(Object.assign(new Error(`${A} would not read`), { name: 'WillNotRead' })),
+    } as never
+    note.replace('# a\n\nrefused')
+    await vi.advanceTimersByTimeAsync(400 + 2000 + 4000)
+
+    expect(light.status).toBe('error')
+    expect(light.lastError).toContain('64 MB')
+    saving.across = null
+  })
+
   test('is tried again a moment later without another keystroke', async () => {
     vi.useFakeTimers()
     const { note } = open(A)

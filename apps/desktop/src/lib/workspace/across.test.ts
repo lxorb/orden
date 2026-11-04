@@ -429,7 +429,7 @@ describe('around one write', () => {
     b.type(inB, 'typed')
     b.failRead(true)
 
-    await expect(b.save(inB)).rejects.toThrow()
+    await expect(b.save(inB)).rejects.toMatchObject({ name: 'WillNotRead' })
     expect(disk.get(PATH)).toBe(BASE)
     expect(count(inB.latest, 'base line')).toBe(1)
     b.failRead(false)

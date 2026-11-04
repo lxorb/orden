@@ -294,11 +294,13 @@ export class Saving {
     this.waiting.clear()
 
     const refused: NoteDoc[] = []
+    const unread = new Set<NoteDoc>()
     await Promise.all(
       notes.map((note) =>
         this.write(note).catch((error: unknown) => {
           refused.push(note)
           this.waiting.add(note)
+          if (error instanceof Error && error.name === 'WillNotRead') unread.add(note)
           log('error', `save: ${note.path ?? 'a draft'} - ${String(error)}`)
         }),
       ),
@@ -311,20 +313,26 @@ export class Saving {
     }
 
     this.retry()
-    if (this.failures === REFUSALS_TOLD) await this.tell(refused)
+    if (this.failures === REFUSALS_TOLD) await this.tell(refused, unread)
   }
 
   /** A note the disk keeps refusing, on the light in the corner: the same place a
    *  sync that failed is told, and the same kind of news. The words stay in the
-   *  note and in the session, and the writes go on being tried. */
-  private async tell(refused: readonly NoteDoc[]) {
+   *  note and in the session, and the writes go on being tried. One whose file has gone
+   *  past reading says that, since nothing the reader does in the tab mends it. */
+  private async tell(refused: readonly NoteDoc[], unread: ReadonlySet<NoteDoc>) {
     const first = refused[0]
     if (!first) return
 
     // Imported here rather than at the top: syncing reads the workspace, and the
     // two would import each other.
     const { sync } = await import('../sync.svelte')
-    const error = t('{name} could not be written.', { name: first.shown })
+    const error = unread.has(first)
+      ? t(
+          '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.',
+          { name: first.shown },
+        )
+      : t('{name} could not be written.', { name: first.shown })
     this.said = { error, was: sync.status === 'error' ? 'off' : sync.status }
     sync.status = 'error'
     sync.lastError = error

@@ -211,7 +211,10 @@ export class Across {
   private async onTheDisk(path: string): Promise<string | null> {
     const read = await this.desk.read(path)
     if (read !== null) return unixLines(read)
-    if (await this.desk.exists(path)) throw new Error(`${path} would not read`)
+    if (await this.desk.exists(path)) {
+      // Said by name, for `saving`, which is first paint and does not import this file.
+      throw Object.assign(new Error(`${path} would not read`), { name: 'WillNotRead' })
+    }
     return null
   }
 
