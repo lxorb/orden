@@ -409,6 +409,18 @@ const NOT_A_PIN: &[&str] = &[
     "pin board",
 ];
 
+/// Whether a field holds a credential: a password by its type or its `autocomplete`, or
+/// a field the page masks the way it would one. A show-password toggle turns the type to
+/// `text` and leaves the other two.
+fn credential(field: &Field) -> bool {
+    field.kind == "password"
+        || field.masked
+        || field
+            .autocomplete
+            .split_whitespace()
+            .any(|one| matches!(one, "current-password" | "new-password"))
+}
+
 /// Whether a field's value is nobody's but the reader's (9.4): a credential, a one-time
 /// code, or a card's number, expiry or security code. Nothing reads it back to an agent:
 /// not its value, not its length.
