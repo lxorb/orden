@@ -17,7 +17,7 @@
  *  was; see test/weight.test.ts. */
 
 import { modes } from './modes.svelte'
-import { keep, stored, stringList } from './stored'
+import { keepJson, stored, stringList } from './stored'
 
 /** Every hint there is, by the control it is about, first the one that matters most:
  *  a session's one hint is the first of these whose control wants it.
@@ -94,7 +94,7 @@ class Hints {
 
     this.put = [...this.put, hint]
     this.seen = this.put
-    keep(KEY, JSON.stringify(this.put))
+    keepJson(KEY, this.put)
   }
 
   private pick() {

@@ -11,7 +11,7 @@
 import { type Hours, isHours, isKeywords } from '@orden/chats/notify'
 import { account } from '../account.svelte'
 import { api, type AccountSettings } from '../api'
-import { isBoolean, isRecord, keep, stored } from '../stored'
+import { isBoolean, isRecord, keepJson, stored } from '../stored'
 
 const KEY = 'nib.chat-hush'
 
@@ -94,15 +94,12 @@ class Hush {
   }
 
   private persist() {
-    keep(
-      KEY,
-      JSON.stringify({
-        keywords: this.keywords,
-        hours: this.hours,
-        previews: this.previews,
-        sound: this.sound,
-      }),
-    )
+    keepJson(KEY, {
+      keywords: this.keywords,
+      hours: this.hours,
+      previews: this.previews,
+      sound: this.sound,
+    })
   }
 }
 

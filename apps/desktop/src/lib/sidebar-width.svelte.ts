@@ -12,7 +12,7 @@
 
 import type { PanelSide } from './workspace.svelte'
 import { readingFactor } from './direction'
-import { forget, isNumber, keep, stored } from './stored'
+import { forget, isNumber, keepJson, stored } from './stored'
 import { viewport } from './viewport.svelte'
 
 const STORAGE_KEY = 'nib:sidebar-width'
@@ -35,7 +35,7 @@ function saved(side: PanelSide): number | null {
  *  either way - just not after a restart. See `keep` in stored.ts. */
 function write(side: PanelSide, width: number | null) {
   if (width === null) forget(keyFor(side))
-  else keep(keyFor(side), String(width))
+  else keepJson(keyFor(side), width)
 }
 
 /** One step of an arrow key. A whole row's worth rather than a pixel: a hand

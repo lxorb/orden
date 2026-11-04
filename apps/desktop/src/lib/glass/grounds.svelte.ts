@@ -7,7 +7,7 @@
  *  the registrable site's. Small and bounded: a colour is seven characters. */
 
 import { type Rgb, rgbOf } from '../legibility'
-import { isNumber, isRecord, isString, keep, stored } from '../stored'
+import { isNumber, isRecord, isString, keepJson, stored } from '../stored'
 import { keysOf } from '../web-tab/pages.svelte'
 
 const KEY = 'nib:glass-grounds'
@@ -83,7 +83,7 @@ class Grounds {
       const oldest = [...index.entries()].sort((one, two) => one[1][1] - two[1][1])
       for (const [key] of oldest.slice(0, index.size - MOST)) index.delete(key)
     }
-    keep(KEY, JSON.stringify(Object.fromEntries(index)))
+    keepJson(KEY, Object.fromEntries(index))
   }
 }
 

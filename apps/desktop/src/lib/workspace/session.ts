@@ -17,7 +17,7 @@ import type { FoldLines } from '@orden/editor'
 import { isBaseTarget, isChatTarget, isPagesTarget, isWebTarget } from '@orden/markdown/links'
 import { identifier } from '../identifier'
 import { roomKind } from '../rooms/kind'
-import { isNumber, isRecord, isString, keep, stringList } from '../stored'
+import { isNumber, isRecord, isString, keepJson, stringList } from '../stored'
 import type { Panel, Space } from '../workspace.svelte'
 import type { TabKind } from './documents.svelte'
 import { type Along, type Frame, pane } from './pane-tree'
@@ -499,5 +499,5 @@ export function writeSession(key: string, state: Session): boolean {
  *  that allows no site data at all, and either way the entry already there stays,
  *  which is a better place to come back to than none. */
 function put(key: string, state: Session): boolean {
-  return keep(key, JSON.stringify({ version: VERSION, ...state }))
+  return keepJson(key, { version: VERSION, ...state })
 }

@@ -4,7 +4,7 @@ import type { EditorView } from '@orden/editor'
 
 import { focusEditor } from '../focus'
 import { nameOf } from '../space-paths'
-import { isRecord, keep, stored } from '../stored'
+import { isRecord, keepJson, stored } from '../stored'
 import { workspace } from '../workspace.svelte'
 
 export const SCRATCHPAD = 'Scratchpad.md'
@@ -61,7 +61,7 @@ class Shown {
 
   private set(on: boolean) {
     this.on = on
-    keep('nib:scratchpad', JSON.stringify({ on, width: this.width }))
+    keepJson('nib:scratchpad', { on, width: this.width })
   }
 }
 

@@ -11,7 +11,7 @@ import { rowName } from '../note-name'
 import { FIXED_ENTRIES, SHORTCUTS } from '../shortcuts/registry'
 import { shortcuts } from '../shortcuts.svelte'
 import { insideSpace } from '../space-paths'
-import { isRecord, keep, stored } from '../stored'
+import { isRecord, keepJson, stored } from '../stored'
 import { isTile } from '../workspace/bookmarks.svelte'
 import { workspace } from '../workspace.svelte'
 import { lettersFor, takenUnderAlt } from './letters'
@@ -69,7 +69,7 @@ class EssentialLetters {
   private remember(given: Record<string, string>) {
     if (Object.entries(given).every(([path, letter]) => this.kept[path] === letter)) return
     this.kept = { ...this.kept, ...given }
-    keep(STORAGE_KEY, JSON.stringify(this.kept))
+    keepJson(STORAGE_KEY, this.kept)
   }
 }
 

@@ -38,7 +38,7 @@ import {
 } from '@orden/markdown/diagrams'
 import { api } from './api'
 import { drawDiagram } from './diagrams'
-import { keep, stored } from './stored'
+import { keepJson, stored } from './stored'
 import { shapesOnly } from './svg-file'
 import { invoke } from './tauri'
 import type { Entry } from './workspace.svelte'
@@ -250,6 +250,6 @@ export async function pushDiagrams(
     }
   }
 
-  keep(remembered(spaceId), JSON.stringify([...sent].slice(-MOST * 4)))
+  keepJson(remembered(spaceId), [...sent].slice(-MOST * 4))
   return { sent: put, refused }
 }

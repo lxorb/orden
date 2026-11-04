@@ -11,7 +11,7 @@
 
 import { movedTo, relativeTo, samePath, within } from '../space-paths'
 import { type Folded, type Folding, meet, readSpaces, without } from '../records'
-import { isRecord, isString, keep } from '../stored'
+import { isRecord, isString, keepJson } from '../stored'
 import { carried, moving } from './file-ops'
 
 const STORAGE_KEY = 'nib:bookmarks'
@@ -469,7 +469,7 @@ export class Bookmarks {
     // Through `keep`, which cannot throw: this is reached from inside a syncing
     // pass, and a storage that is full would otherwise end the pass rather than
     // cost this machine one remembered list; see stored.ts.
-    keep(STORAGE_KEY, JSON.stringify(this.spaces))
+    keepJson(STORAGE_KEY, this.spaces)
     this.changed()
   }
 }

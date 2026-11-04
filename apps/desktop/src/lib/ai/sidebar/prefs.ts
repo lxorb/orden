@@ -9,7 +9,7 @@ import type { Effort } from '../chat/types'
 import { isEffort } from '../chat/effort'
 import type { Provider } from '../providers'
 import { FIRST_MODE, type Mode, modeIn } from '../modes'
-import { isRecord, isString, keep, stored } from '../../stored'
+import { isRecord, isString, keepJson, stored } from '../../stored'
 
 const STORAGE_KEY = 'nib:ai-sidebar'
 
@@ -94,7 +94,7 @@ function held(): Prefs {
 }
 
 function save(): void {
-  keep(STORAGE_KEY, JSON.stringify(held()))
+  keepJson(STORAGE_KEY, held())
 }
 
 /** The key a model's effort is filed under: the same model on two providers is two

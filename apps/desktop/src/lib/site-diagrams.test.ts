@@ -85,6 +85,10 @@ vi.mock('./stored', () => ({
     world.kept[key] = value
     return true
   },
+  keepJson: (key: string, value: unknown) => {
+    world.kept[key] = JSON.stringify(value)
+    return true
+  },
 }))
 
 /** Mermaid needs a browser, so the drawer is stood in for: one small SVG of the

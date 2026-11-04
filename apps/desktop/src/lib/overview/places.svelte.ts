@@ -10,7 +10,7 @@
  *
  *  Kept on this device, under `KEY`, through stored.ts. */
 
-import { keep, stored } from '../stored'
+import { keepJson, stored } from '../stored'
 import type { Box } from './layout'
 
 const KEY = 'nib:overview-places'
@@ -57,7 +57,7 @@ class Places {
     if (known) return known
     const made = nextPlace(this.all, size)
     this.all = { ...this.all, [space]: made }
-    keep(KEY, JSON.stringify(this.all))
+    keepJson(KEY, this.all)
     return made
   }
 }

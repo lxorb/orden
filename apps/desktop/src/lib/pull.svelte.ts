@@ -26,7 +26,7 @@ import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
 import { runnable } from './shortcuts/registry'
 import { viewport } from './viewport.svelte'
-import { forget, isString, keep, stored } from './stored'
+import { forget, isString, keep, storedText } from './stored'
 
 const STORAGE_KEY = 'nib:pull'
 
@@ -138,7 +138,7 @@ class Pull {
   }
 
   restore() {
-    this.chosen = usable(stored(STORAGE_KEY))
+    this.chosen = usable(storedText(STORAGE_KEY))
   }
 
   /** Chooses one, or `NOTHING`. Choosing the one that is offered anyway is

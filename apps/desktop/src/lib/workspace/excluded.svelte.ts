@@ -17,7 +17,7 @@
  *  which account a space's list has been folded into. */
 
 import { insideItsSpace, movedTo, relativeTo, samePath, within } from '../space-paths'
-import { isString, keep } from '../stored'
+import { isString, keepJson } from '../stored'
 import { filledIn, type Folded, type Folding, meet, readSpaces, without } from '../records'
 import { carried, moving } from './file-ops'
 
@@ -258,6 +258,6 @@ export class Excluded {
   }
 
   private write() {
-    keep(STORAGE_KEY, JSON.stringify(this.spaces))
+    keepJson(STORAGE_KEY, this.spaces)
   }
 }

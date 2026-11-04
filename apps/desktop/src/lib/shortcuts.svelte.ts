@@ -31,7 +31,7 @@ import {
   type Shortcut,
   SYSTEM_KEYS,
 } from './shortcuts/registry'
-import { isRecord, keep, stored, storedText } from './stored'
+import { isRecord, keep, keepJson, stored, storedText } from './stored'
 import { isNative } from './tauri'
 import { viewport } from './viewport.svelte'
 import { saveFront } from './save-place/door'
@@ -212,7 +212,7 @@ class Shortcuts {
    *  account. Everything that shows a key reads it from here, so the menus
    *  and the palette follow on their own. */
   private settle() {
-    keep(STORAGE_KEY, JSON.stringify(this.overrides))
+    keepJson(STORAGE_KEY, this.overrides)
     keep(PRESET_KEY, this.preset)
     for (const view of this.views) setShortcutKeys(view, this.overrides)
     this.share()
@@ -262,7 +262,7 @@ class Shortcuts {
 
     this.overrides = usableOnes
     this.preset = named
-    keep(STORAGE_KEY, JSON.stringify(this.overrides))
+    keepJson(STORAGE_KEY, this.overrides)
     keep(PRESET_KEY, this.preset)
     for (const view of this.views) setShortcutKeys(view, this.overrides)
   }

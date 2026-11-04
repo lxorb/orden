@@ -17,7 +17,7 @@ import { chooseFiles, PICTURES } from '../choose-files'
 import { fileBytes } from '../bytes'
 import { key, message } from '../i18n.svelte'
 import { settings } from '../settings.svelte'
-import { forget, keep } from '../stored'
+import { forget, keepJson } from '../stored'
 import { theme } from '../theme.svelte'
 import { afterQuiet, onceAFrame } from '../timing'
 import {
@@ -331,7 +331,7 @@ class Wallpaper {
   private write(slot: Slot): void {
     const held = this.held[slot]
     if (!held) return
-    if (keep(KEYS[slot], JSON.stringify(held))) showPicture(SAID[slot], undefined)
+    if (keepJson(KEYS[slot], held)) showPicture(SAID[slot], undefined)
   }
 }
 

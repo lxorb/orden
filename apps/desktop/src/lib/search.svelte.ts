@@ -14,7 +14,7 @@ import { isEmpty, parseQuery } from './search/query'
 import { selectedWords } from './search/seed'
 import { searchSpace } from './search/space'
 import { isMarkdownPath } from './space-paths'
-import { isBoolean, isRecord, keep, stored } from './stored'
+import { isBoolean, isRecord, keepJson, stored } from './stored'
 import { afterQuiet } from './timing'
 import { workspace } from './workspace.svelte'
 
@@ -125,7 +125,7 @@ class Search {
   setSort(sort: SearchSort) {
     const descending = this.ordering.sort === sort ? !this.ordering.descending : false
     this.ordering = { sort, descending }
-    keep(SORT_KEY, JSON.stringify(this.ordering))
+    keepJson(SORT_KEY, this.ordering)
   }
 
   /** One run of hits in the order asked for.

@@ -5,7 +5,7 @@
  *  reader does to a row, and the popup that is open, if one is. Fetched with the first
  *  web tab and never in the first paint: nothing here matters before a page is open. */
 
-import { stored, keep } from '../stored'
+import { keepJson, stored } from '../stored'
 import { invoke, isDesktop, platform } from '../tauri'
 import { ASK_AGAIN, NOT_ANSWERING } from './answering'
 
@@ -225,7 +225,7 @@ class Extensions {
     const last = stored(LOOKED)
     if (!updateDue(typeof last === 'number' ? last : null, Date.now())) return
     setTimeout(() => {
-      keep(LOOKED, String(Date.now()))
+      keepJson(LOOKED, Date.now())
       void invoke<number>('extensions_update')
         .then((moved) => (moved > 0 ? this.load() : undefined))
         .catch(() => undefined)

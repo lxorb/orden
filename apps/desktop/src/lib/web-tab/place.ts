@@ -19,7 +19,7 @@
  *  Bounded, like everything kept per device: the last two hundred web notes somebody
  *  looked at, oldest first out. */
 
-import { isRecord, keep, stored } from '../stored'
+import { isRecord, keepJson, stored } from '../stored'
 
 const STORAGE_KEY = 'nib:web-places'
 
@@ -96,7 +96,7 @@ export function placeKept(path: string | null, place: Place) {
 
   // A device that cannot keep this opens the page at the top, which is what a
   // browser with no session does.
-  keep(STORAGE_KEY, JSON.stringify(Object.fromEntries(kept)))
+  keepJson(STORAGE_KEY, Object.fromEntries(kept))
 }
 
 /** Forgets every note's place that was on, or had walked through, one of `urls` - or
@@ -108,6 +108,5 @@ export function placesForgotten(urls: ReadonlySet<string> | null) {
     ([, place]) =>
       urls !== null && !urls.has(place.url) && !(place.trail ?? []).some((one) => urls.has(one)),
   )
-  if (left.length !== Object.keys(held).length)
-    keep(STORAGE_KEY, JSON.stringify(Object.fromEntries(left)))
+  if (left.length !== Object.keys(held).length) keepJson(STORAGE_KEY, Object.fromEntries(left))
 }

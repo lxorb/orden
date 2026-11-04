@@ -5,7 +5,7 @@
  *  Kept by the view's name (`viewKey`): a project by its space and its note, a view Orden
  *  ships by its name, a base by its file. */
 
-import { isRecord, keep, stored, stringList } from '../stored'
+import { isRecord, keepJson, stored, stringList } from '../stored'
 import type { ViewSpec } from './spec'
 
 const FOLDS = 'nib:view-folds'
@@ -39,7 +39,7 @@ export function keepFolds(key: string | null, folded: ReadonlySet<string>): void
   const all = Object.fromEntries(Object.entries(read(FOLDS)).filter(([one]) => one !== key))
   if (folded.size) all[key] = [...folded]
   const kept = Object.entries(all).slice(-MOST)
-  keep(FOLDS, JSON.stringify(Object.fromEntries(kept)))
+  keepJson(FOLDS, Object.fromEntries(kept))
 }
 
 /** How a project was last laid out here, as its base's words, if it was changed. */
@@ -52,7 +52,7 @@ export function projectView(space: string, path: string): string | undefined {
 export function keepProjectView(space: string, path: string, words: string): void {
   const all = read(PROJECTS)
   all[`${space}/${path}`] = words
-  keep(PROJECTS, JSON.stringify(all))
+  keepJson(PROJECTS, all)
 }
 
 /** The layouts kept for a space's projects, moved along with their notes: `moved` answers
@@ -78,5 +78,5 @@ export function followProjectViews(
     out[`${into}/${now}`] = follow(words, path, now)
     changed = true
   }
-  if (changed) keep(PROJECTS, JSON.stringify(out))
+  if (changed) keepJson(PROJECTS, out)
 }

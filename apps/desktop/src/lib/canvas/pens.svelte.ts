@@ -14,7 +14,7 @@
  *  and none of it is a preference anybody would go looking for in Settings. One
  *  key, read once when the module loads and written whenever something moves. */
 
-import { keep, storedText } from '../stored'
+import { keepJson, stored } from '../stored'
 import { clampOpacity, type InkTool, isInkTool } from './format'
 import { INK_STYLES } from './ink'
 import { DEFAULT_INK } from './palette'
@@ -207,6 +207,12 @@ export function readPens(raw: string | null): Kept {
     return blank()
   }
 
+  return keptFrom(parsed)
+}
+
+/** The same, from what storage held once parsed (`stored`): a missing or broken entry
+ *  is null, which starts again as above. */
+function keptFrom(parsed: unknown): Kept {
   if (!isRecord(parsed)) return blank()
 
   const held = parsed
@@ -258,7 +264,7 @@ class Pens {
   constructor() {
     // A browser with site data turned off reads nothing, and the pens start
     // blank: they still work, they are only forgotten between sittings.
-    this.restore(readPens(storedText(KEY)))
+    this.restore(keptFrom(stored(KEY)))
   }
 
   /** The pen that is out. Never nothing: the row is never empty. */
@@ -379,7 +385,7 @@ class Pens {
       partly: this.partly,
     }
 
-    keep(KEY, JSON.stringify(held))
+    keepJson(KEY, held)
   }
 }
 

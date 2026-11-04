@@ -10,7 +10,7 @@
  *  Keyed by provider id and model, so two OpenAI-compatible servers serving a model of
  *  the same name are two entries. */
 
-import { isBoolean, isNumber, isRecord, keep, recordOf, stored } from '../../stored'
+import { isBoolean, isNumber, isRecord, keepJson, recordOf, stored } from '../../stored'
 import { isEffort } from './effort'
 import type { Effort } from './types'
 
@@ -73,7 +73,7 @@ export function learn(provider: string, model: string, change: Learnt): void {
   const refused = [...new Set([...(before.refused ?? []), ...(change.refused ?? [])])]
   const next = { ...before, ...change, ...(refused.length ? { refused } : {}) }
   held = { ...all(), [key]: next }
-  keep(STORAGE_KEY, JSON.stringify(held))
+  keepJson(STORAGE_KEY, held)
 }
 
 /** Forgets everything, for the tests. */

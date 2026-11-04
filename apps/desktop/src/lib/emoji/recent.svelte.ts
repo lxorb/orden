@@ -7,7 +7,7 @@
  *  so kept here and not in the account; see icon-recent.svelte.ts, which keeps the icon
  *  picker's the same way. */
 
-import { isNumber, keep, stored, stringList } from '../stored'
+import { isNumber, keepJson, stored, stringList } from '../stored'
 import type { Tone } from './tones'
 
 const RECENT_KEY = 'nib:emoji-recent'
@@ -34,12 +34,12 @@ class EmojiRecent {
 
   add(emoji: string): void {
     this.list = [emoji, ...this.list.filter((one) => one !== emoji)].slice(0, MOST_RECENT)
-    keep(RECENT_KEY, JSON.stringify(this.list))
+    keepJson(RECENT_KEY, this.list)
   }
 
   setTone(tone: Tone): void {
     this.tone = tone
-    keep(TONE_KEY, String(tone))
+    keepJson(TONE_KEY, tone)
   }
 }
 

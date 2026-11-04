@@ -43,7 +43,7 @@ import { startup } from './startup.svelte'
 import { nextTask } from './breathe'
 import { mark, markPainted } from './trace'
 import { afterQuiet } from './timing'
-import { isRecord, keep, stored } from './stored'
+import { isRecord, keepJson, stored } from './stored'
 import { WELCOME_PATH } from './welcome'
 import {
   type Draft,
@@ -2775,7 +2775,7 @@ class Workspace {
   }
 
   private persistTreeOptions() {
-    keep(TREE_KEY, JSON.stringify(this.treeOptions))
+    keepJson(TREE_KEY, this.treeOptions)
     void this.loadTree()
   }
 

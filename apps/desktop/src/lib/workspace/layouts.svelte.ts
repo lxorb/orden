@@ -9,7 +9,7 @@
  *  This machine's alone, like the sidebar width and the open folders: which
  *  arrangement suits a screen is a fact about the screen. */
 
-import { isRecord, isString, keep, stored } from '../stored'
+import { isRecord, isString, keepJson, stored } from '../stored'
 import { type Layout, readLayout, withoutText } from './session'
 
 const STORAGE_KEY = 'nib:layouts'
@@ -72,6 +72,6 @@ export class Layouts {
   private write() {
     // Out of room: the layouts already written down stay, and the one that did not
     // fit is on screen anyway, which is where it came from.
-    keep(STORAGE_KEY, JSON.stringify(this.all))
+    keepJson(STORAGE_KEY, this.all)
   }
 }

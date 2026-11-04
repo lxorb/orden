@@ -7,7 +7,7 @@ import { api, ApiError, type SpaceRole } from './api'
 import { arriving } from './arriving.svelte'
 import { without } from './records'
 import { log } from './log'
-import { keep, stored, storedText } from './stored'
+import { keep, keepJson, stored, storedText } from './stored'
 import { nudgeDelay, pollDelay, RECONCILE_INTERVAL } from './backoff'
 import type { Pairing } from './space-pairing'
 import { untrack } from 'svelte'
@@ -1016,14 +1016,11 @@ class Sync {
    *  something to report a failure: what it found is in memory and true, and the
    *  only thing lost is the next launch's head start. */
   private write(mirrors: Record<string, Mirror>): boolean {
-    return keep(
-      STORAGE_KEY,
-      JSON.stringify({
-        account: this.owner,
-        seen: this.seen,
-        mirrors,
-      }),
-    )
+    return keepJson(STORAGE_KEY, {
+      account: this.owner,
+      seen: this.seen,
+      mirrors,
+    })
   }
 }
 

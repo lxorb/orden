@@ -7,7 +7,7 @@
  *  stored 207,000 of those - under `MOST_PAGES` and `MOST_TEXT`, the least recently used
  *  going first. */
 
-import { forget as unkeep, keep } from '../stored'
+import { forget as unkeep, keep, keepJson } from '../stored'
 import { drawable, favicons, keysOf, MARK, MARKS, type Seen } from './pages.svelte'
 
 /** As many pages as the history keeps visits, and half a megabyte of pictures. */
@@ -124,8 +124,5 @@ export function write() {
 }
 
 function put(index: Map<string, Seen>, sizes: Iterable<readonly [string, number]>) {
-  keep(
-    MARKS,
-    JSON.stringify({ pages: Object.fromEntries(index), sizes: Object.fromEntries(sizes) }),
-  )
+  keepJson(MARKS, { pages: Object.fromEntries(index), sizes: Object.fromEntries(sizes) })
 }

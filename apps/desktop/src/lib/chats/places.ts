@@ -14,7 +14,7 @@
  *  after a move would otherwise go by where the chat was. */
 
 import { account } from '../account.svelte'
-import { keep, stored } from '../stored'
+import { keepJson, stored } from '../stored'
 
 const KEY = 'nib:chat-own-pointers'
 
@@ -68,7 +68,7 @@ export function keepOwnPointer(chat: string, path: string | null): void {
   if ((map.get(chat) ?? null) === path) return
   if (path === null) map.delete(chat)
   else map.set(chat, path)
-  keep(`${KEY}:${id}`, JSON.stringify(Object.fromEntries(map)))
+  keepJson(`${KEY}:${id}`, Object.fromEntries(map))
 }
 
 /** Where this device last moved a chat on the account, this run. */

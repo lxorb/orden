@@ -7,7 +7,7 @@
  *  Asked after the first paint, fetched only by a Mac. */
 
 import { isDesktop, platform } from '../tauri'
-import { keep, stored } from '../stored'
+import { keepJson, stored } from '../stored'
 import { hasKey } from './keys'
 import { ai } from './store.svelte'
 
@@ -32,7 +32,7 @@ class KeysMoved {
         missing ||= !(await hasKey(one.id).catch(() => true))
       }
     }
-    keep(KEY, 'true')
+    keepJson(KEY, true)
     this.showing = missing
     return missing
   }

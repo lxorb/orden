@@ -27,7 +27,7 @@
  *  remembering which account a space's map has been folded into. */
 
 import { insideItsSpace, movedTo, relativeTo, within } from '../space-paths'
-import { isRecord, isString, keep } from '../stored'
+import { isRecord, isString, keepJson } from '../stored'
 import {
   filledIn,
   type Folded,
@@ -372,6 +372,6 @@ export class FolderIcons {
   }
 
   private write() {
-    keep(STORAGE_KEY, JSON.stringify(this.spaces))
+    keepJson(STORAGE_KEY, this.spaces)
   }
 }

@@ -13,7 +13,7 @@
 
 import { t } from '../i18n.svelte'
 import { withOrWithout } from '../records'
-import { isRecord, keep, stored, storedText } from '../stored'
+import { isRecord, keep, keepJson, stored, storedText } from '../stored'
 import { invoke, isDesktop } from '../tauri'
 
 export interface Shell {
@@ -146,7 +146,7 @@ class Shells {
    *  again for null. */
   setWay(command: string, way: Way | null) {
     this.ways = withOrWithout(this.ways, command, way)
-    keep(WAYS_KEY, JSON.stringify(this.ways))
+    keepJson(WAYS_KEY, this.ways)
   }
 
   /** Off forgets every terminal's lines at once, rather than only writing no more of

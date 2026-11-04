@@ -24,7 +24,7 @@
  *  JSON, or names a setting wrongly is said in a notice and at the top of Settings,
  *  with what is wrong and where - never by not starting. What is right still applies. */
 
-import { isRecord, keep, stored } from '../stored'
+import { isRecord, keepJson, stored } from '../stored'
 import { invoke, platform } from '../tauri'
 import { declared } from './declared.svelte'
 import type { Field } from './fields'
@@ -63,7 +63,7 @@ function remembered(): Record<string, Own> {
 }
 
 function remember(): void {
-  keep(OWN_KEY, JSON.stringify(own))
+  keepJson(OWN_KEY, own)
 }
 
 /** A field's name among the remembered: its key, and a list's member after it. */

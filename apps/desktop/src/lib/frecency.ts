@@ -22,7 +22,7 @@
  *  notes opened lately, because it is a habit of whoever is at the keyboard rather
  *  than a fact about a space. */
 
-import { forget, isNumber, isRecord, keep, stored, stringList } from './stored'
+import { forget, isNumber, isRecord, keepJson, stored, stringList } from './stored'
 import { afterQuiet } from './timing'
 
 const KEY = 'nib:palette-picks'
@@ -121,7 +121,7 @@ class Frecency {
 
     const out: Record<string, [number, number]> = {}
     for (const [key, use] of uses) out[key] = [Math.round(use.weight * 1000) / 1000, use.at]
-    keep(KEY, JSON.stringify(out))
+    keepJson(KEY, out)
   }
 
   /** Somebody reached for `key`. */

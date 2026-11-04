@@ -50,7 +50,7 @@ import {
 import { glassesKey } from './even/key.svelte'
 import { type Effort, isEffort } from './even/models'
 import { key } from './i18n.svelte'
-import { isNumber, isRecord, isString, keep, stored, stringList } from './stored'
+import { isNumber, isRecord, isString, keepJson, stored, stringList } from './stored'
 import { currentWindow, invoke, isDesktop } from './tauri'
 import { theme } from './theme.svelte'
 import { opening } from './workspace/documents.svelte'
@@ -1705,7 +1705,7 @@ class Modes {
       frontMatter: this.properties,
       linkFormat: this.linkFormat,
     }
-    keep(STORAGE_KEY, JSON.stringify(state))
+    keepJson(STORAGE_KEY, state)
   }
 }
 

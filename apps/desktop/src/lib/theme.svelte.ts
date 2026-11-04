@@ -15,6 +15,7 @@ import {
   isRecord,
   isString,
   keep,
+  keepJson,
   recordOf,
   stored,
   storedText,
@@ -381,7 +382,7 @@ class Themes {
 
     if (stillGiven && held !== FIRST_LOOK.accent) {
       drawers[SHARED] = { ...drawers[SHARED], accent: FIRST_LOOK.accent }
-      keep(SETTINGS_KEY, JSON.stringify(drawers))
+      keepJson(SETTINGS_KEY, drawers)
     }
     keep(GIVEN_KEY, stillGiven ? FIRST_LOOK.accent : '')
   }
@@ -661,7 +662,7 @@ class Themes {
       }
     }
     this.chosen = { ...this.chosen, [drawer]: { ...this.chosen[drawer], [id]: value } }
-    keep(SETTINGS_KEY, JSON.stringify(this.chosen))
+    keepJson(SETTINGS_KEY, this.chosen)
   }
 
   /** Turns one dial, and keeps it. */
@@ -672,7 +673,7 @@ class Themes {
     const drawer = this.drawerOf(setting)
     this.chosen = { ...this.chosen, [drawer]: { ...this.chosen[drawer], [id]: value } }
     this.trying = Object.fromEntries(Object.entries(this.trying).filter(([one]) => one !== id))
-    keep(SETTINGS_KEY, JSON.stringify(this.chosen))
+    keepJson(SETTINGS_KEY, this.chosen)
     if (id === 'accent') keep(GIVEN_KEY, '')
     this.paintSettings()
     if (setting.reapplies === true) this.apply()
@@ -866,7 +867,7 @@ class Themes {
       return
     }
 
-    if (earlySheet()?.css !== css) keep(SHEET_KEY, JSON.stringify({ id: theme.id, css }))
+    if (earlySheet()?.css !== css) keepJson(SHEET_KEY, { id: theme.id, css })
   }
 
   /** What the theme declares, once the grammar behind its door arrives; the sheet

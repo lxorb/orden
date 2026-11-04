@@ -20,7 +20,7 @@ import { answerThreadSpaces } from '../../automation/caller'
 import { i18n, message, t } from '../../i18n.svelte'
 import { prompt } from '../../prompt.svelte'
 import { without } from '../../records'
-import { forget, keep, stored, storedText } from '../../stored'
+import { forget, keep, keepJson, stored, storedText } from '../../stored'
 import { onceAFrame } from '../../timing'
 import { workspace } from '../../workspace.svelte'
 import { unlisted } from '../chat/catalogue'
@@ -329,7 +329,7 @@ class Chat implements Panel {
     const thread = threadFromAsk(old, space, provider.id, provider.model)
     if (thread) await keepThread(thread).catch(() => undefined)
     const rest = Object.fromEntries(Object.entries(spaces).filter(([id]) => id !== space))
-    if (Object.keys(rest).length) keep(OLD_KEY, JSON.stringify({ spaces: rest }))
+    if (Object.keys(rest).length) keepJson(OLD_KEY, { spaces: rest })
     else forget(OLD_KEY)
   }
 
@@ -404,7 +404,7 @@ class Chat implements Panel {
       if (!space || stored(key) === true) continue
       try {
         wrote += await findParents(space)
-        keep(key, 'true')
+        keepJson(key, true)
       } catch {
         // Tried again next launch.
       }

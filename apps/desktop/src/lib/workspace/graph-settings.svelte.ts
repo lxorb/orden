@@ -21,7 +21,7 @@
  *  `nib:folder-icons` is this store's twin in every respect, down to remembering
  *  which account a space's settings have been folded into. */
 
-import { isBoolean, isNumber, isRecord, isString, keep } from '../stored'
+import { isBoolean, isNumber, isRecord, isString, keepJson } from '../stored'
 import { filledIn, type Folded, type Folding, meet, readSpaces, without } from '../records'
 
 export const STORAGE_KEY = 'nib:graph'
@@ -392,6 +392,6 @@ export class SpaceGraphSettings {
     // Through `keep`, the one place that writes: a picture that cannot be
     // written down is still the picture on screen, and the settings are in
     // memory and true. See stored.ts.
-    keep(STORAGE_KEY, JSON.stringify(this.spaces))
+    keepJson(STORAGE_KEY, this.spaces)
   }
 }
