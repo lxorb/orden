@@ -477,9 +477,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,880,800, for #331: the pictures the tab overview keeps of windows,
  *  taken as each leaves the screen (overview/faces.ts, overview/faces.svelte.ts).
  *  Measured 5,880,642.
+ *
+ *  The code raised on 2026-11-04, to 5,882,900, for #331: the tab overview handing over to the app and
+ *  back with no frame of difference (overview/Overview.svelte, overview/mirror.ts).
+ *  Measured 5,882,737.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_880_800,
+  code: 5_882_900,
   catalogues: 965_200,
   styles: 290_000,
   fonts: 260_000,
