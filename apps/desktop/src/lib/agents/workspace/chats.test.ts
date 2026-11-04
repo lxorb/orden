@@ -166,7 +166,7 @@ describe('the chats an agent sees', () => {
     }
     try {
       const asked = await call('read_chat', { chat: 'thesis' }, callerOf(grant, 'in-secret'))
-      expect(asked.ok).toBe(false)
+      expect(JSON.stringify(asked)).toContain('"ok":false')
       expect(JSON.stringify(asked)).toContain('ambiguous')
       expect(JSON.stringify(asked)).toContain(twin)
       expect(JSON.stringify(asked)).toContain(third)
