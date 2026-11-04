@@ -108,7 +108,14 @@ export interface Watched {
    *  a space paired after the watch began - every space, on a device's first v2 launch -
    *  or one whose folder moved. */
   follow(): void
+  /** A space's first pass is over: its folder is read now if anything was heard of it
+   *  that the pass may have read past, so that waits for no next launch. */
+  caughtUp(spaceId: string): void
   stop(): void
+}
+
+function spaceAt(engine: Engine, root: string) {
+  return [...engine.core.spaces.values()].find((one) => one.row.root === root)
 }
 
 /** Watches every space the engine keeps. */
@@ -132,11 +139,31 @@ export function watchFolders(how: Watching): Watched {
     }
   }
 
+  // The spaces something was heard of before their first pass was over, and the roots whose
+  // watch has said it started: that first word is no news, the pass lists the folder after it.
+  const missed = new Set<string>()
+  const started = new Set<string>()
+  const behind = (id: string | undefined) => {
+    if (id !== undefined && !how.ready(id)) missed.add(id)
+  }
+
   const heard = (news: SpaceNews) => {
     if (news.unwatched === 'limit') limitReached()
     if (news.gone) return
-    if (news.scan) queue.push(() => scanned(how, news.root))
-    for (const change of news.changes) queue.push(() => changed(how, change))
+    if (news.scan) {
+      const again = started.has(news.root)
+      started.add(news.root)
+      queue.push(() => {
+        if (again) behind(spaceAt(how.engine, news.root)?.id)
+        return scanned(how, news.root)
+      })
+    }
+    for (const change of news.changes) {
+      queue.push(() => {
+        behind(how.engine.placed(change.path)?.space.id)
+        return changed(how, change)
+      })
+    }
     void drain()
   }
 
@@ -156,6 +183,12 @@ export function watchFolders(how: Watching): Watched {
   follow()
   return {
     follow,
+    caughtUp: (spaceId) => {
+      const root = how.engine.core.spaces.get(spaceId)?.row.root
+      if (!missed.delete(spaceId) || root === undefined) return
+      queue.push(() => scanned(how, root))
+      void drain()
+    },
     stop: () => {
       stopped = true
       void unwatchSpaces().catch(() => undefined)
@@ -248,7 +281,7 @@ async function made(engine: Engine, path: string, dir: boolean) {
  *  watching - closed, or the watcher having lost events. */
 export async function scanned(how: Watching, root: string): Promise<void> {
   const engine = how.engine
-  const space = [...engine.core.spaces.values()].find((one) => one.row.root === root)
+  const space = spaceAt(engine, root)
   if (!space || !how.ready(space.id)) return
   const listed = await scanSpace(root)
   const seen = new Set<string>()

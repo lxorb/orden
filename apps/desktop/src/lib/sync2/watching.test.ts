@@ -1,13 +1,18 @@
 import { describe, expect, test, vi } from 'vitest'
 import type { Engine } from './engine'
-import { scanned, kept, type Watching } from './watching'
+import { scanned, kept, watchFolders, type Watching } from './watching'
 
 vi.mock('../surfaces.svelte', () => ({ syncMark: { ask: () => undefined } }))
 
+const watch = vi.hoisted(() => ({ heard: (_news: unknown): void => undefined }))
 const listing = vi.hoisted(() => ({ answer: (): Promise<unknown[]> => Promise.resolve([]) }))
 vi.mock('../space-watch', async (original) => ({
   ...(await original<typeof import('../space-watch')>()),
   scanSpace: () => listing.answer(),
+  watchSpaces: (_roots: string[], heard: (news: unknown) => void) => {
+    watch.heard = heard
+    return Promise.resolve()
+  },
 }))
 
 const ROOT = '/home/me/.local/share/ch.emilvinu.nib/Spaces/Two'
@@ -111,4 +116,84 @@ describe('a launch scan', () => {
     } as unknown as Watching
     await scanned(how, ROOT)
   }
+})
+
+describe('what is heard while a first pass runs', () => {
+  const started = () => {
+    const created = vi.fn(() => Promise.resolve())
+    const entries = new Map()
+    const space = {
+      id: 's',
+      row: { root: ROOT },
+      entries,
+      key: (path: string) => path,
+      at: () => null,
+      paths: () => new Map(),
+    }
+    let ready = false
+    const watched = watchFolders({
+      engine: {
+        created,
+        placed: (path: string) => ({ space, path: path.slice(ROOT.length + 1) }),
+        entryAt: () => null,
+        ownWork: () => false,
+        core: {
+          spaces: new Map([['s', space]]),
+          world: {
+            foldsCase: false,
+            blobs: {},
+            join: (root: string, path: string) => `${root}/${path}`,
+            disk: { exists: () => Promise.resolve(true), read: () => Promise.resolve('words') },
+          },
+        },
+      },
+      ready: () => ready,
+      changed: () => undefined,
+    } as unknown as Watching)
+    const hear = async (news: object) => {
+      watch.heard({ root: ROOT, changes: [], scan: false, gone: false, ...news })
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    }
+    return { created, watched, hear, passed: () => (ready = true) }
+  }
+  const file = { path: `${ROOT}/late.md`, dir: false, size: 5, mtime: 1, id: null }
+
+  test('is read once it is over, not at the next launch', async () => {
+    const { created, watched, hear, passed } = started()
+    await hear({ scan: true })
+    await hear({ changes: [{ kind: 'created', ...file }] })
+    expect(created).not.toHaveBeenCalled()
+
+    listing.answer = () => Promise.resolve([file])
+    passed()
+    watched.caughtUp('s')
+    await vi.waitFor(() => expect(created).toHaveBeenCalledWith(file.path, false, 'words'))
+    watched.stop()
+  })
+
+  test('a watch lost in the middle of it counts as well', async () => {
+    const { created, watched, hear, passed } = started()
+    await hear({ scan: true })
+    await hear({ scan: true })
+
+    listing.answer = () => Promise.resolve([file])
+    passed()
+    watched.caughtUp('s')
+    await vi.waitFor(() => expect(created).toHaveBeenCalledTimes(1))
+    watched.stop()
+  })
+
+  test('nothing heard but the start of the watch: the pass read all of that', async () => {
+    const { created, watched, hear, passed } = started()
+    await hear({ scan: true })
+
+    const asked = vi.fn(() => Promise.resolve([file]))
+    listing.answer = asked
+    passed()
+    watched.caughtUp('s')
+    await hear({ changes: [] })
+    expect(asked).not.toHaveBeenCalled()
+    expect(created).not.toHaveBeenCalled()
+    watched.stop()
+  })
 })

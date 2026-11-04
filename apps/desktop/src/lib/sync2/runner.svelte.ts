@@ -596,6 +596,7 @@ class Runner {
             }
             this.firsts.add(id)
             this.watched?.follow()
+            this.watched?.caughtUp(id)
           }
           const passed = await engine.pass(id)
           this.placesHeard(engine, space.row.root)
