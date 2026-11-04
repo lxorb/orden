@@ -383,7 +383,7 @@ static PRESSED: LazyLock<String> = LazyLock::new(|| {
 /// How long a frame in a process of its own has to answer what the scans ask. A frame that is
 /// reloading loses the question, and one that hangs never answers: either way it is a part
 /// not read, which is safe, and no reason to hold up the rest of the page for the full wait.
-const FRAME_PATIENCE: Duration = Duration::from_secs(8);
+pub(super) const FRAME_PATIENCE: Duration = Duration::from_secs(8);
 
 /// How long one read of a page spends on its frames: the frames it did not come to are not
 /// written, as a frame on a denied site is not.

@@ -908,7 +908,7 @@ pub fn awake(view: &View, label: &str, own: bool) {
             Some(&frame.session),
             "Network.enable",
             &json!({}),
-            PATIENCE,
+            super::page::FRAME_PATIENCE,
         );
     }
 }
