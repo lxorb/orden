@@ -22,7 +22,11 @@ WATCH = """
   const armed = sessionStorage.getItem('launch-close');
   if (!armed) return;
   sessionStorage.removeItem('launch-close');
-  const go = () => {
+  // The session written as the window goes, and nothing after it: the page goes on running
+  // for a moment after a reload is asked for, and a launch ending in that moment shows nothing.
+  const go = (ws) => {
+    ws.persist();
+    ws.persist = () => true;
     sessionStorage.setItem('launch-closed', '1');
     location.reload();
   };
@@ -31,13 +35,17 @@ WATCH = """
     if (!ws) return;
     if (armed === 'persist') {
       ws.persist();
+      const session = localStorage.getItem('nib:workspace') ?? '';
+      if (!session.includes('ONLY-IN-THE-SESSION') || !session.includes('WORDS-IN-A-SET-OUT-OF-SIGHT')) {
+        sessionStorage.setItem('launch-lost', '1');
+      }
       if (ws.restored && ws.setsWritten() !== ws.setsRead && ws.tabs.length > 2) clearInterval(every);
     } else if (armed === 'list up') {
-      if (ws.tree && !ws.tabs.length) { clearInterval(every); go(); }
+      if (ws.tree && !ws.tabs.length) { clearInterval(every); go(ws); }
     } else if (ws.restored && ws.setsWritten() !== ws.setsRead) {
       if (!ws.tabs.some((tab) => tab.note.latest.includes('""" + IN_A_SET + """'))) {
         clearInterval(every);
-        go();
+        go(ws);
       }
     }
   }, 0);
@@ -53,7 +61,7 @@ def type_draft(page: Page, words: str) -> None:
     wait_for(page, f"()=>{WS}.active?.note.latest.includes({words!r})", "typed")
 
 
-def kept_through(page: Page, armed: str, fires: bool) -> None:
+def kept_through(page: Page, armed: str, fires: bool, total: int) -> None:
     page.evaluate(f"()=>{WS}.persist()")
     page.evaluate("(armed)=>sessionStorage.setItem('launch-close', armed)", armed)
     page.reload(wait_until="commit")
@@ -67,12 +75,14 @@ def kept_through(page: Page, armed: str, fires: bool) -> None:
             page,
             f"()=>{WS}.tabs.some(t=>t.note.latest.includes({words!r}))",
             f"{words} back after: {armed}",
-            timeout=15000,
+            15,
         )
+    if page.evaluate("()=>sessionStorage.getItem('launch-lost')"):
+        wrong(f"{armed}: a session written in the launch held neither draft or only one")
     tabs = page.evaluate(f"()=>{WS}.tabs.length")
     say(f"{armed}: both drafts back, {tabs} tabs")
-    if tabs != 13:
-        wrong(f"{armed}: {tabs} tabs came back, not 13")
+    if tabs != total:
+        wrong(f"{armed}: {tabs} tabs came back, not {total}")
 
 
 def drive(browser: Browser) -> None:
@@ -85,7 +95,7 @@ def drive(browser: Browser) -> None:
 
     other = page.evaluate(f"async()=>{{const made=await {WS}.addSpace('Other'); return made?.id ?? made}}")
     page.evaluate(f"(id)=>{WS}.selectSpace(id)", other)
-    wait_for(page, f"(id)=>{WS}.activeSpaceId===id", "in the other space", other)
+    wait_for(page, f"()=>{WS}.activeSpaceId==={other!r}", "in the other space")
     DRIVE.seed(page, *[f"# S{at}\n\nwords {at}\n" for at in range(10)])
     for at in range(10):
         page.evaluate(
@@ -95,15 +105,13 @@ def drive(browser: Browser) -> None:
         )
     type_draft(page, IN_A_SET)
     page.evaluate(f"(id)=>{WS}.selectSpace(id)", first)
-    wait_for(page, f"(id)=>{WS}.activeSpaceId===id", "back in the first space", first)
+    wait_for(page, f"()=>{WS}.activeSpaceId==={first!r}", "back in the first space")
     total = page.evaluate(f"()=>{WS}.tabs.length")
     say(f"before: {total} tabs")
-    if total != 13:
-        say("the first space opens with a note of its own, counted")
 
-    kept_through(page, "persist", False)
-    kept_through(page, "list up", True)
-    kept_through(page, "set building", True)
+    kept_through(page, "persist", False, total)
+    kept_through(page, "list up", True, total)
+    kept_through(page, "set building", True, total)
 
 
 if __name__ == "__main__":
