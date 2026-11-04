@@ -371,7 +371,6 @@ fn let_go(app: &AppHandle, label: &str) {
     }
     cdp::forget(label);
     quiet::forget(app, label);
-    super::watch::forget(label);
 }
 
 /// An agent said goodbye: its tabs go in ten minutes, unless it comes back.

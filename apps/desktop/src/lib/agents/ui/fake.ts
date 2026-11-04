@@ -12,7 +12,6 @@ import type {
   AgentTab,
   Approval,
   Category,
-  Frame,
   Grant,
   Overview,
   ShellWords,
@@ -63,9 +62,6 @@ export class FakeCrate implements Source {
   /** The audit log, one day of it. */
   readonly lines: Record<string, unknown>[] = []
 
-  /** Which tabs are being watched. */
-  watching: string[] = []
-
   /** What the shell was last told. */
   told: { key: string | null; words: ShellWords } | null = null
 
@@ -74,7 +70,6 @@ export class FakeCrate implements Source {
   hidden = false
 
   private hearing: ((event: AgentEvent) => void) | null = null
-  private framing = new Set<(frame: Frame) => void>()
   private next = 1
 
   /** Where the news goes: the UI's `hear`. */
@@ -161,12 +156,6 @@ export class FakeCrate implements Source {
     return this.ask('', 'pairing', client)
   }
 
-  /** A picture of a tab, sent to whoever watches. */
-  frame(tab: string, jpeg: string): void {
-    if (!this.watching.includes(tab)) return
-    for (const on of this.framing) on({ tab, jpeg })
-  }
-
   // ---- the Source: what the UI asks ------------------------------------------------
 
   state(): Promise<Overview> {
@@ -229,17 +218,6 @@ export class FakeCrate implements Source {
     this.overview.tabs = this.overview.tabs.filter(([, one]) => one.id !== agentTab)
     this.emit({ kind: 'closed', agent: held[0], id: agentTab })
     return Promise.resolve()
-  }
-
-  watch(tabs: string[]): Promise<void> {
-    this.asked.push({ command: 'watch', args: [tabs] })
-    this.watching = [...tabs]
-    return Promise.resolve()
-  }
-
-  frames(on: (frame: Frame) => void): Promise<() => void> {
-    this.framing.add(on)
-    return Promise.resolve(() => this.framing.delete(on))
   }
 
   shell(key: string | null, words: ShellWords): Promise<void> {

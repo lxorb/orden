@@ -8,9 +8,6 @@
 /** The event the crate's news arrives on. */
 export const AGENT_EVENT = 'nib://agent'
 
-/** The event an agent tab's pictures arrive on, while the activity panel watches. */
-export const AGENT_FRAME_EVENT = 'nib://agent-frame'
-
 /** Every verb the crate answers, in the crate's order. */
 export const BROWSER_VERBS = [
   'browser_tabs',
@@ -303,7 +300,6 @@ export const AGENT_COMMANDS = [
   'agents_log_clear',
   'agents_adopt',
   'agents_capture',
-  'agents_watch',
   'agents_shell',
   'agents_hold',
 ] as const
@@ -319,12 +315,6 @@ export interface Overview {
   halted: string[]
   /** The agents that called in the last ten minutes and did not say goodbye. */
   connected: string[]
-}
-
-/** One picture of an agent tab, from the engine's screencast: a JPEG, base64. */
-export interface Frame {
-  tab: string
-  jpeg: string
 }
 
 /** The words the crate says in the reader's language: the tray's rows and the

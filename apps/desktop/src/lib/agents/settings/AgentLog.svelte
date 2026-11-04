@@ -132,7 +132,7 @@
   }
 
   /* A call as the activity panel lists one: the word, what it was about, and when, at
-     the far end where the times make a column. See AgentCard.svelte. */
+     the far end where the times make a column. See AgentSession.svelte in lib/agents/ui. */
   li {
     display: flex;
     align-items: baseline;

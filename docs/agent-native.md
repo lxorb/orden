@@ -662,17 +662,15 @@ keep doing so (section 12).
 
 ### 6.6 Watching
 
-**The agent's page is never on screen unless the reader asks, and then it is a picture.**
-The activity panel (9.5) shows each agent tab as a live thumbnail: the engine's screencast
-(`Page.startScreencast`, JPEG, a frame at most every 200 ms, 480 pixels wide) drawn into an
-`<img>` while the panel is open and not at all when it is closed. A picture, because a
-picture takes no input: watching can never be interacting by accident, and the reader's
-pointer over it is the reader's pointer over Orden. The page keeps rendering out of sight, so
-the frames are real; a hidden page would have none (section 3).
+**The agent's page is never on screen unless the reader asks.** The agent's session (9.5)
+lists its own tabs by name and site; nothing of the page is drawn there. The live pictures
+the activity panel once showed of each tab, the engine's screencast, went with that panel
+(#1120): the frame (7.1) and the session's log say what the agent is doing, and Show (6.7)
+puts the page itself in front of the reader when they want to see it.
 
 ### 6.7 Showing
 
-**Show** on a thumbnail, or the agent's `browser_show`, makes an agent tab a tab of the
+**Show** on a tab's row in the session, or the agent's `browser_show`, makes an agent tab a tab of the
 reader's, beside the one in front, **without loading it again**: it is already a child of
 the window, so showing it is placing it where the pane is. What changes is whose strip it
 is in: the listeners of a reader's tab are attached (keys, page-first, full screen,
@@ -1152,9 +1150,11 @@ not filled in behind the agent's back either.
 
 ### 9.5 Seeing what it did, and stopping it
 
-- **The activity panel** (the right sidebar, where the outline and the links are): each
-  connected agent, what it is doing now, its tabs as thumbnails (6.6), its questions, and
-  the session as a list of calls. **Stop** per agent.
+- **The agent's session**, in the Ask panel (#1120): each connected agent is a row at the
+  top of its chat list, with a mark while it is connected and the question it is asking,
+  if any; opened, the session takes the conversation's place: what it is doing now, its
+  questions, its own tabs by name (6.6), and the session as a list of calls, with **Stop**,
+  **Add to note** and **Undo**. Each question is a notification too, which opens it.
 - **The audit log**: every call, with the agent, the time, the tool, the tab or the note,
   the arguments (typed text into a password field never appears, because there is none),
   the result's status and its duration, as one JSON line, in
@@ -1423,7 +1423,7 @@ the app, is in `scripts/probe_app.py`'s `run_probe`).
 | `agent-harness` | a fake agent (a scripted MCP client), scenario pages (injection, a shop, a sign-in, dialogs, popups, pickers), the family watch in `probe_app.py`, the weight guard for `lib/agents`, a nightly drive | the spike; each lane's verbs as they land | 1, running through 3 |
 | `agent-mcp` | `main.rs`'s `mcp` mode, the tool schemas and descriptions, the untrusted marking, the pairing, `needs_approval` | `agent-core`'s verb contract (13.1), which it can build against a fake | 2 |
 | `agent-workspace-tools` | `lib/automation/` agent verbs: tree, tabs, bookmarks, spaces without switching, search, versions, canvases, PDFs and highlights, settings allowlist, `capture_to_note`; `run_terminal` when the terminal lands | `agent-core`'s token and scope check | 2 |
-| `agent-activity-ui` | `lib/agents/` UI, lazy: the frame, the tab mark, the tab's Stop, the activity panel with thumbnails, the questions, Show, the stop key in the registry and globally | `agent-core`'s events (13.1); starts on a fake | 2 |
+| `agent-activity-ui` | `lib/agents/` UI, lazy: the frame, the tab mark, the tab's Stop, the agent's row and session in the Ask panel, the questions, Show, the stop key in the registry and globally | `agent-core`'s events (13.1); starts on a fake | 2 |
 | `agent-settings-ui` | Settings > Agents: the grants, the pairing bubble, sites, asks, mode, limits, the log viewer and Add to note, the copy line for `nib mcp`, locales | `agent-core`'s grant shape | 2 |
 | `agent-engines` | `WKWebView` and `WebKitGTK` subsets behind the same verbs, measured first | `agent-core` | 3 |
 
@@ -1454,10 +1454,8 @@ At most eight agents run at once and no wave needs more than five. Wave 1 can st
   `agents_log {day}` with `agents_log_days` (the days there are, newest first) and
   `agents_log_clear {agent?}` (Settings > Agents' Clear), and `agents_adopt {agent_tab,
   tab}` for Show (6.7). The activity
-  UI adds four: `agents_stop {agent?}` stops one agent where one is named (the panel's
-  row and a tab's Stop), `agents_watch {tabs}`
-  starts the screencast of those agent tabs (and stops the rest) with its frames on
-  `nib://agent-frame`, `agents_shell {key, words}` hands the crate the stop's key in the
+  UI adds three: `agents_stop {agent?}` stops one agent where one is named (the panel's
+  row and a tab's Stop), `agents_shell {key, words}` hands the crate the stop's key in the
   system's notation and the words the tray and the notifications say, and `agents_hold
   {hide}` answers whether the asking window holds the agents' pages and, with `hide`,
   hides it instead of closing it (open question 6).

@@ -209,57 +209,6 @@ fn send(
     }
 }
 
-/// One call nobody waits for, from any thread: for what a page is told and never answers
-/// back about, a screencast's frame acknowledged.
-pub fn tell(view: &View, method: &'static str, params: &Value) {
-    match view {
-        #[cfg(all(windows, not(feature = "cef")))]
-        View::Webview(view) => {
-            let params = params.clone();
-            let _ = view.with_webview(move |platform| {
-                if let Some(core) = core_of(&platform) {
-                    post(&core, method, &params);
-                }
-            });
-        }
-        #[cfg(feature = "cef")]
-        View::Webview(view) => {
-            crate::engine::devtools::tell(view, None, vec![(method, params.clone())]);
-        }
-        #[cfg(feature = "cef")]
-        View::Windowless(page) => page.tell(method, params),
-    }
-}
-
-/// Hears one of the protocol's events on a page from now on, from any thread: its
-/// parameters, for as long as the page is open.
-pub fn listen(view: &View, event: &'static str, on: impl Fn(Value) + Send + Sync + 'static) {
-    match view {
-        #[cfg(all(windows, not(feature = "cef")))]
-        View::Webview(view) => {
-            let _ = view.with_webview(move |platform| {
-                if let Some(core) = core_of(&platform) {
-                    hear(&core, event, move |_, value| on(value));
-                }
-            });
-        }
-        #[cfg(feature = "cef")]
-        View::Webview(view) => {
-            let _ = crate::engine::devtools::hear(view, move |method, session, params| {
-                if method == event && session.is_none() {
-                    on(params.clone());
-                }
-            });
-        }
-        #[cfg(feature = "cef")]
-        View::Windowless(page) => page.hear(move |method, session, params| {
-            if method == event && session.is_none() {
-                on(params.clone());
-            }
-        }),
-    }
-}
-
 /// One call nobody waits for, on the window's thread: its answer, whatever it is, is
 /// dropped. For what a page is set up with before it loads, where waiting would be
 /// waiting inside the event loop's own turn.

@@ -16,7 +16,7 @@
 //! | `browser`, `reader` | the browser verbs, on the agent's tabs and the reader's |
 //! | `capture` | a page read for the window's `capture_to_note` |
 //! | `memory` | the engine's memory |
-//! | `shell`, `watch` | what the app around the window does for agents - the tray, the stop key, the notifications, the window kept - and the pictures of their tabs |
+//! | `shell` | what the app around the window does for agents - the tray, the stop key, the notifications, the window kept |
 //!
 //! **Nothing at launch.** Not a thread, not a file read, not a webview: the state below
 //! is made on the first request that names an agent verb or carries an agent's token,
@@ -107,7 +107,6 @@ pub(crate) mod stop;
 #[cfg(any(windows, feature = "cef"))]
 pub mod engines;
 pub mod shell;
-pub mod watch;
 
 #[cfg(any(windows, feature = "cef"))]
 mod browser;

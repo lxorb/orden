@@ -10,7 +10,7 @@ import { without } from '../../records'
 import type { AgentEvent, AgentTab, Approval, Grant, Overview } from '../verbs'
 
 /** An agent tab, with the agent it belongs to. */
-export interface Held extends AgentTab {
+interface Held extends AgentTab {
   agent: string
 }
 

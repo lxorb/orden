@@ -54,7 +54,7 @@ export function wornAt(seen: Seen, now: number, colourOf: ColourOf): Record<stri
 }
 
 /** One tab's state, for the agent that last called on it. */
-export function stateOf(
+function stateOf(
   seen: Seen,
   agent: string,
   at: number,
