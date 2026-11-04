@@ -1193,8 +1193,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,563,500, for #1097: an emoji's outline takes a tint like a line,
  *  and a row wearing one is held back as a line is (`takesTint` in icons.ts, Icon.svelte,
- *  FileMark.svelte). The outlines themselves are a chunk of their own. Measured 3,562,612. */
-const BUDGET = 3_563_500
+ *  FileMark.svelte). The outlines themselves are a chunk of their own. Measured 3,562,612.
+ *
+ *  Raised 2026-11-04, to 3,565,000, for #1068: a delete put back out of the trash or
+ *  undone is said to sync by the word it went with, so it comes back as the entries it
+ *  was (workspace/undoing.ts, trash.svelte.ts). Measured 3,563,824. */
+const BUDGET = 3_565_000
 const MOST_FILES = 394
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
