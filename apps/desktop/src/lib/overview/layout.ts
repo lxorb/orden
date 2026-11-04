@@ -56,6 +56,8 @@ export interface Panes {
 
 /** The room between two windows, and between a split's sides, which the seam runs in. */
 const GAP = 28
+/** And between two rows, which holds the name under each window of the upper. */
+const ROW_GAP = 60
 const SEAM_GAP = 56
 
 /** No window wider than this share of the room, so one tab alone is a window on a
@@ -82,7 +84,7 @@ export function gridFor(count: number, shape: number, room: Box, widest: number)
   for (let across = 1; across <= Math.max(count, 1); across++) {
     const down = Math.ceil(count / across)
     const byWidth = (room.w - (across - 1) * GAP) / across
-    const byHeight = ((room.h - (down - 1) * GAP) / down) * shape
+    const byHeight = ((room.h - (down - 1) * ROW_GAP) / down) * shape
     const w = Math.min(byWidth, byHeight, widest)
     if (w > best.w + 0.5) best = { across, w }
   }
@@ -96,7 +98,7 @@ function grid(paneId: string, room: Box, panes: Panes, widest: number): Slot[] {
   const { across, w } = gridFor(ids.length, shape, room, widest)
   const h = w / shape
   const down = Math.ceil(ids.length / across)
-  const tall = down * h + (down - 1) * GAP
+  const tall = down * h + (down - 1) * ROW_GAP
   const top = room.y + (room.h - tall) / 2
 
   return ids.map((id, index) => {
@@ -108,7 +110,7 @@ function grid(paneId: string, room: Box, panes: Panes, widest: number): Slot[] {
       id,
       paneId,
       x: left + (index % across) * (w + GAP),
-      y: top + row * (h + GAP),
+      y: top + row * (h + ROW_GAP),
       w,
       h,
     }

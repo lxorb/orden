@@ -2,8 +2,10 @@
   /** The spaces' cells in All spaces: a membrane round each space's windows, moving on
    *  its own every frame, stretched by a window held against it (issue #331). What a
    *  membrane does is membrane.ts; this keeps one per space, moves each to its space's
-   *  windows on springs, and draws them, every frame for as long as it is up. Asked for
-   *  less movement, the membranes stand still and follow at once. */
+   *  windows on springs, and draws them, every frame for as long as it is up. Every frame
+   *  it is handed the windows of each cell as they are drawn at that moment, which the
+   *  membrane never leaves out, whatever its springs are doing. Asked for less movement,
+   *  the membranes stand still and follow at once. */
 
   import { onDestroy } from 'svelte'
   import { stillness } from '../motion'
@@ -23,8 +25,14 @@
     cells,
     pushed,
     holding,
+    inside,
+    out,
   }: {
+    /** Whether the windows are out on the canvas, or on their way home. */
+    out: boolean
     cells: readonly Shown[]
+    /** The windows in a cell, where each is drawn this frame, read every frame. */
+    inside: (key: string) => readonly Box[]
     /** Whether a window is held, which a membrane standing still wakes for. */
     holding: boolean
     /** The window held, and the cell it is in now, read every frame. */
@@ -35,6 +43,7 @@
     membrane: Membrane
     box: Record<'x' | 'y' | 'w' | 'h', Spring>
     path: SVGPathElement | null
+    name: HTMLElement | null
   }
 
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
@@ -52,6 +61,7 @@
         h: spring(cell.box.h),
       },
       path: null,
+      name: null,
     }
     kept.set(cell.key, made)
     return made
@@ -63,6 +73,17 @@
     return {
       destroy() {
         kept.delete(key)
+      },
+    }
+  }
+
+  function named(node: HTMLElement, key: string) {
+    const cell = cells.find((one) => one.key === key)
+    if (cell) keptOf(cell).name = node
+    return {
+      destroy() {
+        const one = kept.get(key)
+        if (one?.name === node) one.name = null
       },
     }
   }
@@ -93,8 +114,17 @@
         else step(one.box[key], seconds)
       }
       one.membrane.box = { x: one.box.x.at, y: one.box.y.at, w: one.box.w.at, h: one.box.h.at }
-      one.membrane.step(seconds, now / 1000, hand?.key === cell.key ? [hand.box] : [], still)
+      const own = inside(cell.key)
+      one.membrane.step(
+        seconds,
+        now / 1000,
+        hand?.key === cell.key ? [...own, hand.box] : own,
+        still,
+      )
       one.path?.setAttribute('d', one.membrane.pathOf())
+      // The name rides the top of the membrane, just over it.
+      const crown = one.membrane.crown()
+      if (one.name) one.name.style.translate = `${crown.x}px ${crown.y}px`
     }
 
     // Never still, unless asked to be: then only while something is moving.
@@ -116,7 +146,7 @@
   onDestroy(() => cancelAnimationFrame(frame))
 </script>
 
-<svg class="cells" width="1" height="1" aria-hidden="true">
+<svg class="cells" class:is-out={out} width="1" height="1" aria-hidden="true">
   {#each cells as cell (cell.key)}
     <path
       class="membrane"
@@ -130,8 +160,9 @@
   <span
     class="name"
     class:is-on={cell.on}
-    style:translate="{cell.box.x}px {cell.box.y - 64}px"
-    aria-hidden="true">{cell.name}</span
+    class:is-out={out}
+    aria-hidden="true"
+    use:named={cell.key}>{cell.name}</span
   >
 {/each}
 
@@ -142,6 +173,17 @@
     left: 0;
     overflow: visible;
     pointer-events: none;
+  }
+
+  /* In with the windows and out with them, never there before them or after. */
+  .cells,
+  .name {
+    opacity: 0;
+    transition: opacity var(--dur-slow) var(--ease-out);
+  }
+
+  .is-out {
+    opacity: 1;
   }
 
   /* A membrane: a faint wash of the space's colour inside, a soft line at its edge. */
@@ -157,15 +199,20 @@
     stroke: color-mix(in srgb, var(--tint) 70%, transparent);
   }
 
+  /* A space's name, over the top of its membrane, at the overview's own size for it
+     whatever the zoom (Overview.svelte's tokens). */
   .name {
     position: absolute;
     top: 0;
     left: 0;
     color: var(--muted);
-    font-size: var(--text-lg);
+    font-size: var(--overview-cell-name);
     font-weight: var(--weight-strong);
     white-space: nowrap;
     pointer-events: none;
+    transform-origin: 0 0;
+    scale: var(--overview-unzoom);
+    transform: translate(-50%, calc(-100% - var(--space-2)));
   }
 
   .name.is-on {

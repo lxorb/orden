@@ -210,7 +210,7 @@
   const cellBoxes = $derived<Cell[]>(
     laidCells.map((one) => ({
       key: one.key,
-      box: around(one.laid.slots) ?? places.at(one.key) ?? room,
+      box: captioned(around(one.laid.slots) ?? places.at(one.key) ?? room),
     })),
   )
 
@@ -240,6 +240,14 @@
     return { w: slot.w * 3, h: slot.h * 3 }
   }
 
+  /** How much room a window's name takes under it on the screen, at most. */
+  const CAPTION_ROOM = 36
+
+  /** A window's box with its name under it, which its cell holds as well. */
+  function captioned(box: Box): Box {
+    return { ...box, h: box.h + CAPTION_ROOM * Math.max(1, 1 / camera.zoom) }
+  }
+
   /** How far from its place, in pixels all told, a window's name starts to show. */
   const CAPTION_NEAR = 60
 
@@ -249,6 +257,24 @@
   const elements = new Map<string, { window: HTMLElement; face: HTMLElement; chip: HTMLElement }>()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
   const captions = new Map<string, HTMLElement>()
+  /** The windows that have come to rest on the canvas since it came up, which are where
+   *  they are drawn from then on; one still on its way out of the strip is where it is
+   *  going, as far as its cell is concerned. */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once a frame, never rendered
+  const arrived = new Set<string>()
+
+  /** A cell's windows, each where it is drawn this frame - or, on its way out of the strip
+   *  or home to it, where it lies on the canvas - for the membrane round them, which
+   *  never leaves one out (membrane.ts). The window under the hand is `pushedNow`'s. */
+  function insideOf(key: string): Box[] {
+    const boxes: Box[] = []
+    for (const slot of laid.slots) {
+      if (slot.id === held?.id || cellOf.get(slot.id) !== key) continue
+      const pose = arrived.has(slot.id) ? flights.get(slot.id)?.pose : null
+      boxes.push(captioned(pose ? { x: pose.x, y: pose.y, w: pose.w, h: pose.h } : slot))
+    }
+    return boxes
+  }
 
   /** Where a window goes home to: its pane, for the tab the pane shows, else its tab in
    *  the strip. A tab with no place on screen - scrolled out of its strip - fades where
@@ -312,6 +338,7 @@
     let moving = false
     for (const [id, flight] of flights) {
       if (!flight.step(seconds)) moving = true
+      else if (out) arrived.add(id)
       if (id === held?.id) follow()
       else paint(id)
     }
@@ -354,6 +381,7 @@
     if (stillness()) {
       for (const [id, flight] of flights) {
         flight.land()
+        if (out) arrived.add(id)
         paint(id)
       }
       if (!out) gone()
@@ -420,6 +448,7 @@
     held = null
     pressed = null
     out = false
+    arrived.clear()
     aimAll()
   }
 
@@ -463,7 +492,7 @@
     }
   }
 
-  function captioned(node: HTMLElement, id: string) {
+  function named(node: HTMLElement, id: string) {
     captions.set(id, node)
     return {
       destroy() {
@@ -770,9 +799,19 @@
       </div>
     {/if}
 
-    <div class="world" style:transform="translate({camera.x}px, {camera.y}px) scale({camera.zoom})">
+    <div
+      class="world"
+      style:transform="translate({camera.x}px, {camera.y}px) scale({camera.zoom})"
+      style:--overview-unzoom={Math.max(1, 1 / camera.zoom)}
+    >
       {#if cellsShown.length}
-        <Cells cells={cellsShown} pushed={pushedNow} holding={held !== null} />
+        <Cells
+          cells={cellsShown}
+          pushed={pushedNow}
+          holding={held !== null}
+          inside={insideOf}
+          {out}
+        />
       {/if}
       <svg class="seams" class:is-out={out} width="1" height="1" aria-hidden="true">
         {#each laid.seams as seam (seam.id)}
@@ -815,9 +854,9 @@
         <span
           class="caption"
           style:translate="{slot.x}px {slot.y + slot.h + 8}px"
-          style:width="{slot.w}px"
+          style:width="calc({slot.w}px / var(--overview-unzoom))"
           aria-hidden="true"
-          use:captioned={tab.id}
+          use:named={tab.id}
         >
           <TabMark {tab} /><span class="caption-name">{tab.shown}</span>
         </span>
@@ -840,7 +879,12 @@
     opacity: 1;
   }
 
+  /* The sizes of what the overview says in words, in one place: a window's name and a
+     space's, never smaller on the screen than these, however far out the camera is
+     (`--overview-unzoom` scales them back by as much as the camera makes them small). */
   .canvas {
+    --overview-caption: var(--text-base);
+    --overview-cell-name: calc(var(--text-base) * 1.6);
     position: fixed;
     inset: 0;
     z-index: var(--z-sheet);
@@ -1029,9 +1073,11 @@
     justify-content: center;
     gap: var(--space-2);
     color: var(--text);
-    font-size: var(--text-sm);
+    font-size: var(--overview-caption);
     white-space: nowrap;
     pointer-events: none;
     opacity: 0;
+    transform-origin: 0 0;
+    scale: var(--overview-unzoom);
   }
 </style>

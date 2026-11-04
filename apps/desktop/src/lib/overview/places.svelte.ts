@@ -16,7 +16,7 @@ import type { Box } from './layout'
 const KEY = 'nib:overview-places'
 
 /** The room between two spaces' places. */
-const APART = 160
+const APART = 360
 
 /** The places as written, with anything that is not one left out. */
 export function readPlaces(value: unknown): Record<string, Box> {
