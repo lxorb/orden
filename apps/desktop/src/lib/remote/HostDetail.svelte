@@ -103,7 +103,7 @@
 </script>
 
 <header class="who">
-  <button class="back" aria-label={t('Back')} title={t('Back')} onclick={onback}>
+  <button class="nib-glyph back" aria-label={t('Back')} title={t('Back')} onclick={onback}>
     <svg class="nib-mirror" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg>
   </button>
   <HostMark colour={host.colour} />
@@ -206,37 +206,10 @@
     min-width: 0;
   }
 
-  /* Back to the list, as a host's page in Agents has it. */
+  /* Back to the list: the square is `.nib-glyph`; it stands out into the margin by
+     the room round its arrow, so the arrow lines up with the title above. */
   .back {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 26px;
-    height: 26px;
     margin-inline-start: -6px;
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted-strong);
-    cursor: default;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
-
-  .back svg {
-    width: 14px;
-    height: 14px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.6;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  @media (hover: hover) {
-    .back:hover {
-      color: var(--text-strong);
-    }
   }
 
   /* The name, in the type a pane's own title is set in; a field only where it can

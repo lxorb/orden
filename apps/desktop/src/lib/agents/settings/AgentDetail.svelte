@@ -151,7 +151,7 @@
 {/snippet}
 
 <header class="who">
-  <button class="back" aria-label={t('Back')} title={t('Back')} onclick={onback}>
+  <button class="nib-glyph back" aria-label={t('Back')} title={t('Back')} onclick={onback}>
     <svg class="nib-mirror" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg>
   </button>
   <AgentMark name={grant.name} />
@@ -259,7 +259,7 @@
           <span class="always">
             {#each always as category (category)}
               <button
-                class="said"
+                class="nib-tag"
                 title={t('Remove')}
                 onclick={() => {
                   change((one) => withoutAlways(one, site, category))
@@ -284,7 +284,7 @@
           />
         </div>
         <button
-          class="drop"
+          class="nib-glyph is-danger"
           aria-label={t('Remove')}
           title={t('Remove')}
           onclick={() => {
@@ -338,38 +338,10 @@
 </div>
 
 <style>
-  /* Back to the list, in front of the agent it leaves, as a phone's bar has it: the
-     pane's own title stays above, so this is a step rather than a heading. */
+  /* Back to the list: the square is `.nib-glyph`; it stands out into the margin by
+     the room round its arrow, so the arrow lines up with the title above. */
   .back {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 26px;
-    height: 26px;
     margin-inline-start: -6px;
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted-strong);
-    cursor: default;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
-
-  .back svg {
-    width: 14px;
-    height: 14px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.6;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  @media (hover: hover) {
-    .back:hover {
-      color: var(--text-strong);
-    }
   }
 
   .who {
@@ -459,63 +431,6 @@
     flex-wrap: wrap;
     gap: var(--space-1);
     margin-block-start: 2px;
-  }
-
-  .said {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35em;
-    padding: 0 0.5em;
-    border: none;
-    border-radius: 999px;
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .said:hover {
-      background: var(--danger-soft);
-      color: var(--danger);
-    }
-  }
-
-  .drop {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 26px;
-    height: 26px;
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted);
-    cursor: default;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
-
-  .drop :global(svg) {
-    width: 12px;
-    height: 12px;
-    stroke-width: 1.5;
-  }
-
-  .said :global(svg) {
-    width: 8px;
-    height: 8px;
-    stroke-width: 1.4;
-  }
-
-  @media (hover: hover) {
-    .drop:hover {
-      color: var(--danger);
-    }
   }
 
   .value {

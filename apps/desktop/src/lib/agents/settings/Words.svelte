@@ -44,7 +44,7 @@
   {#if words.length}
     <div class="list">
       {#each words as word (word)}
-        <button class="word" title={t('Remove')} onclick={() => onremove(word)}>
+        <button class="nib-tag" title={t('Remove')} onclick={() => onremove(word)}>
           {word}<Cross small />
         </button>
       {/each}
@@ -78,42 +78,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2);
-  }
-
-  /* One word, and the way to take it back: the whole of it is the button. */
-  .word {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4em;
-    padding: 0.1em 0.55em;
-    border: none;
-    border-radius: 999px;
-    background: var(--surface-2);
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  .word :global(svg) {
-    width: 8px;
-    height: 8px;
-    color: var(--muted);
-    stroke-width: 1.4;
-  }
-
-  @media (hover: hover) {
-    .word:hover {
-      background: var(--danger-soft);
-      color: var(--danger);
-    }
-
-    .word:hover :global(svg) {
-      color: inherit;
-    }
   }
 
   /* The value box every setting's is, across the list rather than in the column. */

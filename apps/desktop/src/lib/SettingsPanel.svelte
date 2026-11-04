@@ -447,7 +447,11 @@
     {#if viewport.touch}
       <header class="bar">
         {#if !settings.listing}
-          <button class="icon" aria-label={t('Back')} onclick={() => (settings.listing = true)}>
+          <button
+            class="nib-glyph"
+            aria-label={t('Back')}
+            onclick={() => (settings.listing = true)}
+          >
             <svg class="nib-mirror" viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" /></svg>
           </button>
         {/if}
@@ -456,7 +460,7 @@
           {settings.listing ? t('Settings') : titleOf(settings.section)}
         </h1>
 
-        <button class="icon" aria-label={t('Close')} onclick={() => (settings.open = false)}>
+        <button class="nib-glyph" aria-label={t('Close')} onclick={() => (settings.open = false)}>
           <Cross />
         </button>
       </header>
@@ -928,7 +932,7 @@
         <div class="chips">
           {#each modes.spellWords as word (word)}
             <button
-              class="chip"
+              class="nib-tag"
               title={t('Remove')}
               onclick={() => modes.toggleSpellWord(word, view)}
             >
@@ -1298,7 +1302,7 @@
               {rebind.listening === entry.id ? t('Press a key…') : (shown(key) ?? t('Not set'))}
             </button>
             <button
-              class="revert"
+              class="nib-glyph revert"
               disabled={!shortcuts.changed(entry.id)}
               title={t('Reset')}
               aria-label={t('Reset')}
@@ -1319,8 +1323,10 @@
                 name: rebind.clash.holders.map((one) => one.label()).join(', '),
               })}
             </span>
-            <button class="take" onclick={() => rebind.takeOver()}>{t('Take it over')}</button>
-            <button class="give" onclick={() => (rebind.clash = null)}>{t('Cancel')}</button>
+            <button class="nib-chip" onclick={() => rebind.takeOver()}>{t('Take it over')}</button>
+            <button class="nib-chip is-quiet" onclick={() => (rebind.clash = null)}
+              >{t('Cancel')}</button
+            >
           </div>
         {/if}
       {/each}
@@ -1384,7 +1390,7 @@
         {@render mark(id)}
         <span class="name">{nameFor(id)}</span>
         <button
-          class="revert"
+          class="nib-glyph revert"
           disabled={at === 0}
           title={t('Move up')}
           aria-label={t('Move up')}
@@ -1393,7 +1399,7 @@
           <svg viewBox="0 0 16 16"><path d="M4.5 9.5L8 6l3.5 3.5" /></svg>
         </button>
         <button
-          class="revert"
+          class="nib-glyph revert"
           disabled={at === toolbar.ids.length - 1}
           title={t('Move down')}
           aria-label={t('Move down')}
@@ -1402,7 +1408,7 @@
           <svg viewBox="0 0 16 16"><path d="M4.5 6.5L8 10l3.5-3.5" /></svg>
         </button>
         <button
-          class="revert"
+          class="nib-glyph revert"
           title={t('Take it off')}
           aria-label={t('Take it off')}
           onclick={() => toolbar.remove(id)}
@@ -1463,7 +1469,7 @@
           {@render mark(entry.id)}
           <span class="name">{entry.label()}</span>
           <button
-            class="revert"
+            class="nib-glyph revert"
             title={t('Put it on the bar')}
             aria-label={t('Put it on the bar')}
             onclick={() => toolbar.add(entry.id)}
@@ -1967,39 +1973,10 @@
 
   /* Back to the key it came with. Present only once it is not on it, so the
      row stays quiet until something was actually changed. */
-  .revert {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 26px;
-    height: 26px;
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted);
-    cursor: default;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
-
+  /* The square is `.nib-glyph`; one with nothing to do is not there at all, so a
+     row that was never changed shows no way to change it back. */
   .revert:disabled {
     visibility: hidden;
-  }
-
-  @media (hover: hover) {
-    .revert:hover:not(:disabled) {
-      color: var(--text-strong);
-    }
-  }
-
-  .revert :global(svg) {
-    width: 14px;
-    height: 14px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.4;
-    stroke-linecap: round;
-    stroke-linejoin: round;
   }
 
   /* What is in the way, and the two ways out of it. Nothing is written until
@@ -2018,25 +1995,6 @@
   .clash span {
     flex: 1;
     min-width: 12rem;
-  }
-
-  .clash button {
-    flex: none;
-    padding: 5px 10px;
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-row);
-    cursor: default;
-  }
-
-  .clash .take {
-    border-color: transparent;
-    background: var(--accent);
-    color: var(--accent-ink);
   }
 
   /* A key that may never arrive. Quiet rather than red: on a browser several of
@@ -2184,43 +2142,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2);
-  }
-
-  /* One word, and the way to take it back. The whole chip is the button, so
-     there is no small cross to aim at. */
-  .chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4em;
-    padding: 0.1em 0.55em;
-    border: none;
-    border-radius: 99px;
-    background: var(--surface-2);
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  .chip :global(svg) {
-    width: 8px;
-    height: 8px;
-    color: var(--muted);
-    stroke-width: 1.4;
-  }
-
-  @media (hover: hover) {
-    .chip:hover {
-      background: var(--danger-soft);
-      color: var(--danger);
-    }
-
-    .chip:hover :global(svg) {
-      color: inherit;
-    }
   }
 
   /* The part of a dial's track its floor keeps it off: grey rather than the accent, so
@@ -2382,34 +2303,6 @@
   /* Without a back button before it, the title lines up with the cards. */
   .sheet.phone .bar h1.inset {
     padding-inline-start: 10px;
-  }
-
-  .sheet.phone .bar .icon {
-    flex: none;
-    width: var(--touch-target);
-    height: var(--touch-target);
-    display: grid;
-    place-items: center;
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-md);
-    background: none;
-    color: var(--text);
-    cursor: default;
-  }
-
-  .sheet.phone .bar .icon:active {
-    background: var(--surface-2);
-  }
-
-  .sheet.phone .bar .icon :global(svg) {
-    width: var(--touch-icon);
-    height: var(--touch-icon);
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.6;
-    stroke-linecap: round;
-    stroke-linejoin: round;
   }
 
   .sheet.phone nav {
@@ -2605,13 +2498,6 @@
     min-height: var(--touch-target);
     padding: 7px 10px;
     font-size: var(--text-sm);
-  }
-
-  /* The floor, not a size of its own: three of these in a row is what a button
-     on the bar carries, and a thumb has to land on each. */
-  .sheet.phone .revert {
-    width: var(--touch-target);
-    height: var(--touch-target);
   }
 
   .sheet.phone .setting .mark {

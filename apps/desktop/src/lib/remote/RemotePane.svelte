@@ -110,7 +110,7 @@
                 </span>
               </button>
               <button
-                class="step"
+                class="nib-glyph"
                 disabled={at === 0}
                 title={t('Move up')}
                 aria-label={t('Move up')}
@@ -119,7 +119,7 @@
                 <svg viewBox="0 0 16 16"><path d="M4.5 9.5L8 6l3.5 3.5" /></svg>
               </button>
               <button
-                class="step"
+                class="nib-glyph"
                 disabled={at === remote.hosts.length - 1}
                 title={t('Move down')}
                 aria-label={t('Move down')}
@@ -130,7 +130,7 @@
             </div>
           {/each}
           <button class="nib-setting row add" onclick={() => void add()}>
-            <span class="plus" aria-hidden="true"
+            <span class="nib-setting-mark plus" aria-hidden="true"
               ><svg viewBox="0 0 16 16"><path d="M8 3.5v9M3.5 8h9" /></svg></span
             >
             <span class="name">{t('Add host')}</span>
@@ -221,34 +221,8 @@
     }
   }
 
-  .step,
-  .plus {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 26px;
-    height: 26px;
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted);
-    cursor: default;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
-
-  .plus {
-    width: var(--icon-md);
-    height: var(--icon-md);
-  }
-
-  @media (hover: hover) {
-    .step:not(:disabled):hover {
-      color: var(--text-strong);
-    }
-  }
-
-  .step svg,
+  /* The mark in front of Add host is the row's leading mark (`.nib-setting-mark`);
+     the move up and down beside each host are `.nib-glyph`. */
   .plus svg {
     width: 14px;
     height: 14px;

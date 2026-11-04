@@ -558,6 +558,23 @@ select option {
   max-inline-size: 100%;
 }
 
+/* What a row is about, drawn in front of its name: an app's or a browser's logo
+   in Settings > Import (#1057). The row mark's size, which is a thumb's under a
+   finger through `--icon-md`, so every leading mark in a pane is one size. */
+.nib-setting-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--icon-md);
+  height: var(--icon-md);
+  font-size: var(--icon-md);
+  color: var(--muted-strong);
+  /* A stroked mark's ink and weight are its box's (Icon.svelte); a logo paints
+     itself. */
+  stroke: currentColor;
+  stroke-width: 1.75;
+}
+
 /* ── Layers over the app ───────────────────── */
 
 /* What a layer is put up over: the app, dimmed and softened, so the surface in
@@ -1085,6 +1102,15 @@ select option {
   color: var(--accent);
 }
 
+/* One that takes something away, such as a rule out of a list: it says so in the
+   colour the app says no in when pointed at. Four panes drew their own 26px square
+   for these, each a size off the row's and none of them lit under the pointer. */
+@media (hover: hover) {
+  .nib-glyph.is-danger:hover:not(:disabled) {
+    color: var(--danger);
+  }
+}
+
 /* A name that cannot be written, said on the thing the name is being typed in: a
    hairline in red, and the reason as a sentence under the words. Calmly, because
    half of what is refused is refused while it is still being typed: `Q1` is on
@@ -1607,6 +1633,53 @@ select option {
   min-height: var(--touch-target);
   padding: 0 var(--space-4);
   font-size: var(--touch-text);
+}
+
+/* At work on what it was pressed for, such as an import: faded with the others it
+   stands beside, which the shared fade does, and the pointer says to wait (#1057). */
+.nib-chip[aria-busy='true'] {
+  cursor: progress;
+}
+
+/* ── A word that can be taken back ─────────── */
+
+/* One word of a list somebody made, the whole of it the button that takes it out:
+   the spelling dictionary's words, an agent's words and the categories a site is
+   always allowed. Three components drew their own, at two sizes and two inks. The
+   cross is the small one (Cross.svelte). */
+.nib-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.1em 0.55em;
+  border: none;
+  border-radius: 99px;
+  background: var(--surface-2);
+  color: var(--text-strong);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  cursor: default;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.nib-tag > svg {
+  width: 8px;
+  height: 8px;
+  color: var(--muted);
+  stroke-width: 1.4;
+}
+
+@media (hover: hover) {
+  .nib-tag:hover {
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+
+  .nib-tag:hover > svg {
+    color: inherit;
+  }
 }
 
 /* ── How much is used ──────────────────────── */
