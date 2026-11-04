@@ -43,11 +43,13 @@
   import type { Block } from './tab-strip/picking.svelte'
   import {
     type Bounds,
+    crossTakes,
     endOf,
     holds,
     keptWidths,
     MAGNETISM,
     moved,
+    OPENING,
     partsFor,
     placed,
     separated,
@@ -202,6 +204,19 @@
   const opened = $derived(
     icons && !drag.on && hovered !== null && hovered !== activeId ? hovered : null,
   )
+
+  /** The tab opened out under the pointer once it has finished opening, whose cross takes
+   *  a press from then on; see `crossTakes` in tab-strip/layout.ts. */
+  let settledOpen = $state<string | null>(null)
+  $effect(() => {
+    const now = opened
+    if (now === null) {
+      settledOpen = null
+      return
+    }
+    const timer = setTimeout(() => (settledOpen = now), dur(OPENING))
+    return () => clearTimeout(timer)
+  })
 
   /** The tabs drawn as icons that would wear the same drawing as another, which wear
    *  their first letter on it as well; see tab-strip/twins.ts. */
@@ -1132,7 +1147,7 @@
           {#if !icon}
             <button
               class="shut"
-              class:hidden={!parts.close}
+              class:hidden={!parts.close || !crossTakes(tab.id, opened, settledOpen)}
               title={shortcuts.tooltip(t('Close'), 'app.close')}
               aria-label={t('Close')}
               onclick={(event) => closeTab(tab, pointerOf(event))}

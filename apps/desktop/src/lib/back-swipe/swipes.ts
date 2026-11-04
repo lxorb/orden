@@ -27,7 +27,14 @@
  *  **One swipe, one step,** where the pad says nothing. The touchpad's coast goes on after
  *  a swipe has gone, and the step itself can leave a gap in it - a page is replaced, a
  *  note is drawn - long enough to read as the fingers lifting. What arrives within
- *  `SETTLE` of that is the same coast, and nobody's. */
+ *  `SETTLE` of that is the same coast, and nobody's.
+ *
+ *  **Every swipe ends** (#1119), in `end` and nowhere else, whatever stopped it: the hand
+ *  lifting, gone quiet, cancelled, or landing again; another tab's or another hand's
+ *  step; the window going out of sight; the setting turned off; the tab or its pane no
+ *  longer shown (SwipeArrow.svelte); and, for a hand that says when it lifts and whose
+ *  lift never came, nothing heard from it for `HOLD`. Ended, an arrow still out with the
+ *  fingers plays out and goes: none outlives the stream it drew. */
 
 import { mount, unmount } from 'svelte'
 import { overlays } from '../overlays'
@@ -49,6 +56,14 @@ export const SIDE = 24
 
 /** How long the arrow plays out once a swipe is decided; see SwipeArrow.svelte. */
 export const PLAYS = 210
+
+/** How long a hand that says when it lifts - a finger, a touchpad that says so - may say
+ *  nothing at all before it is taken to be gone, its lift lost on the way: the stream
+ *  ends as nothing, and its arrow goes back. Not a moment, because such a hand held still
+ *  is a swipe held, armed and waiting for the lift (#209; held three seconds in
+ *  swipe-replays.json), and neither a pad held still nor a finger says anything while it
+ *  is. In milliseconds. */
+export const HOLD = 4_000
 
 /** Both ways taken: what a surface that kept the scroll for itself says. */
 const KEPT: Record<Side, boolean> = { left: true, right: true }
@@ -95,6 +110,7 @@ interface Live {
 }
 
 let live: Live | null = null
+/** What ends the stream if nothing more is heard of it: `QUIET`, or `HOLD`. */
 let quiet: ReturnType<typeof setTimeout> | undefined
 let clearing: ReturnType<typeof setTimeout> | undefined
 /** Until when, on this window's clock, a touchpad's new stream is the last swipe's coast. */
@@ -150,6 +166,7 @@ function draw(one: Live) {
     one.room = roomOf(pane)
   }
   swiping.tab = one.tab.id
+  swiping.pane = one.tab.paneId
   swiping.room = one.room
   swiping.side = side
   swiping.stage = phase === 'went' ? 'went' : phase === 'stayed' ? 'stayed' : 'tracking'
@@ -161,13 +178,18 @@ function draw(one: Live) {
 /** The arrow plays out and goes. */
 function played() {
   clearTimeout(clearing)
-  clearing = setTimeout(() => {
-    swiping.tab = null
-    swiping.room = null
-    swiping.progress = 0
-    swiping.travel = 0
-    swiping.turn++
-  }, dur(PLAYS))
+  clearing = setTimeout(gone, dur(PLAYS))
+}
+
+/** No arrow at all. */
+function gone() {
+  clearTimeout(clearing)
+  swiping.tab = null
+  swiping.pane = null
+  swiping.room = null
+  swiping.progress = 0
+  swiping.travel = 0
+  swiping.turn++
 }
 
 /** A decided swipe, acted on once: the step, if it went, and the arrow played out. */
@@ -188,11 +210,14 @@ function decided(one: Live, phase: 'went' | 'stayed', side: Side) {
 /** One step of whichever stream it belongs to. A step over another tab, or from another
  *  kind of hand, ends the stream before it. */
 export function heard(step: Heard): void {
-  if (!swipeChoice.on) return
+  if (!swipeChoice.on) {
+    end('dropped')
+    return
+  }
   // The fingers are off the pad: the coast of a gesture already decided, or a wheel
   // that is not the pad's. Nobody's.
   if (step.source === 'touchpad' && pad.known && !pad.down) return
-  if (live && (live.tab.id !== step.tab.id || live.source !== step.source)) lift()
+  if (live && (live.tab.id !== step.tab.id || live.source !== step.source)) end('lifted')
 
   const now = performance.now()
   const told = step.source === 'touch' || pad.known
@@ -214,9 +239,12 @@ export function heard(step: Heard): void {
   one.at = step.at
   one.heardAt = now
   // A touchpad never says it was let go of; a finger does. See gesture.ts. Gone quiet,
-  // it was let go of that long after its last step, on that step's own clock.
+  // it was let go of that long after its last step, on that step's own clock. One that
+  // says, and says nothing for `HOLD`, lost its lift on the way.
   clearTimeout(quiet)
-  if (!one.told) quiet = setTimeout(() => lift(step.at + QUIET), QUIET)
+  quiet = one.told
+    ? setTimeout(() => end('dropped'), HOLD)
+    : setTimeout(() => end('lifted', step.at + QUIET), QUIET)
   if (one.swallowed) return
 
   const turn: Turn = {
@@ -248,31 +276,29 @@ export function heard(step: Heard): void {
   }
 }
 
-/** The fingers have lifted: the stream is decided, and the next step starts another.
- *  `at` is on the stream's own clock; left out - a stream cut short by another - it is
- *  as long after its last step as this window has waited since hearing it. */
-export function lift(at?: number): void {
+/** The stream is over, and this is the one place any stream ends; see the top.
+ *  `lifted` is the hand letting go, which decides a swipe that was tracking; `at` is on
+ *  the stream's own clock, and left out - a stream cut short by another - it is as long
+ *  after its last step as this window has waited since hearing it. `dropped` is a stream
+ *  that ends as nothing: nothing is stepped. Either way the next step starts another,
+ *  and an arrow still out with the fingers goes back the way it came. */
+function end(how: 'lifted' | 'dropped', at?: number): void {
   clearTimeout(quiet)
   const one = live
   live = null
   if (!one || one.swallowed) return
-  const when = at ?? one.at + (performance.now() - one.heardAt)
-  const shown = one.swipe.lift(when)
-  // A stream the content kept, or one a coast decided already, leaves nothing to decide.
-  if (shown.phase === 'went' || shown.phase === 'stayed') {
-    if (one.shown) draw(one)
-    decided(one, shown.phase, shown.side)
+  if (how === 'lifted') {
+    const when = at ?? one.at + (performance.now() - one.heardAt)
+    const shown = one.swipe.lift(when)
+    // A stream the content kept, or one a coast decided already, leaves nothing to decide.
+    if (shown.phase === 'went' || shown.phase === 'stayed') {
+      if (one.shown) draw(one)
+      decided(one, shown.phase, shown.side)
+    }
+    if (one.went && !one.told) settling = performance.now() + SETTLE
   }
-  if (one.went && !one.told) settling = performance.now() + SETTLE
-}
-
-/** The stream ends as nothing: the arrow, if it was out, goes back, and nothing is
- *  stepped. */
-function dropped() {
-  clearTimeout(quiet)
-  const one = live
-  live = null
-  if (one && !one.stepped && one.shown) decided(one, 'stayed', one.swipe.shown.side)
+  // Let go before it was a swipe at all - out as it leaned sideways - or dropped.
+  if (one.shown && !one.stepped) decided(one, 'stayed', one.swipe.shown.side)
 }
 
 /** How many fingers are on the touchpad now, as the crate says it. Two landing start a
@@ -280,7 +306,7 @@ function dropped() {
 export function touchpad(fingers: number): void {
   pad.known = true
   if (fingers >= 3) {
-    if (live?.source === 'touchpad') dropped()
+    if (live?.source === 'touchpad') end('dropped')
     pad.down = false
     return
   }
@@ -289,8 +315,7 @@ export function touchpad(fingers: number): void {
   pad.down = down
   if (live?.source !== 'touchpad') return
   // Landing again with a stream still open is one whose lift was never heard.
-  if (down) dropped()
-  else lift()
+  end(down ? 'dropped' : 'lifted')
 }
 
 /** The tab a window event is over, when it is one a swipe may start on: inside a pane's
@@ -360,6 +385,8 @@ let finger: { tab: Tab; x: number; y: number; scrolls: Record<Side, boolean> } |
 
 function touched(event: TouchEvent) {
   finger = null
+  // A finger landing with a finger's stream still open: that one's lift was never heard.
+  if (live?.source === 'touch') end('dropped')
   const touch = event.touches[0]
   // A tablet held upright pulls its drawers out from the sides; see drawer-follow.ts.
   if (!swipeChoice.on || viewport.drawer || event.touches.length !== 1 || !touch) return
@@ -397,9 +424,9 @@ function moved(event: TouchEvent) {
 }
 
 function released(event: TouchEvent) {
-  if (!finger) return
   finger = null
-  if (live?.source === 'touch') lift(event.timeStamp)
+  if (live?.source === 'touch')
+    end(event.type === 'touchcancel' ? 'dropped' : 'lifted', event.timeStamp)
 }
 
 /** What the crate says a page saw; see src-tauri/src/web_swipe.rs. */
@@ -433,12 +460,14 @@ export function readFingers(value: unknown): number | null {
 /** A page's swipe, in the window's pixels: a page zoomed in reports its own, smaller
  *  ones. */
 export function pageSaid(said: Said): void {
-  const tab = workspace.tabs.find((one) => one.id === said.tab)
-  if (tab?.kind !== 'web' || overlays.depth > 0) return
+  // A lift ends its stream whatever has happened since it began: a layer come up, the
+  // tab gone.
   if (said.kind === 'lift') {
-    if (live?.tab.id === tab.id) lift(said.at)
+    if (live?.tab.id === said.tab) end('lifted', said.at)
     return
   }
+  const tab = workspace.tabs.find((one) => one.id === said.tab)
+  if (tab?.kind !== 'web' || overlays.depth > 0) return
   const zoom = pages.of(tab.id).zoom || 1
   heard({
     tab,
@@ -450,14 +479,30 @@ export function pageSaid(said: Said): void {
   })
 }
 
+/** The window went out of sight: whatever the hand does now, this window will not hear
+ *  it lift. Not the window losing the focus, which is also a page taking it - a finger
+ *  landing on a web page does - and what a precision touchpad says of a lift reaches
+ *  the window behind another all the same; see src-tauri/src/touchpad.rs. */
+function away() {
+  if (document.visibilityState === 'hidden') end('dropped')
+}
+
+/** The tab the arrow is over is no longer the one its pane shows - another chosen, it
+ *  closed, the pane gone - so the stream ends, and the arrow with it at once. */
+function unseen() {
+  end('dropped')
+  gone()
+}
+
 /** Starts hearing swipes, and puts the arrow on the window. Answers the way to stop. */
 export function listen(): () => void {
   const target = document.createElement('div')
   document.body.append(target)
-  const arrow = mount(SwipeArrow, { target })
+  const arrow = mount(SwipeArrow, { target, props: { unseen } })
 
   window.addEventListener('wheel', wheeled, { passive: true })
   window.addEventListener('scroll', scrolled, { capture: true, passive: true })
+  document.addEventListener('visibilitychange', away)
   // A phone has the system's own back at the side of the screen.
   const touching = !isMobile
   if (touching) {
@@ -493,6 +538,7 @@ export function listen(): () => void {
     unlisten?.()
     window.removeEventListener('wheel', wheeled)
     window.removeEventListener('scroll', scrolled, { capture: true })
+    document.removeEventListener('visibilitychange', away)
     slid.forget()
     if (touching) {
       window.removeEventListener('touchstart', touched, { capture: true })
@@ -500,7 +546,8 @@ export function listen(): () => void {
       window.removeEventListener('touchend', released, { capture: true })
       window.removeEventListener('touchcancel', released, { capture: true })
     }
-    lift()
+    end('dropped')
+    gone()
     settling = 0
     pad.known = false
     pad.down = false

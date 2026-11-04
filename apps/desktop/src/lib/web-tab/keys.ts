@@ -15,6 +15,7 @@
  *  mean. A terminal plays a key the same way once it has asked whose it is; see
  *  terminal/two-ways.ts. */
 
+import { parseCombination, type Platform } from '../keys'
 import { isRecord } from '../stored'
 
 /** A key as the crate names it: `KeyboardEvent`'s own words for it. */
@@ -74,4 +75,27 @@ export function replay(one: Pressed): void {
   })
   played.add(event)
   window.dispatchEvent(event)
+}
+
+/** A chord the app takes from a page, as the crate is asked for it (`web_keys_take` in
+ *  web_keys.rs): where the key is, and what is held with it. */
+export interface Taken {
+  code: string
+  ctrl: boolean
+  shift: boolean
+  alt: boolean
+}
+
+/** A key bound in the app as one to take from a page: a letter or a digit held with Ctrl
+ *  or Alt. Null for anything else, which a page keeps: a key with Cmd, a named key, or
+ *  one held with neither, which is typing. The crate refuses those too. */
+export function takenOf(key: string | null, platform: Platform): Taken | null {
+  const combination = key === null ? null : parseCombination(key, platform)
+  if (!combination || combination.meta || combination.ctrl === combination.alt) return null
+
+  const letter = /^[a-z]$/.test(combination.key)
+  if (!letter && !/^[0-9]$/.test(combination.key)) return null
+  const { ctrl, shift, alt } = combination
+  const code = letter ? `Key${combination.key.toUpperCase()}` : `Digit${combination.key}`
+  return { code, ctrl, shift, alt }
 }

@@ -1126,6 +1126,13 @@ export const gu: Dictionary = {
   'Split right': 'જમણે વિભાજો',
   'Split down': 'નીચે વિભાજો',
   'Other pane': 'બીજું ખાનું',
+  'Pane to the left': 'ડાબું ખાનું',
+  'Pane to the right': 'જમણું ખાનું',
+  'Pane above': 'ઉપરનું ખાનું',
+  'Pane below': 'નીચેનું ખાનું',
+  'Active pane follows the pointer': 'સક્રિય ખાનું પોઇન્ટરને અનુસરે છે',
+  'The pane under the pointer becomes the one you work in.':
+    'પોઇન્ટર નીચેનું ખાનું એ બને છે જેમાં તમે કામ કરો છો.',
   'Close this pane': 'આ ખાનું બંધ કરો',
   'Note {number}': 'નોંધ {number}',
   'Scroll together': 'સાથે સરકાવો',

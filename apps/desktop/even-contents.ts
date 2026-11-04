@@ -555,11 +555,34 @@ export function partOf(file: string, catalogue: boolean): Part {
  *
  *  The code raised on 2026-11-04, to 6,013,800, as #1063 and #1068 came to claude/hunt-round-1.
  *  Measured 6,013,571.
+ *
+ *  The code raised on 2026-11-04, to 5,897,400, and the catalogues to 973,000, for #1033:
+ *  Alt+H, J, K and L between the panes (pane-moves.ts, `paneToward` in
+ *  workspace/pane-tree.ts), and their four names and the pointer's switch in every
+ *  language. Measured 5,897,207 and 972,863.
+ *
+ *  The code raised on 2026-11-04, to 5,903,500, for #1120: the editor's properties
+ *  strip and a footnote's card and jump, which the plugin's notes draw too. Measured
+ *  5,902,056.
+ *
+ *  The styles raised on 2026-11-04, to 290,400, for #331: the tab overview's close button
+ *  as the app's quiet grey one with its cross red, its hover and its press
+ *  (overview/Overview.svelte). Measured 290,153.
+ *
+ *  The styles raised on 2026-11-04, to 290,700, for #331: the tab overview happens in the
+ *  window, its sidebars sliding away under its spring and its canvas a clear scrim under
+ *  the bar (overview/Overview.svelte). Measured 290,456.
+ *
+ *  Raised on 2026-11-04 as #1033, #1120, #1106 and #331 came to claude/hunt-round-1, on
+ *  the hunt's own 6,013,571 and 983,998: the code to 6,022,500, the panes' Alt+H/J/K/L,
+ *  the properties strip and a footnote's card, measured 6,022,254; the catalogues to
+ *  988,100, the panes' names in every language, measured 988,012. The styles keep
+ *  #331's 290,700, measured 290,524.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_013_800,
-  catalogues: 984_100,
-  styles: 290_000,
+  code: 6_022_500,
+  catalogues: 988_100,
+  styles: 290_700,
   fonts: 260_000,
   pages: 40_000,
 }

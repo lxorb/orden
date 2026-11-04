@@ -22,6 +22,8 @@ export type Stage = 'tracking' | 'went' | 'stayed'
 export const swiping = $state<{
   /** The tab it is over, or null for no arrow at all. */
   tab: string | null
+  /** The pane that tab was shown in as the stream began, whose room it comes in over. */
+  pane: string | null
   room: Room | null
   side: Side
   stage: Stage
@@ -31,4 +33,13 @@ export const swiping = $state<{
   travel: number
   /** Counts every change, for a web tab to place its page again on each. */
   turn: number
-}>({ tab: null, room: null, side: 'left', stage: 'tracking', progress: 0, travel: 0, turn: 0 })
+}>({
+  tab: null,
+  pane: null,
+  room: null,
+  side: 'left',
+  stage: 'tracking',
+  progress: 0,
+  travel: 0,
+  turn: 0,
+})

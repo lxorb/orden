@@ -29,7 +29,14 @@ vi.mock('../surfaces.svelte', () => ({ tabOverview: { open: false } }))
 vi.mock('../viewport.svelte', () => ({ viewport: { touch: false } }))
 vi.mock('../i18n.svelte', () => ({ i18n: { factor: 1 } }))
 vi.mock('../shortcuts.svelte', () => ({
-  shortcuts: { keyFor: () => null, platform: 'linux' },
+  shortcuts: {
+    // The panes' four ways, bound as they ship (#1033), and Alt+K rebound to Ctrl+Alt+K.
+    keyFor: (id: string) =>
+      ({ 'pane.focus-left': 'Alt-h', 'pane.focus-up': 'Mod-Alt-k', 'pane.focus-right': 'Alt-l' })[
+        id
+      ] ?? null,
+    platform: 'linux',
+  },
 }))
 vi.mock('../workspace.svelte', () => ({
   workspace: { panes: { focusedId: 'pane' }, activeTabId: null, tabs: [], tabsIn: () => [] },
@@ -63,9 +70,20 @@ function tile(letter: string) {
   document.body.append(button)
 }
 
-test('the letters are said to the crate, and a page that tells Alt keeps the numbers up', async () => {
+test("the letters and the panes' keys are said to the crate, and a page that tells Alt keeps the numbers up", async () => {
   expect(asked).toEqual([
-    { command: 'web_keys_take', args: { chords: [{ code: 'KeyN', alt: true }] } },
+    {
+      command: 'web_keys_take',
+      args: {
+        chords: [
+          { code: 'KeyN', ctrl: false, shift: false, alt: true },
+          { code: 'KeyH', ctrl: false, shift: false, alt: true },
+          // A key rebound with Ctrl and Alt is AltGr's on half of Europe's keyboards, and
+          // the page's: never asked for.
+          { code: 'KeyL', ctrl: false, shift: false, alt: true },
+        ],
+      },
+    },
   ])
   // The answer lands after the import: until then, the blur still puts them away.
   await Promise.resolve()

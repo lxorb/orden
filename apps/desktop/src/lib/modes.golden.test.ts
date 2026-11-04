@@ -134,7 +134,7 @@ const AWAY = {
   canvasTurnSnaps: false,
   highlightTone: 3,
   hardBreaks: true,
-  frontMatter: 'source',
+  frontMatterDrawn: 'source',
   linkFormat: 'markdown',
 }
 
@@ -169,6 +169,7 @@ describe('what an older build wrote', () => {
     'the properties row shown': { properties: 'source' },
     'the properties row said as anything else': { properties: 'rows' },
     'front matter beside properties': { frontMatter: 'source', properties: 'hidden' },
+    'front matter hidden before the strip': { frontMatter: 'hidden' },
     'a scroll mode for the glasses': { glassesScroll: 'native', glassesBreak: 3 },
     'the translucency switch': { translucent: true },
     'translucency turned off': { translucent: false },

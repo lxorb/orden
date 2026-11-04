@@ -1124,6 +1124,13 @@ export const ms: Dictionary = {
   'Split right': 'Pisah ke kanan',
   'Split down': 'Pisah ke bawah',
   'Other pane': 'Anak tetingkap lain',
+  'Pane to the left': 'Anak tetingkap di kiri',
+  'Pane to the right': 'Anak tetingkap di kanan',
+  'Pane above': 'Anak tetingkap di atas',
+  'Pane below': 'Anak tetingkap di bawah',
+  'Active pane follows the pointer': 'Anak tetingkap aktif mengikut penuding',
+  'The pane under the pointer becomes the one you work in.':
+    'Anak tetingkap di bawah penuding menjadi tempat anda bekerja.',
   'Close this pane': 'Tutup anak tetingkap ini',
   'Note {number}': 'Nota {number}',
   'Scroll together': 'Tatal bersama',

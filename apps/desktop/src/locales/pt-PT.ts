@@ -1146,6 +1146,13 @@ export const ptPT: Dictionary = {
   'Split right': 'Dividir à direita',
   'Split down': 'Dividir abaixo',
   'Other pane': 'O outro painel',
+  'Pane to the left': 'Painel à esquerda',
+  'Pane to the right': 'Painel à direita',
+  'Pane above': 'Painel acima',
+  'Pane below': 'Painel abaixo',
+  'Active pane follows the pointer': 'O painel ativo segue o ponteiro',
+  'The pane under the pointer becomes the one you work in.':
+    'O painel sob o ponteiro passa a ser aquele em que trabalha.',
   'Close this pane': 'Fechar este painel',
   'Note {number}': 'Nota {number}',
   'Scroll together': 'Deslocar em conjunto',

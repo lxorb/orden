@@ -1,29 +1,43 @@
-/** A note's front matter, drawn as the rows it says rather than as the YAML it
- *  is written in - and edited in them.
+/** A note's front matter, drawn as a strip at the top of the note: one quiet line
+ *  saying what the note carries, which opens into the rows it says - and is edited in
+ *  them. Obsidian's and Notion's properties, in the note rather than in a panel beside
+ *  it (#1120): the metadata is about this note, so it is read and changed where the
+ *  note is.
  *
- *  Each row's value is the control its shape asks for: a field for a word, a number
- *  field for a number, a date picker for a date, a real checkbox for a `true`, chips
- *  with an `x` each and a field to add one for a list, and a menu where the key is
+ *  Folded, the strip is the word, the count and the keys with their values on one line
+ *  that ends where the column does, so a note opens on its words and not on a form.
+ *  Open, each row's value is the control its shape asks for: a field for a word, a
+ *  number field for a number, a date picker for a date, a real checkbox for a `true`,
+ *  chips with an `x` each and a field to add one for a list, and a menu where the key is
  *  one the app has a fixed set of answers for. What every one of them writes is
  *  plain front matter - `tags: [one, two]`, `done: true`, `due: 2026-09-14` - through
  *  property-edits.ts in @orden/markdown, which is built on `frontMatterEdit`. So the
  *  file stays a file every other reader can read, and nothing here can write a shape
  *  the rows could not read back.
  *
- *  The source is still one caret away, and that has not changed: clicking a row's
- *  key puts the caret on that row's own line, and the whole block gives way to the
- *  YAML it is written in. What has changed is that somebody who only wants to tick a
- *  box no longer has to go through the YAML to do it. The reader who wants the source
- *  all the time, or none of it, says so once in Settings; see `propertiesMode` in
- *  blocks.ts and properties.ts in @orden/markdown.
+ *  The source is still one caret away: clicking a row's key puts the caret on that
+ *  row's own line, and the whole block gives way to the YAML it is written in, which is
+ *  where a key is renamed or taken out. The reader who wants the source all the time,
+ *  or none of it, says so once in Settings; see `propertiesMode` in blocks.ts and
+ *  properties.ts in @orden/markdown.
+ *
+ *  Whether the strip is open is the note's state and not the file's: it is how this
+ *  note is being read, and writing it down would be a change to a file nobody changed.
  *
  *  One document change per gesture, on the change rather than per keystroke for a
  *  field, so a value typed into a row is one thing to undo. A block holding a shape
  *  @orden/markdown cannot read stays source, whole; see properties.ts there. */
 
-import { EditorSelection, Facet } from '@codemirror/state'
-import type { EditorView } from '@codemirror/view'
+import {
+  EditorSelection,
+  type EditorState,
+  Facet,
+  StateEffect,
+  StateField,
+} from '@codemirror/state'
+import { EditorView } from '@codemirror/view'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
+import { CHEVRON } from '@orden/markdown/icons'
 import { type Property, propertiesTable, readProperties } from '@orden/markdown/properties'
 import {
   type ListItem,
@@ -32,8 +46,10 @@ import {
   writeList,
   writeProperty,
 } from '@orden/markdown/property-edits'
+import { iconElement } from '../icon'
 import { label } from '../labels'
 import { applied, clearOfBlock } from './front-matter'
+import { drawnAs, frontMatterSpan, showFrontMatter } from './hidden-front-matter'
 import { pressedByKey } from '../press'
 import { NibWidget } from './widget'
 
@@ -48,26 +64,53 @@ export const propertyChoices = Facet.define<
   Record<string, readonly string[]>
 >({ combine: (values) => values[0] ?? {} })
 
+/** Opens the strip, or folds it again. */
+export const openProperties = StateEffect.define<boolean>()
+
+/** Whether the note's strip is open. Folded is where every note starts. */
+export const propertiesOpen = StateField.define<boolean>({
+  create: () => false,
+  update(open, transaction) {
+    for (const effect of transaction.effects) if (effect.is(openProperties)) open = effect.value
+    return open
+  },
+})
+
+/** Whether the strip opened or folded, which changes what is drawn without the note
+ *  moving. */
+export function openedChanged(before: EditorState, after: EditorState): boolean {
+  return before.field(propertiesOpen, false) !== after.field(propertiesOpen, false)
+}
+
 export class PropertiesWidget extends NibWidget {
-  constructor(private readonly source: string) {
+  constructor(
+    private readonly source: string,
+    private readonly open = false,
+  ) {
     super()
   }
 
   override eq(other: PropertiesWidget) {
-    return other.source === this.source
+    return other.source === this.source && other.open === this.open
   }
 
   toDOM(view: EditorView) {
     const host = document.createElement('div')
     host.className = 'nib-properties'
+    host.dataset.open = String(this.open)
 
     const properties = readProperties(this.source)
     if (properties === null) return host
 
+    host.append(head(view, properties, this.open))
+    if (!this.open) return host
+
+    const rows = document.createElement('div')
     // The renderer's own markup, out of escaped text; see properties.ts in
     // @orden/markdown. The reading view draws the same rows from the same string, and
     // the controls below are put into the cells it left.
-    host.innerHTML = propertiesTable(properties)
+    rows.innerHTML = propertiesTable(properties)
+    host.append(...rows.childNodes)
 
     // The block sits at the top of the note, so the offsets the rows carry are
     // the offsets in the document.
@@ -100,7 +143,7 @@ export class PropertiesWidget extends NibWidget {
       control(view, property, cell, choices[property.key] ?? null)
     }
 
-    host.append(adder(view, properties.length))
+    if (!view.state.readOnly) host.append(adder(view))
     return host
   }
 
@@ -109,6 +152,140 @@ export class PropertiesWidget extends NibWidget {
   override ignoreEvent() {
     return true
   }
+}
+
+/** The strip's own line: the chevron, the word, how many, and folded the keys with
+ *  what they say, so the line is worth reading without opening it. A button, so the
+ *  keyboard opens it the way a pointer does. */
+function head(view: EditorView, properties: readonly Property[], open: boolean): HTMLElement {
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.className = 'nib-properties-head'
+  button.setAttribute('aria-expanded', String(open))
+
+  const name = document.createElement('span')
+  name.className = 'nib-properties-name'
+  name.textContent = label('properties')
+
+  const count = document.createElement('span')
+  count.className = 'nib-properties-count'
+  count.textContent = String(properties.length)
+
+  button.append(iconElement(CHEVRON, 'nib-properties-chevron'), name, count)
+
+  if (!open && properties.length) {
+    const said = document.createElement('span')
+    said.className = 'nib-properties-said'
+    for (const property of properties) {
+      const pair = document.createElement('span')
+      pair.className = 'nib-properties-pair'
+      const key = document.createElement('span')
+      key.className = 'nib-properties-key'
+      key.textContent = property.key
+      pair.append(key, ` ${summary(property)}`)
+      said.append(pair)
+    }
+    button.append(said)
+  }
+
+  const toggle = (keyed: boolean) => {
+    view.dispatch({ effects: openProperties.of(!open) })
+    // The strip is drawn again, so a keyboard that was on it goes to the new one's
+    // line. A pointer's press leaves the caret where it was, as every button in a
+    // note does.
+    if (keyed) focusHead(view)
+  }
+  button.addEventListener('mousedown', (event) => {
+    event.preventDefault()
+    toggle(false)
+  })
+  pressedByKey(button, () => toggle(true))
+  return button
+}
+
+/** What a folded row says after its key: the value, or a list's items. */
+function summary(property: Property): string {
+  if (property.kind === 'list' || property.kind === 'map') return property.items.join(', ')
+  return property.value
+}
+
+/** The keyboard on the strip's line, once it is drawn. */
+function focusHead(view: EditorView, then?: (strip: HTMLElement) => void) {
+  const reach = () => {
+    const strip = view.dom.querySelector<HTMLElement>('.nib-properties')
+    const line = strip?.querySelector<HTMLElement>('.nib-properties-head')
+    if (!strip || !line) return false
+    line.focus({ preventScroll: true })
+    then?.(strip)
+    return true
+  }
+  // Drawn in the dispatch when the top of the note is on screen; a note scrolled a
+  // long way down draws it once the scroll has measured.
+  if (!reach()) requestAnimationFrame(() => void reach())
+}
+
+/** "Show properties": the strip opened at the top of the note and the keyboard on
+ *  it. Where the reader keeps the front matter as YAML, or keeps it off the page, the
+ *  caret goes into the YAML instead, shown for as long as it stays there; see
+ *  `insertFrontMatter`. A note with none gets its first one, which is the one thing
+ *  asking to see them can mean there. */
+export function showProperties(view: EditorView): boolean {
+  const state = view.state
+  if (!frontMatterSpan(state)) return newProperty(view)
+
+  const source = state.doc.toString()
+  if (drawnAs(state) !== 'properties' || readProperties(source) === null) {
+    const inside = state.doc.line(Math.min(2, state.doc.lines))
+    view.dispatch({
+      selection: EditorSelection.cursor(inside.to),
+      effects: showFrontMatter.of(null),
+      scrollIntoView: true,
+    })
+    view.focus()
+    return true
+  }
+
+  // Out of the block first: a caret in it is the YAML, and the strip is not drawn.
+  const span = frontMatterSpan(state)
+  const caret = state.selection.main.head
+  view.dispatch({
+    effects: [openProperties.of(true), EditorView.scrollIntoView(0, { y: 'start' })],
+    ...(span && caret <= span.end ? { selection: EditorSelection.cursor(span.after) } : {}),
+  })
+  focusHead(view)
+  return true
+}
+
+/** "Add a property": a new key at the foot of the note's front matter, or the block
+ *  itself where the note has none, with its placeholder name selected so what is
+ *  typed names it. Written in the YAML, which is shown for as long as the caret stays
+ *  there, because naming a key is writing a word and the YAML is where words are
+ *  written. */
+export function newProperty(view: EditorView): boolean {
+  const state = view.state
+  if (state.readOnly) return false
+
+  const doc = state.doc
+  const source = doc.toString()
+  const taken = new Set((readProperties(source) ?? []).map((one) => one.key.toLowerCase()))
+  let number = taken.size + 1
+  while (taken.has(`${label('property')}${number}`.toLowerCase())) number++
+  const name = `${label('property')}${number}`
+
+  const close = closingFence(state)
+  const from = close === null ? 0 : doc.line(close).from
+  const insert = close === null ? `---\n${name}: \n---\n\n` : `${name}: \n`
+  const start = from + (close === null ? 4 : 0)
+
+  view.dispatch({
+    changes: { from, insert },
+    selection: EditorSelection.range(start, start + name.length),
+    effects: showFrontMatter.of(null),
+    scrollIntoView: true,
+    userEvent: 'input',
+  })
+  view.focus()
+  return true
 }
 
 /** Writes one property and answers whether anything changed, so a control that was
@@ -289,16 +466,16 @@ function menu(view: EditorView, property: Property, choices: readonly string[]):
   return select
 }
 
-/** The one affordance the block adds: a new key, on a line of its own, with the
- *  caret on it. A row rather than a plus in a corner, so it is where the next row
+/** The one affordance the open strip adds: a new key, on a line of its own, with its
+ *  name selected. A row rather than a plus in a corner, so it is where the next row
  *  would go and reads as the empty line at the end of a list. */
-function adder(view: EditorView, count: number): HTMLElement {
+function adder(view: EditorView): HTMLElement {
   const button = document.createElement('button')
   button.className = 'nib-property-add nib-row is-short'
   button.type = 'button'
   button.textContent = label('addProperty')
 
-  const add = () => addProperty(view, count)
+  const add = () => newProperty(view)
   button.addEventListener('mousedown', (event) => {
     event.preventDefault()
     add()
@@ -308,33 +485,12 @@ function adder(view: EditorView, count: number): HTMLElement {
   return button
 }
 
-/** Writes an empty key in front of the closing fence and puts the caret on it.
- *
- *  In front of the fence rather than after the last row read, because a block
- *  may hold blank lines the rows do not: the fence is the one place a new key is
- *  certainly still inside the block. */
-function addProperty(view: EditorView, count: number): void {
-  const doc = view.state.doc
-  const close = closingFence(view)
-  if (close === null) return
-
-  const line = doc.line(close)
-  const insert = `${label('property')}${count + 1}: \n`
-
-  view.dispatch({
-    changes: { from: line.from, insert },
-    selection: EditorSelection.cursor(line.from + insert.length - 1),
-    scrollIntoView: true,
-    userEvent: 'input',
-  })
-  view.focus()
-}
-
 /** Which line the block's closing `---` is on, or null when the note has no
- *  block. Read from the text: a widget is drawn from a string and the tree it
- *  came from is not in hand. */
-function closingFence(view: EditorView): number | null {
-  const doc = view.state.doc
+ *  block. Read from the text, by the same reading of front matter every reader of a
+ *  note shares: the closing fence is the one place a new key is certainly still inside
+ *  the block, since a block may hold blank lines the rows do not. */
+function closingFence(state: EditorState): number | null {
+  const doc = state.doc
   const block = frontMatterBlock(doc.toString())
   return block && doc.lineAt(block.close).number
 }

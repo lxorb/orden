@@ -1116,6 +1116,13 @@ export const ko: Dictionary = {
   'Split right': '오른쪽으로 분할',
   'Split down': '아래로 분할',
   'Other pane': '다른 창',
+  'Pane to the left': '왼쪽 창',
+  'Pane to the right': '오른쪽 창',
+  'Pane above': '위쪽 창',
+  'Pane below': '아래쪽 창',
+  'Active pane follows the pointer': '활성 창이 포인터를 따라감',
+  'The pane under the pointer becomes the one you work in.':
+    '포인터 아래의 창이 작업 중인 창이 됩니다.',
   'Close this pane': '이 창 닫기',
   'Note {number}': '노트 {number}',
   'Scroll together': '함께 스크롤',

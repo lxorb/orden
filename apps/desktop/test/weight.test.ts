@@ -1288,9 +1288,28 @@ function holds(tail: string): boolean {
  *
  *  Raised on 2026-11-04, to 3,677,500, as #1063 and #1068 (a bookmark by id) came to
  *  claude/hunt-round-1, on the 3,668,789 above. One module more, 395. Measured 3,677,304.
+ *
+ *  Raised 2026-11-04, to 3,581,600, for #1033: Alt+H, J, K and L between the panes and
+ *  the pane under the pointer the active one (pane-moves.ts, `paneToward` in
+ *  workspace/pane-tree.ts), and their five words in every language. Measured 3,580,980.
+ *
+ *  Raised 2026-11-04, to 3,583,000, for #1106: a tab drawn as its icon keeps its cross
+ *  from a press until it has opened out under the pointer (Tabs.svelte, tab-strip/
+ *  layout.ts). Measured 3,582,252.
+ *
+ *  Raised 2026-11-04, to 3,600,000 and 395 modules, for #1120: a note's front matter as
+ *  a foldable strip at the top of the note, and a footnote's mark showing its words and
+ *  going to its definition and back (live-preview/properties.ts and the new
+ *  live-preview/footnotes.ts in @orden/editor). Both are the note's own drawing, which
+ *  arrives with the note. Measured 3,598,326.
+ *
+ *  Raised on 2026-11-04, to 3,699,500 and 397 modules, as #1033, #1106 and #1120 came to
+ *  claude/hunt-round-1, on the 3,677,304 above: the panes' Alt+H/J/K/L, an icon tab's
+ *  cross, the properties strip and the new live-preview/footnotes.ts. Measured 3,699,300,
+ *  396 modules.
  */
-const BUDGET = 3_677_500
-const MOST_FILES = 396
+const BUDGET = 3_699_500
+const MOST_FILES = 397
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

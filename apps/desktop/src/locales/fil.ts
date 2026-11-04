@@ -1141,6 +1141,13 @@ export const fil: Dictionary = {
   'Split right': 'Hatiin pakanan',
   'Split down': 'Hatiin pababa',
   'Other pane': 'Kabilang pane',
+  'Pane to the left': 'Pane sa kaliwa',
+  'Pane to the right': 'Pane sa kanan',
+  'Pane above': 'Pane sa itaas',
+  'Pane below': 'Pane sa ibaba',
+  'Active pane follows the pointer': 'Sinusundan ng aktibong pane ang pointer',
+  'The pane under the pointer becomes the one you work in.':
+    'Ang pane sa ilalim ng pointer ang nagiging pinagtatrabahuhan mo.',
   'Close this pane': 'Isara ang pane na ito',
   'Note {number}': 'Tala {number}',
   'Scroll together': 'Mag-scroll nang sabay',

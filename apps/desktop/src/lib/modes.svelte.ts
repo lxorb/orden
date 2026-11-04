@@ -191,8 +191,9 @@ interface Saved {
   highlightTone: number | null
   hardBreaks: boolean
   linkFormat: LinkFormat
-  /** `properties` before hidden became the default; see `restore`. */
-  frontMatter: PropertiesMode
+  /** `frontMatter` before the strip became the default, and `properties` before
+   *  that; see `restore`. */
+  frontMatterDrawn: PropertiesMode
 }
 
 /** The word the status bar shows for each mode modal editing has, in Vim's own
@@ -325,7 +326,7 @@ export const DEFAULTS = {
   highlightTone: null as number | null,
   hardBreaks: false,
   linkFormat: 'wikilink' as LinkFormat,
-  properties: 'hidden' as PropertiesMode,
+  properties: 'properties' as PropertiesMode,
 }
 
 /** A stored switch, or its default where what is stored is not one. */
@@ -669,17 +670,19 @@ class Modes {
         content: familyName(fonts.content),
         mono: familyName(fonts.mono),
       }
-      // Kept as `frontMatter` since hidden became the default. An older build wrote
-      // `properties` down for everybody who changed any setting at all, so the rows
-      // it says were the default rather than a choice; the source was always a
-      // choice, and is kept.
+      // Kept as `frontMatterDrawn` since the strip in the note took the Properties
+      // panel's place and became the default (#1120). An older build wrote
+      // `frontMatter` down for everybody who changed any setting at all, and
+      // `properties` before that, so the hidden it said was the default rather than a
+      // choice - and hidden with no panel beside the note is metadata nobody can
+      // reach. The source was always a choice, and is kept.
       this.properties =
-        'frontMatter' in saved
-          ? propertiesMode(saved.frontMatter)
-          : saved.properties === 'source'
+        'frontMatterDrawn' in saved
+          ? propertiesMode(saved.frontMatterDrawn)
+          : saved.frontMatter === 'source' || saved.properties === 'source'
             ? 'source'
             : DEFAULTS.properties
-      stale ||= 'properties' in saved
+      stale ||= 'properties' in saved || 'frontMatter' in saved
       // Kept as `turnsCanvas` since turning became the default (#487): an older build
       // wrote `canvasTurns` down for everybody, so its off was no choice, its on is ours.
       this.canvasTurns = on(saved.turnsCanvas, DEFAULTS.canvasTurns)
@@ -1768,7 +1771,7 @@ class Modes {
       canvasTurnSnaps: this.canvasTurnSnaps,
       highlightTone: this.highlightTone,
       hardBreaks: this.hardBreaks,
-      frontMatter: this.properties,
+      frontMatterDrawn: this.properties,
       linkFormat: this.linkFormat,
     }
     return state

@@ -1202,34 +1202,46 @@ describe('translucency, which the glass theme is now', () => {
   })
 })
 
-/** What a note's front matter is drawn as. Hidden is where a reader starts, and an
- *  entry written before it was can say `properties` without anybody having chosen
- *  it: every build wrote the whole entry down whenever any setting moved. */
+/** What a note's front matter is drawn as. The strip at the top of the note is where a
+ *  reader starts (#1120), and an entry written before it was can say `hidden` - or
+ *  `properties` before that - without anybody having chosen it: every build wrote the
+ *  whole entry down whenever any setting moved. */
 describe('the front matter', () => {
   const saved = () =>
     JSON.parse(localStorage.getItem('nib:modes') ?? '{}') as Record<string, unknown>
 
-  test('starts hidden', () => {
-    expect(modes.properties).toBe('hidden')
+  test('starts as the strip', () => {
+    expect(modes.properties).toBe('properties')
   })
 
-  test('is remembered across a restart when somebody asks to see it', async () => {
-    modes.setProperties('properties')
-    expect((await restarted()).properties).toBe('properties')
-    expect(saved()).toHaveProperty('frontMatter', 'properties')
+  test('is remembered across a restart when somebody asks to hide it', async () => {
+    modes.setProperties('hidden')
+    expect((await restarted()).properties).toBe('hidden')
+    expect(saved()).toHaveProperty('frontMatterDrawn', 'hidden')
   })
 
-  test('takes no answer from rows an older build wrote down for everybody', async () => {
+  test('takes no answer from the hidden an older build wrote down for everybody', async () => {
+    localStorage.setItem('nib:modes', JSON.stringify({ frontMatter: 'hidden', vim: true }))
+
+    const back = await restarted()
+    expect(back.properties).toBe('properties')
+    expect(back.vim).toBe(true)
+    expect(saved()).not.toHaveProperty('frontMatter')
+    expect(saved()).toHaveProperty('frontMatterDrawn', 'properties')
+  })
+
+  test('nor from the rows the build before that wrote down', async () => {
     localStorage.setItem('nib:modes', JSON.stringify({ properties: 'properties', vim: true }))
 
     const back = await restarted()
-    expect(back.properties).toBe('hidden')
-    expect(back.vim).toBe(true)
+    expect(back.properties).toBe('properties')
     expect(saved()).not.toHaveProperty('properties')
   })
 
   test('but keeps the source, which nobody had without asking for it', async () => {
     localStorage.setItem('nib:modes', JSON.stringify({ properties: 'source' }))
+    expect((await restarted()).properties).toBe('source')
+    localStorage.setItem('nib:modes', JSON.stringify({ frontMatter: 'source' }))
     expect((await restarted()).properties).toBe('source')
   })
 })

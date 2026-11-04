@@ -1123,6 +1123,13 @@ export const id: Dictionary = {
   'Split right': 'Bagi ke kanan',
   'Split down': 'Bagi ke bawah',
   'Other pane': 'Panel lain',
+  'Pane to the left': 'Panel di kiri',
+  'Pane to the right': 'Panel di kanan',
+  'Pane above': 'Panel di atas',
+  'Pane below': 'Panel di bawah',
+  'Active pane follows the pointer': 'Panel aktif mengikuti penunjuk',
+  'The pane under the pointer becomes the one you work in.':
+    'Panel di bawah penunjuk menjadi panel tempat Anda bekerja.',
   'Close this pane': 'Tutup panel ini',
   'Note {number}': 'Catatan {number}',
   'Scroll together': 'Gulir bersama',

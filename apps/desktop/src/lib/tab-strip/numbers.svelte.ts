@@ -26,9 +26,9 @@
  *  (`told`, `meaning` and `heard_raw` in web_keys.rs), played here as the keys they were,
  *  so the numbers come over a page as they do over a note - and the keyboard going into
  *  a page, which this document hears as its own blur, is no word of Alt there. And Alt
- *  and a digit or an Essential's letter is taken from the page and said as itself, so it
- *  does here what it does anywhere: the letters are said to the crate as they change
- *  (`web_keys_take`). Its answer is whether a page says Alt at all - `WebView2` does, and
+ *  and a digit, an Essential's letter or a pane's Alt+H, J, K and L (pane-moves.ts) is
+ *  taken from the page and said as itself, so it does here what it does anywhere: the
+ *  letters and the panes' keys are said to the crate as they change (`web_keys_take`). Its answer is whether a page says Alt at all - `WebView2` does, and
  *  Orden's own Chromium where the X server has its input extension - and where none does
  *  that blur still puts them away, rather than leave them up over a release nobody
  *  heard. A terminal hands Alt and a digit to the app rather than to the shell
@@ -48,6 +48,7 @@ import { workspace } from '../workspace.svelte'
 import { letterOf } from './letters'
 import { essentialLetters } from './letters.svelte'
 import { AltHold, numerals } from './numbers'
+import { takenOf, type Taken } from '../web-tab/keys'
 import TabNumbers from './TabNumbers.svelte'
 
 /** One tab's number, and the corner of its mark on the glass. */
@@ -94,13 +95,21 @@ class Numbers {
         const front = `${workspace.panes.focusedId}:${workspace.activeTabId}:${workspace.tabs.length}`
         if (front && untrack(() => this.hold.holding)) this.place()
       })
-      // The Essentials' letters, taken from a page as they change; see the top.
+      // The Essentials' letters, and the panes' Alt+H, J, K and L where they are bound
+      // now (#1033), taken from a page as they change; see the top.
       if (isDesktop) {
         $effect(() => {
-          const chords = Object.values(essentialLetters.given).map((letter) => ({
+          const letters = Object.values(essentialLetters.given).map((letter): Taken => ({
             code: `Key${letter}`,
+            ctrl: false,
+            shift: false,
             alt: true,
           }))
+          const panes = PAGE_TAKES.flatMap((id) => {
+            const one = takenOf(shortcuts.keyFor(id), shortcuts.platform)
+            return one ? [one] : []
+          })
+          const chords = [...letters, ...panes]
           void invoke<boolean>('web_keys_take', { chords })
             .then((tells) => (this.pageTells = tells))
             .catch(() => undefined)
@@ -225,5 +234,8 @@ class Numbers {
     )
   }
 }
+
+/** The app's commands whose keys are taken from a page, wherever they are bound now. */
+const PAGE_TAKES = ['pane.focus-left', 'pane.focus-down', 'pane.focus-up', 'pane.focus-right']
 
 export const numbers = new Numbers()

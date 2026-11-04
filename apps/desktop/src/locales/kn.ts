@@ -1135,6 +1135,13 @@ export const kn: Dictionary = {
   'Split right': 'ಬಲಕ್ಕೆ ವಿಭಜಿಸಿ',
   'Split down': 'ಕೆಳಕ್ಕೆ ವಿಭಜಿಸಿ',
   'Other pane': 'ಇನ್ನೊಂದು ಪೇನ್',
+  'Pane to the left': 'ಎಡದ ಪೇನ್',
+  'Pane to the right': 'ಬಲದ ಪೇನ್',
+  'Pane above': 'ಮೇಲಿನ ಪೇನ್',
+  'Pane below': 'ಕೆಳಗಿನ ಪೇನ್',
+  'Active pane follows the pointer': 'ಸಕ್ರಿಯ ಪೇನ್ ಪಾಯಿಂಟರ್ ಅನ್ನು ಅನುಸರಿಸುತ್ತದೆ',
+  'The pane under the pointer becomes the one you work in.':
+    'ಪಾಯಿಂಟರ್ ಕೆಳಗಿನ ಪೇನ್ ನೀವು ಕೆಲಸ ಮಾಡುವ ಪೇನ್ ಆಗುತ್ತದೆ.',
   'Close this pane': 'ಈ ಪೇನ್ ಮುಚ್ಚಿ',
   'Note {number}': 'ಟಿಪ್ಪಣಿ {number}',
   'Scroll together': 'ಜೊತೆಯಾಗಿ ಸ್ಕ್ರೋಲ್',

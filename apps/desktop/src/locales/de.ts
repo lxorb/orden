@@ -1140,6 +1140,13 @@ export const de: Dictionary = {
   'Split right': 'Rechts teilen',
   'Split down': 'Unten teilen',
   'Other pane': 'Anderes Teilfenster',
+  'Pane to the left': 'Teilfenster links',
+  'Pane to the right': 'Teilfenster rechts',
+  'Pane above': 'Teilfenster oben',
+  'Pane below': 'Teilfenster unten',
+  'Active pane follows the pointer': 'Aktives Teilfenster folgt dem Zeiger',
+  'The pane under the pointer becomes the one you work in.':
+    'Das Teilfenster unter dem Zeiger wird zu dem, in dem du arbeitest.',
   'Close this pane': 'Dieses Teilfenster schließen',
   'Note {number}': 'Notiz {number}',
   'Scroll together': 'Gemeinsam scrollen',

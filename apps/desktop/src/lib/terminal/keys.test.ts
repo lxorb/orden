@@ -212,8 +212,20 @@ describe('the key an agent pastes a picture with', () => {
       for (const letter of 'abcdefghijklmnopqrstuvwxyz') {
         expect(routeKey(press(letter, alt), platform, null, false), letter).toBe('shell')
       }
-      // Claude Code's Alt+K, which the app has too: both, and asked about once (#426).
+      // A command a reader put on Alt and a letter: both, and asked about once (#426).
       expect(routeKey(press('k', alt), platform, 'app.ask-selection', false)).toBe('ask')
+      // The panes' four ways are the shell's, never asked about (#1033).
+      for (const [letter, toward] of [
+        ['h', 'left'],
+        ['j', 'down'],
+        ['k', 'up'],
+        ['l', 'right'],
+      ] as const) {
+        expect(routeKey(press(letter, alt), platform, `pane.focus-${toward}`, false)).toBe('shell')
+      }
+      // And the selection to the AI panel, now on Ctrl+Alt+K, is the app's.
+      const both = { ctrlKey: true, altKey: true }
+      expect(routeKey(press('k', both), platform, 'app.ask-selection', false)).toBe('app')
     }
   })
 

@@ -16,6 +16,8 @@ import {
   EQUAL,
   type Frame,
   nextPane,
+  paneToward,
+  type Toward,
   pane,
   type Pane,
   paneIn,
@@ -158,6 +160,14 @@ export class Panes {
   focusNext() {
     const next = nextPane(this.frame, this.focusedId)
     if (next) this.focus(next.id)
+  }
+
+  /** The pane next over on that side, given the focus: Alt+H, J, K and L (#1033).
+   *  Answers it, or null at the window's edge, where nothing moves. */
+  focusToward(toward: Toward): Pane | null {
+    const next = paneToward(this.frame, this.focusedId, toward)
+    if (next) this.focus(next.id)
+    return next
   }
 
   splittable(along: Along, id: string = this.focusedId): boolean {

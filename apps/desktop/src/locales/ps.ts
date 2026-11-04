@@ -1126,6 +1126,13 @@ export const ps: Dictionary = {
   'Split right': 'ښي ته بېلول',
   'Split down': 'ښکته بېلول',
   'Other pane': 'بله تخته',
+  'Pane to the left': 'کیڼه تخته',
+  'Pane to the right': 'ښۍ تخته',
+  'Pane above': 'پورته تخته',
+  'Pane below': 'لاندې تخته',
+  'Active pane follows the pointer': 'فعاله تخته د نښې پسې ځي',
+  'The pane under the pointer becomes the one you work in.':
+    'د نښې لاندې تخته هغه کېږي چې تاسو پکې کار کوئ.',
   'Close this pane': 'دا تخته بندول',
   'Note {number}': 'يادښت {number}',
   'Scroll together': 'يوځای رغړول',

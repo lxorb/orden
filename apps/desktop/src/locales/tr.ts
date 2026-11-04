@@ -1131,6 +1131,13 @@ export const tr: Dictionary = {
   'Split right': 'Sağa böl',
   'Split down': 'Aşağıya böl',
   'Other pane': 'Diğer bölme',
+  'Pane to the left': 'Soldaki bölme',
+  'Pane to the right': 'Sağdaki bölme',
+  'Pane above': 'Üstteki bölme',
+  'Pane below': 'Alttaki bölme',
+  'Active pane follows the pointer': 'Etkin bölme işaretçiyi izler',
+  'The pane under the pointer becomes the one you work in.':
+    'İşaretçinin altındaki bölme, üzerinde çalıştığınız bölme olur.',
   'Close this pane': 'Bu bölmeyi kapat',
   'Note {number}': 'Not {number}',
   'Scroll together': 'Birlikte kaydır',

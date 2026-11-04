@@ -1132,6 +1132,13 @@ export const pa: Dictionary = {
   'Split right': 'ਸੱਜੇ ਵੰਡੋ',
   'Split down': 'ਹੇਠਾਂ ਵੰਡੋ',
   'Other pane': 'ਦੂਜਾ ਖ਼ਾਨਾ',
+  'Pane to the left': 'ਖੱਬਾ ਖ਼ਾਨਾ',
+  'Pane to the right': 'ਸੱਜਾ ਖ਼ਾਨਾ',
+  'Pane above': 'ਉੱਪਰਲਾ ਖ਼ਾਨਾ',
+  'Pane below': 'ਹੇਠਲਾ ਖ਼ਾਨਾ',
+  'Active pane follows the pointer': 'ਸਰਗਰਮ ਖ਼ਾਨਾ ਪੁਆਇੰਟਰ ਦੇ ਪਿੱਛੇ ਚੱਲਦਾ ਹੈ',
+  'The pane under the pointer becomes the one you work in.':
+    'ਪੁਆਇੰਟਰ ਹੇਠਲਾ ਖ਼ਾਨਾ ਉਹ ਬਣ ਜਾਂਦਾ ਹੈ ਜਿਸ ਵਿੱਚ ਤੁਸੀਂ ਕੰਮ ਕਰਦੇ ਹੋ।',
   'Close this pane': 'ਇਹ ਖ਼ਾਨਾ ਬੰਦ ਕਰੋ',
   'Note {number}': 'ਨੋਟ {number}',
   'Scroll together': 'ਇਕੱਠੇ ਸਰਕਾਓ',

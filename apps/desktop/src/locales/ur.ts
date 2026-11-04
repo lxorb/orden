@@ -1127,6 +1127,13 @@ export const ur: Dictionary = {
   'Split right': 'دائیں تقسیم',
   'Split down': 'نیچے تقسیم',
   'Other pane': 'دوسرا پین',
+  'Pane to the left': 'بائیں پین',
+  'Pane to the right': 'دائیں پین',
+  'Pane above': 'اوپر والا پین',
+  'Pane below': 'نیچے والا پین',
+  'Active pane follows the pointer': 'فعال پین پوائنٹر کے پیچھے چلتا ہے',
+  'The pane under the pointer becomes the one you work in.':
+    'پوائنٹر کے نیچے والا پین وہی بن جاتا ہے جس میں آپ کام کرتے ہیں۔',
   'Close this pane': 'یہ پین بند کریں',
   'Note {number}': 'نوٹ {number}',
   'Scroll together': 'ساتھ اسکرول',

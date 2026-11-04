@@ -110,6 +110,16 @@ const APP_KEYS = new Set([
 /** Sent to nobody: see the top of this file. */
 const NEITHER = new Set(['app.close-window'])
 
+/** The app's commands a terminal never gives way to nor asks about: the panes' Alt+H,
+ *  J, K and L (#1033), which are ESC and a letter to a shell and to vim in it, as every
+ *  other Alt and a letter is. Off a terminal they go between the panes. */
+const SHELL_KEYS = new Set([
+  'pane.focus-left',
+  'pane.focus-down',
+  'pane.focus-up',
+  'pane.focus-right',
+])
+
 const ZOOM: Record<string, Route> = {
   'app.zoom-in': 'zoom-in',
   'app.zoom-out': 'zoom-out',
@@ -151,7 +161,7 @@ export function routeKey(
 
   const zoom = ZOOM[command]
   if (zoom) return zoom
-  if (NEITHER.has(command)) return 'shell'
+  if (NEITHER.has(command) || SHELL_KEYS.has(command)) return 'shell'
   // A key the shell reads as a character of its own, which an app command is on as well:
   // asked about, once. Ctrl+C is the interrupt whatever is on it.
   if (shellReads(event)) return key === 'c' ? 'shell' : 'ask'

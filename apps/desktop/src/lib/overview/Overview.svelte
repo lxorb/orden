@@ -22,7 +22,7 @@
    *
    *  All spaces shows the other spaces too, each in its place on the one canvas inside a
    *  bubble that is its windows (Cells.svelte); a window dragged out of its cell takes the
-   *  bubble with it, and dragged well into another's plops across, which moves its tab to
+   *  bubble with it, and pointed into another's plops across, which moves its tab to
    *  that space when it is let go (cells.ts). */
 
   import { tick as laidOut, untrack } from 'svelte'
@@ -69,7 +69,7 @@
   import { faces } from './faces.svelte'
   import { drawn, Flight, type Pose } from './flight'
   import { land as landSpring, resting as sprung, SHARE, spring, step } from './spring'
-  import { settled, stripLanding } from './free'
+  import { roomFor, settled, stripLanding } from './free'
   import { around, type Box, type Laid, lay, seamPath, seamsAmong, type Slot } from './layout'
   import { marked, mirrorOf, shownBox, tabCopyOf } from './mirror'
   import { walk, wayOf } from './walk'
@@ -84,10 +84,21 @@
   let width = $state(window.innerWidth)
   let height = $state(window.innerHeight)
 
-  /** The room the windows are laid out in: the window, less a margin and the row at
-   *  the top. */
+  /** The room the windows are laid out in: the window under its bar, less a margin and
+   *  the row at the top. */
   const MARGIN = 56
-  const TOP = 88
+  const ROW = 50
+
+  /** Where the window's bar ends, which the overview leaves where it is: the canvas is
+   *  everything under it (Titlebar.svelte's `header`). Read as the layer comes up. */
+  let barBottom = $state(0)
+
+  function barOf(): number {
+    const bar = document.querySelector('header[data-chrome="top"]')?.getBoundingClientRect()
+    return bar && bar.height > 0 ? Math.max(0, bar.bottom) : 0
+  }
+
+  const roomTop = $derived(barBottom + ROW)
 
   /** What each pane showed as the layer came up, which its windows take the shape of. */
   let panes = $state<Record<string, { w: number; h: number }>>({})
@@ -100,9 +111,9 @@
   /** The room the windows are laid out in on the screen, at one to one. */
   const screenRoom = $derived<Box>({
     x: MARGIN,
-    y: TOP,
+    y: roomTop,
     w: Math.max(width - 2 * MARGIN, 200),
-    h: Math.max(height - TOP - MARGIN, 160),
+    h: Math.max(height - roomTop - MARGIN, 160),
   })
 
   /** Which space's place the canvas lays this set of tabs out in: the space's own, or the
@@ -278,16 +289,6 @@
     return settled(lying, new Set(all.filter((one) => put[one.id]).map((one) => one.id)), namedRoom)
   })
 
-  /** And with one held: that one under the hand, where it stays when it is let go, and
-   *  every other pushed out of its way - back where it was once the hand moves on. */
-  const slots = $derived.by((): Slot[] => {
-    const hand = held?.box
-    const id = held?.id
-    if (!hand || !id) return resting
-    const lying = resting.map((slot) => (slot.id === id ? { ...slot, ...hand } : slot))
-    return settled(lying, new Set([id]), namedRoom)
-  })
-
   /** Which cell each window lies in, by tab: its space's, or the one the held window is
    *  over. */
   const cellOf = $derived.by(() => {
@@ -297,6 +298,18 @@
     )
     if (held?.landing?.kind === 'space') map.set(held.id, held.landing.key)
     return map
+  })
+
+  /** And with one held: that one under the hand, where it stays when it is let go, and
+   *  every other of the cell it is in pushed out of its way - back where it was once the
+   *  hand moves on. Another cell's windows stay put, which the hand points into (free.ts
+   *  `roomFor`). */
+  const slots = $derived.by((): Slot[] => {
+    const hand = held?.box
+    const id = held?.id
+    if (!hand || !id) return resting
+    const key = cellOf.get(id)
+    return roomFor(resting, id, hand, (one) => cellOf.get(one) === key, namedRoom)
   })
 
   /** Every window, and the lines between each split's sides. */
@@ -310,11 +323,15 @@
     ),
   })
 
-  /** Each cell's windows, boxed, for which cell a window is over and for the camera: the
-   *  held one left out, which never decides where the cell it is leaving is. */
+  /** Each cell's windows, boxed, for which cell a window is over and for the camera: as
+   *  they lie at rest, not as the held one pushes them, so where a cell is pointed into
+   *  never moves under the hand; the held one left out, which never decides where the
+   *  cell it is leaving is. */
   const cellBoxes = $derived<Cell[]>(
     gridCells.map((one) => {
-      const inside = slots.filter((slot) => cellOf.get(slot.id) === one.key && slot.id !== held?.id)
+      const inside = resting.filter(
+        (slot) => cellOf.get(slot.id) === one.key && slot.id !== held?.id,
+      )
       // A cell whose one window is held is where that window was taken from.
       const from = resting.filter(
         (slot) => slot.id === held?.id && one.slots.some((own) => own.id === slot.id),
@@ -491,6 +508,8 @@
 
   function opened(at: number) {
     const value = String(Math.round(at * 1000) / 1000)
+    // The sidebars slide out as far as the overview is out (`html[data-overview]`).
+    document.documentElement.style.setProperty('--overview-open', value)
     if (ground) {
       ground.style.opacity = value
       // Not there at all at the ends: a ground over the app, however faint, has the app
@@ -533,9 +552,12 @@
   }
 
   /** What a window is a copy of is out of sight while the window is away from it, so
-   *  the two are never seen at once: the strip leaves out every tab whose window is away
-   *  from it, and a pane whose tab in front is a window away from the pane stands back -
-   *  but for a window near its home, which is handed over to what is under it there. */
+   *  the two are never seen at once: the strip leaves out every tab whose window is away,
+   *  the tab in front of a pane too - the bar is the window's own while the overview is
+   *  up, and a strip still holding the tab whose window is on the canvas would be that
+   *  tab twice - and a pane whose tab in front is a window away from the pane stands
+   *  back; but for a window near its home, which is handed over to what is under it
+   *  there. */
   function awayFromStrip() {
     if (!started) return
     const away: string[] = []
@@ -547,7 +569,8 @@
       if (home && home.alpha > 0.5 && home.tab < 0.5) {
         const pane = byId.get(id)?.paneId
         if (gone && pane) lifted.push(pane)
-      } else if (gone) away.push(id)
+      }
+      if (gone) away.push(id)
     }
     if (away.join(' ') !== tabOverview.out.join(' ')) tabOverview.out = away
     if (lifted.join(' ') !== tabOverview.lifted.join(' ')) tabOverview.lifted = lifted
@@ -631,6 +654,7 @@
     const again = shown
     if (!again) {
       corner = cardCorner()
+      barBottom = barOf()
       places.recall(workspace.tabs)
       void faces.read()
       // Where it was left, once there is somewhere; the space worked in the first time, and
@@ -673,6 +697,7 @@
     }
     shown = true
     out = true
+    document.documentElement.dataset.overview = modes.overviewBlur ? 'blur' : 'slide'
     if (again) aimAll()
   }
 
@@ -717,6 +742,8 @@
     tabsAsDrawn = {}
     tabOverview.out = []
     tabOverview.lifted = []
+    delete document.documentElement.dataset.overview
+    document.documentElement.style.removeProperty('--overview-open')
   }
 
   const close = () => (tabOverview.open = false)
@@ -893,14 +920,14 @@
   }
 
   /** Whether the held window, with the pointer at `point`, is over another space's cell:
-   *  once it is well inside it (cells.ts). */
+   *  once the pointer is nearer that cell's windows than its own's (cells.ts). */
   function landingFor(point: Point): (Landing & { kind: 'space' }) | null {
     if (!held) return null
     const from = held.from
     const goes = held.goes
     const now = held.landing?.key ?? from
     const cells = cellBoxes.filter((one) => one.key === from || goes.includes(one.key))
-    const cell = all ? cellAt(cells, now, point.x, point.y) : from
+    const cell = all ? cellAt(cells, now, point.x, point.y, camera.zoom) : from
     return cell === from ? null : { kind: 'space', key: cell }
   }
 
@@ -1085,10 +1112,10 @@
   let panning = false
 
   function grounded(event: PointerEvent) {
-    if (!(event.target instanceof Element) || event.target.closest('.window, .closer, .top')) return
+    if (!(event.target instanceof Element) || !event.target.closest('.floor')) return
     handTakes()
     touching.set(event.pointerId, { x: event.clientX, y: event.clientY })
-    ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
+    event.target.setPointerCapture(event.pointerId)
     panning = touching.size > 1
   }
 
@@ -1134,15 +1161,25 @@
 />
 
 {#if shown}
-  <div
-    class="nib-scrim ground"
-    class:is-blurred={modes.overviewBlur}
-    aria-hidden="true"
-    bind:this={ground}
-  ></div>
+  <!-- Asked for under Appearance: the app behind the canvas, blurred, its sidebars where
+       they are. Otherwise there is nothing here at all: the sidebars slide away and the
+       canvas is the ground the panes stand on. -->
+  {#if modes.overviewBlur}
+    <div
+      class="nib-scrim ground is-blurred"
+      style:top="{barBottom}px"
+      aria-hidden="true"
+      bind:this={ground}
+    ></div>
+  {/if}
 
+  <!-- A clear scrim, so a web page's live view steps behind its picture from the first
+       frame to the last (web-tab/covers.ts); it draws nothing and takes no press itself -
+       the bar over it is the window's still, and the floor under the windows is what a
+       press on the canvas lands on. -->
   <div
-    class="canvas"
+    class="nib-scrim is-clear canvas"
+    style:--overview-top="{barBottom}px"
     bind:this={canvasNode}
     role="dialog"
     aria-modal="true"
@@ -1158,6 +1195,8 @@
     onselectstart={(event) => event.preventDefault()}
     ondragstart={(event) => event.preventDefault()}
   >
+    <div class="floor" aria-hidden="true"></div>
+
     <div class="top">
       {#if spaces.length > 1}
         <!-- All spaces or This space: whether the other spaces' cells are there too. -->
@@ -1268,22 +1307,23 @@
 {/if}
 
 <style>
-  /* The canvas: Orden's own ground, the surface the panes stand on (App.svelte's
-     `main` and `.middle`), so the whole of the overview happens inside Orden - the
-     panes' cards stand back as their windows leave them, and nothing of the app is
-     drawn through. Still a scrim, which a web page's live view steps behind (see
-     web-tab/covers.ts). */
-  .ground {
-    --scrim-z: var(--z-sheet);
-    opacity: 0;
-    background: linear-gradient(var(--chrome-ground), var(--chrome-ground)), var(--shell-ground);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
+  /* The window as it is, but for its sidebars: they slide away, the left one to the left
+     and the right one to the right, as if each were shut, as far as the overview is out -
+     moved and not shut, so nothing is laid out again and the panes stay where they are.
+     What they uncover is the ground they stood on, which is the canvas's. */
+  :global(html[data-overview='slide'] [data-chrome='start']) {
+    translate: calc(var(--dir, 1) * -100% * var(--overview-open, 0)) 0;
   }
 
-  /* Or, asked for under Appearance, the app behind it, blurred far enough to be a
-     surface and not a page, as the overview was drawn first. */
+  :global(html[data-overview='slide'] [data-chrome='end']) {
+    translate: calc(var(--dir, 1) * 100% * var(--overview-open, 0)) 0;
+  }
+
+  /* Asked for under Appearance: the app under the bar, blurred far enough to be a surface
+     and not a page, as the overview was drawn first. */
   .ground.is-blurred {
+    --scrim-z: var(--z-sheet);
+    opacity: 0;
     background: color-mix(in srgb, var(--bg) 55%, transparent);
     -webkit-backdrop-filter: blur(28px);
     backdrop-filter: blur(28px);
@@ -1297,11 +1337,17 @@
     --overview-cell-name: calc(var(--text-base) * 1.6);
     position: fixed;
     inset: 0;
-    /* Over the whole app, and just under a sheet: what the overview asks - a terminal
-       still running, words with no file, closed by a window's cross - comes up over
-       it, and is answered there. */
+    /* Over the panes, and just under a sheet: what the overview asks - a terminal still
+       running, words with no file, closed by a window's cross - comes up over it, and is
+       answered there. */
     z-index: calc(var(--z-sheet) - 1);
     overflow: hidden;
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    /* Nothing but its windows, its row and its floor takes a press: the bar stays the
+       window's. */
+    pointer-events: none;
     outline: none;
     touch-action: none;
     /* Windows are pictures of their tabs, not their words: nothing here is chosen as
@@ -1310,10 +1356,20 @@
     -webkit-user-select: none;
   }
 
+  /* The canvas between the windows, under the bar, which a press, a drag or a pinch on
+     the canvas lands on. */
+  .floor {
+    position: absolute;
+    inset: 0;
+    top: var(--overview-top, 0);
+    pointer-events: auto;
+  }
+
   .top {
     position: absolute;
     z-index: var(--z-raised);
-    top: var(--space-5);
+    top: calc(var(--overview-top, 0px) + var(--space-3));
+    pointer-events: auto;
     left: 50%;
     display: flex;
     gap: var(--space-2);
@@ -1378,6 +1434,7 @@
     cursor: pointer;
     outline: none;
     touch-action: none;
+    pointer-events: auto;
   }
 
   /* Under the hand, over the others, a little higher off the canvas. */
@@ -1460,10 +1517,12 @@
     border: 2px solid var(--accent);
   }
 
-  /* A window's cross: red, small, on its top right corner itself, at the same size on the
-     screen whatever the zoom, there while the pointer is on the window or on the cross,
-     and only once the window is in its place. Under the pointer it darkens and grows a
-     little, so it is plain that a press closes the tab. */
+  /* A window's cross: the app's quiet grey button with the cross in it red, small, on
+     the window's top right corner itself, at the same size on the screen whatever the
+     zoom, there while the pointer is on the window or on the cross, and only once the
+     window is in its place. Under the pointer the button lights as a quiet one does, its
+     cross goes a step deeper and it grows a little, so it is plain that a press closes
+     the tab. */
   .closer {
     --closer-size: 22px;
     position: absolute;
@@ -1475,12 +1534,12 @@
     width: var(--closer-size);
     height: var(--closer-size);
     padding: 0;
-    border: 0;
+    border: 1px solid var(--line);
     border-radius: 50%;
-    /* The ink a strong colour is written on in this theme, as on the accent. */
-    color: var(--accent-ink);
-    background: var(--danger);
-    box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+    color: var(--danger);
+    /* Solid, half of it being over the canvas and half over the window. */
+    background: var(--surface-2);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.22);
     transform-origin: 0 0;
     scale: var(--overview-unzoom);
     /* Its middle on the corner: scaled about that point, so it grows in place. */
@@ -1489,7 +1548,8 @@
     pointer-events: none;
     transition:
       opacity var(--dur-fast) var(--ease-out),
-      background-color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
       transform var(--dur-fast) var(--ease-out);
   }
 
@@ -1510,13 +1570,17 @@
     visibility: hidden;
   }
 
+  /* The quiet button's hover and press, laid on its own grey so it stays solid; the
+     cross deeper towards the ink, as a button that deletes is (base.css). */
   .closer:hover,
   .closer:focus-visible {
-    background: color-mix(in srgb, var(--danger) 80%, black);
+    color: color-mix(in srgb, var(--danger) 86%, var(--text-strong));
+    background: linear-gradient(var(--surface-hover), var(--surface-hover)), var(--surface-2);
     transform: scale(1.18) translate(-50%, -50%);
   }
 
   .closer:active {
+    background: linear-gradient(var(--surface-press), var(--surface-press)), var(--surface-2);
     transform: scale(0.94) translate(-50%, -50%);
   }
 

@@ -1131,6 +1131,13 @@ export const gsw: Dictionary = {
   'Split right': 'Rächts teile',
   'Split down': 'Une teile',
   'Other pane': 'Anders Teilfänschter',
+  'Pane to the left': 'Teilfänschter links',
+  'Pane to the right': 'Teilfänschter rächts',
+  'Pane above': 'Teilfänschter obe',
+  'Pane below': 'Teilfänschter unde',
+  'Active pane follows the pointer': 'Aktivs Teilfänschter folgt em Zeiger',
+  'The pane under the pointer becomes the one you work in.':
+    'S Teilfänschter under em Zeiger wird zu dem, wo du drin schaffsch.',
   'Close this pane': 'Das Teilfänschter zuemache',
   'Note {number}': 'Notiz {number}',
   'Scroll together': 'Zäme scrolle',

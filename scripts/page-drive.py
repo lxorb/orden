@@ -207,7 +207,8 @@ def stale():
     if "window id" not in wm.stdout:
         print("stale: no window manager to take the focus away, not asked")
         return
-    other = subprocess.Popen(["xterm", "-geometry", "20x5+1300+800"])
+    # xterm and not xmessage; see the kwin job in wayland.yml.
+    other = subprocess.Popen(["xterm", "-geometry", "20x5+1300+800", "-title", "another app"])
     found = ""
     for _ in range(50):
         found = subprocess.run(["xdotool", "search", "--class", "xterm"], capture_output=True, text=True, check=False).stdout
@@ -363,6 +364,17 @@ def corners(shot, hole, label):
 
 
 def zoom():
+    # In front again, whatever ran before it: the tree's last drive leaves a note there.
+    front = run("""(() => {
+      const ws = nib.workspace
+      const tab = ws.tabs.find((one) => one.kind === 'web')
+      if (!tab) return false
+      ws.activate(tab.id)
+      return true
+    })()""")
+    if not front:
+        fail("no web tab to zoom over")
+        return
     first = until(HOLE, "the web tab's hole")
     if not first:
         return

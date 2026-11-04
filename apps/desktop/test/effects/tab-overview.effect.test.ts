@@ -219,8 +219,9 @@ test('while a window is away, what it is a copy of is out of sight: its tab, or 
   onTestFinished(() => shown.forEach((one) => one.remove()))
   await opened()
   expect([...tabOverview.lifted].sort()).toEqual([...panes].sort())
-  const fronts = new Set(workspace.panes.all.map((one) => one.activeTabId))
-  expect(tabOverview.out.filter((id) => fronts.has(id))).toEqual([])
+  // And every tab is out of its strip, the ones in front too: the bar is the window's,
+  // seen, and a strip that kept them would show each of them twice.
+  expect([...tabOverview.out].sort()).toEqual(workspace.tabs.map((one) => one.id).sort())
   expect(overlays.escape()).toBe(true)
   flushSync()
   await tick()
@@ -228,21 +229,40 @@ test('while a window is away, what it is a copy of is out of sight: its tab, or 
   expect(tabOverview.out).toEqual([])
 })
 
-test('the canvas is Orden’s own ground, and the app blurred only when asked for', async () => {
+test('the canvas is the window’s own ground, its sidebars sliding away, and the app blurred only when asked for', async () => {
   const { modes } = await import('../../src/lib/modes.svelte')
   await opened()
-  const ground = () => document.querySelector('.ground')
-  expect(ground()?.classList.contains('is-blurred')).toBe(false)
+  // Nothing laid over the app: no ground of its own, the sidebars slid all the way out.
+  expect(document.querySelector('.ground')).toBe(null)
+  expect(document.documentElement.dataset.overview).toBe('slide')
+  expect(document.documentElement.style.getPropertyValue('--overview-open')).toBe('1')
   expect(overlays.escape()).toBe(true)
   flushSync()
   await tick()
+  expect(document.documentElement.dataset.overview).toBe(undefined)
+  expect(document.documentElement.style.getPropertyValue('--overview-open')).toBe('')
   modes.toggleOverviewBlur()
   try {
     await opened()
-    expect(ground()?.classList.contains('is-blurred')).toBe(true)
+    expect(document.querySelector('.ground')?.classList.contains('is-blurred')).toBe(true)
+    expect(document.documentElement.dataset.overview).toBe('blur')
   } finally {
     modes.toggleOverviewBlur()
   }
+})
+
+test('a web page steps behind its picture for as long as the overview is up, from its first frame', async () => {
+  const { layersOver } = await import('../../src/lib/web-tab/covers')
+  const hole = document.createElement('div')
+  document.body.append(hole)
+  onTestFinished(() => hole.remove())
+  await opened()
+  // The canvas itself is a clear scrim, there and seen as soon as it is: never hidden on
+  // its first frames as the blurred ground is (covers.ts `seen`).
+  const canvas = layer() as HTMLElement | null
+  expect(canvas?.matches('.nib-scrim.is-clear')).toBe(true)
+  expect(canvas?.style.visibility).toBe('')
+  expect(layersOver(hole).some((one) => one.scrim && one.node === canvas)).toBe(true)
 })
 
 test('a window’s cross sits on its corner, red, and answers the pointer', async () => {
@@ -255,23 +275,31 @@ test('a window’s cross sits on its corner, red, and answers the pointer', asyn
     .map(Number)
   const width = parseFloat(window?.style.width ?? '0')
   expect(cross?.style.translate).toBe(`${String((x ?? 0) + width)}px ${String(y)}px`)
-  // Red and small, and under the pointer darker and a little larger: its own rules, as
-  // the component declares them (jsdom lays nothing out and hovers nothing).
+  // The app's quiet grey button, only its cross red, small, and under the pointer lit
+  // and a little larger: its own rules, as the component declares them (jsdom lays
+  // nothing out and hovers nothing).
   const { default: source } = await import('../../src/lib/overview/Overview.svelte?raw')
   /** The body of the rule whose selectors start `head`, up to its brace. */
   const rule = (head: string) => {
     const at = source.indexOf(`\n  ${head}`)
     return at < 0 ? '' : source.slice(source.indexOf('{', at), source.indexOf('}', at))
   }
-  expect(rule('.closer {')).toContain('background: var(--danger)')
+  expect(rule('.closer {')).toContain('color: var(--danger)')
+  expect(rule('.closer {')).toContain('background: var(--surface-2)')
+  expect(rule('.closer {')).not.toMatch(/background:[^;]*--danger/)
   expect(rule('.closer {')).toContain('translate(-50%, -50%)')
   expect(rule('.closer {')).toMatch(/--closer-size: 2[0-4]px/)
   const hovered = [...source.matchAll(/\n {2}([^{}]*\.closer:hover[^{}]*)\{([^}]*)\}/g)].map(
     (one) => one[2] ?? '',
   )
-  expect(hovered.some((one) => one.includes('background:') && one.includes('scale(1.18)'))).toBe(
-    true,
-  )
+  expect(
+    hovered.some(
+      (one) =>
+        one.includes('--surface-hover') &&
+        one.includes('scale(1.18)') &&
+        !/background:[^;]*--danger/.test(one),
+    ),
+  ).toBe(true)
 })
 
 test('every window’s name is drawn under every window, so none lies on another window', async () => {

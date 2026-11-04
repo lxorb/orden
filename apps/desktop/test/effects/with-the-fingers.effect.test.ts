@@ -7,11 +7,16 @@
  *  anywhere that matches counts. The overview's drag is #331's and not here. */
 
 import { flushSync, mount, unmount } from 'svelte'
-import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import arrowSource from '../../src/lib/back-swipe/SwipeArrow.svelte?raw'
 import appSource from '../../src/App.svelte?raw'
 import pullSource from '../../src/lib/PullMark.svelte?raw'
 import base from '../../../../packages/themes/src/base.css?raw'
+
+/** The tab the arrow is over, shown in its pane; see SwipeArrow.svelte. */
+vi.mock('../../src/lib/workspace.svelte', () => ({
+  workspace: { showing: (pane: string) => (pane === 'p' ? { id: 't' } : null) },
+}))
 
 const SwipeArrow = (await import('../../src/lib/back-swipe/SwipeArrow.svelte')).default
 const { swiping } = await import('../../src/lib/back-swipe/shown.svelte')
@@ -122,10 +127,11 @@ describe("the swipe's arrow, while the fingers are on", () => {
       test(`${run.name}, from the ${side}: nothing on it eases`, () => {
         const target = document.createElement('div')
         document.body.append(target)
-        const arrow = mount(SwipeArrow, { target })
+        const arrow = mount(SwipeArrow, { target, props: { unseen: () => undefined } })
         try {
           Object.assign(swiping, {
             tab: 't',
+            pane: 'p',
             room,
             side,
             stage: 'tracking',
@@ -152,6 +158,7 @@ describe("the swipe's arrow, while the fingers are on", () => {
           target.remove()
           Object.assign(swiping, {
             tab: null,
+            pane: null,
             room: null,
             stage: 'tracking',
             progress: 0,

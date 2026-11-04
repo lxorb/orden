@@ -1130,6 +1130,13 @@ export const hi: Dictionary = {
   'Split right': 'दाएँ बाँटें',
   'Split down': 'नीचे बाँटें',
   'Other pane': 'दूसरा फलक',
+  'Pane to the left': 'बायाँ फलक',
+  'Pane to the right': 'दायाँ फलक',
+  'Pane above': 'ऊपर का फलक',
+  'Pane below': 'नीचे का फलक',
+  'Active pane follows the pointer': 'सक्रिय फलक पॉइंटर के साथ चलता है',
+  'The pane under the pointer becomes the one you work in.':
+    'पॉइंटर के नीचे वाला फलक वही बन जाता है जिसमें आप काम करते हैं।',
   'Close this pane': 'यह फलक बंद करें',
   'Note {number}': 'नोट {number}',
   'Scroll together': 'साथ स्क्रॉल करें',

@@ -1136,6 +1136,13 @@ export const sw: Dictionary = {
   'Split right': 'Gawa kulia',
   'Split down': 'Gawa chini',
   'Other pane': 'Paneli nyingine',
+  'Pane to the left': 'Paneli ya kushoto',
+  'Pane to the right': 'Paneli ya kulia',
+  'Pane above': 'Paneli ya juu',
+  'Pane below': 'Paneli ya chini',
+  'Active pane follows the pointer': 'Paneli amilifu hufuata kiashiria',
+  'The pane under the pointer becomes the one you work in.':
+    'Paneli iliyo chini ya kiashiria inakuwa ile unayofanyia kazi.',
   'Close this pane': 'Funga paneli hii',
   'Note {number}': 'Dokezo {number}',
   'Scroll together': 'Sogeza pamoja',

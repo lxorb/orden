@@ -1145,6 +1145,13 @@ export const es: Dictionary = {
   'Split right': 'Dividir a la derecha',
   'Split down': 'Dividir abajo',
   'Other pane': 'El otro panel',
+  'Pane to the left': 'Panel de la izquierda',
+  'Pane to the right': 'Panel de la derecha',
+  'Pane above': 'Panel de arriba',
+  'Pane below': 'Panel de abajo',
+  'Active pane follows the pointer': 'El panel activo sigue al puntero',
+  'The pane under the pointer becomes the one you work in.':
+    'El panel bajo el puntero pasa a ser en el que trabajas.',
   'Close this pane': 'Cerrar este panel',
   'Note {number}': 'Nota {number}',
   'Scroll together': 'Desplazar a la vez',

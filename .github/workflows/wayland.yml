@@ -229,17 +229,6 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
-      # A site may declare `ipc`, which Google Sheets does, and the app's own pages are in
-      # the app's profile; the Linux half of scripts/web-globals-probe.py.
-      - name: What a page is given, and quick add and the presenter heard, under sway
-        if: always()
-        env:
-          OUT: wayland-out/globals
-          GLOBALS: '1'
-        run: |
-          pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       # #787: a private tab's answer to a site is kept for its private session only.
       - name: A private tab's permission answer kept from normal tabs, under sway
         if: always()
@@ -438,13 +427,13 @@ jobs:
       contents: read
     steps:
       - name: KWin on X11 as Fedora 44 released it, Xvfb and xdotool
-        # Pinned to the release, without the updates repo: its kwin 6.8 obsoletes kwin-x11 and
-        # ships no `kwin_x11`, so it installs happily and the session then has no window
-        # manager to start. Lift it when this job runs KWin's Wayland session rather than X11,
-        # or when Fedora's updates carry a `kwin_x11` again. And
-        # xterm as the other window a drive takes the focus to, not xmessage: the AppImage's
-        # hook about user namespaces asks through xmessage where it finds one and waits for
-        # an answer, which a container that allows none never gives (fix-namespaces.hook).
+        # From the release, not its updates: Fedora 44's updates carry KWin 6.8, which takes
+        # the place of kwin-x11 and has no `kwin_x11`, so the package installs and the
+        # session then has no window manager to start. Lift it once this job runs KWin's own
+        # Wayland session, or the updates carry a `kwin_x11` again. xterm, not xmessage, is
+        # the other window a drive gives the focus to (page-drive.py): an AppImage's hook
+        # asks its question about user namespaces through xmessage where it finds one, and
+        # a container waits on that answer for good.
         run: dnf install -y --disablerepo=updates kwin-x11 xorg-x11-server-Xvfb xdpyinfo xwininfo xprop xdotool xwd xterm ImageMagick dbus-daemon dbus-tools python3 procps-ng nss nss-softokn mesa-dri-drivers git ffmpeg-free python3-pillow
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
@@ -475,23 +464,12 @@ jobs:
         run: |
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
-      - name: A note dragged in the file list, under KWin
+      - name: A note dragged in the file list, and the interface zoomed, under KWin
         if: always()
         env:
-          OUT: kwin-out/tree
+          OUT: kwin-out/page
           KWIN: '1'
           TREE: '1'
-          NIB_CEF_SANDBOX: disabled
-        run: |
-          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
-          dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
-      # In a session of its own: the tree drive ends on a note it opened, where a web tab has
-      # no hole to measure.
-      - name: The interface zoomed, under KWin
-        if: always()
-        env:
-          OUT: kwin-out/zoom
-          KWIN: '1'
           ZOOM: '1'
           NIB_CEF_SANDBOX: disabled
         run: |

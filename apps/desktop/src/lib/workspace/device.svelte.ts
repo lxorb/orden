@@ -48,6 +48,8 @@ export const TAGS_KEY = 'nib:expanded-tags'
 const GROUPS_KEY = 'nib:expanded-groups'
 /** Whether the Essentials are tiles or the list they were. */
 const ESSENTIALS_KEY = 'nib:essentials-look'
+/** Whether the pane under the pointer is the one being worked in. */
+const FOLLOWS_KEY = 'nib:pane-follows-pointer'
 
 /** Enough that a note opened this morning is still there, short enough that
  *  the list is worth reading. */
@@ -85,6 +87,11 @@ export class DeviceView {
    *  they were, for somebody who keeps a lot of notes there and reads them by name.
    *  Settings, Appearance; see essentials.ts. */
   essentialTiles = $state(true)
+  /** Whether the pane under the pointer becomes the active one, as in a tiling window
+   *  manager: on, the default, or only a press choosing it (#1033). A hand's habit on
+   *  this machine, like the look of the Essentials. Settings, Appearance; see
+   *  pane-moves.ts. */
+  paneFollowsPointer = $state(true)
 
   /** The icon a space wears, keyed by folder rather than by id so it survives
    *  the ids being handed out again on the next launch. */
@@ -121,6 +128,7 @@ export class DeviceView {
     this.expandedTags = recordOf(stored(TAGS_KEY), isBoolean)
     this.expandedGroups = recordOf(stored(GROUPS_KEY), isBoolean)
     this.essentialTiles = storedText(ESSENTIALS_KEY) !== 'list'
+    this.paneFollowsPointer = storedText(FOLLOWS_KEY) !== 'off'
     this.icons = recordOf(stored(ICONS_KEY), isString)
     this.iconTints = recordOf(stored(ICON_TINTS_KEY), isString)
   }
@@ -171,6 +179,11 @@ export class DeviceView {
   showEssentialTiles(on: boolean) {
     this.essentialTiles = on
     keep(ESSENTIALS_KEY, on ? 'tiles' : 'list')
+  }
+
+  followPointer(on: boolean) {
+    this.paneFollowsPointer = on
+    keep(FOLLOWS_KEY, on ? 'on' : 'off')
   }
 
   /** How far down the list this space was left, or zero for one never scrolled. */

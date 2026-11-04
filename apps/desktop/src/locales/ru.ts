@@ -1167,6 +1167,13 @@ export const ru: Dictionary = {
   'Split right': 'Разделить вправо',
   'Split down': 'Разделить вниз',
   'Other pane': 'Другая область',
+  'Pane to the left': 'Область слева',
+  'Pane to the right': 'Область справа',
+  'Pane above': 'Область сверху',
+  'Pane below': 'Область снизу',
+  'Active pane follows the pointer': 'Активная область следует за указателем',
+  'The pane under the pointer becomes the one you work in.':
+    'Область под указателем становится той, в которой вы работаете.',
   'Close this pane': 'Закрыть эту область',
   'Note {number}': 'Заметка {number}',
   'Scroll together': 'Прокручивать вместе',

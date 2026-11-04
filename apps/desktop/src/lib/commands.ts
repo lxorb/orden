@@ -28,6 +28,7 @@ import {
   lowerCase,
   moveBlockDown,
   moveBlockUp,
+  newProperty,
   pastePlain,
   redoEdit,
   reformatDocument,
@@ -1744,6 +1745,16 @@ export function appCommands(view?: EditorView): Command[] {
       label: t('Properties'),
       hint: shortcuts.hint('app.properties'),
       run: () => revealPanel('properties'),
+    },
+    // A note's first property, or another one, written at the foot of its front
+    // matter with its name selected; see `newProperty` in @orden/editor.
+    {
+      id: 'add-property',
+      label: t('Add a property'),
+      disabled: !view || view.state.readOnly || !tidies(workspace.active?.path ?? null),
+      run: () => {
+        if (view) newProperty(view)
+      },
     },
     // A phone and a tablet have no AI panel (#403).
     ...(viewport.touch
