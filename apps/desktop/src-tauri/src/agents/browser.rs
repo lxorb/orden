@@ -433,7 +433,7 @@ fn judged_times(
     let Some(question) = policy::judge(grant, facts, act, &page.url(), &hosts) else {
         return cleared();
     };
-    let summary = said_times(question.summary, times);
+    let summary = said_times(question.summary.clone(), times);
     // An allowance is for what was asked: the same button with other words round it, in a
     // form that has grown a card field, or pressed more often, is another question.
     let key = approvals::on_page(key, &page.url(), &question_key(&question, &summary, facts));

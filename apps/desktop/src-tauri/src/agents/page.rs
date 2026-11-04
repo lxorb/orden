@@ -826,6 +826,21 @@ impl Page<'_> {
         }
     }
 
+    /// A handle to an element in the page's own world, which is what a script that changes
+    /// its fields runs in. Nothing is judged by what runs there: `Page::object` is for that.
+    fn page_object(&self, element: &Element) -> Result<String, Answer> {
+        let resolved = self.call_on(
+            element,
+            "DOM.resolveNode",
+            &json!({ "backendNodeId": element.backend, "objectGroup": WORLD }),
+        )?;
+        resolved
+            .pointer("/object/objectId")
+            .and_then(Value::as_str)
+            .map(str::to_string)
+            .ok_or_else(|| stale("the element has no object"))
+    }
+
     /// nib's own world in a session's top frame.
     fn world_in(&self, session: Option<&str>) -> Result<i64, Answer> {
         let frame = match session {
