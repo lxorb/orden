@@ -1197,8 +1197,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,565,000, for #1068: a delete put back out of the trash or
  *  undone is said to sync by the word it went with, so it comes back as the entries it
- *  was (workspace/undoing.ts, trash.svelte.ts). Measured 3,563,824. */
-const BUDGET = 3_565_000
+ *  was (workspace/undoing.ts, trash.svelte.ts). Measured 3,563,824.
+ *
+ *  Raised 2026-11-04, to 3,567,000, for #1068: a move or a delete in the file list is
+ *  said to sync before the disk has it, through the one hook every operation goes
+ *  through (`doing` in workspace/file-ops.ts, `renameOnDisk` and `bin` in
+ *  workspace.svelte.ts). Measured 3,565,800. */
+const BUDGET = 3_567_000
 const MOST_FILES = 394
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
