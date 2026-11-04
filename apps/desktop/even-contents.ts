@@ -430,9 +430,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,865,700, for #1059: the palette finds a website
  *  by its address as well as its name (kinds.ts), and the index says which websites the
  *  space holds (link-index.svelte.ts). Measured 5,865,507.
+ *
+ *  The code raised on 2026-11-04, to 5,866,200, for #1046: Todos, one view of a space's
+ *  tasks with Todoist's Display menu over it - its groupings, sortings and filters and
+ *  the count of what differs (display.ts, DisplayBuilder.svelte), a space's own kept
+ *  layout (kept-views.ts) and GitHub's column heads (BoardHead.svelte). Measured
+ *  5,865,852.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_865_700,
+  code: 5_866_200,
   catalogues: 964_400,
   styles: 290_000,
   fonts: 260_000,
