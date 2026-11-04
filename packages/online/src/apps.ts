@@ -399,3 +399,20 @@ export function fromHostOf(data: string): FromHost | null {
     return { cannot: NO_PICTURE.find((one) => one === value.cannot) ?? null }
   return null
 }
+
+/** One thing the holder does to the application, as its tab sends it over the
+ *  picture's data channel, `input` (the host's `apps_host/input.rs` plays it into the
+ *  application's display): the pointer at a point of the display in its own pixels, a
+ *  button (a `PointerEvent`'s `button`) pressed or let go, the wheel turned by clicks
+ *  (down and right positive), and a key pressed or let go, by the character it gave or
+ *  its name (`KeyboardEvent.key`) and the key it was (`KeyboardEvent.code`). */
+export type InputEvent =
+  | { t: 'move'; x: number; y: number }
+  | { t: 'button'; button: number; down: boolean }
+  | { t: 'wheel'; x: number; y: number }
+  | { t: 'key'; key: string; code: string; down: boolean }
+
+/** An input event as the channel's message. */
+export function inputText(event: InputEvent): string {
+  return JSON.stringify(event)
+}

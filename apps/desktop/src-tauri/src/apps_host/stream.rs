@@ -20,6 +20,9 @@
 //! has decodes it: Orden's own CEF has no H.264. A program the host runs, as Xvfb is,
 //! rather than a codec linked into every build. It starts once the viewer is
 //! connected, so the first frame is a key frame, and another comes every two seconds.
+//!
+//! **Input** comes back over the data channel and is played into the application's
+//! display, and only there (`input.rs`).
 
 use std::io::{self, Read};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
@@ -36,6 +39,7 @@ use str0m::media::{MediaKind, MediaTime, Mid, Pt};
 use str0m::net::{Protocol, Receive};
 use str0m::{Candidate, Event, IceConnectionState, Input, Output, Rtc, RtcConfig};
 
+use super::input::Input as HolderInput;
 use super::Screen;
 
 /// How long a viewer has to connect once it has the answer.
@@ -127,6 +131,10 @@ struct Shared {
     start_encoder: bool,
     /// Whether it was.
     encoding: bool,
+    /// The display, for the input played into it.
+    display: String,
+    /// The holder's input, played into the display: opened as the first arrives.
+    input: Option<HolderInput>,
 }
 
 /// One connection and what its threads read.
@@ -214,6 +222,8 @@ impl Peer {
                 connected: None,
                 start_encoder: false,
                 encoding: false,
+                display: screen.display.clone(),
+                input: None,
             }),
             ended: AtomicBool::new(false),
             screen,
@@ -367,6 +377,15 @@ fn heard(shared: &mut Shared, event: Event) -> bool {
             true
         }
         Event::IceConnectionStateChange(IceConnectionState::Disconnected) => false,
+        Event::ChannelData(data) => {
+            if shared.input.is_none() {
+                shared.input = HolderInput::open(&shared.display).ok();
+            }
+            if let Some(input) = shared.input.as_mut() {
+                input.play(&data.data);
+            }
+            true
+        }
         _ => true,
     }
 }
@@ -779,8 +798,9 @@ mod tests {
     }
 
     /// A viewer of `str0m`'s own, on the loopback, against a real Xvfb and ffmpeg: it
-    /// connects with the answer and gets the display's picture as VP8, key frame first.
-    /// CI installs both; elsewhere the test says nothing without them.
+    /// connects with the answer, gets the display's picture as VP8, key frame first, and
+    /// moves the display's pointer over the data channel. CI installs both; elsewhere
+    /// the test says nothing without them.
     #[test]
     fn a_viewer_gets_the_picture_of_the_display() {
         use str0m::change::SdpAnswer;
@@ -830,13 +850,30 @@ mod tests {
         let mut buffer = vec![0_u8; 2000];
         let mut frames = 0;
         let mut first_key = None;
-        while Instant::now() < until && frames < 10 {
+        let mut moved = false;
+        let pointer = || {
+            use x11rb::connection::Connection as _;
+            use x11rb::protocol::xproto::ConnectionExt as _;
+            let (x, screen) = x11rb::connect(Some(display.name().as_str())).ok()?;
+            let root = x.setup().roots.get(screen)?.root;
+            let at = x.query_pointer(root).ok()?.reply().ok()?;
+            Some((at.root_x, at.root_y))
+        };
+        while Instant::now() < until && (frames < 10 || !moved) {
+            moved = moved || pointer() == Some((100, 50));
             loop {
                 match viewer.poll_output().unwrap() {
                     Output::Timeout(_) => break,
                     Output::Transmit(datagram) => {
                         // The host's other addresses are not reachable from the loopback.
                         let _ = socket.send_to(&datagram.contents, datagram.destination);
+                    }
+                    Output::Event(Event::ChannelOpen(id, _)) => {
+                        if let Some(mut channel) = viewer.channel(id) {
+                            channel
+                                .write(false, br#"{"t":"move","x":100,"y":50}"#)
+                                .unwrap();
+                        }
                     }
                     Output::Event(Event::MediaData(data)) => {
                         // VP8's frame tag: a clear lowest bit is a key frame.
@@ -857,6 +894,7 @@ mod tests {
             viewer.handle_input(input).unwrap();
         }
         assert!(frames >= 10, "{frames} frames came");
+        assert!(moved, "the pointer moved to where the viewer put it");
         assert_eq!(first_key, Some(true), "the first frame is a key frame");
         assert!(!peer.ended());
         drop(peer);

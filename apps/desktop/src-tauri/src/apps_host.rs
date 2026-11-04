@@ -35,6 +35,8 @@
 
 #[cfg(target_os = "linux")]
 mod display;
+#[cfg(target_os = "linux")]
+mod input;
 mod installed;
 #[cfg(target_os = "linux")]
 mod stream;

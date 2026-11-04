@@ -8,7 +8,14 @@
  *  tried again after a while, as long as it is wanted; a host that says why it has no
  *  picture is not asked again until the picture is wanted afresh. */
 
-import { fromHostOf, type NoPicture, toHostText, type ToHost } from '@orden/online/apps'
+import {
+  fromHostOf,
+  type InputEvent,
+  inputText,
+  type NoPicture,
+  toHostText,
+  type ToHost,
+} from '@orden/online/apps'
 
 export type PictureStatus =
   | { is: 'off' }
@@ -49,7 +56,7 @@ export class Picture {
   status = $state<PictureStatus>({ is: 'off' })
   /** What the video element shows, once the host's track has come. */
   stream = $state<MediaStream | null>(null)
-  /** The channel input goes over, once it is open (step 5). */
+  /** The channel input goes over, once it is open. */
   channel: RTCDataChannel | null = null
   private peer: RTCPeerConnection | null = null
   private wanted = false
@@ -87,6 +94,13 @@ export class Picture {
     peer.setRemoteDescription({ type: 'answer', sdp: said.answer }).catch(() => {
       if (this.peer === peer) this.lost()
     })
+  }
+
+  /** Something the holder did over the picture, sent to the host while its channel is
+   *  open; before that, and after, it goes nowhere. */
+  input(event: InputEvent): void {
+    const channel = this.channel
+    if (channel?.readyState === 'open') channel.send(inputText(event))
   }
 
   /** The tab has gone. */

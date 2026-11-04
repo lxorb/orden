@@ -6,6 +6,7 @@
    *  this; see session.svelte.ts. */
 
   import type { NotStarted } from '@orden/online/apps'
+  import { displayPoint, keyEvent, wheelClicks } from './input'
   import type { PictureStatus } from './picture.svelte'
   import { onMount, untrack } from 'svelte'
   import { t } from '../i18n.svelte'
@@ -112,6 +113,50 @@
   }
   const pictureLine = $derived(noPicture(picture, device))
 
+  // What the holder does over the picture goes to the application (input.ts), and to
+  // nothing behind it: the page neither scrolls, nor moves focus, nor opens its menu.
+  let wheelLeft = { x: 0, y: 0 }
+  function pointer(event: PointerEvent, down: boolean | null) {
+    if (!video) return
+    const at = displayPoint(
+      event.clientX,
+      event.clientY,
+      video.getBoundingClientRect(),
+      video.videoWidth,
+      video.videoHeight,
+    )
+    if (at) session.picture.input({ t: 'move', ...at })
+    if (down === null) return
+    event.preventDefault()
+    if (down) {
+      place?.focus()
+      video.setPointerCapture(event.pointerId)
+    }
+    session.picture.input({ t: 'button', button: event.button, down })
+  }
+  function wheel(event: WheelEvent) {
+    event.preventDefault()
+    const turned = wheelClicks(wheelLeft, event.deltaX, event.deltaY, event.deltaMode)
+    wheelLeft = turned.left
+    if (turned.x || turned.y) session.picture.input({ t: 'wheel', x: turned.x, y: turned.y })
+  }
+  // Not passive, which a wheel is unless it says otherwise, or the page would scroll.
+  $effect(() => {
+    const over = video
+    if (!over) return
+    over.addEventListener('wheel', wheel, { passive: false })
+    return () => {
+      over.removeEventListener('wheel', wheel)
+    }
+  })
+  function key(event: KeyboardEvent, down: boolean) {
+    if (!showing) return
+    const said = keyEvent(event, down)
+    if (!said) return
+    event.preventDefault()
+    session.picture.input(said)
+  }
+
   const waiting = $derived(
     status.is === 'reading' ||
       status.is === 'connecting' ||
@@ -120,8 +165,27 @@
   )
 </script>
 
-<div class="application" data-region="editor" bind:this={place}>
-  <video bind:this={video} class:shown={showing} autoplay muted playsinline></video>
+<!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+<div
+  class="application"
+  data-region="editor"
+  bind:this={place}
+  tabindex={showing ? 0 : -1}
+  role="application"
+  onkeydown={(event) => key(event, true)}
+  onkeyup={(event) => key(event, false)}
+>
+  <video
+    bind:this={video}
+    class:shown={showing}
+    autoplay
+    muted
+    playsinline
+    onpointermove={(event) => pointer(event, null)}
+    onpointerdown={(event) => pointer(event, true)}
+    onpointerup={(event) => pointer(event, false)}
+    oncontextmenu={(event) => event.preventDefault()}
+  ></video>
   {#if showing}
     <div class="bar">
       <button type="button" class="nib-button" onclick={() => session.run('restart')}

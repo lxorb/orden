@@ -3,6 +3,7 @@ import {
   type AppFile,
   catalogueOf,
   fromHostOf,
+  inputText,
   MOST_ICON,
   MOST_INSTALLED,
   appFileOf,
@@ -169,5 +170,14 @@ describe('the picture’s signalling', () => {
     expect(fromHostOf('{"cannot":"gpu"}')).toEqual({ cannot: null })
     expect(fromHostOf('{"answer":3}')).toBeNull()
     expect(fromHostOf('not json')).toBeNull()
+  })
+})
+
+describe('the holder’s input', () => {
+  it('goes as the JSON the host’s crate reads, tagged by what it is', () => {
+    expect(inputText({ t: 'move', x: 10, y: 20 })).toBe('{"t":"move","x":10,"y":20}')
+    expect(inputText({ t: 'key', key: 'a', code: 'KeyA', down: true })).toBe(
+      '{"t":"key","key":"a","code":"KeyA","down":true}',
+    )
   })
 })

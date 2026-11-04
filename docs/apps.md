@@ -108,3 +108,12 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
   afresh. The tab says the picture cannot reach this device, that the host needs ffmpeg, or
   that this engine has no WebRTC. Another device taking it over ends the picture here, and the
   host is told (`bye`).
+- **Input goes back** over the data channel (`apps/desktop/src/lib/apps/input.ts` in the tab,
+  `apps_host/input.rs` on the host): the pointer at a point of the display in its own pixels
+  (through the scale and the bands the picture is drawn with), buttons, the wheel in clicks (a
+  notch, or three lines, a click), and keys by the character they gave and the key they were.
+  The host plays them with XTEST into the application's Xvfb and nowhere else: a key on the
+  key of the display's keymap that gives its keysym with Shift as held, or on a spare key lent
+  it, so the holder's layout decides what is typed; what was pressed is what is let go, and
+  everything held is let go when the picture ends. `AltGraph` is not passed on, since the
+  character it chose is. Input methods, touch, pen and precise scrolling are step 5.

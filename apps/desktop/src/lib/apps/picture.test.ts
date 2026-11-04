@@ -16,7 +16,14 @@ class FakePeer {
   ontrack: ((event: { streams: unknown[]; track: unknown }) => void) | null = null
   onicecandidate: ((event: { candidate: unknown }) => void) | null = null
   onconnectionstatechange: (() => void) | null = null
-  channel = { onopen: null as (() => void) | null }
+  channel = {
+    onopen: null as (() => void) | null,
+    readyState: 'connecting' as RTCDataChannelState,
+    sent: [] as string[],
+    send(data: string) {
+      this.sent.push(data)
+    },
+  }
 
   addTransceiver(kind: string, init: { direction: string }) {
     this.wants.push(`${kind} ${init.direction}`)
@@ -163,6 +170,23 @@ describe('an application’s picture', () => {
     // What the old connection says after is not heard.
     here.peers[0]?.becomes('connected')
     expect(here.picture.status).toEqual({ is: 'off' })
+  })
+
+  test('sends what the holder does over the channel once it is open, and nothing before', async () => {
+    const here = world()
+    here.picture.want(true)
+    await tick()
+    const channel = here.peers[0]?.channel
+    here.picture.input({ t: 'move', x: 1, y: 2 })
+    expect(channel?.sent).toEqual([])
+    if (channel) channel.readyState = 'open'
+    channel?.onopen?.()
+    here.picture.input({ t: 'move', x: 3, y: 4 })
+    expect(channel?.sent).toEqual(['{"t":"move","x":3,"y":4}'])
+
+    here.picture.want(false)
+    here.picture.input({ t: 'move', x: 5, y: 6 })
+    expect(channel?.sent).toHaveLength(1)
   })
 
   test('an engine without WebRTC says so', () => {
