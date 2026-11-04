@@ -414,9 +414,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  wears the empty page, and Lucide's folder where it holds notes, read on the scan the
  *  index makes (`saysNothing` in scan-note.ts) and decided in `sourceMark`
  *  (chosen-icon.ts). Measured 5,860,304.
+ *
+ *  The code raised on 2026-11-04, to 5,861,700, for #1040: a new tab nothing was done
+ *  with goes once it is left (workspace.svelte.ts, workspace/blank-tabs.svelte.ts).
+ *  Measured 5,861,488.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_860_400,
+  code: 5_861_700,
   catalogues: 964_400,
   styles: 290_000,
   fonts: 260_000,

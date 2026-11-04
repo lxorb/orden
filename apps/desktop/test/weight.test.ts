@@ -1117,8 +1117,13 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,525,800, for #1042: a note that says nothing yet wears the empty
  *  page, and Lucide's folder where it holds notes, read on the scan the index already
  *  makes (`saysNothing` in scan-note.ts) and decided in `sourceMark` (chosen-icon.ts).
- *  Measured 3,525,768. */
-const BUDGET = 3_525_800
+ *  Measured 3,525,768.
+ *
+ *  Raised 2026-11-04, to 3,527,900, for #1040: a new tab nothing was done with goes once
+ *  it is left, judged in one place (`isBlankTab` and `closeLeftBlank` in
+ *  workspace.svelte.ts, `typedInto` in web-tab/pages.svelte.ts); when is fetched at the
+ *  launch's last turn. Measured 3,527,726. */
+const BUDGET = 3_527_900
 const MOST_FILES = 389
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
