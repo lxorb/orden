@@ -42,6 +42,7 @@
   import PrivateMark from './PrivateMark.svelte'
   import ExtensionButtons from './ExtensionButtons.svelte'
   import { barKey, stops, type ZoomStep } from './bar-keys'
+  import { watchRows } from './bar-rows'
   import { isWebAddress } from './address'
   import { meantBy, shownUrl } from './idn'
   import { downloads, progressOf } from './downloads.svelte'
@@ -231,10 +232,21 @@
     const asked = addressing.asked
     if (asked && asked !== answered && asked.page === page) untrack(take)
   })
+
+  /** Whether the field has a line of its own under the glyphs: a pane too narrow for
+   *  all of the bar on one line. See bar-rows.ts. */
+  let row = $state<HTMLElement>()
+  let alone = $state(false)
+  $effect(() => {
+    if (!row) return
+    return watchRows(row, (said) => (alone = said))
+  })
 </script>
 
 <div
   class="webbar"
+  class:alone
+  bind:this={row}
   class:grounded={ground !== undefined}
   data-theme={theme}
   style:--web-ground={ground?.colour}
@@ -404,7 +416,7 @@
   /* The find bar's own row, because it is the same kind of thing in the same place:
      a row of controls between the strip and what is being read. A pane too narrow
      for the glyphs and a field that can be read puts the field on a line of its own;
-     see AddressField.svelte. */
+     see AddressField.svelte, and `.alone` below. */
   .webbar {
     flex: none;
     display: flex;
@@ -417,6 +429,38 @@
     transition:
       background-color var(--dur-slow) var(--ease-out),
       border-color var(--dur-slow) var(--ease-out);
+  }
+
+  /* Too narrow for one line (#1118): the glyphs keep the first, those in front of the
+     field at its start and those after it at its end, and the field takes the whole
+     line under them - rather than the last glyph wrapping alone onto a second line and
+     leaving the rest of it an empty band over the page. A spacer between the two kinds
+     of glyph, a break before the field, and the field last; the break is the gap
+     between the lines. Pseudo-elements, so bar-rows.ts measures the same items either
+     way. See bar-rows.ts. */
+  .webbar.alone {
+    row-gap: 0;
+  }
+
+  .webbar.alone::before {
+    content: '';
+    order: 1;
+    flex: 1 1 0;
+  }
+
+  .webbar.alone > :global(.field) ~ :global(*) {
+    order: 2;
+  }
+
+  .webbar.alone::after {
+    content: '';
+    order: 3;
+    flex-basis: 100%;
+    height: var(--space-1);
+  }
+
+  .webbar.alone > :global(.field) {
+    order: 4;
   }
 
   /* On its page's own colour there is nothing to draw a line between. */
