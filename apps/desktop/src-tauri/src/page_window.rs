@@ -52,7 +52,7 @@ mod engine {
             return false;
         };
         super::windowless(
-            u64::from(host.window_handle()),
+            host.window_handle(),
             host.is_window_rendering_disabled() != 0,
         )
     }
