@@ -63,9 +63,10 @@
   import { movingOf, spacesFor } from '../workspace/space-move'
   import { faces } from './faces.svelte'
   import { drawn, Flight, type Pose } from './flight'
+  import { land as landSpring, resting as sprung, SHARE, spring, step } from './spring'
   import { settled, stripLanding } from './free'
   import { around, type Box, type Laid, lay, seamPath, seamsAmong, type Slot } from './layout'
-  import { marked, mirrorOf, shownBox } from './mirror'
+  import { marked, mirrorOf, shownBox, tabCopyOf } from './mirror'
   import { walk, wayOf } from './walk'
   import WindowFace from './WindowFace.svelte'
 
@@ -87,6 +88,8 @@
   let panes = $state<Record<string, { w: number; h: number }>>({})
   /** The copy of each pane's tab in front, by tab. */
   let mirrors = $state<Record<string, HTMLElement>>({})
+  /** The copy of each tab as its strip draws it, by tab (mirror.ts `tabCopyOf`). */
+  let tabsAsDrawn = $state<Record<string, HTMLElement>>({})
 
   const frame = $derived(workspace.panes.frame)
   /** The room the windows are laid out in on the screen, at one to one. */
@@ -429,15 +432,93 @@
     frameAsked = 0
     const seconds = Math.max(0, (now - last) / 1000)
     last = now
-    let moving = false
+    // The first frame that moves anything is the first the overview is seen in: until
+    // then the app is what is on screen, unchanged (`started`).
+    if (!started) begin()
+    opening.to = out ? 1 : 0
+    step(opening, seconds)
+    opened(opening.at)
+    let moving = !sprung(opening)
     for (const [id, flight] of flights) {
       if (!flight.step(seconds)) moving = true
       else if (out) arrived.add(id)
       if (id === held?.id) follow()
       else paint(id)
     }
+    awayFromStrip()
     if (moving) fly()
     else if (!out) gone()
+  }
+
+  /** How far out the overview is, 0 the app as it was and 1 all the way: what the
+   *  ground, the row at the top, the cells, the lines and the windows' shadows fade by,
+   *  on a spring like the windows, so a change of mind turns it round where it is, and on
+   *  the windows' clock, so the first frame and the last are the app's own. */
+  const opening = spring(0, SHARE)
+  let ground = $state<HTMLElement>()
+  let canvasNode = $state<HTMLElement>()
+
+  function opened(at: number) {
+    const value = String(Math.round(at * 1000) / 1000)
+    if (ground) {
+      ground.style.opacity = value
+      // Not there at all at the ends: a blur over the app, however faint, has the app
+      // drawn through it, which is not quite how the app draws itself.
+      ground.style.visibility = at < 0.01 ? 'hidden' : ''
+    }
+    canvasNode?.style.setProperty('--overview-open', value)
+  }
+
+  /** Whether a frame of the overview has been drawn since it was asked for. Before the
+   *  first, every window lies exactly on what it was - its pane, its tab - and is not
+   *  drawn, and the strip keeps its tabs: what is on screen is the app itself, never a
+   *  copy of it that the eye could tell from it. The first frame takes the tabs out of
+   *  the strip and shows the windows, already on their way. */
+  let started = true
+
+  /** Where each window came out from, or is going home to: its pane, or its tab in the
+   *  strip. */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once a frame, never rendered
+  const homes = new Map<string, Pose>()
+
+  /** How near its home a window is handed over: within this many pixels of it on the
+   *  screen, all told, it gives way to the pane or the tab it is, which is under it in
+   *  the same place - all the way at its home, only the app is drawn. A copy is drawn a
+   *  hair differently from what it copies, the text above all, and a handover spread
+   *  over the last frames of a movement is one the eye cannot find. */
+  const NEAR = 14
+
+  /** How far a window is from its home on the screen, or null for one with none. */
+  function fromHome(id: string): number | null {
+    const home = homes.get(id)
+    const pose = flights.get(id)?.pose
+    if (!home || !pose || home.alpha < 0.5) return null
+    const off =
+      Math.abs(pose.x - home.x) +
+      Math.abs(pose.y - home.y) +
+      Math.abs(pose.w - home.w) +
+      Math.abs(pose.h - home.h)
+    return off * camera.zoom
+  }
+
+  /** The strip leaves out every tab whose window is away from it: not one whose window
+   *  is near its place in the strip, nor the tab in front of a pane, whose window is the
+   *  pane's. */
+  function awayFromStrip() {
+    if (!started) return
+    const away: string[] = []
+    for (const id of flights.keys()) {
+      const home = homes.get(id)
+      if (home && home.alpha > 0.5 && home.tab < 0.5) continue
+      const off = out ? null : fromHome(id)
+      if (off === null || off >= NEAR) away.push(id)
+    }
+    if (away.join(' ') !== tabOverview.out.join(' ')) tabOverview.out = away
+  }
+
+  function begin() {
+    started = true
+    for (const id of flights.keys()) paint(id)
   }
 
   /** Writes a window's pose onto its element. */
@@ -447,7 +528,12 @@
     const slot = laid.slots.find((one) => one.id === id)
     if (!flight || !parts || !slot) return
     const pose = flight.pose
-    const styles = drawn(pose, slot.w, slot.h, corner)
+    const styles = drawn(pose, slot.w, slot.h, corner, camera.zoom)
+    // Out, the first frame that moves is already the window's: the movement hides the
+    // change. Home, the movement is slowest at its very end, so it is handed over there.
+    const home = started ? (out ? null : fromHome(id)) : 0
+    if (home !== null && home < NEAR)
+      styles.window.opacity = String(Number(styles.window.opacity) * (home / NEAR))
     Object.assign(parts.window.style, styles.window)
     Object.assign(parts.face.style, styles.face)
     Object.assign(parts.chip.style, styles.chip)
@@ -469,14 +555,24 @@
     for (const { slot, tab } of untrack(() => windows)) {
       if (tab.id === hand) continue
       const flight = flights.get(tab.id)
-      flight?.aim(out ? lying(slot) : homeOf(tab, slot))
+      if (out) flight?.aim(lying(slot))
+      else {
+        const home = homeOf(tab, slot)
+        homes.set(tab.id, home)
+        flight?.aim(home)
+      }
     }
     if (stillness()) {
+      if (!started) begin()
+      opening.to = out ? 1 : 0
+      landSpring(opening)
+      opened(opening.at)
       for (const [id, flight] of flights) {
         flight.land()
         if (out) arrived.add(id)
         paint(id)
       }
+      awayFromStrip()
       if (!out) gone()
       return
     }
@@ -511,17 +607,28 @@
         if (tab && tab.kind !== 'web') {
           const copy = mirrorOf(pane.id)
           if (copy) copies[tab.id] = copy
-          // And kept, for the next time it is not in front.
-          faces.take(pane.id, tab)
+          // And kept, for the next time it is not in front: once the way in is drawn.
+          setTimeout(() => {
+            if (workspace.panes.at(pane.id)?.activeTabId === tab.id) faces.take(pane.id, tab)
+          }, 900)
         }
         if (tab?.kind === 'web') void pages.shoot(tab.id)
       }
       mirrors = copies
+      // Each tab as its strip draws it, which its window leaves the strip as.
+      const inherited = new Map<Element, string>()
+      const tabCopies: Record<string, HTMLElement> = {}
+      for (const tab of workspace.tabs) {
+        const copy = tabCopyOf(tab.id, inherited)
+        if (copy) tabCopies[tab.id] = copy
+      }
+      tabsAsDrawn = tabCopies
       at = workspace.activeTabId
+      started = false
+      homes.clear()
     }
     shown = true
     out = true
-    tabOverview.out = workspace.tabs.map((tab) => tab.id)
     if (again) aimAll()
   }
 
@@ -559,9 +666,11 @@
 
   /** The last window is home: the layer goes and the strip has its tabs back. */
   function gone() {
+    homes.clear()
     shown = false
     flights.clear()
     mirrors = {}
+    tabsAsDrawn = {}
     tabOverview.out = []
   }
 
@@ -584,7 +693,9 @@
     elements.set(id, { window: node, face, chip })
     const entry = windows.find((one) => one.tab.id === id)
     if (entry && !flights.has(id)) {
-      flights.set(id, new Flight(out ? homeOf(entry.tab, entry.slot) : lying(entry.slot)))
+      const home = out ? homeOf(entry.tab, entry.slot) : null
+      if (home) homes.set(id, home)
+      flights.set(id, new Flight(home ?? lying(entry.slot)))
     }
     paint(id)
     aimAll()
@@ -604,6 +715,11 @@
         captions.delete(id)
       },
     }
+  }
+
+  /** A tab's copy, put in its window's chip. */
+  function holdingTab(node: HTMLElement, copy: HTMLElement | undefined) {
+    if (copy) node.replaceChildren(copy)
   }
 
   function closing(node: HTMLElement, id: string) {
@@ -913,10 +1029,11 @@
 />
 
 {#if shown}
-  <div class="nib-scrim ground" class:is-out={out} aria-hidden="true"></div>
+  <div class="nib-scrim ground" aria-hidden="true" bind:this={ground}></div>
 
   <div
     class="canvas"
+    bind:this={canvasNode}
     role="dialog"
     aria-modal="true"
     aria-label={t('Tabs')}
@@ -931,7 +1048,7 @@
     onselectstart={(event) => event.preventDefault()}
     ondragstart={(event) => event.preventDefault()}
   >
-    <div class="top" class:is-out={out}>
+    <div class="top">
       {#if spaces.length > 1}
         <!-- All spaces or This space: whether the other spaces' cells are there too. -->
         <Select
@@ -955,15 +1072,9 @@
       style:--overview-unzoom={Math.max(1, 1 / camera.zoom)}
     >
       {#if cellsShown.length}
-        <Cells
-          cells={cellsShown}
-          pushed={pushedNow}
-          holding={held !== null}
-          inside={insideOf}
-          {out}
-        />
+        <Cells cells={cellsShown} pushed={pushedNow} holding={held !== null} inside={insideOf} />
       {/if}
-      <svg class="seams" class:is-out={out} width="1" height="1" aria-hidden="true">
+      <svg class="seams" width="1" height="1" aria-hidden="true">
         {#each laid.seams as seam (seam.id)}
           <path d={seamPath(seam)} />
         {/each}
@@ -1000,10 +1111,14 @@
               height={face.h}
             />
           </span>
-          <span class="chip" aria-hidden="true">
-            <span class="chip-inner"
-              ><TabMark {tab} /><span class="chip-name">{tab.shown}</span></span
-            >
+          <span class="chip" class:is-copy={!!tabsAsDrawn[tab.id]} aria-hidden="true">
+            {#if tabsAsDrawn[tab.id]}
+              <span class="chip-copy" use:holdingTab={tabsAsDrawn[tab.id]}></span>
+            {:else}
+              <span class="chip-inner"
+                ><TabMark {tab} /><span class="chip-name">{tab.shown}</span></span
+              >
+            {/if}
           </span>
           <span class="ring" aria-hidden="true"></span>
         </button>
@@ -1044,11 +1159,6 @@
     --scrim-blur: 28px;
     --scrim-ink: 55%;
     opacity: 0;
-    transition: opacity var(--dur-slow) var(--ease-out);
-  }
-
-  .ground.is-out {
-    opacity: 1;
   }
 
   /* The sizes of what the overview says in words, in one place: a window's name and a
@@ -1080,21 +1190,13 @@
     display: flex;
     gap: var(--space-2);
     align-items: center;
-    translate: -50% -8px;
-    opacity: 0;
-    transition:
-      opacity var(--dur-base) var(--ease-out),
-      translate var(--dur-base) var(--ease-out);
+    translate: -50% calc((1 - var(--overview-open, 0)) * -8px);
+    opacity: var(--overview-open, 0);
   }
 
   /* Tidy up, the app's own button, beside the dropdown. */
   .tidy {
     white-space: nowrap;
-  }
-
-  .top.is-out {
-    translate: -50% 0;
-    opacity: 1;
   }
 
   /* The one canvas, which the camera moves and scales; see camera.ts. */
@@ -1113,13 +1215,7 @@
     left: 0;
     overflow: visible;
     pointer-events: none;
-    opacity: 0;
-    transition: opacity var(--dur-base) var(--ease-out);
-  }
-
-  .seams.is-out {
-    opacity: 1;
-    transition-delay: var(--dur-base);
+    opacity: var(--overview-open, 0);
   }
 
   .seams path {
@@ -1143,8 +1239,13 @@
     text-align: start;
     overflow: hidden;
     transform-origin: 0 0;
-    background: var(--bg);
-    box-shadow: var(--shadow-lg);
+    /* No ground of its own: its face has one, and as a tab it is the strip's, which
+       draws its tabs on the chrome. */
+    background: none;
+    /* Lifted off the canvas as far as the overview is out: none at all on the first
+       frame and the last, where a window is its pane. */
+    box-shadow: 0 calc(24px * var(--overview-open, 1)) calc(64px * var(--overview-open, 1))
+      calc(-12px * var(--overview-open, 1)) rgb(0 0 0 / 0.26);
     will-change: transform;
     cursor: pointer;
     outline: none;
@@ -1167,7 +1268,19 @@
     transform-origin: 0 0;
   }
 
-  /* The tab it was, at the tab's own size whatever the window's scale. */
+  /* The tab it was, at the tab's own size whatever the window's scale: the strip's own
+     tab copied where there is one, which draws its own ground. */
+  .chip.is-copy {
+    background: none;
+  }
+
+  .chip-copy {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
   .chip {
     position: absolute;
     top: 0;
@@ -1200,6 +1313,8 @@
   .ring {
     position: absolute;
     inset: 0;
+    /* None on the first frame and the last, where the window is its pane or its tab. */
+    opacity: var(--overview-open, 1);
     border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
     border-radius: inherit;
     pointer-events: none;
@@ -1246,7 +1361,7 @@
   .window:hover + .closer,
   .closer:hover,
   .closer:focus-visible {
-    opacity: var(--near, 1);
+    opacity: var(--near, 0);
     pointer-events: auto;
   }
 

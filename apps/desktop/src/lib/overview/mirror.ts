@@ -79,9 +79,54 @@ export function mirrorOf(paneId: string): HTMLElement | null {
   const box = shownBox(paneId)
   if (!pane || !box) return null
   const { copy, scrolls } = copyOf(pane, box)
-  // Put back once the copy is in the document, the only place an element can be
-  // scrolled.
-  if (scrolls.length) requestAnimationFrame(() => scrolledTo(scrolls))
+  owed.set(copy, scrolls)
+  return copy
+}
+
+/** Where a copy's scrollers are to be scrolled to, until it is in the document. */
+const owed = new WeakMap<Element, [Element, number, number][]>()
+
+/** A copy just put in the document, scrolled where the pane was: at once, the only
+ *  moment that is not a frame late - a frame at the top of the note and then the place
+ *  it was is a jump. */
+export function scrolledIn(copy: Element) {
+  scrolledTo(owed.get(copy) ?? [])
+  owed.delete(copy)
+}
+
+/** A copy of the tab `id` in its strip, as it is drawn there - its shape, its mark, its
+ *  name, the colours of the strip it is in - which the window it becomes starts and ends
+ *  as, so the window that leaves the strip is the tab and not a likeness of it; or null
+ *  for a tab not drawn in a strip. The colours are its strip's: a copy elsewhere would
+ *  take the overview's, so what it inherits is written on it. */
+export function tabCopyOf(id: string, inherited: Map<Element, string>): HTMLElement | null {
+  const tab = marked('box', id)
+  const box = tab?.getBoundingClientRect()
+  if (!tab || !box || box.width <= 0) return null
+  const parent = tab.parentElement
+  let given = parent ? inherited.get(parent) : ''
+  if (parent && given === undefined) {
+    const style = getComputedStyle(parent)
+    given = ''
+    for (const name of style) {
+      if (name.startsWith('--')) given += `${name}:${style.getPropertyValue(name)};`
+    }
+    for (const name of ['color', 'font-family', 'font-size', 'font-weight', 'line-height'])
+      given += `${name}:${style.getPropertyValue(name)};`
+    inherited.set(parent, given)
+  }
+  const copy = tab.cloneNode(true) as HTMLElement
+  copy.removeAttribute('data-box')
+  copy.classList.remove('away')
+  copy.setAttribute('inert', '')
+  for (const one of copy.querySelectorAll('[id]')) one.removeAttribute('id')
+  copy.style.cssText = `${given ?? ''}${copy.style.cssText}`
+  copy.style.position = 'absolute'
+  copy.style.left = '0'
+  copy.style.top = '0'
+  copy.style.transform = 'none'
+  copy.style.width = `${box.width}px`
+  copy.style.height = `${box.height}px`
   return copy
 }
 

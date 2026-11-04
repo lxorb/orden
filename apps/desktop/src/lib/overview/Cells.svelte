@@ -26,10 +26,7 @@
     pushed,
     holding,
     inside,
-    out,
   }: {
-    /** Whether the windows are out on the canvas, or on their way home. */
-    out: boolean
     cells: readonly Shown[]
     /** The windows in a cell, where each is drawn this frame, read every frame. */
     inside: (key: string) => readonly Box[]
@@ -146,7 +143,7 @@
   onDestroy(() => cancelAnimationFrame(frame))
 </script>
 
-<svg class="cells" class:is-out={out} width="1" height="1" aria-hidden="true">
+<svg class="cells" width="1" height="1" aria-hidden="true">
   {#each cells as cell (cell.key)}
     <path
       class="membrane"
@@ -157,12 +154,7 @@
   {/each}
 </svg>
 {#each cells as cell (cell.key)}
-  <span
-    class="name"
-    class:is-on={cell.on}
-    class:is-out={out}
-    aria-hidden="true"
-    use:named={cell.key}>{cell.name}</span
+  <span class="name" class:is-on={cell.on} aria-hidden="true" use:named={cell.key}>{cell.name}</span
   >
 {/each}
 
@@ -175,15 +167,11 @@
     pointer-events: none;
   }
 
-  /* In with the windows and out with them, never there before them or after. */
+  /* In with the windows and out with them, never there before them or after: as far as
+     the overview is out (Overview.svelte). */
   .cells,
   .name {
-    opacity: 0;
-    transition: opacity var(--dur-slow) var(--ease-out);
-  }
-
-  .is-out {
-    opacity: 1;
+    opacity: var(--overview-open, 0);
   }
 
   /* A membrane: a faint wash of the space's colour inside, a soft line at its edge. */

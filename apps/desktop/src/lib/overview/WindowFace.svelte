@@ -16,7 +16,7 @@
   import { pages } from '../web-tab/pages.svelte'
   import type { Tab } from '../workspace.svelte'
   import { drawInto, type Face } from './faces'
-  import { scrolledBack } from './mirror'
+  import { scrolledBack, scrolledIn } from './mirror'
 
   const {
     tab,
@@ -42,6 +42,7 @@
   /** The pane's copy, put inside. */
   function holding(node: HTMLElement, copy: HTMLElement) {
     node.append(copy)
+    scrolledIn(copy)
   }
 
   $effect(() => {
