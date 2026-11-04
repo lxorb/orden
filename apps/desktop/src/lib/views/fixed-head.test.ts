@@ -13,6 +13,7 @@ vi.mock('../sharing.svelte', () => ({
 const { kitFor } = await import('./kit')
 const { contextFor } = await import('./context')
 const { default: ViewHead } = await import('./ViewHead.svelte')
+const { columnMenu } = await import('./column-menu')
 
 function kitOf(fixed: boolean, path: string | null, rows = 'notes') {
   const base = readBase('views:\n  - type: table\n    name: One\n  - type: table\n    name: Two\n')
@@ -38,6 +39,11 @@ const head = (kit: ReturnType<typeof kitOf>) =>
   render(ViewHead, { props: { kit, title: 'Base', onadd: () => undefined } }).body
 
 describe('a view whose base cannot be kept', () => {
+  test('offers no column menu: all of it changes the base', () => {
+    expect(columnMenu(kitOf(true, '/mine/a.md'), 'file.name', ['file.name'])).toEqual([])
+    expect(columnMenu(kitOf(false, '/mine/a.md'), 'file.name', ['file.name'])).not.toEqual([])
+  })
+
   test('can still add a note', () => {
     const kit = kitOf(true, '/mine/a.md')
     expect(kit.writable).toBe(false)

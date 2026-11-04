@@ -260,7 +260,7 @@
         onpointerdown={(event) => reorder(event, column)}
         oncontextmenu={(event) => headMenu(event, column)}
       >
-        <button type="button" class="name" onclick={() => sortBy(column)}>
+        <button type="button" class="name" disabled={!kit.writable} onclick={() => sortBy(column)}>
           {propertyName(column, live.base ? displayName(live.base, column) : undefined)}
           {#if sort}<span class="arrow" aria-hidden="true"
               >{sort.direction === 'ASC' ? '↑' : '↓'}</span
