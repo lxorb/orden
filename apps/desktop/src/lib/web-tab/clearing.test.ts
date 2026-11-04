@@ -18,6 +18,12 @@ vi.mock('../tauri', async (importOriginal) => ({
   },
 }))
 
+// The account's Web icons (#1054), which a clearing of the history takes away too.
+const forgotten = vi.hoisted(() => [] as number[])
+vi.mock('./site-icons.svelte', () => ({
+  siteIcons: { forgetSince: (since: number) => void forgotten.push(since) },
+}))
+
 const { clearData, reach, sinceFor, sitesSince } = await import('./clearing')
 const { visited } = await import('./visited')
 const { placeKept, placeOf } = await import('./place')
@@ -99,5 +105,13 @@ describe('the clearing', () => {
     expect(asked.some((one) => one.command === 'web_clear')).toBe(false)
     expect(visited.all('nib:web-visits')).toEqual([])
     expect(placeOf('/Notes/A.url')).toBeNull()
+  })
+
+  test("the history's range takes the account's Web icons with it, and nothing else does", async () => {
+    forgotten.length = 0
+    await clearData({ range: 'hour', history: false, site: true, cache: true }, [], NOW)
+    expect(forgotten).toEqual([])
+    await clearData({ range: 'hour', history: true, site: false, cache: false }, [], NOW)
+    expect(forgotten).toEqual([NOW - HOUR])
   })
 })

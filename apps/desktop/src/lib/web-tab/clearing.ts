@@ -7,12 +7,14 @@
  *
  *  The history is this device's and goes here: its rows over the range, the marks kept
  *  for them, and the place each note on one of those pages was left at (visited.ts,
- *  place.ts). The rest is the engine's, cleared by its own call in the crate, store by
+ *  place.ts), and the sites it saw off the account's Web icons (site-icons.svelte.ts).
+ *  The rest is the engine's, cleared by its own call in the crate, store by
  *  store; see src-tauri/src/web_clear.rs. A private tab's store is in memory and goes
  *  with its last tab, so nothing here reaches it. Fetched with the dialog. */
 
 import { invoke } from '../tauri'
 import { placesForgotten } from './place'
+import { siteIcons } from './site-icons.svelte'
 import { visited } from './visited'
 import { ownStore, webData } from './web-data.svelte'
 
@@ -107,5 +109,7 @@ export async function clearData(
   if (asked.history) {
     const gone = new Set(books.flatMap((book) => visited.removeSince(book, since)))
     placesForgotten(since <= 0 ? null : gone)
+    // And the sites the range saw, off the account's Web icons on every device (#1054).
+    await siteIcons.forgetSince(since)
   }
 }

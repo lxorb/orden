@@ -2656,4 +2656,6 @@ export const zhHans: Dictionary = {
   'Not sent. Your text is kept, so you can try again.': '未发送。你的文字已保留，可以再试一次。',
   'Reset to site icon': '恢复为网站图标',
   'One colour': '单色',
+  'Web icons': '网站图标',
+  'Sites you visit will appear here': '你访问过的网站会显示在这里',
 }

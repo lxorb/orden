@@ -2711,4 +2711,6 @@ export const ja: Dictionary = {
     '送信できませんでした。入力内容は残っているので、もう一度お試しください。',
   'Reset to site icon': 'サイトのアイコンに戻す',
   'One colour': '単色',
+  'Web icons': 'ウェブのアイコン',
+  'Sites you visit will appear here': '訪れたサイトがここに表示されます',
 }

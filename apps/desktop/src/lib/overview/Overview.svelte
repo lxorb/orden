@@ -1019,7 +1019,7 @@
 
   const spaces = $derived(workspace.shownSpaces)
 
-  /** Where a notch of the wheel with Ctrl is taking the zoom, and about which point of
+  /** Where a notch of the wheel is taking the zoom, and about which point of
    *  the screen; eased there a frame at a time (camera.ts). */
   let zoomGoal: { zoom: number; at: Point } | null = null
   let zoomFrame = 0
@@ -1042,17 +1042,18 @@
     } else zoomFrame = requestAnimationFrame(zooming)
   }
 
-  /** The wheel and two fingers on a touchpad move the canvas, a pinch brings it nearer
-   *  under the fingers, and a notch of the wheel with Ctrl eases it nearer, as a page's
-   *  zoom does, never in steps. Listened for by hand, since a passive listener cannot
-   *  keep the page from zooming. */
+  /** Every scroll zooms, Ctrl held or not, and none moves the canvas, which only a drag
+   *  on it does: a notch of the wheel eases nearer or further, as a page's zoom does,
+   *  never in steps, and fingers on a touchpad, scrolling or pinching, are followed under
+   *  the fingers. Listened for by hand, since a passive listener cannot keep the page
+   *  from zooming. */
   function wheeled(node: HTMLElement) {
     const turn = (event: WheelEvent) => {
       event.preventDefault()
       const { deltaX, deltaY, deltaMode, ctrlKey, metaKey, clientX, clientY } = event
       const said = { deltaX, deltaY, deltaMode, ctrlKey, metaKey, x: clientX, y: clientY }
       handTakes()
-      if ((ctrlKey || metaKey) && isNotch(said)) {
+      if (isNotch(said)) {
         const zoom = notched(zoomGoal?.zoom ?? camera.zoom, said)
         if (stillness()) {
           camera = eased(camera, zoom, said, Number.POSITIVE_INFINITY)
@@ -1065,8 +1066,8 @@
         }
         return
       }
-      // A pinch or a pan takes over from a notch on its way.
-      if (ctrlKey || metaKey) zoomGoal = null
+      // Fingers on a touchpad take over from a notch on its way.
+      zoomGoal = null
       camera = turned(camera, said)
     }
     node.addEventListener('wheel', turn, { passive: false })

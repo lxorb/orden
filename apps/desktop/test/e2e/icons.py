@@ -180,6 +180,86 @@ def sets(page: Page, label: str, where: str) -> None:
     page.locator(".sheet input.nib-field").fill("")
 
 
+# Where the marks on a cell are against what the cell draws (#1116): the box of the
+# glyph and of the character in an emoji cell, against the cell's own box, and a
+# group's heading against the glyphs under it. Read off the layout, in pixels.
+GEOMETRY = """
+() => {
+  const sheet = document.querySelector('.sheet')
+  const centre = (r) => [r.left + r.width / 2, r.top + r.height / 2]
+  const off = []
+  for (const cell of [...sheet.querySelectorAll('.grid .cell')].slice(0, 40)) {
+    const box = cell.getBoundingClientRect()
+    const glyph = cell.querySelector('.glyph').getBoundingClientRect()
+    const emoji = cell.querySelector('.emoji')
+    const range = document.createRange()
+    if (emoji?.firstChild) range.selectNodeContents(emoji)
+    const drawn = emoji ? range.getBoundingClientRect() : glyph
+    const [cx, cy] = centre(box)
+    for (const one of [glyph, drawn]) {
+      const [x, y] = centre(one)
+      off.push(Math.max(Math.abs(x - cx), Math.abs(y - cy)))
+    }
+  }
+  const head = sheet.querySelector('.grid .head')
+  const row = head?.parentElement?.nextElementSibling
+  const first = row?.querySelector('.cell .glyph')
+  let heading = null
+  if (head && first) {
+    const range = document.createRange()
+    range.selectNodeContents(head)
+    heading = Math.abs(range.getBoundingClientRect().left - first.getBoundingClientRect().left)
+  }
+  return { worst: Math.max(...off), heading, walked: sheet.querySelectorAll('.cell.at').length }
+}
+"""
+
+# How a cell looks hovered and walked to, which are two different things (#1116).
+LOOKS = """
+(which) => {
+  const cell = document.querySelector(which)
+  if (!cell) return null
+  const style = getComputedStyle(cell)
+  return [style.backgroundColor, style.boxShadow].join(' / ')
+}
+"""
+
+
+def aligned(page: Page, label: str) -> None:
+    """Every mark on a cell is the cell's own box, the glyph centred in it, and the
+    arrows' mark shows only once the arrows are used, unlike a hover (#1116)."""
+    page.locator(".sheet input.nib-field").fill("")
+    wait_for(page, "() => document.querySelectorAll('.sheet .grid .emoji').length > 8", f"[{label}] the emoji")
+    page.wait_for_timeout(250)
+    seen = page.evaluate(GEOMETRY)
+    say(f"[{label}] cells: {seen}")
+    check(seen["worst"] <= 0.75, f"[{label}] every glyph is centred in its cell ({seen['worst']:.2f}px off)")
+    check(
+        seen["heading"] is not None and seen["heading"] <= 1,
+        f"[{label}] a group's heading lines up with its glyphs ({seen['heading']})",
+    )
+    check(seen["walked"] == 0, f"[{label}] no cell is marked before a key is pressed")
+
+    field = page.locator(".sheet input.nib-field")
+    field.press("ArrowRight")
+    field.press("ArrowRight")
+    walked = page.evaluate(LOOKS, ".sheet .cell.at")
+    check(walked is not None, f"[{label}] the arrows mark the cell they are on")
+    if label == "desktop":
+        page.locator(".sheet .grid .cell").nth(5).hover()
+        page.wait_for_timeout(200)
+        hovered = page.evaluate(LOOKS, ".sheet .grid .cell:hover")
+        check(
+            walked is not None and hovered is not None and walked != hovered,
+            f"[{label}] and that mark is not a hover's: {walked} against {hovered}",
+        )
+        page.mouse.move(0, 0)
+    field.fill("rocket")
+    page.wait_for_timeout(150)
+    check(page.locator(".sheet .cell.at").count() == 0, f"[{label}] a new search starts unmarked")
+    field.fill("")
+
+
 CANVAS_WORN = (
     "() => { const ws = window.nibApp.workspace;"
     " const c = ws.files.find((one) => one.name === 'Roadmap.canvas');"
@@ -297,6 +377,7 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         say(f"[{label}] choosing for {page.evaluate(CANVAS_ICON)}")
         page.locator(".sheet").wait_for(state="visible", timeout=PATIENCE * 1000)
         sets(page, label, where)
+        aligned(page, label)
 
         pick(page, label, "rocket")
 
@@ -324,7 +405,7 @@ def main() -> int:
         shoot(browser, "phone", PHONE)
 
     return DRIVE.verdict(
-        "icons on a note, a canvas and a folder, the picker over every set, and an emoji's outline"
+        "icons on a note, a canvas and a folder, the picker over every set, its cells' marks, and an emoji's outline"
     )
 
 

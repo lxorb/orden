@@ -2748,4 +2748,6 @@ export const pa: Dictionary = {
     'ਨਹੀਂ ਭੇਜੀ ਗਈ। ਤੁਹਾਡਾ ਲਿਖਿਆ ਸੰਭਾਲਿਆ ਹੈ, ਤੁਸੀਂ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰ ਸਕਦੇ ਹੋ।',
   'Reset to site icon': 'ਸਾਈਟ ਦੇ ਆਈਕਨ ’ਤੇ ਵਾਪਸ ਜਾਓ',
   'One colour': 'ਇੱਕ ਰੰਗ',
+  'Web icons': 'ਵੈੱਬ ਆਈਕਨ',
+  'Sites you visit will appear here': 'ਜਿਹੜੀਆਂ ਸਾਈਟਾਂ ਤੁਸੀਂ ਵੇਖਦੇ ਹੋ, ਉਹ ਇੱਥੇ ਦਿਖਾਈ ਦੇਣਗੀਆਂ',
 }

@@ -2744,4 +2744,6 @@ export const fa: Dictionary = {
     'ارسال نشد. متن شما حفظ شده است تا دوباره تلاش کنید.',
   'Reset to site icon': 'بازگشت به نماد سایت',
   'One colour': 'تک‌رنگ',
+  'Web icons': 'نمادهای وب',
+  'Sites you visit will appear here': 'سایت‌هایی که بازدید می‌کنید اینجا نشان داده می‌شوند',
 }

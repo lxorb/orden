@@ -2734,4 +2734,6 @@ export const id: Dictionary = {
     'Tidak terkirim. Teks Anda tetap disimpan, jadi Anda bisa mencoba lagi.',
   'Reset to site icon': 'Kembalikan ke ikon situs',
   'One colour': 'Satu warna',
+  'Web icons': 'Ikon web',
+  'Sites you visit will appear here': 'Situs yang Anda kunjungi akan muncul di sini',
 }

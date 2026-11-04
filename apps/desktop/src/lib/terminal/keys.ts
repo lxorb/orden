@@ -49,8 +49,10 @@
  *  **Alt and a letter is the shell's** - ESC and the letter, as every terminal sends it,
  *  and on Windows ConPTY hands it to the program as the Alt chord Windows Terminal's would
  *  be - so Claude Code's Alt+V pastes an image in a local terminal as it does there. Only
- *  Alt and a digit, the tabs by number, is the app's. In a terminal on another machine
- *  the image key brings this computer's picture over instead (`imageKey`, images.ts).
+ *  Alt and a digit, the tabs by number, is the app's, and Alt and an Essential's letter,
+ *  which tab-strip/numbers.svelte.ts takes before the terminal hears it (#1051). In a
+ *  terminal on another machine the image key brings this computer's picture over
+ *  instead (`imageKey`, images.ts).
  *
  *  AltGr is never a chord. Windows says it as Ctrl and Alt, and it is how half of
  *  Europe types `@`, `{` and `\` - so Ctrl and Alt with a key that came out as anything

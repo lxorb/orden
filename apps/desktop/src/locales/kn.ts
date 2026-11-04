@@ -2769,4 +2769,6 @@ export const kn: Dictionary = {
     'ಕಳುಹಿಸಲಾಗಿಲ್ಲ. ನಿಮ್ಮ ಪಠ್ಯ ಉಳಿದಿದೆ, ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಬಹುದು.',
   'Reset to site icon': 'ಸೈಟ್ ಐಕಾನ್‌ಗೆ ಮರುಹೊಂದಿಸಿ',
   'One colour': 'ಒಂದೇ ಬಣ್ಣ',
+  'Web icons': 'ವೆಬ್ ಐಕಾನ್‌ಗಳು',
+  'Sites you visit will appear here': 'ನೀವು ಭೇಟಿ ನೀಡುವ ಸೈಟ್‌ಗಳು ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತವೆ',
 }

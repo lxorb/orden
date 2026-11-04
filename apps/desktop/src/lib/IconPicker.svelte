@@ -24,6 +24,7 @@
    *  the last row, which says what the thing falls back to when it wears nothing - a
    *  letter for a space, and for everything in the file list the mark that says what
    *  it is. */
+  import { account } from './account.svelte'
   import { ACCENTS } from './accents'
   import { closeOnBack } from './backstack.svelte'
   import { chosenIcon, chosenTint } from './chosen-icon'
@@ -33,7 +34,16 @@
   import { iconLibrary } from './icon-library.svelte'
   import { iconRecent } from './icon-recent.svelte'
   import { LATER_SETS, type LoadedSet, mergeSets, PICKER_SETS, pickerCredit } from './icon-sets'
-  import { EMOJI_OUTLINE, rankIcons, readIcon, sameIcon, takesTint, writtenIcon } from './icons'
+  import {
+    EMOJI_OUTLINE,
+    type IconEntry,
+    rankIcons,
+    readIcon,
+    sameIcon,
+    SITE_ICONS,
+    takesTint,
+    writtenIcon,
+  } from './icons'
   import { t } from './i18n.svelte'
   import { dur, LAYER } from './motion'
   import { overlays } from './overlays'
@@ -62,6 +72,10 @@
    *  another word - and the ranking is over every icon in the set either way. */
   const FOUND = 300
 
+  /** How many rows the Web icons take before anything is typed (#1054): the sites seen
+   *  last, which are the ones reached for. The rest are a search away. */
+  const SITE_ROWS = 2
+
   let query = $state('')
   let field = $state<HTMLInputElement>()
   let scroller = $state<HTMLElement>()
@@ -70,6 +84,10 @@
   let top = $state(0)
   /** Which cell the arrows are on, as an index into `cells`. */
   let at = $state(0)
+  /** Whether the arrows have been used since the sheet opened or the search changed
+   *  (#1116): only then is the cell they are on marked. Marked from the start, the
+   *  first cell read as one hovered, or as one chosen, before anybody touched a key. */
+  let walked = $state(false)
   /** The colour the next pick is drawn in. Starts as the one the thing already wears,
    *  so changing the icon keeps the colour and changing the colour keeps the icon. */
   let tint = $state<string | null>(null)
@@ -126,18 +144,44 @@
     return parts.length ? mergeSets(parts) : null
   })
 
-  /** Every cell of the open tab, in the order it is shown: what a search found, or the
-   *  tab's own order when nothing has been typed. */
-  const cells = $derived(
-    held ? rankIcons(held.entries, query, query ? FOUND : held.entries.length) : [],
-  )
+  /** Whether there is an account whose sites the Web icons are (#1054): a device nobody
+   *  is signed in on has no list, and says nothing about one. */
+  const signedIn = $derived(account.accountToken !== null)
+
+  /** The account's sites as a set, where there is an account and its service keeps
+   *  them: a service from before the Web icons leaves the section out altogether. */
+  const siteSet = $derived.by(() => {
+    const set = signedIn ? iconLibrary.loaded[SITE_ICONS] : undefined
+    return set && !set.unoffered ? set : null
+  })
+
+  /** The Web icons (#1054): the marks of the sites the account has been to, the most
+   *  recently seen first, under the values a cell writes. Read off the account's list,
+   *  so one seen on another device is here without having been opened on this one. */
+  const sites = $derived.by((): IconEntry[] => {
+    return (siteSet?.entries ?? []).map((one) => ({
+      ...one,
+      name: writtenIcon(SITE_ICONS, one.name),
+    }))
+  })
 
   const columns = $derived(Math.max(1, Math.floor((width || cell * 8) / cell)))
+
+  /** The Web icons shown before anything is typed. */
+  const siteRow = $derived(sites.slice(0, columns * SITE_ROWS))
+
+  /** Every cell, in the order it is shown: what a search found among every set and the
+   *  sites, or with nothing typed the latest sites and then the sets' own order. */
+  const cells = $derived.by(() => {
+    if (!held) return []
+    if (query) return rankIcons([...sites, ...held.entries], query, FOUND)
+    return [...siteRow.map((one) => one.name), ...held.entries.map((one) => one.name)]
+  })
 
   /** A row of the grid: a heading where a group begins, or a run of cells. Every row is
    *  one cell tall, headings included, which is what lets the window be worked out
    *  with one division rather than a table of heights. */
-  type Row = { head: string } | { names: string[] }
+  type Row = { head: string } | { names: string[] } | { note: string }
 
   /** Groups only where the set has them and nothing has been typed. A search is
    *  already an order - the best answer first - and cutting it into Unicode's
@@ -156,7 +200,20 @@
 
     if (query || !held.groups.length) return runs(cells)
 
-    return held.groups.flatMap((group) => [{ head: group.label }, ...runs(group.names)])
+    // The sites first, as a group of their own, and a line where there are none yet.
+    const web: Row[] = !siteSet
+      ? []
+      : [
+          { head: t('Web icons') },
+          ...(siteRow.length
+            ? runs(siteRow.map((one) => one.name))
+            : [{ note: t('Sites you visit will appear here') }]),
+        ]
+
+    return [
+      ...web,
+      ...held.groups.flatMap((group) => [{ head: group.label }, ...runs(group.names)]),
+    ]
   })
 
   /** What each cell is called, for a reader who cannot see it. The set's own words
@@ -167,6 +224,7 @@
     const map = new Map<string, string>()
 
     for (const entry of held?.entries ?? []) map.set(entry.name, entry.words)
+    for (const entry of sites) map.set(entry.name, entry.words)
 
     return map
   })
@@ -219,12 +277,19 @@
 
     query = ''
     at = 0
+    walked = false
     top = 0
     // Read once too: a colour painted while the sheet is up is written to the thing at
     // once, and following it would start the sheet over under the reader's search.
     tint = untrack(() =>
       asked.kind === 'space' ? workspace.tintFor(asked.id) : chosenTint(asked.path),
     )
+
+    // The account's sites again, for a picker opened after they were first asked for:
+    // one seen on another device since then. At most every so often; see site-icons.
+    if (untrack(() => iconLibrary.loaded[SITE_ICONS])) {
+      void import('./web-tab/site-icons.svelte').then((one) => one.siteIcons.refresh())
+    }
 
     clearTimeout(focusing)
     focusing = setTimeout(() => field?.focus(), dur(FOCUS))
@@ -236,6 +301,7 @@
     if (!target) return
     const all = wanted || query.trim() !== ''
     for (const id of PICKER_SETS) if (all || !LATER_SETS.has(id)) iconLibrary.load(id)
+    if (signedIn) iconLibrary.load(SITE_ICONS)
     if (outlined) iconLibrary.load(EMOJI_OUTLINE)
   })
 
@@ -249,6 +315,7 @@
   $effect(() => {
     reads(query)
     at = 0
+    walked = false
   })
 
   // Nothing is waiting to be focused once the sheet has gone.
@@ -304,7 +371,9 @@
     const step = steps[event.key]
     if (step !== undefined && cells.length) {
       event.preventDefault()
-      at = Math.min(cells.length - 1, Math.max(0, at + step))
+      // The first press shows where the arrows are, and moves from there after.
+      if (walked) at = Math.min(cells.length - 1, Math.max(0, at + step))
+      walked = true
       reach(cells[at])
       return
     }
@@ -399,6 +468,8 @@
             <div class="row" style:top="{(shown.from + index) * cell}px">
               {#if 'head' in row}
                 <span class="head">{row.head}</span>
+              {:else if 'note' in row}
+                <span class="note">{row.note}</span>
               {:else}
                 {#each row.names as written (written)}
                   <!-- What this icon is called, once: the cell asked twice, over a
@@ -412,7 +483,7 @@
                     title={label}
                     aria-label={label}
                     class:active={sameIcon(value, worn)}
-                    class:at={cells[at] === written}
+                    class:at={walked && cells[at] === written}
                     onclick={() => chose(value)}
                   >
                     <span class="glyph"><Icon icon={readIcon(value)} {tint} /></span>
@@ -525,10 +596,18 @@
 
   /* A group's name, in the same row height as the cells: one height for every row is
      what keeps the window one division rather than a table. */
+  /* In line with the glyphs below it, not with the cells' edges (#1116). */
   .head {
-    padding: 0 4px;
+    padding: 0 calc((var(--cell) - var(--icon-lg)) / 2);
     font-size: var(--text-sm);
     font-weight: var(--weight-strong);
+    color: var(--muted);
+  }
+
+  /* What the Web icons say while there are none yet (#1054). */
+  .note {
+    padding: 0 calc((var(--cell) - var(--icon-lg)) / 2);
+    font-size: var(--text-sm);
     color: var(--muted);
   }
 
@@ -539,12 +618,18 @@
     overflow: hidden;
   }
 
+  /* One box for the glyph and for every mark on it - hovered, walked to, chosen - in
+     every section and either drawing of an emoji (#1116): no padding of the browser's
+     own, and the glyph centred in it by flex, which centres a glyph wider than its box
+     too where a grid track grows to the right of it. */
   .cell {
     width: var(--cell);
     height: var(--cell);
     flex: none;
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
     border: none;
     border-radius: var(--radius-sm);
     background: none;
@@ -555,8 +640,10 @@
       color var(--dur-instant) var(--ease-out);
   }
 
+  /* Where the arrows are: a ring, not the hover's fill, so the two never read as one
+     (#1116). */
   .cell.at {
-    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 2px var(--accent);
     color: var(--text-strong);
   }
 

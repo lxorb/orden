@@ -49,6 +49,7 @@ import {
   type IconNode,
   loadIcons,
   LUCIDE,
+  SITE_ICONS,
   squash,
   writtenIcon,
 } from './icons'
@@ -109,6 +110,9 @@ export type IconShape =
   | { kind: 'stroked'; icon: IconNode }
   /** A finished drawing: the elements of an SVG, and the box they were drawn in. */
   | { kind: 'drawn'; body: string; box: string }
+  /** A picture as an address - a site's mark (#1054), held as a `data:` one - drawn
+   *  as it is, in its own colours. */
+  | { kind: 'picture'; src: string }
 
 /** What a loaded set holds. */
 export interface LoadedSet {
@@ -123,6 +127,9 @@ export interface LoadedSet {
   /** The name in this set that draws an emoji again, or null where it draws none: the
    *  emoji's outlines (#1097), which the picker offers in an emoji's place. */
   twin?(emoji: string): string | null
+  /** Whether the set is not to be offered just now, though it arrived: the Web icons
+   *  where the account's service does not keep them (#1054). */
+  readonly unoffered?: boolean
 }
 
 /** Where an icon of a set without groups goes among the icons of the set it shares a
@@ -536,6 +543,14 @@ export const ICON_SETS: readonly IconSet[] = [
     label: key('One colour'),
     credit: 'Fluent Emoji High Contrast by Microsoft, MIT',
     load: loadOutlines,
+  },
+  {
+    id: SITE_ICONS,
+    label: key('Web icons'),
+    credit: '',
+    // The account's list, as this device holds it: a set whose icons come and go, so
+    // what it answers is read off the list each time it is asked (#1054).
+    load: async () => (await import('./web-tab/site-icons.svelte')).siteSet(),
   },
   {
     id: BRANDS,

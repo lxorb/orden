@@ -88,15 +88,21 @@ describe("an Essential's letter", () => {
     expect(numbers.worn).toHaveLength(1)
   })
 
-  test("is the shell's in a terminal", () => {
+  test("is worn and taken in a terminal too, and another letter is the shell's", async () => {
+    tile('N')
     const screen = document.createElement('div')
     screen.className = 'xterm'
     const field = document.createElement('textarea')
     screen.append(field)
     document.body.append(screen)
+    field.focus()
+    key({ key: 'Alt', altKey: true }, field)
+    expect(numbers.worn).toEqual([{ id: 'essential:N', label: 'N', x: 40, y: 40 }])
+    const other = key({ key: 'f', code: 'KeyF', altKey: true }, field)
+    expect(other.defaultPrevented).toBe(false)
     const pressed = key({ key: 'n', code: 'KeyN', altKey: true }, field)
-    expect(pressed.defaultPrevented).toBe(false)
-    expect(opened).toEqual([])
+    expect(pressed.defaultPrevented).toBe(true)
+    await vi.waitFor(() => expect(opened).toEqual(['/space/Notes.md']))
   })
 })
 

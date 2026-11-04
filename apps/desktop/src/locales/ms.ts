@@ -2734,4 +2734,6 @@ export const ms: Dictionary = {
     'Tidak dihantar. Teks anda disimpan, jadi anda boleh cuba lagi.',
   'Reset to site icon': 'Kembali kepada ikon laman',
   'One colour': 'Satu warna',
+  'Web icons': 'Ikon web',
+  'Sites you visit will appear here': 'Laman yang anda lawati akan muncul di sini',
 }

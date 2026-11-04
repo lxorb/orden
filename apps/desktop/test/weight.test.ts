@@ -1268,7 +1268,11 @@ function holds(tail: string): boolean {
  *  Raised on 2026-11-04, to 3,666,900, for the leftovers of the bug round: one tab per
  *  document on a reopen, a refused write saying why, and a put back said as one. No new
  *  module. Measured 3,666,714.
- */
+ *
+ *  Raised 2026-11-04, to 3,568,500, for #1054 and #1116: the icon picker's Web icons, the
+ *  account's sites first in the grid and a site's mark drawn as a picture, and a cell's
+ *  marks on its own box (IconPicker.svelte, Icon.svelte). The list and its pictures are a
+ *  chunk of their own. Measured 3,567,023. */
 const BUDGET = 3_666_900
 const MOST_FILES = 395
 

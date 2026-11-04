@@ -2740,4 +2740,6 @@ export const ps: Dictionary = {
     'ونه لېږل شو. ستاسو متن ساتل شوی، بیا هڅه کولی شئ.',
   'Reset to site icon': 'د سایټ نښې ته بیرته راګرځول',
   'One colour': 'یو رنګ',
+  'Web icons': 'د وېب نښې',
+  'Sites you visit will appear here': 'هغه سایټونه چې تاسو یې ګورئ دلته به ښکاره شي',
 }

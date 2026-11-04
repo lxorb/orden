@@ -535,6 +535,12 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  Raised on 2026-11-04 for the leftovers of the bug round: the code to 6,003,000, one tab per
  *  document on a reopen and a refused write saying why, measured 6,002,821. The catalogues to
  *  982,500: that reason in every catalogue, measured 982,425.
+ *
+ *  The code raised on 2026-11-04, to 5,892,500, and the catalogues to 969,500, for #1054
+ *  and #1116: the icon picker's Web icons - the account's sites, held on the device and
+ *  drawn as pictures, in every catalogue - and a cell's marks on its own box
+ *  (web-tab/site-icons.svelte.ts, IconPicker.svelte, Icon.svelte). Measured 5,891,756
+ *  and 968,905.
  */
 export const BUDGETS: Record<Part, number> = {
   code: 6_003_000,

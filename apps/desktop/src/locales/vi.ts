@@ -2710,4 +2710,6 @@ export const vi: Dictionary = {
     'Chưa gửi được. Nội dung của bạn vẫn được giữ, bạn có thể thử lại.',
   'Reset to site icon': 'Đặt lại biểu tượng trang web',
   'One colour': 'Một màu',
+  'Web icons': 'Biểu tượng web',
+  'Sites you visit will appear here': 'Các trang bạn truy cập sẽ hiện ở đây',
 }

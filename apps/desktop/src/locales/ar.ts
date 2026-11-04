@@ -2850,4 +2850,6 @@ export const ar: Dictionary = {
     'لم يُرسل. نصك محفوظ، لذا يمكنك المحاولة مرة أخرى.',
   'Reset to site icon': 'العودة إلى أيقونة الموقع',
   'One colour': 'بلون واحد',
+  'Web icons': 'أيقونات الويب',
+  'Sites you visit will appear here': 'ستظهر هنا المواقع التي تزورها',
 }

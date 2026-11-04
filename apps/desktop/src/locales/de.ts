@@ -2798,4 +2798,6 @@ export const de: Dictionary = {
     'Nicht gesendet. Dein Text bleibt erhalten, du kannst es noch einmal versuchen.',
   'Reset to site icon': 'Auf Website-Symbol zurücksetzen',
   'One colour': 'Einfarbig',
+  'Web icons': 'Web-Symbole',
+  'Sites you visit will appear here': 'Websites, die du besuchst, erscheinen hier',
 }

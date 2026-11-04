@@ -2690,4 +2690,6 @@ export const am: Dictionary = {
     'አልተላከም። ጽሑፍህ ተቀምጧል፣ ስለዚህ እንደገና መሞከር ትችላለህ።',
   'Reset to site icon': 'ወደ የጣቢያው አዶ መልስ',
   'One colour': 'ባለ አንድ ቀለም',
+  'Web icons': 'የድር አዶዎች',
+  'Sites you visit will appear here': 'የሚጎበኟቸው ድረ ገጾች እዚህ ይታያሉ',
 }

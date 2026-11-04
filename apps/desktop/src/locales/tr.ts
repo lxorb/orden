@@ -2755,4 +2755,6 @@ export const tr: Dictionary = {
     'Gönderilmedi. Metniniz duruyor, yeniden deneyebilirsiniz.',
   'Reset to site icon': 'Site simgesine dön',
   'One colour': 'Tek renk',
+  'Web icons': 'Web simgeleri',
+  'Sites you visit will appear here': 'Ziyaret ettiğiniz siteler burada görünür',
 }

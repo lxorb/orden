@@ -2658,4 +2658,6 @@ export const zhHant: Dictionary = {
   'Not sent. Your text is kept, so you can try again.': '未送出。你的文字已保留，可以再試一次。',
   'Reset to site icon': '還原為網站圖示',
   'One colour': '單色',
+  'Web icons': '網站圖示',
+  'Sites you visit will appear here': '你造訪過的網站會顯示在這裡',
 }

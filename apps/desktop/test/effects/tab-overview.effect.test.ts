@@ -283,3 +283,48 @@ test('every window’s name is drawn under every window, so none lies on another
   expect(lastName).toBeGreaterThan(-1)
   expect(lastName).toBeLessThan(firstWindow)
 })
+
+test('every scroll zooms about the pointer, Ctrl or not, and none moves the canvas', async () => {
+  await opened()
+  const world = () => document.querySelector<HTMLElement>('.world')
+  const read = () => {
+    const transform = world()?.style.transform ?? ''
+    const [x, y, zoom] = (
+      /translate\(([-\d.]+)px, ([-\d.]+)px\) scale\(([-\d.]+)\)/.exec(transform) ?? []
+    )
+      .slice(1)
+      .map(Number)
+    return { x: x ?? 0, y: y ?? 0, zoom: zoom ?? 1 }
+  }
+  const at = { clientX: 400, clientY: 300 }
+  const pointUnder = () => {
+    const now = read()
+    return { x: (at.clientX - now.x) / now.zoom, y: (at.clientY - now.y) / now.zoom }
+  }
+  // Asked for less movement, a notch is where it goes at once.
+  for (const [deltaY, ctrlKey] of [
+    [-100, false],
+    [-6, false],
+    [-100, true],
+    [-4, true],
+  ] as const) {
+    const before = read()
+    const under = pointUnder()
+    layer()?.dispatchEvent(
+      new WheelEvent('wheel', {
+        deltaY,
+        deltaX: 25,
+        ctrlKey,
+        ...at,
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
+    flushSync()
+    const after = read()
+    expect(after.zoom, `${String(deltaY)} ${String(ctrlKey)}`).toBeGreaterThan(before.zoom)
+    // Zoomed about the pointer and nothing else: the point under it stays under it.
+    expect(pointUnder().x).toBeCloseTo(under.x)
+    expect(pointUnder().y).toBeCloseTo(under.y)
+  }
+})

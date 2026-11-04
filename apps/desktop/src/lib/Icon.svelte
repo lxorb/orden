@@ -80,6 +80,10 @@
     <!-- eslint-disable-next-line svelte/no-at-html-tags -- a shipped icon set, not content -->
     {@html drawing.body}
   </svg>
+{:else if drawing?.kind === 'picture'}
+  <!-- A site's mark (#1054): a picture the account holds, as a `data:` address, drawn in
+       an image, where an SVG among them runs nothing. Its own colours, never a tint. -->
+  <img class="glyph picture" src={drawing.src} alt="" draggable="false" />
 {:else if stroked}
   <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true" style:color={colour}>
     {#each stroked as [tag, attrs] (JSON.stringify(attrs))}
@@ -122,11 +126,19 @@
     stroke: none;
   }
 
+  .picture {
+    object-fit: contain;
+  }
+
   .emoji {
     /* A character has no box of its own to fill, so it is centred in the caller's
-       instead; the rest is above. */
-    display: grid;
-    place-items: center;
+       instead; the rest is above. By flex rather than a grid (#1116): a grid's track
+       grows to fit a glyph wider than the box and starts at the box's left edge, which
+       put every emoji a pixel or two right of its cell; flex centres the overflow too. */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
     /* Against the box rather than the text, so one number covers a 16px mark and a
        28px badge for a space. 0.88 is where a face sits level with the cap height
        of the name beside it. */

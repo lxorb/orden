@@ -1169,4 +1169,45 @@ export const routes = {
 
   revokeConnector: (token: string) =>
     request<{ ok: true }>('/v1/mcp/token', { method: 'DELETE', token }),
+
+  /* The marks of the sites the account has been to, for the icon picker's Web icons
+     (#1054); see services/sync/src/site-icons.ts and site-icons.svelte.ts. */
+
+  /** Every site the account keeps, newest first, with its picture's hash. */
+  siteIcons: (token: string) => request<{ sites: SiteIcon[] }>('/v2/site-icons', { token }),
+
+  /** A tab has been to a site, whose mark is at `icon` (an address, or inline). */
+  sawSite: (
+    token: string,
+    site: { site: string; label: string; icon: string | null; seen: number },
+  ) => request<{ site: SiteIcon | null }>('/v2/site-icons', { token, body: site }),
+
+  /** Forgets sites: those named, those seen since a moment, or every one. */
+  forgetSites: (token: string, which: { sites: string[] } | { since: number }) =>
+    request<{ ok: true }>('/v2/site-icons', { method: 'DELETE', token, body: which }),
+
+  /** One site's picture, as a `data:` address the picker keeps on this device; null
+   *  where the account holds none. */
+  siteIconPicture: async (token: string, site: string): Promise<string | null> => {
+    const response = await fetch(`${BASE}/v2/site-icons/${encodeURIComponent(site)}/picture`, {
+      headers: { authorization: `Bearer ${token}` },
+    })
+    if (!response.ok) return null
+
+    const type = response.headers.get('content-type') ?? 'image/png'
+    const bytes = new Uint8Array(await response.arrayBuffer())
+    let text = ''
+    for (let at = 0; at < bytes.length; at += 0x8000) {
+      text += String.fromCharCode(...bytes.subarray(at, at + 0x8000))
+    }
+    return `data:${type};base64,${btoa(text)}`
+  },
+}
+
+/** One site the account has been to, as the service keeps it. */
+export interface SiteIcon {
+  site: string
+  label: string
+  seen: number
+  hash: string | null
 }

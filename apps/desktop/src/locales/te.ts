@@ -2755,4 +2755,6 @@ export const te: Dictionary = {
     'పంపలేదు. మీ వచనం అలాగే ఉంది, మళ్లీ ప్రయత్నించవచ్చు.',
   'Reset to site icon': 'సైట్ చిహ్నానికి రీసెట్ చేయండి',
   'One colour': 'ఒకే రంగు',
+  'Web icons': 'వెబ్ చిహ్నాలు',
+  'Sites you visit will appear here': 'మీరు సందర్శించే సైట్‌లు ఇక్కడ కనిపిస్తాయి',
 }

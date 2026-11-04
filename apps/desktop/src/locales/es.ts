@@ -2809,4 +2809,6 @@ export const es: Dictionary = {
     'No enviado. Tu texto se conserva para que puedas intentarlo de nuevo.',
   'Reset to site icon': 'Restablecer el icono del sitio',
   'One colour': 'Un color',
+  'Web icons': 'Iconos web',
+  'Sites you visit will appear here': 'Aquí aparecerán los sitios que visites',
 }

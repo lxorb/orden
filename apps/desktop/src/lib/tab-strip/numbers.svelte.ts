@@ -7,7 +7,10 @@
  *  rules: Alt and the letter shows that Essential, as a plain press of its tile does
  *  (#1051). Which letter is letters.svelte.ts. A tile out of sight - the sidebar folded
  *  away, the list showing something else - wears nothing, but its letter still goes to
- *  it. Never in a terminal, where Alt and a letter is the shell's (terminal/keys.ts).
+ *  it. One hold and one test of whether to show, for the numbers and the letters alike,
+ *  and neither asks where the keyboard is: the letters show whenever the numbers do,
+ *  wherever the focus is - a note, a web page, a terminal, the top bar (#1051). So in a terminal too an Essential's letter is the app's, as
+ *  Alt and a digit is; Alt and any other letter is still the shell's (terminal/keys.ts).
  *
  *  On the press of Alt itself, in the frame it goes down in, as KeyTips are. Emil,
  *  2026-10-01: *"currently it just feels a bit delayed till the numbers appear when
@@ -128,7 +131,7 @@ class Numbers {
       repeat: event.repeat,
       altGraph: event.getModifierState('AltGraph'),
     }
-    const letter = inTerminal(event.target) ? null : letterOf(stroke)
+    const letter = letterOf(stroke)
     const essential = letter === null ? null : essentialLetters.pathOf(letter)
     const place = this.hold.down(stroke, event.timeStamp, essential !== null)
 
@@ -210,8 +213,6 @@ class Numbers {
 
   /** The Essentials' letters, on the tiles in sight: a folded sidebar's are not. */
   private essentialsWorn(): Worn[] {
-    if (inTerminal(document.activeElement)) return []
-
     return [...document.querySelectorAll<HTMLElement>('[data-essential-letter]')].flatMap(
       (tile) => {
         const label = tile.dataset.essentialLetter
@@ -223,11 +224,6 @@ class Numbers {
       },
     )
   }
-}
-
-/** Whether a key goes to a terminal, whose Alt and a letter is the shell's. */
-function inTerminal(target: EventTarget | null): boolean {
-  return target instanceof Element && target.closest('.xterm') !== null
 }
 
 export const numbers = new Numbers()
