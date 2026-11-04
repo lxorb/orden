@@ -7,7 +7,8 @@
  *  never one the key does not keep. Pure; numbers.svelte.ts is what shows them. */
 
 import { WITHIN } from '../double-tap'
-import { parseCombination, type Platform } from '../keys'
+import type { Platform } from '../keys'
+import { underAlt } from './letters'
 
 /** The keys, and the place along the strip each goes to. Eight places, the ninth, and
  *  the last, which Alt+0 goes to. */
@@ -16,14 +17,6 @@ const PLACES: readonly (readonly [string, number | 'last'])[] = [
   ['app.note-ninth', 8],
   ['app.note-9.alt', 'last'],
 ]
-
-/** What a key bound under Alt alone is called on a tab: its one character. Nothing for a
- *  key held with anything else, or a key that is not a character. */
-function underAlt(key: string | null, platform: Platform): string | null {
-  const combination = key === null ? null : parseCombination(key, platform)
-  if (!combination?.alt || combination.ctrl || combination.meta || combination.shift) return null
-  return combination.key.length === 1 ? combination.key.toUpperCase() : null
-}
 
 /** The number each of a strip's `count` tabs wears, in its order, or null for a tab no
  *  key reaches. The first eight wear their places and the ninth its own, since Alt+9
@@ -102,8 +95,10 @@ export class AltHold {
   private quiet = false
 
   /** A key went down. Answers whether the numbers are to be put where the tabs are now:
-   *  on a hold beginning, and on a digit, which has just moved the active tab. */
-  down(stroke: Stroke, now = Number.NaN): boolean {
+   *  on a hold beginning, and on a digit or a letter an Essential wears (`claimed`, see
+   *  letters.ts), which have just moved what is in front - a hand going from one to the
+   *  next with Alt still down sees where it is going, as with the digits. */
+  down(stroke: Stroke, now = Number.NaN, claimed = false): boolean {
     const alone = !stroke.ctrlKey && !stroke.shiftKey && !stroke.metaKey && !stroke.altGraph
 
     if (stroke.key === 'Alt') {
@@ -119,7 +114,7 @@ export class AltHold {
       return this.holding
     }
 
-    if (stroke.altKey && alone && isDigit(stroke)) {
+    if (stroke.altKey && alone && (isDigit(stroke) || claimed)) {
       this.holding = true
       this.spent = false
       return true

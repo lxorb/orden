@@ -9,6 +9,7 @@
    *  A bookmark keeps a path the space speaks, so a note or folder that has
    *  since been deleted simply has no row. A search points at nothing on disk
    *  and is always there. */
+  import { onMount } from 'svelte'
   import { flip } from 'svelte/animate'
   import { cubicOut } from 'svelte/easing'
   import { scale } from 'svelte/transition'
@@ -245,6 +246,28 @@
     open(row, howFor(ask, { preview: true }))
   }
 
+  /** A double click keeps an essential as a tab of the strip (#1051). */
+  function keepAsTab(row: Row) {
+    const path = row.path
+    if (path) void reckoning().then((one) => one.keepAsTab(path))
+  }
+
+  /** The letters Alt goes to the essentials with, fetched once the launch has drawn
+   *  rather than in front of it, as the numbers that show them are; see
+   *  tab-strip/letters.svelte.ts. */
+  let letters = $state.raw<typeof import('./tab-strip/letters.svelte') | null>(null)
+  onMount(() => {
+    void import('./tab-strip/letters.svelte').then((one) => (letters = one))
+  })
+
+  /** The letter Alt goes to an essential with, which numbers.svelte.ts shows while Alt is
+   *  held and a screen reader says as the tile's key. */
+  function letterOf(row: Row): { 'data-essential-letter'?: string; 'aria-keyshortcuts'?: string } {
+    const given = letters?.essentialLetters.given
+    const letter = given && row.path && isTile(row.mark) ? given[row.path] : undefined
+    return letter ? { 'data-essential-letter': letter, 'aria-keyshortcuts': `Alt+${letter}` } : {}
+  }
+
   function startDrag(event: DragEvent, row: Row) {
     reach()
     carryBookmark(event.dataTransfer, row.at, isTile(row.mark))
@@ -416,7 +439,9 @@
               active={tile.active}
               slot={landing?.at === tile.at ? (landing.after ? 'after' : 'before') : null}
               data-at={tile.at}
+              {...letterOf(tile)}
               onopen={(ask: TabAsk) => pressed(tile, ask)}
+              ondblclick={(event: MouseEvent) => tabAsk(event) === 'plain' && keepAsTab(tile)}
               onmenu={(event: MouseEvent) => showMenu(event, tile)}
               ondragstart={(event: DragEvent) => startDrag(event, tile)}
               ondragend={endDrag}
@@ -462,10 +487,12 @@
                 class:nested={row.mark.kind !== 'group'}
                 style:--level={row.depth}
                 data-at={row.at}
+                {...letterOf(row)}
                 draggable="true"
                 onclick={(event) => pressed(row, tabAsk(event))}
                 ondblclick={(event) =>
-                  tabAsk(event) === 'plain' && row.mark.kind !== 'note' && open(row, {})}
+                  tabAsk(event) === 'plain' &&
+                  (row.mark.kind === 'note' ? keepAsTab(row) : open(row, {}))}
                 use:middleOpens={(event) => pressed(row, tabAsk(event))}
                 oncontextmenu={(event) => showMenu(event, row)}
                 use:longPress={(event) => showMenu(event, row)}

@@ -3,6 +3,12 @@
  *  of a button. Only on the strip of the pane being worked in, because that is the strip
  *  Alt and a digit counts along; see `showTab` in shortcuts/registry.ts.
  *
+ *  And each Essential's letter, at the corner of its tile, by the same hold and the same
+ *  rules: Alt and the letter shows that Essential, as a plain press of its tile does
+ *  (#1051). Which letter is letters.svelte.ts. A tile out of sight - the sidebar folded
+ *  away, the list showing something else - wears nothing, but its letter still goes to
+ *  it. Never in a terminal, where Alt and a letter is the shell's (terminal/keys.ts).
+ *
  *  On the press of Alt itself, in the frame it goes down in, as KeyTips are. Emil,
  *  2026-10-01: *"currently it just feels a bit delayed till the numbers appear when
  *  holding alt"* - a wait of 150 ms, there so that a quick Alt+3 would never flash them,
@@ -30,6 +36,8 @@ import { tabOverview } from '../surfaces.svelte'
 import { isDesktop } from '../tauri'
 import { viewport } from '../viewport.svelte'
 import { workspace } from '../workspace.svelte'
+import { letterOf } from './letters'
+import { essentialLetters } from './letters.svelte'
 import { AltHold, numerals } from './numbers'
 import TabNumbers from './TabNumbers.svelte'
 
@@ -50,7 +58,8 @@ class Numbers {
   constructor() {
     // Capturing, so a terminal or a list that stops a key on its way cannot hide it.
     const options = { capture: true, passive: true }
-    addEventListener('keydown', (event) => this.down(event), options)
+    // Not passive: Alt and an Essential's letter is taken from whatever is focused.
+    addEventListener('keydown', (event) => this.down(event), { capture: true })
     addEventListener('keyup', (event) => this.up(event), options)
     addEventListener('pointerdown', () => this.used(), options)
     addEventListener('wheel', () => this.used(), options)
@@ -76,19 +85,26 @@ class Numbers {
   }
 
   private down(event: KeyboardEvent) {
-    const place = this.hold.down(
-      {
-        key: event.key,
-        code: event.code,
-        altKey: event.altKey,
-        ctrlKey: event.ctrlKey,
-        shiftKey: event.shiftKey,
-        metaKey: event.metaKey,
-        repeat: event.repeat,
-        altGraph: event.getModifierState('AltGraph'),
-      },
-      event.timeStamp,
-    )
+    const stroke = {
+      key: event.key,
+      code: event.code,
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      shiftKey: event.shiftKey,
+      metaKey: event.metaKey,
+      repeat: event.repeat,
+      altGraph: event.getModifierState('AltGraph'),
+    }
+    const letter = inTerminal(event.target) ? null : letterOf(stroke)
+    const essential = letter === null ? null : essentialLetters.pathOf(letter)
+    const place = this.hold.down(stroke, event.timeStamp, essential !== null)
+
+    if (essential !== null) {
+      event.preventDefault()
+      event.stopPropagation()
+      if (!event.repeat)
+        void import('../essentials.svelte').then((one) => one.openEssential(essential))
+    }
 
     if (place) this.place()
     else if (!this.hold.holding) this.clear()
@@ -132,15 +148,19 @@ class Numbers {
     // Nor over the tab overview, whose windows the tabs are while it is up (#331).
     if (tabOverview.open) return
 
+    this.worn = [...this.tabsWorn(), ...this.essentialsWorn()]
+  }
+
+  private tabsWorn(): Worn[] {
     const paneId = workspace.panes.focusedId
     const strip = document.querySelector(`[data-strip="${CSS.escape(paneId)}"]`)
-    if (!strip) return
+    if (!strip) return []
 
     const tabs = workspace.tabsIn(paneId)
     const labels = numerals(tabs.length, (id) => shortcuts.keyFor(id), shortcuts.platform)
     const seen = strip.getBoundingClientRect()
 
-    this.worn = tabs.flatMap((tab, at) => {
+    return tabs.flatMap((tab, at) => {
       const label = labels[at]
       const pick = strip.querySelector(`.pick[data-tab="${CSS.escape(tab.id)}"]`)
       if (!label || !pick) return []
@@ -154,6 +174,27 @@ class Numbers {
       return [{ id: tab.id, label, x: i18n.factor > 0 ? box.right : box.left, y: box.bottom }]
     })
   }
+
+  /** The Essentials' letters, on the tiles in sight: a folded sidebar's are not. */
+  private essentialsWorn(): Worn[] {
+    if (inTerminal(document.activeElement)) return []
+
+    return [...document.querySelectorAll<HTMLElement>('[data-essential-letter]')].flatMap(
+      (tile) => {
+        const label = tile.dataset.essentialLetter
+        const box = tile.getBoundingClientRect()
+        if (!label || !box.width || box.right <= 0 || box.left >= innerWidth) return []
+        if (box.bottom <= 0 || box.top >= innerHeight) return []
+        const x = i18n.factor > 0 ? box.right : box.left
+        return [{ id: `essential:${label}`, label, x, y: box.bottom }]
+      },
+    )
+  }
+}
+
+/** Whether a key goes to a terminal, whose Alt and a letter is the shell's. */
+function inTerminal(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest('.xterm') !== null
 }
 
 export const numbers = new Numbers()

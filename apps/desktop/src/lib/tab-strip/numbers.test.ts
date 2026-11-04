@@ -195,4 +195,15 @@ describe('Alt held', () => {
     expect(hold.holding).toBe(false)
     expect(hold.down(stroke('Alt'))).toBe(true)
   })
+
+  /** Alt and an Essential's letter goes to it (#1051): the hold carries on through it, as
+   *  through a digit, and a letter no Essential wears is a chord of its own. */
+  test("keeps them through an Essential's letter, and ends on any other", () => {
+    const hold = new AltHold()
+    hold.down(stroke('Alt'))
+    expect(hold.down(stroke('n', { code: 'KeyN' }), Number.NaN, true)).toBe(true)
+    expect(hold.holding).toBe(true)
+    expect(hold.down(stroke('f', { code: 'KeyF' }))).toBe(false)
+    expect(hold.holding).toBe(false)
+  })
 })

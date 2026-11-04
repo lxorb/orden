@@ -313,7 +313,16 @@ export function released<T extends Held>(tabs: readonly T[], kept: readonly stri
  *  note, which is open in one tab only (`secondWebTabs`), that tab, its page and its web
  *  data with it - or the file opened with its tab an essential as it lands. One view an
  *  essential. */
-export async function openEssential(path: string) {
+export function openEssential(path: string): Promise<void> {
+  opening = showEssential(path)
+  return opening
+}
+
+/** The last press of a tile, still landing: a double click's second press waits for the
+ *  first one's tab. */
+let opening: Promise<void> = Promise.resolve()
+
+async function showEssential(path: string) {
   const ws = workspace
   const held = essentialTab(ws.tabs, path, (paneId) => ws.panes.at(paneId) !== null)
   if (held) {
@@ -339,6 +348,21 @@ export async function openEssential(path: string) {
   } finally {
     ws.essentialComing = null
   }
+}
+
+/** An essential kept as a tab of the strip, on a double click of its tile (#1051): the
+ *  essential's own tab, as it is - its place in the note, its page - goes into the strip
+ *  and is in front, and the tile's next press gives the essential a view of its own. */
+export async function keepAsTab(path: string) {
+  await opening.catch(() => undefined)
+  const ws = workspace
+  const held = essentialTab(ws.tabs, path, (paneId) => ws.panes.at(paneId) !== null)
+  if (!held) {
+    await openInStrip(path, {})
+    return
+  }
+  held.essential = null
+  ws.front(held.id)
 }
 
 /** An essential asked for in the strip: the strip's tab of it, or a view of its own,
