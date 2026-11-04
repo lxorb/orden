@@ -177,8 +177,8 @@ describe('the head of the list', () => {
   })
 })
 
-/** The note's footnotes are the Outline's last group, the panel of their own gone
- *  (#1120). */
+/** The Outline is offered beside what has parts to list, and nothing else (#1120); the
+ *  table that says so is panel-tab.ts. */
 describe('the Outline', () => {
   const NOTE = 'A claim[^1] and another[^two].\n\n[^1]: the first\n\n[^two]: the second\n'
 
@@ -198,6 +198,24 @@ describe('the Outline', () => {
     expect(html).toContain('the first')
     expect(html).toContain('Footnotes<span>2</span>')
     expect(html.indexOf('Head')).toBeLessThan(html.indexOf('Footnotes<span>'))
+  })
+
+  test('is a tab beside a note with footnotes and no headings', () => {
+    open(NOTE)
+    expect(right()).toMatch(/role="tab"[^>]*aria-label="Outline"/)
+  })
+
+  test('is no tab beside a note with neither, and the side shows its next panel', () => {
+    open('Words, and nothing else.\n')
+    viewport.device = 'desktop'
+    workspace.rightPanel = 'outline'
+    const html = render(Sidebar, { props: { side: 'right' as const } }).body
+
+    expect(html).not.toMatch(/role="tab"[^>]*aria-label="Outline"/)
+    expect(html).toContain('data-panel="links"')
+    // What was chosen is kept, for the next note that has parts.
+    expect(workspace.rightPanel).toBe('outline')
+    workspace.rightPanel = null
   })
 })
 

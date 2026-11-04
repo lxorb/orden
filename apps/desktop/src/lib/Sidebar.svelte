@@ -31,6 +31,7 @@
   import { arrive, leave, segmented } from './slide'
   import { splitTabs, tabsShown } from './workspace/panels'
   import { headingAt, lineOf } from './outline'
+  import { pdfOutlines } from './pdf/outline.svelte'
   import { pages } from './pages/showing.svelte'
   import {
     archiveSection,
@@ -155,8 +156,13 @@
     // The scratchpad's card is the right side's while it is up (#1032).
     if (side === 'right' && padHere && pad.on) return 'scratchpad'
     const open = workspace.openOn(side)
-    if (open) return (lastShown = open)
-    return side === 'right' ? (workspace.nextRight ?? lastShown) : lastShown
+    const chosen = open ?? (side === 'right' ? (workspace.nextRight ?? lastShown) : lastShown)
+    if (open) lastShown = open
+    // A panel with nothing to show beside the tab in front - the Outline beside a
+    // terminal - gives its place to the side's first tab that has, and is back as soon
+    // as a tab it fills is (#1120). The side stays out, and what was chosen is kept.
+    if (workspace.fills(chosen)) return chosen
+    return mine.find((one) => one.id !== 'scratchpad')?.id ?? chosen
   })
 
   /** Whether the column has come in. A panel built by the launch is already there;
@@ -305,7 +311,9 @@
       PANELS.map((one) => one.id),
     )
 
-    // The scratchpad last on the right, the one tab that is no panel (#1032).
+    // Only the panels with something to show beside the tab in front (#1120; see
+    // panel-tab.ts). The scratchpad last on the right, the one tab that is no panel
+    // (#1032).
     const pads: { id: Panel | 'scratchpad'; label: string; path: string }[] = padHere
       ? [{ id: 'scratchpad', label: t('Scratchpad'), path: SCRATCHPAD_MARK }]
       : []
@@ -314,6 +322,7 @@
         PANELS.filter(
           (one) =>
             one.id === id &&
+            workspace.fills(id) &&
             (id !== 'chats' || !!account.accountToken) &&
             // The AI panel is the desktop's and the browser's; the glasses' plugin has none.
             (id !== 'ask' || !__EVEN_PLUGIN__),
@@ -467,6 +476,21 @@
     const tab = workspace.panelTab
     if (tab && tab.id !== workspace.activeTabId) workspace.activate(tab.id)
     ongoto?.(line)
+  }
+
+  /** A PDF's own contents, where the tab the panels are about is one that wrote them;
+   *  see pdf/outline.svelte.ts. */
+  const contents = $derived.by(() => {
+    const tab = workspace.panelTab
+    return tab?.kind === 'pdf' ? (pdfOutlines.get(tab.id) ?? []) : []
+  })
+
+  /** Takes the reader to a page of the PDF the panel is about, in its own pane. */
+  function toPage(page: number) {
+    const tab = workspace.panelTab
+    if (!tab?.path) return
+    if (tab.id !== workspace.activeTabId) workspace.activate(tab.id)
+    workspace.gotoPage = { path: tab.path, page }
   }
 
   /** The outline steps in and fades from the shallowest heading the note
@@ -1115,6 +1139,23 @@
                       ondrop={(event) => dropSection(event, index)}
                     >
                       <span class="nib-row-label">{heading.text}</span>
+                    </button>
+                  </li>
+                {/each}
+              </ul>
+            {:else if contents.length}
+              <!-- A PDF's own contents, as the file wrote them (#1120): a row goes to
+                   the page the part starts on, in the viewer it is open in. -->
+              <ul use:roving={{ rows: '.row', open: (row) => row.click() }}>
+                {#each contents as part, index (index)}
+                  <li>
+                    <button
+                      class="nib-row is-short row heading"
+                      style:--level={part.level}
+                      onclick={() => toPage(part.page)}
+                    >
+                      <span class="nib-row-label">{part.title}</span>
+                      <span class="nib-row-meta">{part.page}</span>
                     </button>
                   </li>
                 {/each}
