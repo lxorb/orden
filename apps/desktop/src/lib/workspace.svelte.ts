@@ -857,11 +857,16 @@ class Workspace {
     // brings the account's notes and a signed-out one shows the sign-in; neither
     // wants a welcome note. See welcome.ts.
     if (!isNative && !isPlugin()) {
-      const { seed } = await import('./web/commands')
-      // What the old address's handoff waits for; see first-visit.svelte.ts.
-      if (await seed()) {
-        ;(await import('./first-visit.svelte')).firstVisit.seeded()
-        settings.setup = -1
+      try {
+        const { seed } = await import('./web/commands')
+        // What the old address's handoff waits for; see first-visit.svelte.ts.
+        if (await seed()) {
+          ;(await import('./first-visit.svelte')).firstVisit.seeded()
+          settings.setup = -1
+        }
+      } catch (error) {
+        // Not a reason to leave the session unread, and nothing written from here on.
+        log('warn', `first visit: nothing seeded - ${String(error)}`)
       }
     }
 

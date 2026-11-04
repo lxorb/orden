@@ -66,10 +66,12 @@ export function writeEdited(
   note.onDisk = knew
   note.dirty = true
   const down = (content: string) => invoke('write_note', { path, content })
+  let through: Across | null = null
   return first()
     .then(() => across ?? acrossSoon?.().catch(() => null) ?? null)
-    .then(async (through) => {
-      if (through) return through.writing(note, path, down)
+    .then(async (found) => {
+      through = found
+      if (found) return found.writing(note, path, down)
       await writeTaking(path, words)
       note.onDisk = words
       return { words, revision }
@@ -82,8 +84,8 @@ export function writeEdited(
       },
       async (error: unknown) => {
         log('error', `save: ${path} - ${String(error)}`)
-        const { workspace } = await import('../workspace.svelte')
-        workspace.owedWords(note)
+        if (through) through.owe(note)
+        else (await import('../workspace.svelte')).workspace.owedWords(note)
         return null
       },
     )

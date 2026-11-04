@@ -203,8 +203,7 @@ describe('a persist while the session is coming back', () => {
       held.count = 0
       held.stopAt = at
       const workspace = await newWindow()
-      void workspace.restore()
-      void allIn(workspace).catch(() => undefined)
+      void workspace.restore().then(() => allIn(workspace))
       await vi.waitFor(() => expect(held.reached).toBe(true), { timeout: 5000 })
       workspace.persist()
 
