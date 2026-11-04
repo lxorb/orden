@@ -2339,6 +2339,15 @@ export const id: Dictionary = {
   'What does it run?': 'Apa yang dijalankan?',
   'A program’s path, and its arguments': 'Path program, dan argumennya',
   '{device} (this device)': '{device} (perangkat ini)',
+  'Find an application': 'Cari aplikasi',
+  'Another program…': 'Program lain…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} belum bisa menjalankan aplikasi di layar tersendiri.',
+  '{device} needs Xvfb to run an application.':
+    '{device} memerlukan Xvfb untuk menjalankan aplikasi.',
+  '{device} did not allow this program.': '{device} tidak mengizinkan program ini.',
+  '{device} does not have this application.': '{device} tidak memiliki aplikasi ini.',
+  'It did not start on {device}.': 'Aplikasi tidak berjalan di {device}.',
   'Start online machine': 'Mulai mesin online',
   'Stop online machine': 'Hentikan mesin online',
   Resume: 'Lanjutkan',

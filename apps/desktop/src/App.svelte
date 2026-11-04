@@ -114,6 +114,21 @@
     }, 3000)
   }
 
+  // The applications this computer runs for the reader's other devices (docs/apps.md):
+  // developer mode's, on a desktop and signed in, and fetched only then.
+  $effect(() => {
+    if (!isDesktop || __EVEN_PLUGIN__ || !modes.coder || !account.accountToken) return
+    let stop: (() => void) | null = null
+    let gone = false
+    void import('./lib/apps/host.svelte').then(({ hostApps }) => {
+      if (!gone) stop = hostApps()
+    })
+    return () => {
+      gone = true
+      stop?.()
+    }
+  })
+
   /** The editor of the pane that has the focus, which is what every key, every
    *  menu and the palette act on. Each pane leaves its own here; see
    *  views.svelte.ts. */

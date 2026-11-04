@@ -1,9 +1,17 @@
 /** Making an application (docs/apps.md): developer mode's new tab card. Which of the
- *  reader's computers it runs on, then what: a program by its path and its arguments
- *  (the list of what each computer has installed comes with its host, issue 1063). The
- *  file is written in the folder new notes go to, named after the program, and opened. */
+ *  reader's computers it runs on, then what: one of the applications that computer has
+ *  installed, by its name and icon - this computer's asked of the crate, another's read
+ *  from the catalogue its host wrote to the account (`host.svelte.ts`) - or another
+ *  program by its path and arguments. The file is written in the folder new notes go
+ *  to, named after what it runs, and opened. */
 
-import { appFileText } from '@orden/online/apps'
+import {
+  type AppRun,
+  appFileText,
+  CATALOGUE_PATH,
+  catalogueOf,
+  type Installed,
+} from '@orden/online/apps'
 import { account } from '../account.svelte'
 import { t } from '../i18n.svelte'
 import { canWriteAt } from '../sharing.svelte'
@@ -53,18 +61,64 @@ export async function makeApplication(): Promise<Tab | null> {
   })
   if (!host) return null
 
-  const line = await prompt.ask({
-    title: t('What does it run?'),
-    placeholder: t('A program’s path, and its arguments'),
-  })
-  const program = line === null ? null : programOf(line)
-  if (!program) return null
+  const here = computers.find((one) => one.id === host)?.current ?? false
+  const installed = await installedOn(host, here, token)
+  let run: AppRun | null = null
+  if (installed.length) {
+    const picked = await prompt.find({
+      title: t('What does it run?'),
+      placeholder: t('Find an application'),
+      options: [
+        ...installed.map((one) => ({
+          id: one.id,
+          label: one.name,
+          ...(one.icon ? { picture: one.icon } : { mark: 'application' as const }),
+        })),
+        { id: ANOTHER, label: t('Another program…') },
+      ],
+    })
+    if (picked === null) return null
+    const app = installed.find((one) => one.id === picked)
+    if (app) run = { kind: 'installed', id: app.id, name: app.name }
+  }
+  if (!run) {
+    const line = await prompt.ask({
+      title: t('What does it run?'),
+      placeholder: t('A program’s path, and its arguments'),
+    })
+    const program = line === null ? null : programOf(line)
+    if (!program) return null
+    run = { kind: 'path', ...program, cwd: null }
+  }
 
-  const name = nameOf(program.path).replace(/\.(exe|app)$/i, '') || t('Application')
+  const name =
+    (run.kind === 'installed' ? run.name : nameOf(run.path).replace(/\.(exe|app)$/i, '')) ||
+    t('Application')
   const path = joinPath(root, await workspace.freeNameOnDisk(root, `${name}.application`))
-  await writeFile(path, appFileText({ v: 1, host, run: { kind: 'path', ...program, cwd: null } }))
+  await writeFile(path, appFileText({ v: 1, host, run }))
   await workspace.fileCame(path, 'file')
   const tab = openApplication(path)
   void workspace.loadTree()
   return tab
+}
+
+/** The chooser's row for a program by its path, which no application id can be. */
+const ANOTHER = '\u0000another'
+
+/** What a computer has installed: this one's from the crate, another's from the
+ *  catalogue its host wrote. Nothing, where that computer has not written one yet or the
+ *  account does not know the route, and then the chooser asks for a path. */
+async function installedOn(host: string, here: boolean, token: string): Promise<Installed[]> {
+  if (here) {
+    const { invoke, isDesktop } = await import('../tauri')
+    if (!isDesktop) return []
+    const listed = await invoke<unknown>('apps_installed').catch(() => null)
+    return catalogueOf(listed) ?? []
+  }
+  const { request } = await import('../api')
+  const answered = await request<{ apps?: unknown }>(
+    `${CATALOGUE_PATH}/${encodeURIComponent(host)}`,
+    { token },
+  ).catch(() => null)
+  return catalogueOf(answered?.apps) ?? []
 }

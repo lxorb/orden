@@ -2396,6 +2396,15 @@ export const de: Dictionary = {
   'What does it run?': 'Was führt sie aus?',
   'A program’s path, and its arguments': 'Pfad eines Programms und seine Argumente',
   '{device} (this device)': '{device} (dieses Gerät)',
+  'Find an application': 'Anwendung suchen',
+  'Another program…': 'Anderes Programm…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} kann eine Anwendung noch nicht auf einem eigenen Bildschirm ausführen.',
+  '{device} needs Xvfb to run an application.':
+    '{device} braucht Xvfb, um eine Anwendung auszuführen.',
+  '{device} did not allow this program.': '{device} hat dieses Programm nicht erlaubt.',
+  '{device} does not have this application.': '{device} hat diese Anwendung nicht.',
+  'It did not start on {device}.': 'Sie ist auf {device} nicht gestartet.',
   'Start online machine': 'Online-Maschine starten',
   'Stop online machine': 'Online-Maschine stoppen',
   Resume: 'Fortsetzen',

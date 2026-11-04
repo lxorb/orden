@@ -2316,6 +2316,15 @@ export const ko: Dictionary = {
   'What does it run?': '무엇을 실행하나요?',
   'A program’s path, and its arguments': '프로그램 경로와 인수',
   '{device} (this device)': '{device} (이 기기)',
+  'Find an application': '애플리케이션 찾기',
+  'Another program…': '다른 프로그램…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device}에서는 아직 애플리케이션을 전용 화면에서 실행할 수 없습니다.',
+  '{device} needs Xvfb to run an application.':
+    '{device}에서 애플리케이션을 실행하려면 Xvfb가 필요합니다.',
+  '{device} did not allow this program.': '{device}에서 이 프로그램을 허용하지 않았습니다.',
+  '{device} does not have this application.': '{device}에 이 애플리케이션이 없습니다.',
+  'It did not start on {device}.': '{device}에서 시작되지 않았습니다.',
   'Start online machine': '온라인 머신 시작',
   'Stop online machine': '온라인 머신 중지',
   Resume: '이어서 하기',

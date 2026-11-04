@@ -2,6 +2,7 @@
  *  online terminal's (locks/sockets.ts), and signalling that only the holder and the host
  *  ever see. */
 
+import { createHash } from 'node:crypto'
 import { subprotocol } from '@orden/rooms'
 import { HOLD_GRACE } from '@orden/online/wire'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
@@ -244,5 +245,88 @@ describe('an application’s door', () => {
 
     env.db.prepare("update notes set deleted = 1 where id = 'app-1'").run()
     expect((await knock(owner)).status).toBe(404)
+  })
+})
+
+/** What each computer has installed (step 3; apps/catalogue.ts): written by a host for
+ *  itself, read by the reader's other devices, behind the door's switch. */
+describe('a host’s catalogue', () => {
+  const APPS = {} as unknown as DurableObjectNamespace
+  const GIMP = { id: 'org.gimp.GIMP.desktop', name: 'GIMP' }
+
+  /** A signed-in device, bound to its session as its hub's hello binds it. */
+  async function device(email: string, id: string): Promise<string> {
+    const token = await signIn(env, email)
+    const hash = createHash('sha256').update(token).digest('hex')
+    const session = env.db
+      .prepare('select id, user_id from sessions where token_hash = ?')
+      .get(hash) as {
+      id: string
+      user_id: string
+    }
+    env.db
+      .prepare(
+        `insert into devices (id, user_id, session_id, name, platform, app, created_at, last_seen_at)
+         values (?, ?, ?, 'Laptop', 'linux', '1', 1, 1)`,
+      )
+      .run(id, session.user_id, session.id)
+    return token
+  }
+
+  const on = () =>
+    env.db.prepare("insert into online_service (key, value) values ('apps', 'on')").run()
+  const write = (token: string, apps: unknown) =>
+    call(env, '/v2/apps/catalogue', { token, method: 'PUT', body: { apps } })
+  const read = (token: string, id: string) =>
+    call<{ apps?: unknown }>(env, `/v2/apps/catalogue/${id}`, { token })
+
+  beforeEach(() => {
+    env = testEnv({ APPS })
+    opened = true
+  })
+
+  test('answers 404 while switched off', async () => {
+    const laptop = await device('owner@example.com', 'device-laptop')
+    expect((await write(laptop, [GIMP])).status).toBe(404)
+    expect((await read(laptop, 'device-laptop')).status).toBe(404)
+  })
+
+  test('a host writes its own, and the reader’s other devices read it by its id', async () => {
+    on()
+    const laptop = await device('owner@example.com', 'device-laptop')
+    const phone = await device('owner@example.com', 'device-phone')
+    const icon = 'data:image/png;base64,iVBORw0KGgo='
+    const written = await write(laptop, [
+      { ...GIMP, icon },
+      { id: 'org.gimp.GIMP.desktop', name: 'GIMP again' },
+      { id: 'firefox.desktop', name: 'Firefox', icon: 'data:text/html;base64,PHA+' },
+      { name: 'no id' },
+    ])
+    expect(written.json).toEqual({ kept: 2 })
+
+    const answered = await read(phone, 'device-laptop')
+    expect(answered.json.apps).toEqual([
+      { ...GIMP, icon },
+      { id: 'firefox.desktop', name: 'Firefox' },
+    ])
+    expect((await read(phone, 'device-phone')).status).toBe(404)
+  })
+
+  test('nobody else’s, and nothing of a device that was ended', async () => {
+    on()
+    const laptop = await device('owner@example.com', 'device-laptop')
+    const other = await device('other@example.com', 'device-other')
+    await write(laptop, [GIMP])
+    expect((await read(other, 'device-laptop')).status).toBe(404)
+
+    env.db.prepare("update devices set revoked_at = 2 where id = 'device-laptop'").run()
+    const phone = await device('owner@example.com', 'device-phone')
+    expect((await read(phone, 'device-laptop')).status).toBe(404)
+  })
+
+  test('a session no device said hello with writes nothing', async () => {
+    on()
+    const token = await signIn(env, 'owner@example.com')
+    expect((await write(token, [GIMP])).status).toBe(409)
   })
 })

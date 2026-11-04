@@ -5,7 +5,13 @@
  *  The file says the host and what runs; the account names the relay by the file's id,
  *  never by its words, as an online terminal's. */
 
-import { type AppFile, appFileOf, type AppState, type View } from '@orden/online/apps'
+import {
+  type AppFile,
+  appFileOf,
+  type AppState,
+  type NotStarted,
+  type View,
+} from '@orden/online/apps'
 import { account } from '../account.svelte'
 import { BASE } from '../api'
 import { pageWorld } from '../online/link'
@@ -27,7 +33,7 @@ export type AppStatus =
   | { is: 'connecting' }
   | { is: 'away' }
   | { is: 'held'; holder: Holder }
-  | { is: 'here'; state: AppState | null; code: number | null }
+  | { is: 'here'; state: AppState | null; code: number | null; why: NotStarted | null }
 
 export class AppSession {
   /** What the file says, once read. */
@@ -40,6 +46,7 @@ export class AppSession {
   private holder = $state<Holder | null>(null)
   private state = $state<AppState | null>(null)
   private code = $state<number | null>(null)
+  private why = $state<NotStarted | null>(null)
   private link: AppLink | null = null
   private ended = false
 
@@ -51,7 +58,7 @@ export class AppSession {
     if (!this.open) return { is: 'connecting' }
     if (this.holder) return { is: 'held', holder: this.holder }
     if (!this.hostUp) return { is: 'away' }
-    return { is: 'here', state: this.state, code: this.code }
+    return { is: 'here', state: this.state, code: this.code, why: this.why }
   }
 
   /** Reads the file and connects, once. */
@@ -104,6 +111,7 @@ export class AppSession {
       case 'state':
         this.state = what.state
         this.code = what.code ?? null
+        this.why = what.why ?? null
         return
       case 'signal':
       case 'refused':
@@ -150,7 +158,7 @@ export class AppSession {
 }
 
 /** The id sync gave the file at `path`, waited for while a new one is taken in. */
-async function idOf(path: string, until: number): Promise<string | null> {
+export async function idOf(path: string, until: number): Promise<string | null> {
   const { runner } = await import('../sync2/runner.svelte')
   for (;;) {
     const id = runner.engine?.entryAt(path)?.id ?? null

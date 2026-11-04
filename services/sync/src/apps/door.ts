@@ -12,10 +12,11 @@ import { tokenOf } from '@orden/rooms'
 import { Hono } from 'hono'
 import { now, sha256 } from '../crypto'
 import { note } from '../failed'
-import { SIGN_IN } from '../refused'
+import { NOT_FOUND, SIGN_IN } from '../refused'
 import type { Env } from '../types'
 import { deviceName } from '../locks/device-name'
 import { WHO } from '../machines/reach'
+import { appsOn } from './catalogue'
 
 const DEVICE_PROTOCOL = 'nib.device.'
 const DEVICE = /^[A-Za-z0-9_-]{8,64}$/
@@ -23,22 +24,13 @@ const AWAY = 'the application is not answering - try again'
 
 export const appsDoor = new Hono<{ Bindings: Env }>()
 
-/** Whether applications are switched on. */
-async function appsOn(env: Env): Promise<boolean> {
-  if (!env.APPS) return false
-  const row = await env.DB.prepare("select value from online_service where key = 'apps'").first<{
-    value: string
-  }>()
-  return row?.value === 'on'
-}
-
 /** Whether the file is the person's own: in a space they own, and not deleted. */
 const OWNED = `select 1 as yes from notes n join spaces s on s.id = n.space_id
   where n.id = ?1 and s.user_id = ?2 and coalesce(n.deleted, 0) = 0`
 
 appsDoor.get('/:app/socket', async (context) => {
   const env = context.env
-  if (!(await appsOn(env))) return context.json({ error: 'not found' }, 404)
+  if (!(await appsOn(env))) return context.json({ error: NOT_FOUND }, 404)
   if (context.req.header('upgrade')?.toLowerCase() !== 'websocket') {
     return context.json({ error: 'an application is a websocket' }, 426)
   }
@@ -65,11 +57,11 @@ appsDoor.get('/:app/socket', async (context) => {
     env.DB.prepare(OWNED).bind(app, who).first<{ yes: number }>(),
     deviceName(env, device, who),
   ])
-  if (!owned) return context.json({ error: 'not found' }, 404)
+  if (!owned) return context.json({ error: NOT_FOUND }, 404)
 
   const host = offered.includes(HOST_PROTOCOL)
   const namespace = env.APPS
-  if (!namespace) return context.json({ error: 'not found' }, 404)
+  if (!namespace) return context.json({ error: NOT_FOUND }, 404)
   const answer = await namespace
     .get(namespace.idFromName(`${who}:${app}`))
     .fetch('https://app.invalid/join', {

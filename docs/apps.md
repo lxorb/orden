@@ -46,3 +46,36 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
   terminal's `Channel` with the application's frames). It says where the application stands -
   waiting for its computer, running on it, not running, or held by another device with Take over
   - with Start, Stop and Restart. The picture comes with the host and the stream (steps 3 and 4).
+
+## The host (step 3)
+
+- **What this computer has installed** (`apps_host/installed.rs`): on Linux the desktop entries
+  of the XDG data folders, read as the Desktop Entry Specification says (the first folder with
+  an id wins; hidden entries, entries not shown in menus, terminal programs and entries whose
+  `TryExec` is missing are left out), with their icons from the hicolor theme or `pixmaps`; on
+  Windows the Start menu's shortcuts; on a Mac the bundles in `/Applications` and
+  `~/Applications`.
+- **The catalogue**: the host writes that list to the account, `PUT /v2/apps/catalogue`, for its
+  own device (the session's, never one the request names), and any of the reader's devices reads
+  it, `GET /v2/apps/catalogue/:device` (`services/sync/src/apps/catalogue.ts`, the table
+  `app_catalogues`). Behind the door's switch; gone with the device when it is ended and with
+  the account. **New application** offers it by name and icon (this computer's own list is asked
+  of the crate directly), with **Another program…** for a path.
+- **Hosting** (`apps/desktop/src/lib/apps/host.svelte.ts`): in developer mode, signed in, on a
+  desktop, every application file of the open space that names this device gets a socket to its
+  relay as the host. The holder's Start, Stop and Restart are done by the crate
+  (`apps_host.rs`), and where the application stands is said back, with a reason when it did
+  not start (`why`: `isolation`, `display`, `refused`, `missing`, `failed`). Nothing starts by
+  itself; an application keeps running when its viewer leaves and when the host's window
+  reloads, and stops when it is stopped, when its file goes and when Orden quits.
+- **What may run**: an installed application by the id the crate found and the command its own
+  entry holds; a program by its path only after the reader at the host said yes to that exact
+  program, arguments and folder in a dialog of the system's own, remembered in the app's local
+  data (a file `allowed.json` in its `apps` folder).
+- **Where**: on Linux, an Xvfb of its own (`apps_host/display.rs`) at the holder's size in
+  device pixels, with the toolkits told to speak X11 (`WAYLAND_DISPLAY` removed), in a process
+  group of its own that is what Stop ends. Xvfb not installed: the tab says so. Windows and
+  macOS: nothing is started, and the tab says the computer cannot give an application a
+  display of its own yet (step 8).
+- **Not yet**: a host serves the applications of the space it has open; a program that speaks
+  only Wayland needs a headless compositor (weston), which comes with the capture in step 4.

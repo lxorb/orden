@@ -38,6 +38,7 @@ import { onlineAdmin } from './machines/admin'
 import { sweepAudit } from './machines/audit'
 import { machineBundle } from './machines/bundle'
 import { onlineDoor } from './machines/door'
+import { appCatalogues } from './apps/catalogue'
 import { appsDoor } from './apps/door'
 import { isMachineHost, machineDomain } from './machines/hetzner-host'
 import { online } from './machines/routes'
@@ -304,6 +305,9 @@ app.route('/v1', notes)
 
 // Sync v2, the hub's half: the account's devices. See hub/devices.ts.
 app.route('/v2/devices', devices)
+// What each of the account's computers has installed, for New application (issue 1063;
+// apps/catalogue.ts). Behind the guard, unlike the application's door above.
+app.route('/v2/apps/catalogue', appCatalogues)
 // The reader's AI accounts, end to end between their devices; see ai/vault.ts.
 app.route('/v2/ai', aiVault)
 

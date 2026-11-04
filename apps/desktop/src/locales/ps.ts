@@ -2354,6 +2354,15 @@ export const ps: Dictionary = {
   'What does it run?': 'څه چلوي؟',
   'A program’s path, and its arguments': 'د یوه پروګرام لار، او دلیلونه یې',
   '{device} (this device)': '{device} (دا وسیله)',
+  'Find an application': 'یو اپلیکیشن ومومئ',
+  'Another program…': 'بل پروګرام…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} لا نشي کولی اپلیکیشن د خپل جلا ښودنځي پر مخ وچلوي.',
+  '{device} needs Xvfb to run an application.':
+    '{device} د اپلیکیشن چلولو لپاره Xvfb ته اړتیا لري.',
+  '{device} did not allow this program.': '{device} دې پروګرام ته اجازه ورنکړه.',
+  '{device} does not have this application.': '{device} دا اپلیکیشن نه لري.',
+  'It did not start on {device}.': 'پر {device} پیل نه شو.',
   'Start online machine': 'آنلاین ماشین پیل کړئ',
   'Stop online machine': 'آنلاین ماشین ودروئ',
   Resume: 'بیا پیل',

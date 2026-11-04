@@ -196,6 +196,8 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
         // And nothing a terminal started is left running once the app has gone.
         RunEvent::Exit => {
             crate::terminal::end_all(app);
+            // Nor any application it hosted, nor the display it drew on; see apps_host.rs.
+            crate::apps_host::end_all(app);
             // Nor any Claude Code or Codex a question started; see ai_cli.rs.
             crate::ai_cli::end_all(app);
             // And no notice left on the screen to answer into an Orden that has gone; see

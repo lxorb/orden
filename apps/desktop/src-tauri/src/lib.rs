@@ -33,6 +33,10 @@
 
 #[cfg(desktop)]
 mod agents;
+// An application running on this computer for a tab on another, on a display of its
+// own (issue 1063); see apps_host.rs.
+#[cfg(desktop)]
+mod apps_host;
 // What a launch reads first, read while the webview starts; see ahead.rs.
 #[cfg(desktop)]
 mod ahead;
@@ -533,6 +537,10 @@ macro_rules! desktop_commands {
             terminal::pty_resize,
             terminal::pty_seen,
             terminal::pty_busy,
+            apps_host::apps_installed,
+            apps_host::apps_start,
+            apps_host::apps_watch,
+            apps_host::apps_stop,
             terminal::pty_folder,
             terminal::pty_program,
             terminal::pty_kill,
@@ -767,6 +775,10 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     // terminal.rs.
     #[cfg(desktop)]
     let builder = terminal::managed(builder);
+
+    // The applications this computer hosts; see apps_host.rs.
+    #[cfg(desktop)]
+    let builder = builder.manage(apps_host::Hosted::default());
 
     // The questions Claude Code and Codex are answering, and the ChatGPT plan's access
     // token of the hour; see ai_cli.rs and chatgpt.rs.

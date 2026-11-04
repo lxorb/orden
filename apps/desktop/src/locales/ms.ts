@@ -2341,6 +2341,15 @@ export const ms: Dictionary = {
   'What does it run?': 'Apa yang dijalankannya?',
   'A program’s path, and its arguments': 'Laluan program, dan argumennya',
   '{device} (this device)': '{device} (peranti ini)',
+  'Find an application': 'Cari aplikasi',
+  'Another program…': 'Program lain…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} belum boleh menjalankan aplikasi pada paparan sendiri.',
+  '{device} needs Xvfb to run an application.':
+    '{device} memerlukan Xvfb untuk menjalankan aplikasi.',
+  '{device} did not allow this program.': '{device} tidak membenarkan program ini.',
+  '{device} does not have this application.': '{device} tiada aplikasi ini.',
+  'It did not start on {device}.': 'Ia tidak bermula pada {device}.',
   'Start online machine': 'Mulakan mesin dalam talian',
   'Stop online machine': 'Hentikan mesin dalam talian',
   Resume: 'Sambung semula',

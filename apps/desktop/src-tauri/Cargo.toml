@@ -38,7 +38,9 @@ missing_docs = "warn"
 # web tab's page is cut to round the app's layers over it (src/web_cut.rs). And the
 # window's top edge strip, shown only while that edge resizes the window
 # (src/top_edge.rs). And the trust a Mac's web tab was served with, and the chain
-# of certificates in it, for the site's popover (src/web_certificate/webkit.rs). None of
+# of certificates in it, for the site's popover (src/web_certificate/webkit.rs). And
+# `kill(2)` on the process group of an application this computer hosts, which is how it
+# and everything it started are ended (src/apps_host.rs). None of
 # them has a safe wrapper to use instead, and anything new that wants unsafe has to
 # say so at the function and say why.
 unsafe_code = "deny"

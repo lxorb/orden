@@ -2364,6 +2364,15 @@ export const tr: Dictionary = {
   'What does it run?': 'Neyi çalıştırsın?',
   'A program’s path, and its arguments': 'Bir programın yolu ve argümanları',
   '{device} (this device)': '{device} (bu cihaz)',
+  'Find an application': 'Uygulama bul',
+  'Another program…': 'Başka bir program…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} henüz bir uygulamayı kendine ait bir ekranda çalıştıramıyor.',
+  '{device} needs Xvfb to run an application.':
+    '{device} bir uygulamayı çalıştırmak için Xvfb’ye ihtiyaç duyuyor.',
+  '{device} did not allow this program.': '{device} bu programa izin vermedi.',
+  '{device} does not have this application.': '{device} cihazında bu uygulama yok.',
+  'It did not start on {device}.': '{device} üzerinde başlamadı.',
   'Start online machine': 'Çevrimiçi makineyi başlat',
   'Stop online machine': 'Çevrimiçi makineyi durdur',
   Resume: 'Devam et',

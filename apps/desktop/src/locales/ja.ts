@@ -2335,6 +2335,15 @@ export const ja: Dictionary = {
   'What does it run?': '何を実行しますか？',
   'A program’s path, and its arguments': 'プログラムのパスと引数',
   '{device} (this device)': '{device}（このデバイス）',
+  'Find an application': 'アプリケーションを検索',
+  'Another program…': '別のプログラム…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} はまだアプリケーションを専用の画面で実行できません。',
+  '{device} needs Xvfb to run an application.':
+    'アプリケーションを実行するには {device} に Xvfb が必要です。',
+  '{device} did not allow this program.': '{device} はこのプログラムを許可しませんでした。',
+  '{device} does not have this application.': '{device} にはこのアプリケーションがありません。',
+  'It did not start on {device}.': '{device} で起動しませんでした。',
   'Start online machine': 'オンラインマシンを起動',
   'Stop online machine': 'オンラインマシンを停止',
   Resume: '再開',

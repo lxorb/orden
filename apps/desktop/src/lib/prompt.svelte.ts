@@ -36,6 +36,10 @@ interface Choice {
    *  gives it - the space's own icon, or its first letter - in the box a mark
    *  would be in, so the names in the list still read as one column. */
   space?: { id: string | null; name: string }
+  /** A picture of the thing itself, in the box a mark would be in: an installed
+   *  application's own icon, as its computer sent it (a data URL; apps/make.ts). An
+   *  image draws no script, so one from another device is only ever a picture. */
+  picture?: string
 }
 
 interface Choose {

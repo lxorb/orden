@@ -2380,6 +2380,15 @@ export const ml: Dictionary = {
   'What does it run?': 'ഇത് എന്ത് പ്രവർത്തിപ്പിക്കും?',
   'A program’s path, and its arguments': 'ഒരു പ്രോഗ്രാമിന്റെ പാത്ത്, അതിന്റെ ആർഗ്യുമെന്റുകൾ',
   '{device} (this device)': '{device} (ഈ ഉപകരണം)',
+  'Find an application': 'ആപ്ലിക്കേഷൻ തിരയുക',
+  'Another program…': 'മറ്റൊരു പ്രോഗ്രാം…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device}-ന് ഇതുവരെ സ്വന്തം ഡിസ്‌പ്ലേയിൽ ആപ്ലിക്കേഷൻ പ്രവർത്തിപ്പിക്കാനാവില്ല.',
+  '{device} needs Xvfb to run an application.':
+    'ആപ്ലിക്കേഷൻ പ്രവർത്തിപ്പിക്കാൻ {device}-ന് Xvfb വേണം.',
+  '{device} did not allow this program.': '{device} ഈ പ്രോഗ്രാം അനുവദിച്ചില്ല.',
+  '{device} does not have this application.': '{device}-ൽ ഈ ആപ്ലിക്കേഷൻ ഇല്ല.',
+  'It did not start on {device}.': '{device}-ൽ ഇത് ആരംഭിച്ചില്ല.',
   'Start online machine': 'ഓൺലൈൻ മെഷീൻ ആരംഭിക്കുക',
   'Stop online machine': 'ഓൺലൈൻ മെഷീൻ നിർത്തുക',
   Resume: 'തുടരുക',

@@ -2396,6 +2396,15 @@ export const fil: Dictionary = {
   'What does it run?': 'Ano ang patatakbuhin nito?',
   'A program’s path, and its arguments': 'Path ng isang program, at ang mga argument nito',
   '{device} (this device)': '{device} (ang device na ito)',
+  'Find an application': 'Maghanap ng application',
+  'Another program…': 'Ibang program…',
+  '{device} cannot run an application on a display of its own yet.':
+    'Hindi pa kayang magpatakbo ng {device} ng application sa sarili nitong display.',
+  '{device} needs Xvfb to run an application.':
+    'Kailangan ng {device} ang Xvfb para magpatakbo ng application.',
+  '{device} did not allow this program.': 'Hindi pinayagan ng {device} ang program na ito.',
+  '{device} does not have this application.': 'Wala sa {device} ang application na ito.',
+  'It did not start on {device}.': 'Hindi ito nagsimula sa {device}.',
   'Start online machine': 'Simulan ang online na makina',
   'Stop online machine': 'Ihinto ang online na makina',
   Resume: 'Ituloy',

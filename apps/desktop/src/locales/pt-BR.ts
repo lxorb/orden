@@ -2396,6 +2396,15 @@ export const ptBR: Dictionary = {
   'What does it run?': 'O que ele executa?',
   'A program’s path, and its arguments': 'O caminho de um programa e seus argumentos',
   '{device} (this device)': '{device} (este dispositivo)',
+  'Find an application': 'Buscar um aplicativo',
+  'Another program…': 'Outro programa…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} ainda não consegue rodar um aplicativo em uma tela própria.',
+  '{device} needs Xvfb to run an application.':
+    '{device} precisa do Xvfb para rodar um aplicativo.',
+  '{device} did not allow this program.': '{device} não permitiu este programa.',
+  '{device} does not have this application.': '{device} não tem este aplicativo.',
+  'It did not start on {device}.': 'Não iniciou em {device}.',
   'Start online machine': 'Iniciar máquina online',
   'Stop online machine': 'Parar máquina online',
   Resume: 'Retomar',

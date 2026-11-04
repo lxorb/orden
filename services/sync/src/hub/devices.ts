@@ -120,6 +120,11 @@ async function endDevice(env: Env, user: string, device: string): Promise<boolea
 
   await env.DB.batch([
     env.DB.prepare('delete from web_keys where user_id = ? and device_id = ?').bind(user, device),
+    // What it had installed, for New application (apps/catalogue.ts).
+    env.DB.prepare('delete from app_catalogues where user_id = ? and device_id = ?').bind(
+      user,
+      device,
+    ),
     // Where it was pushed to, by the device it said it was and by the session it
     // registered through: a lost phone is told nothing more (#454, push/live.ts).
     env.DB.prepare(
