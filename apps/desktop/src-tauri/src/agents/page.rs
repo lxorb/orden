@@ -594,18 +594,18 @@ impl FrameMap {
         (parallel && map.determinant().abs() > 1e-6).then_some(map)
     }
 
-    fn determinant(&self) -> f64 {
+    fn determinant(self) -> f64 {
         self.across.0 * self.down.1 - self.across.1 * self.down.0
     }
 
-    fn to_page(&self, (x, y): (f64, f64)) -> (f64, f64) {
+    fn to_page(self, (x, y): (f64, f64)) -> (f64, f64) {
         (
             self.origin.0 + self.across.0 * x + self.down.0 * y,
             self.origin.1 + self.across.1 * x + self.down.1 * y,
         )
     }
 
-    fn to_frame(&self, (x, y): (f64, f64)) -> Option<(f64, f64)> {
+    fn to_frame(self, (x, y): (f64, f64)) -> Option<(f64, f64)> {
         let det = self.determinant();
         if det.abs() <= 1e-6 {
             return None;
