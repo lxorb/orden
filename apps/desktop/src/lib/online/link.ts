@@ -29,7 +29,11 @@
  *    left to the browser, which can wait minutes on a network that went.
  *
  *  Pure of the page: the socket, the clock and the token are the world's, so the tests
- *  drive it with a fake (link.test.ts). */
+ *  drive it with a fake (link.test.ts).
+ *
+ *  All of that but what the frames are is `Channel`'s, which an application's socket
+ *  is made of too (apps/link.ts, issue 1063): its own frames, the same lock, the same
+ *  beats, looks and tries. */
 
 import {
   type ClientFrame,
@@ -38,7 +42,6 @@ import {
   type ServerFrame,
   serverFrameOf,
   socketPath,
-  text,
 } from '@orden/online/wire'
 import { BEAT } from '@orden/sync-core/wire'
 import { BEAT_EVERY, linkDelay } from '../backoff'
@@ -77,14 +80,12 @@ export interface LinkWorld {
   watch(back: () => void): () => void
 }
 
+/** What any channel tells its owner besides its frames: the socket is open and said
+ *  hello, or it dropped and is coming back by itself. */
+export type Opened = { t: 'open' } | { t: 'dropped' }
+
 /** What the link tells the terminal. */
-export type Heard =
-  | { t: 'out'; data: Uint8Array }
-  | ServerFrame
-  /** The socket is open and said hello. */
-  | { t: 'open' }
-  /** The socket dropped and is coming back by itself. */
-  | { t: 'dropped' }
+export type Heard = { t: 'out'; data: Uint8Array } | ServerFrame | Opened
 
 /** Beats with nothing heard after which a socket is counted dead. */
 const SILENT_BEATS = 3
@@ -105,16 +106,15 @@ const SLEPT = BEAT_EVERY
 /** Refusals that the same socket, asked again later, would get again. */
 const FINAL: readonly Refusal[] = ['gone', 'list', 'allowance', 'budget', 'off', 'flag']
 
-export class Link {
-  /** The offset of the first byte not drawn, once anything has been. */
-  private since: number | null = null
+/** A socket that comes back by itself, beats and is looked at, and takes part in its
+ *  session's lock: everything about one but its frames, which `In` and `Out` are. */
+export abstract class Channel<In extends { t: string }, Out extends { t: string }> {
   private socket: LinkSocket | null = null
   private retry: (() => void) | null = null
   private tries = 0
   private closed = false
-  /** Why the last refusal that waits for the reader was given, if one was. */
-  private stopped: Refusal | null = null
-  private size: { cols: number; rows: number }
+  /** Whether a refusal that waits for the reader was given. */
+  private stopped = false
   /** Beats since anything was heard, and what stops the next one. */
   private quiet = 0
   private stopBeat: (() => void) | null = null
@@ -127,19 +127,28 @@ export class Link {
   private unwatch: (() => void) | null = null
 
   constructor(
-    private readonly term: string,
+    private readonly name: string,
     private readonly world: LinkWorld,
-    private readonly heard: (what: Heard) => void,
-    cols: number,
-    rows: number,
-  ) {
-    this.size = { cols, rows }
+    protected readonly heard: (what: In | Opened) => void,
+  ) {}
+
+  /** The socket's address, from the service's root, for the name it was made with. */
+  protected abstract path(name: string): string
+  /** The hello it opens with, and says again once handed the session. */
+  protected abstract helloFrame(): Out
+  /** A message as the frame it is, or null for one to drop. */
+  protected abstract read(data: string | ArrayBuffer): In | null
+  /** Whether a frame is a refusal that asking again would get again. */
+  protected abstract final(frame: In): boolean
+  /** Whether a frame from up is typing, which a socket that is gone would swallow. */
+  protected typing(_frame: Out): boolean {
+    return false
   }
 
   /** Opens it; and again, after a refusal that waited for the reader. */
   open(): void {
     this.closed = false
-    this.stopped = null
+    this.stopped = false
     this.retry?.()
     this.retry = null
     this.unwatch ??= this.world.watch(() => {
@@ -179,7 +188,7 @@ export class Link {
     void this.world.device().then(
       (device) => {
         if (this.closed || this.socket) return
-        const url = `${this.world.base.replace(/^http/, 'ws')}${socketPath(this.term)}`
+        const url = `${this.world.base.replace(/^http/, 'ws')}${this.path(this.name)}`
         let socket: LinkSocket | null = null
         try {
           socket = this.world.socket(url, [`nib.token.${token}`, `nib.device.${device}`], {
@@ -308,67 +317,44 @@ export class Link {
   }
 
   private hear(data: string | ArrayBuffer): void {
-    if (typeof data !== 'string') {
-      const out = outOf(new Uint8Array(data))
-      if (!out) return
-      const end = out.seq + out.data.length
-      // Drawn already, all or some of it: what a reconnect sends again.
-      if (this.since !== null && end <= this.since) return
-      const skip = this.since === null ? 0 : Math.max(0, this.since - out.seq)
-      this.since = end
-      this.heard({ t: 'out', data: out.data.subarray(skip) })
-      return
-    }
-
-    const frame = serverFrameOf(data)
+    const frame = this.read(data)
     if (!frame) return
-    if (frame.t === 'screen') this.since = frame.seq
     // Held off until now: what it missed is asked for as on any other hello.
     if (frame.t === 'hold') this.hello()
-    if (frame.t === 'refused' && FINAL.includes(frame.error)) this.stopped = frame.error
+    if (this.final(frame)) this.stopped = true
     this.heard(frame)
   }
 
   /** A frame up, if the socket is open; nothing waits for one that is not, since what
    *  the reader typed into a dropped terminal is not what they would type into the
    *  screen they will see when it is back. */
-  say(frame: ClientFrame): boolean {
+  say(frame: Out): boolean {
     if (!this.socket?.open) return false
-    this.send(this.socket, text(frame))
+    this.send(this.socket, JSON.stringify(frame))
     // Keys going into a socket that is gone would be felt at once: looked at now.
-    if (frame.t === 'in') this.probe()
+    if (this.typing(frame)) this.probe()
     return true
   }
 
-  /** The hello a socket opens with: the screen's size, the offset drawn up to, and that it
-   *  takes part in the session's lock. */
-  private hello(): void {
-    this.say({
-      t: 'hello',
-      ...this.size,
-      ...(this.since === null ? {} : { since: this.since }),
-      hold: true,
-    })
-  }
-
-  /** Take over: the session handed to this device, where another holds it. */
-  take(): boolean {
-    return this.say({ t: 'take' })
-  }
-
-  /** Bytes up, as they were made: a key xterm.js encoded itself. */
-  sayBytes(bytes: Uint8Array): boolean {
+  /** Bytes up, as they were made. */
+  protected sayRaw(bytes: Uint8Array): boolean {
     if (!this.socket?.open) return false
     this.send(this.socket, bytes)
     this.probe()
     return true
   }
 
-  /** The screen's size here, said now and with every hello after. */
-  resize(cols: number, rows: number): void {
-    if (cols === this.size.cols && rows === this.size.rows) return
-    this.size = { cols, rows }
-    this.say({ t: 'size', cols, rows })
+  /** The hello a socket opens with, and that it takes part in the session's lock. */
+  private hello(): void {
+    if (!this.socket?.open) return
+    this.send(this.socket, JSON.stringify(this.helloFrame()))
+  }
+
+  /** Take over: the session handed to this device, where another holds it. */
+  take(): boolean {
+    if (!this.socket?.open) return false
+    this.send(this.socket, JSON.stringify({ t: 'take' }))
+    return true
   }
 
   /** Whether it is open now. */
@@ -391,8 +377,76 @@ export class Link {
     const socket = this.socket
     this.socket = null
     // The session let go of now, for another device to have at once.
-    if (socket?.open) this.send(socket, text({ t: 'leave' }))
+    if (socket?.open) this.send(socket, JSON.stringify({ t: 'leave' }))
     socket?.close()
+  }
+}
+
+/** The socket from one online terminal to its session. */
+export class Link extends Channel<Exclude<Heard, Opened>, ClientFrame> {
+  /** The offset of the first byte not drawn, once anything has been. */
+  private since: number | null = null
+  private size: { cols: number; rows: number }
+
+  constructor(
+    term: string,
+    world: LinkWorld,
+    heard: (what: Heard) => void,
+    cols: number,
+    rows: number,
+  ) {
+    super(term, world, heard)
+    this.size = { cols, rows }
+  }
+
+  protected path(term: string): string {
+    return socketPath(term)
+  }
+
+  /** The screen's size, the offset drawn up to, and that it takes part in the lock. */
+  protected helloFrame(): ClientFrame {
+    return {
+      t: 'hello',
+      ...this.size,
+      ...(this.since === null ? {} : { since: this.since }),
+      hold: true,
+    }
+  }
+
+  protected read(data: string | ArrayBuffer): Exclude<Heard, Opened> | null {
+    if (typeof data !== 'string') {
+      const out = outOf(new Uint8Array(data))
+      if (!out) return null
+      const end = out.seq + out.data.length
+      // Drawn already, all or some of it: what a reconnect sends again.
+      if (this.since !== null && end <= this.since) return null
+      const skip = this.since === null ? 0 : Math.max(0, this.since - out.seq)
+      this.since = end
+      return { t: 'out', data: out.data.subarray(skip) }
+    }
+    const frame = serverFrameOf(data)
+    if (frame?.t === 'screen') this.since = frame.seq
+    return frame
+  }
+
+  protected final(frame: Exclude<Heard, Opened>): boolean {
+    return frame.t === 'refused' && FINAL.includes(frame.error)
+  }
+
+  protected override typing(frame: ClientFrame): boolean {
+    return frame.t === 'in'
+  }
+
+  /** Bytes up, as they were made: a key xterm.js encoded itself. */
+  sayBytes(bytes: Uint8Array): boolean {
+    return this.sayRaw(bytes)
+  }
+
+  /** The screen's size here, said now and with every hello after. */
+  resize(cols: number, rows: number): void {
+    if (cols === this.size.cols && rows === this.size.rows) return
+    this.size = { cols, rows }
+    this.say({ t: 'size', cols, rows })
   }
 }
 

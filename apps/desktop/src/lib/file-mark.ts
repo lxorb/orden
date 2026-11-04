@@ -11,6 +11,7 @@
  *  little else. `FileMark.svelte` draws what it answers. */
 
 import {
+  isApplicationTarget,
   isBaseTarget,
   isCanvasTarget,
   isChatTarget,
@@ -65,6 +66,16 @@ const Workflow: IconNode = [
   ['rect', { width: '9', height: '9', x: '2', y: '2', rx: '2.25' }],
   ['path', { d: 'M6.5 11v4.25a2.25 2.25 0 0 0 2.25 2.25H13' }],
   ['rect', { width: '9', height: '9', x: '13', y: '13', rx: '2.25' }],
+]
+
+/** An application: Lucide's `panel-top`, a window with its bar, on the grid the rest of
+ *  the set is drawn on. Lucide draws it to eighteen units, from 3 to 21, which in the
+ *  empty pane's buttons reads as the application's card sitting smaller and lower than
+ *  the note's beside it - the canvas's trouble, above. So the same window, as tall as a
+ *  page, 2 to 22: its corner as Lucide drew it and its bar a third of the way down. */
+const Window: IconNode = [
+  ['rect', { width: '18', height: '20', x: '3', y: '2', rx: '2' }],
+  ['path', { d: 'M3 9h18' }],
 ]
 
 /** The top of Lucide's page - its outline and its folded corner, as `file` draws them -
@@ -142,6 +153,7 @@ export type FileMark =
   | 'remote'
   | 'base'
   | 'chat'
+  | 'application'
 
 /** The mark a file's name earns it.
  *
@@ -159,6 +171,7 @@ export function fileMark(name: string): FileMark {
   if (isChatTarget(name)) return 'chat'
   // An online terminal's file wears the terminal its tab is (issue 1055).
   if (isTermTarget(name)) return 'terminal'
+  if (isApplicationTarget(name)) return 'application'
   if (isImageTarget(name)) return 'picture'
   if (isMarkdownPath(name)) return 'note'
   return 'file'
@@ -218,6 +231,9 @@ export const MARKS: Record<FileMark, IconNode> = {
   base: Table,
   // A speech bubble: a chat (docs/chats.md).
   chat: MessageSquare,
+  // A window with its bar: an application running on one of the reader's devices
+  // (docs/apps.md), on the set's grid; see `Window`.
+  application: Window,
 }
 
 /** What an essential's tile wears: its file's mark, or for a note that chose no icon

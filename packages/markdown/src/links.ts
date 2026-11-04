@@ -138,6 +138,11 @@ export function isChatTarget(target: string): boolean {
   return /\.chat$/i.test(target)
 }
 
+/** Whether a target names an application: its `.application` file (docs/apps.md). */
+export function isApplicationTarget(target: string | null): boolean {
+  return target !== null && /\.application$/i.test(target)
+}
+
 /** Whether a target names an online terminal: its `.term` file
  *  (docs/online-terminal.md 4.5). */
 export function isTermTarget(target: string | null): boolean {

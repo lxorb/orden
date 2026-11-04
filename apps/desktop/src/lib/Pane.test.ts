@@ -21,6 +21,7 @@ const SURFACES = [...SOURCE.matchAll(/\{#await (\w+Surface)\(\) then \w+\}([\s\S
 describe('a surface a pane is filled with', () => {
   test('is every kind of tab a pane can show', () => {
     expect(SURFACES.map(([, door]) => door).sort()).toEqual([
+      'applicationSurface',
       'canvasSurface',
       'chatSurface',
       'emptySurface',

@@ -22,7 +22,13 @@ import {
   spaceOf,
   within,
 } from './paths'
-import { isBaseTarget, isChatTarget, isTermTarget, isWebTarget } from '@orden/markdown/links'
+import {
+  isApplicationTarget,
+  isBaseTarget,
+  isChatTarget,
+  isTermTarget,
+  isWebTarget,
+} from '@orden/markdown/links'
 import { assetType } from './asset-route'
 import { isReserved } from '../naming'
 import { assets, type FileRow, files, KEEP, meta, snapshots, stats } from './store'
@@ -125,8 +131,8 @@ function chunksOf(
 }
 
 /** Whether a file is one the tree shows: a note, a PDF beside one, a canvas, a page
- *  note, a website, a base, a chat's pointer (docs/chats.md 4.2) or an online terminal
- *  (issue 1055). The same kinds the desktop's `read_tree` lists, and for the
+ *  note, a website, a base, a chat's pointer (docs/chats.md 4.2), an online terminal
+ *  (issue 1055) or an application (docs/apps.md). The same kinds the desktop's `read_tree` lists, and for the
  *  same reason - they are the things a tab can hold. A page note was left out of
  *  both lists, which left one drawn in a tab and nowhere else: no row in the file
  *  list, nothing for a search to read, and nothing for the mirror to send up, since
@@ -140,7 +146,8 @@ function listed(path: string): boolean {
     isWebTarget(path) ||
     isBaseTarget(path) ||
     isChatTarget(path) ||
-    isTermTarget(path)
+    isTermTarget(path) ||
+    isApplicationTarget(path)
   )
 }
 
@@ -241,7 +248,7 @@ function readsAsText(path: string): boolean {
     isCanvas(path) ||
     isPages(path) ||
     path.endsWith(SIDECAR) ||
-    /\.(base|url|webloc|term|chat)$/i.test(path)
+    /\.(base|url|webloc|term|chat|application)$/i.test(path)
   )
 }
 

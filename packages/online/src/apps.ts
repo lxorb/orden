@@ -221,3 +221,64 @@ export function toHostOf(raw: string): RelayToHost | null {
       return null
   }
 }
+
+// ---------------------------------------------------------------------------
+// The file
+
+/** The extension an application's file has: its own word, since a `.app` is a folder on
+ *  a Mac and Finder would draw the file as a broken bundle. */
+export const APP_EXTENSION = '.application'
+
+/** What an application runs: one installed on its host, by the id the host lists it
+ *  under and the name it was shown with; or a program by its path, with its arguments
+ *  and the folder it starts in. */
+export type AppRun =
+  | { kind: 'installed'; id: string; name: string }
+  | { kind: 'path'; path: string; args: string[]; cwd: string | null }
+
+/** An application's file: the device it runs on, and what it runs there. */
+export interface AppFile {
+  v: 1
+  host: string
+  run: AppRun
+}
+
+const LONGEST = 4096
+
+function isText(value: unknown, most = LONGEST): value is string {
+  return typeof value === 'string' && value.length > 0 && value.length <= most
+}
+
+function runOfFile(value: unknown): AppRun | null {
+  if (!isRecord(value)) return null
+  if (value.kind === 'installed') {
+    return isText(value.id) && isText(value.name, 200)
+      ? { kind: 'installed', id: value.id, name: value.name }
+      : null
+  }
+  if (value.kind !== 'path' || !isText(value.path)) return null
+  const args = value.args ?? []
+  if (!Array.isArray(args) || args.length > 256 || !args.every((one) => typeof one === 'string'))
+    return null
+  const cwd = value.cwd ?? null
+  if (!(cwd === null || isText(cwd))) return null
+  return { kind: 'path', path: value.path, args, cwd }
+}
+
+/** An application file's text as its fields, or null for text that is not one: read
+ *  strictly, as a `.term` is, and extra fields dropped. */
+export function appFileOf(text: string): AppFile | null {
+  const value = parsed(text)
+  if (!isRecord(value) || value.v !== 1 || !isText(value.host, 200)) return null
+  const run = runOfFile(value.run)
+  return run ? { v: 1, host: value.host, run } : null
+}
+
+/** The text an application's file is written with: one line of JSON and a newline. */
+export function appFileText(app: AppFile): string {
+  const run =
+    app.run.kind === 'installed'
+      ? { kind: 'installed', id: app.run.id, name: app.run.name }
+      : { kind: 'path', path: app.run.path, args: app.run.args, cwd: app.run.cwd }
+  return `${JSON.stringify({ v: 1, host: app.host, run })}\n`
+}

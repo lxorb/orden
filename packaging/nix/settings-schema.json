@@ -450,6 +450,11 @@
     "default": "running",
     "description": "Asks before Orden quits with terminals open: always, or only while something runs in one."
   },
+  "kinds.application": {
+    "type": "boolean",
+    "default": true,
+    "description": "Offers this type when you make something new; off only takes it out of that list."
+  },
   "kinds.canvas": {
     "type": "boolean",
     "default": true,

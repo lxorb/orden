@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  type AppFile,
+  appFileOf,
+  appFileText,
   appSocketPath,
   hostFrameOf,
   MOST_SIGNAL,
@@ -66,5 +69,35 @@ describe('an application’s socket', () => {
 
   it('names the socket by the file id, escaped', () => {
     expect(appSocketPath('a/b')).toBe('/v2/apps/a%2Fb/socket')
+  })
+})
+
+describe('an application’s file', () => {
+  it('reads back what it wrote, both kinds of run', () => {
+    const installed = {
+      v: 1,
+      host: 'd_1',
+      run: { kind: 'installed', id: 'org.gimp.GIMP', name: 'GIMP' },
+    } satisfies AppFile
+    const path: AppFile = {
+      v: 1,
+      host: 'd_1',
+      run: { kind: 'path', path: '/usr/bin/xclock', args: ['-digital'], cwd: null },
+    }
+    expect(appFileOf(appFileText(installed))).toEqual(installed)
+    expect(appFileOf(appFileText(path))).toEqual(path)
+  })
+
+  it('is read strictly: anything else is not an application', () => {
+    expect(appFileOf('')).toBeNull()
+    expect(appFileOf('{"v":2,"host":"d","run":{"kind":"path","path":"/x"}}')).toBeNull()
+    expect(appFileOf('{"v":1,"host":"","run":{"kind":"path","path":"/x"}}')).toBeNull()
+    expect(appFileOf('{"v":1,"host":"d","run":{"kind":"path","path":"/x","args":[1]}}')).toBeNull()
+    expect(appFileOf('{"v":1,"host":"d","run":{"kind":"shell","cmd":"rm"}}')).toBeNull()
+    expect(appFileOf('{"v":1,"host":"d","run":{"kind":"path","path":"/x"}}')).toEqual({
+      v: 1,
+      host: 'd',
+      run: { kind: 'path', path: '/x', args: [], cwd: null },
+    })
   })
 })

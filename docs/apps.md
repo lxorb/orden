@@ -25,3 +25,24 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
   `state` (stopped, starting, running, exited) is kept for whoever joins later. A second host
   socket replaces the first. The application never stops because a viewer left.
 - The wire is `@orden/online/apps`.
+
+## The file and the tab (step 2)
+
+- **An application is a file**, `GIMP.application`: one line of JSON, the device it runs on
+  (`host`, the account's device id) and what it runs (`run`: an installed application's id and
+  name, or a program's path, its arguments and the folder it starts in). Read strictly, as an
+  online terminal's `.term` is (`appFileOf` in `@orden/online/apps`). Its own word rather than
+  `.app`, which is a folder on a Mac.
+- **Listed like every kind a tab can hold**: `is_application` in the crate's `tree.rs`, `listed`
+  in `web/commands.ts`, the `application` opener, its mark (a window), and
+  `web/commands.test.ts`'s list of one file of every opener. Synced as a file. In the sidebar only
+  in developer mode (`shownTree` in workspace.svelte.ts); elsewhere it is kept and synced, and
+  has no row.
+- **Made** from the new tab's card, **New application** (A), in developer mode
+  (`apps/desktop/src/lib/apps/make.ts`): which of the reader's computers it runs on (Linux, Windows, macOS), then a
+  program line, split as a shell splits it and never run by one (`programOf`).
+- **The tab** (`apps/desktop/src/lib/apps/ApplicationTab.svelte` and `session.svelte.ts`) reads the file, asks
+  sync for its id, and keeps a socket to the relay (`apps/desktop/src/lib/apps/link.ts`, which is the online
+  terminal's `Channel` with the application's frames). It says where the application stands -
+  waiting for its computer, running on it, not running, or held by another device with Take over
+  - with Start, Stop and Restart. The picture comes with the host and the stream (steps 3 and 4).

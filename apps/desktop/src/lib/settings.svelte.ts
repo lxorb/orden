@@ -190,7 +190,16 @@ export const settings = new Settings()
 export const KINDS_KEY = 'nib:hidden-kinds'
 
 export type KindName =
-  'note' | 'canvas' | 'pages' | 'chat' | 'terminal' | 'remote' | 'online' | 'web' | 'private'
+  | 'note'
+  | 'canvas'
+  | 'pages'
+  | 'chat'
+  | 'terminal'
+  | 'remote'
+  | 'online'
+  | 'application'
+  | 'web'
+  | 'private'
 
 export function kindsHere(): KindName[] {
   if (__EVEN_PLUGIN__) return ['note', 'canvas', 'pages']
@@ -201,6 +210,8 @@ export function kindsHere(): KindName[] {
   // Every terminal is for somebody who writes code; see `developer` in modes.svelte.ts.
   if (isDesktop && modes.coder) here.push('terminal', 'remote')
   if (modes.coder) here.push('online')
+  // An application on one of the reader's computers, used from any device (docs/apps.md).
+  if (modes.coder) here.push('application')
   if (web) here.push('web')
   if (web && isDesktop) here.push('private')
   return here

@@ -1,9 +1,11 @@
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
 import { account } from './account.svelte'
 import { hiddenKinds, settings } from './settings.svelte'
+import { modes } from './modes.svelte'
 import { arriving } from './arriving.svelte'
 import {
   blockIds,
+  isApplicationTarget,
   isCanvasTarget,
   isPagesTarget,
   isPdfTarget,
@@ -763,7 +765,15 @@ class Workspace {
     if (!coming) return null
 
     const root = coming.path
-    const listed = withoutRows(coming, (entry) => !entry.is_dir && isInstructions(root, entry.path))
+    // An application is developer mode's alone (docs/apps.md): elsewhere its file is
+    // synced and kept, and no row.
+    const coder = modes.coder
+    const listed = withoutRows(
+      coming,
+      (entry) =>
+        !entry.is_dir &&
+        (isInstructions(root, entry.path) || (!coder && isApplicationTarget(entry.path))),
+    )
     return orderedTree(this.unkept(this.unarchived(listed)), this.sortMode, (folder) =>
       this.arranged.listOf(folder),
     )
@@ -1506,7 +1516,7 @@ class Workspace {
    *  opens a tab with Ctrl held: what an agent makes for the reader without moving their
    *  screen (docs/agent-native.md 5.4). Nothing in front changes, so nothing goes. */
   openUnsaved(
-    kind: 'note' | 'canvas' | 'pages' | 'terminal',
+    kind: 'note' | 'canvas' | 'pages' | 'terminal' | 'application',
     text: string,
     name = UNTITLED,
     beside: string | null = null,
@@ -2652,6 +2662,9 @@ class Workspace {
         return
       case 'term':
         if (!__EVEN_PLUGIN__) (await import('./online/open')).openTerm(path, options)
+        return
+      case 'application':
+        if (!__EVEN_PLUGIN__) (await import('./apps/open')).openApplication(path, options)
         return
       case 'note':
         await this.open(path, options)

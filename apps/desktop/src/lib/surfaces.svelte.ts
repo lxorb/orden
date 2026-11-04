@@ -129,6 +129,14 @@ export const terminalSurface = held(() =>
     : import('./terminal/TerminalTab.svelte'),
 )
 
+/** An application running on one of the reader's devices (docs/apps.md). Never the
+ *  glasses' plugin's, which opens none. */
+export const applicationSurface = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no application in the Even Realities plugin'))
+    : import('./apps/ApplicationTab.svelte'),
+)
+
 /** A pane with nothing open, which is the kinds a new tab can be as buttons. Fetched
  *  like the surfaces above it and for the same reason: a window that opens on a note -
  *  which is nearly every window - should not carry the answer to a pane that has

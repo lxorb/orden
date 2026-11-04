@@ -36,6 +36,13 @@ vi.mock('./online/open', () => ({
     return Promise.resolve(null)
   },
 }))
+// And an application's asks which of the reader's computers it runs on; see apps/make.ts.
+vi.mock('./apps/make', () => ({
+  makeApplication: () => {
+    online.made?.push('application')
+    return Promise.resolve(null)
+  },
+}))
 
 const { kindLines, newKinds } = await import('./new-kinds')
 const { workspace } = await import('./workspace.svelte')
@@ -78,8 +85,15 @@ function makers(): string[] {
 }
 
 describe('the kinds a new tab can be', () => {
-  test('are the four, and an online terminal, in the order a reader is offered them', () => {
-    expect(newKinds().map((one) => one.kind)).toEqual(['note', 'canvas', 'pages', 'online', 'web'])
+  test('are the four, an online terminal and an application, in the order a reader is offered them', () => {
+    expect(newKinds().map((one) => one.kind)).toEqual([
+      'note',
+      'canvas',
+      'pages',
+      'online',
+      'application',
+      'web',
+    ])
   })
 
   /** *"Note, Canvas, Page Note | Terminal, Remote, Online Terminal | Web Note, Private Web
@@ -88,7 +102,7 @@ describe('the kinds a new tab can be', () => {
   test('stand in three lines: what is written, what runs, and the web', () => {
     expect(kindLines(newKinds()).map((line) => line.map((one) => one.kind))).toEqual([
       ['note', 'canvas', 'pages'],
-      ['online'],
+      ['online', 'application'],
       ['web'],
     ])
   })
@@ -99,6 +113,7 @@ describe('the kinds a new tab can be', () => {
       'New canvas',
       'New page note',
       'Online terminal',
+      'New application',
       'New web note',
     ])
   })
@@ -111,6 +126,7 @@ describe('the kinds a new tab can be', () => {
       'canvas',
       'pages',
       'terminal',
+      'application',
       'web',
     ])
   })
@@ -119,13 +135,25 @@ describe('the kinds a new tab can be', () => {
    *  there is no tab to make and the row would answer nothing. */
   test('leave the website out on a phone', () => {
     viewport.device = 'phone'
-    expect(newKinds().map((one) => one.kind)).toEqual(['note', 'canvas', 'pages', 'online'])
+    expect(newKinds().map((one) => one.kind)).toEqual([
+      'note',
+      'canvas',
+      'pages',
+      'online',
+      'application',
+    ])
   })
 
   /** And on a tablet, which hands every page to the system's browser as well (#206). */
   test('and on a tablet', () => {
     viewport.device = 'tablet'
-    expect(newKinds().map((one) => one.kind)).toEqual(['note', 'canvas', 'pages', 'online'])
+    expect(newKinds().map((one) => one.kind)).toEqual([
+      'note',
+      'canvas',
+      'pages',
+      'online',
+      'application',
+    ])
   })
 
   test('make one each', async () => {
@@ -136,6 +164,7 @@ describe('the kinds a new tab can be', () => {
     // after the ones behind them.
     await vi.waitFor(() =>
       expect([...made].sort()).toEqual([
+        'application',
         'canvas',
         'note',
         'online',
@@ -185,7 +214,7 @@ describe('the kinds a new tab can be', () => {
   test('each answers a letter of its own', () => {
     const letters = newKinds().map((one) => one.letter)
 
-    expect(letters).toEqual(['n', 'c', 'p', 'o', 'w'])
+    expect(letters).toEqual(['n', 'c', 'p', 'o', 'a', 'w'])
     expect(new Set(letters).size).toBe(letters.length)
   })
 })

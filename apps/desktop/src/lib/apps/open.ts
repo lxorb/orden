@@ -1,0 +1,27 @@
+/** An application's file in a tab of its own (docs/apps.md): one tab per file, as an
+ *  online terminal's, and only in developer mode - elsewhere the file opens nothing. */
+
+import { modes } from '../modes.svelte'
+import type { OpenHow } from '../new-tab'
+import { nameOf, samePath } from '../space-paths'
+import type { Tab } from '../workspace/documents.svelte'
+import { workspace } from '../workspace.svelte'
+
+/** The name an application's tab is called by: its file's, without the ending. */
+export function appName(path: string): string {
+  return nameOf(path).replace(/\.application$/i, '') || nameOf(path)
+}
+
+export function openApplication(path: string, how: OpenHow = {}): Tab | null {
+  if (__EVEN_PLUGIN__ || !modes.coder) return null
+  const open = workspace.tabs.find((one) => one.kind === 'application' && samePath(one.path, path))
+  if (open) {
+    if (how.activate !== false) workspace.activeTabId = open.id
+    return open
+  }
+  const beside = how.beside ? workspace.activeTabId : null
+  const tab = workspace.openUnsaved('application', '', appName(path), beside, how.activate ?? true)
+  tab.path = path
+  workspace.persist()
+  return tab
+}

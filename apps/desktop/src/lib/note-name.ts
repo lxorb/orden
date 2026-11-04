@@ -45,8 +45,8 @@ export function isAgentsName(name: string): boolean {
 }
 
 /** The endings a document is known by rather than named after: markdown's four, a
- *  canvas, a page note, the two a website is written as, a chat's pointer, a base and an
- *  online terminal - every kind a tab opens but a PDF (note-name.test.ts holds this to
+ *  canvas, a page note, the two a website is written as, a chat's pointer, a base, an
+ *  online terminal and an application - every kind a tab opens but a PDF (note-name.test.ts holds this to
  *  `Opener`, so a kind added there is shown without its ending or fails).
  *
  *  These are the kinds Orden writes and titles from the inside, so the ending is the
@@ -62,7 +62,7 @@ export function isAgentsName(name: string): boolean {
  *
  *  Either way the file on disk keeps every character of its name, so a vault opened
  *  next door reads exactly what this wrote. Only what is shown changes. */
-const OWN = /\.(md|markdown|mdown|mkd|canvas|pages|url|webloc|chat|base|term)$/i
+const OWN = /\.(md|markdown|mdown|mkd|canvas|pages|url|webloc|chat|base|term|application)$/i
 
 /** A document's name as everything that lists one shows it.
  *

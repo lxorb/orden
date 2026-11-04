@@ -151,6 +151,18 @@ const ROWS: Record<KindName, () => NewKindRow> = {
   // A shell on the reader's own machine in the cloud. O for Online. See
   // docs/online-terminal.md 4.10.
   online: () => onlineRow(),
+  // An application on one of the reader's computers (docs/apps.md). A for Application.
+  application: () => ({
+    kind: 'application',
+    line: 'run',
+    label: () => kindLabel('application'),
+    mark: 'application',
+    letter: 'a',
+    make: (paneId) => {
+      if (!__EVEN_PLUGIN__)
+        inPane(paneId, () => import('./apps/make').then(({ makeApplication }) => makeApplication()))
+    },
+  }),
   // On the search engine this device chose, which is where a browser's new tab lands.
   // Emil, #354: *"if you click on web note in the Ctrl + T menu, then it should open
   // your configured search engine"*. The press was already a choice of kind, so a
