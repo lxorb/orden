@@ -901,6 +901,7 @@ fn address(url: &str) -> Result<Url, String> {
 
 /// The reader script, told whether it is after a selection.
 pub(crate) fn reader(selection: bool) -> String {
+    // `/* __HIDE__ */` is where an agent's read leaves out what the policy names (page.rs).
     READER
         .replace("__SELECTION__", if selection { "yes" } else { "no" })
         .replace("__LONGEST__", &LONGEST_PAGE.to_string())

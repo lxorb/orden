@@ -55,7 +55,7 @@ const LIT: Duration = Duration::from_millis(300);
 /// Whether what a press lands on (`this`) is the element meant (`target`): it, inside it,
 /// round it, its label, or a frame it may be in. Across shadow roots, which `contains`
 /// stops at: a button inside a web component is pressed through its host.
-const INSIDE: &str = "function (target) { const up = (one) => one.parentNode || (one instanceof ShadowRoot ? one.host : null); const holds = (outer, inner) => { for (let one = inner; one; one = up(one)) if (one === outer) return true; return false }; const el = this.nodeType === 1 ? this : this.parentElement; if (!el) return true; if (holds(target, el) || holds(el, target)) return true; const label = el.closest('label'); if (label && (label.control === target || holds(label, target))) return true; return el.tagName === 'IFRAME' || el.tagName === 'FRAME' }";
+const INSIDE: &str = "function (place) { const target = place.element || place; const up = (one) => one.parentNode || (one instanceof ShadowRoot ? one.host : null); const holds = (outer, inner) => { for (let one = inner; one; one = up(one)) if (one === outer) return true; return false }; const el = this.nodeType === 1 ? this : this.parentElement; if (!el) return true; if (holds(target, el) || holds(el, target)) return true; const label = el.closest('label'); if (label && (label.control === target || holds(label, target))) return true; return el.tagName === 'IFRAME' || el.tagName === 'FRAME' }";
 
 /// The tallest full-page picture, in CSS pixels.
 const TALLEST: f64 = 16_384.0;
@@ -106,8 +106,10 @@ const FIELDS: &str = r"
 /// What a page's element says about itself and its form, for the policy and for what
 /// may be done to it. Run with the element as `this`.
 const FACTS_BODY: &str = r"
-  let el = this.nodeType === 1 ? this : this.parentElement
-  if (!el) return {}
+  // A pseudo-element answers a hit test and has no node of its own, a root or a document
+  // none that is an element. What is left says nothing, which the crate asks about.
+  let el = this.nodeType === 1 ? this : this.parentElement || this.element || this.host || this.documentElement
+  if (!el || el.nodeType !== 1) return {}
   // A part of a field the engine draws itself (a date's picker button) is that field.
   const root = el.getRootNode && el.getRootNode()
   if (root && root.host && ['INPUT', 'SELECT', 'TEXTAREA'].includes(root.host.tagName)) el = root.host
@@ -153,7 +155,11 @@ const FACTS_BODY: &str = r"
     return ''
   }
   const controlName = (one) => {
-    const said = text((labelOf(one) || one.innerText || (one.tagName === 'INPUT' ? one.value : '') || one.getAttribute('title') || one.getAttribute('alt') || '') + ' ' + pictured(one))
+    // A `<label>` elsewhere and its words both: that is no way to hide what it says.
+    const label = labelOf(one)
+    const words = text(one.innerText)
+    const both = label && words && !one.hasAttribute('aria-label') && !label.toLowerCase().includes(words.toLowerCase()) ? label + ' ' + words : label || words
+    const said = text((both || (one.tagName === 'INPUT' ? one.value : '') || one.getAttribute('title') || one.getAttribute('alt') || '') + ' ' + pictured(one))
     return said || hostLabel(one)
   }
   const nameOf = (one) => (one.matches(CONTROLS) ? controlName(one) : plainName(one)).slice(0, 200)
@@ -169,21 +175,44 @@ const FACTS_BODY: &str = r"
     }
     return null
   }
-  // The words it holds, short of a control of its own, which is pressed for itself: a mail's row is not called Delete for the icon in it. What is too long to be a name is none, and a column of cards is judged by the card that was hit.
-  const SHORT = 60
-  const heldWords = (one) => {
-    let said = ''
-    for (const node of one.childNodes) {
-      if (said.length > SHORT) break
-      if (node.nodeType === 3) said += ' ' + node.textContent
-      else if (node.nodeType === 1 && !node.matches(CONTROLS) && !['SCRIPT', 'STYLE'].includes(node.tagName) && node.getClientRects().length) said += ' ' + heldWords(node)
-    }
-    return said
+  // Its lines as they show, short of a control of its own, which is pressed for itself: a mail's row is not called Delete for the icon in it. Through a shadow root: an open one, and the one the hit itself is in, closed or not.
+  const rootOf = (one) => {
+    if (one.shadowRoot) return one.shadowRoot
+    for (let at = el.getRootNode(); at && at.host; at = at.host.getRootNode()) if (at.host === one) return at
+    return null
   }
+  const MOST_HELD = 400
+  const linesOf = (one) => {
+    const lines = ['']
+    let seen = 0
+    const walk = (nodes) => {
+      for (const node of nodes) {
+        if (seen > MOST_HELD) return
+        if (node.nodeType === 3) {
+          lines[lines.length - 1] += node.textContent
+          seen += node.textContent.length
+        }
+        if (node.nodeType !== 1 || node.matches(CONTROLS) || ['SCRIPT', 'STYLE'].includes(node.tagName)) continue
+        const shown = one.ownerDocument.defaultView.getComputedStyle(node).display
+        if (shown === 'none' || (shown !== 'contents' && !node.getClientRects().length)) continue
+        const inline = shown.startsWith('inline') || shown === 'contents'
+        if (!inline) lines.push('')
+        const slotted = node.tagName === 'SLOT' ? node.assignedNodes() : []
+        walk(slotted.length ? slotted : (rootOf(node) || node).childNodes)
+        if (!inline) lines.push('')
+      }
+    }
+    walk((rootOf(one) || one).childNodes)
+    return { lines: lines.map(text).filter(Boolean), seen }
+  }
+  // Called what it says first, a price or a count aside: a part of a Pay button is Pay, and a row's other cells, a help card's other line and a card's further words are not what pressing it does. Too much, or too many controls, and it is no one control: a column, or an app's root with its listener.
+  const SHORT = 60
   const actingName = (one) => {
-    const words = text(heldWords(one))
-    const own = text(labelOf(one) || (words.length > SHORT ? '' : words) || one.getAttribute('title') || (words ? '' : onlyPicture(one)))
     const hit = plainName(el)
+    const { lines, seen } = linesOf(one)
+    if (seen > MOST_HELD || one.querySelectorAll(CONTROLS).length > 2) return hit
+    const first = lines.find((line) => !/\d/.test(line)) || lines[0] || ''
+    const own = text(labelOf(one) || (first.length > SHORT ? '' : first) || one.getAttribute('title') || (first ? '' : onlyPicture(one)))
     return own.includes(hit) ? own : text(own + ' ' + hit)
   }
   const actor = acting()
@@ -200,7 +229,8 @@ const FACTS_BODY: &str = r"
   const form = formOf()
   const buttonType = pressed.tagName === 'BUTTON' ? String(pressed.getAttribute('type') || 'submit').toLowerCase() : ''
   const submit = !!form && ((pressed.tagName === 'BUTTON' && buttonType === 'submit') || (pressed.tagName === 'INPUT' && ['submit', 'image'].includes(String(pressed.type).toLowerCase())))
-  const link = pressed.tagName === 'A' && !/^\s*(#|javascript:|$)/i.test(String(pressed.getAttribute('href') || ''))
+  // One that only goes: a Rails or Turbo delete, a link that says it is a button, and one with a handler do more than that. A listener no attribute shows is the crate's to see.
+  const link = pressed.tagName === 'A' && !/^\s*(#|javascript:|$)/i.test(String(pressed.getAttribute('href') || '')) && !pressed.matches('[data-method], [data-turbo-method], [role=button], [onclick], [onmousedown], [onmouseup], [onpointerdown], [onpointerup]')
   const said = String(el.getAttribute('role') || '').toLowerCase()
   const editable = !!(el.isContentEditable || tag === 'textarea' || said === 'textbox' || said === 'searchbox' || (tag === 'input' && !['checkbox', 'radio', 'submit', 'button', 'image', 'file', 'reset', 'hidden', 'range', 'color'].includes(kind)))
   // What Enter in the form presses: its first submit button, in the order the form holds them.
@@ -223,10 +253,19 @@ const FACTS_BODY: &str = r"
     }
   }
   fieldsIn(form || el.ownerDocument)
+  // The dialog a control is in, by its label, its heading or its first words: its Confirm does what the dialog says.
+  const dialogOf = () => {
+    if (!control) return ''
+    for (let at = el; at; at = at.getRootNode().host) {
+      const box = at.closest('dialog, [role=dialog], [role=alertdialog]')
+      if (box) return (labelOf(box) || text((box.querySelector('h1, h2, h3, h4, [role=heading]') || {}).textContent) || linesOf(box).lines[0] || '').slice(0, 200)
+    }
+    return ''
+  }
   // The document it is in and the origins round it, which is the frame it is in.
   const place = el.ownerDocument.location
   const at = place ? [place.href, ...Array.from(place.ancestorOrigins || [])] : []
-  return { at, cut: walked >= 50000, control: !!control, tag, type: kind, name, autocomplete: String(el.getAttribute('autocomplete') || '').toLowerCase(), submit, link, editable, in_form: !!form, fields, field: describe(el), default_button: first ? nameOf(first) : '', opaque }
+  return { at, cut: walked >= 50000, control: !!control, tag, type: kind, name, autocomplete: String(el.getAttribute('autocomplete') || '').toLowerCase(), submit, link, editable, in_form: !!form, fields, field: describe(el), default_button: first ? nameOf(first) : '', opaque, dialog: dialogOf() }
 ";
 
 /// `FACTS_BODY` with `FIELDS` in front of it, as the function the protocol runs: `heard`
@@ -236,7 +275,7 @@ static FACTS: LazyLock<String> =
 
 /// What is round an element that a press on it reaches, up to the page itself, whose
 /// listeners are every framework's and say nothing of this press.
-const ROUND_IT: &str = "function () { const el = this.nodeType === 1 ? this : this.parentElement; if (!el) return null; const up = el.parentElement || el.getRootNode().host || null; return !up || ['BODY', 'HTML'].includes(up.tagName) ? null : up }";
+const ROUND_IT: &str = "function () { const el = this.nodeType === 1 ? this : this.parentElement || this.element; if (!el) return null; const up = el.parentElement || el.getRootNode().host || null; return !up || ['BODY', 'HTML'].includes(up.tagName) ? null : up }";
 
 /// How far up the engine is asked what listens: past that a thing held is no part of it.
 const MOST_LISTENED_ROUND: usize = 6;
@@ -282,7 +321,7 @@ static PRESSED: LazyLock<String> = LazyLock::new(|| {
     [
         "function () {",
         FIELDS,
-        "const el = this.nodeType === 1 ? this : this.parentElement; return el ? el.closest(CONTROLS) : null }",
+        "const el = this.nodeType === 1 ? this : this.parentElement || this.element; return el ? el.closest(CONTROLS) : null }",
     ]
     .concat()
 });
@@ -358,29 +397,104 @@ const UNVALUED: &str = r"const unvalued = (root) => {
   return root
 }";
 
-/// The whole page's HTML with its links made absolute and its scripts left out, for
-/// `browser_read` as markdown, unvalued.
-static WHOLE: LazyLock<String> = LazyLock::new(|| {
+/// What a secret editable region is told apart by: the regions of a document in order, the
+/// same in the document and in a clone of it. `hidden` is which of them the policy named.
+const REGIONS: &str = r"[contenteditable]:not([contenteditable=false i])";
+
+/// The mark a secret leaves where it was: the reader can see words are missing.
+const HIDDEN_MARK: &str = "[hidden]";
+
+/// The regions of a document, each said for the policy.
+static REGIONS_SAID: LazyLock<String> = LazyLock::new(|| {
     [
-        "(() => {\n",
-        UNVALUED,
-        r"
-  const copy = unvalued(document.body ? document.body.cloneNode(true) : document.createElement('body'))
-  for (const one of copy.querySelectorAll('script, style, noscript, template, svg, canvas, iframe')) one.remove()
-  for (const one of copy.querySelectorAll('[href]')) { try { one.setAttribute('href', one.href) } catch (_) { one.removeAttribute('href') } }
-  for (const one of copy.querySelectorAll('[src]')) { try { one.setAttribute('src', one.src) } catch (_) { one.removeAttribute('src') } }
-  return { url: location.href, title: document.title, html: copy.innerHTML.slice(0, 4000000), text: document.body ? document.body.innerText : '' }
-})()",
+        "(() => {",
+        FIELDS,
+        "const said = (one) => Object.assign(describe(one), { filled: text(one.innerText) !== '' }); return document.body ? Array.from(document.body.querySelectorAll('",
+        REGIONS,
+        "')).map(said) : [] })()",
     ]
     .concat()
 });
+
+/// `document.body`'s words as `innerText` has them, the regions in `hidden` a mark and each
+/// other word as it stands: only such a region is cut, by node, whatever else on the page
+/// reads the same. Run only on a page with one, where it costs `innerText`'s fine points.
+const MASKED_TEXT: &str = r"
+  const all = Array.from(document.body.querySelectorAll('[contenteditable]:not([contenteditable=false i])'))
+  const secret = hidden.map((at) => all[at]).filter(Boolean)
+  const say = (one) => {
+    if (secret.includes(one)) return '[hidden]'
+    if (!secret.some((held) => one.contains(held))) return one.getClientRects().length ? one.innerText : ''
+    let said = ''
+    for (const node of one.childNodes) {
+      if (node.nodeType === 3) said += node.textContent.replace(/\s+/g, ' ')
+      else if (node.nodeType === 1) {
+        const shown = one.ownerDocument.defaultView.getComputedStyle(node).display
+        const words = say(node)
+        said += shown.startsWith('inline') ? words : words ? '\n' + words + '\n' : ''
+      }
+    }
+    return said
+  }
+  return say(document.body).replace(/\n{3,}/g, '\n\n').trim()
+";
+
+/// The same on a clone of the body: `copy` has the regions in the document's order.
+const MASKED_CLONE: &str = r"
+  const all = Array.from(copy.querySelectorAll('[contenteditable]:not([contenteditable=false i])'))
+  for (const at of hidden) if (all[at]) all[at].textContent = '[hidden]'
+";
+
+/// The page as text for `browser_read`, the regions in `hidden` left out by node.
+fn text_hiding(hidden: &[usize]) -> String {
+    if hidden.is_empty() {
+        return TEXT.to_string();
+    }
+    format!(
+        "(() => {{ const hidden = {}; const said = (() => {{ {MASKED_TEXT} }})(); return {{ url: location.href, title: document.title, text: said }} }})()",
+        json!(hidden)
+    )
+}
+
+/// The whole page's HTML with its links made absolute and its scripts left out, for
+/// `browser_read` as markdown, unvalued, and the regions in `hidden` left out by node.
+fn whole_hiding(hidden: &[usize]) -> String {
+    [
+        "(() => {\n",
+        UNVALUED,
+        "\n  const hidden = ",
+        &json!(hidden).to_string(),
+        r"
+  const copy = document.body ? document.body.cloneNode(true) : document.createElement('body')
+",
+        MASKED_CLONE,
+        r"
+  unvalued(copy)
+  for (const one of copy.querySelectorAll('script, style, noscript, template, svg, canvas, iframe')) one.remove()
+  for (const one of copy.querySelectorAll('[href]')) { try { one.setAttribute('href', one.href) } catch (_) { one.removeAttribute('href') } }
+  for (const one of copy.querySelectorAll('[src]')) { try { one.setAttribute('src', one.src) } catch (_) { one.removeAttribute('src') } }
+  return { url: location.href, title: document.title, html: copy.innerHTML.slice(0, 4000000), text: document.body ? (() => {",
+        MASKED_TEXT,
+        r"})() : '' }
+})()",
+    ]
+    .concat()
+}
 
 /// The article as the clip button reads it - the very script, `web_tabs::reader`, which
 /// leaves out every field's value by the same rule as `UNVALUED` - for `browser_read` as
 /// an article and for a clip, which are the same words. It answers a snapshot of the
 /// document; the window finds the article in it with the clipper's own extractor (see
 /// packages/markdown/src/article.ts `readSnapshot`), on the way to the markdown.
-static CLIPPED: LazyLock<String> = LazyLock::new(|| crate::web_tabs::reader(false));
+fn clipped_hiding(hidden: &[usize]) -> String {
+    crate::web_tabs::reader(false).replace(
+        "/* __HIDE__ */",
+        &format!(
+            "{{ const copy = body; const hidden = {}; {MASKED_CLONE} }}",
+            json!(hidden)
+        ),
+    )
+}
 
 /// Whether the document has stopped changing: resolves once nothing moved for `still`
 /// milliseconds, or at `most`.
@@ -423,8 +537,12 @@ pub struct Page<'a> {
     pub credentials: AtomicBool,
 }
 
+/// What a press is put to the question by, for each element it finds under the pointer
+/// other than the one already judged; see `Page::press_judged`.
+pub type Gate<'g> = &'g dyn Fn(&Element) -> Result<(), Answer>;
+
 /// An element, resolved from a ref.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Element {
     /// The frame's session, for an element in a process of its own.
     session: Option<String>,
@@ -555,7 +673,11 @@ impl Page<'_> {
     /// the engine alone can see: a listener round it no attribute shows. A control is its
     /// own answer and a field its own.
     pub fn facts_of_press(&self, element: &Element) -> Result<Facts, Answer> {
-        let facts = self.facts(element)?;
+        let mut facts = self.facts(element)?;
+        // A link with a listener of its own may do more than go.
+        if facts.link && self.link_listens(element) {
+            facts.link = false;
+        }
         if facts.control || facts.editable {
             return Ok(facts);
         }
@@ -578,6 +700,31 @@ impl Page<'_> {
             .cloned()
             .unwrap_or_default();
         Ok(self.facts_from(element, &said))
+    }
+
+    /// Whether the control an element is in listens for a press itself.
+    fn link_listens(&self, element: &Element) -> bool {
+        let control = self.object(element).ok().and_then(|object| {
+            let found = self
+                .call_on(
+                    element,
+                    "Runtime.callFunctionOn",
+                    &json!({ "objectId": object, "functionDeclaration": PRESSED.as_str() }),
+                )
+                .ok()?;
+            found
+                .pointer("/result/objectId")?
+                .as_str()
+                .map(str::to_string)
+        });
+        control.is_some_and(|object| {
+            self.call_on(
+                element,
+                "DOMDebugger.getEventListeners",
+                &json!({ "objectId": object }),
+            )
+            .is_ok_and(|said| hears_a_press(&said))
+        })
     }
 
     /// The nearest of an element and what is round it that listens for a press.
@@ -607,7 +754,7 @@ impl Page<'_> {
     }
 
     fn facts_from(&self, element: &Element, said: &Value) -> Facts {
-        let mut facts: Facts = serde_json::from_value(said.clone()).unwrap_or_default();
+        let mut facts = facts_read(said);
         if !facts.cut {
             facts.fields.extend(self.closed_fields(element));
         }
@@ -646,6 +793,13 @@ impl Page<'_> {
     /// Whether the frame an element is in may be acted in (9.2): a denied site does not
     /// open for being in a frame.
     pub fn may_act_in(&self, facts: &Facts) -> Result<(), Answer> {
+        // Nowhere is no answer to where, for an agent with a site it may not act in.
+        if facts.at.is_empty() && facts.opaque && self.limits_sites() {
+            return Err(Answer::error(
+                Code::SiteDenied,
+                "what is at that point says nothing of itself or of where it is: take a snapshot and press something else",
+            ));
+        }
         match &self.limits {
             Some((grant, store)) => policy::frame_allowed(grant, &facts.at, *store)
                 .map_err(|why| Answer::error(Code::SiteDenied, why)),
@@ -839,8 +993,7 @@ impl Page<'_> {
         Ok(said
             .pointer("/result/value")
             .cloned()
-            .and_then(|value| serde_json::from_value(value).ok())
-            .map(|facts| (facts, object.to_string())))
+            .map(|value| (facts_read(&value), object.to_string())))
     }
 
     /// The session of a frame in a process of its own, by the frame's id.
@@ -1096,10 +1249,44 @@ impl Page<'_> {
         let hit = self
             .call(
                 "DOM.getNodeForLocation",
-                &json!({ "x": whole(x + left), "y": whole(y + top), "includeUserAgentShadowDOM": false, "ignorePointerEventsNone": true }),
+                &json!({ "x": whole(x + left), "y": whole(y + top), "includeUserAgentShadowDOM": false, "ignorePointerEventsNone": false }),
             )
             .ok()?;
-        hit.get("backendNodeId").and_then(Value::as_u64)
+        let backend = hit.get("backendNodeId").and_then(Value::as_u64)?;
+        Some(self.originating(None, backend))
+    }
+
+    /// The element a pseudo-element hangs on, for a hit on one: a `::after` over a button
+    /// is the button, as it is to the press. Anything else is itself; a pseudo-element that
+    /// will not say stays one, which `FACTS` answers nothing about, and that asks.
+    fn originating(&self, session: Option<&str>, backend: u64) -> u64 {
+        let call = |method: &str, params: &Value| {
+            cdp::call_in(self.view, session, method, params, cdp::PATIENCE).ok()
+        };
+        let pseudo = call("DOM.describeNode", &json!({ "backendNodeId": backend }))
+            .is_some_and(|said| said.pointer("/node/pseudoType").is_some());
+        if !pseudo {
+            return backend;
+        }
+        let holder = || {
+            let resolved = call(
+                "DOM.resolveNode",
+                &json!({ "backendNodeId": backend, "objectGroup": WORLD }),
+            )?;
+            let on = call(
+                "Runtime.callFunctionOn",
+                &json!({
+                    "objectId": resolved.pointer("/object/objectId")?.as_str()?,
+                    "functionDeclaration": "function () { return this.element || null }",
+                }),
+            )?;
+            let said = call(
+                "DOM.describeNode",
+                &json!({ "objectId": on.pointer("/result/objectId")?.as_str()? }),
+            )?;
+            said.pointer("/node/backendNodeId")?.as_u64()
+        };
+        holder().unwrap_or(backend)
     }
 
     /// What a press at a point in the page's viewport lands on, as an element: inside a
@@ -1158,10 +1345,11 @@ impl Page<'_> {
                 "x": whole(x - left + scrolled("/cssLayoutViewport/pageX")),
                 "y": whole(y - top + scrolled("/cssLayoutViewport/pageY")),
                 "includeUserAgentShadowDOM": false,
-                "ignorePointerEventsNone": true,
+                "ignorePointerEventsNone": false,
             }),
         )?;
         let backend = hit.get("backendNodeId").and_then(Value::as_u64)?;
+        let backend = self.originating(Some(&session), backend);
         let held = call("DOM.describeNode", &json!({ "backendNodeId": backend }))?;
         held.pointer("/node/frameId")
             .is_none()
@@ -1297,30 +1485,25 @@ impl Page<'_> {
         button: &str,
         count: u8,
         modifiers: u8,
+        gate: Gate<'_>,
     ) -> Result<(), Answer> {
         let aim = self.aim(element)?;
-        self.click_aimed(element, &aim, button, count, modifiers)
+        gate(&aim.on)?;
+        self.refuse_picker(&aim.on)?;
+        if !self.own {
+            self.light(element);
+        }
+        self.press_judged(aim.point, &aim.on, button, count, modifiers, gate)
     }
 
-    /// `click`, at the very point the press was judged by.
-    pub fn click_aimed(
-        &self,
-        element: &Element,
-        aim: &Aim,
-        button: &str,
-        count: u8,
-        modifiers: u8,
-    ) -> Result<(), Answer> {
-        if self.facts(&aim.on)?.picker() {
+    fn refuse_picker(&self, element: &Element) -> Result<(), Answer> {
+        if self.facts(element)?.picker() {
             return Err(Answer::error(
                 Code::BadArguments,
                 "that opens a list of the engine's own: set it with browser_select or browser_fill_form",
             ));
         }
-        if !self.own {
-            self.light(element);
-        }
-        self.press_at(aim.point, button, count, modifiers)
+        Ok(())
     }
 
     /// The engine's own press at a point in the tab's viewport, in CSS pixels - one image
@@ -1330,9 +1513,11 @@ impl Page<'_> {
     pub fn click_at(
         &self,
         point: (f64, f64),
+        judged: &Element,
         button: &str,
         count: u8,
         modifiers: u8,
+        gate: Gate<'_>,
     ) -> Result<(), Answer> {
         let (width, height, _, _) = self.viewport()?;
         if !(0.0..width).contains(&point.0) || !(0.0..height).contains(&point.1) {
@@ -1344,27 +1529,38 @@ impl Page<'_> {
                 ),
             ));
         }
-        if let Ok(element) = self.element_at(point) {
-            if self.facts(&element).is_ok_and(|facts| facts.picker()) {
-                return Err(Answer::error(
-                    Code::BadArguments,
-                    "that opens a list of the engine's own: set it with browser_select or browser_fill_form",
-                ));
-            }
-        }
-        self.press_at(point, button, count, modifiers)
+        self.refuse_picker(judged)?;
+        self.press_judged(point, judged, button, count, modifiers, gate)
     }
 
-    fn press_at(
+    /// The pointer brought to a point, and pressed there only for what is under it by then.
+    /// The move is the page's to answer, and it can take the judged element away and show
+    /// another: what has changed goes to the gate before the button goes down, each press.
+    /// A page's own timer can still swap it between the look and the press (9.3).
+    fn press_judged(
         &self,
         point: (f64, f64),
+        judged: &Element,
         button: &str,
         count: u8,
         modifiers: u8,
+        gate: Gate<'_>,
     ) -> Result<(), Answer> {
         let before = self.navigations();
         self.mouse("mouseMoved", point, "none", 0, modifiers)?;
+        let mut last = judged.clone();
         for press in 1..=count.max(1) {
+            let now = match self.struck(judged, point) {
+                Ok(now) => now,
+                // The first press took the page away: no more to press.
+                Err(_) if press > 1 => break,
+                Err(refused) => return Err(refused),
+            };
+            if now != last {
+                gate(&now)?;
+                self.refuse_picker(&now)?;
+                last = now;
+            }
             self.mouse("mousePressed", point, button, press, modifiers)?;
             self.mouse("mouseReleased", point, button, press, modifiers)?;
         }
@@ -1372,7 +1568,6 @@ impl Page<'_> {
         Ok(())
     }
 
-    /// The pointer over an element.
     pub fn hover(&self, element: &Element) -> Result<(), Answer> {
         let point = self.point(element)?;
         self.mouse("mouseMoved", point, "none", 0, 0)
@@ -1497,7 +1692,12 @@ impl Page<'_> {
     }
 
     /// One field of a form set to a value, by what kind of field it is.
-    pub fn fill(&self, element: &Element, value: &FieldValue) -> Result<(), Answer> {
+    pub fn fill(
+        &self,
+        element: &Element,
+        value: &FieldValue,
+        gate: Gate<'_>,
+    ) -> Result<(), Answer> {
         let facts = self.facts(element)?;
         self.refuse_secret(&facts)?;
         if facts.sensitive() {
@@ -1512,7 +1712,7 @@ impl Page<'_> {
                     ));
                 }
                 if self.tick_changes(element, *wanted)? {
-                    self.click(element, "left", 1, 0)?;
+                    self.click(element, "left", 1, 0, gate)?;
                 }
                 Ok(())
             }
@@ -1659,7 +1859,12 @@ impl Page<'_> {
     /// One element dragged onto another, with the engine's own drag when the page drags
     /// and plain presses and moves when it only listens to the pointer. The engine's drag
     /// is intercepted rather than started, so no drag of the system's ever begins.
-    pub fn drag(&self, from: &Element, to: &Element) -> Result<(), Answer> {
+    pub fn drag(
+        &self,
+        (from, picked): (&Element, &Element),
+        (to, dropped): (&Element, &Element),
+        (at_start, at_end): (Gate<'_>, Gate<'_>),
+    ) -> Result<(), Answer> {
         let start = self.point(from)?;
         let end = self.point(to)?;
         self.call("Input.setInterceptDrags", &json!({ "enabled": true }))?;
@@ -1669,6 +1874,10 @@ impl Page<'_> {
             .dragged = None;
         let dragged = (|| {
             self.mouse("mouseMoved", start, "none", 0, 0)?;
+            let now = self.struck(from, start)?;
+            if &now != picked {
+                at_start(&now)?;
+            }
             self.mouse("mousePressed", start, "left", 1, 0)?;
             for step in 1..=8u8 {
                 let at = f64::from(step) / 8.0;
@@ -1696,6 +1905,10 @@ impl Page<'_> {
                     )?;
                 }
             }
+            let now = self.struck(to, end)?;
+            if &now != dropped {
+                at_end(&now)?;
+            }
             self.mouse("mouseReleased", end, "left", 1, 0)
         })();
         let _ = self.call("Input.setInterceptDrags", &json!({ "enabled": false }));
@@ -1704,7 +1917,12 @@ impl Page<'_> {
 
     /// Files handed to a file input: the input itself, or the chooser a press on the
     /// element opens, which the engine intercepts rather than shows (6.2).
-    pub fn upload(&self, element: &Element, files: &[String]) -> Result<(), Answer> {
+    pub fn upload(
+        &self,
+        element: &Element,
+        files: &[String],
+        gate: Gate<'_>,
+    ) -> Result<(), Answer> {
         let facts = self.facts(element)?;
         let input = if facts.kind == "file" {
             element.clone()
@@ -1713,7 +1931,7 @@ impl Page<'_> {
                 .lock()
                 .unwrap_or_else(PoisonError::into_inner)
                 .chooser = None;
-            self.click(element, "left", 1, 0)?;
+            self.click(element, "left", 1, 0, gate)?;
             let waiting = Instant::now();
             let chosen = loop {
                 if let Some(node) = self
@@ -2189,40 +2407,27 @@ impl Page<'_> {
         found
     }
 
-    /// What the secret editable regions of the page hold, in each spelling a read has it
-    /// in: such a region is a field to the policy and words of the page to `innerText` and
-    /// markup, which is all a read sees (`UNVALUED` can't tell it from a document being
-    /// edited, whose words are what a read is for).
-    fn secret_regions(&self) -> Vec<String> {
-        let mut held = Vec::new();
-        for one in self.secrets(self.every_part()) {
-            if !one.filled {
-                continue;
-            }
-            let session = self.session_of_part(&one.prefix);
-            let element = Element {
-                frame: None,
-                session,
-                backend: one.backend,
-            };
-            let said = self.run_on(
-                &element,
-                "function () { return this.isContentEditable && !['INPUT', 'TEXTAREA'].includes(this.tagName) ? [this.innerHTML, this.innerText, this.textContent] : [] }",
-                &[],
-            );
-            if let Ok(Value::Array(spellings)) = said {
-                held.extend(
-                    spellings
-                        .iter()
-                        .filter_map(Value::as_str)
-                        .map(str::to_string)
-                        .filter(|one| !one.trim().is_empty()),
-                );
-            }
-        }
-        // The longest first: markup holds the words, and would be left in pieces.
-        held.sort_by_key(|one| std::cmp::Reverse(one.len()));
-        held
+    /// Which of the document's editable regions (`REGIONS`) are secrets with words in them:
+    /// a field to the policy, and to `innerText` and markup words of the page like any,
+    /// which is why a read leaves them out itself. Any other's words, a document being
+    /// edited, are what a read is for. Frames are in no read.
+    fn secret_regions(&self) -> Vec<usize> {
+        let Ok(said) = self.isolated(&REGIONS_SAID) else {
+            return Vec::new();
+        };
+        said.as_array()
+            .map(|all| {
+                all.iter()
+                    .enumerate()
+                    .filter(|(_, one)| one.get("filled").and_then(Value::as_bool) == Some(true))
+                    .filter(|(_, one)| {
+                        serde_json::from_value::<Field>((*one).clone())
+                            .is_ok_and(|field| policy::secret(&field))
+                    })
+                    .map(|(at, _)| at)
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 
     /// The page as text, as markdown, or its article as markdown. Markdown is the
@@ -2233,10 +2438,11 @@ impl Page<'_> {
         shape: super::verbs::ReadAs,
     ) -> Result<(String, String, String), Answer> {
         use super::verbs::ReadAs;
+        let hidden = self.secret_regions();
         let said = match shape {
-            ReadAs::Text => self.isolated(TEXT)?,
-            ReadAs::Markdown => self.isolated(&WHOLE)?,
-            ReadAs::Article => self.isolated(&CLIPPED)?,
+            ReadAs::Text => self.isolated(&text_hiding(&hidden))?,
+            ReadAs::Markdown => self.isolated(&whole_hiding(&hidden))?,
+            ReadAs::Article => self.isolated(&clipped_hiding(&hidden))?,
         };
         let text_at = |key: &str| {
             said.get(key)
@@ -2245,11 +2451,10 @@ impl Page<'_> {
                 .to_string()
         };
         let (url, title) = (text_at("url"), text_at("title"));
-        let held = self.secret_regions();
         if shape == ReadAs::Text {
-            return Ok((url, title, without(text_at("text"), &held)));
+            return Ok((url, title, text_at("text")));
         }
-        let html = without(text_at("html"), &held);
+        let html = text_at("html");
         let markdown = crate::endpoint::ask(
             app,
             super::verbs::window::MARKDOWN,
@@ -2263,7 +2468,7 @@ impl Page<'_> {
         .ok()
         .and_then(|value| value.as_str().map(str::to_string));
         let words = markdown.unwrap_or_else(|| {
-            let text = without(text_at("text"), &held);
+            let text = text_at("text");
             if text.is_empty() {
                 strip_tags(&html)
             } else {
@@ -2286,11 +2491,11 @@ impl Page<'_> {
     /// clipper's own converter, so a clip of an agent's tab and of the reader's are the
     /// same words.
     pub fn clip(&self) -> Result<(String, String, String), Answer> {
-        let said = self.isolated(&CLIPPED)?;
+        let said = self.isolated(&clipped_hiding(&self.secret_regions()))?;
         Ok((
             text(&said, "url"),
             text(&said, "title"),
-            without(text(&said, "html"), &self.secret_regions()),
+            text(&said, "html"),
         ))
     }
 
@@ -2348,18 +2553,17 @@ impl Page<'_> {
                     .lock()
                     .unwrap_or_else(PoisonError::into_inner)
                     .idle_for(Duration::from_millis(500)),
-                // Asked of the words first, as this comes round many times, and only then of
-                // what is held in a secret region, which is no answer either way (9.4).
+                // Asked of the words first, as this comes round many times, and only then
+                // with any secret region out, which is no answer either way (9.4).
                 Until::Text { text } => {
                     self.isolated(&format!(
                         "(document.body ? document.body.innerText : '').includes({})",
                         json!(text)
                     ))
                     .is_ok_and(|found| found.as_bool() == Some(true))
-                        && self.isolated(TEXT).is_ok_and(|said| {
-                            without(self::text(&said, "text"), &self.secret_regions())
-                                .contains(text.as_str())
-                        })
+                        && self
+                            .isolated(&text_hiding(&self.secret_regions()))
+                            .is_ok_and(|said| self::text(&said, "text").contains(text.as_str()))
                 }
                 Until::Element { element } => self.element(element).is_ok_and(|element| {
                     self.call_on(
@@ -2653,12 +2857,18 @@ fn thrown(answered: &Value) -> Result<(), Answer> {
     ))
 }
 
-/// Words with what is held in a secret region taken out.
-fn without(mut words: String, held: &[String]) -> String {
-    for one in held {
-        words = words.replace(one.as_str(), "");
+/// What the page's answer says of an element. An answer that says nothing, or nothing that
+/// reads, is an element no one can name: `opaque`, which `policy::judge` asks about, and
+/// never `Facts::default()`, which it would let go as nothing at all.
+fn facts_read(said: &Value) -> Facts {
+    let named = said.get("tag").and_then(Value::as_str).is_some();
+    match serde_json::from_value::<Facts>(said.clone()) {
+        Ok(facts) if named => facts,
+        _ => Facts {
+            opaque: true,
+            ..Facts::default()
+        },
     }
-    words
 }
 
 /// A string of a page's answer, or nothing.
@@ -3101,13 +3311,23 @@ mod tests {
     }
 
     #[test]
-    fn what_a_secret_region_holds_is_out_of_every_spelling() {
-        let held = ["<b>41</b>11".to_string(), "4111".to_string()];
-        assert_eq!(
-            without("a <b>41</b>11 b 4111 c".to_string(), &held),
-            "a  b  c"
-        );
-        assert_eq!(without("nothing".to_string(), &[]), "nothing");
+    fn a_read_of_a_page_with_no_secret_region_is_the_plain_read() {
+        assert_eq!(text_hiding(&[]), TEXT);
+        assert!(text_hiding(&[2]).contains("const hidden = [2]"));
+        assert!(whole_hiding(&[2]).contains("const hidden = [2]"));
+        assert!(clipped_hiding(&[2]).contains("const hidden = [2]"));
+        assert!(MASKED_TEXT.contains(HIDDEN_MARK) && MASKED_CLONE.contains(HIDDEN_MARK));
+        assert!(MASKED_TEXT.contains(REGIONS) && MASKED_CLONE.contains(REGIONS));
+    }
+
+    #[test]
+    fn what_cannot_be_read_of_a_press_is_never_nothing() {
+        assert!(facts_read(&json!({})).opaque);
+        assert!(facts_read(&Value::Null).opaque);
+        assert!(facts_read(&json!({ "tag": 3 })).opaque);
+        let read = facts_read(&json!({ "tag": "button", "name": "OK" }));
+        assert!(!read.opaque);
+        assert_eq!(read.name, "OK");
     }
 
     #[test]

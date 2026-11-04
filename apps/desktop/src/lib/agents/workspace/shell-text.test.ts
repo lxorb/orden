@@ -388,3 +388,97 @@ describe('a package manager, by what is known to be free', () => {
     expect(onTheList(line, listed)).toBe(true)
   })
 })
+
+describe('a line as the shell hands it over', () => {
+  const listed = ['git', 'npm', 'pnpm', 'yarn', 'bun']
+
+  test.each([
+    'npm --prefix "./ run /.." exec -- touch pwn',
+    'npm --prefix "./ run /.." publish',
+    'npm --prefix "./ run /.." config set script-shell ./sh.sh',
+    'npm --prefix "./ run /.." pkg set scripts.t=x',
+    "npm --prefix './ run /..' exec touch pwn",
+    'pnpm --filter "./ run /.." exec touch pwn',
+    'pnpm --dir "x run y" exec touch z',
+    'pnpm --dir ./\\ run\\ /.. exec touch z',
+    'bun --cwd "./ test /.." ./e.js',
+    'yarn --cwd "./ test /.." exec touch z',
+    // A shell with no such quoting reads these the other way round.
+    'npm --prefix a\\ exec test',
+    'npm --prefix "a b" test',
+    // A quote never closed runs nothing it says.
+    'npm test "',
+    "git log '",
+    'git "log',
+    'git -c"core.pager=touch" log',
+    'git --"exec-path"=x status',
+    'git log --"output"=x',
+    'npm t --"shell"=x',
+  ])('asks: %s', (line) => {
+    expect(onTheList(line, listed)).toBe(false)
+  })
+
+  test.each([
+    'git commit -m "fix two words"',
+    "git commit -m 'fix two words'",
+    'git log --format="%h %s"',
+    'git log --grep "a -c word"',
+    'git diff -- "a file.md"',
+    'npm run build -- --title "two words"',
+    'pnpm --filter web test -- -t "a name with words"',
+    'npm install "lodash"',
+  ])('goes: %s', (line) => {
+    expect(onTheList(line, listed)).toBe(true)
+  })
+})
+
+describe('a bare name that may be on the path', () => {
+  const listed = ['npm', 'pnpm', 'yarn', 'bun']
+
+  test.each([
+    "pnpm watch 'touch pwn'",
+    "bun run watch 'touch pwn'",
+    "yarn watch 'touch pwn'",
+    'pnpm watch',
+    'bun run watch',
+    'pnpm format D:',
+    'bun run format D:',
+    'pnpm check x',
+    'bun dev ./x',
+    'pnpm tsc --project=./x',
+    'pnpm vitest --config=./x',
+    'npm --prefix "a b" run t',
+    'pnpm eslint --rulesdir=./x .',
+  ])('asks: %s', (line) => {
+    expect(onTheList(line, listed)).toBe(false)
+  })
+
+  test.each([
+    'bun run test:unit',
+    'bun run db:migrate',
+    'bun run build',
+    'bun dev',
+    'bun start',
+    'bun db:migrate',
+    'pnpm test:unit',
+    'pnpm build:web',
+    'yarn test:unit',
+    'pnpm tsc',
+    'pnpm tsc --noEmit',
+    'pnpm vitest run',
+    'pnpm vitest run src/a.test.ts',
+    'pnpm eslint .',
+    'pnpm eslint . --fix',
+    'pnpm prettier --check .',
+    'yarn jest',
+    'pnpm test src/a.test.ts',
+    'npm test --loglevel=error',
+    'npm install --save-prod lodash',
+    'npm install --ignore-scripts',
+    'npm ci --ignore-scripts',
+    'pnpm install --ignore-scripts',
+    'bun install --ignore-scripts',
+  ])('goes: %s', (line) => {
+    expect(onTheList(line, listed)).toBe(true)
+  })
+})

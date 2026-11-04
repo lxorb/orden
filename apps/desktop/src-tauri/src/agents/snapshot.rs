@@ -40,6 +40,9 @@ const LONGEST_NAME: usize = 160;
 /// words and digits out of the page with it, and says next to nothing.
 const SHORTEST_ECHO: usize = 3;
 
+/// The mark a secret leaves in a name: the reader can see words are missing.
+const HIDDEN: &str = "[hidden]";
+
 /// The longest snapshot when none is asked for, in characters.
 pub const MOST: usize = 40_000;
 
@@ -93,6 +96,20 @@ impl<'a> Node<'a> {
             .and_then(Value::as_str)
             .unwrap_or_default();
         spoken_role(raw)
+    }
+
+    /// The nodes the engine says it built this one's name from.
+    fn name_points_at(&self) -> Vec<u64> {
+        self.raw
+            .pointer("/name/sources")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter_map(|source| source.pointer("/attributeValue/relatedNodes"))
+            .filter_map(Value::as_array)
+            .flatten()
+            .filter_map(|one| one.get("backendDOMNodeId").and_then(Value::as_u64))
+            .collect()
     }
 
     fn name(&self) -> &'a str {
@@ -291,7 +308,7 @@ fn states(node: &Node<'_>, role: &str, origin: &str) -> String {
 }
 
 /// A field's value as its line writes it: a secret's only as whether it is filled.
-fn value_of(node: &Node<'_>, role: &str, secret: bool, forest: &Forest<'_>) -> String {
+fn value_of(node: &Node<'_>, role: &str, secret: bool) -> String {
     if !has_value(role) {
         return String::new();
     }
@@ -301,7 +318,6 @@ fn value_of(node: &Node<'_>, role: &str, secret: bool, forest: &Forest<'_>) -> S
     if secret {
         return " [filled]".into();
     }
-    let value = forest.scrubbed(&value);
     if value.trim().is_empty() {
         String::new()
     } else {
@@ -325,8 +341,11 @@ struct Forest<'a> {
     hung: HashMap<(usize, u64), usize>,
     /// The secret fields the page named.
     secret: &'a HashSet<(String, u64)>,
-    /// The secret fields' values, as they would read inside another element's name.
-    echoes: Vec<String>,
+    /// The secret fields' values, by the nodes whose names the engine builds out of them:
+    /// a node round the field, by part and node id, for `said_of`.
+    echoes: HashMap<(usize, &'a str), Vec<String>>,
+    /// The same by part and backend node, for a name that points at the field.
+    echoes_by_backend: HashMap<(usize, u64), Vec<String>>,
 }
 
 impl<'a> Forest<'a> {
@@ -350,20 +369,56 @@ impl<'a> Forest<'a> {
             by_id,
             hung,
             secret,
-            echoes: Vec::new(),
+            echoes: HashMap::new(),
+            echoes_by_backend: HashMap::new(),
         };
-        let mut echoes: Vec<String> = parts
-            .iter()
-            .enumerate()
-            .flat_map(|(at, part)| part.nodes.iter().map(move |raw| (at, Node { raw })))
-            .filter(|(at, node)| forest.secret(*at, node))
-            .filter_map(|(_, node)| node.value())
-            .filter(|value| value.trim().chars().count() >= SHORTEST_ECHO)
-            .collect();
-        // The longest first, so a value inside another is not taken out of it first.
-        echoes.sort_by_key(|one| std::cmp::Reverse(one.len()));
-        echoes.dedup();
-        forest.echoes = echoes;
+        for (at, part) in parts.iter().enumerate() {
+            let parents: HashMap<&str, &str> = part
+                .nodes
+                .iter()
+                .flat_map(|raw| {
+                    let id = raw
+                        .get("nodeId")
+                        .and_then(Value::as_str)
+                        .unwrap_or_default();
+                    raw.get("childIds")
+                        .and_then(Value::as_array)
+                        .into_iter()
+                        .flatten()
+                        .filter_map(Value::as_str)
+                        .map(move |child| (child, id))
+                })
+                .collect();
+            for raw in &part.nodes {
+                let node = Node { raw };
+                let Some(value) = node
+                    .value()
+                    .filter(|value| value.trim().chars().count() >= SHORTEST_ECHO)
+                    .filter(|_| forest.secret(at, &node))
+                else {
+                    continue;
+                };
+                let mut id = raw.get("nodeId").and_then(Value::as_str);
+                while let Some(one) = id {
+                    forest
+                        .echoes
+                        .entry((at, one))
+                        .or_default()
+                        .push(value.clone());
+                    if let Some(backend) = forest.by_id[at]
+                        .get(one)
+                        .and_then(|held| Node { raw: held }.backend())
+                    {
+                        forest
+                            .echoes_by_backend
+                            .entry((at, backend))
+                            .or_default()
+                            .push(value.clone());
+                    }
+                    id = parents.get(one).copied();
+                }
+            }
+        }
         forest
     }
 
@@ -378,15 +433,34 @@ impl<'a> Forest<'a> {
         named || node.value().is_some_and(|value| masked(&value))
     }
 
-    /// Words with every secret's value taken out of them.
-    fn scrubbed<'n>(&self, words: &'n str) -> Cow<'n, str> {
-        let mut out = Cow::Borrowed(words);
-        for echo in &self.echoes {
-            if out.contains(echo.as_str()) {
-                out = Cow::Owned(out.replace(echo.as_str(), ""));
+    /// A node's name, with a mark for any secret's value the engine built it out of: a field
+    /// inside the node, or one its name points at (`aria-labelledby`). Only those: the same
+    /// words anywhere else are the page's own, and cutting them would let a field take `not`
+    /// out of `Do not pay`.
+    fn said_of<'n>(&self, part: usize, node: &Node<'n>) -> Cow<'n, str> {
+        let mut said = Cow::Borrowed(node.name());
+        let id = node.raw.get("nodeId").and_then(Value::as_str);
+        let mut echoes: Vec<&String> = id
+            .and_then(|id| self.echoes.get(&(part, id)))
+            .into_iter()
+            .flatten()
+            .collect();
+        for backend in node.name_points_at() {
+            echoes.extend(
+                self.echoes_by_backend
+                    .get(&(part, backend))
+                    .into_iter()
+                    .flatten(),
+            );
+        }
+        // The longest first, so a value inside another is not taken out of it first.
+        echoes.sort_by_key(|one| std::cmp::Reverse(one.len()));
+        for echo in echoes {
+            if said.contains(echo.as_str()) {
+                said = Cow::Owned(said.replace(echo.as_str(), HIDDEN));
             }
         }
-        out
+        said
     }
 
     fn root(&self, part: usize) -> Option<&'a Value> {
@@ -490,7 +564,7 @@ impl Writer<'_> {
         }
         let node = Node { raw };
         let role = node.role();
-        let name = forest.scrubbed(node.name());
+        let name = forest.said_of(part, &node);
         let name = name.as_ref();
         let prefix = &forest.parts[part].prefix;
         let secret = forest.secret(part, &node);
@@ -511,7 +585,7 @@ impl Writer<'_> {
                 line.push_str(&quoted(name));
             }
             line.push_str(&states(&node, &role, self.origin));
-            line.push_str(&value_of(&node, &role, secret, forest));
+            line.push_str(&value_of(&node, &role, secret));
             // Words on their own have a ref too: a `<div>` with a listener and no role is
             // still somewhere a person presses, and its words are how an agent names it.
             let pressable = !(around.in_list && role == "option");
@@ -546,7 +620,7 @@ impl Writer<'_> {
         };
         said.extend(children.iter().filter_map(|child| {
             let child = Node { raw: child };
-            let named = forest.scrubbed(child.name());
+            let named = forest.said_of(part, &child);
             (child.role() != "text" && !named.trim().is_empty()).then(|| named.trim().to_string())
         }));
         let within = Around {
@@ -614,7 +688,7 @@ fn search(
 ) {
     let node = Node { raw };
     let role = node.role();
-    let name = forest.scrubbed(node.name());
+    let name = forest.said_of(part, &node);
     let name = name.trim();
     let prefix = &forest.parts[part].prefix;
     let reference = node.backend().map(|backend| format!("{prefix}e{backend}"));
@@ -874,8 +948,11 @@ mod tests {
             ),
             with(
                 node("5", "button", "Pay with 4242 4242 4242 4242", 5, &[]),
-                "parentId",
-                json!("1"),
+                "name",
+                json!({
+                    "value": "Pay with 4242 4242 4242 4242",
+                    "sources": [{ "attributeValue": { "relatedNodes": [{ "backendDOMNodeId": 2 }] } }],
+                }),
             ),
             field("6", "PIN", "\u{2022}\u{2022}\u{2022}\u{2022}", 6, &["7"]),
             with(
@@ -917,7 +994,7 @@ mod tests {
             text,
             [
                 "- textbox \"Card number\" [filled] [ref=e2]",
-                "- button \"Pay with\" [ref=e5]",
+                "- button \"Pay with [hidden]\" [ref=e5]",
                 "- textbox \"PIN\" [filled] [ref=e6]",
                 "- textbox \"Empty code\" [ref=e8]",
             ]
@@ -944,7 +1021,56 @@ mod tests {
             },
         );
         assert_eq!(named.len(), 1);
-        assert_eq!(named[0].name, "Pay with");
+        assert_eq!(named[0].name, "Pay with [hidden]");
+    }
+
+    /// A secret's value is cut only from a name built out of it. The same words anywhere
+    /// else are the page's, and a page or a frame could otherwise cut any it liked.
+    #[test]
+    fn a_secret_cuts_nothing_but_a_name_built_out_of_it() {
+        let field = with(
+            node("2", "textbox", "PIN", 2, &[]),
+            "value",
+            json!({ "type": "string", "value": "not" }),
+        );
+        let warning = node("3", "paragraph", "", 3, &["4"]);
+        let words = node("4", "StaticText", "Do not pay this invoice", 4, &[]);
+        let label = node("5", "button", "report not", 5, &[]);
+        let holder = node("6", "group", "PIN not", 6, &["7"]);
+        let held = with(
+            node("7", "textbox", "x", 7, &[]),
+            "value",
+            json!({ "type": "string", "value": "not" }),
+        );
+        let parts = vec![Part {
+            prefix: String::new(),
+            nodes: vec![
+                node("1", "RootWebArea", "", 1, &["2", "3", "5", "6"]),
+                field,
+                warning,
+                words,
+                label,
+                holder,
+                held,
+            ],
+            owner: None,
+        }];
+        let secret: HashSet<(String, u64)> = [(String::new(), 2), (String::new(), 7)]
+            .into_iter()
+            .collect();
+        let text = render(
+            &parts,
+            &Asked {
+                under: None,
+                most: MOST,
+                secret: &secret,
+                origin: "https://a.example",
+            },
+        )
+        .text;
+        assert!(text.contains("Do not pay this invoice"), "{text}");
+        assert!(text.contains("button \"report not\""), "{text}");
+        assert!(text.contains("group \"PIN [hidden]\""), "{text}");
     }
 
     #[test]

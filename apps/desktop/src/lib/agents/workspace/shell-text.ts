@@ -34,8 +34,14 @@ const SCRIPTS = [
   'typecheck',
   'preview',
   'serve',
-  'watch',
 ]
+
+/** A package's own script by its shape: no program on a path is called `test:unit`. */
+const SCRIPT_BY_SHAPE = /^[\w-]+:[\w:.-]+$/
+
+/** What pnpm and yarn start out of the package's own `node_modules/.bin`, by the names
+ *  everyone's toolchain has. Their options are held to the same list as any. */
+const TOOLS = ['tsc', 'vitest', 'jest', 'eslint', 'prettier']
 /** What is free after the command: where a value follows, it reads as any other word. */
 const OPTIONS_FREE = [
   ...PLAIN,
@@ -95,6 +101,12 @@ const OPTIONS_FREE = [
   '--prefer-offline',
   '--latest',
   '-L',
+  '--ignore-scripts',
+  '--save-prod',
+  '--loglevel',
+  '--noEmit',
+  '--write',
+  '--check',
 ]
 const REACH: Record<
   string,
@@ -159,7 +171,6 @@ const REACH: Record<
     ...PACKAGES,
     short: null,
     commands: [
-      ...SCRIPTS,
       't',
       'run',
       'install',
@@ -195,7 +206,6 @@ const REACH: Record<
     ...PACKAGES,
     short: null,
     commands: [
-      ...SCRIPTS,
       'run',
       'install',
       'add',
@@ -218,8 +228,6 @@ const REACH: Record<
     short: /^-[a-zA-Z]*[ep]/,
     long: [...PACKAGES.long, '--eval', '--print'],
     commands: [
-      'test',
-      'build',
       'install',
       'i',
       'add',
@@ -485,18 +493,76 @@ function gitStays(plain: readonly string[]): boolean {
   return true
 }
 
+/** A line's words as a POSIX shell hands them over: quotes and backslashes gone, and what
+ *  they held one word. `null` for a quote left open, which the shell would go on reading
+ *  past Enter. */
+export function wordsOf(line: string): string[] | null {
+  const words: string[] = []
+  let word: string | null = null
+  let quote: '"' | "'" | null = null
+
+  for (let at = 0; at < line.length; at++) {
+    const one = line.charAt(at)
+    if (quote === "'") {
+      if (one === "'") quote = null
+      else word += one
+    } else if (quote === '"') {
+      if (one === '"') quote = null
+      else if (one === '\\' && /["\\$`]/.test(line.charAt(at + 1))) word += line.charAt(++at)
+      else word += one
+    } else if (one === '"' || one === "'") {
+      quote = one
+      word ??= ''
+    } else if (one === '\\') {
+      word = (word ?? '') + line.charAt(++at)
+    } else if (/\s/.test(one)) {
+      if (word !== null) words.push(word)
+      word = null
+    } else {
+      word = (word ?? '') + one
+    }
+  }
+
+  if (quote !== null) return null
+  if (word !== null) words.push(word)
+  return words
+}
+
+/** Whether a package manager's bare name is known to be one of these, with nothing after it
+ *  that the program of that name would run: `pnpm format D:`, on a path that has one. */
+function bareNameStays(program: string, plain: readonly string[], at: number): boolean {
+  const command = plain[at] ?? ''
+  if (program === 'bun') {
+    // Its own commands, whatever follows.
+    if (command === 'test' || command === 'build') return true
+    const named = command === 'run' ? (plain[at + 1] ?? '') : command
+    const past = command === 'run' ? at + 2 : at + 1
+    if (SCRIPT_BY_SHAPE.test(named)) return true
+    return SCRIPTS.includes(named) && !positional(plain, past)
+  }
+  if (program !== 'pnpm' && program !== 'yarn') return false
+  if (SCRIPT_BY_SHAPE.test(command) || TOOLS.includes(command)) return true
+  return SCRIPTS.includes(command) && (command === 'test' || !positional(plain, at + 1))
+}
+
+/** Whether any word past this one, short of `--`, is no option. */
+function positional(plain: readonly string[], from: number): boolean {
+  const end = plain.indexOf('--', from)
+  return plain.slice(from, end === -1 ? undefined : end).some((word) => !word.startsWith('-'))
+}
+
 /** Whether a program's arguments stay out of what it can be told to run. */
-function argumentsStay(program: string, words: readonly string[]): boolean {
+function argumentsStay(program: string, plain: readonly string[]): boolean {
   if (RUNS_WHAT_IT_FETCHES.has(program)) return false
 
-  // As the shell hands them over: `"-c"`, `-'c'` and `-\c` are all `-c`.
-  const plain = words.map((word) => word.replace(/["'\\]/g, ''))
   if (program === 'git') return gitStays(plain)
 
   const reach = REACH[program]
   if (!reach) return true
 
-  // The options in front of the command, walked: a value is not the command.
+  // The options in front of the command, walked: a value is not the command. One with a
+  // space in it is read otherwise by a shell with other quoting (PowerShell's backslash is
+  // no escape), and is not worth finding out for a folder.
   let at = 0
   for (; at < plain.length; at++) {
     const word = plain[at] ?? ''
@@ -507,6 +573,7 @@ function argumentsStay(program: string, words: readonly string[]): boolean {
         at += 1
         if (at === plain.length) return false
       }
+      if (/\s/.test(word) || /\s/.test(plain[at] ?? '')) return false
       continue
     }
     return false
@@ -518,11 +585,8 @@ function argumentsStay(program: string, words: readonly string[]): boolean {
     if (at >= plain.length) return false
   }
   const command = plain[at]
-  if (command !== undefined && !reach.commands.includes(command)) {
-    // Bun's `run` takes a file or anything on the path as readily as a script.
-    if (program !== 'bun' || command !== 'run' || !SCRIPTS.includes(plain[at + 1] ?? '')) {
-      return false
-    }
+  if (command !== undefined) {
+    if (!reach.commands.includes(command) && !bareNameStays(program, plain, at)) return false
   }
 
   // After it, as git's: known to be free or a question, and past `--` it is the script's.
@@ -546,7 +610,8 @@ export function onTheList(command: string, programs: readonly string[]): boolean
   const program = programOf(command)
   if (program === '' || !programs.some((one) => one.toLowerCase() === program)) return false
 
-  return argumentsStay(program, command.trim().split(/\s+/).slice(1))
+  const words = wordsOf(command.trim())
+  return words !== null && argumentsStay(program, words.slice(1))
 }
 
 /** Whether a line starts only its first program: no second command after a `;`, an

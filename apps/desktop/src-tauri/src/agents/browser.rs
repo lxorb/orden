@@ -627,25 +627,28 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 };
                 let count = click.count.unwrap_or(1).clamp(1, 3);
                 let held = modifiers(&click.modifiers);
+                let gated = |landed: &Element, key: &str| {
+                    let facts = page.facts_of_press(landed)?;
+                    judged(app, caller, page, place, &facts, Act::Press, key)
+                };
                 match (&click.element, click.x, click.y) {
+                    // By what it lands on, whatever the ref is of, and again by whatever
+                    // the page has put there when the pointer arrives (9.3).
                     (Some(reference), None, None) => {
                         let target = element(page, reference)?;
-                        // By what it lands on, whatever the ref is of (9.3).
-                        let aim = page.aim(&target)?;
-                        let facts = page.facts_of_press(&aim.on)?;
                         let key = approvals::key("browser_click", Some(&tab), Some(reference));
-                        judged(app, caller, page, place, &facts, Act::Press, &key)?;
-                        page.click_aimed(&target, &aim, button, count, held)?;
+                        page.click(&target, button, count, held, &|landed| gated(landed, &key))?;
                     }
                     // A point instead, which the press is judged by what lands there, as
                     // a press on that element by ref would be (#373).
                     (None, Some(x), Some(y)) => {
                         let target = page.element_at((x, y))?;
-                        let facts = page.facts_of_press(&target)?;
                         let reference = format!("e{}", target.backend);
                         let key = approvals::key("browser_click", Some(&tab), Some(&reference));
-                        judged(app, caller, page, place, &facts, Act::Press, &key)?;
-                        page.click_at((x, y), button, count, held)?;
+                        gated(&target, &key)?;
+                        page.click_at((x, y), &target, button, count, held, &|landed| {
+                            gated(landed, &key)
+                        })?;
                     }
                     _ => {
                         return Err(Answer::error(
@@ -753,35 +756,32 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 }
                 // A tick is a press, and what it is called is what it does; the question
                 // for every write under Confirm is the one the form has already had.
-                if let Caller::Agent(grant) = caller {
-                    for ((target, _), field) in targets.iter().zip(&form.fields) {
-                        let FieldValue::Ticked(wanted) = &field.value else {
-                            continue;
-                        };
-                        if !page.tick_changes(target, *wanted)? {
-                            continue;
-                        }
-                        let facts = page.facts_of_press(&page.aim(target)?.on)?;
-                        let grave = policy::judge(
-                            grant,
-                            &facts,
-                            Act::Press,
-                            &page.url(),
-                            &page_hosts(page),
-                        )
-                        .is_some_and(|question| question.category != Category::Writing);
-                        if grave {
-                            let key = approvals::key(
-                                "browser_fill_form_tick",
-                                Some(&tab),
-                                Some(&field.element),
-                            );
-                            judged(app, caller, page, place, &facts, Act::Press, &key)?;
+                let tick_key =
+                    |field: &str| approvals::key("browser_fill_form_tick", Some(&tab), Some(field));
+                let ticked = |landed: &Element, key: &str| -> Result<(), Answer> {
+                    let Caller::Agent(grant) = caller else {
+                        return Ok(());
+                    };
+                    let facts = page.facts_of_press(landed)?;
+                    let grave =
+                        policy::judge(grant, &facts, Act::Press, &page.url(), &page_hosts(page))
+                            .is_some_and(|question| question.category != Category::Writing);
+                    if grave {
+                        judged(app, caller, page, place, &facts, Act::Press, key)?;
+                    }
+                    Ok(())
+                };
+                // All of them before any is set, so a question leaves the form as it was.
+                for ((target, _), field) in targets.iter().zip(&form.fields) {
+                    if let FieldValue::Ticked(wanted) = &field.value {
+                        if page.tick_changes(target, *wanted)? {
+                            ticked(&page.aim(target)?.on, &tick_key(&field.element))?;
                         }
                     }
                 }
                 for ((target, _), field) in targets.iter().zip(&form.fields) {
-                    page.fill(target, &field.value)?;
+                    let key = tick_key(&field.element);
+                    page.fill(target, &field.value, &|landed| ticked(landed, &key))?;
                 }
                 acted(page)
             }
@@ -795,15 +795,17 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
             Verb::Drag(drag) => {
                 let (from, to) = (element(page, &drag.from)?, element(page, &drag.to)?);
                 // What the press and the release land on, whatever the refs are of.
+                let (picked, dropped) = (page.at_first_point(&from)?, page.at_first_point(&to)?);
                 let (mut from_facts, to_facts) = (
-                    page.facts_of_press(&page.at_first_point(&from)?)?,
-                    page.facts_of_press(&page.at_first_point(&to)?)?,
+                    page.facts_of_press(&picked)?,
+                    page.facts_of_press(&dropped)?,
                 );
                 page.may_act_in(&from_facts)?;
                 page.may_act_in(&to_facts)?;
                 // Picked up and put down elsewhere, no click lands on a plain element, and a
                 // card called Pay rent is carried, not pressed. On itself it is a click.
-                if drag.from != drag.to && !from_facts.control {
+                let carried = drag.from != drag.to;
+                if carried && !from_facts.control {
                     from_facts.name.clear();
                 }
                 // A press on the one and a release on the other, which is a click on either
@@ -822,7 +824,23 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 let ends = format!("{}>{}", drag.from, drag.to);
                 let key = approvals::key("browser_drag", Some(&tab), Some(&ends));
                 judged(app, caller, page, place, judged_by, Act::Press, &key)?;
-                page.drag(&from, &to)?;
+                // And again for what the page has put under the pointer at either end.
+                let at_start = |landed: &Element| -> Result<(), Answer> {
+                    let mut facts = page.facts_of_press(landed)?;
+                    if carried && !facts.control {
+                        facts.name.clear();
+                    }
+                    judged(app, caller, page, place, &facts, Act::Press, &key)
+                };
+                let at_end = |landed: &Element| -> Result<(), Answer> {
+                    let facts = page.facts_of_press(landed)?;
+                    page.may_act_in(&facts)?;
+                    if facts.control {
+                        judged(app, caller, page, place, &facts, Act::Press, &key)?;
+                    }
+                    Ok(())
+                };
+                page.drag((&from, &picked), (&to, &dropped), (&at_start, &at_end))?;
                 acted(page)
             }
             Verb::Upload(upload) => {
@@ -862,18 +880,23 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     // What is no file input is pressed to open its chooser, and is judged
                     // as that press, whatever it turns out to do.
                     let facts = page.facts(&target)?;
-                    let (facts, how) = if facts.kind == "file" {
-                        (facts, Act::Write)
-                    } else {
-                        (page.facts_of_press(&page.aim(&target)?.on)?, Act::Press)
-                    };
-                    judged(app, caller, page, place, &facts, how, &key)?;
+                    if facts.kind == "file" {
+                        judged(app, caller, page, place, &facts, Act::Write, &key)?;
+                    }
                 }
                 let paths: Vec<String> = files
                     .iter()
                     .map(|(path, _)| path.to_string_lossy().into_owned())
                     .collect();
-                page.upload(&target, &paths)?;
+                let key = approvals::on_page(
+                    &approvals::key("browser_upload", Some(&tab), Some(&upload.files.join("|"))),
+                    &page.url(),
+                    "",
+                );
+                page.upload(&target, &paths, &|landed| {
+                    let facts = page.facts_of_press(landed)?;
+                    judged(app, caller, page, place, &facts, Act::Press, &key)
+                })?;
                 acted(page)
             }
             Verb::Screenshot(shot) => {

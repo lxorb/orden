@@ -257,6 +257,8 @@ pub struct Facts {
     /// Whether it is, or is in, a control: a button, a link, a role that says so. What is
     /// not has only its own short words for a name.
     pub control: bool,
+    /// What the dialog a control is in calls itself: its Confirm does what that says.
+    pub dialog: String,
     /// Whether the page was too big to read all its fields, so its form cannot be judged.
     pub cut: bool,
     /// The address of the document it is in, then the origin of each frame round that:
@@ -347,7 +349,31 @@ fn card_field(field: &Field) -> bool {
         return true;
     }
     let said = field.said.to_lowercase();
-    CARD.iter().any(|one| said.contains(one)) || says(&field.said, CARD_WORDS)
+    CARD.iter().any(|one| said.contains(one))
+        || (says(&plain_said(&field.said), CARD_WORDS) && !says(&said, NO_PAYMENT_CARD))
+}
+
+/// What a field says with the marks between its words read as spaces, as a person reads
+/// `SMS-Code` and `card_no`.
+fn plain_said(said: &str) -> String {
+    said.replace(['-', '_'], " ")
+}
+
+/// Whether a field asks for a one-time code or a PIN, by what it is called (9.4).
+fn one_time(field: &Field) -> bool {
+    if field
+        .autocomplete
+        .split_whitespace()
+        .any(|one| one == "postal-code")
+    {
+        return false;
+    }
+    says(&plain_said(&field.said), ONE_TIME)
+        || alone(&field.label, ONE_TIME_ALONE)
+        // In its capitals, or as a field's name: `Pin notes` and a colour called Tan are not.
+        || field.said.split(|one: char| !one.is_alphanumeric()).any(|word| {
+            word.ends_with("TAN") || (!body(field) && matches!(word, "PIN" | "pin"))
+        })
 }
 
 /// Whether a field holds a credential: a password by its type or its `autocomplete`, or
@@ -372,7 +398,7 @@ pub fn secret(field: &Field) -> bool {
             .split_whitespace()
             .any(|one| one.starts_with("cc-") || one == "one-time-code")
         || card_field(field)
-        || says(&field.said, ONE_TIME)
+        || one_time(field)
 }
 
 /// Whether a field is a box words are written in: a `<textarea>` or an editable region,
@@ -585,6 +611,23 @@ pub fn judge(
         }
     }
 
+    // A dialog's Confirm does what the dialog says it does: the second step of a delete.
+    let confirming = act == Act::Press
+        && facts.control
+        && !facts.link
+        && !facts.editable
+        && says(&facts.dialog, DELETING)
+        && !says(&facts.name, DISMISSING)
+        && !alone(&facts.name, DISMISSING_ALONE);
+    if confirming {
+        if let Some(question) = ask(
+            Category::Deleting,
+            on(&short(&facts.dialog), "Delete", &site),
+        ) {
+            return Some(question);
+        }
+    }
+
     // What a press lands on cannot be read, so it can be anything on the list above.
     if act == Act::Press && (facts.opaque || (facts.cut && facts.submit)) {
         if let Some(question) = ask(Category::Unread, on("", "A press", &site)) {
@@ -750,56 +793,118 @@ pub fn social(host: &str) -> bool {
     SOCIAL.iter().any(|one| covers(one, host))
 }
 
-/// What a one-time code and a PIN are called, in names, ids and labels: whole words, since
-/// `pin` is in `shipping` and `otp` in `hotpot`. Only a secret by this, which hides a value
-/// from an agent and asks nothing: over-careful about a postal PIN code, and never a leak.
+/// What a one-time code and a PIN are called, in names, ids and labels, with their marks
+/// read as spaces: whole words, since `otp` is in `hotpot`. Only a secret by this, which hides
+/// a value from an agent and asks nothing: over-careful about a postal PIN code, and never
+/// a leak. No bare `one-time` or `authenticator`: a one-time donation and an app's name.
 const ONE_TIME: &[&str] = &[
     "otp",
     "otpcode",
     "totp",
-    "one-time",
-    "one time",
-    "onetime",
-    "one_time",
+    "one time code",
+    "one time password",
+    "one time passcode",
+    "one time pin",
+    "onetime code",
+    "onetime password",
+    "onetimecode",
+    "onetimepassword",
     "verification code",
-    "verification_code",
-    "verification-code",
     "verificationcode",
     "verify code",
     "digit code",
+    "digit 1",
+    "digit 2",
+    "digit 3",
+    "digit 4",
+    "digit 5",
+    "digit 6",
     "2fa",
-    "two-factor",
     "two factor",
     "mfa",
-    "authenticator",
+    "authenticator code",
     "auth code",
     "authentication code",
     "sms code",
-    "pin",
+    "login code",
+    "sign in code",
+    "recovery code",
+    "backup code",
+    "code we sent",
+    "code you received",
     "pincode",
     "pin code",
+    "pin number",
     "passcode",
-    "tan",
+    "best\u{e4}tigungs code",
     "best\u{e4}tigungscode",
     "einmalcode",
     "einmalpasswort",
     "sicherheitscode",
+    "zugangscode",
+    "anmeldecode",
+    "authentifizierungscode",
     "geheimzahl",
     "code de v\u{e9}rification",
     "c\u{f3}digo de verificaci\u{f3}n",
     "codice di verifica",
 ];
 
-/// More of what card fields are called, as whole words: `card no` is in `card notes`.
+/// What is a one-time code only as a field's whole label.
+const ONE_TIME_ALONE: &[&str] = &["code", "otp", "pin", "tan"];
+
+/// More of what card fields are called, as whole words with their marks read as spaces:
+/// `card no` is in `card notes`.
 const CARD_WORDS: &[&str] = &[
     "card no",
-    "card_no",
-    "card-no",
     "cardno",
     "card num",
-    "card_num",
-    "credit_card",
+    "credit card",
+    "mm/yy",
+    "mm / yy",
+    "mm/jj",
+    "mm/aa",
 ];
+
+/// What calls itself a card and pays for nothing.
+const NO_PAYMENT_CARD: &[&str] = &[
+    "library",
+    "loyalty",
+    "member",
+    "membership",
+    "student",
+    "health",
+    "insurance",
+    "id card",
+    "gift",
+];
+
+/// What a press in a dialog does when it is the way out of it, whatever the dialog is about.
+const DISMISSING: &[&str] = &[
+    "cancel",
+    "close",
+    "dismiss",
+    "keep",
+    "no",
+    "not now",
+    "back",
+    "abbrechen",
+    "schlie\u{df}en",
+    "nein",
+    "behalten",
+    "zur\u{fc}ck",
+    "annuler",
+    "fermer",
+    "non",
+    "garder",
+    "cancelar",
+    "cerrar",
+    "annulla",
+    "chiudi",
+];
+
+/// The same in a mark.
+const DISMISSING_ALONE: &[&str] = &["x", "\u{d7}", "\u{2715}"];
 
 /// What card fields are called, in names, ids and labels.
 const CARD: &[&str] = &[
@@ -1561,6 +1666,109 @@ mod tests {
 
     fn category(facts: &Facts, url: &str) -> Option<Category> {
         judge(&grant(), facts, Act::Press, url, &[]).map(|question| question.category)
+    }
+
+    #[test]
+    fn a_dialog_that_deletes_asks_of_its_confirm_and_not_of_its_way_out() {
+        let url = "https://app.example/";
+        let in_dialog = |name: &str, dialog: &str| Facts {
+            control: true,
+            dialog: dialog.into(),
+            ..press(name)
+        };
+        for name in ["Confirm", "OK", "Yes", "Continue"] {
+            assert_eq!(
+                category(&in_dialog(name, "Delete your account?"), url),
+                Some(Category::Deleting),
+                "{name}"
+            );
+        }
+        for name in [
+            "Cancel",
+            "No, keep it",
+            "Close",
+            "x",
+            "Abbrechen",
+            "Not now",
+        ] {
+            assert_eq!(
+                category(&in_dialog(name, "Delete your account?"), url),
+                None,
+                "{name}"
+            );
+        }
+        assert_eq!(
+            category(&in_dialog("Confirm", "Change your name?"), url),
+            None
+        );
+    }
+
+    #[test]
+    fn what_says_nothing_of_itself_asks() {
+        let unread = Facts {
+            opaque: true,
+            ..Facts::default()
+        };
+        assert_eq!(
+            category(&unread, "https://app.example/"),
+            Some(Category::Unread)
+        );
+    }
+
+    #[test]
+    fn what_is_no_code_and_no_payment_card_stays_readable() {
+        let called = |said: &str, kind: &str| Field {
+            kind: kind.into(),
+            said: said.into(),
+            ..Field::default()
+        };
+        for said in [
+            "One-time donation",
+            "Authenticator app name",
+            "Tan",
+            "tan",
+            "Library card no",
+            "Discount code",
+            "Pin to top",
+        ] {
+            assert!(!secret(&called(said, "text")), "{said}");
+        }
+        assert!(!secret(&called("Pin notes", "textarea")));
+        assert!(!card_field(&called("Library card no", "text")));
+        let postal = Field {
+            autocomplete: "postal-code".into(),
+            ..called("PIN code", "text")
+        };
+        assert!(!secret(&postal));
+    }
+
+    #[test]
+    fn a_code_under_a_name_with_marks_or_as_a_whole_label_is_secret() {
+        let called = |said: &str| Field {
+            kind: "text".into(),
+            said: said.into(),
+            ..Field::default()
+        };
+        for said in [
+            "SMS-Code",
+            "Best\u{e4}tigungs-Code",
+            "Login code",
+            "Enter the code we sent you",
+            "Recovery code",
+            "Zugangscode",
+            "Authentifizierungscode",
+            "Digit 1",
+            "MM/YY",
+            "photoTAN",
+            "TAN",
+        ] {
+            assert!(secret(&called(said)), "{said}");
+        }
+        let code = Field {
+            label: "Code".into(),
+            ..called("Code")
+        };
+        assert!(secret(&code));
     }
 
     #[test]
