@@ -3,9 +3,10 @@
  *
  *  The windows lie on one canvas for every space, each space where it was put (see
  *  places.svelte.ts), and the screen is a window onto it. A point on the canvas is drawn
- *  at `point * zoom + (x, y)`. The wheel and two fingers on a touchpad move it, a pinch
- *  or Ctrl and the wheel bring it nearer about the point under the hand, and it opens on
- *  the space being worked in. Pure. */
+ *  at `point * zoom + (x, y)`. Every turn of the wheel and every scroll of two fingers
+ *  on a touchpad brings it nearer or further about the point under the hand, Ctrl held or
+ *  not, as a pinch does; it is moved only by dragging the canvas itself. It opens on the
+ *  space being worked in. Pure. */
 
 import type { Box } from './layout'
 
@@ -81,10 +82,10 @@ const PAGE = 800
 const PINCH = 0.01
 const MOST = 40
 
-/** Whether a turn with Ctrl or Cmd is a notch of a mouse's wheel rather than a pinch:
- *  a notch says lines, or a hundred pixels or so at once, where a pinch says a few at a
- *  time and rarely whole ones. A notch is eased towards (`eased`); a pinch follows the
- *  fingers one to one. */
+/** Whether a turn is a notch of a mouse's wheel rather than fingers on a touchpad: a
+ *  notch says lines, or a hundred pixels or so at once, where fingers say a few at a time
+ *  and rarely whole ones. A notch is eased towards (`eased`); fingers are followed one to
+ *  one (`turned`). */
 export function isNotch(turn: Turn): boolean {
   return turn.deltaMode !== 0 || (Math.abs(turn.deltaY) >= 50 && Number.isInteger(turn.deltaY))
 }
@@ -113,17 +114,17 @@ export function eased(camera: Camera, zoom: number, at: Point, seconds: number):
   return zoomedAt(camera, at, next / camera.zoom)
 }
 
-/** The camera after a turn of the wheel: two fingers on a touchpad and the wheel move
- *  the canvas; a pinch, or Ctrl or Cmd with the wheel, zooms about the pointer. */
+/** The camera after fingers on a touchpad, followed as they go: zoomed about the
+ *  pointer, never moved (Emil, 2026-11-04: in the overview every scroll zooms, and the
+ *  canvas is moved only by dragging it). A pinch, which Chromium says as Ctrl and the
+ *  wheel, zooms as sharply as the fingers spread; two fingers scrolling zoom as a notch
+ *  of the wheel does, pixel for pixel. */
 export function turned(camera: Camera, turn: Turn): Camera {
   const unit = turn.deltaMode === 1 ? LINE : turn.deltaMode === 2 ? PAGE : 1
-  const dx = turn.deltaX * unit
   const dy = turn.deltaY * unit
-  if (turn.ctrlKey || turn.metaKey) {
-    const step = Math.max(-MOST, Math.min(MOST, dy))
-    return zoomedAt(camera, turn, Math.exp(-step * PINCH))
-  }
-  return moved(camera, -dx, -dy)
+  const step = Math.max(-MOST, Math.min(MOST, dy))
+  const rate = turn.ctrlKey || turn.metaKey ? PINCH : NOTCH
+  return zoomedAt(camera, turn, Math.exp(-step * rate))
 }
 
 /** Two fingers on the glass, then and now: moved by where their middle went, and nearer
