@@ -2001,10 +2001,6 @@ mod tests {
         }
         for (name, dialog) in [
             ("Got it", "How to delete your data"),
-            (
-                "Accept all",
-                "We use cookies. You can delete them in your browser.",
-            ),
             ("Learn more", "Delete account?"),
             ("Next page", "Recently deleted items"),
             ("Cancel", "Delete your account?"),
@@ -2031,21 +2027,15 @@ mod tests {
         };
         // Each of these goes: an everyday dialog, or a way out said another way.
         for (name, dialog) in [
-            ("OK", "We use cookies. You can delete them in your browser."),
             (
                 "Accept all cookies",
                 "We use cookies. You can remove them at any time.",
             ),
             (
-                "Allow all",
+                "Allow all cookies",
                 "Our partners use cookies to process payment and measure ads.",
             ),
-            (
-                "Agree",
-                "We and our partners store data. You can withdraw or remove consent any time.",
-            ),
-            ("I agree", "Cookies help us deliver your purchase."),
-            ("Next", "New: you can now pay with PayPal."),
+            ("Next", "Tip: drag a widget to move it."),
             ("Continue", "This upgrade is free of charge."),
             ("Assign", "Who is in charge of this project?"),
             ("Lanjut", "Saya setuju dengan ketentuan ini"),
@@ -2109,6 +2099,40 @@ mod tests {
                 "This upgrade is 20 EUR. Pay now?",
                 Category::Paying,
             ),
+            // Only a name that says cookies is about cookies: the dialog's words are no way past.
+            (
+                "OK",
+                "We use cookies. You can delete them in your browser.",
+                Category::Deleting,
+            ),
+            ("OK", "Consent to payment of 99 EUR.", Category::Paying),
+            (
+                "Agree",
+                "By clicking Agree you consent to be charged 99 EUR every month.",
+                Category::Paying,
+            ),
+            (
+                "Allow",
+                "Payment consent. Allow shop.example to take 500 EUR from your account.",
+                Category::Paying,
+            ),
+            (
+                "OK",
+                "We use cookies. Your account will be deleted permanently.",
+                Category::Deleting,
+            ),
+            (
+                "Accept all",
+                "We use cookies. You can delete them in your browser.",
+                Category::Deleting,
+            ),
+            // Next goes on to what the dialog says.
+            (
+                "Next",
+                "Your card will be charged 99 EUR.",
+                Category::Paying,
+            ),
+            ("Next", "Your account will be deleted.", Category::Deleting),
         ] {
             assert_eq!(
                 category(&in_dialog(name, dialog), url),
@@ -2145,8 +2169,32 @@ mod tests {
                 facts.default_button
             );
         }
+        assert_eq!(
+            enter(&field(true, "Next", "Your account will be deleted.")),
+            Some(Category::Deleting)
+        );
         assert_eq!(enter(&field(true, "Cancel", "Delete your account?")), None);
         assert_eq!(enter(&field(true, "", "Change your name?")), None);
+    }
+
+    #[test]
+    fn shift_enter_in_a_field_submits_like_enter_and_in_a_box_writes_a_line() {
+        let key = crate::agents::keys::chord("Shift+Enter").expect("a key");
+        let field = |kind: &str| Facts {
+            tag: "input".into(),
+            editable: true,
+            in_form: true,
+            field: Field {
+                kind: kind.into(),
+                ..Field::default()
+            },
+            ..Facts::default()
+        };
+        let (facts, act) = key_act(field("text"), &key).expect("it does something");
+        assert_eq!(act, Act::Enter);
+        assert!(facts.submit);
+        let (_, act) = key_act(field("textarea"), &key).expect("as before");
+        assert_eq!(act, Act::Press);
     }
 
     #[test]

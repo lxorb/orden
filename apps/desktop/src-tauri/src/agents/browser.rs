@@ -1456,7 +1456,9 @@ mod tests {
                 "Delete 40 files Time left 10:00",
                 "Delete 40 files Time left 9:59",
             ),
-            ("Removing files 0%", "Removing files 45 %"),
+            ("Pay now. 12:03 PM", "Pay now. 12:04 PM"),
+            ("Pay now. 3:45pm", "Pay now. 3:46pm"),
+            ("Pay now. 09:58:12", "Pay now. 09:58:13"),
             (
                 "Pay now. Offer ends in 58 seconds",
                 "Pay now. Offer ends in 1 minute",
@@ -1476,6 +1478,12 @@ mod tests {
                 "Confirm purchase. Total: 20000 EUR",
             ),
             ("Pay $20", "Pay $20000"),
+            ("Pay 5% of your balance", "Pay 50% of your balance"),
+            ("Removing files 5 %", "Removing files 50 %"),
+            ("Delete the last 1 hour", "Delete the last 24 hours"),
+            ("Delete the last 1h", "Delete the last 24h"),
+            ("Pay 20 $", "Pay 20 \u{20ac}"),
+            ("Split 1:10 and pay", "Split 1:1000 and pay"),
             ("Delete 3 files", "Delete 3000 files"),
             ("Pay 1.299,00 EUR", "Pay 9.299,00 EUR"),
         ] {

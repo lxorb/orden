@@ -4097,6 +4097,18 @@ mod tests {
     }
 
     #[test]
+    fn a_slider_gone_by_the_scan_is_no_secret() {
+        let parts = [Part {
+            prefix: String::new(),
+            nodes: vec![
+                json!({ "backendDOMNodeId": 1, "role": { "value": "slider" }, "value": { "value": "0:10" } }),
+            ],
+            owner: None,
+        }];
+        assert!(gone_fields(&parts, &HashSet::new()).is_empty());
+    }
+
+    #[test]
     fn a_capture_says_every_node_in_every_document() {
         let capture = json!({ "documents": [
             { "nodes": { "backendNodeId": [1, 2] } },
