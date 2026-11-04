@@ -7,6 +7,7 @@
 import { chatText } from '@orden/chats'
 import { resultsOf } from '@orden/chats/wire'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { MOST_BOUND } from '../src/bound'
 import { chatLogs, fire } from './chat-fakes'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 import { hubs } from './hub-fakes'
@@ -176,5 +177,78 @@ describe('chats through the connector', () => {
     )
     expect(await tool(await connector(reader), 'read_chat', { chat })).toContain('#thesis')
     expect((await state(owner)).map((one) => one.body)).not.toContain('hi')
+  })
+
+  test('a name two chats hold is asked about, and nothing lands in either', async () => {
+    const other = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Private' } })).json
+      .space.id
+    const second = (
+      await call<{ chat: string }>(env, '/v2/chats', { token: owner, body: { space: other } })
+    ).json.chat
+    await call(env, `/v1/spaces/${other}/notes`, {
+      token: owner,
+      body: { path: 'thesis.chat', content: chatText({ v: 1, chat: second }) },
+    })
+    const message = (await state(owner))[0]?.id ?? ''
+    const key = await connector(owner)
+
+    for (const [name, args] of [
+      ['post_message', { chat: 'thesis', text: 'meant for one of them' }],
+      ['read_chat', { chat: '#Thesis' }],
+      ['react', { chat: 'thesis', message, emoji: '👍' }],
+    ] as const) {
+      const said = await tool(key, name, args)
+      expect(said).toContain('2 chats are called')
+      expect(said).toContain(`${chat} in Thesis`)
+      expect(said).toContain(`${second} in Private`)
+    }
+    const first = await state(owner)
+    expect(first.map((one) => one.body)).not.toContain('meant for one of them')
+    expect(first.find((one) => one.id === message)).not.toHaveProperty('reactions.👍')
+    const mine = chat
+    chat = second
+    expect(await state(owner)).toEqual([])
+
+    // Named back by id, and by id it is the one that was meant.
+    expect(await tool(key, 'post_message', { chat: second, text: 'for Private' })).toMatch(
+      /^Posted in #thesis/,
+    )
+    expect((await state(owner)).map((one) => one.body)).toEqual(['for Private'])
+    chat = mine
+    expect((await state(owner)).map((one) => one.body)).not.toContain('for Private')
+  })
+
+  test('two of one name in one space are asked about too', async () => {
+    const twin = (await call<{ chat: string }>(env, '/v2/chats', { token: owner, body: { space } }))
+      .json.chat
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token: owner,
+      body: { path: 'old/thesis.chat', content: chatText({ v: 1, chat: twin }) },
+    })
+    const said = await tool(await connector(owner), 'read_chat', { chat: 'thesis' })
+    expect(said).toContain(chat)
+    expect(said).toContain(twin)
+    expect(said).not.toContain('Draft of chapter 3')
+  })
+
+  test('an account of more chats than one statement may bind reaches them all', async () => {
+    for (let at = 0; at < 101; at++) {
+      const made = (
+        await call<{ chat: string }>(env, '/v2/chats', { token: owner, body: { space } })
+      ).json.chat
+      await call(env, `/v1/spaces/${space}/notes`, {
+        token: owner,
+        body: { path: `c${String(at)}.chat`, content: chatText({ v: 1, chat: made }) },
+      })
+    }
+    const key = await connector(owner)
+    const listed = await tool(key, 'list_chats')
+    expect(listed).toContain('#thesis')
+    expect(listed).toContain('#c0')
+    expect(listed).toContain('#c100')
+    expect(await tool(key, 'read_chat', { chat: 'thesis' })).toContain('Draft of chapter 3')
+
+    const { count, sql } = env.widest()
+    expect(count, sql.replace(/\s+/g, ' ').trim()).toBeLessThanOrEqual(MOST_BOUND)
   })
 })
