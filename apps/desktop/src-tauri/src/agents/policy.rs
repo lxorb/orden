@@ -655,14 +655,13 @@ pub fn judge(
         && confirms(&facts.name)
         && !says(&facts.dialog, NOT_ABOUT_THE_PRESS)
     {
-        let said = short(&facts.dialog);
-        if dialog_commits(&facts.dialog, PAYING) {
-            if let Some(question) = ask(Category::Paying, on(&said, "Pay", &site)) {
+        if let Some(said) = dialog_commits(&facts.dialog, PAYING) {
+            if let Some(question) = ask(Category::Paying, on(&short(said), "Pay", &site)) {
                 return Some(question);
             }
         }
-        if dialog_commits(&facts.dialog, DELETING) {
-            if let Some(question) = ask(Category::Deleting, on(&said, "Delete", &site)) {
+        if let Some(said) = dialog_commits(&facts.dialog, DELETING) {
+            if let Some(question) = ask(Category::Deleting, on(&short(said), "Delete", &site)) {
                 return Some(question);
             }
         }
@@ -986,18 +985,19 @@ const COMMITS: &[&str] = &[
     "permanentemente",
 ];
 
-/// Whether a dialog says these words of what its button goes ahead with: a sentence that
+/// What a dialog says of what its button goes ahead with, in these words: a sentence that
 /// asks (`Delete your account?`), one that says it will (`This will delete your account.`),
-/// or its opening words, as a heading does (`Pay 20.00 EUR`).
-fn dialog_commits(dialog: &str, words: &[&str]) -> bool {
-    let leads_off = starts_with_any(dialog, words);
-    leads_off
-        || dialog
-            .split_inclusive(['.', '!', '?', '\u{ff1f}'])
-            .any(|sentence| {
-                says(sentence, words)
-                    && (sentence.trim_end().ends_with(['?', '\u{ff1f}']) || says(sentence, COMMITS))
-            })
+/// or its opening words, as a heading does (`Pay 20.00 EUR`). That sentence, for the question.
+fn dialog_commits<'d>(dialog: &'d str, words: &[&str]) -> Option<&'d str> {
+    let mut sentences = dialog
+        .split_inclusive(['.', '!', '?', '\u{ff1f}'])
+        .map(str::trim);
+    if starts_with_any(dialog, words) {
+        return sentences.next();
+    }
+    sentences.find(|sentence| {
+        says(sentence, words) && (sentence.ends_with(['?', '\u{ff1f}']) || says(sentence, COMMITS))
+    })
 }
 
 fn starts_with_any(line: &str, words: &[&str]) -> bool {
@@ -1871,7 +1871,8 @@ mod tests {
             "Pay 20.00 EUR?",
         ] {
             assert!(
-                dialog_commits(dialog, DELETING) || dialog_commits(dialog, PAYING),
+                dialog_commits(dialog, DELETING).is_some()
+                    || dialog_commits(dialog, PAYING).is_some(),
                 "{dialog}"
             );
         }
@@ -1881,7 +1882,8 @@ mod tests {
             "Added to cart Buy 2 more for free shipping",
         ] {
             assert!(
-                !dialog_commits(dialog, DELETING) && !dialog_commits(dialog, PAYING),
+                dialog_commits(dialog, DELETING).is_none()
+                    && dialog_commits(dialog, PAYING).is_none(),
                 "{dialog}"
             );
         }

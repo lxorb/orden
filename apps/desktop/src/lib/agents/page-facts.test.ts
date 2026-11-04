@@ -23,6 +23,7 @@ const script = constant('FIELDS') + constant('FACTS_BODY')
 
 interface Said {
   tag: string
+  default_button: string
   name: string
   in_form: boolean
   submit: boolean

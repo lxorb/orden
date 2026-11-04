@@ -767,11 +767,7 @@ impl Page<'_> {
                 self.forget_worlds(session);
             }
             for frame in self.frames_of(session) {
-                if let Some(handle) = self
-                    .world_of_frame(session, &frame)
-                    .ok()
-                    .and_then(|world| resolve(world))
-                {
+                if let Some(handle) = self.world_of_frame(session, &frame).ok().and_then(&resolve) {
                     return Some(handle);
                 }
             }
@@ -931,11 +927,15 @@ impl Page<'_> {
             return Ok(facts);
         }
         // A control by the engine's account alone: a component's `ElementInternals`.
-        if let Some(name) = self.engine_control_round(element) {
-            facts.name = joined_name(&facts.name, &name);
-        }
+        let engine = self.engine_control_round(element);
+        let named = |mut facts: Facts| {
+            if let Some(name) = &engine {
+                facts.name = joined_name(&facts.name, name);
+            }
+            facts
+        };
         let Some(listening) = self.listening(element) else {
-            return Ok(facts);
+            return Ok(named(facts));
         };
         let answered = self.call_on(
             element,
@@ -952,7 +952,7 @@ impl Page<'_> {
             .pointer("/result/value")
             .cloned()
             .unwrap_or_default();
-        Ok(self.facts_from(element, &said))
+        Ok(named(self.facts_from(element, &said)))
     }
 
     /// Whether the control an element is in listens for a press itself.

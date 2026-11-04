@@ -465,10 +465,7 @@ fn said_times(summary: String, times: u8) -> String {
 
 /// What an allowance is for, in full: a summary is cut short for reading.
 fn question_key(category: Category, summary: &str, facts: &Facts) -> String {
-    format!(
-        "{} {} {} {category:?} {summary}",
-        facts.name, facts.default_button, facts.dialog
-    )
+    format!("{} {} {category:?} {summary}", facts.name, facts.dialog)
 }
 
 /// One press, however many times it is looked at on its way: one question. The look before
