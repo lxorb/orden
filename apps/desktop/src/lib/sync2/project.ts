@@ -21,6 +21,7 @@ import { put, type Change, type EntryRow } from './store'
 /** What recording that Orden wrote `text` to an entry's file changes. */
 export async function wrote(core: Core, entry: EntryRow, text: string): Promise<Change[]> {
   entry.written_hash = await core.world.digest(unixLines(text))
+  core.events.file?.({ id: entry.id, text: unixLines(text) })
   return [put('written', { id: entry.id, text: unixLines(text) }), put('entries', { ...entry })]
 }
 

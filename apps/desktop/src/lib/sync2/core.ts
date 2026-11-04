@@ -73,6 +73,8 @@ export interface CoreEvents {
   /** A file whose words its entry's kind cannot hold, kept on this device; see
    *  `unsynced` in ingest.ts. */
   unsynced: (event: { id: string; name: string }) => void
+  /** What an entry's file says now, which its document has taken in. */
+  file: (event: { id: string; text: string }) => void
 }
 
 export class Core {

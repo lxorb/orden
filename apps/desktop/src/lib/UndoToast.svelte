@@ -184,6 +184,9 @@
   >
     <p>{failed.undoing ? t('Not undone') : t('Not moved')}</p>
     <button class="undo" onclick={() => failed.again()}>{t('Retry')}</button>
+    {#if failed.skip}
+      <button class="undo" onclick={() => failed.giveUp()}>{t('Skip')}</button>
+    {/if}
   </div>
 {:else if undoToast.kind}
   <div

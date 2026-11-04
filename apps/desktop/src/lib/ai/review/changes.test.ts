@@ -136,7 +136,7 @@ describe('the rewind plan', () => {
       ]),
     ]
     const plan = planFor({ turns }, 'm1', [])
-    expect(plan?.made).toEqual([{ path: 'Plan.md', space: 'Work' }])
+    expect(plan?.made).toEqual([expect.objectContaining({ path: 'Plan.md', space: 'Work' })])
     expect(plan?.lasting).toBe(false)
     expect(plan?.choices[0]).toBe('both')
 

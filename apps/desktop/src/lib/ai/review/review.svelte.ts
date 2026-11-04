@@ -21,7 +21,14 @@ import {
   setReviewMarks,
   setReviewSource,
 } from '@orden/editor/review'
-import { onTracks, putBackIn, trackedAgents, tracksOf, undoSomeIn } from '../../agents/docs'
+import {
+  onTracks,
+  putBackIn,
+  trackedAgents,
+  tracksAside,
+  tracksOf,
+  undoSomeIn,
+} from '../../agents/docs'
 import { busy } from '../../busy.svelte'
 import { plural, t } from '../../i18n.svelte'
 import { insideSpace, notePath, withinSpace } from '../../space-paths'
@@ -64,7 +71,7 @@ export interface ReviewPanel {
 type Taken =
   /** Edits under a token of their own, wherever their notes have got to since. */
   | { kind: 'edits'; token: string; agents: string[] }
-  | { kind: 'made'; path: string; words: string }
+  | { kind: 'made'; id: string; path: string; words: string }
   | { kind: 'file'; file: FileChange }
 
 /** What a rewind took back, to put back with Redo until the next message. */
@@ -73,6 +80,8 @@ interface Redo {
   /** What is left to do again, the first taken back first; done from the end. */
   taken: Taken[]
   turns: Turn[] | null
+  /** The compaction those turns held up, which Redo brings back with them. */
+  compaction?: Thread['compaction']
 }
 
 /** Said of a rewind or a Redo that left something as it was. */
@@ -160,12 +169,14 @@ class Review {
 
   /** Every edit of the sidebar's agents still there to take back, open notes brought
    *  up to date first. */
-  edits(agents = trackedAgents().filter((one) => providerOf(one) !== null)): Edit[] {
+  edits(agents = trackedAgents().filter((one) => providerOf(one) !== null), aside = false): Edit[] {
     this.heard()
     const edits: Edit[] = []
     for (const agent of agents) {
-      for (const [path, track] of tracksOf(agent)) {
-        const open = documentOf(path)
+      const away = aside ? tracksAside(agent) : []
+      for (const [path, track] of [...tracksOf(agent), ...away]) {
+        // Whatever is open at the name of a note deleted is another note.
+        const open = away.some(([, one]) => one === track) ? null : documentOf(path)
         if (open) track.follow(open)
         for (const id of track.ids) {
           const thread = track.threadOf(id)
@@ -188,7 +199,8 @@ class Review {
     // A helper works on any provider in use (`run_agent`), so a thread with helpers reads
     // every built-in agent's edits; `changesOf` keeps those of its own threads.
     const agents = thread.helpers?.length ? undefined : providersOf(thread).map(agentOf)
-    return changesOf(thread, this.edits(agents), answeringAt, this.kept)
+    // With those of a note deleted: a rewind puts it back on the way to them.
+    return changesOf(thread, this.edits(agents, true), answeringAt, this.kept)
   }
 
   /** The same by note. */
@@ -412,7 +424,9 @@ class Review {
     const index = thread.turns.findIndex((one) => one.id === turn)
     if (choice === 'both' || choice === 'conversation') {
       redo.turns = thread.turns.splice(index)
+      const compaction = thread.compaction
       this.cut(thread, panel, plan.turn)
+      if (compaction && !thread.compaction) redo.compaction = compaction
     } else if (choice === 'summarize-from') {
       const summary = await summarized(thread, thread.turns.slice(index))
       thread.turns.splice(index, thread.turns.length - index, {
@@ -482,7 +496,12 @@ class Review {
       } else {
         const gone = await this.unmake(thread, step.made)
         if (gone === 'stayed') short = true
-        else if (gone) taken.push({ kind: 'made', ...gone })
+        else if (gone) {
+          // Taken back, like a file change: a note the reader makes at the name after
+          // this is theirs, and the next rewind leaves it alone.
+          this.filesDone.add(step.made.id)
+          taken.push({ kind: 'made', id: step.made.id, ...gone })
+        }
       }
     }
     return { taken, short }
@@ -534,6 +553,7 @@ class Review {
       }
       if (redo.turns) {
         thread.turns.push(...redo.turns)
+        if (redo.compaction) thread.compaction = redo.compaction
         void rewound(thread)
         panel?.release?.()
         if (panel) panel.text = ''
@@ -563,7 +583,9 @@ class Review {
       if ((await workspace.noteText(one.path).catch(() => null)) !== null) return true
       if (await onDisk(one.path)) return true
       await writeFile(one.path, one.words)
+      await workspace.fileCame(one.path, 'file')
       await workspace.loadTree()
+      this.filesDone.delete(one.id)
       return false
     }
     let short = false

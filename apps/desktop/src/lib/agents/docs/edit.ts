@@ -27,10 +27,10 @@ import type { Selected } from './anchors'
 import { type Desk, type Located, located, type NoteAt, openNote, wordsOf } from './desk'
 import { type Planned, plan, readEdits, type Replacement } from './edits'
 import { type Agent, showAgent } from './presence'
-import { movedTo } from '../../space-paths'
+import { movedTo, within } from '../../space-paths'
 import { DocError } from './problem'
 import { revOf } from './rev'
-import { touch, touchedMoved, type Touched } from './touched'
+import { touch, touchedBy, touchedMoved, type Touched } from './touched'
 import { Track } from './track'
 
 /** How far back the reader's own writing keeps an edit away: two seconds. */
@@ -104,6 +104,14 @@ const waiting = new Map<string, { track: Track; row: Touched | null }[]>()
 /** A note moved or renamed, or a folder or a space with it: its tracks go with it, so
  *  what an agent did stays the agent's to take back, under the name the note has now. */
 export function tracksMoved(from: string, to: string, root?: string): void {
+  for (const [key, held] of [...aside]) {
+    const [agent, path] = partsOf(key)
+    const now = movedTo(path, from, to, root)
+    // One aside at this very name stays: it is the note on it now that moved.
+    if (now === null || now === path || now === to) continue
+    aside.delete(key)
+    aside.set(keyOf(agent, now), [...(aside.get(keyOf(agent, now)) ?? []), ...held])
+  }
   for (const [key, held] of [...waiting]) {
     const [agent, path] = partsOf(key)
     const now = movedTo(path, from, to, root)
@@ -136,6 +144,64 @@ export function tracksMoved(from: string, to: string, root?: string): void {
     }
     for (const listener of listeners) listener(agent, now, path)
   }
+}
+
+/** Tracks of notes that were deleted, by the key they had, oldest first. Words made at the
+ *  name since are another note's, with a track of its own: going through this one they
+ *  were folded into its steps, and a rewind wrote the old note's edit into the wrong words.
+ *  Each has its key again when a file comes back there saying what it last said. */
+const aside = new Map<string, { track: Track; row: Touched | null }[]>()
+
+/** A note deleted, or a folder or a space with it: its tracks are put aside. */
+export function tracksRemoved(path: string): void {
+  for (const [key, track] of [...tracks]) {
+    const [agent, at] = partsOf(key)
+    if (within(path, at) === null) continue
+
+    track.setAside()
+    tracks.delete(key)
+    kept.delete(key)
+    const row = touchedBy(at).find((one) => one.id === agent) ?? null
+    touch(at, { id: agent, name: row?.name ?? agent }, 0)
+    aside.set(key, [...(aside.get(key) ?? []), { track, row }])
+    for (const listener of listeners) listener(agent, at)
+  }
+}
+
+/** A file came to be: a note deleted and put back has its track again, and any other is a
+ *  new note, whatever its name was before. Asked of its words only where one is waiting. */
+export async function tracksCame(
+  path: string,
+  read: (path: string) => Promise<string | null>,
+): Promise<void> {
+  for (const [key, held] of [...aside]) {
+    const [agent, at] = partsOf(key)
+    if (within(path, at) === null || tracks.has(key)) continue
+
+    const words = await read(at)
+    if (words === null || tracks.has(key)) continue
+    const says = words.replace(/\r\n?/g, '\n')
+    const back = [...held].reverse().find((one) => one.track.says === says)
+    if (!back) continue
+
+    held.splice(held.indexOf(back), 1)
+    if (!held.length) aside.delete(key)
+    tracks.set(key, back.track)
+    placed.set(back.track, at)
+    if (back.row) touch(at, back.row, back.row.edits)
+    for (const listener of listeners) listener(agent, at)
+  }
+}
+
+/** One agent's tracks put aside, with the path of the note each was of: what a rewind
+ *  reads besides `tracksOf`, for the edits it has to take back once the note is back. */
+export function tracksAside(agent: string): [string, Track][] {
+  const prefix = keyOf(agent, '')
+  return [...aside].flatMap(([key, held]) =>
+    key.startsWith(prefix)
+      ? held.map(({ track }): [string, Track] => [key.slice(prefix.length), track])
+      : [],
+  )
 }
 
 function partsOf(key: string): [string, string] {

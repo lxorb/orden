@@ -1113,6 +1113,13 @@ function holds(tail: string): boolean {
  *  across lines read by the block's own rule, the id a named block gets on the page, what
  *  a file shared on its own is held to, and a tick written one at a time, all in modules
  *  the first paint already has. Measured 3,574,630, 387 modules.
+ *
+ *  Raised 2026-11-04, to 3,559,000, for the bug hunt's third round on the desktop: a closed
+ *  tab that comes back from its file once its words have landed, every write looking at the
+ *  disk first, a write's words not lost to a file gone, undo over a space renamed and one
+ *  that says when it will not go, a layout that asks before ending a terminal. The watch of
+ *  the spaces with no engine, what a move does to the steps of undo and across itself are
+ *  behind doors. Measured 3,558,622.
  */
 const BUDGET = 3_574_900
 const MOST_FILES = 388

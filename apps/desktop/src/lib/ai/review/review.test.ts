@@ -91,6 +91,7 @@ vi.mock('../../agents/docs', async () => {
     onTracks: edit.onTracks,
     trackedAgents: edit.trackedAgents,
     tracksOf: edit.tracksOf,
+    tracksAside: edit.tracksAside,
     undoSomeIn: (
       agent: { id: string; name: string },
       path: string,
@@ -248,6 +249,48 @@ describe('a rewind', () => {
     expect(fake.desk.panes['b.md']?.text).toBe('> TWO')
     expect(fake.desk.panes['c.md']?.text).toBe('THREE')
     expect(thread.turns).toHaveLength(4)
+  })
+
+  test('a second rewind leaves alone the note the reader made at the name', async () => {
+    fake.desk = deskWith({ 'Made.md': 'new words' })
+    fake.documents = []
+    fake.removed = []
+    const thread = aThread()
+    await message(
+      thread,
+      'make',
+      [],
+      [
+        {
+          kind: 'tool',
+          id: 'c-again',
+          verb: 'create_note',
+          args: { path: 'Made' },
+          state: 'ok',
+          result: { text: '{"path":"Made.md","created":true}', images: [], error: false },
+        },
+      ],
+    )
+    await review.rewind(thread, 'make', 'notes', null)
+    expect(fake.removed).toEqual(['/space/Made.md'])
+
+    fake.removed = []
+    await review.rewind(thread, 'make', 'notes', null)
+    expect(fake.removed).toEqual([])
+  })
+
+  test('Redo brings back the compaction the turns it brings back held up', async () => {
+    fake.desk = deskWith({ 'A.md': 'a' })
+    fake.documents = []
+    const thread = aThread()
+    await message(thread, 'first', [], [])
+    await message(thread, 'second', [], [])
+    const compaction = { upTo: 'second', kind: 'summary', model: 'm', summary: 'short' } as const
+    thread.compaction = compaction
+    await review.rewind(thread, 'second', 'conversation', null)
+    expect(thread.compaction).toBeUndefined()
+    await review.putBack(thread, null)
+    expect(thread.compaction).toEqual(compaction)
   })
 
   test('sends a note the thread made since to Recently deleted', async () => {
@@ -565,10 +608,11 @@ describe('a rewind over a thread that did things in any order', () => {
 })
 
 describe('a call made in the space in front, not the thread’s', () => {
+  let calls = 0
   const tool = (verb: string, args: unknown, answer: string): Turn['parts'] => [
     {
       kind: 'tool',
-      id: `c-${verb}`,
+      id: `c-${verb}-${String(++calls)}`,
       verb,
       args,
       state: 'ok',

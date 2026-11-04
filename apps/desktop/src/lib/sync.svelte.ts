@@ -670,6 +670,7 @@ class Sync {
         this.pulling.add(key)
         try {
           await workspace.fileMoved(from, to, 'file')
+          await workspace.undone.moved(from, to)
         } finally {
           this.pulling.delete(key)
         }

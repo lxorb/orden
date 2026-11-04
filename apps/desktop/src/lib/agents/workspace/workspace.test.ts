@@ -162,6 +162,7 @@ const workspace = {
   // follows it; see workspace/file-ops.ts.
   fileOps: new FileOps(),
   holdingUnder: vi.fn((_path: string, run: () => Promise<void>) => run()),
+  undone: { moved: () => undefined },
   fileMoved: vi.fn((from: string, to: string, kind: Kind) =>
     workspace.fileOps.tell({ op: 'moved', from, to, kind, root: '/s/Home' }),
   ),

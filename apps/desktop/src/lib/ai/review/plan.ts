@@ -13,6 +13,8 @@ export type Choice = 'both' | 'conversation' | 'notes' | 'summarize-from' | 'sum
 
 /** A file a tool call made: where the call said, relative to its space. */
 export interface Made {
+  /** The call that made it. */
+  id: string
   path: string
   space?: string
 }
@@ -59,7 +61,7 @@ function madeBy(part: Extract<Part, { kind: 'tool' }>): Made | null {
   const path = said.path
   if (typeof path !== 'string' || !path) return null
   const space = spaceOfCall(part)
-  return space ? { path, space } : { path }
+  return space ? { id: part.id, path, space } : { id: part.id, path }
 }
 
 /** The calls the thread made in answer to `turn` and every message after it. */
@@ -100,8 +102,10 @@ export function planFor(
     const moved = fileChangeOf(part)
     const at = part.at ?? 0
     if (file) {
-      made.push(file)
-      acts.push({ at, step: { kind: 'made', made: file } })
+      if (!done.has(file.id)) {
+        made.push(file)
+        acts.push({ at, step: { kind: 'made', made: file } })
+      }
     } else if (moved) {
       if (!done.has(moved.id)) {
         files.push(moved)

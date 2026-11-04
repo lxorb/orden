@@ -18,7 +18,7 @@ import { applied, appliedToFile, type Edit, endingsLike } from '../search/replac
 import type { Retargeting } from '../link-index.svelte'
 import type { Holding } from '../sync/holding'
 import { onDisk } from '../on-disk'
-import { folderOf, isMarkdownPath, samePath } from '../space-paths'
+import { folderOf, isMarkdownPath, samePath, within } from '../space-paths'
 import { invoke } from '../tauri'
 import type { Entry } from '../workspace.svelte'
 import type { Archive } from './archive.svelte'
@@ -44,6 +44,8 @@ export interface PutsBack {
   fileMoved(from: string, to: string, kind: Kind): Promise<void>
   fileGone(path: string, kind: 'file' | 'folder'): Promise<void>
   fileCame(path: string, kind: 'file' | 'folder'): Promise<void>
+  /** Asks for the same undo again. */
+  undoFileAction(): Promise<void>
   /** One file operation on everything open at or under a path, after whatever write
    *  of any of it is in the air; see `holdingUnder` in workspace/saving.svelte.ts. */
   holdingUnder(path: string, run: () => Promise<void>): Promise<void>
@@ -67,15 +69,31 @@ export async function undoLastFileAction(ws: PutsBack): Promise<void> {
       if (!(await undoOne(ws, step))) {
         if (steps.length < action.steps.length) action.steps = steps
         await ws.loadTree()
+        await refused(ws, action)
         return
       }
       steps.pop()
     }
-  } else if (!(await undoOne(ws, action))) return
+  } else if (!(await undoOne(ws, action))) {
+    await refused(ws, action)
+    return
+  }
 
   ws.undone.drop()
   await ws.loadTree()
   ws.persist()
+}
+
+/** A step that would not go back says so, with the way to ask again and the way to let
+ *  it go: it stays on top, and every later undo was the same silent nothing until twenty
+ *  new steps had pushed it off. */
+async function refused(ws: PutsBack, action: FileAction) {
+  const { failed } = await import('../views/failed.svelte')
+  failed.tell(
+    () => void ws.undoFileAction(),
+    true,
+    () => ws.undone.giveUp(action),
+  )
 }
 
 /** Puts one operation back; false where it would not go. */
@@ -214,18 +232,44 @@ export async function putBack(action: Extract<FileAction, { kind: 'delete' }>): 
   if (!action.trashId) {
     // Nothing kept and nothing in the trash, which is what a PDF deleted while
     // signed in looks like. Writing nothing would leave an empty file where the
-    // paper was, so this says so instead.
-    if (!action.content) throw new Error('there is nothing to put back')
+    // paper was, so this says so instead. A note that was empty is an empty note: an
+    // empty note the account held has nothing else to come back from.
+    if (!action.content && !(isMarkdownPath(action.path) && !action.folder)) {
+      throw new Error('there is nothing to put back')
+    }
 
     return writeBeside(action.path, action.content)
   }
 
   const restored = await invoke<string>('restore_trash', { id: action.trashId }).catch(() => null)
 
-  if (restored !== null) return restored || action.path
+  if (restored !== null)
+    return action.trashedAt ? cameOver(action, restored) : restored || action.path
   if (!action.content) throw new Error('the deleted note is no longer in the trash')
 
   return writeBeside(action.path, action.content)
+}
+
+/** What the trash put back where it went from, carried to where that is now. The trash
+ *  knows the path it was given: with its space renamed since, it made the old folder again
+ *  for this one note, which the next listing took for a second space. */
+async function cameOver(action: Extract<FileAction, { kind: 'delete' }>, restored: string) {
+  const left = action.trashedAt
+  const from = restored || left?.path
+  if (!left || !from) return action.path
+  // Moved away and back: the trash has it right.
+  if (samePath(from, action.path)) {
+    delete action.trashedAt
+    return from
+  }
+  const to = await freeBeside(action.path)
+  await invoke('create_folder', { path: folderOf(to) }).catch(() => undefined)
+  await invoke('rename_note', { from, to })
+  for (let up = folderOf(from); within(left.root, up) !== null; up = folderOf(up)) {
+    await invoke('remove_empty_folder', { path: up }).catch(() => undefined)
+  }
+  delete action.trashedAt
+  return to
 }
 
 /** Words written back at `path`, or beside it where something is there now, answering

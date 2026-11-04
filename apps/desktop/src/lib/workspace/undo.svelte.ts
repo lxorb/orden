@@ -27,6 +27,9 @@ export type FileAction =
       path: string
       content: string
       trashId?: string
+      /** Where the trash will put it back, where that is no longer `path`: the whole of
+       *  what moved since has gone from under it (`root`). */
+      trashedAt?: { path: string; root: string }
       /** Signed in, a folder's words and folders as it went. */
       folder?: boolean
       notes?: { path: string; content: string }[]
@@ -112,6 +115,7 @@ export interface Copied {
 
 import { shownName } from '../note-name'
 import { nameOf, samePath } from '../space-paths'
+import type { FileOp } from './file-ops'
 
 /** Twenty is far more than anyone reaches back through, and stops a long
  *  session from holding the text of every note it ever deleted. */
@@ -194,6 +198,32 @@ export class FileActions {
         go(true)
       })
     })
+  }
+
+  /** An operation said to everything kept by path. The stack holds paths, and a move
+   *  nobody here will undo in its turn changes every step under it: a space renamed, which
+   *  is no step of its own, or a file moved in another window or by another program. */
+  async follow(op: FileOp) {
+    if (op.op !== 'moved' || (!op.heard && op.kind !== 'space')) return
+    const { heardMove } = await import('./undo-moved')
+    heardMove(this.steps, op)
+  }
+
+  /** A move no step here records: the steps' paths follow it. */
+  async moved(from: string, to: string) {
+    const { rewritten } = await import('./undo-moved')
+    for (const action of this.steps) rewritten(action, from, to)
+  }
+
+  /** Every step there is, whichever way it is facing. */
+  private get steps(): FileAction[] {
+    return [...this.stack, ...this.ahead, ...(this.#held ?? [])]
+  }
+
+  /** A step that will not go back, let go of at the reader's word: everything under it
+   *  waits behind it otherwise. */
+  giveUp(action: FileAction) {
+    this.stack = this.stack.filter((one) => one !== action)
   }
 
   /** Drops the newest one, once it has actually been put back, and keeps it to do
