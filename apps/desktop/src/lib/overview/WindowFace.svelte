@@ -2,13 +2,13 @@
   /** What a window of the overview shows: what its tab would show, drawn the size its
    *  pane is and made small by the window (issue #331).
    *
-   *  The tab in front of a pane is the pane itself, copied (mirror.ts). Any other is drawn
-   *  the way its kind says (`preview` in workspace/tab-kinds.ts): a note from its words as
-   *  they are now, through the reading renderer, from the line it was left at; a
-   *  terminal from the last of its screen as written down (previews.ts); a web page from
-   *  its last photograph; anything else from the picture kept of it the last time it was
-   *  on screen (faces.svelte.ts). With nothing to draw from, it is its mark, its name
-   *  and where it is from. */
+   *  The tab in front of a pane is the pane itself, under the window (Overview.svelte),
+   *  and has none of this. Any other is drawn the way its kind says (`preview` in
+   *  workspace/tab-kinds.ts): a note from its words as they are now, through the reading
+   *  renderer, from the line it was left at; a terminal from the last of its screen as
+   *  written down (previews.ts); a web page from its last photograph; anything else from
+   *  the picture kept of it the last time it was on screen (faces.svelte.ts). With
+   *  nothing to draw from, it is its mark, its name and where it is from. */
 
   import { readingHtml, unreadableHtml } from '../reading/render'
   import { trustsHtmlIn } from '../sharing.svelte'
@@ -18,18 +18,16 @@
   import type { Tab } from '../workspace.svelte'
   import { TAB_KINDS } from '../workspace/tab-kinds'
   import { drawInto, type Face } from './faces'
-  import { scrolledBack, scrolledIn } from './mirror'
+  import { scrolledBack } from './mirror'
   import { readingFrom, scrollbackOf } from './previews'
 
   const {
     tab,
-    mirror,
     face,
     width,
     height,
   }: {
     tab: Tab
-    mirror: HTMLElement | null
     /** The picture kept of it, if there is one. */
     face: Face | null
     width: number
@@ -45,14 +43,8 @@
 
   let html = $state('')
 
-  /** The pane's copy, put inside. */
-  function holding(node: HTMLElement, copy: HTMLElement) {
-    node.append(copy)
-    scrolledIn(copy)
-  }
-
   $effect(() => {
-    if (mirror || how !== 'reading') return
+    if (how !== 'reading') return
     const text = readingFrom(tab.doc, tab.anchor, START)
     const note = { text, path: tab.path }
     let stale = false
@@ -71,7 +63,7 @@
   /** A terminal's last lines, as written down. */
   let screen = $state<{ text: string; cols: number } | null>(null)
   $effect(() => {
-    if (mirror || how !== 'scrollback') return
+    if (how !== 'scrollback') return
     let stale = false
     void scrollbackOf(tab).then((one) => {
       if (!stale) screen = one
@@ -107,9 +99,7 @@
 </script>
 
 <div class="face" style:width="{width}px" style:height="{height}px">
-  {#if mirror}
-    <div class="held" use:holding={mirror}></div>
-  {:else if how === 'reading'}
+  {#if how === 'reading'}
     <div class="read">
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note's own words, rendered by the same renderer the reading view uses, under the same trust -->
       <article class="page nib-write">{@html html}</article>
@@ -141,17 +131,6 @@
     overflow: hidden;
     background: var(--bg);
     pointer-events: none;
-  }
-
-  .held,
-  .held > :global(*) {
-    width: 100%;
-    height: 100%;
-  }
-
-  .held > :global(*) {
-    display: flex;
-    flex-direction: column;
   }
 
   /* The reading view's column, at the pane's own size. */
