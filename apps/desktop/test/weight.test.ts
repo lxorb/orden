@@ -1177,8 +1177,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,558,200, for #331: the pictures the tab overview keeps of windows,
  *  taken as each leaves the screen (overview/faces.ts, overview/faces.svelte.ts).
- *  Measured 3,558,037. */
-const BUDGET = 3_558_200
+ *  Measured 3,558,037.
+ *
+ *  Raised 2026-11-04, to 3,559,000, for #331: each kind's way of drawing its window in the
+ *  tab overview (overview/previews.ts, workspace/tab-kinds.ts).
+ *  Measured 3,558,887. */
+const BUDGET = 3_559_000
 const MOST_FILES = 393
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
