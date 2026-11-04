@@ -142,6 +142,14 @@ CARD = """(card) => {
     icons: [...card.querySelectorAll('.meta .bit')].every((one) => !!one.querySelector('svg')),
     more: getComputedStyle(more.closest('.actions')).opacity,
     gap: card.parentElement.getBoundingClientRect().bottom - card.getBoundingClientRect().bottom,
+    // The grip in the row's margin, clear of the box and level with it (#1110).
+    grip: (() => {
+      const grip = card.querySelector('.grip')?.getBoundingClientRect()
+      const box = card.querySelector('.head .box')
+      const at = box?.getBoundingClientRect()
+      if (!grip || !at) return null
+      return { overlap: grip.right - at.left, drift: Math.abs(grip.top + grip.height / 2 - (at.top + at.height / 2)) }
+    })(),
   }
 }"""
 
@@ -169,6 +177,8 @@ def the_card(page: Page) -> None:
             wrong("the card's menu does not show on the focus")
         if drawn["gap"] < 4:
             wrong("there is no room between one card and the next")
+        if drawn["grip"] is None or drawn["grip"]["overlap"] > 0 or drawn["grip"]["drift"] > 2:
+            wrong("the grip lies over the box, or not level with it")
         shot(page, f"01-card-{scheme}")
     page.emulate_media(color_scheme="light")
 

@@ -163,9 +163,11 @@
       oncontextmenu={more}
       onauxclick={aux}
     >
+      <!-- Todoist's grip: the row is carried from anywhere on it, and this says so. In the
+           row's own margin, so the row is what it is placed in: inside the head, which
+           holds the actions over the words, it lay over the box (#1110). -->
+      <span class="grip" aria-hidden="true"><Glyph icon={Grip} /></span>
       <div class="head">
-        <!-- Todoist's grip: the row is carried from anywhere on it, and this says so. -->
-        <span class="grip" aria-hidden="true"><Glyph icon={Grip} /></span>
         {#if twist}
           <button
             type="button"
