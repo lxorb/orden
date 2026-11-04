@@ -47,9 +47,10 @@ Nothing here loosens any of them.
    that Obsidian leaves alone. Table, list, cards, board, calendar, timeline and chart; the
    built-in Inbox, Today and Upcoming are bases Orden ships and a reader can copy and change.
 6. **A Tasks panel on the left** beside the files and the search: the space's one Todos
-   view (#1046), then the favourites and labels, each with its count. A row opens its view
-   in a tab, the way the graph opens. The panel is navigation, the tab is the work. Todos'
-   Display menu is where Inbox, Today, Upcoming, Completed and the filters went.
+   view (#1046), then the favourites and labels, each with its count. A press chooses a
+   row and draws its list in the panel under the rows; Ctrl or Cmd and a press, the middle
+   button or the row's menu opens it in a tab of its own (#374). Todos' Display menu is
+   where Inbox, Today, Upcoming, Completed and the filters went.
 7. **Quick add from anywhere**: a global key opens a one-line field over whatever is in
    front, and the palette has the same field. `Call mum tomorrow 4pm #family p1 every
 sunday` becomes chips as it is typed, in English and German, and a chip pressed turns
@@ -752,12 +753,15 @@ navigation, never a list of tasks itself, the way Todoist's sidebar is:
   left over.
 - **Rows** are `.nib-row`s with the existing section labels; counts are the badge shape; no
   sentence anywhere. Bookmarked views and notes come first, as favourites.
-- **A row opens its view in a tab** of its own kind (a view tab, as the graph is a tab):
-  full width, so a board and a calendar have the room they need, splittable beside a note,
-  restored with the session. A note's menu has "Open as board" and "Open as calendar" for
-  its own tasks.
-- **On the right instead**: the panel can be moved right like any panel; a reader who wants
-  Todos next to the note they write in moves it there and gets it as a list in the panel.
+- **A press chooses a row** (#374): it is marked, and its list is drawn in the panel under
+  the rows; no tab opens. **A tab is asked for**: Ctrl or Cmd and a press, the middle
+  button, or the row's menu, Open in new tab, opens it in a view tab of its own kind (as the
+  graph is a tab), kept rather than a preview: full width, so a board and a calendar have
+  the room they need, splittable beside a note, restored with the session. Which a press
+  is, is decided in one place (`choose` in panel-press.ts). A note's menu has "Open as
+  board" and "Open as calendar" for its own tasks.
+- **On the right instead**: the panel can be moved right like any panel, and is the same
+  there: the rows, and the chosen row's list under them beside the note being written.
 - **On a phone** it is the drawer's third tab; a row opens the view as the page.
 
 Why both a panel and tabs: the panel answers "where are my things" in one glance with counts,

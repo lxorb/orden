@@ -2,7 +2,7 @@
 
 What this drives, against the real rows store and the real files:
 
-  * The Tasks panel has one row for the space's tasks; pressing it opens Todos, grouped
+  * The Tasks panel has one row for the space's tasks; Ctrl and a press opens Todos, grouped
     by when each task is due - Overdue, Today, Tomorrow, Later, No date - with a task
     waiting for its start date and a done one left out.
   * Display says how many of its settings differ from the view as it came; Completed
@@ -91,7 +91,8 @@ def texts(page: Page, selector: str) -> list[str]:
 def open_from_panel(page: Page) -> None:
     page.evaluate("window.nibApp.workspace.showPanel('tasks')")
     wait_for(page, "document.querySelector('.tasks .nib-row')", "the Tasks panel")
-    page.locator(".tasks .nib-row", has_text="Tasks").first.click()
+    # A plain press only chooses the row (#374); Ctrl and a press asks for its tab.
+    page.locator(".tasks .nib-row", has_text="Tasks").first.click(modifiers=["Control"])
     wait_for(page, "document.querySelector('.view-tab .task, .view-tab .card')", "Todos")
     quiet(page)
 

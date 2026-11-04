@@ -3,19 +3,19 @@
    *  space in one view (#1046), its count in the danger tone while something is overdue
    *  - then the favourites (bookmarked notes with tasks and views) and the labels. What
    *  were Inbox, Today, Upcoming, Completed, the filters, the projects and the notes are
-   *  the one view's Display menu now: its grouping, its filters and Completed tasks. A
-   *  row opens its view in the tab it takes over, the way a press in the file list
-   *  opens a note: the panel is navigation, the tab is the work.
+   *  the one view's Display menu now.
    *
-   *  Moved to the right, beside the note being written, it is the Todos list itself, so
-   *  the day can be worked through without leaving the note. */
+   *  A press on a row chooses it, and its list is drawn here under the rows; no tab
+   *  opens (#374). Ctrl or Cmd and a press, the middle button, or the row's menu opens
+   *  it in a tab of its own. Which is which is decided in one place, panel-press.ts.
+   *  Moved to the right, beside the note being written, it is the same. */
   import { answer, readBase, type Row } from '@orden/bases'
   import { untrack } from 'svelte'
   import { t } from '../i18n.svelte'
   import { links } from '../link-index.svelte'
   import { DIVIDER, menu } from '../menu.svelte'
   import { rows } from '../rows/rows.svelte'
-  import { insideSpace, samePath } from '../space-paths'
+  import { insideSpace } from '../space-paths'
   import { invoke } from '../tauri'
   import { workspace } from '../workspace.svelte'
   import { addTyped, openQuickAdd } from './add'
@@ -25,14 +25,14 @@
   import ListLayout from './ListLayout.svelte'
   import { LiveView } from './live.svelte'
   import { ADD_MARK, LABEL_MARK, PROJECT_MARK, TODAY_MARK, VIEW_MARK } from './marks'
-  import { openBaseFile, openLabel, openProject, openTodos } from './open'
   import { openByPath, panelCounts } from './panel'
-  import { builtinBase } from './source'
+  import { choose, openInTab, type PanelRow, sameRow, specOf } from './panel-press'
+  import { fileSource, panelSource } from './source'
   import { prompt } from '../prompt.svelte'
   import { canWriteAt } from '../sharing.svelte'
-  import { type Builtin, readSpec } from './spec'
   import { builtinName } from './words'
 
+  /** Which side of the window the panel is on; the same on both, said for its styles. */
   const { side = 'left' }: { side?: 'left' | 'right' } = $props()
 
   /** Every space's rows as the store last told of a change, which is what counts again. */
@@ -118,20 +118,31 @@
     }
   }
 
-  /** Which view the tab in front is, to mark its row. */
-  const front = $derived.by(() => {
-    const tab = workspace.panelTab ?? workspace.active
-    if (tab?.kind !== 'view') return null
-    return { path: tab.path, spec: readSpec(tab.doc) }
-  })
-  const isOn = (builtin: Builtin, extra?: { path?: string; tag?: string }) =>
-    front?.spec?.builtin === builtin &&
-    (extra?.path === undefined || front.spec.path === extra.path) &&
-    (extra?.tag === undefined || front.spec.tag === extra.tag)
+  /** The row chosen, whose list is drawn under the rows: Todos until another is. */
+  let chosen = $state<PanelRow>({ kind: 'todos' })
 
-  /** A press opens the view in the tab the last press opened, unless that tab was kept;
-   *  Ctrl or Cmd keeps the one there and opens another, as a link in a browser does. */
-  const how = (event: MouseEvent) => ({ preview: !(event.ctrlKey || event.metaKey) })
+  /** A row pressed: chosen here, or opened in a tab where that was asked for. */
+  function press(event: MouseEvent, row: PanelRow) {
+    if (choose(event) === 'tab') {
+      event.preventDefault()
+      openInTab(row)
+    } else chosen = row
+  }
+
+  /** The middle button, which a browser gives no click for. */
+  function auxPress(event: MouseEvent, row: PanelRow) {
+    if (event.button === 1) press(event, row)
+  }
+
+  /** A row's menu: Open in new tab first, then what the row itself offers. */
+  function rowMenu(event: MouseEvent, row: PanelRow) {
+    event.preventDefault()
+    if (row.kind === 'label') {
+      labelMenu(event, row.tag)
+      return
+    }
+    menu.show(event, [{ label: t('Open in new tab'), run: () => openInTab(row) }])
+  }
 
   let typing = $state(false)
   let words = $state('')
@@ -153,12 +164,13 @@
   function labelMenu(event: MouseEvent, tag: string) {
     // Opened only, in a space shared to be read: renaming or taking a label away writes
     // its notes, which that space refuses (`replaceInNotes` in workspace/note-text.ts).
+    const open = { label: t('Open in new tab'), run: () => openInTab({ kind: 'label', tag }) }
     if (root !== null && !canWriteAt(root)) {
-      menu.show(event, [{ label: t('Open'), run: () => openLabel(tag) }])
+      menu.show(event, [open])
       return
     }
     menu.show(event, [
-      { label: t('Open'), run: () => openLabel(tag) },
+      open,
       {
         label: t('Rename'),
         asks: true,
@@ -187,40 +199,38 @@
     ])
   }
 
-  /** On the right: the open space's Todos, worked through beside the note. */
-  const beside = $derived.by(() => {
-    if (side !== 'right') return null
+  /** The chosen row's list, drawn under the rows: Todos of the open space, as it follows
+   *  the space; a view's changes are kept on this device as a tab's would be. */
+  const shown = $derived.by(() => {
+    const row = chosen
     const name = workspace.activeSpace?.name
     return untrack(() => {
-      const spec =
-        name === undefined
-          ? { builtin: 'todos' as const }
-          : { builtin: 'todos' as const, space: name }
-      // Changes to how it is drawn here stay here: the panel keeps no words of its own.
-      const live = new LiveView({
-        scope: null,
-        load: () => Promise.resolve(builtinBase(spec)),
-        save: () => Promise.resolve(),
-      })
-      return { live, kit: kitFor(live, spec, null, true) }
+      const here: PanelRow =
+        row.kind === 'todos' && row.space === undefined && name !== undefined
+          ? { kind: 'todos', space: name }
+          : row
+      const spec = specOf(here)
+      const file = here.kind === 'base' ? here.path : null
+      const live = new LiveView(file === null ? panelSource(spec ?? {}) : fileSource(file))
+      return { live, kit: kitFor(live, spec ?? {}, file, true) }
     })
   })
   $effect(() => {
-    const here = beside
-    if (here) return untrack(() => here.live.start())
+    const here = shown
+    return untrack(() => here.live.start())
   })
 </script>
 
-{#snippet row(
-  mark: string,
-  label: string,
-  count: number | null,
-  on: boolean,
-  open: (event: MouseEvent) => void,
-  late = false,
-  context?: (event: MouseEvent) => void,
-)}
-  <button type="button" class="nib-row" class:is-on={on} onclick={open} oncontextmenu={context}>
+{#snippet row(mark: string, label: string, count: number | null, target: PanelRow, late = false)}
+  <button
+    type="button"
+    class="nib-row"
+    class:is-on={sameRow(chosen, target)}
+    aria-pressed={sameRow(chosen, target)}
+    onclick={(event) => press(event, target)}
+    onauxclick={(event) => auxPress(event, target)}
+    oncontextmenu={(event) => rowMenu(event, target)}
+  >
     <span class="nib-row-mark"
       ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={mark} /></svg></span
     >
@@ -229,7 +239,7 @@
   </button>
 {/snippet}
 
-<div class="tasks">
+<div class="tasks" data-side={side}>
   {#if typing}
     <div class="nib-row adding">
       <span class="nib-row-mark"
@@ -268,63 +278,46 @@
     </button>
   {/if}
 
-  {#if beside}
-    <ListLayout kit={beside.kit} />
-  {:else}
-    {@render row(
-      TODAY_MARK,
-      builtinName('todos'),
-      counts.todos,
-      isOn('todos'),
-      (event) => openTodos(workspace.activeSpace?.name, how(event)),
-      counts.overdue,
-    )}
+  {@render row(TODAY_MARK, builtinName('todos'), counts.todos, { kind: 'todos' }, counts.overdue)}
 
-    {#if favourites.length}
-      <p class="nib-section">{t('Favorites')}</p>
-      {#each favourites as one (one.path)}
-        {#if one.base}
-          {@render row(
-            VIEW_MARK,
-            one.name,
-            one.count,
-            front?.path !== undefined && samePath(front.path, one.path),
-            (event) => openBaseFile(one.path, how(event)),
-          )}
-        {:else if space}
-          {@const name = space.name}
-          {@render row(
-            PROJECT_MARK,
-            one.name,
-            one.count,
-            isOn('project', { path: one.relative }),
-            (event) => openProject(name, one.relative, undefined, how(event)),
-          )}
-        {/if}
-      {/each}
-    {/if}
-
-    {#if counts.labels.length}
-      <p class="nib-section">{t('Labels')}</p>
-      {#each counts.labels as one (one.tag)}
-        {@render row(
-          LABEL_MARK,
-          one.tag,
-          one.count,
-          isOn('label', { tag: one.tag }),
-          (event) => openLabel(one.tag, how(event)),
-          false,
-          (event) => labelMenu(event, one.tag),
-        )}
-      {/each}
-    {/if}
+  {#if favourites.length}
+    <p class="nib-section">{t('Favorites')}</p>
+    {#each favourites as one (one.path)}
+      {#if one.base}
+        {@render row(VIEW_MARK, one.name, one.count, { kind: 'base', path: one.path })}
+      {:else if space}
+        {@render row(PROJECT_MARK, one.name, one.count, {
+          kind: 'project',
+          space: space.name,
+          path: one.relative,
+        })}
+      {/if}
+    {/each}
   {/if}
+
+  {#if counts.labels.length}
+    <p class="nib-section">{t('Labels')}</p>
+    {#each counts.labels as one (one.tag)}
+      {@render row(LABEL_MARK, one.tag, one.count, { kind: 'label', tag: one.tag })}
+    {/each}
+  {/if}
+
+  <!-- The chosen row's list, here in the panel and in no tab (#374). -->
+  <div class="chosen">
+    {#key shown}<ListLayout kit={shown.kit} />{/key}
+  </div>
 </div>
 
 <style>
   .tasks {
     display: flex;
     flex-direction: column;
+  }
+
+  .chosen {
+    margin-top: var(--space-2);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--line);
   }
 
   .nib-row-mark svg {

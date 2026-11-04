@@ -18,7 +18,7 @@ import { insideSpace, samePath, within } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import type { Tab } from '../workspace/documents.svelte'
 import { noteText, writeNoteText } from '../workspace/note-text'
-import { keepProjectView, keepTodosView, todosView } from './kept-views'
+import { keepProjectView, keepTodosView, projectView, todosView } from './kept-views'
 import type { Shown, Source } from './live.svelte'
 import { asShipped, readSpec, type ViewSpec, writeSpec } from './spec'
 
@@ -115,6 +115,17 @@ export function fileSource(path: string, view?: string, self?: () => Row | undef
   }
 }
 
+/** A built-in view's change kept on this device where it has a place there: a project
+ *  laid out again as it was left the next time it is opened here, and a space's Todos in
+ *  that space, wherever it was changed (a tab, the Tasks panel). */
+function keepChange(spec: ViewSpec, yaml: string): void {
+  if (spec.builtin === 'project') keepProjectView(spec.space ?? '', spec.path ?? '', yaml)
+  if (spec.builtin === 'todos' && spec.space !== undefined) {
+    const shipped = writeBase(builtinView('todos', { space: spec.space }))
+    keepTodosView(spec.space, yaml === shipped ? undefined : yaml)
+  }
+}
+
 /** A built-in view in a tab: what it changes is kept in the tab's words, and is the
  *  tab's own until "Copy to a base" writes it to a file. */
 export function tabSource(tab: Tab): Source {
@@ -126,14 +137,26 @@ export function tabSource(tab: Tab): Source {
       const now = spec()
       const yaml = writeBase(next)
       tab.note.replace(writeSpec({ ...now, yaml }), false)
-      // A project is laid out again as it was left, the next time it is opened here.
-      if (now.builtin === 'project') keepProjectView(now.space ?? '', now.path ?? '', yaml)
-      // And a space's Todos, in that space, whichever tab it is changed in.
-      if (now.builtin === 'todos' && now.space !== undefined) {
-        const shipped = writeBase(builtinView('todos', { space: now.space }))
-        keepTodosView(now.space, yaml === shipped ? undefined : yaml)
-      }
+      keepChange(now, yaml)
       workspace.scheduleSession()
+      return Promise.resolve()
+    },
+  }
+}
+
+/** A built-in view chosen in the Tasks panel (#374), drawn there and in no tab: it
+ *  starts as it was left on this device and keeps what it changes the same way. */
+export function panelSource(spec: ViewSpec): Source {
+  const kept =
+    spec.builtin === 'project' ? projectView(spec.space ?? '', spec.path ?? '') : undefined
+  let now: ViewSpec = kept === undefined ? spec : { ...spec, yaml: kept }
+  return {
+    scope: null,
+    load: () => Promise.resolve(builtinBase(now)),
+    save(next) {
+      const yaml = writeBase(next)
+      now = { ...asShipped(now), yaml }
+      keepChange(now, yaml)
       return Promise.resolve()
     },
   }
