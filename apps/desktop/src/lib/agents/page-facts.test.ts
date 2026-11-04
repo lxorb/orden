@@ -375,8 +375,16 @@ describe('what acts for a press, by its first line', () => {
   })
 
   test.each([
-    ['a listener round a short app', '<div id=root><span id=hit>Home</span><div>Delete account</div></div>', 'Home'],
-    ['a row', '<table><tr tabindex=0 onclick="go()"><td id=hit>Stripe</td><td>Pay now</td></tr></table>', 'Stripe'],
+    [
+      'a listener round a short app',
+      '<div id=root><span id=hit>Home</span><div>Delete account</div></div>',
+      'Home',
+    ],
+    [
+      'a row',
+      '<table><tr tabindex=0 onclick="go()"><td id=hit>Stripe</td><td>Pay now</td></tr></table>',
+      'Stripe',
+    ],
     [
       'a help card, from its other line',
       '<article onclick="go()" style="cursor:pointer"><p id=hit>Help center</p><h3>How to delete your account</h3></article>',
@@ -393,7 +401,9 @@ describe('what acts for a press, by its first line', () => {
 
   test('what holds many controls is no one control', () => {
     expect(
-      hit('<div onclick="go()"><h3>Pay</h3><p id=hit>Open</p><a></a><button></button><button></button></div>').name,
+      hit(
+        '<div onclick="go()"><h3>Pay</h3><p id=hit>Open</p><a></a><button></button><button></button></div>',
+      ).name,
     ).toBe('Open')
   })
 })
@@ -421,9 +431,15 @@ describe('a link that goes somewhere, and one that does more', () => {
 
 describe('a control in a dialog', () => {
   test.each([
-    ['its label', '<div role=dialog aria-label="Delete your account?"><button>Confirm</button></div>'],
+    [
+      'its label',
+      '<div role=dialog aria-label="Delete your account?"><button>Confirm</button></div>',
+    ],
     ['its heading', '<dialog open><h2>Delete your account?</h2><button>Confirm</button></dialog>'],
-    ['its first words', '<div role=alertdialog><p>Delete your account?</p><button>Confirm</button></div>'],
+    [
+      'its first words',
+      '<div role=alertdialog><p>Delete your account?</p><button>Confirm</button></div>',
+    ],
   ])('says what the dialog says: %s', (_, html) => {
     expect(pressOn(page(html)).dialog).toBe('Delete your account?')
   })
@@ -435,7 +451,9 @@ describe('a control in a dialog', () => {
 
 describe('a control named by a label as well as by its words', () => {
   test('a label elsewhere does not hide them', () => {
-    const facts = pressOn(page('<label for=b>Continue reading</label><button id=b>Pay now</button>'))
+    const facts = pressOn(
+      page('<label for=b>Continue reading</label><button id=b>Pay now</button>'),
+    )
     expect(facts.name).toContain('Pay now')
     expect(facts.name).toContain('Continue reading')
   })

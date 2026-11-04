@@ -929,12 +929,16 @@ bare listed name with no second command, no control character and nothing the sh
 but `python -c`, a `git` alias in the repository's config, a `Makefile` or an `npm test` a
 script changed run whatever they run, and no check of a line can see that. `shell-text.ts`
 sends the plainest ways out back to the question: git, npm, pnpm, yarn and bun each go by the
-commands and options known to be free, and any other asks (git's `-c`, `-C`, `-p`,
-`--exec-path`, `--git-dir`, `--work-tree`, `--output`, `--upload-pack` and its `config`,
-`submodule` and `bisect`; `npm exec` and its kind and abbreviations, `npm config` and any
-option that sets a config key, a bare `pnpm touch` or `bun run touch`, which start what is on
-the path; `npx` always). That narrows the list of surprises and does not end it. List only
-what you would let the agent run with anything after it.
+commands and options known to be free, read as a shell hands them over, and any other asks
+(git's `-c`, `-C`, `-p`, `--exec-path`, `--git-dir`, `--work-tree`, `--output`, `--upload-pack`
+and its `config`, `submodule` and `bisect`; `npm exec` and its kind and abbreviations, `npm
+config` and any option that sets a config key, a bare `pnpm touch` or `bun run touch`, which
+start what is on the path; a folder with a space in it in front of the command; `npx` always).
+A bare name goes where it can only be a script: `test:unit` by its shape, `build` and the few
+like it with nothing after them, and `tsc`, `vitest`, `jest`, `eslint` and `prettier` for pnpm
+and yarn. `pnpm run` and `npm run` take a script and nothing else. That narrows the list of
+surprises and does not end it. List only what you would let the agent run with anything after
+it.
 
 **The reader's own terminals** are tabs like any other (`lib/agents/workspace/
 terminal-tab.ts`), what "look at my terminal" and "restart the server" are about. VS Code's
@@ -1051,16 +1055,27 @@ agent. Unanswered questions expire after a day. In `confirm` mode every write as
 same way, batched: an agent's ten form fields are one question.
 
 A press is judged by **what it lands on**, not by the ref it was named by: the element the
-engine finds at the point, and in a frame the frame's element, by the frame's site. So a
-paragraph round a Pay button asks and a section whose middle is empty does not, and a frame's
-ref is a press of what is in the frame. Where no control holds the press, what acts for it does
-(a handler, a place in the tab order, a widget's role, a pointer cursor set on it, a listener
-the engine can see), by the words it holds when they are short enough to be a name, leaving
-out any control of its own: any part of a div built as a Pay button asks, a mail's row is not
-called Delete for the icon in it, and a column of cards is no card. A link with an address that
-goes somewhere stays no delete, since the press that deletes is on the page it goes to. A tick
-by `browser_fill_form` is a press like one by `browser_click`, on top of the form's one
-question.
+engine finds at the point with the hit test the press itself goes by, so through a
+`pointer-events: none` layer, a pseudo-element as what it hangs on, and in a frame the frame's
+element, by the frame's site. What says nothing of itself asks. The pointer is brought there
+first and the point looked at again, as the page may answer the move: anything new there is
+put to the same question before the button goes down. A page's own timer can still swap it
+in the moment between that look and the press, which no check from outside closes.
+
+So a paragraph round a Pay button asks and a section whose middle is empty does not, and a
+frame's ref is a press of what is in the frame. Where no control holds the press, what acts for
+it does (a handler, a place in the tab order, a widget's role, a pointer cursor set on it, a
+listener the engine can see), called what it says first, a price or a count aside: any part of
+a div built as a Pay button asks, through a shadow root too, a row is not called Pay for its
+second cell, and what holds much or several controls is no one control. So a `<div>` that
+pays and puts its price and then a long line first goes unasked from that line. A control keeps
+its own name, whatever it sits in. A link that only goes is no delete, as the press that deletes
+is on the page it goes to; one with `data-method`, `role=button` or a handler or listener of its
+own is a press, while a plain `<a href=/delete-account>` still goes, and so does a page's own
+script on a button called anything. A control in a dialog that says it deletes asks, unless it
+is the way out (Cancel, Close, No), and that is by the dialog's words: a dialog that says
+nothing of it and only a body further down goes. A tick by `browser_fill_form` is a press like
+one by `browser_click`, on top of the form's one question.
 
 Recognising these from the page rather than from the agent's own account of what it is
 doing is the point. An agent that has been talked into buying something will describe the
@@ -1080,8 +1095,12 @@ by any road: `browser_snapshot` writes such a field as `[filled]` or nothing, an
 under it (the engine's own value for a password is one bullet a character, and its words
 inside the field the same, so either would say how long it is); `browser_find` never looks
 inside one; a name the engine builds out of a field's value has the value taken out; and
-`browser_read` and a clip carry no field's value in any shape, nor the words of a secret
-editable region, the only editable region whose words are not simply the page's. A page holding a filled one
+`browser_read` and a clip carry no field's value in any shape, and a secret editable region
+leaves `[hidden]`, by the node and never by its words: every other word of the page stands as it
+is, whatever a field holds. The value is cut only from a name the engine builds out of that
+field, and leaves `[hidden]` there too; the same words the page prints anywhere else are the
+page's own. `[filled]` costs an agent reading back what is under a name like `PIN code`, also a
+postal code in India (unless its `autocomplete` says `postal-code`). A page holding a filled one
 prints to a PDF only for a call cleared for signing in.
 The engine's password saving and autofill are off in agent tabs, so a saved password is
 not filled in behind the agent's back either.

@@ -227,17 +227,7 @@ const REACH: Record<
     // `-e1` and `-pe1`: short options bundle, and a value may hang on the end.
     short: /^-[a-zA-Z]*[ep]/,
     long: [...PACKAGES.long, '--eval', '--print'],
-    commands: [
-      'install',
-      'i',
-      'add',
-      'a',
-      'remove',
-      'rm',
-      'update',
-      'outdated',
-      'help',
-    ],
+    commands: ['install', 'i', 'add', 'a', 'remove', 'rm', 'update', 'outdated', 'help'],
     before: PLAIN.filter((one) => one !== '-s'),
     valued: ['--cwd'],
   },
