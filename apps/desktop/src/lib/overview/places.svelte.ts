@@ -10,7 +10,7 @@
  *
  *  Kept on this device, under `KEY`, through stored.ts. */
 
-import { keepJson, stored } from '../stored'
+import { forget, keepJson, stored, storedText } from '../stored'
 import type { Camera } from './camera'
 import type { Box } from './layout'
 import { type Keyed, lastingKeys } from './tab-keys'
@@ -20,7 +20,10 @@ const KEY = 'nib:overview-places'
 /** Where each window was put by hand, which it stays at (free.ts): a window nobody has
  *  moved lies where its space's panes would put it. Written by each tab's lasting name
  *  (tab-keys.ts), since a tab's id is new every run. */
-const WINDOWS = 'nib:overview-windows'
+const WINDOWS = 'nib:overview-windows-2'
+
+/** The same as an earlier version wrote it, with private tabs' titles among the names. */
+const WINDOWS_BEFORE = 'nib:overview-windows'
 
 /** Where the camera was as the view was last put away, which it opens at again (Emil,
  *  2026-11-04). */
@@ -59,6 +62,16 @@ export function nextPlace(all: Record<string, Box>, size: { w: number; h: number
   const right = Math.max(...placed.map((one) => one.x + one.w))
   const top = Math.min(...placed.map((one) => one.y))
   return { x: right + APART, y: top, ...size }
+}
+
+/** What an earlier version wrote, without the name of any web page that had no file: a
+ *  private tab's title is one of those, and nothing tells which. At launch. */
+export function upgradeWindows() {
+  const before = readPlaces(stored(WINDOWS_BEFORE))
+  if (storedText(WINDOWS_BEFORE) === null) return
+  const left = Object.entries(before).filter(([name]) => !name.startsWith('web:~'))
+  keepJson(WINDOWS, Object.fromEntries(left))
+  forget(WINDOWS_BEFORE)
 }
 
 class Places {
