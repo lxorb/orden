@@ -256,10 +256,7 @@ describe('a press no control holds goes to what acts for it', () => {
 
   test('a listener only the engine can see', () => {
     const document = page('<div id=round><div>Pay now</div><div id=hit>20.00 EUR</div></div>')
-    const facts = factsOf(
-      document.querySelector('#hit')!,
-      document.querySelector('#round')!,
-    )
+    const facts = factsOf(document.querySelector('#hit')!, document.querySelector('#round')!)
     expect(facts.name).toBe('Pay now 20.00 EUR')
     expect(factsOf(document.querySelector('#hit')!).name).toBe('20.00 EUR')
   })
