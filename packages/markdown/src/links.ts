@@ -982,6 +982,22 @@ export function blocksOf(text: string): NoteBlock[] {
  *  published page, not an embed. The editor hides it the way it hides any other
  *  syntax mark, and brings it back when the caret is on its line. */
 export function withoutBlockIds(text: string): string {
+  return replacingBlockIds(text, () => '')
+}
+
+/** The same with each name written over in blanks, so every offset in the note stays
+ *  what it was. Only where the line ends its paragraph: two blanks before a line of the
+ *  same paragraph would break it there. */
+export function blockIdsBlanked(text: string): string {
+  return replacingBlockIds(text, (length, end) => {
+    const next = text.indexOf('\n', end)
+    const under = text.indexOf('\n', next + 1)
+    const below = next === -1 ? '' : text.slice(next + 1, under === -1 ? text.length : under)
+    return below.trim() === '' ? ' '.repeat(length) : ''
+  })
+}
+
+function replacingBlockIds(text: string, by: (length: number, end: number) => string): string {
   let out = ''
   let at = 0
 
@@ -995,7 +1011,7 @@ export function withoutBlockIds(text: string): string {
     const before = text[caret - 1]
     const from = before === ' ' || before === '\t' ? caret - 1 : caret
 
-    out += text.slice(at, from)
+    out += text.slice(at, from) + by(end - from, end)
     at = end
   }
 

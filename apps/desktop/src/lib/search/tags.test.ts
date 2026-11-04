@@ -243,3 +243,17 @@ describe('what taking a tag away has to cut', () => {
     expect(without('---\ntags: [work, other]\n---\n', 'work')).toBe('---\ntags: [other]\n---\n')
   })
 })
+
+describe('a tag in a flow list across lines', () => {
+  const note = '---\ntags: [\n  work, # mine\n  # a line of comment\n  "b",\n]\nz: 1\n---\nrest\n'
+
+  test('is a tag, each at its own place', () => {
+    expect(tagsIn(note).map((one) => one.replace(/^#/, ''))).toEqual(['work', 'b'])
+    const [span] = tagSpans(note, 'work')
+    expect(span && note.slice(span.from, span.to)).toBe('work')
+  })
+
+  test('a list nothing closes reads as it did', () => {
+    expect(tagsIn('---\ntags: [a\nz: b\n---\n').map((one) => one.replace(/^#/, ''))).toEqual(['a'])
+  })
+})

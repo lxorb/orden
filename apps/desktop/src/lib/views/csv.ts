@@ -3,7 +3,7 @@
  *  (`csvValue` in @orden/bases). Copied, or saved as a file the way an export is. A
  *  button column has nothing to say in a spreadsheet and is left out. */
 
-import { cellValue, csvText, csvValue, isButton } from '@orden/bases'
+import { cellValue, csvText, csvValue, isButton, sheetSafe } from '@orden/bases'
 import { copyText } from '../clipboard'
 import { deliver } from '../export/save'
 import { t } from '../i18n.svelte'
@@ -17,10 +17,10 @@ function viewCsv(live: LiveView): string | null {
   const answer = live.answer
   if (!base || !answer) return null
   const columns = live.columns.filter((one) => !isButton(one))
-  const header = columns.map((one) => propertyName(one, displayName(base, one)))
+  const header = columns.map((one) => sheetSafe(propertyName(one, displayName(base, one))))
   const rows = answer.groups.flatMap((group) =>
     group.rows.map((row) =>
-      columns.map((column) => csvValue(cellValue(base, column, row, live.context))),
+      columns.map((column) => sheetSafe(csvValue(cellValue(base, column, row, live.context)))),
     ),
   )
   return csvText(header, rows)

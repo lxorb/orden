@@ -22,6 +22,7 @@
  *  indented code, are code as much as a fence at the margin is. */
 
 import { CODE, CodeBlocks, closingTicks, OPENS } from './fences'
+import { frontMatterBlock } from './front-matter'
 
 /** The two ways a comment is written. `%%` opens and closes with the same
  *  characters, which the scan below does not care about: it looks for the
@@ -165,4 +166,15 @@ export function withoutComments(source: string): string {
   }
 
   return out.join('\n')
+}
+
+/** A whole note with its comments gone, its front matter as it is: a value there is
+ *  no writer's aside. `50%% off` or a `<!--` in one would otherwise run on down the note,
+ *  and take the block's closing fence and the words under it along. The same order as the
+ *  renderer, which takes the block off first. */
+export function noteWithoutComments(source: string): string {
+  const block = frontMatterBlock(source)
+  return block
+    ? source.slice(0, block.to) + withoutComments(source.slice(block.to))
+    : withoutComments(source)
 }

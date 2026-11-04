@@ -669,7 +669,7 @@ function markAbbreviations(html: string, terms: Map<string, string>): string {
   }
 }
 
-export { withoutComments } from './comments'
+export { noteWithoutComments, withoutComments } from './comments'
 
 /** The ceiling a formula's own sizes are held to, which the editor's renderer
  *  needs as well: one number, so a note that will not fit the panel in the app

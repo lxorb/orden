@@ -58,6 +58,12 @@ function page(path: string, options: Record<string, unknown> = {}) {
 }
 
 describe('what a note says about its page', () => {
+  test('a comment sign in a value leaves the block and the note under it', () => {
+    const front = frontOf('---\nnote: 50%% off\ntitle: Plan\ndescription: <!-- x\n---\nWords\n')
+    expect(front?.title).toBe('Plan')
+    expect(frontOf('---\ntitle: Plan\n---\nWords %%to me\n# Not it\n')?.title).toBe('Plan')
+  })
+
   test('reads the keys Obsidian Publish writes', () => {
     const front = frontOf(
       [

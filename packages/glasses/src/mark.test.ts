@@ -701,3 +701,42 @@ describe('a block name', () => {
     expect(lines('```\nx ^abc123\n```').join('\n')).toContain('x ^abc123')
   })
 })
+
+/** The phone's caret follows a line by its offset in the file. */
+describe('a block name', () => {
+  test('moves no line, however many there are', () => {
+    const note = Array.from({ length: 60 }, (_, at) => `Paragraph ${at} ^blk${at}\n`).join('\n')
+    const marked = markLines(note, { inner: BODY_INNER })
+    for (const line of marked.filter((one) => one.text.startsWith('Paragraph'))) {
+      expect(note.slice(line.from).startsWith(line.text.trimEnd())).toBe(true)
+    }
+    expect(marked.map((one) => one.text).join('\n')).not.toContain('^blk')
+  })
+
+  test('is set the same as with it cut, and in every kind of block', () => {
+    const shown = (source: string) =>
+      markLines(source, { inner: BODY_INNER }).map((one) => one.text.trimEnd())
+    for (const [named, plain] of [
+      ['# Title ^abc\n\nWords\n', '# Title\n\nWords\n'],
+      ['- one ^abc\n- two\n', '- one\n- two\n'],
+      ['> quoted ^abc\n\nWords\n', '> quoted\n\nWords\n'],
+      ['one ^abc\ntwo\n', 'one\ntwo\n'],
+      ['```ts\ncode\n``` ^abc\n', '```ts\ncode\n```\n'],
+    ] as const) {
+      expect(shown(named)).toEqual(shown(plain))
+    }
+  })
+})
+
+describe('a front matter value with a comment sign in it', () => {
+  test('leaves the note under it', () => {
+    for (const value of ['50%% off', '<!-- x', 'a %% b %% c']) {
+      const texts = markLines(`---\nnote: ${value}\n---\nWords here\n\nMore\n`, {
+        inner: BODY_INNER,
+      }).map((one) => one.text)
+      expect(texts).toContain('Words here')
+      expect(texts).toContain('More')
+      expect(texts.join('\n')).not.toContain('note:')
+    }
+  })
+})
