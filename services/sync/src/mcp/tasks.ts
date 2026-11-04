@@ -335,6 +335,11 @@ async function list(env: Env, token: TokenRow, args: Args, seen: Space[]): Promi
   const names = new Set(
     rows.filter((row) => row.kind === 'note').map((row) => row.file.basename.toLowerCase()),
   )
+  // A number of tasks, from a caller a schema does not bind: below one answered none with
+  // a total saying otherwise, and a fraction cut where nobody asked.
+  if (args.limit !== undefined && !(Number.isInteger(args.limit) && Number(args.limit) > 0)) {
+    throw new Said('limit is a whole number of tasks, one or more.')
+  }
   const answer = listTasks(
     rows,
     {
