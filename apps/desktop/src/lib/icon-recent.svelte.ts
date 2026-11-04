@@ -1,7 +1,6 @@
-/** What the picker remembers between openings: which set was last open, and the
- *  icons that were last chosen.
+/** What the picker remembers between openings: the icons that were last chosen.
  *
- *  Both are about the person rather than about the thing wearing the icon, so
+ *  That is about the person rather than about the thing wearing the icon, so
  *  neither belongs in a note, in a space or on the account - this device, this
  *  person, the drawer they last had open. Which is also why they are here rather
  *  than in the component: a sheet that is mounted once and shut every time it is
@@ -11,34 +10,22 @@
  *  marking a month of folders reaches for the same eight icons, and reaching for them
  *  should not mean typing the same eight words again. */
 
-import { isString, keep, keepJson, parsed, stored, storedText, stringList } from './stored'
+import { forget, keepJson, stored, stringList } from './stored'
 
 const RECENT_KEY = 'nib:icons-recent'
-const SET_KEY = 'nib:icon-set'
+
+/** Where the picker kept the tab it was last left on, before the tabs went (#1096):
+ *  nothing reads it now, so it is taken away once this is loaded. */
+const OLD_SET_KEY = 'nib:icon-set'
+forget(OLD_SET_KEY)
 
 /** How many are kept. One row of them at the width the sheet is, and no scrollbar:
  *  a second row of recent icons is a second grid, and the grid is below. */
 const MOST_RECENT = 12
 
-/** Read as it is written, which is the id as it stands rather than JSON: read as
- *  JSON, every id came back as nothing and the picker forgot the tab it was left on.
- *  A quoted id is read too, in case one was ever written that way. */
-function lastSet(): string {
-  const said = storedText(SET_KEY)
-  if (said === null) return ''
-
-  const quoted = parsed(said)
-  return isString(quoted) ? quoted : said
-}
-
 class IconRecent {
   /** The written values, most recently chosen first. */
   list = $state<string[]>(stringList(stored(RECENT_KEY))?.slice(0, MOST_RECENT) ?? [])
-
-  /** The set the picker opens on: the one it was last left on, so somebody who
-   *  works in emoji is not put back into the line set every time. Empty until one
-   *  has been left, which the picker reads as its own default. */
-  set = $state<string>(lastSet())
 
   /** One that has just been chosen, moved to the front. Taking an icon away is not
    *  choosing one, so `null` is not remembered. */
@@ -47,13 +34,6 @@ class IconRecent {
 
     this.list = [value, ...this.list.filter((one) => one !== value)].slice(0, MOST_RECENT)
     keepJson(RECENT_KEY, this.list)
-  }
-
-  open(set: string) {
-    if (this.set === set) return
-
-    this.set = set
-    keep(SET_KEY, set)
   }
 }
 

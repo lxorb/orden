@@ -5,13 +5,13 @@
    *  inside a tree of these components and a space is named somewhere else entirely;
    *  this is mounted once, over the whole page.
    *
-   *  Three sets in two tabs, thousands of icons, one search field. Which tab is a
-   *  chooser rather than two sheets, because the question is always the same question -
-   *  what should this wear - and the answer happens to live in more than one place; see
-   *  icon-sets.ts. A tab is a line the app tints or a picture in its own colours, which
-   *  is the difference a reader sees, so the emoji and the coloured drawings are one
-   *  tab. Its sets arrive the first time it is opened. It opens on the tab that holds
-   *  what the thing wears, and on the one you were last in where it wears nothing.
+   *  Every set, thousands of icons, one search field and no tabs (#1096): the question
+   *  is always the same question - what should this wear - and which set holds the
+   *  answer is nobody's business but icon-sets.ts's. A search ranks every icon of every
+   *  set by how well it answers; with nothing typed, the last few chosen come first and
+   *  then one list across all the sets. The sets arrive as the sheet first opens, and
+   *  the brands, which are most of the weight, once somebody searches or scrolls to the
+   *  end of the rest.
    *
    *  The grid draws only the rows on screen. Two thousand emoji is two thousand
    *  elements, and a sheet that took a second to open every time would be a sheet
@@ -32,20 +32,11 @@
   import { iconChoice } from './icon-choice.svelte'
   import { iconLibrary } from './icon-library.svelte'
   import { iconRecent } from './icon-recent.svelte'
-  import {
-    DEFAULT_TAB,
-    ICON_TABS,
-    type IconTab,
-    type LoadedSet,
-    mergeSets,
-    tabCredit,
-    tabNamed,
-  } from './icon-sets'
-  import { EMOJI_SET, rankIcons, readIcon, sameIcon } from './icons'
+  import { LATER_SETS, type LoadedSet, mergeSets, PICKER_SETS, pickerCredit } from './icon-sets'
+  import { rankIcons, readIcon, sameIcon } from './icons'
   import { t } from './i18n.svelte'
   import { dur, LAYER } from './motion'
   import { overlays } from './overlays'
-  import { segmented } from './slide'
   import { trap } from './trap'
   import { viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
@@ -85,10 +76,8 @@
   const cell = $derived(viewport.touch ? TOUCH_CELL : POINTER_CELL)
   const target = $derived(iconChoice.target)
 
-  /** The tab on screen: the one that holds what the thing wears, chosen afresh each
-   *  time the sheet opens, and otherwise the one last chosen. */
-  let opened = $state<IconTab | null>(null)
-  const tab = $derived(opened ?? tabNamed(iconRecent.set) ?? DEFAULT_TAB)
+  /** Whether the sets that wait for a search or a scroll have been asked for. */
+  let wanted = $state(false)
 
   /** What the thing being chosen for wears now, as written. */
   const worn = $derived(
@@ -101,17 +90,18 @@
 
   const written = $derived(readIcon(worn))
 
-  /** Whether a set of the tab is still on its way. A set this build leaves out does
-   *  not hold the others back: the tab is what did arrive. */
-  const pending = $derived(tab.sets.some((id) => iconLibrary.loading(id)))
-  const absent = $derived(tab.sets.every((id) => iconLibrary.absent[id]))
+  /** Whether a set the sheet opens with is still on its way. A set this build leaves
+   *  out does not hold the others back, and nor does one that waits for a search: the
+   *  list is what did arrive. */
+  const pending = $derived(PICKER_SETS.some((id) => !LATER_SETS.has(id) && iconLibrary.loading(id)))
+  const absent = $derived(PICKER_SETS.every((id) => iconLibrary.absent[id]))
 
-  /** The tab's sets as one collection, whose names are the values a cell writes. */
+  /** Every set as one collection, whose names are the values a cell writes. */
   const held = $derived.by(() => {
     if (pending || absent) return null
 
     const parts: { id: string; held: LoadedSet }[] = []
-    for (const id of tab.sets) {
+    for (const id of PICKER_SETS) {
       const one = iconLibrary.loaded[id]
       if (one) parts.push({ id, held: one })
     }
@@ -200,12 +190,13 @@
     const asked = iconChoice.target
     if (!asked) return
 
-    // Read once, as the sheet opens: a tint written while it is up changes what the
-    // thing wears, and is no reason to move the reader to another tab.
+    // What it wears, read once as the sheet opens: an icon out of a set that waits for a
+    // search has its set fetched now, so the cell it is in is there to be seen.
     const wears = untrack(() =>
       readIcon(asked.kind === 'space' ? workspace.iconFor(asked.id) : chosenIcon(asked.path)),
     )
-    opened = wears ? tabNamed(iconLibrary.setFor(wears) ?? EMOJI_SET) : null
+    const set = iconLibrary.setFor(wears)
+    wanted = set !== null && LATER_SETS.has(set)
 
     query = ''
     at = 0
@@ -216,16 +207,23 @@
     focusing = setTimeout(() => field?.focus(), dur(FOCUS))
   })
 
-  // Every set of the tab it is on, each fetched once; see icon-library.svelte.ts.
+  // Every set, each fetched once; see icon-library.svelte.ts. The ones that wait, once
+  // somebody searches or has scrolled to the end of the rest.
   $effect(() => {
-    if (target) for (const id of tab.sets) iconLibrary.load(id)
+    if (!target) return
+    const all = wanted || query.trim() !== ''
+    for (const id of PICKER_SETS) if (all || !LATER_SETS.has(id)) iconLibrary.load(id)
+  })
+
+  // Scrolled to within a screen of the end: the rest is wanted.
+  $effect(() => {
+    if (!wanted && held && height && top + height * 2 >= rows.length * cell) wanted = true
   })
 
   // A fresh set of answers starts at the first of them: the cell the arrows were on is
   // no longer the one under them.
   $effect(() => {
     reads(query)
-    reads(tab)
     at = 0
   })
 
@@ -236,19 +234,14 @@
   $effect(() => (target ? overlays.show(() => iconChoice.close()) : undefined))
   $effect(() => closeOnBack(target !== null, () => iconChoice.close()))
 
-  /** A tab chosen by hand, which is the one remembered for next time. */
-  function open(one: IconTab) {
-    opened = one
-    iconRecent.open(one.id)
-  }
-
   /** One written value onto the thing being chosen for, and the sheet shut. The three
    *  targets differ in nothing but where the value goes. */
   function chose(said: string | null) {
     const asked = iconChoice.target
     if (!asked) return
 
-    const colour = said === null ? null : tint
+    // A colour goes only with a line, the one kind of icon that takes one.
+    const colour = said !== null && readIcon(said)?.kind === 'lucide' ? tint : null
 
     if (asked.kind === 'space') workspace.setIcon(asked.id, said, colour)
     else if (asked.kind === 'folder') workspace.setFolderIcon(asked.path, said, colour)
@@ -340,24 +333,6 @@
       autocorrect="off"
     />
 
-    <!-- Which tab, as one control rather than two sheets. Somebody else drew two of
-         the sets, so a tab carries who and under what licence: that belongs where a
-         person is looking at the drawings rather than in a panel nobody opens. The
-         emoji have no credit, being the platform's own font. -->
-    <div class="nib-segmented" role="radiogroup" aria-label={t('Icons')} use:segmented>
-      {#each ICON_TABS as one (one.id)}
-        <button
-          type="button"
-          title={tabCredit(one) || undefined}
-          aria-pressed={one.id === tab.id}
-          class:on={one.id === tab.id}
-          onclick={() => open(one)}
-        >
-          {t(one.label)}
-        </button>
-      {/each}
-    </div>
-
     <!-- The last few, whichever set each came from: somebody marking a month of
          folders reaches for the same handful, and reaching for them should not mean
          typing the same words again. -->
@@ -423,38 +398,40 @@
       {/if}
     </div>
 
-    <!-- The colour a line icon is drawn in. Only for the line set: an emoji and a
-         coloured drawing are already pictures in their own colours, and painting over
-         one would be painting over somebody's drawing. -->
-    {#if tab.tinted}
-      <div class="tints" role="group" aria-label={t('Colour')}>
+    <!-- The colour a line icon is drawn in. Only a line takes it: an emoji, a coloured
+         drawing and a logo are already pictures in their own colours, and painting over
+         one would be painting over somebody's drawing. Chosen before or after the line,
+         which is why the dots are always there. -->
+    <div class="tints" role="group" aria-label={t('Colour')}>
+      <button
+        type="button"
+        class="tint plain"
+        aria-label={t('Plain')}
+        aria-pressed={tint === null}
+        class:on={tint === null}
+        onclick={() => paint(null)}
+      ></button>
+      {#each ACCENTS as accent (accent.id)}
         <button
           type="button"
-          class="tint plain"
-          aria-label={t('Plain')}
-          aria-pressed={tint === null}
-          class:on={tint === null}
-          onclick={() => paint(null)}
+          class="tint"
+          aria-label={accent.name}
+          aria-pressed={tint === accent.id}
+          class:on={tint === accent.id}
+          style:--dot={accent.dark}
+          onclick={() => paint(accent.id)}
         ></button>
-        {#each ACCENTS as accent (accent.id)}
-          <button
-            type="button"
-            class="tint"
-            aria-label={accent.name}
-            aria-pressed={tint === accent.id}
-            class:on={tint === accent.id}
-            style:--dot={accent.dark}
-            onclick={() => paint(accent.id)}
-          ></button>
-        {/each}
-      </div>
-    {/if}
+      {/each}
+    </div>
 
     <button class="clear" onclick={() => chose(null)}>
       {target.kind === 'space'
         ? t('Use the first letter instead')
         : t('Use the plain mark instead')}
     </button>
+
+    <!-- Who drew the sets, and under what licence: somebody else drew most of them. -->
+    <p class="credit">{pickerCredit()}</p>
   </div>
 {/if}
 
@@ -560,6 +537,12 @@
     padding: var(--space-5) 0;
     text-align: center;
     font-size: var(--text-sm);
+    color: var(--muted);
+  }
+
+  .credit {
+    margin: 0;
+    font-size: var(--text-xs);
     color: var(--muted);
   }
 

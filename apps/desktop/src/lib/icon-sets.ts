@@ -364,6 +364,24 @@ async function loadFlatColour(): Promise<LoadedSet> {
   return { ...iconify(collection.default, tags), place: (name) => placed.get(name) ?? null }
 }
 
+/** Orden's own mark among the brands (#1096), the way they are drawn: one colour,
+ *  `currentColor`, so it is the text's colour in either theme. Not a drawing of its own:
+ *  the four bars of the app's icon (public/icon-512.png), measured off it and put on the
+ *  set's 24 unit grid - the bars 6.18 thick, 16.82 long, a unit apart, rounded at 1.45. */
+export const ORDEN = 'orden'
+
+const ORDEN_MARK = {
+  body:
+    '<g fill="currentColor">' +
+    '<rect x="0" y="0" width="16.82" height="6.18" rx="1.45"/>' +
+    '<rect x="17.82" y="0" width="6.18" height="16.82" rx="1.45"/>' +
+    '<rect x="0" y="7.18" width="6.18" height="16.82" rx="1.45"/>' +
+    '<rect x="7.18" y="17.82" width="16.82" height="6.18" rx="1.45"/>' +
+    '</g>',
+  width: 24,
+  height: 24,
+}
+
 /** The brand logos: Simple Icons, every one of them, as Iconify publishes the set
  *  (#1082). CC0, and one drawing each in one colour, which is drawn in the colour of
  *  the text around it - so GitHub's black mark is light on a dark theme rather than
@@ -378,7 +396,8 @@ async function loadBrands(): Promise<LoadedSet> {
     import('@iconify-json/simple-icons/icons.json'),
     import('./brand-names'),
   ])
-  const held = iconify(collection.default, new Map())
+  const set = collection.default as IconifyCollection
+  const held = iconify({ ...set, icons: { ...set.icons, [ORDEN]: ORDEN_MARK } }, new Map())
 
   return {
     ...held,
@@ -400,16 +419,15 @@ function spaced(name: string): string {
     .toLowerCase()
 }
 
-/** The set the picker opens on, and the one a bare name means. Lucide, because it
- *  is the set the app is drawn in and the one every file already speaks. */
+/** The set a bare name means. Lucide, because it is the set the app is drawn in and
+ *  the one every file already speaks. */
 export const DEFAULT_SET = LUCIDE
 
 /** The id of the coloured set, so the credits and the tests can name it. */
 export const FLAT_COLOUR = 'flat-color-icons'
 
-/** Every set an icon can come from. Which tab of the picker shows it is
- *  `ICON_TABS`'s business: a set is where a drawing is kept and what a file writes,
- *  a tab is how a person browses. */
+/** Every set an icon can come from: where a drawing is kept and what a file writes.
+ *  How the picker browses them is `PICKER_SETS`. */
 export const ICON_SETS: readonly IconSet[] = [
   {
     id: LUCIDE,
@@ -444,58 +462,30 @@ export function setNamed(id: string): IconSet | null {
   return ICON_SETS.find((one) => one.id === id) ?? null
 }
 
-/** One tab of the picker: the sets it browses as one collection. */
-export interface IconTab {
-  /** Also what the picker remembers it by; see icon-recent.svelte.ts. */
-  id: string
-  label: string
-  sets: readonly string[]
-  /** Whether a tint applies to what it holds: only to strokes, never to a picture
-   *  that already has its colours. */
-  tinted: boolean
-}
+/** Every set the picker searches and browses, as one collection (#1096): no tabs, one
+ *  field, ranked by how well each icon answers rather than by which set it came from.
+ *
+ *  The emoji are the frame, since they are the one set with groups, and the coloured
+ *  drawings are placed by topic among them (#1071); the line set and the brands follow
+ *  as groups of their own; see `mergeSets`. A set added later is a line here, with
+ *  places of its own if it has no groups. */
+export const PICKER_SETS: readonly string[] = [EMOJI_SET, FLAT_COLOUR, LUCIDE, BRANDS]
 
-/** The tabs, in the order the picker shows them: a line the app tints, a picture in
- *  its own colours, and a brand's logo. The emoji and the coloured drawings were one tab each and looked the
- *  same, so they are one collection, the emoji's groups with the drawings placed by
- *  topic among them (#1071). A set added later joins whichever of the two it looks
- *  like, with places of its own if it has no groups. */
-const LINE_TAB: IconTab = { id: LUCIDE, label: key('Line'), sets: [LUCIDE], tinted: true }
+/** The sets the picker fetches only once somebody searches or scrolls to the end of
+ *  what is there: 3,700 logos are 4.7 MB, which nobody opening the sheet for a folder
+ *  should wait for. */
+export const LATER_SETS: ReadonlySet<string> = new Set([BRANDS])
 
-export const ICON_TABS: readonly IconTab[] = [
-  LINE_TAB,
-  { id: EMOJI_SET, label: key('Emoji'), sets: [EMOJI_SET, FLAT_COLOUR], tinted: false },
-  // A tab of their own rather than a place among the emoji: a logo names a product
-  // where an emoji or a drawing is a picture of a thing, and 3,700 of them interleaved
-  // with two thousand pictures would bury both. Nor among the lines, which are strokes
-  // the app tints; a logo is a filled mark drawn as its owner drew it (#1082).
-  { id: BRANDS, label: key('Brands'), sets: [BRANDS], tinted: false },
-]
-
-/** The tab the picker opens on before one has been chosen: the set the app is drawn
- *  in, as `DEFAULT_SET` is. */
-export const DEFAULT_TAB = LINE_TAB
-
-/** The tab a remembered id or a set's id means, or null for one this build does not
- *  know. A set's id is how the picker remembered a tab before the tabs were merged,
- *  so a stored "flat-color-icons" opens the tab that holds it now. */
-export function tabNamed(id: string): IconTab | null {
-  return (
-    ICON_TABS.find((tab) => tab.id === id) ?? ICON_TABS.find((tab) => tab.sets.includes(id)) ?? null
-  )
-}
-
-/** Who drew what a tab shows and under what licence, from every set in it that has
+/** Who drew what the picker shows and under what licence, every set that has
  *  somebody to credit. */
-export function tabCredit(tab: IconTab): string {
-  return tab.sets
-    .map((id) => setNamed(id)?.credit ?? '')
+export function pickerCredit(): string {
+  return PICKER_SETS.map((id) => setNamed(id)?.credit ?? '')
     .filter(Boolean)
     .join('; ')
 }
 
-/** What a tab browses: every icon of its sets under the value a file writes for it,
- *  which is what lets one grid hold icons of two sets whose names could be the same. */
+/** What the picker browses: every icon of its sets under the value a file writes for
+ *  it, which is what lets one grid hold icons of sets whose names could be the same. */
 export interface TabHeld {
   entries: IconEntry[]
   groups: { label: string; names: string[] }[]

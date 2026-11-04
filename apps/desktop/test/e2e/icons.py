@@ -142,30 +142,37 @@ def pick(page: Page, label: str, words: str) -> None:
     By the words the cell is called rather than by the name it writes: a cell says
     what it is for a reader who cannot see it, and an emoji's name is the picture."""
     page.locator(".sheet input.nib-field").fill(words)
-    cell = page.locator(f'.sheet button[aria-label="{words}"]').first
+    # The line one: a search over every set finds the emoji of the same name too, and
+    # an emoji is a character where a line is a drawing.
+    cell = page.locator(f'.sheet button[aria-label="{words}"]:has(svg)').first
     cell.wait_for(state="visible", timeout=PATIENCE * 1000)
     cell.click()
     say(f"[{label}] picked {words}")
 
 
 def sets(page: Page, label: str, where: str) -> None:
-    """The three tabs, each shot once its own cells are drawn. A set is a chunk of
-    its own and arrives when its tab is opened, which is what the wait is for."""
-    for tab in ("Line", "Emoji", "Colour"):
-        page.locator(f'.nib-segmented button:has-text("{tab}")').click()
-        page.locator(".sheet input.nib-field").fill("")
-        wait_for(
-            page,
-            "() => document.querySelectorAll('.sheet .cell').length > 8",
-            f"[{label}] the {tab} set to arrive",
-        )
-        page.wait_for_timeout(250)
-        page.locator(".sheet").screenshot(path=str(SHOTS / f"picker-{tab.lower()}-{where}.png"))
-        say(f"[{label}] wrote picker-{tab.lower()}-{where}.png")
-        check(
-            page.locator(".sheet .cell").count() > 8,
-            f"[{label}] the {tab} set draws cells",
-        )
+    """The one list, shot once its cells are drawn, and a search over every set (#1096):
+    no tabs, and a search finds a line, an emoji and a brand alike."""
+    page.locator(".sheet input.nib-field").fill("")
+    wait_for(
+        page,
+        "() => document.querySelectorAll('.sheet .cell').length > 8",
+        f"[{label}] the sets to arrive",
+    )
+    page.wait_for_timeout(250)
+    page.locator(".sheet").screenshot(path=str(SHOTS / f"picker-{where}.png"))
+    say(f"[{label}] wrote picker-{where}.png")
+    check(page.locator(".sheet .nib-segmented").count() == 0, f"[{label}] the picker has no tabs")
+
+    for words, what in (("rocket", "line"), ("orden", "Orden's own mark")):
+        page.locator(".sheet input.nib-field").fill(words)
+        found = page.locator(f'.sheet button[aria-label="{words}"], .sheet button[aria-label="Orden"]')
+        try:
+            found.first.wait_for(state="visible", timeout=PATIENCE * 1000)
+        except Exception:
+            check(False, f"[{label}] a search for {words} finds {what}")
+        page.locator(".sheet").screenshot(path=str(SHOTS / f"picker-{words}-{where}.png"))
+    page.locator(".sheet input.nib-field").fill("")
 
 
 def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
@@ -219,7 +226,6 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         page.locator(".sheet").wait_for(state="visible", timeout=PATIENCE * 1000)
         sets(page, label, where)
 
-        page.locator('.nib-segmented button:has-text("Line")').click()
         pick(page, label, "rocket")
 
         worn = wait_for(

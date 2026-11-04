@@ -305,9 +305,8 @@ def chooses(page: Page, scheme: str) -> None:
 
     say(f"[{scheme}] choosing an icon for {page.evaluate(CHOOSE)}")
     page.locator(".sheet").wait_for(state="visible", timeout=30_000)
-    page.locator('.nib-segmented button:has-text("Line")').click()
     page.locator(".sheet input.nib-field").fill("anchor")
-    cell = page.locator('.sheet button[aria-label="anchor"]').first
+    cell = page.locator('.sheet button[aria-label="anchor"]:has(svg)').first
     cell.wait_for(state="visible", timeout=30_000)
     cell.click()
     page.wait_for_timeout(900)

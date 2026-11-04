@@ -10,6 +10,7 @@
 
 /** Slug to the brand's name as it writes it. */
 export const CALLED: Readonly<Record<string, string>> = {
+  orden: 'Orden',
   anthropic: 'Anthropic',
   claude: 'Claude',
   openai: 'OpenAI',
@@ -47,6 +48,7 @@ export const CALLED: Readonly<Record<string, string>> = {
 /** Slug to the other words a brand is looked for by: its product's name where the logo
  *  is the company's, and what people call it. */
 export const ALSO: Readonly<Record<string, string>> = {
+  orden: 'nib notes app',
   anthropic: 'claude ai',
   claude: 'claude code anthropic ai',
   openai: 'chatgpt gpt codex ai',
