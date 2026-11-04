@@ -33,7 +33,9 @@ import { invoke } from '../tauri'
 import type { Entry, Space } from '../workspace.svelte'
 import type { NoteDoc } from './documents.svelte'
 import type { FileAction, FileActions } from './undo.svelte'
-import { writeFile } from './write-file'
+import { oneWriteAt } from '../windows'
+import type { Across } from './across'
+import { writeFile, writeInTurn } from './write-file'
 
 /** What writing across a space needs of the store it belongs to. */
 export interface HoldsNotes {
@@ -46,7 +48,9 @@ export interface HoldsNotes {
   documentAt(path: string): NoteDoc | null
   flush(): void
   loadTree(): Promise<void>
-  persist(): void
+  persist(): unknown
+  /** The other windows, once this one has met them; see workspace/across.ts. */
+  readonly across?: Across | null
 }
 
 /** The tags of the open space, for the panel that draws them as a tree.
@@ -239,7 +243,7 @@ export async function replaceInNotes(
   for (const change of writable) {
     const open = ws.documentAt(change.path)
     const wrote = open
-      ? await writeOpen(open, change, keeping)
+      ? await writeOpen(ws, open, change, keeping)
       : await writeClosed(ws, change, keeping)
     if (wrote) done.push(wrote)
   }
@@ -264,9 +268,15 @@ export async function replaceInNotes(
  *  Carried by guessing where the document no longer remembers the words the change
  *  was read from, because a replacement somebody asked for has to be written; the
  *  guess is exact wherever the edits are clear of what changed. */
-async function writeOpen(open: NoteDoc, change: Change, keeping: Keeping): Promise<Undone> {
+async function writeOpen(
+  ws: HoldsNotes,
+  open: NoteDoc,
+  change: Change,
+  keeping: Keeping,
+): Promise<Undone> {
   open.flush()
   const before = open.text
+  const onDisk = open.onDisk
   const edits = open.live.carried(change.edits, change.before, true) ?? change.edits
   const after = applied(before, edits)
 
@@ -275,7 +285,23 @@ async function writeOpen(open: NoteDoc, change: Change, keeping: Keeping): Promi
   // Keeping the version about to be replaced, the same way saving does: the words
   // the reader had, unsaved ones and all.
   await keep(change.path, before, keeping)
-  await writeFile(change.path, after)
+  const across = ws.across
+  if (across && !across.alone) {
+    // These words are not on the disk, and another window's may be that this one has not
+    // heard: down the way an autosave goes, against what this note knew the file to hold.
+    // Not written (the file went, the note moved) they are owed like any others.
+    open.onDisk = onDisk
+    open.dirty = true
+    const written = await across.writing(open, change.path, (words) =>
+      invoke('write_note', { path: change.path, content: words }),
+    )
+    if (written !== null) {
+      open.dirty = open.revision !== written.revision
+      links.noteSaved(change.path, written.words)
+    }
+  } else {
+    await writeFile(change.path, after)
+  }
 
   return { path: change.path, content: before, after, edits: reverse(before, edits) }
 }
@@ -296,19 +322,28 @@ async function writeClosed(
   change: Change,
   keeping: Keeping,
 ): Promise<Undone | null> {
-  const read = await invoke<string>('read_note', { path: change.path }).catch(() => null)
-  if (read === null) return null
+  // One turn of the file, from the read to the write: what another window writes between
+  // the two would otherwise be replaced by words worked out without it.
+  const turn = await oneWriteAt(change.path, async () => {
+    const read = await invoke<string>('read_note', { path: change.path }).catch(() => null)
+    if (read === null) return null
 
-  const now = endingsLike(read, change.before)
-  // Worked out on one line ending, written into a file of others; see `appliedToFile`.
-  const foreign = now !== read
-  const same = now === change.before
-  const edits = same ? change.edits : carriedPast(change.before, now, change.edits)
-  if (!edits) return null
-  const after = same ? change.after : applied(now, edits)
+    const now = endingsLike(read, change.before)
+    // Worked out on one line ending, written into a file of others; see `appliedToFile`.
+    const foreign = now !== read
+    const same = now === change.before
+    const edits = same ? change.edits : carriedPast(change.before, now, change.edits)
+    if (!edits) return null
+    const after = same ? change.after : applied(now, edits)
+    const down = foreign ? appliedToFile(read, edits) : after
 
-  await keep(change.path, read, keeping)
-  await writeFile(change.path, foreign ? appliedToFile(read, edits) : after)
+    await keep(change.path, read, keeping)
+    await writeInTurn(change.path, down)
+    return { read, now, same, edits, after, down }
+  })
+  if (turn === null) return null
+  const { read, now, same, edits, after, down } = turn
+  links.noteSaved(change.path, down)
 
   const late = ws.documentAt(change.path)
   const caught = late?.live.carried(edits, now)

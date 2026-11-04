@@ -154,7 +154,7 @@ class Runner {
   /** Open notes joined to their documents, by document key. */
   private readonly bound = new Map<
     string,
-    { id: string; part: () => void; plane?: PlaneJoin | null }
+    { id: string; part: () => void; plane?: PlaneJoin | null; joining?: boolean }
   >()
   private binding = Promise.resolve()
   /** The space folders' watch, on the desktop; see watching.ts. */
@@ -1172,7 +1172,9 @@ class Runner {
     const engine = this.engine
     const entry = note.path === null ? null : engine?.entryAt(note.path)
     if (!engine || !entry || engine.core.isHeld(entry.id)) return null
-    if (![...this.bound.values()].some((one) => one.id === entry.id)) return null
+    // Not yet where `attach` is still joining: words put in now reach the document and
+    // not the note, whose next write would put its older ones over the disk.
+    if (![...this.bound.values()].some((one) => one.id === entry.id && !one.joining)) return null
     const doc = engine.core.docs.get(entry.id)
     if (!doc?.live || !engine.core.pinned.has(entry.id)) return null
     return {
@@ -1235,7 +1237,7 @@ class Runner {
       }
       const arrivals = one.arrivals()
       const holds = () => one.arrivals() === arrivals && this.bound.get(key)?.id === one.id
-      this.bound.set(key, { id: one.id, part: () => undefined })
+      this.bound.set(key, { id: one.id, part: () => undefined, joining: true })
       // A document made again under the note - the account's words taken, a new epoch -
       // is a document its room has never met: the room is joined afresh.
       const again = () => {

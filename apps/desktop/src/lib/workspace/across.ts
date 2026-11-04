@@ -29,7 +29,7 @@ import { samePath, within } from '../space-paths'
 import { invoke } from '../tauri'
 import { afterQuiet, waited } from '../timing'
 import { oneWriteAt, type Windows, windows as theWindows } from '../windows'
-import type { NoteDoc } from './documents.svelte'
+import { type NoteDoc, unixLines } from './documents.svelte'
 import type { FileOp } from './file-ops'
 
 /** A note's document as the sync engine holds it, joined to its views in this window: what
@@ -55,13 +55,13 @@ export interface Desk {
   noteSaved(path: string, text: string): void
   read(path: string): Promise<string | null>
   exists(path: string): Promise<boolean>
+  /** Whether the folder a path's space is in answers at all: a share gone offline has no
+   *  file at any path, and that says nothing about the file. */
+  reachable(path: string): Promise<boolean>
   keepVersion(path: string, text: string): Promise<unknown>
   /** A moment, for news on its way. */
   pause(): Promise<unknown>
 }
-
-/** The editor's line endings, whatever a file has. */
-const unixLines = (text: string) => text.replace(/\r\n?/g, '\n')
 
 /** A write that went down: the words, and the note's revision at them. */
 export interface Written {
@@ -160,10 +160,24 @@ export class Across {
       if (note.path !== null) this.desk.owed(note)
       return null
     }
+    // Words a composition is holding back are in nothing yet that could be written, and
+    // nothing can be merged with what stands for words that have not arrived.
+    if (note.live.holdingBack) {
+      this.desk.owed(note)
+      return null
+    }
     const disk = await this.onTheDisk(path)
-    if (disk === null && note.onDisk !== null) return GONE
+    if (disk === null && note.onDisk !== null) {
+      if (await this.desk.reachable(path)) return GONE
+      throw new Error(`${path} is out of reach`)
+    }
     if (disk !== null && disk !== note.onDisk) await this.takeIn(note, path, disk)
-    // Words a composition is holding back are in nothing yet that could be written.
+    // The read was a round trip: a rename heard in it moved the note, and these words go
+    // where it is now.
+    if (!samePath(note.path, path)) {
+      if (note.path !== null) this.desk.owed(note)
+      return null
+    }
     if (note.live.holdingBack) {
       this.desk.owed(note)
       return null
@@ -198,13 +212,29 @@ export class Across {
     const { merge3 } = await import('@orden/sync-core/merge3')
     // From here to the note holding it nothing waits, so no key can land in between.
     const joined = this.desk.joined(note)
-    const mine = joined ? joined.text() : note.latest
+    const mine = unixLines(joined ? joined.text() : note.latest)
     const words = mine === base ? disk : merge3(base, mine, disk).text
     if (words !== mine) {
       if (joined) joined.put(words)
-      else note.took(fold(mine, words), words)
+      else this.into(note, mine, words)
     }
     note.onDisk = disk
+  }
+
+  /** Words brought into a note, as the one span they changed by. One the rope will not take
+   *  is words and a rope that have come apart, which nothing here can see the cause of: the
+   *  rope is told the whole words instead, since those hold everything the reader has and
+   *  every window's write. Better the carets than the note. */
+  private into(note: NoteDoc, mine: string, words: string) {
+    try {
+      note.took(fold(mine, words), words)
+    } catch (error) {
+      log('error', `across: ${note.path ?? note.name} took the whole words - ${String(error)}`)
+      const { dirty, onDisk } = note
+      note.replace(words, false)
+      note.dirty = dirty
+      note.onDisk = onDisk
+    }
   }
 
   /** Another window, or the engine, wrote this file. */
@@ -214,6 +244,12 @@ export class Across {
     if (!note) return
     await oneWriteAt(path, async () => {
       if (!samePath(note.path, path)) return
+      // Taken in once the composition is over, by the write this asks for.
+      if (note.live.holdingBack) {
+        note.dirty = true
+        this.desk.owed(note)
+        return
+      }
       // Gone is the file operation's to say, and unreadable is the next word's or write's.
       const disk = await this.onTheDisk(path).catch(() => null)
       if (disk === null || disk === note.onDisk) return
@@ -225,7 +261,13 @@ export class Across {
         note.replace(disk, false)
         return
       }
-      await this.takeIn(note, path, disk)
+      try {
+        await this.takeIn(note, path, disk)
+      } catch (error) {
+        // Words of its own that were waiting on this: their write says what is wrong.
+        if (note.dirty) this.desk.owed(note)
+        throw error
+      }
       if (note.latest === disk && !note.live.holdingBack) {
         note.dirty = false
         return
@@ -285,6 +327,10 @@ export async function startAcross(): Promise<Across> {
     noteSaved: (path, text) => links.noteSaved(path, text),
     read: (path) => invoke<string>('read_note', { path }).catch(() => null),
     exists: (path) => onDisk(path),
+    reachable: (path) => {
+      const root = workspace.rootHolding(path)
+      return root === null ? Promise.resolve(true) : onDisk(root)
+    },
     keepVersion: (path, text) => invoke('snapshot_note', { path, content: text }),
     pause: () => waited(RENAME_NEWS),
   })

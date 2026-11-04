@@ -597,12 +597,14 @@ describe('a file with CRLF endings', () => {
         if (!note) continue
         const move = pick(4)
         if (move === 0) {
-          const token = `tk${String(tokens.length)}z`
+          // No two start or end alike: two inserts at one place meet by the letter, and a
+          // shared letter would read as a token cut in two.
+          const token = `${String.fromCharCode(65 + tokens.length)}-${String(tokens.length)}-${String.fromCharCode(97 + tokens.length)}`
           tokens.push(token)
           const lines = note.live.text.toString().split('\n')
           const line = pick(lines.length)
           const from = lines.slice(0, line).join('\n').length + (line ? 1 : 0)
-          note.live.edit([{ from, to: from, insert: `${token} ` }])
+          note.live.edit([{ from, to: from, insert: token }])
         } else if (move === 1) {
           running.push(saves[at]?.(note))
         } else if (wires.flight.length) {

@@ -71,3 +71,34 @@ export function ifFree(
     }
   })
 }
+
+/** Holds a lock for as long as `run` runs, waiting in line for it: a window that leads
+ *  or answers for the others until it goes. With locks that are missing, refuse or do not
+ *  answer `run` runs at once, as the one window there is. Stopped by `signal` while waiting,
+ *  nothing runs. */
+export function heldForLife(name: string, run: () => Promise<unknown>, signal?: AbortSignal): void {
+  let started = false
+  const go = () => {
+    if (started) return undefined
+    started = true
+    return run()
+  }
+  const locks = locksHere()
+  if (!locks) {
+    void go()
+    return
+  }
+  void locksWork(locks).then((works) => {
+    if (!works) {
+      if (!signal?.aborted) void go()
+      return
+    }
+    try {
+      locks.request(name, signal ? { signal } : {}, go).catch(() => {
+        if (!signal?.aborted && !started) void go()
+      })
+    } catch {
+      if (!signal?.aborted) void go()
+    }
+  })
+}

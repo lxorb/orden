@@ -62,6 +62,12 @@ export function holdsWords(kind: TabKind): boolean {
   return TAB_KINDS[kind].words
 }
 
+/** The editor's line endings, whatever a file has. The rope holds these and only these, and
+ *  every offset into a note is an offset into them. */
+export function unixLines(text: string): string {
+  return text.includes('\r') ? text.replace(/\r\n?/g, '\n') : text
+}
+
 export interface DocumentStart {
   kind: TabKind
   path: string | null
@@ -149,9 +155,12 @@ export class NoteDoc {
     this.path = start.path
     this.name = start.name
     this.dirty = start.dirty
-    this.words = start.text
+    // In the rope's line endings like every other word of it: `words` stands for the rope
+    // wherever it is not behind, so a note whose file has CRLF endings read offsets into
+    // the one that did not fit the other. `before` is the file as it was, for a version.
+    this.words = unixLines(start.text)
     this.before = start.path !== null && !start.dirty ? start.text : null
-    this.onDisk = this.before
+    this.onDisk = this.before === null ? null : this.words
     this.live = new SharedDoc(start.text)
     this.retitle()
 
@@ -268,6 +277,18 @@ export class NoteDoc {
     if (this.words !== text) this.words = text
   }
 
+  /** Changes to the rope that leave the note in step with its file. A throw out of one
+   *  leaves it listening: a note that had stopped would take everything typed afterwards
+   *  for nothing owed, and never write again. */
+  private quietly(change: () => void) {
+    this.quiet = true
+    try {
+      change()
+    } finally {
+      this.quiet = false
+    }
+  }
+
   /** Text put into the note from somewhere other than the editor: a version
    *  restored, a note a sync brought over, a rename that rewrote the title. It
    *  reaches every pane showing this note.
@@ -279,18 +300,19 @@ export class NoteDoc {
    *  `changed` is what turns the words `from` into `text`, from a writer that knows:
    *  a plane; see canvas/written.ts. Taken only while these are still those words. */
   replace(
-    text: string,
+    written: string,
     dirty = true,
     changed?: { from: string; changes: readonly { from: number; to: number; insert: string }[] },
   ) {
-    this.quiet = !dirty
+    const text = unixLines(written)
     const known = changed && !this.behind && this.words === changed.from
     // Whether this is a step for undo to stop at is the same question as whether it
     // leaves the note out of step with its file. A version put back is somebody
     // asking for it and has to be undoable; a note re-read from disk is not, and a
     // Ctrl+Z that put the old file back would be an edit the app invented.
-    this.live.replace(text, dirty, known ? changed.changes : undefined)
-    this.quiet = false
+    const put = () => this.live.replace(text, dirty, known ? changed.changes : undefined)
+    if (dirty) put()
+    else this.quietly(put)
 
     this.words = text
     this.behind = false
@@ -298,17 +320,18 @@ export class NoteDoc {
     if (!dirty) this.onDisk = text
     // A note re-read from its file: that is what the file holds now, where the
     // version the first write keeps has not been taken yet.
-    if (!dirty && this.before !== null) this.before = text
+    if (!dirty && this.before !== null) this.before = written
   }
 
   /** The file written with these words by someone other than the document's own
    *  write: a link rewrite through a canvas's surface (`relinked`). Clean again, as
    *  `edited` leaves it, so the same words are not written and sent a second time. */
-  wroteAs(text: string) {
+  wroteAs(written: string) {
+    const text = unixLines(written)
     if (this.behind || this.words !== text) return
     this.dirty = false
     this.onDisk = text
-    if (this.before !== null) this.before = text
+    if (this.before !== null) this.before = written
   }
 
   /** Words changed under the note by something other than an editor, as the
@@ -316,9 +339,7 @@ export class NoteDoc {
    *  back. The file is written in the same breath, so this leaves the note
    *  clean, and every pane showing it keeps its caret. */
   edited(changes: readonly { from: number; to: number; insert: string }[], text: string) {
-    this.quiet = true
-    this.live.edit(changes)
-    this.quiet = false
+    this.quietly(() => this.live.edit(changes))
 
     this.words = text
     this.behind = false
@@ -332,9 +353,7 @@ export class NoteDoc {
    *  what the words are afterwards. */
   took(change: { from: number; to: number; insert: string } | null, to: string) {
     if (!change) return
-    this.quiet = true
-    this.live.arrived([change])
-    this.quiet = false
+    this.quietly(() => this.live.arrived([change]))
     // A composition holds what arrives until it ends, and the rope says when it has.
     this.behind = this.live.text.toString() !== to
     if (!this.behind) this.words = to
@@ -352,20 +371,19 @@ export class NoteDoc {
    *  nobody asked it for. A tab reaching a note another pane already has open is
    *  pointed at that document instead; see `walk`. */
   adopt(note: { path: string; name: string; text: string }) {
+    const text = unixLines(note.text)
     this.path = note.path
     this.name = note.name
     this.before = note.text
-    this.onDisk = note.text
+    this.onDisk = text
     this.arrivals++
 
     // Not `replace`: this document is not being edited, it is being pointed at
     // another note, and the note it came from must not be one step behind the one
     // it is on. `takeOn` gives it a history of its own, empty. See shared.ts.
-    this.quiet = true
-    this.live.takeOn(note.text)
-    this.quiet = false
+    this.quietly(() => this.live.takeOn(text))
 
-    this.words = note.text
+    this.words = text
     this.behind = false
     this.dirty = false
   }
