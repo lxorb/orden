@@ -36,6 +36,8 @@
 #[cfg(target_os = "linux")]
 mod display;
 #[cfg(target_os = "linux")]
+mod encoder;
+#[cfg(target_os = "linux")]
 mod input;
 mod installed;
 #[cfg(target_os = "linux")]
@@ -267,6 +269,11 @@ fn run_on_its_display(
 
     if !display::available() {
         return Err("display".to_owned());
+    }
+    // Which encoders work here is found by trying each, which takes a moment: begun now,
+    // it is known by the time a viewer asks for the picture.
+    if installed::on_path("ffmpeg") {
+        std::thread::spawn(|| encoder::working().len());
     }
     let (width, height) = display::screen(view.width, view.height, view.dpr);
     let display = display::Display::start(width, height, view.dpr).map_err(|_| "failed")?;

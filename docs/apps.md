@@ -124,3 +124,10 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
   credentials that last a day where the Worker has a TURN key (the secrets `TURN_KEY_ID` and
   `TURN_KEY_TOKEN`). Only the viewer relays; the host answers a relayed candidate from its own
   address. An older account answers 404, and the viewer makes do with the STUN.
+- **Encoders** (`apps_host/encoder.rs`): each of ffmpeg's hardware encoders that could serve
+  (`h264_nvenc`, `h264_vaapi`, `h264_qsv`, `vp9_vaapi`, `vp9_qsv`, `vp8_vaapi`) is tried on one
+  frame of a test picture once, as the first application starts, and only those that make it
+  are kept. A viewer is sent the best kept one whose codec it decodes - hardware H.264 to
+  WebView2 and WKWebView, hardware VP9 or VP8 to Orden's CEF - and libvpx's VP8 otherwise. Each
+  holds nothing back (no B-frames, no look-ahead, its lowest-latency mode); H.264 goes out as
+  constrained baseline, cut into frames at the access unit delimiters ffmpeg is told to write.

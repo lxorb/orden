@@ -16,11 +16,12 @@
 //! relayed candidate is answered from here.
 //!
 //! **The picture** is ffmpeg's: it reads the application's display (`x11grab`, over
-//! `XShm`), encodes VP8 in libvpx's realtime mode with nothing held back, and writes
-//! each frame to a pipe as IVF the moment it is made. VP8 because every engine a viewer
-//! has decodes it: Orden's own CEF has no H.264. A program the host runs, as Xvfb is,
-//! rather than a codec linked into every build. It starts once the viewer is
-//! connected, so the first frame is a key frame, and another comes every two seconds.
+//! `XShm`), encodes it with nothing held back - on this computer's GPU where it can and
+//! the viewer decodes what that makes, else VP8 in libvpx's realtime mode, which every
+//! viewer decodes (`encoder.rs`) - and writes each frame to a pipe the moment it is
+//! made. A program the host runs, as Xvfb is, rather than a codec linked into every
+//! build. It starts once the viewer is connected, so the first frame is a key frame,
+//! and another comes every two seconds.
 //!
 //! **Input** comes back over the data channel and is played into the application's
 //! display, and only there (`input.rs`).
@@ -40,6 +41,7 @@ use str0m::media::{MediaKind, MediaTime, Mid, Pt};
 use str0m::net::{Protocol, Receive};
 use str0m::{Candidate, Event, IceConnectionState, Input, Output, Rtc, RtcConfig};
 
+use super::encoder::{self, AccessUnits, Encoder, Made};
 use super::input::Input as HolderInput;
 use super::{stun, Screen};
 
@@ -81,7 +83,8 @@ pub struct ViewerCandidate {
 pub enum Cannot {
     /// ffmpeg is not installed.
     Encoder,
-    /// The offer is not one this can answer: no video, no VP8, or not SDP.
+    /// The offer is not one this can answer: no video, no codec this can encode, or not
+    /// SDP.
     Offer,
     /// This computer has no address to be reached on.
     Network,
@@ -121,8 +124,9 @@ struct Shared {
     rtc: Rtc,
     /// The sockets, to send each datagram from the address `str0m` chose.
     sockets: Vec<UdpSocket>,
-    /// The video's media and its VP8 payload type, once the answer has made them.
-    video: Option<(Mid, Pt)>,
+    /// The video's media, its payload type and the encoder that makes it, once the
+    /// answer has made them.
+    video: Option<(Mid, Pt, Encoder)>,
     /// When the timers are next due.
     next: Instant,
     /// When the viewer connected, which is when the picture starts.
@@ -178,9 +182,15 @@ impl Peer {
         }
         let offer = SdpOffer::from_sdp_string(offer).map_err(|_| Cannot::Offer)?;
         let now = Instant::now();
+        // The codecs this computer's encoders make; which of them is sent is chosen once
+        // the offer says what the viewer decodes.
+        let working = encoder::working();
+        let makes = |made: Made| working.iter().any(|one| one.made == made);
         let mut rtc = RtcConfig::new()
             .clear_codecs()
             .enable_vp8(true)
+            .enable_vp9(makes(Made::Vp9))
+            .enable_h264(makes(Made::H264))
             .set_crypto_provider(provider())
             .build(now);
 
@@ -379,14 +389,26 @@ fn drive(shared: &mut Shared) -> bool {
 fn heard(shared: &mut Shared, event: Event) -> bool {
     match event {
         Event::MediaAdded(added) if added.kind == MediaKind::Video => {
-            let pt = shared.rtc.writer(added.mid).and_then(|writer| {
-                writer
-                    .payload_params()
-                    .find(|params| params.spec().codec == Codec::Vp8)
-                    .map(str0m::format::PayloadParams::pt)
+            let offered: Vec<(Made, Pt)> = shared
+                .rtc
+                .writer(added.mid)
+                .map(|writer| {
+                    writer
+                        .payload_params()
+                        .filter_map(|params| Some((made_of(params.spec().codec)?, params.pt())))
+                        .collect()
+                })
+                .unwrap_or_default();
+            let decodes: Vec<Made> = offered.iter().map(|&(made, _)| made).collect();
+            let chosen = encoder::chosen(encoder::working(), &decodes);
+            let pt = chosen.and_then(|one| {
+                offered
+                    .iter()
+                    .find(|&&(made, _)| made == one.made)
+                    .map(|&(_, pt)| pt)
             });
-            if let Some(pt) = pt {
-                shared.video = Some((added.mid, pt));
+            if let (Some(chosen), Some(pt)) = (chosen, pt) {
+                shared.video = Some((added.mid, pt, chosen));
             }
             due(shared);
             true
@@ -441,6 +463,16 @@ fn answers_video(sdp: &str) -> bool {
         }
     }
     false
+}
+
+/// The codec an encoder here makes, for a codec the viewer negotiated.
+fn made_of(codec: Codec) -> Option<Made> {
+    match codec {
+        Codec::Vp8 => Some(Made::Vp8),
+        Codec::Vp9 => Some(Made::Vp9),
+        Codec::H264 => Some(Made::H264),
+        _ => None,
+    }
 }
 
 /// After a turn of the connection: the encoder started once it is due.
@@ -501,89 +533,15 @@ fn keep_time(inner: &Arc<Inner>) {
     }
 }
 
-/// The frame rate the display is read at: the holder's refresh rate, at most 60.
-#[allow(
-    clippy::cast_possible_truncation,
-    clippy::cast_sign_loss,
-    reason = "clamped to 10 to 60 first"
-)]
-pub fn frame_rate(hz: f64) -> u32 {
-    if hz.is_finite() {
-        hz.clamp(10.0, 60.0).round() as u32
-    } else {
-        60
-    }
-}
-
-/// The bits a second VP8 is given: about a tenth of a bit a pixel a frame, which keeps
-/// text sharp, between 1 and 20 megabits.
-pub fn bit_rate(width: u32, height: u32, fps: u32) -> u64 {
-    let pixels = u64::from(width) * u64::from(height) * u64::from(fps);
-    (pixels / 10).clamp(1_000_000, 20_000_000)
-}
-
-/// What ffmpeg is told: read the display at the frame rate, encode VP8 in realtime with
-/// no frame held back, a key frame every two seconds, and write each frame as IVF the
-/// moment it is made.
-pub fn encoder_args(screen: &Screen) -> Vec<String> {
-    let fps = frame_rate(screen.hz);
-    let rate = bit_rate(screen.width, screen.height, fps);
-    let threads = std::thread::available_parallelism()
-        .map_or(2, std::num::NonZeroUsize::get)
-        .clamp(1, 8);
-    [
-        "-hide_banner",
-        "-loglevel",
-        "error",
-        "-nostdin",
-        "-f",
-        "x11grab",
-        "-framerate",
-        &fps.to_string(),
-        "-draw_mouse",
-        "1",
-        "-i",
-        &screen.display,
-        "-c:v",
-        "libvpx",
-        "-deadline",
-        "realtime",
-        "-cpu-used",
-        "8",
-        "-lag-in-frames",
-        "0",
-        "-error-resilient",
-        "1",
-        "-auto-alt-ref",
-        "0",
-        "-b:v",
-        &rate.to_string(),
-        "-maxrate",
-        &(rate * 3 / 2).to_string(),
-        "-bufsize",
-        &(rate / 2).to_string(),
-        "-g",
-        &(fps * 2).to_string(),
-        "-threads",
-        &threads.to_string(),
-        "-pix_fmt",
-        "yuv420p",
-        "-f",
-        "ivf",
-        "-flush_packets",
-        "1",
-        "pipe:1",
-    ]
-    .iter()
-    .map(|&one| one.to_owned())
-    .collect()
-}
-
 /// The encoder for one connection: frames read off ffmpeg and written to the video
 /// until the connection ends or ffmpeg does.
 fn encode(inner: &Arc<Inner>) {
+    let Some((_, _, chosen)) = inner.lock().video else {
+        inner.end();
+        return;
+    };
     let Ok(mut child) = Command::new("ffmpeg")
-        .args(encoder_args(&inner.screen))
+        .args(encoder::encoder_args(chosen, &inner.screen))
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
@@ -593,12 +551,31 @@ fn encode(inner: &Arc<Inner>) {
         return;
     };
     if let Some(mut frames) = child.stdout.take() {
-        if ivf_header(&mut frames).is_ok() {
-            while !inner.over() {
-                let Ok(frame) = ivf_frame(&mut frames) else {
-                    break;
-                };
-                send_frame(inner, frame);
+        match chosen.made {
+            Made::Vp8 | Made::Vp9 => {
+                if ivf_header(&mut frames).is_ok() {
+                    while !inner.over() {
+                        let Ok(frame) = ivf_frame(&mut frames) else {
+                            break;
+                        };
+                        send_frame(inner, frame);
+                    }
+                }
+            }
+            Made::H264 => {
+                let mut units = AccessUnits::default();
+                let mut buffer = vec![0_u8; 64 * 1024];
+                while !inner.over() {
+                    let Ok(length) = frames.read(&mut buffer) else {
+                        break;
+                    };
+                    if length == 0 {
+                        break;
+                    }
+                    for frame in units.take(&buffer[..length]) {
+                        send_frame(inner, frame);
+                    }
+                }
             }
         }
     }
@@ -609,7 +586,7 @@ fn encode(inner: &Arc<Inner>) {
 /// One frame written to the video, at the time it came, on the 90 kHz clock.
 fn send_frame(inner: &Arc<Inner>, frame: Vec<u8>) {
     let mut shared = inner.lock();
-    let (Some((mid, pt)), Some(_)) = (shared.video, shared.connected) else {
+    let (Some((mid, pt, _)), Some(_)) = (shared.video, shared.connected) else {
         return;
     };
     let now = Instant::now();
@@ -729,37 +706,6 @@ mod tests {
             cannot_text(Cannot::Encoder.word()),
             r#"{"cannot":"encoder"}"#
         );
-    }
-
-    #[test]
-    fn reads_the_display_at_the_holders_refresh_rate_up_to_sixty() {
-        assert_eq!(frame_rate(144.0), 60);
-        assert_eq!(frame_rate(30.0), 30);
-        assert_eq!(frame_rate(1.0), 10);
-        assert_eq!(frame_rate(f64::NAN), 60);
-    }
-
-    #[test]
-    fn gives_a_bigger_screen_more_bits_within_bounds() {
-        assert_eq!(bit_rate(1280, 800, 60), 6_144_000);
-        assert_eq!(bit_rate(64, 64, 10), 1_000_000);
-        assert_eq!(bit_rate(7680, 4320, 60), 20_000_000);
-    }
-
-    #[test]
-    fn asks_ffmpeg_for_vp8_with_nothing_held_back() {
-        let screen = Screen {
-            display: ":123".to_owned(),
-            width: 1280,
-            height: 800,
-            hz: 120.0,
-        };
-        let args = encoder_args(&screen).join(" ");
-        assert!(args.contains("-f x11grab -framerate 60 -draw_mouse 1 -i :123"));
-        assert!(args.contains("-c:v libvpx -deadline realtime"));
-        assert!(args.contains("-lag-in-frames 0"));
-        assert!(args.contains("-g 120"));
-        assert!(args.ends_with("-f ivf -flush_packets 1 pipe:1"));
     }
 
     #[test]
