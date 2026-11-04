@@ -295,12 +295,13 @@ function partyFrom(headers: Headers): Party {
   } catch {
     // Not escaped words: no name.
   }
+  const login = headers.get('x-nib-login')
   return {
     role: headers.get('x-nib-role') === 'host' ? 'host' : 'viewer',
     session: headers.get('x-nib-app-id') ?? '',
     device: headers.get('x-nib-device') ?? '',
     who: headers.get('x-nib-who') ?? '',
-    login: headers.get('x-nib-login') ?? undefined,
+    ...(login ? { login } : {}),
     name,
     seen: Date.now(),
   }
