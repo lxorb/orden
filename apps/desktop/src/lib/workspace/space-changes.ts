@@ -7,6 +7,7 @@ import { account } from '../account.svelte'
 import { identifier } from '../identifier'
 import { samePath } from '../space-paths'
 import { invoke } from '../tauri'
+import { windows } from '../windows'
 import type { Space } from '../workspace.svelte'
 import { type HoldsSpaces, selectSpace, tabSets } from './spaces'
 
@@ -39,6 +40,7 @@ export async function adoptSpace(
   if (!ws.spaces.some((space) => samePath(space.root, created.path))) {
     const space: Space = { id: identifier(), name: created.name, root: created.path }
     ws.spaces = [...ws.spaces, space]
+    windows.say('spaces-again')
 
     if (ws.activeSpaceId) ws.persist()
     else await selectSpace(ws, space.id)
@@ -58,6 +60,7 @@ export async function addSpace(ws: HoldsSpaces, name: string) {
 
   const space: Space = { id: identifier(), name: created.name, root: created.path }
   ws.spaces = [...ws.spaces, space]
+  windows.say('spaces-again')
   await selectSpace(ws, space.id)
   return space
 }

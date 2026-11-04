@@ -48,7 +48,7 @@ export interface Writes {
   persist(): void
   /** A note's file now says all its document does: whatever a closed tab kept of it is
    *  on the disk, and the file is what to come back from. */
-  wroteAll(path: string, key: string): void
+  wroteAll(path: string, key: string, words: string): void
   loadTree(): Promise<void>
   /** The name a folder will take: the wanted one, or the next number after it where
    *  the folder already holds that name - `except` left out of what it holds. The
@@ -697,7 +697,7 @@ export class Saving {
     if (landed === null) return
     content = landed.words
     note.written(path, nameOf(path), landed.revision)
-    if (!note.dirty) this.ws.wroteAll(path, note.key)
+    if (!note.dirty) this.ws.wroteAll(path, note.key, content)
     // Moved under the write by something that did not wait for it: the words are
     // owed again at the path the note is at now; see `written`.
     if (!samePath(note.path, path)) this.owed(note)

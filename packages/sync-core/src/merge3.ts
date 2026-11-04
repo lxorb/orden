@@ -595,6 +595,70 @@ export function written(base: string, analysis: Analysis, writing: Writing): str
   return out + base.slice(at)
 }
 
+/** Whether one side's words at a point are the other's as well: where they start or end, for
+ *  words gone on from, or anywhere for a passage. */
+function heldIn(words: string, other: string): boolean {
+  const these = words.trim()
+  if (!these) return false
+  return (
+    other.trimStart().startsWith(these) ||
+    other.trimEnd().endsWith(these) ||
+    (these.length >= HELD_WHOLE && other.includes(these))
+  )
+}
+
+/** The whole lines two sides' words begin with alike. */
+function linesAlike(one: string, other: string): string {
+  let at = 0
+  while (at < one.length && one.charAt(at) === other.charAt(at)) at++
+  return one.slice(0, one.lastIndexOf('\n', at - 1) + 1)
+}
+
+/** The merge where one side may be a later or an earlier state of the other's words, not
+ *  another writer of its own: a write that landed unheard, and then the same note typed on.
+ *  `merge3` keeps two sides' words at one point side by side, as it should for two people
+ *  (`milk` and `eggs`), and so says `typed` twice over `typed` and `typed more`. Here the words
+ *  one side holds of the other's at one span are said once, and neither side loses a word:
+ *  only words the other side's text holds are left out. Not for what merges two devices'
+ *  words: this says what one writer's history means, which the CRDT does not. */
+export function mergedOn(base: string, local: string, remote: string): string {
+  const analysis = analyse(base, local, remote)
+  const mine = [...analysis.alone.local, ...analysis.meetings.flatMap((one) => one.local)]
+  const theirs = [...analysis.alone.remote, ...analysis.meetings.flatMap((one) => one.remote)]
+  const told = new Map<Edit, Edit | null>()
+
+  for (const one of mine) {
+    const other = theirs.find((edit) => edit.from === one.from && edit.to === one.to)
+    if (!other) continue
+    const [shorter, longer] = one.insert.length <= other.insert.length ? [one, other] : [other, one]
+    if (heldIn(shorter.insert, longer.insert)) {
+      told.set(shorter, null)
+      continue
+    }
+    const alike = linesAlike(one.insert, other.insert)
+    if (alike) told.set(other, { ...other, insert: other.insert.slice(alike.length) })
+  }
+
+  const left = (side: readonly Edit[]) =>
+    side.flatMap((edit) => {
+      const said = told.has(edit) ? told.get(edit) : edit
+      return said ? [said] : []
+    })
+  return written(
+    base,
+    {
+      ...analysis,
+      meetings: analysis.meetings.map((one) => ({
+        ...one,
+        local: left(one.local),
+        remote: left(one.remote),
+      })),
+      alone: { local: left(analysis.alone.local), remote: left(analysis.alone.remote) },
+    },
+    { settle: () => 'both' },
+  )
+}
+
 /** The three-way merge of `local` and `remote` against `base`, with the map of where
  *  they wrote. Each meeting is settled by `settle`: by default as a CRDT would leave
  *  it, which loses nothing either side wrote. */

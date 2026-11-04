@@ -38,10 +38,21 @@ vi.mock('../tauri', async (importOriginal) => ({
     return held.disk!.invoke(command, args)
   },
 }))
+// The launch's own turn for the sets is `allIn` here: a turn coming late to a window this has
+// killed would fetch them into the next window's copy of the store.
+vi.mock('../startup.svelte', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../startup.svelte')>()
+  const turn = real.startup.turn.bind(real.startup)
+  real.startup.turn = (stage) => (stage === 'doors' ? new Promise(() => {}) : turn(stage))
+  return real
+})
 const { Disk, memoryStorage } = await import('../../../test/disk')
 const d = new Disk()
 held.disk = d
 vi.stubGlobal('localStorage', memoryStorage())
+// A window killed lets go of its slot with its lock, and here nothing lets go: no locks, so
+// every launch is the first window.
+vi.stubGlobal('navigator', {})
 vi.stubGlobal('requestAnimationFrame', (run: () => void) => setTimeout(run, 0))
 
 const ONE = '/spaces/One'

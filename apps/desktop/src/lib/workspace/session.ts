@@ -17,6 +17,7 @@ import type { FoldLines } from '@orden/editor'
 import { isBaseTarget, isChatTarget, isPagesTarget, isWebTarget } from '@orden/markdown/links'
 import { identifier } from '../identifier'
 import { roomKind } from '../rooms/kind'
+import { nameOf, samePath } from '../space-paths'
 import { isNumber, isRecord, isString, keepJson, stringList } from '../stored'
 import type { Panel, Space } from '../workspace.svelte'
 import type { TabKind } from './documents.svelte'
@@ -364,6 +365,50 @@ export function readClosed(value: unknown): ClosedTab | null {
     ...(isNumber(value.batch) ? { batch: value.batch } : {}),
     ...(isString(value.trashed) ? { trashed: value.trashed } : {}),
   }
+}
+
+/** The arrangement a session read holds, whichever of the three shapes it was written in. */
+export function arrangementIn(state: Session): Layout | null {
+  if (state.layout) return state.layout
+
+  const paths = state.openPaths ?? []
+  const tabs = state.tabs?.length
+    ? state.tabs
+    : paths.flatMap((path) => readDraft({ path, name: nameOf(path), doc: '' }) ?? [])
+  if (!tabs.length) return null
+
+  const id = identifier()
+  const active = state.tabs?.length
+    ? (state.active ?? 0)
+    : Math.max(
+        0,
+        paths.findIndex((path) => samePath(path, state.activePath ?? null)),
+      )
+  return {
+    frame: { kind: 'pane', pane: { id, tabs, active, linked: false } },
+    focused: id,
+    panel: state.panel,
+  }
+}
+
+/** What the session says while the arrangement it read is on its way into the window: all of
+ *  that, as it was read, and `now` behind it in the pane with the focus, which is where the
+ *  arrangement puts what it finds open (`arrange` in workspace.svelte.ts). A tab that holds
+ *  nothing the arrangement's own tab of that file does not is that tab, as it is there. */
+export function arrivingWith(read: Layout, now: Layout): Layout {
+  const held = panesOf(read.frame).flatMap((one) => one.tabs)
+  const open = panesOf(now.frame)
+    .flatMap((one) => one.tabs)
+    .filter((tab) => tab.dirty || !held.some((one) => one.path && samePath(one.path, tab.path)))
+  const panes = panesOf(read.frame)
+  const into = (panes.find((one) => one.id === read.focused) ?? panes[0])?.id
+  const behind = (frame: FrameDraft): FrameDraft => {
+    if (frame.kind === 'split')
+      return { ...frame, sides: [behind(frame.sides[0]), behind(frame.sides[1])] }
+    if (frame.pane.id !== into) return frame
+    return { kind: 'pane', pane: { ...frame.pane, tabs: [...frame.pane.tabs, ...open] } }
+  }
+  return { ...read, panel: now.panel, frame: open.length ? behind(read.frame) : read.frame }
 }
 
 export function readSession(value: unknown): Session | null {
