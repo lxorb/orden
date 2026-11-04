@@ -347,7 +347,7 @@ fn card_field(field: &Field) -> bool {
         return true;
     }
     let said = field.said.to_lowercase();
-    CARD.iter().any(|one| said.contains(one))
+    CARD.iter().any(|one| said.contains(one)) || says(&field.said, CARD_WORDS)
 }
 
 /// Whether a field holds a credential: a password by its type or its `autocomplete`, or
@@ -372,6 +372,7 @@ pub fn secret(field: &Field) -> bool {
             .split_whitespace()
             .any(|one| one.starts_with("cc-") || one == "one-time-code")
         || card_field(field)
+        || says(&field.said, ONE_TIME)
 }
 
 /// Whether a field is a box words are written in: a `<textarea>` or an editable region,
@@ -748,6 +749,57 @@ pub fn payment_host(host: &str) -> bool {
 pub fn social(host: &str) -> bool {
     SOCIAL.iter().any(|one| covers(one, host))
 }
+
+/// What a one-time code and a PIN are called, in names, ids and labels: whole words, since
+/// `pin` is in `shipping` and `otp` in `hotpot`. Only a secret by this, which hides a value
+/// from an agent and asks nothing: over-careful about a postal PIN code, and never a leak.
+const ONE_TIME: &[&str] = &[
+    "otp",
+    "otpcode",
+    "totp",
+    "one-time",
+    "one time",
+    "onetime",
+    "one_time",
+    "verification code",
+    "verification_code",
+    "verification-code",
+    "verificationcode",
+    "verify code",
+    "digit code",
+    "2fa",
+    "two-factor",
+    "two factor",
+    "mfa",
+    "authenticator",
+    "auth code",
+    "authentication code",
+    "sms code",
+    "pin",
+    "pincode",
+    "pin code",
+    "passcode",
+    "tan",
+    "best\u{e4}tigungscode",
+    "einmalcode",
+    "einmalpasswort",
+    "sicherheitscode",
+    "geheimzahl",
+    "code de v\u{e9}rification",
+    "c\u{f3}digo de verificaci\u{f3}n",
+    "codice di verifica",
+];
+
+/// More of what card fields are called, as whole words: `card no` is in `card notes`.
+const CARD_WORDS: &[&str] = &[
+    "card no",
+    "card_no",
+    "card-no",
+    "cardno",
+    "card num",
+    "card_num",
+    "credit_card",
+];
 
 /// What card fields are called, in names, ids and labels.
 const CARD: &[&str] = &[
@@ -1509,6 +1561,40 @@ mod tests {
 
     fn category(facts: &Facts, url: &str) -> Option<Category> {
         judge(&grant(), facts, Act::Press, url, &[]).map(|question| question.category)
+    }
+
+    #[test]
+    fn a_code_a_pin_and_a_card_are_secret_by_what_they_are_called() {
+        let called = |said: &str| Field {
+            kind: "text".into(),
+            said: said.into(),
+            ..Field::default()
+        };
+        for said in [
+            "otp 6-digit code",
+            "verification_code Verification code",
+            "verificationCode",
+            "pin PIN",
+            "user_pin",
+            "card_no Card no",
+            "cardno",
+            "credit_card",
+            "Best\u{e4}tigungscode",
+            "One-time password",
+        ] {
+            assert!(secret(&called(said)), "{said}");
+        }
+        for said in [
+            "shipping",
+            "spinner",
+            "hotpot",
+            "Search",
+            "Card notes",
+            "tangent",
+            "Discount code",
+        ] {
+            assert!(!secret(&called(said)), "{said}");
+        }
     }
 
     #[test]
