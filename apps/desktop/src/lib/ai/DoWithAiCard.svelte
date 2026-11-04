@@ -56,7 +56,7 @@
         /></span
       ></span
     >
-    <div class="pick">
+    <div class="nib-setting-value">
       <Select
         value={tasked}
         options={MODES.filter((one) => one !== 'plan').map((one) => ({
@@ -129,11 +129,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .pick {
-    flex: none;
-    width: 14rem;
   }
 
   .pressable {

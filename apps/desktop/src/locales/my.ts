@@ -555,8 +555,6 @@ export const my: Dictionary = {
   'Actual size': 'အမှန်အရွယ်',
   // Appearance
   Accent: 'အသားပေးအရောင်',
-  'Swipe in from the edge to see your notes.':
-    'သင့်မှတ်စုများကို ကြည့်ရန် အစွန်းမှ အတွင်းသို့ ပွတ်ဆွဲပါ။',
   'Window corners': 'ဝင်းဒိုး ထောင့်များ',
   Rounded: 'လုံးဝိုင်း',
   Square: 'လေးထောင့်',
@@ -2337,6 +2335,8 @@ export const my: Dictionary = {
   'Take photo': 'ဓာတ်ပုံရိုက်ရန်',
   Pronouns: 'နာမ်စားများ',
   Bio: 'အကြောင်း',
+  'A few words about you': 'သင့်အကြောင်း စကားအနည်းငယ်',
+  'What’s happening?': 'ဘာဖြစ်နေလဲ။',
   'Clear after': 'ရှင်းလင်းမည့်အချိန်',
   '30 minutes': 'မိနစ် 30',
   '1 hour': '1 နာရီ',

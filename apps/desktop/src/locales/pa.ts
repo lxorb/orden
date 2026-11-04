@@ -560,7 +560,6 @@ export const pa: Dictionary = {
   'Actual size': 'ਅਸਲੀ ਆਕਾਰ',
   // Appearance
   Accent: 'ਉਭਾਰ ਰੰਗ',
-  'Swipe in from the edge to see your notes.': 'ਆਪਣੇ ਨੋਟ ਦੇਖਣ ਲਈ ਕਿਨਾਰੇ ਤੋਂ ਅੰਦਰ ਸਵਾਈਪ ਕਰੋ।',
   'Window corners': 'ਵਿੰਡੋ ਦੇ ਕੋਨੇ',
   Rounded: 'ਗੋਲ',
   Square: 'ਚੌਰਸ',
@@ -2362,6 +2361,8 @@ export const pa: Dictionary = {
   'Take photo': 'ਫ਼ੋਟੋ ਖਿੱਚੋ',
   Pronouns: 'ਪੜਨਾਂਵ',
   Bio: 'ਜਾਣ-ਪਛਾਣ',
+  'A few words about you': 'ਤੁਹਾਡੇ ਬਾਰੇ ਕੁਝ ਸ਼ਬਦ',
+  'What’s happening?': 'ਕੀ ਹੋ ਰਿਹਾ ਹੈ?',
   'Clear after': 'ਇਸ ਤੋਂ ਬਾਅਦ ਹਟਾਓ',
   '30 minutes': '30 ਮਿੰਟ',
   '1 hour': '1 ਘੰਟਾ',

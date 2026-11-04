@@ -557,8 +557,6 @@ export const hi: Dictionary = {
   'Actual size': 'वास्तविक आकार',
   // Appearance
   Accent: 'एक्सेंट',
-  'Swipe in from the edge to see your notes.':
-    'अपने नोट्स देखने के लिए किनारे से अंदर स्वाइप करें।',
   'Window corners': 'विंडो के कोने',
   Rounded: 'गोल',
   Square: 'चौकोर',
@@ -2355,6 +2353,8 @@ export const hi: Dictionary = {
   'Take photo': 'फ़ोटो लें',
   Pronouns: 'सर्वनाम',
   Bio: 'परिचय',
+  'A few words about you': 'अपने बारे में कुछ शब्द',
+  'What’s happening?': 'क्या चल रहा है?',
   'Clear after': 'इसके बाद हटाएँ',
   '30 minutes': '30 मिनट',
   '1 hour': '1 घंटा',

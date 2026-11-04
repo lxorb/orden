@@ -1709,6 +1709,170 @@ textarea.nib-field {
   }
 }
 
+/* The value at the end of a setting's row: a field typed into, the closed dropdown
+   beside it, a status with its emoji. One box for all of them - the height, the
+   corner, the hairline, the hover and the focus - at the width of the one column
+   every value in a pane ends in (#1056).
+
+   Six panes had drawn their own: a borderless `.inline` at 12rem in four of them
+   and 14rem in a fifth, the dropdown's box at 14rem in its own component, and
+   Account's fields showing a box only while they were empty. So one row's name read
+   as plain text, the next as an empty box and the dropdown under both as a box of
+   another height, each ending at its own x. Being a value is this; what is in it
+   is the pane's.
+
+   A wrapper wears it too, where something stands in the box beside the words, the
+   way `.nib-field` is worn: the emoji in front of a status. */
+.nib-field.is-value {
+  min-height: var(--row-height);
+  padding: var(--space-2) var(--space-3);
+  border-color: var(--line-strong);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
+.nib-field.is-value :is(input, textarea) {
+  min-height: 0;
+  line-height: inherit;
+}
+
+textarea.nib-field.is-value {
+  resize: none;
+}
+
+/* A value no setting can take, such as a search address without its `%s`: said in
+   the one colour the app says no in, until the keyboard is back in it. */
+.nib-field.is-value[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+@media (hover: hover) {
+  .nib-field.is-value:hover {
+    border-color: var(--muted);
+  }
+}
+
+/* A mark pressed inside a value's box, such as the emoji in front of a status or
+   the cross that clears it: the glyph button at the height of the line it stands
+   in, so the box stays the height of every other value. A finger's is the touch
+   floor, which the row's own height already has room for. */
+.nib-field.is-value > .nib-glyph {
+  width: 22px;
+  height: 22px;
+  margin-block: -2px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
+}
+
+.nib-field.is-value > .nib-glyph > svg {
+  width: var(--icon-md);
+  height: var(--icon-md);
+}
+
+[data-touch] .nib-field.is-value > .nib-glyph {
+  width: var(--touch-target);
+  height: var(--touch-target);
+  margin-block: calc((1.4em - var(--touch-target)) / 2);
+}
+
+/* A value that is read and not changed here, such as the account's address: the
+   words where a field's words stand, at its inset and edge, with nothing round them
+   to suggest a caret could go in. Selectable, because an address is copied. */
+.nib-field.is-value.is-read {
+  border-color: transparent;
+  background: none;
+  color: var(--muted-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* The column: every value in a row ends at the row's end and starts at one x, and
+   a dropdown holding a longer word than the column grows towards the name rather
+   than past the end. A box that is the value is that wide; a control that holds
+   one, the dropdown's, is put in `.nib-setting-value`. */
+.nib-setting > .nib-field.is-value {
+  flex: none;
+  inline-size: var(--setting-value);
+}
+
+.nib-setting-value {
+  flex: none;
+  min-inline-size: min(var(--setting-value), 100%);
+}
+
+/* A value of many choices that wraps rather than growing, such as the swatches: the
+   column's width exactly, so the choices end where every other value does and a
+   second line starts under the first. */
+.nib-setting-value.is-wrapping {
+  inline-size: var(--setting-value);
+  max-inline-size: 100%;
+}
+
+/* A value more than a line tall, such as a bio, or one that needs a whole line
+   under a finger, such as a status: the name stands at its first line rather than
+   at its middle, the way a label stands beside a paragraph, and on a phone the
+   value takes the line under the name. */
+.nib-setting.is-tall {
+  align-items: flex-start;
+}
+
+.nib-setting.is-tall > .name {
+  padding-block-start: calc(var(--space-2) + 1px);
+  line-height: 1.4;
+}
+
+/* Under a finger a value is what a phone's own settings show: the words at the end
+   of the row, with no box until the keyboard comes, the way the dropdown there is
+   drawn plain. A value taller than a line takes the row under its name. */
+[data-touch] .nib-setting > .nib-field.is-value {
+  flex: 1 1 0;
+  inline-size: auto;
+  min-inline-size: 0;
+  max-inline-size: 60%;
+}
+
+[data-touch] .nib-setting > .nib-field.is-value,
+[data-touch] .nib-setting > .nib-setting-value > .nib-field.is-value {
+  padding-inline: var(--space-2);
+  font-size: var(--touch-text);
+  text-align: end;
+}
+
+[data-touch] .nib-setting > .nib-field.is-value:not(:focus, :focus-within),
+[data-touch] .nib-setting > .nib-setting-value > .nib-field.is-value:not(:focus) {
+  border-color: transparent;
+  background: none;
+}
+
+[data-touch] .nib-setting > .nib-field.is-value:not(input, textarea) {
+  justify-content: flex-end;
+}
+
+[data-touch] .nib-setting.is-tall > .nib-field.is-value {
+  flex-basis: 100%;
+  max-inline-size: none;
+  padding-inline: 0;
+  text-align: start;
+}
+
+[data-touch] .nib-setting-value {
+  min-inline-size: 0;
+  max-inline-size: 60%;
+}
+
+/* A value that is a row of choices, such as the swatches: a thumb's worth each is
+   wider than the room beside a name, so the name takes the first line and the
+   choices the next. */
+[data-touch] .nib-setting-value.is-wrapping {
+  inline-size: auto;
+  flex-basis: 100%;
+  max-inline-size: none;
+}
+
 /* What a box you type into says when the keyboard lands in it: its own border
    turns, which is the answer such a box has always given, and it gives that one
    rather than the ring as well - two answers to one question read as a mistake.

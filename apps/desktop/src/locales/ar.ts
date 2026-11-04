@@ -589,7 +589,6 @@ export const ar: Dictionary = {
   'Actual size': 'الحجم الفعلي',
   // Appearance
   Accent: 'اللون المميز',
-  'Swipe in from the edge to see your notes.': 'اسحب من الحافة لترى ملاحظاتك.',
   'Window corners': 'زوايا النافذة',
   Rounded: 'مستديرة',
   Square: 'مربعة',
@@ -2478,6 +2477,8 @@ export const ar: Dictionary = {
   'Take photo': 'التقاط صورة',
   Pronouns: 'الضمائر',
   Bio: 'نبذة',
+  'A few words about you': 'بضع كلمات عنك',
+  'What’s happening?': 'ما الجديد؟',
   'Clear after': 'المسح بعد',
   '30 minutes': '30 دقيقة',
   '1 hour': 'ساعة واحدة',

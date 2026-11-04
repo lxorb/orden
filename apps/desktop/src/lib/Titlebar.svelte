@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { swipeOpens } from './swipe-opens'
   import { chrome } from './glass/chrome.svelte'
   import { i18n, t } from './i18n.svelte'
   import { keepFocus } from './focus'
@@ -17,25 +16,12 @@
   import { settings } from './settings.svelte'
   import { tabOverview, toggleTabOverview } from './surfaces.svelte'
   import { shortcuts } from './shortcuts.svelte'
-  import { startup } from './startup.svelte'
   import { webChannel } from './updater'
   import { viewport } from './viewport.svelte'
   import { WindowState } from './window-state.svelte'
   import { workspace } from './workspace.svelte'
 
   const { onpalette }: { onpalette: () => void } = $props()
-
-  /** Whether the file list is a drawer a swipe from the edge pulls out, which is what makes
-   *  its button redundant to an eye (#1066). */
-  const swiped = $derived(swipeOpens())
-
-  /** The list pulled out, by its swipe or any other way: the swipe has been found, so the
-   *  hint about it is put away for good. Fetched only then, through the hints' door. */
-  $effect(() => {
-    if (swiped && workspace.openOn('left')) {
-      void import('./hints.svelte').then(({ hints }) => hints.dismiss('drawer'))
-    }
-  })
 
   /** What the middle button says. Read off the window itself rather than off its
    *  own clicks, because dragging a maximised window off the top of the screen
@@ -188,24 +174,9 @@
   {/if}
 
   <!-- Not while there is no space and no tab: a list of nothing, in the moment before a
-       fresh start's space is made (fresh-start.ts). Where a swipe from the edge pulls the
-       list out as a drawer - a phone, a tablet held upright - the button is said and not
-       shown (#1066): a screen reader and a keyboard still have it, and so does its key,
-       and somebody new is told about the swipe once (hints.svelte.ts). -->
+       fresh start's space is made (fresh-start.ts). -->
   {#if !listless}
-    <SidebarToggle unseen={swiped} />
-    {#if swiped && startup.settled && !__EVEN_PLUGIN__}
-      <span class="swipe-hint">
-        {#await import('./HintCard.svelte') then card}
-          <card.default
-            hint="drawer"
-            side="below"
-            text={t('Swipe in from the edge to see your notes.')}
-            onpress={() => workspace.toggleSidebar()}
-          />
-        {/await}
-      </span>
-    {/if}
+    <SidebarToggle />
   {/if}
 
   {#if viewport.touch}
@@ -305,14 +276,6 @@
      rather than about reading, and AppKit keeps them at the window's left edge. */
   header.lights {
     padding-left: var(--traffic-lights);
-  }
-
-  /* Where the hint about the swipe hangs from: the bar's start, as tall as the bar, so the
-     card comes down under it there (HintCard.svelte). It takes no room in the row. */
-  .swipe-hint {
-    position: relative;
-    flex: none;
-    width: 0;
   }
 
   .pad,

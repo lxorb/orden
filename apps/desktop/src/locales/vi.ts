@@ -554,7 +554,6 @@ export const vi: Dictionary = {
   'Actual size': 'Cỡ thật',
   // Appearance
   Accent: 'Màu nhấn',
-  'Swipe in from the edge to see your notes.': 'Vuốt vào từ mép để xem ghi chú của bạn.',
   'Window corners': 'Góc cửa sổ',
   Rounded: 'Bo tròn',
   Square: 'Vuông',
@@ -2330,6 +2329,8 @@ export const vi: Dictionary = {
   'Take photo': 'Chụp ảnh',
   Pronouns: 'Danh xưng',
   Bio: 'Giới thiệu',
+  'A few words about you': 'Vài lời về bạn',
+  'What’s happening?': 'Bạn đang làm gì?',
   'Clear after': 'Xóa sau',
   '30 minutes': '30 phút',
   '1 hour': '1 giờ',

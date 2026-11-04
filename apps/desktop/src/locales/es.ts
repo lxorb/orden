@@ -568,7 +568,6 @@ export const es: Dictionary = {
   'Actual size': 'Tamaño real',
   // Appearance
   Accent: 'Acento',
-  'Swipe in from the edge to see your notes.': 'Desliza desde el borde para ver tus notas.',
   'Window corners': 'Esquinas de la ventana',
   Rounded: 'Redondeadas',
   Square: 'Cuadradas',
@@ -2417,6 +2416,8 @@ export const es: Dictionary = {
   'Take photo': 'Hacer foto',
   Pronouns: 'Pronombres',
   Bio: 'Biografía',
+  'A few words about you': 'Unas palabras sobre ti',
+  'What’s happening?': '¿Qué está pasando?',
   'Clear after': 'Borrar después de',
   '30 minutes': '30 minutos',
   '1 hour': '1 hora',

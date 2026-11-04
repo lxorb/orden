@@ -51,8 +51,7 @@
     </div>
   {/if}
   <input
-    class="add"
-    class:refused
+    class="nib-field is-value add"
     type="text"
     {placeholder}
     aria-label={placeholder}
@@ -117,30 +116,8 @@
     }
   }
 
-  .add {
-    width: 100%;
-    padding: 6px 9px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    transition:
-      border-color var(--dur-fast) var(--ease-out),
-      background var(--dur-fast) var(--ease-out);
-  }
-
-  .add::placeholder {
-    color: var(--muted);
-  }
-
-  .add:focus {
-    background: var(--bg);
-  }
-
-  /* What was typed and not taken, said in the colour of a refusal. */
-  .add.refused {
-    border-color: var(--danger);
+  /* The value box every setting's is, across the list rather than in the column. */
+  .words > .add {
+    inline-size: auto;
   }
 </style>

@@ -554,8 +554,6 @@ export const jv: Dictionary = {
   'Actual size': 'Ukuran asli',
   // Appearance
   Accent: 'Warna panandes',
-  'Swipe in from the edge to see your notes.':
-    'Gesek mlebu saka pinggir kanggo ndeleng cathetanmu.',
   'Window corners': 'Pojok jendhela',
   Rounded: 'Bunder',
   Square: 'Kothak',
@@ -2337,6 +2335,8 @@ export const jv: Dictionary = {
   'Take photo': 'Njupuk foto',
   Pronouns: 'Tembung sesulih',
   Bio: 'Bio',
+  'A few words about you': 'Sawetara tembung babagan sampeyan',
+  'What’s happening?': 'Ana apa?',
   'Clear after': 'Busak sawise',
   '30 minutes': '30 menit',
   '1 hour': '1 jam',

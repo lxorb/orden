@@ -80,15 +80,27 @@
 <style>
   .swatches {
     --swatch-edge: color-mix(in srgb, var(--text) 12%, transparent);
+    --swatch-size: 24px;
     display: flex;
     flex-wrap: wrap;
     gap: 7px;
   }
 
+  /* In a setting's value column (`.nib-setting-value.is-wrapping`, base.css): as many
+     to a line as the column holds, every line on the same columns, and the chosen
+     one's ring inside the column rather than past its end - the 4px it reaches out
+     is the room kept round the dots (#1056). */
+  :global(.nib-setting-value.is-wrapping) > .swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, var(--swatch-size));
+    justify-content: space-between;
+    padding: 4px;
+  }
+
   .swatch {
     position: relative;
-    width: 24px;
-    height: 24px;
+    width: var(--swatch-size);
+    height: var(--swatch-size);
     padding: 0;
     border: none;
     border-radius: 50%;
@@ -160,11 +172,7 @@
 
   /* A thumb's worth each, on a touch screen. */
   :global([data-touch]) .swatches {
+    --swatch-size: var(--touch-target);
     gap: 12px;
-  }
-
-  :global([data-touch]) .swatch {
-    width: var(--touch-target);
-    height: var(--touch-target);
   }
 </style>

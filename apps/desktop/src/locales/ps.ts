@@ -557,7 +557,6 @@ export const ps: Dictionary = {
   'Actual size': 'اصلي کچه',
   // Appearance
   Accent: 'ځانګړی رنګ',
-  'Swipe in from the edge to see your notes.': 'خپلې یادښتونه د لیدو لپاره له څنډې دننه سوایپ کړئ.',
   'Window corners': 'د کړکۍ کونجونه',
   Rounded: 'ګرد',
   Square: 'مربع',
@@ -2360,6 +2359,8 @@ export const ps: Dictionary = {
   'Take photo': 'انځور اخيستل',
   Pronouns: 'ضميرونه',
   Bio: 'پېژندنه',
+  'A few words about you': 'ستاسو په اړه څو کلمې',
+  'What’s happening?': 'څه پېښېږي؟',
   'Clear after': 'له دې وروسته پاکول',
   '30 minutes': '۳۰ دقيقې',
   '1 hour': '۱ ساعت',

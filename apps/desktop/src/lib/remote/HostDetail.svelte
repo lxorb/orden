@@ -128,7 +128,7 @@
     <span class="name">{t('Address')}</span>
     {#if host.own}
       <input
-        class="field"
+        class="nib-field is-value address"
         value={host.hostname
           ? said({ user: host.user, hostname: host.hostname, port: host.port })
           : ''}
@@ -144,12 +144,14 @@
 
   <div class="nib-setting">
     <span class="name">{t('Colour')}</span>
-    <Swatches
-      options={colours}
-      label={t('Colour')}
-      chosen={host.colour ?? ''}
-      onchoose={(value: string) => about({ colour: (value || undefined) as About['colour'] })}
-    />
+    <div class="nib-setting-value is-wrapping">
+      <Swatches
+        options={colours}
+        label={t('Colour')}
+        chosen={host.colour ?? ''}
+        onchoose={(value: string) => about({ colour: (value || undefined) as About['colour'] })}
+      />
+    </div>
   </div>
 
   <div class="nib-setting">
@@ -258,23 +260,9 @@
     border-bottom-color: var(--accent);
   }
 
-  .field {
-    flex: none;
-    width: 14rem;
-    max-width: 55%;
-    padding: 6px 9px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--text-strong);
+  /* An address is read letter by letter; the box is every setting value's. */
+  .address {
     font-family: var(--font-mono);
-    font-size: var(--text-sm);
-    outline: none;
-    transition: border-color var(--dur-fast) var(--ease-out);
-  }
-
-  .field:focus {
-    border-color: var(--accent);
   }
 
   .value {

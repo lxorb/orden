@@ -351,7 +351,7 @@
           <label class="nib-setting setting">
             <span class="name">{t('Name')}</span>
             <input
-              class="nib-field inline"
+              class="nib-field is-value"
               value={provider.name}
               placeholder={accountName({ ...provider, name: '' })}
               spellcheck="false"
@@ -364,7 +364,7 @@
           <label class="nib-setting setting">
             <span class="name">{t('Name')}</span>
             <input
-              class="nib-field inline"
+              class="nib-field is-value"
               value={provider.name}
               placeholder={t('OpenAI-compatible')}
               spellcheck="false"
@@ -375,7 +375,7 @@
           <label class="nib-setting setting">
             <span class="name">{t('Base URL')}</span>
             <input
-              class="nib-field inline"
+              class="nib-field is-value"
               value={provider.baseUrl ?? ''}
               placeholder={EXAMPLE_URL}
               spellcheck="false"
@@ -412,7 +412,7 @@
                 </div>
               {:else}
                 <input
-                  class="nib-field inline"
+                  class="nib-field is-value"
                   type="password"
                   value=""
                   placeholder={provider.kind === 'compatible' ? t('Optional') : 'sk-'}
@@ -431,7 +431,7 @@
           <div class="nib-setting setting">
             <span class="name">{t('Model')}</span>
             {#if models[provider.id]?.length}
-              <div class="pick">
+              <div class="nib-setting-value">
                 <Select
                   value={provider.model}
                   options={(models[provider.id] ?? []).map((one) => ({ value: one, label: one }))}
@@ -492,7 +492,7 @@
             /></span
           ></span
         >
-        <div class="pick">
+        <div class="nib-setting-value">
           <Select
             value={ai.uses[feature.id] ?? ''}
             options={[
@@ -585,22 +585,6 @@
     display: flex;
     align-items: center;
     gap: var(--space-2);
-  }
-
-  /* Wide enough for the longest model name anybody has to read. */
-  .pick {
-    flex: none;
-    width: 14rem;
-  }
-
-  /* A field in a row: the design system's box, sized to the column a control sits
-     in rather than to the row. */
-  .inline {
-    flex: none;
-    width: 14rem;
-    min-height: 30px;
-    padding: 0 var(--space-2);
-    font-size: var(--text-sm);
   }
 
   .hint {

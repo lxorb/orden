@@ -572,7 +572,6 @@ export const ptPT: Dictionary = {
   'Actual size': 'Tamanho real',
   // Appearance
   Accent: 'Destaque',
-  'Swipe in from the edge to see your notes.': 'Deslize a partir da margem para ver as suas notas.',
   'Window corners': 'Cantos da janela',
   Rounded: 'Arredondados',
   Square: 'Quadrados',
@@ -2414,6 +2413,8 @@ export const ptPT: Dictionary = {
   'Take photo': 'Tirar fotografia',
   Pronouns: 'Pronomes',
   Bio: 'Bio',
+  'A few words about you': 'Algumas palavras sobre si',
+  'What’s happening?': 'O que se passa?',
   'Clear after': 'Limpar após',
   '30 minutes': '30 minutos',
   '1 hour': '1 hora',

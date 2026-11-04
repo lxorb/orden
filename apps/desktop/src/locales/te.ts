@@ -558,8 +558,6 @@ export const te: Dictionary = {
   'Actual size': 'నిజ పరిమాణం',
   // Appearance
   Accent: 'యాక్సెంట్ రంగు',
-  'Swipe in from the edge to see your notes.':
-    'మీ నోట్‌లను చూడడానికి అంచు నుండి లోపలికి స్వైప్ చేయండి.',
   'Window corners': 'విండో మూలలు',
   Rounded: 'గుండ్రని',
   Square: 'చతురస్రం',
@@ -2369,6 +2367,8 @@ export const te: Dictionary = {
   'Take photo': 'ఫోటో తీయి',
   Pronouns: 'సర్వనామాలు',
   Bio: 'పరిచయం',
+  'A few words about you': 'మీ గురించి కొన్ని మాటలు',
+  'What’s happening?': 'ఏమి జరుగుతోంది?',
   'Clear after': 'ఇంత తర్వాత తొలగించు',
   '30 minutes': '30 నిమిషాలు',
   '1 hour': '1 గంట',

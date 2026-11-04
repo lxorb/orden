@@ -558,8 +558,6 @@ export const ta: Dictionary = {
   'Actual size': 'உண்மை அளவு',
   // Appearance
   Accent: 'சிறப்பு நிறம்',
-  'Swipe in from the edge to see your notes.':
-    'உங்கள் குறிப்புகளைப் பார்க்க ஓரத்திலிருந்து உள்ளே தேய்க்கவும்.',
   'Window corners': 'சாளர மூலைகள்',
   Rounded: 'வளைந்த',
   Square: 'சதுரம்',
@@ -2391,6 +2389,8 @@ export const ta: Dictionary = {
   'Take photo': 'புகைப்படம் எடு',
   Pronouns: 'பிரதிப்பெயர்கள்',
   Bio: 'அறிமுகம்',
+  'A few words about you': 'உங்களைப் பற்றி சில வார்த்தைகள்',
+  'What’s happening?': 'என்ன நடக்கிறது?',
   'Clear after': 'இதன் பின் அழி',
   '30 minutes': '30 நிமிடங்கள்',
   '1 hour': '1 மணிநேரம்',

@@ -569,7 +569,6 @@ export const fr: Dictionary = {
   'Actual size': 'Taille réelle',
   // Appearance
   Accent: 'Couleur',
-  'Swipe in from the edge to see your notes.': 'Balayez depuis le bord pour voir vos notes.',
   'Window corners': 'Coins de la fenêtre',
   Rounded: 'Arrondis',
   Square: 'Carrés',
@@ -2427,6 +2426,8 @@ export const fr: Dictionary = {
   'Take photo': 'Prendre une photo',
   Pronouns: 'Pronoms',
   Bio: 'Bio',
+  'A few words about you': 'Quelques mots sur vous',
+  'What’s happening?': 'Quoi de neuf ?',
   'Clear after': 'Effacer après',
   '30 minutes': '30 minutes',
   '1 hour': '1 heure',

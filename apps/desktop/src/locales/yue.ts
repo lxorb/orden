@@ -554,7 +554,6 @@ export const yue: Dictionary = {
   'Actual size': '實際大小',
   // Appearance
   Accent: '強調色',
-  'Swipe in from the edge to see your notes.': '由邊緣向內掃就睇到你嘅筆記。',
   'Window corners': '視窗角',
   Rounded: '圓角',
   Square: '方角',
@@ -2294,6 +2293,8 @@ export const yue: Dictionary = {
   'Take photo': '影相',
   Pronouns: '代名詞',
   Bio: '簡介',
+  'A few words about you': '講幾句關於你嘅嘢',
+  'What’s happening?': '而家點呀？',
   'Clear after': '幾耐之後清除',
   '30 minutes': '30 分鐘',
   '1 hour': '1 個鐘',

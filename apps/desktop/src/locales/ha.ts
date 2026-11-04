@@ -562,7 +562,6 @@ export const ha: Dictionary = {
   'Actual size': 'Girman gaske',
   // Appearance
   Accent: 'Launin nuni',
-  'Swipe in from the edge to see your notes.': 'Goge daga gefe zuwa ciki don ganin bayananka.',
   'Window corners': 'Kusurwoyin taga',
   Rounded: 'Mai zagaye',
   Square: 'Mai murabba’i',
@@ -2388,6 +2387,8 @@ export const ha: Dictionary = {
   'Take photo': 'Ɗauki hoto',
   Pronouns: 'Karin suna',
   Bio: 'Bayani',
+  'A few words about you': 'Wasu kalmomi game da kai',
+  'What’s happening?': 'Me ke faruwa?',
   'Clear after': 'Share bayan',
   '30 minutes': 'Minti 30',
   '1 hour': 'Awa 1',

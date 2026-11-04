@@ -173,6 +173,9 @@
   --row-pad: var(--space-2);
   --row-gap: var(--space-2);
   --row-indent: 14px;
+  /* The column every value at the end of a setting's row is drawn in: the
+     dropdowns, the fields, the swatches. See `.nib-field.is-value` in base.css. */
+  --setting-value: 14rem;
   /* The corner a selected block is drawn with. Its own token because it is read
      back as a number and traced into the outline rather than declared on a box;
      see selection/shape.ts in @orden/editor. A plain length, no calc. */

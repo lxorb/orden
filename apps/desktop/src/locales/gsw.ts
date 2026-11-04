@@ -558,7 +558,6 @@ export const gsw: Dictionary = {
   'Actual size': 'Originalgrössi',
   // Appearance
   Accent: 'Akzänt',
-  'Swipe in from the edge to see your notes.': 'Wisch vom Rand ine, zum dini Notize z gseh.',
   'Window corners': 'Fänschterecke',
   Rounded: 'Abgrundet',
   Square: 'Eggig',
@@ -2370,6 +2369,8 @@ export const gsw: Dictionary = {
   'Take photo': 'Foti mache',
   Pronouns: 'Pronome',
   Bio: 'Bio',
+  'A few words about you': 'Es paar Wort über dich',
+  'What’s happening?': 'Was lauft?',
   'Clear after': 'Lösche nach',
   '30 minutes': '30 Minute',
   '1 hour': '1 Stund',

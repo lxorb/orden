@@ -554,7 +554,6 @@ export const ja: Dictionary = {
   'Actual size': '実際のサイズ',
   // Appearance
   Accent: 'アクセント',
-  'Swipe in from the edge to see your notes.': '端から内側へスワイプするとノートが見られます。',
   'Window corners': 'ウィンドウの角',
   Rounded: '丸',
   Square: '四角',
@@ -2340,6 +2339,8 @@ export const ja: Dictionary = {
   'Take photo': '写真を撮る',
   Pronouns: '代名詞',
   Bio: '自己紹介',
+  'A few words about you': 'あなたについてひとこと',
+  'What’s happening?': 'いまどうしてる？',
   'Clear after': 'クリアまでの時間',
   '30 minutes': '30分',
   '1 hour': '1時間',

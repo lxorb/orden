@@ -554,7 +554,6 @@ export const zhHant: Dictionary = {
   'Actual size': '實際大小',
   // Appearance
   Accent: '強調色',
-  'Swipe in from the edge to see your notes.': '從邊緣向內滑動即可查看筆記。',
   'Window corners': '視窗角',
   Rounded: '圓角',
   Square: '直角',
@@ -2297,6 +2296,8 @@ export const zhHant: Dictionary = {
   'Take photo': '拍照',
   Pronouns: '代名詞',
   Bio: '簡介',
+  'A few words about you': '簡單介紹一下自己',
+  'What’s happening?': '在忙什麼？',
   'Clear after': '清除時間',
   '30 minutes': '30 分鐘',
   '1 hour': '1 小時',

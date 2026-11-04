@@ -555,7 +555,6 @@ export const ms: Dictionary = {
   'Actual size': 'Saiz sebenar',
   // Appearance
   Accent: 'Warna aksen',
-  'Swipe in from the edge to see your notes.': 'Leret masuk dari tepi untuk melihat nota anda.',
   'Window corners': 'Sudut tetingkap',
   Rounded: 'Bulat',
   Square: 'Segi empat',
@@ -2346,6 +2345,8 @@ export const ms: Dictionary = {
   'Take photo': 'Ambil foto',
   Pronouns: 'Kata ganti nama',
   Bio: 'Bio',
+  'A few words about you': 'Beberapa patah kata tentang anda',
+  'What’s happening?': 'Apa yang berlaku?',
   'Clear after': 'Kosongkan selepas',
   '30 minutes': '30 minit',
   '1 hour': '1 jam',

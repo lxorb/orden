@@ -558,7 +558,6 @@ export const tr: Dictionary = {
   'Actual size': 'Gerçek boyut',
   // Appearance
   Accent: 'Vurgu rengi',
-  'Swipe in from the edge to see your notes.': 'Notlarını görmek için kenardan içeri kaydır.',
   'Window corners': 'Pencere köşeleri',
   Rounded: 'Yuvarlak',
   Square: 'Köşeli',
@@ -2368,6 +2367,8 @@ export const tr: Dictionary = {
   'Take photo': 'Fotoğraf çek',
   Pronouns: 'Zamirler',
   Bio: 'Biyografi',
+  'A few words about you': 'Kendinden birkaç söz',
+  'What’s happening?': 'Neler oluyor?',
   'Clear after': 'Şu süre sonra temizle',
   '30 minutes': '30 dakika',
   '1 hour': '1 saat',

@@ -557,7 +557,6 @@ export const mr: Dictionary = {
   'Actual size': 'खरा आकार',
   // Appearance
   Accent: 'ॲक्सेंट',
-  'Swipe in from the edge to see your notes.': 'तुमच्या नोंदी पाहण्यासाठी कडेपासून आत स्वाइप करा.',
   'Window corners': 'विंडोचे कोपरे',
   Rounded: 'गोलाकार',
   Square: 'चौकोनी',
@@ -2360,6 +2359,8 @@ export const mr: Dictionary = {
   'Take photo': 'फोटो काढा',
   Pronouns: 'सर्वनामे',
   Bio: 'परिचय',
+  'A few words about you': 'तुमच्याबद्दल काही शब्द',
+  'What’s happening?': 'काय चालू आहे?',
   'Clear after': 'यानंतर साफ करा',
   '30 minutes': '30 मिनिटे',
   '1 hour': '1 तास',

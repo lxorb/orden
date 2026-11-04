@@ -24,7 +24,7 @@ const RULE = /\.setting \.nib-segmented \{([^}]*)\}/.exec(SOURCE)?.[1]
 
 describe('a segmented setting', () => {
   test('is never narrower than the column its short choices line up in', () => {
-    expect(RULE).toMatch(/min-width:\s*14rem/)
+    expect(RULE).toMatch(/min-width:\s*var\(--setting-value\)/)
   })
 
   test('and grows to its words rather than holding them to one width', () => {

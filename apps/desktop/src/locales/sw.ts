@@ -562,7 +562,6 @@ export const sw: Dictionary = {
   'Actual size': 'Ukubwa halisi',
   // Appearance
   Accent: 'Rangi ya msisitizo',
-  'Swipe in from the edge to see your notes.': 'Telezesha kutoka ukingoni kuona madokezo yako.',
   'Window corners': 'Pembe za dirisha',
   Rounded: 'Mviringo',
   Square: 'Mraba',
@@ -2388,6 +2387,8 @@ export const sw: Dictionary = {
   'Take photo': 'Piga picha',
   Pronouns: 'Viwakilishi',
   Bio: 'Maelezo',
+  'A few words about you': 'Maneno machache kukuhusu',
+  'What’s happening?': 'Kuna nini?',
   'Clear after': 'Futa baada ya',
   '30 minutes': 'Dakika 30',
   '1 hour': 'Saa 1',

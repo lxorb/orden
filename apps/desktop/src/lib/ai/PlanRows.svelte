@@ -154,7 +154,7 @@
   <label class="nib-setting setting">
     <span class="name">{t('Model')}</span>
     <input
-      class="nib-field inline"
+      class="nib-field is-value"
       value={provider.model}
       placeholder={t('Default')}
       spellcheck="false"
@@ -226,14 +226,6 @@
     display: flex;
     align-items: center;
     gap: var(--space-2);
-  }
-
-  .inline {
-    flex: none;
-    width: 14rem;
-    min-height: 30px;
-    padding: 0 var(--space-2);
-    font-size: var(--text-sm);
   }
 
   /* The ChatGPT mark beside its words, as OpenAI's own button has it. */

@@ -580,7 +580,6 @@ export const uk: Dictionary = {
   'Actual size': 'Справжній розмір',
   // Appearance
   Accent: 'Акцент',
-  'Swipe in from the edge to see your notes.': 'Проведіть від краю, щоб побачити нотатки.',
   'Window corners': 'Кути вікна',
   Rounded: 'Заокруглені',
   Square: 'Прямі',
@@ -2440,6 +2439,8 @@ export const uk: Dictionary = {
   'Take photo': 'Зробити фото',
   Pronouns: 'Займенники',
   Bio: 'Про себе',
+  'A few words about you': 'Кілька слів про себе',
+  'What’s happening?': 'Що відбувається?',
   'Clear after': 'Очистити через',
   '30 minutes': '30 хвилин',
   '1 hour': '1 годину',

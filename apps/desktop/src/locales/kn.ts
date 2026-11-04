@@ -561,8 +561,6 @@ export const kn: Dictionary = {
   'Actual size': 'ನಿಜ ಗಾತ್ರ',
   // Appearance
   Accent: 'ಆಕ್ಸೆಂಟ್ ಬಣ್ಣ',
-  'Swipe in from the edge to see your notes.':
-    'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ನೋಡಲು ಅಂಚಿನಿಂದ ಒಳಗೆ ಸ್ವೈಪ್ ಮಾಡಿ.',
   'Window corners': 'ವಿಂಡೋ ಮೂಲೆಗಳು',
   Rounded: 'ದುಂಡಾದ',
   Square: 'ಚೌಕ',
@@ -2380,6 +2378,8 @@ export const kn: Dictionary = {
   'Take photo': 'ಫೋಟೋ ತೆಗೆಯಿರಿ',
   Pronouns: 'ಸರ್ವನಾಮಗಳು',
   Bio: 'ಪರಿಚಯ',
+  'A few words about you': 'ನಿಮ್ಮ ಬಗ್ಗೆ ಕೆಲವು ಮಾತುಗಳು',
+  'What’s happening?': 'ಏನು ನಡೆಯುತ್ತಿದೆ?',
   'Clear after': 'ಇದರ ನಂತರ ಅಳಿಸಿ',
   '30 minutes': '30 ನಿಮಿಷ',
   '1 hour': '1 ಗಂಟೆ',

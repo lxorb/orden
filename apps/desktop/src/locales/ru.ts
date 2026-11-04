@@ -580,7 +580,6 @@ export const ru: Dictionary = {
   'Actual size': 'Реальный размер',
   // Appearance
   Accent: 'Акцент',
-  'Swipe in from the edge to see your notes.': 'Проведите от края, чтобы увидеть заметки.',
   'Window corners': 'Углы окна',
   Rounded: 'Скруглённые',
   Square: 'Прямые',
@@ -2447,6 +2446,8 @@ export const ru: Dictionary = {
   'Take photo': 'Сделать фото',
   Pronouns: 'Местоимения',
   Bio: 'О себе',
+  'A few words about you': 'Пара слов о себе',
+  'What’s happening?': 'Что происходит?',
   'Clear after': 'Очистить через',
   '30 minutes': '30 минут',
   '1 hour': '1 час',

@@ -696,15 +696,17 @@
     <!-- The one control whose options are colours rather than words: nine names
          would say what nine dots already say. The same row of dots the theme
          picker has at its foot; see Swatches.svelte. -->
-    <div class="nib-setting setting swatched" class:declared={!!field.declared}>
+    <div class="nib-setting setting" class:declared={!!field.declared}>
       {@render named(field, where)}
-      <Swatches
-        options={field.options}
-        label={field.label}
-        chosen={field.get()}
-        onchoose={(value: string) => field.set(value)}
-        pair={field.pair}
-      />
+      <div class="nib-setting-value is-wrapping">
+        <Swatches
+          options={field.options}
+          label={field.label}
+          chosen={field.get()}
+          onchoose={(value: string) => field.set(value)}
+          pair={field.pair}
+        />
+      </div>
     </div>
   {:else if field.kind === 'picture'}
     <!-- A picture per side, shown as itself: pressing one chooses another, the way a
@@ -797,7 +799,7 @@
            kind waits for the field to be left, because half a word is a phrase
            that matches nothing. -->
         <input
-          class="inline"
+          class="nib-field is-value"
           type="text"
           value={field.get()}
           placeholder={field.placeholder}
@@ -812,7 +814,7 @@
   {:else if field.kind === 'select'}
     <div class="nib-setting setting" class:declared={!!field.declared}>
       {@render named(field, where)}
-      <div class="pick">
+      <div class="nib-setting-value">
         <Select
           value={field.get()}
           options={field.options}
@@ -852,7 +854,7 @@
           /></span
         >{#if declared.holds('general.searchEngine')}{@render fileNote()}{/if}</span
       >
-      <div class="pick">
+      <div class="nib-setting-value">
         <Select
           value={customising ? CUSTOM : searchEngine.id}
           options={[
@@ -882,7 +884,7 @@
           >{#if declared.holds('general.searchEngineAddress')}{@render fileNote()}{/if}</span
         >
         <input
-          class="inline"
+          class="nib-field is-value"
           type="url"
           value={searchEngine.custom}
           placeholder="https://example.com/search?q=%s"
@@ -936,7 +938,7 @@
         </div>
       {/if}
       <input
-        class="inline"
+        class="nib-field is-value add"
         type="text"
         placeholder={t('Add a word')}
         spellcheck="false"
@@ -1025,7 +1027,7 @@
             ></span
           >
           <input
-            class="inline"
+            class="nib-field is-value"
             value={account.user.name ?? ''}
             placeholder={t('Your name')}
             spellcheck="false"
@@ -1034,7 +1036,7 @@
         </label>
         <div class="nib-setting setting">
           <span class="name">{t('Email')}</span>
-          <span class="text">{account.user.email}</span>
+          <span class="nib-field is-value is-read">{account.user.email}</span>
         </div>
       </div>
 
@@ -1117,7 +1119,7 @@
         <label class="nib-setting setting">
           <span class="name">{t('Your name')}</span>
           <input
-            class="inline"
+            class="nib-field is-value"
             value={account.guest.name}
             placeholder={t('Your name')}
             spellcheck="false"
@@ -1224,7 +1226,7 @@
           /></span
         ></span
       >
-      <div class="pick">
+      <div class="nib-setting-value">
         <Select
           value={shortcuts.preset}
           options={presetChoices}
@@ -1429,7 +1431,7 @@
           /></span
         ></span
       >
-      <div class="pick">
+      <div class="nib-setting-value">
         <Select
           value={pull.id}
           options={pullChoices}
@@ -1517,7 +1519,7 @@
           ></span
         >
         <input
-          class="inline"
+          class="nib-field is-value"
           type="password"
           value=""
           placeholder="sk-"
@@ -1541,7 +1543,7 @@
             /></span
           ></span
         >
-        <div class="pick">
+        <div class="nib-setting-value">
           <Select
             value={modes.glassesModel}
             options={offered.models.map((one) => ({ value: one, label: one }))}
@@ -1559,7 +1561,7 @@
             /></span
           ></span
         >
-        <div class="pick">
+        <div class="nib-setting-value">
           <Select
             value={modes.glassesEffort}
             options={EFFORT_WORDS.map((one) => ({ value: one.value, label: t(one.label) }))}
@@ -1806,14 +1808,7 @@
      width let the chosen half stand out past its end. */
   .setting .nib-segmented {
     flex: none;
-    min-width: 14rem;
-  }
-
-  .setting .text {
-    color: var(--muted-strong);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    min-width: var(--setting-value);
   }
 
   .setting .value {
@@ -1847,15 +1842,6 @@
     stroke-width: 1.5;
     stroke-linecap: round;
     stroke-linejoin: round;
-  }
-
-  /* Never narrower than the column the choices line up in, and as wide as the
-     chosen one's words where they need more, so a value is read rather than
-     guessed from its first half: at one width for every language, German read
-     `Ansicht: In diesem Bere…`. */
-  .pick {
-    flex: none;
-    min-width: 14rem;
   }
 
   /* A row that is itself a control: it shows what it does when pointed at. */
@@ -2190,10 +2176,8 @@
     gap: var(--space-2);
   }
 
-  .words .inline {
-    width: 100%;
-    text-align: start;
-    border-color: var(--line);
+  .words > .add {
+    inline-size: auto;
   }
 
   .chips {
@@ -2237,66 +2221,6 @@
     .chip:hover :global(svg) {
       color: inherit;
     }
-  }
-
-  /* An input in a row: the value at the right, no box until it is typed in. */
-  .inline {
-    flex: none;
-    width: 12rem;
-    padding: 6px 9px;
-    border: 1px solid transparent;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    text-align: end;
-    outline: none;
-    transition:
-      border-color var(--dur-fast) var(--ease-out),
-      background var(--dur-fast) var(--ease-out);
-  }
-
-  .inline::placeholder {
-    color: var(--muted);
-  }
-
-  /* An address no search can go to: said in the one colour the app says no in. */
-  .inline[aria-invalid='true'] {
-    border-color: var(--danger);
-  }
-
-  @media (hover: hover) {
-    .inline:hover {
-      border-color: var(--line);
-    }
-  }
-
-  /* The ground the box appears on, and only that: the turn is the themes
-     package's answer for a box with a caret in it, which outweighs both the
-     hairline above and the hover above that. */
-  .inline:focus {
-    background: var(--bg);
-  }
-
-  /* A row whose control is a row of dots rather than one word. It wraps, unlike
-     every other setting row: the control is as wide as the theme's list is long,
-     and a list that does not fit belongs under the name rather than squeezed
-     beside it. */
-  .swatched {
-    flex-wrap: wrap;
-  }
-
-  .swatched > :global(.swatches) {
-    flex: 1;
-    justify-content: flex-end;
-  }
-
-  /* Under a thumb the dots are what a thumb needs, which is wider than the row has
-     beside a name, so the name takes the first line and they take the rest. */
-  .sheet.phone .swatched > :global(.swatches) {
-    flex-basis: 100%;
-    justify-content: flex-start;
   }
 
   /* The part of a dial's track its floor keeps it off: grey rather than the accent, so
@@ -2655,11 +2579,6 @@
     width: 100%;
   }
 
-  .sheet.phone .pick {
-    min-width: 0;
-    max-width: 60%;
-  }
-
   /* An action in a card is a row of the grouped list on a phone: the card's own
      side padding, the accent, and the hairline above it. The panes drawn inside
      this sheet - security, sync, the AI providers - hold actions too, so it is
@@ -2703,18 +2622,6 @@
 
   .sheet.phone .clash {
     padding: 10px var(--touch-pad);
-  }
-
-  .sheet.phone .inline {
-    width: 55%;
-    min-height: var(--touch-target);
-    padding: 8px 10px;
-    font-size: var(--touch-text);
-  }
-
-  .sheet.phone .setting .text {
-    max-width: 60%;
-    font-size: var(--touch-text);
   }
 
   .sheet.phone .hint,

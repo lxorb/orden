@@ -51,7 +51,7 @@ describe('the button that opens the file list', () => {
       ['lib/Sidebar.svelte', sidebar],
     ] as const) {
       expect(text, `${name} draws the glyph again`).not.toContain(PANEL)
-      expect(text, `${name} uses the component`).toMatch(/<SidebarToggle( unseen=\{swiped\})? \/>/)
+      expect(text, `${name} uses the component`).toContain('<SidebarToggle />')
     }
   })
 
@@ -60,21 +60,8 @@ describe('the button that opens the file list', () => {
    *  opened a list of a space that did not exist yet. So the bar does not offer it.
    *  The plus stays: a tab is how a note is written with no space yet. */
   test('is not in the bar while there is nothing to list', () => {
-    expect(titlebar).toMatch(/\{#if !listless\}\s*<SidebarToggle unseen=\{swiped\} \/>/)
+    expect(titlebar).toMatch(/\{#if !listless\}\s*<SidebarToggle \/>\s*\{\/if\}/)
     expect(titlebar).toContain('!workspace.spaces.length && !workspace.tabs.length')
-  })
-
-  /** On a phone, and a tablet held upright, a swipe from the edge pulls the list out, so
-   *  the button is redundant to an eye and the bar is shown without it (#1066). Said, not
-   *  shown: a screen reader and a keyboard still have it, and somebody new is told about
-   *  the swipe once. The condition is the swipe's own, so the button never goes where the
-   *  swipe does not open the list. */
-  test('is said and not shown where a swipe from the edge pulls the list out', () => {
-    expect(titlebar).toContain('const swiped = $derived(swipeOpens())')
-    expect(read('App.svelte')).toContain('if (!host || !swipeOpens()) return')
-    expect(toggle).toContain('class:nib-said={unseen && !keyed}')
-    expect(titlebar).toMatch(/hint="drawer"/)
-    expect(read('lib/hints.svelte.ts')).toMatch(/HINTS = \['drawer'/)
   })
 
   /** One glyph and one movement, wherever it is drawn: the bar over the note and

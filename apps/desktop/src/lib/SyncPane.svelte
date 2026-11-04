@@ -251,7 +251,7 @@
           /></span
         ></span
       >
-      <div class="pick">
+      <div class="nib-setting-value">
         <Select
           value={modes.conflicts}
           options={rules}
@@ -281,7 +281,7 @@
         /></span
       ></span
     >
-    <div class="pick">
+    <div class="nib-setting-value">
       <Select
         value={String(modes.keepVersions)}
         options={horizons}
@@ -395,7 +395,7 @@
         /></span
       ></span
     >
-    <div class="pick">
+    <div class="nib-setting-value">
       <Select
         value={String(chosen)}
         options={back.map((one) => ({
@@ -477,12 +477,6 @@
 
   .setting .name {
     flex: 1;
-  }
-
-  /* Wide enough for the longest choice the pane offers. */
-  .pick {
-    flex: none;
-    width: 14rem;
   }
 
   .note {

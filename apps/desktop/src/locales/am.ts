@@ -555,7 +555,6 @@ export const am: Dictionary = {
   'Actual size': 'እውነተኛ መጠን',
   // Appearance
   Accent: 'የማጉላት ቀለም',
-  'Swipe in from the edge to see your notes.': 'ማስታወሻዎችዎን ለማየት ከጠርዙ ወደ ውስጥ ያንሸራትቱ።',
   'Window corners': 'የመስኮት ማዕዘኖች',
   Rounded: 'የተጠጋጋ',
   Square: 'ካሬ',
@@ -2331,6 +2330,8 @@ export const am: Dictionary = {
   'Take photo': 'ፎቶ አንሳ',
   Pronouns: 'ተውላጠ ስሞች',
   Bio: 'ስለ እኔ',
+  'A few words about you': 'ስለ እርስዎ ጥቂት ቃላት',
+  'What’s happening?': 'ምን እየሆነ ነው?',
   'Clear after': 'ከዚህ በኋላ አጽዳ',
   '30 minutes': '30 ደቂቃ',
   '1 hour': '1 ሰዓት',

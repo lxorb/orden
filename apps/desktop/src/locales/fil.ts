@@ -562,8 +562,6 @@ export const fil: Dictionary = {
   'Actual size': 'Tunay na laki',
   // Appearance
   Accent: 'Kulay tampok',
-  'Swipe in from the edge to see your notes.':
-    'Mag-swipe papasok mula sa gilid para makita ang iyong mga tala.',
   'Window corners': 'Mga sulok ng window',
   Rounded: 'Bilugan',
   Square: 'Parisukat',
@@ -2401,6 +2399,8 @@ export const fil: Dictionary = {
   'Take photo': 'Kumuha ng litrato',
   Pronouns: 'Mga panghalip',
   Bio: 'Bio',
+  'A few words about you': 'Ilang salita tungkol sa iyo',
+  'What’s happening?': 'Ano ang nangyayari?',
   'Clear after': 'I-clear pagkatapos ng',
   '30 minutes': '30 minuto',
   '1 hour': '1 oras',

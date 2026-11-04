@@ -204,7 +204,7 @@
       <div class="nib-setting setting">
         <span class="name">{t('Code from the app')}</span>
         <input
-          class="inline narrow"
+          class="nib-field is-value narrow"
           bind:value={code}
           placeholder="000000"
           aria-label={t('Code from the app')}
@@ -247,7 +247,7 @@
       <div class="nib-setting setting">
         <span class="name">{t('Code to change sign-in')}</span>
         <input
-          class="inline"
+          class="nib-field is-value"
           bind:value={code}
           placeholder="000000"
           aria-label={t('Code to change sign-in')}
@@ -325,35 +325,6 @@
     white-space: nowrap;
   }
 
-  /* An input in a row: the value at the right, no box until it is typed in. */
-  .inline {
-    flex: none;
-    width: 12rem;
-    padding: 6px 9px;
-    border: 1px solid transparent;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    text-align: end;
-    outline: none;
-    transition:
-      border-color var(--dur-fast) var(--ease-out),
-      background var(--dur-fast) var(--ease-out);
-  }
-
-  .inline::placeholder {
-    color: var(--muted);
-  }
-
-  /* The ground the box appears on, and only that: the turn is the themes
-     package's answer for a box with a caret in it, which outweighs both the
-     hairline above and the hover above that. */
-  .inline:focus {
-    background: var(--bg);
-  }
-
   /* The square, on a plate of its own: a code has to be dark on light to be
      read by a camera, whichever theme the app is in, and the plate is what makes
      that a decision rather than an accident. */
@@ -385,15 +356,12 @@
     color: var(--text-strong);
   }
 
-  /* Beside a button, so the field takes what the digits need and no more. */
-  .inline.narrow {
-    width: 8rem;
-  }
-
-  @media (hover: hover) {
-    .inline:hover {
-      border-color: var(--line);
-    }
+  /* Beside a button, so the field takes what the digits need and no more. The
+     box and the column it would otherwise take are `.nib-field.is-value` in the
+     themes package. */
+  .setting > .narrow {
+    flex: none;
+    inline-size: 8rem;
   }
 
   .note {
@@ -430,17 +398,6 @@
     border-radius: var(--radius-lg);
     background: var(--surface);
     overflow: hidden;
-  }
-
-  :global(.sheet.phone) .inline {
-    width: 55%;
-    min-height: var(--touch-target);
-    padding: 8px 10px;
-    font-size: var(--touch-text);
-  }
-
-  :global(.sheet.phone) .inline.narrow {
-    width: 8rem;
   }
 
   :global(.sheet.phone) .setting {

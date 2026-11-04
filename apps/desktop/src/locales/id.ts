@@ -554,7 +554,6 @@ export const id: Dictionary = {
   'Actual size': 'Ukuran asli',
   // Appearance
   Accent: 'Warna aksen',
-  'Swipe in from the edge to see your notes.': 'Geser masuk dari tepi untuk melihat catatanmu.',
   'Window corners': 'Sudut jendela',
   Rounded: 'Membulat',
   Square: 'Persegi',
@@ -2344,6 +2343,8 @@ export const id: Dictionary = {
   'Take photo': 'Ambil foto',
   Pronouns: 'Kata ganti',
   Bio: 'Bio',
+  'A few words about you': 'Beberapa kata tentang Anda',
+  'What’s happening?': 'Apa yang sedang terjadi?',
   'Clear after': 'Hapus setelah',
   '30 minutes': '30 menit',
   '1 hour': '1 jam',

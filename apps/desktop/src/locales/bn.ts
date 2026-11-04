@@ -557,7 +557,6 @@ export const bn: Dictionary = {
   'Actual size': 'আসল আকার',
   // Appearance
   Accent: 'অ্যাকসেন্ট',
-  'Swipe in from the edge to see your notes.': 'আপনার নোট দেখতে কিনারা থেকে ভেতরে সোয়াইপ করুন।',
   'Window corners': 'উইন্ডোর কোণ',
   Rounded: 'গোলাকার',
   Square: 'বর্গাকার',
@@ -2357,6 +2356,8 @@ export const bn: Dictionary = {
   'Take photo': 'ছবি তুলুন',
   Pronouns: 'সর্বনাম',
   Bio: 'পরিচিতি',
+  'A few words about you': 'আপনার সম্পর্কে কয়েকটি কথা',
+  'What’s happening?': 'কী চলছে?',
   'Clear after': 'এর পরে মুছুন',
   '30 minutes': '৩০ মিনিট',
   '1 hour': '১ ঘণ্টা',

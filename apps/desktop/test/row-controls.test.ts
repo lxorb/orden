@@ -117,7 +117,7 @@ function says(node: Node): boolean {
 test('the words a row of settings is named by are its .name', () => {
   const WORDS = new Set(['span', 'div', 'p', 'strong', 'small'])
   // What a row says that is not its name: a value, a key, a hint, a mark.
-  const VALUES = new Set(['name', 'text', 'hint', 'value', 'key', 'mark'])
+  const VALUES = new Set(['name', 'text', 'hint', 'value', 'is-value', 'key', 'mark'])
   const bare = components(SRC).flatMap((file) => {
     const tree = parse(readFileSync(file, 'utf8'), { modern: true })
     return [...elements(tree.fragment)]
@@ -163,9 +163,16 @@ test("a row's name keeps a readable width and what does not fit beside it wraps 
  *  the list of panes cut a name its column could not hold (issue 516). */
 test('a dropdown in a row and a pane in the list are as long as their words', () => {
   const panel = readFileSync(join(SRC, 'lib/SettingsPanel.svelte'), 'utf8')
+  const sheet = readFileSync(
+    fileURLToPath(new URL('../../../packages/themes/src/base.css', import.meta.url)),
+    'utf8',
+  )
 
-  // A floor for the column the choices line up in, not a width.
-  expect(ruleOf(panel, '  .pick')).toMatch(/min-width:\s*14rem/)
-  expect(ruleOf(panel, '  .pick')).not.toMatch(/\swidth:/)
+  // A floor for the column the choices line up in, not a width: the column every
+  // pane's values share (#1056).
+  expect(ruleOf(sheet, '.nib-setting-value')).toMatch(
+    /min-inline-size:\s*min\(var\(--setting-value\),\s*100%\)/,
+  )
+  expect(ruleOf(sheet, '.nib-setting-value')).not.toMatch(/[\s;](inline-size|width):/)
   expect(ruleOf(panel, '  .item .nib-row-label')).toMatch(/white-space:\s*normal/)
 })

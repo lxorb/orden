@@ -557,7 +557,6 @@ export const gu: Dictionary = {
   'Actual size': 'ખરું માપ',
   // Appearance
   Accent: 'ઉપસાવ રંગ',
-  'Swipe in from the edge to see your notes.': 'તમારી નોંધો જોવા માટે કિનારેથી અંદર સ્વાઇપ કરો.',
   'Window corners': 'વિન્ડોના ખૂણા',
   Rounded: 'ગોળ',
   Square: 'ચોરસ',
@@ -2349,6 +2348,8 @@ export const gu: Dictionary = {
   'Take photo': 'ફોટો લો',
   Pronouns: 'સર્વનામ',
   Bio: 'પરિચય',
+  'A few words about you': 'તમારા વિશે થોડા શબ્દો',
+  'What’s happening?': 'શું ચાલી રહ્યું છે?',
   'Clear after': 'આટલા પછી સાફ કરો',
   '30 minutes': '30 મિનિટ',
   '1 hour': '1 કલાક',

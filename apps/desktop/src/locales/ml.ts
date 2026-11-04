@@ -563,8 +563,6 @@ export const ml: Dictionary = {
   'Actual size': 'യഥാർത്ഥ വലുപ്പം',
   // Appearance
   Accent: 'ആക്‌സന്റ് നിറം',
-  'Swipe in from the edge to see your notes.':
-    'നിങ്ങളുടെ കുറിപ്പുകൾ കാണാൻ അരികിൽ നിന്ന് അകത്തേക്ക് സ്വൈപ്പ് ചെയ്യുക.',
   'Window corners': 'ജാലകത്തിന്റെ മൂലകൾ',
   Rounded: 'വളഞ്ഞത്',
   Square: 'ചതുരം',
@@ -2385,6 +2383,8 @@ export const ml: Dictionary = {
   'Take photo': 'ഫോട്ടോ എടുക്കുക',
   Pronouns: 'സർവ്വനാമങ്ങൾ',
   Bio: 'ആമുഖം',
+  'A few words about you': 'നിങ്ങളെക്കുറിച്ച് ചില വാക്കുകൾ',
+  'What’s happening?': 'എന്താണ് വിശേഷം?',
   'Clear after': 'ഇതിനു ശേഷം മായ്ക്കുക',
   '30 minutes': '30 മിനിറ്റ്',
   '1 hour': '1 മണിക്കൂർ',

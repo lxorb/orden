@@ -269,7 +269,7 @@
         {/if}
       </span>
       {#if rule}
-        <div class="pick">
+        <div class="nib-setting-value">
           <Select
             value={rule}
             options={ruleChoices}
@@ -485,11 +485,6 @@
       background: var(--danger-soft);
       color: var(--danger);
     }
-  }
-
-  .pick {
-    flex: none;
-    width: 12rem;
   }
 
   .drop {

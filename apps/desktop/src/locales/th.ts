@@ -554,7 +554,6 @@ export const th: Dictionary = {
   'Actual size': 'ขนาดจริง',
   // Appearance
   Accent: 'สีเน้น',
-  'Swipe in from the edge to see your notes.': 'ปัดเข้ามาจากขอบเพื่อดูโน้ตของคุณ',
   'Window corners': 'มุมหน้าต่าง',
   Rounded: 'มน',
   Square: 'เหลี่ยม',
@@ -2312,6 +2311,8 @@ export const th: Dictionary = {
   'Take photo': 'ถ่ายรูป',
   Pronouns: 'สรรพนาม',
   Bio: 'ประวัติย่อ',
+  'A few words about you': 'เล่าเกี่ยวกับตัวคุณสักหน่อย',
+  'What’s happening?': 'กำลังทำอะไรอยู่',
   'Clear after': 'ล้างหลังจาก',
   '30 minutes': '30 นาที',
   '1 hour': '1 ชั่วโมง',
