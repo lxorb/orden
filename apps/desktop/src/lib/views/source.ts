@@ -55,7 +55,10 @@ export function builtinBase(spec: ViewSpec): Base {
         note: { space: spec.space ?? '', path: spec.path ?? '' },
       })
     case 'label':
-      return builtinView('label', { tag: spec.tag ?? '' })
+      return builtinView('label', {
+        tag: spec.tag ?? '',
+        ...(spec.space === undefined ? {} : { space: spec.space }),
+      })
     case 'inbox':
       return builtinView('inbox', { inboxes: rows.inboxes() })
     case 'upcoming':

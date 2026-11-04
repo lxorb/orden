@@ -26,7 +26,7 @@
   import { LiveView } from './live.svelte'
   import { ADD_MARK, LABEL_MARK, PROJECT_MARK, TODAY_MARK, VIEW_MARK } from './marks'
   import { openByPath, panelCounts } from './panel'
-  import { choose, openInTab, type PanelRow, sameRow, specOf } from './panel-press'
+  import { choose, chosenIn, openInTab, type PanelRow, sameRow, specOf } from './panel-press'
   import { fileSource, panelSource } from './source'
   import { refusedAsTag } from '../tag-actions'
   import { guardedAt } from './guard'
@@ -128,14 +128,22 @@
   }
 
   /** The row chosen, whose list is drawn under the rows: Todos until another is. */
-  let chosen = $state<PanelRow>({ kind: 'todos' })
+  let pressed = $state<{ row: PanelRow; root: string | null }>({
+    row: { kind: 'todos' },
+    root: null,
+  })
+  const chosen = $derived(chosenIn(pressed, root))
+
+  /** A label's row: the open space's, as the panel lists its labels. */
+  const labelRow = (tag: string): PanelRow =>
+    space ? { kind: 'label', tag, space: space.name } : { kind: 'label', tag }
 
   /** A row pressed: chosen here, or opened in a tab where that was asked for. */
   function press(event: MouseEvent, row: PanelRow) {
     if (choose(event) === 'tab') {
       event.preventDefault()
       openInTab(row)
-    } else chosen = row
+    } else pressed = { row, root }
   }
 
   /** The middle button, which a browser gives no click for. */
@@ -173,7 +181,7 @@
   function labelMenu(event: MouseEvent, tag: string) {
     // Opened only, in a space shared to be read: renaming or taking a label away writes
     // its notes, which that space refuses (`replaceInNotes` in workspace/note-text.ts).
-    const open = { label: t('Open in new tab'), run: () => openInTab({ kind: 'label', tag }) }
+    const open = { label: t('Open in new tab'), run: () => openInTab(labelRow(tag)) }
     if (root !== null && !canWriteAt(root)) {
       menu.show(event, [open])
       return
@@ -307,7 +315,7 @@
   {#if counts.labels.length}
     <p class="nib-section">{t('Labels')}</p>
     {#each counts.labels as one (one.tag)}
-      {@render row(LABEL_MARK, one.tag, one.count, { kind: 'label', tag: one.tag })}
+      {@render row(LABEL_MARK, one.tag, one.count, labelRow(one.tag))}
     {/each}
   {/if}
 

@@ -867,6 +867,29 @@ describe('the panel', () => {
     ])
     expect(counts.labels).toEqual([{ tag: 'admin', count: 2 }])
   })
+
+  test('lists the labels of the open space alone, with its count', () => {
+    const rows = [
+      taskRow('Mine.md', '- [ ] Here #both #mine', 1, { space: 'Mine' }),
+      taskRow('Theirs.md', '- [ ] There #both #theirs', 1, { space: 'Other' }),
+    ]
+    expect(panelCounts(rows, TODAY, 'Mine').labels.map((one) => one.tag)).toEqual(['both', 'mine'])
+    expect(panelCounts(rows, TODAY, 'Mine').labels[0]?.count).toBe(1)
+    // The list of notes still knows every space: a favourite asks for its own.
+    expect(panelCounts(rows, TODAY, 'Mine').notes).toHaveLength(2)
+  })
+
+  test('a label of one space shows that space’s rows', () => {
+    const rows = [
+      taskRow('Mine.md', '- [ ] Here #both', 1, { space: 'Mine' }),
+      taskRow('Theirs.md', '- [ ] There #both', 1, { space: 'Other' }),
+    ]
+    const context = contextFor({ rows, today: TODAY, now: `${TODAY}T00:00:00` })
+    const said = answer(builtinView('label', { tag: 'both', space: 'Mine' }), 0, rows, context)
+    expect(said.groups.flatMap((one) => one.rows).map((one) => one.task?.text)).toEqual(['Here'])
+    const every = answer(builtinView('label', { tag: 'both' }), 0, rows, context)
+    expect(every.total).toBe(2)
+  })
 })
 
 describe('the context', () => {

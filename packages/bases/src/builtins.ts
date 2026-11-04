@@ -22,7 +22,7 @@ export interface BuiltinParams {
   note?: { space: string; path: string }
   /** The tag, without `#`: a label. */
   tag?: string
-  /** The space, by its name: Todos. */
+  /** The space, by its name: Todos, and a label of the open space alone. */
   space?: string
   /** Today: a task with no day of its own, neither a start date nor a scheduled one, is
    *  in it, as one whose start date has come. The reader's setting; off, as Todoist's
@@ -172,10 +172,14 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
     }
     case 'label': {
       const tag = quote(params.tag ?? '')
+      const tagged = `if(task, task.started && task.hasTag(${tag}), file.hasTag(${tag}))`
       return base({
         type: 'list',
         name: `#${params.tag ?? ''}`,
-        filters: `if(task, task.started && task.hasTag(${tag}), file.hasTag(${tag}))`,
+        filters:
+          params.space === undefined
+            ? tagged
+            : { and: [`file.space == ${quote(params.space)}`, tagged] },
         sort: [],
         groupBy: { property: 'file.path', direction: 'ASC' },
         nib: { rows: 'both', kept: {} },

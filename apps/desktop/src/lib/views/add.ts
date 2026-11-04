@@ -31,6 +31,9 @@ import { dayIn } from './values'
 export interface Prefill {
   /** The note it is written in, on this disk; the open space's inbox where absent. */
   path?: string
+  /** The space whose inbox it goes to where that is not the open one, by its root: a
+   *  tab of another's Todos, still showing after a switch. */
+  root?: string
   heading?: string
   due?: string
   deadline?: string
@@ -43,6 +46,7 @@ export interface Prefill {
  *  carry: its note in the open space, its tags, its day. Answers whether it opened. */
 export function openQuickAdd(prefill: Prefill = {}): boolean {
   if (
+    prefill.root !== undefined ||
     prefill.heading !== undefined ||
     prefill.priority !== undefined ||
     prefill.status !== undefined ||
@@ -72,6 +76,10 @@ export function prefillOf(
   const out: Prefill = {}
   if (spec.builtin === 'today') out.due = today
   if (spec.builtin === 'label' && spec.tag) out.tags = [spec.tag]
+  if (spec.builtin === 'todos' && spec.space !== workspace.activeSpace?.name) {
+    const space = workspace.spaces.find((one) => one.name === spec.space)
+    if (space) out.root = space.root
+  }
   if (spec.builtin === 'project' && spec.space !== undefined && spec.path !== undefined) {
     const space = workspace.spaces.find((one) => one.name === spec.space)
     if (space) out.path = insideSpace(space.root, spec.path)
@@ -102,7 +110,7 @@ export function prefillOf(
 export async function addTyped(words: string, prefill: Prefill): Promise<boolean> {
   const text = words.trim()
   if (!text) return false
-  const path = prefill.path ?? (await rows.inbox())
+  const path = prefill.path ?? (await rows.inbox(prefill.root))
   if (path === null || !canWriteAt(path)) return false
   return addTask(
     path,

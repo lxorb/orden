@@ -10,7 +10,9 @@ import { freePath } from '@orden/markdown/paths'
  *  out of the space, and a `.` step made the name look free while the disk wrote
  *  over the note it named. */
 
-const { written, taken, on, held } = vi.hoisted(() => ({
+const { added, written, taken, on, held } = vi.hoisted(() => ({
+  /** The notes tasks were added to. */
+  added: [] as string[],
   written: new Map<string, string>(),
   taken: new Set<string>(),
   /** The space on screen. */
@@ -69,6 +71,7 @@ vi.mock('../surfaces.svelte', () => ({ showQuickAdd: () => undefined }))
 vi.mock('../rows/rows.svelte', () => ({
   rows: {
     ready: true,
+    inbox: async (root = on.root) => `${root}/Inbox.md`,
     of: (space: string) =>
       (held.get(space) ?? []).map((path) => ({
         kind: 'note',
@@ -79,9 +82,11 @@ vi.mock('../rows/rows.svelte', () => ({
       })),
   },
 }))
-vi.mock('./act', () => ({ addTask: async () => null }))
+vi.mock('./act', () => ({
+  addTask: async (path: string) => void added.push(path),
+}))
 
-const { addNote, prefillOf } = await import('./add')
+const { addNote, addTyped, openQuickAdd, prefillOf } = await import('./add')
 
 const inFolder = (folder: string) =>
   readBase(
@@ -166,6 +171,7 @@ describe('a task added in a group of Todos', () => {
   const today = '2026-10-13'
 
   test('is due today or tomorrow, wears the label, or goes into the project', () => {
+    on.root = '/s/Private'
     expect(prefillOf(todos, today, { property: 'formula.when', key: 'today' })).toEqual({
       deadline: today,
     })
@@ -179,5 +185,23 @@ describe('a task added in a group of Todos', () => {
     expect(prefillOf(todos, today, { property: 'file.path', key: 'Errands.md' })).toEqual({
       path: '/s/Private/Errands.md',
     })
+  })
+
+  test('in a tab of another space goes to that space’s inbox, by the add row', async () => {
+    added.length = 0
+    const prefill = prefillOf(todos, today)
+    expect(openQuickAdd(prefill)).toBe(false)
+    await addTyped('Pay', prefill)
+    expect(added).toEqual(['/s/Private/Inbox.md'])
+  })
+
+  test('in the open space’s own tab, to its inbox by quick add', async () => {
+    on.root = '/s/Private'
+    added.length = 0
+    const prefill = prefillOf(todos, today)
+    expect(prefill).toEqual({})
+    expect(openQuickAdd(prefill)).toBe(true)
+    await addTyped('Pay', prefill)
+    expect(added).toEqual(['/s/Private/Inbox.md'])
   })
 })

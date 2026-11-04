@@ -12,7 +12,7 @@ import type { ViewSpec } from './spec'
 export type PanelRow =
   | { kind: 'todos'; space?: string }
   | { kind: 'project'; space: string; path: string }
-  | { kind: 'label'; tag: string }
+  | { kind: 'label'; tag: string; space?: string }
   | { kind: 'base'; path: string }
 
 /** The keys and the button a press came with. */
@@ -33,6 +33,17 @@ export function sameRow(a: PanelRow | null, b: PanelRow): boolean {
   return a !== null && JSON.stringify(a) === JSON.stringify(b)
 }
 
+/** The row the panel shows in the space at `root`: the one pressed there. Only Todos
+ *  follows the space, so anything else goes back to Todos in another. */
+export function chosenIn(
+  chosen: { row: PanelRow; root: string | null },
+  root: string | null,
+): PanelRow {
+  return chosen.root === root ? chosen.row : TODOS
+}
+
+const TODOS: PanelRow = { kind: 'todos' }
+
 /** The view a row shows, as a tab would ask for it; a base file is its path instead. */
 export function specOf(row: PanelRow): ViewSpec | null {
   switch (row.kind) {
@@ -41,7 +52,9 @@ export function specOf(row: PanelRow): ViewSpec | null {
     case 'project':
       return { builtin: 'project', space: row.space, path: row.path }
     case 'label':
-      return { builtin: 'label', tag: row.tag }
+      return row.space === undefined
+        ? { builtin: 'label', tag: row.tag }
+        : { builtin: 'label', space: row.space, tag: row.tag }
     case 'base':
       return null
   }
@@ -58,7 +71,8 @@ export function openInTab(row: PanelRow): void {
       openProject(row.space, row.path, undefined, how)
       return
     case 'label':
-      openLabel(row.tag, how)
+      if (row.space === undefined) openLabel(row.tag, how)
+      else openLabel(row.tag, how, row.space)
       return
     case 'base':
       openBaseFile(row.path, how)
