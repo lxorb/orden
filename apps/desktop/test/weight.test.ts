@@ -1134,8 +1134,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,538,300, for #1059: the palette finds a website by its address
  *  as well as its name (kinds.ts, Palette.svelte), and the index says which websites the
- *  space holds (`websitesHere` in link-index.svelte.ts). Measured 3,538,162. */
-const BUDGET = 3_538_300
+ *  space holds (`websitesHere` in link-index.svelte.ts). Measured 3,538,162.
+ *
+ *  Raised 2026-11-04, to 3,542,900, for #1032: the right side is one side whatever it
+ *  shows, shut whole by its one button and opened on what it showed last, with the
+ *  scratchpad one of its tabs (`rightShows`, `showRight` and `closeRight` in
+ *  workspace.svelte.ts; Sidebar.svelte, App.svelte). Measured 3,542,782. */
+const BUDGET = 3_542_900
 const MOST_FILES = 390
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

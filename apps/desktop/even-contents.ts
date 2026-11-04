@@ -436,9 +436,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  the count of what differs (display.ts, DisplayBuilder.svelte), a space's own kept
  *  layout (kept-views.ts) and GitHub's column heads (BoardHead.svelte). Measured
  *  5,865,852.
+ *
+ *  The code raised on 2026-11-04, to 5,866,700, for #1032: the right side shut whole by its
+ *  one button, with the scratchpad one of its tabs (workspace.svelte.ts, Sidebar.svelte).
+ *  Measured 5,866,534.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_866_200,
+  code: 5_866_700,
   catalogues: 964_400,
   styles: 290_000,
   fonts: 260_000,
