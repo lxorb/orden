@@ -292,6 +292,26 @@ describe('a published note cannot script the reader', () => {
     expect(response.text).toContain('&lt;script&gt;')
   })
 
+  test('nor is what follows an inline tag the parser reads as raw', async () => {
+    const content =
+      '# Nasty\n\nx <kbd> <img src=x onerror=alert(1) ""> <style x=y ""> <input ""> y\n\n---\n\nz <pre> <iframe src=x "">\n'
+    await addNote('nasty.md', content)
+    await publish({ subdomain: 'field' })
+
+    for (const [path, headers] of [
+      ['/nasty', {}],
+      ['/nasty?slides', {}],
+      ['/nasty', { 'x-nib-preview': '1' }],
+    ] as const) {
+      const response = await call(env, path, { host: 'field.nibeditor.com', headers })
+      for (const live of ['<img src=x', '<style x=y', '<input ""', '<iframe src=x']) {
+        expect(response.text, `${path} ${live}`).not.toContain(live)
+      }
+    }
+    const page = await call(env, '/nasty', { host: 'field.nibeditor.com' })
+    expect(page.text).toContain('&lt;img src=x')
+  })
+
   test('every page runs the script the site serves and nothing else', async () => {
     await publish({ subdomain: 'field' })
 

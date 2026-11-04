@@ -375,6 +375,14 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         return captioned(custom ?? defaults.code.call(this, token), captionIn(info))
       },
 
+      /** Words are escaped, whatever marked says of them. After an inline `<kbd>`, `<pre>`,
+       *  `<code>` or `<script>` it calls the text escaped already (`inRawBlock`), and that
+       *  text holds every tag marked turned away and a browser takes: it reached the page
+       *  past `html` below, and so past `escapeHtml` and `ownMarkup` both. */
+      text(token: Tokens.Text | Tokens.Escape) {
+        return defaults.text.call(this, 'escaped' in token ? { ...token, escaped: false } : token)
+      },
+
       /** Raw HTML, which is three different questions.
        *
        *  An `<iframe>` is a page somewhere else, and that answer is the same on
