@@ -511,9 +511,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,965,400, for the bug hunt's third round, the sums above
  *  and what came to unstable meanwhile in one build at last, on claude/hunt-round-1: nothing
  *  new beyond one guard fewer for a launch's first write. Measured 5,965,187.
+ *
+ *  The code raised on 2026-11-04, to 5,977,200, for the bug hunt's fourth round on views: a
+ *  row under several labels, a space's views following its name, labels of the open space
+ *  alone, a block's name by its line. Measured 5,976,912.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_965_400,
+  code: 5_977_200,
   catalogues: 967_400,
   styles: 290_000,
   fonts: 260_000,
