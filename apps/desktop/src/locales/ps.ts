@@ -2356,7 +2356,11 @@ export const ps: Dictionary = {
   'Running on {device}': 'په {device} چلېږي',
   'Starting on {device}…': 'په {device} پیلېږي…',
   'Not running on {device}': 'په {device} نه چلېږي',
-  'Its picture is not shown here yet.': 'انځور یې لا دلته نه ښودل کېږي.',
+  'The picture cannot reach this device.': 'انځور دې وسیلې ته نه شي رسېدای.',
+  '{device} needs ffmpeg to send its picture.':
+    '{device} د خپل انځور د لېږلو لپاره ffmpeg ته اړتیا لري.',
+  'The picture could not be sent.': 'انځور ونه لېږل شو.',
+  'This device cannot show the picture.': 'دا وسیله انځور نه شي ښودلای.',
   'None of your devices can run an application yet': 'ستاسو هېڅ وسیله لا اپلیکیشن نشي چلولی',
   'Where does it run?': 'چېرته چلېږي؟',
   'What does it run?': 'څه چلوي؟',

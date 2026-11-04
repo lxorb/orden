@@ -2333,7 +2333,10 @@ export const my: Dictionary = {
   'Running on {device}': '{device} တွင် လည်ပတ်နေသည်',
   'Starting on {device}…': '{device} တွင် စတင်နေသည်…',
   'Not running on {device}': '{device} တွင် မလည်ပတ်ပါ',
-  'Its picture is not shown here yet.': '၎င်း၏ ပုံကို ဤနေရာတွင် မပြသေးပါ။',
+  'The picture cannot reach this device.': 'ပုံသည် ဤစက်ပစ္စည်းသို့ မရောက်နိုင်ပါ။',
+  '{device} needs ffmpeg to send its picture.': 'ပုံကို ပို့ရန် {device} တွင် ffmpeg လိုအပ်သည်။',
+  'The picture could not be sent.': 'ပုံကို ပို့၍ မရပါ။',
+  'This device cannot show the picture.': 'ဤစက်ပစ္စည်းသည် ပုံကို မပြနိုင်ပါ။',
   'None of your devices can run an application yet':
     'သင့်စက်များထဲမှ မည်သည့်စက်မျှ အပလီကေးရှင်း မလည်ပတ်နိုင်သေးပါ',
   'Where does it run?': 'ဘယ်မှာ လည်ပတ်မလဲ?',

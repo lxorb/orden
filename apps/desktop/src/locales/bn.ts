@@ -2353,7 +2353,10 @@ export const bn: Dictionary = {
   'Running on {device}': '{device}-এ চলছে',
   'Starting on {device}…': '{device}-এ শুরু হচ্ছে…',
   'Not running on {device}': '{device}-এ চলছে না',
-  'Its picture is not shown here yet.': 'এর ছবি এখনও এখানে দেখানো হয় না।',
+  'The picture cannot reach this device.': 'ছবিটি এই ডিভাইসে পৌঁছাতে পারছে না।',
+  '{device} needs ffmpeg to send its picture.': 'ছবি পাঠাতে {device}-এর ffmpeg প্রয়োজন।',
+  'The picture could not be sent.': 'ছবিটি পাঠানো যায়নি।',
+  'This device cannot show the picture.': 'এই ডিভাইস ছবিটি দেখাতে পারে না।',
   'None of your devices can run an application yet':
     'আপনার কোনো ডিভাইস এখনও অ্যাপ্লিকেশন চালাতে পারে না',
   'Where does it run?': 'এটি কোথায় চলবে?',

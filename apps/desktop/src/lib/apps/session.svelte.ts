@@ -20,6 +20,7 @@ import { untrack } from 'svelte'
 import type { Tab } from '../workspace/documents.svelte'
 import { workspace } from '../workspace.svelte'
 import { type AppHeard, AppLink } from './link'
+import { Picture } from './picture.svelte'
 
 /** How long a file just made is waited for, for sync to give it its id. */
 const WAIT = 20_000
@@ -47,8 +48,15 @@ export class AppSession {
   private state = $state<AppState | null>(null)
   private code = $state<number | null>(null)
   private why = $state<NotStarted | null>(null)
+  /** Whether this device holds it, as the relay last said; kept while its socket
+   *  comes back, since the picture goes peer to peer meanwhile. */
+  private holding = false
   private link: AppLink | null = null
   private ended = false
+  /** Its picture, wanted while this device holds it and it runs on a host that is there. */
+  readonly picture = new Picture((data) => {
+    this.link?.say({ t: 'signal', data })
+  })
 
   constructor(private readonly tab: Tab) {}
 
@@ -91,6 +99,11 @@ export class AppSession {
   }
 
   private heard(what: AppHeard): void {
+    this.hear(what)
+    this.picture.want(!this.ended && this.holding && this.hostUp && this.state === 'running')
+  }
+
+  private hear(what: AppHeard): void {
     switch (what.t) {
       case 'open':
         this.open = true
@@ -101,9 +114,11 @@ export class AppSession {
         return
       case 'held':
         this.holder = { by: what.by, since: what.since, taken: what.taken }
+        this.holding = false
         return
       case 'hold':
         this.holder = null
+        this.holding = true
         return
       case 'host':
         this.hostUp = what.up
@@ -114,6 +129,8 @@ export class AppSession {
         this.why = what.why ?? null
         return
       case 'signal':
+        this.picture.heard(what.data)
+        return
       case 'refused':
         return
     }
@@ -152,6 +169,7 @@ export class AppSession {
   /** The tab has gone: the socket with it, and the application goes on. */
   end(): void {
     this.ended = true
+    this.picture.end()
     this.link?.close()
     this.link = null
   }

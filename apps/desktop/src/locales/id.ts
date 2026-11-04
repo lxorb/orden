@@ -2340,7 +2340,11 @@ export const id: Dictionary = {
   'Running on {device}': 'Berjalan di {device}',
   'Starting on {device}…': 'Memulai di {device}…',
   'Not running on {device}': 'Tidak berjalan di {device}',
-  'Its picture is not shown here yet.': 'Gambarnya belum ditampilkan di sini.',
+  'The picture cannot reach this device.': 'Gambar tidak dapat mencapai perangkat ini.',
+  '{device} needs ffmpeg to send its picture.':
+    '{device} memerlukan ffmpeg untuk mengirim gambarnya.',
+  'The picture could not be sent.': 'Gambar tidak dapat dikirim.',
+  'This device cannot show the picture.': 'Perangkat ini tidak dapat menampilkan gambar.',
   'None of your devices can run an application yet':
     'Belum ada perangkat Anda yang bisa menjalankan aplikasi',
   'Where does it run?': 'Di mana berjalan?',

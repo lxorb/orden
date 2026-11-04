@@ -27,6 +27,7 @@ import {
   type RelayToHost,
   type StateFrame,
   toHostOf,
+  toHostText,
   type View,
 } from '@orden/online/apps'
 import { untrack } from 'svelte'
@@ -83,7 +84,7 @@ export interface Runner {
 }
 
 /** What ends the picture a holder had: the wire's goodbye. */
-export const BYE = JSON.stringify({ bye: true })
+export const BYE = toHostText({ bye: true })
 
 /** A socket to the relay, as much of one as an application's host uses. */
 export interface Speaking {

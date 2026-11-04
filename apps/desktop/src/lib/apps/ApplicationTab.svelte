@@ -1,10 +1,12 @@
 <script lang="ts">
-  /** An application in a pane (docs/apps.md): for now, where it stands - which device it
-   *  runs on, whether that device is there, whether it runs, who holds it - with Take
-   *  over, Start, Stop and Restart. Its picture comes in a later step of issue 1063. The
-   *  session is the tab's and outlives this; see session.svelte.ts. */
+  /** An application in a pane (docs/apps.md): its picture, sent by its host peer to peer
+   *  while this device holds it (picture.svelte.ts), and otherwise where it stands - which
+   *  device it runs on, whether that device is there, whether it runs, who holds it -
+   *  with Take over, Start, Stop and Restart. The session is the tab's and outlives
+   *  this; see session.svelte.ts. */
 
   import type { NotStarted } from '@orden/online/apps'
+  import type { PictureStatus } from './picture.svelte'
   import { onMount, untrack } from 'svelte'
   import { t } from '../i18n.svelte'
   import { heldLine } from '../online/arrival.svelte'
@@ -17,6 +19,12 @@
   const session = appSessionOf(tab)
 
   let place = $state<HTMLElement>()
+  let video = $state<HTMLVideoElement>()
+
+  $effect(() => {
+    const stream = session.picture.stream
+    if (video && video.srcObject !== stream) video.srcObject = stream
+  })
 
   /** The pane's size, its pixel ratio, and a refresh rate until it is measured. */
   function view() {
@@ -80,6 +88,30 @@
     }
   }
 
+  const picture = $derived(session.picture.status)
+  const showing = $derived(
+    status.is === 'here' && status.state === 'running' && picture.is === 'showing',
+  )
+  /** Why the picture is not here, while the application runs: it cannot reach this
+   *  device, its host has no encoder, or this engine cannot show one. */
+  function noPicture(picture: PictureStatus, device: string): string | null {
+    switch (picture.is) {
+      case 'lost':
+        return t('The picture cannot reach this device.')
+      case 'cannot':
+        return picture.why === 'encoder'
+          ? t('{device} needs ffmpeg to send its picture.', { device })
+          : t('The picture could not be sent.')
+      case 'unsupported':
+        return t('This device cannot show the picture.')
+      case 'off':
+      case 'connecting':
+      case 'showing':
+        return null
+    }
+  }
+  const pictureLine = $derived(noPicture(picture, device))
+
   const waiting = $derived(
     status.is === 'reading' ||
       status.is === 'connecting' ||
@@ -89,14 +121,29 @@
 </script>
 
 <div class="application" data-region="editor" bind:this={place}>
-  <div class="status" role="status">
+  <video bind:this={video} class:shown={showing} autoplay muted playsinline></video>
+  {#if showing}
+    <div class="bar">
+      <button type="button" class="nib-button" onclick={() => session.run('restart')}
+        >{t('Restart')}</button
+      >
+      <button type="button" class="nib-button" onclick={() => session.run('stop')}
+        >{t('Stop')}</button
+      >
+    </div>
+  {/if}
+  <div class="status" role="status" hidden={showing}>
     <p>{line}</p>
     {#if status.is === 'held'}
       <button type="button" class="nib-button" onclick={() => session.take()}
         >{status.holder.taken ? t('Take back') : t('Take over')}</button
       >
     {:else if status.is === 'here' && status.state === 'running'}
-      <p class="quiet">{t('Its picture is not shown here yet.')}</p>
+      {#if pictureLine}
+        <p class="quiet">{pictureLine}</p>
+      {:else}
+        <div class="sweep"><Sweep /></div>
+      {/if}
       <div class="row">
         <button type="button" class="nib-button" onclick={() => session.run('restart')}
           >{t('Restart')}</button
@@ -120,6 +167,36 @@
   .application {
     position: relative;
     height: 100%;
+  }
+
+  /* The picture, at the pane's own size in device pixels, which is the display's. */
+  video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    visibility: hidden;
+  }
+
+  video.shown {
+    visibility: visible;
+  }
+
+  /* Restart and Stop over the picture, out of the way until the pointer comes. */
+  .bar {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+    display: flex;
+    gap: var(--space-2);
+    opacity: 0;
+    transition: opacity var(--duration-fast, 120ms);
+  }
+
+  .application:hover .bar,
+  .bar:focus-within {
+    opacity: 1;
   }
 
   /* The online terminal's card, in the middle of the pane. */

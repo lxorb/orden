@@ -357,3 +357,45 @@ export function catalogueOf(value: unknown): Installed[] | null {
 /** Where a host's catalogue is kept on the account: `PUT` by the host for itself, `GET`
  *  by any of the reader's devices for a host by its id. */
 export const CATALOGUE_PATH = '/v2/apps/catalogue'
+
+// ---------------------------------------------------------------------------
+// The picture's signalling (step 4)
+
+/** Why a host has no picture to offer: ffmpeg is not installed there, the offer was not
+ *  one it could answer, it has no address to be reached on, or the application is not
+ *  running. */
+export type NoPicture = 'encoder' | 'offer' | 'network' | 'stopped'
+
+const NO_PICTURE: readonly NoPicture[] = ['encoder', 'offer', 'network', 'stopped']
+
+/** A candidate as the viewer's engine gives it, `RTCIceCandidate.toJSON()`. */
+export interface CandidateLine {
+  candidate: string
+  sdpMid?: string | null
+  sdpMLineIndex?: number | null
+}
+
+/** What the holder says to the host, as `data` of a `signal` frame: its offer (a
+ *  receive-only video and the data channel), one of its candidates, or that it is done
+ *  with the picture. */
+export type ToHost = { offer: string } | { candidate: CandidateLine } | { bye: true }
+
+/** A message to the host as the `signal` frame's `data`. */
+export function toHostText(said: ToHost): string {
+  return JSON.stringify(said)
+}
+
+/** What the host says back: its answer, with every candidate of its own in it, or why
+ *  there is no picture - null for a reason this side does not know yet. */
+export type FromHost = { answer: string } | { cannot: NoPicture | null }
+
+/** The host's message, read off a `signal` frame's `data`; null for one that does not
+ *  check, which is dropped as a frame is. */
+export function fromHostOf(data: string): FromHost | null {
+  const value = parsed(data)
+  if (!isRecord(value)) return null
+  if (typeof value.answer === 'string') return { answer: value.answer }
+  if (typeof value.cannot === 'string')
+    return { cannot: NO_PICTURE.find((one) => one === value.cannot) ?? null }
+  return null
+}

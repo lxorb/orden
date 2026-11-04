@@ -99,3 +99,12 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
   pipe as IVF the moment it is made. VP8 because every viewer's engine decodes it (Orden's
   CEF has no H.264). It starts once the viewer is connected, so the first frame is a key
   frame; another comes every two seconds. Not installed: the viewer is told `encoder`.
+- **The tab shows it** (`apps/desktop/src/lib/apps/picture.svelte.ts`): while this device holds
+  the application and it runs on a host that is there, the engine's own `RTCPeerConnection`
+  offers a receive-only video and the data channel `input`, trickles its candidates, and shows
+  the host's track in a `<video>` over the pane, with Restart and Stop at its corner. A
+  connection that fails, or is not answered within 20 seconds, is tried again after 4 while it
+  is wanted; a host that says why it has none is not asked again until the picture is wanted
+  afresh. The tab says the picture cannot reach this device, that the host needs ffmpeg, or
+  that this engine has no WebRTC. Another device taking it over ends the picture here, and the
+  host is told (`bye`).

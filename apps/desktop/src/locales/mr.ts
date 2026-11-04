@@ -2355,7 +2355,10 @@ export const mr: Dictionary = {
   'Running on {device}': '{device} वर चालू आहे',
   'Starting on {device}…': '{device} वर सुरू होत आहे…',
   'Not running on {device}': '{device} वर चालू नाही',
-  'Its picture is not shown here yet.': 'त्याचे चित्र अजून इथे दाखवले जात नाही.',
+  'The picture cannot reach this device.': 'चित्र या उपकरणापर्यंत पोहोचू शकत नाही.',
+  '{device} needs ffmpeg to send its picture.': 'चित्र पाठवण्यासाठी {device} ला ffmpeg लागते.',
+  'The picture could not be sent.': 'चित्र पाठवता आले नाही.',
+  'This device cannot show the picture.': 'हे उपकरण चित्र दाखवू शकत नाही.',
   'None of your devices can run an application yet':
     'तुमचे कोणतेही डिव्हाइस अजून ॲप्लिकेशन चालवू शकत नाही',
   'Where does it run?': 'हे कुठे चालेल?',

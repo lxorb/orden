@@ -2333,7 +2333,10 @@ export const jv: Dictionary = {
   'Running on {device}': 'Mlaku ing {device}',
   'Starting on {device}…': 'Miwiti ing {device}…',
   'Not running on {device}': 'Ora mlaku ing {device}',
-  'Its picture is not shown here yet.': 'Gambare durung ditampilake ing kene.',
+  'The picture cannot reach this device.': 'Gambar ora bisa tekan piranti iki.',
+  '{device} needs ffmpeg to send its picture.': '{device} butuh ffmpeg kanggo ngirim gambaré.',
+  'The picture could not be sent.': 'Gambar ora bisa dikirim.',
+  'This device cannot show the picture.': 'Piranti iki ora bisa nuduhaké gambar.',
   'None of your devices can run an application yet':
     'Durung ana piranti sampeyan sing bisa mlakokake aplikasi',
   'Where does it run?': 'Mlaku ing ngendi?',

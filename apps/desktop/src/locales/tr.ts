@@ -2365,7 +2365,11 @@ export const tr: Dictionary = {
   'Running on {device}': '{device} üzerinde çalışıyor',
   'Starting on {device}…': '{device} üzerinde başlatılıyor…',
   'Not running on {device}': '{device} üzerinde çalışmıyor',
-  'Its picture is not shown here yet.': 'Görüntüsü henüz burada gösterilmiyor.',
+  'The picture cannot reach this device.': 'Görüntü bu cihaza ulaşamıyor.',
+  '{device} needs ffmpeg to send its picture.':
+    '{device}, görüntüsünü göndermek için ffmpeg’e ihtiyaç duyar.',
+  'The picture could not be sent.': 'Görüntü gönderilemedi.',
+  'This device cannot show the picture.': 'Bu cihaz görüntüyü gösteremiyor.',
   'None of your devices can run an application yet':
     'Cihazlarınızın hiçbiri henüz uygulama çalıştıramıyor',
   'Where does it run?': 'Nerede çalışsın?',

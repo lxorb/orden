@@ -2308,7 +2308,10 @@ export const th: Dictionary = {
   'Running on {device}': 'กำลังทำงานบน {device}',
   'Starting on {device}…': 'กำลังเริ่มบน {device}…',
   'Not running on {device}': 'ไม่ได้ทำงานบน {device}',
-  'Its picture is not shown here yet.': 'ยังไม่แสดงภาพของแอปที่นี่',
+  'The picture cannot reach this device.': 'ภาพส่งมาถึงอุปกรณ์นี้ไม่ได้',
+  '{device} needs ffmpeg to send its picture.': '{device} ต้องมี ffmpeg เพื่อส่งภาพ',
+  'The picture could not be sent.': 'ส่งภาพไม่ได้',
+  'This device cannot show the picture.': 'อุปกรณ์นี้แสดงภาพไม่ได้',
   'None of your devices can run an application yet':
     'ยังไม่มีอุปกรณ์ของคุณที่เรียกใช้แอปพลิเคชันได้',
   'Where does it run?': 'ทำงานที่ไหน?',

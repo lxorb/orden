@@ -2381,7 +2381,10 @@ export const ml: Dictionary = {
   'Running on {device}': '{device}-ൽ പ്രവർത്തിക്കുന്നു',
   'Starting on {device}…': '{device}-ൽ ആരംഭിക്കുന്നു…',
   'Not running on {device}': '{device}-ൽ പ്രവർത്തിക്കുന്നില്ല',
-  'Its picture is not shown here yet.': 'ഇതിന്റെ ചിത്രം ഇവിടെ ഇതുവരെ കാണിക്കുന്നില്ല.',
+  'The picture cannot reach this device.': 'ചിത്രത്തിന് ഈ ഉപകരണത്തിൽ എത്താനാകില്ല.',
+  '{device} needs ffmpeg to send its picture.': 'ചിത്രം അയയ്ക്കാൻ {device}-ന് ffmpeg വേണം.',
+  'The picture could not be sent.': 'ചിത്രം അയയ്ക്കാനായില്ല.',
+  'This device cannot show the picture.': 'ഈ ഉപകരണത്തിന് ചിത്രം കാണിക്കാനാകില്ല.',
   'None of your devices can run an application yet':
     'നിങ്ങളുടെ ഒരു ഉപകരണത്തിനും ഇതുവരെ ആപ്ലിക്കേഷൻ പ്രവർത്തിപ്പിക്കാൻ കഴിയില്ല',
   'Where does it run?': 'ഇത് എവിടെ പ്രവർത്തിക്കും?',

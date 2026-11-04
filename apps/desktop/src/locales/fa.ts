@@ -2356,7 +2356,10 @@ export const fa: Dictionary = {
   'Running on {device}': 'در حال اجرا روی {device}',
   'Starting on {device}…': 'در حال شروع روی {device}…',
   'Not running on {device}': 'روی {device} اجرا نمی‌شود',
-  'Its picture is not shown here yet.': 'تصویرش هنوز اینجا نشان داده نمی‌شود.',
+  'The picture cannot reach this device.': 'تصویر نمی‌تواند به این دستگاه برسد.',
+  '{device} needs ffmpeg to send its picture.': '{device} برای فرستادن تصویرش به ffmpeg نیاز دارد.',
+  'The picture could not be sent.': 'تصویر فرستاده نشد.',
+  'This device cannot show the picture.': 'این دستگاه نمی‌تواند تصویر را نشان دهد.',
   'None of your devices can run an application yet':
     'هنوز هیچ‌یک از دستگاه‌هایتان نمی‌تواند برنامه‌ای اجرا کند',
   'Where does it run?': 'کجا اجرا شود؟',

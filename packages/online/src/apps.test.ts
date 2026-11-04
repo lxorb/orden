@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   type AppFile,
   catalogueOf,
+  fromHostOf,
   MOST_ICON,
   MOST_INSTALLED,
   appFileOf,
@@ -12,6 +13,7 @@ import {
   type RelayToHost,
   type RelayToViewer,
   toHostOf,
+  toHostText,
   toViewerOf,
   type ViewerFrame,
   viewerFrameOf,
@@ -147,5 +149,25 @@ describe('a host’s catalogue', () => {
       name: `${at}`,
     }))
     expect(catalogueOf(many)).toHaveLength(MOST_INSTALLED)
+  })
+})
+
+describe('the picture’s signalling', () => {
+  it('says the viewer’s offer, candidates and goodbye as the host’s crate reads them', () => {
+    expect(toHostText({ offer: 'v=0' })).toBe('{"offer":"v=0"}')
+    expect(
+      toHostText({
+        candidate: { candidate: 'candidate:1 1 udp 1 1.2.3.4 5 typ host', sdpMid: '0' },
+      }),
+    ).toBe('{"candidate":{"candidate":"candidate:1 1 udp 1 1.2.3.4 5 typ host","sdpMid":"0"}}')
+    expect(toHostText({ bye: true })).toBe('{"bye":true}')
+  })
+
+  it('reads the host’s answer and why it has no picture, a reason it does not know as none', () => {
+    expect(fromHostOf('{"answer":"v=0"}')).toEqual({ answer: 'v=0' })
+    expect(fromHostOf('{"cannot":"encoder"}')).toEqual({ cannot: 'encoder' })
+    expect(fromHostOf('{"cannot":"gpu"}')).toEqual({ cannot: null })
+    expect(fromHostOf('{"answer":3}')).toBeNull()
+    expect(fromHostOf('not json')).toBeNull()
   })
 })

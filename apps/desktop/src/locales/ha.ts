@@ -2384,7 +2384,10 @@ export const ha: Dictionary = {
   'Running on {device}': 'Yana gudana a {device}',
   'Starting on {device}…': 'Yana farawa a {device}…',
   'Not running on {device}': 'Ba ya gudana a {device}',
-  'Its picture is not shown here yet.': 'Ba a nuna hotonsa a nan ba tukuna.',
+  'The picture cannot reach this device.': 'Hoton ba zai iya isa wannan na’urar ba.',
+  '{device} needs ffmpeg to send its picture.': '{device} yana buƙatar ffmpeg don aika hotonsa.',
+  'The picture could not be sent.': 'Ba a iya aika hoton ba.',
+  'This device cannot show the picture.': 'Wannan na’urar ba za ta iya nuna hoton ba.',
   'None of your devices can run an application yet':
     'Babu ɗaya daga cikin na’urorinka da zai iya gudanar da manhaja tukuna',
   'Where does it run?': 'Ina zai gudana?',

@@ -2443,7 +2443,11 @@ export const pl: Dictionary = {
   'Running on {device}': 'Działa na {device}',
   'Starting on {device}…': 'Uruchamia się na {device}…',
   'Not running on {device}': 'Nie działa na {device}',
-  'Its picture is not shown here yet.': 'Jej obraz nie jest tu jeszcze pokazywany.',
+  'The picture cannot reach this device.': 'Obraz nie może dotrzeć do tego urządzenia.',
+  '{device} needs ffmpeg to send its picture.':
+    '{device} potrzebuje ffmpeg, aby wysłać swój obraz.',
+  'The picture could not be sent.': 'Nie udało się wysłać obrazu.',
+  'This device cannot show the picture.': 'To urządzenie nie może wyświetlić obrazu.',
   'None of your devices can run an application yet':
     'Żadne z twoich urządzeń nie może jeszcze uruchomić aplikacji',
   'Where does it run?': 'Gdzie działa?',
