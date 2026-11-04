@@ -3364,7 +3364,10 @@ mod tests {
         assert!(!before.contains("with_webview("), "asked before going over");
         assert!(after.contains("with_webview("));
         for (file, source) in [
-            ("web_certificate/chromium.rs", include_str!("web_certificate/chromium.rs")),
+            (
+                "web_certificate/chromium.rs",
+                include_str!("web_certificate/chromium.rs"),
+            ),
             ("web_pause.rs", include_str!("web_pause.rs")),
         ] {
             assert!(
