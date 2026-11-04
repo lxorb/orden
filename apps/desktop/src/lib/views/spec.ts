@@ -20,8 +20,8 @@ export type Builtin = (typeof BUILTINS)[number]
 export interface ViewSpec {
   /** A built-in view, or absent for the view of a base file (the tab's path). */
   builtin?: Builtin
-  /** A project: the note, by its space's name and its path within it. Todos: the
-   *  space it is of. */
+  /** A project: the note, by its space's name and its path within it. Todos, and a label
+   *  from the Tasks panel: the space it is of. */
   space?: string
   path?: string
   /** A label: the tag, without `#`. */

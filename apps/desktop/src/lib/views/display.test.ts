@@ -1,4 +1,4 @@
-import { answer, builtinView } from '@orden/bases'
+import { answer, builtinView, isWhen, readBase, WHEN } from '@orden/bases'
 import { taskRowsOfText } from '@orden/bases/tasks'
 import { describe, expect, test } from 'vitest'
 import { contextFor } from './context'
@@ -273,5 +273,34 @@ describe('the Display menu over Todos', () => {
       change: { task: { tags: ['admin'] } },
     })
     expect(dropInto('task.tags', 'admin', now, TODAY, 'admin')).toBeNull()
+  })
+})
+
+describe('Date, on a base with a formula of its own called when', () => {
+  const own = readBase(`formulas:
+  when: task.deadline + "1d"
+views:
+  - type: list
+    name: Mine
+    groupBy:
+      property: task.priority
+      direction: ASC
+`)
+
+  test('keeps that formula, and groups by when a task is due under a name of its own', () => {
+    const made = withGrouping(own, 0, 'due', null)
+    expect(made.formulas.when).toBe('task.deadline + "1d"')
+    const by = made.views[0]?.groupBy?.property ?? ''
+    expect(by).not.toBe('formula.when')
+    expect(made.formulas[by.replace('formula.', '')]).toBe(WHEN)
+    expect(isWhen(by)).toBe(true)
+    expect(groupingOf(made.views[0]!, null)).toBe('due')
+  })
+
+  test('a base with none, or with Todos\u2019 own, is as it was', () => {
+    const none = readBase('views:\n  - type: list\n    name: Mine\n')
+    expect(withGrouping(none, 0, 'due', null).views[0]?.groupBy?.property).toBe('formula.when')
+    const again = withGrouping(withGrouping(none, 0, 'due', null), 0, 'due', null)
+    expect(again.views[0]?.groupBy?.property).toBe('formula.when')
   })
 })

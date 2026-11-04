@@ -17,7 +17,9 @@ export {
   builtinView,
   SMART_SORT,
   todayAs,
+  isWhen,
   WHEN,
+  WHEN_ASIDE,
   WHEN_GROUPS,
 } from './builtins'
 export { INBOX_PATH } from './inbox'

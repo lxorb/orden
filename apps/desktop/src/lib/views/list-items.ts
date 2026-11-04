@@ -35,7 +35,7 @@ export interface ListOptions {
   title?: string
   /** Groups folded, by name. */
   folded: ReadonlySet<string>
-  /** Parents whose sub-tasks are folded, by row id. */
+  /** Parents whose sub-tasks are folded, by `foldKey`. */
   shut: ReadonlySet<string>
   /** Groups the view keeps out of sight, by name. */
   hidden?: readonly string[]
@@ -45,24 +45,29 @@ export interface ListOptions {
   parentOf?: (row: Row) => string | null
 }
 
+/** A row as a tree knows it, and as a fold is kept: a view across spaces can hold one path
+ *  in two of them. */
+export const foldKey = (row: Row): string => `${row.space}\n${rowId(row)}`
+
 /** A group's rows in tree order, each with its depth. */
 function tree(
   rows: readonly Row[],
   shut: ReadonlySet<string>,
   parentOf?: (row: Row) => string | null,
 ): { row: Row; depth: number; parent: boolean }[] {
-  const present = new Set(rows.map(rowId))
+  const present = new Set(rows.map(foldKey))
   const children = new Map<string, Row[]>()
   const roots: Row[] = []
   for (const row of rows) {
     const parent = row.task?.parent
-    const parentId = row.task
+    const said = row.task
       ? parent === undefined
         ? null
         : `${row.path}#${parent}`
       : (parentOf?.(row) ?? null)
-    if (parentId !== null && present.has(parentId)) {
-      children.set(parentId, [...(children.get(parentId) ?? []), row])
+    const parentKey = said === null ? null : `${row.space}\n${said}`
+    if (parentKey !== null && present.has(parentKey)) {
+      children.set(parentKey, [...(children.get(parentKey) ?? []), row])
     } else roots.push(row)
   }
 
@@ -70,14 +75,14 @@ function tree(
   // such ring is shown at the top rather than lost.
   const reached = new Set<string>()
   const reach = (row: Row) => {
-    const id = rowId(row)
-    if (reached.has(id)) return
-    reached.add(id)
-    for (const child of children.get(id) ?? []) reach(child)
+    const key = foldKey(row)
+    if (reached.has(key)) return
+    reached.add(key)
+    for (const child of children.get(key) ?? []) reach(child)
   }
   for (const root of roots) reach(root)
   for (const row of rows) {
-    if (reached.has(rowId(row))) continue
+    if (reached.has(foldKey(row))) continue
     roots.push(row)
     reach(row)
   }
@@ -85,20 +90,42 @@ function tree(
   const out: { row: Row; depth: number; parent: boolean }[] = []
   const placed = new Set<string>()
   const walk = (row: Row, depth: number) => {
-    const id = rowId(row)
-    placed.add(id)
-    const under = (children.get(id) ?? []).filter((child) => !placed.has(rowId(child)))
+    const key = foldKey(row)
+    placed.add(key)
+    const under = (children.get(key) ?? []).filter((child) => !placed.has(foldKey(child)))
     out.push({ row, depth, parent: under.length > 0 })
-    if (shut.has(id)) return
-    for (const child of under) if (!placed.has(rowId(child))) walk(child, depth + 1)
+    if (shut.has(key)) return
+    for (const child of under) if (!placed.has(foldKey(child))) walk(child, depth + 1)
   }
-  for (const root of roots) if (!placed.has(rowId(root))) walk(root, 0)
+  for (const root of roots) if (!placed.has(foldKey(root))) walk(root, 0)
   return out
+}
+
+/** Keys for the rows of a drawn list, one key to a row in each group it stands under:
+ *  grouped by a task's labels a row stands under each (`fanOut` in @orden/bases), and a
+ *  keyed list given one key twice cannot draw. Where it first stands, and for a row under
+ *  one group, the key is the row's alone, so the row keeps it moving to another group, and
+ *  what is selected or being typed in moves with it. */
+export function distinctKeys(): (row: Row, group: string) => string {
+  const given = new Set<string>()
+  return (row, group) => {
+    let key = `${row.space}:${rowId(row)}`
+    while (given.has(key)) key += `\n${group}`
+    given.add(key)
+    return key
+  }
+}
+
+/** The rows of an answer's groups, once each, for what does not draw the groups: a row
+ *  under several is still one task on a day, on a timeline, in a file. */
+export function everyRow(groups: readonly Group[]): Row[] {
+  return [...new Set(groups.flatMap((group) => group.rows))]
 }
 
 /** The items a list draws for an answer's groups. */
 export function listItems(groups: readonly Group[], options: ListOptions): Item[] {
   const out: Item[] = []
+  const keyOfRow = distinctKeys()
   for (const group of groups) {
     const name = groupName(group.key)
     if (options.hidden?.includes(name)) continue
@@ -115,14 +142,13 @@ export function listItems(groups: readonly Group[], options: ListOptions): Item[
       if (folded) continue
     }
     for (const one of tree(group.rows, options.shut, options.parentOf)) {
-      const id = rowId(one.row)
       out.push({
         kind: 'row',
-        id: `row:${one.row.space}:${id}`,
+        id: `row:${keyOfRow(one.row, name)}`,
         row: one.row,
         group,
         depth: one.depth,
-        twist: one.parent ? (options.shut.has(id) ? 'shut' : 'open') : null,
+        twist: one.parent ? (options.shut.has(foldKey(one.row)) ? 'shut' : 'open') : null,
       })
     }
     if (options.adding)

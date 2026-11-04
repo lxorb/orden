@@ -20,8 +20,9 @@ import { insideSpace, samePath, within } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import type { Tab } from '../workspace/documents.svelte'
 import { noteText, writeNoteText } from '../workspace/note-text'
-import { keepProjectView, keepTodosView, projectView, todosView } from './kept-views'
+import { keepProjectView, keepTodosView, projectView, renamedTo, todosView } from './kept-views'
 import type { Shown, Source } from './live.svelte'
+import { followSpaceTabs } from './space-follow'
 import { asShipped, readSpec, type ViewSpec, writeSpec } from './spec'
 
 /** Today as Settings has it: with the tasks that have no start date in it, or not (#408). */
@@ -55,7 +56,10 @@ export function builtinBase(spec: ViewSpec): Base {
         note: { space: spec.space ?? '', path: spec.path ?? '' },
       })
     case 'label':
-      return builtinView('label', { tag: spec.tag ?? '' })
+      return builtinView('label', {
+        tag: spec.tag ?? '',
+        ...(spec.space === undefined ? {} : { space: spec.space }),
+      })
     case 'inbox':
       return builtinView('inbox', { inboxes: rows.inboxes() })
     case 'upcoming':
@@ -128,13 +132,35 @@ function keepChange(spec: ViewSpec, yaml: string): void {
   }
 }
 
+/** A tab about a space no space here is called. Renamed, by the record of it, the tab
+ *  comes along; what was kept already has. Anything else - a space deleted, a rename from
+ *  before there was a record - cannot be told apart, so the tab says it cannot be read,
+ *  rather than taking the open space for that one or drawing an empty list for good. */
+function followLost(tab: Tab): void {
+  const name = readSpec(tab.doc)?.space
+  const spaces = workspace.spaces
+  if (name === undefined || !spaces.length || spaces.some((one) => one.name === name)) return
+  const now = renamedTo(name)
+  if (now === undefined || !spaces.some((one) => one.name === now))
+    throw new Error(`no space ${name}`)
+  followSpaceTabs(name, now, workspace.tabs)
+  workspace.scheduleSession()
+}
+
 /** A built-in view in a tab: what it changes is kept in the tab's words, and is the
  *  tab's own until "Copy to a base" writes it to a file. */
 export function tabSource(tab: Tab): Source {
   const spec = () => readSpec(tab.doc) ?? {}
   return {
     scope: null,
-    load: () => Promise.resolve(builtinBase(spec())),
+    load: () => {
+      try {
+        followLost(tab)
+        return Promise.resolve(builtinBase(spec()))
+      } catch (error) {
+        return Promise.reject(error instanceof Error ? error : new Error(String(error)))
+      }
+    },
     save(next) {
       const now = spec()
       const yaml = writeBase(next)

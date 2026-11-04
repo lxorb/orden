@@ -25,7 +25,7 @@ import { expressionOf, filterOf, literal, rowOf, rowsOf } from './filter-rows'
 import { noteRow, taskRow } from './fixture'
 import { pieces, plain } from './inline'
 import { switched } from './layout'
-import { listItems, withEveryDay, withinDays, withPicked } from './list-items'
+import { foldKey, listItems, withEveryDay, withinDays, withPicked } from './list-items'
 import { panelCounts } from './panel'
 import { shortcuts } from '../shortcuts.svelte'
 import { rowKey } from './row-keys'
@@ -755,7 +755,7 @@ describe('the list', () => {
     const shut = listItems(groups, {
       grouped: false,
       folded: new Set(),
-      shut: new Set(['E.md#1']),
+      shut: new Set([foldKey(parent)]),
       adding: false,
     })
     expect(shut.map((one) => one.kind)).toEqual(['row'])
@@ -866,6 +866,29 @@ describe('the panel', () => {
       'Thesis 1',
     ])
     expect(counts.labels).toEqual([{ tag: 'admin', count: 2 }])
+  })
+
+  test('lists the labels of the open space alone, with its count', () => {
+    const rows = [
+      taskRow('Mine.md', '- [ ] Here #both #mine', 1, { space: 'Mine' }),
+      taskRow('Theirs.md', '- [ ] There #both #theirs', 1, { space: 'Other' }),
+    ]
+    expect(panelCounts(rows, TODAY, 'Mine').labels.map((one) => one.tag)).toEqual(['both', 'mine'])
+    expect(panelCounts(rows, TODAY, 'Mine').labels[0]?.count).toBe(1)
+    // The list of notes still knows every space: a favourite asks for its own.
+    expect(panelCounts(rows, TODAY, 'Mine').notes).toHaveLength(2)
+  })
+
+  test('a label of one space shows that space’s rows', () => {
+    const rows = [
+      taskRow('Mine.md', '- [ ] Here #both', 1, { space: 'Mine' }),
+      taskRow('Theirs.md', '- [ ] There #both', 1, { space: 'Other' }),
+    ]
+    const context = contextFor({ rows, today: TODAY, now: `${TODAY}T00:00:00` })
+    const said = answer(builtinView('label', { tag: 'both', space: 'Mine' }), 0, rows, context)
+    expect(said.groups.flatMap((one) => one.rows).map((one) => one.task?.text)).toEqual(['Here'])
+    const every = answer(builtinView('label', { tag: 'both' }), 0, rows, context)
+    expect(every.total).toBe(2)
   })
 })
 

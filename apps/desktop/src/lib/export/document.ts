@@ -131,7 +131,7 @@ function spansOf(tokens: readonly Token[] | undefined, marks: Marks = {}): Span[
         if (closing && name === passing) passing = null
         continue
       }
-      if (name && !closing && !token.raw.trimEnd().endsWith('/>')) {
+      if (name && !closing && !VOID.test(name) && !token.raw.trimEnd().endsWith('/>')) {
         if (NOT_SHOWN.test(name) || HIDDEN.test(token.raw)) {
           passing = name
           continue
@@ -507,7 +507,7 @@ function entitiesRead(text: string): string {
 
 /** The words of a block of raw HTML, a paragraph for each block element in it. No DOM,
  *  since this reading of a note is pure, and no more of HTML than where words are. */
-function wordsOfHtml(html: string): string[] {
+function wordsOfHtml(source: string): string[] {
   const out: string[] = []
   let line = ''
   /** The element being passed over, and how many of its name are open inside it. */
@@ -525,9 +525,16 @@ function wordsOfHtml(html: string): string[] {
     line = ''
   }
 
-  for (const found of html.matchAll(
-    /<!--[\s\S]*?(?:-->|$)|<[!?][^>]*>|<(\/?)([a-z][\w-]*)(?:"[^"]*"|'[^']*'|[^'">])*>/gi,
-  )) {
+  // A comment never closed takes the rest, and no tag closes past the last `>`, which is
+  // what keeps `<a ` thirty thousand times from being read to its end from each of them.
+  const comment = source.lastIndexOf('<!--')
+  const html =
+    comment !== -1 && !source.includes('-->', comment) ? source.slice(0, comment) : source
+  for (const found of html
+    .slice(0, html.lastIndexOf('>') + 1)
+    .matchAll(
+      /<!--[\s\S]*?(?:-->|$)|<[!?][^>]*>|<(\/?)([a-z][\w-]*)(?:"[^"]*"|'[^']*'|[^'">])*>/gi,
+    )) {
     read(html.slice(at, found.index))
     at = found.index + found[0].length
 

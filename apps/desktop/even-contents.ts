@@ -517,9 +517,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *
  *  The code raised on 2026-11-04, to 5,967,600, for what such a pass may still delete: a note
  *  whose words wait in a refused file, and a full account (sync/pass.ts). Measured 5,967,504.
+ *
+ *  The code raised on 2026-11-04, to 5,978,500, for the bug hunt's fourth round on views: a
+ *  row under several labels, a space's views following its name, labels of the open space
+ *  alone, a block's name by its line, text escaped whatever marked says. Measured 5,978,231.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_967_600,
+  code: 5_978_500,
   catalogues: 967_400,
   styles: 290_000,
   fonts: 260_000,

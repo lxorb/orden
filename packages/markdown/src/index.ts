@@ -16,6 +16,7 @@ import { attributeUrl, escape, safeHref, safeSrc } from './html'
 import { htmlBlockCard, ownMarkup } from './html-block'
 import {
   blockAnchorsDrawn,
+  blockMarksOff,
   blockIdsAnchored,
   isNoteTarget,
   sizedAlt,
@@ -375,6 +376,14 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         return captioned(custom ?? defaults.code.call(this, token), captionIn(info))
       },
 
+      /** Words are escaped, whatever marked says of them. After an inline `<kbd>`, `<pre>`,
+       *  `<code>` or `<script>` it calls the text escaped already (`inRawBlock`), and that
+       *  text holds every tag marked turned away and a browser takes: it reached the page
+       *  past `html` below, and so past `escapeHtml` and `ownMarkup` both. */
+      text(token: Tokens.Text | Tokens.Escape) {
+        return defaults.text.call(this, 'escaped' in token ? { ...token, escaped: false } : token)
+      },
+
       /** Raw HTML, which is three different questions.
        *
        *  An `<iframe>` is a page somewhere else, and that answer is the same on
@@ -401,14 +410,17 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
        *  block in a frame of its own when pressed - never in the app - and in one
        *  that is not it was already escaped by the line above. See html-block.ts. */
       html(token: Tokens.HTML | Tokens.Tag) {
-        let text = token.text
+        // What is asked of a tag is asked of it as the page will have it, with no mark
+        // inside to split a word the checks look for.
+        const written = options.escapeHtml ? token.text : blockMarksOff(token.text)
+        let text = written
         let cards = ''
         while (isIframeTag(text)) {
           const { tag, rest } = splitIframe(text)
           cards += iframeCard(tag) ?? ''
           text = rest
         }
-        if (text !== token.text && !text.trim()) return cards
+        if (text !== written && !text.trim()) return cards
         if (options.escapeHtml) return cards + escape(text)
 
         return cards + (htmlBlockCard(text) ?? ownMarkup(text))
@@ -543,7 +555,21 @@ function anchored(words: string): string {
    *  a quote, where a formula or a fence may stand beside them. */
   const lines: (boolean | Set<string>)[] = []
   let above: boolean | Set<string> = false
+  const newlines = (text: string) => text.split('\n').length - 1
+  const read = cut.replace(/\r\n|\r/g, '\n')
+  let at = 0
+  let line = 0
   for (const token of tokens) {
+    // By where its words are: the parser reads a CRLF as a newline, and a line it keeps no
+    // token for, a second definition of one name, can hold no mark, with the lines after
+    // it still the ones they are. A paragraph it joined across one is found by its first
+    // line, and what cannot be found says nothing rather than say it of the wrong line.
+    const whole = read.indexOf(token.raw, at)
+    const raw = whole === -1 ? (token.raw.split('\n')[0] ?? '') : token.raw
+    const from = whole === -1 ? read.indexOf(raw, at) : whole
+    if (from === -1) continue
+    line += newlines(read.slice(at, from))
+    while (lines.length < line) lines.push(false)
     const here: boolean | Set<string> =
       token.type === 'space'
         ? above
@@ -553,8 +579,11 @@ function anchored(words: string): string {
             ? leafLines(token)
             : false
     if (token.type !== 'space') above = here
-    const count = token.raw.split('\n').length - (token.raw.endsWith('\n') ? 1 : 0)
-    for (let one = 0; one < count; one++) lines.push(here)
+    // A token's last newline ends its line; a line the one before ended on is that one's.
+    const last = line + newlines(raw) - (raw.endsWith('\n') ? 1 : 0)
+    for (let one = lines.length; one <= last; one++) lines.push(here)
+    line += newlines(raw)
+    at = from + raw.length
   }
 
   return blockIdsAnchored(words, (line, kept) => {

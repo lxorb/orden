@@ -6,6 +6,7 @@
   import { t } from '../i18n.svelte'
   import { droppable } from './drag.svelte'
   import type { Kit } from './kit'
+  import { everyRow } from './list-items'
   import RowLine from './RowLine.svelte'
   import { dayIn } from './values'
   import { agendaOf } from './calendar'
@@ -18,7 +19,7 @@
 
   const days = $derived.by(() => {
     const base = live.base
-    const rows = (live.answer?.groups ?? []).flatMap((group) => group.rows)
+    const rows = everyRow(live.answer?.groups ?? [])
     return agendaOf(rows, (row: Row) =>
       base ? dayIn(cellValue(base, property, row, live.context)) : null,
     )

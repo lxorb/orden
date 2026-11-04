@@ -8,7 +8,16 @@
  *  Pure. `displayed` is what the engine is asked with: the view's own filters and the
  *  narrowing together. */
 
-import { type Base, type Row, SMART_SORT, type View, WHEN, WHEN_GROUPS } from '@orden/bases'
+import {
+  type Base,
+  isWhen,
+  type Row,
+  SMART_SORT,
+  type View,
+  WHEN,
+  WHEN_ASIDE,
+  WHEN_GROUPS,
+} from '@orden/bases'
 
 export type Grouping =
   | 'default'
@@ -130,13 +139,17 @@ export function notesIn(rows: readonly Row[]): { path: string; name: string }[] 
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
 
+/** What Todos' formula of when a task is due is called in a base (`WHEN`): a formula of the
+ *  base's own called `when` stays its own. */
+const whenName = (base: Base) =>
+  base.formulas.when === undefined || base.formulas.when === WHEN ? 'when' : WHEN_ASIDE
+
 /** The base with one view changed; `when` gives it Todos' formula of when a task is
- *  due, which grouping by date reads (`WHEN`). */
+ *  due, which grouping by date reads. */
 function withView(base: Base, at: number, change: (view: View) => View, when = false): Base {
   const view = base.views[at]
   if (!view) return base
-  const formulas =
-    when && base.formulas.when === undefined ? { ...base.formulas, when: WHEN } : base.formulas
+  const formulas = when ? { ...base.formulas, [whenName(base)]: WHEN } : base.formulas
   return {
     ...base,
     formulas,
@@ -151,6 +164,7 @@ export function groupingOf(view: View, original: View | null): Grouping {
   if (by === undefined) return 'none'
   // A view grouped by note before notes were grouped by path.
   if (by === 'file.basename') return 'note'
+  if (isWhen(by)) return 'due'
   return GROUPINGS.find((one) => GROUP_BY[one] === by) ?? 'none'
 }
 
@@ -178,7 +192,7 @@ export function withGrouping(
         if (original?.nib.groups) nib.groups = [...original.nib.groups]
         return next
       }
-      const property = GROUP_BY[grouping]
+      const property = grouping === 'due' ? `formula.${whenName(base)}` : GROUP_BY[grouping]
       if (property === undefined) return next
       if (grouping === 'section') nib.groupOrder = 'rows'
       if (grouping === 'due') nib.groups = [...WHEN_GROUPS]

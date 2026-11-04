@@ -8,6 +8,7 @@ import { copyText } from '../clipboard'
 import { deliver } from '../export/save'
 import { t } from '../i18n.svelte'
 import { displayName } from './columns'
+import { everyRow } from './list-items'
 import type { LiveView } from './live.svelte'
 import { propertyName } from './words'
 
@@ -18,10 +19,8 @@ function viewCsv(live: LiveView): string | null {
   if (!base || !answer) return null
   const columns = live.columns.filter((one) => !isButton(one))
   const header = columns.map((one) => sheetSafe(propertyName(one, displayName(base, one))))
-  const rows = answer.groups.flatMap((group) =>
-    group.rows.map((row) =>
-      columns.map((column) => sheetSafe(csvValue(cellValue(base, column, row, live.context)))),
-    ),
+  const rows = everyRow(answer.groups).map((row) =>
+    columns.map((column) => sheetSafe(csvValue(cellValue(base, column, row, live.context)))),
   )
   return csvText(header, rows)
 }

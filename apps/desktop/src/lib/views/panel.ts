@@ -1,12 +1,13 @@
 /** What the Tasks panel lists, with its counts: the open space's Todos as its view
  *  answers it (#1046), then the notes (every note with open tasks, the most recently
  *  written first, which the favourites are counted by) and the labels (every tag on an
- *  open task).
+ *  open task of the open space, which is where renaming one writes).
  *
- *  Todos is counted by the engine answering the very base its tab opens (`builtinView`),
- *  so a number in the panel and the rows behind it can never disagree. The notes and
- *  labels are one pass over the open tasks. Pure: the panel hands in the rows and the
- *  day, and draws the answer. */
+ *  Todos is counted by the engine answering the base as Orden ships it (`builtinView`):
+ *  every task of the space that can be worked on, as Todoist's sidebar counts a project,
+ *  whatever its view is narrowed to or shows just now. The notes and labels are one pass
+ *  over the open tasks. Pure: the panel hands in the rows and the day, and draws the
+ *  answer. */
 
 import { answer, type Base, builtinView, type Row } from '@orden/bases'
 import { contextFor } from './context'
@@ -78,6 +79,7 @@ export function panelCounts(
         mtime: row.file.mtime,
       })
     }
+    if (space !== undefined && row.space !== space) continue
     for (const tag of row.task?.tags ?? []) labels.set(tag, (labels.get(tag) ?? 0) + 1)
   }
 
