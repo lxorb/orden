@@ -14,6 +14,7 @@
 import { untrack } from 'svelte'
 import { pages } from '../web-tab/pages.svelte'
 import { type Tab, workspace } from '../workspace.svelte'
+import { TAB_KINDS } from '../workspace/tab-kinds'
 import { evicted, type Face, forgetFaces, LARGEST, readFaces, sizeOf, writeFace } from './faces'
 import { shownBox, snapshotOf } from './mirror'
 import { lastingKeys } from './tab-keys'
@@ -53,7 +54,8 @@ class Faces {
   /** A picture of what the pane shows now, kept as `tab`'s: copied at once, made into
    *  markup once the moment has passed. */
   take(paneId: string, tab: Tab) {
-    if (tab.kind === 'web') return
+    // Only what is drawn from a picture keeps one; the rest is drawn from what it holds.
+    if (TAB_KINDS[tab.kind].preview !== 'picture') return
     const later = snapshotOf(paneId)
     if (!later) return
     setTimeout(() => {

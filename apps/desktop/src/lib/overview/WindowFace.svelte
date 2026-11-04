@@ -2,12 +2,13 @@
   /** What a window of the overview shows: what its tab would show, drawn the size its
    *  pane is and made small by the window (issue #331).
    *
-   *  The tab in front of a pane is the pane itself, copied (mirror.ts). Any other is the
-   *  picture kept of it the last time it was on screen, this run or an earlier one
-   *  (faces.svelte.ts): a note, a canvas, a shell, a chat, as it was drawn; a web page as
-   *  it was last photographed. One never on screen on this device is, for a note, its
-   *  words through the reading renderer, the page the export writes; and for anything
-   *  else its mark, its name and where it is from. */
+   *  The tab in front of a pane is the pane itself, copied (mirror.ts). Any other is drawn
+   *  the way its kind says (`preview` in workspace/tab-kinds.ts): a note from its words as
+   *  they are now, through the reading renderer, from the line it was left at; a
+   *  terminal from the last of its screen as written down (previews.ts); a web page from
+   *  its last photograph; anything else from the picture kept of it the last time it was
+   *  on screen (faces.svelte.ts). With nothing to draw from, it is its mark, its name
+   *  and where it is from. */
 
   import { readingHtml, unreadableHtml } from '../reading/render'
   import { trustsHtmlIn } from '../sharing.svelte'
@@ -15,8 +16,10 @@
   import { theme } from '../theme.svelte'
   import { pages } from '../web-tab/pages.svelte'
   import type { Tab } from '../workspace.svelte'
+  import { TAB_KINDS } from '../workspace/tab-kinds'
   import { drawInto, type Face } from './faces'
   import { scrolledBack, scrolledIn } from './mirror'
+  import { readingFrom, scrollbackOf } from './previews'
 
   const {
     tab,
@@ -33,8 +36,11 @@
     height: number
   } = $props()
 
-  /** As much of a note as a window can show at most: the start of it. A note of a
-   *  hundred thousand words is not rendered whole to show its first screen. */
+  /** How its kind is drawn while it is not in front. */
+  const how = $derived(TAB_KINDS[tab.kind].preview)
+
+  /** As much of a note as a window can show at most: a screenful from where it was left.
+   *  A note of a hundred thousand words is not rendered whole to show one screen. */
   const START = 6000
 
   let html = $state('')
@@ -46,8 +52,8 @@
   }
 
   $effect(() => {
-    if (mirror || face?.html || tab.kind !== 'note') return
-    const text = tab.doc.slice(0, START)
+    if (mirror || how !== 'reading') return
+    const text = readingFrom(tab.doc, tab.anchor, START)
     const note = { text, path: tab.path }
     let stale = false
     void readingHtml(note, theme.current, trustsHtmlIn(tab.note))
@@ -60,7 +66,20 @@
     }
   })
 
-  const shot = $derived(tab.kind === 'web' ? (pages.of(tab.id).shot ?? face?.shot ?? null) : null)
+  const shot = $derived(how === 'photograph' ? (pages.of(tab.id).shot ?? face?.shot ?? null) : null)
+
+  /** A terminal's last lines, as written down. */
+  let screen = $state<{ text: string; cols: number } | null>(null)
+  $effect(() => {
+    if (mirror || how !== 'scrollback') return
+    let stale = false
+    void scrollbackOf(tab).then((one) => {
+      if (!stale) screen = one
+    })
+    return () => {
+      stale = true
+    }
+  })
 
   /** A kept picture drawn again, at the size it was taken and made the window's width,
    *  its scrollers where they were. */
@@ -90,6 +109,15 @@
 <div class="face" style:width="{width}px" style:height="{height}px">
   {#if mirror}
     <div class="held" use:holding={mirror}></div>
+  {:else if how === 'reading'}
+    <div class="read">
+      <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note's own words, rendered by the same renderer the reading view uses, under the same trust -->
+      <article class="page nib-write">{@html html}</article>
+    </div>
+  {:else if how === 'scrollback' && screen}
+    <pre class="screen">{screen.text}</pre>
+  {:else if how === 'photograph' && shot}
+    <img class="shot" src={shot} alt="" draggable="false" />
   {:else if face?.html}
     <div
       class="kept"
@@ -98,13 +126,6 @@
       style:scale={width / Math.max(face.w, 1)}
       use:drawn={face}
     ></div>
-  {:else if tab.kind === 'note'}
-    <div class="read">
-      <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note's own words, rendered by the same renderer the reading view uses, under the same trust -->
-      <article class="page nib-write">{@html html}</article>
-    </div>
-  {:else if shot}
-    <img class="shot" src={shot} alt="" draggable="false" />
   {:else}
     <div class="mark">
       <span class="big"><TabMark {tab} /></span>
@@ -155,6 +176,23 @@
     flex-direction: column;
     width: 100%;
     height: 100%;
+  }
+
+  /* A terminal's last lines, in the terminal's own face, from the bottom up as a screen
+     fills. */
+  .screen {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+    margin: 0;
+    padding: var(--space-3) var(--space-4);
+    overflow: hidden;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: var(--text-row);
+    line-height: 1.35;
+    white-space: pre;
   }
 
   .shot {
