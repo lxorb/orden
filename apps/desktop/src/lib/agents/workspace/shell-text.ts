@@ -9,13 +9,93 @@ export function programOf(command: string): string {
   return /^[\w.+-]+$/.test(word) ? word.toLowerCase() : ''
 }
 
-/** What a listed program can be told to run or write with no second command in sight, by
- *  the program. This is not what makes a listed program safe, which nothing can: a program
- *  on the list is trusted with all it can do, as docs/agent-native.md 8.9 says. It keeps
- *  the plainest ways out of a line that looks like a read in front of the reader's
- *  question. Long options are matched by any prefix, as npm takes one. */
+/** What a package manager is known to do freely, as git below: any other command asks, and
+ *  so does any other option, since each one can set a config key (`--script-shell`,
+ *  `--userconfig`, `--shell`, `--viewer`, pnpm's `--config.x`) and a config key can run
+ *  anything. An abbreviation is not one of them: npm reads `exe` as `exec`. This is not what
+ *  makes a listed program safe, which nothing can: a program on the list is trusted with
+ *  all it can do, as docs/agent-native.md 8.9 says. It keeps the plainest ways out of a line
+ *  that looks like a read in front of the reader's question.
+ *
+ *  `scripts` are the bare names taken for a package's own scripts, where a bare name is not
+ *  only that: pnpm and bun's `run` start whatever else goes by the name on the path. */
 const PACKAGES = { long: ['--script-shell', '--node-options'] }
 const PLAIN = ['--version', '--help', '-v', '-h', '--silent', '-s']
+const SCRIPTS = [
+  'test',
+  'build',
+  'dev',
+  'start',
+  'stop',
+  'restart',
+  'lint',
+  'check',
+  'format',
+  'typecheck',
+  'preview',
+  'serve',
+  'watch',
+]
+/** What is free after the command: where a value follows, it reads as any other word. */
+const OPTIONS_FREE = [
+  ...PLAIN,
+  '--save',
+  '-S',
+  '--save-dev',
+  '-D',
+  '-d',
+  '--dev',
+  '--save-exact',
+  '-E',
+  '--exact',
+  '--save-optional',
+  '-O',
+  '--optional',
+  '--save-peer',
+  '--no-save',
+  '--global',
+  '-g',
+  '--production',
+  '--prod',
+  '-P',
+  '--force',
+  '-f',
+  '--frozen-lockfile',
+  '--no-frozen-lockfile',
+  '--immutable',
+  '--legacy-peer-deps',
+  '--omit',
+  '--include',
+  '--no-audit',
+  '--no-fund',
+  '--audit-level',
+  '--fix',
+  '--json',
+  '--long',
+  '--depth',
+  '--all',
+  '-a',
+  '--recursive',
+  '-r',
+  '--filter',
+  '-F',
+  '--workspace',
+  '-w',
+  '--workspaces',
+  '--workspace-root',
+  '--if-present',
+  '--verbose',
+  '--parallel',
+  '--stream',
+  '--watch',
+  '--coverage',
+  '--bail',
+  '--dry-run',
+  '--offline',
+  '--prefer-offline',
+  '--latest',
+  '-L',
+]
 const REACH: Record<
   string,
   {
@@ -32,21 +112,104 @@ const REACH: Record<
   npm: {
     ...PACKAGES,
     short: null,
-    commands: ['exec', 'x', 'explore', 'init', 'create', 'innit'],
+    commands: [
+      'test',
+      't',
+      'run',
+      'run-script',
+      'start',
+      'stop',
+      'restart',
+      'install',
+      'i',
+      'add',
+      'ci',
+      'clean-install',
+      'uninstall',
+      'remove',
+      'rm',
+      'un',
+      'update',
+      'up',
+      'upgrade',
+      'ls',
+      'list',
+      'll',
+      'la',
+      'outdated',
+      'audit',
+      'view',
+      'info',
+      'show',
+      'pack',
+      'help',
+      'root',
+      'prefix',
+      'why',
+      'explain',
+      'dedupe',
+      'prune',
+      'rebuild',
+      'version',
+    ],
     before: PLAIN,
     valued: ['--prefix', '-w', '--workspace'],
   },
   pnpm: {
     ...PACKAGES,
     short: null,
-    commands: ['exec', 'dlx', 'create', 'x'],
+    commands: [
+      ...SCRIPTS,
+      't',
+      'run',
+      'install',
+      'i',
+      'add',
+      'remove',
+      'rm',
+      'uninstall',
+      'un',
+      'update',
+      'up',
+      'upgrade',
+      'list',
+      'ls',
+      'll',
+      'la',
+      'outdated',
+      'audit',
+      'why',
+      'view',
+      'info',
+      'prune',
+      'rebuild',
+      'dedupe',
+      'pack',
+      'root',
+      'help',
+    ],
     before: [...PLAIN, '-r', '--recursive', '-w', '--workspace-root'],
     valued: ['--filter', '-F', '--dir', '-C'],
   },
   yarn: {
     ...PACKAGES,
     short: null,
-    commands: ['exec', 'dlx', 'create'],
+    commands: [
+      ...SCRIPTS,
+      'run',
+      'install',
+      'add',
+      'remove',
+      'upgrade',
+      'up',
+      'list',
+      'info',
+      'why',
+      'outdated',
+      'audit',
+      'pack',
+      'help',
+    ],
     before: PLAIN,
     valued: ['--cwd'],
   },
@@ -54,7 +217,19 @@ const REACH: Record<
     // `-e1` and `-pe1`: short options bundle, and a value may hang on the end.
     short: /^-[a-zA-Z]*[ep]/,
     long: [...PACKAGES.long, '--eval', '--print'],
-    commands: ['x', 'create'],
+    commands: [
+      'test',
+      'build',
+      'install',
+      'i',
+      'add',
+      'a',
+      'remove',
+      'rm',
+      'update',
+      'outdated',
+      'help',
+    ],
     before: PLAIN.filter((one) => one !== '-s'),
     valued: ['--cwd'],
   },
@@ -337,8 +512,24 @@ function argumentsStay(program: string, words: readonly string[]): boolean {
     return false
   }
 
+  // `yarn workspace web build` is `build`, in `web`.
+  if (program === 'yarn' && plain[at] === 'workspace') {
+    at += 2
+    if (at >= plain.length) return false
+  }
   const command = plain[at]
-  if (command !== undefined && reach.commands.includes(command)) return false
+  if (command !== undefined && !reach.commands.includes(command)) {
+    // Bun's `run` takes a file or anything on the path as readily as a script.
+    if (program !== 'bun' || command !== 'run' || !SCRIPTS.includes(plain[at + 1] ?? '')) {
+      return false
+    }
+  }
+
+  // After it, as git's: known to be free or a question, and past `--` it is the script's.
+  const end = plain.indexOf('--', at)
+  for (const word of plain.slice(at + 1, end === -1 ? undefined : end)) {
+    if (word.startsWith('-') && !OPTIONS_FREE.includes(word.split('=')[0] ?? word)) return false
+  }
 
   return !plain.some((word) => {
     if (word.startsWith('--')) {

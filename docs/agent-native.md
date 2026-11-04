@@ -928,10 +928,13 @@ machine, which is more than everything else in this document put together.
 bare listed name with no second command, no control character and nothing the shell expands,
 but `python -c`, a `git` alias in the repository's config, a `Makefile` or an `npm test` a
 script changed run whatever they run, and no check of a line can see that. `shell-text.ts`
-sends the plainest ways out back to the question (git's `-c`, `-C`, `-p`, `--exec-path`,
-`--git-dir`, `--work-tree`, `--output`, `--upload-pack` and its `config`, `submodule` and
-`bisect`; `npm exec` and its kind, and `npx` always), which narrows the list of surprises
-and does not end it. List only what you would let the agent run with anything after it.
+sends the plainest ways out back to the question: git, npm, pnpm, yarn and bun each go by the
+commands and options known to be free, and any other asks (git's `-c`, `-C`, `-p`,
+`--exec-path`, `--git-dir`, `--work-tree`, `--output`, `--upload-pack` and its `config`,
+`submodule` and `bisect`; `npm exec` and its kind and abbreviations, `npm config` and any
+option that sets a config key, a bare `pnpm touch` or `bun run touch`, which start what is on
+the path; `npx` always). That narrows the list of surprises and does not end it. List only
+what you would let the agent run with anything after it.
 
 **The reader's own terminals** are tabs like any other (`lib/agents/workspace/
 terminal-tab.ts`), what "look at my terminal" and "restart the server" are about. VS Code's
