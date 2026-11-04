@@ -192,6 +192,19 @@ export function partsFor(width: number, tab: Sized, touch = false): Parts {
   return { mark, close, title: left > 0, centred: false }
 }
 
+/** How long a tab drawn as its mark takes to open out to its name, which is the strip's
+ *  own width transition, `--dur-base` (210 ms in tokens.css). */
+export const OPENING = 210
+
+/** Whether a tab's cross takes a press (#1041): not while the tab opens out under the
+ *  pointer. The cross stands against the tab's trailing edge, and that edge starts where
+ *  the mark's ends - right under a pointer that came to the mark - so a click thrown at a
+ *  tab drawn as an icon landed on its cross as it appeared, and closed the tab it meant to
+ *  choose. Once the tab has opened, the cross is where it is meant to be. */
+export function crossTakes(id: string, opened: string | null, settled: string | null): boolean {
+  return id !== opened || settled === opened
+}
+
 /** Which place in a strip a point along it is at: before every tab whose middle it
  *  has not reached. What a note out of the file list, or a tab out of another pane,
  *  is dropped at. */

@@ -1,11 +1,14 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
 import {
   clampedStart,
+  crossTakes,
   endOf,
   holds,
   keptWidths,
   moved,
   near,
+  OPENING,
   nearestSlot,
   partsFor,
   placed,
@@ -302,5 +305,29 @@ describe('the hairlines between tabs', () => {
 
   test('every plain pair has one', () => {
     expect([...separated(['a', 'b', 'c'], new Set())]).toEqual(['a', 'b'])
+  })
+})
+
+/** #1041: a click thrown at a tab drawn as its mark opened it out and, in the same press,
+ *  landed on its cross, which stands against the tab's trailing edge - under the pointer
+ *  until the tab has opened. So the cross takes no press until then. */
+describe("a tab's cross as it opens out under the pointer", () => {
+  test('takes no press until the tab has opened, and does then', () => {
+    expect(crossTakes('a', 'a', null)).toBe(false)
+    expect(crossTakes('a', 'a', 'b')).toBe(false)
+    expect(crossTakes('a', 'a', 'a')).toBe(true)
+  })
+
+  test('on every other tab is as it was', () => {
+    expect(crossTakes('b', 'a', null)).toBe(true)
+    expect(crossTakes('b', null, null)).toBe(true)
+  })
+
+  test("waits as long as the strip's own width transition", () => {
+    const tokens = readFileSync(
+      new URL('../../../../../packages/themes/src/tokens.css', import.meta.url),
+      'utf8',
+    )
+    expect(tokens).toContain(`--dur-base: ${OPENING}ms;`)
   })
 })
