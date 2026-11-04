@@ -364,6 +364,17 @@ def corners(shot, hole, label):
 
 
 def zoom():
+    # In front again, whatever ran before it: the tree's last drive leaves a note there.
+    front = run("""(() => {
+      const ws = nib.workspace
+      const tab = ws.tabs.find((one) => one.kind === 'web')
+      if (!tab) return false
+      ws.activate(tab.id)
+      return true
+    })()""")
+    if not front:
+        fail("no web tab to zoom over")
+        return
     first = until(HOLE, "the web tab's hole")
     if not first:
         return
