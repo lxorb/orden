@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onDestroy, onMount, tick, untrack } from 'svelte'
+  import { whileHere } from './while-here'
   import { staysOn } from './caret'
   import Door from './Door.svelte'
   import { views } from './views.svelte'
@@ -89,7 +90,7 @@
   function showTrail(event: MouseEvent, tab: Tab) {
     if (!tab.canGoBack) return
     event.preventDefault()
-    void import('./tab-strip/menu').then(({ trailMenu }) =>
+    void here(import('./tab-strip/menu')).then(({ trailMenu }) =>
       menu.show(event, trailMenu(tab), { title: t('Back') }),
     )
   }
@@ -100,14 +101,16 @@
   function showMenu(event: MouseEvent, tab: Tab) {
     event.preventDefault()
     event.stopPropagation()
-    void import('./tab-strip/menu').then(({ tabMenu, tabMenuTitle }) =>
+    void here(import('./tab-strip/menu')).then(({ tabMenu, tabMenuTitle }) =>
       menu.show(event, tabMenu(tab, paneId), { title: tabMenuTitle(tab, paneId) }),
     )
   }
 
   /** What the note in this pane offers, fetched on the press; see note-menu.ts. */
   function showNoteMenu(event: MouseEvent) {
-    void import('./note-menu').then(({ noteMenu }) => menu.show(event, noteMenu(event, paneId)))
+    void here(import('./note-menu')).then(({ noteMenu }) =>
+      menu.show(event, noteMenu(event, paneId)),
+    )
   }
 
   /** A press on a stopped agent's mark resumes it (docs/agent-native.md 9.5). Read on
@@ -122,7 +125,7 @@
   /** The empty stretch's own menu, by the point: a held finger's has no target. */
   function showStripMenu(event: MouseEvent) {
     if (document.elementFromPoint(event.clientX, event.clientY) !== strip) return
-    void import('./tab-strip/strip-menu').then(({ stripMenu }) =>
+    void here(import('./tab-strip/strip-menu')).then(({ stripMenu }) =>
       menu.show(event, stripMenu(paneId)),
     )
   }
@@ -159,12 +162,17 @@
     stripWidth > 0 ? Math.max(0, stripWidth - LEAD - (viewport.touch ? 0 : PLUS)) : null,
   )
 
+  /** Every part this strip fetches is heard only while the strip is there; see while-here.ts. */
+  const here = whileHere()
+
   const drag = new TabDrag()
   /** Chrome's held widths while tabs are closed with the pointer, fetched once the strip
    *  is up; see tab-strip/closing.svelte.ts. */
   let closing = $state<ClosingWidths | null>(null)
   onMount(() => {
-    void import('./tab-strip/closing.svelte').then((one) => (closing = new one.ClosingWidths()))
+    void here(import('./tab-strip/closing.svelte')).then(
+      (one) => (closing = new one.ClosingWidths()),
+    )
   })
   /** The tab under a mouse, which hides the hairlines either side of it. */
   let hovered = $state<string | null>(null)
@@ -426,9 +434,9 @@
       return
     }
     if (event.button !== 0 || drag.pressing) return
-    if (!Chip) void import('./tab-strip/TabChip.svelte').then((one) => (Chip = one.default))
+    if (!Chip) void here(import('./tab-strip/TabChip.svelte')).then((one) => (Chip = one.default))
     if (!carry) {
-      void import('./tab-strip/carrying').then((one) => {
+      void here(import('./tab-strip/carrying')).then((one) => {
         carry = one
         // A hand quicker than the fetch is already out, and may have stopped: nothing
         // moves again to light what it is over, and let go of there the tab went home.
@@ -704,7 +712,7 @@
     // An essential, kept as a tab where it was let go: a double click's keeping, in place.
     const mark = draggedBookmark(transfer)
     if (mark !== null) {
-      void import('./tab-strip/essential-drop').then(({ droppedEssential }) =>
+      void here(import('./tab-strip/essential-drop')).then(({ droppedEssential }) =>
         droppedEssential(mark, paneId, at),
       )
       return
@@ -716,7 +724,7 @@
       const held = new Map(
         ['text/uri-list', 'text/plain'].map((type) => [type, transfer?.getData(type) ?? '']),
       )
-      void import('./tab-strip/dropped').then(({ droppedAddress }) => {
+      void here(import('./tab-strip/dropped')).then(({ droppedAddress }) => {
         const address = droppedAddress((type) => held.get(type) ?? '')
         // Opened from the tab in front of that pane, so it lands in that pane.
         const from = workspace.panes.at(paneId)?.activeTabId ?? undefined
@@ -764,7 +772,8 @@
     rename(tab.id)
   }
 
-  const rename = (id: string) => void import('./tab-strip/ops').then((ops) => ops.renameFromTab(id))
+  const rename = (id: string) =>
+    void here(import('./tab-strip/ops')).then((ops) => ops.renameFromTab(id))
 
   /** A double click keeps a preview, the way VS Code does it. A terminal is never one,
    *  so there it renames, as a double click on Windows Terminal's tab does. */
@@ -779,7 +788,7 @@
 
   /** The pick, fetched with the first press on a tab; see tab-strip/picking.svelte.ts. */
   const loadPicking = () =>
-    import('./tab-strip/picking.svelte').then((one) => (picks.loaded ??= one))
+    here(import('./tab-strip/picking.svelte')).then((one) => (picks.loaded ??= one))
 
   /** A press with Ctrl or Shift, picked; answers the tab now in front. */
   function pickWith(loaded: NonNullable<typeof picks.loaded>, event: MouseEvent, tab: Tab) {
@@ -792,7 +801,7 @@
   /** Chrome's hover card, fetched with the first pointer on a tab; see hover-card.svelte.ts. */
   let cards: Promise<typeof import('./tab-strip/hover-card.svelte')> | undefined
   const card = (tab: Tab, node: Element | null, focused = false) =>
-    void (cards ??= import('./tab-strip/hover-card.svelte')).then(({ hovering }) =>
+    void (cards ??= here(import('./tab-strip/hover-card.svelte'))).then(({ hovering }) =>
       node ? hovering.restOn(tab, node, focused) : hovering.leave(tab.id),
     )
 </script>

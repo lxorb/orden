@@ -28,6 +28,7 @@
   } from '@orden/editor'
   import { untrack } from 'svelte'
   import Door from './Door.svelte'
+  import { whileHere } from './while-here'
   import { alone } from './alone.svelte'
   import { isDeck } from '@orden/markdown/slide-breaks'
   import type { Tab } from './workspace.svelte'
@@ -76,6 +77,9 @@
   import { EDGE, inside, type Zone, zoneAt } from './workspace/zones'
 
   const { pane }: { pane: Pane } = $props()
+
+  /** A menu fetched for this pane is shown only while the pane is there; see while-here.ts. */
+  const here = whileHere()
 
   const tab = $derived(workspace.showing(pane.id))
 
@@ -321,7 +325,7 @@
   function showMenu(event: MouseEvent, on: EditorView | undefined, path: string | null) {
     event.preventDefault()
     event.stopPropagation()
-    void import('./editor-menu').then(({ showEditorMenu }) => showEditorMenu(event, on, path))
+    void here(import('./editor-menu')).then(({ showEditorMenu }) => showEditorMenu(event, on, path))
   }
 
   /** A pasted or dropped image, stored once however often it is pasted. A large
