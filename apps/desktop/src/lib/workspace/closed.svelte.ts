@@ -9,6 +9,7 @@
  *  should not carry the text of all hundred around with it. */
 
 import { movedTo, nameOf, samePath, within } from '../space-paths'
+import { unixLines } from './documents.svelte'
 import type { FileOp } from './file-ops'
 import type { ClosedTab, Draft } from './session'
 
@@ -75,10 +76,13 @@ export class ClosedTabs {
    *  what is on the disk or older, and coming back with those is a write of them over
    *  whatever the file says by then, an agent's edit or a sync pull. From here on it comes
    *  back from its file, as a tab with nothing unwritten does. Only that document's: the
-   *  words of another at the path may have been refused, and these say nothing of them. */
-  wroteAll(path: string, key: string) {
+   *  words of another at the path may have been refused, and these say nothing of them.
+   *  Or the entry's own words, whoever wrote them: a key means nothing after a restart, and
+   *  an entry of the run before holds the words the restored tab has just written. */
+  wroteAll(path: string, key: string, words: string) {
     const stack = this.stack.map((closed) => {
-      if (!closed.draft.dirty || closed.draft.share !== key || !samePath(closed.draft.path, path))
+      if (!closed.draft.dirty || !samePath(closed.draft.path, path)) return closed
+      if (closed.draft.share !== key && unixLines(closed.draft.doc) !== unixLines(words))
         return closed
       const draft: Draft = { ...closed.draft, dirty: false, doc: '' }
       delete draft.base

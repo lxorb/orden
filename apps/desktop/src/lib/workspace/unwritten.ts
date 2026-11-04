@@ -104,6 +104,18 @@ export async function mergedOver(base: string, words: string, disk: string): Pro
       return disk
   }
   if (__EVEN_PLUGIN__) return words
-  const { merge3 } = await import('@orden/sync-core/merge3')
-  return merge3(base, words, disk).text
+  const { mergedOn } = await import('@orden/sync-core/merge3')
+  return mergedOn(base, words, disk)
+}
+
+/** A draft's words brought onto the words of the file's open document, or null where they do
+ *  not merge: no version they were typed on, or a kind whose words are not text. */
+export async function wordsOnto(
+  draft: Draft,
+  kind: Draft['kind'],
+  holds: string,
+): Promise<string | null> {
+  if (draft.base === undefined || draft.kind !== 'note' || kind !== 'note') return null
+  if (__EVEN_PLUGIN__) return null
+  return mergedOver(unixLines(draft.base), unixLines(draft.doc), holds)
 }

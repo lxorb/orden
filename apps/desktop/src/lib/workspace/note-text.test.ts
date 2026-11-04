@@ -889,9 +889,11 @@ describe('with another window here', () => {
     expect(note.latest).toBe('ONE\n')
   })
 
-  test('a window alone writes as it always has', async () => {
+  test('a window alone looks at the disk first as well: a file has more writers', async () => {
     const { ws } = space({ '/space/a.md': 'one\n' }, '/space/a.md')
-    const writing = vi.fn()
+    const writing = vi.fn((_note: unknown, _path: string, write: (w: string) => Promise<unknown>) =>
+      write('ONE\n').then(() => ({ words: 'ONE\n', revision: ws.documents[0]?.revision })),
+    )
     meetAcross({ alone: true, writing } as never)
     await replaceInNotes(ws, [
       {
@@ -902,7 +904,7 @@ describe('with another window here', () => {
         back: [{ from: 0, to: 3, insert: 'one' }],
       },
     ])
-    expect(writing).not.toHaveBeenCalled()
+    expect(writing).toHaveBeenCalledOnce()
     expect(disk.get('/space/a.md')).toBe('ONE\n')
   })
 

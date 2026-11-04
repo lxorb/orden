@@ -131,24 +131,23 @@ export async function takeSessionsLeft(
  *  this window or that file may have moved on since: its words are kept as a draft of its
  *  own beside it, never merged into or dropped for what is there, and only where the file
  *  or an open note here does not already say them: as they are, or with what has been
- *  written since. Two panes on one note are one set of words. `spaceOf` is the space the file
- *  is in, which is the draft's from here on. */
+ *  written since. Two panes on one note are one set of words, and so is what one document
+ *  held earlier, a tab closed and typed on in another pane, with what it holds now: the one
+ *  holding the other is kept, wherever in the session it was found. A session does not say
+ *  which is later, so words taken out in between come back here, in the draft. `spaceOf` is the space the file is
+ *  in, which is the draft's from here on. */
 export async function asDrafts(
   drafts: readonly Draft[],
   says: (path: string) => Promise<string | null>,
   spaceOf: (path: string) => string | null = () => null,
 ): Promise<Draft[]> {
   const out: Draft[] = []
-  const seen = new Set<string>()
-  for (const draft of drafts) {
+  for (const [at, draft] of drafts.entries()) {
     if (draft.path === null) {
       out.push(draft)
       continue
     }
-    if (draft.share !== undefined) {
-      if (seen.has(draft.share)) continue
-      seen.add(draft.share)
-    }
+    if (await saidBeside(draft, at, drafts)) continue
     if (await saidThere(draft, await says(draft.path))) continue
     const space = spaceOf(draft.path)
     const made: Draft = { ...draft, path: null, dirty: true, ...(space ? { space } : {}) }
@@ -157,6 +156,18 @@ export async function asDrafts(
     out.push(made)
   }
   return out
+}
+
+/** Whether another draft of the same document says this one's words: the same ones or more.
+ *  Of drafts that each say the other, the first is kept: one always stands. */
+async function saidBeside(draft: Draft, at: number, drafts: readonly Draft[]): Promise<boolean> {
+  if (draft.share === undefined) return false
+  for (const [there, other] of drafts.entries()) {
+    if (there === at || other.share !== draft.share || other.path === null) continue
+    if (other.doc !== draft.doc && !(await saidThere(draft, other.doc))) continue
+    if (there < at || !(await saidThere(other, draft.doc))) return true
+  }
+  return false
 }
 
 /** Whether a file's words already hold a tab's unwritten ones. */

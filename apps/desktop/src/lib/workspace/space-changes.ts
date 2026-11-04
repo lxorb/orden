@@ -8,6 +8,7 @@ import { identifier } from '../identifier'
 import { samePath } from '../space-paths'
 import { forgetSpaceViews } from '../views/kept-views'
 import { invoke } from '../tauri'
+import { windows } from '../windows'
 import type { Space } from '../workspace.svelte'
 import { type HoldsSpaces, selectSpace, tabSets } from './spaces'
 
@@ -40,6 +41,7 @@ export async function adoptSpace(
   if (!ws.spaces.some((space) => samePath(space.root, created.path))) {
     const space: Space = { id: identifier(), name: created.name, root: created.path }
     ws.spaces = [...ws.spaces, space]
+    windows.say('spaces-again')
 
     if (ws.activeSpaceId) ws.persist()
     else await selectSpace(ws, space.id)
@@ -57,8 +59,11 @@ export async function addSpace(ws: HoldsSpaces, name: string) {
 
   if (!created) return
 
-  const space: Space = { id: identifier(), name: created.name, root: created.path }
-  ws.spaces = [...ws.spaces, space]
+  // A listing heard meanwhile may have found the folder already, and given it an id.
+  const listed = ws.spaces.find((one) => samePath(one.root, created.path))
+  const space: Space = listed ?? { id: identifier(), name: created.name, root: created.path }
+  if (!listed) ws.spaces = [...ws.spaces, space]
+  windows.say('spaces-again')
   await selectSpace(ws, space.id)
   return space
 }

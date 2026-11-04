@@ -39,14 +39,22 @@ export function meetAcross(one: Across | null) {
   across = one
 }
 
+/** The way to fetch them for a write before that; see `acrossSoon` in saving.svelte.ts. */
+let acrossSoon: (() => Promise<Across>) | null = null
+
+export function fetchAcross(fetch: () => Promise<Across>) {
+  acrossSoon = fetch
+}
+
 /** An open note whose words were changed in place just now, on their way to its file: the
  *  words go down, and what was written is answered, or null where nothing was and they are
  *  owed. `knew` is what the note knew the file to hold before the change.
  *
- *  With another window here its words may be on the disk unheard, so these go the way an
- *  autosave goes (across.ts). In the same breath as the change, before anything waits: the
- *  note says what the file held, which is what news heard meanwhile merges against.
- *  `first` is what comes before the write: a version kept. */
+ *  Its words may be on the disk unheard, another window's or another program's, so these go
+ *  the way an autosave goes (across.ts), alone as well. In the same breath as the change,
+ *  before anything waits: the note says what the file held, which is what news heard meanwhile
+ *  merges against. A store with nothing to go through writes straight down, and a write
+ *  refused is owed either way. `first` is what comes before the write: a version kept. */
 export function writeEdited(
   note: NoteDoc,
   path: string,
@@ -54,22 +62,30 @@ export function writeEdited(
   knew: string | null,
   first: () => Promise<unknown> = () => Promise.resolve(),
 ): Promise<string | null> {
-  const others = across?.alone === false ? across : null
-  if (!others) return first().then(() => writeTaking(path, words).then(() => words))
-
+  const revision = note.revision
   note.onDisk = knew
   note.dirty = true
+  const down = (content: string) => invoke('write_note', { path, content })
+  let through: Across | null = null
   return first()
-    .then(() => others.writing(note, path, (down) => invoke('write_note', { path, content: down })))
+    .then(() => across ?? acrossSoon?.().catch(() => null) ?? null)
+    .then(async (found) => {
+      through = found
+      if (found) return found.writing(note, path, down)
+      await writeTaking(path, words)
+      note.onDisk = words
+      return { words, revision }
+    })
     .then(
       (written) => {
         if (written === null) return null
         note.dirty = note.revision !== written.revision
         return written.words
       },
-      (error: unknown) => {
+      async (error: unknown) => {
         log('error', `save: ${path} - ${String(error)}`)
-        others.owe(note)
+        if (through) through.owe(note)
+        else (await import('../workspace.svelte')).workspace.owedWords(note)
         return null
       },
     )

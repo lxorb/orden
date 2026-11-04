@@ -38,8 +38,9 @@ export class OpenDocuments {
   /** Documents an arrangement is being built out of; see `arranging`. */
   private readonly building = new Set<NoteDoc>()
   private arrangements = 0
-  /** Documents a tab came back as with no file, by the document its session named: the
-   *  other pane on that note finds it here, as it finds one with a path by its path. */
+  /** Documents a tab with unwritten words came back as, by the document its session named:
+   *  the other pane on that note is a view of this one, and finds it here, whatever it
+   *  came back as and whatever is open at its path. */
   private readonly drafted = new Map<string, NoteDoc>()
 
   constructor(
@@ -114,12 +115,12 @@ export class OpenDocuments {
     return null
   }
 
-  /** A tab named by `share` came back as this document, with no file. */
-  wentDraft(share: string, note: NoteDoc) {
+  /** A tab named by `share` came back as this document. */
+  cameBack(share: string, note: NoteDoc) {
     this.drafted.set(share, note)
   }
 
-  draftOf(share: string): NoteDoc | null {
+  cameBackAs(share: string): NoteDoc | null {
     return this.drafted.get(share) ?? null
   }
 

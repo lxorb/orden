@@ -5,7 +5,7 @@ A CRLF file open in two windows keeps being heard and written (H3-WINDOWS-1). Wo
 set out of sight come along from a window that went (H3-WINDOWS-2). A window that comes back
 with old words merges them with a file that went on (H3-WINDOWS-3), and a file that went stays
 gone with the words a draft. A link rewritten by a rename in one window reaches the note
-open in the other (H3-WINDOWS-4)."""
+open in the other (H3-WINDOWS-4). A space made in one is offered in the other (H4-WINDOWS-4)."""
 
 from __future__ import annotations
 
@@ -271,7 +271,21 @@ def busy_launch(browser: Browser) -> None:
     ctx.close()
 
 
+def space_made(browser: Browser) -> None:
+    ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
+    a = ctx.new_page()
+    DRIVE.open(a)
+    b = another(ctx, a.url)
+    wait_for(a, f"()=>{WS}.spaces.length>0", "a space here")
+    a.wait_for_timeout(1200)
+    b.evaluate(f"async()=>{{await {WS}.addSpace('Second')}}")
+    wait_for(a, f"()=>{WS}.spaces.some(s=>s.name==='Second')", "the other window offers the space")
+    ctx.close()
+
+
 def drive(browser: Browser) -> None:
+    space_made(browser)
+    say("a space made in the other window: held")
     line_endings(browser)
     say("line endings: held")
     out_of_sight(browser)

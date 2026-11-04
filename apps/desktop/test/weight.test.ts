@@ -1239,8 +1239,12 @@ function holds(tail: string): boolean {
  *  Raised on 2026-11-04, to 3,646,100, for the bug hunt's fourth round: a move's step that
  *  knows its tabs went with it, a closed tab that goes back to its space, the notices over
  *  the overview, a board's page turn giving way to a drawer's edge. Measured 3,645,970.
+ *
+ *  Raised on 2026-11-04, to 3,653,000, for the hunt's fourth round: a session written in a launch
+ *  keeps what it read until each piece is back (workspace/session.ts), and unwritten words
+ *  meeting an open document merge or stay beside it. No new module. Measured 3,652,872.
  */
-const BUDGET = 3_646_500
+const BUDGET = 3_653_000
 const MOST_FILES = 395
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

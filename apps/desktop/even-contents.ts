@@ -529,6 +529,10 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  addresses and quotes and a closed tab's way back (moving-space.ts), measured 5,975,028;
  *  the catalogues to 975,800, the sheet's new words and two messages in every catalogue,
  *  measured 975,705.
+ *
+ *  The code raised on 2026-11-04, to 5,972,000, for the hunt's fourth round: a session written
+ *  in a launch keeps what it read until each piece is back, and unwritten words meeting an open
+ *  document merge or stay beside it. Measured 5,971,695.
  */
 export const BUDGETS: Record<Part, number> = {
   code: 5_978_500,

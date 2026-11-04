@@ -114,6 +114,7 @@ export class Across {
       windows.say('file-op', { op: { ...op, key: undefined } })
     })
     windows.hear('list-again', () => this.listAgain())
+    windows.hear('spaces-again', () => this.inTurn(() => this.spacesAgain()))
     windows.hear('file-op', ({ op }) => this.inTurn(() => this.heardOp(op as FileOp)))
     windows.hear('words', ({ path, text }) =>
       this.inTurn(() => this.heardWords(String(path), String(text))),
@@ -223,11 +224,11 @@ export class Across {
       note.onDisk = disk
       return
     }
-    const { merge3 } = await import('@orden/sync-core/merge3')
+    const { mergedOn } = await import('@orden/sync-core/merge3')
     // From here to the note holding it nothing waits, so no key can land in between.
     const joined = this.desk.joined(note)
     const mine = unixLines(joined ? joined.text() : note.latest)
-    const words = mine === base ? disk : merge3(base, mine, disk).text
+    const words = mine === base ? disk : mergedOn(base, mine, disk)
     if (words !== mine) {
       if (joined) joined.put(words)
       else this.into(note, mine, words)
@@ -286,6 +287,12 @@ export class Across {
       note.dirty = true
       this.desk.owed(note)
     })
+  }
+
+  /** Another window made a space, which is no file operation and moves nothing kept here:
+   *  the chooser offers it, and whoever holds the watch watches it. */
+  private async spacesAgain() {
+    await this.desk.loadSpaces()
   }
 
   private async heardOp(op: FileOp) {

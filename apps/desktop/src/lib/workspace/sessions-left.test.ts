@@ -354,3 +354,91 @@ describe('words on a file that went on without them', () => {
     expect(out[0]).not.toHaveProperty('base')
   })
 })
+
+describe('one document in two places of a left session', () => {
+  const held = {
+    kind: 'note' as const,
+    path: '/spaces/One/a.md',
+    name: 'a.md',
+    dirty: true,
+    cursor: 0,
+    scroll: 0,
+    share: 'k1',
+    base: 'base\n',
+  }
+
+  test('the newer words are the ones kept, whichever is found first', async () => {
+    const older = { ...held, doc: 'base\nolder\n' }
+    const newer = { ...held, doc: 'base\nolder\nnewer\n' }
+    const says = () => Promise.resolve('base\n')
+    for (const found of [
+      [older, newer],
+      [newer, older],
+    ]) {
+      expect((await asDrafts(found, says)).map((one) => one.doc)).toEqual(['base\nolder\nnewer\n'])
+    }
+  })
+
+  test('words that went two ways are both kept', async () => {
+    const one = { ...held, doc: 'base\none way\n' }
+    const other = { ...held, doc: 'base\nanother\n' }
+    const out = await asDrafts([one, other], () => Promise.resolve('base\n'))
+    expect(out.map((draft) => draft.doc)).toEqual(['base\none way\n', 'base\nanother\n'])
+  })
+
+  test('two panes on one note are one set of words', async () => {
+    const pane = { ...held, doc: 'base\nwords\n' }
+    const out = await asDrafts([pane, { ...pane }], () => Promise.resolve('base\n'))
+    expect(out).toHaveLength(1)
+  })
+})
+
+describe('two different drafts of one document', () => {
+  const held = {
+    kind: 'note' as const,
+    path: '/spaces/One/a.md',
+    name: 'a.md',
+    dirty: true,
+    cursor: 0,
+    scroll: 0,
+    share: 'k1',
+    base: 'base\n',
+  }
+  const says = () => Promise.resolve('base\n')
+
+  test('each saying the other, one of them stays', async () => {
+    const out = await asDrafts(
+      [
+        { ...held, doc: 'base\nfoo ' },
+        { ...held, doc: 'base\n foo' },
+      ],
+      says,
+    )
+    expect(out).toHaveLength(1)
+  })
+
+  test('however many there are of them', async () => {
+    const out = await asDrafts(
+      [
+        { ...held, doc: 'base\nfoo  ' },
+        { ...held, doc: 'base\n foo ' },
+        { ...held, doc: 'base\n  foo' },
+      ],
+      says,
+    )
+    expect(out.length).toBeGreaterThan(0)
+  })
+
+  /** Which was written later a session does not say, so the one holding the other stands: a
+   *  deletion made on top of words that never reached the file comes back in the draft. */
+  test('the one holding the other is kept, even where the other came later', async () => {
+    const out = await asDrafts(
+      [
+        { ...held, doc: 'base\nkeep this\n' },
+        { ...held, doc: 'base\nkeep\n' },
+      ],
+      says,
+    )
+    expect(out.map((one) => one.doc)).toEqual(['base\nkeep this\n'])
+  })
+})

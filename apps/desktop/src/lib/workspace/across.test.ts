@@ -882,3 +882,34 @@ describe('a share gone offline', () => {
     expect(inA.path).toBeNull()
   })
 })
+
+describe('a space made in another window', () => {
+  test('the list of spaces is read again', async () => {
+    const said = new Map<string, (what: Record<string, unknown>) => void>()
+    let lists = 0
+    const windows = {
+      alone: false,
+      say: () => undefined,
+      hear: (kind: string, listener: (what: Record<string, unknown>) => void) => {
+        said.set(kind, listener)
+        return () => undefined
+      },
+    }
+    const across = new Across(
+      {
+        documents: [],
+        tell: () => Promise.resolve(),
+        follow: () => undefined,
+        loadTree: () => Promise.resolve(),
+        loadSpaces: () => {
+          lists += 1
+          return Promise.resolve()
+        },
+      } as never,
+      windows as never,
+    )
+    said.get('spaces-again')?.({})
+    await across.heardSoFar()
+    expect(lists).toBe(1)
+  })
+})

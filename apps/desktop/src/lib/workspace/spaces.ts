@@ -42,10 +42,19 @@ export interface HoldsSpaces {
 /** Reads the spaces folder. It is the source of truth, so a space added or
  *  removed outside the app simply shows up that way. */
 export async function loadSpaces(ws: HoldsSpaces) {
-  // Read while the webview started, the first time; see workspace/ahead.ts.
-  const found =
-    (await spacesAhead()) ??
-    (await invoke<{ name: string; path: string }[]>('list_spaces').catch(() => []))
+  // A listing that failed says nothing about the spaces, and one that crossed a change here
+  // (`addSpace`) knows nothing of it: read again, a few times at most.
+  let found: { name: string; path: string }[] | null = null
+  for (let round = 0; round < 3; round += 1) {
+    const before = ws.spaces
+    // Read while the webview started, the first time; see workspace/ahead.ts.
+    found =
+      (await spacesAhead()) ??
+      (await invoke<{ name: string; path: string }[]>('list_spaces').catch(() => null))
+    if (!found) return
+    if (ws.spaces === before) break
+  }
+  if (!found) return
 
   // Ids are kept across a reload so the selected space survives one.
   const byRoot = new Map(ws.spaces.map((space) => [space.root, space]))

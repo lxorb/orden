@@ -595,6 +595,83 @@ export function written(base: string, analysis: Analysis, writing: Writing): str
   return out + base.slice(at)
 }
 
+/** Whether `at`, in `text`, falls between two parts of one word. */
+function inWord(text: string, at: number): boolean {
+  return WORDY.test(text.charAt(at - 1)) && WORDY.test(text.charAt(at))
+}
+
+/** Whether one side's words at a point are the other's as well: whole, at the start or the end
+ *  of them for words gone on from, or anywhere for a passage. Never as the letters of a longer
+ *  word: `no` is not in `not sure`, and is the reader's own. */
+function heldIn(words: string, other: string): boolean {
+  const these = words.trim()
+  if (!these) return false
+  const from = other.length - other.trimStart().length
+  const to = other.trimEnd().length
+  for (let at = other.indexOf(these); at !== -1; at = other.indexOf(these, at + 1)) {
+    if (inWord(other, at) || inWord(other, at + these.length)) continue
+    if (at === from || at + these.length === to || these.length >= HELD_WHOLE) return true
+  }
+  return false
+}
+
+/** The whole lines two sides' words begin with alike. */
+function linesAlike(one: string, other: string): string {
+  let at = 0
+  while (at < one.length && one.charAt(at) === other.charAt(at)) at++
+  if (at === 0) return ''
+  return one.slice(0, one.lastIndexOf('\n', at - 1) + 1)
+}
+
+/** The merge where one side may be a later or an earlier state of the other's words, not
+ *  another writer of its own: a write that landed unheard, and then the same note typed on.
+ *  `merge3` keeps two sides' words at one point side by side, as it should for two people
+ *  (`milk` and `eggs`), and so says `typed` twice over `typed` and `typed more`. Here the words
+ *  one side holds of the other's at one span are said once, and neither side loses a word:
+ *  only words the other side's text holds are left out. Not for what merges two devices'
+ *  words: this says what one writer's history means, which the CRDT does not.
+ *
+ *  Which of the two is later nothing here can tell, so the one holding the other stands: words
+ *  taken out in the air, `typed more` cut back to `typed` before either landed, come back.
+ *  Such a deletion is undone and no word is lost; a deletion of what the base held stands. */
+export function mergedOn(base: string, local: string, remote: string): string {
+  const analysis = analyse(base, local, remote)
+  const mine = [...analysis.alone.local, ...analysis.meetings.flatMap((one) => one.local)]
+  const theirs = [...analysis.alone.remote, ...analysis.meetings.flatMap((one) => one.remote)]
+  const told = new Map<Edit, Edit | null>()
+
+  for (const one of mine) {
+    const other = theirs.find((edit) => edit.from === one.from && edit.to === one.to)
+    if (!other) continue
+    const [shorter, longer] = one.insert.length <= other.insert.length ? [one, other] : [other, one]
+    if (heldIn(shorter.insert, longer.insert)) {
+      told.set(shorter, null)
+      continue
+    }
+    const alike = linesAlike(one.insert, other.insert)
+    if (alike) told.set(other, { ...other, insert: other.insert.slice(alike.length) })
+  }
+
+  const left = (side: readonly Edit[]) =>
+    side.flatMap((edit) => {
+      const said = told.has(edit) ? told.get(edit) : edit
+      return said ? [said] : []
+    })
+  return written(
+    base,
+    {
+      ...analysis,
+      meetings: analysis.meetings.map((one) => ({
+        ...one,
+        local: left(one.local),
+        remote: left(one.remote),
+      })),
+      alone: { local: left(analysis.alone.local), remote: left(analysis.alone.remote) },
+    },
+    { settle: () => 'both' },
+  )
+}
+
 /** The three-way merge of `local` and `remote` against `base`, with the map of where
  *  they wrote. Each meeting is settled by `settle`: by default as a CRDT would leave
  *  it, which loses nothing either side wrote. */
