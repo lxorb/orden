@@ -64,6 +64,8 @@ class Numbers {
 
   private readonly hold = new AltHold()
   private frame = 0
+  /** Frames left to follow the tabs for while they still move; see `show`. */
+  private following = 0
   /** Whether a web page says Alt held and let go of inside it; see the top of this file.
    *  `WebView2` always does, and the crate's answer to the letters says for the rest. */
   private pageTells = isDesktop && shortcuts.platform === 'win'
@@ -180,6 +182,11 @@ class Numbers {
    *  tab is in front and its strip has scrolled to it, which this key's own handlers,
    *  after this one, are what do. */
   private place() {
+    this.following = FOLLOW_FRAMES
+    this.follow()
+  }
+
+  private follow() {
     cancelAnimationFrame(this.frame)
     this.frame = requestAnimationFrame(() => this.show())
   }
@@ -193,7 +200,14 @@ class Numbers {
     // Nor over the tab overview, whose windows the tabs are while it is up (#331).
     if (tabOverview.open) return
 
-    this.worn = [...this.tabsWorn(), ...this.essentialsWorn()]
+    const worn = [...this.tabsWorn(), ...this.essentialsWorn()]
+    const moved = !same(worn, this.worn)
+    if (moved) this.worn = worn
+    // Read again at the next frame while the tabs are still on their way: a tab that
+    // came to the front opens out and the one it left closes up over the strip's width
+    // transition, and a strip scrolls to it, so the corners read in the first frame
+    // were where the marks were leaving (#1110). Followed until they are still.
+    if ((moved || moving()) && --this.following > 0) this.follow()
   }
 
   private tabsWorn(): Worn[] {
@@ -233,6 +247,35 @@ class Numbers {
       },
     )
   }
+}
+
+/** How many frames at most the numbers follow their tabs for after a change: past the
+ *  strip's 210 ms width transition, and a smooth scroll, with room to spare. */
+const FOLLOW_FRAMES = 60
+
+/** Whether anything in a strip of tabs is still moving. */
+function moving(): boolean {
+  return [...document.querySelectorAll('[data-strip]')].some(
+    (strip) =>
+      typeof strip.getAnimations === 'function' &&
+      strip.getAnimations({ subtree: true }).length > 0,
+  )
+}
+
+function same(one: readonly Worn[], other: readonly Worn[]): boolean {
+  return (
+    one.length === other.length &&
+    one.every((worn, at) => {
+      const that = other[at]
+      return (
+        !!that &&
+        that.id === worn.id &&
+        that.label === worn.label &&
+        Math.abs(that.x - worn.x) < 0.5 &&
+        Math.abs(that.y - worn.y) < 0.5
+      )
+    })
+  )
 }
 
 /** The app's commands whose keys are taken from a page, wherever they are bound now. */
