@@ -82,10 +82,21 @@
   let width = $state(window.innerWidth)
   let height = $state(window.innerHeight)
 
-  /** The room the windows are laid out in: the window, less a margin and the row at
-   *  the top. */
+  /** The room the windows are laid out in: the window under its bar, less a margin and
+   *  the row at the top. */
   const MARGIN = 56
-  const TOP = 88
+  const ROW = 50
+
+  /** Where the window's bar ends, which the overview leaves where it is: the canvas is
+   *  everything under it (Titlebar.svelte's `header`). Read as the layer comes up. */
+  let barBottom = $state(0)
+
+  function barOf(): number {
+    const bar = document.querySelector('header[data-chrome="top"]')?.getBoundingClientRect()
+    return bar && bar.height > 0 ? Math.max(0, bar.bottom) : 0
+  }
+
+  const roomTop = $derived(barBottom + ROW)
 
   /** What each pane showed as the layer came up, which its windows take the shape of. */
   let panes = $state<Record<string, { w: number; h: number }>>({})
@@ -98,9 +109,9 @@
   /** The room the windows are laid out in on the screen, at one to one. */
   const screenRoom = $derived<Box>({
     x: MARGIN,
-    y: TOP,
+    y: roomTop,
     w: Math.max(width - 2 * MARGIN, 200),
-    h: Math.max(height - TOP - MARGIN, 160),
+    h: Math.max(height - roomTop - MARGIN, 160),
   })
 
   /** Which space's place the canvas lays this set of tabs out in: the space's own, or the
@@ -495,6 +506,8 @@
 
   function opened(at: number) {
     const value = String(Math.round(at * 1000) / 1000)
+    // The sidebars slide out as far as the overview is out (`html[data-overview]`).
+    document.documentElement.style.setProperty('--overview-open', value)
     if (ground) {
       ground.style.opacity = value
       // Not there at all at the ends: a ground over the app, however faint, has the app
@@ -537,9 +550,12 @@
   }
 
   /** What a window is a copy of is out of sight while the window is away from it, so
-   *  the two are never seen at once: the strip leaves out every tab whose window is away
-   *  from it, and a pane whose tab in front is a window away from the pane stands back -
-   *  but for a window near its home, which is handed over to what is under it there. */
+   *  the two are never seen at once: the strip leaves out every tab whose window is away,
+   *  the tab in front of a pane too - the bar is the window's own while the overview is
+   *  up, and a strip still holding the tab whose window is on the canvas would be that
+   *  tab twice - and a pane whose tab in front is a window away from the pane stands
+   *  back; but for a window near its home, which is handed over to what is under it
+   *  there. */
   function awayFromStrip() {
     if (!started) return
     const away: string[] = []
@@ -551,7 +567,8 @@
       if (home && home.alpha > 0.5 && home.tab < 0.5) {
         const pane = byId.get(id)?.paneId
         if (gone && pane) lifted.push(pane)
-      } else if (gone) away.push(id)
+      }
+      if (gone) away.push(id)
     }
     if (away.join(' ') !== tabOverview.out.join(' ')) tabOverview.out = away
     if (lifted.join(' ') !== tabOverview.lifted.join(' ')) tabOverview.lifted = lifted
@@ -635,6 +652,7 @@
     const again = shown
     if (!again) {
       corner = cardCorner()
+      barBottom = barOf()
       places.recall(workspace.tabs)
       void faces.read()
       // Where it was left, once there is somewhere; the space worked in the first time.
@@ -671,6 +689,7 @@
     }
     shown = true
     out = true
+    document.documentElement.dataset.overview = modes.overviewBlur ? 'blur' : 'slide'
     if (again) aimAll()
   }
 
@@ -715,6 +734,8 @@
     tabsAsDrawn = {}
     tabOverview.out = []
     tabOverview.lifted = []
+    delete document.documentElement.dataset.overview
+    document.documentElement.style.removeProperty('--overview-open')
   }
 
   const close = () => (tabOverview.open = false)
@@ -1031,10 +1052,10 @@
   let panning = false
 
   function grounded(event: PointerEvent) {
-    if (!(event.target instanceof Element) || event.target.closest('.window, .closer, .top')) return
+    if (!(event.target instanceof Element) || !event.target.closest('.floor')) return
     handTakes()
     touching.set(event.pointerId, { x: event.clientX, y: event.clientY })
-    ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
+    event.target.setPointerCapture(event.pointerId)
     panning = touching.size > 1
   }
 
@@ -1074,15 +1095,25 @@
 />
 
 {#if shown}
-  <div
-    class="nib-scrim ground"
-    class:is-blurred={modes.overviewBlur}
-    aria-hidden="true"
-    bind:this={ground}
-  ></div>
+  <!-- Asked for under Appearance: the app behind the canvas, blurred, its sidebars where
+       they are. Otherwise there is nothing here at all: the sidebars slide away and the
+       canvas is the ground the panes stand on. -->
+  {#if modes.overviewBlur}
+    <div
+      class="nib-scrim ground is-blurred"
+      style:top="{barBottom}px"
+      aria-hidden="true"
+      bind:this={ground}
+    ></div>
+  {/if}
 
+  <!-- A clear scrim, so a web page's live view steps behind its picture from the first
+       frame to the last (web-tab/covers.ts); it draws nothing and takes no press itself -
+       the bar over it is the window's still, and the floor under the windows is what a
+       press on the canvas lands on. -->
   <div
-    class="canvas"
+    class="nib-scrim is-clear canvas"
+    style:--overview-top="{barBottom}px"
     bind:this={canvasNode}
     role="dialog"
     aria-modal="true"
@@ -1098,6 +1129,8 @@
     onselectstart={(event) => event.preventDefault()}
     ondragstart={(event) => event.preventDefault()}
   >
+    <div class="floor" aria-hidden="true"></div>
+
     <div class="top">
       {#if spaces.length > 1}
         <!-- All spaces or This space: whether the other spaces' cells are there too. -->
@@ -1208,22 +1241,23 @@
 {/if}
 
 <style>
-  /* The canvas: Orden's own ground, the surface the panes stand on (App.svelte's
-     `main` and `.middle`), so the whole of the overview happens inside Orden - the
-     panes' cards stand back as their windows leave them, and nothing of the app is
-     drawn through. Still a scrim, which a web page's live view steps behind (see
-     web-tab/covers.ts). */
-  .ground {
-    --scrim-z: var(--z-sheet);
-    opacity: 0;
-    background: linear-gradient(var(--chrome-ground), var(--chrome-ground)), var(--shell-ground);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
+  /* The window as it is, but for its sidebars: they slide away, the left one to the left
+     and the right one to the right, as if each were shut, as far as the overview is out -
+     moved and not shut, so nothing is laid out again and the panes stay where they are.
+     What they uncover is the ground they stood on, which is the canvas's. */
+  :global(html[data-overview='slide'] [data-chrome='start']) {
+    translate: calc(var(--dir, 1) * -100% * var(--overview-open, 0)) 0;
   }
 
-  /* Or, asked for under Appearance, the app behind it, blurred far enough to be a
-     surface and not a page, as the overview was drawn first. */
+  :global(html[data-overview='slide'] [data-chrome='end']) {
+    translate: calc(var(--dir, 1) * 100% * var(--overview-open, 0)) 0;
+  }
+
+  /* Asked for under Appearance: the app under the bar, blurred far enough to be a surface
+     and not a page, as the overview was drawn first. */
   .ground.is-blurred {
+    --scrim-z: var(--z-sheet);
+    opacity: 0;
     background: color-mix(in srgb, var(--bg) 55%, transparent);
     -webkit-backdrop-filter: blur(28px);
     backdrop-filter: blur(28px);
@@ -1237,11 +1271,17 @@
     --overview-cell-name: calc(var(--text-base) * 1.6);
     position: fixed;
     inset: 0;
-    /* Over the whole app, and just under a sheet: what the overview asks - a terminal
-       still running, words with no file, closed by a window's cross - comes up over
-       it, and is answered there. */
+    /* Over the panes, and just under a sheet: what the overview asks - a terminal still
+       running, words with no file, closed by a window's cross - comes up over it, and is
+       answered there. */
     z-index: calc(var(--z-sheet) - 1);
     overflow: hidden;
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    /* Nothing but its windows, its row and its floor takes a press: the bar stays the
+       window's. */
+    pointer-events: none;
     outline: none;
     touch-action: none;
     /* Windows are pictures of their tabs, not their words: nothing here is chosen as
@@ -1250,10 +1290,20 @@
     -webkit-user-select: none;
   }
 
+  /* The canvas between the windows, under the bar, which a press, a drag or a pinch on
+     the canvas lands on. */
+  .floor {
+    position: absolute;
+    inset: 0;
+    top: var(--overview-top, 0);
+    pointer-events: auto;
+  }
+
   .top {
     position: absolute;
     z-index: var(--z-raised);
-    top: var(--space-5);
+    top: calc(var(--overview-top, 0px) + var(--space-3));
+    pointer-events: auto;
     left: 50%;
     display: flex;
     gap: var(--space-2);
@@ -1318,6 +1368,7 @@
     cursor: pointer;
     outline: none;
     touch-action: none;
+    pointer-events: auto;
   }
 
   /* Under the hand, over the others, a little higher off the canvas. */

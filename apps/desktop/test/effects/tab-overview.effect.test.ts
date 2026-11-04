@@ -219,8 +219,9 @@ test('while a window is away, what it is a copy of is out of sight: its tab, or 
   onTestFinished(() => shown.forEach((one) => one.remove()))
   await opened()
   expect([...tabOverview.lifted].sort()).toEqual([...panes].sort())
-  const fronts = new Set(workspace.panes.all.map((one) => one.activeTabId))
-  expect(tabOverview.out.filter((id) => fronts.has(id))).toEqual([])
+  // And every tab is out of its strip, the ones in front too: the bar is the window's,
+  // seen, and a strip that kept them would show each of them twice.
+  expect([...tabOverview.out].sort()).toEqual(workspace.tabs.map((one) => one.id).sort())
   expect(overlays.escape()).toBe(true)
   flushSync()
   await tick()
@@ -228,21 +229,40 @@ test('while a window is away, what it is a copy of is out of sight: its tab, or 
   expect(tabOverview.out).toEqual([])
 })
 
-test('the canvas is Orden’s own ground, and the app blurred only when asked for', async () => {
+test('the canvas is the window’s own ground, its sidebars sliding away, and the app blurred only when asked for', async () => {
   const { modes } = await import('../../src/lib/modes.svelte')
   await opened()
-  const ground = () => document.querySelector('.ground')
-  expect(ground()?.classList.contains('is-blurred')).toBe(false)
+  // Nothing laid over the app: no ground of its own, the sidebars slid all the way out.
+  expect(document.querySelector('.ground')).toBe(null)
+  expect(document.documentElement.dataset.overview).toBe('slide')
+  expect(document.documentElement.style.getPropertyValue('--overview-open')).toBe('1')
   expect(overlays.escape()).toBe(true)
   flushSync()
   await tick()
+  expect(document.documentElement.dataset.overview).toBe(undefined)
+  expect(document.documentElement.style.getPropertyValue('--overview-open')).toBe('')
   modes.toggleOverviewBlur()
   try {
     await opened()
-    expect(ground()?.classList.contains('is-blurred')).toBe(true)
+    expect(document.querySelector('.ground')?.classList.contains('is-blurred')).toBe(true)
+    expect(document.documentElement.dataset.overview).toBe('blur')
   } finally {
     modes.toggleOverviewBlur()
   }
+})
+
+test('a web page steps behind its picture for as long as the overview is up, from its first frame', async () => {
+  const { layersOver } = await import('../../src/lib/web-tab/covers')
+  const hole = document.createElement('div')
+  document.body.append(hole)
+  onTestFinished(() => hole.remove())
+  await opened()
+  // The canvas itself is a clear scrim, there and seen as soon as it is: never hidden on
+  // its first frames as the blurred ground is (covers.ts `seen`).
+  const canvas = layer() as HTMLElement | null
+  expect(canvas?.matches('.nib-scrim.is-clear')).toBe(true)
+  expect(canvas?.style.visibility).toBe('')
+  expect(layersOver(hole).some((one) => one.scrim && one.node === canvas)).toBe(true)
 })
 
 test('a window’s cross sits on its corner, red, and answers the pointer', async () => {
