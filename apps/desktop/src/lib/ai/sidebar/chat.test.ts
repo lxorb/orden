@@ -210,7 +210,7 @@ describe('the panel’s chats', () => {
     const chat = await launched()
     chat.here('work')
     chat.know(['work', 'home'])
-    chat.setModel('p', 'picked')
+    await chat.chooseModel('p', 'picked')
 
     const next = await launched()
     next.here('work')
@@ -1244,7 +1244,7 @@ describe('a chat while it answers', () => {
     chat.here('work')
     chat.know(['work'])
     await settled()
-    chat.setModel('other', 'm2')
+    await chat.chooseModel('other', 'm2')
     engine.send.mockImplementationOnce(() => Promise.reject(new Error('down')))
     chat.text = 'first'
     chat.submit(around)
@@ -1608,6 +1608,43 @@ describe('switching a chat to another model', () => {
     await chat.chooseModel('p', 'other')
     await chat.chooseModel('p', 'third')
     expect(ticking.asked).toHaveLength(1)
+  })
+
+  /** Every way a model is asked for goes through the one door (#1089). */
+  test('asks first by /model, and switches nothing on no', async () => {
+    const { chat, thread } = await long()
+    chat.models = { p: [{ id: 'other', name: 'Other' } as never] }
+    ticking.answer = { id: 'cancel', ticked: false }
+    expect(chat.modelNamed('other')).toBe(true)
+    await vi.waitFor(() => expect(ticking.asked).toHaveLength(1))
+    expect(thread.model).toBe('m')
+  })
+
+  test('asks first by Ask again with another model, and asks nothing again on no', async () => {
+    const { chat, thread } = await long()
+    thread.turns = [
+      { id: 'u', role: 'you', at: 1, parts: [], draft: { text: 'go', attachments: [] } },
+      { id: 'a', role: 'model', at: 1, parts: [] },
+    ]
+    engine.send.mockClear()
+    ticking.answer = { id: 'cancel', ticked: false }
+    chat.retry({ provider: 'p', id: 'other' })
+    await vi.waitFor(() => expect(ticking.asked).toHaveLength(1))
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(thread.model).toBe('m')
+    expect(engine.send).not.toHaveBeenCalled()
+  })
+
+  test('and asks again with the new model once the switch is taken', async () => {
+    const { chat, thread } = await long()
+    thread.turns = [
+      { id: 'u', role: 'you', at: 1, parts: [], draft: { text: 'go', attachments: [] } },
+      { id: 'a', role: 'model', at: 1, parts: [] },
+    ]
+    engine.send.mockClear()
+    chat.retry({ provider: 'p', id: 'other' })
+    await vi.waitFor(() => expect(engine.send).toHaveBeenCalled())
+    expect(thread.model).toBe('other')
   })
 
   test('and never on a short one', async () => {

@@ -830,7 +830,8 @@ the last effort used with that model. Switching model
 mid-thread keeps the conversation and says, in a line between messages, which model answers
 from there (and that the cache starts again where it does). Because the cache is per model,
 the next message sends the whole conversation again. On a chat long enough for that to
-matter, the picker asks first (#1089, `switch-cost.ts`): about how many tokens it is, and
+matter, every way of switching asks first (#1089, `switch-cost.ts`): the picker, `/model`,
+an agent's profile and Ask again with another model all go through `chooseModel`: about how many tokens it is, and
 that the conversation is compacted first by the model that has it where it does not fit
 the new one. **Don't ask again** stops the question on this device.
 
