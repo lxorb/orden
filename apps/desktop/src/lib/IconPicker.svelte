@@ -84,6 +84,10 @@
   let top = $state(0)
   /** Which cell the arrows are on, as an index into `cells`. */
   let at = $state(0)
+  /** Whether the arrows have been used since the sheet opened or the search changed
+   *  (#1116): only then is the cell they are on marked. Marked from the start, the
+   *  first cell read as one hovered, or as one chosen, before anybody touched a key. */
+  let walked = $state(false)
   /** The colour the next pick is drawn in. Starts as the one the thing already wears,
    *  so changing the icon keeps the colour and changing the colour keeps the icon. */
   let tint = $state<string | null>(null)
@@ -273,6 +277,7 @@
 
     query = ''
     at = 0
+    walked = false
     top = 0
     // Read once too: a colour painted while the sheet is up is written to the thing at
     // once, and following it would start the sheet over under the reader's search.
@@ -310,6 +315,7 @@
   $effect(() => {
     reads(query)
     at = 0
+    walked = false
   })
 
   // Nothing is waiting to be focused once the sheet has gone.
@@ -365,7 +371,9 @@
     const step = steps[event.key]
     if (step !== undefined && cells.length) {
       event.preventDefault()
-      at = Math.min(cells.length - 1, Math.max(0, at + step))
+      // The first press shows where the arrows are, and moves from there after.
+      if (walked) at = Math.min(cells.length - 1, Math.max(0, at + step))
+      walked = true
       reach(cells[at])
       return
     }
@@ -475,7 +483,7 @@
                     title={label}
                     aria-label={label}
                     class:active={sameIcon(value, worn)}
-                    class:at={cells[at] === written}
+                    class:at={walked && cells[at] === written}
                     onclick={() => chose(value)}
                   >
                     <span class="glyph"><Icon icon={readIcon(value)} {tint} /></span>
@@ -588,8 +596,9 @@
 
   /* A group's name, in the same row height as the cells: one height for every row is
      what keeps the window one division rather than a table. */
+  /* In line with the glyphs below it, not with the cells' edges (#1116). */
   .head {
-    padding: 0 4px;
+    padding: 0 calc((var(--cell) - var(--icon-lg)) / 2);
     font-size: var(--text-sm);
     font-weight: var(--weight-strong);
     color: var(--muted);
@@ -597,7 +606,7 @@
 
   /* What the Web icons say while there are none yet (#1054). */
   .note {
-    padding: 0 4px;
+    padding: 0 calc((var(--cell) - var(--icon-lg)) / 2);
     font-size: var(--text-sm);
     color: var(--muted);
   }
@@ -609,12 +618,18 @@
     overflow: hidden;
   }
 
+  /* One box for the glyph and for every mark on it - hovered, walked to, chosen - in
+     every section and either drawing of an emoji (#1116): no padding of the browser's
+     own, and the glyph centred in it by flex, which centres a glyph wider than its box
+     too where a grid track grows to the right of it. */
   .cell {
     width: var(--cell);
     height: var(--cell);
     flex: none;
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
     border: none;
     border-radius: var(--radius-sm);
     background: none;
@@ -625,8 +640,10 @@
       color var(--dur-instant) var(--ease-out);
   }
 
+  /* Where the arrows are: a ring, not the hover's fill, so the two never read as one
+     (#1116). */
   .cell.at {
-    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 2px var(--accent);
     color: var(--text-strong);
   }
 
