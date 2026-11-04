@@ -571,6 +571,9 @@ export const kn: Dictionary = {
   // Appearance
   Accent: 'ಆಕ್ಸೆಂಟ್ ಬಣ್ಣ',
   'Tidy up': 'ಅಚ್ಚುಕಟ್ಟು ಮಾಡಿ',
+  'Blur the app behind the tab overview': 'ಟ್ಯಾಬ್ ಅವಲೋಕನದ ಹಿಂದೆ ಆ್ಯಪ್ ಅನ್ನು ಮಸುಕಾಗಿಸಿ',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Orden ನ ಸ್ವಂತ ಹಿನ್ನೆಲೆಯ ಬದಲು, ವಿಂಡೋಗಳ ಹಿಂದೆ ಆ್ಯಪ್ ಅನ್ನು ಮಸುಕಾಗಿ ತೋರಿಸುತ್ತದೆ.',
   'Swipe in from the edge to see your notes.':
     'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ನೋಡಲು ಅಂಚಿನಿಂದ ಒಳಗೆ ಸ್ವೈಪ್ ಮಾಡಿ.',
   'Show other tabs as icons': 'ಇತರ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಐಕಾನ್‌ಗಳಾಗಿ ತೋರಿಸಿ',

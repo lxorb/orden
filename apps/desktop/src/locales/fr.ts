@@ -579,6 +579,9 @@ export const fr: Dictionary = {
   // Appearance
   Accent: 'Couleur',
   'Tidy up': 'Ranger',
+  'Blur the app behind the tab overview': 'Flouter l’app derrière la vue des onglets',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Affiche l’app floutée derrière les fenêtres, au lieu de l’arrière-plan d’Orden.',
   'Swipe in from the edge to see your notes.': 'Balayez depuis le bord pour voir vos notes.',
   'Show other tabs as icons': 'Afficher les autres onglets en icônes',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':

@@ -564,6 +564,9 @@ export const th: Dictionary = {
   // Appearance
   Accent: 'สีเน้น',
   'Tidy up': 'จัดระเบียบ',
+  'Blur the app behind the tab overview': 'เบลอแอปด้านหลังภาพรวมแท็บ',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'แสดงแอปแบบเบลอด้านหลังหน้าต่าง แทนพื้นหลังของ Orden เอง',
   'Swipe in from the edge to see your notes.': 'ปัดเข้ามาจากขอบเพื่อดูโน้ตของคุณ',
   'Show other tabs as icons': 'แสดงแท็บอื่นเป็นไอคอน',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':

@@ -564,6 +564,9 @@ export const id: Dictionary = {
   // Appearance
   Accent: 'Warna aksen',
   'Tidy up': 'Rapikan',
+  'Blur the app behind the tab overview': 'Buramkan aplikasi di balik ikhtisar tab',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Menampilkan aplikasi buram di balik jendela, bukan latar belakang Orden sendiri.',
   'Swipe in from the edge to see your notes.': 'Geser masuk dari tepi untuk melihat catatanmu.',
   'Show other tabs as icons': 'Tampilkan tab lain sebagai ikon',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':

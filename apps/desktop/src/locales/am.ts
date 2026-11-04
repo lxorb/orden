@@ -565,6 +565,9 @@ export const am: Dictionary = {
   // Appearance
   Accent: 'የማጉላት ቀለም',
   'Tidy up': 'አስተካክል',
+  'Blur the app behind the tab overview': 'ከትሮች አጠቃላይ እይታ በስተጀርባ መተግበሪያውን አደብዝዝ',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'ከOrden የራሱ ዳራ ይልቅ መተግበሪያውን ከመስኮቶቹ በስተጀርባ ደብዝዞ ያሳያል።',
   'Swipe in from the edge to see your notes.': 'ማስታወሻዎችዎን ለማየት ከጠርዙ ወደ ውስጥ ያንሸራትቱ።',
   'Show other tabs as icons': 'ሌሎች ትሮችን እንደ አዶ አሳይ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':

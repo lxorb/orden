@@ -567,6 +567,9 @@ export const fa: Dictionary = {
   // Appearance
   Accent: 'رنگ تکیه',
   'Tidy up': 'مرتب‌سازی',
+  'Blur the app behind the tab overview': 'محو کردن برنامه پشت نمای کلی زبانه‌ها',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'برنامه را پشت پنجره‌ها محو نشان می‌دهد، به‌جای پس‌زمینهٔ خود Orden.',
   'Swipe in from the edge to see your notes.': 'برای دیدن یادداشت‌هایتان از لبه به داخل بکشید.',
   'Show other tabs as icons': 'نمایش زبانه‌های دیگر به‌صورت نماد',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':

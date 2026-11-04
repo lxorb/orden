@@ -564,6 +564,9 @@ export const vi: Dictionary = {
   // Appearance
   Accent: 'Màu nhấn',
   'Tidy up': 'Sắp xếp gọn',
+  'Blur the app behind the tab overview': 'Làm mờ ứng dụng phía sau tổng quan thẻ',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Hiển thị ứng dụng bị làm mờ phía sau các cửa sổ, thay cho nền riêng của Orden.',
   'Swipe in from the edge to see your notes.': 'Vuốt vào từ mép để xem ghi chú của bạn.',
   'Show other tabs as icons': 'Hiện các thẻ khác dưới dạng biểu tượng',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':

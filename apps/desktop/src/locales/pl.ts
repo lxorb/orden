@@ -590,6 +590,9 @@ export const pl: Dictionary = {
   // Appearance
   Accent: 'Akcent',
   'Tidy up': 'Uporządkuj',
+  'Blur the app behind the tab overview': 'Rozmyj aplikację za przeglądem kart',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Pokazuje rozmytą aplikację za oknami zamiast własnego tła Ordena.',
   'Swipe in from the edge to see your notes.': 'Przesuń od krawędzi, aby zobaczyć swoje notatki.',
   'Show other tabs as icons': 'Pokazuj pozostałe karty jako ikony',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':

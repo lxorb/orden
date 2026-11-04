@@ -578,6 +578,9 @@ export const es: Dictionary = {
   // Appearance
   Accent: 'Acento',
   'Tidy up': 'Ordenar',
+  'Blur the app behind the tab overview': 'Desenfocar la app detrás de la vista de pestañas',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Muestra la app desenfocada detrás de las ventanas, en lugar del fondo propio de Orden.',
   'Swipe in from the edge to see your notes.': 'Desliza desde el borde para ver tus notas.',
   'Show other tabs as icons': 'Mostrar las demás pestañas como iconos',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':

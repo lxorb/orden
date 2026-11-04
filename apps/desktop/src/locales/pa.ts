@@ -570,6 +570,9 @@ export const pa: Dictionary = {
   // Appearance
   Accent: 'ਉਭਾਰ ਰੰਗ',
   'Tidy up': 'ਤਰਤੀਬ ਦਿਓ',
+  'Blur the app behind the tab overview': 'ਟੈਬ ਝਲਕ ਦੇ ਪਿੱਛੇ ਐਪ ਨੂੰ ਧੁੰਦਲਾ ਕਰੋ',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Orden ਦੇ ਆਪਣੇ ਪਿਛੋਕੜ ਦੀ ਥਾਂ ਵਿੰਡੋਆਂ ਦੇ ਪਿੱਛੇ ਐਪ ਨੂੰ ਧੁੰਦਲਾ ਦਿਖਾਉਂਦਾ ਹੈ।',
   'Swipe in from the edge to see your notes.': 'ਆਪਣੇ ਨੋਟ ਦੇਖਣ ਲਈ ਕਿਨਾਰੇ ਤੋਂ ਅੰਦਰ ਸਵਾਈਪ ਕਰੋ।',
   'Show other tabs as icons': 'ਹੋਰ ਟੈਬ ਆਈਕਨ ਵਜੋਂ ਦਿਖਾਓ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':

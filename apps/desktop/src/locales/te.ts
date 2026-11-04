@@ -568,6 +568,9 @@ export const te: Dictionary = {
   // Appearance
   Accent: 'యాక్సెంట్ రంగు',
   'Tidy up': 'చక్కదిద్దు',
+  'Blur the app behind the tab overview': 'ట్యాబ్ అవలోకనం వెనుక యాప్‌ను మసకబార్చు',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Orden సొంత నేపథ్యానికి బదులుగా, విండోల వెనుక యాప్‌ను మసకగా చూపిస్తుంది.',
   'Swipe in from the edge to see your notes.':
     'మీ నోట్‌లను చూడడానికి అంచు నుండి లోపలికి స్వైప్ చేయండి.',
   'Show other tabs as icons': 'ఇతర ట్యాబ్‌లను ఐకాన్‌లుగా చూపించు',

@@ -568,6 +568,10 @@ export const tr: Dictionary = {
   // Appearance
   Accent: 'Vurgu rengi',
   'Tidy up': 'Düzenle',
+  'Blur the app behind the tab overview':
+    'Sekme genel görünümünün arkasındaki uygulamayı bulanıklaştır',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Orden’in kendi arka planı yerine pencerelerin arkasında uygulamayı bulanık gösterir.',
   'Swipe in from the edge to see your notes.': 'Notlarını görmek için kenardan içeri kaydır.',
   'Show other tabs as icons': 'Diğer sekmeleri simge olarak göster',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':

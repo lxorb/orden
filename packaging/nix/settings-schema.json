@@ -52,6 +52,11 @@
     "default": "",
     "description": "The face of code and terminals; any monospaced font installed here, by its name."
   },
+  "appearance.overviewBlur": {
+    "type": "boolean",
+    "default": false,
+    "description": "Shows the app blurred behind the windows, instead of Orden’s own background."
+  },
   "appearance.pointingHand": {
     "type": "boolean",
     "default": false,

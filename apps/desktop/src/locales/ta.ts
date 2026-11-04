@@ -568,6 +568,9 @@ export const ta: Dictionary = {
   // Appearance
   Accent: 'சிறப்பு நிறம்',
   'Tidy up': 'ஒழுங்குபடுத்து',
+  'Blur the app behind the tab overview': 'தாவல் மேலோட்டத்தின் பின்னால் செயலியை மங்கலாக்கு',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Orden-இன் சொந்தப் பின்னணிக்குப் பதிலாக, சாளரங்களின் பின்னால் செயலியை மங்கலாகக் காட்டும்.',
   'Swipe in from the edge to see your notes.':
     'உங்கள் குறிப்புகளைப் பார்க்க ஓரத்திலிருந்து உள்ளே தேய்க்கவும்.',
   'Show other tabs as icons': 'மற்ற தாவல்களை உருவங்களாகக் காட்டு',

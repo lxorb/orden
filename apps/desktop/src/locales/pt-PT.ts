@@ -582,6 +582,9 @@ export const ptPT: Dictionary = {
   // Appearance
   Accent: 'Destaque',
   'Tidy up': 'Arrumar',
+  'Blur the app behind the tab overview': 'Desfocar a app por trás da vista geral dos separadores',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Mostra a app desfocada por trás das janelas, em vez do fundo do próprio Orden.',
   'Swipe in from the edge to see your notes.': 'Deslize a partir da margem para ver as suas notas.',
   'Show other tabs as icons': 'Mostrar os outros separadores como ícones',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':

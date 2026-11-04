@@ -590,6 +590,9 @@ export const ru: Dictionary = {
   // Appearance
   Accent: 'Акцент',
   'Tidy up': 'Упорядочить',
+  'Blur the app behind the tab overview': 'Размывать приложение за обзором вкладок',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Показывает размытое приложение за окнами вместо собственного фона Orden.',
   'Swipe in from the edge to see your notes.': 'Проведите от края, чтобы увидеть заметки.',
   'Show other tabs as icons': 'Показывать остальные вкладки значками',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':

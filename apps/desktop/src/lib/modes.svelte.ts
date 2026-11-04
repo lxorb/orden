@@ -164,6 +164,7 @@ interface Saved {
   alwaysOnTop: boolean
   frame: Frame
   hand: boolean
+  overviewBlur: boolean
   fonts: Record<FontPlace, string>
   closeBrackets: boolean
   ligatures: LigatureScope
@@ -300,6 +301,7 @@ export const DEFAULTS = {
   alwaysOnTop: false,
   frame: 'nib' as Frame,
   hand: false,
+  overviewBlur: false,
   fonts: { ui: '', content: '', mono: '' } as Record<FontPlace, string>,
   closeBrackets: true,
   ligatures: 'off' as LigatureScope,
@@ -423,6 +425,10 @@ class Modes {
    *  for a link. This machine's, for the same reason the frame is: it is about the
    *  pointer on this desk. Said on the root as `data-pointer`; see base.css. */
   hand = $state(DEFAULTS.hand)
+  /** The tab overview over the app blurred, as it first was, rather than on Orden's own
+   *  ground (issue #331). Off: the overview is drawn on the surface the panes stand on,
+   *  so the whole of it happens inside Orden. This machine's, as the pointer is. */
+  overviewBlur = $state(DEFAULTS.overviewBlur)
   /** The faces the reader chose to read in, where they chose one; nothing is the app's
    *  own (#772). This machine's, since a face is something installed on one. */
   fonts = $state<Record<FontPlace, string>>({ ...DEFAULTS.fonts })
@@ -900,6 +906,11 @@ class Modes {
     if (first && this.quietMarks === on) this.toggleQuietMarks()
     this.persist()
     this.share({ developer: on })
+  }
+
+  toggleOverviewBlur() {
+    this.overviewBlur = !this.overviewBlur
+    this.persist()
   }
 
   toggleHand() {
@@ -1693,6 +1704,7 @@ class Modes {
       pagesPaper: this.pagesPaper,
       frame: this.frame,
       hand: this.hand,
+      overviewBlur: this.overviewBlur,
       fonts: this.fonts,
       conflicts: this.conflicts,
       keepVersions: this.keepVersions,

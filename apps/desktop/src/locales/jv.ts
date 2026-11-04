@@ -564,6 +564,9 @@ export const jv: Dictionary = {
   // Appearance
   Accent: 'Warna panandes',
   'Tidy up': 'Rapèkaké',
+  'Blur the app behind the tab overview': 'Burekaké aplikasi ing mburi ringkesan tab',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Nuduhaké aplikasi burek ing mburi jendhela, tinimbang latar mburi Orden dhéwé.',
   'Swipe in from the edge to see your notes.':
     'Gesek mlebu saka pinggir kanggo ndeleng cathetanmu.',
   'Show other tabs as icons': 'Tampilake tab liyane minangka lambang',

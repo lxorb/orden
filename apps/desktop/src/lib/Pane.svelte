@@ -59,6 +59,7 @@
     graphSurface,
     pagesSurface,
     readingSurface,
+    tabOverview,
     terminalSurface,
     viewSurface,
     webSurface,
@@ -431,6 +432,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="pane"
+  class:lifted={tabOverview.lifted.includes(pane.id)}
   data-pane={pane.id}
   onpointerdowncapture={() => workspace.focusPane(pane.id)}
   ondragover={over}
@@ -762,6 +764,21 @@
   .pane:has(> :global(.here)),
   .pane:has(> .head):has(> :global(.here)) {
     background: var(--empty-ground, var(--bg));
+  }
+
+  /* Its tab in front is a window of the tab overview away from the pane, a copy of what
+     the pane shows: the pane stands back meanwhile, all but its own strip, so the window
+     and what it is a copy of are never seen at once (issue #331). Faded and not hidden,
+     so whatever has the focus in it keeps it. */
+  .pane.lifted,
+  .pane.lifted:has(> .head),
+  .pane.lifted:has(> .head):has(> :global(.here)) {
+    background: none;
+    box-shadow: none;
+  }
+
+  .pane.lifted > :not(.head) {
+    opacity: 0;
   }
 
   /* A pane beside another one carries its own strip. The window's single pane

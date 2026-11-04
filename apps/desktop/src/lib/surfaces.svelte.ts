@@ -331,10 +331,17 @@ export const syncMark = latched(() =>
 export const spacePickerDialog = latched(() => import('./SpacePicker.svelte'))
 
 /** Every tab as a window on a canvas, Alt Alt (issue #331): the layer, fetched with the
- *  first ask, and whether it is wanted. `out` is the tabs whose window is away from the
- *  strip, which the strip leaves a gap for; see overview/Overview.svelte. */
+ *  first ask, and whether it is wanted. While a window is a copy on its way somewhere,
+ *  what it is a copy of is out of sight, so nothing is ever seen twice: `out` is the
+ *  tabs whose window is away from the strip, which the strip leaves a gap for, and
+ *  `lifted` the panes whose tab in front is a window away from the pane, which the pane
+ *  stands back for; see overview/Overview.svelte. */
 export const tabOverviewLayer = latched(() => import('./overview/Overview.svelte'))
-export const tabOverview = $state<{ open: boolean; out: string[] }>({ open: false, out: [] })
+export const tabOverview = $state<{ open: boolean; out: string[]; lifted: string[] }>({
+  open: false,
+  out: [],
+  lifted: [],
+})
 
 export function toggleTabOverview(): void {
   void tabOverviewLayer.ask()

@@ -567,6 +567,9 @@ export const hi: Dictionary = {
   // Appearance
   Accent: 'एक्सेंट',
   'Tidy up': 'व्यवस्थित करें',
+  'Blur the app behind the tab overview': 'टैब अवलोकन के पीछे ऐप को धुंधला करें',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Orden की अपनी पृष्ठभूमि के बजाय विंडो के पीछे ऐप को धुंधला दिखाता है।',
   'Swipe in from the edge to see your notes.':
     'अपने नोट्स देखने के लिए किनारे से अंदर स्वाइप करें।',
   'Show other tabs as icons': 'बाकी टैब आइकन के रूप में दिखाएँ',

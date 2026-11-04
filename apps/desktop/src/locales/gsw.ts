@@ -568,6 +568,9 @@ export const gsw: Dictionary = {
   // Appearance
   Accent: 'Akzänt',
   'Tidy up': 'Ufrume',
+  'Blur the app behind the tab overview': 'App hinder de Tab-Übersicht verschwumme',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Zeigt d App verschwumme hinder de Fänschter statt em eigete Hintergrund vo Orden.',
   'Swipe in from the edge to see your notes.': 'Wisch vom Rand ine, zum dini Notize z gseh.',
   'Show other tabs as icons': 'Anderi Tabs als Symbol zeige',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':

@@ -572,6 +572,9 @@ export const fil: Dictionary = {
   // Appearance
   Accent: 'Kulay tampok',
   'Tidy up': 'Ayusin',
+  'Blur the app behind the tab overview': 'I-blur ang app sa likod ng overview ng mga tab',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Ipinapakita ang app na naka-blur sa likod ng mga window, sa halip na ang sariling background ng Orden.',
   'Swipe in from the edge to see your notes.':
     'Mag-swipe papasok mula sa gilid para makita ang iyong mga tala.',
   'Show other tabs as icons': 'Ipakita ang ibang tab bilang icon',

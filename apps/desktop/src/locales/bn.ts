@@ -567,6 +567,9 @@ export const bn: Dictionary = {
   // Appearance
   Accent: 'অ্যাকসেন্ট',
   'Tidy up': 'গুছিয়ে নিন',
+  'Blur the app behind the tab overview': 'ট্যাব ওভারভিউয়ের পেছনে অ্যাপ ঝাপসা করুন',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Orden-এর নিজস্ব পটভূমির বদলে উইন্ডোগুলোর পেছনে অ্যাপটি ঝাপসা দেখায়।',
   'Swipe in from the edge to see your notes.': 'আপনার নোট দেখতে কিনারা থেকে ভেতরে সোয়াইপ করুন।',
   'Show other tabs as icons': 'অন্য ট্যাবগুলো আইকন হিসেবে দেখান',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':

@@ -3,8 +3,10 @@
    *
    *  Not a sheet of cards over the tabs: the tabs become the windows. The tab in front of
    *  each pane shrinks out of the pane, the others come down out of the strip from where
-   *  each tab sits, and they land on a blurred canvas laid out the way the panes are - a
-   *  split's sides side by side with a curve between them (layout.ts). A press on one
+   *  each tab sits, and they land on a canvas - Orden's own ground, or the app blurred if
+   *  asked for - laid out the way the panes are, a split's sides side by side with a curve
+   *  between them (layout.ts). While a window is away, what it is a copy of - its pane,
+   *  its tab in the strip - is out of sight, so nothing is seen twice. A press on one
    *  opens it: it grows back into its pane while the rest go home to the strip. Alt Alt
    *  again, Escape, or a press on the canvas send every window home.
    *
@@ -19,9 +21,9 @@
    *  into another pane's (drag.ts).
    *
    *  All spaces shows the other spaces too, each in its place on the one canvas inside a
-   *  living membrane (Cells.svelte); a window dragged out of its cell stretches it, and
-   *  dragged well into another's plops across, which moves its tab to that space when it
-   *  is let go (cells.ts). */
+   *  bubble that is its windows (Cells.svelte); a window dragged out of its cell takes the
+   *  bubble with it, and dragged well into another's plops across, which moves its tab to
+   *  that space when it is let go (cells.ts). */
 
   import { tick as laidOut, untrack } from 'svelte'
   import { closeOnBack } from '../backstack.svelte'
@@ -55,7 +57,8 @@
   import { places } from './places.svelte'
   import { type Cell, cellAt } from './cells'
   import Cells from './Cells.svelte'
-  import { shapeOf as membraneOf } from './membrane'
+  import { grownOf } from './bubble'
+  import { modes } from '../modes.svelte'
   import { keep, storedText } from '../stored'
   import { canWriteAt } from '../sharing.svelte'
   import { mayCarry } from '../workspace/chat-carry'
@@ -115,19 +118,19 @@
   function lookAtSpace() {
     const place = places.place(spaceKey, { w: screenRoom.w, h: screenRoom.h })
     camera = lookingAt(place, screenRoom)
-    // Then all of its cell, membrane, name and all, where it is drawn as one, never
+    // Then all of its cell, bubble, name and all, where it is drawn as one, never
     // nearer than one to one.
     const cell = cellBoxes.find((one) => one.key === spaceKey)
     if (!all || !cell) return
     camera = lookingAt(wholeOf([cell]), screenRoom)
   }
 
-  /** Where some cells are drawn, their membranes and names and all. */
+  /** Where some cells are drawn, their bubbles and names and all. */
   function wholeOf(cells: readonly Cell[]): Box {
     const named = NAME_ROOM * Math.max(1, 1 / camera.zoom)
-    const boxes = cells.map((one) => {
-      const { cx, cy, a, b } = membraneOf(one.box)
-      return { x: cx - a, y: cy - b - named, w: 2 * a, h: 2 * b + named }
+    const boxes = cells.map(({ box }) => {
+      const grown = grownOf(box)
+      return { ...grown, y: grown.y - named, h: grown.h + named }
     })
     return around(boxes) ?? room
   }
@@ -186,7 +189,7 @@
     flyFrame = 0
   }
 
-  /** The room a cell's name takes over its membrane. */
+  /** The room a cell's name takes over its bubble. */
   const NAME_ROOM = 48
 
   const shapeOf = (paneId: string): number => {
@@ -299,20 +302,26 @@
     ),
   })
 
-  /** Each cell's windows, boxed, for the membranes and for which cell a window is over:
-   *  the held one left out, which is the membrane's to stretch round and never what
-   *  decides where the cell is. */
+  /** Each cell's windows, boxed, for which cell a window is over and for the camera: the
+   *  held one left out, which never decides where the cell it is leaving is. */
   const cellBoxes = $derived<Cell[]>(
     gridCells.map((one) => {
       const inside = slots.filter((slot) => cellOf.get(slot.id) === one.key && slot.id !== held?.id)
-      return { key: one.key, box: captioned(around(inside) ?? places.at(one.key) ?? room) }
+      // A cell whose one window is held is where that window was taken from.
+      const from = resting.filter(
+        (slot) => slot.id === held?.id && one.slots.some((own) => own.id === slot.id),
+      )
+      return {
+        key: one.key,
+        box: captioned(around(inside) ?? around(from) ?? places.at(one.key) ?? room),
+      }
     }),
   )
 
   const cellsShown = $derived(
     all
       ? cellBoxes.map((one) => ({
-          ...one,
+          key: one.key,
           name: workspace.spaces.find((space) => space.id === one.key)?.name ?? '',
           tint: workspace.tintFor(one.key),
           on: one.key === spaceKey,
@@ -361,8 +370,8 @@
   const arrived = new Set<string>()
 
   /** A cell's windows, each where it is drawn this frame - or, on its way out of the strip
-   *  or home to it, where it lies on the canvas - for the membrane round them, which
-   *  never leaves one out (membrane.ts). The window under the hand is `pushedNow`'s. */
+   *  or home to it, where it lies on the canvas - for the bubble round them, which
+   *  never leaves one out (bubble.ts). The window under the hand is `pushedNow`'s. */
   function insideOf(key: string): Box[] {
     const boxes: Box[] = []
     for (const slot of laid.slots) {
@@ -462,7 +471,7 @@
     const value = String(Math.round(at * 1000) / 1000)
     if (ground) {
       ground.style.opacity = value
-      // Not there at all at the ends: a blur over the app, however faint, has the app
+      // Not there at all at the ends: a ground over the app, however faint, has the app
       // drawn through it, which is not quite how the app draws itself.
       ground.style.visibility = at < 0.01 ? 'hidden' : ''
     }
@@ -501,19 +510,25 @@
     return off * camera.zoom
   }
 
-  /** The strip leaves out every tab whose window is away from it: not one whose window
-   *  is near its place in the strip, nor the tab in front of a pane, whose window is the
-   *  pane's. */
+  /** What a window is a copy of is out of sight while the window is away from it, so
+   *  the two are never seen at once: the strip leaves out every tab whose window is away
+   *  from it, and a pane whose tab in front is a window away from the pane stands back -
+   *  but for a window near its home, which is handed over to what is under it there. */
   function awayFromStrip() {
     if (!started) return
     const away: string[] = []
+    const lifted: string[] = []
     for (const id of flights.keys()) {
       const home = homes.get(id)
-      if (home && home.alpha > 0.5 && home.tab < 0.5) continue
       const off = out ? null : fromHome(id)
-      if (off === null || off >= NEAR) away.push(id)
+      const gone = off === null || off >= NEAR
+      if (home && home.alpha > 0.5 && home.tab < 0.5) {
+        const pane = byId.get(id)?.paneId
+        if (gone && pane) lifted.push(pane)
+      } else if (gone) away.push(id)
     }
     if (away.join(' ') !== tabOverview.out.join(' ')) tabOverview.out = away
+    if (lifted.join(' ') !== tabOverview.lifted.join(' ')) tabOverview.lifted = lifted
   }
 
   function begin() {
@@ -672,6 +687,7 @@
     mirrors = {}
     tabsAsDrawn = {}
     tabOverview.out = []
+    tabOverview.lifted = []
   }
 
   const close = () => (tabOverview.open = false)
@@ -824,13 +840,14 @@
     return cell === from ? null : { kind: 'space', key: cell }
   }
 
-  /** The held window and the cell it is in now, for the membranes. */
+  /** The held window and the cell it is in now, for the bubbles. */
   function pushedNow(): { key: string; box: Box } | null {
     if (!held) return null
     const pose = flights.get(held.id)?.pose
     if (!pose) return null
     const key = held.landing?.key ?? held.from
-    return { key, box: { x: pose.x, y: pose.y, w: pose.w, h: pose.h } }
+    // Its name under it, which its bubble holds as well.
+    return { key, box: captioned({ x: pose.x, y: pose.y, w: pose.w, h: pose.h }) }
   }
 
   /** Where the pointer is, while a window is held. */
@@ -1029,7 +1046,12 @@
 />
 
 {#if shown}
-  <div class="nib-scrim ground" aria-hidden="true" bind:this={ground}></div>
+  <div
+    class="nib-scrim ground"
+    class:is-blurred={modes.overviewBlur}
+    aria-hidden="true"
+    bind:this={ground}
+  ></div>
 
   <div
     class="canvas"
@@ -1122,7 +1144,7 @@
           </span>
           <span class="ring" aria-hidden="true"></span>
         </button>
-        <!-- Its cross, over its corner while the pointer is on it: beside the window and not
+        <!-- Its cross, on its corner while the pointer is on it: beside the window and not
              in it, a button in a button being no button at all. -->
         <button
           class="closer"
@@ -1153,12 +1175,25 @@
 {/if}
 
 <style>
-  /* The canvas: the app behind it, blurred far enough to be a surface and not a page. */
+  /* The canvas: Orden's own ground, the surface the panes stand on (App.svelte's
+     `main` and `.middle`), so the whole of the overview happens inside Orden - the
+     panes' cards stand back as their windows leave them, and nothing of the app is
+     drawn through. Still a scrim, which a web page's live view steps behind (see
+     web-tab/covers.ts). */
   .ground {
     --scrim-z: var(--z-sheet);
-    --scrim-blur: 28px;
-    --scrim-ink: 55%;
     opacity: 0;
+    background: linear-gradient(var(--chrome-ground), var(--chrome-ground)), var(--shell-ground);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  /* Or, asked for under Appearance, the app behind it, blurred far enough to be a
+     surface and not a page, as the overview was drawn first. */
+  .ground.is-blurred {
+    background: color-mix(in srgb, var(--bg) 55%, transparent);
+    -webkit-backdrop-filter: blur(28px);
+    backdrop-filter: blur(28px);
   }
 
   /* The sizes of what the overview says in words, in one place: a window's name and a
@@ -1332,30 +1367,43 @@
     border: 2px solid var(--accent);
   }
 
-  /* A window's cross: in its top right corner, at the size of the strip's whatever the
-     zoom, there while the pointer is on the window or on the cross itself, and only
-     once the window is in its place. */
+  /* A window's cross: red, small, on its top right corner itself, at the same size on the
+     screen whatever the zoom, there while the pointer is on the window or on the cross,
+     and only once the window is in its place. Under the pointer it darkens and grows a
+     little, so it is plain that a press closes the tab. */
   .closer {
+    --closer-size: 22px;
     position: absolute;
     top: 0;
     left: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: var(--row-height);
-    height: var(--row-height);
+    width: var(--closer-size);
+    height: var(--closer-size);
     padding: 0;
-    border: 1px solid var(--line);
+    border: 0;
     border-radius: 50%;
-    color: var(--text);
-    background: color-mix(in srgb, var(--surface) 92%, transparent);
-    box-shadow: var(--shadow-sm, 0 1px 3px rgb(0 0 0 / 0.15));
+    /* The ink a strong colour is written on in this theme, as on the accent. */
+    color: var(--accent-ink);
+    background: var(--danger);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
     transform-origin: 0 0;
     scale: var(--overview-unzoom);
-    transform: translate(calc(-100% - var(--space-2)), var(--space-2));
+    /* Its middle on the corner: scaled about that point, so it grows in place. */
+    transform: scale(1) translate(-50%, -50%);
     opacity: 0;
     pointer-events: none;
-    transition: opacity var(--dur-fast) var(--ease-out);
+    transition:
+      opacity var(--dur-fast) var(--ease-out),
+      background-color var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
+  }
+
+  .closer :global(.nib-cross) {
+    width: 12px;
+    height: 12px;
+    stroke-width: 2.25;
   }
 
   .window:hover + .closer,
@@ -1369,8 +1417,14 @@
     visibility: hidden;
   }
 
-  .closer:hover {
-    border-color: var(--line-strong);
+  .closer:hover,
+  .closer:focus-visible {
+    background: color-mix(in srgb, var(--danger) 80%, black);
+    transform: scale(1.18) translate(-50%, -50%);
+  }
+
+  .closer:active {
+    transform: scale(0.94) translate(-50%, -50%);
   }
 
   .caption {

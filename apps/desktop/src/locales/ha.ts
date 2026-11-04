@@ -572,6 +572,9 @@ export const ha: Dictionary = {
   // Appearance
   Accent: 'Launin nuni',
   'Tidy up': 'Tsara',
+  'Blur the app behind the tab overview': 'Dushe manhaja a bayan bayyani na shafuka',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Yana nuna manhajar a dushe a bayan tagogi, maimakon bangon Orden na kansa.',
   'Swipe in from the edge to see your notes.': 'Goge daga gefe zuwa ciki don ganin bayananka.',
   'Show other tabs as icons': 'Nuna sauran shafuka a matsayin gumaka',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':

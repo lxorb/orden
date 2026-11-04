@@ -567,6 +567,9 @@ export const gu: Dictionary = {
   // Appearance
   Accent: 'ઉપસાવ રંગ',
   'Tidy up': 'વ્યવસ્થિત કરો',
+  'Blur the app behind the tab overview': 'ટૅબ ઝાંખી પાછળ ઍપને ઝાંખી કરો',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Orden ની પોતાની પૃષ્ઠભૂમિને બદલે વિન્ડોઝ પાછળ ઍપને ઝાંખી બતાવે છે.',
   'Swipe in from the edge to see your notes.': 'તમારી નોંધો જોવા માટે કિનારેથી અંદર સ્વાઇપ કરો.',
   'Show other tabs as icons': 'બીજી ટૅબ આઇકન તરીકે બતાવો',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
