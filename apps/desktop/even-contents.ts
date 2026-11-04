@@ -528,9 +528,16 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The styles raised on 2026-11-04, to 290,800, for #1063: a chooser's row wearing an
  *  installed application's own icon, in the box a mark is in (PromptSheet.svelte).
  *  Measured 290,744.
+ *
+ *  The code raised on 2026-11-04, to 5,913,700, for #1110: a side's panel icon pressed
+ *  twice opens the panel as a tab, an edit carried into an open file in the editor's
+ *  count of its line endings, a terminal's chosen icon on its tab and its row, and a
+ *  todo's card leaving the keyboard on itself (panel-tab.ts,
+ *  workspace/documents.svelte.ts, terminal/TerminalMark.svelte, icon-target.ts,
+ *  views/TaskRow.svelte). Measured 5,913,084.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_904_800,
+  code: 5_913_700,
   catalogues: 973_000,
   styles: 290_800,
   fonts: 260_000,

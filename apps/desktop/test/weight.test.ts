@@ -1234,8 +1234,16 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,602,000, for #1123: the sidebars are the window's across
  *  spaces, and the space switcher walks with the key that opened it still held
- *  (workspace/sets.svelte.ts, workspace/spaces.ts, roving.ts). Measured 3,600,780. */
-const BUDGET = 3_602_000
+ *  (workspace/sets.svelte.ts, workspace/spaces.ts, roving.ts). Measured 3,600,780.
+ *
+ *  Raised 2026-11-04, to 3,608,000, for #1110: a side's panel icon pressed twice opens
+ *  the panel as a tab (Sidebar.svelte; the table is fetched with the press), the
+ *  scratchpad as a note in one (scratchpad/is.svelte.ts), an edit carried into an open
+ *  file in the editor's count of its line endings (workspace/documents.svelte.ts,
+ *  `flatEdits` in search/replace.ts), and an online terminal's row wearing its tab's mark
+ *  and the icon chosen for it (FileMark.svelte, chosen-icon.ts,
+ *  marks-elsewhere.svelte.ts). Measured 3,607,291. */
+const BUDGET = 3_608_000
 const MOST_FILES = 395
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
