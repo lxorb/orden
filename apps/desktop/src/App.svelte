@@ -1672,8 +1672,10 @@
   }
 
   /* After a drag: as long as the distance left asks for, on a curve that
-     starts at the finger's pace and eases to a stop rather than snapping. */
-  :global([data-drawer]) .panels.settling {
+     starts at the finger's pace and eases to a stop rather than snapping. Never
+     under a finger: a drawer caught again before it has settled follows the new
+     drag at once rather than easing after it (#1066). */
+  :global([data-drawer]) .panels.settling:not(.dragging) {
     transition: transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
   }
 
@@ -1734,7 +1736,7 @@
     animation: none;
   }
 
-  :global([data-drawer]) .panels.right.settling {
+  :global([data-drawer]) .panels.right.settling:not(.dragging) {
     transition: transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
   }
 
@@ -1774,7 +1776,7 @@
     transition: none;
   }
 
-  :global([data-drawer][data-narrow]) .document.settling {
+  :global([data-drawer][data-narrow]) .document.settling:not(.dragging) {
     transition:
       transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1),
       box-shadow var(--settle) cubic-bezier(0.32, 0.72, 0, 1);

@@ -1,10 +1,10 @@
 import { describe, expect, test, vi } from 'vitest'
-import arrowSource from './SwipeArrow.svelte?raw'
 
 /** The arrow is glued to the fingers (#1050): drawn in the turn each step is heard in,
  *  from the very first step, with nothing measured on the way and nothing easing it after
  *  them. In the jsdom project, because the room it comes in over is the DOM's. Where it
- *  is for each step is gesture.test.ts. */
+ *  is for each step is gesture.test.ts, and that nothing eases it there is
+ *  test/effects/with-the-fingers.effect.test.ts. */
 
 vi.mock('../tauri', () => ({ isDesktop: false, isMobile: false }))
 vi.mock('../web-tab/pages.svelte', () => ({
@@ -45,11 +45,5 @@ describe('the arrow', () => {
 
   test('measures the room it comes in over once, not at every step', () => {
     expect(measured).toBe(1)
-  })
-
-  test('is moved with no transition while the fingers are on', () => {
-    const tracking = /\.nib-swipe\.tracking\s*\{([^}]*)\}/.exec(arrowSource)?.[1] ?? ''
-    expect(tracking).toContain('transition')
-    expect(tracking).not.toMatch(/transform|translate/)
   })
 })
