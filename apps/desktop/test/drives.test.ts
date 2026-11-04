@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
@@ -88,19 +88,23 @@ function split(text: string, into: Set<string>): void {
   for (const one of text.split(/[\s${}()?:+\\]+/)) if (one) into.add(one.replace(/^\./, ''))
 }
 
-for (const path of sources) {
-  const text = read(path)
-
-  if (path.endsWith('.css')) for (const found of text.matchAll(IN_CSS)) classes.add(caught(found))
+/** Every class one file writes, into `into`. */
+function classesIn(path: string, text: string, into: Set<string>): void {
+  if (path.endsWith('.css')) for (const found of text.matchAll(IN_CSS)) into.add(caught(found))
   else
     for (const block of text.matchAll(STYLE))
-      for (const found of caught(block).matchAll(IN_CSS)) classes.add(caught(found))
+      for (const found of caught(block).matchAll(IN_CSS)) into.add(caught(found))
 
-  for (const found of text.matchAll(ATTRIBUTE)) split(caught(found), classes)
-  for (const found of text.matchAll(DIRECTIVE)) classes.add(caught(found))
-  for (const found of text.matchAll(PROPERTY)) split(caught(found), classes)
+  for (const found of text.matchAll(ATTRIBUTE)) split(caught(found), into)
+  for (const found of text.matchAll(DIRECTIVE)) into.add(caught(found))
+  for (const found of text.matchAll(PROPERTY)) split(caught(found), into)
   for (const found of text.matchAll(ELEMENT))
-    for (const one of caught(found).matchAll(/["'`]([^"'`]+)["'`]/g)) split(caught(one), classes)
+    for (const one of caught(found).matchAll(/["'`]([^"'`]+)["'`]/g)) split(caught(one), into)
+}
+
+for (const path of sources) {
+  const text = read(path)
+  classesIn(path, text, classes)
 
   // An id as the attribute, as the property, and as a stylesheet's own selector.
   for (const found of text.matchAll(/\bid\s*[=:]\s*["'`]([^"'`${}]*)["'`]/g))
@@ -183,6 +187,49 @@ describe('the names a drive points at', () => {
       .sort()
 
     expect(stale, `${name} asks for names nothing in the app writes`).toEqual([])
+  })
+})
+
+/** A component and every component it draws, by the `.svelte` files it imports. */
+function drawnBy(path: string, found = new Set<string>()): Set<string> {
+  // `./one.svelte` is also how a `.svelte.ts` module is imported, which draws nothing.
+  if (found.has(path) || !existsSync(path)) return found
+  found.add(path)
+  for (const one of read(path).matchAll(/from\s+'(\.{1,2}\/[^']+\.svelte)'/g))
+    drawnBy(join(path, '..', caught(one)), found)
+  return found
+}
+
+/** The classes the top bar itself writes: Titlebar.svelte and what it draws. A name the
+ *  app writes somewhere else is no answer to a drive looking for it in the bar - `.pad`
+ *  is padding all over the app, and stayed "there" for the drives after the bar's
+ *  scratchpad switch had gone (#1104). */
+const bar = new Set<string>()
+for (const path of drawnBy(join(ROOT, 'apps', 'desktop', 'src', 'lib', 'Titlebar.svelte')))
+  classesIn(path, read(path), bar)
+
+describe('the names a drive looks for in the top bar', () => {
+  test('the bar writes names at all', () => {
+    expect(bar).toContain('title')
+    expect(bar).toContain('toggle')
+  })
+
+  test.each(drives)('%s looks in the bar for what the bar draws', (name) => {
+    const text = read(E2E, name)
+    const stale = new Set<string>()
+    // Every string that starts in the bar, wherever it is handed over from: a drive
+    // keeps the bar's selectors in names of its own (`GLYPH = "header button.pad"`).
+    for (const found of text.matchAll(/(["'`])(header\b(?:(?!\1).)*)\1/g)) {
+      for (const part of caught(found, 2)
+        .replace(/\{[^}]*\}/g, '')
+        .split(',')) {
+        const inBar = /^\s*header\b(?:\[[^\]]*\])?\s+(.*)$/.exec(part)
+        if (!inBar) continue
+        for (const one of caught(inBar).matchAll(/\.(-?[A-Za-z_][\w-]*)/g))
+          if (!bar.has(caught(one))) stale.add(`${part.trim()} → .${caught(one)}`)
+      }
+    }
+    expect([...stale].sort(), `${name} looks in the bar for what it no longer draws`).toEqual([])
   })
 })
 

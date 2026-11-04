@@ -1,14 +1,16 @@
-"""The scratchpad as a switch and a card, never a tab, seen in light and dark.
+"""The scratchpad as a card, never a tab of the notes', seen in light and dark.
 
 Emil, 2026-10-05: "The scratchpad should never open as a tab. It should be basically a
-thing in the top right that you can click, and then it is selected or it isn't." So the
-glyph at the bar's top right shows a card docked under it, Escape and the glyph put it
-away and give the keyboard back to the note, Ctrl+Shift+X calls it, a reload keeps it
-up with its words, and nothing of it is ever in the tab strip. On a phone it is the one
-note on the screen, all of where the note is and named in the bar, never a card beside the
-note (#206: "it should display as the only open note on mobile"). Over a canvas or a
-page note it is a markdown note like any other: nothing of the drawing is left on the
-screen, and putting it away gives the drawing back (#404).
+thing in the top right that you can click, and then it is selected or it isn't." On a
+desktop it is one of the right side's tabs (#1032): the right side's one button in the
+bar opens the side, the scratchpad's tab there shows the card with the keyboard in it,
+Escape puts it away and gives the keyboard back to the note, the side's button shuts it
+whole, Ctrl+Shift+X calls it, a reload keeps it up with its words, and nothing of it is
+ever in the strip of notes. On a phone it is in the left drawer's foot (#1030), and up
+it is the one note on the screen, all of where the note is and named in the bar, never
+a card beside the note (#206: "it should display as the only open note on mobile"). Over
+a canvas or a page note it is a markdown note like any other: nothing of the drawing is
+left on the screen, and putting it away gives the drawing back (#404).
 
     python apps/desktop/test/e2e/scratchpad.py
 
@@ -26,8 +28,12 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 PLAN = "# Plan\n\nWhat we are doing this week, and why it matters.\n"
 
-GLYPH = "header button.pad"
-CARD = "[data-scratchpad] .cm-content"
+#: The right side's one button in the bar, and the scratchpad's tab on that side (#1032).
+RIGHT = 'header [data-side-toggle="right"]'
+PAD_TAB = '[data-tab="scratchpad"]'
+#: A phone's: the scratchpad's glyph in the left drawer's foot (#1030).
+FOOT_GLYPH = '[data-region="foot"] button[aria-label="Scratchpad"]'
+CARD = "[data-scratchpad-card] .cm-content"
 
 # A phone says so in its user agent, and only then is the layout a phone's: with the
 # headless desktop agent, a narrow touch window is still a desktop with a strip of tabs.
@@ -42,16 +48,16 @@ ON_TOP = """() => {
   const card = document.querySelector('[data-scratchpad]')?.getBoundingClientRect()
   if (!card || !card.width || !card.height) return false
   const at = document.elementFromPoint(card.x + card.width / 2, card.y + card.height / 2)
-  return !!at?.closest('[data-scratchpad]')
+  return !!at?.closest('[data-scratchpad-card]')
 }"""
 
 STATE = """() => ({
-  pressed: document.querySelector('header button.pad')?.getAttribute('aria-pressed'),
-  card: !!document.querySelector('[data-scratchpad] .cm-content'),
-  inCard: !!document.activeElement?.closest('[data-scratchpad]'),
+  pressed: document.querySelector('[data-tab="scratchpad"]')?.getAttribute('aria-selected') ?? 'false',
+  card: !!document.querySelector('[data-scratchpad-card] .cm-content'),
+  inCard: !!document.activeElement?.closest('[data-scratchpad-card]'),
   inNote: !!document.activeElement?.closest('[data-panes]'),
   tabs: window.nibApp.workspace.tabs.map((one) => one.name),
-  words: document.querySelector('[data-scratchpad] .cm-content')?.textContent ?? null,
+  words: document.querySelector('[data-scratchpad-card] .cm-content')?.textContent ?? null,
 })"""
 
 
@@ -68,6 +74,28 @@ def opened(browser: Browser, scheme: str, phone: bool = False) -> Page:
     DRIVE.seed(page, PLAN)
     DRIVE.open_note(page, "Plan")
     return page
+
+
+def show_pad(page: Page) -> None:
+    """The scratchpad by the pointer on a desktop: the right side's button if the side is
+    shut, then the scratchpad's tab on it."""
+    if not page.locator(PAD_TAB).is_visible():
+        page.locator(RIGHT).click()
+        page.locator(PAD_TAB).wait_for(state="visible", timeout=5000)
+    if page.locator(PAD_TAB).get_attribute("aria-selected") != "true":
+        page.locator(PAD_TAB).click()
+
+
+def pad_on_phone(page: Page) -> None:
+    """The scratchpad by a finger on a phone: the drawer, then the glyph at its foot. Put
+    away from there, the drawer is still open over the note, and is shut as a hand would."""
+    if not page.locator(FOOT_GLYPH).is_visible():
+        page.evaluate("() => window.nibApp.workspace.toggleSidebar('left')")
+        page.locator(FOOT_GLYPH).wait_for(state="visible", timeout=5000)
+        page.wait_for_timeout(400)
+    page.locator(FOOT_GLYPH).tap()
+    page.wait_for_timeout(300)
+    page.evaluate("() => { const ws = window.nibApp.workspace; if (ws.panel) ws.closePanel() }")
 
 
 def gone(page: Page) -> None:
@@ -91,7 +119,7 @@ def desktop(browser: Browser, scheme: str) -> None:
         wrong(f"[{scheme}] the switch reads as pressed before it is")
 
     page.locator(".cm-content").first.click()
-    page.locator(GLYPH).click()
+    show_pad(page)
     wait_for(page, f"document.querySelector('{CARD}')", "the card")
     page.wait_for_timeout(350)
     state = page.evaluate(STATE)
@@ -137,11 +165,12 @@ def desktop(browser: Browser, scheme: str) -> None:
     no_tab(page, f"{scheme} reload")
     shot(page, f"{scheme}/04-after-a-reload")
 
-    page.locator(GLYPH).click()
+    # The right side's button shuts the side whole, the card with it (#1032).
+    page.locator(RIGHT).click()
     page.wait_for_timeout(400)
     gone(page)
     if page.evaluate(STATE)["card"]:
-        wrong(f"[{scheme}] the switch did not put the card away")
+        wrong(f"[{scheme}] the right side's button did not put the card away")
     page.context.close()
 
 
@@ -149,7 +178,9 @@ def phone(browser: Browser) -> None:
     page = opened(browser, "light", phone=True)
     if page.evaluate("document.documentElement.dataset.device") != "phone":
         wrong("[phone] the page is not laid out as a phone")
-    page.locator(GLYPH).tap()
+    if page.locator(f"header {PAD_TAB}, header [aria-label='Scratchpad']").count():
+        wrong("[phone] the bar has a switch of the scratchpad's, which is the drawer's (#1030)")
+    pad_on_phone(page)
     wait_for(page, f"document.querySelector('{CARD}')", "the card on a phone")
     page.wait_for_timeout(400)
     if not page.evaluate(ON_TOP):
@@ -210,7 +241,7 @@ def over_a_drawing(browser: Browser) -> None:
         page.evaluate(f"() => window.nibApp.workspace.{make}()")
         wait_for(page, "document.querySelector('.cluster')", f"the {kind}'s bar")
         page.wait_for_timeout(400)
-        page.locator(GLYPH).tap()
+        pad_on_phone(page)
         wait_for(page, f"document.querySelector('{CARD}')", f"the scratchpad over the {kind}")
         page.wait_for_timeout(500)
 
@@ -243,7 +274,7 @@ def over_a_drawing(browser: Browser) -> None:
         shot(page, f"light/06-over-a-{kind.replace(' ', '-')}")
         page.evaluate("() => { window.nibApp.viewport.keyboard = 0; window.nibApp.viewport.typing = false }")
 
-        page.locator(GLYPH).tap()
+        pad_on_phone(page)
         page.wait_for_timeout(600)
         back = page.evaluate(UNDER)
         kinds = {"canvas": "canvas", "page note": "pages"}
@@ -263,7 +294,7 @@ def main() -> int:
         phone(browser)
         say("--- a phone, over a drawing ---")
         over_a_drawing(browser)
-    return DRIVE.verdict("the scratchpad is a switch and a card, never a tab")
+    return DRIVE.verdict("the scratchpad is a card on the right side or a phone's one note, never a tab")
 
 
 if __name__ == "__main__":
