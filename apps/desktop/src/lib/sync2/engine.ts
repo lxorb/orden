@@ -27,7 +27,7 @@ import { holdsDocument } from './kinds'
 import { holderOf } from '../pages/held'
 import { waitsForBytes } from './files'
 import { foldIn } from './ingest'
-import { settle, type SpaceState } from './places'
+import { settle, type SpaceState, windowsPath } from './places'
 import { pass, type Passed, resting } from './pass'
 import { project, wrote } from './project'
 import { keepLosers, rejoin } from './rejoin'
@@ -533,7 +533,8 @@ export class Engine implements AskedEngine {
 
 /** A path relative to a root, with `/` between folders, or null outside it. */
 export function relative(root: string, path: string, foldsCase: boolean): string | null {
-  const norm = (value: string) => value.replace(/\\/g, '/').replace(/\/+$/, '')
+  const slashed = windowsPath(root)
+  const norm = (value: string) => (slashed ? value.replace(/\\/g, '/') : value).replace(/\/+$/, '')
   const base = norm(root)
   const full = norm(path)
   if (full.length <= base.length) return null

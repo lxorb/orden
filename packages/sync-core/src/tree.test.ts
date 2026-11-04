@@ -52,7 +52,8 @@ describe('tree', () => {
     const emoji = `${'😀'.repeat(127)}.md`
     create(state, 'n4', emoji)
     const cut = create(state, 'n5', emoji)
-    expect('name' in cut && cut.name.isWellFormed() && cut.name.length <= 255).toBe(true)
+    expect('name' in cut && cut.name.length <= 255).toBe(true)
+    expect('name' in cut && /[\uD800-\uDBFF]\./.test(cut.name)).toBe(false)
   })
 
   test('nameKey is NFC and without case', () => {

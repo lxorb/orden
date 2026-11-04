@@ -369,7 +369,6 @@ class Runner {
       const settling = () => waited(SETTLING)
       if (!(await sentAll(engine, kept, SENDING_ROUNDS, settling))) return false
       const { listings, gone } = await reachable(kept, (id) => listingOf(token, id))
-      // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once on the way back; nothing renders from it
       const done = new Set([...kept].filter((id) => !gone.has(id)))
       const mirrors = await this.mirrorsNow(engine, user.id, listings, done, gone)
       back = keep(MIRRORS, JSON.stringify({ account: user.id, seen: true, mirrors }))
@@ -546,8 +545,9 @@ class Runner {
     if (!engine) return
     this.status = 'syncing'
     this.lastError = null
-    let offline = false
-    let moved = false
+    // Set by what runs below in its own function, which is more than a read of them can see.
+    let offline = false as boolean
+    let moved = false as boolean
     try {
       if (this.due.delete('') || Date.now() - this.reconciledAt >= RECONCILE_INTERVAL) {
         // The account out of reach is the hollow light, never the red one: the passes

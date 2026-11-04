@@ -40,7 +40,7 @@ import { MINE } from './docs'
 import { foldIn, readAgain } from './ingest'
 import { fileOfUpdates, judge, shapeOf, turn, unixLines } from './kinds'
 import { type Outboxed, settle, type SpaceState } from './places'
-import { project } from './project'
+import { notWritten, project } from './project'
 import { againstBytes, type Merging, type Outgoing, outgoingBytes } from './records'
 import { carriedOwn, withTasksOf } from '@orden/bases/inbox'
 import { keepLosers, rejoin } from './rejoin'
@@ -436,8 +436,15 @@ async function pullDocs(
       doc.pulled = Math.max(doc.pulled, wanted.get(one.id)?.docSeq ?? 0)
       wanted.delete(one.id)
       changes.push(...core.docChanges(doc))
-      changes.push(...(await foldedThenProjected(core, space, entry, doc)))
-      brought += 1
+      // One note's file is that note's: thrown, this left before the commit below, and every
+      // file the batch had written read on the next launch as a new note (`notWritten`).
+      try {
+        changes.push(...(await foldedThenProjected(core, space, entry, doc)))
+      } catch (error) {
+        changes.push(...notWritten(core, space, entry, doc, error))
+      }
+      // Not written is not brought: it comes round again, and nothing here moved.
+      if (!wanted.has(one.id)) brought += 1
     }
     changes.push(core.wantChange(space.id))
     await core.commit(changes)

@@ -38,7 +38,7 @@ import { kindOfName, made, moved } from './create'
 import { MINE } from './docs'
 import { readFeed } from './pass'
 import { fileOfUpdates, judge, readable, seedOf, shapeOf, turn, unixLines } from './kinds'
-import type { SpaceState } from './places'
+import { asOnAccount, type SpaceState } from './places'
 import { againstBytes } from './records'
 import { keepLosers } from './rejoin'
 import { project, wrote } from './project'
@@ -136,7 +136,8 @@ export async function firstPass(
   const byPlace = (path: string, folder: boolean): EntryRow | null => {
     const key = space.key(path)
     for (const [id, at] of wanted) {
-      if (claimed.has(id) || away.has(id) || space.key(at) !== key) continue
+      if (claimed.has(id) || away.has(id)) continue
+      if (space.key(at) !== key && space.key(asOnAccount(at)) !== key) continue
       const entry = space.entries.get(id)
       if (entry && (entry.kind === 'folder') === folder) return entry
     }

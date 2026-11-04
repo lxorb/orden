@@ -1343,6 +1343,9 @@ describe('two spaces whose folders differ only in case', () => {
     expect(relative('/s/Notes', '/s/notes/a.md', false)).toBeNull()
     expect(relative('/s/notes', '/s/notes/a.md', false)).toBe('a.md')
     expect(relative('/s/Notes', '/s/notes/a.md', true)).toBe('a.md')
+    // A backslash is a separator on Windows and a character of a name anywhere else.
+    expect(relative('/s/notes', '/s/notes/a\\b.md', false)).toBe('a\\b.md')
+    expect(relative('C:\\s\\notes', 'C:\\s\\notes\\a\\b.md', true)).toBe('a/b.md')
   })
 
   // On Linux both can be there: a private note went up in the shared space, and a delete

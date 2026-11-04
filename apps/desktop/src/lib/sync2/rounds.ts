@@ -85,9 +85,7 @@ export async function reachable<T>(
   spaces: ReadonlySet<string>,
   listing: (id: string) => Promise<T>,
 ): Promise<{ listings: ReadonlyMap<string, T>; gone: ReadonlySet<string> }> {
-  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once on the way back; nothing renders from it
   const listings = new Map<string, T>()
-  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- the same
   const gone = new Set<string>()
   for (const id of spaces) {
     try {

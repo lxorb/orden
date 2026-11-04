@@ -16,6 +16,7 @@ import { evictedHere } from '../icloud-placeholder'
 import { onDisk } from '../on-disk'
 import { holderOf } from '../pages/held'
 import { scanSpace } from '../space-watch'
+import { windowsPath } from './places'
 import { invoke, isDesktop, joinPath, platform } from '../tauri'
 import { classifier } from './classify'
 import { accountOver, remoteFiles } from './transport'
@@ -133,9 +134,10 @@ interface Listed {
 }
 
 async function listed(root: string): Promise<{ path: string; dir: boolean }[] | null> {
-  const base = root.replace(/\\/g, '/').replace(/\/+$/, '')
+  const slashed = (path: string) => (windowsPath(root) ? path.replace(/\\/g, '/') : path)
+  const base = slashed(root).replace(/\/+$/, '')
   const inside = (path: string): string | null => {
-    const at = path.replace(/\\/g, '/')
+    const at = slashed(path)
     return at.startsWith(`${base}/`) ? at.slice(base.length + 1) : null
   }
   // On a desktop, everything in the folder - pictures and recordings with the notes -
