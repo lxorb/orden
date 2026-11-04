@@ -1173,8 +1173,12 @@ function holds(tail: string): boolean {
  *  corner with every placement (`cardCorner` in pages.svelte.ts). Measured 3,556,693.
  *
  *  Raised 2026-11-04, to 3,557,900, for #1100: Send feedback's bug back in the sidebar's
- *  foot on every device (SidebarFoot.svelte). Measured 3,557,767. */
-const BUDGET = 3_557_900
+ *  foot on every device (SidebarFoot.svelte). Measured 3,557,767.
+ *
+ *  Raised 2026-11-04, to 3,558,200, for #331: the pictures the tab overview keeps of windows,
+ *  taken as each leaves the screen (overview/faces.ts, overview/faces.svelte.ts).
+ *  Measured 3,558,037. */
+const BUDGET = 3_558_200
 const MOST_FILES = 393
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
