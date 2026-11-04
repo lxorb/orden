@@ -996,6 +996,14 @@ select option {
   opacity: 1;
 }
 
+/* Its note's own tab in the strip is the one in front (#1110): a ring of the accent
+   standing a little off the card, around it - another state than the open one's lift
+   above, whose ring is on the card, and worn with it where both hold. */
+.nib-tile.is-front {
+  outline: 1.5px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: 2px;
+}
+
 /* Where a drop would land: a line in the gap, as a list draws one between rows. */
 .nib-tile.is-before::before,
 .nib-tile.is-after::before {

@@ -57,6 +57,10 @@
      *  magnifier instead. */
     kind: Mark | null
     active: boolean
+    /** Whether the note's own tab in the strip is the one in front (#1110): another
+     *  state than `active`, which is the essential shown where a tab shows, and both
+     *  can hold at once. */
+    front: boolean
   }
 
   const byPath = $derived.by(() => {
@@ -81,7 +85,15 @@
     const shared = { mark, at, depth }
 
     if (mark.kind === 'group' || mark.kind === 'search' || mark.kind === 'graph') {
-      return { ...shared, label: mark.text, note: null, path: null, kind: null, active: false }
+      return {
+        ...shared,
+        label: mark.text,
+        note: null,
+        path: null,
+        kind: null,
+        active: false,
+        front: false,
+      }
     }
 
     // A block bookmark carries the whole of what a link into it would say, so the
@@ -107,6 +119,11 @@
         (mark.kind === 'note'
           ? samePath(workspace.active?.essential ?? null, entry.path)
           : workspace.active?.path === entry.path),
+      front:
+        !entry.is_dir &&
+        mark.kind === 'note' &&
+        !workspace.active?.essential &&
+        samePath(workspace.active?.path ?? null, entry.path),
     }
   }
 
@@ -437,6 +454,7 @@
               name={tile.label}
               mark={tile.kind ?? 'note'}
               active={tile.active}
+              front={tile.front}
               slot={landing?.at === tile.at ? (landing.after ? 'after' : 'before') : null}
               data-at={tile.at}
               {...letterOf(tile)}
