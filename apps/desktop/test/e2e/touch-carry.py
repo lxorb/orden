@@ -183,6 +183,24 @@ def board_on(browser, width, height, name):
         page.wait_for_timeout(300)
     if in_column(page, "A") != after:
         wrong(f"[{name}] a swipe moved a card")
+
+    # The edge strip is the drawer's, as Google Docs' and Spotify's: with no button on the
+    # bar it is the way to the file list from a board, and the column stays as it was.
+    if name == "phone":
+        column = page.evaluate("() => document.querySelector('.strip [aria-selected=true]')?.textContent")
+        touch(cdp, "touchStart", [(6, 500)])
+        for step in range(1, 13):
+            touch(cdp, "touchMove", [(6 + 26 * step, 500)])
+            page.wait_for_timeout(16)
+        touch(cdp, "touchEnd", [])
+        page.wait_for_timeout(600)
+        panel = page.evaluate("() => window.nibApp.workspace.panel")
+        say(f"[{name}] from the edge strip: panel {panel}")
+        if not panel:
+            wrong(f"[{name}] a swipe from the edge did not open the drawer over a board")
+        if page.evaluate("() => document.querySelector('.strip [aria-selected=true]')?.textContent") != column:
+            wrong(f"[{name}] a swipe from the edge turned the board's page too")
+        page.evaluate("() => window.nibApp.workspace.closePanel()")
     context.close()
 
 

@@ -107,7 +107,12 @@ export function followDrawers(host: HTMLElement): () => void {
 
     // Whatever is under the finger gets first refusal: a table that scrolls
     // sideways, a strip of tabs, a canvas being drawn on.
-    if (ownsGesture(document.elementFromPoint(touch.clientX, touch.clientY), host)) return
+    factor = readingFactor()
+    const atEdge = [drawer, rightDrawer].some(
+      (one) => one.there && fromEdge(touch.clientX, factor, one.sign) <= edge,
+    )
+    const under = document.elementFromPoint(touch.clientX, touch.clientY)
+    if (ownsGesture(under, host, atEdge)) return
 
     // Closed, only the edge strip opens a drawer on a tablet, where the note is a
     // page wide enough to be written and drawn on. Open, the drag that puts it
@@ -119,7 +124,6 @@ export function followDrawers(host: HTMLElement): () => void {
     // gesture runs the other way. `factor` and each drawer's sign are the only
     // places that say so.
     const anywhere = viewport.device === 'phone'
-    factor = readingFactor()
 
     // Whichever drawer is out is the one a drag moves, and it is under the
     // finger wherever the finger is. Where both are out it is the other side's:
