@@ -1907,6 +1907,147 @@ mod tests {
     }
 
     #[test]
+    fn the_way_out_of_a_dialog_and_what_reads_as_paying_by_mistake() {
+        let url = "https://app.example/";
+        let in_dialog = |name: &str, dialog: &str| Facts {
+            dialog: dialog.into(),
+            ..press(name)
+        };
+        // Each of these goes: an everyday dialog, or a way out said another way.
+        for (name, dialog) in [
+            ("OK", "We use cookies. You can delete them in your browser."),
+            (
+                "Accept all cookies",
+                "We use cookies. You can remove them at any time.",
+            ),
+            (
+                "Allow all",
+                "Our partners use cookies to process payment and measure ads.",
+            ),
+            (
+                "Agree",
+                "We and our partners store data. You can withdraw or remove consent any time.",
+            ),
+            ("I agree", "Cookies help us deliver your purchase."),
+            ("Next", "New: you can now pay with PayPal."),
+            ("Continue", "This upgrade is free of charge."),
+            ("Assign", "Who is in charge of this project?"),
+            ("Lanjut", "Saya setuju dengan ketentuan ini"),
+            ("Close dialog", "Delete your account?"),
+            ("Close modal", "Pay 20 EUR"),
+            ("Close Close", "Delete your account?"),
+            ("Continue shopping", "Item removed"),
+            ("Stay", "Delete your account?"),
+            ("Sluiten", "Delete your account?"),
+            ("\u{30ad}\u{30e3}\u{30f3}\u{30bb}\u{30eb}", "Delete your account?"),
+            ("Keep", "Delete this item?"),
+            ("No, keep it", "Delete your account?"),
+        ] {
+            assert_eq!(
+                category(&in_dialog(name, dialog), url),
+                None,
+                "{name}: {dialog}"
+            );
+        }
+        // Each of these asks: only what is plainly the way out goes free.
+        for (name, dialog, asked) in [
+            (
+                "Accept",
+                "Accept a charge of 99 EUR to your card?",
+                Category::Paying,
+            ),
+            (
+                "Keep",
+                "Keep your plan and be billed 99 EUR?",
+                Category::Paying,
+            ),
+            (
+                "Accept",
+                "Delete transfer request from Bob",
+                Category::Deleting,
+            ),
+            ("Accept all", "Delete your account?", Category::Deleting),
+            ("OK", "Delete your account?", Category::Deleting),
+            (
+                "No, thanks and charge me",
+                "Pay 99 EUR?",
+                Category::Paying,
+            ),
+            // Cookies in the same dialog are no way past what it asks.
+            (
+                "OK",
+                "Delete your account? We use cookies.",
+                Category::Deleting,
+            ),
+            (
+                "OK",
+                "Your card is charged 99 EUR. We use cookies.",
+                Category::Paying,
+            ),
+            (
+                "Continue",
+                "Free of charge for a month, then you are charged 9 EUR.",
+                Category::Paying,
+            ),
+            ("Continue", "This upgrade is 20 EUR. Pay now?", Category::Paying),
+        ] {
+            assert_eq!(
+                category(&in_dialog(name, dialog), url),
+                Some(asked),
+                "{name}: {dialog}"
+            );
+        }
+    }
+
+    #[test]
+    fn enter_in_a_dialog_is_judged_like_its_confirm() {
+        let url = "https://app.example/";
+        let field = |submit: bool, default_button: &str, dialog: &str| Facts {
+            tag: "input".into(),
+            editable: true,
+            in_form: submit,
+            submit,
+            default_button: default_button.into(),
+            dialog: dialog.into(),
+            ..Facts::default()
+        };
+        let enter = |facts: &Facts| {
+            judge(&grant(), facts, Act::Enter, url, &[]).map(|question| question.category)
+        };
+        for facts in [
+            field(true, "Confirm", "Delete your account?"),
+            field(true, "", "Delete your account?"),
+            field(false, "", "Delete your account?"),
+        ] {
+            assert_eq!(enter(&facts), Some(Category::Deleting), "{}", facts.default_button);
+        }
+        assert_eq!(enter(&field(true, "Cancel", "Delete your account?")), None);
+        assert_eq!(enter(&field(true, "", "Change your name?")), None);
+    }
+
+    #[test]
+    fn a_question_does_not_quote_a_secret_it_is_asked_on() {
+        let url = "https://app.example/";
+        let facts = Facts {
+            tag: "input".into(),
+            name: "4111111111111111".into(),
+            field: Field {
+                autocomplete: "cc-number".into(),
+                ..Field::default()
+            },
+            ..Facts::default()
+        };
+        let confirm = Grant {
+            mode: Mode::Confirm,
+            ..grant()
+        };
+        let question = judge(&confirm, &facts, Act::Press, url, &[]);
+        let summary = question.map(|one| one.summary).unwrap_or_default();
+        assert!(!summary.is_empty());
+        assert!(!summary.contains("4111"), "{summary}");
+    }
+
+    #[test]
     fn a_dialog_is_quoted_whole_and_amounts_stay_whole() {
         let quoted = |dialog: &str| mention(dialog, PAYING, DIALOG_PAYING).map(str::to_string);
         assert_eq!(

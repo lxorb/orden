@@ -722,3 +722,32 @@ describe('a long dialog', () => {
     expect(facts.dialog).toContain('permanently delete')
   })
 })
+
+describe('a dialog with a field in it', () => {
+  test.each([
+    ['an editable region', '<div contenteditable aria-label="Password">hunter2secret</div>'],
+    ['a text box by its role', '<div role=textbox aria-label="One-time code">hunter2secret</div>'],
+    ['a text area', '<textarea autocomplete=cc-number>hunter2secret</textarea>'],
+    ['words the page masks', '<span style="-webkit-text-security:disc">hunter2secret</span>'],
+  ])('does not say what is in %s', (_, field) => {
+    const facts = pressOn(
+      page(`<div role=dialog><h2>Delete account</h2>${field}<button>Next</button></div>`),
+    )
+    expect(facts.dialog).toBe('Delete account')
+  })
+
+  test('tells a field in it what it says, for the Enter that submits its form', () => {
+    const element = page(
+      '<dialog open><p>Delete your account?</p><form><input id=hit></form></dialog>',
+    ).querySelector('#hit')
+    expect(factsOf(element).dialog).toBe('Delete your account?')
+  })
+})
+
+describe('more fields than are described', () => {
+  test('say so, as what is past them is unread', () => {
+    const fields = Array.from({ length: 205 }, (_, at) => `<input name=a${String(at)}>`).join('')
+    const facts = pressOn(page(`<form>${fields}<input id=card><button>Save</button></form>`))
+    expect(facts as unknown as { cut: boolean }).toMatchObject({ cut: true })
+  })
+})

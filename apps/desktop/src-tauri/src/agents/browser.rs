@@ -1368,10 +1368,61 @@ fn beyond_the_grant(root: &Path, path: &Path, spaces: &Spaces) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{beyond_the_grant, modifiers};
+    use super::{beyond_the_grant, modifiers, policy, question_key, Act, Facts, Grant};
     use crate::agents::grants::{Every, Spaces};
     use crate::agents::verbs::Modifier;
     use std::path::Path;
+
+    /// What an allowance is for, for a control in a dialog.
+    fn key_of(name: &str, dialog: &str) -> String {
+        let facts = Facts {
+            tag: "button".into(),
+            name: name.into(),
+            dialog: dialog.into(),
+            ..Facts::default()
+        };
+        let grant = Grant::own("a".into(), "A");
+        let question = policy::judge(&grant, &facts, Act::Press, "https://app.example/", &[])
+            .expect("it asks");
+        question_key(&question, &question.summary, &facts)
+    }
+
+    #[test]
+    fn an_allowance_outlives_a_clock_and_not_the_words() {
+        for (one, other) in [
+            (
+                "Complete your payment Time left 9:58 Card ending 4242",
+                "Complete your payment Time left 9:57 Card ending 4242",
+            ),
+            (
+                "Delete 40 files Time left 10:00",
+                "Delete 40 files Time left 9:59",
+            ),
+            ("Removing files 0%", "Removing files 45 %"),
+            ("Pay now. Offer ends in 58 seconds", "Pay now. Offer ends in 1 minute"),
+            ("Pay now. Ends in 58s", "Pay now. Ends in 57s"),
+            ("Delete draft |", "Delete draft /"),
+        ] {
+            assert_eq!(key_of("Yes", one), key_of("Yes", other), "{one}");
+        }
+        for (one, other) in [
+            (
+                "Delete this item? report-draft.txt",
+                "Delete this item? ALL PROJECTS",
+            ),
+            ("Confirm purchase. Total: 20 EUR", "Confirm purchase. Total: 20000 EUR"),
+            ("Pay $20", "Pay $20000"),
+            ("Delete 3 files", "Delete 3000 files"),
+            ("Pay 1.299,00 EUR", "Pay 9.299,00 EUR"),
+        ] {
+            assert_ne!(key_of("Yes", one), key_of("Yes", other), "{one}");
+        }
+        // A button named Delete answers to its dialog's words as a Yes does.
+        assert_ne!(
+            key_of("Delete", "Are you sure? report-draft.txt"),
+            key_of("Delete", "Are you sure? ALL PROJECTS"),
+        );
+    }
 
     #[test]
     fn a_file_is_in_reach_by_the_space_it_is_in() {
