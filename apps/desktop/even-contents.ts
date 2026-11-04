@@ -503,10 +503,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,894,600, for #1068: a bookmark keeps the id of
  *  what it points at, and is found by it (workspace/bookmarks.svelte.ts,
  *  workspace/entry-ids.ts). Measured 5,894,413.
+ *
+ *  The code raised on 2026-11-04, to 5,897,400, and the catalogues to 973,000, for #1033:
+ *  Alt+H, J, K and L between the panes (pane-moves.ts, `paneToward` in
+ *  workspace/pane-tree.ts), and their four names and the pointer's switch in every
+ *  language. Measured 5,897,207 and 972,863.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_894_600,
-  catalogues: 969_500,
+  code: 5_897_400,
+  catalogues: 973_000,
   styles: 290_000,
   fonts: 260_000,
   pages: 40_000,

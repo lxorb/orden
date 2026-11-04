@@ -1216,8 +1216,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,577,000, for #1068: a bookmark keeps the id of what it points
  *  at, and is found by it where its path names nothing (workspace/bookmarks.svelte.ts,
- *  workspace/entry-ids.ts). Measured 3,576,390. */
-const BUDGET = 3_577_000
+ *  workspace/entry-ids.ts). Measured 3,576,390.
+ *
+ *  Raised 2026-11-04, to 3,581,600, for #1033: Alt+H, J, K and L between the panes and
+ *  the pane under the pointer the active one (pane-moves.ts, `paneToward` in
+ *  workspace/pane-tree.ts), and their five words in every language. Measured 3,580,980. */
+const BUDGET = 3_581_600
 const MOST_FILES = 394
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
