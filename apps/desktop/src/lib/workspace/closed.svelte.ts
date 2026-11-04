@@ -8,7 +8,7 @@
  *  Bounded, and the oldest goes first: a sitting that closes a hundred notes
  *  should not carry the text of all hundred around with it. */
 
-import { movedTo, nameOf } from '../space-paths'
+import { movedTo, nameOf, samePath, within } from '../space-paths'
 import type { FileOp } from './file-ops'
 import type { ClosedTab } from './session'
 
@@ -45,6 +45,12 @@ export class ClosedTabs {
   /** A closed tab of a file that has since moved comes back on the file where it is
    *  now, rather than on a name nothing answers to. */
   follow(op: FileOp) {
+    // Its words went with the note, into its last version; nothing may write them back.
+    if (op.op === 'removed') {
+      const path = op.path
+      this.spend((draft) => draft.path !== null && within(path, draft.path) !== null)
+      return
+    }
     if (op.op !== 'moved') return
 
     const stack = this.stack.map((closed) => {
@@ -53,6 +59,24 @@ export class ClosedTabs {
         ? closed
         : { ...closed, draft: { ...closed.draft, path, name: nameOf(path) } }
     })
+    if (stack.some((one, at) => one !== this.stack[at])) this.stack = stack
+  }
+
+  /** A note's file says all its document does: an entry holding words for it holds what
+   *  is on the disk or older, and coming back with those is a write of them over whatever
+   *  the file says by then, an agent's edit or a sync pull. From here on it comes back
+   *  from its file, as a tab with nothing unwritten does. */
+  wroteAll(path: string) {
+    this.spend((draft) => samePath(draft.path, path))
+  }
+
+  /** The entries `which` picks, holding no words of their own from here on. */
+  private spend(which: (draft: ClosedTab['draft']) => boolean) {
+    const stack = this.stack.map((closed) =>
+      closed.draft.dirty && which(closed.draft)
+        ? { ...closed, draft: { ...closed.draft, dirty: false, doc: '' } }
+        : closed,
+    )
     if (stack.some((one, at) => one !== this.stack[at])) this.stack = stack
   }
 

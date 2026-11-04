@@ -970,6 +970,28 @@ class Workspace {
     this.saving.across = across
   }
 
+  /** How a write before that fetches it; see `acrossSoon` in workspace/saving.svelte.ts. */
+  acrossWhenWriting(fetch: () => Promise<Across>) {
+    this.saving.acrossSoon = fetch
+  }
+
+  /** A note's file says all its document does; see `wroteAll` in workspace/closed.svelte.ts. */
+  wroteAll(path: string) {
+    this.closed.wroteAll(path)
+  }
+
+  /** A file gone with words of a note's on no disk: from here on a draft, which keeps
+   *  them, as for a note deleted in another window. */
+  draftUnwrittenUnder(path: string) {
+    for (const note of this.documents) {
+      if (note.path === null || !note.dirty || within(path, note.path) === null) continue
+      note.home = this.spaceOf(note)
+      note.path = null
+      note.onDisk = null
+      this.scheduleSession()
+    }
+  }
+
   /** A note's words are owed to its file: another window's merged in, say. */
   owedWords(note: NoteDoc) {
     this.saving.owed(note)
@@ -3064,6 +3086,8 @@ class Workspace {
     // not there yet opens blank - for a folder whose note nobody has written.
     const doc = found ?? ((await unread(path)) || !options.blank ? null : '')
     if (doc === null) return null
+    // Not there and meant not to be, so a first write is no file gone from under it.
+    const unwritten = found === null
 
     // A preview reuses the one preview tab rather than opening another, and only
     // when that tab is in the pane being worked in: taking over a tab in another
@@ -3084,6 +3108,7 @@ class Workspace {
 
     if (reusable) {
       reusable.note.adopt({ path, name: nameOf(path), text: doc })
+      if (unwritten) reusable.note.onDisk = null
       this.walked(reusable, path)
       this.placeAt(reusable, path)
       // A note arriving in the preview tab is a note opening, and a note opens
@@ -3102,6 +3127,7 @@ class Workspace {
       text: doc,
       dirty: false,
     })
+    if (unwritten) note.onDisk = null
     const tab = new Tab(note, this.panes.focusedId)
     this.walked(tab, path)
     this.placeAt(tab, path)

@@ -25,6 +25,7 @@ import {
   written,
 } from './parting'
 import { warmDoors } from './surfaces.svelte'
+import type { Across } from './workspace/across'
 import { recovery } from './recovery.svelte'
 import { reloading } from './reloading.svelte'
 import { record } from './sync/record.svelte'
@@ -218,11 +219,24 @@ export function start(): () => void {
     void startup.turn('rooms').then(() => import('./web-tab/one-window.svelte'))
   }
 
-  // The other windows' writes and file operations; see workspace/across.ts.
+  // The other windows' writes and file operations, and what is on the disk before a write
+  // goes over it; see workspace/across.ts. Sooner for a write that comes first.
   if (!__EVEN_PLUGIN__) {
-    void startup
-      .turn('rooms')
-      .then(() => import('./workspace/across').then(({ startAcross }) => startAcross()))
+    let fetched: Promise<Across> | null = null
+    const across = () =>
+      (fetched ??= import('./workspace/across').then(({ startAcross }) => startAcross()))
+    workspace.acrossWhenWriting(across)
+    void startup.turn('rooms').then(across)
+  }
+
+  // Changes other programs make in the spaces, where no sync engine hears them; see
+  // workspace/outside.svelte.ts.
+  if (!__EVEN_PLUGIN__ && isDesktop) {
+    void startup.turn('rooms').then(() =>
+      import('./workspace/outside.svelte').then(({ hearOutside }) => {
+        hearOutside()
+      }),
+    )
   }
 
   // Quick add's key over every other app, a desktop's alone and after the launch

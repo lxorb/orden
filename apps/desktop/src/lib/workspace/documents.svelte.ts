@@ -138,7 +138,15 @@ export class NoteDoc {
    *  what a write and another window's write are each merged against, null for a document
    *  with no file or one that came back holding words the file never had. See
    *  workspace/across.ts. */
-  onDisk: string | null
+  get onDisk(): string | null {
+    return this.knownOnDisk
+  }
+
+  set onDisk(to: string | null) {
+    this.knownOnDisk = to === null ? null : to.replace(/\r\n?/g, '\n')
+  }
+
+  private knownOnDisk: string | null = null
 
   /** `edited` hears about every change to the words, wherever it came from: a
    *  keystroke in any pane, an undo, a picture dropped in. */

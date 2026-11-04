@@ -1,0 +1,327 @@
+import { beforeEach, describe, expect, test, vi } from 'vitest'
+
+/** Another program writing a space's files, with the real store and across on a disk in
+ *  memory: a terminal agent, `git pull`, another editor, signed out and alone. What may
+ *  never happen is the file's words gone with no version holding them. */
+
+const disk = vi.hoisted(() => ({ current: null as import('../../test/disk').Disk | null }))
+vi.mock('./tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./tauri')>()),
+  isDesktop: true,
+  isNative: true,
+  invoke: (command: string, args?: Record<string, unknown>) => {
+    if (command === 'snapshot_note') versions.push(String(args?.content))
+    if (command === 'write_note') writes.push(String(args?.content))
+    return (disk.current as NonNullable<typeof disk.current>).invoke(command, args)
+  },
+}))
+const versions: string[] = []
+const writes: string[] = []
+
+const { Disk, memoryStorage } = await import('../../test/disk')
+const d = new Disk()
+disk.current = d
+vi.stubGlobal('localStorage', memoryStorage())
+const { workspace } = await import('./workspace.svelte')
+const { startAcross } = await import('./workspace/across')
+await startAcross()
+const { followOwnMoves, heardChange, heardNews } = await import('./workspace/outside.svelte')
+
+const SPACE = '/s'
+
+async function fresh(files: Record<string, string>) {
+  await workspace.writesSettled()
+  d.reset()
+  d.folders.add(SPACE)
+  for (const [path, words] of Object.entries(files)) d.files.set(path, words)
+  workspace.tabs = []
+  workspace.closed.stack = []
+  workspace.spaces = [{ id: 'S', name: 's', root: SPACE }]
+  workspace.activeSpaceId = 'S'
+  await workspace.loadTree()
+  versions.length = 0
+  writes.length = 0
+}
+
+function typed(words: string) {
+  const note = workspace.active?.note
+  if (!note) throw new Error('nothing open')
+  const end = note.live.text.length
+  note.live.edit([{ from: end, to: end, insert: words }], { userEvent: 'input' })
+}
+
+beforeEach(() => {
+  vi.useRealTimers()
+})
+
+describe('a stale buffer written over a file another program wrote', () => {
+  test('a clean tab typed in keeps what the terminal wrote', async () => {
+    await fresh({ '/s/n.md': '# n\n\nmine\n' })
+    await workspace.open('/s/n.md')
+    d.files.set('/s/n.md', '# n\n\nmine\n\nA WHOLE SECTION A TERMINAL AGENT WROTE\n')
+    typed('typed\n')
+    await workspace.writeNow()
+    expect(d.files.get('/s/n.md')).toContain('TERMINAL AGENT')
+    expect(d.files.get('/s/n.md')).toContain('typed')
+    expect(workspace.active?.note.latest).toContain('TERMINAL AGENT')
+    expect(workspace.active?.note.dirty).toBe(false)
+  })
+
+  test('both writing one line keeps both', async () => {
+    await fresh({ '/s/n.md': 'one\n' })
+    await workspace.open('/s/n.md')
+    d.files.set('/s/n.md', 'one from outside\n')
+    const note = workspace.active?.note
+    note?.live.edit([{ from: 0, to: 3, insert: 'one from me' }], { userEvent: 'input' })
+    await workspace.writeNow()
+    expect(d.files.get('/s/n.md')).toContain('outside')
+    expect(d.files.get('/s/n.md')).toContain('from me')
+  })
+
+  test('a file with Windows line endings no one else touched is written, not merged', async () => {
+    await fresh({ '/s/n.md': 'one\r\ntwo\r\n' })
+    await workspace.open('/s/n.md')
+    typed('three\n')
+    await workspace.writeNow()
+    expect(d.files.get('/s/n.md')).toBe('one\ntwo\nthree\n')
+    expect(versions[0]).toBe('one\r\ntwo\r\n')
+  })
+
+  test('a plane does not merge: the last write stands and a version holds the other', async () => {
+    const plane = (nodes: string) => `{"nodes":[${nodes}],"edges":[]}`
+    await fresh({ '/s/c.canvas': plane('') })
+    await workspace.openCanvas('/s/c.canvas')
+    const note = workspace.tabs.at(-1)?.note
+    if (!note) throw new Error('not open')
+    d.files.set('/s/c.canvas', plane('"outside"'))
+    note.replace(plane('"mine"'))
+    await workspace.writeNow()
+    expect(d.files.get('/s/c.canvas')).toBe(plane('"mine"'))
+    expect(versions).toContain(plane('"outside"'))
+  })
+
+  test('a file another program deleted does not come back, and the words stay', async () => {
+    await fresh({ '/s/n.md': '# n\n' })
+    await workspace.open('/s/n.md')
+    d.files.delete('/s/n.md')
+    typed('typed\n')
+    await workspace.writeNow()
+    expect(d.files.has('/s/n.md')).toBe(false)
+    expect(workspace.active?.note.path).toBe(null)
+    expect(workspace.active?.note.latest).toContain('typed')
+  })
+
+  test('a folder with no note of its own: the first words make the file, closed at once', async () => {
+    await fresh({ '/s/Proj/other.md': 'x' })
+    await workspace.openRow('/s/Proj')
+    const tab = workspace.tabs.find((one) => one.path === '/s/Proj/Proj.md')
+    if (!tab) throw new Error('did not open')
+    tab.note.replace('words typed into the folder note')
+    workspace.close(tab.id)
+    await workspace.writesSettled()
+    expect(d.files.get('/s/Proj/Proj.md')).toBe('words typed into the folder note')
+  })
+
+  test('a note the listing leaves out, closed within the pause, still writes', async () => {
+    await fresh({ '/s/.hidden/n.md': 'x\n' })
+    await workspace.loadTree()
+    await workspace.open('/s/.hidden/n.md')
+    const tab = workspace.tabs.find((one) => one.path === '/s/.hidden/n.md')
+    if (!tab) throw new Error('did not open')
+    tab.note.replace('x\ntyped\n')
+    workspace.close(tab.id)
+    await workspace.writesSettled()
+    expect(d.files.get('/s/.hidden/n.md')).toBe('x\ntyped\n')
+  })
+
+  test('a note deleted with a key still owed is not written back', async () => {
+    await fresh({ '/s/n.md': 'x\n' })
+    await workspace.open('/s/n.md')
+    typed('typed\n')
+    await workspace.remove('/s/n.md', false)
+    await workspace.writesSettled()
+    expect(d.files.has('/s/n.md')).toBe(false)
+  })
+})
+
+describe('the closed stack', () => {
+  test('closed right after the last key, the file changed since: reopens from the file', async () => {
+    await fresh({ '/s/a.md': '# a\n' })
+    await workspace.open('/s/a.md')
+    const tab = workspace.active
+    if (!tab) throw new Error('not open')
+    typed('words typed then closed at once\n')
+    workspace.close(tab.id)
+    await workspace.writesSettled()
+    expect(workspace.closed.stack.at(-1)?.draft.dirty).toBe(false)
+    expect(workspace.closed.stack.at(-1)?.draft.doc).toBe('')
+
+    const outside = '# a\nwords typed then closed at once\n\nFROM THE OTHER DEVICE\n'
+    d.files.set('/s/a.md', outside)
+    writes.length = 0
+    await workspace.reopenClosed()
+    await workspace.writesSettled()
+    expect(workspace.active?.note.latest).toBe(outside)
+    expect(writes).toEqual([])
+    expect(d.files.get('/s/a.md')).toBe(outside)
+  })
+
+  test('a write that never landed: the words come back, and what the file says is kept', async () => {
+    await fresh({ '/s/a.md': '# a\n' })
+    workspace.closed.stack = [
+      {
+        paneId: workspace.panes.focusedId,
+        at: 0,
+        draft: {
+          kind: 'note',
+          path: '/s/a.md',
+          name: 'a.md',
+          doc: '# a\nTHE WORDS THE CLOSED STACK SAVED\n',
+          dirty: true,
+          cursor: 0,
+          scroll: 0,
+        },
+      },
+    ]
+    d.files.set('/s/a.md', '# a\nFROM THE OTHER DEVICE\n')
+    await workspace.reopenClosed()
+    await workspace.writesSettled()
+    expect(workspace.active?.note.latest).toContain('THE WORDS THE CLOSED STACK SAVED')
+    expect(d.files.get('/s/a.md')).toContain('THE WORDS THE CLOSED STACK SAVED')
+    expect(versions).toContain('# a\nFROM THE OTHER DEVICE\n')
+  })
+
+  test('words still unwritten when the tab comes back at once are all there', async () => {
+    await fresh({ '/s/a.md': '# a\n' })
+    await workspace.open('/s/a.md')
+    const tab = workspace.active
+    if (!tab) throw new Error('not open')
+    typed('just typed\n')
+    workspace.close(tab.id)
+    await workspace.reopenClosed()
+    await workspace.writesSettled()
+    expect(workspace.active?.note.latest).toBe('# a\njust typed\n')
+    expect(d.files.get('/s/a.md')).toBe('# a\njust typed\n')
+  })
+
+  test('a refused write leaves the words on the entry', async () => {
+    await fresh({ '/s/a.md': '# a\n' })
+    await workspace.open('/s/a.md')
+    const tab = workspace.active
+    if (!tab) throw new Error('not open')
+    d.unreadable.add('/s/a.md')
+    typed('kept\n')
+    workspace.close(tab.id)
+    await vi.waitFor(() => expect(workspace.closed.stack.length).toBe(1))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(workspace.closed.stack.at(-1)?.draft.dirty).toBe(true)
+    expect(workspace.closed.stack.at(-1)?.draft.doc).toContain('kept')
+    d.unreadable.clear()
+    await workspace.writesSettled()
+  })
+})
+
+describe('what the watch says, with no engine to hear it', () => {
+  const stat = { size: 1, mtime: 1, id: null, dir: false }
+  const modified = (path: string) => ({ kind: 'modified' as const, path, ...stat })
+
+  test('a clean tab reads the file, and writes nothing', async () => {
+    await fresh({ '/s/n.md': 'mine\n' })
+    await workspace.open('/s/n.md')
+    d.files.set('/s/n.md', 'mine\nAND THEIRS\n')
+    await heardChange(modified('/s/n.md'))
+    expect(workspace.active?.note.latest).toBe('mine\nAND THEIRS\n')
+    expect(workspace.active?.note.dirty).toBe(false)
+    await workspace.writesSettled()
+    expect(writes).toEqual([])
+  })
+
+  test("the watch saying back this window's own write changes nothing", async () => {
+    await fresh({ '/s/n.md': 'mine\n' })
+    await workspace.open('/s/n.md')
+    typed('typed\n')
+    await workspace.writesSettled()
+    writes.length = 0
+    const revision = workspace.active?.note.revision
+    await heardChange(modified('/s/n.md'))
+    await workspace.writesSettled()
+    expect(workspace.active?.note.revision).toBe(revision)
+    expect(writes).toEqual([])
+  })
+
+  test('words waiting take the file in as they go down', async () => {
+    await fresh({ '/s/n.md': 'one\n\ntwo\n' })
+    await workspace.open('/s/n.md')
+    typed('typed\n')
+    d.files.set('/s/n.md', 'THEIRS\n\none\n\ntwo\n')
+    await heardChange(modified('/s/n.md'))
+    await workspace.writesSettled()
+    expect(d.files.get('/s/n.md')).toBe('THEIRS\n\none\n\ntwo\ntyped\n')
+    expect(workspace.active?.note.latest).toBe('THEIRS\n\none\n\ntwo\ntyped\n')
+  })
+
+  test('a file gone closes a clean tab', async () => {
+    await fresh({ '/s/n.md': 'mine\n' })
+    await workspace.open('/s/n.md')
+    d.files.delete('/s/n.md')
+    await heardChange({ kind: 'removed', path: '/s/n.md', dir: false, id: null })
+    expect(workspace.tabs).toEqual([])
+    await workspace.writesSettled()
+    expect(d.files.has('/s/n.md')).toBe(false)
+  })
+
+  test('a file gone keeps a tab with words on no disk, as a draft', async () => {
+    await fresh({ '/s/n.md': 'mine\n' })
+    await workspace.open('/s/n.md')
+    typed('typed\n')
+    d.files.delete('/s/n.md')
+    await heardChange({ kind: 'removed', path: '/s/n.md', dir: false, id: null })
+    await workspace.writesSettled()
+    expect(workspace.active?.note.path).toBe(null)
+    expect(workspace.active?.note.latest).toContain('typed')
+    expect(d.files.has('/s/n.md')).toBe(false)
+  })
+
+  test('a file said gone that is back stays', async () => {
+    await fresh({ '/s/n.md': 'mine\n' })
+    await workspace.open('/s/n.md')
+    await heardChange({ kind: 'removed', path: '/s/n.md', dir: false, id: null })
+    expect(workspace.active?.path).toBe('/s/n.md')
+  })
+
+  test('a file moved takes its tab along, and a key lands at the new name', async () => {
+    await fresh({ '/s/n.md': 'mine\n' })
+    await workspace.open('/s/n.md')
+    d.files.delete('/s/n.md')
+    d.files.set('/s/m.md', 'mine\n')
+    await heardChange({ kind: 'renamed', from: '/s/n.md', path: '/s/m.md', ...stat })
+    expect(workspace.active?.path).toBe('/s/m.md')
+    typed('typed\n')
+    await workspace.writesSettled()
+    expect(d.files.get('/s/m.md')).toBe('mine\ntyped\n')
+    expect(d.files.has('/s/n.md')).toBe(false)
+  })
+
+  test('a new file is a row in the list', async () => {
+    await fresh({ '/s/n.md': 'mine\n' })
+    d.files.set('/s/fresh.md', 'from git\n')
+    await heardNews({
+      root: SPACE,
+      changes: [{ kind: 'created', path: '/s/fresh.md', ...stat }],
+      scan: false,
+      gone: false,
+    })
+    await vi.waitFor(() => expect(workspace.entryAt('/s/fresh.md')).not.toBeNull())
+  })
+
+  test("a move of the workspace's own, said back, is said to nobody a second time", async () => {
+    await fresh({ '/s/x.md': 'x\n' })
+    followOwnMoves()
+    await workspace.rename('/s/x.md', 'y.md')
+    const heard: unknown[] = []
+    const stop = workspace.fileOps.follow((op) => heard.push(op))
+    await heardChange({ kind: 'renamed', from: '/s/x.md', path: '/s/y.md', ...stat })
+    stop()
+    expect(heard).toEqual([])
+  })
+})
