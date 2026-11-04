@@ -223,7 +223,10 @@ export class Across {
     const base = note.onDisk
     if (base === null || !asText(note)) {
       // Nothing to merge against, or nothing that merges: what is there is kept.
-      await this.desk.keepVersion(path, disk).catch(() => undefined)
+      // The file as it stood, line endings too: `disk` is in the editor's.
+      const stood = await this.desk.read(path)
+      const kept = stood !== null && unixLines(stood) === disk ? stood : disk
+      await this.desk.keepVersion(path, kept).catch(() => undefined)
       note.onDisk = disk
       return
     }

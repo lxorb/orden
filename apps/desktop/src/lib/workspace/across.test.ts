@@ -289,6 +289,15 @@ describe('one note in two windows', () => {
     expect(inB.latest).toContain('typed')
   })
 
+  test('a version of what a write replaces is the file as it stood, its line endings too', async () => {
+    const { disk, b } = twoWindows()
+    const inB = b.open('{"nodes":[]}', 'canvas')
+    disk.set(PATH, '{\r\n"nodes":[1]\r\n}')
+    b.type(inB, ' ')
+    await b.save(inB)
+    expect(b.versions).toEqual(['{\r\n"nodes":[1]\r\n}'])
+  })
+
   test('a plane does not merge as text: the words a write replaces are kept as a version', async () => {
     const before = '{"nodes":[]}'
     const { wires, disk, a, b } = twoWindows(before)
