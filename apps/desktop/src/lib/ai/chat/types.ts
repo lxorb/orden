@@ -300,6 +300,8 @@ export interface ThreadHead {
   archived?: boolean
   state?: SessionState
   pinned?: number
+  /** Another window is answering in it, as far as its head can tell. */
+  elsewhere?: boolean
   /** The first words, for searching the list. */
   words: string
 }

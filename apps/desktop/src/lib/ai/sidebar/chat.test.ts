@@ -3,7 +3,7 @@
  *  The crate's per-space store is played here by a map, so what is kept where is seen. */
 
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { Draft, EngineEvent, Thread, Turn } from '../chat/types'
+import type { Draft, EngineEvent, Part, Thread, Turn } from '../chat/types'
 
 const { memoryStorage } = await import('../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
@@ -1880,5 +1880,111 @@ describe('switching a chat to another model', () => {
     await chat.chooseModel('p', 'other')
     expect(ticking.asked).toEqual([])
     expect(chat.thread?.model).toBe('other')
+  })
+})
+
+describe('where a chat stands', () => {
+  beforeEach(() => {
+    kept.clear()
+    localStorage.clear()
+    engine.send.mockReset()
+  })
+
+  /** A chat answering, its model turn holding `parts`, told of them one by one. */
+  async function answering() {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    let tell: (part: Part, index: number) => void = () => undefined
+    let finish: () => void = () => undefined
+    engine.send.mockImplementationOnce(
+      (thread: Thread, draft: Draft, on: (event: EngineEvent) => void) =>
+        new Promise<void>((resolve) => {
+          const turn: Turn = { id: 'answer', role: 'model', at: 1, parts: [] }
+          thread.turns.push({ id: 'asked', role: 'you', at: 1, parts: [], draft }, turn)
+          on({ type: 'turn', turn })
+          tell = (part, index) => {
+            turn.parts[index] = part
+            on({ type: 'part', turn: turn.id, index, part })
+          }
+          finish = resolve
+        }),
+    )
+    chat.text = 'go on'
+    chat.submit({ front: null, selection: '' })
+    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+    return { chat, tell: (part: Part, index: number) => tell(part, index), end: () => finish() }
+  }
+
+  const call = (id: string, state: 'asking' | 'ok' | 'running'): Part => ({
+    kind: 'tool',
+    id,
+    verb: 'write',
+    args: {},
+    state,
+  })
+
+  test('a call finishing beside one awaiting approval leaves it waiting on the reader', async () => {
+    const { chat, tell, end } = await answering()
+    tell(call('one', 'running'), 0)
+    tell(call('two', 'running'), 1)
+    expect(chat.thread?.state).toBe('running')
+    tell(call('one', 'asking'), 0)
+    expect(chat.thread?.state).toBe('needs-input')
+    tell(call('two', 'ok'), 1)
+    expect(chat.thread?.state).toBe('needs-input')
+    tell(call('one', 'ok'), 0)
+    expect(chat.thread?.state).toBe('running')
+    end()
+  })
+
+  test('so does one of two approvals answered, until the other is', async () => {
+    const { chat, tell, end } = await answering()
+    tell(call('one', 'asking'), 0)
+    tell(call('two', 'asking'), 1)
+    tell(call('one', 'ok'), 0)
+    expect(chat.thread?.state).toBe('needs-input')
+    tell(call('two', 'ok'), 1)
+    expect(chat.thread?.state).toBe('running')
+    end()
+  })
+
+  test('a chat a relaunch found at work is interrupted, and at work again when asked', async () => {
+    const { keepThread, newThread } = await import('../chat/threads')
+    const thread = newThread('work', 'p', 'm')
+    thread.title = 'Plan'
+    thread.state = 'running'
+    thread.turns = [{ id: 'u1', role: 'you', at: 1, parts: [] }]
+    await keepThread(thread)
+
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    await vi.waitFor(() => expect(chat.every.map((one) => one.state)).toEqual(['interrupted']))
+    await chat.openThread(thread.id, false)
+    expect(chat.thread?.state).toBe('interrupted')
+
+    engine.send.mockImplementationOnce(() => new Promise<void>(() => undefined))
+    chat.text = 'again'
+    chat.submit({ front: null, selection: '' })
+    await vi.waitFor(() => expect(chat.every.map((one) => one.state)).toEqual(['running']))
+  })
+
+  test('a chat another window is answering in is at work, not interrupted', async () => {
+    const { keepThread, newThread } = await import('../chat/threads')
+    const thread = newThread('work', 'p', 'm')
+    thread.title = 'Plan'
+    thread.state = 'running'
+    thread.answering = 'a1'
+    thread.turns = [{ id: 'u1', role: 'you', at: 1, parts: [] }]
+    await keepThread(thread)
+
+    // A launch here is a window of its own, as this test has no session to keep its name in.
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    await vi.waitFor(() =>
+      expect(chat.every.find((one) => one.id === thread.id)?.state).toBe('running'),
+    )
   })
 })

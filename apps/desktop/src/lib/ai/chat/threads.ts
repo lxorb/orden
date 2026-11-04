@@ -453,6 +453,7 @@ function headIn(value: unknown): ThreadHead | null {
     updated: isNumber(value.updated) ? value.updated : 0,
     ...(value.archived === true ? { archived: true } : {}),
     ...placeIn(value),
+    ...(answeredElsewhere(value) ? { elsewhere: true } : {}),
     words: isString(value.words) ? value.words : '',
   }
 }
@@ -586,17 +587,21 @@ export async function readThread(space: string, id: string): Promise<Thread | nu
   return threadIn(value, true)
 }
 
+/** When and where a thread is being answered, for the window that reads it meanwhile; see
+ *  `answeredElsewhere`. */
+function aliveIn(thread: Thread): { answeringAt?: number; answeringIn?: string } {
+  return thread.answering ? { answeringAt: Date.now(), answeringIn: thisWindow() } : {}
+}
+
 /** A thread as a file says it: its own mode and model, whatever one send is running on. */
 function asWritten({ own, ...thread }: Thread): Thread {
-  // When and where, for the window that reads it meanwhile; see `answeredElsewhere`.
-  const alive = thread.answering ? { answeringAt: Date.now(), answeringIn: thisWindow() } : {}
-  return { ...thread, ...own, ...alive }
+  return { ...thread, ...own, ...aliveIn(thread) }
 }
 
 /** Writes a thread down, and its line in the space's list. */
 export async function writeThread(given: Thread): Promise<void> {
   const thread = asWritten(given)
-  const head = headOf(thread)
+  const head = { ...headOf(thread), ...aliveIn(thread) }
   const body = JSON.stringify(thread)
   if (isNative) {
     await invoke<null>('ai_thread_write', { space: thread.space, id: thread.id, head, body })

@@ -356,12 +356,28 @@ class Chat implements Panel {
   /** A head as this run knows it: a chat written down as at work that nothing in this
    *  run is working on was at work when the app last closed, and is interrupted
    *  (`relaunch`). Written down the next time the thread itself is. */
-  private settled<T extends Listed>(head: T): T {
+  private settled<T extends Pick<Listed, 'id' | 'state' | 'elsewhere'>>(head: T): T {
     const state = head.state ?? FIRST_STATE
-    if (this.running.includes(head.id) || tasks.of(head.id).length || this.resets[head.id]?.waiting)
+    if (
+      this.running.includes(head.id) ||
+      head.elsewhere ||
+      tasks.of(head.id).length ||
+      this.resets[head.id]?.waiting
+    )
       return head
     const now = nextState(state, { type: 'relaunch' })
     return now === state ? head : { ...head, state: now }
+  }
+
+  /** A thread read from its file, settled as its head is: a chat at work when the app last
+   *  closed is interrupted on the thread as well, or a send, which moves it to at work
+   *  from at work, would tell the list nothing. */
+  private settledRead(thread: Thread | null): Thread | null {
+    if (thread) {
+      const { state } = this.settled(thread)
+      if (state !== undefined) thread.state = state
+    }
+    return thread
   }
 
   /** The one door every change of a chat's state goes through (#1089): the machine in
@@ -621,11 +637,12 @@ class Chat implements Panel {
     } else if (event.type === 'part') {
       this.changed.add(event.turn)
       // A question for the reader is an answer they have not seen, until they do, and
-      // the chat waits on them; anything after it is the agent going on.
+      // the chat waits on them; anything after it is the agent going on, unless a call
+      // beside it is still asking (`runCalls` runs a round's calls side by side).
       if (event.part.kind === 'tool' && event.part.state === 'asking') {
         this.answered(thread)
         this.move(thread, { type: 'ask' })
-      } else this.move(thread, { type: 'answered' })
+      } else if (!stillAsking(thread, event.turn)) this.move(thread, { type: 'answered' })
       this.grew(thread, event.part)
     } else if (event.type === 'done') {
       this.everything = true
@@ -690,7 +707,11 @@ class Chat implements Panel {
   /** Another window wrote a thread down. */
   heardWritten(id: string): void {
     void this.readAgain(id)
+    this.headsSoon()
   }
+
+  /** The list told what another window's answers have come to, as often as they are written. */
+  private readonly headsSoon = afterQuiet(() => void this.refreshHeads(), KEEP_QUIET, KEEP_AT_MOST)
 
   private askingAgain: ReturnType<typeof setTimeout> | null = null
 
@@ -1519,7 +1540,10 @@ class Chat implements Panel {
 
   /** A thread by id: the one in hand, else the one kept. */
   private async held(id: string): Promise<Thread | null> {
-    return this.live.get(id) ?? (await readThread(this.spaceOf(id), id).catch(() => null))
+    return (
+      this.live.get(id) ??
+      this.settledRead(await readThread(this.spaceOf(id), id).catch(() => null))
+    )
   }
 
   async exportThread(): Promise<void> {
@@ -1632,6 +1656,12 @@ $effect.root(() => {
 answerThreadSpaces(
   (id) => chat.threadOf(id)?.space ?? chat.every.find((one) => one.id === id)?.space ?? null,
 )
+
+/** Whether a call of a model turn is still waiting on the reader. */
+function stillAsking(thread: Thread, turn: string): boolean {
+  const parts = thread.turns.find((one) => one.id === turn)?.parts ?? []
+  return parts.some((part) => part.kind === 'tool' && part.state === 'asking')
+}
 
 /** The space a thread works in: its own, and the one in front where it names none this
  *  device has. What its message is gathered in and its sources are paths in. */
