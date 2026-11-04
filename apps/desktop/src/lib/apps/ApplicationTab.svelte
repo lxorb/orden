@@ -96,10 +96,10 @@
 </div>
 
 <style>
+  /* On the pane's paper, which is the one surface that lays it (#1110). */
   .application {
     position: relative;
     height: 100%;
-    background: var(--content-ground, var(--bg));
   }
 
   /* The online terminal's card, in the middle of the pane. */
