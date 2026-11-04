@@ -209,6 +209,51 @@ describe('what is never lost', () => {
   })
 })
 
+describe('a move taken back', () => {
+  test('undone, the tab goes back with its file; redone, it follows again', async () => {
+    await workspace.openEntry(IDEAS)
+    await workspace.openEntry(PLAN)
+    await moveToSpace([tabAt(PLAN).id], 'home')
+    expect(onScreen()).not.toContain('Plan')
+
+    await workspace.undoFileAction()
+    expect(files().has(PLAN)).toBe(true)
+    expect(onScreen()).toContain('Plan')
+
+    await workspace.redoFileAction()
+    expect(files().has('/spaces/Home/Plan.md')).toBe(true)
+    expect(onScreen()).not.toContain('Plan')
+    await workspace.showSpace('home')
+    expect(onScreen()).toContain('Plan')
+  })
+
+  test('a move within a space stays the tab’s own business', async () => {
+    files().set('/spaces/Work/Old/x.md', '# x\n')
+    await workspace.loadTree()
+    await workspace.openEntry(PLAN)
+    await workspace.move(PLAN, '/spaces/Work/Old')
+    await workspace.undoFileAction()
+    expect(onScreen()).toContain('Plan')
+  })
+})
+
+describe('a move that was refused', () => {
+  test('says so, with the way to try again, and answers that nothing moved', async () => {
+    const { failed } = await import('../../src/lib/views/failed.svelte')
+    failed.dismiss()
+    files().set('/spaces/Home/Plan.md', '# theirs\n')
+    await workspace.openEntry(PLAN)
+    expect(await moveToSpace([tabAt(PLAN).id], 'home')).toBe(false)
+    expect(failed.retry).not.toBe(null)
+    expect(onScreen()).toContain('Plan')
+    failed.dismiss()
+
+    files().delete('/spaces/Home/Plan.md')
+    expect(await moveToSpace([tabAt(PLAN).id], 'home')).toBe(true)
+    expect(failed.retry).toBe(null)
+  })
+})
+
 describe('the session', () => {
   test('writes the tab under the space it went to', async () => {
     const draft = blank('notes')
