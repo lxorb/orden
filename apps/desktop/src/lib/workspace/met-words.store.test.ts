@@ -97,6 +97,19 @@ describe('unwritten words meeting an open document', () => {
     expect(workspace.closed.stack).toHaveLength(0)
   })
 
+  test('a closed tab reopened over the note open again in its strip leaves one tab of it', async () => {
+    await workspace.loadTree()
+    workspace.closed.restore([{ paneId: workspace.panes.focusedId, at: 0, draft: tab() }])
+    await workspace.open(PATH)
+    const open = workspace.active!
+    await workspace.reopenClosed()
+    await workspace.writesSettled()
+
+    expect(workspace.tabs.filter((one) => one.path === PATH)).toEqual([open])
+    expect(workspace.active).toBe(open)
+    expect(d.files.get(PATH)).toBe('base\ntyped\n')
+  })
+
   test('a closed entry of another space goes back there, and meets the note open in it', async () => {
     const OTHER = '/spaces/Two'
     const THERE = `${OTHER}/a.md`

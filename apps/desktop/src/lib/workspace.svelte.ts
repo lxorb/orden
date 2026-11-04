@@ -3712,6 +3712,13 @@ class Workspace {
         const [tab] = await this.tabsFrom([draft], paneId)
         if (!tab) continue
 
+        // Of a strip's tabs, one per document: its note was opened again since it closed.
+        const there = this.tabsIn(paneId).find((one) => one.note === tab.note)
+        if (there) {
+          back = { tab: there, paneId }
+          continue
+        }
+
         this.tabs = this.placed(tab, paneId, closed.at)
         back = { tab, paneId }
       }
