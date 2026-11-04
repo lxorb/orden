@@ -1152,8 +1152,12 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,549,500, for #1098: a web note wears the icon chosen for it over
  *  the site's mark, kept in its `.url` and carried by every rewrite of one
  *  (`rewriteShortcut` in web-tab/shortcut.ts, `wearsChosen` in chosen-icon.ts).
- *  Measured 3,549,413. */
-const BUDGET = 3_549_500
+ *  Measured 3,549,413.
+ *
+ *  Raised 2026-11-04, to 3,551,400, for #1047: a checkbox in the left side's top row
+ *  that opens Todos as a tab, fetched with the press (Sidebar.svelte, todos-entry.ts), and
+ *  the Tasks panel homed on the right (workspace/panels.ts). Measured 3,551,274. */
+const BUDGET = 3_551_400
 const MOST_FILES = 391
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
