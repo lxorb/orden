@@ -767,7 +767,7 @@ impl Page<'_> {
                 self.forget_worlds(session);
             }
             for frame in self.frames_of(session) {
-                if let Some(handle) = self.world_of_frame(session, &frame).ok().and_then(&resolve) {
+                if let Some(handle) = self.world_of_frame(session, &frame).ok().and_then(resolve) {
                     return Some(handle);
                 }
             }

@@ -1079,7 +1079,7 @@ So a paragraph round a Pay button asks and a section whose middle is empty does 
 frame's ref is a press of what is in the frame. Where no control holds the press, what acts for
 it does (a handler, a place in the tab order, a widget's role, a pointer cursor set on it, a
 listener the engine can see), by its label and the words hit, and by a line it holds that opens
-by saying it pays or deletes (`Pay now`, `Delete 3 files`, a pseudo-element's words too), any
+by saying it pays or deletes, in four words or fewer (`Pay now`, `Delete 3 files`, a pseudo-element's words too), any
 line of what is built to be pressed, and only the first of a row or of what only a listener or
 the tab order says takes one. So a Pay tile asks from any part, a row is not called Pay for its
 second cell, a help card is not called what its heading discusses, and `Pay on delivery` on a
@@ -1093,8 +1093,8 @@ page's own script behind a button called OK is not seen by anything here.
 A link that only goes is no delete, as the press that deletes is on the page it goes to; one
 with `data-method`, `data-turbo-method`, `role=button` or a handler or listener of its own is a
 press, while a plain `<a href=/delete-account>` still goes. In a dialog, what goes ahead (Confirm,
-OK, Yes, Continue) asks if the dialog's label or lines talk of paying or deleting, a notice about
-cookies aside. Got it, Accept all, Learn more and a nameless icon do not, and so a dialog whose
+OK, Yes, Continue) asks if the dialog says it is about to pay or delete: a sentence that asks, or says it will, or
+its opening words, a notice about cookies aside. `You can remove your data at any time` does not. Got it, Accept all, Learn more and a nameless icon do not, and so a dialog whose
 real button is called something else goes. A tick by `browser_fill_form` is a press like one by
 `browser_click`, on top of the form's one question.
 
@@ -1113,7 +1113,7 @@ is not printed to a PDF at all, where nothing could paint it over. Nor does it
 read any other secret - a one-time code or a PIN and a card's number, expiry or security code,
 each by its `autocomplete` or by what it is called, and in a box, an editable region or a
 `role=textbox` alike -
-by any road: `browser_snapshot` writes such a field as `[filled]` or nothing, and nothing
+by any road, and a field that cannot be described, whatever frame it is in, counts as one: `browser_snapshot` writes such a field as `[filled]` or nothing, and nothing
 under it (the engine's own value for a password is one bullet a character, and its words
 inside the field the same, so either would say how long it is); `browser_find` never looks
 inside one; a name the engine builds out of a field's value has the value taken out; and
