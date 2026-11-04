@@ -113,7 +113,7 @@ vi.mock('@tauri-apps/api/event', () => ({
   },
 }))
 
-const { pages, readChosen, readOpening } = await import('./pages.svelte')
+const { cardCorner, pages, readChosen, readOpening } = await import('./pages.svelte')
 
 // What the window's listeners are fetched with, behind the first page; see `listen` in
 // pages.svelte.ts. Fetched here first: a whole gate compiles them cold on a busy
@@ -1062,6 +1062,49 @@ describe('what a page asking for a window says', () => {
   test('names nothing a tab may not hold', () => {
     expect(readOpening({ tab: 't', url: 'file:///C:/Windows/', behind: true })).toBeNull()
     expect(readOpening({ url: 'https://example.com/' })).toBeNull()
+  })
+})
+
+/** #1088: a page fills the bottom of a rounded card, so each placement says the card's
+ *  corner, as the frame's token has it where the panes are, for the page's own two bottom
+ *  corners; Square and full screen make it nothing. */
+describe("the card's corner a page is placed with", () => {
+  /** A window whose panes stand in a card with corners `radius` across, as the frame's
+   *  token says; only the two names `cardCorner` reads, set and taken away again. */
+  function frame(radius: string) {
+    const panes = {}
+    Object.assign(globalThis, {
+      document: { querySelector: (selector: string) => (selector === 'main' ? panes : null) },
+      getComputedStyle: (of: object) => ({
+        getPropertyValue: (token: string) =>
+          of === panes && token === '--card-radius' ? radius : '',
+      }),
+    })
+  }
+
+  afterEach(() => {
+    Reflect.deleteProperty(globalThis, 'document')
+    Reflect.deleteProperty(globalThis, 'getComputedStyle')
+  })
+
+  test('is the token where the panes are, and nothing for a square card', () => {
+    frame('10px')
+    expect(cardCorner()).toBe(10)
+    frame('0px')
+    expect(cardCorner()).toBe(0)
+    frame('')
+    expect(cardCorner()).toBe(0)
+  })
+
+  test('goes with every placement, nothing where there is no frame to read', async () => {
+    const shown = pages.show('round', SITE, PANE)
+    const arrive = await asked()
+    arrive()
+    await shown
+    void pages.place('round', MOVED, true)
+    await vi.waitFor(() =>
+      expect(last('web_place')).toMatchObject({ tab: 'round', pane: MOVED, corner: 0 }),
+    )
   })
 })
 

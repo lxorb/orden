@@ -34,6 +34,13 @@
 //! Linux was never cut, and a toast took a band of the pane under the page rather than
 //! floating over it (#512). Elsewhere `CUTS` is false, and the window answers a layer
 //! over a page the way it always has: the still picture, and the page hidden.
+//!
+//! **The card's corners too** (#1088). What is open sits in a card with rounded corners,
+//! and a page fills its card to the bottom: drawn square, the page stood out of both of
+//! the card's lower corners. So the page's own shape has the card's corner at its two
+//! bottom corners, as wide as the window says the card's corner is (`--card-radius`, which
+//! Square and full screen make nothing). The same region on Windows and Linux, and on a
+//! Mac, which cuts nothing, the page's own layer rounded there (`engine::round`).
 
 use std::collections::HashMap;
 use std::sync::{LazyLock, Mutex, PoisonError};
@@ -79,19 +86,25 @@ fn pixels(length: f64, scale: f64) -> i32 {
     (length * scale).round() as i32
 }
 
-/// The shape a cut leaves of a page `wide` by `tall` pixels of the screen, at `scale`.
-/// Layers that miss the page are left out; one that reaches past its edge is kept whole,
-/// corners and all, and what of it is outside the page is outside the page's window
-/// anyway. A cut with nothing left in it is no cut.
+/// The shape a cut leaves of a page `wide` by `tall` pixels of the screen, at `scale`,
+/// whose two bottom corners are the card's, `corner` in the window's own units across.
+/// The first piece is the page itself, its last field the diameter of those two corners
+/// and of no others; every piece after it a layer taken out of it. Layers that miss the
+/// page are left out; one that reaches past its edge is kept whole, corners and all, and
+/// what of it is outside the page is outside the page's window anyway. A page with
+/// nothing over it and square corners has no shape at all.
 #[must_use]
-pub fn shape_of(cut: Option<&Cut>, wide: u32, tall: u32, scale: f64) -> Shape {
-    let cut = cut?;
-    if cut.all {
+pub fn shape_of(cut: Option<&Cut>, wide: u32, tall: u32, scale: f64, corner: f64) -> Shape {
+    if cut.is_some_and(|one| one.all) {
         return Some(Vec::new());
     }
 
     let wide = i32::try_from(wide).unwrap_or(i32::MAX);
     let tall = i32::try_from(tall).unwrap_or(i32::MAX);
+    let round = pixels(corner.max(0.0) * 2.0, scale).clamp(0, wide.min(tall).max(0));
+    let Some(cut) = cut else {
+        return (round > 0).then(|| vec![(0, 0, wide, tall, round)]);
+    };
     let pieces: Vec<Piece> = cut
         .hollows
         .iter()
@@ -109,11 +122,11 @@ pub fn shape_of(cut: Option<&Cut>, wide: u32, tall: u32, scale: f64) -> Shape {
         })
         .collect();
 
-    // Nothing over the page after all: the whole of it.
-    if pieces.is_empty() {
+    // Nothing over the page after all: the whole of it, its corners as they are.
+    if pieces.is_empty() && round == 0 {
         return None;
     }
-    let mut whole = vec![(0, 0, wide, tall, 0)];
+    let mut whole = vec![(0, 0, wide, tall, round)];
     whole.extend(pieces);
     Some(whole)
 }
@@ -129,25 +142,28 @@ pub const CUTS: bool = cfg!(any(
 /// a cut is given the cut again at its new size.
 static GIVEN: LazyLock<Mutex<Given>> = LazyLock::new(Mutex::default);
 
-/// Each page's last cut and shape, by its label.
-type Given = HashMap<String, (Option<Cut>, Shape)>;
+/// Each page's last cut, the card's corner it was given, and the shape they made, by its
+/// label.
+type Given = HashMap<String, (Option<Cut>, f64, Shape)>;
 
 fn given<T>(look: impl FnOnce(&mut Given) -> T) -> T {
     look(&mut GIVEN.lock().unwrap_or_else(PoisonError::into_inner))
 }
 
 /// Gives a page the shape a cut leaves of it at `wide` by `tall` pixels of the screen,
-/// at `scale`, unless it already has that shape.
-pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64) {
+/// at `scale`, with the card's `corner` at its bottom, unless it already has that shape.
+/// Where nothing is cut, only the corner.
+pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64, corner: f64) {
     if !CUTS {
+        engine::round(view, corner);
         return;
     }
-    let shape = shape_of(cut.as_ref(), wide, tall, scale);
+    let shape = shape_of(cut.as_ref(), wide, tall, scale, corner);
     let label = view.label().to_string();
     let changed = given(|all| {
         // A page never given a shape has all of itself, which is `None`.
-        let before = all.get(&label).and_then(|(_, one)| one.clone());
-        all.insert(label, (cut, shape.clone()));
+        let before = all.get(&label).and_then(|(_, _, one)| one.clone());
+        all.insert(label, (cut, corner, shape.clone()));
         before != shape
     });
     if changed {
@@ -155,11 +171,15 @@ pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64)
     }
 }
 
-/// A page under a cut has been given a new size: the cut again, at that size.
+/// A page with a shape has been given a new size: its cut and its corner again, at that
+/// size.
 pub fn refit(view: &Webview, wide: u32, tall: u32, scale: f64) {
-    let cut = given(|all| all.get(view.label()).and_then(|(cut, _)| cut.clone()));
-    if cut.is_some() {
-        apply(view, cut, wide, tall, scale);
+    let kept = given(|all| {
+        all.get(view.label())
+            .map(|(cut, corner, _)| (cut.clone(), *corner))
+    });
+    if let Some((cut, corner)) = kept.filter(|(cut, corner)| cut.is_some() || *corner > 0.0) {
+        apply(view, cut, wide, tall, scale, corner);
     }
 }
 
@@ -174,9 +194,13 @@ mod engine {
     use windows::Win32::Foundation::{BOOL, HWND};
     use windows::Win32::Graphics::Gdi::{
         CombineRgn, CreateRectRgn, CreateRoundRectRgn, DeleteObject, SetWindowRgn, HRGN, RGN_DIFF,
+        RGN_OR,
     };
 
     use super::Shape;
+
+    /// Nothing: here the corner is the region's (`shape`).
+    pub fn round(_view: &Webview, _corner: f64) {}
 
     /// The window the engine draws the page in: the one wry made to hold the controller.
     #[allow(
@@ -201,8 +225,15 @@ mod engine {
                 };
                 let region = match pieces.split_first() {
                     None => CreateRectRgn(0, 0, 0, 0),
-                    Some((&(left, top, right, bottom, _), hollows)) => {
-                        let whole = CreateRectRgn(left, top, right, bottom);
+                    Some((&(left, top, right, bottom, round), hollows)) => {
+                        let whole = CreateRectRgn(left, top, right, bottom - round / 2);
+                        // The card's two bottom corners, and square above them.
+                        if round > 0 {
+                            let corners =
+                                CreateRoundRectRgn(left, top, right + 1, bottom + 1, round, round);
+                            CombineRgn(whole, whole, corners, RGN_OR);
+                            let _ = DeleteObject(corners);
+                        }
                         for &(left, top, right, bottom, round) in hollows {
                             let hollow =
                                 CreateRoundRectRgn(left, top, right + 1, bottom + 1, round, round);
@@ -231,6 +262,9 @@ mod engine {
     use x11rb::rust_connection::RustConnection;
 
     use super::{Piece, Shape};
+
+    /// Nothing: here the corner is the shape's (`shape`).
+    pub fn round(_view: &Webview, _corner: f64) {}
 
     /// The crate's own connection to the X server, for shapes alone: made the first time
     /// a page is cut, and `None` where there is no X server or it has no Shape extension.
@@ -266,8 +300,8 @@ mod engine {
             Some(pieces) => {
                 let (whole, hollows) = match pieces.split_first() {
                     None => (Vec::new(), &[][..]),
-                    Some((&(left, top, right, bottom, _), hollows)) => {
-                        (rectangles(left, top, right, bottom, 0), hollows)
+                    Some((&(left, top, right, bottom, round), hollows)) => {
+                        (lower(left, top, right, bottom, round), hollows)
                     }
                 };
                 x.shape_rectangles(
@@ -329,6 +363,26 @@ mod engine {
         all
     }
 
+    /// The page itself, with corners of diameter `round` at its bottom and square ones at
+    /// its top: the card's.
+    pub fn lower(left: i32, top: i32, right: i32, bottom: i32, round: i32) -> Vec<Rectangle> {
+        let rows = rectangles(left, top, right, bottom, round);
+        let Some(middle) = rows.first() else {
+            return rows;
+        };
+        let wide = right - left;
+        let radius = (round / 2).clamp(0, wide.min(bottom - top) / 2);
+        // The middle, stretched to the top, and the bottom rows of the curve; every second
+        // row from the first is a top row, which the square top leaves out.
+        let mut all = vec![Rectangle {
+            y: clamp16(top),
+            height: u16::try_from((bottom - top - radius).max(0)).unwrap_or(u16::MAX),
+            ..*middle
+        }];
+        all.extend(rows.iter().skip(2).step_by(2).copied());
+        all
+    }
+
     /// How far in from the side a corner of `radius` is on its `line`th line from the
     /// top: where a circle's edge crosses the middle of that line.
     #[allow(
@@ -347,7 +401,24 @@ mod engine {
 
     #[cfg(test)]
     mod tests {
-        use super::rectangles;
+        use super::{lower, rectangles};
+
+        /// The card's corners at the page's bottom, and its top square: the first rows are
+        /// as wide as the page, the last ones narrower.
+        #[test]
+        fn a_page_is_rounded_at_the_bottom_alone() {
+            let page = lower(0, 0, 100, 50, 16);
+            assert_eq!(page.len(), 1 + 8);
+            assert_eq!(
+                (page[0].x, page[0].y, page[0].width, page[0].height),
+                (0, 0, 100, 42)
+            );
+            let rows = &page[1..];
+            assert!(rows.iter().all(|one| one.y >= 42 && one.width <= 100));
+            let last = rows.iter().find(|one| one.y == 49).expect("the bottom row");
+            assert!(last.width < 100 && last.x > 0);
+            assert_eq!(lower(0, 0, 100, 50, 0).len(), 1);
+        }
 
         /// A square corner is the one rectangle; a round one is narrower on its first
         /// line than its last, and no line of it is wider than the whole.
@@ -372,9 +443,55 @@ mod engine {
     }
 }
 
+#[cfg(target_os = "macos")]
+mod engine {
+    use objc2::msg_send;
+    use objc2::rc::Retained;
+    use objc2::runtime::AnyObject;
+    use objc2_web_kit::WKWebView;
+    use tauri::Webview;
+
+    use super::Shape;
+
+    /// Nothing to give: `CUTS` is false here, and nothing calls this.
+    pub fn shape(_view: &Webview, _shape: Shape) {}
+
+    /// The page's own layer with the card's `corner` at its two bottom corners, and none
+    /// for nothing: a Mac cuts no region, and `WKWebView` draws in a layer that rounds.
+    #[allow(
+        unsafe_code,
+        reason = "the page's layer is reached and rounded through the Objective-C runtime"
+    )]
+    pub fn round(view: &Webview, corner: f64) {
+        let corner = corner.max(0.0);
+        let _ = view.with_webview(move |platform| {
+            // Safe: the runtime's own live web view, of the type it says, on the main
+            // thread, and a layer it backs itself with once asked to.
+            unsafe {
+                let Some(page) = Retained::retain(platform.inner().cast::<WKWebView>()) else {
+                    return;
+                };
+                page.setWantsLayer(true);
+                let layer: *mut AnyObject = msg_send![&*page, layer];
+                let Some(layer) = layer.as_ref() else {
+                    return;
+                };
+                // The bottom is the layer's larger y where its contents are flipped, as a
+                // web view's are, and its smaller one where they are not.
+                let flipped: bool = msg_send![layer, contentsAreFlipped];
+                let bottom: usize = if flipped { 4 | 8 } else { 1 | 2 };
+                let _: () = msg_send![layer, setCornerRadius: corner];
+                let _: () = msg_send![layer, setMaskedCorners: bottom];
+                let _: () = msg_send![layer, setMasksToBounds: corner > 0.0];
+            }
+        });
+    }
+}
+
 #[cfg(not(any(
     all(windows, not(feature = "cef")),
-    all(target_os = "linux", feature = "cef")
+    all(target_os = "linux", feature = "cef"),
+    target_os = "macos"
 )))]
 mod engine {
     use tauri::Webview;
@@ -383,6 +500,9 @@ mod engine {
 
     /// Nothing to give: `CUTS` is false here, and nothing calls this.
     pub fn shape(_view: &Webview, _shape: Shape) {}
+
+    /// Nothing: the BSDs' engine has neither a region nor a layer to round.
+    pub fn round(_view: &Webview, _corner: f64) {}
 }
 
 #[cfg(test)]
@@ -399,10 +519,39 @@ mod tests {
         }
     }
 
+    /// #1088: the card's corner at the page's two bottom corners, in screen pixels, with
+    /// or without a layer over it; Square gives nothing; a sheet over it still takes it all.
+    #[test]
+    fn the_page_wears_the_card_s_corner_at_its_bottom() {
+        assert_eq!(
+            shape_of(None, 800, 600, 1.5, 10.0),
+            Some(vec![(0, 0, 800, 600, 30)])
+        );
+        assert_eq!(shape_of(None, 800, 600, 1.5, 0.0), None);
+        let cut = Cut {
+            all: false,
+            hollows: vec![hollow(10.0, 20.0, 200.0, 100.0)],
+        };
+        assert_eq!(
+            shape_of(Some(&cut), 800, 600, 1.0, 10.0),
+            Some(vec![(0, 0, 800, 600, 20), (10, 20, 210, 120, 0)])
+        );
+        let all = Cut {
+            all: true,
+            hollows: Vec::new(),
+        };
+        assert_eq!(shape_of(Some(&all), 800, 600, 1.0, 10.0), Some(Vec::new()));
+        // Never a corner wider than the page.
+        assert_eq!(
+            shape_of(None, 8, 600, 1.0, 10.0),
+            Some(vec![(0, 0, 8, 600, 8)])
+        );
+    }
+
     #[test]
     fn nothing_over_the_page_is_the_whole_page() {
-        assert_eq!(shape_of(None, 800, 600, 1.0), None);
-        assert_eq!(shape_of(Some(&Cut::default()), 800, 600, 1.0), None);
+        assert_eq!(shape_of(None, 800, 600, 1.0, 0.0), None);
+        assert_eq!(shape_of(Some(&Cut::default()), 800, 600, 1.0, 0.0), None);
     }
 
     #[test]
@@ -411,7 +560,7 @@ mod tests {
             all: true,
             hollows: Vec::new(),
         };
-        assert_eq!(shape_of(Some(&all), 800, 600, 1.0), Some(Vec::new()));
+        assert_eq!(shape_of(Some(&all), 800, 600, 1.0, 0.0), Some(Vec::new()));
     }
 
     #[test]
@@ -424,7 +573,7 @@ mod tests {
             }],
         };
         assert_eq!(
-            shape_of(Some(&cut), 1200, 900, 1.5),
+            shape_of(Some(&cut), 1200, 900, 1.5, 0.0),
             Some(vec![(0, 0, 1200, 900, 0), (15, 30, 315, 180, 24)])
         );
     }
@@ -436,7 +585,7 @@ mod tests {
             hollows: vec![hollow(-40.0, -10.0, 100.0, 50.0)],
         };
         assert_eq!(
-            shape_of(Some(&cut), 800, 600, 1.0),
+            shape_of(Some(&cut), 800, 600, 1.0, 0.0),
             Some(vec![(0, 0, 800, 600, 0), (-40, -10, 60, 40, 0)])
         );
     }
@@ -454,7 +603,7 @@ mod tests {
             }],
         };
         assert_eq!(
-            shape_of(Some(&cut), 1000, 700, 1.0),
+            shape_of(Some(&cut), 1000, 700, 1.0, 0.0),
             Some(vec![(0, 0, 1000, 700, 0), (-248, 85, 80, 325, 24)])
         );
     }
@@ -465,11 +614,11 @@ mod tests {
             all: false,
             hollows: vec![hollow(900.0, 10.0, 100.0, 50.0)],
         };
-        assert_eq!(shape_of(Some(&cut), 800, 600, 1.0), None);
+        assert_eq!(shape_of(Some(&cut), 800, 600, 1.0, 0.0), None);
         let left = Cut {
             all: false,
             hollows: vec![hollow(-140.0, 10.0, 100.0, 50.0)],
         };
-        assert_eq!(shape_of(Some(&left), 800, 600, 1.0), None);
+        assert_eq!(shape_of(Some(&left), 800, 600, 1.0, 0.0), None);
     }
 }

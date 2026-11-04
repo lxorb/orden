@@ -298,6 +298,15 @@ export async function chooseTab(tab: string): Promise<void> {
   workspace.activate(tab)
 }
 
+/** The corner of the card a page fills, in the window's own pixels: the frame's token
+ *  where the panes are (#1088), which Square and full screen make nothing. The page's own
+ *  bottom corners take it, so it stands in the card rather than out of its corners. */
+export function cardCorner(): number {
+  if (typeof document === 'undefined') return 0
+  const panes = document.querySelector('main') ?? document.documentElement
+  return parseFloat(getComputedStyle(panes).getPropertyValue('--card-radius')) || 0
+}
+
 export function readOpening(value: unknown): Opening | null {
   if (typeof value !== 'object' || value === null) return null
 
@@ -933,6 +942,7 @@ class Pages {
         visible: one.visible,
         frame: one.frame,
         cut: one.cut,
+        corner: cardCorner(),
       })
       cutting = cuts === true
     } catch (error) {

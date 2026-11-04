@@ -1482,6 +1482,13 @@ What a browser does with the page in front of it without being asked, each on
 `nib://web-found` and landed on the tab's state by `web-tab/heard.ts`. Elsewhere the
 engines say nothing, and what each one does there is said with it.
 
+- **The card's corners.** What is open stands in a card with rounded corners (Window
+  corners, #1088), and a page fills its card to the bottom, so its own two bottom corners
+  are the card's: the window says the card's corner with every placement (`cardCorner`,
+  the frame's `--card-radius` where the panes are, nothing for Square and full screen),
+  and `web_cut.rs` gives the page that corner in the shape it already cuts layers out of
+  - a region on `WebView2`, the X server's shape on CEF - and on a Mac the page's own
+  layer, rounded at the bottom. `scripts/corner-drive.py` photographs it.
 - **A press in the page chooses its tab.** A press into a page, or the page taking the
   keyboard, makes its tab and its pane the ones being worked in, as a press anywhere in
   the app's own page makes its pane's (#1080) - the page is a native view, and the press
