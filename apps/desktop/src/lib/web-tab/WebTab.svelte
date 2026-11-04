@@ -824,6 +824,8 @@
         // so. A link followed inside the page is not; see `workspace.webAimed`.
         void workspace.webAimed(tab, url)
       }}
+      onnote={(path: string) =>
+        void import('./web-notes').then((one) => one.openWebNote(workspace, tab, path))}
       onmenu={(event: MouseEvent) =>
         menu.show(event, webRows(page, page.zoom, actions), { title: t('Website') })}
       onsite={() => {

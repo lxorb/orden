@@ -47,6 +47,10 @@ export interface World {
   /** How much a key has been used; see frecency.ts. */
   worth: (key: string) => number
   now: number
+  /** Where the website at a path points, or null for a file that is not one: a web
+   *  note is found by its address as well as by its name, here and in the address
+   *  field alike (#1059; see web-tab/web-notes.ts). */
+  addressOf?: (path: string) => string | null
 }
 
 /** Part 5 of rank.ts, as points. */
@@ -262,12 +266,17 @@ export function candidates(world: World): Candidate<Row>[] {
     const reading = readingOf(entry, world.root)
     if (open.has(reading.key)) continue
 
+    // A website's site and address, read afresh: its entry stays the same object when
+    // only the address inside it changes. A space holds a handful.
+    const url = world.addressOf?.(entry.path) ?? null
+    const address = url ? foldName(addressOf(url)) : null
+
     out.push({
       key: reading.key,
       kind: 'note',
       name: reading.name,
-      names: [],
-      also: reading.also,
+      names: address ? [hostOf(address)] : [],
+      also: address ? [...reading.also, address] : reading.also,
       lift: lifted(entry.path),
       use: world.worth(reading.key),
       item: { kind: 'note', entry, folder: reading.folder, shared: shared(reading.alike) },

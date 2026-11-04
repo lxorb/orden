@@ -61,6 +61,7 @@
     onstep,
     onhistory,
     onaddress,
+    onnote,
     onmenu,
     onsite,
     ondownloads,
@@ -88,6 +89,8 @@
     /** A right click or a held finger on an arrow: the pages that way, as a list. */
     onhistory: (forward: boolean, event: MouseEvent) => void
     onaddress: (said: string, aside: boolean, typed: string) => void
+    /** One of the space's websites chosen from the address field's list (#1059). */
+    onnote?: (path: string) => void
     onmenu: (event: MouseEvent) => void
     onsite: () => void
     ondownloads: () => void
@@ -335,6 +338,7 @@
     held={page}
     onenter={(said: string, aside: boolean, typed: string) =>
       onaddress(meantBy(said, page.url), aside, typed)}
+    onnote={page.inPrivate ? undefined : onnote}
     {ontyping}
   />
 

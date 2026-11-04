@@ -790,6 +790,14 @@ class Links {
     return this.websites.get(relative)?.address ?? null
   }
 
+  /** Every website in the open space, by its path relative to the space: what the
+   *  address field offers beside the history (#1059; see web-tab/web-notes.ts). The
+   *  map itself, which is a new one whenever any website changes, so a caller can keep
+   *  what it built from it for as long as it is the same map. */
+  get websitesHere(): ReadonlyMap<string, { address: string | null; favicon: string | null }> {
+    return this.websites
+  }
+
   /** Whether this space still holds a website written as a note, which is what the
    *  palette's Convert row is offered for. Reactive, so the row goes as the last one
    *  is converted. */

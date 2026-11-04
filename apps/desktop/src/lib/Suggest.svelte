@@ -16,6 +16,7 @@
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { dur } from './motion'
+  import type { Piece } from './palette/pieces'
 
   const {
     values,
@@ -27,6 +28,8 @@
     shown = (value: string) => value,
     aside,
     lead,
+    marks,
+    badge,
   }: {
     values: string[]
     typed: string
@@ -42,7 +45,26 @@
     aside?: (value: string) => string
     /** What stands in front of a row, where the rows wear a mark. */
     lead?: Snippet<[string]>
+    /** Where a row's letters were found, for a field that finds them the palette's way
+     *  - spread through the words - rather than as one run; null for the run. See
+     *  palette/pieces.ts. */
+    marks?: (value: string, shown: string) => Piece[] | null
+    /** A word at the end of a row saying what kind of thing it is, or the empty
+     *  string for none: a saved web note among pages of the history (#1059). */
+    badge?: (value: string) => string
   } = $props()
+
+  /** The value cut into what was typed and what was not. */
+  function piecesOf(value: string, text: string): Piece[] {
+    const found = marks?.(value, text)
+    if (found) return found
+    const { before, hit, after } = split(text)
+    return [
+      { text: before, hit: false },
+      { text: hit, hit: true },
+      { text: after, hit: false },
+    ].filter((one) => one.text)
+  }
 
   /** The value in three parts, so the letters that were typed can be marked
    *  where they actually sit. */
@@ -72,8 +94,9 @@
   transition:fly={{ y: -4, duration: dur(130), easing: cubicOut }}
 >
   {#each values as value, index (value)}
-    {@const parts = split(shown(value))}
+    {@const parts = piecesOf(value, shown(value))}
     {@const after = aside?.(value) ?? ''}
+    {@const kind = badge?.(value) ?? ''}
     <li role="none">
       <button
         id="{id}-{index}"
@@ -88,9 +111,11 @@
       >
         {@render lead?.(value)}
         <span class="words"
-          >{parts.before}<span class="matched">{parts.hit}</span>{parts.after}
+          >{#each parts as part, at (at)}{#if part.hit}<span class="matched">{part.text}</span
+              >{:else}{part.text}{/if}{/each}
           {#if after}<span class="aside">{after}</span>{/if}</span
         >
+        {#if kind}<span class="badge">{kind}</span>{/if}
       </button>
     </li>
   {/each}
@@ -161,6 +186,17 @@
   button:hover .aside,
   button.on .aside {
     color: var(--muted-strong);
+  }
+
+  /* What kind of row it is, at its end: a quiet word in a pill, as Chrome marks a
+     bookmark among history in its omnibox. */
+  .badge {
+    flex: none;
+    padding: 0 var(--space-1);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    color: var(--muted);
+    font-size: var(--text-xs);
   }
 
   /* The letters that were typed, marked where they landed in the value. */
