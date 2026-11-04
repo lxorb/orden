@@ -329,9 +329,16 @@ renaming the tab; **Move to space** moves the audience; **bookmarks, search by n
 the file list and the session restore** carry it; **Reopen closed tab** reopens it; and
 another device of the same person opens the same file and so the same session.
 
-- **Made** by the new tab's card, in the folder new notes go to, named `Terminal`, `Terminal 2`...
-  A session is opened on the maker's own machine, which is started if it sleeps. Making one in
-  somebody else's space is making a terminal on **your** machine that their people can watch.
+- **Made** by the new tab's card as a tab **not saved** (issue 1055), as every new tab is:
+  no file and no row in the list, its words a `.term`'s naming its session, which the
+  account keys by the session's own id and only its owner reaches. **Saving it** - Ctrl+S,
+  or the tab dropped on the list - writes the `.term` (`keepTerm` in workspace/placing.ts),
+  named after the tab, and the account gives the session the file's id once sync has sent
+  it (`adopt` in routes.ts); from then on everything below holds. Until then it is on this
+  device's tabs alone: another device does not see it, though the session runs on and is
+  in Settings' list. A `.term` an older Orden wrote at once stays where it is.
+  A session is opened on the maker's own machine, which is started if it sleeps. Saving one in
+  somebody else's space is putting a terminal on **your** machine that their people can watch.
 - **Closing its tab** never ends the session: the shell and everything in it go on, as tmux's
   do when a client leaves.
 - **`exit`**, or the shell ending: the file stays, the last screen stays readable with the
@@ -935,7 +942,7 @@ tmux started from a service dies with it unless it is moved to a scope of its ow
 Issue 1055, lxorb: an online terminal is a file in the sidebar like any note, synced and
 reopened on every device, and **one device at a time** drives it.
 
-- **Listed.** A `.term` is a row of the file list (`is_term` in the crate's `tree.rs`, `listed`
+- **Saveable, and then listed.** A new online terminal is not saved (4.5); saved, its `.term` is a row of the file list (`is_term` in the crate's `tree.rs`, `listed`
   in `web/commands.ts`) wearing the terminal's mark. It was neither: no row, and a phone's or
   a browser's mirror, which walks that list, never sent it to the reader's other devices.
   `web/commands.test.ts` lists a file of every `Opener` kind, so a new kind fails until listed.

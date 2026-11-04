@@ -2426,12 +2426,18 @@ class Workspace {
       if (dir === null || !(await this.writableAt(dir))) return null
       await this.nestFor(dir, [])
 
+      const claim = (path: string, run: () => Promise<NoteDoc | null>) =>
+        this.opened.opening(path, run)
       const saved =
         tab.kind === 'web'
           ? await import('./workspace/placing').then((one) =>
-              one.keepWeb(this, (path, run) => this.opened.opening(path, run), tab, dir, file),
+              one.keepWeb(this, claim, tab, dir, file),
             )
-          : await this.saving.place(tab.note, dir, file ?? draftFile(tab.note))
+          : tab.kind === 'terminal'
+            ? await import('./workspace/placing').then((one) =>
+                one.keepTerm(this, claim, tab, dir, file),
+              )
+            : await this.saving.place(tab.note, dir, file ?? draftFile(tab.note))
       this.persist()
       return saved
     } catch (error) {

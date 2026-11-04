@@ -97,6 +97,43 @@ export async function keepWeb(
   return target
 }
 
+/** An online terminal not saved yet, kept as its `.term` in `dir` (issue 1055): its words,
+ *  which name its session, under the name given or the tab's, as a web tab's page is kept.
+ *  The session goes on as it was; the account gives it the file's id once sync has sent
+ *  the file, as a session made on sync v1 is adopted (`adopt` in machines/routes.ts). */
+export async function keepTerm(
+  ws: Places & { fileCame(path: string, kind: 'file'): Promise<void> },
+  claim: Claim,
+  tab: Tab,
+  dir: string,
+  file?: string,
+): Promise<string | null> {
+  const { canWriteAt } = await import('../sharing.svelte')
+  if (!canWriteAt(dir)) return null
+  const name =
+    shownName(file ?? tab.name)
+      .replace(/[\\/]/g, ' ')
+      .trim() || UNTITLED
+  let target: string | undefined
+  while (target === undefined) {
+    const free = await ws.freeNameOnDisk(dir, `${name}.term`)
+    if (ws.freeName(dir, free) === free) target = joinPath(dir, free)
+  }
+  const at = target
+  const words = tab.doc
+  const kept = await claim(at, async () => {
+    ws.showEntry(ws.freshEntry(at, false))
+    await writeFile(at, words)
+    await ws.fileCame(at, 'file')
+    await ws.loadTree()
+    tab.note.path = at
+    tab.note.name = nameOf(at)
+    ws.remember(at)
+    return tab.note
+  })
+  return kept === tab.note ? at : null
+}
+
 /** The web data of a new note made of `tab`, on `url`: none for a tab on the shared
  *  store, and for a tab that kept another note's pages apart (a link out of a Separate
  *  note) a fresh id, whose store is a copy of the one the tab was in. Never that note's

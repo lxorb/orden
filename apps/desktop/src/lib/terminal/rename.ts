@@ -29,6 +29,12 @@ export async function renameTerminal(tab: Tab, typed: string): Promise<void> {
     await workspace.rename(tab.path, workspace.freeName(folder, `${name}.term`, tab.path))
     return
   }
+  // One not saved yet has no file: its name is the tab's, which Save names the file after.
+  if (isOnlineTab(tab)) {
+    tab.name = typed.trim().slice(0, NAME_MOST).replace(/[\\/]/g, ' ') || MADE_NAME
+    workspace.scheduleSession()
+    return
+  }
 
   const before = readSpec(tab.doc)
   if (tab.kind !== 'terminal' || !before) return

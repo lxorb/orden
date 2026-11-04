@@ -778,11 +778,15 @@ class Session {
     this.named()
 
     const source = this.online
-      ? (await import('../online/source')).onlineSource(() => this.tab.path, {
-          tab: () => this.tab.id,
-          front: () => this.inFront && workspace.activeTabId === this.tab.id,
-          offer: (url) => this.offer(url),
-        })
+      ? (await import('../online/source')).onlineSource(
+          () => this.tab.path,
+          () => this.tab.doc,
+          {
+            tab: () => this.tab.id,
+            front: () => this.inFront && workspace.activeTabId === this.tab.id,
+            offer: (url) => this.offer(url),
+          },
+        )
       : new PtySource(id, spec.shell, spec.folder, this.remote)
     if (this.pty !== id) {
       source.end()

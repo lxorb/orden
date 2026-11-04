@@ -2,22 +2,22 @@
  *  online terminal and an empty pane all come here (docs/online-terminal.md 4.5, 4.10).
  *
  *  A new session on the reader's own machine - made, and started, if there is none yet -
- *  named by a `.term` file in the folder new notes go to, `Terminal`, `Terminal 2`..., and
- *  that file opened as a terminal tab. Signed out it opens the account sheet; not on the
- *  list yet, it says so. The file is what carries it from then on: renamed, moved to
- *  another space, bookmarked, put back after a restart and opened on another device, all
- *  as a note is. */
+ *  in a tab of its own that is not saved, as every new tab is (issue 1055): no file and no
+ *  row in the list, its words a `.term`'s naming the session, which is keyed by its own id
+ *  on the account and reached by its owner's devices alone. Saving it - Ctrl+S, or the tab
+ *  dropped on the list - writes the `.term` (`keepTerm` in workspace/placing.ts), and the
+ *  file carries it from then on: renamed, moved, bookmarked and opened on another device,
+ *  as a note is, the account giving the session the file's id (`adopt` in routes.ts).
+ *  Signed out it opens the account sheet; not on the list yet, it says so. */
 
 import { account } from '../account.svelte'
 import { t } from '../i18n.svelte'
 import type { OpenHow } from '../new-tab'
-import { canWriteAt } from '../sharing.svelte'
+import { termText } from '@orden/online/term'
 import { nameOf, samePath } from '../space-paths'
-import { joinPath } from '../tauri'
 import type { Tab } from '../workspace/documents.svelte'
 import { workspace } from '../workspace.svelte'
-import { writeFile } from '../workspace/write-file'
-import type { Refused } from './calls'
+import { type Refused, refusedOf, termSession } from './calls'
 import { machine } from './machine.svelte'
 import { refusalWords } from './words'
 import { MADE_NAME, termName } from './path'
@@ -30,11 +30,7 @@ export async function openOnline(beside = false): Promise<Tab | null> {
     account.ask()
     return null
   }
-  const root = workspace.activeSpace?.root
-  // The terminal is a file written into the space, which one shared to be read refuses.
-  if (!root || !canWriteAt(root)) return null
-
-  // Not on the list yet, or the service off: said before any file is made. Asked again
+  // Not on the list yet, or the service off: said before any session is made. Asked again
   // every time, but waited for only when this window has not heard yes already: the
   // socket says a refusal that came since, and the terminal is on its way meanwhile.
   const asking = machine.refresh()
@@ -45,13 +41,23 @@ export async function openOnline(beside = false): Promise<Tab | null> {
     return null
   }
 
-  // The file first, empty: sync gives it its id, the account names its session by that id,
-  // and the terminal writes the session into it as it starts. See source.ts.
-  const path = joinPath(root, await workspace.freeNameOnDisk(root, `${MADE_NAME}.term`))
-  await writeFile(path, '')
-  await workspace.fileCame(path, 'file')
-  const tab = openTerm(path, { beside })
-  void workspace.loadTree()
+  // The session first, keyed by its own id: the tab's words name it, and nothing is
+  // written into the space until the reader saves it.
+  let words: string
+  try {
+    words = termText(await termSession(null))
+  } catch (error) {
+    await refused(refusedOf(error))
+    return null
+  }
+  if (__EVEN_PLUGIN__) return null
+  const tab = workspace.openUnsaved(
+    'terminal',
+    words,
+    MADE_NAME,
+    beside ? workspace.activeTabId : null,
+  )
+  workspace.persist()
   return tab
 }
 
