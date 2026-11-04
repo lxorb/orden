@@ -197,8 +197,8 @@ describe('a persist while the session is coming back', () => {
     // The window closes, or something writes the session, while one read has not answered.
     for (let at = 0; at < trips; at += 1) {
       freshRound()
-      let open: () => void = () => undefined
-      held.gate = new Promise((go) => (open = go))
+      // Never answers: a window killed does not come back to write over the next one.
+      held.gate = new Promise(() => undefined)
       held.reached = false
       held.count = 0
       held.stopAt = at
@@ -217,7 +217,6 @@ describe('a persist while the session is coming back', () => {
 
       // Killed there: what it was waiting for never answers it, and the next launch is good.
       await goodLaunch()
-      open()
     }
   }, 240_000)
 

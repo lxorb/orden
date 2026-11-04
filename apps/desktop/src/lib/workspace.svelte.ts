@@ -1057,12 +1057,13 @@ class Workspace {
    *  document per file is the workspace's own answer now rather than a map this
    *  method passes along. See workspace/open.ts. */
   private async tabsFrom(drafts: Draft[], paneId: string): Promise<Tab[]> {
-    return (await this.tabsAlong(drafts, paneId)).filter((one) => one !== null)
+    return [...new Set(await this.tabsAlong(drafts, paneId))].filter((one) => one !== null)
   }
 
   /** The same, one place for each draft: null where a draft could not come back, so an
    *  index the session counted along the drafts still finds its tab - the one that was
-   *  in front - when a tab before it in the strip has gone. */
+   *  in front - when a tab before it in the strip has gone, and the tab it folded into where
+   *  there is one, so a tab appears there twice. */
   private async tabsAlong(drafts: Draft[], paneId: string): Promise<(Tab | null)[]> {
     return this.opened.arranging(async () => {
       const made: (Tab | null)[] = []
@@ -1134,7 +1135,10 @@ class Workspace {
 
         const already = draft.path ? this.opened.at(draft.path) : null
         if (already) {
-          made.push(this.viewOf(await this.wordsMeet(already, draft), paneId, draft))
+          // Of this strip's tabs, one per document: a note typed in a launch's gap and a kill
+          // leave two of it in the session.
+          const met = await this.wordsMeet(already, draft)
+          made.push(made.find((one) => one?.note === met) ?? this.viewOf(met, paneId, draft))
           continue
         }
 
@@ -1162,7 +1166,11 @@ class Workspace {
           const back = note
             ? await this.wordsMeet(note, draft)
             : await this.opened.opening(draft.path, () => this.unwrittenBack(draft))
-          made.push(back ? this.viewOf(back, paneId, draft) : null)
+          made.push(
+            back
+              ? (made.find((one) => one?.note === back) ?? this.viewOf(back, paneId, draft))
+              : null,
+          )
           continue
         }
 
@@ -1355,7 +1363,7 @@ class Workspace {
 
     for (const draft of panesOf(layout.frame)) {
       const along = await this.tabsAlong(draft.tabs, draft.id)
-      const tabs = along.filter((one) => one !== null)
+      const tabs = [...new Set(along)].filter((one) => one !== null)
       // Which tab was showing first, since that index counts along the strip as the
       // arrangement wrote it down - along the drafts, so a tab before it that could
       // not come back moves nothing - and the one after it where it is the one that

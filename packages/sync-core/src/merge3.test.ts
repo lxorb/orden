@@ -322,8 +322,8 @@ describe('mergedOn takes nothing from either side', () => {
       return out
     }
 
-    const count = (text: string, token: string) =>
-      (text.match(new RegExp(`(?<![A-Za-z0-9])${token}(?![A-Za-z0-9])`, 'g')) ?? []).length
+    // A word ends in its own last letter, and no other holds it, run together or not.
+    const count = (text: string, token: string) => text.split(token).length - 1
     let goneOn = 0
     for (let round = 0; round < 40_000; round += 1) {
       const base = baseOf(next(8) + 1, next(4) !== 0)
