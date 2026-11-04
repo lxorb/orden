@@ -12,10 +12,17 @@
  *
  *  Read rather than scanned: a front matter key or two for a note, a few lines for a
  *  website, the `nib` key for a plane - never the space. And a chat's pointer in any
- *  space, open or not, since no scan reads one: a line of JSON each. */
+ *  space, open or not, and an online terminal's file, since no scan reads either: a line
+ *  of JSON each. */
 
 import { frontMatterValue } from '@orden/markdown/front-matter'
-import { isCanvasTarget, isChatTarget, isPagesTarget, isWebTarget } from '@orden/markdown/links'
+import {
+  isCanvasTarget,
+  isChatTarget,
+  isPagesTarget,
+  isTermTarget,
+  isWebTarget,
+} from '@orden/markdown/links'
 import { SvelteMap } from 'svelte/reactivity'
 import { saysNothing } from './scan-note'
 import { ICON_COLOUR_KEY, ICON_KEY } from './icons'
@@ -53,7 +60,8 @@ function wears(path: string): boolean {
     isCanvasTarget(path) ||
     isPagesTarget(path) ||
     isWebTarget(path) ||
-    isChatTarget(path)
+    isChatTarget(path) ||
+    isTermTarget(path)
   )
 }
 
@@ -76,6 +84,13 @@ async function wornBy(path: string, content: string): Promise<Worn> {
     if (__EVEN_PLUGIN__) return NOTHING
     const pointer = (await import('@orden/chats/pointer')).chatOf(content)
     return { ...NOTHING, icon: pointer?.icon ?? null, iconColor: pointer?.iconColor ?? null }
+  }
+
+  // An online terminal's file, a line of JSON, in any space (#1110).
+  if (isTermTarget(path)) {
+    if (__EVEN_PLUGIN__) return NOTHING
+    const term = (await import('@orden/online/term')).termOf(content)
+    return { ...NOTHING, icon: term?.icon ?? null, iconColor: term?.iconColor ?? null }
   }
 
   if (isCanvasTarget(path) || isPagesTarget(path)) {

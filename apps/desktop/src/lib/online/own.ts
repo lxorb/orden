@@ -37,5 +37,12 @@ export function namedSession(words: string | null): string | undefined {
 /** The words a file is written with so that it names `term`, or null where it already
  *  does, or could not be read and so is left as it is. */
 export function wordsFor(words: string | null, term: Term): string | null {
-  return words === null || namedSession(words) === term.session ? null : termText(term)
+  if (words === null || namedSession(words) === term.session) return null
+  // The icon the reader chose stays the file's, whichever session it names (#1110).
+  const said = termOf(words)
+  return termText({
+    ...term,
+    ...(said?.icon ? { icon: said.icon } : {}),
+    ...(said?.iconColor ? { iconColor: said.iconColor } : {}),
+  })
 }

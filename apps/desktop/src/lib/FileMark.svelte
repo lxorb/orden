@@ -34,10 +34,14 @@
    *
    *  What a row holds is said at the far end of it and by the indentation of what
    *  follows, never by the mark: the mark says what the row is. */
+  import { isTermTarget } from '@orden/markdown/links'
   import { chosenIcon, chosenTint, faviconFor, sourceMark } from './chosen-icon'
   import { type FileMark, MARKS } from './file-mark'
   import Icon from './Icon.svelte'
   import { readIcon, takesTint } from './icons'
+  import { samePath } from './space-paths'
+  import { terminalMark } from './surfaces.svelte'
+  import { workspace } from './workspace.svelte'
 
   /** `path` is left out by a caller that knows a name and no path, and handed in as
    *  `undefined` by one whose path is sometimes null - a tab holding a note nobody has
@@ -62,6 +66,19 @@
   const chosen = $derived(path === undefined ? null : readIcon(chosenIcon(path)))
   const tint = $derived(path === undefined ? null : chosenTint(path))
 
+  /** An online terminal's file wears its tab's mark, the one TerminalMark.svelte draws -
+   *  what runs in it while a tab of it is open, the icon chosen for it, the cloud - so
+   *  its row and its tab are one icon (#1110). The tab, where one is open. */
+  const term = $derived(
+    path !== undefined && isTermTarget(path)
+      ? (workspace.tabs.find((one) => one.path !== null && samePath(one.path, path)) ?? {
+          doc: '',
+          running: null,
+          path,
+        })
+      : null,
+  )
+
   /** The kind's mark, but a PDF's for a page note made from one. */
   const source = $derived(sourceMark(mark, path, url))
   const shown = $derived<FileMark>(source.mark)
@@ -84,7 +101,15 @@
   })
 </script>
 
-{#if favicon && !broken}
+{#if term}
+  {#await terminalMark()}
+    <span class="mark quiet"><Icon icon={worn} {tint} fallback={MARKS[shown]} /></span>
+  {:then Mark}
+    <Mark tab={term} />
+  {:catch}
+    <span class="mark quiet"><Icon icon={worn} {tint} fallback={MARKS[shown]} /></span>
+  {/await}
+{:else if favicon && !broken}
   <span class="mark picture" aria-hidden="true">
     <img src={favicon} alt="" draggable="false" onerror={() => (broken = true)} />
   </span>

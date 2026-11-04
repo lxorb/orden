@@ -37,6 +37,7 @@ const SPACE: Record<string, string> = {
   '/space/Docs.url':
     '[InternetShortcut]\r\nURL=https://docs.dev/\r\nTitle=Docs\r\nNib-Added=2026-01-01T00:00:00.000Z\r\nNib-Icon=data:image/png;base64,AA\r\n',
   '/space/Team.chat': `{"v":1,"chat":"${CHAT}"}\n`,
+  '/space/Server.term': '{"v":1,"machine":"m_1","session":"s_1"}\n',
   '/space/Damaged.chat': 'Team\n',
 }
 
@@ -190,6 +191,44 @@ describe('the icon a web note is given', () => {
     sent.length = 0
     await setFileIcon('/space/Docs.url', null)
     expect(written('/space/Docs.url')).toBe(SPACE['/space/Docs.url'])
+  })
+})
+
+/** An open web note's tab holds its `.url` as the file says it, `\r\n` and all, while
+ *  its document's editor counts each line ending as one character: the icon went into
+ *  the file two characters early, inside its date, while the tab was open (#1110). */
+describe('the icon an open web note is given', () => {
+  test('is written where it belongs, and the tab holds what the file says', async () => {
+    fresh()
+    await workspace.open('/space/Docs.url')
+    expect(workspace.tabs.some((one) => one.path === '/space/Docs.url')).toBe(true)
+
+    await setFileIcon('/space/Docs.url', 'rocket')
+
+    const file = written('/space/Docs.url') ?? ''
+    expect(file).toBe(`${SPACE['/space/Docs.url'] ?? ''}Nib-Chosen-Icon=rocket\r\n`)
+    expect(workspace.tabs.find((one) => one.path === '/space/Docs.url')?.doc).toBe(file)
+  })
+})
+
+/** An online terminal keeps it in its file, over what runs in it (#1110). */
+describe('the icon an online terminal is given', () => {
+  test('is written into its file, and taken away again', async () => {
+    fresh()
+    await setFileIcon('/space/Server.term', 'rocket', 'violet')
+    const chosen = written('/space/Server.term') ?? ''
+    expect(JSON.parse(chosen)).toEqual({
+      v: 1,
+      machine: 'm_1',
+      session: 's_1',
+      icon: 'rocket',
+      iconColor: 'violet',
+    })
+
+    notes['/space/Server.term'] = chosen
+    sent.length = 0
+    await setFileIcon('/space/Server.term', null)
+    expect(written('/space/Server.term')).toBe(SPACE['/space/Server.term'])
   })
 })
 

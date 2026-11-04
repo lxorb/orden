@@ -44,6 +44,7 @@ import {
   isChatTarget,
   isPagesTarget,
   isTabFile,
+  isTermTarget,
   isWebTarget,
   type LinkKind,
   withoutBlockIds,
@@ -852,8 +853,9 @@ class Links {
     // the next scan.
     if (!isMarkdownPath(relative)) this.fileAdded(relative)
 
-    // A chat's pointer is read there too, in any space: no scan reads one.
-    if (isChatTarget(relative)) {
+    // A chat's pointer is read there too, in any space: no scan reads one. Nor an online
+    // terminal's file, which keeps the icon chosen for it (#1110).
+    if (isChatTarget(relative) || isTermTarget(relative)) {
       elsewhere.saved(path, content)
       return
     }
@@ -1045,6 +1047,9 @@ class Links {
    *  listed, which is what `loadTree` asks for a root this index is not of. */
   follow(op: FileOp): Promise<void> | undefined {
     elsewhere.forget(op.op === 'moved' ? op.from : op.path)
+    // And what was read at the place it moved to, which a mark may have asked about as
+    // the move was made and found nothing yet: a file renamed onto `.term` (#1110).
+    if (op.op === 'moved') elsewhere.forget(op.to)
     // Another space's notes are read again the next time one of them asks.
     const other = this.otherHolding(op.op === 'moved' ? op.from : op.path)
     if (other !== null && this.others.delete(other)) this.changed()

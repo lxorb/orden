@@ -10,6 +10,22 @@ describe('a terminal written down', () => {
     expect(readSpec(writeSpec({ ...spec, name: 'server' }))).toEqual({ ...spec, name: 'server' })
   })
 
+  /** An icon chosen for it (#1110), and its colour, which go with the icon. */
+  test('with the icon chosen for it', () => {
+    const spec = { shell: 'pwsh', folder: null, key: 'k', name: null, icon: '🚀' }
+    expect(readSpec(writeSpec(spec))).toEqual(spec)
+    expect(readSpec(writeSpec({ ...spec, iconColor: 'violet' }))).toEqual({
+      ...spec,
+      iconColor: 'violet',
+    })
+    // A colour with no icon to colour is not written.
+    expect(
+      JSON.parse(
+        writeSpec({ shell: 'pwsh', folder: null, key: 'k', name: null, iconColor: 'violet' }),
+      ),
+    ).toEqual({ shell: 'pwsh', folder: null, key: 'k' })
+  })
+
   /** A tab nobody named writes what a build before names wrote. */
   test('with no name where it has none', () => {
     const words = writeSpec({ shell: 'cmd', folder: null, key: 'k', name: null })

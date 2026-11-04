@@ -29,6 +29,7 @@ import { shortcuts } from '../shortcuts.svelte'
 import { shownName } from '../note-name'
 import { nameOf, withinSpace } from '../space-paths'
 import { toggleFill } from '../tab-fill/fill'
+import { terminalIconRows } from '../terminal/icon-rows'
 import { openTerminal, shellRows } from '../terminal/open'
 import { readSpec } from '../terminal/spec'
 import { isOnlineTab } from '../online/path'
@@ -172,12 +173,14 @@ function shellEntries(tab: Tab): MenuEntry[] {
   if (__EVEN_PLUGIN__ || tab.kind !== 'terminal') return []
 
   // Another online terminal is another session on the same machine, beside this one.
+  // Its icon and a local one's, chosen from the tab (#1110).
   if (isOnlineTab(tab)) {
     return [
       {
         label: t('Open another'),
         run: () => void import('../online/open').then(({ openOnline }) => openOnline(true)),
       },
+      ...terminalIconRows(tab),
       DIVIDER,
     ]
   }
@@ -190,6 +193,7 @@ function shellEntries(tab: Tab): MenuEntry[] {
       run: () => void openTerminal(spec?.shell, beside),
       more: () => shellRows((shell) => void openTerminal(shell.id, beside)),
     },
+    ...terminalIconRows(tab),
     DIVIDER,
   ]
 }

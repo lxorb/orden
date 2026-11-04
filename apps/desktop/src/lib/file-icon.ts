@@ -22,7 +22,13 @@
 
 import { frontMatterEdits } from '@orden/markdown/front-matter'
 import { scalar } from '@orden/markdown/yaml'
-import { isCanvasTarget, isChatTarget, isPagesTarget, isWebTarget } from '@orden/markdown/links'
+import {
+  isCanvasTarget,
+  isChatTarget,
+  isPagesTarget,
+  isTermTarget,
+  isWebTarget,
+} from '@orden/markdown/links'
 import { oneEdit, type TextEdit } from '@orden/markdown/edits'
 import { isFolderNote } from './folder-notes'
 import { ICON_COLOUR_KEY, ICON_KEY, readTint } from './icons'
@@ -80,12 +86,14 @@ export async function setFileIcon(
     ? await webIconEdit(path, before, value, colour)
     : isChatTarget(path)
       ? await chatIconEdit(before, value, colour)
-      : isCanvasTarget(path) || isPagesTarget(path)
-        ? (await import('@orden/markdown/canvas')).canvasIconEdit(before, value, colour)
-        : frontMatterEdits(before, [
-            [ICON_KEY, value === null ? null : scalar(value)],
-            [ICON_COLOUR_KEY, colour],
-          ])
+      : isTermTarget(path)
+        ? await termIconEdit(before, value, colour)
+        : isCanvasTarget(path) || isPagesTarget(path)
+          ? (await import('@orden/markdown/canvas')).canvasIconEdit(before, value, colour)
+          : frontMatterEdits(before, [
+              [ICON_KEY, value === null ? null : scalar(value)],
+              [ICON_COLOUR_KEY, colour],
+            ])
   if (!edit) return
 
   try {
@@ -124,4 +132,21 @@ async function chatIconEdit(
   const { chatOf, chatText, withIcon } = await import('@orden/chats')
   const pointer = chatOf(before)
   return pointer && oneEdit(before, chatText(withIcon(pointer, icon, colour)))
+}
+
+/** An online terminal's file written again wearing the icon over what runs in it
+ *  (#1110), or null where it already does or the file is no terminal. Its reader is the
+ *  online terminal's own, fetched here as the chats' is above. */
+async function termIconEdit(
+  before: string,
+  icon: string | null,
+  colour: string | null,
+): Promise<TextEdit | null> {
+  if (__EVEN_PLUGIN__) return null
+  const { termOf, termText } = await import('@orden/online/term')
+  const term = termOf(before)
+  if (!term) return null
+  const plain = { v: term.v, machine: term.machine, session: term.session }
+  const worn = icon === null ? plain : { ...plain, icon, ...(colour ? { iconColor: colour } : {}) }
+  return oneEdit(before, termText(worn))
 }

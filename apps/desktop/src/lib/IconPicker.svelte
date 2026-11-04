@@ -27,10 +27,9 @@
   import { account } from './account.svelte'
   import { ACCENTS } from './accents'
   import { closeOnBack } from './backstack.svelte'
-  import { chosenIcon, chosenTint } from './chosen-icon'
-  import { setFileIcon } from './file-icon'
   import Icon from './Icon.svelte'
   import { iconChoice } from './icon-choice.svelte'
+  import { tintOf, wear, wornBy } from './icon-target'
   import { iconLibrary } from './icon-library.svelte'
   import { iconRecent } from './icon-recent.svelte'
   import { LATER_SETS, type LoadedSet, mergeSets, PICKER_SETS, pickerCredit } from './icon-sets'
@@ -50,7 +49,6 @@
   import { segmented } from './slide'
   import { trap } from './trap'
   import { viewport } from './viewport.svelte'
-  import { workspace } from './workspace.svelte'
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { fade, scale } from 'svelte/transition'
@@ -104,13 +102,7 @@
   let wanted = $state(false)
 
   /** What the thing being chosen for wears now, as written. */
-  const worn = $derived(
-    target === null
-      ? null
-      : target.kind === 'space'
-        ? workspace.iconFor(target.id)
-        : chosenIcon(target.path),
-  )
+  const worn = $derived(target === null ? null : wornBy(target))
 
   const written = $derived(readIcon(worn))
 
@@ -267,9 +259,7 @@
 
     // What it wears, read once as the sheet opens: an icon out of a set that waits for a
     // search has its set fetched now, so the cell it is in is there to be seen.
-    const wears = untrack(() =>
-      readIcon(asked.kind === 'space' ? workspace.iconFor(asked.id) : chosenIcon(asked.path)),
-    )
+    const wears = untrack(() => readIcon(wornBy(asked)))
     const set = iconLibrary.setFor(wears)
     wanted = set !== null && LATER_SETS.has(set)
     if (set === EMOJI_OUTLINE) outlined = true
@@ -281,9 +271,7 @@
     top = 0
     // Read once too: a colour painted while the sheet is up is written to the thing at
     // once, and following it would start the sheet over under the reader's search.
-    tint = untrack(() =>
-      asked.kind === 'space' ? workspace.tintFor(asked.id) : chosenTint(asked.path),
-    )
+    tint = untrack(() => tintOf(asked))
 
     // The account's sites again, for a picker opened after they were first asked for:
     // one seen on another device since then. At most every so often; see site-icons.
@@ -325,8 +313,8 @@
   $effect(() => (target ? overlays.show(() => iconChoice.close()) : undefined))
   $effect(() => closeOnBack(target !== null, () => iconChoice.close()))
 
-  /** One written value onto the thing being chosen for, and the sheet shut. The three
-   *  targets differ in nothing but where the value goes. */
+  /** One written value onto the thing being chosen for, and the sheet shut. The
+   *  targets differ in nothing but where the value goes; see icon-target.ts. */
   function chose(said: string | null) {
     const asked = iconChoice.target
     if (!asked) return
@@ -334,9 +322,7 @@
     // A colour goes only with an icon that takes one: a line, an emoji's outline.
     const colour = takesTint(readIcon(said)) ? tint : null
 
-    if (asked.kind === 'space') workspace.setIcon(asked.id, said, colour)
-    else if (asked.kind === 'folder') workspace.setFolderIcon(asked.path, said, colour)
-    else void setFileIcon(asked.path, said, colour)
+    wear(asked, said, colour)
 
     iconRecent.add(said)
     iconChoice.close()
@@ -352,9 +338,7 @@
     const asked = iconChoice.target
     if (!asked || !takesTint(written) || worn === null) return
 
-    if (asked.kind === 'space') workspace.setIcon(asked.id, worn, colour)
-    else if (asked.kind === 'folder') workspace.setFolderIcon(asked.path, worn, colour)
-    else void setFileIcon(asked.path, worn, colour)
+    wear(asked, worn, colour)
   }
 
   /** The arrows walk the grid and Enter takes what they are on. Read from the search

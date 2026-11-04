@@ -25,6 +25,10 @@ export interface Spec {
   /** What the reader called it, which every name a program would give it gives way to;
    *  null while it has none of its own. See naming.ts and rename.ts. */
   name: string | null
+  /** The icon the reader chose for it, as an icon is written (icons.ts), and its colour;
+   *  absent while it wears what runs in it (#1110). See TerminalMark.svelte. */
+  icon?: string
+  iconColor?: string
 }
 
 /** What a shell's id starts with where it is another machine's host: `ssh:pi`, the id
@@ -58,14 +62,25 @@ export function readSpec(text: string): Spec | null {
     folder: isString(value.folder) && value.folder ? value.folder : null,
     key: isString(value.key) && value.key ? value.key : '',
     name: isString(value.name) && value.name.trim() ? value.name : null,
+    ...(isString(value.icon) && value.icon ? { icon: value.icon } : {}),
+    ...(isString(value.icon) && value.icon && isString(value.iconColor) && value.iconColor
+      ? { iconColor: value.iconColor }
+      : {}),
   }
 }
 
 /** The words, with no `name` at all for a tab nobody named, so a terminal from before
  *  names reads the same as one after. */
 export function writeSpec(spec: Spec): string {
-  const { shell, folder, key, name } = spec
-  return JSON.stringify(name ? { shell, folder, key, name } : { shell, folder, key })
+  const { shell, folder, key, name, icon, iconColor } = spec
+  return JSON.stringify({
+    shell,
+    folder,
+    key,
+    ...(name ? { name } : {}),
+    ...(icon ? { icon } : {}),
+    ...(icon && iconColor ? { iconColor } : {}),
+  })
 }
 
 /** Where a new terminal starts: the folder of the space being worked in, which is where
