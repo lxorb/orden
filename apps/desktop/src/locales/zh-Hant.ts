@@ -86,6 +86,15 @@ export const zhHant: Dictionary = {
   // Tasks: the Display menu
   Display: '顯示',
   'Completed tasks': '已完成任務',
+  Smart: '智慧',
+  Grouping: '分組',
+  Sorting: '排序',
+  'Last 30 days': '過去 30 天',
+  'Assigned to me': '指派給我',
+  Unassigned: '未指派',
+  'Reset all': '全部重設',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    '版面將工作顯示為清單、看板或日曆。分組將工作分成若干組，即看板的欄。排序為每一組排好順序。篩選會隱藏你不需要的內容。所有設定都會為此檢視保留。',
   // Tasks: several lines pasted into quick add
   'One task': '一個任務',
   'One per line': '每行一個',

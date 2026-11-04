@@ -1,6 +1,6 @@
 /** What a view keeps on this device and nowhere else, as Todoist's apps do: which of
- *  a list's groups are folded, and how each project is laid out - list or board, its
- *  grouping, its sorting - so a project opened again comes back as it was left.
+ *  a list's groups are folded, and how each project and each space's Todos is laid out -
+ *  list or board, its grouping, its sorting - so it comes back as it was left.
  *
  *  Kept by the view's name (`viewKey`): a project by its space and its note, a view Orden
  *  ships by its name, a base by its file. */
@@ -10,6 +10,7 @@ import type { ViewSpec } from './spec'
 
 const FOLDS = 'nib:view-folds'
 const PROJECTS = 'nib:project-views'
+const TODOS = 'nib:todos-views'
 
 /** How many views keep their folds: the ones folded most lately. */
 const MOST = 200
@@ -19,6 +20,7 @@ export function viewKey(spec: ViewSpec, file: string | null): string | null {
   if (file !== null) return `file:${file}`
   if (spec.builtin === 'project') return `project:${spec.space ?? ''}/${spec.path ?? ''}`
   if (spec.builtin === 'label') return `label:${spec.tag ?? ''}`
+  if (spec.builtin === 'todos') return `todos:${spec.space ?? ''}`
   return spec.builtin ?? null
 }
 
@@ -53,6 +55,21 @@ export function keepProjectView(space: string, path: string, words: string): voi
   const all = read(PROJECTS)
   all[`${space}/${path}`] = words
   keepJson(PROJECTS, all)
+}
+
+/** How a space's Todos was last laid out here - its layout, grouping, sorting, filters
+ *  and whether done tasks show - as its base's words, if it was changed (#1046). */
+export function todosView(space: string): string | undefined {
+  const words = read(TODOS)[space]
+  return typeof words === 'string' ? words : undefined
+}
+
+/** How a space's Todos is laid out now, kept for the next time it is opened; none, put
+ *  back as Orden ships it. */
+export function keepTodosView(space: string, words: string | undefined): void {
+  const all = Object.fromEntries(Object.entries(read(TODOS)).filter(([one]) => one !== space))
+  if (words !== undefined) all[space] = words
+  keepJson(TODOS, all)
 }
 
 /** The layouts kept for a space's projects, moved along with their notes: `moved` answers

@@ -90,6 +90,15 @@ export const gsw: Dictionary = {
   // Tasks: the Display menu
   Display: 'Aazeig',
   'Completed tasks': 'Erledigti Ufgabe',
+  Smart: 'Gschiid',
+  Grouping: 'Gruppierig',
+  Sorting: 'Sortierig',
+  'Last 30 days': 'Letschti 30 Täg',
+  'Assigned to me': 'Mir zuegwise',
+  Unassigned: 'Nöd zuegwise',
+  'Reset all': 'Alles zruggsetze',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'S Layout zeigt d Ufgabe als Lischte, Board oder Kalender. D Gruppierig teilt si i Gruppe, das sind d Spalte vomene Board. D Sortierig ordnet jedi Gruppe. Filter blände us, was du nöd bruchsch. Alles wird für die Aasicht gmerkt.',
   // Tasks: several lines pasted into quick add
   'One task': 'Ei Ufgab',
   'One per line': 'Eini pro Ziile',

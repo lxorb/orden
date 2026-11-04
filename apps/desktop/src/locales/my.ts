@@ -86,6 +86,15 @@ export const my: Dictionary = {
   // Tasks: the Display menu
   Display: 'ပြသပုံ',
   'Completed tasks': 'ပြီးစီးသော လုပ်ငန်းများ',
+  Smart: 'စမတ်',
+  Grouping: 'အုပ်စုဖွဲ့ခြင်း',
+  Sorting: 'စီခြင်း',
+  'Last 30 days': 'ပြီးခဲ့သော ရက် ၃၀',
+  'Assigned to me': 'ကျွန်ုပ်ထံ တာဝန်ပေးထားသော',
+  Unassigned: 'တာဝန်မပေးရသေးသော',
+  'Reset all': 'အားလုံး ပြန်သတ်မှတ်ရန်',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'အပြင်အဆင်သည် လုပ်ငန်းများကို စာရင်း၊ ဘုတ် သို့မဟုတ် ပြက္ခဒိန်အဖြစ် ပြသည်။ အုပ်စုဖွဲ့ခြင်းသည် ၎င်းတို့ကို အုပ်စုများအဖြစ် ခွဲပြီး ဘုတ်၏ ကော်လံများ ဖြစ်သည်။ စီခြင်းသည် အုပ်စုတစ်ခုစီကို စီစဉ်သည်။ စစ်ထုတ်မှုများသည် မလိုအပ်သည်ကို ဖျောက်ထားသည်။ ယင်းအားလုံးကို ဤမြင်ကွင်းအတွက် သိမ်းထားသည်။',
   // Tasks: several lines pasted into quick add
   'One task': 'လုပ်ငန်းတစ်ခု',
   'One per line': 'တစ်ကြောင်းလျှင် တစ်ခု',

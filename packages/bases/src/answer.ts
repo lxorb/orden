@@ -150,7 +150,10 @@ export function compileView(base: Base, which?: string | number): CompiledView {
   const clock = filter.clock || [...formulas, ...getters].some((one) => one.clock)
 
   const kinds = view.nib.rows ?? 'notes'
-  const fanOut = view.type === 'kanban' || view.type === 'board'
+  // A board grouped by a list puts a row under each member; so does any layout grouped
+  // by a task's labels, Todoist's grouping by label (#1046).
+  const fanOut =
+    view.type === 'kanban' || view.type === 'board' || view.groupBy?.property === 'task.tags'
   const showCompleted = view.nib.showCompleted ?? false
   let facts = new WeakMap<Row, RowFacts>()
   let factsFor = ''

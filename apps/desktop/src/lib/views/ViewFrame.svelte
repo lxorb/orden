@@ -24,7 +24,7 @@
   import type { Kit } from './kit'
   import FormLayout from './FormLayout.svelte'
   import ListLayout from './ListLayout.svelte'
-  import { openBuiltin } from './open'
+  import { openTodos } from './open'
   import PhoneRows from './PhoneRows.svelte'
   import ProjectAbout from './ProjectAbout.svelte'
   import TableLayout from './TableLayout.svelte'
@@ -75,17 +75,11 @@
     if (going) {
       going = false
       clearTimeout(goingTimer)
-      const to =
-        event.key === 't'
-          ? 'today'
-          : event.key === 'u'
-            ? 'upcoming'
-            : event.key === 'i'
-              ? 'inbox'
-              : null
-      if (to) {
+      // Todoist's G then T, U or I: Today, Upcoming and the Inbox are one view now,
+      // the open space's Todos (#1046).
+      if (event.key === 't' || event.key === 'u' || event.key === 'i') {
         event.preventDefault()
-        openBuiltin(to)
+        openTodos()
       }
       return
     }

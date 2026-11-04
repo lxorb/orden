@@ -91,6 +91,15 @@ export const it: Dictionary = {
   // Tasks: the Display menu
   Display: 'Visualizzazione',
   'Completed tasks': 'Attività completate',
+  Smart: 'Intelligente',
+  Grouping: 'Raggruppamento',
+  Sorting: 'Ordinamento',
+  'Last 30 days': 'Ultimi 30 giorni',
+  'Assigned to me': 'Assegnate a me',
+  Unassigned: 'Non assegnate',
+  'Reset all': 'Reimposta tutto',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'Il layout mostra le attività come elenco, bacheca o calendario. Il raggruppamento le divide in gruppi, che sono le colonne di una bacheca. L’ordinamento ordina ogni gruppo. I filtri nascondono ciò che non ti serve. Tutto viene conservato per questa vista.',
   // Tasks: several lines pasted into quick add
   'One task': "Un'attività",
   'One per line': 'Una per riga',

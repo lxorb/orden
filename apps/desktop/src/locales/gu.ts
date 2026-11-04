@@ -89,6 +89,15 @@ export const gu: Dictionary = {
   // Tasks: the Display menu
   Display: 'પ્રદર્શન',
   'Completed tasks': 'પૂર્ણ કાર્યો',
+  Smart: 'સ્માર્ટ',
+  Grouping: 'જૂથબંધી',
+  Sorting: 'ગોઠવણી',
+  'Last 30 days': 'છેલ્લા 30 દિવસ',
+  'Assigned to me': 'મને સોંપાયેલા',
+  Unassigned: 'સોંપાયેલા નથી',
+  'Reset all': 'બધું રીસેટ કરો',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'લેઆઉટ કાર્યોને યાદી, બોર્ડ અથવા કૅલેન્ડર તરીકે બતાવે છે. જૂથબંધી તેમને જૂથોમાં વહેંચે છે, જે બોર્ડના કૉલમ છે. ગોઠવણી દરેક જૂથને ક્રમમાં મૂકે છે. ફિલ્ટર તમને જરૂર ન હોય તે છુપાવે છે. આ બધું આ દૃશ્ય માટે રાખવામાં આવે છે.',
   // Tasks: several lines pasted into quick add
   'One task': 'એક કાર્ય',
   'One per line': 'દરેક લીટીએ એક',

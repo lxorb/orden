@@ -93,6 +93,15 @@ export const ar: Dictionary = {
   // Tasks: the Display menu
   Display: 'العرض',
   'Completed tasks': 'المهام المكتملة',
+  Smart: 'ذكي',
+  Grouping: 'التجميع',
+  Sorting: 'الترتيب',
+  'Last 30 days': 'آخر 30 يومًا',
+  'Assigned to me': 'المسندة إليّ',
+  Unassigned: 'غير مسندة',
+  'Reset all': 'إعادة تعيين الكل',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'يعرض التخطيط المهام كقائمة أو لوحة أو تقويم. يقسمها التجميع إلى مجموعات هي أعمدة اللوحة. يرتب الترتيب كل مجموعة. تخفي عوامل التصفية ما لا تحتاج إليه. ويُحفظ كل ذلك لهذا العرض.',
   // Tasks: several lines pasted into quick add
   'One task': 'مهمة واحدة',
   'One per line': 'واحدة لكل سطر',

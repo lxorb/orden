@@ -89,6 +89,15 @@ export const ps: Dictionary = {
   // Tasks: the Display menu
   Display: 'ښودنه',
   'Completed tasks': 'بشپړې دندې',
+  Smart: 'هوښیار',
+  Grouping: 'ډله‌بندي',
+  Sorting: 'ترتیب',
+  'Last 30 days': 'وروستۍ ۳۰ ورځې',
+  'Assigned to me': 'ما ته سپارل شوي',
+  Unassigned: 'نه سپارل شوي',
+  'Reset all': 'ټول بیا تنظیم کړئ',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'ترتیب‌بندي دندې د لېست، تختې یا کلیزې په بڼه ښيي. ډله‌بندي یې په ډلو وېشي، چې د تختې ستنې دي. ترتیب هره ډله منظموي. فلټرونه هغه پټوي چې تاسو ورته اړتیا نه لرئ. دا ټول د دې لید لپاره ساتل کېږي.',
   // Tasks: several lines pasted into quick add
   'One task': 'یوه دنده',
   'One per line': 'په هره کرښه کې یوه',

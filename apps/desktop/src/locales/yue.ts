@@ -86,6 +86,15 @@ export const yue: Dictionary = {
   // Tasks: the Display menu
   Display: '顯示',
   'Completed tasks': '已完成任務',
+  Smart: '智能',
+  Grouping: '分組',
+  Sorting: '排序',
+  'Last 30 days': '過去 30 日',
+  'Assigned to me': '指派畀我',
+  Unassigned: '未指派',
+  'Reset all': '全部重設',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    '版面將工作顯示成清單、看板或者日曆。分組將佢哋分成組，即係看板嘅欄。排序排好每一組。篩選器收埋你唔需要嘅嘢。全部都會為呢個檢視保留。',
   // Tasks: several lines pasted into quick add
   'One task': '一個任務',
   'One per line': '每行一個',

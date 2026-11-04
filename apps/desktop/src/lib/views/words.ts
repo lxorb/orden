@@ -15,6 +15,7 @@ import type { Builtin } from './spec'
 import { dayIn } from './values'
 
 const BUILTIN_NAMES: Record<Builtin, string> = {
+  todos: key('Tasks'),
   inbox: key('Inbox'),
   today: key('Today'),
   upcoming: key('Upcoming'),
@@ -135,6 +136,13 @@ export function groupLabel(
 ): string {
   if (property === 'formula.overdue') return value === true ? t('Overdue') : t('Today')
   if (value === 'overdue') return t('Overdue')
+  // Todos' groups of when a task is due (`WHEN` in @orden/bases, #1046).
+  if (property === 'formula.when') {
+    if (value === 'today') return t('Today')
+    if (value === 'tomorrow') return t('Tomorrow')
+    if (value === 'later') return t('Later')
+    if (value === null || value === '') return t('No date')
+  }
   if (value === null || value === '') return t('None')
   if (property === 'task.status' && typeof value === 'string') {
     const known = STATUS_NAMES[value]

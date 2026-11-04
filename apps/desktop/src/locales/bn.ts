@@ -89,6 +89,15 @@ export const bn: Dictionary = {
   // Tasks: the Display menu
   Display: 'প্রদর্শন',
   'Completed tasks': 'সম্পন্ন কাজ',
+  Smart: 'স্মার্ট',
+  Grouping: 'গ্রুপ করা',
+  Sorting: 'সাজানো',
+  'Last 30 days': 'গত ৩০ দিন',
+  'Assigned to me': 'আমাকে দেওয়া',
+  Unassigned: 'কাউকে দেওয়া নয়',
+  'Reset all': 'সব রিসেট করুন',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'লেআউট কাজগুলো তালিকা, বোর্ড বা ক্যালেন্ডার হিসেবে দেখায়। গ্রুপ করা এগুলোকে দলে ভাগ করে, যেগুলো বোর্ডের কলাম। সাজানো প্রতিটি দলকে ক্রমে সাজায়। ফিল্টার যা দরকার নেই তা লুকায়। এ সবই এই ভিউয়ের জন্য রাখা হয়।',
   // Tasks: several lines pasted into quick add
   'One task': 'একটি কাজ',
   'One per line': 'প্রতি লাইনে একটি',

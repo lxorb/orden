@@ -90,6 +90,15 @@ export const sw: Dictionary = {
   // Tasks: the Display menu
   Display: 'Mwonekano',
   'Completed tasks': 'Kazi zilizokamilika',
+  Smart: 'Mahiri',
+  Grouping: 'Kupanga kwa vikundi',
+  Sorting: 'Kupanga',
+  'Last 30 days': 'Siku 30 zilizopita',
+  'Assigned to me': 'Nilizopewa mimi',
+  Unassigned: 'Hazijakabidhiwa',
+  'Reset all': 'Weka upya yote',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'Mpangilio unaonyesha kazi kama orodha, ubao au kalenda. Kupanga kwa vikundi kunazigawa katika vikundi, ambavyo ni safu za ubao. Kupanga kunapanga kila kikundi. Vichujio huficha usichohitaji. Yote huhifadhiwa kwa mwonekano huu.',
   // Tasks: several lines pasted into quick add
   'One task': 'Kazi moja',
   'One per line': 'Moja kwa kila mstari',

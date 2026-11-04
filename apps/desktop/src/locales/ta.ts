@@ -90,6 +90,15 @@ export const ta: Dictionary = {
   // Tasks: the Display menu
   Display: 'காட்சி',
   'Completed tasks': 'முடிந்த பணிகள்',
+  Smart: 'ஸ்மார்ட்',
+  Grouping: 'குழுவாக்கம்',
+  Sorting: 'வரிசைப்படுத்தல்',
+  'Last 30 days': 'கடந்த 30 நாட்கள்',
+  'Assigned to me': 'எனக்கு ஒதுக்கப்பட்டவை',
+  Unassigned: 'ஒதுக்கப்படாதவை',
+  'Reset all': 'அனைத்தையும் மீட்டமை',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'தளவமைப்பு பணிகளைப் பட்டியல், பலகை அல்லது நாட்காட்டியாகக் காட்டும். குழுவாக்கம் அவற்றைக் குழுக்களாகப் பிரிக்கும்; அவையே பலகையின் நெடுவரிசைகள். வரிசைப்படுத்தல் ஒவ்வொரு குழுவையும் ஒழுங்குபடுத்தும். வடிப்பான்கள் உங்களுக்குத் தேவையில்லாததை மறைக்கும். இவை அனைத்தும் இந்தக் காட்சிக்காக வைக்கப்படும்.',
   // Tasks: several lines pasted into quick add
   'One task': 'ஒரு பணி',
   'One per line': 'வரிக்கு ஒன்று',

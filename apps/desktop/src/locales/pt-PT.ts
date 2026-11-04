@@ -91,6 +91,15 @@ export const ptPT: Dictionary = {
   // Tasks: the Display menu
   Display: 'Visualização',
   'Completed tasks': 'Tarefas concluídas',
+  Smart: 'Inteligente',
+  Grouping: 'Agrupamento',
+  Sorting: 'Ordenação',
+  'Last 30 days': 'Últimos 30 dias',
+  'Assigned to me': 'Atribuídas a mim',
+  Unassigned: 'Sem responsável',
+  'Reset all': 'Repor tudo',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'O esquema mostra as tarefas como lista, quadro ou calendário. O agrupamento divide-as em grupos, que são as colunas de um quadro. A ordenação ordena cada grupo. Os filtros ocultam o que não precisa. Tudo fica guardado para esta vista.',
   // Tasks: several lines pasted into quick add
   'One task': 'Uma tarefa',
   'One per line': 'Uma por linha',

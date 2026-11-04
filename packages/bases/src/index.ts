@@ -10,7 +10,15 @@ export { listAsWritten, noteValues, scalarValue, taskHash } from './note-values'
 export { finish, nextOccurrence, type OccurrenceOptions, skip, tick } from './occurrence'
 export { answer, cellValue, groupName, orderId, rowId } from './answer'
 export { readBase, writeBase } from './base-file'
-export { type BuiltinName, type BuiltinParams, builtinView, todayAs } from './builtins'
+export {
+  type BuiltinName,
+  type BuiltinParams,
+  builtinView,
+  SMART_SORT,
+  todayAs,
+  WHEN,
+  WHEN_GROUPS,
+} from './builtins'
 export { INBOX_PATH } from './inbox'
 export { addDays, addMonths, dayNumber, daysInMonth, todayOf, weekday } from './dates'
 export { nextDate, parseRule, ruleText } from './recurrence'

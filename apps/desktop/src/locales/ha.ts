@@ -90,6 +90,15 @@ export const ha: Dictionary = {
   // Tasks: the Display menu
   Display: 'Nuni',
   'Completed tasks': 'Ayyukan da aka kammala',
+  Smart: 'Mai wayo',
+  Grouping: 'Tarawa',
+  Sorting: 'Jerawa',
+  'Last 30 days': 'Kwanaki 30 da suka wuce',
+  'Assigned to me': 'An ba ni',
+  Unassigned: 'Ba a ba kowa ba',
+  'Reset all': 'Sake saita duka',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'Tsari yana nuna ayyuka a matsayin jeri, allo ko kalanda. Tarawa tana raba su zuwa rukuni, waɗanda su ne ginshiƙan allo. Jerawa tana jera kowane rukuni. Matattara suna ɓoye abin da ba ka buƙata. Ana adana duka don wannan duba.',
   // Tasks: several lines pasted into quick add
   'One task': 'Aiki ɗaya',
   'One per line': 'Ɗaya kowane layi',

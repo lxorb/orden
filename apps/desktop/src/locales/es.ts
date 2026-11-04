@@ -91,6 +91,15 @@ export const es: Dictionary = {
   // Tasks: the Display menu
   Display: 'Visualización',
   'Completed tasks': 'Tareas completadas',
+  Smart: 'Inteligente',
+  Grouping: 'Agrupación',
+  Sorting: 'Orden',
+  'Last 30 days': 'Últimos 30 días',
+  'Assigned to me': 'Asignadas a mí',
+  Unassigned: 'Sin asignar',
+  'Reset all': 'Restablecer todo',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'El diseño muestra las tareas como lista, tablero o calendario. La agrupación las divide en grupos, que son las columnas de un tablero. El orden ordena cada grupo. Los filtros ocultan lo que no necesitas. Todo se guarda para esta vista.',
   // Tasks: several lines pasted into quick add
   'One task': 'Una tarea',
   'One per line': 'Una por línea',

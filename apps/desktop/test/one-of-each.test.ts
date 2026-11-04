@@ -810,6 +810,8 @@ describe('the sentence behind a setting', () => {
       'lib/access/Access.svelte',
       'lib/ai/DoWithAiCard.svelte',
       'lib/people/ProfileRows.svelte',
+      // The views' Display menu, whose rows are settings of the view (#1046).
+      'lib/views/DisplayBuilder.svelte',
     ])
   })
 })

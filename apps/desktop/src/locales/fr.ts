@@ -91,6 +91,15 @@ export const fr: Dictionary = {
   // Tasks: the Display menu
   Display: 'Affichage',
   'Completed tasks': 'Tâches terminées',
+  Smart: 'Intelligent',
+  Grouping: 'Regroupement',
+  Sorting: 'Tri',
+  'Last 30 days': '30 derniers jours',
+  'Assigned to me': 'Assignées à moi',
+  Unassigned: 'Non assignées',
+  'Reset all': 'Tout réinitialiser',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'La disposition affiche les tâches en liste, en tableau ou en calendrier. Le regroupement les répartit en groupes, qui sont les colonnes d’un tableau. Le tri ordonne chaque groupe. Les filtres masquent ce dont vous n’avez pas besoin. Tout est conservé pour cette vue.',
   // Tasks: several lines pasted into quick add
   'One task': 'Une tâche',
   'One per line': 'Une par ligne',

@@ -89,6 +89,15 @@ export const fa: Dictionary = {
   // Tasks: the Display menu
   Display: 'نمایش',
   'Completed tasks': 'کارهای انجام‌شده',
+  Smart: 'هوشمند',
+  Grouping: 'گروه‌بندی',
+  Sorting: 'مرتب‌سازی',
+  'Last 30 days': '۳۰ روز گذشته',
+  'Assigned to me': 'واگذارشده به من',
+  Unassigned: 'واگذارنشده',
+  'Reset all': 'بازنشانی همه',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'چیدمان کارها را به‌صورت فهرست، تخته یا تقویم نشان می‌دهد. گروه‌بندی آن‌ها را به گروه‌هایی تقسیم می‌کند که ستون‌های تخته‌اند. مرتب‌سازی هر گروه را مرتب می‌کند. فیلترها آنچه را لازم ندارید پنهان می‌کنند. همهٔ این‌ها برای این نما نگه داشته می‌شود.',
   // Tasks: several lines pasted into quick add
   'One task': 'یک کار',
   'One per line': 'یکی برای هر خط',

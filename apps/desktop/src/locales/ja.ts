@@ -86,6 +86,15 @@ export const ja: Dictionary = {
   // Tasks: the Display menu
   Display: '表示',
   'Completed tasks': '完了したタスク',
+  Smart: 'スマート',
+  Grouping: 'グループ化',
+  Sorting: '並べ替え',
+  'Last 30 days': '過去30日',
+  'Assigned to me': '自分に割り当て',
+  Unassigned: '未割り当て',
+  'Reset all': 'すべてリセット',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'レイアウトはタスクをリスト、ボード、カレンダーで表示します。グループ化はタスクをグループに分け、それがボードの列になります。並べ替えは各グループの順序を決めます。フィルターは不要なものを隠します。すべてこのビューに保存されます。',
   // Tasks: several lines pasted into quick add
   'One task': '1つのタスク',
   'One per line': '1行に1つ',

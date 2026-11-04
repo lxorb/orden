@@ -103,7 +103,7 @@ export async function renameProject(
 
 /** The projects of a space, as the panel draws them; `count` answers a note's open
  *  tasks. */
-export function spaceProjects(root: string, count: (note: string) => number): ProjectNode[] {
+function spaceProjects(root: string, count: (note: string) => number): ProjectNode[] {
   const folder = entryAt(workspace.tree, projectsFolder(root))
   if (!folder?.is_dir) return []
   return projectNodes(folder, (path) => workspace.arranged.listOf(path), count)
@@ -194,7 +194,7 @@ const placeOf = (project: { note: string; folder: string | null }) => project.fo
  *  folder they share (`placedBeside`), so the panel and the file list stay one order. A
  *  project from another folder is moved into that one first, as a drop there would.
  *  Nothing happens for a project put beside itself or inside its own sub-projects. */
-export async function placeProject(
+async function placeProject(
   moving: { note: string; folder: string | null },
   target: { note: string; folder: string | null },
   after: boolean,

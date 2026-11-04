@@ -1,6 +1,6 @@
-/** Todoist's Display menu over a view of tasks: how it is grouped, how it is sorted and
- *  which way, whether done tasks stay, and what it is narrowed to - a priority, a label,
- *  a day. Each answer is a new base, so the change is kept where the view keeps its
+/** Todoist's Display menu over a view of tasks (#1046): how it is grouped, how it is
+ *  sorted and which way, whether done tasks stay, and what it is narrowed to - a
+ *  priority, a label, a day, when it was written down, who it is assigned to. Each answer is a new base, so the change is kept where the view keeps its
  *  changes (a built-in view in its tab, a base in its file), and Obsidian reads every key
  *  it knows: the grouping and the sorting are Bases' own, the narrowing Orden's under the
  *  view's `nib:` key (`only`), which Obsidian leaves alone.
@@ -8,10 +8,21 @@
  *  Pure. `displayed` is what the engine is asked with: the view's own filters and the
  *  narrowing together. */
 
-import type { Base, Row, View } from '@orden/bases'
+import { type Base, type Row, SMART_SORT, type View, WHEN, WHEN_GROUPS } from '@orden/bases'
 
-export type Grouping = 'default' | 'none' | 'note' | 'section' | 'date' | 'deadline' | 'priority'
-export type Sorting = 'default' | 'manual' | 'name' | 'date' | 'deadline' | 'priority' | 'note'
+export type Grouping =
+  | 'default'
+  | 'none'
+  | 'note'
+  | 'section'
+  | 'date'
+  | 'deadline'
+  | 'priority'
+  | 'tag'
+  | 'due'
+  | 'status'
+export type Sorting =
+  'default' | 'smart' | 'manual' | 'name' | 'date' | 'deadline' | 'priority' | 'note' | 'created'
 
 export const GROUPINGS: readonly Grouping[] = [
   'default',
@@ -21,15 +32,44 @@ export const GROUPINGS: readonly Grouping[] = [
   'date',
   'deadline',
   'priority',
+  'tag',
+  'due',
+  'status',
 ]
 export const SORTINGS: readonly Sorting[] = [
   'default',
+  'smart',
   'manual',
   'name',
   'date',
   'deadline',
   'priority',
   'note',
+  'created',
+]
+
+/** The groupings Todoist's Display offers (#1046), in its order: none, priority, label,
+ *  date (when it is due), project and status; a project's own view its headings too. */
+export function groupingsFor(project: boolean): Grouping[] {
+  return [
+    'none',
+    ...(project ? (['section'] as const) : []),
+    'priority',
+    'tag',
+    'due',
+    ...(project ? [] : (['note'] as const)),
+    'status',
+  ]
+}
+
+/** And the sortings: smart, due date, priority, name, created, manual. */
+export const SORTS_OFFERED: readonly Sorting[] = [
+  'smart',
+  'deadline',
+  'priority',
+  'name',
+  'created',
+  'manual',
 ]
 
 /** The property each choice groups or sorts by. */
@@ -40,11 +80,19 @@ const BY: Partial<Record<Grouping | Sorting, string>> = {
   deadline: 'task.deadline',
   priority: 'task.priority',
   name: 'task.text',
+  created: 'task.created',
 }
 
 /** What each grouping groups by, where it differs from what its sorting sorts by: a
- *  note's group is its path, so two notes of one name in two folders stay apart. */
-const GROUP_BY: Partial<Record<Grouping, string>> = { ...BY, note: 'file.path' }
+ *  note's group is its path, so two notes of one name in two folders stay apart. Date
+ *  is when a task is due, Todos' Overdue, Today, Tomorrow, Later and No date (`WHEN`). */
+const GROUP_BY: Partial<Record<Grouping, string>> = {
+  ...BY,
+  note: 'file.path',
+  tag: 'task.tags',
+  due: 'formula.when',
+  status: 'task.status',
+}
 
 /** What a view is narrowed to. */
 export interface Only {
@@ -53,6 +101,22 @@ export interface Only {
   date?: 'overdue' | 'today' | 'week' | 'none'
   /** A note, by its path in its space: Todoist's project filter on Completed. */
   project?: string
+  /** When the task was written down (its `➕`): today, in the last 7 days or 30. */
+  created?: 'today' | 'week' | 'month'
+  /** Who it is assigned to: a name, `ASSIGNED_TO_ME` or `UNASSIGNED`. */
+  assignee?: string
+}
+
+/** The assignee filter's two answers that are no one's name: a name never starts with
+ *  a colon. */
+export const ASSIGNED_TO_ME = ':me'
+export const UNASSIGNED = ':none'
+
+/** Every assignee the tasks name, once each, in the reader's order. */
+export function assigneesOf(rows: readonly Row[]): string[] {
+  const seen = new Set<string>()
+  for (const row of rows) if (row.task?.assignee) seen.add(row.task.assignee)
+  return [...seen].sort((a, b) => a.localeCompare(b))
 }
 
 /** The notes a view's rows are in, by name, for the project it can be narrowed to. */
@@ -66,10 +130,18 @@ export function notesIn(rows: readonly Row[]): { path: string; name: string }[] 
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
 
-function withView(base: Base, at: number, change: (view: View) => View): Base {
+/** The base with one view changed; `when` gives it Todos' formula of when a task is
+ *  due, which grouping by date reads (`WHEN`). */
+function withView(base: Base, at: number, change: (view: View) => View, when = false): Base {
   const view = base.views[at]
   if (!view) return base
-  return { ...base, views: base.views.map((one, index) => (index === at ? change(view) : one)) }
+  const formulas =
+    when && base.formulas.when === undefined ? { ...base.formulas, when: WHEN } : base.formulas
+  return {
+    ...base,
+    formulas,
+    views: base.views.map((one, index) => (index === at ? change(view) : one)),
+  }
 }
 
 /** How a view is grouped, `default` where it is grouped as the view it came from is. */
@@ -90,27 +162,75 @@ export function withGrouping(
   grouping: Grouping,
   original: View | null,
 ): Base {
-  return withView(base, at, (view) => {
-    const nib = { ...view.nib }
-    delete nib.groupOrder
-    const next: View = { ...view, nib }
-    delete next.groupBy
-    if (grouping === 'default') {
-      if (original?.groupBy) next.groupBy = original.groupBy
-      if (original?.nib.groupOrder) nib.groupOrder = original.nib.groupOrder
+  return withView(
+    base,
+    at,
+    (view) => {
+      const nib = { ...view.nib }
+      delete nib.groupOrder
+      // The order of the groups belongs to the grouping it was set for.
+      delete nib.groups
+      const next: View = { ...view, nib }
+      delete next.groupBy
+      if (grouping === 'default') {
+        if (original?.groupBy) next.groupBy = original.groupBy
+        if (original?.nib.groupOrder) nib.groupOrder = original.nib.groupOrder
+        if (original?.nib.groups) nib.groups = [...original.nib.groups]
+        return next
+      }
+      const property = GROUP_BY[grouping]
+      if (property === undefined) return next
+      if (grouping === 'section') nib.groupOrder = 'rows'
+      if (grouping === 'due') nib.groups = [...WHEN_GROUPS]
+      next.groupBy = { property, direction: 'ASC' }
       return next
-    }
-    const property = GROUP_BY[grouping]
-    if (property === undefined) return next
-    if (grouping === 'section') nib.groupOrder = 'rows'
-    next.groupBy = { property, direction: 'ASC' }
-    return next
-  })
+    },
+    grouping === 'due',
+  )
+}
+
+/** The grouping a view as it came is grouped by, as Display names it, or `default` for
+ *  one it has no name for (Upcoming's days). */
+export function shippedGrouping(original: View | null): Grouping {
+  if (!original) return 'none'
+  const by = original.groupBy?.property
+  if (by === undefined) return 'none'
+  return GROUPINGS.find((one) => one !== 'default' && GROUP_BY[one] === by) ?? 'default'
+}
+
+/** The sorting a view as it came is sorted by, as Display names it. */
+export function shippedSorting(original: View | null): Sorting {
+  if (!original?.sort.length) return 'manual'
+  if (same(original.sort, SMART_SORT)) return 'smart'
+  if (original.sort.length > 1) return 'default'
+  return (
+    SORTINGS.find((one) => one !== 'default' && BY[one] === original.sort[0]?.property) ?? 'default'
+  )
+}
+
+/** How many of a view's Display settings differ from the view as it came: the badge on
+ *  Display, and the ones on its Sort and Filter. A base came as its file says, so only
+ *  what Display narrows it by is a change of Display's. */
+export function changedFrom(
+  view: View,
+  original: View | null,
+): { sort: number; filter: number; total: number } {
+  const filter = Object.keys(onlyOf(view)).length
+  if (!original) return { sort: 0, filter, total: filter }
+  const grouping = groupingOf(view, original)
+  const sorting = sortingOf(view, original).sorting
+  const sort =
+    (grouping === 'default' || grouping === shippedGrouping(original) ? 0 : 1) +
+    (sorting === 'default' || sorting === shippedSorting(original) ? 0 : 1)
+  const layout = original.type === view.type ? 0 : 1
+  const done = (view.nib.showCompleted ?? false) === (original.nib.showCompleted ?? false) ? 0 : 1
+  return { sort, filter, total: sort + filter + layout + done }
 }
 
 /** How a view is sorted, and whether the other way round. */
 export function sortingOf(view: View, original: View | null): { sorting: Sorting; down: boolean } {
   if (original && same(view.sort, original.sort)) return { sorting: 'default', down: false }
+  if (same(view.sort, SMART_SORT)) return { sorting: 'smart', down: false }
   const first = view.sort[0]
   if (!first) return { sorting: 'manual', down: false }
   return {
@@ -129,6 +249,7 @@ export function withSorting(
 ): Base {
   return withView(base, at, (view) => {
     if (sorting === 'default') return { ...view, sort: original ? [...original.sort] : [] }
+    if (sorting === 'smart') return { ...view, sort: [...SMART_SORT] }
     const property = BY[sorting]
     if (property === undefined) return { ...view, sort: [] }
     return { ...view, sort: [{ property, direction: down ? 'DESC' : 'ASC' }] }
@@ -165,7 +286,11 @@ export function onlyOf(view: View): Only {
   const label: unknown = Reflect.get(kept, 'label')
   const date = dateOf(Reflect.get(kept, 'date'))
   const project: unknown = Reflect.get(kept, 'project')
+  const created: unknown = Reflect.get(kept, 'created')
+  const assignee: unknown = Reflect.get(kept, 'assignee')
   return {
+    ...(created === 'today' || created === 'week' || created === 'month' ? { created } : {}),
+    ...(typeof assignee === 'string' && assignee ? { assignee } : {}),
     ...(typeof project === 'string' && project ? { project } : {}),
     ...(priority === undefined ? {} : { priority }),
     ...(typeof label === 'string' && label ? { label } : {}),
@@ -194,6 +319,13 @@ export function onlyFilter(only: Only): string | null {
   else if (only.date === 'week') parts.push('task.date >= today() && task.date <= today() + "6d"')
   else if (only.date === 'none') parts.push('!task.date')
   if (only.project !== undefined) parts.push(`file.path == ${JSON.stringify(only.project)}`)
+  if (only.created === 'today') parts.push('task.created == today()')
+  else if (only.created === 'week') parts.push('task.created >= today() - "6d"')
+  else if (only.created === 'month') parts.push('task.created >= today() - "29d"')
+  if (only.assignee === ASSIGNED_TO_ME) parts.push('task.mine')
+  else if (only.assignee === UNASSIGNED) parts.push('!task.assignee')
+  else if (only.assignee !== undefined)
+    parts.push(`task.assignee == ${JSON.stringify(only.assignee)}`)
   return parts.length ? parts.join(' && ') : null
 }
 

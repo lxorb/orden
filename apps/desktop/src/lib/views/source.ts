@@ -18,13 +18,21 @@ import { insideSpace, samePath, within } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import type { Tab } from '../workspace/documents.svelte'
 import { noteText, writeNoteText } from '../workspace/note-text'
-import { keepProjectView } from './kept-views'
+import { keepProjectView, keepTodosView, todosView } from './kept-views'
 import type { Shown, Source } from './live.svelte'
-import { readSpec, type ViewSpec, writeSpec } from './spec'
+import { asShipped, readSpec, type ViewSpec, writeSpec } from './spec'
 
 /** Today as Settings has it: with the tasks that have no start date in it, or not (#408). */
 function today(): Base {
   return builtinView('today', { undated: modes.undatedInToday })
+}
+
+/** A built-in view as Orden ships it, whatever a tab or a space made of it: what Reset
+ *  puts back and what the Display menu calls the default. */
+export function shippedBase(spec: ViewSpec): Base {
+  if (spec.builtin === 'todos')
+    return builtinView('todos', spec.space === undefined ? {} : { space: spec.space })
+  return builtinBase(asShipped(spec))
 }
 
 /** The base a built-in spec asks for: as the tab changed it, else as Orden ships it. */
@@ -35,6 +43,11 @@ export function builtinBase(spec: ViewSpec): Base {
     return spec.builtin === 'today' ? todayAs(base, modes.undatedInToday) : base
   }
   switch (spec.builtin) {
+    case 'todos': {
+      // As it was left in this space, else as Orden ships it (#1046).
+      const kept = spec.space === undefined ? undefined : todosView(spec.space)
+      return kept === undefined ? shippedBase(spec) : readBase(kept)
+    }
     case 'project':
       return builtinView('project', {
         note: { space: spec.space ?? '', path: spec.path ?? '' },
@@ -115,6 +128,11 @@ export function tabSource(tab: Tab): Source {
       tab.note.replace(writeSpec({ ...now, yaml }), false)
       // A project is laid out again as it was left, the next time it is opened here.
       if (now.builtin === 'project') keepProjectView(now.space ?? '', now.path ?? '', yaml)
+      // And a space's Todos, in that space, whichever tab it is changed in.
+      if (now.builtin === 'todos' && now.space !== undefined) {
+        const shipped = writeBase(builtinView('todos', { space: now.space }))
+        keepTodosView(now.space, yaml === shipped ? undefined : yaml)
+      }
       workspace.scheduleSession()
       return Promise.resolve()
     },

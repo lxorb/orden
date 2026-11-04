@@ -90,6 +90,15 @@ export const tr: Dictionary = {
   // Tasks: the Display menu
   Display: 'Görünüm',
   'Completed tasks': 'Tamamlanan görevler',
+  Smart: 'Akıllı',
+  Grouping: 'Gruplama',
+  Sorting: 'Sıralama',
+  'Last 30 days': 'Son 30 gün',
+  'Assigned to me': 'Bana atananlar',
+  Unassigned: 'Atanmamış',
+  'Reset all': 'Tümünü sıfırla',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'Düzen görevleri liste, pano veya takvim olarak gösterir. Gruplama onları panonun sütunları olan gruplara ayırır. Sıralama her grubu düzenler. Filtreler ihtiyacınız olmayanı gizler. Hepsi bu görünüm için saklanır.',
   // Tasks: several lines pasted into quick add
   'One task': 'Tek görev',
   'One per line': 'Satır başına bir',

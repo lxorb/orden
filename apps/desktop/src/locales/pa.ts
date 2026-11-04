@@ -89,6 +89,15 @@ export const pa: Dictionary = {
   // Tasks: the Display menu
   Display: 'ਦਿਖਾਵਾ',
   'Completed tasks': 'ਪੂਰੇ ਹੋਏ ਕੰਮ',
+  Smart: 'ਸਮਾਰਟ',
+  Grouping: 'ਸਮੂਹਬੰਦੀ',
+  Sorting: 'ਤਰਤੀਬ',
+  'Last 30 days': 'ਪਿਛਲੇ 30 ਦਿਨ',
+  'Assigned to me': 'ਮੈਨੂੰ ਸੌਂਪੇ',
+  Unassigned: 'ਕਿਸੇ ਨੂੰ ਨਹੀਂ ਸੌਂਪੇ',
+  'Reset all': 'ਸਭ ਰੀਸੈੱਟ ਕਰੋ',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'ਲੇਆਉਟ ਕੰਮਾਂ ਨੂੰ ਸੂਚੀ, ਬੋਰਡ ਜਾਂ ਕੈਲੰਡਰ ਵਜੋਂ ਦਿਖਾਉਂਦਾ ਹੈ। ਸਮੂਹਬੰਦੀ ਇਹਨਾਂ ਨੂੰ ਸਮੂਹਾਂ ਵਿੱਚ ਵੰਡਦੀ ਹੈ, ਜੋ ਬੋਰਡ ਦੇ ਕਾਲਮ ਹਨ। ਤਰਤੀਬ ਹਰ ਸਮੂਹ ਨੂੰ ਕ੍ਰਮ ਵਿੱਚ ਰੱਖਦੀ ਹੈ। ਫਿਲਟਰ ਉਹ ਲੁਕਾਉਂਦੇ ਹਨ ਜਿਸ ਦੀ ਤੁਹਾਨੂੰ ਲੋੜ ਨਹੀਂ। ਇਹ ਸਭ ਇਸ ਦ੍ਰਿਸ਼ ਲਈ ਰੱਖਿਆ ਜਾਂਦਾ ਹੈ।',
   // Tasks: several lines pasted into quick add
   'One task': 'ਇੱਕ ਕੰਮ',
   'One per line': 'ਹਰ ਲਾਈਨ ਲਈ ਇੱਕ',

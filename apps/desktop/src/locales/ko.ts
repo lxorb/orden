@@ -86,6 +86,15 @@ export const ko: Dictionary = {
   // Tasks: the Display menu
   Display: '보기',
   'Completed tasks': '완료된 작업',
+  Smart: '스마트',
+  Grouping: '그룹화',
+  Sorting: '정렬',
+  'Last 30 days': '최근 30일',
+  'Assigned to me': '나에게 할당됨',
+  Unassigned: '할당되지 않음',
+  'Reset all': '모두 초기화',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    '레이아웃은 작업을 목록, 보드 또는 캘린더로 보여 줍니다. 그룹화는 작업을 그룹으로 나누며, 이 그룹이 보드의 열이 됩니다. 정렬은 각 그룹의 순서를 정합니다. 필터는 필요 없는 것을 숨깁니다. 모두 이 보기에 저장됩니다.',
   // Tasks: several lines pasted into quick add
   'One task': '작업 하나',
   'One per line': '줄마다 하나',

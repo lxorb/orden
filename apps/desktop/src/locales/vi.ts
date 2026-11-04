@@ -86,6 +86,15 @@ export const vi: Dictionary = {
   // Tasks: the Display menu
   Display: 'Hiển thị',
   'Completed tasks': 'Việc đã xong',
+  Smart: 'Thông minh',
+  Grouping: 'Nhóm',
+  Sorting: 'Sắp xếp',
+  'Last 30 days': '30 ngày qua',
+  'Assigned to me': 'Giao cho tôi',
+  Unassigned: 'Chưa giao',
+  'Reset all': 'Đặt lại tất cả',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'Bố cục hiển thị công việc dưới dạng danh sách, bảng hoặc lịch. Nhóm chia chúng thành các nhóm, chính là các cột của bảng. Sắp xếp sắp thứ tự từng nhóm. Bộ lọc ẩn những gì bạn không cần. Tất cả được giữ cho chế độ xem này.',
   // Tasks: several lines pasted into quick add
   'One task': 'Một việc',
   'One per line': 'Mỗi dòng một việc',

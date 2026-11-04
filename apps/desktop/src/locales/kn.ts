@@ -90,6 +90,15 @@ export const kn: Dictionary = {
   // Tasks: the Display menu
   Display: 'ಪ್ರದರ್ಶನ',
   'Completed tasks': 'ಪೂರ್ಣಗೊಂಡ ಕಾರ್ಯಗಳು',
+  Smart: 'ಸ್ಮಾರ್ಟ್',
+  Grouping: 'ಗುಂಪುಗೊಳಿಸುವಿಕೆ',
+  Sorting: 'ವಿಂಗಡಣೆ',
+  'Last 30 days': 'ಕಳೆದ 30 ದಿನಗಳು',
+  'Assigned to me': 'ನನಗೆ ನಿಯೋಜಿಸಿದವು',
+  Unassigned: 'ನಿಯೋಜಿಸದವು',
+  'Reset all': 'ಎಲ್ಲವನ್ನೂ ಮರುಹೊಂದಿಸಿ',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'ಲೇಔಟ್ ಕಾರ್ಯಗಳನ್ನು ಪಟ್ಟಿ, ಬೋರ್ಡ್ ಅಥವಾ ಕ್ಯಾಲೆಂಡರ್ ಆಗಿ ತೋರಿಸುತ್ತದೆ. ಗುಂಪುಗೊಳಿಸುವಿಕೆ ಅವುಗಳನ್ನು ಗುಂಪುಗಳಾಗಿ ವಿಭಜಿಸುತ್ತದೆ, ಅವು ಬೋರ್ಡ್‌ನ ಕಾಲಮ್‌ಗಳು. ವಿಂಗಡಣೆ ಪ್ರತಿ ಗುಂಪನ್ನು ಕ್ರಮಗೊಳಿಸುತ್ತದೆ. ಫಿಲ್ಟರ್‌ಗಳು ನಿಮಗೆ ಬೇಡವಾದುದನ್ನು ಮರೆಮಾಡುತ್ತವೆ. ಇವೆಲ್ಲವೂ ಈ ವೀಕ್ಷಣೆಗಾಗಿ ಉಳಿಯುತ್ತವೆ.',
   // Tasks: several lines pasted into quick add
   'One task': 'ಒಂದು ಕಾರ್ಯ',
   'One per line': 'ಪ್ರತಿ ಸಾಲಿಗೆ ಒಂದು',

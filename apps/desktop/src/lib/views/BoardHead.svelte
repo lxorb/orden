@@ -2,7 +2,11 @@
   /** A column's head, Notion's: the group's name as a pill in its option's tone (a value
    *  no option holds is a quiet pill with no tone), the count, which is a button for the
    *  column's calculation, then ⋯ and + while the head is pointed at, and always under a
-   *  thumb. The right button is the ⋯. */
+   *  thumb. The right button is the ⋯.
+   *
+   *  A board of tasks heads its columns as GitHub's project board does (#1046): a
+   *  status circle in the group's tone, the name, the count in a badge, and a line
+   *  under them that says what the column is, where it says anything. */
   import { t } from '../i18n.svelte'
   import { ADD_MARK } from './marks'
 
@@ -12,6 +16,8 @@
     count,
     sums = [],
     muted = false,
+    circle = false,
+    about,
     carries = false,
     canAdd = true,
     onmenu,
@@ -25,6 +31,10 @@
     sums?: readonly string[]
     /** A value no option holds. */
     muted?: boolean
+    /** Headed with a status circle rather than a pill: a board of tasks. */
+    circle?: boolean
+    /** One line under the head, saying what the column holds. */
+    about?: string | undefined
     /** Carried by its head to reorder the columns. */
     carries?: boolean
     canAdd?: boolean
@@ -35,13 +45,19 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="head" class:carries oncontextmenu={onmenu}>
-  <span class="tag" class:toned={tone !== null} class:muted style:--pill={tone}>
-    <span class="name">{name}</span>
-  </span>
+<div class="head" class:carries class:circled={circle} oncontextmenu={onmenu}>
+  {#if circle}
+    <span class="circle" style:--pill={tone} aria-hidden="true"></span>
+    <span class="name plain">{name}</span>
+  {:else}
+    <span class="tag" class:toned={tone !== null} class:muted style:--pill={tone}>
+      <span class="name">{name}</span>
+    </span>
+  {/if}
   <button
     type="button"
     class="count"
+    class:badge={circle}
     aria-label={t('Calculate')}
     title={t('Calculate')}
     onclick={oncount}
@@ -75,6 +91,7 @@
     </button>
   {/if}
 </div>
+{#if about}<p class="about">{about}</p>{/if}
 
 <style>
   .head {
@@ -119,6 +136,50 @@
   .name {
     min-width: 0;
     overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* GitHub's status circle: a ring in the group's tone round a dot of it. */
+  .circle {
+    flex: none;
+    box-sizing: border-box;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--pill, var(--muted));
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--pill, var(--muted)) 30%, transparent);
+  }
+
+  .plain {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text-strong);
+    font-weight: var(--weight-strong);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .head.circled {
+    gap: var(--space-2);
+  }
+
+  .count.badge {
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 9px;
+    background: var(--surface-3);
+    color: var(--muted-strong);
+    font-size: var(--text-xs);
+  }
+
+  .about {
+    margin: 0;
+    padding: 0 var(--space-3) var(--space-1);
+    overflow: hidden;
+    color: var(--muted);
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
     text-overflow: ellipsis;
     white-space: nowrap;
   }

@@ -14,9 +14,16 @@ import {
 import { bare, isNoteProperty } from './columns'
 
 /** The size a board's cards are where its view says none: Notion's own default. */
-export const DEFAULT_SIZE: CardSize = 'medium'
+const DEFAULT_SIZE: CardSize = 'medium'
 
 export const CARD_SIZES: readonly CardSize[] = ['small', 'medium', 'large']
+
+/** The size a board's cards are: the view's, else Notion's medium for notes, and for
+ *  tasks Todoist's card - a line of words and a line of meta, no room left over under
+ *  them (#1046). */
+export function sizeOf(size: CardSize | undefined, notes: boolean): CardSize {
+  return size ?? (notes ? DEFAULT_SIZE : 'small')
+}
 
 /** How many lines a card's title takes at most, and how many property lines it has
  *  room for, at each size. */
@@ -36,7 +43,9 @@ const GAP = 6
 /** The lines a card of this size has: its title's and its properties', which every
  *  card of the view keeps, filled or not, so every card is one height. `shown` is how
  *  many properties the view puts on its cards; `extra` a line every card keeps for its
- *  checklist or its task's chips where the view shows no property. */
+ *  checklist or its task's chips where the view shows no property. A task's card has
+ *  its one meta line and no other (BoardCard.svelte), so a board of tasks asks with
+ *  none shown and the line extra. */
 export function cardLines(
   size: CardSize,
   shown: number,
@@ -101,12 +110,13 @@ export function droppableBy(
 ): boolean {
   if (property === undefined) return false
   if (
-    /^task\.(status|done|priority|due|date|scheduled|start|deadline|assignee|section)$/.test(
+    /^task\.(status|done|priority|due|date|scheduled|start|deadline|assignee|section|tags)$/.test(
       property,
     )
   )
     return true
-  if (property === 'formula.overdue' || property === 'formula.day') return true
+  if (property === 'formula.overdue' || property === 'formula.day' || property === 'formula.when')
+    return true
   if (property === 'file.path' || property === 'file.basename') return rows !== 'notes'
   return isNoteProperty(property)
 }

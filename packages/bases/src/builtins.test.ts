@@ -36,6 +36,33 @@ const rows: Row[] = [
 ]
 
 describe('the built-in views', () => {
+  // #1046: one view of a space's tasks, grouped by when each is due.
+  test('Todos: a space’s started tasks by when they are due, the undated last, done ones out', () => {
+    const due = [
+      taskRow('Due.md', '- [ ] Late [deadline:: 2026-10-01]', 0),
+      taskRow('Due.md', '- [ ] Now [deadline:: 2026-10-04]', 1),
+      taskRow('Due.md', '- [ ] Next 🔼 [deadline:: 2026-10-05]', 2),
+      taskRow('Due.md', '- [ ] Next first ⏫ [deadline:: 2026-10-05]', 3),
+      taskRow('Due.md', '- [ ] Far [deadline:: 2026-11-30]', 4),
+      taskRow('Due.md', '- [ ] Waiting 🛫 2026-10-09 [deadline:: 2026-10-10]', 5),
+      taskRow('Due.md', '- [x] Done [deadline:: 2026-10-04]', 6),
+      taskRow('Due.md', '- [ ] Whenever', 7),
+      taskRow('Due.md', '- [ ] Other space [deadline:: 2026-10-04]', 0, { space: 'Work' }),
+    ]
+    const space = due[0]?.space ?? ''
+    expect(keyed(answer(builtinView('todos', { space }), 0, due, context))).toEqual([
+      ['overdue', ['Late']],
+      ['today', ['Now']],
+      ['tomorrow', ['Next first', 'Next']],
+      ['later', ['Far']],
+      [null, ['Whenever']],
+    ])
+    const every = answer(builtinView('todos'), 0, due, context)
+    expect(every.groups.flatMap((group) => group.rows.map((row) => row.task?.text))).toContain(
+      'Other space',
+    )
+  })
+
   test('Today: overdue first, then today, by priority and time; not started and done ones out', () => {
     expect(keyed(answer(builtinView('today'), 0, rows, context))).toEqual([
       // Overdue is a deadline past: Orden's own, or a vault's `📅`.
@@ -166,5 +193,33 @@ describe('the built-in views', () => {
     }
     const undated = builtinView('today', { undated: true })
     expect(readBase(writeBase(undated))).toEqual(undated)
+  })
+})
+
+describe('a list grouped by labels', () => {
+  test('holds a task under each of its labels, and one with none under no value', () => {
+    const tagged = [
+      taskRow('Tags.md', '- [ ] Both #home #work', 0),
+      taskRow('Tags.md', '- [ ] Home #home', 1),
+      taskRow('Tags.md', '- [ ] Bare', 2),
+    ]
+    const base = builtinView('todos')
+    const view = base.views[0]
+    if (!view) throw new Error('no view')
+    const byTag = {
+      ...base,
+      views: [
+        {
+          ...view,
+          groupBy: { property: 'task.tags', direction: 'ASC' as const },
+          nib: { ...view.nib, groups: [] },
+        },
+      ],
+    }
+    expect(keyed(answer(byTag, 0, tagged, context))).toEqual([
+      ['home', ['Both', 'Home']],
+      ['work', ['Both']],
+      [null, ['Bare']],
+    ])
   })
 })

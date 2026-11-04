@@ -89,6 +89,15 @@ export const hi: Dictionary = {
   // Tasks: the Display menu
   Display: 'प्रदर्शन',
   'Completed tasks': 'पूरे किए गए कार्य',
+  Smart: 'स्मार्ट',
+  Grouping: 'समूहीकरण',
+  Sorting: 'क्रम',
+  'Last 30 days': 'पिछले 30 दिन',
+  'Assigned to me': 'मुझे सौंपे गए',
+  Unassigned: 'किसी को नहीं सौंपे गए',
+  'Reset all': 'सब रीसेट करें',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'लेआउट कामों को सूची, बोर्ड या कैलेंडर के रूप में दिखाता है। समूहीकरण उन्हें समूहों में बाँटता है, जो बोर्ड के कॉलम हैं। क्रम हर समूह को क्रम में रखता है। फ़िल्टर वह छिपाते हैं जिसकी आपको ज़रूरत नहीं। यह सब इस व्यू के लिए रखा जाता है।',
   // Tasks: several lines pasted into quick add
   'One task': 'एक कार्य',
   'One per line': 'हर पंक्ति पर एक',

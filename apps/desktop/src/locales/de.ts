@@ -90,6 +90,15 @@ export const de: Dictionary = {
   // Tasks: the Display menu
   Display: 'Anzeige',
   'Completed tasks': 'Erledigte Aufgaben',
+  Smart: 'Smart',
+  Grouping: 'Gruppierung',
+  Sorting: 'Sortierung',
+  'Last 30 days': 'Letzte 30 Tage',
+  'Assigned to me': 'Mir zugewiesen',
+  Unassigned: 'Nicht zugewiesen',
+  'Reset all': 'Alles zurücksetzen',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'Das Layout zeigt die Aufgaben als Liste, Board oder Kalender. Die Gruppierung teilt sie in Gruppen, die Spalten eines Boards. Die Sortierung ordnet jede Gruppe. Filter blenden aus, was du nicht brauchst. Alles wird für diese Ansicht gemerkt.',
   // Tasks: several lines pasted into quick add
   'One task': 'Eine Aufgabe',
   'One per line': 'Eine pro Zeile',

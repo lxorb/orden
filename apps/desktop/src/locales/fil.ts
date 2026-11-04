@@ -89,6 +89,15 @@ export const fil: Dictionary = {
   // Tasks: the Display menu
   Display: 'Pagpapakita',
   'Completed tasks': 'Mga natapos na gawain',
+  Smart: 'Matalino',
+  Grouping: 'Pagpapangkat',
+  Sorting: 'Pagsasaayos',
+  'Last 30 days': 'Huling 30 araw',
+  'Assigned to me': 'Nakatalaga sa akin',
+  Unassigned: 'Walang nakatalaga',
+  'Reset all': 'I-reset lahat',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'Ipinapakita ng layout ang mga gawain bilang listahan, board o kalendaryo. Hinahati sila ng pagpapangkat sa mga grupo, na siyang mga column ng board. Inaayos ng pagsasaayos ang bawat grupo. Itinatago ng mga filter ang hindi mo kailangan. Lahat ng ito ay itinatago para sa view na ito.',
   // Tasks: several lines pasted into quick add
   'One task': 'Isang gawain',
   'One per line': 'Isa bawat linya',

@@ -89,6 +89,15 @@ export const am: Dictionary = {
   // Tasks: the Display menu
   Display: 'አቀራረብ',
   'Completed tasks': 'የተጠናቀቁ ተግባራት',
+  Smart: 'ብልጥ',
+  Grouping: 'መቧደን',
+  Sorting: 'መደርደር',
+  'Last 30 days': 'ያለፉት 30 ቀናት',
+  'Assigned to me': 'ለእኔ የተመደቡ',
+  Unassigned: 'ያልተመደቡ',
+  'Reset all': 'ሁሉንም ዳግም አስጀምር',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'አቀማመጥ ተግባሮቹን እንደ ዝርዝር፣ ሰሌዳ ወይም ቀን መቁጠሪያ ያሳያል። መቧደን በቡድኖች ይከፍላቸዋል፤ እነዚህም የሰሌዳ ዓምዶች ናቸው። መደርደር እያንዳንዱን ቡድን ያስተካክላል። ማጣሪያዎች የማያስፈልግዎትን ይደብቃሉ። ሁሉም ለዚህ እይታ ይቀመጣል።',
   // Tasks: several lines pasted into quick add
   'One task': 'አንድ ተግባር',
   'One per line': 'በየመስመሩ አንድ',

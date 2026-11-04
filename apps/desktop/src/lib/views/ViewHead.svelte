@@ -32,9 +32,9 @@
   import type { Builder } from './live.svelte'
   import { ADD_MARK, DISPLAY_MARK, FILTER_MARK, GROUP_MARK, LAYOUT_MARKS, LOCK_MARK } from './marks'
   import DisplayBuilder from './DisplayBuilder.svelte'
-  import { onlyOf } from './display'
-  import { builtinBase } from './source'
-  import { asShipped } from './spec'
+  import { changedFrom } from './display'
+  import Sheet from '../Sheet.svelte'
+  import { shippedBase } from './source'
   import FormulaBuilder from './FormulaBuilder.svelte'
   import NameBuilder from './NameBuilder.svelte'
   import OptionsBuilder from './OptionsBuilder.svelte'
@@ -67,7 +67,8 @@
   const base = $derived(live.base)
   const layout = $derived(layoutOf(view?.type ?? 'table'))
   /** What the head calls the view: its own name, else the tab's. */
-  const named = $derived(view?.name.trim() ? view.name : title)
+  // Todos is named as its tab is, in the reader's language, whatever its base says.
+  const named = $derived(kit.spec.builtin !== 'todos' && view?.name.trim() ? view.name : title)
   /** The layouts this place has room for: a fence and a phone leave the timeline out. */
   const offered = $derived(
     LAYOUTS.filter(
@@ -95,7 +96,14 @@
    *  New, whichever rows it is of, so Rows in its settings never takes the head away;
    *  a built-in view keeps its own. */
   const tabbed = $derived(kit.spec.builtin === undefined)
-  const narrowed = $derived(view ? Object.keys(onlyOf(view)).length > 0 : false)
+  /** How many of Display's settings differ from the view as it came: Todoist's
+   *  `Display: 1` (#1046). */
+  const displayChanged = $derived.by(() => {
+    if (!view) return 0
+    const original =
+      kit.spec.builtin === undefined ? null : (shippedBase(kit.spec).views[0] ?? null)
+    return changedFrom(view, original).total
+  })
   const notes = $derived((view?.nib.rows ?? 'notes') === 'notes')
 
   /** What each builder is called, for the layer that holds it. */
@@ -153,7 +161,7 @@
   /** A view Orden ships, the way it came. */
   function reset() {
     open = null
-    kit.change(() => builtinBase(asShipped(kit.spec)))
+    kit.change(() => shippedBase(kit.spec))
   }
 
   function pick(next: Layout) {
@@ -177,6 +185,14 @@
                   .then((words) => (words?.trim() ? addSection(kit, words) : undefined)),
             },
             { label: t('Open in note'), run: () => void workspace.open(project.path) },
+            // What the panel's project menu had, before the panel was one view (#1046).
+            {
+              label: t('Save as CSV'),
+              run: () =>
+                void import('./todoist-csv').then((one) =>
+                  one.saveProjectCsv(project.path, project.name),
+                ),
+            },
             DIVIDER,
           ]
         : []),
@@ -492,20 +508,29 @@
   <div class="tool">
     <button
       type="button"
-      class="nib-glyph"
-      class:set={narrowed}
+      class="nib-glyph display-button"
+      class:set={displayChanged > 0}
       class:open={open === 'display'}
       data-opens-popover
       title={t('Display')}
-      aria-label={t('Display')}
+      aria-label={displayChanged ? `${t('Display')}: ${displayChanged}` : t('Display')}
       aria-expanded={open === 'display'}
       onclick={() => toggle('display')}
     >
       <svg viewBox="0 0 13 13"><path d={DISPLAY_MARK} /></svg>
+      {#if !kit.compact}<span class="display-word">{t('Display')}</span>{/if}
+      {#if displayChanged}<span class="display-count">{displayChanged}</span>{/if}
     </button>
-    <Popover open={open === 'display'} label={t('Display')} onclose={() => (open = null)}>
-      <DisplayBuilder {kit} onreset={kit.spec.builtin !== undefined ? reset : undefined} />
-    </Popover>
+    {#if viewport.device === 'phone'}
+      <!-- On a phone, a sheet from the bottom rather than a layer under the button. -->
+      <Sheet open={open === 'display'} title={t('Display')} onclose={() => (open = null)}>
+        <DisplayBuilder {kit} onreset={kit.spec.builtin !== undefined ? reset : undefined} />
+      </Sheet>
+    {:else}
+      <Popover open={open === 'display'} label={t('Display')} onclose={() => (open = null)}>
+        <DisplayBuilder {kit} onreset={kit.spec.builtin !== undefined ? reset : undefined} />
+      </Popover>
+    {/if}
   </div>
 {/snippet}
 {#snippet plusButton()}
@@ -921,6 +946,29 @@
 
   .nib-glyph.set {
     color: var(--accent);
+  }
+
+  /* Display says its name, and how many of its settings are not the view's own. */
+  .display-button {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-1);
+    width: auto;
+    padding-inline: var(--space-2);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+  }
+
+  .display-count {
+    min-width: 16px;
+    padding: 0 5px;
+    border-radius: 8px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+    line-height: 16px;
   }
 
   .nib-glyph.open {

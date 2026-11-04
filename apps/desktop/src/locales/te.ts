@@ -90,6 +90,15 @@ export const te: Dictionary = {
   // Tasks: the Display menu
   Display: 'ప్రదర్శన',
   'Completed tasks': 'పూర్తయిన పనులు',
+  Smart: 'స్మార్ట్',
+  Grouping: 'సమూహీకరణ',
+  Sorting: 'క్రమబద్ధీకరణ',
+  'Last 30 days': 'గత 30 రోజులు',
+  'Assigned to me': 'నాకు కేటాయించినవి',
+  Unassigned: 'కేటాయించనివి',
+  'Reset all': 'అన్నీ రీసెట్ చేయండి',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'లేఅవుట్ పనులను జాబితా, బోర్డు లేదా క్యాలెండర్‌గా చూపుతుంది. సమూహీకరణ వాటిని సమూహాలుగా విభజిస్తుంది, అవే బోర్డు నిలువు వరుసలు. క్రమబద్ధీకరణ ప్రతి సమూహాన్ని క్రమంలో పెడుతుంది. ఫిల్టర్లు మీకు అవసరం లేనిదాన్ని దాచుతాయి. ఇవన్నీ ఈ వీక్షణ కోసం ఉంచబడతాయి.',
   // Tasks: several lines pasted into quick add
   'One task': 'ఒక పని',
   'One per line': 'ప్రతి పంక్తికి ఒకటి',

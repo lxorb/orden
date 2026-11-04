@@ -86,6 +86,15 @@ export const th: Dictionary = {
   // Tasks: the Display menu
   Display: 'การแสดงผล',
   'Completed tasks': 'งานที่เสร็จแล้ว',
+  Smart: 'อัจฉริยะ',
+  Grouping: 'การจัดกลุ่ม',
+  Sorting: 'การเรียงลำดับ',
+  'Last 30 days': '30 วันที่ผ่านมา',
+  'Assigned to me': 'มอบหมายให้ฉัน',
+  Unassigned: 'ยังไม่ได้มอบหมาย',
+  'Reset all': 'รีเซ็ตทั้งหมด',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'เลย์เอาต์แสดงงานเป็นรายการ บอร์ด หรือปฏิทิน การจัดกลุ่มแบ่งงานเป็นกลุ่ม ซึ่งเป็นคอลัมน์ของบอร์ด การเรียงลำดับจัดลำดับแต่ละกลุ่ม ตัวกรองซ่อนสิ่งที่คุณไม่ต้องการ ทั้งหมดนี้จะถูกเก็บไว้สำหรับมุมมองนี้',
   // Tasks: several lines pasted into quick add
   'One task': 'งานเดียว',
   'One per line': 'บรรทัดละงาน',

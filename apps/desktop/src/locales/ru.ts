@@ -92,6 +92,15 @@ export const ru: Dictionary = {
   // Tasks: the Display menu
   Display: 'Вид',
   'Completed tasks': 'Выполненные задачи',
+  Smart: 'Умная',
+  Grouping: 'Группировка',
+  Sorting: 'Сортировка',
+  'Last 30 days': 'Последние 30 дней',
+  'Assigned to me': 'Назначенные мне',
+  Unassigned: 'Без исполнителя',
+  'Reset all': 'Сбросить всё',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'Макет показывает задачи списком, доской или календарём. Группировка делит их на группы, которые становятся столбцами доски. Сортировка упорядочивает каждую группу. Фильтры скрывают то, что вам не нужно. Всё это сохраняется для этого представления.',
   // Tasks: several lines pasted into quick add
   'One task': 'Одна задача',
   'One per line': 'По одной на строку',

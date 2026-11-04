@@ -89,6 +89,15 @@ export const mr: Dictionary = {
   // Tasks: the Display menu
   Display: 'प्रदर्शन',
   'Completed tasks': 'पूर्ण कार्ये',
+  Smart: 'स्मार्ट',
+  Grouping: 'गटबद्धता',
+  Sorting: 'क्रमवारी',
+  'Last 30 days': 'मागील 30 दिवस',
+  'Assigned to me': 'मला नेमलेली',
+  Unassigned: 'कोणालाही न नेमलेली',
+  'Reset all': 'सर्व रीसेट करा',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'मांडणी कामे यादी, बोर्ड किंवा दिनदर्शिका म्हणून दाखवते. गटबद्धता त्यांना गटांत विभागते, जे बोर्डचे स्तंभ असतात. क्रमवारी प्रत्येक गट क्रमाने लावते. फिल्टर तुम्हाला नको असलेले लपवतात. हे सर्व या दृश्यासाठी जपले जाते.',
   // Tasks: several lines pasted into quick add
   'One task': 'एक कार्य',
   'One per line': 'प्रत्येक ओळीला एक',

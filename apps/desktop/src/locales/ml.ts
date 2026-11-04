@@ -90,6 +90,15 @@ export const ml: Dictionary = {
   // Tasks: the Display menu
   Display: 'പ്രദർശനം',
   'Completed tasks': 'പൂർത്തിയായ ജോലികൾ',
+  Smart: 'സ്മാർട്ട്',
+  Grouping: 'ഗ്രൂപ്പ് ചെയ്യൽ',
+  Sorting: 'ക്രമീകരണം',
+  'Last 30 days': 'കഴിഞ്ഞ 30 ദിവസം',
+  'Assigned to me': 'എനിക്ക് നൽകിയവ',
+  Unassigned: 'ആർക്കും നൽകാത്തവ',
+  'Reset all': 'എല്ലാം പുനഃസജ്ജമാക്കുക',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'ലേഔട്ട് ജോലികളെ ലിസ്റ്റ്, ബോർഡ് അല്ലെങ്കിൽ കലണ്ടർ ആയി കാണിക്കുന്നു. ഗ്രൂപ്പ് ചെയ്യൽ അവയെ ഗ്രൂപ്പുകളായി തിരിക്കുന്നു, അവയാണ് ബോർഡിന്റെ കോളങ്ങൾ. ക്രമീകരണം ഓരോ ഗ്രൂപ്പിനെയും ക്രമപ്പെടുത്തുന്നു. ഫിൽട്ടറുകൾ നിങ്ങൾക്ക് വേണ്ടാത്തത് മറയ്ക്കുന്നു. ഇതെല്ലാം ഈ കാഴ്ചയ്ക്കായി സൂക്ഷിക്കുന്നു.',
   // Tasks: several lines pasted into quick add
   'One task': 'ഒരു ജോലി',
   'One per line': 'ഓരോ വരിക്കും ഒന്ന്',

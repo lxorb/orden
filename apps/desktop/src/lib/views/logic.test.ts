@@ -780,7 +780,7 @@ describe('a line’s words', () => {
 })
 
 describe('the panel', () => {
-  test('counts Inbox, Today and Upcoming as their views answer them, and the projects and labels', () => {
+  test('counts the space’s Todos as its view answers it, and the notes and labels', () => {
     const rows = [
       taskRow('Inbox.md', '- [ ] Idea'),
       // Late by its deadline: a start date past is never late (#371).
@@ -789,10 +789,10 @@ describe('the panel', () => {
       taskRow('Thesis.md', '- [ ] Later #admin 📅 2026-10-09'),
       taskRow('Thesis.md', '- [x] Done ✅ 2026-10-01', 1),
     ]
-    const counts = panelCounts(rows, TODAY, [{ space: 'Notes', path: 'Inbox.md' }])
-    expect(counts).toMatchObject({ inbox: 1, today: 2, overdue: true, upcoming: 3 })
-    // With the tasks that have no start date in Today, as Settings can have it (#408).
-    expect(panelCounts(rows, TODAY, [{ space: 'Notes', path: 'Inbox.md' }], true).today).toBe(3)
+    const counts = panelCounts(rows, TODAY, 'Notes')
+    // Later's start date has not come, so it waits (#371); the done one is out.
+    expect(counts).toMatchObject({ todos: 3, overdue: true })
+    expect(panelCounts(rows, TODAY, 'Elsewhere').todos).toBe(0)
     expect(counts.notes.map((one) => `${one.name} ${one.count}`).sort()).toEqual([
       'Errands 2',
       'Inbox 1',

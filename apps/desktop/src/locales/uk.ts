@@ -92,6 +92,15 @@ export const uk: Dictionary = {
   // Tasks: the Display menu
   Display: 'Вигляд',
   'Completed tasks': 'Виконані завдання',
+  Smart: 'Розумне',
+  Grouping: 'Групування',
+  Sorting: 'Сортування',
+  'Last 30 days': 'Останні 30 днів',
+  'Assigned to me': 'Призначені мені',
+  Unassigned: 'Без виконавця',
+  'Reset all': 'Скинути все',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'Макет показує завдання списком, дошкою або календарем. Групування ділить їх на групи, які є стовпцями дошки. Сортування впорядковує кожну групу. Фільтри приховують те, що вам не потрібно. Усе це зберігається для цього подання.',
   // Tasks: several lines pasted into quick add
   'One task': 'Одне завдання',
   'One per line': 'По одному на рядок',

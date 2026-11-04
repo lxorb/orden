@@ -86,6 +86,15 @@ export const id: Dictionary = {
   // Tasks: the Display menu
   Display: 'Tampilan',
   'Completed tasks': 'Tugas selesai',
+  Smart: 'Cerdas',
+  Grouping: 'Pengelompokan',
+  Sorting: 'Pengurutan',
+  'Last 30 days': '30 hari terakhir',
+  'Assigned to me': 'Ditugaskan kepada saya',
+  Unassigned: 'Belum ditugaskan',
+  'Reset all': 'Atur ulang semua',
+  'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
+    'Tata letak menampilkan tugas sebagai daftar, papan, atau kalender. Pengelompokan membaginya ke dalam grup, yaitu kolom-kolom papan. Pengurutan mengurutkan setiap grup. Filter menyembunyikan yang tidak Anda perlukan. Semuanya disimpan untuk tampilan ini.',
   // Tasks: several lines pasted into quick add
   'One task': 'Satu tugas',
   'One per line': 'Satu per baris',
