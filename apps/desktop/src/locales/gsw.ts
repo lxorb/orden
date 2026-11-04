@@ -2738,7 +2738,6 @@ export const gsw: Dictionary = {
     'Orden speicheret KI-Schlüssel nümm im Schlüsselbund vom Mac, wo immer wieder nach em Passwort gfrogt het. Gib dini Schlüssel no einisch ii und meld di wieder bi ChatGPT aa.',
   'Add images': 'Bilder dezuefüege',
   'Remove image': 'Bild entferne',
-  'Paste, drop or add images (up to 4).': 'Bilder iifüege, inezie oder dezuefüege (bis zu 4).',
   'That is more than 4 images.': 'Das sind meh als 4 Bilder.',
   'That file could not be used as an image.': 'Die Datei chame nöd als Bild bruuche.',
   'Report received': 'Bricht übercho',

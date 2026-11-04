@@ -2717,8 +2717,6 @@ export const ps: Dictionary = {
     'Orden نور د AI کیلي د Mac په کیچین کې نه ساتي، چې تل یې پټنوم غوښته. خپلې کیلي بیا ولیکئ او یو ځل بیا ChatGPT ته ننوځئ.',
   'Add images': 'انځورونه زیات کړئ',
   'Remove image': 'انځور لرې کړئ',
-  'Paste, drop or add images (up to 4).':
-    'انځورونه پیسټ کړئ، کش یې کړئ یا زیات یې کړئ (تر 4 پورې).',
   'That is more than 4 images.': 'دا له 4 انځورونو زیات دي.',
   'That file could not be used as an image.': 'دا فایل د انځور په توګه نه شي کارول کېدای.',
   'Report received': 'راپور ترلاسه شو',

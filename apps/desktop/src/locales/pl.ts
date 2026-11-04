@@ -2810,7 +2810,6 @@ export const pl: Dictionary = {
     'Orden nie przechowuje już kluczy AI w pęku kluczy Maca, który ciągle prosił o hasło. Wpisz klucze jeszcze raz i zaloguj się ponownie do ChatGPT.',
   'Add images': 'Dodaj obrazy',
   'Remove image': 'Usuń obraz',
-  'Paste, drop or add images (up to 4).': 'Wklej, upuść lub dodaj obrazy (maksymalnie 4).',
   'That is more than 4 images.': 'To więcej niż 4 obrazy.',
   'That file could not be used as an image.': 'Tego pliku nie można użyć jako obrazu.',
   'Report received': 'Zgłoszenie otrzymane',

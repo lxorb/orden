@@ -2715,7 +2715,6 @@ export const hi: Dictionary = {
     'Orden अब AI कुंजियाँ Mac की कीचेन में नहीं रखता, जो बार-बार उसका पासवर्ड माँगती थी। अपनी कुंजियाँ फिर से डालें और ChatGPT में एक बार और साइन इन करें।',
   'Add images': 'चित्र जोड़ें',
   'Remove image': 'चित्र हटाएँ',
-  'Paste, drop or add images (up to 4).': 'चित्र पेस्ट करें, खींचकर छोड़ें या जोड़ें (अधिकतम 4)।',
   'That is more than 4 images.': 'ये 4 से ज़्यादा चित्र हैं।',
   'That file could not be used as an image.':
     'इस फ़ाइल को चित्र के रूप में इस्तेमाल नहीं किया जा सकता।',

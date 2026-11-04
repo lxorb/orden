@@ -2811,7 +2811,6 @@ export const ru: Dictionary = {
     'Orden больше не хранит ключи ИИ в связке ключей Mac, которая снова и снова спрашивала пароль. Введите ключи заново и ещё раз войдите в ChatGPT.',
   'Add images': 'Добавить изображения',
   'Remove image': 'Убрать изображение',
-  'Paste, drop or add images (up to 4).': 'Вставьте, перетащите или добавьте изображения (до 4).',
   'That is more than 4 images.': 'Это больше 4 изображений.',
   'That file could not be used as an image.': 'Этот файл нельзя использовать как изображение.',
   'Report received': 'Отчёт получен',

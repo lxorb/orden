@@ -2787,7 +2787,6 @@ export const es: Dictionary = {
     'Orden ya no guarda las claves de IA en el llavero del Mac, que pedía su contraseña una y otra vez. Introduce tus claves e inicia sesión en ChatGPT una vez más.',
   'Add images': 'Añadir imágenes',
   'Remove image': 'Quitar imagen',
-  'Paste, drop or add images (up to 4).': 'Pega, suelta o añade imágenes (hasta 4).',
   'That is more than 4 images.': 'Son más de 4 imágenes.',
   'That file could not be used as an image.': 'Ese archivo no se puede usar como imagen.',
   'Report received': 'Informe recibido',

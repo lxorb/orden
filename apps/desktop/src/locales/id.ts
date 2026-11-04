@@ -2712,7 +2712,6 @@ export const id: Dictionary = {
     'Orden tidak lagi menyimpan kunci AI di rantai kunci Mac, yang terus meminta kata sandinya. Masukkan kunci Anda dan masuk ke ChatGPT sekali lagi.',
   'Add images': 'Tambahkan gambar',
   'Remove image': 'Hapus gambar',
-  'Paste, drop or add images (up to 4).': 'Tempel, seret, atau tambahkan gambar (maksimal 4).',
   'That is more than 4 images.': 'Itu lebih dari 4 gambar.',
   'That file could not be used as an image.': 'File itu tidak dapat digunakan sebagai gambar.',
   'Report received': 'Laporan diterima',

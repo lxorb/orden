@@ -2804,7 +2804,6 @@ export const uk: Dictionary = {
     'Orden більше не зберігає ключі ШІ у в’язці ключів Mac, яка знову й знову питала пароль. Введіть ключі ще раз і знову увійдіть у ChatGPT.',
   'Add images': 'Додати зображення',
   'Remove image': 'Прибрати зображення',
-  'Paste, drop or add images (up to 4).': 'Вставте, перетягніть або додайте зображення (до 4).',
   'That is more than 4 images.': 'Це більше ніж 4 зображення.',
   'That file could not be used as an image.': 'Цей файл не можна використати як зображення.',
   'Report received': 'Звіт отримано',

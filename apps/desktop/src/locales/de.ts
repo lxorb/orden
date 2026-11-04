@@ -2775,8 +2775,6 @@ export const de: Dictionary = {
     'Orden speichert KI-Schlüssel nicht mehr im Schlüsselbund des Mac, der immer wieder nach seinem Passwort fragte. Gib deine Schlüssel noch einmal ein und melde dich erneut bei ChatGPT an.',
   'Add images': 'Bilder hinzufügen',
   'Remove image': 'Bild entfernen',
-  'Paste, drop or add images (up to 4).':
-    'Bilder einfügen, hineinziehen oder hinzufügen (bis zu 4).',
   'That is more than 4 images.': 'Das sind mehr als 4 Bilder.',
   'That file could not be used as an image.': 'Diese Datei lässt sich nicht als Bild verwenden.',
   'Report received': 'Bericht erhalten',

@@ -2718,8 +2718,6 @@ export const mr: Dictionary = {
     'Orden आता AI की Mac च्या कीचेनमध्ये ठेवत नाही, जी सारखी तिचा पासवर्ड मागत होती. तुमच्या की पुन्हा टाका आणि ChatGPT मध्ये पुन्हा एकदा साइन इन करा.',
   'Add images': 'प्रतिमा जोडा',
   'Remove image': 'प्रतिमा काढा',
-  'Paste, drop or add images (up to 4).':
-    'प्रतिमा पेस्ट करा, ओढून सोडा किंवा जोडा (जास्तीत जास्त 4).',
   'That is more than 4 images.': 'या 4 पेक्षा जास्त प्रतिमा आहेत.',
   'That file could not be used as an image.': 'ही फाइल प्रतिमा म्हणून वापरता येत नाही.',
   'Report received': 'अहवाल मिळाला',

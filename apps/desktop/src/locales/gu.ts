@@ -2703,7 +2703,6 @@ export const gu: Dictionary = {
     'Orden હવે AI કી Mac ના કીચેનમાં રાખતું નથી, જે વારંવાર તેનો પાસવર્ડ માંગતું હતું. તમારી કી ફરી દાખલ કરો અને ChatGPT માં ફરી સાઇન ઇન કરો.',
   'Add images': 'છબીઓ ઉમેરો',
   'Remove image': 'છબી દૂર કરો',
-  'Paste, drop or add images (up to 4).': 'છબીઓ પેસ્ટ કરો, ખેંચીને મૂકો અથવા ઉમેરો (વધુમાં વધુ 4).',
   'That is more than 4 images.': 'આ 4 કરતાં વધુ છબીઓ છે.',
   'That file could not be used as an image.': 'આ ફાઇલનો છબી તરીકે ઉપયોગ થઈ શકતો નથી.',
   'Report received': 'રિપોર્ટ મળ્યો',

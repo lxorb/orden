@@ -2756,7 +2756,6 @@ export const sw: Dictionary = {
     'Orden haihifadhi tena funguo za AI kwenye keychain ya Mac, iliyokuwa ikiuliza nenosiri lake mara kwa mara. Weka funguo zako na uingie ChatGPT tena.',
   'Add images': 'Ongeza picha',
   'Remove image': 'Ondoa picha',
-  'Paste, drop or add images (up to 4).': 'Bandika, buruta au ongeza picha (hadi 4).',
   'That is more than 4 images.': 'Hizo ni zaidi ya picha 4.',
   'That file could not be used as an image.': 'Faili hiyo haiwezi kutumika kama picha.',
   'Report received': 'Ripoti imepokelewa',

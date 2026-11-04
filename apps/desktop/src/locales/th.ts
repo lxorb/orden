@@ -2661,7 +2661,6 @@ export const th: Dictionary = {
     'Orden ไม่เก็บคีย์ AI ไว้ในพวงกุญแจของ Mac อีกต่อไป ซึ่งคอยถามรหัสผ่านซ้ำแล้วซ้ำอีก ใส่คีย์ของคุณและลงชื่อเข้าใช้ ChatGPT อีกครั้ง',
   'Add images': 'เพิ่มรูปภาพ',
   'Remove image': 'นำรูปภาพออก',
-  'Paste, drop or add images (up to 4).': 'วาง ลากมาวาง หรือเพิ่มรูปภาพ (สูงสุด 4 รูป)',
   'That is more than 4 images.': 'เกิน 4 รูปแล้ว',
   'That file could not be used as an image.': 'ใช้ไฟล์นี้เป็นรูปภาพไม่ได้',
   'Report received': 'ได้รับรายงานแล้ว',

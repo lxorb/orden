@@ -2679,7 +2679,6 @@ export const ko: Dictionary = {
     'Orden은 더 이상 AI 키를 Mac 키체인에 보관하지 않습니다. 키체인이 암호를 계속 물었기 때문입니다. 키를 다시 입력하고 ChatGPT에 한 번 더 로그인하세요.',
   'Add images': '이미지 추가',
   'Remove image': '이미지 제거',
-  'Paste, drop or add images (up to 4).': '이미지를 붙여넣거나 끌어다 놓거나 추가하세요(최대 4개).',
   'That is more than 4 images.': '이미지가 4개를 넘습니다.',
   'That file could not be used as an image.': '이 파일은 이미지로 사용할 수 없습니다.',
   'Report received': '보고서 접수됨',

@@ -2795,7 +2795,6 @@ export const it: Dictionary = {
     'Orden non conserva più le chiavi IA nel portachiavi del Mac, che continuava a chiederne la password. Inserisci di nuovo le chiavi e accedi ancora una volta a ChatGPT.',
   'Add images': 'Aggiungi immagini',
   'Remove image': 'Rimuovi immagine',
-  'Paste, drop or add images (up to 4).': 'Incolla, trascina o aggiungi immagini (fino a 4).',
   'That is more than 4 images.': 'Sono più di 4 immagini.',
   'That file could not be used as an image.': 'Questo file non può essere usato come immagine.',
   'Report received': 'Segnalazione ricevuta',

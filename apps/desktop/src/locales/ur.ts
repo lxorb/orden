@@ -2711,8 +2711,6 @@ export const ur: Dictionary = {
     'Orden اب AI کیز Mac کی کی چین میں نہیں رکھتا، جو بار بار اس کا پاس ورڈ مانگتی تھی۔ اپنی کیز دوبارہ درج کریں اور ChatGPT میں ایک بار پھر سائن ان کریں۔',
   'Add images': 'تصاویر شامل کریں',
   'Remove image': 'تصویر ہٹائیں',
-  'Paste, drop or add images (up to 4).':
-    'تصاویر پیسٹ کریں، گھسیٹ کر چھوڑیں یا شامل کریں (زیادہ سے زیادہ 4)۔',
   'That is more than 4 images.': 'یہ 4 تصاویر سے زیادہ ہیں۔',
   'That file could not be used as an image.': 'یہ فائل تصویر کے طور پر استعمال نہیں ہو سکتی۔',
   'Report received': 'رپورٹ موصول ہو گئی',

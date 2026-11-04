@@ -2704,8 +2704,6 @@ export const my: Dictionary = {
     'Orden သည် AI သော့များကို Mac ၏ keychain တွင် မသိမ်းတော့ပါ၊ ၎င်းက စကားဝှက်ကို ထပ်ခါထပ်ခါ မေးနေခဲ့၍ဖြစ်သည်။ သင့်သော့များကို ထပ်ထည့်ပြီး ChatGPT သို့ နောက်တစ်ကြိမ် ဝင်ပါ။',
   'Add images': 'ပုံများ ထည့်ရန်',
   'Remove image': 'ပုံကို ဖယ်ရန်',
-  'Paste, drop or add images (up to 4).':
-    'ပုံများကို ကူးထည့်ပါ၊ ဆွဲချပါ သို့မဟုတ် ထည့်ပါ (အများဆုံး 4 ပုံ)။',
   'That is more than 4 images.': 'ပုံ 4 ပုံထက် ပိုနေသည်။',
   'That file could not be used as an image.': 'ဤဖိုင်ကို ပုံအဖြစ် အသုံးမပြုနိုင်ပါ။',
   'Report received': 'အစီရင်ခံစာ ရရှိပါပြီ',

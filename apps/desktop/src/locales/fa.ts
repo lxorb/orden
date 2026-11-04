@@ -2722,8 +2722,6 @@ export const fa: Dictionary = {
     'Orden دیگر کلیدهای هوش مصنوعی را در کلیدزنجیر Mac نگه نمی‌دارد، که مدام رمزش را می‌خواست. کلیدهایتان را دوباره وارد کنید و یک بار دیگر به ChatGPT وارد شوید.',
   'Add images': 'افزودن تصویر',
   'Remove image': 'حذف تصویر',
-  'Paste, drop or add images (up to 4).':
-    'تصویرها را جای‌گذاری کنید، بکشید و رها کنید یا بیفزایید (حداکثر 4).',
   'That is more than 4 images.': 'بیش از 4 تصویر است.',
   'That file could not be used as an image.': 'این فایل را نمی‌توان به‌عنوان تصویر استفاده کرد.',
   'Report received': 'گزارش دریافت شد',

@@ -2756,7 +2756,6 @@ export const ha: Dictionary = {
     'Orden ba ya ajiye maɓallan AI a cikin keychain na Mac kuma, wanda ke ta neman kalmar sirrinsa. Shigar da maɓallanka kuma ka sake shiga ChatGPT.',
   'Add images': 'Ƙara hotuna',
   'Remove image': 'Cire hoton',
-  'Paste, drop or add images (up to 4).': 'Liƙa, ja ka sauke ko ƙara hotuna (har zuwa 4).',
   'That is more than 4 images.': 'Hotunan sun wuce 4.',
   'That file could not be used as an image.':
     'Ba za a iya amfani da wannan fayil a matsayin hoto ba.',

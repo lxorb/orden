@@ -2713,7 +2713,6 @@ export const bn: Dictionary = {
     'Orden আর Mac-এর কিচেইনে AI কী রাখে না, কারণ সেটি বারবার পাসওয়ার্ড চাইত। আপনার কী আবার দিন এবং ChatGPT-তে আরেকবার সাইন ইন করুন।',
   'Add images': 'ছবি যোগ করুন',
   'Remove image': 'ছবি সরান',
-  'Paste, drop or add images (up to 4).': 'ছবি পেস্ট করুন, টেনে আনুন বা যোগ করুন (সর্বোচ্চ 4টি)।',
   'That is more than 4 images.': 'এগুলো 4টির বেশি ছবি।',
   'That file could not be used as an image.': 'এই ফাইলটি ছবি হিসেবে ব্যবহার করা যাচ্ছে না।',
   'Report received': 'রিপোর্ট পাওয়া গেছে',

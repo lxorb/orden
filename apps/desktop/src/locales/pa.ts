@@ -2725,8 +2725,6 @@ export const pa: Dictionary = {
     'Orden ਹੁਣ AI ਕੁੰਜੀਆਂ Mac ਦੀ ਕੀਚੇਨ ਵਿੱਚ ਨਹੀਂ ਰੱਖਦਾ, ਜੋ ਵਾਰ-ਵਾਰ ਉਸਦਾ ਪਾਸਵਰਡ ਮੰਗਦੀ ਸੀ। ਆਪਣੀਆਂ ਕੁੰਜੀਆਂ ਮੁੜ ਦਿਓ ਅਤੇ ChatGPT ਵਿੱਚ ਇੱਕ ਵਾਰ ਹੋਰ ਸਾਈਨ ਇਨ ਕਰੋ।',
   'Add images': 'ਤਸਵੀਰਾਂ ਜੋੜੋ',
   'Remove image': 'ਤਸਵੀਰ ਹਟਾਓ',
-  'Paste, drop or add images (up to 4).':
-    'ਤਸਵੀਰਾਂ ਪੇਸਟ ਕਰੋ, ਖਿੱਚ ਕੇ ਛੱਡੋ ਜਾਂ ਜੋੜੋ (ਵੱਧ ਤੋਂ ਵੱਧ 4)।',
   'That is more than 4 images.': 'ਇਹ 4 ਤੋਂ ਵੱਧ ਤਸਵੀਰਾਂ ਹਨ।',
   'That file could not be used as an image.': 'ਇਸ ਫ਼ਾਈਲ ਨੂੰ ਤਸਵੀਰ ਵਜੋਂ ਨਹੀਂ ਵਰਤਿਆ ਜਾ ਸਕਦਾ।',
   'Report received': 'ਰਿਪੋਰਟ ਮਿਲ ਗਈ',

@@ -197,7 +197,6 @@
             disabled={sending || pictures.length >= MOST_PICTURES}
             onclick={() => picker?.click()}>{t('Add images')}</button
           >
-          <span class="hint">{t('Paste, drop or add images (up to 4).')}</span>
           <input
             bind:this={picker}
             type="file"
@@ -362,11 +361,6 @@
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-2);
-  }
-
-  .hint {
-    font-size: var(--text-sm);
-    color: var(--muted);
   }
 
   .row {

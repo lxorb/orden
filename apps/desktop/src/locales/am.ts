@@ -2670,7 +2670,6 @@ export const am: Dictionary = {
     'Orden የAI ቁልፎችን ከእንግዲህ በMac ቁልፍ ሰንሰለት ውስጥ አያስቀምጥም፤ የይለፍ ቃሉን ደጋግሞ ይጠይቅ ነበርና። ቁልፎችዎን ያስገቡ እና ወደ ChatGPT እንደገና ይግቡ።',
   'Add images': 'ምስሎችን አክል',
   'Remove image': 'ምስሉን አስወግድ',
-  'Paste, drop or add images (up to 4).': 'ምስሎችን ለጥፍ፣ ጎትተህ ጣል ወይም አክል (እስከ 4)።',
   'That is more than 4 images.': 'ይህ ከ4 ምስሎች በላይ ነው።',
   'That file could not be used as an image.': 'ይህ ፋይል እንደ ምስል ሊያገለግል አይችልም።',
   'Report received': 'ሪፖርቱ ደርሷል',

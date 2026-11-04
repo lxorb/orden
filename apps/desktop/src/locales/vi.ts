@@ -2688,7 +2688,6 @@ export const vi: Dictionary = {
     'Orden không còn giữ khóa AI trong Chuỗi khóa của Mac, vốn cứ hỏi mật khẩu mãi. Hãy nhập lại khóa và đăng nhập ChatGPT thêm một lần nữa.',
   'Add images': 'Thêm hình ảnh',
   'Remove image': 'Gỡ hình ảnh',
-  'Paste, drop or add images (up to 4).': 'Dán, kéo thả hoặc thêm hình ảnh (tối đa 4).',
   'That is more than 4 images.': 'Đã quá 4 hình ảnh.',
   'That file could not be used as an image.': 'Không thể dùng tệp này làm hình ảnh.',
   'Report received': 'Đã nhận báo cáo',

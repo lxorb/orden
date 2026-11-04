@@ -2732,8 +2732,6 @@ export const te: Dictionary = {
     'Orden ఇకపై AI కీలను Mac కీచెయిన్‌లో ఉంచదు, అది మళ్లీ మళ్లీ పాస్‌వర్డ్ అడిగేది. మీ కీలను మళ్లీ నమోదు చేసి ChatGPT లోకి మరోసారి సైన్ ఇన్ చేయండి.',
   'Add images': 'చిత్రాలను జోడించు',
   'Remove image': 'చిత్రాన్ని తీసివేయి',
-  'Paste, drop or add images (up to 4).':
-    'చిత్రాలను అతికించండి, లాగి వదలండి లేదా జోడించండి (గరిష్ఠంగా 4).',
   'That is more than 4 images.': 'ఇవి 4 చిత్రాల కంటే ఎక్కువ.',
   'That file could not be used as an image.': 'ఈ ఫైల్‌ను చిత్రంగా ఉపయోగించలేము.',
   'Report received': 'నివేదిక అందింది',

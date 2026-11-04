@@ -2639,7 +2639,6 @@ export const zhHant: Dictionary = {
     'Orden 不再將 AI 金鑰存放在 Mac 的鑰匙圈中，它一再要求輸入密碼。請重新輸入金鑰，並再次登入 ChatGPT。',
   'Add images': '新增圖片',
   'Remove image': '移除圖片',
-  'Paste, drop or add images (up to 4).': '可貼上、拖入或新增圖片（最多 4 張）。',
   'That is more than 4 images.': '超過了 4 張圖片。',
   'That file could not be used as an image.': '這個檔案無法用作圖片。',
   'Report received': '已收到回報',

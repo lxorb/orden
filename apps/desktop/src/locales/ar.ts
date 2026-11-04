@@ -2830,7 +2830,6 @@ export const ar: Dictionary = {
     'لم يعد Orden يحفظ مفاتيح الذكاء الاصطناعي في سلسلة مفاتيح Mac، التي ظلت تطلب كلمة مرورها. أدخل مفاتيحك وسجّل الدخول إلى ChatGPT مرة أخرى.',
   'Add images': 'إضافة صور',
   'Remove image': 'إزالة الصورة',
-  'Paste, drop or add images (up to 4).': 'الصق الصور أو أفلتها أو أضفها (حتى 4).',
   'That is more than 4 images.': 'هذه أكثر من 4 صور.',
   'That file could not be used as an image.': 'تعذّر استخدام هذا الملف كصورة.',
   'Report received': 'تم استلام البلاغ',
