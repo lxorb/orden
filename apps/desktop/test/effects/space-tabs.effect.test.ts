@@ -109,35 +109,35 @@ describe('the chat at a side', () => {
     expect(workspace.openOn('right')).toBe('ask')
   })
 
-  test('leaves any other panel to the space that kept it', async () => {
-    await workspace.showSpace('home')
-    workspace.closePanel('right')
+  // #1123: the sides are the window's, so a switch leaves whatever is open there open, and
+  // no space keeps a panel of its own under the chat.
+  test("leaves any other panel open too, since the side is the window's", async () => {
     await workspace.showSpace('work')
     workspace.showPanel('outline')
 
     await workspace.showSpace('home')
-    expect(workspace.openOn('right')).toBe(null)
+    expect(workspace.openOn('right')).toBe('outline')
     await workspace.showSpace('work')
     expect(workspace.openOn('right')).toBe('outline')
   })
 
-  test('stands over what a space keeps there, which is there when it is shut', async () => {
+  test('shut after a switch, leaves the side shut: no space kept anything under it', async () => {
     await chattingInHome()
     await workspace.showSpace('work')
     expect(workspace.openOn('right')).toBe('ask')
 
     workspace.closePanel('right')
-    expect(workspace.openOn('right')).toBe('outline')
+    expect(workspace.openOn('right')).toBe(null)
   })
 
-  test('is not what a space keeps: shut elsewhere, a space has its own again', async () => {
+  test('shut in one space, is shut in every space', async () => {
     await chattingInHome()
     await workspace.showSpace('work')
     await workspace.showSpace('home')
     workspace.closePanel('right')
 
     await workspace.showSpace('work')
-    expect(workspace.openOn('right')).toBe('outline')
+    expect(workspace.openOn('right')).toBe(null)
   })
 
   test('shut in one space does not open again in the space it came from', async () => {
@@ -149,13 +149,13 @@ describe('the chat at a side', () => {
     expect(workspace.openOn('right')).toBe(null)
   })
 
-  test('with another panel chosen over it, leaves that as what the space keeps', async () => {
+  test('with another panel chosen over it, keeps that one open through a switch', async () => {
     await chattingInHome()
     await workspace.showSpace('work')
     workspace.showPanel('links')
 
     await workspace.showSpace('home')
-    expect(workspace.openOn('right')).toBe(null)
+    expect(workspace.openOn('right')).toBe('links')
     await workspace.showSpace('work')
     expect(workspace.openOn('right')).toBe('links')
   })
@@ -168,8 +168,8 @@ describe('the chat at a side', () => {
     expect(workspace.openOn('right')).toBe('ask')
   })
 
-  // The switcher's way in shows the sidebar, and shut, the chat leaves the file list there.
-  test('moved to the left, has the file list under it where a switch asks for the sidebar', async () => {
+  // A switch opens neither side, so shut, the chat leaves the left side shut too.
+  test('moved to the left, stays there through a switch, and shut leaves that side shut', async () => {
     workspace.movePanel('ask', 'left')
     try {
       await workspace.showSpace('home')
@@ -180,7 +180,7 @@ describe('the chat at a side', () => {
       await workspace.showSpace('home')
       expect(workspace.openOn('left')).toBe('ask')
       workspace.closePanel('left')
-      expect(workspace.openOn('left')).toBe('tree')
+      expect(workspace.openOn('left')).toBe(null)
     } finally {
       workspace.movePanel('ask', 'right')
     }
