@@ -381,6 +381,15 @@ static PRESSED: LazyLock<String> = LazyLock::new(|| {
 /// not read, which is safe, and no reason to hold up the rest of the page for the full wait.
 const FRAME_PATIENCE: Duration = Duration::from_secs(8);
 
+/// How long one read of a page spends on its frames: the frames it did not come to are not
+/// written, as a frame on a denied site is not.
+const MOST_ON_FRAMES: Duration = Duration::from_secs(15);
+
+/// Whether a part of the page is past what a read spends on frames. Never the page's own.
+fn prefix_past_budget(prefix: &str, started: Instant) -> bool {
+    !prefix.is_empty() && started.elapsed() > MOST_ON_FRAMES
+}
+
 fn patience_in(session: Option<&str>) -> Duration {
     if session.is_some() {
         FRAME_PATIENCE
@@ -2612,6 +2621,7 @@ impl Page<'_> {
 
     /// The page's accessibility tree, with its frames, as the parts `snapshot` writes.
     pub fn parts(&self) -> Result<Tree, Answer> {
+        let started = Instant::now();
         let own = self.call("Accessibility.getFullAXTree", &json!({}))?;
         let mut parts = vec![Part {
             prefix: String::new(),
@@ -2644,8 +2654,18 @@ impl Page<'_> {
             if !places.get(&frame).is_none_or(|at| self.may_read_frame(at)) {
                 continue;
             }
-            let Ok(nodes) = self.call("Accessibility.getFullAXTree", &json!({ "frameId": frame }))
-            else {
+            // The whole read is held to a budget: frames that reload as they are asked lose
+            // each question, and the rest of the page is not kept waiting on them.
+            if started.elapsed() > MOST_ON_FRAMES {
+                break;
+            }
+            let Ok(nodes) = cdp::call_in(
+                self.view,
+                None,
+                "Accessibility.getFullAXTree",
+                &json!({ "frameId": frame }),
+                FRAME_PATIENCE,
+            ) else {
                 continue;
             };
             let owner = self.owner_in(&parts, &frame);
@@ -2657,6 +2677,9 @@ impl Page<'_> {
         }
         // Frames in processes of their own, through their sessions.
         for (number, frame) in away {
+            if started.elapsed() > MOST_ON_FRAMES {
+                break;
+            }
             let at = self.frame_address(&frame);
             if !self.may_read_frame(&at) {
                 continue;
@@ -2666,7 +2689,7 @@ impl Page<'_> {
                 Some(&frame.session),
                 "Accessibility.getFullAXTree",
                 &json!({}),
-                cdp::PATIENCE,
+                FRAME_PATIENCE,
             ) else {
                 continue;
             };
@@ -2745,7 +2768,7 @@ impl Page<'_> {
                     Some(&frame.session),
                     "Runtime.evaluate",
                     &json!({ "expression": "[location.href, ...Array.from(location.ancestorOrigins || [])]", "returnByValue": true, "contextId": world }),
-                    cdp::PATIENCE,
+                    FRAME_PATIENCE,
                 )
                 .ok()
             })
@@ -2796,8 +2819,17 @@ impl Page<'_> {
     /// or closed, and a frame sharing the process, of any origin, hide none of them from
     /// this; each describes itself and the policy judges.
     fn secrets(&self, prefixes: impl IntoIterator<Item = String>) -> Vec<Secret> {
+        let started = Instant::now();
         let mut found = Vec::new();
         for prefix in prefixes {
+            if prefix_past_budget(&prefix, started) {
+                found.push(Secret {
+                    prefix: prefix.clone(),
+                    backend: UNREAD,
+                    filled: true,
+                });
+                continue;
+            }
             let session = self.session_of_part(&prefix);
             let call = |method: &str, params: &Value| {
                 cdp::call_in(
