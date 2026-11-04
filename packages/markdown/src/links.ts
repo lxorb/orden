@@ -1029,8 +1029,15 @@ export function blockIdsAnchored(
     const above = start < 0 ? '' : kept.slice(kept.lastIndexOf('\n', start - 1) + 1, start)
     if (above.trim() === '') return `${kept}${mark}\n${words}`
     if (!holds(row.line - 1, above) || TABLE_RULE.test(above)) return kept
-    return `${after(kept.slice(0, start))}\n${words}`
+    const carriage = kept[start - 1] === '\r' ? 1 : 0
+    return `${after(kept.slice(0, start - carriage))}${kept.slice(start - carriage)}`
   })
+}
+
+/** Text with the marks of `blockIdsAnchored` gone, as they will be from any tag. */
+export function blockMarksOff(text: string): string {
+  if (!text.includes(ANCHOR_OPEN)) return text
+  return text.replace(new RegExp(`\\s?${ANCHOR_OPEN}[\\w-]+${ANCHOR_CLOSE}`, 'g'), '')
 }
 
 /** The marks of `blockIdsAnchored` as the empty elements a page scrolls to. A mark inside a

@@ -33,13 +33,23 @@ export function sameRow(a: PanelRow | null, b: PanelRow): boolean {
   return a !== null && JSON.stringify(a) === JSON.stringify(b)
 }
 
-/** The row the panel shows in the space at `root`: the one pressed there. Only Todos
- *  follows the space, so anything else goes back to Todos in another. */
-export function chosenIn(
-  chosen: { row: PanelRow; root: string | null },
-  root: string | null,
-): PanelRow {
-  return chosen.root === root ? chosen.row : TODOS
+/** A space as the panel asks about it. */
+interface Here {
+  id: string
+  name: string
+  root: string
+}
+
+/** The row the panel shows in the space it is in: the one pressed there. Only Todos
+ *  follows a switch of space, so anything else goes back to Todos in another. The same
+ *  space under a new name keeps its row, under that name; a base is a path on this disk,
+ *  which that moved. */
+export function chosenIn(pressed: { row: PanelRow; in: Here | null }, here: Here | null): PanelRow {
+  const { row, in: was } = pressed
+  if (was?.id !== here?.id) return TODOS
+  if (!was || !here || was.root === here.root) return row
+  if (row.kind === 'base') return TODOS
+  return 'space' in row && row.space === was.name ? { ...row, space: here.name } : row
 }
 
 const TODOS: PanelRow = { kind: 'todos' }

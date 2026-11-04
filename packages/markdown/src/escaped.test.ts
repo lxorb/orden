@@ -100,7 +100,8 @@ function live(html: string): string[] {
     if (element.closest('.callout svg, [class*="embed"] svg')) continue
     const cover = element.closest('.nib-cover') !== null
     if (!OURS.has(element.tagName)) out.push(element.tagName)
-    if (element.tagName === 'INPUT' && element.getAttribute('type') !== 'checkbox') out.push('INPUT')
+    if (element.tagName === 'INPUT' && element.getAttribute('type') !== 'checkbox')
+      out.push('INPUT')
     if (element.tagName === 'BUTTON' && !element.closest('[class*="embed"]')) out.push('BUTTON')
     for (const { name, value } of element.attributes) {
       if (/^on/i.test(name) || (name === 'style' && !cover) || name === 'srcdoc')

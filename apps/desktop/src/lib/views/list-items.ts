@@ -35,7 +35,7 @@ export interface ListOptions {
   title?: string
   /** Groups folded, by name. */
   folded: ReadonlySet<string>
-  /** Parents whose sub-tasks are folded, by row id. */
+  /** Parents whose sub-tasks are folded, by `foldKey`. */
   shut: ReadonlySet<string>
   /** Groups the view keeps out of sight, by name. */
   hidden?: readonly string[]
@@ -45,15 +45,17 @@ export interface ListOptions {
   parentOf?: (row: Row) => string | null
 }
 
-/** A group's rows in tree order, each with its depth. A view across spaces can hold one
- *  path in two of them, so a row is known here with its space. */
+/** A row as a tree knows it, and as a fold is kept: a view across spaces can hold one path
+ *  in two of them. */
+export const foldKey = (row: Row): string => `${row.space}\n${rowId(row)}`
+
+/** A group's rows in tree order, each with its depth. */
 function tree(
   rows: readonly Row[],
   shut: ReadonlySet<string>,
   parentOf?: (row: Row) => string | null,
 ): { row: Row; depth: number; parent: boolean }[] {
-  const keyOf = (row: Row) => `${row.space}\n${rowId(row)}`
-  const present = new Set(rows.map(keyOf))
+  const present = new Set(rows.map(foldKey))
   const children = new Map<string, Row[]>()
   const roots: Row[] = []
   for (const row of rows) {
@@ -73,14 +75,14 @@ function tree(
   // such ring is shown at the top rather than lost.
   const reached = new Set<string>()
   const reach = (row: Row) => {
-    const key = keyOf(row)
+    const key = foldKey(row)
     if (reached.has(key)) return
     reached.add(key)
     for (const child of children.get(key) ?? []) reach(child)
   }
   for (const root of roots) reach(root)
   for (const row of rows) {
-    if (reached.has(keyOf(row))) continue
+    if (reached.has(foldKey(row))) continue
     roots.push(row)
     reach(row)
   }
@@ -88,14 +90,14 @@ function tree(
   const out: { row: Row; depth: number; parent: boolean }[] = []
   const placed = new Set<string>()
   const walk = (row: Row, depth: number) => {
-    const key = keyOf(row)
+    const key = foldKey(row)
     placed.add(key)
-    const under = (children.get(key) ?? []).filter((child) => !placed.has(keyOf(child)))
+    const under = (children.get(key) ?? []).filter((child) => !placed.has(foldKey(child)))
     out.push({ row, depth, parent: under.length > 0 })
-    if (shut.has(rowId(row))) return
-    for (const child of under) if (!placed.has(keyOf(child))) walk(child, depth + 1)
+    if (shut.has(key)) return
+    for (const child of under) if (!placed.has(foldKey(child))) walk(child, depth + 1)
   }
-  for (const root of roots) if (!placed.has(keyOf(root))) walk(root, 0)
+  for (const root of roots) if (!placed.has(foldKey(root))) walk(root, 0)
   return out
 }
 
@@ -123,7 +125,7 @@ export function everyRow(groups: readonly Group[]): Row[] {
 /** The items a list draws for an answer's groups. */
 export function listItems(groups: readonly Group[], options: ListOptions): Item[] {
   const out: Item[] = []
-  const keyOf = distinctKeys()
+  const keyOfRow = distinctKeys()
   for (const group of groups) {
     const name = groupName(group.key)
     if (options.hidden?.includes(name)) continue
@@ -140,14 +142,13 @@ export function listItems(groups: readonly Group[], options: ListOptions): Item[
       if (folded) continue
     }
     for (const one of tree(group.rows, options.shut, options.parentOf)) {
-      const id = rowId(one.row)
       out.push({
         kind: 'row',
-        id: `row:${keyOf(one.row, name)}`,
+        id: `row:${keyOfRow(one.row, name)}`,
         row: one.row,
         group,
         depth: one.depth,
-        twist: one.parent ? (options.shut.has(id) ? 'shut' : 'open') : null,
+        twist: one.parent ? (options.shut.has(foldKey(one.row)) ? 'shut' : 'open') : null,
       })
     }
     if (options.adding)

@@ -128,11 +128,9 @@
   }
 
   /** The row chosen, whose list is drawn under the rows: Todos until another is. */
-  let pressed = $state<{ row: PanelRow; root: string | null }>({
-    row: { kind: 'todos' },
-    root: null,
-  })
-  const chosen = $derived(chosenIn(pressed, root))
+  const here = $derived(space ? { id: space.id, name: space.name, root: space.root } : null)
+  let pressed = $state.raw<Parameters<typeof chosenIn>[0]>({ row: { kind: 'todos' }, in: null })
+  const chosen = $derived(chosenIn(pressed, here))
 
   /** A label's row: the open space's, as the panel lists its labels. */
   const labelRow = (tag: string): PanelRow =>
@@ -143,7 +141,7 @@
     if (choose(event) === 'tab') {
       event.preventDefault()
       openInTab(row)
-    } else pressed = { row, root }
+    } else pressed = { row, in: here }
   }
 
   /** The middle button, which a browser gives no click for. */

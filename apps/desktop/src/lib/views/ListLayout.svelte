@@ -15,7 +15,7 @@
    *  are folded is kept on this device (kept-views.ts). A row carried onto
    *  another group is written into it; onto another task of its own note, it moves its
    *  lines there. */
-  import { groupName, type Row, rowId, type Value } from '@orden/bases'
+  import { groupName, type Row, type Value } from '@orden/bases'
   import { untrack } from 'svelte'
   import { Heights } from '../chats/view/window'
   import { without } from '../records'
@@ -33,6 +33,7 @@
   import {
     EMPTY,
     listItems,
+    foldKey,
     toggled,
     withEveryDay,
     withEverySection,
@@ -298,7 +299,7 @@
       if (!here) return
       event.preventDefault()
       if (key.kind === 'pick') pick(here.id, false)
-      else if (here.twist) shut = toggled(shut, rowId(here.row))
+      else if (here.twist) shut = toggled(shut, foldKey(here.row))
       return
     }
     if (key.kind === 'add') {
@@ -475,7 +476,7 @@
               subtasks={countsOf(row)}
               depth={item.depth}
               twist={item.twist}
-              ontwist={() => (shut = toggled(shut, rowId(row)))}
+              ontwist={() => (shut = toggled(shut, foldKey(row)))}
               selected={selected === item.id}
               onselect={() => (selected = item.id)}
               picked={picked.has(item.id)}
@@ -491,7 +492,7 @@
               {where}
               depth={item.depth}
               twist={item.twist}
-              ontwist={() => (shut = toggled(shut, rowId(row)))}
+              ontwist={() => (shut = toggled(shut, foldKey(row)))}
               selected={selected === item.id}
               onselect={() => (selected = item.id)}
             />

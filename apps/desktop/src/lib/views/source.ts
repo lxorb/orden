@@ -20,9 +20,9 @@ import { insideSpace, samePath, within } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import type { Tab } from '../workspace/documents.svelte'
 import { noteText, writeNoteText } from '../workspace/note-text'
-import { keepProjectView, keepTodosView, projectView, todosView } from './kept-views'
+import { keepProjectView, keepTodosView, projectView, renamedTo, todosView } from './kept-views'
 import type { Shown, Source } from './live.svelte'
-import { followSpaceName } from './space-follow'
+import { followSpaceTabs } from './space-follow'
 import { asShipped, readSpec, type ViewSpec, writeSpec } from './spec'
 
 /** Today as Settings has it: with the tasks that have no start date in it, or not (#408). */
@@ -132,14 +132,18 @@ function keepChange(spec: ViewSpec, yaml: string): void {
   }
 }
 
-/** A tab about a space no space here is called: a space renamed behind it, since deleting
- *  one closes its tabs. It is the open space's now, and so what was kept under that name,
- *  rather than an empty list for good. */
+/** A tab about a space no space here is called. Renamed, by the record of it, the tab
+ *  comes along; what was kept already has. Anything else - a space deleted, a rename from
+ *  before there was a record - cannot be told apart, so the tab says it cannot be read,
+ *  rather than taking the open space for that one or drawing an empty list for good. */
 function followLost(tab: Tab): void {
   const name = readSpec(tab.doc)?.space
-  const open = workspace.activeSpace
-  if (name === undefined || !open || workspace.spaces.some((one) => one.name === name)) return
-  followSpaceName(name, open.name, workspace.tabs, [])
+  const spaces = workspace.spaces
+  if (name === undefined || !spaces.length || spaces.some((one) => one.name === name)) return
+  const now = renamedTo(name)
+  if (now === undefined || !spaces.some((one) => one.name === now))
+    throw new Error(`no space ${name}`)
+  followSpaceTabs(name, now, workspace.tabs)
   workspace.scheduleSession()
 }
 
@@ -150,8 +154,12 @@ export function tabSource(tab: Tab): Source {
   return {
     scope: null,
     load: () => {
-      followLost(tab)
-      return Promise.resolve(builtinBase(spec()))
+      try {
+        followLost(tab)
+        return Promise.resolve(builtinBase(spec()))
+      } catch (error) {
+        return Promise.reject(error instanceof Error ? error : new Error(String(error)))
+      }
     },
     save(next) {
       const now = spec()

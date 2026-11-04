@@ -25,7 +25,7 @@ import { expressionOf, filterOf, literal, rowOf, rowsOf } from './filter-rows'
 import { noteRow, taskRow } from './fixture'
 import { pieces, plain } from './inline'
 import { switched } from './layout'
-import { listItems, withEveryDay, withinDays, withPicked } from './list-items'
+import { foldKey, listItems, withEveryDay, withinDays, withPicked } from './list-items'
 import { panelCounts } from './panel'
 import { shortcuts } from '../shortcuts.svelte'
 import { rowKey } from './row-keys'
@@ -755,7 +755,7 @@ describe('the list', () => {
     const shut = listItems(groups, {
       grouped: false,
       folded: new Set(),
-      shut: new Set(['E.md#1']),
+      shut: new Set([foldKey(parent)]),
       adding: false,
     })
     expect(shut.map((one) => one.kind)).toEqual(['row'])

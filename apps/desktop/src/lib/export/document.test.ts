@@ -60,8 +60,22 @@ describe('a block of raw HTML', () => {
     expect(line('w1 <span hidden>secret</span> w2\n')).toBe('w1  w2')
   })
 
-  test('a tag that never closes is no further than the next that opens', () => {
-    expect(said('<div <p>w1</p>\n')).toContain('w1')
+  test('a tag is read to its end as a browser reads it, a stray < in it or not', () => {
+    for (const hidden of [
+      '<div hidden title=a<b>secret</div>',
+      '<div style="display:none" a<b>secret</div>',
+      '<script x<y>alert(1)</script>',
+      '<style a<b>.x{}</style>',
+      '<dialog x<y>closed</dialog>',
+    ]) {
+      expect(said(`${hidden}\n`), hidden).toEqual([])
+    }
+    expect(said('<div <p>w1</p>\n')).toEqual(['w1'])
+  })
+
+  test('words after the last tag stay, and a comment that never closes goes', () => {
+    expect(said('<div>w1</div>w2 <a b\n')).toEqual(['w1', 'w2 <a b'])
+    expect(said('<div>w1</div><!-- w2 > w3\n')).toEqual(['w1'])
   })
 
   test('reads the entities a note holds', () => {

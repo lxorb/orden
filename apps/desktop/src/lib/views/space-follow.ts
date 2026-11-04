@@ -3,11 +3,10 @@
  *  everything kept comes along, rather than an empty list about a space that is gone.
  *
  *  Told by `renameSpace` whether any view has been drawn yet or not, and asked again by a
- *  tab read later (`source.ts`): a tab put aside with another space, or one a rename left
- *  behind before this was here. */
+ *  tab read in another window (`source.ts`), which goes by the record of the rename. */
 
 import { type Base, type Filter, readBase, writeBase } from '@orden/bases'
-import { followSpaceViews } from './kept-views'
+import { followSpaceViews, forgetSpaceViews, spaceRenamed } from './kept-views'
 import { readSpec, writeSpec } from './spec'
 
 /** The tab, as much of it as a view keeps its words in. */
@@ -47,16 +46,8 @@ function followed(words: string, from: string, to: string): string {
   })
 }
 
-/** Everything of a view about the space `from` made about `to`. A space of the old name
- *  still there (two can bear one, once one is somebody else's; `others`) keeps what is
- *  kept under it. */
-export function followSpaceName(
-  from: string,
-  to: string,
-  tabs: readonly ViewHolder[],
-  others: readonly { name: string }[],
-): void {
-  if (from === to || others.some((one) => one.name === from)) return
+/** The tabs about the space `from` made about `to`. */
+export function followSpaceTabs(from: string, to: string, tabs: readonly ViewHolder[]): void {
   for (const tab of tabs) {
     if (tab.kind !== 'view' || tab.path !== null) continue
     const spec = readSpec(tab.doc)
@@ -64,5 +55,22 @@ export function followSpaceName(
     const yaml = spec.yaml === undefined ? {} : { yaml: followed(spec.yaml, from, to) }
     tab.note.replace(writeSpec({ ...spec, space: to, ...yaml }), false)
   }
+}
+
+/** Everything of a view about the space `from` made about `to`, and that it was renamed.
+ *  With another space still of the old name (two can bear one, once one is somebody
+ *  else's; `others`) nothing can say whose a tab or a layout is, and nothing moves. What
+ *  stands under the new name is what a space gone left there. */
+export function followSpaceName(
+  from: string,
+  to: string,
+  tabs: readonly ViewHolder[],
+  others: readonly { name: string }[],
+): void {
+  if (from === to || others.some((one) => one.name === from)) return
+  followSpaceTabs(from, to, tabs)
+  if (others.some((one) => one.name === to)) return
+  forgetSpaceViews(to)
   followSpaceViews(from, to, (words) => followed(words, from, to))
+  spaceRenamed(from, to)
 }

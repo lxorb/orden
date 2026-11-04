@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest'
 import { columnsOf } from './columns'
 import { dropInto } from './drop'
 import { taskRow } from './fixture'
-import { distinctKeys, everyRow, listItems } from './list-items'
+import { distinctKeys, everyRow, foldKey, listItems } from './list-items'
 
 /** A row under each of its labels (#1046): `answer` hands the same row to several groups,
  *  and everything that draws or counts them has to know. */
@@ -83,5 +83,22 @@ describe('two spaces with one path', () => {
       (one) => one.kind === 'row',
     )
     expect(rows).toHaveLength(2)
+  })
+
+  test('folding a task folds that one, not the same line of another space', () => {
+    const parent = (space: string) => taskRow('E.md', '- [ ] Top', 1, { space })
+    const child = (space: string) =>
+      taskRow('E.md', '  - [ ] Under', 2, { space, parent: 1, indent: 2 })
+    const here = parent('A')
+    const rows = [here, child('A'), parent('B'), child('B')]
+    const items = listItems([under(null, ...rows)], {
+      ...OPTIONS,
+      grouped: false,
+      adding: false,
+      shut: new Set([foldKey(here)]),
+    })
+    expect(items.map((one) => (one.kind === 'row' ? `${one.row.space}:${one.twist}` : ''))).toEqual(
+      ['A:shut', 'B:open', 'B:null'],
+    )
   })
 })

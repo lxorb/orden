@@ -40,7 +40,7 @@ export interface Prefill {
   /** The note it is written in, on this disk; the open space's inbox where absent. */
   path?: string
   /** The space whose inbox it goes to where that is not the open one, by its root: a
-   *  tab of another's Todos, still showing after a switch. */
+   *  tab of another's Todos or label, still showing after a switch. */
   root?: string
   heading?: string
   due?: string
@@ -84,9 +84,13 @@ export function prefillOf(
   const out: Prefill = {}
   if (spec.builtin === 'today') out.due = today
   if (spec.builtin === 'label' && spec.tag) out.tags = [spec.tag]
-  if (spec.builtin === 'todos' && spec.space !== workspace.activeSpace?.name) {
-    const space = workspace.spaces.find((one) => one.name === spec.space)
-    if (space) out.root = space.root
+  if (
+    (spec.builtin === 'todos' || spec.builtin === 'label') &&
+    spec.space !== workspace.activeSpace?.name
+  ) {
+    // Of two of a name, nothing says which: the open space, as ever.
+    const [space, other] = workspace.spaces.filter((one) => one.name === spec.space)
+    if (space && !other) out.root = space.root
   }
   if (spec.builtin === 'project' && spec.space !== undefined && spec.path !== undefined) {
     const space = workspace.spaces.find((one) => one.name === spec.space)

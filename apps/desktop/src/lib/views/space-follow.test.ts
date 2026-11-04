@@ -42,8 +42,17 @@ vi.mock('../workspace.svelte', () => ({
 vi.mock('../rows/rows.svelte', () => ({ rows: { inboxes: () => [], of: () => [] } }))
 vi.mock('../link-index.svelte', () => ({ links: {} }))
 
-const { foldsOf, keepFolds, keepProjectView, keepTodosView, projectView, todosView } =
-  await import('./kept-views')
+const {
+  foldsOf,
+  forgetSpaceViews,
+  keepFolds,
+  keepProjectView,
+  keepTodosView,
+  projectView,
+  renamedTo,
+  spaceRenamed,
+  todosView,
+} = await import('./kept-views')
 const { followSpaceName } = await import('./space-follow')
 const { builtinBase, tabSource } = await import('./source')
 const { readSpec, writeSpec } = await import('./spec')
@@ -141,16 +150,39 @@ describe('a space renamed', () => {
   })
 })
 
-describe('a tab of a space renamed before it followed', () => {
-  test('comes to the open space when it is read, what was kept with it', async () => {
+describe('a tab about a space no space is called', () => {
+  const lost = () => tabOf(writeSpec({ builtin: 'todos', space: 'Work', yaml: todosIn('Work') }))
+
+  test('with a record of the rename, comes to the name it has now', async () => {
     keepTodosView('Work', todosIn('Work'))
-    const tab = tabOf(writeSpec({ builtin: 'todos', space: 'Work', yaml: todosIn('Work') }))
+    spaceRenamed('Work', 'Mid')
+    spaceRenamed('Mid', 'Job')
+    const tab = lost()
     tabs.push(tab)
     const base = await tabSource(tab as never).load()
     expect(readSpec(tab.doc)?.space).toBe('Job')
     expect(base.views[0]?.filters).toEqual(builtinView('todos', { space: 'Job' }).views[0]?.filters)
-    expect(todosView('Job')).toBeDefined()
-    expect(todosView('Work')).toBeUndefined()
+    // What was kept moved with the rename, and is not moved over the space's own again.
+    expect(todosView('Job')).toBeUndefined()
+  })
+
+  test('with none, says it cannot be read, and touches nothing of the open space', async () => {
+    keepTodosView('Work', todosIn('Work'))
+    keepTodosView('Job', todosIn('Job'))
+    const tab = lost()
+    const words = tab.doc
+    tabs.push(tab)
+    await expect(tabSource(tab as never).load()).rejects.toThrow()
+    expect(tab.doc).toBe(words)
+    expect(todosView('Job')).toBe(todosIn('Job'))
+    expect(todosView('Work')).toBe(todosIn('Work'))
+  })
+
+  test('with a record of a space since gone, likewise', async () => {
+    spaceRenamed('Work', 'Gone')
+    await expect(tabSource(lost() as never).load()).rejects.toThrow()
+    forgetSpaceViews('Gone')
+    expect(renamedTo('Work')).toBeUndefined()
   })
 
   test('of a space that is there is left alone', async () => {
@@ -163,11 +195,52 @@ describe('a tab of a space renamed before it followed', () => {
     )
   })
 
-  test('with no space open, waits', async () => {
-    place.active = null
+  test('with no list of spaces yet, waits', async () => {
+    place.spaces = []
     const words = writeSpec({ builtin: 'todos', space: 'Work' })
     const tab = tabOf(words)
     await tabSource(tab as never).load()
     expect(tab.doc).toBe(words)
+    place.spaces = [{ id: 'j', name: 'Job', root: '/s/Job' }]
+  })
+})
+
+describe('what a deleted space kept', () => {
+  test('goes with it, so a space named so later starts as Orden ships it', () => {
+    keepTodosView('Old', todosIn('Old'))
+    keepProjectView('Old', 'Plan.md', projectIn('Old'))
+    keepFolds('todos:Old', new Set(['later']))
+    keepFolds('project:Old/Plan.md', new Set(['Shop']))
+    forgetSpaceViews('Old')
+    expect(todosView('Old')).toBeUndefined()
+    expect(projectView('Old', 'Plan.md')).toBeUndefined()
+    expect([...foldsOf('todos:Old')]).toEqual([])
+    expect([...foldsOf('project:Old/Plan.md')]).toEqual([])
+  })
+
+  test('and a rename onto a name left behind brings its own, not what stood there', () => {
+    keepTodosView('Old', todosIn('Old'))
+    keepProjectView('Old', 'Plan.md', projectIn('Old'))
+    keepProjectView('Fresh', 'Plan.md', projectIn('Fresh'))
+    keepFolds('todos:Old', new Set(['stale']))
+    keepFolds('project:Old/Plan.md', new Set(['stale']))
+    keepFolds('project:Fresh/Plan.md', new Set(['mine']))
+    followSpaceName('Fresh', 'Old', [], [])
+    expect(todosView('Old')).toBeUndefined()
+    expect(readBase(projectView('Old', 'Plan.md') ?? '').views[0]?.filters).toEqual(
+      builtinView('project', { note: { space: 'Old', path: 'Plan.md' } }).views[0]?.filters,
+    )
+    expect([...foldsOf('todos:Old')]).toEqual([])
+    expect([...foldsOf('project:Old/Plan.md')]).toEqual(['mine'])
+  })
+})
+
+describe('two spaces of one name', () => {
+  test('a rename of one cannot say whose a tab is, and moves nothing', () => {
+    const words = writeSpec({ builtin: 'todos', space: 'Work' })
+    const tab = tabOf(words)
+    followSpaceName('Work', 'Job', [tab], [{ name: 'Work' }])
+    expect(tab.doc).toBe(words)
+    expect(renamedTo('Work')).toBeUndefined()
   })
 })

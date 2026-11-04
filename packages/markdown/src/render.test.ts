@@ -1250,6 +1250,28 @@ describe('a named block, as a page holds it', () => {
     expect(differ).toEqual([])
   })
 
+  test('is found in a note of CRLF lines as in any other', () => {
+    const html = renderMarkdown('one ^a\r\n\r\ntwo ^b\r\n\r\nthree ^c', { blockAnchors: true })
+    for (const id of ['a', 'b', 'c']) expect(html).toContain(`id="^${id}"`)
+    expect(
+      renderMarkdown('one\r\n\r\n<div>\r\nz ^z\r\n</div>\r\n', { blockAnchors: true }),
+    ).not.toContain('id="^z"')
+  })
+
+  test('hides no script target from what holds them back', () => {
+    for (const source of [
+      'word <a href="java ^a\nscript:alert(1)">x</a>\n',
+      'word <a href="java\uE0F0a\uE0F1script:alert(1)">x</a>\n',
+      '<a href="java\uE0F0a\uE0F1script:alert(1)">x</a>\n',
+    ]) {
+      const html = renderMarkdown(source, { blockAnchors: true })
+      expect(html, source).not.toMatch(/<a [^>]*href="java/)
+    }
+    expect(
+      renderMarkdown('word <a href="https://x.dev/ ^a\nb">x</a>\n', { blockAnchors: true }),
+    ).toContain('<a href="https://x.dev/')
+  })
+
   test('takes a tag no further than the next one that opens', async () => {
     const { blockAnchorsDrawn } = await import('./links')
     expect(blockAnchorsDrawn('<div <a title="x">y</a>\n')).toBe('<div <a title="">y</a>\n')

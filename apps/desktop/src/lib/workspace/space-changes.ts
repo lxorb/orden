@@ -6,6 +6,7 @@
 import { account } from '../account.svelte'
 import { identifier } from '../identifier'
 import { samePath } from '../space-paths'
+import { forgetSpaceViews } from '../views/kept-views'
 import { invoke } from '../tauri'
 import type { Space } from '../workspace.svelte'
 import { type HoldsSpaces, selectSpace, tabSets } from './spaces'
@@ -140,6 +141,8 @@ export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
   // workspace/file-ops.ts.
   await ws.fileGone(space.root, 'space')
   ws.spaces = ws.spaces.filter((entry) => entry.id !== id)
+  // Kept by its name, which nothing else may inherit; of two of a name, it may be the other's.
+  if (!ws.spaces.some((entry) => entry.name === space.name)) forgetSpaceViews(space.name)
   // The sets, fetched after the list so the shared set of older builds is not given to
   // this space, and before the space on screen changes, since by the switch below they
   // would take what is left of its tabs for the next space's. See `selectSpace`.

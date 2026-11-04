@@ -11,6 +11,7 @@ import type { ViewSpec } from './spec'
 const FOLDS = 'nib:view-folds'
 const PROJECTS = 'nib:project-views'
 const TODOS = 'nib:todos-views'
+const RENAMES = 'nib:space-renames'
 
 /** How many views keep their folds: the ones folded most lately. */
 const MOST = 200
@@ -72,6 +73,14 @@ export function keepTodosView(space: string, words: string | undefined): void {
   keepJson(TODOS, all)
 }
 
+/** A key of the folds that is about a space's Todos or one of its projects, as the name
+ *  after the space. */
+function foldOf(key: string, space: string): string | null {
+  if (key === `todos:${space}`) return ''
+  const project = `project:${space}/`
+  return key.startsWith(project) ? key.slice(project.length) : null
+}
+
 /** What is kept under a space's name, moved to the name it has now: its Todos, its
  *  projects, and which of their groups are folded. `follow` answers the words about it
  *  there. */
@@ -88,15 +97,58 @@ export function followSpaceViews(
   }
   followProjectViews(from, (path) => path, follow, to)
   const folds = read(FOLDS)
-  const project = `project:${from}/`
   const moved = Object.entries(folds).map(([key, groups]): [string, unknown] => {
-    if (key === `todos:${from}`) return [`todos:${to}`, groups]
-    return key.startsWith(project)
-      ? [`project:${to}/${key.slice(project.length)}`, groups]
-      : [key, groups]
+    const rest = foldOf(key, from)
+    if (rest === null) return [key, groups]
+    return [rest === '' ? `todos:${to}` : `project:${to}/${rest}`, groups]
   })
   if (moved.some(([key], at) => key !== Object.keys(folds)[at]))
     keepJson(FOLDS, Object.fromEntries(moved))
+}
+
+/** What was kept under a space's name, gone with the name, so a space called that later
+ *  does not start as this one was left. Where it had moved from goes too. */
+export function forgetSpaceViews(space: string): void {
+  const todos = read(TODOS)
+  if (space in todos)
+    keepJson(
+      TODOS,
+      without(todos, (one) => one === space),
+    )
+  const projects = read(PROJECTS)
+  const under = (key: string) => key.startsWith(`${space}/`)
+  if (Object.keys(projects).some(under)) keepJson(PROJECTS, without(projects, under))
+  const folds = read(FOLDS)
+  const folded = (key: string) => foldOf(key, space) !== null
+  if (Object.keys(folds).some(folded)) keepJson(FOLDS, without(folds, folded))
+  const renames = read(RENAMES)
+  const named = Object.fromEntries(
+    Object.entries(renames).filter(([from, to]) => from !== space && to !== space),
+  )
+  if (Object.keys(named).length !== Object.keys(renames).length) keepJson(RENAMES, named)
+}
+
+function without(all: Record<string, unknown>, gone: (key: string) => boolean) {
+  return Object.fromEntries(Object.entries(all).filter(([key]) => !gone(key)))
+}
+
+/** That a space on this device took another name, which is the one thing that tells a tab
+ *  still about the old one from a tab about a space that is gone (`source.ts`). */
+export function spaceRenamed(from: string, to: string): void {
+  const all = without(read(RENAMES), (key) => key === to)
+  keepJson(RENAMES, { ...all, [from]: to })
+}
+
+/** The name a space that was called this goes by now, as far as this device knows. */
+export function renamedTo(space: string): string | undefined {
+  const all = read(RENAMES)
+  const seen = new Set([space])
+  let now: string | undefined
+  for (let at = all[space]; typeof at === 'string' && !seen.has(at); at = all[at]) {
+    seen.add(at)
+    now = at
+  }
+  return now
 }
 
 /** The layouts kept for a space's projects, moved along with their notes: `moved` answers

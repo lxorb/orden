@@ -204,4 +204,11 @@ describe('a task added in a group of Todos', () => {
     await addTyped('Pay', prefill)
     expect(added).toEqual(['/s/Private/Inbox.md'])
   })
+
+  test('a label of another space too, and with two of that name, nowhere it could not know', async () => {
+    added.length = 0
+    await addTyped('Pay', prefillOf({ builtin: 'label', tag: 'x', space: 'Mine' }, today))
+    expect(added).toEqual(['/s/Private/Inbox.md'])
+    expect(prefillOf({ builtin: 'label', tag: 'x' }, today)).toEqual({ tags: ['x'] })
+  })
 })
