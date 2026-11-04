@@ -507,7 +507,7 @@
       "source",
       "hidden"
     ],
-    "default": "hidden",
+    "default": "properties",
     "description": "Properties draws the rows and edits them in place; Source is the YAML as typed."
   },
   "markdown.newlineBreaks": {

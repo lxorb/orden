@@ -6,6 +6,7 @@ import { dragFreeze } from './dragging'
 import { hiddenFrontMatterGuard } from './hidden-front-matter'
 import { imageExtension } from './image'
 import { runExtension } from '../run/door'
+import { propertiesOpen } from './properties'
 import { pointerSnap } from './snap'
 
 /** Hides markdown syntax until the caret enters the construct that owns it.
@@ -22,6 +23,7 @@ export function livePreview(): Extension {
     livePreviewDecorations,
     blockDecorations,
     hiddenFrontMatterGuard,
+    propertiesOpen,
     imageExtension,
     runExtension(),
   ]

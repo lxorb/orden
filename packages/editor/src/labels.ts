@@ -66,6 +66,8 @@ const DEFAULTS = {
    *  word a new key is named with until it is given a name of its own. */
   addProperty: 'Add a property',
   property: 'property',
+  /** The strip a note's front matter is drawn as, folded or open. */
+  properties: 'Properties',
   /** The field at the end of a list property, and the `x` on one of its chips. */
   addToList: 'Add',
   removeFromList: 'Remove',

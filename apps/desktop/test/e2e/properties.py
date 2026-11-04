@@ -3,6 +3,9 @@ edited in the control its own shape asks for, and the three-way choice above it.
 
 What this drives, all of it against the real editor and the real file:
 
+  * The strip at the top of the note starts folded, one line with the keys and what
+    they say, and opens into the rows on a press (#1120).
+
   * A field for a word, a number field for a number, a date picker for a date, a real
     checkbox for a `true`, chips with an `x` and a field to add one for a list, and a
     menu where the key is one the app has a fixed set of answers for.
@@ -230,6 +233,14 @@ def the_three_answers(page: Page) -> None:
 
     page.evaluate("() => window.nibApp.modes.setProperties('properties')")
     quiet(page)
+    # The strip comes back, folded or open as the note was left; open, it is the rows.
+    is_true(
+        page.evaluate("() => !!document.querySelector('#write .nib-properties-head')"),
+        "the strip did not come back",
+    )
+    if not page.evaluate(ROWS):
+        page.click("#write .nib-properties-head")
+        quiet(page)
     is_true(bool(page.evaluate(ROWS)), "the rows did not come back")
 
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
@@ -249,8 +260,17 @@ def drive(browser: Browser) -> None:
     DRIVE.open(page)
     wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
-    # The rows, which this drive reads; hidden is where a reader starts.
+    # The strip, which is where a reader starts: folded, one line.
     page.evaluate("() => window.nibApp.modes.setProperties('properties')")
+    wait_for(page, "document.querySelector('#write .nib-properties-head')", "the strip")
+    quiet(page)
+    is_true(not page.evaluate(ROWS), "the strip opened on its own")
+    folded = page.inner_text("#write .nib-properties-head")
+    say(f"[folded] {folded!r}")
+    is_true("title" in folded and "one, two" in folded, "the folded strip says nothing")
+    shot(page, "00-folded")
+
+    page.click("#write .nib-properties-head")
     wait_for(
         page,
         "document.querySelector('#write .property[data-key=\\'tags\\']')",

@@ -2685,16 +2685,96 @@
   outline-offset: -2px;
 }
 
-/* A note's front matter drawn as its rows. The rows themselves are in
-   document.css, which the app loads too, so the editor and the reading view are
-   one drawing; this is what the writing surface adds on top of it. */
+/* A note's front matter drawn as a strip: one quiet line folded, the rows open. The
+   rows themselves are in document.css, which the app loads too, so the editor and
+   the reading view are one drawing; this is what the writing surface adds on top of
+   it. The rule under it is the one the reading view's rows end on, so the strip and
+   the words stay two things either way. */
 .nib-properties {
   white-space: normal;
+  margin-bottom: 0.8em;
+  padding-bottom: 0.2em;
+  border-bottom: 1px solid var(--line);
   animation: settle-in var(--dur-base) var(--ease-out);
 }
 
 #write .nib-properties .properties {
-  margin-bottom: 0.8em;
+  margin: 0 0 0.2em;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+/* The strip's own line: smaller than the words and in the app's face, so it reads as
+   something about the note rather than as its first sentence. Folded, the keys and
+   what they say follow on one line that ends where the column does. */
+#write .nib-properties-head {
+  display: flex;
+  align-items: center;
+  gap: 0.45em;
+  width: 100%;
+  min-width: 0;
+  padding: 0.2em 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-family: var(--font-ui);
+  font-size: 0.85em;
+  text-align: start;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  #write .nib-properties-head:hover {
+    color: var(--text);
+  }
+}
+
+#write .nib-properties-chevron {
+  flex: none;
+  width: 0.95em;
+  height: 0.95em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+/* Pointing at what it holds when it is folded, and down at the rows when open, as
+   the chevron beside a folded block does. */
+.nib-properties[data-open='true'] .nib-properties-chevron {
+  transform: rotate(90deg);
+}
+
+#write .nib-properties-name {
+  flex: none;
+}
+
+#write .nib-properties-count {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+#write .nib-properties-said {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+#write .nib-properties-pair + .nib-properties-pair::before {
+  content: ' · ';
+  color: var(--muted);
+}
+
+#write .nib-properties-key {
+  color: var(--muted);
 }
 
 /* The row that adds another property: at the foot of the list, where the next

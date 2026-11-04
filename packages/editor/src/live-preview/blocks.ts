@@ -19,7 +19,7 @@ import { coverOf } from '@orden/markdown/cover'
 import { readProperties } from '@orden/markdown/properties'
 import { CoverWidget } from './cover'
 import { drawnAs, propertiesMode, shownChanged } from './hidden-front-matter'
-import { PropertiesWidget } from './properties'
+import { openedChanged, PropertiesWidget, propertiesOpen } from './properties'
 import { embedOfBlock, embedWidget } from '../wikilink/embed'
 import { trustChanged, trustsMarkup } from '../markup'
 import { noteIndex, type NoteIndex } from '../wikilink/notes'
@@ -239,10 +239,10 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
           if (readProperties(source) === null) return false
 
           ranges.push(
-            Decoration.replace({ widget: new PropertiesWidget(source), block: true }).range(
-              span.from,
-              span.to,
-            ),
+            Decoration.replace({
+              widget: new PropertiesWidget(source, state.field(propertiesOpen, false) === true),
+              block: true,
+            }).range(span.from, span.to),
           )
           return false
         }
@@ -529,6 +529,7 @@ function settingsChanged(transaction: Transaction): boolean {
     before.facet(numberEquations) !== after.facet(numberEquations) ||
     before.facet(propertiesMode) !== after.facet(propertiesMode) ||
     shownChanged(before, after) ||
+    openedChanged(before, after) ||
     // An embed shows another note, so what that note says decides what is drawn
     // here even though nothing in this document moved.
     before.facet(noteIndex) !== after.facet(noteIndex) ||
