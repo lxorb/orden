@@ -59,9 +59,10 @@ function seenBy(call: Call, store: Chats): Seen[] {
 }
 
 /** The chat a call names, by its id or its name (with or without `#`): where two spaces
- *  have one by the name, the one of the space its AI panel thread works in, then the
- *  space in front's. Where that still leaves several, they are named back by id rather
- *  than chosen between: a message goes to whoever is in the chat. */
+ *  have one by the name, the one of the space its AI panel thread works in, or for a call
+ *  from no thread, the space in front's. Where that still leaves several, they are named
+ *  back by id rather than chosen between: a message goes to whoever is in the chat, and
+ *  a thread's message does not go by which tab is up. */
 function chatFor(call: Call, store: Chats): Seen {
   const named = need(call, 'chat')
   const folded = named.replace(/^#/, '').trim().toLowerCase()
@@ -72,7 +73,7 @@ function chatFor(call: Call, store: Chats): Seen {
   const byId = seen.find((one) => one.entry.id === named)
   if (byId) return byId
   const inHome = byName.filter((one) => one.entry.root === home)
-  const inFront = byName.filter((one) => one.entry.root === front)
+  const inFront = home === undefined ? byName.filter((one) => one.entry.root === front) : []
   const fitting = inHome.length ? inHome : inFront.length ? inFront : byName
   const [found, ...others] = fitting
   if (!found)

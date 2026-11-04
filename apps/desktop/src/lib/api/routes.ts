@@ -729,7 +729,7 @@ export const routes = {
 
     if (!response.ok) {
       const said = isRecord(body) && isString(body.error) ? body.error : null
-      throw new ApiError(response.status, said ?? 'upload failed')
+      throw new ApiError(response.status, said ?? 'upload failed', body)
     }
 
     return body as { hash: string; stored: boolean }

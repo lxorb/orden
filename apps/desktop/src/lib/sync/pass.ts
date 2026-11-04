@@ -1374,7 +1374,71 @@ export interface Sending {
 const REFUSALS: ReadonlySet<number> = new Set([400, 413, 415, 422])
 
 function refusesIt(error: unknown): boolean {
-  return error instanceof ApiError && REFUSALS.has(error.status)
+  // The Worker says why for everything it answers. An answer with no sentence is an edge
+  // between here and there, a proxy's limit say, which says nothing about the file.
+  return (
+    error instanceof ApiError &&
+    REFUSALS.has(error.status) &&
+    isRecord(error.body) &&
+    isString(error.body.error)
+  )
+}
+
+/** The account has no room: that is no fault of this file, and may pass. Nothing more goes
+ *  up in this pass, the deletes that could make room still land, and the pass then ends
+ *  in this error as it always did, so it is said and tried again. */
+function isFull(error: unknown): error is ApiError {
+  return error instanceof ApiError && error.status === 507
+}
+
+/** A file with no entry whose words did not land in this pass, refused or not offered. */
+interface Unplaced {
+  path: string
+  /** Its hash where it was read for offering; a kind never offered is not read. */
+  hash: string | null
+  /** The lines it holds, read when something vanished in the same pass. */
+  lines?: Set<string>
+}
+
+function linesOf(words: string): Set<string> {
+  return new Set(
+    words
+      .split(/\r?\n/)
+      .map((one) => one.trim())
+      .filter(Boolean),
+  )
+}
+
+/** Whether a note gone from its path has its words in a file that has no place on the
+ *  account yet: its move, by another program, to a name or a size refused. A delete then
+ *  would leave the words on this device alone, so it waits for that file to land or go.
+ *  Told by the words, so a note deleted beside an unrelated refused file still goes: the
+ *  same hash, or at least half of what the account holds of the note. An account that
+ *  will not say what it holds has not said they differ. */
+async function wordsWaitIn(
+  token: string,
+  id: string,
+  hash: string,
+  unplaced: readonly Unplaced[],
+): Promise<boolean> {
+  if (!unplaced.length) return false
+  if (unplaced.some((one) => one.hash === hash)) return true
+
+  let lines: Set<string>
+  try {
+    lines = linesOf((await api.readNote(token, id)).content)
+  } catch (error) {
+    return !isGone(error)
+  }
+  if (!lines.size) return false
+
+  for (const one of unplaced) {
+    one.lines ??= linesOf(await invoke<string>('read_note', { path: one.path }).catch(() => ''))
+    let shared = 0
+    for (const line of lines) if (one.lines.has(line)) shared += 1
+    if (shared * 2 >= lines.size) return true
+  }
+  return false
 }
 
 /** The names `NOTE_PATH` in services/sync/src/notes.ts takes. The tree lists more, for sync
@@ -1404,8 +1468,14 @@ function refusedOf(mirror: Mirror): Refused {
   return fresh
 }
 
-/** One note refused: said once, and the record of the write in the air put back to what
- *  it was, since this one was answered and did not land. See `offered` in mirror.ts. */
+/** The record of a write in the air put back to what it was, since this one was answered
+ *  and did not land. See `offered` in mirror.ts. */
+function notInTheAir(mirror: Mirror, path: string, earlier: string | undefined) {
+  mirror.offered =
+    earlier === undefined ? without(mirror.offered, path) : { ...mirror.offered, [path]: earlier }
+}
+
+/** One note refused, and said once. */
 function noteRefused(
   mirror: Mirror,
   path: string,
@@ -1416,8 +1486,7 @@ function noteRefused(
 ) {
   log('warn', `sync: ${path} not taken - ${String(error)}`)
   refusedOf(mirror).notes.set(path, hash)
-  mirror.offered =
-    earlier === undefined ? without(mirror.offered, path) : { ...mirror.offered, [path]: earlier }
+  notInTheAir(mirror, path, earlier)
   sending.refused?.(path)
 }
 
@@ -1461,9 +1530,16 @@ export async function push(
 
   // A PDF is bytes rather than words, so it goes up as a blob and the space
   // records where in it the file sits; see `pushFiles`.
-  if (await pushFiles(mirror, root, listed, token, unread, sending)) moved = true
+  let full: ApiError | null = null
+  try {
+    if (await pushFiles(mirror, root, listed, token, unread, sending)) moved = true
+  } catch (error) {
+    if (!isFull(error)) throw error
+    full = error
+  }
 
   const refused = refusedOf(mirror)
+  const unplaced: Unplaced[] = []
 
   for (const file of listed.filter((one) => !isPdfTarget(one.name))) {
     const path = relativeTo(root, file.path)
@@ -1478,6 +1554,7 @@ export async function push(
       if (!refused.notes.has(path)) {
         noteRefused(mirror, path, '', 'not a kind sync v1 carries', mirror.offered[path], sending)
       }
+      if (!mirror.notes[path]) unplaced.push({ path: file.path, hash: null })
       continue
     }
 
@@ -1498,7 +1575,10 @@ export async function push(
     // one is another.
     if (tracked ? untold[tracked.id] : renamed.has(path)) continue
     // Refused as it is now, and asked again once it is something else.
-    if (refused.notes.get(path) === hash) continue
+    if (refused.notes.get(path) === hash) {
+      if (!tracked) unplaced.push({ path: file.path, hash })
+      continue
+    }
 
     if (!tracked) {
       // The app's own welcome note, exactly as the app wrote it, is not writing
@@ -1508,7 +1588,19 @@ export async function push(
       // any other note. See welcome.ts.
       if (isUntouchedWelcome(path, content)) continue
 
-      if (await create(mirror, token, path, content, sending)) moved = true
+      if (full) {
+        unplaced.push({ path: file.path, hash })
+        continue
+      }
+      try {
+        if (await create(mirror, token, path, content, sending)) moved = true
+      } catch (error) {
+        if (!isFull(error)) throw error
+        full = error
+      }
+      if (!mirror.notes[path] && (full || refused.notes.get(path) === hash)) {
+        unplaced.push({ path: file.path, hash })
+      }
       continue
     }
 
@@ -1520,6 +1612,7 @@ export async function push(
     if (joined.has(tracked.id)) {
       continue
     }
+    if (full) continue
 
     moved = true
 
@@ -1545,6 +1638,11 @@ export async function push(
         noteRefused(mirror, path, hash, error, earlier, sending)
         continue
       }
+      if (isFull(error)) {
+        notInTheAir(mirror, path, earlier)
+        full = error
+        continue
+      }
       if (!(error instanceof ApiError) || error.status !== 409) throw error
 
       // The note's room settled while this write was in the air, which is this
@@ -1562,6 +1660,15 @@ export async function push(
       } catch (again) {
         // Moved again, or its room away: this note waits for the next pass, as above.
         if (again instanceof NotWritten) continue
+        // What the two made together is past what the account takes: as above.
+        if (refusesIt(again)) {
+          noteRefused(mirror, path, hash, again, earlier, sending)
+          continue
+        }
+        if (isFull(again)) {
+          full = again
+          continue
+        }
         if (!(again instanceof ApiError) || (again.status !== 409 && again.status !== 503)) {
           throw again
         }
@@ -1592,6 +1699,7 @@ export async function push(
       await shownAgain(mirror, aside, tracked.id, new Set())
       continue
     }
+    if (await wordsWaitIn(token, tracked.id, tracked.hash, unplaced)) continue
 
     if (!(await deletedOnAccount(token, tracked.id))) continue
 
@@ -1600,6 +1708,7 @@ export async function push(
     moved = true
   }
 
+  if (full) throw full
   return moved
 }
 
@@ -1658,10 +1767,17 @@ async function pushFiles(
   for (const file of listed) {
     const path = relativeTo(root, file.path)
     if (!isPdfTarget(file.name) && !dressesTheSite(path)) continue
-    // Bytes the account would not keep, as they were written then: see below.
-    if (refused.papers.get(path) === file.modified) continue
-
     const tracked = mirror.files[path]
+    // Bytes the account would not keep, as they were written then: see below. What it
+    // has of the file from before stays said, so a link to it goes on working.
+    if (refused.papers.get(path) === file.modified) {
+      if (tracked) {
+        held[path] = tracked
+        manifest.push({ path, hash: tracked.hash })
+      }
+      continue
+    }
+
     // Read and hashed again only when the file has been written since, so a
     // paper nobody has touched costs nothing at all.
     const hash = tracked?.modified === file.modified ? tracked.hash : await hashFile(file.path)
@@ -1710,8 +1826,16 @@ async function pushFiles(
           if (!refusesIt(error)) throw error
           log('warn', `sync: ${file.path} not taken - ${String(error)}`)
           refused.papers.set(file.path, held[file.path]?.modified ?? 0)
-          unsent.add(file.path)
           sending.refused?.(file.path)
+          // The list just said dropped the row for bytes it has not got: said again below
+          // as it stood, or not at all where it never stood.
+          const was = mirror.files[file.path]
+          if (was) {
+            held[file.path] = was
+            file.hash = was.hash
+          } else {
+            unsent.add(file.path)
+          }
         }
       }
       // A file that would not read was never sent, so the mirror must not say it
@@ -1802,6 +1926,7 @@ async function create(
       noteRefused(mirror, path, offered, error, earlier, sending)
       return false
     }
+    if (isFull(error)) notInTheAir(mirror, path, earlier)
     if (!(error instanceof ApiError) || error.status !== 409) throw error
 
     const body = isRecord(error.body) ? error.body : {}
@@ -1844,6 +1969,11 @@ async function create(
     try {
       await keepBoth(mirror, path, tracked, held, token, null)
     } catch (again) {
+      // Paired, and their words are kept: the next push refuses this file by its write.
+      if (refusesIt(again)) {
+        noteRefused(mirror, path, offered, again, earlier, sending)
+        return true
+      }
       if (!(again instanceof NotWritten)) throw again
       // The copy would not land, so nothing holds their words but the account. Paired, the
       // next push would send this file over them.

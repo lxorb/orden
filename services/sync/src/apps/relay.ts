@@ -192,8 +192,8 @@ export class AppRelay implements DurableObject {
 
     const held = await this.lock.holder(first.session)
     await this.lock.settle(first.session)
-    const holds = await this.lock.holder(first.session)
-    if (holds?.device !== held?.device) await this.toldWho(first.session)
+    // Handed to a device, the lock has told the host; freed for nobody, nothing has.
+    if (held && !(await this.lock.holder(first.session))) await this.toldWho(first.session)
 
     if (this.ctx.getWebSockets().some((socket) => socket.readyState === OPEN)) {
       await this.ctx.storage.setAlarm(Date.now() + ASK_SIGNINS_EVERY)

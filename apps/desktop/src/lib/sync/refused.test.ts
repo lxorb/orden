@@ -509,7 +509,11 @@ test('a delete waits where the account would not say what the note held', async 
 
   device.disk.delete(`${ROOT}/a.md`)
   put('b.md', `the words\n${BIG}`)
-  answering = { to: new RegExp(`GET .*/v1/notes/${mirror.notes['a.md']?.id ?? ''}`), status: 500, left: 1 }
+  answering = {
+    to: new RegExp(`GET .*/v1/notes/${mirror.notes['a.md']?.id ?? ''}`),
+    status: 500,
+    left: 1,
+  }
   await pass(mirror)
   expect(await pathsOnAccount()).toEqual(['a.md'])
 

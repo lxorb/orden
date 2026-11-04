@@ -14,9 +14,10 @@ const LUCILE: Who = 'user:lucile'
 
 const team = { id: 'team', name: 'Team', root: '/spaces/Team' }
 const secret = { id: 'secret', name: 'Secret', root: '/spaces/Secret' }
+const third = { id: 'third', name: 'Third', root: '/spaces/Third' }
 
 vi.mock('../../workspace.svelte', () => ({
-  workspace: { spaces: [team, secret], activeSpace: team, activeSpaceId: 'team' },
+  workspace: { spaces: [team, secret, third], activeSpace: team, activeSpaceId: 'team' },
 }))
 
 /** What `agents_ask` was asked, and what it answers next. */
@@ -185,9 +186,8 @@ describe('the chats an agent sees', () => {
       path: '/spaces/Secret/thesis.chat',
     })
     const { answerThreadSpaces } = await import('../../automation/caller')
-    // A thread that works in a space holding no chat of that name; `Notes` is in front.
+    // A thread that works in a space holding no chat of that name; `Team` is in front.
     answerThreadSpaces((thread) => (thread === 'in-third' ? 'third' : null))
-    workspace.spaces.push({ id: 'third', name: 'Third', root: '/spaces/Third' } as never)
     const grant = {
       id: 'nib-claude',
       built_in: true,
@@ -204,7 +204,6 @@ describe('the chats an agent sees', () => {
       expect(asked).toContain(twin)
       expect(asked).not.toContain('Draft of chapter 3')
     } finally {
-      workspace.spaces.pop()
       answerThreadSpaces(() => null)
     }
   })

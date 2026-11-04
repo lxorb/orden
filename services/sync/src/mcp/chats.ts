@@ -27,6 +27,9 @@ const string = { type: 'string' }
 /** What a message sent from here says it came by. */
 const VIA = { agent: 'nib connector' }
 
+/** The most chats one listing names; a chat is found by its name or id among them all. */
+const MOST_LISTED = 500
+
 /** The most messages one read answers, and one search. */
 const MOST_READ = 200
 const MOST_FOUND = 50
@@ -99,8 +102,12 @@ interface Known extends Listed {
 /** Every chat the account reaches, named by its pointer and its space: one query for
  *  the list, one for the names. A chat whose pointer the account has not seen yet has
  *  no name to be found by and is left out. */
-async function chatsOf(env: Env, who: Whoever): Promise<Known[]> {
-  const rows = (await listed(env, who, null)).slice(0, 500)
+async function chatsOf(
+  env: Env,
+  who: Whoever,
+  most: number | null = MOST_LISTED,
+): Promise<Known[]> {
+  const rows = await listed(env, who, null, most)
   if (!rows.length) return []
   const found = await askInChunks(
     rows.map((one) => one.id),
@@ -157,7 +164,7 @@ async function chatNamed(
   const wanted = words(args, 'chat')
   if (!wanted) return 'Which chat? list_chats names them.'
   const folded = wanted.replace(/^#/, '').trim().toLowerCase()
-  const all = await chatsOf(env, who)
+  const all = await chatsOf(env, who, null)
   const byId = all.find((one) => one.id === wanted)
   const byName = byId ? [] : all.filter((one) => one.name.toLowerCase() === folded)
   if (byName.length > 1) {
