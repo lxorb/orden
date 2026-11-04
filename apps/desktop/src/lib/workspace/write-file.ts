@@ -16,9 +16,10 @@
 
 import { links } from '../link-index.svelte'
 import { invoke } from '../tauri'
+import { writeTaking } from './in-turn'
 
 export async function writeFile(path: string, content: string): Promise<void> {
-  await invoke('write_note', { path, content })
+  await writeTaking(path, content)
   links.noteSaved(path, content)
 }
 

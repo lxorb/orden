@@ -395,7 +395,8 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  default space way to the account's own, decided in one place (seed-space.ts, and the
  *  plan's `discard` in space-plan.ts). Measured 5,848,312.
  *
- *  The code raised on 2026-11-04, to 5,899,500, for the bug hunt's two rounds and the
+ *  The code raised on 2026-11-04, to 5,912,000, for one note across windows (a file's turn
+ *  and a note's one line ending; the plugin carries no merge). Before it, to 5,899,500, for the bug hunt's two rounds and the
  *  above being in one build at last, on claude/hunt-round-1: nothing new, the two sums
  *  together. Measured 5,899,267.
  *

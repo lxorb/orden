@@ -2084,6 +2084,20 @@ describe('what the account holds of a file', () => {
     expect(await sync.holds('/Notes/a.md')).toBe(true)
   })
 
+  test('a clean note whose file differs only by its line endings is not reloaded', async () => {
+    fake.disk.set('/Notes/a.md', '# a\r\nb\r\n')
+    await mirrored({}, { 'a.md': '# a\nb\n' })
+    await workspace.open('/Notes/a.md')
+    const reload = vi.spyOn(workspace, 'reload')
+    await (
+      sync as unknown as {
+        refresh(path: string, joined: { has(id: string): boolean }): Promise<void>
+      }
+    ).refresh('/Notes/a.md', { has: () => false })
+    expect(reload).not.toHaveBeenCalled()
+    reload.mockRestore()
+  })
+
   test('a folder whose paper was replaced since the last push goes to the trash', async () => {
     fake.disk.set('/Notes/Work/a.md', '# a')
     fake.disk.set('/Notes/Work/paper.pdf', '%PDF replaced')

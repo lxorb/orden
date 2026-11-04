@@ -1,4 +1,5 @@
 import { invoke } from '../tauri'
+import { writeTaking } from '../workspace/in-turn'
 
 /** The disk would not take a note's words: a name too long for it, a read-only folder, a
  *  full disk. One note's trouble, which a pass goes past; see `pull`. */
@@ -44,7 +45,7 @@ export async function writeDown(path: string, content: string, was?: string | nu
 
   // `arrived`: these words came from elsewhere, so a name the crate makes no new note of
   // is still written where this platform can hold it (`write_note`).
-  await invoke('write_note', { path, content, arrived: true }).catch((error: unknown) => {
+  await writeTaking(path, content, true).catch((error: unknown) => {
     throw new NotWritten(path, error)
   })
 }

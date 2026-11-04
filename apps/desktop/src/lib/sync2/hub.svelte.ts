@@ -21,6 +21,7 @@ import { account } from '../account.svelte'
 import { BASE } from '../api'
 import { BEAT_EVERY, roomDelay } from '../backoff'
 import { t } from '../i18n.svelte'
+import { heldForLife } from '../locks'
 import { keep, storedText } from '../stored'
 import { invoke, isDesktop, platform } from '../tauri'
 import {
@@ -435,19 +436,13 @@ const nativeWorld: HubWorld = {
     }
     return { post: (message) => channel.postMessage(message) }
   },
-  elect: (lead) => {
-    const locks = typeof navigator === 'undefined' ? undefined : navigator.locks
-    if (!locks) {
-      lead()
-      return
-    }
-    // Held for the window's life: the promise never settles, and the lock goes with
-    // the window, which is when the next one in line takes it.
-    void locks.request('nib:hub', () => {
+  // Held for the window's life: the promise never settles, and the lock goes with
+  // the window, which is when the next one in line takes it.
+  elect: (lead) =>
+    heldForLife('nib:hub', () => {
       lead()
       return new Promise<never>(() => undefined)
-    })
-  },
+    }),
   every: ticking,
 }
 

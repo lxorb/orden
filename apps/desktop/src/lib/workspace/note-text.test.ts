@@ -20,6 +20,8 @@ const disk = new Map<string, string>()
 let holding: { command: string; until: Promise<void> } | null = null
 
 vi.mock('../tauri', () => ({
+  isNative: false,
+  platform: () => 'linux',
   invoke: async (command: string, args?: Record<string, unknown>) => {
     const path = typeof args?.path === 'string' ? args.path : ''
     const content = typeof args?.content === 'string' ? args.content : ''
@@ -62,6 +64,7 @@ const { FileActions } = await import('./undo.svelte')
 const { undoLastFileAction } = await import('./undoing')
 type PutsBack = import('./undoing').PutsBack
 const { NoteDoc } = await import('./documents.svelte')
+const { meetAcross } = await import('./in-turn')
 type HoldsNotes = import('./note-text').HoldsNotes
 
 const SPACE = '/space'
@@ -778,5 +781,159 @@ describe('a closed note written to after the change was worked out', () => {
     await replaceInNotes(ws, [change])
 
     expect(disk.has(NOTE)).toBe(false)
+  })
+})
+
+describe('with another window here', () => {
+  afterEach(() => meetAcross(null))
+
+  test('a write that throws leaves the note owed and the rest of the list written', async () => {
+    const { ws } = space({ '/space/a.md': 'one\n', '/space/b.md': 'two\n' }, '/space/a.md')
+    const owed = vi.fn()
+    meetAcross({
+      alone: false,
+      owe: owed,
+      writing: () => Promise.reject(new Error('refused')),
+    } as never)
+    const change = (path: string, before: string, after: string) => ({
+      path,
+      before,
+      after,
+      edits: [{ from: 0, to: 3, insert: after.slice(0, 3) }],
+      back: [{ from: 0, to: 3, insert: before.slice(0, 3) }],
+    })
+    await replaceInNotes(ws, [
+      change('/space/a.md', 'one\n', 'ONE\n'),
+      change('/space/b.md', 'two\n', 'TWO\n'),
+    ])
+    expect(owed).toHaveBeenCalledWith(ws.documents[0])
+    expect(ws.documents[0]?.dirty).toBe(true)
+    expect(disk.get('/space/b.md')).toBe('TWO\n')
+  })
+
+  test('a note open here goes down through the turn that takes in what is on the disk', async () => {
+    const { ws } = space({ '/space/a.md': 'one\ntwo\n' }, '/space/a.md')
+    const note = ws.documents[0]
+    if (!note) throw new Error('no note')
+    const seen: { base: string | null; words: string; dirty: boolean }[] = []
+    const across = {
+      alone: false,
+      writing: async (
+        one: typeof note,
+        _path: string,
+        write: (words: string) => Promise<unknown>,
+      ) => {
+        seen.push({ base: one.onDisk, words: one.latest, dirty: one.dirty })
+        await write(one.latest)
+        one.onDisk = one.latest
+        return { words: one.latest, revision: one.revision }
+      },
+    }
+    meetAcross(across as never)
+
+    await replaceInNotes(ws, [
+      {
+        path: '/space/a.md',
+        before: 'one\ntwo\n',
+        after: 'ONE\ntwo\n',
+        edits: [{ from: 0, to: 3, insert: 'ONE' }],
+        back: [{ from: 0, to: 3, insert: 'one' }],
+      },
+    ])
+
+    // What it merges against is what the file said, not the words not written yet.
+    expect(seen).toEqual([{ base: 'one\ntwo\n', words: 'ONE\ntwo\n', dirty: true }])
+    expect(disk.get('/space/a.md')).toBe('ONE\ntwo\n')
+    expect(note.dirty).toBe(false)
+    expect(note.onDisk).toBe('ONE\ntwo\n')
+  })
+
+  test('news heard while the version is kept merges against what the file said', async () => {
+    const { ws } = space({ '/space/a.md': 'one\n' }, '/space/a.md')
+    const note = ws.documents[0]
+    if (!note) throw new Error('no note')
+    meetAcross({ alone: false, writing: () => Promise.resolve(null) } as never)
+    let letGo = () => undefined as unknown
+    holding = { command: 'snapshot_note', until: new Promise((go) => (letGo = () => go())) }
+    const writing = replaceInNotes(ws, [
+      {
+        path: '/space/a.md',
+        before: 'one\n',
+        after: 'ONE\n',
+        edits: [{ from: 0, to: 3, insert: 'ONE' }],
+        back: [{ from: 0, to: 3, insert: 'one' }],
+      },
+    ])
+    await vi.waitFor(() => expect(sent.some((one) => one.command === 'snapshot_note')).toBe(true))
+    expect(note.onDisk).toBe('one\n')
+    expect(note.dirty).toBe(true)
+    letGo()
+    await writing
+  })
+
+  test('a note that went from under it stays owed rather than clean', async () => {
+    const { ws } = space({ '/space/a.md': 'one\n' }, '/space/a.md')
+    const note = ws.documents[0]
+    if (!note) throw new Error('no note')
+    meetAcross({ alone: false, writing: () => Promise.resolve(null) } as never)
+    await replaceInNotes(ws, [
+      {
+        path: '/space/a.md',
+        before: 'one\n',
+        after: 'ONE\n',
+        edits: [{ from: 0, to: 3, insert: 'ONE' }],
+        back: [{ from: 0, to: 3, insert: 'one' }],
+      },
+    ])
+    expect(note.dirty).toBe(true)
+    expect(note.latest).toBe('ONE\n')
+  })
+
+  test('a window alone writes as it always has', async () => {
+    const { ws } = space({ '/space/a.md': 'one\n' }, '/space/a.md')
+    const writing = vi.fn()
+    meetAcross({ alone: true, writing } as never)
+    await replaceInNotes(ws, [
+      {
+        path: '/space/a.md',
+        before: 'one\n',
+        after: 'ONE\n',
+        edits: [{ from: 0, to: 3, insert: 'ONE' }],
+        back: [{ from: 0, to: 3, insert: 'one' }],
+      },
+    ])
+    expect(writing).not.toHaveBeenCalled()
+    expect(disk.get('/space/a.md')).toBe('ONE\n')
+  })
+
+  test('a closed note is read and written in one turn of the file', async () => {
+    const { ws } = space({ '/space/a.md': 'one\n' })
+    const turns: string[] = []
+    const locks = {
+      request: async (name: string, ...rest: unknown[]) => {
+        const run = rest.at(-1) as (lock: unknown) => Promise<unknown>
+        if (!name.startsWith('nib:file:')) return run({ name })
+        turns.push(`in ${name}`)
+        const answer = await run({ name })
+        turns.push(`out ${name}`)
+        return answer
+      },
+    }
+    vi.stubGlobal('navigator', { locks })
+    try {
+      await replaceInNotes(ws, [
+        {
+          path: '/space/a.md',
+          before: 'one\n',
+          after: 'ONE\n',
+          edits: [{ from: 0, to: 3, insert: 'ONE' }],
+          back: [{ from: 0, to: 3, insert: 'one' }],
+        },
+      ])
+    } finally {
+      vi.unstubAllGlobals()
+    }
+    expect(turns).toEqual(['in nib:file:/space/a.md', 'out nib:file:/space/a.md'])
+    expect(disk.get('/space/a.md')).toBe('ONE\n')
   })
 })

@@ -1120,9 +1120,18 @@ function holds(tail: string): boolean {
  *  that says when it will not go, a layout that asks before ending a terminal. The watch of
  *  the spaces with no engine, what a move does to the steps of undo and across itself are
  *  behind doors. Measured 3,558,622.
+ *
+ *  Raised 2026-11-04, to 3,574,900, and to 389 modules, for one note across windows: a file's
+ *  turn taken by every whole-file write (workspace/in-turn.ts), a note's words in one line
+ *  ending, and a dirty tab saying what it was typed on. What could wait is behind doors: the
+ *  windows' bus, the locks, the merge on restore. Measured 3,574,813, 388 modules.
+ *
+ *  Raised 2026-11-04, to 3,581,100, for words worked out inside a file's turn (rename, undo,
+ *  a block named), an open note's write through the other windows, and restored words
+ *  waiting to have met them. Measured 3,580,965, 388 modules.
  */
-const BUDGET = 3_574_900
-const MOST_FILES = 388
+const BUDGET = 3_581_100
+const MOST_FILES = 389
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

@@ -31,6 +31,7 @@ import { record } from './sync/record.svelte'
 import type { Folded } from './sync/web-copies'
 import { workspace } from './workspace.svelte'
 import type { FileOp } from './workspace/file-ops'
+import { unixLines } from './workspace/documents.svelte'
 import { samePath } from './space-paths'
 
 export const STORAGE_KEY = MIRRORS_KEY
@@ -714,7 +715,7 @@ class Sync {
     if (!note || note.dirty) return
 
     const content = await invoke<string>('read_note', { path }).catch(() => null)
-    if (content === null || content === note.text) return
+    if (content === null || unixLines(content) === note.text) return
     // A room joined to the note but out of reach takes no file: the words would go to
     // it as this device's own typing once it is reached again (#541).
     if (id !== undefined) rooms.letGoUnreached(id)

@@ -6,21 +6,78 @@
  *  The tabs with nothing unwritten in them are not: the files are there. Fetched only
  *  where there is such an entry. */
 
-import { type Draft, panesOf, readSession, type Session } from './session'
+import { unixLines } from './documents.svelte'
+import { type Draft, readClosed, readDraft } from './session'
 import { ifFree, locksHere, locksWork } from '../locks'
 import { log } from '../log'
+import { isNumber, isRecord } from '../stored'
 import { leftLately, slotLock, slotOf } from './slot'
-
-/** The tabs of a session whose words are nowhere else. */
-function wordsOnlyIn(session: Session): Draft[] {
-  const all = session.layout
-    ? panesOf(session.layout.frame).flatMap((pane) => pane.tabs)
-    : (session.tabs ?? [])
-  return all.filter(wordsOnly)
-}
+import { TAB_KINDS } from './tab-kinds'
+import { mergedOver } from './unwritten'
 
 function wordsOnly(one: Draft): boolean {
+  if (!TAB_KINDS[one.kind].words) return false
   return one.dirty || (one.path === null && one.doc.trim() !== '')
+}
+
+/** A session's entry as written, with the tabs whose words are nowhere else out of it and
+ *  into `found`. The one place that knows where an entry holds tabs: a strip anywhere in it,
+ *  which is a pane of the arrangement, of a split, of a set out of sight (`sets`, of any
+ *  depth) or the flat strip of an older build; and the closed stack, whose words are in
+ *  Recently deleted once they have an entry there. A holder of tabs added later is a strip
+ *  like these, and is found. */
+function parted(value: unknown, found: Draft[]): unknown {
+  if (Array.isArray(value)) return value.map((one) => parted(one, found))
+  if (!isRecord(value)) return value
+  const out: Record<string, unknown> = {}
+  for (const [name, field] of Object.entries(value)) {
+    if (name === 'tabs' && Array.isArray(field)) Object.assign(out, strip(value, field, found))
+    else if (name === 'closed' && Array.isArray(field)) out[name] = stack(field, found)
+    else if (name !== 'active' && name !== 'recent') out[name] = parted(field, found)
+    else if (!Array.isArray(value.tabs)) out[name] = field
+  }
+  return out
+}
+
+/** A strip without those tabs, its tab in front and its order of use counted along what is
+ *  left: both are indices into it (`PaneDraft`). */
+function strip(pane: Record<string, unknown>, tabs: unknown[], found: Draft[]) {
+  const moved = new Map<number, number>()
+  const kept: unknown[] = []
+  tabs.forEach((one, at) => {
+    const draft = readDraft(one)
+    if (draft && wordsOnly(draft)) {
+      found.push(draft)
+      return
+    }
+    moved.set(at, kept.length)
+    kept.push(one)
+  })
+  const active = isNumber(pane.active) ? pane.active : 0
+  // The tab in front gone: the one after it, as `built` looks for one, or the last.
+  const next = tabs.findIndex((_, at) => at >= active && moved.has(at))
+  return {
+    tabs: kept,
+    ...('active' in pane ? { active: moved.get(next) ?? Math.max(kept.length - 1, 0) } : {}),
+    ...(Array.isArray(pane.recent)
+      ? {
+          recent: pane.recent.flatMap((at: unknown) => {
+            const to = isNumber(at) ? moved.get(at) : undefined
+            return to === undefined ? [] : [to]
+          }),
+        }
+      : {}),
+  }
+}
+
+/** The closed stack without those tabs. */
+function stack(closed: unknown[], found: Draft[]): unknown[] {
+  return closed.filter((one) => {
+    const entry = readClosed(one)
+    if (!entry || entry.trashed !== undefined || !wordsOnly(entry.draft)) return true
+    found.push(entry.draft)
+    return false
+  })
 }
 
 /** The entries in storage that are another window's session. */
@@ -55,13 +112,12 @@ export async function takeSessionsLeft(
     }
     let working: Promise<void> = Promise.resolve()
     const work = async () => {
-      const raw = parsed(storage.getItem(key))
-      const session = readSession(raw)
-      const drafts = session ? wordsOnlyIn(session) : []
+      const drafts: Draft[] = []
+      const rest = parted(parsed(storage.getItem(key)), drafts)
       if (drafts.length) await take(drafts)
       // The first window's arrangement is what the next launch reads; only the words go.
       if (slot !== 0) storage.removeItem(key)
-      else if (drafts.length) storage.setItem(key, JSON.stringify(withoutWords(raw)))
+      else if (drafts.length) storage.setItem(key, JSON.stringify(rest))
     }
     await ifFree(locks, slotLock(slot), () => (working = work()))
     await working.catch((error: unknown) => {
@@ -71,43 +127,46 @@ export async function takeSessionsLeft(
   return waiting
 }
 
-/** A session's entry as written, without the tabs `wordsOnlyIn` takes. */
-function withoutWords(raw: unknown): unknown {
-  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return raw
-  const out: Record<string, unknown> = {}
-  for (const [name, value] of Object.entries(raw)) {
-    out[name] =
-      name === 'tabs' && Array.isArray(value)
-        ? value.filter((one) => !wordsOnly(one as Draft))
-        : name === 'sides' && Array.isArray(value)
-          ? value.map(withoutWords)
-          : name === 'layout' || name === 'frame' || name === 'pane'
-            ? withoutWords(value)
-            : value
-  }
-  return out
-}
-
 /** Those tabs as this window will hold them. A note with unwritten words has a file, and
  *  this window or that file may have moved on since: its words are kept as a draft of its
  *  own beside it, never merged into or dropped for what is there, and only where the file
- *  or an open note here does not already say them. */
+ *  or an open note here does not already say them: as they are, or with what has been
+ *  written since. Two panes on one note are one set of words. `spaceOf` is the space the file
+ *  is in, which is the draft's from here on. */
 export async function asDrafts(
   drafts: readonly Draft[],
   says: (path: string) => Promise<string | null>,
+  spaceOf: (path: string) => string | null = () => null,
 ): Promise<Draft[]> {
   const out: Draft[] = []
+  const seen = new Set<string>()
   for (const draft of drafts) {
     if (draft.path === null) {
       out.push(draft)
       continue
     }
-    if ((await says(draft.path)) === draft.doc) continue
-    const made: Draft = { ...draft, path: null, dirty: true }
+    if (draft.share !== undefined) {
+      if (seen.has(draft.share)) continue
+      seen.add(draft.share)
+    }
+    if (await saidThere(draft, await says(draft.path))) continue
+    const space = spaceOf(draft.path)
+    const made: Draft = { ...draft, path: null, dirty: true, ...(space ? { space } : {}) }
     delete made.share
+    delete made.base
     out.push(made)
   }
   return out
+}
+
+/** Whether a file's words already hold a tab's unwritten ones. */
+async function saidThere(draft: Draft, read: string | null): Promise<boolean> {
+  if (read === null) return false
+  const disk = unixLines(read)
+  const words = unixLines(draft.doc)
+  if (disk === words) return true
+  if (draft.base === undefined || draft.kind !== 'note') return false
+  return (await mergedOver(unixLines(draft.base), words, disk)) === disk
 }
 
 function parsed(text: string | null): unknown {

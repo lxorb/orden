@@ -46,6 +46,9 @@ export interface Writes {
   keep(id: string): void
   scheduleSession(): void
   persist(): void
+  /** A note's file now says all its document does: whatever a closed tab kept of it is
+   *  on the disk, and the file is what to come back from. */
+  wroteAll(path: string, key: string): void
   loadTree(): Promise<void>
   /** The name a folder will take: the wanted one, or the next number after it where
    *  the folder already holds that name - `except` left out of what it holds. The
@@ -60,9 +63,6 @@ export interface Writes {
   /** A file that came to be, said once to everything that keeps files by path; `key`
    *  names the open document it is. See workspace/file-ops.ts. */
   fileCame(path: string, kind: 'file' | 'folder', key?: string): Promise<void>
-  /** A note's file now says all its document does: whatever a closed tab kept of it is
-   *  on the disk, and the file is what to come back from. */
-  wroteAll(path: string, key: string): void
 }
 
 /** How long a move of sync's waits for a write in the air, in milliseconds. A write on a
@@ -492,6 +492,12 @@ export class Saving {
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
   private readonly claimed = new Set<string>()
 
+  /** The same across the windows, which each have their own `claimed`: the lock of each path
+   *  claimed here, held until it has landed. Two windows placing one name in one moment
+   *  would otherwise both find it free, and the second's write take the first's note. */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
+  private readonly claimHeld = new Map<string, () => void>()
+
   private isClaimed(path: string): boolean {
     return [...this.claimed].some((one) => samePath(one, path))
   }
@@ -524,6 +530,8 @@ export class Saving {
       await this.saveWaiting()
     } finally {
       this.claimed.delete(path)
+      this.claimHeld.get(path)?.()
+      this.claimHeld.delete(path)
     }
     return path
   }
@@ -543,6 +551,7 @@ export class Saving {
     // Fetched here rather than imported at the top: saving is in the first paint, and a
     // draft given a place is not.
     const { pairOf } = await import('../pages/held')
+    const { holdIfFree } = await import('../locks')
     const found: string[] = []
     for (;;) {
       const name = freePath(
@@ -553,19 +562,29 @@ export class Saving {
           this.ws.freeName(folder, candidate) !== candidate,
       )
       const path = joinPath(folder, name)
+      const release = await holdIfFree(`nib:claim:${path}`)
+      if (release === null) {
+        found.push(name)
+        continue
+      }
       // The other half of a page note's pair as well: a page note landing beside a PDF
       // named as its paper takes that PDF for its own, and the listing that would have
       // said so is not this space's either.
       const other = pairOf(name)
       const taken =
         (await onDisk(path)) || (other !== null && (await onDisk(joinPath(folder, other))))
-      if (note.path !== null) return null
+      if (note.path !== null) {
+        release()
+        return null
+      }
       if (taken) found.push(name)
       else if (!this.isClaimed(path) && this.ws.freeName(folder, name) === name) {
         note.path = path
         this.claimed.add(path)
+        this.claimHeld.set(path, release)
         return path
       }
+      release()
     }
   }
 

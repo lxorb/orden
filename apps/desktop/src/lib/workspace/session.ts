@@ -41,6 +41,10 @@ export interface Draft {
   /** What was folded, as pairs of line numbers. Absent for a tab with nothing
    *  folded, which is what a tab is unless it says otherwise. */
   folds?: readonly FoldLines[] | undefined
+  /** For a tab with a file and unwritten words: the version of the file they were typed on,
+   *  what they are merged against should the file have gone on since; see unwritten.ts.
+   *  Absent for every other tab, and in a session written before it was kept. */
+  base?: string | undefined
   /** Which document this tab was a view of. Two panes showing the same note
    *  write the same key here, so a restart puts them back on one document rather
    *  than on two copies of it. Absent for a tab that had it to itself. */
@@ -232,7 +236,7 @@ export function readDraft(value: unknown): Draft | null {
   if (!isRecord(value)) return null
 
   const { kind, path, name, doc, dirty, cursor, scroll, anchor, share, reading } = value
-  const { folds, page, zoom, pinned, address, space, source, apart } = value
+  const { folds, page, zoom, pinned, address, space, source, apart, base } = value
   if (typeof name !== 'string' || typeof doc !== 'string') return null
   if (path !== null && typeof path !== 'string') return null
 
@@ -248,6 +252,7 @@ export function readDraft(value: unknown): Draft | null {
     scroll: isNumber(scroll) ? scroll : 0,
     ...(isNumber(anchor) ? { anchor } : {}),
     ...(shut ? { folds: shut } : {}),
+    ...(path !== null && dirty === true && typeof base === 'string' ? { base } : {}),
     ...(isString(share) ? { share } : {}),
     ...(reading === true ? { reading: true } : {}),
     ...(typeof source === 'boolean' ? { source } : {}),
@@ -464,11 +469,30 @@ function bareFrame(frame: FrameDraft): FrameDraft {
     return { ...frame, sides: [bareFrame(frame.sides[0]), bareFrame(frame.sides[1])] }
   }
 
-  const tabs = frame.pane.tabs.map((draft) =>
-    draft.path && draft.doc ? { ...draft, doc: '', dirty: false } : draft,
-  )
+  const tabs = frame.pane.tabs.map((draft) => {
+    if (!draft.path || !draft.doc) return draft
+    const bare: Draft = { ...draft, doc: '', dirty: false }
+    delete bare.base
+    return bare
+  })
 
   return { kind: 'pane', pane: { ...frame.pane, tabs } }
+}
+
+function withoutBases(layout: Layout): Layout | null {
+  if (!panesOf(layout.frame).some((pane) => pane.tabs.some((tab) => tab.base !== undefined)))
+    return null
+  const bare = (frame: FrameDraft): FrameDraft => {
+    if (frame.kind === 'split')
+      return { ...frame, sides: [bare(frame.sides[0]), bare(frame.sides[1])] }
+    const tabs = frame.pane.tabs.map((draft) => {
+      const out = { ...draft }
+      delete out.base
+      return out
+    })
+    return { ...frame, pane: { ...frame.pane, tabs } }
+  }
+  return { ...layout, frame: bare(layout.frame) }
 }
 
 /** Writes the session down, giving things up until it fits.
@@ -490,6 +514,11 @@ export function writeSession(key: string, state: Session): boolean {
   // disk or were deliberately given up on.
   const shorter: Session = { ...state, closed: [] }
   if (put(key, shorter)) return true
+
+  // What the words were typed on, next: without it they come back all the same, with the
+  // file kept as a version rather than merged.
+  const unmerged = state.layout ? withoutBases(state.layout) : null
+  if (unmerged && put(key, { ...shorter, layout: unmerged })) return true
 
   const lean = state.layout ? withoutText(state.layout) : undefined
   return put(key, { ...shorter, ...(lean ? { layout: lean } : {}) })

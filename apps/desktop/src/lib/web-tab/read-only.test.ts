@@ -168,7 +168,8 @@ describe('in a space shared to be read', () => {
 
     expect(before()).toEqual(was)
     expect(writes()).toEqual([])
-    expect(tab.doc).toBe(SHORTCUT)
+    // In the editor's line endings, as every note's words are.
+    expect(tab.doc).toBe(SHORTCUT.replace(/\r\n/g, '\n'))
   })
 
   test('a website in the old format opens where it points, and stays as it is', async () => {

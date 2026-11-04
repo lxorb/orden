@@ -94,6 +94,7 @@ import { draftFile, hasWords, isDraft, isUnsaved, worthAFile } from './workspace
 import { TAB_KINDS } from './workspace/tab-kinds'
 import type { Picked } from './import/sources'
 import { type Binning, type FileAction, FileActions, type Kept } from './workspace/undo.svelte'
+import { inFileTurn, meetAcross } from './workspace/in-turn'
 import { writeFile } from './workspace/write-file'
 import { isScratchpad, shown as pad } from './scratchpad/is.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
@@ -219,6 +220,7 @@ const SESSION_DELAY = 400
 /** The most words of a document with a file the session copies: longer than a book,
  *  a fifth of what storage holds. A plane of ten thousand strokes is seven million. */
 const WORDS_KEPT = 1_000_000
+
 /** How far back one tab remembers. Longer than anybody follows a link in one
  *  sitting, short enough that a trail is never what a session is made of. */
 const TRAIL = 30
@@ -969,6 +971,7 @@ class Workspace {
   /** Writes from here on keep in step with the other windows; see workspace/across.ts. */
   meetOthers(across: Across) {
     this.saving.across = across
+    meetAcross(across)
   }
 
   /** How a write before that fetches it; see `acrossSoon` in workspace/saving.svelte.ts. */
@@ -1002,10 +1005,16 @@ class Workspace {
         const says = async (path: string) =>
           this.opened.at(path)?.latest ??
           (await invoke<string>('read_note', { path }).catch(() => null))
-        const tabs = await this.tabsFrom(await asDrafts(drafts, says), this.panes.focusedId)
+        const spaceOf = (path: string) =>
+          this.spaces.find((one) => within(one.root, path) !== null)?.id ?? null
+        const tabs = await this.tabsFrom(
+          await asDrafts(drafts, says, spaceOf),
+          this.panes.focusedId,
+        )
         this.tabs = byPin([...this.tabs, ...tabs])
-        // Written down here before the entry that held them lets them go.
-        this.persist()
+        // Written down here before the entry that held them lets them go, and that entry
+        // stays where storage would not take them.
+        if (!this.persist()) throw new Error('no room to write them down')
       })
       if (waiting) setTimeout(() => void this.takeWhatWasLeft(slot), LEAVING_GRACE)
     } catch (error) {
@@ -1104,10 +1113,13 @@ class Workspace {
         }
 
         // A file that was clean is read again, so an edit made elsewhere shows up,
-        // and the read is the round trip a second open of the same file waits out.
+        // and the read is the round trip a second open of the same file waits out. One
+        // with unwritten words is read as well: the file may have gone on without them.
         const note =
-          holdsWords(draft.kind) && draft.path && !draft.dirty
-            ? await this.opened.opening(draft.path, () => this.drafted(draft))
+          holdsWords(draft.kind) && draft.path
+            ? await this.opened.opening(draft.path, () =>
+                draft.dirty ? this.unwrittenBack(draft) : this.drafted(draft),
+              )
             : this.opened.make({
                 kind: draft.kind,
                 path: draft.path,
@@ -1141,8 +1153,43 @@ class Workspace {
   private already(draft: Draft): NoteDoc | null {
     const shared = draft.share ? this.opened.withKey(draft.share) : null
     if (shared && samePath(shared.path, draft.path)) return shared
+    // The other pane of a note whose file has gone: its draft, made a moment ago.
+    const draftOfIt = draft.share ? this.opened.draftOf(draft.share) : null
+    if (draftOfIt) return draftOfIt
 
     return draft.path ? this.opened.at(draft.path) : null
+  }
+
+  /** One draft's document with words its file never got, against what the file says now;
+   *  see workspace/unwritten.ts. */
+  private async unwrittenBack(draft: Draft): Promise<NoteDoc | null> {
+    const path = draft.path
+    if (path === null) return null
+    const { cameBack } = await import('./workspace/unwritten')
+    const back = await cameBack(
+      { ...draft, path },
+      {
+        read: (one) => invoke<string>('read_note', { path: one }).catch(() => null),
+        exists: onDisk,
+        keepVersion: (one, content) => invoke('snapshot_note', { path: one, content }),
+        spaceOf: (one) => this.spaces.find((space) => within(space.root, one) !== null)?.id ?? null,
+        reachable: (one) => {
+          const root = this.rootHolding(one)
+          return root === null ? Promise.resolve(true) : onDisk(root)
+        },
+      },
+    )
+    const note = this.opened.make({
+      kind: draft.kind,
+      path: back.path,
+      name: draft.name,
+      text: back.text,
+      dirty: back.dirty,
+      home: back.home,
+    })
+    note.onDisk = back.onDisk
+    if (back.path === null && draft.share !== undefined) this.opened.wentDraft(draft.share, note)
+    return note
   }
 
   /** One draft's document, read from its file. Null for a file that has gone. */
@@ -1402,6 +1449,10 @@ class Workspace {
       // cost its whole length to write out, on every pause.
       doc: copied ? tab.doc : '',
       dirty: copied && tab.dirty,
+      // What those words were typed on, for a file that goes on without them.
+      ...(copied && tab.dirty && tab.path !== null && tab.note.onDisk !== null
+        ? { base: tab.note.onDisk }
+        : {}),
       cursor: tab.cursor ?? 0,
       scroll: tab.scroll ?? 0,
       anchor: tab.anchor,
@@ -1420,11 +1471,12 @@ class Workspace {
     }
   }
 
-  persist() {
+  /** Answers whether the session is written down. */
+  persist(): boolean {
     this.session.cancel()
     // Before this window has its slot there is nothing here yet that the session holds
     // and nothing to overwrite another window's with.
-    if (this.sessionKey === null) return
+    if (this.sessionKey === null) return false
 
     const state: Session = {
       spaces: this.spaces,
@@ -1441,10 +1493,10 @@ class Workspace {
       sets: this.setsWritten(),
     }
 
-    writeSession(this.sessionKey, state)
+    const written = writeSession(this.sessionKey, state)
 
     // The next launch is the first window's.
-    if (this.slot !== 0) return
+    if (this.slot !== 0) return written
 
     // And what the next launch will ask for first, for the crate to read while the
     // webview starts: this space's tree and the notes a restore reads off the disk,
@@ -1459,6 +1511,7 @@ class Workspace {
         .filter((path) => path !== null),
       web: this.panes.all.some((pane) => this.showing(pane.id)?.kind === 'web'),
     })
+    return written
   }
 
   /** The spaces' sets out of sight, as read; sets.svelte.ts writes them once fetched. */
@@ -2932,7 +2985,7 @@ class Workspace {
           // until it is read again the row is sitting in a folder that does not hold
           // it; see `remove`, which puts a row back the same way.
           try {
-            await invoke('rename_note', { from, to: target })
+            await inFileTurn(from, () => invoke('rename_note', { from, to: target }))
           } catch (error) {
             await back()
             await this.loadTree()
@@ -4539,7 +4592,11 @@ class Workspace {
     // which is the same file to Windows and to a Mac - and the row wore a name
     // nothing answered to until the next listing. See `move` and `remove`.
     try {
-      await invoke('rename_note', { from: path, to: target, ...(hold ? { hold } : {}) })
+      // In the file's turn: another window's write that has read it lands first or finds
+      // it gone, and does not put it back; see workspace/across.ts.
+      await inFileTurn(path, () =>
+        invoke('rename_note', { from: path, to: target, ...(hold ? { hold } : {}) }),
+      )
     } catch (error) {
       await this.loadTree()
       throw error
@@ -4692,14 +4749,16 @@ class Workspace {
 
     try {
       if (toAccount) {
-        await invoke(isFolder ? 'delete_folder' : 'delete_note', { path })
+        await inFileTurn(path, () => invoke(isFolder ? 'delete_folder' : 'delete_note', { path }))
         if (isFolder) return held && { content: '', folder: true, ...held }
         return words ? { content: content ?? '' } : null
       }
-      const entry = await invoke<{ id: string }>('trash_item', {
-        path,
-        kind: isFolder ? 'folder' : 'note',
-      })
+      const entry = await inFileTurn(path, () =>
+        invoke<{ id: string }>('trash_item', {
+          path,
+          kind: isFolder ? 'folder' : 'note',
+        }),
+      )
       return { content: content ?? '', trashId: entry.id, ...(isFolder ? { folder: true } : {}) }
     } catch (error) {
       // The row was hidden before the file was asked to go, so a delete that

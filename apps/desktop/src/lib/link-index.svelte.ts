@@ -74,6 +74,7 @@ import { invoke } from './tauri'
 import { coveredBy } from './workspace/archive.svelte'
 import type { NoteDoc } from './workspace/documents.svelte'
 import type { FileOp } from './workspace/file-ops'
+import { inFileTurn, writeEdited, writeInTurn } from './workspace/in-turn'
 import { log } from './log'
 
 /** One place a link was found, as a row in the panel. */
@@ -1807,45 +1808,66 @@ class Links {
       const doc = open(absolute)
       const drawn =
         doc && rewrite && !isPagesTarget(note.path) ? await rewrite.drawnPlane(doc) : null
-      const before = await this.wordsOf(absolute, target, open)
-      if (before === null) continue
       // In the same tick as the words: the entry that describes them.
-      const read = listed?.(note.path) ?? note
+      let read = listed?.(note.path) ?? note
+      const drawing = { relinked: false }
 
       // A plane is JSON, and is rewritten as JSON; see canvas-rewrite.ts.
       const file = card ?? moving
-      let after = rewrite
-        ? rewrite.retargetCanvas(before, source, file, to)
-        : retargetLinks(before, source, to)
-      if (after === null || after === before) continue
-
-      // Taken by the document in the same breath as its words were read, so no
-      // keystroke falls between the two; one landing while the write is in the air
-      // is the document's own, and marks it for its next write.
-      const relinked =
-        drawn !== null &&
-        rewrite !== null &&
-        drawn.relinked((canvas) => rewrite.retargetPlane(canvas, source, file, to))
-      if (relinked && doc) after = doc.text
-      else {
-        const edit = oneEdit(before, after)
-        if (doc && edit) doc.edited([edit], after)
-      }
-
-      await invoke('snapshot_note', { path: target, content: before }).catch(() => undefined)
+      const worked = (before: string) =>
+        rewrite
+          ? rewrite.retargetCanvas(before, source, file, to)
+          : retargetLinks(before, source, to)
+      const keepIt = (before: string) =>
+        invoke('snapshot_note', { path: target, content: before }).catch(() => undefined)
       // A note that cannot be written - read-only, held by another program, a full
       // disk - keeps its old link and is said in the log; the others are rewritten
       // all the same. Thrown, it undid the move that asked for this: opening a PDF
       // discarded the page note made for it, and with it the PDF, for good (#537).
-      const wrote = await invoke('write_note', { path: target, content: after }).then(
-        () => true,
-        (error: unknown) => {
-          log('warn', `a link in ${target} could not be rewritten: ${String(error)}`)
-          return false
-        },
-      )
-      if (!wrote) continue
-      if (relinked) doc?.wroteAs(after)
+      const refused = (error: unknown) => {
+        log('warn', `a link in ${target} could not be rewritten: ${String(error)}`)
+        return null
+      }
+
+      const after = doc
+        ? await (async () => {
+            const before = await this.wordsOf(absolute, target, open)
+            if (before === null) return null
+            read = listed?.(note.path) ?? note
+            let words = worked(before)
+            if (words === null || words === before) return null
+
+            // Taken by the document in the same breath as its words were read, so no
+            // keystroke falls between the two; one landing while the write is in the air
+            // is the document's own, and marks it for its next write.
+            const knew = doc.onDisk
+            drawing.relinked =
+              drawn !== null &&
+              rewrite !== null &&
+              drawn.relinked((canvas) => rewrite.retargetPlane(canvas, source, file, to))
+            if (drawing.relinked) words = doc.text
+            else {
+              const edit = oneEdit(before, words)
+              if (edit) doc.edited([edit], words)
+            }
+            return writeEdited(doc, target, words, knew, () => keepIt(before))
+          })().catch(refused)
+        : // Worked out in the file's turn: another window's write that came first is in it.
+          await inFileTurn(target, async () => {
+            const before = await this.wordsOf(absolute, target, open)
+            if (before === null) return null
+            read = listed?.(note.path) ?? note
+            const words = worked(before)
+            if (words === null || words === before) return null
+            const late = open(absolute)
+            const edit = oneEdit(before, words)
+            if (late && edit) late.edited([edit], words)
+            await keepIt(before)
+            await writeInTurn(target, words)
+            return words
+          }).catch(refused)
+      if (after === null) continue
+      if (drawing.relinked) doc?.wroteAs(after)
       for (const hear of hearing) hear(target, after)
       told?.push(target)
 
@@ -1957,30 +1979,41 @@ class Links {
     if (!canWriteAt(absolute)) return null
 
     const open = await this.openDocument()
-    const before = await this.wordsOf(absolute, absolute, open)
-    if (before === null) return null
-
     const { namedBlock } = await import('@orden/markdown/block-names')
-    const named = namedBlock(before, line, () =>
-      freeBlockId(new Set(blockIds(before).map((one) => one.id))),
-    )
-    if (!named) return null
-    if (named.source === before) return named.id
-
-    const id = named.id
-    const after = named.source
-
-    // Taken by the document in the same breath as its words were read, for the
-    // reason `retarget` gives.
     const doc = open(absolute)
-    const edit = oneEdit(before, after)
-    if (doc && edit) doc.edited([edit], after)
 
-    await invoke('snapshot_note', { path: absolute, content: before }).catch(() => undefined)
-    await invoke('write_note', { path: absolute, content: after })
+    const name = async (): Promise<string | null> => {
+      const before = await this.wordsOf(absolute, absolute, open)
+      if (before === null) return null
 
-    this.noteSaved(absolute, after)
-    return id
+      const named = namedBlock(before, line, () =>
+        freeBlockId(new Set(blockIds(before).map((one) => one.id))),
+      )
+      if (!named) return null
+      if (named.source === before) return named.id
+
+      const id = named.id
+      const after = named.source
+      const keepIt = () =>
+        invoke('snapshot_note', { path: absolute, content: before }).catch(() => undefined)
+
+      // Taken by the document in the same breath as its words were read, for the
+      // reason `retarget` gives.
+      const edit = oneEdit(before, after)
+      if (doc) {
+        const knew = doc.onDisk
+        if (edit) doc.edited([edit], after)
+        await writeEdited(doc, absolute, after, knew, keepIt)
+      } else {
+        await keepIt()
+        await writeInTurn(absolute, after)
+      }
+
+      this.noteSaved(absolute, after)
+      return id
+    }
+    // Worked out in the file's turn; see `retarget`.
+    return doc ? name() : inFileTurn(absolute, name)
   }
 
   /** The note an embed names, for an export: the renderer cannot wait on a disk,

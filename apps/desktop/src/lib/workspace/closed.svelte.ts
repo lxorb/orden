@@ -10,7 +10,7 @@
 
 import { movedTo, nameOf, samePath, within } from '../space-paths'
 import type { FileOp } from './file-ops'
-import type { ClosedTab } from './session'
+import type { ClosedTab, Draft } from './session'
 
 /** Far more than anybody reaches back through, and few enough that what is kept
  *  with each entry cannot fill the session on its own. */
@@ -53,7 +53,9 @@ export class ClosedTabs {
       const stack = this.stack.map((closed) => {
         const at = closed.draft.path
         if (at === null || within(path, at) === null || !closed.draft.dirty) return closed
-        return { ...closed, draft: { ...closed.draft, path: null } }
+        const draft: Draft = { ...closed.draft, path: null }
+        delete draft.base
+        return { ...closed, draft }
       })
       if (stack.some((one, at) => one !== this.stack[at])) this.stack = stack
       return
@@ -75,11 +77,13 @@ export class ClosedTabs {
    *  back from its file, as a tab with nothing unwritten does. Only that document's: the
    *  words of another at the path may have been refused, and these say nothing of them. */
   wroteAll(path: string, key: string) {
-    const stack = this.stack.map((closed) =>
-      closed.draft.dirty && closed.draft.share === key && samePath(closed.draft.path, path)
-        ? { ...closed, draft: { ...closed.draft, dirty: false, doc: '' } }
-        : closed,
-    )
+    const stack = this.stack.map((closed) => {
+      if (!closed.draft.dirty || closed.draft.share !== key || !samePath(closed.draft.path, path))
+        return closed
+      const draft: Draft = { ...closed.draft, dirty: false, doc: '' }
+      delete draft.base
+      return { ...closed, draft }
+    })
     if (stack.some((one, at) => one !== this.stack[at])) this.stack = stack
   }
 
