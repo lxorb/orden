@@ -5,6 +5,7 @@
 import { t } from './i18n.svelte'
 import { DIVIDER, type MenuEntry } from './menu-item'
 import { search, type SearchSort } from './search.svelte'
+import { mayLiveOn } from './workspace/panels'
 import { type Panel, type PanelSide, workspace } from './workspace.svelte'
 
 /** What the Files tab offers besides the order: which files are shown at all, and
@@ -62,6 +63,8 @@ export function panelMenu(
   // panel's own rows are. A phone has no two sides to speak of - the right one
   // is a drawer of its own there - and the row is offered all the same: the
   // choice travels with the window, and a phone in a dock is a wide screen.
+  // Not for a panel that lives on one side only; see RIGHT_ONLY in workspace/panels.ts.
+  if (!mayLiveOn(id, there)) return own
   return [
     ...own,
     ...(own.length ? [DIVIDER] : []),

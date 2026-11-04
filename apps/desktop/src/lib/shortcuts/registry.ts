@@ -909,13 +909,15 @@ const APP_ENTRIES: Shortcut[] = [
   ...(__EVEN_PLUGIN__
     ? []
     : [
+        // Todos as a tab, the left side's checkbox (#1047); the Tasks panel lives on the
+        // right now, and its own tab opens it.
         {
           id: 'app.tasks',
           label: () => t('Tasks'),
           category: 'view',
           scope: 'app',
           key: 'Mod-Shift-y',
-          run: () => revealPanel('tasks'),
+          run: () => void import('../todos-entry').then(({ showTodos }) => showTodos()),
         } satisfies Shortcut,
         // The Chats panel, and two keys a chat answers itself (docs/chats.md 4.16).
         {

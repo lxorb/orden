@@ -754,10 +754,24 @@
         {/if}
 
         <!-- It takes the rest of the head, so the whole row is the control that
-         opens the list of spaces. Nothing stands beside it: the pen that made a
-         note here is gone (issue #229), and a new note is its key, the
+         opens the list of spaces. Only Todos stands beside it (#1047): the pen that
+         made a note here is gone (issue #229), and a new note is its key, the
          palette, the file list's menu and the new tab's chooser. -->
         <SpaceSwitcher />
+
+        <!-- Todos, as a tab: the space's tasks in one view, brought forward where it is
+         open already. In place of the Tasks panel, which lives on the right now, as the
+         list beside the note being written (#1047; see todos-entry.ts). -->
+        {#if !__EVEN_PLUGIN__}
+          <button
+            class="nib-glyph tool todos"
+            title={shortcuts.tooltip(t('Tasks'), 'app.tasks')}
+            aria-label={t('Tasks')}
+            onclick={() => void import('./todos-entry').then(({ showTodos }) => showTodos())}
+          >
+            <svg viewBox="0 0 13 13"><path d={TASKS_MARK} /></svg>
+          </button>
+        {/if}
       </div>
     {/if}
 

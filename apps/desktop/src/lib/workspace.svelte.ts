@@ -887,7 +887,7 @@ class Workspace {
     // has already asked for one in the second the window has been up; see
     // `panelChosen`.
     if (!this.panelChosen) {
-      this.panel = state.panel
+      this.panel = panels.leftPanelFrom(state.panel)
       this.rightPanel = state.rightPanel ?? null
     }
     this.right = panels.rightFrom(state.right, state.known)
