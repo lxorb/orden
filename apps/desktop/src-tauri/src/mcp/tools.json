@@ -40,6 +40,28 @@
     "annotations": { "destructiveHint": true, "openWorldHint": false }
   },
   {
+    "name": "process",
+    "description": "Run a program on this computer, never through a shell: run waits (up to 2 min) and answers stdout, stderr, exit; start keeps it running for read, write, kill. A program not on your list, given by path or with env asks the reader first.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "op": { "type": "string", "enum": ["run", "start", "list", "read", "write", "kill"] },
+        "program": { "type": "string", "description": "a name on PATH, or an absolute or ~/ path" },
+        "args": { "type": "array", "items": { "type": "string" } },
+        "env": { "type": "object", "additionalProperties": { "type": "string" } },
+        "cwd": { "type": "string" },
+        "stdin": { "type": "string" },
+        "timeout_ms": { "type": "integer" },
+        "id": { "type": "string" },
+        "since": { "type": "integer", "description": "read: the last answer's next" },
+        "wait_ms": { "type": "integer" },
+        "close": { "type": "boolean", "description": "write: close its input" }
+      },
+      "required": ["op"]
+    },
+    "annotations": { "destructiveHint": true, "openWorldHint": true }
+  },
+  {
     "name": "agent_status",
     "description": "Your grant (what you may reach), your tabs, the questions waiting for the reader, and whether you are stopped.",
     "inputSchema": { "type": "object", "properties": {} },

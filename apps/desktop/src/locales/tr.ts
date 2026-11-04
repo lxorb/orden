@@ -2116,6 +2116,8 @@ export const tr: Dictionary = {
   'Run commands': 'Komut çalıştırmak',
   'Read and change files anywhere on this computer':
     'Bu bilgisayarın her yerindeki dosyaları okuma ve değiştirme',
+  Programs: 'Programlar',
+  'Run programs on this computer': 'Bu bilgisayarda program çalıştırma',
   Paying: 'Ödeme',
   'Sending messages': 'Mesaj gönderme',
   'Publishing and sharing': 'Yayımlama ve paylaşma',

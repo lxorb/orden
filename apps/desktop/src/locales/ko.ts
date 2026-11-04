@@ -2074,6 +2074,8 @@ export const ko: Dictionary = {
   'Change settings': '설정 변경',
   'Run commands': '명령 실행',
   'Read and change files anywhere on this computer': '이 컴퓨터 어디서나 파일 읽기 및 변경',
+  Programs: '프로그램',
+  'Run programs on this computer': '이 컴퓨터에서 프로그램 실행',
   Paying: '결제',
   'Sending messages': '메시지 보내기',
   'Publishing and sharing': '게시 및 공유',

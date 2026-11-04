@@ -51,9 +51,9 @@
 mod args;
 mod codex_app;
 mod enroll;
-mod family;
+pub(crate) mod family;
 mod home;
-mod program;
+pub(crate) mod program;
 mod run;
 mod say;
 mod session;

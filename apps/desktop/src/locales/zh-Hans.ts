@@ -2051,6 +2051,8 @@ export const zhHans: Dictionary = {
   'Change settings': '更改设置',
   'Run commands': '运行命令',
   'Read and change files anywhere on this computer': '读取和更改此电脑上任何位置的文件',
+  Programs: '程序',
+  'Run programs on this computer': '在这台电脑上运行程序',
   Paying: '付款',
   'Sending messages': '发送消息',
   'Publishing and sharing': '发布与共享',

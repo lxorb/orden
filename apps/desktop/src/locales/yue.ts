@@ -2047,6 +2047,8 @@ export const yue: Dictionary = {
   'Change settings': '改設定',
   'Run commands': '行指令',
   'Read and change files anywhere on this computer': '讀取同修改呢部電腦任何地方嘅檔案',
+  Programs: '程式',
+  'Run programs on this computer': '喺呢部電腦度執行程式',
   Paying: '俾錢',
   'Sending messages': '發訊息',
   'Publishing and sharing': '發佈同分享',

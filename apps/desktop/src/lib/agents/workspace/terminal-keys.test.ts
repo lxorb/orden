@@ -20,7 +20,14 @@ describe('what goes without asking', () => {
   test('one command line of a program on the list, with Enter', () => {
     expect(typesFreely('git status', true, [], programs)).toBe(true)
     expect(typesFreely('npm test', true, [], programs)).toBe(true)
-    expect(typesFreely('"C:\\Program Files\\Git\\bin\\git.exe" log', true, [], programs)).toBe(true)
+  })
+
+  test('a listed name given as a path is any file called that, and asks (#1078)', () => {
+    expect(typesFreely('"C:\\Program Files\\Git\\bin\\git.exe" log', true, [], programs)).toBe(
+      false,
+    )
+    expect(typesFreely('/tmp/x/git log', true, [], programs)).toBe(false)
+    expect(typesFreely('./npm test', true, [], programs)).toBe(false)
   })
 
   test('nothing else: another program, a second command, no Enter, keys after it', () => {

@@ -2109,6 +2109,8 @@ export const pa: Dictionary = {
   'Run commands': 'ਕਮਾਂਡਾਂ ਚਲਾਉਣਾ',
   'Read and change files anywhere on this computer':
     'ਇਸ ਕੰਪਿਊਟਰ ਉੱਤੇ ਕਿਤੇ ਵੀ ਫ਼ਾਈਲਾਂ ਪੜ੍ਹੋ ਅਤੇ ਬਦਲੋ',
+  Programs: 'ਪ੍ਰੋਗਰਾਮ',
+  'Run programs on this computer': 'ਇਸ ਕੰਪਿਊਟਰ ਉੱਤੇ ਪ੍ਰੋਗਰਾਮ ਚਲਾਓ',
   Paying: 'ਭੁਗਤਾਨ',
   'Sending messages': 'ਸੁਨੇਹੇ ਭੇਜਣਾ',
   'Publishing and sharing': 'ਪ੍ਰਕਾਸ਼ਿਤ ਅਤੇ ਸਾਂਝਾ ਕਰਨਾ',

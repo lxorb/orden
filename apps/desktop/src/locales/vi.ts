@@ -2082,6 +2082,8 @@ export const vi: Dictionary = {
   'Run commands': 'Chạy lệnh',
   'Read and change files anywhere on this computer':
     'Đọc và thay đổi tệp ở bất kỳ đâu trên máy tính này',
+  Programs: 'Chương trình',
+  'Run programs on this computer': 'Chạy chương trình trên máy tính này',
   Paying: 'Thanh toán',
   'Sending messages': 'Gửi tin nhắn',
   'Publishing and sharing': 'Xuất bản và chia sẻ',

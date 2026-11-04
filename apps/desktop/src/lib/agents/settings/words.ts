@@ -19,6 +19,7 @@ export const GROUP_WORDS: Record<ScopeGroup, () => string> = {
   settings: () => t('Settings'),
   terminal: () => t('Terminal'),
   files: () => t('Files'),
+  processes: () => t('Programs'),
   helpers: () => t('Helpers'),
 }
 
@@ -39,6 +40,7 @@ export const SCOPE_WORDS: Record<Scope, () => string> = {
   settings: () => t('Change settings'),
   terminal: () => t('Run commands'),
   files: () => t('Read and change files anywhere on this computer'),
+  processes: () => t('Run programs on this computer'),
   agents: () => t('Start helpers on your AI accounts'),
 }
 

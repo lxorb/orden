@@ -2107,6 +2107,8 @@ export const fa: Dictionary = {
   'Change settings': 'تغییر تنظیمات',
   'Run commands': 'اجرای فرمان‌ها',
   'Read and change files anywhere on this computer': 'خواندن و تغییر فایل‌ها در هر جای این رایانه',
+  Programs: 'برنامه‌ها',
+  'Run programs on this computer': 'اجرای برنامه‌ها روی این رایانه',
   Paying: 'پرداخت',
   'Sending messages': 'فرستادن پیام',
   'Publishing and sharing': 'انتشار و اشتراک‌گذاری',

@@ -2104,6 +2104,8 @@ export const bn: Dictionary = {
   'Run commands': 'কমান্ড চালানো',
   'Read and change files anywhere on this computer':
     'এই কম্পিউটারের যেকোনো জায়গার ফাইল পড়া ও বদলানো',
+  Programs: 'প্রোগ্রাম',
+  'Run programs on this computer': 'এই কম্পিউটারে প্রোগ্রাম চালানো',
   Paying: 'অর্থ প্রদান',
   'Sending messages': 'বার্তা পাঠানো',
   'Publishing and sharing': 'প্রকাশ ও শেয়ার করা',

@@ -2096,6 +2096,8 @@ export const gu: Dictionary = {
   'Run commands': 'આદેશો ચલાવવા',
   'Read and change files anywhere on this computer':
     'આ કમ્પ્યુટર પર ક્યાંય પણ ફાઇલો વાંચવી અને બદલવી',
+  Programs: 'પ્રોગ્રામ',
+  'Run programs on this computer': 'આ કમ્પ્યુટર પર પ્રોગ્રામ ચલાવો',
   Paying: 'ચુકવણી',
   'Sending messages': 'સંદેશા મોકલવા',
   'Publishing and sharing': 'પ્રકાશિત અને શેર કરવું',

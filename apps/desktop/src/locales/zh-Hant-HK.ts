@@ -2050,6 +2050,8 @@ export const zhHantHK: Dictionary = {
   'Change settings': '更改設定',
   'Run commands': '執行指令',
   'Read and change files anywhere on this computer': '讀取及更改此電腦上任何位置的檔案',
+  Programs: '程式',
+  'Run programs on this computer': '在這部電腦上執行程式',
   Paying: '付款',
   'Sending messages': '傳送訊息',
   'Publishing and sharing': '發佈及共享',

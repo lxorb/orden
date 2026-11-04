@@ -76,6 +76,7 @@ pub fn halt(app: &AppHandle, agent: &str) {
         .unwrap_or_else(PoisonError::into_inner)
         .get_or_insert_with(HashSet::new)
         .insert(agent.to_string());
+    super::process::end_all(Some(agent));
     if fresh {
         let _ = app.emit(
             EVENT,
@@ -92,6 +93,7 @@ pub fn halt(app: &AppHandle, agent: &str) {
 pub fn stop(app: &AppHandle) -> bool {
     GENERATION.fetch_add(1, Ordering::SeqCst);
     let again = STOPPED.swap(true, Ordering::SeqCst);
+    super::process::end_all(None);
     #[cfg(any(windows, feature = "cef"))]
     if again {
         super::tabs::close_all(app, None);

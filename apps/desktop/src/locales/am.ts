@@ -2078,6 +2078,8 @@ export const am: Dictionary = {
   'Change settings': 'ቅንብሮችን መቀየር',
   'Run commands': 'ትዕዛዞችን ማስኬድ',
   'Read and change files anywhere on this computer': 'በዚህ ኮምፒውተር ላይ የትም ያሉ ፋይሎችን ማንበብና መቀየር',
+  Programs: 'ፕሮግራሞች',
+  'Run programs on this computer': 'በዚህ ኮምፒውተር ላይ ፕሮግራሞችን ማስኬድ',
   Paying: 'መክፈል',
   'Sending messages': 'መልዕክቶችን መላክ',
   'Publishing and sharing': 'ማተም እና ማጋራት',

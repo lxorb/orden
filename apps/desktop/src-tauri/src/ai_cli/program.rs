@@ -116,7 +116,7 @@ fn named_outright(tool: Tool) -> Option<PathBuf> {
 
 /// The `PATH` to look on and to start with: the app's own, and on a Mac and Linux the
 /// login shell's after it.
-fn search_path() -> OsString {
+pub fn search_path() -> OsString {
     let own = std::env::var_os("PATH").unwrap_or_default();
     #[cfg(unix)]
     if let Some(shell) = login_path() {

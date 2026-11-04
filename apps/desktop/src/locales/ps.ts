@@ -2107,6 +2107,8 @@ export const ps: Dictionary = {
   'Run commands': 'امرونه چلول',
   'Read and change files anywhere on this computer':
     'په دې کمپیوټر کې هر چېرته فایلونه لوستل او بدلول',
+  Programs: 'پروګرامونه',
+  'Run programs on this computer': 'په دې کمپیوټر کې پروګرامونه چلول',
   Paying: 'تادیه',
   'Sending messages': 'پیغامونه لېږل',
   'Publishing and sharing': 'خپرول او شریکول',

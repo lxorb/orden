@@ -683,6 +683,130 @@ pub enum FileKind {
     Link,
 }
 
+/// `process`: a program on this computer, run to its end or started and talked to
+/// (#1078), the way a VS Code extension's `ShellExecution` and `child_process` do. See
+/// process.rs.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Process {
+    /// What to do.
+    pub op: ProcessOp,
+    /// For `run` and `start`: the program, a bare name found on the `PATH`, or a path,
+    /// absolute or under `~/`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub program: Option<String>,
+    /// Its arguments, each as it is, never through a shell.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub args: Vec<String>,
+    /// Variables set for it, over the app's own.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub env: std::collections::BTreeMap<String, String>,
+    /// The folder it runs in: absolute, or under `~/`; the home folder when not said.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cwd: Option<String>,
+    /// For `run`, what it reads, after which its input is closed; for `write`, words
+    /// typed into a started one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stdin: Option<String>,
+    /// For `run`: how long it may take, in milliseconds.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timeout_ms: Option<u64>,
+    /// For `read`, `write` and `kill`: the started one, as `start` answered.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+    /// For `read`: what it printed after this, as the last answer's `next` said.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub since: Option<u64>,
+    /// For `read`: how long to wait for something new, in milliseconds.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub wait_ms: Option<u64>,
+    /// For `write`: its input closed after the words.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub close: bool,
+}
+
+/// What `process` does.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ProcessOp {
+    /// Started, waited for, and answered with what it printed and how it ended.
+    Run,
+    /// Started and left running, answered with its id.
+    Start,
+    /// This agent's started ones.
+    List,
+    /// What a started one printed since a cursor.
+    Read,
+    /// Words typed into a started one.
+    Write,
+    /// A started one ended, with everything it started.
+    Kill,
+}
+
+/// What `process` answers.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ProcessDone {
+    /// The started one it is about.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+    /// Whether it is still running.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub running: bool,
+    /// Its exit code, once it has one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub exit: Option<i32>,
+    /// What ended it, where it did not end on its own.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ended: Option<Ended>,
+    /// What `run` printed on its standard output: the end of it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stdout: Option<String>,
+    /// What `run` printed on its standard error: the end of it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stderr: Option<String>,
+    /// What a started one printed since the cursor, both outputs as they came.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub output: Option<String>,
+    /// The cursor for the next `read`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub next: Option<u64>,
+    /// Whether something was left out: the start of a long output, or past the most
+    /// one answer holds.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub truncated: bool,
+    /// What `list` found.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub processes: Vec<ProcessEntry>,
+}
+
+/// What ended a program that did not end on its own.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Ended {
+    /// Running past its time.
+    TimedOut,
+    /// `kill`, the stop, or the agent going.
+    Killed,
+}
+
+/// One started program, as `list` says it.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ProcessEntry {
+    /// Its id.
+    pub id: String,
+    /// The program, as it was found.
+    pub program: String,
+    /// Its arguments.
+    pub args: Vec<String>,
+    /// When it was started, in milliseconds since 1970.
+    pub started: u64,
+    /// Whether it is still running.
+    pub running: bool,
+    /// Its exit code, once it has one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub exit: Option<i32>,
+}
+
 /// `approval_status`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -808,6 +932,8 @@ verbs! {
     "browser_takeover" => Takeover(Takeover) -> Acted,
     /// Files and folders anywhere the user account reaches (#1078).
     "files" => Files(Files) -> FilesDone,
+    /// Programs on this computer, run or started and talked to (#1078).
+    "process" => Process(Process) -> ProcessDone,
     /// This agent's grant, tabs, questions and pauses.
     "agent_status" => Status(Nothing) -> Status,
     /// What the reader answered.

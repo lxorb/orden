@@ -2135,6 +2135,8 @@ export const sw: Dictionary = {
   'Run commands': 'Kuendesha amri',
   'Read and change files anywhere on this computer':
     'Kusoma na kubadilisha faili popote kwenye kompyuta hii',
+  Programs: 'Programu',
+  'Run programs on this computer': 'Kuendesha programu kwenye kompyuta hii',
   Paying: 'Kulipa',
   'Sending messages': 'Kutuma ujumbe',
   'Publishing and sharing': 'Kuchapisha na kushiriki',

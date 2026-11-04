@@ -2102,6 +2102,8 @@ export const hi: Dictionary = {
   'Run commands': 'कमांड चलाना',
   'Read and change files anywhere on this computer':
     'इस कंप्यूटर पर कहीं भी फ़ाइलें पढ़ें और बदलें',
+  Programs: 'प्रोग्राम',
+  'Run programs on this computer': 'इस कंप्यूटर पर प्रोग्राम चलाएँ',
   Paying: 'भुगतान',
   'Sending messages': 'संदेश भेजना',
   'Publishing and sharing': 'प्रकाशित और साझा करना',

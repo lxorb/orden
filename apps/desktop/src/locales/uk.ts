@@ -2183,6 +2183,8 @@ export const uk: Dictionary = {
   'Run commands': 'Виконувати команди',
   'Read and change files anywhere on this computer':
     'Читати й змінювати файли будь-де на цьому комп’ютері',
+  Programs: 'Програми',
+  'Run programs on this computer': 'Запускати програми на цьому комп’ютері',
   Paying: 'Оплата',
   'Sending messages': 'Надсилання повідомлень',
   'Publishing and sharing': 'Публікація й поширення',

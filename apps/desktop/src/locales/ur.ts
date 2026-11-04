@@ -2102,6 +2102,8 @@ export const ur: Dictionary = {
   'Run commands': 'کمانڈز چلانا',
   'Read and change files anywhere on this computer':
     'اس کمپیوٹر پر کہیں بھی فائلیں پڑھنا اور بدلنا',
+  Programs: 'پروگرام',
+  'Run programs on this computer': 'اس کمپیوٹر پر پروگرام چلائیں',
   Paying: 'ادائیگی',
   'Sending messages': 'پیغامات بھیجنا',
   'Publishing and sharing': 'شائع کرنا اور شیئر کرنا',

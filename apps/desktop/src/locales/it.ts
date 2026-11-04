@@ -2168,6 +2168,8 @@ export const it: Dictionary = {
   'Run commands': 'Eseguire comandi',
   'Read and change files anywhere on this computer':
     'Leggere e modificare file ovunque su questo computer',
+  Programs: 'Programmi',
+  'Run programs on this computer': 'Eseguire programmi su questo computer',
   Paying: 'Pagare',
   'Sending messages': 'Inviare messaggi',
   'Publishing and sharing': 'Pubblicare e condividere',

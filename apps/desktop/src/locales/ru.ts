@@ -2190,6 +2190,8 @@ export const ru: Dictionary = {
   'Run commands': 'Выполнять команды',
   'Read and change files anywhere on this computer':
     'Читать и изменять файлы в любом месте этого компьютера',
+  Programs: 'Программы',
+  'Run programs on this computer': 'Запускать программы на этом компьютере',
   Paying: 'Оплата',
   'Sending messages': 'Отправка сообщений',
   'Publishing and sharing': 'Публикация и доступ',

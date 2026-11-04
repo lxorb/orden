@@ -2106,6 +2106,8 @@ export const mr: Dictionary = {
   'Change settings': 'सेटिंग्ज बदलणे',
   'Run commands': 'आज्ञा चालवणे',
   'Read and change files anywhere on this computer': 'या संगणकावर कुठेही फाइल्स वाचा आणि बदला',
+  Programs: 'प्रोग्राम',
+  'Run programs on this computer': 'या संगणकावर प्रोग्राम चालवा',
   Paying: 'पैसे भरणे',
   'Sending messages': 'संदेश पाठवणे',
   'Publishing and sharing': 'प्रकाशित करणे आणि शेअर करणे',

@@ -2161,6 +2161,8 @@ export const es: Dictionary = {
   'Run commands': 'Ejecutar comandos',
   'Read and change files anywhere on this computer':
     'Leer y cambiar archivos en cualquier lugar de este equipo',
+  Programs: 'Programas',
+  'Run programs on this computer': 'Ejecutar programas en este equipo',
   Paying: 'Pagar',
   'Sending messages': 'Enviar mensajes',
   'Publishing and sharing': 'Publicar y compartir',

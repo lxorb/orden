@@ -202,6 +202,8 @@ fn changed(app: &AppHandle) {
     let Some(agents) = now else {
         return;
     };
+    // A gone agent's programs go with it (#1078; process.rs).
+    super::process::keep_only(&agents);
     let _ = app.emit(EVENT, Event::Connected { agents });
     settle(app);
 }

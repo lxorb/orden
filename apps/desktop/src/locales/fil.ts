@@ -2148,6 +2148,8 @@ export const fil: Dictionary = {
   'Run commands': 'Magpatakbo ng mga command',
   'Read and change files anywhere on this computer':
     'Basahin at baguhin ang mga file saanman sa computer na ito',
+  Programs: 'Mga program',
+  'Run programs on this computer': 'Magpatakbo ng mga program sa computer na ito',
   Paying: 'Pagbabayad',
   'Sending messages': 'Pagpapadala ng mensahe',
   'Publishing and sharing': 'Pag-publish at pagbabahagi',

@@ -2171,6 +2171,8 @@ export const fr: Dictionary = {
   'Run commands': 'Exécuter des commandes',
   'Read and change files anywhere on this computer':
     'Lire et modifier des fichiers partout sur cet ordinateur',
+  Programs: 'Programmes',
+  'Run programs on this computer': 'Lancer des programmes sur cet ordinateur',
   Paying: 'Payer',
   'Sending messages': 'Envoyer des messages',
   'Publishing and sharing': 'Publier et partager',

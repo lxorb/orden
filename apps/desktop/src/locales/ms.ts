@@ -2099,6 +2099,8 @@ export const ms: Dictionary = {
   'Run commands': 'Menjalankan arahan',
   'Read and change files anywhere on this computer':
     'Baca dan ubah fail di mana-mana pada komputer ini',
+  Programs: 'Program',
+  'Run programs on this computer': 'Jalankan program pada komputer ini',
   Paying: 'Membayar',
   'Sending messages': 'Menghantar mesej',
   'Publishing and sharing': 'Menerbitkan dan berkongsi',

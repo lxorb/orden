@@ -9,6 +9,18 @@ export function programOf(command: string): string {
   return name.replace(/\.(exe|cmd|bat|com|ps1|sh)$/i, '').toLowerCase()
 }
 
+/** Whether a command line's program is one on an agent's list: only a program named
+ *  bare, found on the shell's own `PATH`. A path (`/tmp/x/git`, `./git`, `~/bin/git`)
+ *  is whatever file happens to carry the name, so it is judged as a program not on the
+ *  list (#1078), as the crate's `process` judges one. */
+export function onTheList(programs: readonly string[], command: string): boolean {
+  const first = /^\s*(?:"([^"]+)"|'([^']+)'|(\S+))/.exec(command)
+  const word = first?.[1] ?? first?.[2] ?? first?.[3] ?? ''
+  if (/[\\/]/.test(word) || word.startsWith('~')) return false
+
+  return programs.map((one) => one.toLowerCase()).includes(programOf(command))
+}
+
 /** Whether a line starts only its first program: no second command after a `;`, an
  *  `&` or a `|`, nothing run inside it with backticks or `$(`, and no file written or
  *  read with `>` or `<`. Only such a line can be let through for being on an agent's

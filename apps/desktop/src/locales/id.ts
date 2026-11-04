@@ -2097,6 +2097,8 @@ export const id: Dictionary = {
   'Run commands': 'Menjalankan perintah',
   'Read and change files anywhere on this computer':
     'Membaca dan mengubah file di mana saja di komputer ini',
+  Programs: 'Program',
+  'Run programs on this computer': 'Menjalankan program di komputer ini',
   Paying: 'Membayar',
   'Sending messages': 'Mengirim pesan',
   'Publishing and sharing': 'Menerbitkan dan berbagi',

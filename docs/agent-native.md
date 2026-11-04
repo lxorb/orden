@@ -491,6 +491,7 @@ the AI sidebar, with the chat attached, and the answer comes back as a draft (de
 | `read_setting`, `write_setting` | `key`, `value` | an allowlist of keys (8.8); writing asks |
 | `capture_to_note` | `tab`, `note`?, `as`: `clip`, `screenshot`, `pdf`, `link`; `under`?, `full_page`?, `folder`?, `space`? | a page into a note, from an agent's tab or the reader's: the clipper's markdown with `source:`, a screenshot or a PDF kept beside the note and embedded, or the address; answers the note |
 | `files` | `op`: `read`, `write`, `append`, `list`, `stat`, `mkdir`, `move`, `copy`, `delete`, `search`, `changes`; `path`, `to`?, `content`?, `base64`?, `glob`?, `text`?, `since`? | files and folders anywhere the user account reaches, outside the spaces, with `files` (8.11) |
+| `process` | `op`: `run`, `start`, `list`, `read`, `write`, `kill`; `program`?, `args`?, `env`?, `cwd`?, `stdin`?, `timeout_ms`?, `id`?, `since`?, `wait_ms`?, `close`? | a program on this computer, never through a shell: run to its end, or started and read, written to and ended, with `processes` (8.12) |
 | `run_terminal` | `command`, `cwd`? | only when the terminal tab exists, and only with `terminal` (8.9) |
 | `read_terminal` | `tab`, `lines`? | one of the reader's terminal tabs as words: scrollback and screen, wrapped lines joined, marked as the terminal's; one not shown since a restart answers the lines it came back with. `context` (8.9) |
 | `type_terminal` | `tab`, `text`?, `enter`?, `keys`?, `wait_ms`? | one line typed into the reader's own shell, Enter unless told otherwise, then named keys (`Ctrl+C`, the arrows, `Tab`...); answers what it printed until it went quiet. `terminal`, and it asks like `run_terminal` (8.9) |
@@ -923,7 +924,10 @@ the sync, the AI keys, the agents' own grants, or anything in `automation.json`.
 
 `run_terminal` is its own capability, off unless granted, and in unsupervised mode still
 asks for any command not on the agent's list of allowed programs. A terminal is the whole
-machine, which is more than everything else in this document put together.
+machine, which is more than everything else in this document put together. A program is on
+the list only by its bare name: a line that starts one by its path (`/tmp/x/git`,
+`./git`, `"C:\Program Files\Git\bin\git.exe"`) asks, since any file can be called
+`git` (`onTheList` in `shell-text.ts`, #1078).
 
 **The reader's own terminals** are tabs like any other (`lib/agents/workspace/
 terminal-tab.ts`), what "look at my terminal" and "restart the server" are about. VS Code's
@@ -994,6 +998,39 @@ third party is granted.
   20 000, skipping `.git` and `node_modules`; each says `truncated` when it was cut. What a
   file says is the file's words, marked untrusted as a page's are (9.6).
 
+### 8.12 Programs
+
+An agent runs programs as a VS Code extension's tasks and `child_process` do (#1078):
+`process` with `run` starts one, waits for it and answers its standard output, its
+standard error (the last 100 000 bytes of each) and its exit code; `start` leaves one
+running - a dev server, a watcher - and answers an id, which `read` (what it printed since
+the last answer's `next`, waiting up to `wait_ms` for something new), `write` (words into
+its input, `close` to end it), `kill` and `list` take. It is the `processes` scope, which
+the reader's own agents hold and a third party is granted (`process.rs`).
+
+- **Never through a shell.** The program and each argument go to the system as they are,
+  so no argument is a second command. A bare name is looked for on the app's own `PATH`
+  (on a Mac and Linux the login shell's too, as the AI programs are found), never on one
+  the call sets; a path is absolute or under `~/`, never relative, since an agent is in no
+  folder. It runs in `cwd`, or the home folder.
+- **Asked as the terminal asks** (8.9): a program not on the agent's list asks under *the
+  terminal*. Only a bare name is on the list - a path is any file that happens to be
+  called `git` - and a call that sets `env` asks too, since `GIT_SSH_COMMAND`,
+  `NODE_OPTIONS` or `LD_PRELOAD` make a listed program run something else. Each question
+  is `Grant::asks`, so Full permissions, which a client connected over MCP always has
+  (#1099), asks nothing. `run_terminal` and `type_terminal` hold the same rule about a
+  program given by its path.
+- **The agent's own.** A started program is the agent's alone: no other agent lists,
+  reads, writes to or ends it. It is ended with everything it started (a job object on
+  Windows, a process group on a Mac and Linux, as the AI programs are) when the agent says
+  goodbye, when it has not called for the ten minutes that make it gone, and when the
+  reader presses the stop, for everyone or for that agent.
+- **Bounded**: a `run` waits two minutes at most (`timeout_ms`, a minute unless it says),
+  inside the time `nib mcp` waits for an answer, and longer work is `start` and `read`; a
+  started program keeps the last megabyte of what it printed, one answer holds 100 000
+  bytes of it, and an agent has at most eight running. What a program printed is its
+  words, marked untrusted (9.6).
+
 ---
 
 ## 9. Safety and permissions
@@ -1011,7 +1048,7 @@ Each agent holds:
 
 | part | what it is | Emil's default |
 | --- | --- | --- |
-| scopes | `context`, `notes.read`, `notes.write`, `chats.read`, `chats.write`, `tree`, `workspace`, `workspace.focus`, `browser`, `browser.reader`, `browser.script`, `browser.network`, `browser.storage`, `settings`, `terminal`, `files`, `agents` | all but `browser.script`, `browser.storage`, `settings` |
+| scopes | `context`, `notes.read`, `notes.write`, `chats.read`, `chats.write`, `tree`, `workspace`, `workspace.focus`, `browser`, `browser.reader`, `browser.script`, `browser.network`, `browser.storage`, `settings`, `terminal`, `files`, `processes`, `agents` | all but `browser.script`, `browser.storage`, `settings` |
 | spaces | which spaces it may reach; another space's tabs and notes do not exist to it | every space |
 | sites | allow, deny, and "agent store only", by site (registrable domain, as `siteOf`) | none set |
 | mode | `unsupervised` or `confirm` | unsupervised |
@@ -1019,8 +1056,9 @@ Each agent holds:
 | limits | tabs, calls a minute, pages a minute, browser memory | 4 tabs, 600 calls, 60 navigations, no memory limit |
 
 A third-party agent starts with `context` off, `browser.reader` off, both chats scopes off
-(a chat is other people's words), the terminal, helpers and files anywhere off, and
-`confirm` mode. A grant kept from before #1078 has no `files` until the reader turns it on. A grant kept from before chats were
+(a chat is other people's words), the terminal, helpers, files anywhere and programs off,
+and `confirm` mode. A grant kept from before #1078 has no `files` or `processes` until the
+reader turns them on. A grant kept from before chats were
 is given `chats.read` and `chats.write` where it holds `notes.read` and `notes.write` and is
 the reader's own (it holds `context`); once the file has been written with them, a scope
 taken away stays away. "Always in this chat" is kept the way "Always on this site" is, under

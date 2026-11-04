@@ -2126,6 +2126,8 @@ export const kn: Dictionary = {
   'Run commands': 'ಆದೇಶಗಳನ್ನು ಚಲಾಯಿಸುವುದು',
   'Read and change files anywhere on this computer':
     'ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ ಎಲ್ಲಿಯಾದರೂ ಫೈಲ್‌ಗಳನ್ನು ಓದಿ ಬದಲಿಸಿ',
+  Programs: 'ಪ್ರೋಗ್ರಾಂಗಳು',
+  'Run programs on this computer': 'ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ ಪ್ರೋಗ್ರಾಂಗಳನ್ನು ಚಲಾಯಿಸಿ',
   Paying: 'ಪಾವತಿ',
   'Sending messages': 'ಸಂದೇಶಗಳನ್ನು ಕಳುಹಿಸುವುದು',
   'Publishing and sharing': 'ಪ್ರಕಟಿಸುವುದು ಮತ್ತು ಹಂಚಿಕೊಳ್ಳುವುದು',

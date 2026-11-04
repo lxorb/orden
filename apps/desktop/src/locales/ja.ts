@@ -2093,6 +2093,8 @@ export const ja: Dictionary = {
   'Run commands': 'コマンドを実行する',
   'Read and change files anywhere on this computer':
     'このコンピュータのどこにあるファイルでも読み書きする',
+  Programs: 'プログラム',
+  'Run programs on this computer': 'このコンピューターでプログラムを実行',
   Paying: '支払い',
   'Sending messages': 'メッセージの送信',
   'Publishing and sharing': '公開と共有',
