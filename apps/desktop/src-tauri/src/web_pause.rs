@@ -43,8 +43,11 @@ type Said = tauri::async_runtime::Sender<bool>;
 pub async fn web_pause(app: AppHandle, tab: String, paused: bool) -> Result<bool, String> {
     let view = crate::web_tabs::found(&app, &tab)?;
     if paused {
-        view.hide()
-            .map_err(|error| format!("that page could not be hidden: {error}"))?;
+        // A command's thread; see `on_the_page`.
+        crate::web_tabs::on_the_page(&app, view.label(), |view| {
+            let _ = view.hide();
+        })
+        .map_err(|error| format!("that page could not be hidden: {error}"))?;
     }
     let (said, mut heard) = tauri::async_runtime::channel::<bool>(1);
     engine::lull(&view, paused, said)?;
