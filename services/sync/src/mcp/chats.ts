@@ -15,6 +15,7 @@
 import { type Message, may, mentionsIn, type Post, ulid, type Who } from '@orden/chats'
 import { chatsText, hitsText, type Listed, messagesText, type Reading } from '@orden/chats/agent'
 import { accountById } from '../auth'
+import { askInChunks, places } from '../bound'
 import { askChat } from '../chats/ask'
 import { reachChat, type Reached } from '../chats/reach'
 import { asking, listed, membersOf, searched } from '../chats/routes'
@@ -25,6 +26,9 @@ const string = { type: 'string' }
 
 /** What a message sent from here says it came by. */
 const VIA = { agent: 'nib connector' }
+
+/** The most chats one listing names; a chat is found by its name or id among them all. */
+const MOST_LISTED = 500
 
 /** The most messages one read answers, and one search. */
 const MOST_READ = 200
@@ -98,30 +102,39 @@ interface Known extends Listed {
 /** Every chat the account reaches, named by its pointer and its space: one query for
  *  the list, one for the names. A chat whose pointer the account has not seen yet has
  *  no name to be found by and is left out. */
-async function chatsOf(env: Env, who: Whoever): Promise<Known[]> {
-  const rows = (await listed(env, who, null)).slice(0, 500)
+async function chatsOf(
+  env: Env,
+  who: Whoever,
+  most: number | null = MOST_LISTED,
+): Promise<Known[]> {
+  const rows = await listed(env, who, null, most)
   if (!rows.length) return []
-  const marks = rows.map(() => '?').join(', ')
-  const { results } = await env.DB.prepare(
-    `select ch.id as id, f.path as path, sp.name as space from chats ch
-       join spaces sp on sp.id = ch.space_id
-       left join notes f on f.id = ch.file_id and f.deleted = 0
-      where ch.id in (${marks})`,
+  const found = await askInChunks(
+    rows.map((one) => one.id),
+    async (chunk) => {
+      const { results } = await env.DB.prepare(
+        `select ch.id as id, f.path as path, sp.name as space from chats ch
+           join spaces sp on sp.id = ch.space_id
+           left join notes f on f.id = ch.file_id and f.deleted = 0
+          where ch.id in (${places(chunk.length)})`,
+      )
+        .bind(...chunk)
+        .all<{ id: string; path: string | null; space: string }>()
+      return results
+    },
   )
-    .bind(...rows.map((one) => one.id))
-    .all<{ id: string; path: string | null; space: string }>()
-  const named = new Map(results.map((one) => [one.id, one]))
+  const named = new Map(found.map((one) => [one.id, one]))
   const me = whoOf(who)
   return rows.flatMap((row): Known[] => {
-    const found = named.get(row.id)
-    const name = (found?.path?.split('/').pop() ?? '').replace(/\.chat$/i, '')
-    if (!found || !name) return []
+    const chat = named.get(row.id)
+    const name = (chat?.path?.split('/').pop() ?? '').replace(/\.chat$/i, '')
+    if (!chat || !name) return []
     const behind = row.lastSeq > row.readSeq && row.lastBy !== me
     return [
       {
         id: row.id,
         name,
-        space: found.space,
+        space: chat.space,
         members: row.members,
         unread: behind ? 'some' : 0,
         mentions: row.mentions,
@@ -138,7 +151,11 @@ function whoOf(who: Whoever): Who {
 }
 
 /** The chat an argument names, by id or by name (with or without `#`), or the sentence
- *  to answer with instead. */
+ *  to answer with instead.
+ *
+ *  A name is not an id, and two chats can share one: the first of them was whichever the
+ *  listing had first, and a message meant for one audience landed in front of the other.
+ *  So several are named back by id, as `findSpace` in ./tools.ts names back spaces. */
 async function chatNamed(
   env: Env,
   who: Whoever,
@@ -147,9 +164,14 @@ async function chatNamed(
   const wanted = words(args, 'chat')
   if (!wanted) return 'Which chat? list_chats names them.'
   const folded = wanted.replace(/^#/, '').trim().toLowerCase()
-  const all = await chatsOf(env, who)
-  const known =
-    all.find((one) => one.id === wanted) ?? all.find((one) => one.name.toLowerCase() === folded)
+  const all = await chatsOf(env, who, null)
+  const byId = all.find((one) => one.id === wanted)
+  const byName = byId ? [] : all.filter((one) => one.name.toLowerCase() === folded)
+  if (byName.length > 1) {
+    const ids = byName.map((one) => `${one.id} in ${one.space}`).join(', ')
+    return `${String(byName.length)} chats are called ${wanted}: ${ids}. Name one by its id.`
+  }
+  const known = byId ?? byName[0]
   const reached = known ? await reachChat(env, who, known.id) : null
   if (!known || !reached) return `No chat called ${wanted}. list_chats names them.`
   return { known, reached }

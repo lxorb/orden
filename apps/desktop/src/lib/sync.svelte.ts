@@ -272,7 +272,7 @@ class Sync {
   /** Moves a pull is making on this disk because the account already has them, by
    *  `from` and `to`, while everything kept by path is hearing of them. */
   private readonly pulling = new Set<string>()
-  /** The notes the reader has been told will not land on this disk; see `notWritten`. */
+  /** The notes the reader has been told will not land; see `notWritten`. */
   private readonly toldUnwritten = new Set<string>()
 
   /** A file operation, heard the way everything kept by path hears one; see
@@ -731,7 +731,7 @@ class Sync {
 
   /** One line in the log for one space, unless there is nothing to say about it.
    *  See sync/record.svelte.ts, which decides that. */
-  /** Tells the reader, once a session, that a note will not land on this disk. */
+  /** Tells the reader, once a session, that a note will not land, here or on the account. */
   private notWritten(path: string) {
     if (this.toldUnwritten.has(path)) return
     this.toldUnwritten.add(path)
@@ -814,6 +814,7 @@ class Sync {
             held: record.held,
             asked: new Set(record.clashes.map((one) => one.id)),
             sent: () => (this.pushed += 1),
+            refused: (path: string) => this.notWritten(joinPath(mirror.root, path)),
             // An old copy of a web note folded into it: the note open in a tab takes
             // what it now says, the copy leaves the list. See sync/web-copies.ts.
             folded: ({ kept, gone }: Folded) => {

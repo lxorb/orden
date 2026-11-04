@@ -511,9 +511,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,965,400, for the bug hunt's third round, the sums above
  *  and what came to unstable meanwhile in one build at last, on claude/hunt-round-1: nothing
  *  new beyond one guard fewer for a launch's first write. Measured 5,965,187.
+ *
+ *  The code raised on 2026-11-04, to 5,966,500, for a file the account refuses on sync v1,
+ *  which stopped every push after it (sync/pass.ts). Measured 5,966,413.
+ *
+ *  The code raised on 2026-11-04, to 5,967,600, for what such a pass may still delete: a note
+ *  whose words wait in a refused file, and a full account (sync/pass.ts). Measured 5,967,504.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_965_400,
+  code: 5_967_600,
   catalogues: 967_400,
   styles: 290_000,
   fonts: 260_000,

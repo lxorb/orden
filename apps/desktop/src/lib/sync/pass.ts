@@ -1360,9 +1360,134 @@ export interface Sending {
   asked?: ReadonlySet<string>
   /** One note sent, by its path in the space. What the log counts. */
   sent?: (path: string) => void
+  /** One file the account will not take as it is, by its path in the space. */
+  refused?: (path: string) => void
   /** A web note's old copy folded into the note, both as this machine spells them;
    *  see web-copies.ts. */
   folded?: (one: Folded) => void
+}
+
+/** What the account says of a file itself, which saying again changes nothing about: not
+ *  a path or a kind it keeps, too big, not what it can read. As `REFUSALS` in
+ *  pages/carried.ts. Everything else can change with the file as it is - a network, a
+ *  server, a rate, a full account, a role - and goes on ending the pass, to be tried again. */
+const REFUSALS: ReadonlySet<number> = new Set([400, 413, 415, 422])
+
+function refusesIt(error: unknown): boolean {
+  // The Worker says why for everything it answers. An answer with no sentence is an edge
+  // between here and there, a proxy's limit say, which says nothing about the file.
+  return (
+    error instanceof ApiError &&
+    REFUSALS.has(error.status) &&
+    isRecord(error.body) &&
+    isString(error.body.error)
+  )
+}
+
+/** The account has no room: that is no fault of this file, and may pass. Nothing more goes
+ *  up in this pass, the deletes that could make room still land, and the pass then ends
+ *  in this error as it always did, so it is said and tried again. */
+function isFull(error: unknown): error is ApiError {
+  return error instanceof ApiError && error.status === 507
+}
+
+/** A file with no entry whose words did not land in this pass, refused or not offered. */
+interface Unplaced {
+  path: string
+  /** Its hash where it was read for offering; a kind never offered is not read. */
+  hash: string | null
+  /** The lines it holds, read when something vanished in the same pass. */
+  lines?: Set<string>
+}
+
+function linesOf(words: string): Set<string> {
+  return new Set(
+    words
+      .split(/\r?\n/)
+      .map((one) => one.trim())
+      .filter(Boolean),
+  )
+}
+
+/** Whether a note gone from its path has its words in a file that has no place on the
+ *  account yet: its move, by another program, to a name or a size refused. A delete then
+ *  would leave the words on this device alone, so it waits for that file to land or go.
+ *  Told by the words, so a note deleted beside an unrelated refused file still goes: the
+ *  same hash, or at least half of what the account holds of the note. An account that
+ *  will not say what it holds has not said they differ. */
+async function wordsWaitIn(
+  token: string,
+  id: string,
+  hash: string,
+  unplaced: readonly Unplaced[],
+): Promise<boolean> {
+  if (!unplaced.length) return false
+  if (unplaced.some((one) => one.hash === hash)) return true
+
+  let lines: Set<string>
+  try {
+    lines = linesOf((await api.readNote(token, id)).content)
+  } catch (error) {
+    return !isGone(error)
+  }
+  if (!lines.size) return false
+
+  for (const one of unplaced) {
+    one.lines ??= linesOf(await invoke<string>('read_note', { path: one.path }).catch(() => ''))
+    let shared = 0
+    for (const line of lines) if (one.lines.has(line)) shared += 1
+    if (shared * 2 >= lines.size) return true
+  }
+  return false
+}
+
+/** The names `NOTE_PATH` in services/sync/src/notes.ts takes. The tree lists more, for sync
+ *  v2 carries a base and an online terminal; they are not offered to an account that can
+ *  only refuse them. */
+const NOTE_PATH = /\.(md|markdown|mdown|mkd|canvas|pages|url|webloc|chat)$/i
+
+/** What the account has refused of a space's files, which is not asked again while the
+ *  file stays as it is: a note by the hash it was refused at (`''` for a name it never
+ *  takes), a PDF by when it was last written, and the list of them as it was said.
+ *
+ *  Kept for the session rather than in the mirror, so a limit raised on the account is
+ *  met by the next launch, and an entry here says nothing about whether the file is
+ *  gone: it is on the disk and in `seen`, so the bottom of `push` deletes nothing for it. */
+interface Refused {
+  notes: Map<string, string>
+  papers: Map<string, number>
+  list: string | null
+}
+const refusals = new WeakMap<Mirror, Refused>()
+
+function refusedOf(mirror: Mirror): Refused {
+  const known = refusals.get(mirror)
+  if (known) return known
+  const fresh: Refused = { notes: new Map(), papers: new Map(), list: null }
+  refusals.set(mirror, fresh)
+  return fresh
+}
+
+/** The record of a write in the air put back to what it was, since this one was answered
+ *  and did not land. See `offered` in mirror.ts. */
+function notInTheAir(mirror: Mirror, path: string, earlier: string | undefined) {
+  mirror.offered =
+    earlier === undefined ? without(mirror.offered, path) : { ...mirror.offered, [path]: earlier }
+}
+
+/** One note refused, and said once. */
+function noteRefused(
+  mirror: Mirror,
+  path: string,
+  hash: string,
+  error: unknown,
+  earlier: string | undefined,
+  sending: Sending,
+) {
+  log('warn', `sync: ${path} not taken - ${String(error)}`)
+  refusedOf(mirror).notes.set(path, hash)
+  notInTheAir(mirror, path, earlier)
+  sending.refused?.(path)
 }
 
 export async function push(
@@ -1405,7 +1530,16 @@ export async function push(
 
   // A PDF is bytes rather than words, so it goes up as a blob and the space
   // records where in it the file sits; see `pushFiles`.
-  if (await pushFiles(mirror, root, listed, token, unread)) moved = true
+  let full: ApiError | null = null
+  try {
+    if (await pushFiles(mirror, root, listed, token, unread, sending)) moved = true
+  } catch (error) {
+    if (!isFull(error)) throw error
+    full = error
+  }
+
+  const refused = refusedOf(mirror)
+  const unplaced: Unplaced[] = []
 
   for (const file of listed.filter((one) => !isPdfTarget(one.name))) {
     const path = relativeTo(root, file.path)
@@ -1414,6 +1548,15 @@ export async function push(
     // A note whose two copies are still waiting for an answer stays where it is,
     // on both sides: this is the one file the pass deliberately leaves alone.
     if (held.has(file.path)) continue
+
+    // A kind this account cannot hold, which is not reading the file to hear so.
+    if (!NOTE_PATH.test(path)) {
+      if (!refused.notes.has(path)) {
+        noteRefused(mirror, path, '', 'not a kind sync v1 carries', mirror.offered[path], sending)
+      }
+      if (!mirror.notes[path]) unplaced.push({ path: file.path, hash: null })
+      continue
+    }
 
     // Left out when unreadable, rather than ending the pass for all after it.
     const content = await invoke<string>('read_note', { path: file.path }).catch(
@@ -1431,6 +1574,11 @@ export async function push(
     // Or to the name it has here: the note is at the new name, and a file at the old
     // one is another.
     if (tracked ? untold[tracked.id] : renamed.has(path)) continue
+    // Refused as it is now, and asked again once it is something else.
+    if (refused.notes.get(path) === hash) {
+      if (!tracked) unplaced.push({ path: file.path, hash })
+      continue
+    }
 
     if (!tracked) {
       // The app's own welcome note, exactly as the app wrote it, is not writing
@@ -1440,7 +1588,19 @@ export async function push(
       // any other note. See welcome.ts.
       if (isUntouchedWelcome(path, content)) continue
 
-      if (await create(mirror, token, path, content)) moved = true
+      if (full) {
+        unplaced.push({ path: file.path, hash })
+        continue
+      }
+      try {
+        if (await create(mirror, token, path, content, sending)) moved = true
+      } catch (error) {
+        if (!isFull(error)) throw error
+        full = error
+      }
+      if (!mirror.notes[path] && (full || refused.notes.get(path) === hash)) {
+        unplaced.push({ path: file.path, hash })
+      }
       continue
     }
 
@@ -1452,6 +1612,7 @@ export async function push(
     if (joined.has(tracked.id)) {
       continue
     }
+    if (full) continue
 
     moved = true
 
@@ -1459,6 +1620,7 @@ export async function push(
     // that never comes back: the write lands, the reply is lost, and this is the
     // only record that the copy the account now holds is this machine's own. See
     // `offered` in mirror.ts and `news` in `pull`.
+    const earlier = mirror.offered[path]
     mirror.offered = { ...mirror.offered, [path]: hash }
 
     try {
@@ -1470,6 +1632,17 @@ export async function push(
       // This note's room is not taking words just now. The next pass asks again, and
       // the notes after this one have nothing to do with it.
       if (error instanceof ApiError && error.status === 503) continue
+      // This file's trouble, not the pass's: the entry stays, as the words the account
+      // has are still the note's, and the files after it go on.
+      if (refusesIt(error)) {
+        noteRefused(mirror, path, hash, error, earlier, sending)
+        continue
+      }
+      if (isFull(error)) {
+        notInTheAir(mirror, path, earlier)
+        full = error
+        continue
+      }
       if (!(error instanceof ApiError) || error.status !== 409) throw error
 
       // The note's room settled while this write was in the air, which is this
@@ -1487,6 +1660,15 @@ export async function push(
       } catch (again) {
         // Moved again, or its room away: this note waits for the next pass, as above.
         if (again instanceof NotWritten) continue
+        // What the two made together is past what the account takes: as above.
+        if (refusesIt(again)) {
+          noteRefused(mirror, path, hash, again, earlier, sending)
+          continue
+        }
+        if (isFull(again)) {
+          full = again
+          continue
+        }
         if (!(again instanceof ApiError) || (again.status !== 409 && again.status !== 503)) {
           throw again
         }
@@ -1517,6 +1699,7 @@ export async function push(
       await shownAgain(mirror, aside, tracked.id, new Set())
       continue
     }
+    if (await wordsWaitIn(token, tracked.id, tracked.hash, unplaced)) continue
 
     if (!(await deletedOnAccount(token, tracked.id))) continue
 
@@ -1525,6 +1708,7 @@ export async function push(
     moved = true
   }
 
+  if (full) throw full
   return moved
 }
 
@@ -1566,7 +1750,9 @@ async function pushFiles(
   token: string,
   /** The folders that did not list: see `underUnread`. */
   unread: readonly string[],
+  sending: Sending,
 ): Promise<boolean> {
+  const refused = refusedOf(mirror)
   const held: Record<string, TrackedFile> = {}
   const manifest: SpaceFile[] = []
 
@@ -1581,8 +1767,17 @@ async function pushFiles(
   for (const file of listed) {
     const path = relativeTo(root, file.path)
     if (!isPdfTarget(file.name) && !dressesTheSite(path)) continue
-
     const tracked = mirror.files[path]
+    // Bytes the account would not keep, as they were written then: see below. What it
+    // has of the file from before stays said, so a link to it goes on working.
+    if (refused.papers.get(path) === file.modified) {
+      if (tracked) {
+        held[path] = tracked
+        manifest.push({ path, hash: tracked.hash })
+      }
+      continue
+    }
+
     // Read and hashed again only when the file has been written since, so a
     // paper nobody has touched costs nothing at all.
     const hash = tracked?.modified === file.modified ? tracked.hash : await hashFile(file.path)
@@ -1594,7 +1789,23 @@ async function pushFiles(
 
   if (same(mirror.files, held)) return false
 
-  const { missing } = await api.saveSpaceFiles(token, mirror.spaceId, manifest)
+  // A list is refused whole, and the notes have nothing to do with it: more PDFs than a
+  // space keeps, or one by a name it will not hold, leaves them on this device alone.
+  const said = JSON.stringify(manifest)
+  if (refused.list === said) return false
+  const saved = () =>
+    api.saveSpaceFiles(token, mirror.spaceId, manifest).catch((error: unknown) => {
+      if (!refusesIt(error)) throw error
+      log('warn', `sync: the files of ${mirror.spaceId} not taken - ${String(error)}`)
+      refused.list = said
+      for (const file of manifest) {
+        if (mirror.files[file.path]?.hash !== file.hash) sending.refused?.(file.path)
+      }
+      return null
+    })
+  const first = await saved()
+  if (!first) return false
+  const { missing } = first
 
   // What the account could not keep is what it has no bytes for. Those go up
   // now, and the list is offered again so their rows land as well.
@@ -1608,14 +1819,32 @@ async function pushFiles(
       const bytes = await invoke<ArrayBuffer>('read_file', {
         path: joinPath(root, file.path),
       }).catch(() => null)
-      if (bytes) await api.putBlob(token, file.hash, contentTypeOf(file.path), bytes)
+      if (bytes) {
+        try {
+          await api.putBlob(token, file.hash, contentTypeOf(file.path), bytes)
+        } catch (error) {
+          if (!refusesIt(error)) throw error
+          log('warn', `sync: ${file.path} not taken - ${String(error)}`)
+          refused.papers.set(file.path, held[file.path]?.modified ?? 0)
+          sending.refused?.(file.path)
+          // The list just said dropped the row for bytes it has not got: said again below
+          // as it stood, or not at all where it never stood.
+          const was = mirror.files[file.path]
+          if (was) {
+            held[file.path] = was
+            file.hash = was.hash
+          } else {
+            unsent.add(file.path)
+          }
+        }
+      }
       // A file that would not read was never sent, so the mirror must not say it
       // was: `holds` reads it to leave a delete to the account (sync/holding.ts),
       // and the next pass offers it again.
       else unsent.add(file.path)
     }
 
-    await api.saveSpaceFiles(token, mirror.spaceId, manifest)
+    if (!(await saved())) return false
   }
 
   mirror.files = Object.fromEntries(Object.entries(held).filter(([path]) => !unsent.has(path)))
@@ -1678,6 +1907,7 @@ async function create(
   token: string,
   path: string,
   content: string,
+  sending: Sending,
 ): Promise<boolean> {
   // For the reason the push gives: a create whose answer is lost leaves the account
   // holding a note this machine has no entry for and made itself.
@@ -1691,6 +1921,12 @@ async function create(
     mirror.offered = without(mirror.offered, path)
     return true
   } catch (error) {
+    // This file's trouble, not the pass's: see `Refused`.
+    if (refusesIt(error)) {
+      noteRefused(mirror, path, offered, error, earlier, sending)
+      return false
+    }
+    if (isFull(error)) notInTheAir(mirror, path, earlier)
     if (!(error instanceof ApiError) || error.status !== 409) throw error
 
     const body = isRecord(error.body) ? error.body : {}
@@ -1733,6 +1969,11 @@ async function create(
     try {
       await keepBoth(mirror, path, tracked, held, token, null)
     } catch (again) {
+      // Paired, and their words are kept: the next push refuses this file by its write.
+      if (refusesIt(again)) {
+        noteRefused(mirror, path, offered, again, earlier, sending)
+        return true
+      }
       if (!(again instanceof NotWritten)) throw again
       // The copy would not land, so nothing holds their words but the account. Paired, the
       // next push would send this file over them.

@@ -3,9 +3,10 @@
  *  ever see. */
 
 import { subprotocol } from '@orden/rooms'
-import { HOLD_GRACE } from '@orden/online/wire'
+import { HOLD_GRACE, HOLD_QUIET } from '@orden/online/wire'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { AppRelay, type Party } from '../src/apps/relay'
+import { sha256 } from '../src/crypto'
 import type { Env } from '../src/types'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { HubState } from './hub-fakes'
@@ -244,5 +245,137 @@ describe('an application’s door', () => {
 
     env.db.prepare("update notes set deleted = 1 where id = 'app-1'").run()
     expect((await knock(owner)).status).toBe(404)
+  })
+
+  test('says which sign-in came, and keeps out a deleted space’s file', async () => {
+    const { APPS, asked } = namespace()
+    const { owner } = await world(APPS)
+    on()
+    vi.setSystemTime(Date.now() + 31_000)
+
+    await knock(owner)
+    expect(asked[0]?.get('x-nib-login')).toBe(await sha256(owner))
+
+    env.db.prepare("update spaces set deleted = 1 where id = 'space-1'").run()
+    expect((await knock(owner)).status).toBe(404)
+  })
+
+  describe('each minute', () => {
+    const LATER = 61_000
+
+    async function sockets() {
+      env = testEnv()
+      opened = true
+      const token = await signIn(env, 'owner@example.com')
+      const who = (env.db.prepare('select id from users').get() as { id: string }).id
+      env.db
+        .prepare(
+          `insert into spaces (id, user_id, name, created_at, updated_at, blog_enabled)
+           values ('space-1', ?, 'Mine', 1, 1, 0)`,
+        )
+        .run(who)
+      env.db
+        .prepare(
+          `insert into notes (id, space_id, path, seq, updated_at, size, hash)
+           values ('app-1', 'space-1', 'Figma.app', 1, 1, 0, 'h')`,
+        )
+        .run()
+      const state = new HubState()
+      Object.assign(state, {
+        getWebSocketAutoResponseTimestamp: (socket: MachineSocket) => socket.beatAt,
+      })
+      const made = new AppRelay(state as unknown as DurableObjectState, env)
+      const login = await sha256(token)
+      const join = async (role: Party['role'], device: string, from = login) => {
+        const socket = new MachineSocket()
+        await made.enter(socket as unknown as WebSocket, {
+          role,
+          session: 'app-1',
+          device,
+          who,
+          login: from,
+          name: device,
+          seen: Date.now(),
+        })
+        return socket
+      }
+      return { made, state, join, login }
+    }
+
+    test('a sign-in that ended closes its socket, and only its', async () => {
+      const { made, state, join } = await sockets()
+      const host = await join('host', 'desktop')
+      vi.setSystemTime(Date.now() + 31_000)
+      const other = await signIn(env, 'owner@example.com')
+      const viewer = await join('viewer', 'laptop', await sha256(other))
+      expect(state.alarm).not.toBeNull()
+
+      env.db.prepare('delete from sessions where token_hash = ?').run(await sha256(other))
+      vi.setSystemTime(Date.now() + LATER)
+      await made.alarm()
+
+      expect(viewer.closedWith?.code).toBe(4401)
+      expect(host.closedWith).toBeNull()
+      expect(state.alarm).not.toBeNull()
+    })
+
+    test('a file deleted closes every socket, and the object stops asking', async () => {
+      const { made, state, join } = await sockets()
+      const host = await join('host', 'desktop')
+      const viewer = await join('viewer', 'laptop')
+
+      env.db.prepare("update notes set deleted = 1 where id = 'app-1'").run()
+      state.alarm = null
+      vi.setSystemTime(Date.now() + LATER)
+      await made.alarm()
+
+      expect(host.closedWith?.code).toBe(4404)
+      expect(viewer.closedWith?.code).toBe(4404)
+      expect(state.alarm).toBeNull()
+    })
+
+    test('a lock handed on tells the host once', async () => {
+      const { made, join } = await sockets()
+      const host = await join('host', 'desktop')
+      const say = (socket: MachineSocket) =>
+        made.webSocketMessage(
+          socket as unknown as WebSocket,
+          JSON.stringify({ t: 'hello', hold: true }),
+        )
+      const laptop = await join('viewer', 'laptop')
+      await say(laptop)
+      const phone = await join('viewer', 'phone')
+      await say(phone)
+
+      // The laptop goes quiet, and the grace passes with no timer: the object slept.
+      vi.setSystemTime(Date.now() + HOLD_QUIET + 1000)
+      phone.beatAt = new Date()
+      await made.alarm()
+      expect(laptop.closedWith?.code).toBe(4408)
+      vi.setSystemTime(Date.now() + HOLD_GRACE + 1000)
+      phone.beatAt = new Date()
+      const before = host.of('viewer').length
+      await made.alarm()
+      await vi.advanceTimersByTimeAsync(0)
+
+      expect(phone.of('hold')).toEqual([{ t: 'hold' }])
+      expect(host.of('viewer').slice(before)).toEqual([
+        { t: 'viewer', device: 'phone', name: 'phone' },
+      ])
+    })
+
+    test('a database that does not answer ends nothing', async () => {
+      const { made, join } = await sockets()
+      const host = await join('host', 'desktop')
+      const refusing = () => Promise.reject(new Error('away'))
+      const statement = { bind: () => statement, first: refusing, all: refusing }
+      const db = env.DB
+      env.DB = { prepare: () => statement } as unknown as typeof env.DB
+      vi.setSystemTime(Date.now() + LATER)
+      await made.alarm()
+      env.DB = db
+
+      expect(host.closedWith).toBeNull()
+    })
   })
 })

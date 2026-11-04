@@ -35,6 +35,7 @@
  *  against the account's own gigabyte - that is Emil's to decide - so this is the
  *  only thing holding them. */
 
+import { chunks, places } from './bound'
 import { byteLength, cleanPersonName, now, sha256 } from './crypto'
 import { picturesOf } from './pictures'
 import type { Env, Note } from './types'
@@ -687,11 +688,11 @@ async function capVersions(env: Env): Promise<number> {
 
       if (!going.length) break
 
-      await env.DB.prepare(
-        `delete from note_versions where rowid in (${going.map(() => '?').join(', ')})`,
-      )
-        .bind(...going)
-        .run()
+      for (const chunk of chunks(going)) {
+        await env.DB.prepare(`delete from note_versions where rowid in (${places(chunk.length)})`)
+          .bind(...chunk)
+          .run()
+      }
     }
   }
 

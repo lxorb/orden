@@ -969,6 +969,36 @@ describe('a space somebody shared', () => {
     expect(fake.remote.calls).toEqual(['createNote Mine.md'])
   })
 
+  test('a note the account refuses is said, and the notes after it go up', async () => {
+    sharedWithMe('write')
+    await signIn()
+    account.settled()
+    await sync.pass()
+    fake.remote.calls = []
+
+    fake.disk.set('/Theirs/A too big.md', '# refused')
+    fake.disk.set('/Theirs/Z.md', '# after it')
+    await workspace.loadTree()
+    const real = fake.api.createNote
+    fake.api.createNote = (token, spaceId, path, content) =>
+      path === 'A too big.md'
+        ? Promise.reject(
+            new ApiError(400, 'that note is too large', { error: 'that note is too large' }),
+          )
+        : real(token, spaceId, path, content)
+    try {
+      await sync.pass()
+    } finally {
+      fake.api.createNote = real
+    }
+
+    expect(fake.remote.calls).toEqual(['createNote Z.md'])
+    expect(sync.status).not.toBe('error')
+    const { unsynced } = await import('./sync2/unsynced.svelte')
+    await vi.waitFor(() => expect(unsynced.said).toBe('A too big.md'))
+    unsynced.dismiss()
+  })
+
   test('is let go of rather than deleted when the folder goes', async () => {
     sharedWithMe('write')
     await signIn()
