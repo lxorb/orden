@@ -160,14 +160,16 @@ function remember(key: string, place: Shown) {
 const fenceKey = (path: string, words: string) => `${path}\n${words.replace(/\s+$/, '')}`
 
 /** A ` ```base ` fence in a note at `path` (on this disk; null for a note with no
- *  file). Its changes are written into the fence, so the note is the base. */
-export function fenceSource(code: string, path: string | null): Source {
+ *  file, `stranger` where that is a file somebody shared on its own). Its changes are
+ *  written into the fence, so the note is the base. */
+export function fenceSource(code: string, path: string | null, stranger = false): Source {
   let words = code
   let shown = path === null ? undefined : fenceViews.get(fenceKey(path, code))
   const space = path === null ? workspace.activeSpace : spaceOf(path)
   return {
     scope: space?.name ?? null,
     path,
+    stranger,
     self: () => rowAt(path),
     shown: () => shown,
     keep(now) {

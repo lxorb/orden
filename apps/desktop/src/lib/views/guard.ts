@@ -10,9 +10,11 @@ import { trustsHtmlAt } from '../sharing.svelte'
 const copies = new WeakMap<Base, Base>()
 
 /** A base read at this path as it may run here: the reader's own as it is, anybody
- *  else's marked, or null where it holds a pattern it may not run. */
-export function guardedAt(base: Base, path: string | null): Base | null {
-  if (trustsHtmlAt(path)) return base
+ *  else's marked, or null where it holds a pattern it may not run. `stranger` is what
+ *  a path cannot say: the fence stands in a file somebody shared on its own, which has
+ *  none. */
+export function guardedAt(base: Base, path: string | null, stranger = false): Base | null {
+  if (!stranger && trustsHtmlAt(path)) return base
   if (refusedPattern(base) !== null) return null
 
   const known = copies.get(base)

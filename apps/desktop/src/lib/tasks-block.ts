@@ -94,6 +94,7 @@ export async function tasksRowsHtml(
   code: string,
   nothing: string,
   root: string | null = null,
+  stranger = false,
 ): Promise<string | null> {
   const [{ answer, groupName }, { readTasksQuery }, { refusedPattern, todayOf }, space] =
     await Promise.all([
@@ -104,8 +105,10 @@ export async function tasksRowsHtml(
     ])
   if (!space) return null
   const { base: read, unsupported } = readTasksQuery(code)
-  // A fence in a shared note runs what somebody else wrote; see expr/pattern.ts.
-  const guarded = !trustsHtmlAt(root)
+  // A fence in a shared note runs what somebody else wrote; see expr/pattern.ts. Where
+  // the note says so itself: a space's root cannot tell for a note shared on its own,
+  // or a caller with no root for any note.
+  const guarded = stranger || !trustsHtmlAt(root)
   const refused = guarded ? refusedPattern(read) : null
   if (refused !== null) return `<p class="nib-query-none">${escapeAll(refused)}</p>`
   const base = { ...read, guarded }

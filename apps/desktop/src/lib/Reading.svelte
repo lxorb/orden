@@ -68,7 +68,7 @@
     let stopped = false
     void import('./views/mount').then(({ mountBases }) => {
       if (stopped) return
-      stop = mountBases(page, from)
+      stop = mountBases(page, from, untrack(() => tab.note.shared !== null))
       // The placeholders the find bar may have read are gone from the page now.
       changed()
       if (untrack(() => finding)) reveal()

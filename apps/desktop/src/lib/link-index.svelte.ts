@@ -1028,7 +1028,7 @@ class Links {
   /** What the editor is handed: the notes, which one is open, and a way to read
    *  one. A fresh object each time the index changes and the same one otherwise,
    *  which is what decides whether every link on screen is redrawn. */
-  index(openPath: string | null): NoteIndex {
+  index(openPath: string | null, stranger = false): NoteIndex {
     const other = openPath === null ? null : this.otherHolding(openPath)
     if (openPath !== null && other !== null) return this.otherIndex(other, openPath)
 
@@ -1043,7 +1043,9 @@ class Links {
       this.handed.clear()
     }
 
-    const key = path ?? ''
+    // A file somebody shared on its own has no path either, and what runs in it is held
+    // to a line a note of the reader's with no file is not.
+    const key = stranger ? 'stranger\n' : (path ?? '')
     const known = this.handed.get(key)
     if (known) return known
 
@@ -1074,7 +1076,9 @@ class Links {
         queryBlock ??= await import('./query-block')
         if (language === 'tasks' && !__EVEN_PLUGIN__) {
           const { tasksRowsHtml } = await import('./tasks-block')
-          return tasksRowsHtml(code, t('Nothing found'))
+          const { trustsHtmlAt } = await import('./sharing.svelte')
+          const here = path === null || this.root === null ? null : insideSpace(this.root, path)
+          return tasksRowsHtml(code, t('Nothing found'), null, stranger || !trustsHtmlAt(here))
         }
         return queryBlock.queryRowsHtml(code, t('Nothing found'))
       },
@@ -1093,7 +1097,7 @@ class Links {
       // replaced on disk or a plane saved in the tab beside this one is a drawing
       // that has to be made again, and this object being remade is what says so.
       drawFile: (card, file) => this.drawnFile(card, file),
-      mountBase: (host, ask) => this.mountedBase(host, ask, path),
+      mountBase: (host, ask) => this.mountedBase(host, ask, path, stranger),
     }
     this.handed.set(key, made)
     return made
@@ -1178,6 +1182,7 @@ class Links {
     host: HTMLElement,
     ask: { code: string } | { target: string; view: string | null },
     path: string | null,
+    stranger: boolean,
   ): () => void {
     if (__EVEN_PLUGIN__) return () => undefined
     const root = this.root
@@ -1185,7 +1190,7 @@ class Links {
     let stop: (() => void) | null = null
     let stopped = false
     void import('./views/mount').then(({ mountBase }) => {
-      if (!stopped) stop = mountBase(host, ask, from)
+      if (!stopped) stop = mountBase(host, ask, from, stranger)
     })
     return () => {
       stopped = true

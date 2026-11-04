@@ -15,6 +15,7 @@
     file = null,
     view,
     from,
+    stranger = false,
     title,
   }: {
     /** A fence's own words. */
@@ -25,12 +26,14 @@
     view?: string | undefined
     /** The note it stands in, on this disk, or null for one with no file yet. */
     from: string | null
+    /** Whether that note is a file somebody shared on its own, which has no path to ask. */
+    stranger?: boolean
     title: string
   } = $props()
 
   const made = untrack(() => {
     const source =
-      file !== null ? fileSource(file, view, () => rowAt(from)) : fenceSource(code ?? '', from)
+      file !== null ? fileSource(file, view, () => rowAt(from)) : fenceSource(code ?? '', from, stranger)
     const live = new LiveView(source)
     return { live, kit: kitFor(live, view === undefined ? {} : { view }, file, true) }
   })
