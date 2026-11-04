@@ -541,10 +541,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  drawn as pictures, in every catalogue - and a cell's marks on its own box
  *  (web-tab/site-icons.svelte.ts, IconPicker.svelte, Icon.svelte). Measured 5,891,756
  *  and 968,905.
+ *
+ *  Raised on 2026-11-04 as #1054 and #1116 came to claude/hunt-round-1: the code to 6,011,300,
+ *  measured 6,011,091, and the catalogues to 984,100, measured 983,998.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_003_000,
-  catalogues: 982_500,
+  code: 6_011_300,
+  catalogues: 984_100,
   styles: 290_000,
   fonts: 260_000,
   pages: 40_000,

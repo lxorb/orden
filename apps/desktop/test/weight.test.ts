@@ -1272,8 +1272,12 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,568,500, for #1054 and #1116: the icon picker's Web icons, the
  *  account's sites first in the grid and a site's mark drawn as a picture, and a cell's
  *  marks on its own box (IconPicker.svelte, Icon.svelte). The list and its pictures are a
- *  chunk of their own. Measured 3,567,023. */
-const BUDGET = 3_666_900
+ *  chunk of their own. Measured 3,567,023.
+ *
+ *  Raised on 2026-11-04, to 3,669,000, as those came to claude/hunt-round-1, on the 3,666,714
+ *  above. Measured 3,668,789.
+ */
+const BUDGET = 3_669_000
 const MOST_FILES = 395
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
