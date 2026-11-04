@@ -732,3 +732,105 @@ describe('a closed note written to after the change was worked out', () => {
     expect(disk.has(NOTE)).toBe(false)
   })
 })
+
+describe('with another window here', () => {
+  test('a note open here goes down through the turn that takes in what is on the disk', async () => {
+    const { ws } = space({ '/space/a.md': 'one\ntwo\n' }, '/space/a.md')
+    const note = ws.documents[0]
+    if (!note) throw new Error('no note')
+    const seen: { base: string | null; words: string; dirty: boolean }[] = []
+    const across = {
+      alone: false,
+      writing: async (one: typeof note, _path: string, write: (words: string) => Promise<unknown>) => {
+        seen.push({ base: one.onDisk, words: one.latest, dirty: one.dirty })
+        await write(one.latest)
+        one.onDisk = one.latest
+        return { words: one.latest, revision: one.revision }
+      },
+    }
+    ;(ws as unknown as { across: unknown }).across = across
+
+    await replaceInNotes(ws, [
+      {
+        path: '/space/a.md',
+        before: 'one\ntwo\n',
+        after: 'ONE\ntwo\n',
+        edits: [{ from: 0, to: 3, insert: 'ONE' }],
+        back: [{ from: 0, to: 3, insert: 'one' }],
+      },
+    ])
+
+    // What it merges against is what the file said, not the words not written yet.
+    expect(seen).toEqual([{ base: 'one\ntwo\n', words: 'ONE\ntwo\n', dirty: true }])
+    expect(disk.get('/space/a.md')).toBe('ONE\ntwo\n')
+    expect(note.dirty).toBe(false)
+    expect(note.onDisk).toBe('ONE\ntwo\n')
+  })
+
+  test('a note that went from under it stays owed rather than clean', async () => {
+    const { ws } = space({ '/space/a.md': 'one\n' }, '/space/a.md')
+    const note = ws.documents[0]
+    if (!note) throw new Error('no note')
+    ;(ws as unknown as { across: unknown }).across = {
+      alone: false,
+      writing: () => Promise.resolve(null),
+    }
+    await replaceInNotes(ws, [
+      {
+        path: '/space/a.md',
+        before: 'one\n',
+        after: 'ONE\n',
+        edits: [{ from: 0, to: 3, insert: 'ONE' }],
+        back: [{ from: 0, to: 3, insert: 'one' }],
+      },
+    ])
+    expect(note.dirty).toBe(true)
+    expect(note.latest).toBe('ONE\n')
+  })
+
+  test('a window alone writes as it always has', async () => {
+    const { ws } = space({ '/space/a.md': 'one\n' }, '/space/a.md')
+    const writing = vi.fn()
+    ;(ws as unknown as { across: unknown }).across = { alone: true, writing }
+    await replaceInNotes(ws, [
+      {
+        path: '/space/a.md',
+        before: 'one\n',
+        after: 'ONE\n',
+        edits: [{ from: 0, to: 3, insert: 'ONE' }],
+        back: [{ from: 0, to: 3, insert: 'one' }],
+      },
+    ])
+    expect(writing).not.toHaveBeenCalled()
+    expect(disk.get('/space/a.md')).toBe('ONE\n')
+  })
+
+  test('a closed note is read and written in one turn of the file', async () => {
+    const { ws } = space({ '/space/a.md': 'one\n' })
+    const turns: string[] = []
+    const locks = {
+      request: async (name: string, run: () => Promise<unknown>) => {
+        turns.push(`in ${name}`)
+        const answer = await run()
+        turns.push(`out ${name}`)
+        return answer
+      },
+    }
+    vi.stubGlobal('navigator', { locks })
+    try {
+      await replaceInNotes(ws, [
+        {
+          path: '/space/a.md',
+          before: 'one\n',
+          after: 'ONE\n',
+          edits: [{ from: 0, to: 3, insert: 'ONE' }],
+          back: [{ from: 0, to: 3, insert: 'one' }],
+        },
+      ])
+    } finally {
+      vi.unstubAllGlobals()
+    }
+    expect(turns).toEqual(['in nib:file:/space/a.md', 'out nib:file:/space/a.md'])
+    expect(disk.get('/space/a.md')).toBe('ONE\n')
+  })
+})

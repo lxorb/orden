@@ -3,6 +3,7 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { leadSync } from './sync2/lead'
+import { heldForLife } from './locks'
 import { oneWriteAt } from './windows'
 import { takeSlot } from './workspace/slot'
 
@@ -33,6 +34,13 @@ afterEach(() => {
 describe.each(Object.entries(BROKEN))('with locks %s', (_name, locks) => {
   beforeEach(() => {
     vi.stubGlobal('navigator', { locks })
+  })
+
+  test('what is held for the life of a window runs all the same', async () => {
+    const run = vi.fn(() => new Promise<void>(() => undefined))
+    heldForLife('nib:test', run)
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(run).toHaveBeenCalledTimes(1)
   })
 
   test('the window takes the first session', async () => {
