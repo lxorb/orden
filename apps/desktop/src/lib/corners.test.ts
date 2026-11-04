@@ -57,3 +57,18 @@ test('the sidebar draws its separators with the seam, never with a line of its o
     expect(style, file).not.toMatch(/border(?:-[a-z]+)*:\s*1px solid var\(--line\)/)
   }
 })
+
+/** #1103: a tab filling the window kept the card's inset and corner, because the card
+ *  was flush only in full screen and for a file alone. One condition says that nothing of
+ *  the app's stands round what is open, every full mode in it, and the tokens follow it;
+ *  test/e2e/full-window.py measures each mode, a note and a web tab. */
+test('every full mode makes the card flush through one condition', () => {
+  const app = read('../App.svelte')
+  expect(app).toMatch(/const flush = \$derived\(bare \|\| filled\)/)
+  expect(app).toMatch(/const bare = \$derived\(fullscreen\.on \|\| alone\.on\)/)
+  expect(app).toMatch(/const filled = \$derived\(workspace\.panes\.fills !== null\)/)
+  const rule = /main\.flush,[^{]*\{([^}]*)\}/.exec(app)?.[1] ?? ''
+  for (const token of ['--card-radius', '--card-inset', '--card-edge', '--card-shadow']) {
+    expect(rule, token).toContain(token)
+  }
+})

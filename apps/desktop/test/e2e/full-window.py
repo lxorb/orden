@@ -15,6 +15,9 @@ by full screen the full window of nib, not F11 behaviour." What this presses and
   * **Shift+F11 out**: the list, the strips and the other pane back exactly as they were.
   * **A web tab** fills the window with its own bar kept and its page's room reaching every
     edge but the bar's.
+  * **Flush in every full mode** (#1103): Shift+F11 and F11's full screen, over a note and
+    a web tab - the pane is the window's box, square, with no edge or shadow round it,
+    and the corner a web page is given is nothing.
   * The same, photographed in light and in dark.
 
 Run it from the repository root:
@@ -107,6 +110,25 @@ LAYOUT = """
   })(),
   strips: [...document.querySelectorAll('.tab .label')].map((one) => one.textContent.trim()),
 })
+"""
+
+# What stands round the pane in front: its box, its corner, its edge and shadow, and the
+# corner a web tab's page is given (`cardCorner` in pages.svelte.ts reads the same token).
+FLUSH = """
+() => {
+  const pane = [...document.querySelectorAll('[data-pane]')].find((one) => one.getClientRects().length)
+  if (!pane) return null
+  const r = pane.getBoundingClientRect()
+  const style = getComputedStyle(pane)
+  const main = getComputedStyle(document.querySelector('main'))
+  return {
+    box: [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)],
+    window: [innerWidth, innerHeight],
+    radius: style.borderTopLeftRadius,
+    shadow: style.boxShadow,
+    corner: parseFloat(main.getPropertyValue('--card-radius')) || 0,
+  }
+}
 """
 
 FILLED = "window.nibApp.workspace.panes.fills !== null && !document.querySelector('aside')"
@@ -255,6 +277,47 @@ def web_tab(page: Page, scheme: str) -> None:
     wait_for(page, BACK, "Shift+F11 out of the web tab")
 
 
+def flush(page: Page, scheme: str, mode: str) -> None:
+    """Nothing of the app's round the pane: the window's box, square, bare (#1103)."""
+    said = page.evaluate(FLUSH)
+    say(f"[{scheme}] {mode}: {json.dumps(said)}")
+    if not said:
+        wrong(f"[{mode}] no pane on screen")
+        return
+    if said["box"] != [0, 0, *said["window"]]:
+        wrong(f"[{mode}] the pane is {said['box']}, not the window {said['window']}")
+    if said["radius"] not in ("0px", "0"):
+        wrong(f"[{mode}] the pane keeps a rounded corner: {said['radius']}")
+    if said["shadow"] not in ("none", "") and "0px 0px 0px 1px" not in said["shadow"]:
+        wrong(f"[{mode}] the pane keeps a shadow: {said['shadow']}")
+    if "0px 0px 0px 1px rgb" in said["shadow"] and "rgba(0, 0, 0, 0)" not in said["shadow"]:
+        wrong(f"[{mode}] the pane keeps an edge: {said['shadow']}")
+    if said["corner"]:
+        wrong(f"[{mode}] a web page here would be given a corner of {said['corner']}px")
+
+
+def every_full_mode(page: Page, scheme: str) -> None:
+    """Shift+F11 and F11, over a note and over a web tab: flush in each (#1103)."""
+    for kind in ("note", "web tab"):
+        if kind == "web tab":
+            page.evaluate("() => window.nibApp.workspace.openWebsite()")
+            wait_for(page, "document.querySelector('.web .webbar')", "the web tab's bar")
+        quiet(page)
+        page.evaluate("() => window.nibApp.workspace.panes.fills = window.nibApp.workspace.panes.focusedId")
+        wait_for(page, FILLED, f"the {kind} filling the window")
+        quiet(page)
+        flush(page, scheme, f"{kind}, filling the window")
+        page.evaluate("() => window.nibApp.workspace.panes.fills = null")
+        wait_for(page, BACK, f"the {kind} back")
+
+        page.evaluate("() => window.nibApp.fullscreen.enter(window.nibApp.workspace.panes)")
+        wait_for(page, "window.nibApp.fullscreen.on", f"full screen over the {kind}")
+        quiet(page)
+        flush(page, scheme, f"{kind}, full screen")
+        page.evaluate("() => window.nibApp.fullscreen.leave()")
+        wait_for(page, "!window.nibApp.fullscreen.on && !!document.querySelector('aside')", "full screen left")
+
+
 def drive(browser: Browser) -> None:
     for scheme in ("light", "dark"):
         page = opened(browser, scheme)
@@ -263,6 +326,7 @@ def drive(browser: Browser) -> None:
         tabs_and_escape(page, scheme)
         key_out(page, scheme, before)
         web_tab(page, scheme)
+        every_full_mode(page, scheme)
         page.context.close()
 
 

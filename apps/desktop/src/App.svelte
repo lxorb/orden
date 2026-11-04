@@ -142,6 +142,8 @@
   /** Whether a tab fills the window; see lib/tab-fill. */
   const filled = $derived(workspace.panes.fills !== null)
   const bare = $derived(fullscreen.on || alone.on)
+  /** Nothing of the app's round what is open: the card flush (#1103). */
+  const flush = $derived(bare || filled)
   /** Whether each side's panel is built. Once it has been open it stays built, shut
    *  or not, and the launch's last turns build it shut where it never was: opening
    *  it is then a column sliding open over rows already laid out, never a panel made
@@ -1052,6 +1054,7 @@
 <main
   class:focus={modes.focus}
   class:full={bare}
+  class:flush
   inert={workspace.nothingToShow}
   style:height={pageHeight()}
 >
@@ -1567,9 +1570,9 @@
     padding: var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left);
   }
 
-  /* No card where the whole screen is the note, and none on a phone or a tablet, whose
-     screen is all the note there is room for: flush and square, as the window was. */
-  main.full,
+  /* No card where the whole window is the note (`flush`), and none on a phone or a tablet,
+     whose screen is all the note there is room for: flush and square, as the window was. */
+  main.flush,
   :global([data-touch]) main {
     --card-radius: 0px;
     --card-inset: 0px;
