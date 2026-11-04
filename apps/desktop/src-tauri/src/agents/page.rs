@@ -781,7 +781,7 @@ impl Page<'_> {
                 session,
                 "DOM.resolveNode",
                 &json!({ "backendNodeId": backend, "objectGroup": group, "executionContextId": world }),
-                patience_in(session),
+                FRAME_PATIENCE,
             )
             .ok()
             .and_then(|said| {
@@ -790,12 +790,17 @@ impl Page<'_> {
                     .map(str::to_string)
             })
         };
+        let started = Instant::now();
         // A world goes with its document, so one more look with new ones after a navigation.
         for fresh in [false, true] {
             if fresh {
                 self.forget_worlds(session);
             }
             for frame in self.frames_of(session) {
+                // Frames reloading as they are asked lose every question: no answer, soon.
+                if started.elapsed() > FRAME_PATIENCE {
+                    return None;
+                }
                 if let Some(handle) = self.world_of_frame(session, &frame).ok().and_then(resolve) {
                     self.frame_read(session, &frame);
                     return Some(handle);
@@ -899,7 +904,7 @@ impl Page<'_> {
             session,
             "Page.createIsolatedWorld",
             &json!({ "frameId": frame, "worldName": WORLD }),
-            patience_in(session),
+            FRAME_PATIENCE,
         )
         .map_err(|why| stale(&why))?;
         let world = made
@@ -2851,9 +2856,9 @@ impl Page<'_> {
             };
             let fields = fields_in_capture(&capture, None);
             for (at, backend) in fields.into_iter().enumerate() {
-                // Past the most, or what no world of ours can describe: a secret that is
-                // filled, as asking found nothing out. Never a field let by.
-                let said = (at < MOST_FIELDS_ASKED)
+                // Past the most, past the time, or what no world of ours can describe: a
+                // secret that is filled, as asking found nothing out. Never a field let by.
+                let said = (at < MOST_FIELDS_ASKED && started.elapsed() <= MOST_ON_FRAMES)
                     .then(|| self.handle_in_world(session.as_deref(), backend, SECRETS))
                     .flatten()
                     .and_then(|field| {
