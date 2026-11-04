@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { nameToWrite } from './naming'
+import { type Opener, openerFor } from './openers'
 import {
   draftName,
   endingOf,
@@ -160,6 +161,31 @@ describe('the name a document is listed under', () => {
 
   test('drops a chat’s pointer, which the chat is named by', () => {
     expect(shownName('Team.chat')).toBe('Team')
+  })
+
+  /** Every kind Orden opens in a tab of its own is a document it named, and is shown
+   *  by its name alone: an online terminal's file read `Claude Code.term` in the list.
+   *  One file of each opener, so a kind added to `Opener` is listed here and shown
+   *  without its ending, or this fails to compile. A PDF is somebody else's file. */
+  test('drops the ending of every kind a tab opens but a paper', () => {
+    const one: Record<Exclude<Opener, 'pdf'>, string> = {
+      note: 'Plan.md',
+      web: 'Docs.url',
+      pages: 'Journal.pages',
+      canvas: 'Board.canvas',
+      view: 'Bugs.base',
+      chat: 'Team.chat',
+      term: 'Claude Code.term',
+    }
+    const build = { evenBuild: false, isPlugin: false }
+    for (const [kind, name] of Object.entries(one)) {
+      expect(
+        openerFor(name, () => false, build),
+        name,
+      ).toBe(kind)
+      expect(shownName(name), name).toBe(name.slice(0, name.lastIndexOf('.')))
+      expect(nameToWrite(shownName(name), endingOf(name) ?? ''), name).toBe(name)
+    }
   })
 
   /** A paper, a picture and anything else Orden did not write are files from
