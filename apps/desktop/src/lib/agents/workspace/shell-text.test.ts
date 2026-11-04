@@ -296,3 +296,221 @@ describe('the options a package manager takes in front of its command', () => {
     expect(onTheList(line, listed)).toBe(false)
   })
 })
+
+describe('a package manager, by what is known to be free', () => {
+  const listed = ['npm', 'pnpm', 'yarn', 'bun']
+
+  test.each([
+    "npm exe -c 'touch pwned'",
+    'npm ex touch',
+    'npm explor x',
+    'npm cre x',
+    'npm ini x',
+    'npm config set script-shell ./sh.sh --location=project',
+    'npm set script-shell ./sh.sh',
+    'npm set-script t x',
+    'npm pkg set scripts.t=x',
+    'npm somethingnew',
+    'npm test --userconfig=./npmrc',
+    'npm run t --shell=./sh',
+    'npm help x --viewer=./pwn',
+    'npm install --git=./pwn x',
+    'bun exec touch',
+    'bun touch pwned',
+    'bun ./pwn.ts',
+    'bun run touch pwned',
+    'bun run ./pwn.ts',
+    'bun pm pkg set scripts.t=x',
+    'bun build ./a.ts --outfile=./b',
+    'bun test --preload=./pwn.ts',
+    'pnpm recursive exec touch pwned',
+    'pnpm multi exec touch pwned',
+    'pnpm m exec touch pwned',
+    'pnpm r exec touch pwned',
+    'pnpm touch pwned',
+    'pnpm --filter web touch pwned',
+    'pnpm config set script-shell ./sh.sh',
+    'pnpm test --config.script-shell=./sh.sh',
+    'pnpm run t --shell-mode',
+    'yarn touch pwned',
+    'yarn config set scriptShell ./sh.sh',
+    'yarn workspace web touch pwned',
+    'yarn workspace web exec touch',
+    'yarn workspace',
+  ])('asks: %s', (line) => {
+    expect(onTheList(line, listed)).toBe(false)
+  })
+
+  test.each([
+    'npm',
+    'npm i',
+    'npm install',
+    'npm i -D vitest',
+    'npm install --save-dev vitest',
+    'npm ci --omit=dev',
+    'npm run build',
+    'npm run build --if-present',
+    'npm run test -- --watch',
+    'npm t',
+    'npm start',
+    'npm ls --depth=0',
+    'npm audit --json',
+    'npm outdated',
+    'npm view svelte version',
+    'npm uninstall x',
+    'npm update',
+    'pnpm',
+    'pnpm i --frozen-lockfile',
+    'pnpm add -D vitest',
+    'pnpm remove x',
+    'pnpm build',
+    'pnpm dev',
+    'pnpm lint',
+    'pnpm check',
+    'pnpm run anything',
+    'pnpm -r test',
+    'pnpm --filter web test -- -t name',
+    'pnpm list --depth 0',
+    'yarn',
+    'yarn install --immutable',
+    'yarn add -D x',
+    'yarn run anything',
+    'yarn build',
+    'yarn workspace web build',
+    'bun i',
+    'bun install --frozen-lockfile',
+    'bun add -d x',
+    'bun test',
+    'bun run build',
+    'bun run dev',
+    'bun build ./a.ts',
+  ])('goes: %s', (line) => {
+    expect(onTheList(line, listed)).toBe(true)
+  })
+})
+
+describe('a line as the shell hands it over', () => {
+  const listed = ['git', 'npm', 'pnpm', 'yarn', 'bun']
+
+  test.each([
+    'npm --prefix "./ run /.." exec -- touch pwn',
+    'npm --prefix "./ run /.." publish',
+    'npm --prefix "./ run /.." config set script-shell ./sh.sh',
+    'npm --prefix "./ run /.." pkg set scripts.t=x',
+    "npm --prefix './ run /..' exec touch pwn",
+    'pnpm --filter "./ run /.." exec touch pwn',
+    'pnpm --dir "x run y" exec touch z',
+    'pnpm --dir ./\\ run\\ /.. exec touch z',
+    'bun --cwd "./ test /.." ./e.js',
+    'yarn --cwd "./ test /.." exec touch z',
+    // A shell with no such quoting reads these the other way round.
+    'npm --prefix a\\ exec test',
+    'npm --prefix "a b" test',
+    // A quote never closed runs nothing it says.
+    'npm test "',
+    "git log '",
+    'git "log',
+    'git -c"core.pager=touch" log',
+    'git --"exec-path"=x status',
+    'git log --"output"=x',
+    'npm t --"shell"=x',
+  ])('asks: %s', (line) => {
+    expect(onTheList(line, listed)).toBe(false)
+  })
+
+  test.each([
+    'git commit -m "fix two words"',
+    "git commit -m 'fix two words'",
+    'git log --format="%h %s"',
+    'git log --grep "a -c word"',
+    'git diff -- "a file.md"',
+    'npm run build -- --title "two words"',
+    'pnpm --filter web test -- -t "a name with words"',
+    'npm install "lodash"',
+  ])('goes: %s', (line) => {
+    expect(onTheList(line, listed)).toBe(true)
+  })
+})
+
+describe('a bare name that may be on the path', () => {
+  const listed = ['npm', 'pnpm', 'yarn', 'bun']
+
+  test.each([
+    "pnpm watch 'touch pwn'",
+    "bun run watch 'touch pwn'",
+    "yarn watch 'touch pwn'",
+    'pnpm watch',
+    'bun run watch',
+    'pnpm format D:',
+    'bun run format D:',
+    'pnpm check x',
+    'bun dev ./x',
+    'pnpm tsc --project=./x',
+    'pnpm vitest --config=./x',
+    'npm --prefix "a b" run t',
+    'pnpm eslint --rulesdir=./x .',
+  ])('asks: %s', (line) => {
+    expect(onTheList(line, listed)).toBe(false)
+  })
+
+  test.each([
+    'bun run test:unit',
+    'bun run db:migrate',
+    'bun run build',
+    'bun dev',
+    'bun start',
+    'bun db:migrate',
+    'pnpm test:unit',
+    'pnpm build:web',
+    'yarn test:unit',
+    'pnpm tsc',
+    'pnpm tsc --noEmit',
+    'pnpm vitest run',
+    'pnpm vitest run src/a.test.ts',
+    'pnpm eslint .',
+    'pnpm eslint . --fix',
+    'pnpm prettier --check .',
+    'yarn jest',
+    'pnpm test src/a.test.ts',
+    'npm test --loglevel=error',
+    'npm install --save-prod lodash',
+    'npm install --ignore-scripts',
+    'npm ci --ignore-scripts',
+    'pnpm install --ignore-scripts',
+    'bun install --ignore-scripts',
+  ])('goes: %s', (line) => {
+    expect(onTheList(line, listed)).toBe(true)
+  })
+})
+
+describe('a space the shell does not split on', () => {
+  const listed = ['git', 'npm', 'pnpm', 'yarn', 'bun']
+
+  test.each([
+    'npm --prefix ./\u00a0run\u00a0/.. exec touch pwn',
+    'npm --prefix ./\u2003run\u2003/.. exec touch pwn',
+    'pnpm --dir ./\u00a0run\u00a0/.. exec touch pwn',
+    'pnpm --filter ./\u00a0run\u00a0/.. exec touch pwn',
+    'bun --cwd ./\u00a0test\u00a0/.. ./e.js',
+    'npm\u00a0exec touch',
+    'git log\u00a0-c',
+  ])('is no space, and asks: %j', (line) => {
+    expect(onTheList(line, listed) && startsOnlyOne(line)).toBe(false)
+  })
+
+  test('a tab and a space still part words', () => {
+    expect(onTheList('git  status', listed)).toBe(true)
+  })
+})
+
+describe('a colon name that is a file', () => {
+  const listed = ['pnpm', 'yarn', 'bun']
+
+  test.each(['bun a:b.js', 'bun run a:b.js', 'pnpm a:b.js', 'yarn a:b.js'])('asks: %s', (line) => {
+    expect(onTheList(line, listed)).toBe(false)
+  })
+
+  test.each(['bun run test:unit', 'bun db:migrate', 'pnpm build:web'])('goes: %s', (line) => {
+    expect(onTheList(line, listed)).toBe(true)
+  })
+})

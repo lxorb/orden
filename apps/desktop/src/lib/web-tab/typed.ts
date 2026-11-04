@@ -139,11 +139,12 @@ export interface HalfTyped {
   over: string
 }
 
-/** A Windows path: a drive letter, relative to that drive or not, or a share. To `URL` it is
- *  a host called `c` or `nas` over http, and with a space in it words for the search engine,
- *  either of which tells the network what is on this machine. It means `file:`, which a tab
- *  does not open. A letter with a port is a host, and one with a space after it is words. */
-const WINDOWS_PATH = /^(?:[a-z]:(?!\s)(?!\d{1,5}(?:[/?#]|$))|\\\\)/i
+/** A Windows path: a drive letter, relative to that drive or not, a share, the top of this
+ *  drive, home or from here. To `URL` it is a host called `c` or `nas` over http, and with a
+ *  space in it words for the search engine, either of which tells the network what is on this
+ *  machine. It means `file:`, which a tab does not open. A letter with a port is a host, and
+ *  one with a space after it is words. */
+const WINDOWS_PATH = /^(?:[a-z]:(?!\s)(?!\d{1,5}(?:[/?#]|$))|(?:~|\.{1,2})?\\)/i
 
 /** A file, or a share on the network, by its scheme, whatever follows it. */
 const FILE_SCHEME = /^(?:file|smb|afp|nfs|cifs):/i
@@ -166,8 +167,9 @@ const WORD_AND_WORD = /^[^\s:/?#@]+:(?!:)\S+$/
 /** A name, a colon and at least two words with an `@` further on: `admin:pass word@router.lan`. */
 const NAME_AT_HOST = /^[^\s:/?#@]+:\S.*@/
 
-/** A word that says what comes after its colon is secret. */
-const NAMES_A_SECRET = /^(?:password|passwd|passcode|passphrase|pwd|secret|token|api[-_]?key)\s*:/i
+/** A word that says what comes after its colon is secret, in the languages most typed in. */
+const NAMES_A_SECRET =
+  /^(?:password|passwd|passcode|passphrase|pwd|secret|token|api[-_]?key|passwort|kennwort|mot de passe|contrase\u00f1a|contrasena|senha|wachtwoord|l\u00f6senord|losenord|has\u0142o|\u043f\u0430\u0440\u043e\u043b\u044c|\u5bc6\u7801|\u5bc6\u78bc|\u30d1\u30b9\u30ef\u30fc\u30c9|\ube44\ubc00\ubc88\ud638)\s*[:\uff1a]/iu
 
 /** Whether something typed could be a credential, and so goes to no search engine, which
  *  would keep it. Chrome would search for `root:hunter2`, and for a search operator with

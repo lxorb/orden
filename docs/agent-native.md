@@ -418,7 +418,9 @@ number or code - is one line that says only whether it holds anything, `[filled]
 nothing under it (9.4). Frames in
 the page's own process are in the page's tree under their frame element; a frame in a
 process of its own (another site, as Chromium isolates them) is reached through the
-session `Target.setAutoAttach` gives it, and its refs are `f<n>e<id>`.
+session `Target.setAutoAttach` gives it, and its refs are `f<n>e<id>`. A frame in a process of its
+own inside another such frame is not written, and the snapshot says `truncated`, as it does for a
+frame it could not read; a press there by point is refused.
 
 ### 5.3 Notes
 
@@ -928,10 +930,18 @@ machine, which is more than everything else in this document put together.
 bare listed name with no second command, no control character and nothing the shell expands,
 but `python -c`, a `git` alias in the repository's config, a `Makefile` or an `npm test` a
 script changed run whatever they run, and no check of a line can see that. `shell-text.ts`
-sends the plainest ways out back to the question (git's `-c`, `-C`, `-p`, `--exec-path`,
-`--git-dir`, `--work-tree`, `--output`, `--upload-pack` and its `config`, `submodule` and
-`bisect`; `npm exec` and its kind, and `npx` always), which narrows the list of surprises
-and does not end it. List only what you would let the agent run with anything after it.
+sends the plainest ways out back to the question: git, npm, pnpm, yarn and bun each go by the
+commands and options known to be free, read as a shell hands them over (a space of any kind but
+the plain one asks), and any other asks
+(git's `-c`, `-C`, `-p`, `--exec-path`, `--git-dir`, `--work-tree`, `--output`, `--upload-pack`
+and its `config`, `submodule` and `bisect`; `npm exec` and its kind and abbreviations, `npm
+config` and any option that sets a config key, a bare `pnpm touch` or `bun run touch`, which
+start what is on the path; a folder with a space in it in front of the command; `npx` always).
+A bare name goes where it can only be a script: `test:unit` by its shape, `build` and the few
+like it with nothing after them, and `tsc`, `vitest`, `jest`, `eslint` and `prettier` for pnpm
+and yarn. `pnpm run` and `npm run` take a script and nothing else. That narrows the list of
+surprises and does not end it. List only what you would let the agent run with anything after
+it.
 
 **The reader's own terminals** are tabs like any other (`lib/agents/workspace/
 terminal-tab.ts`), what "look at my terminal" and "restart the server" are about. VS Code's
@@ -1033,7 +1043,10 @@ unchanged: they ask as their thread's mode says.
 ### 9.2 Sites
 
 A denied site cannot be opened, navigated to, or acted in, in an agent tab or a reader's;
-a navigation the page itself makes to one is stopped and reported. `browser.script` is per
+a navigation the page itself makes to one is stopped and reported. A frame of one is the same:
+a press, a drag or a hover on a frame's own ref lands inside it and is refused like one by
+point, and a page holding one is not printed to a PDF, since a print cannot paint it over as
+a picture does. `browser.script` is per
 site on top of the scope, because running script in a page is running as that page.
 
 ### 9.3 What it always asks first
@@ -1059,6 +1072,63 @@ notification and the question in the activity panel (the site's mark, the summar
 agent. Unanswered questions expire after a day. In `confirm` mode every write asks the
 same way, batched: an agent's ten form fields are one question.
 
+A press is judged by **what it lands on**, not by the ref it was named by: the element the
+engine finds at the point with the hit test the press itself goes by, so through a
+`pointer-events: none` layer, a pseudo-element or a shadow root as what it hangs on, and in a
+frame the frame's element, by the frame's site, the point followed through any `transform`, `zoom`,
+border or padding by the engine's own content box. And in such a frame what the frame itself says
+the pointer is over is asked too, which owes nothing to that mapping. The pointer is brought there first and the point looked at
+again, as the page may answer the move: anything new there is put to the same question before
+the button goes down. One press is one question, however many times it is looked at. A page's
+own timer can still swap the target in the moment between that look and the press, which no
+check from outside closes.
+
+**Everything this goes by is read where the page cannot answer**: in a world of nib's own in
+that very frame, through each interface's own getters, or from the engine's own lists (`DOM`,
+`Accessibility`, `DOMDebugger`). A page can redefine `contentDocument`, `ownerDocument` or
+`closest` on its own objects, or name a form's field `elements` or `parentNode`, and none of it
+is seen here. Its content is another matter: a page calls its own button what it likes.
+
+An allowance is for the question asked: its category, the control's name and everything its dialog
+says, short of what ticks: a clock (`9:58`, `3:45pm`), a countdown in seconds or minutes (`58 seconds`), a
+spinner. The same button when another file is named, when an amount, a percentage, a currency, a
+count or a number of hours changes, or in a form that has grown a card field, asks again; a clock
+anywhere in the dialog does not. A bare counter with no unit is a number like any and asks each time. A press made more than once says how many times,
+and asks again for another count.
+
+So a paragraph round a Pay button asks and a section whose middle is empty does not, and a
+frame's ref is a press of what is in the frame. Where no control holds the press, what acts for
+it does (a handler, a place in the tab order, a widget's role, a pointer cursor set on it, a
+listener the engine can see), by its label and the words hit, and by a line it holds that opens
+by saying it pays or deletes, in four words or fewer (`Pay now`, `Delete 3 files`, a pseudo-element's words too), any
+line of what is built to be pressed, and only the first of a row or of what only a listener or
+the tab order says takes one. So a Pay tile asks from any part, a row is not called Pay for its
+second cell, a help card is not called what its heading discusses, and `Pay on delivery` on a
+tile does ask. What holds more than two controls is no one control, and goes by the words hit.
+
+Where it draws its own face and acts on a press, a `canvas` or a component that shows nothing
+readable asks, as **unread**. An empty `div` with a listener goes: it is a backdrop as often as a
+button, and no check can say which. A control keeps its own name, whatever it sits in, and a
+page's own script behind a button called OK is not seen by anything here.
+
+A link that only goes is no delete, as the press that deletes is on the page it goes to; one
+with `data-method`, `data-turbo-method`, `role=button` or a handler or listener of its own is a
+press, while a plain `<a href=/delete-account>` still goes. In a dialog that talks of paying or deleting anywhere in it, every control asks except the way
+out, a closed list (Cancel, Close, Close dialog, No, Stay, Got it, Learn more and their like),
+an icon with no name included. `Keep` is the way out of a dialog about deleting and of none about
+paying, where `Keep your plan and be billed` is a yes. `Next` is none: it goes on to what the dialog
+says. Plain `OK`, `Agree`, `Accept` and `Allow` always ask, as `Consent to payment` says those too;
+only a control whose own name says cookies (`Accept all cookies`) goes, so a cookie notice that
+mentions a delete word costs one question on its plain `OK`, an accepted false alarm. A dialog is not
+read for what it means past that, as that lets honest second steps by: `You can remove your data at
+any time` and OK cost one question. `free of charge`, `in charge` and `pay attention` are not the word. Enter in a
+field of such a dialog is a press too, of its form's first submit button or of none, so
+type-to-confirm asks like its Confirm. The question quotes the first sentence that says so, and
+never what a field holds: a dialog's words leave out every field's, and a secret's own name, which
+may be what it holds, is not said. A form of 200 fields or more has not been read to its end, so a
+submit in it asks. A tick by `browser_fill_form` is a press like one by `browser_click`, on top of
+the form's one question.
+
 Recognising these from the page rather than from the agent's own account of what it is
 doing is the point. An agent that has been talked into buying something will describe the
 press as whatever it was told to; the card field is still a card field.
@@ -1071,12 +1141,27 @@ signs in, only where its mode clears it (signing in, 9.3; at once under Full per
 a focused password field is refused, and in every other
 picture each filled secret field is painted over in flat grey; a page holding a filled one
 is not printed to a PDF at all, where nothing could paint it over. Nor does it
-read any other secret - a one-time code, a card's number, expiry or security code - by
-any road: `browser_snapshot` writes such a field as `[filled]` or nothing, and nothing
+read any other secret - a one-time code or a PIN and a card's number, expiry or security code,
+each by its `autocomplete` or by what it is called, and in a box, an editable region or a
+`role=textbox` alike -
+by any road, at any depth of page, and a field that cannot be described, whatever frame it is in,
+counts as one (a part of the page whose fields cannot be read at all is not written, and no picture
+of the page is taken; a frame inside a frame in another process is followed down for this, and one
+that cannot be reached keeps the picture back too): `browser_snapshot` writes such a field as `[filled]` or nothing, and nothing
 under it (the engine's own value for a password is one bullet a character, and its words
 inside the field the same, so either would say how long it is); `browser_find` never looks
 inside one; a name the engine builds out of a field's value has the value taken out; and
-`browser_read` and a clip carry no field's value in any shape. A page holding a filled one
+`browser_read` and a clip carry no field's value in any shape, and a secret editable region
+leaves `[hidden]` (in markdown, `\[hidden\]`), by the node and never by its words: every other
+word of the page stands as it is, whatever a field holds. What holds a value in the tree and has gone by the scan after it, a field remounted while the page
+was being read, is written as a secret too, as nothing can now say it is not; a picture is painted
+for what was there before it and after it, taken again once if the secrets differ and then refused;
+and a read whose secret regions change while it is made
+is made again once and then refused. The value is cut only from a name the
+engine builds out of that field, by the engine's own account of where a name came from, and
+leaves `[hidden]` there too; the same words the page prints anywhere else, an `<output>` of the
+code it just took included, are the page's own and are read. `[filled]` costs an agent reading back what is under a name like `PIN code`, also a
+postal code in India (unless its `autocomplete` says `postal-code`). A page holding a filled one
 prints to a PDF only for a call cleared for signing in.
 The engine's password saving and autofill are off in agent tabs, so a saved password is
 not filled in behind the agent's back either.

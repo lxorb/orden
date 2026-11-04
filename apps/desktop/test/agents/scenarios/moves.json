@@ -1,0 +1,82 @@
+{
+  "proves": "a button under a pseudo-element is judged as the button, and what a page shows under the pointer when it arrives is judged again before the press",
+  "doc": "9.3",
+  "steps": [
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/moves"
+      },
+      "save": {
+        "tab": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{tab}",
+        "for": "load"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "button",
+        "name": "Place order"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "ripple": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{ripple}"
+      },
+      "expect": {
+        "status": "needs_approval",
+        "has": ["approval"]
+      }
+    },
+    {
+      "record": "ordered",
+      "count": 0
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "button",
+        "name": "OK"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "over": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{over}"
+      },
+      "expect": {
+        "status": "needs_approval",
+        "has": ["approval"]
+      }
+    },
+    {
+      "record": "paid",
+      "count": 0
+    }
+  ]
+}

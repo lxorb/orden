@@ -9,13 +9,105 @@ export function programOf(command: string): string {
   return /^[\w.+-]+$/.test(word) ? word.toLowerCase() : ''
 }
 
-/** What a listed program can be told to run or write with no second command in sight, by
- *  the program. This is not what makes a listed program safe, which nothing can: a program
- *  on the list is trusted with all it can do, as docs/agent-native.md 8.9 says. It keeps
- *  the plainest ways out of a line that looks like a read in front of the reader's
- *  question. Long options are matched by any prefix, as npm takes one. */
+/** What a package manager is known to do freely, as git below: any other command asks, and
+ *  so does any other option, since each one can set a config key (`--script-shell`,
+ *  `--userconfig`, `--shell`, `--viewer`, pnpm's `--config.x`) and a config key can run
+ *  anything. An abbreviation is not one of them: npm reads `exe` as `exec`. This is not what
+ *  makes a listed program safe, which nothing can: a program on the list is trusted with
+ *  all it can do, as docs/agent-native.md 8.9 says. It keeps the plainest ways out of a line
+ *  that looks like a read in front of the reader's question.
+ *
+ *  `scripts` are the bare names taken for a package's own scripts, where a bare name is not
+ *  only that: pnpm and bun's `run` start whatever else goes by the name on the path. */
 const PACKAGES = { long: ['--script-shell', '--node-options'] }
 const PLAIN = ['--version', '--help', '-v', '-h', '--silent', '-s']
+const SCRIPTS = [
+  'test',
+  'build',
+  'dev',
+  'start',
+  'stop',
+  'restart',
+  'lint',
+  'check',
+  'format',
+  'typecheck',
+  'preview',
+  'serve',
+]
+
+/** A package's own script by its shape: no program on a path is called `test:unit`. */
+const SCRIPT_BY_SHAPE = /^[\w-]+:[\w:-]+$/
+
+/** What pnpm and yarn start out of the package's own `node_modules/.bin`, by the names
+ *  everyone's toolchain has. Their options are held to the same list as any. */
+const TOOLS = ['tsc', 'vitest', 'jest', 'eslint', 'prettier']
+/** What is free after the command: where a value follows, it reads as any other word. */
+const OPTIONS_FREE = [
+  ...PLAIN,
+  '--save',
+  '-S',
+  '--save-dev',
+  '-D',
+  '-d',
+  '--dev',
+  '--save-exact',
+  '-E',
+  '--exact',
+  '--save-optional',
+  '-O',
+  '--optional',
+  '--save-peer',
+  '--no-save',
+  '--global',
+  '-g',
+  '--production',
+  '--prod',
+  '-P',
+  '--force',
+  '-f',
+  '--frozen-lockfile',
+  '--no-frozen-lockfile',
+  '--immutable',
+  '--legacy-peer-deps',
+  '--omit',
+  '--include',
+  '--no-audit',
+  '--no-fund',
+  '--audit-level',
+  '--fix',
+  '--json',
+  '--long',
+  '--depth',
+  '--all',
+  '-a',
+  '--recursive',
+  '-r',
+  '--filter',
+  '-F',
+  '--workspace',
+  '-w',
+  '--workspaces',
+  '--workspace-root',
+  '--if-present',
+  '--verbose',
+  '--parallel',
+  '--stream',
+  '--watch',
+  '--coverage',
+  '--bail',
+  '--dry-run',
+  '--offline',
+  '--prefer-offline',
+  '--latest',
+  '-L',
+  '--ignore-scripts',
+  '--save-prod',
+  '--loglevel',
+  '--noEmit',
+  '--write',
+  '--check',
+]
 const REACH: Record<
   string,
   {
@@ -32,21 +124,102 @@ const REACH: Record<
   npm: {
     ...PACKAGES,
     short: null,
-    commands: ['exec', 'x', 'explore', 'init', 'create', 'innit'],
+    commands: [
+      'test',
+      't',
+      'run',
+      'run-script',
+      'start',
+      'stop',
+      'restart',
+      'install',
+      'i',
+      'add',
+      'ci',
+      'clean-install',
+      'uninstall',
+      'remove',
+      'rm',
+      'un',
+      'update',
+      'up',
+      'upgrade',
+      'ls',
+      'list',
+      'll',
+      'la',
+      'outdated',
+      'audit',
+      'view',
+      'info',
+      'show',
+      'pack',
+      'help',
+      'root',
+      'prefix',
+      'why',
+      'explain',
+      'dedupe',
+      'prune',
+      'rebuild',
+      'version',
+    ],
     before: PLAIN,
     valued: ['--prefix', '-w', '--workspace'],
   },
   pnpm: {
     ...PACKAGES,
     short: null,
-    commands: ['exec', 'dlx', 'create', 'x'],
+    commands: [
+      't',
+      'run',
+      'install',
+      'i',
+      'add',
+      'remove',
+      'rm',
+      'uninstall',
+      'un',
+      'update',
+      'up',
+      'upgrade',
+      'list',
+      'ls',
+      'll',
+      'la',
+      'outdated',
+      'audit',
+      'why',
+      'view',
+      'info',
+      'prune',
+      'rebuild',
+      'dedupe',
+      'pack',
+      'root',
+      'help',
+    ],
     before: [...PLAIN, '-r', '--recursive', '-w', '--workspace-root'],
     valued: ['--filter', '-F', '--dir', '-C'],
   },
   yarn: {
     ...PACKAGES,
     short: null,
-    commands: ['exec', 'dlx', 'create'],
+    commands: [
+      'run',
+      'install',
+      'add',
+      'remove',
+      'upgrade',
+      'up',
+      'list',
+      'info',
+      'why',
+      'outdated',
+      'audit',
+      'pack',
+      'help',
+    ],
     before: PLAIN,
     valued: ['--cwd'],
   },
@@ -54,7 +227,7 @@ const REACH: Record<
     // `-e1` and `-pe1`: short options bundle, and a value may hang on the end.
     short: /^-[a-zA-Z]*[ep]/,
     long: [...PACKAGES.long, '--eval', '--print'],
-    commands: ['x', 'create'],
+    commands: ['install', 'i', 'add', 'a', 'remove', 'rm', 'update', 'outdated', 'help'],
     before: PLAIN.filter((one) => one !== '-s'),
     valued: ['--cwd'],
   },
@@ -310,18 +483,77 @@ function gitStays(plain: readonly string[]): boolean {
   return true
 }
 
+/** A line's words as a POSIX shell hands them over: parted by a space or a tab and nothing
+ *  else, quotes and backslashes gone, and what they held one word. `null` for a quote left
+ *  open, which the shell would go on reading past Enter. */
+function wordsOf(line: string): string[] | null {
+  const words: string[] = []
+  let word: string | null = null
+  let quote: '"' | "'" | null = null
+
+  for (let at = 0; at < line.length; at++) {
+    const one = line.charAt(at)
+    if (quote === "'") {
+      if (one === "'") quote = null
+      else word = (word ?? '') + one
+    } else if (quote === '"') {
+      if (one === '"') quote = null
+      else if (one === '\\' && /["\\$`]/.test(line.charAt(at + 1)))
+        word = (word ?? '') + line.charAt(++at)
+      else word = (word ?? '') + one
+    } else if (one === '"' || one === "'") {
+      quote = one
+      word ??= ''
+    } else if (one === '\\') {
+      word = (word ?? '') + line.charAt(++at)
+    } else if (one === ' ' || one === '\t') {
+      if (word !== null) words.push(word)
+      word = null
+    } else {
+      word = (word ?? '') + one
+    }
+  }
+
+  if (quote !== null) return null
+  if (word !== null) words.push(word)
+  return words
+}
+
+/** Whether a package manager's bare name is known to be one of these, with nothing after it
+ *  that the program of that name would run: `pnpm format D:`, on a path that has one. */
+function bareNameStays(program: string, plain: readonly string[], at: number): boolean {
+  const command = plain[at] ?? ''
+  if (program === 'bun') {
+    // Its own commands, whatever follows.
+    if (command === 'test' || command === 'build') return true
+    const named = command === 'run' ? (plain[at + 1] ?? '') : command
+    const past = command === 'run' ? at + 2 : at + 1
+    if (SCRIPT_BY_SHAPE.test(named)) return true
+    return SCRIPTS.includes(named) && !positional(plain, past)
+  }
+  if (program !== 'pnpm' && program !== 'yarn') return false
+  if (SCRIPT_BY_SHAPE.test(command) || TOOLS.includes(command)) return true
+  return SCRIPTS.includes(command) && (command === 'test' || !positional(plain, at + 1))
+}
+
+/** Whether any word past this one, short of `--`, is no option. */
+function positional(plain: readonly string[], from: number): boolean {
+  const end = plain.indexOf('--', from)
+  return plain.slice(from, end === -1 ? undefined : end).some((word) => !word.startsWith('-'))
+}
+
 /** Whether a program's arguments stay out of what it can be told to run. */
-function argumentsStay(program: string, words: readonly string[]): boolean {
+function argumentsStay(program: string, plain: readonly string[]): boolean {
   if (RUNS_WHAT_IT_FETCHES.has(program)) return false
 
-  // As the shell hands them over: `"-c"`, `-'c'` and `-\c` are all `-c`.
-  const plain = words.map((word) => word.replace(/["'\\]/g, ''))
   if (program === 'git') return gitStays(plain)
 
   const reach = REACH[program]
   if (!reach) return true
 
-  // The options in front of the command, walked: a value is not the command.
+  // The options in front of the command, walked: a value is not the command. One with a
+  // space in it is read otherwise by a shell with other quoting (PowerShell's backslash is
+  // no escape), and is not worth finding out for a folder.
   let at = 0
   for (; at < plain.length; at++) {
     const word = plain[at] ?? ''
@@ -332,13 +564,27 @@ function argumentsStay(program: string, words: readonly string[]): boolean {
         at += 1
         if (at === plain.length) return false
       }
+      if (/\s/.test(word) || /\s/.test(plain[at] ?? '')) return false
       continue
     }
     return false
   }
 
+  // `yarn workspace web build` is `build`, in `web`.
+  if (program === 'yarn' && plain[at] === 'workspace') {
+    at += 2
+    if (at >= plain.length) return false
+  }
   const command = plain[at]
-  if (command !== undefined && reach.commands.includes(command)) return false
+  if (command !== undefined) {
+    if (!reach.commands.includes(command) && !bareNameStays(program, plain, at)) return false
+  }
+
+  // After it, as git's: known to be free or a question, and past `--` it is the script's.
+  const end = plain.indexOf('--', at)
+  for (const word of plain.slice(at + 1, end === -1 ? undefined : end)) {
+    if (word.startsWith('-') && !OPTIONS_FREE.includes(word.split('=')[0] ?? word)) return false
+  }
 
   return !plain.some((word) => {
     if (word.startsWith('--')) {
@@ -355,7 +601,11 @@ export function onTheList(command: string, programs: readonly string[]): boolean
   const program = programOf(command)
   if (program === '' || !programs.some((one) => one.toLowerCase() === program)) return false
 
-  return argumentsStay(program, command.trim().split(/\s+/).slice(1))
+  // A space of another kind is part of a word to the shell, and no way to read a line by eye.
+  if (/(?! )\p{Zs}/u.test(command)) return false
+
+  const words = wordsOf(command.trim())
+  return words !== null && argumentsStay(program, words.slice(1))
 }
 
 /** Whether a line starts only its first program: no second command after a `;`, an
@@ -368,7 +618,7 @@ export function onTheList(command: string, programs: readonly string[]): boolean
  *  shell, Ctrl+U clears what came before it, Ctrl+O runs it, a backspace rubs it out and
  *  a tab completes it, so the words before Enter are not the words that run. */
 export function startsOnlyOne(command: string): boolean {
-  return !/[;&|`<>!(){}$*?[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(command)
+  return !/[;&|`<>!(){}$*?[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]|(?! )\p{Zs}/u.test(command)
 }
 
 /** What a terminal printed, as words: the escapes that colour and move things on a

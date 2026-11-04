@@ -27,9 +27,9 @@ use super::policy::{self, Act, Facts};
 use super::snapshot::{self, Asked, Wanted};
 use super::tabs::{self, Tab};
 use super::verbs::{
-    Acted, Answer, Category, Closed, Code, ConsoleLines, DownloadList, Evaluated, Event, Found,
-    Opened, PageText, Requests, Snapped, StorageOp, Store, Stored, TabList, Verb, Waited, World,
-    EVENT,
+    Acted, Answer, Category, Closed, Code, ConsoleLines, DownloadList, Evaluated, Event,
+    FieldValue, Found, Opened, PageText, Requests, Snapped, StorageOp, Store, Stored, TabList,
+    Verb, Waited, World, EVENT,
 };
 use super::Caller;
 
@@ -276,6 +276,9 @@ fn gate<'a>(
             Caller::Reader => None,
         },
         credentials: std::sync::atomic::AtomicBool::new(cleared),
+        worlds: std::sync::Mutex::new(std::collections::HashMap::new()),
+        frame_lists: std::sync::Mutex::new(std::collections::HashMap::new()),
+        worlds_renewed: std::sync::atomic::AtomicBool::new(false),
     };
     if let Caller::Agent(grant) = caller {
         if let Err(why) = policy::site_allowed(grant, &page.url(), place.store()) {
@@ -398,6 +401,24 @@ fn judged(
     act: Act,
     key: &str,
 ) -> Result<(), Answer> {
+    judged_times(app, caller, page, place, facts, act, key, 1)
+}
+
+/// `judged`, for a press made so many times, which the question says.
+#[allow(
+    clippy::too_many_arguments,
+    reason = "the one decision every act goes through, and each of these is what it is about"
+)]
+fn judged_times(
+    app: &AppHandle,
+    caller: &Caller,
+    page: &Page<'_>,
+    place: &Place,
+    facts: &Facts,
+    act: Act,
+    key: &str,
+    times: u8,
+) -> Result<(), Answer> {
     let cleared = || -> Result<(), Answer> {
         if policy::credential_act(facts, act) {
             page.credentials
@@ -413,11 +434,10 @@ fn judged(
     let Some(question) = policy::judge(grant, facts, act, &page.url(), &hosts) else {
         return cleared();
     };
-    let key = approvals::on_page(
-        key,
-        &page.url(),
-        &format!("{} {}", facts.name, facts.default_button),
-    );
+    let summary = said_times(question.summary.clone(), times);
+    // An allowance is for what was asked: the same button with other words round it, in a
+    // form that has grown a card field, or pressed more often, is another question.
+    let key = approvals::on_page(key, &page.url(), &question_key(&question, &summary, facts));
     if approvals::allowed(&grant.id, &key) {
         return cleared();
     }
@@ -425,11 +445,210 @@ fn judged(
         app,
         grant,
         question.category,
-        question.summary,
+        summary,
         Some(&page.url()),
         place.id(),
         &key,
     ))
+}
+
+/// A question with how many times, where it is more than once.
+fn said_times(summary: String, times: u8) -> String {
+    if times > 1 {
+        format!("{summary} ({times} times)")
+    } else {
+        summary
+    }
+}
+
+/// What an allowance is for: the category, the control's name, what its dialog says and how
+/// it was put, short of what ticks. Another file named in the dialog or another amount is
+/// another question; a clock changes nothing asked, and each tick a question would be a pile of
+/// the same one in front of the reader.
+fn question_key(question: &policy::Question, summary: &str, facts: &Facts) -> String {
+    steady(&format!(
+        "{} {:?} {} {summary}",
+        facts.name, question.category, facts.dialog
+    ))
+}
+
+/// Whether a word is a time of day or a clock counting down: `9:58`, `09:58:12`, `3:45pm`. A
+/// whole word only, so `1:1000` is a ratio and stays.
+fn is_clock(word: &str) -> bool {
+    let word = word.trim_matches(['(', ')', ',', '.', ';']).to_lowercase();
+    let word = word
+        .strip_suffix("am")
+        .or_else(|| word.strip_suffix("pm"))
+        .unwrap_or(&word);
+    let parts: Vec<&str> = word.split(':').collect();
+    let digits = |one: &str| one.chars().all(|digit| digit.is_ascii_digit());
+    matches!(parts.len(), 2 | 3)
+        && matches!(parts[0].len(), 1 | 2)
+        && parts.iter().all(|one| digits(one))
+        && parts[1..]
+            .iter()
+            .all(|one| one.len() == 2 && one.as_bytes()[0] < b'6')
+}
+
+/// Words with what ticks taken out of them: a clock, a countdown in seconds or minutes, and a
+/// spinner's mark. Every other number and sign stays, as an amount, a percentage, a currency, a
+/// count of files or of hours is the difference between two questions.
+fn steady(words: &str) -> String {
+    const TICKING: &[&str] = &[
+        "s", "sec", "secs", "second", "seconds", "min", "mins", "minute", "minutes", "sek",
+        "sekunde", "sekunden", "minuten", "seconde", "secondes", "segundo", "segundos", "minuto",
+        "minutos", "secondo", "secondi", "minuti",
+    ];
+    let unit = |word: &str| {
+        let word = word
+            .trim_matches(|one: char| !one.is_alphanumeric())
+            .to_lowercase();
+        TICKING.contains(&word.as_str())
+    };
+    let whole = |word: &str| !word.is_empty() && word.chars().all(|one| one.is_ascii_digit());
+    let counting = |word: &str| {
+        word.find(|one: char| !one.is_ascii_digit())
+            .is_some_and(|at| at > 0 && unit(&word[at..]))
+    };
+    let mark = |word: &str| {
+        word.chars().all(|one| {
+            matches!(
+                one,
+                '|' | '/'
+                    | '-'
+                    | '\\'
+                    | '.'
+                    | '*'
+                    | '+'
+                    | '\u{b7}'
+                    | '\u{2022}'
+                    | '\u{2026}'
+                    | '\u{2800}'..='\u{28ff}'
+            )
+        })
+    };
+    let all: Vec<&str> = words.split_whitespace().collect();
+    let mut kept = Vec::with_capacity(all.len());
+    let mut at = 0;
+    while at < all.len() {
+        let word = all[at];
+        at += 1;
+        if mark(word) || counting(word) {
+            continue;
+        }
+        if is_clock(word) {
+            // `12:03 PM`, apart.
+            if all
+                .get(at)
+                .is_some_and(|next| matches!(next.to_lowercase().trim_matches('.'), "am" | "pm"))
+            {
+                at += 1;
+            }
+            continue;
+        }
+        // A number and its unit apart: `58 seconds`.
+        if whole(word) && all.get(at).is_some_and(|next| unit(next)) {
+            at += 1;
+            continue;
+        }
+        kept.push(word);
+    }
+    kept.join(" ")
+}
+
+/// One press, however many times it is looked at on its way: one question. The look before
+/// the move, the look after it, each end of a drag and a tick judged before its form is set
+/// all come here, and what has been answered for this press is not asked again. An
+/// allowance is spent by being asked for, so a second question with the same words would
+/// never find one.
+struct OnePress<'a, 'p> {
+    app: &'a AppHandle,
+    caller: &'a Caller,
+    page: &'a Page<'p>,
+    place: &'a Place,
+    key: String,
+    /// Asks only for what is more than a write: a tick's form has had that question.
+    graver_only: bool,
+    /// How many presses this one question is for.
+    times: u8,
+    answered: std::cell::RefCell<Vec<String>>,
+}
+
+impl<'a, 'p> OnePress<'a, 'p> {
+    fn new(
+        app: &'a AppHandle,
+        caller: &'a Caller,
+        page: &'a Page<'p>,
+        place: &'a Place,
+        key: String,
+    ) -> Self {
+        Self {
+            app,
+            caller,
+            page,
+            place,
+            key,
+            graver_only: false,
+            times: 1,
+            answered: std::cell::RefCell::new(Vec::new()),
+        }
+    }
+
+    fn landed(&self, on: &Element) -> Result<(), Answer> {
+        self.judge(&self.page.facts_of_press(on)?)
+    }
+
+    fn judge(&self, facts: &Facts) -> Result<(), Answer> {
+        let Caller::Agent(grant) = self.caller else {
+            return judged(
+                self.app,
+                self.caller,
+                self.page,
+                self.place,
+                facts,
+                Act::Press,
+                &self.key,
+            );
+        };
+        self.page.may_act_in(facts)?;
+        let hosts = page_hosts(self.page);
+        let question = policy::judge(grant, facts, Act::Press, &self.page.url(), &hosts);
+        let Some(question) = question else {
+            return if self.graver_only {
+                Ok(())
+            } else {
+                judged(
+                    self.app,
+                    self.caller,
+                    self.page,
+                    self.place,
+                    facts,
+                    Act::Press,
+                    &self.key,
+                )
+            };
+        };
+        if self.graver_only && question.category == Category::Writing {
+            return Ok(());
+        }
+        // Every word of it, as two long names alike at the start read the same when cut.
+        let said = question_key(&question, &question.summary, facts);
+        if self.answered.borrow().contains(&said) {
+            return Ok(());
+        }
+        judged_times(
+            self.app,
+            self.caller,
+            self.page,
+            self.place,
+            facts,
+            Act::Press,
+            &self.key,
+            self.times,
+        )?;
+        self.answered.borrow_mut().push(said);
+        Ok(())
+    }
 }
 
 /// Asks the reader; see `approvals`.
@@ -585,7 +804,8 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     url,
                     title: page.title(),
                     text: written.text,
-                    truncated: written.truncated,
+                    // A part of the page it left out, as much as one it had no room for.
+                    truncated: written.truncated || super::page::left_a_part_out(&secret),
                 }))
             }
             Verb::Find(asked) => {
@@ -628,22 +848,31 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 let count = click.count.unwrap_or(1).clamp(1, 3);
                 let held = modifiers(&click.modifiers);
                 match (&click.element, click.x, click.y) {
+                    // By what it lands on, whatever the ref is of, and again by whatever
+                    // the page has put there when the pointer arrives (9.3).
                     (Some(reference), None, None) => {
                         let target = element(page, reference)?;
-                        let facts = page.facts(&target)?;
                         let key = approvals::key("browser_click", Some(&tab), Some(reference));
-                        judged(app, caller, page, place, &facts, Act::Press, &key)?;
-                        page.click(&target, button, count, held)?;
+                        let press = OnePress {
+                            times: count,
+                            ..OnePress::new(app, caller, page, place, key)
+                        };
+                        page.click(&target, button, count, held, &|on| press.landed(on))?;
                     }
                     // A point instead, which the press is judged by what lands there, as
                     // a press on that element by ref would be (#373).
                     (None, Some(x), Some(y)) => {
                         let target = page.element_at((x, y))?;
-                        let facts = page.facts(&target)?;
                         let reference = format!("e{}", target.backend);
                         let key = approvals::key("browser_click", Some(&tab), Some(&reference));
-                        judged(app, caller, page, place, &facts, Act::Press, &key)?;
-                        page.click_at((x, y), button, count, held)?;
+                        let press = OnePress {
+                            times: count,
+                            ..OnePress::new(app, caller, page, place, key)
+                        };
+                        press.landed(&target)?;
+                        page.click_at((x, y), &target, button, count, held, &|on| {
+                            press.landed(on)
+                        })?;
                     }
                     _ => {
                         return Err(Answer::error(
@@ -749,25 +978,58 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     let key = approvals::key("browser_fill_form", Some(&tab), None);
                     judged(app, caller, page, place, facts, Act::Write, &key)?;
                 }
-                for ((target, _), field) in targets.iter().zip(&form.fields) {
-                    page.fill(target, &field.value)?;
+                // A tick is a press, and what it is called is what it does; the question
+                // for every write under Confirm is the one the form has already had. Each
+                // one is asked before any is set, so a question leaves the form as it was,
+                // and not again when the tick is made.
+                let ticks: Vec<OnePress<'_, '_>> = form
+                    .fields
+                    .iter()
+                    .map(|field| {
+                        let key = approvals::key(
+                            "browser_fill_form_tick",
+                            Some(&tab),
+                            Some(&field.element),
+                        );
+                        OnePress {
+                            graver_only: true,
+                            ..OnePress::new(app, caller, page, place, key)
+                        }
+                    })
+                    .collect();
+                for (((target, _), field), press) in targets.iter().zip(&form.fields).zip(&ticks) {
+                    if let FieldValue::Ticked(wanted) = &field.value {
+                        if page.tick_changes(target, *wanted)? {
+                            press.landed(&page.aim(target)?.on)?;
+                        }
+                    }
+                }
+                for (((target, _), field), press) in targets.iter().zip(&form.fields).zip(&ticks) {
+                    page.fill(target, &field.value, &|on| press.landed(on))?;
                 }
                 acted(page)
             }
             Verb::Hover(hover) => {
                 let target = element(page, &hover.element)?;
-                page.may_act_in(&page.facts(&target)?)?;
+                // Where the pointer comes to rest: a frame's ref is in the frame.
+                page.may_act_in(&page.facts(&page.at_first_point(&target)?)?)?;
                 page.hover(&target)?;
                 acted(page)
             }
             Verb::Drag(drag) => {
                 let (from, to) = (element(page, &drag.from)?, element(page, &drag.to)?);
-                let (mut from_facts, to_facts) = (page.facts(&from)?, page.facts(&to)?);
+                // What the press and the release land on, whatever the refs are of.
+                let (picked, dropped) = (page.at_first_point(&from)?, page.at_first_point(&to)?);
+                let (mut from_facts, to_facts) = (
+                    page.facts_of_press(&picked)?,
+                    page.facts_of_press(&dropped)?,
+                );
                 page.may_act_in(&from_facts)?;
                 page.may_act_in(&to_facts)?;
                 // Picked up and put down elsewhere, no click lands on a plain element, and a
                 // card called Pay rent is carried, not pressed. On itself it is a click.
-                if drag.from != drag.to && !from_facts.control {
+                let carried = drag.from != drag.to;
+                if carried && !from_facts.control {
                     from_facts.name.clear();
                 }
                 // A press on the one and a release on the other, which is a click on either
@@ -785,8 +1047,25 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 };
                 let ends = format!("{}>{}", drag.from, drag.to);
                 let key = approvals::key("browser_drag", Some(&tab), Some(&ends));
-                judged(app, caller, page, place, judged_by, Act::Press, &key)?;
-                page.drag(&from, &to)?;
+                let press = OnePress::new(app, caller, page, place, key);
+                press.judge(judged_by)?;
+                // And again for what the page has put under the pointer at either end.
+                let at_start = |landed: &Element| -> Result<(), Answer> {
+                    let mut facts = page.facts_of_press(landed)?;
+                    if carried && !facts.control {
+                        facts.name.clear();
+                    }
+                    press.judge(&facts)
+                };
+                let at_end = |landed: &Element| -> Result<(), Answer> {
+                    let facts = page.facts_of_press(landed)?;
+                    page.may_act_in(&facts)?;
+                    if facts.control {
+                        press.judge(&facts)?;
+                    }
+                    Ok(())
+                };
+                page.drag((&from, &picked), (&to, &dropped), (&at_start, &at_end))?;
                 acted(page)
             }
             Verb::Upload(upload) => {
@@ -804,9 +1083,10 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         &page.url(),
                         "",
                     );
+                    // Only looked at, as the press may yet ask: spent once nothing else does.
                     if !outside.is_empty()
                         && grant.asks(Category::Files)
-                        && !approvals::allowed(&grant.id, &key)
+                        && !approvals::is_allowed(&grant.id, &key)
                     {
                         let summary = format!(
                             "Hand {} to {}",
@@ -826,18 +1106,31 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     // What is no file input is pressed to open its chooser, and is judged
                     // as that press, whatever it turns out to do.
                     let facts = page.facts(&target)?;
-                    let how = if facts.kind == "file" {
-                        Act::Write
-                    } else {
-                        Act::Press
-                    };
-                    judged(app, caller, page, place, &facts, how, &key)?;
+                    if facts.kind == "file" {
+                        judged(app, caller, page, place, &facts, Act::Write, &key)?;
+                    }
                 }
                 let paths: Vec<String> = files
                     .iter()
                     .map(|(path, _)| path.to_string_lossy().into_owned())
                     .collect();
-                page.upload(&target, &paths)?;
+                let key = approvals::key("browser_upload_press", Some(&tab), Some(&upload.element));
+                let press = OnePress::new(app, caller, page, place, key);
+                page.upload(&target, &paths, &|on| press.landed(on))?;
+                if let Caller::Agent(grant) = caller {
+                    let _ = approvals::allowed(
+                        &grant.id,
+                        &approvals::on_page(
+                            &approvals::key(
+                                "browser_upload",
+                                Some(&tab),
+                                Some(&upload.files.join("|")),
+                            ),
+                            &page.url(),
+                            "",
+                        ),
+                    );
+                }
                 acted(page)
             }
             Verb::Screenshot(shot) => {
@@ -1161,10 +1454,75 @@ fn beyond_the_grant(root: &Path, path: &Path, spaces: &Spaces) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{beyond_the_grant, modifiers};
+    use super::{beyond_the_grant, modifiers, policy, question_key, Act, Facts, Grant};
     use crate::agents::grants::{Every, Spaces};
     use crate::agents::verbs::Modifier;
     use std::path::Path;
+
+    /// What an allowance is for, for a control in a dialog.
+    fn key_of(name: &str, dialog: &str) -> String {
+        let facts = Facts {
+            tag: "button".into(),
+            name: name.into(),
+            dialog: dialog.into(),
+            ..Facts::default()
+        };
+        let grant = Grant::own("a".into(), "A");
+        let question = policy::judge(&grant, &facts, Act::Press, "https://app.example/", &[])
+            .expect("it asks");
+        question_key(&question, &question.summary, &facts)
+    }
+
+    #[test]
+    fn an_allowance_outlives_a_clock_and_not_the_words() {
+        for (one, other) in [
+            (
+                "Complete your payment Time left 9:58 Card ending 4242",
+                "Complete your payment Time left 9:57 Card ending 4242",
+            ),
+            (
+                "Delete 40 files Time left 10:00",
+                "Delete 40 files Time left 9:59",
+            ),
+            ("Pay now. 12:03 PM", "Pay now. 12:04 PM"),
+            ("Pay now. 3:45pm", "Pay now. 3:46pm"),
+            ("Pay now. 09:58:12", "Pay now. 09:58:13"),
+            (
+                "Pay now. Offer ends in 58 seconds",
+                "Pay now. Offer ends in 1 minute",
+            ),
+            ("Pay now. Ends in 58s", "Pay now. Ends in 57s"),
+            ("Delete draft |", "Delete draft /"),
+        ] {
+            assert_eq!(key_of("Yes", one), key_of("Yes", other), "{one}");
+        }
+        for (one, other) in [
+            (
+                "Delete this item? report-draft.txt",
+                "Delete this item? ALL PROJECTS",
+            ),
+            (
+                "Confirm purchase. Total: 20 EUR",
+                "Confirm purchase. Total: 20000 EUR",
+            ),
+            ("Pay $20", "Pay $20000"),
+            ("Pay 5% of your balance", "Pay 50% of your balance"),
+            ("Removing files 5 %", "Removing files 50 %"),
+            ("Delete the last 1 hour", "Delete the last 24 hours"),
+            ("Delete the last 1h", "Delete the last 24h"),
+            ("Pay 20 $", "Pay 20 \u{20ac}"),
+            ("Split 1:10 and pay", "Split 1:1000 and pay"),
+            ("Delete 3 files", "Delete 3000 files"),
+            ("Pay 1.299,00 EUR", "Pay 9.299,00 EUR"),
+        ] {
+            assert_ne!(key_of("Yes", one), key_of("Yes", other), "{one}");
+        }
+        // A button named Delete answers to its dialog's words as a Yes does.
+        assert_ne!(
+            key_of("Delete", "Are you sure? report-draft.txt"),
+            key_of("Delete", "Are you sure? ALL PROJECTS"),
+        );
+    }
 
     #[test]
     fn a_file_is_in_reach_by_the_space_it_is_in() {

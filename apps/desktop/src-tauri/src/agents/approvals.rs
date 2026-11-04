@@ -66,6 +66,17 @@ pub fn on_page(key: &str, url: &str, element: &str) -> String {
     format!("{key}:{host}:{element}")
 }
 
+/// Whether the reader allowed this call, leaving the allowance for `allowed` to spend.
+pub fn is_allowed(agent: &str, key: &str) -> bool {
+    held().iter().any(|one| {
+        one.approval.agent == agent
+            && one.key == key
+            && one.approval.answer == ApprovalAnswer::Allowed
+            && !one.spent
+            && one.at.elapsed() < SPEND_WITHIN
+    })
+}
+
 /// Whether the reader allowed this call: spends the allowance if so.
 pub fn allowed(agent: &str, key: &str) -> bool {
     let mut all = held();

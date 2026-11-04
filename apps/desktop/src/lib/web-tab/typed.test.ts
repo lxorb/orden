@@ -278,3 +278,44 @@ describe('a time of day', () => {
     expect(webAddress('host1:5000')).toBe('http://host1:5000')
   })
 })
+
+describe('a path from where one stands, on Windows', () => {
+  test.each([
+    ['\\Users\\me\\secret.docx'],
+    ['\\Users\\me\\my secret.docx'],
+    ['\\secret.txt'],
+    ['.\\secret.txt'],
+    ['..\\secret dir\\x.txt'],
+    ['..\\x.txt'],
+    ['~\\x y.txt'],
+    ['~\\x.txt'],
+  ])('goes to no host and no search engine: %s', (typed) => {
+    expect(isLocalFile(typed)).toBe(true)
+    expect(typedAddress(typed)).toBeNull()
+    expect(webAddress(typed)).toBeNull()
+  })
+})
+
+describe('a word that names a secret, in the languages a page is read in', () => {
+  test.each([
+    ['Passwort: geheim'],
+    ['Kennwort: geheim'],
+    ['passwort:geheim wort'],
+    ['Mot de passe: secret'],
+    ['contrase\u00f1a: secreto'],
+    ['senha: segredo'],
+    ['wachtwoord: geheim'],
+    ['l\u00f6senord: hemligt'],
+    ['\u043f\u0430\u0440\u043e\u043b\u044c: \u0441\u0435\u043a\u0440\u0435\u0442'],
+    ['\u5bc6\u7801\uff1a abc'],
+    ['\u30d1\u30b9\u30ef\u30fc\u30c9: abc'],
+  ])('goes to no search engine: %s', (typed) => {
+    expect(mayBeSecret(typed)).toBe(true)
+    expect(webAddress(typed)).toBeNull()
+  })
+
+  test('and words about one are a search', () => {
+    expect(webAddress('passwort vergessen')).toContain('google')
+    expect(webAddress('wie lang: passwort')).toContain('google')
+  })
+})
