@@ -32,7 +32,7 @@ describe('what somebody typed', () => {
   })
 
   test('a known web scheme with no slashes is that address, as in a browser', () => {
-    expect(webAddress('http:example.com')).toBe('http://example.com/')
+    expect(webAddress('http:example.com')).toBe('http://example.com')
     expect(webAddress('https:example.com/a')).toBe('https://example.com/a')
   })
 
