@@ -164,7 +164,10 @@ describe('wherever the session held them', () => {
       id: 'x',
       along: 'row',
       fraction: 0.5,
-      sides: [frame([tab({ path: null, doc: 'LEFT' })]), frame([tab({ path: null, doc: 'RIGHT' })])],
+      sides: [
+        frame([tab({ path: null, doc: 'LEFT' })]),
+        frame([tab({ path: null, doc: 'RIGHT' })]),
+      ],
     }
     const storage = memoryStorage({
       'nib:workspace': whole({ layout: { panel: null, focused: 'q', frame: split } }),
@@ -260,7 +263,11 @@ describe('wherever the session held them', () => {
   })
 
   test('where the tab in front was the one taken, what is left shows the next', async () => {
-    const tabs = [tab({ path: '/s/a.md' }), tab({ path: null, doc: 'WORDS' }), tab({ path: '/s/b.md' })]
+    const tabs = [
+      tab({ path: '/s/a.md' }),
+      tab({ path: null, doc: 'WORDS' }),
+      tab({ path: '/s/b.md' }),
+    ]
     const storage = memoryStorage({
       'nib:workspace': whole({
         layout: { panel: null, focused: 'q', frame: frame(tabs, 1) },

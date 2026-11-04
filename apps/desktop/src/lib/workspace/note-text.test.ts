@@ -741,7 +741,11 @@ describe('with another window here', () => {
     const seen: { base: string | null; words: string; dirty: boolean }[] = []
     const across = {
       alone: false,
-      writing: async (one: typeof note, _path: string, write: (words: string) => Promise<unknown>) => {
+      writing: async (
+        one: typeof note,
+        _path: string,
+        write: (words: string) => Promise<unknown>,
+      ) => {
         seen.push({ base: one.onDisk, words: one.latest, dirty: one.dirty })
         await write(one.latest)
         one.onDisk = one.latest
@@ -765,6 +769,32 @@ describe('with another window here', () => {
     expect(disk.get('/space/a.md')).toBe('ONE\ntwo\n')
     expect(note.dirty).toBe(false)
     expect(note.onDisk).toBe('ONE\ntwo\n')
+  })
+
+  test('news heard while the version is kept merges against what the file said', async () => {
+    const { ws } = space({ '/space/a.md': 'one\n' }, '/space/a.md')
+    const note = ws.documents[0]
+    if (!note) throw new Error('no note')
+    ;(ws as unknown as { across: unknown }).across = {
+      alone: false,
+      writing: () => Promise.resolve(null),
+    }
+    let letGo = () => undefined as unknown
+    holding = { command: 'snapshot_note', until: new Promise((go) => (letGo = () => go())) }
+    const writing = replaceInNotes(ws, [
+      {
+        path: '/space/a.md',
+        before: 'one\n',
+        after: 'ONE\n',
+        edits: [{ from: 0, to: 3, insert: 'ONE' }],
+        back: [{ from: 0, to: 3, insert: 'one' }],
+      },
+    ])
+    await vi.waitFor(() => expect(sent.some((one) => one.command === 'snapshot_note')).toBe(true))
+    expect(note.onDisk).toBe('one\n')
+    expect(note.dirty).toBe(true)
+    letGo()
+    await writing
   })
 
   test('a note that went from under it stays owed rather than clean', async () => {

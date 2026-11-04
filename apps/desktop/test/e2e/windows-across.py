@@ -105,6 +105,41 @@ def out_of_sight(browser: Browser) -> None:
     ctx.close()
 
 
+def no_room(browser: Browser) -> None:
+    """Storage takes nothing more from the window taking the words: the entry holding them
+    stays (H3-WINDOWS-L3)."""
+    ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
+    a = ctx.new_page()
+    DRIVE.open(a)
+    b = another(ctx, a.url)
+    b.bring_to_front()
+    b.evaluate(f"()=>{WS}.openBlank()")
+    b.wait_for_selector(".cm-content")
+    b.locator(".cm-content").first.click()
+    b.keyboard.type("WORDS WITH NO ROOM", delay=2)
+    b.evaluate(f"()=>{WS}.persist()")
+    a.close(run_before_unload=True)
+    b.close(run_before_unload=True)
+
+    c = ctx.new_page()
+    c.add_init_script(
+        "const put = Storage.prototype.setItem;"
+        "Storage.prototype.setItem = function (k, v) {"
+        "  if (String(k).startsWith('nib:workspace')) throw new DOMException('full', 'QuotaExceededError');"
+        "  return put.call(this, k, v) }"
+    )
+    c.goto(DRIVE.origin)
+    DRIVE.ready(c)
+    wait_for(c, f"()=>{WS}.tabs.some(t=>t.note.latest.includes('WITH NO ROOM'))", "the words here", patience=30)
+    c.wait_for_timeout(500)
+    kept = c.evaluate(
+        "()=>Object.keys(localStorage).filter(k=>(localStorage.getItem(k)||'').includes('WITH NO ROOM'))"
+    )
+    if not kept:
+        wrong("storage full, and the only entry holding the words let them go")
+    ctx.close()
+
+
 def stale(browser: Browser, gone: bool) -> None:
     ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
     a = ctx.new_page()
@@ -186,6 +221,8 @@ def drive(browser: Browser) -> None:
     say("line endings: held")
     out_of_sight(browser)
     say("set out of sight: held")
+    no_room(browser)
+    say("no room for what is taken: held")
     stale(browser, gone=False)
     say("old words over a newer file: held")
     stale(browser, gone=True)

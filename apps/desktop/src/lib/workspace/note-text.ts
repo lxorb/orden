@@ -283,16 +283,20 @@ async function writeOpen(
 
   open.edited(edits, after)
 
+  // These words are not on the disk, and another window's may be that this one has not heard.
+  // So, in the same breath: this note says what it knew the file to hold, what anything
+  // heard from here on is merged against, and goes down the way an autosave goes. Not written
+  // (the file went, the note moved) they are owed like any others.
+  const across = ws.across?.alone === false ? ws.across : null
+  if (across) {
+    open.onDisk = onDisk
+    open.dirty = true
+  }
+
   // Keeping the version about to be replaced, the same way saving does: the words
   // the reader had, unsaved ones and all.
   await keep(change.path, before, keeping)
-  const across = ws.across
-  if (across && !across.alone) {
-    // These words are not on the disk, and another window's may be that this one has not
-    // heard: down the way an autosave goes, against what this note knew the file to hold.
-    // Not written (the file went, the note moved) they are owed like any others.
-    open.onDisk = onDisk
-    open.dirty = true
+  if (across) {
     const written = await across.writing(open, change.path, (words) =>
       invoke('write_note', { path: change.path, content: words }),
     )

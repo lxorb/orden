@@ -471,8 +471,9 @@ function bareFrame(frame: FrameDraft): FrameDraft {
 
   const tabs = frame.pane.tabs.map((draft) => {
     if (!draft.path || !draft.doc) return draft
-    const { base: _base, ...rest } = draft
-    return { ...rest, doc: '', dirty: false }
+    const bare: Draft = { ...draft, doc: '', dirty: false }
+    delete bare.base
+    return bare
   })
 
   return { kind: 'pane', pane: { ...frame.pane, tabs } }

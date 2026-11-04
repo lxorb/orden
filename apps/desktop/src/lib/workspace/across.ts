@@ -78,6 +78,12 @@ const RENAME_NEWS = 500
 /** Whether a kind's words merge as text. */
 const asText = (note: NoteDoc) => note.kind === 'note'
 
+/** The same of words owed, which a key may have changed. */
+const isDirty = (note: NoteDoc) => note.dirty
+
+/** Asked again after a round trip: not what the last look said. */
+const holdingBack = (note: NoteDoc) => note.live.holdingBack
+
 export class Across {
   /** One thing heard at a time, in the order said: a note moved and then written. */
   private hearing: Promise<unknown> = Promise.resolve()
@@ -178,7 +184,8 @@ export class Across {
       if (note.path !== null) this.desk.owed(note)
       return null
     }
-    if (note.live.holdingBack) {
+    // The composition may have started in that read.
+    if (holdingBack(note)) {
       this.desk.owed(note)
       return null
     }
@@ -265,10 +272,10 @@ export class Across {
         await this.takeIn(note, path, disk)
       } catch (error) {
         // Words of its own that were waiting on this: their write says what is wrong.
-        if (note.dirty) this.desk.owed(note)
+        if (isDirty(note)) this.desk.owed(note)
         throw error
       }
-      if (note.latest === disk && !note.live.holdingBack) {
+      if (note.latest === disk && !holdingBack(note)) {
         note.dirty = false
         return
       }

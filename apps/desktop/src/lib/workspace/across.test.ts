@@ -1,6 +1,7 @@
 /** One note open in two windows, with real documents and one disk: H2-DESKTOP-14. */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { EditorState } from '@orden/editor'
 import { oneWriteAt, Windows } from '../windows'
 import { NoteDoc } from './documents.svelte'
 import { Across, type Desk } from './across'
@@ -466,7 +467,8 @@ function savingLikeTheCrate(window: ReturnType<typeof aWindow>, disk: Map<string
   }
 }
 
-const CRLF = '# Title\r\n\r\nFirst paragraph here.\r\n\r\nSecond paragraph here.\r\n\r\nThird one.\r\n'
+const CRLF =
+  '# Title\r\n\r\nFirst paragraph here.\r\n\r\nSecond paragraph here.\r\n\r\nThird one.\r\n'
 const LF = CRLF.replace(/\r\n/g, '\n')
 
 describe('a file with CRLF endings', () => {
@@ -606,7 +608,8 @@ describe('a file with CRLF endings', () => {
           const from = lines.slice(0, line).join('\n').length + (line ? 1 : 0)
           note.live.edit([{ from, to: from, insert: token }])
         } else if (move === 1) {
-          running.push(saves[at]?.(note))
+          const save = saves[at]
+          if (save) running.push(save(note))
         } else if (wires.flight.length) {
           const [one] = wires.flight.splice(pick(wires.flight.length), 1)
           one?.()
@@ -763,13 +766,11 @@ describe('while an input method is composing', () => {
   /** A view of the note that is in the middle of a composition. */
   const composing = (note: NoteDoc) => {
     const view = {
-      get state() {
-        return note.live.state
-      },
+      state: EditorState.create({ doc: note.live.text }),
       dispatch: () => undefined,
       composing: true,
     }
-    note.live.join(view as never)
+    note.live.join(view)
     return view
   }
 

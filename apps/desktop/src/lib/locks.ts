@@ -108,8 +108,8 @@ export function heldForLife(name: string, run: () => Promise<unknown>, signal?: 
 export async function holdIfFree(name: string): Promise<(() => void) | null> {
   const locks = locksHere()
   if (!locks || !(await locksWork(locks))) return () => undefined
-  let release = () => undefined as void
-  const holding = new Promise<void>((done) => (release = done))
+  let release = (): unknown => undefined
+  const holding = new Promise((done) => (release = () => done(undefined)))
   const held = await ifFree(locks, name, () => holding)
-  return held === 'taken' ? null : release
+  return held === 'taken' ? null : () => void release()
 }

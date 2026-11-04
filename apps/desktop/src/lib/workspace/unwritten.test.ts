@@ -9,7 +9,7 @@ import { cameBack } from './unwritten'
 const BASE = '# Both\n\nbase line\n'
 const OLD = `${BASE}OLD-FROM-A\n`
 
-const draft = (fields: Partial<Draft> = {}): Draft => ({
+const draft = (fields: Partial<Draft> & { path?: string } = {}): Draft & { path: string } => ({
   kind: 'note',
   path: '/s/Both.md',
   name: 'Both.md',
