@@ -1109,6 +1109,13 @@ export const th: Dictionary = {
   'Split right': 'แยกไปขวา',
   'Split down': 'แยกลงล่าง',
   'Other pane': 'บานอื่น',
+  'Pane to the left': 'บานทางซ้าย',
+  'Pane to the right': 'บานทางขวา',
+  'Pane above': 'บานด้านบน',
+  'Pane below': 'บานด้านล่าง',
+  'Active pane follows the pointer': 'บานที่ใช้งานตามตัวชี้',
+  'The pane under the pointer becomes the one you work in.':
+    'บานที่อยู่ใต้ตัวชี้จะกลายเป็นบานที่คุณทำงานอยู่',
   'Close this pane': 'ปิดบานนี้',
   'Note {number}': 'โน้ต {number}',
   'Scroll together': 'เลื่อนพร้อมกัน',

@@ -1120,6 +1120,13 @@ export const ja: Dictionary = {
   'Split right': '右に分割',
   'Split down': '下に分割',
   'Other pane': '別のペイン',
+  'Pane to the left': '左のペイン',
+  'Pane to the right': '右のペイン',
+  'Pane above': '上のペイン',
+  'Pane below': '下のペイン',
+  'Active pane follows the pointer': 'アクティブなペインをポインターに追従させる',
+  'The pane under the pointer becomes the one you work in.':
+    'ポインターの下にあるペインが作業中のペインになります。',
   'Close this pane': 'このペインを閉じる',
   'Note {number}': 'ノート {number}',
   'Scroll together': '一緒にスクロール',

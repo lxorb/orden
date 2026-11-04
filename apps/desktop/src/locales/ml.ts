@@ -1138,6 +1138,13 @@ export const ml: Dictionary = {
   'Split right': 'വലത്തേക്ക് വിഭജിക്കുക',
   'Split down': 'താഴേക്ക് വിഭജിക്കുക',
   'Other pane': 'മറ്റേ പെയിൻ',
+  'Pane to the left': 'ഇടത്തെ പെയിൻ',
+  'Pane to the right': 'വലത്തെ പെയിൻ',
+  'Pane above': 'മുകളിലെ പെയിൻ',
+  'Pane below': 'താഴത്തെ പെയിൻ',
+  'Active pane follows the pointer': 'സജീവ പെയിൻ പോയിന്ററിനെ പിന്തുടരുന്നു',
+  'The pane under the pointer becomes the one you work in.':
+    'പോയിന്ററിന് താഴെയുള്ള പെയിൻ നിങ്ങൾ പ്രവർത്തിക്കുന്നതാകുന്നു.',
   'Close this pane': 'ഈ പെയിൻ അടയ്ക്കുക',
   'Note {number}': 'കുറിപ്പ് {number}',
   'Scroll together': 'ഒരുമിച്ച് സ്ക്രോൾ',

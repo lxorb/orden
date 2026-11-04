@@ -1137,6 +1137,13 @@ export const ta: Dictionary = {
   'Split right': 'வலப்புறம் பிரி',
   'Split down': 'கீழ்ப்புறம் பிரி',
   'Other pane': 'மற்ற பலகம்',
+  'Pane to the left': 'இடது பலகம்',
+  'Pane to the right': 'வலது பலகம்',
+  'Pane above': 'மேல் பலகம்',
+  'Pane below': 'கீழ் பலகம்',
+  'Active pane follows the pointer': 'செயலில் உள்ள பலகம் சுட்டியைப் பின்தொடரும்',
+  'The pane under the pointer becomes the one you work in.':
+    'சுட்டியின் கீழுள்ள பலகமே நீங்கள் வேலை செய்யும் பலகமாகிறது.',
   'Close this pane': 'இந்தப் பலகத்தை மூடு',
   'Note {number}': 'குறிப்பு {number}',
   'Scroll together': 'சேர்ந்து உருளு',

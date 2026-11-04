@@ -1124,6 +1124,13 @@ export const bn: Dictionary = {
   'Split right': 'ডানে ভাগ',
   'Split down': 'নিচে ভাগ',
   'Other pane': 'অন্য প্যান',
+  'Pane to the left': 'বাঁয়ের প্যান',
+  'Pane to the right': 'ডানের প্যান',
+  'Pane above': 'উপরের প্যান',
+  'Pane below': 'নিচের প্যান',
+  'Active pane follows the pointer': 'সক্রিয় প্যান পয়েন্টার অনুসরণ করে',
+  'The pane under the pointer becomes the one you work in.':
+    'পয়েন্টারের নিচের প্যানটিই হয় যেখানে আপনি কাজ করছেন।',
   'Close this pane': 'এই প্যান বন্ধ',
   'Note {number}': 'নোট {number}',
   'Scroll together': 'একসাথে স্ক্রল',

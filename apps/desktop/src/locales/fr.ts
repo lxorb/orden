@@ -1146,6 +1146,13 @@ export const fr: Dictionary = {
   'Split right': 'Diviser à droite',
   'Split down': 'Diviser en bas',
   'Other pane': 'Autre volet',
+  'Pane to the left': 'Volet de gauche',
+  'Pane to the right': 'Volet de droite',
+  'Pane above': 'Volet du dessus',
+  'Pane below': 'Volet du dessous',
+  'Active pane follows the pointer': 'Le volet actif suit le pointeur',
+  'The pane under the pointer becomes the one you work in.':
+    'Le volet sous le pointeur devient celui dans lequel vous travaillez.',
   'Close this pane': 'Fermer ce volet',
   'Note {number}': 'Note {number}',
   'Scroll together': 'Défiler ensemble',

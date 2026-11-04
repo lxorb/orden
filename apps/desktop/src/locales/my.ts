@@ -1118,6 +1118,13 @@ export const my: Dictionary = {
   'Split right': 'ညာသို့ခွဲပါ',
   'Split down': 'အောက်သို့ခွဲပါ',
   'Other pane': 'အခြားအကန့်',
+  'Pane to the left': 'ဘယ်ဘက်အကန့်',
+  'Pane to the right': 'ညာဘက်အကန့်',
+  'Pane above': 'အပေါ်အကန့်',
+  'Pane below': 'အောက်အကန့်',
+  'Active pane follows the pointer': 'အသက်ဝင်အကန့်သည် ညွှန်တံနောက်လိုက်သည်',
+  'The pane under the pointer becomes the one you work in.':
+    'ညွှန်တံအောက်ရှိ အကန့်သည် သင်အလုပ်လုပ်နေသော အကန့်ဖြစ်လာသည်။',
   'Close this pane': 'ဤအကန့်ပိတ်ပါ',
   'Note {number}': 'မှတ်စု {number}',
   'Scroll together': 'အတူဆွဲပါ',

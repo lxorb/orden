@@ -1103,6 +1103,13 @@ export const zhHantHK: Dictionary = {
   'Split right': '向右拆分',
   'Split down': '向下拆分',
   'Other pane': '另一個窗格',
+  'Pane to the left': '左邊的窗格',
+  'Pane to the right': '右邊的窗格',
+  'Pane above': '上方的窗格',
+  'Pane below': '下方的窗格',
+  'Active pane follows the pointer': '使用中的窗格跟隨指標',
+  'The pane under the pointer becomes the one you work in.':
+    '指標下方的窗格會成為你正在使用的窗格。',
   'Close this pane': '關閉此窗格',
   'Note {number}': '筆記{number}',
   'Scroll together': '一起滾動',

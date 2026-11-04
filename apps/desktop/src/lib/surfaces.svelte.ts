@@ -540,6 +540,8 @@ export async function warmDoors(): Promise<void> {
     () => import('./tab-cycle.svelte'),
     // The tabs' numbers while Alt is held.
     __EVEN_PLUGIN__ ? undefined : () => import('./tab-strip/numbers.svelte'),
+    // The pane under the pointer is the active one (#1033).
+    __EVEN_PLUGIN__ ? undefined : () => import('./pane-moves').then((one) => one.followPointer()),
     // The bar a tab filling the window keeps, so the first Shift+F11 is one layout and
     // not two; the command itself comes with a tab's menu above.
     __EVEN_PLUGIN__ ? undefined : () => fillBar(),

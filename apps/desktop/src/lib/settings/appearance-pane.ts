@@ -342,6 +342,19 @@ export function appearancePane(): Pane {
             get: () => modes.hand,
             set: () => modes.toggleHand(),
           },
+          {
+            // The pane under the pointer is the one Alt and a digit counts in and a new
+            // tab opens in, as in a tiling window manager (#1033); see pane-moves.ts.
+            kind: 'switch',
+            key: 'appearance.paneFollowsPointer',
+            store: { on: workspace.device, name: 'paneFollowsPointer' },
+            label: t('Active pane follows the pointer'),
+            hint: t('The pane under the pointer becomes the one you work in.'),
+            words: ['pane', 'split', 'focus follows mouse', 'hover', 'mouse', 'active'],
+            initial: true,
+            get: () => workspace.device.paneFollowsPointer,
+            set: (on) => workspace.device.followPointer(on),
+          },
         ],
       },
 

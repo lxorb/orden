@@ -1127,6 +1127,13 @@ export const fa: Dictionary = {
   'Split right': 'شکافتن به راست',
   'Split down': 'شکافتن به پایین',
   'Other pane': 'تخته دیگر',
+  'Pane to the left': 'تخته سمت چپ',
+  'Pane to the right': 'تخته سمت راست',
+  'Pane above': 'تخته بالا',
+  'Pane below': 'تخته پایین',
+  'Active pane follows the pointer': 'تخته فعال نشانگر را دنبال می‌کند',
+  'The pane under the pointer becomes the one you work in.':
+    'تخته زیر نشانگر همان می‌شود که در آن کار می‌کنید.',
   'Close this pane': 'بستن این تخته',
   'Note {number}': 'یادداشت {number}',
   'Scroll together': 'پیمایش با هم',

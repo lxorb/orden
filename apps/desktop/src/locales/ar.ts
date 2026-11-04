@@ -1174,6 +1174,13 @@ export const ar: Dictionary = {
   'Split right': 'تقسيم لليمين',
   'Split down': 'تقسيم لأسفل',
   'Other pane': 'الجزء الآخر',
+  'Pane to the left': 'الجزء الأيسر',
+  'Pane to the right': 'الجزء الأيمن',
+  'Pane above': 'الجزء العلوي',
+  'Pane below': 'الجزء السفلي',
+  'Active pane follows the pointer': 'الجزء النشط يتبع المؤشر',
+  'The pane under the pointer becomes the one you work in.':
+    'يصبح الجزء الذي تحت المؤشر هو الذي تعمل فيه.',
   'Close this pane': 'إغلاق هذا الجزء',
   'Note {number}': 'ملاحظة {number}',
   'Scroll together': 'تمرير معًا',

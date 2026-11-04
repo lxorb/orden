@@ -1164,6 +1164,13 @@ export const uk: Dictionary = {
   'Split right': 'Розділити праворуч',
   'Split down': 'Розділити вниз',
   'Other pane': 'Інша область',
+  'Pane to the left': 'Область ліворуч',
+  'Pane to the right': 'Область праворуч',
+  'Pane above': 'Область угорі',
+  'Pane below': 'Область унизу',
+  'Active pane follows the pointer': 'Активна область іде за вказівником',
+  'The pane under the pointer becomes the one you work in.':
+    'Область під вказівником стає тією, у якій ви працюєте.',
   'Close this pane': 'Закрити цю область',
   'Note {number}': 'Нотатка {number}',
   'Scroll together': 'Прокручувати разом',

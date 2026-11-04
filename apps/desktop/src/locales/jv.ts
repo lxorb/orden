@@ -1118,6 +1118,13 @@ export const jv: Dictionary = {
   'Split right': 'Pisah nengen',
   'Split down': 'Pisah mudhun',
   'Other pane': 'Panel liya',
+  'Pane to the left': 'Panel ing kiwa',
+  'Pane to the right': 'Panel ing tengen',
+  'Pane above': 'Panel ing dhuwur',
+  'Pane below': 'Panel ing ngisor',
+  'Active pane follows the pointer': 'Panel aktif ngetutake penunjuk',
+  'The pane under the pointer becomes the one you work in.':
+    'Panel ing sangisoré penunjuk dadi panel panggonan sampeyan nyambut gawé.',
   'Close this pane': 'Tutup panel iki',
   'Note {number}': 'Cathetan {number}',
   'Scroll together': 'Nggulung bareng',

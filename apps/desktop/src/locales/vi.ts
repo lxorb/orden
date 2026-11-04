@@ -1115,6 +1115,13 @@ export const vi: Dictionary = {
   'Split right': 'Chia sang phải',
   'Split down': 'Chia xuống dưới',
   'Other pane': 'Ngăn khác',
+  'Pane to the left': 'Ngăn bên trái',
+  'Pane to the right': 'Ngăn bên phải',
+  'Pane above': 'Ngăn phía trên',
+  'Pane below': 'Ngăn phía dưới',
+  'Active pane follows the pointer': 'Ngăn đang dùng đi theo con trỏ',
+  'The pane under the pointer becomes the one you work in.':
+    'Ngăn dưới con trỏ trở thành ngăn bạn đang làm việc.',
   'Close this pane': 'Đóng ngăn này',
   'Note {number}': 'Ghi chú {number}',
   'Scroll together': 'Cuộn cùng nhau',

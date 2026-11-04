@@ -1136,6 +1136,13 @@ export const ha: Dictionary = {
   'Split right': 'Raba dama',
   'Split down': 'Raba ƙasa',
   'Other pane': 'Ɗayan fanon',
+  'Pane to the left': 'Fanon hagu',
+  'Pane to the right': 'Fanon dama',
+  'Pane above': 'Fanon sama',
+  'Pane below': 'Fanon ƙasa',
+  'Active pane follows the pointer': 'Fanon da ke aiki yana bin alamar nuni',
+  'The pane under the pointer becomes the one you work in.':
+    'Fanon da ke ƙarƙashin alamar nuni ya zama wanda kake aiki a ciki.',
   'Close this pane': 'Rufe wannan fanon',
   'Note {number}': 'Bayanin kula {number}',
   'Scroll together': 'Mirgina tare',

@@ -57,6 +57,11 @@
     "default": false,
     "description": "Shows the app blurred behind the windows, instead of Orden’s own background."
   },
+  "appearance.paneFollowsPointer": {
+    "type": "boolean",
+    "default": true,
+    "description": "The pane under the pointer becomes the one you work in."
+  },
   "appearance.pointingHand": {
     "type": "boolean",
     "default": false,
@@ -1293,9 +1298,25 @@
     "type": "string",
     "description": "The key that runs Zoom out, as the keys file writes it; empty for none."
   },
+  "shortcuts.pane-focus-down": {
+    "type": "string",
+    "description": "The key that runs Pane below, as the keys file writes it; empty for none."
+  },
+  "shortcuts.pane-focus-left": {
+    "type": "string",
+    "description": "The key that runs Pane to the left, as the keys file writes it; empty for none."
+  },
   "shortcuts.pane-focus-next": {
     "type": "string",
     "description": "The key that runs Other pane, as the keys file writes it; empty for none."
+  },
+  "shortcuts.pane-focus-right": {
+    "type": "string",
+    "description": "The key that runs Pane to the right, as the keys file writes it; empty for none."
+  },
+  "shortcuts.pane-focus-up": {
+    "type": "string",
+    "description": "The key that runs Pane above, as the keys file writes it; empty for none."
   },
   "shortcuts.pane-move-tab": {
     "type": "string",

@@ -1129,6 +1129,13 @@ export const te: Dictionary = {
   'Split right': 'కుడివైపు విభజించు',
   'Split down': 'కిందివైపు విభజించు',
   'Other pane': 'మరో పేన్',
+  'Pane to the left': 'ఎడమ పేన్',
+  'Pane to the right': 'కుడి పేన్',
+  'Pane above': 'పై పేన్',
+  'Pane below': 'కింది పేన్',
+  'Active pane follows the pointer': 'చురుకైన పేన్ పాయింటర్‌ను అనుసరిస్తుంది',
+  'The pane under the pointer becomes the one you work in.':
+    'పాయింటర్ కింద ఉన్న పేన్ మీరు పని చేసే పేన్ అవుతుంది.',
   'Close this pane': 'ఈ పేన్ మూసివేయి',
   'Note {number}': 'నోట్ {number}',
   'Scroll together': 'కలిసి స్క్రోల్',

@@ -159,3 +159,73 @@ export function clamped(fraction: number, room: number, least = LEAST): number {
   const edge = least / room
   return Math.min(1 - edge, Math.max(edge, fraction))
 }
+
+/** A way to go from one pane to the next one over: Alt+H, J, K and L (#1033). */
+export type Toward = 'left' | 'right' | 'up' | 'down'
+
+/** Where a pane sits in the window, as shares of its width and height. */
+interface Place {
+  pane: Pane
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+/** Every pane and where it sits, from the shares its splits give each side. */
+function placesIn(frame: Frame, x = 0, y = 0, width = 1, height = 1): Place[] {
+  if (frame.kind === 'pane') return [{ pane: frame, x, y, width, height }]
+
+  const [first, second] = frame.sides
+  if (frame.along === 'row') {
+    const split = width * frame.fraction
+    return [
+      ...placesIn(first, x, y, split, height),
+      ...placesIn(second, x + split, y, width - split, height),
+    ]
+  }
+  const split = height * frame.fraction
+  return [
+    ...placesIn(first, x, y, width, split),
+    ...placesIn(second, x, y + split, width, height - split),
+  ]
+}
+
+/** How much two stretches along one line have in common. */
+function overlap(from: number, length: number, otherFrom: number, otherLength: number): number {
+  return Math.min(from + length, otherFrom + otherLength) - Math.max(from, otherFrom)
+}
+
+/** The pane next to this one on that side, as vim's Ctrl+W and a letter goes: one that
+ *  shares an edge with it there, the one beside its middle where two do. Null at the
+ *  window's edge, which is where the hand stops rather than coming round. */
+export function paneToward(frame: Frame, id: string, toward: Toward): Pane | null {
+  const places = placesIn(frame)
+  const here = places.find((one) => one.pane.id === id)
+  if (!here) return null
+
+  const EDGE = 1e-6
+  const across = toward === 'left' || toward === 'right'
+  const middle = across ? here.y + here.height / 2 : here.x + here.width / 2
+
+  let best: { place: Place; off: number } | null = null
+  for (const one of places) {
+    if (one === here) continue
+    const beside = {
+      left: Math.abs(one.x + one.width - here.x) < EDGE,
+      right: Math.abs(here.x + here.width - one.x) < EDGE,
+      up: Math.abs(one.y + one.height - here.y) < EDGE,
+      down: Math.abs(here.y + here.height - one.y) < EDGE,
+    }[toward]
+    const shared = across
+      ? overlap(one.y, one.height, here.y, here.height)
+      : overlap(one.x, one.width, here.x, here.width)
+    if (!beside || shared <= EDGE) continue
+
+    const centre = across ? one.y + one.height / 2 : one.x + one.width / 2
+    const off = Math.abs(centre - middle)
+    if (!best || off < best.off) best = { place: one, off }
+  }
+
+  return best?.place.pane ?? null
+}

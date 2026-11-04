@@ -35,6 +35,7 @@ import { picks } from '../tab-strip/drag.svelte'
 import { closeWindow, invoke, isDesktop, platform } from '../tauri'
 import type { Platform } from '../keys'
 import { workspace } from '../workspace.svelte'
+import type { Toward } from '../workspace/pane-tree'
 import { type Around, closeAfterLabel } from '../workspace/closing-around'
 
 /** What Ctrl+Shift+A asks the AI panel before it opens it: whether the press was the
@@ -289,6 +290,14 @@ const onMac = () => isDesktop && platform() === 'macos'
 /** Runs an app-level command. The two that need the component say so through
  *  the context; everything else reaches the stores directly, the way the
  *  command palette does. */
+/** The four ways between the panes, the letter each is on and what it is called. */
+const PANE_WAYS: readonly [Toward, string, () => string][] = [
+  ['left', 'h', () => t('Pane to the left')],
+  ['down', 'j', () => t('Pane below')],
+  ['up', 'k', () => t('Pane above')],
+  ['right', 'l', () => t('Pane to the right')],
+]
+
 const APP_ENTRIES: Shortcut[] = [
   // Ctrl+Alt+N since Ctrl+N went to the scratchpad (Emil, issue #213): the same letter,
   // one modifier further, and nothing else in the app or any keyboard held it. AltGr
@@ -705,6 +714,18 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Alt-o',
     run: () => workspace.panes.focusNext(),
   },
+  // Vim's four ways between the panes, with Alt in place of Ctrl+W (#1033): the pane
+  // next over on that side, and the keyboard with it. None on a Mac, where Option and a
+  // letter types a character; see pane-moves.ts.
+  ...PANE_WAYS.map(([toward, letter, label]): Shortcut => ({
+    id: `pane.focus-${toward}`,
+    label,
+    category: 'view',
+    scope: 'app',
+    key: `Alt-${letter}`,
+    mac: null,
+    run: () => void import('../pane-moves').then((one) => one.movePane(toward)),
+  })),
   // Every tab at once, as windows on a canvas: Alt tapped twice, as Shift twice is the
   // palette (issue #331). The key again puts them away; see overview/Overview.svelte.
   {
@@ -950,16 +971,16 @@ const APP_ENTRIES: Shortcut[] = [
       if (!askAgain?.()) revealPanel('ask')
     },
   },
-  // The selection into the AI panel's field as `@Note:12-14`, Claude Code's Alt+K: the
-  // words as they are now, which go with the next message whatever is selected then.
-  // Cmd+Opt+K on a Mac, where Option+K types a character (a German keyboard's °).
+  // The selection into the AI panel's field as `@Note:12-14`: the words as they are now,
+  // which go with the next message whatever is selected then. Ctrl+Alt+K, since Alt+K is
+  // the pane above (#1033), and Cmd+Opt+K on a Mac, where Option+K types a character (a
+  // German keyboard's °).
   {
     id: 'app.ask-selection',
     label: () => t('Selection to the AI panel'),
     category: 'view',
     scope: 'app',
-    key: 'Alt-k',
-    mac: 'Mod-Alt-k',
+    key: 'Mod-Alt-k',
     run: () => {
       if (!__EVEN_PLUGIN__) void import('../ai/sidebar/quote').then((one) => one.quoteSelection())
     },
