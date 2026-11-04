@@ -1104,8 +1104,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,513,500, for #1055: an online terminal's file is a row of the
  *  list wearing the terminal's mark (`isTermTarget` in links.ts, file-mark.ts). Measured
- *  3,513,238, 385 modules. */
-const BUDGET = 3_513_500
+ *  3,513,238, 385 modules.
+ *
+ *  Raised 2026-11-04, to 3,514,700, for #1051: the Essentials ask for their Alt letters
+ *  once the launch has drawn, and a double click keeps one as a tab (Bookmarks.svelte).
+ *  Measured 3,514,549. */
+const BUDGET = 3_514_700
 const MOST_FILES = 389
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

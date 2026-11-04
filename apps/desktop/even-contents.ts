@@ -397,9 +397,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,849,300, for #1055: an online terminal held by
  *  one device at a time, its card saying who holds it with Take over (arrival.svelte.ts),
  *  and its file a row of the list. Measured 5,849,083.
+ *
+ *  The code raised on 2026-11-04, to 5,852,200, for #1051: the Essentials' Alt letters
+ *  (tab-strip/letters.ts, tab-strip/letters.svelte.ts) and a double click that keeps an
+ *  Essential as a tab. Measured 5,852,018.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_849_300,
+  code: 5_852_200,
   catalogues: 964_400,
   styles: 290_000,
   fonts: 260_000,
