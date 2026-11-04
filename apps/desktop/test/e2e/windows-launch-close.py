@@ -6,7 +6,9 @@ a reload as the list is up and the tabs are not, and a reload while the set is b
 
 from __future__ import annotations
 
-from playwright.sync_api import Browser, Page
+from collections.abc import Callable
+
+from playwright.sync_api import Browser, Error as PlaywrightError, Page
 
 from harness import Drive
 
@@ -61,15 +63,32 @@ def type_draft(page: Page, words: str) -> None:
     wait_for(page, f"()=>{WS}.active?.note.latest.includes({words!r})", "typed")
 
 
+def through_reload(page: Page, ask: Callable[[], object]) -> None:
+    for _ in range(100):
+        try:
+            ask()
+            return
+        except PlaywrightError as error:
+            if "destroyed" not in str(error) and "navigat" not in str(error):
+                raise
+            page.wait_for_timeout(100)
+    wrong("the page never came back from its reload")
+
+
 def kept_through(page: Page, armed: str, fires: bool, total: int) -> None:
     page.evaluate(f"()=>{WS}.persist()")
     page.evaluate("(armed)=>sessionStorage.setItem('launch-close', armed)", armed)
     page.reload(wait_until="commit")
-    DRIVE.ready(page)
     if fires:
-        wait_for(page, "()=>sessionStorage.getItem('launch-closed')==='1'", f"the window went: {armed}")
-        page.evaluate("()=>sessionStorage.removeItem('launch-closed')")
-        DRIVE.ready(page)
+        # The page's own reload comes when it comes, under whatever is being asked of it.
+        through_reload(
+            page,
+            lambda: wait_for(
+                page, "()=>sessionStorage.getItem('launch-closed')==='1'", f"the window went: {armed}"
+            ),
+        )
+        through_reload(page, lambda: page.evaluate("()=>sessionStorage.removeItem('launch-closed')"))
+    through_reload(page, lambda: DRIVE.ready(page))
     for words in (ON_SCREEN, IN_A_SET):
         wait_for(
             page,
