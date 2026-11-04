@@ -135,7 +135,8 @@ def main() -> int:
         page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
         installed = page.evaluate(INSTALLING, INSTALL)
         say(f"installed {', '.join(installed)}")
-        check("the store installed the six themes", len(installed) == len(INSTALL))
+        # Beside the given ones a launch puts in by itself (#1110), as it reaches the store.
+        check("the store installed the six themes", {f"file:{one}" for one in INSTALL} <= set(installed))
         page.wait_for_timeout(300)
 
         # A right click on the switch in the panel's foot.

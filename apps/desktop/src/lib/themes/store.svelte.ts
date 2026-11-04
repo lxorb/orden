@@ -10,6 +10,7 @@
 import { message, t } from '../i18n.svelte'
 import { log } from '../log'
 import { isBuiltIn, theme } from '../theme.svelte'
+import { keepJson, stored, stringList } from '../stored'
 import { invoke } from '../tauri'
 import { indexUrl, isNewer, readIndex, type StoreTheme, styleUrl } from './registry'
 import { stamped } from './stamp'
@@ -26,6 +27,13 @@ const FRESH_FOR = 5 * 60 * 1000
 /** What the first paint of the grid is measured as, under a name a profiler and
  *  the browser's own timeline both show. */
 export const PAINT = 'nib:themes'
+
+/** The store's themes every install starts with, beside the ones the app ships (#1110):
+ *  put in the folder once each, so one somebody removes stays removed. */
+export const GIVEN_THEMES = ['graphite', 'rose', 'warm-paper'] as const
+
+/** Which of `GIVEN_THEMES` have been put in the folder already. */
+const GIVEN_KEY = 'nib:themes-given'
 
 /** Whether a theme is worth showing for what was typed. Plain substring, case
  *  aside, over everything a card shows: the same kind of lookup the settings
@@ -156,27 +164,8 @@ class Store {
     this.refused = { id: one.id, notes: [] }
 
     try {
-      const response = await fetch(styleUrl(one.id))
-      if (!response.ok) throw new Error('could not fetch that theme')
-
-      const reviewed = review(await response.text())
-      if (!reviewed.css) throw new Error('that theme has nothing a theme may set')
-
-      this.refused = { id: one.id, notes: reviewed.refused }
-      // The count is what the preview says, because a list of CSS complaints is
-      // not what somebody installing a theme came for. The complaints themselves
-      // go to the log, which is where a question about them is answered.
-      if (reviewed.refused.length) {
-        log('warn', `${one.id} ${one.version}: ${reviewed.refused.join('; ')}`)
-      }
-
-      await invoke<string>('write_theme', {
-        id: one.id,
-        css: stamped(
-          { id: one.id, name: one.name, author: one.author, version: one.version },
-          reviewed.css,
-        ),
-      })
+      const refused = await this.write(one)
+      this.refused = { id: one.id, notes: refused }
 
       await theme.reload()
       // Applied at once. Installing a theme and then being asked to turn it on
@@ -188,6 +177,68 @@ class Store {
     } finally {
       this.working = null
     }
+  }
+
+  /** Fetches, reviews and writes one theme into the folder, stamped with its version,
+   *  and answers what the reviewer refused. Applies nothing: what is chosen stays chosen,
+   *  and the folder's next reading paints a new version of the one worn. */
+  private async write(one: StoreTheme): Promise<string[]> {
+    const response = await fetch(styleUrl(one.id))
+    if (!response.ok) throw new Error('could not fetch that theme')
+
+    const reviewed = review(await response.text())
+    if (!reviewed.css) throw new Error('that theme has nothing a theme may set')
+
+    // The count is what the preview says, because a list of CSS complaints is
+    // not what somebody installing a theme came for. The complaints themselves
+    // go to the log, which is where a question about them is answered.
+    if (reviewed.refused.length) {
+      log('warn', `${one.id} ${one.version}: ${reviewed.refused.join('; ')}`)
+    }
+
+    await invoke<string>('write_theme', {
+      id: one.id,
+      css: stamped(
+        { id: one.id, name: one.name, author: one.author, version: one.version },
+        reviewed.css,
+      ),
+    })
+    return reviewed.refused
+  }
+
+  /** Keeps the folder up with the catalogue, unasked (#1110): every theme the store
+   *  installed is written again at the catalogue's newer version, and the given themes
+   *  an install has not had yet are put in. Quiet: a catalogue that will not answer, or
+   *  one theme that will not fetch, is tried again at the next launch. */
+  async keepUp() {
+    await theme.reload()
+    await this.load()
+    if (this.error) {
+      log('warn', `themes: could not keep up: ${this.error}`)
+      this.error = null
+      return
+    }
+
+    const given = [...(stringList(stored(GIVEN_KEY)) ?? [])]
+    let wrote = false
+    for (const one of this.themes) {
+      const owed = GIVEN_THEMES.some((id) => id === one.id) && !given.includes(one.id)
+      if (!this.updatable(one) && !(owed && !this.installed(one.id))) {
+        if (owed) given.push(one.id)
+        continue
+      }
+      if (this.working === one.id) continue
+      try {
+        await this.write(one)
+        wrote = true
+        if (owed) given.push(one.id)
+      } catch (error) {
+        log('warn', `themes: could not keep ${one.id} up: ${String(error)}`)
+      }
+    }
+
+    keepJson(GIVEN_KEY, given)
+    if (wrote) await theme.reload()
   }
 
   /** Applies an installed theme, exactly as choosing a hand-placed file does. */

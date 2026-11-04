@@ -79,7 +79,7 @@ vi.mock('../tauri', () => ({
   },
 }))
 
-const { arrange, store } = await import('./store.svelte')
+const { arrange, GIVEN_THEMES, store } = await import('./store.svelte')
 const { theme } = await import('../theme.svelte')
 
 /** One catalogue entry, with only what the test cares about spelled out. */
@@ -363,6 +363,72 @@ describe('installing, updating and removing', () => {
 
     expect(theme.files).toHaveLength(1)
     expect(store.installed('night-owl')).toBe(false)
+  })
+})
+
+/** Unasked, at every launch (#1110): what the store installed follows the catalogue,
+ *  and the given themes are in the folder without anybody installing them. */
+describe('keeping up with the catalogue', () => {
+  const given = () => GIVEN_THEMES.map((id) => entry({ id, name: id }))
+
+  test('puts the given themes in the folder, once, and wears none of them', async () => {
+    serving(given())
+
+    await store.keepUp()
+
+    expect([...folder.files.keys()].sort()).toEqual([...GIVEN_THEMES].sort())
+    expect(GIVEN_THEMES.every((id) => store.installed(id))).toBe(true)
+    expect(theme.id).toBe('default')
+
+    // One removed stays removed: the next launch does not bring it back.
+    await store.remove('rose')
+    store.themes = []
+    await store.keepUp()
+    expect(folder.files.has('rose')).toBe(false)
+  })
+
+  test('writes an installed theme again at the newer version, and paints it if worn', async () => {
+    serving([entry()])
+    await store.load()
+    await store.install(entry({}) as never)
+
+    serving([entry({ version: '1.1.0' })], PAIR)
+    store.themes = []
+    await store.keepUp()
+
+    expect(folder.files.get('warm-paper')).toContain('"version":"1.1.0"')
+    expect(store.using('warm-paper')).toBe(true)
+    expect(theme.active.variants).toEqual(['light', 'dark'])
+  })
+
+  test('leaves a theme at the catalogue version alone, and a hand-placed one too', async () => {
+    serving([entry()])
+    await store.load()
+    await store.install(entry({}) as never)
+    folder.files.set('night-owl', sheet('#001122'))
+    const asked = serving([
+      entry(),
+      entry({ id: 'night-owl', name: 'Night Owl', version: '9.0.0' }),
+    ])
+    store.themes = []
+
+    await store.keepUp()
+
+    expect(asked.filter((url) => url.endsWith('theme.css'))).toEqual([])
+    expect(folder.files.get('night-owl')).toBe(sheet('#001122'))
+  })
+
+  test('a catalogue that will not answer changes nothing and says nothing', async () => {
+    vi.stubGlobal('fetch', () => Promise.resolve(new Response('nope', { status: 500 })))
+
+    await store.keepUp()
+
+    expect(folder.files.size).toBe(0)
+    expect(store.error).toBe(null)
+    // Tried again next time, since nothing was given yet.
+    serving(given())
+    await store.keepUp()
+    expect(folder.files.size).toBe(GIVEN_THEMES.length)
   })
 })
 
