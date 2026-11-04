@@ -201,12 +201,12 @@ class Runner {
       if (!this.current || this.local) {
         const engine = this.current
         if (engine) {
-          this.keepCarried(await carriedIds(engine.core.store))
+          this.keepCarried(await carriedIds(engine.core.store, isLocal, account.user?.id))
           await this.letGo()
         } else {
           const store = await openSyncStore(LOCAL_STORE)
           try {
-            this.keepCarried(await carriedIds(store))
+            this.keepCarried(await carriedIds(store, isLocal, account.user?.id))
           } finally {
             await store.close().catch(() => undefined)
           }
@@ -219,8 +219,13 @@ class Runner {
   }
 
   private keepCarried(ids: ReadonlyMap<string, string>) {
+    this.carriedFrom = null
     for (const [root, kept] of ids) this.carrying.set(root, kept)
   }
+
+  /** Whose store the ids being carried came from: an account's, signing out, or null
+   *  for the one kept signed out. */
+  private carriedFrom: string | null = null
 
   /** The ids carried, into the account's store, for every space whose first pass is
    *  still to come: kept there, so a first pass a relaunch away still finds them. */
@@ -330,8 +335,6 @@ class Runner {
 
   private async startLocalNow(): Promise<void> {
     if (this.current || account.user) return
-    // A session signed out begins again from its folders: nothing earlier is carried.
-    this.carrying.clear()
     const store = await openSyncStore(LOCAL_STORE)
     const engine = await Engine.start(
       appWorld(() => null, this.telling),
@@ -345,6 +348,13 @@ class Runner {
     }
     this.local = true
     this.current = engine
+    // The ids the account's store had, signing out, for each space's first pass here;
+    // nothing carried the other way, which was for an account.
+    const from = this.carriedFrom
+    const carried = new Map(this.carrying)
+    this.carrying.clear()
+    this.carriedFrom = null
+    if (from !== null && carried.size) await engine.core.commit(carriedRows(carried, from))
     this.stops.push(workspace.fileOps.doneBy(this.doer))
     if (isDesktop) {
       const { watchFolders } = await import('./watching')
@@ -540,6 +550,16 @@ class Runner {
       } catch (error) {
         log('warn', `sync: signing out kept no mirrors - ${String(error)}`)
       }
+      // What every space holds keeps its id signed out too, on the desktop, which keeps
+      // spaces signed out (`startLocal`); see `carriedRows` in local.ts.
+      if (isDesktop && !this.local) {
+        const ids = await carriedIds(engine.core.store, () => true).catch(() => null)
+        if (ids) {
+          this.carrying.clear()
+          this.keepCarried(ids)
+          this.carriedFrom = accountId
+        }
+      }
     }
     await this.halt()
     this.firsts.clear()
@@ -628,8 +648,14 @@ class Runner {
         const space = engine.core.spaces.get(id)
         if (!space) continue
         if (!(await this.firstDone(engine, id)) && isLocal(id)) {
-          if (!(await localFirst(engine.core, space))) continue
-          await engine.core.commit([put('meta', { key: `${FIRST}${id}`, value: 1 })])
+          const carried = await carriedFor(engine.core.store, space.row.root, (path) =>
+            space.key(path),
+          )
+          if (!(await localFirst(engine.core, space, carried))) continue
+          await engine.core.commit([
+            put('meta', { key: `${FIRST}${id}`, value: 1 }),
+            carriedGone(space.row.root),
+          ])
           this.firsts.add(id)
           this.watched?.follow()
         } else if (!(await this.firstDone(engine, id))) {

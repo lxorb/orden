@@ -13,12 +13,12 @@
  *  (`LOCAL_STORE`), never in an account's. */
 
 import { applyOp } from '@orden/sync-core/tree'
-import type { EntryKind, Op } from '@orden/sync-core/wire'
+import type { Op } from '@orden/sync-core/wire'
 import { holderOf } from '../pages/held'
 import { Core } from './core'
 import { kindOfName, made } from './create'
 import { holdsDocument, unixLines } from './kinds'
-import { flushAll, refused, settleDisk, type Passed } from './pass'
+import { flushAll, madeAnew, refused, settleDisk, type Passed } from './pass'
 import type { SpaceState } from './places'
 import { get, put, remove, scan, type Change, type SyncStore } from './store'
 
@@ -49,8 +49,13 @@ export function localSpaceId(random: () => number): string {
 const ROUNDS = 4
 
 /** A space's first pass with no account: everything in its folder becomes an entry with
- *  an id, and each note a document holding its words. Answers whether it got through. */
-export async function localFirst(core: Core, space: SpaceState): Promise<boolean> {
+ *  an id, and each note a document holding its words - under the id it had signed in,
+ *  where signing out carried one (`carried`). Answers whether it got through. */
+export async function localFirst(
+  core: Core,
+  space: SpaceState,
+  carried: ReadonlyMap<string, string> = new Map(),
+): Promise<boolean> {
   const life = core.life
   const world = core.world
   const everything = (await world.list?.(space.row.root)) ?? []
@@ -73,9 +78,12 @@ export async function localFirst(core: Core, space: SpaceState): Promise<boolean
     const document = !one.dir && holdsDocument(kindOfName(one.path))
     const text = document ? await world.disk.read(world.join(space.row.root, one.path)) : undefined
     if (text === null) continue
+    // The id it had in the account's store, signed in until now, where nothing here has it.
+    const id = carried.get(space.key(one.path))
     const madeHere = await made(core, space, {
       path: one.path,
       folder: one.dir,
+      ...(id === undefined || core.entry(id) ? {} : { id }),
       ...(text === undefined ? {} : { text: unixLines(text) }),
     })
     changes.push(...madeHere.changes)
@@ -156,29 +164,15 @@ async function applied(core: Core, space: SpaceState): Promise<Change[]> {
 
 /** An op the rules would not apply here. A folder or a file whose making was refused -
  *  its folder deleted meanwhile, or its id already a tombstone of this space - is made
- *  again where its file is, under a new id: nobody else holds it, so nothing of it may
- *  go, and a file that no entry shows is one the disk would be made to agree with by
- *  taking it away. The rest is what an account's refusal is (`refused` in pass.ts). */
+ *  again where its file is, under a new id (`madeAnew` in pass.ts): nobody else holds
+ *  it, so nothing of it may go, and a file that no entry shows is one the disk would be
+ *  made to agree with by taking it away. The rest is what an account's refusal is
+ *  (`refused` in pass.ts). */
 async function refusedHere(core: Core, space: SpaceState, op: Op, why: string): Promise<Change[]> {
   if ((op.t !== 'create' && op.t !== 'mkdir') || why !== 'gone') {
     return await refused(core, space, op, why)
   }
-  const entry = space.entries.get(op.id)
-  if (!entry?.local_path || entry.seq !== null) return []
-  const path = entry.local_path
-  const full = core.world.join(space.row.root, path)
-  const text = holdsDocument(entry.kind) ? await core.world.disk.read(full) : undefined
-  if (text === null) return []
-  space.entries.delete(op.id)
-  space.changed()
-  const changes: Change[] = [remove('entries', op.id), ...core.forgetChanges(op.id)]
-  const again = await made(core, space, {
-    path,
-    folder: entry.kind === 'folder',
-    ...(entry.kind === 'folder' ? {} : { kind: entry.kind as Exclude<EntryKind, 'folder'> }),
-    ...(text === undefined ? {} : { text: unixLines(text) }),
-  })
-  return [...changes, ...again.changes]
+  return await madeAnew(core, space, op.id)
 }
 
 /** Every document's pending words, confirmed: they are the only words there are. Answers
@@ -203,22 +197,46 @@ async function confirmed(core: Core, space: SpaceState): Promise<number> {
   return count
 }
 
-/** The meta row an account's store keeps, until a space's first pass, of the ids what
- *  is in that space's folder had while it was used signed out. */
+/** The meta row a store keeps, until a space's first pass, of the ids what is in that
+ *  space's folder had in the store kept before it: the one kept signed out, for an
+ *  account's first pass, or an account's, for the first pass signed out. */
 const CARRIED = 'carried:'
 
-/** The ids of everything live in the spaces kept signed out, by each space's root and,
- *  within it, by path as the disk had it: what signing in carries over to the account's
- *  first pass of each, so what the account has never heard of goes up under the id it
- *  had here (`firstPass` in migrate.ts). */
-export async function carriedIds(store: Pick<SyncStore, 'read'>): Promise<Map<string, string>> {
-  const [spaces, entries] = await store.read([scan('spaces'), scan('entries')])
+/** The meta row the store kept signed out keeps of which ids came from which account,
+ *  by a space's root: what signing in to another account does not carry, since a space
+ *  there may not make an entry under an id another space has made (`takenIds` in the
+ *  Worker's sync2/ops.ts). */
+const FROM = 'from:'
+
+/** What an id is, as a store keeps it: a UUID the account gave, or 32 hex digits a
+ *  device made. */
+const ID = /^[0-9A-Za-z-]{1,64}$/
+
+/** The ids of everything live in a store's spaces, by each space's root and, within it,
+ *  by path as the disk had it: what signing in or out carries over to the next store's
+ *  first pass of each, so each entry keeps its id where it can (`firstPass` in
+ *  migrate.ts, `localFirst` here). Signing in to `account`, what came from another
+ *  account stays behind. */
+export async function carriedIds(
+  store: Pick<SyncStore, 'read'>,
+  which: (spaceId: string) => boolean = isLocal,
+  account?: string,
+): Promise<Map<string, string>> {
+  const [spaces, entries, meta] = await store.read([scan('spaces'), scan('entries'), scan('meta')])
+  const elsewhere = new Map<string, Set<string>>()
+  for (const row of meta) {
+    if (!row.key.startsWith(FROM) || typeof row.value !== 'string') continue
+    const from = fromOf(row.value)
+    if (from && from.account !== account) elsewhere.set(row.key.slice(FROM.length), from.ids)
+  }
   const out = new Map<string, string>()
   for (const space of spaces) {
-    if (!isLocal(space.space_id)) continue
+    if (!which(space.space_id)) continue
+    const away = elsewhere.get(space.root)
     const ids: Record<string, string> = {}
     for (const entry of entries) {
       if (entry.space_id !== space.space_id || entry.deleted || !entry.local_path) continue
+      if (away?.has(entry.id)) continue
       ids[entry.local_path] = entry.id
     }
     if (Object.keys(ids).length) out.set(space.root, JSON.stringify(ids))
@@ -226,9 +244,29 @@ export async function carriedIds(store: Pick<SyncStore, 'read'>): Promise<Map<st
   return out
 }
 
-/** The rows that keep carried ids in an account's store, one a space's root. */
-export function carriedRows(carried: ReadonlyMap<string, string>): Change[] {
-  return [...carried].map(([root, ids]) => put('meta', { key: `${CARRIED}${root}`, value: ids }))
+function fromOf(value: string): { account: string; ids: Set<string> } | null {
+  try {
+    const read: unknown = JSON.parse(value)
+    if (typeof read !== 'object' || read === null) return null
+    const { account, ids } = read as { account?: unknown; ids?: unknown }
+    if (typeof account !== 'string' || !Array.isArray(ids)) return null
+    return { account, ids: new Set(ids.filter((id): id is string => typeof id === 'string')) }
+  } catch {
+    return null
+  }
+}
+
+/** The rows that keep carried ids in the next store, one a space's root; carried from an
+ *  account into the store kept signed out, with which account they came from. */
+export function carriedRows(carried: ReadonlyMap<string, string>, account?: string): Change[] {
+  const rows: Change[] = []
+  for (const [root, ids] of carried) {
+    rows.push(put('meta', { key: `${CARRIED}${root}`, value: ids }))
+    if (account === undefined) continue
+    const from = { account, ids: Object.values(JSON.parse(ids) as Record<string, string>) }
+    rows.push(put('meta', { key: `${FROM}${root}`, value: JSON.stringify(from) }))
+  }
+  return rows
 }
 
 /** The ids carried for a space's folder, by path as `key` compares paths; none where
@@ -245,7 +283,7 @@ export async function carriedFor(
     const ids: unknown = JSON.parse(row.value)
     if (typeof ids !== 'object' || ids === null) return out
     for (const [path, id] of Object.entries(ids)) {
-      if (typeof id === 'string' && /^[0-9a-f]{32}$/.test(id)) out.set(key(path), id)
+      if (typeof id === 'string' && ID.test(id)) out.set(key(path), id)
     }
   } catch {
     // Not what was written: nothing carried, and every stray is made under a new id.

@@ -121,6 +121,15 @@ the id a device chooses for what it makes (a create under an id that was ever an
 space's is refused). What the account already has keeps the account's id; tabs, places
 and open folders are kept by path, so neither touches them.
 
+Signing out carries them the other way: the ids of everything the account's store held go
+into the store kept signed out, beside the account they came from (`from:<root>`), and its
+first pass of each space makes every entry under the id it had signed in. Signing in to
+that account again sends them back as they are; signing in to another leaves them behind,
+since a space there may not make an entry under an id another space made, and what was
+made signed out goes up under its own. A note the account still will not make under its id
+even at the top of the space - one another space once made, or this space's own gone for
+good - is made again under a new id with what its file says, never left unsent.
+
 ## What is kept about an entry
 
 A folder's icon and its colour are kept on the account by the folder's id, and a

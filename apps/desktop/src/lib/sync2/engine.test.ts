@@ -767,6 +767,46 @@ describe('a delete put back (#1068)', () => {
   })
 })
 
+describe('a note the account will not make under its id (#1068)', () => {
+  test('is made again under a new one, with its words, and nothing is left unsent', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const there = await device(account, 'd1')
+    await there.disk.write(`${ROOT}/Gone.md`, 'old words')
+    const gone = (await there.engine.created(`${ROOT}/Gone.md`, false, 'old words')) ?? ''
+    await there.engine.pass(SPACE)
+    await there.disk.remove(`${ROOT}/Gone.md`)
+    await there.engine.removed(`${ROOT}/Gone.md`)
+    await there.engine.pass(SPACE)
+
+    // A note made here under an id the account already holds as somebody's tombstone:
+    // an id carried from a store the account does not know of.
+    const here = await device(account, 'd0')
+    await here.disk.write(`${ROOT}/Idea.md`, 'ship it mk7q')
+    const made = (await here.engine.created(`${ROOT}/Idea.md`, false, 'ship it mk7q')) ?? ''
+    const space = here.engine.core.spaces.get(SPACE)
+    const entry = space?.entries.get(made)
+    if (!space || !entry) throw new Error('no entry')
+    space.entries.delete(made)
+    space.entries.set(gone, { ...entry, id: gone })
+    for (const one of space.outbox) {
+      if (one.record.t === 'op' && one.record.op.t === 'create' && one.record.op.id === made) {
+        one.record = { t: 'op', op: { ...one.record.op, id: gone, op: 'carried.c' } }
+      }
+    }
+    space.changed()
+
+    await here.engine.pass(SPACE)
+    await here.engine.pass(SPACE)
+
+    const idea = (await account.view()).entries.find((one) => one.name === 'Idea.md')
+    expect(idea?.id).toBeDefined()
+    expect(idea?.id).not.toBe(gone)
+    expect(await textOn(account, idea?.id ?? '')).toBe('ship it mk7q')
+    expect(here.engine.core.spaces.get(SPACE)?.at('Idea.md')?.id).toBe(idea?.id)
+    expect(here.engine.waiting(SPACE)).toBe(false)
+  })
+})
+
 describe('a move to another space', () => {
   const WORK = 'work'
   const WORK_ROOT = '/device/work'
