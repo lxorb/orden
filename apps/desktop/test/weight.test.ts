@@ -1181,9 +1181,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,559,000, for #331: each kind's way of drawing its window in the
  *  tab overview (overview/previews.ts, workspace/tab-kinds.ts).
- *  Measured 3,558,887. */
+ *  Measured 3,558,887.
+ *
+ *  Raised 2026-11-04, to 394 modules, for #1041: every tab but the one in front is its
+ *  icon, opening out to its name under the pointer, with a letter on look-alikes
+ *  (tab-strip/icon-tabs.svelte.ts, tab-strip/twins.ts). Measured 3,556,835, 393 modules. */
 const BUDGET = 3_559_000
-const MOST_FILES = 393
+const MOST_FILES = 394
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

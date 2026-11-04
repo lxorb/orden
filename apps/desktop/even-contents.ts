@@ -485,10 +485,14 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,884,400, for #331: each kind's way of drawing its window in the
  *  tab overview (overview/previews.ts, workspace/tab-kinds.ts).
  *  Measured 5,884,223.
+ *
+ *  The catalogues raised on 2026-11-04, to 967,400, for #1041: the switch that shows every
+ *  tab but the one in front as its icon, with its hint, in every catalogue
+ *  (general-pane.ts). Measured 967,294.
  */
 export const BUDGETS: Record<Part, number> = {
   code: 5_884_400,
-  catalogues: 965_200,
+  catalogues: 967_400,
   styles: 290_000,
   fonts: 260_000,
   pages: 40_000,
