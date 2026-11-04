@@ -472,38 +472,60 @@ fn question_key(question: &policy::Question, summary: &str, facts: &Facts) -> St
     ))
 }
 
-/// Words with what ticks taken out of them: a time of day or a countdown, a percentage, and
-/// what is no word at all, as a spinner is. Every other number stays, an amount or a count of
-/// files being the difference between two questions.
+/// Whether a word is a time of day or a clock counting down: `9:58`, `09:58:12`, `3:45pm`. A
+/// whole word only, so `1:1000` is a ratio and stays.
+fn is_clock(word: &str) -> bool {
+    let word = word.trim_matches(['(', ')', ',', '.', ';']).to_lowercase();
+    let word = word
+        .strip_suffix("am")
+        .or_else(|| word.strip_suffix("pm"))
+        .unwrap_or(&word);
+    let parts: Vec<&str> = word.split(':').collect();
+    let digits = |one: &str| one.chars().all(|digit| digit.is_ascii_digit());
+    matches!(parts.len(), 2 | 3)
+        && matches!(parts[0].len(), 1 | 2)
+        && parts.iter().all(|one| digits(one))
+        && parts[1..]
+            .iter()
+            .all(|one| one.len() == 2 && one.as_bytes()[0] < b'6')
+}
+
+/// Words with what ticks taken out of them: a clock, a countdown in seconds or minutes, and a
+/// spinner's mark. Every other number and sign stays, as an amount, a percentage, a currency, a
+/// count of files or of hours is the difference between two questions.
 fn steady(words: &str) -> String {
-    const UNITS: &[&str] = &[
-        "s", "sec", "secs", "second", "seconds", "min", "mins", "minute", "minutes", "h", "hr",
-        "hrs", "hour", "hours", "sek", "sekunde", "sekunden", "minuten", "std", "stunde",
-        "stunden", "seconde", "secondes", "heure", "heures", "segundo", "segundos", "minuto",
-        "minutos", "hora", "horas", "secondo", "secondi", "minuti", "ora", "ore",
+    const TICKING: &[&str] = &[
+        "s", "sec", "secs", "second", "seconds", "min", "mins", "minute", "minutes", "sek",
+        "sekunde", "sekunden", "minuten", "seconde", "secondes", "segundo", "segundos", "minuto",
+        "minutos", "secondo", "secondi", "minuti",
     ];
-    let bare = |word: &str| -> String {
-        word.trim_matches(|one: char| !one.is_alphanumeric())
-            .to_lowercase()
+    let unit = |word: &str| {
+        let word = word
+            .trim_matches(|one: char| !one.is_alphanumeric())
+            .to_lowercase();
+        TICKING.contains(&word.as_str())
     };
-    let number = |word: &str| {
-        !word.is_empty()
-            && word
-                .chars()
-                .all(|one| one.is_ascii_digit() || one == '.' || one == ',')
-            && word.starts_with(|one: char| one.is_ascii_digit())
+    let whole = |word: &str| !word.is_empty() && word.chars().all(|one| one.is_ascii_digit());
+    let counting = |word: &str| {
+        word.find(|one: char| !one.is_ascii_digit())
+            .is_some_and(|at| at > 0 && unit(&word[at..]))
     };
-    let ticks = |word: &str| {
-        let word = word.trim_matches(|one: char| matches!(one, '(' | ')' | ',' | '.' | ';'));
-        let clock = word.contains(':')
-            && word
-                .split(':')
-                .all(|one| !one.is_empty() && one.chars().all(|digit| digit.is_ascii_digit()));
-        let percent = word.strip_suffix('%').is_some_and(number);
-        let timed = word
-            .find(|one: char| !one.is_ascii_digit() && one != '.' && one != ',')
-            .is_some_and(|at| at > 0 && number(&word[..at]) && UNITS.contains(&&word[at..]));
-        clock || percent || timed
+    let mark = |word: &str| {
+        word.chars().all(|one| {
+            matches!(
+                one,
+                '|' | '/'
+                    | '-'
+                    | '\\'
+                    | '.'
+                    | '*'
+                    | '+'
+                    | '\u{b7}'
+                    | '\u{2022}'
+                    | '\u{2026}'
+                    | '\u{2800}'..='\u{28ff}'
+            )
+        })
     };
     let all: Vec<&str> = words.split_whitespace().collect();
     let mut kept = Vec::with_capacity(all.len());
@@ -511,17 +533,23 @@ fn steady(words: &str) -> String {
     while at < all.len() {
         let word = all[at];
         at += 1;
-        if ticks(word) || bare(word).is_empty() {
+        if mark(word) || counting(word) {
             continue;
         }
-        // A number and its unit apart: `58 seconds`, `45 %`.
-        if number(&bare(word)) && word.chars().next().is_some_and(|one| one.is_ascii_digit()) {
-            if let Some(next) = all.get(at) {
-                if *next == "%" || UNITS.contains(&bare(next).as_str()) {
-                    at += 1;
-                    continue;
-                }
+        if is_clock(word) {
+            // `12:03 PM`, apart.
+            if all
+                .get(at)
+                .is_some_and(|next| matches!(next.to_lowercase().trim_matches('.'), "am" | "pm"))
+            {
+                at += 1;
             }
+            continue;
+        }
+        // A number and its unit apart: `58 seconds`.
+        if whole(word) && all.get(at).is_some_and(|next| unit(next)) {
+            at += 1;
+            continue;
         }
         kept.push(word);
     }

@@ -2732,6 +2732,8 @@ impl Page<'_> {
     /// The page's accessibility tree, with its frames, as the parts `snapshot` writes.
     pub fn parts(&self) -> Result<Tree, Answer> {
         let started = Instant::now();
+        // A frame not followed yet is on no list, and the read would not say it left it out.
+        let _ = self.nested_followed();
         let own = self.call("Accessibility.getFullAXTree", &json!({}))?;
         let mut parts = vec![Part {
             prefix: String::new(),

@@ -660,8 +660,7 @@ pub fn judge(
                 continue;
             };
             let way_out = dismisses(&facts.name)
-                || (category == Category::Deleting && alone(&facts.name, KEEPING))
-                || consents(&facts.name, &facts.dialog, said, words);
+                || (category == Category::Deleting && alone(&facts.name, KEEPING));
             if way_out {
                 continue;
             }
@@ -710,7 +709,9 @@ pub fn key_act(mut facts: Facts, key: &super::keys::Key) -> Option<(Facts, Act)>
         return None;
     }
     facts.submit = facts.in_form && key.submits();
-    Some((facts, if key.sends() { Act::Enter } else { Act::Press }))
+    // Shift+Enter is a new line in a box, and in a field the same submit as Enter.
+    let enter = key.sends() || (key.submits() && !body(&facts.field));
+    Some((facts, if enter { Act::Enter } else { Act::Press }))
 }
 
 /// Which of a drag's two ends the one question for it is about: the graver, and a drop
@@ -947,13 +948,16 @@ const DISMISSING: &[&str] = &[
     "go back",
     "never mind",
     "got it",
+    "accept cookies",
+    "accept all cookies",
+    "allow cookies",
+    "allow all cookies",
     "reject",
     "reject all",
     "decline",
     "learn more",
     "more info",
     "details",
-    "next",
     "next page",
     "previous page",
     "skip",
@@ -968,6 +972,7 @@ const DISMISSING: &[&str] = &[
     "zur\u{fc}ck",
     "sp\u{e4}ter",
     "verstanden",
+    "alle cookies akzeptieren",
     "annuler",
     "fermer",
     "non",
@@ -989,48 +994,6 @@ const DISMISSING: &[&str] = &[
 /// The way out of a dialog about deleting, and of none about paying, where `Keep your plan and
 /// be billed` is a yes.
 const KEEPING: &[&str] = &["keep", "behalten", "garder"];
-
-/// What says yes to cookies, which is all it says where a dialog is about them (`consents`), and
-/// says yes to anything elsewhere.
-const CONSENTING: &[&str] = &[
-    "ok",
-    "okay",
-    "accept",
-    "accept all",
-    "accept cookies",
-    "accept all cookies",
-    "allow",
-    "allow all",
-    "allow cookies",
-    "allow all cookies",
-    "agree",
-    "i agree",
-    "i accept",
-    "agree and close",
-    "agree and continue",
-    "akzeptieren",
-    "alle akzeptieren",
-    "zustimmen",
-    "einverstanden",
-    "accepter",
-    "tout accepter",
-    "aceptar",
-    "aceptar todo",
-    "accetta",
-    "accetta tutti",
-];
-
-/// What a dialog about cookies calls them.
-const ABOUT_COOKIES: &[&str] = &["cookie", "cookies", "consent", "einwilligung"];
-
-/// Whether a press says yes to cookies in a dialog about them: one that opens on them, or whose
-/// sentence naming the word does, and does not lead with the word: `We use cookies. You can
-/// delete them`, and not `Your card is charged. We use cookies`.
-fn consents(name: &str, dialog: &str, said: &str, words: &[&str]) -> bool {
-    alone(name, CONSENTING)
-        && !starts_with_any(said, words)
-        && (says(said, ABOUT_COOKIES) || says(first_sentence(dialog), ABOUT_COOKIES))
-}
 
 /// Whether a press is the way out of a dialog. An arrow or a tick round it is no word.
 fn dismisses(name: &str) -> bool {
@@ -1127,11 +1090,6 @@ fn stops(dialog: &str) -> impl Iterator<Item = usize> + '_ {
             && dialog[end..].chars().next().is_none_or(char::is_whitespace))
         .then_some(end)
     })
-}
-
-/// A dialog's first sentence.
-fn first_sentence(dialog: &str) -> &str {
-    &dialog[..stops(dialog).next().unwrap_or(dialog.len())]
 }
 
 /// The first sentence of a dialog with one of these words in it, to quote to the reader: to a

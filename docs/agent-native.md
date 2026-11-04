@@ -1075,10 +1075,10 @@ that very frame, through each interface's own getters, or from the engine's own 
 is seen here. Its content is another matter: a page calls its own button what it likes.
 
 An allowance is for the question asked: its category, the control's name and everything its dialog
-says, short of what ticks: a time of day or a countdown (`9:58`, `58 seconds`), a percentage, a
-spinner. The same button when another file is named, when an amount or a count changes, or in a form
-that has grown a card field, asks again; a clock anywhere in the dialog does not. A bare counter with
-no unit is a number like any and asks each time. A press made more than once says how many times,
+says, short of what ticks: a clock (`9:58`, `3:45pm`), a countdown in seconds or minutes (`58 seconds`), a
+spinner. The same button when another file is named, when an amount, a percentage, a currency, a
+count or a number of hours changes, or in a form that has grown a card field, asks again; a clock
+anywhere in the dialog does not. A bare counter with no unit is a number like any and asks each time. A press made more than once says how many times,
 and asks again for another count.
 
 So a paragraph round a Pay button asks and a section whose middle is empty does not, and a
@@ -1099,13 +1099,14 @@ page's own script behind a button called OK is not seen by anything here.
 A link that only goes is no delete, as the press that deletes is on the page it goes to; one
 with `data-method`, `data-turbo-method`, `role=button` or a handler or listener of its own is a
 press, while a plain `<a href=/delete-account>` still goes. In a dialog that talks of paying or deleting anywhere in it, every control asks except the way
-out, a closed list (Cancel, Close, Close dialog, No, Stay, Got it, Next, Learn more and their like),
+out, a closed list (Cancel, Close, Close dialog, No, Stay, Got it, Learn more and their like),
 an icon with no name included. `Keep` is the way out of a dialog about deleting and of none about
-paying, where `Keep your plan and be billed` is a yes, and `Accept` is one only where the dialog is
-about cookies: OK, Accept, Allow all or Agree go where it opens on cookies or consent, or says so in
-the sentence naming the word, and that sentence does not lead with it. It is not read for what it
-means past that, as that lets honest second steps by: `You can remove your data at any time` and OK
-cost one question. `free of charge`, `in charge` and `pay attention` are not the word. Enter in a
+paying, where `Keep your plan and be billed` is a yes. `Next` is none: it goes on to what the dialog
+says. Plain `OK`, `Agree`, `Accept` and `Allow` always ask, as `Consent to payment` says those too;
+only a control whose own name says cookies (`Accept all cookies`) goes, so a cookie notice that
+mentions a delete word costs one question on its plain `OK`, an accepted false alarm. A dialog is not
+read for what it means past that, as that lets honest second steps by: `You can remove your data at
+any time` and OK cost one question. `free of charge`, `in charge` and `pay attention` are not the word. Enter in a
 field of such a dialog is a press too, of its form's first submit button or of none, so
 type-to-confirm asks like its Confirm. The question quotes the first sentence that says so, and
 never what a field holds: a dialog's words leave out every field's, and a secret's own name, which
