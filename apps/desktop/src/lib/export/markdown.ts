@@ -18,6 +18,7 @@ import {
   shownText,
 } from '@orden/markdown/links'
 import { stripFrontMatter } from '@orden/markdown/front-matter'
+import { codeSpans, inCode } from '@orden/markdown/tags'
 import { encodeTarget } from '../link-rewrite'
 
 /** A stretch of the source, and what goes in its place. */
@@ -115,9 +116,13 @@ function pictureEdits(source: string, rename: (src: string) => string | null): E
       continue
     }
 
+    const spans = codeSpans(line)
     for (const match of line.matchAll(PICTURE)) {
+      if (inCode(spans, match.index)) continue
       const written = match[2] ?? ''
-      const from = at + match.index + match[0].indexOf(written, match[1]?.length ?? 0)
+      // Past `![`, the alt and `](`: an alt may hold the same characters.
+      const past = (match[1]?.length ?? 0) + 4
+      const from = at + match.index + match[0].indexOf(written, past)
       const edit = sourceEdit(written, from, rename)
       if (edit) edits.push(edit)
     }

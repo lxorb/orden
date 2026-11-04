@@ -139,3 +139,18 @@ describe('pictures and code', () => {
     expect(toMarkdown(source, { picture })).toBe(source)
   })
 })
+
+describe('a picture’s source moved', () => {
+  const moved = { picture: (src: string) => `assets/${src}` }
+
+  test('is the source, where its alt says the same', () => {
+    expect(toMarkdown('![a](a)', moved)).toBe('![a](assets/a)')
+    expect(toMarkdown('![ab](b)', moved)).toBe('![ab](assets/b)')
+  })
+
+  test('and not one written as inline code', () => {
+    expect(toMarkdown('see `![a](c.png)` and ![a](c.png)', moved)).toBe(
+      'see `![a](c.png)` and ![a](assets/c.png)',
+    )
+  })
+})
