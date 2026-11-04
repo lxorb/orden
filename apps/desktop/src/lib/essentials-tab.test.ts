@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 /** An essential kept as a tab of the strip by a double click of its tile, and the
@@ -27,6 +28,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
 const { keepAsTab, openEssential } = await import('./essentials.svelte')
 const { essentialLetters } = await import('./tab-strip/letters.svelte')
+const { droppedEssential } = await import('./tab-strip/essential-drop')
 const { flushSync } = await import('svelte')
 type Entry = import('./workspace.svelte').Entry
 
@@ -67,6 +69,40 @@ describe('an essential double clicked', () => {
     await openEssential('/space/Notes.md')
     expect(workspace.active).not.toBe(shown)
     expect(workspace.active?.essential).toBe('/space/Notes.md')
+  })
+})
+
+describe('an essential dragged into a strip', () => {
+  test('is kept as a tab where it was let go, as it was, as a double click keeps it', async () => {
+    workspace.panes.collapse()
+    workspace.tabs = []
+    workspace.openBlank('First', '# First')
+    workspace.openBlank('Second', '# Second')
+    await openEssential('/space/Notes.md')
+    const shown = workspace.active
+    shown!.scroll = 240
+
+    const pane = workspace.panes.focusedId
+    const id = await droppedEssential(0, pane, 1)
+    expect(id).toBe(shown?.id)
+    expect(shown?.essential).toBeNull()
+    // Where it was let go of, between the two, and the same tab with its place kept.
+    expect(strip()).toEqual([null, '/space/Notes.md', null])
+    expect(workspace.active).toBe(shown)
+    expect(shown?.scroll).toBe(240)
+  })
+
+  test('is what the strip does with a bookmark let go of on it', () => {
+    const tabs = readFileSync(new URL('./Tabs.svelte', import.meta.url), 'utf8')
+    expect(tabs).toMatch(/const takes = [^\n]*\n?[^\n]*isBookmarkDrag\(transfer\)/)
+    expect(tabs).toContain('droppedEssential(mark, paneId, at)')
+  })
+
+  test('and a bookmark that is no note is no tab', async () => {
+    workspace.bookmarks.put('/space', [{ kind: 'group', path: 'g', text: 'Group' }])
+    const before = workspace.tabs.length
+    expect(await droppedEssential(0, workspace.panes.focusedId, 0)).toBeNull()
+    expect(workspace.tabs.length).toBe(before)
   })
 })
 

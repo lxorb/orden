@@ -6,7 +6,13 @@
   import { fade } from 'svelte/transition'
   import { quintOut } from 'svelte/easing'
   import { agentMarks } from './agent-marks.svelte'
-  import { dragged, isTreeDrag, mayCarryAddress } from './drag-paths'
+  import {
+    dragged,
+    draggedBookmark,
+    isBookmarkDrag,
+    isTreeDrag,
+    mayCarryAddress,
+  } from './drag-paths'
   import { chrome } from './glass/chrome.svelte'
   import { i18n, t } from './i18n.svelte'
   import { longPress } from './longpress'
@@ -661,17 +667,21 @@
 
   /* ── A note out of the file list, or a link out of another app ─────── */
 
-  /** Whether a drag is one the strip takes: rows out of the file list, or what may be
-   *  a link dragged in from another app. See tab-strip/dropped.ts. */
+  /** Whether a drag is one the strip takes: rows out of the file list, an essential or a
+   *  note's bookmark (#1051), or what may be a link dragged in from another app. See
+   *  tab-strip/dropped.ts and tab-strip/essential-drop.ts. */
   const takes = (transfer: DataTransfer | null) =>
-    isTreeDrag(transfer) || mayCarryAddress(transfer?.types ?? [])
+    isTreeDrag(transfer) || isBookmarkDrag(transfer) || mayCarryAddress(transfer?.types ?? [])
 
   function over(event: DragEvent) {
     if (!takes(event.dataTransfer)) return
 
     event.preventDefault()
     event.stopPropagation()
-    if (event.dataTransfer && isTreeDrag(event.dataTransfer)) {
+    if (
+      event.dataTransfer &&
+      (isTreeDrag(event.dataTransfer) || isBookmarkDrag(event.dataTransfer))
+    ) {
       event.dataTransfer.dropEffect = 'move'
     }
 
@@ -690,6 +700,15 @@
     const at = slotAt(base, alongOf(event.clientX), run)
     workspace.panes.landing = null
     workspace.panes.dropped()
+
+    // An essential, kept as a tab where it was let go: a double click's keeping, in place.
+    const mark = draggedBookmark(transfer)
+    if (mark !== null) {
+      void import('./tab-strip/essential-drop').then(({ droppedEssential }) =>
+        droppedEssential(mark, paneId, at),
+      )
+      return
+    }
 
     if (!isTreeDrag(transfer)) {
       // A page, as a tab of its own where it was let go, in front: Chrome's drop. The

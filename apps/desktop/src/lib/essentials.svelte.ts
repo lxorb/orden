@@ -350,19 +350,21 @@ async function showEssential(path: string) {
   }
 }
 
-/** An essential kept as a tab of the strip, on a double click of its tile (#1051): the
- *  essential's own tab, as it is - its place in the note, its page - goes into the strip
- *  and is in front, and the tile's next press gives the essential a view of its own. */
-export async function keepAsTab(path: string) {
+/** An essential kept as a tab of the strip, on a double click of its tile or its tile
+ *  dragged into a strip (#1051): the essential's own tab, as it is - its place in the
+ *  note, its page - goes into the strip and is in front, and the tile's next press gives
+ *  the essential a view of its own. Answers that tab, to be put where it was let go. */
+export async function keepAsTab(path: string): Promise<string | null> {
   await opening.catch(() => undefined)
   const ws = workspace
   const held = essentialTab(ws.tabs, path, (paneId) => ws.panes.at(paneId) !== null)
   if (!held) {
     await openInStrip(path, {})
-    return
+    return ws.activeTabId
   }
   held.essential = null
   ws.front(held.id)
+  return held.id
 }
 
 /** An essential asked for in the strip: the strip's tab of it, or a view of its own,
