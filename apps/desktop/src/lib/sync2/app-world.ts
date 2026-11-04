@@ -17,7 +17,7 @@ import { onDisk } from '../on-disk'
 import { holderOf } from '../pages/held'
 import { scanSpace } from '../space-watch'
 import { windowsPath } from './places'
-import { invoke, isDesktop, joinPath, platform } from '../tauri'
+import { invoke, isDesktop, isNative, joinPath, platform } from '../tauri'
 import { classifier } from './classify'
 import { accountOver, remoteFiles } from './transport'
 import type { Disk, FileKind, World } from './world'
@@ -51,6 +51,12 @@ function parentOf(path: string): string {
  *  a read; see on-disk.ts. A stamp alone answered no for every path in the browser,
  *  so a note deleted on another device was never deleted there. */
 const stamped = onDisk
+
+/** Whether something is at a path, for sync to read its going as a delete: nobody being able
+ *  to look says nothing is gone (`file_there` in the crate). Where the app itself was not
+ *  answered, the same. */
+const thereOrUnsure = (path: string): Promise<boolean> =>
+  isNative ? invoke<boolean>('file_there', { path }).catch(() => true) : onDisk(path)
 
 function diskOf(telling: Telling): Disk {
   return {
@@ -121,7 +127,7 @@ function diskOf(telling: Telling): Disk {
       await telling.gone(path, kind)
     },
     mkdir: (path) => invoke('create_folder', { path }).then(() => undefined),
-    exists: stamped,
+    exists: thereOrUnsure,
     evicted: evictedHere,
   }
 }
@@ -130,10 +136,13 @@ function diskOf(telling: Telling): Disk {
 interface Listed {
   path: string
   is_dir: boolean
+  unlisted?: boolean
   children?: Listed[]
 }
 
-async function listed(root: string): Promise<{ path: string; dir: boolean }[] | null> {
+async function listed(
+  root: string,
+): Promise<{ path: string; dir: boolean; unlisted?: boolean }[] | null> {
   const slashed = (path: string) => (windowsPath(root) ? path.replace(/\\/g, '/') : path)
   const base = slashed(root).replace(/\/+$/, '')
   const inside = (path: string): string | null => {
@@ -148,7 +157,7 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[] | 
     if (all) {
       return all.flatMap((one) => {
         const path = inside(one.path)
-        return path === null ? [] : [{ path, dir: one.dir }]
+        return path === null ? [] : [{ path, dir: one.dir, unlisted: one.unlisted === true }]
       })
     }
   }
@@ -158,16 +167,17 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[] | 
     root,
     options: { showHidden: false, papers: true },
   }).catch(() => null)
-  const out: { path: string; dir: boolean }[] = []
+  const out: { path: string; dir: boolean; unlisted?: boolean }[] = []
   const walk = (node: Listed) => {
     for (const child of node.children ?? []) {
       const path = inside(child.path)
       if (path === null) continue
-      out.push({ path, dir: child.is_dir })
+      out.push({ path, dir: child.is_dir, unlisted: child.unlisted === true })
       if (child.is_dir) walk(child)
     }
   }
-  if (!tree) return null
+  // A space that would not list is no listing at all, not an empty space.
+  if (!tree || tree.unlisted) return null
   walk(tree)
   // The list leaves a dotted file out as the app's own; sync carries the space's own
   // inbox all the same (#1044), as the crate's scan does on a desktop.

@@ -18,6 +18,9 @@ export interface Listed {
   /** Milliseconds since the epoch. */
   mtime: number
   id: string | null
+  /** A folder whose children were not read: it would not list, or is too deep. It may not be
+   *  empty, and what is known under it is not therefore gone; see `walk` in the crate. */
+  unlisted?: true
 }
 
 /** One answer about one path. A folder that arrives brings a `created` for everything
@@ -109,7 +112,7 @@ function listedOf(value: unknown): Listed | null {
     return null
   }
   if (!identity(id)) return null
-  return { path, dir, size, mtime, id }
+  return { path, dir, size, mtime, id, ...(value.unlisted === true ? { unlisted: true } : {}) }
 }
 
 function changeOf(value: unknown): SpaceChange | null {

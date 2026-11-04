@@ -475,6 +475,21 @@ pub fn file_stamp(app: AppHandle, path: String) -> Result<Option<Stamp>, String>
     Ok(stamp_of(&openable(&app, &path)?))
 }
 
+/// Whether anything is at a path in a space, or nobody could look: sync's question before it
+/// reads a file's going as a delete. No permission, or a network drive away, says nothing is
+/// known to be gone. `file_stamp` answers null for those, for callers who only want a stamp.
+#[tauri::command(async)]
+pub fn file_there(app: AppHandle, path: String) -> Result<bool, String> {
+    Ok(there_or_unsure(&openable(&app, &path)?))
+}
+
+fn there_or_unsure(target: &Path) -> bool {
+    match fs::symlink_metadata(target) {
+        Ok(_) => true,
+        Err(error) => !crate::space_watch::says_gone(&error),
+    }
+}
+
 /// Whether a note that is not there is in iCloud all the same; see `icloud::evicted`.
 #[tauri::command(async)]
 pub fn note_evicted(app: AppHandle, path: String) -> Result<bool, String> {
@@ -554,6 +569,32 @@ mod tests {
 
     fn write_note(path: String, content: String) -> Result<(), String> {
         super::note_written(Path::new(&path), &path, &content)
+    }
+
+    #[test]
+    fn a_path_nobody_could_look_at_is_not_gone() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let file = dir.path().join("note.md");
+        assert!(!super::there_or_unsure(&file));
+        fs::write(&file, b"words").expect("the file");
+        assert!(super::there_or_unsure(&file));
+        assert!(
+            !super::there_or_unsure(&file.join("under.md")),
+            "a file where a folder was is gone too"
+        );
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let shut = dir.path().join("shut");
+            fs::create_dir(&shut).expect("a folder");
+            fs::set_permissions(&shut, fs::Permissions::from_mode(0o000)).expect("locked");
+            // Root reads through permissions, and then this says nothing.
+            if fs::read_dir(&shut).is_err() {
+                assert!(super::there_or_unsure(&shut.join("note.md")));
+            }
+            fs::set_permissions(&shut, fs::Permissions::from_mode(0o755)).expect("opened");
+        }
     }
 
     fn file_stamp(path: &str) -> Option<Stamp> {

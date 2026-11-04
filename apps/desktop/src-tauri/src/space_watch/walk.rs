@@ -47,6 +47,9 @@ pub struct Found {
     /// would not say, which a file that vanished between the listing and the question
     /// also answers.
     pub id: Option<String>,
+    /// A folder whose children were not read: it would not list, or is past `MAX_DEPTH`.
+    /// It looks empty and may not be, and what is known under it is not therefore gone.
+    pub unlisted: bool,
 }
 
 /// Whether sync leaves a name alone; see the top of this file.
@@ -100,7 +103,17 @@ pub fn found(root: &Path, rel: &Path) -> Option<Found> {
             .and_then(|at| at.duration_since(std::time::UNIX_EPOCH).ok())
             .map_or(0, |since| since.as_nanos()),
         id: identity(&path),
+        unlisted: false,
     })
+}
+
+/// Whether a failed look at a path says nothing is there. Any other failure (no permission,
+/// a network drive away, a virus scanner in the way) says only that nobody could look.
+pub fn says_gone(error: &std::io::Error) -> bool {
+    matches!(
+        error.kind(),
+        std::io::ErrorKind::NotFound | std::io::ErrorKind::NotADirectory
+    )
 }
 
 /// Whether anything sync keeps is at `rel` inside `root` now: `found` without asking
@@ -108,46 +121,81 @@ pub fn found(root: &Path, rel: &Path) -> Option<Found> {
 pub fn present(root: &Path, rel: &Path) -> bool {
     !rel.as_os_str().is_empty()
         && !ignored_path(rel)
-        && fs::symlink_metadata(root.join(rel)).is_ok_and(|meta| !meta.file_type().is_symlink())
+        && match fs::symlink_metadata(root.join(rel)) {
+            Ok(meta) => !meta.file_type().is_symlink(),
+            // Nobody could look: not a removal, which would leave the account too.
+            Err(error) => !says_gone(&error),
+        }
+}
+
+/// The names sync keeps in a folder, in order. An error partway through the listing is the
+/// listing failing: what it had got to is not all that is there.
+fn names_in(root: &Path, rel: &Path) -> std::io::Result<Vec<String>> {
+    let mut names = Vec::new();
+    for entry in fs::read_dir(root.join(rel))? {
+        if let Ok(name) = entry?.file_name().into_string() {
+            if !ignored(&name) || carried(&rel.join(&name)) {
+                names.push(name);
+            }
+        }
+    }
+    names.sort_unstable();
+    Ok(names)
 }
 
 /// Everything under `rel` inside `root`, `rel` itself left out, handed to `visit` a
 /// folder before what is in it and each folder's names in order. `left` is what the
 /// walk may still list; a walk that runs out answers the sentence that says so.
+///
+/// A folder inside that will not list is handed over `unlisted`, and the walk goes on. `rel`
+/// itself not listing is an error: answered as an empty space, every note in it is a delete.
 pub fn walk(
     root: &Path,
     rel: &Path,
     left: &mut usize,
     visit: &mut dyn FnMut(Found),
 ) -> Result<(), String> {
-    let depth = rel.components().count();
-    if depth >= MAX_DEPTH {
+    if rel.components().count() >= MAX_DEPTH {
         return Ok(());
     }
-    let Ok(listing) = fs::read_dir(root.join(rel)) else {
-        return Ok(());
-    };
+    match names_in(root, rel) {
+        Ok(names) => walk_names(root, rel, names, left, visit),
+        Err(error) if says_gone(&error) => Ok(()),
+        Err(error) => Err(format!(
+            "{} would not list: {error}",
+            root.join(rel).display()
+        )),
+    }
+}
 
-    let mut names: Vec<String> = listing
-        .flatten()
-        .filter_map(|entry| entry.file_name().into_string().ok())
-        .filter(|name| !ignored(name) || carried(&rel.join(name)))
-        .collect();
-    names.sort_unstable();
-
+fn walk_names(
+    root: &Path,
+    rel: &Path,
+    names: Vec<String>,
+    left: &mut usize,
+    visit: &mut dyn FnMut(Found),
+) -> Result<(), String> {
     for name in names {
         let child = rel.join(&name);
-        let Some(one) = found(root, &child) else {
+        let Some(mut one) = found(root, &child) else {
             continue;
         };
         *left = left
             .checked_sub(1)
             .ok_or_else(|| format!("this space holds more than {MAX_ENTRIES} files and folders"))?;
 
-        let dir = one.dir;
+        // Listed before it is handed over, which is when it has to say whether it could be.
+        let inside =
+            (one.dir && child.components().count() < MAX_DEPTH).then(|| names_in(root, &child));
+        one.unlisted = one.dir
+            && match &inside {
+                None => true,
+                Some(Err(error)) => !says_gone(error),
+                Some(Ok(_)) => false,
+            };
         visit(one);
-        if dir {
-            walk(root, &child, left, visit)?;
+        if let Some(Ok(names)) = inside {
+            walk_names(root, &child, names, left, visit)?;
         }
     }
 
@@ -165,6 +213,8 @@ pub fn everything(root: &Path) -> Result<Vec<Found>, String> {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(unix)]
+    use super::present;
     use super::{everything, ignored, walk};
     use crate::paths::link_to;
     use std::fs;
@@ -278,5 +328,90 @@ mod tests {
         for name in ["Plan.md", "Icon.png", "thumbs.md", "a~$b"] {
             assert!(!ignored(name), "{name:?}");
         }
+    }
+
+    /// Permissions taken away for as long as it lives. Root reads through them, so a test
+    /// run as root says nothing.
+    #[cfg(unix)]
+    struct Locked(PathBuf);
+
+    #[cfg(unix)]
+    impl Locked {
+        fn up(folder: PathBuf) -> Option<Self> {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&folder, fs::Permissions::from_mode(0o000)).expect("locked");
+            if fs::read_dir(&folder).is_ok() {
+                fs::set_permissions(&folder, fs::Permissions::from_mode(0o755)).expect("opened");
+                return None;
+            }
+            Some(Self(folder))
+        }
+    }
+
+    #[cfg(unix)]
+    impl Drop for Locked {
+        fn drop(&mut self) {
+            use std::os::unix::fs::PermissionsExt;
+            let _ = fs::set_permissions(&self.0, fs::Permissions::from_mode(0o755));
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_folder_that_will_not_list_says_so_and_the_walk_goes_on() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let root = dir.path();
+        fs::create_dir_all(root.join("Shut")).expect("a folder");
+        fs::write(root.join("Shut").join("Inside.md"), "words").expect("a note");
+        fs::write(root.join("Open.md"), "words").expect("a note");
+        let Some(_locked) = Locked::up(root.join("Shut")) else {
+            return;
+        };
+
+        let all = everything(root).expect("the rest of the space");
+        let shut = all
+            .iter()
+            .find(|one| one.rel == Path::new("Shut"))
+            .expect("the folder itself");
+        assert!(shut.unlisted, "it is not empty, it is unread");
+        assert!(all.iter().any(|one| one.rel == Path::new("Open.md")));
+        assert!(!all.iter().any(|one| one.rel.ends_with("Inside.md")));
+        assert!(
+            present(root, Path::new("Shut/Inside.md")),
+            "nobody could look: that is not gone"
+        );
+        assert!(!present(root, Path::new("Open.md/Inside.md")));
+        assert!(!present(root, Path::new("Never.md")));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_space_that_will_not_list_is_an_error_not_an_empty_space() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let root = dir.path().join("Space");
+        fs::create_dir_all(&root).expect("a space");
+        let Some(_locked) = Locked::up(root.clone()) else {
+            return;
+        };
+        assert!(everything(&root).is_err());
+    }
+
+    #[test]
+    fn an_empty_folder_is_listed_and_one_past_the_limit_is_not() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let root = dir.path();
+        fs::create_dir(root.join("Empty")).expect("a folder");
+        let deep = (0..crate::paths::MAX_DEPTH).fold(PathBuf::new(), |at, _| at.join("d"));
+        fs::create_dir_all(root.join(&deep)).expect("deep folders");
+
+        let all = everything(root).expect("a walk");
+        let of = |rel: &Path| {
+            all.iter()
+                .find(|one| one.rel == rel)
+                .expect("listed")
+                .unlisted
+        };
+        assert!(!of(Path::new("Empty")));
+        assert!(of(&deep));
     }
 }

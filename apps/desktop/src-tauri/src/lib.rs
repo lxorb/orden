@@ -339,6 +339,7 @@ macro_rules! commands {
             notes::delete_folder,
             notes::remove_empty_folder,
             notes::file_stamp,
+            notes::file_there,
             notes::note_evicted,
             notes::path_taken,
             tree::read_tree,

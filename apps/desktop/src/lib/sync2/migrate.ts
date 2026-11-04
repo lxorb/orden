@@ -98,6 +98,19 @@ export async function firstPass(
   const listed = world.list ? await world.list(space.row.root) : []
   if (listed === null || !alive()) return false
   const everything = listed
+  // A note v1 knew under a folder that would not list is not known to be gone, or moved: it
+  // stays as it is until its file can be read (`project` waits for it), and no delete goes.
+  const unread = everything.filter((one) => one.unlisted).map((one) => `${space.key(one.path)}/`)
+  if (v1 && unread.length) {
+    v1 = {
+      ...v1,
+      notes: Object.fromEntries(
+        Object.entries(v1.notes).filter(
+          ([path]) => !unread.some((folder) => space.key(path).startsWith(folder)),
+        ),
+      ),
+    }
+  }
   const notes = new Set(everything.filter((one) => !one.dir).map((one) => space.key(one.path)))
   const listing = everything.filter((one) => {
     const holder = one.dir ? null : holderOf(one.path)

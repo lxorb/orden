@@ -24,6 +24,8 @@ interface Device {
     bytes: Map<string, Uint8Array>
     files: Map<string, string>
     kept: unknown[]
+    read(path: string): Promise<string | null>
+    exists(path: string): Promise<boolean>
     readBytes(path: string): Promise<Uint8Array | null>
     writeBytes(path: string, bytes: Uint8Array): Promise<void>
     write(path: string, text: string): Promise<void>
@@ -57,7 +59,7 @@ interface Kit {
     name?: string
     files?: Record<string, string | Uint8Array>
   }): Promise<Device>
-  firstPass(core: Core, space: unknown, v1: null): Promise<boolean>
+  firstPass(core: Core, space: unknown, v1: unknown): Promise<boolean>
   Engine: { start(world: unknown, store: unknown): Promise<Device['engine']> }
 }
 
@@ -332,4 +334,59 @@ test('a row a device cannot read does not stop its passes, whatever hangs under 
   expect(desk.disk.files.get(`${desk.root}/after.md`)).toBe('after\n')
   expect([...desk.disk.files.keys()].some((path) => path.includes('pwn'))).toBe(false)
   expect((await desk.engine.pass(space))?.finished).toBe(true)
+})
+
+test('a first pass deletes nothing v1 knew under a folder that would not list, and then meets it', async () => {
+  const laptop = await device('laptop', { 'shut/inside.md': 'inside\n', 'open.md': 'open\n' })
+  await passed(laptop)
+  const rows = await env.DB.prepare('select id, path, version, hash from notes where space_id = ?')
+    .bind(space)
+    .all<{ id: string; path: string; version: number; hash: string }>()
+  const notes = Object.fromEntries(
+    rows.results.map((row) => [row.path, { id: row.id, version: row.version, hash: row.hash }]),
+  )
+  const cursor = 1000
+
+  const k = await kit()
+  const desk = await k.testDevice({
+    fetch: async (request) => await app.fetch(request, env),
+    token,
+    name: 'desk',
+    files: { 'shut/inside.md': 'inside\n', 'open.md': 'open\n' },
+  })
+  const core = desk.engine.core as Core & {
+    world: { list(root: string): Promise<unknown[]> }
+  }
+  const shut = `${desk.root}/shut/`
+  const { read, exists } = {
+    read: desk.disk.read.bind(desk.disk),
+    exists: desk.disk.exists.bind(desk.disk),
+  }
+  let locked = true
+  desk.disk.read = (path) => (locked && path.startsWith(shut) ? Promise.resolve(null) : read(path))
+  desk.disk.exists = (path) =>
+    locked && path.startsWith(shut) ? Promise.resolve(true) : exists(path)
+  core.world.list = () =>
+    Promise.resolve([
+      { path: 'shut', dir: true, unlisted: true },
+      { path: 'open.md', dir: false },
+    ])
+  await core.commit(core.addSpace(space, desk.root, 'owner'))
+  expect(
+    await k.firstPass(core, core.spaces.get(space), { cursor, notes, untold: {}, files: {} }),
+  ).toBe(true)
+  await rooms.settle()
+  await desk.engine.pass(space)
+  await rooms.settle()
+  expect(await accountPaths()).toEqual(['open.md', 'shut/inside.md'])
+  expect(placed(core).find((one) => one.name === 'inside.md')?.local_path).toBe('')
+
+  // The folder lists again: that file is that note, and no second one comes of it.
+  locked = false
+  await desk.engine.pass(space)
+  await rooms.settle()
+  expect(placed(core).find((one) => one.name === 'inside.md')?.local_path).toBe('shut/inside.md')
+  await desk.engine.pass(space)
+  await rooms.settle()
+  expect(await accountPaths()).toEqual(['open.md', 'shut/inside.md'])
 })

@@ -155,7 +155,7 @@ test('a want right behind a watcher’s open is not lost while the holder is ask
     holderOf: (id: string) => Promise<{ alive: boolean } | null>
     session: (id: string) => unknown
   }
-  let answer = (_: { alive: boolean }) => {}
+  let answer: (now: { alive: boolean }) => void = () => undefined
   inner.holderOf = () => new Promise((resolve) => (answer = resolve))
   const order: string[] = []
   inner.session = () => ({

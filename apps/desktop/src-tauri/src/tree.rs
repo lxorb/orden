@@ -156,7 +156,12 @@ fn walk(
     if depth < MAX_DEPTH && seen.first_time(path) {
         if let Ok(entries) = fs::read_dir(path) {
             unlisted = false;
-            for entry in entries.flatten() {
+            for entry in entries {
+                // Partway through, the listing failed: what it got to is not all there is.
+                let Ok(entry) = entry else {
+                    unlisted = true;
+                    break;
+                };
                 let (child, name, evicted) = named(&entry);
 
                 if name.starts_with('.') && !options.show_hidden {

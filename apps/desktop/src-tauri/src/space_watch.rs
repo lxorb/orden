@@ -23,6 +23,8 @@ mod known;
 mod walk;
 mod watching;
 
+pub use walk::says_gone;
+
 use serde::Serialize;
 use std::path::Path;
 use std::sync::{Mutex, MutexGuard};
@@ -61,6 +63,9 @@ pub struct Listed {
     mtime: u64,
     /// What it is apart from where it is, or null where the file system would not say.
     id: Option<String>,
+    /// A folder whose children were not read; see `walk`. What is known under it is not gone.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    unlisted: bool,
 }
 
 /// One answer about one path.
@@ -126,6 +131,7 @@ fn listed(root: &Path, one: Found) -> Listed {
         size: one.size,
         mtime: one.mtime,
         id: one.id,
+        unlisted: one.unlisted,
     }
 }
 
@@ -265,6 +271,7 @@ mod tests {
             size: 5,
             mtime: 1_700_000_000_000,
             stamp: 1_700_000_000_000_000_000,
+            unlisted: false,
             id: Some("2a:1f".into()),
         };
 
@@ -301,6 +308,7 @@ mod tests {
             size: 0,
             mtime: 0,
             id: None,
+            unlisted: false,
         });
         assert_eq!(
             serde_json::to_value(&created).expect("json")["kind"],

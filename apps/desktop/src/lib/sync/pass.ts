@@ -170,6 +170,13 @@ function flatten(entry: Entry): Entry[] {
   return out
 }
 
+/** The folders of a tree that were not read into; see `walk` in tree.rs. */
+function unlistedIn(entry: Entry): Entry[] {
+  return entry.children.flatMap((child) =>
+    child.is_dir ? [...(child.unlisted ? [child] : []), ...unlistedIn(child)] : [],
+  )
+}
+
 /** Whether a note is in a room, by its id on the account.
  *
  *  A note in a room has one truth and it is the room's: every device in it holds
@@ -1338,8 +1345,10 @@ export async function push(
   const tree = await invoke<Entry>('read_tree', { root, options: { papers: true } }).catch(
     () => null,
   )
-  if (!tree) return false
+  // A space that would not list is not a space with nothing in it.
+  if (!tree || tree.unlisted) return false
   const waits = unsettled.get(mirror) ?? new Set<string>()
+  const unread = unlistedIn(tree).map((one) => `${relativeTo(root, one.path)}/`)
 
   // The copies of web notes earlier passes made, folded back into their notes before
   // anything is offered: a copy that went is a file that vanished here, which the
@@ -1457,7 +1466,9 @@ export async function push(
       inForeignCopy(path) ||
       waits.has(tracked.id) ||
       sending.asked?.has(tracked.id) ||
-      untold[tracked.id]
+      untold[tracked.id] ||
+      // A folder that would not list, or too deep to: nothing under it is known to be gone.
+      unread.some((folder) => samePath(path.slice(0, folder.length), folder))
     )
       continue
 

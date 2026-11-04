@@ -97,8 +97,11 @@ export async function project(
   // (ingest), and nothing is written over it. Unless it says these very words: that is
   // this note, written here by a pass that ended before its record was kept.
   const same = was !== null && unixLines(was) === unixLines(text)
-  if (!entry.local_path && !same && (was !== null || (await core.world.disk.exists(full)))) {
-    return []
+  if (!entry.local_path && !same && was !== null) return []
+  if (!entry.local_path && !same && (await core.world.disk.exists(full))) {
+    // Or it will not read: what is there cannot be told from what this note says, and
+    // the next pass, which may read it, asks again.
+    return notWritten(core, space, entry, doc, new Error('its place on the disk will not read'))
   }
   // A file that is there and will not read, saved as another encoding or grown past what
   // a note holds: what it says cannot be kept as a version, so nothing is written over

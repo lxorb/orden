@@ -18,6 +18,9 @@ const world = vi.hoisted(() => {
   class Device {
     disk = new Map<string, string>()
     kept = new Map<string, string[]>()
+    /** Folders that will not list, and whether the space itself will. */
+    shut = new Set<string>()
+    rootShut = false
 
     keep(path: string, content: string) {
       if (!content.trim()) return
@@ -63,18 +66,44 @@ const world = vi.hoisted(() => {
         return answer(undefined)
       case 'read_tree': {
         const root = text(args.root)
-        const children = [...here.disk.keys()]
-          .filter((one) => one.startsWith(`${root}/`))
-          .sort()
-          .map((one): Entry => ({
-            name: one.split('/').pop() ?? one,
-            path: one,
-            is_dir: false,
-            modified: 0,
-            created: 0,
-            children: [],
-          }))
-        return answer({ name: root, path: root, is_dir: true, modified: 0, created: 0, children })
+        const shut = [...here.shut]
+        const children = here.rootShut
+          ? []
+          : [
+              ...[...here.disk.keys()]
+                .filter(
+                  (one) =>
+                    one.startsWith(`${root}/`) &&
+                    !shut.some((folder) => one.startsWith(`${folder}/`)),
+                )
+                .sort()
+                .map((one): Entry => ({
+                  name: one.split('/').pop() ?? one,
+                  path: one,
+                  is_dir: false,
+                  modified: 0,
+                  created: 0,
+                  children: [],
+                })),
+              ...shut.map((one) => ({
+                name: one,
+                path: one,
+                is_dir: true,
+                modified: 0,
+                created: 0,
+                children: [],
+                unlisted: true,
+              })),
+            ]
+        return answer({
+          name: root,
+          path: root,
+          is_dir: true,
+          modified: 0,
+          created: 0,
+          children,
+          ...(here.rootShut ? { unlisted: true } : {}),
+        })
       }
     }
     throw new Error(`no such command: ${command}`)
@@ -337,5 +366,46 @@ describe('a write refused for a rename made elsewhere', () => {
     expect(after.paths).toEqual(['renamed.md'])
     expect(after.content).toContain('here')
     expect(after.content).toContain('elsewhere')
+  })
+})
+
+describe('a folder that will not list', () => {
+  async function synced() {
+    const me = await person('d@example.com')
+    const spaceId = await spaceOf(me.token)
+    const device = new world.Device()
+    device.disk.set(`${ROOT}/shut/inside.md`, 'inside\n')
+    device.disk.set(`${ROOT}/shutter.md`, 'beside\n')
+    device.disk.set(NOTE, 'open\n')
+    const mirror = newMirror(spaceId, ROOT)
+    await pass(device, mirror, me.token)
+    return { me, spaceId, device, mirror }
+  }
+
+  test('nothing under it is deleted, and it is still known', async () => {
+    const { me, spaceId, device, mirror } = await synced()
+    device.shut.add(`${ROOT}/shut`)
+    await push(mirror, me.token, NOBODY)
+    expect((await accountHolds(me.token, spaceId)).paths).toEqual([
+      'plan.md',
+      'shut/inside.md',
+      'shutter.md',
+    ])
+    expect(mirror.notes['shut/inside.md']).toBeDefined()
+  })
+
+  test('a note beside it that did go is still a delete', async () => {
+    const { me, spaceId, device, mirror } = await synced()
+    device.shut.add(`${ROOT}/shut`)
+    device.disk.delete(`${ROOT}/shutter.md`)
+    await push(mirror, me.token, NOBODY)
+    expect((await accountHolds(me.token, spaceId)).paths).toEqual(['plan.md', 'shut/inside.md'])
+  })
+
+  test('a space that will not list deletes nothing', async () => {
+    const { me, spaceId, device, mirror } = await synced()
+    device.rootShut = true
+    await push(mirror, me.token, NOBODY)
+    expect((await accountHolds(me.token, spaceId)).paths).toHaveLength(3)
   })
 })
