@@ -257,6 +257,11 @@ async function cameOver(action: Extract<FileAction, { kind: 'delete' }>, restore
   const left = action.trashedAt
   const from = restored || left?.path
   if (!left || !from) return action.path
+  // Moved away and back: the trash has it right.
+  if (samePath(from, action.path)) {
+    delete action.trashedAt
+    return from
+  }
   const to = await freeBeside(action.path)
   await invoke('create_folder', { path: folderOf(to) }).catch(() => undefined)
   await invoke('rename_note', { from, to })

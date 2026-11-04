@@ -62,7 +62,7 @@ export interface Writes {
   fileCame(path: string, kind: 'file' | 'folder', key?: string): Promise<void>
   /** A note's file now says all its document does: whatever a closed tab kept of it is
    *  on the disk, and the file is what to come back from. */
-  wroteAll(path: string): void
+  wroteAll(path: string, key: string): void
 }
 
 /** How long a move of sync's waits for a write in the air, in milliseconds. A write on a
@@ -678,7 +678,7 @@ export class Saving {
     if (landed === null) return
     content = landed.words
     note.written(path, nameOf(path), landed.revision)
-    if (!note.dirty) this.ws.wroteAll(path)
+    if (!note.dirty) this.ws.wroteAll(path, note.key)
     // Moved under the write by something that did not wait for it: the words are
     // owed again at the path the note is at now; see `written`.
     if (!samePath(note.path, path)) this.owed(note)

@@ -57,6 +57,7 @@ export class Engine implements AskedEngine {
     resurrected: new Set(),
     pass: new Set(),
     unsynced: new Set(),
+    file: new Set(),
   }
 
   private constructor(
@@ -66,6 +67,7 @@ export class Engine implements AskedEngine {
     this.held = new HeldList(core, names)
     core.events.resurrected = (event) => this.emit('resurrected', event)
     core.events.unsynced = (event) => this.emit('unsynced', event)
+    core.events.file = (event) => this.emit('file', event)
     core.events.held = () => {
       void this.held.refresh()
       for (const [id, told] of [...this.unheld]) {

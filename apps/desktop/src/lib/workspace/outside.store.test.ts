@@ -89,7 +89,7 @@ describe('the watch of the spaces', () => {
       say: (kind: string) => said[kind]?.(),
       hear: (kind: string, listener: () => void) => {
         said[kind] = listener
-        return () => undefined
+        return () => true
       },
     }
     const watch = new TheWatch()

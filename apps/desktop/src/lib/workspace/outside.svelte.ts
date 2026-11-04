@@ -19,12 +19,13 @@
  *  - Under a tab with words waiting: the write is hurried, and takes the file in first;
  *    see `attempt` in across.ts. That is also what holds whenever nothing was heard, past
  *    the system's limit or within the watch's quiet moment.
- *  - A file gone: a clean tab closes as for a delete; unwritten words stay, as a draft.
+ *  - A file gone: a clean tab closes, and unwritten words stay as a draft. Nothing else
+ *    forgets it, since `git switch` and back is a file gone and come back; see `vanished`.
  *  - A file moved: everything kept by path follows, as for a move in another window.
  *
  *  Nothing here tells the account: `heard` says it was done elsewhere. And what Orden did
- *  itself comes back too: a write finds nothing new, a delete asks the disk, and a move is
- *  checked off against the one the workspace said. */
+ *  itself comes back too: a write finds nothing new, a delete asks the disk, and a move
+ *  changes nothing that has already followed it. */
 
 import { untrack } from 'svelte'
 import { links } from '../link-index.svelte'
@@ -32,11 +33,12 @@ import { account } from '../account.svelte'
 import { log } from '../log'
 import { onDisk } from '../on-disk'
 import { onUnwatched, type SpaceChange, type SpaceNews, watchSpaces } from '../space-watch'
-import { isMarkdownPath, withinSpace } from '../space-paths'
+import { isMarkdownPath, within, withinSpace } from '../space-paths'
 import { sync } from '../sync.svelte'
 import { type Leadership, leadSync } from '../sync2/lead'
 import { invoke } from '../tauri'
 import { afterQuiet } from '../timing'
+import { landing } from '../views/moving'
 import { windows } from '../windows'
 import { workspace } from '../workspace.svelte'
 import { holdsWords } from './documents.svelte'
@@ -44,9 +46,6 @@ import type { FileOp } from './file-ops'
 
 /** The lock's name beside the accounts': no engine runs under it. */
 const NO_ENGINE = 'no-engine'
-
-/** How many moves the workspace said are remembered until the watch says them back. */
-const MOST_OWN_MOVES = 64
 
 const unixLines = (text: string) => text.replace(/\r\n?/g, '\n')
 
@@ -56,16 +55,6 @@ function dotted(path: string): boolean {
   const space = workspace.spaces.find((one) => withinSpace(one.root, path) !== null)
   const inside = space ? withinSpace(space.root, path) : null
   return (inside ?? path).split('/').some((part) => part.startsWith('.'))
-}
-
-/** Moves the workspace said, not yet heard back from the watch: `from` then `to`. */
-const ownMoves: string[] = []
-
-function ownMove(from: string, to: string): boolean {
-  const at = ownMoves.indexOf(`${from}\n${to}`)
-  if (at < 0) return false
-  ownMoves.splice(at, 1)
-  return true
 }
 
 const listAgain = afterQuiet(() => void workspace.loadTree(), 100)
@@ -96,21 +85,38 @@ async function told(op: FileOp) {
   await workspace.fileOps.tell({ ...op, heard: true })
 }
 
+/** A file not there any more, by another program's doing, which may be `git switch` and
+ *  back in a moment. So not a delete told to everything kept by path, which forgets its
+ *  icon, its place in an order, what it leaves out and a paper's words for good: only what
+ *  shows it goes. Its tab can be reopened, unwritten words stay as a draft, and the index
+ *  reads it again when it comes back. */
+function vanished(path: string, kind: 'file' | 'folder') {
+  for (const note of workspace.documents) {
+    if (note.path === null || !note.dirty || within(path, note.path) === null) continue
+    note.home = workspace.spaceOf(note)
+    note.path = null
+    note.onDisk = null
+    workspace.scheduleSession()
+  }
+  const op = { op: 'removed', path, kind, root: workspace.rootHolding(path) } as const
+  workspace.opened.follow(op, (id) => workspace.close(id))
+  workspace.closed.follow(op)
+  void links.follow(op)
+}
+
 async function gone(path: string, dir: boolean) {
   // A note deleted and put straight back is said to be deleted after it is back.
   if (await onDisk(path)) return
-  workspace.draftUnwrittenUnder(path)
-  await told({
-    op: 'removed',
-    path,
-    kind: dir ? 'folder' : 'file',
-    root: workspace.rootHolding(path),
-  })
+  vanished(path, dir ? 'folder' : 'file')
+  windows.say('vanished', { path, dir })
   listAgain()
 }
 
 async function moved(from: string, to: string, dir: boolean) {
-  if (ownMove(from, to) || (await onDisk(from))) return
+  // One of the workspace's under way is told when its links have been rewritten, which
+  // finding what pointed at the old name needs done first. One told already changes nothing
+  // kept by path, and the steps of undo know their own; see workspace/undo-moved.ts.
+  if (landing(to) || (await onDisk(from))) return
   await told({
     op: 'moved',
     from,
@@ -189,15 +195,6 @@ export function heardNews(news: SpaceNews): Promise<void> {
   return hearing
 }
 
-/** What the workspace did itself, for telling its moves from another program's. */
-export function followOwnMoves(): void {
-  workspace.fileOps.follow((op) => {
-    if (op.op !== 'moved' || op.heard) return
-    ownMoves.push(`${op.from}\n${op.to}`)
-    if (ownMoves.length > MOST_OWN_MOVES) ownMoves.shift()
-  })
-}
-
 /** Whether the sync engine is the one to watch: it has the account and its first pass. */
 const engineWatches = () => account.user !== null && sync.version === 2
 
@@ -258,12 +255,32 @@ export class TheWatch {
   }
 }
 
+/** The engine let go of the one watch, here or in another window: the crate's watch is the
+ *  whole app's, and the window that could take it up is not the one signing out's. Answers
+ *  the way to stop hearing. */
+export function hearsUnwatched(
+  watch: TheWatch,
+  line: Pick<typeof windows, 'say' | 'hear'> = windows,
+): () => void {
+  const told = onUnwatched(() => {
+    watch.letGoOfByEngine()
+    line.say('spaces-unwatched')
+  })
+  const heard = line.hear('spaces-unwatched', () => watch.letGoOfByEngine())
+  return () => {
+    told()
+    heard()
+  }
+}
+
 /** Started once, at the launch's turn for it, on the desktop. */
 export function hearOutside(): void {
-  followOwnMoves()
-
   const watch = new TheWatch()
-  onUnwatched(() => watch.letGoOfByEngine())
+  hearsUnwatched(watch)
+  windows.hear('vanished', ({ path, dir }) => {
+    vanished(String(path), dir === true ? 'folder' : 'file')
+    listAgain()
+  })
 
   $effect.root(() => {
     $effect(() => {

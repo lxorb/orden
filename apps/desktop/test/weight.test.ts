@@ -1070,8 +1070,15 @@ function holds(tail: string): boolean {
  *  links, a thread written down while it runs), what a base may cost, a tile's move, the
  *  sync's scans, an undo that waits for every gesture landing, one definition of front
  *  matter (front-matter-lines.ts) and one device's windows being one. What could wait went
- *  behind a door on the branches. Measured 3,550,937, 386 modules. */
-const BUDGET = 3_551_100
+ *  behind a door on the branches. Measured 3,550,937, 386 modules.
+ *
+ *  Raised 2026-11-04, to 3,559,000, for the bug hunt's third round on the desktop: a closed
+ *  tab that comes back from its file once its words have landed, every write looking at the
+ *  disk first, a write's words not lost to a file gone, undo over a space renamed and one
+ *  that says when it will not go, a layout that asks before ending a terminal. The watch of
+ *  the spaces with no engine, what a move does to the steps of undo and across itself are
+ *  behind doors. Measured 3,558,622. */
+const BUDGET = 3_559_000
 const MOST_FILES = 387
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

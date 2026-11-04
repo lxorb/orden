@@ -977,20 +977,8 @@ class Workspace {
   }
 
   /** A note's file says all its document does; see `wroteAll` in workspace/closed.svelte.ts. */
-  wroteAll(path: string) {
-    this.closed.wroteAll(path)
-  }
-
-  /** A file gone with words of a note's on no disk: from here on a draft, which keeps
-   *  them, as for a note deleted in another window. */
-  draftUnwrittenUnder(path: string) {
-    for (const note of this.documents) {
-      if (note.path === null || !note.dirty || within(path, note.path) === null) continue
-      note.home = this.spaceOf(note)
-      note.path = null
-      note.onDisk = null
-      this.scheduleSession()
-    }
+  wroteAll(path: string, key: string) {
+    this.closed.wroteAll(path, key)
   }
 
   /** A note's words are owed to its file: another window's merged in, say. */

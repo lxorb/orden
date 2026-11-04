@@ -182,7 +182,7 @@ async function movedAway(place: Place, from: string, to: string, folder: boolean
         .retarget(from, to, place.space.root, undefined, { moved: true })
         .catch(() => undefined)
       await workspace.fileMoved(from, to, folder ? 'folder' : 'file')
-      workspace.undone.moved(from, to)
+      await workspace.undone.moved(from, to)
     }),
   )
 }

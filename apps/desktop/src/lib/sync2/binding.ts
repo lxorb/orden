@@ -40,6 +40,8 @@ import { judge, mergedOf, turn } from './kinds'
 export interface Held {
   readonly live: SharedDoc
   readonly latest: string
+  /** What the file is known to say; see workspace/across.ts. */
+  onDisk?: string | null
 }
 
 /** Puts `to` into a note that reads `from`, as one edit, keeping every caret. */
@@ -177,6 +179,13 @@ export async function attach(
   if (met.asked === undefined) join()
   else wait(met.asked)
 
+  // A file the engine read or wrote, whose words have reached the note through the join.
+  // The note's next write merges against what it knows the file says, and an edit of
+  // another program's it did not know of was merged in a second time beside its own.
+  const unheard = engine.on('file', (event) => {
+    if (event.id === id && unbind && !gone()) note.onDisk = event.text
+  })
+
   // The account's words taken over this device's, or a new epoch: the same note, a new
   // document under it. A note still waiting on its question meets it when that is answered.
   doc.replaced = (fresh) => {
@@ -191,6 +200,7 @@ export async function attach(
 
   return () => {
     parted = true
+    unheard()
     unbind?.()
     waiting?.()
     doc.replaced = null

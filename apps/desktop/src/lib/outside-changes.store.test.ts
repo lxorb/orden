@@ -25,8 +25,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
 const { startAcross } = await import('./workspace/across')
 await startAcross()
-const outside = await import('./workspace/outside.svelte')
-const { followOwnMoves, heardChange, heardNews } = outside
+const { heardChange, heardNews } = await import('./workspace/outside.svelte')
 
 const SPACE = '/s'
 
@@ -315,21 +314,23 @@ describe('what the watch says, with no engine to hear it', () => {
     await vi.waitFor(() => expect(workspace.entryAt('/s/fresh.md')).not.toBeNull())
   })
 
-  test("a move of the workspace's own, said back, is said to nobody a second time", async () => {
+  test("a move of the workspace's own, said back, leaves the steps as they were", async () => {
     await fresh({ '/s/x.md': 'x\n' })
-    followOwnMoves()
     await workspace.rename('/s/x.md', 'y.md')
-    const heard: unknown[] = []
-    const stop = workspace.fileOps.follow((op) => heard.push(op))
     await heardChange({ kind: 'renamed', from: '/s/x.md', path: '/s/y.md', ...stat })
-    stop()
-    expect(heard).toEqual([])
+    await workspace.undoFileAction()
+    expect([...d.files.keys()]).toEqual(['/s/x.md'])
   })
 })
 
 describe('from the review', () => {
   const stat = { size: 1, mtime: 1, id: null, dir: false }
-  const renamed = (from: string, path: string) => ({ kind: 'renamed' as const, from, path, ...stat })
+  const renamed = (from: string, path: string) => ({
+    kind: 'renamed' as const,
+    from,
+    path,
+    ...stat,
+  })
   const removed = (path: string) => ({ kind: 'removed' as const, path, dir: false, id: null })
 
   test('words only a closed tab holds outlive the file going, heard or not', async () => {
@@ -379,7 +380,6 @@ describe('from the review', () => {
 
   test('a rename said back through another window leaves its own step whole', async () => {
     await fresh({ '/s/x.md': 'x\n' })
-    followOwnMoves()
     await workspace.rename('/s/x.md', 'y.md')
     await workspace.fileOps.tell({
       op: 'moved',
@@ -397,7 +397,6 @@ describe('from the review', () => {
     const files: Record<string, string> = {}
     for (let at = 0; at < 70; at++) files[`/s/n${String(at)}.md`] = 'n\n'
     await fresh({ ...files, '/s/in/keep.md': 'k\n' })
-    followOwnMoves()
     const paths = Object.keys(files)
     await workspace.moveMany(paths, '/s/in')
     for (const path of paths) {
@@ -409,7 +408,6 @@ describe('from the review', () => {
 
   test('a move still under way is not taken for another program', async () => {
     await fresh({ '/s/w.md': 'w\n' })
-    followOwnMoves()
     await workspace.rename('/s/w.md', 'x.md')
     const { moving } = await import('./views/moving')
     const heard: string[] = []
@@ -425,7 +423,6 @@ describe('from the review', () => {
 
   test('a move there and back with nothing said leaves a later move outside heard', async () => {
     await fresh({ '/s/a.md': 'a\n' })
-    followOwnMoves()
     await workspace.open('/s/a.md')
     await workspace.rename('/s/a.md', 'b.md')
     await workspace.rename('/s/b.md', 'a.md')

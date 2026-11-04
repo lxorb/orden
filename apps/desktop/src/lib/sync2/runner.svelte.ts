@@ -703,7 +703,7 @@ class Runner {
       this.own.add(`moved:${from}`)
       try {
         await workspace.fileMoved(from, to, kind)
-        workspace.undone.moved(from, to)
+        await workspace.undone.moved(from, to)
       } finally {
         this.own.delete(`moved:${from}`)
       }
