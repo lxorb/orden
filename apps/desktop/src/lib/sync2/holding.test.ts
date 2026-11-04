@@ -85,7 +85,7 @@ async function inStep(path: string, kind: string, words: string) {
 
 beforeEach(() => {
   for (const one of [disk, entries, held, pending, touched]) one.clear()
-  Object.assign(runner, { engine: engine() })
+  Object.assign(runner, { current: engine() })
 })
 
 describe('a paper', () => {

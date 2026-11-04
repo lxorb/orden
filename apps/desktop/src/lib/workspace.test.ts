@@ -466,12 +466,13 @@ describe('previewing every kind of file', () => {
 })
 
 describe('picking a space from the switcher', () => {
-  test('opens a closed sidebar on the tree', async () => {
+  // A switch changes what the window shows, never its frame (#1123).
+  test('leaves a closed sidebar closed', async () => {
     workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
     workspace.panel = null
     await workspace.showSpace('one')
     expect(workspace.activeSpaceId).toBe('one')
-    expect(workspace.panel).toBe('tree')
+    expect(workspace.panel).toBeNull()
   })
 
   test('leaves an open panel as it is', async () => {

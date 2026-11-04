@@ -179,7 +179,7 @@ test('the shared set of older builds is not given to the space being deleted', a
   const before = await window([WORK], 'work')
   const sets = await fetched()
   before.openWebsite()
-  await sets.toSpace('food', false)
+  await sets.toSpace('food')
   const { aside } = JSON.parse(JSON.stringify(before.setsWritten())) as {
     aside: Record<string, unknown>
   }
@@ -244,7 +244,7 @@ describe('the set older builds shared, in a window with no space to give it to',
     const before = await window([WORK], 'work')
     const sets = await fetched()
     before.openWebsite()
-    await sets.toSpace('food', false)
+    await sets.toSpace('food')
     const { aside } = JSON.parse(JSON.stringify(before.setsWritten())) as {
       aside: Record<string, unknown>
     }

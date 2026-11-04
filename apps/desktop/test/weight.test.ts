@@ -1307,8 +1307,17 @@ function holds(tail: string): boolean {
  *  claude/hunt-round-1, on the 3,677,304 above: the panes' Alt+H/J/K/L, an icon tab's
  *  cross, the properties strip and the new live-preview/footnotes.ts. Measured 3,699,300,
  *  396 modules.
+ *
+ *  Raised 2026-11-04, to 3,602,000, for #1123: the sidebars are the window's across
+ *  spaces, and the space switcher walks with the key that opened it still held
+ *  (workspace/sets.svelte.ts, workspace/spaces.ts, roving.ts). Measured 3,600,780.
+ *
+ *  Raised on 2026-11-04, to 3,702,000, as #1123 came to claude/hunt-round-1, on the
+ *  3,699,300 above: the sidebars the window's across spaces and the switcher walking with
+ *  its key held, net of the hunt's per-set panels (#332) it makes unneeded. Measured
+ *  3,701,761, 396 modules.
  */
-const BUDGET = 3_699_500
+const BUDGET = 3_702_000
 const MOST_FILES = 397
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

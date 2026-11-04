@@ -9,9 +9,13 @@
  *  running for as long as their tab is open, a file renamed or deleted under a tab nobody
  *  can see. A tab is on screen when its pane is in the frame on screen; the frames of
  *  the other sets are kept here with the rest of what belongs to them - which pane has
- *  the focus and which fills the window, both sides' panels (but for an open chat, which
- *  stays), the preview, the tab the panels are held on, and whether the keyboard was in
- *  a page.
+ *  the focus and which fills the window, the preview, the tab the panels are held on,
+ *  and whether the keyboard was in a page.
+ *
+ *  **The sidebars are the window's, not a set's** (#1123). Whether each side is open,
+ *  which panel it shows and how wide it is stay as they are across a switch: a switch
+ *  changes what the window shows, never the frame around it. A session an older build
+ *  wrote with a side for every set comes back with the one the window had on screen.
  *
  *  Every space keeps its own tabs (#674), so this is fetched by the first switch of
  *  space or move of a tab to another, and by a launch whose session holds sets, at its
@@ -27,7 +31,7 @@ import { spaceSound } from '../surfaces.svelte'
 import { invoke, isDesktop } from '../tauri'
 import { IN_A_PAGE } from '../trap'
 import { pages } from '../web-tab/pages.svelte'
-import { type Panel, type Tab, workspace } from '../workspace.svelte'
+import { type Tab, workspace } from '../workspace.svelte'
 import { type Frame, pane, paneIn, panesIn } from './pane-tree'
 import {
   focusIn,
@@ -41,13 +45,12 @@ import {
 } from './sets'
 import { TABS_KEY, tabSets } from './spaces'
 
-/** A set out of sight: everything about the window that is the set's, but its tabs. */
+/** A set out of sight: everything about the window that is the set's, but its tabs. Not
+ *  the sidebars, which are the window's (#1123). */
 interface Aside {
   frame: Frame
   focused: string
   fills: string | null
-  panel: Panel | null
-  rightPanel: Panel | null
   preview: string | null
   held: string | null
   /** Whether the keyboard was in a page as the set was left, rather than in the app. */
@@ -133,17 +136,12 @@ class Sets {
   /** The switch to a space, wherever it was asked. The set on screen is put aside and the
    *  space's own brought in, in the one step that also changes the space, so the first
    *  frame drawn after it is the new set whole; then the tree is read, as any switch reads
-   *  it. */
-  async toSpace(id: string, shown: boolean): Promise<void> {
+   *  it. The sidebars stay as they were, shut ones shut (#1123). */
+  async toSpace(id: string): Promise<void> {
     const ws = workspace
     this.going = this.going.catch(() => undefined).then(() => this.swap(id))
     await this.going
 
-    if (shown) {
-      // The sidebar asked for, with the chat over it there: the file list for when it shuts.
-      if (ws.panel === 'ask') ws.underChat ??= 'tree'
-      ws.panel ??= 'tree'
-    }
     ws.clearSelection()
     await ws.loadTree()
     ws.persist()
@@ -183,9 +181,6 @@ class Sets {
         frame: ws.panes.frame,
         focused: ws.panes.focusedId,
         fills: ws.panes.fills,
-        // The chat is nobody's to keep: it goes along with the reader (#332).
-        panel: ws.panel === 'ask' ? ws.underChat : ws.panel,
-        rightPanel: ws.rightPanel === 'ask' ? ws.underChat : ws.rightPanel,
         preview: ws.previewTabId,
         held: ws.heldTabId,
         inPage: inPage(),
@@ -194,8 +189,8 @@ class Sets {
   }
 
   /** A set brought on screen: its frame, put right for whatever happened to its tabs out
-   *  of sight, or one empty pane for a space that has never had a set. The sides of a set
-   *  never seen are left as they are. */
+   *  of sight, or one empty pane for a space that has never had a set. The sides are left
+   *  as they are, the window's. */
   private bringIn(key: string, set: Aside | undefined) {
     const ws = workspace
     this.aside = without(this.aside, key)
@@ -205,20 +200,6 @@ class Sets {
     ws.panes.swapping = true
     ws.panes.restore(frame, set ? focusIn(frame, set.focused) : frame.id)
     ws.panes.fills = set?.fills && paneIn(frame, set.fills) ? set.fills : null
-    // The open chat stays open, over what this set keeps at its side (#332), also where a
-    // card is over it.
-    const side = ws.sideOf('ask')
-    const chatting = (side === 'right' ? ws.rightPanel : ws.panel) === 'ask'
-    ws.underChat = null
-    if (set) {
-      ws.panel = set.panel === 'ask' ? null : set.panel
-      ws.rightPanel = set.rightPanel === 'ask' ? null : set.rightPanel
-      if (chatting) {
-        ws.underChat = side === 'right' ? ws.rightPanel : ws.panel
-        if (side === 'right') ws.rightPanel = 'ask'
-        else ws.panel = 'ask'
-      }
-    }
     ws.previewTabId = set?.preview ?? null
     ws.heldTabId = set?.held ?? null
   }
@@ -290,7 +271,7 @@ class Sets {
     const key = this.setOf(tab)
     const space = key !== null && ws.spaces.some((one) => one.id === key) ? key : null
 
-    if (space !== null) await this.toSpace(space, false)
+    if (space !== null) await this.toSpace(space)
     // Still out of sight - a set no space shows - it comes here rather than nowhere.
     if (!ws.panes.at(tab.paneId)) this.carry([tab], ws.panes.focusedId)
     ws.activeTabId = id
@@ -336,7 +317,7 @@ class Sets {
         into.activeTabId = moving.at(-1)?.id ?? into.activeTabId
       }
     } else {
-      this.aside = { ...this.aside, [key]: this.fresh(moving, 'tree') }
+      this.aside = { ...this.aside, [key]: this.fresh(moving) }
     }
 
     for (const one of left) {
@@ -365,7 +346,7 @@ class Sets {
   }
 
   /** A set of one pane holding these tabs, the one in front last in front. */
-  private fresh(tabs: readonly Tab[], panel: Panel | null): Aside {
+  private fresh(tabs: readonly Tab[]): Aside {
     const made = pane(identifier())
     this.carry(tabs, made.id)
     made.activeTabId = workspace.panes.successorOf(tabs.map((tab) => tab.id))
@@ -373,8 +354,6 @@ class Sets {
       frame: made,
       focused: made.id,
       fills: null,
-      panel,
-      rightPanel: null,
       preview: null,
       held: null,
       inPage: false,
@@ -391,7 +370,8 @@ class Sets {
 
   /** A set the session named, built back through the session's own restore - the same
    *  drafts, documents and frame a launch puts on screen - into a frame put aside. One
-   *  build per set, however many ask.
+   *  build per set, however many ask. The sides an older build wrote with it are passed
+   *  over: the window's are the ones it had on screen (#1123).
    *
    *  It stays in `drafted` until `aside` holds it, in one breath: `written` writes the set
    *  from one or the other, and a session written while a set is being read keeps it as it
@@ -415,8 +395,6 @@ class Sets {
             frame,
             focused: focusIn(frame, draft.layout.focused),
             fills: null,
-            panel: draft.layout.panel,
-            rightPanel: draft.right,
             preview: null,
             held: null,
             inPage: false,
@@ -430,14 +408,15 @@ class Sets {
 
   /** The sets out of sight as the session writes them: the ones built, drafted through the
    *  session's own `layout`, and the ones not built yet as they were read. Nothing at all
-   *  where the window is in no space and none is aside. */
+   *  where the window is in no space and none is aside. Each says the window's sides, the
+   *  one pair there is, so an older build reading it brings the same sides back. */
   private written(): SetsDraft | undefined {
     const aside: Record<string, SetDraft> = { ...this.drafted }
     for (const [key, set] of Object.entries(this.aside)) {
       if (!this.tabsOf(key).length) continue
       aside[key] = {
-        layout: workspace.layout(set.frame, set.focused, set.panel),
-        right: set.rightPanel,
+        layout: workspace.layout(set.frame, set.focused),
+        right: workspace.rightPanel,
       }
     }
     return this.on === GLOBAL && !Object.keys(aside).length ? undefined : { on: this.on, aside }

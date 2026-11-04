@@ -150,13 +150,19 @@ describe('a window with no engine and nobody who has one', () => {
 
   test('while its own engine is starting, too', async () => {
     signedInAs('a')
-    opening.open = () => new Promise(() => undefined)
-    void runner.start()
+    // A store still opening holds the lane every store goes through, so it refuses in the
+    // end: a stop after it would otherwise wait on it for good.
+    let refuse = () => undefined as void
+    opening.open = () =>
+      new Promise((_, reject) => (refuse = () => reject(new Error('the store refused'))))
+    const starting = runner.start().catch(() => undefined)
     await flush()
     let answer: boolean | undefined
     void runner.passNow().then((said) => (answer = said))
     await flush()
     expect(answer).toBe(false)
+    refuse()
+    await starting
   })
 })
 
@@ -209,12 +215,12 @@ describe('the engine’s window', () => {
     signedInAs('b')
     const held = runner as unknown as {
       accountId: string | null
-      engine: unknown
+      current: unknown
       tookOver(one: unknown): Promise<void>
     }
     held.accountId = 'b'
     const one = engine()
-    held.engine = one
+    held.current = one
     await held.tookOver(one)
     const item = (text: string) => ({ id: '0', what: { kind: 'wrote', path: '/s/a.md', text } })
 

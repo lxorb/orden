@@ -5,7 +5,8 @@
    *  heading, no field, no New space: this is for going somewhere. A digit goes at once
    *  where only one space can be meant; letters find a space by its name, show where
    *  they landed in it, and wait for Enter. Backspace takes a letter back, Escape and
-   *  the key again put it away, the arrows walk. See space-pick.ts.
+   *  the key again put it away, the arrows walk - with the key's modifiers still down as
+   *  well, as a Mac's Cmd+Tab is walked (`held` in roving.ts, #1123). See space-pick.ts.
    *
    *  The contract every layer keeps, from the same parts: the shared scrim and screen
    *  out of the themes package, centred and a sheet wide (`--screen-sheet`, as choosing
@@ -54,7 +55,7 @@
     role="menu"
     aria-label={t('Spaces')}
     use:trap
-    use:roving={{ current: '.is-on', wrap: true }}
+    use:roving={{ current: '.is-on', wrap: true, held: true }}
     onkeydowncapture={typing.press}
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >

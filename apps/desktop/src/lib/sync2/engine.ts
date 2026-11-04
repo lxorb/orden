@@ -40,6 +40,7 @@ import { holdsDocument } from './kinds'
 import { holderOf } from '../pages/held'
 import { waitsForBytes } from './files'
 import { foldIn } from './ingest'
+import { isLocal, localPass } from './local'
 import { settle, type SpaceState, windowsPath } from './places'
 import { pass, type Passed, resting } from './pass'
 import { project, wrote } from './project'
@@ -153,7 +154,10 @@ export class Engine implements AskedEngine {
     let passed: Passed | null = null
     let failed: string | null = null
     try {
-      passed = await this.core.use(() => pass(this.core, space))
+      // A space with no account behind it is its own (local.ts).
+      passed = await this.core.use(() =>
+        isLocal(space.id) ? localPass(this.core, space) : pass(this.core, space),
+      )
     } catch (error) {
       failed = error instanceof Error ? error.message : String(error)
       throw error

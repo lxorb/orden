@@ -19,10 +19,10 @@ describe('a note on its way to its document', () => {
   test('is not joined until it has', () => {
     const doc = { live: true, text: () => 'words', write: () => undefined }
     const open = runner as unknown as {
-      engine: unknown
+      current: unknown
       bound: Map<string, { id: string; part: () => void; joining?: boolean }>
     }
-    open.engine = {
+    open.current = {
       entryAt: () => ({ id: 'n1' }),
       core: {
         isHeld: () => false,
@@ -39,6 +39,6 @@ describe('a note on its way to its document', () => {
     expect(runner.joinedOf(note)?.text()).toBe('words')
 
     open.bound.clear()
-    open.engine = null
+    open.current = null
   })
 })

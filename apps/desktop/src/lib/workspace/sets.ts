@@ -5,8 +5,9 @@
  *  for that space, and it changes automatically when you switch to another space."* For
  *  a while that was a choice, Tabs: Global or Space; since #674 it is what every space
  *  does. A space's set is its tabs, its panes and splits, which tab is in front in each,
- *  the sidebars, the preview and where the keyboard was - Arc's spaces and VS Code's
- *  windows, where a workspace is its own editors.
+ *  the preview and where the keyboard was - Arc's spaces and VS Code's windows, where a
+ *  workspace is its own editors. Not the sidebars, which are the window's and stay as
+ *  they are across a switch (#1123).
  *
  *  Pure, so every rule here is read off lists in a test; sets.svelte.ts carries it out
  *  on the workspace, and docs/chrome-tabs.md says it for a reader. */
@@ -100,7 +101,9 @@ export function focusIn(frame: Frame, focused: string): string {
 
 /** A set out of sight as the session writes it: the arrangement - the same `Layout` a
  *  session and a named layout are - and the right side, which a layout leaves out
- *  because it is the window's rather than an arrangement's. */
+ *  because it is the window's rather than an arrangement's. The sides in it are the
+ *  window's, written for older builds, which read a side per set; this one reads them
+ *  off the session's own fields (#1123). */
 export interface SetDraft {
   layout: Layout
   right: Panel | null

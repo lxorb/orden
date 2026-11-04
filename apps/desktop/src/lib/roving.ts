@@ -105,6 +105,13 @@ export interface RovingOptions {
   quiet?: string
   /** A list whose rows are not all in the page; see LongList. */
   long?: LongList
+  /** A layer a chord opens, whose modifiers may still be down as the hand walks it: the
+   *  space switcher, Cmd+Shift+Space on a Mac and Ctrl+Space elsewhere. A hand that knows
+   *  Cmd+Tab keeps Cmd down and walks with the arrows, and every arrow under it was a
+   *  chord passed on to the window, so on a Mac the switcher did not walk at all (#1123).
+   *  Here the arrows, Home, End and Enter are the list's under Ctrl, Alt or Cmd as well.
+   *  Never Space, which with the chord's modifiers is the key that puts the layer away. */
+  held?: boolean
 }
 
 /** Which keys walk a list, and what each of them is in the one vocabulary the walk
@@ -127,6 +134,9 @@ const ACROSS: Record<string, string> = {
 
 /** The two that mean the same thing in every list there has ever been. */
 const ENDS = new Set(['Home', 'End'])
+
+/** The keys a layer opened by a chord takes under the chord's modifiers; see `held`. */
+const HELD = new Set(['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter'])
 
 export function roving(node: HTMLElement, options: RovingOptions = {}) {
   if (options.inner) return {}
@@ -206,7 +216,7 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
     // from everywhere in the app except a list, and a list is where Tab lands. The
     // rule was already here, on the letters at the bottom of this function; it was
     // only ever half applied. See `chorded` in keys.ts.
-    const bare = !chorded(event)
+    const bare = !chorded(event) || (settings.held === true && HELD.has(event.key))
 
     const long = settings.long
     const rows = rowsOf()
