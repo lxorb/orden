@@ -1011,7 +1011,9 @@ const TABLE_RULE = /^\s*\|?[\s:|-]+\|?\s*$/
 /** The same with each name left as a mark `blockAnchorsDrawn` makes an id of, on the lines
  *  `holds` says a mark can stand on: `line` is the line's number, the words what is left
  *  of it. After a blank, so what closes an emphasis is still at the end of a word, and
- *  inside a table row's last cell, since another cell would be dropped. */
+ *  inside a table row's last cell, since another cell would be dropped. A name on its own
+ *  line is a blank line once it is gone, so it goes at the end of the words above and
+ *  leaves that blank, or where there are none, stands alone above it. */
 export function blockIdsAnchored(
   text: string,
   holds: (line: number, words: string) => boolean,
@@ -1020,7 +1022,14 @@ export function blockIdsAnchored(
     const words = kept.slice(kept.lastIndexOf('\n') + 1)
     if (row.code || !holds(row.line, words) || TABLE_RULE.test(words)) return kept
     const mark = `${ANCHOR_OPEN}${id}${ANCHOR_CLOSE}`
-    return /\|\s*$/.test(words) ? kept.replace(/\|\s*$/, `${mark} |`) : `${kept} ${mark}`
+    const after = (held: string) =>
+      /\|\s*$/.test(held) ? held.replace(/\|\s*$/, `${mark} |`) : `${held} ${mark}`
+    if (words.trim() !== '') return after(kept)
+    const start = kept.length - words.length - 1
+    const above = start < 0 ? '' : kept.slice(kept.lastIndexOf('\n', start - 1) + 1, start)
+    if (above.trim() === '') return `${kept}${mark}\n${words}`
+    if (!holds(row.line - 1, above) || TABLE_RULE.test(above)) return kept
+    return `${after(kept.slice(0, start))}\n${words}`
   })
 }
 
@@ -1032,7 +1041,9 @@ export function blockAnchorsDrawn(html: string): string {
   const anywhere = new RegExp(`\\s?${mark}`, 'g')
   const anchor = (id: string) => `<span id="^${id}"></span>`
   return html
-    .replace(/<[a-z/](?:"[^"]*"|'[^']*'|[^'">])*>/gi, (tag) => tag.replace(anywhere, ''))
+    // No further than the next tag opening, or `<a ` thirty thousand times is read to its
+    // end from each one of them. A mark past a stray `<` in a tag is in the one it opens.
+    .replace(/<[a-z/](?:"[^"]*"|'[^']*'|[^'"<>])*>/gi, (tag) => tag.replace(anywhere, ''))
     .replace(new RegExp(`<p>\\s*${mark}\\s*</p>`, 'g'), (_, id: string) => anchor(id))
     .replace(new RegExp(mark, 'g'), (_, id: string) => anchor(id))
 }

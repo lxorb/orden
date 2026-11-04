@@ -543,7 +543,16 @@ function anchored(words: string): string {
    *  a quote, where a formula or a fence may stand beside them. */
   const lines: (boolean | Set<string>)[] = []
   let above: boolean | Set<string> = false
+  const newlines = (text: string) => text.split('\n').length - 1
+  let at = 0
+  let line = 0
   for (const token of tokens) {
+    // By where its words are: a line the parser keeps no token for, a second definition of
+    // one name, can hold no mark, and the lines after it are still the ones they are.
+    const found = cut.indexOf(token.raw, at)
+    const from = found === -1 ? at : found
+    line += newlines(cut.slice(at, from))
+    while (lines.length < line) lines.push(false)
     const here: boolean | Set<string> =
       token.type === 'space'
         ? above
@@ -553,8 +562,11 @@ function anchored(words: string): string {
             ? leafLines(token)
             : false
     if (token.type !== 'space') above = here
-    const count = token.raw.split('\n').length - (token.raw.endsWith('\n') ? 1 : 0)
-    for (let one = 0; one < count; one++) lines.push(here)
+    // A token's last newline ends its line; a line the one before ended on is that one's.
+    const last = line + newlines(token.raw) - (token.raw.endsWith('\n') ? 1 : 0)
+    for (let one = lines.length; one <= last; one++) lines.push(here)
+    line += newlines(token.raw)
+    at = from + token.raw.length
   }
 
   return blockIdsAnchored(words, (line, kept) => {

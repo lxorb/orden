@@ -1207,3 +1207,53 @@ describe('a named block on a line that is no words of a paragraph or an item', (
     expect(html.match(/<td/g)).toHaveLength(4)
   })
 })
+
+describe('a named block, as a page holds it', () => {
+  const anchored = (source: string) => renderMarkdown(source, { blockAnchors: true })
+  /** What a page draws with its anchors taken off, and the name-free words beside it. */
+  const without = (html: string) => html.replace(/\s?<span id="\^[\w-]+"><\/span>/g, '')
+  const tight = (html: string) => html.replace(/>\s+</g, '><').trim()
+
+  test('on its own line under words is a break between them, as everywhere else', () => {
+    expect(anchored('word\n^own\nmore\n')).toBe(
+      '<p>word <span id="^own"></span></p>\n<p>more</p>\n',
+    )
+    expect(without(anchored('- a\n^own\n- b\n'))).toBe(renderMarkdown('- a\n\n- b\n'))
+    expect(anchored('- a\n^own\n- b\n')).toContain('<span id="^own">')
+    expect(anchored('Words\n\n^abc\nmore\n')).toContain('<p>more</p>')
+  })
+
+  test('under a definition it cannot name goes, and what is under it stays one', () => {
+    expect(without(anchored('word\n^own\n[ref]: http://x ^d\n\n[ref]\n'))).toBe(
+      renderMarkdown('word\n\n[ref]: http://x\n\n[ref]\n'),
+    )
+  })
+
+  test('is read by where the words are, whatever the parser keeps no token for', () => {
+    expect(
+      anchored('[ref]: http://x\n[ref]: http://y ^d\n\n> quote\n\n[ref]\n'),
+    ).toBe(renderMarkdown('[ref]: http://x\n[ref]: http://y\n\n> quote\n\n[ref]\n'))
+    expect(without(anchored('[r]: http://x\n[r]: http://y\n\n$$x$$ ^d\n'))).toBe(
+      renderMarkdown('[r]: http://x\n[r]: http://y\n\n$$x$$\n'),
+    )
+  })
+
+  test('draws the same page with its anchors off, in every order of these lines', () => {
+    const lines = ['word', '- a', '> q', '[r]: http://x ^d', '$$x$$ ^e', '^own', '', 'more ^w']
+    const named = lines.flatMap((one) =>
+      lines.flatMap((two) => lines.map((three) => [one, two, three].join('\n') + '\n')),
+    )
+    const plain = (text: string) => text.replace(/[ \t]*\^\w+$/gm, '')
+    const differ = named.filter(
+      (text) => tight(without(anchored(text))) !== tight(renderMarkdown(plain(text))),
+    )
+    expect(differ).toEqual([])
+  })
+
+  test('takes a tag no further than the next one that opens', async () => {
+    const { blockAnchorsDrawn } = await import('./links')
+    expect(blockAnchorsDrawn('<div <a title="x">y</a>\n')).toBe(
+      '<div <a title="">y</a>\n',
+    )
+  })
+})
