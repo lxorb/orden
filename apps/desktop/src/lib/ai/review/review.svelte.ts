@@ -195,17 +195,18 @@ class Review {
   }
 
   /** A thread's changes the reader has not kept, oldest first. */
-  changes(thread: Reviewed): Change[] {
+  changes(thread: Reviewed, deleted = true): Change[] {
     // A helper works on any provider in use (`run_agent`), so a thread with helpers reads
     // every built-in agent's edits; `changesOf` keeps those of its own threads.
     const agents = thread.helpers?.length ? undefined : providersOf(thread).map(agentOf)
     // With those of a note deleted: a rewind puts it back on the way to them.
-    return changesOf(thread, this.edits(agents, true), answeringAt, this.kept)
+    return changesOf(thread, this.edits(agents, deleted), answeringAt, this.kept)
   }
 
-  /** The same by note. */
+  /** The same by note, for the card: not those of a note deleted, which have nothing to
+   *  be taken back in until the note is back. */
   notes(thread: Reviewed): NoteChanges[] {
-    return byNote(this.changes(thread))
+    return byNote(this.changes(thread, false))
   }
 
   /** The notes a thread moved or deleted that the reader has not kept, oldest first. */
@@ -264,6 +265,13 @@ class Review {
       if ([...asked].some((id) => !went.includes(id))) short = true
     }
     return { more, short }
+  }
+
+  /** All of a thread's card taken back: the moves and deletes first, so that a note edited
+   *  and then deleted is there for its edits to go back in, which come back with it. */
+  async undoAll(thread: Reviewed & Thread, files: readonly FileChange[]): Promise<void> {
+    await this.undoFiles(thread, files)
+    await this.undo(this.changes(thread, false))
   }
 
   /** Moves and deletes the reader has read: they leave the list. */

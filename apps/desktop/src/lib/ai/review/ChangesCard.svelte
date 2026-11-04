@@ -46,10 +46,7 @@
       </button>
       <button
         class="nib-chip is-quiet"
-        onclick={() => {
-          void review.undo(all)
-          void review.undoFiles(thread, files)
-        }}>{t('Undo')}</button
+        onclick={() => void review.undoAll(thread, files)}>{t('Undo')}</button
       >
       <button
         class="nib-chip"

@@ -70,7 +70,11 @@ vi.mock('../../workspace.svelte', () => ({
     get undone() {
       return fake.undone
     },
-    fileCame: () => Promise.resolve(),
+    // A note back has its tracks again, as `workspace.fileOps` tells agents/docs.
+    fileCame: async (path: string) => {
+      const { tracksCame } = await import('../../agents/docs/edit')
+      await tracksCame(path, (at) => Promise.resolve(fake.desk.disk.get(at) ?? null))
+    },
     open: (path: string) => {
       fake.opened.push(path)
       return Promise.resolve()
@@ -506,6 +510,23 @@ describe('a rewind over a thread that did things in any order', () => {
     expect(files()).toEqual({})
 
     await review.rewind(thread, 'go', 'notes', null)
+    expect(files()).toEqual({ 'A.md': 'original' })
+    expect(busy.trouble).toBeNull()
+  })
+
+  test('edited and then deleted: the card’s one Undo brings it back with the words it had', async () => {
+    const thread = aThread()
+    await running(thread, [
+      () => acts.edit(thread, 'A.md', 'original', 'EDITED'),
+      () => acts.trash('A.md'),
+    ])
+    const { tracksRemoved } = await import('../../agents/docs/edit')
+    tracksRemoved('/space/A.md')
+    // Nothing to take back of the words until the note is there: the delete's row is.
+    expect(review.notes(thread)).toEqual([])
+    expect(review.files(thread)).toHaveLength(1)
+
+    await review.undoAll(thread, review.files(thread))
     expect(files()).toEqual({ 'A.md': 'original' })
     expect(busy.trouble).toBeNull()
   })
