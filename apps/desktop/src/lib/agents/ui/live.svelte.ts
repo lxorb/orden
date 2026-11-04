@@ -2,7 +2,7 @@
  *  the window lives.
  *
  *  Started by the first agent event the shell hears (agent-marks.svelte.ts), or by the
- *  activity panel being opened, whichever is first, and only ever once. What it keeps
+ *  chat list showing its agents, whichever is first, and only ever once. What it keeps
  *  up to date is small and all of it is the shell's: which tabs wear a mark, the badge,
  *  the steps asked of the reader, whether closing the window hides it, the stop's key from any app, and
  *  the pairing bubble while a client is asking. */

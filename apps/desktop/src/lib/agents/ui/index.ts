@@ -16,7 +16,6 @@
  *  | `source`, `fake` | the crate, and a crate in memory for tests and drives |
  *  | `read` | the crate's events read |
  *  | `AgentRows`, `AgentSession`, `Question` | the row in the chat list, and the session |
- *  | `ActivityPanel` | the same sessions in a panel of their own, until it goes |
  *  | `PairingBubble`, `TakeoverBar` | the two things asked outside it | */
 
 export { ended, start, started, stopAgents, wrote } from './live.svelte'

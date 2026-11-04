@@ -5,8 +5,8 @@
  *  every analytics product counts a visit by. A client does not say when a job starts or
  *  ends, so the gap is the only honest line to draw.
  *
- *  Pure, over the calls the activity panel reads the log into (`agents/ui/session.ts`),
- *  so a call is the same call in the panel and here, said in the same words. */
+ *  Pure, over the calls the agent's session reads the log into (`agents/ui/session.ts`),
+ *  so a call is the same call in the session and here, said in the same words. */
 
 import type { Call } from '../ui/session'
 

@@ -100,7 +100,7 @@ export const notes: NoteDocs = {
 }
 
 /** Takes back one agent's edits in the note at `path`, a path on this disk: what the
- *  palette's row and the activity panel ask, about the note in front. */
+ *  palette's row and the agent's session in Ask ask, about the note in front. */
 export async function undoAgentIn(agent: Agent, path: string): Promise<{ undone: number }> {
   const note = locatedAt(path)
   return note ? undoAt(desk, agent, note) : { undone: 0 }

@@ -29,6 +29,7 @@ import {
   moveBlockDown,
   moveBlockUp,
   newProperty,
+  showProperties,
   pastePlain,
   redoEdit,
   reformatDocument,
@@ -435,14 +436,22 @@ function agentUndoRows(): Command[] {
   }))
 }
 
-/** The agents' panel and the stop, from the first agent heard in this run: before
- *  that there is nothing to show and nobody to stop. The stop is the window's own - a
- *  link or another program is not the reader pressing it. See lib/agents/ui. */
+/** The agents and the stop, from the first agent heard in this run: before that there
+ *  is nothing to show and nobody to stop. The agents are rows of Ask's chat list
+ *  (#1120). The stop is the window's own - a link or another program is not the reader
+ *  pressing it. See lib/agents/ui. */
 function agentRows(): Command[] {
   if (__EVEN_PLUGIN__ || !agentMarks.heard) return []
 
   return [
-    { id: 'agents-panel', label: t('Agents'), run: () => revealPanel('agents') },
+    {
+      id: 'agents',
+      label: t('Agents'),
+      run: () => {
+        revealPanel('ask')
+        void import('./ai/sidebar/chat.svelte').then(({ chat }) => chat.showThreads())
+      },
+    },
     {
       id: 'agents-stop',
       label: t('Stop agents'),
@@ -1729,20 +1738,17 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('app.links'),
       run: () => revealPanel('links'),
     },
-    // The fifth panel. No key of its own: the four that have one are the four that
-    // had one, and a fifth combination nobody asked for is a key taken away from
-    // whatever the reader might have wanted it for. The palette is how it is reached
-    // without pointing, and the tab strip is how it is reached with.
+    // The note's front matter, in the strip at the top of the note (#1120): opened, with
+    // the keyboard on it. No key of its own until the reader gives it one; see
+    // show-properties.ts.
     {
-      id: 'footnotes-panel',
-      label: t('Footnotes'),
-      run: () => revealPanel('footnotes'),
-    },
-    {
-      id: 'properties-panel',
+      id: 'show-properties',
       label: t('Properties'),
       hint: shortcuts.hint('app.properties'),
-      run: () => revealPanel('properties'),
+      disabled: !view || !tidies(workspace.active?.path ?? null),
+      run: () => {
+        if (view) showProperties(view)
+      },
     },
     // A note's first property, or another one, written at the foot of its front
     // matter with its name selected; see `newProperty` in @orden/editor.

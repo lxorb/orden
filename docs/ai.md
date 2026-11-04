@@ -795,4 +795,4 @@ without a network.
 The panel's own drive is `apps/desktop/test/e2e/ask-panel.py`: the right side's homes
 and keys, the panel with no provider, a question answered against the same kind of fake
 provider with the archive left out and the citation opening its passage, a stop, an
-insert, and the Properties panel writing a note's front matter.
+insert.

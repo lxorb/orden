@@ -8,7 +8,6 @@ reads is where a key leaves the keyboard and what a screen reader is told about 
   - the undo toast is said through the region that was on the page first, F6 reaches its
     Undo from the note, Tab reaches it before the note, and pressing it hands the keyboard
     back to where it came from;
-  - a property with words for a value is renamed and removed from the keyboard;
   - the tab in front says it is;
   - the two sidebars have a name each, and axe has nothing to say about these parts;
   - the divider between two panes is a named separator the arrows move;
@@ -373,87 +372,6 @@ def tab_closed(page: Page) -> None:
         wrong(f"the keyboard went with the closed tab: {at}")
 
 
-def properties(page: Page, held: str) -> None:
-    page.evaluate("async (path) => { await window.nibApp.workspace.openEntry(path, { activate: true }) }", held)
-    page.evaluate("() => window.nibApp.workspace.showPanel('properties')")
-    wait_for(page, "document.querySelector('.prop[data-key=\"place\"]')", "the properties panel")
-    quiet(page)
-    page.evaluate("() => document.querySelector('.prop[data-key=\"place\"] .value input').focus()")
-
-    # The control a key can stand on is drawn exactly as the words of a note that cannot be
-    # written, and its words can still be selected.
-    box = """() => { const b = document.querySelector('.prop[data-key="weather"] .key').getBoundingClientRect(); const s = getComputedStyle(document.querySelector('.prop[data-key="weather"] .key')); return [b.x, b.y, b.width, b.height, s.fontSize, s.fontFamily, s.color, s.lineHeight, s.userSelect] }"""
-    written = page.evaluate(box)
-    page.evaluate("() => { window.nibApp.modes.readOnly = true }")
-    quiet(page)
-    if page.evaluate("""() => document.querySelector('.prop[data-key="weather"] .key').tagName""") == "SPAN":
-        read = page.evaluate(box)
-        say(f"[props] the key as a control {written}, as words {read}")
-        if written != read:
-            wrong(f"the key as a control is drawn differently: {written} against {read}")
-    page.evaluate("() => { window.nibApp.modes.readOnly = false }")
-    quiet(page)
-    page.evaluate("""() => document.querySelector('.prop[data-key="place"] .value input').focus()""")
-
-    # Back along the row from its field to its key.
-    at = press(page, "Shift+Tab")
-    say(f"[props] Shift+Tab from the value: {at}")
-    if "|span.key|" not in at:
-        wrong(f"a property's key takes no keyboard: {at}")
-        return
-
-    # The key's own menu: Rename and Remove, for a value that is words.
-    press(page, "Shift+F10")
-    rows = page.evaluate("() => [...document.querySelectorAll('[role=menu] [role=menuitem]')].map((one) => one.textContent.trim())")
-    say(f"[props] Shift+F10 on the key: {rows}")
-    if rows != ["Rename", "Remove"]:
-        wrong(f"the key's menu is not Rename and Remove: {rows}")
-    choose(page, "Rename")
-    at = where(page)
-    if "input.key" not in at:
-        wrong(f"Rename from the menu did not open the name: {at}")
-    page.keyboard.type("region")
-    at = press(page, "Enter")
-    wait_for(page, "document.querySelector('.prop[data-key=\"region\"]')", "the new name")
-    quiet(page)
-    at = where(page)
-    say(f"[props] Enter on the new name: {at}")
-    if "span.key|region" not in at:
-        wrong(f"the keyboard did not stay on the renamed key: {at}")
-
-    # Enter on a key renames, as a double click does, and Escape leaves it as it was.
-    at = press(page, "Enter")
-    if "input.key" not in at:
-        wrong(f"Enter on a key did not open its name: {at}")
-    at = press(page, "Escape")
-    say(f"[props] Escape out of the name: {at}")
-    if "span.key|region" not in at:
-        wrong(f"Escape out of a name lost the keyboard: {at}")
-
-    # Remove, and the keyboard goes to the key that took its place.
-    press(page, "Shift+F10")
-    choose(page, "Remove")
-    wait_for(page, "!document.querySelector('.prop[data-key=\"region\"]')", "the row to go")
-    quiet(page)
-    at = where(page)
-    say(f"[props] after Remove: {at}")
-    if "span.key|weather" not in at:
-        wrong(f"the keyboard went with the removed row: {at}")
-    words = page.evaluate("() => window.nibApp.workspace.active?.note?.latest ?? ''")
-    if "region:" in words or "place:" in words:
-        wrong(f"the note still holds the row: {words!r}")
-    # A field keeps its own menu.
-    page.evaluate("() => document.querySelector('.prop[data-key=\"weather\"] .value input').focus()")
-    press(page, "Shift+F10")
-    rows = page.evaluate("() => [...document.querySelectorAll('[role=menu] [role=menuitem]')].map((one) => one.textContent.trim())")
-    say(f"[props] Shift+F10 in the field: {rows}")
-    # WebKit makes no contextmenu of the key, in a field as anywhere the app asks for none.
-    if not harness.WEBKIT and not any(row.startswith("Paste") for row in rows):
-        wrong(f"the field lost its own menu: {rows}")
-    press(page, "Escape")
-    DRIVE.shot(page, "properties")
-
-
 def named_sides(page: Page) -> None:
     page.evaluate("() => { const ws = window.nibApp.workspace; ws.showPanel('search'); ws.movePanel('search', 'right'); ws.showPanel('tree') }")
     wait_for(page, "document.querySelectorAll('aside[data-sidebar]').length === 2", "both sidebars")
@@ -593,7 +511,6 @@ def drive(browser: Browser) -> None:
         ("hand back", lambda: hand_back_hidden(page)),
         ("enter", lambda: enter_after_going(page)),
         ("tab", lambda: tab_closed(page)),
-        ("properties", lambda: properties(page, held)),
         ("sides", lambda: named_sides(page)),
         ("axe", lambda: axe_says(page, "both sidebars")),
         ("divider", lambda: divider(page)),

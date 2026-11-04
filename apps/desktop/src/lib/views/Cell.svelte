@@ -1,7 +1,7 @@
 <script lang="ts">
   /** One cell of a table (and one property on a card): the value as words, and, while
    *  it is being edited, the control its column's kind asks for. A note's property is
-   *  edited in the Properties panel's own control (properties/PropertyValue.svelte); a
+   *  edited in the one property control (properties/PropertyValue.svelte); a
    *  task's field in the control that field needs - a date, a time, a priority, a
    *  status. Whatever it becomes is written through the one write path (kit.write),
    *  one undo per edit.

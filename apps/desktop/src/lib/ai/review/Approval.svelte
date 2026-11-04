@@ -2,7 +2,7 @@
   /** A call that waits for the reader (docs/ai-sidebar.md 4.4): in Approve every change,
    *  in any mode paying. Drawn as a card in the call's own step, Codex's - what it would
    *  change, then Approve, Always and Deny in Codex's order (once, from now on, no) -
-   *  and answered there or in the Activity panel, whichever comes first. Always says
+   *  and answered there or in the agent's session, whichever comes first. Always says
    *  yes to this tool for the rest of the thread. */
   import { t } from '../../i18n.svelte'
   import { crateAnswers, sayAlways } from '../chat/approvals'

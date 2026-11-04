@@ -163,17 +163,7 @@ export interface Space {
  *  the workspace for a tab. */
 export type { NoteDoc, Tab, TabKind } from './workspace/documents.svelte'
 
-export type Panel =
-  | 'tree'
-  | 'outline'
-  | 'search'
-  | 'tasks'
-  | 'chats'
-  | 'links'
-  | 'footnotes'
-  | 'properties'
-  | 'ask'
-  | 'agents'
+export type Panel = 'tree' | 'outline' | 'search' | 'tasks' | 'chats' | 'links' | 'ask'
 
 /** Which side of the window a panel sits on; where each starts is
  *  workspace/panels.ts. Its own name because `Side` is already a pane's drop zone, which has four of them; see
@@ -683,10 +673,7 @@ class Workspace {
    *  Here rather than in the panel that draws the button, because the palette asks the
    *  same question and two copies of one rule is one of them going stale. */
   holdable(panel: Panel | null): boolean {
-    return (
-      !viewport.touch &&
-      (panel === 'outline' || panel === 'links' || panel === 'footnotes' || panel === 'properties')
-    )
+    return !viewport.touch && (panel === 'outline' || panel === 'links')
   }
 
   /** The panel a hold would be about: whichever side has one that can be held, the left

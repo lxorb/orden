@@ -21,10 +21,6 @@ export const SEARCH_MARK = 'M5.5 1.5a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM8.6 8.6l3 3'
 export const LINKS_MARK =
   'M5.6 7.4 7.4 5.6M6.9 4.3l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7l-1.2 1.2M8.4 9.9l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7l1.2-1.2'
 
-/** A line of words with a raised 1 after it, and the rule and the note under it: a
- *  footnote, which is a mark in the words and what it says at the bottom. */
-export const FOOTNOTES_MARK = 'M2 3h5.5M9.2 2.4l1.2-.9v3.3M2 7h9M2 10h4'
-
 /** Three notes and the edges between them: the same links, drawn as a picture. */
 export const GRAPH_MARK =
   'M1.4 3.4a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M8 3.4a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M4.7 9.9a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M5 3.4h3M5.7 8.3 4 5M7.3 8.3 9 5'
@@ -38,15 +34,9 @@ export const ORDER_MARK = 'M2 3.5h5M2 6.5h4M2 9.5h3M10 2.6v7.8M8.5 8.9 10 10.4l1
 /** Two chevrons meeting: every row folded, as VS Code and Obsidian draw it. */
 export const FOLD_MARK = 'M3.5 1.8 6.5 4.6l3-2.8M3.5 11.2l3-2.8 3 2.8'
 
-/** A key and its value, three rows of them: a note's front matter. */
-export const PROPERTIES_MARK = 'M2 3.4h2.4M6.4 3.4h4.6M2 6.5h2.4M6.4 6.5h4.6M2 9.6h2.4M6.4 9.6h4.6'
-
 /** A four-point spark, the mark every assistant wears. */
 export const ASK_MARK =
   'M6.5 2c.4 2.6 1.9 4.1 4.5 4.5-2.6.4-4.1 1.9-4.5 4.5-.4-2.6-1.9-4.1-4.5-4.5 2.6-.4 4.1-1.9 4.5-4.5z'
-
-/** A pulse: the activity panel's tab, where agents are seen at work. */
-export const AGENTS_MARK = 'M1.5 6.5h2L5 2.5l3 8 1.5-4h2'
 
 /** A speech bubble: the Chats panel. */
 export const CHATS_MARK = 'M11.2 8.4a1 1 0 0 1-1 1H4.1l-2.3 2V2.8a1 1 0 0 1 1-1h7.4a1 1 0 0 1 1 1z'

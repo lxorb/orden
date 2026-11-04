@@ -7,7 +7,7 @@
    *  to learn. The client's mark is its initial in its own colour, the square the Share
    *  sheet draws a person with, because a client is somebody asking to come in.
    *
-   *  Under the title bar at the right, over the activity panel's side of the window, and
+   *  Under the title bar at the right, over the Ask panel's side of the window, and
    *  on the overlay stack, so a page under it is out of sight while it is up: nothing of
    *  the app's can be drawn over a page. Escape is Don't allow: the client asks again
    *  the next time it connects. */

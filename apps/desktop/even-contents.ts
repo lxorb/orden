@@ -145,7 +145,6 @@ export const APP_FOLDERS = [
   'pages',
   'palette',
   'pdf',
-  'properties',
   'quick-add',
   'reading',
   'recorder',

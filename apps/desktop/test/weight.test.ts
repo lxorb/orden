@@ -1479,7 +1479,6 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/ai/chat/engine.ts', 'the thread engine'],
     ['/lib/ai/chat/threads.ts', 'where threads are kept'],
     ['/lib/ai/retrieve.ts', 'what a question is sent with'],
-    ['/lib/PropertiesPanel.svelte', 'the Properties panel'],
     // And the Links panel with the rows it draws, which moved to the right side with
     // them: a side that is shut when the window opens. Warmed at the launch's last turn
     // with the Search panel, so the tab is never a wait.

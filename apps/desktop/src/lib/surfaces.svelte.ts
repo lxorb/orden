@@ -160,15 +160,6 @@ export const findBar = held(() => import('./FindBar.svelte'))
  *  carries a ranking engine. */
 export const searchPanel = held(() => import('./SearchPanel.svelte'))
 
-/** The activity panel, whose tab is there only once an agent has spoken. Never the
- *  glasses' plugin's, which no agent reaches: an agent comes through the installed
- *  app's own program. */
-export const agentsPanel = held(() =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('no agents in the Even Realities plugin'))
-    : import('./agents/ui/ActivityPanel.svelte'),
-)
-
 /** The settings sheet: every pane it has, the theme store, the sync pane, the AI pane,
  *  the security pane. The app's largest single panel, and not on screen when the window
  *  opens. Mounted for good once it arrives rather than with the sheet, so that opening
@@ -186,7 +177,7 @@ export const pagesNavigator = held(() =>
 )
 
 /** The right side's panels that are more than a list of rows: the links with their
- *  picture, the conversation with the providers behind it, and the front matter. The
+ *  picture, and the conversation with the providers behind it. The
  *  right side is shut when a window opens; the links are warmed with the doors. */
 export const linksPanel = held(() => import('./Links.svelte'))
 /** The AI panel, with the thread engine behind it: never the glasses' plugin's, which
@@ -196,7 +187,6 @@ export const askPanel = held(() =>
     ? Promise.reject(new Error('desktop only'))
     : import('./ai/sidebar/ChatPanel.svelte'),
 )
-export const propertiesPanel = held(() => import('./PropertiesPanel.svelte'))
 
 /** The archive at the foot of the file list, once the space has one. Never the glasses'
  *  plugin's: its package is at its ceiling, and it hides what is archived without them. */

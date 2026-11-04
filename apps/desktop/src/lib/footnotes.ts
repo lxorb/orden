@@ -6,12 +6,11 @@
  *  is in one place. See outline.ts, which this sits beside.
  *
  *  A footnote is two things in two places - a `[^1]` in the middle of a sentence
- *  and a `[^1]: …` at the bottom - and the panel is the one screen that puts them
- *  together. So a row carries both lines: the one the mark is on in the words above,
- *  which is where pressing the row goes, and the one the definition is written on,
- *  which the Footnotes panel offers beside it. Reading the note is what you were
- *  doing, so the mark is what a press answers; the definition is a second press for
- *  the times you came looking for what it says. */
+ *  and a `[^1]: …` at the bottom. A row of the Outline's Footnotes group carries both
+ *  lines: the one the mark is on in the words above, which is where pressing the row
+ *  goes, and the one the definition is written on, which pressing the mark in the note
+ *  goes to (live-preview/footnotes.ts in @orden/editor, #1120). Reading the note is what
+ *  you were doing, so the mark is what a press on the row answers. */
 
 import { lines } from '@orden/markdown/links'
 

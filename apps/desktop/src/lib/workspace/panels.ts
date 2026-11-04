@@ -113,15 +113,7 @@ export function moving(sides: Sides, panel: Panel, side: PanelSide): Sides {
 /** Where each panel lives until somebody moves it: the left is the space (the file
  *  list, the search), the right is the note in front and the conversation about the
  *  space - Obsidian's split, with the chat where VS Code keeps its own. */
-export const STARTS_RIGHT: readonly Panel[] = [
-  'outline',
-  'links',
-  'properties',
-  'footnotes',
-  'ask',
-  'agents',
-  'tasks',
-]
+export const STARTS_RIGHT: readonly Panel[] = ['outline', 'links', 'ask', 'tasks']
 
 /** The panels that live on the right and are never moved to the left. The Tasks panel
  *  is the Todos list beside the note being written; the left side's way to Todos is
@@ -147,14 +139,11 @@ export const PANELS: readonly Panel[] = [
   'tasks',
   'chats',
   'links',
-  'footnotes',
-  'properties',
   'ask',
-  'agents',
 ]
 
 /** The panels a window could be arranged with before a session said which it knew. */
-const ARRANGED_BEFORE: readonly Panel[] = ['tree', 'outline', 'search', 'links', 'footnotes']
+const ARRANGED_BEFORE: readonly Panel[] = ['tree', 'outline', 'search', 'links']
 
 /** The right side a window opens with: the homes when nothing was written down, else
  *  what was written plus any homed there that the build which wrote it never knew. */

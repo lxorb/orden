@@ -26,7 +26,7 @@ class AgentMarks {
   /** The mark each tab wears, by tab id. */
   on = $state<Record<string, Worn>>({})
 
-  /** Whether an agent has spoken in this run: the activity panel has a tab from then. */
+  /** Whether an agent has spoken in this run: Ask's chat list has its row from then. */
   heard = $state(false)
 
   /** Tabs an agent opened or made behind the reader, by tab id, with the agent's name:

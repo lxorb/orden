@@ -191,29 +191,21 @@ describe('the scratchpad over the right side', () => {
 
 describe('where a panel lives until somebody moves it', () => {
   test('is the space on the left and the note in front on the right, as Obsidian has it', () => {
-    expect(rightFrom(undefined)).toEqual([
-      'outline',
-      'links',
-      'properties',
-      'footnotes',
-      'ask',
-      'agents',
-      'tasks',
-    ])
+    expect(rightFrom(undefined)).toEqual(['outline', 'links', 'ask', 'tasks'])
     expect(panelsOn(rightFrom(undefined), 'left', PANELS)).toEqual(['tree', 'search', 'chats'])
   })
 
   test('and a window arranged before the homes keeps its own arrangement', () => {
     // A build with five panels wrote this: the outline moved over, the rest left.
-    expect(rightFrom(['outline'])).toEqual(['outline', 'properties', 'ask', 'agents', 'tasks'])
+    expect(rightFrom(['outline'])).toEqual(['outline', 'ask', 'tasks'])
     // And one that had everything on the left wrote nothing at all.
     expect(rightFrom(undefined)).toEqual(STARTS_RIGHT)
   })
 
-  test('and the agents are homed on the right in a window that knew every panel before them', () => {
-    const before = PANELS.filter((one) => one !== 'agents')
-    expect(rightFrom(['ask'], before)).toEqual(['ask', 'agents', 'tasks'])
-    expect(rightFrom([], before)).toEqual(['agents', 'tasks'])
+  test('and Ask is homed on the right in a window that knew every panel before it', () => {
+    const before = PANELS.filter((one) => one !== 'ask')
+    expect(rightFrom(['links'], before)).toEqual(['links', 'ask', 'tasks'])
+    expect(rightFrom([], before)).toEqual(['ask', 'tasks'])
   })
 
   test('while one that knew every panel is kept exactly, but for the Tasks panel', () => {

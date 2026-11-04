@@ -283,7 +283,7 @@ export interface Opened {
 // ---- the window's commands ------------------------------------------------------------
 
 /** The commands the window calls the crate with: the settings pane (`agents_read`,
- *  `agents_write`, `agents_mint`, the log's days and its Clear), the activity panel,
+ *  `agents_write`, `agents_mint`, the log's days and its Clear), the agents' sessions,
  *  and `capture_to_note`'s reading of a page (`agents_capture`). Each answers only Orden's
  *  own window. */
 export const AGENT_COMMANDS = [
@@ -304,7 +304,7 @@ export const AGENT_COMMANDS = [
   'agents_hold',
 ] as const
 
-/** `agents_state`: everything the activity panel draws from at once; the events keep it
+/** `agents_state`: everything the agents' rows and sessions draw from at once; the events keep it
  *  current after. `tabs` are `[agent, tab]` pairs. */
 export interface Overview {
   agents: Grant[]

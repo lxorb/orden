@@ -696,7 +696,7 @@ While an agent is acting in a tab the reader can see:
 - **The element about to be pressed is lit** by the engine's own inspector highlight
   (`Overlay.highlightNode`) for 300 ms before the press. It is drawn by the renderer, not
   put into the page, so the site's scripts cannot see or move it.
-- **Nothing else.** No bar, no banner, no toast. The activity panel has the detail.
+- **Nothing else.** No bar, no banner, no toast. The agent's session in Ask has the detail.
 
 A reader's tab that is not on screen is acted in the same way and wears only the mark.
 
@@ -755,7 +755,7 @@ and re-read the page every step; Atlas's "take control" is the mode switch peopl
   frozen again. The reader showing the tab meanwhile shows it as ever.
 - **The stop is the reader's one control**: the key from any app, the tray, every
   indicator, and **Stop** in the tab's menu, which stops that agent the way its row in
-  the activity panel does (9.5); a press on a stopped agent's mark resumes it.
+  the agent's session does (9.5); a press on a stopped agent's mark resumes it.
 - **`browser_takeover`** is the agent asking for a step only the reader may do - a sign-in,
   a captcha, a payment: the reason is one line under the tab's bar, with **Done**, and a
   notification. The agent is not paused and gets nothing handed back: it carries on, waits
@@ -857,7 +857,7 @@ at wears the agent's mark on its tab while the agent writes in it.
   Ctrl+Z after an agent's paragraph takes the paragraph away and not also the sentence the
   reader typed before it. It is Ctrl+Z like anything else; there is no second undo stack to
   learn.
-- **Undo the agent's edits** in the activity panel and the palette takes back everything
+- **Undo the agent's edits** in the agent's session and the palette takes back everything
   one agent did to one note in this session, **mapped through what the reader did
   since** (each transaction's inverse, mapped through the later changes), so the reader's
   own words stay.
@@ -1121,7 +1121,7 @@ sidebar's Full permissions, `autonomous`, nothing at all):
 A call that needs asking answers at once, `{"status": "needs_approval", "approval": "a17",
 "summary": "Place order on shop.example"}`, so an unsupervised agent can carry on with
 something else rather than hold a connection open for an hour. The reader sees one system
-notification and the question in the activity panel (the site's mark, the summary,
+notification and the question in the agent's session (the site's mark, the summary,
 **Don't allow**, **Allow**, and **Always on this site**); `approval_status` tells the
 agent. Unanswered questions expire after a day. In `confirm` mode every write asks the
 same way, batched: an agent's ten form fields are one question.
@@ -1450,7 +1450,7 @@ At most eight agents run at once and no wave needs more than five. Wave 1 can st
   and answers its token once.
 - **The window's commands**, each answering only Orden's own window: `agents_stop`,
   `agents_resume {agent?}`, `agents_answer {id, allow, always}`, `agents_ask {agent, category, summary, key}` for a window verb
-  that asks first, `agents_state` for everything the activity panel draws at once,
+  that asks first, `agents_state` for everything the agents' rows and sessions draw at once,
   `agents_log {day}` with `agents_log_days` (the days there are, newest first) and
   `agents_log_clear {agent?}` (Settings > Agents' Clear), and `agents_adopt {agent_tab,
   tab}` for Show (6.7). The activity
@@ -1487,7 +1487,7 @@ Each has a recommendation, and the design above assumes it.
    sharing, deleting for good, signing in (always a takeover), settings and the terminal**;
    everything else runs. Each can be turned off per agent.
 3. **How you are asked while away.** Recommendation: **the call answers "needs approval" at
-   once, you get one notification, the question waits in the activity panel for a day.**
+   once, you get one notification, the question waits in the agent's session for a day.**
    The agent carries on with whatever else it can.
 4. **The stop key.** Recommendation: **Ctrl+Alt+Shift+K (Ctrl+Option+Cmd+K), from any
    app**, first press pauses everything, second closes the agents' tabs.

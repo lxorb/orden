@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from 'vitest'
 import { render } from 'svelte/server'
 import { STARTS_RIGHT } from './workspace/panels'
 
-/** What the sidebar draws: which tabs its strip holds, what the Footnotes panel makes
+/** What the sidebar draws: which tabs its strip holds, what the Outline makes
  *  of a note's footnotes, and who is offered the button that holds a panel on one note.
  *
  *  Rendered on the server, the way Tabs.test does beside it: what is under test is the
@@ -15,9 +15,7 @@ import { STARTS_RIGHT } from './workspace/panels'
 vi.mock('./rooms.svelte', () => ({ rooms: { present: {}, following: null } }))
 vi.mock('./surfaces.svelte', () => ({
   askPanel: () => new Promise(() => undefined),
-  agentsPanel: () => new Promise(() => undefined),
   linksPanel: () => new Promise(() => undefined),
-  propertiesPanel: () => new Promise(() => undefined),
   pagesNavigator: () => new Promise(() => undefined),
   searchPanel: () => new Promise(() => undefined),
   showFeedback: () => undefined,
@@ -65,15 +63,7 @@ describe('the panel tabs', () => {
     // The Tasks panel lives on the right (#1047).
     expect(strip('left')).toEqual(['Files'])
     // And the scratchpad, the one tab on a desktop's right that is no panel (#1032).
-    expect(strip('right')).toEqual([
-      'Outline',
-      'Links',
-      'Properties',
-      'Footnotes',
-      'Ask',
-      'Tasks',
-      'Scratchpad',
-    ])
+    expect(strip('right')).toEqual(['Outline', 'Links', 'Ask', 'Tasks', 'Scratchpad'])
   })
 
   test('and a panel moved over is on the other side, at the end of its strip', () => {
@@ -81,24 +71,9 @@ describe('the panel tabs', () => {
     workspace.movePanel('outline', 'left')
 
     expect(strip('left')).toEqual(['Files', 'Outline'])
-    expect(strip('right')).toEqual([
-      'Links',
-      'Properties',
-      'Footnotes',
-      'Ask',
-      'Tasks',
-      'Scratchpad',
-    ])
+    expect(strip('right')).toEqual(['Links', 'Ask', 'Tasks', 'Scratchpad'])
     workspace.movePanel('outline', 'right')
-    expect(strip('right')).toEqual([
-      'Links',
-      'Properties',
-      'Footnotes',
-      'Ask',
-      'Tasks',
-      'Outline',
-      'Scratchpad',
-    ])
+    expect(strip('right')).toEqual(['Links', 'Ask', 'Tasks', 'Outline', 'Scratchpad'])
     workspace.right = [...STARTS_RIGHT]
   })
 
@@ -122,12 +97,12 @@ describe('the panel tabs', () => {
     const { pill, after, html } = row('ask')
     agentMarks.heard = false
 
-    // Emil's 840 px panel: six tabs, and the Ask panel's Chats beside them looking
-    // like a seventh. All six are tabs of the one list, and the scratchpad's with them
+    // Emil's 840 px panel: its tabs, and the Ask panel's Chats beside them looking like
+    // one more. All of them are tabs of the one list, and the scratchpad's with them
     // (#1032), and the Tasks panel's since it lives on the right (#1047); Chats is a tool
-    // after it.
+    // after it. Properties, Footnotes and Agents are no panels any more (#1120).
     expect(html.match(/role="tablist"/g)).toHaveLength(1)
-    expect(pill.match(/role="tab"/g)).toHaveLength(8)
+    expect(pill.match(/role="tab"/g)).toHaveLength(5)
     expect(after).not.toContain('role="tab"')
     expect(after).toContain('aria-label="Chats"')
     expect(after).toContain('aria-label="New chat"')
@@ -143,18 +118,18 @@ describe('the panel tabs', () => {
     }
   })
 
-  /** The square that stopped every agent stood beside the Agents tab on its own
-   *  (#406). An agent is stopped where it runs - its row in the panel, its tab, the
-   *  Ask panel's composer - and by the stop key, the tray and `nib --stop-agents`. */
-  test('and the Agents panel has no stop of its own among them', () => {
+  /** The questions agents wait on are counted on the Ask tab, whose chat list is where
+   *  an agent's session is and where they are answered (#1120). */
+  test('and the Ask tab counts the questions agents are waiting on', () => {
     open('# Head\n')
     agentMarks.heard = true
-    const { html, after } = row('agents')
+    agentMarks.waiting = 2
+    const { pill } = row('outline')
+    agentMarks.waiting = 0
     agentMarks.heard = false
 
-    expect(html).toContain('aria-label="Agents"')
-    expect(after).not.toContain('Stop agents')
-    expect(html).not.toContain('Stop agents')
+    expect(pill).toMatch(/aria-label="Ask"[\s\S]*?class="waiting[^"]*"[^>]*>\s*2\s*</)
+    expect(pill).not.toContain('aria-label="Agents"')
   })
 
   test('and with nothing laid out yet, none is put behind More', () => {
@@ -202,53 +177,27 @@ describe('the head of the list', () => {
   })
 })
 
-describe('the Footnotes panel', () => {
+/** The note's footnotes are the Outline's last group, the panel of their own gone
+ *  (#1120). */
+describe('the Outline', () => {
   const NOTE = 'A claim[^1] and another[^two].\n\n[^1]: the first\n\n[^two]: the second\n'
 
-  test('draws a row per footnote, with its label and what it says', () => {
-    open(NOTE)
-    const html = drawn('footnotes')
+  /** The right side, where the Outline lives, drawn on it. */
+  function right(): string {
+    viewport.device = 'desktop'
+    workspace.rightPanel = 'outline'
+    const html = render(Sidebar, { props: { side: 'right' as const } }).body
+    workspace.rightPanel = null
+    return html
+  }
 
-    expect(html).toContain('the first')
-    expect(html).toContain('the second')
-    expect(html.match(/class="[^"]*\brow note\b/g)).toHaveLength(2)
-  })
-
-  test('says how many there are in its own heading', () => {
-    open(NOTE)
-    expect(drawn('footnotes')).toContain('Footnotes<span>2</span>')
-  })
-
-  test('offers the definition as well as the mark, which is the whole point of it', () => {
-    open(NOTE)
-    const html = drawn('footnotes')
-
-    expect(html.match(/to-definition/g)).toHaveLength(2)
-    expect(html).toContain('Go to the definition')
-  })
-
-  test('and offers no definition for a mark nothing defines', () => {
-    open('A claim[^1] and nothing at the bottom.\n')
-    const html = drawn('footnotes')
-
-    expect(html).toContain('row note')
-    expect(html).not.toContain('to-definition')
-  })
-
-  test('says so plainly for a note with none', () => {
-    open('# Head\n\nWords.\n')
-    const html = drawn('footnotes')
-
-    expect(html).toContain('No footnotes in this note')
-    expect(html).toContain('Footnotes<span>0</span>')
-  })
-
-  test('leaves the Outline’s own section exactly where it was', () => {
-    open(NOTE)
-    const html = drawn('outline')
+  test('ends on a Footnotes group, a row a footnote, under the headings', () => {
+    open(`# Head\n\n${NOTE}`)
+    const html = right()
 
     expect(html).toContain('the first')
     expect(html).toContain('Footnotes<span>2</span>')
+    expect(html.indexOf('Head')).toBeLessThan(html.indexOf('Footnotes<span>'))
   })
 })
 
@@ -260,10 +209,10 @@ describe('the Footnotes panel', () => {
 describe('the button that holds a panel on a note', () => {
   const HELD = 'Stay on this note'
 
-  test('is offered on the four panels that are about one note', () => {
+  test('is offered on the two panels that are about one note', () => {
     open('# Head\n\nWords[^1].\n\n[^1]: said\n')
 
-    for (const panel of ['outline', 'links', 'footnotes', 'properties'] as const) {
+    for (const panel of ['outline', 'links'] as const) {
       expect(drawn(panel), panel).toContain(HELD)
     }
   })
@@ -279,7 +228,7 @@ describe('the button that holds a panel on a note', () => {
   test('is not offered on a phone, which holds one document', () => {
     open('# Head\n\nWords[^1].\n\n[^1]: said\n')
 
-    for (const panel of ['outline', 'links', 'footnotes'] as const) {
+    for (const panel of ['outline', 'links'] as const) {
       expect(drawn(panel, 'phone'), panel).not.toContain(HELD)
     }
   })
@@ -304,7 +253,7 @@ describe('the button that holds a panel on a note', () => {
     open('# Head\n')
 
     viewport.device = 'desktop'
-    workspace.panel = 'footnotes'
+    workspace.panel = 'links'
     const desktop = appCommands().find((one) => one.id === 'hold-panel')
     expect(desktop?.label).toBe(HELD)
     expect(desktop?.disabled).toBe(false)
@@ -322,7 +271,7 @@ describe('the button that holds a panel on a note', () => {
   test('nor on a tablet, which holds one document too', () => {
     open('# Head\n\nWords[^1].\n\n[^1]: said\n')
 
-    for (const panel of ['outline', 'links', 'footnotes'] as const) {
+    for (const panel of ['outline', 'links'] as const) {
       expect(drawn(panel, 'tablet'), panel).not.toContain(HELD)
     }
   })
@@ -395,7 +344,7 @@ describe('the space in the header', () => {
 describe('a shut side', () => {
   test('keeps its panel, rows and all, behind a closed column nothing can reach', () => {
     open('A claim[^1].\n\n[^1]: the first\n')
-    workspace.panel = 'footnotes'
+    workspace.panel = 'outline'
     workspace.closePanel()
     const html = render(Sidebar, { props: { side: 'left' as const } }).body
 

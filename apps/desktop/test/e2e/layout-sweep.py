@@ -629,7 +629,7 @@ async def through_palette(one: Browser, page: Any, command: str, surface: str, s
 
 #: Every panel a browser has: the agents' needs the installed app's crate, and its tab is
 #: not drawn here (see Sidebar.svelte).
-PANELS = ("tree", "outline", "search", "tasks", "chats", "links", "footnotes", "properties", "ask")
+PANELS = ("tree", "outline", "search", "tasks", "chats", "links", "ask")
 
 
 async def panels(one: Browser, page: Any, width: int, scheme: str) -> None:

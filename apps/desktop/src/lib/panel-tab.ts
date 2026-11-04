@@ -21,9 +21,6 @@ const TABS: Record<PanelTab, (() => Promise<void>) | null> = {
   search: null,
   chats: null,
   links: null,
-  footnotes: null,
-  properties: null,
-  agents: null,
 }
 
 /** Whether a panel opens as a tab. */
