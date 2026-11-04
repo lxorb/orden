@@ -524,11 +524,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,904,800, for #331: each pane shrinks where it is
  *  into its own window in the tab overview (`paneDrawn` in overview/flight.ts, the layer
  *  under the panes in overview/Overview.svelte). Measured 5,904,611.
+ *
+ *  The styles raised on 2026-11-04, to 290,800, for #1063: a chooser's row wearing an
+ *  installed application's own icon, in the box a mark is in (PromptSheet.svelte).
+ *  Measured 290,744.
  */
 export const BUDGETS: Record<Part, number> = {
   code: 5_904_800,
   catalogues: 973_000,
-  styles: 290_700,
+  styles: 290_800,
   fonts: 260_000,
   pages: 40_000,
 }
