@@ -380,7 +380,12 @@ export class Engine implements AskedEngine {
         const path = this.core.world.join(now.space.row.root, `${now.path}${one.rest}`)
         if (one.kind === 'folder') await this.make(path, true)
         else if (!holdsDocument(one.kind)) await this.make(path, false)
-        else await this.make(path, false, (await this.core.world.disk.read(path)) ?? '')
+        else {
+          // One that will not read is no empty note to anybody: the folder's watcher makes
+          // it once it reads, as it does any file that came.
+          const text = await this.core.world.disk.read(path)
+          if (text !== null) await this.make(path, false, text)
+        }
       }
       return
     }

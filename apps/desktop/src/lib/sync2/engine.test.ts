@@ -1039,6 +1039,22 @@ describe('a move to another space', () => {
       .sort()
   }
 
+  test('a note that will not read is made in no other space as an empty note', async () => {
+    const here = await twoSpaces()
+    await here.disk.mkdir(`${ROOT}/Trip`)
+    await here.engine.created(`${ROOT}/Trip`, true)
+    await here.disk.write(`${ROOT}/Trip/Map.md`, '# Map\n')
+    await here.engine.created(`${ROOT}/Trip/Map.md`, false, '# Map\n')
+
+    await here.disk.move(`${ROOT}/Trip`, `${WORK_ROOT}/Trip`)
+    const read = here.disk.read.bind(here.disk)
+    here.disk.read = (path: string) =>
+      path === `${WORK_ROOT}/Trip/Map.md` ? Promise.resolve(null) : read(path)
+    await here.engine.moved(`${ROOT}/Trip`, `${WORK_ROOT}/Trip`)
+
+    expect(held(here, WORK)).toEqual(['Trip folder'])
+  })
+
   test('takes a folder with everything in it, each as the kind it was (#413)', async () => {
     // The other space's tree had never heard of anything in the folder, and only the
     // folder was made there: the account, and every other device, had it empty.
