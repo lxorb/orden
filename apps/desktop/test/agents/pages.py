@@ -100,6 +100,15 @@ FRAME = page(
     '<iframe id="inner" title="Inner" src="http://{other}:{port}/inner" width="600" height="240"></iframe>',
 )
 
+LANDS = page(
+    "Lands",
+    """<ul><li id="wrapper"><button id="pay" style="width:100%;height:40px">Pay now</button></li></ul>
+<div id="built" onclick="record({kind: 'built'})"><div>Pay now</div><div>20.00 EUR</div></div>
+<p>The weather is fine today</p>
+<a href="/lands#guide">How to delete your account</a>""",
+    "document.getElementById('pay').addEventListener('click', () => record({kind: 'paid'}))",
+)
+
 INNER = page(
     "Inner",
     """<label>Inner field <input id="field"></label><button id="press">Inner button</button>""",
@@ -288,6 +297,7 @@ class Site:
             "/signin": SIGN_IN,
             "/mail": MAIL,
             "/frame": FRAME.replace("{other}", OTHER).replace("{port}", str(self.port)),
+            "/lands": LANDS,
             "/inner": INNER,
             "/dialogs": DIALOGS,
             "/leave": LEAVE,

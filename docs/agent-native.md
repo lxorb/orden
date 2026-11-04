@@ -1021,7 +1021,10 @@ hands. The one decision is `Grant::asks` and `Grant::holds` in the crate, and
 ### 9.2 Sites
 
 A denied site cannot be opened, navigated to, or acted in, in an agent tab or a reader's;
-a navigation the page itself makes to one is stopped and reported. `browser.script` is per
+a navigation the page itself makes to one is stopped and reported. A frame of one is the same:
+a press, a drag or a hover on a frame's own ref lands inside it and is refused like one by
+point, and a page holding one is not printed to a PDF, since a print cannot paint it over as
+a picture does. `browser.script` is per
 site on top of the scope, because running script in a page is running as that page.
 
 ### 9.3 What it always asks first
@@ -1047,6 +1050,18 @@ notification and the question in the activity panel (the site's mark, the summar
 agent. Unanswered questions expire after a day. In `confirm` mode every write asks the
 same way, batched: an agent's ten form fields are one question.
 
+A press is judged by **what it lands on**, not by the ref it was named by: the element the
+engine finds at the point, and in a frame the frame's element, by the frame's site. So a
+paragraph round a Pay button asks and a section whose middle is empty does not, and a frame's
+ref is a press of what is in the frame. Where no control holds the press, what acts for it does
+(a handler, a place in the tab order, a widget's role, a pointer cursor set on it, a listener
+the engine can see), by the words it holds when they are short enough to be a name, leaving
+out any control of its own: any part of a div built as a Pay button asks, a mail's row is not
+called Delete for the icon in it, and a column of cards is no card. A link with an address that
+goes somewhere stays no delete, since the press that deletes is on the page it goes to. A tick
+by `browser_fill_form` is a press like one by `browser_click`, on top of the form's one
+question.
+
 Recognising these from the page rather than from the agent's own account of what it is
 doing is the point. An agent that has been talked into buying something will describe the
 press as whatever it was told to; the card field is still a card field.
@@ -1059,12 +1074,14 @@ signs in, only where its mode clears it (signing in, 9.3; at once under Full per
 a focused password field is refused, and in every other
 picture each filled secret field is painted over in flat grey; a page holding a filled one
 is not printed to a PDF at all, where nothing could paint it over. Nor does it
-read any other secret - a one-time code, a card's number, expiry or security code - by
-any road: `browser_snapshot` writes such a field as `[filled]` or nothing, and nothing
+read any other secret - a one-time code or a PIN and a card's number, expiry or security code,
+each by its `autocomplete` or by what it is called, and in a box or an editable region alike -
+by any road: `browser_snapshot` writes such a field as `[filled]` or nothing, and nothing
 under it (the engine's own value for a password is one bullet a character, and its words
 inside the field the same, so either would say how long it is); `browser_find` never looks
 inside one; a name the engine builds out of a field's value has the value taken out; and
-`browser_read` and a clip carry no field's value in any shape. A page holding a filled one
+`browser_read` and a clip carry no field's value in any shape, nor the words of a secret
+editable region, the only editable region whose words are not simply the page's. A page holding a filled one
 prints to a PDF only for a call cleared for signing in.
 The engine's password saving and autofill are off in agent tabs, so a saved password is
 not filled in behind the agent's back either.

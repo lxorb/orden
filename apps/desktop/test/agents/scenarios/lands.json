@@ -1,0 +1,141 @@
+{
+  "proves": "a press is judged by what it lands on: the list item round a Pay button asks and pays nothing, any part of a div built as one asks, and plain words and a link to a guide go",
+  "doc": "9.3",
+  "steps": [
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/lands"
+      },
+      "save": {
+        "tab": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{tab}",
+        "for": "load"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "listitem"
+      },
+      "expect": {
+        "status": "ok",
+        "has": [
+          "result.matches.0.ref"
+        ]
+      },
+      "save": {
+        "wrapper": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{wrapper}"
+      },
+      "expect": {
+        "status": "needs_approval",
+        "has": [
+          "approval"
+        ]
+      }
+    },
+    {
+      "record": "paid",
+      "count": 0
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "text": "20.00 EUR"
+      },
+      "expect": {
+        "status": "ok",
+        "has": [
+          "result.matches.0.ref"
+        ]
+      },
+      "save": {
+        "part": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{part}"
+      },
+      "expect": {
+        "status": "needs_approval",
+        "has": [
+          "approval"
+        ]
+      }
+    },
+    {
+      "record": "built",
+      "count": 0
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "text": "The weather is fine"
+      },
+      "expect": {
+        "status": "ok",
+        "has": [
+          "result.matches.0.ref"
+        ]
+      },
+      "save": {
+        "words": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{words}"
+      },
+      "expect": {
+        "status": "ok"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "link",
+        "name": "How to delete your account"
+      },
+      "expect": {
+        "status": "ok",
+        "has": [
+          "result.matches.0.ref"
+        ]
+      },
+      "save": {
+        "guide": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{guide}"
+      },
+      "expect": {
+        "status": "ok"
+      }
+    }
+  ]
+}
