@@ -210,6 +210,15 @@ def type_and_send(page: Page, words: str, key: str = "Enter") -> None:
     page.keyboard.press(key)
 
 
+def switched(page: Page) -> None:
+    """Another model in a chat with turns sends the conversation again, which the panel
+    asks about first (#1089): Switch."""
+    switch = page.locator('.nib-screen button:has-text("Switch")')
+    switch.wait_for(state="visible", timeout=10_000)
+    switch.click()
+    switch.wait_for(state="hidden", timeout=10_000)
+
+
 def drive(browser: Browser, scheme: str) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820}, color_scheme=scheme)
     DRIVE.open(page)
@@ -317,6 +326,7 @@ def drive(browser: Browser, scheme: str) -> None:
     shot(page, f"{tag}05-models")
     page.keyboard.press("ArrowDown")
     page.keyboard.press("Enter")
+    switched(page)
     page.wait_for_timeout(250)
     chip = page.locator(".ask .picker .chip").inner_text()
     if "Fake Large" not in chip:
@@ -335,6 +345,7 @@ def drive(browser: Browser, scheme: str) -> None:
     page.keyboard.press("Alt+p")
     waited(page, "document.querySelector('.ask .pop')", "the model popover")
     page.locator(".ask .pop .model", has_text="Fake Small").click()
+    switched(page)
     page.wait_for_timeout(200)
     page.locator(FIELD).click()
     page.keyboard.press("Alt+t")
@@ -475,6 +486,9 @@ def drive(browser: Browser, scheme: str) -> None:
     waited(page, "document.querySelector('.ask .threads')", "the thread list again")
     keyboard_in_the_list(page)
     page.keyboard.press("Delete")
+    # Archived chats wait behind one press since #1089, with their count.
+    waited(page, "document.querySelector('.ask .threads .shown-archived')", "the archived chats' row")
+    page.locator(".ask .threads .shown-archived").click()
     waited(page, "document.querySelector('.ask .threads .group.archived')", "the archived group")
     shot(page, f"{tag}11-archived")
     page.keyboard.press("Escape")
@@ -680,12 +694,13 @@ def shape(browser: Browser, scheme: str) -> None:
     # Back: Codex's home, the latest chats, and the thread again from there.
     page.locator('.ask .top button[aria-label="Back"]').click()
     waited(page, "document.querySelector('.ask .home .recent')", "the home with its chats")
-    recent = page.locator(".ask .home .recent .nib-row-label").all_inner_texts()
+    # A chat's row is ChatRow.svelte's since #1089: its model's logo, its title, its age.
+    recent = page.locator(".ask .home .recent .row .title").all_inner_texts()
     if recent[:1] != ["What does a heron do?"]:
         wrong(f"the home does not list the latest chat: {recent}")
     page.wait_for_timeout(300)
     shot(page, f"{tag}02b-home-side")
-    page.locator(".ask .home .recent .nib-row", has_text="What does a heron do?").click()
+    page.locator(".ask .home .recent .row", has_text="What does a heron do?").click()
     waited(page, "document.querySelector('.ask .said')", "the chat open again")
 
     # "+" holds what goes along; the modes have their own menu beside it.
@@ -714,6 +729,7 @@ def shape(browser: Browser, scheme: str) -> None:
     page.locator('.ask .answer.last .acts button[aria-label="Ask again"]').click()
     waited(page, "document.querySelectorAll('.menu [role=menuitem]').length >= 3", "the models under Ask again")
     menu_row(page, "Fake Large").click()
+    switched(page)
     idle(page)
     if Model.seen[-1].get("model") != "fake-large":
         wrong(f"Ask again did not ask the model picked: {Model.seen[-1].get('model')}")
@@ -791,7 +807,7 @@ def shape(browser: Browser, scheme: str) -> None:
     shot(page, f"{tag}07-tab")
     page.locator(".ask.wide .threads .new").click()
     waited(page, "document.querySelector('.ask.wide .home')", "a new thread in the tab")
-    recent = page.locator(".ask.wide .home .recent .nib-row-label").all_inner_texts()
+    recent = page.locator(".ask.wide .home .recent .row .title").all_inner_texts()
     if "What does a heron do?" not in recent:
         wrong(f"the home does not list the latest threads: {recent}")
     page.wait_for_timeout(400)
