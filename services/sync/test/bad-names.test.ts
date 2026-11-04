@@ -5,6 +5,8 @@
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { feedPageOf, GONE_NAME, isName, type FeedItem } from '@orden/sync-core'
 import { sha256 } from '../src/crypto'
+import { cleanPath, noteBeside } from '../src/notes'
+import type { Note } from '../src/types'
 import { call, type RpcView, signIn, type TestEnv, testEnv } from './harness'
 
 let env: TestEnv
@@ -146,4 +148,28 @@ test('a note that already has such a name can still be read, and a save of it st
     body: { baseVersion: held.json.note.version, path: LONG, content: 'again' },
   })
   expect(saved.status).toBe(200)
+})
+
+test('a copy kept beside a note named near the limit, or under a bad folder, still lands', async () => {
+  const near = `${'n'.repeat(250)}.md`
+  const made = await call(env, `/v1/spaces/${space}/notes`, {
+    token,
+    body: { path: near, content: 'near' },
+  })
+  const held = await env.DB.prepare('select * from notes where id = ?')
+    .bind(made.json.note.id)
+    .first<Note>()
+  const copy = await noteBeside(env, held as Note, 'other words')
+  expect(cleanPath(copy?.path ?? '')).toBe(copy?.path)
+  const second = await noteBeside(env, held as Note, 'more other words')
+  expect(second?.path).not.toBe(copy?.path)
+  expect(cleanPath(second?.path ?? '')).toBe(second?.path)
+
+  const lost = await noteBeside(
+    env,
+    { ...(held as Note), path: '../../Other/pwn.md', id: 'e'.repeat(32) },
+    'words under a bad folder',
+  )
+  expect(lost?.path.startsWith('pwn')).toBe(true)
+  expect((await feed()).read).not.toBeNull()
 })

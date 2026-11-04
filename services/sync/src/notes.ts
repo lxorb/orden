@@ -2,7 +2,8 @@ import { type Context, Hono } from 'hono'
 import { NOT_A_PATH, NO_SUCH_NOTE, OUT_OF_SPACE, ROOM_AWAY } from './refused'
 import { mergeCanvasFiles } from '@orden/markdown/canvas-merge'
 import { isPagesTarget } from '@orden/markdown/links'
-import { isName } from '@orden/sync-core'
+import { isName, LONGEST_NAME } from '@orden/sync-core'
+import { shortened } from '@orden/sync-core/tree'
 import { conflictPath, freePath, numbered } from '@orden/markdown/paths'
 import { objectBody, readBody } from './body'
 import { FRONT_REV, readFront, titleFrom, writeFront } from './blog/front'
@@ -335,7 +336,7 @@ export async function noteBeside(
 
   if (kept) return kept
 
-  const beside = conflictPath(note.path)
+  const beside = besidePath(note.path)
 
   for (let counter = 1; counter <= 20; counter += 1) {
     const path = numbered(beside, counter)
@@ -346,6 +347,20 @@ export async function noteBeside(
 
   return null
 }
+
+/** Where a copy of the note at `path` goes, its name short enough to be one with the words
+ *  and the number a copy's name takes: a note named near the limit keeps its copy too, and
+ *  one in a folder from before `cleanPath` refused it keeps it at the top of the space. */
+function besidePath(path: string): string {
+  const parts = path.split('/')
+  const name = parts.pop() ?? path
+  const place = parts.every(isName) ? parts : []
+  const made = (named: string) => conflictPath([...place, named].join('/'))
+  const over = nameLength(made(name)) + ' 20'.length - LONGEST_NAME
+  return over <= 0 ? made(name) : made(shortened(name, over, 'note'))
+}
+
+const nameLength = (path: string) => path.length - path.lastIndexOf('/') - 1
 
 /** Puts a note's new contents in the store: the bytes in R2, the row in D1, with
  *  the version and the space's cursor moved on so that every other device reads

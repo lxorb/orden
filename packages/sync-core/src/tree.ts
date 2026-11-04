@@ -152,7 +152,7 @@ function freeName(
 }
 
 /** A name with `by` code units less, off the end of its stem. */
-function shortened(name: string, by: number, kind: EntryKind): string {
+export function shortened(name: string, by: number, kind: EntryKind): string {
   const dot = kind === 'folder' ? -1 : name.lastIndexOf('.')
   // An ending too long to leave a stem goes with it.
   const stemEnd = dot > by ? dot : name.length
