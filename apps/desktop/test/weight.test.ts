@@ -1255,8 +1255,17 @@ function holds(tail: string): boolean {
  *  growth on the hunt's own 3,655,190, with a chat in hand telling the list another window is
  *  answering in it (`merged`), a folder's top by its disk's own rules (`sameFolder`). The
  *  hunt's third tauri branch adds nothing here. No new module. Measured 3,663,693, 394 modules.
+ *
+ *  Raised 2026-11-04, to 3,567,000, for #1068: a move or a delete in the file list is
+ *  said to sync before the disk has it, through the one hook every operation goes
+ *  through (`doing` in workspace/file-ops.ts, `renameOnDisk` and `bin` in
+ *  workspace.svelte.ts). Measured 3,565,800.
+ *
+ *  Raised on 2026-11-04, to 3,666,000, as that came to claude/hunt-round-1, on the hunt's own
+ *  3,663,693: the same hook, with a move and a delete made in the file's turn inside it. No new
+ *  module. Measured 3,665,764, 394 modules.
  */
-const BUDGET = 3_663_900
+const BUDGET = 3_666_000
 const MOST_FILES = 395
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

@@ -91,7 +91,6 @@ describe('a move the engine makes', () => {
     notes.set('/s/Stuck.md', '# Stuck\n')
     const told: string[] = []
     const telling = {
-      touching: () => undefined,
       holdingWrites: (_from: string, _run: unknown, stalled: () => Promise<void>) => stalled(),
       moved: () => {
         told.push('told')
@@ -112,7 +111,6 @@ describe('a move the engine makes', () => {
     notes.set('/s/Held.md', '# Held\n')
     const order: string[] = []
     const telling = {
-      touching: () => undefined,
       holdingWrites: async (from: string, run: () => Promise<void>) => {
         order.push(`held ${from}, ${String(notes.has(from))}`)
         await run()
@@ -138,7 +136,6 @@ describe('a PDF another device turned into its page note', () => {
   test('moves to the paper of the page note beside it', async () => {
     notes.set('/s/X.pages', '{}')
     const telling = {
-      touching: () => undefined,
       holdingWrites: (_from: string, run: () => Promise<void>) => run(),
       moved: () => Promise.resolve(),
     } as unknown as Parameters<typeof appWorld>[1]
@@ -157,7 +154,6 @@ describe('a PDF another device turned into its page note', () => {
 
   test('holds nothing for any other move', async () => {
     const telling = {
-      touching: () => undefined,
       holdingWrites: (_from: string, run: () => Promise<void>) => run(),
       moved: () => Promise.resolve(),
     } as unknown as Parameters<typeof appWorld>[1]
@@ -184,7 +180,6 @@ describe('a PDF another device renamed, with its highlights', () => {
     notes.set('/s/A.pdf', '%PDF')
     notes.set('/s/A.pdf.highlights.json', '{"version":1}')
     const telling = {
-      touching: () => undefined,
       holdingWrites: (_from: string, run: () => Promise<void>) => run(),
       moved: () => Promise.resolve(),
     } as unknown as Parameters<typeof appWorld>[1]
@@ -205,7 +200,6 @@ describe('a page note another device renamed', () => {
     notes.set('/s/X.pages', '{}')
     notes.set('/s/X.pages.pdf', '%PDF')
     const telling = {
-      touching: () => undefined,
       holdingWrites: (_from: string, run: () => Promise<void>) => run(),
       moved: () => Promise.resolve(),
     } as unknown as Parameters<typeof appWorld>[1]
@@ -228,7 +222,6 @@ describe('a highlighted PDF another device turned into its page note', () => {
     notes.set('/s/T.pdf', '%PDF')
     notes.set('/s/T.pdf.highlights.json', '{"version":1}')
     const telling = {
-      touching: () => undefined,
       holdingWrites: (_from: string, run: () => Promise<void>) => run(),
       moved: () => Promise.resolve(),
       gone: () => Promise.resolve(),

@@ -341,6 +341,10 @@ export interface Settling {
   keeps: (id: string) => boolean
   /** A document this device will not hear of again: its rows go. */
   forget: (id: string) => void
+  /** Whether the app is moving or deleting an entry's file itself, this moment: it is
+   *  left to that, and where it went is written down once it is done (`moving` in
+   *  engine.ts). */
+  busy?: (id: string) => boolean
 }
 
 /** A path nothing here uses yet, beside `path`: where a file waits while another takes
@@ -399,8 +403,9 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
     }
   }
 
+  const busy = how.busy ?? (() => false)
   for (const entry of space.entries.values()) {
-    if (!entry.local_path || wanted.has(entry.id)) continue
+    if (!entry.local_path || wanted.has(entry.id) || busy(entry.id)) continue
     if (entry.kind !== 'folder' && how.keeps(entry.id)) continue
     // A folder goes once nothing it holds is staying.
     if (entry.kind === 'folder' && holdsKept(space, entry, how)) continue
@@ -421,6 +426,7 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
     const due = [...space.entries.values()]
       .filter((entry) => {
         const want = wanted.get(entry.id)
+        if (busy(entry.id)) return false
         return entry.local_path && want !== undefined && entry.local_path !== want
       })
       .sort((a, b) => depth(a.local_path) - depth(b.local_path))
@@ -455,6 +461,7 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
         continue
       }
       const holder = space.at(want)
+      if (holder && holder !== entry && busy(holder.id)) continue
       if (holder && holder !== entry) {
         // Somebody else is still there: it waits aside, and moves on in its own turn.
         const out = aside(holder.local_path, holder.id)

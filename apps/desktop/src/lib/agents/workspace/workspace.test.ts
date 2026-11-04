@@ -160,6 +160,11 @@ const workspace = {
   fileOps: new FileOps(),
   holdingUnder: vi.fn((_path: string, run: () => Promise<void>) => run()),
   undone: { moved: () => undefined },
+  // The disk's part of a move, which the store says to sync first.
+  renameOnDisk: vi.fn(async (from: string, to: string) => {
+    const { invoke } = await import('../../tauri')
+    await invoke('rename_note', { from, to })
+  }),
   fileMoved: vi.fn((from: string, to: string, kind: Kind) =>
     workspace.fileOps.tell({ op: 'moved', from, to, kind, root: '/s/Home' }),
   ),

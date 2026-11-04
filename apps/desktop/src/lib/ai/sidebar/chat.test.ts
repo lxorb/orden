@@ -62,6 +62,12 @@ const place = vi.hoisted(() => ({
 
 vi.mock('../../workspace.svelte', () => ({ workspace: place }))
 
+// Whose a note in front may be is the index's to say, which holds nothing here.
+vi.mock('../commands/found', () => ({
+  fromOthers: () => Promise.resolve(false),
+  fromOthersIn: () => Promise.resolve(false),
+}))
+
 vi.mock('../store.svelte', () => {
   const provider = { id: 'p', kind: 'compatible', model: 'm', name: 'Fake' }
   return { ai: { providerFor: () => provider, provider: () => provider } }
@@ -2112,5 +2118,93 @@ describe('a chat in the list the moment it changes (#1111)', () => {
     await vi.waitFor(() => expect(line(plan.id)).toBeUndefined())
     await removing
     expect(line(plan.id)).toBeUndefined()
+  })
+})
+
+/** The quick question, Ctrl Ctrl, is a chat of the panel's own (#1115). */
+describe('a chat started outside the panel', () => {
+  beforeEach(() => {
+    kept.clear()
+    deleted.length = 0
+    localStorage.clear()
+    place.activeSpaceId = 'work'
+  })
+
+  test('is a chat like one typed into the panel: its engine, its provider, what was in front', async () => {
+    engine.send.mockClear()
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work', 'home'])
+    const front = { path: 'Plan.md', name: 'Plan', text: 'ship on Friday' }
+
+    const { thread, ended } = chat.startHere('When do we ship?', [], {
+      front,
+      selection: '',
+      picked: null,
+    })
+    await ended
+
+    const [sent, draft] = engine.send.mock.calls[0] ?? []
+    expect(sent).toBe(thread)
+    expect([thread.space, thread.provider, thread.model]).toEqual(['work', 'p', 'm'])
+    expect(draft?.text).toBe('When do we ship?')
+    expect(draft?.attachments.map((one) => one.text)).toContain('ship on Friday')
+    expect(kept.get('work')?.has(thread.id)).toBe(true)
+  })
+
+  test('is in the list at once, and the chat open in the panel stays open', async () => {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    await vi.waitFor(() => expect(chat.head).not.toBeNull())
+    const open = chat.thread
+    let gate: () => void = () => undefined
+    gathering.gate = new Promise((done) => {
+      gate = done
+    })
+
+    const { thread, ended } = chat.startHere('When do we ship?', [], {
+      front: null,
+      selection: '',
+      picked: null,
+    })
+
+    expect(chat.heads.map((one) => one.id)).toEqual([thread.id])
+    expect(chat.thread).toBe(open)
+    gate()
+    await ended
+    expect(chat.heads.map((one) => one.id)).toEqual([thread.id])
+  })
+
+  test('learns the spaces itself where the panel was never drawn', async () => {
+    const chat = await launched()
+    const { thread, ended } = chat.startHere('Hello', [], {
+      front: null,
+      selection: '',
+      picked: null,
+    })
+    expect(thread.space).toBe('work')
+    expect(chat.heads.map((one) => one.id)).toEqual([thread.id])
+    await ended
+  })
+
+  test('is drawn where it is watched, and a follow-up goes on in it', async () => {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    const { thread, ended } = chat.startHere('First', [], {
+      front: null,
+      selection: '',
+      picked: null,
+    })
+    chat.watch(thread)
+    await ended
+    await vi.waitFor(() => expect(chat.watched?.turns.length).toBe(2))
+
+    await chat.sendIn(thread, 'Second', [], { front: null, selection: '', picked: null })
+    await vi.waitFor(() => expect(chat.watched?.turns.length).toBe(4))
+    expect(chat.watched?.turns[2]?.draft?.text).toBe('Second')
+    chat.watch(null)
+    expect(chat.watched).toBeNull()
   })
 })

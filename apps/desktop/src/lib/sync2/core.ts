@@ -121,6 +121,12 @@ export class Core {
    *  they wait a while before going again (files.ts). Memory only. */
   readonly refusedBytes = new Map<string, { at: number; hash: string; full: boolean }>()
   readonly events: Partial<CoreEvents> = {}
+  /** Entries whose files the app is moving or deleting itself this moment, by id, and
+   *  the paths on this disk it is doing it at (`moving` in engine.ts): a pass leaves
+   *  the files to it, and the folder's watcher hears nothing there that needs reading.
+   *  Memory only: nothing is in hand across a launch. */
+  readonly inHand = new Map<string, number>()
+  readonly handPaths: string[] = []
   /** Which files' words were kept because their entry's kind cannot hold them, by id
    *  and digest, and which entries the reader was told about; see `unsynced` in
    *  ingest.ts. */

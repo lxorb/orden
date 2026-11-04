@@ -127,6 +127,10 @@ def twice_ctrl(page: Page) -> None:
     page.keyboard.press("Control")
 
 
+# The AI panel's chats, through the handle a drive has to them.
+CHATS = "() => window.nibApp.aiChats()"
+
+
 def last_messages() -> str:
     """Everything the last request said, as one string to look for words in."""
     if not Model.seen:
@@ -225,12 +229,31 @@ def asked(page: Page) -> None:
     if chip.count() != 1 or "heron line" not in chip.inner_text():
         wrong(f"the selection is not the chip: {chip.all_inner_texts()}")
 
+    open_before = page.evaluate(CHATS + ".then((chat) => chat.thread?.id ?? null)")
     page.keyboard.type("What is this?")
     page.keyboard.press("Enter")
+    # The panel's own chat (#1115): in its list the moment it is asked.
+    listed = page.evaluate(
+        "() => new Promise((done) => setTimeout(done, 50)).then(() => window.nibApp.aiChats())"
+        ".then((chat) => chat.heads.some((one) => one.words.includes('What is this?')))"
+    )
+    if not listed:
+        wrong("the quick question is not in the panel's list the moment it is asked")
     wait_for(page, "/heron waits/.test(document.querySelector('.quick .words')?.textContent ?? '')", "the answer")
     shot(page, "06-answered")
-    if "<selection>" not in last_messages() or "heron line" not in last_messages():
-        wrong(f"the request did not carry the selection: {last_messages()[:300]}")
+    # The panel's agent's rules. Its tools are the desktop crate's, which a browser build
+    # has none of, for the panel's chat as for this one.
+    request = Model.seen[-1] if Model.seen else {}
+    rules = [one.get("content", "") for one in request.get("messages", []) if one.get("role") == "system"]
+    if not rules or "agent inside nib" not in rules[0]:
+        wrong(f"the quick question was not told the panel's rules: {rules[:1]}")
+    if page.evaluate(CHATS + ".then((chat) => chat.thread?.id ?? null)") != open_before:
+        wrong("the quick question took the panel's open chat away")
+    # The panel's own chat (#1115): the selection goes as the panel's chip of it does.
+    said = last_messages()
+    labelled = 'label=\\"selection\\"' in said or 'source=\\"selection\\"' in said
+    if not labelled or "heron line" not in said:
+        wrong(f"the request did not carry the selection: {said[-600:]}")
 
     Model.words = ["Then ", "it ", "strikes."]
     page.keyboard.type("And then?")
@@ -255,7 +278,7 @@ def asked(page: Page) -> None:
     page.keyboard.type("Hello?")
     page.keyboard.press("Enter")
     wait_for(page, "/Plain/.test(document.querySelector('.quick .words')?.textContent ?? '')", "an answer")
-    if "<note>" in last_messages() or "<selection>" in last_messages():
+    if "The first line." in last_messages() or "heron line" in last_messages():
         wrong("a chip taken off still sent the note")
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('.quick')", "Escape putting it away")

@@ -13,10 +13,11 @@ Four surfaces use it, and they all go through one module:
 - the four rewrites on a selection,
 - the Ask panel on the right side of the window, which answers questions about
   your notes and says where each answer came from,
-- and a quick question on the side, answered in place over whatever is open.
+- and a quick question on the side, answered in place over whatever is open: a chat of
+  the Ask panel's own, started from anywhere (#1115).
 
 Each asks the default provider unless Settings > AI > **Used for** gives it one of its
-own: a plan for questions about the notes and a fast model on this machine for
+own (the quick question asks what Ask asks): a plan for questions about the notes and a fast model on this machine for
 rewrites, say. `ai.providerFor(feature)` in `store.svelte.ts` is that choice, and
 `complete()` is the one request; together they are the seam, and nothing else asks a
 model.
@@ -610,25 +611,28 @@ field that cannot be asked anything is a field that lies.
 Ctrl pressed twice on its own - Cmd twice on a Mac - or **Quick question** in the
 palette: a field in the middle of the window, the palette's shape and place, and the
 answer streamed in place under it. Claude Code's /btw, Raycast's quick AI, Arc's question
-about a page and Notion's space bar are the four it was modelled on: a question on the
-side that never becomes a conversation anybody has to tidy away.
+about a page and Notion's space bar are the four it was modelled on.
 
-- **What goes along is one thing, chosen, and shown.** The selection in the note in
-  front; else the note in front; else, on a desktop, the page in a web tab in front -
-  its selection, else its article, which is what the clipper reads (`web_clip`). It is
-  a chip under the field, and its cross takes it off for the rest of the thread. A note
-  or a page goes to 4,000 tokens; see `ai/quick.ts`.
-- **A thread while it is up.** Enter asks, Shift+Enter is a new line, and the next
-  question carries the turns before it within the Ask panel's history budget
-  (`ai/history.ts`). Escape, a click outside or the key again put it away, and stop
-  what is arriving; the next press starts again with what is in front then. Nothing is
-  kept: the Ask panel is the conversation that is.
-- **Two things to do with an answer**, as glyphs under it: **Add to note**, on lines of
+- **A shortcut to the AI panel's own chat, not a second kind of one (#1115).** The
+  question starts the chat a message typed into the panel starts: the same rules, the
+  same context with where the reader is, the same tools and permissions, the provider and
+  model Ask uses, kept with its history. It is in the panel's list the moment it is
+  asked, while the chat open in the panel stays open, and it is opened and carried on
+  there like any other (`startHere` in `ai/sidebar/chat.svelte.ts`).
+- **What goes along is what the panel sends, and shown.** The note in front and the
+  words selected in it, read the way the panel's field reads them
+  (`ai/sidebar/around.ts`); with no note in front, the page in a web tab in front, as
+  the panel's `@` chip of a tab. A chip under the field names it, and its cross takes it
+  off; it goes with the first question.
+- **A chat while it is up.** Enter asks, Shift+Enter is a new line, and the next question
+  goes on in the same chat. Escape, a click outside or the key again put the field away;
+  the chat goes on in the panel. Where its agent asks something (a change to approve),
+  **Continue in the panel** is offered at once, since the question is answered there.
+- **Three things to do with an answer**, as glyphs under it: **Add to note**, on lines of
   its own under the selection or the caret's line of the note it was asked about, which
   puts the field away; with no note in front, onto the end of the scratchpad, where a
-  thought with no note yet belongs. And **Copy**.
-- Its own row in Settings > AI > **Used for**, so a fast local model can answer it while
-  a plan answers the Ask panel. With no provider it says the one line and links there.
+  thought with no note yet belongs. **Copy**. And **Continue in the panel**.
+- With no provider it says the one line and links to Settings > AI.
 - Not in the glasses' plugin, whose package is at its ceiling.
 
 The store is `ai/quick.svelte.ts`, the sheet `QuickQuestion.svelte`, and an answer is

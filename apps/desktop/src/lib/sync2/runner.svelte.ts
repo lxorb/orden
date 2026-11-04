@@ -26,7 +26,7 @@ import { type Pairing, pairSpaces } from '../space-pairing'
 import { readMirror, type Mirror } from '../sync/mirror'
 import { isRecord, keepJson, stored } from '../stored'
 import { workspace } from '../workspace.svelte'
-import type { FileOp } from '../workspace/file-ops'
+import type { Doer, FileOp } from '../workspace/file-ops'
 import { owesAtTheEnd, owesLast, writing } from '../parting'
 import { isDesktop, joinPath } from '../tauri'
 import { pathKey, samePath } from '../space-paths'
@@ -83,9 +83,6 @@ const MIRRORS = 'nib:mirrors'
 
 /** The meta row that says a space's first pass is done. */
 const FIRST = 'first:'
-
-/** How long a path the engine moved or took away is the engine's own to the watcher. */
-const TOUCHED = 5_000
 
 function v1Spaces(accountId: string): Map<string, V1Space> {
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once by the first pass; nothing renders from it
@@ -148,9 +145,6 @@ class Runner {
   /** Operations the engine made on the disk, which the workspace says back: not heard
    *  as this person's. */
   private readonly own = new Set<string>()
-  /** Paths the engine moved or took away lately, by when that stops mattering: what the
-   *  folder's watcher reports a moment later is the engine's own doing. */
-  private readonly touched = new Map<string, number>()
   /** Spaces whose first pass is done. */
   private readonly firsts = new Set<string>()
   /** Open notes joined to their documents, by document key. */
@@ -239,6 +233,8 @@ class Runner {
       document.removeEventListener('visibilitychange', back)
     })
     this.stops.push(this.followOpen())
+    // The workspace's moves and deletes, said to the engine before the disk has them.
+    this.stops.push(workspace.fileOps.doneBy(this.doer))
     // The file list's hand-arranged order, by the places the account keeps (#1068).
     this.stops.push(
       workspace.arranged.placeBy(
@@ -258,9 +254,9 @@ class Runner {
       const { watchFolders } = await import('./watching')
       const watched = watchFolders({
         engine,
-        own: (path) => this.ownPath(path),
         ready: (id) => this.firsts.has(id),
         changed: () => this.nudge(),
+        moved: (from, to, kind) => this.telling.moved(from, to, kind),
       })
       this.watched = watched
       this.stops.push(() => {
@@ -659,21 +655,6 @@ class Runner {
     return row !== null
   }
 
-  /** Whether the engine itself moved or took away a path a moment ago, or anything above
-   *  it. */
-  private ownPath(path: string): boolean {
-    const now = Date.now()
-    const at = path.replaceAll('\\', '/')
-    for (const [one, until] of this.touched) {
-      if (until < now) {
-        this.touched.delete(one)
-        continue
-      }
-      if (at === one || at.startsWith(`${one}/`)) return true
-    }
-    return false
-  }
-
   private spaceOnScreen(engine: Engine): string | null {
     const root = workspace.activeSpace?.root
     for (const space of engine.core.spaces.values()) if (space.row.root === root) return space.id
@@ -734,9 +715,6 @@ class Runner {
 
   /** The engine's own operations on the disk, said to the workspace and not heard back. */
   private readonly telling: Telling = {
-    touching: (path) => {
-      this.touched.set(path.replaceAll('\\', '/'), Date.now() + TOUCHED)
-    },
     holdingWrites: (from, run, stalled) => workspace.holdingWrites(from, run, stalled),
     moved: async (from, to, kind) => {
       this.own.add(`moved:${from}`)
@@ -780,6 +758,28 @@ class Runner {
   private treeStale() {
     clearTimeout(this.treeTimer)
     this.treeTimer = setTimeout(() => void workspace.loadTree(), 200)
+  }
+
+  /** A move or a delete the workspace is making (`doing` in workspace/file-ops.ts),
+   *  said to the engine by the id of what is there before the disk has it, and the
+   *  disk's part made inside that (`moving` and `removing` in engine.ts). */
+  readonly doer: Doer = async (op, run) => {
+    const engine = this.engine
+    if (!engine || op.kind === 'space' || op.op === 'created') {
+      await run()
+      return
+    }
+    if (op.op === 'moved') {
+      await engine.moving(op.from, op.to, async () => {
+        await run()
+      })
+    } else {
+      await engine.removing(op.path, async () => {
+        const back = await run()
+        return typeof back === 'string' && back ? back : op.back
+      })
+    }
+    this.nudge()
   }
 
   /** A file operation, heard as everything kept by path hears it. Answers what is left to

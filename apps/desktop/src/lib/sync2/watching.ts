@@ -8,10 +8,15 @@
  *  file at a new path - is a move. Read a hundred at a time, a tick apart, so a `git
  *  checkout` of another branch never holds the window up.
  *
- *  Not what Orden did itself: the workspace says those once (workspace/file-ops.ts), and
- *  the engine's own moves and deletes are marked as they are made (`own`). A folder that
- *  is not there any more is never read as a reason to delete anything: a space renamed in
- *  Explorer is gone from here too, and it is the workspace that says what became of it. */
+ *  Not what Orden did itself (#1068): the file list's moves and deletes are said to the
+ *  engine before the disk has them (`moving` in engine.ts), and the engine's own are in
+ *  its tree before they are on the disk, so whatever is heard about a path where the
+ *  tree and the disk do not agree yet is that work under way, and nothing to read
+ *  (`ownWork`). Every change is read against the disk as it is now, not as the message
+ *  says it was: a message comes a moment late, and the path may have been taken again
+ *  since. A folder that is not there any more is never read as a reason to delete
+ *  anything: a space renamed in Explorer is gone from here too, and it is the workspace
+ *  that says what became of it. */
 
 import {
   scanSpace,
@@ -86,12 +91,15 @@ function limitReached(): void {
 
 export interface Watching {
   engine: Engine
-  /** Whether the engine itself just moved or removed this path. */
-  own(path: string): boolean
   /** Whether a space's first pass is done, so its folder can be read against its tree. */
   ready(spaceId: string): boolean
   /** Something changed that a pass should send. */
   changed(): void
+  /** Another program moved or renamed a file or a folder the engine keeps, and the
+   *  engine has it there now: said to everything this device keeps by path - its tabs,
+   *  where each note was being read, the folders standing open - so they follow the
+   *  entry, as they follow a move made in Orden (#1068). */
+  moved?(from: string, to: string, kind: 'file' | 'folder'): Promise<void>
 }
 
 /** The watch, and the two things asked of it. */
@@ -162,18 +170,29 @@ async function changed(how: Watching, change: SpaceChange): Promise<void> {
   // for it here is the same note twice (as `scanned` waits, for the same reason).
   const placed = engine.placed(change.path)
   if (placed && !how.ready(placed.space.id)) return
+  const disk = engine.core.world.disk
   if (change.kind === 'renamed') {
-    if (how.own(change.from) || !kept(engine, change.path, change.dir)) return
-    if (engine.entryAt(change.from)) {
-      await engine.moved(change.from, change.path)
-      return
+    if (!kept(engine, change.path, change.dir)) return
+    // Respelled on a disk that does not tell case apart: one file, at both names.
+    const entry = engine.entryAt(change.from)
+    const respelled = entry !== null && entry === engine.entryAt(change.path)
+    const left = respelled || !(await disk.exists(change.from))
+    const there = await disk.exists(change.path)
+    if (left && there && !engine.ownWork(change.from) && !engine.ownWork(change.path)) {
+      if (entry) {
+        await engine.moved(change.from, change.path)
+        await how.moved?.(change.from, change.path, change.dir ? 'folder' : 'file')
+        return
+      }
     }
-    if (!engine.entryAt(change.path)) await made(engine, change.path, change.dir)
+    // Half of it is all that is still so: what went, or what came.
+    if (left) await gone(engine, change.from)
+    if (there) await came(engine, change.path, change.dir)
     return
   }
-  if (!kept(engine, change.path, change.dir) || how.own(change.path)) return
+  if (!kept(engine, change.path, change.dir)) return
   if (change.kind === 'removed') {
-    if (engine.entryAt(change.path)) await engine.removed(change.path)
+    await gone(engine, change.path)
     return
   }
   if (engine.entryAt(change.path)) {
@@ -183,7 +202,21 @@ async function changed(how: Watching, change: SpaceChange): Promise<void> {
   // A file with no entry that changed is a file with no entry: its `created` may have
   // met it locked (a picture half copied on Windows), and nothing else would ask again
   // before the next launch. A folder's change says nothing about the folder.
-  if (change.kind === 'created' || !change.dir) await made(engine, change.path, change.dir)
+  if (change.kind === 'created' || !change.dir) await came(engine, change.path, change.dir)
+}
+
+/** A path heard to have gone: a delete, where it is gone and was nobody's doing here. */
+async function gone(engine: Engine, path: string): Promise<void> {
+  if (engine.ownWork(path) || !engine.entryAt(path)) return
+  if (await engine.core.world.disk.exists(path)) return
+  await engine.removed(path)
+}
+
+/** A path heard to have come: a file made, where it is there and nobody's doing here. */
+async function came(engine: Engine, path: string, dir: boolean): Promise<void> {
+  if (engine.ownWork(path) || engine.entryAt(path)) return
+  if (!(await engine.core.world.disk.exists(path))) return
+  await made(engine, path, dir)
 }
 
 /** Whether the tree already has a folder where `path` is: the engine makes one on this
@@ -230,7 +263,7 @@ export async function scanned(how: Watching, root: string): Promise<void> {
     seen.add(space.key(inside))
     const entry = space.at(inside)
     if (!entry) {
-      await made(engine, one.path, one.dir)
+      if (!engine.ownWork(one.path)) await made(engine, one.path, one.dir)
     } else if (!one.dir && (entry.mtime !== one.mtime || entry.size !== one.size)) {
       await engine.foreign(one.path)
       // Read once: the next launch reads it again only if it changed again.
@@ -245,7 +278,7 @@ export async function scanned(how: Watching, root: string): Promise<void> {
     if (hidden(entry.local_path) || inForeignCopy(entry.local_path)) continue
     if (unread.some((folder) => space.key(entry.local_path).startsWith(folder))) continue
     const full = engine.core.world.join(root, entry.local_path)
-    if (how.own(full) || (await engine.core.world.disk.exists(full))) continue
+    if (engine.ownWork(full) || (await engine.core.world.disk.exists(full))) continue
     await engine.removed(full)
   }
 }

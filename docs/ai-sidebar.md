@@ -295,7 +295,7 @@ names the provider's own road.
 | `/compact [focus]` | - | CC, Cx, Copilot, Zed | the older turns become a summary; the focus steers it | `/compact` into the live session | `thread/compact/start` | Claude key: server compaction where the model lists `compact`; OpenAI key: `/responses/compact`; ChatGPT plan and compatible: Orden's own summary turn |
 | `/autocompact [auto\|<tokens>\|off]` | - | CC | when compaction happens on its own; shown on the ring as a tick | `--autocompact` at the next process start | `model_auto_compact_token_limit` | Orden's threshold |
 | `/context [all]` | - | CC | the ring's tray as a message: system, instructions, tools, attached, conversation, free | `modelUsage` of the last result | `thread/tokenUsage/updated` | the response's `usage` |
-| `/btw [question]` | `/side` | CC `/btw`, Cx `/side` (`/btw`), Cursor | the Quick question sheet, with this thread as its context; nothing is added here (`docs/ai.md`, "A quick question") | one-shot ask | one-shot ask | `complete()` |
+| `/btw [question]` | `/side` | CC `/btw`, Cx `/side` (`/btw`), Cursor | the Quick question sheet: a chat of its own beside this one, in the list at once; nothing is added here (`docs/ai.md`, "A quick question") | one-shot ask | one-shot ask | `complete()` |
 | `/copy [n]` | - | CC, Cx | the nth latest answer, citations as wikilinks | Orden | Orden | Orden |
 | `/export [note]` | `/save` | CC | the thread as a note in the space (or the clipboard with no name) | Orden | Orden | Orden |
 | `/archive` | - | Cx | out of the list, kept | Orden | Orden | Orden |

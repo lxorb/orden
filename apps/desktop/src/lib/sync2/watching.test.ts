@@ -58,6 +58,7 @@ describe('a launch scan', () => {
         removed,
         created: () => Promise.resolve(null),
         placed: (path: string) => ({ space, path: path.slice(ROOT.length + 1) }),
+        ownWork: () => false,
         core: {
           spaces: new Map([['s', space]]),
           world: {
@@ -69,7 +70,6 @@ describe('a launch scan', () => {
         },
       },
       ready: () => true,
-      own: () => false,
     } as unknown as Watching
     await scanned(how, ROOT)
     return removed

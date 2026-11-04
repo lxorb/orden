@@ -22,7 +22,18 @@ import { repositioned } from '@orden/sync-core/order'
 import type { TreeEntry } from '@orden/sync-core/tree'
 import type { EngineEvents, Engine as AskedEngine } from './asking.svelte'
 import { Core } from './core'
-import { atOrUnder, made, moved, placed as placedRows, removed, restored, unsynced } from './create'
+import {
+  atOrUnder,
+  carried,
+  intended,
+  made,
+  mergeableAfter,
+  moved,
+  placed as placedRows,
+  removed,
+  restored,
+  unsynced,
+} from './create'
 import type { Doc } from './docs'
 import { HeldList, type Names } from './held'
 import { holdsDocument } from './kinds'
@@ -313,7 +324,16 @@ export class Engine implements AskedEngine {
     mergeable?: string,
   ): Promise<string | null> {
     const placed = this.placed(path)
-    if (!placed || placed.space.at(placed.path)) return null
+    if (!placed) return null
+    const there = placed.space.at(placed.path)
+    if (there) {
+      // Heard first from the folder's watcher, before the file list said it made it: the
+      // same entry, which takes what only the file list knows - a day's note made to be
+      // folded into one another device made (#1068).
+      if (mergeable !== undefined)
+        await this.core.commit(mergeableAfter(placed.space, there, mergeable))
+      return null
+    }
     if (!folder && (await this.heldPaper(path))) return null
     const { id, changes } = await made(this.core, placed.space, {
       path: placed.path,
@@ -366,6 +386,114 @@ export class Engine implements AskedEngine {
     }
     await this.core.commit(moved(this.core, was.space, was.path, now.path))
     await this.settle(was.space)
+  }
+
+  /** A move or a rename the file list, an agent or an undo makes (#1068): said to the
+   *  engine by the id of what is at `from` before the file moves, shown at once and on
+   *  its way to the account, with the entry and everything in it held while `run`
+   *  moves the file, so neither a pass nor the folder's watcher reads the disk halfway.
+   *  Where the file is is written down once `run` is done. A move `run` could not make
+   *  goes back where it was, said the same way. Anything the engine does not keep by an
+   *  id - another space, a page note's paper - is moved by `run` alone and said after
+   *  it, as before. */
+  async moving(from: string, to: string, run: () => Promise<void>): Promise<void> {
+    const was = this.placed(from)
+    const now = this.placed(to)
+    const entry = was?.space.at(was.path)
+    if (
+      !was ||
+      !now ||
+      !entry ||
+      was.space !== now.space ||
+      inForeignCopy(now.path) ||
+      (await this.heldPaper(to))
+    ) {
+      await run()
+      return
+    }
+    const { space } = was
+    const release = this.handle(atOrUnder(space, was.path), [from, to])
+    const name = space.shown().entries.get(entry.id)?.name
+    try {
+      await this.core.use(() => this.core.commit(intended(this.core, space, entry, now.path)))
+      try {
+        await run()
+      } catch (error) {
+        await this.core.use(() =>
+          this.core.commit(intended(this.core, space, entry, was.path, name)),
+        )
+        throw error
+      }
+      await this.core.use(() => this.core.commit(carried(space, was.path, now.path)))
+    } finally {
+      release()
+    }
+    await this.core.use(() => this.settle(space))
+  }
+
+  /** A delete the file list, an agent or an undo makes: what is at `path` held while
+   *  `run` takes the file away, and then said to the engine at once, with the word it
+   *  can be put back by - which `run` may answer, the trash's id for it. */
+  async removing(path: string, run: () => Promise<unknown>): Promise<void> {
+    const placed = this.placed(path)
+    const release = this.handle(placed ? atOrUnder(placed.space, placed.path) : [], [path])
+    try {
+      const back = await run()
+      await this.core.use(() => this.remove(path, typeof back === 'string' ? back : undefined))
+    } finally {
+      release()
+    }
+  }
+
+  /** Entries and paths in hand until the answer is called; see `inHand` in core.ts. */
+  private handle(entries: readonly EntryRow[], paths: readonly string[]): () => void {
+    const { inHand, handPaths } = this.core
+    for (const entry of entries) inHand.set(entry.id, (inHand.get(entry.id) ?? 0) + 1)
+    const held = paths.map((one) => this.normed(one))
+    handPaths.push(...held)
+    return () => {
+      for (const entry of entries) {
+        const left = (inHand.get(entry.id) ?? 1) - 1
+        if (left) inHand.set(entry.id, left)
+        else inHand.delete(entry.id)
+      }
+      for (const one of held) {
+        const at = handPaths.indexOf(one)
+        if (at >= 0) handPaths.splice(at, 1)
+      }
+    }
+  }
+
+  /** A path as `relative` reads it, by the disk of the space it is in. */
+  private normed(path: string): string {
+    return norm(this.placed(path)?.space.row.root ?? path, path)
+  }
+
+  /** Whether what is at a path on this disk, or comes or goes there, is the engine's
+   *  own doing still under way, which the folder's watcher has nothing to read in
+   *  (#1068): a path the app is moving or deleting a file at this moment (`moving`),
+   *  or one where an entry's file is and the tree shows it elsewhere or nowhere, or
+   *  where the tree shows an entry whose file is not there yet - a pass between the
+   *  one and the other. Read off the tree and the disk as they are, never off how long
+   *  ago anything happened. */
+  ownWork(path: string): boolean {
+    const at = this.normed(path)
+    const folded = (one: string) => (this.core.world.foldsCase ? one.toLowerCase() : one)
+    for (const one of this.core.handPaths) {
+      if (folded(at) === folded(one) || folded(at).startsWith(`${folded(one)}/`)) return true
+    }
+    const placed = this.placed(path)
+    if (!placed) return false
+    const { space } = placed
+    const key = space.key(placed.path)
+    const wanted = space.paths()
+    for (const entry of space.entries.values()) {
+      const want = wanted.get(entry.id)
+      const here = entry.local_path
+      if (here && space.key(here) === key && want !== here) return true
+      if (want !== undefined && space.key(want) === key && here !== want) return true
+    }
+    return false
   }
 
   /** Whether a file is the paper a page note holds: `Lecture.pages.pdf` beside
@@ -425,6 +553,7 @@ export class Engine implements AskedEngine {
       join: (folder, path) => this.core.world.join(folder, path),
       keeps: (id) => this.core.hasPending(id) || this.core.isHeld(id),
       forget: (id) => forgets.push(...this.core.forgetChanges(id)),
+      busy: (id) => this.core.inHand.has(id),
     })
     await this.core.commit([...this.core.entryChanges(changed), ...forgets])
   }

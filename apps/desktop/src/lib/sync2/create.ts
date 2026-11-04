@@ -1,9 +1,9 @@
 /** What this device does to a space's tree, told to the account as operations on ids
  *  (docs/sync-v2.md sections 5.9 and 5.13).
  *
- *  Every one arrives after the disk has it - the workspace made, renamed, moved or
- *  deleted the file and says so once (`workspace/file-ops.ts`), and the simulator's
- *  person does the same - so the entry takes its new place here, the op waits in the
+ *  A move, a rename or a delete arrives before the disk has it (`moving` and `removing`
+ *  in engine.ts, `intended` here), a file made after - and anything another program did,
+ *  after (`watching.ts`) - so the entry takes its new place here, the op waits in the
  *  outbox, and what is shown is the tree with the op applied, exactly as the account
  *  will apply it.
  *
@@ -30,7 +30,7 @@ import { MINE } from './docs'
 import { holdsDocument, shapeOf, turn } from './kinds'
 import { folderOf, joined, nameOf, SEP, type SpaceState } from './places'
 import { wrote } from './project'
-import { GONE_KEPT, goneRow } from './records'
+import { GONE_KEPT, goneRow, outgoingBytes } from './records'
 import { put, remove, type Change, type EntryRow } from './store'
 
 /** What an entry is, read off its name: sync-core's rule, which the account reads by too. */
@@ -172,6 +172,22 @@ export async function made(
   return { id, changes }
 }
 
+/** A create still waiting to go, made `mergeable` after all: the file list said a moment
+ *  after the folder's watcher that it made the note, and as the day's note it is. */
+export function mergeableAfter(space: SpaceState, entry: EntryRow, text: string): Change[] {
+  const one = space.outbox.find(
+    (op) =>
+      op.record.t === 'op' &&
+      !op.record.sent &&
+      op.record.op.t === 'create' &&
+      op.record.op.id === entry.id,
+  )
+  if (one?.record.t !== 'op' || one.record.op.t !== 'create') return []
+  one.record = { t: 'op', op: { ...one.record.op, mergeable: { text } } }
+  one.row = { ...one.row, op: outgoingBytes(one.record) }
+  return [put('outbox', one.row)]
+}
+
 /** Every entry at or under a local path. */
 export function atOrUnder(space: SpaceState, path: string): EntryRow[] {
   const key = space.key(path)
@@ -194,32 +210,68 @@ export function moved(core: Core, space: SpaceState, from: string, to: string): 
   if (inForeignCopy(to) && !inForeignCopy(from)) return []
   const changes: Change[] = []
   const parent = folderFor(core, space, folderOf(to), changes)
-  // Moved and not renamed keeps the account's name, which a name this platform spells its
-  // own way here is not: `CON` on Windows would become `_CON` on every device.
-  const had = space.shown().entries.get(entry.id)?.name
-  const name = had !== undefined && nameOf(from) === nameOf(to) ? had : nameOf(to)
-
   // Everything under it is where it is now, before the op is shown.
+  changes.push(...carried(space, from, to))
+  changes.push(...placing(core, space, entry, parent, keptName(space, entry, from, to)))
+  space.changed()
+  return changes
+}
+
+/** The name a move to `to` leaves an entry: moved and not renamed keeps the account's, which
+ *  a name this platform spells its own way here is not: `CON` on Windows would become `_CON`
+ *  on every device. */
+function keptName(space: SpaceState, entry: EntryRow, from: string, to: string): string {
+  const had = space.shown().entries.get(entry.id)?.name
+  return had !== undefined && nameOf(from) === nameOf(to) ? had : nameOf(to)
+}
+
+/** The op that puts an entry at `to`, shown at once, before its file is there: what
+ *  the file list does is said before the disk has it (`moving` in engine.ts), so
+ *  nothing the folder's watcher hears meanwhile is a guess. Where the file is stays as
+ *  it was until `carried`. `name`: what it was called, for a move put back. */
+export function intended(
+  core: Core,
+  space: SpaceState,
+  entry: EntryRow,
+  to: string,
+  name = keptName(space, entry, entry.local_path, to),
+): Change[] {
+  const changes: Change[] = []
+  const parent = folderFor(core, space, folderOf(to), changes)
+  changes.push(...placing(core, space, entry, parent, name))
+  space.changed()
+  return changes
+}
+
+/** Everything at or under `from` is at `to` on this disk now. */
+export function carried(space: SpaceState, from: string, to: string): Change[] {
+  const changes: Change[] = []
   for (const one of atOrUnder(space, from)) {
     one.local_path = `${to}${one.local_path.slice(from.length)}`
     changes.push(put('entries', { ...one }))
   }
+  space.changed()
+  return changes
+}
 
+/** A rename, or a move, of an entry to `name` in `parent`, where what is shown does not
+ *  have it there already. */
+function placing(
+  core: Core,
+  space: SpaceState,
+  entry: EntryRow,
+  parent: string | null,
+  name: string,
+): Change[] {
   const seen = space.row.cursor
   const shown = space.shown().entries.get(entry.id)
   if (shown?.parent === parent) {
-    if (shown.name !== name) {
-      changes.push(
-        ...queue(core, space, { op: core.nextId('o'), t: 'rename', id: entry.id, name, seen }),
-      )
-    }
-  } else {
-    const op: Op = { op: core.nextId('o'), t: 'move', id: entry.id, parent, seen }
-    if (shown?.name !== name) op.name = name
-    changes.push(...queue(core, space, op))
+    if (shown.name === name) return []
+    return queue(core, space, { op: core.nextId('o'), t: 'rename', id: entry.id, name, seen })
   }
-  space.changed()
-  return changes
+  const op: Op = { op: core.nextId('o'), t: 'move', id: entry.id, parent, seen }
+  if (shown?.name !== name) op.name = name
+  return queue(core, space, op)
 }
 
 /** Entries put somewhere else among the rest of their folder, by hand (#1068): one

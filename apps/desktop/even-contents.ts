@@ -527,9 +527,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  overview's bubbles. Measured 6,001,579. The catalogues to 979,600: the overview's blur setting
  *  and One colour in every catalogue, measured 979,469. The agents' branch moved neither past
  *  the budgets before them.
+ *
+ *  The code raised on 2026-11-04, to 6,002,200, as #1068's move and delete said to sync first
+ *  and #1115's quick question started as a chat came to claude/hunt-round-1, net of what the
+ *  latter took out. Measured 6,002,001.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_001_800,
+  code: 6_002_200,
   catalogues: 979_600,
   styles: 290_000,
   fonts: 260_000,

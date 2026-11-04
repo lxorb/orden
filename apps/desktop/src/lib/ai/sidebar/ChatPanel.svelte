@@ -29,7 +29,6 @@
   import { hearAgain } from '../../shortcuts/registry'
   import { shortcuts } from '../../shortcuts.svelte'
   import { isTreeDrag } from '../../drag-paths'
-  import { workspace } from '../../workspace.svelte'
   import { ai } from '../store.svelte'
   import { following, toggleFollow } from '../review'
   import { chat } from './chat.svelte'
@@ -59,24 +58,8 @@
   const listing = $derived(chat.listing && !wide)
   const empty = $derived(!chat.turns.length && !chat.busy && !chat.pending[head?.id ?? ''])
 
-  // The space in front is where a new chat starts, and nothing more: the chats are one
-  // list, every space's, and the open one stays open as the space changes (#332).
-  // Untracked, so what the store reads while it changes threads is not something these
-  // effects wait on: only the space, and which spaces there are.
-  $effect(() => {
-    const space = workspace.activeSpaceId ?? ''
-    untrack(() => chat.here(space))
-  })
-  $effect(() => {
-    const spaces = workspace.spaces.map((one) => one.id)
-    untrack(() => chat.know(spaces))
-  })
-
-  // A thread not yet sent asks whichever provider Ask is set to now.
-  $effect(() => {
-    const provider = ai.providerFor('ask')
-    untrack(() => chat.follow(provider))
-  })
+  // Which spaces there are, the one in front and the provider Ask uses are the store's
+  // to follow, drawn or not (#1115); see the end of chat.svelte.ts.
 
   /** A tab's rail shown or put away. */
   function toggleRail() {

@@ -11,7 +11,7 @@
    *  the field first and the answer under it for the same reason. Escape, a click
    *  outside or the key again put it away, and a follow-up is the field again.
    *
-   *  The store is ai/quick.svelte.ts; what goes along is ai/quick.ts. */
+   *  The store is ai/quick.svelte.ts, a shortcut to the AI panel's own chat (#1115). */
   import { cubicOut } from 'svelte/easing'
   import { fade, fly, scale } from 'svelte/transition'
   import Answer from './ai/Answer.svelte'
@@ -151,9 +151,7 @@
         <div class="chips" transition:fade={{ duration: dur(120) }}>
           <span class="chip" class:quoted={context.kind === 'selection'} title={context.name}>
             <svg viewBox="0 0 13 13"><path d={MARKS[context.kind]} /></svg>
-            <span class="what"
-              >{context.kind === 'selection' ? context.text.slice(0, 120) : context.name}</span
-            >
+            <span class="what">{context.name}</span>
             <button
               class="drop"
               title={t('Remove')}
@@ -199,6 +197,25 @@
 
         {#if waiting}
           <Thinking />
+        {/if}
+
+        <!-- The agent asks the reader something - a file it may write, a command it may
+             run - which is answered where the chat is drawn whole: the panel (#1115). -->
+        {#if quick.asking && workspace.offers('ask')}
+          <div class="acts" in:fade={{ duration: dur(120) }}>
+            <button
+              class="nib-glyph act"
+              title={t('Continue in the panel')}
+              aria-label={t('Continue in the panel')}
+              onclick={() => void quick.continueInPanel()}
+            >
+              <svg viewBox="0 0 13 13"
+                ><path
+                  d="M2.5 3.5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6l-2.5 2v-2h0a1 1 0 0 1-1-1z"
+                /></svg
+              >
+            </button>
+          </div>
         {/if}
 
         {#if quick.trouble}

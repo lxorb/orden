@@ -67,8 +67,31 @@ export type FileOp = (
  *  operations in a row reach the account in the order they were done. */
 export type Follower = (op: FileOp) => unknown
 
+/** What hears of a move or a delete before the disk has it, and makes it: `run` is the
+ *  operation on the disk, answering for a delete the word it can be put back by (the
+ *  trash's id for it). Sync, which says it to its engine by id first, so the folder's
+ *  watcher has nothing to guess about what Orden is doing itself (#1068). The followers
+ *  still hear it after, as every operation. */
+export type Doer = (op: FileOp, run: () => Promise<unknown>) => Promise<void>
+
 export class FileOps {
   private readonly followers = new Set<Follower>()
+  private doer: Doer | null = null
+
+  /** Makes every move and delete from now on through `doer`. Answers the way to stop. */
+  doneBy(doer: Doer): () => void {
+    this.doer = doer
+    return () => {
+      if (this.doer === doer) this.doer = null
+    }
+  }
+
+  /** A move or a delete made on the disk by `run`, through the doer where there is one;
+   *  told to the followers after, by the operation as ever. */
+  async doing(op: FileOp, run: () => Promise<unknown>): Promise<void> {
+    if (this.doer) await this.doer(op, run)
+    else await run()
+  }
 
   /** Follows every operation from now on. Answers the way to stop. */
   follow(follower: Follower): () => void {
