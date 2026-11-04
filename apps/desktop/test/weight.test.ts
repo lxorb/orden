@@ -1143,8 +1143,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,545,000, and to 391 modules, for a part the strip or a pane
  *  fetched that lands after it has gone, which does nothing now (while-here.ts, Tabs.svelte,
- *  Pane.svelte). Measured 3,544,879, 390 modules. */
-const BUDGET = 3_545_000
+ *  Pane.svelte). Measured 3,544,879, 390 modules.
+ *
+ *  Raised 2026-11-04, to 3,545,700, for #1030: a phone opens the scratchpad from the
+ *  drawer's foot (SidebarFoot.svelte, `scratchFromDrawer` in scratchpad/is.svelte.ts)
+ *  rather than from a switch in every note's bar. Measured 3,545,505. */
+const BUDGET = 3_545_700
 const MOST_FILES = 391
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
