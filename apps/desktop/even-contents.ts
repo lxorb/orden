@@ -464,9 +464,14 @@ export function partOf(file: string, catalogue: boolean): Part {
  *
  *  The code raised on 2026-11-04, to 5,873,000, for #1100: Send feedback's bug back in
  *  the sidebar's foot (SidebarFoot.svelte). Measured 5,872,846.
+ *
+ *  The code raised on 2026-11-04, to 5,875,200, for #1057: the shapes every settings
+ *  button is drawn with (`.nib-tag`, `.nib-setting-mark`, `.nib-glyph.is-danger`, a
+ *  busy `.nib-chip` in base.css), which the stylesheet's raw text carries for export.
+ *  Measured 5,875,013.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_873_000,
+  code: 5_875_200,
   catalogues: 965_200,
   styles: 290_000,
   fonts: 260_000,
