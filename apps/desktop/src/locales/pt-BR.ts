@@ -577,6 +577,9 @@ export const ptBR: Dictionary = {
   // Appearance
   Accent: 'Destaque',
   'Tidy up': 'Organizar',
+  'Blur the app behind the tab overview': 'Desfocar o app atrás da visão geral das abas',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Mostra o app desfocado atrás das janelas, em vez do fundo do próprio Orden.',
   'Swipe in from the edge to see your notes.': 'Deslize a partir da borda para ver suas notas.',
   'Show other tabs as icons': 'Mostrar as outras abas como ícones',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
@@ -2784,4 +2787,5 @@ export const ptBR: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'Não enviado. Seu texto foi mantido para você tentar de novo.',
   'Reset to site icon': 'Voltar ao ícone do site',
+  'One colour': 'Uma cor',
 }

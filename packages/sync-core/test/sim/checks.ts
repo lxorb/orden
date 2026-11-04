@@ -1,6 +1,7 @@
 /** What must be true once a simulated run has gone quiet (docs/sync-v2.md section 12).
  *
- *  - Every device holds the tree and the texts the account holds.
+ *  - Every device holds the tree and the texts the account holds, each row where
+ *    somebody put it among the rest of its folder too (#1068).
  *  - The tree is whole: names unique per folder as folders compare them, every live
  *    entry in a live folder.
  *  - Every word ever typed is in a note or in a version, unless the person it was
@@ -64,7 +65,7 @@ function sortedEntries(entries: readonly EntryView[]): string {
   return JSON.stringify(
     [...entries]
       .sort((a, b) => (a.id < b.id ? -1 : 1))
-      .map((entry) => [entry.id, entry.kind, entry.parent, entry.name]),
+      .map((entry) => [entry.id, entry.kind, entry.parent, entry.name, entry.pos ?? null]),
   )
 }
 

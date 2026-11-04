@@ -4,10 +4,12 @@
    *  from behind the side to where letting go would go, and past that a little further
    *  against a growing pull, so it stops. A ring round its edge fills with the accent as
    *  the fingers go, so how far is left is in sight; full, the circle fills with it, the
-   *  arrow in it gives one small push, and letting go goes. Nothing happens while the
+   *  arrow in it grows a little, and letting go goes. Nothing happens while the
    *  fingers are down. It bursts once and goes when the swipe goes, and slides back out
-   *  when it stays. While the fingers are on it never glides: where it is drawn is where
-   *  they are. See swipes.ts, and gesture_nav_simple.cc in Chromium for the look.
+   *  when it stays. While the fingers are on nothing on it glides or fades, its place, its
+   *  size and its colours alike: where it is drawn is where they are, as they are (#1050).
+   *  Only playing out does it move on its own. See swipes.ts, and gesture_nav_simple.cc
+   *  in Chromium for the look.
    *
    *  Over a web tab the page is a webview drawn above every pixel of the window. While
    *  the fingers are on, the whole pane counts as covered (`nib-swipe-room`, which
@@ -85,7 +87,6 @@
       class:armed={swiping.progress >= 1 || swiping.stage === 'went'}
       class:went={swiping.stage === 'went'}
       class:stayed={swiping.stage === 'stayed'}
-      class:tracking={swiping.stage === 'tracking'}
       class:right={swiping.side === 'right'}
       style:transform="translate({across}px, {drop}px)"
       style:opacity={shade}
@@ -130,11 +131,6 @@
     color: var(--accent);
     /* Moved and faded by the compositor on every step, never painted again for it. */
     will-change: transform, opacity;
-    transition:
-      transform var(--dur-instant) var(--ease-out),
-      background-color var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out),
-      border-color var(--dur-fast) var(--ease-out);
   }
 
   /* The icon's own twenty-four, on its own grid: eight pixels in from the circle's edge,
@@ -148,15 +144,6 @@
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
-    transition: scale var(--dur-fast) var(--ease-spring);
-  }
-
-  /* With the fingers: drawn where they are, never on its way there. */
-  .nib-swipe.tracking {
-    transition:
-      background-color var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out),
-      border-color var(--dur-fast) var(--ease-out);
   }
 
   .nib-swipe.right .arrow {
@@ -178,7 +165,6 @@
     stroke-width: 2;
     stroke-linecap: round;
     stroke-dasharray: 1;
-    transition: opacity var(--dur-fast) var(--ease-out);
   }
 
   .nib-swipe.right .ring {
@@ -201,12 +187,24 @@
     color: var(--accent-ink);
   }
 
-  /* Gone: one burst, and out. */
+  /* Gone: one burst, and out. A swipe a flick decided before the ring was full takes
+     the accent on its way out. */
   .nib-swipe.went {
     scale: 1.2;
     transition:
       opacity var(--dur-base) var(--ease-out),
-      scale var(--dur-base) var(--ease-out);
+      scale var(--dur-base) var(--ease-out),
+      background-color var(--dur-base) var(--ease-out),
+      color var(--dur-base) var(--ease-out),
+      border-color var(--dur-base) var(--ease-out);
+  }
+
+  .went .ring {
+    transition: opacity var(--dur-base) var(--ease-out);
+  }
+
+  .went .arrow {
+    transition: scale var(--dur-base) var(--ease-out);
   }
 
   /* Stayed: back out the way it came. */

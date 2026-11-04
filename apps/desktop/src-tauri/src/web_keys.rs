@@ -41,14 +41,22 @@
 //! is Alt+Tab's shape, and a Ctrl let go of inside the page is the release that
 //! chooses. So is Alt going down on its own, and whatever key goes down while it is
 //! held, as `Unidentified` and never as the key: the window shows each tab's number
-//! while Alt is held, keeps them through Alt and a digit (which is taken, above, and said
-//! as itself) and puts them away at any other key (`told`). Nothing else is said,
-//! so a site cannot be read through this and cannot speak through it either: the event
-//! is the engine's, raised in this process, and nothing in the page can raise it.
+//! and each Essential's letter for as long as Alt is held, through any key, and puts
+//! them away at its release (`told`; lib/tab-strip/numbers.svelte.ts). Nothing else is
+//! said, so a site cannot be read through this and cannot speak through it either: the
+//! event is the engine's, raised in this process, and nothing in the page can raise it.
 //!
-//! `WebView2`'s alone. `WebKitGTK` has no such event reachable through what wry hands
-//! out, and on Orden's own Chromium the webview has no controller to ask; on those a page
-//! keeps every key, as it did.
+//! **The app's own chords.** Alt and a digit is fixed, above. The rest of what the app
+//! takes while Alt is held changes as a person works - an Essential's letter (#1051) is
+//! given as the Essential is made - so the window says which they are (`web_keys_take`)
+//! and every engine takes exactly those from a page as it takes Alt and a digit: the page
+//! never has them and the window is told each as itself (`app_s`). Any other key with
+//! Alt is still the page's. A chord the window asks for must be held with Ctrl or with
+//! Alt, and not both: a key without either is typing, and Ctrl with Alt is `AltGr`.
+//!
+//! On Orden's own Chromium, on Linux, the same comes by way of the X server; see
+//! `grabbed`. A Mac needs none of it: Option and a letter types a character there, so the
+//! app shows no numbers or letters and takes no such key.
 //!
 //! **A Mac needs none of this.** There the chords are rows of the menu bar across the
 //! top of the screen - Cmd+T, Cmd+W, Ctrl+Tab and the rest are key equivalents - and
@@ -181,12 +189,12 @@ pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed>
 
 /// A key the page keeps that the window is only told of: Alt going down on its own, and
 /// any key going down while it is held, named for nothing but that. The window shows each
-/// tab's number the moment Alt goes down and puts them away at such a key - a digit with
-/// Alt is `meaning`'s, said as itself, and keeps them (see
-/// `lib/tab-strip/numbers.svelte.ts`); the page has both keys, as it always did. `AltGr`
-/// is Ctrl and Alt on Windows and is never said, and Alt with Shift is the system's
-/// switch between keyboards. Asked only of a key `meaning` left to the page.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+/// tab's number the moment Alt goes down and keeps them through such a key, as through
+/// every key while Alt is held (see `lib/tab-strip/numbers.svelte.ts`); the page has
+/// both keys, as it always did. `AltGr` is Ctrl and Alt on Windows and is never said, and
+/// Alt with Shift is the system's switch between keyboards. Asked only of a key `meaning`
+/// and `app_s` left to the page.
+#[cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
 pub fn told(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed> {
     if !down || repeat || held.ctrl {
         return None;
@@ -223,6 +231,188 @@ fn digit(vk: u32) -> Option<(&'static str, &'static str)> {
 
     let at = usize::try_from(vk.checked_sub(0x30)?).ok()?;
     DIGITS.get(at).copied()
+}
+
+/// A letter or a digit as `KeyboardEvent` names it, from its virtual key: the letter
+/// in capitals with Shift.
+fn named(vk: u32, shift: bool) -> Option<(&'static str, &'static str)> {
+    const LETTERS: [(&str, &str, &str); 26] = [
+        ("a", "A", "KeyA"),
+        ("b", "B", "KeyB"),
+        ("c", "C", "KeyC"),
+        ("d", "D", "KeyD"),
+        ("e", "E", "KeyE"),
+        ("f", "F", "KeyF"),
+        ("g", "G", "KeyG"),
+        ("h", "H", "KeyH"),
+        ("i", "I", "KeyI"),
+        ("j", "J", "KeyJ"),
+        ("k", "K", "KeyK"),
+        ("l", "L", "KeyL"),
+        ("m", "M", "KeyM"),
+        ("n", "N", "KeyN"),
+        ("o", "O", "KeyO"),
+        ("p", "P", "KeyP"),
+        ("q", "Q", "KeyQ"),
+        ("r", "R", "KeyR"),
+        ("s", "S", "KeyS"),
+        ("t", "T", "KeyT"),
+        ("u", "U", "KeyU"),
+        ("v", "V", "KeyV"),
+        ("w", "W", "KeyW"),
+        ("x", "X", "KeyX"),
+        ("y", "Y", "KeyY"),
+        ("z", "Z", "KeyZ"),
+    ];
+
+    let letter = vk
+        .checked_sub(0x41)
+        .and_then(|at| usize::try_from(at).ok())
+        .and_then(|at| LETTERS.get(at));
+    match letter {
+        Some(&(small, capital, code)) => Some((if shift { capital } else { small }, code)),
+        None => digit(vk),
+    }
+}
+
+/// A chord the app takes from a page while it is the app's: a letter or a digit on the
+/// top row, by its virtual key, and what is held with it. See the top of this file.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Chord {
+    vk: u32,
+    held: Held,
+}
+
+/// A chord as the window asks for it: `KeyboardEvent`'s `code` and its modifiers.
+#[derive(Debug, serde::Deserialize)]
+pub struct Asked {
+    code: String,
+    #[serde(default)]
+    ctrl: bool,
+    #[serde(default)]
+    shift: bool,
+    #[serde(default)]
+    alt: bool,
+}
+
+impl Chord {
+    /// The chord asked for, or `None` for one no page may lose: a key without Ctrl or
+    /// Alt is typing, Ctrl with Alt is `AltGr`'s character, and a key that is no letter
+    /// and no digit is none of the app's.
+    fn of(asked: &Asked) -> Option<Self> {
+        if asked.ctrl == asked.alt {
+            return None;
+        }
+        let (letters, at) = match asked.code.strip_prefix("Key") {
+            Some(letter) => (b'A'..=b'Z', letter),
+            None => (b'0'..=b'9', asked.code.strip_prefix("Digit")?),
+        };
+        let [one] = at.as_bytes() else {
+            return None;
+        };
+        if !letters.contains(one) {
+            return None;
+        }
+        let vk = u32::from(*one);
+        Some(Self {
+            vk,
+            held: Held {
+                ctrl: asked.ctrl,
+                shift: asked.shift,
+                alt: asked.alt,
+            },
+        })
+    }
+}
+
+/// The chords the window has said are the app's now; see `web_keys_take`.
+static TAKEN: std::sync::RwLock<Vec<Chord>> = std::sync::RwLock::new(Vec::new());
+
+#[cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
+fn app_chords() -> Vec<Chord> {
+    TAKEN
+        .read()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .clone()
+}
+
+/// One of the chords the window has said are the app's, pressed: the page never has it,
+/// and the window is told it as itself. A key let go of is `meaning`'s.
+#[cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
+fn app_s(vk: u32, held: Held, down: bool, repeat: bool, taken: &[Chord]) -> Option<Pressed> {
+    if !down || !taken.contains(&Chord { vk, held }) {
+        return None;
+    }
+    let (key, code) = named(vk, held.shift)?;
+    Some(Pressed {
+        key,
+        code,
+        held,
+        repeat,
+        down,
+    })
+}
+
+/// What a key pressed or let go of inside a page means, on an engine that hears every key
+/// apart from its chords: every chord here is the browser's or the app's and comes by its
+/// own way (the grab on Linux), so of the rest only what `told` says of a key going down
+/// is said, and a modifier let go of. `page` is whether a page has the keyboard - the
+/// app's own page hears its keys itself - asked only when the answer matters; `grabbing`
+/// whether a chord holds the keyboard, whose release nothing else hears.
+#[cfg_attr(not(feature = "cef"), allow(dead_code))]
+fn heard_raw(
+    vk: u32,
+    held: Held,
+    down: bool,
+    repeat: bool,
+    taken: &[Chord],
+    grabbing: bool,
+    page: impl FnOnce() -> bool,
+) -> Option<Pressed> {
+    if down {
+        let chord = meaning(vk, held, true, repeat).is_some()
+            || reloading(vk, held).is_some()
+            || app_s(vk, held, true, repeat, taken).is_some();
+        let said = if chord {
+            None
+        } else {
+            told(vk, held, true, repeat)
+        };
+        return said.filter(|_| page());
+    }
+    let said = meaning(vk, held, false, repeat)?;
+    (grabbing || page()).then_some(said)
+}
+
+/// The chords the app takes from a page from now on, in place of the ones before (see
+/// the top of this file); said by the window whenever they change. Answers whether a
+/// page says Alt held and let go of, which the window then hears in place of the
+/// keyboard going into the page.
+#[tauri::command(async)]
+pub fn web_keys_take(app: tauri::AppHandle, chords: Vec<Asked>) -> bool {
+    let chords: Vec<Chord> = chords.iter().filter_map(Chord::of).collect();
+    *TAKEN
+        .write()
+        .unwrap_or_else(std::sync::PoisonError::into_inner) = chords;
+    tells_alt(&app)
+}
+
+/// `WebView2` says every key pressed with Alt and asks for the taken ones afresh at
+/// each, so nothing is to be done but answer.
+#[cfg(all(windows, not(feature = "cef")))]
+fn tells_alt(_app: &tauri::AppHandle) -> bool {
+    true
+}
+
+#[cfg(feature = "cef")]
+fn tells_alt(app: &tauri::AppHandle) -> bool {
+    grabbed::retake(app)
+}
+
+/// A Mac's engine says nothing of Alt, and has no chords to take.
+#[cfg(not(any(windows, feature = "cef")))]
+fn tells_alt(_app: &tauri::AppHandle) -> bool {
+    false
 }
 
 /// Starts listening on one page. Called on the window's thread, once, as the page is
@@ -282,7 +472,9 @@ pub fn listen(webview: &tauri::webview::PlatformWebview, app: tauri::AppHandle, 
             if vk == 0x7A && sender.is_some_and(|one| crate::web_page::holds_screen(&one)) {
                 return Ok(());
             }
-            let Some(pressed) = meaning(vk, now, down, repeat) else {
+            let pressed = meaning(vk, now, down, repeat)
+                .or_else(|| app_s(vk, now, down, repeat, &app_chords()));
+            let Some(pressed) = pressed else {
                 // Alt held on its own, which the page keeps and the window is told of.
                 if let Some(said) = told(vk, now, down, repeat) {
                     let _ = app.emit_to(window.as_str(), PRESSED, said);
@@ -402,10 +594,20 @@ pub use grabbed::{focus_in, listen, x11_window};
 /// chooses in Ctrl+Tab. The app's own page is a browser beside the tabs' and not inside
 /// them, so its keys are never taken.
 ///
+/// The chords the window says are the app's (`web_keys_take`) are grabbed the same way,
+/// and grabbed afresh whenever it says new ones.
+///
 /// Nothing else is taken, and the page keeps every key that is not a chord, Alt alone
-/// included: a page cannot tell the window that Alt is held here, so the tabs' numbers
-/// show only while the app's own page has the keyboard. F11 is taken even while a video
-/// in the page holds the screen, which `WebView2` gives back; Escape leaves it there.
+/// included. But the window is told Alt going down and let go of inside a page, as on
+/// `WebView2`, so the tabs' numbers and the Essentials' letters stay up while Alt is held
+/// there (#1053): X11's input extension says every key raw to a client that asks on the
+/// root window, whoever has the keyboard and whatever holds it, and never takes a key from
+/// anyone. Said only while a page has the keyboard - the app's own page hears its own -
+/// and through `heard_raw`, which leaves every chord to its grab. A modifier let go of
+/// while a grab holds the keyboard is said from there too, and no longer from the grab,
+/// so it is said once. Where the extension is not there, the grab says those releases,
+/// as it did, and nothing says Alt. F11 is taken even while a video in the page holds
+/// the screen, which `WebView2` gives back; Escape leaves it there.
 #[cfg(feature = "cef")]
 mod grabbed {
     use std::collections::HashMap;
@@ -413,14 +615,20 @@ mod grabbed {
 
     use tauri::{AppHandle, Emitter, Manager};
     use x11rb::connection::Connection as _;
+    use x11rb::protocol::xinput::{
+        self, ConnectionExt as _, Device, KeyEventFlags, RawKeyPressEvent, XIEventMask,
+    };
     use x11rb::protocol::xproto::{
-        ChangeWindowAttributesAux, ConnectionExt as _, EventMask, GrabMode, Keycode, Keysym,
-        ModMask,
+        ChangeWindowAttributesAux, ConnectionExt as _, EventMask, Grab, GrabMode, Keycode, Keysym,
+        ModMask, Window,
     };
     use x11rb::protocol::Event;
     use x11rb::rust_connection::RustConnection;
 
-    use super::{meaning, page_took_focus, reloading, vk_of, Held, Pressed, PRESSED};
+    use super::{
+        app_chords, app_s, heard_raw, meaning, page_took_focus, reloading, vk_of, Chord, Held,
+        Pressed, PRESSED,
+    };
 
     /// The keys a chord is made with, as X11 names them: T, W, N and R, Tab, Page Up and
     /// Page Down, the digits on the top row, F5, F6 and F11.
@@ -448,8 +656,9 @@ mod grabbed {
     }
 
     /// Every chord the page may not have, as a key and the modifiers held with it: what
-    /// `meaning` and `reloading` say is the browser's, and nothing else.
-    pub(super) fn chords() -> Vec<(Keysym, u16)> {
+    /// `meaning` and `reloading` say is the browser's, and what the window says is the
+    /// app's (`taken`), and nothing else.
+    pub(super) fn chords(taken: &[Chord]) -> Vec<(Keysym, u16)> {
         let mut every = Vec::new();
         for key in KEYS {
             let Some(vk) = vk_of(key) else { continue };
@@ -460,12 +669,29 @@ mod grabbed {
                 }
             }
         }
+        for one in taken {
+            // A letter's keysym is the small one, which is what the map's first column
+            // has; a digit's is its own virtual key.
+            let key = if (0x41..=0x5A).contains(&one.vk) {
+                one.vk + 0x20
+            } else {
+                one.vk
+            };
+            let chord = (key, mask_of(one.held));
+            if !every.contains(&chord) {
+                every.push(chord);
+            }
+        }
         every
     }
 
     /// One connection to the X server for every grab, and the keyboard's map with it.
     struct Grabs {
         x: RustConnection,
+        /// The screen's root window, where raw keys are asked for.
+        root: Window,
+        /// Whether the server says raw keys; see the top of this module.
+        raw: bool,
         /// Each grabbed page's browser window, and the label of the app window it is in.
         pages: Mutex<HashMap<u32, String>>,
         /// Which keysym each keycode is without modifiers, from the server's own map.
@@ -519,11 +745,14 @@ mod grabbed {
             }
         }
 
-        /// Every chord grabbed on `page`'s browser window. A window that has gone already
-        /// is an error the server sends back as an event, read and dropped below.
+        /// Every chord grabbed on `page`'s browser window, in place of the ones before:
+        /// the window's chords change, and so does the keyboard's map. A window that has
+        /// gone already is an error the server sends back as an event, read and dropped
+        /// below.
         fn grab(&self, page: u32) {
+            let _ = self.x.ungrab_key(Grab::ANY, page, ModMask::ANY);
             let map = self.map.lock().unwrap_or_else(PoisonError::into_inner);
-            for (sym, mask) in chords() {
+            for (sym, mask) in chords(&app_chords()) {
                 for code in map.keycodes(sym) {
                     for lock in LOCKS {
                         let _ = self.x.grab_key(
@@ -541,11 +770,111 @@ mod grabbed {
             let _ = self.x.flush();
         }
 
+        /// Every grabbed page's browser window.
+        fn pages(&self) -> Vec<u32> {
+            self.pages
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+                .keys()
+                .copied()
+                .collect()
+        }
+
+        /// Which of `pages` - browser windows - has the keyboard, or holds the window that
+        /// has it: the window with the input focus, and its parents up to the root.
+        fn focused(&self, pages: &[u32]) -> Option<u32> {
+            let mut at = self.x.get_input_focus().ok()?.reply().ok()?.focus;
+            for _ in 0..16 {
+                if pages.contains(&at) {
+                    return Some(at);
+                }
+                let tree = self.x.query_tree(at).ok()?.reply().ok()?;
+                if tree.parent == 0 || tree.parent == tree.root {
+                    return None;
+                }
+                at = tree.parent;
+            }
+            None
+        }
+
+        /// A key the server says raw: said to the window where `heard_raw` says so, the
+        /// modifiers held read from the server as they are now. `grabbing` is the app
+        /// window whose page a chord's grab holds the keyboard of, if one does.
+        fn heard(
+            &self,
+            app: &AppHandle,
+            key: &RawKeyPressEvent,
+            down: bool,
+            grabbing: Option<&str>,
+        ) {
+            let Ok(code) = Keycode::try_from(key.detail) else {
+                return;
+            };
+            let sym = self
+                .map
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+                .keysym(code);
+            let Some(vk) = sym.and_then(vk_of) else {
+                return;
+            };
+            let Some(state) = self
+                .x
+                .query_pointer(self.root)
+                .ok()
+                .and_then(|cookie| cookie.reply().ok())
+            else {
+                return;
+            };
+            let repeat = key.flags.contains(KeyEventFlags::KEY_REPEAT);
+            let mut holder = grabbing.map(str::to_owned);
+            let said = heard_raw(
+                vk,
+                held_by(u16::from(state.mask)),
+                down,
+                repeat,
+                &app_chords(),
+                grabbing.is_some(),
+                || {
+                    let page = self.focused(&self.pages()).and_then(|page| {
+                        self.pages
+                            .lock()
+                            .unwrap_or_else(PoisonError::into_inner)
+                            .get(&page)
+                            .cloned()
+                    });
+                    let found = page.is_some();
+                    holder = holder.take().or(page);
+                    found
+                },
+            );
+            if let (Some(said), Some(holder)) = (said, holder) {
+                // Only told: the page has the key as well, and keeps the keyboard.
+                let _ = app.emit_to(holder.as_str(), PRESSED, said);
+            }
+        }
+
         /// What the server says, for as long as it says anything: a chord pressed in a
-        /// page, a modifier let go of while the chord holds the keyboard, and a new map.
+        /// page, a key raw, a modifier let go of while the chord holds the keyboard, and
+        /// a new map.
         fn hear(&self, app: &AppHandle) {
+            // The key whose grab holds the keyboard, and the window of the page it holds.
+            let mut grabbing: Option<(Keycode, String)> = None;
             while let Ok(event) = self.x.wait_for_event() {
                 let (window, code, state, down) = match event {
+                    Event::XinputRawKeyPress(key) => {
+                        self.heard(app, &key, true, grabbing.as_ref().map(|one| one.1.as_str()));
+                        continue;
+                    }
+                    Event::XinputRawKeyRelease(key) => {
+                        self.heard(
+                            app,
+                            &key,
+                            false,
+                            grabbing.as_ref().map(|one| one.1.as_str()),
+                        );
+                        continue;
+                    }
                     // A page's browser window took the keyboard: the app's own page lets
                     // go of it, whether or not CEF tells it; see keyboard.rs.
                     Event::FocusIn(focus) => {
@@ -558,14 +887,7 @@ mod grabbed {
                     Event::KeyRelease(key) => (key.event, key.detail, u16::from(key.state), false),
                     Event::MappingNotify(_) => {
                         self.read_map();
-                        let pages: Vec<u32> = self
-                            .pages
-                            .lock()
-                            .unwrap_or_else(PoisonError::into_inner)
-                            .keys()
-                            .copied()
-                            .collect();
-                        for page in pages {
+                        for page in self.pages() {
                             self.grab(page);
                         }
                         continue;
@@ -587,12 +909,23 @@ mod grabbed {
                     continue;
                 };
                 let held = held_by(state);
+                if !down && grabbing.as_ref().is_some_and(|one| one.0 == code) {
+                    grabbing = None;
+                }
                 let said = if down {
-                    meaning(vk, held, true, false).or_else(|| reloading(vk, held))
+                    meaning(vk, held, true, false)
+                        .or_else(|| reloading(vk, held))
+                        .or_else(|| app_s(vk, held, true, false, &app_chords()))
+                } else if self.raw {
+                    // Said raw, above.
+                    None
                 } else {
                     meaning(vk, held, false, false)
                 };
                 if let Some(said) = said {
+                    if said.down {
+                        grabbing = Some((code, holder.clone()));
+                    }
                     told(app, holder, said);
                 }
             }
@@ -621,8 +954,12 @@ mod grabbed {
                 let (x, _) = x11rb::connect(None)
                     .map_err(|error| eprintln!("web keys: no X server to take chords on: {error}"))
                     .ok()?;
+                let root = x.setup().roots.first()?.root;
+                let raw = raw_keys(&x, root);
                 let grabs = Arc::new(Grabs {
                     x,
+                    root,
+                    raw,
                     pages: Mutex::new(HashMap::new()),
                     map: Mutex::new(Map::default()),
                 });
@@ -635,6 +972,36 @@ mod grabbed {
                 Some(grabs)
             })
             .clone()
+    }
+
+    /// Every key asked for raw, on the root window: true where the server has the input
+    /// extension at 2.2 or later and took the asking.
+    fn raw_keys(x: &RustConnection, root: Window) -> bool {
+        let version = x
+            .xinput_xi_query_version(2, 2)
+            .ok()
+            .and_then(|cookie| cookie.reply().ok());
+        if version.is_none_or(|one| (one.major_version, one.minor_version) < (2, 2)) {
+            return false;
+        }
+        let keys = xinput::EventMask {
+            deviceid: Device::ALL_MASTER.into(),
+            mask: vec![XIEventMask::RAW_KEY_PRESS | XIEventMask::RAW_KEY_RELEASE],
+        };
+        x.xinput_xi_select_events(root, &[keys])
+            .is_ok_and(|cookie| cookie.check().is_ok())
+    }
+
+    /// The window's chords taken afresh on every page; see `web_keys_take`. Answers
+    /// whether a page says Alt held and let go of.
+    pub(super) fn retake(app: &AppHandle) -> bool {
+        let Some(grabs) = grabs(app) else {
+            return false;
+        };
+        for page in grabs.pages() {
+            grabs.grab(page);
+        }
+        grabs.raw
     }
 
     /// A page's browser window, as the X server knows it; `None` before CEF has made it.
@@ -653,19 +1020,7 @@ mod grabbed {
     /// it, as the X server says: the window with the input focus, and its parents up to the
     /// root. `None` where no X server was reached.
     pub fn focus_in(pages: &[u32]) -> Option<u32> {
-        let grabs = GRABS.get()?.as_ref()?;
-        let mut at = grabs.x.get_input_focus().ok()?.reply().ok()?.focus;
-        for _ in 0..16 {
-            if pages.contains(&at) {
-                return Some(at);
-            }
-            let tree = grabs.x.query_tree(at).ok()?.reply().ok()?;
-            if tree.parent == 0 || tree.parent == tree.root {
-                return None;
-            }
-            at = tree.parent;
-        }
-        None
+        GRABS.get()?.as_ref()?.focused(pages)
     }
 
     /// Starts taking the browser's chords on one page. Called on the window's thread,
@@ -690,7 +1045,30 @@ mod grabbed {
 
     #[cfg(test)]
     mod tests {
-        use super::Map;
+        use super::{chords, Map};
+        use crate::web_keys::{Asked, Chord};
+
+        /// The window's chords are grabbed with the browser's, a letter by its small
+        /// keysym under Mod1, and each only once.
+        #[test]
+        fn the_app_s_chords_are_grabbed_with_the_browser_s() {
+            let asked = |code: &str| {
+                Chord::of(&Asked {
+                    code: code.into(),
+                    ctrl: false,
+                    shift: false,
+                    alt: true,
+                })
+                .expect("a chord")
+            };
+            let before = chords(&[]);
+            assert!(!before.contains(&(0x65, 0x08)));
+            let with = chords(&[asked("KeyE"), asked("Digit1")]);
+            assert!(with.contains(&(0x65, 0x08)));
+            // Alt and 1 is the browser's already, and grabbed once.
+            assert_eq!(with.iter().filter(|one| **one == (0x31, 0x08)).count(), 1);
+            assert_eq!(with.len(), before.len() + 1);
+        }
 
         /// AZERTY's top row is `&`, `é`, ... with the digits under Shift, as the server's
         /// map has it: two keysyms a keycode, from keycode 10 on.
@@ -711,7 +1089,164 @@ mod grabbed {
 
 #[cfg(test)]
 mod tests {
-    use super::{meaning, page_took_focus, told, Held};
+    use super::{app_s, heard_raw, meaning, page_took_focus, told, Asked, Chord, Held};
+
+    const ALT: Held = Held {
+        ctrl: false,
+        shift: false,
+        alt: true,
+    };
+
+    fn asked(code: &str, ctrl: bool, shift: bool, alt: bool) -> Option<Chord> {
+        Chord::of(&Asked {
+            code: code.into(),
+            ctrl,
+            shift,
+            alt,
+        })
+    }
+
+    /// #1051, #1053: an Essential's letter, asked for by the window, is taken from the
+    /// page and said as itself; every other letter with Alt is still the page's.
+    #[test]
+    fn a_chord_the_window_asks_for_is_taken_and_said_as_itself() {
+        let taken = [asked("KeyE", false, false, true).expect("Alt and E")];
+        let said = app_s(0x45, ALT, true, false, &taken).expect("taken");
+        assert_eq!((said.key, said.code), ("e", "KeyE"));
+        assert!(said.held.alt && said.down && !said.keeps_page());
+        // Held, it repeats as itself.
+        assert!(app_s(0x45, ALT, true, true, &taken).is_some_and(|one| one.repeat));
+        // Another letter, the same letter with Shift or Ctrl too, and its release are not.
+        assert_eq!(app_s(0x46, ALT, true, false, &taken), None);
+        assert_eq!(
+            app_s(0x45, Held { shift: true, ..ALT }, true, false, &taken),
+            None
+        );
+        assert_eq!(
+            app_s(0x45, Held { ctrl: true, ..ALT }, true, false, &taken),
+            None
+        );
+        assert_eq!(app_s(0x45, ALT, false, false, &taken), None);
+        // Nothing is taken that was not asked for.
+        assert_eq!(app_s(0x45, ALT, true, false, &[]), None);
+    }
+
+    #[test]
+    fn a_page_keeps_typing_and_altgr_whatever_the_window_asks() {
+        // A letter alone, with Shift alone, and AltGr (Ctrl and Alt) are never taken.
+        assert_eq!(asked("KeyE", false, false, false), None);
+        assert_eq!(asked("KeyE", false, true, false), None);
+        assert_eq!(asked("KeyE", true, false, true), None);
+        // Nor a key that is no letter and no digit.
+        assert_eq!(asked("ArrowLeft", false, false, true), None);
+        assert_eq!(asked("Keye", false, false, true), None);
+        assert_eq!(asked("KeyAB", false, false, true), None);
+        assert_eq!(asked("Digit10", false, false, true), None);
+        // A digit and a letter with Ctrl are, by their virtual keys.
+        let digit = asked("Digit7", false, false, true).expect("Alt and 7");
+        assert!(app_s(0x37, ALT, true, false, &[digit]).is_some_and(|one| one.key == "7"));
+        let ctrl = asked("KeyJ", true, true, false).expect("Ctrl, Shift and J");
+        let held = Held {
+            ctrl: true,
+            shift: true,
+            alt: false,
+        };
+        assert!(app_s(0x4A, held, true, false, &[ctrl]).is_some_and(|one| one.key == "J"));
+    }
+
+    /// #1053 on Linux: what the X server's raw keys say of a key in a page. Alt and its
+    /// release, and a key while it is held; never a chord, which its grab says.
+    #[test]
+    fn a_raw_key_says_alt_in_a_page_and_leaves_every_chord_to_its_grab() {
+        let taken = [asked("KeyE", false, false, true).expect("Alt and E")];
+        let raw = |vk, held, down, grabbing, page: bool| {
+            heard_raw(vk, held, down, false, &taken, grabbing, || page)
+                .map(|one| (one.key, one.down))
+        };
+
+        // Alt going down and let go of in a page.
+        assert_eq!(raw(0x12, ALT, true, false, true), Some(("Alt", true)));
+        assert_eq!(
+            raw(0x12, Held::default(), false, false, true),
+            Some(("Alt", false))
+        );
+        // A key while it is held, named for nothing.
+        assert_eq!(
+            raw(0x44, ALT, true, false, true),
+            Some(("Unidentified", true))
+        );
+        // In the app's own page, which hears its own keys, nothing.
+        assert_eq!(raw(0x12, ALT, true, false, false), None);
+        assert_eq!(raw(0x12, Held::default(), false, false, false), None);
+        // A chord is its grab's: Alt and a digit, Ctrl and T, F5, an Essential's letter.
+        assert_eq!(raw(0x31, ALT, true, false, true), None);
+        let ctrl = Held {
+            ctrl: true,
+            ..Held::default()
+        };
+        assert_eq!(raw(0x54, ctrl, true, false, true), None);
+        assert_eq!(raw(0x74, Held::default(), true, false, true), None);
+        assert_eq!(raw(0x45, ALT, true, false, true), None);
+        // A modifier let go of while a grab holds the keyboard is said wherever the
+        // keyboard is now: the release that chooses in Ctrl+Tab.
+        assert_eq!(
+            raw(0x11, Held::default(), false, true, false),
+            Some(("Control", false))
+        );
+        // Any other key let go of is nothing.
+        assert_eq!(raw(0x45, Held::default(), false, true, true), None);
+        // Shift with Alt, a repeat and AltGr are never a hold.
+        let shift = Held { shift: true, ..ALT };
+        assert_eq!(raw(0x12, shift, true, false, true), None);
+        assert_eq!(
+            heard_raw(0x12, ALT, true, true, &taken, false, || true),
+            None
+        );
+        assert_eq!(
+            raw(0x12, Held { ctrl: true, ..ALT }, true, false, true),
+            None
+        );
+    }
+
+    /// The page is asked about only when the answer matters: it is a round trip to the
+    /// X server for every key.
+    #[test]
+    fn a_raw_key_asks_where_the_keyboard_is_only_when_it_has_to() {
+        let asked = |vk, held, down, grabbing| {
+            let mut asked = false;
+            let _ = heard_raw(vk, held, down, false, &[], grabbing, || {
+                asked = true;
+                true
+            });
+            asked
+        };
+        // A plain letter typed, and a chord, are not asked about.
+        assert!(!asked(0x45, Held::default(), true, false));
+        assert!(!asked(0x31, ALT, true, false));
+        // A release under a grab is said without asking.
+        assert!(!asked(0x11, Held::default(), false, true));
+        assert!(asked(0x12, ALT, true, false));
+        assert!(asked(0x12, Held::default(), false, false));
+    }
+
+    /// Every engine that hears a page's keys takes the window's chords, by the one rule.
+    #[test]
+    fn every_engine_takes_the_chords_the_window_asks_for() {
+        let source = include_str!("web_keys.rs");
+        let body = |mark: &str| {
+            let from = source.find(mark).expect(mark);
+            let rest = &source[from..];
+            &rest[..rest.find("\n}\n").expect("its end")]
+        };
+        let webview2 =
+            body("pub fn listen(webview: &tauri::webview::PlatformWebview, app: tauri::AppHandle");
+        assert!(webview2.contains("app_s(vk, now, down, repeat, &app_chords())"));
+        let cef = body("mod grabbed {");
+        assert!(cef.contains("app_s(vk, held, true, false, &app_chords())"));
+        assert!(cef.contains("chords(&app_chords())"));
+        assert!(cef.contains("heard_raw("));
+        assert!(include_str!("lib.rs").contains("web_keys::web_keys_take,"));
+    }
 
     /// #1036: a press into the page, or the page handed the keyboard, is told to the app's
     /// own page; a chord's grab and the pointer merely crossing the page are not.

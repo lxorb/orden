@@ -565,6 +565,9 @@ export const my: Dictionary = {
   // Appearance
   Accent: 'အသားပေးအရောင်',
   'Tidy up': 'စနစ်တကျ စီရန်',
+  'Blur the app behind the tab overview': 'တက်ဘ် ခြုံငုံကြည့်ရှုမှု နောက်ရှိ အက်ပ်ကို ဝါးစေရန်',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Orden ၏ ကိုယ်ပိုင်နောက်ခံအစား ဝင်းဒိုးများနောက်တွင် အက်ပ်ကို ဝါးဝါးပြသည်။',
   'Swipe in from the edge to see your notes.':
     'သင့်မှတ်စုများကို ကြည့်ရန် အစွန်းမှ အတွင်းသို့ ပွတ်ဆွဲပါ။',
   'Show other tabs as icons': 'အခြားတဘ်များကို အိုင်ကွန်အဖြစ် ပြပါ',
@@ -2720,4 +2723,5 @@ export const my: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'မပို့ရသေးပါ။ သင့်စာသားကို သိမ်းထားသဖြင့် ထပ်မံကြိုးစားနိုင်သည်။',
   'Reset to site icon': 'ဆိုက်၏ အိုင်ကွန်သို့ ပြန်ထားရန်',
+  'One colour': 'အရောင်တစ်ရောင်',
 }

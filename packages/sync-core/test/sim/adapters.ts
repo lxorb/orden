@@ -23,6 +23,8 @@ export interface EntryView {
   kind: EntryKind
   parent: string | null
   name: string
+  /** Where somebody put it among the rest of its folder, by hand (#1068). */
+  pos?: string
 }
 
 /** What a side holds: its live tree, and the text of every live note in it. A device
@@ -69,6 +71,9 @@ export type Action =
   /** Brings back something this device deleted, from its trash (#1068). `id` is the
    *  entry, chosen by the run among what this device took away. */
   | { t: 'restore'; id: string }
+  /** A row dragged to another place among the rest of its folder (#1068): `at` a
+   *  fraction into its folder's rows as this device draws them. */
+  | { t: 'place'; target: Pick; at: number }
   | { t: 'append-day'; name: string; words: string }
   | { t: 'edit-file'; note: Pick; at: number; words: string; cut: number }
   | { t: 'save' }

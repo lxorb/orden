@@ -590,6 +590,9 @@ export const uk: Dictionary = {
   // Appearance
   Accent: 'Акцент',
   'Tidy up': 'Упорядкувати',
+  'Blur the app behind the tab overview': 'Розмивати застосунок за оглядом вкладок',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Показує розмитий застосунок за вікнами замість власного тла Orden.',
   'Swipe in from the edge to see your notes.': 'Проведіть від краю, щоб побачити нотатки.',
   'Show other tabs as icons': 'Показувати інші вкладки значками',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
@@ -2820,4 +2823,5 @@ export const uk: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'Не надіслано. Ваш текст збережено, можна спробувати ще раз.',
   'Reset to site icon': 'Повернути значок сайту',
+  'One colour': 'Одноколірні',
 }

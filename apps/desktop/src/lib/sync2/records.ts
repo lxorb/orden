@@ -8,7 +8,8 @@
  *  ops, the losing side of an answer or a minor overlap on its way to `/v2/docs/keep`,
  *  and a day's note the account merged into one that was there, each a row of the
  *  `outbox` in the order it was made. And what a held note was held against, in the
- *  `held` row's `remote`.
+ *  `held` row's `remote`. Beside them, where each entry was put among the rest of its
+ *  folder (`order:<space>`), and where what this device deleted was (`gone:<space>`).
  *
  *  All of it framed the way sync v2 frames a request (`frame` in @orden/sync-core), so a
  *  Yjs update inside a record is bytes and not a list of numbers, and read back through
@@ -22,6 +23,7 @@ import {
   opOf,
   unframe,
 } from '@orden/sync-core/wire'
+import { isPosition } from '@orden/sync-core/order'
 import type { MetaRow } from './store'
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -187,6 +189,110 @@ export function wantedRow(space: string, wanted: ReadonlyMap<string, Wanted>): M
   const out: Record<string, [number, number]> = {}
   for (const [id, one] of wanted) out[id] = [one.docSeq, one.epoch]
   return { key: wantKey(space), value: JSON.stringify(out) }
+}
+
+// ---------------------------------------------------------------------------
+// Where each entry was put among the rest of its folder
+
+/** Whether a space's account keeps where somebody put each entry among the rest of its
+ *  folder (its feed said `order`), and the place the account confirmed for every entry
+ *  that has one (#1068). Kept per space in `meta` as `order:<space>`, written with the
+ *  feed page or the answer that changed it.
+ *
+ *  A row of `meta` rather than a column of `entries`: a new column is a new schema,
+ *  which a store at it shuts an older Orden out of (`Newer` in sync_store/store.rs), and
+ *  an entry row with a field the older build does not know is one it refuses to read
+ *  (`rowOf` in store.ts). An older build reads past a `meta` row it has no use for, so
+ *  going back to one costs the places and nothing else. */
+export interface Ordering {
+  on: boolean
+  positions: Map<string, string>
+}
+
+const ORDER = 'order:'
+
+export function orderKey(space: string): string {
+  return `${ORDER}${space}`
+}
+
+export function orderingOf(row: MetaRow): { space: string; ordering: Ordering } | null {
+  if (!row.key.startsWith(ORDER) || typeof row.value !== 'string') return null
+  try {
+    const value: unknown = JSON.parse(row.value)
+    if (!isRecord(value)) return null
+    const positions = new Map<string, string>()
+    if (isRecord(value.pos)) {
+      for (const [id, pos] of Object.entries(value.pos)) {
+        if (isPosition(pos)) positions.set(id, pos)
+      }
+    }
+    return { space: row.key.slice(ORDER.length), ordering: { on: value.on === true, positions } }
+  } catch {
+    return null
+  }
+}
+
+export function orderingRow(space: string, ordering: Ordering): MetaRow {
+  return {
+    key: orderKey(space),
+    value: JSON.stringify({ on: ordering.on, pos: Object.fromEntries(ordering.positions) }),
+  }
+}
+
+// ---------------------------------------------------------------------------
+// What this device deleted
+
+/** What this device deleted, by the id of the entry deleted: where it and everything in
+ *  it were on this disk, relative to the space's root, and the word the app keeps to put
+ *  it back by (`back`: its trash's id for it, or its undo's), so a delete put back - out
+ *  of the trash, or undone - brings each back as the entry it was (#1068; `restored` in
+ *  create.ts). The newest `GONE_KEPT`, per space, in `meta` as `gone:<space>`: an older
+ *  build reads past it. */
+interface Went {
+  paths: Map<string, string>
+  back?: string
+}
+
+export type Gone = Map<string, Went>
+
+export const GONE_KEPT = 200
+
+const GONE = 'gone:'
+
+export function goneKey(space: string): string {
+  return `${GONE}${space}`
+}
+
+export function goneOf(row: MetaRow): { space: string; gone: Gone } | null {
+  if (!row.key.startsWith(GONE) || typeof row.value !== 'string') return null
+  try {
+    const value: unknown = JSON.parse(row.value)
+    if (!isRecord(value)) return null
+    const gone: Gone = new Map()
+    for (const [id, went] of Object.entries(value)) {
+      if (!isRecord(went) || !isRecord(went.paths)) continue
+      const paths = new Map<string, string>()
+      for (const [one, path] of Object.entries(went.paths)) {
+        if (typeof path === 'string') paths.set(one, path)
+      }
+      if (!paths.has(id)) continue
+      gone.set(id, typeof went.back === 'string' ? { paths, back: went.back } : { paths })
+    }
+    return { space: row.key.slice(GONE.length), gone }
+  } catch {
+    return null
+  }
+}
+
+export function goneRow(space: string, gone: Gone): MetaRow {
+  const value: Record<string, { paths: Record<string, string>; back?: string }> = {}
+  for (const [id, went] of gone) {
+    value[id] = {
+      paths: Object.fromEntries(went.paths),
+      ...(went.back === undefined ? {} : { back: went.back }),
+    }
+  }
+  return { key: goneKey(space), value: JSON.stringify(value) }
 }
 
 // ---------------------------------------------------------------------------

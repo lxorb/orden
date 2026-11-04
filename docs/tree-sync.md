@@ -61,11 +61,35 @@ gets a position between theirs and nothing else is renumbered. Rows with a posit
 first, by position and then by id; rows nobody placed follow, in the folder's own order
 (by name, by time).
 
+On a device the places are the engine's (`order:<space>` in the sync store's `meta`,
+beside the tree rather than in a new column, so going back to an older build costs the
+places and nothing else). The file list reads a folder's order from them where the
+account says it keeps places and somebody put a row of that folder somewhere, and turns
+a drop into the places it needs (`repositioned`): the rows whose places already rise in
+the wanted order keep them, so one row dragged is one `place` sent. A device sends
+places only to an account whose feed says it keeps them, and drops what it holds if the
+account answers a batch with one in it as a request it cannot read - an account put back
+to a build from before places.
+
 Who last put an entry where it is and who last wrote in it are two things the account
 keeps apart (`placed_seq` and `placed_by` on a note, 0068). Writing in a note makes its
 writer the last to change it, but not the one who put it in its folder: a device that
 wrote in a note somebody else had moved into a folder, never having seen it there, has
 still not seen it there, and its delete of the folder leaves it.
+
+## Putting a delete back
+
+A delete made here is said to the engine with a word to put it back by: the trash's id
+for what it holds, or the undo's own. The engine keeps where the entry and everything in
+it were on this disk (`gone:<space>` in the sync store's `meta`, the newest two hundred),
+so when the trash or an undo puts the files back and says so with that word, each comes
+back as the entry it was, under its id: a `restore` to the account, which brings it back
+with the folders above it, over a delete that had not seen it, and its words come down
+again by the next pull, what the file said kept as a version where they differ. One made
+here whose making has not gone yet loses the delete behind it instead, its words its
+file's; one the account never heard of, or no longer has, is made again under its id
+with what its file says. A file put back by no such word, or where something else is now,
+is a file made.
 
 A delete is a fact, not an absence: the account keeps the entry with a tombstone and the
 cursor it was deleted at, so a device that comes back after a week does not send up the
@@ -78,7 +102,8 @@ they can be restored.
 network that drops, repeats and delays, with devices offline, quitting and crashing, and
 then checks what everybody holds once it goes quiet (checks.ts):
 
-- every device holds the account's tree and texts;
+- every device holds the account's tree and texts, each row where the account has it
+  among the rest of its folder;
 - names are unique per folder, and every live entry is in a live folder;
 - no folder is inside itself;
 - nothing exists that nobody made, and no note's words are live in two notes at once
@@ -87,7 +112,8 @@ then checks what everybody holds once it goes quiet (checks.ts):
 - what a person restored is there, under its id, unless somebody deleted it again.
 
 The tree walks (`mix: 'tree'`) draw mostly moves, renames, deletes and restores on four or
-five devices. They run against the reference account and devices (`tree-walks.test.ts`)
+five devices; the order walks (`mix: 'order'`) draw rows dragged among the rest of their
+folders as well, and every device has to end with each row where the account has it. They run against the reference account and devices (`tree-walks.test.ts`)
 and with the app's own sync engine as every device (`apps/desktop/src/lib/sync2/sim.test.ts`).
 
 ## Known gaps
@@ -95,12 +121,11 @@ and with the app's own sync engine as every device (`apps/desktop/src/lib/sync2/
 What the tree walks found when they were first run, each pinned as an expected failure
 until the step of #1068 that removes it lands:
 
-- **A restore from this device's trash makes a new note.** The trash puts the files back
-  on the disk and the engine hears them as files made, so the note comes back under a new
-  id, beside its own tombstone. Restoring has to be an operation on the id.
-- **Order is not on the devices yet.** The account keeps positions (`pos` on folders and
-  notes, 0069, and the `place` operation), and says so in its feed (`order: true`), but
-  the file list still keeps the order somebody dragged a folder's rows into per folder
-  path as a list of names (`arranged`), last writer wins per folder: two people
-  reordering one folder overwrite each other, and a rename or a move loses the place.
-  The devices move to positions next.
+- **An older app's drag in a folder that has places is not read.** Builds from before
+  places still keep the order per folder path as a list of names (`arranged`, synced
+  through the account, last writer per folder), and newer devices write that list from
+  the places so older ones draw the same order. The other way round only happens once:
+  a folder arranged before its space kept places becomes places on the first newer
+  device to pass over it. After that, an older app dragging rows of that folder writes
+  a list nobody newer reads, and the next newer device to pass writes the places' order
+  back over it.

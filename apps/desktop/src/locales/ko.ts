@@ -564,6 +564,9 @@ export const ko: Dictionary = {
   // Appearance
   Accent: '강조색',
   'Tidy up': '정리',
+  'Blur the app behind the tab overview': '탭 개요 뒤의 앱 흐리게 하기',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Orden 자체 배경 대신 창 뒤에 앱을 흐리게 표시합니다.',
   'Swipe in from the edge to see your notes.': '가장자리에서 안쪽으로 밀어 노트를 보세요.',
   'Show other tabs as icons': '다른 탭을 아이콘으로 보기',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
@@ -2695,4 +2698,5 @@ export const ko: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     '보내지 못했습니다. 입력한 내용은 남아 있으니 다시 시도하세요.',
   'Reset to site icon': '사이트 아이콘으로 되돌리기',
+  'One colour': '단색',
 }

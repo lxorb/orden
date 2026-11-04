@@ -60,3 +60,20 @@ test('let go among a pane’s windows, it lands in its strip where it reads amon
   })
   expect(stripLanding([], 'x', { x: 0, y: 0, w: 1, h: 1 })).toBe(null)
 })
+
+test('a window is never pushed onto the name under another, however much room the name takes', () => {
+  // The camera drawn back: each name takes more of the canvas than the usual gap.
+  const named = 140
+  const windows = [at('a', 0, 0), at('b', 0, 150), at('c', 230, 100), at('held', 10, 260)]
+  const after = settled(windows, new Set(['held']), named)
+  for (const one of after) {
+    for (const other of after) {
+      if (one === other) continue
+      const beside = one.x + one.w <= other.x || other.x + other.w <= one.x
+      // Below one, the next window starts only past its name.
+      if (!beside && other.y >= one.y)
+        expect(other.y).toBeGreaterThanOrEqual(one.y + one.h + named - 1)
+    }
+  }
+  expect(after.every((a, i) => after.every((b, j) => i === j || !overlaps(a, b, named)))).toBe(true)
+})

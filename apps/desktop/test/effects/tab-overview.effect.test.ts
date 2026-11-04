@@ -1,5 +1,5 @@
 import { flushSync, mount, tick, unmount } from 'svelte'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, onTestFinished, test, vi } from 'vitest'
 
 /** Every tab as a window on a canvas (issue #331), opened by Alt Alt, the top bar's button
  *  or the palette's row: one window per tab of every pane, the arrows walk them, Enter
@@ -202,4 +202,84 @@ test('a window’s cross closes its tab the strip’s way, which asks where that
   // The press was the cross's: the window was not opened and the view is still up.
   expect(tabOverview.open).toBe(true)
   expect(layer()).not.toBe(null)
+})
+
+test('while a window is away, what it is a copy of is out of sight: its tab, or its pane', async () => {
+  // Asked for less movement, every window is out at once: each tab away from the strip,
+  // each pane whose tab in front is a window standing back, so nothing is seen twice.
+  // The panes, where the windows of their tabs in front come out of.
+  const panes = workspace.panes.all.map((one) => one.id)
+  const shown = panes.map((id, index) => {
+    const pane = document.createElement('div')
+    pane.dataset.pane = id
+    pane.getBoundingClientRect = () => new DOMRect(index * 600, 40, 600, 700)
+    document.body.append(pane)
+    return pane
+  })
+  onTestFinished(() => shown.forEach((one) => one.remove()))
+  await opened()
+  expect([...tabOverview.lifted].sort()).toEqual([...panes].sort())
+  const fronts = new Set(workspace.panes.all.map((one) => one.activeTabId))
+  expect(tabOverview.out.filter((id) => fronts.has(id))).toEqual([])
+  expect(overlays.escape()).toBe(true)
+  flushSync()
+  await tick()
+  expect(tabOverview.lifted).toEqual([])
+  expect(tabOverview.out).toEqual([])
+})
+
+test('the canvas is Orden’s own ground, and the app blurred only when asked for', async () => {
+  const { modes } = await import('../../src/lib/modes.svelte')
+  await opened()
+  const ground = () => document.querySelector('.ground')
+  expect(ground()?.classList.contains('is-blurred')).toBe(false)
+  expect(overlays.escape()).toBe(true)
+  flushSync()
+  await tick()
+  modes.toggleOverviewBlur()
+  try {
+    await opened()
+    expect(ground()?.classList.contains('is-blurred')).toBe(true)
+  } finally {
+    modes.toggleOverviewBlur()
+  }
+})
+
+test('a window’s cross sits on its corner, red, and answers the pointer', async () => {
+  await opened()
+  const window = windows()[0]
+  const cross = window?.nextElementSibling as HTMLElement | null
+  // On the window's top right corner itself, its middle on it (the transform below).
+  const [x, y] = (/translate\(([-\d.]+)px, ([-\d.]+)px\)/.exec(window?.style.transform ?? '') ?? [])
+    .slice(1)
+    .map(Number)
+  const width = parseFloat(window?.style.width ?? '0')
+  expect(cross?.style.translate).toBe(`${String((x ?? 0) + width)}px ${String(y)}px`)
+  // Red and small, and under the pointer darker and a little larger: its own rules, as
+  // the component declares them (jsdom lays nothing out and hovers nothing).
+  const { default: source } = await import('../../src/lib/overview/Overview.svelte?raw')
+  /** The body of the rule whose selectors start `head`, up to its brace. */
+  const rule = (head: string) => {
+    const at = source.indexOf(`\n  ${head}`)
+    return at < 0 ? '' : source.slice(source.indexOf('{', at), source.indexOf('}', at))
+  }
+  expect(rule('.closer {')).toContain('background: var(--danger)')
+  expect(rule('.closer {')).toContain('translate(-50%, -50%)')
+  expect(rule('.closer {')).toMatch(/--closer-size: 2[0-4]px/)
+  const hovered = [...source.matchAll(/\n {2}([^{}]*\.closer:hover[^{}]*)\{([^}]*)\}/g)].map(
+    (one) => one[2] ?? '',
+  )
+  expect(hovered.some((one) => one.includes('background:') && one.includes('scale(1.18)'))).toBe(
+    true,
+  )
+})
+
+test('every window’s name is drawn under every window, so none lies on another window', async () => {
+  await opened()
+  const world = document.querySelector('.world')
+  const order = [...(world?.children ?? [])].map((one) => one.classList[0])
+  const lastName = order.lastIndexOf('caption')
+  const firstWindow = order.indexOf('window')
+  expect(lastName).toBeGreaterThan(-1)
+  expect(lastName).toBeLessThan(firstWindow)
 })

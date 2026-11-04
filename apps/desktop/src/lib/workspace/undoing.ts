@@ -43,8 +43,8 @@ export interface PutsBack {
    *  workspace.svelte.ts. A rename put back is a rename, a delete put back is a file
    *  come back, and an import or a copy taken back is files gone. */
   fileMoved(from: string, to: string, kind: Kind): Promise<void>
-  fileGone(path: string, kind: 'file' | 'folder'): Promise<void>
-  fileCame(path: string, kind: 'file' | 'folder'): Promise<void>
+  fileGone(path: string, kind: 'file' | 'folder', back?: string): Promise<void>
+  fileCame(path: string, kind: 'file' | 'folder', key?: string, back?: string): Promise<void>
   /** Asks for the same undo again. */
   undoFileAction(): Promise<void>
   /** One file operation on everything open at or under a path, after whatever write
@@ -105,16 +105,28 @@ async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
         // Where it landed goes on the step, which beside a note made at its name since
         // is not where it was: a redo deletes this note, not that one.
         action.path = await putBack(action)
-        // And the index reads it again, so the links to it resolve at once.
-        await ws.fileCame(action.path, action.folder ? 'folder' : 'file')
+        // And the index reads it again, so the links to it resolve at once, and sync
+        // brings back the entries it was.
+        await ws.fileCame(
+          action.path,
+          action.folder ? 'folder' : 'file',
+          undefined,
+          action.back ?? action.trashId,
+        )
         break
       case 'create': {
         // Into Recently deleted, and what that kept goes on the step for a redo.
         const kept = await ws.bin(action.path, false)
         action.content = kept?.content ?? ''
-        if (kept?.trashId) action.trashId = kept.trashId
-        else delete action.trashId
-        await ws.fileGone(action.path, 'file')
+        // Put back by the trash's id where it went there, else by a word of its own.
+        if (kept?.trashId) {
+          action.trashId = kept.trashId
+          delete action.back
+        } else {
+          delete action.trashId
+          action.back = crypto.randomUUID()
+        }
+        await ws.fileGone(action.path, 'file', action.back ?? action.trashId)
         break
       }
       case 'many':

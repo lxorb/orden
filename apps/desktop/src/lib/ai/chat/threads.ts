@@ -59,10 +59,9 @@ export function newThread(
   }
 }
 
-/** What the list shows of a thread: its title, its model, its age, and its words for
- *  searching. */
-export function headOf(thread: Thread): ThreadHead {
-  const words = thread.turns
+/** The words of a thread the list's search finds it by. */
+export function wordsOf(thread: Thread): string {
+  return thread.turns
     .flatMap((turn) => [
       turn.draft?.text ?? '',
       ...turn.parts.flatMap((part) => (part.kind === 'text' ? [part.text] : [])),
@@ -70,6 +69,11 @@ export function headOf(thread: Thread): ThreadHead {
     .join(' ')
     .replace(/\s+/g, ' ')
     .slice(0, WORDS)
+}
+
+/** What the list shows of a thread: its title, its model, its age, and its words for
+ *  searching. */
+export function headOf(thread: Thread, words = wordsOf(thread)): ThreadHead {
   return {
     id: thread.id,
     title: thread.title,

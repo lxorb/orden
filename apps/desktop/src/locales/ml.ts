@@ -573,6 +573,9 @@ export const ml: Dictionary = {
   // Appearance
   Accent: 'ആക്‌സന്റ് നിറം',
   'Tidy up': 'ക്രമീകരിക്കുക',
+  'Blur the app behind the tab overview': 'ടാബ് അവലോകനത്തിന് പിന്നിൽ ആപ്പ് മങ്ങിക്കുക',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Orden-ന്റെ സ്വന്തം പശ്ചാത്തലത്തിന് പകരം, ജാലകങ്ങൾക്ക് പിന്നിൽ ആപ്പ് മങ്ങിച്ച് കാണിക്കുന്നു.',
   'Swipe in from the edge to see your notes.':
     'നിങ്ങളുടെ കുറിപ്പുകൾ കാണാൻ അരികിൽ നിന്ന് അകത്തേക്ക് സ്വൈപ്പ് ചെയ്യുക.',
   'Show other tabs as icons': 'മറ്റ് ടാബുകൾ ഐക്കണുകളായി കാണിക്കുക',
@@ -2772,4 +2775,5 @@ export const ml: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'അയച്ചില്ല. നിങ്ങളുടെ എഴുത്ത് സൂക്ഷിച്ചിട്ടുണ്ട്, വീണ്ടും ശ്രമിക്കാം.',
   'Reset to site icon': 'സൈറ്റിന്റെ ഐക്കണിലേക്ക് മടങ്ങുക',
+  'One colour': 'ഒറ്റ നിറം',
 }

@@ -564,6 +564,9 @@ export const zhHans: Dictionary = {
   // Appearance
   Accent: '强调色',
   'Tidy up': '整理',
+  'Blur the app behind the tab overview': '在标签页总览后模糊应用',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    '在窗口后显示模糊的应用，而不是 Orden 自己的背景。',
   'Swipe in from the edge to see your notes.': '从边缘向内滑动即可查看笔记。',
   'Show other tabs as icons': '其他标签页只显示图标',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
@@ -2650,4 +2653,5 @@ export const zhHans: Dictionary = {
   'View your report': '查看你的报告',
   'Not sent. Your text is kept, so you can try again.': '未发送。你的文字已保留，可以再试一次。',
   'Reset to site icon': '恢复为网站图标',
+  'One colour': '单色',
 }

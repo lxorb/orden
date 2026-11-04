@@ -575,6 +575,7 @@ macro_rules! desktop_commands {
             keyboard::keyboard_here,
             keyboard::keyboard_went,
             keyboard::keyboard_back,
+            web_keys::web_keys_take,
             web_tabs::web_navigate,
             web_tabs::web_step,
             web_tabs::web_trail,

@@ -345,6 +345,25 @@ export function appearancePane(): Pane {
         ],
       },
 
+      {
+        title: t('Tabs'),
+        fields: [
+          {
+            // The tab overview (Alt Alt) on Orden's own ground, or over the app blurred,
+            // as it was drawn first (issue #331).
+            kind: 'switch',
+            key: 'appearance.overviewBlur',
+            store: { on: modes, name: 'overviewBlur' },
+            label: t('Blur the app behind the tab overview'),
+            hint: t('Shows the app blurred behind the windows, instead of Orden’s own background.'),
+            words: ['overview', 'alt alt', 'blur', 'background', 'windows'],
+            initial: DEFAULTS.overviewBlur,
+            get: () => modes.overviewBlur,
+            set: () => modes.toggleOverviewBlur(),
+          },
+        ],
+      },
+
       // The window itself: who draws its frame. Desktop only, because a browser tab
       // has none - and on a phone the system draws everything. Orden's own frame stays
       // the default: the bar it draws holds the menu, the sidebar toggle, the tabs

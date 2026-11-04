@@ -954,6 +954,62 @@ describe('a folder deleted here', () => {
   })
 })
 
+describe('a delete put back (#1068)', () => {
+  test('brings a folder back as the entries it was, words and all, made nowhere again', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const here = await device(account, 'd0')
+    await here.disk.mkdir(`${ROOT}/Work`)
+    const folder = await here.engine.created(`${ROOT}/Work`, true)
+    await here.disk.move(`${ROOT}/Plan.md`, `${ROOT}/Work/Plan.md`)
+    await here.engine.moved(`${ROOT}/Plan.md`, `${ROOT}/Work/Plan.md`)
+    await here.engine.pass(SPACE)
+
+    // Into the trash, and the account hears of the delete.
+    const words = here.disk.files.get(`${ROOT}/Work/Plan.md`) ?? ''
+    await here.disk.remove(`${ROOT}/Work`)
+    await here.engine.removed(`${ROOT}/Work`, 'trash-1')
+    await here.engine.pass(SPACE)
+    expect((await account.view()).entries.map((entry) => entry.id)).not.toContain(PLAN)
+
+    // Out of the trash, where it was.
+    await here.disk.mkdir(`${ROOT}/Work`)
+    await here.disk.write(`${ROOT}/Work/Plan.md`, words)
+    expect(await here.engine.restored(`${ROOT}/Work`, 'trash-1')).toBe(true)
+    await here.engine.pass(SPACE)
+    await here.engine.pass(SPACE)
+
+    const live = (await account.view()).entries
+    expect(live.map((entry) => entry.id).sort()).toEqual([PLAN, 'n2', folder].sort())
+    expect(live.find((entry) => entry.id === PLAN)?.parent).toBe(folder)
+    expect(await textOn(account, PLAN)).toBe(words)
+    expect(here.disk.files.get(`${ROOT}/Work/Plan.md`)).toBe(words)
+    expect(here.engine.core.spaces.get(SPACE)?.at('Work/Plan.md')?.id).toBe(PLAN)
+  })
+
+  test('takes back a delete the account never heard of, with the note made here', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const here = await device(account, 'd0')
+    here.online = false
+    await here.disk.write(`${ROOT}/Idea.md`, 'ship it mk5z')
+    const note = await here.engine.created(`${ROOT}/Idea.md`, false, 'ship it mk5z')
+    await here.disk.remove(`${ROOT}/Idea.md`)
+    await here.engine.removed(`${ROOT}/Idea.md`, 'undo-1')
+    await here.disk.write(`${ROOT}/Idea.md`, 'ship it mk5z')
+    expect(await here.engine.restored(`${ROOT}/Idea.md`, 'undo-1')).toBe(true)
+    here.online = true
+    await here.engine.pass(SPACE)
+
+    expect((await account.view()).entries.map((entry) => entry.id)).toContain(note)
+    expect(await textOn(account, note ?? '')).toBe('ship it mk5z')
+  })
+
+  test('is a file made where nothing was deleted by that word', async () => {
+    const here = await device()
+    await here.disk.write(`${ROOT}/Other.md`, 'words')
+    expect(await here.engine.restored(`${ROOT}/Other.md`, 'never')).toBe(false)
+  })
+})
+
 describe('a move to another space', () => {
   const WORK = 'work'
   const WORK_ROOT = '/device/work'

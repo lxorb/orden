@@ -162,7 +162,12 @@ def sets(page: Page, label: str, where: str) -> None:
     page.wait_for_timeout(250)
     page.locator(".sheet").screenshot(path=str(SHOTS / f"picker-{where}.png"))
     say(f"[{label}] wrote picker-{where}.png")
-    check(page.locator(".sheet .nib-segmented").count() == 0, f"[{label}] the picker has no tabs")
+    # The one control of two halves there is says how the emoji are drawn (#1097), not
+    # which set is shown.
+    check(
+        page.locator(".sheet .nib-segmented:not(.variant)").count() == 0,
+        f"[{label}] the picker has no tabs",
+    )
 
     for words, what in (("rocket", "line"), ("orden", "Orden's own mark")):
         page.locator(".sheet input.nib-field").fill(words)
@@ -173,6 +178,73 @@ def sets(page: Page, label: str, where: str) -> None:
             check(False, f"[{label}] a search for {words} finds {what}")
         page.locator(".sheet").screenshot(path=str(SHOTS / f"picker-{words}-{where}.png"))
     page.locator(".sheet input.nib-field").fill("")
+
+
+CANVAS_WORN = (
+    "() => { const ws = window.nibApp.workspace;"
+    " const c = ws.files.find((one) => one.name === 'Roadmap.canvas');"
+    " return c ? [window.nibApp.links.iconOf(c.path), window.nibApp.links.tintOf(c.path)] : null }"
+)
+
+
+def outline(page: Page, label: str, where: str) -> None:
+    """An emoji in one colour (#1097): the same search finds it, the pair under the grid
+    says which drawing a pick is, and a colour paints it as it paints a line."""
+    say(f"[{label}] choosing again for {page.evaluate(CANVAS_ICON)}")
+    sheet = page.locator(".sheet")
+    sheet.wait_for(state="visible", timeout=PATIENCE * 1000)
+    sheet.locator(".variant button").nth(1).click()
+    sheet.locator("input.nib-field").fill("thinking face")
+    sheet.locator(".tint").nth(3).click()
+    cell = sheet.locator('button.cell[aria-label="thinking face"]:has(svg.drawn)').first
+    cell.wait_for(state="visible", timeout=PATIENCE * 1000)
+    # A colour painted while the sheet is up keeps what was typed.
+    page.wait_for_timeout(400)
+    check(
+        sheet.locator("input.nib-field").input_value() == "thinking face",
+        f"[{label}] a colour painted keeps the search",
+    )
+    sheet.screenshot(path=str(SHOTS / f"picker-outline-{where}.png"))
+    say(f"[{label}] wrote picker-outline-{where}.png")
+    cell.click()
+
+    worn = wait_for(
+        page,
+        f"() => {{ const w = ({CANVAS_WORN})(); return w && w[0] !== 'rocket' ? w : null }}",
+        f"[{label}] the canvas to wear the outline",
+    )
+    check(
+        worn is not None and worn[0] == "fluent-emoji-high-contrast:thinking-face",
+        f"[{label}] the outline is a value of its own: `{worn}`",
+    )
+    check(worn is not None and worn[1] is not None, f"[{label}] and keeps the colour picked")
+
+    row = page.locator("aside .row", has_text="Roadmap").locator(".mark svg.drawn")
+    row.first.wait_for(state="visible", timeout=PATIENCE * 1000)
+    check(
+        "color" in (row.first.get_attribute("style") or ""),
+        f"[{label}] the row draws the outline in that colour",
+    )
+    page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"tree-outline-{where}.png"))
+    say(f"[{label}] wrote tree-outline-{where}.png")
+
+    # Back in colour, the same cell writes the emoji itself.
+    say(f"[{label}] and once more for {page.evaluate(CANVAS_ICON)}")
+    sheet.wait_for(state="visible", timeout=PATIENCE * 1000)
+    check(
+        sheet.locator(".variant button").nth(1).get_attribute("aria-checked") == "true",
+        f"[{label}] the picker opens on outlines for a row that wears one",
+    )
+    sheet.locator(".variant button").nth(0).click()
+    sheet.locator("input.nib-field").fill("thinking face")
+    sheet.locator('button.cell[aria-label="thinking face"]:has(.emoji)').first.click()
+    worn = wait_for(
+        page,
+        f"() => {{ const w = ({CANVAS_WORN})(); return w && !w[0].includes(':') ? w : null }}",
+        f"[{label}] the canvas to wear the emoji",
+    )
+    check(worn is not None and worn[0] == "\U0001F914", f"[{label}] in colour it is the emoji: `{worn}`")
+    check(worn is not None and worn[1] is None, f"[{label}] which takes no colour")
 
 
 def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
@@ -240,6 +312,8 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         page.wait_for_timeout(300)
         page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"tree-chosen-{where}.png"))
         say(f"[{label}] wrote tree-chosen-{where}.png")
+
+        outline(page, label, where)
     finally:
         page.context.close()
 
@@ -249,7 +323,9 @@ def main() -> int:
         shoot(browser, "desktop", DESKTOP)
         shoot(browser, "phone", PHONE)
 
-    return DRIVE.verdict("icons on a note, a canvas and a folder, and the picker in three sets")
+    return DRIVE.verdict(
+        "icons on a note, a canvas and a folder, the picker over every set, and an emoji's outline"
+    )
 
 
 if __name__ == "__main__":

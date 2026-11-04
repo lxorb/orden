@@ -159,3 +159,30 @@ describe('random walks against the Worker', () => {
     expect(failed).toEqual([])
   }, 300_000)
 })
+
+describe('rows arranged at random against the Worker', () => {
+  /** The order walks of #1068: rows dragged among the rest of their folders while the
+   *  tree moves, every device ending with each row where the Worker has it. */
+  const SEEDS = 10
+
+  test(`${String(SEEDS)} seeds end with every row in the same place everywhere`, async () => {
+    const failed: string[] = []
+    for (let seed = 1; seed <= SEEDS; seed++) {
+      const report = await simulate({
+        seed,
+        devices: 4,
+        steps: 60,
+        mix: 'order',
+        account: (_clock, seeded) => {
+          const account = new WorkerAccount(seeded)
+          made.push(account)
+          return account
+        },
+      })
+      if (report.failures.length) failed.push(`seed ${String(seed)}: ${report.failures.join('; ')}`)
+      for (const one of made) one.close()
+      made = []
+    }
+    expect(failed).toEqual([])
+  }, 300_000)
+})

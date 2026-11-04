@@ -34,4 +34,16 @@ describe('the tree, walked at random on five devices', () => {
   test('seed 632 loses no words to a folder delete', async () => {
     expect((await simulate({ seed: 632, devices: 5, steps: 80, mix: 'tree' })).failures).toEqual([])
   })
+
+  /** The same with rows dragged among the rest of their folders as well: every device
+   *  ends with each row where the account has it, so two people arranging one folder
+   *  at once both keep what they did (#1068). */
+  test('ends with every row in the same place everywhere', async () => {
+    const failed: string[] = []
+    for (let seed = 1; seed <= SEEDS; seed++) {
+      const report = await simulate({ seed, devices: 5, steps: 80, mix: 'order' })
+      if (report.failures.length) failed.push(`seed ${String(seed)}: ${report.failures.join('; ')}`)
+    }
+    expect(failed).toEqual([])
+  })
 })

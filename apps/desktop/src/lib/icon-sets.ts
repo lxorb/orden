@@ -1,6 +1,6 @@
 /** The sets an icon can come from, and the data behind each one.
  *
- *  Four, and each earns its place by answering something the others cannot:
+ *  Five, and each earns its place by answering something the others cannot:
  *
  *  - **Emoji.** The whole Unicode set, drawn by the platform's own colour font. The
  *    breadth is the point - there is an emoji for very nearly anything somebody
@@ -21,6 +21,11 @@
  *    which the credit says. The one set that is wanted by name as well as chosen: a
  *    website with no favicon wears its brand's logo, and code asks for a company's
  *    mark through `brandIcon`.
+ *  - **Fluent Emoji High Contrast.** The emoji again, drawn in one colour (#1097): the
+ *    one thing the platform's font cannot do is draw a face in the text's colour, so a
+ *    row can wear 🤔 the way it wears a line, in either theme and in a tint. Microsoft's,
+ *    MIT. Not cells of its own in the picker but the emoji's own, drawn as outlines when
+ *    somebody asks for them; see `loadOutlines`.
  *
  *  Two coloured sets with real breadth were weighed and refused on size: Twemoji
  *  (10.5 MB, CC-BY-4.0) and Fluent Emoji Flat (9.2 MB, MIT) both redraw the emoji
@@ -38,6 +43,7 @@
 
 import {
   BRANDS,
+  EMOJI_OUTLINE,
   EMOJI_SET,
   type IconEntry,
   type IconNode,
@@ -114,6 +120,9 @@ export interface LoadedSet {
   /** Where an icon sits in a tab it shares with a set that has groups, for a set
    *  that has none of its own; see `mergeSets`. Absent where a set has its own tab. */
   place?(name: string): IconPlace | null
+  /** The name in this set that draws an emoji again, or null where it draws none: the
+   *  emoji's outlines (#1097), which the picker offers in an emoji's place. */
+  twin?(emoji: string): string | null
 }
 
 /** Where an icon of a set without groups goes among the icons of the set it shares a
@@ -364,6 +373,81 @@ async function loadFlatColour(): Promise<LoadedSet> {
   return { ...iconify(collection.default, tags), place: (name) => placed.get(name) ?? null }
 }
 
+/** An Iconify collection with the other names some of its drawings go by. */
+interface Aliased extends IconifyCollection {
+  aliases?: Record<string, { parent: string }>
+}
+
+/** An emoji as Iconify's `chars.json` keys it: its code points in hex, joined by dashes. */
+function codePoints(emoji: string): string {
+  // Code points on purpose: the file keys a family by each of its parts.
+  return Array.from(emoji, (one) => one.codePointAt(0)?.toString(16) ?? '').join('-')
+}
+
+/** A drawing's clip paths and masks under ids of its own. The set reuses one id across
+ *  drawings that clip differently - two hearts, one mask - and every drawing on a page is
+ *  inline in the one document, so the second heart was cut by the first's mask. The
+ *  drawing's name after each id makes them one per drawing; the same drawing twice on a
+ *  page is the same shapes under the same id, which draws the same. */
+function ownIds(body: string, name: string): string {
+  const ids = [...body.matchAll(/\bid="([^"]+)"/g)].flatMap((one) => (one[1] ? [one[1]] : []))
+  return ids.reduce(
+    (out: string, id) =>
+      out
+        .replaceAll(`id="${id}"`, `id="${id}-${name}"`)
+        .replaceAll(`url(#${id})`, `url(#${id}-${name})`)
+        .replaceAll(`href="#${id}"`, `href="#${id}-${name}"`),
+    body,
+  )
+}
+
+/** The emoji drawn again in one colour (#1097): Microsoft's Fluent Emoji High Contrast,
+ *  MIT, as Iconify publishes it. 1,595 drawings in 2.8 MB of JSON, filled in
+ *  `currentColor`, so an outline is the text's colour in either theme and takes a tint
+ *  like a line. Its own chunk, fetched the first time somebody asks the picker for
+ *  outlines or a row wears one.
+ *
+ *  Chosen over the other monochrome sets that cover the emoji: Noto's monochrome emoji
+ *  ships as a font, which would put a second emoji font in the app to draw one icon, and
+ *  OpenMoji's black set is CC BY-SA, attribution and share-alike both, against MIT. What it does not draw: the flags (262 of them, none in any colour of one),
+ *  the newest emoji, and a few of the families; those stay the colour emoji they are.
+ *
+ *  Matched to the emoji by character, the one key the two files share, and by name for
+ *  the handful whose character the set files under another spelling. */
+async function loadOutlines(): Promise<LoadedSet> {
+  const [collection, chars, groups] = await Promise.all([
+    import('@iconify-json/fluent-emoji-high-contrast/icons.json'),
+    import('@iconify-json/fluent-emoji-high-contrast/chars.json'),
+    import('unicode-emoji-json/data-by-group.json'),
+  ])
+  const set = collection.default as Aliased
+  const icons = Object.fromEntries(
+    Object.entries(set.icons).map(([name, icon]) => [
+      name,
+      { ...icon, body: ownIds(icon.body, name) },
+    ]),
+  )
+  for (const [name, alias] of Object.entries(set.aliases ?? {})) {
+    const parent = icons[alias.parent]
+    if (parent) icons[name] = parent
+  }
+  const held = iconify({ ...set, icons }, new Map())
+  const named = chars.default as Record<string, string>
+
+  const twins = new Map<string, string>()
+  for (const group of groups.default as EmojiGroup[]) {
+    for (const one of group.emojis) {
+      const name =
+        named[codePoints(one.emoji)] ??
+        named[codePoints(plain(one.emoji))] ??
+        one.slug.replace(/_/g, '-')
+      if (icons[name]) twins.set(one.emoji, name)
+    }
+  }
+
+  return { ...held, twin: (emoji) => twins.get(emoji) ?? null }
+}
+
 /** Orden's own mark among the brands (#1096), the way they are drawn: one colour,
  *  `currentColor`, so it is the text's colour in either theme. Not a drawing of its own:
  *  the four bars of the app's icon (public/icon-512.png), measured off it and put on the
@@ -448,6 +532,12 @@ export const ICON_SETS: readonly IconSet[] = [
     load: loadFlatColour,
   },
   {
+    id: EMOJI_OUTLINE,
+    label: key('One colour'),
+    credit: 'Fluent Emoji High Contrast by Microsoft, MIT',
+    load: loadOutlines,
+  },
+  {
     id: BRANDS,
     label: key('Brands'),
     // Simple Icons gives its drawings away under CC0 and says plainly that the marks are
@@ -479,7 +569,9 @@ export const LATER_SETS: ReadonlySet<string> = new Set([BRANDS])
 /** Who drew what the picker shows and under what licence, every set that has
  *  somebody to credit. */
 export function pickerCredit(): string {
-  return PICKER_SETS.map((id) => setNamed(id)?.credit ?? '')
+  // The emoji's outlines too, which the picker draws in the emoji's cells (#1097).
+  return [...PICKER_SETS, EMOJI_OUTLINE]
+    .map((id) => setNamed(id)?.credit ?? '')
     .filter(Boolean)
     .join('; ')
 }

@@ -27,10 +27,11 @@ import { kindOfName } from '@orden/sync-core/tree'
 import type { EntryKind, Op } from '@orden/sync-core/wire'
 import type { Core } from './core'
 import { MINE } from './docs'
-import { shapeOf, turn } from './kinds'
-import { folderOf, nameOf, SEP, type SpaceState } from './places'
+import { holdsDocument, shapeOf, turn } from './kinds'
+import { folderOf, joined, nameOf, SEP, type SpaceState } from './places'
 import { wrote } from './project'
-import { put, type Change, type EntryRow } from './store'
+import { GONE_KEPT, goneRow } from './records'
+import { put, remove, type Change, type EntryRow } from './store'
 
 /** What an entry is, read off its name: sync-core's rule, which the account reads by too. */
 export { kindOfName }
@@ -107,6 +108,11 @@ export interface Made {
   text?: string
   /** For a day's note made by the append action: the text it started from. */
   mergeable?: string
+  /** Made again under the id it had: something this device deleted before the account
+   *  heard of it, back from the trash (`restored`) - and as the kind it was, which a
+   *  rename may have left its name no longer saying. */
+  id?: string
+  kind?: EntryKind
 }
 
 /** A file or a folder that came to be here. Answers its id, and the changes to write. */
@@ -122,8 +128,8 @@ export async function made(
   const changes: Change[] = []
   const parent = folderFor(core, space, folderOf(what.path), changes)
   const name = nameOf(what.path)
-  const kind: EntryKind = what.folder ? 'folder' : kindOfName(name)
-  const id = freshId(core)
+  const kind: EntryKind = what.folder ? 'folder' : (what.kind ?? kindOfName(name))
+  const id = what.id ?? freshId(core)
   const entry = entryRow(space, id, kind, parent, name, what.path)
   // A file that is not a document travels as its bytes, where this world carries them,
   // and stays on this device where it does not, or where it is too large to.
@@ -135,7 +141,9 @@ export async function made(
   const op: Op = what.folder
     ? { op: core.nextId('o'), t: 'mkdir', id, parent, name, seen }
     : {
-        op: `${id}.c`,
+        // A create made again goes as an op of its own: the account answers one id
+        // once, and the first may have reached it before it was lost.
+        op: what.id === undefined ? `${id}.c` : core.nextId('o'),
         t: 'create',
         id,
         kind: kind as Exclude<EntryKind, 'folder'>,
@@ -214,6 +222,24 @@ export function moved(core: Core, space: SpaceState, from: string, to: string): 
   return changes
 }
 
+/** Entries put somewhere else among the rest of their folder, by hand (#1068): one
+ *  `place` each, which the outbox folds to the last of a row's drags. */
+export function placed(
+  core: Core,
+  space: SpaceState,
+  places: ReadonlyMap<string, string>,
+): Change[] {
+  const changes: Change[] = []
+  for (const [id, pos] of places) {
+    changes.push(
+      ...queue(core, space, { op: core.nextId('o'), t: 'place', id, pos, seen: space.row.cursor }),
+    )
+  }
+  if (places.size) core.reorders += 1
+  space.changed()
+  return changes
+}
+
 /** Another sync tool's copy taken off the account, which the person asked for in the
  *  Sync pane: it goes to the account's Recently deleted and its file stays where it is,
  *  here and on every disk (`settle` in places.ts). Seen up to the cursor, because this
@@ -249,7 +275,7 @@ function inside(space: SpaceState, folder: string): EntryRow[] {
  *  goes up any more; what the account holds of them lands in its Recently deleted,
  *  unless another device wrote in them since this one last looked, when the account
  *  keeps them and they come back (an edit beats a delete). */
-export function removed(core: Core, space: SpaceState, path: string): Change[] {
+export function removed(core: Core, space: SpaceState, path: string, back?: string): Change[] {
   const entry = space.at(path)
   if (!entry) return []
   const changes: Change[] = []
@@ -267,6 +293,15 @@ export function removed(core: Core, space: SpaceState, path: string): Change[] {
     seen = Math.min(seen, core.numbers.get(one.id)?.pulled ?? 0)
   }
 
+  // Where each was, for the delete to be put back as the entries it was.
+  space.gone.delete(entry.id)
+  const paths = new Map(gone.map((one) => [one.id, one.local_path]))
+  space.gone.set(entry.id, back === undefined ? { paths } : { paths, back })
+  for (const id of [...space.gone.keys()].slice(0, Math.max(0, space.gone.size - GONE_KEPT))) {
+    space.gone.delete(id)
+  }
+  changes.push(put('meta', goneRow(space.id, space.gone)))
+
   for (const one of gone) {
     one.local_path = ''
     changes.push(put('entries', { ...one }))
@@ -274,6 +309,152 @@ export function removed(core: Core, space: SpaceState, path: string): Change[] {
     if (one.kind !== 'folder') changes.push(...core.forgetChanges(one.id))
   }
   changes.push(...queue(core, space, { op: core.nextId('o'), t: 'delete', id: entry.id, seen }))
+  space.changed()
+  return changes
+}
+
+/** Whether an op that makes an entry is still in the outbox - `unsent`: and has not
+ *  gone yet. */
+function making(space: SpaceState, id: string, unsent = false): boolean {
+  return space.outbox.some(
+    (one) =>
+      one.record.t === 'op' &&
+      one.record.op.id === id &&
+      (one.record.op.t === 'create' || one.record.op.t === 'mkdir') &&
+      !(unsent && one.record.sent),
+  )
+}
+
+/** This device's delete of an entry whose making has not gone either, taken out of the
+ *  outbox: the account will hear of neither, and a restore behind them would name an
+ *  entry it never had, the two folded away before it (`coalesce`). */
+function unsent(space: SpaceState, id: string, changes: Change[]): void {
+  const one = space.outbox.find(
+    (op) =>
+      op.record.t === 'op' &&
+      !op.record.sent &&
+      op.record.op.t === 'delete' &&
+      op.record.op.id === id,
+  )
+  if (!one) return
+  space.outbox = space.outbox.filter((other) => other !== one)
+  changes.push(remove('outbox', one.row.op_id))
+  space.changed()
+}
+
+/** What this device deleted, back on its disk at `path` - out of its trash, or a delete
+ *  undone - as the entries it was, under their ids (#1068). The files were heard as
+ *  files made before, so a note came back under a new id beside its own tombstone.
+ *
+ *  Each entry whose file is back: one made here whose making has not gone yet loses
+ *  the delete behind it; one the account never heard of is made again under its id,
+ *  with what its file says; any other goes up as a `restore`, which brings it
+ *  back on the account with the folders above it, over a delete made without having
+ *  seen it, and its words come down again by the next pull. A folder's entries are
+ *  found where this device last had them (`gone` on the space), else where their names
+ *  put them inside it. Answers null where the
+ *  entry is not this space's, or another entry's file is at `path`: what is there is
+ *  then a file made. */
+export async function restored(
+  core: Core,
+  space: SpaceState,
+  id: string,
+  path: string,
+): Promise<Change[] | null> {
+  const top = space.entries.get(id)
+  if (!top) return null
+  const holder = space.at(path)
+  if (holder) return holder.id === id ? [] : null
+
+  // Where each was when this device deleted it, else where the names put it.
+  const back: { entry: EntryRow; at: string }[] = []
+  const was = space.gone.get(id)?.paths
+  const from = was?.get(id)
+  if (was && from !== undefined) {
+    for (const [one, at] of was) {
+      const entry = space.entries.get(one)
+      if (entry && !entry.local_path) back.push({ entry, at: `${path}${at.slice(from.length)}` })
+    }
+    back.sort((a, b) => a.at.split(SEP).length - b.at.split(SEP).length)
+  } else {
+    const walk = (entry: EntryRow, at: string, depth: number) => {
+      back.push({ entry, at })
+      if (entry.kind !== 'folder' || depth > space.entries.size) return
+      for (const one of space.entries.values()) {
+        if (one.parent !== entry.id || one.local_path) continue
+        walk(one, joined(at, space.spelled(one.name)), depth + 1)
+      }
+    }
+    walk(top, path, 0)
+  }
+
+  const changes: Change[] = []
+  let wants = false
+  for (const { entry, at } of back) {
+    if (space.at(at) || !(await core.world.disk.exists(core.world.join(space.row.root, at)))) {
+      if (entry === top) return null
+      continue
+    }
+    if (entry.seq === null && !making(space, entry.id)) {
+      // Made and deleted here before the account heard of either: made again.
+      const text = holdsDocument(entry.kind)
+        ? ((await core.world.disk.read(core.world.join(space.row.root, at))) ?? '')
+        : undefined
+      const again = await made(core, space, {
+        path: at,
+        folder: entry.kind === 'folder',
+        id: entry.id,
+        kind: entry.kind as EntryKind,
+        ...(text === undefined ? {} : { text }),
+      })
+      changes.push(...again.changes)
+      continue
+    }
+    entry.local_path = at
+    changes.push(put('entries', { ...entry }))
+    if (entry.kind === 'file') core.touched.add(entry.id)
+    // Its words were let go of with the delete: wanted again, so the next pull brings
+    // them, and a delete made before then takes nothing this device has not seen. What
+    // the file says is what this device last had, not an edit made since: the account's
+    // newer words are written over it, and it is kept as a version (`project`).
+    if (holdsDocument(entry.kind) && !core.hasDoc(entry.id)) {
+      core.wanted(space.id).set(entry.id, { docSeq: 0, epoch: core.epochs.get(entry.id) ?? 1 })
+      wants = true
+      const text = await core.world.disk.read(core.world.join(space.row.root, at))
+      if (text !== null) changes.push(...(await wrote(core, entry, text)))
+    }
+    // Made here and not gone yet: the delete behind it goes instead, and nothing else.
+    if (making(space, entry.id, true)) {
+      unsent(space, entry.id, changes)
+      // And its words, let go of with the delete, are its file's again: the account has
+      // none of them yet.
+      const shape = shapeOf(entry.kind)
+      if (shape && !core.hasDoc(entry.id)) {
+        const text = (await core.world.disk.read(core.world.join(space.row.root, at))) ?? ''
+        const doc = core.made(entry.id, shape, 1)
+        if (text) doc.write((live) => turn(shape, live, '', text, MINE))
+        doc.flush()
+        changes.push(...core.docChanges(doc), ...(await wrote(core, entry, text)))
+      }
+      continue
+    }
+    // Even where it shows: somebody else's delete this device has not heard of yet may
+    // be on the account, and a person asking for it back outweighs a delete that had
+    // not seen that.
+    const seen = space.row.cursor
+    changes.push(...queue(core, space, { op: core.nextId('o'), t: 'restore', id: entry.id, seen }))
+  }
+
+  // Put back beside something that took its name meanwhile: under the name it came
+  // back with.
+  const now = space.shown().entries.get(id)
+  const name = nameOf(path)
+  if (now && !now.deleted && space.key(space.spelled(now.name)) !== space.key(name)) {
+    const seen = space.row.cursor
+    changes.push(...queue(core, space, { op: core.nextId('o'), t: 'rename', id, name, seen }))
+  }
+  if (wants) changes.push(core.wantChange(space.id))
+  if (space.gone.delete(id)) changes.push(put('meta', goneRow(space.id, space.gone)))
   space.changed()
   return changes
 }

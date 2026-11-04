@@ -18,9 +18,11 @@
  *  - migrate.ts - the first v2 pass of a space that v1 kept, and the way back. */
 
 import { foreignCopy, inForeignCopy } from '@orden/sync-core/foreign'
+import { repositioned } from '@orden/sync-core/order'
+import type { TreeEntry } from '@orden/sync-core/tree'
 import type { EngineEvents, Engine as AskedEngine } from './asking.svelte'
 import { Core } from './core'
-import { atOrUnder, made, moved, removed, unsynced } from './create'
+import { atOrUnder, made, moved, placed as placedRows, removed, restored, unsynced } from './create'
 import type { Doc } from './docs'
 import { HeldList, type Names } from './held'
 import { holdsDocument } from './kinds'
@@ -229,6 +231,67 @@ export class Engine implements AskedEngine {
     })
   }
 
+  /** The space a folder on this disk is in, or is the top of, and where in it. */
+  private folderPlaced(folder: string): Placed | null {
+    for (const foldsCase of this.core.world.foldsCase ? [false, true] : [false]) {
+      for (const space of this.core.spaces.values()) {
+        if (sameFolder(space.row.root, folder, foldsCase)) return { space, path: '' }
+      }
+    }
+    return this.placed(folder)
+  }
+
+  /** The names of a folder's rows somebody put somewhere, in the order their places put
+   *  them: what the file list draws a hand-arranged folder by (#1068). Null where the
+   *  space's account keeps no places, or nobody put a row of this folder anywhere; the
+   *  file list then reads the order it kept before places. */
+  placedIn(folder: string): string[] | null {
+    const placed = this.folderPlaced(folder)
+    if (!placed?.space.ordering.on) return null
+    return placed.space.placedNames().get(placed.space.key(placed.path))?.names ?? null
+  }
+
+  /** Every folder of the space at `root` with rows somebody put somewhere, by its path in
+   *  the space, and their names in order. Empty where the account keeps no places. */
+  placedFolders(root: string): Map<string, string[]> {
+    const placed = this.folderPlaced(root)
+    const out = new Map<string, string[]>()
+    if (!placed?.space.ordering.on || placed.path) return out
+    for (const { folder, names } of placed.space.placedNames().values()) out.set(folder, names)
+    return out
+  }
+
+  /** Whether the space a folder is in keeps places, and has the folder in its tree. */
+  keepsPlaces(folder: string): boolean {
+    const placed = this.folderPlaced(folder)
+    return !!placed?.space.ordering.on && placed.space.folderAt(placed.path) !== undefined
+  }
+
+  /** A folder's rows drawn in this order from now on: `order` its rows' names as they
+   *  are to be drawn, the first `count` of them put there by hand. Each row whose place
+   *  has to change for it is given a new one, as few as can be (`repositioned` in
+   *  @orden/sync-core/order), and goes up as a `place`. Answers false, sending nothing,
+   *  where the account keeps no places or the folder is not in its tree. */
+  arrange(folder: string, order: readonly string[], count: number): Promise<boolean> {
+    return this.core.use(async () => {
+      const placed = this.folderPlaced(folder)
+      if (!placed?.space.ordering.on) return false
+      const { space } = placed
+      const children = space.childrenAt(placed.path)
+      if (!children) return false
+      const rows: TreeEntry[] = []
+      let standing = 0
+      for (const [at, name] of order.entries()) {
+        const entry = children.get(name)
+        if (!entry || rows.includes(entry)) continue
+        rows.push(entry)
+        if (at < count) standing = rows.length
+      }
+      await this.core.commit(placedRows(this.core, space, repositioned(rows, standing)))
+      return true
+    })
+  }
+
   // -------------------------------------------------------------------------
   // This device's own changes
 
@@ -317,17 +380,39 @@ export class Engine implements AskedEngine {
     return holder !== null && (await this.core.world.disk.read(holder)) !== null
   }
 
-  removed(path: string): Promise<void> {
-    return this.core.use(() => this.remove(path))
+  /** A file or folder deleted here. `back`: the word its trash or its undo keeps to put
+   *  it back by (`restored`). */
+  removed(path: string, back?: string): Promise<void> {
+    return this.core.use(() => this.remove(path, back))
   }
 
-  private async remove(path: string): Promise<void> {
+  /** What this device deleted, back at `path` as the entries it was - a folder with what
+   *  it held (`restored` in create.ts): the delete said with `back` (`removed`), the word
+   *  its trash or its undo keeps. Answers false where it cannot be: no delete of this
+   *  space was said with that word, or something else is there; what is there is then a
+   *  file made, which the caller says instead. */
+  restored(path: string, back: string): Promise<boolean> {
+    return this.core.use(async () => {
+      const placed = this.placed(path)
+      if (!placed) return false
+      let id: string | null = null
+      for (const [one, went] of placed.space.gone) if (went.back === back) id = one
+      if (id === null) return false
+      const changes = await restored(this.core, placed.space, id, placed.path)
+      if (changes === null) return false
+      await this.core.commit(changes)
+      await this.settle(placed.space)
+      return true
+    })
+  }
+
+  private async remove(path: string, back?: string): Promise<void> {
     const placed = this.placed(path)
     if (!placed) return
     // Every road to here reads a file not found as gone. On macOS 13 a note iCloud took
     // off this Mac is exactly that, and it would leave the account and every other device.
     if (await this.core.world.disk.evicted(path)) return
-    await this.core.commit(removed(this.core, placed.space, placed.path))
+    await this.core.commit(removed(this.core, placed.space, placed.path, back))
     await this.settle(placed.space)
     await this.held.refresh()
   }
@@ -533,12 +618,23 @@ export class Engine implements AskedEngine {
   }
 }
 
+/** A path with `/` between folders, as the disk `root` is on writes them: `\\` is a
+ *  separator on Windows and a character of a name anywhere else. */
+function norm(root: string, value: string): string {
+  return (windowsPath(root) ? value.replace(/\\/g, '/') : value).replace(/\/+$/, '')
+}
+
+/** Whether a folder is the top of a space, as `relative` compares them. */
+function sameFolder(root: string, folder: string, foldsCase: boolean): boolean {
+  const base = norm(root, root)
+  const full = norm(root, folder)
+  return foldsCase ? full.toLowerCase() === base.toLowerCase() : full === base
+}
+
 /** A path relative to a root, with `/` between folders, or null outside it. */
 export function relative(root: string, path: string, foldsCase: boolean): string | null {
-  const slashed = windowsPath(root)
-  const norm = (value: string) => (slashed ? value.replace(/\\/g, '/') : value).replace(/\/+$/, '')
-  const base = norm(root)
-  const full = norm(path)
+  const base = norm(root, root)
+  const full = norm(root, path)
   if (full.length <= base.length) return null
   const head = full.slice(0, base.length)
   const same = foldsCase ? head.toLowerCase() === base.toLowerCase() : head === base

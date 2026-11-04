@@ -568,6 +568,9 @@ export const ta: Dictionary = {
   // Appearance
   Accent: 'சிறப்பு நிறம்',
   'Tidy up': 'ஒழுங்குபடுத்து',
+  'Blur the app behind the tab overview': 'தாவல் மேலோட்டத்தின் பின்னால் செயலியை மங்கலாக்கு',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Orden-இன் சொந்தப் பின்னணிக்குப் பதிலாக, சாளரங்களின் பின்னால் செயலியை மங்கலாகக் காட்டும்.',
   'Swipe in from the edge to see your notes.':
     'உங்கள் குறிப்புகளைப் பார்க்க ஓரத்திலிருந்து உள்ளே தேய்க்கவும்.',
   'Show other tabs as icons': 'மற்ற தாவல்களை உருவங்களாகக் காட்டு',
@@ -2782,4 +2785,5 @@ export const ta: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'அனுப்பப்படவில்லை. உங்கள் உரை வைக்கப்பட்டுள்ளது, மீண்டும் முயலலாம்.',
   'Reset to site icon': 'தளத்தின் ஐகானுக்குத் திரும்பு',
+  'One colour': 'ஒற்றை நிறம்',
 }

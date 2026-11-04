@@ -564,6 +564,9 @@ export const zhHantHK: Dictionary = {
   // Appearance
   Accent: '強調色',
   'Tidy up': '整理',
+  'Blur the app behind the tab overview': '在分頁總覽後模糊應用程式',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    '在視窗後顯示模糊的應用程式，而非 Orden 本身的背景。',
   'Swipe in from the edge to see your notes.': '從邊緣向內滑動即可查看筆記。',
   'Show other tabs as icons': '其他分頁只顯示圖示',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
@@ -2650,4 +2653,5 @@ export const zhHantHK: Dictionary = {
   'View your report': '查看你的報告',
   'Not sent. Your text is kept, so you can try again.': '未傳送。你的文字已保留，可以再試一次。',
   'Reset to site icon': '還原為網站圖示',
+  'One colour': '單色',
 }

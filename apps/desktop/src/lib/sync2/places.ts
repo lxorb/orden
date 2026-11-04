@@ -16,9 +16,10 @@
 import { type OpResult, type Op } from '@orden/sync-core/wire'
 import { inForeignCopy } from '@orden/sync-core/foreign'
 import { hash32 } from '@orden/sync-core/seed'
+import { byPosition } from '@orden/sync-core/order'
 import { applyOp, nameKey, type TreeEntry, type TreeState, treeState } from '@orden/sync-core/tree'
 import { isReserved } from '../naming'
-import type { Outgoing } from './records'
+import type { Gone, Ordering, Outgoing } from './records'
 import type { EntryRow, OutboxRow, SpaceRow } from './store'
 import type { Disk, FileKind, World } from './world'
 
@@ -71,11 +72,19 @@ export function windowsPath(root: string): boolean {
 export class SpaceState {
   entries: Map<string, EntryRow>
   outbox: Outboxed[]
+  /** Whether the account keeps where each entry was put among the rest of its folder,
+   *  and where it has each that somebody put somewhere (#1068; `Ordering` in
+   *  records.ts). Off until the feed says so: an account from before positions is sent
+   *  none. */
+  ordering: Ordering
+  /** Where what this device deleted was on this disk (`Gone` in records.ts). */
+  gone: Gone = new Map()
   /** When the files held in step here were last checked against what the account
    *  keeps; see `recoverLost` in files.ts. Never, at launch. */
   lostCheckedAt = -Infinity
   private shownCache: TreeState | null = null
   private pathsCache: Map<string, string> | null = null
+  private placedCache: Map<string, { folder: string; names: string[] }> | null = null
 
   constructor(
     public row: SpaceRow,
@@ -83,9 +92,11 @@ export class SpaceState {
     outbox: readonly Outboxed[],
     private readonly device: string,
     private readonly world: Pick<World, 'platform' | 'foldsCase'>,
+    ordering: Ordering = { on: false, positions: new Map() },
   ) {
     this.entries = new Map(entries.map((entry) => [entry.id, entry]))
     this.outbox = [...outbox]
+    this.ordering = ordering
   }
 
   get id(): string {
@@ -97,6 +108,7 @@ export class SpaceState {
   changed() {
     this.shownCache = null
     this.pathsCache = null
+    this.placedCache = null
   }
 
   /** The tree the account has confirmed: every entry it has named, as it named it. */
@@ -112,9 +124,15 @@ export class SpaceState {
         deleted: entry.deleted,
         seq: entry.seq,
         docSeq: 0,
+        ...this.positionOf(entry.id),
       })
     }
     return treeState(entries, this.row.cursor)
+  }
+
+  private positionOf(id: string): { pos?: string } {
+    const pos = this.ordering.positions.get(id)
+    return pos === undefined ? {} : { pos }
   }
 
   /** What the person sees: the confirmed tree with every waiting op applied. A day's
@@ -166,6 +184,50 @@ export class SpaceState {
     return out
   }
 
+  /** The rows somebody put somewhere in each folder, by the folder's path as this disk
+   *  compares paths (`key`): the folder's path, and the rows' names on this disk in the
+   *  order their places put them (#1068). Only folders with such a row are here. */
+  placedNames(): Map<string, { folder: string; names: string[] }> {
+    if (this.placedCache) return this.placedCache
+    const shown = this.shown()
+    const paths = this.paths()
+    const groups = new Map<string, { folder: string; rows: TreeEntry[] }>()
+    for (const entry of shown.entries.values()) {
+      if (entry.deleted || entry.pos === undefined || !paths.has(entry.id)) continue
+      const folder = entry.parent === null ? '' : paths.get(entry.parent)
+      if (folder === undefined) continue
+      const group = groups.get(this.key(folder)) ?? { folder, rows: [] }
+      group.rows.push(entry)
+      groups.set(this.key(folder), group)
+    }
+    const out = new Map<string, { folder: string; names: string[] }>()
+    for (const [key, { folder, rows }] of groups) {
+      const names = rows.sort(byPosition).map((entry) => nameOf(paths.get(entry.id) ?? ''))
+      out.set(key, { folder, names })
+    }
+    this.placedCache = out
+    return out
+  }
+
+  /** The live entries of the shown tree in a folder, by their name on this disk. */
+  childrenAt(folder: string): Map<string, TreeEntry> | null {
+    const parent = this.folderAt(folder)
+    if (parent === undefined) return null
+    const paths = this.paths()
+    const out = new Map<string, TreeEntry>()
+    for (const entry of this.shown().entries.values()) {
+      const path = paths.get(entry.id)
+      if (entry.deleted || entry.parent !== parent || path === undefined) continue
+      out.set(nameOf(path), entry)
+    }
+    return out
+  }
+
+  /** How a name the account holds is spelled on this disk. */
+  spelled(name: string): string {
+    return localName(name, this.world.platform)
+  }
+
   /** How this disk compares two paths. */
   key(path: string): string {
     return this.world.foldsCase ? nameKey(path) : path.normalize('NFC')
@@ -208,6 +270,21 @@ export class SpaceState {
     this.changed()
   }
 
+  /** Where an op the account applied leaves the entry among the rest of its folder.
+   *  Answers whether that changed. */
+  placedBy(op: Op, before: string | null, after: string | null): boolean {
+    const had = this.ordering.positions.get(op.id)
+    const pos = positionAfter(op, had, before, after)
+    if (pos === had) return false
+    if (pos === undefined) this.ordering.positions.delete(op.id)
+    else this.ordering.positions.set(op.id, pos)
+    this.repositioned = true
+    return true
+  }
+
+  /** Whether a place changed since the store was last told (`orderingRow`). */
+  repositioned = false
+
   /** What an op the account answered makes of an entry's row: where it ended up, or that
    *  it is gone. Answers the rows that changed. */
   answered(op: Op, result: OpResult): EntryRow[] {
@@ -218,6 +295,7 @@ export class SpaceState {
     if (op.t === 'delete') {
       entry.deleted = true
     } else if ('parent' in result) {
+      this.placedBy(op, entry.parent, result.parent)
       entry.parent = result.parent
       entry.name = result.name
       entry.deleted = false
@@ -227,6 +305,24 @@ export class SpaceState {
     this.changed()
     return touched
   }
+}
+
+/** The position an op the account applied leaves its entry with, by the rule the
+ *  account applies (`placed` and `moved` in @orden/sync-core/tree): a place or a drop
+ *  says where, a rename keeps it, a move to another folder that does not say leaves
+ *  it behind. Until the feed says it again, which it does. */
+function positionAfter(
+  op: Op,
+  had: string | undefined,
+  before: string | null,
+  after: string | null,
+) {
+  if (op.t === 'place') return op.pos
+  if ((op.t === 'move' || op.t === 'mkdir' || op.t === 'create') && op.pos !== undefined) {
+    return op.pos
+  }
+  if (op.t === 'move' && before !== after) return undefined
+  return had
 }
 
 function numbered(name: string, counter: number): string {

@@ -1,6 +1,6 @@
 import fc from 'fast-check'
 import { describe, expect, test } from 'vitest'
-import { between, byPosition, isPosition } from './order'
+import { between, byPosition, isPosition, repositioned, spread } from './order'
 
 describe('a position', () => {
   test('fits between any two, and at either end', () => {
@@ -40,5 +40,91 @@ describe('a position', () => {
   test('orders entries, the positioned first and the ids breaking ties', () => {
     const rows = [{ id: 'c' }, { id: 'b', pos: 'V' }, { id: 'a', pos: 'V' }, { id: 'd', pos: 'G' }]
     expect([...rows].sort(byPosition).map((one) => one.id)).toEqual(['d', 'a', 'b', 'c'])
+  })
+})
+
+describe('positions for an order', () => {
+  /** The ids of rows drawn by their positions, the unplaced after in the given order. */
+  const drawn = (rows: { id: string; pos?: string }[], moved: Map<string, string>) => {
+    const now = rows.map((row) => {
+      const pos = moved.get(row.id) ?? row.pos
+      return pos === undefined ? { id: row.id } : { id: row.id, pos }
+    })
+    const placed = now.filter((row) => row.pos !== undefined).sort(byPosition)
+    return [...placed, ...now.filter((row) => row.pos === undefined)].map((row) => row.id)
+  }
+
+  test('spread keeps a hundred in one gap short and rising', () => {
+    const out = spread('V', 'W', 100)
+    expect(out).toHaveLength(100)
+    expect(
+      out.every(
+        (pos, at) =>
+          isPosition(pos) && pos > 'V' && pos < 'W' && (at === 0 || pos > (out[at - 1] ?? '')),
+      ),
+    ).toBe(true)
+    expect(Math.max(...out.map((pos) => pos.length))).toBeLessThanOrEqual(4)
+  })
+
+  test('an order nobody placed yet gives each placed row a position', () => {
+    const rows = [{ id: 'c' }, { id: 'a' }, { id: 'b' }]
+    const moved = repositioned(rows, 2)
+    expect([...moved.keys()]).toEqual(['c', 'a'])
+    expect(drawn(rows, moved)).toEqual(['c', 'a', 'b'])
+  })
+
+  test('one row dragged is one position written', () => {
+    const rows = [
+      { id: 'a', pos: 'G' },
+      { id: 'b', pos: 'N' },
+      { id: 'c', pos: 'V' },
+      { id: 'd', pos: 'e' },
+    ]
+    // d dragged to the top.
+    const wanted = [rows[3], rows[0], rows[1], rows[2]].filter((row) => row !== undefined)
+    const moved = repositioned(wanted, 4)
+    expect([...moved.keys()]).toEqual(['d'])
+    expect(drawn(rows, moved)).toEqual(['d', 'a', 'b', 'c'])
+  })
+
+  test('a placed row trimmed off the end still stands where the order says', () => {
+    const rows = [{ id: 'a', pos: 'V' }, { id: 'b' }, { id: 'c', pos: 'G' }]
+    // Only a is said to be placed, but c keeps a position and so stands after a and b.
+    const moved = repositioned(rows, 1)
+    expect(drawn(rows, moved)).toEqual(['a', 'b', 'c'])
+  })
+
+  test('any order of any rows comes out drawn as wanted', () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.option(fc.constantFrom('1', 'G', 'N', 'V', 'e', 'z'), { nil: undefined }), {
+          maxLength: 30,
+        }),
+        fc.nat(),
+        fc.nat(),
+        (positions, seed, placed) => {
+          const rows = positions.map((pos, at) =>
+            pos === undefined ? { id: `r${String(at)}` } : { id: `r${String(at)}`, pos },
+          )
+          // A shuffle drawn from the seed, the unplaced keeping their order at the end.
+          const wanted = [...rows].sort(
+            (a, b) =>
+              ((seed * (a.id.length + 7) + a.id.charCodeAt(1)) % 13) -
+              ((seed * (b.id.length + 7) + b.id.charCodeAt(1)) % 13),
+          )
+          const count = placed % (wanted.length + 1)
+          const moved = repositioned(wanted, count)
+          for (const pos of moved.values()) expect(isPosition(pos)).toBe(true)
+          const drawnNow = drawn(wanted, moved)
+          const standing = drawnNow.filter(
+            (id) => moved.has(id) || wanted.find((row) => row.id === id)?.pos !== undefined,
+          )
+          // The rows that stand placed are drawn in the wanted order, ahead of the rest.
+          const ids = wanted.map((row) => row.id)
+          expect(standing).toEqual(ids.slice(0, standing.length))
+          expect(standing.length).toBeGreaterThanOrEqual(count)
+        },
+      ),
+    )
   })
 })

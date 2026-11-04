@@ -37,7 +37,7 @@
   import { chosenIcon, chosenTint, faviconFor, sourceMark } from './chosen-icon'
   import { type FileMark, MARKS } from './file-mark'
   import Icon from './Icon.svelte'
-  import { readIcon } from './icons'
+  import { readIcon, takesTint } from './icons'
 
   /** `path` is left out by a caller that knows a name and no path, and handed in as
    *  `undefined` by one whose path is sometimes null - a tab holding a note nobody has
@@ -89,7 +89,7 @@
     <img src={favicon} alt="" draggable="false" onerror={() => (broken = true)} />
   </span>
 {:else}
-  <span class="mark" class:quiet={chosen === null || chosen.kind === 'lucide'}>
+  <span class="mark" class:quiet={chosen === null || takesTint(chosen)}>
     <Icon icon={worn} {tint} fallback={MARKS[shown]} />
   </span>
 {/if}

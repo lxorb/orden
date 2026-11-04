@@ -564,6 +564,9 @@ export const ja: Dictionary = {
   // Appearance
   Accent: 'アクセント',
   'Tidy up': '整列',
+  'Blur the app behind the tab overview': 'タブ一覧の背後のアプリをぼかす',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Orden 自身の背景の代わりに、ウィンドウの背後にぼかしたアプリを表示します。',
   'Swipe in from the edge to see your notes.': '端から内側へスワイプするとノートが見られます。',
   'Show other tabs as icons': 'ほかのタブをアイコンで表示',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
@@ -2705,4 +2708,5 @@ export const ja: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     '送信できませんでした。入力内容は残っているので、もう一度お試しください。',
   'Reset to site icon': 'サイトのアイコンに戻す',
+  'One colour': '単色',
 }

@@ -578,6 +578,9 @@ export const es: Dictionary = {
   // Appearance
   Accent: 'Acento',
   'Tidy up': 'Ordenar',
+  'Blur the app behind the tab overview': 'Desenfocar la app detrás de la vista de pestañas',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Muestra la app desenfocada detrás de las ventanas, en lugar del fondo propio de Orden.',
   'Swipe in from the edge to see your notes.': 'Desliza desde el borde para ver tus notas.',
   'Show other tabs as icons': 'Mostrar las demás pestañas como iconos',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
@@ -2803,4 +2806,5 @@ export const es: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'No enviado. Tu texto se conserva para que puedas intentarlo de nuevo.',
   'Reset to site icon': 'Restablecer el icono del sitio',
+  'One colour': 'Un color',
 }

@@ -9,6 +9,7 @@
     "./diverge": "./src/diverge.ts",
     "./foreign": "./src/foreign.ts",
     "./merge3": "./src/merge3.ts",
+    "./order": "./src/order.ts",
     "./outbox": "./src/outbox.ts",
     "./plane-diverge": "./src/plane-diverge.ts",
     "./seed": "./src/seed.ts",

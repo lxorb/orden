@@ -599,6 +599,9 @@ export const ar: Dictionary = {
   // Appearance
   Accent: 'اللون المميز',
   'Tidy up': 'ترتيب',
+  'Blur the app behind the tab overview': 'تمويه التطبيق خلف عرض علامات التبويب',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'يعرض التطبيق مموّهًا خلف النوافذ بدلًا من خلفية Orden الخاصة.',
   'Swipe in from the edge to see your notes.': 'اسحب من الحافة لترى ملاحظاتك.',
   'Show other tabs as icons': 'اعرض علامات التبويب الأخرى كأيقونات',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
@@ -2844,4 +2847,5 @@ export const ar: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'لم يُرسل. نصك محفوظ، لذا يمكنك المحاولة مرة أخرى.',
   'Reset to site icon': 'العودة إلى أيقونة الموقع',
+  'One colour': 'بلون واحد',
 }

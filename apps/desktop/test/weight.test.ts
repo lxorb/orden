@@ -1238,8 +1238,25 @@ function holds(tail: string): boolean {
  *  space, a board's page turn giving way to a drawer's edge; a session written in a launch
  *  meeting an open document merge or stay beside it. No new module. Measured 3,655,190, 394
  *  modules.
+ *
+ *  Raised 2026-11-04, to 3,562,000, for #1068: the file list reads a hand-arranged
+ *  folder from each row's own place where the account keeps them, and turns a drop into
+ *  them (workspace/arranged.svelte.ts). Measured 3,561,350.
+ *
+ *  Raised 2026-11-04, to 3,563,500, for #1097: an emoji's outline takes a tint like a line,
+ *  and a row wearing one is held back as a line is (`takesTint` in icons.ts, Icon.svelte,
+ *  FileMark.svelte). The outlines themselves are a chunk of their own. Measured 3,562,612.
+ *
+ *  Raised 2026-11-04, to 3,565,000, for #1068: a delete put back out of the trash or
+ *  undone is said to sync by the word it went with, so it comes back as the entries it
+ *  was (workspace/undoing.ts, trash.svelte.ts). Measured 3,563,824.
+ *
+ *  Raised on 2026-11-04, to 3,663,900, as those three came to claude/hunt-round-1: the same
+ *  growth on the hunt's own 3,655,190, with a chat in hand telling the list another window is
+ *  answering in it (`merged`), a folder's top by its disk's own rules (`sameFolder`). The
+ *  hunt's third tauri branch adds nothing here. No new module. Measured 3,663,693, 394 modules.
  */
-const BUDGET = 3_655_400
+const BUDGET = 3_663_900
 const MOST_FILES = 395
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

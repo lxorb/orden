@@ -564,6 +564,9 @@ export const yue: Dictionary = {
   // Appearance
   Accent: '強調色',
   'Tidy up': '整理',
+  'Blur the app behind the tab overview': '喺分頁總覽後面模糊個 app',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    '喺視窗後面顯示模糊咗嘅 app，而唔係 Orden 自己嘅背景。',
   'Swipe in from the edge to see your notes.': '由邊緣向內掃就睇到你嘅筆記。',
   'Show other tabs as icons': '其他分頁只顯示圖示',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
@@ -2644,4 +2647,5 @@ export const yue: Dictionary = {
   'View your report': '睇你嘅報告',
   'Not sent. Your text is kept, so you can try again.': '未送出。你寫嘅嘢仲喺度，可以再試多次。',
   'Reset to site icon': '還原做網站圖示',
+  'One colour': '單色',
 }

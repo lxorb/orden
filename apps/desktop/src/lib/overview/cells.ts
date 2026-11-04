@@ -1,8 +1,8 @@
 /** Which cell a dragged window is in, in All spaces (issue #331).
  *
  *  A window is always in exactly one space's cell, never between two or outside every
- *  one. Dragged towards the edge of its own it stays in it, and the membrane stretches
- *  round it; dragged far enough into the room of another, it plops across. Far enough is
+ *  one. Dragged towards the edge of its own it stays in it, and its bubble goes
+ *  with it; dragged far enough into the room of another, it plops across. Far enough is
  *  further than the way back, so a hand resting on the line between two cells does not
  *  make the window flicker between them. Pure. */
 

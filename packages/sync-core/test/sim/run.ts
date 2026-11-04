@@ -58,8 +58,9 @@ export interface Options {
   watch?: string
   /** What the random steps are mostly about: the words (the default, the mix every
    *  pinned seed was drawn from), or the tree - moves, renames, deletes and restores
-   *  crossing on many devices (#1068). */
-  mix?: 'words' | 'tree'
+   *  crossing on many devices (#1068) - or the order: the tree's mix with rows dragged
+   *  among the rest of their folders as well. */
+  mix?: 'words' | 'tree' | 'order'
 }
 
 export interface Report {
@@ -147,6 +148,19 @@ class Run {
 
   /** The kinds of action the random steps draw, and how often. */
   private kinds(): [Action['t'], number][] {
+    if (this.options.mix === 'order') {
+      return [
+        ['type', 8],
+        ['create', 12],
+        ['mkdir', 6],
+        ['rename', 8],
+        ['move', 10],
+        ['delete', 6],
+        ['restore', 4],
+        ['place', 26],
+        ['save', 6],
+      ]
+    }
     if (this.options.mix === 'tree') {
       return [
         ['type', 12],
@@ -209,6 +223,8 @@ class Run {
         const id = trash[r.int(Math.max(trash.length, 1))]
         return id === undefined ? { t: 'save' } : { t: 'restore', id }
       }
+      case 'place':
+        return { t: 'place', target: pick(), at: pick() }
       case 'append-day':
         return { t: 'append-day', name: DAY, words: this.words() }
       case 'edit-file':

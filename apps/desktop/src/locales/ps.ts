@@ -567,6 +567,9 @@ export const ps: Dictionary = {
   // Appearance
   Accent: 'ځانګړی رنګ',
   'Tidy up': 'ترتیب کړئ',
+  'Blur the app behind the tab overview': 'د ټب کتنې شاته اپ تت کړئ',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'د Orden د خپل شالید پر ځای، اپ د کړکیو شاته تت ښيي.',
   'Swipe in from the edge to see your notes.': 'خپلې یادښتونه د لیدو لپاره له څنډې دننه سوایپ کړئ.',
   'Show other tabs as icons': 'نور ټبونه د نښو په توګه ښکاره کړئ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
@@ -2734,4 +2737,5 @@ export const ps: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'ونه لېږل شو. ستاسو متن ساتل شوی، بیا هڅه کولی شئ.',
   'Reset to site icon': 'د سایټ نښې ته بیرته راګرځول',
+  'One colour': 'یو رنګ',
 }

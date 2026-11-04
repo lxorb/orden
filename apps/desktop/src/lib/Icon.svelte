@@ -20,7 +20,7 @@
    *  asking is free after the first time. See icon-library.svelte.ts. */
   import { accentColour } from './accents'
   import { iconLibrary } from './icon-library.svelte'
-  import { type IconNode, readTint, type WrittenIcon } from './icons'
+  import { type IconNode, readTint, takesTint, type WrittenIcon } from './icons'
   import { theme } from './theme.svelte'
 
   const {
@@ -30,8 +30,9 @@
   }: {
     /** What was chosen, or null for something that chose nothing. */
     icon: WrittenIcon | null
-    /** An accent id, for a stroked icon only: an emoji and a coloured drawing have
-     *  their own colours, and tinting either would be painting over the picture. */
+    /** An accent id, for an icon that takes one (`takesTint`): a line, and an emoji's
+     *  outline (#1097). An emoji and a coloured drawing have their own colours, and
+     *  tinting either would be painting over the picture. */
     tint?: string | null
     /** What to stroke where nothing was chosen, or where the set that would draw it
      *  has not arrived: the kind's own mark, the app's own glyph. Null draws
@@ -55,11 +56,13 @@
    *  somebody's file and may say `icon-color: chartreuse`, and a name no palette holds
    *  is no colour rather than the first accent in the list.
    *
-   *  Only where a stroke is actually being drawn, and never over a fallback: a plain
-   *  page in violet would say the chosen icon had arrived when it had not. */
+   *  Only where the chosen icon is actually being drawn, and never over a fallback: a
+   *  plain page in violet would say the chosen icon had arrived when it had not. */
   const painted = $derived(readTint(tint))
   const colour = $derived(
-    painted && drawing?.kind === 'stroked' ? accentColour(painted, theme.current) : null,
+    painted && drawing && drawing.kind !== 'emoji' && takesTint(icon)
+      ? accentColour(painted, theme.current)
+      : null,
   )
 </script>
 
@@ -73,7 +76,7 @@
   <!-- Somebody else's drawing, as it was drawn: its own box, its own colours, no
        stroke of ours over it. The markup is a set this app ships, read out of its
        own package at build time - never anything a note or a person typed. -->
-  <svg class="glyph drawn" viewBox={drawing.box} aria-hidden="true">
+  <svg class="glyph drawn" viewBox={drawing.box} aria-hidden="true" style:color={colour}>
     <!-- eslint-disable-next-line svelte/no-at-html-tags -- a shipped icon set, not content -->
     {@html drawing.body}
   </svg>

@@ -572,6 +572,9 @@ export const sw: Dictionary = {
   // Appearance
   Accent: 'Rangi ya msisitizo',
   'Tidy up': 'Panga',
+  'Blur the app behind the tab overview': 'Fifisha programu nyuma ya muhtasari wa vichupo',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Huonyesha programu ikiwa imefifishwa nyuma ya madirisha, badala ya mandharinyuma ya Orden yenyewe.',
   'Swipe in from the edge to see your notes.': 'Telezesha kutoka ukingoni kuona madokezo yako.',
   'Show other tabs as icons': 'Onyesha vichupo vingine kama aikoni',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
@@ -2772,4 +2775,5 @@ export const sw: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'Haijatumwa. Maandishi yako yamehifadhiwa, kwa hivyo unaweza kujaribu tena.',
   'Reset to site icon': 'Rudisha ikoni ya tovuti',
+  'One colour': 'Rangi moja',
 }

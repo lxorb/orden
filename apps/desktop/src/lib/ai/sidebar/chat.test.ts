@@ -1964,10 +1964,19 @@ describe('where a chat stands', () => {
     await chat.openThread(thread.id, false)
     expect(chat.thread?.state).toBe('interrupted')
 
-    engine.send.mockImplementationOnce(() => new Promise<void>(() => undefined))
+    let finish: () => void = () => undefined
+    engine.send.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve
+        }),
+    )
     chat.text = 'again'
     chat.submit({ front: null, selection: '' })
     await vi.waitFor(() => expect(chat.every.map((one) => one.state)).toEqual(['running']))
+    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+    finish()
+    await vi.waitFor(() => expect(chat.running).toEqual([]))
   })
 
   test('a chat another window is answering in is at work, not interrupted', async () => {
@@ -1986,5 +1995,122 @@ describe('where a chat stands', () => {
     await vi.waitFor(() =>
       expect(chat.every.find((one) => one.id === thread.id)?.state).toBe('running'),
     )
+  })
+
+  test('so is one of those in hand here, opened or asked after', async () => {
+    const { keepThread, newThread } = await import('../chat/threads')
+    const thread = newThread('work', 'p', 'm')
+    thread.title = 'Plan'
+    thread.state = 'running'
+    thread.answering = 'a1'
+    thread.turns = [{ id: 'u1', role: 'you', at: 1, parts: [] }]
+    await keepThread(thread)
+
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    await vi.waitFor(() => expect(chat.every.map((one) => one.id)).toEqual([thread.id]))
+    await chat.openThread(thread.id, false)
+    expect(chat.every.find((one) => one.id === thread.id)?.state).toBe('running')
+    chat.showThreads()
+    await new Promise((done) => setTimeout(done, 0))
+    expect(chat.every.find((one) => one.id === thread.id)?.state).toBe('running')
+  })
+})
+
+describe('a chat in the list the moment it changes (#1111)', () => {
+  beforeEach(() => {
+    kept.clear()
+    deleted.length = 0
+    localStorage.clear()
+  })
+
+  /** An engine that takes the message and holds its answer until `answer` is called. */
+  function holding() {
+    let answer: () => void = () => undefined
+    engine.send.mockImplementationOnce((thread: Thread, draft: Draft, on) => {
+      const turn = { id: crypto.randomUUID(), role: 'you' as const, at: 1, parts: [], draft }
+      thread.turns.push(turn)
+      on({ type: 'turn', turn })
+      return new Promise<void>((done) => {
+        answer = done
+      })
+    })
+    return () => answer()
+  }
+
+  test('is there at once when it is made and left with Back, the answer still to come', async () => {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    await vi.waitFor(() => expect(chat.head).not.toBeNull())
+    const answer = holding()
+    chat.text = 'plan the week'
+    chat.submit({ front: null, selection: '' })
+    const id = chat.thread?.id ?? ''
+    await vi.waitFor(() => expect(chat.head?.kept).toBe(true))
+
+    chat.newThread()
+    expect(chat.heads.map((one) => one.id)).toEqual([id])
+    // The list read again, before the chat is written down, still has it.
+    chat.showThreads()
+    await new Promise((done) => setTimeout(done, 0))
+    expect(chat.heads.map((one) => one.id)).toEqual([id])
+    answer()
+    await vi.waitFor(() => expect(chat.running).toEqual([]))
+    expect(chat.heads.map((one) => one.id)).toEqual([id])
+  })
+
+  test('is there at once while its first message is still gathered', async () => {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    let open: () => void = () => undefined
+    gathering.gate = new Promise((done) => {
+      open = done
+    })
+    chat.text = 'plan the week'
+    chat.submit({ front: null, selection: '' })
+
+    expect(chat.heads.map((one) => one.id)).toEqual([chat.thread?.id])
+    open()
+    await vi.waitFor(() => expect(chat.running).toEqual([]))
+  })
+
+  test('started from elsewhere is there at once', async () => {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work', 'home'])
+    const aside = chat.startAside('home', 'Book the dentist', 'auto', 'Do this task')
+
+    expect(chat.heads.map((one) => one.title)).toEqual(['Book the dentist'])
+    await aside
+  })
+
+  test('renamed, pinned, archived and deleted, is so in the list at once', async () => {
+    const garden = await had('home', 'Garden', 1_000)
+    const plan = await had('work', 'Plan', 2_000)
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work', 'home'])
+    await vi.waitFor(() => expect(chat.heads).toHaveLength(2))
+    const line = (id: string) => chat.heads.find((one) => one.id === id)
+
+    await chat.rename('Allotment', garden.id)
+    expect(line(garden.id)?.title).toBe('Allotment')
+
+    // A list read before the pin, and back after it, does not take it off again.
+    chat.showThreads()
+    await chat.pin(plan.id)
+    await new Promise((done) => setTimeout(done, 0))
+    expect(line(plan.id)?.pinned).toBeGreaterThan(0)
+
+    chat.archive(garden.id)
+    await vi.waitFor(() => expect(line(garden.id)?.archived).toBe(true))
+
+    const removing = chat.remove(plan.id)
+    await vi.waitFor(() => expect(line(plan.id)).toBeUndefined())
+    await removing
+    expect(line(plan.id)).toBeUndefined()
   })
 })

@@ -135,6 +135,41 @@ describe('an icon with a colour on it', () => {
   })
 })
 
+/** An emoji in one colour (#1097): drawn in the text's colour, so it takes a tint as a
+ *  line does, and is held back as a line is; a logo in one colour keeps its own. */
+describe('an emoji s outline', () => {
+  const outline = '<path fill="currentColor" d="M1 1h30v30H1z"/>'
+  const one = (body: string) => ({
+    entries: [],
+    groups: [],
+    shape: () => ({ kind: 'drawn' as const, body, box: '0 0 32 32' }),
+  })
+
+  test('is drawn in the colour on it', () => {
+    const before = iconLibrary.loaded
+    iconLibrary.loaded = { ...before, 'fluent-emoji-high-contrast': one(outline) }
+    chosen.Work = 'fluent-emoji-high-contrast:thinking-face'
+    tints.Work = 'violet'
+    const body = drawn('file', 'Work')
+
+    expect(body).toContain('M1 1h30v30H1z')
+    expect(body).toMatch(/<svg[^>]*class="[^"]*drawn[^"]*"[^>]*style="[^"]*color:/)
+    expect(body).toMatch(/class="[^"]*mark[^"]*quiet/)
+    tints.Work = null
+    iconLibrary.loaded = before
+  })
+
+  test('and a logo takes none', () => {
+    const before = iconLibrary.loaded
+    iconLibrary.loaded = { ...before, 'simple-icons': one(outline) }
+    chosen.Work = 'simple-icons:github'
+    tints.Work = 'violet'
+    expect(drawn('file', 'Work')).not.toMatch(/style="[^"]*color:/)
+    tints.Work = null
+    iconLibrary.loaded = before
+  })
+})
+
 describe('a row that chose nothing', () => {
   test('wears the mark its kind wears', () => {
     for (const mark of ['note', 'canvas', 'file', 'pdf'] as const) {

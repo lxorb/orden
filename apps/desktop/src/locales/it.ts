@@ -577,6 +577,9 @@ export const it: Dictionary = {
   // Appearance
   Accent: 'Accento',
   'Tidy up': 'Riordina',
+  'Blur the app behind the tab overview': 'Sfoca l’app dietro la panoramica delle schede',
+  'Shows the app blurred behind the windows, instead of Orden’s own background.':
+    'Mostra l’app sfocata dietro le finestre, invece dello sfondo di Orden.',
   'Swipe in from the edge to see your notes.': 'Scorri dal bordo per vedere le tue note.',
   'Show other tabs as icons': 'Mostra le altre schede come icone',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
@@ -2811,4 +2814,5 @@ export const it: Dictionary = {
   'Not sent. Your text is kept, so you can try again.':
     'Non inviata. Il tuo testo resta qui, così puoi riprovare.',
   'Reset to site icon': 'Ripristina l’icona del sito',
+  'One colour': 'Un colore',
 }

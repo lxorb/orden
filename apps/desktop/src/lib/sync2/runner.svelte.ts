@@ -29,7 +29,7 @@ import { workspace } from '../workspace.svelte'
 import type { FileOp } from '../workspace/file-ops'
 import { owesAtTheEnd, owesLast, writing } from '../parting'
 import { isDesktop, joinPath } from '../tauri'
-import { pathKey } from '../space-paths'
+import { pathKey, samePath } from '../space-paths'
 import { oneWriteAt, type Said, windows } from '../windows'
 import { waited } from '../timing'
 import { appWorld, type Telling } from './app-world'
@@ -46,6 +46,7 @@ import { MINE } from './docs'
 import { Engine } from './engine'
 import { type Leadership, leadSync } from './lead'
 import { Owed, type Owing, takeOwed } from './owed'
+import { placesOf } from './placing'
 import { type Holding, spend } from '../sync/holding'
 import type { Carried } from '../pages/carried'
 import { holdsDocument, joinsAs, turn, unixLines } from './kinds'
@@ -238,6 +239,18 @@ class Runner {
       document.removeEventListener('visibilitychange', back)
     })
     this.stops.push(this.followOpen())
+    // The file list's hand-arranged order, by the places the account keeps (#1068).
+    this.stops.push(
+      workspace.arranged.placeBy(
+        placesOf(engine, (root, folder) => {
+          const tree = workspace.tree
+          if (!tree || !samePath(tree.path, root)) return null
+          return folder
+            ? (workspace.entryAt(joinPath(root, folder))?.children ?? null)
+            : tree.children
+        }),
+      ),
+    )
     // A canvas's surface arrives after its tab: the planes are joined once it has.
     rooms.drawn = () => this.rebind()
     this.stops.push(() => (rooms.drawn = null))
@@ -589,6 +602,7 @@ class Runner {
             this.watched?.follow()
           }
           const passed = await engine.pass(id)
+          this.placesHeard(engine, space.row.root)
           if (passed?.full) this.full.add(id)
           else if (passed?.finished) this.full.delete(id)
           for (const one of this.full) if (!engine.core.spaces.has(one)) this.full.delete(one)
@@ -624,6 +638,18 @@ class Runner {
       this.status = 'error'
       this.lastError = error instanceof Error ? error.message : String(error)
     }
+  }
+
+  /** How many times the engine's places had changed when the file list last heard. */
+  private reorders = -1
+
+  /** A pass over a space is over: its hand-arranged order is brought into line with the
+   *  places (`fromPlaces`), and drawn again where they changed. */
+  private placesHeard(engine: Engine, root: string) {
+    workspace.arranged.fromPlaces(root)
+    if (engine.core.reorders === this.reorders) return
+    this.reorders = engine.core.reorders
+    workspace.arranged.repositioned()
   }
 
   private async firstDone(engine: Engine, id: string): Promise<boolean> {
@@ -784,7 +810,10 @@ class Runner {
         // A day's note the append action made starts from nothing, which is what two of
         // them made apart are merged against.
         const mergeable = this.mergeables.delete(op.path) ? '' : undefined
-        await engine.created(op.path, op.kind === 'folder', text, mergeable)
+        // A delete put back comes back as the entries it was, where the engine has it.
+        if (!(op.back && (await engine.restored(op.path, op.back)))) {
+          await engine.created(op.path, op.kind === 'folder', text, mergeable)
+        }
         this.rebind()
       } else if (op.op === 'moved') {
         if (op.kind === 'space') {
@@ -794,7 +823,7 @@ class Runner {
           await engine.moved(op.from, op.to)
         }
       } else if (op.kind !== 'space') {
-        await engine.removed(op.path)
+        await engine.removed(op.path, op.back)
       }
       this.nudge()
     })()

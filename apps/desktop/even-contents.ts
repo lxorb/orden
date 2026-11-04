@@ -520,10 +520,17 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  (moving-space.ts); a session written in a launch, words meeting an open document. Measured
  *  5,996,978. The catalogues to 975,800, the sheet's new words and two messages in every
  *  catalogue, measured 975,705.
+ *
+ *  Raised on 2026-11-04 as #1068, #1097, #331 and #1111 came to claude/hunt-round-1, none of
+ *  which raised these on unstable, where they fit under what the hunt has since spent. The code
+ *  to 6,001,800: a delete put back as its entries, each row's own place, an emoji's tint, the
+ *  overview's bubbles. Measured 6,001,579. The catalogues to 979,600: the overview's blur setting
+ *  and One colour in every catalogue, measured 979,469. The agents' branch moved neither past
+ *  the budgets before them.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_997_200,
-  catalogues: 975_800,
+  code: 6_001_800,
+  catalogues: 979_600,
   styles: 290_000,
   fonts: 260_000,
   pages: 40_000,

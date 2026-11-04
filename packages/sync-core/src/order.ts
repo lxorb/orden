@@ -60,3 +60,77 @@ export function byPosition(
   }
   return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
 }
+
+/** `count` positions after `before` and before `after`, rising: the gap halved again
+ *  and again rather than each one squeezed in after the last, so a hundred rows put in
+ *  one gap stay a few digits long. */
+export function spread(before: string | null, after: string | null, count: number): string[] {
+  if (count <= 0) return []
+  const middle = between(before, after)
+  const low = Math.floor((count - 1) / 2)
+  return [...spread(before, middle, low), middle, ...spread(middle, after, count - 1 - low)]
+}
+
+/** The positions that draw a folder's rows in the order `rows` lists them, moving as
+ *  few of them as can be: what a drag, a key or an older order turned into positions
+ *  sends (#1068). Answers each row whose position changes, by id, and the new one.
+ *
+ *  The first `placed` rows are the ones somebody put where they are, and stand with
+ *  positions; a row after them that already has one keeps standing placed, since
+ *  nothing takes a position away, and so does every row before it. The rest follow
+ *  the placed in the folder's own order, as they would anyway. Of the rows that stand
+ *  placed, the longest run whose positions already rise in the wanted order keeps
+ *  them, and only the others are given new ones in the gaps: one row dragged is one
+ *  position written, and a drag somebody made elsewhere of another row stands. */
+export function repositioned(
+  rows: readonly { id: string; pos?: string | undefined }[],
+  placed: number,
+): Map<string, string> {
+  let upTo = Math.min(Math.max(placed, 0), rows.length)
+  rows.forEach((row, at) => {
+    if (row.pos !== undefined) upTo = Math.max(upTo, at + 1)
+  })
+  const standing = rows.slice(0, upTo)
+
+  // The longest run of rising positions, by patience: `ends[k]` is where the best run
+  // of k + 1 rows found so far ends, its position the lowest such an end can have.
+  const ends: number[] = []
+  const back = new Array<number>(standing.length).fill(-1)
+  standing.forEach((row, at) => {
+    const pos = row.pos
+    if (pos === undefined) return
+    let low = 0
+    let high = ends.length
+    while (low < high) {
+      const mid = (low + high) >> 1
+      const end = standing[ends[mid] ?? 0]?.pos ?? ''
+      if (end < pos) low = mid + 1
+      else high = mid
+    }
+    back[at] = low > 0 ? (ends[low - 1] ?? -1) : -1
+    ends[low] = at
+  })
+  const keeps = new Set<number>()
+  for (let at = ends.at(-1) ?? -1; at >= 0; at = back[at] ?? -1) keeps.add(at)
+
+  const out = new Map<string, string>()
+  let before: string | null = null
+  let gap: number[] = []
+  const fill = (after: string | null) => {
+    spread(before, after, gap.length).forEach((pos, k) => {
+      const row = standing[gap[k] ?? 0]
+      if (row) out.set(row.id, pos)
+    })
+    gap = []
+  }
+  standing.forEach((row, at) => {
+    if (!keeps.has(at)) {
+      gap.push(at)
+      return
+    }
+    fill(row.pos ?? null)
+    before = row.pos ?? null
+  })
+  fill(null)
+  return out
+}

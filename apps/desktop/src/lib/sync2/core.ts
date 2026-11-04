@@ -17,9 +17,14 @@ import { holdsDocument, shapeOf, type Shape } from './kinds'
 import { SpaceState, type Outboxed } from './places'
 import {
   againstOf,
+  goneKey,
+  goneOf,
   numbersKey,
   numbersOf,
   numbersRow,
+  orderingOf,
+  orderingRow,
+  orderKey,
   outgoingBytes,
   outgoingOf,
   wantKey,
@@ -27,6 +32,8 @@ import {
   wantedRow,
   type Against,
   type DocNumbers,
+  type Gone,
+  type Ordering,
   type Outgoing,
   type Wanted,
 } from './records'
@@ -150,7 +157,13 @@ export class Core {
       scan('held'),
     ])
 
+    const orderings = new Map<string, Ordering>()
+    const gones = new Map<string, Gone>()
     for (const row of meta) {
+      const ordering = orderingOf(row)
+      if (ordering) orderings.set(ordering.space, ordering.ordering)
+      const gone = goneOf(row)
+      if (gone) gones.set(gone.space, gone.gone)
       const read = numbersOf(row)
       if (read) core.numbers.set(read.id, read.numbers)
       if (row.key.startsWith(GEN)) {
@@ -175,7 +188,16 @@ export class Core {
         const record = outgoingOf(row.op)
         if (record) waiting.push({ row, record })
       }
-      core.spaces.set(space.space_id, new SpaceState(space, mine, waiting, core.device, world))
+      const state = new SpaceState(
+        space,
+        mine,
+        waiting,
+        core.device,
+        world,
+        orderings.get(space.space_id),
+      )
+      state.gone = gones.get(space.space_id) ?? state.gone
+      core.spaces.set(space.space_id, state)
     }
 
     for (const row of held) {
@@ -268,6 +290,8 @@ export class Core {
       clear('outbox', spaceId),
       remove('spaces', spaceId),
       remove('meta', wantKey(spaceId)),
+      remove('meta', orderKey(spaceId)),
+      remove('meta', goneKey(spaceId)),
     )
     return changes
   }
@@ -298,6 +322,18 @@ export class Core {
   /** The row changes for entries. */
   entryChanges(rows: Iterable<EntryRow>): Change[] {
     return [...rows].map((row) => put('entries', { ...row }))
+  }
+
+  /** How many times where an entry stands among the rest of its folder has changed,
+   *  here or on the account: what the file list redraws a hand-arranged folder by. */
+  reorders = 0
+
+  /** The space's places written down, where they changed since they last were. */
+  orderChanges(space: SpaceState): Change[] {
+    if (!space.repositioned) return []
+    space.repositioned = false
+    this.reorders += 1
+    return [put('meta', orderingRow(space.id, space.ordering))]
   }
 
   /** The documents of a space still to pull. */
