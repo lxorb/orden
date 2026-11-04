@@ -499,6 +499,7 @@ export class CanvasStore implements PlaneSurface {
     const together: Canvas = {
       ...merged(ours, arrived),
       icon: arrived.icon ?? null,
+      iconColor: arrived.iconColor ?? null,
       ...(arrived.extras ? { extras: arrived.extras } : {}),
     }
     if (!arrived.extras) delete together.extras

@@ -637,7 +637,7 @@ async () => {
   const thread = chat.thread
   thread.turns.push({ id: 'you-ask', role: 'you', at: Date.now(), draft: { text: 'Shout the first words too', attachments: [] }, parts: [] })
   thread.turns.push({ id: 'model-ask', role: 'model', at: Date.now(), parts: [
-    { kind: 'tool', id: 'a1', verb: 'edit_note', args: { path: 'Herons.md', edits: [{ at: { quote: 'A heron' }, replace: 'A HERON' }] }, state: 'asking', result: { text: '', images: [], error: false, approval: 'q1' } },
+    { kind: 'tool', id: 'a1', verb: 'edit_note', args: { path: 'Herons.md', edits: [{ at: { quote: 'A heron' }, replace: 'A HERON' }] }, state: 'asking', result: { category: 'writing', text: '', images: [], error: false, approval: 'q1' } },
   ] })
   chat.touched(thread)
 }
