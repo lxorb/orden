@@ -81,6 +81,13 @@ function space(notes: Record<string, string>, openAt?: string) {
       edits.push(after)
       edited(changes, after)
     }
+    // And by the road that carries edits past what was typed since; see `take`.
+    const take = note.take.bind(note)
+    note.take = (changes, before) => {
+      const took = take(changes, before)
+      edits.push(took.text)
+      return took
+    }
   }
 
   const ws = {
@@ -563,6 +570,56 @@ describe('a replacement while the reader types', () => {
 
     expect(disk.get(`${SPACE}/other.md`)).toBe('also #job')
     expect(live()).toBe('- [ ] now call #job')
+  })
+})
+
+/** A file with Windows line endings - every web note's `.url`, and a note written on
+ *  Windows - is held by its open document as the file says it, `\r\n` and all, while the
+ *  editor counts each line ending as one character. An icon chosen for an open web note
+ *  was put in two characters early on its fourth line, inside the date (#1110): the
+ *  edits went into the editor in the file's count. */
+describe('an open file with Windows line endings', () => {
+  const URL_FILE = `${SPACE}/Site.url`
+  const SHORTCUT =
+    '[InternetShortcut]\r\nURL=https://example.com/\r\nTitle=Site\r\nNib-Added=2026-09-13T08:00:00.000Z\r\n'
+  const CHOSEN = `${SHORTCUT}Nib-Chosen-Icon=rocket\r\n`
+
+  test('takes an edit where it was worked out, on the disk and in the editor', async () => {
+    const { ws, note, live } = typedIn(URL_FILE, SHORTCUT)
+
+    await replaceInNotes(
+      ws,
+      [
+        {
+          path: URL_FILE,
+          before: SHORTCUT,
+          after: CHOSEN,
+          edits: [
+            { from: SHORTCUT.length, to: SHORTCUT.length, insert: 'Nib-Chosen-Icon=rocket\r\n' },
+          ],
+          back: [{ from: SHORTCUT.length, to: CHOSEN.length, insert: '' }],
+        },
+      ],
+      { anyFile: true },
+    )
+
+    expect(disk.get(URL_FILE)).toBe(CHOSEN)
+    expect(live()).toBe(CHOSEN.replace(/\r\n/g, '\n'))
+    expect(note.text).toBe(CHOSEN)
+
+    // And taken back the same way.
+    await undoLastFileAction(ws as unknown as PutsBack)
+    expect(disk.get(URL_FILE)).toBe(SHORTCUT)
+    expect(live()).toBe(SHORTCUT.replace(/\r\n/g, '\n'))
+  })
+
+  test('and an edit handed straight to the document is in the file’s count too', () => {
+    const note = openNote(URL_FILE, SHORTCUT)
+    const at = SHORTCUT.indexOf('Title=')
+    note.edited([{ from: at, to: at + 6, insert: 'Name=' }], SHORTCUT.replace('Title=', 'Name='))
+    expect(note.live.text.toString()).toBe(
+      SHORTCUT.replace('Title=', 'Name=').replace(/\r\n/g, '\n'),
+    )
   })
 })
 
