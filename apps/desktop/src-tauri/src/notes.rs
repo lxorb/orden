@@ -881,10 +881,12 @@ mod tests {
         let target = path(&dir, "notepad.md");
 
         fs::write(&target, b"\xEF\xBB\xBF# Title\r\nwords\r\n").expect("a marked file");
-        let read = super::words_of(&target).expect("the words");
+        let read = super::words_of(std::path::Path::new(&target)).expect("the words");
         assert_eq!(read, "# Title\r\nwords\r\n");
         assert_eq!(
-            super::words_stamped(&target).expect("the words").0,
+            super::words_stamped(std::path::Path::new(&target))
+                .expect("the words")
+                .0,
             "# Title\r\nwords\r\n"
         );
 

@@ -273,9 +273,8 @@ pub fn value_closes_at(body: &str, from: usize, limit: usize) -> Option<usize> {
             .position(|&one| one == b'\n')
             .map_or(limit, |one| at + one)
     };
-    let without_return = |line: &'_ [u8]| -> usize {
-        line.len() - usize::from(line.last() == Some(&b'\r'))
-    };
+    let without_return =
+        |line: &'_ [u8]| -> usize { line.len() - usize::from(line.last() == Some(&b'\r')) };
 
     let mut stop = line_end(from);
     let first = &bytes[from..stop];
