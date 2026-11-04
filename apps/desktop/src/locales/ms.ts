@@ -565,6 +565,7 @@ export const ms: Dictionary = {
   // Appearance
   Accent: 'Warna aksen',
   'Tidy up': 'Kemaskan',
+  'Swipe in from the edge to see your notes.': 'Leret masuk dari tepi untuk melihat nota anda.',
   'Window corners': 'Sudut tetingkap',
   Rounded: 'Bulat',
   Square: 'Segi empat',

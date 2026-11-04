@@ -567,6 +567,7 @@ export const gu: Dictionary = {
   // Appearance
   Accent: 'ઉપસાવ રંગ',
   'Tidy up': 'વ્યવસ્થિત કરો',
+  'Swipe in from the edge to see your notes.': 'તમારી નોંધો જોવા માટે કિનારેથી અંદર સ્વાઇપ કરો.',
   'Window corners': 'વિન્ડોના ખૂણા',
   Rounded: 'ગોળ',
   Square: 'ચોરસ',

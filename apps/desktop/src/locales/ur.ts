@@ -567,6 +567,7 @@ export const ur: Dictionary = {
   // Appearance
   Accent: 'نمایاں رنگ',
   'Tidy up': 'ترتیب دیں',
+  'Swipe in from the edge to see your notes.': 'اپنے نوٹس دیکھنے کے لیے کنارے سے اندر سوائپ کریں۔',
   'Window corners': 'ونڈو کے کونے',
   Rounded: 'گول',
   Square: 'چوکور',

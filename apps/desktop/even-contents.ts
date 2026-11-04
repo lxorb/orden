@@ -456,9 +456,14 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,870,900, for #1055: an online terminal not saved,
  *  which the plugin never opens, kept as its `.term` when it is (workspace/placing.ts,
  *  drafts.ts). Measured 5,870,576.
+ *
+ *  The code raised on 2026-11-04, to 5,872,500, for #1066 again: the file list's button
+ *  said and not shown where a swipe from the edge pulls the list out, and the one hint
+ *  about the swipe (Titlebar.svelte, SidebarToggle.svelte, hints.svelte.ts), put back
+ *  after the #1056 rebase dropped them. Measured 5,872,382.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_870_900,
+  code: 5_872_500,
   catalogues: 965_200,
   styles: 290_000,
   fonts: 260_000,

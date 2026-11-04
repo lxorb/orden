@@ -565,6 +565,7 @@ export const am: Dictionary = {
   // Appearance
   Accent: 'የማጉላት ቀለም',
   'Tidy up': 'አስተካክል',
+  'Swipe in from the edge to see your notes.': 'ማስታወሻዎችዎን ለማየት ከጠርዙ ወደ ውስጥ ያንሸራትቱ።',
   'Window corners': 'የመስኮት ማዕዘኖች',
   Rounded: 'የተጠጋጋ',
   Square: 'ካሬ',

@@ -590,6 +590,7 @@ export const ru: Dictionary = {
   // Appearance
   Accent: 'Акцент',
   'Tidy up': 'Упорядочить',
+  'Swipe in from the edge to see your notes.': 'Проведите от края, чтобы увидеть заметки.',
   'Window corners': 'Углы окна',
   Rounded: 'Скруглённые',
   Square: 'Прямые',

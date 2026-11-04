@@ -572,6 +572,8 @@ export const fil: Dictionary = {
   // Appearance
   Accent: 'Kulay tampok',
   'Tidy up': 'Ayusin',
+  'Swipe in from the edge to see your notes.':
+    'Mag-swipe papasok mula sa gilid para makita ang iyong mga tala.',
   'Window corners': 'Mga sulok ng window',
   Rounded: 'Bilugan',
   Square: 'Parisukat',

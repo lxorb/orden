@@ -568,6 +568,7 @@ export const tr: Dictionary = {
   // Appearance
   Accent: 'Vurgu rengi',
   'Tidy up': 'Düzenle',
+  'Swipe in from the edge to see your notes.': 'Notlarını görmek için kenardan içeri kaydır.',
   'Window corners': 'Pencere köşeleri',
   Rounded: 'Yuvarlak',
   Square: 'Köşeli',

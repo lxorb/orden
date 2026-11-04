@@ -567,6 +567,7 @@ export const mr: Dictionary = {
   // Appearance
   Accent: 'ॲक्सेंट',
   'Tidy up': 'नीटनेटके करा',
+  'Swipe in from the edge to see your notes.': 'तुमच्या नोंदी पाहण्यासाठी कडेपासून आत स्वाइप करा.',
   'Window corners': 'विंडोचे कोपरे',
   Rounded: 'गोलाकार',
   Square: 'चौकोनी',

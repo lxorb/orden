@@ -568,6 +568,7 @@ export const gsw: Dictionary = {
   // Appearance
   Accent: 'Akzänt',
   'Tidy up': 'Ufrume',
+  'Swipe in from the edge to see your notes.': 'Wisch vom Rand ine, zum dini Notize z gseh.',
   'Window corners': 'Fänschterecke',
   Rounded: 'Abgrundet',
   Square: 'Eggig',

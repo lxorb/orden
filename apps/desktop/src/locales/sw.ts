@@ -572,6 +572,7 @@ export const sw: Dictionary = {
   // Appearance
   Accent: 'Rangi ya msisitizo',
   'Tidy up': 'Panga',
+  'Swipe in from the edge to see your notes.': 'Telezesha kutoka ukingoni kuona madokezo yako.',
   'Window corners': 'Pembe za dirisha',
   Rounded: 'Mviringo',
   Square: 'Mraba',

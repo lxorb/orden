@@ -570,6 +570,7 @@ export const pa: Dictionary = {
   // Appearance
   Accent: 'ਉਭਾਰ ਰੰਗ',
   'Tidy up': 'ਤਰਤੀਬ ਦਿਓ',
+  'Swipe in from the edge to see your notes.': 'ਆਪਣੇ ਨੋਟ ਦੇਖਣ ਲਈ ਕਿਨਾਰੇ ਤੋਂ ਅੰਦਰ ਸਵਾਈਪ ਕਰੋ।',
   'Window corners': 'ਵਿੰਡੋ ਦੇ ਕੋਨੇ',
   Rounded: 'ਗੋਲ',
   Square: 'ਚੌਰਸ',

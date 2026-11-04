@@ -568,6 +568,8 @@ export const ta: Dictionary = {
   // Appearance
   Accent: 'சிறப்பு நிறம்',
   'Tidy up': 'ஒழுங்குபடுத்து',
+  'Swipe in from the edge to see your notes.':
+    'உங்கள் குறிப்புகளைப் பார்க்க ஓரத்திலிருந்து உள்ளே தேய்க்கவும்.',
   'Window corners': 'சாளர மூலைகள்',
   Rounded: 'வளைந்த',
   Square: 'சதுரம்',

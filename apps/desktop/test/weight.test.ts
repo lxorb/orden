@@ -1161,9 +1161,15 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,553,700 and 392 modules, for #1055: a new online terminal is a
  *  tab not saved, told apart by its words (`isOnlineTab` reads them with `termOf`, the
  *  `.term` reader, which is the module more), and saved as its `.term`; and every kind a tab
- *  opens is shown without its ending (note-name.ts). Measured 3,553,422, 391 modules. */
-const BUDGET = 3_553_700
-const MOST_FILES = 392
+ *  opens is shown without its ending (note-name.ts). Measured 3,553,422, 391 modules.
+ *
+ *  Raised 2026-11-04, to 3,556,300, and to 393 modules, for #1066 again: the file list's
+ *  button said and not shown where a swipe from the edge pulls the list out, on the
+ *  swipe's own condition, asked in one place (swipe-opens.ts, Titlebar.svelte,
+ *  SidebarToggle.svelte), put back after the #1056 rebase dropped them. Measured
+ *  3,556,148, 392 modules. */
+const BUDGET = 3_556_300
+const MOST_FILES = 393
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

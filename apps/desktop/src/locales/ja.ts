@@ -564,6 +564,7 @@ export const ja: Dictionary = {
   // Appearance
   Accent: 'アクセント',
   'Tidy up': '整列',
+  'Swipe in from the edge to see your notes.': '端から内側へスワイプするとノートが見られます。',
   'Window corners': 'ウィンドウの角',
   Rounded: '丸',
   Square: '四角',

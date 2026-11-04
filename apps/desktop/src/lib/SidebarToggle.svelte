@@ -25,7 +25,19 @@
   import { shortcuts } from './shortcuts.svelte'
   import { type PanelSide, workspace } from './workspace.svelte'
 
-  const { side = 'left' }: { side?: PanelSide } = $props()
+  const {
+    side = 'left',
+    unseen = false,
+  }: {
+    side?: PanelSide
+    /** Said and not shown: where a swipe from the edge pulls the drawer out, the button is
+     *  redundant to an eye (#1066), and only a screen reader, or a keyboard Tab lands on
+     *  it with, is given it - visible while the keyboard is on it. */
+    unseen?: boolean
+  } = $props()
+
+  /** Whether the keyboard, rather than a finger, is on the button now. */
+  let keyed = $state(false)
 
   /** The right side is open while it shows anything, the scratchpad too (#1032). */
   const open = $derived(side === 'right' ? workspace.rightShows !== null : !!workspace.openOn(side))
@@ -82,13 +94,18 @@
   class="nib-glyph toggle"
   class:is-on={open}
   class:right={side === 'right'}
+  class:nib-said={unseen && !keyed}
   data-side-toggle={side}
   title={shortcuts.tooltip(label, side === 'left' ? 'app.sidebar' : 'app.right-sidebar')}
   aria-label={label}
   aria-pressed={open}
   onclick={pressed}
   onkeydown={onward}
-  onblur={() => (opened = false)}
+  onfocus={(event) => (keyed = event.currentTarget.matches(':focus-visible'))}
+  onblur={() => {
+    opened = false
+    keyed = false
+  }}
 >
   <svg viewBox="0 0 14 14">
     <rect x="1" y="2.5" width="12" height="9" rx="1.5" />

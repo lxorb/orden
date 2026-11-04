@@ -573,6 +573,8 @@ export const ml: Dictionary = {
   // Appearance
   Accent: 'ആക്‌സന്റ് നിറം',
   'Tidy up': 'ക്രമീകരിക്കുക',
+  'Swipe in from the edge to see your notes.':
+    'നിങ്ങളുടെ കുറിപ്പുകൾ കാണാൻ അരികിൽ നിന്ന് അകത്തേക്ക് സ്വൈപ്പ് ചെയ്യുക.',
   'Window corners': 'ജാലകത്തിന്റെ മൂലകൾ',
   Rounded: 'വളഞ്ഞത്',
   Square: 'ചതുരം',

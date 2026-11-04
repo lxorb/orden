@@ -599,6 +599,7 @@ export const ar: Dictionary = {
   // Appearance
   Accent: 'اللون المميز',
   'Tidy up': 'ترتيب',
+  'Swipe in from the edge to see your notes.': 'اسحب من الحافة لترى ملاحظاتك.',
   'Window corners': 'زوايا النافذة',
   Rounded: 'مستديرة',
   Square: 'مربعة',

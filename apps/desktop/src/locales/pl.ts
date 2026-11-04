@@ -590,6 +590,7 @@ export const pl: Dictionary = {
   // Appearance
   Accent: 'Akcent',
   'Tidy up': 'Uporządkuj',
+  'Swipe in from the edge to see your notes.': 'Przesuń od krawędzi, aby zobaczyć swoje notatki.',
   'Window corners': 'Narożniki okna',
   Rounded: 'Zaokrąglone',
   Square: 'Kwadratowe',

@@ -564,6 +564,7 @@ export const vi: Dictionary = {
   // Appearance
   Accent: 'Màu nhấn',
   'Tidy up': 'Sắp xếp gọn',
+  'Swipe in from the edge to see your notes.': 'Vuốt vào từ mép để xem ghi chú của bạn.',
   'Window corners': 'Góc cửa sổ',
   Rounded: 'Bo tròn',
   Square: 'Vuông',

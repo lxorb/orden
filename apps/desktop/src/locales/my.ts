@@ -565,6 +565,8 @@ export const my: Dictionary = {
   // Appearance
   Accent: 'အသားပေးအရောင်',
   'Tidy up': 'စနစ်တကျ စီရန်',
+  'Swipe in from the edge to see your notes.':
+    'သင့်မှတ်စုများကို ကြည့်ရန် အစွန်းမှ အတွင်းသို့ ပွတ်ဆွဲပါ။',
   'Window corners': 'ဝင်းဒိုး ထောင့်များ',
   Rounded: 'လုံးဝိုင်း',
   Square: 'လေးထောင့်',

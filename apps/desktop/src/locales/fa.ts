@@ -567,6 +567,7 @@ export const fa: Dictionary = {
   // Appearance
   Accent: 'رنگ تکیه',
   'Tidy up': 'مرتب‌سازی',
+  'Swipe in from the edge to see your notes.': 'برای دیدن یادداشت‌هایتان از لبه به داخل بکشید.',
   'Window corners': 'گوشه‌های پنجره',
   Rounded: 'گرد',
   Square: 'مربعی',

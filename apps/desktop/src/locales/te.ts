@@ -568,6 +568,8 @@ export const te: Dictionary = {
   // Appearance
   Accent: 'యాక్సెంట్ రంగు',
   'Tidy up': 'చక్కదిద్దు',
+  'Swipe in from the edge to see your notes.':
+    'మీ నోట్‌లను చూడడానికి అంచు నుండి లోపలికి స్వైప్ చేయండి.',
   'Window corners': 'విండో మూలలు',
   Rounded: 'గుండ్రని',
   Square: 'చతురస్రం',

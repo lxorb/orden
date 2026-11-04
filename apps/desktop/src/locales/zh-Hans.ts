@@ -564,6 +564,7 @@ export const zhHans: Dictionary = {
   // Appearance
   Accent: '强调色',
   'Tidy up': '整理',
+  'Swipe in from the edge to see your notes.': '从边缘向内滑动即可查看笔记。',
   'Window corners': '窗口圆角',
   Rounded: '圆角',
   Square: '直角',

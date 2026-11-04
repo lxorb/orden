@@ -564,6 +564,7 @@ export const zhHantHK: Dictionary = {
   // Appearance
   Accent: '強調色',
   'Tidy up': '整理',
+  'Swipe in from the edge to see your notes.': '從邊緣向內滑動即可查看筆記。',
   'Window corners': '視窗角',
   Rounded: '圓角',
   Square: '直角',

@@ -567,6 +567,7 @@ export const ps: Dictionary = {
   // Appearance
   Accent: 'ځانګړی رنګ',
   'Tidy up': 'ترتیب کړئ',
+  'Swipe in from the edge to see your notes.': 'خپلې یادښتونه د لیدو لپاره له څنډې دننه سوایپ کړئ.',
   'Window corners': 'د کړکۍ کونجونه',
   Rounded: 'ګرد',
   Square: 'مربع',

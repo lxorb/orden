@@ -26,6 +26,7 @@
   import FirstSync from './lib/FirstSync.svelte'
   import Progress from './lib/Progress.svelte'
   import { drawer, rightDrawer } from './lib/drawer.svelte'
+  import { swipeOpens } from './lib/swipe-opens'
   import { escapeLeaves, fullscreen } from './lib/fullscreen.svelte'
   import { alone } from './lib/alone.svelte'
   import { chrome } from './lib/glass/chrome.svelte'
@@ -488,7 +489,7 @@
   // first drag is a thumb that arrives well after the first paint.
   $effect(() => {
     const host = middle
-    if (!host || !viewport.drawer || bare) return
+    if (!host || !swipeOpens()) return
 
     let stop: (() => void) | null = null
     let live = true

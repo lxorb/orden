@@ -578,6 +578,7 @@ export const es: Dictionary = {
   // Appearance
   Accent: 'Acento',
   'Tidy up': 'Ordenar',
+  'Swipe in from the edge to see your notes.': 'Desliza desde el borde para ver tus notas.',
   'Window corners': 'Esquinas de la ventana',
   Rounded: 'Redondeadas',
   Square: 'Cuadradas',

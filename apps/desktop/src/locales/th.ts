@@ -564,6 +564,7 @@ export const th: Dictionary = {
   // Appearance
   Accent: 'สีเน้น',
   'Tidy up': 'จัดระเบียบ',
+  'Swipe in from the edge to see your notes.': 'ปัดเข้ามาจากขอบเพื่อดูโน้ตของคุณ',
   'Window corners': 'มุมหน้าต่าง',
   Rounded: 'มน',
   Square: 'เหลี่ยม',

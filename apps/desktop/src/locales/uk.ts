@@ -590,6 +590,7 @@ export const uk: Dictionary = {
   // Appearance
   Accent: 'Акцент',
   'Tidy up': 'Упорядкувати',
+  'Swipe in from the edge to see your notes.': 'Проведіть від краю, щоб побачити нотатки.',
   'Window corners': 'Кути вікна',
   Rounded: 'Заокруглені',
   Square: 'Прямі',

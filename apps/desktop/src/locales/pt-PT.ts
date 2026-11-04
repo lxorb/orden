@@ -582,6 +582,7 @@ export const ptPT: Dictionary = {
   // Appearance
   Accent: 'Destaque',
   'Tidy up': 'Arrumar',
+  'Swipe in from the edge to see your notes.': 'Deslize a partir da margem para ver as suas notas.',
   'Window corners': 'Cantos da janela',
   Rounded: 'Arredondados',
   Square: 'Quadrados',
