@@ -1224,9 +1224,15 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 3,583,000, for #1106: a tab drawn as its icon keeps its cross
  *  from a press until it has opened out under the pointer (Tabs.svelte, tab-strip/
- *  layout.ts). Measured 3,582,252. */
-const BUDGET = 3_583_000
-const MOST_FILES = 394
+ *  layout.ts). Measured 3,582,252.
+ *
+ *  Raised 2026-11-04, to 3,600,000 and 395 modules, for #1120: a note's front matter as
+ *  a foldable strip at the top of the note, and a footnote's mark showing its words and
+ *  going to its definition and back (live-preview/properties.ts and the new
+ *  live-preview/footnotes.ts in @orden/editor). Both are the note's own drawing, which
+ *  arrives with the note. Measured 3,598,326. */
+const BUDGET = 3_600_000
+const MOST_FILES = 395
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

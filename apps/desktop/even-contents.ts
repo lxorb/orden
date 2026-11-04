@@ -508,9 +508,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  Alt+H, J, K and L between the panes (pane-moves.ts, `paneToward` in
  *  workspace/pane-tree.ts), and their four names and the pointer's switch in every
  *  language. Measured 5,897,207 and 972,863.
+ *
+ *  The code raised on 2026-11-04, to 5,903,500, for #1120: the editor's properties
+ *  strip and a footnote's card and jump, which the plugin's notes draw too. Measured
+ *  5,902,056.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_897_400,
+  code: 5_903_500,
   catalogues: 973_000,
   styles: 290_000,
   fonts: 260_000,
