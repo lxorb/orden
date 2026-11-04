@@ -1185,8 +1185,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-11-04, to 394 modules, for #1041: every tab but the one in front is its
  *  icon, opening out to its name under the pointer, with a letter on look-alikes
- *  (tab-strip/icon-tabs.svelte.ts, tab-strip/twins.ts). Measured 3,556,835, 393 modules. */
-const BUDGET = 3_559_000
+ *  (tab-strip/icon-tabs.svelte.ts, tab-strip/twins.ts). Measured 3,556,835, 393 modules.
+ *
+ *  Raised 2026-11-04, to 3,562,000, for #1068: the file list reads a hand-arranged
+ *  folder from each row's own place where the account keeps them, and turns a drop into
+ *  them (workspace/arranged.svelte.ts). Measured 3,561,350. */
+const BUDGET = 3_562_000
 const MOST_FILES = 394
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
