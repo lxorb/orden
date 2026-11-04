@@ -656,12 +656,12 @@ pub fn judge(
         && !says(&facts.dialog, NOT_ABOUT_THE_PRESS)
     {
         let said = short(&facts.dialog);
-        if says(&facts.dialog, PAYING) {
+        if dialog_commits(&facts.dialog, PAYING) {
             if let Some(question) = ask(Category::Paying, on(&said, "Pay", &site)) {
                 return Some(question);
             }
         }
-        if says(&facts.dialog, DELETING) {
+        if dialog_commits(&facts.dialog, DELETING) {
             if let Some(question) = ask(Category::Deleting, on(&said, "Delete", &site)) {
                 return Some(question);
             }
@@ -963,9 +963,41 @@ const CONFIRMING_ALONE: &[&str] = &[
 /// What makes a dialog's talk of deleting no question of its own: a notice about cookies.
 const NOT_ABOUT_THE_PRESS: &[&str] = &["cookie", "cookies"];
 
-/// Whether a press goes ahead with what a dialog says.
+/// Whether a press goes ahead with what a dialog says. An arrow or a tick after it is no word.
 fn confirms(name: &str) -> bool {
+    let name = name.trim_matches(|one: char| !one.is_alphanumeric());
     alone(name, CONFIRMING_ALONE) || starts_with_any(name, CONFIRMING)
+}
+
+/// What makes a sentence about paying or deleting a thing about to be done, and not a thing
+/// that may be done some day (`You can remove your data at any time`).
+const COMMITS: &[&str] = &[
+    "will",
+    "permanently",
+    "forever",
+    "cannot be undone",
+    "can't be undone",
+    "are you sure",
+    "want to",
+    "wirklich",
+    "endg\u{fc}ltig",
+    "wird",
+    "definitivement",
+    "permanentemente",
+];
+
+/// Whether a dialog says these words of what its button goes ahead with: a sentence that
+/// asks (`Delete your account?`), one that says it will (`This will delete your account.`),
+/// or its opening words, as a heading does (`Pay 20.00 EUR`).
+fn dialog_commits(dialog: &str, words: &[&str]) -> bool {
+    let leads_off = starts_with_any(dialog, words);
+    leads_off
+        || dialog
+            .split_inclusive(['.', '!', '?', '\u{ff1f}'])
+            .any(|sentence| {
+                says(sentence, words)
+                    && (sentence.trim_end().ends_with(['?', '\u{ff1f}']) || says(sentence, COMMITS))
+            })
 }
 
 fn starts_with_any(line: &str, words: &[&str]) -> bool {
@@ -976,11 +1008,12 @@ fn starts_with_any(line: &str, words: &[&str]) -> bool {
     })
 }
 
-/// Whether a line opens by saying it pays or deletes: `Pay now`, `Delete 3 files`, and not
-/// `How to delete your account` or `Payment details`, which a tile may hold in its other
-/// lines and do neither.
+/// Whether a line opens by saying it pays or deletes and is short enough to be a button's:
+/// `Pay now`, `Delete 3 files`, and not `How to delete your account`, `Payment details` or
+/// `Pay gap widens in Europe`, which a tile may hold in its other lines and do neither.
 pub fn leads(line: &str) -> bool {
-    starts_with_any(line, PAYING) || starts_with_any(line, DELETING)
+    line.split_whitespace().count() <= 4
+        && (starts_with_any(line, PAYING) || starts_with_any(line, DELETING))
 }
 
 /// What card fields are called, in names, ids and labels.
@@ -1829,6 +1862,35 @@ mod tests {
     }
 
     #[test]
+    fn a_dialog_commits_by_what_it_says_will_happen() {
+        for dialog in [
+            "Delete your account?",
+            "Are you sure? This will delete your account.",
+            "Confirmation Delete your account?",
+            "Pay 20.00 EUR",
+            "Pay 20.00 EUR?",
+        ] {
+            assert!(
+                dialog_commits(dialog, DELETING) || dialog_commits(dialog, PAYING),
+                "{dialog}"
+            );
+        }
+        for dialog in [
+            "Your subscription: pay nothing for 30 days.",
+            "Privacy You can remove your data at any time.",
+            "Added to cart Buy 2 more for free shipping",
+        ] {
+            assert!(
+                !dialog_commits(dialog, DELETING) && !dialog_commits(dialog, PAYING),
+                "{dialog}"
+            );
+        }
+        assert!(confirms("Continue \u{2192}"));
+        assert!(confirms("Yes \u{2713}"));
+        assert!(!confirms("Continue shopping"));
+    }
+
+    #[test]
     fn a_line_leads_by_how_it_opens() {
         for line in [
             "Pay now",
@@ -1841,6 +1903,9 @@ mod tests {
             assert!(leads(line), "{line}");
         }
         for line in [
+            "Pay gap widens in Europe",
+            "Remove stains from a shirt",
+            "Buy one get one free",
             "How to delete your account",
             "Payment details",
             "Help center",

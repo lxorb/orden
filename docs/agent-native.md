@@ -1066,9 +1066,14 @@ own timer can still swap the target in the moment between that look and the pres
 check from outside closes.
 
 **Everything this goes by is read where the page cannot answer**: in a world of nib's own in
-that frame, or from the engine's own lists (`DOM`, `Accessibility`, `DOMDebugger`). A page can
-redefine `contentDocument`, `ownerDocument` or `closest` on its own objects and none of it is
-seen here. Its content is another matter: a page calls its own button what it likes.
+that very frame, through each interface's own getters, or from the engine's own lists (`DOM`,
+`Accessibility`, `DOMDebugger`). A page can redefine `contentDocument`, `ownerDocument` or
+`closest` on its own objects, or name a form's field `elements` or `parentNode`, and none of it
+is seen here. Its content is another matter: a page calls its own button what it likes.
+
+An allowance is for the question asked, every word of it: the same button in a dialog whose
+words changed, or in a form that has grown a card field, asks again, and a press made more than
+once says how many times, and asks again for another count.
 
 So a paragraph round a Pay button asks and a section whose middle is empty does not, and a
 frame's ref is a press of what is in the frame. Where no control holds the press, what acts for

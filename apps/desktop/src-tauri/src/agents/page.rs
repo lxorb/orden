@@ -55,7 +55,17 @@ const LIT: Duration = Duration::from_millis(300);
 /// Whether what a press lands on (`this`) is the element meant (`target`): it, inside it,
 /// round it, its label, or a frame it may be in. Across shadow roots, which `contains`
 /// stops at: a button inside a web component is pressed through its host.
-const INSIDE: &str = "function (place) { const target = place.element || place; const up = (one) => one.parentNode || (one instanceof ShadowRoot ? one.host : null); const holds = (outer, inner) => { for (let one = inner; one; one = up(one)) if (one === outer) return true; return false }; const el = this.nodeType === 1 ? this : this.parentElement; if (!el) return true; if (holds(target, el) || holds(el, target)) return true; const label = el.closest('label'); if (label && (label.control === target || holds(label, target))) return true; return el.tagName === 'IFRAME' || el.tagName === 'FRAME' }";
+static INSIDE: LazyLock<String> = LazyLock::new(|| {
+    [
+        "function (place) { ",
+        NATIVE,
+        "const target = read(place, 'element') || place; const up = (one) => read(one, 'parentNode') || read(one, 'host') || null; const holds = (outer, inner) => { for (let one = inner; one; one = up(one)) if (one === outer) return true; return false }; const el = read(this, 'nodeType') === 1 ? this : read(this, 'parentElement') || read(this, 'element') || read(this, 'host'); if (!el) return true; if (holds(target, el) || holds(el, target)) return true; const label = call(el, 'closest', 'label'); if (label && (read(label, 'control') === target || holds(label, target))) return true; return ['IFRAME', 'FRAME'].includes(read(el, 'tagName')) }",
+    ]
+    .concat()
+});
+
+/// What is read of an element in a small script: as in `FIELDS`.
+const NATIVE: &str = "const read = (one, key) => Reflect.get(Object.getPrototypeOf(one), key, one); const call = (one, key, ...args) => read(one, key).apply(one, args); ";
 
 /// The tallest full-page picture, in CSS pixels.
 const TALLEST: f64 = 16_384.0;
@@ -65,38 +75,41 @@ const TALLEST: f64 = 16_384.0;
 /// says - type, `autocomplete`, words, whether its style masks it, whether a message box
 /// @-mentions somebody - and leaves every judgement to `policy`.
 const FIELDS: &str = r"
+  // What is read of an element, through its interface and past its own properties: a form's named field is its own property, in every world, and would answer for `nodeType`, `elements` or `parentElement`.
+  const read = (one, key) => Reflect.get(Object.getPrototypeOf(one), key, one)
+  const call = (one, key, ...args) => read(one, key).apply(one, args)
   const text = (one) => String(one || '').replace(/\s+/g, ' ').trim()
   const CONTROLS = 'button, a, [role=button], [role=link], [role=menuitem], input[type=submit], input[type=button], input[type=image], summary'
   const BUILT_TO_PRESS = '[onclick], [onmousedown], [onmouseup], [onpointerdown], [onpointerup], [role=option], [role=tab], [role=treeitem], [role=menuitemcheckbox], [role=menuitemradio], [role=checkbox], [role=radio], [role=switch]'
   const TAKES_A_PRESS = BUILT_TO_PRESS + ', [tabindex]:not([tabindex^=\x22-\x22])'
   const labelOf = (field) => {
-    const parts = [field.getAttribute('aria-label')]
-    if (field.labels) for (const one of field.labels) parts.push(one.innerText)
-    const by = field.getAttribute('aria-labelledby')
+    const parts = [call(field, 'getAttribute', 'aria-label')]
+    if (read(field, 'labels')) for (const one of read(field, 'labels')) parts.push(read(one, 'innerText'))
+    const by = call(field, 'getAttribute', 'aria-labelledby')
     if (by) for (const id of by.split(/\s+/)) {
-      const home = field.getRootNode()
-      const named = (home.getElementById && home.getElementById(id)) || field.ownerDocument.getElementById(id)
-      if (named) parts.push(named.innerText)
+      const home = call(field, 'getRootNode')
+      const named = (home.getElementById && home.getElementById(id)) || read(field, 'ownerDocument').getElementById(id)
+      if (named) parts.push(read(named, 'innerText'))
     }
     return text(parts.filter(Boolean).join(' '))
   }
   const describe = (one) => {
-    const tag = one.tagName.toLowerCase()
-    const role = String(one.getAttribute('role') || '').toLowerCase()
-    const box = tag === 'textarea' || ((!!one.isContentEditable || role === 'textbox') && tag !== 'input')
-    let type = tag === 'input' ? String(one.type || 'text').toLowerCase() : tag === 'textarea' ? 'textarea' : box ? 'editable' : tag
+    const tag = read(one, 'tagName').toLowerCase()
+    const role = String(call(one, 'getAttribute', 'role') || '').toLowerCase()
+    const box = tag === 'textarea' || ((!!read(one, 'isContentEditable') || role === 'textbox') && tag !== 'input')
+    let type = tag === 'input' ? String(read(one, 'type') || 'text').toLowerCase() : tag === 'textarea' ? 'textarea' : box ? 'editable' : tag
     if (role === 'searchbox' || (box && role === 'combobox')) type = 'search'
-    const label = labelOf(one) || text(one.getAttribute('placeholder'))
+    const label = labelOf(one) || text(call(one, 'getAttribute', 'placeholder'))
     let masked = false
     try {
-      const style = one.ownerDocument.defaultView.getComputedStyle(one)
+      const style = read(one, 'ownerDocument').defaultView.getComputedStyle(one)
       masked = type !== 'password' && String(style.webkitTextSecurity || 'none') !== 'none'
     } catch (_) {}
-    const words = box ? String(tag === 'textarea' ? one.value : one.innerText || '').slice(0, 5000) : ''
+    const words = box ? String(tag === 'textarea' ? read(one, 'value') : read(one, 'innerText') || '').slice(0, 5000) : ''
     return {
       type,
-      autocomplete: String(one.getAttribute('autocomplete') || '').toLowerCase(),
-      said: text([one.name, one.id, one.getAttribute('placeholder'), labelOf(one)].filter(Boolean).join(' ')).slice(0, 200),
+      autocomplete: String(call(one, 'getAttribute', 'autocomplete') || '').toLowerCase(),
+      said: text([read(one, 'name'), read(one, 'id'), call(one, 'getAttribute', 'placeholder'), labelOf(one)].filter(Boolean).join(' ')).slice(0, 200),
       label: label.slice(0, 200),
       masked,
       mentions: /(^|\s)@[\p{L}\p{N}_.-]{2,}/u.test(words),
@@ -109,48 +122,48 @@ const FIELDS: &str = r"
 const FACTS_BODY: &str = r"
   // A pseudo-element answers a hit test and has no node of its own, a root or a document
   // none that is an element. What is left says nothing, which the crate asks about.
-  let el = this.nodeType === 1 ? this : this.parentElement || this.element || this.host || this.documentElement
-  if (!el || el.nodeType !== 1) return {}
+  let el = read(this, 'nodeType') === 1 ? this : read(this, 'parentElement') || this.element || this.host || this.documentElement
+  if (!el || read(el, 'nodeType') !== 1) return {}
   // A part of a field the engine draws itself (a date's picker button) is that field.
-  const root = el.getRootNode && el.getRootNode()
+  const root = call(el, 'getRootNode')
   if (root && root.host && ['INPUT', 'SELECT', 'TEXTAREA'].includes(root.host.tagName)) el = root.host
-  const tag = el.tagName.toLowerCase()
-  const kind = tag === 'input' ? String(el.type || 'text').toLowerCase() : ''
+  const tag = read(el, 'tagName').toLowerCase()
+  const kind = tag === 'input' ? String(read(el, 'type') || 'text').toLowerCase() : ''
   // Its label's control, which is what a press on the label's words presses.
   const labelled = () => {
-    const held = el.closest('label')
-    return held && held.control && held.control.matches(CONTROLS) ? held.control : null
+    const held = call(el, 'closest', 'label')
+    return held && read(held, 'control') && call(read(held, 'control'), 'matches', CONTROLS) ? read(held, 'control') : null
   }
-  const control = el.closest(CONTROLS) || labelled()
+  const control = call(el, 'closest', CONTROLS) || labelled()
   const pressed = control || el
   // A button named by its picture says so through the picture: what the engine's tree names it too.
   const pictured = (one) => {
     const said = []
-    for (const kid of one.querySelectorAll('img[alt], input[alt], area[alt], [aria-label], [title], svg title')) said.push(kid.getAttribute('alt') || kid.getAttribute('aria-label') || kid.getAttribute('title') || kid.textContent)
+    for (const kid of call(one, 'querySelectorAll', 'img[alt], input[alt], area[alt], [aria-label], [title], svg title')) said.push(call(kid, 'getAttribute', 'alt') || call(kid, 'getAttribute', 'aria-label') || call(kid, 'getAttribute', 'title') || read(kid, 'textContent'))
     return said.join(' ')
   }
   // What is no control has no name in what it holds: a column of cards is not called Pay rent, nor a mail's row Delete for an icon in it. Its own words, down through what is plainly part of them, and only if they are short enough to be a name.
   const INLINE = ['SPAN', 'B', 'I', 'EM', 'STRONG', 'SMALL', 'U', 'MARK', 'ABBR', 'FONT', 'LABEL']
   const ownWords = (one) => {
     let said = ''
-    for (const node of one.childNodes) {
-      if (node.nodeType === 3) said += node.textContent
-      else if (node.nodeType === 1 && !node.matches(CONTROLS) && !['SCRIPT', 'STYLE'].includes(node.tagName) && (one.children.length === 1 || INLINE.includes(node.tagName))) said += ' ' + ownWords(node)
+    for (const node of read(one, 'childNodes')) {
+      if (read(node, 'nodeType') === 3) said += read(node, 'textContent')
+      else if (read(node, 'nodeType') === 1 && !call(node, 'matches', CONTROLS) && !['SCRIPT', 'STYLE'].includes(read(node, 'tagName')) && (read(one, 'children').length === 1 || INLINE.includes(read(node, 'tagName')))) said += ' ' + ownWords(node)
     }
     return said
   }
   const onlyPicture = (one) => {
-    const kid = one.children.length === 1 ? one.children[0] : null
-    return kid ? kid.getAttribute('alt') || kid.getAttribute('aria-label') || kid.getAttribute('title') || (kid.tagName.toLowerCase() === 'svg' ? (kid.querySelector('title') || {}).textContent : '') || onlyPicture(kid) : ''
+    const kid = read(one, 'children').length === 1 ? read(one, 'children')[0] : null
+    return kid ? call(kid, 'getAttribute', 'alt') || call(kid, 'getAttribute', 'aria-label') || call(kid, 'getAttribute', 'title') || (read(kid, 'tagName').toLowerCase() === 'svg' ? (call(kid, 'querySelector', 'title') || {}).textContent : '') || onlyPicture(kid) : ''
   }
   const plainName = (one) => {
     const words = text(ownWords(one))
-    return text(labelOf(one) || (words.length > 60 ? '' : words) || (one.tagName === 'INPUT' ? one.value : '') || one.getAttribute('title') || one.getAttribute('alt') || (words ? '' : onlyPicture(one)))
+    return text(labelOf(one) || (words.length > 60 ? '' : words) || (read(one, 'tagName') === 'INPUT' ? read(one, 'value') : '') || call(one, 'getAttribute', 'title') || call(one, 'getAttribute', 'alt') || (words ? '' : onlyPicture(one)))
   }
   // A design system's inner button, with its label on the host round its shadow root.
   const hostLabel = (one) => {
-    for (let at = one.getRootNode().host; at; at = at.getRootNode().host) {
-      const said = text(at.getAttribute('aria-label') || at.getAttribute('title'))
+    for (let at = call(one, 'getRootNode').host; at; at = call(at, 'getRootNode').host) {
+      const said = text(call(at, 'getAttribute', 'aria-label') || call(at, 'getAttribute', 'title'))
       if (said) return said
     }
     return ''
@@ -158,70 +171,72 @@ const FACTS_BODY: &str = r"
   const controlName = (one) => {
     // A `<label>` elsewhere and its words both: that is no way to hide what it says.
     const label = labelOf(one)
-    const words = text(one.innerText)
-    const both = label && words && !one.hasAttribute('aria-label') && !label.toLowerCase().includes(words.toLowerCase()) ? label + ' ' + words : label || words
-    const said = text((both || (one.tagName === 'INPUT' ? one.value : '') || one.getAttribute('title') || one.getAttribute('alt') || '') + ' ' + pictured(one))
+    const words = text(read(one, 'innerText'))
+    const both = label && words && !call(one, 'hasAttribute', 'aria-label') && !label.toLowerCase().includes(words.toLowerCase()) ? label + ' ' + words : label || words
+    const said = text((both || (read(one, 'tagName') === 'INPUT' ? read(one, 'value') : '') || call(one, 'getAttribute', 'title') || call(one, 'getAttribute', 'alt') || '') + ' ' + pictured(one))
     return said || hostLabel(one)
   }
-  const nameOf = (one) => (one.matches(CONTROLS) ? controlName(one) : plainName(one)).slice(0, 200)
+  const nameOf = (one) => (call(one, 'matches', CONTROLS) ? controlName(one) : plainName(one)).slice(0, 200)
   // What is pressed where no control holds the press: what listens round it, the nearest that says it takes a press (a handler, a place in the tab order, a widget's role, or `heard`, which the engine found listening), or the outermost that shows a pointer, which its children inherit. A field is its own.
-  const above = (one) => one.parentElement || one.getRootNode().host || null
+  const above = (one) => read(one, 'parentElement') || call(one, 'getRootNode').host || null
   const acting = () => {
-    if (control || ['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName) || el.isContentEditable) return null
-    const top = (one) => !one || ['BODY', 'HTML'].includes(one.tagName)
-    const pointing = (one) => one.ownerDocument.defaultView.getComputedStyle(one).cursor === 'pointer'
+    if (control || ['INPUT', 'SELECT', 'TEXTAREA'].includes(read(el, 'tagName')) || read(el, 'isContentEditable')) return null
+    const top = (one) => !one || ['BODY', 'HTML'].includes(read(one, 'tagName'))
+    const pointing = (one) => read(one, 'ownerDocument').defaultView.getComputedStyle(one).cursor === 'pointer'
     for (let one = el; !top(one); one = above(one)) {
-      if (one === heard || one.matches(TAKES_A_PRESS)) return one
+      if (one === heard || call(one, 'matches', TAKES_A_PRESS)) return one
       if (pointing(one) && (top(above(one)) || !pointing(above(one)))) return one
     }
     return null
   }
   // Its lines as they show, short of a control of its own, which is pressed for itself: a mail's row is not called Delete for the icon in it. Through a shadow root: an open one, and the one the hit itself is in, closed or not. The words of its pseudo-elements, which is all some labels are.
   const rootOf = (one) => {
-    if (one.shadowRoot) return one.shadowRoot
-    for (let at = el.getRootNode(); at && at.host; at = at.host.getRootNode()) if (at.host === one) return at
+    if (read(one, 'shadowRoot')) return read(one, 'shadowRoot')
+    for (let at = call(el, 'getRootNode'); at && at.host; at = at.host.getRootNode()) if (at.host === one) return at
     return null
   }
   const MOST_HELD = 400
+  const MOST_IN_A_DIALOG = 4000
   const pseudoWords = (one) => {
     const said = []
     for (const part of ['::before', '::after', '::marker']) {
-      const words = /^\x22(.*)\x22$/.exec(String(one.ownerDocument.defaultView.getComputedStyle(one, part).content || ''))
+      const words = /^\x22(.*)\x22$/.exec(String(read(one, 'ownerDocument').defaultView.getComputedStyle(one, part).content || ''))
       if (words && words[1]) said.push(words[1])
     }
     return said
   }
-  const linesOf = (one, leaving) => {
+  const linesOf = (one, leaving, most = MOST_HELD) => {
     const lines = [...pseudoWords(one), '']
     let seen = 0
     const walk = (nodes) => {
       for (const node of nodes) {
-        if (seen > MOST_HELD) return
-        if (node.nodeType === 3) {
-          lines[lines.length - 1] += node.textContent
-          seen += node.textContent.length
+        if (seen > most) return
+        if (read(node, 'nodeType') === 3) {
+          lines[lines.length - 1] += read(node, 'textContent')
+          seen += read(node, 'textContent').length
         }
-        if (node.nodeType !== 1 || node === leaving || node.matches(CONTROLS) || ['SCRIPT', 'STYLE'].includes(node.tagName)) continue
-        const shown = one.ownerDocument.defaultView.getComputedStyle(node).display
-        if (shown === 'none' || (shown !== 'contents' && !node.getClientRects().length)) continue
+        if (read(node, 'tagName') === 'BR') lines.push('')
+        if (read(node, 'nodeType') !== 1 || node === leaving || call(node, 'matches', CONTROLS) || ['SCRIPT', 'STYLE'].includes(read(node, 'tagName'))) continue
+        const shown = read(one, 'ownerDocument').defaultView.getComputedStyle(node).display
+        if (shown === 'none' || (shown !== 'contents' && !call(node, 'getClientRects').length)) continue
         const inline = shown.startsWith('inline') || shown === 'contents'
         if (!inline) lines.push('')
-        const slotted = node.tagName === 'SLOT' ? node.assignedNodes() : []
-        walk(slotted.length ? slotted : (rootOf(node) || node).childNodes)
+        const slotted = read(node, 'tagName') === 'SLOT' ? call(node, 'assignedNodes') : []
+        walk(slotted.length ? slotted : read(rootOf(node) || node, 'childNodes'))
         if (!inline) lines.push('')
       }
     }
-    walk((rootOf(one) || one).childNodes)
+    walk(read(rootOf(one) || one, 'childNodes'))
     return lines.map(text).filter(Boolean)
   }
   // What it says for itself, with the words of the hit. Its lines are the policy's to read, with what is too long to be a name left out: built to be pressed, any of them may say what it does, as a Pay tile says Order summary and then Pay now; a row, or what only a listener round it or a place in the tab order says takes a press, by its first alone, as a row is not called Pay for its second cell and an app's root not Delete for its menu. Too many controls and it is no one control, as a column of cards is not.
   const SHORT = 60
-  const actingName = (one) => text(labelOf(one) || one.getAttribute('title') || (linesOf(one).length ? '' : onlyPicture(one)))
+  const actingName = (one) => text(labelOf(one) || call(one, 'getAttribute', 'title') || (linesOf(one).length ? '' : onlyPicture(one)))
   const heldBy = (one) => {
-    if (one.querySelectorAll(CONTROLS).length > 2) return []
+    if (call(one, 'querySelectorAll', CONTROLS).length > 2) return []
     const lines = linesOf(one)
-    const built = one.matches(BUILT_TO_PRESS) || (one !== heard && !one.matches(TAKES_A_PRESS))
-    const row = ['TR', 'TD', 'TH'].includes(one.tagName)
+    const built = call(one, 'matches', BUILT_TO_PRESS) || (one !== heard && !call(one, 'matches', TAKES_A_PRESS))
+    const row = ['TR', 'TD', 'TH'].includes(read(one, 'tagName'))
     return (built && !row ? lines.slice(0, 8) : lines.slice(0, 1)).filter((line) => line.length <= SHORT)
   }
   const actor = acting()
@@ -234,27 +249,27 @@ const FACTS_BODY: &str = r"
   const name = (actor ? named() : nameOf(pressed)).slice(0, 200)
   // Through the shadow roots it is in: a design system's button is in the form round its host.
   const formOf = () => {
-    if (el.form) return el.form
-    for (let at = el; at; at = at.getRootNode().host) {
-      const found = at.closest('form')
+    if (read(el, 'form')) return read(el, 'form')
+    for (let at = el; at; at = call(at, 'getRootNode').host) {
+      const found = call(at, 'closest', 'form')
       if (found) return found
     }
     return null
   }
   const form = formOf()
-  const buttonType = pressed.tagName === 'BUTTON' ? String(pressed.getAttribute('type') || 'submit').toLowerCase() : ''
-  const submit = !!form && ((pressed.tagName === 'BUTTON' && buttonType === 'submit') || (pressed.tagName === 'INPUT' && ['submit', 'image'].includes(String(pressed.type).toLowerCase())))
+  const buttonType = read(pressed, 'tagName') === 'BUTTON' ? String(call(pressed, 'getAttribute', 'type') || 'submit').toLowerCase() : ''
+  const submit = !!form && ((read(pressed, 'tagName') === 'BUTTON' && buttonType === 'submit') || (read(pressed, 'tagName') === 'INPUT' && ['submit', 'image'].includes(String(read(pressed, 'type')).toLowerCase())))
   // One that only goes: a Rails or Turbo delete, a link that says it is a button, and one with a handler do more than that. A listener no attribute shows is the crate's to see.
-  const link = pressed.tagName === 'A' && !/^\s*(#|javascript:|$)/i.test(String(pressed.getAttribute('href') || '')) && !pressed.matches('[data-method], [data-turbo-method], [role=button], [onclick], [onmousedown], [onmouseup], [onpointerdown], [onpointerup]')
-  const said = String(el.getAttribute('role') || '').toLowerCase()
-  const editable = !!(el.isContentEditable || tag === 'textarea' || said === 'textbox' || said === 'searchbox' || (tag === 'input' && !['checkbox', 'radio', 'submit', 'button', 'image', 'file', 'reset', 'hidden', 'range', 'color'].includes(kind)))
+  const link = read(pressed, 'tagName') === 'A' && !/^\s*(#|javascript:|$)/i.test(String(call(pressed, 'getAttribute', 'href') || '')) && !call(pressed, 'matches', '[data-method], [data-turbo-method], [role=button], [onclick], [onmousedown], [onmouseup], [onpointerdown], [onpointerup]')
+  const said = String(call(el, 'getAttribute', 'role') || '').toLowerCase()
+  const editable = !!(read(el, 'isContentEditable') || tag === 'textarea' || said === 'textbox' || said === 'searchbox' || (tag === 'input' && !['checkbox', 'radio', 'submit', 'button', 'image', 'file', 'reset', 'hidden', 'range', 'color'].includes(kind)))
   // What Enter in the form presses: its first submit button, in the order the form holds them.
-  const first = form && form.elements ? Array.from(form.elements).find((one) => ['BUTTON', 'INPUT'].includes(one.tagName) && ['submit', 'image'].includes(String(one.type).toLowerCase())) : null
+  const first = form && read(form, 'elements') ? Array.from(read(form, 'elements')).find((one) => ['BUTTON', 'INPUT'].includes(read(one, 'tagName')) && ['submit', 'image'].includes(String(read(one, 'type')).toLowerCase())) : null
   // A closed shadow root's host: it has the keyboard and shows nothing to read, not even that it has a root.
   const native = ['input', 'select', 'textarea', 'button', 'a', 'area', 'summary', 'body', 'html', 'iframe', 'frame', 'object', 'embed', 'img', 'video', 'audio', 'canvas']
   // And what draws its own face and acts on a press: a canvas, or a component showing nothing that can be read. An empty div with a listener is a backdrop, or a tile nobody named, and goes.
-  const drawn = !!actor && !name && !held.length && (tag === 'canvas' || tag.includes('-')) && !el.children.length && !text(el.innerText)
-  const opaque = drawn || (!native.includes(tag) && !el.shadowRoot && !el.children.length && !text(el.innerText) && !name && !!root && root.activeElement === el)
+  const drawn = !!actor && !name && !held.length && (tag === 'canvas' || tag.includes('-')) && !read(el, 'children').length && !text(read(el, 'innerText'))
+  const opaque = drawn || (!native.includes(tag) && !read(el, 'shadowRoot') && !read(el, 'children').length && !text(read(el, 'innerText')) && !name && !!root && root.activeElement === el)
   // The form's fields, or the page's when it is in none: a webmail's Send and a chat
   // widget's are in no form, and their message box is an editable region.
   // Into the open shadow roots under it; a closed one is the crate's (`closed_fields`).
@@ -262,31 +277,31 @@ const FACTS_BODY: &str = r"
   const fields = []
   let walked = 0
   const fieldsIn = (under) => {
-    for (const one of under.querySelectorAll('*')) {
+    for (const one of call(under, 'querySelectorAll', '*')) {
       if (fields.length >= 200 || walked >= 50000) return
       walked += 1
-      if (one.matches('input, select, textarea, [contenteditable]:not([contenteditable=false]), [role=textbox]')) fields.push(describe(one))
-      if (one.shadowRoot) fieldsIn(one.shadowRoot)
+      if (call(one, 'matches', 'input, select, textarea, [contenteditable]:not([contenteditable=false]), [role=textbox]')) fields.push(describe(one))
+      if (read(one, 'shadowRoot')) fieldsIn(read(one, 'shadowRoot'))
     }
   }
-  fieldsIn(form || el.ownerDocument)
+  fieldsIn(form || read(el, 'ownerDocument'))
   // What the dialog a press is in says: its label and its own lines. Its Confirm does what the dialog says.
   const dialogOf = () => {
     if (!control && !actor) return ''
-    for (let at = el; at; at = at.getRootNode().host) {
-      const box = at.closest('dialog, [role=dialog], [role=alertdialog]')
+    for (let at = el; at; at = call(at, 'getRootNode').host) {
+      const box = call(at, 'closest', 'dialog, [role=dialog], [role=alertdialog]')
       if (box) {
         const label = labelOf(box)
-        const lines = linesOf(box, actor).filter((line) => line !== label)
-        return text([label, ...lines].join(' ')).slice(0, 200)
+        const lines = linesOf(box, actor, MOST_IN_A_DIALOG).filter((line) => line !== label)
+        return text([label, ...lines].join(' ')).slice(0, MOST_IN_A_DIALOG)
       }
     }
     return ''
   }
   // The document it is in and the origins round it, which is the frame it is in.
-  const place = el.ownerDocument.location
+  const place = read(el, 'ownerDocument').location
   const at = place ? [place.href, ...Array.from(place.ancestorOrigins || [])] : []
-  return { at, cut: walked >= 50000, control: !!control, tag, type: kind, name, autocomplete: String(el.getAttribute('autocomplete') || '').toLowerCase(), submit, link, editable, in_form: !!form, fields, field: describe(el), default_button: first ? nameOf(first) : '', opaque, dialog: dialogOf(), held }
+  return { at, cut: walked >= 50000, control: !!control, tag, type: kind, name, autocomplete: String(call(el, 'getAttribute', 'autocomplete') || '').toLowerCase(), submit, link, editable, in_form: !!form, fields, field: describe(el), default_button: first ? nameOf(first) : '', opaque, dialog: dialogOf(), held }
 ";
 
 /// `FACTS_BODY` with `FIELDS` in front of it, as the function the protocol runs: `heard`
@@ -296,7 +311,14 @@ static FACTS: LazyLock<String> =
 
 /// What is round an element that a press on it reaches, up to the page itself, whose
 /// listeners are every framework's and say nothing of this press.
-const ROUND_IT: &str = "function () { const el = this.nodeType === 1 ? this : this.parentElement || this.element || this.host; if (!el) return null; const up = el.parentElement || el.getRootNode().host || null; return !up || ['BODY', 'HTML'].includes(up.tagName) ? null : up }";
+static ROUND_IT: LazyLock<String> = LazyLock::new(|| {
+    [
+        "function () { ",
+        NATIVE,
+        "const el = read(this, 'nodeType') === 1 ? this : read(this, 'parentElement') || read(this, 'element') || read(this, 'host'); if (!el) return null; const up = read(el, 'parentElement') || call(el, 'getRootNode').host || null; return !up || ['BODY', 'HTML'].includes(read(up, 'tagName')) ? null : up }",
+    ]
+    .concat()
+});
 
 /// How far up the engine is asked what listens: past that a thing held is no part of it.
 const MOST_LISTENED_ROUND: usize = 6;
@@ -325,13 +347,20 @@ static DESCRIBED: LazyLock<String> = LazyLock::new(|| {
     [
         "function () {",
         FIELDS,
-        "return Object.assign(describe(this), { filled: String((this.value === undefined ? this.innerText : this.value) || '').trim() !== '' }) }",
+        "const value = read(this, 'value'); return Object.assign(describe(this), { filled: String((value === undefined ? read(this, 'innerText') : value) || '').trim() !== '' }) }",
     ]
     .concat()
 });
 
 /// The form the element is in, or its document: what `FACTS_BODY` reads the fields of.
-const FIELDS_SCOPE: &str = "function () { const el = this.nodeType === 1 ? this : this.parentElement; if (!el) return null; if (el.form) return el.form; for (let at = el; at; at = at.getRootNode().host) { const found = at.closest('form'); if (found) return found } return el.ownerDocument }";
+static FIELDS_SCOPE: LazyLock<String> = LazyLock::new(|| {
+    [
+        "function () { ",
+        NATIVE,
+        "const el = read(this, 'nodeType') === 1 ? this : read(this, 'parentElement'); if (!el) return null; if (read(el, 'form')) return read(el, 'form'); for (let at = el; at; at = call(at, 'getRootNode').host) { const found = call(at, 'closest', 'form'); if (found) return found } return read(el, 'ownerDocument') }",
+    ]
+    .concat()
+});
 
 /// A field described, for the policy alone. Run with the field as `this`.
 static DESCRIBED_ONLY: LazyLock<String> =
@@ -342,7 +371,7 @@ static PRESSED: LazyLock<String> = LazyLock::new(|| {
     [
         "function () {",
         FIELDS,
-        "const el = this.nodeType === 1 ? this : this.parentElement || this.element || this.host; return el ? el.closest(CONTROLS) : null }",
+        "const el = read(this, 'nodeType') === 1 ? this : read(this, 'parentElement') || read(this, 'element') || read(this, 'host'); return el ? call(el, 'closest', CONTROLS) : null }",
     ]
     .concat()
 });
@@ -369,9 +398,10 @@ struct Secret {
 
 /// The element that has the keyboard, into open shadow roots and frames of the same origin.
 const ACTIVE: &str = r"(() => {
+  const read = (one, key) => Reflect.get(Object.getPrototypeOf(one), key, one)
   let at = document.activeElement
   try { while (at) {
-    const inner = (at.shadowRoot && at.shadowRoot.activeElement) || (at.contentDocument && at.contentDocument.activeElement)
+    const inner = (read(at, 'shadowRoot') && read(at, 'shadowRoot').activeElement) || (read(at, 'contentDocument') && read(at, 'contentDocument').activeElement)
     if (!inner) break
     at = inner
   } } catch (_) {}
@@ -427,7 +457,7 @@ static REGIONS_SAID: LazyLock<String> = LazyLock::new(|| {
     [
         "(() => {",
         FIELDS,
-        "const said = (one) => Object.assign(describe(one), { filled: text(one.innerText) !== '' }); return document.body ? Array.from(document.body.querySelectorAll('",
+        "const said = (one) => Object.assign(describe(one), { filled: text(read(one, 'innerText')) !== '' }); return document.body ? Array.from(document.body.querySelectorAll('",
         REGIONS,
         "')).map(said) : [] })()",
     ]
@@ -439,17 +469,20 @@ static REGIONS_SAID: LazyLock<String> = LazyLock::new(|| {
 /// other word as it stands: only such a region is cut, by node, whatever else on the page
 /// reads the same. Run only on a page with one, where it costs `innerText`'s fine points.
 const MASKED_TEXT: &str = r"
+  const read = (one, key) => Reflect.get(Object.getPrototypeOf(one), key, one)
+  const call = (one, key, ...args) => read(one, key).apply(one, args)
   const all = Array.from(document.body.querySelectorAll('[contenteditable]:not([contenteditable=false i]), [role=textbox]'))
   const secret = hidden.map((at) => all[at]).filter(Boolean)
   const say = (one) => {
     if (secret.includes(one)) return '[hidden]'
-    if (one.ownerDocument.defaultView.getComputedStyle(one).display === 'none') return ''
-    if (!secret.some((held) => one.contains(held))) return one.getClientRects().length ? one.innerText : ''
+    const view = read(one, 'ownerDocument').defaultView
+    if (view.getComputedStyle(one).display === 'none') return ''
+    if (!secret.some((held) => call(one, 'contains', held))) return call(one, 'getClientRects').length ? read(one, 'innerText') : ''
     let said = ''
-    for (const node of one.childNodes) {
-      if (node.nodeType === 3) said += node.textContent.replace(/\s+/g, ' ')
-      else if (node.nodeType === 1) {
-        const shown = one.ownerDocument.defaultView.getComputedStyle(node).display
+    for (const node of read(one, 'childNodes')) {
+      if (read(node, 'nodeType') === 3) said += read(node, 'textContent').replace(/\s+/g, ' ')
+      else if (read(node, 'nodeType') === 1) {
+        const shown = view.getComputedStyle(node).display
         const words = say(node)
         said += shown.startsWith('inline') ? words : words ? '\n' + words + '\n' : ''
       }
@@ -557,7 +590,7 @@ pub struct Page<'a> {
     pub credentials: AtomicBool,
     /// nib's own world in each session the call has been in, where everything the gate goes
     /// by is read: the page has no reach into it, however it dresses its own objects.
-    pub worlds: Mutex<HashMap<Option<String>, i64>>,
+    pub worlds: Mutex<HashMap<(Option<String>, String), i64>>,
 }
 
 /// How a frame's own points sit in the page: its top left, and where a step along each of
@@ -703,25 +736,63 @@ impl Page<'_> {
     /// A handle to an element in nib's own world, for a function to run on: what it reads
     /// is the engine's own, whatever the page has defined on the same objects (9.3).
     fn object(&self, element: &Element) -> Result<String, Answer> {
-        let resolve = |world: i64| {
-            self.call_on(
-                element,
-                "DOM.resolveNode",
-                &json!({ "backendNodeId": element.backend, "objectGroup": WORLD, "executionContextId": world }),
-            )
-        };
-        let session = element.session.as_deref();
-        let world = self.world_in(session, element.frame.as_deref())?;
-        // A world goes with its document: a navigation since the last look takes it.
-        let resolved = resolve(world).or_else(|_| {
-            self.forget_world(session);
-            resolve(self.world_in(session, element.frame.as_deref())?)
-        })?;
-        resolved
-            .pointer("/object/objectId")
-            .and_then(Value::as_str)
-            .map(str::to_string)
+        self.handle_in_world(element.session.as_deref(), element.backend, WORLD)
             .ok_or_else(|| stale("the element has no object"))
+    }
+
+    /// A node's handle in nib's world in its own frame. The engine asks whether a world's
+    /// window may reach the node and answers nothing where not, as for a frame of another
+    /// origin in the same process, so each frame of the session is tried; the engine knows
+    /// a node's frame only by trying. `None` is a node no world of ours can read, which is
+    /// no answer about it.
+    fn handle_in_world(&self, session: Option<&str>, backend: u64, group: &str) -> Option<String> {
+        let resolve = |world: i64| {
+            cdp::call_in(
+                self.view,
+                session,
+                "DOM.resolveNode",
+                &json!({ "backendNodeId": backend, "objectGroup": group, "executionContextId": world }),
+                cdp::PATIENCE,
+            )
+            .ok()
+            .and_then(|said| {
+                said.pointer("/object/objectId")
+                    .and_then(Value::as_str)
+                    .map(str::to_string)
+            })
+        };
+        // A world goes with its document, so one more look with new ones after a navigation.
+        for fresh in [false, true] {
+            if fresh {
+                self.forget_worlds(session);
+            }
+            for frame in self.frames_of(session) {
+                if let Some(handle) = self
+                    .world_of_frame(session, &frame)
+                    .ok()
+                    .and_then(|world| resolve(world))
+                {
+                    return Some(handle);
+                }
+            }
+        }
+        None
+    }
+
+    /// The frames a session has in its process, the top one first.
+    fn frames_of(&self, session: Option<&str>) -> Vec<String> {
+        let tree = cdp::call_in(
+            self.view,
+            session,
+            "Page.getFrameTree",
+            &json!({}),
+            cdp::PATIENCE,
+        );
+        let mut frames = Vec::new();
+        if let Ok(tree) = tree {
+            frames_under(tree.get("frameTree").unwrap_or(&Value::Null), &mut frames);
+        }
+        frames
     }
 
     /// A handle to an element in the page's own world, which is what its listeners are told
@@ -740,10 +811,22 @@ impl Page<'_> {
             .ok_or_else(|| stale("the element has no object"))
     }
 
-    /// nib's own world in a session: the page's when none, and a frame's by its id or as
-    /// the session's top frame. One to a call, in the frame's own process.
-    fn world_in(&self, session: Option<&str>, frame: Option<&str>) -> Result<i64, Answer> {
-        let key = session.map(str::to_string);
+    /// nib's own world in a session's top frame.
+    fn world_in(&self, session: Option<&str>) -> Result<i64, Answer> {
+        let frame = match session {
+            None => self.main_frame()?,
+            Some(_) => self
+                .frames_of(session)
+                .into_iter()
+                .next()
+                .ok_or_else(|| Answer::error(Code::Failed, "the frame has no world for nib"))?,
+        };
+        self.world_of_frame(session, &frame)
+    }
+
+    /// nib's own world in one frame, made once for the call.
+    fn world_of_frame(&self, session: Option<&str>, frame: &str) -> Result<i64, Answer> {
+        let key = (session.map(str::to_string), frame.to_string());
         if let Some(world) = self
             .worlds
             .lock()
@@ -752,23 +835,14 @@ impl Page<'_> {
         {
             return Ok(*world);
         }
-        let call = |method: &str, params: &Value| {
-            cdp::call_in(self.view, session, method, params, cdp::PATIENCE)
-                .map_err(|why| stale(&why))
-        };
-        let frame = match (session, frame) {
-            (None, _) => self.main_frame()?,
-            (Some(_), Some(frame)) => frame.to_string(),
-            (Some(_), None) => call("Page.getFrameTree", &json!({}))?
-                .pointer("/frameTree/frame/id")
-                .and_then(Value::as_str)
-                .ok_or_else(|| Answer::error(Code::Failed, "the frame has no world for nib"))?
-                .to_string(),
-        };
-        let made = call(
+        let made = cdp::call_in(
+            self.view,
+            session,
             "Page.createIsolatedWorld",
             &json!({ "frameId": frame, "worldName": WORLD }),
-        )?;
+            cdp::PATIENCE,
+        )
+        .map_err(|why| stale(&why))?;
         let world = made
             .get("executionContextId")
             .and_then(Value::as_i64)
@@ -780,11 +854,11 @@ impl Page<'_> {
         Ok(world)
     }
 
-    fn forget_world(&self, session: Option<&str>) {
+    fn forget_worlds(&self, session: Option<&str>) {
         self.worlds
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
-            .remove(&session.map(str::to_string));
+            .retain(|(of, _), _| of.as_deref() != session);
     }
 
     /// Runs a function on an element in nib's own world, answering its value.
@@ -856,6 +930,10 @@ impl Page<'_> {
         if facts.control || facts.editable {
             return Ok(facts);
         }
+        // A control by the engine's account alone: a component's `ElementInternals`.
+        if let Some(name) = self.engine_control_round(element) {
+            facts.name = joined_name(&facts.name, &name);
+        }
         let Some(listening) = self.listening(element) else {
             return Ok(facts);
         };
@@ -926,6 +1004,19 @@ impl Page<'_> {
         })
     }
 
+    /// What the engine calls the control it holds this element to be in, if any, though no
+    /// tag or attribute says so.
+    fn engine_control_round(&self, element: &Element) -> Option<String> {
+        let tree = self
+            .call_on(
+                element,
+                "Accessibility.getPartialAXTree",
+                &json!({ "objectId": self.object(element).ok()?, "fetchRelatives": true }),
+            )
+            .ok()?;
+        control_in_tree(tree.get("nodes")?.as_array()?)
+    }
+
     /// The nearest of an element and what is round it that listens for a press.
     fn listening(&self, element: &Element) -> Option<String> {
         let mut object = self.object(element).ok()?;
@@ -937,7 +1028,7 @@ impl Page<'_> {
                 .call_on(
                     element,
                     "Runtime.callFunctionOn",
-                    &json!({ "objectId": object, "functionDeclaration": ROUND_IT }),
+                    &json!({ "objectId": object, "functionDeclaration": ROUND_IT.as_str() }),
                 )
                 .ok()?;
             object = round.pointer("/result/objectId")?.as_str()?.to_string();
@@ -1025,7 +1116,7 @@ impl Page<'_> {
         };
         let Some(scope) = call(
             "Runtime.callFunctionOn",
-            &json!({ "objectId": object, "functionDeclaration": FIELDS_SCOPE }),
+            &json!({ "objectId": object, "functionDeclaration": FIELDS_SCOPE.as_str() }),
         )
         .and_then(|said| {
             said.pointer("/result/objectId")
@@ -1047,18 +1138,11 @@ impl Page<'_> {
             .into_iter()
             .take(200)
             .filter_map(|backend| {
-                let field = call(
-                    "DOM.resolveNode",
-                    &json!({
-                        "backendNodeId": backend,
-                        "objectGroup": WORLD,
-                        "executionContextId": self.world_in(session, element.frame.as_deref()).ok()?,
-                    }),
-                )?;
+                let field = self.handle_in_world(session, backend, WORLD)?;
                 let said = call(
                     "Runtime.callFunctionOn",
                     &json!({
-                        "objectId": field.pointer("/object/objectId")?.as_str()?,
+                        "objectId": field,
                         "functionDeclaration": DESCRIBED_ONLY.as_str(),
                         "returnByValue": true,
                     }),
@@ -1145,7 +1229,7 @@ impl Page<'_> {
             if !facts.pressable() && !facts.editable {
                 continue;
             }
-            let Ok(world) = self.world_in(Some(&frame.session), Some(&frame.id)) else {
+            let Ok(world) = self.world_in(Some(&frame.session)) else {
                 continue;
             };
             let focused = cdp::call_in(
@@ -1177,7 +1261,7 @@ impl Page<'_> {
         };
         let world = match world {
             Some(world) => i64::try_from(world).unwrap_or_default(),
-            None => self.world_in(session, None)?,
+            None => self.world_in(session)?,
         };
         let asked = json!({ "expression": ACTIVE, "returnByValue": false, "contextId": world });
         let found = call("Runtime.evaluate", &asked)?;
@@ -1219,7 +1303,7 @@ impl Page<'_> {
             )
         };
         let answered = run(self.world()?).or_else(|_| {
-            self.forget_world(None);
+            self.forget_worlds(None);
             run(self.world()?)
         })?;
         thrown(&answered)?;
@@ -1231,7 +1315,7 @@ impl Page<'_> {
 
     /// nib's own world in the page's frame: the page's document, none of its globals.
     fn world(&self) -> Result<i64, Answer> {
-        self.world_in(None, None)
+        self.world_in(None)
     }
 
     fn main_frame(&self) -> Result<String, Answer> {
@@ -1469,18 +1553,11 @@ impl Page<'_> {
             return backend;
         }
         let holder = || {
-            let resolved = call(
-                "DOM.resolveNode",
-                &json!({
-                    "backendNodeId": backend,
-                    "objectGroup": WORLD,
-                    "executionContextId": self.world_in(session, None).ok()?,
-                }),
-            )?;
+            let handle = self.handle_in_world(session, backend, WORLD)?;
             let on = call(
                 "Runtime.callFunctionOn",
                 &json!({
-                    "objectId": resolved.pointer("/object/objectId")?.as_str()?,
+                    "objectId": handle,
                     "functionDeclaration": "function () { return this.element || this.host || null }",
                 }),
             )?;
@@ -1575,14 +1652,16 @@ impl Page<'_> {
             .and_then(Value::as_array)
             .map(|all| all.iter().filter_map(Value::as_f64).collect())
             .unwrap_or_default();
-        let metrics = self.call_on(element, "Page.getLayoutMetrics", &json!({}))?;
-        let size = |path: &str| metrics.pointer(path).and_then(Value::as_f64).unwrap_or(0.0);
-        FrameMap::of(
-            &quad,
-            size("/cssLayoutViewport/clientWidth"),
-            size("/cssLayoutViewport/clientHeight"),
-        )
-        .ok_or_else(|| {
+        // Its size with its bars, as the quad is: the layout viewport leaves a bar out, and
+        // every point would land that much further along than it was judged.
+        let session = element.session.as_deref();
+        let said = self.call_on(
+            element,
+            "Runtime.evaluate",
+            &json!({ "expression": "[innerWidth, innerHeight]", "returnByValue": true, "contextId": self.world_of_frame(session, frame)? }),
+        )?;
+        let size = |at: &str| said.pointer(at).and_then(Value::as_f64).unwrap_or(0.0);
+        FrameMap::of(&quad, size("/result/value/0"), size("/result/value/1")).ok_or_else(|| {
             Answer::error(
                 Code::Failed,
                 "that frame is drawn in a way Orden cannot follow: press something else",
@@ -1591,36 +1670,47 @@ impl Page<'_> {
     }
 
     /// Whether the element is what a press at the point lands on - it, something inside
-    /// it, or a label for it - and what does when it is not.
-    fn lands_on(&self, element: &Element, (x, y): (f64, f64)) -> Result<(), Answer> {
-        if element.session.is_some() {
-            return Ok(());
-        }
-        let Some(hit) = self.node_at((x, y)) else {
-            return Ok(());
+    /// it, or a label for it - and what does when it is not. In a frame the same, so a
+    /// point that comes out anywhere else in the frame than the element is seen; what the
+    /// page round the frame has put over it is judged as what the press lands on.
+    fn lands_on(&self, element: &Element, point: (f64, f64)) -> Result<(), Answer> {
+        let covered = if element.session.is_some() {
+            match self.element_at(point) {
+                Ok(hit) if hit.session == element.session => hit,
+                _ => return Ok(()),
+            }
+        } else {
+            let Some(hit) = self.node_at(point) else {
+                return Ok(());
+            };
+            Element {
+                session: None,
+                frame: None,
+                backend: hit,
+            }
         };
+        let hit = covered.backend;
         if hit == element.backend {
             return Ok(());
         }
-        let covered = Element {
-            session: None,
-            frame: None,
-            backend: hit,
-        };
         let target = self.object(element)?;
         // A frame's own ref, with the frame's document under the press: what it lands on is
         // the frame's, and is judged as that.
-        if self.frame_held(None, &target).is_some() {
+        if self
+            .frame_held(element.session.as_deref(), &target)
+            .is_some()
+        {
             return Ok(());
         }
         let above = self.object(&covered)?;
         // The two in different documents have no way to be compared, and are not the one
         // inside the other: a frame over the element covers it.
-        let inside = self.call(
+        let inside = self.call_on(
+            element,
             "Runtime.callFunctionOn",
             &json!({
                 "objectId": above,
-                "functionDeclaration": INSIDE,
+                "functionDeclaration": INSIDE.as_str(),
                 "arguments": [{ "objectId": target }],
                 "returnByValue": true,
             }),
@@ -2506,7 +2596,7 @@ impl Page<'_> {
     /// Where a frame in a process of its own is now, as the frame says: the address it was
     /// attached at may be older than a navigation inside it.
     fn frame_address(&self, frame: &cdp::Frame) -> Vec<String> {
-        let world = self.world_in(Some(&frame.session), Some(&frame.id)).ok();
+        let world = self.world_in(Some(&frame.session)).ok();
         world
             .and_then(|world| {
                 cdp::call_in(
@@ -2575,46 +2665,41 @@ impl Page<'_> {
                 .ok()
                 .and_then(|value| value.get("root").cloned())
             else {
+                // A part that cannot be read may hold anything: a filled secret, of no node.
+                found.push(Secret {
+                    prefix: prefix.clone(),
+                    backend: 0,
+                    filled: true,
+                });
                 continue;
             };
             let mut fields = Vec::new();
             typed_into(&tree, false, true, &mut fields);
             for (at, backend) in fields.into_iter().enumerate() {
-                if at >= MOST_FIELDS_ASKED {
+                // Past the most, or what no world of ours can describe: a secret that is
+                // filled, as asking found nothing out. Never a field let by.
+                let said = (at < MOST_FIELDS_ASKED)
+                    .then(|| self.handle_in_world(session.as_deref(), backend, SECRETS))
+                    .flatten()
+                    .and_then(|field| {
+                        call(
+                            "Runtime.callFunctionOn",
+                            &json!({ "objectId": field, "functionDeclaration": DESCRIBED.as_str(), "returnByValue": true }),
+                        )
+                        .ok()
+                    })
+                    .and_then(|value| value.pointer("/result/value").cloned())
+                    .filter(Value::is_object);
+                let Some(said) = said else {
                     found.push(Secret {
                         prefix: prefix.clone(),
                         backend,
                         filled: true,
                     });
                     continue;
-                }
-                let Ok(world) = self.world_in(session.as_deref(), None) else {
-                    continue;
                 };
-                let Some(field) = call(
-                    "DOM.resolveNode",
-                    &json!({ "backendNodeId": backend, "objectGroup": SECRETS, "executionContextId": world }),
-                )
-                .ok()
-                .and_then(|value| {
-                    value
-                        .pointer("/object/objectId")
-                        .and_then(Value::as_str)
-                        .map(str::to_string)
-                }) else {
-                    continue;
-                };
-                let Some(said) = call(
-                    "Runtime.callFunctionOn",
-                    &json!({ "objectId": field, "functionDeclaration": DESCRIBED.as_str(), "returnByValue": true }),
-                )
-                .ok()
-                .and_then(|value| value.pointer("/result/value").cloned()) else {
-                    continue;
-                };
-                if serde_json::from_value::<Field>(said.clone())
-                    .is_ok_and(|field| policy::secret(&field))
-                {
+                let judged = serde_json::from_value::<Field>(said.clone());
+                if judged.is_ok_and(|field| policy::secret(&field)) || judged_failed(&said) {
                     found.push(Secret {
                         prefix: prefix.clone(),
                         backend,
@@ -2634,23 +2719,24 @@ impl Page<'_> {
     /// a field to the policy, and to `innerText` and markup words of the page like any,
     /// which is why a read leaves them out itself. Any other's words, a document being
     /// edited, are what a read is for. Frames are in no read.
-    fn secret_regions(&self) -> Vec<usize> {
-        let Ok(said) = self.isolated(&REGIONS_SAID) else {
-            return Vec::new();
-        };
-        said.as_array()
-            .map(|all| {
-                all.iter()
-                    .enumerate()
-                    .filter(|(_, one)| one.get("filled").and_then(Value::as_bool) == Some(true))
-                    .filter(|(_, one)| {
-                        serde_json::from_value::<Field>((*one).clone())
-                            .is_ok_and(|field| policy::secret(&field))
-                    })
-                    .map(|(at, _)| at)
-                    .collect()
+    fn secret_regions(&self) -> Result<Vec<usize>, Answer> {
+        let said = self.isolated(&REGIONS_SAID)?;
+        let all = said.as_array().ok_or_else(|| {
+            Answer::error(
+                Code::Failed,
+                "the page's fields could not be read, so neither can its words",
+            )
+        })?;
+        Ok(all
+            .iter()
+            .enumerate()
+            .filter(|(_, one)| one.get("filled").and_then(Value::as_bool) == Some(true))
+            .filter(|(_, one)| {
+                serde_json::from_value::<Field>((*one).clone())
+                    .map_or(true, |field| policy::secret(&field))
             })
-            .unwrap_or_default()
+            .map(|(at, _)| at)
+            .collect())
     }
 
     /// The page as text, as markdown, or its article as markdown. Markdown is the
@@ -2661,7 +2747,7 @@ impl Page<'_> {
         shape: super::verbs::ReadAs,
     ) -> Result<(String, String, String), Answer> {
         use super::verbs::ReadAs;
-        let hidden = self.secret_regions();
+        let hidden = self.secret_regions()?;
         let said = match shape {
             ReadAs::Text => self.isolated(&text_hiding(&hidden))?,
             ReadAs::Markdown => self.isolated(&whole_hiding(&hidden))?,
@@ -2714,7 +2800,7 @@ impl Page<'_> {
     /// clipper's own converter, so a clip of an agent's tab and of the reader's are the
     /// same words.
     pub fn clip(&self) -> Result<(String, String, String), Answer> {
-        let said = self.isolated(&clipped_hiding(&self.secret_regions()))?;
+        let said = self.isolated(&clipped_hiding(&self.secret_regions()?))?;
         Ok((
             text(&said, "url"),
             text(&said, "title"),
@@ -2785,7 +2871,8 @@ impl Page<'_> {
                     ))
                     .is_ok_and(|found| found.as_bool() == Some(true))
                         && self
-                            .isolated(&text_hiding(&self.secret_regions()))
+                            .secret_regions()
+                            .and_then(|hidden| self.isolated(&text_hiding(&hidden)))
                             .is_ok_and(|said| self::text(&said, "text").contains(text.as_str()))
                 }
                 Until::Element { element } => self.element(element).is_ok_and(|element| {
@@ -3092,6 +3179,56 @@ fn frame_of_holder(node: &Value) -> Option<String> {
     .then(|| node.get("frameId").and_then(Value::as_str))
     .flatten()
     .map(str::to_string)
+}
+
+/// The name of the nearest control up from the first node of an engine's partial tree.
+fn control_in_tree(nodes: &[Value]) -> Option<String> {
+    let by_id: HashMap<&str, &Value> = nodes
+        .iter()
+        .filter_map(|node| Some((node.get("nodeId")?.as_str()?, node)))
+        .collect();
+    let mut at = nodes.first();
+    let mut steps = 0;
+    while let Some(node) = at {
+        let role = node
+            .pointer("/role/value")
+            .and_then(Value::as_str)
+            .unwrap_or_default();
+        let name = node
+            .pointer("/name/value")
+            .and_then(Value::as_str)
+            .unwrap_or_default();
+        if matches!(role, "button" | "link" | "menuitem") && !name.trim().is_empty() {
+            return Some(name.to_string());
+        }
+        steps += 1;
+        at = node
+            .get("parentId")
+            .and_then(Value::as_str)
+            .and_then(|parent| by_id.get(parent).copied())
+            .filter(|_| steps < 64);
+    }
+    None
+}
+
+/// Whether what a field said cannot be read as a field, which counts as a secret.
+fn judged_failed(said: &Value) -> bool {
+    serde_json::from_value::<Field>(said.clone()).is_err()
+}
+
+/// The frames of a frame tree, the top one first.
+fn frames_under(tree: &Value, out: &mut Vec<String>) {
+    if let Some(id) = tree.pointer("/frame/id").and_then(Value::as_str) {
+        out.push(id.to_string());
+    }
+    for child in tree
+        .get("childFrames")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+    {
+        frames_under(child, out);
+    }
 }
 
 /// What the page's answer says of an element. An answer that says nothing, or nothing that
@@ -3533,6 +3670,49 @@ mod tests {
         assert!(clipped.contains("removeAttribute('value')"));
         assert!(!clipped.contains("__HIDE__"));
         assert!(whole_hiding(&[]).contains("unvalued(copy)"));
+    }
+
+    #[test]
+    fn a_control_by_the_engine_alone_names_what_it_holds() {
+        let nodes = [
+            json!({ "nodeId": "3", "parentId": "2", "role": { "value": "StaticText" }, "name": { "value": "x" } }),
+            json!({ "nodeId": "2", "parentId": "1", "role": { "value": "button" }, "name": { "value": "Pay now" } }),
+            json!({ "nodeId": "9", "parentId": "1", "role": { "value": "button" }, "name": { "value": "A sibling" } }),
+        ];
+        assert_eq!(control_in_tree(&nodes).as_deref(), Some("Pay now"));
+        assert_eq!(control_in_tree(&nodes[2..]).as_deref(), Some("A sibling"));
+        let plain = [json!({ "nodeId": "3", "role": { "value": "generic" } })];
+        assert_eq!(control_in_tree(&plain), None);
+        // Round and round is no name, and no hang.
+        let round = [json!({ "nodeId": "3", "parentId": "3", "role": { "value": "generic" } })];
+        assert_eq!(control_in_tree(&round), None);
+    }
+
+    #[test]
+    fn every_frame_of_a_tree_is_tried_the_top_one_first() {
+        let tree = json!({
+            "frame": { "id": "a" },
+            "childFrames": [
+                { "frame": { "id": "b" }, "childFrames": [{ "frame": { "id": "c" } }] },
+                { "frame": { "id": "d" } },
+            ],
+        });
+        let mut frames = Vec::new();
+        frames_under(&tree, &mut frames);
+        assert_eq!(frames, ["a", "b", "c", "d"]);
+    }
+
+    #[test]
+    fn a_frames_size_with_its_bars_lands_where_the_quad_says() {
+        // A 300 by 200 frame: its own size is the quad's, whatever a bar takes of the layout.
+        let map = FrameMap::of(
+            &[0.0, 0.0, 300.0, 0.0, 300.0, 200.0, 0.0, 200.0],
+            300.0,
+            200.0,
+        )
+        .expect("a straight quad");
+        assert_eq!(map.to_page((200.0, 20.0)), (200.0, 20.0));
+        assert_eq!(map.to_frame((200.0, 20.0)), Some((200.0, 20.0)));
     }
 
     #[test]

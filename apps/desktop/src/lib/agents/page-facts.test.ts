@@ -349,7 +349,12 @@ describe('a press no control holds goes to what acts for it', () => {
 describe('what a press lands on that is no element', () => {
   test('a pseudo-element is the element it hangs on', () => {
     const button = page('<button>Pay now</button>').querySelector('button')
-    expect(factsOf({ element: button }).name).toBe('Pay now')
+    class Pseudo {
+      get element() {
+        return button
+      }
+    }
+    expect(factsOf(new Pseudo()).name).toBe('Pay now')
   })
 
   test('so is a shadow root, and a document its root', () => {
@@ -655,5 +660,64 @@ describe('a read with a secret on the way', () => {
   test('counts a textbox built of a div as a region', () => {
     const document = page('<div role="textbox" aria-label="PIN">123456</div><p>after</p>')
     expect(maskedText(document, [0])).not.toContain('123456')
+  })
+})
+
+describe('a form that names a field after what is read of it', () => {
+  // The named getter of a form is on the instance, in every world, as these are.
+  const clobbered = (form: Element, names: Record<string, unknown>) => {
+    for (const [name, value] of Object.entries(names)) {
+      Object.defineProperty(form, name, { value, configurable: true })
+    }
+  }
+
+  test('`elements` does not hide its default button', () => {
+    const document = page('<form><input id=b><button>Delete account</button></form>')
+    const form = document.querySelector('form') as Element
+    clobbered(form, { elements: document.querySelector('#b') })
+    expect(factsOf(document.querySelector('#b')).default_button).toBe('Delete account')
+  })
+
+  test('`nodeType` does not send it to its parent', () => {
+    const document = page(
+      '<div id=out><form onclick="pay()">Pay now<input id=h type=hidden></form></div>',
+    )
+    const form = document.querySelector('form') as Element
+    clobbered(form, { nodeType: document.querySelector('#h') })
+    expect(factsOf(form).tag).toBe('form')
+    expect(factsOf(form).name).toContain('Pay now')
+  })
+
+  // Not `parentElement` or `parentNode`: jsdom's selector engine walks them itself and spins,
+  // where the engine's is native. Those are driven live (l1, l2).
+  test.each(['getRootNode', 'closest', 'matches', 'tagName'])(
+    '`%s` does not turn the walk round',
+    (name) => {
+      const document = page('<form><span id=hit>Open</span><input id=h></form>')
+      const form = document.querySelector('form') as Element
+      clobbered(form, { [name]: document.querySelector('#h') })
+      expect(factsOf(document.querySelector('#hit')).name).toBe('Open')
+    },
+  )
+})
+
+describe('a line broken by hand', () => {
+  test('is two', () => {
+    const element = page(
+      '<div onclick="x()"><span>Your file</span><br><span id=hit>Delete it</span></div>',
+    ).querySelector('#hit')
+    expect(factsOf(element).held).toEqual(['Your file', 'Delete it'])
+  })
+})
+
+describe('a long dialog', () => {
+  test('is read to its end', () => {
+    const long = 'Please read all of this. '.repeat(12)
+    const facts = pressOn(
+      page(
+        `<div role=dialog><p>${long}</p><p>This will permanently delete your account.</p><button>Confirm</button></div>`,
+      ),
+    )
+    expect(facts.dialog).toContain('permanently delete')
   })
 })

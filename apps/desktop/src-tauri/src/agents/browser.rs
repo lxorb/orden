@@ -399,6 +399,24 @@ fn judged(
     act: Act,
     key: &str,
 ) -> Result<(), Answer> {
+    judged_times(app, caller, page, place, facts, act, key, 1)
+}
+
+/// `judged`, for a press made so many times, which the question says.
+#[allow(
+    clippy::too_many_arguments,
+    reason = "the one decision every act goes through, and each of these is what it is about"
+)]
+fn judged_times(
+    app: &AppHandle,
+    caller: &Caller,
+    page: &Page<'_>,
+    place: &Place,
+    facts: &Facts,
+    act: Act,
+    key: &str,
+    times: u8,
+) -> Result<(), Answer> {
     let cleared = || -> Result<(), Answer> {
         if policy::credential_act(facts, act) {
             page.credentials
@@ -414,10 +432,13 @@ fn judged(
     let Some(question) = policy::judge(grant, facts, act, &page.url(), &hosts) else {
         return cleared();
     };
+    let summary = said_times(question.summary, times);
+    // An allowance is for what was asked: the same button with other words round it, in a
+    // form that has grown a card field, or pressed more often, is another question.
     let key = approvals::on_page(
         key,
         &page.url(),
-        &format!("{} {}", facts.name, facts.default_button),
+        &question_key(question.category, &summary, facts),
     );
     if approvals::allowed(&grant.id, &key) {
         return cleared();
@@ -426,11 +447,28 @@ fn judged(
         app,
         grant,
         question.category,
-        question.summary,
+        summary,
         Some(&page.url()),
         place.id(),
         &key,
     ))
+}
+
+/// A question with how many times, where it is more than once.
+fn said_times(summary: String, times: u8) -> String {
+    if times > 1 {
+        format!("{summary} ({times} times)")
+    } else {
+        summary
+    }
+}
+
+/// What an allowance is for, in full: a summary is cut short for reading.
+fn question_key(category: Category, summary: &str, facts: &Facts) -> String {
+    format!(
+        "{} {} {} {category:?} {summary}",
+        facts.name, facts.default_button, facts.dialog
+    )
 }
 
 /// One press, however many times it is looked at on its way: one question. The look before
@@ -446,7 +484,9 @@ struct OnePress<'a, 'p> {
     key: String,
     /// Asks only for what is more than a write: a tick's form has had that question.
     graver_only: bool,
-    answered: std::cell::RefCell<Vec<(Category, String)>>,
+    /// How many presses this one question is for.
+    times: u8,
+    answered: std::cell::RefCell<Vec<String>>,
 }
 
 impl<'a, 'p> OnePress<'a, 'p> {
@@ -464,6 +504,7 @@ impl<'a, 'p> OnePress<'a, 'p> {
             place,
             key,
             graver_only: false,
+            times: 1,
             answered: std::cell::RefCell::new(Vec::new()),
         }
     }
@@ -505,11 +546,12 @@ impl<'a, 'p> OnePress<'a, 'p> {
         if self.graver_only && question.category == Category::Writing {
             return Ok(());
         }
-        let said = (question.category, question.summary);
+        // Every word of it, as two long names alike at the start read the same when cut.
+        let said = question_key(question.category, &question.summary, facts);
         if self.answered.borrow().contains(&said) {
             return Ok(());
         }
-        judged(
+        judged_times(
             self.app,
             self.caller,
             self.page,
@@ -517,6 +559,7 @@ impl<'a, 'p> OnePress<'a, 'p> {
             facts,
             Act::Press,
             &self.key,
+            self.times,
         )?;
         self.answered.borrow_mut().push(said);
         Ok(())
@@ -724,7 +767,10 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     (Some(reference), None, None) => {
                         let target = element(page, reference)?;
                         let key = approvals::key("browser_click", Some(&tab), Some(reference));
-                        let press = OnePress::new(app, caller, page, place, key);
+                        let press = OnePress {
+                            times: count,
+                            ..OnePress::new(app, caller, page, place, key)
+                        };
                         page.click(&target, button, count, held, &|on| press.landed(on))?;
                     }
                     // A point instead, which the press is judged by what lands there, as
@@ -733,7 +779,10 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         let target = page.element_at((x, y))?;
                         let reference = format!("e{}", target.backend);
                         let key = approvals::key("browser_click", Some(&tab), Some(&reference));
-                        let press = OnePress::new(app, caller, page, place, key);
+                        let press = OnePress {
+                            times: count,
+                            ..OnePress::new(app, caller, page, place, key)
+                        };
                         press.landed(&target)?;
                         page.click_at((x, y), &target, button, count, held, &|on| {
                             press.landed(on)
