@@ -6,9 +6,10 @@ tab, lets an agent act in it, and photographs and checks:
 
 - the frame round the page in the agent's colour, and the agent's spark on the tab,
   turning; both muted once the reader takes the tab, and back on a press on the mark;
-- the activity panel on the right: the agent, what it is doing now, its own tab as a
-  picture, the session, and a question with Don't allow, Always on this site, Allow -
-  and Allow sends the answer and takes the question away;
+- the agent as a row at the top of the Ask panel's chat list (#1120), connected and
+  saying what it asks, and its session opened from there: the agent, what it is doing
+  now, its own tab by name, the session, and a question with Don't allow, Always on this
+  site, Allow - and Allow sends the answer and takes the question away;
 - a takeover's line and Done under the tab's bar;
 - the pairing bubble for a client asking to connect.
 
@@ -60,34 +61,6 @@ async () => {
 }
 """
 
-# A picture of a page for the agent's own tab: drawn here rather than shipped, as the
-# engine's screencast would send one, a JPEG in base64.
-PICTURE = """
-() => {
-  const canvas = document.createElement('canvas')
-  canvas.width = 480
-  canvas.height = 300
-  const ink = canvas.getContext('2d')
-  ink.fillStyle = '#f4f1ea'
-  ink.fillRect(0, 0, 480, 300)
-  ink.fillStyle = '#1f2937'
-  ink.fillRect(0, 0, 480, 44)
-  ink.fillStyle = '#e5e7eb'
-  ink.font = 'bold 20px sans-serif'
-  ink.fillText('Flights', 20, 30)
-  ink.fillStyle = '#374151'
-  for (let row = 0; row < 5; row++) {
-    ink.fillRect(20, 70 + row * 42, 300, 12)
-    ink.fillRect(20, 88 + row * 42, 180, 8)
-    ink.fillStyle = row === 1 ? '#2563eb' : '#374151'
-    ink.fillRect(380, 70 + row * 42, 80, 26)
-    ink.fillStyle = '#374151'
-  }
-  return canvas.toDataURL('image/jpeg', 0.8).split(',')[1]
-}
-"""
-
-
 def settle(page: Page) -> None:
     page.evaluate("() => document.fonts.ready")
     page.wait_for_timeout(250)
@@ -130,37 +103,60 @@ def drive(page: Page, scheme: str) -> None:
     if not wait_for(page, "document.querySelector('.tab .mark.agent.turning')", "the mark resumed"):
         say(f"asked: {page.evaluate('() => window.__fake.asked.slice(-3)')}")
 
-    # The activity panel: an agent tab of its own, a picture of it, and a question.
+    # The chat list: an agent tab of its own, a question, and the agent's row over the
+    # chats, which opens its session.
     own = page.evaluate(
         f"() => window.__fake.open('{AGENT}', 'https://flights.example/', 'Flights to Lisbon').id"
     )
     fake(page, f"act('{AGENT}', '{own}', 'browser_type')")
-    page.evaluate("() => window.nibApp.workspace.showPanel('agents')")
-    wait_for(page, "document.querySelector('section.agent .name')", "the activity panel")
-    wait_for(page, f"window.__fake.watching.includes('{own}')", "the thumbnail being watched")
-    picture = page.evaluate(PICTURE)
-    page.evaluate(f"(jpeg) => window.__fake.frame('{own}', jpeg)", picture)
     fake(
         page,
         f"ask('{AGENT}', 'paying', 'Place order on shop.example', 'shop.example', '{tab}')",
     )
+    page.evaluate("() => window.nibApp.workspace.showPanel('ask')")
+    page.evaluate("() => import('/src/lib/ai/sidebar/chat.svelte.ts').then(({ chat }) => chat.showThreads())")
+    wait_for(page, f"document.querySelector('.nib-row.agent[data-agent=\"{AGENT}\"]')", "the agent's row")
+    row = page.evaluate(
+        f"""() => {{
+          const row = document.querySelector('.nib-row.agent[data-agent="{AGENT}"]')
+          return {{
+            name: row.querySelector('.name')?.textContent,
+            asking: row.querySelector('.asking')?.textContent,
+            badge: row.querySelector('.asks')?.textContent.trim(),
+            connected: !!row.querySelector('.connected'),
+          }}
+        }}"""
+    )
+    say(f"[row] {row}")
+    if row != {
+        "name": "Claude Code",
+        "asking": "Place order on shop.example",
+        "badge": "1",
+        "connected": True,
+    }:
+        wrong(f"the agent's row is {row}")
+    shot(page, f"{scheme}-03-list")
+
+    page.click(f".nib-row.agent[data-agent='{AGENT}']")
+    wait_for(page, "document.querySelector('section.agent .name')", "the agent's session")
     wait_for(page, "document.querySelector('.agent .question')", "the question")
-    wait_for(page, "document.querySelector('.thumb .picture[style*=\"base64\"]')", "the picture")
     page.evaluate("() => import('/src/lib/agents/ui/index.ts').then((ui) => ui.started().readLog())")
     wait_for(page, "document.querySelectorAll('.agent .call').length >= 3", "the session")
 
     name = page.evaluate("() => document.querySelector('section.agent .name').textContent")
     if name != "Claude Code":
-        wrong(f"the panel names the agent {name!r}")
-    badge = page.evaluate("() => document.querySelector('.waiting')?.textContent.trim()")
-    if badge != "1":
-        wrong(f"the badge on the panel's tab says {badge!r}")
+        wrong(f"the session names the agent {name!r}")
+    pages = page.evaluate(
+        "() => [...document.querySelectorAll('section.agent .tabs .nib-row-label')].map((one) => one.textContent)"
+    )
+    if pages != ["Flights to Lisbon"]:
+        wrong(f"the session lists the agent's own pages as {pages}")
     answers = page.evaluate(
         "() => [...document.querySelectorAll('.agent .question button')].map((b) => b.textContent.trim())"
     )
     if answers != ["Don’t allow", "Allow", "Always on this site"]:
         wrong(f"the question's answers are {answers}")
-    shot(page, f"{scheme}-03-panel")
+    shot(page, f"{scheme}-04-session")
 
     page.click(".agent .question .rows .nib-button:not(.is-quiet)")
     wait_for(page, "!document.querySelector('.agent .question')", "the answered question to go")
@@ -174,7 +170,7 @@ def drive(page: Page, scheme: str) -> None:
         f"ask('{AGENT}', 'takeover', 'Sign in to finish the order', 'https://shop.example/', '{tab}')",
     )
     wait_for(page, "document.querySelector('.takeover')", "the takeover's line")
-    shot(page, f"{scheme}-04-takeover")
+    shot(page, f"{scheme}-05-takeover")
     page.click(".takeover .nib-button")
     wait_for(page, "!document.querySelector('.takeover')", "the step said done")
 
@@ -184,7 +180,7 @@ def drive(page: Page, scheme: str) -> None:
     words = page.evaluate("() => document.querySelector('.pairing').textContent")
     if "Codex wants to connect" not in words:
         wrong(f"the pairing bubble says {words!r}")
-    shot(page, f"{scheme}-05-pairing")
+    shot(page, f"{scheme}-06-pairing")
 
 
 def main() -> int:

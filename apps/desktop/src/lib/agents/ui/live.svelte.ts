@@ -8,6 +8,9 @@
  *  the pairing bubble while a client is asking. */
 
 import { mount, unmount, untrack } from 'svelte'
+import { agentOpen } from '../../ai/sidebar/agent-open.svelte'
+import { revealPanel } from '../../focus'
+import { notify, unshow } from '../../notify'
 import { agentMarks } from '../../agent-marks.svelte'
 import { unlend } from '../../web-tab/lending'
 import { t } from '../../i18n.svelte'
@@ -99,6 +102,29 @@ export function started(source: Source = crate): Activity {
     })
 
     // A client asking to become an agent: the bubble, for as long as it asks.
+    // Each question an agent asks is a notification too, as a chat's message is: the
+    // agent is waiting on the reader, who may be in another app. Pressed, it opens the
+    // agent's session, where the question is answered. Taken back once answered.
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping, never drawn
+    const told = new Set<string>()
+    $effect(() => {
+      const now = activity.questions
+      untrack(() => {
+        for (const one of now) {
+          if (told.has(one.id)) continue
+          told.add(one.id)
+          notify(activity.nameOf(one.agent), one.summary, questionTag(one.id), () =>
+            openSession(one.agent),
+          )
+        }
+        for (const id of told) {
+          if (now.some((one) => one.id === id)) continue
+          told.delete(id)
+          unshow(questionTag(id))
+        }
+      })
+    })
+
     const pairing = $derived(activity.seen.approvals.some((one) => one.category === 'pairing'))
     $effect(() => {
       if (!pairing) return
@@ -111,6 +137,15 @@ export function started(source: Source = crate): Activity {
 
   void activity.load().catch(() => undefined)
   return activity
+}
+
+/** What a question's notification is filed under, so its answer takes it back. */
+const questionTag = (id: string) => `agent-question-${id}`
+
+/** An agent's session, open in the Ask panel where a conversation would be (#1120). */
+function openSession(agent: string): void {
+  agentOpen.id = agent
+  revealPanel('ask')
 }
 
 /** The UI taken down, and the shell told nothing is known: for a test that starts it
