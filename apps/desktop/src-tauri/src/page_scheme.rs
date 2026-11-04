@@ -65,6 +65,9 @@ pub fn wear(page: &Webview<crate::Engine>) {
     let Some(scheme) = said() else {
         return;
     };
+    if crate::page_window::has_none(page.label()) {
+        return;
+    }
     let _ = page.with_webview(move |platform| engine::wear(&platform, scheme));
 }
 

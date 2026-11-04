@@ -1702,7 +1702,7 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
     #[cfg(not(all(windows, not(feature = "cef"))))]
     let _ = store;
 
-    let Some(view) = app.get_webview(&label_of(tab)) else {
+    let Ok(view) = found(app, tab) else {
         return;
     };
 
@@ -2528,8 +2528,12 @@ fn let_go(label: &str) {
 /// The webview for a tab, or a reason there is none. A tab whose page has been
 /// unloaded to give the memory back is the ordinary case rather than a failure, and
 /// the window opens it again instead of reporting anything.
+#[track_caller]
 pub(crate) fn found(app: &AppHandle, tab: &str) -> Result<Webview, String> {
-    app.get_webview(&label_of(tab))
+    let label = label_of(tab);
+    // A page with no window is one the runtime would stop the app over; see page_window.rs.
+    app.get_webview(&label)
+        .filter(|_| !crate::page_window::has_none(&label))
         .ok_or_else(|| "that tab has no page open".to_string())
 }
 

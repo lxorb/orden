@@ -283,7 +283,8 @@ pub fn heard(window: &Window, event: &WindowEvent) {
             .collect()
     });
     for (label, one) in mine {
-        if let Some(view) = window.app_handle().get_webview(&label) {
+        let view = window.app_handle().get_webview(&label);
+        if let Some(view) = view.filter(|_| !crate::page_window::has_none(&label)) {
             let bounds = fitted(one.hole, &one.frame, now);
             let (_, _, width, height) = edges(bounds, scale);
             let _ = put(&view, bounds, scale);

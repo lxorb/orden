@@ -277,6 +277,9 @@ mod secure_dns;
 // A drag out of the app's own page, which the page runs itself on Linux; see page_drag.rs.
 #[cfg(desktop)]
 mod page_drag;
+// Whether a page still has its window, which the Linux engine asserts; see page_window.rs.
+#[cfg(desktop)]
+mod page_window;
 // How large the app's pages are drawn, and where a web tab's page goes; see
 // page_scale.rs.
 #[cfg(desktop)]
