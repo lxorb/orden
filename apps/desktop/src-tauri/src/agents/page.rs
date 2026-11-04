@@ -1207,7 +1207,14 @@ impl Page<'_> {
             backend: hit,
         };
         let target = self.object(element)?;
+        // A frame's own ref, with the frame's document under the press: what it lands on is
+        // the frame's, and is judged as that.
+        if self.frame_held(None, &target).is_some() {
+            return Ok(());
+        }
         let above = self.object(&covered)?;
+        // The two in different documents have no way to be compared, and are not the one
+        // inside the other: a frame over the element covers it.
         let inside = self.call(
             "Runtime.callFunctionOn",
             &json!({
@@ -1216,8 +1223,10 @@ impl Page<'_> {
                 "arguments": [{ "objectId": target }],
                 "returnByValue": true,
             }),
-        )?;
-        if inside.pointer("/result/value").and_then(Value::as_bool) != Some(false) {
+        );
+        if inside
+            .is_ok_and(|one| one.pointer("/result/value").and_then(Value::as_bool) != Some(false))
+        {
             return Ok(());
         }
         // Its tag and nothing it says: a refusal goes to the model unmarked, and the page's
