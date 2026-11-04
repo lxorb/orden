@@ -207,10 +207,11 @@ def stale():
     if "window id" not in wm.stdout:
         print("stale: no window manager to take the focus away, not asked")
         return
-    other = subprocess.Popen(["xmessage", "-geometry", "200x100+1300+800", "another app"])
+    # xterm and not xmessage; see the kwin job in wayland.yml.
+    other = subprocess.Popen(["xterm", "-geometry", "20x5+1300+800", "-title", "another app"])
     found = ""
     for _ in range(50):
-        found = subprocess.run(["xdotool", "search", "--class", "xmessage"], capture_output=True, text=True, check=False).stdout
+        found = subprocess.run(["xdotool", "search", "--class", "xterm"], capture_output=True, text=True, check=False).stdout
         if found.split():
             break
         time.sleep(0.1)

@@ -426,8 +426,15 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: KWin, Xvfb and xdotool, as Fedora 44 has them
-        run: dnf install -y kwin-x11 xorg-x11-server-Xvfb xdpyinfo xwininfo xprop xdotool xwd xmessage ImageMagick dbus-daemon dbus-tools python3 procps-ng nss nss-softokn mesa-dri-drivers git ffmpeg-free python3-pillow
+      - name: KWin on X11 as Fedora 44 released it, Xvfb and xdotool
+        # From the release, not its updates: Fedora 44's updates carry KWin 6.8, which takes
+        # the place of kwin-x11 and has no `kwin_x11`, so the package installs and the
+        # session then has no window manager to start. Lift it once this job runs KWin's own
+        # Wayland session, or the updates carry a `kwin_x11` again. xterm, not xmessage, is
+        # the other window a drive gives the focus to (page-drive.py): an AppImage's hook
+        # asks its question about user namespaces through xmessage where it finds one, and
+        # a container waits on that answer for good.
+        run: dnf install -y --disablerepo=updates kwin-x11 xorg-x11-server-Xvfb xdpyinfo xwininfo xprop xdotool xwd xterm ImageMagick dbus-daemon dbus-tools python3 procps-ng nss nss-softokn mesa-dri-drivers git ffmpeg-free python3-pillow
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
