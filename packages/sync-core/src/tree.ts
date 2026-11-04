@@ -34,7 +34,7 @@
  *  a batch and writes back, and the only numbers that move are the space's cursor. */
 
 import { freePath } from '@orden/markdown/paths'
-import type { EntryKind, Op, OpResult } from './wire'
+import { type EntryKind, heldName, LONGEST_NAME, type Op, type OpResult, shortened } from './wire'
 
 export interface TreeEntry {
   id: string
@@ -133,12 +133,21 @@ function freeName(
 ): string {
   const taken = takenIn(state, parent, except)
   const free = (candidate: string) => !taken.has(nameKey(candidate))
+  const first = (name: string): string => {
+    if (kind !== 'folder') return freePath(name, (candidate) => !free(candidate))
+    if (free(name)) return name
+    for (let counter = 2; ; counter += 1) {
+      const candidate = `${name} ${String(counter)}`
+      if (free(candidate)) return candidate
+    }
+  }
 
-  if (kind !== 'folder') return freePath(wanted, (candidate) => !free(candidate))
-  if (free(wanted)) return wanted
-  for (let counter = 2; ; counter += 1) {
-    const candidate = `${wanted} ${String(counter)}`
-    if (free(candidate)) return candidate
+  // The number has to fit too: past `LONGEST_NAME` the feed carries a name no device reads.
+  let name = heldName(wanted)
+  for (;;) {
+    const found = first(name)
+    if (found.length <= LONGEST_NAME) return found
+    name = shortened(name, found.length - LONGEST_NAME, kind)
   }
 }
 

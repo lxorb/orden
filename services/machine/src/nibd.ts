@@ -68,6 +68,8 @@ async function call(url: string): Promise<number> {
 
 export class Nibd {
   private readonly sessions = new Map<string, Session>()
+  /** The opens still asking a session's holder whether it runs; see `receive`. */
+  private readonly opening = new Map<string, Promise<void>>()
   private readonly saves: Saves
   private readonly options: Options
   private readonly meter = new Meter(Date.now())
@@ -156,14 +158,18 @@ export class Nibd {
       return
     }
     if (!isSessionId(frame.session)) return
+    // The server does not wait for one frame before the next (server.ts): what follows an
+    // open that is still asking the holder, the `want` a reader's screen hangs on, is not
+    // to find no session and be dropped.
+    const opening = frame.t === 'open' ? undefined : this.opening.get(frame.session)
+    if (opening) await opening.catch(() => undefined)
     const session = this.sessions.get(frame.session)
     switch (frame.t) {
       case 'open':
         if (!session) {
           // Nor a new shell for a watcher: only a program still running in its holder.
-          if (frame.watching && !(await this.holderOf(frame.session))?.alive) return
-          if (this.sessions.has(frame.session)) return
-          this.sessions.set(frame.session, this.session(frame.session, frame.cols, frame.rows))
+          if (frame.watching) await this.watcherOpens(frame.session, frame.cols, frame.rows)
+          else this.sessions.set(frame.session, this.session(frame.session, frame.cols, frame.rows))
         } else if (!session.alive && !frame.watching) {
           // Whoever may only watch does not start its shell again, which is `start`'s to
           // ask for. `Machine` keeps no word of an ended shell across its own restart.
@@ -222,6 +228,22 @@ export class Nibd {
   }
 
   /** A holder nobody opened since this `nibd` started, asked how it is and let go of. */
+  /** A watcher's open of a session this machine has not got: only a program still running
+   *  in its holder, which is a question to ask it, with the session's next frames behind. */
+  private async watcherOpens(id: string, cols: number, rows: number): Promise<void> {
+    const opens = async () => {
+      if (!(await this.holderOf(id))?.alive) return
+      if (!this.sessions.has(id)) this.sessions.set(id, this.session(id, cols, rows))
+    }
+    const opening = opens()
+    this.opening.set(id, opening)
+    try {
+      await opening
+    } finally {
+      if (this.opening.get(id) === opening) this.opening.delete(id)
+    }
+  }
+
   private async holderOf(id: string): Promise<SessionNow | null> {
     const held = new Held(socketOf(this.holds, id), { out: () => undefined, exit: () => undefined })
     const hello = await held.find()

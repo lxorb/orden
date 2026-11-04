@@ -6,6 +6,7 @@ import {
   deviceRowsOf,
   epochFrame,
   feedPageOf,
+  heldName,
   frame,
   type Framed,
   hubFrameOf,
@@ -184,6 +185,40 @@ describe('entry ids', () => {
     }
     const page = feedPageOf({ items: [gone], cursor: 1, more: false })
     expect(page?.items.map((one) => one.id)).toEqual(['../../x'])
+  })
+
+  test('a name no disk holds is read under one it can, and the page still reads', () => {
+    const item = (id: string, name: string, deleted = false) => ({
+      id,
+      kind: 'note',
+      parent: null,
+      name,
+      deleted,
+      seq: 1,
+      hash: '',
+      size: 0,
+      by: '',
+      at: 0,
+    })
+    const page = feedPageOf({
+      items: [item('a', `${'x'.repeat(300)}.md`), item('b', '..'), item('c', 'kept.md')],
+      cursor: 3,
+      more: false,
+    })
+    expect(page?.items.map((one) => one.id)).toEqual(['a', 'b', 'c'])
+    expect(page?.items[0]?.name).toBe(`${'x'.repeat(252)}.md`)
+    expect(page?.items[1]?.name).toBe('__')
+    expect(page?.cursor).toBe(3)
+
+    const gone = feedPageOf({ items: [item('a', '..', true)], cursor: 1, more: false })
+    expect(gone?.items[0]).toMatchObject({ id: 'a', name: '__', deleted: true })
+  })
+
+  test('a name that is one stays as it is', () => {
+    for (const name of ['Plan.md', 'x'.repeat(255), '...', 'a b']) expect(heldName(name)).toBe(name)
+    expect(heldName('')).toBe('_')
+    expect(heldName('.')).toBe('_')
+    expect(heldName('a/b\u0000c')).toBe('a_b_c')
   })
 })
 

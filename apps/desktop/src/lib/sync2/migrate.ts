@@ -97,7 +97,22 @@ export async function firstPass(
   // would be a delete sent to the account.
   const listed = world.list ? await world.list(space.row.root) : []
   if (listed === null || !alive()) return false
-  const everything = listed
+  // A note v1 knew that the listing does not show is gone only if the disk says so: a folder
+  // that would not list, or would not say what is in it, past the depth a listing goes, a
+  // link a listing leaves alone. One that reads is here. One nobody can look at waits, the
+  // pass with it: let through, its pairing with v1 is lost, and later it reads as a new note
+  // (or now, as a delete on every device).
+  const everything = [...listed]
+  const shown = new Set(listed.map((one) => space.key(one.path)))
+  for (const path of Object.keys(v1?.notes ?? {})) {
+    if (shown.has(space.key(path))) continue
+    if ((await world.disk.read(full(path))) !== null) {
+      everything.push({ path, dir: false })
+      shown.add(space.key(path))
+    } else if (await world.disk.exists(full(path))) {
+      return false
+    }
+  }
   const notes = new Set(everything.filter((one) => !one.dir).map((one) => space.key(one.path)))
   const listing = everything.filter((one) => {
     const holder = one.dir ? null : holderOf(one.path)

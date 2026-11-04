@@ -398,6 +398,9 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,899,500, for the bug hunt's two rounds and the
  *  above being in one build at last, on claude/hunt-round-1: nothing new, the two sums
  *  together. Measured 5,899,267.
+ *
+ *  The code raised on 2026-11-04, to 5,855,000, for the sync hunt's round three: a note the
+ *  disk refuses staying wanted, a space's trouble being that space's. Measured 5,854,964.
  */
 export const BUDGETS: Record<Part, number> = {
   code: 5_899_500,

@@ -213,16 +213,20 @@ async function made(engine: Engine, path: string, dir: boolean) {
 
 /** A space's folder read whole against its tree: what changed while Orden was not
  *  watching - closed, or the watcher having lost events. */
-async function scanned(how: Watching, root: string): Promise<void> {
+export async function scanned(how: Watching, root: string): Promise<void> {
   const engine = how.engine
   const space = [...engine.core.spaces.values()].find((one) => one.row.root === root)
   if (!space || !how.ready(space.id)) return
   const listed = await scanSpace(root)
   const seen = new Set<string>()
+  /** The folders the listing could not read into: nothing under them is known to be gone. */
+  const unread: string[] = []
 
   for (const one of listed) {
     const inside = relative(root, one.path, engine.core.world.foldsCase)
-    if (inside === null || !kept(engine, inside, one.dir)) continue
+    if (inside === null) continue
+    if (one.unlisted) unread.push(`${space.key(inside)}/`)
+    if (!kept(engine, inside, one.dir)) continue
     seen.add(space.key(inside))
     const entry = space.at(inside)
     if (!entry) {
@@ -239,6 +243,7 @@ async function scanned(how: Watching, root: string): Promise<void> {
   for (const entry of [...space.entries.values()]) {
     if (!entry.local_path || entry.deleted || seen.has(space.key(entry.local_path))) continue
     if (hidden(entry.local_path) || inForeignCopy(entry.local_path)) continue
+    if (unread.some((folder) => space.key(entry.local_path).startsWith(folder))) continue
     const full = engine.core.world.join(root, entry.local_path)
     if (how.own(full) || (await engine.core.world.disk.exists(full))) continue
     await engine.removed(full)

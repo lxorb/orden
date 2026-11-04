@@ -1104,7 +1104,11 @@ function holds(tail: string): boolean {
  *  two sums together. Measured 3,566,575, 387 modules.
  *
  *  Raised 2026-11-04, to 3,567,200, for a name field that leaves the focus alone once the
- *  reader has pressed something inside its first frame (select-all.ts). Measured 3,567,070. */
+ *  reader has pressed something inside its first frame (select-all.ts). Measured 3,567,070.
+ *
+ *  Raised on 2026-11-04, to 3,552,000, for the sync hunt's round three: v1 going past a space
+ *  that throws and telling of a note the disk refuses. Measured 3,551,945.
+ */
 const BUDGET = 3_567_200
 const MOST_FILES = 388
 

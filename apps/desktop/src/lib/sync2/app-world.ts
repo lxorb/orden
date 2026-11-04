@@ -16,7 +16,8 @@ import { evictedHere } from '../icloud-placeholder'
 import { onDisk } from '../on-disk'
 import { holderOf } from '../pages/held'
 import { scanSpace } from '../space-watch'
-import { invoke, isDesktop, joinPath, platform } from '../tauri'
+import { windowsPath } from './places'
+import { invoke, isDesktop, isNative, joinPath, platform } from '../tauri'
 import { classifier } from './classify'
 import { accountOver, remoteFiles } from './transport'
 import type { Disk, FileKind, World } from './world'
@@ -51,13 +52,21 @@ function parentOf(path: string): string {
  *  so a note deleted on another device was never deleted there. */
 const stamped = onDisk
 
+/** Whether something is at a path, for sync to read its going as a delete: nobody being able
+ *  to look says nothing is gone (`file_there` in the crate). Where the app itself was not
+ *  answered, the same. */
+const thereOrUnsure = (path: string): Promise<boolean> =>
+  isNative ? invoke<boolean>('file_there', { path }).catch(() => true) : onDisk(path)
+
 function diskOf(telling: Telling): Disk {
   return {
     read: (path) => invoke<string>('read_note', { path }).catch(() => null),
     async write(path, text) {
       const fresh = !(await stamped(path))
-      await invoke('create_folder', { path: parentOf(path) }).catch(() => undefined)
-      const write = () => invoke('write_note', { path, content: text })
+      await invoke('create_folder', { path: parentOf(path), arrived: true }).catch(() => undefined)
+      // `arrived`: the account's name, so one the crate makes no new note of still lands where
+      // this platform can hold it. Windows spells it otherwise first (`localName`).
+      const write = () => invoke('write_note', { path, content: text, arrived: true })
       await (telling.writing ? telling.writing(path, text, write) : write())
       links.noteSaved(path, text)
       telling.written(path, fresh)
@@ -70,7 +79,7 @@ function diskOf(telling: Telling): Disk {
     async move(from, to, kind) {
       telling.touching(from)
       telling.touching(to)
-      await invoke('create_folder', { path: parentOf(to) }).catch(() => undefined)
+      await invoke('create_folder', { path: parentOf(to), arrived: true }).catch(() => undefined)
       // A file the account holds as a page note's paper, `X.pages.pdf` beside
       // `X.pages`: a PDF another device turned into that note. The crate refuses a PDF
       // put where a page note takes it for its paper unless it is held there on
@@ -85,7 +94,13 @@ function diskOf(telling: Telling): Disk {
       await telling.holdingWrites(
         from,
         async () => {
-          await invoke('rename_note', { from, to, alone: true, ...(hold ? { hold } : {}) })
+          await invoke('rename_note', {
+            from,
+            to,
+            alone: true,
+            arrived: true,
+            ...(hold ? { hold } : {}),
+          })
           await telling.moved(from, to, kind)
         },
         () => Promise.reject(new Error(`${from} has a write that has not answered`)),
@@ -119,8 +134,8 @@ function diskOf(telling: Telling): Disk {
         })
       await telling.gone(path, kind)
     },
-    mkdir: (path) => invoke('create_folder', { path }).then(() => undefined),
-    exists: stamped,
+    mkdir: (path) => invoke('create_folder', { path, arrived: true }).then(() => undefined),
+    exists: thereOrUnsure,
     evicted: evictedHere,
   }
 }
@@ -129,13 +144,15 @@ function diskOf(telling: Telling): Disk {
 interface Listed {
   path: string
   is_dir: boolean
+  unlisted?: boolean
   children?: Listed[]
 }
 
 async function listed(root: string): Promise<{ path: string; dir: boolean }[] | null> {
-  const base = root.replace(/\\/g, '/').replace(/\/+$/, '')
+  const slashed = (path: string) => (windowsPath(root) ? path.replace(/\\/g, '/') : path)
+  const base = slashed(root).replace(/\/+$/, '')
   const inside = (path: string): string | null => {
-    const at = path.replace(/\\/g, '/')
+    const at = slashed(path)
     return at.startsWith(`${base}/`) ? at.slice(base.length + 1) : null
   }
   // On a desktop, everything in the folder - pictures and recordings with the notes -
@@ -165,7 +182,8 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[] | 
       if (child.is_dir) walk(child)
     }
   }
-  if (!tree) return null
+  // A space that would not list is no listing at all, not an empty space.
+  if (!tree || tree.unlisted) return null
   walk(tree)
   // The list leaves a dotted file out as the app's own; sync carries the space's own
   // inbox all the same (#1044), as the crate's scan does on a desktop.
@@ -208,7 +226,9 @@ export function appWorld(token: () => string | null, telling: Telling): World {
       async write(path, bytes) {
         const fresh = !(await stamped(path))
         telling.touching(path)
-        await invoke('create_folder', { path: parentOf(path) }).catch(() => undefined)
+        await invoke('create_folder', { path: parentOf(path), arrived: true }).catch(
+          () => undefined,
+        )
         await invoke('write_bytes', { path, base64: toBase64(bytes) })
         telling.written(path, fresh)
       },

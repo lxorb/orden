@@ -117,6 +117,8 @@ export class Core {
    *  ingest.ts. */
   readonly unsyncedKept = new Set<string>()
   readonly unsyncedTold = new Set<string>()
+  /** How many writes in a row an entry's file has refused; see `notWritten` in project.ts. */
+  readonly unwrittenFor = new Map<string, number>()
   /** Bumped when the engine stops, so work still in the air can tell it is too late. */
   life = 0
   private writing: Promise<unknown> = Promise.resolve()

@@ -186,7 +186,10 @@ export function moved(core: Core, space: SpaceState, from: string, to: string): 
   if (inForeignCopy(to) && !inForeignCopy(from)) return []
   const changes: Change[] = []
   const parent = folderFor(core, space, folderOf(to), changes)
-  const name = nameOf(to)
+  // Moved and not renamed keeps the account's name, which a name this platform spells its
+  // own way here is not: `CON` on Windows would become `_CON` on every device.
+  const had = space.shown().entries.get(entry.id)?.name
+  const name = had !== undefined && nameOf(from) === nameOf(to) ? had : nameOf(to)
 
   // Everything under it is where it is now, before the op is shown.
   for (const one of atOrUnder(space, from)) {

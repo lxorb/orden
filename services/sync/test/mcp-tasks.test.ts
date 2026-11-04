@@ -67,6 +67,16 @@ async function json(key: string, name: string, args: Record<string, unknown> = {
 const read = async (key: string, path: string) => tool(key, 'read_note', { space: 'Work', path })
 
 describe('the to-dos, with Orden closed', () => {
+  test('a limit is a whole number of tasks, one or more', async () => {
+    const key = await connector()
+    await tool(key, 'add_task', { space: 'Work', note: 'one.md', text: 'first' })
+    await tool(key, 'add_task', { space: 'Work', note: 'one.md', text: 'second' })
+    for (const limit of [-1, 0, 1.5, 'two']) {
+      expect(await tool(key, 'list_tasks', { limit })).toContain('limit is a whole number')
+    }
+    expect((await json(key, 'list_tasks', { limit: 1 })).tasks).toHaveLength(1)
+  })
+
   test('are listed with the tools', async () => {
     const response = await call<RpcView>(env, '/mcp', {
       token: await connector(),

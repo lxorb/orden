@@ -62,6 +62,12 @@ function localName(name: string, platform: World['platform']): string {
   return name
 }
 
+/** Whether a root is a Windows path, the one place `\\` is a separator. Anywhere else it is
+ *  a character of a name. */
+export function windowsPath(root: string): boolean {
+  return /^[a-zA-Z]:/.test(root) || root.includes('\\')
+}
+
 export class SpaceState {
   entries: Map<string, EntryRow>
   outbox: Outboxed[]

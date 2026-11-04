@@ -335,6 +335,11 @@ async function list(env: Env, token: TokenRow, args: Args, seen: Space[]): Promi
   const names = new Set(
     rows.filter((row) => row.kind === 'note').map((row) => row.file.basename.toLowerCase()),
   )
+  // A number of tasks, from a caller a schema does not bind: below one answered none with
+  // a total saying otherwise, and a fraction cut where nobody asked.
+  if (args.limit !== undefined && !(Number.isInteger(args.limit) && Number(args.limit) > 0)) {
+    throw new Said('limit is a whole number of tasks, one or more.')
+  }
   const answer = listTasks(
     rows,
     {
@@ -535,7 +540,10 @@ async function addRow(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
   const name = noteName(words(args, 'title') ?? 'Untitled')
   for (let counter = 1; counter < 100; counter++) {
     const file = counter === 1 ? `${name}.md` : `${name} ${counter}.md`
-    const path = folder ? `${folder}/${file}` : file
+    // A base's filter names the folder, and whoever can write a base can write that.
+    const asked = folder ? `${folder}/${file}` : file
+    const path = cleanPath(asked)
+    if (!path) throw new Said(`${asked} is not a note path.`)
     if ((await wordsAt(env, space, path)) !== null) continue
     let landed
     try {

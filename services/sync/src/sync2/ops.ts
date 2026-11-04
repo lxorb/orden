@@ -9,7 +9,14 @@
  *  an edit against, so it goes to Recently deleted exactly as it always has) - so the
  *  rows, the paths and every v2 device's feed stay one story whichever app wrote. */
 
-import { type CreateOp, isEntryId, type Op, type OpContext, type OpResult } from '@orden/sync-core'
+import {
+  type CreateOp,
+  isEntryId,
+  isName,
+  type Op,
+  type OpContext,
+  type OpResult,
+} from '@orden/sync-core'
 import { newId } from '../crypto'
 import type { Env } from '../types'
 import type { Reached } from '../spaces/space'
@@ -164,9 +171,13 @@ function foldersFor(tree: Tree, folders: readonly string[], context: OpContext):
   return parent
 }
 
+/** A path taken apart into its names. Whoever calls has held it to `cleanPath`; the feed
+ *  hands each name to every device of the space, so one that is not a name is an error
+ *  here rather than a row they all stop at. */
 function split(path: string): { folders: string[]; name: string } {
   const folders = path.split('/')
   const name = folders.pop() ?? path
+  if (![...folders, name].every(isName)) throw new Error(`not a place for a note: ${path}`)
   return { folders, name }
 }
 
