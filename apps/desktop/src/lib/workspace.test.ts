@@ -3400,11 +3400,27 @@ describe('reopening the tab that was closed last', () => {
     const first = workspace.tabs[0]
     if (!beside || !first) throw new Error('the split did not happen')
 
+    await workspace.open('/space/b.md')
     workspace.close(beside.id)
     await workspace.reopenClosed()
 
-    const back = workspace.tabs.find((one) => one.id !== first.id)
-    expect(back?.note).toBe(first.note)
+    const back = workspace.tabs.find((one) => one.id !== first.id && one.note === first.note)
+    expect(back?.paneId).toBe(beside.paneId)
+  })
+
+  test('and only shows it where its pane has gone and the strip left already holds it', async () => {
+    await workspace.open('/space/a.md')
+    workspace.split('row')
+
+    const beside = workspace.active
+    const first = workspace.tabs[0]
+    if (!beside || !first) throw new Error('the split did not happen')
+
+    workspace.close(beside.id)
+    await workspace.reopenClosed()
+
+    expect(workspace.tabs).toEqual([first])
+    expect(workspace.active).toBe(first)
   })
 })
 
