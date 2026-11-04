@@ -15,7 +15,7 @@ vi.mock('../shortcuts.svelte', () => ({
   shortcuts: { keyFor: () => null, platform: 'win' },
 }))
 vi.mock('../workspace.svelte', () => ({
-  workspace: { panes: { focusedId: 'pane' }, tabsIn: () => [] },
+  workspace: { panes: { focusedId: 'pane' }, activeTabId: null, tabs: [], tabsIn: () => [] },
 }))
 vi.mock('./letters.svelte', () => ({
   essentialLetters: { pathOf: (letter: string) => (letter === 'N' ? '/space/Notes.md' : null) },
@@ -49,6 +49,8 @@ function tile(letter: string, box = { left: 10, right: 40, top: 10, bottom: 40 }
 
 beforeEach(() => {
   up()
+  // A key between, so the last test's Alt and this one's are no Alt Alt.
+  key({ key: 'a', code: 'KeyA' })
   document.body.replaceChildren()
   opened.length = 0
 })
@@ -77,13 +79,13 @@ describe("an Essential's letter", () => {
     expect(numbers.worn).toHaveLength(1)
   })
 
-  test('no Essential wears is left alone, and ends the hold', () => {
+  test('no Essential wears is left alone, and the hold goes on (#1053)', () => {
     tile('N')
     key({ key: 'Alt', altKey: true })
     const pressed = key({ key: 'f', code: 'KeyF', altKey: true })
     expect(pressed.defaultPrevented).toBe(false)
     expect(opened).toEqual([])
-    expect(numbers.worn).toEqual([])
+    expect(numbers.worn).toHaveLength(1)
   })
 
   test("is the shell's in a terminal", () => {
@@ -95,5 +97,36 @@ describe("an Essential's letter", () => {
     const pressed = key({ key: 'n', code: 'KeyN', altKey: true }, field)
     expect(pressed.defaultPrevented).toBe(false)
     expect(opened).toEqual([])
+  })
+})
+
+/** #1053: up exactly while Alt is held, whatever else the hand does. */
+describe('Alt held', () => {
+  const pointer = (name: string, altKey: boolean) =>
+    dispatchEvent(new PointerEvent(name, { altKey, bubbles: true }))
+
+  test('stays through other keys and the pointer, and goes as Alt is let go of', () => {
+    tile('N')
+    key({ key: 'Alt', altKey: true })
+    key({ key: 'ArrowLeft', code: 'ArrowLeft', altKey: true })
+    pointer('pointerdown', true)
+    dispatchEvent(new WheelEvent('wheel', { altKey: true }))
+    expect(numbers.worn).toHaveLength(1)
+
+    up()
+    expect(numbers.worn).toEqual([])
+  })
+
+  test('goes at the first press or move that says Alt is up, a release nobody heard', () => {
+    tile('N')
+    key({ key: 'Alt', altKey: true })
+    pointer('pointermove', false)
+    expect(numbers.worn).toEqual([])
+  })
+
+  test('comes at the first move that says Alt is down, where its press was not heard', () => {
+    tile('N')
+    pointer('pointermove', true)
+    expect(numbers.worn).toHaveLength(1)
   })
 })
