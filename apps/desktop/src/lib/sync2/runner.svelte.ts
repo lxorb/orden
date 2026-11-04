@@ -215,6 +215,7 @@ class Runner {
         engine,
         ready: (id) => this.firsts.has(id),
         changed: () => this.nudge(),
+        moved: (from, to, kind) => this.telling.moved(from, to, kind),
       })
       this.watched = watched
       this.stops.push(() => {

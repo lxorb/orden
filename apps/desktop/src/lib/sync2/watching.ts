@@ -90,6 +90,11 @@ export interface Watching {
   ready(spaceId: string): boolean
   /** Something changed that a pass should send. */
   changed(): void
+  /** Another program moved or renamed a file or a folder the engine keeps, and the
+   *  engine has it there now: said to everything this device keeps by path - its tabs,
+   *  where each note was being read, the folders standing open - so they follow the
+   *  entry, as they follow a move made in Orden (#1068). */
+  moved?(from: string, to: string, kind: 'file' | 'folder'): Promise<void>
 }
 
 /** The watch, and the two things asked of it. */
@@ -166,6 +171,7 @@ async function changed(how: Watching, change: SpaceChange): Promise<void> {
     if (left && there && !engine.ownWork(change.from) && !engine.ownWork(change.path)) {
       if (entry) {
         await engine.moved(change.from, change.path)
+        await how.moved?.(change.from, change.path, change.dir ? 'folder' : 'file')
         return
       }
     }

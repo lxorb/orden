@@ -889,12 +889,21 @@ describe('the folder watcher', () => {
       heard.push(hear)
       return Promise.resolve()
     })
-    const watched = watchFolders({ engine, ready: () => true, changed: () => undefined })
+    const moves: string[] = []
+    const watched = watchFolders({
+      engine,
+      ready: () => true,
+      changed: () => undefined,
+      moved: (from, to, kind) => {
+        moves.push(`${kind} ${from} -> ${to}`)
+        return Promise.resolve()
+      },
+    })
     const say = async (...changes: SpaceChange[]) => {
       for (const hear of heard) hear({ root: ROOT, changes, scan: false, gone: false })
       await settled()
     }
-    return { say, stop: () => watched.stop() }
+    return { say, moves, stop: () => watched.stop() }
   }
   const removed = (path: string): SpaceChange => ({ kind: 'removed', path, dir: false, id: null })
   const created = (path: string): SpaceChange => ({
@@ -973,6 +982,18 @@ describe('the folder watcher', () => {
       ['n2', 'Ideas.md'],
     ])
     expect(here.engine.entryAt(`${ROOT}/Goals.md`)?.id).toBe(PLAN)
+  })
+
+  test('says a rename another program made to everything kept by path (#1068)', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const here = await device(account, 'd0')
+    const { say, moves, stop } = listening(here.engine)
+    await here.disk.move(`${ROOT}/Plan.md`, `${ROOT}/Goals.md`)
+    await say({ ...created(`${ROOT}/Goals.md`), kind: 'renamed', from: `${ROOT}/Plan.md` })
+    stop()
+
+    expect(here.engine.entryAt(`${ROOT}/Goals.md`)?.id).toBe(PLAN)
+    expect(moves).toEqual([`file ${ROOT}/Plan.md -> ${ROOT}/Goals.md`])
   })
 
   test('puts a rename back where the disk would not make it (#1068)', async () => {
