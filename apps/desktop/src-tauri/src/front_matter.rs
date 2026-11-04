@@ -516,7 +516,14 @@ pub fn list(body: &str, block: &Block, key: &str) -> Vec<String> {
         if let Some(close) = value_closes_at(body, from + past, block.close) {
             let joined: Vec<&str> = body[from + past..close]
                 .lines()
-                .map(|one| one.split(" #").next().unwrap_or_default().trim())
+                .map(|one| {
+                    let line = one.trim();
+                    if line.starts_with('#') {
+                        ""
+                    } else {
+                        line.split(" #").next().unwrap_or_default().trim()
+                    }
+                })
                 .collect();
             return flow_items(&joined.join(" "));
         }
@@ -770,7 +777,7 @@ mod tests {
     #[test]
     fn reads_a_list_written_across_lines() {
         assert_eq!(
-            aliases("---\naliases: [\n  One, # first\n  \"Two\",\n]\nz: 1\n---\n"),
+            aliases("---\naliases: [\n  One, # first\n  # a note\n  \"Two\",\n]\nz: 1\n---\n"),
             vec!["One", "Two"]
         );
         assert_eq!(

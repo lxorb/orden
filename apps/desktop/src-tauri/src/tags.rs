@@ -63,7 +63,7 @@ fn read_front(body: &str, front: usize, close: usize, found: &mut Vec<String>) {
             let value = at + line.len() - rest.len();
             if let Some(closes) = front_matter::value_closes_at(body, value, close) {
                 for one in body[value..closes].lines() {
-                    read_values(one.split("# ").next().unwrap_or_default(), found);
+                    read_values(without_comment(one), found);
                 }
                 at = closes + 1;
                 continue;
@@ -78,6 +78,17 @@ fn read_front(body: &str, front: usize, close: usize, found: &mut Vec<String>) {
         }
         at = end + 1;
     }
+}
+
+/// A line of a flow list up to a `# ` that opens at its start or after a blank.
+fn without_comment(line: &str) -> &str {
+    let opens = line.match_indices("# ").map(|(at, _)| at).find(|&at| {
+        line[..at]
+            .chars()
+            .next_back()
+            .is_none_or(char::is_whitespace)
+    });
+    opens.map_or(line, |at| &line[..at])
 }
 
 /// What follows `tags:` or `tag:` at the left margin, or nothing when the line
@@ -516,6 +527,7 @@ mod tests {
         assert_eq!(tags_in(note), vec!["#work", "#b"]);
         // Nothing closes this one, so it is the one line's.
         assert_eq!(tags_in("---\ntags: [a\nz: b\n---\n"), vec!["#a"]);
+        assert_eq!(tags_in("---\ntags: [\n  a# b,\n]\n---\n"), vec!["#a", "#b"]);
         assert_eq!(tags_in("---\ntags: [a, b]\nz: 1\n---\n"), vec!["#a", "#b"]);
     }
 
