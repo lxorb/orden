@@ -2708,6 +2708,13 @@ export const tr: Dictionary = {
   'Valid from': 'Geçerlilik başlangıcı',
   'Valid until': 'Geçerlilik bitişi',
   'SHA-256 fingerprint': 'SHA-256 parmak izi',
+  Intermediate: 'Ara',
+  Root: 'Kök',
+  'Certificate chain': 'Sertifika zinciri',
+  'Serial number': 'Seri numarası',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'Siteden ayrıca okundu: tarayıcı motoru bu sayfanın hangi sertifikayla geldiğini söylemiyor.',
+  'The certificate could not be read.': 'Sertifika okunamadı.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'Web sayfalarının sitelerin adreslerini nasıl bulduğu. HTTPS üzerinden, sizinle sağlayıcı arasındaki hiç kimse sorguları okuyamaz ya da değiştiremez.',

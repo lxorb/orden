@@ -2665,6 +2665,13 @@ export const ja: Dictionary = {
   'Valid from': '有効期間の開始',
   'Valid until': '有効期間の終了',
   'SHA-256 fingerprint': 'SHA-256 フィンガープリント',
+  Intermediate: '中間',
+  Root: 'ルート',
+  'Certificate chain': '証明書チェーン',
+  'Serial number': 'シリアル番号',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'サイトから別途読み取りました: このページがどの証明書で届いたかをブラウザーエンジンは示しません。',
+  'The certificate could not be read.': '証明書を読み取れませんでした。',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'ウェブページがサイトのアドレスを調べる方法です。HTTPS 経由なら、あなたとプロバイダーの間にいる誰も問い合わせを読んだり書き換えたりできません。',

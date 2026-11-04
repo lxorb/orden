@@ -2723,6 +2723,13 @@ export const kn: Dictionary = {
   'Valid from': 'ಇಂದಿನಿಂದ ಮಾನ್ಯ',
   'Valid until': 'ಇಲ್ಲಿಯವರೆಗೆ ಮಾನ್ಯ',
   'SHA-256 fingerprint': 'SHA-256 ಫಿಂಗರ್‌ಪ್ರಿಂಟ್',
+  Intermediate: 'ಮಧ್ಯಂತರ',
+  Root: 'ರೂಟ್',
+  'Certificate chain': 'ಪ್ರಮಾಣಪತ್ರ ಸರಪಳಿ',
+  'Serial number': 'ಸೀರಿಯಲ್ ಸಂಖ್ಯೆ',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'ಸೈಟ್‌ನಿಂದ ಪ್ರತ್ಯೇಕವಾಗಿ ಓದಲಾಗಿದೆ: ಈ ಪುಟ ಯಾವ ಪ್ರಮಾಣಪತ್ರದೊಂದಿಗೆ ಬಂದಿತು ಎಂದು ಬ್ರೌಸರ್ ಎಂಜಿನ್ ಹೇಳುವುದಿಲ್ಲ.',
+  'The certificate could not be read.': 'ಪ್ರಮಾಣಪತ್ರವನ್ನು ಓದಲಾಗಲಿಲ್ಲ.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'ವೆಬ್ ಪುಟಗಳು ಸೈಟ್‌ಗಳ ವಿಳಾಸವನ್ನು ಹೇಗೆ ಹುಡುಕುತ್ತವೆ. HTTPS ಮೂಲಕ ನಿಮ್ಮ ಮತ್ತು ಪೂರೈಕೆದಾರರ ನಡುವೆ ಯಾರೂ ಹುಡುಕಾಟಗಳನ್ನು ಓದಲು ಅಥವಾ ಬದಲಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.',

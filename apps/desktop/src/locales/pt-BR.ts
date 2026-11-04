@@ -2743,6 +2743,13 @@ export const ptBR: Dictionary = {
   'Valid from': 'Válido de',
   'Valid until': 'Válido até',
   'SHA-256 fingerprint': 'Impressão digital SHA-256',
+  Intermediate: 'Intermediário',
+  Root: 'Raiz',
+  'Certificate chain': 'Cadeia de certificados',
+  'Serial number': 'Número de série',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'Lido do site separadamente: o mecanismo do navegador não diz com qual certificado esta página chegou.',
+  'The certificate could not be read.': 'Não foi possível ler o certificado.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'Como as páginas da web procuram os endereços dos sites. Por HTTPS, ninguém entre você e o provedor consegue ler ou alterar as consultas.',

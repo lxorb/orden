@@ -2687,6 +2687,13 @@ export const ms: Dictionary = {
   'Valid from': 'Sah dari',
   'Valid until': 'Sah hingga',
   'SHA-256 fingerprint': 'Cap jari SHA-256',
+  Intermediate: 'Perantara',
+  Root: 'Akar',
+  'Certificate chain': 'Rantaian sijil',
+  'Serial number': 'Nombor siri',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'Dibaca berasingan daripada laman: enjin pelayar tidak menyatakan sijil mana yang dibawa halaman ini.',
+  'The certificate could not be read.': 'Sijil tidak dapat dibaca.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'Cara halaman web mencari alamat laman. Melalui HTTPS, tiada sesiapa di antara anda dan penyedia boleh membaca atau mengubah carian itu.',

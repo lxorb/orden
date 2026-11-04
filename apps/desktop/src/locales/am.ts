@@ -2645,6 +2645,13 @@ export const am: Dictionary = {
   'Valid from': 'የሚሠራው ከ',
   'Valid until': 'የሚሠራው እስከ',
   'SHA-256 fingerprint': 'የSHA-256 አሻራ',
+  Intermediate: 'መካከለኛ',
+  Root: 'ሥር',
+  'Certificate chain': 'የምስክር ወረቀት ሰንሰለት',
+  'Serial number': 'መለያ ቁጥር',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'ከጣቢያው ለብቻው የተነበበ፦ የአሳሹ ሞተር ይህ ገጽ በየትኛው የምስክር ወረቀት እንደመጣ አይናገርም።',
+  'The certificate could not be read.': 'የምስክር ወረቀቱ ሊነበብ አልቻለም።',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'ድረ-ገጾች የጣቢያዎችን አድራሻ እንዴት እንደሚፈልጉ። በHTTPS ሲሆን በእርስዎና በአቅራቢው መካከል ያለ ማንም ፍለጋዎቹን ማንበብም ሆነ መቀየር አይችልም።',

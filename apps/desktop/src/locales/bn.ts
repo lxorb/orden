@@ -2688,6 +2688,13 @@ export const bn: Dictionary = {
   'Valid from': 'বৈধ শুরু',
   'Valid until': 'বৈধ শেষ',
   'SHA-256 fingerprint': 'SHA-256 ফিঙ্গারপ্রিন্ট',
+  Intermediate: 'মধ্যবর্তী',
+  Root: 'রুট',
+  'Certificate chain': 'সার্টিফিকেট চেইন',
+  'Serial number': 'সিরিয়াল নম্বর',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'সাইট থেকে আলাদাভাবে পড়া হয়েছে: ব্রাউজার ইঞ্জিন বলে না এই পেজটি কোন সার্টিফিকেট নিয়ে এসেছে।',
+  'The certificate could not be read.': 'সার্টিফিকেটটি পড়া যায়নি।',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'ওয়েব পেজ কীভাবে সাইটের ঠিকানা খোঁজে। HTTPS-এ আপনার আর প্রদানকারীর মাঝে কেউ খোঁজগুলো পড়তে বা বদলাতে পারে না।',

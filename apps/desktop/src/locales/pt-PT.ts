@@ -2757,6 +2757,13 @@ export const ptPT: Dictionary = {
   'Valid from': 'Válido desde',
   'Valid until': 'Válido até',
   'SHA-256 fingerprint': 'Impressão digital SHA-256',
+  Intermediate: 'Intermédio',
+  Root: 'Raiz',
+  'Certificate chain': 'Cadeia de certificados',
+  'Serial number': 'Número de série',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'Lido do site separadamente: o motor do navegador não diz com que certificado esta página chegou.',
+  'The certificate could not be read.': 'Não foi possível ler o certificado.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'Como as páginas web procuram os endereços dos sites. Por HTTPS, ninguém entre si e o fornecedor consegue ler ou alterar as consultas.',

@@ -2747,6 +2747,13 @@ export const fil: Dictionary = {
   'Valid from': 'Bisa mula',
   'Valid until': 'Bisa hanggang',
   'SHA-256 fingerprint': 'SHA-256 na fingerprint',
+  Intermediate: 'Intermediate',
+  Root: 'Root',
+  'Certificate chain': 'Chain ng certificate',
+  'Serial number': 'Serial number',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'Hiwalay na binasa mula sa site: hindi sinasabi ng browser engine kung aling certificate ang dala ng page na ito.',
+  'The certificate could not be read.': 'Hindi mabasa ang certificate.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'Kung paano hinahanap ng mga web page ang address ng mga site. Sa HTTPS, walang sinuman sa pagitan mo at ng provider ang makakabasa o makakapagbago ng mga paghahanap.',

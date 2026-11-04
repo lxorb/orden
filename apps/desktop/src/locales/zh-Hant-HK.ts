@@ -2612,6 +2612,13 @@ export const zhHantHK: Dictionary = {
   'Valid from': '有效期由',
   'Valid until': '有效期至',
   'SHA-256 fingerprint': 'SHA-256 指紋',
+  Intermediate: '中繼',
+  Root: '根',
+  'Certificate chain': '證書鏈',
+  'Serial number': '序號',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    '另行從網站讀取：瀏覽器引擎未說明此頁面使用的是哪張證書。',
+  'The certificate could not be read.': '無法讀取證書。',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     '網頁查找網站地址的方式。經 HTTPS 時，你與供應商之間的任何人都無法讀取或篡改查詢。',

@@ -2731,6 +2731,13 @@ export const ha: Dictionary = {
   'Valid from': 'Yana aiki daga',
   'Valid until': 'Yana aiki har zuwa',
   'SHA-256 fingerprint': 'Hoton yatsa na SHA-256',
+  Intermediate: 'Na tsakiya',
+  Root: 'Tushe',
+  'Certificate chain': 'Sarkar takardar shaida',
+  'Serial number': 'Lambar serial',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'An karanta daga shafin daban: injin burauza bai faɗi da wace takardar shaida wannan shafi ya zo ba.',
+  'The certificate could not be read.': 'Ba a iya karanta takardar shaidar ba.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'Yadda shafukan yanar gizo ke neman adiresoshin shafuka. Ta HTTPS, babu wanda ke tsakaninka da mai bayarwa da zai iya karanta ko canza binciken.',

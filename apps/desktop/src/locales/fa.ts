@@ -2697,6 +2697,13 @@ export const fa: Dictionary = {
   'Valid from': 'معتبر از',
   'Valid until': 'معتبر تا',
   'SHA-256 fingerprint': 'اثر انگشت SHA-256',
+  Intermediate: 'میانی',
+  Root: 'ریشه',
+  'Certificate chain': 'زنجیرهٔ گواهی',
+  'Serial number': 'شمارهٔ سریال',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'جداگانه از سایت خوانده شد: موتور مرورگر نمی‌گوید این صفحه با کدام گواهی آمده است.',
+  'The certificate could not be read.': 'گواهی خوانده نشد.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'اینکه صفحه‌های وب نشانی سایت‌ها را چگونه پیدا می‌کنند. با HTTPS هیچ‌کس میان شما و ارائه‌دهنده نمی‌تواند جست‌وجوها را بخواند یا تغییر دهد.',

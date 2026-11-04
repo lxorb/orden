@@ -2691,6 +2691,13 @@ export const ps: Dictionary = {
   'Valid from': 'د اعتبار پیل',
   'Valid until': 'د اعتبار پای',
   'SHA-256 fingerprint': 'د SHA-256 د ګوتې نښه',
+  Intermediate: 'منځنی',
+  Root: 'ریښه',
+  'Certificate chain': 'د سند لړۍ',
+  'Serial number': 'سریال شمېره',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'له سایټ څخه په جلا ډول ولوستل شو: د براوزر انجن نه وايي چې دا پاڼه له کوم سند سره راغلې ده.',
+  'The certificate could not be read.': 'سند ونه لوستل شو.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'ویب پاڼې د سایټونو پتې څنګه لټوي. د HTTPS له لارې ستاسو او برابروونکي ترمنځ هېڅوک لټونونه نشي لوستلی یا بدلولی.',

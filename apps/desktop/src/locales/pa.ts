@@ -2700,6 +2700,13 @@ export const pa: Dictionary = {
   'Valid from': 'ਤੋਂ ਵੈਧ',
   'Valid until': 'ਤੱਕ ਵੈਧ',
   'SHA-256 fingerprint': 'SHA-256 ਫਿੰਗਰਪ੍ਰਿੰਟ',
+  Intermediate: 'ਵਿਚਕਾਰਲਾ',
+  Root: 'ਰੂਟ',
+  'Certificate chain': 'ਸਰਟੀਫਿਕੇਟ ਲੜੀ',
+  'Serial number': 'ਸੀਰੀਅਲ ਨੰਬਰ',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'ਸਾਈਟ ਤੋਂ ਵੱਖਰੇ ਤੌਰ ਤੇ ਪੜ੍ਹਿਆ: ਬ੍ਰਾਊਜ਼ਰ ਇੰਜਣ ਨਹੀਂ ਦੱਸਦਾ ਕਿ ਇਹ ਪੰਨਾ ਕਿਸ ਸਰਟੀਫਿਕੇਟ ਨਾਲ ਆਇਆ।',
+  'The certificate could not be read.': 'ਸਰਟੀਫਿਕੇਟ ਪੜ੍ਹਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'ਵੈੱਬ ਪੰਨੇ ਸਾਈਟਾਂ ਦੇ ਪਤੇ ਕਿਵੇਂ ਲੱਭਦੇ ਹਨ। HTTPS ਰਾਹੀਂ ਤੁਹਾਡੇ ਅਤੇ ਪ੍ਰਦਾਤਾ ਵਿਚਕਾਰ ਕੋਈ ਵੀ ਖੋਜਾਂ ਨੂੰ ਪੜ੍ਹ ਜਾਂ ਬਦਲ ਨਹੀਂ ਸਕਦਾ।',

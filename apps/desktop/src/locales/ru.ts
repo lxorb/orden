@@ -2786,6 +2786,13 @@ export const ru: Dictionary = {
   'Valid from': 'Действителен с',
   'Valid until': 'Действителен до',
   'SHA-256 fingerprint': 'Отпечаток SHA-256',
+  Intermediate: 'Промежуточный',
+  Root: 'Корневой',
+  'Certificate chain': 'Цепочка сертификатов',
+  'Serial number': 'Серийный номер',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'Прочитано с сайта отдельно: движок браузера не сообщает, с каким сертификатом пришла эта страница.',
+  'The certificate could not be read.': 'Не удалось прочитать сертификат.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'Как веб-страницы узнают адреса сайтов. Через HTTPS никто между вами и провайдером не может прочитать или изменить запросы.',

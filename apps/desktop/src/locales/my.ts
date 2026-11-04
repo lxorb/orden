@@ -2678,6 +2678,13 @@ export const my: Dictionary = {
   'Valid from': 'စတင်အကျုံးဝင်သည့်နေ့',
   'Valid until': 'ကုန်ဆုံးသည့်နေ့',
   'SHA-256 fingerprint': 'SHA-256 လက်ဗွေ',
+  Intermediate: 'အလယ်အလတ်',
+  Root: 'အမြစ်',
+  'Certificate chain': 'လက်မှတ် ကွင်းဆက်',
+  'Serial number': 'အမှတ်စဉ်',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'ဆိုက်မှ သီးခြား ဖတ်ထားသည်- ဤစာမျက်နှာသည် မည်သည့်လက်မှတ်ဖြင့် ရောက်လာသည်ကို ဘရောက်ဇာ အင်ဂျင်က မပြောပါ။',
+  'The certificate could not be read.': 'လက်မှတ်ကို ဖတ်၍ မရပါ။',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'ဝဘ်စာမျက်နှာများက ဆိုက်လိပ်စာများကို ရှာပုံ။ HTTPS ဖြင့်ဆိုလျှင် သင်နှင့် ပံ့ပိုးသူကြားရှိ မည်သူမျှ ရှာဖွေမှုများကို မဖတ်နိုင်၊ မပြောင်းနိုင်ပါ။',

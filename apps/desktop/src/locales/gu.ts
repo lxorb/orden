@@ -2678,6 +2678,13 @@ export const gu: Dictionary = {
   'Valid from': 'માન્ય થી',
   'Valid until': 'માન્ય સુધી',
   'SHA-256 fingerprint': 'SHA-256 ફિંગરપ્રિન્ટ',
+  Intermediate: 'મધ્યવર્તી',
+  Root: 'રૂટ',
+  'Certificate chain': 'પ્રમાણપત્ર શૃંખલા',
+  'Serial number': 'સીરીયલ નંબર',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'સાઇટ પરથી અલગથી વાંચ્યું: બ્રાઉઝર એન્જિન કહેતું નથી કે આ પેજ કયા પ્રમાણપત્ર સાથે આવ્યું.',
+  'The certificate could not be read.': 'પ્રમાણપત્ર વાંચી શકાયું નહીં.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'વેબ પેજ સાઇટના સરનામાં કેવી રીતે શોધે છે. HTTPS પર તમારી અને પ્રદાતા વચ્ચે કોઈ શોધ વાંચી કે બદલી શકતું નથી.',

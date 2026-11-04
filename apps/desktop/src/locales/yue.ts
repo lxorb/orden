@@ -2606,6 +2606,13 @@ export const yue: Dictionary = {
   'Valid from': '有效期由',
   'Valid until': '有效期至',
   'SHA-256 fingerprint': 'SHA-256 指紋',
+  Intermediate: '中繼',
+  Root: '根',
+  'Certificate chain': '證書鏈',
+  'Serial number': '序號',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    '另外由網站讀取：瀏覽器引擎冇講呢個網頁係用邊張證書嚟嘅。',
+  'The certificate could not be read.': '讀唔到證書。',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     '網頁點樣搵網站嘅地址。經 HTTPS 嘅話，你同供應商之間冇人可以睇到或者改到查詢。',

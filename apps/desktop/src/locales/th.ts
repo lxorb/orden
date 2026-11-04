@@ -2636,6 +2636,13 @@ export const th: Dictionary = {
   'Valid from': 'ใช้ได้ตั้งแต่',
   'Valid until': 'ใช้ได้ถึง',
   'SHA-256 fingerprint': 'ลายนิ้วมือ SHA-256',
+  Intermediate: 'ระดับกลาง',
+  Root: 'รูท',
+  'Certificate chain': 'สายใบรับรอง',
+  'Serial number': 'หมายเลขซีเรียล',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'อ่านจากไซต์แยกต่างหาก: เอนจินเบราว์เซอร์ไม่ได้บอกว่าหน้านี้มาพร้อมใบรับรองใด',
+  'The certificate could not be read.': 'อ่านใบรับรองไม่ได้',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'วิธีที่หน้าเว็บค้นหาที่อยู่ของเว็บไซต์ ผ่าน HTTPS ไม่มีใครที่อยู่ระหว่างคุณกับผู้ให้บริการอ่านหรือเปลี่ยนการค้นหาได้',

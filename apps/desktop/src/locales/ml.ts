@@ -2730,6 +2730,13 @@ export const ml: Dictionary = {
   'Valid from': 'സാധുത ആരംഭം',
   'Valid until': 'സാധുത അവസാനം',
   'SHA-256 fingerprint': 'SHA-256 ഫിംഗർപ്രിന്റ്',
+  Intermediate: 'ഇടനില',
+  Root: 'റൂട്ട്',
+  'Certificate chain': 'സർട്ടിഫിക്കറ്റ് ശൃംഖല',
+  'Serial number': 'സീരിയൽ നമ്പർ',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'സൈറ്റിൽ നിന്ന് വേറിട്ട് വായിച്ചു: ഈ പേജ് ഏത് സർട്ടിഫിക്കറ്റുമായാണ് വന്നതെന്ന് ബ്രൗസർ എഞ്ചിൻ പറയുന്നില്ല.',
+  'The certificate could not be read.': 'സർട്ടിഫിക്കറ്റ് വായിക്കാനായില്ല.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'വെബ് പേജുകൾ സൈറ്റുകളുടെ വിലാസം എങ്ങനെ കണ്ടെത്തുന്നു. HTTPS വഴിയാകുമ്പോൾ നിങ്ങൾക്കും ദാതാവിനും ഇടയിലുള്ള ആർക്കും തിരച്ചിലുകൾ വായിക്കാനോ മാറ്റാനോ കഴിയില്ല.',

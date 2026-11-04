@@ -2676,6 +2676,13 @@ export const jv: Dictionary = {
   'Valid from': 'Laku wiwit',
   'Valid until': 'Laku nganti',
   'SHA-256 fingerprint': 'Sidik driji SHA-256',
+  Intermediate: 'Perantara',
+  Root: 'Oyod',
+  'Certificate chain': 'Rantai sertifikat',
+  'Serial number': 'Nomer seri',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'Diwaca kapisah saka situs: mesin browser ora ngandhani sertifikat endi sing digawa kaca iki.',
+  'The certificate could not be read.': 'Sertifikat ora bisa diwaca.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'Carane kaca web nggoleki alamat situs. Liwat HTTPS, ora ana sing ana ing antarane sampeyan lan panyedhiya sing bisa maca utawa ngowahi panelusuran.',

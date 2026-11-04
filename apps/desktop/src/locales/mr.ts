@@ -2693,6 +2693,13 @@ export const mr: Dictionary = {
   'Valid from': 'पासून वैध',
   'Valid until': 'पर्यंत वैध',
   'SHA-256 fingerprint': 'SHA-256 फिंगरप्रिंट',
+  Intermediate: 'मध्यवर्ती',
+  Root: 'रूट',
+  'Certificate chain': 'प्रमाणपत्र साखळी',
+  'Serial number': 'अनुक्रमांक',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'साइटवरून स्वतंत्रपणे वाचले: हे पान कोणत्या प्रमाणपत्रासह आले ते ब्राउझर इंजिन सांगत नाही.',
+  'The certificate could not be read.': 'प्रमाणपत्र वाचता आले नाही.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'वेब पेज साइटचे पत्ते कसे शोधतात. HTTPS वरून तुमच्या आणि प्रदात्याच्या मध्ये कोणीही शोध वाचू किंवा बदलू शकत नाही.',

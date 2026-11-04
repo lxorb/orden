@@ -2706,6 +2706,13 @@ export const te: Dictionary = {
   'Valid from': 'నుండి చెల్లుతుంది',
   'Valid until': 'వరకు చెల్లుతుంది',
   'SHA-256 fingerprint': 'SHA-256 వేలిముద్ర',
+  Intermediate: 'మధ్యస్థ',
+  Root: 'రూట్',
+  'Certificate chain': 'సర్టిఫికెట్ గొలుసు',
+  'Serial number': 'సీరియల్ నంబర్',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'సైట్ నుండి విడిగా చదవబడింది: ఈ పేజీ ఏ సర్టిఫికెట్‌తో వచ్చిందో బ్రౌజర్ ఇంజిన్ చెప్పదు.',
+  'The certificate could not be read.': 'సర్టిఫికెట్‌ను చదవలేకపోయాం.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'వెబ్ పేజీలు సైట్ల చిరునామాలను ఎలా వెతుకుతాయి. HTTPS ద్వారా మీకూ ప్రొవైడర్‌కూ మధ్య ఎవరూ శోధనలను చదవలేరు, మార్చలేరు.',

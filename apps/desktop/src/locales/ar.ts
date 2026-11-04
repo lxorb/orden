@@ -2804,6 +2804,13 @@ export const ar: Dictionary = {
   'Valid from': 'صالحة من',
   'Valid until': 'صالحة حتى',
   'SHA-256 fingerprint': 'بصمة SHA-256',
+  Intermediate: 'وسيطة',
+  Root: 'الجذر',
+  'Certificate chain': 'سلسلة الشهادات',
+  'Serial number': 'الرقم التسلسلي',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'قُرئت من الموقع على حدة: محرك المتصفح لا يذكر الشهادة التي وصلت بها هذه الصفحة.',
+  'The certificate could not be read.': 'تعذّرت قراءة الشهادة.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'كيف تبحث صفحات الويب عن عناوين المواقع. عبر HTTPS لا يستطيع أحد بينك وبين المزوّد قراءة عمليات البحث أو تغييرها.',

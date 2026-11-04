@@ -2749,6 +2749,13 @@ export const de: Dictionary = {
   'Valid from': 'Gültig ab',
   'Valid until': 'Gültig bis',
   'SHA-256 fingerprint': 'SHA-256-Fingerabdruck',
+  Intermediate: 'Zwischenzertifikat',
+  Root: 'Stammzertifikat',
+  'Certificate chain': 'Zertifikatskette',
+  'Serial number': 'Seriennummer',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'Separat von der Website gelesen: Die Browser-Engine sagt nicht, mit welchem Zertifikat diese Seite kam.',
+  'The certificate could not be read.': 'Das Zertifikat konnte nicht gelesen werden.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'Wie Webseiten die Adressen von Websites nachschlagen. Über HTTPS kann niemand zwischen dir und dem Anbieter die Anfragen lesen oder verändern.',

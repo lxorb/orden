@@ -2690,6 +2690,13 @@ export const hi: Dictionary = {
   'Valid from': 'इस तारीख से मान्य',
   'Valid until': 'इस तारीख तक मान्य',
   'SHA-256 fingerprint': 'SHA-256 फ़िंगरप्रिंट',
+  Intermediate: 'मध्यवर्ती',
+  Root: 'रूट',
+  'Certificate chain': 'प्रमाणपत्र शृंखला',
+  'Serial number': 'सीरियल नंबर',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'साइट से अलग से पढ़ा गया: ब्राउज़र इंजन यह नहीं बताता कि यह पेज किस प्रमाणपत्र के साथ आया।',
+  'The certificate could not be read.': 'प्रमाणपत्र पढ़ा नहीं जा सका।',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'वेब पेज साइटों के पते कैसे ढूँढते हैं। HTTPS पर आपके और प्रदाता के बीच कोई भी इन खोजों को पढ़ या बदल नहीं सकता।',

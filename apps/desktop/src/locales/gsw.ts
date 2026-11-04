@@ -2712,6 +2712,13 @@ export const gsw: Dictionary = {
   'Valid from': 'Gültig ab',
   'Valid until': 'Gültig bis',
   'SHA-256 fingerprint': 'SHA-256-Fingerabdruck',
+  Intermediate: 'Zwüschezertifikat',
+  Root: 'Stammzertifikat',
+  'Certificate chain': 'Zertifikatschette',
+  'Serial number': 'Seriennummere',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'Separat vo de Websiite gläse: D Browser-Engine seit nöd, mit welem Zertifikat die Siite cho isch.',
+  'The certificate could not be read.': 'S Zertifikat het nöd chöne gläse werde.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'Wie Websiite d Adrässe vo Siite nachluegt. Über HTTPS cha niemer zwüsche dir und em Aabieter d Aafroge läse oder ändere.',

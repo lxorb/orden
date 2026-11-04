@@ -2731,6 +2731,13 @@ export const sw: Dictionary = {
   'Valid from': 'Halali kuanzia',
   'Valid until': 'Halali hadi',
   'SHA-256 fingerprint': 'Alama ya kidole ya SHA-256',
+  Intermediate: 'Cha kati',
+  Root: 'Mzizi',
+  'Certificate chain': 'Mnyororo wa vyeti',
+  'Serial number': 'Nambari ya mfululizo',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'Imesomwa kutoka kwa tovuti kando: injini ya kivinjari haisemi ukurasa huu ulikuja na cheti kipi.',
+  'The certificate could not be read.': 'Cheti hakikuweza kusomwa.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'Jinsi kurasa za wavuti zinavyotafuta anwani za tovuti. Kupitia HTTPS, hakuna aliye kati yako na mtoa huduma anayeweza kusoma au kubadilisha utafutaji.',

@@ -2739,6 +2739,13 @@ export const ta: Dictionary = {
   'Valid from': 'செல்லுபடி தொடக்கம்',
   'Valid until': 'செல்லுபடி முடிவு',
   'SHA-256 fingerprint': 'SHA-256 கைரேகை',
+  Intermediate: 'இடைநிலை',
+  Root: 'ரூட்',
+  'Certificate chain': 'சான்றிதழ் சங்கிலி',
+  'Serial number': 'வரிசை எண்',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'தளத்திலிருந்து தனியாகப் படிக்கப்பட்டது: இந்தப் பக்கம் எந்தச் சான்றிதழுடன் வந்தது என்பதை உலாவி இயந்திரம் சொல்வதில்லை.',
+  'The certificate could not be read.': 'சான்றிதழைப் படிக்க முடியவில்லை.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'இணையப் பக்கங்கள் தளங்களின் முகவரியை எப்படித் தேடுகின்றன. HTTPS வழியாக உங்களுக்கும் வழங்குநருக்கும் இடையில் யாரும் தேடல்களைப் படிக்கவோ மாற்றவோ முடியாது.',

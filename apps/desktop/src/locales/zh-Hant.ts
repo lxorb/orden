@@ -2613,6 +2613,13 @@ export const zhHant: Dictionary = {
   'Valid from': '有效期間起始',
   'Valid until': '有效期間截止',
   'SHA-256 fingerprint': 'SHA-256 指紋',
+  Intermediate: '中繼',
+  Root: '根',
+  'Certificate chain': '憑證鏈',
+  'Serial number': '序號',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    '另行從網站讀取：瀏覽器引擎未說明此頁面使用的是哪個憑證。',
+  'The certificate could not be read.': '無法讀取憑證。',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     '網頁查詢網站位址的方式。透過 HTTPS，你與服務商之間的任何人都無法讀取或竄改查詢。',

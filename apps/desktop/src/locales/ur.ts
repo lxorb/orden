@@ -2686,6 +2686,13 @@ export const ur: Dictionary = {
   'Valid from': 'سے درست',
   'Valid until': 'تک درست',
   'SHA-256 fingerprint': 'SHA-256 فنگر پرنٹ',
+  Intermediate: 'درمیانی',
+  Root: 'روٹ',
+  'Certificate chain': 'سرٹیفکیٹ زنجیر',
+  'Serial number': 'سیریل نمبر',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'سائٹ سے الگ سے پڑھا گیا: براؤزر انجن نہیں بتاتا کہ یہ صفحہ کس سرٹیفکیٹ کے ساتھ آیا۔',
+  'The certificate could not be read.': 'سرٹیفکیٹ پڑھا نہیں جا سکا۔',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'ویب صفحات سائٹس کے پتے کیسے تلاش کرتے ہیں۔ HTTPS کے ذریعے آپ اور فراہم کنندہ کے درمیان کوئی بھی تلاش کو پڑھ یا بدل نہیں سکتا۔',

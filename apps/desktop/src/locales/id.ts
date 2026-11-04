@@ -2687,6 +2687,13 @@ export const id: Dictionary = {
   'Valid from': 'Berlaku sejak',
   'Valid until': 'Berlaku hingga',
   'SHA-256 fingerprint': 'Sidik jari SHA-256',
+  Intermediate: 'Perantara',
+  Root: 'Akar',
+  'Certificate chain': 'Rantai sertifikat',
+  'Serial number': 'Nomor seri',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'Dibaca terpisah dari situs: mesin browser tidak menyebutkan sertifikat mana yang dibawa halaman ini.',
+  'The certificate could not be read.': 'Sertifikat tidak dapat dibaca.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'Cara halaman web mencari alamat situs. Lewat HTTPS, tidak ada yang berada di antara Anda dan penyedia yang bisa membaca atau mengubah pencariannya.',

@@ -2662,6 +2662,13 @@ export const vi: Dictionary = {
   'Valid from': 'Có hiệu lực từ',
   'Valid until': 'Có hiệu lực đến',
   'SHA-256 fingerprint': 'Vân tay SHA-256',
+  Intermediate: 'Trung gian',
+  Root: 'Gốc',
+  'Certificate chain': 'Chuỗi chứng chỉ',
+  'Serial number': 'Số sê-ri',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'Được đọc riêng từ trang web: công cụ trình duyệt không cho biết trang này đến cùng chứng chỉ nào.',
+  'The certificate could not be read.': 'Không thể đọc chứng chỉ.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'Cách các trang web tra cứu địa chỉ của trang. Qua HTTPS, không ai ở giữa bạn và nhà cung cấp có thể đọc hay thay đổi các lần tra cứu.',

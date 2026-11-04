@@ -2654,6 +2654,13 @@ export const ko: Dictionary = {
   'Valid from': '유효 기간 시작',
   'Valid until': '유효 기간 종료',
   'SHA-256 fingerprint': 'SHA-256 지문',
+  Intermediate: '중간',
+  Root: '루트',
+  'Certificate chain': '인증서 체인',
+  'Serial number': '일련번호',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    '사이트에서 따로 읽었습니다: 브라우저 엔진은 이 페이지가 어떤 인증서로 왔는지 알려 주지 않습니다.',
+  'The certificate could not be read.': '인증서를 읽을 수 없습니다.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     '웹 페이지가 사이트 주소를 찾는 방법입니다. HTTPS를 쓰면 나와 제공업체 사이의 누구도 조회를 읽거나 바꿀 수 없습니다.',

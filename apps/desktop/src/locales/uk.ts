@@ -2779,6 +2779,13 @@ export const uk: Dictionary = {
   'Valid from': 'Дійсний з',
   'Valid until': 'Дійсний до',
   'SHA-256 fingerprint': 'Відбиток SHA-256',
+  Intermediate: 'Проміжний',
+  Root: 'Кореневий',
+  'Certificate chain': 'Ланцюжок сертифікатів',
+  'Serial number': 'Серійний номер',
+  'Read from the site separately: the browser engine does not say which certificate this page came with.':
+    'Прочитано із сайту окремо: рушій браузера не повідомляє, з яким сертифікатом прийшла ця сторінка.',
+  'The certificate could not be read.': 'Не вдалося прочитати сертифікат.',
   DNS: 'DNS',
   'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
     'Як вебсторінки шукають адреси сайтів. Через HTTPS ніхто між вами й провайдером не може прочитати чи змінити запити.',
