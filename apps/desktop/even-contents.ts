@@ -406,12 +406,12 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  opened a menu or a popover closes it (overlays.ts, menu.svelte.ts). Measured
  *  5,853,362.
  *
- *  The code raised on 2026-11-04, to 5,855,300, for #1066: the file list's button said and
- *  not shown where a swipe from the edge pulls the list out, and the one hint about the
- *  swipe (Titlebar.svelte, SidebarToggle.svelte, hints.svelte.ts). Measured 5,855,166.
+ *  The code raised on 2026-11-04, to 5,859,300, for #1056: the value box and column every
+ *  setting's value is drawn in (`.nib-field.is-value`, `--setting-value` in base.css),
+ *  which the stylesheet's raw text carries for export. Measured 5,859,138.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_855_300,
+  code: 5_859_300,
   catalogues: 964_400,
   styles: 290_000,
   fonts: 260_000,
