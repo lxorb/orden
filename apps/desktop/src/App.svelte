@@ -54,6 +54,7 @@
     feedbackSheet,
     importSheet,
     spacePickerDialog,
+    tabOverview,
     tabOverviewLayer,
     hostPickerDialog,
     paletteDoor,
@@ -1276,7 +1277,13 @@
 {/snippet}
 
 {#snippet notices()}
-  <div class="notices" data-notices data-region="notices" class:over={viewport.drawer}>
+  <div
+    class="notices"
+    data-notices
+    data-region="notices"
+    class:over={viewport.drawer}
+    class:above={tabOverview.open}
+  >
     <StorageWarning />
     {#if undoToastNotice.asked}
       {#await undoToastNotice.asked then UndoToast}
@@ -1560,6 +1567,12 @@
   /* Over the drawer, which is fixed over the whole height of the window. */
   .notices.over {
     position: fixed;
+  }
+
+  /* Over the overview, which covers the whole app: what a drop there did is said here. */
+  .notices.above {
+    position: fixed;
+    z-index: var(--z-sheet);
   }
 
   /* Room only around something. `:global`, or the compiler drops a rule about

@@ -168,12 +168,19 @@ def drive(browser: Browser) -> None:
     all_spaces(page)
     before = box(page, "A2")
     drag(page, before, box(page, "B2"))
-    told = page.locator("text=Not moved").count()
+    told = page.evaluate(
+        """() => {
+          const word = [...document.querySelectorAll('.toast p')].find((one) => one.textContent === 'Not moved')
+          if (!word) return false
+          const r = word.getBoundingClientRect()
+          return word.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2))
+        }"""
+    )
     after = box(page, "A2")
     say(f"refused: told {told}, window from {before} to {after}")
     shot(page, "refused")
     if not told:
-        wrong("a drop refused says nothing")
+        wrong("a drop refused says nothing that can be seen")
     if abs(after["x"] - before["x"]) > 8 or abs(after["y"] - before["y"]) > 8:
         wrong(f"a refused window stays parked in the other cell: {before} to {after}")
     if not tab(page, "A2")["here"]:
