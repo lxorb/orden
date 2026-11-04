@@ -24,6 +24,18 @@ describe('what somebody typed', () => {
     expect(webAddress('   ')).toBeNull()
   })
 
+  test('no host ends in a number or has an empty label: those are words', () => {
+    const search = (words: string) => `https://www.google.com/search?q=${words}`
+    expect(webAddress('3.14')).toBe(search('3.14'))
+    expect(webAddress('foo..bar')).toBe(search('foo..bar'))
+    expect(webAddress('1.2.3.4')).toBe('https://1.2.3.4')
+  })
+
+  test('a known web scheme with no slashes is that address, as in a browser', () => {
+    expect(webAddress('http:example.com')).toBe('http://example.com/')
+    expect(webAddress('https:example.com/a')).toBe('https://example.com/a')
+  })
+
   test('an address is taken as written', () => {
     expect(webAddress('https://svelte.dev/docs')).toBe('https://svelte.dev/docs')
     expect(webAddress('http://localhost:5173/')).toBe('http://localhost:5173/')

@@ -89,9 +89,19 @@ function schemeFor(typed: string): 'http' | 'https' {
  *  one: a number with a port is a server somebody started, `8080:80` and `10:30/path`. */
 const CLOCK = /^(?:[01]?\d|2[0-3]):[0-5]\d$/
 
+/** What no name on the web is: an empty label (`foo..bar`), a number at the end that is no
+ *  whole address (`3.14`), which `URL` would read as 3.0.0.14, or a web scheme and its address
+ *  with no slashes (`http:example.com`). */
+function noName(typed: string): boolean {
+  if (typed.startsWith('[')) return false
+  if (/^https?:\D/i.test(typed)) return true
+  const name = typed.split(/[/?#:]/, 1)[0] ?? ''
+  return name.includes('..') || (/\.\d+$/.test(name) && !/^\d{1,3}(?:\.\d{1,3}){3}$/.test(name))
+}
+
 /** Whether something typed is a host, and not a scheme of its own with digits after it. */
 function isHost(typed: string): boolean {
-  if (!HOST.test(typed) || CLOCK.test(typed)) return false
+  if (!HOST.test(typed) || CLOCK.test(typed) || noName(typed)) return false
   const word = /^([a-z\d-]+):\d/i.exec(typed)?.[1]
   return !word || !NOT_HOSTS.has(word.toLowerCase())
 }
@@ -200,7 +210,11 @@ export function typedAddress(typed: string): string | null {
     return isWebAddress(guessed) ? asTheEngineSays(guessed) : null
   }
 
-  if (hasScheme(said)) return isWebAddress(said) ? asTheEngineSays(said) : null
+  if (hasScheme(said)) {
+    // `http:example.com`, which a browser reads as the address it plainly is.
+    const whole = said.replace(/^https?:(?!\/\/)/i, '$&//')
+    return isWebAddress(whole) ? asTheEngineSays(whole) : null
+  }
 
   return null
 }
