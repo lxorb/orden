@@ -169,7 +169,10 @@ describe('over a file that has gone on', () => {
   test('words with long enough a run beside them are', async () => {
     const left = 'a line long enough to say where this was typed\n'
     const { desk } = disk(`${left}typed\nand the rest\nNEWER\n`)
-    const back = await cameBack(draft({ base: `${left}and the rest\n`, doc: `${left}typed\nand the rest\n` }), desk)
+    const back = await cameBack(
+      draft({ base: `${left}and the rest\n`, doc: `${left}typed\nand the rest\n` }),
+      desk,
+    )
     expect(back).toMatchObject({ dirty: false })
   })
 

@@ -63,11 +63,7 @@ export class ClosedTabs {
    *  words of another at the path may have been refused, and these say nothing of them. */
   wroteAll(path: string, key: string) {
     const stack = this.stack.map((closed) => {
-      if (
-        !closed.draft.dirty ||
-        closed.draft.share !== key ||
-        !samePath(closed.draft.path, path)
-      )
+      if (!closed.draft.dirty || closed.draft.share !== key || !samePath(closed.draft.path, path))
         return closed
       const draft: Draft = { ...closed.draft, dirty: false, doc: '' }
       delete draft.base

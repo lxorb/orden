@@ -59,7 +59,6 @@ const single = (one: object) => ({
   frame: { kind: 'pane' as const, pane: { id: 'p1', active: 0, linked: false, tabs: [one] } },
 })
 
-
 beforeEach(async () => {
   const one = disk.current
   if (!one) throw new Error('no disk')
@@ -72,7 +71,7 @@ beforeEach(async () => {
 })
 
 test('one note in two panes whose file has gone comes back as one draft', async () => {
-  await workspace.applyLayout(split(tab({}), tab({})) as never, false)
+  await workspace.applyLayout(split(tab({}), tab({})), false)
   expect(workspace.tabs).toHaveLength(2)
   expect(workspace.tabs[0]?.note).toBe(workspace.tabs[1]?.note)
   expect(workspace.tabs[0]?.path).toBeNull()

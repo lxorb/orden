@@ -114,6 +114,7 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
     persisted: 0,
     lists: 0,
     keep: () => undefined,
+    wroteAll: () => undefined,
     scheduleSession: () => undefined,
     loadTree() {
       this.lists += 1

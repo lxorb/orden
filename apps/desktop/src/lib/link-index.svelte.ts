@@ -1805,12 +1805,14 @@ class Links {
         doc && rewrite && !isPagesTarget(note.path) ? await rewrite.drawnPlane(doc) : null
       // In the same tick as the words: the entry that describes them.
       let read = listed?.(note.path) ?? note
-      let relinked = false
+      const plane = { relinked: false }
 
       // A plane is JSON, and is rewritten as JSON; see canvas-rewrite.ts.
       const file = card ?? moving
       const worked = (before: string) =>
-        rewrite ? rewrite.retargetCanvas(before, source, file, to) : retargetLinks(before, source, to)
+        rewrite
+          ? rewrite.retargetCanvas(before, source, file, to)
+          : retargetLinks(before, source, to)
       const keepIt = (before: string) =>
         invoke('snapshot_note', { path: target, content: before }).catch(() => undefined)
       // A note that cannot be written - read-only, held by another program, a full
@@ -1834,11 +1836,11 @@ class Links {
             // keystroke falls between the two; one landing while the write is in the air
             // is the document's own, and marks it for its next write.
             const knew = doc.onDisk
-            relinked =
+            plane.relinked =
               drawn !== null &&
               rewrite !== null &&
               drawn.relinked((canvas) => rewrite.retargetPlane(canvas, source, file, to))
-            if (relinked) words = doc.text
+            if (plane.relinked) words = doc.text
             else {
               const edit = oneEdit(before, words)
               if (edit) doc.edited([edit], words)
@@ -1860,7 +1862,7 @@ class Links {
             return words
           }).catch(refused)
       if (after === null) continue
-      if (relinked) doc?.wroteAs(after)
+      if (plane.relinked) doc?.wroteAs(after)
       for (const hear of hearing) hear(target, after)
       told?.push(target)
 

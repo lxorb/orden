@@ -593,7 +593,7 @@ describe('what the words were typed on', () => {
   test('goes before the words do, when storage is short', () => {
     const written: string[] = []
     const storage = {
-      setItem: (key: string, value: string) => {
+      setItem: (_key: string, value: string) => {
         if (value.includes('THE VERSION')) throw new DOMException('full', 'QuotaExceededError')
         written.push(value)
       },

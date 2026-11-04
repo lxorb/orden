@@ -404,7 +404,8 @@ async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'r
     // another window's write that came between would go under words worked out without it.
     const down = await inFileTurn(note.path, async () => {
       const file = await invoke<string>('read_note', { path: note.path }).catch(() => null)
-      if (file === null) throw new Error(`${note.path} will not read, so nothing is written over it`)
+      if (file === null)
+        throw new Error(`${note.path} will not read, so nothing is written over it`)
       const now = endingsLike(file, note.after)
       const words = now === note.after ? note.content : carriedPast(note, file, now)
       await writeInTurn(note.path, words)

@@ -893,9 +893,13 @@ describe('what the account holds of a folder', () => {
 })
 
 describe('a replacement put back with another window here', () => {
-  const NOTE = { content: 'alpha line\n', after: 'gamma line\n', edits: [{ from: 0, to: 5, insert: 'alpha' }] }
+  const NOTE = {
+    content: 'alpha line\n',
+    after: 'gamma line\n',
+    edits: [{ from: 0, to: 5, insert: 'alpha' }],
+  }
 
-  test('a closed note is read again in the file\'s turn', async () => {
+  test("a closed note is read again in the file's turn", async () => {
     disk.set('/s/a.md', NOTE.after)
     const turns: (() => unknown)[] = []
     let inTurn = false

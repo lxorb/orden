@@ -483,7 +483,8 @@ function withoutBases(layout: Layout): Layout | null {
   if (!panesOf(layout.frame).some((pane) => pane.tabs.some((tab) => tab.base !== undefined)))
     return null
   const bare = (frame: FrameDraft): FrameDraft => {
-    if (frame.kind === 'split') return { ...frame, sides: [bare(frame.sides[0]), bare(frame.sides[1])] }
+    if (frame.kind === 'split')
+      return { ...frame, sides: [bare(frame.sides[0]), bare(frame.sides[1])] }
     const tabs = frame.pane.tabs.map((draft) => {
       const out = { ...draft }
       delete out.base
