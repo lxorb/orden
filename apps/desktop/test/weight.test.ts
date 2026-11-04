@@ -1122,8 +1122,12 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,527,900, for #1040: a new tab nothing was done with goes once
  *  it is left, judged in one place (`isBlankTab` and `closeLeftBlank` in
  *  workspace.svelte.ts, `typedInto` in web-tab/pages.svelte.ts); when is fetched at the
- *  launch's last turn. Measured 3,527,726. */
-const BUDGET = 3_527_900
+ *  launch's last turn. Measured 3,527,726.
+ *
+ *  Raised 2026-11-04, to 3,528,400, for #1051: a strip of tabs taking an
+ *  essential let go of on it, and fetching what keeps it as a tab (Tabs.svelte). Measured
+ *  3,528,260, 388 modules. */
+const BUDGET = 3_528_400
 const MOST_FILES = 389
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

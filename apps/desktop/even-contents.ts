@@ -418,9 +418,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,861,700, for #1040: a new tab nothing was done
  *  with goes once it is left (workspace.svelte.ts, workspace/blank-tabs.svelte.ts).
  *  Measured 5,861,488.
+ *
+ *  The code raised on 2026-11-04, to 5,862,600, for #1051: an essential let go of on
+ *  a strip of tabs kept as a tab where it landed (tab-strip/essential-drop.ts, Tabs.svelte).
+ *  Measured 5,862,455.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_861_700,
+  code: 5_862_600,
   catalogues: 964_400,
   styles: 290_000,
   fonts: 260_000,
