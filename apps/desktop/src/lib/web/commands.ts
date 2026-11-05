@@ -32,6 +32,7 @@ import {
 } from '@orden/markdown/links'
 import { assetType } from './asset-route'
 import { keptAway, NOT_HERE } from './away.svelte'
+import { rehomed, unread } from '@orden/scan/indexed'
 import { isReserved } from '../naming'
 import {
   assets,
@@ -857,6 +858,12 @@ async function spaceTags(root: string) {
   for (const row of rows) {
     for (const tag of tagsIn(row.content)) counts.set(tag, (counts.get(tag) ?? 0) + 1)
   }
+  // A note kept away counts each of its tags once, which is what its scan holds (#1126).
+  for (const away of keptAway.under(root)) {
+    for (const tag of keptAway.scanOf(away.id)?.tags ?? []) {
+      counts.set(tag, (counts.get(tag) ?? 0) + 1)
+    }
+  }
 
   return [...counts.entries()]
     .map(([tag, count]) => ({ tag, count }))
@@ -962,6 +969,21 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
   // A size that is not written down is a chunk of the old length next time, which
   // is how every chunk was read before sizes were kept: nothing to report.
   if (learnt.length) await stats.learn(learnt).catch(() => undefined)
+
+  // And what this browser keeps no words of, as the account said each reads (#1126;
+  // away.svelte.ts): its scan where one has come, and its name until then.
+  const here = new Set(paths)
+  for (const away of keptAway.under(base)) {
+    const path = normalise(away.path)
+    if (here.has(path) || hiddenUnder(base, path)) continue
+    const at = relative(path)
+    const stamp = { size: away.size, mtime: away.modified, ctime: away.modified }
+    const said = keptAway.scanOf(away.id)
+    const scan = said ? rehomed(said, at) : unread(at, stamp)
+    if (scan) notes.push(scan)
+    // A website is a file beside the notes as well, as above.
+    if (!scan || isWebTarget(path)) beside.push(path)
+  }
 
   // Pictures live in their own store here, and only their names are wanted.
   const pictures = (await assets.paths()).filter(

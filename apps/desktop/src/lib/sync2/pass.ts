@@ -465,6 +465,7 @@ export async function readFeed(
     // that stops saying it is kept whole again, from the next pull (keeping.ts, #1126).
     if (space.keeping.on !== (read.index === true)) {
       space.keeping.on = read.index === true
+      if (!space.keeping.on) delete space.keeping.refused
       changes.push(keepingChange(space))
     }
     const asked = space.row.cursor

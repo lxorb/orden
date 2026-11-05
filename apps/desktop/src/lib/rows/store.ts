@@ -168,6 +168,18 @@ export class RowsStore {
     })
   }
 
+  /** What the account says of notes a browser keeps no words of (#1126): each one's
+   *  scan, relative to the space at `root`, with the front matter and the task lines
+   *  its rows are made of. */
+  indexed(root: string, scans: readonly ScannedNote[]) {
+    const held = this.spaces.get(pathKey(root))
+    if (!held) return
+    for (const scan of scans) {
+      if (!isMarkdownPath(scan.path) || scan.tasks === undefined) continue
+      this.edit(held, pathKey(scan.path, held.root), () => this.rowsIn(held, readOf(scan)))
+    }
+  }
+
   /** A file operation, heard as everything kept by path hears one. */
   follow(op: FileOp): Promise<void> | undefined {
     if (op.op === 'removed') {

@@ -232,7 +232,7 @@ export class SpaceState {
 
   /** Whether this device keeps only the words it uses of this space (keeping.ts). */
   get keepsFew(): boolean {
-    return this.world.lazy === true && this.keeping.on
+    return this.world.lazy === true && this.keeping.on && !this.keeping.refused
   }
 
   /** The entry whose file is at `path` on this disk now - or, where this device keeps

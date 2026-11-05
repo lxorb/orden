@@ -168,6 +168,10 @@ let queryBlock: typeof import('./query-block') | null = null
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- listeners, never rendered
 const hearing = new Set<(path: string, content: string) => void>()
 
+/** Whoever hears what the account says of the notes a browser keeps no words of. */
+// eslint-disable-next-line svelte/prefer-svelte-reactivity -- listeners, never rendered
+const indexing = new Set<(root: string, scans: readonly ScannedNote[]) => void>()
+
 /** How `retarget` runs. */
 export interface Retargeting {
   /** The note itself went, by a rename or a move; not by a merge. */
@@ -892,6 +896,21 @@ class Links {
   hearSaves(hear: (path: string, content: string) => void): () => void {
     hearing.add(hear)
     return () => hearing.delete(hear)
+  }
+
+  /** What the account says of notes a browser keeps no words of, newer than what the
+   *  index held (#1126; sync2/indexing.ts): each one's scan, relative to the space at
+   *  `root`, taken in here where it is the open space, and told to the rows of every
+   *  space as a save is (`hearIndexed`). */
+  indexed(root: string, scans: readonly ScannedNote[]) {
+    if (!scans.length) return
+    if (this === links) for (const hear of indexing) hear(root, scans)
+    if (this.root !== null && samePath(root, this.root)) this.put(...scans)
+  }
+
+  hearIndexed(hear: (root: string, scans: readonly ScannedNote[]) => void): () => void {
+    indexing.add(hear)
+    return () => indexing.delete(hear)
   }
 
   /** The open space's notes as the index holds them: its scan, which the rows of the

@@ -83,8 +83,21 @@ function mayLetGo(core: Core, space: SpaceState, entry: EntryRow): boolean {
 export interface LettingGo {
   /** Drops the row at a full path, as no delete: nothing kept by path hears of it. */
   drop(path: string): Promise<void>
-  /** The words of a note on their way out, by its full path. */
-  leaving?(path: string, text: string): Promise<void>
+  /** The words of a note on their way out, for what is kept of them (the index). */
+  leaving?(one: Leaving): Promise<void>
+}
+
+/** A note whose words are on their way out. */
+export interface Leaving {
+  id: string
+  space: string
+  /** Relative to the space, `/`-separated. */
+  path: string
+  text: string
+  /** The account's version of the words, as this device last pulled them. */
+  docSeq: number
+  /** When they last moved, as the feed said. */
+  at: number
 }
 
 /** Lets go of the least recently used documents of every space this device keeps few
@@ -125,7 +138,17 @@ async function letGo(core: Core, space: SpaceState, entry: EntryRow, how: Lettin
   const full = core.world.join(space.row.root, entry.local_path)
   if (how.leaving) {
     const text = await core.world.disk.read(full)
-    if (text !== null) await how.leaving(full, text)
+    const docSeq = core.numbers.get(entry.id)?.pulled ?? 0
+    if (text !== null) {
+      await how.leaving({
+        id: entry.id,
+        space: space.id,
+        path: entry.local_path,
+        text,
+        docSeq,
+        at: entry.mtime ?? 0,
+      })
+    }
   }
   // Read again: a write or an open may have come while the words were being told.
   if (!mayLetGo(core, space, entry)) return

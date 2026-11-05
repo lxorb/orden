@@ -19,7 +19,7 @@ import { holderOf } from '../pages/held'
 import { scanSpace } from '../space-watch'
 import { invoke, isDesktop, isNative, joinPath, platform } from '../tauri'
 import { classifier } from './classify'
-import { accountOver, remoteFiles } from './transport'
+import { accountOver, type Reading, readingOver, remoteFiles } from './transport'
 import type { Disk, FileKind, World } from './world'
 import { syncDeletes } from '../sync/deletes'
 
@@ -199,14 +199,18 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[]> {
 }
 
 /** The app's world for one account's engine. */
+function reachingOf(token: () => string | null) {
+  return { base: BASE, token, device: deviceName, fetch: (request: Request) => fetch(request) }
+}
+
+/** What a browser that keeps only some of the words asks about the rest (#1126). */
+export function readingFor(token: () => string | null): Reading {
+  return readingOver(reachingOf(token))
+}
+
 export function appWorld(token: () => string | null, telling: Telling): World {
   const os = platform()
-  const reaching = {
-    base: BASE,
-    token,
-    device: deviceName,
-    fetch: (request: Request) => fetch(request),
-  }
+  const reaching = reachingOf(token)
   return {
     disk: diskOf(telling),
     account: accountOver(reaching),

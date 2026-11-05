@@ -40,7 +40,7 @@ import { holdsDocument } from './kinds'
 import { holderOf } from '../pages/held'
 import { waitsForBytes } from './files'
 import { foldIn } from './ingest'
-import { away, type LettingGo, trim, usedChanges } from './keeping'
+import { away, keepingChange, type LettingGo, trim, usedChanges } from './keeping'
 import { isLocal, localPass } from './local'
 import { settle, type SpaceState } from './places'
 import { pass, type Passed, pullNow, resting } from './pass'
@@ -58,6 +58,20 @@ export interface Starting {
   /** Whether an answer asks the account for its newest words first. The simulator's
    *  person answers between requests, and says no. */
   freshens?: boolean
+}
+
+/** A document this device keeps no words of, as the file list and the index want it. */
+export interface AwayFile {
+  id: string
+  space: string
+  /** The full path the file list shows it at. */
+  path: string
+  /** Relative to its space, `/`-separated. */
+  relative: string
+  size: number
+  modified: number
+  /** The account's version of its words, as the feed last said. */
+  docSeq: number
 }
 
 /** Where a path is: which space, and where in it. */
@@ -305,8 +319,8 @@ export class Engine implements AskedEngine {
   /** Every document this device keeps no words of, in the spaces where it keeps only
    *  some: by the full path the file list shows it at, how long its words are and when
    *  they last moved, as the feed said. */
-  awayFiles(): { id: string; path: string; size: number; modified: number }[] {
-    const out: { id: string; path: string; size: number; modified: number }[] = []
+  awayFiles(): AwayFile[] {
+    const out: AwayFile[] = []
     for (const space of this.core.spaces.values()) {
       if (!space.keepsFew) continue
       const paths = space.paths()
@@ -315,9 +329,12 @@ export class Engine implements AskedEngine {
         if (at === undefined || !away(this.core, space, entry)) continue
         out.push({
           id: entry.id,
+          space: space.id,
           path: this.core.world.join(space.row.root, at),
+          relative: at,
           size: entry.size ?? 0,
           modified: entry.mtime ?? 0,
+          docSeq: this.core.wanted(space.id).get(entry.id)?.docSeq ?? 0,
         })
       }
     }
@@ -344,6 +361,34 @@ export class Engine implements AskedEngine {
       const doc = await this.core.doc(entry.id)
       await this.core.commit(usedChanges(this.core, space, entry.id, doc?.text().length))
       return true
+    })
+  }
+
+  /** The documents of a space this device keeps the words of, where it keeps only
+   *  some: what a search of the rest leaves to the walk of what is here. */
+  keptIds(spaceId: string): string[] {
+    const space = this.core.spaces.get(spaceId)
+    if (!space?.keepsFew) return []
+    return [...space.entries.values()].flatMap((entry) =>
+      entry.local_path && this.core.hasDoc(entry.id) ? [entry.id] : [],
+    )
+  }
+
+  /** The spaces where this device keeps only the words it uses, by id and root. */
+  keepingFew(): { id: string; root: string }[] {
+    return [...this.core.spaces.values()].flatMap((space) =>
+      space.keepsFew ? [{ id: space.id, root: space.row.root }] : [],
+    )
+  }
+
+  /** A space whose account said it serves the rest and then had no route for it: kept
+   *  whole from the next pass on, until its feed stops saying so. */
+  keepWhole(spaceId: string): Promise<void> {
+    return this.core.use(async () => {
+      const space = this.core.spaces.get(spaceId)
+      if (!space || space.keeping.refused) return
+      space.keeping.refused = true
+      await this.core.commit([keepingChange(space)])
     })
   }
 

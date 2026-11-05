@@ -9,6 +9,14 @@ import { MemoryDisk } from './memory-disk'
 import { MemoryStore } from './memory-store'
 import { put, scan } from './store'
 import { wantedRow } from './records'
+import { indexed } from '@orden/scan/indexed'
+import { Matcher } from '@orden/scan/search/match'
+import { parseQuery } from '@orden/scan/search/query'
+import type { IndexItem, SearchAnswer, SearchRequest } from '@orden/scan/wire'
+import type { IndexRow, IndexStore } from '../web/index-store'
+import { Indexing } from './indexing'
+import type { Leaving } from './keeping'
+import type { Reading } from './transport'
 import type { World } from './world'
 
 /** A browser that keeps only the words it uses (keeping.ts, #1126), against the
@@ -97,8 +105,8 @@ function letting(disk: MemoryDisk) {
         disk.files.delete(path)
         return Promise.resolve()
       },
-      leaving: (path: string, text: string) => {
-        told.push({ path, text })
+      leaving: (one: Leaving) => {
+        told.push({ path: one.path, text: one.text })
         return Promise.resolve()
       },
     },
@@ -139,6 +147,7 @@ describe('a browser that keeps only the words it uses', () => {
       const doc = await other.engine.hold(id)
       doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'Later. '), HERE)
       const name = id === PLAN ? 'Plan.md' : 'Ideas.md'
+      await other.disk.write(`${ROOT}/${name}`, doc?.text() ?? '')
       await other.engine.saved(`${ROOT}/${name}`, doc?.text() ?? '')
       await other.engine.letGo(id)
     }
@@ -185,7 +194,7 @@ describe('a browser that keeps only the words it uses', () => {
     const plan = SEEDED[0]?.text.length ?? 0
     expect(await browser.engine.trim(plan + ideas - 1, how)).toBe(1)
 
-    expect(told).toEqual([{ path: `${ROOT}/Ideas.md`, text: SEEDED[1]?.text }])
+    expect(told).toEqual([{ path: 'Ideas.md', text: SEEDED[1]?.text }])
     expect(browser.disk.files.has(`${ROOT}/Ideas.md`)).toBe(false)
     expect(browser.disk.files.has(`${ROOT}/Plan.md`)).toBe(true)
     expect(browser.engine.core.hasDoc(IDEAS)).toBe(false)
@@ -278,6 +287,7 @@ describe('a browser that keeps only the words it uses', () => {
     const write = async (id: string, name: string, words: string) => {
       const doc = await other.engine.hold(id)
       doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, words), HERE)
+      await other.disk.write(`${ROOT}/${name}`, doc?.text() ?? '')
       await other.engine.saved(`${ROOT}/${name}`, doc?.text() ?? '')
       await other.engine.letGo(id)
       // Twice: the second hears the account take the words, and sends nothing more.
@@ -348,6 +358,7 @@ describe('a browser that keeps only the words it uses', () => {
     await other.engine.pass(SPACE)
     const doc = await other.engine.hold(PLAN)
     doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'Now. '), HERE)
+    await other.disk.write(`${ROOT}/Plan.md`, doc?.text() ?? '')
     await other.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')
     await other.engine.pass(SPACE)
 
@@ -355,5 +366,166 @@ describe('a browser that keeps only the words it uses', () => {
     await browser.engine.pass(SPACE)
     expect(browser.disk.files.size).toBe(2)
     expect(browser.engine.awayFiles()).toEqual([])
+  })
+})
+
+/** The account's half of #1126 as the Worker answers it (sync2/reading.ts), over the
+ *  simulator's account: each note's scan from its words, and a search of them a note
+ *  per page, so paging is walked. `missing` is a Worker from before the routes. */
+function readingOf(account: ReferenceAccount, how = { missing: false }) {
+  const asked: { route: string; ids: string[] }[] = []
+  const reading: Reading = {
+    async index(_space, ids) {
+      asked.push({ route: 'index', ids: [...ids] })
+      if (how.missing) return 'missing'
+      const { texts } = await account.view()
+      return ids.map((id): IndexItem => {
+        const entry = account.tree.entries.get(id)
+        if (!entry || entry.deleted) return { id, refused: 'gone' }
+        const stamp = { size: 0, mtime: 0, ctime: 0 }
+        return { id, docSeq: entry.docSeq, scan: indexed(entry.name, texts[id] ?? '', stamp) }
+      })
+    },
+    async search(_space, request: SearchRequest): Promise<SearchAnswer | 'missing' | null> {
+      asked.push({ route: 'search', ids: request.skip ?? [] })
+      if (how.missing) return 'missing'
+      const { texts } = await account.view()
+      const notes = [...account.tree.entries.values()]
+        .filter(
+          (one) =>
+            !one.deleted && one.id > (request.after ?? '') && !request.skip?.includes(one.id),
+        )
+        .sort((a, b) => (a.id < b.id ? -1 : 1))
+      const one = notes[0]
+      if (!one) return { hits: [], loose: [], after: null }
+      const note = { path: one.name, relative: one.name, name: one.name, body: texts[one.id] ?? '' }
+      const hits = new Matcher(request.query)
+        .hits(note, request.limit)
+        .map((hit) => ({ ...hit, id: one.id }))
+      return { hits, loose: [], after: notes.length > 1 ? one.id : null }
+    },
+  }
+  return { reading, asked }
+}
+
+function memoryIndex(): IndexStore & { rows: Map<string, IndexRow> } {
+  const rows = new Map<string, IndexRow>()
+  return {
+    rows,
+    of: (space) => Promise.resolve([...rows.values()].filter((one) => one.space === space)),
+    put: (some) => {
+      for (const one of some) rows.set(one.id, one)
+      return Promise.resolve()
+    },
+    remove: (ids) => {
+      for (const id of ids) rows.delete(id)
+      return Promise.resolve()
+    },
+    close: () => undefined,
+  }
+}
+
+describe('what a browser knows of the notes it keeps no words of', () => {
+  test("asks for each one's scan once per version of its words", async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const browser = await fresh(account, 'b')
+    await browser.engine.pass(SPACE)
+    const { reading, asked } = readingOf(account)
+    const store = memoryIndex()
+    const indexing = new Indexing(browser.engine, reading, store)
+
+    const first = await indexing.refresh()
+    expect(asked).toEqual([{ route: 'index', ids: [PLAN, IDEAS] }])
+    expect(first[0]?.root).toBe(ROOT)
+    expect(first[0]?.scans.map((one) => one.path).sort()).toEqual(['Ideas.md', 'Plan.md'])
+    expect(indexing.scans().get(IDEAS)?.headings).toEqual(['Ideas'])
+    expect(await indexing.refresh()).toEqual([])
+    expect(asked).toHaveLength(1)
+
+    // Another device writes in one: that one is asked for again, and only that one.
+    const other = await fresh(account, 'o', { lazy: false })
+    await other.engine.pass(SPACE)
+    const doc = await other.engine.hold(IDEAS)
+    doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, '# New\n'), HERE)
+    await other.disk.write(`${ROOT}/Ideas.md`, doc?.text() ?? '')
+    await other.engine.saved(`${ROOT}/Ideas.md`, doc?.text() ?? '')
+    await other.engine.letGo(IDEAS)
+    await other.engine.pass(SPACE)
+    await other.engine.pass(SPACE)
+    await browser.engine.pass(SPACE)
+    await indexing.refresh()
+    expect(asked.at(-1)).toEqual({ route: 'index', ids: [IDEAS] })
+    expect(indexing.scans().get(IDEAS)?.headings).toEqual(['New', 'Ideas'])
+
+    // Kept across a launch, in its own store.
+    const again = new Indexing(browser.engine, reading, store)
+    expect(await again.refresh()).toEqual([])
+    expect(again.scans().get(PLAN)?.path).toBe('Plan.md')
+  })
+
+  test('a note let go of leaves its scan made here, and nothing is asked for it', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const browser = await fresh(account, 'b')
+    await browser.engine.pass(SPACE)
+    await browser.engine.fetch(`${ROOT}/Plan.md`)
+    const { reading, asked } = readingOf(account)
+    const indexing = new Indexing(browser.engine, reading, memoryIndex())
+    await browser.engine.trim(0, {
+      drop: (path) => Promise.resolve(void browser.disk.files.delete(path)),
+      leaving: (one) => indexing.leaving(one),
+    })
+    expect(indexing.scans().get(PLAN)?.path).toBe('Plan.md')
+    await indexing.refresh()
+    expect(asked).toEqual([{ route: 'index', ids: [IDEAS] }])
+  })
+
+  test('a search of them pages through the account, by the path each is shown at', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const browser = await fresh(account, 'b')
+    await browser.engine.pass(SPACE)
+    await browser.engine.moving(`${ROOT}/Plan.md`, `${ROOT}/Later.md`, () => Promise.resolve())
+    const { reading, asked } = readingOf(account)
+    const indexing = new Indexing(browser.engine, reading, memoryIndex())
+
+    const found: string[] = []
+    await indexing.search(
+      ROOT,
+      parseQuery('e'),
+      [],
+      10,
+      (batch) => {
+        found.push(...batch.hits.map((hit) => `${hit.path}:${String(hit.line)}`))
+      },
+      [],
+    )
+    expect(asked.map((one) => one.route)).toEqual(['search', 'search'])
+    expect(found.some((one) => one.startsWith(`${ROOT}/Later.md:`))).toBe(true)
+    expect(found.some((one) => one.startsWith(`${ROOT}/Ideas.md:`))).toBe(true)
+
+    // What is kept here is walked here, and left out of the account's walk.
+    await browser.engine.fetch(`${ROOT}/Ideas.md`)
+    asked.length = 0
+    await indexing.search(ROOT, parseQuery('e'), [], 1, () => undefined, [])
+    expect(asked).toEqual([{ route: 'search', ids: [IDEAS] }])
+  })
+
+  test('an account with no route for it keeps the space whole from the next pass', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const browser = await fresh(account, 'b')
+    await browser.engine.pass(SPACE)
+    const { reading } = readingOf(account, { missing: true })
+    const indexing = new Indexing(browser.engine, reading, memoryIndex())
+
+    expect(await indexing.refresh()).toEqual([])
+    expect(browser.engine.keepingFew()).toEqual([])
+    await browser.engine.pass(SPACE)
+    expect(browser.disk.files.size).toBe(2)
+    expect(browser.engine.awayFiles()).toEqual([])
+
+    // And it stays whole across a launch, while the feed still says it serves the rest.
+    const launched = await Engine.start(browser.engine.core.world, browser.store.open(), {
+      freshens: false,
+    })
+    expect(launched.keepingFew()).toEqual([])
   })
 })

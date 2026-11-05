@@ -8,15 +8,30 @@
  *  one is the engine's operation alone, with no row to move. A command the engine
  *  itself sends says `raw`, and is answered from the rows as they are. */
 
+import type { Query } from '@orden/scan/search/query'
+import type { Found } from '@orden/scan/search/walk'
+import type { IndexedNote } from '@orden/scan/wire'
 import { SvelteSet } from 'svelte/reactivity'
 import { normalise, within } from './paths'
 
-/** One file kept away, as the listing draws it. */
+/** One file kept away, as the listing draws it, by its entry's id. */
 interface Away {
+  id: string
   path: string
   size: number
   modified: number
 }
+
+/** A search of what is kept away under a root, as the account answers it: hits handed
+ *  over as they come, in the shape the walk here hands them (search/space.ts). */
+type SearchAway = (
+  root: string,
+  query: Query,
+  terms: readonly string[],
+  limit: number,
+  onFound: (found: Found) => void,
+  excluded: readonly string[],
+) => Promise<void>
 
 /** What a read that found a file away, and could not fetch it, is answered: the
  *  device is offline, or the account would not say. */
@@ -26,6 +41,9 @@ class KeptAway {
   /** By path. Replaced whole on every change, so whatever draws one is drawn again. */
   private files = $state.raw(new Map<string, Away>())
   private fetch: ((path: string) => Promise<boolean>) | null = null
+  /** What the account said of each, by id: its scan (web/index-store.ts). */
+  private scans: ReadonlyMap<string, IndexedNote> = new Map()
+  private searching: SearchAway | null = null
   /** The files being fetched this moment, by path: the file list's cloud pulses. */
   readonly fetching = new SvelteSet<string>()
   /** Whether the account could not be reached at the last try: what a note that is
@@ -44,9 +62,37 @@ class KeptAway {
 
   /** None, signed out or kept whole. */
   clear() {
+    this.scans = new Map()
+    this.searching = null
     if (!this.files.size && !this.fetch) return
     this.files = new Map()
     this.fetch = null
+  }
+
+  /** What the account said of each file kept away, and how the rest of a space is
+   *  searched. */
+  answeredBy(scans: ReadonlyMap<string, IndexedNote>, search: SearchAway) {
+    this.scans = scans
+    this.searching = search
+  }
+
+  /** The scan of a file kept away, by its id, where the account has said it. */
+  scanOf(id: string): IndexedNote | null {
+    return this.scans.get(id) ?? null
+  }
+
+  /** What is kept away under `root`, searched by the account; nothing where nothing is,
+   *  or nobody answers for it. */
+  async search(
+    root: string,
+    query: Query,
+    terms: readonly string[],
+    limit: number,
+    onFound: (found: Found) => void,
+    excluded: readonly string[] = [],
+  ): Promise<void> {
+    if (!this.searching || !this.under(root).length || limit <= 0) return
+    await this.searching(root, query, terms, limit, onFound, excluded)
   }
 
   at(path: string): Away | null {

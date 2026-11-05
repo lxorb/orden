@@ -363,6 +363,10 @@ export interface Keeping {
   /** Paths in the space whose rows this device is letting go of: written down before
    *  the rows go, so a stop halfway takes the rest at the next start. */
   going: Set<string>
+  /** Whether the account said it serves the rest and then had no route for it - a
+   *  Worker put back to one from before them: the space is kept whole until its feed
+   *  stops saying so. */
+  refused?: boolean
 }
 
 const KEEP = 'keep:'
@@ -389,7 +393,9 @@ export function keepingOf(row: MetaRow): { space: string; keeping: Keeping } | n
         ? value.going.filter((one): one is string => typeof one === 'string')
         : [],
     )
-    return { space: row.key.slice(KEEP.length), keeping: { on: value.on === true, used, going } }
+    const keeping: Keeping = { on: value.on === true, used, going }
+    if (value.refused === true) keeping.refused = true
+    return { space: row.key.slice(KEEP.length), keeping }
   } catch {
     return null
   }
@@ -402,6 +408,7 @@ export function keepingRow(space: string, keeping: Keeping): MetaRow {
       on: keeping.on,
       used: Object.fromEntries([...keeping.used].map(([id, one]) => [id, [one.at, one.size]])),
       going: [...keeping.going],
+      ...(keeping.refused ? { refused: true } : {}),
     }),
   }
 }

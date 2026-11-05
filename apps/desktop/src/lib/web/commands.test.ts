@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { AssetRow, FileRow, SnapshotRow } from './store'
 import type { Opener } from '../openers'
+import type { SpaceLinks } from '@orden/scan/note'
 
 /** The browser's stand-in for the file commands, driven against a disk that
  *  lives in a Map rather than in IndexedDB. Node has no IndexedDB, and the
@@ -168,6 +169,7 @@ const { forgetSeedStore, rememberSeedIn, seedSpaceRoot } = await import('../seed
 const { WELCOME, WELCOME_PATH } = await import('../welcome')
 const { openerFor } = await import('../openers')
 const { keptAway, NOT_HERE } = await import('./away.svelte')
+const { indexed } = await import('@orden/scan/indexed')
 
 const write = (path: string, content = '') => webInvoke('write_note', { path, content })
 const read = (path: string) => webInvoke<string>('read_note', { path })
@@ -1353,7 +1355,7 @@ describe('a note kept away', () => {
    *  while `offline`. */
   function away(offline = { yes: false }) {
     const asked: string[] = []
-    keptAway.keep([{ path: '/Notes/Plan.md', size: 12, modified: 5 }], (path) => {
+    keptAway.keep([{ id: 'n1', path: '/Notes/Plan.md', size: 12, modified: 5 }], (path) => {
       asked.push(path)
       if (offline.yes) return Promise.resolve(false)
       disk.files.set(path, { path, content: 'Ship Monday', created: 5, modified: 5 })
@@ -1425,6 +1427,37 @@ describe('a note kept away', () => {
     offline.yes = false
     await webInvoke('copy_path', { from: '/Notes', to: '/Copied' })
     expect(disk.files.get('/Copied/Plan.md')?.content).toBe('Ship Monday')
+  })
+
+  test('is in the link index as the account read it, and by its name before that', async () => {
+    await write('/Notes/Idea.md', 'see [[Plan]]')
+    keptAway.keep(
+      [
+        { id: 'n1', path: '/Notes/Work/Plan.md', size: 12, modified: 5 },
+        { id: 'n2', path: '/Notes/Later.md', size: 3, modified: 5 },
+      ],
+      () => Promise.resolve(false),
+    )
+    const stamp = { size: 12, mtime: 5, ctime: 5 }
+    // Read by the account at its old name, before it moved into Work.
+    const said = indexed('Plan.md', '# Plan\n\n- [ ] ship #work\n', stamp)
+    if (said) keptAway.answeredBy(new Map([['n1', said]]), () => Promise.resolve())
+
+    const found = await webInvoke<SpaceLinks>('scan_links', { root: '/Notes' })
+    const plan = found.notes.find((one) => one.path === 'Work/Plan.md')
+    expect(plan).toMatchObject({ name: 'Plan', headings: ['Plan'], tags: ['work'] })
+    expect(plan?.tasks?.map((one) => one.text)).toEqual(['ship #work'])
+    expect(found.notes.find((one) => one.path === 'Later.md')).toMatchObject({
+      name: 'Later',
+      links: [],
+      bare: false,
+    })
+    expect(found.notes.map((one) => one.path).sort()).toEqual([
+      'Idea.md',
+      'Later.md',
+      'Work/Plan.md',
+    ])
+    expect(await webInvoke('space_tags', { root: '/Notes' })).toEqual([{ tag: 'work', count: 1 }])
   })
 
   test('let go of, its row goes with nothing kept', async () => {

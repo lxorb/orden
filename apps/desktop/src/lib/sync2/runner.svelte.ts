@@ -31,9 +31,13 @@ import { owesLast, writing } from '../parting'
 import { isDesktop, isNative, joinPath } from '../tauri'
 import { keptAway } from '../web/away.svelte'
 import { keptBudget, TRIM_AFTER } from './budget'
+import { links } from '../link-index.svelte'
+import { Indexing } from './indexing'
+import type { Leaving } from './keeping'
+import { forgetIndex, type IndexStore, openIndex } from '../web/index-store'
 import { samePath } from '../space-paths'
 import { waited } from '../timing'
-import { appWorld, lettingGo, type Telling } from './app-world'
+import { appWorld, lettingGo, readingFor, type Telling } from './app-world'
 import type { NoteDoc } from '../workspace/documents.svelte'
 import type { PlaneSurface } from '../canvas/shared'
 import type { Watched } from './watching'
@@ -259,6 +263,17 @@ class Runner {
       return
     }
     this.current = engine
+    // What the browser knows of the notes it keeps no words of (#1126; indexing.ts).
+    if (!isNative) {
+      const store = await openIndex(user.id).catch(() => null)
+      if (store)
+        this.indexing = new Indexing(
+          engine,
+          readingFor(() => account.token),
+          store,
+        )
+      this.indexStore = store
+    }
     await this.carriedIn(engine)
     engine.held.changed = (notes) => (this.heldNotes = notes)
     this.heldNotes = engine.held.notes
@@ -422,6 +437,9 @@ class Runner {
     clearTimeout(this.trimTimer)
     this.awayPaths.clear()
     keptAway.clear()
+    this.indexing = null
+    this.indexStore?.close()
+    this.indexStore = null
     const engine = this.current
     this.current = null
     this.accountId = null
@@ -491,6 +509,7 @@ class Runner {
       if (back) {
         this.firsts.clear()
         await forgetSyncStore(user.id).catch(() => undefined)
+        if (!isNative) await forgetIndex(user.id)
       }
     }
   }
@@ -569,6 +588,7 @@ class Runner {
     await this.halt()
     this.firsts.clear()
     await forgetSyncStore(accountId)
+    if (!isNative) await forgetIndex(accountId)
   }
 
   // -------------------------------------------------------------------------
@@ -688,6 +708,7 @@ class Runner {
         }
         const passed = await engine.pass(id)
         await this.awayHeard(engine, true)
+        if (passed?.finished) await this.indexHeard(engine)
         if (!this.local) this.placesHeard(engine, space.row.root)
         if (passed?.full) this.full.add(id)
         else if (passed?.finished) this.full.delete(id)
@@ -915,6 +936,7 @@ class Runner {
       }
     }
     const back = keptAway.keep(files, (path) => this.fetchAway(engine, path))
+    if (this.indexing) keptAway.answeredBy(this.indexing.scans(), this.indexing.search)
     if (back.length || files.length !== was.size) this.treeStale()
     // A note opened while it was away, waiting in its tab, has its words now.
     for (const path of back) void workspace.arrived(path)
@@ -929,6 +951,26 @@ class Runner {
     return here
   }
 
+  /** What the browser knows of the notes it keeps no words of, and where it keeps it. */
+  private indexing: Indexing | null = null
+  private indexStore: IndexStore | null = null
+
+  /** The scans older than the words the feed names, asked for again after a pass, and
+   *  what came told to the link index and the rows (indexing.ts). */
+  private async indexHeard(engine: Engine) {
+    const indexing = this.indexing
+    if (!indexing || this.current !== engine) return
+    const refreshed = await indexing.refresh().catch((error: unknown) => {
+      log('warn', `sync: the index stays as it was - ${String(error)}`)
+      return []
+    })
+    if (this.current !== engine || this.indexing !== indexing) return
+    keptAway.answeredBy(indexing.scans(), indexing.search)
+    for (const one of refreshed) links.indexed(one.root, one.scans)
+    // A space whose account had no route for it is kept whole from now on.
+    if (!engine.keepingFew().length) await this.awayHeard(engine, false)
+  }
+
   private trimTimer: ReturnType<typeof setTimeout> | undefined
 
   /** The words kept here brought within the budget, a moment after they last grew. */
@@ -939,7 +981,11 @@ class Runner {
     this.trimTimer = setTimeout(() => {
       void (async () => {
         if (this.current !== engine) return
-        const went = await engine.trim(await keptBudget(), lettingGo)
+        const indexing = this.indexing
+        const went = await engine.trim(await keptBudget(), {
+          ...lettingGo,
+          ...(indexing ? { leaving: (one: Leaving) => indexing.leaving(one) } : {}),
+        })
         if (went) await this.awayHeard(engine, false)
       })().catch((error: unknown) => log('warn', `sync: words kept stayed - ${String(error)}`))
     }, TRIM_AFTER)

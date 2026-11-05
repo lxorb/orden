@@ -20,3 +20,21 @@ export function indexed(path: string, content: string, stamp: Stamp): IndexedNot
   if (isWebTarget(path)) return scanShortcut(path, content)
   return null
 }
+
+/** A scan made at one path, read at another: the note was renamed or moved since, and
+ *  its name in the index is its name now. The rest is what its words say, which a move
+ *  does not change. */
+export function rehomed(scan: IndexedNote, path: string): IndexedNote {
+  if (scan.path === path) return scan
+  const file = path.split('/').pop() ?? path
+  return { ...scan, path, name: MARKDOWN.test(path) ? file.replace(MARKDOWN, '') : file }
+}
+
+/** What the index holds of a file whose scan has not come yet: its name, so a link to
+ *  it resolves and it is a node of the graph, and no words - no links, no tasks, and
+ *  not that it says nothing, which nobody here knows. Its scan, once it comes, takes
+ *  its place (`indexed` in the app's link index). */
+export function unread(path: string, stamp: Stamp): IndexedNote | null {
+  const blank = indexed(path, '', stamp)
+  return blank ? { ...blank, bare: false } : null
+}
