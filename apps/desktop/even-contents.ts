@@ -658,11 +658,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  (Appearance > Window, Pane.svelte, App.svelte): the code to 6,133,700, measured
  *  6,133,342; the catalogues to 1,014,300, its words in every language, measured
  *  1,014,026; the styles to 292,700, measured 292,429.
+ *
+ *  Raised on 2026-11-05 for #331, the tab worked in flying over every other window and a
+ *  window's picture held while they fly (Overview.svelte, WindowFace.svelte): the code to
+ *  6,135,000, measured 6,134,607; the styles to 293,100, measured 292,782.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_133_700,
+  code: 6_135_000,
   catalogues: 1_014_300,
-  styles: 292_700,
+  styles: 293_100,
   fonts: 260_000,
   pages: 40_000,
 }
