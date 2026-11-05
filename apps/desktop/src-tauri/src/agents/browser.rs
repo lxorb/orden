@@ -776,7 +776,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     title: page.title(),
                     text: written.text,
                     // A part of the page it left out, as much as one it had no room for.
-                    truncated: written.truncated || super::page::left_a_part_out(&secret),
+                    truncated: written.truncated || engines::left_a_part_out(&secret),
                 }))
             }
             Verb::Find(asked) => {

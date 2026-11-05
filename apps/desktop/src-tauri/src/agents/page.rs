@@ -29,7 +29,7 @@ use base64::Engine as _;
 use serde_json::{json, Value};
 
 use super::cdp::{self, Heard};
-use super::engines::{Engine, Gate, Page, Tree};
+use super::engines::{Engine, Gate, Page, Tree, UNREAD};
 use super::keys::{self, Key};
 use super::policy::{self, Facts, Field};
 use super::snapshot::{self, Part};
@@ -403,17 +403,8 @@ fn patience_in(session: Option<&str>) -> Duration {
     }
 }
 
-/// The node of the secret that stands for a whole part of the page no field of which could
-/// be told: nothing of that part is written, and no picture of the page is taken.
-const UNREAD: u64 = 0;
-
 /// The part an `UNREAD` secret names where a read left a frame out and the rest stands.
 const LEFT_OUT: &str = "left out";
-
-/// Whether a read of the page has left a part of it out, whichever part.
-pub fn left_a_part_out(secret: &HashSet<(String, u64)>) -> bool {
-    secret.iter().any(|(_, node)| *node == UNREAD)
-}
 
 /// How many fields of one page are each asked about themselves, one by one. Past it, each
 /// counts as a secret: over-careful about a page of a thousand inputs, and never a leak.

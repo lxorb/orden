@@ -310,6 +310,15 @@ pub fn cut(text: String, most: usize) -> String {
 /// A page's trees, and the secret fields among their nodes.
 pub type Tree = (Vec<Part>, HashSet<(String, u64)>);
 
+/// The node of the secret that stands for a whole part of the page no field of which could
+/// be told: nothing of that part is written, and no picture of the page is taken.
+pub const UNREAD: u64 = 0;
+
+/// Whether a read of the page has left a part of it out, whichever part.
+pub fn left_a_part_out(secret: &HashSet<(String, u64)>) -> bool {
+    secret.iter().any(|(_, node)| *node == UNREAD)
+}
+
 /// What a press is put to the question by, for each element it finds under the pointer
 /// other than the one already judged; see the `DevTools` page's `press_judged`.
 pub type Gate<'g> = &'g dyn Fn(&Element) -> Result<(), Answer>;
