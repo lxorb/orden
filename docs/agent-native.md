@@ -492,7 +492,7 @@ the AI sidebar, with the chat attached, and the answer comes back as a draft (de
 | `capture_to_note` | `tab`, `note`?, `as`: `clip`, `screenshot`, `pdf`, `link`; `under`?, `full_page`?, `folder`?, `space`? | a page into a note, from an agent's tab or the reader's: the clipper's markdown with `source:`, a screenshot or a PDF kept beside the note and embedded, or the address; answers the note |
 | `files` | `op`: `read`, `write`, `append`, `list`, `stat`, `mkdir`, `move`, `copy`, `delete`, `search`, `changes`; `path`, `to`?, `content`?, `base64`?, `glob`?, `text`?, `since`? | files and folders anywhere the user account reaches, outside the spaces, with `files` (8.11) |
 | `process` | `op`: `run`, `start`, `list`, `read`, `write`, `kill`; `program`?, `args`?, `env`?, `cwd`?, `stdin`?, `timeout_ms`?, `id`?, `since`?, `wait_ms`?, `close`? | a program on this computer, never through a shell: run to its end, or started and read, written to and ended, with `processes` (8.12) |
-| `run_terminal` | `command`, `cwd`? | only when the terminal tab exists, and only with `terminal` (8.9) |
+| `run_terminal` | `command`, `cwd`?, `tab`? | only when the terminal tab exists, and only with `terminal` (8.9); with `tab`, typed into that terminal of the reader's, local or online, and what it printed until it went quiet |
 | `read_terminal` | `tab`, `lines`? | one of the reader's terminal tabs as words: scrollback and screen, wrapped lines joined, marked as the terminal's; one not shown since a restart answers the lines it came back with. `context` (8.9) |
 | `type_terminal` | `tab`, `text`?, `enter`?, `keys`?, `wait_ms`? | one line typed into the reader's own shell, Enter unless told otherwise, then named keys (`Ctrl+C`, the arrows, `Tab`...); answers what it printed until it went quiet. `terminal`, and it asks like `run_terminal` (8.9) |
 | `run_command` | `id` | one row of the palette's registry, as `orden commands run` does; never the rows only somebody at the keyboard may press (`byHand`: recording, the camera, dictation, signing out), and the rows that publish, share or change settings ask (9.3) |
@@ -941,6 +941,14 @@ behind the one in front, or put back by a restart and not looked at since, has n
 until it is shown; typing into one starts it off every screen, at a size of its own, and
 the pane fits it the first time the tab is shown. The answer is what it printed until it
 went quiet for a moment, so an agent rarely has to read again.
+
+**An online terminal** (#1055) is one of the reader's terminals like any other (#1125): the
+same tools read, type and run commands in it (`run_terminal` with `tab`, which types into
+a local terminal the same way) through its own socket, and the tab list says it runs
+while its session is live. Another device holding it, or its owner keeping typing to
+themselves, refuses typing with why (`by_hand`, `not_granted`) and leaves reading its last
+screen (`last_screen`); an agent never presses Take over, Reconnect or Resume. See
+`online-terminal.md` 4.7.
 
 ### 8.10 Under sync v2
 

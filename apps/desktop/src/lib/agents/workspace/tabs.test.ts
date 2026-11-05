@@ -240,7 +240,7 @@ vi.mock('../../terminal/rename', () => ({ renameTerminal }))
 /** Which tabs have a shell running. */
 const running = new Set<string>()
 vi.mock('../../terminal/running', () => ({
-  ptyOf: (id: string) => (running.has(id) ? `${id}-1` : undefined),
+  shellRunning: (id: string) => running.has(id),
 }))
 
 vi.mock('../../terminal/history', () => ({
@@ -276,8 +276,51 @@ const term = {
   },
   onWriteParsed: () => ({ dispose: () => undefined }),
 }
+/** An online terminal's session as an agent finds it (#1125): what stands in its way,
+ *  and what pressing the app's own keys would have done. */
+const online = {
+  blocked: null as { why: string; lasting: boolean } | null,
+  held: false,
+  taken: 0,
+  ended: false,
+  again: 0,
+}
 vi.mock('../../terminal/sessions.svelte', () => ({
-  sessionOf: () => ({ term, host: { isConnected: true } }),
+  sessionOf: (tab: { id: string; path: string | null }) => {
+    const isOnline = tab.path?.endsWith('.term') === true
+    return {
+      term: {
+        ...term,
+        // Enter under an online terminal's card is Take over: never an agent's to press.
+        input: (data: string) => {
+          if (isOnline && online.blocked) online.taken += 1
+          else term.input(data)
+        },
+      },
+      host: { isConnected: true },
+      online: isOnline,
+      current: isOnline ? online.blocked === null : running.has(tab.id),
+      agentHeld: isOnline && online.held,
+      ended: isOnline && online.ended,
+      startAgain: () => {
+        online.again += 1
+        online.ended = false
+        online.blocked = null
+        running.add(tab.id)
+      },
+      agentBlocked: () =>
+        isOnline
+          ? online.blocked
+          : running.has(tab.id)
+            ? null
+            : { why: 'its shell is not running', lasting: false },
+      agentTyped: (data: string) => {
+        if (isOnline && online.blocked) return online.blocked.why
+        term.input(data)
+        return null
+      },
+    }
+  },
 }))
 
 const { runAgentVerb } = await import('./index')
@@ -316,6 +359,11 @@ beforeEach(() => {
     }),
     tab('s1', 'note', '/s/Work/Pinned.md', { shown: 'Pinned' }),
   ]
+  online.blocked = null
+  online.held = false
+  online.taken = 0
+  online.ended = false
+  online.again = 0
   showing.p1 = 'n1'
   showing.p2 = 'c1'
   workspace.activeTabId = 'n1'
@@ -704,6 +752,10 @@ describe('a PDF, Settings and Recently deleted', () => {
 })
 
 describe('the reader terminals', () => {
+  /** An online terminal of the reader's (#1055), beside the local one. */
+  const withOnline = () =>
+    tabs.push(tab('o1', 'terminal', '/s/Work/Build.term', { shown: 'Build', doc: '' }))
+
   test('read: the screen as lines once running, the lines it came back with before', async () => {
     expect(await call('read_terminal', { tab: 't1' })).toMatchObject({
       result: { tab: 't1', running: false, output: 'built\nok', restored: 7 },
@@ -744,6 +796,89 @@ describe('the reader terminals', () => {
     await call('type_terminal', { tab: 't1', keys: ['Ctrl+C'], wait_ms: 1 })
     expect(screen.typed).toEqual(['\x03'])
     expect(asked.some((one) => one.command === 'agents_ask')).toBe(false)
+  })
+
+  test('an online terminal is read and typed into as a local one is (#1125)', async () => {
+    withOnline()
+    running.add('o1')
+    expect(await call('read_terminal', { tab: 'o1', lines: 1 })).toMatchObject({
+      result: { tab: 'o1', running: true, output: 'On branch main', truncated: true },
+      untrusted: 'terminal output',
+    })
+    const said = await call('type_terminal', { tab: 'o1', text: 'git log', wait_ms: 1 })
+    expect(screen.typed).toEqual(['git log\r'])
+    expect(said).toMatchObject({ result: { tab: 'o1', typed: 'git log + Enter' } })
+
+    // Asked as a local one asks (#1072).
+    answer = { status: 'needs_approval', approval: 'a3', summary: 'rm' }
+    expect(await call('type_terminal', { tab: 'o1', text: 'rm -rf build' })).toMatchObject({
+      status: 'needs_approval',
+    })
+    expect(screen.typed).toEqual(['git log\r'])
+  })
+
+  test('run_terminal in a tab runs there, a local terminal and an online one alike', async () => {
+    withOnline()
+    running.add('t1')
+    running.add('o1')
+    for (const tab of ['t1', 'o1']) {
+      expect(
+        await call('run_terminal', { tab, command: 'git status', timeout_ms: 1 }),
+      ).toMatchObject({
+        result: { tab, typed: 'git status + Enter' },
+        untrusted: 'terminal output',
+      })
+    }
+    expect(screen.typed).toEqual(['git status\r', 'git status\r'])
+
+    answer = { status: 'needs_approval', approval: 'a4', summary: 'rm' }
+    expect(await call('run_terminal', { tab: 'o1', command: 'rm -rf build' })).toMatchObject({
+      status: 'needs_approval',
+    })
+    expect(screen.typed).toHaveLength(2)
+  })
+
+  test('an online terminal another device holds is never taken over by an agent', async () => {
+    withOnline()
+    online.blocked = { why: 'Laptop holds this session', lasting: true }
+    online.held = true
+    expect(await call('type_terminal', { tab: 'o1', text: 'git log' })).toMatchObject({
+      code: 'by_hand',
+    })
+    expect(online.taken).toBe(0)
+    expect(screen.typed).toEqual([])
+    // Its last screen is still read, and said to be that.
+    expect(await call('read_terminal', { tab: 'o1' })).toMatchObject({
+      result: { tab: 'o1', last_screen: true },
+    })
+  })
+
+  test('an online terminal kept to its owner is read, never typed in', async () => {
+    withOnline()
+    online.blocked = { why: "its machine's owner keeps typing in it to themselves", lasting: true }
+    expect(await call('type_terminal', { tab: 'o1', text: 'git log' })).toMatchObject({
+      code: 'not_granted',
+    })
+    expect(screen.typed).toEqual([])
+  })
+
+  test('an online terminal whose shell ended starts a new one, as Enter would', async () => {
+    withOnline()
+    online.ended = true
+    online.blocked = { why: 'its shell ended', lasting: false }
+    await call('type_terminal', { tab: 'o1', text: 'git log', wait_ms: 1 })
+    expect(online.again).toBe(1)
+    expect(online.taken).toBe(0)
+    expect(screen.typed).toEqual(['git log\r'])
+  })
+
+  test('the tab list says an online terminal runs while its session is live', async () => {
+    withOnline()
+    running.add('o1')
+    const listed = await call('workspace_tabs', { op: 'list' })
+    expect(listed).toMatchObject({
+      result: expect.arrayContaining([expect.objectContaining({ id: 'o1', running: true })]),
+    })
   })
 
   test('type: one line, known keys, and never the command line', async () => {
