@@ -240,6 +240,12 @@ export function topRow(frame: Frame): Frame {
   return { ...frame, sides: [topRow(frame.sides[0]), topRow(frame.sides[1])] }
 }
 
+export function bottomRow(frame: Frame): Frame {
+  if (frame.kind === 'pane') return frame
+  if (frame.along === 'column') return bottomRow(frame.sides[1])
+  return { ...frame, sides: [bottomRow(frame.sides[0]), bottomRow(frame.sides[1])] }
+}
+
 /** The tracks of a split's grid: the two sides' shares of what is left once the room
  *  between them is taken. Shares of the whole and the room besides made the split wider
  *  than its room, under the right side by that much (#1076). One rule for the panes and

@@ -2664,6 +2664,9 @@ export const ms: Dictionary = {
     'Menunjukkan tangan penuding di atas butang, seperti halaman web.',
   'Orden’s own title bar, or the window frame of your system.':
     'Bar tajuk Orden sendiri, atau bingkai tetingkap sistem anda.',
+  'Square bottom edge': 'Tepi bawah bersegi',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'Yang terbuka sampai ke bawah tetingkap dengan sudut bersegi; dalam pisahan, anak tetingkap yang menyentuhnya.',
   'How large the text of notes is.': 'Berapa besar teks nota.',
   'How large all of Orden is drawn on this device.':
     'Sebesar mana seluruh Orden dipaparkan pada peranti ini.',

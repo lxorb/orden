@@ -142,6 +142,7 @@ export interface Over {
   /** How much of the page shows where it is drawn under the app (`'under'`): the hole's
    *  own opacity, its ancestors' included. One where it is not said. */
   opacity?: number
+  corner?: number
 }
 
 /** All of a page under the app's layers, said here rather than taken from covers.ts, which
@@ -160,6 +161,7 @@ interface Placement {
   cut: Cut | null
   away?: boolean
   opacity?: number
+  corner?: number | undefined
 }
 
 /** How the engine layers a page with the app's own HTML, which the crate says with every
@@ -299,8 +301,10 @@ export async function chooseTab(tab: string): Promise<void> {
 /** The corner of the card a page fills, in the window's own pixels: the frame's token
  *  where the panes are (#1088), which full screen makes nothing. The page's own
  *  bottom corners take it, so it stands in the card rather than out of its corners. */
-export function cardCorner(): number {
+export function cardCorner(within?: Element | null): number {
   if (typeof document === 'undefined') return 0
+  const card = within?.closest('[data-pane]')
+  if (card) return parseFloat(getComputedStyle(card).getPropertyValue('--card-foot')) || 0
   const panes = document.querySelector('main') ?? document.documentElement
   return parseFloat(getComputedStyle(panes).getPropertyValue('--card-radius')) || 0
 }
@@ -876,6 +880,7 @@ class Pages {
         frame: over.frame,
         cut,
         opacity: over.opacity ?? 1,
+        corner: over.corner,
       })
       return
     }
@@ -895,7 +900,13 @@ class Pages {
     // already asked for one; see `pressed` in WebTab.svelte.
     if (covering) void this.shoot(tabId)
 
-    await this.put(tabId, page, { pane, visible, frame: over.frame, cut: null })
+    await this.put(tabId, page, {
+      pane,
+      visible,
+      frame: over.frame,
+      cut: null,
+      corner: over.corner,
+    })
   }
 
   /** The page with the app's layers cut out of it, on screen round them; see
@@ -918,7 +929,13 @@ class Pages {
     // A picture for the hole to hold under the layer: where none is there yet behind a
     // layer that fades in, and a fresh one under a scrim, which stands for all of it.
     if (page.shot === null || over.cut.all) void this.shoot(tabId)
-    await this.put(tabId, page, { pane, visible: true, frame: over.frame, cut: over.cut })
+    await this.put(tabId, page, {
+      pane,
+      visible: true,
+      frame: over.frame,
+      cut: over.cut,
+      corner: over.corner,
+    })
   }
 
   /** One placement, behind whatever is in the air; see latest.ts. A refused one is the
@@ -940,7 +957,7 @@ class Pages {
         visible: one.visible,
         frame: one.frame,
         cut: one.cut,
-        corner: cardCorner(),
+        corner: one.corner ?? cardCorner(),
         ...(one.opacity === undefined ? {} : { opacity: one.opacity }),
       })
       heard(said)

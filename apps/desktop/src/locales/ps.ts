@@ -2669,6 +2669,9 @@ export const ps: Dictionary = {
   'Shows a pointing hand over buttons, as web pages do.': 'لکه ویب پاڼې، پر تڼیو د اشارې لاس ښيي.',
   'Orden’s own title bar, or the window frame of your system.':
     'د Orden خپله سرلیک پټه، یا ستاسو د غونډال د کړکۍ چوکاټ.',
+  'Square bottom edge': 'مربع لاندینۍ څنډه',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'هغه څه چې پرانیستي دي د مربع کونجونو سره د کړکۍ تر لاندې رسېږي؛ په وېش کې، هغه برخې چې ورسره لګېږي.',
   'How large the text of notes is.': 'د یادښتونو متن څومره لوی وي.',
   'How large all of Orden is drawn on this device.': 'په دې وسیله کې د ټول Orden د ښودلو اندازه.',
   'The space between the lines of a note.': 'د یادښت د کرښو ترمنځ واټن.',

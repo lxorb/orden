@@ -2615,6 +2615,9 @@ export const th: Dictionary = {
     'แสดงรูปมือชี้เมื่ออยู่เหนือปุ่ม เหมือนหน้าเว็บ',
   'Orden’s own title bar, or the window frame of your system.':
     'แถบชื่อของ Orden เอง หรือกรอบหน้าต่างของระบบคุณ',
+  'Square bottom edge': 'ขอบล่างแบบเหลี่ยม',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'สิ่งที่เปิดอยู่จะยาวถึงขอบล่างของหน้าต่างด้วยมุมเหลี่ยม เมื่อแบ่งหน้าจอ จะเป็นเฉพาะบานที่แตะขอบล่าง',
   'How large the text of notes is.': 'ขนาดตัวอักษรของโน้ต',
   'How large all of Orden is drawn on this device.': 'ขนาดการแสดงผลของ Orden ทั้งหมดบนอุปกรณ์นี้',
   'The space between the lines of a note.': 'ระยะห่างระหว่างบรรทัดของโน้ต',

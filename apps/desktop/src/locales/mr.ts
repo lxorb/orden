@@ -2671,6 +2671,9 @@ export const mr: Dictionary = {
     'वेब पानांप्रमाणे बटणांवर बोट दाखवणारा हात दाखवते.',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden ची स्वतःची शीर्षक पट्टी किंवा तुमच्या सिस्टमची खिडकी फ्रेम.',
+  'Square bottom edge': 'चौकोनी खालची कड',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'जे उघडे आहे ते चौकोनी कोपऱ्यांसह खिडकीच्या तळापर्यंत जाते; विभाजनात, तळाला स्पर्श करणारे पेन.',
   'How large the text of notes is.': 'नोंदींचा मजकूर किती मोठा आहे.',
   'How large all of Orden is drawn on this device.': 'या डिव्हाइसवर संपूर्ण Orden किती मोठे दिसते.',
   'The space between the lines of a note.': 'नोंदीच्या ओळींमधील अंतर.',

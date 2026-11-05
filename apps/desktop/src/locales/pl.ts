@@ -2763,6 +2763,9 @@ export const pl: Dictionary = {
     'Pokazuje wskazującą dłoń nad przyciskami, jak na stronach internetowych.',
   'Orden’s own title bar, or the window frame of your system.':
     'Własny pasek tytułu Orden albo ramka okna Twojego systemu.',
+  'Square bottom edge': 'Prostokątna dolna krawędź',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'To, co otwarte, sięga dołu okna z prostymi rogami; przy podziale panele, które go dotykają.',
   'How large the text of notes is.': 'Jak duży jest tekst notatek.',
   'How large all of Orden is drawn on this device.': 'Jak duży jest cały Orden na tym urządzeniu.',
   'The space between the lines of a note.': 'Odstęp między wierszami notatki.',

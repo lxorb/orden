@@ -32,7 +32,7 @@
   import { alone } from './alone.svelte'
   import { isDeck } from '@orden/markdown/slide-breaks'
   import type { Tab } from './workspace.svelte'
-  import { type Pane, panesIn, topRow } from './workspace/pane-tree'
+  import { bottomRow, type Pane, paneIn, panesIn, topRow } from './workspace/pane-tree'
   import type { Landing } from './workspace/panes.svelte'
   import { TAB_KINDS } from './workspace/tab-kinds'
   import { dragged, isTreeDrag } from './drag-paths'
@@ -451,6 +451,7 @@
   class="pane"
   class:lifted={tabOverview.lifted.includes(pane.id)}
   class:straight={!stripped && flushFirst(pane.id)}
+  class:grounded={modes.flushBottom && !!paneIn(bottomRow(workspace.panes.frame), pane.id)}
   data-pane={pane.id}
   onpointerdowncapture={() => workspace.focusPane(pane.id)}
   ondragover={over}
@@ -777,7 +778,8 @@
     background: var(--content-ground, var(--bg));
     /* A card on the chrome (#1088): what it holds is cut to its corners, so a bar or a
        page's own ground never stands square in a rounded card. */
-    border-radius: var(--card-radius);
+    --card-foot: var(--card-radius);
+    border-radius: var(--card-radius) var(--card-radius) var(--card-foot) var(--card-foot);
     overflow: clip;
     box-shadow:
       var(--card-shadow),
@@ -786,6 +788,10 @@
 
   .pane.straight {
     border-start-start-radius: 0;
+  }
+
+  .pane.grounded {
+    --card-foot: 0px;
   }
 
   .pane:has(> .head) {

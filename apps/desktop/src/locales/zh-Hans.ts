@@ -2592,6 +2592,9 @@ export const zhHans: Dictionary = {
   'Shows a pointing hand over buttons, as web pages do.': '像网页一样在按钮上显示手形指针。',
   'Orden’s own title bar, or the window frame of your system.':
     '使用 Orden 自己的标题栏，或系统的窗口边框。',
+  'Square bottom edge': '直角底边',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    '打开的内容以直角延伸到窗口底部；分屏时，仅限触及底部的窗格。',
   'How large the text of notes is.': '笔记文字的大小。',
   'How large all of Orden is drawn on this device.': '整个 Orden 在此设备上的显示大小。',
   'The space between the lines of a note.': '笔记行与行之间的距离。',

@@ -368,10 +368,8 @@
       : settled(covered.cut, page.shot !== null, pages.cuts)
     last = at
     const visible = cut === null
-    underlaid(
-      tab.id,
-      under && page.live && seen ? { ...at, corner: page.filling ? 0 : cardCorner() } : null,
-    )
+    const corner = page.filling ? 0 : cardCorner(hole)
+    underlaid(tab.id, under && page.live && seen ? { ...at, corner } : null)
     if (under && hole && fading(hole)) follow()
 
     // A layer on its way out is on no list: it took itself off the overlay stack the
@@ -398,7 +396,7 @@
     const frame = frameOf()
     // The scale is part of it: the same box on a screen of another scale is another page
     // window, and nothing else in the layout says the scale changed.
-    const said = JSON.stringify([at, cut, frame?.window, devicePixelRatio, opacity])
+    const said = JSON.stringify([at, cut, frame?.window, devicePixelRatio, opacity, corner])
     // Nothing has moved *and there is a page*. The second half is what keeps a tab from
     // being left on an empty pane for good: a pane measured under a layer on its way out
     // has said its rectangle already, and the page is the thing that is missing.
@@ -410,8 +408,8 @@
     // web data; said with the page, since a tab opened by hand asks for it as it mounts.
     page.space = space
     if (!page.live) page.own = apart
-    if (under) void pages.show(tab.id, address, at, true, { cut, frame, opacity })
-    else void pages.show(tab.id, address, at, visible, { cut, frame })
+    if (under) void pages.show(tab.id, address, at, true, { cut, frame, opacity, corner })
+    else void pages.show(tab.id, address, at, visible, { cut, frame, corner })
   }
 
   /** Where this tab points: the address the page is on, else the one the session

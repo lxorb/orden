@@ -2632,6 +2632,9 @@ export const ko: Dictionary = {
     '웹 페이지처럼 버튼 위에서 손가락 포인터를 보여 줍니다.',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden 자체의 제목 표시줄이나 시스템의 창 프레임 중에서 고릅니다.',
+  'Square bottom edge': '아래쪽 각진 가장자리',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    '열린 내용이 각진 모서리로 창 아래쪽 끝까지 닿습니다. 분할하면 아래쪽에 닿는 패널만 그렇습니다.',
   'How large the text of notes is.': '노트 글자의 크기입니다.',
   'How large all of Orden is drawn on this device.':
     '이 기기에서 Orden 전체가 표시되는 크기입니다.',

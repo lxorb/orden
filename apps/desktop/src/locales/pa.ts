@@ -2673,6 +2673,9 @@ export const pa: Dictionary = {
     'ਵੈੱਬ ਪੰਨਿਆਂ ਵਾਂਗ ਬਟਨਾਂ ਉੱਤੇ ਇਸ਼ਾਰਾ ਕਰਦਾ ਹੱਥ ਦਿਖਾਉਂਦਾ ਹੈ।',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden ਦੀ ਆਪਣੀ ਸਿਰਲੇਖ ਪੱਟੀ, ਜਾਂ ਤੁਹਾਡੇ ਸਿਸਟਮ ਦਾ ਵਿੰਡੋ ਚੌਖਟਾ।',
+  'Square bottom edge': 'ਚੌਰਸ ਹੇਠਲਾ ਕਿਨਾਰਾ',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'ਜੋ ਖੁੱਲ੍ਹਾ ਹੈ ਉਹ ਚੌਰਸ ਕੋਨਿਆਂ ਨਾਲ ਵਿੰਡੋ ਦੇ ਹੇਠਾਂ ਤੱਕ ਜਾਂਦਾ ਹੈ; ਵੰਡ ਵਿੱਚ, ਉਹ ਪੈਨ ਜੋ ਇਸ ਨੂੰ ਛੂਹਦੇ ਹਨ।',
   'How large the text of notes is.': 'ਨੋਟਾਂ ਦਾ ਲਿਖਤ ਕਿੰਨਾ ਵੱਡਾ ਹੈ।',
   'How large all of Orden is drawn on this device.':
     'ਇਸ ਡਿਵਾਈਸ ’ਤੇ ਪੂਰਾ Orden ਕਿੰਨਾ ਵੱਡਾ ਦਿਖਦਾ ਹੈ।',

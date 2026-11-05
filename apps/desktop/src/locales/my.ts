@@ -2656,6 +2656,9 @@ export const my: Dictionary = {
     'ဝဘ်စာမျက်နှာများကဲ့သို့ ခလုတ်များပေါ်တွင် လက်ညှိုးထိုးလက်ကို ပြသည်။',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden ၏ ကိုယ်ပိုင် ခေါင်းစဉ်ဘား သို့မဟုတ် သင့်စနစ်၏ ဝင်းဒိုးဘောင်။',
+  'Square bottom edge': 'လေးထောင့် အောက်ခြေအနား',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'ဖွင့်ထားသည့်အရာသည် လေးထောင့်ထောင့်များဖြင့် ဝင်းဒိုး၏ အောက်ခြေအထိ ရောက်သည်။ ခွဲထားလျှင် ၎င်းကို ထိသော အကန့်များ။',
   'How large the text of notes is.': 'မှတ်စုများ၏ စာလုံးအရွယ် မည်မျှကြီးမည်နည်း။',
   'How large all of Orden is drawn on this device.':
     'ဤစက်ပေါ်တွင် Orden တစ်ခုလုံး ပြသသည့် အရွယ်အစား။',

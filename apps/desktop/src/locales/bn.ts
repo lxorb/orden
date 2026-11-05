@@ -2667,6 +2667,9 @@ export const bn: Dictionary = {
     'ওয়েব পাতার মতোই বোতামের ওপর একটি নির্দেশক হাত দেখায়।',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden-এর নিজের টাইটেল বার, অথবা আপনার সিস্টেমের উইন্ডো ফ্রেম।',
+  'Square bottom edge': 'চৌকো নিচের কিনারা',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'যা খোলা আছে তা চৌকো কোণ নিয়ে উইন্ডোর নিচ পর্যন্ত যায়; বিভক্ত অবস্থায়, যে প্যানগুলো নিচ ছোঁয়।',
   'How large the text of notes is.': 'নোটের লেখা কত বড়।',
   'How large all of Orden is drawn on this device.': 'এই ডিভাইসে পুরো Orden কত বড় দেখানো হবে।',
   'The space between the lines of a note.': 'নোটের লাইনগুলোর মাঝের ফাঁক।',

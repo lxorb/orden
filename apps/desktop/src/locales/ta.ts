@@ -2713,6 +2713,9 @@ export const ta: Dictionary = {
     'இணையப் பக்கங்களைப் போல, பொத்தான்களின் மேல் சுட்டும் கையைக் காட்டுகிறது.',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden-இன் சொந்தத் தலைப்புப் பட்டை, அல்லது உங்கள் கணினியின் சாளரச் சட்டகம்.',
+  'Square bottom edge': 'சதுரக் கீழ் விளிம்பு',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'திறந்திருப்பது சதுர மூலைகளுடன் சாளரத்தின் கீழ்வரை செல்கிறது; பிரிப்பில், அதைத் தொடும் பலகங்கள்.',
   'How large the text of notes is.': 'குறிப்புகளின் உரை எவ்வளவு பெரியது என்பது.',
   'How large all of Orden is drawn on this device.':
     'இந்தச் சாதனத்தில் முழு Orden எவ்வளவு பெரிதாகக் காட்டப்படுகிறது.',

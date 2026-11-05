@@ -2625,6 +2625,9 @@ export const am: Dictionary = {
   'Shows a pointing hand over buttons, as web pages do.': 'እንደ ድረ ገጾች፣ በአዝራሮች ላይ የሚጠቁም እጅ ያሳያል።',
   'Orden’s own title bar, or the window frame of your system.':
     'የOrden የራሱ የርዕስ አሞሌ፣ ወይም የሥርዓትዎ የመስኮት ክፈፍ።',
+  'Square bottom edge': 'ካሬ የታች ጠርዝ',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'የተከፈተው ነገር በካሬ ማዕዘኖች እስከ መስኮቱ ታች ይደርሳል፤ በክፍፍል ውስጥ ታቹን የሚነኩት ክፍሎች።',
   'How large the text of notes is.': 'የማስታወሻዎች ጽሑፍ ምን ያህል ትልቅ እንደሆነ።',
   'How large all of Orden is drawn on this device.': 'ኦርደን በዚህ መሣሪያ ላይ በሙሉ ምን ያህል ትልቅ እንደሚታይ።',
   'The space between the lines of a note.': 'በማስታወሻ መስመሮች መካከል ያለው ክፍተት።',

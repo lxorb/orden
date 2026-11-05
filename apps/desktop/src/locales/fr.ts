@@ -2750,6 +2750,9 @@ export const fr: Dictionary = {
     'Affiche une main qui pointe au-dessus des boutons, comme sur les pages web.',
   'Orden’s own title bar, or the window frame of your system.':
     'La barre de titre propre à Orden, ou le cadre de fenêtre de votre système.',
+  'Square bottom edge': 'Bord inférieur droit',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'Ce qui est ouvert descend jusqu’au bas de la fenêtre avec des coins droits ; dans une division, les volets qui le touchent.',
   'How large the text of notes is.': 'La taille du texte des notes.',
   'How large all of Orden is drawn on this device.':
     'La taille d’affichage de tout Orden sur cet appareil.',

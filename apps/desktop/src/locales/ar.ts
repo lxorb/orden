@@ -2783,6 +2783,9 @@ export const ar: Dictionary = {
     'يعرض يدًا مشيرة فوق الأزرار، كما تفعل صفحات الويب.',
   'Orden’s own title bar, or the window frame of your system.':
     'شريط عنوان Orden الخاص، أو إطار النافذة في نظامك.',
+  'Square bottom edge': 'حافة سفلية مربعة',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'يمتد المفتوح حتى أسفل النافذة بزوايا مربعة؛ وفي التقسيم، الأجزاء التي تلامسه.',
   'How large the text of notes is.': 'حجم نص الملاحظات.',
   'How large all of Orden is drawn on this device.': 'حجم عرض Orden بالكامل على هذا الجهاز.',
   'The space between the lines of a note.': 'المسافة بين أسطر الملاحظة.',

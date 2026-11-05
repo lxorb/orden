@@ -29,6 +29,11 @@
     "default": "tiles",
     "description": "Whether the bookmarks at the top of the file list show as tiles or as a list."
   },
+  "appearance.flushBottom": {
+    "type": "boolean",
+    "default": false,
+    "description": "What is open runs into the bottom of the window with square corners; in a split, the panes that touch it."
+  },
   "appearance.frame": {
     "type": "string",
     "enum": [

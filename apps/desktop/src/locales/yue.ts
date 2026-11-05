@@ -2587,6 +2587,9 @@ export const yue: Dictionary = {
   'Shows a pointing hand over buttons, as web pages do.': '好似網頁咁，喺按鈕上面顯示手指游標。',
   'Orden’s own title bar, or the window frame of your system.':
     '用 Orden 自己嘅標題列，定係你系統嘅視窗框。',
+  'Square bottom edge': '直角底邊',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    '打開嘅內容以直角伸到視窗底部；分割時，只係掂到底部嘅窗格。',
   'How large the text of notes is.': '筆記文字有幾大。',
   'How large all of Orden is drawn on this device.': '成個 Orden 喺呢部裝置上面顯示幾大。',
   'The space between the lines of a note.': '筆記行同行之間嘅空間。',

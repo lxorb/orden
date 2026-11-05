@@ -1179,6 +1179,39 @@ describe("the card's corner a page is placed with", () => {
       expect(last('web_place')).toMatchObject({ tab: 'round', pane: MOVED, corner: 0 }),
     )
   })
+
+  test("is its own pane's foot, square where that pane stands on the window's bottom", () => {
+    const card = {}
+    const hole = { closest: (selector: string) => (selector === '[data-pane]' ? card : null) }
+    const foot = (radius: string) =>
+      Object.assign(globalThis, {
+        document: { querySelector: () => null },
+        getComputedStyle: (of: object) => ({
+          getPropertyValue: (token: string) =>
+            of === card && token === '--card-foot' ? radius : '10px',
+        }),
+      })
+    foot('10px')
+    expect(cardCorner(hole as unknown as Element)).toBe(10)
+    foot('0px')
+    expect(cardCorner(hole as unknown as Element)).toBe(0)
+  })
+
+  test("goes with the placement as its pane says it, over the window's own", async () => {
+    frame('10px')
+    const shown = pages.show('foot', SITE, PANE)
+    const arrive = await asked()
+    arrive()
+    await shown
+    void pages.place('foot', MOVED, true, false, { cut: null, frame: null, corner: 0 })
+    await vi.waitFor(() =>
+      expect(last('web_place')).toMatchObject({ tab: 'foot', pane: MOVED, corner: 0 }),
+    )
+    void pages.place('foot', PANE, true)
+    await vi.waitFor(() =>
+      expect(last('web_place')).toMatchObject({ tab: 'foot', pane: PANE, corner: 10 }),
+    )
+  })
 })
 
 /** #1080: a press in a web tab's page never reaches the app's own page, so the crate says

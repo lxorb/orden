@@ -2643,6 +2643,9 @@ export const vi: Dictionary = {
     'Hiện bàn tay chỉ trên nút, như các trang web.',
   'Orden’s own title bar, or the window frame of your system.':
     'Thanh tiêu đề riêng của Orden hoặc khung cửa sổ của hệ thống.',
+  'Square bottom edge': 'Cạnh dưới vuông',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'Nội dung đang mở chạm tới đáy cửa sổ với góc vuông; khi chia, các ngăn chạm đáy.',
   'How large the text of notes is.': 'Cỡ chữ của ghi chú.',
   'How large all of Orden is drawn on this device.':
     'Kích thước hiển thị toàn bộ Orden trên thiết bị này.',

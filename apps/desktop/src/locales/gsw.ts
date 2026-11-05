@@ -2687,6 +2687,9 @@ export const gsw: Dictionary = {
     'Zeigt über Chnöpf e zeigendi Hand, wie s Websiite mached.',
   'Orden’s own title bar, or the window frame of your system.':
     'Di eiget Titelliischte vo Orden oder de Fänschterrahme vo dim System.',
+  'Square bottom edge': 'Eckigi Underkante',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'Was offe isch, gaht mit eckige Egge bis a de unteri Fensterrand; bi ere Teilig d Bereich, wo ne berüehred.',
   'How large the text of notes is.': 'Wie gross de Text vo Notize isch.',
   'How large all of Orden is drawn on this device.':
     'Wie gross s ganze Orden uf däm Grät aazeigt wird.',

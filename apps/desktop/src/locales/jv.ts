@@ -2650,6 +2650,9 @@ export const jv: Dictionary = {
     'Nuduhake tangan nuding ing ndhuwur tombol, kaya ing kaca web.',
   'Orden’s own title bar, or the window frame of your system.':
     'Bar judhul Orden dhewe, utawa kerangka jendhela sistem sampeyan.',
+  'Square bottom edge': 'Pinggir ngisor kothak',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'Sing dibukak tekan ngisor jendhéla kanthi pojok kothak; ing pamisahan, panel sing nyenggol.',
   'How large the text of notes is.': 'Sepira gedhene teks cathetan.',
   'How large all of Orden is drawn on this device.':
     'Sepira gedhéné kabèh Orden ditampilaké ing piranti iki.',

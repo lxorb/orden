@@ -89,3 +89,19 @@ test('every sidebar over the note stands on the paper, under the chrome and its 
     )
   }
 })
+
+test("the square bottom edge squares the foot of the panes on the window's bottom and drops the inset under them", () => {
+  const pane = read('./Pane.svelte')
+  expect(pane).toContain(
+    'class:grounded={modes.flushBottom && !!paneIn(bottomRow(workspace.panes.frame), pane.id)}',
+  )
+  expect(pane).toContain(
+    'border-radius: var(--card-radius) var(--card-radius) var(--card-foot) var(--card-foot);',
+  )
+  expect(/\n {2}\.pane \{([^}]*)\}/.exec(pane)?.[1]).toContain('--card-foot: var(--card-radius);')
+  expect(/\.pane\.grounded \{([^}]*)\}/.exec(pane)?.[1]?.trim()).toBe('--card-foot: 0px;')
+  const app = read('../App.svelte')
+  expect(app).toContain('class:grounded={modes.flushBottom}')
+  expect(/\.panes\.grounded \{([^}]*)\}/.exec(app)?.[1]?.trim()).toBe('padding-bottom: 0;')
+  expect(read('./web-tab/WebTab.svelte')).toContain('cardCorner(hole)')
+})

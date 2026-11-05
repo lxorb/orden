@@ -2664,6 +2664,9 @@ export const id: Dictionary = {
     'Menampilkan tangan penunjuk di atas tombol, seperti di halaman web.',
   'Orden’s own title bar, or the window frame of your system.':
     'Bilah judul milik Orden, atau bingkai jendela sistem Anda.',
+  'Square bottom edge': 'Tepi bawah siku',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'Yang terbuka sampai ke tepi bawah jendela dengan sudut siku; dalam pemisahan, panel yang menyentuhnya.',
   'How large the text of notes is.': 'Seberapa besar teks catatan.',
   'How large all of Orden is drawn on this device.':
     'Seberapa besar seluruh Orden ditampilkan di perangkat ini.',

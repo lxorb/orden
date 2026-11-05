@@ -2647,6 +2647,9 @@ export const ja: Dictionary = {
     'ウェブページのように、ボタンの上で指差しカーソルを表示します。',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden 独自のタイトルバーか、システムのウィンドウ枠かを選びます。',
+  'Square bottom edge': '下端を角にする',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    '開いている内容が角の丸みなしでウィンドウの下端まで届きます。分割時は下端に接するペインだけです。',
   'How large the text of notes is.': 'ノートの文字の大きさです。',
   'How large all of Orden is drawn on this device.': 'このデバイスで Orden 全体を表示する大きさ。',
   'The space between the lines of a note.': 'ノートの行と行の間隔です。',

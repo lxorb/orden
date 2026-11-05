@@ -2711,6 +2711,9 @@ export const ml: Dictionary = {
     'വെബ് പേജുകളിലെ പോലെ, ബട്ടണുകൾക്ക് മുകളിൽ ചൂണ്ടുന്ന കൈ കാണിക്കുന്നു.',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden-ന്റെ സ്വന്തം ടൈറ്റിൽ ബാർ, അല്ലെങ്കിൽ നിങ്ങളുടെ സിസ്റ്റത്തിന്റെ വിൻഡോ ഫ്രെയിം.',
+  'Square bottom edge': 'ചതുര താഴത്തെ അറ്റം',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'തുറന്നിരിക്കുന്നത് ചതുര മൂലകളോടെ ജാലകത്തിന്റെ താഴെ വരെ എത്തുന്നു; വിഭജനത്തിൽ, അതിനെ തൊടുന്ന പാളികൾ.',
   'How large the text of notes is.': 'കുറിപ്പുകളിലെ എഴുത്ത് എത്ര വലുതാണ് എന്നത്.',
   'How large all of Orden is drawn on this device.':
     'ഈ ഉപകരണത്തിൽ Orden മുഴുവൻ എത്ര വലുതായി കാണിക്കുന്നു.',

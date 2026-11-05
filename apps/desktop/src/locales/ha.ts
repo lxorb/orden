@@ -2707,6 +2707,9 @@ export const ha: Dictionary = {
     'Yana nuna hannu mai nuni a kan maɓallai, kamar yadda shafukan yanar gizo ke yi.',
   'Orden’s own title bar, or the window frame of your system.':
     'Sandar take ta Orden kanta, ko firam ɗin taga na tsarinka.',
+  'Square bottom edge': 'Gefen ƙasa mai murabba’i',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'Abin da yake buɗe yana kaiwa ƙasan taga da kusurwoyi masu murabba’i; a rabe, sassan da suka taɓa shi.',
   'How large the text of notes is.': 'Girman rubutun bayanan kula.',
   'How large all of Orden is drawn on this device.':
     'Yadda Orden gaba ɗaya yake da girma a wannan na’ura.',

@@ -1206,6 +1206,7 @@
           class="panes"
           data-panes
           class:under-pad={padOver}
+          class:grounded={modes.flushBottom}
           inert={padOver}
           bind:clientWidth={panesWide}
         >
@@ -1564,6 +1565,10 @@
 
   .panes.under-pad {
     visibility: hidden;
+  }
+
+  .panes.grounded {
+    padding-bottom: 0;
   }
 
   /* Start, middle and end, whichever of them is up; each card names its track.

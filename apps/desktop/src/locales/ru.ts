@@ -2762,6 +2762,9 @@ export const ru: Dictionary = {
     'Показывает указывающую руку над кнопками, как на веб-страницах.',
   'Orden’s own title bar, or the window frame of your system.':
     'Собственная строка заголовка Orden или рамка окна вашей системы.',
+  'Square bottom edge': 'Прямой нижний край',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'Открытое доходит до нижнего края окна с прямыми углами; при разделении это панели, которые его касаются.',
   'How large the text of notes is.': 'Размер текста заметок.',
   'How large all of Orden is drawn on this device.':
     'Насколько крупно отображается весь Orden на этом устройстве.',

@@ -165,6 +165,7 @@ interface Saved {
   frame: Frame
   hand: boolean
   overviewBlur: boolean
+  flushBottom: boolean
   fonts: Record<FontPlace, string>
   closeBrackets: boolean
   ligatures: LigatureScope
@@ -303,6 +304,7 @@ export const DEFAULTS = {
   frame: 'nib' as Frame,
   hand: false,
   overviewBlur: false,
+  flushBottom: false,
   fonts: { ui: '', content: '', mono: '' } as Record<FontPlace, string>,
   closeBrackets: true,
   ligatures: 'off' as LigatureScope,
@@ -430,6 +432,7 @@ class Modes {
    *  ground (issue #331). Off: the overview is drawn on the surface the panes stand on,
    *  so the whole of it happens inside Orden. This machine's, as the pointer is. */
   overviewBlur = $state(DEFAULTS.overviewBlur)
+  flushBottom = $state(DEFAULTS.flushBottom)
   /** The faces the reader chose to read in, where they chose one; nothing is the app's
    *  own (#772). This machine's, since a face is something installed on one. */
   fonts = $state<Record<FontPlace, string>>({ ...DEFAULTS.fonts })
@@ -931,6 +934,11 @@ class Modes {
 
   toggleOverviewBlur() {
     this.overviewBlur = !this.overviewBlur
+    this.persist()
+  }
+
+  toggleFlushBottom() {
+    this.flushBottom = !this.flushBottom
     this.persist()
   }
 
@@ -1751,6 +1759,7 @@ class Modes {
       frame: this.frame,
       hand: this.hand,
       overviewBlur: this.overviewBlur,
+      flushBottom: this.flushBottom,
       fonts: this.fonts,
       conflicts: this.conflicts,
       keepVersions: this.keepVersions,

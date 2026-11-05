@@ -2723,6 +2723,9 @@ export const de: Dictionary = {
     'Zeigt über Schaltflächen eine zeigende Hand, wie es Webseiten tun.',
   'Orden’s own title bar, or the window frame of your system.':
     'Die eigene Titelleiste von Orden oder der Fensterrahmen deines Systems.',
+  'Square bottom edge': 'Eckige Unterkante',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'Das Geöffnete reicht mit eckigen Ecken bis an den unteren Fensterrand; bei geteilter Ansicht die Bereiche, die ihn berühren.',
   'How large the text of notes is.': 'Wie groß der Text von Notizen ist.',
   'How large all of Orden is drawn on this device.':
     'Wie groß ganz Orden auf diesem Gerät dargestellt wird.',

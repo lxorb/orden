@@ -2700,6 +2700,9 @@ export const kn: Dictionary = {
     'ವೆಬ್ ಪುಟಗಳಂತೆಯೇ, ಬಟನ್‌ಗಳ ಮೇಲೆ ತೋರುಬೆರಳಿನ ಕೈಯನ್ನು ತೋರಿಸುತ್ತದೆ.',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden ನ ಸ್ವಂತ ಶೀರ್ಷಿಕೆ ಪಟ್ಟಿ, ಅಥವಾ ನಿಮ್ಮ ಸಿಸ್ಟಂನ ವಿಂಡೋ ಚೌಕಟ್ಟು.',
+  'Square bottom edge': 'ಚೌಕ ಕೆಳ ಅಂಚು',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'ತೆರೆದಿರುವುದು ಚೌಕ ಮೂಲೆಗಳೊಂದಿಗೆ ವಿಂಡೋದ ಕೆಳಭಾಗದವರೆಗೆ ಬರುತ್ತದೆ; ವಿಭಜನೆಯಲ್ಲಿ, ಅದನ್ನು ಮುಟ್ಟುವ ಪೇನ್‌ಗಳು.',
   'How large the text of notes is.': 'ಟಿಪ್ಪಣಿಗಳ ಪಠ್ಯ ಎಷ್ಟು ದೊಡ್ಡದು ಎಂಬುದು.',
   'How large all of Orden is drawn on this device.':
     'ಈ ಸಾಧನದಲ್ಲಿ ಇಡೀ Orden ಎಷ್ಟು ದೊಡ್ಡದಾಗಿ ಕಾಣಿಸುತ್ತದೆ.',

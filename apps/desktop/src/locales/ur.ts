@@ -2666,6 +2666,9 @@ export const ur: Dictionary = {
     'ویب صفحات کی طرح بٹنوں پر اشارہ کرتا ہاتھ دکھاتا ہے۔',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden کی اپنی ٹائٹل بار، یا آپ کے سسٹم کا ونڈو فریم۔',
+  'Square bottom edge': 'مربع نچلا کنارہ',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'جو کھلا ہے وہ مربع کونوں کے ساتھ ونڈو کے نیچے تک جاتا ہے؛ تقسیم میں، وہ پین جو اسے چھوتے ہیں۔',
   'How large the text of notes is.': 'نوٹس کا متن کتنا بڑا ہو۔',
   'How large all of Orden is drawn on this device.': 'اس ڈیوائس پر پورا Orden کتنا بڑا دکھائی دے۔',
   'The space between the lines of a note.': 'نوٹ کی لائنوں کے درمیان فاصلہ۔',

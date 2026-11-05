@@ -2705,6 +2705,9 @@ export const sw: Dictionary = {
     'Huonyesha mkono unaoelekeza juu ya vitufe, kama kurasa za wavuti zinavyofanya.',
   'Orden’s own title bar, or the window frame of your system.':
     'Upau wa kichwa wa Orden wenyewe, au fremu ya dirisha ya mfumo wako.',
+  'Square bottom edge': 'Ukingo wa chini wa mraba',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'Kilicho wazi kinafika chini ya dirisha kwa pembe za mraba; katika mgawanyo, vidirisha vinavyougusa.',
   'How large the text of notes is.': 'Ukubwa wa maandishi ya madokezo.',
   'How large all of Orden is drawn on this device.': 'Ukubwa wa Orden yote kwenye kifaa hiki.',
   'The space between the lines of a note.': 'Nafasi kati ya mistari ya dokezo.',

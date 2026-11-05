@@ -2657,6 +2657,9 @@ export const gu: Dictionary = {
     'વેબ પેજની જેમ બટન પર ઇશારો કરતો હાથ બતાવે છે.',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden ની પોતાની શીર્ષક પટ્ટી, કે તમારી સિસ્ટમનું વિન્ડો ચોકઠું.',
+  'Square bottom edge': 'ચોરસ નીચેની કિનારી',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'જે ખુલ્લું છે તે ચોરસ ખૂણાઓ સાથે વિન્ડોના તળિયા સુધી પહોંચે છે; વિભાજનમાં, તેને સ્પર્શતા પેન.',
   'How large the text of notes is.': 'નોંધોનું લખાણ કેટલું મોટું છે.',
   'How large all of Orden is drawn on this device.': 'આ ઉપકરણ પર આખું Orden કેટલું મોટું દેખાય.',
   'The space between the lines of a note.': 'નોંધની લીટીઓ વચ્ચેની જગ્યા.',

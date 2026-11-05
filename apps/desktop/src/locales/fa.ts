@@ -2672,6 +2672,9 @@ export const fa: Dictionary = {
     'مانند صفحه‌های وب، روی دکمه‌ها دست اشاره نشان می‌دهد.',
   'Orden’s own title bar, or the window frame of your system.':
     'نوار عنوان خود Orden، یا قاب پنجرهٔ سامانهٔ شما.',
+  'Square bottom edge': 'لبهٔ پایینی گوشه‌دار',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'آنچه باز است با گوشه‌های قائم تا پایین پنجره می‌رسد؛ در حالت تقسیم، پنل‌هایی که به آن می‌رسند.',
   'How large the text of notes is.': 'اندازهٔ متن یادداشت‌ها.',
   'How large all of Orden is drawn on this device.': 'اندازهٔ نمایش کل Orden در این دستگاه.',
   'The space between the lines of a note.': 'فاصلهٔ میان خط‌های یک یادداشت.',

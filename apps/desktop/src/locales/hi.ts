@@ -2668,6 +2668,9 @@ export const hi: Dictionary = {
     'वेब पेज की तरह बटन पर इशारा करता हाथ दिखाता है।',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden का अपना टाइटल बार या आपके सिस्टम का विंडो फ़्रेम।',
+  'Square bottom edge': 'चौकोर निचला किनारा',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'जो खुला है वह चौकोर कोनों के साथ विंडो के नीचे तक जाता है; विभाजन में, वे पैन जो उसे छूते हैं।',
   'How large the text of notes is.': 'नोट का टेक्स्ट कितना बड़ा है।',
   'How large all of Orden is drawn on this device.': 'इस डिवाइस पर पूरा Orden कितना बड़ा दिखे।',
   'The space between the lines of a note.': 'नोट की पंक्तियों के बीच की जगह।',

@@ -2687,6 +2687,9 @@ export const tr: Dictionary = {
     'Web sayfalarında olduğu gibi düğmelerin üzerinde işaret eden bir el gösterir.',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden’in kendi başlık çubuğu ya da sisteminizin pencere çerçevesi.',
+  'Square bottom edge': 'Köşeli alt kenar',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'Açık olan, köşeli kenarlarla pencerenin altına kadar uzanır; bölündüğünde, alta değen bölmeler.',
   'How large the text of notes is.': 'Notların yazısının ne kadar büyük olduğu.',
   'How large all of Orden is drawn on this device.':
     'Orden’ın tamamının bu cihazda ne kadar büyük görüneceği.',

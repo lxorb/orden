@@ -2725,6 +2725,9 @@ export const fil: Dictionary = {
     'Nagpapakita ng nakaturong kamay sa ibabaw ng mga button, gaya ng sa mga web page.',
   'Orden’s own title bar, or the window frame of your system.':
     'Ang sariling title bar ng Orden, o ang kuwadro ng bintana ng iyong sistema.',
+  'Square bottom edge': 'Kuwadradong ibabang gilid',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'Umaabot sa ibaba ng window ang nakabukas nang may kuwadradong sulok; sa split, ang mga pane na dumidikit dito.',
   'How large the text of notes is.': 'Gaano kalaki ang teksto ng mga tala.',
   'How large all of Orden is drawn on this device.':
     'Kung gaano kalaki ipinapakita ang buong Orden sa device na ito.',

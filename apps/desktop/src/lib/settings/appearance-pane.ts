@@ -431,6 +431,19 @@ export function appearancePane(): Pane {
                   get: () => modes.frame,
                   set: (value) => modes.setFrame(value),
                 },
+                {
+                  kind: 'switch',
+                  key: 'appearance.flushBottom',
+                  store: { on: modes, name: 'flushBottom' },
+                  label: t('Square bottom edge'),
+                  hint: t(
+                    'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.',
+                  ),
+                  words: ['corners', 'rounded', 'square', 'bottom', 'edge', 'card', 'gap', 'flush'],
+                  initial: DEFAULTS.flushBottom,
+                  get: () => modes.flushBottom,
+                  set: () => modes.toggleFlushBottom(),
+                },
                 ...(zooms
                   ? ([
                       {

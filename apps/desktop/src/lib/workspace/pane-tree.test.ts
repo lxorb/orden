@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import {
   type Along,
+  bottomRow,
   canSplit,
   clamped,
   EQUAL,
@@ -224,6 +225,44 @@ describe('the top row', () => {
   test("keeps the panes themselves, so a strip over one is that pane's", () => {
     const frame = split(pane('a'), 'a', 'column', 'b')
     expect(topRow(frame)).toBe(panesIn(frame)[0])
+  })
+})
+
+const bottomIds = (frame: Frame) => panesIn(bottomRow(frame)).map((one) => one.id)
+
+describe('the bottom row', () => {
+  test('is the one pane there is', () => {
+    expect(bottomIds(pane('a'))).toEqual(['a'])
+  })
+
+  test('holds both panes side by side', () => {
+    expect(bottomIds(split(pane('a'), 'a', 'row', 'b'))).toEqual(['a', 'b'])
+  })
+
+  test('holds only the lower of two panes one above the other', () => {
+    expect(bottomIds(split(pane('a'), 'a', 'column', 'b'))).toEqual(['b'])
+  })
+
+  test('holds the bottom two of a 2x2 split either way first', () => {
+    const across = split(
+      split(split(pane('a'), 'a', 'row', 'b'), 'a', 'column', 'c'),
+      'b',
+      'column',
+      'd',
+    )
+    expect(bottomIds(across)).toEqual(['c', 'd'])
+    const down = split(
+      split(split(pane('a'), 'a', 'column', 'c'), 'a', 'row', 'b'),
+      'c',
+      'row',
+      'd',
+    )
+    expect(bottomIds(down)).toEqual(['c', 'd'])
+  })
+
+  test("holds a pane beside a column whole, and only the column's lower side", () => {
+    const frame = split(split(pane('a'), 'a', 'row', 'b'), 'b', 'column', 'c')
+    expect(bottomIds(frame)).toEqual(['a', 'c'])
   })
 })
 

@@ -2681,6 +2681,9 @@ export const te: Dictionary = {
     'వెబ్ పేజీల లాగే, బటన్‌లపై చూపుడు చేతిని చూపిస్తుంది.',
   'Orden’s own title bar, or the window frame of your system.':
     'Orden సొంత టైటిల్ బార్, లేదా మీ సిస్టమ్ విండో ఫ్రేమ్.',
+  'Square bottom edge': 'చతురస్ర కింది అంచు',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    'తెరిచి ఉన్నది చతురస్ర మూలలతో విండో కింది వరకు వస్తుంది; విభజనలో, దాన్ని తాకే పేన్‌లు.',
   'How large the text of notes is.': 'నోట్‌ల టెక్స్ట్ ఎంత పెద్దదో అది.',
   'How large all of Orden is drawn on this device.':
     'ఈ పరికరంలో Orden మొత్తం ఎంత పెద్దగా కనిపిస్తుంది.',

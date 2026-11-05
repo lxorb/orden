@@ -2592,6 +2592,9 @@ export const zhHantHK: Dictionary = {
   'Shows a pointing hand over buttons, as web pages do.': '像網頁一樣在按鈕上顯示手形指標。',
   'Orden’s own title bar, or the window frame of your system.':
     '使用 Orden 自己的標題列，或系統的視窗框架。',
+  'Square bottom edge': '直角底邊',
+  'What is open runs into the bottom of the window with square corners; in a split, the panes that touch it.':
+    '開啟的內容以直角延伸至視窗底部；分割時，僅限觸及底部的窗格。',
   'How large the text of notes is.': '筆記文字的大小。',
   'How large all of Orden is drawn on this device.': '整個 Orden 在此裝置上的顯示大小。',
   'The space between the lines of a note.': '筆記行與行之間的距離。',
