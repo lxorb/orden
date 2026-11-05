@@ -335,17 +335,29 @@ pub struct Frame {
     pub parent: String,
 }
 
+/// Where a console line or a request came from, as the engine said: what the site filter
+/// of `browser_console` and `browser_network` goes by, besides the line's script or the
+/// request's address.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Whence {
+    /// Orden's own line: what the page tried that Orden refused.
+    Orden,
+    /// A frame's: its address or origin first, then that of the frame holding it, as
+    /// `Facts::at` is. Empty when the engine did not say.
+    Frame(Vec<String>),
+}
+
 /// What the engine has said about one page, kept as it says it.
 #[derive(Default)]
 pub struct Heard {
     /// The frames' sessions already asked to say what frames they hold in turn.
     nested: HashSet<String>,
-    /// The console, oldest first.
-    console: VecDeque<ConsoleLine>,
+    /// The console, oldest first, each line with where it came from.
+    console: VecDeque<(ConsoleLine, Whence)>,
     /// The next console line's number.
     console_next: u64,
-    /// The requests, oldest first.
-    requests: VecDeque<Request>,
+    /// The requests, oldest first, each with the frame that sent it.
+    requests: VecDeque<(Request, Whence)>,
     /// The next request's number.
     requests_next: u64,
     /// Each request's number and when it started, by its session and id.
@@ -354,6 +366,9 @@ pub struct Heard {
     in_flight: HashSet<(String, String)>,
     /// When the last request started or ended.
     network_moved: Option<Instant>,
+    /// The origin of each script context, by its session and id: the frame a console
+    /// line was printed in, whichever site its script came from.
+    contexts: HashMap<(String, i64), String>,
     /// Frames in processes of their own, by the number their refs carry (`f2e17` is
     /// the second); a frame that went is `None`, so the numbers of the rest hold.
     frames: Vec<Option<Frame>>,
@@ -381,25 +396,34 @@ pub struct Heard {
 }
 
 impl Heard {
-    /// Console lines after `since`, of `level` when named.
-    pub fn console(&self, since: Option<u64>, level: Option<&str>) -> (Vec<ConsoleLine>, u64) {
+    /// Console lines after `since`, of `level` when named, each with where it came from.
+    pub fn console(
+        &self,
+        since: Option<u64>,
+        level: Option<&str>,
+    ) -> (Vec<(ConsoleLine, Whence)>, u64) {
         let lines = self
             .console
             .iter()
-            .filter(|one| since.is_none_or(|since| one.seq > since))
-            .filter(|one| level.is_none_or(|level| one.level == level))
+            .filter(|(one, _)| since.is_none_or(|since| one.seq > since))
+            .filter(|(one, _)| level.is_none_or(|level| one.level == level))
             .cloned()
             .collect();
         (lines, self.console_next)
     }
 
-    /// Requests after `since`, whose address contains `matching` when named.
-    pub fn requests(&self, since: Option<u64>, matching: Option<&str>) -> (Vec<Request>, u64) {
+    /// Requests after `since`, whose address contains `matching` when named, each with
+    /// the frame that sent it.
+    pub fn requests(
+        &self,
+        since: Option<u64>,
+        matching: Option<&str>,
+    ) -> (Vec<(Request, Whence)>, u64) {
         let rows = self
             .requests
             .iter()
-            .filter(|one| since.is_none_or(|since| one.seq > since))
-            .filter(|one| matching.is_none_or(|part| one.url.contains(part)))
+            .filter(|(one, _)| since.is_none_or(|since| one.seq > since))
+            .filter(|(one, _)| matching.is_none_or(|part| one.url.contains(part)))
             .cloned()
             .collect();
         (rows, self.requests_next)
@@ -428,8 +452,8 @@ impl Heard {
             .collect();
         self.requests
             .iter()
-            .filter(|one| seqs.contains(&one.seq))
-            .map(|one| one.url.clone())
+            .filter(|(one, _)| seqs.contains(&one.seq))
+            .map(|(one, _)| one.url.clone())
             .collect()
     }
 
@@ -449,17 +473,20 @@ impl Heard {
 
     /// A line of Orden's own in the console: what the page tried that Orden refused.
     pub fn say(&mut self, level: &str, text: String) {
-        self.line(level, text, Some("nib".to_string()));
+        self.line(level, text, Some("nib".to_string()), Whence::Orden);
     }
 
-    fn line(&mut self, level: &str, text: String, source: Option<String>) {
+    fn line(&mut self, level: &str, text: String, source: Option<String>, whence: Whence) {
         self.console_next += 1;
-        self.console.push_back(ConsoleLine {
-            seq: self.console_next,
-            level: level.to_string(),
-            text: cut(text, LONGEST_LINE),
-            source,
-        });
+        self.console.push_back((
+            ConsoleLine {
+                seq: self.console_next,
+                level: level.to_string(),
+                text: cut(text, LONGEST_LINE),
+                source,
+            },
+            whence,
+        ));
         while self.console.len() > RING {
             self.console.pop_front();
         }
@@ -479,18 +506,30 @@ impl Heard {
         self.started.insert(key, (seq, Instant::now()));
         self.network_moved = Some(Instant::now());
         let request = event.get("request").cloned().unwrap_or_default();
-        self.requests.push_back(Request {
-            seq,
-            method: text_at(&request, "method"),
-            url: cut(text_at(&request, "url"), LONGEST_LINE),
-            status: None,
-            kind: text_at(event, "type"),
-            ms: None,
-            failed: None,
-            body: None,
-        });
+        // The document that sent it, then the frame its session is: a frame of one site
+        // fetches from any other.
+        let mut from: Vec<String> = event
+            .get("documentURL")
+            .and_then(Value::as_str)
+            .map(str::to_string)
+            .into_iter()
+            .collect();
+        from.extend(self.session_address(session));
+        self.requests.push_back((
+            Request {
+                seq,
+                method: text_at(&request, "method"),
+                url: cut(text_at(&request, "url"), LONGEST_LINE),
+                status: None,
+                kind: text_at(event, "type"),
+                ms: None,
+                failed: None,
+                body: None,
+            },
+            Whence::Frame(from),
+        ));
         while self.requests.len() > RING {
-            if let Some(gone) = self.requests.pop_front() {
+            if let Some((gone, _)) = self.requests.pop_front() {
                 self.started.retain(|_, (seq, _)| *seq != gone.seq);
             }
         }
@@ -504,7 +543,7 @@ impl Heard {
             .pointer("/response/status")
             .and_then(Value::as_u64)
             .and_then(|one| u16::try_from(one).ok());
-        if let Some(row) = self.requests.iter_mut().find(|one| one.seq == seq) {
+        if let Some((row, _)) = self.requests.iter_mut().find(|(one, _)| one.seq == seq) {
             row.status = status;
         }
     }
@@ -519,9 +558,44 @@ impl Heard {
         let Some((seq, at)) = self.started.get(&key).copied() else {
             return;
         };
-        if let Some(row) = self.requests.iter_mut().find(|one| one.seq == seq) {
+        if let Some((row, _)) = self.requests.iter_mut().find(|(one, _)| one.seq == seq) {
             row.ms = u64::try_from(at.elapsed().as_millis()).ok();
             row.failed = failed;
+        }
+    }
+
+    /// The address of the frame a session is, for a frame's own session; none for the
+    /// page's.
+    fn session_address(&self, session: &str) -> Option<String> {
+        if session.is_empty() {
+            return None;
+        }
+        self.frames
+            .iter()
+            .flatten()
+            .find(|frame| frame.session == session)
+            .map(|frame| frame.url.clone())
+    }
+
+    /// Where a line printed in a script context was printed: the context's origin, then
+    /// the frame its session is.
+    fn printed_in(&self, session: &str, context: Option<i64>) -> Whence {
+        let mut at: Vec<String> = context
+            .and_then(|id| self.contexts.get(&(session.to_string(), id)))
+            .cloned()
+            .into_iter()
+            .collect();
+        at.extend(self.session_address(session));
+        Whence::Frame(at)
+    }
+
+    fn context_created(&mut self, session: &str, event: &Value) {
+        let Some(context) = event.get("context") else {
+            return;
+        };
+        if let Some(id) = context.get("id").and_then(Value::as_i64) {
+            self.contexts
+                .insert((session.to_string(), id), text_at(context, "origin"));
         }
     }
 
@@ -574,6 +648,7 @@ impl Heard {
             }
         }
         self.in_flight.retain(|(owner, _)| owner != session);
+        self.contexts.retain(|(owner, _), _| owner != session);
         self.nested.remove(session);
     }
 
@@ -619,13 +694,16 @@ pub fn labels() -> Vec<String> {
 }
 
 /// The events a page is followed for: what `heard_event` keeps.
-const EVENTS: [&str; 13] = [
+const EVENTS: [&str; 16] = [
     "Network.requestWillBeSent",
     "Network.responseReceived",
     "Network.loadingFinished",
     "Network.loadingFailed",
     "Runtime.consoleAPICalled",
     "Runtime.exceptionThrown",
+    "Runtime.executionContextCreated",
+    "Runtime.executionContextDestroyed",
+    "Runtime.executionContextsCleared",
     "Log.entryAdded",
     "Page.fileChooserOpened",
     "Target.attachedToTarget",
@@ -715,7 +793,11 @@ fn heard_event(held: &mut Heard, method: &str, session: &str, event: Value) {
                 Some("debug") => "debug",
                 _ => "log",
             };
-            held.line(level, spoken(&event), frame_source(&event));
+            let whence = held.printed_in(
+                session,
+                event.get("executionContextId").and_then(Value::as_i64),
+            );
+            held.line(level, spoken(&event), frame_source(&event), whence);
         }
         "Runtime.exceptionThrown" => {
             let details = event.get("exceptionDetails").cloned().unwrap_or_default();
@@ -732,7 +814,20 @@ fn heard_event(held: &mut Heard, method: &str, session: &str, event: Value) {
                     .unwrap_or_default()
                     + 1
             ));
-            held.line("error", text, source);
+            let whence = held.printed_in(
+                session,
+                details.get("executionContextId").and_then(Value::as_i64),
+            );
+            held.line("error", text, source, whence);
+        }
+        "Runtime.executionContextCreated" => held.context_created(session, &event),
+        "Runtime.executionContextDestroyed" => {
+            if let Some(id) = event.get("executionContextId").and_then(Value::as_i64) {
+                held.contexts.remove(&(session.to_string(), id));
+            }
+        }
+        "Runtime.executionContextsCleared" => {
+            held.contexts.retain(|(owner, _), _| owner != session);
         }
         "Log.entryAdded" => {
             let entry = event.get("entry").cloned().unwrap_or_default();
@@ -743,7 +838,9 @@ fn heard_event(held: &mut Heard, method: &str, session: &str, event: Value) {
                 _ => "info",
             };
             let source = entry.get("url").and_then(Value::as_str).map(str::to_string);
-            held.line(level, text_at(&entry, "text"), source);
+            // An entry names no frame: the address it is about is all there is of where.
+            let whence = Whence::Frame(source.iter().cloned().collect());
+            held.line(level, text_at(&entry, "text"), source, whence);
         }
         "Page.fileChooserOpened" => {
             held.chooser = event.get("backendNodeId").and_then(Value::as_u64);
@@ -1034,11 +1131,11 @@ mod tests {
     fn the_ring_keeps_the_last_five_hundred_and_counts_on() {
         let mut heard = Heard::default();
         for at in 0..(RING + 20) {
-            heard.line("log", format!("{at}"), None);
+            heard.line("log", format!("{at}"), None, Whence::Orden);
         }
         let (lines, next) = heard.console(None, None);
         assert_eq!(lines.len(), RING);
-        assert_eq!(lines[0].text, "20");
+        assert_eq!(lines[0].0.text, "20");
         assert_eq!(next, u64::try_from(RING + 20).expect("small"));
         let (after, _) = heard.console(Some(next - 2), None);
         assert_eq!(after.len(), 2);
@@ -1059,10 +1156,94 @@ mod tests {
         assert!(heard.idle_for(Duration::ZERO));
         let (rows, next) = heard.requests(None, Some("a.example"));
         assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].status, Some(302));
-        assert_eq!(rows[0].method, "GET");
+        assert_eq!(rows[0].0.status, Some(302));
+        assert_eq!(rows[0].0.method, "GET");
         assert_eq!(next, 1);
         assert!(!heard.idle_for(Duration::from_secs(60)));
+    }
+
+    /// RE-2, RE-3: a console line is placed by the context it was printed in, not by its
+    /// script's address, and a request by the document and the frame that sent it.
+    #[test]
+    fn a_line_and_a_request_carry_the_frame_they_came_from() {
+        let mut heard = Heard::default();
+        heard.attached(
+            "",
+            &json!({ "sessionId": "s1", "targetInfo": { "type": "iframe", "targetId": "F", "url": "https://bank.example/app" } }),
+        );
+        heard_event(
+            &mut heard,
+            "Runtime.executionContextCreated",
+            "",
+            json!({ "context": { "id": 7, "origin": "https://bank.example" } }),
+        );
+        let printed = |context: i64, url: &str| {
+            json!({
+                "type": "log",
+                "executionContextId": context,
+                "args": [{ "type": "string", "value": "balance 1200" }],
+                "stackTrace": { "callFrames": [{ "url": url, "lineNumber": 0 }] },
+            })
+        };
+        heard_event(
+            &mut heard,
+            "Runtime.consoleAPICalled",
+            "",
+            printed(7, "https://cdn.example/app.js"),
+        );
+        heard_event(&mut heard, "Runtime.consoleAPICalled", "", printed(9, ""));
+        heard_event(
+            &mut heard,
+            "Log.entryAdded",
+            "",
+            json!({ "entry": { "level": "error", "text": "no url" } }),
+        );
+        heard.say("warning", "Orden kept a tab from opening".into());
+        let (lines, _) = heard.console(None, None);
+        let whence: Vec<&Whence> = lines.iter().map(|(_, whence)| whence).collect();
+        assert_eq!(
+            whence,
+            [
+                &Whence::Frame(vec!["https://bank.example".into()]),
+                &Whence::Frame(vec![]),
+                &Whence::Frame(vec![]),
+                &Whence::Orden,
+            ]
+        );
+        assert_eq!(
+            lines[0].0.source.as_deref(),
+            Some("https://cdn.example/app.js:1")
+        );
+        // A context gone is no longer anybody's.
+        heard_event(
+            &mut heard,
+            "Runtime.executionContextsCleared",
+            "",
+            json!({}),
+        );
+        heard_event(&mut heard, "Runtime.consoleAPICalled", "", printed(7, ""));
+        assert_eq!(heard.console(None, None).0[4].1, Whence::Frame(vec![]));
+
+        heard.request_started(
+            "s1",
+            &json!({ "requestId": "1", "type": "Fetch", "documentURL": "https://bank.example/app", "request": { "method": "GET", "url": "https://api.backend.example/accounts" } }),
+        );
+        heard.request_started(
+            "",
+            &json!({ "requestId": "2", "type": "Fetch", "documentURL": "https://shop.example/", "request": { "method": "GET", "url": "https://api.backend.example/cart" } }),
+        );
+        let (rows, _) = heard.requests(None, None);
+        assert_eq!(
+            rows[0].1,
+            Whence::Frame(vec![
+                "https://bank.example/app".into(),
+                "https://bank.example/app".into()
+            ])
+        );
+        assert_eq!(
+            rows[1].1,
+            Whence::Frame(vec!["https://shop.example/".into()])
+        );
     }
 
     #[test]
