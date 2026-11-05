@@ -18,6 +18,7 @@ class FakePeer {
   onconnectionstatechange: (() => void) | null = null
   channel = {
     onopen: null as (() => void) | null,
+    onmessage: null as ((event: { data: unknown }) => void) | null,
     readyState: 'connecting' as RTCDataChannelState,
     sent: [] as string[],
     send(data: string) {
@@ -215,5 +216,26 @@ describe('an application’s picture', () => {
     await tick()
     expect(here.peers).toHaveLength(1)
     expect(here.said.filter((one) => one.includes('offer'))).toHaveLength(1)
+  })
+
+  test('draws the application’s pointer as its host says it, until the picture ends', async () => {
+    const here = world()
+    here.picture.want(true)
+    await tick()
+    const channel = here.peers[0]?.channel
+    const png = 'data:image/png;base64,iVBORw0KGgo='
+    channel?.onmessage?.({ data: JSON.stringify({ t: 'pointer', png, x: 1, y: 2 }) })
+    expect(here.picture.pointer).toEqual({ t: 'pointer', png, x: 1, y: 2 })
+    channel?.onmessage?.({ data: '{"t":"pointer","png":"javascript:alert(1)","x":0,"y":0}' })
+    channel?.onmessage?.({ data: 'nope' })
+    expect(here.picture.pointer).toEqual({ t: 'pointer', png, x: 1, y: 2 })
+    channel?.onmessage?.({ data: '{"t":"pointer","hidden":true}' })
+    expect(here.picture.pointer).toEqual({ t: 'pointer', hidden: true })
+
+    here.picture.want(false)
+    expect(here.picture.pointer).toBeNull()
+    // What the old connection says after is not heard.
+    channel?.onmessage?.({ data: JSON.stringify({ t: 'pointer', png, x: 1, y: 2 }) })
+    expect(here.picture.pointer).toBeNull()
   })
 })

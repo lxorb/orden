@@ -1580,6 +1580,20 @@ engines say nothing, and what each one does there is said with it.
   ask without a delegate for it, so there `alert()` shows nothing and `confirm()` is
   `false`, and Linux draws `WebKitGTK`'s own. See `src-tauri/src/web_dialogs.rs` and
   `web-tab/dialogs.svelte.ts`.
+- **A page that did not arrive** (#1093). A name that does not resolve, a certificate
+  that is wrong, a server that never answers: `WebView2` draws an error page of its own
+  and says why (`NavigationCompleted`). `WKWebView` draws nothing, and wry hears none of
+  it - the tab stayed empty under a spinner that never stopped, black in a dark theme. So
+  on a Mac Orden's own navigation delegate stands in front of wry's
+  (`src-tauri/src/web_page/webkit.rs`), says each failure as the same `arrived` event,
+  with the engine's own words for it and whether it left the tab with nothing drawn
+  (`bare`), and the pane answers a bare one with the card a crashed page gets: the site,
+  the address, the reason, Reload and Open in the browser (`failed` in
+  `web-tab/pages.svelte.ts`). A navigation another one replaced, or that became a
+  download, is no failure. The same delegate judges a **frame's** navigation as a frame:
+  wry asked the tab's own rule about every frame on a Mac, and that rule refused
+  `about:srcdoc`, `data:` and `blob:`, so every such frame was an empty box there and
+  nowhere else (`frame_may_open` in `web_tabs.rs`).
 - **View page source.** The page menu's row asks for `view-source:` and the address,
   which opens as a tab: the source of anything a tab may hold and nothing else. The
   address field takes it typed, as Chrome's does.

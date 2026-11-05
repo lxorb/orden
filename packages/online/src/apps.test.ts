@@ -3,10 +3,12 @@ import {
   type AppFile,
   catalogueOf,
   fromHostOf,
+  fromPictureOf,
   iceServersOf,
   inputText,
   MOST_ICON,
   MOST_INSTALLED,
+  MOST_POINTER,
   appFileOf,
   appFileText,
   appSocketPath,
@@ -180,6 +182,36 @@ describe('the holder’s input', () => {
     expect(inputText({ t: 'key', key: 'a', code: 'KeyA', down: true })).toBe(
       '{"t":"key","key":"a","code":"KeyA","down":true}',
     )
+    expect(inputText({ t: 'text', text: '日本' })).toBe('{"t":"text","text":"日本"}')
+  })
+})
+
+describe('what the host says on the picture’s channel', () => {
+  it('reads the pointer’s shape with its hot spot, or that it is hidden', () => {
+    const png = 'data:image/png;base64,iVBORw0KGgo='
+    expect(fromPictureOf(JSON.stringify({ t: 'pointer', png, x: 3, y: 4 }))).toEqual({
+      t: 'pointer',
+      png,
+      x: 3,
+      y: 4,
+    })
+    expect(fromPictureOf('{"t":"pointer","hidden":true}')).toEqual({ t: 'pointer', hidden: true })
+  })
+
+  it('drops what does not check: another picture, a spot off it, too large, not text', () => {
+    const png = 'data:image/png;base64,iVBORw0KGgo='
+    expect(
+      fromPictureOf(
+        JSON.stringify({ t: 'pointer', png: 'data:image/svg+xml;base64,AA==', x: 0, y: 0 }),
+      ),
+    ).toBeNull()
+    expect(fromPictureOf(JSON.stringify({ t: 'pointer', png, x: -1, y: 0 }))).toBeNull()
+    expect(fromPictureOf(JSON.stringify({ t: 'pointer', png, x: 1.5, y: 0 }))).toBeNull()
+    const huge = `data:image/png;base64,${'A'.repeat(MOST_POINTER)}`
+    expect(fromPictureOf(JSON.stringify({ t: 'pointer', png: huge, x: 0, y: 0 }))).toBeNull()
+    expect(fromPictureOf('{"t":"clipboard","text":"x"}')).toBeNull()
+    expect(fromPictureOf(new ArrayBuffer(4))).toBeNull()
+    expect(fromPictureOf('nope')).toBeNull()
   })
 })
 

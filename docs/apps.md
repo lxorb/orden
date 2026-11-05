@@ -94,11 +94,12 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
   one UDP socket for each address the host has (and the loopback), a thread for each, one for
   its timers. It gathers nothing and has no TURN client; the host needs none, since the
   viewer's engine does TURN.
-- **ffmpeg**, a program the host runs as it runs Xvfb: `x11grab` reads the display, libvpx
-  encodes VP8 in its realtime mode with no frame held back, and each frame is written to a
-  pipe as IVF the moment it is made. VP8 because every viewer's engine decodes it (Orden's
-  CEF has no H.264). It starts once the viewer is connected, so the first frame is a key
-  frame; another comes every two seconds. Not installed: the viewer is told `encoder`.
+- **ffmpeg**, a program the host runs as it runs Xvfb: it is handed the display's frames
+  (step 5: read as the display changes, no longer by `x11grab`), libvpx encodes VP8 in its
+  realtime mode with no frame held back, and each frame is written to a pipe as IVF the
+  moment it is made. VP8 because every viewer's engine decodes it (Orden's CEF has no
+  H.264). It starts once the viewer is connected, so the first frame is a key frame. Not
+  installed: the viewer is told `encoder`.
 - **The tab shows it** (`apps/desktop/src/lib/apps/picture.svelte.ts`): while this device holds
   the application and it runs on a host that is there, the engine's own `RTCPeerConnection`
   offers a receive-only video and the data channel `input`, trickles its candidates, and shows
@@ -116,7 +117,7 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
   key of the display's keymap that gives its keysym with Shift as held, or on a spare key lent
   it, so the holder's layout decides what is typed; what was pressed is what is let go, and
   everything held is let go when the picture ends. `AltGraph` is not passed on, since the
-  character it chose is. Input methods, touch, pen and precise scrolling are step 5.
+  character it chose is. Input methods, touch and pen came with step 5.
 - **Across networks**: the host asks Cloudflare's STUN, once for each of its sockets, what
   address the internet sees it at (`apps_host/stun.rs`), and puts that in the answer beside its
   own; the viewer asks the account for its servers, `GET /v2/apps/ice`
@@ -131,3 +132,48 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
   WebView2 and WKWebView, hardware VP9 or VP8 to Orden's CEF - and libvpx's VP8 otherwise. Each
   holds nothing back (no B-frames, no look-ahead, its lowest-latency mode); H.264 goes out as
   constrained baseline, cut into frames at the access unit delimiters ffmpeg is told to write.
+
+## Size and input (step 5)
+
+- **The display is the holder's tab**, in device pixels, at its ratio: made so when the
+  application starts, and again whenever the tab is resized (once the drag has settled,
+  `view.ts`), moved to a screen of another ratio, or taken over by another device, whose
+  view the relay hands the host with the lock (`apps_view`). Xvfb's screen cannot grow once
+  started, so it is made with room for a 4K monitor either way up (more if the first view
+  is larger: 64 MiB at least, for as long as the application runs), and RandR sets the part
+  in use, with a monitor of that size (`apps_host/display.rs`). Larger than the room, the
+  picture is the room's and drawn to fit.
+- **A window manager of its own** (`apps_host/wm.rs`) fills the screen with the
+  application's main windows and fills it again as it changes; a dialog, a transient
+  window or one whose hints hold it smaller keeps its size in the middle; the newest
+  window, and the one clicked, has the keyboard. It says the ratio to the toolkits as a
+  desktop does: XSETTINGS (`Gdk/WindowScalingFactor`, `Gdk/UnscaledDPI`, `Xft/DPI`), which
+  GTK follows live, and `Xft.dpi` in the screen's resources for Qt and Electron, which read
+  it as they start.
+- **The refresh rate is the holder's screen's**, measured off the frames the page draws
+  (when it mounts, when its ratio changes, when the window comes back), and the picture is
+  read at most that often, up to 60 a second.
+- **Frames only when the display changes** (`apps_host/capture.rs`): DAMAGE says when
+  anything is drawn, and only then is the screen read - in memory shared with Xvfb
+  (MIT-SHM), as `x11grab` reads it - and handed to the encoder, each frame stamped with the
+  time it came. A still application sends nothing.
+- **A key frame when one was lost**: a viewer whose picture broke asks for one (PLI or
+  FIR), and gets it from an encoder started afresh, which begins with one; at most every
+  half second, the next request waiting for that. A screen of another size starts one too.
+  Ten seconds' worth of frames brings another, as a net under the requests.
+- **The pointer is the holder's own**, with the application's shape for it: the picture
+  has no pointer drawn in it, and the host sends the shape whenever it changes over the
+  data channel (`{"t":"pointer","png":...,"x":...,"y":...}`, the hot spot in the display's
+  pixels, or `{"t":"pointer","hidden":true}`), which the tab draws as the CSS pointer over
+  the picture at its ratio.
+- **An input method** composes in a text field of the tab's own, put where the pointer last
+  pressed; the text it makes comes to the host once chosen (`{"t":"text","text":...}`) and
+  is typed a character at a time, on a key of the display's that gives it or a spare one
+  lent it. A dead key's letter and a symbol picked from the system's picker come the same
+  way.
+- **Touch and pen** are the pointer, as X has only the one: the first finger or the pen's
+  tip presses its main button, a pen's barrel button the other; the page neither pans nor
+  zooms under them. **Precise scrolling** adds up to the wheel's clicks, X having nothing
+  finer, with nothing left over lost.
+- **Keys held when the tab loses the keyboard** - the window left with Alt held - are let
+  go in the application.

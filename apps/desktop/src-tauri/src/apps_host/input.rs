@@ -16,6 +16,10 @@
 //! What was pressed for a key is what is let go for it, even if the character changed
 //! meanwhile (a Shift let go first). Everything still held is let go when the picture
 //! ends.
+//!
+//! **Text an input method made** (step 5) - a word composed in Japanese, a letter made
+//! of a dead key and another - comes as the text itself, once it is chosen, and each of
+//! its characters is typed as a key that gives it, pressed and let go.
 
 use std::collections::HashMap;
 
@@ -46,7 +50,12 @@ pub enum InputEvent {
         code: String,
         down: bool,
     },
+    /// Text an input method made, typed character by character.
+    Text { text: String },
 }
+
+/// The most characters one message of text types.
+const MOST_TEXT: usize = 1000;
 
 /// The X button a pointer's button is: 1 the main one, 2 the middle, 3 the other, and
 /// 8 and 9 back and forward.
@@ -254,6 +263,7 @@ impl Input {
                 }
             }
             InputEvent::Key { key, code, down } => self.key(&key, code, down),
+            InputEvent::Text { text } => self.text(&text),
         }
         let _ = self.connection.flush();
     }
@@ -268,19 +278,9 @@ impl Input {
         let Some(sym) = keysym(key).map(|sym| sided(sym, &code)) else {
             return;
         };
-        let shifted = self
-            .held_keys
-            .keys()
-            .any(|held| held == "ShiftLeft" || held == "ShiftRight");
-        let Some((keycode, lent)) = self.keymap.key_for(sym, shifted) else {
+        let Some(keycode) = self.key_giving(sym) else {
             return;
         };
-        if lent {
-            let syms = vec![sym; usize::from(self.per_key.max(1))];
-            let _ = self
-                .connection
-                .change_keyboard_mapping(1, keycode, self.per_key.max(1), &syms);
-        }
         if let Some(was) = self.held_keys.insert(code, keycode) {
             // Pressed again without being let go: a key repeating.
             if was != keycode {
@@ -288,6 +288,37 @@ impl Input {
             }
         }
         self.fake(KEY_PRESS_EVENT, keycode, 0, 0);
+    }
+
+    /// The key that gives a keysym with Shift as it is held, a spare one lent it first
+    /// where the keymap has none.
+    fn key_giving(&mut self, sym: Keysym) -> Option<Keycode> {
+        let shifted = self
+            .held_keys
+            .keys()
+            .any(|held| held == "ShiftLeft" || held == "ShiftRight");
+        let (keycode, lent) = self.keymap.key_for(sym, shifted)?;
+        if lent {
+            let syms = vec![sym; usize::from(self.per_key.max(1))];
+            let _ = self
+                .connection
+                .change_keyboard_mapping(1, keycode, self.per_key.max(1), &syms);
+        }
+        Some(keycode)
+    }
+
+    /// Types text, a key for each character that has one, pressed and let go.
+    fn text(&mut self, text: &str) {
+        for one in text.chars().take(MOST_TEXT) {
+            let Some(sym) = keysym(one.encode_utf8(&mut [0; 4])) else {
+                continue;
+            };
+            let Some(keycode) = self.key_giving(sym) else {
+                continue;
+            };
+            self.fake(KEY_PRESS_EVENT, keycode, 0, 0);
+            self.fake(KEY_RELEASE_EVENT, keycode, 0, 0);
+        }
     }
 
     /// Lets go of every key and button still held: the picture is ending.
@@ -345,6 +376,12 @@ mod tests {
                 key: "a".to_owned(),
                 code: "KeyA".to_owned(),
                 down: true,
+            })
+        );
+        assert_eq!(
+            read(r#"{"t":"text","text":"日本"}"#),
+            Some(InputEvent::Text {
+                text: "日本".to_owned()
             })
         );
         assert_eq!(read(r#"{"t":"run","line":"rm -rf ~"}"#), None);

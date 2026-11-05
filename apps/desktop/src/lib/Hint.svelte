@@ -34,7 +34,7 @@
 
 <!-- A word joiner first, so no line ever breaks between the label's last word and
      the glyph: the `?` wraps with that word instead of standing on a line alone. -->
-<span class="explain nib-hint" bind:this={host}
+<span class="explain nib-mark nib-hint" bind:this={host}
   >&#8288;<button
     type="button"
     aria-label={text}
@@ -81,54 +81,30 @@
 
 <style>
   /* In the label's own line, as a word of it, rather than a box beside the label
-     (#1052). A row that set the label and the glyph side by side in a flex row
-     centred the glyph on the label's line box - the font's ascent, descent and
-     leading - which is not where the letters are, and is somewhere else again in
-     every face, size and platform; and on a name that wrapped, it centred the glyph
-     on all of its lines at once and left a gap after the last word as wide as the
-     longest line. Here the glyph is centred the way CSS centres a thing on letters,
-     `vertical-align: middle`, on the middle of the label's own x-height; it follows
-     the last word on that word's line; and the gap before it is `--hint-gap` in
-     every label and in either direction.
-
-     And it takes no room of its own on the line: the glyph is pulled back over its
-     own width and drawn where it would have stood, and the label keeps the gap and
-     the glyph free at its end instead (below). A word joiner keeps the glyph with
-     the last word only while the two fit on a line together; a word as wide as the
-     name - German has them - is broken by `overflow-wrap: anywhere`, and the glyph
-     would be broken off with it onto a line by itself. */
+     (#1052): `.nib-mark` in the themes package, which places every glyph that
+     follows words the same way - on the middle of their x-height, glued to the last
+     word, taking no room of its own on the line. What is here is its size and gap,
+     said on the label the glyph follows, and the bubble's anchor. */
   .explain {
     position: relative;
-    white-space: nowrap;
   }
 
-  /* The gap and the glyph, said on the label the glyph follows, which keeps that
-     much room free at its end - room inside the label's own width - and hands both
-     down to the glyph. */
   :global(:has(> .nib-hint)) {
-    --hint-gap: 5px;
-    --hint-glyph: 16px;
-    padding-inline-end: calc(var(--hint-gap) + var(--hint-glyph));
+    --mark-gap: 5px;
+    --mark-size: 16px;
   }
 
   :global([data-touch] :has(> .nib-hint)) {
-    --hint-glyph: var(--touch-icon);
+    --mark-size: var(--touch-icon);
   }
 
   /* The glyph itself: quiet enough to be passed over by somebody who knows the
      word, and in the same slot after every label that has one, so a label
      without one sits exactly where it did. */
   button {
-    position: relative;
-    inset-inline-start: calc(var(--hint-glyph, 16px) + var(--hint-gap, 5px));
     display: inline-flex;
-    vertical-align: middle;
     align-items: center;
     justify-content: center;
-    width: var(--hint-glyph, 16px);
-    height: var(--hint-glyph, 16px);
-    margin: 0;
-    margin-inline-start: calc(-1 * var(--hint-glyph, 16px));
     padding: 0;
     border: none;
     border-radius: 50%;
@@ -164,7 +140,7 @@
   .sentence {
     position: absolute;
     top: calc(100% + 6px);
-    inset-inline-start: calc(var(--hint-gap, 5px) - 8px);
+    inset-inline-start: calc(var(--mark-gap, 5px) - 8px);
     z-index: var(--z-popover);
   }
 

@@ -1297,6 +1297,65 @@ describe('a page whose process died', () => {
     expect(pages.of('left').crashed).toBe(false)
   })
 
+  /** #1093: a page that did not arrive, and that the engine drew nothing for, goes the
+   *  same way, at the address it was going to, with the engine's words for why. */
+  test('one that did not arrive goes the same way, says why, and comes back with Reload', async () => {
+    await livePage('failing')
+    calls.length = 0
+    const page = await hearing('nib://web-page')
+    page({
+      payload: {
+        tab: 'failing',
+        said: 'arrived',
+        url: 'https://no-such-host.invalid/',
+        failure: 'other',
+        bare: true,
+        reason: 'A server with the specified hostname could not be found.',
+      },
+    })
+    await settle()
+
+    const failed = pages.of('failing')
+    expect(failed.crashed).toBe(true)
+    expect(failed.live).toBe(false)
+    expect(failed.loading).toBe(false)
+    expect(failed.url).toBe('https://no-such-host.invalid/')
+    expect(failed.failure).toEqual({
+      url: 'https://no-such-host.invalid/',
+      failure: 'other',
+      reason: 'A server with the specified hostname could not be found.',
+    })
+    expect(calls).toContainEqual({ command: 'web_close', args: { tab: 'failing', keep: true } })
+
+    await pages.step('failing', 'reload')
+    expect(failed.crashed).toBe(false)
+    expect(failed.failure).toBe(null)
+  })
+
+  test('one the engine could not say the address of keeps the tab where it was going', async () => {
+    await livePage('nameless')
+    const page = await hearing('nib://web-page')
+    page({
+      payload: { tab: 'nameless', said: 'arrived', url: '', failure: 'other', bare: true },
+    })
+    await settle()
+    const failed = pages.of('nameless')
+    expect(failed.crashed).toBe(true)
+    expect(failed.url).toBe(SITE)
+    expect(failed.failure?.url).toBe(SITE)
+  })
+
+  test('one an engine drew its own page for stays', async () => {
+    await livePage('drawn')
+    const page = await hearing('nib://web-page')
+    page({
+      payload: { tab: 'drawn', said: 'arrived', url: SITE, failure: 'other', bare: false },
+    })
+    await settle()
+    expect(pages.of('drawn').live).toBe(true)
+    expect(pages.of('drawn').failure).toBe(null)
+  })
+
   test('a build that is refused after Reload offers Reload again', async () => {
     await livePage('refused')
     await crash('refused')

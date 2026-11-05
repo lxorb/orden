@@ -25,6 +25,7 @@
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
   import FindBar from '../FindBar.svelte'
+  import Outward from '../Outward.svelte'
   import { t } from '../i18n.svelte'
   import { dur } from '../motion'
   import { hostOf } from '@orden/online/urls'
@@ -87,9 +88,9 @@
     <!-- An address a program on the machine asked a browser for, in a browser build,
          which may open a window only for a press: the site's name is the whole of it. -->
     <div class="bar" transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
-      <button type="button" onclick={() => session.openOffered()}>
-        {hostOf(session.offered)} ↗
-      </button>
+      <button type="button" onclick={() => session.openOffered()}
+        ><span class="words">{hostOf(session.offered)}<Outward /></span></button
+      >
     </div>
   {/if}
 </div>
@@ -174,6 +175,13 @@
     font-weight: var(--weight-strong);
     cursor: default;
     transition: background var(--dur-fast) var(--ease-out);
+  }
+
+  /* The site's name and the arrow every link that leaves the app carries, a run of
+     text in a box of its own, which keeps the end of the line for the arrow
+     (Outward.svelte) inside the button's own padding. */
+  .bar .words {
+    display: block;
   }
 
   @media (hover: hover) {

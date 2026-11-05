@@ -744,6 +744,32 @@ pub(crate) fn tab_may_open(url: &Url) -> bool {
     allowed(url) || crate::extensions::ours(url)
 }
 
+/// Whether a frame inside a tab's page may be on `url` (#1093): what a tab may open, and
+/// the documents a page makes for its own frames - `about:blank`, `about:srcdoc`, a
+/// `data:` page and a `blob:` of a site's own - which are the page's own content rather
+/// than anywhere it goes.
+///
+/// Asked only where the engine asks about a frame's navigation at all. `WKWebView` asks
+/// its one navigation delegate about every frame, and wry hands each to the tab's rule,
+/// which refused every one of those four: a sign-in in a frame, an editor's preview or an
+/// embed drawn from a `blob:` stayed an empty box on a Mac while it worked everywhere
+/// else, where a frame's navigation is never the tab's to judge. See `web_page/webkit.rs`.
+#[cfg_attr(
+    not(all(target_os = "macos", not(feature = "cef"))),
+    allow(dead_code, reason = "only WKWebView asks about a frame's navigation")
+)]
+pub(crate) fn frame_may_open(url: &Url) -> bool {
+    match url.scheme() {
+        "about" => matches!(url.path(), "blank" | "srcdoc"),
+        "data" => true,
+        // `blob:https://site/id`: a site's own, and only one a tab may be on.
+        "blob" => {
+            Url::parse(url.path()).is_ok_and(|inner| inner.scheme() != "blob" && allowed(&inner))
+        }
+        _ => tab_may_open(url),
+    }
+}
+
 /// Opens `url` as a tab beside `tab`, in front: what an extension's popup does with a
 /// link pressed in it or a page of its own it opens; see extensions/popup.rs.
 pub(crate) fn open_as_tab(app: &AppHandle, window: &str, tab: &str, url: &Url) {
@@ -3339,8 +3365,8 @@ mod shot {
 #[cfg(test)]
 mod tests {
     use super::{
-        address, allowed, becomes, capture_kinds, handed_over, is_ours, opening, origin_of,
-        origin_written, reader, tab_of, Becomes, Place, Profile, Trail, WebTabs, BLANK,
+        address, allowed, becomes, capture_kinds, frame_may_open, handed_over, is_ours, opening,
+        origin_of, origin_written, reader, tab_of, Becomes, Place, Profile, Trail, WebTabs, BLANK,
     };
     use tauri::Url;
 
@@ -3539,6 +3565,33 @@ mod tests {
         assert!(!allowed(&at("file:///C:/notes/Idea.md")));
         assert!(!allowed(&at("mailto:someone@example.com")));
         assert!(!allowed(&at("data:text/html,<p>hi")));
+    }
+
+    /// #1093: a frame holds what the page makes for it, and nothing a tab may not open.
+    #[test]
+    fn a_frame_holds_the_page_s_own_documents_and_nothing_a_tab_may_not_open() {
+        for own in [
+            "about:blank",
+            "about:srcdoc",
+            "data:text/html,<p>hi",
+            "blob:https://example.com/4b1f-11",
+            "https://example.com/embed",
+        ] {
+            assert!(frame_may_open(&at(own)), "{own}");
+        }
+        for never in [
+            "about:preferences",
+            "blob:file:///C:/x",
+            "blob:http://tauri.localhost/1",
+            "file:///C:/notes/Idea.md",
+            "http://ipc.localhost/notes",
+            "nib://open?path=a.md",
+            "mailto:someone@example.com",
+        ] {
+            assert!(!frame_may_open(&at(never)), "{never}");
+        }
+        // And a tab's own rule is what it was.
+        assert!(!allowed(&at("about:blank")));
     }
 
     #[test]

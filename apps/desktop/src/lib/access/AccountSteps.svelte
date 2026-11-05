@@ -14,6 +14,7 @@
   import { connectors } from '../connectors.svelte'
   import Copyable from '../Copyable.svelte'
   import CopyButton from '../CopyButton.svelte'
+  import Outward from '../Outward.svelte'
   import { t } from '../i18n.svelte'
   import { openExternal } from '../tauri'
   import { dur } from '../motion'
@@ -56,12 +57,9 @@
       <ol class="steps">
         <li>
           <p>{t('In Claude, open Settings → Connectors and click Add custom connector.')}</p>
-          <button class="link" onclick={() => void openExternal(CLAUDE_CONNECTORS)}>
-            {t('Open Claude’s connectors')}
-            <svg class="nib-mirror" viewBox="0 0 16 16" aria-hidden="true"
-              ><path d="M6 3h7v7M13 3L5 11" /></svg
-            >
-          </button>
+          <button class="link" onclick={() => void openExternal(CLAUDE_CONNECTORS)}
+            >{t('Open Claude’s connectors')}<Outward /></button
+          >
         </li>
         <li>
           <p>{t('Fill in the two fields and click Add.')}</p>
@@ -269,11 +267,9 @@
 
   .link,
   .disclose {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
     align-self: flex-start;
-    padding: 0;
+    padding-block: 0;
+    padding-inline-start: 0;
     border: none;
     background: none;
     font-family: var(--font-ui);
@@ -282,21 +278,19 @@
     transition: color var(--dur-fast) var(--ease-out);
   }
 
+  /* A run of text, not a flex row: the arrow sits on the letters and wraps with the
+     last word, and keeps the end of the line for itself (#1061, Outward.svelte). */
   .link {
+    display: block;
     color: var(--accent);
-  }
-
-  .link svg {
-    width: 12px;
-    height: 12px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.5;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    text-align: start;
   }
 
   .disclose {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding-inline-end: 0;
     color: var(--muted-strong);
     font-weight: var(--weight-strong);
   }

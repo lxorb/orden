@@ -125,20 +125,108 @@ test('a zoom made inside the page is the size the site is kept at', () => {
 })
 
 test('reads how a page arrived, and why it did not', () => {
-  expect(readSaid({ tab: 'a', said: 'arrived', url: 'https://a.example/', failure: null })).toEqual(
-    { tab: 'a', said: 'arrived', url: 'https://a.example/', failure: null },
-  )
-  expect(
-    readSaid({ tab: 'a', said: 'arrived', url: 'https://a.example/', failure: 'unreachable' }),
-  ).toEqual({ tab: 'a', said: 'arrived', url: 'https://a.example/', failure: 'unreachable' })
-  // A word the crate never says reads as no failure rather than as a reason to act.
-  expect(readSaid({ tab: 'a', said: 'arrived', url: 'https://a.example/', failure: 'x' })).toEqual({
-    tab: 'a',
-    said: 'arrived',
-    url: 'https://a.example/',
+  const arrived = { tab: 'a', said: 'arrived', url: 'https://a.example/' } as const
+  expect(readSaid({ ...arrived, failure: null })).toEqual({
+    ...arrived,
     failure: null,
+    bare: false,
+    reason: null,
+  })
+  expect(readSaid({ ...arrived, failure: 'unreachable' })).toEqual({
+    ...arrived,
+    failure: 'unreachable',
+    bare: false,
+    reason: null,
+  })
+  // A word the crate never says reads as no failure rather than as a reason to act.
+  expect(readSaid({ ...arrived, failure: 'x' })).toEqual({
+    ...arrived,
+    failure: null,
+    bare: false,
+    reason: null,
+  })
+  // What the engine drew nothing for, and its words for why (#1093).
+  expect(readSaid({ ...arrived, failure: 'other', bare: true, reason: 'No such server.' })).toEqual(
+    { ...arrived, failure: 'other', bare: true, reason: 'No such server.' },
+  )
+  expect(readSaid({ ...arrived, failure: 'other', bare: 'yes', reason: 4 })).toEqual({
+    ...arrived,
+    failure: 'other',
+    bare: false,
+    reason: null,
   })
   expect(readSaid({ tab: 'a', said: 'arrived' })).toBe(null)
+})
+
+/** #1093: on a Mac a page that failed to load left the tab empty under a spinner for good;
+ *  black, in a dark theme. A failure the engine drew nothing for is the pane's to say. */
+test('a page that did not arrive and that nothing was drawn for is said, and only that', () => {
+  const page = on('https://no-such-host.invalid/')
+  const failed: [string, unknown][] = []
+  const fail = (tab: string, not: unknown) => void failed.push([tab, not])
+  const arrived = { tab: 'a', said: 'arrived', url: 'https://no-such-host.invalid/' } as const
+
+  heard(
+    page,
+    { ...arrived, failure: 'other', bare: true, reason: 'No such server.' },
+    undefined,
+    undefined,
+    fail,
+  )
+  expect(failed).toEqual([
+    ['a', { url: 'https://no-such-host.invalid/', failure: 'other', reason: 'No such server.' }],
+  ])
+
+  // An engine that drew its own page for it, or a page that arrived, says nothing more.
+  heard(
+    page,
+    { ...arrived, failure: 'other', bare: false, reason: null },
+    undefined,
+    undefined,
+    fail,
+  )
+  heard(page, { ...arrived, failure: null, bare: false, reason: null }, undefined, undefined, fail)
+  expect(failed).toHaveLength(1)
+})
+
+test('an upgrade that falls back to http is never said to have failed', () => {
+  const page = on('https://example.com')
+  page.upgrade = { tried: 'https://example.com', fallback: 'http://example.com' }
+  const went: string[] = []
+  const failed: string[] = []
+  heard(
+    page,
+    {
+      tab: 'a',
+      said: 'arrived',
+      url: 'https://example.com/',
+      failure: 'unreachable',
+      bare: true,
+      reason: 'Could not connect.',
+    },
+    (_, url) => void went.push(url),
+    undefined,
+    (tab) => void failed.push(tab),
+  )
+  expect(went).toEqual(['http://example.com'])
+  expect(failed).toEqual([])
+
+  // The http it fell back to not arriving either is said.
+  heard(
+    page,
+    {
+      tab: 'a',
+      said: 'arrived',
+      url: 'http://example.com/',
+      failure: 'unreachable',
+      bare: true,
+      reason: 'Could not connect.',
+    },
+    (_, url) => void went.push(url),
+    undefined,
+    (tab) => void failed.push(tab),
+  )
+  expect(failed).toEqual(['a'])
 })
 
 /** Emil, 2026-10-13 (#235): a host typed with no scheme, given https, and nothing
@@ -150,13 +238,31 @@ test('an upgrade nothing answered goes to plain http, once', () => {
   const go = (tab: string, url: string) => void went.push([tab, url])
 
   // The page the tab was on, finishing as it left, is not the upgrade.
-  heard(page, { tab: 'a', said: 'arrived', url: 'https://svelte.dev/', failure: null }, go)
+  heard(
+    page,
+    {
+      tab: 'a',
+      said: 'arrived',
+      url: 'https://svelte.dev/',
+      failure: null,
+      bare: false,
+      reason: null,
+    },
+    go,
+  )
   expect(went).toEqual([])
   expect(page.upgrade).not.toBeNull()
 
   heard(
     page,
-    { tab: 'a', said: 'arrived', url: 'https://example.com/', failure: 'unreachable' },
+    {
+      tab: 'a',
+      said: 'arrived',
+      url: 'https://example.com/',
+      failure: 'unreachable',
+      bare: false,
+      reason: null,
+    },
     go,
   )
   expect(went).toEqual([['a', 'http://example.com']])
@@ -165,7 +271,14 @@ test('an upgrade nothing answered goes to plain http, once', () => {
   // Settled: the next failure is shown as it is.
   heard(
     page,
-    { tab: 'a', said: 'arrived', url: 'https://example.com/', failure: 'unreachable' },
+    {
+      tab: 'a',
+      said: 'arrived',
+      url: 'https://example.com/',
+      failure: 'unreachable',
+      bare: false,
+      reason: null,
+    },
     go,
   )
   expect(went).toHaveLength(1)
@@ -176,8 +289,17 @@ test('a wrong certificate, or a page that arrived, settles an upgrade where it i
     const page = on('https://example.com')
     page.upgrade = { tried: 'https://example.com', fallback: 'http://example.com' }
     const went: string[] = []
-    heard(page, { tab: 'a', said: 'arrived', url: 'https://example.com/', failure }, (_, url) =>
-      went.push(url),
+    heard(
+      page,
+      {
+        tab: 'a',
+        said: 'arrived',
+        url: 'https://example.com/',
+        failure,
+        bare: false,
+        reason: null,
+      },
+      (_, url) => went.push(url),
     )
     expect(went).toEqual([])
     expect(page.upgrade).toBeNull()

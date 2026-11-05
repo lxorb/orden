@@ -16,6 +16,7 @@
   import { enginesFor } from './web-tab/engines'
   import { CUSTOM, searchEngine } from './web-tab/search-engine.svelte'
   import Hint from './Hint.svelte'
+  import Outward from './Outward.svelte'
   import Icon from './Icon.svelte'
   import { i18n, message, plural, t } from './i18n.svelte'
   import AiPane from './AiPane.svelte'
@@ -976,12 +977,9 @@
         {#if group.caption.url}
           {@const url = group.caption.url}
           <p class="hint caption">
-            <button class="link" onclick={() => void openExternal(url)}>
-              {group.caption.text}
-              <svg class="nib-mirror" viewBox="0 0 16 16" aria-hidden="true"
-                ><path d="M6 3h7v7M13 3L5 11" /></svg
-              >
-            </button>
+            <button class="link" onclick={() => void openExternal(url)}
+              >{group.caption.text}<Outward /></button
+            >
           </p>
         {:else}
           <p class="hint caption">{group.caption.text}</p>
@@ -2073,12 +2071,12 @@
   }
 
   /* A caption that leads somewhere outside the app: the same sentence, in the
-     accent, with the arrow every other outward link in the app carries. */
+     accent, with the arrow every other outward link in the app carries. A run of
+     text, not a flex row: the arrow sits on the letters and wraps with the last
+     word, and keeps the end of the line for itself (#1061, Outward.svelte). */
   .hint.caption .link {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 0;
+    padding-block: 0;
+    padding-inline-start: 0;
     border: none;
     background: none;
     font-family: var(--font-ui);
@@ -2088,17 +2086,6 @@
     text-align: start;
     cursor: default;
     transition: color var(--dur-fast) var(--ease-out);
-  }
-
-  .hint.caption .link svg {
-    flex: none;
-    width: 12px;
-    height: 12px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.5;
-    stroke-linecap: round;
-    stroke-linejoin: round;
   }
 
   @media (hover: hover) {

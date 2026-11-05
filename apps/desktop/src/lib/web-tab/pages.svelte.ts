@@ -33,6 +33,7 @@ import { invoke, isDesktop } from '../tauri'
 import { isWebAddress } from './address'
 import { ASK_AGAIN, NOT_ANSWERING } from './answering'
 import type { Cut } from './covers'
+import type { NotArrived } from './heard'
 import { Latest } from './latest'
 import { placeOf, placeKept } from './place'
 import type { Upgrade } from './upgrade'
@@ -339,6 +340,10 @@ export class Page {
   /** Whether the page's process died under it. The pane offers it again rather than build
    *  it on its own: a page that crashes as it loads would crash for ever. See `ended`. */
   crashed = $state(false)
+  /** Why the page is not there, where it is because it did not arrive rather than because
+   *  its process died: the address it was going to and the engine's words for why. The
+   *  pane's card says it; see `failed`. */
+  failure = $state<NotArrived | null>(null)
   /** Whether the build on its way is a crashed page being offered again, whose refusal is
    *  that same offer once more rather than the card for a platform with no webview. */
   rebuilding = false
@@ -1024,6 +1029,20 @@ class Pages {
     await invoke('web_close', { tab: tabId, keep: true }).catch(() => undefined)
   }
 
+  /** The page did not arrive, and the engine drew nothing for it: on a Mac a failed load
+   *  left the tab empty under a spinner that never stopped - black in a dark theme
+   *  (#1093). It goes the way a page whose process died goes, at the address it was going
+   *  to, and the pane says why and offers it again; Reload builds it there. */
+  async failed(tabId: string, not: NotArrived): Promise<void> {
+    const page = this.held.get(tabId)
+    if (!page?.live) return
+    // Where it was going, where the engine said; the tab's own address where it did not -
+    // never nothing, which is a new tab's (#1093).
+    if (isWebAddress(not.url)) page.url = not.url
+    page.failure = { ...not, url: page.url ?? not.url }
+    await this.ended(tabId)
+  }
+
   /** Reads where the page has got to and writes it down for this device, and whether
    *  something is typed into it. Quiet about failure: a page that has gone is a page
    *  whose place was already written when it went. */
@@ -1161,6 +1180,7 @@ class Pages {
     page.url = url
     page.openable = true
     page.crashed = false
+    page.failure = null
     // The title, the mark and the picture all belonged to the page that was there.
     // Until the new one says what it is called the bar shows the site, which is true
     // of both.
@@ -1199,6 +1219,7 @@ class Pages {
       await invoke('web_close', { tab: tabId, keep: true }).catch(() => undefined)
       page.rebuilding = true
       page.crashed = false
+      page.failure = null
       return
     }
     if (!isDesktop || !page?.live) return
@@ -1535,6 +1556,7 @@ class Pages {
         (tab) => this.held.get(tab),
         (tab, url) => void this.go(tab, url),
         (tab) => void this.ended(tab),
+        (tab, not) => void this.failed(tab, not),
       )
       await listen('nib://web-tab', (event) => {
         const said = readMoved(event.payload)

@@ -40,7 +40,9 @@ missing_docs = "warn"
 # (src/top_edge.rs). And the trust a Mac's web tab was served with, and the chain
 # of certificates in it, for the site's popover (src/web_certificate/webkit.rs). And
 # `kill(2)` on the process group of an application this computer hosts, which is how it
-# and everything it started are ended (src/apps_host.rs). None of
+# and everything it started are ended (src/apps_host.rs), and the memory its display's
+# picture is read through, shared with that display's X server (`mmap(2)` and
+# `munmap(2)`, src/apps_host/capture.rs). None of
 # them has a safe wrapper to use instead, and anything new that wants unsafe has to
 # say so at the function and say why.
 unsafe_code = "deny"
@@ -413,7 +415,10 @@ zbus = { version = "5", default-features = false, features = ["async-io", "block
 # of a web tab's page, less the app's layers over it (web_cut.rs). And `xinput`, the
 # keyboard's raw keys, which say Alt held and let go of inside a page (web_keys.rs). And
 # `xtest`, the holder's input played into an application's own Xvfb (apps_host/input.rs).
-x11rb = { version = "0.13", default-features = false, features = ["cursor", "resource_manager", "shape", "xinput", "xtest"] }
+# And that Xvfb's picture read as it changes, in memory shared with it (`damage`, `shm`),
+# its pointer's shape (`xfixes`), and its size made the holder's (`randr`;
+# apps_host/capture.rs and display.rs). No new crate: features of x11rb's own.
+x11rb = { version = "0.13", default-features = false, features = ["cursor", "damage", "randr", "resource_manager", "shape", "shm", "xfixes", "xinput", "xtest"] }
 # GLib's sources, read by name at run time where the binding cannot be linked: the
 # main thread's loop asleep while nothing happens on CEF (chromium_pump.rs). In the lock
 # file already, as what nearly every crate here builds with.

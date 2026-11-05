@@ -15,32 +15,41 @@
 //! has no TURN client, which a host does not need: the viewer's engine does TURN, and a
 //! relayed candidate is answered from here.
 //!
-//! **The picture** is ffmpeg's: it reads the application's display (`x11grab`, over
-//! `XShm`), encodes it with nothing held back - on this computer's GPU where it can and
-//! the viewer decodes what that makes, else VP8 in libvpx's realtime mode, which every
-//! viewer decodes (`encoder.rs`) - and writes each frame to a pipe the moment it is
-//! made. A program the host runs, as Xvfb is, rather than a codec linked into every
-//! build. It starts once the viewer is connected, so the first frame is a key frame,
-//! and another comes every two seconds.
+//! **The picture** is read off the application's display when something is drawn on
+//! it, at most once a refresh of the holder's screen (`capture.rs`), and encoded by
+//! ffmpeg with nothing held back - on this computer's GPU where it can and the viewer
+//! decodes what that makes, else VP8 in libvpx's realtime mode, which every viewer
+//! decodes (`encoder.rs`) - each frame written to a pipe the moment it is made. A
+//! program the host runs, as Xvfb is, rather than a codec linked into every build. It
+//! starts once the viewer is connected, so the first frame is a key frame. A still
+//! screen sends nothing.
+//!
+//! **A whole picture when one was lost** (step 5): a viewer whose picture broke - a
+//! packet lost that a resend did not bring back - asks for a key frame (PLI or FIR),
+//! and gets one at once from an encoder started afresh, which begins with one; so does
+//! a screen made another size. Asked again while that one is on its way, it waits.
 //!
 //! **Input** comes back over the data channel and is played into the application's
-//! display, and only there (`input.rs`).
+//! display, and only there (`input.rs`); the pointer's shape goes the other way on it.
 
-use std::io::{self, Read};
+use std::io::{self, Read, Write as _};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
-use std::process::{Child, Command, Stdio};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::mpsc::{self, RecvTimeoutError, Sender};
 use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
 use std::time::{Duration, Instant};
 
 use serde::Deserialize;
 use str0m::change::SdpOffer;
+use str0m::channel::ChannelId;
 use str0m::crypto::CryptoProvider;
 use str0m::format::Codec;
 use str0m::media::{MediaKind, MediaTime, Mid, Pt};
 use str0m::net::{Protocol, Receive};
 use str0m::{Candidate, Event, IceConnectionState, Input, Output, Rtc, RtcConfig};
 
+use super::capture::{Capture, News};
 use super::encoder::{self, AccessUnits, Encoder, Made};
 use super::input::Input as HolderInput;
 use super::{stun, Screen};
@@ -53,6 +62,9 @@ const LONGEST_WAIT: Duration = Duration::from_millis(20);
 const LISTEN_FOR: Duration = Duration::from_millis(250);
 /// The largest frame read off the encoder: a key frame of a 16K screen fits.
 const LARGEST_FRAME: usize = 16 * 1024 * 1024;
+/// The least time between two whole pictures the viewer asks for: it asks again while the
+/// first is on its way.
+const WHOLE_AT_MOST: Duration = Duration::from_millis(500);
 
 /// What the holder says, as `data` of its `signal` frames.
 #[derive(Debug, Deserialize)]
@@ -140,14 +152,23 @@ struct Shared {
     display: String,
     /// The holder's input, played into the display: opened as the first arrives.
     input: Option<HolderInput>,
+    /// The data channel, once the viewer has opened it.
+    channel: Option<ChannelId>,
+    /// The pointer's shape as last said, for a channel that opens after.
+    pointer: Option<String>,
+    /// Whoever reads the picture, told when the viewer asks for a whole one.
+    news: Option<Sender<News>>,
 }
 
 /// One connection and what its threads read.
 struct Inner {
     shared: Mutex<Shared>,
     ended: AtomicBool,
-    screen: Screen,
+    /// The application's display, and the holder's refresh rate as it is now.
+    screen: Arc<Mutex<Screen>>,
     began: Instant,
+    /// Counted up by every encoder started, so the frames of one ended are let go.
+    generation: AtomicU64,
 }
 
 impl Inner {
@@ -159,6 +180,13 @@ impl Inner {
 
     fn over(&self) -> bool {
         self.ended.load(Ordering::SeqCst)
+    }
+
+    fn screen(&self) -> Screen {
+        self.screen
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone()
     }
 
     fn end(&self) {
@@ -176,7 +204,7 @@ pub struct Peer {
 impl Peer {
     /// Answers the holder's offer for the application on `screen`, and starts listening
     /// for it: the peer, and the answer's SDP.
-    pub fn answer(screen: Screen, offer: &str) -> Result<(Peer, String), Cannot> {
+    pub fn answer(screen: Arc<Mutex<Screen>>, offer: &str) -> Result<(Peer, String), Cannot> {
         if !super::installed::on_path("ffmpeg") {
             return Err(Cannot::Encoder);
         }
@@ -241,6 +269,11 @@ impl Peer {
             return Err(Cannot::Offer);
         }
 
+        let display = screen
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .display
+            .clone();
         let listening: Vec<UdpSocket> = sockets
             .iter()
             .filter_map(|socket| socket.try_clone().ok())
@@ -254,12 +287,16 @@ impl Peer {
                 connected: None,
                 start_encoder: false,
                 encoding: false,
-                display: screen.display.clone(),
+                display,
                 input: None,
+                channel: None,
+                pointer: None,
+                news: None,
             }),
             ended: AtomicBool::new(false),
             screen,
             began: now,
+            generation: AtomicU64::new(0),
         });
         for socket in listening {
             let inner = inner.clone();
@@ -421,6 +458,21 @@ fn heard(shared: &mut Shared, event: Event) -> bool {
             true
         }
         Event::IceConnectionStateChange(IceConnectionState::Disconnected) => false,
+        Event::KeyframeRequest(_) => {
+            if let Some(news) = &shared.news {
+                let _ = news.send(News::Whole);
+            }
+            true
+        }
+        Event::ChannelOpen(id, label) => {
+            if label == "input" {
+                shared.channel = Some(id);
+                if let Some(pointer) = shared.pointer.clone() {
+                    write_channel(shared, &pointer);
+                }
+            }
+            true
+        }
         Event::ChannelData(data) => {
             if shared.input.is_none() {
                 shared.input = HolderInput::open(&shared.display).ok();
@@ -479,7 +531,7 @@ fn made_of(codec: Codec) -> Option<Made> {
 fn after(inner: &Arc<Inner>, shared: &mut Shared) {
     if std::mem::take(&mut shared.start_encoder) {
         let encoding = inner.clone();
-        std::thread::spawn(move || encode(&encoding));
+        std::thread::spawn(move || pictures(&encoding));
     }
 }
 
@@ -533,54 +585,222 @@ fn keep_time(inner: &Arc<Inner>) {
     }
 }
 
-/// The encoder for one connection: frames read off ffmpeg and written to the video
-/// until the connection ends or ffmpeg does.
-fn encode(inner: &Arc<Inner>) {
+/// One encoder, for frames of one size. Dropped, it is ended.
+struct Encoding {
+    child: Child,
+    frames: ChildStdin,
+    size: (u16, u16),
+    began: Instant,
+}
+
+impl Drop for Encoding {
+    fn drop(&mut self) {
+        stop(&mut self.child);
+    }
+}
+
+/// What the picture is waiting to send: the screen drawn on since it was last read, and
+/// a whole picture the viewer asked for.
+#[derive(Debug, Default)]
+struct Owed {
+    drawn: bool,
+    whole: bool,
+}
+
+impl Owed {
+    /// Takes one piece of news; answers whether the picture goes on.
+    fn hear(&mut self, inner: &Inner, news: News) -> bool {
+        match news {
+            News::Drawn | News::Resized => self.drawn = true,
+            News::Whole => self.whole = true,
+            News::Pointer(text) => {
+                let mut shared = inner.lock();
+                write_channel(&mut shared, &text);
+                shared.pointer = Some(text);
+                drive(&mut shared);
+            }
+            News::Gone => return false,
+        }
+        true
+    }
+
+    /// When the next frame is due, if one is owed: a refresh after the last one, and a
+    /// whole picture not sooner than `WHOLE_AT_MOST` after the encoder last began.
+    fn due(
+        &self,
+        now: Instant,
+        last: Option<Instant>,
+        every: Duration,
+        began: Option<Instant>,
+    ) -> Option<Instant> {
+        let refresh = last.map(|at| at + every);
+        let drawn = self.drawn.then(|| refresh.unwrap_or(now));
+        let whole = self.whole.then(|| {
+            let fresh = began.map(|at| at + WHOLE_AT_MOST);
+            refresh.max(fresh).unwrap_or(now)
+        });
+        match (drawn, whole) {
+            (Some(one), Some(other)) => Some(one.min(other)),
+            (one, other) => one.or(other),
+        }
+    }
+}
+
+/// The picture of one connection: read off the display as it changes, encoded, and
+/// written to the video, until the connection ends, the display does, or the encoder.
+fn pictures(inner: &Arc<Inner>) {
     let Some((_, _, chosen)) = inner.lock().video else {
         inner.end();
         return;
     };
-    let Ok(mut child) = Command::new("ffmpeg")
-        .args(encoder::encoder_args(chosen, &inner.screen))
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .spawn()
-    else {
+    let (tell, news) = mpsc::channel();
+    let Ok(mut capture) = Capture::open(&inner.screen().display, tell.clone()) else {
         inner.end();
         return;
     };
-    if let Some(mut frames) = child.stdout.take() {
-        match chosen.made {
-            Made::Vp8 | Made::Vp9 => {
-                if ivf_header(&mut frames).is_ok() {
-                    while !inner.over() {
-                        let Ok(frame) = ivf_frame(&mut frames) else {
-                            break;
-                        };
+    inner.lock().news = Some(tell);
+    let mut encoding: Option<Encoding> = None;
+    // The first frame is owed already: the screen as it is.
+    let mut owed = Owed {
+        drawn: true,
+        whole: false,
+    };
+    let mut last: Option<Instant> = None;
+    'reading: while !inner.over() {
+        let fps = encoder::frame_rate(inner.screen().hz);
+        let every = Duration::from_secs_f64(1.0 / f64::from(fps));
+        let now = Instant::now();
+        let due = owed.due(now, last, every, encoding.as_ref().map(|one| one.began));
+        if due.is_none_or(|at| at > now) {
+            let wait = due.map_or(LISTEN_FOR, |at| at - now).min(LISTEN_FOR);
+            match news.recv_timeout(wait) {
+                Ok(one) => {
+                    for one in std::iter::once(one).chain(news.try_iter()) {
+                        if !owed.hear(inner, one) {
+                            break 'reading;
+                        }
+                    }
+                }
+                Err(RecvTimeoutError::Timeout) => {}
+                Err(RecvTimeoutError::Disconnected) => break,
+            }
+            continue;
+        }
+
+        // What was drawn up to now is in this frame, so news of it is not owed again.
+        for one in news.try_iter() {
+            if !owed.hear(inner, one) {
+                break 'reading;
+            }
+        }
+        let Ok((image, size)) = capture.grab() else {
+            break;
+        };
+        let whole_now = owed.whole
+            && encoding
+                .as_ref()
+                .is_none_or(|one| now >= one.began + WHOLE_AT_MOST);
+        let fresh = whole_now || encoding.as_ref().is_none_or(|one| one.size != size);
+        if fresh {
+            // The one before is ended once this has begun, and what it still makes is let
+            // go: a new encoder begins with a key frame.
+            let Some(started) = start_encoder(inner, chosen, size, fps) else {
+                break;
+            };
+            encoding = Some(started);
+            owed.whole = false;
+        }
+        let Some(writing) = encoding.as_mut() else {
+            break;
+        };
+        if writing.frames.write_all(image).is_err() {
+            break;
+        }
+        owed.drawn = false;
+        last = Some(now);
+    }
+    inner.lock().news = None;
+    drop(encoding);
+    drop(capture);
+    inner.end();
+}
+
+/// An encoder for frames of this size, and the thread that sends what it makes.
+fn start_encoder(
+    inner: &Arc<Inner>,
+    chosen: Encoder,
+    size: (u16, u16),
+    fps: u32,
+) -> Option<Encoding> {
+    let generation = inner.generation.fetch_add(1, Ordering::SeqCst) + 1;
+    let mut child = Command::new("ffmpeg")
+        .args(encoder::encoder_args(chosen, size.0, size.1, fps))
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .ok()?;
+    let (Some(frames), Some(made)) = (child.stdin.take(), child.stdout.take()) else {
+        stop(&mut child);
+        return None;
+    };
+    let sending = inner.clone();
+    std::thread::spawn(move || send_frames(&sending, made, chosen.made, generation));
+    Some(Encoding {
+        child,
+        frames,
+        size,
+        began: Instant::now(),
+    })
+}
+
+/// The frames one encoder makes, written to the video while it is the one in use. The
+/// one in use ending by itself ends the picture.
+fn send_frames(inner: &Arc<Inner>, mut made: ChildStdout, codec: Made, generation: u64) {
+    let current = || inner.generation.load(Ordering::SeqCst) == generation;
+    match codec {
+        Made::Vp8 | Made::Vp9 => {
+            if ivf_header(&mut made).is_ok() {
+                while !inner.over() && current() {
+                    let Ok(frame) = ivf_frame(&mut made) else {
+                        break;
+                    };
+                    if current() {
                         send_frame(inner, frame);
                     }
                 }
             }
-            Made::H264 => {
-                let mut units = AccessUnits::default();
-                let mut buffer = vec![0_u8; 64 * 1024];
-                while !inner.over() {
-                    let Ok(length) = frames.read(&mut buffer) else {
-                        break;
-                    };
-                    if length == 0 {
-                        break;
-                    }
-                    for frame in units.take(&buffer[..length]) {
+        }
+        Made::H264 => {
+            let mut units = AccessUnits::default();
+            let mut buffer = vec![0_u8; 64 * 1024];
+            while !inner.over() && current() {
+                let Ok(length) = made.read(&mut buffer) else {
+                    break;
+                };
+                if length == 0 {
+                    break;
+                }
+                for frame in units.take(&buffer[..length]) {
+                    if current() {
                         send_frame(inner, frame);
                     }
                 }
             }
         }
     }
-    stop(&mut child);
-    inner.end();
+    if current() {
+        inner.end();
+    }
+}
+
+/// A message to the tab on the data channel, once it is open.
+fn write_channel(shared: &mut Shared, text: &str) {
+    if let Some(id) = shared.channel {
+        if let Some(mut channel) = shared.rtc.channel(id) {
+            let _ = channel.write(false, text.as_bytes());
+        }
+    }
 }
 
 /// One frame written to the video, at the time it came, on the 90 kHz clock.
@@ -723,12 +943,10 @@ mod tests {
         if !super::super::installed::on_path("ffmpeg") {
             return;
         }
-        let screen = Screen {
+        let screen = Arc::new(Mutex::new(Screen {
             display: ":1".to_owned(),
-            width: 64,
-            height: 64,
             hz: 60.0,
-        };
+        }));
         assert_eq!(Peer::answer(screen, "not sdp").err(), Some(Cannot::Offer));
     }
 
@@ -765,14 +983,80 @@ mod tests {
         ));
     }
 
-    /// A viewer of `str0m`'s own, on the loopback, against a real Xvfb and ffmpeg: it
-    /// connects with the answer, gets the display's picture as VP8, key frame first, and
-    /// moves the display's pointer over the data channel. CI installs both; elsewhere
-    /// the test says nothing without them.
+    /// Whether a VP8 frame is a key frame, and the size a key frame says.
+    fn vp8(frame: &[u8]) -> (bool, Option<(u16, u16)>) {
+        let key = frame.first().is_some_and(|tag| (tag & 1) == 0);
+        let size = (key && frame.len() >= 10 && frame[3..6] == [0x9d, 0x01, 0x2a]).then(|| {
+            (
+                u16::from_le_bytes([frame[6], frame[7]]) & 0x3fff,
+                u16::from_le_bytes([frame[8], frame[9]]) & 0x3fff,
+            )
+        });
+        (key, size)
+    }
+
+    /// A viewer of `str0m`'s own on the loopback, as a tab's engine is one.
+    struct Viewer {
+        rtc: Rtc,
+        socket: UdpSocket,
+        local: SocketAddr,
+    }
+
+    impl Viewer {
+        /// Runs it for at most `within`, each event handed to `heard`, until `done`.
+        fn run(
+            &mut self,
+            within: Duration,
+            mut heard: impl FnMut(&mut Rtc, Event),
+            mut done: impl FnMut() -> bool,
+        ) -> bool {
+            let until = Instant::now() + within;
+            let mut buffer = vec![0_u8; 2000];
+            while Instant::now() < until {
+                if done() {
+                    return true;
+                }
+                loop {
+                    match self.rtc.poll_output().unwrap() {
+                        Output::Timeout(_) => break,
+                        Output::Transmit(datagram) => {
+                            // The host's other addresses are not reachable from the loopback.
+                            let _ = self
+                                .socket
+                                .send_to(&datagram.contents, datagram.destination);
+                        }
+                        Output::Event(event) => heard(&mut self.rtc, event),
+                    }
+                }
+                let input = match self.socket.recv_from(&mut buffer) {
+                    Ok((length, from)) => Input::Receive(
+                        Instant::now(),
+                        Receive::new(Protocol::Udp, from, self.local, &buffer[..length]).unwrap(),
+                    ),
+                    Err(_) => Input::Timeout(Instant::now()),
+                };
+                self.rtc.handle_input(input).unwrap();
+            }
+            done()
+        }
+    }
+
+    /// A viewer of `str0m`'s own, on the loopback, against a real Xvfb and ffmpeg. It
+    /// connects with the answer and gets the display's picture as VP8, key frame first,
+    /// and the pointer's shape, and moves the display's pointer over the data channel.
+    /// Then: nothing drawn, nothing is sent; something drawn is; a whole picture asked
+    /// for comes as a key frame; and the screen made another size comes as a key frame
+    /// of that size. CI installs both; elsewhere the test says nothing without them.
     #[test]
-    fn a_viewer_gets_the_picture_of_the_display() {
+    #[allow(
+        clippy::too_many_lines,
+        reason = "one viewer's picture, told in the order it changes"
+    )]
+    fn a_viewer_gets_the_picture_of_the_display_as_it_changes() {
         use str0m::change::SdpAnswer;
-        use str0m::media::Direction;
+        use str0m::media::{Direction, KeyframeRequestKind};
+        use x11rb::connection::Connection as _;
+        use x11rb::protocol::xproto::{ConnectionExt as _, CreateGCAux, Rectangle};
 
         let ready =
             super::super::display::available() && super::super::installed::on_path("ffmpeg");
@@ -784,86 +1068,139 @@ mod tests {
             return;
         }
         let display = super::super::display::Display::start(320, 240, 1.0).unwrap();
-        let screen = Screen {
+        let screen = Arc::new(Mutex::new(Screen {
             display: display.name(),
-            width: 320,
-            height: 240,
             hz: 30.0,
-        };
+        }));
 
-        let mut viewer = RtcConfig::new()
+        let mut rtc = RtcConfig::new()
             .set_crypto_provider(provider())
             .build(Instant::now());
         let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
         let local = socket.local_addr().unwrap();
         let mine = Candidate::host(local, "udp").unwrap();
-        let _ = viewer.add_local_candidate(mine.clone());
-        let mut change = viewer.sdp_api();
-        change.add_media(MediaKind::Video, Direction::RecvOnly, None, None, None);
+        let _ = rtc.add_local_candidate(mine.clone());
+        let mut change = rtc.sdp_api();
+        let mid = change.add_media(MediaKind::Video, Direction::RecvOnly, None, None, None);
         change.add_channel("input".to_owned());
         let (offer, pending) = change.apply().unwrap();
 
         let (peer, answer) = Peer::answer(screen, &offer.to_sdp_string()).unwrap();
         assert!(answer.contains("VP8"));
-        viewer
-            .sdp_api()
+        rtc.sdp_api()
             .accept_answer(pending, SdpAnswer::from_sdp_string(&answer).unwrap())
             .unwrap();
         peer.candidate(&mine.to_sdp_string());
-
         socket
             .set_read_timeout(Some(Duration::from_millis(10)))
             .unwrap();
-        let until = Instant::now() + Duration::from_secs(30);
-        let mut buffer = vec![0_u8; 2000];
-        let mut frames = 0;
-        let mut first_key = None;
-        let mut moved = false;
+        let mut viewer = Viewer { rtc, socket, local };
+
+        let (x, number) = x11rb::connect(Some(display.name().as_str())).unwrap();
+        let root = x.setup().roots[number].root;
         let pointer = || {
-            use x11rb::connection::Connection as _;
-            use x11rb::protocol::xproto::ConnectionExt as _;
-            let (x, screen) = x11rb::connect(Some(display.name().as_str())).ok()?;
-            let root = x.setup().roots.get(screen)?.root;
             let at = x.query_pointer(root).ok()?.reply().ok()?;
             Some((at.root_x, at.root_y))
         };
-        while Instant::now() < until && (frames < 10 || !moved) {
-            moved = moved || pointer() == Some((100, 50));
-            loop {
-                match viewer.poll_output().unwrap() {
-                    Output::Timeout(_) => break,
-                    Output::Transmit(datagram) => {
-                        // The host's other addresses are not reachable from the loopback.
-                        let _ = socket.send_to(&datagram.contents, datagram.destination);
-                    }
-                    Output::Event(Event::ChannelOpen(id, _)) => {
-                        if let Some(mut channel) = viewer.channel(id) {
-                            channel
-                                .write(false, br#"{"t":"move","x":100,"y":50}"#)
-                                .unwrap();
-                        }
-                    }
-                    Output::Event(Event::MediaData(data)) => {
-                        // VP8's frame tag: a clear lowest bit is a key frame.
-                        let key = data.data.first().is_some_and(|tag| (tag & 1) == 0);
-                        first_key.get_or_insert(key);
-                        frames += 1;
-                    }
-                    Output::Event(_) => {}
+        let frames = std::cell::RefCell::new(Vec::<Vec<u8>>::new());
+        let mut shape = false;
+        let heard = |rtc: &mut Rtc, event: Event, shape: &mut bool| match event {
+            Event::ChannelOpen(id, _) => {
+                if let Some(mut channel) = rtc.channel(id) {
+                    channel
+                        .write(false, br#"{"t":"move","x":100,"y":50}"#)
+                        .unwrap();
                 }
             }
-            let input = match socket.recv_from(&mut buffer) {
-                Ok((length, from)) => Input::Receive(
-                    Instant::now(),
-                    Receive::new(Protocol::Udp, from, local, &buffer[..length]).unwrap(),
-                ),
-                Err(_) => Input::Timeout(Instant::now()),
-            };
-            viewer.handle_input(input).unwrap();
-        }
-        assert!(frames >= 10, "{frames} frames came");
-        assert!(moved, "the pointer moved to where the viewer put it");
-        assert_eq!(first_key, Some(true), "the first frame is a key frame");
+            Event::ChannelData(data) => {
+                *shape = *shape
+                    || data.data.starts_with(b"{")
+                        && String::from_utf8_lossy(&data.data).contains(r#""t":"pointer""#);
+            }
+            Event::MediaData(data) => frames.borrow_mut().push(data.data.to_vec()),
+            _ => {}
+        };
+
+        let connected = viewer.run(
+            Duration::from_secs(30),
+            |rtc, event| heard(rtc, event, &mut shape),
+            || !frames.borrow().is_empty() && pointer() == Some((100, 50)),
+        );
+        assert!(connected, "{} frames came", frames.borrow().len());
+        assert!(vp8(&frames.borrow()[0]).0, "the first frame is a key frame");
+        let mut shaped = shape;
+        viewer.run(
+            Duration::from_secs(2),
+            |rtc, event| heard(rtc, event, &mut shaped),
+            || false,
+        );
+        assert!(shape || shaped, "the pointer's shape came");
+
+        // Nothing drawn: nothing sent.
+        frames.borrow_mut().clear();
+        viewer.run(
+            Duration::from_millis(800),
+            |rtc, event| heard(rtc, event, &mut shaped),
+            || false,
+        );
+        assert!(
+            frames.borrow().is_empty(),
+            "{} frames of a still screen",
+            frames.borrow().len()
+        );
+
+        // Something drawn: sent.
+        let pen = x.generate_id().unwrap();
+        x.create_gc(pen, root, &CreateGCAux::new().foreground(0x00ff_0000))
+            .unwrap();
+        x.poly_fill_rectangle(
+            root,
+            pen,
+            &[Rectangle {
+                x: 0,
+                y: 0,
+                width: 40,
+                height: 40,
+            }],
+        )
+        .unwrap();
+        x.flush().unwrap();
+        let drawn = viewer.run(
+            Duration::from_secs(5),
+            |rtc, event| heard(rtc, event, &mut shaped),
+            || !frames.borrow().is_empty(),
+        );
+        assert!(drawn, "what was drawn came");
+
+        // A whole picture asked for: a key frame.
+        frames.borrow_mut().clear();
+        viewer
+            .rtc
+            .writer(mid)
+            .unwrap()
+            .request_keyframe(None, KeyframeRequestKind::Pli)
+            .unwrap();
+        let whole = viewer.run(
+            Duration::from_secs(5),
+            |rtc, event| heard(rtc, event, &mut shaped),
+            || frames.borrow().iter().any(|one| vp8(one).0),
+        );
+        assert!(whole, "a key frame came when one was asked for");
+
+        // Another size: a key frame of it.
+        frames.borrow_mut().clear();
+        display.fit(400, 300, 1.0).unwrap();
+        let resized = viewer.run(
+            Duration::from_secs(5),
+            |rtc, event| heard(rtc, event, &mut shaped),
+            || {
+                frames
+                    .borrow()
+                    .iter()
+                    .any(|one| vp8(one).1 == Some((400, 300)))
+            },
+        );
+        assert!(resized, "a key frame of the new size came");
         assert!(!peer.ended());
         drop(peer);
     }

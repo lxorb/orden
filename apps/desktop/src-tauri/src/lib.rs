@@ -550,6 +550,7 @@ macro_rules! desktop_commands {
             apps_host::apps_watch,
             apps_host::apps_stop,
             apps_host::apps_signal,
+            apps_host::apps_view,
             terminal::pty_folder,
             terminal::pty_program,
             terminal::pty_kill,

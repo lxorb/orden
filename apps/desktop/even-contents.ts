@@ -615,10 +615,11 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  claude/hunt-round-1 on top of the hunt's: the code to 6,050,500, measured 6,050,283;
  *  the styles to #331's 292,200, measured 292,180. Catalogues 992,135 as they were.
  *  Then the code to 6,051,000 for the device id read beside the web store (`deviceWeb`
- *  in web/sync-store.ts), measured 6,050,842.
+ *  in web/sync-store.ts), measured 6,050,842. Then to 6,054,000 as #1061's arrow after a
+ *  link out came, measured 6,053,809; styles 292,188 inside #331's 292,200.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_051_000,
+  code: 6_054_000,
   catalogues: 992_400,
   styles: 292_200,
   fonts: 260_000,

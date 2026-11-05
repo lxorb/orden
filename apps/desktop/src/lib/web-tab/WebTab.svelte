@@ -1011,10 +1011,16 @@
     {/await}
   {:else if isDesktop && page.crashed}
     <!-- The page's process is gone, and its webview with it: a white box, which a reader
-         took for the site. Chrome's Aw, Snap: where it was, and Reload, here as on the bar. -->
+         took for the site. Chrome's Aw, Snap: where it was, and Reload, here as on the bar.
+         And a page that did not arrive and that the engine drew nothing for, which was an
+         empty pane under a spinner that never stopped (#1093): the same card, with the
+         engine's own words for why. -->
     <div class="card">
       <p class="name">{page.title || plainOrigin(address)}</p>
       <p class="site">{address}</p>
+      {#if page.failure?.reason}
+        <p class="why">{page.failure.reason}</p>
+      {/if}
       <div class="rows">
         <button class="nib-button" onclick={() => void pages.step(tab.id, 'reload')}>
           {t('Reload')}
@@ -1244,5 +1250,13 @@
     font-size: var(--text-sm);
     /* A whole address has no spaces to break at. */
     overflow-wrap: anywhere;
+  }
+
+  /* Why a page did not arrive, in the engine's words: a sentence under the address. */
+  .why {
+    max-width: 36em;
+    margin: 0;
+    color: var(--text);
+    font-size: var(--text-sm);
   }
 </style>
