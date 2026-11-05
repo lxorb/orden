@@ -113,8 +113,11 @@ struct Page {
 enum Answering {
     /// `alert`, `confirm`, `prompt`, `beforeunload`.
     Script(JsdialogCallback),
-    /// The site's sign-in box.
-    SignIn(AuthCallback),
+    /// The site's sign-in box: the paused request, by the session it is paused in.
+    SignIn {
+        session: Option<String>,
+        request: String,
+    },
     /// The site's request for a client certificate, with those it may be answered with
     /// and the words each is known by.
     Certificate(
@@ -388,17 +391,52 @@ fn browser_settings() -> BrowserSettings {
 
 /// What an agent's page has been told before anything loads: the file chooser
 /// intercepted, `print()` and the pickers stubbed, the page domain on first since a
-/// script registered with it off is kept and never run.
+/// script registered with it off is kept and never run, and the site's sign-in boxes
+/// brought here (`signing_in`).
 fn quietened(page: &Windowless) {
-    page.tell("Page.enable", &json!({}));
-    page.tell(
-        "Page.setInterceptFileChooserDialog",
-        &json!({ "enabled": true }),
-    );
-    page.tell(
-        "Page.addScriptToEvaluateOnNewDocument",
-        &json!({ "source": quiet::STUBS, "runImmediately": true }),
-    );
+    for (method, params) in quieting() {
+        page.tell(method, &params);
+    }
+}
+
+/// The calls `quietened` makes, in order.
+fn quieting() -> [(&'static str, Value); 4] {
+    [
+        ("Page.enable", json!({})),
+        (
+            "Page.setInterceptFileChooserDialog",
+            json!({ "enabled": true }),
+        ),
+        (
+            "Page.addScriptToEvaluateOnNewDocument",
+            json!({ "source": quiet::STUBS, "runImmediately": true }),
+        ),
+        ("Fetch.enable", signing_in()),
+    ]
+}
+
+/// The site's sign-in boxes, through the protocol rather than the request handler: CEF
+/// gives a sign-in to `GetAuthCredentials` only once `--disable-chrome-login-prompt`
+/// turns Chrome's own login prompt off for the whole process, the reader's tabs' box with
+/// it, and that prompt has nowhere to be on a browser with no window (#1131). Every
+/// request pauses for as long as `heard` takes to send it on, so a challenge to any of
+/// them is `Fetch.authRequired`.
+fn signing_in() -> Value {
+    json!({ "handleAuthRequests": true, "patterns": [{ "urlPattern": "*" }] })
+}
+
+/// What answers a paused sign-in: the user name and password, or no.
+fn signed_in(request: &str, said: &Said) -> Value {
+    let response = if said.accept {
+        json!({
+            "response": "ProvideCredentials",
+            "username": said.username.as_deref().unwrap_or_default(),
+            "password": said.password.as_deref().unwrap_or_default(),
+        })
+    } else {
+        json!({ "response": "CancelAuth" })
+    };
+    json!({ "requestId": request, "authChallengeResponse": response })
 }
 
 /// A browser made for a page: kept, heard, quietened and sent where it was going. On
@@ -497,9 +535,9 @@ wrap_dev_tools_message_observer! {
     }
 }
 
-/// One message from the page's agent: an answer for whoever waits on its id, or an event
-/// for whoever hears the page.
-fn heard(page: &Page, message: &Value) {
+/// One message from the page's agent: an answer for whoever waits on its id, a paused
+/// request sent on or its sign-in held, or an event for whoever hears the page.
+fn heard(page: &Arc<Page>, message: &Value) {
     if let Some(id) = message
         .get("id")
         .and_then(Value::as_i64)
@@ -520,6 +558,47 @@ fn heard(page: &Page, message: &Value) {
     };
     let session = message.get("sessionId").and_then(Value::as_str);
     let params = message.get("params").cloned().unwrap_or(Value::Null);
+    let request = params.get("requestId").and_then(Value::as_str);
+    match (method, request) {
+        ("Fetch.requestPaused", Some(request)) => {
+            send(
+                page,
+                session,
+                "Fetch.continueRequest",
+                &json!({ "requestId": request }),
+            );
+            return;
+        }
+        ("Fetch.authRequired", Some(request)) => {
+            let realm = params
+                .pointer("/authChallenge/realm")
+                .and_then(Value::as_str)
+                .unwrap_or_default();
+            let url = params
+                .pointer("/request/url")
+                .and_then(Value::as_str)
+                .unwrap_or_default();
+            hold(
+                page,
+                DialogKind::SignIn,
+                quiet::signing_in(realm),
+                String::new(),
+                url.to_string(),
+                Answering::SignIn {
+                    session: session.map(str::to_string),
+                    request: request.to_string(),
+                },
+            );
+            return;
+        }
+        // A frame in a process of its own pauses and asks in its own session.
+        ("Target.attachedToTarget", _) => {
+            if let Some(frame) = params.get("sessionId").and_then(Value::as_str) {
+                send(page, Some(frame), "Fetch.enable", &signing_in());
+            }
+        }
+        _ => {}
+    }
     let hearing = page
         .hearing
         .lock()
@@ -528,6 +607,15 @@ fn heard(page: &Page, message: &Value) {
     for one in hearing {
         one(method, session, &params);
     }
+}
+
+/// One call nobody waits for, in a frame's session when named.
+fn send(page: &Arc<Page>, session: Option<&str>, method: &str, params: &Value) {
+    let found = Windowless {
+        label: page.owner.label.clone(),
+        page: Arc::clone(page),
+    };
+    let _ = found.ask(session, method, params);
 }
 
 /// What an answer says: its result, or the agent's own words for why there is none.
@@ -567,29 +655,35 @@ fn settle(page: &Arc<Page>, number: Option<u64>, said: Said) {
         return;
     };
     quiet::release(&page.owner.label);
-    on_ui(move || match answering {
+    give(page, answering, said);
+}
+
+/// Gives the engine one answer to a dialog.
+fn give(page: &Arc<Page>, answering: Answering, said: Said) {
+    match answering {
         Answering::Script(callback) => {
-            let words = said.text.as_deref().map(CefString::from);
-            callback.cont(i32::from(said.accept), words.as_ref());
+            on_ui(move || {
+                let words = said.text.as_deref().map(CefString::from);
+                callback.cont(i32::from(said.accept), words.as_ref());
+            });
         }
-        Answering::SignIn(callback) => {
-            if said.accept {
-                let name = CefString::from(said.username.as_deref().unwrap_or_default());
-                let password = CefString::from(said.password.as_deref().unwrap_or_default());
-                callback.cont(Some(&name), Some(&password));
-            } else {
-                callback.cancel();
-            }
-        }
+        Answering::SignIn { session, request } => send(
+            page,
+            session.as_deref(),
+            "Fetch.continueWithAuth",
+            &signed_in(&request, &said),
+        ),
         Answering::Certificate(callback, offered) => {
-            // None chosen, or no: on without a certificate, as a browser's Cancel goes.
-            let mut chosen = said
-                .chosen(offered.iter().map(|(_, words)| words.as_str()))
-                .and_then(|at| offered.into_iter().nth(at))
-                .map(|(one, _)| one);
-            callback.select(chosen.as_mut());
+            on_ui(move || {
+                // None chosen, or no: on without a certificate, as a browser's Cancel goes.
+                let mut chosen = said
+                    .chosen(offered.iter().map(|(_, words)| words.as_str()))
+                    .and_then(|at| offered.into_iter().nth(at))
+                    .map(|(one, _)| one);
+                callback.select(chosen.as_mut());
+            });
         }
-    });
+    }
 }
 
 /// Holds a dialog for the agent, and answers it the safe way if nobody does.
@@ -602,7 +696,16 @@ fn hold(
     answering: Answering,
 ) {
     let number = quiet::NUMBER.fetch_add(1, Ordering::Relaxed);
-    *page.dialog.lock().unwrap_or_else(PoisonError::into_inner) = Some((number, answering));
+    // One held at a time: the one before it is answered no, or a sign-in it paused would
+    // wait for good.
+    let before = page
+        .dialog
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .replace((number, answering));
+    if let Some((_, before)) = before {
+        give(page, before, Said::only(false));
+    }
     quiet::hold(
         &page.owner.label,
         Dialog {
@@ -1091,35 +1194,10 @@ wrap_request_handler! {
             1
         }
 
-        // The site's sign-in box and its request for a client certificate, held for the
-        // agent like any dialog: `browser_dialog` answers them, and answering yes signs in,
-        // which asks as the mode says - nothing at all under Full permissions (#1072,
-        // `policy::answering`).
-        fn auth_credentials(
-            &self,
-            _browser: Option<&mut Browser>,
-            origin_url: Option<&CefString>,
-            _is_proxy: ::std::os::raw::c_int,
-            _host: Option<&CefString>,
-            _port: ::std::os::raw::c_int,
-            realm: Option<&CefString>,
-            _scheme: Option<&CefString>,
-            callback: Option<&mut AuthCallback>,
-        ) -> ::std::os::raw::c_int {
-            let Some(callback) = callback else {
-                return 0;
-            };
-            hold(
-                &self.page,
-                DialogKind::SignIn,
-                quiet::signing_in(&text(realm)),
-                String::new(),
-                text(origin_url),
-                Answering::SignIn(callback.clone()),
-            );
-            1
-        }
-
+        // The site's request for a client certificate, held for the agent like any dialog:
+        // `browser_dialog` answers it, and answering yes signs in, which asks as the mode
+        // says - nothing at all under Full permissions (#1072, `policy::answering`). Its
+        // sign-in box comes through the protocol instead; see `signing_in`.
         fn on_select_client_certificate(
             &self,
             _browser: Option<&mut Browser>,
@@ -1250,7 +1328,7 @@ wrap_load_handler! {
 mod tests {
     use serde_json::json;
 
-    use super::{answer, paired};
+    use super::{answer, paired, quieting, signed_in, Said};
 
     #[test]
     fn an_answer_is_its_result_or_the_agent_s_words() {
@@ -1263,6 +1341,37 @@ mod tests {
             Err("No node".to_string())
         );
         assert_eq!(answer(&json!({ "id": 4 })), Ok(serde_json::Value::Null));
+    }
+
+    /// #1131: a sign-in box CEF would give Chrome's own prompt, which a windowless page
+    /// has nowhere to show, is asked for before the page loads anything.
+    #[test]
+    fn an_agent_page_takes_its_own_sign_ins() {
+        let fetch = quieting()
+            .into_iter()
+            .find(|(method, _)| *method == "Fetch.enable")
+            .map(|(_, params)| params)
+            .expect("the page's sign-ins are asked for");
+        assert_eq!(fetch["handleAuthRequests"], json!(true));
+        assert_eq!(fetch["patterns"], json!([{ "urlPattern": "*" }]));
+    }
+
+    #[test]
+    fn a_sign_in_is_answered_with_its_words_or_cancelled() {
+        let yes = Said {
+            accept: true,
+            username: Some("ada".into()),
+            password: Some("pw".into()),
+            ..Said::default()
+        };
+        assert_eq!(
+            signed_in("r1", &yes),
+            json!({ "requestId": "r1", "authChallengeResponse": { "response": "ProvideCredentials", "username": "ada", "password": "pw" } })
+        );
+        assert_eq!(
+            signed_in("r2", &Said::only(false)),
+            json!({ "requestId": "r2", "authChallengeResponse": { "response": "CancelAuth" } })
+        );
     }
 
     #[test]

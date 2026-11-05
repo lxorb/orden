@@ -54,13 +54,7 @@ CANNOT: dict[str, set[str]] = {
 
 #: What an engine should do and does not yet, by the check's name, with its issue: run and
 #: written down as known, and a failure the day it starts working, so this is told.
-KNOWN: dict[str, dict[str, str]] = {
-    "chromium": {
-        "a sign_in is held": "#1131",
-        "answer the sign_in": "#1131",
-        "the page heard the sign_in's answer": "#1131",
-    },
-}
+KNOWN: dict[str, dict[str, str]] = {}
 
 #: The code a verb an engine cannot do answers.
 UNSUPPORTED = "unsupported_on_this_engine"
