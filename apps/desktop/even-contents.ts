@@ -563,10 +563,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  tab's hover card saying what the tab uses in developer mode (tab-strip/facts.ts,
  *  fetched apart and never in the plugin; the card's lines for it). Measured 5,935,326
  *  and 292,272.
+ *
+ *  The catalogues raised on 2026-11-05, to 985,000, for #1127: a tab unloaded from its
+ *  menu, its three rows, the question before a page with something typed into it goes
+ *  and the switch under General > Tabs, in every language (tab-strip/unloading.svelte.ts,
+ *  general-pane.ts). Its code and its faded marks fit in the room. Measured 984,540.
  */
 export const BUDGETS: Record<Part, number> = {
   code: 5_935_600,
-  catalogues: 977_400,
+  catalogues: 985_000,
   styles: 292_300,
   fonts: 260_000,
   pages: 40_000,

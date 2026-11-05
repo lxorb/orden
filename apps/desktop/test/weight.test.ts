@@ -1254,8 +1254,13 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-05, to 3,622,000 and 397 modules, for #1120: a side offers only the
  *  panels the tab in front can fill, asked of the one table of panels, which the
  *  workspace now reads at once rather than with a press (panel-tab.ts), and a PDF's
- *  own contents for the Outline (pdf/outline.svelte.ts). Measured 3,620,924. */
-const BUDGET = 3_622_000
+ *  own contents for the Outline (pdf/outline.svelte.ts). Measured 3,620,924.
+ *
+ *  Raised 2026-11-05, to 3,625,000, for #1127: a tab unloaded from its menu, faded in the
+ *  strip and in the Essentials, its editor state let go of by its pane and its page parked
+ *  out of sight (Tabs.svelte, Bookmarks.svelte, BookmarkTile.svelte, Pane.svelte,
+ *  workspace/documents.svelte.ts, web-tab/pages.svelte.ts). Measured 3,624,357. */
+const BUDGET = 3_625_000
 const MOST_FILES = 397
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
