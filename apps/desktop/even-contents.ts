@@ -555,9 +555,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-05, to 5,932,100, for #1068: the browser's rows can be
  *  mounted at a folder, every table asked by path (`mountRows` in web/store.ts).
  *  Measured 5,931,783.
+ *
+ *  The code raised on 2026-11-05, to 5,935,100, for #1061: the arrow after a link that
+ *  leaves the app as one mark with the `?`, on the letters and kept with the last word
+ *  (Outward.svelte, Hint.svelte, base.css). Measured 5,934,516.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_932_100,
+  code: 5_935_100,
   catalogues: 977_400,
   styles: 292_200,
   fonts: 260_000,
