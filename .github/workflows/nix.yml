@@ -9,12 +9,14 @@ name: nix
 # could not open.
 #
 # On a pull request into main it builds the flake in the checkout. By hand, and when
-# packaging-bump.yml calls it, it builds the flake it is handed - from GitHub, the way
-# `nix run github:lxorb/orden?dir=packaging/nix` does - or the checkout's.
+# packaging-bump.yml or release.yml calls it, it builds the flake it is handed - from
+# GitHub, the way `nix run github:lxorb/orden?dir=packaging/nix` does - or the
+# checkout's.
 #
-# One flake now holds both channels: `default` is the release out of its .deb, and
-# `orden-unstable` compiles the sources beside it. The release build is what is
-# started here; `resolve_source_hashes` validates the source one instead.
+# One flake holds every channel: `default` is the release out of its .deb,
+# `orden-unstable` the edge out of its own, and `orden-source` compiles the sources
+# beside it. `package` picks which is built and started, the release unless it says
+# otherwise; `resolve_source_hashes` validates the source one.
 on:
   pull_request:
     branches: [main]
@@ -34,6 +36,9 @@ on:
       flake:
         description: The flake to start, as `nix run` takes it; empty uses the checked-out branch
         default: ''
+      package:
+        description: The package to build and start, `default` when empty
+        default: ''
       resolve_source_hashes:
         description: Resolve fake Cargo and pnpm hashes during source-flake validation
         type: boolean
@@ -42,6 +47,10 @@ on:
     inputs:
       flake:
         description: The flake to start; the checkout's packaging/nix when empty
+        type: string
+        default: ''
+      package:
+        description: The package to build and start, `default` when empty
         type: string
         default: ''
       artifact:
@@ -54,7 +63,7 @@ on:
         default: false
 
 concurrency:
-  group: nix-${{ github.workflow }}-${{ github.ref }}-${{ inputs.flake }}-${{ inputs.artifact }}
+  group: nix-${{ github.workflow }}-${{ github.ref }}-${{ inputs.flake }}-${{ inputs.package }}-${{ inputs.artifact }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Nothing here writes anywhere.
@@ -124,7 +133,19 @@ jobs:
         env:
           ASKED: ${{ inputs.flake }}
           SHA: ${{ github.sha }}
+          PACKAGE: ${{ inputs.package }}
+          RESOLVE_HASHES: ${{ inputs.resolve_source_hashes }}
         run: |
+          if [ "$RESOLVE_HASHES" = true ]; then
+            attr=orden-source
+          else
+            attr=${PACKAGE:-default}
+          fi
+          echo "attr=$attr" >>"$GITHUB_OUTPUT"
+          # The source build's hashes are filled in this runner's copy, which a start
+          # would compile all over again; it starts the release, as before.
+          if [ "$attr" = orden-source ]; then start=default; else start=$attr; fi
+          echo "start=$start" >>"$GITHUB_OUTPUT"
           if [ -n "$ASKED" ]; then
             flake="$ASKED"
           elif [ -f "$PWD/flake.nix" ]; then
@@ -139,7 +160,7 @@ jobs:
             flake="path:$PWD/packaging/nix"
           fi
           echo "flake=$flake" >>"$GITHUB_OUTPUT"
-          echo "### $flake" >>"$GITHUB_STEP_SUMMARY"
+          echo "### $flake#$attr" >>"$GITHUB_STEP_SUMMARY"
 
       - name: nix flake check
         env:
@@ -163,40 +184,33 @@ jobs:
       - name: The ${{ matrix.other }} package evaluates
         env:
           FLAKE: ${{ steps.flake.outputs.flake }}
-        run: nix eval --raw "$FLAKE#packages.${{ matrix.other }}.default.name"
+        run: nix eval --raw "$FLAKE#packages.${{ matrix.other }}.${{ steps.flake.outputs.attr }}.name"
 
       - name: nix build
         id: build
         env:
           FLAKE: ${{ steps.flake.outputs.flake }}
-          RESOLVE_HASHES: ${{ inputs.resolve_source_hashes }}
+          ATTR: ${{ steps.flake.outputs.attr }}
         run: |
-          # The release build unless the source one was asked for: both live in the
-          # one flake, and they are named apart all the way down, so whichever is
-          # built here the assertions below read off its own pname.
-          if [ "$RESOLVE_HASHES" = true ]; then
-            attr=orden-unstable
-          else
-            attr=default
-          fi
-          # orden or orden-unstable: every file a profile gets is
+          # The packages are named apart all the way down, so whichever is built here
+          # the assertions below read off its own pname: every file a profile gets is
           # named after it, so installed streams never collide.
-          pname=$(nix eval --raw "$FLAKE#$attr.pname")
+          pname=$(nix eval --raw "$FLAKE#$ATTR.pname")
           # The release is on WebKitGTK up to 0.16.0 and on CEF after it; the source
           # build is always on CEF. What is asserted about the wrapper and GStreamer
           # below only holds for WebKit.
-          if [ "$pname" = orden-unstable ]; then
+          if [ "$pname" = orden-source ]; then
             engine=cef
           else
-            engine=$(nix eval --raw "$FLAKE#$attr.engine")
+            engine=$(nix eval --raw "$FLAKE#$ATTR.engine")
           fi
           echo "engine=$engine" >>"$GITHUB_OUTPUT"
-          echo "### $pname $(nix eval --raw "$FLAKE#$attr.version")" >>"$GITHUB_STEP_SUMMARY"
+          echo "### $pname $(nix eval --raw "$FLAKE#$ATTR.version")" >>"$GITHUB_STEP_SUMMARY"
 
-          if [ "$pname" = orden-unstable ]; then
+          if [ "$pname" = orden-source ]; then
             for attempt in 1 2 3; do
               set +e
-              nix build --print-build-logs "$FLAKE#$attr" -o result 2>&1 | tee nix-build.log
+              nix build --print-build-logs "$FLAKE#$ATTR" -o result 2>&1 | tee nix-build.log
               status=${PIPESTATUS[0]}
               set -e
               [ "$status" -eq 0 ] && break
@@ -241,7 +255,7 @@ jobs:
             done
             test -x "result/bin/$pname"
           else
-            nix build --print-build-logs "$FLAKE#$attr" -o result
+            nix build --print-build-logs "$FLAKE#$ATTR" -o result
           fi
 
           test -x "result/bin/$pname"
@@ -251,7 +265,7 @@ jobs:
               test "$(readlink result/bin/nib)" = orden
               expected=2
               ;;
-            orden-unstable) expected=1 ;;
+            orden-unstable | orden-source) expected=1 ;;
             *) echo "::error::unexpected Nix package name: $pname"; exit 1 ;;
           esac
           test "$(find result/bin -mindepth 1 | wc -l)" -eq "$expected"
@@ -262,10 +276,10 @@ jobs:
           if [ "$engine" = webkit ]; then
             grep -q '/proc/driver/nvidia/version ]; then export WEBKIT_DISABLE_DMABUF_RENDERER=1' "result/bin/$pname"
           fi
-          # On CEF the release's wrapper says so before it starts on a system that
+          # On CEF the wrapper of a .deb says so before it starts on a system that
           # refuses the user namespaces its sandbox needs - this runner, until the step
           # below allows them - and never starts without one (#438).
-          if [ "$engine" = cef ] && [ "$pname" = orden ]; then
+          if [ "$engine" = cef ] && [ "$pname" != orden-source ]; then
             check=$(grep -o "/nix/store/[^' ]*-userns.sh" "result/bin/$pname")
             test -f "$check"
             if grep -q no-sandbox "result/bin/$pname"; then exit 1; fi
@@ -337,14 +351,14 @@ jobs:
         env:
           FLAKE: ${{ steps.flake.outputs.flake }}
           ENGINE: ${{ steps.build.outputs.engine }}
-        run: bash scripts/nix-start.sh wayland "$FLAKE" "$ENGINE"
+        run: bash scripts/nix-start.sh wayland "$FLAKE#${{ steps.flake.outputs.start }}" "$ENGINE"
 
       - name: It starts on X11, through Xwayland
         if: ${{ !cancelled() && steps.wayland.outcome != 'skipped' }}
         env:
           FLAKE: ${{ steps.flake.outputs.flake }}
           ENGINE: ${{ steps.build.outputs.engine }}
-        run: bash scripts/nix-start.sh x11 "$FLAKE" "$ENGINE"
+        run: bash scripts/nix-start.sh x11 "$FLAKE#${{ steps.flake.outputs.start }}" "$ENGINE"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()

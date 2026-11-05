@@ -8,9 +8,8 @@ name: release
 # since a tag sharing a name with the branch makes every checkout of it
 # ambiguous.
 #
-# Nix is not served from here. The stable flake in packaging/nix follows the
-# release, and anyone who wants the edge builds it from the `unstable` branch
-# themselves; there is no branch holding a flake pinned to edge's binaries.
+# Nix's edge is served from here too: after every edge build `nix-edge` pins the
+# flake's orden-unstable to its .debs, in packaging/nix/edge.json on `unstable`.
 #
 # A push that changes nothing a build is made of builds nothing: the documents, every
 # Markdown file and the tests. GitHub reads these filters for a branch only, so a tag
@@ -31,6 +30,7 @@ on:
       - 'packages/editor/test/**'
       - 'packages/glasses/test/**'
       - 'services/*/test/**'
+      - packaging/nix/edge.json
   workflow_dispatch:
 
 # A build of `unstable` is never cancelled by a newer push: pushes came faster
@@ -560,3 +560,49 @@ jobs:
     with:
       tag: ${{ needs.version.outputs.tag }}
     secrets: inherit
+
+  # The pin is pushed with this run's own token, which starts no workflow, so it never
+  # builds an edge of its own; then that commit's flake is built and started the way
+  # the release's is.
+  nix-edge:
+    needs: [version, publish]
+    if: ${{ !cancelled() && needs.publish.result == 'success' && needs.version.outputs.rolling == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      sha: ${{ steps.pin.outputs.sha }}
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          ref: unstable
+
+      - name: Pin orden-unstable to this build
+        id: pin
+        run: |
+          git config user.name lxorbs-minion
+          git config user.email 43935334+lxorbs-minion@users.noreply.github.com
+          for attempt in 1 2 3 4 5; do
+            git fetch -q origin unstable
+            git reset -q --hard FETCH_HEAD
+            node scripts/bump-packaging.mjs edge "$VERSION"
+            git add packaging/nix/edge.json
+            git diff --cached --quiet && break
+            git commit -q -m "chore: nix on edge $VERSION" -m "Co-authored-by: Emil Vinu <101118850+lxorb@users.noreply.github.com>"
+            git push -q origin HEAD:unstable && break
+            [ "$attempt" -lt 5 ] || exit 1
+            sleep 10
+          done
+          echo "sha=$(git rev-parse HEAD)" >>"$GITHUB_OUTPUT"
+
+  nix:
+    needs: nix-edge
+    permissions:
+      contents: read
+    uses: ./.github/workflows/nix.yml
+    with:
+      flake: github:${{ github.repository }}/${{ needs.nix-edge.outputs.sha }}?dir=packaging/nix
+      package: orden-unstable

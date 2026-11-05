@@ -302,10 +302,15 @@ esac
       .map((one) => one[1])
 
     // The draft a tag's run makes first runs nothing out of the repository, so what it may
-    // write is out of reach of anything a build fetched.
-    expect(writing).toEqual(['draft', 'publish'])
+    // write is out of reach of anything a build fetched. nix-edge (#1135) runs only the
+    // repository's own script, over the digests the release page reports, and takes
+    // nothing a build made.
+    expect(writing).toEqual(['draft', 'publish', 'nix-edge'])
     expect(/\n {2}draft:\n([\s\S]*?)(?=\n {2}[a-z-]+:\n)/.exec(workflow)?.[1]).not.toContain(
       'uses:',
+    )
+    expect(/\n {2}nix-edge:\n([\s\S]*?)(?=\n {2}[a-z-]+:\n)/.exec(workflow)?.[1]).not.toContain(
+      'download-artifact',
     )
   })
 })
@@ -674,6 +679,51 @@ describe('the engine a Linux package runs', () => {
     expect(build).toContain('scripts/linux-cef.sh tauri build')
     expect(repo('.github', 'workflows', 'release.yml')).toContain(
       'scripts/linux-cef.sh tauri build',
+    )
+  })
+})
+
+/** #1135: the flake's orden-unstable is the `edge` pre-release's .deb, pinned in
+ *  packaging/nix/edge.json, which release.yml rewrites on `unstable` after every edge
+ *  build. */
+describe('the Nix edge', () => {
+  const release = repo('.github', 'workflows', 'release.yml')
+  const job = /\n {2}nix-edge:\n([\s\S]*?)\n {2}\S/.exec(`${release}\n  .`)?.[1] ?? ''
+
+  test('is pinned to an edge build of both architectures', () => {
+    const pin = JSON.parse(read('nix', 'edge.json'))
+    expect(pin.version).toMatch(/^\d+\.\d+\.\d+-\d+$/)
+    expect(pin.tag).toBe('edge')
+    expect(pin.asset).toBe('Orden')
+    expect(Object.keys(pin.hashes).sort()).toEqual(['aarch64-linux', 'x86_64-linux'])
+    for (const hash of Object.values(pin.hashes)) {
+      expect(hash).toMatch(/^sha256-[A-Za-z0-9+/]{43}=$/)
+    }
+  })
+
+  test('is read by the flake, which builds it as it builds the release', () => {
+    const flake = read('nix', 'flake.nix')
+    expect(flake).toContain('builtins.readFile ./edge.json')
+    expect(flake).toContain('mkRelease (edgePin // { pname = "orden-unstable"; }) pkgs')
+    expect(flake).toContain('orden = mkRelease stable pkgs;')
+  })
+
+  test('is moved after every edge build, on the run token alone', () => {
+    expect(job).toContain("needs.version.outputs.rolling == 'true'")
+    expect(job).toContain('node scripts/bump-packaging.mjs edge "$VERSION"')
+    expect(job).toContain('git push -q origin HEAD:unstable')
+    expect(job).not.toContain('secrets.')
+    expect(job).not.toMatch(/--force|-f origin/)
+  })
+
+  test('and its own push builds nothing', () => {
+    const ignored = /paths-ignore:\n([\s\S]*?)\n {2}workflow_dispatch:/.exec(release)?.[1] ?? ''
+    expect(ignored).toContain('- packaging/nix/edge.json')
+  })
+
+  test('is started out of the pushed flake the way the release is', () => {
+    expect(release).toMatch(
+      /uses: \.\/\.github\/workflows\/nix\.yml\n\s+with:\n\s+flake: github:\$\{\{ github\.repository \}\}\/\$\{\{ needs\.nix-edge\.outputs\.sha \}\}\?dir=packaging\/nix\n\s+package: orden-unstable/,
     )
   })
 })

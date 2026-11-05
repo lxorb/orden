@@ -1,6 +1,7 @@
 {
-  # Orden for Nix, both channels out of one file: the release, taken from its
-  # `.deb`, and the app compiled from the sources this file arrives beside.
+  # Orden for Nix, out of one file: the release and the `edge` pre-release, each
+  # taken from its `.deb`, and the app compiled from the sources this file arrives
+  # beside.
   #
   # One file, the same bytes on every branch, on purpose. The release flake belongs
   # on main and the source build on unstable, and work flows unstable -> pull
@@ -9,7 +10,8 @@
   # broke `nix profile install github:lxorb/orden?dir=packaging/nix` for everyone
   # already on it. Nothing below asks which branch it is on: the release outputs are
   # pinned to a published release, and the source output compiles whatever tree this
-  # file sits in.
+  # file sits in. The edge's pin is edge.json beside it, which only release.yml writes,
+  # on unstable, after every edge build.
   #
   # `packages.default` and `packages.orden` take the program out of the release's
   # .deb and run it on nixpkgs' own GTK 4, NSS and the rest, the way the AUR package
@@ -28,14 +30,12 @@
   #   nix run github:lxorb/orden?dir=packaging/nix
   #   nix profile install github:lxorb/orden?dir=packaging/nix
   #
-  # `packages.orden-unstable` compiles the sources instead, under its own command,
-  # desktop entry and icons, so it installs beside the release rather than over it:
+  # `packages.orden-unstable` is the edge's .deb, wrapped the same way, and
+  # `packages.orden-source` compiles the sources; each has its own command, desktop
+  # entry and icons, so it installs beside the release rather than over it:
   #
   #   nix profile install github:lxorb/orden/unstable?dir=packaging/nix#orden-unstable
-  #
-  # Two channels and no third. There is no branch carrying a flake pinned to the
-  # `edge` pre-release's binaries any more; whoever wants the edge on Nix compiles
-  # the branch, which is the one place Nix differs from the other package managers.
+  #   nix profile install github:lxorb/orden/unstable?dir=packaging/nix#orden-source
   #
   # On NixOS, as an input of the system's flake:
   #
@@ -77,25 +77,24 @@
         };
       };
 
+      stable = release // {
+        hashes = builtins.mapAttrs (_: deb: deb.hash) debs;
+      };
+      edgePin =
+        if builtins.pathExists ./edge.json then
+          builtins.fromJSON (builtins.readFile ./edge.json)
+        else
+          null;
+
       # The source build's own names, never touched by a release bump.
       fromSource = {
-        pname = "orden-unstable";
+        pname = "orden-source";
         # A prerelease version makes a source-built Nix install follow the unstable
         # updater stream by default. Stable and edge release builds have a higher
         # semantic version than this local source build.
         version = "0.0.0-unstable";
       };
 
-      inherit (release) pname version;
-      edge = pname != "orden";
-
-      # 0.16.0 is the last release on WebKitGTK; every release after it carries CEF
-      # in its .deb. The packaging for CEF lands on unstable ahead of the release that
-      # ships it, so until the pin above moves past 0.16.0 the release build has to
-      # take the .deb it is actually pinned to, or `nix run` breaks for everyone the
-      # moment this file reaches main. Once it has moved, the WebKit half below is
-      # dead and can go.
-      onCef = nixpkgs.lib.versionOlder "0.16.0" version;
       systems = builtins.attrNames debs;
       forEach = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
 
@@ -269,9 +268,19 @@
       # .deb is unpacked, its program pointed at nixpkgs' libraries, and wrapped
       # in a shell script.
       mkRelease =
-        pkgs:
+        channel: pkgs:
         let
-          inherit (debs.${pkgs.stdenv.hostPlatform.system}) suffix hash;
+          inherit (channel) pname version;
+          inherit (debs.${pkgs.stdenv.hostPlatform.system}) suffix;
+          hash = channel.hashes.${pkgs.stdenv.hostPlatform.system};
+          edge = pname != "orden";
+          # 0.16.0 is the last release on WebKitGTK; every release after it carries CEF
+          # in its .deb. The packaging for CEF lands on unstable ahead of the release that
+          # ships it, so until the pin above moves past 0.16.0 the release build has to
+          # take the .deb it is actually pinned to, or `nix run` breaks for everyone the
+          # moment this file reaches main. Once it has moved, the WebKit half below is
+          # dead and can go.
+          onCef = nixpkgs.lib.versionOlder "0.16.0" version;
           gstPlugins = gstPluginsFor pkgs;
         in
         pkgs.stdenv.mkDerivation {
@@ -281,7 +290,7 @@
           passthru.engine = if onCef then "cef" else "webkit";
 
           src = pkgs.fetchurl {
-            url = "https://github.com/lxorb/orden/releases/download/${release.tag}/${release.asset}-${version}-linux-${suffix}.deb";
+            url = "https://github.com/lxorb/orden/releases/download/${channel.tag}/${channel.asset}-${version}-linux-${suffix}.deb";
             inherit hash;
           };
 
@@ -329,7 +338,7 @@
           + ''
             install -d $out/share/applications
             substitute ${./orden.desktop} $out/share/applications/${pname}.desktop \
-              --replace-fail 'Name=Orden' 'Name=${if edge then "Orden Edge" else "Orden"}' \
+              --replace-fail 'Name=Orden' 'Name=${if edge then "Orden Unstable" else "Orden"}' \
               --replace-fail 'Exec=orden' 'Exec=${pname}' \
               --replace-fail 'Icon=orden' 'Icon=${pname}' \
               --replace-fail 'StartupWMClass=orden' 'StartupWMClass=${pname}'
@@ -394,16 +403,35 @@
           '';
 
           meta = {
-            description = "Markdown editor with realtime inline preview${pkgs.lib.optionalString edge ", built from main"}";
+            description = "Markdown editor with realtime inline preview${pkgs.lib.optionalString edge ", the latest build of unstable"}";
             homepage = "https://orden.so";
             downloadPage = "https://github.com/lxorb/orden/releases";
-            changelog = "https://github.com/lxorb/orden/releases/tag/${release.tag}";
+            changelog = "https://github.com/lxorb/orden/releases/tag/${channel.tag}";
             license = pkgs.lib.licenses.agpl3Only;
             mainProgram = pname;
             platforms = systems;
             sourceProvenance = [ pkgs.lib.sourceTypes.binaryNativeCode ];
           };
         };
+
+      mkEdge =
+        pkgs:
+        if edgePin != null then
+          mkRelease (edgePin // { pname = "orden-unstable"; }) pkgs
+        else
+          pkgs.stdenvNoCC.mkDerivation {
+            pname = "orden-unstable";
+            version = "0";
+            buildCommand = ''
+              echo "orden-unstable installs the edge pinned in edge.json, and this branch has none:" >&2
+              echo "  nix profile install 'github:lxorb/orden/unstable?dir=packaging/nix#orden-unstable'" >&2
+              exit 1
+            '';
+            meta = {
+              mainProgram = "orden-unstable";
+              platforms = systems;
+            };
+          };
 
       # The same app compiled out of the workspace beside this flake, with its own
       # command, desktop entry, icons, wrapper and GStreamer registry, so it sits in
@@ -429,7 +457,7 @@
       # is the same on both architectures by construction - the fetcher runs
       # `pnpm install --force`, which takes every platform's optional dependencies,
       # so one hash covers x86_64 and aarch64. A real hash means `nix profile
-      # install ...#orden-unstable` works for somebody who is not CI, which a
+      # install ...#orden-source` works for somebody who is not CI, which a
       # placeholder never did. It does go stale when pnpm-lock.yaml moves, and then
       # the *build* fails loudly with the hash it wanted; nix.yml's
       # `resolve_source_hashes` fills it in a runner's copy to validate a build
@@ -521,7 +549,7 @@
               src = workspace;
               pnpm = pkgs.pnpm_10;
               fetcherVersion = 4;
-              hash = "sha256-3OH5zSUgmuLgwXRe8vXdx7E7T4n5SVMdQvmNDEP2yL8=";
+              hash = "sha256-yOi7wQw/tu+4JdxHUIQnJ4aFDG6U39JQvFWAunLg/Vw=";
             };
 
             buildInputs = runtimeInputsFor pkgs;
@@ -555,7 +583,7 @@
               done
               install -Dm644 ${./orden.desktop} $out/share/applications/${pname}.desktop
               substitute ${./orden.desktop} $out/share/applications/${pname}.desktop \
-                --replace-fail 'Name=Orden' 'Name=Orden Unstable' \
+                --replace-fail 'Name=Orden' 'Name=Orden Source' \
                 --replace-fail 'Exec=orden' 'Exec=${pname}' \
                 --replace-fail 'Icon=orden' 'Icon=${pname}' \
                 --replace-fail 'StartupWMClass=orden' 'StartupWMClass=${pname}'
@@ -591,19 +619,21 @@
       packages = forEach (
         pkgs:
         let
-          orden = mkRelease pkgs;
+          orden = mkRelease stable pkgs;
         in
         {
-          ${pname} = orden;
+          inherit orden;
           default = orden;
+          # What the package was called before 0.15, for a profile that names it.
+          nib = orden;
+          orden-unstable = mkEdge pkgs;
           ${fromSource.pname} = mkSource pkgs;
         }
-        # What the package was called before 0.15, for a profile that names it.
-        // pkgs.lib.optionalAttrs (!edge) { nib = orden; }
       );
 
       overlays.default = final: _prev: {
-        ${pname} = mkRelease final;
+        orden = mkRelease stable final;
+        orden-unstable = mkEdge final;
         ${fromSource.pname} = mkSource final;
       };
 
@@ -846,6 +876,11 @@
           type = "app";
           program = pkgs.lib.getExe self.packages.${pkgs.stdenv.hostPlatform.system}.default;
           meta.description = "Orden, a markdown editor with realtime inline preview";
+        };
+        orden-unstable = {
+          type = "app";
+          program = pkgs.lib.getExe self.packages.${pkgs.stdenv.hostPlatform.system}.orden-unstable;
+          meta.description = "Orden, the latest build of unstable";
         };
         ${fromSource.pname} = {
           type = "app";

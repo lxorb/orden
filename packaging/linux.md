@@ -360,9 +360,10 @@ anything unusual; this one does not, so it should pass automatically.
 
 ## Nix
 
-`nix/flake.nix` is one file holding both channels, and it is the same file on every
+`nix/flake.nix` is one file holding every channel, and it is the same file on every
 branch: `packages.default` and `packages.orden` are the release out of its `.deb`,
-`packages.orden-unstable` compiles the sources beside the flake. It used to be two
+`packages.orden-unstable` is the `edge` pre-release out of its own, and
+`packages.orden-source` compiles the sources beside the flake. It used to be two
 different files at the one path, the release flake on main and the source flake on
 `unstable`, which meant every release pull request either conflicted here or
 quietly carried the source flake onto main and broke
@@ -519,24 +520,34 @@ it aside, given a `backupFileExtension`). Each file belongs to one of the two:
 declare it here, or edit it in the app.
 
 For the edge rather than the release, install the `orden-unstable` package, named
-explicitly, from the `unstable` branch. It compiles that branch's source and follows
-the unstable updater channel by default, and it has its own command, desktop entry
-and icons, so it installs beside the release rather than over it:
+explicitly, from the `unstable` branch. It is the same `.deb` the `edge` pre-release
+carries, wrapped exactly as the release is, with its own command, desktop entry and
+icons, so it installs beside the release rather than over it. `orden-source` compiles
+the branch instead, under names of its own again:
 
 ```
 nix profile install github:lxorb/orden/unstable?dir=packaging/nix#orden-unstable
-nix profile upgrade --all    # either one moves to its newest build
+nix profile install github:lxorb/orden/unstable?dir=packaging/nix#orden-source
+nix profile upgrade --all    # each one moves to its newest build
 ```
 
-The attribute has to be named: `default` is the release on every branch now, so
-leaving it off installs the release from a flake fetched off `unstable`. Name the
-repository and not just the directory - `?dir=packaging/nix` is how Nix is handed
-the whole tree with the flake inside it, and the source build needs the workspace
-next to it. `path:packaging/nix`, which copies that directory alone, leaves the
-release outputs working and `orden-unstable` as a derivation that says what is
-missing when somebody builds it.
+Its pin is `nix/edge.json`, the version and the two `.deb` hashes, kept out of the
+flake so the release pull request never conflicts over it. After every edge build
+`release.yml`'s `nix-edge` job rewrites it (`node scripts/bump-packaging.mjs edge`),
+pushes it to `unstable` with the run's own token, which starts no workflow, and
+builds and starts that commit's `orden-unstable` through `nix.yml`. Only the pin on
+`unstable` is current: edge keeps one build's files, so an older copy, main's
+included, names files that are gone, and the stable outputs never read it.
 
-Its Cargo dependencies are vendored straight out of `Cargo.lock`, so they carry no
+The attribute has to be named: `default` is the release on every branch now, so
+leaving it off installs the release from a flake fetched off `unstable`. For
+`orden-source`, name the repository and not just the directory - `?dir=packaging/nix`
+is how Nix is handed the whole tree with the flake inside it, and the source build
+needs the workspace next to it. `path:packaging/nix`, which copies that directory
+alone, leaves the other outputs working and `orden-source` as a derivation that says
+what is missing when somebody builds it.
+
+`orden-source`'s Cargo dependencies are vendored straight out of `Cargo.lock`, so they carry no
 hash to go stale. Its pnpm dependencies need a fixed-output hash, which is pinned in
 the flake and is the same on both architectures (the fetcher runs `pnpm install
 --force`, taking every platform's optional packages). That hash is the one thing in
@@ -546,20 +557,12 @@ moves past it the source *build* fails and names the hash it wanted, while
 release outputs or the check on main. `gh workflow run nix.yml -f resolve_source_hashes=true`
 resolves and validates it on a runner before it is committed here.
 
-Two channels and no third. There is no branch holding a flake pinned to the
-binaries of the `edge` pre-release: that was `nix-edge`, main plus a commit of
-edge pins, force-pushed on every build, and it is gone. Main carries releases
-and nothing else now, so a flake following main is a flake following the
-release. Someone who wants the edge on Nix compiles the branch, which is the one
-place this differs from the other package managers: everywhere else the edge
-arrives as the same prebuilt .deb the `edge` pre-release carries.
-
 The release package needs no binary cache, and nothing is compiled for it: the
 build unpacks a 13 MB .deb, points its program at nixpkgs' libraries and writes
 a shell wrapper, about four seconds on a CI runner, plus the download of the
 .deb from the release, which a cache would only replace with a download of the
-same size. Everything else comes from cache.nixos.org already. `orden-unstable`
-is the exception, since it builds the app from source.
+same size. Everything else comes from cache.nixos.org already; so does
+`orden-unstable`. `orden-source` is the exception, since it builds the app from source.
 
 `flake.lock` pins nixpkgs, because Nix refuses to run a flake from GitHub whose
 lock file it would have to write. Every release moves it (see below), so it is
@@ -571,8 +574,9 @@ and aarch64, and starts Orden out of it twice on each in a headless sway
 and no `DISPLAY`, so the window is a native Wayland one, and once on X11 through
 Xwayland (`scripts/nix-start.sh`). On a pull request into `main` it builds the
 flake in the checkout; by hand, and when `packaging-bump.yml` calls it, the flake it
-is handed, from GitHub exactly as `nix run` above does. It starts the release build; `-f resolve_source_hashes=true` builds
-`orden-unstable` instead.
+is handed, from GitHub exactly as `nix run` above does. It starts the release build;
+`-f package=orden-unstable` starts the edge, and `-f resolve_source_hashes=true`
+builds `orden-source`.
 
 ## Refreshing all of it for a new release
 

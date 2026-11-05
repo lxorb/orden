@@ -3,6 +3,7 @@
 // URLs and the digests of the files each one ships, read off the release page.
 //
 //   node scripts/bump-packaging.mjs 0.15.0
+//   node scripts/bump-packaging.mjs edge [0.19.1-1088]
 //
 // The publishers in publish.yml and publish-linux.yml rewrite their copies in
 // flight anyway; this keeps the committed files on the release they describe, so
@@ -10,8 +11,8 @@
 // validate-linux-packaging.yml checks what is really shipped. Run by
 // .github/workflows/packaging-bump.yml after every stable release.
 //
-// Releases only. The edge on Nix is compiled from the `unstable` branch, not
-// pinned to the .debs on the `edge` pre-release; see packaging/linux.md.
+// `edge` writes packaging/nix/edge.json alone, the .debs of the `edge` pre-release
+// that the flake's orden-unstable installs; release.yml runs it after every edge build.
 //
 // Every rewrite has to match exactly as often as it is written to: a manifest
 // whose shape moved fails here, loudly, instead of being left half on the old
@@ -24,10 +25,11 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url))
 const REPO = process.env.GITHUB_REPOSITORY || 'lxorb/orden'
 
 const asked = process.argv[2]?.replace(/^v/, '')
-if (!/^\d+\.\d+\.\d+$/.test(asked ?? '')) {
-  throw new Error('usage: bump-packaging.mjs <version>')
+const edge = asked === 'edge'
+if (!edge && !/^\d+\.\d+\.\d+$/.test(asked ?? '')) {
+  throw new Error('usage: bump-packaging.mjs <version> | edge [<version>]')
 }
-const tag = `v${asked}`
+const tag = edge ? 'edge' : `v${asked}`
 
 const newer = (a, b) => {
   const [x, y] = [a, b].map((v) => v.split('.').map(Number))
@@ -44,11 +46,17 @@ const response = await fetch(`https://api.github.com/repos/${REPO}/releases/tags
 })
 if (!response.ok) throw new Error(`${tag}: the release page answered ${response.status}`)
 const release = await response.json()
-if (release.draft || release.prerelease) throw new Error(`${tag} is not a stable release`)
+if (!edge && (release.draft || release.prerelease)) {
+  throw new Error(`${tag} is not a stable release`)
+}
 
 // What the files are called there: `Orden-<version>-<platform>`.
 const asset = 'Orden'
-const version = asked
+const version = edge
+  ? (process.argv[3] ??
+    release.assets.map((one) => /^Orden-(.+)-linux-x64\.deb$/.exec(one.name)?.[1]).find(Boolean))
+  : asked
+if (!version) throw new Error(`${tag}: no Linux .deb on the release`)
 
 // The digest GitHub computed when the file was uploaded, the same one the snap
 // is pinned to; nothing is downloaded here.
@@ -61,6 +69,21 @@ const digest = (name) => {
 const file = (arch, kind) => `${asset}-${version}-${arch}${kind}`
 const sri = (hex) => `sha256-${Buffer.from(hex, 'hex').toString('base64')}`
 const download = `https://github.com/${REPO}/releases/download/${tag}`
+
+if (edge) {
+  const pin = {
+    version,
+    tag,
+    asset,
+    hashes: {
+      'x86_64-linux': sri(digest(file('linux-x64', '.deb'))),
+      'aarch64-linux': sri(digest(file('linux-arm64', '.deb'))),
+    },
+  }
+  writeFileSync(join(ROOT, 'packaging/nix/edge.json'), `${JSON.stringify(pin, null, 2)}\n`)
+  console.log(`nix edge on ${version}`)
+  process.exit(0)
+}
 
 // What a URL naming some earlier release looks like, under either name it had.
 const OLD = String.raw`releases/download/v[0-9][^/'"]*/[A-Za-z]+-[0-9][^-]*`
