@@ -45,6 +45,15 @@ export function mountOf(path: string): { mount: Mounted; inside: string } | null
   return null
 }
 
+/** Whether `root` has the shape of a kept space's root, mounted yet or not: a file named
+ *  as the folder of `.orden` it is in (internal/spaces.ts). What says a root is none of
+ *  the crate's to watch or to list before the launch has mounted it. */
+export function keptShaped(root: string): boolean {
+  const parts = spelled(root).split('/')
+  const name = parts.at(-1)
+  return parts.length > 2 && parts.at(-3) === '.orden' && !!name && parts.at(-2) === name
+}
+
 /** Every space kept here. */
 export function mounts(): Mounted[] {
   return [...mounted.values()]

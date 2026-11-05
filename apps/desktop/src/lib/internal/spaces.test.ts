@@ -445,3 +445,28 @@ describe('a space written out as Markdown and folders', () => {
     expect(disk.files.get('/picked/Disk/.Inbox.md')).toEqual(new TextEncoder().encode('- [ ] eggs'))
   })
 })
+
+describe('a kept space the launch has not mounted yet', () => {
+  test('is waited for and read off its index, never listed as a folder of nothing', async () => {
+    const { listInternal } = await import('./watch')
+    const { keptShaped } = await import('./roots')
+    const folder = '/spaces/.orden/Plans'
+    disk.dirs.add('/spaces/.orden')
+    disk.dirs.add(folder)
+    disk.files.set(`${folder}/Plans`, '')
+    disk.files.set(`${folder}/.entries/k1.md`, 'ship it')
+    const entry = { key: 'k1.md', made: 1, modified: 1, size: 7 }
+    disk.files.set(
+      `${folder}/.index.0.json`,
+      JSON.stringify({ index: 1, gen: 1, paths: { 'Plan.md': entry }, trash: [] }),
+    )
+
+    expect(keptShaped(`${folder}/Plans`)).toBe(true)
+    expect(keptShaped('/spaces/Plans')).toBe(false)
+    expect(keptShaped('/spaces/.orden/Plans/Other')).toBe(false)
+    expect((await listInternal(`${folder}/Plans`))?.map((one) => one.path)).toEqual([
+      `${folder}/Plans/Plan.md`,
+    ])
+    expect(await listInternal('/spaces/Disk')).toBeNull()
+  })
+})

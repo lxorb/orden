@@ -286,4 +286,17 @@ describe('the engine over a space Orden keeps', () => {
     ])
     watched.stop()
   })
+
+  test("hands a kept space the launch has not mounted yet to neither the crate's watch nor its scan", async () => {
+    const { watchFolders } = await import('../sync2/watching')
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const root = '/spaces/.orden/Later/Later'
+    const here = await device(account, 'd0', root, new MemoryDisk())
+    const watched = watchFolders({ engine: here, ready: () => true, changed: () => undefined })
+    await settled()
+
+    expect(watch.roots.flat()).not.toContain(root)
+    expect(watch.scans).toEqual([])
+    watched.stop()
+  })
 })

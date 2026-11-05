@@ -26,7 +26,8 @@ import {
   watchSpaces,
 } from '../space-watch'
 import { carriedOwn } from '@orden/bases/inbox'
-import { hearInternal, listInternal } from '../internal/watch'
+import { keptShaped } from '../internal/roots'
+import { hearInternal, listInternal, mountedFor } from '../internal/watch'
 import { inForeignCopy } from '@orden/sync-core/foreign'
 import { t } from '../i18n.svelte'
 import { syncMark } from '../surfaces.svelte'
@@ -151,7 +152,11 @@ export function watchFolders(how: Watching): Watched {
       const stop = hearInternal(root, (changes) => {
         heard({ root, changes, scan: false, gone: false })
       })
-      if (!stop) continue
+      if (!stop) {
+        // One the launch has not mounted yet: heard once it is, and never the crate's.
+        if (keptShaped(root)) void mountedFor(root).then((yes) => yes && follow())
+        continue
+      }
       inside.set(root, stop)
       heard({ root, changes: [], scan: true, gone: false })
     }
@@ -163,7 +168,7 @@ export function watchFolders(how: Watching): Watched {
     if (stopped) return
     const all = [...how.engine.core.spaces.values()].map((space) => space.row.root).sort()
     hearInside(all)
-    const roots = all.filter((root) => !inside.has(root))
+    const roots = all.filter((root) => !inside.has(root) && !keptShaped(root))
     const said = JSON.stringify(roots)
     if (said === watched) return
     watched = said
@@ -263,7 +268,10 @@ async function scanned(how: Watching, root: string): Promise<void> {
   const engine = how.engine
   const space = [...engine.core.spaces.values()].find((one) => one.row.root === root)
   if (!space || !how.ready(space.id)) return
-  const listed = (await listInternal(root)) ?? (await scanSpace(root))
+  // A kept space not mounted is no folder to list: a listing of nothing there would
+  // read as everything in it deleted.
+  const listed = (await listInternal(root)) ?? (keptShaped(root) ? null : await scanSpace(root))
+  if (!listed) return
   const seen = new Set<string>()
 
   for (const one of listed) {

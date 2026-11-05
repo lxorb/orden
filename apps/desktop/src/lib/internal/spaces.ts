@@ -60,7 +60,7 @@ const rootIn = (folder: string, name: string) => joinPath(folder, name)
  *  short). */
 let finding: Promise<Space[]> | null = null
 
-function keptSpaces(): Promise<Space[]> {
+export function keptSpaces(): Promise<Space[]> {
   finding ??= find().finally(() => {
     finding = null
   })

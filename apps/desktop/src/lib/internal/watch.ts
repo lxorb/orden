@@ -5,7 +5,17 @@
 
 import type { Listed, SpaceChange } from '../space-watch'
 import { joinPath } from '../tauri'
-import { mountOf } from './roots'
+import { keptShaped, mountOf } from './roots'
+
+/** The kept spaces mounted, where `root` is one the launch has not mounted yet: what the
+ *  engine waits for before it reads one, rather than read a file where a space is. */
+export async function mountedFor(root: string): Promise<boolean> {
+  if (mountOf(root)) return true
+  if (!keptShaped(root)) return false
+  const { keptSpaces } = await import('./spaces')
+  await keptSpaces().catch(() => [])
+  return mountOf(root) !== null
+}
 
 /** Every change to the kept space at `root`, as the crate's watcher says one. Answers
  *  how to stop, or null where `root` is no kept space. */
@@ -31,6 +41,7 @@ export function hearInternal(
 /** Everything in the kept space at `root`, as the crate's scan lists a folder. Null
  *  where `root` is no kept space. */
 export async function listInternal(root: string): Promise<Listed[] | null> {
+  if (!(await mountedFor(root))) return null
   const found = mountOf(root)
   if (!found || found.inside) return null
   return (await found.mount.folder.list()).map(({ path, entry }) => ({
