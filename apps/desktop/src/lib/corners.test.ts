@@ -75,3 +75,17 @@ test('every full mode makes the card flush through one condition', () => {
     expect(rule, token).toContain(token)
   }
 })
+
+test('every sidebar over the note stands on the paper, under the chrome and its own ground', () => {
+  const over: [string, RegExp][] = [
+    ['../App.svelte', /:global\(\[data-drawer\]\) \.panels \{([^}]*)\}/],
+    ['Sidebar.svelte', /\n {2}\.column\.shut\.floating aside \{([^}]*)\}/],
+  ]
+  for (const [file, selector] of over) {
+    const rule = selector.exec(read(`./${file}`))?.[1] ?? ''
+    const ground = /background:([^;]*);/.exec(rule.replace(/\/\*[\s\S]*?\*\//g, ''))?.[1] ?? ''
+    expect(ground.replace(/\s+/g, ' ').trim(), file).toBe(
+      'linear-gradient(var(--side-ground), var(--side-ground)), linear-gradient(var(--chrome-ground), var(--chrome-ground)), var(--bg)',
+    )
+  }
+})

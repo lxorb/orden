@@ -1687,6 +1687,9 @@
     transform: translateX(calc(var(--dir) * -100%));
     transition: transform var(--dur-base) var(--ease-out);
     box-shadow: var(--shadow-lg);
+    background:
+      linear-gradient(var(--side-ground), var(--side-ground)),
+      linear-gradient(var(--chrome-ground), var(--chrome-ground)), var(--bg);
   }
 
   :global([data-drawer]) .panels.open {

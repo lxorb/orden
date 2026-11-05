@@ -1313,7 +1313,9 @@
     border-radius: var(--card-radius);
     /* Its own ground under its own: at rest it stands on the window's chrome and lets
        it show through, and over the note there is no chrome under it. */
-    background: linear-gradient(var(--side-ground), var(--side-ground)), var(--chrome-ground);
+    background:
+      linear-gradient(var(--side-ground), var(--side-ground)),
+      linear-gradient(var(--chrome-ground), var(--chrome-ground)), var(--bg);
     box-shadow:
       var(--card-shadow),
       0 0 0 1px var(--card-edge),
