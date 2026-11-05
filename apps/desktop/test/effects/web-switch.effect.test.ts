@@ -30,8 +30,9 @@ let holding: Promise<void> | null = null
 let refuses: string | null = null
 
 /** Whether the crate says it cuts the app's layers out of a page, as the system's engine
- *  on Windows does, rather than having the window hide the page behind its picture. */
-let cuts = false
+ *  on Windows does, rather than having the window hide the page behind its picture; or
+ *  that it draws pages under the window's HTML (#1137). */
+let cuts: boolean | 'under' = false
 
 /** How many questions a page answers about where it has got to before it goes quiet, as
  *  a page being closed under the question does; null for every one. See `whereIs`. */
@@ -48,6 +49,7 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
     if (command === 'web_look' && answersLooks !== null && answersLooks-- <= 0)
       return new Promise(() => undefined)
     if (command === 'web_place') return Promise.resolve(cuts)
+    if (command === 'web_open' && cuts === 'under') return Promise.resolve(cuts)
     return Promise.resolve(undefined)
   },
 }))
@@ -1163,4 +1165,60 @@ test('a tab turned Separate is built again once, in its own store, and stays', a
 
   void unmount(app)
   pages.forget(tab.id)
+})
+
+/** On an engine that draws pages under the window's HTML (#1137), a layer over the page is
+ *  drawn over the live page: the page is never hidden or photographed for it, the layer is
+ *  only taken out of the page's input, and the window's grounds leave a hole where the
+ *  page is, so the page shows through them. */
+describe('a page drawn under the app', () => {
+  test('is never hidden or photographed for a layer, which only takes its input', async () => {
+    cuts = 'under'
+    const { app } = await opened('https://example.com/under')
+
+    asked.length = 0
+    document.querySelector('.hole')?.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+    const menu = layer('nib-layer', { x: 100, y: 140, width: 240, height: 200 })
+    const off = overlays.show(() => undefined)
+    await frames()
+
+    const placed = asked.filter((one) => one.command === 'web_place')
+    expect(placed.length).toBeGreaterThan(0)
+    expect(placed.every((one) => one.args.visible === true)).toBe(true)
+    expect(placed.at(-1)?.args).toMatchObject({
+      cut: { all: false, hollows: [{ x: 100, y: 100, width: 240, height: 200, radius: 0 }] },
+      opacity: 1,
+    })
+    expect(asked.map((one) => one.command)).not.toContain('web_shot')
+
+    const scrim = layer('nib-scrim', { x: 0, y: 0, width: 800, height: 600 })
+    await frames()
+    expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args).toMatchObject({
+      visible: true,
+      cut: { all: true },
+    })
+
+    off()
+    menu.remove()
+    scrim.remove()
+    void unmount(app)
+  })
+
+  test('shows through a hole in the grounds, which closes as its tab goes', async () => {
+    cuts = 'under'
+    const { app } = await opened('https://example.com/ground')
+
+    expect(document.querySelector('.hole')?.classList.contains('under')).toBe(true)
+    expect(document.body.hasAttribute('data-underlay')).toBe(true)
+    expect(document.documentElement.hasAttribute('data-underlay')).toBe(true)
+    expect(document.body.style.getPropertyValue('--underlay-clip')).toMatch(/^path\(evenodd, /)
+
+    void unmount(app)
+    flushSync()
+    await frames()
+
+    expect(document.body.hasAttribute('data-underlay')).toBe(false)
+    expect(document.documentElement.hasAttribute('data-underlay')).toBe(false)
+    expect(document.body.style.getPropertyValue('--underlay-clip')).toBe('')
+  })
 })

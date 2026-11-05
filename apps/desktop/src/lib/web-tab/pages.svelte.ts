@@ -139,7 +139,14 @@ export interface Frame {
 export interface Over {
   cut: Cut | null
   frame: Frame | null
+  /** How much of the page shows where it is drawn under the app (`'under'`): the hole's
+   *  own opacity, its ancestors' included. One where it is not said. */
+  opacity?: number
 }
+
+/** All of a page under the app's layers, said here rather than taken from covers.ts, which
+ *  is not in front of the first paint. */
+const WHOLE: Cut = { all: true, hollows: [] }
 
 /** Nothing over the page, and no layout to follow. */
 const NOTHING: Over = { cut: null, frame: null }
@@ -152,13 +159,27 @@ interface Placement {
   frame: Frame | null
   cut: Cut | null
   away?: boolean
+  opacity?: number
 }
 
-/** Whether the crate cuts the app's layers out of a page rather than hiding it, which
- *  it says with every page it builds and every placement: the system's engine on Windows
- *  does. Until it has said,
- *  a page under a layer is hidden behind its picture, which every build can do. */
-let cutting = false
+/** How the engine layers a page with the app's own HTML, which the crate says with every
+ *  page it builds and every placement:
+ *
+ *  - `'under'`: the page is drawn under the window's HTML, which is transparent where the
+ *    page shows, so every layer of the app is simply drawn over the live page. The cut is
+ *    still told, and means where the page takes no input. See underlay.ts and #1137.
+ *  - `'cut'`: the page is drawn over the HTML, and the app's layers are cut out of it
+ *    (src-tauri/src/web_cut.rs); the crate's answer is `true`.
+ *  - `'hide'`: the page is hidden behind its still picture under a layer, which every
+ *    build can do, and is what a page is until the crate has said. */
+export type Layering = 'under' | 'cut' | 'hide'
+
+let layering = $state<Layering>('hide')
+
+/** The crate's answer, as a layering. */
+function heard(said: unknown): void {
+  layering = said === 'under' ? 'under' : said === true ? 'cut' : 'hide'
+}
 
 /** Where a page is, its trail, and whether a field in it is typed into; see `web_look`. */
 interface Looked {
@@ -714,7 +735,7 @@ class Pages {
     try {
       // The note's own store, or the shared one; see web-data.svelte.ts.
       const store = page.inPrivate ? null : await (await stores()).store(forOwn)
-      const cuts = await invoke<boolean | undefined>('web_open', {
+      const said = await invoke<boolean | 'under' | undefined>('web_open', {
         tab: tabId,
         url: page.url,
         pane,
@@ -724,7 +745,7 @@ class Pages {
       // Said with the page as well as with every placement, because the first page of a
       // window is built before anything has been placed, and a layer over it then would
       // be answered as though the engine could not cut.
-      cutting = cuts === true
+      heard(said)
       page.live = true
       page.openable = true
       page.frozen = false
@@ -799,7 +820,13 @@ class Pages {
     // is out of sight, still the tab in front so nothing counts down for it, and nothing
     // is photographed: a page built this moment has nothing on it worth standing in.
     else if (wanted.covering)
-      await this.place(tabId, wanted.pane, false, cutting && wanted.over.cut !== null, wanted.over)
+      await this.place(
+        tabId,
+        wanted.pane,
+        false,
+        layering === 'under' || (layering === 'cut' && wanted.over.cut !== null),
+        wanted.over,
+      )
     // Out of sight, and counting down to being frozen: the countdown that should have
     // started when the tab was switched away from found no page to start it on.
     else this.hide(tabId, wanted.pane)
@@ -838,9 +865,24 @@ class Pages {
 
     if (!page.live && visible) return
 
+    // Drawn under the app: a layer over the page is drawn over it, so a page covered is a
+    // page still shown, with the layer's shape - or all of it - taken out of its input.
+    if (layering === 'under' && page.live) {
+      const shown = visible || covering
+      const cut = !shown ? null : covering ? (over.cut ?? WHOLE) : over.cut
+      await this.put(tabId, page, {
+        pane,
+        visible: shown,
+        frame: over.frame,
+        cut,
+        opacity: over.opacity ?? 1,
+      })
+      return
+    }
+
     // Something of the app's is over the page, and the crate can cut it out of the page:
     // the page stays on screen round it. See `cover`.
-    if (covering && cutting && page.live && over.cut) {
+    if (covering && layering === 'cut' && page.live && over.cut) {
       await this.cover(tabId, page, pane, over)
       return
     }
@@ -892,15 +934,16 @@ class Pages {
     if (__EVEN_PLUGIN__) return
     page.sent = one
     try {
-      const cuts = await invoke<boolean | undefined>('web_place', {
+      const said = await invoke<boolean | 'under' | undefined>('web_place', {
         tab: tabId,
         pane: one.pane,
         visible: one.visible,
         frame: one.frame,
         cut: one.cut,
         corner: cardCorner(),
+        ...(one.opacity === undefined ? {} : { opacity: one.opacity }),
       })
-      cutting = cuts === true
+      heard(said)
     } catch (error) {
       // The page's browser did not answer, and the crate left the page where it was rather
       // than stop the app to wait for it. The page is alive: it is placed again in a
@@ -932,10 +975,15 @@ class Pages {
     page.shown = one.visible
   }
 
-  /** Whether the crate cuts the app's layers out of a page rather than hiding it; see
-   *  `cutting`. */
+  /** Whether the app's layers can be drawn over a live page, cut out of it or over it,
+   *  rather than the page hidden for them; see `layering`. */
   get cuts(): boolean {
-    return cutting
+    return layering !== 'hide'
+  }
+
+  /** Whether pages are drawn under the app's HTML; see `layering`. */
+  get under(): boolean {
+    return layering === 'under'
   }
 
   /** The tab is no longer the one showing.

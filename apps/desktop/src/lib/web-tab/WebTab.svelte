@@ -62,7 +62,8 @@
   import { mute, muteSite } from './mute'
   import { zoomTo as zoomPageTo } from './zoom'
   import { shownAddress } from './omnibox'
-  import { type Frame, pages, type Rect, siteMark, type Step } from './pages.svelte'
+  import { cardCorner, type Frame, pages, type Rect, siteMark, type Step } from './pages.svelte'
+  import { fading, opacityOf, underlaid } from './underlay'
   import { seek, shut, sought } from './seek'
   import { watchScale, watchShifts } from './shifts'
   import { grants, siteOf } from './permissions.svelte'
@@ -106,6 +107,10 @@
    *  overlay stack is already empty and the element is still there to be hit. See
    *  `look` and LAYER in motion.ts. */
   const LEAVING = 300
+
+  /** Below this opacity a page drawn under the app counts as not drawn, and takes no
+   *  input: the pane is faded out, or lifted into the tab overview. */
+  const UNSEEN = 0.01
 
   const page = $derived(pages.of(tab.id))
 
@@ -276,6 +281,23 @@
     }
   })
 
+  // Drawn under the app, the page fades, hides and moves with whatever holds the hole -
+  // a pane lifted into the tab overview, a class or a style on any of them - which is
+  // neither a change of size nor a layer, so each of them is watched for it.
+  $effect(() => {
+    const room = hole
+    if (!room || !pages.under || typeof MutationObserver !== 'function') return
+    const holding = new MutationObserver(now)
+    for (let at = room.parentElement; at; at = at.parentElement) {
+      holding.observe(at, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'hidden', 'inert'],
+      })
+    }
+    holding.observe(document.documentElement, { attributes: true })
+    return () => holding.disconnect()
+  })
+
   /** Puts the page where the hole is. Coalesced onto a frame, because a pane being
    *  dragged reports every pixel. What set it off is taken and not looked at: an
    *  observer and a listener hand it one anyway, and an effect names by it the state
@@ -315,6 +337,7 @@
     if (!isDesktop || !ready || own) return
 
     const box = rect()
+    if (!box) underlaid(tab.id, null)
     if (!box) {
       // No room for the page at all: a window made too short for anything under the bar.
       // The page goes out of sight where it was, still the tab in front, rather than
@@ -330,9 +353,26 @@
 
     const covered = coverOf(box)
     const at = covered.box
-    const cut = settled(covered.cut, page.shot !== null, pages.cuts)
+    // Drawn under the app, the page is drawn whatever is over it, at the hole's own
+    // opacity, and what is over it only takes its input; see `layering` in pages.svelte.ts.
+    const under = pages.under
+    // Another tab's page holding the screen is drawn over this one by nothing: this one
+    // is not drawn at all meanwhile.
+    const opacity =
+      !under || page.filling ? 1 : filling.by !== null ? 0 : hole ? opacityOf(hole) : 1
+    const seen = opacity > UNSEEN
+    const cut = under
+      ? seen
+        ? covered.cut
+        : ALL
+      : settled(covered.cut, page.shot !== null, pages.cuts)
     last = at
     const visible = cut === null
+    underlaid(
+      tab.id,
+      under && page.live && seen ? { ...at, corner: page.filling ? 0 : cardCorner() } : null,
+    )
+    if (under && hole && fading(hole)) follow()
 
     // A layer on its way out is on no list: it took itself off the overlay stack the
     // moment it closed, and nothing says when its own motion has finished. So while
@@ -352,12 +392,13 @@
     // moves under one - a pane shrinking into its window under the tab overview - is not
     // told on every frame, each a placement of a page nobody sees and its photograph
     // thrown away for the new size (#1136). Where the hole is is told when the page is seen.
-    if (cut?.all && toldWhole && page.live) return
+    // A page drawn under the app is seen under a scrim, and goes on following its hole.
+    if (cut?.all && toldWhole && page.live && !under) return
 
     const frame = frameOf()
     // The scale is part of it: the same box on a screen of another scale is another page
     // window, and nothing else in the layout says the scale changed.
-    const said = JSON.stringify([at, cut, frame?.window, devicePixelRatio])
+    const said = JSON.stringify([at, cut, frame?.window, devicePixelRatio, opacity])
     // Nothing has moved *and there is a page*. The second half is what keeps a tab from
     // being left on an empty pane for good: a pane measured under a layer on its way out
     // has said its rectangle already, and the page is the thing that is missing.
@@ -369,7 +410,8 @@
     // web data; said with the page, since a tab opened by hand asks for it as it mounts.
     page.space = space
     if (!page.live) page.own = apart
-    void pages.show(tab.id, address, at, visible, { cut, frame })
+    if (under) void pages.show(tab.id, address, at, true, { cut, frame, opacity })
+    else void pages.show(tab.id, address, at, visible, { cut, frame })
   }
 
   /** Where this tab points: the address the page is on, else the one the session
@@ -447,7 +489,7 @@
       // photographed. Nothing waits for the picture: it is there by the time the
       // overlay is, and the pane keeps the one from a moment ago either way. See
       // `shoot` in pages.svelte.ts.
-      void pages.shoot(tab.id)
+      if (!pages.under) void pages.shoot(tab.id)
       // What the press opens is heard as it arrives, by `watchArrivals`; it used to be
       // looked for again a fifth of a second later, and a layer that came in that time
       // was drawn behind the page until then (#1124).
@@ -500,6 +542,7 @@
       // rectangle is the one the page was last placed at rather than one measured now,
       // because by here the hole is out of the document and measures nothing; see
       // `last`. A tab nothing ever placed has no page to hide.
+      underlaid(tab.id, null)
       if (last) pages.hide(tab.id, last)
     }
   })
@@ -1052,8 +1095,9 @@
       class:acted={worn !== null}
       class:resting={worn?.stopped}
       style:--agent={worn?.colour}
-      class:still={page.shot !== null}
-      style:background-image={page.shot === null ? 'none' : `url(${page.shot})`}
+      class:under={pages.under && page.live}
+      class:still={page.shot !== null && !pages.under}
+      style:background-image={page.shot === null || pages.under ? 'none' : `url(${page.shot})`}
       bind:this={hole}
     ></div>
   {:else if page.framing === 'frame' && address}
@@ -1149,6 +1193,43 @@
     flex: 1;
     min-height: 0;
     background: var(--bg);
+  }
+
+  /* Drawn under the app (#1137): nothing in the hole, so the page shows through it, and
+     each ground behind it painted round it instead; see underlay.ts. Each painter's layer
+     is fixed, so a card's `overflow: clip` does not clip it twice, and is put and cut by
+     underlay.ts in the window's pixels. */
+  .hole.under {
+    background: none;
+  }
+
+  :global(html[data-underlay]),
+  :global([data-underlay]) {
+    background: none !important;
+  }
+
+  :global(:not(html)[data-underlay])::before {
+    content: '';
+    position: fixed;
+    left: var(--underlay-x);
+    top: var(--underlay-y);
+    width: var(--underlay-w);
+    height: var(--underlay-h);
+    z-index: var(--z-under);
+    pointer-events: none;
+    clip-path: var(--underlay-clip);
+  }
+
+  :global(body[data-underlay])::before {
+    background: var(--window-ground);
+  }
+
+  :global(main[data-underlay])::before {
+    background: var(--shell-ground);
+  }
+
+  :global(main > .middle[data-underlay])::before {
+    background: var(--chrome-ground);
   }
 
   /* Quiet, under the bar: the one line a page built again in another store says. */

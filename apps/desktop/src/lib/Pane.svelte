@@ -795,6 +795,19 @@
     );
   }
 
+  /* The same paper with a page drawn under the app inside it, laid by the pane's own layer
+     round the page instead (web-tab/underlay.ts, #1137). */
+  .pane:global([data-underlay])::before {
+    background: var(--content-ground, var(--bg));
+  }
+
+  .pane:global([data-underlay]):has(> .head)::before {
+    background: linear-gradient(
+      transparent var(--titlebar-height),
+      var(--content-ground, var(--bg)) 0
+    );
+  }
+
   /* Nothing open: whatever the theme puts behind the frame, like a browser's new tab. */
   .pane:has(> :global(.here)),
   .pane:has(> .head):has(> :global(.here)) {

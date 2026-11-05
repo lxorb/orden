@@ -74,8 +74,8 @@ let photographing: Promise<void> | null = null
 let photo: string | null = null
 
 /** Whether the crate says it cuts the app's layers out of a page, as the system's engine
- *  on Windows does; see src-tauri/src/web_cut.rs. */
-let cuts = false
+ *  on Windows does (see src-tauri/src/web_cut.rs), or draws pages under the app (#1137). */
+let cuts: boolean | 'under' = false
 
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
@@ -367,6 +367,82 @@ describe('a page asked for while something is over the pane', () => {
 
     expect(commands()).not.toContain('web_open')
     expect(last('web_place')).toMatchObject({ tab: 'a', visible: true })
+  })
+})
+
+/** An engine that draws its pages under the window's HTML (#1137): whatever of the app's
+ *  is over a page is drawn over it, so the page is never hidden or photographed for it,
+ *  and what is over it only takes its input. */
+describe('a page drawn under the app', () => {
+  const over = {
+    cut: { all: false, hollows: [{ x: 500, y: 520, width: 280, height: 60, radius: 8 }] },
+    frame: null,
+  }
+
+  test('arrives under a layer shown, with the layer taken out of its input', async () => {
+    cuts = 'under'
+    const shown = pages.show('a', SITE, PANE, false, over)
+    const arrive = await asked()
+    arrive()
+    await shown
+    await settle()
+
+    expect(pages.under).toBe(true)
+    expect(pages.cuts).toBe(true)
+    expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, visible: true, cut: over.cut })
+    expect(calls.some((one) => one.command === 'web_place' && one.args.visible === false)).toBe(
+      false,
+    )
+    expect(commands()).not.toContain('web_shot')
+  })
+
+  test('stays shown under a scrim, which takes all of its input, and is never photographed', async () => {
+    cuts = 'under'
+    const shown = pages.show('a', SITE, PANE)
+    const arrive = await asked()
+    arrive()
+    await shown
+    await settle()
+    calls.length = 0
+
+    await pages.show('a', SITE, PANE, false, { cut: null, frame: null })
+    await settle()
+
+    expect(last('web_place')).toMatchObject({ visible: true, cut: { all: true, hollows: [] } })
+    expect(commands()).not.toContain('web_shot')
+  })
+
+  test('is told the opacity it is drawn at, and is hidden when its tab is', async () => {
+    cuts = 'under'
+    const shown = pages.show('a', SITE, PANE)
+    const arrive = await asked()
+    arrive()
+    await shown
+    await settle()
+
+    await pages.show('a', SITE, PANE, true, { cut: null, frame: null, opacity: 0.5 })
+    await settle()
+    expect(last('web_place')).toMatchObject({ visible: true, cut: null, opacity: 0.5 })
+
+    pages.hide('a', PANE)
+    await settle()
+    expect(last('web_place')).toMatchObject({ visible: false, cut: null })
+  })
+
+  test('an engine that says nothing of it is told no opacity', async () => {
+    cuts = true
+    const shown = pages.show('a', SITE, PANE)
+    const arrive = await asked()
+    arrive()
+    await shown
+    await settle()
+
+    await pages.show('a', SITE, MOVED)
+    await settle()
+
+    expect(pages.under).toBe(false)
+    expect(last('web_place')).toMatchObject({ pane: MOVED })
+    expect(last('web_place')).not.toHaveProperty('opacity')
   })
 })
 
