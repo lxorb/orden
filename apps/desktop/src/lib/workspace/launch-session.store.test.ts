@@ -46,6 +46,10 @@ vi.mock('../startup.svelte', async (importOriginal) => {
   real.startup.turn = (stage) => (stage === 'doors' ? new Promise(() => undefined) : turn(stage))
   return real
 })
+// The switcher's speaker, fetched once the sets wake: loaded after a test's window is gone,
+// it would make a set store of its own in the next one's modules (workspace.svelte reaches
+// surfaces.svelte since #331).
+vi.mock('../SpaceSound.svelte', () => ({ default: () => undefined }))
 const { Disk, memoryStorage } = await import('../../../test/disk')
 const d = new Disk()
 held.disk = d
