@@ -1186,6 +1186,11 @@ parts), because base64 would cost a third more on every update.
   `{ id, kind: 'note'|'canvas'|'pages'|'url'|'file'|'folder', parent, name, deleted, seq,
   docSeq?, epoch?, epochBase?, hash, size, by, at }`, at most 1000 per page, tree and
   content changes in one order.
+- `POST /v2/spaces/:space/index` with `{ ids }` (at most 200) answers `{ items }`: each live
+  document's scan, made from the account's copy of its words, with that copy's `docSeq`, or
+  `refused: 'gone'`; an id left out (its words were being saved) is asked again. `POST
+  /v2/spaces/:space/search` with a parsed query answers one page of hits, by id, from
+  `after` on (9.4, #1126). The feed says `index: true` where both are there.
 - `POST /v2/spaces/:space/ops` with `{ ops: Op[] }` (at most 200) returns
   `{ results: [{ op, ok } | { op, ok, id, parent, name } | { op, merged: id } | { op,
   refused: 'cycle'|'edited'|'role'|'gone' }], cursor }`. An op id seen before answers its
@@ -1813,6 +1818,43 @@ browser (a Web Locks leader) rather than one per tab.
 | first sync of 5,000 notes | the file list in a second, the note on screen first | the feed's names at once (as `arriving` does), bulk snapshots in 4 MB pages |
 | memory | documents only for open notes, plus a scratch one while classifying | |
 | web capture | under 200 ms on the UI thread | the dump runs in the page's process; compression and crypto on a Rust thread |
+
+### 9.4 A browser that keeps only the words it uses
+
+A browser holds every note it keeps three times - the document, what Orden last wrote, and
+the file's row - so the browser keeps the tree whole and only the words it uses (#1126;
+`lib/sync2/keeping.ts`). Desktops and phones keep every word, as before.
+
+- **When.** Only in the browser build (`World.lazy`), only under v2, and only for a space
+  whose feed says `index: true`: the account answers what the rest need. An account that
+  says nothing - the Worker before #1126 - is kept whole. One that says so and answers
+  `/index` or `/search` with the router's own 404 is a Worker put back: that space is
+  kept whole (`refused` in `keep:<space>`) until its feed stops saying so.
+- **The tree** comes with the feed as always, and every entry is listed. A document this
+  browser keeps no words of is listed from the tree, with its size and time from the feed
+  and the cloud a file kept elsewhere wears (`web/away.svelte.ts`). Every "is anything
+  there" counts it, a move or a delete of one is the engine's op by id with no row to
+  move, and a delete of one takes what the feed listed, as of the space's cursor.
+- **Words** are pulled when asked for (`POST /v2/docs/pull` for that one id): a note
+  opened, a row under the pointer, a copy, a write to it. Once here a document is kept in
+  step like any other. Offline, a note kept away opens saying it opens once the account
+  can be reached, and fills in when it is fetched.
+- **Letting go.** Past the budget (`budget.ts`, a share of the site's quota) the least
+  recently used documents go: the document, `written` and the row together, written down
+  first (`going`) so a stop halfway drops the rest of the row at the next start. Never one
+  with anything of this device's in it: pending, held, open, carried by a room, in hand,
+  not yet made on the account. A space's own hidden notes (the inbox) and every document
+  that is not a note, a canvas or a page note are always kept. Only while one window of the
+  app is open in the browser (a shared Web Lock, `aloneHere`): every window runs an engine
+  over the one store, and a note open in another is none this one may let go of.
+- **What every note is asked about.** Links, backlinks, the graph, tags, icons, the rows of
+  tasks and bases read each note's scan: from the words here where they are, and from the
+  account's `POST /v2/spaces/:space/index` for the rest (the same `@orden/scan` code over
+  the account's copy), kept by id in `nib-index:<account>` and asked again when the feed's
+  `docSeq` passes the scan's (`indexing.ts`). A note let go of leaves its scan from the
+  words in hand. A search walks the notes here and asks `POST /v2/spaces/:space/search` for
+  the rest, a page at a time, with the same matcher; offline it finds what is here.
+- **Not yet:** files that are not documents (pictures, PDFs) are still fetched when listed.
 
 ---
 

@@ -361,6 +361,7 @@ describe('tree operations', () => {
 
     const page = await feed()
     expect(page.order).toBe(true)
+    expect(page.index).toBe(true)
     const pos = Object.fromEntries(page.items.map((item) => [item.id, item.pos]))
     expect(pos).toMatchObject({ f: 'V', a: 'k', b: 'K' })
     const refused = await call(env, `/v2/spaces/${space}/ops`, {
