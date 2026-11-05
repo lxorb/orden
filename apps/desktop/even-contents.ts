@@ -628,11 +628,14 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  by default (side-toggles.svelte.ts, Appearance > Sidebars): the code to 6,127,800,
  *  measured 6,127,556; the catalogues to 1,010,800, its words in every language, measured
  *  1,010,519.
+ *
+ *  Raised on 2026-11-05 for #1146: every sidebar over the note stands on an opaque ground
+ *  (App.svelte, Sidebar.svelte): the styles to 291,400, measured 291,179.
  */
 export const BUDGETS: Record<Part, number> = {
   code: 6_127_800,
   catalogues: 1_010_800,
-  styles: 291_000,
+  styles: 291_400,
   fonts: 260_000,
   pages: 40_000,
 }

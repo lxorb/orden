@@ -1297,8 +1297,11 @@ function holds(tail: string): boolean {
  *  Titlebar.svelte). Measured 3,706,433 in 398.
  *
  *  Lowered 2026-11-05, to 3,667,000, as #1094's own comments went. Measured 3,666,685 in
- *  398. */
-const BUDGET = 3_667_000
+ *  398.
+ *
+ *  Raised on 2026-11-05, to 3,667,400, for #1146: every sidebar over the note stands on
+ *  an opaque ground (App.svelte, Sidebar.svelte). Measured 3,667,161 in 398. */
+const BUDGET = 3_667_400
 const MOST_FILES = 399
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
