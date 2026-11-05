@@ -2789,4 +2789,6 @@ export const ko: Dictionary = {
     '오디오가 Orden과 Cloudflare로 전송되며, 보관되지 않습니다',
   'Stop dictating': '받아쓰기 중지',
   'Writing down what you said': '말한 내용을 적는 중',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    '오디오가 이 기기의 음성 인식으로 전송되며, 제조사의 서버를 사용할 수 있습니다',
 }

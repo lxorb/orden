@@ -2907,4 +2907,6 @@ export const it: Dictionary = {
     'L’audio va a Orden e Cloudflare, e non viene conservato',
   'Stop dictating': 'Interrompi la dettatura',
   'Writing down what you said': 'Sto scrivendo quello che hai detto',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'L’audio va al riconoscimento vocale di questo dispositivo, che può usare i server del produttore',
 }

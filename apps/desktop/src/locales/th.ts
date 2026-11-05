@@ -2768,4 +2768,6 @@ export const th: Dictionary = {
     'เสียงถูกส่งไปที่ Orden และ Cloudflare และไม่ถูกเก็บไว้',
   'Stop dictating': 'หยุดพิมพ์ด้วยเสียง',
   'Writing down what you said': 'กำลังเขียนสิ่งที่คุณพูด',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'เสียงถูกส่งไปยังระบบรู้จำเสียงพูดของอุปกรณ์นี้ ซึ่งอาจใช้เซิร์ฟเวอร์ของผู้ผลิต',
 }

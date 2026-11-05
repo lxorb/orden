@@ -2826,4 +2826,6 @@ export const hi: Dictionary = {
     'ऑडियो Orden और Cloudflare पर जाता है, और रखा नहीं जाता',
   'Stop dictating': 'बोलकर लिखना बंद करें',
   'Writing down what you said': 'आपने जो कहा वह लिखा जा रहा है',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'ऑडियो इस डिवाइस की वाक् पहचान पर जाता है, जो उसके निर्माता के सर्वर इस्तेमाल कर सकती है',
 }

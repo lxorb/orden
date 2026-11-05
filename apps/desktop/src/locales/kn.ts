@@ -2857,4 +2857,6 @@ export const kn: Dictionary = {
     'ಆಡಿಯೊ Orden ಮತ್ತು Cloudflare ಗೆ ಹೋಗುತ್ತದೆ, ಮತ್ತು ಇಟ್ಟುಕೊಳ್ಳಲಾಗುವುದಿಲ್ಲ',
   'Stop dictating': 'ಉಕ್ತಲೇಖನ ನಿಲ್ಲಿಸಿ',
   'Writing down what you said': 'ನೀವು ಹೇಳಿದ್ದನ್ನು ಬರೆಯಲಾಗುತ್ತಿದೆ',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'ಆಡಿಯೊ ಈ ಸಾಧನದ ಧ್ವನಿ ಗುರುತಿಸುವಿಕೆಗೆ ಹೋಗುತ್ತದೆ, ಅದು ತಯಾರಕರ ಸರ್ವರ್‌ಗಳನ್ನು ಬಳಸಬಹುದು',
 }

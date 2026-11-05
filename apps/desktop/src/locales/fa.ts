@@ -2829,4 +2829,6 @@ export const fa: Dictionary = {
     'صدا به Orden و Cloudflare می‌رود و نگه داشته نمی‌شود',
   'Stop dictating': 'توقف دیکته',
   'Writing down what you said': 'در حال نوشتن آنچه گفتید',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'صدا به تشخیص گفتار این دستگاه می‌رود که ممکن است از سرورهای سازنده‌اش استفاده کند',
 }

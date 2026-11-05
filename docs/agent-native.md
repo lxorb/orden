@@ -531,10 +531,11 @@ denied site and the stop answer exactly as they do for a press.
   (`untrusted`), because the note is named after what the page calls itself.
 - **The log** has the call once, as `capture_to_note`, filed by the crate's own code:
   a refused print is `error (password_field)`, not the window failing.
-- **Where the engine has no road** (the system's engine on a Mac and on Linux), a reader's tab is clipped
+- **Where the engine has no road** (a phone), a reader's tab is clipped
   the clip button's way and nothing is photographed or printed that could not be painted
   over; a reader's page put away to give the memory back is clipped as its address, as
   the button clips it. A reader's tab behind another one has no picture.
+  On a Mac it is `WKWebView`'s road (12.2), the PDF the page as laid out on one sheet.
 - **Measured** by `scripts/capture-probe.py`, end to end over `nib mcp`: a clip 35 to
   45 ms, a picture 120 to 145 ms, a PDF 115 to 130 ms, a refusal 8 to 12 ms. It proves
   the note's words are `browser_read`'s article words with no field's value, that the
@@ -1419,14 +1420,20 @@ is still off, and an agent's token never reaches it.
 
 ## 12. Platforms
 
-|                          | an agent's own tab                             | out of sight, unthrottled                                                                                                                                                              | reading, pressing, typing                                                                    | screenshots                            | status                       |
-| ------------------------ | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------- | ---------------------------- |
-| **`WebView2`** (Windows) | a shown child outside the window's client area | **measured** (3): 60 frames and 100 ticks a second                                                                                                                                     | the `DevTools` Protocol: `Accessibility.getFullAXTree`, `Input.*` - trusted, inside the page | `Page.captureScreenshot`, 95 to 120 ms | every verb                   |
-| **`WKWebView`** (macOS)  | none yet                                       | **measured**: a child outside the window's content runs at the window's own rate while the window is on a screen, and stops with it minimised whatever `inactiveSchedulingPolicy` says | scripts in a `WKContentWorld`; an `NSEvent` sent to the view is trusted                      | `takeSnapshot`, even minimised         | `unsupported_on_this_engine` |
-| **`WebKitGTK`** (Linux)  | none yet                                       | **measured**: a `GtkOffscreenWindow` runs at full rate; a child outside the window's content gets no frames                                                                            | scripts in a script world; script events only                                                | `webkit_web_view_get_snapshot`         | `unsupported_on_this_engine` |
+| | an agent's own tab | out of sight, unthrottled | reading, pressing, typing | screenshots | status |
+| --- | --- | --- | --- | --- | --- |
+| **`WebView2`** (Windows) | a shown child outside the window's client area | **measured** (3): 60 frames and 100 ticks a second | the `DevTools` Protocol: `Accessibility.getFullAXTree`, `Input.*` - trusted, inside the page | `Page.captureScreenshot`, 95 to 120 ms | every verb |
+| **`WKWebView`** (macOS) | a child outside the window's content, with delegates of Orden's own (#1092) | **measured**: a child outside the window's content runs at the window's own rate while the window is on a screen, and stops with it minimised whatever `inactiveSchedulingPolicy` says | scripts in nib's `WKContentWorld`; presses and keys as `NSEvent`s sent to the view, trusted | `takeSnapshot`, even minimised | every verb but four (12.2) |
+| **`WebKitGTK`** (Linux) | none yet | **measured**: a `GtkOffscreenWindow` runs at full rate; a child outside the window's content gets no frames | scripts in a script world; script events only | `webkit_web_view_get_snapshot` | `unsupported_on_this_engine` |
 
 Every tool answers `unsupported_on_this_engine` where it has no honest implementation,
-rather than a weaker one pretending.
+rather than a weaker one pretending. Every verb goes through one interface,
+`agents::engines::Engine`, which each engine implements; what an engine cannot do is in
+its table (`CDP_CANNOT`, `WEBKIT_CANNOT` in `agents/engines/mod.rs`) with the reason the
+answer gives. `scripts/agent-parity.py` runs one agent's script against a probe build of
+each engine (`.github/workflows/agent-parity.yml`, on the macOS, Windows and Linux runners):
+every verb answers the same on each, or `unsupported_on_this_engine` exactly where that
+engine's table says, so a tool missing on one engine fails CI.
 
 ### 12.1 Orden's own Chromium, while there was one
 
@@ -1435,7 +1442,7 @@ windowless browser with no native window at all (`agents/engines/cef.rs`), measu
 frames and 100 ticks a second on Windows and never built on a Mac. That build is gone
 (#305, #313), and with it that row of the table; the history keeps what was measured.
 
-### 12.2 `WKWebView` and `WebKitGTK`: measured, not built
+### 12.2 `WKWebView` and `WebKitGTK`: measured, and built on `WKWebView`
 
 `scripts/webkit-agent-probe` puts the same page out of sight every way each engine offers,
 on a runner (`.github/workflows/agent-engines.yml`), and reads its rates, a picture, a press
@@ -1478,19 +1485,46 @@ What that says:
 - **Pictures work everywhere it was asked**: 1280 by 800, out of sight, and on a Mac with the
   window minimised.
 
-**Why no verb runs there yet.** Keeping the page alive and driving it is shown possible. What
-is not built is keeping it quiet: on both engines everything a page uses to reach a person is
-the engine's delegate, which wry holds for the app's webviews - on a Mac an `<input
-type=file>` opens a file panel (`runOpenPanel`), a camera request is a system prompt
-(`requestMediaCapture`), `alert` returns at once unseen, a window the page opens is wry's to
-make - and `WebKitGTK`'s `run-file-chooser`, `permission-request`, `script-dialog` and `create`
-signals the same. An agent's page needs a delegate of Orden's own on each before it can be opened without one of those reaching the reader, and
-then the subset: the accessibility snapshot as a script in the isolated world (the logic of
-Playwright's `ariaSnapshot`, Apache-2.0), presses and keys as `NSEvent`s on a Mac and as
-script events on Linux (said in the answer: `isTrusted` false), pictures, navigation, waits,
-`evaluate`; and no console, network log, file upload or drag, which have no road without a
-protocol. Until then each browser verb answers `unsupported_on_this_engine` and says where
-the browser runs.
+**What is built on `WKWebView`** (#1092). An agent's tab is a child `WKWebView` outside
+the window's content, as on `WebView2`, so it runs while Orden's window is on a screen and
+pauses while it is minimised (above). Before it loads anything the runtime's scripts and
+message channel are taken out of it and it gets a navigation delegate and a UI delegate of
+Orden's own in place of wry's (`agents/engines/webkit.rs`): `alert`, `confirm`, `prompt`
+and the site's sign-in box are held for `browser_dialog` (a client certificate is declined),
+the file panel and the camera, the microphone and the motion sensors are refused, a window
+the page asks for is another agent tab at that address (without `window.opener`: `WebKit`
+gives a new window's page only to a webview it builds itself), `window.close()` closes the
+tab, and a download goes into the agent's folder through `WKDownload`. It runs no
+extensions, so its tab in the reader's store is in that store itself, with no twin (12.3).
+
+- **Reading.** The snapshot is a script in nib's own `WKContentWorld` (`snapshot.js`, after
+  Playwright's `ariaSnapshot`) that writes the page's accessibility tree in the `DevTools`
+  Protocol's shape, so `snapshot.rs` writes it, `browser_find` searches it and the secret
+  fields are judged by the same code as on Chromium. A ref is an id the world keeps for as
+  long as its element lives, numbered from a start of each load's own; frames of the same
+  origin are in the page's tree, and a frame of another site is not reached. `browser_read`
+  and a clip use the same scripts as the `DevTools` road (`agents/scripts.rs`).
+- **Acting.** Presses, the pointer and keys are `NSEvent`s sent to the view itself, never
+  through the system's queue; words go in through the view's own `insertText:`, and through
+  the page's `insertText` command where that did not reach the field, as in a reader's tab.
+  A `<select>`, a date and a colour are set through the page. Scrolling is the page's own.
+  `WebKit` gives a page the pointer's moves only while its window is the active one, so
+  where Orden's is not, `browser_hover` reaches the element as the page's own events
+  (`isTrusted` false) and the style's `:hover` does not apply. Every act settles as on
+  Chromium, and the reader's keyboard focus inside Orden's window is given back after each
+  press and key.
+- **The rest.** `browser_evaluate` is `callAsyncJavaScript` in nib's world or the page's;
+  `browser_storage` is the view's `WKHTTPCookieStore` and its site's data records;
+  `browser_screenshot` is `takeSnapshot`, every filled secret field painted over; network
+  idle is the page loaded and no resource fetched for 500 ms, as `performance` counts them.
+  `capture_to_note` as a PDF is `createPDF`, the page as it is laid out on one sheet, not
+  the reader's paper. `browser_show` opens the agent's address as a reader's tab of its own
+  and closes the agent's, as on Orden's own Chromium: wry does not hand its delegates back.
+- **What answers `unsupported_on_this_engine`**, with its reason: `browser_console` and
+  `browser_network` (no protocol to a page's console or network log is open to an app),
+  `browser_upload` (a file input takes files only through the file panel a person picks
+  them in, which an agent's page never opens) and `browser_drag` (a drag is the system's
+  own session, which only the real pointer starts).
 
 ### 12.3 The reader's logins, never their extensions
 
@@ -1498,8 +1532,8 @@ the browser runs.
 drive pages - a profile of its own with extensions off and the reader's cookies handed in -
 or, with the switch at `blocked`, in the agent's own store. Measured on both by
 `agent-tab-probe.py`: the cookie the reader's tab set is in the twin's page, and the agent's
-own cookie never reaches the reader's tab. `WKWebView` and `WebKitGTK` run no extensions,
-so they would need no twin.
+own cookie never reaches the reader's tab. `WKWebView` runs no extensions, so an agent's
+tab there is in the reader's store itself (`engines::TWINS`).
 
 ---
 

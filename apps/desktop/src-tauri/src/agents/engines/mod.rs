@@ -5,7 +5,7 @@
 //! | --- | --- | --- | --- |
 //! | `WebView2` | a child webview outside the window's client area (`tabs.rs`) | its webview | the `DevTools` Protocol, all of them |
 //! | Orden's own Chromium | a windowless browser with no native window at all (`cef.rs`) | its webview, through `engine/devtools.rs` | the same protocol, all of them |
-//! | `WKWebView` | none yet: measured by scripts/webkit-agent-probe, see docs/agent-native.md 12 | - | the same [`Engine`], every verb in [`WEBKIT_CANNOT`] answering `unsupported_on_this_engine` (`webkit.rs`) |
+//! | `WKWebView` | a child webview outside the window's content, with delegates of Orden's own (`webkit.rs`) | its webview | the same [`Engine`]: scripts in nib's `WKContentWorld`, `NSEvent`s to the view; the four in [`WEBKIT_CANNOT`] answer `unsupported_on_this_engine` |
 //!
 //! **One interface every verb goes through** (#1092). A verb is decided in `browser.rs`:
 //! which tab, whether this agent may act there, what the page says it would be doing. It
@@ -231,8 +231,8 @@ pub const NAME: &str = "WKWebView";
 )]
 pub const CDP_CANNOT: &[(&str, &str)] = &[];
 
-/// What `WKWebView` has no honest way to do yet, verb by verb, and why; see
-/// docs/agent-native.md 12.2. Each step of #1092 takes rows out of it.
+/// What `WKWebView` has no honest way to do, verb by verb, and why; see
+/// docs/agent-native.md 12.2. Every other verb is done there (`webkit.rs`).
 #[cfg_attr(
     any(windows, feature = "cef"),
     allow(
@@ -241,37 +241,23 @@ pub const CDP_CANNOT: &[(&str, &str)] = &[];
     )
 )]
 pub const WEBKIT_CANNOT: &[(&str, &str)] = &[
-    ("browser_snapshot", NOT_BUILT),
-    ("browser_find", NOT_BUILT),
-    ("browser_read", NOT_BUILT),
-    ("browser_click", NOT_BUILT),
-    ("browser_type", NOT_BUILT),
-    ("browser_press", NOT_BUILT),
-    ("browser_scroll", NOT_BUILT),
-    ("browser_select", NOT_BUILT),
-    ("browser_fill_form", NOT_BUILT),
-    ("browser_hover", NOT_BUILT),
-    ("browser_drag", NOT_BUILT),
-    ("browser_upload", NOT_BUILT),
-    ("browser_screenshot", NOT_BUILT),
-    ("browser_console", NOT_BUILT),
-    ("browser_network", NOT_BUILT),
-    ("browser_evaluate", NOT_BUILT),
-    ("browser_storage", NOT_BUILT),
-    ("browser_show", NOT_BUILT),
-    ("browser_takeover", NOT_BUILT),
-    ("capture_to_note", NOT_BUILT),
+    (
+        "browser_drag",
+        "a drag on WKWebView is the system's own drag session, which only the real pointer starts: an agent's would take the reader's pointer",
+    ),
+    (
+        "browser_upload",
+        "WKWebView gives a file input its files only through the file panel a person picks them in, and Orden never opens one for an agent's page",
+    ),
+    (
+        "browser_console",
+        "WKWebView has no road to a page's console for an app: its Web Inspector's protocol is Safari's alone",
+    ),
+    (
+        "browser_network",
+        "WKWebView says nothing of a page's requests to an app: there is no protocol to its network log",
+    ),
 ];
-
-/// Why a verb `WEBKIT_CANNOT` names is not done yet.
-#[cfg_attr(
-    any(windows, feature = "cef"),
-    allow(
-        dead_code,
-        reason = "the other engine's table, which the test reads beside this one's"
-    )
-)]
-const NOT_BUILT: &str = "this verb is not built on WKWebView yet: on a Mac an agent's tab opens, goes, waits and answers its dialogs, and the rest follows (#1092)";
 
 /// This build's engine's table.
 #[cfg(any(windows, feature = "cef"))]
@@ -420,6 +406,39 @@ impl Page<'_> {
     /// Clears this call to touch a credential: `judged`'s decision.
     pub fn clear_credentials(&self) {
         self.credentials.store(true, Ordering::Relaxed);
+    }
+
+    /// A password field, or any field of a sign-in form, refused unless this call was
+    /// cleared for it: the floor under `judged`, which asks or clears first (#1072).
+    pub fn refuse_secret(&self, facts: &Facts) -> Result<(), Answer> {
+        if (facts.password() || facts.sign_in()) && !self.may_touch_credentials() {
+            return Err(Answer::error(
+                Code::PasswordField,
+                "that is a sign-in, and this agent's mode asks before signing in",
+            ));
+        }
+        Ok(())
+    }
+
+    /// Whether a key may go to the field that has the page's keyboard: never one that
+    /// would open a picker, and never a character into a password field - which in a
+    /// reader's tab may be the field the reader is typing their own password into.
+    pub fn may_press(&self, key: &Key) -> Result<(), Answer> {
+        if let Some(facts) = self.active_facts()? {
+            if facts.picker() && key.opens_a_picker() {
+                return Err(Answer::error(
+                    Code::BadArguments,
+                    "that key would open a list of the engine's own: use browser_select or browser_fill_form",
+                ));
+            }
+            if facts.password() && key.changes_words() && !self.may_touch_credentials() {
+                return Err(Answer::error(
+                    Code::PasswordField,
+                    "the field with the keyboard is a password field, and this agent's mode asks before signing in",
+                ));
+            }
+        }
+        Ok(())
     }
 }
 

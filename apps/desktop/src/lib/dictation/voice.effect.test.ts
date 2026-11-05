@@ -28,6 +28,18 @@ vi.mock('./listening', () => ({
     })
   },
 }))
+vi.mock('./device', () => ({
+  listenOnDevice: () => {
+    world.started.push({ engine: 'device', words: [] })
+    return Promise.resolve({
+      finish: () => {
+        world.finished++
+        return Promise.resolve()
+      },
+      cancel: () => world.cancelled++,
+    })
+  },
+}))
 vi.mock('../account.svelte', () => ({
   account: {
     get accountToken() {
@@ -241,5 +253,30 @@ describe('with an engine chosen', () => {
     action?.destroy()
     action = undefined
     expect(world.cancelled).toBe(1)
+  })
+})
+
+describe('the device’s own recogniser', () => {
+  afterEach(() => {
+    delete (globalThis as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition
+  })
+
+  test('is offered where there is one, saying whose it is', async () => {
+    Object.assign(globalThis, { webkitSpeechRecognition: vi.fn() })
+    press(0)
+    await settle()
+    const rows = [...target.querySelectorAll('[role="dialog"] button')].map(
+      (one) => one.textContent,
+    )
+    expect(rows.at(-1)).toContain('This device')
+    expect(rows.at(-1)).toContain('maker’s servers')
+  })
+
+  test('is the road taken once chosen, and none of Whisper’s', async () => {
+    Object.assign(globalThis, { webkitSpeechRecognition: vi.fn() })
+    engines.choose('device')
+    press(0)
+    await settle()
+    expect(world.started).toEqual([{ engine: 'device', words: [] }])
   })
 })

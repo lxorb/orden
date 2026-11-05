@@ -43,6 +43,14 @@
 
   /** What each road is called and where it sends a voice. */
   function said(engine: Engine): { name: string; where: string } {
+    if (engine === 'device') {
+      return {
+        name: t('This device'),
+        where: t(
+          'Audio goes to this device’s speech recognition, which may use its maker’s servers',
+        ),
+      }
+    }
     if (engine === 'account') {
       return {
         name: t('Orden account'),

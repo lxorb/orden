@@ -2866,4 +2866,6 @@ export const ml: Dictionary = {
     'ഓഡിയോ Orden-ലേക്കും Cloudflare-ലേക്കും പോകുന്നു, സൂക്ഷിക്കുന്നില്ല',
   'Stop dictating': 'ഡിക്റ്റേഷൻ നിർത്തുക',
   'Writing down what you said': 'നിങ്ങൾ പറഞ്ഞത് എഴുതുന്നു',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'ഓഡിയോ ഈ ഉപകരണത്തിന്റെ സംഭാഷണ തിരിച്ചറിയലിലേക്ക് പോകുന്നു, അത് നിർമ്മാതാവിന്റെ സെർവറുകൾ ഉപയോഗിച്ചേക്കാം',
 }

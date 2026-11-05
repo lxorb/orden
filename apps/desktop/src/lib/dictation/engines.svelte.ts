@@ -2,7 +2,8 @@
  *
  *  Chosen rather than guessed, because each road sends a voice somewhere: to the AI
  *  provider the reader set up (or nowhere past this machine, for a server running on
- *  it), or to Orden's Worker and the Whisper on Cloudflare's Workers AI behind it. Until
+ *  it), to Orden's Worker and the Whisper on Cloudflare's Workers AI behind it, or to
+ *  the device's own recogniser, which is its maker's (device.ts). Until
  *  one is chosen nothing is recorded: the first press asks (EngineChooser.svelte), and
  *  Settings > AI changes it.
  *
@@ -15,11 +16,14 @@
 import { account } from '../account.svelte'
 import { transcriberNow } from '../ai/hears'
 import type { Provider } from '../ai/providers'
+import { method } from '../mobile/bridge'
 import { forget, keep, storedText } from '../stored'
+import { isNative, platform } from '../tauri'
+import { speechRecogniser } from './recogniser'
 
-export type Engine = 'provider' | 'account'
+export type Engine = 'provider' | 'account' | 'device'
 
-const ENGINES: readonly Engine[] = ['provider', 'account']
+const ENGINES: readonly Engine[] = ['provider', 'account', 'device']
 
 const KEY = 'nib:dictation-engine'
 
@@ -38,6 +42,16 @@ export function whereTo(provider: Provider): { local: boolean; host: string } {
   return { local, host }
 }
 
+/** Whether this device has a recogniser of its own that works: Android's, through the
+ *  activity, and the web's where it is more than a name. WebView2 on Windows and CEF on
+ *  Linux both carry the web's constructor and neither has a speech service behind it, so
+ *  there it would only ever answer with an error. */
+export function deviceHears(): boolean {
+  if (method('dictates')?.()) return true
+  if (isNative && (platform() === 'windows' || platform() === 'linux')) return false
+  return !!speechRecogniser()
+}
+
 /** An address's host, or the address itself where it is not one. Parsed rather than
  *  kept, so a plain URL and nothing reactive. */
 function hostOf(address: string): string {
@@ -52,9 +66,12 @@ class Engines {
   /** What the reader chose, whether or not it can be used right now. */
   chosen = $state<Engine | null>(read())
 
-  /** Whether a road can be taken here: a provider that transcribes, or an account. */
+  /** Whether a road can be taken here: a provider that transcribes, an account, or a
+   *  recogniser of the device's own. */
   usable(engine: Engine): boolean {
-    return engine === 'provider' ? !!transcriberNow() : !!account.accountToken
+    if (engine === 'provider') return !!transcriberNow()
+    if (engine === 'account') return !!account.accountToken
+    return deviceHears()
   }
 
   /** Every road that can be taken here, the reader's own provider first. */

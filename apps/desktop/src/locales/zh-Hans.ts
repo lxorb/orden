@@ -2741,4 +2741,6 @@ export const zhHans: Dictionary = {
     '音频发送到 Orden 和 Cloudflare，且不会保留',
   'Stop dictating': '停止听写',
   'Writing down what you said': '正在写下你说的话',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    '音频发送到这台设备的语音识别，可能会使用其制造商的服务器',
 }

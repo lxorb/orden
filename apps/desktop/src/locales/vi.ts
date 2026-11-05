@@ -2797,4 +2797,6 @@ export const vi: Dictionary = {
     'Âm thanh được gửi đến Orden và Cloudflare, và không được lưu lại',
   'Stop dictating': 'Dừng đọc chính tả',
   'Writing down what you said': 'Đang ghi lại những gì bạn nói',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'Âm thanh được gửi đến tính năng nhận dạng giọng nói của thiết bị này, có thể dùng máy chủ của nhà sản xuất',
 }

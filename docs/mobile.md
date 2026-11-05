@@ -182,13 +182,14 @@ test in `test/android.test.ts` that holds the two sides to each other.
 
 ## What the app asks the phone for
 
-Five permissions; the second is only for dictation and the last three only for
-reminders:
+Six permissions; the second and third are only for the microphone and the last three
+only for reminders:
 
 | | |
 | --- | --- |
 | `INTERNET` | sync, and the account |
-| `RECORD_AUDIO` | the speech recogniser, asked for the first time somebody turns dictation on |
+| `RECORD_AUDIO` | the speech recogniser and the webview's microphone, asked for the first time somebody dictates or records |
+| `MODIFY_AUDIO_SETTINGS` | granted at install, never asked: wry's webview grants a page the microphone only together with it |
 | `POST_NOTIFICATIONS` | a reminder that rang, asked the first time a reminder is set (Android 13 on) |
 | `SCHEDULE_EXACT_ALARM` | a reminder at its minute; see *Alarms* below |
 | `RECEIVE_BOOT_COMPLETED` | the alarms set again after a reboot |
@@ -458,6 +459,14 @@ bridge is words.
 While it listens, the line across the top of the document sweeps and says
 `Listening` - the line an export and a stored picture already use. A mark somebody
 has to dismiss is not a quiet one, and there is no new overlay.
+
+The same recogniser is one of the three roads for dictation into a field - the AI
+chat, quick add, the quick question (#1128, `docs/ai.md` "Dictation") - as **This
+device**. Each turn also says its partial words and the voice's level a few times a
+second (`partial` and `level` beside `text` in what `heard` sends), which a field draws
+as live words and a meter; the note's dictation reads only the sentences. The other two
+roads record through the webview's own microphone, which asks for `RECORD_AUDIO` the
+same once.
 
 ## What the mirror does while the app is in the background
 

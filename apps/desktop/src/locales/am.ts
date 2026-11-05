@@ -2773,4 +2773,6 @@ export const am: Dictionary = {
   'Audio goes to Orden and Cloudflare, and is not kept': 'ድምጹ ወደ Orden እና Cloudflare ይሄዳል፣ አይቀመጥም',
   'Stop dictating': 'መጻፍ አቁም',
   'Writing down what you said': 'የተናገሩትን በመጻፍ ላይ',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'ድምጹ ወደዚህ መሣሪያ የንግግር ማወቂያ ይሄዳል፣ ይህም የአምራቹን አገልጋዮች ሊጠቀም ይችላል',
 }

@@ -2936,4 +2936,6 @@ export const ar: Dictionary = {
     'يذهب الصوت إلى Orden وCloudflare، ولا يُحفظ',
   'Stop dictating': 'إيقاف الإملاء',
   'Writing down what you said': 'جارٍ كتابة ما قلته',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'يذهب الصوت إلى التعرّف على الكلام في هذا الجهاز، وقد يستخدم خوادم الشركة المصنّعة',
 }

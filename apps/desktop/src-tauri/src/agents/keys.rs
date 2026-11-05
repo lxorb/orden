@@ -55,6 +55,52 @@ impl Key {
         [down, up]
     }
 
+    /// The key as a Mac's own keyboard sends it, for an `NSEvent` (#1092): its virtual
+    /// key code, the characters it carries, and the characters it carries without its
+    /// modifiers - which for a key that types nothing is the function key's own character
+    /// `AppKit` gives it, so the page reads the same `key` and `code` it does on Windows.
+    #[cfg_attr(
+        not(target_os = "macos"),
+        allow(dead_code, reason = "only a Mac's engine is handed keys as NSEvents")
+    )]
+    pub fn mac(&self) -> (u16, String, String) {
+        let function = |at: u32| char::from_u32(at).map(String::from).unwrap_or_default();
+        let (code, plain) = match self.code.as_str() {
+            "Enter" => (36, "\r".to_string()),
+            "Tab" => (48, "\t".to_string()),
+            "Escape" => (53, "\u{1b}".to_string()),
+            "Backspace" => (51, "\u{7f}".to_string()),
+            "Delete" => (117, function(0xF728)),
+            "Insert" => (114, function(0xF727)),
+            "Space" => (49, " ".to_string()),
+            "ArrowUp" => (126, function(0xF700)),
+            "ArrowDown" => (125, function(0xF701)),
+            "ArrowLeft" => (123, function(0xF702)),
+            "ArrowRight" => (124, function(0xF703)),
+            "Home" => (115, function(0xF729)),
+            "End" => (119, function(0xF72B)),
+            "PageUp" => (116, function(0xF72C)),
+            "PageDown" => (121, function(0xF72D)),
+            other => {
+                if let Some(number) = other
+                    .strip_prefix('F')
+                    .and_then(|one| one.parse::<u32>().ok())
+                {
+                    const CODES: [u16; 12] =
+                        [122, 120, 99, 118, 96, 97, 98, 100, 101, 109, 103, 111];
+                    let at = usize::try_from(number.saturating_sub(1))
+                        .unwrap_or(0)
+                        .min(11);
+                    (CODES[at], function(0xF704 + number - 1))
+                } else {
+                    (ansi(other), self.name.to_lowercase())
+                }
+            }
+        };
+        let typed = self.text.clone().unwrap_or_else(|| plain.clone());
+        (code, typed, plain)
+    }
+
     /// Whether this press would open a `<select>`'s list or a picker, which the tools
     /// never do (6.5): Space, Enter, F4 and Alt+Down on such a field.
     pub fn opens_a_picker(&self) -> bool {
@@ -92,6 +138,69 @@ impl Key {
     /// in a chat, and sends nothing.
     pub fn sends(&self) -> bool {
         self.name == "Enter" && self.modifiers & (ALT | SHIFT) == 0
+    }
+}
+
+/// A Mac's virtual key code for a key the DOM calls `code`, on the ANSI layout.
+#[cfg_attr(
+    not(target_os = "macos"),
+    allow(dead_code, reason = "only a Mac's engine is handed keys as NSEvents")
+)]
+fn ansi(code: &str) -> u16 {
+    const LETTERS: [(char, u16); 26] = [
+        ('A', 0),
+        ('B', 11),
+        ('C', 8),
+        ('D', 2),
+        ('E', 14),
+        ('F', 3),
+        ('G', 5),
+        ('H', 4),
+        ('I', 34),
+        ('J', 38),
+        ('K', 40),
+        ('L', 37),
+        ('M', 46),
+        ('N', 45),
+        ('O', 31),
+        ('P', 35),
+        ('Q', 12),
+        ('R', 15),
+        ('S', 1),
+        ('T', 17),
+        ('U', 32),
+        ('V', 9),
+        ('W', 13),
+        ('X', 7),
+        ('Y', 16),
+        ('Z', 6),
+    ];
+    const DIGITS: [u16; 10] = [29, 18, 19, 20, 21, 23, 22, 26, 28, 25];
+    if let Some(letter) = code.strip_prefix("Key").and_then(|one| one.chars().next()) {
+        return LETTERS
+            .iter()
+            .find(|(one, _)| *one == letter)
+            .map_or(0, |(_, code)| *code);
+    }
+    if let Some(digit) = code
+        .strip_prefix("Digit")
+        .and_then(|one| one.parse::<usize>().ok())
+    {
+        return DIGITS.get(digit).copied().unwrap_or(0);
+    }
+    match code {
+        "Equal" => 24,
+        "Minus" => 27,
+        "BracketRight" => 30,
+        "BracketLeft" => 33,
+        "Quote" => 39,
+        "Semicolon" => 41,
+        "Backslash" => 42,
+        "Comma" => 43,
+        "Slash" => 44,
+        "Period" => 47,
+        "Backquote" => 50,
+        _ => 0,
     }
 }
 
@@ -276,6 +385,34 @@ mod tests {
             chord("Control+Shift+R").expect("key").modifiers,
             CONTROL | SHIFT
         );
+    }
+
+    #[test]
+    fn a_mac_s_keyboard_sends_each_key_with_its_own_code_and_characters() {
+        assert_eq!(
+            chord("Enter").expect("key").mac(),
+            (36, "\r".into(), "\r".into())
+        );
+        assert_eq!(
+            chord("Escape").expect("key").mac(),
+            (53, "\u{1b}".into(), "\u{1b}".into())
+        );
+        assert_eq!(chord("a").expect("key").mac(), (0, "a".into(), "a".into()));
+        assert_eq!(
+            chord("Shift+a").expect("key").mac(),
+            (0, "A".into(), "a".into())
+        );
+        assert_eq!(
+            chord("Control+c").expect("key").mac(),
+            (8, "c".into(), "c".into())
+        );
+        assert_eq!(chord("7").expect("key").mac().0, 26);
+        assert_eq!(
+            chord("ArrowDown").expect("key").mac(),
+            (125, "\u{f701}".into(), "\u{f701}".into())
+        );
+        assert_eq!(chord("F5").expect("key").mac().0, 96);
+        assert_eq!(chord("/").expect("key").mac().0, 44);
     }
 
     #[test]

@@ -140,7 +140,8 @@ export default tseslint.config(
     // src-tauri/src/keyboard_press.js, and the one that says its scheme,
     // src-tauri/src/page_scheme.js, and the one that keeps what it stores,
     // src-tauri/src/kept.js, and the one that says what will not play,
-    // src-tauri/src/web_media.js.
+    // src-tauri/src/web_media.js, and an agent's reach into a page on a Mac,
+    // src-tauri/src/agents/engines/snapshot.js.
     // And the frame script, a classic script every sandboxed frame carries inline; see
     // packages/editor/src/frame-script.js.
     files: [
@@ -156,6 +157,7 @@ export default tseslint.config(
       'apps/desktop/src-tauri/src/keyboard_press.js',
       'apps/desktop/src-tauri/src/page_scheme.js',
       'apps/desktop/src-tauri/src/kept.js',
+      'apps/desktop/src-tauri/src/agents/engines/snapshot.js',
       'packages/editor/src/frame-script.js',
     ],
     ...tseslint.configs.disableTypeChecked,

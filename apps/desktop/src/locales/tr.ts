@@ -2844,4 +2844,6 @@ export const tr: Dictionary = {
     'Ses Orden ve Cloudflare’e gider ve saklanmaz',
   'Stop dictating': 'Dikteyi durdur',
   'Writing down what you said': 'Söyledikleriniz yazılıyor',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'Ses bu cihazın konuşma tanımasına gider; bu, üreticisinin sunucularını kullanabilir',
 }

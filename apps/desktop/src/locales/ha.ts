@@ -2866,4 +2866,6 @@ export const ha: Dictionary = {
     'Sautin yana zuwa Orden da Cloudflare, kuma ba a ajiye shi',
   'Stop dictating': 'Daina rubutun murya',
   'Writing down what you said': 'Ana rubuta abin da ka faɗa',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'Sautin yana zuwa gane magana na wannan na’ura, wanda zai iya amfani da sabar masu ƙera ta',
 }

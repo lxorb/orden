@@ -83,12 +83,15 @@ describe('what the app asks the phone for', () => {
       (one) => one[1],
     )
 
-    // The reminders' three: showing one, an alarm at its minute, and the alarms set again
-    // after a reboot (Reminders.kt). Never USE_EXACT_ALARM, which is for clocks and
-    // calendars and which a store review refuses an app like this.
+    // The microphone's two: the one the reader is asked for, and the one wry's webview
+    // asks for beside it before it lets a page record (#1128). The reminders' three:
+    // showing one, an alarm at its minute, and the alarms set again after a reboot
+    // (Reminders.kt). Never USE_EXACT_ALARM, which is for clocks and calendars and which
+    // a store review refuses an app like this.
     expect(asked).toEqual([
       'android.permission.INTERNET',
       'android.permission.RECORD_AUDIO',
+      'android.permission.MODIFY_AUDIO_SETTINGS',
       'android.permission.POST_NOTIFICATIONS',
       'android.permission.SCHEDULE_EXACT_ALARM',
       'android.permission.RECEIVE_BOOT_COMPLETED',

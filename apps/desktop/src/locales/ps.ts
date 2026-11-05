@@ -2827,4 +2827,6 @@ export const ps: Dictionary = {
     'غږ Orden او Cloudflare ته ځي، او نه ساتل کېږي',
   'Stop dictating': 'املا ودروه',
   'Writing down what you said': 'هغه څه لیکل کېږي چې تاسو وویل',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'غږ د دې وسیلې د خبرو پېژندنې ته ځي، چې کېدای شي د جوړوونکي سرورونه وکاروي',
 }
