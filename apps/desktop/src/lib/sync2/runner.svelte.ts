@@ -30,7 +30,7 @@ import type { Doer, FileOp } from '../workspace/file-ops'
 import { owesAtTheEnd, owesLast, writing } from '../parting'
 import { isDesktop, isNative, joinPath } from '../tauri'
 import { keptAway } from '../web/away.svelte'
-import { aloneHere, keptBudget, TRIM_AFTER } from './budget'
+import { aloneHere, holdThisWindow, keptBudget, TRIM_AFTER } from './budget'
 import { links } from '../link-index.svelte'
 import { Indexing } from './indexing'
 import type { Leaving } from './keeping'
@@ -904,6 +904,9 @@ class Runner {
           offline = true
         })
       }
+      // A browser keeps words away only while it is the app's one window (#1126): another
+      // lists what is on the disk, and the engine is not in it.
+      if (!isNative) engine.core.crowded = !(await aloneHere())
       // One space's trouble is that space's: the others have their turn, and it is said after.
       await eachDue(
         this.due,
@@ -1522,6 +1525,7 @@ class Runner {
   /** What a window with no engine listens to. A window that takes the engine goes on
    *  hearing these, and nobody says them to it any more. */
   private hearLeader() {
+    if (!isNative) holdThisWindow()
     if (this.hearings.length) return
     if (typeof window !== 'undefined') {
       const back = () => this.lookedAt()
@@ -1599,7 +1603,12 @@ class Runner {
           })
         })
       }),
-      this.hear('sync-hello', () => this.sayAll()),
+      this.hear('sync-hello', () => {
+        this.sayAll()
+        // A window more: in a browser what this one kept away comes down now, as that one
+        // lists the disk (#1126; `crowded`).
+        if (!isNative && engine.core.world.lazy) this.kick()
+      }),
       $effect.root(() => {
         $effect(() => {
           const said = {

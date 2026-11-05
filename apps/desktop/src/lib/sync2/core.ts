@@ -109,6 +109,11 @@ export class Core {
   /** Documents whose words were asked for here - opened, or about to be - where this
    *  device keeps only the words it uses (keeping.ts). Memory only. */
   readonly asked = new Set<string>()
+  /** Whether another window of the app is open (`aloneHere` in budget.ts), said by the
+   *  runner before each pass: a browser keeps a note's words away only while it is alone,
+   *  as it lets words go only then, since another window may have the note open and lists
+   *  what is on the disk (#1126). Memory only. */
+  crowded = false
   /** The newest epoch the account has said each document is on: a room is joined only by
    *  a document on it, since operations of two epochs cannot be merged. */
   readonly epochs = new Map<string, number>()

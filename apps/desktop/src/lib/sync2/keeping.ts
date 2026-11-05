@@ -44,7 +44,7 @@ function alwaysKept(space: SpaceState, entry: EntryRow): boolean {
 
 /** Whether a document's words are to be pulled into this device. */
 export function keptHere(core: Core, space: SpaceState, entry: EntryRow): boolean {
-  if (!space.keepsFew) return true
+  if (!space.keepsFew || core.crowded) return true
   return core.hasDoc(entry.id) || core.asked.has(entry.id) || alwaysKept(space, entry)
 }
 
