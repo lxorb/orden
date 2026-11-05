@@ -212,6 +212,14 @@ inside a folder picked for it, numbered where the name is taken, so nothing ther
 written over. It is made once, when asked, and never kept in step after; a space that is
 a folder is written out the same way.
 
+A folder from outside - an Obsidian vault, a folder of somebody else's notes - is only
+ever read, by an import into a space (#552, step 4g): nothing opens one in place, and
+an import into a space Orden keeps lands in its store like any other write. A space that
+was a folder in place, a vault among them, is taken in once by the conversion above with
+its ids, its sync and its versions (`rehome_snapshots`), and with what says it was a
+vault (`.obsidian`'s settings files, so a `📅` stays a deadline there, #371); the rest of
+Obsidian's settings, and the folder itself, stay where they were and are changed no more.
+
 ## What is kept about an entry
 
 A folder's icon and its colour are kept on the account by the folder's id, and a

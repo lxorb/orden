@@ -29,6 +29,7 @@ const disk = vi.hoisted(() => {
     }
   }
   let trashed = 0
+  const rehomed: string[] = []
   const trash: { id: string; kind: string; name: string; from: string; trashedAt: number }[] = []
   interface Node {
     name: string
@@ -92,6 +93,9 @@ const disk = vi.hoisted(() => {
         if (held === undefined) throw new Error('no such file')
         return (typeof held === 'string' ? new TextEncoder().encode(held) : held).slice().buffer
       }
+      case 'rehome_snapshots':
+        rehomed.push(`${String(args.from)} -> ${String(args.to)}`)
+        return 1
       case 'path_taken':
         return files.has(path) || dirs.has(path)
       case 'file_stamp': {
@@ -140,6 +144,7 @@ const disk = vi.hoisted(() => {
   return {
     files,
     dirs,
+    rehomed,
     crate,
   }
 })
@@ -179,6 +184,7 @@ afterEach(async () => {
   }
   disk.files.clear()
   for (const one of [...disk.dirs]) if (one !== '/spaces') disk.dirs.delete(one)
+  disk.rehomed.length = 0
   localStorage.removeItem(KEEP_SPACES)
 })
 
@@ -336,7 +342,9 @@ describe('a space that is a folder, where this device keeps new spaces itself', 
     disk.files.set('/spaces/Notes/Plan.md', 'ship it')
     disk.files.set('/spaces/Notes/Work/cat.png', new Uint8Array([1, 2]))
     disk.files.set('/spaces/Notes/.Inbox.md', '- [ ] eggs')
-    disk.files.set('/spaces/Notes/.obsidian', 'theirs')
+    disk.dirs.add('/spaces/Notes/.obsidian')
+    disk.files.set('/spaces/Notes/.obsidian/app.json', '{}')
+    disk.files.set('/spaces/Notes/.obsidian/plugins.json', 'theirs')
     const before = new Map(disk.files)
     const { ws, said } = workspace(['/spaces/Notes'])
     // Written while the rest was being copied, before the hold.
@@ -354,7 +362,10 @@ describe('a space that is a folder, where this device keeps new spaces itself', 
       new Uint8Array(await call<ArrayBuffer>('read_file', { path: `${root}/Work/cat.png` })),
     ).toEqual(new Uint8Array([1, 2]))
     expect(await call('path_exists', { path: `${root}/Empty` })).toBe(true)
-    expect(await call('path_exists', { path: `${root}/.obsidian` })).toBe(false)
+    // What says it was a vault, and nothing else of Obsidian's; and its versions with it.
+    expect(await call('path_exists', { path: `${root}/.obsidian/app.json` })).toBe(true)
+    expect(await call('path_exists', { path: `${root}/.obsidian/plugins.json` })).toBe(false)
+    expect(disk.rehomed).toEqual([`/spaces/Notes -> ${root}`])
     // The folder as it was, bar what was written into it before the hold; and listed no more.
     for (const [path, held] of before) {
       if (path !== '/spaces/Notes/Plan.md') expect(disk.files.get(path)).toEqual(held)

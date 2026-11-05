@@ -39,6 +39,11 @@ const foldsCase = () => ['windows', 'macos', 'ios', ''].includes(platform())
  *  is the space's all the same. */
 const INBOX = '.Inbox.md'
 
+/** What says a folder was an Obsidian vault, where a task's `📅` is a deadline (#371,
+ *  rows/vault.ts): the files Obsidian writes into `.obsidian`, carried so the space
+ *  reads its tasks as it did. The rest of Obsidian's settings stay with the folder. */
+const VAULT = ['.obsidian/app.json', '.obsidian/workspace.json', '.obsidian/core-plugins.json']
+
 /** Everything in the folder at `root`, by its path inside with `/` between folders: what
  *  the file list holds, what pages hold as their papers, every other file, and the inbox
  *  - the app's other dotted files are the app's, and stay with the folder. */
@@ -56,8 +61,10 @@ async function contents(root: string): Promise<{ path: string; dir: boolean }[]>
     }
   }
   walk(tree)
-  if (await crate<Stamp | null>('file_stamp', { path: joinPath(root, INBOX) }).catch(() => null)) {
-    out.push({ path: INBOX, dir: false })
+  for (const own of [INBOX, ...VAULT]) {
+    if (await crate<Stamp | null>('file_stamp', { path: joinPath(root, own) }).catch(() => null)) {
+      out.push({ path: own, dir: false })
+    }
   }
   return out
 }
@@ -126,7 +133,13 @@ export async function convertSpace(ws: HoldsSpaces, id: string): Promise<boolean
         if (!is || is.modified !== was?.modified || is.len !== was.len) changed.add(one.path)
       }
       for (const one of now) if (one.dir && !(await into.at(one.path))) changed.add(one.path)
-      const there = new Set(now.map((one) => one.path))
+      // What is there now, and the folders it is in.
+      const there = new Set<string>()
+      for (const { path } of now) {
+        for (let at = path; at; at = at.includes('/') ? at.slice(0, at.lastIndexOf('/')) : '') {
+          there.add(at)
+        }
+      }
       for (const { path } of await into.list()) if (!there.has(path)) await into.remove(path)
       await copied(from, into, changed)
       await into.flush()
@@ -135,6 +148,9 @@ export async function convertSpace(ws: HoldsSpaces, id: string): Promise<boolean
       const root = await mountKept(folder, space.name, from)
       space.root = root
       await ws.fileMoved(from, root, 'space')
+      // Each note's versions, kept by its path in the app's own folder, under the path
+      // it has now (`rehome_snapshots` in history.rs).
+      await crate('rehome_snapshots', { from, to: root }).catch(() => 0)
       done.converted = true
     })
     if (!done.converted) return false
