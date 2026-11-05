@@ -2339,6 +2339,7 @@ export const zhHantHK: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     '{device} 暫時未能在獨立的顯示器上執行應用程式。',
   '{device} needs Xvfb to run an application.': '{device} 需要 Xvfb 才能執行應用程式。',
+  '{device} needs Screen Recording and Accessibility.': '{device} 需要螢幕錄影及輔助使用權限。',
   '{device} did not allow this program.': '{device} 未有允許此程式。',
   '{device} does not have this application.': '{device} 上沒有此應用程式。',
   'It did not start on {device}.': '未能在 {device} 上啟動。',

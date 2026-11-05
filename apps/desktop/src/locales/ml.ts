@@ -2435,6 +2435,8 @@ export const ml: Dictionary = {
     '{device}-ന് ഇതുവരെ സ്വന്തം ഡിസ്‌പ്ലേയിൽ ആപ്ലിക്കേഷൻ പ്രവർത്തിപ്പിക്കാനാവില്ല.',
   '{device} needs Xvfb to run an application.':
     'ആപ്ലിക്കേഷൻ പ്രവർത്തിപ്പിക്കാൻ {device}-ന് Xvfb വേണം.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device}-ന് സ്ക്രീൻ റെക്കോർഡിംഗും അക്സസിബിലിറ്റിയും അനുവദിക്കണം.',
   '{device} did not allow this program.': '{device} ഈ പ്രോഗ്രാം അനുവദിച്ചില്ല.',
   '{device} does not have this application.': '{device}-ൽ ഈ ആപ്ലിക്കേഷൻ ഇല്ല.',
   'It did not start on {device}.': '{device}-ൽ ഇത് ആരംഭിച്ചില്ല.',

@@ -39,12 +39,20 @@ export type AppState = 'stopped' | 'starting' | 'running' | 'exited'
 const APP_STATES: readonly AppState[] = ['stopped', 'starting', 'running', 'exited']
 
 /** Why a host did not start it, with a `stopped` or `exited` state: its platform cannot
- *  give an application a display of its own yet (Windows and macOS, until step 8), the
- *  display server it needs is not installed (Xvfb), the reader at the host said no to a
- *  program by its path, what the file names is not on the host, or it failed to start. */
-export type NotStarted = 'isolation' | 'display' | 'refused' | 'missing' | 'failed'
+ *  give an application a display of its own yet (Windows), the display server it needs
+ *  is not installed (Xvfb), a Mac has not allowed Screen Recording and Accessibility
+ *  (step 8), the reader at the host said no to a program by its path, what the file
+ *  names is not on the host, or it failed to start. */
+export type NotStarted = 'isolation' | 'display' | 'permission' | 'refused' | 'missing' | 'failed'
 
-const NOT_STARTED: readonly NotStarted[] = ['isolation', 'display', 'refused', 'missing', 'failed']
+const NOT_STARTED: readonly NotStarted[] = [
+  'isolation',
+  'display',
+  'permission',
+  'refused',
+  'missing',
+  'failed',
+]
 
 /** The state frame, as either side sends it. */
 export interface StateFrame {

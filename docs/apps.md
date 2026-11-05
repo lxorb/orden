@@ -74,9 +74,9 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
   data (a file `allowed.json` in its `apps` folder).
 - **Where**: on Linux, an Xvfb of its own (`apps_host/display.rs`) at the holder's size in
   device pixels, with the toolkits told to speak X11 (`WAYLAND_DISPLAY` removed), in a process
-  group of its own that is what Stop ends. Xvfb not installed: the tab says so. Windows and
-  macOS: nothing is started, and the tab says the computer cannot give an application a
-  display of its own yet (step 8).
+  group of its own that is what Stop ends. Xvfb not installed: the tab says so. A Mac: see
+  step 8. Windows: nothing is started, and the tab says the computer cannot give an
+  application a display of its own yet.
 - **Not yet**: a host serves the applications of the space it has open; a program that speaks
   only Wayland needs a headless compositor (weston), which comes with the capture in step 4.
 
@@ -211,6 +211,50 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
 - **Not done**: dragging files in and out, and downloads. Both need files carried over the
   connection and, for a drop, X's drag-and-drop played into the application; they are left
   for later.
+
+## A Mac (step 8)
+
+Written in the cloud and checked there for the Mac target with `cargo clippy`; not yet run on
+a Mac. Everything above the host (the file, the relay, the tab, the picture's connection,
+the encoder's pipe) is the same; the Mac's halves are in `apps_host/mac/`, under the names the
+Linux ones have.
+
+- **A display that is not there** (`mac/display.rs`): `CGVirtualDisplay`, a private class of
+  CoreGraphics that `DeskPad`, `BetterDisplay` and Chromium's tests use, reached through the
+  Objective-C runtime by name; a macOS without it says `isolation`. Made the holder's size in
+  device pixels, Retina where the holder's screen is, and made again as the view changes. It
+  is moved to the far corner of the other displays, touching them at one point, so the
+  reader's pointer reaches it only through that corner. One thread of the module's own holds
+  every display.
+- **What a Mac has to allow** (`mac/access.rs`): Screen Recording and Accessibility, each asked
+  with the system's own prompt as an application first starts. Until both are given the tab
+  says so (`permission`, `@orden/online/apps`).
+- **The application** is its bundle's own program (`CFBundleExecutable`, by `NSBundle`), run as
+  a child of Orden's in a process group of its own, not `open -a`: a process whose windows are
+  found by its id, and a second one where the reader already has it open.
+- **Its windows** (`mac/windows.rs`) are looked at through Accessibility eight times a second and
+  moved onto its display: a standard window to fill it (below the display's menu bar), a
+  dialog or panel to its middle at its own size. A window it opens is on the reader's screen
+  for that moment.
+- **The picture** (`mac/capture.rs`): ScreenCaptureKit's stream of that display, filtered to
+  the application's windows (no desktop, no Dock, no one else's window), BGRA at the display's
+  device pixels, no pointer drawn, at most 60 a second. Only a frame ScreenCaptureKit calls
+  `Complete` is news, so a still application sends nothing. A display made another size
+  changes the stream's configuration. The pointer's shape is not sent yet.
+- **The encoder** is VideoToolbox's H.264 (`h264_videotoolbox`, realtime, no B-frames,
+  constrained baseline) to a viewer that decodes H.264, and libvpx's VP8 to any other.
+  ffmpeg is looked for on `PATH` and in Homebrew's and `MacPorts`' folders, which an app
+  started from Finder does not have on its `PATH`.
+- **Input** (`mac/input.rs`): keys (by `KeyboardEvent.code` as a Mac's virtual key codes, with
+  the holder's character written into the event), text, the wheel and a pointer that only
+  moves are posted to the application's process, which no one else sees. A press goes through
+  the window server, which moves the reader's pointer onto the application's display until
+  the last button is let go, and then puts it back; the application comes to the front.
+- **The clipboard** (`mac/clipboard.rs`) is the system's one: a paste puts the holder's text on
+  it first, and a change made while the application is in front goes to the holder.
+- **Not yet**: its sound (it plays from the Mac's speakers; ScreenCaptureKit can read one
+  application's sound), its pointer's shape, its menu bar (the Mac's own, on the main screen),
+  and Windows.
 
 ## Measured (step 9)
 

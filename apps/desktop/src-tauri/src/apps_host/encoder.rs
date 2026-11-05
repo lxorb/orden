@@ -9,7 +9,8 @@
 //! **What the viewer decodes decides.** Hardware H.264 (NVENC, VAAPI, Quick Sync) goes to a
 //! viewer that offers H.264 - `WebView2` and `WKWebView` - and hardware VP9 or VP8 to any,
 //! Orden's own CEF included, which has no H.264. Each is told to hold nothing back: no
-//! B-frames, no look-ahead, its lowest-latency mode.
+//! B-frames, no look-ahead, its lowest-latency mode. A Mac's is `VideoToolbox`'s H.264
+//! (step 8).
 //!
 //! **Fed frame by frame** (step 5): the picture is read off the display as it changes
 //! (`capture.rs`) and written to the encoder raw, each frame stamped with the time it
@@ -40,6 +41,8 @@ pub enum Hardware {
     Qsv,
     /// NVIDIA's.
     Nvenc,
+    /// A Mac's media engine.
+    VideoToolbox,
 }
 
 /// One of ffmpeg's encoders.
@@ -52,13 +55,14 @@ pub struct Encoder {
 
 /// Every encoder tried, best first: hardware before software, and within the hardware
 /// H.264 first, which every GPU of the last ten years has.
-pub const ALL: [Encoder; 7] = [
+pub const ALL: [Encoder; 8] = [
     one("h264_nvenc", Made::H264, Hardware::Nvenc),
     one("h264_vaapi", Made::H264, Hardware::Vaapi),
     one("h264_qsv", Made::H264, Hardware::Qsv),
     one("vp9_vaapi", Made::Vp9, Hardware::Vaapi),
     one("vp9_qsv", Made::Vp9, Hardware::Qsv),
     one("vp8_vaapi", Made::Vp8, Hardware::Vaapi),
+    one("h264_videotoolbox", Made::H264, Hardware::VideoToolbox),
     SOFTWARE,
 ];
 
@@ -95,12 +99,19 @@ pub fn working() -> &'static [Encoder] {
             .iter()
             .copied()
             .filter(|one| one.hardware != Hardware::None)
+            .filter(|one| ours(one.hardware))
             .filter(|one| works(*one))
             .collect();
         // libvpx is not tried: an ffmpeg without it is one the viewer is told about.
         found.push(SOFTWARE);
         found
     })
+}
+
+/// Whether this platform has the hardware at all: `VideoToolbox` is a Mac's alone, and a
+/// Mac has none of the others.
+fn ours(hardware: Hardware) -> bool {
+    (hardware == Hardware::VideoToolbox) == cfg!(target_os = "macos")
 }
 
 /// Whether an encoder makes one frame of a test picture.
@@ -112,7 +123,7 @@ fn works(encoder: Encoder) -> bool {
     args.extend(words("-f lavfi -i testsrc=size=320x240:rate=1 -frames:v 1"));
     args.extend(upload_args(encoder.hardware));
     args.extend(["-c:v", encoder.name, "-f", "null", "-"].map(str::to_owned));
-    let Ok(mut child) = Command::new("ffmpeg")
+    let Ok(mut child) = Command::new(ffmpeg())
         .args(["-hide_banner", "-loglevel", "quiet", "-nostdin"])
         .args(&args)
         .stdin(Stdio::null())
@@ -136,6 +147,35 @@ fn works(encoder: Encoder) -> bool {
     }
 }
 
+/// Where a Mac's package managers put ffmpeg: an app started from Finder or the Dock
+/// is handed `/usr/bin:/bin:/usr/sbin:/sbin`, never these (see `pandoc/finding.rs`).
+#[cfg(target_os = "macos")]
+const MAC_FOLDERS: &[&str] = &["/opt/homebrew/bin", "/usr/local/bin", "/opt/local/bin"];
+
+/// The ffmpeg this computer runs: the one on `PATH`, or on a Mac the first in a package
+/// manager's folder.
+pub fn ffmpeg() -> &'static str {
+    static FOUND: OnceLock<String> = OnceLock::new();
+    FOUND.get_or_init(|| {
+        #[cfg(target_os = "macos")]
+        if !super::installed::on_path("ffmpeg") {
+            if let Some(found) = MAC_FOLDERS
+                .iter()
+                .map(|folder| format!("{folder}/ffmpeg"))
+                .find(|program| std::path::Path::new(program).is_file())
+            {
+                return found;
+            }
+        }
+        "ffmpeg".to_owned()
+    })
+}
+
+/// Whether there is an ffmpeg to run.
+pub fn has_ffmpeg() -> bool {
+    super::installed::on_path(ffmpeg())
+}
+
 /// A line of ffmpeg's arguments, none of which has a space in it, as its words.
 fn words(line: &str) -> Vec<String> {
     line.split_whitespace().map(str::to_owned).collect()
@@ -151,7 +191,7 @@ fn device_args(hardware: Hardware) -> Vec<String> {
             "va",
         ],
         Hardware::Qsv => &["-init_hw_device", "qsv=hw", "-filter_hw_device", "hw"],
-        Hardware::Nvenc | Hardware::None => &[],
+        Hardware::Nvenc | Hardware::VideoToolbox | Hardware::None => &[],
     };
     words.iter().map(|&one| one.to_owned()).collect()
 }
@@ -163,6 +203,7 @@ fn upload_args(hardware: Hardware) -> Vec<String> {
         Hardware::Vaapi => &["-vf", "format=nv12,hwupload"],
         Hardware::Qsv => &["-vf", "format=nv12,hwupload=extra_hw_frames=16"],
         Hardware::Nvenc | Hardware::None => &["-pix_fmt", "yuv420p"],
+        Hardware::VideoToolbox => &["-pix_fmt", "nv12"],
     };
     words.iter().map(|&one| one.to_owned()).collect()
 }
@@ -217,6 +258,16 @@ fn tuning_args(encoder: Encoder, threads: usize) -> Vec<String> {
             "0",
             "-profile:v",
             "baseline",
+        ],
+        "h264_videotoolbox" => &[
+            "-realtime",
+            "1",
+            "-prio_speed",
+            "1",
+            "-bf",
+            "0",
+            "-profile:v",
+            "constrained_baseline",
         ],
         "vp9_qsv" | "vp9_vaapi" | "vp8_vaapi" => &["-async_depth", "1"],
         _ => &[],

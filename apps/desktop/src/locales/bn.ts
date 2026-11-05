@@ -2402,6 +2402,8 @@ export const bn: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     '{device} এখনও নিজস্ব ডিসপ্লেতে কোনো অ্যাপ্লিকেশন চালাতে পারে না।',
   '{device} needs Xvfb to run an application.': 'অ্যাপ্লিকেশন চালাতে {device}-এর Xvfb দরকার।',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device}-এর স্ক্রিন রেকর্ডিং ও অ্যাক্সেসিবিলিটির অনুমতি দরকার।',
   '{device} did not allow this program.': '{device} এই প্রোগ্রামটি অনুমতি দেয়নি।',
   '{device} does not have this application.': '{device}-এ এই অ্যাপ্লিকেশনটি নেই।',
   'It did not start on {device}.': '{device}-এ এটি চালু হয়নি।',

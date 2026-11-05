@@ -172,15 +172,18 @@
         return t('Not running on {device}', { device })
     }
   })
-  /** Why its computer did not start it: Windows and macOS have no display of an
-   *  application's own yet (step 8 of issue 1063), Linux needs Xvfb, the reader there
-   *  said no to a program by its path, or what the file names is not there. */
+  /** Why its computer did not start it: Windows has no display of an application's
+   *  own yet (step 8 of issue 1063), Linux needs Xvfb, a Mac has not allowed Screen
+   *  Recording and Accessibility, the reader there said no to a program by its path, or
+   *  what the file names is not there. */
   function notStarted(why: NotStarted, device: string): string {
     switch (why) {
       case 'isolation':
         return t('{device} cannot run an application on a display of its own yet.', { device })
       case 'display':
         return t('{device} needs Xvfb to run an application.', { device })
+      case 'permission':
+        return t('{device} needs Screen Recording and Accessibility.', { device })
       case 'refused':
         return t('{device} did not allow this program.', { device })
       case 'missing':

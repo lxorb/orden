@@ -2336,6 +2336,7 @@ export const yue: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     '{device} 暫時未可以喺自己嘅顯示器度運行應用程式。',
   '{device} needs Xvfb to run an application.': '{device} 要有 Xvfb 先可以運行應用程式。',
+  '{device} needs Screen Recording and Accessibility.': '{device} 需要螢幕錄影同輔助使用權限。',
   '{device} did not allow this program.': '{device} 唔准呢個程式。',
   '{device} does not have this application.': '{device} 冇呢個應用程式。',
   'It did not start on {device}.': '喺 {device} 度開唔到。',

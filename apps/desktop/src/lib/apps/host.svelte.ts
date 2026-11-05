@@ -9,7 +9,7 @@
  *  Developer mode's, on a desktop, while signed in (App.svelte starts it). The crate
  *  decides what may run - an installed application by the id it found itself, a program
  *  by its path only once the reader here said yes - and where: a display of its own, on
- *  Linux; on Windows and macOS nothing is started yet, and the tab is told why.
+ *  Linux and macOS; on Windows nothing is started yet, and the tab is told why.
  *
  *  And its picture (step 4): the holder's signalling, `signal` frames, handed to the
  *  crate as they come (`apps_host/stream.rs`), which answers the offer and sends the
@@ -329,7 +329,14 @@ async function appWorld(): Promise<{
         return null
       } catch (error) {
         const why = String(error)
-        const known: NotStarted[] = ['isolation', 'display', 'refused', 'missing', 'failed']
+        const known: NotStarted[] = [
+          'isolation',
+          'display',
+          'permission',
+          'refused',
+          'missing',
+          'failed',
+        ]
         return known.find((one) => one === why) ?? 'failed'
       }
     },

@@ -2428,6 +2428,8 @@ export const kn: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     '{device} ಇನ್ನೂ ತನ್ನದೇ ಡಿಸ್‌ಪ್ಲೇಯಲ್ಲಿ ಅಪ್ಲಿಕೇಶನ್ ಚಲಾಯಿಸಲಾರದು.',
   '{device} needs Xvfb to run an application.': 'ಅಪ್ಲಿಕೇಶನ್ ಚಲಾಯಿಸಲು {device}ಗೆ Xvfb ಬೇಕು.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device}ಗೆ ಸ್ಕ್ರೀನ್ ರೆಕಾರ್ಡಿಂಗ್ ಮತ್ತು ಅಕ್ಸೆಸಿಬಿಲಿಟಿ ಅನುಮತಿ ಬೇಕು.',
   '{device} did not allow this program.': '{device} ಈ ಪ್ರೋಗ್ರಾಂಗೆ ಅನುಮತಿಸಲಿಲ್ಲ.',
   '{device} does not have this application.': '{device}ನಲ್ಲಿ ಈ ಅಪ್ಲಿಕೇಶನ್ ಇಲ್ಲ.',
   'It did not start on {device}.': 'ಇದು {device}ನಲ್ಲಿ ಪ್ರಾರಂಭವಾಗಲಿಲ್ಲ.',

@@ -252,7 +252,7 @@ impl Peer {
             sound,
             group,
         } = source;
-        if !super::installed::on_path("ffmpeg") {
+        if !encoder::has_ffmpeg() {
             return Err(Cannot::Encoder);
         }
         let offer = SdpOffer::from_sdp_string(offer).map_err(|_| Cannot::Offer)?;
@@ -349,7 +349,7 @@ impl Peer {
     }
 
     /// Whether it has ended: the viewer went, or never came.
-    #[cfg(test)]
+    #[cfg(all(test, target_os = "linux"))]
     pub fn ended(&self) -> bool {
         self.inner.over()
     }
@@ -929,7 +929,7 @@ fn start_encoder(
     fps: u32,
 ) -> Option<Encoding> {
     let generation = inner.generation.fetch_add(1, Ordering::SeqCst) + 1;
-    let mut child = Command::new("ffmpeg")
+    let mut child = Command::new(encoder::ffmpeg())
         .args(encoder::encoder_args(chosen, size.0, size.1, fps))
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -1249,6 +1249,7 @@ mod tests {
     }
 
     /// Whether a VP8 frame is a key frame, and the size a key frame says.
+    #[cfg(target_os = "linux")]
     fn vp8(frame: &[u8]) -> (bool, Option<(u16, u16)>) {
         let key = frame.first().is_some_and(|tag| (tag & 1) == 0);
         let size = (key && frame.len() >= 10 && frame[3..6] == [0x9d, 0x01, 0x2a]).then(|| {
@@ -1261,12 +1262,14 @@ mod tests {
     }
 
     /// A viewer of `str0m`'s own on the loopback, as a tab's engine is one.
+    #[cfg(target_os = "linux")]
     struct Viewer {
         rtc: Rtc,
         socket: UdpSocket,
         local: SocketAddr,
     }
 
+    #[cfg(target_os = "linux")]
     impl Viewer {
         /// A viewer that offers to take the display's picture and its sound, the
         /// host's peer that answered it, and the video's media and the audio's.
@@ -1359,6 +1362,7 @@ mod tests {
     /// Then: nothing drawn, nothing is sent; something drawn is; a whole picture asked
     /// for comes as a key frame; and the screen made another size comes as a key frame
     /// of that size. CI installs both; elsewhere the test says nothing without them.
+    #[cfg(target_os = "linux")]
     #[test]
     #[allow(
         clippy::too_many_lines,
@@ -1493,6 +1497,7 @@ mod tests {
     /// share it; shared, what the holder gives is what the application's paste gets, and
     /// what the application copies comes to the holder. CI installs Xvfb and ffmpeg;
     /// elsewhere the test says nothing without them.
+    #[cfg(target_os = "linux")]
     #[test]
     #[allow(
         clippy::too_many_lines,
@@ -1641,6 +1646,7 @@ mod tests {
 
     /// A sound server for the test: the one there is, or one started for it where
     /// `pulseaudio` is installed (CI installs it), in a folder of its own.
+    #[cfg(target_os = "linux")]
     fn sound_server() -> Option<std::process::Child> {
         let up = || {
             Command::new("pactl")
@@ -1684,6 +1690,7 @@ mod tests {
     /// The application's sound reaches a viewer that offers to take it, as Opus. CI
     /// installs Xvfb, ffmpeg and `PulseAudio`; elsewhere the test says nothing without
     /// them.
+    #[cfg(target_os = "linux")]
     #[test]
     fn a_viewer_hears_the_applications_sound() {
         let ready = super::super::display::available()
@@ -1754,6 +1761,7 @@ mod tests {
     /// far above what CI's runners measure (a few milliseconds), so that only a real
     /// regression - a frame held back, a refresh missed - fails them. CI installs Xvfb
     /// and ffmpeg; elsewhere the test says nothing without them.
+    #[cfg(target_os = "linux")]
     #[test]
     #[allow(
         clippy::too_many_lines,

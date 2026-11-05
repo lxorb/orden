@@ -2414,6 +2414,8 @@ export const te: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     '{device} ఇంకా అప్లికేషన్‌ను దాని సొంత డిస్‌ప్లేపై నడపలేదు.',
   '{device} needs Xvfb to run an application.': 'అప్లికేషన్ నడపడానికి {device}కు Xvfb కావాలి.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device}కి స్క్రీన్ రికార్డింగ్, యాక్సెసిబిలిటీ అనుమతి కావాలి.',
   '{device} did not allow this program.': '{device} ఈ ప్రోగ్రామ్‌ను అనుమతించలేదు.',
   '{device} does not have this application.': '{device}లో ఈ అప్లికేషన్ లేదు.',
   'It did not start on {device}.': 'ఇది {device}లో ప్రారంభం కాలేదు.',

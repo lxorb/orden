@@ -2494,6 +2494,8 @@ export const ru: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     '{device} пока не может запускать приложение на отдельном экране.',
   '{device} needs Xvfb to run an application.': 'Для запуска приложения {device} нужен Xvfb.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} нужны разрешения «Запись экрана» и «Универсальный доступ».',
   '{device} did not allow this program.': '{device} не разрешил эту программу.',
   '{device} does not have this application.': 'На {device} нет этого приложения.',
   'It did not start on {device}.': 'Не запустилось на {device}.',

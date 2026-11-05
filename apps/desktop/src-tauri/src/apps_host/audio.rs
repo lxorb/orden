@@ -115,7 +115,7 @@ impl Sound {
             let _ = reader.wait();
             return None;
         };
-        let encoder = Command::new("ffmpeg")
+        let encoder = Command::new(super::encoder::ffmpeg())
             .args(encoder_args())
             .stdin(Stdio::from(samples))
             .stdout(Stdio::piped())

@@ -2393,6 +2393,8 @@ export const id: Dictionary = {
     '{device} belum bisa menjalankan aplikasi di layar tersendiri.',
   '{device} needs Xvfb to run an application.':
     '{device} memerlukan Xvfb untuk menjalankan aplikasi.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} memerlukan Rekaman Layar dan Aksesibilitas.',
   '{device} did not allow this program.': '{device} tidak mengizinkan program ini.',
   '{device} does not have this application.': '{device} tidak memiliki aplikasi ini.',
   'It did not start on {device}.': 'Aplikasi tidak berjalan di {device}.',

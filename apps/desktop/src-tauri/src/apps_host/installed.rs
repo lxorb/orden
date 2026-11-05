@@ -19,6 +19,7 @@ use serde::Serialize;
 
 /// The largest icon file read, in bytes: its data URL is at most `MOST_ICON` in
 /// `@orden/online/apps`, 48 KiB, which base64 makes of about 36 KiB.
+#[cfg_attr(target_os = "macos", allow(dead_code))]
 const MOST_ICON_BYTES: u64 = 35 * 1024;
 
 /// One application, as the window lists it.
@@ -118,13 +119,19 @@ fn entries() -> Vec<Entry> {
                 continue;
             };
             let id = path.to_string_lossy().into_owned();
+            // Its own program, run as a child of Orden's, rather than `open -a`: a
+            // process of its own whose windows are found by its id, and a second one
+            // where the reader already has it open on this Mac.
+            let Some(program) = bundle_program(&id) else {
+                continue;
+            };
             found.push(Entry {
                 listed: Listed {
-                    id: id.clone(),
+                    id,
                     name: name.to_owned(),
                     icon: None,
                 },
-                argv: vec!["/usr/bin/open".to_owned(), "-a".to_owned(), id],
+                argv: vec![program],
             });
         }
     }
@@ -134,6 +141,31 @@ fn entries() -> Vec<Entry> {
 #[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
 fn entries() -> Vec<Entry> {
     Vec::new()
+}
+
+/// The program in a Mac's application bundle, by its `Info.plist`.
+#[cfg(target_os = "macos")]
+pub fn bundle_program(bundle: &str) -> Option<String> {
+    let bundle =
+        objc2_foundation::NSBundle::bundleWithPath(&objc2_foundation::NSString::from_str(bundle))?;
+    let program = bundle.executablePath()?.to_string();
+    Path::new(&program).is_file().then_some(program)
+}
+
+/// What a program by its path runs: the path itself where it is there to run, or on a
+/// Mac the program inside an application bundle.
+pub fn program_of(path: &str) -> Option<String> {
+    #[cfg(target_os = "macos")]
+    {
+        let named = Path::new(path);
+        let bundle = named
+            .extension()
+            .is_some_and(|one| one.eq_ignore_ascii_case("app"));
+        if bundle && named.is_dir() {
+            return bundle_program(path);
+        }
+    }
+    on_path(path).then(|| path.to_owned())
 }
 
 /// Whether a program is there to run: a path that is a file, or a name on `PATH`.
@@ -149,6 +181,7 @@ pub fn on_path(program: &str) -> bool {
 
 /// What the Desktop Entry Specification reads out of one file: the `[Desktop Entry]`
 /// group's keys, the plain ones (a translated `Name[de]` is not the name).
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub(crate) mod desktop {
     use std::collections::HashMap;
 

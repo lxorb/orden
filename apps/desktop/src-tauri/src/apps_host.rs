@@ -19,8 +19,12 @@
 //!
 //! **Nowhere but its own display.** On Linux an application runs on an Xvfb of its own
 //! (`display.rs`), never the reader's desktop, so nothing it draws or does lands on
-//! their screen or takes their mouse. Windows and macOS have no such display yet (step
-//! 8), so there nothing is started at all and the tab says so (`isolation`).
+//! their screen or takes their mouse. On a Mac (step 8) it gets a display that is not
+//! there, put out of the way (`mac/display.rs`), and its windows are kept on it
+//! (`mac/windows.rs`); but a Mac has one window server, so it is in the Dock, a press
+//! moves the reader's pointer for that moment, and it can come to the front (`mac/`).
+//! Windows has no such display yet, so there nothing is started at all and the tab says
+//! so (`isolation`).
 //!
 //! **What outlives what.** An application keeps running when the device viewing it
 //! leaves and when this window reloads - the window asks again, and hears where it
@@ -41,7 +45,7 @@
 //! and text goes between its clipboard and the holder's while the holder shares it
 //! (`clipboard.rs`).
 
-#![cfg_attr(not(target_os = "linux"), allow(dead_code))]
+#![cfg_attr(not(any(target_os = "linux", target_os = "macos")), allow(dead_code))]
 
 #[cfg(target_os = "linux")]
 mod audio;
@@ -52,16 +56,42 @@ mod clipboard;
 #[cfg(target_os = "linux")]
 mod display;
 #[cfg(target_os = "linux")]
-mod encoder;
-#[cfg(target_os = "linux")]
 mod input;
-mod installed;
-#[cfg(target_os = "linux")]
-mod stream;
-#[cfg(target_os = "linux")]
-mod stun;
 #[cfg(target_os = "linux")]
 mod wm;
+
+// A Mac's own halves, by the names the shared ones use (step 8).
+#[cfg(target_os = "macos")]
+#[path = "apps_host/mac/access.rs"]
+mod access;
+#[cfg(target_os = "macos")]
+#[path = "apps_host/mac/audio.rs"]
+mod audio;
+#[cfg(target_os = "macos")]
+#[path = "apps_host/mac/capture.rs"]
+mod capture;
+#[cfg(target_os = "macos")]
+#[path = "apps_host/mac/clipboard.rs"]
+mod clipboard;
+#[cfg(target_os = "macos")]
+#[path = "apps_host/mac/display.rs"]
+mod display;
+#[cfg(target_os = "macos")]
+#[path = "apps_host/mac/input.rs"]
+mod input;
+#[cfg(target_os = "macos")]
+#[path = "apps_host/mac/windows.rs"]
+mod windows;
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+mod encoder;
+mod installed;
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+mod stream;
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+mod stun;
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+mod wire;
 
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -139,6 +169,13 @@ struct Running {
     /// Its sink on the sound server, where there is one; gone with it too.
     #[cfg(target_os = "linux")]
     sink: Mutex<Option<audio::Sink>>,
+    /// On a Mac: its display, its windows kept on it, and the clipboard it shares.
+    #[cfg(target_os = "macos")]
+    display: Mutex<Option<display::Display>>,
+    #[cfg(target_os = "macos")]
+    placer: Mutex<Option<windows::Placer>>,
+    #[cfg(target_os = "macos")]
+    clipboard: Arc<clipboard::Clipboard>,
 }
 
 impl Running {
@@ -160,7 +197,7 @@ impl Running {
 pub struct Hosted {
     apps: Mutex<HashMap<String, Arc<Running>>>,
     allowed: Mutex<Option<HashSet<String>>>,
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     peers: Mutex<HashMap<String, stream::Peer>>,
 }
 
@@ -171,7 +208,7 @@ impl Hosted {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     fn peers(&self) -> MutexGuard<'_, HashMap<String, stream::Peer>> {
         self.peers
             .lock()
@@ -179,7 +216,7 @@ impl Hosted {
     }
 
     /// Ends the picture of one application, if a device was taking it.
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     fn end_peer(&self, key: &str) {
         let gone = self.peers().remove(key);
         drop(gone);
@@ -246,15 +283,13 @@ pub fn apps_start(
     let (argv, cwd) = match &run {
         Run::Installed { id } => (installed::find(id).ok_or("missing")?.argv, None),
         Run::Path { path, args, cwd } => {
-            if !installed::on_path(path) {
-                return Err("missing".to_owned());
-            }
-            let mut argv = vec![path.clone()];
+            let program = installed::program_of(path).ok_or("missing")?;
+            let mut argv = vec![program];
             argv.extend(args.iter().cloned());
             (argv, cwd.clone())
         }
     };
-    if !cfg!(target_os = "linux") {
+    if !cfg!(any(target_os = "linux", target_os = "macos")) {
         return Err("isolation".to_owned());
     }
     if let Run::Path { path, args, cwd } = &run {
@@ -265,7 +300,7 @@ pub fn apps_start(
     run_on_its_display(webview.app_handle().clone(), key, argv, cwd, view, events)
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(not(any(target_os = "linux", target_os = "macos")))]
 fn run_on_its_display(
     _app: AppHandle,
     _key: String,
@@ -294,7 +329,7 @@ fn run_on_its_display(
     }
     // Which encoders work here is found by trying each, which takes a moment: begun now,
     // it is known by the time a viewer asks for the picture.
-    if installed::on_path("ffmpeg") {
+    if encoder::has_ffmpeg() {
         std::thread::spawn(|| encoder::working().len());
     }
     let (width, height) = display::screen(view.width, view.height, view.dpr);
@@ -307,7 +342,7 @@ fn run_on_its_display(
         .or_else(dirs::home_dir)
         .unwrap_or_else(|| PathBuf::from("/"));
     let (program, rest) = argv.split_first().ok_or("missing")?;
-    let mut child = Command::new(program)
+    let child = Command::new(program)
         .args(rest)
         .current_dir(folder)
         .env("DISPLAY", &name)
@@ -347,23 +382,116 @@ fn run_on_its_display(
         state: "running",
         code: None,
     });
+    wait_for(app, key, running, child);
+    Ok(())
+}
 
-    // The one thing that waits for it: when it ends, its display goes and the window is
-    // told whether it was stopped or ended by itself.
-    std::thread::spawn(move || {
-        let status = child.wait().ok();
+/// What a Mac has to say yes to, its display, and the application on it, its windows
+/// kept there (`mac/`).
+#[cfg(target_os = "macos")]
+fn run_on_its_display(
+    app: AppHandle,
+    key: String,
+    argv: Vec<String>,
+    cwd: Option<String>,
+    view: View,
+    events: Channel<Said>,
+) -> Result<(), String> {
+    use std::os::unix::process::CommandExt;
+    use std::process::{Command, Stdio};
+
+    if !display::available() {
+        return Err("isolation".to_owned());
+    }
+    if !access::allowed() {
+        return Err("permission".to_owned());
+    }
+    if encoder::has_ffmpeg() {
+        std::thread::spawn(|| encoder::working().len());
+    }
+    let (width, height) = display::screen(view.width, view.height, view.dpr);
+    let display = display::Display::start(width, height, view.dpr).map_err(|_| "failed")?;
+    let folder = cwd
+        .map(PathBuf::from)
+        .filter(|one| one.is_dir())
+        .or_else(dirs::home_dir)
+        .unwrap_or_else(|| PathBuf::from("/"));
+    let (program, rest) = argv.split_first().ok_or("missing")?;
+    let child = Command::new(program)
+        .args(rest)
+        .current_dir(folder)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .process_group(0)
+        .spawn()
+        .map_err(|_| "failed")?;
+    let pid = child.id();
+    let process = i32::try_from(pid).map_err(|_| "failed")?;
+    let running = Arc::new(Running {
+        pid,
+        events: Mutex::new(Some(events)),
+        stopping: AtomicBool::new(false),
+        screen: Arc::new(Mutex::new(Screen {
+            display: format!("{}/{pid}", display.id),
+            hz: view.hz,
+        })),
+        placer: Mutex::new(Some(windows::Placer::start(process, display.id))),
+        display: Mutex::new(Some(display)),
+        clipboard: clipboard::Clipboard::open(process),
+    });
+    app.state::<Hosted>()
+        .apps()
+        .insert(key.clone(), running.clone());
+    running.tell(Said {
+        state: "running",
+        code: None,
+    });
+    wait_for(app, key, running, child);
+    Ok(())
+}
+
+/// What goes with an application when it ends: its display, its sink, and on a Mac the
+/// watch on its windows.
+fn let_go_of(running: &Running) {
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    {
         let display = running
             .display
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .take();
         drop(display);
+    }
+    #[cfg(target_os = "linux")]
+    {
         let sink = running
             .sink
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .take();
         drop(sink);
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let placer = running
+            .placer
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .take();
+        drop(placer);
+    }
+    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+    let _ = running;
+}
+
+/// The one thing that waits for it: when it ends, its display goes and the window is
+/// told whether it was stopped or ended by itself.
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn wait_for(app: AppHandle, key: String, running: Arc<Running>, mut child: std::process::Child) {
+    std::thread::spawn(move || {
+        let status = child.wait().ok();
+        let_go_of(&running);
         let hosted = app.state::<Hosted>();
         let mut apps = hosted.apps();
         let ours = apps.get(&key).is_some_and(|one| Arc::ptr_eq(one, &running));
@@ -384,7 +512,6 @@ fn run_on_its_display(
             },
         });
     });
-    Ok(())
 }
 
 /// Hears where it stands, if it is running: the window that reloaded asks again. Starts
@@ -433,8 +560,25 @@ pub fn apps_view(webview: Webview, key: String, view: View) -> Result<(), String
     Ok(())
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(not(any(target_os = "linux", target_os = "macos")))]
 fn view_here(_running: &Running, _view: View) {}
+
+#[cfg(target_os = "macos")]
+fn view_here(running: &Running, view: View) {
+    running
+        .screen
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .hz = view.hz;
+    let (width, height) = display::screen(view.width, view.height, view.dpr);
+    let display = running
+        .display
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    if let Some(display) = display.as_ref() {
+        display.fit(width, height, view.dpr);
+    }
+}
 
 #[cfg(target_os = "linux")]
 fn view_here(running: &Running, view: View) {
@@ -463,14 +607,14 @@ pub fn apps_signal(webview: Webview, key: String, data: String) -> Result<Option
     Ok(signal_here(&webview.state::<Hosted>(), &key, &data))
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(not(any(target_os = "linux", target_os = "macos")))]
 fn signal_here(_hosted: &Hosted, _key: &str, data: &str) -> Option<String> {
     // Nothing runs here yet (`isolation`), so there is no picture to offer.
     data.contains("\"offer\"")
         .then(|| serde_json::json!({ "cannot": "stopped" }).to_string())
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 fn signal_here(hosted: &Hosted, key: &str, data: &str) -> Option<String> {
     use stream::FromViewer;
 
@@ -481,18 +625,7 @@ fn signal_here(hosted: &Hosted, key: &str, data: &str) -> Option<String> {
             let Some(running) = hosted.apps().get(key).cloned() else {
                 return Some(stream::cannot_text("stopped"));
             };
-            let clipboard = running
-                .display
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .as_ref()
-                .and_then(display::Display::clipboard);
-            let sound = running
-                .sink
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .as_ref()
-                .map(audio::Sink::monitor);
+            let (clipboard, sound) = shared_of(&running);
             let source = stream::Source {
                 screen: running.screen.clone(),
                 clipboard,
@@ -518,6 +651,30 @@ fn signal_here(hosted: &Hosted, key: &str, data: &str) -> Option<String> {
             None
         }
     }
+}
+
+/// The clipboard an application shares with its holder, and its sink's monitor.
+#[cfg(target_os = "linux")]
+fn shared_of(running: &Running) -> (Option<Arc<clipboard::Clipboard>>, Option<String>) {
+    let clipboard = running
+        .display
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .as_ref()
+        .and_then(display::Display::clipboard);
+    let sound = running
+        .sink
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .as_ref()
+        .map(audio::Sink::monitor);
+    (clipboard, sound)
+}
+
+/// The clipboard an application shares with its holder; no sound yet on a Mac.
+#[cfg(target_os = "macos")]
+fn shared_of(running: &Running) -> (Option<Arc<clipboard::Clipboard>>, Option<String>) {
+    (Some(running.clipboard.clone()), None)
 }
 
 /// Asks its group to end, and makes it after `grace`.
@@ -579,7 +736,7 @@ pub fn end_all(app: &AppHandle) {
         return;
     };
     let all: Vec<Arc<Running>> = hosted.apps().drain().map(|(_, one)| one).collect();
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     hosted.peers().clear();
     if all.is_empty() {
         return;

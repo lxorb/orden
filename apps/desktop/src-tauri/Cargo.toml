@@ -42,7 +42,10 @@ missing_docs = "warn"
 # `kill(2)` on the process group of an application this computer hosts, which is how it
 # and everything it started are ended (src/apps_host.rs), and the memory its display's
 # picture is read through, shared with that display's X server (`mmap(2)` and
-# `munmap(2)`, src/apps_host/capture.rs). And a test's count of the steps SQLite took
+# `munmap(2)`, src/apps_host/capture.rs). And on a Mac the same application's
+# display that is not there (`CGVirtualDisplay`, reached through the Objective-C runtime),
+# its picture's frames (ScreenCaptureKit, CoreVideo), its windows (Accessibility) and the
+# holder's input (CoreGraphics' events), in src/apps_host/mac/. And a test's count of the steps SQLite took
 # over a chat's window (src/sync_store/chats.rs). None of
 # them has a safe wrapper to use instead, and anything new that wants unsafe has to
 # say so at the function and say why.
@@ -349,6 +352,9 @@ objc2-foundation = { version = "0.3", default-features = false, features = [
 objc2-app-kit = { version = "0.3", default-features = false, features = [
   "std",
   "block2",
+  # A running application's process id: whose a Mac's clipboard change was
+  # (apps_host/mac/clipboard.rs).
+  "libc",
   "objc2-core-foundation",
   "NSApplication",
   "NSBitmapImageRep",
@@ -361,6 +367,8 @@ objc2-app-kit = { version = "0.3", default-features = false, features = [
   "NSGraphicsContext",
   "NSImage",
   "NSImageRep",
+  # An application's clipboard on a Mac, the system's own (apps_host/mac/clipboard.rs).
+  "NSPasteboard",
   "NSPrintInfo",
   "NSPrintOperation",
   "NSResponder",
@@ -421,6 +429,62 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
   "WKWebsiteDataRecord",
   "WKWebsiteDataStore",
 ] }
+
+# A Mac hosting one of the reader's applications (issue 1063, step 8; apps_host/mac/):
+# a display of the application's own (`CGVirtualDisplay`, through the Objective-C
+# runtime), its picture read as it changes (ScreenCaptureKit, its frames' pixels by
+# CoreMedia and CoreVideo), the holder's input posted to the application's process and
+# its displays placed out of the way (CoreGraphics), and a queue of the system's for
+# both (dispatch2). The objc2 family at the versions above.
+objc2-screen-capture-kit = { version = "0.3", default-features = false, features = [
+  "std",
+  "block2",
+  "libc",
+  "objc2-core-media",
+  "objc2-core-graphics",
+  "dispatch2",
+  "SCError",
+  "SCShareableContent",
+  "SCStream",
+] }
+objc2-core-media = { version = "0.3", default-features = false, features = [
+  "std",
+  "objc2-core-video",
+  "CMSampleBuffer",
+  "CMBase",
+  "CMTime",
+] }
+objc2-core-foundation = { version = "0.3", default-features = false, features = [
+  "std",
+  "CFArray",
+  "CFCGTypes",
+  "CFDictionary",
+  "CFNumber",
+  "CFString",
+] }
+objc2-core-video = { version = "0.3", default-features = false, features = [
+  "std",
+  "CVBase",
+  "CVBuffer",
+  "CVImageBuffer",
+  "CVPixelBuffer",
+  "CVReturn",
+] }
+objc2-core-graphics = { version = "0.3", default-features = false, features = [
+  "std",
+  "libc",
+  "CGDirectDisplay",
+  "CGDisplayConfiguration",
+  "CGError",
+  "CGEvent",
+  "CGEventSource",
+  "CGEventTypes",
+  "CGRemoteOperation",
+  "CGWindowLevel",
+] }
+dispatch2 = { version = "0.3", default-features = false, features = ["std", "objc2"] }
+# The picture sent peer to peer, as on Linux (apps_host/stream.rs).
+str0m = { version = "0.25", default-features = false, features = ["rust-crypto"] }
 
 # The desktop portal's global shortcuts, the only key from any app a Wayland session
 # hands over, and the token-carrying second launch, both on the session bus: zbus's

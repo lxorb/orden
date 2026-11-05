@@ -35,21 +35,7 @@ use x11rb::protocol::Event;
 use x11rb::rust_connection::RustConnection;
 use x11rb::NONE;
 
-/// What the thread that reads the picture hears: what the display's thread saw, and
-/// what the connection to the tab asked.
-#[derive(Debug, PartialEq)]
-pub enum News {
-    /// Something was drawn.
-    Drawn,
-    /// The screen was made another size.
-    Resized,
-    /// The pointer's shape changed: the message the tab is sent.
-    Pointer(String),
-    /// The holder's tab asked for a whole picture, its last having been lost on the way.
-    Whole,
-    /// The display has gone.
-    Gone,
-}
+pub use super::wire::News;
 
 /// A segment of memory shared with the server, mapped here to read.
 struct Mapped {

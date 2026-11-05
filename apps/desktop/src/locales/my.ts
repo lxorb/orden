@@ -2386,6 +2386,8 @@ export const my: Dictionary = {
     '{device} သည် အက်ပလီကေးရှင်းကို ၎င်း၏ကိုယ်ပိုင် ဖန်သားပြင်ပေါ်တွင် မဖွင့်နိုင်သေးပါ။',
   '{device} needs Xvfb to run an application.':
     'အက်ပလီကေးရှင်း ဖွင့်ရန် {device} တွင် Xvfb လိုအပ်သည်။',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} တွင် Screen Recording နှင့် Accessibility ခွင့်ပြုချက် လိုအပ်သည်။',
   '{device} did not allow this program.': '{device} က ဤပရိုဂရမ်ကို ခွင့်မပြုခဲ့ပါ။',
   '{device} does not have this application.': '{device} တွင် ဤအက်ပလီကေးရှင်း မရှိပါ။',
   'It did not start on {device}.': '{device} ပေါ်တွင် မစတင်ခဲ့ပါ။',

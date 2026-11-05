@@ -2415,6 +2415,8 @@ export const gsw: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     '{device} cha e Aawändig no nöd uf eme eigete Bildschirm laufe loo.',
   '{device} needs Xvfb to run an application.': '{device} bruucht Xvfb, zum e Aawändig laufe loo.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} bruucht Bildschirmufnahm und Bedienigshilfe.',
   '{device} did not allow this program.': '{device} hät das Programm nöd erlaubt.',
   '{device} does not have this application.': '{device} hät die Aawändig nöd.',
   'It did not start on {device}.': 'Si isch uf {device} nöd gstartet.',

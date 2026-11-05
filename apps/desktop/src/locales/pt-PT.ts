@@ -2462,6 +2462,8 @@ export const ptPT: Dictionary = {
     '{device} ainda não consegue executar uma aplicação num ecrã próprio.',
   '{device} needs Xvfb to run an application.':
     '{device} precisa do Xvfb para executar uma aplicação.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} precisa de Gravação de ecrã e Acessibilidade.',
   '{device} did not allow this program.': '{device} não permitiu este programa.',
   '{device} does not have this application.': '{device} não tem esta aplicação.',
   'It did not start on {device}.': 'Não arrancou em {device}.',

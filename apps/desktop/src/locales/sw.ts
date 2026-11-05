@@ -2434,6 +2434,8 @@ export const sw: Dictionary = {
   '{device} cannot run an application on a display of its own yet.':
     '{device} bado haiwezi kuendesha programu kwenye skrini yake yenyewe.',
   '{device} needs Xvfb to run an application.': '{device} inahitaji Xvfb ili kuendesha programu.',
+  '{device} needs Screen Recording and Accessibility.':
+    '{device} inahitaji ruhusa ya Kurekodi Skrini na Ufikivu.',
   '{device} did not allow this program.': '{device} haikuruhusu programu hii.',
   '{device} does not have this application.': '{device} haina programu hii.',
   'It did not start on {device}.': 'Haikuanza kwenye {device}.',
