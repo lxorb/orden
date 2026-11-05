@@ -194,6 +194,7 @@ export class Bubble {
   /** How far out it reaches along each direction, and how fast that is changing. */
   private readonly h = new Float64Array(N)
   private readonly speed = new Float64Array(N)
+  private readonly shown = new Float64Array(N)
   /** Its windows' round shapes, grown by `PAD`: where it goes; and by `CLEAR`: how
    *  near in it may be. */
   private goal: Float64Array = new Float64Array(N)
@@ -206,6 +207,7 @@ export class Bubble {
   constructor(boxes: readonly Box[]) {
     this.aim(boxes)
     this.h.set(this.goal)
+    this.shown.set(this.goal)
     this.draw(0, true)
   }
 
@@ -229,7 +231,7 @@ export class Bubble {
 
   /** The middle of what it reaches now. */
   private middle(): { x: number; y: number } {
-    const at = (share: number) => this.h[Math.round(share * N) % N] ?? 0
+    const at = (share: number) => this.shown[Math.round(share * N) % N] ?? 0
     return { x: (at(0) - at(0.5)) / 2, y: (at(0.25) - at(0.75)) / 2 }
   }
 
@@ -254,12 +256,8 @@ export class Bubble {
       const lead = v + RATE * off
       this.h[i] = goal + (off + lead * dt) * fade
       this.speed[i] = (v - RATE * lead * dt) * fade
-      const floor = this.floor[i] ?? 0
-      if ((this.h[i] ?? 0) < floor) {
-        this.h[i] = floor
-        this.speed[i] = Math.max(0, this.speed[i] ?? 0)
-      }
     }
+    for (let i = 0; i < N; i++) this.shown[i] = Math.max(this.h[i] ?? 0, this.floor[i] ?? 0)
     this.edges = []
     this.draw(t, still)
   }
@@ -272,7 +270,7 @@ export class Bubble {
   private draw(t: number, still: boolean) {
     this.t = t
     this.still = still
-    let points = even(hullOf(this.h))
+    let points = even(hullOf(this.shown))
     if (!still) {
       const { x, y } = this.middle()
       const breath = BREATH * Math.sin(t * BREATH_RATE * TAU)
@@ -297,7 +295,7 @@ export class Bubble {
 
   /** How far out it reaches along direction `i`, as drawn before any cut. */
   reach(i: number): number {
-    return this.h[((i % N) + N) % N] ?? 0
+    return this.shown[((i % N) + N) % N] ?? 0
   }
 
   /** The outline as drawn: a closed polygon, which `pathOf` rounds. */

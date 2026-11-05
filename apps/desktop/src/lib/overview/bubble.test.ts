@@ -139,6 +139,35 @@ test('a window pushed against its bubble from inside swells it round, never into
   }
 })
 
+test('dragged at any speed, turned at once, or late a frame, it stays round', () => {
+  // Emil: a window dragged very fast, or turned about all of a sudden, still pressed hard
+  // corners into its bubble.
+  let seed = 11
+  const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647
+  for (const speed of [30, 120, 250]) {
+    for (const alone of [true, false]) {
+      const still = { x: 0, y: 0, w: 640, h: 400 }
+      const held = { x: 700, y: 0, w: 640, h: 400 }
+      const windows = () => (alone ? [held] : [still, held])
+      const one = new Bubble(windows())
+      let dx = 1
+      let dy = 0
+      for (let frame = 0; frame < 90; frame++) {
+        if (frame % 4 === 0) {
+          const angle = random() * 2 * Math.PI
+          dx = Math.cos(angle)
+          dy = Math.sin(angle)
+        }
+        held.x += dx * speed
+        held.y += dy * speed
+        one.step(frame % 30 === 17 ? 0.12 : 1 / 60, frame / 60, windows())
+        expect(encloses(one, windows())).toBe(true)
+        expect(tightestOf(one)).toBeGreaterThan(40)
+      }
+    }
+  }
+})
+
 test('round two windows far apart it is their hull, never wider where there are none', () => {
   const left = { x: 0, y: 0, w: 300, h: 200 }
   const right = { x: 900, y: 0, w: 300, h: 200 }
