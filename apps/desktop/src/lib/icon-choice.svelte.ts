@@ -15,9 +15,14 @@
  *  and which key it goes under is file-icon.ts's business rather than the picker's.
  *  A space keeps its icon on this device, and a folder in its space's own map,
  *  because neither is a file. See workspace.setIcon and
- *  workspace/folder-icons.svelte.ts. */
-type IconTarget =
-  { kind: 'space'; id: string } | { kind: 'file'; path: string } | { kind: 'folder'; path: string }
+ *  workspace/folder-icons.svelte.ts. A terminal on this machine is no file and keeps it
+ *  in its tab's words, by the tab (#1110); see icon-target.ts, which reads and writes
+ *  each. */
+export type IconTarget =
+  | { kind: 'space'; id: string }
+  | { kind: 'file'; path: string }
+  | { kind: 'folder'; path: string }
+  | { kind: 'terminal'; tab: string }
 
 class IconChoice {
   /** What an icon is being chosen for, or null while the sheet is shut. */
@@ -34,6 +39,11 @@ class IconChoice {
 
   folder(path: string) {
     this.target = { kind: 'folder', path }
+  }
+
+  /** A terminal tab on this machine, by its id. */
+  terminal(tab: string) {
+    this.target = { kind: 'terminal', tab }
   }
 
   close() {

@@ -577,6 +577,9 @@ export const pa: Dictionary = {
   'Show other tabs as icons': 'ਹੋਰ ਟੈਬ ਆਈਕਨ ਵਜੋਂ ਦਿਖਾਓ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ਅੱਗੇ ਵਾਲੀ ਤੋਂ ਬਿਨਾਂ ਹਰ ਟੈਬ ਸਿਰਫ਼ ਆਪਣਾ ਆਈਕਨ ਦਿਖਾਉਂਦੀ ਹੈ; ਕਿਸੇ ਉੱਤੇ ਪੁਆਇੰਟਰ ਲਿਆਉਣ ਨਾਲ ਨਾਂ ਦਿਖਦਾ ਹੈ।',
+  'Tabs as wide as their names': 'ਨਾਂ ਜਿੰਨੀਆਂ ਚੌੜੀਆਂ ਟੈਬਾਂ',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'ਹਰ ਟੈਬ ਸਿਰਫ਼ ਓਨੀ ਚੌੜੀ ਹੁੰਦੀ ਹੈ ਜਿੰਨੀ ਉਸਦੇ ਆਈਕਨ, ਨਾਂ ਅਤੇ ਬੰਦ ਕਰਨ ਵਾਲੇ ਬਟਨ ਨੂੰ ਲੋੜ ਹੈ; ਬੰਦ ਹੋਣ ਤੇ ਸਾਰੀਆਂ ਟੈਬਾਂ ਬਰਾਬਰ ਚੌੜੀਆਂ ਹੁੰਦੀਆਂ ਹਨ।',
   'Tab preview delay': 'ਟੈਬ ਝਲਕ ਦੀ ਦੇਰੀ',
   'How long the pointer rests on a tab before its preview shows.':
     'ਝਲਕ ਦਿਖਣ ਤੋਂ ਪਹਿਲਾਂ ਪੁਆਇੰਟਰ ਟੈਬ ਉੱਤੇ ਕਿੰਨੀ ਦੇਰ ਰੁਕਦਾ ਹੈ।',
@@ -2365,6 +2368,14 @@ export const pa: Dictionary = {
   'What does it run?': 'ਇਹ ਕੀ ਚਲਾਏ?',
   'A program’s path, and its arguments': 'ਕਿਸੇ ਪ੍ਰੋਗਰਾਮ ਦਾ ਪਾਥ, ਅਤੇ ਉਸਦੇ ਆਰਗੂਮੈਂਟ',
   '{device} (this device)': '{device} (ਇਹ ਡਿਵਾਈਸ)',
+  'Find an application': 'ਐਪਲੀਕੇਸ਼ਨ ਲੱਭੋ',
+  'Another program…': 'ਹੋਰ ਪ੍ਰੋਗਰਾਮ…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} ਅਜੇ ਕਿਸੇ ਐਪਲੀਕੇਸ਼ਨ ਨੂੰ ਉਸਦੇ ਆਪਣੇ ਡਿਸਪਲੇ ’ਤੇ ਨਹੀਂ ਚਲਾ ਸਕਦਾ।',
+  '{device} needs Xvfb to run an application.': 'ਐਪਲੀਕੇਸ਼ਨ ਚਲਾਉਣ ਲਈ {device} ਨੂੰ Xvfb ਚਾਹੀਦਾ ਹੈ।',
+  '{device} did not allow this program.': '{device} ਨੇ ਇਸ ਪ੍ਰੋਗਰਾਮ ਦੀ ਇਜਾਜ਼ਤ ਨਹੀਂ ਦਿੱਤੀ।',
+  '{device} does not have this application.': '{device} ’ਤੇ ਇਹ ਐਪਲੀਕੇਸ਼ਨ ਨਹੀਂ ਹੈ।',
+  'It did not start on {device}.': 'ਇਹ {device} ’ਤੇ ਸ਼ੁਰੂ ਨਹੀਂ ਹੋਈ।',
   'Start online machine': 'ਔਨਲਾਈਨ ਮਸ਼ੀਨ ਸ਼ੁਰੂ ਕਰੋ',
   'Stop online machine': 'ਔਨਲਾਈਨ ਮਸ਼ੀਨ ਰੋਕੋ',
   Resume: 'ਮੁੜ ਸ਼ੁਰੂ ਕਰੋ',

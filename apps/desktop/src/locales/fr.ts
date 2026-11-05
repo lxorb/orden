@@ -586,6 +586,9 @@ export const fr: Dictionary = {
   'Show other tabs as icons': 'Afficher les autres onglets en icônes',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Chaque onglet sauf celui au premier plan n’affiche que son icône ; en le pointant, son nom apparaît.',
+  'Tabs as wide as their names': 'Onglets aussi larges que leur nom',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Chaque onglet n’est large que de ce qu’il faut à son icône, son nom et son bouton de fermeture ; désactivé, tous ont la même largeur.',
   'Tab preview delay': 'Délai de l’aperçu des onglets',
   'How long the pointer rests on a tab before its preview shows.':
     'Le temps pendant lequel le pointeur reste sur un onglet avant que son aperçu apparaisse.',
@@ -2430,6 +2433,15 @@ export const fr: Dictionary = {
   'What does it run?': 'Que lance-t-elle ?',
   'A program’s path, and its arguments': 'Le chemin d’un programme et ses arguments',
   '{device} (this device)': '{device} (cet appareil)',
+  'Find an application': 'Chercher une application',
+  'Another program…': 'Autre programme…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} ne peut pas encore lancer une application sur un écran à elle.',
+  '{device} needs Xvfb to run an application.':
+    '{device} a besoin de Xvfb pour lancer une application.',
+  '{device} did not allow this program.': '{device} n’a pas autorisé ce programme.',
+  '{device} does not have this application.': '{device} n’a pas cette application.',
+  'It did not start on {device}.': 'Elle n’a pas démarré sur {device}.',
   'Start online machine': 'Démarrer la machine en ligne',
   'Stop online machine': 'Arrêter la machine en ligne',
   Resume: 'Reprendre',

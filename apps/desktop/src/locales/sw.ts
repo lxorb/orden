@@ -579,6 +579,9 @@ export const sw: Dictionary = {
   'Show other tabs as icons': 'Onyesha vichupo vingine kama aikoni',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Kila kichupo isipokuwa cha mbele kinaonyesha aikoni yake tu; ukielekeza kimoja, jina lake linaonekana.',
+  'Tabs as wide as their names': 'Vichupo vyenye upana wa majina yao',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Kila kichupo kina upana unaohitajika na aikoni, jina na kitufe chake cha kufunga tu; kikizimwa, vichupo vyote vina upana sawa.',
   'Tab preview delay': 'Muda wa kusubiri onyesho la kichupo',
   'How long the pointer rests on a tab before its preview shows.':
     'Muda ambao kiashiria hukaa kwenye kichupo kabla onyesho lake halijaonekana.',
@@ -2391,6 +2394,14 @@ export const sw: Dictionary = {
   'What does it run?': 'Inaendesha nini?',
   'A program’s path, and its arguments': 'Njia ya programu, na hoja zake',
   '{device} (this device)': '{device} (kifaa hiki)',
+  'Find an application': 'Tafuta programu',
+  'Another program…': 'Programu nyingine…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} bado haiwezi kuendesha programu kwenye skrini yake yenyewe.',
+  '{device} needs Xvfb to run an application.': '{device} inahitaji Xvfb ili kuendesha programu.',
+  '{device} did not allow this program.': '{device} haikuruhusu programu hii.',
+  '{device} does not have this application.': '{device} haina programu hii.',
+  'It did not start on {device}.': 'Haikuanza kwenye {device}.',
   'Start online machine': 'Washa mashine ya mtandaoni',
   'Stop online machine': 'Zima mashine ya mtandaoni',
   Resume: 'Endelea',

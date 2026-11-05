@@ -574,6 +574,9 @@ export const bn: Dictionary = {
   'Show other tabs as icons': 'অন্য ট্যাবগুলো আইকন হিসেবে দেখান',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'সামনের ট্যাব ছাড়া প্রতিটি ট্যাব শুধু আইকন দেখায়; কোনোটির ওপর পয়েন্টার রাখলে নাম দেখায়।',
+  'Tabs as wide as their names': 'নামের মাপে ট্যাব',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'প্রতিটি ট্যাব কেবল তার আইকন, নাম আর বন্ধ করার বোতামের যতটা দরকার ততটাই চওড়া; বন্ধ থাকলে সব ট্যাব সমান চওড়া।',
   'Tab preview delay': 'ট্যাব প্রিভিউয়ের বিলম্ব',
   'How long the pointer rests on a tab before its preview shows.':
     'প্রিভিউ দেখানোর আগে পয়েন্টার কতক্ষণ ট্যাবের ওপর থাকবে।',
@@ -2360,6 +2363,14 @@ export const bn: Dictionary = {
   'What does it run?': 'এটি কী চালাবে?',
   'A program’s path, and its arguments': 'একটি প্রোগ্রামের পাথ, এবং এর আর্গুমেন্ট',
   '{device} (this device)': '{device} (এই ডিভাইস)',
+  'Find an application': 'একটি অ্যাপ্লিকেশন খুঁজুন',
+  'Another program…': 'অন্য প্রোগ্রাম…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} এখনও নিজস্ব ডিসপ্লেতে কোনো অ্যাপ্লিকেশন চালাতে পারে না।',
+  '{device} needs Xvfb to run an application.': 'অ্যাপ্লিকেশন চালাতে {device}-এর Xvfb দরকার।',
+  '{device} did not allow this program.': '{device} এই প্রোগ্রামটি অনুমতি দেয়নি।',
+  '{device} does not have this application.': '{device}-এ এই অ্যাপ্লিকেশনটি নেই।',
+  'It did not start on {device}.': '{device}-এ এটি চালু হয়নি।',
   'Start online machine': 'অনলাইন মেশিন চালু করুন',
   'Stop online machine': 'অনলাইন মেশিন বন্ধ করুন',
   Resume: 'আবার শুরু করুন',

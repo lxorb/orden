@@ -52,7 +52,16 @@ import type { Carried } from '../pages/carried'
 import { holdsDocument, joinsAs, turn, unixLines } from './kinds'
 import { hub } from './hub.svelte'
 import { firstPass, mirrorsFrom, type V1Listing, type V1Space } from './migrate'
-import { isLocal, LOCAL_STORE, localFirst, localSpaceId } from './local'
+import {
+  carriedFor,
+  carriedGone,
+  carriedIds,
+  carriedRows,
+  isLocal,
+  LOCAL_STORE,
+  localFirst,
+  localSpaceId,
+} from './local'
 import { forgetSyncStore, get, openSyncStore, put, remove } from './store'
 import { eachDue, reachable, sentAll } from './rounds'
 import { Refused } from './transport'
@@ -184,7 +193,7 @@ class Runner {
    *  does; see "The other windows" below. The wait for the lead is outside the lane, so
    *  a stop meanwhile is never queued behind it. */
   async start(): Promise<void> {
-    if (this.local) await this.inLane(() => this.letGo(true))
+    if (this.local) await this.inLane(() => this.carryLocal())
     const user = account.user
     if (!user || this.current || this.giving) return
     this.accountId = user.id
@@ -200,7 +209,10 @@ class Runner {
     this.giving = null
     this.lead = lead
     try {
-      const engine = await this.inLane(() => this.running(user))
+      const engine = await this.inLane(async () => {
+        await this.carryLocal()
+        return this.running(user)
+      })
       if (engine) await this.tookOver(engine)
     } catch (error) {
       // No engine, here: whoever waits next may fare better, and nothing is owed to nobody.
@@ -255,6 +267,58 @@ class Runner {
     this.storeWait = null
   }
 
+  /** The ids the spaces kept signed out had, by each space's root, on their way to the
+   *  account's store; see `carryLocal`. */
+  private carrying = new Map<string, string>()
+
+  /** Signing in: the engine kept signed out lets go, the ids of everything it kept are
+   *  carried over for the account's first pass of each space (`firstPass`), and its
+   *  store goes, so a later session signed out starts from the folders as they are
+   *  then, never from a tree from before that the disk would be made to agree with.
+   *  Never while the account's engine runs: opening the store kept signed out then
+   *  would close the account's under it, and there is nothing left to carry anyway.
+   *  Only in the window holding the device's store (`storeLead`), which it keeps. */
+  private async carryLocal(): Promise<void> {
+    if (!this.storeLead) return
+    try {
+      const engine = this.current
+      if (engine && !this.local) return
+      if (engine) {
+        this.keepCarried(await carriedIds(engine.core.store))
+        await this.letGo(true)
+      } else {
+        // Only the desktop keeps spaces signed out this way; see `startLocal` in sync.svelte.ts.
+        if (!isDesktop) return
+        const store = await openSyncStore(LOCAL_STORE)
+        try {
+          this.keepCarried(await carriedIds(store))
+        } finally {
+          await store.close().catch(() => undefined)
+        }
+      }
+      await forgetSyncStore(LOCAL_STORE)
+    } catch (error) {
+      log('warn', `sync: the store kept signed out stays - ${String(error)}`)
+    }
+  }
+
+  private keepCarried(ids: ReadonlyMap<string, string>) {
+    for (const [root, kept] of ids) this.carrying.set(root, kept)
+  }
+
+  /** The ids carried, into the account's store, for every space whose first pass is
+   *  still to come: kept there, so a first pass a relaunch away still finds them. */
+  private async carriedIn(engine: Engine) {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away within this call
+    const carried = new Map(this.carrying)
+    this.carrying.clear()
+    for (const space of engine.core.spaces.values()) {
+      if (!(await this.firstDone(engine, space.id))) continue
+      for (const root of carried.keys()) if (samePath(root, space.row.root)) carried.delete(root)
+    }
+    if (carried.size) await engine.core.commit(carriedRows(carried))
+  }
+
   /** Opens the account's store and starts its engine, in the lane: answers it, or null
    *  once this session has moved on meanwhile. */
   private async running(user: { id: string }): Promise<Engine | null> {
@@ -271,6 +335,7 @@ class Runner {
       return null
     }
     this.current = engine
+    await this.carriedIn(engine)
     engine.held.changed = (notes) => (this.heldNotes = notes)
     this.heldNotes = engine.held.notes
 
@@ -352,6 +417,8 @@ class Runner {
 
   private async startLocalNow(): Promise<void> {
     if (this.current || account.user) return
+    // A session signed out begins again from its folders: nothing earlier is carried.
+    this.carrying.clear()
     const store = await openSyncStore(LOCAL_STORE)
     const engine = await Engine.start(
       appWorld(() => null, this.telling),
@@ -383,19 +450,13 @@ class Runner {
     this.kick()
   }
 
-  /** The spaces used signed out let go of for good: what signing in does, so a later
-   *  signed-out session starts from the folders as they are then, never from a tree a
-   *  week old that the disk would be made to agree with. */
+  /** The spaces used signed out let go of, their ids carried (`carryLocal`): what
+   *  signing in does, whichever engine the account runs. */
   async dropLocal(): Promise<void> {
     // Only the window holding the device's store forgets it: another window may still be
     // keeping it, and lets go of it first when it hears the same.
     if (!(await this.holdStore())) return
-    return this.inLane(async () => {
-      if (this.local) await this.letGo(true)
-      await forgetSyncStore(LOCAL_STORE).catch((error: unknown) => {
-        log('warn', `sync: the store kept signed out stays - ${String(error)}`)
-      })
-    })
+    return this.inLane(() => this.carryLocal())
   }
 
   /** A held note answered: Keep mine, Keep theirs or Keep both. Answers the copy's path
@@ -737,10 +798,12 @@ class Runner {
               space.row.root,
               this.accountId ? (v1Spaces(this.accountId).get(id) ?? null) : null,
             )
+            const carried = await carriedFor(engine.core.store, space.row.root, (path) =>
+              space.key(path),
+            )
             const first = `${FIRST}${id}`
-            if (
-              !(await firstPass(engine.core, space, v1, [put('meta', { key: first, value: 1 })]))
-            ) {
+            const done = [put('meta', { key: first, value: 1 }), carriedGone(space.row.root)]
+            if (!(await firstPass(engine.core, space, v1, carried, done))) {
               offline = true
               await engine.core.commit([
                 ...engine.core.forgetSpace(id),

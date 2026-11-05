@@ -571,6 +571,9 @@ export const yue: Dictionary = {
   'Show other tabs as icons': '其他分頁只顯示圖示',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '除咗前面嗰個，每個分頁淨係顯示圖示；指住其中一個就會見到佢個名。',
+  'Tabs as wide as their names': '分頁闊度跟名',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    '每個分頁只係得佢個圖示、名同關閉掣需要咁闊；關咗嘅話，所有分頁一樣闊。',
   'Tab preview delay': '分頁預覽延遲',
   'How long the pointer rests on a tab before its preview shows.':
     '指標喺分頁上面停幾耐先會顯示預覽。',
@@ -2294,6 +2297,14 @@ export const yue: Dictionary = {
   'What does it run?': '運行咩？',
   'A program’s path, and its arguments': '程式嘅路徑同參數',
   '{device} (this device)': '{device}（呢部裝置）',
+  'Find an application': '搵應用程式',
+  'Another program…': '其他程式…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} 暫時未可以喺自己嘅顯示器度運行應用程式。',
+  '{device} needs Xvfb to run an application.': '{device} 要有 Xvfb 先可以運行應用程式。',
+  '{device} did not allow this program.': '{device} 唔准呢個程式。',
+  '{device} does not have this application.': '{device} 冇呢個應用程式。',
+  'It did not start on {device}.': '喺 {device} 度開唔到。',
   'Start online machine': '開啟網上機器',
   'Stop online machine': '停止網上機器',
   Resume: '繼續',

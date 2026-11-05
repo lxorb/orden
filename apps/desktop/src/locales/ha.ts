@@ -579,6 +579,9 @@ export const ha: Dictionary = {
   'Show other tabs as icons': 'Nuna sauran shafuka a matsayin gumaka',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Kowane shafi banda na gaba yana nuna gumakinsa kawai; idan ka nuna ɗaya, sunansa zai bayyana.',
+  'Tabs as wide as their names': 'Shafuka masu faɗin sunayensu',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Kowace shafi tana da faɗin da alamarta, sunanta da maɓallin rufewa ke buƙata kawai; idan an kashe, duk shafuka faɗinsu ɗaya.',
   'Tab preview delay': 'Jinkirin samfoti na shafi',
   'How long the pointer rests on a tab before its preview shows.':
     'Tsawon lokacin da mai nuni zai tsaya a kan shafi kafin samfotinsa ya bayyana.',
@@ -2390,6 +2393,14 @@ export const ha: Dictionary = {
   'What does it run?': 'Me zai gudanar?',
   'A program’s path, and its arguments': 'Hanyar shiri, da muhawarorinsa',
   '{device} (this device)': '{device} (wannan na’urar)',
+  'Find an application': 'Nemo manhaja',
+  'Another program…': 'Wani shiri…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} ba zai iya gudanar da manhaja a kan nunin kansa ba tukuna.',
+  '{device} needs Xvfb to run an application.': '{device} na buƙatar Xvfb don gudanar da manhaja.',
+  '{device} did not allow this program.': '{device} bai yarda da wannan shirin ba.',
+  '{device} does not have this application.': '{device} ba shi da wannan manhaja.',
+  'It did not start on {device}.': 'Bai fara a kan {device} ba.',
   'Start online machine': 'Kunna na’urar kan layi',
   'Stop online machine': 'Dakatar da na’urar kan layi',
   Resume: 'Ci gaba',

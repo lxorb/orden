@@ -1103,14 +1103,6 @@ class Workspace {
             : { ...draft, dirty: false, doc }
         }
 
-        // Never a tab: an older Orden's goes, its unwritten words written first.
-        if (isScratchpad(draft.path)) {
-          if (draft.dirty && draft.path)
-            await writeFile(draft.path, draft.doc).catch(() => undefined)
-          made.push(null)
-          continue
-        }
-
         // The space's AGENTS.md is its settings' now, so a clean tab of it goes. One with
         // words unsaved is put back as it was, and is written and closed like any other.
         if (draft.path && !draft.dirty && this.instructionsAt(draft.path)) {
@@ -3200,10 +3192,11 @@ class Workspace {
     await this.open(own?.path ?? folderNotePath(path), { ...options, blank: !own })
   }
 
-  async open(asked: string, options: OpenHow & { blank?: boolean } = {}) {
+  async open(asked: string, options: OpenHow & { blank?: boolean; asNote?: boolean } = {}) {
     const path = this.spelled(asked)
-    // Never a tab: its card, wherever it is opened from.
-    if (isScratchpad(path)) {
+    // Its card, wherever it is opened from; a tab only where one is asked for by name -
+    // the right side's icon pressed twice (#1110) - and, once there is one, that tab.
+    if (isScratchpad(path) && !options.asNote && !this.opened.at(path)) {
       const { scratchpad } = await import('./scratchpad/pad')
       scratchpad.show()
       return

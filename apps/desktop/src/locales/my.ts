@@ -573,6 +573,9 @@ export const my: Dictionary = {
   'Show other tabs as icons': 'အခြားတဘ်များကို အိုင်ကွန်အဖြစ် ပြပါ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ရှေ့ရှိတဘ်မှလွဲ၍ တဘ်တိုင်းသည် အိုင်ကွန်ကိုသာ ပြသည်၊ တစ်ခုကို ညွှန်လျှင် ၎င်း၏အမည် ပေါ်လာသည်။',
+  'Tabs as wide as their names': 'အမည်အလျား တဘ်များ',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'တဘ်တစ်ခုစီသည် ၎င်း၏ အိုင်ကွန်၊ အမည်နှင့် ပိတ်ခလုတ် လိုသလောက်သာ ကျယ်သည်။ ပိတ်ထားလျှင် တဘ်အားလုံး အကျယ်တူသည်။',
   'Tab preview delay': 'တဘ် အစမ်းကြည့် နှောင့်နှေးချိန်',
   'How long the pointer rests on a tab before its preview shows.':
     'အစမ်းကြည့် ပေါ်လာမီ ညွှန်တံသည် တဘ်ပေါ်တွင် ကြာကြာနေရမည့်အချိန်။',
@@ -2339,6 +2342,15 @@ export const my: Dictionary = {
   'What does it run?': 'ဘာကို လည်ပတ်မလဲ?',
   'A program’s path, and its arguments': 'ပရိုဂရမ်၏ လမ်းကြောင်းနှင့် ၎င်း၏ argument များ',
   '{device} (this device)': '{device} (ဤစက်)',
+  'Find an application': 'အက်ပလီကေးရှင်း ရှာရန်',
+  'Another program…': 'အခြားပရိုဂရမ်…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} သည် အက်ပလီကေးရှင်းကို ၎င်း၏ကိုယ်ပိုင် ဖန်သားပြင်ပေါ်တွင် မဖွင့်နိုင်သေးပါ။',
+  '{device} needs Xvfb to run an application.':
+    'အက်ပလီကေးရှင်း ဖွင့်ရန် {device} တွင် Xvfb လိုအပ်သည်။',
+  '{device} did not allow this program.': '{device} က ဤပရိုဂရမ်ကို ခွင့်မပြုခဲ့ပါ။',
+  '{device} does not have this application.': '{device} တွင် ဤအက်ပလီကေးရှင်း မရှိပါ။',
+  'It did not start on {device}.': '{device} ပေါ်တွင် မစတင်ခဲ့ပါ။',
   'Start online machine': 'အွန်လိုင်း စက်ကို စတင်ရန်',
   'Stop online machine': 'အွန်လိုင်း စက်ကို ရပ်ရန်',
   Resume: 'ဆက်လုပ်ရန်',

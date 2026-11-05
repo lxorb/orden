@@ -1312,12 +1312,29 @@ function holds(tail: string): boolean {
  *  spaces, and the space switcher walks with the key that opened it still held
  *  (workspace/sets.svelte.ts, workspace/spaces.ts, roving.ts). Measured 3,600,780.
  *
+ *  Raised 2026-11-04, to 3,608,000, for #1110: a side's panel icon pressed twice opens
+ *  the panel as a tab (Sidebar.svelte; the table is fetched with the press), the
+ *  scratchpad as a note in one (scratchpad/is.svelte.ts), an edit carried into an open
+ *  file in the editor's count of its line endings (workspace/documents.svelte.ts,
+ *  `flatEdits` in search/replace.ts), and an online terminal's row wearing its tab's mark
+ *  and the icon chosen for it (FileMark.svelte, chosen-icon.ts,
+ *  marks-elsewhere.svelte.ts). Measured 3,607,291.
+ *
+ *  Raised 2026-11-04, to 3,617,200, for #1114 and #1110: tabs as wide as their names,
+ *  each name measured, and the switch under General > Tabs with its two lines; the room
+ *  a tab carried in is given, the numbers following their tabs, a terminal's open tab on
+ *  its ground, an essential's ring while its tab is in front and its press in a split
+ *  window (Tabs.svelte, tab-strip/, drag-paths.ts, Bookmarks.svelte, essentials.svelte.ts).
+ *  Measured 3,616,365.
+ *
  *  Raised on 2026-11-04, to 3,702,000, as #1123 came to claude/hunt-round-1, on the
  *  3,699,300 above: the sidebars the window's across spaces and the switcher walking with
  *  its key held, net of the hunt's per-set panels (#332) it makes unneeded. Measured
  *  3,701,761, 396 modules.
- */
-const BUDGET = 3_702_000
+ *
+ *  Raised on 2026-11-05, to 3,717,000, as #1110, #1114, #1063 and #331 came to
+ *  claude/hunt-round-1 on top of the hunt's 3,702,000. Measured 3,716,798, 396 modules. */
+const BUDGET = 3_717_000
 const MOST_FILES = 397
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

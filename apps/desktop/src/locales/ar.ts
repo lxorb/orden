@@ -606,6 +606,9 @@ export const ar: Dictionary = {
   'Show other tabs as icons': 'اعرض علامات التبويب الأخرى كأيقونات',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'كل علامة تبويب غير التي في الواجهة تعرض أيقونتها فقط، وتظهر اسمها عند الإشارة إليها.',
+  'Tabs as wide as their names': 'علامات تبويب بعرض أسمائها',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'كل علامة تبويب بالعرض الذي يحتاجه رمزها واسمها وزر إغلاقها فقط؛ وعند الإيقاف تكون كل العلامات بالعرض نفسه.',
   'Tab preview delay': 'تأخير معاينة علامة التبويب',
   'How long the pointer rests on a tab before its preview shows.':
     'المدة التي يستقر فيها المؤشر على علامة التبويب قبل ظهور معاينتها.',
@@ -2480,6 +2483,14 @@ export const ar: Dictionary = {
   'What does it run?': 'ماذا يشغّل؟',
   'A program’s path, and its arguments': 'مسار برنامج، ووسائطه',
   '{device} (this device)': '{device} (هذا الجهاز)',
+  'Find an application': 'ابحث عن تطبيق',
+  'Another program…': 'برنامج آخر…',
+  '{device} cannot run an application on a display of its own yet.':
+    'لا يستطيع {device} بعدُ تشغيل تطبيق على شاشة خاصة به.',
+  '{device} needs Xvfb to run an application.': 'يحتاج {device} إلى Xvfb لتشغيل تطبيق.',
+  '{device} did not allow this program.': 'لم يسمح {device} بهذا البرنامج.',
+  '{device} does not have this application.': 'لا يوجد هذا التطبيق على {device}.',
+  'It did not start on {device}.': 'لم يبدأ على {device}.',
   'Start online machine': 'تشغيل الجهاز عبر الإنترنت',
   'Stop online machine': 'إيقاف الجهاز عبر الإنترنت',
   Resume: 'استئناف',

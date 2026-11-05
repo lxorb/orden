@@ -20,6 +20,10 @@ export interface Term {
   v: 1
   machine: string
   session: string
+  /** The icon the reader chose for it, as Orden writes an icon, and its colour; absent
+   *  while it wears what runs in it. */
+  icon?: string
+  iconColor?: string
 }
 
 /** The filesystem the home is on: bytes used and its size. What fills it is what froze

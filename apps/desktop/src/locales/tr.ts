@@ -576,6 +576,9 @@ export const tr: Dictionary = {
   'Show other tabs as icons': 'Diğer sekmeleri simge olarak göster',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Öndeki dışındaki her sekme yalnızca simgesini gösterir; birinin üzerine gelince adı görünür.',
+  'Tabs as wide as their names': 'Adları kadar geniş sekmeler',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Her sekme yalnızca simgesinin, adının ve kapatma düğmesinin gerektirdiği kadar geniştir; kapalıyken tüm sekmeler aynı genişlikte olur.',
   'Tab preview delay': 'Sekme önizleme gecikmesi',
   'How long the pointer rests on a tab before its preview shows.':
     'Önizleme görünmeden önce işaretçinin sekme üzerinde ne kadar durduğu.',
@@ -2371,6 +2374,15 @@ export const tr: Dictionary = {
   'What does it run?': 'Neyi çalıştırsın?',
   'A program’s path, and its arguments': 'Bir programın yolu ve argümanları',
   '{device} (this device)': '{device} (bu cihaz)',
+  'Find an application': 'Uygulama bul',
+  'Another program…': 'Başka bir program…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} henüz bir uygulamayı kendine ait bir ekranda çalıştıramıyor.',
+  '{device} needs Xvfb to run an application.':
+    '{device} bir uygulamayı çalıştırmak için Xvfb’ye ihtiyaç duyuyor.',
+  '{device} did not allow this program.': '{device} bu programa izin vermedi.',
+  '{device} does not have this application.': '{device} cihazında bu uygulama yok.',
+  'It did not start on {device}.': '{device} üzerinde başlamadı.',
   'Start online machine': 'Çevrimiçi makineyi başlat',
   'Stop online machine': 'Çevrimiçi makineyi durdur',
   Resume: 'Devam et',

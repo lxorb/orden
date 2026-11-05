@@ -20,7 +20,7 @@ import { kindOfName, made } from './create'
 import { holdsDocument, unixLines } from './kinds'
 import { flushAll, refused, settleDisk, type Passed } from './pass'
 import type { SpaceState } from './places'
-import { put, remove, type Change } from './store'
+import { get, put, remove, scan, type Change, type SyncStore } from './store'
 
 /** The store the spaces used signed out are kept in. An account's store is named by its
  *  id, a UUID, so no account's is ever called this. */
@@ -201,4 +201,59 @@ async function confirmed(core: Core, space: SpaceState): Promise<number> {
   }
   if (count) await core.commit([...changes, core.counterRow()])
   return count
+}
+
+/** The meta row an account's store keeps, until a space's first pass, of the ids what
+ *  is in that space's folder had while it was used signed out. */
+const CARRIED = 'carried:'
+
+/** The ids of everything live in the spaces kept signed out, by each space's root and,
+ *  within it, by path as the disk had it: what signing in carries over to the account's
+ *  first pass of each, so what the account has never heard of goes up under the id it
+ *  had here (`firstPass` in migrate.ts). */
+export async function carriedIds(store: Pick<SyncStore, 'read'>): Promise<Map<string, string>> {
+  const [spaces, entries] = await store.read([scan('spaces'), scan('entries')])
+  const out = new Map<string, string>()
+  for (const space of spaces) {
+    if (!isLocal(space.space_id)) continue
+    const ids: Record<string, string> = {}
+    for (const entry of entries) {
+      if (entry.space_id !== space.space_id || entry.deleted || !entry.local_path) continue
+      ids[entry.local_path] = entry.id
+    }
+    if (Object.keys(ids).length) out.set(space.root, JSON.stringify(ids))
+  }
+  return out
+}
+
+/** The rows that keep carried ids in an account's store, one a space's root. */
+export function carriedRows(carried: ReadonlyMap<string, string>): Change[] {
+  return [...carried].map(([root, ids]) => put('meta', { key: `${CARRIED}${root}`, value: ids }))
+}
+
+/** The ids carried for a space's folder, by path as `key` compares paths; none where
+ *  nothing was carried or what was kept does not read. */
+export async function carriedFor(
+  store: Pick<SyncStore, 'read'>,
+  root: string,
+  key: (path: string) => string,
+): Promise<Map<string, string>> {
+  const [row] = await store.read([get('meta', `${CARRIED}${root}`)])
+  const out = new Map<string, string>()
+  if (typeof row?.value !== 'string') return out
+  try {
+    const ids: unknown = JSON.parse(row.value)
+    if (typeof ids !== 'object' || ids === null) return out
+    for (const [path, id] of Object.entries(ids)) {
+      if (typeof id === 'string' && /^[0-9a-f]{32}$/.test(id)) out.set(key(path), id)
+    }
+  } catch {
+    // Not what was written: nothing carried, and every stray is made under a new id.
+  }
+  return out
+}
+
+/** The row of a space's carried ids, gone once its first pass has used them. */
+export function carriedGone(root: string): Change {
+  return remove('meta', `${CARRIED}${root}`)
 }

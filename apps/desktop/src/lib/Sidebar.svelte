@@ -340,6 +340,11 @@
    *  the panel's id. */
   const commandOf = (id: Panel | 'scratchpad') => `app.${id === 'tree' ? 'files' : id}`
 
+  /** The tab the first press of a double press chose: choosing one can bring it out of
+   *  More and move the row under the pointer, so the second press may land on another
+   *  tab, and the double press is about the one first pressed (#1110). */
+  let firstPress: Panel | 'scratchpad' | null = null
+
   /** A tab pressed: its panel, or the scratchpad, on this side; see `showRight`. */
   const choose = (id: Panel | 'scratchpad') =>
     id === 'scratchpad' ? workspace.showRight('scratchpad') : workspace.showPanel(id)
@@ -754,24 +759,12 @@
         {/if}
 
         <!-- It takes the rest of the head, so the whole row is the control that
-         opens the list of spaces. Only Todos stands beside it (#1047): the pen that
-         made a note here is gone (issue #229), and a new note is its key, the
-         palette, the file list's menu and the new tab's chooser. -->
+         opens the list of spaces, with nothing beside it: the pen that made a note
+         here is gone (issue #229), and a new note is its key, the palette, the file
+         list's menu and the new tab's chooser; Todos, which stood here (#1047), is
+         its key, the palette, and a double press on the right side's Todos icon
+         (#1110). -->
         <SpaceSwitcher />
-
-        <!-- Todos, as a tab: the space's tasks in one view, brought forward where it is
-         open already. In place of the Tasks panel, which lives on the right now, as the
-         list beside the note being written (#1047; see todos-entry.ts). -->
-        {#if !__EVEN_PLUGIN__}
-          <button
-            class="nib-glyph tool todos"
-            title={shortcuts.tooltip(t('Tasks'), 'app.tasks')}
-            aria-label={t('Tasks')}
-            onclick={() => void import('./todos-entry').then(({ showTodos }) => showTodos())}
-          >
-            <svg viewBox="0 0 13 13"><path d={TASKS_MARK} /></svg>
-          </button>
-        {/if}
       </div>
     {/if}
 
@@ -809,7 +802,17 @@
               ? t('{title}, unread', { title: item.label })
               : item.label}
             aria-selected={showing === item.id}
-            onclick={() => choose(item.id)}
+            onclick={(event) => {
+              // The first press of a double one chooses; the second is the double's.
+              if (event.detail > 1) return
+              firstPress = item.id
+              choose(item.id)
+            }}
+            ondblclick={() => {
+              const id = firstPress ?? item.id
+              // Fetched with the press, as the tab's menu is.
+              void import('./panel-tab').then(({ openAsTab }) => openAsTab(id))
+            }}
             oncontextmenu={(event) => {
               if (item.id !== 'scratchpad') showTabMenu(event, item.id, item.label)
             }}

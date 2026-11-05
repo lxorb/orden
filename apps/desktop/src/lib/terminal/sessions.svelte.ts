@@ -21,6 +21,7 @@ import { type ISearchOptions, SearchAddon } from '@xterm/addon-search'
 import { SerializeAddon } from '@xterm/addon-serialize'
 import { Unicode11Addon } from '@xterm/addon-unicode11'
 import { type ITheme, Terminal } from '@xterm/xterm'
+import { chrome } from '../glass/chrome.svelte'
 import '@xterm/xterm/css/xterm.css'
 import { untrack } from 'svelte'
 import { copyText } from '../clipboard'
@@ -55,7 +56,7 @@ import {
 } from './history'
 import type { Picture } from './images'
 import { imageKey, imageKeyTyped, type Route, routeKey, typedBy } from './keys'
-import { findColours, monospace, terminalContrast, terminalTheme } from './look'
+import { findColours, monospace, terminalContrast, terminalGround, terminalTheme } from './look'
 import { type Left, pastesItself, promptEnd, reporting, tidied } from './modes'
 import { Front, terminalName } from './naming'
 import { AddressLinks, chosenText } from './links'
@@ -277,7 +278,7 @@ class Session {
       cursorInactiveStyle: 'outline',
       minimumContrastRatio: terminalContrast(),
       rightClickSelectsWord: false,
-      theme: terminalTheme(document.documentElement, !shells.themed),
+      theme: laid(terminalTheme(document.documentElement, !shells.themed)),
       // A link a program marked itself (OSC 8) is followed the way any other is, with the
       // whole address it carries, and not through xterm.js's own confirm box: by the
       // press, like every link here (`pressLink`), so its activation does nothing.
@@ -1579,7 +1580,7 @@ function watch() {
   const repaint = (themed = shells.themed) => {
     cancelAnimationFrame(frame)
     frame = requestAnimationFrame(() => {
-      const theme = terminalTheme(document.documentElement, !themed)
+      const theme = laid(terminalTheme(document.documentElement, !themed))
       const family = monospace()
       const contrast = terminalContrast()
       // The page's style moves for other reasons too - the zoom, the keyboard on a
@@ -1619,3 +1620,10 @@ function watch() {
 }
 
 watch()
+
+/** The terminals' colours, their ground said to the strip, whose open tab of a terminal
+ *  stands on it (#1110); see `terminalGround` in look.ts. */
+function laid(theme: ITheme): ITheme {
+  chrome.terminal = terminalGround(theme)
+  return theme
+}

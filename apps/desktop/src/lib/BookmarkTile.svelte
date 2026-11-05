@@ -16,6 +16,7 @@
     name,
     mark,
     active,
+    front,
     slot,
     onopen,
     onmenu,
@@ -25,6 +26,8 @@
     name: string
     mark: Mark
     active: boolean
+    /** Whether the note's own tab in the strip is the one in front (#1110). */
+    front: boolean
     /** Which edge a tile let go of now would arrive at, or null for none. */
     slot: 'before' | 'after' | null
     onopen: (ask: TabAsk) => void
@@ -38,6 +41,7 @@
   type="button"
   class="nib-tile tile"
   class:is-on={active}
+  class:is-front={front}
   class:is-before={slot === 'before'}
   class:is-after={slot === 'after'}
   title={name}

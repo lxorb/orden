@@ -47,15 +47,18 @@ function appVersion(): string {
  *  what it actually knows, which is when the server started. */
 function stamp(serving: boolean): string {
   if (serving) return `${manifest.version} dev server started ${when()}`
+  return `${manifest.version} ${commit(false) || 'unknown'} ${when()}`
+}
 
-  let sha = 'unknown'
+/** The commit a bundle was built from, short, or nothing: from a dev server, for the
+ *  reason above, and from a tree with no git in it, which still builds. */
+function commit(serving: boolean): string {
+  if (serving) return ''
   try {
-    sha = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim()
+    return execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim()
   } catch {
-    // A tree with no git in it still builds; it just cannot say which commit.
+    return ''
   }
-
-  return `${manifest.version} ${sha} ${when()}`
 }
 
 function when(): string {
@@ -97,6 +100,8 @@ export default defineConfig(({ command, mode }) => ({
     // The version the installer carries: under the name on the space chooser, where
     // Obsidian's vault chooser says its own, and in the hub's hello (sync2/hub.svelte.ts).
     __APP_VERSION__: JSON.stringify(appVersion()),
+    // Which commit it is, beside the version in Settings (settings/version.svelte.ts).
+    __APP_COMMIT__: JSON.stringify(commit(command === 'serve')),
     // Whether Settings > AI offers Claude Code. On unless the build is made with
     // `NIB_CLAUDE_CODE=off`, which the crate reads too; see env.d.ts and docs/ai.md.
     __CLAUDE_CODE__: JSON.stringify(

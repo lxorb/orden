@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   type AppFile,
+  catalogueOf,
+  MOST_ICON,
+  MOST_INSTALLED,
   appFileOf,
   appFileText,
   appSocketPath,
@@ -36,6 +39,8 @@ describe('an application’s socket', () => {
     { t: 'host', up: false },
     { t: 'state', state: 'exited', code: 1 },
     { t: 'state', state: 'running' },
+    { t: 'state', state: 'stopped', why: 'isolation' },
+    { t: 'state', state: 'exited', code: null, why: 'failed' },
     { t: 'refused', error: 'gone' },
   ])('reads back what the relay told a viewer: %j', (one) => {
     expect(toViewerOf(JSON.stringify(one))).toEqual(one)
@@ -99,5 +104,48 @@ describe('an application’s file', () => {
       host: 'd',
       run: { kind: 'path', path: '/x', args: [], cwd: null },
     })
+  })
+})
+
+describe('a reason a host did not start it', () => {
+  it('is dropped, and the frame kept, when this side does not know it', () => {
+    expect(toViewerOf('{"t":"state","state":"stopped","why":"later"}')).toEqual({
+      t: 'state',
+      state: 'stopped',
+    })
+    expect(hostFrameOf('{"t":"state","state":"stopped","why":"display"}')).toEqual({
+      t: 'state',
+      state: 'stopped',
+      why: 'display',
+    })
+  })
+})
+
+describe('a host’s catalogue', () => {
+  it('keeps what checks, the first of an id, and an icon only when it is a small picture', () => {
+    const png = 'data:image/png;base64,iVBORw0KGgo='
+    expect(
+      catalogueOf([
+        { id: 'gimp.desktop', name: 'GIMP', icon: png },
+        { id: 'gimp.desktop', name: 'Again' },
+        { id: 'x.desktop', name: 'X', icon: 'data:text/html;base64,PHA+' },
+        { id: 'big.desktop', name: 'Big', icon: `data:image/png;base64,${'A'.repeat(MOST_ICON)}` },
+        { id: '', name: 'No id' },
+        'not one',
+      ]),
+    ).toEqual([
+      { id: 'gimp.desktop', name: 'GIMP', icon: png },
+      { id: 'x.desktop', name: 'X' },
+      { id: 'big.desktop', name: 'Big' },
+    ])
+    expect(catalogueOf({ apps: [] })).toBeNull()
+  })
+
+  it('lists at most MOST_INSTALLED', () => {
+    const many = Array.from({ length: MOST_INSTALLED + 5 }, (_, at) => ({
+      id: `${at}`,
+      name: `${at}`,
+    }))
+    expect(catalogueOf(many)).toHaveLength(MOST_INSTALLED)
   })
 })

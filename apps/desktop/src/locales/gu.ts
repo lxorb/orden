@@ -574,6 +574,9 @@ export const gu: Dictionary = {
   'Show other tabs as icons': 'બીજી ટૅબ આઇકન તરીકે બતાવો',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'આગળની ટૅબ સિવાય દરેક ટૅબ ફક્ત તેનું આઇકન બતાવે છે; કોઈ પર પોઇન્ટર રાખતાં તેનું નામ દેખાય છે.',
+  'Tabs as wide as their names': 'નામ જેટલી પહોળી ટૅબ',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'દરેક ટૅબ તેના આઇકન, નામ અને બંધ કરવાના બટનને જોઈએ એટલી જ પહોળી હોય છે; બંધ હોય ત્યારે બધી ટૅબ સરખી પહોળી હોય છે.',
   'Tab preview delay': 'ટેબ પૂર્વાવલોકન વિલંબ',
   'How long the pointer rests on a tab before its preview shows.':
     'પૂર્વાવલોકન દેખાય તે પહેલાં પોઇન્ટર ટેબ પર કેટલો સમય રહે છે.',
@@ -2352,6 +2355,14 @@ export const gu: Dictionary = {
   'What does it run?': 'તે શું ચલાવે?',
   'A program’s path, and its arguments': 'પ્રોગ્રામનો પાથ, અને તેના આર્ગ્યુમેન્ટ',
   '{device} (this device)': '{device} (આ ઉપકરણ)',
+  'Find an application': 'એપ્લિકેશન શોધો',
+  'Another program…': 'બીજો પ્રોગ્રામ…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} હજુ પોતાના અલગ ડિસ્પ્લે પર એપ્લિકેશન ચલાવી શકતું નથી.',
+  '{device} needs Xvfb to run an application.': 'એપ્લિકેશન ચલાવવા માટે {device}ને Xvfb જોઈએ.',
+  '{device} did not allow this program.': '{device}એ આ પ્રોગ્રામની મંજૂરી ન આપી.',
+  '{device} does not have this application.': '{device} પાસે આ એપ્લિકેશન નથી.',
+  'It did not start on {device}.': 'તે {device} પર શરૂ ન થઈ.',
   'Start online machine': 'ઑનલાઇન મશીન શરૂ કરો',
   'Stop online machine': 'ઑનલાઇન મશીન બંધ કરો',
   Resume: 'ફરી ચાલુ કરો',

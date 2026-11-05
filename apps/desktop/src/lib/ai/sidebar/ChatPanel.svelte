@@ -215,7 +215,7 @@
   /* A column with one thing that scrolls in it: the conversation grows and the field
      at the foot stays put. The body this sits in gives up its own scrolling and
      padding for it; see Sidebar.svelte. */
-  /* `--ground` is what the panel is drawn on, which the composer's fade fades to. */
+  /* `--ground` is what the panel is drawn on, which a row's buttons stand on over its end. */
   .ask {
     --ground: var(--side-bar-bg-color);
 

@@ -576,6 +576,9 @@ export const te: Dictionary = {
   'Show other tabs as icons': 'ఇతర ట్యాబ్‌లను ఐకాన్‌లుగా చూపించు',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ముందున్నది తప్ప ప్రతి ట్యాబ్ తన ఐకాన్ మాత్రమే చూపిస్తుంది; ఒకదానిపై పాయింటర్ ఉంచితే పేరు కనిపిస్తుంది.',
+  'Tabs as wide as their names': 'పేరంత వెడల్పు ట్యాబ్‌లు',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'ప్రతి ట్యాబ్ తన ఐకాన్, పేరు, మూసే బటన్‌కు అవసరమైనంత వెడల్పు మాత్రమే ఉంటుంది; ఆఫ్ చేస్తే అన్ని ట్యాబ్‌లు ఒకే వెడల్పు.',
   'Tab preview delay': 'ట్యాబ్ ప్రివ్యూ ఆలస్యం',
   'How long the pointer rests on a tab before its preview shows.':
     'ప్రివ్యూ కనిపించే ముందు పాయింటర్ ట్యాబ్‌పై ఎంత సేపు ఉండాలి.',
@@ -2371,6 +2374,14 @@ export const te: Dictionary = {
   'What does it run?': 'ఇది ఏమి నడుపుతుంది?',
   'A program’s path, and its arguments': 'ఒక ప్రోగ్రామ్ పాత్, దాని ఆర్గ్యుమెంట్‌లు',
   '{device} (this device)': '{device} (ఈ పరికరం)',
+  'Find an application': 'అప్లికేషన్ కోసం వెతకండి',
+  'Another program…': 'ఇంకో ప్రోగ్రామ్…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} ఇంకా అప్లికేషన్‌ను దాని సొంత డిస్‌ప్లేపై నడపలేదు.',
+  '{device} needs Xvfb to run an application.': 'అప్లికేషన్ నడపడానికి {device}కు Xvfb కావాలి.',
+  '{device} did not allow this program.': '{device} ఈ ప్రోగ్రామ్‌ను అనుమతించలేదు.',
+  '{device} does not have this application.': '{device}లో ఈ అప్లికేషన్ లేదు.',
+  'It did not start on {device}.': 'ఇది {device}లో ప్రారంభం కాలేదు.',
   'Start online machine': 'ఆన్‌లైన్ మెషీన్‌ను ప్రారంభించండి',
   'Stop online machine': 'ఆన్‌లైన్ మెషీన్‌ను ఆపండి',
   Resume: 'కొనసాగించండి',

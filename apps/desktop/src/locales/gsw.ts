@@ -575,6 +575,9 @@ export const gsw: Dictionary = {
   'Show other tabs as icons': 'Anderi Tabs als Symbol zeige',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Jede Tab usser em vordere zeigt nur sis Symbol; wenn du druf zeigsch, chunnt sin Name.',
+  'Tabs as wide as their names': 'Tabs so breit wie iri Näme',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Jede Tab isch nur so breit, wie Symbol, Name und Zuemache-Chnopf bruuched; uus, sind alli Tabs glich breit.',
   'Tab preview delay': 'Verzögerig vo de Tab-Vorschau',
   'How long the pointer rests on a tab before its preview shows.':
     'Wie lang de Zeiger uf eme Tab ruet, bevor sini Vorschau chunnt.',
@@ -2372,6 +2375,14 @@ export const gsw: Dictionary = {
   'What does it run?': 'Was füert si us?',
   'A program’s path, and its arguments': 'De Pfad vomene Programm und sini Argumänt',
   '{device} (this device)': '{device} (das Grät)',
+  'Find an application': 'Aawändig sueche',
+  'Another program…': 'Anders Programm…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} cha e Aawändig no nöd uf eme eigete Bildschirm laufe loo.',
+  '{device} needs Xvfb to run an application.': '{device} bruucht Xvfb, zum e Aawändig laufe loo.',
+  '{device} did not allow this program.': '{device} hät das Programm nöd erlaubt.',
+  '{device} does not have this application.': '{device} hät die Aawändig nöd.',
+  'It did not start on {device}.': 'Si isch uf {device} nöd gstartet.',
   'Start online machine': 'Online-Maschine starte',
   'Stop online machine': 'Online-Maschine stoppe',
   Resume: 'Wiitermache',

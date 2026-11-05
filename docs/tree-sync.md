@@ -111,9 +111,15 @@ is confirmed as it stands. Something whose making the rules refuse - its folder 
 made again where its file is, under a new id, rather than being taken off the disk.
 
 Signing in lets that store go: the engine kept signed out stops before the account's opens
-its store (the crate keeps one open at a time), and the store is deleted, so a later
-session signed out starts from the folders as they are then and never makes the disk agree
-with a tree from before. The account's first pass of each space is as it always was.
+its store (the crate keeps one open at a time), the ids of everything it kept are carried
+into the account's store (`carried:<root>` in its `meta`, until that space's first pass),
+and the store is deleted, so a later session signed out starts from the folders as they
+are then and never makes the disk agree with a tree from before. The account's first pass
+of each space matches the folder against the account as it always has; what the account
+has never heard of is made there under the id it had signed out, since the account takes
+the id a device chooses for what it makes (a create under an id that was ever another
+space's is refused). What the account already has keeps the account's id; tabs, places
+and open folders are kept by path, so neither touches them.
 
 ## What is kept about an entry
 

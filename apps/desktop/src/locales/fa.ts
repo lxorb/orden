@@ -574,6 +574,9 @@ export const fa: Dictionary = {
   'Show other tabs as icons': 'نمایش زبانه‌های دیگر به‌صورت نماد',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'هر زبانه جز زبانهٔ جلو فقط نمادش را نشان می‌دهد؛ با اشاره به یکی، نامش نمایان می‌شود.',
+  'Tabs as wide as their names': 'زبانه‌ها به پهنای نامشان',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'هر زبانه فقط به اندازه‌ای پهن است که نماد، نام و دکمهٔ بستنش لازم دارند؛ خاموش، همهٔ زبانه‌ها یک پهنا دارند.',
   'Tab preview delay': 'تأخیر پیش‌نمایش زبانه',
   'How long the pointer rests on a tab before its preview shows.':
     'مدتی که نشانگر روی زبانه می‌ماند تا پیش‌نمایش آن نمایش داده شود.',
@@ -2362,6 +2365,14 @@ export const fa: Dictionary = {
   'What does it run?': 'چه چیزی اجرا کند؟',
   'A program’s path, and its arguments': 'مسیر یک برنامه و آرگومان‌هایش',
   '{device} (this device)': '{device} (این دستگاه)',
+  'Find an application': 'یک برنامه پیدا کنید',
+  'Another program…': 'برنامهٔ دیگر…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} هنوز نمی‌تواند برنامه‌ای را روی نمایشگر جداگانهٔ خودش اجرا کند.',
+  '{device} needs Xvfb to run an application.': '{device} برای اجرای برنامه به Xvfb نیاز دارد.',
+  '{device} did not allow this program.': '{device} اجازهٔ این برنامه را نداد.',
+  '{device} does not have this application.': '{device} این برنامه را ندارد.',
+  'It did not start on {device}.': 'روی {device} شروع نشد.',
   'Start online machine': 'روشن کردن ماشین آنلاین',
   'Stop online machine': 'خاموش کردن ماشین آنلاین',
   Resume: 'ادامه',

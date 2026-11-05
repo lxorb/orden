@@ -96,6 +96,11 @@ class Chrome {
   frame = $state<Scheme | null>(null)
   /** Each web tab's bar, for a page that has said what it stands on. */
   bars = $state<Record<string, Ground>>({})
+  /** The ground a terminal draws of its own - the theme's terminal colours, or the one
+   *  palette Settings can keep - and null while it draws none and stands on the pane's,
+   *  under a see-through theme. Glass or not: the open tab of a terminal stands on it,
+   *  so the two are one surface (#1110); see terminal/sessions.svelte.ts. */
+  terminal = $state<string | null>(null)
   /** What the platform put behind the window, as the root says it; see material.ts. */
   material = $state<string | null>(null)
   /** The least wash the frame's words allow over what is behind it now, from 0 to 1:

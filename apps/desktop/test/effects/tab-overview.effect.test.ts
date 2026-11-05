@@ -204,10 +204,9 @@ test('a window’s cross closes its tab the strip’s way, which asks where that
   expect(layer()).not.toBe(null)
 })
 
-test('while a window is away, what it is a copy of is out of sight: its tab, or its pane', async () => {
-  // Asked for less movement, every window is out at once: each tab away from the strip,
-  // each pane whose tab in front is a window standing back, so nothing is seen twice.
-  // The panes, where the windows of their tabs in front come out of.
+test('each pane is its own window, moved where it is and never copied, and every tab is out of its strip', async () => {
+  // Asked for less movement, every window is out at once. The panes, which their tabs in
+  // front are the windows of.
   const panes = workspace.panes.all.map((one) => one.id)
   const shown = panes.map((id, index) => {
     const pane = document.createElement('div')
@@ -218,15 +217,41 @@ test('while a window is away, what it is a copy of is out of sight: its tab, or 
   })
   onTestFinished(() => shown.forEach((one) => one.remove()))
   await opened()
-  expect([...tabOverview.lifted].sort()).toEqual([...panes].sort())
+  // The pane itself is drawn as its window - moved, made small, taking no press - and the
+  // window over it draws nothing of it: no copy of the pane anywhere.
+  for (const pane of shown) {
+    expect(pane.style.transform).toMatch(/translate\(.*\) scale\(/)
+    expect(pane.style.pointerEvents).toBe('none')
+  }
+  const fronts = new Set(workspace.panes.all.map((one) => one.activeTabId))
+  for (const window of windows()) {
+    const id = workspace.tabs.find((one) => one.shown === window.getAttribute('aria-label'))?.id
+    if (id && fronts.has(id)) expect(window.querySelector('.face')).toBe(null)
+  }
+  expect(tabOverview.lifted).toEqual([])
   // And every tab is out of its strip, the ones in front too: the bar is the window's,
   // seen, and a strip that kept them would show each of them twice.
   expect([...tabOverview.out].sort()).toEqual(workspace.tabs.map((one) => one.id).sort())
   expect(overlays.escape()).toBe(true)
   flushSync()
   await tick()
-  expect(tabOverview.lifted).toEqual([])
+  // Home, each pane is drawn where it is laid out again, as it always is.
+  for (const pane of shown) expect(pane.getAttribute('style') ?? '').toBe('')
   expect(tabOverview.out).toEqual([])
+})
+
+test('a pane holding a web page stands back while its picture is its window', async () => {
+  const page = workspace.openPage('https://example.com/') ?? ''
+  pages.of(page).shot = 'data:image/png;base64,AA=='
+  const paneId = workspace.tabs.find((one) => one.id === page)?.paneId ?? ''
+  const pane = document.createElement('div')
+  pane.dataset.pane = paneId
+  pane.getBoundingClientRect = () => new DOMRect(0, 40, 600, 700)
+  document.body.append(pane)
+  onTestFinished(() => pane.remove())
+  await opened()
+  expect(pane.style.transform).toBe('')
+  expect(tabOverview.lifted).toContain(paneId)
 })
 
 test('the canvas is the window’s own ground, its sidebars sliding away, and the app blurred only when asked for', async () => {
@@ -302,14 +327,24 @@ test('a window’s cross sits on its corner, red, and answers the pointer', asyn
   ).toBe(true)
 })
 
-test('every window’s name is drawn under every window, so none lies on another window', async () => {
+test('every window’s name, and the bubbles, are drawn under the panes and every window, so none lies on another window', async () => {
+  // The room the panes are drawn in, which the layer under them goes first in.
+  const room = document.createElement('div')
+  room.dataset.panes = ''
+  room.append(document.createElement('div'))
+  document.body.append(room)
+  onTestFinished(() => room.remove())
   await opened()
-  const world = document.querySelector('.world')
-  const order = [...(world?.children ?? [])].map((one) => one.classList[0])
-  const lastName = order.lastIndexOf('caption')
-  const firstWindow = order.indexOf('window')
-  expect(lastName).toBeGreaterThan(-1)
-  expect(lastName).toBeLessThan(firstWindow)
+  const under = room.firstElementChild
+  expect(under?.classList.contains('under')).toBe(true)
+  expect(under?.querySelectorAll('.caption')).toHaveLength(windows().length)
+  expect(under?.querySelector('.window')).toBe(null)
+  expect(layer()?.querySelector('.caption')).toBe(null)
+  // And it goes with the overview.
+  expect(overlays.escape()).toBe(true)
+  flushSync()
+  await tick()
+  expect(room.querySelector('.under')).toBe(null)
 })
 
 test('every scroll zooms about the pointer, Ctrl or not, and none moves the canvas', async () => {

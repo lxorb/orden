@@ -15,6 +15,7 @@ import type { Camera } from '../camera'
 import { identifier } from '../identifier'
 import { t } from '../i18n.svelte'
 import { draftName, shownName, TITLE_CHARS } from '../note-name'
+import { applied, appliedToFile, type Edit, flatEdits } from '../search/replace'
 import { samePath } from '../space-paths'
 import { type TabKind, TAB_KINDS } from './tab-kinds'
 
@@ -345,11 +346,49 @@ export class NoteDoc {
   /** Words changed under the note by something other than an editor, as the
    *  ranges that changed: a replacement across the space, and putting one
    *  back. The file is written in the same breath, so this leaves the note
-   *  clean, and every pane showing it keeps its caret. */
+   *  clean, and every pane showing it keeps its caret.
+   *
+   *  The ranges are in the words they were worked out on, which `text` comes after: the
+   *  file's - `\r\n` and all, for a file written on Windows and for every web note's
+   *  `.url` - wherever `text` is in those, while the editor and `words` hold each line
+   *  ending as one character. So they are carried into the editor's own count first;
+   *  taken as they were, an icon chosen for an open web note landed two characters early
+   *  on its fourth line, inside the date (#1110). */
   edited(changes: readonly { from: number; to: number; insert: string }[], text: string) {
+    const from = text.includes('\r') ? this.asFile() : this.words
+    this.applyLive(flatEdits(from, changes).edits, text)
+  }
+
+  /** Edits worked out on `before` - these words as somebody read them a moment ago,
+   *  in whatever line endings - carried past what the reader has typed since and
+   *  applied, the way `edited` applies them. Answers the words as the file is to be
+   *  written, in its own line endings, and the edits and the words they were applied
+   *  to as the editor counts them, for what undoes them. */
+  take(edits: readonly Edit[], before: string): { text: string; edits: Edit[]; flat: string } {
+    this.flush()
+    const flat = this.words
+    const worked = flatEdits(before, edits)
+    const file = this.asFile(before)
+    const carried = this.live.carried(worked.edits, worked.words, true) ?? worked.edits
+    const text = file === flat ? applied(flat, carried) : appliedToFile(file, carried)
+    this.applyLive(carried, text)
+    return { text, edits: carried, flat }
+  }
+
+  /** These words in the file's own line endings, as far as they are known: the file as
+   *  this document last knew it, or `read` from it, while either is still these words;
+   *  otherwise the words as they are. */
+  private asFile(read?: string): string {
+    for (const file of [this.before, read]) {
+      if (file?.includes('\r') && unixLines(file) === this.words) return file
+    }
+    return this.words
+  }
+
+  private applyLive(changes: readonly Edit[], text: string) {
     this.quietly(() => this.live.edit(changes))
 
-    this.words = text
+    this.words = unixLines(text)
     this.behind = false
     this.dirty = false
     this.onDisk = text

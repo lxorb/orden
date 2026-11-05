@@ -571,6 +571,9 @@ export const zhHans: Dictionary = {
   'Show other tabs as icons': '其他标签页只显示图标',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '除前面的标签页外，每个标签页只显示图标；指向某个标签页时会显示其名称。',
+  'Tabs as wide as their names': '标签页宽度随名称',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    '每个标签页只占其图标、名称和关闭按钮所需的宽度；关闭后，所有标签页宽度相同。',
   'Tab preview delay': '标签页预览延迟',
   'How long the pointer rests on a tab before its preview shows.':
     '指针在标签页上停留多久后显示预览。',
@@ -2298,6 +2301,14 @@ export const zhHans: Dictionary = {
   'What does it run?': '运行什么？',
   'A program’s path, and its arguments': '程序的路径及其参数',
   '{device} (this device)': '{device}（此设备）',
+  'Find an application': '查找应用程序',
+  'Another program…': '其他程序…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} 暂时还不能在独立的显示器上运行应用程序。',
+  '{device} needs Xvfb to run an application.': '{device} 需要 Xvfb 才能运行应用程序。',
+  '{device} did not allow this program.': '{device} 未允许此程序。',
+  '{device} does not have this application.': '{device} 上没有此应用程序。',
+  'It did not start on {device}.': '未能在 {device} 上启动。',
   'Start online machine': '启动在线机器',
   'Stop online machine': '停止在线机器',
   Resume: '继续',

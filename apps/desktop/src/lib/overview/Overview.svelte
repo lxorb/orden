@@ -1,14 +1,18 @@
 <script lang="ts">
   /** Every tab as a window on a canvas, Alt Alt (issue #331).
    *
-   *  Not a sheet of cards over the tabs: the tabs become the windows. The tab in front of
-   *  each pane shrinks out of the pane, the others come down out of the strip from where
-   *  each tab sits, and they land on a canvas - Orden's own ground, or the app blurred if
-   *  asked for - laid out the way the panes are, a split's sides side by side with a curve
-   *  between them (layout.ts). While a window is away, what it is a copy of - its pane,
-   *  its tab in the strip - is out of sight, so nothing is seen twice. A press on one
-   *  opens it: it grows back into its pane while the rest go home to the strip. Alt Alt
-   *  again, Escape, or a press on the canvas send every window home.
+   *  Not a layer over the app: a state of the window. Its bar stays, its sidebars slide
+   *  away, and the room the tabs are shown in becomes the canvas, on the ground the panes
+   *  always stood on. The tabs become the windows: each pane itself shrinks, where it is,
+   *  into the window of its tab in front (`paneDrawn` in flight.ts) - the pane and not a
+   *  copy of it - and the other tabs come down out of the strip from where each tab sits
+   *  as pictures of themselves (WindowFace.svelte). They land laid out the way the panes
+   *  are, a split's sides side by side with a curve between them (layout.ts). A web page,
+   *  which no style can move, steps behind its picture for the whole run, and its pane
+   *  stands back while the picture flies as its window. While a window is away, the tab
+   *  it is is out of its strip, so nothing is seen twice. A press on one opens it: it
+   *  grows back into its pane while the rest go home to the strip. Alt Alt again, Escape,
+   *  or a press on the canvas send every window home.
    *
    *  Every window is one element on springs from the tab it was to the window it is
    *  (flight.ts), so a change of mind mid-flight turns it round from where it is, at the
@@ -67,11 +71,11 @@
   import type { Frame } from '../workspace/pane-tree'
   import { movingOf, spacesFor } from '../workspace/space-move'
   import { faces } from './faces.svelte'
-  import { drawn, Flight, type Pose } from './flight'
+  import { drawn, Flight, paneDrawn, type Pose } from './flight'
   import { land as landSpring, resting as sprung, SHARE, spring, step } from './spring'
   import { roomFor, settled, stripLanding } from './free'
   import { around, type Box, type Laid, lay, seamPath, seamsAmong, type Slot } from './layout'
-  import { marked, mirrorOf, shownBox, tabCopyOf } from './mirror'
+  import { marked, shownBox, tabCopyOf } from './mirror'
   import { walk, wayOf } from './walk'
   import WindowFace from './WindowFace.svelte'
 
@@ -102,8 +106,15 @@
 
   /** What each pane showed as the layer came up, which its windows take the shape of. */
   let panes = $state<Record<string, { w: number; h: number }>>({})
-  /** The copy of each pane's tab in front, by tab. */
-  let mirrors = $state<Record<string, HTMLElement>>({})
+  /** The panes that are their own windows, by their tab in front: each pane's element,
+   *  where it was laid out as the layer came up - the box it is moved from, and goes home
+   *  to, however it is drawn meanwhile - and how tall its strip is. Every pane but one
+   *  showing a web page, whose live view no style moves. */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written as the layer comes up, read once a frame
+  const panesAsWindows = new Map<string, { node: HTMLElement; box: DOMRect; head: number }>()
+  /** And which tabs those are, for what their windows draw: nothing but a ring, the pane
+   *  being under it. */
+  let asPanes = $state<Record<string, true>>({})
   /** The copy of each tab as its strip draws it, by tab (mirror.ts `tabCopyOf`). */
   let tabsAsDrawn = $state<Record<string, HTMLElement>>({})
 
@@ -426,7 +437,16 @@
    *  it is. */
   function homeOf(tab: Tab, slot: Slot): Pose {
     if (workspace.panes.at(tab.paneId)?.activeTabId === tab.id) {
-      const box = shownBox(tab.paneId)
+      // A pane moving as its window is where it was laid out, not where it is drawn.
+      const laidOut = panesAsWindows.get(tab.id)
+      const box = laidOut
+        ? new DOMRect(
+            laidOut.box.x,
+            laidOut.box.y + laidOut.head,
+            laidOut.box.width,
+            laidOut.box.height - laidOut.head,
+          )
+        : shownBox(tab.paneId)
       if (box && box.width > 0) return onCanvas(box, 0)
     }
     // The tab's own shape in the strip; see Tabs.svelte.
@@ -568,7 +588,7 @@
       const gone = off === null || off >= NEAR
       if (home && home.alpha > 0.5 && home.tab < 0.5) {
         const pane = byId.get(id)?.paneId
-        if (gone && pane) lifted.push(pane)
+        if (gone && pane && !movesAsWindow(id)) lifted.push(pane)
       }
       if (gone) away.push(id)
     }
@@ -597,6 +617,7 @@
     Object.assign(parts.window.style, styles.window)
     Object.assign(parts.face.style, styles.face)
     Object.assign(parts.chip.style, styles.chip)
+    if (started) movePane(id, pose)
     // The name under a window, and its cross, only once it is nearly in its place.
     const off =
       Math.abs(pose.x - slot.x) +
@@ -607,6 +628,59 @@
     const caption = captions.get(id)
     if (caption) caption.style.opacity = String(near)
     closers.get(id)?.style.setProperty('--near', String(near))
+  }
+
+  /** Whether the pane of tab `id` is that tab's window: it was in front as the layer came
+   *  up, and still is. */
+  function movesAsWindow(id: string): boolean {
+    const pane = byId.get(id)?.paneId
+    return panesAsWindows.has(id) && !!pane && workspace.panes.at(pane)?.activeTabId === id
+  }
+
+  /** A pane drawn where its window is this frame: over the bubbles and the names, under
+   *  the windows of the other tabs and its own ring, and over all of them while it is the
+   *  one held. It takes no press; its window over it does. */
+  function movePane(id: string, pose: Pose) {
+    const one = panesAsWindows.get(id)
+    if (!one) return
+    if (!movesAsWindow(id)) return putBack(one.node)
+    const styles = paneDrawn(pose, camera, one.box, one.head, corner, opening.at)
+    Object.assign(one.node.style, styles, {
+      transformOrigin: '0 0',
+      zIndex: id === held?.id ? 'var(--z-sheet)' : 'var(--z-raised)',
+      pointerEvents: 'none',
+      // A layer of its own while it moves; at rest drawn again at the size it is shown,
+      // so its words are as sharp as the other windows'.
+      willChange: flights.get(id)?.resting && id !== held?.id ? 'auto' : 'transform',
+    })
+  }
+
+  /** The camera moved - a pan, a pinch, a notch - and the panes moving as their windows
+   *  with it, which no world they are in moves for them. */
+  $effect(() => {
+    const looking = { ...camera }
+    untrack(() => {
+      if (!shown || !started || looking.zoom <= 0) return
+      for (const id of panesAsWindows.keys()) {
+        const pose = flights.get(id)?.pose
+        if (pose) movePane(id, pose)
+      }
+    })
+  })
+
+  const PANE_STYLES = [
+    'transform',
+    'transform-origin',
+    'clip-path',
+    'opacity',
+    'z-index',
+    'pointer-events',
+    'will-change',
+  ]
+
+  /** A pane where it is laid out, drawn as it always is. */
+  function putBack(node: HTMLElement) {
+    for (const name of PANE_STYLES) node.style.removeProperty(name)
   }
 
   /** Sends every window where it goes: onto the canvas, or home. */
@@ -668,21 +742,28 @@
         cellBoxes.find((one) => one.key === spaceKey)?.box
       if (kept && (!front || isOnView(kept, front, screenRoom))) camera = kept
       namedZoom = camera.zoom
-      const copies: Record<string, HTMLElement> = {}
+      panesAsWindows.clear()
+      const asWindows: Record<string, true> = {}
       for (const pane of workspace.panes.all) {
         const tab = pane.activeTabId ? byId.get(pane.activeTabId) : undefined
-        // A page is its photograph: the copy of a pane holding a live webview is a hole.
-        if (tab && tab.kind !== 'web') {
-          const copy = mirrorOf(pane.id)
-          if (copy) copies[tab.id] = copy
-          // And kept, for the next time it is not in front: once the way in is drawn.
-          setTimeout(() => {
-            if (workspace.panes.at(pane.id)?.activeTabId === tab.id) faces.take(pane.id, tab)
-          }, 900)
+        if (!tab) continue
+        // A page is its photograph, its live view out of sight behind it: no style moves a
+        // native view, and one that moved would be told every frame where it is.
+        if (tab.kind === 'web') {
+          void pages.shoot(tab.id)
+          continue
         }
-        if (tab?.kind === 'web') void pages.shoot(tab.id)
+        const node = marked('pane', pane.id)
+        const box = node?.getBoundingClientRect()
+        if (!node || !box || box.width <= 0 || box.height <= 0) continue
+        const head = node.querySelector(':scope > .head')?.getBoundingClientRect().height ?? 0
+        panesAsWindows.set(tab.id, { node, box, head })
+        asWindows[tab.id] = true
+        // Kept, for the next time it is not in front: copied now, while it is drawn where
+        // it is laid out (faces.svelte.ts).
+        faces.take(pane.id, tab)
       }
-      mirrors = copies
+      asPanes = asWindows
       // Each tab as its strip draws it, which its window leaves the strip as.
       const inherited = new Map<Element, string>()
       const tabCopies: Record<string, HTMLElement> = {}
@@ -738,7 +819,9 @@
     homes.clear()
     shown = false
     flights.clear()
-    mirrors = {}
+    for (const { node } of panesAsWindows.values()) putBack(node)
+    panesAsWindows.clear()
+    asPanes = {}
     tabsAsDrawn = {}
     tabOverview.out = []
     tabOverview.lifted = []
@@ -1140,6 +1223,19 @@
     touching.set(event.pointerId, now)
   }
 
+  /** The layer under the panes, put first among them: drawn before every pane, and under
+   *  the bar. Moved back out as the layer goes, since it is no longer where it was made. */
+  function beneathPanes(node: HTMLElement) {
+    const layer = node.firstElementChild
+    const panes = document.querySelector('[data-panes]')
+    if (layer && panes) panes.prepend(layer)
+    return {
+      destroy() {
+        layer?.remove()
+      },
+    }
+  }
+
   function letGo(event: PointerEvent) {
     if (!touching.delete(event.pointerId)) return
     if (!touching.size && !panning && event.type === 'pointerup') close()
@@ -1161,6 +1257,45 @@
 />
 
 {#if shown}
+  <!-- Under the panes, which stand on it: the bubbles, the lines between a split's sides,
+       and the names under the windows, all of them before any window, so a window is
+       never under a name. Put among the panes themselves (`beneathPanes`), since a pane
+       moving as its window is drawn where the panes are drawn. -->
+  <div class="beneath" use:beneathPanes>
+    <div
+      class="under"
+      style:--overview-top="{barBottom}px"
+      aria-hidden="true"
+      onselectstart={(event) => event.preventDefault()}
+      ondragstart={(event) => event.preventDefault()}
+    >
+      <div
+        class="world"
+        style:transform="translate({camera.x}px, {camera.y}px) scale({camera.zoom})"
+        style:--overview-unzoom={Math.max(1, 1 / camera.zoom)}
+      >
+        {#if cellsShown.length}
+          <Cells cells={cellsShown} pushed={pushedNow} holding={held !== null} inside={insideOf} />
+        {/if}
+        <svg class="seams" width="1" height="1">
+          {#each laid.seams as seam (seam.id)}
+            <path d={seamPath(seam)} />
+          {/each}
+        </svg>
+        {#each windows as { slot, tab } (tab.id)}
+          <span
+            class="caption"
+            style:translate="{slot.x}px {slot.y + slot.h + 8}px"
+            style:width="calc({slot.w}px / var(--overview-unzoom))"
+            use:named={tab.id}
+          >
+            <TabMark {tab} /><span class="caption-name">{tab.shown}</span>
+          </span>
+        {/each}
+      </div>
+    </div>
+  </div>
+
   <!-- Asked for under Appearance: the app behind the canvas, blurred, its sidebars where
        they are. Otherwise there is nothing here at all: the sidebars slide away and the
        canvas is the ground the panes stand on. -->
@@ -1220,29 +1355,6 @@
       style:transform="translate({camera.x}px, {camera.y}px) scale({camera.zoom})"
       style:--overview-unzoom={Math.max(1, 1 / camera.zoom)}
     >
-      {#if cellsShown.length}
-        <Cells cells={cellsShown} pushed={pushedNow} holding={held !== null} inside={insideOf} />
-      {/if}
-      <svg class="seams" width="1" height="1" aria-hidden="true">
-        {#each laid.seams as seam (seam.id)}
-          <path d={seamPath(seam)} />
-        {/each}
-      </svg>
-
-      <!-- The names under the windows, all of them before any window: a window is never
-           under a name, whichever comes later (issue #331). -->
-      {#each windows as { slot, tab } (tab.id)}
-        <span
-          class="caption"
-          style:translate="{slot.x}px {slot.y + slot.h + 8}px"
-          style:width="calc({slot.w}px / var(--overview-unzoom))"
-          aria-hidden="true"
-          use:named={tab.id}
-        >
-          <TabMark {tab} /><span class="caption-name">{tab.shown}</span>
-        </span>
-      {/each}
-
       {#each windows as { slot, tab } (tab.id)}
         {@const face = faceOf(slot)}
         <button
@@ -1266,13 +1378,10 @@
           use:placed={tab.id}
         >
           <span class="face-box" style:scale={slot.w / face.w}>
-            <WindowFace
-              {tab}
-              mirror={mirrors[tab.id] ?? null}
-              face={faces.of(tab.id)}
-              width={face.w}
-              height={face.h}
-            />
+            <!-- A pane that is its window is under it, and the window only its ring. -->
+            {#if !asPanes[tab.id]}
+              <WindowFace {tab} face={faces.of(tab.id)} width={face.w} height={face.h} />
+            {/if}
           </span>
           <span class="chip" class:is-copy={!!tabsAsDrawn[tab.id]} aria-hidden="true">
             {#if tabsAsDrawn[tab.id]}
@@ -1320,9 +1429,10 @@
   }
 
   /* Asked for under Appearance: the app under the bar, blurred far enough to be a surface
-     and not a page, as the overview was drawn first. */
+     and not a page, as the overview was drawn first - over the sidebars, which stay, and
+     under the panes and what lies under them, which stand on it. */
   .ground.is-blurred {
-    --scrim-z: var(--z-sheet);
+    --scrim-z: var(--z-raised);
     opacity: 0;
     background: color-mix(in srgb, var(--bg) 55%, transparent);
     -webkit-backdrop-filter: blur(28px);
@@ -1381,6 +1491,26 @@
   /* Tidy up, the app's own button, beside the dropdown. */
   .tidy {
     white-space: nowrap;
+  }
+
+  /* The anchor the layer under the panes is made in, and moved out of. */
+  .beneath {
+    display: none;
+  }
+
+  /* Under the panes and over the ground they stand on, cut off at the bar. */
+  .under {
+    --overview-caption: var(--text-base);
+    --overview-cell-name: calc(var(--text-base) * 1.6);
+    position: fixed;
+    inset: 0;
+    /* Level with the panes moving as their windows (`movePane`), and before them. */
+    z-index: var(--z-raised);
+    overflow: hidden;
+    clip-path: inset(var(--overview-top, 0) 0 0 0);
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   /* The one canvas, which the camera moves and scales; see camera.ts. */

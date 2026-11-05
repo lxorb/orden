@@ -8,6 +8,8 @@
   import { quintOut } from 'svelte/easing'
   import { agentMarks } from './agent-marks.svelte'
   import {
+    carried,
+    carriedMark,
     dragged,
     draggedBookmark,
     isBookmarkDrag,
@@ -45,6 +47,7 @@
     type Bounds,
     crossTakes,
     endOf,
+    fitted,
     holds,
     keptWidths,
     MAGNETISM,
@@ -54,16 +57,19 @@
     placed,
     separated,
     slotAt,
+    trailing,
     widened,
     widthsFor,
     worthKeeping,
   } from './tab-strip/layout'
   import { initialOf, siteLook, twins } from './tab-strip/twins'
+  import { insideSpace, nameOf } from './space-paths'
+  import { shownName } from './note-name'
   import { chosenIcon } from './chosen-icon'
   import { pages } from './web-tab/pages.svelte'
   import { workspace, type Tab } from './workspace.svelte'
   import type { Landing } from './workspace/panes.svelte'
-  import { iconTabs } from './tab-strip/icon-tabs.svelte'
+  import { fitTabs, iconTabs } from './tab-strip/icon-tabs.svelte'
   import { isDraft } from './workspace/drafts'
   import { inside } from './workspace/zones'
   import { initial } from './icons'
@@ -191,11 +197,68 @@
   /** Every tab but the one being read drawn as its mark alone, while Icon tabs is on and
    *  the strip is a pointer's (#1041); see tab-strip/icon-tabs.svelte.ts. */
   const icons = $derived(iconTabs.on && !viewport.touch)
+  /** Each tab's own width while tabs are as wide as their contents (#1114): its name as
+   *  long as it is drawn in the type `measurer` wears, which is the names' own, and the
+   *  marks after it; see `fitted` in layout.ts. Empty while the switch is off, and
+   *  wherever nothing could be measured. */
+  let measurer = $state<HTMLSpanElement | undefined>()
+  let fits = $state<Record<string, number>>({})
+  let names: Record<string, number> = {}
+  let namesFont = ''
+  let pen: CanvasRenderingContext2D | null | undefined
+
+  /** How long `name` is drawn in a tab, or 0 where it cannot be measured. */
+  function measured(name: string): number {
+    if (!measurer) return 0
+    const type = getComputedStyle(measurer)
+    const font = `${type.fontStyle} ${type.fontWeight} ${type.fontSize} ${type.fontFamily}`
+    if (font !== namesFont) {
+      names = {}
+      namesFont = font
+    }
+    let width = names[name]
+    if (width === undefined) {
+      pen ??= document.createElement('canvas').getContext('2d')
+      if (!pen) return 0
+      pen.font = font
+      width = pen.measureText(name).width
+      names[name] = width
+    }
+    return width
+  }
+
+  $effect(() => {
+    const next: Record<string, number> = {}
+    if (fitTabs.on && measurer) {
+      for (const tab of tabs) {
+        const name = measured(tab.shown)
+        if (name <= 0) continue
+        const seen = rooms.seen[tab.note.key]
+        next[tab.id] = fitted(
+          name,
+          trailing({
+            reading: tab.reading,
+            sound: tab.kind === 'web' && pages.of(tab.id).playing,
+            shared: !!tab.note.shared,
+            draft: isDraft(tab.note),
+            faces: Math.min(seen?.people.length ?? 0, 3),
+            dots: Math.min(seen?.mine ?? rooms.present[tab.note.key] ?? 0, 3),
+          }),
+        )
+      }
+    }
+    const now = untrack(() => fits)
+    const keys = Object.keys(next)
+    if (keys.length !== Object.keys(now).length || keys.some((id) => now[id] !== next[id]))
+      fits = next
+  })
+
   const sized = $derived(
     tabs.map((tab) => ({
       id: tab.id,
       icon: icons && tab.id !== activeId,
       active: tab.id === activeId,
+      fit: fits[tab.id],
     })),
   )
 
@@ -244,7 +307,7 @@
     const shared =
       (closing?.widths ? keptWidths(sized, closing.widths) : null) ?? widthsFor(sized, room)
     const at = opened === null ? -1 : sized.findIndex((one) => one.id === opened)
-    return at < 0 ? shared : widened(shared, at, room)
+    return at < 0 ? shared : widened(shared, at, room, sized[at]?.fit)
   })
   const base = $derived(placed(widths))
 
@@ -262,6 +325,33 @@
   const incoming = $derived(
     landing?.kind === 'strip' && landing.paneId === paneId && !drag.on ? landing.at : null,
   )
+
+  /** A tab as it is drawn once another has come in front of it. */
+  const behind = (one: (typeof sized)[number]) => ({ ...one, active: false, icon: icons })
+
+  /** How wide the tab that something dropped here becomes wants to be, while tabs are as
+   *  wide as their names: a tab carried in from another pane, an essential or a
+   *  bookmark, a row out of the file list. Not known for a link from another app,
+   *  whose page has not said its name yet. */
+  const arriving = $derived.by(() => {
+    if (incoming === null || !fitTabs.on) return undefined
+    const carriedTab = workspace.panes.dragging?.tabId
+    const tab = carriedTab ? workspace.tabs.find((one) => one.id === carriedTab) : undefined
+    if (tab) return fits[tab.id]
+    const mark = carriedMark()
+    const path =
+      mark === null
+        ? carried()[0]
+        : (() => {
+            const kept = workspace.bookmarks.list[mark]
+            const root = workspace.activeSpace?.root
+            return kept?.kind === 'note' && root ? insideSpace(root, kept.path) : undefined
+          })()
+    if (path === undefined) return undefined
+    const name = workspace.opened.at(path)?.shown ?? shownName(nameOf(path))
+    const width = measured(name)
+    return width > 0 ? fitted(width) : undefined
+  })
 
   /** Where each tab is drawn, and where the tabs end. */
   const layout = $derived.by(() => {
@@ -292,12 +382,14 @@
     }
 
     if (incoming !== null) {
-      // A tab's worth of room where it would land, and the rest shrunk to make it,
-      // exactly as they would be with the tab already there.
+      // Room where it would land for the tab it becomes, and the rest made way for it,
+      // exactly as they would be with that tab already there: in front, as a drop puts
+      // it (`moveTab`), as wide as its name where tabs are (#1114), and every other tab
+      // as a tab not in front is - an icon while Icon tabs is on (#1110).
       const withGap = [
-        ...sized.slice(0, incoming),
-        { id: '', icon: false, active: false },
-        ...sized.slice(incoming),
+        ...sized.slice(0, incoming).map(behind),
+        { id: '', icon: false, active: true, fit: arriving },
+        ...sized.slice(incoming).map(behind),
       ]
       const bounds = placed(widthsFor(withGap, room))
       for (const [at, one] of withGap.entries()) {
@@ -949,6 +1041,8 @@
     oncontextmenu={showStripMenu}
     use:longPress={showStripMenu}
   >
+    <!-- The names' own type, which a tab's name is measured in; see `fits`. -->
+    <span class="measure" aria-hidden="true" bind:this={measurer}></span>
     <div class="lane" class:shrinking style:width="max(100%, {span}px)">
       {#each tabs as tab, at (tab.id)}
         <!-- Who else is in this note, once and at most three of each: the other people,
@@ -977,8 +1071,10 @@
           class:away={tabOverview.out.includes(tab.id)}
           class:settling={settling === tab.id}
           class:onbar={tab.kind === 'web'}
+          class:onterminal={tab.kind === 'terminal'}
           data-theme={tab.id === activeId ? chrome.tabTheme(tab.id) : undefined}
           style:--web-ground={chrome.barOf(tab.id)?.colour}
+          style:--terminal-paper={tab.kind === 'terminal' ? chrome.terminal : null}
           style:width="{box.width}px"
           style:transform="translateX({box.x * i18n.factor}px)"
           style:--w="{box.width}px"
@@ -1085,6 +1181,7 @@
                still what it says to a reader who cannot see it. -->
             <span
               class="label"
+              class:whole={(fits[tab.id] ?? Infinity) <= box.width}
               class:hidden={!parts.title && !icon}
               class:quiet={icon}
               class:naming={tab.naming}>{tab.shown}</span
@@ -1251,7 +1348,8 @@
     /* What the active tab is filled with: the ground of whatever is directly under
        the strip, so the two are one surface. A note's page by default; a tab that
        brings a bar of its own says so with `.onbar`. */
-    --tab-ground: var(--paper, var(--bg));
+    --tab-paper: var(--paper, var(--bg));
+    --tab-ground: var(--tab-paper);
     /* What the pointer lights on the frame - a tab, the plus, the two steps: a lift of
        the ink over whatever the frame is, a tone past it, which is Chrome's header
        hover. It was the paper 40% of the way, Chrome's old rule, and on a frame one
@@ -1381,6 +1479,13 @@
      page's own colour. */
   .tab.onbar {
     --tab-ground: var(--web-ground, var(--surface));
+  }
+
+  /* A terminal's: the ground it draws of its own, its theme's terminal colours or the
+     one palette Settings keeps, or, see-through, the pane's ground it stands on - and
+     never the note's paper, which a terminal is not written on (#1110). */
+  .tab.onterminal {
+    --tab-ground: var(--terminal-paper, var(--terminal-ground, var(--tab-paper)));
   }
 
   /* The body: a rounded box from the frame down, a hair inside the tab's own box
@@ -1645,6 +1750,21 @@
 
   .label.quiet {
     opacity: 0;
+  }
+
+  /* A tab as wide as its contents has the whole of its name to show, and no end to
+     fade out (#1114). */
+  .label.whole,
+  :global(:root[dir='rtl']) .label.whole {
+    mask-image: none;
+  }
+
+  .measure {
+    position: absolute;
+    visibility: hidden;
+    pointer-events: none;
+    font-family: var(--font-ui);
+    font-size: var(--text-row);
   }
 
   /* Under the field typing it, holding its place. */

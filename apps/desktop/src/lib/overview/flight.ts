@@ -120,3 +120,33 @@ export function drawn(pose: Pose, wide: number, tall: number, corner: number, zo
     },
   }
 }
+
+/** Where a pane is drawn as its own window (issue #331): the pane itself, laid out where
+ *  it always is (`box`, on the screen, its strip `head` tall at the top), moved and made
+ *  small so that what it shows - all of it under the strip - lies exactly on the window's
+ *  `pose` on the canvas the camera looks at. It keeps its shape: made the window's width,
+ *  and cut off at the window's foot where the window is the shorter, at the window's
+ *  corner. Its strip is cut away as far as the overview is `open`, so on the first frame
+ *  and the last the pane is the pane as it is laid out, strip and all. */
+export function paneDrawn(
+  pose: Pose,
+  camera: { x: number; y: number; zoom: number },
+  box: { x: number; y: number; width: number; height: number },
+  head: number,
+  corner: number,
+  open: number,
+) {
+  const x = camera.x + pose.x * camera.zoom
+  const y = camera.y + pose.y * camera.zoom
+  const w = Math.max(pose.w * camera.zoom, 1)
+  const h = Math.max(pose.h * camera.zoom, 1)
+  const scale = w / Math.max(box.width, 1)
+  const shown = Math.max(box.height - head, 1)
+  const cut = head * clamp(open)
+  const below = Math.max(0, shown - h / scale)
+  return {
+    transform: `translate(${x - box.x}px, ${y - box.y - scale * head}px) scale(${scale})`,
+    clipPath: `inset(${cut}px 0 ${below}px 0 round ${corner / scale}px)`,
+    opacity: String(clamp(pose.alpha)),
+  }
+}

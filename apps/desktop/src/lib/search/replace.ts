@@ -99,6 +99,32 @@ export function endingsLike(words: string, like: string): string {
   return like.includes('\r') || !words.includes('\r') ? words : words.replace(/\r\n?/g, '\n')
 }
 
+/** Edits worked out on words with `\r\n` or `\r` endings, as the same edits on those
+ *  words with `\n` alone - which is what an editor holds of a file, since CodeMirror
+ *  reads every line ending as one character. An offset between a `\r` and its `\n` is
+ *  the line's end. Words with no `\r` come back as they are. */
+export function flatEdits(words: string, edits: readonly Edit[]): { words: string; edits: Edit[] } {
+  if (!words.includes('\r')) return { words, edits: edits.map((one) => ({ ...one })) }
+
+  // How many `\r` of a `\r\n` lie before each offset, counted once along the words.
+  const dropped: number[] = new Array<number>(words.length + 1)
+  let count = 0
+  for (let at = 0; at <= words.length; at++) {
+    dropped[at] = count
+    if (words[at] === '\r' && words[at + 1] === '\n') count++
+  }
+  const flat = (at: number) => at - (dropped[Math.max(0, Math.min(at, words.length))] ?? 0)
+
+  return {
+    words: words.replace(/\r\n?/g, '\n'),
+    edits: edits.map((one) => ({
+      from: flat(one.from),
+      to: flat(one.to),
+      insert: one.insert.replace(/\r\n?/g, '\n'),
+    })),
+  }
+}
+
 /** Whether the first line ending of a file is `\r\n`, which has the disk write every
  *  line that way; see `as_written` in notes.rs. */
 function crlfFirst(file: string): boolean {

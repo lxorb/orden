@@ -27,7 +27,7 @@ import { forget, isRecord, isString, keepJson, stored, storedText } from '../sto
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
-import { shown } from './is.svelte'
+import { closeScratchpad, shown } from './is.svelte'
 import { difference, joined } from './words'
 
 /** The words the card is writing, until the file has them. A write begun as the page goes
@@ -149,6 +149,18 @@ class Scratchpad {
     shown.show(take)
   }
 
+  /** Opened as a note, in a tab like any other: its right side icon's double press
+   *  (#1110). The card's words are written first and the card goes, so the words are in
+   *  the one editor; while the tab is open the card's key and icon bring the tab
+   *  forward (`show` in is.svelte.ts), and the edits below go into its document. */
+  async asNote(): Promise<void> {
+    const path = await this.where()
+    const live = this.live
+    if (live) await this.writeDown(path, live.state.doc.toString())
+    closeScratchpad()
+    await workspace.open(path, { asNote: true })
+  }
+
   /** What it says now: the card's words while it is up, else the file's. */
   async text(): Promise<string> {
     if (this.live) return this.live.state.doc.toString()
@@ -173,7 +185,9 @@ class Scratchpad {
     if (now.replace(/\r\n?/g, '\n') !== before) return false
 
     live?.dispatch({ changes: [...edits] })
-    await this.written(path, applied(before, edits))
+    const after = applied(before, edits)
+    if (!live) this.intoTab(path, edits, after)
+    await this.written(path, after)
     return true
   }
 
@@ -205,8 +219,21 @@ class Scratchpad {
     const after = change(before)
     if (after === before) return
 
-    this.live?.dispatch({ changes: difference(before, after) })
+    const changes = difference(before, after)
+    if (this.live) this.live.dispatch({ changes })
+    else this.intoTab(path, [changes], after)
     await this.written(path, after)
+  }
+
+  /** Edits made with no card up, carried into the tab that has the scratchpad open as a
+   *  note, if one does: its document is what `toChange` read them against, and a tab
+   *  left on the words before them would write those back over the file. */
+  private intoTab(
+    path: string,
+    changes: readonly { from: number; to: number; insert: string }[],
+    after: string,
+  ): void {
+    workspace.documentAt(path)?.edited(changes, after)
   }
 
   /** An edit, written. The card's words have what is owed in them, so with the card up it

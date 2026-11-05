@@ -93,7 +93,13 @@ interface Engine {
     token: string
     files?: Record<string, string>
   }): Promise<Device>
-  firstPass(core: Core, space: SpaceState, v1: V1Space | null, done?: never[]): Promise<boolean>
+  firstPass(
+    core: Core,
+    space: SpaceState,
+    v1: V1Space | null,
+    carried?: ReadonlyMap<string, string>,
+    done?: never[],
+  ): Promise<boolean>
   Engine: {
     start(world: unknown, store: unknown, how: { freshens: boolean }): Promise<Device['engine']>
   }
@@ -171,6 +177,7 @@ async function migrated(
   notes: Record<string, Tracked>,
   cursor = 0,
   untold?: V1Space['untold'],
+  carried?: ReadonlyMap<string, string>,
 ) {
   const kit = await engine()
   const device = await kit.testDevice({
@@ -183,7 +190,12 @@ async function migrated(
   const state = core.spaces.get(space)
   if (!state) throw new Error('the space was not added')
 
-  const first = await kit.firstPass(core, state, { cursor, notes, ...(untold ? { untold } : {}) })
+  const first = await kit.firstPass(
+    core,
+    state,
+    { cursor, notes, ...(untold ? { untold } : {}) },
+    carried,
+  )
   expect(first).toBe(true)
   const asked = [...device.asked]
   await rooms.settle()
@@ -319,6 +331,37 @@ describe('a device moving to v2', () => {
     expect(file('Ideas/New.md')).toBe('A new idea.\n')
   })
 
+  test('what was made signed out goes up under the ids it had here (#1068)', async () => {
+    const note = await v1Note('Plan.md', 'Plan.\n')
+    const folder = '0f'.repeat(16)
+    const idea = '1e'.repeat(16)
+    // The account's own note keeps the account's id, whatever it was called here.
+    const carried = new Map([
+      ['ideas', folder],
+      ['ideas/new.md', idea],
+      ['plan.md', '2d'.repeat(16)],
+    ])
+    await migrated(
+      { 'Plan.md': 'Plan.\n', 'Ideas/New.md': 'A new idea.\n' },
+      { 'Plan.md': { ...note, hash: await sha256('Plan.\n') } },
+      0,
+      undefined,
+      carried,
+    )
+
+    const ids = env.db
+      .prepare('select id, path from notes where space_id = ? and deleted = 0 order by path')
+      .all(space) as { id: string; path: string }[]
+    expect(ids).toEqual([
+      { id: idea, path: 'Ideas/New.md' },
+      { id: note.id, path: 'Plan.md' },
+    ])
+    const folders = env.db
+      .prepare('select id from folders where space_id = ? and name = ?')
+      .all(space, 'Ideas') as { id: string }[]
+    expect(folders).toEqual([{ id: folder }])
+  })
+
   test('a note v1 tracked whose file is gone is deleted, unless written in elsewhere', async () => {
     const gone = await v1Note('Gone.md', 'Delete me.\n')
     const kept = await v1Note('Kept.md', 'Keep me.\n')
@@ -403,7 +446,7 @@ describe('a first pass that does not get through', () => {
     }
     const done = { t: 'put', table: 'meta', row: { key: 'first:done', value: 1 } }
 
-    expect(await kit.firstPass(core, state, null, [done as never])).toBe(true)
+    expect(await kit.firstPass(core, state, null, undefined, [done as never])).toBe(true)
 
     expect(commits.at(-1)).toContain(done)
     expect(commits.slice(0, -1).flat()).not.toContain(done)

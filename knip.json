@@ -40,7 +40,8 @@
         "src/site/site.ts",
         "src/lib/ai/review/index.ts"
       ],
-      "ignoreDependencies": ["katex", "axe-core"]
+      "ignoreDependencies": ["katex", "axe-core"],
+      "ignoreBinaries": ["jq"]
     },
     "apps/cli": {
       "ignoreBinaries": ["screencapture", "osascript"]

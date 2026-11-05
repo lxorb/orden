@@ -139,6 +139,8 @@
                        the names still read as one column. -->
                   {#if option.space}
                     <span class="space"><SpaceMark {...option.space} /></span>
+                  {:else if option.picture}
+                    <img class="picture" src={option.picture} alt="" draggable="false" />
                   {:else if option.mark}
                     <FileMark mark={option.mark} path={option.id} />
                   {/if}
@@ -275,6 +277,14 @@
     font-size: var(--text-xs);
     font-weight: var(--weight-strong);
     color: var(--muted);
+  }
+
+  /* An application's own icon, in the same box. */
+  .picture {
+    width: var(--icon-md);
+    height: var(--icon-md);
+    flex: none;
+    object-fit: contain;
   }
 
   /* The name is what runs out of room, not the mark beside it. */

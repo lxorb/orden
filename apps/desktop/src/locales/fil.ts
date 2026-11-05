@@ -580,6 +580,9 @@ export const fil: Dictionary = {
   'Show other tabs as icons': 'Ipakita ang ibang tab bilang icon',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Bawat tab maliban sa nasa harap ay icon lang ang ipinapakita; kapag tinuro ang isa, lalabas ang pangalan nito.',
+  'Tabs as wide as their names': 'Mga tab na kasinlapad ng pangalan nila',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Kasinlapad lang ang bawat tab ng kailangan ng icon, pangalan at close button nito; kapag naka-off, pare-pareho ang lapad ng lahat.',
   'Tab preview delay': 'Antala ng preview ng tab',
   'How long the pointer rests on a tab before its preview shows.':
     'Gaano katagal nakapatong ang pointer sa tab bago lumabas ang preview nito.',
@@ -2404,6 +2407,15 @@ export const fil: Dictionary = {
   'What does it run?': 'Ano ang patatakbuhin nito?',
   'A program’s path, and its arguments': 'Path ng isang program, at ang mga argument nito',
   '{device} (this device)': '{device} (ang device na ito)',
+  'Find an application': 'Maghanap ng application',
+  'Another program…': 'Ibang program…',
+  '{device} cannot run an application on a display of its own yet.':
+    'Hindi pa kayang magpatakbo ng {device} ng application sa sarili nitong display.',
+  '{device} needs Xvfb to run an application.':
+    'Kailangan ng {device} ang Xvfb para magpatakbo ng application.',
+  '{device} did not allow this program.': 'Hindi pinayagan ng {device} ang program na ito.',
+  '{device} does not have this application.': 'Wala sa {device} ang application na ito.',
+  'It did not start on {device}.': 'Hindi ito nagsimula sa {device}.',
   'Start online machine': 'Simulan ang online na makina',
   'Stop online machine': 'Ihinto ang online na makina',
   Resume: 'Ituloy',

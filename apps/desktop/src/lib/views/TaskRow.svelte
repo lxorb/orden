@@ -124,6 +124,19 @@
     onpick(event.shiftKey)
   }
 
+  /** A press on a control inside the row leaves the keyboard on the row, never on the
+   *  control: the words and the buttons are not a Tab's stop, and one holding the
+   *  keyboard drew a ring of its own round the title - after a sheet it opened closed,
+   *  and the keyboard came back to it - where the row's own state already says which
+   *  row it is (#1110). The press goes on to the control as before. */
+  function holdOnRow(event: MouseEvent) {
+    if (event.button !== 0 || !(event.target instanceof Element)) return
+    if (!event.target.closest('button')) return
+    event.preventDefault()
+    if (event.currentTarget instanceof HTMLElement)
+      event.currentTarget.focus({ preventScroll: true })
+  }
+
   /** The middle button: its note in a tab, as a link opens. */
   function aux(event: MouseEvent) {
     if (event.button !== 1) return
@@ -178,6 +191,7 @@
       }}
       onfocus={() => onselect?.()}
       onclick={press}
+      onmousedown={holdOnRow}
       oncontextmenu={more}
       onauxclick={aux}
     >
@@ -396,8 +410,11 @@
     border-radius: var(--radius-md);
   }
 
+  /* The card's start has room for its grip inside it, an inset from the card's edge on
+     either side of it, rather than the hairline's margin a row has (#1110). */
   .card .task {
-    --actions-ground: var(--surface);
+    --grip-room: calc(var(--row-pad) + var(--space-2));
+    padding-inline-start: calc(var(--grip-room) + var(--depth) * var(--row-indent));
     border-radius: var(--radius-md);
     background: var(--surface);
     box-shadow: inset 0 0 0 1px var(--line);
@@ -430,7 +447,9 @@
   }
 
   .card .grip {
+    inset-inline-start: calc(var(--depth) * var(--row-indent) + var(--space-1) - 1px);
     top: calc(var(--card-pad) + (var(--task-head, var(--row-height)) - var(--icon-md)) / 2);
+    width: var(--row-pad);
   }
 
   .task.is-picked {
@@ -506,18 +525,18 @@
     cursor: default;
   }
 
-  /* Over the end of the words rather than beside them, so a narrow list - the Tasks
-     panel's (#374) - gives the words the whole row until the pointer or the focus is on
-     it; on the row's own ground then, so the words under them do not show through. */
+  /* Out of the way at rest, so a narrow list - the Tasks panel's (#374) - gives the words
+     the whole row; beside them, taking their end, once the pointer or the focus is on it.
+     Never over them on a ground of its own: the row's grounds are see-through, and a
+     second coat of one is a box round the buttons the row's own state does not have
+     (#1110). */
   .actions {
     position: absolute;
     inset-inline-end: 0;
     top: 50%;
+    flex: none;
     display: flex;
     gap: 2px;
-    padding-inline-start: var(--space-2);
-    border-radius: var(--radius-row);
-    background: var(--actions-ground, var(--bg));
     opacity: 0;
     pointer-events: none;
     translate: 0 -50%;
@@ -527,22 +546,10 @@
   .task:hover .actions,
   .task.is-on .actions,
   .task:focus-within .actions {
+    position: static;
+    translate: none;
     opacity: 1;
     pointer-events: auto;
-  }
-
-  @media (hover: hover) {
-    .task:hover {
-      --actions-ground: var(--surface-hover);
-    }
-  }
-
-  .task.is-on {
-    --actions-ground: var(--surface-selected);
-  }
-
-  .task.is-picked {
-    --actions-ground: var(--accent-soft);
   }
 
   :global([data-touch]) .actions {

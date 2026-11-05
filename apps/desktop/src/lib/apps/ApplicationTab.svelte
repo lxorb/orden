@@ -4,6 +4,7 @@
    *  over, Start, Stop and Restart. Its picture comes in a later step of issue 1063. The
    *  session is the tab's and outlives this; see session.svelte.ts. */
 
+  import type { NotStarted } from '@orden/online/apps'
   import { onMount, untrack } from 'svelte'
   import { t } from '../i18n.svelte'
   import { heldLine } from '../online/arrival.svelte'
@@ -53,6 +54,7 @@
       case 'held':
         return heldLine(status.holder)
       case 'here':
+        if (status.why) return notStarted(status.why, device)
         if (status.state === 'running') return t('Running on {device}', { device })
         if (status.state === 'starting') return t('Starting on {device}…', { device })
         if (status.state === 'exited' && status.code !== null)
@@ -60,6 +62,24 @@
         return t('Not running on {device}', { device })
     }
   })
+  /** Why its computer did not start it: Windows and macOS have no display of an
+   *  application's own yet (step 8 of issue 1063), Linux needs Xvfb, the reader there
+   *  said no to a program by its path, or what the file names is not there. */
+  function notStarted(why: NotStarted, device: string): string {
+    switch (why) {
+      case 'isolation':
+        return t('{device} cannot run an application on a display of its own yet.', { device })
+      case 'display':
+        return t('{device} needs Xvfb to run an application.', { device })
+      case 'refused':
+        return t('{device} did not allow this program.', { device })
+      case 'missing':
+        return t('{device} does not have this application.', { device })
+      case 'failed':
+        return t('It did not start on {device}.', { device })
+    }
+  }
+
   const waiting = $derived(
     status.is === 'reading' ||
       status.is === 'connecting' ||

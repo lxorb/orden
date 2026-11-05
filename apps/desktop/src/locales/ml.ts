@@ -581,6 +581,9 @@ export const ml: Dictionary = {
   'Show other tabs as icons': 'മറ്റ് ടാബുകൾ ഐക്കണുകളായി കാണിക്കുക',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'മുന്നിലുള്ളതൊഴികെ ഓരോ ടാബും ഐക്കൺ മാത്രം കാണിക്കുന്നു; ഒന്നിലേക്ക് ചൂണ്ടുമ്പോൾ പേര് കാണാം.',
+  'Tabs as wide as their names': 'പേരിന്റെ വീതിയിൽ ടാബുകൾ',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'ഓരോ ടാബിനും അതിന്റെ ഐക്കൺ, പേര്, അടയ്ക്കൽ ബട്ടൺ എന്നിവയ്ക്ക് വേണ്ടത്ര വീതി മാത്രം; ഓഫാക്കിയാൽ എല്ലാ ടാബുകൾക്കും ഒരേ വീതി.',
   'Tab preview delay': 'ടാബ് പ്രിവ്യൂ കാലതാമസം',
   'How long the pointer rests on a tab before its preview shows.':
     'പ്രിവ്യൂ കാണിക്കുന്നതിന് മുമ്പ് പോയിന്റർ ടാബിൽ എത്ര നേരം നിൽക്കണം.',
@@ -2388,6 +2391,15 @@ export const ml: Dictionary = {
   'What does it run?': 'ഇത് എന്ത് പ്രവർത്തിപ്പിക്കും?',
   'A program’s path, and its arguments': 'ഒരു പ്രോഗ്രാമിന്റെ പാത്ത്, അതിന്റെ ആർഗ്യുമെന്റുകൾ',
   '{device} (this device)': '{device} (ഈ ഉപകരണം)',
+  'Find an application': 'ആപ്ലിക്കേഷൻ തിരയുക',
+  'Another program…': 'മറ്റൊരു പ്രോഗ്രാം…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device}-ന് ഇതുവരെ സ്വന്തം ഡിസ്‌പ്ലേയിൽ ആപ്ലിക്കേഷൻ പ്രവർത്തിപ്പിക്കാനാവില്ല.',
+  '{device} needs Xvfb to run an application.':
+    'ആപ്ലിക്കേഷൻ പ്രവർത്തിപ്പിക്കാൻ {device}-ന് Xvfb വേണം.',
+  '{device} did not allow this program.': '{device} ഈ പ്രോഗ്രാം അനുവദിച്ചില്ല.',
+  '{device} does not have this application.': '{device}-ൽ ഈ ആപ്ലിക്കേഷൻ ഇല്ല.',
+  'It did not start on {device}.': '{device}-ൽ ഇത് ആരംഭിച്ചില്ല.',
   'Start online machine': 'ഓൺലൈൻ മെഷീൻ ആരംഭിക്കുക',
   'Stop online machine': 'ഓൺലൈൻ മെഷീൻ നിർത്തുക',
   Resume: 'തുടരുക',

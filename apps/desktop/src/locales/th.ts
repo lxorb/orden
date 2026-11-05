@@ -571,6 +571,9 @@ export const th: Dictionary = {
   'Show other tabs as icons': 'แสดงแท็บอื่นเป็นไอคอน',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ทุกแท็บยกเว้นแท็บด้านหน้าแสดงแค่ไอคอน ชี้ที่แท็บใดก็จะเห็นชื่อ',
+  'Tabs as wide as their names': 'แท็บกว้างเท่าชื่อ',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'แต่ละแท็บกว้างเท่าที่ไอคอน ชื่อ และปุ่มปิดต้องการเท่านั้น เมื่อปิด แท็บทั้งหมดจะกว้างเท่ากัน',
   'Tab preview delay': 'ระยะหน่วงของภาพตัวอย่างแท็บ',
   'How long the pointer rests on a tab before its preview shows.':
     'ระยะเวลาที่ตัวชี้ต้องค้างบนแท็บก่อนภาพตัวอย่างจะแสดง',
@@ -2314,6 +2317,14 @@ export const th: Dictionary = {
   'What does it run?': 'เรียกใช้อะไร?',
   'A program’s path, and its arguments': 'พาธของโปรแกรม และอาร์กิวเมนต์',
   '{device} (this device)': '{device} (อุปกรณ์นี้)',
+  'Find an application': 'ค้นหาแอปพลิเคชัน',
+  'Another program…': 'โปรแกรมอื่น…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} ยังเรียกใช้แอปพลิเคชันบนจอแสดงผลของตัวเองไม่ได้',
+  '{device} needs Xvfb to run an application.': '{device} ต้องใช้ Xvfb เพื่อเรียกใช้แอปพลิเคชัน',
+  '{device} did not allow this program.': '{device} ไม่อนุญาตโปรแกรมนี้',
+  '{device} does not have this application.': '{device} ไม่มีแอปพลิเคชันนี้',
+  'It did not start on {device}.': 'ไม่ได้เริ่มทำงานบน {device}',
   'Start online machine': 'เปิดเครื่องออนไลน์',
   'Stop online machine': 'หยุดเครื่องออนไลน์',
   Resume: 'ทำต่อ',

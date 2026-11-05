@@ -8,6 +8,8 @@ import { hash32 } from '@orden/sync-core/seed'
  *  own, and signing in lets the store kept signed out go. */
 
 const said = vi.hoisted(() => [] as string[])
+/** Each store by whose it is, kept across opens as the crate keeps its files. */
+const stores = vi.hoisted(() => new Map<string, unknown>())
 vi.mock('./store', async (importOriginal) => {
   const original = await importOriginal<typeof import('./store')>()
   return {
@@ -18,7 +20,10 @@ vi.mock('./store', async (importOriginal) => {
       const { MemoryStore } = await import('./memory-store')
       // A round trip, as the crate's is.
       await new Promise((settle) => setTimeout(settle, 5))
-      const store = new MemoryStore(id).open()
+      const kept =
+        (stores.get(id) as InstanceType<typeof MemoryStore> | undefined) ?? new MemoryStore(id)
+      stores.set(id, kept)
+      const store = kept.open()
       return {
         ...store,
         close: () => {
@@ -29,10 +34,20 @@ vi.mock('./store', async (importOriginal) => {
     },
     forgetSyncStore: (id: string) => {
       said.push(`forget ${id}`)
+      stores.delete(id)
       return Promise.resolve()
     },
   }
 })
+
+// As on the desktop, the one place spaces are kept signed out, with no folder to watch.
+vi.mock('../tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../tauri')>()),
+  isDesktop: true,
+}))
+vi.mock('./watching', () => ({
+  watchFolders: () => ({ stop: () => undefined, follow: () => undefined }),
+}))
 
 const { MemoryDisk } = await import('./memory-disk')
 vi.mock('./app-world', () => {
@@ -81,9 +96,11 @@ describe('the engine kept signed out', () => {
     const dropping = runner.dropLocal()
     await Promise.all([starting, dropping])
 
-    // The account's store opens once this window leads, which may come after the drop.
+    // The account's store opens once this window leads, which may come after the drop,
+    // and never before the store kept signed out has gone.
     expect(said.slice(0, 2)).toEqual(['open local', 'close local'])
     expect(said).toContain('open u1')
+    expect(said.lastIndexOf('forget local')).toBeLessThan(said.indexOf('open u1'))
     expect(said).toContain('forget local')
     expect(said).not.toContain('close u1')
     expect(runner.engine).not.toBeNull()
@@ -97,6 +114,42 @@ describe('the engine kept signed out', () => {
     Object.assign(account, { user: { id: 'u1', syncVersion: 2 } })
     await runner.startLocal()
     expect(said).toEqual([])
+    Object.assign(account, { user: null })
+  })
+
+  test('carries the ids of what it kept into the account’s store, for each space’s first pass', async () => {
+    said.length = 0
+    const { MemoryStore } = await import('./memory-store')
+    const { put, get } = await import('./store')
+    const local = new MemoryStore('local')
+    stores.set('local', local)
+    const id = '3c'.repeat(16)
+    await local.open().write([
+      put('spaces', { space_id: 'local-1', root: '/Notes', cursor: 1, role: 'owner', store: null }),
+      put('entries', {
+        id,
+        space_id: 'local-1',
+        kind: 'note',
+        parent: null,
+        name: 'Plan.md',
+        local_path: 'Plan.md',
+        file_key: null,
+        written_hash: null,
+        mtime: null,
+        size: null,
+        seq: 1,
+        deleted: false,
+      }),
+    ])
+
+    Object.assign(account, { user: { id: 'u2', syncVersion: 2 } })
+    await Promise.all([runner.dropLocal(), runner.start()])
+
+    expect(said).toContain('forget local')
+    expect(stores.has('local')).toBe(false)
+    const [row] = await runner.engine!.core.store.read([get('meta', 'carried:/Notes')])
+    expect(JSON.parse(String(row?.value))).toEqual({ 'Plan.md': id })
+    await runner.stop()
     Object.assign(account, { user: null })
   })
 })

@@ -572,6 +572,9 @@ export const jv: Dictionary = {
   'Show other tabs as icons': 'Tampilake tab liyane minangka lambang',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Saben tab kajaba sing ngarep mung nampilake lambange; yen diarahake, jenenge katon.',
+  'Tabs as wide as their names': 'Tab sajembaré jenengé',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Saben tab mung jembar sak butuhé lambang, jeneng lan tombol tutupé; yèn dipatèni, kabèh tab padha jembaré.',
   'Tab preview delay': 'Wektu tundha pratinjau tab',
   'How long the pointer rests on a tab before its preview shows.':
     'Suwene pointer mandheg ing tab sadurunge pratinjaune katon.',
@@ -2340,6 +2343,14 @@ export const jv: Dictionary = {
   'What does it run?': 'Apa sing dilakokake?',
   'A program’s path, and its arguments': 'Path program, lan argumene',
   '{device} (this device)': '{device} (piranti iki)',
+  'Find an application': 'Golèk aplikasi',
+  'Another program…': 'Program liya…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} durung bisa mbukak aplikasi ing layar dhéwé.',
+  '{device} needs Xvfb to run an application.': '{device} butuh Xvfb kanggo mbukak aplikasi.',
+  '{device} did not allow this program.': '{device} ora ngidini program iki.',
+  '{device} does not have this application.': '{device} ora duwé aplikasi iki.',
+  'It did not start on {device}.': 'Ora mlaku ing {device}.',
   'Start online machine': 'Wiwiti mesin online',
   'Stop online machine': 'Mandhegake mesin online',
   Resume: 'Terusake',

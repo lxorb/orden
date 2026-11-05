@@ -19,7 +19,7 @@
  *  front of it, is the open space's, which is the only space a caller holding one can
  *  mean. Every mark in the app asks here, so each of them follows. */
 
-import { isChatTarget, isPagesTarget } from '@orden/markdown/links'
+import { isChatTarget, isPagesTarget, isTermTarget } from '@orden/markdown/links'
 import type { FileMark } from './file-mark'
 import { folderNote, isFolderNote } from './folder-notes'
 import { brandIcon, readIcon, siteBrand } from './icons'
@@ -55,8 +55,9 @@ function awayIn(path: string): string | null {
 }
 
 export function chosenIcon(path: string): string | null {
-  // A chat keeps it in its pointer, which no scan reads; see marks-elsewhere.
-  if (isChatTarget(path)) return elsewhere.of(path)?.icon ?? null
+  // A chat keeps it in its pointer and an online terminal in its file (#1110), which no
+  // scan reads; see marks-elsewhere.
+  if (isChatTarget(path) || isTermTarget(path)) return elsewhere.of(path)?.icon ?? null
   const away = awayIn(path)
   if (away === null) return links.iconOf(path) ?? workspace.folderIcons.iconOf(mapKey(path))
 
@@ -199,7 +200,7 @@ function liveMarkOf(path: string): string | null {
  *  Only a stroked icon takes one; an emoji and a coloured drawing have their own
  *  colours. See `readTint` in icons.ts for which names count. */
 export function chosenTint(path: string): string | null {
-  if (isChatTarget(path)) return elsewhere.of(path)?.iconColor ?? null
+  if (isChatTarget(path) || isTermTarget(path)) return elsewhere.of(path)?.iconColor ?? null
   const away = awayIn(path)
   if (away === null) return links.tintOf(path) ?? workspace.folderIcons.tintOf(mapKey(path))
 

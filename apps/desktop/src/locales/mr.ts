@@ -574,6 +574,9 @@ export const mr: Dictionary = {
   'Show other tabs as icons': 'इतर टॅब चिन्हांच्या रूपात दाखवा',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'पुढच्या टॅबशिवाय प्रत्येक टॅब फक्त त्याचे चिन्ह दाखवतो; एकावर पॉइंटर नेल्यास त्याचे नाव दिसते.',
+  'Tabs as wide as their names': 'नावाइतके रुंद टॅब',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'प्रत्येक टॅब त्याच्या आयकॉन, नाव आणि बंद करण्याच्या बटणाला लागेल तितकाच रुंद असतो; बंद असताना सर्व टॅब सारख्या रुंदीचे असतात.',
   'Tab preview delay': 'टॅब पूर्वावलोकनाचा विलंब',
   'How long the pointer rests on a tab before its preview shows.':
     'पूर्वावलोकन दिसण्यापूर्वी पॉइंटर टॅबवर किती वेळ थांबतो.',
@@ -2362,6 +2365,14 @@ export const mr: Dictionary = {
   'What does it run?': 'हे काय चालवेल?',
   'A program’s path, and its arguments': 'प्रोग्रामचा पाथ, आणि त्याचे आर्ग्युमेंट',
   '{device} (this device)': '{device} (हे डिव्हाइस)',
+  'Find an application': 'ॲप्लिकेशन शोधा',
+  'Another program…': 'दुसरा प्रोग्राम…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} अजून ॲप्लिकेशन त्याच्या स्वतःच्या डिस्प्लेवर चालवू शकत नाही.',
+  '{device} needs Xvfb to run an application.': 'ॲप्लिकेशन चालवण्यासाठी {device} ला Xvfb लागते.',
+  '{device} did not allow this program.': '{device} ने या प्रोग्रामला परवानगी दिली नाही.',
+  '{device} does not have this application.': '{device} वर हे ॲप्लिकेशन नाही.',
+  'It did not start on {device}.': 'ते {device} वर सुरू झाले नाही.',
   'Start online machine': 'ऑनलाइन मशीन सुरू करा',
   'Stop online machine': 'ऑनलाइन मशीन थांबवा',
   Resume: 'पुन्हा सुरू करा',

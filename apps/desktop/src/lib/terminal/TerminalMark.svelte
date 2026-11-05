@@ -12,9 +12,18 @@
    *  An online terminal wears the same marks with a small cloud in the corner, so it never
    *  reads as a local shell, and its machine's state as a dot over the other corner: none
    *  while awake, hollow while asleep, turning while it starts, amber near the month's
-   *  hours. See docs/online-terminal.md 4.10. */
+   *  hours. See docs/online-terminal.md 4.10.
+   *
+   *  An icon the reader chose is worn over all of these (#1110) - a terminal's in its
+   *  tab's words (spec.ts), an online terminal's in its file - with the cloud still in
+   *  its corner. And this is the one mark a terminal has: its tab, its row in the file
+   *  list and every other list draw it, so a row is never the plain terminal its tab is
+   *  not (FileMark.svelte). A row with no tab open runs nothing, and says nothing of
+   *  the machine it has not asked about. */
 
+  import { chosenIcon, chosenTint } from '../chosen-icon'
   import Icon from '../Icon.svelte'
+  import { readIcon, takesTint } from '../icons'
   import { marks } from '../online/marks.svelte'
   import { isTermTarget } from '@orden/markdown/links'
   import { remote } from '../remote/hosts.svelte'
@@ -29,13 +38,24 @@
     $props()
 
   const online = $derived(isTermTarget(tab.path ?? null))
-  const shell = $derived(online ? '' : (readSpec(tab.doc)?.shell ?? ''))
+  /** The tab's words, for one on this machine: its shell, and the icon chosen for it. */
+  const spec = $derived(online ? null : readSpec(tab.doc))
+  const shell = $derived(spec?.shell ?? '')
   const mark = $derived(terminalMark(shell, tab.running?.program ?? null))
   const host = $derived(hostIdOf(shell))
   const colour = $derived(
     tab.running?.colour ?? (host === null ? null : (remote.byId(host)?.colour ?? null)),
   )
-  const machine = $derived(online ? (marks.get(tab.id ?? '') ?? 'asleep') : null)
+  const machine = $derived(online && tab.id !== undefined ? (marks.get(tab.id) ?? 'asleep') : null)
+
+  /** What the reader chose for it, and its colour: the file's for an online terminal,
+   *  the tab's words' for one on this machine. */
+  const chosen = $derived(
+    readIcon(online ? (tab.path ? chosenIcon(tab.path) : null) : (spec?.icon ?? null)),
+  )
+  const tint = $derived(
+    online ? (tab.path ? chosenTint(tab.path) : null) : (spec?.iconColor ?? null),
+  )
 
   $effect(() => {
     if (host !== null) void remote.ready()
@@ -46,17 +66,18 @@
   class="mark"
   class:is-coloured={colour !== null}
   class:is-online={online}
+  class:is-picture={chosen !== null && !takesTint(chosen)}
   style:--host={colour === null ? undefined : `var(--canvas-${colour})`}
   data-mark={mark}
   data-machine={machine}
   aria-hidden="true"
 >
-  <span class="drawn"><Icon icon={null} fallback={TERMINAL_MARKS[mark]} /></span>
+  <span class="drawn"><Icon icon={chosen} {tint} fallback={TERMINAL_MARKS[mark]} /></span>
   {#if online}
     <svg class="cloud" viewBox="0 0 24 24"
       ><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" /></svg
     >
-    {#if machine !== 'awake'}<span class="state"></span>{/if}
+    {#if machine !== null && machine !== 'awake'}<span class="state"></span>{/if}
   {/if}
 </span>
 
@@ -68,9 +89,15 @@
     width: var(--icon-md);
     height: var(--icon-md);
     flex: none;
+    font-size: var(--icon-md);
     stroke: currentColor;
     stroke-width: 1.6;
     opacity: 0.8;
+  }
+
+  /* An emoji or a drawing in its own colours, chosen: FileMark's rule, drawn whole. */
+  .mark.is-picture {
+    opacity: 1;
   }
 
   .drawn {

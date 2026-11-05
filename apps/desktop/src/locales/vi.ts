@@ -571,6 +571,9 @@ export const vi: Dictionary = {
   'Show other tabs as icons': 'Hiện các thẻ khác dưới dạng biểu tượng',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Mọi thẻ trừ thẻ ở phía trước chỉ hiện biểu tượng; trỏ vào một thẻ sẽ thấy tên của nó.',
+  'Tabs as wide as their names': 'Thẻ rộng vừa tên',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Mỗi thẻ chỉ rộng vừa đủ cho biểu tượng, tên và nút đóng của nó; khi tắt, mọi thẻ rộng như nhau.',
   'Tab preview delay': 'Độ trễ xem trước thẻ',
   'How long the pointer rests on a tab before its preview shows.':
     'Thời gian con trỏ dừng trên một thẻ trước khi bản xem trước hiện ra.',
@@ -2332,6 +2335,14 @@ export const vi: Dictionary = {
   'What does it run?': 'Chạy cái gì?',
   'A program’s path, and its arguments': 'Đường dẫn chương trình và các đối số',
   '{device} (this device)': '{device} (thiết bị này)',
+  'Find an application': 'Tìm ứng dụng',
+  'Another program…': 'Chương trình khác…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} chưa thể chạy ứng dụng trên một màn hình riêng.',
+  '{device} needs Xvfb to run an application.': '{device} cần Xvfb để chạy ứng dụng.',
+  '{device} did not allow this program.': '{device} không cho phép chương trình này.',
+  '{device} does not have this application.': '{device} không có ứng dụng này.',
+  'It did not start on {device}.': 'Ứng dụng không khởi động trên {device}.',
   'Start online machine': 'Khởi động máy trực tuyến',
   'Stop online machine': 'Dừng máy trực tuyến',
   Resume: 'Tiếp tục',

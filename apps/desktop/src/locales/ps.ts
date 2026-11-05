@@ -574,6 +574,9 @@ export const ps: Dictionary = {
   'Show other tabs as icons': 'نور ټبونه د نښو په توګه ښکاره کړئ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'له مخکني پرته هر ټب یوازې خپله نښه ښيي؛ کله چې یو ته اشاره وکړئ، نوم یې ښکاره کېږي.',
+  'Tabs as wide as their names': 'ټبونه د خپلو نومونو په پلنوالي',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'هر ټب یوازې هومره پلن دی چې د هغه نښه، نوم او د تړلو تڼۍ ورته اړتیا لري؛ کله چې بند وي، ټول ټبونه یو شان پلن وي.',
   'Tab preview delay': 'د ټب د مخکتنې ځنډ',
   'How long the pointer rests on a tab before its preview shows.':
     'څومره وخت چې اشاره ګر په ټب پاتې کیږي مخکې له دې چې مخکتنه یې ښکاره شي.',
@@ -2362,6 +2365,15 @@ export const ps: Dictionary = {
   'What does it run?': 'څه چلوي؟',
   'A program’s path, and its arguments': 'د یوه پروګرام لار، او دلیلونه یې',
   '{device} (this device)': '{device} (دا وسیله)',
+  'Find an application': 'یو اپلیکیشن ومومئ',
+  'Another program…': 'بل پروګرام…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} لا نشي کولی اپلیکیشن د خپل جلا ښودنځي پر مخ وچلوي.',
+  '{device} needs Xvfb to run an application.':
+    '{device} د اپلیکیشن چلولو لپاره Xvfb ته اړتیا لري.',
+  '{device} did not allow this program.': '{device} دې پروګرام ته اجازه ورنکړه.',
+  '{device} does not have this application.': '{device} دا اپلیکیشن نه لري.',
+  'It did not start on {device}.': 'پر {device} پیل نه شو.',
   'Start online machine': 'آنلاین ماشین پیل کړئ',
   'Stop online machine': 'آنلاین ماشین ودروئ',
   Resume: 'بیا پیل',

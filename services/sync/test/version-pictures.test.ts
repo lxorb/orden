@@ -1,6 +1,6 @@
 /** What a version of a note shows, as what keeps a picture: an account with more
  *  versions than one sweep reads gets to the end of them over several nights, keeps
- *  every picture a version shows, and is let go of the rest (0071, `versionPictures`). */
+ *  every picture a version shows, and is let go of the rest (0073, `versionPictures`). */
 
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'

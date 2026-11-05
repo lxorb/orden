@@ -24,6 +24,20 @@ describe('a .term file', () => {
     })
   })
 
+  it('keeps the icon chosen for it and its colour, and nothing that is not one', () => {
+    const worn = { ...term, icon: 'lucide:rocket', iconColor: 'violet' }
+    expect(termOf(termText(worn))).toEqual(worn)
+    expect(termText(worn)).toBe(
+      '{"v":1,"machine":"m_7J2","session":"s_01J","icon":"lucide:rocket","iconColor":"violet"}\n',
+    )
+    expect(termOf('{"v":1,"machine":"m","session":"s","icon":7,"iconColor":"red"}')).toEqual({
+      v: 1,
+      machine: 'm',
+      session: 's',
+    })
+    expect(termText({ ...term, iconColor: 'red' })).toBe(termText(term))
+  })
+
   it.each([
     '',
     'Terminal',

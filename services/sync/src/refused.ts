@@ -18,6 +18,11 @@
  *  `objectBody` in body.ts. */
 export const NOT_AN_OBJECT = 'send an object'
 
+/** What applications answer while they are switched off, and for an application that
+ *  is not the reader's: a route that does not exist, as an app that knows it reads it
+ *  (apps/door.ts, apps/catalogue.ts). */
+export const NOT_FOUND = 'not found'
+
 /** A space id nobody in this account can reach, said the same way as a note's. */
 export const NO_SUCH_SPACE = 'no such space'
 

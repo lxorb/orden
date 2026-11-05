@@ -453,10 +453,8 @@ async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'r
     const open = ws.documentAt(note.path)
     if (open) {
       open.flush()
-      const edits = open.live.carried(note.edits, note.after, true) ?? note.edits
-      const back = applied(open.text, edits)
       const knew = open.onDisk
-      open.edited(edits, back)
+      const back = open.take(note.edits, note.after).text
       const written = await writeEdited(open, note.path, back, knew)
       if (written !== null) links.noteSaved(note.path, written)
       continue

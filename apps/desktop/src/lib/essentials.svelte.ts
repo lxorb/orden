@@ -313,10 +313,19 @@ export function released<T extends Held>(tabs: readonly T[], kept: readonly stri
  *  forward as it was left; else a view of its own of a file already open - for a web
  *  note, which is open in one tab only (`secondWebTabs`), that tab, its page and its web
  *  data with it - or the file opened with its tab an essential as it lands. One view an
- *  essential. */
+ *  essential.
+ *
+ *  While the window is split it is kept as a tab instead, as a double click keeps it
+ *  (#1110): the essential's own view takes the place of whatever one pane showed, and
+ *  which pane that was is not something a press in the sidebar says. */
 export function openEssential(path: string): Promise<void> {
-  opening = showEssential(path)
+  opening = split() ? keepAsTab(path).then(() => undefined) : showEssential(path)
   return opening
+}
+
+/** Whether more than one pane is in sight: split, and none of them filling the window. */
+function split(): boolean {
+  return workspace.panes.count > 1 && workspace.panes.fills === null
 }
 
 /** The last press of a tile, still landing: a double click's second press waits for the

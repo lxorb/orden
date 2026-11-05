@@ -1805,7 +1805,7 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('app.graph'),
       run: () => workspace.openGraph(),
     },
-    // Todos as a tab, the same as the left side's checkbox and its key (#1047).
+    // Todos as a tab, the same as its key and the right side's Todos icon (#1047, #1110).
     ...(__EVEN_PLUGIN__
       ? []
       : [

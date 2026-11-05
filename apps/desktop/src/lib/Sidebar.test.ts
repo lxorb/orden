@@ -62,7 +62,7 @@ describe('the panel tabs', () => {
   test('are the space on the left and the note in front on the right, as Obsidian has them', () => {
     open('# Head\n')
 
-    // The Tasks panel lives on the right; the left side opens Todos from its top row (#1047).
+    // The Tasks panel lives on the right (#1047).
     expect(strip('left')).toEqual(['Files'])
     // And the scratchpad, the one tab on a desktop's right that is no panel (#1032).
     expect(strip('right')).toEqual([

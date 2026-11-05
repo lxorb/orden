@@ -322,19 +322,18 @@ async function writeOpen(open: NoteDoc, change: Change, keeping: Keeping): Promi
   open.flush()
   const before = open.text
   const onDisk = open.onDisk
-  const edits = open.live.carried(change.edits, change.before, true) ?? change.edits
-  const after = applied(before, edits)
-
-  open.edited(edits, after)
+  // In the editor's count of the line endings, and written in the file's; see `take`.
+  const took = open.take(change.edits, change.before)
+  const after = applied(took.flat, took.edits)
 
   // Keeping the version about to be replaced, the same way saving does: the words
   // the reader had, unsaved ones and all.
-  const written = await writeEdited(open, change.path, after, onDisk, () =>
+  const written = await writeEdited(open, change.path, took.text, onDisk, () =>
     keep(change.path, before, keeping),
   )
   if (written !== null) links.noteSaved(change.path, written)
 
-  return { path: change.path, content: before, after, edits: reverse(before, edits) }
+  return { path: change.path, content: before, after, edits: reverse(took.flat, took.edits) }
 }
 
 /** A note nobody has open, written as the change says. A pane that opened it while
@@ -377,8 +376,8 @@ async function writeClosed(
   links.noteSaved(change.path, down)
 
   const late = ws.documentAt(change.path)
-  const caught = late?.live.carried(edits, now)
-  if (late && caught) catchUp(late, caught, after)
+  // Only a document that remembers holding the words the write was worked out on.
+  if (late?.live.since(now.replace(/\r\n?/g, '\n'))) catchUp(late, edits, now, after)
 
   return {
     path: change.path,
@@ -410,9 +409,7 @@ function carriedPast(before: string, now: string, edits: readonly Edit[]): Edit[
 /** A note opened from the file a write was about to replace, brought up to it. Its
  *  words are the file's again unless the reader has typed in the meantime, which
  *  is then what the next write is for. */
-function catchUp(note: NoteDoc, edits: readonly Edit[], written: string) {
-  note.flush()
-  const text = applied(note.text, edits)
-  note.edited(edits, text)
+function catchUp(note: NoteDoc, edits: readonly Edit[], before: string, written: string) {
+  const { text } = note.take(edits, before)
   if (text !== written) note.dirty = true
 }

@@ -38,6 +38,22 @@ export type AppState = 'stopped' | 'starting' | 'running' | 'exited'
 
 const APP_STATES: readonly AppState[] = ['stopped', 'starting', 'running', 'exited']
 
+/** Why a host did not start it, with a `stopped` or `exited` state: its platform cannot
+ *  give an application a display of its own yet (Windows and macOS, until step 8), the
+ *  display server it needs is not installed (Xvfb), the reader at the host said no to a
+ *  program by its path, what the file names is not on the host, or it failed to start. */
+export type NotStarted = 'isolation' | 'display' | 'refused' | 'missing' | 'failed'
+
+const NOT_STARTED: readonly NotStarted[] = ['isolation', 'display', 'refused', 'missing', 'failed']
+
+/** The state frame, as either side sends it. */
+export interface StateFrame {
+  t: 'state'
+  state: AppState
+  code?: number | null
+  why?: NotStarted
+}
+
 /** What a viewer says: hello (with `hold`, as an online terminal's), Take over, leave,
  *  signalling for the host, its view, and start / stop / restart for the host. */
 export type ViewerFrame =
@@ -50,10 +66,7 @@ export type ViewerFrame =
 
 /** What the host says: that it is the host, signalling for the holder, and where the
  *  application stands. */
-export type HostFrame =
-  | { t: 'host' }
-  | { t: 'signal'; data: string }
-  | { t: 'state'; state: AppState; code?: number | null }
+export type HostFrame = { t: 'host' } | { t: 'signal'; data: string } | StateFrame
 
 /** What the relay tells a viewer: the lock's frames, whether the host is there, the
  *  host's signalling, where the application stands, and refusals. */
@@ -62,7 +75,7 @@ export type RelayToViewer =
   | { t: 'hold' }
   | { t: 'host'; up: boolean }
   | { t: 'signal'; data: string }
-  | { t: 'state'; state: AppState; code?: number | null }
+  | StateFrame
   | { t: 'refused'; error: 'gone' | 'rate' | 'large' }
 
 /** What the relay tells the host: who holds the application now (null for nobody), the
@@ -112,14 +125,25 @@ function runOf(value: Fields): { t: 'run'; what: 'start' | 'stop' | 'restart' } 
   return what === 'start' || what === 'stop' || what === 'restart' ? { t: 'run', what } : null
 }
 
-function stateOf(value: Fields): { t: 'state'; state: AppState; code?: number | null } | null {
-  const { state, code } = value
+function stateOf(value: Fields): StateFrame | null {
+  const { state, code, why } = value
   if (!APP_STATES.some((one) => one === state)) return null
   const known = state as AppState
-  if (code === undefined) return { t: 'state', state: known }
-  return code === null || (typeof code === 'number' && Number.isSafeInteger(code))
-    ? { t: 'state', state: known, code }
-    : null
+  if (!(
+    code === undefined ||
+    code === null ||
+    (typeof code === 'number' && Number.isSafeInteger(code))
+  ))
+    return null
+  // A reason this side does not know is dropped rather than the frame: a newer host may
+  // say more than an older tab can.
+  const reason = NOT_STARTED.find((one) => one === why)
+  return {
+    t: 'state',
+    state: known,
+    ...(code === undefined ? {} : { code }),
+    ...(reason ? { why: reason } : {}),
+  }
 }
 
 /** A viewer's frame, as the relay reads it. */
@@ -282,3 +306,54 @@ export function appFileText(app: AppFile): string {
       : { kind: 'path', path: app.run.path, args: app.run.args, cwd: app.run.cwd }
   return `${JSON.stringify({ v: 1, host: app.host, run })}\n`
 }
+
+// ---------------------------------------------------------------------------
+// What a host has installed (step 3)
+
+/** One application a host has installed, as the new application's chooser offers it:
+ *  the id the host knows it by (a desktop entry's id on Linux, a Start menu shortcut on
+ *  Windows, a bundle on a Mac), its name, and its icon as a small picture, where the
+ *  host found one. The host starts it by the id alone and never by words from elsewhere. */
+export interface Installed {
+  id: string
+  name: string
+  icon?: string
+}
+
+/** The most applications one host lists. */
+export const MOST_INSTALLED = 600
+/** The largest icon kept, as its data URL: a 48 pixel PNG or a small SVG. */
+export const MOST_ICON = 48 * 1024
+/** The largest catalogue, in characters of JSON. */
+export const MOST_CATALOGUE = 4 * 1024 * 1024
+
+const ICON = /^data:image\/(png|svg\+xml);base64,[A-Za-z0-9+/]+={0,2}$/
+
+/** One listed application that checks, or null. An icon that does not check is left
+ *  off rather than the application. */
+export function installedOf(value: unknown): Installed | null {
+  if (!isRecord(value) || !isText(value.id, 512) || !isText(value.name, 200)) return null
+  const { icon } = value
+  const kept = typeof icon === 'string' && icon.length <= MOST_ICON && ICON.test(icon)
+  return { id: value.id, name: value.name, ...(kept ? { icon } : {}) }
+}
+
+/** A host's catalogue that checks: the applications that do, the first of any id, at
+ *  most `MOST_INSTALLED`; null for something that is no list. */
+export function catalogueOf(value: unknown): Installed[] | null {
+  if (!Array.isArray(value)) return null
+  const seen = new Set<string>()
+  const apps: Installed[] = []
+  for (const one of value) {
+    const app = installedOf(one)
+    if (!app || seen.has(app.id)) continue
+    seen.add(app.id)
+    apps.push(app)
+    if (apps.length === MOST_INSTALLED) break
+  }
+  return apps
+}
+
+/** Where a host's catalogue is kept on the account: `PUT` by the host for itself, `GET`
+ *  by any of the reader's devices for a host by its id. */
+export const CATALOGUE_PATH = '/v2/apps/catalogue'

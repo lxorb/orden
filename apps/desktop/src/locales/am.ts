@@ -572,6 +572,9 @@ export const am: Dictionary = {
   'Show other tabs as icons': 'ሌሎች ትሮችን እንደ አዶ አሳይ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ከፊት ካለው በስተቀር እያንዳንዱ ትር አዶውን ብቻ ያሳያል፤ ወደ አንዱ ሲጠቁሙ ስሙን ያሳያል።',
+  'Tabs as wide as their names': 'ትሮች እንደ ስማቸው ስፋት',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'እያንዳንዱ ትር ምልክቱ፣ ስሙ እና የመዝጊያ ቁልፉ የሚፈልጉትን ያህል ብቻ ይሰፋል፤ ሲጠፋ ሁሉም ትሮች እኩል ስፋት አላቸው።',
   'Tab preview delay': 'የትር ቅድመ እይታ መዘግየት',
   'How long the pointer rests on a tab before its preview shows.':
     'ቅድመ እይታው ከመታየቱ በፊት ጠቋሚው በትሩ ላይ የሚያርፍበት ጊዜ።',
@@ -2331,6 +2334,14 @@ export const am: Dictionary = {
   'What does it run?': 'ምን ያስኬዳል?',
   'A program’s path, and its arguments': 'የፕሮግራም መንገድ፣ እና ነጋሪ እሴቶቹ',
   '{device} (this device)': '{device} (ይህ መሣሪያ)',
+  'Find an application': 'መተግበሪያ ፈልግ',
+  'Another program…': 'ሌላ ፕሮግራም…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} እስካሁን መተግበሪያን በራሱ ማሳያ ላይ ማስኬድ አይችልም።',
+  '{device} needs Xvfb to run an application.': '{device} መተግበሪያ ለማስኬድ Xvfb ያስፈልገዋል።',
+  '{device} did not allow this program.': '{device} ይህን ፕሮግራም አልፈቀደም።',
+  '{device} does not have this application.': '{device} ይህ መተግበሪያ የለውም።',
+  'It did not start on {device}.': 'በ{device} ላይ አልጀመረም።',
   'Start online machine': 'የመስመር ላይ ማሽን አስጀምር',
   'Stop online machine': 'የመስመር ላይ ማሽን አቁም',
   Resume: 'ቀጥል',

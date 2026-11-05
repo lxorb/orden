@@ -573,16 +573,41 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  window, its sidebars sliding away under its spring and its canvas a clear scrim under
  *  the bar (overview/Overview.svelte). Measured 290,456.
  *
+ *  The code raised on 2026-11-04, to 5,904,800, for #331: each pane shrinks where it is
+ *  into its own window in the tab overview (`paneDrawn` in overview/flight.ts, the layer
+ *  under the panes in overview/Overview.svelte). Measured 5,904,611.
+ *
+ *  The styles raised on 2026-11-04, to 290,800, for #1063: a chooser's row wearing an
+ *  installed application's own icon, in the box a mark is in (PromptSheet.svelte).
+ *  Measured 290,744.
+ *
+ *  The code raised on 2026-11-04, to 5,913,700, for #1110: a side's panel icon pressed
+ *  twice opens the panel as a tab, an edit carried into an open file in the editor's
+ *  count of its line endings, a terminal's chosen icon on its tab and its row, and a
+ *  todo's card leaving the keyboard on itself (panel-tab.ts,
+ *  workspace/documents.svelte.ts, terminal/TerminalMark.svelte, icon-target.ts,
+ *  views/TaskRow.svelte). Measured 5,913,084.
+ *
+ *  The code raised on 2026-11-04, to 5,916,700, the catalogues to 977,400 and the styles
+ *  to 291,500, for #1114 and #1110: tabs as wide as their names and the switch's two
+ *  lines in every language, and the strip's and the Essentials' fixes with them
+ *  (Tabs.svelte, tab-strip/, Bookmarks.svelte, base.css). Measured 5,916,205, 976,970 and
+ *  291,204.
+ *
  *  Raised on 2026-11-04 as #1033, #1120, #1106 and #331 came to claude/hunt-round-1, on
  *  the hunt's own 6,013,571 and 983,998: the code to 6,022,500, the panes' Alt+H/J/K/L,
  *  the properties strip and a footnote's card, measured 6,022,254; the catalogues to
  *  988,100, the panes' names in every language, measured 988,012. The styles keep
  *  #331's 290,700, measured 290,524.
+ *
+ *  Raised on 2026-11-05 as #1110, #1114, #1063 and #331 came to claude/hunt-round-1 on
+ *  top of the hunt's: the code to 6,035,500, measured 6,035,186; the catalogues to
+ *  992,400, measured 992,135. The styles keep #1114's 291,500, measured 291,272.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_022_500,
-  catalogues: 988_100,
-  styles: 290_700,
+  code: 6_035_500,
+  catalogues: 992_400,
+  styles: 291_500,
   fonts: 260_000,
   pages: 40_000,
 }

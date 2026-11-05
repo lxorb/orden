@@ -576,6 +576,9 @@ export const ta: Dictionary = {
   'Show other tabs as icons': 'மற்ற தாவல்களை உருவங்களாகக் காட்டு',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'முன்னால் உள்ளதைத் தவிர ஒவ்வொரு தாவலும் உருவத்தை மட்டும் காட்டும்; ஒன்றின் மேல் சுட்டினால் அதன் பெயர் தெரியும்.',
+  'Tabs as wide as their names': 'பெயர் அளவு அகலமான தாவல்கள்',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'ஒவ்வொரு தாவலும் அதன் ஐகான், பெயர், மூடும் பொத்தான் ஆகியவற்றுக்குத் தேவையான அகலம் மட்டுமே; அணைத்தால் எல்லாத் தாவல்களும் ஒரே அகலம்.',
   'Tab preview delay': 'தாவல் முன்னோட்டத் தாமதம்',
   'How long the pointer rests on a tab before its preview shows.':
     'முன்னோட்டம் தோன்றும் முன் சுட்டி தாவலின் மேல் எவ்வளவு நேரம் இருக்க வேண்டும்.',
@@ -2394,6 +2397,14 @@ export const ta: Dictionary = {
   'What does it run?': 'இது எதை இயக்கும்?',
   'A program’s path, and its arguments': 'ஒரு நிரலின் பாதை, அதன் அளவுருக்கள்',
   '{device} (this device)': '{device} (இந்தச் சாதனம்)',
+  'Find an application': 'பயன்பாட்டைத் தேடு',
+  'Another program…': 'வேறு நிரல்…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} இன்னும் ஒரு பயன்பாட்டை அதன் சொந்த காட்சியில் இயக்க முடியாது.',
+  '{device} needs Xvfb to run an application.': 'பயன்பாட்டை இயக்க {device}-க்கு Xvfb தேவை.',
+  '{device} did not allow this program.': '{device} இந்த நிரலை அனுமதிக்கவில்லை.',
+  '{device} does not have this application.': '{device}-இல் இந்தப் பயன்பாடு இல்லை.',
+  'It did not start on {device}.': 'இது {device}-இல் தொடங்கவில்லை.',
   'Start online machine': 'ஆன்லைன் இயந்திரத்தைத் தொடங்கு',
   'Stop online machine': 'ஆன்லைன் இயந்திரத்தை நிறுத்து',
   Resume: 'தொடர்',

@@ -28,7 +28,7 @@
   import { shortcuts } from '../shortcuts.svelte'
   import { afterQuiet } from '../timing'
   import { scratchpad } from './pad'
-  import { closeScratchpad, shown, WIDTH } from './is.svelte'
+  import { closeScratchpad, padTab, shown, WIDTH } from './is.svelte'
   import { viewport } from '../viewport.svelte'
 
   /** `docked` in the right side's body, as its tab (#1032): the side's width, so no edge
@@ -118,6 +118,12 @@
   $effect(() => {
     const index = links.index(path)
     if (view) setNoteIndex(view, index)
+  })
+
+  // A tab holding the scratchpad as a note is where its words are (#1110): a card left up
+  // by the last launch goes as that tab comes back, so they are never in two editors.
+  $effect(() => {
+    if (padTab()) closeScratchpad()
   })
 
   // Asked for by a person: the keyboard in, remembering where it was for the way back.

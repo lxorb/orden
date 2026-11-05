@@ -597,6 +597,9 @@ export const uk: Dictionary = {
   'Show other tabs as icons': 'Показувати інші вкладки значками',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Кожна вкладка, крім передньої, показує лише значок; якщо навести на неї, з’являється назва.',
+  'Tabs as wide as their names': 'Вкладки завширшки з назву',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Кожна вкладка завширшки лише з свій значок, назву й кнопку закриття; якщо вимкнено, усі вкладки однакової ширини.',
   'Tab preview delay': 'Затримка попереднього перегляду вкладки',
   'How long the pointer rests on a tab before its preview shows.':
     'Скільки вказівник має пробути на вкладці, перш ніж з’явиться її попередній перегляд.',
@@ -2443,6 +2446,14 @@ export const uk: Dictionary = {
   'What does it run?': 'Що вона запускає?',
   'A program’s path, and its arguments': 'Шлях до програми та її аргументи',
   '{device} (this device)': '{device} (цей пристрій)',
+  'Find an application': 'Знайти застосунок',
+  'Another program…': 'Інша програма…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} поки не може запускати застосунок на окремому екрані.',
+  '{device} needs Xvfb to run an application.': 'Щоб запустити застосунок, {device} потрібен Xvfb.',
+  '{device} did not allow this program.': '{device} не дозволив цю програму.',
+  '{device} does not have this application.': 'На {device} немає цього застосунку.',
+  'It did not start on {device}.': 'Не запустився на {device}.',
   'Start online machine': 'Запустити онлайн-машину',
   'Stop online machine': 'Зупинити онлайн-машину',
   Resume: 'Продовжити',

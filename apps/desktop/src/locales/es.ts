@@ -585,6 +585,9 @@ export const es: Dictionary = {
   'Show other tabs as icons': 'Mostrar las demás pestañas como iconos',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Cada pestaña salvo la del frente muestra solo su icono; al señalar una, muestra su nombre.',
+  'Tabs as wide as their names': 'Pestañas tan anchas como sus nombres',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Cada pestaña mide solo lo que necesitan su icono, su nombre y su botón de cerrar; desactivado, todas miden lo mismo.',
   'Tab preview delay': 'Retraso de la vista previa de pestañas',
   'How long the pointer rests on a tab before its preview shows.':
     'Cuánto descansa el puntero sobre una pestaña antes de que aparezca su vista previa.',
@@ -2420,6 +2423,15 @@ export const es: Dictionary = {
   'What does it run?': '¿Qué ejecuta?',
   'A program’s path, and its arguments': 'La ruta de un programa y sus argumentos',
   '{device} (this device)': '{device} (este dispositivo)',
+  'Find an application': 'Buscar una aplicación',
+  'Another program…': 'Otro programa…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} todavía no puede ejecutar una aplicación en una pantalla propia.',
+  '{device} needs Xvfb to run an application.':
+    '{device} necesita Xvfb para ejecutar una aplicación.',
+  '{device} did not allow this program.': '{device} no permitió este programa.',
+  '{device} does not have this application.': '{device} no tiene esta aplicación.',
+  'It did not start on {device}.': 'No se inició en {device}.',
   'Start online machine': 'Iniciar máquina en línea',
   'Stop online machine': 'Detener máquina en línea',
   Resume: 'Reanudar',

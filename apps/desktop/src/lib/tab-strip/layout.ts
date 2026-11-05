@@ -42,10 +42,50 @@ const CLOSE_FROM = 68
 const CLOSE_FROM_TOUCH = 100
 
 /** What the layout needs to know about a tab: whether it is the one being read, and
- *  whether it is drawn as its mark alone. */
+ *  whether it is drawn as its mark alone - and, while tabs are as wide as their contents
+ *  (#1114), how wide its contents want it (`fitted`). */
 export interface Sized {
   readonly icon: boolean
   readonly active: boolean
+  readonly fit?: number | undefined
+}
+
+/** The gap between a tab's mark and its name: `.label`'s margin in Tabs.svelte. */
+const LABEL_GAP = 6
+
+/** What a tab wears after its name, each with the lead before it, as Tabs.svelte and
+ *  the themes draw them: the open book, the speaker, the shared mark (13 px each), the
+ *  unsaved dot (6 px), and the faces (16 px) and dots (5 px) of who else is in it, each
+ *  overlapping the next by 2. */
+export interface Trailing {
+  reading?: boolean
+  sound?: boolean
+  shared?: boolean
+  draft?: boolean
+  faces?: number
+  dots?: number
+}
+
+export function trailing(marks: Trailing): number {
+  const people = (marks.faces ?? 0) * 14 + (marks.dots ?? 0) * 3
+  return (
+    (marks.reading ? 6 + 13 : 0) +
+    (marks.sound ? 6 + 13 : 0) +
+    (marks.shared ? 4 + 13 : 0) +
+    (marks.draft ? 6 + 6 : 0) +
+    (people > 0 ? 6 + people : 0)
+  )
+}
+
+/** How wide a tab is when it is as wide as its contents need (#1114): its mark, its name
+ *  `name` pixels long, the marks after the name `trailing` pixels long, and its close
+ *  button - and never so narrow that a tab not in front gives up its close button for it.
+ *
+ *  Emil: an active "Orden" tab beside one icon tab was far wider than its name needs,
+ *  every tab being the standard width while the strip has the room. */
+export function fitted(name: number, trailing = 0): number {
+  const contents = MARK + LABEL_GAP + name + trailing + CLOSE
+  return Math.ceil(2 * INSET + Math.max(contents, CLOSE_FROM))
 }
 
 /** A tab's place in the strip: where it starts, and how wide it is. */
@@ -68,8 +108,14 @@ function limits(tab: Sized): { least: number; crossover: number; preferred: numb
   return {
     least: tab.active ? WIDTH.active : WIDTH.inactive,
     crossover: WIDTH.active,
-    preferred: WIDTH.standard,
+    preferred: preferredOf(tab),
   }
+}
+
+/** The widest a tab drawn with its name grows: the standard width, or its contents' own
+ *  where it is as wide as those (#1114), never wider than the standard one. */
+function preferredOf(tab: Sized): number {
+  return tab.fit === undefined ? WIDTH.standard : clamp(tab.fit, WIDTH.active, WIDTH.standard)
 }
 
 /** How wide each tab is, given the room the strip has for them.
@@ -123,14 +169,23 @@ export function widthsFor(tabs: readonly Sized[], room: number | null): number[]
 /** How wide a tab drawn as its mark alone opens out to while the pointer rests on it
  *  (#1041): to the standard width where the strip has the room, and never narrower than
  *  enough of its name to read. Only that tab changes, so every tab in front of it - and
- *  the one under the pointer - stays where it was, and the ones after it make way. */
+ *  the one under the pointer - stays where it was, and the ones after it make way.
+ *
+ *  A tab as wide as its contents (#1114, `fit`) opens out to those and no further, and
+ *  a short name to no more than it needs. */
 export const OPENED_LEAST = 160
 
-export function widened(widths: readonly number[], at: number, room: number | null): number[] {
+export function widened(
+  widths: readonly number[],
+  at: number,
+  room: number | null,
+  fit?: number,
+): number[] {
   const now = widths[at]
   if (now === undefined) return [...widths]
   const free = room === null ? 0 : Math.max(0, room - sum(widths))
-  const wide = Math.max(OPENED_LEAST, Math.min(WIDTH.standard, now + free))
+  const most = fit === undefined ? WIDTH.standard : clamp(fit, WIDTH.icon, WIDTH.standard)
+  const wide = Math.max(Math.min(OPENED_LEAST, most), Math.min(most, now + free))
   return widths.map((width, index) => (index === at ? Math.max(width, wide) : width))
 }
 

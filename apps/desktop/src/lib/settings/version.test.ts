@@ -59,9 +59,23 @@ describe('the version', () => {
     expect(version.said()).toBe('under test · Unstable')
   })
 
-  test('says the build the web app was served beside it', () => {
+  test('says the build the web app was served beside it, and the commit it was built from', () => {
     world.web = 'stable'
-    expect(version.said()).toBe('under test · Stable')
+    expect(version.said()).toBe('under test (c0ffee1) · Stable')
+  })
+
+  /** #1112: the edge carries the release's number, so only its commit tells it is stale. */
+  test("says the edge's commit, which its number does not", () => {
+    world.web = 'unstable'
+    expect(version.said()).toBe('under test (c0ffee1) · Unstable')
+  })
+
+  test('pressed on the web, puts the commit on the clipboard with the version', async () => {
+    world.web = 'unstable'
+    const field = versionField()
+    if (field.kind !== 'value') throw new Error('the version is a value')
+    field.press()
+    await vi.waitFor(() => expect(world.copied).toEqual(['under test (c0ffee1)']))
   })
 
   test('is alone on a phone, whose updates are the store’s', () => {

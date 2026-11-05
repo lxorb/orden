@@ -414,6 +414,7 @@ export default defineConfig({
     // Read by the space chooser, which the plugin never shows; defined so the page
     // cannot trip over a name it was never given. See vite.config.ts.
     __APP_VERSION__: JSON.stringify(manifest.version),
+    __APP_COMMIT__: JSON.stringify(''),
     // The glasses run no program on anybody's machine.
     __CLAUDE_CODE__: 'false',
   },

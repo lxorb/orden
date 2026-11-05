@@ -148,8 +148,24 @@ CARD = """(card) => {
       const box = card.querySelector('.head .box')
       const at = box?.getBoundingClientRect()
       if (!grip || !at) return null
-      return { overlap: grip.right - at.left, drift: Math.abs(grip.top + grip.height / 2 - (at.top + at.height / 2)) }
+      return {
+        overlap: grip.right - at.left,
+        drift: Math.abs(grip.top + grip.height / 2 - (at.top + at.height / 2)),
+        // Inside the card, an inset from its edge (#1110).
+        inset: grip.left - card.getBoundingClientRect().left,
+      }
     })(),
+    // The row's own state is the whole of what says it is selected: no ring round its
+    // words, and no ground of its own round its buttons (#1110).
+    ring: (() => {
+      const words = card.querySelector('.words')
+      const went = words?.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }),
+      )
+      // Pressed, the words leave the keyboard on the row rather than taking it.
+      return went === false && document.activeElement === card ? 'none' : 'the words'
+    })(),
+    under: getComputedStyle(card.querySelector('.actions')).backgroundColor,
   }
 }"""
 
@@ -179,6 +195,12 @@ def the_card(page: Page) -> None:
             wrong("there is no room between one card and the next")
         if drawn["grip"] is None or drawn["grip"]["overlap"] > 0 or drawn["grip"]["drift"] > 2:
             wrong("the grip lies over the box, or not level with it")
+        elif drawn["grip"]["inset"] < 3:
+            wrong("the grip touches the card's edge")
+        if drawn["ring"] != "none":
+            wrong("the selected card's words draw a ring of their own")
+        if drawn["under"] not in ("rgba(0, 0, 0, 0)", "transparent"):
+            wrong("the card's buttons stand on a ground of their own")
         shot(page, f"01-card-{scheme}")
     page.emulate_media(color_scheme="light")
 

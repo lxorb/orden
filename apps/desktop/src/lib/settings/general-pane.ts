@@ -9,7 +9,7 @@ import { recovery } from '../recovery.svelte'
 import { hasTray, residency } from '../reminders/residency.svelte'
 import { chatsGroups } from '../chats-settings'
 import { tabCycle } from '../tab-cycle.svelte'
-import { iconTabs } from '../tab-strip/icon-tabs.svelte'
+import { fitTabs, iconTabs } from '../tab-strip/icon-tabs.svelte'
 import { PREVIEW_DELAY, previewDelay } from '../tab-strip/preview-delay.svelte'
 import { isDesktop, isMobile, platform } from '../tauri'
 import { swipeChoice } from '../back-swipe/choice.svelte'
@@ -408,6 +408,21 @@ export function generalPane(): Pane {
                   initial: true,
                   get: () => iconTabs.on,
                   set: (on) => iconTabs.set(on),
+                },
+                // Each tab only as wide as its contents, still shrinking when the room
+                // runs out (#1114); see tab-strip/icon-tabs.svelte.ts.
+                {
+                  kind: 'switch',
+                  key: 'general.fitTabs',
+                  store: { on: fitTabs, name: 'on' },
+                  label: t('Tabs as wide as their names'),
+                  hint: t(
+                    'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.',
+                  ),
+                  words: ['width', 'wide', 'narrow', 'compact', 'fit', 'title', 'tabs'],
+                  initial: true,
+                  get: () => fitTabs.on,
+                  set: (on) => fitTabs.set(on),
                 },
                 {
                   kind: 'slider',

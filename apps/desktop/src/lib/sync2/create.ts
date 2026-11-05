@@ -110,7 +110,8 @@ export interface Made {
   mergeable?: string
   /** Made again under the id it had: something this device deleted before the account
    *  heard of it, back from the trash (`restored`) - and as the kind it was, which a
-   *  rename may have left its name no longer saying. */
+   *  rename may have left its name no longer saying. Or the id it had while the space
+   *  was used signed out, made on the account at its first pass (`firstPass`). */
   id?: string
   kind?: EntryKind
 }

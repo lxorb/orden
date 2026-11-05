@@ -579,6 +579,9 @@ export const kn: Dictionary = {
   'Show other tabs as icons': 'ಇತರ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಐಕಾನ್‌ಗಳಾಗಿ ತೋರಿಸಿ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ಮುಂದಿನದನ್ನು ಬಿಟ್ಟು ಪ್ರತಿ ಟ್ಯಾಬ್ ತನ್ನ ಐಕಾನ್ ಮಾತ್ರ ತೋರಿಸುತ್ತದೆ; ಒಂದರ ಮೇಲೆ ಪಾಯಿಂಟರ್ ಇಟ್ಟರೆ ಹೆಸರು ಕಾಣುತ್ತದೆ.',
+  'Tabs as wide as their names': 'ಹೆಸರಿನಷ್ಟು ಅಗಲದ ಟ್ಯಾಬ್‌ಗಳು',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'ಪ್ರತಿ ಟ್ಯಾಬ್ ತನ್ನ ಐಕಾನ್, ಹೆಸರು ಮತ್ತು ಮುಚ್ಚುವ ಬಟನ್‌ಗೆ ಬೇಕಾದಷ್ಟು ಮಾತ್ರ ಅಗಲವಿರುತ್ತದೆ; ಆಫ್ ಇದ್ದಾಗ ಎಲ್ಲ ಟ್ಯಾಬ್‌ಗಳು ಒಂದೇ ಅಗಲ.',
   'Tab preview delay': 'ಟ್ಯಾಬ್ ಮುನ್ನೋಟದ ವಿಳಂಬ',
   'How long the pointer rests on a tab before its preview shows.':
     'ಮುನ್ನೋಟ ತೋರುವ ಮೊದಲು ಪಾಯಿಂಟರ್ ಟ್ಯಾಬ್ ಮೇಲೆ ಎಷ್ಟು ಹೊತ್ತು ಇರಬೇಕು.',
@@ -2382,6 +2385,14 @@ export const kn: Dictionary = {
   'What does it run?': 'ಇದು ಏನನ್ನು ಚಲಾಯಿಸುತ್ತದೆ?',
   'A program’s path, and its arguments': 'ಪ್ರೋಗ್ರಾಂನ ಪಾತ್ ಮತ್ತು ಅದರ ಆರ್ಗ್ಯುಮೆಂಟ್‌ಗಳು',
   '{device} (this device)': '{device} (ಈ ಸಾಧನ)',
+  'Find an application': 'ಅಪ್ಲಿಕೇಶನ್ ಹುಡುಕಿ',
+  'Another program…': 'ಬೇರೆ ಪ್ರೋಗ್ರಾಂ…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} ಇನ್ನೂ ತನ್ನದೇ ಡಿಸ್‌ಪ್ಲೇಯಲ್ಲಿ ಅಪ್ಲಿಕೇಶನ್ ಚಲಾಯಿಸಲಾರದು.',
+  '{device} needs Xvfb to run an application.': 'ಅಪ್ಲಿಕೇಶನ್ ಚಲಾಯಿಸಲು {device}ಗೆ Xvfb ಬೇಕು.',
+  '{device} did not allow this program.': '{device} ಈ ಪ್ರೋಗ್ರಾಂಗೆ ಅನುಮತಿಸಲಿಲ್ಲ.',
+  '{device} does not have this application.': '{device}ನಲ್ಲಿ ಈ ಅಪ್ಲಿಕೇಶನ್ ಇಲ್ಲ.',
+  'It did not start on {device}.': 'ಇದು {device}ನಲ್ಲಿ ಪ್ರಾರಂಭವಾಗಲಿಲ್ಲ.',
   'Start online machine': 'ಆನ್‌ಲೈನ್ ಯಂತ್ರವನ್ನು ಪ್ರಾರಂಭಿಸಿ',
   'Stop online machine': 'ಆನ್‌ಲೈನ್ ಯಂತ್ರವನ್ನು ನಿಲ್ಲಿಸಿ',
   Resume: 'ಮುಂದುವರಿಸಿ',

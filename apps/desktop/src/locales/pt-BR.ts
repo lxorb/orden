@@ -584,6 +584,9 @@ export const ptBR: Dictionary = {
   'Show other tabs as icons': 'Mostrar as outras abas como ícones',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Cada aba, exceto a da frente, mostra só o ícone; ao apontar para uma, aparece o nome dela.',
+  'Tabs as wide as their names': 'Abas da largura dos seus nomes',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Cada aba tem só a largura de que precisam o ícone, o nome e o botão de fechar; desligado, todas as abas têm a mesma largura.',
   'Tab preview delay': 'Atraso da prévia de abas',
   'How long the pointer rests on a tab before its preview shows.':
     'Quanto tempo o ponteiro fica sobre uma aba antes de a prévia aparecer.',
@@ -2404,6 +2407,15 @@ export const ptBR: Dictionary = {
   'What does it run?': 'O que ele executa?',
   'A program’s path, and its arguments': 'O caminho de um programa e seus argumentos',
   '{device} (this device)': '{device} (este dispositivo)',
+  'Find an application': 'Buscar um aplicativo',
+  'Another program…': 'Outro programa…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} ainda não consegue rodar um aplicativo em uma tela própria.',
+  '{device} needs Xvfb to run an application.':
+    '{device} precisa do Xvfb para rodar um aplicativo.',
+  '{device} did not allow this program.': '{device} não permitiu este programa.',
+  '{device} does not have this application.': '{device} não tem este aplicativo.',
+  'It did not start on {device}.': 'Não iniciou em {device}.',
   'Start online machine': 'Iniciar máquina online',
   'Stop online machine': 'Parar máquina online',
   Resume: 'Retomar',

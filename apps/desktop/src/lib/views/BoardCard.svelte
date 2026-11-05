@@ -175,6 +175,15 @@
     tabindex="-1"
     aria-label={t('More')}
     title={t('More')}
+    onmousedown={(event) => {
+      // The keyboard stays on the card, which says it is the one: the button is no
+      // stop of its own, and holding the keyboard drew a ring round it (#1110).
+      if (event.button !== 0) return
+      event.preventDefault()
+      event.currentTarget.parentElement?.querySelector<HTMLElement>('[data-card]')?.focus({
+        preventScroll: true,
+      })
+    }}
     onclick={(event) => onmenu(event, row)}
   >
     <svg viewBox="0 0 13 13" aria-hidden="true"
@@ -321,13 +330,35 @@
     color: var(--success);
   }
 
+  /* Over the title's end, on no ground of its own: a card's ground is its tone's, or
+     see-through under glass, and the surface laid under the button was a box the card
+     does not have (#1110). The title fades out under it instead. */
   .menu {
     position: absolute;
     top: 3px;
     inset-inline-end: 3px;
     opacity: 0;
-    background: var(--surface);
     transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  .card:hover .title,
+  .card:focus-within .title,
+  :global([data-touch]) .card .title {
+    --under-menu: calc(var(--row-height-sm) + 3px);
+    mask-image: linear-gradient(
+      to left,
+      transparent var(--under-menu),
+      #000 calc(var(--under-menu) + var(--space-3))
+    );
+  }
+
+  :global(:root[dir='rtl']) .card:is(:hover, :focus-within) .title,
+  :global(:root[dir='rtl'][data-touch]) .card .title {
+    mask-image: linear-gradient(
+      to right,
+      transparent var(--under-menu),
+      #000 calc(var(--under-menu) + var(--space-3))
+    );
   }
 
   .menu svg {

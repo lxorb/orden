@@ -14,6 +14,12 @@ export function isScratchpad(path: string | null | undefined): boolean {
   return !!path && nameOf(path) === SCRATCHPAD && workspace.outside(path)
 }
 
+/** The tab the scratchpad is open in as a note, its right side icon's double press
+ *  (#1110); null while it is only its card. */
+export function padTab(): { id: string } | null {
+  return workspace.tabs.find((one) => isScratchpad(one.path)) ?? null
+}
+
 // Guarded for the workspace's tests, which have no page.
 const inCard = () =>
   typeof document !== 'undefined' &&
@@ -35,7 +41,14 @@ class Shown {
     if (typeof kept.width === 'number') this.resize(kept.width)
   }
 
+  /** Up, unless a tab holds its words already: that tab is brought forward instead, so
+   *  the words are in one editor and never two writing over each other (#1110). */
   show(take = true) {
+    const tab = padTab()
+    if (tab) {
+      workspace.activate(tab.id)
+      return
+    }
     this.calling = take
     this.set(true)
   }

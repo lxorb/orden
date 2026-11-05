@@ -338,6 +338,12 @@
       calc(var(--space-1) + var(--row-pad)),
       calc((100% - var(--column, 100%)) / 2 + var(--space-4))
     );
+    /* The thread fades out over the composer, Codex's sticky composer, rather than being
+       cut off at a line: a mask, so what shows through is whatever the panel stands on.
+       A colour laid over the end was the side's colour as a token says it, and a side
+       under glass, the wallpaper or the chrome's own ground stands on something else -
+       a darker strip with a band of the real ground between it and the field (#1110). */
+    mask-image: linear-gradient(to bottom, #000 calc(100% - var(--space-4)), transparent);
   }
 
   .home {

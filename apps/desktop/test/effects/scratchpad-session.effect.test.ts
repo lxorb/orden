@@ -1,10 +1,12 @@
 import { flushSync } from 'svelte'
 import { expect, test, vi } from 'vitest'
 
-/** A session an older nib wrote, with the scratchpad open as a tab and another closed:
- *  both go on the way in, the words the open one had not written yet are written to the
- *  file first, and the other tabs come back as they were. See `tabsAlong` in
- *  workspace.svelte.ts. */
+/** A session with the scratchpad open as a note, which its right side icon's double
+ *  press opens (#1110): the tab comes back like any note's, words not yet written and
+ *  all, and while it is open the scratchpad is that tab - its card's key brings the tab
+ *  forward, a link to it lands there, and what is put on its end goes into the tab's
+ *  document as well as the file, so the tab never writes the words before it back. See
+ *  is.svelte.ts and pad.ts. */
 
 vi.stubGlobal('requestAnimationFrame', (run: () => void) => setTimeout(run, 0))
 vi.stubGlobal('requestIdleCallback', (run: () => void) => setTimeout(run, 0))
@@ -35,7 +37,7 @@ const draft = (path: string, doc: string, dirty: boolean) => ({
   scroll: 0,
 })
 
-test('an older session’s scratchpad tab is dropped, its words kept', async () => {
+test('a session’s scratchpad tab comes back, and is the scratchpad while it is open', async () => {
   const { Disk } = await import('../disk')
   disk.current = new Disk()
   disk.current.files.set(PLAN, '# Plan\n')
@@ -72,11 +74,27 @@ test('an older session’s scratchpad tab is dropped, its words kept', async () 
   await workspace.restore()
   flushSync()
 
-  expect(workspace.tabs.map((one) => one.path)).toEqual([PLAN])
-  expect(workspace.active?.path).toBe(PLAN)
-  expect(disk.current.files.get(PAD)).toBe('Old words\nNot yet written\n')
+  expect(workspace.tabs.map((one) => one.path)).toEqual([PLAN, PAD])
+  expect(workspace.active?.path).toBe(PAD)
+  expect(workspace.documentAt(PAD)?.text).toBe('Old words\nNot yet written\n')
 
-  // And the closed one is never reopened as a tab.
-  await workspace.reopenClosed()
-  expect(workspace.tabs.some((one) => one.path === PAD)).toBe(false)
+  const { shown } = await import('../../src/lib/scratchpad/is.svelte')
+  const { scratchpad } = await import('../../src/lib/scratchpad/pad')
+  vi.spyOn(scratchpad, 'where').mockResolvedValue(PAD)
+
+  // The card's key, and a link to it, bring the tab forward rather than the card up.
+  workspace.activate(workspace.tabs[0]?.id ?? '')
+  shown.show()
+  expect(shown.on).toBe(false)
+  expect(workspace.active?.path).toBe(PAD)
+  workspace.activate(workspace.tabs[0]?.id ?? '')
+  await workspace.open(PAD)
+  expect(shown.on).toBe(false)
+  expect(workspace.active?.path).toBe(PAD)
+
+  // Words put on its end are in the tab and in the file, the tab's own unwritten ones too.
+  await scratchpad.append('Added')
+  expect(workspace.documentAt(PAD)?.text).toBe('Old words\nNot yet written\n\nAdded\n')
+  expect(disk.current.files.get(PAD)).toBe('Old words\nNot yet written\n\nAdded\n')
+  expect(workspace.documentAt(PAD)?.dirty).toBe(false)
 })

@@ -571,6 +571,9 @@ export const ko: Dictionary = {
   'Show other tabs as icons': '다른 탭을 아이콘으로 보기',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '앞에 있는 탭을 빼고 모든 탭이 아이콘만 보여 주며, 가리키면 이름이 나타납니다.',
+  'Tabs as wide as their names': '이름만큼 넓은 탭',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    '각 탭은 아이콘, 이름, 닫기 버튼에 필요한 만큼만 넓어집니다. 끄면 모든 탭이 같은 너비가 됩니다.',
   'Tab preview delay': '탭 미리보기 지연',
   'How long the pointer rests on a tab before its preview shows.':
     '미리보기가 나타나기 전에 포인터가 탭 위에 머무는 시간입니다.',
@@ -2324,6 +2327,15 @@ export const ko: Dictionary = {
   'What does it run?': '무엇을 실행하나요?',
   'A program’s path, and its arguments': '프로그램 경로와 인수',
   '{device} (this device)': '{device} (이 기기)',
+  'Find an application': '애플리케이션 찾기',
+  'Another program…': '다른 프로그램…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device}에서는 아직 애플리케이션을 전용 화면에서 실행할 수 없습니다.',
+  '{device} needs Xvfb to run an application.':
+    '{device}에서 애플리케이션을 실행하려면 Xvfb가 필요합니다.',
+  '{device} did not allow this program.': '{device}에서 이 프로그램을 허용하지 않았습니다.',
+  '{device} does not have this application.': '{device}에 이 애플리케이션이 없습니다.',
+  'It did not start on {device}.': '{device}에서 시작되지 않았습니다.',
   'Start online machine': '온라인 머신 시작',
   'Stop online machine': '온라인 머신 중지',
   Resume: '이어서 하기',

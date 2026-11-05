@@ -579,6 +579,9 @@ export const de: Dictionary = {
   'Show other tabs as icons': 'Andere Tabs als Symbole zeigen',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Jeder Tab außer dem vorderen zeigt nur sein Symbol; zeigst du auf einen, erscheint sein Name.',
+  'Tabs as wide as their names': 'Tabs so breit wie ihre Namen',
+  'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
+    'Jeder Tab ist nur so breit, wie Symbol, Name und Schließen-Knopf brauchen; aus, sind alle Tabs gleich breit.',
   'Tab preview delay': 'Verzögerung der Tab-Vorschau',
   'How long the pointer rests on a tab before its preview shows.':
     'Wie lange der Zeiger auf einem Tab ruht, bevor seine Vorschau erscheint.',
@@ -2404,6 +2407,15 @@ export const de: Dictionary = {
   'What does it run?': 'Was führt sie aus?',
   'A program’s path, and its arguments': 'Pfad eines Programms und seine Argumente',
   '{device} (this device)': '{device} (dieses Gerät)',
+  'Find an application': 'Anwendung suchen',
+  'Another program…': 'Anderes Programm…',
+  '{device} cannot run an application on a display of its own yet.':
+    '{device} kann eine Anwendung noch nicht auf einem eigenen Bildschirm ausführen.',
+  '{device} needs Xvfb to run an application.':
+    '{device} braucht Xvfb, um eine Anwendung auszuführen.',
+  '{device} did not allow this program.': '{device} hat dieses Programm nicht erlaubt.',
+  '{device} does not have this application.': '{device} hat diese Anwendung nicht.',
+  'It did not start on {device}.': 'Sie ist auf {device} nicht gestartet.',
   'Start online machine': 'Online-Maschine starten',
   'Stop online machine': 'Online-Maschine stoppen',
   Resume: 'Fortsetzen',

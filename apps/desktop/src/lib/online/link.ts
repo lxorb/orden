@@ -145,6 +145,12 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
     return false
   }
 
+  /** Subprotocols it names besides the token and the device: an application's host
+   *  names its role (`nib.role.host`, apps/host.svelte.ts). */
+  protected role(): string[] {
+    return []
+  }
+
   /** Opens it; and again, after a refusal that waited for the reader. */
   open(): void {
     this.closed = false
@@ -191,7 +197,8 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
         const url = `${this.world.base.replace(/^http/, 'ws')}${this.path(this.name)}`
         let socket: LinkSocket | null = null
         try {
-          socket = this.world.socket(url, [`nib.token.${token}`, `nib.device.${device}`], {
+          const protocols = [`nib.token.${token}`, `nib.device.${device}`, ...this.role()]
+          socket = this.world.socket(url, protocols, {
             opened: () => {
               if (this.socket !== socket || !socket) return
               this.opening?.()

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Todos from the left side's checkbox, its key and the palette (#1047): the space's
+/** Todos from its key, the palette (#1047) and the right side's Todos icon (#1110): the space's
  *  one view of its tasks as a tab, brought forward wherever it is open already. */
 
 interface FakeTab {
@@ -87,16 +87,19 @@ describe('Todos, asked for', () => {
 describe('where it is asked for', () => {
   const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8')
 
-  test('the checkbox in the left side’s top row', () => {
+  test('not the left side’s head, whose checkbox is gone (#1110)', () => {
     const sidebar = read('./Sidebar.svelte')
     const head = sidebar.slice(
       sidebar.indexOf('<div class="head"'),
       sidebar.indexOf('<div class="switch"'),
     )
-    expect(head).toMatch(
-      /onclick=\{\(\) => void import\('\.\/todos-entry'\)\.then\(\(\{ showTodos \}\) => showTodos\(\)\)\}/,
-    )
-    expect(head).toContain('<path d={TASKS_MARK} />')
+    expect(head).not.toContain('todos-entry')
+    expect(head).not.toContain('TASKS_MARK')
+  })
+
+  test('a double press on a side’s Todos icon, which opens a panel as its tab', () => {
+    expect(read('./Sidebar.svelte')).toMatch(/ondblclick=[\s\S]*?import\('\.\/panel-tab'\)/)
+    expect(read('./panel-tab.ts')).toMatch(/tasks: \(\) => import\('\.\/todos-entry'\)/)
   })
 
   test('its key, and the palette’s row, which says the key', () => {

@@ -72,6 +72,38 @@ describe('an essential double clicked', () => {
   })
 })
 
+/** #1110: a press of an essential's tile in a split window took the place of whatever
+ *  one of the panes showed. It is kept as a tab there, as a double click keeps it. */
+describe('an essential pressed while the window is split', () => {
+  test('is kept as a tab of the strip in front, and no pane loses what it showed', async () => {
+    workspace.panes.collapse()
+    workspace.tabs = []
+    workspace.openBlank('Left', '# Left')
+    const left = workspace.panes.focusedId
+    const right = workspace.panes.split('row', left)
+    expect(right).not.toBeNull()
+    workspace.openBlank('Right', '# Right')
+    const showing = workspace.tabs.map((one) => one.id)
+
+    await openEssential('/space/Notes.md')
+    expect(strip()).toContain('/space/Notes.md')
+    expect(workspace.active?.essential).toBeNull()
+    expect(workspace.active?.path).toBe('/space/Notes.md')
+    // Every tab there was is still there, with what it showed.
+    for (const id of showing) expect(workspace.tabs.some((one) => one.id === id)).toBe(true)
+    workspace.panes.collapse()
+  })
+
+  test('opens a view of its own as before with the window not split', async () => {
+    workspace.panes.collapse()
+    workspace.tabs = []
+    workspace.openBlank('Only', '# Only')
+    await openEssential('/space/Notes.md')
+    expect(workspace.active?.essential).toBe('/space/Notes.md')
+    expect(strip()).not.toContain('/space/Notes.md')
+  })
+})
+
 describe('an essential dragged into a strip', () => {
   test('is kept as a tab where it was let go, as it was, as a double click keeps it', async () => {
     workspace.panes.collapse()

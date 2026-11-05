@@ -1,17 +1,15 @@
-/** What a pane shows, copied: the window the tab in front of a pane becomes in the
- *  overview (issue #331).
+/** What a pane shows, and a tab in its strip, copied (issue #331): the picture kept of a
+ *  pane's tab in front, which its window is drawn from in a later run when it is no longer
+ *  in front (`snapshotOf`, faces.svelte.ts), and the tab as its strip draws it, which its
+ *  window leaves the strip as (`tabCopyOf`). The pane in front itself is its window while
+ *  the overview is up, and is never copied for that.
  *
- *  That window starts as the pane itself and shrinks from it, so it has to be exactly
- *  what the pane was showing - the editor's own lines, its caret row, its scroll - or the
- *  first frame is a jump from one picture of the note to another. A copy of the pane's
- *  own elements is that, with nothing to render and nothing to wait for: the editor draws
- *  only the lines in view, so the copy is a screenful.
- *
- *  A copy and not the pane: the pane stays where it is, under the overview, and the
- *  window is free to fly. What a copy would get wrong is put right here - a canvas is
- *  copied blank, so its pixels are drawn across; a frame would load its page again, so
- *  it goes; an id would be in the document twice, and a focusable element would be a
- *  second stop for Tab, so neither is kept. */
+ *  A copy of the pane's own elements is exactly what it was showing - the editor's own
+ *  lines, its scroll - with nothing to render and nothing to wait for. What a copy would
+ *  get wrong is put right here - a canvas is copied blank, so its pixels are drawn
+ *  across; a frame would load its page again, so it goes; an id would be in the document
+ *  twice, and a focusable element would be a second stop for Tab, so neither is kept; and
+ *  how the overview draws a pane moving as its window is no part of what it shows. */
 
 /** The element whose `data-` attribute `name` says `value`. */
 export function marked(name: string, value: string): HTMLElement | null {
@@ -57,6 +55,7 @@ function copyOf(pane: HTMLElement, box: DOMRect) {
   copy.querySelector(':scope > .head')?.remove()
   copy.removeAttribute('data-pane')
   copy.setAttribute('inert', '')
+  copy.removeAttribute('style')
   copy.style.width = `${box.width}px`
   copy.style.height = `${box.height}px`
 
@@ -70,28 +69,6 @@ function copyOf(pane: HTMLElement, box: DOMRect) {
   }
   for (const [canvas, twin] of canvases) drawnOnto(canvas, twin)
   return { copy, scrolls }
-}
-
-/** A still copy of what `paneId` shows, the size it is shown at, or null where the pane
- *  is not on screen. */
-export function mirrorOf(paneId: string): HTMLElement | null {
-  const pane = paneBody(paneId)
-  const box = shownBox(paneId)
-  if (!pane || !box) return null
-  const { copy, scrolls } = copyOf(pane, box)
-  owed.set(copy, scrolls)
-  return copy
-}
-
-/** Where a copy's scrollers are to be scrolled to, until it is in the document. */
-const owed = new WeakMap<Element, [Element, number, number][]>()
-
-/** A copy just put in the document, scrolled where the pane was: at once, the only
- *  moment that is not a frame late - a frame at the top of the note and then the place
- *  it was is a jump. */
-export function scrolledIn(copy: Element) {
-  scrolledTo(owed.get(copy) ?? [])
-  owed.delete(copy)
 }
 
 /** A copy of the tab `id` in its strip, as it is drawn there - its shape, its mark, its

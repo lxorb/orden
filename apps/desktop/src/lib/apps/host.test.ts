@@ -1,0 +1,218 @@
+import type { AppFile, HostFrame, RelayToHost, View } from '@orden/online/apps'
+import { describe, expect, test } from 'vitest'
+import type { LinkWorld, Opened } from '../online/link'
+import {
+  applicationFiles,
+  FIRST_VIEW,
+  host,
+  HostLink,
+  type HostWorld,
+  type Runner,
+  type Said,
+  type Speaking,
+} from './host.svelte'
+
+/** This computer as an application's host (issue 1063, step 3; host.svelte.ts): which
+ *  files it hosts, what it does with the holder's Start, Stop and Restart, and what it
+ *  says back - with the crate and the relay played here. */
+
+const GIMP: AppFile = {
+  v: 1,
+  host: 'device-laptop',
+  run: { kind: 'installed', id: 'gimp.desktop', name: 'GIMP' },
+}
+const OTHER: AppFile = { ...GIMP, host: 'device-desktop' }
+
+const tick = () => new Promise((settle) => setTimeout(settle, 0))
+
+function world(files: Record<string, AppFile | string>) {
+  const said: HostFrame[] = []
+  const links: { app: string; heard: (what: RelayToHost | Opened) => void; closed: boolean }[] = []
+  const asked: string[] = []
+  let tell: ((what: Said) => void) | null = null
+  let why: Awaited<ReturnType<Runner['start']>> = null
+  let paths = Object.keys(files)
+  let changed: (() => void) | null = null
+
+  const runner: Runner = {
+    start(key, file, view, heard) {
+      asked.push(
+        `start ${key} ${file.run.kind === 'installed' ? file.run.id : file.run.path} ${view.width}`,
+      )
+      tell = heard
+      if (why === null) heard({ state: 'running', code: null })
+      return Promise.resolve(why)
+    },
+    watch(key) {
+      asked.push(`watch ${key}`)
+      return Promise.resolve(false)
+    },
+    stop(key) {
+      asked.push(`stop ${key}`)
+      tell?.({ state: 'stopped', code: null })
+      return Promise.resolve()
+    },
+  }
+  const made: HostWorld = {
+    device: () => Promise.resolve('device-laptop'),
+    files: () => paths,
+    read: (path) => {
+      const one = files[path]
+      return Promise.resolve(
+        one === undefined ? null : typeof one === 'string' ? one : JSON.stringify(one),
+      )
+    },
+    idOf: (path) => Promise.resolve(`id-${path.replace(/\W/g, '')}`),
+    runner,
+    link: (app, heard): Speaking => {
+      const link = { app, heard, closed: false }
+      links.push(link)
+      return {
+        open: () => undefined,
+        close: () => {
+          link.closed = true
+        },
+        say: (frame) => {
+          said.push(frame)
+          return true
+        },
+      }
+    },
+  }
+  const stop = host(made, (again) => {
+    changed = again
+    return () => {
+      changed = null
+    }
+  })
+  return {
+    said,
+    links,
+    asked,
+    stop,
+    exits: (code: number) => tell?.({ state: 'exited', code }),
+    refuses: (reason: NonNullable<typeof why>) => {
+      why = reason
+    },
+    remove: (path: string) => {
+      paths = paths.filter((one) => one !== path)
+      changed?.()
+    },
+  }
+}
+
+const VIEW: View = { width: 1600, height: 900, dpr: 2, hz: 120 }
+
+describe('an application’s host', () => {
+  test('hosts the files that name this device, and no other, without starting them', async () => {
+    const here = world({
+      '/s/GIMP.application': GIMP,
+      '/s/Other.application': OTHER,
+      '/s/Bad.application': 'nope',
+    })
+    await tick()
+    expect(here.links.map((one) => one.app)).toEqual(['id-sGIMPapplication'])
+    expect(here.asked).toEqual(['watch id-sGIMPapplication'])
+
+    // Once the socket is open, the relay is told where it stands: not running.
+    here.links[0]?.heard({ t: 'open' })
+    expect(here.said).toEqual([{ t: 'state', state: 'stopped' }])
+  })
+
+  test('the holder’s Start runs it at the holder’s view, and says so', async () => {
+    const here = world({ '/s/GIMP.application': GIMP })
+    await tick()
+    const heard = here.links[0]?.heard
+    heard?.({ t: 'view', view: VIEW })
+    heard?.({ t: 'run', what: 'start' })
+    await tick()
+    expect(here.asked).toContain('start id-sGIMPapplication gimp.desktop 1600')
+    expect(here.said).toEqual([
+      { t: 'state', state: 'starting' },
+      { t: 'state', state: 'running' },
+    ])
+
+    here.exits(3)
+    expect(here.said.at(-1)).toEqual({ t: 'state', state: 'exited', code: 3 })
+  })
+
+  test('a start the crate refused is said with its reason', async () => {
+    const here = world({ '/s/GIMP.application': GIMP })
+    await tick()
+    here.refuses('isolation')
+    here.links[0]?.heard({ t: 'run', what: 'start' })
+    await tick()
+    expect(here.said.at(-1)).toEqual({ t: 'state', state: 'stopped', why: 'isolation' })
+  })
+
+  test('Restart stops it and starts it again once it has stopped', async () => {
+    const here = world({ '/s/GIMP.application': GIMP })
+    await tick()
+    const heard = here.links[0]?.heard
+    heard?.({ t: 'run', what: 'start' })
+    await tick()
+    heard?.({ t: 'run', what: 'restart' })
+    await tick()
+    expect(here.asked.filter((one) => !one.startsWith('watch'))).toEqual([
+      `start id-sGIMPapplication gimp.desktop ${FIRST_VIEW.width}`,
+      'stop id-sGIMPapplication',
+      `start id-sGIMPapplication gimp.desktop ${FIRST_VIEW.width}`,
+    ])
+    expect(here.said.at(-1)).toEqual({ t: 'state', state: 'running' })
+  })
+
+  test('its file going stops it; hosting stopping leaves it running', async () => {
+    const here = world({ '/s/GIMP.application': GIMP, '/s/Two.application': GIMP })
+    await tick()
+    here.remove('/s/GIMP.application')
+    await tick()
+    expect(here.links[0]?.closed).toBe(true)
+    expect(here.asked).toContain('stop id-sGIMPapplication')
+
+    here.stop()
+    expect(here.links[1]?.closed).toBe(true)
+    expect(here.asked).not.toContain('stop id-sTwoapplication')
+  })
+})
+
+describe('the host’s socket', () => {
+  test('names its role beside the token and the device', async () => {
+    const offered: string[][] = []
+    const linkWorld: LinkWorld = {
+      base: 'https://sync.example',
+      token: () => 'token',
+      device: () => Promise.resolve('device-laptop'),
+      socket: (_url, protocols) => {
+        offered.push(protocols)
+        return { open: false, buffered: 0, send: () => undefined, close: () => undefined }
+      },
+      after: () => () => undefined,
+      now: () => 0,
+      hidden: () => false,
+      watch: () => () => undefined,
+    }
+    const link = new HostLink('app-1', linkWorld, () => undefined)
+    link.open()
+    await tick()
+    expect(offered[0]).toEqual(['nib.token.token', 'nib.device.device-laptop', 'nib.role.host'])
+    link.close()
+  })
+})
+
+test('every application file of a tree, however deep', () => {
+  const tree = {
+    path: '/s',
+    is_dir: true,
+    children: [
+      { path: '/s/GIMP.application', is_dir: false },
+      { path: '/s/Plan.md', is_dir: false },
+      {
+        path: '/s/tools',
+        is_dir: true,
+        children: [{ path: '/s/tools/Blender.APPLICATION', is_dir: false }],
+      },
+    ],
+  }
+  expect(applicationFiles(tree)).toEqual(['/s/GIMP.application', '/s/tools/Blender.APPLICATION'])
+  expect(applicationFiles(null)).toEqual([])
+})

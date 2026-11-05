@@ -1,4 +1,10 @@
-import { isCanvasTarget, isChatTarget, isPagesTarget, isWebTarget } from '@orden/markdown/links'
+import {
+  isCanvasTarget,
+  isChatTarget,
+  isPagesTarget,
+  isTermTarget,
+  isWebTarget,
+} from '@orden/markdown/links'
 import { DIVIDER, type MenuEntry } from './menu-item'
 import { chosenIcon } from './chosen-icon'
 import { iconChoice } from './icon-choice.svelte'
@@ -179,7 +185,7 @@ export function archiveEntry(path: string | null | undefined): MenuEntry[] {
  *  every list that shows one can offer it - the tree today, a search result or a
  *  bookmark whenever one of those grows a menu of its own.
  *
- *  A note, a canvas, a chat, a web note or a folder. Not a PDF and not a picture: those
+ *  A note, a canvas, a chat, a web note, an online terminal or a folder. Not a PDF and not a picture: those
  *  are files with nowhere to keep an icon - a note has front matter, a canvas has its
  *  `nib` key, a chat its pointer, a web note its `.url` (#1098) - and a folder is not a
  *  file at all, so its icon is kept by the space. The two words are the same either
@@ -200,8 +206,10 @@ export function iconEntries(path: string | null | undefined, folder = false): Me
   // A web note keeps its chosen icon in its `.url`, over the site's mark (#1098); a
   // `.webloc` is a plist with no key for one.
   const web = isWebTarget(path) && !/\.webloc$/i.test(path.trim())
+  // An online terminal keeps it in its file, over what runs in it (#1110).
+  const term = !__EVEN_PLUGIN__ && isTermTarget(path)
   const kept =
-    chat || web || [isMarkdownPath, isCanvasTarget, isPagesTarget].some((one) => one(path))
+    chat || web || term || [isMarkdownPath, isCanvasTarget, isPagesTarget].some((one) => one(path))
   if (!folder && !kept) return []
 
   // The writing is fetched by the press, as a cover's is below: every menu carried it.
