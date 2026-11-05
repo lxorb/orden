@@ -1084,11 +1084,15 @@ What a VS Code extension does with the window (#1078), each through the rules ev
 change to the reader's screen keeps (`reader-view.ts`, #1070):
 
 - **Settings**, every one by its key (8.8), themes among them.
-- **A file dialog** a command opens - Import, every Export - is answered by `run_command`'s
-  `path` instead of shown, as an extension's command takes a file where a person would
-  be shown `showOpenDialog`: the crate says whether the agent may read or write there
-  (`agents_dialog_path`), under exactly `files`' rules - the scope, the fences, the
-  question (8.11). A row that opens no dialog says `path_unused`.
+- **A file dialog** a command opens - Import, every Export, the folder a whole space is
+  exported into - is answered by `run_command`'s `path` instead of shown, as an
+  extension's command takes a file where a person would be shown `showOpenDialog`: the
+  crate says whether the agent may read or write there (`agents_dialog_path`), under
+  exactly `files`' rules - the scope, the fences, the question (8.11). A path it allows
+  is then let in as the dialog's pick would be, so the app's own writers reach it: a
+  folder itself, a file and the folder it is in, or the file alone where that folder
+  holds Orden's own. A row that opens no dialog says `path_unused`, and a test holds
+  every file that opens the system's dialog to asking for an agent's answer first.
 - **The clipboard**: `system_clipboard` reads and writes its text, under its own scope,
   `clipboard`, since what was copied last may be a password; reading is marked as the
   clipboard's words (9.6), and writing asks in `confirm` mode, as every write does.

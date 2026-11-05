@@ -577,7 +577,12 @@ pub fn agents_dialog_path(
         verbs::FilesOp::Read
     };
     match files::reachable(&app, &Caller::Agent(Box::new(grant)), &path, op) {
-        Ok(path) => Answer::ok(serde_json::json!({ "path": path.display().to_string() })),
+        Ok(path) => {
+            // What the dialog's pick would have let the app's writers and readers reach,
+            // which `write_bytes`, `write_note` and the import stand behind.
+            crate::paths::picked_for_an_agent(&app, &files::pick_reach(&app, &path));
+            Answer::ok(serde_json::json!({ "path": path.display().to_string() }))
+        }
         Err(answer) => answer,
     }
 }

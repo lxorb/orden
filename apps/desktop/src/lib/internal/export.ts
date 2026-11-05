@@ -92,10 +92,14 @@ export async function exportSpaceTo(root: string, name: string, picked: string):
   return into
 }
 
-/** The same, into a folder the reader picks now. Null where they picked none. */
+/** The same, into a folder the reader picks now - or, for an agent's command, the
+ *  folder its path names, which the crate has judged as the dialog's pick (#1078,
+ *  `dialog-answer.ts`). Null where none was picked. */
 export async function exportSpace(root: string, name: string): Promise<string | null> {
-  const { open } = await import('@tauri-apps/plugin-dialog')
-  const picked = await open({ directory: true })
+  const given = (await import('../dialog-answer')).dialogAnswer()
+  const picked = given
+    ? await given(true)
+    : await (await import('@tauri-apps/plugin-dialog')).open({ directory: true })
   if (typeof picked !== 'string') return null
   return exportSpaceTo(root, name, picked)
 }

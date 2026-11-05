@@ -134,6 +134,33 @@ pub(super) fn reachable(
     Ok(path)
 }
 
+/// What a dialog answered by an agent's path lets the app's own writers and readers
+/// reach (`paths::picked_for_an_agent`), as the system dialog's pick would: a folder
+/// itself, and for a file the folder it is in - where an export's pictures land beside
+/// it - unless that folder holds Orden's own, by name or through a link, or is the top
+/// of a disk; then the file alone.
+pub(super) fn pick_reach(app: &AppHandle, path: &Path) -> PathBuf {
+    reach_of(&own_folders(app), path)
+}
+
+/// `pick_reach`, against the folders given.
+fn reach_of(fenced: &[PathBuf], path: &Path) -> PathBuf {
+    if path.is_dir() {
+        return path.to_path_buf();
+    }
+    match path.parent() {
+        Some(folder)
+            if folder
+                .parent()
+                .is_some_and(|above| !above.as_os_str().is_empty())
+                && refused(fenced, FilesOp::Copy, folder, None).is_none() =>
+        {
+            folder.to_path_buf()
+        }
+        _ => path.to_path_buf(),
+    }
+}
+
 /// A path as an agent gave it, made absolute: `~/` is the home folder (system.rs).
 pub(super) fn absolute(app: &AppHandle, asked: &str) -> Result<PathBuf, String> {
     resolved(app, asked)
@@ -947,6 +974,33 @@ mod tests {
         assert!(behind(&fenced, &mine.join("grants")).is_some());
         assert!(behind(&fenced, &root).is_none());
         assert!(behind(&fenced, &mine).is_none());
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    /// A dialog answered by an agent's path reaches what the system's pick would, and
+    /// never a folder that holds Orden's own: a file beside the fence is reached alone.
+    #[cfg(unix)]
+    #[test]
+    fn a_path_an_agent_answers_a_dialog_with_reaches_no_further_than_a_pick() {
+        let root = temp();
+        let config = root.join("config");
+        let fence = config.join("Orden");
+        fs::create_dir_all(&fence).expect("fence");
+        let desk = root.join("Desktop");
+        fs::create_dir_all(&desk).expect("desk");
+        std::os::unix::fs::symlink(&config, root.join("alias")).expect("alias");
+        let fenced = [fence.clone()];
+
+        assert_eq!(reach_of(&fenced, &desk.join("Plan.pdf")), desk);
+        assert_eq!(reach_of(&fenced, &desk), desk);
+        let beside = config.join("Plan.pdf");
+        assert_eq!(reach_of(&fenced, &beside), beside);
+        let through = root.join("alias").join("Plan.pdf");
+        assert_eq!(reach_of(&fenced, &through), through);
+        assert_eq!(
+            reach_of(&fenced, Path::new("/Plan.pdf")),
+            Path::new("/Plan.pdf")
+        );
         let _ = fs::remove_dir_all(&root);
     }
 
