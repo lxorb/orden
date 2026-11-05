@@ -2357,6 +2357,9 @@ export const zhHans: Dictionary = {
   'What does it run?': '运行什么？',
   'A program’s path, and its arguments': '程序的路径及其参数',
   '{device} (this device)': '{device}（此设备）',
+  '{device}: cannot run applications yet': '{device}：暂时无法运行应用程序',
+  '{device} has not listed its applications yet. What does it run?':
+    '{device}尚未列出其应用程序。运行什么？',
   'Find an application': '查找应用程序',
   'Another program…': '其他程序…',
   '{device} cannot run an application on a display of its own yet.':

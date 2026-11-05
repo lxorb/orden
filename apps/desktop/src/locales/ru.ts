@@ -2514,6 +2514,9 @@ export const ru: Dictionary = {
   'What does it run?': 'Что оно запускает?',
   'A program’s path, and its arguments': 'Путь к программе и её аргументы',
   '{device} (this device)': '{device} (это устройство)',
+  '{device}: cannot run applications yet': '{device}: пока не может запускать приложения',
+  '{device} has not listed its applications yet. What does it run?':
+    '{device} ещё не передал список своих приложений. Что оно запускает?',
   'Find an application': 'Найти приложение',
   'Another program…': 'Другая программа…',
   '{device} cannot run an application on a display of its own yet.':

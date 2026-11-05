@@ -2428,6 +2428,9 @@ export const pa: Dictionary = {
   'What does it run?': 'ਇਹ ਕੀ ਚਲਾਏ?',
   'A program’s path, and its arguments': 'ਕਿਸੇ ਪ੍ਰੋਗਰਾਮ ਦਾ ਪਾਥ, ਅਤੇ ਉਸਦੇ ਆਰਗੂਮੈਂਟ',
   '{device} (this device)': '{device} (ਇਹ ਡਿਵਾਈਸ)',
+  '{device}: cannot run applications yet': '{device}: ਅਜੇ ਐਪਲੀਕੇਸ਼ਨਾਂ ਨਹੀਂ ਚਲਾ ਸਕਦਾ',
+  '{device} has not listed its applications yet. What does it run?':
+    '{device} ਨੇ ਅਜੇ ਆਪਣੀਆਂ ਐਪਲੀਕੇਸ਼ਨਾਂ ਦੀ ਸੂਚੀ ਨਹੀਂ ਦਿੱਤੀ। ਇਹ ਕੀ ਚਲਾਏ?',
   'Find an application': 'ਐਪਲੀਕੇਸ਼ਨ ਲੱਭੋ',
   'Another program…': 'ਹੋਰ ਪ੍ਰੋਗਰਾਮ…',
   '{device} cannot run an application on a display of its own yet.':

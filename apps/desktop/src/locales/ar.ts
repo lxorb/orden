@@ -2541,6 +2541,9 @@ export const ar: Dictionary = {
   'What does it run?': 'ماذا يشغّل؟',
   'A program’s path, and its arguments': 'مسار برنامج، ووسائطه',
   '{device} (this device)': '{device} (هذا الجهاز)',
+  '{device}: cannot run applications yet': '{device}: لا يمكنه تشغيل التطبيقات بعد',
+  '{device} has not listed its applications yet. What does it run?':
+    'لم يرسل {device} قائمة تطبيقاته بعد. ماذا يشغّل؟',
   'Find an application': 'ابحث عن تطبيق',
   'Another program…': 'برنامج آخر…',
   '{device} cannot run an application on a display of its own yet.':

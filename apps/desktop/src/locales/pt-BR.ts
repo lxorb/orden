@@ -2469,6 +2469,9 @@ export const ptBR: Dictionary = {
   'What does it run?': 'O que ele executa?',
   'A program’s path, and its arguments': 'O caminho de um programa e seus argumentos',
   '{device} (this device)': '{device} (este dispositivo)',
+  '{device}: cannot run applications yet': '{device}: ainda não pode executar aplicativos',
+  '{device} has not listed its applications yet. What does it run?':
+    '{device} ainda não listou seus aplicativos. O que ele executa?',
   'Find an application': 'Buscar um aplicativo',
   'Another program…': 'Outro programa…',
   '{device} cannot run an application on a display of its own yet.':

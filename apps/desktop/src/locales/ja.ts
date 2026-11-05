@@ -2405,6 +2405,9 @@ export const ja: Dictionary = {
   'What does it run?': '何を実行しますか？',
   'A program’s path, and its arguments': 'プログラムのパスと引数',
   '{device} (this device)': '{device}（このデバイス）',
+  '{device}: cannot run applications yet': '{device}：まだアプリケーションを実行できません',
+  '{device} has not listed its applications yet. What does it run?':
+    '{device}はまだアプリケーションの一覧を送信していません。何を実行しますか？',
   'Find an application': 'アプリケーションを検索',
   'Another program…': '別のプログラム…',
   '{device} cannot run an application on a display of its own yet.':

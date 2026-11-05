@@ -2434,6 +2434,9 @@ export const te: Dictionary = {
   'What does it run?': 'ఇది ఏమి నడుపుతుంది?',
   'A program’s path, and its arguments': 'ఒక ప్రోగ్రామ్ పాత్, దాని ఆర్గ్యుమెంట్‌లు',
   '{device} (this device)': '{device} (ఈ పరికరం)',
+  '{device}: cannot run applications yet': '{device}: ఇంకా అప్లికేషన్‌లను నడపలేదు',
+  '{device} has not listed its applications yet. What does it run?':
+    '{device} ఇంకా తన అప్లికేషన్‌ల జాబితాను ఇవ్వలేదు. ఇది ఏమి నడుపుతుంది?',
   'Find an application': 'అప్లికేషన్ కోసం వెతకండి',
   'Another program…': 'ఇంకో ప్రోగ్రామ్…',
   '{device} cannot run an application on a display of its own yet.':

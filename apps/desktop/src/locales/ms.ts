@@ -2413,6 +2413,9 @@ export const ms: Dictionary = {
   'What does it run?': 'Apa yang dijalankannya?',
   'A program’s path, and its arguments': 'Laluan program, dan argumennya',
   '{device} (this device)': '{device} (peranti ini)',
+  '{device}: cannot run applications yet': '{device}: belum boleh menjalankan aplikasi',
+  '{device} has not listed its applications yet. What does it run?':
+    '{device} belum menyenaraikan aplikasinya. Apa yang dijalankannya?',
   'Find an application': 'Cari aplikasi',
   'Another program…': 'Program lain…',
   '{device} cannot run an application on a display of its own yet.':

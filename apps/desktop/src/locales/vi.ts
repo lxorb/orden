@@ -2395,6 +2395,9 @@ export const vi: Dictionary = {
   'What does it run?': 'Chạy cái gì?',
   'A program’s path, and its arguments': 'Đường dẫn chương trình và các đối số',
   '{device} (this device)': '{device} (thiết bị này)',
+  '{device}: cannot run applications yet': '{device}: chưa thể chạy ứng dụng',
+  '{device} has not listed its applications yet. What does it run?':
+    '{device} chưa liệt kê các ứng dụng của nó. Chạy cái gì?',
   'Find an application': 'Tìm ứng dụng',
   'Another program…': 'Chương trình khác…',
   '{device} cannot run an application on a display of its own yet.':

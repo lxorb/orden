@@ -2357,6 +2357,9 @@ export const zhHant: Dictionary = {
   'What does it run?': '執行什麼？',
   'A program’s path, and its arguments': '程式的路徑及其參數',
   '{device} (this device)': '{device}（此裝置）',
+  '{device}: cannot run applications yet': '{device}：暫時無法執行應用程式',
+  '{device} has not listed its applications yet. What does it run?':
+    '{device}尚未列出其應用程式。執行什麼？',
   'Find an application': '尋找應用程式',
   'Another program…': '其他程式…',
   '{device} cannot run an application on a display of its own yet.':

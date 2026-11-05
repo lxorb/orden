@@ -2387,6 +2387,9 @@ export const ko: Dictionary = {
   'What does it run?': '무엇을 실행하나요?',
   'A program’s path, and its arguments': '프로그램 경로와 인수',
   '{device} (this device)': '{device} (이 기기)',
+  '{device}: cannot run applications yet': '{device}: 아직 애플리케이션을 실행할 수 없습니다',
+  '{device} has not listed its applications yet. What does it run?':
+    '{device}에서 아직 애플리케이션 목록을 보내지 않았습니다. 무엇을 실행하나요?',
   'Find an application': '애플리케이션 찾기',
   'Another program…': '다른 프로그램…',
   '{device} cannot run an application on a display of its own yet.':

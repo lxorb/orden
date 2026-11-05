@@ -250,7 +250,9 @@ export class Picture {
   private async begin(): Promise<void> {
     this.close()
     const turn = this.turn
-    this.status = { is: 'connecting' }
+    // A try after one that was lost keeps saying so until the picture shows: a moment of
+    // "connecting" between two failures read as if it might work this time.
+    if (this.status.is !== 'lost') this.status = { is: 'connecting' }
     const servers = await this.world.servers().catch(() => [...FALLBACK_ICE])
     // Not wanted any more, or begun again, while the servers were asked for.
     if (turn !== this.turn || !this.wanted) return

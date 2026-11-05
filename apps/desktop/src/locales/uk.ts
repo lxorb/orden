@@ -2508,6 +2508,9 @@ export const uk: Dictionary = {
   'What does it run?': 'Що вона запускає?',
   'A program’s path, and its arguments': 'Шлях до програми та її аргументи',
   '{device} (this device)': '{device} (цей пристрій)',
+  '{device}: cannot run applications yet': '{device}: поки не може запускати застосунки',
+  '{device} has not listed its applications yet. What does it run?':
+    '{device} ще не надав список своїх застосунків. Що він запускає?',
   'Find an application': 'Знайти застосунок',
   'Another program…': 'Інша програма…',
   '{device} cannot run an application on a display of its own yet.':

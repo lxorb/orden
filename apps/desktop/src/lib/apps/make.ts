@@ -53,11 +53,15 @@ export async function makeApplication(): Promise<Tab | null> {
 
   const host = await prompt.choose({
     title: t('Where does it run?'),
-    options: computers.map((one) => ({
-      id: one.id,
-      label: one.current ? t('{device} (this device)', { device: one.name }) : one.name,
-      primary: one.current,
-    })),
+    options: computers.map((one) => {
+      const name = one.current ? t('{device} (this device)', { device: one.name }) : one.name
+      // A Mac has no place of an application's own yet (step 8): said here, not after.
+      const label =
+        one.platform === 'macos'
+          ? t('{device}: cannot run applications yet', { device: name })
+          : name
+      return { id: one.id, label, primary: one.current && one.platform !== 'macos' }
+    }),
   })
   if (!host) return null
 
@@ -82,8 +86,14 @@ export async function makeApplication(): Promise<Tab | null> {
     if (app) run = { kind: 'installed', id: app.id, name: app.name }
   }
   if (!run) {
+    // No list from that computer: it has not hosted since it was updated, or the account
+    // does not keep one yet. Said, rather than a path asked for with no word why.
+    const device = computers.find((one) => one.id === host)?.name ?? ''
     const line = await prompt.ask({
-      title: t('What does it run?'),
+      title:
+        installed.length || here
+          ? t('What does it run?')
+          : t('{device} has not listed its applications yet. What does it run?', { device }),
       placeholder: t('A program’s path, and its arguments'),
     })
     const program = line === null ? null : programOf(line)

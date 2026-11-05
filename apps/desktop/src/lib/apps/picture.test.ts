@@ -161,7 +161,8 @@ describe('an application’s picture', () => {
     here.wait(AGAIN_AFTER)
     await tick()
     expect(here.peers).toHaveLength(2)
-    expect(here.picture.status).toEqual({ is: 'connecting' })
+    // Still said to be lost while it is tried again, until it shows.
+    expect(here.picture.status).toEqual({ is: 'lost' })
 
     // This offer the relay lost: never answered, it counts as failed in the end.
     here.wait(SHOWN_WITHIN)

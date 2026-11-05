@@ -2493,6 +2493,9 @@ export const it: Dictionary = {
   'What does it run?': 'Cosa esegue?',
   'A program’s path, and its arguments': 'Il percorso di un programma e i suoi argomenti',
   '{device} (this device)': '{device} (questo dispositivo)',
+  '{device}: cannot run applications yet': '{device}: non può ancora eseguire applicazioni',
+  '{device} has not listed its applications yet. What does it run?':
+    '{device} non ha ancora elencato le sue applicazioni. Cosa esegue?',
   'Find an application': 'Cerca un’applicazione',
   'Another program…': 'Altro programma…',
   '{device} cannot run an application on a display of its own yet.':

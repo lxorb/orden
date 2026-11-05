@@ -2422,6 +2422,9 @@ export const hi: Dictionary = {
   'What does it run?': 'यह क्या चलाए?',
   'A program’s path, and its arguments': 'किसी प्रोग्राम का पाथ, और उसके आर्ग्युमेंट',
   '{device} (this device)': '{device} (यह डिवाइस)',
+  '{device}: cannot run applications yet': '{device}: अभी एप्लिकेशन नहीं चला सकता',
+  '{device} has not listed its applications yet. What does it run?':
+    '{device} ने अभी तक अपने एप्लिकेशन की सूची नहीं भेजी है। यह क्या चलाए?',
   'Find an application': 'ऐप्लिकेशन खोजें',
   'Another program…': 'दूसरा प्रोग्राम…',
   '{device} cannot run an application on a display of its own yet.':

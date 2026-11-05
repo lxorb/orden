@@ -2455,6 +2455,10 @@ export const ha: Dictionary = {
   'What does it run?': 'Me zai gudanar?',
   'A program’s path, and its arguments': 'Hanyar shiri, da muhawarorinsa',
   '{device} (this device)': '{device} (wannan na’urar)',
+  '{device}: cannot run applications yet':
+    '{device}: har yanzu ba zai iya gudanar da aikace-aikace ba',
+  '{device} has not listed its applications yet. What does it run?':
+    '{device} bai riga ya jera aikace-aikacensa ba. Me zai gudanar?',
   'Find an application': 'Nemo manhaja',
   'Another program…': 'Wani shiri…',
   '{device} cannot run an application on a display of its own yet.':

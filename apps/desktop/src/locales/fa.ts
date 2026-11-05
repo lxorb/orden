@@ -2425,6 +2425,9 @@ export const fa: Dictionary = {
   'What does it run?': 'چه چیزی اجرا کند؟',
   'A program’s path, and its arguments': 'مسیر یک برنامه و آرگومان‌هایش',
   '{device} (this device)': '{device} (این دستگاه)',
+  '{device}: cannot run applications yet': '{device}: هنوز نمی‌تواند برنامه‌ها را اجرا کند',
+  '{device} has not listed its applications yet. What does it run?':
+    '{device} هنوز فهرست برنامه‌های خود را نفرستاده است. چه چیزی اجرا کند؟',
   'Find an application': 'یک برنامه پیدا کنید',
   'Another program…': 'برنامهٔ دیگر…',
   '{device} cannot run an application on a display of its own yet.':

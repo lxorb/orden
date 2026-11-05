@@ -2390,6 +2390,9 @@ export const am: Dictionary = {
   'What does it run?': 'ምን ያስኬዳል?',
   'A program’s path, and its arguments': 'የፕሮግራም መንገድ፣ እና ነጋሪ እሴቶቹ',
   '{device} (this device)': '{device} (ይህ መሣሪያ)',
+  '{device}: cannot run applications yet': '{device}፦ መተግበሪያዎችን ገና ማስኬድ አይችልም',
+  '{device} has not listed its applications yet. What does it run?':
+    '{device} መተግበሪያዎቹን እስካሁን አልዘረዘረም። ምን ያስኬዳል?',
   'Find an application': 'መተግበሪያ ፈልግ',
   'Another program…': 'ሌላ ፕሮግራም…',
   '{device} cannot run an application on a display of its own yet.':

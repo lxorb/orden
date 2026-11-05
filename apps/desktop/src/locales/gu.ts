@@ -2415,6 +2415,9 @@ export const gu: Dictionary = {
   'What does it run?': 'તે શું ચલાવે?',
   'A program’s path, and its arguments': 'પ્રોગ્રામનો પાથ, અને તેના આર્ગ્યુમેન્ટ',
   '{device} (this device)': '{device} (આ ઉપકરણ)',
+  '{device}: cannot run applications yet': '{device}: હજી એપ્લિકેશન ચલાવી શકતું નથી',
+  '{device} has not listed its applications yet. What does it run?':
+    '{device} એ હજી તેની એપ્લિકેશનોની યાદી આપી નથી. તે શું ચલાવે?',
   'Find an application': 'એપ્લિકેશન શોધો',
   'Another program…': 'બીજો પ્રોગ્રામ…',
   '{device} cannot run an application on a display of its own yet.':
