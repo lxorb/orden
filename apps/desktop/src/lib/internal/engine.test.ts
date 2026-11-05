@@ -74,6 +74,8 @@ function commandsDisk(): Disk {
       await webInvoke('write_note', { path, content: text })
     },
     keep: () => Promise.resolve(),
+    // A kept space's files are Orden's own, never a cloud's placeholder.
+    evicted: () => Promise.resolve(false),
     move: (from, to) => webInvoke('rename_note', { from, to, alone: true }),
     remove: (path, kind) =>
       kind === 'file'
