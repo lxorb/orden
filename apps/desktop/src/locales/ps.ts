@@ -2882,6 +2882,18 @@ export const ps: Dictionary = {
   'Dictate with': 'املا په',
   'Where your voice goes to be turned into words.': 'ستاسو غږ د کلمو د جوړولو لپاره چېرته ځي.',
   'Ask on first use': 'په لومړي کارولو کې پوښتنه وکړه',
+  'This computer': 'دا کمپیوټر',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'په دې کمپیوټر کې کله چې د {size} د وینا ماډل یې راورسېږي؛ تر هغه {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'په دې کمپیوټر کې پاتې کېږي. یو ځل د {size} د وینا ماډل ښکته کوي',
+  'Speech model': 'د وینا ماډل',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}، په دې کمپیوټر کې. هېڅ هغه څه چې تاسو وایئ له دې نه وځي.',
+  'Downloading {percent}%': 'ښکته کېږي {percent}%',
+  'Download ({size})': 'ښکته کول ({size})',
+  'The speech model could not be downloaded.': 'د وینا ماډل ښکته نشو.',
+  'The speech model is still downloading.': 'د وینا ماډل لا هم ښکته کېږي.',
   'Orden account': 'د Orden حساب',
   'Your AI provider': 'ستاسو د AI وړاندې کوونکی',
   'Stays on this computer': 'په همدې کمپیوټر پاتې کېږي',

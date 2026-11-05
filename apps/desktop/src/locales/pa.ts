@@ -2891,6 +2891,18 @@ export const pa: Dictionary = {
   'Where your voice goes to be turned into words.':
     'ਤੁਹਾਡੀ ਆਵਾਜ਼ ਸ਼ਬਦਾਂ ਵਿੱਚ ਬਦਲਣ ਲਈ ਕਿੱਥੇ ਜਾਂਦੀ ਹੈ।',
   'Ask on first use': 'ਪਹਿਲੀ ਵਰਤੋਂ ਤੇ ਪੁੱਛੋ',
+  'This computer': 'ਇਹ ਕੰਪਿਊਟਰ',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'ਇਸਦਾ {size} ਦਾ ਸਪੀਚ ਮਾਡਲ ਆਉਣ ’ਤੇ ਇਸੇ ਕੰਪਿਊਟਰ ’ਤੇ; ਤਦ ਤੱਕ {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'ਇਸੇ ਕੰਪਿਊਟਰ ’ਤੇ ਰਹਿੰਦਾ ਹੈ। ਇੱਕ ਵਾਰ {size} ਦਾ ਸਪੀਚ ਮਾਡਲ ਡਾਊਨਲੋਡ ਕਰਦਾ ਹੈ',
+  'Speech model': 'ਸਪੀਚ ਮਾਡਲ',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, ਇਸੇ ਕੰਪਿਊਟਰ ’ਤੇ। ਤੁਸੀਂ ਜੋ ਕਹਿੰਦੇ ਹੋ, ਉਸ ਵਿੱਚੋਂ ਕੁਝ ਵੀ ਬਾਹਰ ਨਹੀਂ ਜਾਂਦਾ।',
+  'Downloading {percent}%': 'ਡਾਊਨਲੋਡ ਹੋ ਰਿਹਾ ਹੈ {percent}%',
+  'Download ({size})': 'ਡਾਊਨਲੋਡ ਕਰੋ ({size})',
+  'The speech model could not be downloaded.': 'ਸਪੀਚ ਮਾਡਲ ਡਾਊਨਲੋਡ ਨਹੀਂ ਹੋ ਸਕਿਆ।',
+  'The speech model is still downloading.': 'ਸਪੀਚ ਮਾਡਲ ਹਾਲੇ ਡਾਊਨਲੋਡ ਹੋ ਰਿਹਾ ਹੈ।',
   'Orden account': 'Orden ਖਾਤਾ',
   'Your AI provider': 'ਤੁਹਾਡਾ AI ਪ੍ਰਦਾਤਾ',
   'Stays on this computer': 'ਇਸੇ ਕੰਪਿਊਟਰ ਤੇ ਰਹਿੰਦਾ ਹੈ',

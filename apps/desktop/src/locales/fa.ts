@@ -2886,6 +2886,18 @@ export const fa: Dictionary = {
   'Dictate with': 'دیکته با',
   'Where your voice goes to be turned into words.': 'صدای شما برای تبدیل به متن به کجا می‌رود.',
   'Ask on first use': 'در اولین استفاده بپرس',
+  'This computer': 'این رایانه',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'روی این رایانه وقتی مدل گفتار {size} آن رسید؛ تا آن موقع {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'روی این رایانه می‌ماند. یک بار یک مدل گفتار {size} دانلود می‌کند',
+  'Speech model': 'مدل گفتار',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}، روی این رایانه. هیچ‌چیز از آنچه می‌گویید از آن بیرون نمی‌رود.',
+  'Downloading {percent}%': 'در حال دانلود {percent}٪',
+  'Download ({size})': 'دانلود ({size})',
+  'The speech model could not be downloaded.': 'مدل گفتار دانلود نشد.',
+  'The speech model is still downloading.': 'مدل گفتار هنوز در حال دانلود است.',
   'Orden account': 'حساب Orden',
   'Your AI provider': 'ارائه‌دهندهٔ هوش مصنوعی شما',
   'Stays on this computer': 'روی همین رایانه می‌ماند',

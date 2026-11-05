@@ -2823,6 +2823,18 @@ export const th: Dictionary = {
   'Dictate with': 'พิมพ์ด้วยเสียงผ่าน',
   'Where your voice goes to be turned into words.': 'เสียงของคุณถูกส่งไปที่ใดเพื่อแปลงเป็นข้อความ',
   'Ask on first use': 'ถามเมื่อใช้ครั้งแรก',
+  'This computer': 'คอมพิวเตอร์เครื่องนี้',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'บนคอมพิวเตอร์เครื่องนี้เมื่อโมเดลเสียงพูดขนาด {size} มาถึง ระหว่างนี้ใช้ {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'อยู่บนคอมพิวเตอร์เครื่องนี้ ดาวน์โหลดโมเดลเสียงพูดขนาด {size} ครั้งเดียว',
+  'Speech model': 'โมเดลเสียงพูด',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model} บนคอมพิวเตอร์เครื่องนี้ สิ่งที่คุณพูดไม่ออกไปไหน',
+  'Downloading {percent}%': 'กำลังดาวน์โหลด {percent}%',
+  'Download ({size})': 'ดาวน์โหลด ({size})',
+  'The speech model could not be downloaded.': 'ดาวน์โหลดโมเดลเสียงพูดไม่ได้',
+  'The speech model is still downloading.': 'โมเดลเสียงพูดยังดาวน์โหลดอยู่',
   'Orden account': 'บัญชี Orden',
   'Your AI provider': 'ผู้ให้บริการ AI ของคุณ',
   'Stays on this computer': 'อยู่บนคอมพิวเตอร์เครื่องนี้เท่านั้น',

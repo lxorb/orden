@@ -1,0 +1,156 @@
+{
+  "about": "The 21 recordings of #1128. m14-*: PolyAI MINDS-14 (CC BY 4.0, https://huggingface.co/datasets/PolyAI/minds14), train split, rows 40-45 of de-DE and en-US. tts-*: dictation-style sentences spoken by gpt-4o-mini-tts for #1128; bench.py adds 25 dB of noise to them.",
+  "context": [
+    "Sophie",
+    "Herr Bäumler",
+    "Daniel",
+    "Priya",
+    "Emil",
+    "Jürgen Weißmüller",
+    "Orden",
+    "Sync Worker",
+    "Cloudflare Workers",
+    "Svelte",
+    "Tauri",
+    "Pull Request",
+    "Feature Flag",
+    "CI"
+  ],
+  "samples": [
+    {
+      "file": "m14-de-DE-40.flac",
+      "lang": "de",
+      "kind": "real-phone",
+      "ref": "Hallo ich habe meine neuesten Transaktionen durchgeguckt und gefunden dass es da eine Zahlung gibt die ich nicht kenne und wollte jetzt wissen wohin diese Zahlung gegangen ist"
+    },
+    {
+      "file": "m14-de-DE-41.flac",
+      "lang": "de",
+      "kind": "real-phone",
+      "ref": "Hallo ich habe einen Barzahlungen in meinem Auszug die ich nicht erkennen können Sie mir weiterhelfen"
+    },
+    {
+      "file": "m14-de-DE-42.flac",
+      "lang": "de",
+      "kind": "real-phone",
+      "ref": "hallo bitte zeigen Sie mir meine aktuelle transaktionsübersicht"
+    },
+    {
+      "file": "m14-de-DE-43.flac",
+      "lang": "de",
+      "kind": "real-phone",
+      "ref": "hallo ich möchte wissen von wem die letzte Zahlung ist die ich bekommen habe"
+    },
+    {
+      "file": "m14-de-DE-44.flac",
+      "lang": "de",
+      "kind": "real-phone",
+      "ref": "Hallo ich würde gerne die letzten Transaktionen sehen die ich getätigt habe"
+    },
+    {
+      "file": "m14-de-DE-45.flac",
+      "lang": "de",
+      "kind": "real-phone",
+      "ref": "Hallo schönen guten Tag ich rufe an weil ich gerade am Online-Banking Bezahlung gesehen habe die ich bis jetzt noch nicht kannte und nicht weiß von wem die kommen dann können Sie da mal erklären von wem die abgebucht wurde"
+    },
+    {
+      "file": "m14-en-US-40.flac",
+      "lang": "en",
+      "kind": "real-phone",
+      "ref": "I was wondering if I was able to set up a joint account through the app"
+    },
+    {
+      "file": "m14-en-US-41.flac",
+      "lang": "en",
+      "kind": "real-phone",
+      "ref": "I would like to set up a joint account how would I go about doing that"
+    },
+    {
+      "file": "m14-en-US-42.flac",
+      "lang": "en",
+      "kind": "real-phone",
+      "ref": "what is my account balance"
+    },
+    {
+      "file": "m14-en-US-43.flac",
+      "lang": "en",
+      "kind": "real-phone",
+      "ref": "show me my current countdown"
+    },
+    {
+      "file": "m14-en-US-44.flac",
+      "lang": "en",
+      "kind": "real-phone",
+      "ref": "I was wondering if my current balance is on my account"
+    },
+    {
+      "file": "m14-en-US-45.flac",
+      "lang": "en",
+      "kind": "real-phone",
+      "ref": "I would like to be showing my account balance please"
+    },
+    {
+      "file": "tts-de1.flac",
+      "lang": "de",
+      "kind": "tts-dictation",
+      "ref": "Hallo Sophie, kannst du mir bis Donnerstag die Folien für das Meeting in Zürich schicken? Danke!",
+      "terms": ["Sophie", "Zürich"]
+    },
+    {
+      "file": "tts-de2.flac",
+      "lang": "de",
+      "kind": "tts-dictation",
+      "ref": "Erinnere mich morgen um halb neun daran, die Steuererklärung an Herrn Bäumler zu schicken.",
+      "terms": ["Bäumler", "Steuererklärung"]
+    },
+    {
+      "file": "tts-de3.flac",
+      "lang": "de",
+      "kind": "tts-dictation",
+      "ref": "Fasse bitte die Notiz über die Quartalsplanung zusammen und markiere die offenen Punkte.",
+      "terms": ["Quartalsplanung"]
+    },
+    {
+      "file": "tts-en1.flac",
+      "lang": "en",
+      "kind": "tts-dictation",
+      "ref": "Can you summarize this note and list the three open questions, then draft a reply to Daniel?",
+      "terms": ["Daniel"]
+    },
+    {
+      "file": "tts-en2.flac",
+      "lang": "en",
+      "kind": "tts-dictation",
+      "ref": "Remind me to book the flight to Lisbon on Friday, and ask Priya whether the budget is approved.",
+      "terms": ["Lisbon", "Priya"]
+    },
+    {
+      "file": "tts-mix1.flac",
+      "lang": "de+en",
+      "kind": "tts-dictation",
+      "ref": "Kannst du bitte den Pull Request für den Sync Worker reviewen und schauen, ob die Tests in CI grün sind?",
+      "terms": ["Pull Request", "Sync Worker", "CI"]
+    },
+    {
+      "file": "tts-mix2.flac",
+      "lang": "de+en",
+      "kind": "tts-dictation",
+      "ref": "Schreib eine kurze E-Mail an Emil: Das Deployment auf Cloudflare Workers ist fertig, aber das Feature Flag ist noch off.",
+      "terms": ["Emil", "Cloudflare Workers", "Feature Flag"]
+    },
+    {
+      "file": "tts-mix3.flac",
+      "lang": "de+en",
+      "kind": "tts-dictation",
+      "ref": "Erstelle ein Todo: Svelte-Komponente refactoren, dann das Onboarding im Settings Panel testen.",
+      "terms": ["Todo", "Svelte", "Onboarding", "Settings Panel"]
+    },
+    {
+      "file": "tts-mix4.flac",
+      "lang": "en+de",
+      "kind": "tts-dictation",
+      "ref": "Ask Jürgen Weißmüller if the Tauri build for Windows still crashes on startup.",
+      "terms": ["Jürgen Weißmüller", "Tauri", "Windows"]
+    }
+  ]
+}

@@ -2826,6 +2826,18 @@ export const am: Dictionary = {
   'Dictate with': 'በዚህ ይጻፍ',
   'Where your voice goes to be turned into words.': 'ድምጽዎ ወደ ቃላት ለመቀየር የሚሄድበት።',
   'Ask on first use': 'በመጀመሪያ ጥቅም ላይ ጠይቅ',
+  'This computer': 'ይህ ኮምፒውተር',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'የ{size} የንግግር ሞዴሉ ሲደርስ በዚህ ኮምፒውተር ላይ፤ እስከዚያ ድረስ {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'በዚህ ኮምፒውተር ላይ ይቀራል። የ{size} የንግግር ሞዴል አንድ ጊዜ ያወርዳል',
+  'Speech model': 'የንግግር ሞዴል',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}፣ በዚህ ኮምፒውተር ላይ። የሚናገሩት ምንም ነገር ከዚህ አይወጣም።',
+  'Downloading {percent}%': 'በማውረድ ላይ {percent}%',
+  'Download ({size})': 'አውርድ ({size})',
+  'The speech model could not be downloaded.': 'የንግግር ሞዴሉ ሊወርድ አልቻለም።',
+  'The speech model is still downloading.': 'የንግግር ሞዴሉ ገና እየወረደ ነው።',
   'Orden account': 'የOrden መለያ',
   'Your AI provider': 'የእርስዎ AI አቅራቢ',
   'Stays on this computer': 'በዚህ ኮምፒውተር ላይ ይቆያል',

@@ -2880,6 +2880,18 @@ export const ms: Dictionary = {
   'Where your voice goes to be turned into words.':
     'Ke mana suara anda dihantar untuk ditukar menjadi perkataan.',
   'Ask on first use': 'Tanya semasa kali pertama digunakan',
+  'This computer': 'Komputer ini',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'Pada komputer ini sebaik model pertuturannya ({size}) tiba; sehingga itu {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'Kekal pada komputer ini. Memuat turun model pertuturan {size} sekali',
+  'Speech model': 'Model pertuturan',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, pada komputer ini. Tiada apa yang anda sebut keluar daripadanya.',
+  'Downloading {percent}%': 'Memuat turun {percent}%',
+  'Download ({size})': 'Muat turun ({size})',
+  'The speech model could not be downloaded.': 'Model pertuturan tidak dapat dimuat turun.',
+  'The speech model is still downloading.': 'Model pertuturan masih dimuat turun.',
   'Orden account': 'Akaun Orden',
   'Your AI provider': 'Penyedia AI anda',
   'Stays on this computer': 'Kekal pada komputer ini',

@@ -2917,6 +2917,18 @@ export const kn: Dictionary = {
   'Where your voice goes to be turned into words.':
     'ನಿಮ್ಮ ಧ್ವನಿಯನ್ನು ಪದಗಳಾಗಿ ಬದಲಿಸಲು ಅದು ಎಲ್ಲಿಗೆ ಹೋಗುತ್ತದೆ.',
   'Ask on first use': 'ಮೊದಲ ಬಳಕೆಯಲ್ಲಿ ಕೇಳಿ',
+  'This computer': 'ಈ ಕಂಪ್ಯೂಟರ್',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'ಅದರ {size} ಸ್ಪೀಚ್ ಮಾದರಿ ಬಂದ ನಂತರ ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ; ಅಲ್ಲಿಯವರೆಗೆ {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲೇ ಉಳಿಯುತ್ತದೆ. ಒಮ್ಮೆ {size} ಸ್ಪೀಚ್ ಮಾದರಿಯನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡುತ್ತದೆ',
+  'Speech model': 'ಸ್ಪೀಚ್ ಮಾದರಿ',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ. ನೀವು ಹೇಳುವ ಯಾವುದೂ ಇದರಿಂದ ಹೊರಹೋಗುವುದಿಲ್ಲ.',
+  'Downloading {percent}%': 'ಡೌನ್‌ಲೋಡ್ ಆಗುತ್ತಿದೆ {percent}%',
+  'Download ({size})': 'ಡೌನ್‌ಲೋಡ್ ({size})',
+  'The speech model could not be downloaded.': 'ಸ್ಪೀಚ್ ಮಾದರಿಯನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಲಾಗಲಿಲ್ಲ.',
+  'The speech model is still downloading.': 'ಸ್ಪೀಚ್ ಮಾದರಿ ಇನ್ನೂ ಡೌನ್‌ಲೋಡ್ ಆಗುತ್ತಿದೆ.',
   'Orden account': 'Orden ಖಾತೆ',
   'Your AI provider': 'ನಿಮ್ಮ AI ಪೂರೈಕೆದಾರ',
   'Stays on this computer': 'ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲೇ ಉಳಿಯುತ್ತದೆ',

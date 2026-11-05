@@ -2846,6 +2846,18 @@ export const ko: Dictionary = {
   'Where your voice goes to be turned into words.':
     '목소리를 글자로 바꾸기 위해 음성이 가는 곳입니다.',
   'Ask on first use': '처음 사용할 때 묻기',
+  'This computer': '이 컴퓨터',
+  'On this computer once its {size} speech model is here; until then {road}':
+    '음성 모델({size})이 도착하면 이 컴퓨터에서, 그 전까지는 {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    '이 컴퓨터에만 머뭅니다. 음성 모델({size})을 한 번 내려받습니다',
+  'Speech model': '음성 모델',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, 이 컴퓨터에서. 말한 내용은 밖으로 나가지 않습니다.',
+  'Downloading {percent}%': '내려받는 중 {percent}%',
+  'Download ({size})': '내려받기({size})',
+  'The speech model could not be downloaded.': '음성 모델을 내려받지 못했습니다.',
+  'The speech model is still downloading.': '음성 모델을 아직 내려받는 중입니다.',
   'Orden account': 'Orden 계정',
   'Your AI provider': '내 AI 제공업체',
   'Stays on this computer': '이 컴퓨터에만 남습니다',

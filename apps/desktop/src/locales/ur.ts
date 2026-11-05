@@ -2879,6 +2879,18 @@ export const ur: Dictionary = {
   'Where your voice goes to be turned into words.':
     'آپ کی آواز الفاظ میں بدلنے کے لیے کہاں جاتی ہے۔',
   'Ask on first use': 'پہلی بار استعمال پر پوچھیں',
+  'This computer': 'یہ کمپیوٹر',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'اس کا {size} کا اسپیچ ماڈل آنے پر اسی کمپیوٹر پر؛ تب تک {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'اسی کمپیوٹر پر رہتا ہے۔ ایک بار {size} کا اسپیچ ماڈل ڈاؤن لوڈ کرتا ہے',
+  'Speech model': 'اسپیچ ماڈل',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}، اسی کمپیوٹر پر۔ آپ جو کہتے ہیں اس میں سے کچھ بھی باہر نہیں جاتا۔',
+  'Downloading {percent}%': 'ڈاؤن لوڈ ہو رہا ہے {percent}%',
+  'Download ({size})': 'ڈاؤن لوڈ کریں ({size})',
+  'The speech model could not be downloaded.': 'اسپیچ ماڈل ڈاؤن لوڈ نہیں ہو سکا۔',
+  'The speech model is still downloading.': 'اسپیچ ماڈل ابھی ڈاؤن لوڈ ہو رہا ہے۔',
   'Orden account': 'Orden اکاؤنٹ',
   'Your AI provider': 'آپ کا AI فراہم کنندہ',
   'Stays on this computer': 'اسی کمپیوٹر پر رہتا ہے',

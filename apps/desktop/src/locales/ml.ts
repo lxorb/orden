@@ -2928,6 +2928,18 @@ export const ml: Dictionary = {
   'Where your voice goes to be turned into words.':
     'നിങ്ങളുടെ ശബ്ദം വാക്കുകളാക്കി മാറ്റാൻ എവിടേക്ക് പോകുന്നു.',
   'Ask on first use': 'ആദ്യ ഉപയോഗത്തിൽ ചോദിക്കുക',
+  'This computer': 'ഈ കമ്പ്യൂട്ടർ',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'ഇതിന്റെ {size} സ്പീച്ച് മോഡൽ എത്തിയാൽ ഈ കമ്പ്യൂട്ടറിൽ; അതുവരെ {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'ഈ കമ്പ്യൂട്ടറിൽ തന്നെ നിൽക്കും. ഒരിക്കൽ {size} സ്പീച്ച് മോഡൽ ഡൗൺലോഡ് ചെയ്യും',
+  'Speech model': 'സ്പീച്ച് മോഡൽ',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, ഈ കമ്പ്യൂട്ടറിൽ. നിങ്ങൾ പറയുന്നതൊന്നും ഇതിൽ നിന്ന് പുറത്തുപോകില്ല.',
+  'Downloading {percent}%': 'ഡൗൺലോഡ് ചെയ്യുന്നു {percent}%',
+  'Download ({size})': 'ഡൗൺലോഡ് ({size})',
+  'The speech model could not be downloaded.': 'സ്പീച്ച് മോഡൽ ഡൗൺലോഡ് ചെയ്യാനായില്ല.',
+  'The speech model is still downloading.': 'സ്പീച്ച് മോഡൽ ഇപ്പോഴും ഡൗൺലോഡ് ചെയ്യുന്നു.',
   'Orden account': 'Orden അക്കൗണ്ട്',
   'Your AI provider': 'നിങ്ങളുടെ AI ദാതാവ്',
   'Stays on this computer': 'ഈ കമ്പ്യൂട്ടറിൽ തന്നെ തുടരും',

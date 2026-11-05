@@ -2785,6 +2785,18 @@ export const yue: Dictionary = {
   'Dictate with': '用呢個語音輸入',
   'Where your voice goes to be turned into words.': '你把聲轉做文字時會傳去邊度。',
   'Ask on first use': '第一次用嗰陣問',
+  'This computer': '呢部電腦',
+  'On this computer once its {size} speech model is here; until then {road}':
+    '語音模型（{size}）下載好之後喺呢部電腦度；喺嗰之前用{road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    '留喺呢部電腦度。只下載一次語音模型（{size}）',
+  'Speech model': '語音模型',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}，喺呢部電腦度。你講嘅嘢一啲都唔會離開佢。',
+  'Downloading {percent}%': '下載緊 {percent}%',
+  'Download ({size})': '下載（{size}）',
+  'The speech model could not be downloaded.': '下載唔到語音模型。',
+  'The speech model is still downloading.': '語音模型仲下載緊。',
   'Orden account': 'Orden 帳戶',
   'Your AI provider': '你嘅 AI 供應商',
   'Stays on this computer': '留喺呢部電腦',

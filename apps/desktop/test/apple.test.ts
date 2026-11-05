@@ -156,4 +156,9 @@ describe('what the hardened runtime lets a Mac open', () => {
     expect(grants).toContain('com.apple.security.device.audio-input')
     expect(grants).toContain('com.apple.security.device.camera')
   })
+
+  test('and let local dictation load the runtime it downloaded, which is not signed by Orden (#1151)', () => {
+    const grants = granted(read(TAURI, macOS.entitlements ?? 'Entitlements.plist'))
+    expect(grants).toContain('com.apple.security.cs.disable-library-validation')
+  })
 })

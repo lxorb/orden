@@ -51,7 +51,8 @@
   import { invoke, isDesktop } from './tauri'
   import { viewport } from './viewport.svelte'
   import Hint from './Hint.svelte'
-  import { canDictate, engines } from './dictation/engines.svelte'
+  import { canDictate, type Engine, engines } from './dictation/engines.svelte'
+  import { local } from './dictation/local.svelte'
 
   /** Which providers have a key on this device, by id. Asked once per provider and
    *  again whenever one is typed: the store itself never holds a key, so "set" is a
@@ -201,6 +202,15 @@
       danger: true,
     })
     if (sure) await vault.remove(id).catch(() => false)
+  }
+
+  /** What a dictation road is called in its list. */
+  function engineName(engine: Engine): string {
+    if (engine === 'auto') return t('Auto')
+    if (engine === 'local') return t('This computer')
+    if (engine === 'account') return t('Orden account')
+    if (engine === 'device') return t('This device')
+    return ai.transcriber?.name ?? ''
   }
 
   /** What an account is called: the name the reader gave it, else whose sign-in it is as
@@ -509,7 +519,7 @@
 {/if}
 
 <!-- Where dictation's sound goes (#1128): chosen on this device, and until it is, asked
-     on the first press. -->
+     on the first press. And the model this computer hears with, where it can (#1151). -->
 {#if canDictate()}
   <h3>{t('Dictation')}</h3>
   <div class="card">
@@ -526,25 +536,52 @@
           value={engines.chosen ?? ''}
           options={[
             { value: '', label: t('Ask on first use') },
-            ...engines.offered().map((one) => ({
-              value: one,
-              label:
-                one === 'account'
-                  ? t('Orden account')
-                  : one === 'device'
-                    ? t('This device')
-                    : (ai.transcriber?.name ?? ''),
-            })),
+            ...engines.offered().map((one) => ({ value: one, label: engineName(one) })),
           ]}
           onchange={(value: string) =>
-            engines.choose(
-              value === 'provider' || value === 'account' || value === 'device' ? value : null,
-            )}
+            engines.choose(engines.offered().find((one) => one === value) ?? null)}
           label={t('Dictate with')}
           plain={viewport.touch}
         />
       </div>
     </div>
+    {#if local.fits}
+      <div class="nib-setting setting">
+        <span class="name"
+          ><span class="nib-named"
+            >{t('Speech model')}<Hint
+              text={t('{model}, on this computer. Nothing you say leaves it.', {
+                model: local.machine?.model.name ?? '',
+              })}
+            /></span
+          ></span
+        >
+        <div class="nib-setting-value">
+          {#if local.fetching}
+            <span class="caption"
+              >{t('Downloading {percent}%', {
+                percent: Math.floor(
+                  (100 * local.fetching.done) / Math.max(1, local.fetching.total),
+                ),
+              })}</span
+            >
+          {:else if local.ready}
+            <button class="nib-chip is-quiet" onclick={() => void local.remove()}
+              >{t('Remove')}</button
+            >
+          {:else}
+            <button class="nib-chip" onclick={() => void local.fetch()}
+              >{t('Download ({size})', {
+                size: `${Math.round((local.machine?.model.bytes ?? 0) / 1e6)} MB`,
+              })}</button
+            >
+          {/if}
+        </div>
+      </div>
+      {#if local.trouble}
+        <p class="hint caption">{local.trouble}</p>
+      {/if}
+    {/if}
   </div>
 {/if}
 

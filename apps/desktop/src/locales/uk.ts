@@ -2973,6 +2973,18 @@ export const uk: Dictionary = {
   'Where your voice goes to be turned into words.':
     'Куди надсилається ваш голос, щоб стати текстом.',
   'Ask on first use': 'Запитати під час першого використання',
+  'This computer': 'Цей комп’ютер',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'На цьому комп’ютері, щойно надійде його мовна модель ({size}); доти {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'Залишається на цьому комп’ютері. Один раз завантажує мовну модель ({size})',
+  'Speech model': 'Мовна модель',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, на цьому комп’ютері. Ніщо зі сказаного не залишає його.',
+  'Downloading {percent}%': 'Завантаження {percent}%',
+  'Download ({size})': 'Завантажити ({size})',
+  'The speech model could not be downloaded.': 'Не вдалося завантажити мовну модель.',
+  'The speech model is still downloading.': 'Мовна модель ще завантажується.',
   'Orden account': 'Обліковий запис Orden',
   'Your AI provider': 'Ваш постачальник ШІ',
   'Stays on this computer': 'Залишається на цьому комп’ютері',

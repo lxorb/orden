@@ -2990,6 +2990,18 @@ export const ar: Dictionary = {
   'Dictate with': 'الإملاء عبر',
   'Where your voice goes to be turned into words.': 'إلى أين يذهب صوتك ليتحول إلى كلمات.',
   'Ask on first use': 'اسأل عند أول استخدام',
+  'This computer': 'هذا الكمبيوتر',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'على هذا الكمبيوتر بعد وصول نموذج الكلام ({size})؛ وحتى ذلك الحين {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'يبقى على هذا الكمبيوتر. ينزّل نموذج كلام بحجم {size} مرة واحدة',
+  'Speech model': 'نموذج الكلام',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}، على هذا الكمبيوتر. لا يغادره شيء مما تقوله.',
+  'Downloading {percent}%': 'جارٍ التنزيل {percent}%',
+  'Download ({size})': 'تنزيل ({size})',
+  'The speech model could not be downloaded.': 'تعذّر تنزيل نموذج الكلام.',
+  'The speech model is still downloading.': 'لا يزال نموذج الكلام قيد التنزيل.',
   'Orden account': 'حساب Orden',
   'Your AI provider': 'مزوّد الذكاء الاصطناعي الخاص بك',
   'Stays on this computer': 'يبقى على هذا الحاسوب',

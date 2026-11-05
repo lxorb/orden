@@ -2926,6 +2926,18 @@ export const ha: Dictionary = {
   'Where your voice goes to be turned into words.':
     'Inda muryarka ke zuwa don a mayar da ita kalmomi.',
   'Ask on first use': 'Tambaya a farkon amfani',
+  'This computer': 'Wannan kwamfuta',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'A wannan kwamfuta da zarar samfurin magana na {size} ya iso; kafin nan {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'Yana zama a wannan kwamfuta. Yana sauke samfurin magana na {size} sau ɗaya',
+  'Speech model': 'Samfurin magana',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, a wannan kwamfuta. Babu abin da kake faɗa da ke barin ta.',
+  'Downloading {percent}%': 'Ana saukewa {percent}%',
+  'Download ({size})': 'Sauke ({size})',
+  'The speech model could not be downloaded.': 'Ba a iya sauke samfurin magana ba.',
+  'The speech model is still downloading.': 'Ana ci gaba da sauke samfurin magana.',
   'Orden account': 'Asusun Orden',
   'Your AI provider': 'Mai samar maka da AI',
   'Stays on this computer': 'Tana zama a wannan kwamfutar',

@@ -2792,6 +2792,18 @@ export const zhHans: Dictionary = {
   'Dictate with': '听写方式',
   'Where your voice goes to be turned into words.': '你的声音被送往何处以转换成文字。',
   'Ask on first use': '首次使用时询问',
+  'This computer': '这台电脑',
+  'On this computer once its {size} speech model is here; until then {road}':
+    '语音模型（{size}）下载好后在这台电脑上；在此之前使用{road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    '留在这台电脑上。只需下载一次语音模型（{size}）',
+  'Speech model': '语音模型',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}，在这台电脑上。你说的内容不会离开它。',
+  'Downloading {percent}%': '正在下载 {percent}%',
+  'Download ({size})': '下载（{size}）',
+  'The speech model could not be downloaded.': '无法下载语音模型。',
+  'The speech model is still downloading.': '语音模型仍在下载。',
   'Orden account': 'Orden 账户',
   'Your AI provider': '你的 AI 提供商',
   'Stays on this computer': '留在这台电脑上',

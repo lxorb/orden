@@ -2905,6 +2905,18 @@ export const gsw: Dictionary = {
   'Where your voice goes to be turned into words.':
     'Wohäre dini Stimm gaht, zum in Text umgwandlet z wärde.',
   'Ask on first use': 'Bim erschte Mal frage',
+  'This computer': 'Dä Computer',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'Uf däm Computer, sobald sis Sprachmodell ({size}) do isch; bis denn {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'Blibt uf däm Computer. Ladt eimol es Sprachmodell ({size}) abe',
+  'Speech model': 'Sprachmodell',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, uf däm Computer. Nüt, wo du seisch, verlaht ihn.',
+  'Downloading {percent}%': 'Wird glade: {percent} %',
+  'Download ({size})': 'Abelade ({size})',
+  'The speech model could not be downloaded.': 'S Sprachmodell het nöd chönne abeglade wärde.',
+  'The speech model is still downloading.': 'S Sprachmodell wird no abeglade.',
   'Orden account': 'Orden-Konto',
   'Your AI provider': 'Din KI-Aabieter',
   'Stays on this computer': 'Blibt uf däm Computer',

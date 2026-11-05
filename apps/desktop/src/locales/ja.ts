@@ -2857,6 +2857,18 @@ export const ja: Dictionary = {
   'Where your voice goes to be turned into words.':
     '声を文字に変換するために音声が送られる先です。',
   'Ask on first use': '最初に使うときに確認',
+  'This computer': 'このコンピュータ',
+  'On this computer once its {size} speech model is here; until then {road}':
+    '音声モデル（{size}）が届いたらこのコンピュータで。それまでは {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'このコンピュータ内で完結します。音声モデル（{size}）を一度だけダウンロードします',
+  'Speech model': '音声モデル',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}、このコンピュータ上。話した内容は外に出ません。',
+  'Downloading {percent}%': 'ダウンロード中 {percent}%',
+  'Download ({size})': 'ダウンロード（{size}）',
+  'The speech model could not be downloaded.': '音声モデルをダウンロードできませんでした。',
+  'The speech model is still downloading.': '音声モデルはまだダウンロード中です。',
   'Orden account': 'Orden アカウント',
   'Your AI provider': 'あなたの AI プロバイダ',
   'Stays on this computer': 'このコンピュータから出ません',

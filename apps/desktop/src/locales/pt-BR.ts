@@ -2937,6 +2937,18 @@ export const ptBR: Dictionary = {
   'Dictate with': 'Ditar com',
   'Where your voice goes to be turned into words.': 'Para onde vai sua voz para virar texto.',
   'Ask on first use': 'Perguntar no primeiro uso',
+  'This computer': 'Este computador',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'Neste computador quando o modelo de voz de {size} chegar; até lá, {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'Fica neste computador. Baixa uma vez um modelo de voz de {size}',
+  'Speech model': 'Modelo de voz',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, neste computador. Nada do que você diz sai dele.',
+  'Downloading {percent}%': 'Baixando {percent}%',
+  'Download ({size})': 'Baixar ({size})',
+  'The speech model could not be downloaded.': 'Não foi possível baixar o modelo de voz.',
+  'The speech model is still downloading.': 'O modelo de voz ainda está sendo baixado.',
   'Orden account': 'Conta Orden',
   'Your AI provider': 'Seu provedor de IA',
   'Stays on this computer': 'Fica neste computador',

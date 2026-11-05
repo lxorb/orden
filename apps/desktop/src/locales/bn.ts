@@ -2879,6 +2879,18 @@ export const bn: Dictionary = {
   'Where your voice goes to be turned into words.':
     'আপনার কণ্ঠস্বর শব্দে রূপান্তরের জন্য কোথায় যায়।',
   'Ask on first use': 'প্রথমবার ব্যবহারের সময় জিজ্ঞেস করুন',
+  'This computer': 'এই কম্পিউটার',
+  'On this computer once its {size} speech model is here; until then {road}':
+    '{size}-এর স্পিচ মডেল এলে এই কম্পিউটারে; ততক্ষণ {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'এই কম্পিউটারেই থাকে। একবার {size}-এর একটি স্পিচ মডেল ডাউনলোড করে',
+  'Speech model': 'স্পিচ মডেল',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, এই কম্পিউটারে। আপনি যা বলেন তার কিছুই এর বাইরে যায় না।',
+  'Downloading {percent}%': 'ডাউনলোড হচ্ছে {percent}%',
+  'Download ({size})': 'ডাউনলোড ({size})',
+  'The speech model could not be downloaded.': 'স্পিচ মডেলটি ডাউনলোড করা যায়নি।',
+  'The speech model is still downloading.': 'স্পিচ মডেলটি এখনও ডাউনলোড হচ্ছে।',
   'Orden account': 'Orden অ্যাকাউন্ট',
   'Your AI provider': 'আপনার AI প্রদানকারী',
   'Stays on this computer': 'এই কম্পিউটারেই থাকে',

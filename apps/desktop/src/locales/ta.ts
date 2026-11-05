@@ -2934,6 +2934,18 @@ export const ta: Dictionary = {
   'Where your voice goes to be turned into words.':
     'உங்கள் குரல் சொற்களாக மாற்றப்பட எங்கே செல்கிறது.',
   'Ask on first use': 'முதல் முறை பயன்படுத்தும்போது கேள்',
+  'This computer': 'இந்தக் கணினி',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'அதன் {size} பேச்சு மாதிரி வந்ததும் இந்தக் கணினியில்; அதுவரை {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'இந்தக் கணினியிலேயே இருக்கும். {size} பேச்சு மாதிரியை ஒருமுறை பதிவிறக்கும்',
+  'Speech model': 'பேச்சு மாதிரி',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, இந்தக் கணினியில். நீங்கள் சொல்வது எதுவும் வெளியே போகாது.',
+  'Downloading {percent}%': 'பதிவிறக்குகிறது {percent}%',
+  'Download ({size})': 'பதிவிறக்கு ({size})',
+  'The speech model could not be downloaded.': 'பேச்சு மாதிரியைப் பதிவிறக்க முடியவில்லை.',
+  'The speech model is still downloading.': 'பேச்சு மாதிரி இன்னும் பதிவிறங்குகிறது.',
   'Orden account': 'Orden கணக்கு',
   'Your AI provider': 'உங்கள் AI வழங்குநர்',
   'Stays on this computer': 'இந்தக் கணினியிலேயே இருக்கும்',

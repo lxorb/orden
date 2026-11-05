@@ -2,7 +2,10 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 /** Which roads dictation offers and takes (#1128): only those that can be taken here,
  *  the reader's own provider first; none taken before one is chosen; and the device's
- *  own recogniser only where one works, which a desktop's WebView2 and CEF do not. */
+ *  own recogniser only where one works, which a desktop's WebView2 and CEF do not.
+ *  And this computer's own model (#1151): offered with "Auto" where the computer can run
+ *  it, downloaded only once one of the two is chosen, and taken by "Auto" once it is here
+ *  and keeps up. */
 
 const world = vi.hoisted(() => ({
   token: null as string | null,
@@ -10,7 +13,9 @@ const world = vi.hoisted(() => ({
   native: false,
   os: '',
   phone: false,
+  desktop: false,
   stored: new Map<string, string>(),
+  invoked: [] as string[],
 }))
 
 vi.mock('../account.svelte', () => ({
@@ -28,7 +33,19 @@ vi.mock('../tauri', () => ({
   get isNative() {
     return world.native
   },
+  get isDesktop() {
+    return world.desktop
+  },
   platform: () => world.os,
+  invoke: (command: string) => {
+    world.invoked.push(command)
+    return new Promise(() => undefined)
+  },
+}))
+vi.mock('../native', () => ({
+  Channel: class {
+    onmessage: unknown = null
+  },
 }))
 vi.mock('../stored', () => ({
   storedText: (key: string) => world.stored.get(key) ?? null,
@@ -37,10 +54,32 @@ vi.mock('../stored', () => ({
 }))
 
 const { canDictate, deviceHears, engines, whereTo } = await import('./engines.svelte')
+const { local } = await import('./local.svelte')
+
+const PARAKEET = { id: 'parakeet', name: 'Parakeet TDT 0.6B v3', bytes: 670_000_000 }
+
+/** A desktop whose model is as said. */
+function computer(fit: 'fits' | 'cores', installed: boolean, pace: number | null = null) {
+  world.desktop = true
+  world.native = true
+  local.machine = { fit, model: PARAKEET, installed }
+  local.pace = pace
+}
 
 beforeEach(() => {
-  Object.assign(world, { token: null, provider: null, native: false, os: '', phone: false })
+  Object.assign(world, {
+    token: null,
+    provider: null,
+    native: false,
+    os: '',
+    phone: false,
+    desktop: false,
+  })
   world.stored.clear()
+  world.invoked.length = 0
+  local.machine = null
+  local.fetching = null
+  local.pace = null
   engines.choose(null)
 })
 
@@ -99,6 +138,82 @@ describe('the road taken', () => {
   test('is none again once the chosen one cannot be taken, rather than another', () => {
     world.provider = { id: 'p', kind: 'openai', name: 'OpenAI', model: '' }
     engines.choose('account')
+    expect(engines.now()).toBeNull()
+  })
+})
+
+describe('this computer', () => {
+  test('is asked about only on a desktop, and never downloads by being asked', () => {
+    expect(engines.offered()).toEqual([])
+    expect(world.invoked).toEqual([])
+    world.desktop = true
+    engines.offered()
+    expect(world.invoked).toEqual(['dictation_local'])
+  })
+
+  test('is offered first, with Auto, where it can run the model', () => {
+    world.token = 'a token'
+    computer('fits', false)
+    expect(engines.offered()).toEqual(['auto', 'local', 'account'])
+    expect(world.invoked).not.toContain('dictation_local_fetch')
+  })
+
+  test('is not offered where it cannot keep up', () => {
+    world.token = 'a token'
+    computer('cores', false)
+    expect(engines.offered()).toEqual(['account'])
+  })
+
+  test('downloads its model once it or Auto is chosen, and not for another road', async () => {
+    world.token = 'a token'
+    computer('fits', false)
+    engines.choose('account')
+    expect(world.invoked).not.toContain('dictation_local_fetch')
+    await Promise.resolve()
+    expect(world.invoked).not.toContain('dictation_local_fetch')
+    engines.choose('local')
+    await vi.waitFor(() => expect(world.invoked).toContain('dictation_local_fetch'))
+    expect(engines.now()).toBe('local')
+  })
+})
+
+describe('Auto', () => {
+  test('takes the network road while the model is not here', async () => {
+    world.provider = { id: 'p', kind: 'openai', name: 'OpenAI', model: '' }
+    world.token = 'a token'
+    computer('fits', false)
+    engines.choose('auto')
+    await vi.waitFor(() => expect(world.invoked).toContain('dictation_local_fetch'))
+    expect(engines.now()).toBe('provider')
+    world.provider = null
+    expect(engines.now()).toBe('account')
+  })
+
+  test('takes this computer once the model is here and keeps up', () => {
+    world.token = 'a token'
+    computer('fits', true, 0.08)
+    engines.choose('auto')
+    expect(engines.now()).toBe('local')
+  })
+
+  test('keeps to the network where the model here is too slow', () => {
+    world.token = 'a token'
+    computer('fits', true, 0.6)
+    engines.choose('auto')
+    expect(engines.now()).toBe('account')
+  })
+
+  test('waits for the download where there is no network road', () => {
+    computer('fits', false)
+    engines.choose('auto')
+    expect(engines.now()).toBe('local')
+  })
+
+  test('is not taken on a computer that cannot run the model', () => {
+    world.token = 'a token'
+    computer('fits', false)
+    engines.choose('auto')
+    computer('cores', false)
     expect(engines.now()).toBeNull()
   })
 })

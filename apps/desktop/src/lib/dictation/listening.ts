@@ -1,7 +1,7 @@
 /** One dictation, from the microphone opening to the final words in the field (#1128).
  *
  *  Two kinds of pass over the same samples, both through the road the reader chose
- *  (recorder/transcribe.ts):
+ *  (recorder/transcribe.ts, or the model on this computer, #1151):
  *
  *  - **Live words**, while the voice goes on: the stretch since the last pause is heard
  *    again, a moment after each new bit of speech, and drawn in the field as words still
@@ -24,16 +24,18 @@ import { key, message } from '../i18n.svelte'
 import { heardPiece } from '../recorder/transcribe'
 import { RATE, wavOf } from '../recorder/wav'
 import { type Capture, capture } from './capture'
-import type { Engine } from './engines.svelte'
+import type { Taken } from './engines.svelte'
 import { cleaned, promptOf } from './heard'
+import { local } from './local.svelte'
 import { Ear, FRAME, meter } from './speech'
 import { type Field, Spot } from './spot'
 
-/** The roads that hear through Whisper; the device's own is device.ts. */
-export type Road = Exclude<Engine, 'device'>
+/** The roads that hear a stretch whole; the device's own recogniser is device.ts. */
+export type Road = Exclude<Taken, 'device'>
 
-/** How long after one live pass the next may start, by road. */
-const LIVE_EVERY: Record<Road, number> = { provider: 1_200, account: 2_500 }
+/** How long after one live pass the next may start, by road. This computer's model
+ *  hears a stretch in a fraction of its length and costs nobody a request. */
+const LIVE_EVERY: Record<Road, number> = { local: 300, provider: 1_200, account: 2_500 }
 
 /** How much new speech a live pass waits for: a quarter of a second, in frames. */
 const NEW_SPEECH = 8
@@ -73,12 +75,41 @@ export async function listen(
   words: readonly string[],
   hooks: Hooks,
 ): Promise<Listening> {
-  const hears: Hears = async (samples, prompt, tries) =>
-    (await heardPiece(wavOf(samples, RATE), { prompt, road: engine, tries })).text
+  const hears: Hears =
+    engine === 'local'
+      ? await hearsHere(words)
+      : async (samples, prompt, tries) =>
+          (await heardPiece(wavOf(samples, RATE), { prompt, road: engine, tries })).text
 
   const session = new Session(field, words, hears, LIVE_EVERY[engine], hooks)
   await session.open()
   return { finish: () => session.finish(), cancel: () => session.cancel() }
+}
+
+/** This computer's model, opened for the dictation: a stretch goes to it as one body,
+ *  the names around the field, one a line, and then the samples (`dictation_local_hear`).
+ *  Exported for its tests. */
+export async function hearsHere(words: readonly string[]): Promise<Hears> {
+  if (!local.ready) {
+    void local.fetch()
+    throw new Error(key('The speech model is still downloading.'))
+  }
+  await local.open()
+  const { invoke } = await import('../native')
+  const names = new TextEncoder().encode(words.join('\n'))
+  // The names go with the final pass alone: biasing the model towards them is a second
+  // pass of it (src-tauri/src/dictation/sherpa.rs), which a live pass can do without.
+  return (samples, _prompt, tries) => {
+    const said = tries === FINAL_TRIES ? names : new Uint8Array()
+    const body = new Uint8Array(4 + said.length + samples.byteLength)
+    new DataView(body.buffer).setUint32(0, said.length, true)
+    body.set(said, 4)
+    body.set(
+      new Uint8Array(samples.buffer, samples.byteOffset, samples.byteLength),
+      4 + said.length,
+    )
+    return invoke<string>('dictation_local_hear', body)
+  }
 }
 
 /** Everything one dictation holds. Exported for its tests, which hand it a road and

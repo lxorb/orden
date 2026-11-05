@@ -2945,6 +2945,18 @@ export const fil: Dictionary = {
   'Where your voice goes to be turned into words.':
     'Kung saan napupunta ang boses mo para gawing mga salita.',
   'Ask on first use': 'Magtanong sa unang paggamit',
+  'This computer': 'Ang computer na ito',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'Sa computer na ito kapag narito na ang {size} na speech model nito; hanggang doon, {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'Nananatili sa computer na ito. Nagda-download ng {size} na speech model nang isang beses',
+  'Speech model': 'Speech model',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, sa computer na ito. Walang anumang sinasabi mo ang lumalabas dito.',
+  'Downloading {percent}%': 'Nagda-download {percent}%',
+  'Download ({size})': 'I-download ({size})',
+  'The speech model could not be downloaded.': 'Hindi ma-download ang speech model.',
+  'The speech model is still downloading.': 'Nagda-download pa ang speech model.',
   'Orden account': 'Orden account',
   'Your AI provider': 'Ang AI provider mo',
   'Stays on this computer': 'Nananatili sa computer na ito',

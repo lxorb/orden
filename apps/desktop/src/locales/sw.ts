@@ -2923,6 +2923,18 @@ export const sw: Dictionary = {
   'Where your voice goes to be turned into words.':
     'Mahali sauti yako inakokwenda ili kugeuzwa kuwa maneno.',
   'Ask on first use': 'Uliza mara ya kwanza',
+  'This computer': 'Kompyuta hii',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'Kwenye kompyuta hii mara modeli yake ya usemi ya {size} itakapofika; hadi hapo {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'Hubaki kwenye kompyuta hii. Hupakua modeli ya usemi ya {size} mara moja',
+  'Speech model': 'Modeli ya usemi',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, kwenye kompyuta hii. Hakuna unachosema kinachoondoka humo.',
+  'Downloading {percent}%': 'Inapakua {percent}%',
+  'Download ({size})': 'Pakua ({size})',
+  'The speech model could not be downloaded.': 'Modeli ya usemi haikuweza kupakuliwa.',
+  'The speech model is still downloading.': 'Modeli ya usemi bado inapakuliwa.',
   'Orden account': 'Akaunti ya Orden',
   'Your AI provider': 'Mtoa huduma wako wa AI',
   'Stays on this computer': 'Inabaki kwenye kompyuta hii',

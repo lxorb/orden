@@ -9,6 +9,7 @@
   import { dur } from '../motion'
   import { overlays } from '../overlays'
   import { type Engine, engines, whereTo } from './engines.svelte'
+  import { local } from './local.svelte'
   import { type Dictates, voice } from './voice.svelte'
 
   const { owner, button, below }: { owner: Dictates; button: HTMLButtonElement; below: boolean } =
@@ -43,6 +44,19 @@
 
   /** What each road is called and where it sends a voice. */
   function said(engine: Engine): { name: string; where: string } {
+    if (engine === 'auto') {
+      const fallback = engines.offered().find((one) => one === 'provider' || one === 'account')
+      return {
+        name: t('Auto'),
+        where: fallback
+          ? t('On this computer once its {size} speech model is here; until then {road}', {
+              size: size(),
+              road: said(fallback).name,
+            })
+          : here(),
+      }
+    }
+    if (engine === 'local') return { name: t('This computer'), where: here() }
     if (engine === 'device') {
       return {
         name: t('This device'),
@@ -63,6 +77,15 @@
       name: provider?.name ?? t('Your AI provider'),
       where: to.local ? t('Stays on this computer') : t('Audio goes to {host}', { host: to.host }),
     }
+  }
+
+  function here(): string {
+    return t('Stays on this computer. Downloads a {size} speech model once', { size: size() })
+  }
+
+  /** The model's size on the disk, as a reader reads one. */
+  function size(): string {
+    return `${Math.round((local.machine?.model.bytes ?? 0) / 1e6)} MB`
   }
 
   function choose(engine: Engine) {

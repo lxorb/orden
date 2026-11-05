@@ -2869,6 +2869,18 @@ export const gu: Dictionary = {
   'Where your voice goes to be turned into words.':
     'તમારો અવાજ શબ્દોમાં ફેરવાવા માટે ક્યાં જાય છે.',
   'Ask on first use': 'પહેલી વાર વાપરતી વખતે પૂછો',
+  'This computer': 'આ કમ્પ્યુટર',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'તેનું {size}નું સ્પીચ મોડલ આવે પછી આ કમ્પ્યુટર પર; ત્યાં સુધી {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'આ કમ્પ્યુટર પર જ રહે છે. એક વાર {size}નું સ્પીચ મોડલ ડાઉનલોડ કરે છે',
+  'Speech model': 'સ્પીચ મોડલ',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, આ કમ્પ્યુટર પર. તમે જે બોલો છો તેમાંથી કંઈ બહાર જતું નથી.',
+  'Downloading {percent}%': 'ડાઉનલોડ થઈ રહ્યું છે {percent}%',
+  'Download ({size})': 'ડાઉનલોડ કરો ({size})',
+  'The speech model could not be downloaded.': 'સ્પીચ મોડલ ડાઉનલોડ થઈ શક્યું નથી.',
+  'The speech model is still downloading.': 'સ્પીચ મોડલ હજી ડાઉનલોડ થઈ રહ્યું છે.',
   'Orden account': 'Orden એકાઉન્ટ',
   'Your AI provider': 'તમારો AI પ્રદાતા',
   'Stays on this computer': 'આ કમ્પ્યુટર પર જ રહે છે',

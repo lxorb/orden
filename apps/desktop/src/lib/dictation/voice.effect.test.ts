@@ -14,6 +14,7 @@ const world = vi.hoisted(() => ({
   finished: 0,
   cancelled: 0,
   stored: new Map<string, string>(),
+  local: { fits: false, ready: false, keepsUp: true, fetched: 0 },
 }))
 
 vi.mock('./listening', () => ({
@@ -26,6 +27,24 @@ vi.mock('./listening', () => ({
       },
       cancel: () => world.cancelled++,
     })
+  },
+}))
+vi.mock('./local.svelte', () => ({
+  local: {
+    get fits() {
+      return world.local.fits
+    },
+    get ready() {
+      return world.local.ready
+    },
+    get keepsUp() {
+      return world.local.keepsUp
+    },
+    machine: { fit: 'fits', model: { id: 'parakeet', name: 'Parakeet', bytes: 670_000_000 } },
+    fetch: () => {
+      world.local.fetched++
+      return Promise.resolve()
+    },
   },
 }))
 vi.mock('./device', () => ({
@@ -122,6 +141,7 @@ beforeEach(() => {
   world.finished = 0
   world.cancelled = 0
   world.stored.clear()
+  world.local = { fits: false, ready: false, keepsUp: true, fetched: 0 }
   engines.choose(null)
 })
 
@@ -172,6 +192,45 @@ describe('with no engine chosen', () => {
     await settle()
     expect(world.stored.get('nib:dictation-engine')).toBe('account')
     expect(world.started).toEqual([{ engine: 'account', words: ['Sync Worker'] }])
+  })
+})
+
+describe('on a computer that can hear on its own (#1151)', () => {
+  beforeEach(() => {
+    world.local.fits = true
+  })
+
+  test('the chooser offers Auto first, saying where the voice goes until the model is here', async () => {
+    press(0)
+    await settle()
+    const rows = [...target.querySelectorAll('[role="dialog"] button')].map(
+      (one) => one.textContent,
+    )
+    expect(rows[0]).toContain('Auto')
+    expect(rows[0]).toContain('670 MB')
+    expect(rows[0]).toContain('until then Orden account')
+    expect(rows[1]).toContain('This computer')
+    expect(rows[1]).toContain('Stays on this computer')
+    expect(rows[2]).toContain('Orden account')
+    expect(world.local.fetched).toBe(0)
+  })
+
+  test('Auto downloads the model and listens on the network road meanwhile', async () => {
+    press(0)
+    await settle()
+    target.querySelector<HTMLElement>('[role="dialog"] button')!.click()
+    await settle()
+    expect(world.stored.get('nib:dictation-engine')).toBe('auto')
+    expect(world.local.fetched).toBe(1)
+    expect(world.started).toEqual([{ engine: 'account', words: ['Sync Worker'] }])
+  })
+
+  test('and on this computer once the model is here', async () => {
+    world.local.ready = true
+    engines.choose('auto')
+    press(0)
+    await settle()
+    expect(world.started).toEqual([{ engine: 'local', words: ['Sync Worker'] }])
   })
 })
 

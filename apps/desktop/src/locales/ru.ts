@@ -2979,6 +2979,18 @@ export const ru: Dictionary = {
   'Where your voice goes to be turned into words.':
     'Куда отправляется ваш голос, чтобы стать текстом.',
   'Ask on first use': 'Спросить при первом использовании',
+  'This computer': 'Этот компьютер',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'На этом компьютере, как только загрузится его речевая модель ({size}); до тех пор {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'Остаётся на этом компьютере. Один раз загружает речевую модель ({size})',
+  'Speech model': 'Речевая модель',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, на этом компьютере. Ничто из сказанного не покидает его.',
+  'Downloading {percent}%': 'Загрузка {percent}%',
+  'Download ({size})': 'Загрузить ({size})',
+  'The speech model could not be downloaded.': 'Не удалось загрузить речевую модель.',
+  'The speech model is still downloading.': 'Речевая модель ещё загружается.',
   'Orden account': 'Аккаунт Orden',
   'Your AI provider': 'Ваш поставщик ИИ',
   'Stays on this computer': 'Остаётся на этом компьютере',

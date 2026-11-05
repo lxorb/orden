@@ -2874,6 +2874,18 @@ export const my: Dictionary = {
   'Where your voice goes to be turned into words.':
     'သင့်အသံကို စကားလုံးအဖြစ် ပြောင်းရန် ဘယ်ကို ပို့သည်။',
   'Ask on first use': 'ပထမဆုံးအသုံးပြုချိန်တွင် မေးပါ',
+  'This computer': 'ဤကွန်ပျူတာ',
+  'On this computer once its {size} speech model is here; until then {road}':
+    '{size} စကားပြောမော်ဒယ် ရောက်လာသည်နှင့် ဤကွန်ပျူတာပေါ်တွင်၊ ထိုအချိန်အထိ {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'ဤကွန်ပျူတာပေါ်တွင်သာ ရှိနေသည်။ {size} စကားပြောမော်ဒယ်ကို တစ်ကြိမ် ဒေါင်းလုဒ်လုပ်သည်',
+  'Speech model': 'စကားပြောမော်ဒယ်',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}၊ ဤကွန်ပျူတာပေါ်တွင်။ သင်ပြောသမျှ မည်သည့်အရာမျှ အပြင်သို့ မထွက်ပါ။',
+  'Downloading {percent}%': 'ဒေါင်းလုဒ်လုပ်နေသည် {percent}%',
+  'Download ({size})': 'ဒေါင်းလုဒ် ({size})',
+  'The speech model could not be downloaded.': 'စကားပြောမော်ဒယ်ကို ဒေါင်းလုဒ်လုပ်၍ မရပါ။',
+  'The speech model is still downloading.': 'စကားပြောမော်ဒယ်ကို ဒေါင်းလုဒ်လုပ်နေဆဲဖြစ်သည်။',
   'Orden account': 'Orden အကောင့်',
   'Your AI provider': 'သင့် AI ဝန်ဆောင်မှုပေးသူ',
   'Stays on this computer': 'ဤကွန်ပျူတာပေါ်တွင်သာ ရှိနေသည်',

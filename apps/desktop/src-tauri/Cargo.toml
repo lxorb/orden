@@ -246,6 +246,9 @@ zip = { version = "4", default-features = false, features = ["deflate-flate2"] }
 # And its mutex, which an await may be held across: one refresh of a ChatGPT plan's token
 # at a time (chatgpt.rs).
 tokio = { version = "1", default-features = false, features = ["time", "sync"] }
+# Local dictation's runtime, sherpa-onnx and ONNX Runtime, downloaded when the reader
+# turns it on and loaded then, so the installer carries none of it; see src/dictation.rs.
+libloading = "0.8"
 
 # UIKit as the objects tao hands out, at the version it is built against. For the one
 # thing the phone build answers itself: a second window an iPad asks for, which is

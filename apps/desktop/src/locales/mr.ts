@@ -2883,6 +2883,18 @@ export const mr: Dictionary = {
   'Dictate with': 'याद्वारे श्रुतलेखन',
   'Where your voice goes to be turned into words.': 'तुमचा आवाज शब्दांत बदलण्यासाठी कुठे जातो.',
   'Ask on first use': 'पहिल्या वापराला विचारा',
+  'This computer': 'हा संगणक',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'त्याचे {size} चे स्पीच मॉडेल आल्यावर याच संगणकावर; तोपर्यंत {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'याच संगणकावर राहते. एकदा {size} चे स्पीच मॉडेल डाउनलोड करते',
+  'Speech model': 'स्पीच मॉडेल',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, याच संगणकावर. तुम्ही जे बोलता त्यातले काहीही बाहेर जात नाही.',
+  'Downloading {percent}%': 'डाउनलोड होत आहे {percent}%',
+  'Download ({size})': 'डाउनलोड करा ({size})',
+  'The speech model could not be downloaded.': 'स्पीच मॉडेल डाउनलोड करता आले नाही.',
+  'The speech model is still downloading.': 'स्पीच मॉडेल अजून डाउनलोड होत आहे.',
   'Orden account': 'Orden खाते',
   'Your AI provider': 'तुमचा AI प्रदाता',
   'Stays on this computer': 'याच संगणकावर राहतो',

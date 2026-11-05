@@ -749,6 +749,22 @@ field back, Enter finishes and then is the field's own Enter. The words land at 
 spaced from their neighbours (`dictation/spot.ts`). The measurements behind the choices -
 the model order, the prompt, the final pass - are on #1128.
 
+**This computer** (#1151) hears with no network at all: NVIDIA's Parakeet TDT 0.6B v3,
+quantised by sherpa-onnx, which finds German, English and the mix of them itself. Neither
+the model (670 MB) nor its runtime (sherpa-onnx with ONNX Runtime, 8-14 MB) is in the
+installer: both are downloaded when the reader chooses this road or "Auto", once, into the
+app's local data folder, each file checked against the SHA-256 `src-tauri/src/dictation/
+catalog.rs` pins, and Settings > AI > Dictation removes them. The runtime is loaded then
+(`dictation/sherpa.rs`), and its two libraries are hashed again before every load. A
+computer with fewer than four cores or less than 4 GB of memory is not offered it
+(`dictation/device.rs`). "Auto" hears there once the model is here and keeps up - the open
+model times a pass of two seconds, and slower than 0.3 s a second keeps to the network -
+and until then takes the first network road. Live passes come every 0.3 s, since they cost
+nobody a request. The final pass hears the names around the field as hotwords, kept only
+where they swap words rather than add them (`dictation/sherpa.rs`). `scripts/dictation-bench.py` measures the candidates on the recordings,
+and `the_recordings_heard_here` in `dictation.rs` the app's own engine; the numbers are on
+#1151.
+
 ## Costs
 
 Orden charges nothing and knows nothing about your bill. What it does do is make

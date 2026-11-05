@@ -2902,6 +2902,18 @@ export const tr: Dictionary = {
   'Where your voice goes to be turned into words.':
     'Sesinizin yazıya dönüştürülmek için gittiği yer.',
   'Ask on first use': 'İlk kullanımda sor',
+  'This computer': 'Bu bilgisayar',
+  'On this computer once its {size} speech model is here; until then {road}':
+    '{size} boyutundaki konuşma modeli gelince bu bilgisayarda; o zamana kadar {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'Bu bilgisayarda kalır. {size} boyutunda bir konuşma modelini bir kez indirir',
+  'Speech model': 'Konuşma modeli',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, bu bilgisayarda. Söylediğiniz hiçbir şey dışarı çıkmaz.',
+  'Downloading {percent}%': 'İndiriliyor %{percent}',
+  'Download ({size})': 'İndir ({size})',
+  'The speech model could not be downloaded.': 'Konuşma modeli indirilemedi.',
+  'The speech model is still downloading.': 'Konuşma modeli hâlâ indiriliyor.',
   'Orden account': 'Orden hesabı',
   'Your AI provider': 'AI sağlayıcınız',
   'Stays on this computer': 'Bu bilgisayarda kalır',

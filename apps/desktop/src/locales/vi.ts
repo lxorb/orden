@@ -2855,6 +2855,18 @@ export const vi: Dictionary = {
   'Where your voice goes to be turned into words.':
     'Nơi giọng nói của bạn được gửi đến để chuyển thành chữ.',
   'Ask on first use': 'Hỏi khi dùng lần đầu',
+  'This computer': 'Máy tính này',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'Trên máy tính này khi mô hình giọng nói {size} đã về; cho đến lúc đó, {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'Ở lại trên máy tính này. Tải về một lần mô hình giọng nói {size}',
+  'Speech model': 'Mô hình giọng nói',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, trên máy tính này. Không điều gì bạn nói rời khỏi nó.',
+  'Downloading {percent}%': 'Đang tải {percent}%',
+  'Download ({size})': 'Tải về ({size})',
+  'The speech model could not be downloaded.': 'Không thể tải mô hình giọng nói.',
+  'The speech model is still downloading.': 'Mô hình giọng nói vẫn đang tải.',
   'Orden account': 'Tài khoản Orden',
   'Your AI provider': 'Nhà cung cấp AI của bạn',
   'Stays on this computer': 'Ở lại trên máy tính này',

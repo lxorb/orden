@@ -3610,6 +3610,7 @@ dependencies = [
  "icu_properties",
  "keyring",
  "libc",
+ "libloading 0.8.9",
  "notify",
  "objc2",
  "objc2-app-kit",
@@ -4080,6 +4081,7 @@ dependencies = [
  "block2",
  "objc2",
  "objc2-app-kit",
+ "objc2-core-foundation",
  "objc2-foundation",
 ]
 

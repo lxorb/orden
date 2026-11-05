@@ -2944,6 +2944,19 @@ export const de: Dictionary = {
   'Where your voice goes to be turned into words.':
     'Wohin deine Stimme geht, um in Text umgewandelt zu werden.',
   'Ask on first use': 'Beim ersten Mal fragen',
+  'This computer': 'Dieser Computer',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'Auf diesem Computer, sobald sein Sprachmodell ({size}) da ist; bis dahin {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'Bleibt auf diesem Computer. Lädt einmal ein Sprachmodell ({size}) herunter',
+  'Speech model': 'Sprachmodell',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, auf diesem Computer. Nichts, was du sagst, verlässt ihn.',
+  'Downloading {percent}%': 'Wird geladen: {percent} %',
+  'Download ({size})': 'Herunterladen ({size})',
+  'The speech model could not be downloaded.':
+    'Das Sprachmodell konnte nicht heruntergeladen werden.',
+  'The speech model is still downloading.': 'Das Sprachmodell wird noch heruntergeladen.',
   'Orden account': 'Orden-Konto',
   'Your AI provider': 'Dein KI-Anbieter',
   'Stays on this computer': 'Bleibt auf diesem Computer',

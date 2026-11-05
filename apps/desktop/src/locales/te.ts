@@ -2897,6 +2897,18 @@ export const te: Dictionary = {
   'Where your voice goes to be turned into words.':
     'మీ స్వరం పదాలుగా మారడానికి ఎక్కడికి వెళ్తుంది.',
   'Ask on first use': 'మొదటిసారి వాడినప్పుడు అడుగు',
+  'This computer': 'ఈ కంప్యూటర్',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'దాని {size} స్పీచ్ మోడల్ వచ్చాక ఈ కంప్యూటర్‌లో; అప్పటివరకు {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'ఈ కంప్యూటర్‌లోనే ఉంటుంది. ఒకసారి {size} స్పీచ్ మోడల్‌ను డౌన్‌లోడ్ చేస్తుంది',
+  'Speech model': 'స్పీచ్ మోడల్',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, ఈ కంప్యూటర్‌లో. మీరు చెప్పేదేదీ దీని నుండి బయటకు వెళ్లదు.',
+  'Downloading {percent}%': 'డౌన్‌లోడ్ అవుతోంది {percent}%',
+  'Download ({size})': 'డౌన్‌లోడ్ ({size})',
+  'The speech model could not be downloaded.': 'స్పీచ్ మోడల్‌ను డౌన్‌లోడ్ చేయలేకపోయాం.',
+  'The speech model is still downloading.': 'స్పీచ్ మోడల్ ఇంకా డౌన్‌లోడ్ అవుతోంది.',
   'Orden account': 'Orden ఖాతా',
   'Your AI provider': 'మీ AI ప్రదాత',
   'Stays on this computer': 'ఈ కంప్యూటర్‌లోనే ఉంటుంది',

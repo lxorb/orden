@@ -2866,6 +2866,18 @@ export const jv: Dictionary = {
   'Where your voice goes to be turned into words.':
     'Menyang ngendi swaramu dikirim supaya diowahi dadi tembung.',
   'Ask on first use': 'Takon nalika pisanan dienggo',
+  'This computer': 'Komputer iki',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'Ing komputer iki yèn model wicarané ({size}) wis ana; nganti kuwi {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'Tetep ing komputer iki. Ngundhuh model wicara {size} sapisan',
+  'Speech model': 'Model wicara',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, ing komputer iki. Ora ana sing kokucapaké metu saka kéné.',
+  'Downloading {percent}%': 'Ngundhuh {percent}%',
+  'Download ({size})': 'Undhuh ({size})',
+  'The speech model could not be downloaded.': 'Model wicara ora bisa diundhuh.',
+  'The speech model is still downloading.': 'Model wicara isih diundhuh.',
   'Orden account': 'Akun Orden',
   'Your AI provider': 'Panyedhiya AI sampeyan',
   'Stays on this computer': 'Tetep ing komputer iki',

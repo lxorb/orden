@@ -86,6 +86,9 @@ mod clock;
 mod code_blocks;
 #[cfg(desktop)]
 mod default_browser;
+// Dictation heard on this device, with a model downloaded on demand; see dictation.rs.
+#[cfg(desktop)]
+mod dictation;
 #[cfg(desktop)]
 mod document_window;
 #[cfg(desktop)]
@@ -637,6 +640,11 @@ macro_rules! desktop_commands {
             web_clear::web_clear,
             web_tabs::web_answer,
             web_dialogs::web_dialog_answer,
+            dictation::dictation_local,
+            dictation::dictation_local_fetch,
+            dictation::dictation_local_remove,
+            dictation::dictation_local_open,
+            dictation::dictation_local_hear,
             downloads::web_downloads,
             downloads::web_download_open,
             downloads::web_download_show,
@@ -821,6 +829,10 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     // The applications this computer hosts; see apps_host.rs.
     #[cfg(desktop)]
     let builder = builder.manage(apps_host::Hosted::default());
+
+    // The model local dictation has open; see dictation.rs.
+    #[cfg(desktop)]
+    let builder = builder.manage(std::sync::Arc::new(dictation::Loaded::default()));
 
     // The questions Claude Code and Codex are answering, and the ChatGPT plan's access
     // token of the hour; see ai_cli.rs and chatgpt.rs.

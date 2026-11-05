@@ -2884,6 +2884,18 @@ export const hi: Dictionary = {
   'Where your voice goes to be turned into words.':
     'आपकी आवाज़ शब्दों में बदलने के लिए कहाँ जाती है।',
   'Ask on first use': 'पहली बार इस्तेमाल पर पूछें',
+  'This computer': 'यह कंप्यूटर',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'इसका {size} का स्पीच मॉडल आ जाने पर इसी कंप्यूटर पर; तब तक {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'इसी कंप्यूटर पर रहता है। एक बार {size} का स्पीच मॉडल डाउनलोड करता है',
+  'Speech model': 'स्पीच मॉडल',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, इसी कंप्यूटर पर। आप जो कहते हैं, उसमें से कुछ भी बाहर नहीं जाता।',
+  'Downloading {percent}%': 'डाउनलोड हो रहा है {percent}%',
+  'Download ({size})': 'डाउनलोड करें ({size})',
+  'The speech model could not be downloaded.': 'स्पीच मॉडल डाउनलोड नहीं हो सका।',
+  'The speech model is still downloading.': 'स्पीच मॉडल अभी डाउनलोड हो रहा है।',
   'Orden account': 'Orden खाता',
   'Your AI provider': 'आपका AI प्रदाता',
   'Stays on this computer': 'इसी कंप्यूटर पर रहता है',

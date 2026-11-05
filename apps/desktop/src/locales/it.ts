@@ -2965,6 +2965,18 @@ export const it: Dictionary = {
   'Dictate with': 'Detta con',
   'Where your voice goes to be turned into words.': 'Dove va la tua voce per diventare testo.',
   'Ask on first use': 'Chiedi al primo utilizzo',
+  'This computer': 'Questo computer',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'Su questo computer appena il suo modello vocale da {size} è qui; fino ad allora {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'Resta su questo computer. Scarica una volta un modello vocale da {size}',
+  'Speech model': 'Modello vocale',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, su questo computer. Niente di ciò che dici ne esce.',
+  'Downloading {percent}%': 'Download {percent}%',
+  'Download ({size})': 'Scarica ({size})',
+  'The speech model could not be downloaded.': 'Impossibile scaricare il modello vocale.',
+  'The speech model is still downloading.': 'Il modello vocale è ancora in download.',
   'Orden account': 'Account Orden',
   'Your AI provider': 'Il tuo fornitore di IA',
   'Stays on this computer': 'Resta su questo computer',

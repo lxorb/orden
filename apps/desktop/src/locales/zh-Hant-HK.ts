@@ -2792,6 +2792,18 @@ export const zhHantHK: Dictionary = {
   'Dictate with': '聽寫方式',
   'Where your voice goes to be turned into words.': '你的聲音會被送往何處以轉換成文字。',
   'Ask on first use': '首次使用時詢問',
+  'This computer': '這部電腦',
+  'On this computer once its {size} speech model is here; until then {road}':
+    '語音模型（{size}）下載好後在這部電腦上；在此之前使用{road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    '留在這部電腦上。只需下載一次語音模型（{size}）',
+  'Speech model': '語音模型',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}，在這部電腦上。你說的內容不會離開它。',
+  'Downloading {percent}%': '正在下載 {percent}%',
+  'Download ({size})': '下載（{size}）',
+  'The speech model could not be downloaded.': '無法下載語音模型。',
+  'The speech model is still downloading.': '語音模型仍在下載。',
   'Orden account': 'Orden 帳戶',
   'Your AI provider': '你的 AI 供應商',
   'Stays on this computer': '留在這部電腦上',

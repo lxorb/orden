@@ -3,7 +3,9 @@
  *  Chosen rather than guessed, because each road sends a voice somewhere: to the AI
  *  provider the reader set up (or nowhere past this machine, for a server running on
  *  it), to Orden's Worker and the Whisper on Cloudflare's Workers AI behind it, or to
- *  the device's own recogniser, which is its maker's (device.ts). Until
+ *  the device's own recogniser, which is its maker's (device.ts). Or nowhere: a model
+ *  on this computer (local.svelte.ts, #1151), and "Auto", which hears there once the
+ *  model is here and keeps up, and until then takes the first network road. Until
  *  one is chosen nothing is recorded: the first press asks (EngineChooser.svelte), and
  *  Settings > AI changes it.
  *
@@ -19,11 +21,18 @@ import type { Provider } from '../ai/providers'
 import { method } from '../mobile/bridge'
 import { forget, keep, storedText } from '../stored'
 import { isNative, platform } from '../tauri'
+import { local } from './local.svelte'
 import { speechRecogniser } from './recogniser'
 
-export type Engine = 'provider' | 'account' | 'device'
+export type Engine = 'auto' | 'local' | 'provider' | 'account' | 'device'
 
-const ENGINES: readonly Engine[] = ['provider', 'account', 'device']
+/** A road a voice is actually heard along, which "Auto" resolves to. */
+export type Taken = Exclude<Engine, 'auto'>
+
+const ENGINES: readonly Engine[] = ['auto', 'local', 'provider', 'account', 'device']
+
+/** The network roads "Auto" falls back on, in its order. */
+const NETWORK: readonly Taken[] = ['provider', 'account']
 
 const KEY = 'nib:dictation-engine'
 
@@ -66,29 +75,45 @@ class Engines {
   /** What the reader chose, whether or not it can be used right now. */
   chosen = $state<Engine | null>(read())
 
-  /** Whether a road can be taken here: a provider that transcribes, an account, or a
-   *  recogniser of the device's own. */
+  /** Whether a road can be taken here: a model this computer can run (downloaded or
+   *  not), a provider that transcribes, an account, or a recogniser of the device's own.
+   *  "Auto" is offered where this computer can hear on its own. */
   usable(engine: Engine): boolean {
+    if (engine === 'auto' || engine === 'local') return local.fits
     if (engine === 'provider') return !!transcriberNow()
     if (engine === 'account') return !!account.accountToken
     return deviceHears()
   }
 
-  /** Every road that can be taken here, the reader's own provider first. */
+  /** Every road that can be taken here: Auto and this computer first, then the reader's
+   *  own provider. */
   offered(): Engine[] {
     return ENGINES.filter((one) => this.usable(one))
   }
 
-  /** The road to take now: the one chosen, while it can still be taken. Null asks. */
-  now(): Engine | null {
-    return this.chosen && this.usable(this.chosen) ? this.chosen : null
+  /** The road to take now: the one chosen, while it can still be taken, with "Auto"
+   *  resolved. Null asks. */
+  now(): Taken | null {
+    const chosen = this.chosen
+    if (!chosen || !this.usable(chosen)) return null
+    return chosen === 'auto' ? resolved() : chosen
   }
 
+  /** Keeps the choice; one that hears on this computer starts its download. */
   choose(engine: Engine | null): void {
     this.chosen = engine
     if (engine) keep(KEY, engine)
     else forget(KEY)
+    if (engine === 'auto' || engine === 'local') void local.fetch()
   }
+}
+
+/** What "Auto" hears with: this computer where its model is here and keeps up, else the
+ *  first network road there is, else this computer still, which then waits for its
+ *  download. */
+function resolved(): Taken {
+  if (local.ready && local.keepsUp) return 'local'
+  return NETWORK.find((one) => engines.usable(one)) ?? 'local'
 }
 
 export const engines = new Engines()

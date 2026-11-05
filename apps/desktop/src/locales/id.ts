@@ -2881,6 +2881,18 @@ export const id: Dictionary = {
   'Where your voice goes to be turned into words.':
     'Ke mana suara Anda dikirim untuk diubah menjadi kata-kata.',
   'Ask on first use': 'Tanya saat pertama dipakai',
+  'This computer': 'Komputer ini',
+  'On this computer once its {size} speech model is here; until then {road}':
+    'Di komputer ini setelah model suaranya ({size}) tersedia; sampai saat itu {road}',
+  'Stays on this computer. Downloads a {size} speech model once':
+    'Tetap di komputer ini. Mengunduh model suara {size} sekali',
+  'Speech model': 'Model suara',
+  '{model}, on this computer. Nothing you say leaves it.':
+    '{model}, di komputer ini. Tidak ada yang Anda ucapkan yang keluar darinya.',
+  'Downloading {percent}%': 'Mengunduh {percent}%',
+  'Download ({size})': 'Unduh ({size})',
+  'The speech model could not be downloaded.': 'Model suara tidak dapat diunduh.',
+  'The speech model is still downloading.': 'Model suara masih diunduh.',
   'Orden account': 'Akun Orden',
   'Your AI provider': 'Penyedia AI Anda',
   'Stays on this computer': 'Tetap di komputer ini',

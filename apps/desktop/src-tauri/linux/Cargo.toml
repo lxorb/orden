@@ -72,6 +72,7 @@ reqwest = { version = "0.13", default-features = false, features = ["rustls-no-p
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 zip = { version = "4", default-features = false, features = ["deflate-flate2"] }
 tokio = { version = "1", default-features = false, features = ["time", "sync"] }
+libloading = "0.8"
 
 [target.'cfg(any(target_os = "windows", target_os = "linux"))'.dependencies]
 keyring = { version = "3", default-features = false, features = [
