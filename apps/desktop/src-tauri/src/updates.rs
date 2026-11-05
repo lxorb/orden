@@ -70,7 +70,7 @@ const RELEASES: [&str; 2] = [
 /// rolling channel follows: `0.8.1-421` sits above `0.8.0` in semver, so the edge
 /// manifest served at the releases' endpoint would otherwise hand a stable install
 /// an untested build of main. See `scripts/build-version.sh`.
-fn offered(channel: &str, version: &str, download: &str) -> Result<(), String> {
+pub(crate) fn offered(channel: &str, version: &str, download: &str) -> Result<(), String> {
     let Some(file) = RELEASES
         .iter()
         .find_map(|releases| download.strip_prefix(releases))
@@ -147,7 +147,7 @@ pub struct Found {
 /// is the only safe answer to a value nobody wrote, and it is where every install
 /// starts. A constant that did not parse would read as stable too, which is why
 /// the tests below parse it.
-fn endpoints(channel: &str) -> Option<Vec<Url>> {
+pub(crate) fn endpoints(channel: &str) -> Option<Vec<Url>> {
     if channel != UNSTABLE {
         return None;
     }

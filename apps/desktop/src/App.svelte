@@ -1348,6 +1348,8 @@
       <UpdateNotice
         version={updates.ready}
         managed={updates.managed}
+        system={updates.system}
+        channel={updates.channel}
         ondismiss={() => updates.dismiss()}
       />
     {/if}

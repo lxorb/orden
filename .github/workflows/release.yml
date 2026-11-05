@@ -205,7 +205,9 @@ jobs:
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.sig
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
+            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.sig
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/rpm/*.rpm
+            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/rpm/*.sig
 
   # One download that runs on every Mac, Intel or Apple silicon (#307). `tauri build
   # --target universal-apple-darwin` compiles the crate for each architecture one after
@@ -448,10 +450,11 @@ jobs:
         run: |
           # Every file before the manifest that names it: the updater is never offered
           # a version whose installer is still on its way.
-          # What latest.json names: the setups, the AppImages and the Mac's .app.tar.gz.
+          # What latest.json names: the setups, the AppImages, the Mac's .app.tar.gz, and the
+          # .deb and .rpm a system's PackageKit installs (src-tauri/src/updates.rs).
           # Through xargs, which fails when one does; find's own -exec answers 0 whatever
           # the command said.
-          find artifacts -type f \( -name '*-setup.exe' -o -name '*.AppImage' -o -name '*.app.tar.gz' \) -print0 |
+          find artifacts -type f \( -name '*-setup.exe' -o -name '*.AppImage' -o -name '*.app.tar.gz' -o -name '*.deb' -o -name '*.rpm' \) -print0 |
             xargs -0 -I{} gh release upload "$FILES" {} --clobber
           # And the installers, under the product's name, on the release's own page.
           mkdir installers
@@ -518,6 +521,18 @@ jobs:
     permissions:
       contents: read
     uses: ./.github/workflows/apt.yml
+    with:
+      suite: unstable
+      tag: ${{ needs.version.outputs.tag }}
+    secrets: inherit
+
+  # And into the dnf and zypper repository's `unstable` suite, the same way; see rpm.yml.
+  rpm:
+    needs: [version, publish]
+    if: ${{ !cancelled() && needs.publish.result == 'success' && needs.version.outputs.rolling == 'true' }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/rpm.yml
     with:
       suite: unstable
       tag: ${{ needs.version.outputs.tag }}

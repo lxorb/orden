@@ -3,7 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import Cross from './Cross.svelte'
   import { t } from './i18n.svelte'
-  import { restartToUpdate } from './updater'
+  import { type Channel, restartToUpdate } from './updater'
   import { dur } from './motion'
   import { log } from './log'
   import { told } from './said.svelte'
@@ -11,13 +11,23 @@
   const {
     version,
     managed = false,
+    system = false,
+    channel = 'stable',
     ondismiss,
   }: {
     version: string
     /** A package manager keeps this install: the notice only says what is out. */
     managed?: boolean
+    /** Unless it is apt or dnf, whose install this updates through PackageKit (#1147). */
+    system?: boolean
+    channel?: Channel
     ondismiss: () => void
   } = $props()
+
+  const news = $derived(managed && !system)
+
+  /** What to run in a terminal, where PackageKit could not update it. */
+  let command = $state<string | null>(null)
 
   /** How long the news stays when there is nothing to do about it; the rename
    *  notice's, long enough to read it twice. */
@@ -44,7 +54,7 @@
   }
 
   $effect(() => {
-    if (!managed || pointer || keys) return
+    if (!news || pointer || keys) return
     const timer = setTimeout(ondismiss, STAYS)
     return () => clearTimeout(timer)
   })
@@ -61,7 +71,9 @@
   async function restart() {
     restarting = true
     try {
-      await (moving ? (await import('./app-place')).moveToApplications() : restartToUpdate())
+      if (system && !__EVEN_PLUGIN__)
+        command = await (await import('./system-update')).updateBySystem(version, channel)
+      else await (moving ? (await import('./app-place')).moveToApplications() : restartToUpdate())
     } catch (error) {
       log('error', `update: ${String(error)}`)
     }
@@ -76,7 +88,8 @@
      a cross, and gone on its own after a while. -->
 <div
   class="notice"
-  class:is-news={managed}
+  class:is-news={news}
+  class:is-told={command !== null}
   transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
   {@attach told(
     managed
@@ -85,7 +98,24 @@
   )}
   {@attach heldBy}
 >
-  {#if managed}
+  {#if command}
+    <p>{t('To update, run this in a terminal:')}</p>
+    <!-- Only ever shown after a failed update, so not part of the first paint. -->
+    {#await import('./Copyable.svelte') then { default: Copyable }}
+      <Copyable value={command} />
+    {/await}
+
+    <div class="actions">
+      <button class="nib-button is-quiet" onclick={ondismiss}>{t('Later')}</button>
+    </div>
+  {:else if system}
+    <p>{t('Orden {version} is available.', { version })}</p>
+
+    <div class="actions">
+      <button class="nib-button is-quiet" onclick={ondismiss}>{t('Later')}</button>
+      <button class="nib-button" disabled={restarting} onclick={restart}>{t('Update')}</button>
+    </div>
+  {:else if news}
     <p>{t('Orden {version} is available.', { version })}</p>
     <button
       class="nib-glyph shut"
@@ -135,6 +165,16 @@
      and the mark sits where the edge of the words would. */
   .shut {
     margin-inline-end: calc(-1 * var(--space-2));
+  }
+
+  /* The words, the command under them, and Later under that. */
+  .notice.is-told {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .is-told .actions {
+    justify-content: flex-end;
   }
 
   .actions {

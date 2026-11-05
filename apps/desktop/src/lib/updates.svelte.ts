@@ -9,6 +9,7 @@ import {
   hearHandedOn,
   stageUpdate,
   stagedVersion,
+  updatedBySystem,
 } from './updater'
 
 /** How often the app looks for a new version while it is running.
@@ -68,6 +69,10 @@ class Updates {
   /** Whether a package manager keeps this install, so the notice only says what is
    *  out; see updater.ts. */
   managed = $state(false)
+
+  /** Whether that manager is apt or dnf, whose install the notice updates through the
+   *  system (#1147): offered on every launch, as a download is, rather than told once. */
+  system = $state(false)
 
   /** Which stream of releases this machine follows; see updater.ts. Stable, until
    *  somebody asks for the other one on this machine. */
@@ -192,8 +197,10 @@ class Updates {
     }
 
     // A package manager's install is told of each version once, across launches.
-    this.managed = (await managedBy()) !== null
-    if (this.managed && storedText(TOLD_KEY) === found) return
+    const manager = await managedBy()
+    this.managed = manager !== null
+    this.system = updatedBySystem(manager)
+    if (this.managed && !this.system && storedText(TOLD_KEY) === found) return
 
     // Only ever set, never cleared: a second look answers nothing for the
     // version it downloaded on the first, and clearing the notice then would
@@ -235,7 +242,7 @@ class Updates {
   private show(version: string) {
     clearTimeout(this.waiting)
     this.ready = version
-    if (this.managed) keep(TOLD_KEY, version)
+    if (this.managed && !this.system) keep(TOLD_KEY, version)
   }
 
   dismiss() {

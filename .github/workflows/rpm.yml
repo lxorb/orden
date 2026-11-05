@@ -1,0 +1,217 @@
+name: rpm
+
+# The dnf and zypper repository, served at https://apt.orden.so/rpm from the apt
+# repository's own bucket, `orden-apt`, and signed with its own key, APT_SIGNING_KEY:
+# one suite of it written again from a release's .rpms and put into the bucket in place
+# of what that suite was, once Fedora and openSUSE have installed it and upgraded to it.
+# `stable` comes from publish.yml, for a stable release, and `unstable` from
+# release.yml, once edge is up; both call this workflow (`uses:`), as they call apt.yml.
+# By hand, once it is on main:
+#
+#   gh workflow run rpm.yml -f suite=stable -f tag=v0.20.0
+#   gh workflow run rpm.yml -f suite=unstable -f tag=edge
+#
+# See scripts/rpm-repo.sh, scripts/rpm-try.sh and packaging/linux.md, "dnf and zypper".
+on:
+  workflow_call:
+    inputs:
+      suite:
+        description: Which suite to write, stable or unstable
+        type: string
+        required: true
+      tag:
+        description: The release whose .rpms go in, v1.2.3 for stable and edge for unstable
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Which suite to write
+        type: choice
+        options: [stable, unstable]
+        required: true
+      tag:
+        description: The release whose .rpms go in, v1.2.3 for stable and edge for unstable
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  # apt.yml's: the same key, address, bucket and account.
+  APT_KEY_FINGERPRINT: 44404B19539FB2C53F31086941F0103448A194DE
+  APT_BASE_URL: https://apt.orden.so
+  R2_BUCKET: orden-apt
+  CF_ACCOUNT_ID: b0e98c15b1f905a394ecd6a849e8e99f
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    permissions: {}
+    outputs:
+      go: ${{ steps.check.outputs.go }}
+    steps:
+      # As apt.yml's gate: skipped in a fork, red in lxorb/orden without the secrets.
+      - id: check
+        env:
+          SUITE: ${{ inputs.suite }}
+          TAG: ${{ inputs.tag }}
+          APT_SIGNING_KEY: ${{ secrets.APT_SIGNING_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          if [[ -z $APT_SIGNING_KEY || -z $CLOUDFLARE_API_TOKEN ]]; then
+            if [[ $REPOSITORY == lxorb/orden ]]; then
+              echo "::error::APT_SIGNING_KEY or CLOUDFLARE_API_TOKEN is not set - $TAG did not reach the rpm repository."
+              exit 1
+            fi
+            echo "::notice::APT_SIGNING_KEY or CLOUDFLARE_API_TOKEN is not set - nothing to publish."
+            echo 'go=false' >>"$GITHUB_OUTPUT"
+          elif [[ $SUITE == stable && $TAG == v*.*.* && $TAG != *-* ]] || [[ $SUITE == unstable && $TAG == edge ]]; then
+            echo 'go=true' >>"$GITHUB_OUTPUT"
+          else
+            echo "::error::$TAG does not go in $SUITE: stable takes a released v*.*.*, unstable takes edge."
+            exit 1
+          fi
+
+  write:
+    needs: gate
+    if: needs.gate.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      SUITE: ${{ inputs.suite }}
+      TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          sparse-checkout: |
+            scripts/rpm-repo.sh
+            scripts/rpm-try.sh
+            packaging/apt/orden-archive-keyring.asc
+            packaging/rpm
+          persist-credentials: false
+
+      - name: The release's .rpms
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The page's own copies, called Orden; edge holds the updater's, called Nib, too.
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir rpms \
+            --pattern 'Orden-*-linux-x64.rpm' --pattern 'Orden-*-linux-arm64.rpm'
+          ls -l rpms
+
+      - name: The signing key
+        env:
+          APT_SIGNING_KEY: ${{ secrets.APT_SIGNING_KEY }}
+        run: |
+          gpg --batch --import <<<"$APT_SIGNING_KEY"
+          published=$(gpg --batch --show-keys --with-colons packaging/apt/orden-archive-keyring.asc | awk -F: '$1 == "fpr" { print $10; exit }')
+          [ "$published" = "$APT_KEY_FINGERPRINT" ] || { echo "::error::the published key is $published"; exit 1; }
+
+      # scripts/rpm-repo.sh reads every package back with the published key, so a
+      # secret that is not it signs nothing that leaves this job.
+      - name: Write the suite
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q rpm createrepo-c
+          bash scripts/rpm-repo.sh "$SUITE" rpms repo
+          # Beside it for the job below, and never put into the bucket.
+          cp scripts/rpm-try.sh repo/
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: rpm-${{ inputs.suite }}
+          path: repo
+          if-no-files-found: error
+          retention-days: 1
+
+  # What a reader does with it, before any reader can: installed fresh and over an older
+  # version, by dnf on Fedora and zypper on openSUSE, on both architectures.
+  try:
+    needs: write
+    strategy:
+      fail-fast: false
+      matrix:
+        system: ['fedora:latest', 'opensuse/tumbleweed:latest']
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    container: ${{ matrix.system }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: rpm-${{ inputs.suite }}
+          path: repo
+      - name: Install and upgrade
+        env:
+          SUITE: ${{ inputs.suite }}
+        run: bash repo/rpm-try.sh repo "$SUITE"
+
+  publish:
+    needs: [write, try]
+    runs-on: ubuntu-latest
+    # One writer at a time. Not apt.yml's group, whose files these never are: a group
+    # keeps one run waiting, and a third would take the place of this one.
+    concurrency:
+      group: rpm
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    env:
+      SUITE: ${{ inputs.suite }}
+      TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: rpm-${{ inputs.suite }}
+          path: repo
+
+      - name: The bucket's key
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          said=$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify ||
+            curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/tokens/verify")
+          id=$(jq -r '.result.id // empty' <<<"$said")
+          [ -n "$id" ] || { echo "::error::CLOUDFLARE_API_TOKEN did not verify"; exit 1; }
+          secret=$(printf '%s' "$CLOUDFLARE_API_TOKEN" | sha256sum | cut -d' ' -f1)
+          echo "::add-mask::$secret"
+          {
+            echo "AWS_ACCESS_KEY_ID=$id"
+            echo "AWS_SECRET_ACCESS_KEY=$secret"
+            echo "AWS_DEFAULT_REGION=auto"
+            echo "R2=https://$CF_ACCOUNT_ID.r2.cloudflarestorage.com"
+          } >>"$GITHUB_ENV"
+
+      # As apt.yml does it: the packages first, then the index that names them, and only
+      # then the packages nothing names any more taken away. The packages are named by
+      # their version and never change; the index is kept for a minute.
+      - name: Into the bucket
+        working-directory: repo
+        run: |
+          s3() { aws --endpoint-url "$R2" s3 "$@"; }
+          bucket="s3://$R2_BUCKET"
+          dir="rpm/$SUITE"
+          s3 sync "$dir" "$bucket/$dir" --only-show-errors --exclude 'repodata/*' --cache-control 'public, max-age=31536000, immutable'
+          s3 sync "$dir/repodata" "$bucket/$dir/repodata" --only-show-errors --delete --cache-control 'public, max-age=60'
+          for file in rpm/*.repo orden-archive-keyring.asc; do
+            s3 cp "$file" "$bucket/$file" --only-show-errors --cache-control 'public, max-age=300'
+          done
+          s3 sync "$dir" "$bucket/$dir" --only-show-errors --delete --exclude 'repodata/*' --cache-control 'public, max-age=31536000, immutable'
+          s3 ls --recursive "$bucket/$dir/"
+          {
+            echo "### rpm $SUITE: $TAG"
+            echo
+            for rpm in "$dir"/*.rpm; do echo "- $(basename "$rpm")"; done
+          } >>"$GITHUB_STEP_SUMMARY"
+
+      # Read back over the address dnf and zypper use.
+      - name: Served
+        working-directory: repo
+        run: |
+          for path in "rpm/$SUITE/repodata/repomd.xml" "rpm/$SUITE/repodata/repomd.xml.asc" rpm/*.repo; do
+            curl -fsSI "$APT_BASE_URL/$path" | head -1
+          done

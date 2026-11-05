@@ -835,6 +835,7 @@ export const sw: Dictionary = {
   'out of space': 'hifadhi imeisha',
   'Orden {version} is ready to install.': 'Orden {version} iko tayari kusakinishwa.',
   'Orden {version} is available.': 'Orden {version} inapatikana.',
+  'To update, run this in a terminal:': 'Ili kusasisha, endesha hii kwenye terminal:',
   'Restart now': 'Anzisha tena sasa',
   'Move to Applications': 'Hamishia kwenye Programu',
   Later: 'Baadaye',

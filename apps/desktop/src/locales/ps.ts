@@ -829,6 +829,7 @@ export const ps: Dictionary = {
   'out of space': 'زېرمه ډکه',
   'Orden {version} is ready to install.': 'Orden {version} د لګولو لپاره تيار دی.',
   'Orden {version} is available.': 'Orden {version} شته دی.',
+  'To update, run this in a terminal:': 'د تازه کولو لپاره، دا په ټرمینل کې وچلوئ:',
   'Restart now': 'اوس بيا پيلول',
   'Move to Applications': 'اپلیکیشنونو ته یې ولېږدوئ',
   Later: 'وروسته',

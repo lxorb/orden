@@ -878,6 +878,7 @@ export const ar: Dictionary = {
   'out of space': 'نفدت مساحة التخزين',
   'Orden {version} is ready to install.': 'Orden {version} جاهز للتثبيت.',
   'Orden {version} is available.': 'Orden {version} متاح.',
+  'To update, run this in a terminal:': 'للتحديث، شغّل هذا في الطرفية:',
   'Restart now': 'إعادة التشغيل الآن',
   'Move to Applications': 'النقل إلى التطبيقات',
   Later: 'لاحقًا',

@@ -62,6 +62,13 @@ export function managedBy(): Promise<string | null> {
   return keeper
 }
 
+/** The managers of a `.deb` and an `.rpm`, whose install the app updates through the
+ *  system's PackageKit when the notice is pressed (#1147); every other manager's install
+ *  is only told. See src-tauri/src/system_update.rs. */
+const SYSTEM = new Set(['apt', 'dnf'])
+
+export const updatedBySystem = (manager: string | null) => manager !== null && SYSTEM.has(manager)
+
 /** The newer version an install a package manager keeps was told of. Never downloaded:
  *  the manager installs it. */
 let announced: string | null = null

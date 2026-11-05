@@ -830,6 +830,7 @@ export const ta: Dictionary = {
   'out of space': 'சேமிப்பிடம் இல்லை',
   'Orden {version} is ready to install.': 'Orden {version} நிறுவத் தயார்.',
   'Orden {version} is available.': 'Orden {version} கிடைக்கிறது.',
+  'To update, run this in a terminal:': 'புதுப்பிக்க, இதை டெர்மினலில் இயக்கவும்:',
   'Restart now': 'இப்போதே மீள்தொடங்கு',
   'Move to Applications': 'பயன்பாடுகளுக்கு நகர்த்து',
   Later: 'பிறகு',

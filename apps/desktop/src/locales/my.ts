@@ -827,6 +827,7 @@ export const my: Dictionary = {
   'out of space': 'သိုလှောင်မှုပြည့်',
   'Orden {version} is ready to install.': 'Orden {version} တပ်ဆင်ရန်အသင့်ရှိ။',
   'Orden {version} is available.': 'Orden {version} ရနိုင်ပါပြီ။',
+  'To update, run this in a terminal:': 'အပ်ဒိတ်လုပ်ရန် ဤအရာကို terminal တွင် run ပါ-',
   'Restart now': 'ယခုပြန်စ',
   'Move to Applications': 'Applications သို့ ရွှေ့ရန်',
   Later: 'နောက်မှ',

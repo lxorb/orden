@@ -845,6 +845,7 @@ export const fr: Dictionary = {
   'out of space': 'plus d’espace disponible',
   'Orden {version} is ready to install.': 'Orden {version} est prêt à être installé.',
   'Orden {version} is available.': 'Orden {version} est disponible.',
+  'To update, run this in a terminal:': 'Pour mettre à jour, lancez ceci dans un terminal :',
   'Restart now': 'Redémarrer maintenant',
   'Move to Applications': 'Déplacer dans Applications',
   Later: 'Plus tard',

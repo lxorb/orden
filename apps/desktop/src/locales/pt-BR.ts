@@ -841,6 +841,7 @@ export const ptBR: Dictionary = {
   'out of space': 'sem espaço',
   'Orden {version} is ready to install.': 'O Orden {version} está pronto para instalar.',
   'Orden {version} is available.': 'O Orden {version} está disponível.',
+  'To update, run this in a terminal:': 'Para atualizar, execute isto em um terminal:',
   'Restart now': 'Reiniciar agora',
   'Move to Applications': 'Mover para Aplicativos',
   Later: 'Depois',

@@ -577,6 +577,11 @@ webkit2gtk = { version = "=2.0.2", features = ["v2_38"] }
 # in the lock file as something tauri builds with, so this costs nothing new.
 tempfile = "3"
 
+# A PackageKit of the tests' own, on the far end of a socket pair, which packagekit.rs's
+# tests update and install against. zbus's own feature, which a build never turns on.
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+zbus = { version = "5", default-features = false, features = ["async-io", "blocking-api", "p2p"] }
+
 # A window class of a test's own, which Windows describes with a brush: the tests in
 # web_wheel.rs build the windows a wheel over a page passes through. The tests' only,
 # so the app never compiles the drawing half of the crate. And a desktop of a test's

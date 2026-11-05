@@ -823,6 +823,7 @@ export const am: Dictionary = {
   'out of space': 'ማከማቻ ሞልቷል',
   'Orden {version} is ready to install.': 'Orden {version} ለመጫን ተዘጋጅቷል።',
   'Orden {version} is available.': 'Orden {version} ይገኛል።',
+  'To update, run this in a terminal:': 'ለማዘመን ይህን በተርሚናል ውስጥ ያሂዱ፦',
   'Restart now': 'አሁን እንደገና አስነሳ',
   'Move to Applications': 'ወደ መተግበሪያዎች ውሰድ',
   Later: 'ቆይቶ',

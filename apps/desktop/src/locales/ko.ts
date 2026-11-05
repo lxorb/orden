@@ -823,6 +823,7 @@ export const ko: Dictionary = {
   'out of space': '저장 공간 부족',
   'Orden {version} is ready to install.': 'Orden {version}을 설치할 수 있습니다.',
   'Orden {version} is available.': 'Orden {version}을 사용할 수 있습니다.',
+  'To update, run this in a terminal:': '업데이트하려면 터미널에서 다음을 실행하세요:',
   'Restart now': '지금 다시 시작',
   'Move to Applications': '응용 프로그램으로 이동',
   Later: '나중에',

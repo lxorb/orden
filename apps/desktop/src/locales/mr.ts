@@ -830,6 +830,7 @@ export const mr: Dictionary = {
   'out of space': 'जागा उरली नाही',
   'Orden {version} is ready to install.': 'Orden {version} इन्स्टॉलसाठी तयार आहे.',
   'Orden {version} is available.': 'Orden {version} उपलब्ध आहे.',
+  'To update, run this in a terminal:': 'अपडेट करण्यासाठी हे टर्मिनलमध्ये चालवा:',
   'Restart now': 'आता रीस्टार्ट करा',
   'Move to Applications': 'ॲप्लिकेशन्समध्ये हलवा',
   Later: 'नंतर',

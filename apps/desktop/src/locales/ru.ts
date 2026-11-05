@@ -865,6 +865,7 @@ export const ru: Dictionary = {
   'out of space': 'нет места',
   'Orden {version} is ready to install.': 'Orden {version} готов к установке.',
   'Orden {version} is available.': 'Доступен Orden {version}.',
+  'To update, run this in a terminal:': 'Чтобы обновить, выполните это в терминале:',
   'Restart now': 'Перезапустить',
   'Move to Applications': 'Переместить в «Программы»',
   Later: 'Позже',

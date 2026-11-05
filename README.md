@@ -55,7 +55,8 @@ Download an installer from the [latest release](https://github.com/lxorb/orden/r
 | Nix, compiled from `unstable` | `nix profile install github:lxorb/orden/unstable?dir=packaging/nix#orden-source` |
 | Debian, Ubuntu, apt repository | add `https://apt.orden.so` as below, then `sudo apt install orden` |
 | Debian, Ubuntu, one file | `sudo apt install ./Orden-<version>-linux-x64.deb` |
-| Fedora, openSUSE | `sudo dnf install ./Orden-<version>-linux-x64.rpm` |
+| Fedora, openSUSE, rpm repository | add `https://apt.orden.so/rpm/orden.repo` as below, then `sudo dnf install orden` or `sudo zypper install orden` |
+| Fedora, openSUSE, one file | `sudo dnf install ./Orden-<version>-linux-x64.rpm` |
 | Any Linux | `chmod +x Orden-<version>-linux-x64.AppImage && ./Orden-<version>-linux-x64.AppImage` |
 
 The apt repository, on x86_64 and arm64, with its key in `/etc/apt/keyrings`:
@@ -74,7 +75,23 @@ sudo apt update
 sudo apt install orden
 ```
 
-`Suites: unstable` follows the edge builds instead. On an apt older than 2.3 the source is one line, `deb [signed-by=/etc/apt/keyrings/orden.asc] https://apt.orden.so stable main`, in `/etc/apt/sources.list.d/orden.list`. An install from the repository is updated by apt, and the app only says when a new version is out.
+`Suites: unstable` follows the edge builds instead. On an apt older than 2.3 the source is one line, `deb [signed-by=/etc/apt/keyrings/orden.asc] https://apt.orden.so stable main`, in `/etc/apt/sources.list.d/orden.list`.
+
+The dnf and zypper repository, on x86_64 and aarch64, signed with the same key: one `.repo` file.
+
+```sh
+# Fedora
+sudo curl -fsSLo /etc/yum.repos.d/orden.repo https://apt.orden.so/rpm/orden.repo
+sudo dnf install orden
+
+# openSUSE
+sudo zypper addrepo https://apt.orden.so/rpm/orden.repo
+sudo zypper install orden
+```
+
+`orden-unstable.repo` follows the edge builds instead. From then on `dnf upgrade`, `zypper update`, GNOME Software, KDE Discover and `dnf-automatic` find every new version.
+
+A `.deb` or an `.rpm` install, from a repository or from one file, also updates from inside Orden: when a new version is out it says so, and Update installs it through PackageKit, which asks for your password once, then restarts Orden. Without PackageKit it shows the command to run instead.
 
 ## Why Orden?
 

@@ -151,6 +151,10 @@ mod obsidian_vaults;
 // Which package manager keeps this install, if one does; see package_manager.rs.
 #[cfg(desktop)]
 mod package_manager;
+// The system's own way to install a package, which updates a .deb or an .rpm; see
+// packagekit.rs and system_update.rs.
+#[cfg(target_os = "linux")]
+mod packagekit;
 #[cfg(desktop)]
 mod pandoc;
 mod papers;
@@ -204,6 +208,9 @@ mod tasks;
 #[cfg(desktop)]
 mod terminal;
 mod themes;
+// A .deb or an .rpm updated through PackageKit; see system_update.rs.
+#[cfg(desktop)]
+mod system_update;
 // The window's top edge, offering a resize only where the window can be resized; see top_edge.rs.
 #[cfg(desktop)]
 mod top_edge;
@@ -583,6 +590,7 @@ macro_rules! desktop_commands {
             terminal::remote::remote_config_open,
             terminal::picture::remote_image,
             updates::check_update,
+            system_update::system_update,
             package_manager::install_manager,
             app_place::app_stuck,
             app_place::move_to_applications,

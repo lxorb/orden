@@ -846,6 +846,7 @@ export const ptPT: Dictionary = {
   'out of space': 'sem espaço',
   'Orden {version} is ready to install.': 'O Orden {version} está pronto a instalar.',
   'Orden {version} is available.': 'O Orden {version} está disponível.',
+  'To update, run this in a terminal:': 'Para atualizar, execute isto num terminal:',
   'Restart now': 'Reiniciar agora',
   'Move to Applications': 'Mover para Aplicações',
   Later: 'Mais tarde',

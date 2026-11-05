@@ -824,6 +824,7 @@ export const vi: Dictionary = {
   'out of space': 'hết dung lượng',
   'Orden {version} is ready to install.': 'Orden {version} đã sẵn sàng để cài.',
   'Orden {version} is available.': 'Đã có Orden {version}.',
+  'To update, run this in a terminal:': 'Để cập nhật, hãy chạy lệnh này trong terminal:',
   'Restart now': 'Khởi động lại ngay',
   'Move to Applications': 'Chuyển vào Ứng dụng',
   Later: 'Để sau',

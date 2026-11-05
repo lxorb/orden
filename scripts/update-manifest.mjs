@@ -40,6 +40,18 @@ const PLATFORMS = [
     key: 'linux-aarch64',
     match: (path) => /linux-arm64/.test(path) && path.endsWith('.AppImage.sig'),
   },
+  // The packages an install from a .deb or an .rpm is updated with, through PackageKit
+  // rather than the plugin; the updater looks for `<os>-<arch>-<installer>` first.
+  ...['deb', 'rpm'].flatMap((kind) => [
+    {
+      key: `linux-x86_64-${kind}`,
+      match: (path) => /linux-x64/.test(path) && path.endsWith(`.${kind}.sig`),
+    },
+    {
+      key: `linux-aarch64-${kind}`,
+      match: (path) => /linux-arm64/.test(path) && path.endsWith(`.${kind}.sig`),
+    },
+  ]),
 ]
 
 /** The macOS bundle is universal, so every Mac is offered the same file. Tauri

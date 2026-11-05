@@ -824,6 +824,7 @@ export const ms: Dictionary = {
   'out of space': 'simpanan penuh',
   'Orden {version} is ready to install.': 'Orden {version} sedia untuk dipasang.',
   'Orden {version} is available.': 'Orden {version} sudah tersedia.',
+  'To update, run this in a terminal:': 'Untuk mengemas kini, jalankan ini dalam terminal:',
   'Restart now': 'Mula semula sekarang',
   'Move to Applications': 'Pindah ke Aplikasi',
   Later: 'Kemudian',

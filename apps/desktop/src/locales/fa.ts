@@ -830,6 +830,7 @@ export const fa: Dictionary = {
   'out of space': 'انبار پر است',
   'Orden {version} is ready to install.': 'Orden {version} آماده نصب است.',
   'Orden {version} is available.': 'Orden {version} در دسترس است.',
+  'To update, run this in a terminal:': 'برای به‌روزرسانی، این را در ترمینال اجرا کنید:',
   'Restart now': 'راه‌اندازی دوباره همین حالا',
   'Move to Applications': 'انتقال به برنامه‌ها',
   Later: 'بعداً',

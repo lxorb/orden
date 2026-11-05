@@ -831,6 +831,7 @@ export const gsw: Dictionary = {
   'out of space': 'kei Platz meh',
   'Orden {version} is ready to install.': 'Orden {version} isch parat zum Installiere.',
   'Orden {version} is available.': 'Orden {version} isch verfüegbar.',
+  'To update, run this in a terminal:': 'Zum Aktualisiere das do im Terminal usfüehre:',
   'Restart now': 'Jetzt neu starte',
   'Move to Applications': 'In „Programme“ verschiebe',
   Later: 'Spöter',

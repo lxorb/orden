@@ -111,7 +111,11 @@ describe('the release', () => {
     const at = mkdtempSync(join(tmpdir(), 'nib-release-'))
     mkdirSync(join(at, 'bin'))
     mkdirSync(join(at, 'artifacts'))
-    const bundles = ['Nib-1.0.0-linux-x64.AppImage', 'Nib-1.0.0-windows-x64-setup.exe']
+    const bundles = [
+      'Nib-1.0.0-linux-x64.AppImage',
+      'Nib-1.0.0-windows-x64-setup.exe',
+      'Nib-1.0.0-linux-x64.rpm',
+    ]
     for (const name of bundles) writeFileSync(join(at, 'artifacts', name), 'bytes')
     writeFileSync(
       join(at, 'latest.json'),
@@ -176,6 +180,66 @@ esac
       expect(status).toBe(0)
       expect(calls.trim().split('\n').at(-1)).toContain('latest.json')
     })
+  })
+
+  /** A `.deb` or an `.rpm` install is updated through PackageKit with its own package,
+   *  checked against the updater's key like any bundle (#1147; src-tauri/src/system_update.rs). */
+  test('names every Linux package in the manifest, by its architecture and kind', () => {
+    const at = mkdtempSync(join(tmpdir(), 'nib-manifest-'))
+    for (const [arch, kinds] of [
+      ['x64', ['AppImage', 'deb', 'rpm']],
+      ['arm64', ['AppImage', 'deb', 'rpm']],
+    ] as const) {
+      mkdirSync(join(at, `nib-linux-${arch}`))
+      for (const kind of kinds) {
+        writeFileSync(
+          join(at, `nib-linux-${arch}`, `Nib-1.0.0-linux-${arch}.${kind}.sig`),
+          `sig ${arch} ${kind}`,
+        )
+      }
+    }
+    const ran = spawnSync(
+      'node',
+      [join(HERE, 'scripts', 'update-manifest.mjs'), 'updates', '1.0.0', at],
+      {
+        encoding: 'utf8',
+      },
+    )
+    expect(ran.status, ran.stderr).toBe(0)
+    const platforms = (
+      JSON.parse(ran.stdout) as { platforms: Record<string, { url: string; signature: string }> }
+    ).platforms
+    for (const [key, file, signature] of [
+      ['linux-x86_64', 'Nib-1.0.0-linux-x64.AppImage', 'sig x64 AppImage'],
+      ['linux-x86_64-deb', 'Nib-1.0.0-linux-x64.deb', 'sig x64 deb'],
+      ['linux-x86_64-rpm', 'Nib-1.0.0-linux-x64.rpm', 'sig x64 rpm'],
+      ['linux-aarch64-deb', 'Nib-1.0.0-linux-arm64.deb', 'sig arm64 deb'],
+      ['linux-aarch64-rpm', 'Nib-1.0.0-linux-arm64.rpm', 'sig arm64 rpm'],
+    ] as const) {
+      expect(platforms[key]?.url, key).toBe(
+        `https://github.com/lxorb/nibeditor/releases/download/updates/${file}`,
+      )
+      expect(platforms[key]?.signature, key).toBe(signature)
+    }
+  })
+
+  describe.skipIf(process.platform === 'win32')(
+    'puts on the release the app downloads from',
+    () => {
+      test('the .deb and the .rpm beside the setups', () => {
+        const { status, calls } = upload({})
+        expect(status).toBe(0)
+        expect(calls).toContain(
+          'release upload updates artifacts/Nib-1.0.0-linux-x64.rpm --clobber',
+        )
+      })
+    },
+  )
+
+  test('uploads the signatures of the .deb and the .rpm the build made', () => {
+    for (const kind of ['deb', 'rpm']) {
+      expect(workflow).toContain(`release/bundle/${kind}/*.sig`)
+    }
   })
 
   describe('a tag', () => {
@@ -594,6 +658,77 @@ describe('the apt repository', () => {
     for (const page of ['README.md', 'index.html']) {
       expect(read('apt', page)).toContain('@BASE@/orden-archive-keyring.asc')
     }
+  })
+})
+
+/** The dnf and zypper repository: apt.orden.so's bucket and key, under `rpm/` (#1147). What
+ *  it installs on Fedora and openSUSE is rpm.yml's `try`, through scripts/rpm-try.sh. */
+describe('the rpm repository', () => {
+  const workflow = repo('.github', 'workflows', 'rpm.yml')
+  const apt = repo('.github', 'workflows', 'apt.yml')
+  const field = (text: string, name: string) => new RegExp(`${name}: (\\S+)`).exec(text)?.[1]
+
+  test("is apt's key, address, bucket and account, and no secret of its own", () => {
+    for (const name of ['APT_KEY_FINGERPRINT', 'APT_BASE_URL', 'R2_BUCKET', 'CF_ACCOUNT_ID']) {
+      expect(field(workflow, name), name).toBe(field(apt, name))
+    }
+    const secrets = new Set([...workflow.matchAll(/secrets\.([A-Z_]+)/g)].map((found) => found[1]))
+    expect([...secrets].sort()).toEqual(['APT_SIGNING_KEY', 'CLOUDFLARE_API_TOKEN'])
+  })
+
+  test('is written for stable by publish.yml and for unstable by release.yml', () => {
+    for (const [caller, suite] of [
+      [repo('.github', 'workflows', 'publish.yml'), 'stable'],
+      [repo('.github', 'workflows', 'release.yml'), 'unstable'],
+    ] as const) {
+      expect(caller).toMatch(
+        new RegExp(String.raw`uses: \./\.github/workflows/rpm\.yml
+\s+with:
+\s+suite: ${suite}
+`),
+      )
+    }
+    expect(workflow).toContain('workflow_call:')
+  })
+
+  test('goes into the bucket only once Fedora and openSUSE have installed it, on both architectures', () => {
+    const publish = /\n {2}publish:\n([\s\S]*?)(?=\n {2}[a-z-]+:\n|$)/.exec(workflow)?.[1] ?? ''
+    expect(publish).toContain('needs: [write, try]')
+    for (const one of ['fedora:latest', 'opensuse/tumbleweed:latest', 'ubuntu-24.04-arm']) {
+      expect(workflow).toContain(one)
+    }
+  })
+
+  test('signs every package and its index, and reads them back with the published key', () => {
+    const script = repo('scripts', 'rpm-repo.sh')
+    expect(script).toContain('rpmsign --addsign')
+    expect(script).toContain('repomd.xml.asc')
+    expect(script).toContain('packaging/apt/orden-archive-keyring.asc')
+    expect(script).toMatch(/rpmkeys --dbpath "\$keys" --checksig/)
+  })
+
+  test('hands readers a .repo file that checks both signatures against the published key', () => {
+    const file = read('rpm', 'orden.repo')
+    for (const line of [
+      'gpgcheck=1',
+      'repo_gpgcheck=1',
+      'gpgkey=@BASE@/orden-archive-keyring.asc',
+      'baseurl=@BASE@/rpm/@SUITE@',
+    ]) {
+      expect(file).toContain(line)
+    }
+  })
+
+  /** Fedora's and openSUSE's packages have different names for the same libraries, so the
+   *  .rpm asks for the libraries themselves, which both provide by the same name. */
+  test('asks for libraries by the names Fedora and openSUSE both give them', () => {
+    const config = JSON.parse(repo('apps', 'desktop', 'src-tauri', 'tauri.conf.json')) as {
+      bundle: { linux: { rpm: { depends: string[] } } }
+    }
+    const depends = config.bundle.linux.rpm.depends
+    expect(depends.length).toBeGreaterThan(0)
+    for (const one of depends) expect(one).toMatch(/^lib[\w.+-]+\.so(\.\d+)*\(\)\(64bit\)$/)
+    expect(depends).toContain('libgtk-4.so.1()(64bit)')
   })
 })
 

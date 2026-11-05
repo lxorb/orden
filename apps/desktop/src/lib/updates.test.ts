@@ -64,6 +64,7 @@ vi.mock('./updater', () => ({
   stagedVersion: () => world.staged,
   announcedVersion: () => world.announced,
   managedBy: () => Promise.resolve(world.managed),
+  updatedBySystem: (manager: string | null) => manager === 'apt' || manager === 'dnf',
   discard: () => {
     world.discards++
     world.staged = null
@@ -593,6 +594,26 @@ describe('where a package manager keeps the install', () => {
     await next.check()
 
     expect(next.ready).toBe('1.4.0')
+    stopNext()
+  })
+
+  /** A `.deb` or an `.rpm`, which the notice updates through PackageKit (#1147): offered
+   *  on every launch, as a download is, and not as news told once. */
+  test('a .deb or an .rpm is offered the update on the next launch too', async () => {
+    world.managed = 'dnf'
+    world.version = '1.4.0'
+    const stop = updates.start()
+    await settle()
+    expect(updates.ready).toBe('1.4.0')
+    expect(updates.system).toBe(true)
+    stop()
+
+    const next = await relaunch()
+    const stopNext = next.start()
+    await settle()
+
+    expect(next.ready).toBe('1.4.0')
+    expect(storage.getItem('nib:update-told')).toBe(null)
     stopNext()
   })
 

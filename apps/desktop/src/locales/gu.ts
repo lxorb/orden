@@ -829,6 +829,7 @@ export const gu: Dictionary = {
   'out of space': 'સંગ્રહ ભરાયો',
   'Orden {version} is ready to install.': 'Orden {version} સ્થાપવા તૈયાર છે.',
   'Orden {version} is available.': 'Orden {version} ઉપલબ્ધ છે.',
+  'To update, run this in a terminal:': 'અપડેટ કરવા માટે, આ ટર્મિનલમાં ચલાવો:',
   'Restart now': 'હમણાં ફરી શરૂ કરો',
   'Move to Applications': 'ઍપ્લિકેશન્સમાં ખસેડો',
   Later: 'પછી',

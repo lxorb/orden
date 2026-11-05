@@ -140,6 +140,18 @@ jobs:
       tag: ${{ needs.gate.outputs.tag }}
     secrets: inherit
 
+  # The dnf and zypper repository's `stable` suite, in apt.yml's bucket; see rpm.yml.
+  rpm:
+    needs: gate
+    if: needs.gate.outputs.publish == 'true'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/rpm.yml
+    with:
+      suite: stable
+      tag: ${{ needs.gate.outputs.tag }}
+    secrets: inherit
+
   # lxorb/scoop-bucket is ours, so this is a commit rather than a pull request.
   scoop:
     needs: gate

@@ -7,7 +7,15 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
+const system = vi.hoisted(() => ({ asked: [] as unknown[][], answer: null as string | null }))
+
 vi.mock('../../src/lib/updater', () => ({ restartToUpdate: () => Promise.resolve() }))
+vi.mock('../../src/lib/system-update', () => ({
+  updateBySystem: (...args: unknown[]) => {
+    system.asked.push(args)
+    return Promise.resolve(system.answer)
+  },
+}))
 vi.mock('../../src/lib/app-place', () => ({
   stuck: () => Promise.resolve(false),
   moveToApplications: () => Promise.resolve(),
@@ -31,10 +39,16 @@ let target: HTMLElement
 let app: ReturnType<typeof mount> | null = null
 let dismissed = 0
 
-function show(managed: boolean) {
+function show(managed: boolean, bySystem = false) {
   app = mount(UpdateNotice, {
     target,
-    props: { version: '1.4.0', managed, ondismiss: () => dismissed++ },
+    props: {
+      version: '1.4.0',
+      managed,
+      system: bySystem,
+      channel: 'unstable',
+      ondismiss: () => dismissed++,
+    },
   })
   flushSync()
 }
@@ -45,6 +59,8 @@ const words = () => target.querySelector('p')?.textContent
 beforeEach(() => {
   vi.useFakeTimers()
   dismissed = 0
+  system.asked = []
+  system.answer = null
   target = document.createElement('div')
   document.body.append(target)
 })
@@ -107,5 +123,43 @@ describe('where the app updates itself', () => {
 
     vi.advanceTimersByTime(60_000)
     expect(dismissed).toBe(0)
+  })
+})
+
+/** A `.deb` or an `.rpm`: Update installs through PackageKit and restarts (#1147), and
+ *  where that cannot happen the notice says what to run instead. */
+describe('where the system updates the install', () => {
+  test('offers the update, and waits for an answer', () => {
+    show(true, true)
+
+    expect(words()).toBe('Orden 1.4.0 is available.')
+    expect(buttons().map((button) => button.textContent)).toEqual(['Later', 'Update'])
+
+    vi.advanceTimersByTime(60_000)
+    expect(dismissed).toBe(0)
+  })
+
+  test('updates the version on the channel followed', async () => {
+    show(true, true)
+
+    buttons()[1]?.click()
+    await vi.advanceTimersByTimeAsync(0)
+    await vi.dynamicImportSettled()
+
+    expect(system.asked).toEqual([['1.4.0', 'unstable']])
+  })
+
+  test('says the command where it could not', async () => {
+    system.answer = 'sudo dnf upgrade --refresh orden'
+    show(true, true)
+
+    buttons()[1]?.click()
+    await vi.advanceTimersByTimeAsync(0)
+    await vi.dynamicImportSettled()
+    flushSync()
+
+    expect(words()).toBe('To update, run this in a terminal:')
+    expect(target.querySelector('code')?.textContent).toBe('sudo dnf upgrade --refresh orden')
+    expect(buttons().map((button) => button.textContent.trim())).toEqual(['Copy', 'Later'])
   })
 })

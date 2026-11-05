@@ -1,6 +1,6 @@
 # Linux packaging
 
-Four package managers, and a flake. Each repackages what
+Five package managers, and a flake. Each repackages what
 `.github/workflows/release.yml` already publishes rather than rebuilding
 Orden, so a release is a release everywhere and nothing can drift between
 them. Not Flathub; see the section of that name.
@@ -8,6 +8,7 @@ them. Not Flathub; see the section of that name.
 | Directory | Manager | Built from | Architectures |
 | --- | --- | --- | --- |
 | `apt/` | apt (`apt install orden`, from `apt.orden.so`) | the `.deb` | amd64, arm64 |
+| `rpm/` | dnf and zypper (`dnf install orden`, from `apt.orden.so/rpm`) | the `.rpm` | x86_64, aarch64 |
 | `aur/nib-bin/` | AUR (`yay -S orden-bin`) | the `.deb` | x86_64, aarch64 |
 | `snap/` | Snap Store | the `.deb` | amd64, arm64 |
 | `nix/` | a flake anyone can install from | the `.deb` | x86_64, aarch64 |
@@ -101,7 +102,7 @@ udev, and the X11 libraries (X11, xcb, Xcomposite, Xdamage, Xext, Xfixes, Xrandr
 | | named |
 | --- | --- |
 | `.deb` (`tauri.conf.json` `bundle.linux.deb.depends`) | `libgtk-4-1 (>= 4.14)`, `libnss3`, `libasound2t64 \| libasound2` and the rest by Ubuntu's names |
-| `.rpm` (`bundle.linux.rpm.depends`) | `gtk4 >= 4.14`, `nss`, `alsa-lib` and the rest by Fedora's names |
+| `.rpm` (`bundle.linux.rpm.depends`) | `libgtk-4.so.1()(64bit)`, `libnss3.so()(64bit)`, `libasound.so.2()(64bit)` and the rest by the libraries' own names, which Fedora and openSUSE both provide |
 | AUR (`PKGBUILD`) | `gtk4>=4.14`, `nss`, `alsa-lib` and the rest by Arch's names |
 | snap | the platform's |
 | Nix | `runtimeInputsFor` in the flake, and `openedFor` for what Chromium opens by name |
@@ -213,11 +214,76 @@ sudo apt install orden
 The one-line form, for an apt older than 2.3 that reads no `.sources` file:
 `deb [signed-by=/etc/apt/keyrings/orden.asc] https://apt.orden.so stable main` in
 `/etc/apt/sources.list.d/orden.list`. The keyring may be the armored `.asc`; apt reads
-either. The app leaves an install from here to apt and only says when a new version is out
-(`package_manager.rs`).
+either. The app updates an install from here through PackageKit; see "Updating from inside
+Orden" below.
 
 By hand, once `apt.yml` is on main: `gh workflow run apt.yml -f suite=stable -f tag=v0.15.0`,
 or `-f suite=unstable -f tag=edge`.
+
+## dnf and zypper - `apt.orden.so/rpm`
+
+The apt repository's bucket, address and key, under `rpm/`: no secret, domain or bucket of
+its own. `rpm.yml` writes it, called the way `apt.yml` is - by `publish.yml` for a stable tag
+(`stable`) and by `release.yml` for edge (`unstable`) - and only after its `try` job has
+installed what it wrote.
+
+```
+rpm/<suite>/orden-<version>-<release>.<arch>.rpm
+rpm/<suite>/repodata/repomd.xml, repomd.xml.asc, and the indices it names
+rpm/orden.repo, rpm/orden-unstable.repo
+orden-archive-keyring.asc
+```
+
+**Each suite holds one version, the newest**, as an apt suite does, and is put into the bucket
+the same way: the packages, then the index, then the packages nothing names taken away. A
+build of main's version, `0.19.1-1101`, is `0.19.1~1101` in an `.rpm`, which sorts below the
+release `0.19.1`.
+
+**Signed twice, with `APT_SIGNING_KEY`**: every package in its header (`rpmsign`), which dnf
+and zypper check with `gpgcheck=1`, and the index (`repomd.xml.asc`), checked with
+`repo_gpgcheck=1`. `scripts/rpm-repo.sh` reads every package back with the published key
+alone, so a secret that is not that key signs nothing that goes out. The packages on the
+release pages stay unsigned; the repository's are the same packages with the signature added.
+
+**Tried before it is published**: `scripts/rpm-try.sh`, in `fedora:latest` and
+`opensuse/tumbleweed:latest` on x86_64 and aarch64, adds the suite's own `.repo` file,
+installs Orden fresh, then again over an older `orden` of its own making, which dnf or zypper
+upgrades. It fails on a signature, a dependency the system cannot meet, or a library
+`libcef.so` cannot find. The `.rpm` names its dependencies by the libraries themselves, which
+is what lets the one package install on both: the two distributions name their packages
+differently (`gtk4` and `libgtk-4-1`, `mesa-libgbm` and `libgbm1`).
+
+Adding it, for `stable` (`orden-unstable.repo` for the edge builds):
+
+```sh
+# Fedora
+sudo curl -fsSLo /etc/yum.repos.d/orden.repo https://apt.orden.so/rpm/orden.repo
+sudo dnf install orden
+
+# openSUSE
+sudo zypper addrepo https://apt.orden.so/rpm/orden.repo
+sudo zypper install orden
+```
+
+By hand, once `rpm.yml` is on main: `gh workflow run rpm.yml -f suite=stable -f tag=v0.20.0`,
+or `-f suite=unstable -f tag=edge`.
+
+## Updating from inside Orden
+
+An install from the `.deb` or the `.rpm` - from a repository above or from one file - is
+told of a new version as every other install is, and its notice has Update. Pressing it hands
+the update to PackageKit (`src-tauri/src/system_update.rs`, `packagekit.rs`), which asks for
+the password once through polkit, and then Orden restarts:
+
+- **A repository the system has offers that version**: PackageKit updates the package from
+  it, trusted packages only.
+- **None does**: Orden downloads the version's own `.deb` or `.rpm`, which the release lists
+  in `latest.json` as `linux-<arch>-deb` and `linux-<arch>-rpm` and signs with the updater's
+  key as it signs every bundle, checks it as the updater checks one, and hands PackageKit the
+  file. Not on openSUSE, whose PackageKit (zypp) aborts the install of a package no key it
+  trusts has signed, after the password: there the notice says the command.
+- **No PackageKit**: the notice says the command to run instead - the repository's update, or
+  the package from its release page.
 
 ## AUR - `orden-bin`
 

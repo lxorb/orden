@@ -818,6 +818,7 @@ export const zhHant: Dictionary = {
   'out of space': '儲存空間已滿',
   'Orden {version} is ready to install.': 'Orden{version}已可安裝。',
   'Orden {version} is available.': 'Orden{version}已推出。',
+  'To update, run this in a terminal:': '要更新，請在終端機中執行：',
   'Restart now': '立即重新啟動',
   'Move to Applications': '移到「應用程式」',
   Later: '稍後',

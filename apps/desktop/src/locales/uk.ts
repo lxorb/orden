@@ -864,6 +864,7 @@ export const uk: Dictionary = {
   'out of space': 'немає місця',
   'Orden {version} is ready to install.': 'Orden {version} готовий до встановлення.',
   'Orden {version} is available.': 'Доступна версія Orden {version}.',
+  'To update, run this in a terminal:': 'Щоб оновити, виконайте це в терміналі:',
   'Restart now': 'Перезапустити',
   'Move to Applications': 'Перемістити в «Програми»',
   Later: 'Пізніше',

@@ -830,6 +830,7 @@ export const ur: Dictionary = {
   'out of space': 'ذخیرہ ختم',
   'Orden {version} is ready to install.': 'Orden {version} انسٹال کے لیے تیار ہے۔',
   'Orden {version} is available.': 'Orden {version} دستیاب ہے۔',
+  'To update, run this in a terminal:': 'اپ ڈیٹ کرنے کے لیے یہ ٹرمینل میں چلائیں:',
   'Restart now': 'ابھی دوبارہ شروع کریں',
   'Move to Applications': 'ایپلیکیشنز میں منتقل کریں',
   Later: 'بعد میں',

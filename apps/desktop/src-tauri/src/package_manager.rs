@@ -4,10 +4,9 @@
 //! own updater would write a second copy beside it (Scoop unpacks the setup.exe that
 //! installs per user), leave the manager believing in a version that is gone
 //! (Chocolatey, Homebrew), or cannot write where it runs at all (Flatpak, Snap, the
-//! Nix store). And on Linux the updater only ever replaces an `AppImage`: the release
-//! manifest carries nothing else, so a `.deb` or `.rpm` install is handed the
-//! `AppImage`, which `dpkg` and `rpm` refuse. Such an install is told a newer version
-//! is out and nothing more; see src/lib/updater.ts.
+//! Nix store). Such an install is told a newer version is out and nothing more; see
+//! src/lib/updater.ts. Except apt's and dnf's, a `.deb` or an `.rpm`, which the plugin
+//! cannot install either but the system's `PackageKit` can: see `system_update.rs`.
 //!
 //! Asked once, after the launch, by the look for a new version: a handful of
 //! environment variables and at most four `stat`s, so nothing a launch waits for.
