@@ -751,19 +751,13 @@ class Chat implements Panel {
     if (!held || this.running.includes(id)) return
     const fresh = await readThread(held.space, id).catch(() => null)
     if (this.live.get(id) !== held || this.running.includes(id)) return
-    if (!fresh) {
-      if (this.queued[id]?.length)
-        this.askingAgain ??= setTimeout(() => this.askAgain(), ANSWER_BEAT)
-      return
+    if (fresh) {
+      this.live.set(id, fresh)
+      if (this.open === held) this.show(fresh)
     }
-    this.live.set(id, fresh)
-    if (this.open === held) this.show(fresh)
-    if (fresh.elsewhere) {
-      if (this.queued[id]?.length)
-        this.askingAgain ??= setTimeout(() => this.askAgain(), ANSWER_BEAT)
-    } else if (this.queued[id]?.length) {
-      this.next(fresh)
-    }
+    if (!this.queued[id]?.length) return
+    if (fresh && !fresh.elsewhere) this.next(fresh)
+    else this.askingAgain ??= setTimeout(() => this.askAgain(), ANSWER_BEAT)
   }
 
   heardWritten(id: string): void {

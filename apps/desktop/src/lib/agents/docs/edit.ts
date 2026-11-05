@@ -95,39 +95,43 @@ function trackOf(agent: Agent, path: string): Track {
 
 const placed = new WeakMap<Track, string>()
 
-const waiting = new Map<string, { track: Track; row: Touched | null }[]>()
+type Held = { track: Track; row: Touched | null }[]
+
+const waiting = new Map<string, Held>()
+
+function heldMoved(
+  held: Map<string, Held>,
+  from: string,
+  to: string,
+  root: string | undefined,
+  join: boolean,
+): void {
+  for (const [key, one] of [...held]) {
+    const [agent, path] = partsOf(key)
+    const now = movedTo(path, from, to, root)
+    if (now === null || now === path || now === to) continue
+    const moved = keyOf(agent, now)
+    held.delete(key)
+    held.set(moved, join ? [...(held.get(moved) ?? []), ...one] : one)
+  }
+}
 
 export function tracksMoved(from: string, to: string, root?: string): void {
-  for (const [key, held] of [...aside]) {
-    const [agent, path] = partsOf(key)
-    const now = movedTo(path, from, to, root)
-    if (now === null || now === path || now === to) continue
-    aside.delete(key)
-    aside.set(keyOf(agent, now), [...(aside.get(keyOf(agent, now)) ?? []), ...held])
-  }
-  for (const [key, held] of [...waiting]) {
-    const [agent, path] = partsOf(key)
-    const now = movedTo(path, from, to, root)
-    if (now === null || now === path || now === to) continue
-    waiting.delete(key)
-    waiting.set(keyOf(agent, now), held)
-  }
+  heldMoved(aside, from, to, root, true)
+  heldMoved(waiting, from, to, root, false)
   for (const [key, track] of [...tracks]) {
     const [agent, path] = partsOf(key)
     const now = movedTo(path, from, to, root)
     if (now === null || now === path) continue
 
+    const moved = keyOf(agent, now)
     tracks.delete(key)
-    const there = tracks.get(keyOf(agent, now))
+    const there = tracks.get(moved)
     const row = touchedMoved(path, now, agent)
-    if (there) {
-      const held = waiting.get(keyOf(agent, now)) ?? []
-      held.push({ track: there, row })
-      waiting.set(keyOf(agent, now), held)
-    }
-    tracks.set(keyOf(agent, now), track)
+    if (there) waiting.set(moved, [...(waiting.get(moved) ?? []), { track: there, row }])
+    tracks.set(moved, track)
     placed.set(track, now)
-    if (kept.delete(key)) kept.add(keyOf(agent, now))
+    if (kept.delete(key)) kept.add(moved)
 
     const back = waiting.get(key)?.pop()
     if (back) {
@@ -138,7 +142,7 @@ export function tracksMoved(from: string, to: string, root?: string): void {
   }
 }
 
-const aside = new Map<string, { track: Track; row: Touched | null }[]>()
+const aside = new Map<string, Held>()
 
 export function tracksRemoved(path: string): void {
   for (const [key, track] of [...tracks]) {

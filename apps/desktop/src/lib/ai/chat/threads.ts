@@ -322,10 +322,15 @@ export function otherWindowWrote(listener: (id: string) => void): () => void {
 }
 
 function ownFields(thread: Thread): Record<string, unknown> {
-  const fields = { ...thread, ...thread.own, turns: undefined, own: undefined }
-  return JSON.parse(
-    JSON.stringify({ ...fields, elsewhere: undefined, answering: undefined }),
-  ) as Record<string, unknown>
+  const fields = {
+    ...thread,
+    ...thread.own,
+    turns: undefined,
+    own: undefined,
+    elsewhere: undefined,
+    answering: undefined,
+  }
+  return JSON.parse(JSON.stringify(fields)) as Record<string, unknown>
 }
 
 const readHere = new Map<string, Record<string, unknown>>()

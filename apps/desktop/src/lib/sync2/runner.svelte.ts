@@ -221,9 +221,7 @@ class Runner {
         return this.running(user, live)
       })
       if (engine) await this.tookOver(engine)
-      else if (this.lead === lead) {
-        this.letGoLead()
-      }
+      else if (this.lead === lead) this.letGoLead()
     } catch (error) {
       this.letGoLead()
       this.owed.clear()
@@ -564,12 +562,7 @@ class Runner {
       await engine.core.store.close().catch(() => undefined)
     }
     if (keepLead) return
-    if (!newer) this.letGoLead()
-    else if (this.lead && this.leadOf !== this.attempt) {
-      this.lead.release()
-      this.lead = null
-      this.settleStore()
-    }
+    if (!newer || (this.lead && this.leadOf !== this.attempt)) this.letGoLead()
   }
 
   private letGoLead() {
@@ -631,8 +624,7 @@ class Runner {
     try {
       const kept = await this.kept(engine)
       if (!kept.size) return (back = true)
-      const settling = () => waited(SETTLING)
-      if (!(await sentAll(engine, kept, SENDING_ROUNDS, settling))) return false
+      if (!(await sentAll(engine, kept, SENDING_ROUNDS, () => waited(SETTLING)))) return false
       const { listings, gone } = await reachable(
         kept,
         (id) => listingOf(token, id),
@@ -1511,11 +1503,7 @@ class Runner {
       }),
       $effect.root(() => {
         $effect(() => {
-          const said = {
-            status: this.status,
-            lastError: this.lastError,
-            lastSyncedAt: this.lastSyncedAt,
-          }
+          const said = this.light()
           untrack(() => this.say('sync-light', said))
         })
       }),
@@ -1554,13 +1542,13 @@ class Runner {
     return null
   }
 
+  private light() {
+    return { status: this.status, lastError: this.lastError, lastSyncedAt: this.lastSyncedAt }
+  }
+
   private sayAll() {
     this.sayRows()
-    this.say('sync-light', {
-      status: this.status,
-      lastError: this.lastError,
-      lastSyncedAt: this.lastSyncedAt,
-    })
+    this.say('sync-light', this.light())
   }
 
   private sayRows() {

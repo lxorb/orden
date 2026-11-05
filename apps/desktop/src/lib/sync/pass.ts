@@ -349,6 +349,13 @@ export async function pull(
 
         const tracked = mirror.notes[remote.path]
         if (tracked?.version === remote.version) continue
+        const keep = (hash = remote.hash) => {
+          mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash }
+        }
+        const wrote = () => {
+          keep()
+          waiting?.wrote?.(target)
+        }
 
         const local = await invoke<string>('read_note', { path: target }).catch(() => null)
 
@@ -373,8 +380,7 @@ export async function pull(
         }
 
         if (local !== null && (await holdsSameWords(local, remote.hash))) {
-          mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: remote.hash }
-          waiting?.wrote?.(target)
+          wrote()
           continue
         }
 
@@ -395,7 +401,7 @@ export async function pull(
             : !(await holdsSameWords(local, tracked.hash)))
 
         if (!news && local !== null && local !== content) {
-          mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: remote.hash }
+          keep()
           continue
         }
 
@@ -406,12 +412,7 @@ export async function pull(
 
           if (together !== null) {
             await writeDown(target, together, local)
-            mirror.notes[remote.path] = {
-              id: remote.id,
-              version: remote.version,
-              hash: remote.hash,
-            }
-            waiting?.wrote?.(target)
+            wrote()
             continue
           }
 
@@ -420,23 +421,13 @@ export async function pull(
             : null
           if (merged !== null) {
             await writeDown(target, merged, local)
-            mirror.notes[remote.path] = {
-              id: remote.id,
-              version: remote.version,
-              hash: remote.hash,
-            }
-            waiting?.wrote?.(target)
+            wrote()
             continue
           }
 
           if (carriedOwn(remote.path)) {
             await writeDown(target, withTasksOf(local, content), local)
-            mirror.notes[remote.path] = {
-              id: remote.id,
-              version: remote.version,
-              hash: remote.hash,
-            }
-            waiting?.wrote?.(target)
+            wrote()
             continue
           }
 
@@ -451,31 +442,24 @@ export async function pull(
               at: Date.now(),
             })
 
-            mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: '' }
+            keep('')
             continue
           }
 
           if (rule === 'newest' && (await theirsIsNewer(target, remote.updatedAt))) {
             await writeDown(target, content, local)
-            mirror.notes[remote.path] = {
-              id: remote.id,
-              version: remote.version,
-              hash: remote.hash,
-            }
-            waiting?.wrote?.(target)
+            wrote()
             continue
           }
 
           if (rule === 'both') await writeDown(conflictPath(target), content)
 
-          mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: remote.hash }
-          waiting?.wrote?.(target)
+          wrote()
           continue
         }
 
         await writeDown(target, content, local)
-        mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: remote.hash }
-        waiting?.wrote?.(target)
+        wrote()
       } catch (error) {
         if (!(error instanceof NotWritten)) throw error
         log('warn', `sync: ${remote.path} not written - ${error.message}`)

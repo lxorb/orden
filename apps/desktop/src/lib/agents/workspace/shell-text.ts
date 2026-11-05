@@ -428,8 +428,12 @@ const GIT: Record<string, Free> = {
   help: {},
 }
 
+function nameOf(word: string): string {
+  return word.split('=')[0] ?? word
+}
+
 function gitOptionFree(word: string, free: Free): boolean {
-  if (word.startsWith('--')) return (free.long ?? []).includes(word.split('=')[0] ?? word)
+  if (word.startsWith('--')) return (free.long ?? []).includes(nameOf(word))
   if (/^-\d+$/.test(word)) return free.valued?.includes('n') === true
 
   for (const letter of word.slice(1)) {
@@ -521,7 +525,7 @@ function argumentsStay(program: string, plain: readonly string[]): boolean {
     const word = plain[at] ?? ''
     if (!word.startsWith('-')) break
     if (reach.before.includes(word)) continue
-    if (reach.valued.includes(word.split('=')[0] ?? word)) {
+    if (reach.valued.includes(nameOf(word))) {
       if (!word.includes('=')) {
         at += 1
         if (at === plain.length) return false
@@ -543,12 +547,12 @@ function argumentsStay(program: string, plain: readonly string[]): boolean {
 
   const end = plain.indexOf('--', at)
   for (const word of plain.slice(at + 1, end === -1 ? undefined : end)) {
-    if (word.startsWith('-') && !OPTIONS_FREE.includes(word.split('=')[0] ?? word)) return false
+    if (word.startsWith('-') && !OPTIONS_FREE.includes(nameOf(word))) return false
   }
 
   return !plain.some((word) => {
     if (word.startsWith('--')) {
-      const name = word.split('=')[0] ?? word
+      const name = nameOf(word)
       return name.length > 2 && reach.long.some((one) => one.startsWith(name))
     }
     return reach.short?.test(word) === true

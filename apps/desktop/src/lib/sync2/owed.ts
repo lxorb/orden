@@ -1,7 +1,5 @@
 import type { FileOp } from '../workspace/file-ops'
 
-type OwedOp = FileOp
-
 export interface Owing {
   id: string
   what: { kind: 'wrote'; path: string; text: string } | { kind: 'op'; op: FileOp; entry?: string }
@@ -15,7 +13,7 @@ export async function takeOwed(
     entryAt(path: string): { id: string } | null | undefined
   },
   item: Owing,
-  follow: (op: OwedOp) => unknown,
+  follow: (op: FileOp) => unknown,
 ): Promise<void> {
   if (item.what.kind === 'wrote') {
     await engine.saved(item.what.path, item.what.text)
