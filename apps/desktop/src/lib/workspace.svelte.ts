@@ -1021,10 +1021,8 @@ class Workspace {
         const says = async (path: string) =>
           this.opened.at(path)?.latest ??
           (await invoke<string>('read_note', { path }).catch(() => null))
-        const spaceOf = (path: string) =>
-          this.spaces.find((one) => within(one.root, path) !== null)?.id ?? null
         const tabs = await this.tabsFrom(
-          await asDrafts(drafts, says, spaceOf),
+          await asDrafts(drafts, says, (path) => this.spaceIdAt(path)),
           this.panes.focusedId,
         )
         this.tabs = [...this.tabs, ...tabs]
@@ -1119,10 +1117,11 @@ class Workspace {
           continue
         }
 
+        const viewOnce = (note: NoteDoc) =>
+          made.find((one) => one?.note === note) ?? this.viewOf(note, paneId, draft)
         const already = draft.path ? this.opened.at(draft.path) : null
         if (already) {
-          const met = await this.wordsMeet(already, draft)
-          made.push(made.find((one) => one?.note === met) ?? this.viewOf(met, paneId, draft))
+          made.push(viewOnce(await this.wordsMeet(already, draft)))
           continue
         }
 
@@ -1149,11 +1148,7 @@ class Workspace {
           const back = note
             ? await this.wordsMeet(note, draft)
             : await this.opened.opening(draft.path, () => this.unwrittenBack(draft))
-          made.push(
-            back
-              ? (made.find((one) => one?.note === back) ?? this.viewOf(back, paneId, draft))
-              : null,
-          )
+          made.push(back ? viewOnce(back) : null)
           continue
         }
 
@@ -1204,7 +1199,7 @@ class Workspace {
           name: draft.name,
           text: words,
           dirty: true,
-          home: this.spaces.find((space) => within(space.root, path) !== null)?.id ?? null,
+          home: this.spaceIdAt(path),
         })
       } else if (merged !== holds) {
         void invoke('snapshot_note', { path, content: holds }).catch(() => undefined)
@@ -1213,6 +1208,10 @@ class Workspace {
       if (draft.share !== undefined) this.opened.cameBack(draft.share, met)
       return met
     }
+  }
+
+  private spaceIdAt(path: string): string | null {
+    return this.spaces.find((one) => within(one.root, path) !== null)?.id ?? null
   }
 
   private async unwrittenBack(draft: Draft): Promise<NoteDoc | null> {
@@ -1225,7 +1224,7 @@ class Workspace {
         read: (one) => invoke<string>('read_note', { path: one }).catch(() => null),
         exists: onDisk,
         keepVersion: (one, content) => invoke('snapshot_note', { path: one, content }),
-        spaceOf: (one) => this.spaces.find((space) => within(space.root, one) !== null)?.id ?? null,
+        spaceOf: (one) => this.spaceIdAt(one),
         reachable: (one) => {
           const root = this.rootHolding(one)
           return root === null ? Promise.resolve(true) : onDisk(root)
@@ -3888,14 +3887,12 @@ class Workspace {
   }
 
   refusedAsInstructions(paths: string[], intoFolder: string): boolean {
-    if (
-      !paths.some((path) => isAgentsName(nameOf(path))) ||
-      !this.spaces.some((one) => samePath(one.root, intoFolder))
-    ) {
-      return false
-    }
-    void import('./reserved-name.svelte').then((one) => one.reservedName.tell(intoFolder))
-    return true
+    const refused =
+      paths.some((path) => isAgentsName(nameOf(path))) &&
+      this.spaces.some((one) => samePath(one.root, intoFolder))
+    if (refused)
+      void import('./reserved-name.svelte').then((one) => one.reservedName.tell(intoFolder))
+    return refused
   }
 
   async moveMany(paths: string[], intoFolder: string, undoing = false): Promise<boolean> {

@@ -220,9 +220,8 @@ function drawnFences(text: string): DrawnFence[] {
 
     if (open && code.fence === null) close(at)
     else if (open) {
-      const { prefix }: { prefix: number } = open
-      const inner = prefix ? raw.replace(new RegExp(`^[ \\t>]{0,${prefix}}`), '') : raw
-      ;(open as { lines: string[] }).lines.push(inner)
+      const { prefix } = open
+      open.lines.push(prefix ? raw.replace(new RegExp(`^[ \\t>]{0,${prefix}}`), '') : raw)
     }
 
     if (kind === OPENS && code.fence !== null) {

@@ -22,8 +22,9 @@ export function slotOf(key: string): number | null {
 function remembered(): number | null {
   try {
     const said = sessionStorage.getItem(REMEMBERED)
-    const slot = said === null ? null : Number(said)
-    return slot !== null && Number.isInteger(slot) && slot >= 0 ? slot : null
+    if (said === null) return null
+    const slot = Number(said)
+    return Number.isInteger(slot) && slot >= 0 ? slot : null
   } catch {
     return null
   }
@@ -66,6 +67,10 @@ function ownAgain(locks: LockManager, slot: number): Promise<boolean> {
       giving.abort()
       resolve(false)
     }, RELOAD_AT_MOST)
+    const refused = () => {
+      clearTimeout(timer)
+      resolve(false)
+    }
     try {
       locks
         .request(slotLock(slot), { signal: giving.signal }, () => {
@@ -74,13 +79,9 @@ function ownAgain(locks: LockManager, slot: number): Promise<boolean> {
           resolve(true)
           return forever()
         })
-        .catch(() => {
-          clearTimeout(timer)
-          resolve(false)
-        })
+        .catch(refused)
     } catch {
-      clearTimeout(timer)
-      resolve(false)
+      refused()
     }
   })
 }

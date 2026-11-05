@@ -38,18 +38,14 @@ export async function cameBack(draft: Draft & { path: string }, asks: Asks): Pro
 
   const read = await asks.read(draft.path)
   if (read === null) {
-    if (await asks.exists(draft.path)) return onFile(true, base)
-    if (base === null || !(await asks.reachable(draft.path))) return onFile(true, base)
-    return asDraft()
+    const stays =
+      (await asks.exists(draft.path)) || base === null || !(await asks.reachable(draft.path))
+    return stays ? onFile(true, base) : asDraft()
   }
 
   const disk = unixLines(read)
   if (disk === words) return onFile(false, disk)
-  if (base === null) {
-    await asks.keepVersion(draft.path, read).catch(() => undefined)
-    return onFile(true, null)
-  }
-  if (disk === base) {
+  if (base === null || disk === base) {
     await asks.keepVersion(draft.path, read).catch(() => undefined)
     return onFile(true, base)
   }
@@ -83,7 +79,7 @@ export async function wordsOnto(
   kind: Draft['kind'],
   holds: string,
 ): Promise<string | null> {
-  if (draft.base === undefined || draft.kind !== 'note' || kind !== 'note') return null
-  if (__EVEN_PLUGIN__) return null
+  if (draft.base === undefined || draft.kind !== 'note' || kind !== 'note' || __EVEN_PLUGIN__)
+    return null
   return mergedOver(unixLines(draft.base), unixLines(draft.doc), holds)
 }

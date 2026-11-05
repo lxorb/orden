@@ -48,14 +48,13 @@ export class ClosedTabs {
   follow(op: FileOp) {
     if (op.op === 'removed') {
       const path = op.path
-      const stack = this.stack.map((closed) => {
+      this.remade((closed) => {
         const at = closed.draft.path
         if (at === null || within(path, at) === null || !closed.draft.dirty) return closed
         const draft: Draft = { ...closed.draft, path: null }
         delete draft.base
         return { ...closed, draft }
       })
-      if (stack.some((one, at) => one !== this.stack[at])) this.stack = stack
       return
     }
     if (op.op !== 'moved') return
@@ -70,7 +69,7 @@ export class ClosedTabs {
   }
 
   wroteAll(path: string, key: string, words: string) {
-    const stack = this.stack.map((closed) => {
+    this.remade((closed) => {
       if (!closed.draft.dirty || !samePath(closed.draft.path, path)) return closed
       if (closed.draft.share !== key && unixLines(closed.draft.doc) !== unixLines(words))
         return closed
@@ -78,6 +77,10 @@ export class ClosedTabs {
       delete draft.base
       return { ...closed, draft }
     })
+  }
+
+  private remade(change: (closed: ClosedTab) => ClosedTab) {
+    const stack = this.stack.map(change)
     if (stack.some((one, at) => one !== this.stack[at])) this.stack = stack
   }
 

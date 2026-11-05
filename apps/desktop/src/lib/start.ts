@@ -256,11 +256,9 @@ export function start(): () => void {
   }
 
   if (!__EVEN_PLUGIN__ && isDesktop) {
-    void startup.turn('rooms').then(() =>
-      import('./workspace/outside.svelte').then(({ hearOutside }) => {
-        hearOutside()
-      }),
-    )
+    void startup
+      .turn('rooms')
+      .then(() => import('./workspace/outside.svelte').then(({ hearOutside }) => hearOutside()))
   }
 
   // Quick add's key over every other app, a desktop's alone and after the launch

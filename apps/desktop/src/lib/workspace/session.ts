@@ -388,11 +388,11 @@ export function arrangementIn(state: Session): Layout | null {
 }
 
 export function arrivingWith(read: Layout, now: Layout): Layout {
-  const held = panesOf(read.frame).flatMap((one) => one.tabs)
+  const panes = panesOf(read.frame)
+  const held = panes.flatMap((one) => one.tabs)
   const open = panesOf(now.frame)
     .flatMap((one) => one.tabs)
     .filter((tab) => tab.dirty || !held.some((one) => one.path && samePath(one.path, tab.path)))
-  const panes = panesOf(read.frame)
   const into = (panes.find((one) => one.id === read.focused) ?? panes[0])?.id
   const behind = (frame: FrameDraft): FrameDraft => {
     if (frame.kind === 'split')
@@ -520,11 +520,7 @@ function withoutBases(layout: Layout): Layout | null {
   const bare = (frame: FrameDraft): FrameDraft => {
     if (frame.kind === 'split')
       return { ...frame, sides: [bare(frame.sides[0]), bare(frame.sides[1])] }
-    const tabs = frame.pane.tabs.map((draft) => {
-      const out = { ...draft }
-      delete out.base
-      return out
-    })
+    const tabs = frame.pane.tabs.map(({ base: _base, ...draft }) => draft)
     return { ...frame, pane: { ...frame.pane, tabs } }
   }
   return { ...layout, frame: bare(layout.frame) }

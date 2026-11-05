@@ -835,8 +835,7 @@ class Sync {
         () => true,
         async (root) => {
           const mirror = mirrors.get(root)
-          if (!mirror) return
-          if (!workspace.spaces.some((space) => space.root === mirror.root)) return
+          if (!mirror || !workspace.spaces.some((space) => space.root === root)) return
 
           this.pulled = 0
           this.pushed = 0

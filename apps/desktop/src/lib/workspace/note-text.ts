@@ -135,9 +135,10 @@ export function toggleTaskAt(
   asked: number,
   hash?: string,
 ): Promise<boolean> {
-  const toggle = () => toggled(ws, path, asked, hash)
   const before = toggling.get(path)
-  const running = (before ? waitedFor(before) : Promise.resolve()).then(toggle)
+  const running = (before ? waitedFor(before) : Promise.resolve()).then(() =>
+    toggled(ws, path, asked, hash),
+  )
   const done = () => {
     if (toggling.get(path) === running) toggling.delete(path)
   }

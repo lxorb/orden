@@ -1867,10 +1867,15 @@ class Links {
 
       // A plane is JSON, and is rewritten as JSON; see canvas-rewrite.ts.
       const file = card ?? moving
-      const worked = (before: string) =>
-        rewrite
+      const fresh = async () => {
+        const before = await this.wordsOf(absolute, target, open)
+        if (before === null) return null
+        read = listed?.(note.path) ?? note
+        const words = rewrite
           ? rewrite.retargetCanvas(before, source, file, to)
           : retargetLinks(before, source, to)
+        return words === null || words === before ? null : { before, words }
+      }
       const keepIt = (before: string) =>
         invoke('snapshot_note', { path: target, content: before }).catch(() => undefined)
       // A note that cannot be written - read-only, held by another program, a full
@@ -1884,11 +1889,10 @@ class Links {
 
       const after = doc
         ? await (async () => {
-            const before = await this.wordsOf(absolute, target, open)
-            if (before === null) return null
-            read = listed?.(note.path) ?? note
-            let words = worked(before)
-            if (words === null || words === before) return null
+            const got = await fresh()
+            if (!got) return null
+            const { before } = got
+            let { words } = got
 
             const knew = doc.onDisk
             drawing.relinked =
@@ -1903,11 +1907,9 @@ class Links {
             return writeEdited(doc, target, words, knew, () => keepIt(before))
           })().catch(refused)
         : await inFileTurn(target, async () => {
-            const before = await this.wordsOf(absolute, target, open)
-            if (before === null) return null
-            read = listed?.(note.path) ?? note
-            const words = worked(before)
-            if (words === null || words === before) return null
+            const got = await fresh()
+            if (!got) return null
+            const { before, words } = got
             const late = open(absolute)
             const edit = oneEdit(before, words)
             if (late && edit) late.edited([edit], words)

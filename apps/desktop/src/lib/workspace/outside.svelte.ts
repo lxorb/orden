@@ -12,12 +12,10 @@ import { afterQuiet } from '../timing'
 import { landing } from '../views/moving'
 import { windows } from '../windows'
 import { workspace } from '../workspace.svelte'
-import { holdsWords } from './documents.svelte'
+import { holdsWords, unixLines } from './documents.svelte'
 import type { FileOp } from './file-ops'
 
 const NO_ENGINE = 'no-engine'
-
-const unixLines = (text: string) => text.replace(/\r\n?/g, '\n')
 
 function dotted(path: string): boolean {
   const space = workspace.spaces.find((one) => withinSpace(one.root, path) !== null)
@@ -50,7 +48,9 @@ async function told(op: FileOp) {
   await workspace.fileOps.tell({ ...op, heard: true })
 }
 
-function vanished(path: string, kind: 'file' | 'folder') {
+const kindOf = (dir: boolean) => (dir ? 'folder' : 'file')
+
+function vanished(path: string, dir: boolean) {
   for (const note of workspace.documents) {
     if (note.path === null || !note.dirty || within(path, note.path) === null) continue
     note.home = workspace.spaceOf(note)
@@ -58,7 +58,7 @@ function vanished(path: string, kind: 'file' | 'folder') {
     note.onDisk = null
     workspace.scheduleSession()
   }
-  const op = { op: 'removed', path, kind, root: workspace.rootHolding(path) } as const
+  const op = { op: 'removed', path, kind: kindOf(dir), root: workspace.rootHolding(path) } as const
   workspace.opened.follow(op, (id) => workspace.close(id))
   workspace.closed.follow(op)
   void links.follow(op)
@@ -66,7 +66,7 @@ function vanished(path: string, kind: 'file' | 'folder') {
 
 async function gone(path: string, dir: boolean) {
   if (await onDisk(path)) return
-  vanished(path, dir ? 'folder' : 'file')
+  vanished(path, dir)
   windows.say('vanished', { path, dir })
   listAgain()
 }
@@ -77,7 +77,7 @@ async function moved(from: string, to: string, dir: boolean) {
     op: 'moved',
     from,
     to,
-    kind: dir ? 'folder' : 'file',
+    kind: kindOf(dir),
     root: workspace.rootHolding(from),
     into: workspace.rootHolding(to),
   })
@@ -85,31 +85,19 @@ async function moved(from: string, to: string, dir: boolean) {
 }
 
 async function came(path: string, dir: boolean) {
-  await told({
-    op: 'created',
-    path,
-    kind: dir ? 'folder' : 'file',
-    root: workspace.rootHolding(path),
-  })
+  await told({ op: 'created', path, kind: kindOf(dir), root: workspace.rootHolding(path) })
   listAgain()
 }
 
 export async function heardChange(change: SpaceChange): Promise<void> {
   if (dotted(change.path)) return
-  switch (change.kind) {
-    case 'removed':
-      await gone(change.path, change.dir)
-      return
-    case 'renamed':
-      await moved(change.from, change.path, change.dir)
-      if (!change.dir) await lookAt(change.path)
-      return
-    case 'created':
-      await came(change.path, change.dir)
-      break
-    case 'modified':
-      break
+  if (change.kind === 'removed') return gone(change.path, change.dir)
+  if (change.kind === 'renamed') {
+    await moved(change.from, change.path, change.dir)
+    if (!change.dir) await lookAt(change.path)
+    return
   }
+  if (change.kind === 'created') await came(change.path, change.dir)
   if (change.dir) return
   if (workspace.documentAt(change.path)) {
     await lookAt(change.path)
@@ -122,8 +110,7 @@ export async function heardChange(change: SpaceChange): Promise<void> {
 }
 
 export async function lookAtAll(): Promise<void> {
-  const paths = workspace.documents.flatMap((one) => one.path ?? [])
-  await Promise.all(paths.map((path) => lookAt(path)))
+  await Promise.all(workspace.documents.flatMap((one) => one.path ?? []).map(lookAt))
 }
 
 let hearing: Promise<void> = Promise.resolve()
@@ -222,7 +209,7 @@ export function hearOutside(): void {
   const watch = new TheWatch()
   hearsUnwatched(watch)
   windows.hear('vanished', ({ path, dir }) => {
-    vanished(String(path), dir === true ? 'folder' : 'file')
+    vanished(String(path), dir === true)
     listAgain()
   })
 

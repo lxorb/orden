@@ -127,16 +127,14 @@ function heldOf(at: PaperAt): Held | null {
   const key = keyOf(at)
   if (!key) return null
 
-  let one = held.get(key)
-  if (!one) {
-    const made: Held = { open: opened(at), drawn: new Map(), recent: [] }
-    made.open.catch(() => {
-      if (held.get(key) === made) held.delete(key)
-    })
-    held.set(key, made)
-    one = made
-  }
-  return one
+  const known = held.get(key)
+  if (known) return known
+  const made: Held = { open: opened(at), drawn: new Map(), recent: [] }
+  made.open.catch(() => {
+    if (held.get(key) === made) held.delete(key)
+  })
+  held.set(key, made)
+  return made
 }
 
 /** The paper itself, opened at the first place that answers.

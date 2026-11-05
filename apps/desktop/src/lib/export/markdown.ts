@@ -92,6 +92,8 @@ function sourceEdit(
   return { from, to: from + written.length, text: asSource(wanted, written) }
 }
 
+const bodyStart = (source: string) => source.length - stripFrontMatter(source).length
+
 function spansByBlock(
   source: string,
   all: readonly { text: string; from: number; code: boolean }[],
@@ -124,7 +126,7 @@ function spansByBlock(
  *  own. A definition cannot interrupt a paragraph, so a line right under one is words. */
 function pictureEdits(source: string, rename: (src: string) => string | null): Edit[] {
   const edits: Edit[] = []
-  const body = source.length - stripFrontMatter(source).length
+  const body = bodyStart(source)
   let paragraph = false
   const all = [...lines(source)]
   const spans = spansByBlock(source, all)
@@ -174,10 +176,11 @@ export function toMarkdown(source: string, options: MarkdownOptions = {}): strin
   const edits: Edit[] = []
 
   if (options.link || options.picture) {
+    const body = bodyStart(source)
     for (const found of findLinks(source)) {
       if (found.kind !== 'wikilink') continue
 
-      const inBody = found.from >= source.length - stripFrontMatter(source).length
+      const inBody = found.from >= body
       const picture = options.picture && inBody ? pictureEmbed(found, options.picture) : null
       if (picture !== null) {
         edits.push({ from: found.from, to: found.to, text: picture })

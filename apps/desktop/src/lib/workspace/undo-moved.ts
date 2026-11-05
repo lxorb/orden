@@ -10,9 +10,8 @@ function did(action: FileAction, from: string, to: string): boolean {
 }
 
 export function heardMove(steps: readonly FileAction[], op: Extract<FileOp, { op: 'moved' }>) {
-  const own =
-    op.kind !== 'space' && (landing(op.to) || steps.some((one) => did(one, op.from, op.to)))
-  if (own) return
+  if (op.kind !== 'space' && (landing(op.to) || steps.some((one) => did(one, op.from, op.to))))
+    return
   for (const action of steps) rewritten(action, op.from, op.to)
 }
 

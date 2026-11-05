@@ -130,11 +130,10 @@ function spansOf(tokens: readonly Token[] | undefined, marks: Marks = {}): Span[
         if (closing && name === passing) passing = null
         continue
       }
-      if (name && !closing && !VOID.test(name) && !token.raw.trimEnd().endsWith('/>')) {
-        if (NOT_SHOWN.test(name) || HIDDEN.test(token.raw)) {
-          passing = name
-          continue
-        }
+      const opens = name && !closing && !VOID.test(name) && !token.raw.trimEnd().endsWith('/>')
+      if (opens && (NOT_SHOWN.test(name) || HIDDEN.test(token.raw))) {
+        passing = name
+        continue
       }
     }
     if (passing === null) out.push(...spansOfToken(token, marks))

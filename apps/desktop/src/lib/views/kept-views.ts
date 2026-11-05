@@ -87,8 +87,7 @@ export function followSpaceViews(
   const todos = read(TODOS)
   const words = todos[from]
   if (typeof words === 'string') {
-    const rest = Object.fromEntries(Object.entries(todos).filter(([one]) => one !== from))
-    keepJson(TODOS, { ...rest, [to]: follow(words) })
+    keepJson(TODOS, { ...without(todos, (one) => one === from), [to]: follow(words) })
   }
   followProjectViews(from, (path) => path, follow, to)
   const folds = read(FOLDS)

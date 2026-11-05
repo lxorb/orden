@@ -41,8 +41,6 @@ const RENAME_NEWS = 500
 
 const asText = (note: NoteDoc) => note.kind === 'note'
 
-const isDirty = (note: NoteDoc) => note.dirty
-
 const holdingBack = (note: NoteDoc) => note.live.holdingBack
 
 export class Across {
@@ -55,7 +53,7 @@ export class Across {
   }, 100)
 
   listed() {
-    if (!this.listing && !this.alone) this.windows.say('list-again')
+    if (!this.listing && !this.windows.alone) this.windows.say('list-again')
   }
 
   constructor(
@@ -67,18 +65,14 @@ export class Across {
       windows.say('file-op', { op: { ...op, key: undefined } })
     })
     windows.hear('list-again', () => this.listAgain())
-    windows.hear('spaces-again', () => this.inTurn(() => this.spacesAgain()))
+    windows.hear('spaces-again', () => this.inTurn(() => this.desk.loadSpaces()))
     windows.hear('file-op', ({ op }) => this.inTurn(() => this.heardOp(op as FileOp)))
     windows.hear('words', ({ path, text }) =>
       this.inTurn(() => this.heardWords(String(path), String(text))),
     )
   }
 
-  get alone(): boolean {
-    return this.windows.alone
-  }
-
-  private inTurn(run: () => Promise<void>) {
+  private inTurn(run: () => Promise<unknown>) {
     this.hearing = this.hearing.then(run).catch((error: unknown) => {
       log('error', `across: ${String(error)}`)
     })
@@ -101,10 +95,7 @@ export class Across {
     if (first !== GONE) return first
     await this.desk.pause()
     await this.hearing
-    if (!samePath(note.path, path)) {
-      if (note.path !== null) this.desk.owed(note)
-      return null
-    }
+    if (this.elsewhere(note, path)) return null
     const second = await oneWriteAt(path, () => this.attempt(note, path, write))
     if (second !== GONE) return second
     this.desk.draftOf(note)
@@ -116,34 +107,33 @@ export class Across {
     path: string,
     write: (words: string) => Promise<unknown>,
   ): Promise<Written | typeof GONE | null> {
-    if (!samePath(note.path, path)) {
-      if (note.path !== null) this.desk.owed(note)
-      return null
-    }
-    if (note.live.holdingBack) {
-      this.desk.owed(note)
-      return null
-    }
+    if (this.letGo(note, path)) return null
     const disk = await this.onTheDisk(path)
     if (disk === null && note.onDisk !== null) {
       if (await this.desk.reachable(path)) return GONE
       throw new Error(`${path} is out of reach`)
     }
     if (disk !== null && disk !== note.onDisk) await this.takeIn(note, path, disk)
-    if (!samePath(note.path, path)) {
-      if (note.path !== null) this.desk.owed(note)
-      return null
-    }
-    if (holdingBack(note)) {
-      this.desk.owed(note)
-      return null
-    }
+    if (this.letGo(note, path)) return null
     const words = note.latest
     const revision = note.revision
     await write(words)
     note.onDisk = words
     this.windows.say('words', { path, text: words })
     return { words, revision }
+  }
+
+  private elsewhere(note: NoteDoc, path: string): boolean {
+    if (samePath(note.path, path)) return false
+    if (note.path !== null) this.desk.owed(note)
+    return true
+  }
+
+  private letGo(note: NoteDoc, path: string): boolean {
+    if (this.elsewhere(note, path)) return true
+    if (!holdingBack(note)) return false
+    this.desk.owed(note)
+    return true
   }
 
   private async onTheDisk(path: string): Promise<string | null> {
@@ -197,31 +187,19 @@ export class Across {
       }
       const disk = await this.onTheDisk(path).catch(() => null)
       if (disk === null || disk === note.onDisk) return
-      if (!note.dirty && note.onDisk === null) {
-        note.replace(disk, false)
-        return
-      }
-      if (!asText(note) && !note.dirty) {
+      if (!note.dirty && (note.onDisk === null || !asText(note))) {
         note.replace(disk, false)
         return
       }
       try {
         await this.takeIn(note, path, disk)
       } catch (error) {
-        if (isDirty(note)) this.desk.owed(note)
+        if (note.dirty) this.desk.owed(note)
         throw error
       }
-      if (note.latest === disk && !holdingBack(note)) {
-        note.dirty = false
-        return
-      }
-      note.dirty = true
-      this.desk.owed(note)
+      note.dirty = note.latest !== disk || holdingBack(note)
+      if (note.dirty) this.desk.owed(note)
     })
-  }
-
-  private async spacesAgain() {
-    await this.desk.loadSpaces()
   }
 
   private async heardOp(op: FileOp) {
@@ -270,7 +248,7 @@ export async function startAcross(): Promise<Across> {
     joined: (note) => sync.engine?.joinedOf(note) ?? null,
     noteSaved: (path, text) => links.noteSaved(path, text),
     read: (path) => invoke<string>('read_note', { path }).catch(() => null),
-    exists: (path) => onDisk(path),
+    exists: onDisk,
     reachable: (path) => {
       const root = workspace.rootHolding(path)
       return root === null ? Promise.resolve(true) : onDisk(root)

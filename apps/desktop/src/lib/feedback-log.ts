@@ -64,7 +64,7 @@ export function scrubbedLog(log: string): string {
     .replace(EMAIL, '<email>')
     .replace(QUOTED, '<quoted>')
     .replace(WHOLE, (whole: string, kind: string) => path(whole, kind))
-    .replace(OPEN, (whole: string) => kept(whole))
+    .replace(OPEN, kept)
     .replace(NAMED, (whole: string, kind: string) => {
       const said = SAYING.exec(whole)?.[0] ?? ''
       return said + path(whole.slice(said.length).trim(), kind)

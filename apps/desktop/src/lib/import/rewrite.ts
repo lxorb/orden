@@ -699,8 +699,9 @@ function withMath(text: string, code: [number, number][]): [number, number][] {
 /** How many lines the properties at the top of the note take, the two `---` lines
  *  included, or nothing for a note that has none. */
 function propertiesEnd(lines: readonly string[]): number {
-  const block = frontMatterBlock(lines.join('\n'))
-  return block ? lines.join('\n').slice(0, block.close).split('\n').length : 0
+  const text = lines.join('\n')
+  const block = frontMatterBlock(text)
+  return block ? text.slice(0, block.close).split('\n').length : 0
 }
 
 /** Where the properties at the top of the note end, as an offset into its text, or

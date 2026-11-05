@@ -91,12 +91,7 @@ export async function oneWriteAt<T>(path: string, run: () => Promise<T>): Promis
       if (started) return undefined
       started = true
       clearTimeout(timer)
-      const running = (async () => run())()
-      running.then(resolve, reject)
-      return running.then(
-        () => undefined,
-        () => undefined,
-      )
+      return (async () => run())().then(resolve, reject)
     }
     const timer = setTimeout(() => void go(), FILE_TURN_AT_MOST)
     try {
