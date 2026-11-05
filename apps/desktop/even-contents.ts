@@ -602,10 +602,16 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  code over its copy of the notes. Nothing new is in the plugin; the moved modules make
  *  chunks of their own and every chunk that reads them imports them by a new name.
  *  Measured 6,001,972.
+ *
+ *  The code raised on 2026-11-05, to 6,008,000, and the catalogues to 991,500, for #1126:
+ *  a browser keeping only the words it uses - the engine's keeping (sync2/keeping.ts),
+ *  the files kept away listed and fetched by the browser's commands (web/away.svelte.ts),
+ *  the cloud on their rows and the two sentences for them in every language. Measured
+ *  6,007,286 and 990,827.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_002_700,
-  catalogues: 989_500,
+  code: 6_008_000,
+  catalogues: 991_500,
   styles: 292_300,
   fonts: 260_000,
   pages: 40_000,
