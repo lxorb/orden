@@ -541,9 +541,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  lines in every language, and the strip's and the Essentials' fixes with them
  *  (Tabs.svelte, tab-strip/, Bookmarks.svelte, base.css). Measured 5,916,205, 976,970 and
  *  291,204.
+ *
+ *  The code raised on 2026-11-05, to 5,919,400, for #1122: an `ai` block's answer has
+ *  LaTeX's `\(…\)` and `\[…\]` spelled the way the note draws formulas as it arrives
+ *  (`TexDelimiters` in @orden/markdown/streamed, ai/answering.ts). Measured 5,918,818.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_916_700,
+  code: 5_919_400,
   catalogues: 977_400,
   styles: 291_500,
   fonts: 260_000,
