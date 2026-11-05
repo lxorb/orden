@@ -723,8 +723,30 @@
     if (moving) {
       stirred()
       fly()
-    } else if (!out) gone()
+    } else {
+      landed()
+      if (!out) gone()
+    }
   }
+
+  /** Whether the windows are on their way out or home: the tab worked in is over every
+   *  other window meanwhile, and no window's picture changes (WindowFace.svelte). */
+  let onTheWay = $state(false)
+
+  function landed() {
+    if (!onTheWay) return
+    onTheWay = false
+    for (const [id, one] of panesAsWindows) {
+      const pose = flights.get(id)?.pose
+      if (pose) movePane(id, pose)
+      else putBack(one.node)
+    }
+    for (const id of flights.keys()) paint(id)
+  }
+
+  /** The tab worked in, while the windows fly: over every other window, the pane it is
+   *  in too (Emil: the others flew over it as it shrank). */
+  const inFront = (id: string) => onTheWay && id === workspace.activeTabId
 
   /** How far out the overview is, 0 the app as it was and 1 all the way: what the
    *  ground, the row at the top, the cells, the lines and the windows' shadows fade by,
@@ -821,6 +843,7 @@
 
   function begin() {
     started = true
+    onTheWay = true
     opensOf()
     for (const id of flights.keys()) paint(id)
   }
@@ -839,6 +862,7 @@
     if (home !== null && home < NEAR)
       styles.window.opacity = String(Number(styles.window.opacity) * (home / NEAR))
     Object.assign(parts.window.style, styles.window)
+    parts.window.classList.toggle('is-front', inFront(id) && !heldIds.has(id))
     Object.assign(parts.face.style, styles.face)
     Object.assign(parts.chip.style, styles.chip)
     // How far the window is scaled from its own size, which its ring is drawn back by,
@@ -926,7 +950,7 @@
       transformOrigin: '0 0',
       // Over the canvas while it is held, as the window under the hand is; under every
       // surface that comes up over the overview, a drawer, the palette, a sheet.
-      zIndex: heldIds.has(id) ? 'var(--z-drawer)' : 'var(--z-raised)',
+      zIndex: heldIds.has(id) || inFront(id) ? 'var(--z-drawer)' : 'var(--z-raised)',
       pointerEvents: 'none',
       // A layer of its own while anything moves; at rest drawn again at the size it is
       // shown, so its words are as sharp as the other windows'.
@@ -1022,6 +1046,7 @@
         paint(id)
       }
       awayFromStrip()
+      landed()
       if (!out) gone()
       return
     }
@@ -1099,7 +1124,10 @@
     shown = true
     out = true
     document.documentElement.dataset.overview = modes.overviewBlur ? 'blur' : 'slide'
-    if (again) aimAll()
+    if (again) {
+      onTheWay = true
+      aimAll()
+    }
   }
 
   /** What each pane shows, measured: its windows take that shape. */
@@ -1132,6 +1160,7 @@
     places.remember(camera)
     out = false
     arrived.clear()
+    if (started) onTheWay = true
     aimAll()
   }
 
@@ -1870,6 +1899,7 @@
                 width={face.w}
                 height={face.h}
                 drawing={readying}
+                flying={onTheWay}
               />
             {/if}
           </span>
@@ -1903,12 +1933,15 @@
         </button>
       {/each}
     </div>
+  </div>
 
-    <!-- The tabs riding on the windows that are their panes', on the screen and not on the
-         canvas: each where its tab is in its strip, against its window (`paintRider`). -->
+  <!-- The tabs riding on the windows that are their panes', on the screen and not on the
+       canvas: each where its tab is in its strip, against its window (`paintRider`), over
+       the pane in front as it flies over every other window (`movePane`). -->
+  <div class="riding" aria-hidden="true">
     {#each windows as { tab } (tab.id)}
       {#if ridersDrawn[tab.id]}
-        <span class="rider" aria-hidden="true" use:riding={tab.id}></span>
+        <span class="rider" use:riding={tab.id}></span>
       {/if}
     {/each}
   </div>
@@ -2110,6 +2143,10 @@
     will-change: transform;
   }
 
+  .window:global(.is-front) {
+    z-index: var(--z-lifted);
+  }
+
   /* Under the hand, over the others, a little higher off the canvas. */
   .window.is-held {
     z-index: var(--z-raised);
@@ -2208,6 +2245,14 @@
 
   /* A tab riding on its window, on the screen (`paintRider`): its copy, at its own size,
      scaled from its corner. */
+  .riding {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-drawer);
+    overflow: hidden;
+    pointer-events: none;
+  }
+
   .rider {
     position: absolute;
     top: 0;

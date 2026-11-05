@@ -151,3 +151,84 @@ test('no frame sets a value that the panes, the sidebars or the windows’ pictu
     expect(one.querySelector('[data-pane], .face, [data-chrome]')).toBe(null)
   }
 })
+
+/** The tab worked in: its pane, which is its window, and how it is stacked. */
+function front() {
+  const pane = document.querySelector<HTMLElement>(`[data-pane="${workspace.panes.all[0]?.id}"]`)
+  return pane?.style.zIndex ?? ''
+}
+
+test('the tab worked in is over every other window on every frame of the way out and home', async () => {
+  // Emil: the other windows flew over the one worked in as it shrank.
+  tabOverview.open = true
+  flushSync()
+  await drawnNow()
+  const out: string[] = []
+  for (let i = 0; i < 40 && waiting.size; i++) {
+    frame()
+    if (tabOverview.out.length) out.push(front())
+  }
+  expect(out.length).toBeGreaterThan(5)
+  // Over the canvas the other windows are on, until every window is where it goes.
+  const landed = out.indexOf('var(--z-raised)')
+  expect(landed).toBeGreaterThan(5)
+  expect(out.slice(0, landed).every((one) => one === 'var(--z-drawer)')).toBe(true)
+  // At rest it is among the others again, under a window dragged over it.
+  for (let i = 0; i < 200; i++) frame()
+  expect(front()).toBe('var(--z-raised)')
+  tabOverview.open = false
+  flushSync()
+  const home: string[] = []
+  for (let i = 0; i < 200 && tabOverview.out.length; i++) {
+    frame()
+    if (tabOverview.out.length) home.push(front())
+  }
+  expect(home.length).toBeGreaterThan(5)
+  expect(home.every((one) => one === 'var(--z-drawer)')).toBe(true)
+  // The tabs riding on their windows are over it still.
+  tabOverview.open = true
+  flushSync()
+  frame()
+  frame()
+  const riding = document.querySelector('.riding')
+  expect(riding?.closest('.canvas')).toBe(null)
+})
+
+test('a picture that comes in while the windows fly is drawn once they are there, its mark till then', async () => {
+  tabOverview.open = true
+  flushSync()
+  await faces.read()
+  // Too long: the windows set off without it.
+  for (let i = 0; i < 20; i++) frame()
+  expect(tabOverview.out.length).toBeGreaterThan(0)
+  const faceOf = () => document.querySelector('.window .face')
+  expect(faceOf()?.querySelector('.mark')).not.toBe(null)
+  for (const done of drawn.splice(0)) done()
+  await Promise.resolve()
+  await Promise.resolve()
+  flushSync()
+  frame()
+  // Not half-way: a window's picture filled in mid-flight was a long frame.
+  expect(faceOf()?.querySelector('.read')).toBe(null)
+  expect(faceOf()?.querySelector('.mark')).not.toBe(null)
+  for (let i = 0; i < 200 && waiting.size; i++) frame()
+  expect(faceOf()?.querySelector('.read')?.textContent).toContain('Some words of it.')
+})
+
+test('a window drawn before is drawn at once the next time, never waited on', async () => {
+  tabOverview.open = true
+  flushSync()
+  await drawnNow()
+  for (let i = 0; i < 200 && waiting.size; i++) frame()
+  tabOverview.open = false
+  flushSync()
+  for (let i = 0; i < 200 && waiting.size; i++) frame()
+  tabOverview.open = true
+  flushSync()
+  expect(drawn).toEqual([])
+  expect(document.querySelector('.window .face .read')?.textContent).toContain('Some words of it.')
+  await Promise.resolve()
+  await Promise.resolve()
+  frame()
+  expect(tabOverview.out.length).toBeGreaterThan(0)
+})

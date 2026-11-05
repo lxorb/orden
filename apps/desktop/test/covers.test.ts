@@ -42,6 +42,7 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
   'lib/FormatBar.svelte .docked': 'a touch screen only, docked over the keyboard',
   'lib/StatusBar.svelte .mode': 'the vim mode, drawn in the corner of a note’s own pane',
   'lib/overview/Overview.svelte .under': 'inside the overview, whose .nib-scrim covers every page',
+  'lib/overview/Overview.svelte .riding': 'inside the overview, whose .nib-scrim covers every page',
   'lib/even/Glasses.svelte .frame': 'the glasses’ plugin, which places no page',
   'lib/tab-strip/TabChip.svelte .chip':
     'the tab carried out of a strip, which hangs only while a drag is over the panes - and a drag covers all of every page (`coverOf` in WebTab.svelte)',

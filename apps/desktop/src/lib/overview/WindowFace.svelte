@@ -1,3 +1,10 @@
+<script lang="ts" module>
+  /** What each note's window was drawn from last, and what it drew, by tab: a window
+   *  drawn again from the same words is drawn at once, never a frame after it is shown. */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read as a window is drawn, never rendered
+  const drawnBefore = new Map<string, { key: string; html: string }>()
+</script>
+
 <script lang="ts">
   /** What a window of the overview shows: what its tab would show, drawn the size its
    *  pane is and made small by the window (issue #331).
@@ -28,6 +35,7 @@
     width,
     height,
     drawing,
+    flying = false,
   }: {
     tab: Tab
     /** The picture kept of it, if there is one. */
@@ -35,6 +43,9 @@
     width: number
     height: number
     drawing?: (done: Promise<unknown>) => void
+    /** Whether the windows are on their way: nothing a window shows changes meanwhile,
+     *  and what came in the while is drawn once they are where they go. */
+    flying?: boolean
   } = $props()
 
   /** How its kind is drawn while it is not in front. */
@@ -44,17 +55,34 @@
    *  A note of a hundred thousand words is not rendered whole to show one screen. */
   const START = 6000
 
-  let html = $state('')
+  /** What the note is read from, and how: the same again is drawn from what was drawn. */
+  const reading = $derived.by(() => {
+    if (how !== 'reading') return null
+    const text = readingFrom(tab.doc, tab.anchor, START)
+    const scheme = theme.current
+    const trusted = trustsHtmlIn(tab.note)
+    return { text, scheme, trusted, key: `${scheme}\u0000${String(trusted)}\u0000${text}` }
+  })
+
+  const readBefore = untrack(() => reading && drawnBefore.get(tab.id))
+  let made = $state(
+    readBefore && readBefore.key === untrack(() => reading?.key) ? readBefore.html : '',
+  )
 
   $effect(() => {
-    if (how !== 'reading') return
-    const text = readingFrom(tab.doc, tab.anchor, START)
-    const note = { text, path: tab.path }
+    const asked = reading
+    if (!asked) return
+    const known = drawnBefore.get(tab.id)
+    if (known?.key === asked.key) {
+      made = known.html
+      return
+    }
     let stale = false
-    const done = readingHtml(note, theme.current, trustsHtmlIn(tab.note))
-      .catch(() => unreadableHtml(text))
-      .then((made) => {
-        if (!stale) html = made
+    const done = readingHtml({ text: asked.text, path: tab.path }, asked.scheme, asked.trusted)
+      .catch(() => unreadableHtml(asked.text))
+      .then((html) => {
+        drawnBefore.set(tab.id, { key: asked.key, html })
+        if (!stale) made = html
       })
     untrack(() => drawing?.(done))
     return () => {
@@ -62,20 +90,46 @@
     }
   })
 
-  const shot = $derived(how === 'photograph' ? (pages.of(tab.id).shot ?? face?.shot ?? null) : null)
+  let html = $state(untrack(() => made))
+  $effect.pre(() => {
+    const now = made
+    if (!flying) html = now
+  })
+
+  const latestShot = $derived(
+    how === 'photograph' ? (pages.of(tab.id).shot ?? face?.shot ?? null) : null,
+  )
+  let shot = $state(untrack(() => latestShot))
+  $effect.pre(() => {
+    const now = latestShot
+    if (!flying) shot = now
+  })
+  /** The photograph the engine has decoded, which is drawn over the mark once it is. */
+  let decodedShot = $state<string | null>(null)
+
+  let kept = $state(untrack(() => face))
+  $effect.pre(() => {
+    const now = face
+    if (!flying) kept = now
+  })
 
   /** A terminal's last lines, as written down. */
-  let screen = $state<{ text: string; cols: number } | null>(null)
+  let readScreen = $state<{ text: string; cols: number } | null>(null)
   $effect(() => {
     if (how !== 'scrollback') return
     let stale = false
     const done = scrollbackOf(tab).then((one) => {
-      if (!stale) screen = one
+      if (!stale) readScreen = one
     })
     untrack(() => drawing?.(done))
     return () => {
       stale = true
     }
+  })
+  let screen = $state<{ text: string; cols: number } | null>(null)
+  $effect.pre(() => {
+    const now = readScreen
+    if (!flying) screen = now
   })
 
   /** A kept picture drawn again, at the size it was taken and made the window's width,
@@ -89,11 +143,19 @@
     return { update: draw }
   }
 
-  function decoded(node: HTMLImageElement, _shot: string) {
-    const decode = () => {
-      if (typeof node.decode === 'function') drawing?.(node.decode())
+  function decoded(node: HTMLImageElement, shot: string) {
+    const decode = (one: string) => {
+      const done =
+        typeof node.decode === 'function' ? node.decode().then(() => one) : Promise.resolve(one)
+      drawing?.(done)
+      void done.then(
+        (seen) => {
+          if (seen === shot) decodedShot = seen
+        },
+        () => undefined,
+      )
     }
-    decode()
+    decode(shot)
     return { update: decode }
   }
 
@@ -111,8 +173,16 @@
   })
 </script>
 
+{#snippet mark()}
+  <div class="mark">
+    <span class="big"><TabMark {tab} /></span>
+    <span class="name">{tab.shown}</span>
+    {#if whence}<span class="whence">{whence}</span>{/if}
+  </div>
+{/snippet}
+
 <div class="face" style:width="{width}px" style:height="{height}px">
-  {#if how === 'reading'}
+  {#if how === 'reading' && html}
     <div class="read">
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note's own words, rendered by the same renderer the reading view uses, under the same trust -->
       <article class="page nib-write">{@html html}</article>
@@ -120,21 +190,25 @@
   {:else if how === 'scrollback' && screen}
     <pre class="screen">{screen.text}</pre>
   {:else if how === 'photograph' && shot}
-    <img class="shot" src={shot} alt="" draggable="false" use:decoded={shot} />
-  {:else if face?.html}
+    {@render mark()}
+    <img
+      class="shot"
+      class:is-drawn={decodedShot === shot}
+      src={shot}
+      alt=""
+      draggable="false"
+      use:decoded={shot}
+    />
+  {:else if kept?.html}
     <div
       class="kept"
-      style:width="{face.w}px"
-      style:height="{face.h}px"
-      style:scale={width / Math.max(face.w, 1)}
-      use:drawn={face}
+      style:width="{kept.w}px"
+      style:height="{kept.h}px"
+      style:scale={width / Math.max(kept.w, 1)}
+      use:drawn={kept}
     ></div>
   {:else}
-    <div class="mark">
-      <span class="big"><TabMark {tab} /></span>
-      <span class="name">{tab.shown}</span>
-      {#if whence}<span class="whence">{whence}</span>{/if}
-    </div>
+    {@render mark()}
   {/if}
 </div>
 
@@ -188,11 +262,18 @@
   }
 
   .shot {
+    position: absolute;
+    inset: 0;
     display: block;
     width: 100%;
     height: 100%;
+    opacity: 0;
     object-fit: cover;
     object-position: top;
+  }
+
+  .shot.is-drawn {
+    opacity: 1;
   }
 
   .mark {

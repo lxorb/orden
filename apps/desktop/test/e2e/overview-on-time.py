@@ -10,6 +10,10 @@ on the built web app in Chromium, the engine WebView2 is, through a DevTools tra
     no window's picture is drawn into after the windows have begun to move: what each
       shows is there before the first frame of the way in, and none is filled in
       half-way, which was a long frame in the middle of the way in
+    no window flies as a blank box: each shows its picture, or its mark until that is
+      drawn
+    the tab worked in is over every other window on every frame that moves (Emil: the
+      others flew over it as it shrank)
 
     python apps/desktop/test/e2e/overview-on-time.py
 """
@@ -56,7 +60,18 @@ SAMPLE = """
   const look = (at) => {
     if (!going) return
     const now = [...document.querySelectorAll('.window')].map((one) => one.style.transform).join('|')
-    frames.push({ at, moved: now !== before && before !== '', drawn })
+    const ws = window.nibApp.workspace
+    const pane = document.querySelector(`[data-pane="${ws.panes.at(ws.tabs.find((one) => one.id === ws.activeTabId)?.paneId)?.id}"]`)
+    const canvas = document.querySelector('.canvas')
+    const blank = [...document.querySelectorAll('.window .face')].filter((face) =>
+      !face.querySelector('.mark, .screen, .kept, img.is-drawn') && !face.querySelector('.read article')?.childElementCount).length
+    frames.push({
+      at,
+      moved: now !== before && before !== '',
+      drawn,
+      blank,
+      over: pane && canvas ? Number(getComputedStyle(pane).zIndex) > Number(getComputedStyle(canvas).zIndex) : null,
+    })
     before = now
     drawn = 0
     requestAnimationFrame(look)
@@ -117,6 +132,13 @@ def run(browser: Browser, page: Page, label: str, keys: list[str], folder: Path)
     ]
     if late:
         wrong(f"[{label}] a window's picture was drawn into while the windows moved: {late}")
+    blank = [index for index in moving if frames[index]["blank"]]
+    if blank:
+        wrong(f"[{label}] a window flew as a blank box, its picture not drawn, on frames {blank[:5]}")
+    # The last frame that moves is the one they land in, all of them where they go.
+    under = [index for index in moving[:-1] if frames[index]["over"] is False]
+    if under:
+        wrong(f"[{label}] the tab worked in was under the other windows on frames {under[:5]}")
     counts = restyled(trace)
     # The frame the overview begins in and the one it ends in restyle what they change -
     # the strip, the bar, the sidebars - once; every frame between restyles only what
