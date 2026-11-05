@@ -410,6 +410,61 @@ pub(crate) fn add_child<R: Runtime>(
     }
 }
 
+#[cfg(desktop)]
+thread_local! {
+    /// What `with_platform!` was handed inline, run once the runtime has returned.
+    static HANDED: std::cell::RefCell<Vec<Box<dyn FnOnce()>>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+}
+
+/// A page's own engine handle, handed to `then` with nothing of the runtime's held:
+/// `with_platform!(view, then)`, for a webview or a webview window.
+///
+/// On the window's thread the runtime answers `with_webview` inline, holding a lock of the
+/// webview's that its focus handlers take as well. `then` waiting in a nested message pump
+/// there, as `web_worlds::cleared` does on `WebView2`, let the new page's focus in, and the
+/// thread waited on itself: from #1094, which opens a web tab's page on that thread, Orden
+/// froze for good the moment a web tab opened on Windows (#1145). So the handle is taken out
+/// and `then` runs once `with_webview` has returned. Asked from any other thread, it is the
+/// runtime's own message, run on the window's thread with nothing held.
+#[cfg(desktop)]
+macro_rules! with_platform {
+    ($page:expr, $then:expr) => {
+        $crate::engine::handed_out(|f| $page.with_webview(f), $then)
+    };
+}
+#[cfg(desktop)]
+pub(crate) use with_platform;
+
+/// `with_platform!`: `with_webview` is the runtime's, asked with what it hands `then`.
+#[cfg(desktop)]
+pub(crate) fn handed_out<P: 'static>(
+    with_webview: impl FnOnce(Box<dyn FnOnce(P) + Send>) -> tauri::Result<()>,
+    then: impl FnOnce(P) + Send + 'static,
+) -> tauri::Result<()> {
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
+
+    let caller = std::thread::current().id();
+    let waiting = Arc::new(AtomicBool::new(true));
+    let inside = Arc::clone(&waiting);
+    let before = HANDED.with_borrow(Vec::len);
+    let asked = with_webview(Box::new(move |platform| {
+        if std::thread::current().id() == caller && inside.load(Ordering::Acquire) {
+            HANDED.with_borrow_mut(|handed| handed.push(Box::new(move || then(platform))));
+        } else {
+            then(platform);
+        }
+    }));
+    waiting.store(false, Ordering::Release);
+    let handed =
+        HANDED.with_borrow_mut(|handed| (handed.len() > before).then(|| handed.pop()).flatten());
+    if let Some(handed) = handed {
+        handed();
+    }
+    asked
+}
+
 /// The window the config describes, taken out of it so it is built by our own code
 /// instead. The config keeps saying what the window looks like; only who builds it
 /// changes.
@@ -546,7 +601,117 @@ pub(crate) mod renderer;
 
 #[cfg(test)]
 mod tests {
-    use super::{internal, APP_PROFILE, ROOT};
+    use super::{handed_out, internal, APP_PROFILE, ROOT};
+    use std::sync::{Arc, Mutex};
+
+    /// #1145: the runtime answers inline on the window's thread, holding the webview's lock
+    /// as it does. What the page is handed runs with that lock let go, before the call
+    /// returns.
+    #[test]
+    fn a_page_handed_inline_is_used_once_the_runtime_lets_go() {
+        let lock = Arc::new(Mutex::new(()));
+        let held = Arc::clone(&lock);
+        let ran = Arc::new(Mutex::new(None));
+        let saw = Arc::clone(&ran);
+        let asked = handed_out(
+            |f: Box<dyn FnOnce(u8) + Send>| {
+                let _runtime = held.lock().expect("the runtime's lock");
+                f(7);
+                Ok(())
+            },
+            move |platform| {
+                let free = lock.try_lock().is_ok();
+                *saw.lock().expect("saw") = Some((platform, free));
+            },
+        );
+        assert!(asked.is_ok());
+        assert_eq!(*ran.lock().expect("ran"), Some((7, true)));
+    }
+
+    /// Posted to the window's thread instead, it runs there when the runtime gets to it, and
+    /// the call does not wait for it; on the caller's own thread too, once the call is over.
+    #[test]
+    fn a_page_handed_later_is_used_where_it_is_handed() {
+        let (said, heard) = std::sync::mpsc::channel();
+        let elsewhere = said.clone();
+        handed_out(
+            |f: Box<dyn FnOnce(u8) + Send>| {
+                std::thread::spawn(move || f(1));
+                Ok(())
+            },
+            move |platform| {
+                let _ = elsewhere.send((platform, std::thread::current().id()));
+            },
+        )
+        .expect("asked");
+        let (platform, on) = heard.recv().expect("handed");
+        assert_eq!(platform, 1);
+        assert_ne!(on, std::thread::current().id());
+
+        let kept = Arc::new(Mutex::new(None::<Box<dyn FnOnce(u8) + Send>>));
+        let keeping = Arc::clone(&kept);
+        handed_out(
+            move |f: Box<dyn FnOnce(u8) + Send>| {
+                *keeping.lock().expect("kept") = Some(f);
+                Ok(())
+            },
+            move |platform| {
+                let _ = said.send((platform, std::thread::current().id()));
+            },
+        )
+        .expect("asked");
+        assert!(heard.try_recv().is_err(), "nothing ran yet");
+        let later = kept.lock().expect("kept").take().expect("posted");
+        later(2);
+        assert_eq!(
+            heard.try_recv().expect("handed"),
+            (2, std::thread::current().id())
+        );
+    }
+
+    /// #1145: nothing that waits in a nested message pump runs inside `with_webview`, where
+    /// on the window's thread the runtime holds the webview's lock: through `with_platform!`.
+    /// Read off the source, as a pump there hangs the app only once a page takes the focus.
+    #[test]
+    fn nothing_pumps_inside_with_webview() {
+        let root = crate::app_dir().join("src");
+        let mut sources = vec![root];
+        let mut inside = Vec::new();
+        while let Some(at) = sources.pop() {
+            for entry in std::fs::read_dir(&at)
+                .expect("the crate's source")
+                .flatten()
+            {
+                let path = entry.path();
+                if path.is_dir() {
+                    sources.push(path);
+                    continue;
+                }
+                let text = std::fs::read_to_string(&path).unwrap_or_default();
+                let text = text.split("#[cfg(test)]").next().unwrap_or_default();
+                for (at, _) in text.match_indices(".with_webview(") {
+                    let call = &text[at + ".with_webview(".len()..];
+                    let mut depth = 1usize;
+                    let end = call
+                        .char_indices()
+                        .find(|&(_, one)| {
+                            match one {
+                                '(' => depth += 1,
+                                ')' => depth -= 1,
+                                _ => {}
+                            }
+                            depth == 0
+                        })
+                        .map_or(call.len(), |(end, _)| end);
+                    let call = &call[..end];
+                    if call.contains("web_worlds::cleared(") || call.contains("web_worlds::sent(") {
+                        inside.push(path.display().to_string());
+                    }
+                }
+            }
+        }
+        assert!(inside.is_empty(), "a pump inside with_webview: {inside:?}");
+    }
 
     /// A window whose page is one of the app's own holds the app's commands and the key to
     /// them, so on CEF it is in the interface's profile, where no extension installed for

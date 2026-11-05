@@ -506,7 +506,7 @@ fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), S
         .map_err(|error| format!("the page could not be built: {error}"));
         let made = made.and_then(|view| {
             let setting = building.clone();
-            view.with_webview(move |platform| {
+            crate::engine::with_platform!(view, move |platform| {
                 crate::web_tabs::keep_session(store.as_deref(), &platform);
                 let Some(core) = cdp::core_of(&platform) else {
                     return;

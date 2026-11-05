@@ -959,7 +959,7 @@ fn popup(
     #[cfg(windows)]
     {
         let closing = window.clone();
-        let _ = window.with_webview(move |platform| {
+        let _ = crate::engine::with_platform!(window, move |platform| {
             crate::web_opens::closing(&platform, closing);
             let cleared = crate::web_worlds::cleared(&platform, "");
             crate::trace::mark(&format!("web popup: {}", cleared.said()));
@@ -1758,7 +1758,7 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
     let asking = app.clone();
     let named = tab.to_string();
     let _ = on_the_page(app, &label_of(tab), move |view| {
-        let _ = view.with_webview(move |platform| {
+        let _ = crate::engine::with_platform!(view, move |platform| {
             // The session every web tab shares is the environment the first page was built
             // on, captured here once and handed to every tab after it, so a note closed and
             // opened again keeps its login; see `session`. Kept before `ask` looks at the
@@ -3388,7 +3388,7 @@ mod tests {
             .split_once("on_the_page(")
             .expect("`listening` reaches the page directly");
         assert!(!before.contains("with_webview("), "asked before going over");
-        assert!(after.contains("with_webview("));
+        assert!(after.contains("with_platform!("));
         for (file, source) in [
             (
                 "web_certificate/chromium.rs",

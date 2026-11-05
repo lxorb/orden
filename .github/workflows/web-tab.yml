@@ -1,0 +1,102 @@
+name: web-tab
+
+# A probe build of each engine opens a web tab and still answers (#1145): from #1094 the
+# app froze on Windows the moment one opened, which no test built from the source saw.
+# scripts/web-tab-drive.py, on the runner's own desktop, where nobody is and the page
+# takes the focus as it does for a person.
+
+on:
+  pull_request:
+    branches: [main]
+    # `ready_for_review` too: a draft runs nothing, and the full run starts the moment
+    # it is marked ready (see docs/conventions.md, "CI").
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - apps/desktop/src-tauri/src/**
+      - apps/desktop/src-tauri/Cargo.toml
+      - scripts/web-tab-drive.py
+      - .github/workflows/web-tab.yml
+  workflow_dispatch:
+
+concurrency:
+  group: web-tab-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  answers:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+          - runner: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 75
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    env:
+      IDENTIFIER: ch.emilvinu.nib.probe.web-tab
+      # The edge build's profile, which is enough to see a window hang; see edge-profile.sh.
+      ROLLING: 'true'
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: ./.github/actions/desktop-setup
+        with:
+          target: ${{ matrix.target }}
+
+      # A probe build: a version no release passes and an updater pointed at nothing, so
+      # it can never install anything over anything; see scripts/probe_app.py.
+      - name: The probe
+        run: |
+          source scripts/edge-profile.sh
+          config='{"identifier":"'"$IDENTIFIER"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
+          case "$RUNNER_OS" in
+            Linux)
+              bash scripts/linux-cef.sh tauri build --target ${{ matrix.target }} --no-bundle \
+                --ignore-version-mismatches --config "$config"
+              echo "EXE=$PWD/apps/desktop/src-tauri/target/${{ matrix.target }}/release/nib" >>"$GITHUB_ENV"
+              ;;
+            macOS)
+              pnpm --filter @orden/desktop exec tauri build --target ${{ matrix.target }} --bundles app --config "$config"
+              app=$(ls -d apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app | head -1)
+              echo "EXE=$PWD/$app/Contents/MacOS/$(ls "$app/Contents/MacOS" | head -1)" >>"$GITHUB_ENV"
+              ;;
+            Windows)
+              pnpm --filter @orden/desktop exec tauri build --target ${{ matrix.target }} --no-bundle --config "$config"
+              echo "EXE=$PWD/apps/desktop/src-tauri/target/${{ matrix.target }}/release/nib.exe" >>"$GITHUB_ENV"
+              ;;
+          esac
+
+      # And Chromium's sandbox helper beside the binary, which it refuses to start
+      # without unless root owns it with its set-user bit, as the packages install it.
+      - name: A screen, on Linux
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y xvfb dbus-x11
+          sandbox="$(dirname "$EXE")/chrome-sandbox"
+          if [ -f "$sandbox" ]; then
+            sudo chown root:root "$sandbox"
+            sudo chmod 4755 "$sandbox"
+          fi
+
+      - name: A web tab, and the app still answers
+        run: |
+          drive=(scripts/web-tab-drive.py --exe "$EXE" --identifier "$IDENTIFIER")
+          case "$RUNNER_OS" in
+            Linux) xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session -- python3 "${drive[@]}" ;;
+            Windows) python "${drive[@]}" ;;
+            *) python3 "${drive[@]}" ;;
+          esac

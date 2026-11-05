@@ -314,7 +314,7 @@ fn sent(app: &AppHandle, view: &Webview, address: &Url) {
     {
         let (closing, label) = (app.clone(), view.label().to_owned());
         let address = address.to_string();
-        let _ = view.with_webview(move |platform| {
+        let _ = crate::engine::with_platform!(view, move |platform| {
             let _ = crate::web_worlds::sent(&platform, &address, "");
             heard(&closing, &label, &platform);
         });
