@@ -303,8 +303,11 @@ export async function firstPass(
   }
 
   changes.push(core.wantChange(space.id), ...done)
+  if (!alive()) return false
+  // The commit is the pass: once it is in, so are the caller's `done` rows, and an engine
+  // stopped meanwhile must not have the space forgotten, its carried ids gone with it.
   await core.commit(changes)
-  return alive()
+  return true
 }
 
 /** A note v1 renamed or moved, found under its new name. */

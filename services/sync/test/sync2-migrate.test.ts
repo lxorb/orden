@@ -452,6 +452,27 @@ describe('a first pass that does not get through', () => {
     expect(commits.slice(0, -1).flat()).not.toContain(done)
   })
 
+  test('an engine stopped while its last commit lands still passed: the commit is the pass', async () => {
+    const kit = await engine()
+    const device = await kit.testDevice({
+      fetch: async (request) => await app.fetch(request, env),
+      token,
+    })
+    const core = device.engine.core
+    await core.commit(core.addSpace(space, device.root, 'owner'))
+    const state = core.spaces.get(space)
+    if (!state) throw new Error('the space was not added')
+    const done = { t: 'put', table: 'meta', row: { key: 'first:done', value: 1 } }
+    const commit = core.commit.bind(core)
+    core.commit = async (changes) => {
+      await commit(changes)
+      // The window lets go as the last one lands: `engine.stop()` bumps the core's life.
+      if (changes.includes(done as never)) core.life += 1
+    }
+
+    expect(await kit.firstPass(core, state, null, undefined, [done as never])).toBe(true)
+  })
+
   test('a listing that failed sends no deletes', async () => {
     const note = await v1Note('Plan.md', 'We ship on Monday.\n')
     const kit = await engine()
