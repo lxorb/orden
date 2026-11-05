@@ -2889,4 +2889,7 @@ export const fil: Dictionary = {
   'Writing down what you said': 'Isinusulat ang sinabi mo',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Napupunta ang audio sa speech recognition ng device na ito, na maaaring gumamit ng mga server ng gumawa nito',
+  'Not on this device': 'Wala sa device na ito',
+  'Not on this device. It opens once you are online again.':
+    'Wala sa device na ito. Magbubukas ito kapag online ka na ulit.',
 }

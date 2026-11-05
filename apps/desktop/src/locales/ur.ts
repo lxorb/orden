@@ -2825,4 +2825,7 @@ export const ur: Dictionary = {
   'Writing down what you said': 'آپ نے جو کہا وہ لکھا جا رہا ہے',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'آڈیو اس آلے کی آواز پہچان پر جاتا ہے، جو اس کے بنانے والے کے سرور استعمال کر سکتی ہے',
+  'Not on this device': 'اس آلے پر نہیں',
+  'Not on this device. It opens once you are online again.':
+    'اس آلے پر نہیں۔ جیسے ہی آپ دوبارہ آن لائن ہوں گے، یہ کھل جائے گا۔',
 }

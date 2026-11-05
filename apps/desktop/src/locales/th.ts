@@ -2771,4 +2771,7 @@ export const th: Dictionary = {
   'Writing down what you said': 'กำลังเขียนสิ่งที่คุณพูด',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'เสียงถูกส่งไปยังระบบรู้จำเสียงพูดของอุปกรณ์นี้ ซึ่งอาจใช้เซิร์ฟเวอร์ของผู้ผลิต',
+  'Not on this device': 'ไม่ได้อยู่ในอุปกรณ์นี้',
+  'Not on this device. It opens once you are online again.':
+    'ไม่ได้อยู่ในอุปกรณ์นี้ จะเปิดได้เมื่อคุณกลับมาออนไลน์',
 }

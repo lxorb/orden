@@ -2939,4 +2939,7 @@ export const ar: Dictionary = {
   'Writing down what you said': 'جارٍ كتابة ما قلته',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'يذهب الصوت إلى التعرّف على الكلام في هذا الجهاز، وقد يستخدم خوادم الشركة المصنّعة',
+  'Not on this device': 'ليست على هذا الجهاز',
+  'Not on this device. It opens once you are online again.':
+    'ليست على هذا الجهاز. ستُفتح عندما تعود إلى الاتصال بالإنترنت.',
 }

@@ -80,6 +80,7 @@
   import { inside } from './workspace/zones'
   import Twist from './Twist.svelte'
   import { dur } from './motion'
+  import { keptAway } from './web/away.svelte'
 
   const { tree }: { tree: Entry } = $props()
 
@@ -1343,13 +1344,15 @@
       ondragover={(event) => overRow(event, entry)}
       ondragleave={(event) => stillInside(event) || dropTarget.clear()}
       ondrop={(event) => drop(event, entry)}
+      onpointerenter={() => entry.evicted && keptAway.ahead(entry.path)}
     >
       <!-- The row says what it opens into without spending a word on it, or
            wears the icon the note itself chose; the path is how it knows. -->
       <FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />
       <span class="nib-row-label">{name}</span>
-      <!-- Only a Mac's iCloud Drive evicts a file, so the plugin build leaves the
-           mark out rather than carry it. -->
+      <!-- Only a Mac's iCloud Drive and a browser keeping only the words it uses
+           leave a file away, so the plugin build leaves the mark out rather than
+           carry it. -->
       {#if !__EVEN_PLUGIN__ && entry.evicted}
         {#await import('./CloudMark.svelte') then mark}<mark.default path={entry.path} />{/await}
       {/if}

@@ -3,22 +3,37 @@
    *  back when it is opened. Finder's own mark for the same fact, a cloud with an
    *  arrow down, in the slot a row keeps for what it has to add about a name; see
    *  SharedMark.svelte, which is the same shape. It pulses while the note is on its
-   *  way. See icloud.svelte.ts. */
+   *  way. See icloud.svelte.ts.
+   *
+   *  And in the browser, a note it keeps no words of: listed, and fetched from the
+   *  account when it is opened (#1126; web/away.svelte.ts). Offline, it says that it
+   *  cannot be opened until the account can be reached. */
   import CloudDownload from 'lucide/dist/esm/icons/cloud-download.mjs'
   import { t } from './i18n.svelte'
   import { icloud } from './icloud.svelte'
+  import { isNative } from './tauri'
+  import { keptAway } from './web/away.svelte'
 
   const { path }: { path: string } = $props()
+
+  const said = $derived(
+    isNative
+      ? t('In iCloud')
+      : keptAway.offline
+        ? t('Not on this device. It opens once you are online again.')
+        : t('Not on this device'),
+  )
 
   $effect(() => icloud.listen())
 </script>
 
 <span
   class="cloud"
-  class:coming={icloud.coming.has(path)}
-  title={t('In iCloud')}
+  class:coming={icloud.coming.has(path) || keptAway.fetching.has(path)}
+  class:offline={!isNative && keptAway.offline}
+  title={said}
   role="img"
-  aria-label={t('In iCloud')}
+  aria-label={said}
 >
   <svg viewBox="0 0 24 24" aria-hidden="true">
     {#each CloudDownload as [tag, attrs], index (index)}
@@ -45,6 +60,11 @@
     stroke-width: 1.9;
     stroke-linecap: round;
     stroke-linejoin: round;
+  }
+
+  /* Out of reach: nothing to fetch it from until the account can be reached. */
+  .offline {
+    opacity: 0.5;
   }
 
   /* On its way. The slowest duration the app has, twice over, so it reads as

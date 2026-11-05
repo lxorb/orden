@@ -2871,4 +2871,7 @@ export const ha: Dictionary = {
   'Writing down what you said': 'Ana rubuta abin da ka faɗa',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Sautin yana zuwa gane magana na wannan na’ura, wanda zai iya amfani da sabar masu ƙera ta',
+  'Not on this device': 'Ba ya kan wannan na’ura',
+  'Not on this device. It opens once you are online again.':
+    'Ba ya kan wannan na’ura. Zai buɗe da zarar kun dawo kan intanet.',
 }

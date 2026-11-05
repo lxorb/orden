@@ -2775,4 +2775,7 @@ export const am: Dictionary = {
   'Writing down what you said': 'የተናገሩትን በመጻፍ ላይ',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'ድምጹ ወደዚህ መሣሪያ የንግግር ማወቂያ ይሄዳል፣ ይህም የአምራቹን አገልጋዮች ሊጠቀም ይችላል',
+  'Not on this device': 'በዚህ መሣሪያ ላይ የለም',
+  'Not on this device. It opens once you are online again.':
+    'በዚህ መሣሪያ ላይ የለም። እንደገና መስመር ላይ ሲሆኑ ይከፈታል።',
 }

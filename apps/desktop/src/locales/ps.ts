@@ -2829,4 +2829,7 @@ export const ps: Dictionary = {
   'Writing down what you said': 'هغه څه لیکل کېږي چې تاسو وویل',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'غږ د دې وسیلې د خبرو پېژندنې ته ځي، چې کېدای شي د جوړوونکي سرورونه وکاروي',
+  'Not on this device': 'په دې وسیله کې نشته',
+  'Not on this device. It opens once you are online again.':
+    'په دې وسیله کې نشته. کله چې بیا آنلاین شئ، خلاصېږي.',
 }

@@ -349,3 +349,59 @@ export function againstOf(bytes: Uint8Array): Against | null {
   }
   return null
 }
+
+// ---------------------------------------------------------------------------
+// Which words this device keeps
+
+/** In a browser that keeps only some of a space's words (#1126): whether the account
+ *  serves what the rest need (`index: true` on its feed), when each document kept here
+ *  was last used and how long it is, and the files whose words are being let go. In
+ *  `meta` as `keep:<space>`; an older build reads past it and keeps every word again. */
+export interface Keeping {
+  on: boolean
+  used: Map<string, { at: number; size: number }>
+  /** Paths in the space whose rows this device is letting go of: written down before
+   *  the rows go, so a stop halfway takes the rest at the next start. */
+  going: Set<string>
+}
+
+const KEEP = 'keep:'
+
+export function keepKey(space: string): string {
+  return `${KEEP}${space}`
+}
+
+export function keepingOf(row: MetaRow): { space: string; keeping: Keeping } | null {
+  if (!row.key.startsWith(KEEP) || typeof row.value !== 'string') return null
+  try {
+    const value: unknown = JSON.parse(row.value)
+    if (!isRecord(value)) return null
+    const used = new Map<string, { at: number; size: number }>()
+    if (isRecord(value.used)) {
+      for (const [id, one] of Object.entries(value.used)) {
+        if (!Array.isArray(one)) continue
+        const [at, size] = one as unknown[]
+        if (typeof at === 'number' && typeof size === 'number') used.set(id, { at, size })
+      }
+    }
+    const going = new Set(
+      Array.isArray(value.going)
+        ? value.going.filter((one): one is string => typeof one === 'string')
+        : [],
+    )
+    return { space: row.key.slice(KEEP.length), keeping: { on: value.on === true, used, going } }
+  } catch {
+    return null
+  }
+}
+
+export function keepingRow(space: string, keeping: Keeping): MetaRow {
+  return {
+    key: keepKey(space),
+    value: JSON.stringify({
+      on: keeping.on,
+      used: Object.fromEntries([...keeping.used].map(([id, one]) => [id, [one.at, one.size]])),
+      going: [...keeping.going],
+    }),
+  }
+}

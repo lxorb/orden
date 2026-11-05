@@ -2827,4 +2827,7 @@ export const ms: Dictionary = {
   'Writing down what you said': 'Menulis apa yang anda katakan',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Audio dihantar ke pengecaman pertuturan peranti ini, yang mungkin menggunakan pelayan pembuatnya',
+  'Not on this device': 'Tiada pada peranti ini',
+  'Not on this device. It opens once you are online again.':
+    'Tiada pada peranti ini. Ia akan dibuka sebaik sahaja anda dalam talian semula.',
 }

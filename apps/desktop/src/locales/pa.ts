@@ -2838,4 +2838,7 @@ export const pa: Dictionary = {
   'Writing down what you said': 'ਤੁਸੀਂ ਜੋ ਕਿਹਾ ਉਹ ਲਿਖਿਆ ਜਾ ਰਿਹਾ ਹੈ',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'ਆਡੀਓ ਇਸ ਡਿਵਾਈਸ ਦੀ ਬੋਲੀ ਪਛਾਣ ਤੇ ਜਾਂਦਾ ਹੈ, ਜੋ ਇਸਦੇ ਨਿਰਮਾਤਾ ਦੇ ਸਰਵਰ ਵਰਤ ਸਕਦੀ ਹੈ',
+  'Not on this device': 'ਇਸ ਡਿਵਾਈਸ ’ਤੇ ਨਹੀਂ',
+  'Not on this device. It opens once you are online again.':
+    'ਇਸ ਡਿਵਾਈਸ ’ਤੇ ਨਹੀਂ। ਤੁਹਾਡੇ ਮੁੜ ਔਨਲਾਈਨ ਹੁੰਦੇ ਹੀ ਇਹ ਖੁੱਲ੍ਹੇਗਾ।',
 }

@@ -2880,4 +2880,7 @@ export const ta: Dictionary = {
   'Writing down what you said': 'நீங்கள் சொன்னதை எழுதுகிறது',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'ஒலி இந்தச் சாதனத்தின் பேச்சு அறிதலுக்குச் செல்கிறது, அது அதன் தயாரிப்பாளரின் சேவையகங்களைப் பயன்படுத்தக்கூடும்',
+  'Not on this device': 'இந்தச் சாதனத்தில் இல்லை',
+  'Not on this device. It opens once you are online again.':
+    'இந்தச் சாதனத்தில் இல்லை. நீங்கள் மீண்டும் இணையத்தில் வந்ததும் இது திறக்கும்.',
 }

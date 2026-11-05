@@ -2800,4 +2800,7 @@ export const vi: Dictionary = {
   'Writing down what you said': 'Đang ghi lại những gì bạn nói',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Âm thanh được gửi đến tính năng nhận dạng giọng nói của thiết bị này, có thể dùng máy chủ của nhà sản xuất',
+  'Not on this device': 'Không có trên thiết bị này',
+  'Not on this device. It opens once you are online again.':
+    'Không có trên thiết bị này. Sẽ mở khi bạn trực tuyến trở lại.',
 }

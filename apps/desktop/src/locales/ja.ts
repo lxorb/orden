@@ -2803,4 +2803,7 @@ export const ja: Dictionary = {
   'Writing down what you said': '話した内容を書き起こしています',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     '音声はこのデバイスの音声認識に送られ、メーカーのサーバーが使われることがあります',
+  'Not on this device': 'このデバイスにはありません',
+  'Not on this device. It opens once you are online again.':
+    'このデバイスにはありません。オンラインに戻ると開きます。',
 }

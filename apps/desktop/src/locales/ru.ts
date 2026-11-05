@@ -2925,4 +2925,7 @@ export const ru: Dictionary = {
   'Writing down what you said': 'Записываю сказанное',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Звук отправляется в распознавание речи этого устройства, которое может использовать серверы производителя',
+  'Not on this device': 'Нет на этом устройстве',
+  'Not on this device. It opens once you are online again.':
+    'Нет на этом устройстве. Откроется, как только вы снова будете в сети.',
 }

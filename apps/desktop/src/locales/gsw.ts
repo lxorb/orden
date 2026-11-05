@@ -2850,4 +2850,7 @@ export const gsw: Dictionary = {
   'Writing down what you said': 'Schriibe uf, was du gseit häsch',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Audio gaht a d Spracherchännig vo däm Grät, wo d Server vo sim Härsteller cha bruuche',
+  'Not on this device': 'Nöd uf däm Gräät',
+  'Not on this device. It opens once you are online again.':
+    'Nöd uf däm Gräät. Es gaht uf, sobald du wider online bisch.',
 }

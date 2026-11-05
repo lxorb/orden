@@ -31,6 +31,7 @@ import {
   isWebTarget,
 } from '@orden/markdown/links'
 import { assetType } from './asset-route'
+import { keptAway, NOT_HERE } from './away.svelte'
 import { isReserved } from '../naming'
 import {
   assets,
@@ -58,6 +59,9 @@ interface Entry {
   children: Entry[]
   /** A page note holding a paper; see `paper` in the desktop's tree.rs. */
   paper?: boolean
+  /** A file this browser keeps no words of, fetched when it is opened (#1126). The
+   *  name a Mac's listing gives a file iCloud took away, which is the same fact. */
+  evicted?: boolean
 }
 
 interface TreeOptions {
@@ -178,9 +182,22 @@ function sidecarOf(path: string): string {
  *  notes answers this in one small read instead of handing back three thousand
  *  bodies to have their names taken off them. Notes and pictures alike, since a
  *  path has one stat wherever the file itself lives. See web/store.ts. */
-async function tree(root: string, options: TreeOptions = {}): Promise<Entry> {
+async function tree(root: string, options: TreeOptions = {}, raw = false): Promise<Entry> {
   const base = normalise(root)
   const rows = (await stats.all()).filter((row) => within(base, row.path))
+  // And what this browser keeps no words of, listed as it is, with the cloud a file
+  // somewhere else wears (#1126; away.svelte.ts). Never for the engine, which lists
+  // what is here.
+  const away = new Set<string>()
+  if (!raw) {
+    const here = new Set(rows.map((row) => row.path))
+    for (const one of keptAway.under(base)) {
+      const path = normalise(one.path)
+      if (here.has(path)) continue
+      away.add(path)
+      rows.push({ path, modified: one.modified, created: one.modified, size: one.size })
+    }
+  }
 
   const folders = new Map<string, Entry>()
   const make = (path: string): Entry => {
@@ -229,6 +246,7 @@ async function tree(root: string, options: TreeOptions = {}): Promise<Entry> {
       created: row.created,
       children: [],
       ...(present.has(paperOf(row.path)) && isPages(row.path) ? { paper: true } : {}),
+      ...(away.has(row.path) ? { evicted: true } : {}),
     })
   }
 
@@ -361,6 +379,9 @@ async function renameNote(from: string, to: string, hold = false, alone = false)
     if (isPdf(source) && !alone) await moveHighlights(source, target)
     return
   }
+  // A note this browser keeps no words of has no row to move: its move is the engine's
+  // operation, made before this one (#1126).
+  if (!rows.length && keptAway.under(source).length) return
   if (!rows.length) throw new Error('nothing to rename')
 
   // One transaction for the lot. Row by row, a browser closed halfway through
@@ -460,6 +481,11 @@ async function copyPath(from: string, to: string) {
   }
   const there = await paperInTheWay(source, target)
   if (there) throw new Error(`${there} is already there`)
+
+  // What this browser keeps no words of is fetched first: a copy is of the words.
+  for (const away of keptAway.under(source)) {
+    if (!(await keptAway.bringBack(away.path))) throw new Error(NOT_HERE)
+  }
 
   const under = (one: string) => one === source || one.startsWith(`${source}/`)
   const copied = (one: string) => target + one.slice(source.length)
@@ -620,6 +646,8 @@ async function saveTrash(entries: TrashEntry[]) {
 
 async function occupied(path: string): Promise<boolean> {
   if (await files.get(path)) return true
+  // A note this browser keeps no words of is there all the same (#1126).
+  if (keptAway.under(path).length) return true
   return (await files.paths()).some((one) => one.startsWith(`${path}/`))
 }
 
@@ -797,7 +825,9 @@ async function spaceList() {
   // Paths, because a space is a folder name: this is the first thing the app asks
   // for on the way up and it used to hand back every note in the browser to find
   // out how many folders there were.
-  for (const path of await files.paths()) {
+  // With what this browser keeps no words of (#1126): a space may be nothing else yet.
+  const away = keptAway.all().map((one) => normalise(one.path))
+  for (const path of [...(await files.paths()), ...away]) {
     const space = spaceOf(path)
     // A dot folder is the app's own, not a space: Recently deleted lives in one.
     if (space !== '/' && !basename(space).startsWith('.')) names.add(space)
@@ -1129,7 +1159,13 @@ export async function webInvoke<T>(
 
   switch (command) {
     case 'read_note': {
-      const row = await textRow(path)
+      // A note this browser keeps no words of is fetched first (#1126); the engine's own
+      // read is of what is here.
+      let row = await textRow(path)
+      if (!row && args.raw !== true && keptAway.at(path)) {
+        if (!(await keptAway.bringBack(path))) throw new Error(NOT_HERE)
+        row = await textRow(path)
+      }
       if (!row) throw new Error('no such note')
       if (tooLarge(row.content)) throw new Error(TOO_LARGE)
       return row.content as T
@@ -1186,12 +1222,19 @@ export async function webInvoke<T>(
       return undefined as T
 
     case 'read_tree':
-      return (await tree(root, args.options ?? {})) as T
+      return (await tree(root, args.options ?? {}, args.raw === true)) as T
 
     // A note, a picture or a folder at this path: what the desktop's stamp answers,
     // and its folders too. See on-disk.ts.
     case 'path_exists':
+      if (args.raw !== true && keptAway.under(path).length) return true as T
       return (await stats.holds(normalise(path))) as T
+
+    // A row let go of because this browser keeps only the words it uses (#1126): gone
+    // from here as no delete is, with nothing kept and nothing told but the listing.
+    case 'let_go_note':
+      await files.remove(normalise(path))
+      return undefined as T
 
     // Searching a space is not here: it runs in a worker, because reading every
     // note and scoring every line of them on this thread is keystrokes that do

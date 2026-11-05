@@ -2918,4 +2918,7 @@ export const uk: Dictionary = {
   'Writing down what you said': 'Записую сказане',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Звук надсилається до розпізнавання мовлення цього пристрою, яке може використовувати сервери виробника',
+  'Not on this device': 'Немає на цьому пристрої',
+  'Not on this device. It opens once you are online again.':
+    'Немає на цьому пристрої. Відкриється, щойно ви знову будете в мережі.',
 }

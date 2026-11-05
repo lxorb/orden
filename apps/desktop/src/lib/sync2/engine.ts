@@ -40,9 +40,10 @@ import { holdsDocument } from './kinds'
 import { holderOf } from '../pages/held'
 import { waitsForBytes } from './files'
 import { foldIn } from './ingest'
+import { away, type LettingGo, trim, usedChanges } from './keeping'
 import { isLocal, localPass } from './local'
 import { settle, type SpaceState } from './places'
-import { pass, type Passed, resting } from './pass'
+import { pass, type Passed, pullNow, resting } from './pass'
 import { project, wrote } from './project'
 import { keepLosers, rejoin } from './rejoin'
 import { againstBytes } from './records'
@@ -296,6 +297,65 @@ export class Engine implements AskedEngine {
       await this.core.commit(placedRows(this.core, space, repositioned(rows, standing)))
       return true
     })
+  }
+
+  // -------------------------------------------------------------------------
+  // Words kept only while used (keeping.ts, #1126)
+
+  /** Every document this device keeps no words of, in the spaces where it keeps only
+   *  some: by the full path the file list shows it at, how long its words are and when
+   *  they last moved, as the feed said. */
+  awayFiles(): { id: string; path: string; size: number; modified: number }[] {
+    const out: { id: string; path: string; size: number; modified: number }[] = []
+    for (const space of this.core.spaces.values()) {
+      if (!space.keepsFew) continue
+      const paths = space.paths()
+      for (const entry of space.entries.values()) {
+        const at = paths.get(entry.id)
+        if (at === undefined || !away(this.core, space, entry)) continue
+        out.push({
+          id: entry.id,
+          path: this.core.world.join(space.row.root, at),
+          size: entry.size ?? 0,
+          modified: entry.mtime ?? 0,
+        })
+      }
+    }
+    return out
+  }
+
+  /** The words of a document this device keeps none of, pulled now and written to its
+   *  file. Answers whether its file is there now. One the account could not be asked
+   *  about stays asked for, and the next pass brings it. */
+  fetch(path: string): Promise<boolean> {
+    return this.core.use(async () => {
+      const placed = this.placed(path)
+      const entry = placed?.space.at(placed.path)
+      if (!placed || !entry) return false
+      if (entry.local_path) return true
+      const { space } = placed
+      if (!away(this.core, space, entry)) return false
+      this.core.asked.add(entry.id)
+      const life = this.core.life
+      if (!(await pullNow(this.core, space, new Set([entry.id]), () => this.core.life === life)))
+        return false
+      if (!entry.local_path) return false
+      this.core.asked.delete(entry.id)
+      const doc = await this.core.doc(entry.id)
+      await this.core.commit(usedChanges(this.core, space, entry.id, doc?.text().length))
+      return true
+    })
+  }
+
+  /** Whether an entry is live in the tree shown here. */
+  isLive(id: string): boolean {
+    return this.core.spaceOf(id)?.isLive(id) ?? false
+  }
+
+  /** Lets go of the least recently used words this device keeps, past `budget`
+   *  characters of them (`trim` in keeping.ts). Answers how many documents went. */
+  trim(budget: number, how: LettingGo): Promise<number> {
+    return this.core.use(() => trim(this.core, budget, how))
   }
 
   // -------------------------------------------------------------------------
@@ -555,7 +615,7 @@ export class Engine implements AskedEngine {
     const doc = this.core.docs.get(entry.id)
     // A document joined to the note it is: what was typed is in it already.
     if (doc?.live && this.core.pinned.has(entry.id)) {
-      const changes: Change[] = []
+      const changes: Change[] = usedChanges(this.core, placed.space, entry.id, text.length)
       if (doc.flush()) changes.push(...this.core.docChanges(doc))
       changes.push(...(await wrote(this.core, entry, text)))
       await this.core.commit(changes)
@@ -684,6 +744,8 @@ export class Engine implements AskedEngine {
       if (!doc) return null
       this.core.pinned.add(id)
       doc.open()
+      const space = this.core.spaceOf(id)
+      if (space) await this.core.commit(usedChanges(this.core, space, id))
       return doc
     })
   }

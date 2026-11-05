@@ -2869,4 +2869,7 @@ export const sw: Dictionary = {
   'Writing down what you said': 'Inaandika ulichosema',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Sauti inakwenda kwenye utambuzi wa sauti wa kifaa hiki, ambao unaweza kutumia seva za mtengenezaji wake',
+  'Not on this device': 'Haipo kwenye kifaa hiki',
+  'Not on this device. It opens once you are online again.':
+    'Haipo kwenye kifaa hiki. Itafunguka utakapokuwa mtandaoni tena.',
 }

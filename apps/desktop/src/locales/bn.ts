@@ -2825,4 +2825,7 @@ export const bn: Dictionary = {
   'Writing down what you said': 'আপনি যা বলেছেন তা লেখা হচ্ছে',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'অডিও এই ডিভাইসের কথা চেনার ব্যবস্থায় যায়, যা নির্মাতার সার্ভার ব্যবহার করতে পারে',
+  'Not on this device': 'এই ডিভাইসে নেই',
+  'Not on this device. It opens once you are online again.':
+    'এই ডিভাইসে নেই। আপনি আবার অনলাইনে এলে এটি খুলবে।',
 }

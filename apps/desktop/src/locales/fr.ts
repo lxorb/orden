@@ -2915,4 +2915,7 @@ export const fr: Dictionary = {
   'Writing down what you said': 'Transcription de ce que vous avez dit',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'L’audio va à la reconnaissance vocale de cet appareil, qui peut utiliser les serveurs de son fabricant',
+  'Not on this device': 'Pas sur cet appareil',
+  'Not on this device. It opens once you are online again.':
+    'Pas sur cet appareil. Elle s’ouvrira dès que vous serez de nouveau en ligne.',
 }

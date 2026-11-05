@@ -2900,4 +2900,7 @@ export const es: Dictionary = {
   'Writing down what you said': 'Escribiendo lo que dijiste',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'El audio va al reconocimiento de voz de este dispositivo, que puede usar los servidores de su fabricante',
+  'Not on this device': 'No está en este dispositivo',
+  'Not on this device. It opens once you are online again.':
+    'No está en este dispositivo. Se abrirá cuando vuelvas a estar en línea.',
 }

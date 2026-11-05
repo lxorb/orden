@@ -2863,4 +2863,7 @@ export const kn: Dictionary = {
   'Writing down what you said': 'ನೀವು ಹೇಳಿದ್ದನ್ನು ಬರೆಯಲಾಗುತ್ತಿದೆ',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'ಆಡಿಯೊ ಈ ಸಾಧನದ ಧ್ವನಿ ಗುರುತಿಸುವಿಕೆಗೆ ಹೋಗುತ್ತದೆ, ಅದು ತಯಾರಕರ ಸರ್ವರ್‌ಗಳನ್ನು ಬಳಸಬಹುದು',
+  'Not on this device': 'ಈ ಸಾಧನದಲ್ಲಿ ಇಲ್ಲ',
+  'Not on this device. It opens once you are online again.':
+    'ಈ ಸಾಧನದಲ್ಲಿ ಇಲ್ಲ. ನೀವು ಮತ್ತೆ ಆನ್‌ಲೈನ್‌ಗೆ ಬಂದಾಗ ಇದು ತೆರೆಯುತ್ತದೆ.',
 }

@@ -42,6 +42,7 @@ import { foldIn } from './ingest'
 import { fileOfUpdates, holdsDocument, judge, shapeOf, turn, unixLines } from './kinds'
 import { made } from './create'
 import { type Outboxed, settle, type SpaceState } from './places'
+import { keepingChange, keptHere } from './keeping'
 import { project } from './project'
 import { againstBytes, type Merging, type Outgoing, outgoingBytes } from './records'
 import { carriedOwn, withTasksOf } from '@orden/bases/inbox'
@@ -431,6 +432,11 @@ export async function readFeed(
       if (item.kind === 'file') {
         entry.file_key = item.hash || null
         entry.size = item.size
+      } else if (core.world.lazy && shapeOf(item.kind)) {
+        // How long its words are and when they last moved: what the file list says of a
+        // document this device may keep no words of (keeping.ts, #1126).
+        entry.size = item.size
+        entry.mtime = item.at
       }
       if (space.ordering.positions.get(item.id) !== item.pos) {
         if (item.pos === undefined) space.ordering.positions.delete(item.id)
@@ -454,6 +460,12 @@ export async function readFeed(
     if (space.ordering.on !== (read.order === true)) {
       space.ordering.on = read.order === true
       space.repositioned = true
+    }
+    // And one that answers for the notes a browser keeps no words of says that too; one
+    // that stops saying it is kept whole again, from the next pull (keeping.ts, #1126).
+    if (space.keeping.on !== (read.index === true)) {
+      space.keeping.on = read.index === true
+      changes.push(keepingChange(space))
     }
     const asked = space.row.cursor
     space.row.cursor = Math.max(space.row.cursor, read.cursor)
@@ -494,17 +506,39 @@ function pullable(core: Core, space: SpaceState, entry: EntryRow): boolean {
   // Another sync tool's copy is never brought here (`foreign` in places.ts).
   if (space.foreign(entry.id)) return false
   if (core.isHeld(entry.id) || core.carried.has(entry.id) || core.hasPending(entry.id)) return false
+  // Where this device keeps only the words it uses, only those (keeping.ts).
+  if (!keptHere(core, space, entry)) return false
   return core.wanted(space.id).has(entry.id) || !core.hasDoc(entry.id)
 }
 
-/** Pulls one batch. Answers how many documents it brought, or null when the account did
- *  not answer. */
+/** Some documents' words, pulled now and written to their files, epochs and all: what
+ *  opening a note this device keeps no words of asks for (keeping.ts, #1126). Answers
+ *  false when the account did not answer. */
+export async function pullNow(
+  core: Core,
+  space: SpaceState,
+  ids: ReadonlySet<string>,
+  alive: () => boolean,
+): Promise<boolean> {
+  for (let round = 0; round < ROUNDS; round += 1) {
+    const pulled = await pullDocs(core, space, alive, ids)
+    if (pulled === null) return false
+    if (!pulled) break
+  }
+  return true
+}
+
+/** Pulls one batch - of `only`, where it is given. Answers how many documents it brought,
+ *  or null when the account did not answer. */
 async function pullDocs(
   core: Core,
   space: SpaceState,
   alive: () => boolean,
+  only?: ReadonlySet<string>,
 ): Promise<number | null> {
-  const due = [...space.entries.values()].filter((entry) => pullable(core, space, entry))
+  const due = [...space.entries.values()].filter(
+    (entry) => (!only || only.has(entry.id)) && pullable(core, space, entry),
+  )
   if (!due.length) return 0
   const wanted = core.wanted(space.id)
 

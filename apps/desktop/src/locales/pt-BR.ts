@@ -2882,4 +2882,7 @@ export const ptBR: Dictionary = {
   'Writing down what you said': 'Escrevendo o que você disse',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'O áudio vai para o reconhecimento de fala deste dispositivo, que pode usar os servidores do fabricante',
+  'Not on this device': 'Não está neste dispositivo',
+  'Not on this device. It opens once you are online again.':
+    'Não está neste dispositivo. Abre assim que você estiver online de novo.',
 }

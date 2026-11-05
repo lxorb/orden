@@ -28,10 +28,12 @@ import { isRecord, keepJson, stored } from '../stored'
 import { workspace } from '../workspace.svelte'
 import type { Doer, FileOp } from '../workspace/file-ops'
 import { owesLast, writing } from '../parting'
-import { isDesktop, joinPath } from '../tauri'
+import { isDesktop, isNative, joinPath } from '../tauri'
+import { keptAway } from '../web/away.svelte'
+import { keptBudget, TRIM_AFTER } from './budget'
 import { samePath } from '../space-paths'
 import { waited } from '../timing'
-import { appWorld, type Telling } from './app-world'
+import { appWorld, lettingGo, type Telling } from './app-world'
 import type { NoteDoc } from '../workspace/documents.svelte'
 import type { PlaneSurface } from '../canvas/shared'
 import type { Watched } from './watching'
@@ -417,6 +419,9 @@ class Runner {
     for (const one of this.bound.values()) one.part()
     this.bound.clear()
     clearTimeout(this.timer)
+    clearTimeout(this.trimTimer)
+    this.awayPaths.clear()
+    keptAway.clear()
     const engine = this.current
     this.current = null
     this.accountId = null
@@ -682,6 +687,7 @@ class Runner {
           this.watched?.follow()
         }
         const passed = await engine.pass(id)
+        await this.awayHeard(engine, true)
         if (!this.local) this.placesHeard(engine, space.row.root)
         if (passed?.full) this.full.add(id)
         else if (passed?.finished) this.full.delete(id)
@@ -708,6 +714,8 @@ class Runner {
       )
       this.lastSyncedAt = Date.now()
       this.status = offline ? 'offline' : 'idle'
+      keptAway.offline = offline
+      this.trimSoon()
     } catch (error) {
       if (this.current !== engine) return
       // The session ended on the account: signed out here too, as every other request
@@ -864,17 +872,77 @@ class Runner {
       await run()
       return
     }
-    if (op.op === 'moved') {
-      await engine.moving(op.from, op.to, async () => {
-        await run()
-      })
-    } else {
-      await engine.removing(op.path, async () => {
-        const back = await run()
-        return typeof back === 'string' && back ? back : op.back
-      })
+    try {
+      if (op.op === 'moved') {
+        await engine.moving(op.from, op.to, async () => {
+          await run()
+        })
+      } else {
+        await engine.removing(op.path, async () => {
+          const back = await run()
+          return typeof back === 'string' && back ? back : op.back
+        })
+      }
+    } finally {
+      // What this browser keeps no words of moved or went with it, as this person did:
+      // everything kept by path has heard so already.
+      await this.awayHeard(engine, false)
     }
     this.nudge()
+  }
+
+  // -------------------------------------------------------------------------
+  // Words kept only while used, in the browser (keeping.ts, #1126)
+
+  /** Where each file this browser keeps no words of was last said to be, by id. */
+  private awayPaths = new Map<string, string>()
+
+  /** The files kept away told to the browser's commands. `told`: where the engine's tree
+   *  moved under them by somebody else's doing, everything kept by path hears of a move
+   *  or a delete of one too, as it hears of a file the engine moved or took away; a file
+   *  that came to be here is the engine's write, which says itself. */
+  private async awayHeard(engine: Engine, told: boolean) {
+    if (isNative || this.current !== engine) return
+    const files = engine.awayFiles()
+    const now = new Map(files.map((one) => [one.id, one.path]))
+    const was = this.awayPaths
+    this.awayPaths = now
+    if (told) {
+      for (const [id, path] of was) {
+        const is = now.get(id)
+        if (is !== undefined && is !== path) await this.telling.moved(path, is, 'file')
+        else if (is === undefined && !engine.isLive(id)) await this.telling.gone(path, 'file')
+      }
+    }
+    const back = keptAway.keep(files, (path) => this.fetchAway(engine, path))
+    if (back.length || files.length !== was.size) this.treeStale()
+    // A note opened while it was away, waiting in its tab, has its words now.
+    for (const path of back) void workspace.arrived(path)
+  }
+
+  /** A file kept away, fetched now. */
+  private async fetchAway(engine: Engine, path: string): Promise<boolean> {
+    if (this.current !== engine) return false
+    const here = await engine.fetch(path)
+    await this.awayHeard(engine, false)
+    this.trimSoon()
+    return here
+  }
+
+  private trimTimer: ReturnType<typeof setTimeout> | undefined
+
+  /** The words kept here brought within the budget, a moment after they last grew. */
+  private trimSoon() {
+    const engine = this.current
+    if (isNative || !engine) return
+    clearTimeout(this.trimTimer)
+    this.trimTimer = setTimeout(() => {
+      void (async () => {
+        if (this.current !== engine) return
+        const went = await engine.trim(await keptBudget(), lettingGo)
+        if (went) await this.awayHeard(engine, false)
+      })().catch((error: unknown) => log('warn', `sync: words kept stayed - ${String(error)}`))
+    }, TRIM_AFTER)
   }
 
   /** A file operation, heard as everything kept by path hears it. Answers what is left to

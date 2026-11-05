@@ -2848,4 +2848,7 @@ export const tr: Dictionary = {
   'Writing down what you said': 'Söyledikleriniz yazılıyor',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Ses bu cihazın konuşma tanımasına gider; bu, üreticisinin sunucularını kullanabilir',
+  'Not on this device': 'Bu cihazda değil',
+  'Not on this device. It opens once you are online again.':
+    'Bu cihazda değil. Yeniden çevrimiçi olduğunuzda açılır.',
 }

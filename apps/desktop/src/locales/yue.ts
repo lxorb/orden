@@ -2736,4 +2736,6 @@ export const yue: Dictionary = {
   'Writing down what you said': '寫緊你講嘅嘢',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     '聲音會傳去呢部裝置嘅語音辨識，可能會用到製造商嘅伺服器',
+  'Not on this device': '唔喺呢部裝置度',
+  'Not on this device. It opens once you are online again.': '唔喺呢部裝置度。你再上線就會打開。',
 }

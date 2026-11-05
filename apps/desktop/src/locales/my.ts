@@ -2820,4 +2820,7 @@ export const my: Dictionary = {
   'Writing down what you said': 'သင်ပြောသည်ကို ရေးနေသည်',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'အသံကို ဤစက်၏ စကားသံမှတ်သားမှုသို့ ပို့ပြီး ၎င်းသည် ထုတ်လုပ်သူ၏ ဆာဗာများကို သုံးနိုင်သည်',
+  'Not on this device': 'ဤစက်ပေါ်တွင် မရှိပါ',
+  'Not on this device. It opens once you are online again.':
+    'ဤစက်ပေါ်တွင် မရှိပါ။ အွန်လိုင်းပြန်ဖြစ်သည့်အခါ ပွင့်ပါမည်။',
 }

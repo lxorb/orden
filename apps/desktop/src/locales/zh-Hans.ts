@@ -2743,4 +2743,6 @@ export const zhHans: Dictionary = {
   'Writing down what you said': '正在写下你说的话',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     '音频发送到这台设备的语音识别，可能会使用其制造商的服务器',
+  'Not on this device': '不在此设备上',
+  'Not on this device. It opens once you are online again.': '不在此设备上。重新联网后即可打开。',
 }

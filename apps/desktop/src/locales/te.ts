@@ -2844,4 +2844,7 @@ export const te: Dictionary = {
   'Writing down what you said': 'మీరు చెప్పింది రాస్తోంది',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'ఆడియో ఈ పరికరం యొక్క మాట గుర్తింపుకు వెళ్తుంది, అది తయారీదారు సర్వర్లను వాడవచ్చు',
+  'Not on this device': 'ఈ పరికరంలో లేదు',
+  'Not on this device. It opens once you are online again.':
+    'ఈ పరికరంలో లేదు. మీరు మళ్లీ ఆన్‌లైన్‌కి రాగానే ఇది తెరుచుకుంటుంది.',
 }

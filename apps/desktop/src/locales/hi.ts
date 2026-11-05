@@ -2829,4 +2829,7 @@ export const hi: Dictionary = {
   'Writing down what you said': 'आपने जो कहा वह लिखा जा रहा है',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'ऑडियो इस डिवाइस की वाक् पहचान पर जाता है, जो उसके निर्माता के सर्वर इस्तेमाल कर सकती है',
+  'Not on this device': 'इस डिवाइस पर नहीं है',
+  'Not on this device. It opens once you are online again.':
+    'इस डिवाइस पर नहीं है। आपके फिर से ऑनलाइन होते ही यह खुलेगा।',
 }

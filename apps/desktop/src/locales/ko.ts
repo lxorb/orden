@@ -2791,4 +2791,7 @@ export const ko: Dictionary = {
   'Writing down what you said': '말한 내용을 적는 중',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     '오디오가 이 기기의 음성 인식으로 전송되며, 제조사의 서버를 사용할 수 있습니다',
+  'Not on this device': '이 기기에 없음',
+  'Not on this device. It opens once you are online again.':
+    '이 기기에 없습니다. 다시 온라인 상태가 되면 열립니다.',
 }

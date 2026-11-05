@@ -2833,4 +2833,7 @@ export const fa: Dictionary = {
   'Writing down what you said': 'در حال نوشتن آنچه گفتید',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'صدا به تشخیص گفتار این دستگاه می‌رود که ممکن است از سرورهای سازنده‌اش استفاده کند',
+  'Not on this device': 'روی این دستگاه نیست',
+  'Not on this device. It opens once you are online again.':
+    'روی این دستگاه نیست. وقتی دوباره آنلاین شوید باز می‌شود.',
 }

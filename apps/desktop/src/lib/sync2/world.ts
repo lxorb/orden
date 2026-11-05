@@ -71,4 +71,7 @@ export interface World {
   /** The road for every file that is not a document (files.ts); a world without one
    *  keeps none of them. */
   blobs?: Blobs
+  /** Whether this device may keep only the words it uses, where the account serves the
+   *  rest (keeping.ts, #1126): the browser. Every other device keeps every word. */
+  lazy?: boolean
 }

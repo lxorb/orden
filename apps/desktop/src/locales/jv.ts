@@ -2814,4 +2814,7 @@ export const jv: Dictionary = {
   'Writing down what you said': 'Lagi nulis apa sing sampeyan omongake',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Audio dikirim menyang pangenalan swara piranti iki, sing bisa nganggo server gawéyané',
+  'Not on this device': 'Ora ana ing piranti iki',
+  'Not on this device. It opens once you are online again.':
+    'Ora ana ing piranti iki. Bakal kabuka yen sampeyan wis online maneh.',
 }
