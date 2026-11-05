@@ -608,9 +608,14 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  the files kept away listed and fetched by the browser's commands (web/away.svelte.ts),
  *  the cloud on their rows and the two sentences for them in every language. Measured
  *  6,007,286 and 990,827.
+ *
+ *  The code raised on 2026-11-05, to 6,009,700, for #1126: what that browser knows of
+ *  the notes it keeps no words of - their scans asked of the account and kept by id
+ *  (sync2/indexing.ts, web/index-store.ts), read into the link index and the rows, and a
+ *  search of them asked of the account a page at a time. Measured 6,008,937.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_008_000,
+  code: 6_009_700,
   catalogues: 991_500,
   styles: 292_300,
   fonts: 260_000,
