@@ -2388,6 +2388,19 @@ export const fa: Dictionary = {
   Application: 'برنامه',
   'This application’s file is damaged': 'فایل این برنامه آسیب دیده است',
   'Waiting for {device}': 'در انتظار {device}',
+  'Sign in to use this application.': 'برای استفاده از این برنامه وارد شوید.',
+  'Waiting for this application’s file to sync…': 'در انتظار همگام‌سازی فایل این برنامه…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'فایل این برنامه هنوز در حساب شما نیست: فضای آن باید همگام شود.',
+  'Your account’s server does not run applications yet.':
+    'سرور حساب شما هنوز برنامه‌ها را اجرا نمی‌کند.',
+  'Cannot reach your account’s server. Still trying…':
+    'دسترسی به سرور حساب شما ممکن نیست. هنوز در حال تلاش…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'رایانه‌ای که این برنامه روی آن اجرا می‌شود دیگر به حساب شما وارد نشده است.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'Orden باید آنجا باز و واردشده باشد و حالت توسعه‌دهنده روشن باشد.',
+  '{device} did not answer.': '{device} پاسخ نداد.',
   'Running on {device}': 'در حال اجرا روی {device}',
   'Starting on {device}…': 'در حال شروع روی {device}…',
   'Not running on {device}': 'روی {device} اجرا نمی‌شود',

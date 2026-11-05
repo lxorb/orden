@@ -2443,6 +2443,20 @@ export const ptPT: Dictionary = {
   Application: 'Aplicação',
   'This application’s file is damaged': 'O ficheiro desta aplicação está danificado',
   'Waiting for {device}': 'À espera de {device}',
+  'Sign in to use this application.': 'Inicie sessão para utilizar esta aplicação.',
+  'Waiting for this application’s file to sync…':
+    'À espera de que o ficheiro desta aplicação seja sincronizado…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'O ficheiro desta aplicação ainda não está na sua conta: o respetivo espaço tem de ser sincronizado.',
+  'Your account’s server does not run applications yet.':
+    'O servidor da sua conta ainda não executa aplicações.',
+  'Cannot reach your account’s server. Still trying…':
+    'Não é possível contactar o servidor da sua conta. A tentar novamente…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'O computador em que esta aplicação é executada já não tem sessão iniciada na sua conta.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'O Orden tem de estar aberto lá, com sessão iniciada e o modo de programador ativado.',
+  '{device} did not answer.': '{device} não respondeu.',
   'Running on {device}': 'Em execução em {device}',
   'Starting on {device}…': 'A iniciar em {device}…',
   'Not running on {device}': 'Não está em execução em {device}',

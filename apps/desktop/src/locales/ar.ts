@@ -2506,6 +2506,18 @@ export const ar: Dictionary = {
   Application: 'تطبيق',
   'This application’s file is damaged': 'ملف هذا التطبيق تالف',
   'Waiting for {device}': 'في انتظار {device}',
+  'Sign in to use this application.': 'سجّل الدخول لاستخدام هذا التطبيق.',
+  'Waiting for this application’s file to sync…': 'في انتظار مزامنة ملف هذا التطبيق…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'ملف هذا التطبيق ليس في حسابك بعد: يجب مزامنة مساحته.',
+  'Your account’s server does not run applications yet.': 'خادم حسابك لا يشغّل التطبيقات بعد.',
+  'Cannot reach your account’s server. Still trying…':
+    'تعذّر الوصول إلى خادم حسابك. لا تزال المحاولة جارية…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'الحاسوب الذي يعمل عليه هذا التطبيق لم يعد مسجّل الدخول إلى حسابك.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'يجب أن يكون Orden مفتوحًا هناك ومسجّلًا الدخول مع تفعيل وضع المطوّر.',
+  '{device} did not answer.': 'لم يستجب {device}.',
   'Running on {device}': 'يعمل على {device}',
   'Starting on {device}…': 'يبدأ على {device}…',
   'Not running on {device}': 'لا يعمل على {device}',

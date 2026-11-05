@@ -2385,6 +2385,19 @@ export const ur: Dictionary = {
   Application: 'ایپلیکیشن',
   'This application’s file is damaged': 'اس ایپلیکیشن کی فائل خراب ہے',
   'Waiting for {device}': '{device} کا انتظار',
+  'Sign in to use this application.': 'اس ایپلیکیشن کو استعمال کرنے کے لیے سائن ان کریں۔',
+  'Waiting for this application’s file to sync…': 'اس ایپلیکیشن کی فائل کے سنک ہونے کا انتظار…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'اس ایپلیکیشن کی فائل ابھی آپ کے اکاؤنٹ میں نہیں ہے: اس کی اسپیس کا سنک ہونا ضروری ہے۔',
+  'Your account’s server does not run applications yet.':
+    'آپ کے اکاؤنٹ کا سرور ابھی ایپلیکیشنز نہیں چلاتا۔',
+  'Cannot reach your account’s server. Still trying…':
+    'آپ کے اکاؤنٹ کے سرور تک رسائی نہیں ہو سکی۔ اب بھی کوشش جاری ہے…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'جس کمپیوٹر پر یہ ایپلیکیشن چلتی ہے وہ اب آپ کے اکاؤنٹ میں سائن ان نہیں ہے۔',
+  'Orden must be open there, signed in, with developer mode on.':
+    'وہاں Orden کھلا ہوا، سائن ان اور ڈیولپر موڈ آن ہونا چاہیے۔',
+  '{device} did not answer.': '{device} نے جواب نہیں دیا۔',
   'Running on {device}': '{device} پر چل رہی ہے',
   'Starting on {device}…': '{device} پر شروع ہو رہی ہے…',
   'Not running on {device}': '{device} پر نہیں چل رہی',

@@ -2359,6 +2359,19 @@ export const vi: Dictionary = {
   Application: 'Ứng dụng',
   'This application’s file is damaged': 'Tệp của ứng dụng này bị hỏng',
   'Waiting for {device}': 'Đang chờ {device}',
+  'Sign in to use this application.': 'Đăng nhập để sử dụng ứng dụng này.',
+  'Waiting for this application’s file to sync…': 'Đang chờ tệp của ứng dụng này đồng bộ…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'Tệp của ứng dụng này chưa có trong tài khoản của bạn: không gian của nó cần được đồng bộ.',
+  'Your account’s server does not run applications yet.':
+    'Máy chủ của tài khoản bạn chưa chạy ứng dụng.',
+  'Cannot reach your account’s server. Still trying…':
+    'Không thể kết nối tới máy chủ của tài khoản bạn. Vẫn đang thử…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'Máy tính chạy ứng dụng này không còn đăng nhập vào tài khoản của bạn.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'Orden phải đang mở ở đó, đã đăng nhập và bật chế độ nhà phát triển.',
+  '{device} did not answer.': '{device} không phản hồi.',
   'Running on {device}': 'Đang chạy trên {device}',
   'Starting on {device}…': 'Đang khởi động trên {device}…',
   'Not running on {device}': 'Không chạy trên {device}',

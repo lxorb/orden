@@ -2323,6 +2323,17 @@ export const zhHant: Dictionary = {
   Application: '應用程式',
   'This application’s file is damaged': '此應用程式的檔案已損毀',
   'Waiting for {device}': '正在等待 {device}',
+  'Sign in to use this application.': '請登入以使用此應用程式。',
+  'Waiting for this application’s file to sync…': '正在等待此應用程式的檔案同步…',
+  'This application’s file is not on your account yet: its space must sync.':
+    '此應用程式的檔案尚未在你的帳號中：其空間必須先同步。',
+  'Your account’s server does not run applications yet.': '你帳號的伺服器尚未支援執行應用程式。',
+  'Cannot reach your account’s server. Still trying…': '無法連線到你帳號的伺服器。仍在重試…',
+  'The computer this application runs on is no longer signed in to your account.':
+    '執行此應用程式的電腦已不再登入你的帳號。',
+  'Orden must be open there, signed in, with developer mode on.':
+    'Orden 必須在該電腦上開啟、已登入，並開啟開發人員模式。',
+  '{device} did not answer.': '{device} 沒有回應。',
   'Running on {device}': '正在 {device} 上執行',
   'Starting on {device}…': '正在 {device} 上啟動…',
   'Not running on {device}': '未在 {device} 上執行',

@@ -2430,6 +2430,20 @@ export const ptBR: Dictionary = {
   Application: 'Aplicativo',
   'This application’s file is damaged': 'O arquivo deste aplicativo está danificado',
   'Waiting for {device}': 'Aguardando {device}',
+  'Sign in to use this application.': 'Entre para usar este aplicativo.',
+  'Waiting for this application’s file to sync…':
+    'Aguardando a sincronização do arquivo deste aplicativo…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'O arquivo deste aplicativo ainda não está na sua conta: o espaço dele precisa ser sincronizado.',
+  'Your account’s server does not run applications yet.':
+    'O servidor da sua conta ainda não executa aplicativos.',
+  'Cannot reach your account’s server. Still trying…':
+    'Não foi possível acessar o servidor da sua conta. Ainda tentando…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'O computador em que este aplicativo roda não está mais conectado à sua conta.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'O Orden precisa estar aberto lá, conectado, com o modo desenvolvedor ativado.',
+  '{device} did not answer.': '{device} não respondeu.',
   'Running on {device}': 'Executando em {device}',
   'Starting on {device}…': 'Iniciando em {device}…',
   'Not running on {device}': 'Não está executando em {device}',

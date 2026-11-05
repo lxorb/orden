@@ -1228,7 +1228,8 @@ the `applications` scope, which the reader's own agents hold and a third party i
 (`agents/workspace/applications.ts`).
 
 - `list` names the application tabs: the computer each runs on, how it stands (`here`
-  with `running` or not and why, `held` by another device, `away`, `connecting`), whether
+  with `running` or not and why, `held` by another device, `away`, `gone`, `connecting`,
+  `unreachable`, or why it cannot connect: `signed-out`, `syncing`, `unsynced`, `unserved`), whether
   this device holds it, and its picture. A tab connects once it has been shown;
   `workspace_tabs` opens one.
 - `start`, `stop` and `restart` it on its host; `picture` answers the frame the tab

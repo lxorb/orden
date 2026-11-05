@@ -2374,6 +2374,19 @@ export const id: Dictionary = {
   Application: 'Aplikasi',
   'This application’s file is damaged': 'File aplikasi ini rusak',
   'Waiting for {device}': 'Menunggu {device}',
+  'Sign in to use this application.': 'Masuk untuk menggunakan aplikasi ini.',
+  'Waiting for this application’s file to sync…': 'Menunggu file aplikasi ini disinkronkan…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'File aplikasi ini belum ada di akun Anda: spacenya harus disinkronkan.',
+  'Your account’s server does not run applications yet.':
+    'Server akun Anda belum menjalankan aplikasi.',
+  'Cannot reach your account’s server. Still trying…':
+    'Tidak dapat menjangkau server akun Anda. Masih mencoba…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'Komputer tempat aplikasi ini berjalan tidak lagi masuk ke akun Anda.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'Orden harus terbuka di sana, sudah masuk, dengan mode pengembang aktif.',
+  '{device} did not answer.': '{device} tidak menjawab.',
   'Running on {device}': 'Berjalan di {device}',
   'Starting on {device}…': 'Memulai di {device}…',
   'Not running on {device}': 'Tidak berjalan di {device}',

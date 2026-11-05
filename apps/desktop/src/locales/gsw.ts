@@ -2399,6 +2399,20 @@ export const gsw: Dictionary = {
   Application: 'Aawändig',
   'This application’s file is damaged': 'D Datei vo dere Aawändig isch kaputt',
   'Waiting for {device}': 'Warte uf {device}',
+  'Sign in to use this application.': 'Aamelde, zum die Aawändig z bruche.',
+  'Waiting for this application’s file to sync…':
+    'Warte, bis s Datei vo dere Aawändig synchronisiert isch…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'S Datei vo dere Aawändig isch no nöd i dim Konto: Ihre Space muess synchronisiere.',
+  'Your account’s server does not run applications yet.':
+    'De Server vo dim Konto füehrt no kei Aawändige uus.',
+  'Cannot reach your account’s server. Still trying…':
+    'De Server vo dim Konto isch nöd erreichbar. Probiere wiiter…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'De Computer, uf dem die Aawändig lauft, isch nüme i dim Konto aagmeldet.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'Orden muess det offe und aagmeldet sii, mit igschaltetem Entwicklermodus.',
+  '{device} did not answer.': '{device} het nöd gantwortet.',
   'Running on {device}': 'Lauft uf {device}',
   'Starting on {device}…': 'Startet uf {device}…',
   'Not running on {device}': 'Lauft nöd uf {device}',

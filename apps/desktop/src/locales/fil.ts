@@ -2431,6 +2431,20 @@ export const fil: Dictionary = {
   Application: 'Application',
   'This application’s file is damaged': 'Sira ang file ng application na ito',
   'Waiting for {device}': 'Hinihintay ang {device}',
+  'Sign in to use this application.': 'Mag-sign in para magamit ang application na ito.',
+  'Waiting for this application’s file to sync…':
+    'Hinihintay na mag-sync ang file ng application na ito…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'Wala pa sa account mo ang file ng application na ito: kailangang mag-sync ang space nito.',
+  'Your account’s server does not run applications yet.':
+    'Hindi pa nagpapatakbo ng mga application ang server ng account mo.',
+  'Cannot reach your account’s server. Still trying…':
+    'Hindi maabot ang server ng account mo. Sinusubukan pa rin…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'Hindi na naka-sign in sa account mo ang computer na pinagpapatakbuhan ng application na ito.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'Dapat nakabukas doon ang Orden, naka-sign in, at naka-on ang developer mode.',
+  '{device} did not answer.': 'Hindi sumagot ang {device}.',
   'Running on {device}': 'Tumatakbo sa {device}',
   'Starting on {device}…': 'Nagsisimula sa {device}…',
   'Not running on {device}': 'Hindi tumatakbo sa {device}',

@@ -2339,6 +2339,19 @@ export const th: Dictionary = {
   Application: 'แอปพลิเคชัน',
   'This application’s file is damaged': 'ไฟล์ของแอปพลิเคชันนี้เสียหาย',
   'Waiting for {device}': 'กำลังรอ {device}',
+  'Sign in to use this application.': 'ลงชื่อเข้าใช้เพื่อใช้แอปพลิเคชันนี้',
+  'Waiting for this application’s file to sync…': 'กำลังรอให้ไฟล์ของแอปพลิเคชันนี้ซิงก์…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'ไฟล์ของแอปพลิเคชันนี้ยังไม่อยู่ในบัญชีของคุณ: ต้องซิงก์สเปซของไฟล์ก่อน',
+  'Your account’s server does not run applications yet.':
+    'เซิร์ฟเวอร์ของบัญชีคุณยังไม่รันแอปพลิเคชัน',
+  'Cannot reach your account’s server. Still trying…':
+    'เข้าถึงเซิร์ฟเวอร์ของบัญชีคุณไม่ได้ กำลังลองต่อ…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'คอมพิวเตอร์ที่แอปพลิเคชันนี้ทำงานอยู่ไม่ได้ลงชื่อเข้าใช้บัญชีของคุณอีกต่อไป',
+  'Orden must be open there, signed in, with developer mode on.':
+    'ต้องเปิด Orden ไว้ที่เครื่องนั้น ลงชื่อเข้าใช้แล้ว และเปิดโหมดนักพัฒนา',
+  '{device} did not answer.': '{device} ไม่ตอบสนอง',
   'Running on {device}': 'กำลังทำงานบน {device}',
   'Starting on {device}…': 'กำลังเริ่มบน {device}…',
   'Not running on {device}': 'ไม่ได้ทำงานบน {device}',

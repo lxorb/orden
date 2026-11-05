@@ -46,6 +46,17 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
   terminal's `Channel` with the application's frames). It says where the application stands -
   waiting for its computer, running on it, not running, or held by another device with Take over
   - with Start, Stop and Restart. The picture comes with the host and the stream (steps 3 and 4).
+- **It never waits without saying why.** A page cannot read why a socket was refused, so
+  before it opens one the tab looks at the door: the socket's address asked as a plain request,
+  the token as a bearer, which answers 426 where the socket may open, 401 signed out, 404 with
+  `UNKNOWN_APP` for a file not on the account yet, and a plain 404 where the account serves no
+  applications (an older server, or the switch off). Each is its own line in the tab: sign in, the
+  file still syncing (looked at again by itself), the server not running applications yet, or not
+  reached (tried again). A socket that does not open within 12 s says it cannot reach the server
+  and looks again; a host the account no longer lists is said to be gone; Start, Stop or Restart
+  the host does not answer within 15 s is said too. A host makes no socket to an account that
+  serves none, and a computer that cannot run an application at all says so before anybody
+  presses Start (`cannot` in `host.svelte.ts`).
 
 ## The host (step 3)
 

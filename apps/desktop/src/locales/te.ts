@@ -2398,6 +2398,19 @@ export const te: Dictionary = {
   Application: 'అప్లికేషన్',
   'This application’s file is damaged': 'ఈ అప్లికేషన్ ఫైల్ పాడైంది',
   'Waiting for {device}': '{device} కోసం వేచి ఉంది',
+  'Sign in to use this application.': 'ఈ అప్లికేషన్‌ను ఉపయోగించడానికి సైన్ ఇన్ చేయండి.',
+  'Waiting for this application’s file to sync…': 'ఈ అప్లికేషన్ ఫైల్ సింక్ అయ్యే వరకు వేచి ఉంది…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'ఈ అప్లికేషన్ ఫైల్ ఇంకా మీ ఖాతాలో లేదు: దాని స్పేస్ సింక్ కావాలి.',
+  'Your account’s server does not run applications yet.':
+    'మీ ఖాతా సర్వర్ ఇంకా అప్లికేషన్‌లను నడపడం లేదు.',
+  'Cannot reach your account’s server. Still trying…':
+    'మీ ఖాతా సర్వర్‌ను చేరుకోలేకపోతోంది. ఇంకా ప్రయత్నిస్తోంది…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'ఈ అప్లికేషన్ నడుస్తున్న కంప్యూటర్ ఇకపై మీ ఖాతాలో సైన్ ఇన్ అయి లేదు.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'అక్కడ Orden తెరిచి ఉండాలి, సైన్ ఇన్ అయి ఉండాలి, డెవలపర్ మోడ్ ఆన్‌లో ఉండాలి.',
+  '{device} did not answer.': '{device} స్పందించలేదు.',
   'Running on {device}': '{device}లో నడుస్తోంది',
   'Starting on {device}…': '{device}లో ప్రారంభమవుతోంది…',
   'Not running on {device}': '{device}లో నడవడం లేదు',

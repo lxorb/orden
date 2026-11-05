@@ -2385,6 +2385,19 @@ export const bn: Dictionary = {
   Application: 'অ্যাপ্লিকেশন',
   'This application’s file is damaged': 'এই অ্যাপ্লিকেশনের ফাইল নষ্ট',
   'Waiting for {device}': '{device}-এর অপেক্ষায়',
+  'Sign in to use this application.': 'এই অ্যাপ্লিকেশন ব্যবহার করতে সাইন ইন করুন।',
+  'Waiting for this application’s file to sync…': 'এই অ্যাপ্লিকেশনের ফাইল সিঙ্ক হওয়ার অপেক্ষায়…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'এই অ্যাপ্লিকেশনের ফাইল এখনও আপনার অ্যাকাউন্টে নেই: এর স্পেস সিঙ্ক হতে হবে।',
+  'Your account’s server does not run applications yet.':
+    'আপনার অ্যাকাউন্টের সার্ভার এখনও অ্যাপ্লিকেশন চালায় না।',
+  'Cannot reach your account’s server. Still trying…':
+    'আপনার অ্যাকাউন্টের সার্ভারে পৌঁছানো যাচ্ছে না। এখনও চেষ্টা চলছে…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'যে কম্পিউটারে এই অ্যাপ্লিকেশন চলে তা আর আপনার অ্যাকাউন্টে সাইন ইন করা নেই।',
+  'Orden must be open there, signed in, with developer mode on.':
+    'সেখানে Orden খোলা, সাইন ইন করা এবং ডেভেলপার মোড চালু থাকতে হবে।',
+  '{device} did not answer.': '{device} সাড়া দেয়নি।',
   'Running on {device}': '{device}-এ চলছে',
   'Starting on {device}…': '{device}-এ শুরু হচ্ছে…',
   'Not running on {device}': '{device}-এ চলছে না',

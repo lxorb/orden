@@ -2469,6 +2469,20 @@ export const uk: Dictionary = {
   Application: 'Програма',
   'This application’s file is damaged': 'Файл цієї програми пошкоджено',
   'Waiting for {device}': 'Очікування {device}',
+  'Sign in to use this application.': 'Увійдіть, щоб користуватися цим застосунком.',
+  'Waiting for this application’s file to sync…':
+    'Очікування синхронізації файлу цього застосунку…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'Файлу цього застосунку ще немає у вашому обліковому записі: його простір має синхронізуватися.',
+  'Your account’s server does not run applications yet.':
+    'Сервер вашого облікового запису ще не запускає застосунки.',
+  'Cannot reach your account’s server. Still trying…':
+    'Не вдається підключитися до сервера вашого облікового запису. Спроби тривають…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'Комп’ютер, на якому працює цей застосунок, більше не ввійшов у ваш обліковий запис.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'Orden має бути відкритий там, з виконаним входом і ввімкненим режимом розробника.',
+  '{device} did not answer.': '{device} не відповів.',
   'Running on {device}': 'Працює на {device}',
   'Starting on {device}…': 'Запускається на {device}…',
   'Not running on {device}': 'Не працює на {device}',

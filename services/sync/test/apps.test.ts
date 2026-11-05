@@ -4,6 +4,7 @@
 
 import { createHash } from 'node:crypto'
 import { subprotocol } from '@orden/rooms'
+import { UNKNOWN_APP } from '@orden/online/apps'
 import { HOLD_GRACE, HOLD_QUIET } from '@orden/online/wire'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { AppRelay, type Party } from '../src/apps/relay'
@@ -246,6 +247,26 @@ describe('an application’s door', () => {
 
     env.db.prepare("update notes set deleted = 1 where id = 'app-1'").run()
     expect((await knock(owner)).status).toBe(404)
+  })
+
+  test('a look without a socket says whether it may open, and why not, and opens nothing', async () => {
+    const { APPS, asked } = namespace()
+    const { owner, other } = await world(APPS)
+    const look = (token?: string, app = 'app-1') =>
+      call(env, `/v2/apps/${app}/socket`, token === undefined ? {} : { token })
+    vi.setSystemTime(Date.now() + 31_000)
+
+    const off = await look(owner)
+    expect([off.status, off.json]).toEqual([404, { error: 'not found' }])
+
+    on()
+    expect((await look(owner)).status).toBe(426)
+    expect((await look()).status).toBe(401)
+    expect((await look('not-a-session')).status).toBe(401)
+    const unknown = await look(owner, 'app-2')
+    expect([unknown.status, unknown.json]).toEqual([404, { error: UNKNOWN_APP }])
+    expect((await look(other)).status).toBe(404)
+    expect(asked).toHaveLength(0)
   })
 
   test('says which sign-in came, and keeps out a deleted space’s file', async () => {

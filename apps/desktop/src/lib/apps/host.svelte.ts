@@ -26,6 +26,7 @@ import {
   appSocketPath,
   CATALOGUE_PATH,
   HOST_PROTOCOL,
+  ICE_PATH,
   type HostFrame,
   type NotStarted,
   type RelayToHost,
@@ -102,7 +103,8 @@ export interface Speaking {
 /** One application this computer hosts. */
 class Hosting {
   private view: View = FIRST_VIEW
-  private state: StateFrame = { t: 'state', state: 'stopped' }
+  private state: StateFrame
+
   /** Whether a restart is waiting for the stop it began with. */
   private restarting = false
   /** The device holding it, as the relay last said. */
@@ -118,7 +120,12 @@ class Hosting {
     private readonly file: AppFile,
     private readonly runner: Runner,
     link: (heard: (what: RelayToHost | Opened) => void) => Speaking,
+    /** Why nothing can run here at all, said to every tab before anybody presses Start. */
+    private readonly cannot: NotStarted | null = null,
   ) {
+    this.state = cannot
+      ? { t: 'state', state: 'stopped', why: cannot }
+      : { t: 'state', state: 'stopped' }
     this.link = link((what) => {
       this.heard(what)
     })
@@ -186,6 +193,10 @@ class Hosting {
 
   private async start(): Promise<void> {
     if (this.ended || this.state.state === 'running' || this.state.state === 'starting') return
+    if (this.cannot) {
+      this.tell({ t: 'state', state: 'stopped', why: this.cannot })
+      return
+    }
     this.tell({ t: 'state', state: 'starting' })
     const why = await this.runner
       .start(this.key, this.file, this.view, (said) => {
@@ -236,6 +247,11 @@ export interface HostWorld {
   read(path: string): Promise<string | null>
   /** The id sync gave a file, waited for a while; null if it has none. */
   idOf(path: string): Promise<string | null>
+  /** Whether the account serves applications at all: an older server, or one with the
+   *  switch off, answers 404, and no socket is made to be refused over and over. */
+  serves(): Promise<boolean>
+  /** Why this computer cannot run an application at all, if it cannot. */
+  cannot: NotStarted | null
   runner: Runner
   link(app: string, heard: (what: RelayToHost | Opened) => void): Speaking
 }
@@ -251,6 +267,7 @@ export function host(world: HostWorld, follow: (changed: () => void) => () => vo
   let looking: Promise<void> = Promise.resolve()
 
   const look = async () => {
+    if (!(await world.serves())) return
     const device = await world.device()
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once, here
     const files = new Set(world.files())
@@ -266,7 +283,13 @@ export function host(world: HostWorld, follow: (changed: () => void) => () => vo
       if (file?.host !== device) continue
       const id = await world.idOf(path)
       if (!id || over() || hosting.has(path)) continue
-      const one = new Hosting(id, file, world.runner, (heard) => world.link(id, heard))
+      const one = new Hosting(
+        id,
+        file,
+        world.runner,
+        (heard) => world.link(id, heard),
+        world.cannot,
+      )
       hosting.set(path, { id, one })
       one.open()
     }
@@ -305,15 +328,23 @@ async function appWorld(): Promise<{
   world: HostWorld
   follow: (changed: () => void) => () => void
 }> {
-  const [{ account }, { BASE, request }, { pageWorld }, { deviceId }, { workspace }, native] =
-    await Promise.all([
-      import('../account.svelte'),
-      import('../api'),
-      import('../online/link'),
-      import('../sync2/hub.svelte'),
-      import('../workspace.svelte'),
-      import('../native'),
-    ])
+  const [
+    { account },
+    { ApiError, BASE, request },
+    { pageWorld },
+    { deviceId },
+    { workspace },
+    native,
+    { platform },
+  ] = await Promise.all([
+    import('../account.svelte'),
+    import('../api'),
+    import('../online/link'),
+    import('../sync2/hub.svelte'),
+    import('../workspace.svelte'),
+    import('../native'),
+    import('../tauri'),
+  ])
   const linkWorld: LinkWorld = pageWorld(BASE, () => account.accountToken, deviceId)
 
   const runner: Runner = {
@@ -361,9 +392,27 @@ async function appWorld(): Promise<{
     })
     .catch(() => undefined)
 
+  // Asked again at most every ten minutes: a server that serves none answers so until it
+  // is updated, and one that could not be reached is tried as if it did.
+  let served: { yes: boolean; at: number } | null = null
+  const serves = async (): Promise<boolean> => {
+    if (served && Date.now() - served.at < 10 * 60_000) return served.yes
+    const token = account.accountToken
+    if (!token) return false
+    const yes = await request(ICE_PATH, { token }).then(
+      () => true,
+      (error: unknown) => !(error instanceof ApiError && error.status === 404),
+    )
+    served = { yes, at: Date.now() }
+    return yes
+  }
+
   return {
     world: {
       device: deviceId,
+      serves,
+      // Windows and macOS have no display of an application's own yet (step 8).
+      cannot: platform() === 'linux' ? null : 'isolation',
       files: () => applicationFiles(untrack(() => workspace.tree)),
       read: (path) => native.invoke<string>('read_note', { path }).catch(() => null),
       idOf: (path) => idOf(path, Date.now() + 20_000),

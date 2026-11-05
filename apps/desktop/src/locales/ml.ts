@@ -2417,6 +2417,20 @@ export const ml: Dictionary = {
   Application: 'ആപ്ലിക്കേഷൻ',
   'This application’s file is damaged': 'ഈ ആപ്ലിക്കേഷന്റെ ഫയൽ കേടാണ്',
   'Waiting for {device}': '{device} കാത്തിരിക്കുന്നു',
+  'Sign in to use this application.': 'ഈ ആപ്ലിക്കേഷൻ ഉപയോഗിക്കാൻ സൈൻ ഇൻ ചെയ്യുക.',
+  'Waiting for this application’s file to sync…':
+    'ഈ ആപ്ലിക്കേഷന്റെ ഫയൽ സിങ്ക് ആകുന്നതിനായി കാത്തിരിക്കുന്നു…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'ഈ ആപ്ലിക്കേഷന്റെ ഫയൽ ഇതുവരെ നിങ്ങളുടെ അക്കൗണ്ടിൽ ഇല്ല: അതിന്റെ സ്പേസ് സിങ്ക് ആകണം.',
+  'Your account’s server does not run applications yet.':
+    'നിങ്ങളുടെ അക്കൗണ്ടിന്റെ സെർവർ ഇതുവരെ ആപ്ലിക്കേഷനുകൾ പ്രവർത്തിപ്പിക്കുന്നില്ല.',
+  'Cannot reach your account’s server. Still trying…':
+    'നിങ്ങളുടെ അക്കൗണ്ടിന്റെ സെർവറിൽ എത്താൻ കഴിയുന്നില്ല. ഇപ്പോഴും ശ്രമിക്കുന്നു…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'ഈ ആപ്ലിക്കേഷൻ പ്രവർത്തിക്കുന്ന കമ്പ്യൂട്ടർ ഇനി നിങ്ങളുടെ അക്കൗണ്ടിൽ സൈൻ ഇൻ ചെയ്തിട്ടില്ല.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'അവിടെ Orden തുറന്നിരിക്കണം, സൈൻ ഇൻ ചെയ്തിരിക്കണം, ഡെവലപ്പർ മോഡ് ഓൺ ആയിരിക്കണം.',
+  '{device} did not answer.': '{device} മറുപടി നൽകിയില്ല.',
   'Running on {device}': '{device}-ൽ പ്രവർത്തിക്കുന്നു',
   'Starting on {device}…': '{device}-ൽ ആരംഭിക്കുന്നു…',
   'Not running on {device}': '{device}-ൽ പ്രവർത്തിക്കുന്നില്ല',

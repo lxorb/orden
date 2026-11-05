@@ -2319,6 +2319,17 @@ export const yue: Dictionary = {
   Application: '應用程式',
   'This application’s file is damaged': '呢個應用程式嘅檔案壞咗',
   'Waiting for {device}': '等緊 {device}',
+  'Sign in to use this application.': '登入嚟用呢個應用程式。',
+  'Waiting for this application’s file to sync…': '等緊呢個應用程式嘅檔案同步…',
+  'This application’s file is not on your account yet: its space must sync.':
+    '呢個應用程式嘅檔案仲未喺你個帳戶入面：佢個空間要先同步。',
+  'Your account’s server does not run applications yet.': '你帳戶嘅伺服器仲未支援執行應用程式。',
+  'Cannot reach your account’s server. Still trying…': '連唔到你帳戶嘅伺服器。仲試緊…',
+  'The computer this application runs on is no longer signed in to your account.':
+    '運行呢個應用程式嘅電腦已經冇再登入你個帳戶。',
+  'Orden must be open there, signed in, with developer mode on.':
+    'Orden 要喺嗰度開住、登入咗，同埋開咗開發人員模式。',
+  '{device} did not answer.': '{device} 冇回應。',
   'Running on {device}': '喺 {device} 上運行緊',
   'Starting on {device}…': '喺 {device} 上啟動緊…',
   'Not running on {device}': '冇喺 {device} 上運行',

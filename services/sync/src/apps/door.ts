@@ -5,9 +5,14 @@
  *  nobody else's: the file must be in a space the person owns, and only their own signed-in
  *  devices come in - as its host or as a viewer. While the switch is off (`apps` in
  *  `online_service`), or wherever the `APPS` binding is absent, this answers 404 like a
- *  route that does not exist, which an app that knows it reads as not available yet. */
+ *  route that does not exist, which an app that knows it reads as not available yet.
+ *
+ *  A page cannot read why a socket was refused, so a tab looks first: the same address
+ *  asked as a plain request, its token as a bearer, is told whether the account may
+ *  open it - 426, a websocket and nothing else - or why not: signed out, the file not
+ *  on the account (yet), or the switch off. */
 
-import { HOST_PROTOCOL } from '@orden/online/apps'
+import { HOST_PROTOCOL, UNKNOWN_APP } from '@orden/online/apps'
 import { tokenOf } from '@orden/rooms'
 import { Hono } from 'hono'
 import { now, sha256 } from '../crypto'
@@ -29,20 +34,29 @@ export const OWNED = `select 1 as yes from notes n join spaces s on s.id = n.spa
 
 appsDoor.get('/:app/socket', async (context) => {
   const env = context.env
-  if (!(await appsOn(env))) return context.json({ error: NOT_FOUND }, 404)
-  if (context.req.header('upgrade')?.toLowerCase() !== 'websocket') {
-    return context.json({ error: 'an application is a websocket' }, 426)
-  }
+  const namespace = env.APPS
+  if (!namespace || !(await appsOn(env))) return context.json({ error: NOT_FOUND }, 404)
+  const socket = context.req.header('upgrade')?.toLowerCase() === 'websocket'
 
   const offered = (context.req.header('sec-websocket-protocol') ?? '')
     .split(',')
     .map((one) => one.trim())
-  const hash = await sha256(tokenOf(offered.join(', ')) ?? '')
+  const token = socket
+    ? tokenOf(offered.join(', '))
+    : /^Bearer (.+)$/.exec(context.req.header('authorization') ?? '')?.[1]
+  const hash = await sha256(token ?? '')
   const signed = await env.DB.prepare(`select who from (${WHO})`)
     .bind(hash, now())
     .first<{ who: string }>()
   if (!signed) return context.json({ error: SIGN_IN }, 401)
   const who = signed.who
+  const app = context.req.param('app')
+
+  if (!socket) {
+    const owned = await env.DB.prepare(OWNED).bind(app, who).first<{ yes: number }>()
+    if (!owned) return context.json({ error: UNKNOWN_APP }, 404)
+    return context.json({ error: 'an application is a websocket' }, 426)
+  }
 
   const device = offered
     .find((one) => one.startsWith(DEVICE_PROTOCOL))
@@ -51,16 +65,13 @@ appsDoor.get('/:app/socket', async (context) => {
     return context.json({ error: 'an application socket names its device' }, 400)
   }
 
-  const app = context.req.param('app')
   const [owned, name] = await Promise.all([
     env.DB.prepare(OWNED).bind(app, who).first<{ yes: number }>(),
     deviceName(env, device, who),
   ])
-  if (!owned) return context.json({ error: NOT_FOUND }, 404)
+  if (!owned) return context.json({ error: UNKNOWN_APP }, 404)
 
   const host = offered.includes(HOST_PROTOCOL)
-  const namespace = env.APPS
-  if (!namespace) return context.json({ error: NOT_FOUND }, 404)
   const answer = await namespace
     .get(namespace.idFromName(`${who}:${app}`))
     .fetch('https://app.invalid/join', {

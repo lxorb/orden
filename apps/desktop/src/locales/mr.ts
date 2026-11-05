@@ -2388,6 +2388,19 @@ export const mr: Dictionary = {
   Application: 'ॲप्लिकेशन',
   'This application’s file is damaged': 'या ॲप्लिकेशनची फाइल खराब आहे',
   'Waiting for {device}': '{device} ची वाट पाहत आहे',
+  'Sign in to use this application.': 'हे ॲप्लिकेशन वापरण्यासाठी साइन इन करा.',
+  'Waiting for this application’s file to sync…': 'या ॲप्लिकेशनची फाइल सिंक होण्याची वाट पाहत आहे…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'या ॲप्लिकेशनची फाइल अद्याप तुमच्या खात्यात नाही: तिचा स्पेस सिंक व्हायला हवा.',
+  'Your account’s server does not run applications yet.':
+    'तुमच्या खात्याचा सर्व्हर अद्याप ॲप्लिकेशन्स चालवत नाही.',
+  'Cannot reach your account’s server. Still trying…':
+    'तुमच्या खात्याच्या सर्व्हरपर्यंत पोहोचता येत नाही. अजूनही प्रयत्न सुरू आहे…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'हे ॲप्लिकेशन ज्या कॉम्प्युटरवर चालते तो आता तुमच्या खात्यात साइन इन नाही.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'तिथे Orden उघडलेले, साइन इन केलेले आणि डेव्हलपर मोड चालू असले पाहिजे.',
+  '{device} did not answer.': '{device} ने उत्तर दिले नाही.',
   'Running on {device}': '{device} वर चालू आहे',
   'Starting on {device}…': '{device} वर सुरू होत आहे…',
   'Not running on {device}': '{device} वर चालू नाही',

@@ -2417,6 +2417,19 @@ export const sw: Dictionary = {
   Application: 'Programu',
   'This application’s file is damaged': 'Faili ya programu hii imeharibika',
   'Waiting for {device}': 'Inasubiri {device}',
+  'Sign in to use this application.': 'Ingia ili utumie programu hii.',
+  'Waiting for this application’s file to sync…': 'Inasubiri faili la programu hii lilandanishwe…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'Faili la programu hii bado haliko kwenye akaunti yako: nafasi yake lazima ilandanishwe.',
+  'Your account’s server does not run applications yet.':
+    'Seva ya akaunti yako bado haiendeshi programu.',
+  'Cannot reach your account’s server. Still trying…':
+    'Haiwezi kufikia seva ya akaunti yako. Bado inajaribu…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'Kompyuta ambayo programu hii inaendeshwa haijaingia tena kwenye akaunti yako.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'Orden lazima iwe wazi huko, imeingia, na hali ya msanidi iwashwe.',
+  '{device} did not answer.': '{device} haikujibu.',
   'Running on {device}': 'Inaendesha kwenye {device}',
   'Starting on {device}…': 'Inaanza kwenye {device}…',
   'Not running on {device}': 'Haiendeshi kwenye {device}',

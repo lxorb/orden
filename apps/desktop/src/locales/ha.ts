@@ -2417,6 +2417,20 @@ export const ha: Dictionary = {
   Application: 'Manhaja',
   'This application’s file is damaged': 'Fayil ɗin wannan manhaja ya lalace',
   'Waiting for {device}': 'Ana jiran {device}',
+  'Sign in to use this application.': 'Shiga domin amfani da wannan aikace-aikacen.',
+  'Waiting for this application’s file to sync…':
+    'Ana jiran fayil ɗin wannan aikace-aikacen ya yi sync…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'Fayil ɗin wannan aikace-aikacen bai riga ya shiga asusunka ba: dole ne a yi sync na sararinsa.',
+  'Your account’s server does not run applications yet.':
+    'Sabar asusunka ba ta fara gudanar da aikace-aikace ba tukuna.',
+  'Cannot reach your account’s server. Still trying…':
+    'Ba a iya isa ga sabar asusunka ba. Ana ci gaba da ƙoƙari…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'Kwamfutar da wannan aikace-aikacen ke aiki a kanta ba ta shiga asusunka ba yanzu.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'Dole Orden ya kasance a buɗe a can, a shiga, tare da yanayin mai haɓakawa a kunne.',
+  '{device} did not answer.': '{device} bai amsa ba.',
   'Running on {device}': 'Yana gudana a {device}',
   'Starting on {device}…': 'Yana farawa a {device}…',
   'Not running on {device}': 'Ba ya gudana a {device}',

@@ -2422,6 +2422,20 @@ export const ta: Dictionary = {
   Application: 'பயன்பாடு',
   'This application’s file is damaged': 'இந்தப் பயன்பாட்டின் கோப்பு சேதமடைந்துள்ளது',
   'Waiting for {device}': '{device}க்காகக் காத்திருக்கிறது',
+  'Sign in to use this application.': 'இந்தப் பயன்பாட்டைப் பயன்படுத்த உள்நுழையவும்.',
+  'Waiting for this application’s file to sync…':
+    'இந்தப் பயன்பாட்டின் கோப்பு ஒத்திசைக்கக் காத்திருக்கிறது…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'இந்தப் பயன்பாட்டின் கோப்பு இன்னும் உங்கள் கணக்கில் இல்லை: அதன் ஸ்பேஸ் ஒத்திசைக்கப்பட வேண்டும்.',
+  'Your account’s server does not run applications yet.':
+    'உங்கள் கணக்கின் சேவையகம் இன்னும் பயன்பாடுகளை இயக்குவதில்லை.',
+  'Cannot reach your account’s server. Still trying…':
+    'உங்கள் கணக்கின் சேவையகத்தை அடைய முடியவில்லை. இன்னும் முயற்சிக்கிறது…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'இந்தப் பயன்பாடு இயங்கும் கணினி இனி உங்கள் கணக்கில் உள்நுழைந்திருக்கவில்லை.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'அங்கே Orden திறந்து, உள்நுழைந்து, டெவலப்பர் பயன்முறை இயக்கப்பட்டிருக்க வேண்டும்.',
+  '{device} did not answer.': '{device} பதிலளிக்கவில்லை.',
   'Running on {device}': '{device} இல் இயங்குகிறது',
   'Starting on {device}…': '{device} இல் தொடங்குகிறது…',
   'Not running on {device}': '{device} இல் இயங்கவில்லை',

@@ -2384,6 +2384,20 @@ export const hi: Dictionary = {
   Application: 'एप्लिकेशन',
   'This application’s file is damaged': 'इस एप्लिकेशन की फ़ाइल खराब है',
   'Waiting for {device}': '{device} की प्रतीक्षा',
+  'Sign in to use this application.': 'इस एप्लिकेशन का उपयोग करने के लिए साइन इन करें।',
+  'Waiting for this application’s file to sync…':
+    'इस एप्लिकेशन की फ़ाइल के सिंक होने की प्रतीक्षा…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'इस एप्लिकेशन की फ़ाइल अभी आपके खाते में नहीं है: इसका स्पेस सिंक होना ज़रूरी है।',
+  'Your account’s server does not run applications yet.':
+    'आपके खाते का सर्वर अभी एप्लिकेशन नहीं चलाता।',
+  'Cannot reach your account’s server. Still trying…':
+    'आपके खाते के सर्वर तक पहुँचा नहीं जा सका। अब भी कोशिश जारी है…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'जिस कंप्यूटर पर यह एप्लिकेशन चलता है, वह अब आपके खाते में साइन इन नहीं है।',
+  'Orden must be open there, signed in, with developer mode on.':
+    'वहाँ Orden खुला, साइन इन और डेवलपर मोड चालू होना चाहिए।',
+  '{device} did not answer.': '{device} ने जवाब नहीं दिया।',
   'Running on {device}': '{device} पर चल रहा है',
   'Starting on {device}…': '{device} पर शुरू हो रहा है…',
   'Not running on {device}': '{device} पर नहीं चल रहा',

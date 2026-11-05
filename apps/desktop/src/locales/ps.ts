@@ -2388,6 +2388,19 @@ export const ps: Dictionary = {
   Application: 'اپلیکیشن',
   'This application’s file is damaged': 'د دې اپلیکیشن فایل خراب دی',
   'Waiting for {device}': 'د {device} په تمه',
+  'Sign in to use this application.': 'د دې اپلېکېشن کارولو لپاره ننوځئ.',
+  'Waiting for this application’s file to sync…': 'د دې اپلېکېشن د فایل د همغږۍ په تمه…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'د دې اپلېکېشن فایل تر اوسه ستاسو په حساب کې نشته: د هغه فضا باید همغږې شي.',
+  'Your account’s server does not run applications yet.':
+    'ستاسو د حساب سرور تر اوسه اپلېکېشنونه نه چلوي.',
+  'Cannot reach your account’s server. Still trying…':
+    'ستاسو د حساب سرور ته رسېدی نه شو. لا هم هڅه کېږي…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'هغه کمپیوټر چې دا اپلېکېشن پرې چلېږي، نور ستاسو حساب ته نه دی ننوتی.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'Orden باید هلته پرانیستل شوی، ننوتلی او د پراختیا کوونکي حالت یې فعال وي.',
+  '{device} did not answer.': '{device} ځواب ورنکړ.',
   'Running on {device}': 'په {device} چلېږي',
   'Starting on {device}…': 'په {device} پیلېږي…',
   'Not running on {device}': 'په {device} نه چلېږي',

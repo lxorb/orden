@@ -2356,6 +2356,17 @@ export const am: Dictionary = {
   Application: 'መተግበሪያ',
   'This application’s file is damaged': 'የዚህ መተግበሪያ ፋይል ተበላሽቷል',
   'Waiting for {device}': '{device}ን በመጠበቅ ላይ',
+  'Sign in to use this application.': 'ይህን መተግበሪያ ለመጠቀም ይግቡ።',
+  'Waiting for this application’s file to sync…': 'የዚህ መተግበሪያ ፋይል እስኪመሳሰል በመጠበቅ ላይ…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'የዚህ መተግበሪያ ፋይል እስካሁን በመለያዎ ላይ የለም፦ ቦታው መመሳሰል አለበት።',
+  'Your account’s server does not run applications yet.': 'የመለያዎ አገልጋይ እስካሁን መተግበሪያዎችን አያስኬድም።',
+  'Cannot reach your account’s server. Still trying…': 'የመለያዎን አገልጋይ ማግኘት አልተቻለም። አሁንም በመሞከር ላይ…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'ይህ መተግበሪያ የሚሠራበት ኮምፒውተር ከእንግዲህ በመለያዎ አልገባም።',
+  'Orden must be open there, signed in, with developer mode on.':
+    'Orden እዚያ ክፍት፣ የገባ እና የገንቢ ሁነታ የበራ መሆን አለበት።',
+  '{device} did not answer.': '{device} አልመለሰም።',
   'Running on {device}': 'በ{device} ላይ እየሠራ ነው',
   'Starting on {device}…': 'በ{device} ላይ እየጀመረ ነው…',
   'Not running on {device}': 'በ{device} ላይ እየሠራ አይደለም',

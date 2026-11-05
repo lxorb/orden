@@ -1,4 +1,4 @@
-import type { AppFile, HostFrame, RelayToHost, View } from '@orden/online/apps'
+import type { AppFile, HostFrame, NotStarted, RelayToHost, View } from '@orden/online/apps'
 import { describe, expect, test } from 'vitest'
 import type { LinkWorld, Opened } from '../online/link'
 import {
@@ -27,7 +27,10 @@ const OTHER: AppFile = { ...GIMP, host: 'device-desktop' }
 
 const tick = () => new Promise((settle) => setTimeout(settle, 0))
 
-function world(files: Record<string, AppFile | string>) {
+function world(
+  files: Record<string, AppFile | string>,
+  options: { serves?: boolean; cannot?: NotStarted | null } = {},
+) {
   const said: HostFrame[] = []
   const links: { app: string; heard: (what: RelayToHost | Opened) => void; closed: boolean }[] = []
   const asked: string[] = []
@@ -76,6 +79,8 @@ function world(files: Record<string, AppFile | string>) {
       )
     },
     idOf: (path) => Promise.resolve(`id-${path.replace(/\W/g, '')}`),
+    serves: () => Promise.resolve(options.serves ?? true),
+    cannot: options.cannot ?? null,
     runner,
     link: (app, heard): Speaking => {
       const link = { app, heard, closed: false }
@@ -130,6 +135,25 @@ describe('an application’s host', () => {
     // Once the socket is open, the relay is told where it stands: not running.
     here.links[0]?.heard({ t: 'open' })
     expect(here.said).toEqual([{ t: 'state', state: 'stopped' }])
+  })
+
+  test('makes no socket to an account that serves no applications', async () => {
+    const here = world({ '/s/GIMP.application': GIMP }, { serves: false })
+    await tick()
+    expect(here.links).toEqual([])
+    expect(here.asked).toEqual([])
+  })
+
+  test('a computer that cannot run one says why before Start, and Start asks nothing of the crate', async () => {
+    const here = world({ '/s/GIMP.application': GIMP }, { cannot: 'isolation' })
+    await tick()
+    const heard = here.links[0]?.heard
+    heard?.({ t: 'open' })
+    expect(here.said).toEqual([{ t: 'state', state: 'stopped', why: 'isolation' }])
+    heard?.({ t: 'run', what: 'start' })
+    await tick()
+    expect(here.said.at(-1)).toEqual({ t: 'state', state: 'stopped', why: 'isolation' })
+    expect(here.asked.filter((one) => one.startsWith('start'))).toEqual([])
   })
 
   test('the holder’s Start runs it at the holder’s view, and says so', async () => {

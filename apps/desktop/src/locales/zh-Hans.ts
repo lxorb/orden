@@ -2323,6 +2323,17 @@ export const zhHans: Dictionary = {
   Application: '应用程序',
   'This application’s file is damaged': '此应用程序的文件已损坏',
   'Waiting for {device}': '正在等待 {device}',
+  'Sign in to use this application.': '请登录以使用此应用程序。',
+  'Waiting for this application’s file to sync…': '正在等待此应用程序的文件同步…',
+  'This application’s file is not on your account yet: its space must sync.':
+    '此应用程序的文件尚未在你的账户中：其空间必须先同步。',
+  'Your account’s server does not run applications yet.': '你账户的服务器尚不支持运行应用程序。',
+  'Cannot reach your account’s server. Still trying…': '无法连接到你账户的服务器。仍在重试…',
+  'The computer this application runs on is no longer signed in to your account.':
+    '运行此应用程序的计算机已不再登录你的账户。',
+  'Orden must be open there, signed in, with developer mode on.':
+    'Orden 必须在那台计算机上打开、已登录，并开启开发者模式。',
+  '{device} did not answer.': '{device} 没有响应。',
   'Running on {device}': '正在 {device} 上运行',
   'Starting on {device}…': '正在 {device} 上启动…',
   'Not running on {device}': '未在 {device} 上运行',

@@ -2367,6 +2367,19 @@ export const my: Dictionary = {
   Application: 'အပလီကေးရှင်း',
   'This application’s file is damaged': 'ဤအပလီကေးရှင်း၏ ဖိုင် ပျက်စီးနေသည်',
   'Waiting for {device}': '{device} ကို စောင့်နေသည်',
+  'Sign in to use this application.': 'ဤအပလီကေးရှင်းကို အသုံးပြုရန် အကောင့်ဝင်ပါ။',
+  'Waiting for this application’s file to sync…': 'ဤအပလီကေးရှင်း၏ ဖိုင် ထပ်တူကျစေရန် စောင့်နေသည်…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'ဤအပလီကေးရှင်း၏ ဖိုင်သည် သင့်အကောင့်တွင် မရှိသေးပါ- ၎င်း၏ နေရာကို ထပ်တူကျရမည်။',
+  'Your account’s server does not run applications yet.':
+    'သင့်အကောင့်၏ ဆာဗာသည် အပလီကေးရှင်းများကို မလုပ်ဆောင်သေးပါ။',
+  'Cannot reach your account’s server. Still trying…':
+    'သင့်အကောင့်၏ ဆာဗာသို့ မရောက်နိုင်ပါ။ ဆက်၍ ကြိုးစားနေသည်…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'ဤအပလီကေးရှင်း လည်ပတ်နေသော ကွန်ပျူတာသည် သင့်အကောင့်သို့ ဝင်ထားခြင်း မရှိတော့ပါ။',
+  'Orden must be open there, signed in, with developer mode on.':
+    'ထိုနေရာတွင် Orden ကို ဖွင့်ထား၍ အကောင့်ဝင်ထားပြီး ဒီဗလပ်ပါမုဒ် ဖွင့်ထားရမည်။',
+  '{device} did not answer.': '{device} က မတုံ့ပြန်ပါ။',
   'Running on {device}': '{device} တွင် လည်ပတ်နေသည်',
   'Starting on {device}…': '{device} တွင် စတင်နေသည်…',
   'Not running on {device}': '{device} တွင် မလည်ပတ်ပါ',

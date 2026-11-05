@@ -2366,6 +2366,18 @@ export const jv: Dictionary = {
   Application: 'Aplikasi',
   'This application’s file is damaged': 'Berkas aplikasi iki rusak',
   'Waiting for {device}': 'Ngenteni {device}',
+  'Sign in to use this application.': 'Mlebua kanggo nggunakake aplikasi iki.',
+  'Waiting for this application’s file to sync…': 'Ngenteni berkas aplikasi iki disinkronake…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'Berkas aplikasi iki durung ana ing akunmu: spasine kudu disinkronake.',
+  'Your account’s server does not run applications yet.': 'Server akunmu durung mbukak aplikasi.',
+  'Cannot reach your account’s server. Still trying…':
+    'Ora bisa nyambung menyang server akunmu. Isih nyoba…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'Komputer sing nglakokake aplikasi iki wis ora mlebu ing akunmu.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'Orden kudu mbukak ing kana, wis mlebu, lan mode pangembang diuripake.',
+  '{device} did not answer.': '{device} ora mangsuli.',
   'Running on {device}': 'Mlaku ing {device}',
   'Starting on {device}…': 'Miwiti ing {device}…',
   'Not running on {device}': 'Ora mlaku ing {device}',

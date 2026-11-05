@@ -2391,6 +2391,19 @@ export const pa: Dictionary = {
   Application: 'ਐਪਲੀਕੇਸ਼ਨ',
   'This application’s file is damaged': 'ਇਸ ਐਪਲੀਕੇਸ਼ਨ ਦੀ ਫ਼ਾਈਲ ਖ਼ਰਾਬ ਹੈ',
   'Waiting for {device}': '{device} ਦੀ ਉਡੀਕ',
+  'Sign in to use this application.': 'ਇਹ ਐਪਲੀਕੇਸ਼ਨ ਵਰਤਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।',
+  'Waiting for this application’s file to sync…': 'ਇਸ ਐਪਲੀਕੇਸ਼ਨ ਦੀ ਫ਼ਾਈਲ ਦੇ ਸਿੰਕ ਹੋਣ ਦੀ ਉਡੀਕ…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'ਇਸ ਐਪਲੀਕੇਸ਼ਨ ਦੀ ਫ਼ਾਈਲ ਅਜੇ ਤੁਹਾਡੇ ਖਾਤੇ ਵਿੱਚ ਨਹੀਂ ਹੈ: ਇਸਦੀ ਸਪੇਸ ਦਾ ਸਿੰਕ ਹੋਣਾ ਜ਼ਰੂਰੀ ਹੈ।',
+  'Your account’s server does not run applications yet.':
+    'ਤੁਹਾਡੇ ਖਾਤੇ ਦਾ ਸਰਵਰ ਅਜੇ ਐਪਲੀਕੇਸ਼ਨਾਂ ਨਹੀਂ ਚਲਾਉਂਦਾ।',
+  'Cannot reach your account’s server. Still trying…':
+    'ਤੁਹਾਡੇ ਖਾਤੇ ਦੇ ਸਰਵਰ ਤੱਕ ਪਹੁੰਚ ਨਹੀਂ ਹੋ ਰਹੀ। ਅਜੇ ਵੀ ਕੋਸ਼ਿਸ਼ ਜਾਰੀ ਹੈ…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'ਜਿਸ ਕੰਪਿਊਟਰ ਉੱਤੇ ਇਹ ਐਪਲੀਕੇਸ਼ਨ ਚੱਲਦੀ ਹੈ, ਉਹ ਹੁਣ ਤੁਹਾਡੇ ਖਾਤੇ ਵਿੱਚ ਸਾਈਨ ਇਨ ਨਹੀਂ ਹੈ।',
+  'Orden must be open there, signed in, with developer mode on.':
+    'ਉੱਥੇ Orden ਖੁੱਲ੍ਹਾ, ਸਾਈਨ ਇਨ ਕੀਤਾ ਹੋਇਆ ਅਤੇ ਡਿਵੈਲਪਰ ਮੋਡ ਚਾਲੂ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ।',
+  '{device} did not answer.': '{device} ਨੇ ਜਵਾਬ ਨਹੀਂ ਦਿੱਤਾ।',
   'Running on {device}': '{device} ’ਤੇ ਚੱਲ ਰਹੀ ਹੈ',
   'Starting on {device}…': '{device} ’ਤੇ ਸ਼ੁਰੂ ਹੋ ਰਹੀ ਹੈ…',
   'Not running on {device}': '{device} ’ਤੇ ਨਹੀਂ ਚੱਲ ਰਹੀ',

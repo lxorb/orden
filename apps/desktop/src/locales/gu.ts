@@ -2377,6 +2377,20 @@ export const gu: Dictionary = {
   Application: 'એપ્લિકેશન',
   'This application’s file is damaged': 'આ એપ્લિકેશનની ફાઇલ બગડી ગઈ છે',
   'Waiting for {device}': '{device}ની રાહ જોઈ રહ્યા છીએ',
+  'Sign in to use this application.': 'આ એપ્લિકેશન વાપરવા માટે સાઇન ઇન કરો.',
+  'Waiting for this application’s file to sync…':
+    'આ એપ્લિકેશનની ફાઇલ સિંક થવાની રાહ જોઈ રહ્યા છીએ…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'આ એપ્લિકેશનની ફાઇલ હજી તમારા એકાઉન્ટમાં નથી: તેની સ્પેસ સિંક થવી જોઈએ.',
+  'Your account’s server does not run applications yet.':
+    'તમારા એકાઉન્ટનું સર્વર હજી એપ્લિકેશન ચલાવતું નથી.',
+  'Cannot reach your account’s server. Still trying…':
+    'તમારા એકાઉન્ટના સર્વર સુધી પહોંચી શકાતું નથી. હજી પ્રયાસ ચાલુ છે…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'જે કમ્પ્યુટર પર આ એપ્લિકેશન ચાલે છે તે હવે તમારા એકાઉન્ટમાં સાઇન ઇન નથી.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'ત્યાં Orden ખુલ્લું, સાઇન ઇન કરેલું અને ડેવલપર મોડ ચાલુ હોવું જોઈએ.',
+  '{device} did not answer.': '{device} એ જવાબ આપ્યો નહીં.',
   'Running on {device}': '{device} પર ચાલે છે',
   'Starting on {device}…': '{device} પર શરૂ થઈ રહી છે…',
   'Not running on {device}': '{device} પર ચાલતી નથી',

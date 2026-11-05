@@ -2410,6 +2410,19 @@ export const kn: Dictionary = {
   Application: 'ಅಪ್ಲಿಕೇಶನ್',
   'This application’s file is damaged': 'ಈ ಅಪ್ಲಿಕೇಶನ್‌ನ ಫೈಲ್ ಹಾಳಾಗಿದೆ',
   'Waiting for {device}': '{device} ಗಾಗಿ ಕಾಯಲಾಗುತ್ತಿದೆ',
+  'Sign in to use this application.': 'ಈ ಅಪ್ಲಿಕೇಶನ್ ಬಳಸಲು ಸೈನ್ ಇನ್ ಮಾಡಿ.',
+  'Waiting for this application’s file to sync…': 'ಈ ಅಪ್ಲಿಕೇಶನ್‌ನ ಫೈಲ್ ಸಿಂಕ್ ಆಗಲು ಕಾಯಲಾಗುತ್ತಿದೆ…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'ಈ ಅಪ್ಲಿಕೇಶನ್‌ನ ಫೈಲ್ ಇನ್ನೂ ನಿಮ್ಮ ಖಾತೆಯಲ್ಲಿ ಇಲ್ಲ: ಅದರ ಸ್ಪೇಸ್ ಸಿಂಕ್ ಆಗಬೇಕು.',
+  'Your account’s server does not run applications yet.':
+    'ನಿಮ್ಮ ಖಾತೆಯ ಸರ್ವರ್ ಇನ್ನೂ ಅಪ್ಲಿಕೇಶನ್‌ಗಳನ್ನು ಚಲಾಯಿಸುತ್ತಿಲ್ಲ.',
+  'Cannot reach your account’s server. Still trying…':
+    'ನಿಮ್ಮ ಖಾತೆಯ ಸರ್ವರ್ ತಲುಪಲು ಸಾಧ್ಯವಾಗುತ್ತಿಲ್ಲ. ಇನ್ನೂ ಪ್ರಯತ್ನಿಸುತ್ತಿದೆ…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'ಈ ಅಪ್ಲಿಕೇಶನ್ ಚಲಿಸುವ ಕಂಪ್ಯೂಟರ್ ಈಗ ನಿಮ್ಮ ಖಾತೆಗೆ ಸೈನ್ ಇನ್ ಆಗಿಲ್ಲ.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'ಅಲ್ಲಿ Orden ತೆರೆದಿರಬೇಕು, ಸೈನ್ ಇನ್ ಆಗಿರಬೇಕು ಮತ್ತು ಡೆವಲಪರ್ ಮೋಡ್ ಆನ್ ಆಗಿರಬೇಕು.',
+  '{device} did not answer.': '{device} ಉತ್ತರಿಸಲಿಲ್ಲ.',
   'Running on {device}': '{device} ನಲ್ಲಿ ಚಾಲನೆಯಲ್ಲಿದೆ',
   'Starting on {device}…': '{device} ನಲ್ಲಿ ಪ್ರಾರಂಭವಾಗುತ್ತಿದೆ…',
   'Not running on {device}': '{device} ನಲ್ಲಿ ಚಾಲನೆಯಲ್ಲಿಲ್ಲ',

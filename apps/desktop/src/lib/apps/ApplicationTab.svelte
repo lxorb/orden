@@ -24,6 +24,7 @@
   import type { PictureStatus } from './picture.svelte'
   import { refreshRate, Settling } from './view'
   import { onMount, untrack } from 'svelte'
+  import { account } from '../account.svelte'
   import { t } from '../i18n.svelte'
   import { heldLine } from '../online/arrival.svelte'
   import Sweep from '../Sweep.svelte'
@@ -159,6 +160,18 @@
         return t('Connecting…')
       case 'damaged':
         return t('This application’s file is damaged')
+      case 'signed-out':
+        return t('Sign in to use this application.')
+      case 'syncing':
+        return t('Waiting for this application’s file to sync…')
+      case 'unsynced':
+        return t('This application’s file is not on your account yet: its space must sync.')
+      case 'unserved':
+        return t('Your account’s server does not run applications yet.')
+      case 'unreachable':
+        return t('Cannot reach your account’s server. Still trying…')
+      case 'gone':
+        return t('The computer this application runs on is no longer signed in to your account.')
       case 'away':
         return t('Waiting for {device}', { device })
       case 'held':
@@ -335,9 +348,18 @@
   const waiting = $derived(
     status.is === 'reading' ||
       status.is === 'connecting' ||
+      status.is === 'syncing' ||
       status.is === 'away' ||
-      (status.is === 'here' && status.state === 'starting'),
+      (status.is === 'here' && status.state === 'starting' && !status.unanswered),
   )
+  /** What the reader can do about a tab that is not connected: sign in, or try again. */
+  const again = $derived(
+    status.is === 'unsynced' || status.is === 'unserved' || status.is === 'unreachable',
+  )
+  // Signed in again: the tab connects without being asked.
+  $effect(() => {
+    if (account.accountToken && untrack(() => session.status.is) === 'signed-out') session.retry()
+  })
 </script>
 
 <div class="application" data-region="editor" bind:this={place} role="application">
@@ -408,7 +430,18 @@
   {/if}
   <div class="status" role="status" hidden={showing}>
     <p>{line}</p>
-    {#if status.is === 'held'}
+    {#if status.is === 'away'}
+      <p class="quiet">{t('Orden must be open there, signed in, with developer mode on.')}</p>
+    {:else if status.is === 'here' && status.unanswered}
+      <p class="quiet">{t('{device} did not answer.', { device })}</p>
+    {/if}
+    {#if status.is === 'signed-out'}
+      <button type="button" class="nib-button" onclick={() => account.ask()}>{t('Sign in')}</button>
+    {:else if again}
+      <button type="button" class="nib-button is-quiet" onclick={() => session.retry()}
+        >{t('Try again')}</button
+      >
+    {:else if status.is === 'held'}
       <button type="button" class="nib-button" onclick={() => session.take()}
         >{status.holder.taken ? t('Take back') : t('Take over')}</button
       >
@@ -426,7 +459,7 @@
           >{t('Stop')}</button
         >
       </div>
-    {:else if status.is === 'here' && status.state !== 'starting'}
+    {:else if status.is === 'here' && status.why !== 'isolation' && (status.state !== 'starting' || status.unanswered)}
       <button type="button" class="nib-button" onclick={() => session.run('start')}
         >{t('Start')}</button
       >

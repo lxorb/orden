@@ -2367,6 +2367,20 @@ export const ja: Dictionary = {
   Application: 'アプリケーション',
   'This application’s file is damaged': 'このアプリケーションのファイルは壊れています',
   'Waiting for {device}': '{device} を待っています',
+  'Sign in to use this application.': 'このアプリケーションを使うにはサインインしてください。',
+  'Waiting for this application’s file to sync…':
+    'このアプリケーションのファイルの同期を待っています…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'このアプリケーションのファイルはまだアカウントにありません。スペースを同期する必要があります。',
+  'Your account’s server does not run applications yet.':
+    'お使いのアカウントのサーバーはまだアプリケーションを実行していません。',
+  'Cannot reach your account’s server. Still trying…':
+    'お使いのアカウントのサーバーに接続できません。再試行しています…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'このアプリケーションが動作しているコンピュータは、もうアカウントにサインインしていません。',
+  'Orden must be open there, signed in, with developer mode on.':
+    'そちらで Orden を開き、サインインして、開発者モードをオンにする必要があります。',
+  '{device} did not answer.': '{device} から応答がありませんでした。',
   'Running on {device}': '{device} で実行中',
   'Starting on {device}…': '{device} で起動しています…',
   'Not running on {device}': '{device} で実行されていません',

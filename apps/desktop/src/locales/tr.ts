@@ -2397,6 +2397,20 @@ export const tr: Dictionary = {
   Application: 'Uygulama',
   'This application’s file is damaged': 'Bu uygulamanın dosyası bozuk',
   'Waiting for {device}': '{device} bekleniyor',
+  'Sign in to use this application.': 'Bu uygulamayı kullanmak için oturum aç.',
+  'Waiting for this application’s file to sync…':
+    'Bu uygulamanın dosyasının eşitlenmesi bekleniyor…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'Bu uygulamanın dosyası henüz hesabında yok: alanının eşitlenmesi gerekiyor.',
+  'Your account’s server does not run applications yet.':
+    'Hesabının sunucusu henüz uygulama çalıştırmıyor.',
+  'Cannot reach your account’s server. Still trying…':
+    'Hesabının sunucusuna ulaşılamıyor. Hâlâ deneniyor…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'Bu uygulamanın çalıştığı bilgisayar artık hesabında oturum açmış durumda değil.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'Orden orada açık, oturum açılmış ve geliştirici modu etkin olmalı.',
+  '{device} did not answer.': '{device} yanıt vermedi.',
   'Running on {device}': '{device} üzerinde çalışıyor',
   'Starting on {device}…': '{device} üzerinde başlatılıyor…',
   'Not running on {device}': '{device} üzerinde çalışmıyor',

@@ -2453,6 +2453,20 @@ export const it: Dictionary = {
   Application: 'Applicazione',
   'This application’s file is damaged': 'Il file di questa applicazione è danneggiato',
   'Waiting for {device}': 'In attesa di {device}',
+  'Sign in to use this application.': 'Accedi per usare questa applicazione.',
+  'Waiting for this application’s file to sync…':
+    'In attesa della sincronizzazione del file di questa applicazione…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'Il file di questa applicazione non è ancora nel tuo account: il suo spazio deve sincronizzarsi.',
+  'Your account’s server does not run applications yet.':
+    'Il server del tuo account non esegue ancora applicazioni.',
+  'Cannot reach your account’s server. Still trying…':
+    'Impossibile raggiungere il server del tuo account. Sto ancora provando…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'Il computer su cui gira questa applicazione non ha più l’accesso al tuo account.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'Orden deve essere aperto lì, con l’accesso effettuato e la modalità sviluppatore attiva.',
+  '{device} did not answer.': '{device} non ha risposto.',
   'Running on {device}': 'In esecuzione su {device}',
   'Starting on {device}…': 'Avvio su {device}…',
   'Not running on {device}': 'Non in esecuzione su {device}',

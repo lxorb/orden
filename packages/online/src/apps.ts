@@ -18,6 +18,11 @@ export function appSocketPath(app: string): string {
   return `/v2/apps/${encodeURIComponent(app)}/socket`
 }
 
+/** What the door says to a look at an application that is not on the account: a file
+ *  that has not synced up yet, or one that went. A door that is switched off, or an
+ *  account that has no such route, says `not found` instead. */
+export const UNKNOWN_APP = 'no such application on this account'
+
 /** The subprotocol the host's socket names itself with. */
 export const HOST_PROTOCOL = 'nib.role.host'
 

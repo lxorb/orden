@@ -2476,6 +2476,19 @@ export const ru: Dictionary = {
   Application: 'Приложение',
   'This application’s file is damaged': 'Файл этого приложения повреждён',
   'Waiting for {device}': 'Ожидание {device}',
+  'Sign in to use this application.': 'Войдите, чтобы использовать это приложение.',
+  'Waiting for this application’s file to sync…': 'Ожидание синхронизации файла этого приложения…',
+  'This application’s file is not on your account yet: its space must sync.':
+    'Файла этого приложения ещё нет в вашей учётной записи: его пространство должно синхронизироваться.',
+  'Your account’s server does not run applications yet.':
+    'Сервер вашей учётной записи пока не запускает приложения.',
+  'Cannot reach your account’s server. Still trying…':
+    'Не удаётся подключиться к серверу вашей учётной записи. Попытки продолжаются…',
+  'The computer this application runs on is no longer signed in to your account.':
+    'Компьютер, на котором работает это приложение, больше не выполнил вход в вашу учётную запись.',
+  'Orden must be open there, signed in, with developer mode on.':
+    'Orden должен быть открыт там, с выполненным входом и включённым режимом разработчика.',
+  '{device} did not answer.': '{device} не ответил.',
   'Running on {device}': 'Работает на {device}',
   'Starting on {device}…': 'Запускается на {device}…',
   'Not running on {device}': 'Не работает на {device}',

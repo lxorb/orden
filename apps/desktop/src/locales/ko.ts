@@ -2349,6 +2349,20 @@ export const ko: Dictionary = {
   Application: '애플리케이션',
   'This application’s file is damaged': '이 애플리케이션의 파일이 손상되었습니다',
   'Waiting for {device}': '{device} 기다리는 중',
+  'Sign in to use this application.': '이 애플리케이션을 사용하려면 로그인하세요.',
+  'Waiting for this application’s file to sync…':
+    '이 애플리케이션의 파일이 동기화되기를 기다리는 중…',
+  'This application’s file is not on your account yet: its space must sync.':
+    '이 애플리케이션의 파일이 아직 계정에 없습니다. 해당 스페이스가 동기화되어야 합니다.',
+  'Your account’s server does not run applications yet.':
+    '계정의 서버가 아직 애플리케이션을 실행하지 않습니다.',
+  'Cannot reach your account’s server. Still trying…':
+    '계정의 서버에 연결할 수 없습니다. 계속 시도하는 중…',
+  'The computer this application runs on is no longer signed in to your account.':
+    '이 애플리케이션이 실행되는 컴퓨터가 더 이상 계정에 로그인되어 있지 않습니다.',
+  'Orden must be open there, signed in, with developer mode on.':
+    '해당 컴퓨터에서 Orden이 열려 있고, 로그인되어 있으며, 개발자 모드가 켜져 있어야 합니다.',
+  '{device} did not answer.': '{device}이(가) 응답하지 않았습니다.',
   'Running on {device}': '{device}에서 실행 중',
   'Starting on {device}…': '{device}에서 시작하는 중…',
   'Not running on {device}': '{device}에서 실행되고 있지 않음',
