@@ -600,6 +600,18 @@ export const ru: Dictionary = {
   'Tabs as wide as their names': 'Вкладки по ширине названий',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'Каждая вкладка шириной ровно в свой значок, название и кнопку закрытия; если выключено, все вкладки одной ширины.',
+  'Unload tabs from their menu': 'Выгружать вкладки из их меню',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'В меню вкладки есть «Выгрузить вкладку»: страница и память освобождаются, пока вкладку снова не выберут.',
+  'Unload tab': 'Выгрузить вкладку',
+  'Unload other tabs': 'Выгрузить остальные вкладки',
+  'Unload tabs to the right': 'Выгрузить вкладки справа',
+  'Unload tabs to the left': 'Выгрузить вкладки слева',
+  'Unload {name}?': 'Выгрузить {name}?',
+  'Unload these tabs?': 'Выгрузить эти вкладки?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'Всё, что введено на странице и не отправлено или ещё отправляется, будет потеряно.',
+  Unload: 'Выгрузить',
   'Tab preview delay': 'Задержка превью вкладки',
   'How long the pointer rests on a tab before its preview shows.':
     'Сколько указатель должен пробыть на вкладке, прежде чем появится её превью.',

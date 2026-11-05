@@ -577,6 +577,18 @@ export const gu: Dictionary = {
   'Tabs as wide as their names': 'નામ જેટલી પહોળી ટૅબ',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'દરેક ટૅબ તેના આઇકન, નામ અને બંધ કરવાના બટનને જોઈએ એટલી જ પહોળી હોય છે; બંધ હોય ત્યારે બધી ટૅબ સરખી પહોળી હોય છે.',
+  'Unload tabs from their menu': 'ટૅબને તેમના મેનૂમાંથી અનલોડ કરો',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'ટૅબનું મેનૂ ટૅબ અનલોડ કરો આપે છે, જે ફરી પસંદ થાય ત્યાં સુધી તેનું પેજ અને મેમરી છોડી દે છે.',
+  'Unload tab': 'ટૅબ અનલોડ કરો',
+  'Unload other tabs': 'બીજા ટૅબ અનલોડ કરો',
+  'Unload tabs to the right': 'જમણી બાજુના ટૅબ અનલોડ કરો',
+  'Unload tabs to the left': 'ડાબી બાજુના ટૅબ અનલોડ કરો',
+  'Unload {name}?': '{name} અનલોડ કરવું છે?',
+  'Unload these tabs?': 'આ ટૅબ અનલોડ કરવા છે?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'પેજમાં લખેલું અને ન મોકલેલું, અથવા હજી મોકલાઈ રહેલું, બધું ખોવાઈ જશે.',
+  Unload: 'અનલોડ કરો',
   'Tab preview delay': 'ટેબ પૂર્વાવલોકન વિલંબ',
   'How long the pointer rests on a tab before its preview shows.':
     'પૂર્વાવલોકન દેખાય તે પહેલાં પોઇન્ટર ટેબ પર કેટલો સમય રહે છે.',

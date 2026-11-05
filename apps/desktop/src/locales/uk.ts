@@ -600,6 +600,18 @@ export const uk: Dictionary = {
   'Tabs as wide as their names': 'Вкладки завширшки з назву',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'Кожна вкладка завширшки лише з свій значок, назву й кнопку закриття; якщо вимкнено, усі вкладки однакової ширини.',
+  'Unload tabs from their menu': 'Вивантажувати вкладки з їхнього меню',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'У меню вкладки є «Вивантажити вкладку»: сторінка й пам’ять звільняються, доки вкладку знову не виберуть.',
+  'Unload tab': 'Вивантажити вкладку',
+  'Unload other tabs': 'Вивантажити інші вкладки',
+  'Unload tabs to the right': 'Вивантажити вкладки праворуч',
+  'Unload tabs to the left': 'Вивантажити вкладки ліворуч',
+  'Unload {name}?': 'Вивантажити {name}?',
+  'Unload these tabs?': 'Вивантажити ці вкладки?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'Усе, що введено на сторінці й не надіслано або ще надсилається, буде втрачено.',
+  Unload: 'Вивантажити',
   'Tab preview delay': 'Затримка попереднього перегляду вкладки',
   'How long the pointer rests on a tab before its preview shows.':
     'Скільки вказівник має пробути на вкладці, перш ніж з’явиться її попередній перегляд.',

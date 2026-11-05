@@ -574,6 +574,18 @@ export const zhHans: Dictionary = {
   'Tabs as wide as their names': '标签页宽度随名称',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     '每个标签页只占其图标、名称和关闭按钮所需的宽度；关闭后，所有标签页宽度相同。',
+  'Unload tabs from their menu': '从标签页菜单卸载标签页',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    '标签页的菜单会提供“卸载标签页”，在再次选中前释放其网页和内存。',
+  'Unload tab': '卸载标签页',
+  'Unload other tabs': '卸载其他标签页',
+  'Unload tabs to the right': '卸载右侧标签页',
+  'Unload tabs to the left': '卸载左侧标签页',
+  'Unload {name}?': '卸载 {name}？',
+  'Unload these tabs?': '卸载这些标签页？',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    '网页中已输入但未发送或正在发送的内容将会丢失。',
+  Unload: '卸载',
   'Tab preview delay': '标签页预览延迟',
   'How long the pointer rests on a tab before its preview shows.':
     '指针在标签页上停留多久后显示预览。',

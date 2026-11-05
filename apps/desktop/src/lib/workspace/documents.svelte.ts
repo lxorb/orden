@@ -524,6 +524,11 @@ export class Tab {
     colour: string | null
   } | null>(null)
 
+  /** Whether the tab was unloaded from its menu (#1127): it keeps its place, its name
+   *  and its mark, and what drew it is let go of until it is shown again, which loads
+   *  it. For the sitting only. See tab-strip/unloading.svelte.ts. */
+  unloaded = $state(false)
+
   /** Whether the tab's name is being typed where it is written, in the strip; see
    *  tab-strip/ops.ts. */
   naming = $state(false)

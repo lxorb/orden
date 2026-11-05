@@ -577,6 +577,18 @@ export const bn: Dictionary = {
   'Tabs as wide as their names': 'নামের মাপে ট্যাব',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'প্রতিটি ট্যাব কেবল তার আইকন, নাম আর বন্ধ করার বোতামের যতটা দরকার ততটাই চওড়া; বন্ধ থাকলে সব ট্যাব সমান চওড়া।',
+  'Unload tabs from their menu': 'মেনু থেকে ট্যাব আনলোড করুন',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'ট্যাবের মেনুতে ট্যাব আনলোড করুন থাকে, যা আবার বেছে না নেওয়া পর্যন্ত তার পাতা ও মেমরি ছেড়ে দেয়।',
+  'Unload tab': 'ট্যাব আনলোড করুন',
+  'Unload other tabs': 'অন্য ট্যাবগুলি আনলোড করুন',
+  'Unload tabs to the right': 'ডানের ট্যাবগুলি আনলোড করুন',
+  'Unload tabs to the left': 'বাঁয়ের ট্যাবগুলি আনলোড করুন',
+  'Unload {name}?': '{name} আনলোড করবেন?',
+  'Unload these tabs?': 'এই ট্যাবগুলি আনলোড করবেন?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'কোনো পাতায় টাইপ করা কিন্তু পাঠানো হয়নি, বা এখনও পাঠানো হচ্ছে, এমন সবকিছু হারিয়ে যাবে।',
+  Unload: 'আনলোড',
   'Tab preview delay': 'ট্যাব প্রিভিউয়ের বিলম্ব',
   'How long the pointer rests on a tab before its preview shows.':
     'প্রিভিউ দেখানোর আগে পয়েন্টার কতক্ষণ ট্যাবের ওপর থাকবে।',

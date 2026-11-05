@@ -1380,3 +1380,60 @@ describe('a page whose process died', () => {
     expect(pages.of('parked').crashed).toBe(false)
   })
 })
+
+/** #1127: a page parked out of sight - from its tab's menu, or by Memory saver - is
+ *  asked where it is first, and the tab can be chosen again while it answers. */
+describe('a page parked out of sight', () => {
+  async function livePage(tab: string) {
+    const shown = pages.show(tab, SITE, PANE)
+    const arrive = await asked()
+    arrive()
+    await shown
+    building = null
+  }
+
+  test('keeps its page when its tab is shown again while it is asked where it is', async () => {
+    await livePage('chosen')
+    pages.hide('chosen', PANE)
+    await settle()
+    calls.length = 0
+    holdingLooks = true
+
+    const parking = pages.park('chosen', true)
+    const answer = await looks()
+    holdingLooks = false
+    const shown = pages.show('chosen', SITE, PANE)
+    answer()
+    await Promise.all([parking, shown])
+
+    expect(pages.of('chosen').live).toBe(true)
+    expect(commands()).not.toContain('web_close')
+    pages.forget('chosen')
+  })
+
+  test('goes, its trail kept, when nobody chose it in the meantime', async () => {
+    await livePage('left')
+    pages.hide('left', PANE)
+    await settle()
+    calls.length = 0
+
+    await pages.park('left', true)
+
+    expect(pages.of('left').live).toBe(false)
+    expect(calls).toContainEqual({ command: 'web_close', args: { tab: 'left', keep: true } })
+    pages.forget('left')
+  })
+
+  test('says first whether something typed into it would be lost', async () => {
+    await livePage('typed')
+    pages.hide('typed', PANE)
+    await settle()
+
+    looked = { url: SITE, x: 0, y: 0, trail: [SITE], at: 0, edited: true }
+    expect(await pages.losing('typed')).toBe(true)
+    looked = { url: SITE, x: 0, y: 0, trail: [SITE], at: 0, edited: false }
+    expect(await pages.losing('typed')).toBe(false)
+    expect(await pages.losing('nobody')).toBe(false)
+    pages.forget('typed')
+  })
+})

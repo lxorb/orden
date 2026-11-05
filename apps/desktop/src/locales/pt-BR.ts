@@ -587,6 +587,18 @@ export const ptBR: Dictionary = {
   'Tabs as wide as their names': 'Abas da largura dos seus nomes',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'Cada aba tem só a largura de que precisam o ícone, o nome e o botão de fechar; desligado, todas as abas têm a mesma largura.',
+  'Unload tabs from their menu': 'Descarregar abas pelo menu delas',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'O menu de uma aba oferece Descarregar aba, que libera a página e a memória dela até ser escolhida de novo.',
+  'Unload tab': 'Descarregar aba',
+  'Unload other tabs': 'Descarregar outras abas',
+  'Unload tabs to the right': 'Descarregar abas à direita',
+  'Unload tabs to the left': 'Descarregar abas à esquerda',
+  'Unload {name}?': 'Descarregar {name}?',
+  'Unload these tabs?': 'Descarregar estas abas?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'O que foi digitado em uma página e não enviado, ou ainda está sendo enviado, será perdido.',
+  Unload: 'Descarregar',
   'Tab preview delay': 'Atraso da prévia de abas',
   'How long the pointer rests on a tab before its preview shows.':
     'Quanto tempo o ponteiro fica sobre uma aba antes de a prévia aparecer.',

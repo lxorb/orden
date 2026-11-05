@@ -574,6 +574,18 @@ export const yue: Dictionary = {
   'Tabs as wide as their names': '分頁闊度跟名',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     '每個分頁只係得佢個圖示、名同關閉掣需要咁闊；關咗嘅話，所有分頁一樣闊。',
+  'Unload tabs from their menu': '喺標籤頁選單度卸載標籤頁',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    '標籤頁嘅選單會有「卸載標籤頁」，直到再揀佢之前會放低佢嘅網頁同記憶體。',
+  'Unload tab': '卸載標籤頁',
+  'Unload other tabs': '卸載其他標籤頁',
+  'Unload tabs to the right': '卸載右邊嘅標籤頁',
+  'Unload tabs to the left': '卸載左邊嘅標籤頁',
+  'Unload {name}?': '卸載 {name}？',
+  'Unload these tabs?': '卸載呢啲標籤頁？',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    '喺網頁度打咗但未送出，或者仲送緊嘅嘢，都會冇咗。',
+  Unload: '卸載',
   'Tab preview delay': '分頁預覽延遲',
   'How long the pointer rests on a tab before its preview shows.':
     '指標喺分頁上面停幾耐先會顯示預覽。',

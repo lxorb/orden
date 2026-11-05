@@ -575,6 +575,18 @@ export const jv: Dictionary = {
   'Tabs as wide as their names': 'Tab sajembaré jenengé',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'Saben tab mung jembar sak butuhé lambang, jeneng lan tombol tutupé; yèn dipatèni, kabèh tab padha jembaré.',
+  'Unload tabs from their menu': 'Ngetokake tab saka menune',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'Menu tab nyedhiyakake Ngetokake tab, sing ngeculake kaca lan memorine nganti dipilih maneh.',
+  'Unload tab': 'Ngetokake tab',
+  'Unload other tabs': 'Ngetokake tab liyane',
+  'Unload tabs to the right': 'Ngetokake tab ing sisih tengen',
+  'Unload tabs to the left': 'Ngetokake tab ing sisih kiwa',
+  'Unload {name}?': 'Ngetokake {name}?',
+  'Unload these tabs?': 'Ngetokake tab-tab iki?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'Apa wae sing diketik ing kaca lan durung dikirim, utawa lagi dikirim, bakal ilang.',
+  Unload: 'Ngetokake',
   'Tab preview delay': 'Wektu tundha pratinjau tab',
   'How long the pointer rests on a tab before its preview shows.':
     'Suwene pointer mandheg ing tab sadurunge pratinjaune katon.',

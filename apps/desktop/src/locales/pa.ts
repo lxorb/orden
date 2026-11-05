@@ -580,6 +580,18 @@ export const pa: Dictionary = {
   'Tabs as wide as their names': 'ਨਾਂ ਜਿੰਨੀਆਂ ਚੌੜੀਆਂ ਟੈਬਾਂ',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'ਹਰ ਟੈਬ ਸਿਰਫ਼ ਓਨੀ ਚੌੜੀ ਹੁੰਦੀ ਹੈ ਜਿੰਨੀ ਉਸਦੇ ਆਈਕਨ, ਨਾਂ ਅਤੇ ਬੰਦ ਕਰਨ ਵਾਲੇ ਬਟਨ ਨੂੰ ਲੋੜ ਹੈ; ਬੰਦ ਹੋਣ ਤੇ ਸਾਰੀਆਂ ਟੈਬਾਂ ਬਰਾਬਰ ਚੌੜੀਆਂ ਹੁੰਦੀਆਂ ਹਨ।',
+  'Unload tabs from their menu': 'ਟੈਬਾਂ ਨੂੰ ਉਹਨਾਂ ਦੇ ਮੀਨੂ ਤੋਂ ਅਨਲੋਡ ਕਰੋ',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'ਟੈਬ ਦੇ ਮੀਨੂ ਵਿੱਚ ਟੈਬ ਅਨਲੋਡ ਕਰੋ ਮਿਲਦਾ ਹੈ, ਜੋ ਦੁਬਾਰਾ ਚੁਣੇ ਜਾਣ ਤੱਕ ਉਸਦਾ ਪੰਨਾ ਅਤੇ ਮੈਮਰੀ ਛੱਡ ਦਿੰਦਾ ਹੈ।',
+  'Unload tab': 'ਟੈਬ ਅਨਲੋਡ ਕਰੋ',
+  'Unload other tabs': 'ਬਾਕੀ ਟੈਬਾਂ ਅਨਲੋਡ ਕਰੋ',
+  'Unload tabs to the right': 'ਸੱਜੇ ਪਾਸੇ ਦੀਆਂ ਟੈਬਾਂ ਅਨਲੋਡ ਕਰੋ',
+  'Unload tabs to the left': 'ਖੱਬੇ ਪਾਸੇ ਦੀਆਂ ਟੈਬਾਂ ਅਨਲੋਡ ਕਰੋ',
+  'Unload {name}?': 'ਕੀ {name} ਅਨਲੋਡ ਕਰਨੀ ਹੈ?',
+  'Unload these tabs?': 'ਕੀ ਇਹ ਟੈਬਾਂ ਅਨਲੋਡ ਕਰਨੀਆਂ ਹਨ?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'ਪੰਨੇ ਵਿੱਚ ਟਾਈਪ ਕੀਤਾ ਅਤੇ ਨਾ ਭੇਜਿਆ, ਜਾਂ ਅਜੇ ਭੇਜਿਆ ਜਾ ਰਿਹਾ, ਸਭ ਗੁੰਮ ਹੋ ਜਾਵੇਗਾ।',
+  Unload: 'ਅਨਲੋਡ ਕਰੋ',
   'Tab preview delay': 'ਟੈਬ ਝਲਕ ਦੀ ਦੇਰੀ',
   'How long the pointer rests on a tab before its preview shows.':
     'ਝਲਕ ਦਿਖਣ ਤੋਂ ਪਹਿਲਾਂ ਪੁਆਇੰਟਰ ਟੈਬ ਉੱਤੇ ਕਿੰਨੀ ਦੇਰ ਰੁਕਦਾ ਹੈ।',

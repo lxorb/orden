@@ -576,6 +576,18 @@ export const my: Dictionary = {
   'Tabs as wide as their names': 'အမည်အလျား တဘ်များ',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'တဘ်တစ်ခုစီသည် ၎င်း၏ အိုင်ကွန်၊ အမည်နှင့် ပိတ်ခလုတ် လိုသလောက်သာ ကျယ်သည်။ ပိတ်ထားလျှင် တဘ်အားလုံး အကျယ်တူသည်။',
+  'Unload tabs from their menu': 'တဘ်များကို ၎င်းတို့၏ မီနူးမှ ဖြုတ်ရန်',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'တဘ်၏ မီနူးတွင် တဘ်ဖြုတ်ရန် ပါပြီး ထပ်ရွေးသည်အထိ ၎င်း၏ စာမျက်နှာနှင့် မှတ်ဉာဏ်ကို လွှတ်ပေးသည်။',
+  'Unload tab': 'တဘ်ဖြုတ်',
+  'Unload other tabs': 'အခြားတဘ်များ ဖြုတ်',
+  'Unload tabs to the right': 'ညာဘက်ရှိ တဘ်များ ဖြုတ်',
+  'Unload tabs to the left': 'ဘယ်ဘက်ရှိ တဘ်များ ဖြုတ်',
+  'Unload {name}?': '{name} ကို ဖြုတ်မလား။',
+  'Unload these tabs?': 'ဤတဘ်များကို ဖြုတ်မလား။',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'စာမျက်နှာတွင် ရိုက်ထားပြီး မပို့ရသေးသော သို့မဟုတ် ပို့နေဆဲဖြစ်သော အရာအားလုံး ပျောက်သွားမည်။',
+  Unload: 'ဖြုတ်',
   'Tab preview delay': 'တဘ် အစမ်းကြည့် နှောင့်နှေးချိန်',
   'How long the pointer rests on a tab before its preview shows.':
     'အစမ်းကြည့် ပေါ်လာမီ ညွှန်တံသည် တဘ်ပေါ်တွင် ကြာကြာနေရမည့်အချိန်။',

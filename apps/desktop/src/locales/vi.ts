@@ -574,6 +574,18 @@ export const vi: Dictionary = {
   'Tabs as wide as their names': 'Thẻ rộng vừa tên',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'Mỗi thẻ chỉ rộng vừa đủ cho biểu tượng, tên và nút đóng của nó; khi tắt, mọi thẻ rộng như nhau.',
+  'Unload tabs from their menu': 'Gỡ tab khỏi bộ nhớ từ menu của tab',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'Menu của tab có Gỡ tab khỏi bộ nhớ, nhả trang và bộ nhớ của tab cho đến khi được chọn lại.',
+  'Unload tab': 'Gỡ tab khỏi bộ nhớ',
+  'Unload other tabs': 'Gỡ các tab khác khỏi bộ nhớ',
+  'Unload tabs to the right': 'Gỡ các tab bên phải khỏi bộ nhớ',
+  'Unload tabs to the left': 'Gỡ các tab bên trái khỏi bộ nhớ',
+  'Unload {name}?': 'Gỡ {name} khỏi bộ nhớ?',
+  'Unload these tabs?': 'Gỡ các tab này khỏi bộ nhớ?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'Mọi thứ đã gõ vào trang mà chưa gửi, hoặc đang gửi, sẽ mất.',
+  Unload: 'Gỡ',
   'Tab preview delay': 'Độ trễ xem trước thẻ',
   'How long the pointer rests on a tab before its preview shows.':
     'Thời gian con trỏ dừng trên một thẻ trước khi bản xem trước hiện ra.',

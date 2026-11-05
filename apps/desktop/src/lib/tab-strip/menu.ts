@@ -9,6 +9,7 @@
  *  | the page | Reload, Copy link and Mute site, on a web tab only |
  *  | the shell | Open another, and any other shell a chevron away, on a terminal only |
  *  | the tab | Rename, Duplicate, Pin, Bookmark, Show in the file list, Move to space |
+ *  | unloading | Unload tab, Unload other tabs, Unload tabs to the right, with the setting on |
  *  | closing | Close, Close others, Close tabs to the right, Close all, Reopen |
  *  | the panes | Share, Stack, Split right and down, Move to other pane, Full window |
  *
@@ -41,6 +42,7 @@ import { isUnsaved } from '../workspace/drafts'
 import { askPlace } from '../save-place/door'
 import { duplicateTab, moveToOtherPane, renameFromTab, renamesFromTab } from './ops'
 import { spaceEntry } from './to-space'
+import { unloadEntries } from './unloading.svelte'
 import { chosen, duplicateMany, moveManyToOtherPane } from './picking.svelte'
 
 /** Move to space, on a touch screen only (#303). Under a pointer a tab is carried onto
@@ -405,6 +407,9 @@ export function tabMenu(tab: Tab, paneId: string): MenuEntry[] {
     ...movedToSpace([tab]),
     // Putting away what the tab shows, which closes it; see archiving.ts.
     ...archiveEntry(tab.path),
+    DIVIDER,
+    // What the tab holds let go of, the tab kept; see unloading.svelte.ts (#1127).
+    ...unloadEntries(tab),
     DIVIDER,
     ...closeEntries(tab),
     DIVIDER,

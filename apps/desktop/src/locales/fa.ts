@@ -577,6 +577,18 @@ export const fa: Dictionary = {
   'Tabs as wide as their names': 'زبانه‌ها به پهنای نامشان',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'هر زبانه فقط به اندازه‌ای پهن است که نماد، نام و دکمهٔ بستنش لازم دارند؛ خاموش، همهٔ زبانه‌ها یک پهنا دارند.',
+  'Unload tabs from their menu': 'تخلیهٔ زبانه‌ها از منوی آن‌ها',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'منوی هر زبانه «تخلیهٔ زبانه» را پیشنهاد می‌کند که صفحه و حافظه‌اش را تا انتخاب دوباره آزاد می‌کند.',
+  'Unload tab': 'تخلیهٔ زبانه',
+  'Unload other tabs': 'تخلیهٔ زبانه‌های دیگر',
+  'Unload tabs to the right': 'تخلیهٔ زبانه‌های سمت راست',
+  'Unload tabs to the left': 'تخلیهٔ زبانه‌های سمت چپ',
+  'Unload {name}?': '{name} تخلیه شود؟',
+  'Unload these tabs?': 'این زبانه‌ها تخلیه شوند؟',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'هر چیزی که در صفحه‌ای تایپ شده و فرستاده نشده، یا در حال فرستادن است، از دست می‌رود.',
+  Unload: 'تخلیه',
   'Tab preview delay': 'تأخیر پیش‌نمایش زبانه',
   'How long the pointer rests on a tab before its preview shows.':
     'مدتی که نشانگر روی زبانه می‌ماند تا پیش‌نمایش آن نمایش داده شود.',

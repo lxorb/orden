@@ -579,6 +579,18 @@ export const te: Dictionary = {
   'Tabs as wide as their names': 'పేరంత వెడల్పు ట్యాబ్‌లు',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'ప్రతి ట్యాబ్ తన ఐకాన్, పేరు, మూసే బటన్‌కు అవసరమైనంత వెడల్పు మాత్రమే ఉంటుంది; ఆఫ్ చేస్తే అన్ని ట్యాబ్‌లు ఒకే వెడల్పు.',
+  'Unload tabs from their menu': 'ట్యాబ్‌లను వాటి మెనూ నుండి అన్‌లోడ్ చేయి',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'ట్యాబ్ మెనూలో ట్యాబ్‌ను అన్‌లోడ్ చేయి ఉంటుంది, అది మళ్లీ ఎంచుకునే వరకు దాని పేజీని, మెమరీని వదిలేస్తుంది.',
+  'Unload tab': 'ట్యాబ్‌ను అన్‌లోడ్ చేయి',
+  'Unload other tabs': 'ఇతర ట్యాబ్‌లను అన్‌లోడ్ చేయి',
+  'Unload tabs to the right': 'కుడివైపు ట్యాబ్‌లను అన్‌లోడ్ చేయి',
+  'Unload tabs to the left': 'ఎడమవైపు ట్యాబ్‌లను అన్‌లోడ్ చేయి',
+  'Unload {name}?': '{name} అన్‌లోడ్ చేయాలా?',
+  'Unload these tabs?': 'ఈ ట్యాబ్‌లను అన్‌లోడ్ చేయాలా?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'పేజీలో టైప్ చేసి పంపనిది, లేదా ఇంకా పంపుతున్నది అంతా పోతుంది.',
+  Unload: 'అన్‌లోడ్ చేయి',
   'Tab preview delay': 'ట్యాబ్ ప్రివ్యూ ఆలస్యం',
   'How long the pointer rests on a tab before its preview shows.':
     'ప్రివ్యూ కనిపించే ముందు పాయింటర్ ట్యాబ్‌పై ఎంత సేపు ఉండాలి.',
