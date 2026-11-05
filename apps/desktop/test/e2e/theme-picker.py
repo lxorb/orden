@@ -13,7 +13,7 @@ gallery does, then checks each of those promises in Chromium:
   - the palette's row opens it where the palette stands;
   - typing narrows the cards and tries the first that answers;
 
-and says how long a theme takes to be on the page once it is pointed at.
+and says in how many frames a theme is on the page once it is pointed at.
 
 Run it from the repository root, after building (`npx vite build --mode drive` in
 apps/desktop):
@@ -86,17 +86,30 @@ STATE = """
 })
 """
 
-#: How long pointing takes to become paint: the move is dispatched, and the page is
-#: asked for the colour the window resolved to on the next two frames.
+#: How many frames pointing takes to become paint: the move is dispatched, and each
+#: frame after it asks for the colour the window resolved to, until it is the new
+#: theme's. A frame is the unit because it is what a person sees; how many
+#: milliseconds one takes is the machine's and its load's (#1121). The milliseconds
+#: are said beside it.
 TIMED = """
 async (name) => {
   const card = [...document.querySelectorAll('[role="option"]')].find((one) => one.textContent.includes(name))
+  const before = getComputedStyle(document.body).backgroundColor
   const start = performance.now()
   card.dispatchEvent(new PointerEvent('pointermove', { bubbles: true }))
   getComputedStyle(document.body).backgroundColor
   const styled = performance.now() - start
-  await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
-  return { styled, painted: performance.now() - start }
+  let frames = 0
+  await new Promise((done) => {
+    const frame = () => {
+      frames++
+      const on = window.nibApp.theme.id === `file:${name.toLowerCase()}`
+      if ((on && getComputedStyle(document.body).backgroundColor !== before) || frames > 60) done()
+      else requestAnimationFrame(frame)
+    }
+    requestAnimationFrame(frame)
+  })
+  return { styled, frames, painted: performance.now() - start }
 }
 """
 
@@ -175,17 +188,10 @@ def main() -> int:
 
         timing = page.evaluate(TIMED, "Solar")
         say(
-            f"Solar styled {timing['styled']:.1f} ms after the pointer moved,"
-            f" painted within {timing['painted']:.1f} ms"
+            f"Solar on the page in frame {timing['frames']} after the pointer moved"
+            f" ({timing['styled']:.1f} ms styled, {timing['painted']:.1f} ms painted)"
         )
-        # How long a frame takes is the painter's: Playwright's WebKit outside a Mac paints
-        # in software, a whole window at twice the pixels in hundreds of milliseconds,
-        # which says nothing of what a Mac draws (#384). There the app's own part - the
-        # style in place - is what is held, and the paint is said.
-        if harness.WEBKIT:
-            check("a theme is styled within two frames' time", timing["styled"] < 50)
-        else:
-            check("a theme is on the page within two frames", timing["painted"] < 50)
+        check("a theme is on the page within two frames", timing["frames"] <= 2)
 
         # Leaving the cards gives the kept one back.
         page.mouse.move(1200, 60)
