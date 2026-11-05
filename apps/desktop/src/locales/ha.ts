@@ -1298,6 +1298,7 @@ export const ha: Dictionary = {
   'Share this space': 'Raba wannan wurin',
   'Export this space as Markdown and folders':
     'Fitar da wannan wurin a matsayin Markdown da manyan fayiloli',
+  'Turn this space back into a folder': 'Mayar da wannan wurin babban fayil',
   'Share this note': 'Raba wannan bayanin kula',
   'Everyone in the space already has it.': 'Kowa a wurin yana da shi riga.',
   'Remove from your list': 'Cire daga jerinka',

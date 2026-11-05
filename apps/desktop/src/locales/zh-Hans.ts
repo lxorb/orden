@@ -1263,6 +1263,7 @@ export const zhHans: Dictionary = {
   'Share {name}': '共享{name}',
   'Share this space': '共享此空间',
   'Export this space as Markdown and folders': '将此空间导出为 Markdown 和文件夹',
+  'Turn this space back into a folder': '将此空间变回文件夹',
   'Share this note': '共享此笔记',
   'Everyone in the space already has it.': '此空间中的每个人都已有权限。',
   'Remove from your list': '从你的列表中移除',

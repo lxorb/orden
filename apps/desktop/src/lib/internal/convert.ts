@@ -8,11 +8,15 @@
  *  rename does (`fileMoved`): everything kept by path follows it, the sync engine's
  *  entries keep their ids and their places, since every path inside is the one it was.
  *
- *  The folder is left exactly as it was, and is not listed or written again: the kept
- *  space says which folder it came from (`.from`), and a build from before reads that
- *  folder as it always did. A space whose copy did not check out stays the folder, and
- *  is tried again at the next launch. */
+ *  Before anything, the folder is copied whole into `.orden/.backups`. Then it is left
+ *  exactly as it was, and is not listed or written again: the kept space says which
+ *  folder it came from (`.from`), and a build from before reads that folder as it always
+ *  did. A space whose copy did not check out - a full disk, a file that read back wrong,
+ *  two names one name here - stays the folder, and is tried again at the next launch;
+ *  one a crash cut short says so (`CONVERTING`), is never listed, and is begun again.
+ *  And a space made of a folder can be turned back into it (`revertSpace`). */
 
+import { toBase64 } from '../bytes'
 import { log } from '../log'
 import { invoke as crate } from '../native'
 import { joinPath, platform } from '../tauri'
@@ -20,7 +24,17 @@ import type { HoldsSpaces } from '../workspace/spaces'
 import { folderBytes } from './bytes'
 import { InternalFolder } from './folder'
 import { mountOf } from './roots'
-import { HOME, keepsNewSpaces, keptFrom, mountKept } from './spaces'
+import {
+  CONVERTING,
+  HOME,
+  keepAsFolder,
+  keepsNewSpaces,
+  keptAsFolders,
+  keptFrom,
+  madeFrom,
+  mountKept,
+  unkeep,
+} from './spaces'
 
 interface Listed {
   path: string
@@ -80,7 +94,8 @@ function same(one: Uint8Array, other: Uint8Array | null): boolean {
 }
 
 /** Each file of the folder at `root` into `into`, read back and checked, and the stamp
- *  each had when it was read. Throws where one did not check out. */
+ *  each had when it was read. Throws where one did not check out, and, on the first
+ *  copy, where two names of the folder are one name here. */
 async function copied(
   root: string,
   into: InternalFolder,
@@ -93,6 +108,9 @@ async function copied(
       await into.mkdir(one.path)
       continue
     }
+    if (!only && into.atNow(one.path)) {
+      throw new Error(`${one.path} and another file are one name in a space kept here`)
+    }
     const at = joinPath(root, one.path)
     stamps.set(one.path, await crate<Stamp | null>('file_stamp', { path: at }).catch(() => null))
     const bytes = await bytesAt(at)
@@ -104,17 +122,59 @@ async function copied(
   return stamps
 }
 
+/** A copy of the folder at `from`, whole, kept beside the kept spaces where nothing
+ *  lists it (`.orden/.backups`), before anything is made of it or written back into it:
+ *  what is there to go back to whatever happens after. Answers where. */
+async function backedUp(from: string, name: string): Promise<string> {
+  const stamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', ' ')
+  const backups = joinPath(joinPath(await crate<string>('spaces_root'), HOME), '.backups')
+  let at = joinPath(backups, `${name} ${stamp}`)
+  for (let counter = 2; await crate<boolean>('path_taken', { path: at }); counter += 1) {
+    at = joinPath(backups, `${name} ${stamp} ${String(counter)}`)
+  }
+  await crate('copy_path', { from, to: at })
+  return at
+}
+
+/** One conversion or reversion at a time, in every call to this module. */
+let turn: Promise<unknown> = Promise.resolve()
+
+function oneAtATime<T>(run: () => Promise<T>): Promise<T> {
+  const mine = turn.then(run, run)
+  turn = mine.catch(() => undefined)
+  return mine
+}
+
 /** The space `id` of `ws`, a folder until now, made one Orden keeps itself. Answers
- *  whether it was. */
-export async function convertSpace(ws: HoldsSpaces, id: string): Promise<boolean> {
+ *  whether it was.
+ *
+ *  The folder is copied whole into `.orden/.backups` first. The kept folder says it is
+ *  being made (`CONVERTING`) until the moment the space moves to it, so one a crash or a
+ *  full disk cut short is never listed, and is made again from the start next time. */
+export function convertSpace(ws: HoldsSpaces, id: string): Promise<boolean> {
+  return oneAtATime(() => converting(ws, id))
+}
+
+async function converting(ws: HoldsSpaces, id: string): Promise<boolean> {
   const space = ws.spaces.find((one) => one.id === id)
   if (!space || mountOf(space.root)) return false
   const from = space.root
   const folder = joinPath(joinPath(await crate<string>('spaces_root'), HOME), space.name)
-  // A kept space of that name already: this one stays the folder rather than become a
-  // space under a name it never had.
-  if (await crate<unknown>('read_tree', { root: folder }).then(Boolean, () => false)) return false
+  const marker = joinPath(folder, CONVERTING)
+  if (await crate<unknown>('read_tree', { root: folder }).then(Boolean, () => false)) {
+    // A kept space of that name already: this one stays the folder rather than become
+    // a space under a name it never had. One cut short is begun again.
+    if (!(await crate<unknown>('file_stamp', { path: marker }).catch(() => null))) return false
+    await crate('delete_folder', { path: folder })
+  }
 
+  try {
+    await backedUp(from, space.name)
+  } catch (error) {
+    log('error', `${space.name} stays a folder: it could not be backed up: ${String(error)}`)
+    return false
+  }
+  await crate('write_note', { path: marker, content: from })
   const world = { now: () => Date.now(), key: () => crypto.randomUUID(), foldsCase: foldsCase() }
   const into = await InternalFolder.open(folder, folderBytes(folder), world)
   try {
@@ -146,6 +206,8 @@ export async function convertSpace(ws: HoldsSpaces, id: string): Promise<boolean
       into.close()
 
       const root = await mountKept(folder, space.name, from)
+      // From here the kept space is the space: a crash now finds it whole.
+      await crate('delete_note', { path: marker })
       space.root = root
       await ws.fileMoved(from, root, 'space')
       // Each note's versions, kept by its path in the app's own folder, under the path
@@ -167,12 +229,66 @@ export async function convertSpace(ws: HoldsSpaces, id: string): Promise<boolean
 }
 
 /** Every space of `ws` that is still a folder, made one Orden keeps itself, one at a
- *  time, where this device says so. */
+ *  time, where this device says so - bar those turned back into folders. */
 export async function convertAll(ws: HoldsSpaces): Promise<void> {
   if (!keepsNewSpaces()) return
-  const done = new Set(await keptFrom())
+  const done = new Set([...(await keptFrom()), ...(await keptAsFolders())])
   for (const space of [...ws.spaces]) {
     if (mountOf(space.root) || done.has(space.root)) continue
     await convertSpace(ws, space.id)
   }
+}
+
+/** The kept space `id` of `ws`, made of a folder, a folder again: that folder backed up
+ *  whole, then every file of the space written into it as the space has it now, and what
+ *  the space no longer has taken into Recently deleted; then the space moves back to the
+ *  folder as a rename does, and its kept folder goes into Recently deleted whole. The
+ *  folder is not made into a kept space again on this device. Answers whether it was. */
+export function revertSpace(ws: HoldsSpaces, id: string): Promise<boolean> {
+  return oneAtATime(() => reverting(ws, id))
+}
+
+async function reverting(ws: HoldsSpaces, id: string): Promise<boolean> {
+  const space = ws.spaces.find((one) => one.id === id)
+  const found = space ? mountOf(space.root) : null
+  const to = space ? madeFrom(space.root) : undefined
+  if (!space || !found || found.inside || !to) return false
+  const root = space.root
+  const there = await crate<unknown>('read_tree', { root: to }).then(Boolean, () => false)
+  if (there) await backedUp(to, space.name)
+
+  const done = { reverted: false }
+  await ws.holdingUnder(root, async () => {
+    const folder = found.mount.folder
+    const kept = await folder.list()
+    for (const { path, entry } of kept) {
+      const at = joinPath(to, path)
+      if (!entry.key) {
+        await crate('create_folder', { path: at })
+        continue
+      }
+      const bytes = await folder.read(path)
+      if (!bytes) throw new Error(`${path} could not be read`)
+      await crate('write_bytes', { path: at, base64: toBase64(bytes) })
+    }
+    // What the space no longer has, into Recently deleted rather than back as a note
+    // nobody wrote: the backup above holds it too.
+    const has = new Set(kept.map((one) => one.path))
+    for (const one of there ? await contents(to) : []) {
+      if (one.dir || has.has(one.path)) continue
+      await crate('trash_item', { path: joinPath(to, one.path), kind: 'note' }).catch(
+        () => undefined,
+      )
+    }
+    await keepAsFolder(to)
+    await unkeep(root)
+    space.root = to
+    await ws.fileMoved(root, to, 'space')
+    await crate('rehome_snapshots', { from: root, to }).catch(() => 0)
+    done.reverted = true
+  })
+  if (!done.reverted) return false
+  ws.persist()
+  await ws.loadTree()
+  return true
 }

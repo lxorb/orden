@@ -16,7 +16,7 @@
 
 import { invoke as crate } from '../native'
 import { storedText } from '../stored'
-import { joinPath, platform } from '../tauri'
+import { internal, joinPath, platform } from '../tauri'
 import { safeName } from '../web/paths'
 import { mountOf } from './roots'
 
@@ -77,6 +77,57 @@ const FROM = '.from'
  *  space says itself: one deleted after it was made of one. In `.orden`, as lines. */
 const RETIRED = '.retired'
 
+/** What a folder of `.orden` holds while a space is being made into one (step 4e): no
+ *  space yet, whatever else is in it - one a crash cut short is made again from the start,
+ *  never listed half copied. */
+export const CONVERTING = '.converting'
+
+/** The folders this device was asked to keep as folders, which are made into kept spaces
+ *  no more: one turned back (`revertSpace` in convert.ts). In `.orden`, as lines. */
+const FOLDERS = '.folders'
+
+async function lines(name: string): Promise<string[]> {
+  const said = await crate<string>('read_note', { path: joinPath(await home(), name) }).catch(
+    () => '',
+  )
+  return said.split('\n').filter(Boolean)
+}
+
+async function addLine(name: string, line: string): Promise<void> {
+  const had = await lines(name)
+  if (had.includes(line)) return
+  await crate('write_note', {
+    path: joinPath(await home(), name),
+    content: `${[...had, line].join('\n')}\n`,
+  })
+}
+
+async function dropLine(name: string, line: string): Promise<void> {
+  const had = await lines(name)
+  if (!had.includes(line)) return
+  const left = had.filter((one) => one !== line)
+  await crate('write_note', {
+    path: joinPath(await home(), name),
+    content: left.length ? `${left.join('\n')}\n` : '',
+  })
+}
+
+/** The folders kept as folders on this device, whatever it says of new spaces. */
+export function keptAsFolders(): Promise<string[]> {
+  return lines(FOLDERS)
+}
+
+/** `path` kept as a folder from now on. */
+export function keepAsFolder(path: string): Promise<void> {
+  return addLine(FOLDERS, path)
+}
+
+/** The folder the kept space at `root` was made of, or undefined for one made new. */
+export function madeFrom(root: string): string | undefined {
+  return mountOf(root)?.inside === '' ? fromOf.get(root) : undefined
+}
+internal.madeOf = madeFrom
+
 async function find(): Promise<Space[]> {
   const at = await home()
   // Not the folder's hidden files, which are the spaces' bytes and indexes: the space
@@ -87,6 +138,8 @@ async function find(): Promise<Space[]> {
   const out: Space[] = []
   for (const one of tree?.children ?? []) {
     if (!one.is_dir) continue
+    const converting = joinPath(one.path, CONVERTING)
+    if (await crate<unknown>('file_stamp', { path: converting }).catch(() => null)) continue
     const root = rootIn(one.path, one.name)
     if (!one.children?.some((child) => !child.is_dir && child.name === one.name)) {
       await crate('write_note', { path: root, content: '' }).catch(() => undefined)
@@ -103,10 +156,7 @@ async function find(): Promise<Space[]> {
  *  is listed of the crate's folders leaves them out. */
 export async function keptFrom(): Promise<string[]> {
   await keptSpaces()
-  const retired = await crate<string>('read_note', { path: joinPath(await home(), RETIRED) }).catch(
-    () => '',
-  )
-  return [...fromOf.values(), ...retired.split('\n').filter(Boolean)]
+  return [...fromOf.values(), ...(await lines(RETIRED))]
 }
 
 /** The crate's folders, without those a kept space was made of, and the kept spaces,
@@ -117,6 +167,20 @@ export async function listedWith(folders: readonly Space[]): Promise<Space[]> {
   return [...folders.filter((one) => !gone.has(one.path)), ...kept].sort((a, b) =>
     a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
   )
+}
+
+/** The kept space at `root` let go and put in this device's trash whole, without its
+ *  folder being retired: the space it was made of is a folder again (`revertSpace`). */
+export async function unkeep(root: string): Promise<void> {
+  const found = mountOf(root)
+  if (!found || found.inside) throw new Error(`${root} is not a space kept here`)
+  const folder = found.mount.folder.name
+  const was = fromOf.get(root)
+  await found.mount.folder.flush()
+  unmount(root)
+  fromOf.delete(root)
+  if (was) await dropLine(RETIRED, was)
+  await crate('trash_item', { path: folder, kind: 'space' })
 }
 
 /** What lets each mounted space go, by its root. */
@@ -216,9 +280,7 @@ export async function removeKept(root: string, forGood: boolean): Promise<unknow
   // The folder it was made of stays no space, whatever becomes of this one.
   const was = fromOf.get(root)
   if (was) {
-    const path = joinPath(await home(), RETIRED)
-    const said = await crate<string>('read_note', { path }).catch(() => '')
-    await crate('write_note', { path, content: `${said}${was}\n` })
+    await addLine(RETIRED, was)
     fromOf.delete(root)
   }
   unmount(root)

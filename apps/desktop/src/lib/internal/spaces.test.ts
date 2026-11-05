@@ -93,6 +93,18 @@ const disk = vi.hoisted(() => {
         if (held === undefined) throw new Error('no such file')
         return (typeof held === 'string' ? new TextEncoder().encode(held) : held).slice().buffer
       }
+      case 'copy_path': {
+        const from = args.from as string
+        const to = args.to as string
+        if (files.has(to) || dirs.has(to)) throw new Error('something already lives there')
+        mkdirs(parentOf(to))
+        for (const one of [...dirs])
+          if (under(from, one)) dirs.add(`${to}${one.slice(from.length)}`)
+        for (const [one, held] of [...files]) {
+          if (under(from, one)) files.set(`${to}${one.slice(from.length)}`, held)
+        }
+        return undefined
+      }
       case 'rehome_snapshots':
         rehomed.push(`${String(args.from)} -> ${String(args.to)}`)
         return 1
@@ -145,6 +157,7 @@ const disk = vi.hoisted(() => {
     files,
     dirs,
     rehomed,
+    trash,
     crate,
   }
 })
@@ -185,6 +198,7 @@ afterEach(async () => {
   disk.files.clear()
   for (const one of [...disk.dirs]) if (one !== '/spaces') disk.dirs.delete(one)
   disk.rehomed.length = 0
+  disk.trash.length = 0
   localStorage.removeItem(KEEP_SPACES)
 })
 
@@ -371,6 +385,10 @@ describe('a space that is a folder, where this device keeps new spaces itself', 
       if (path !== '/spaces/Notes/Plan.md') expect(disk.files.get(path)).toEqual(held)
     }
     expect(await call('list_spaces')).toEqual([{ name: 'Notes', path: root }])
+    // And the folder as it was before anything was made of it, whole, where no list sees.
+    const backup = [...disk.dirs].find((one) => one.startsWith('/spaces/.orden/.backups/Notes '))
+    expect(disk.files.get(`${backup ?? ''}/Plan.md`)).toBe('ship it')
+    expect(disk.files.get(`${backup ?? ''}/Work/cat.png`)).toEqual(new Uint8Array([1, 2]))
 
     // Once: the next launch finds nothing to do, and a delete leaves the folder no space.
     await convertAll(ws)
@@ -468,5 +486,136 @@ describe('a kept space the launch has not mounted yet', () => {
       `${folder}/Plans/Plan.md`,
     ])
     expect(await listInternal('/spaces/Disk')).toBeNull()
+  })
+})
+
+describe('making a folder a kept space, whatever happens on the way', () => {
+  function workspace(root: string) {
+    const said: string[] = []
+    const ws = {
+      spaces: [{ id: 's0', name: root.split('/').pop() ?? '', root }],
+      activeSpaceId: 's0',
+      tree: null,
+      naming: null,
+      notes: [],
+      tabs: [],
+      setsRead: undefined,
+      fileMoved: (from: string, to: string) => {
+        said.push(`${from} -> ${to}`)
+        return Promise.resolve()
+      },
+      fileGone: () => Promise.resolve(),
+      holdingUnder: (_path: string, run: () => Promise<void>) => run(),
+      close: () => undefined,
+      clearSelection: () => undefined,
+      loadTree: () => Promise.resolve(),
+      persist: () => undefined,
+    }
+    return { ws, said }
+  }
+  const notes = () => {
+    disk.dirs.add('/spaces/Notes')
+    disk.dirs.add('/spaces/Notes/Work')
+    disk.files.set('/spaces/Notes/Plan.md', 'ship it')
+    disk.files.set('/spaces/Notes/Work/Old.md', 'old')
+  }
+
+  test('stays the folder, whole, where the disk fills up halfway', async () => {
+    const { convertSpace } = await import('./convert')
+    notes()
+    const before = new Map(disk.files)
+    const { ws, said } = workspace('/spaces/Notes')
+    const write = disk.crate
+    let written = 0
+    disk.crate = (command, args) => {
+      if (command === 'write_bytes' && String(args.path).includes('/.entries/') && ++written > 1) {
+        throw new Error('No space left on device')
+      }
+      return write(command, args)
+    }
+    try {
+      expect(await convertSpace(ws, 's0')).toBe(false)
+    } finally {
+      disk.crate = write
+    }
+    expect(said).toEqual([])
+    for (const [path, held] of before) expect(disk.files.get(path)).toEqual(held)
+    expect(disk.dirs.has('/spaces/.orden/Notes')).toBe(false)
+    expect(await call('list_spaces')).toEqual([{ name: 'Notes', path: '/spaces/Notes' }])
+  })
+
+  test('cut short by a crash, is never listed half made, and is made again from the start', async () => {
+    const { convertAll } = await import('./convert')
+    notes()
+    // As a crash leaves it: the folder begun, half copied, its root never written.
+    disk.dirs.add('/spaces/.orden')
+    disk.dirs.add('/spaces/.orden/Notes')
+    disk.files.set('/spaces/.orden/Notes/.converting', '/spaces/Notes')
+    disk.files.set('/spaces/.orden/Notes/.entries/half.md', 'ship')
+    expect(await call('list_spaces')).toEqual([{ name: 'Notes', path: '/spaces/Notes' }])
+
+    const { ws, said } = workspace('/spaces/Notes')
+    // Twice at once, as two turns of a launch might ask: made once.
+    await Promise.all([convertAll(ws), convertAll(ws)])
+    const root = '/spaces/.orden/Notes/Notes'
+    expect(said).toEqual([`/spaces/Notes -> ${root}`])
+    expect(disk.files.has('/spaces/.orden/Notes/.converting')).toBe(false)
+    expect(disk.files.has('/spaces/.orden/Notes/.entries/half.md')).toBe(false)
+    expect(await call('read_note', { path: `${root}/Work/Old.md` })).toBe('old')
+  })
+
+  test('keeps names of every kind, and refuses two that are one name here', async () => {
+    const { convertSpace } = await import('./convert')
+    disk.dirs.add('/spaces/Notes')
+    disk.dirs.add('/spaces/Notes/日本語')
+    const odd = ['Ünïcode café.md', '日本語/ノート.md', 'a #b%c&+.md', '😀 smile.md', 'Ω.pages']
+    for (const name of odd) disk.files.set(`/spaces/Notes/${name}`, name)
+    const { ws } = workspace('/spaces/Notes')
+    expect(await convertSpace(ws, 's0')).toBe(true)
+    for (const name of odd) {
+      expect(await call('read_note', { path: `/spaces/.orden/Notes/Notes/${name}` })).toBe(name)
+    }
+
+    disk.dirs.add('/spaces/Twice')
+    disk.files.set('/spaces/Twice/plan.md', 'one')
+    disk.files.set('/spaces/Twice/Plan.md', 'two')
+    const twice = workspace('/spaces/Twice')
+    expect(await convertSpace(twice.ws, 's0')).toBe(false)
+    expect(disk.files.get('/spaces/Twice/plan.md')).toBe('one')
+    expect(disk.files.get('/spaces/Twice/Plan.md')).toBe('two')
+  })
+
+  test('is turned back into the folder, with what was written since, and stays one', async () => {
+    const { convertAll, revertSpace } = await import('./convert')
+    notes()
+    const { ws, said } = workspace('/spaces/Notes')
+    await convertAll(ws)
+    const root = '/spaces/.orden/Notes/Notes'
+    await call('write_note', { path: `${root}/Plan.md`, content: 'ship it today' })
+    await call('write_note', { path: `${root}/New.md`, content: 'new' })
+    await call('delete_note', { path: `${root}/Work/Old.md` })
+
+    expect(await revertSpace(ws, 's0')).toBe(true)
+
+    expect(said).toEqual([`/spaces/Notes -> ${root}`, `${root} -> /spaces/Notes`])
+    expect(ws.spaces[0]?.root).toBe('/spaces/Notes')
+    expect(disk.files.get('/spaces/Notes/Plan.md')).toEqual(
+      new TextEncoder().encode('ship it today'),
+    )
+    expect(disk.files.get('/spaces/Notes/New.md')).toEqual(new TextEncoder().encode('new'))
+    // Gone from the space, so gone from the folder - into Recently deleted.
+    expect(disk.files.has('/spaces/Notes/Work/Old.md')).toBe(false)
+    expect(disk.trash.map((one) => one.from)).toEqual([
+      '/spaces/Notes/Work/Old.md',
+      '/spaces/.orden/Notes',
+    ])
+    // Backed up before it was written into, as before it was first made a space.
+    const backups = [...disk.dirs].filter((one) =>
+      /^\/spaces\/\.orden\/\.backups\/[^/]+$/.test(one),
+    )
+    expect(backups).toHaveLength(2)
+    expect(await call('list_spaces')).toEqual([{ name: 'Notes', path: '/spaces/Notes' }])
+    await convertAll(ws)
+    expect(said).toHaveLength(2)
   })
 })

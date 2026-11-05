@@ -1290,6 +1290,7 @@ export const gsw: Dictionary = {
   'Share {name}': '{name} teile',
   'Share this space': 'Die Ablag teile',
   'Export this space as Markdown and folders': 'Die Ablag als Markdown und Ordner exportiere',
+  'Turn this space back into a folder': 'Die Ablag wider zum Ordner mache',
   'Share this note': 'Die Notiz teile',
   'Everyone in the space already has it.': 'Alli i de Ablag hend si scho.',
   'Remove from your list': 'Us dinere Liste nä',

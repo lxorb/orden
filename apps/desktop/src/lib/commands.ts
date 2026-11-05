@@ -1079,6 +1079,20 @@ function spaceCommands(): Command[] {
           },
         ]
       : []),
+    // A space made of a folder on this device, that folder again (#1068); see
+    // internal/convert.ts.
+    ...(internal.madeOf?.(space.root)
+      ? [
+          {
+            id: 'space-to-folder',
+            label: t('Turn this space back into a folder'),
+            run: () =>
+              void import('./internal/convert').then(({ revertSpace }) =>
+                revertSpace(workspace, space.id),
+              ),
+          },
+        ]
+      : []),
     // And the one document in front of the reader, which is the other size of the
     // same act. Offered only where there is one and it can be shared; see
     // sharing.svelte.ts.

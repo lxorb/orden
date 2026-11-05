@@ -1287,6 +1287,7 @@ export const ur: Dictionary = {
   'Share this space': 'یہ اسپیس شیئر کریں',
   'Export this space as Markdown and folders':
     'یہ اسپیس Markdown اور فولڈرز کے طور پر ایکسپورٹ کریں',
+  'Turn this space back into a folder': 'اس اسپیس کو دوبارہ فولڈر بنائیں',
   'Share this note': 'یہ نوٹ شیئر کریں',
   'Everyone in the space already has it.': 'اسپیس میں سب کے پاس یہ پہلے سے ہے۔',
   'Remove from your list': 'اپنی فہرست سے ہٹائیں',

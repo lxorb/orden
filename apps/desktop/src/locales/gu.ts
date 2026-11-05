@@ -1285,6 +1285,7 @@ export const gu: Dictionary = {
   'Share {name}': '{name} વહેંચો',
   'Share this space': 'આ જગ્યા વહેંચો',
   'Export this space as Markdown and folders': 'આ જગ્યાને Markdown અને ફોલ્ડર તરીકે નિકાસ કરો',
+  'Turn this space back into a folder': 'આ જગ્યાને ફરી ફોલ્ડર બનાવો',
   'Share this note': 'આ નોંધ વહેંચો',
   'Everyone in the space already has it.': 'જગ્યામાં બધા પાસે પહેલેથી છે.',
   'Remove from your list': 'તમારી યાદીમાંથી કાઢો',

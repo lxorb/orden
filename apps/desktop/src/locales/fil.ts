@@ -1304,6 +1304,7 @@ export const fil: Dictionary = {
   'Share this space': 'Ibahagi ang espasyong ito',
   'Export this space as Markdown and folders':
     'I-export ang espasyong ito bilang Markdown at mga folder',
+  'Turn this space back into a folder': 'Ibalik ang espasyong ito bilang folder',
   'Share this note': 'Ibahagi ang talang ito',
   'Everyone in the space already has it.': 'Nasa lahat na sa espasyo.',
   'Remove from your list': 'Alisin sa listahan mo',

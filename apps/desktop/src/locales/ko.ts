@@ -1275,6 +1275,7 @@ export const ko: Dictionary = {
   'Share {name}': '{name} 공유',
   'Share this space': '이 공간 공유',
   'Export this space as Markdown and folders': '이 공간을 Markdown과 폴더로 내보내기',
+  'Turn this space back into a folder': '이 공간을 다시 폴더로 되돌리기',
   'Share this note': '이 노트 공유',
   'Everyone in the space already has it.': '이 공간의 모두가 이미 가지고 있습니다.',
   'Remove from your list': '내 목록에서 제거',

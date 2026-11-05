@@ -200,8 +200,16 @@ had, read back and checked against the file it came from; then, with the writes 
 every note open in it held, what changed meanwhile is copied again, and the space moves
 to its new root as a rename does, so everything kept by path follows it and the engine's
 entries keep their ids. A copy that does not check out leaves the space the folder it
-was, to be tried again next launch. The folder is left exactly as it was and is listed
-and written no more - the kept space says which folder it was (`.from`), and one deleted
+was, to be tried again next launch: a full disk, a file that reads back wrong, two names
+the folder tells apart that are one name here. Before anything is copied the folder is
+copied whole into `.orden/.backups`; while the copy is made, the kept folder says so
+(`.converting`), so one a crash cut short is never listed and is begun again from the
+start, and one conversion runs at a time. Turn this space back into a folder makes it
+the folder again: the folder backed up once more, every file of the space written into
+it as the space has it now, what the space no longer has taken into Recently deleted,
+the space moved back as a rename does and its kept folder into Recently deleted whole;
+that folder is made a kept space no more on this device (`.orden/.folders`). Until then
+the folder is left exactly as it was and is listed and written no more - the kept space says which folder it was (`.from`), and one deleted
 afterwards leaves a line in `.orden/.retired` - so a build from before reads that folder
 as it always did, and going back costs only what was written since.
 

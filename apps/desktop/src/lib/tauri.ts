@@ -74,7 +74,10 @@ export const internal: {
   file: ((path: string) => string | null) | null
   /** What each one has not written down yet, written down: on the way out. */
   flush: (() => Promise<void>) | null
-} = { routed: null, file: null, flush: null }
+  /** The folder a space at `root` was made of, where it was made of one and can be
+   *  turned back into it (internal/convert.ts). */
+  madeOf: ((root: string) => string | undefined) | null
+} = { routed: null, file: null, flush: null, madeOf: null }
 
 /** The commands about the spaces themselves, which a desktop answers with the spaces it
  *  keeps itself beside the crate's folders (internal/spaces.ts). */
