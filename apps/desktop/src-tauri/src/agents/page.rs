@@ -1046,14 +1046,6 @@ impl Page<'_> {
             .map(str::to_string)
     }
 
-    fn may_act_in(&self, facts: &Facts) -> Result<(), Answer> {
-        self.frame_may_be_acted_in(facts)
-    }
-
-    fn limits_sites(&self) -> bool {
-        self.grant_limits_sites()
-    }
-
     fn may_read_frame(&self, at: &[String]) -> bool {
         engines::frame_readable(self.limits.as_ref(), at)
     }
@@ -1517,11 +1509,10 @@ impl Page<'_> {
         let Some(frame) = frame_of_holder(&node) else {
             return Ok(element);
         };
-        let frame = frame.as_str();
         if node.get("contentDocument").is_some() {
             return Ok(element);
         }
-        self.element_in_frame(frame, point).ok_or_else(|| {
+        self.element_in_frame(&frame, point).ok_or_else(|| {
             Answer::error(
                 Code::Failed,
                 "that point is in a frame Orden cannot read: take a snapshot and press by ref",
@@ -1661,20 +1652,7 @@ impl Page<'_> {
         {
             return Ok(());
         }
-        let above = self.object(&covered)?;
-        let inside = self.call_on(
-            element,
-            "Runtime.callFunctionOn",
-            &json!({
-                "objectId": above,
-                "functionDeclaration": INSIDE.as_str(),
-                "arguments": [{ "objectId": target }],
-                "returnByValue": true,
-            }),
-        );
-        if inside
-            .is_ok_and(|one| one.pointer("/result/value").and_then(Value::as_bool) != Some(false))
-        {
+        if self.inside(element, &self.object(&covered)?, &target) {
             return Ok(());
         }
         let what = self
@@ -1860,13 +1838,17 @@ impl Page<'_> {
         let (Ok(one_held), Ok(other_held)) = (self.object(one), self.object(other)) else {
             return false;
         };
+        self.inside(one, &one_held, &other_held)
+    }
+
+    fn inside(&self, on: &Element, object: &str, target: &str) -> bool {
         self.call_on(
-            one,
+            on,
             "Runtime.callFunctionOn",
             &json!({
-                "objectId": one_held,
+                "objectId": object,
                 "functionDeclaration": INSIDE.as_str(),
-                "arguments": [{ "objectId": other_held }],
+                "arguments": [{ "objectId": target }],
                 "returnByValue": true,
             }),
         )
@@ -2672,14 +2654,6 @@ impl Page<'_> {
         let mut found = Vec::new();
         let mut seen = HashSet::new();
         for prefix in prefixes {
-            if prefix_past_budget(&prefix, started) {
-                found.push(Secret {
-                    prefix: prefix.clone(),
-                    backend: UNREAD,
-                    filled: true,
-                });
-                continue;
-            }
             let session = self.session_of_part(&prefix);
             let call = |method: &str, params: &Value| {
                 cdp::call_in(
@@ -2690,7 +2664,12 @@ impl Page<'_> {
                     patience_in(session.as_deref()),
                 )
             };
-            let Some(capture) = self.capture(session.as_deref()) else {
+            let capture = if prefix_past_budget(&prefix, started) {
+                None
+            } else {
+                self.capture(session.as_deref())
+            };
+            let Some(capture) = capture else {
                 found.push(Secret {
                     prefix: prefix.clone(),
                     backend: UNREAD,
@@ -2725,8 +2704,9 @@ impl Page<'_> {
                     });
                     continue;
                 };
-                let judged = serde_json::from_value::<Field>(said.clone());
-                if judged.is_ok_and(|field| policy::secret(&field)) || judged_failed(&said) {
+                if serde_json::from_value::<Field>(said.clone())
+                    .map_or(true, |field| policy::secret(&field))
+                {
                     found.push(Secret {
                         prefix: prefix.clone(),
                         backend,
@@ -3158,11 +3138,11 @@ impl Engine for Page<'_> {
     }
 
     fn may_act_in(&self, facts: &Facts) -> Result<(), Answer> {
-        Page::may_act_in(self, facts)
+        self.frame_may_be_acted_in(facts)
     }
 
     fn limits_sites(&self) -> bool {
-        Page::limits_sites(self)
+        self.grant_limits_sites()
     }
 
     fn tick_changes(&self, element: &Element, wanted: bool) -> Result<bool, Answer> {
@@ -3503,6 +3483,9 @@ fn painted_over(
     size: (u32, u32),
     rects: &[[f64; 4]],
 ) -> Result<String, Answer> {
+    if rects.is_empty() {
+        return Ok(png);
+    }
     let (across, down) = (f64::from(size.0) / clip.2, f64::from(size.1) / clip.3);
     let rects: Vec<[f64; 4]> = rects
         .iter()
@@ -3515,19 +3498,12 @@ fn painted_over(
             ]
         })
         .collect();
-    if rects.is_empty() {
-        return Ok(png);
-    }
     paint_over(&png, &rects).map_err(|why| {
         Answer::error(
             Code::Failed,
             format!("a secret field could not be hidden in the picture, so there is none: {why}"),
         )
     })
-}
-
-fn judged_failed(said: &Value) -> bool {
-    serde_json::from_value::<Field>(said.clone()).is_err()
 }
 
 fn frames_under(tree: &Value, out: &mut Vec<String>) {
@@ -3648,8 +3624,8 @@ fn gone_fields(parts: &[Part], seen: &HashSet<(String, u64)>) -> Vec<(String, u6
                         .is_some_and(|parent| holders.contains(parent))
                 })
                 .filter_map(|node| node.get("backendDOMNodeId").and_then(Value::as_u64))
-                .filter(|backend| !seen.contains(&(part.prefix.clone(), *backend)))
                 .map(|backend| (part.prefix.clone(), backend))
+                .filter(|one| !seen.contains(one))
         })
         .collect()
 }
@@ -3713,14 +3689,7 @@ fn fields_in_capture(capture: &Value, under: Option<u64>) -> Vec<u64> {
                 parent.2 || under == Some(backend),
             );
             seen.push(here);
-            if here.1 {
-                continue;
-            }
-            let wanted = match under {
-                None => true,
-                Some(_) => here.0 && here.2,
-            };
-            if !wanted {
+            if here.1 || (under.is_some() && !(here.0 && here.2)) {
                 continue;
             }
             let said: Vec<&str> = attributes

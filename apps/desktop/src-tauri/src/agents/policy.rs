@@ -632,9 +632,9 @@ pub fn judge(
             let Some(said) = mention(&facts.dialog, words, inflected) else {
                 continue;
             };
-            let way_out = dismisses(&facts.name)
-                || (category == Category::Deleting && alone(&facts.name, KEEPING));
-            if way_out {
+            if dismisses(&facts.name)
+                || (category == Category::Deleting && alone(&facts.name, KEEPING))
+            {
                 continue;
             }
             if let Some(question) = ask(category, on(&short(said), fallback, &site)) {
@@ -951,7 +951,8 @@ fn dismisses(name: &str) -> bool {
     let name = name.trim_matches(|one: char| !one.is_alphanumeric());
     let words: Vec<&str> = name.split_whitespace().collect();
     let (half, other) = words.split_at(words.len() / 2);
-    if half.join(" ").eq_ignore_ascii_case(&other.join(" ")) && alone(&half.join(" "), DISMISSING) {
+    let half = half.join(" ");
+    if half.eq_ignore_ascii_case(&other.join(" ")) && alone(&half, DISMISSING) {
         return true;
     }
     let (first, rest) = name.split_once(',').unwrap_or((name, ""));

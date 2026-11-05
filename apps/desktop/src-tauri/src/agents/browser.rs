@@ -593,8 +593,8 @@ impl<'a, 'p> OnePress<'a, 'p> {
     }
 
     fn judge(&self, facts: &Facts) -> Result<(), Answer> {
-        let Caller::Agent(grant) = self.caller else {
-            return judged(
+        let judged = |times| {
+            judged_times(
                 self.app,
                 self.caller,
                 self.page,
@@ -602,25 +602,17 @@ impl<'a, 'p> OnePress<'a, 'p> {
                 facts,
                 Act::Press,
                 &self.key,
-            );
+                times,
+            )
+        };
+        let Caller::Agent(grant) = self.caller else {
+            return judged(1);
         };
         self.page.may_act_in(facts)?;
         let hosts = self.page.hosts();
-        let question = policy::judge(grant, facts, Act::Press, &self.page.url(), &hosts);
-        let Some(question) = question else {
-            return if self.graver_only {
-                Ok(())
-            } else {
-                judged(
-                    self.app,
-                    self.caller,
-                    self.page,
-                    self.place,
-                    facts,
-                    Act::Press,
-                    &self.key,
-                )
-            };
+        let Some(question) = policy::judge(grant, facts, Act::Press, &self.page.url(), &hosts)
+        else {
+            return if self.graver_only { Ok(()) } else { judged(1) };
         };
         if self.graver_only && question.category == Category::Writing {
             return Ok(());
@@ -629,16 +621,7 @@ impl<'a, 'p> OnePress<'a, 'p> {
         if self.answered.borrow().contains(&said) {
             return Ok(());
         }
-        judged_times(
-            self.app,
-            self.caller,
-            self.page,
-            self.place,
-            facts,
-            Act::Press,
-            &self.key,
-            self.times,
-        )?;
+        judged(self.times)?;
         self.answered.borrow_mut().push(said);
         Ok(())
     }
