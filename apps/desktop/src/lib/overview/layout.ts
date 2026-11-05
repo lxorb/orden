@@ -59,7 +59,7 @@ const SEAM_GAP = 56
 
 /** No window wider than this share of the room, so one tab alone is a window on a
  *  canvas and not the pane again. */
-const WIDEST = 0.46
+export const WIDEST = 0.46
 
 /** A side's share of a split, by how many windows it holds: a pane of eight tabs next to
  *  a pane of one is given more of the room, never all of it. */

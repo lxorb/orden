@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import type { Box } from './layout'
-import { packed } from './pack'
+import { meets, packed, pushedAside } from './pack'
 
 const GAP = 40
 
@@ -82,4 +82,36 @@ test('what is taken already stays, and the new ones pack round it', () => {
 
 test('the same spaces pack the same way every time, at any zoom: nothing here knows one', () => {
   expect(packed(sizes, GAP)).toEqual(packed(sizes, GAP))
+})
+
+test('a bubble carried through others pushes them aside, smoothly, and none ever meets another', () => {
+  // Emil: a space dragged over another lay right on it.
+  const rest = [
+    { key: 'a', box: { x: 600, y: 0, w: 500, h: 400 } },
+    { key: 'b', box: { x: 1140, y: 40, w: 300, h: 300 } },
+    { key: 'c', box: { x: 700, y: 500, w: 400, h: 300 } },
+  ]
+  for (const dy of [0, 120, -150]) {
+    const held = { x: -200, y: dy, w: 400, h: 300 }
+    let was: Record<string, Box> = {}
+    for (let step = 0; step < 260; step++) {
+      held.x += 10
+      const now = pushedAside(held, rest, GAP, was)
+      const boxes = rest.map(({ key, box }) => now[key] ?? box)
+      for (const box of boxes) expect(meets(held, box, GAP - 0.5)).toBe(false)
+      for (let i = 0; i < boxes.length; i++)
+        for (let j = i + 1; j < boxes.length; j++)
+          expect(meets(boxes[i]!, boxes[j]!, GAP - 0.5)).toBe(false)
+      for (const { key, box } of rest) {
+        const before = was[key] ?? box
+        const after = now[key] ?? box
+        expect(Math.hypot(after.x - before.x, after.y - before.y)).toBeLessThan(25)
+      }
+      was = now
+    }
+    // Where they were pushed to, they stay while the hand is on: none is left behind it.
+    expect(Object.keys(was).length).toBeGreaterThan(0)
+    held.x = 6000
+    expect(pushedAside(held, rest, GAP, was)).toEqual(was)
+  }
 })

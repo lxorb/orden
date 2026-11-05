@@ -76,8 +76,17 @@
   import { drawn, Flight, paneDrawn, type Pose } from './flight'
   import { land as landSpring, resting as sprung, SHARE, spring, step } from './spring'
   import { readsBefore, roomFor, settled, stripLanding } from './free'
-  import { meets, packed } from './pack'
-  import { around, type Box, type Laid, lay, seamPath, seamsAmong, type Slot } from './layout'
+  import { meets, packed, pushedAside } from './pack'
+  import {
+    around,
+    type Box,
+    type Laid,
+    lay,
+    seamPath,
+    seamsAmong,
+    type Slot,
+    WIDEST,
+  } from './layout'
   import { marked, shownBox, tabCopyOf } from './mirror'
   import { walk, wayOf } from './walk'
   import WindowFace from './WindowFace.svelte'
@@ -179,7 +188,20 @@
     if (!panesOf) return null
     const corner = { x: 0, y: 0, w: screenRoom.w, h: screenRoom.h }
     const inside = around(lay(panesOf, corner, { tabsOf, shapeOf }).slots)
-    return inside ? extentOf(captioned(inside)) : null
+    return extentOf(inside ? captioned(inside) : standIn(corner))
+  }
+
+  /** What an empty space's bubble is round, in the middle of its place: half of what one
+   *  window of its own would take, so it is a bubble of its own among the others and not
+   *  a dot (Emil). */
+  function standIn(place: Box): Box {
+    const w = (place.w * WIDEST) / 2
+    const h = (w * place.h) / Math.max(place.w, 1)
+    return { x: place.x + (place.w - w) / 2, y: place.y + (place.h - h) / 2, w, h }
+  }
+
+  function placeOf(key: string): Box {
+    return key === spaceKey ? room : (places.at(key) ?? room)
   }
 
   /** The places of `keys`, each where its cell lands packed among `taken` round
@@ -328,8 +350,31 @@
     untrack(() => {
       placeNew(keys)
       for (const key of keys) places.place(key, { w: screenRoom.w, h: screenRoom.h })
+      apartAll()
     })
   })
+
+  /** No two spaces' bubbles on each other at rest, wherever they were kept: each that
+   *  lies on one before it, the space worked in first, is moved to the free place
+   *  nearest where it lies (pack.ts). */
+  function apartAll() {
+    const taken: Box[] = []
+    const order = [...cellBoxes].sort(
+      (a, b) => Number(b.key === spaceKey) - Number(a.key === spaceKey),
+    )
+    for (const { key, box: cell } of order) {
+      const box = extentOf(cell)
+      if (!taken.some((one) => meets(one, box, CELLS_APART))) {
+        taken.push(box)
+        continue
+      }
+      const middle = { x: box.x + box.w / 2, y: box.y + box.h / 2 }
+      const spot = packed([{ key, w: box.w, h: box.h }], CELLS_APART, taken, middle)[key]
+      if (!spot) continue
+      shiftSpace(key, spot.x - box.x, spot.y - box.y)
+      taken.push(spot)
+    }
+  }
 
   /** The window under the hand: which, where it was taken hold of (as a share of its
    *  width and height), where it lies now, and whether it is over another space's cell;
@@ -378,7 +423,7 @@
       const own = key === spaceKey
       const panesOf = own ? frame : sets?.frameOf(key)
       if (!panesOf) return []
-      const place = own ? room : (places.at(key) ?? room)
+      const place = placeOf(key)
       return [
         {
           key,
@@ -421,8 +466,36 @@
     const id = held?.id
     if (!heldBoxes.size || !id) return resting
     const key = cellOf.get(id)
-    return roomFor(resting, heldBoxes, (one) => cellOf.get(one) === key)
+    const made = roomFor(resting, heldBoxes, (one) => cellOf.get(one) === key)
+    if (!Object.keys(aside).length) return made
+    return made.map((slot) => {
+      const by = offsetOf(cellOf.get(slot.id) ?? '')
+      return by ? { ...slot, x: slot.x + by.x, y: slot.y + by.y } : slot
+    })
   })
+
+  /** The spaces a space carried by its name has pushed out of its way, each where its
+   *  bubble, name and all, is pushed to (pack.ts `pushedAside`): back where it rests once
+   *  the space is let go. */
+  let aside = $state<Record<string, Box>>({})
+
+  function offsetOf(key: string): Point | null {
+    const to = aside[key]
+    const from = to && cellBoxes.find((one) => one.key === key)
+    if (!to || !from) return null
+    const rest = extentOf(from.box)
+    return { x: to.x - rest.x, y: to.y - rest.y }
+  }
+
+  function pushAside() {
+    const whole = held?.whole
+    const carried = whole ? around([...heldBoxes.values()]) : null
+    if (!whole || !carried) return
+    const others = cellBoxes
+      .filter((one) => one.key !== whole)
+      .map((one) => ({ key: one.key, box: extentOf(one.box) }))
+    aside = pushedAside(extentOf(captioned(carried)), others, CELLS_APART, aside)
+  }
 
   /** Every window, and the lines between each split's sides. */
   const laid = $derived({
@@ -448,10 +521,8 @@
       const from = resting.filter(
         (slot) => heldIds.has(slot.id) && one.slots.some((own) => own.id === slot.id),
       )
-      return {
-        key: one.key,
-        box: captioned(around(inside) ?? around(from) ?? places.at(one.key) ?? room),
-      }
+      const lying = around(inside) ?? around(from)
+      return { key: one.key, box: lying ? captioned(lying) : standIn(placeOf(one.key)) }
     }),
   )
 
@@ -525,7 +596,10 @@
       const pose = arrived.has(slot.id) ? flights.get(slot.id)?.pose : null
       boxes.push(captioned(pose ? { x: pose.x, y: pose.y, w: pose.w, h: pose.h } : slot))
     }
-    return boxes
+    if (boxes.length || laid.slots.some((slot) => cellOf.get(slot.id) === key)) return boxes
+    const empty = standIn(placeOf(key))
+    const by = offsetOf(key)
+    return [by ? { ...empty, x: empty.x + by.x, y: empty.y + by.y } : empty]
   }
 
   /** Where a window goes home to: its pane, for the tab the pane shows, else its tab in
@@ -1293,6 +1367,7 @@
     const h = own?.h ?? 1
     const box = { x: hand.x - held.fx * w, y: hand.y - held.fy * h, w, h }
     held = { ...held, box, landing: landingFor(hand) }
+    pushAside()
     for (const one of heldIds) follow(one)
     fly()
   }
@@ -1347,7 +1422,11 @@
     const hand = held
     if (!hand) return
     dragged = true
-    const lying = laid.slots
+    const rest = new Map(resting.map((one) => [one.id, one]))
+    const lying = laid.slots.map((one) =>
+      aside[cellOf.get(one.id) ?? ''] ? (rest.get(one.id) ?? one) : one,
+    )
+    aside = {}
     const box = hand.box
     const was = resting.find((one) => one.id === hand.id)
     const ids = [hand.id, ...hand.with.map((one) => one.id)]
@@ -1423,6 +1502,7 @@
   function cancelled() {
     pressed = null
     held = null
+    aside = {}
     aimAll()
   }
 

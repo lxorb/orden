@@ -80,3 +80,66 @@ export function packed(
   }
   return out
 }
+
+/** How far along `x`, `y` box `b` goes before it is `gap` clear of `a`, at the least. */
+function clearAlong(a: Box, b: Box, x: number, y: number, gap: number): number {
+  let least = Number.POSITIVE_INFINITY
+  if (x > 1e-9) least = Math.min(least, (a.x + a.w + gap - b.x) / x)
+  if (x < -1e-9) least = Math.min(least, (b.x + b.w + gap - a.x) / -x)
+  if (y > 1e-9) least = Math.min(least, (a.y + a.h + gap - b.y) / y)
+  if (y < -1e-9) least = Math.min(least, (b.y + b.h + gap - a.y) / -y)
+  return Math.max(0, least)
+}
+
+/** Where each of `others` is pushed to by `held`, a bubble carried in among them, by key:
+ *  every one it comes nearer than `gap` to slides away from it, from middle to middle,
+ *  until it is clear, and pushes on any it is then pushed onto, as one coin pushes
+ *  another across a table (Emil: a space dragged over another lay on it). Each starts
+ *  from where it was pushed to last (`was`, the last call's answer) and stays there
+ *  while the hand moves on: one pushed ahead stays ahead, and none jumps across the one
+ *  carried. Only those away from where they rest are given. Pure. */
+export function pushedAside(
+  held: Box,
+  others: readonly { key: string; box: Box }[],
+  gap: number,
+  was: Readonly<Record<string, Box>> = {},
+): Record<string, Box> {
+  const middleOf = (box: Box) => ({ x: box.x + box.w / 2, y: box.y + box.h / 2 })
+  const from = middleOf(held)
+  const now = new Map(others.map(({ key, box }) => [key, { ...(was[key] ?? box) }]))
+  const far = (key: string) => {
+    const box = now.get(key)
+    if (!box) return 0
+    const at = middleOf(box)
+    return Math.hypot(at.x - from.x, at.y - from.y)
+  }
+  const order = others.map(({ key }) => key).sort((a, b) => far(a) - far(b))
+  for (let pass = 0; pass <= order.length; pass++) {
+    let moved = false
+    const pushers: Box[] = [held]
+    for (const key of order) {
+      const box = now.get(key)
+      if (!box) continue
+      for (const pusher of pushers) {
+        if (!meets(pusher, box, gap)) continue
+        const a = middleOf(pusher)
+        const b = middleOf(box)
+        const apart = Math.hypot(b.x - a.x, b.y - a.y)
+        const x = apart > 1e-6 ? (b.x - a.x) / apart : 1
+        const y = apart > 1e-6 ? (b.y - a.y) / apart : 0
+        const by = clearAlong(pusher, box, x, y, gap)
+        box.x += x * by
+        box.y += y * by
+        moved = true
+      }
+      pushers.push(box)
+    }
+    if (!moved) break
+  }
+  const out: Record<string, Box> = {}
+  for (const { key, box } of others) {
+    const at = now.get(key)
+    if (at && (Math.abs(at.x - box.x) > 0.01 || Math.abs(at.y - box.y) > 0.01)) out[key] = at
+  }
+  return out
+}
