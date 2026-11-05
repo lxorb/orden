@@ -812,7 +812,7 @@
     box-shadow: none;
   }
 
-  .pane.lifted > :not(.head) {
+  .pane.lifted > :global(:not(.head)) {
     opacity: 0;
   }
 
