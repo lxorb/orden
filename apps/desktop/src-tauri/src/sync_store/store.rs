@@ -141,13 +141,10 @@ impl Store {
     /// and an app that will not start because of a cache is worse than one that
     /// rebuilds it. VS Code does the same with its state database. A store a newer Orden
     /// wrote is refused instead, because nothing about it is wrong.
-    pub fn open(path: &Path) -> Result<Self, Refused> {
-        Self::open_as(path, None)
-    }
-
-    /// `open`, with the device id a store made now takes: the one this device already
-    /// said to the hub before there was a store (`madeDeviceId` in the window), so a
-    /// device has one id from the start. A store that has one keeps its own.
+    ///
+    /// `device` is the id a store made now takes: the one this device already said to the
+    /// hub before there was a store (`madeDeviceId` in the window), so a device has one id
+    /// from the start. A store that has one keeps its own.
     pub fn open_as(path: &Path, device: Option<&str>) -> Result<Self, Refused> {
         if let Some(folder) = path.parent() {
             made(folder).map_err(Refused::Other)?;
@@ -160,6 +157,12 @@ impl Store {
             }
             other => other,
         }
+    }
+
+    /// `open_as` with no id given: what the tests open.
+    #[cfg(test)]
+    pub fn open(path: &Path) -> Result<Self, Refused> {
+        Self::open_as(path, None)
     }
 
     fn opened(path: &Path, recovered: bool, preferred: Option<&str>) -> Result<Self, Refused> {
