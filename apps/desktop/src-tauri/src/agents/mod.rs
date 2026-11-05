@@ -14,6 +14,7 @@
 //! | `tabs`, `quiet` | the agent's own tabs nobody sees, and everything they may not do |
 //! | `engines` | which engine a page is on, and the one interface every act goes through |
 //! | `cdp`, `page`, `snapshot`, `keys` | the `DevTools` Protocol, and every act through it |
+//! | `scripts` | what every engine runs in a page to read it, and the secrets painted over |
 //! | `browser`, `reader` | the browser verbs, on the agent's tabs and the reader's |
 //! | `capture` | a page read for the window's `capture_to_note` |
 //! | `memory` | the engine's memory |
@@ -132,6 +133,9 @@ mod page;
 mod quiet;
 #[cfg(any(windows, feature = "cef", target_os = "macos"))]
 mod reader;
+// What every engine runs in a page, and makes of what it answers (#1092).
+#[cfg(any(windows, feature = "cef", target_os = "macos"))]
+mod scripts;
 #[cfg(any(windows, feature = "cef", target_os = "macos"))]
 #[cfg_attr(
     all(target_os = "macos", not(feature = "cef")),

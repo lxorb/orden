@@ -328,6 +328,9 @@ objc2-foundation = { version = "0.3", default-features = false, features = [
   "NSNotification",
   "NSObject",
   "NSOperation",
+  # The time an agent's press is said to happen at on a Mac, as the system's own events
+  # say theirs (agents/engines/webkit.rs).
+  "NSProcessInfo",
   "NSProgress",
   "NSSet",
   "NSString",
@@ -351,7 +354,11 @@ objc2-app-kit = { version = "0.3", default-features = false, features = [
   "NSBitmapImageRep",
   "NSButton",
   "NSControl",
+  # An agent's press, pointer and keys sent to its page's view on a Mac; see
+  # agents/engines/webkit.rs.
+  "NSEvent",
   "NSGraphics",
+  "NSGraphicsContext",
   "NSImage",
   "NSImageRep",
   "NSPrintInfo",
@@ -383,6 +390,8 @@ objc2-user-notifications = { version = "0.3", default-features = false, features
 objc2-web-kit = { version = "0.3", default-features = false, features = [
   "std",
   "objc2-app-kit",
+  # The part of an agent's page a picture is taken of (agents/engines/webkit.rs).
+  "objc2-core-foundation",
   "block2",
   # A web state's scripts and nib's own page scripts run in a world of their own, and
   # a hidden page is made an origin with an HTML string; see web_state/isolated.rs,

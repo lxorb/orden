@@ -239,23 +239,10 @@ pub const CDP_CANNOT: &[(&str, &str)] = &[];
     )
 )]
 pub const WEBKIT_CANNOT: &[(&str, &str)] = &[
-    ("browser_snapshot", NOT_BUILT),
-    ("browser_find", NOT_BUILT),
-    ("browser_read", NOT_BUILT),
-    ("browser_click", NOT_BUILT),
-    ("browser_type", NOT_BUILT),
-    ("browser_press", NOT_BUILT),
-    ("browser_scroll", NOT_BUILT),
-    ("browser_select", NOT_BUILT),
-    ("browser_fill_form", NOT_BUILT),
-    ("browser_hover", NOT_BUILT),
     ("browser_drag", NOT_BUILT),
     ("browser_upload", NOT_BUILT),
-    ("browser_screenshot", NOT_BUILT),
     ("browser_console", NOT_BUILT),
     ("browser_network", NOT_BUILT),
-    ("browser_evaluate", NOT_BUILT),
-    ("browser_storage", NOT_BUILT),
     ("browser_show", NOT_BUILT),
     ("browser_takeover", NOT_BUILT),
     ("capture_to_note", NOT_BUILT),
@@ -269,7 +256,7 @@ pub const WEBKIT_CANNOT: &[(&str, &str)] = &[
         reason = "the other engine's table, which the test reads beside this one's"
     )
 )]
-const NOT_BUILT: &str = "this verb is not built on WKWebView yet: on a Mac an agent's tab opens, goes, waits and answers its dialogs, and the rest follows (#1092)";
+const NOT_BUILT: &str = "this verb is not built on WKWebView yet: on a Mac an agent's tab opens, goes, waits, reads the page, runs scripts, takes pictures and answers its dialogs, and the rest follows (#1092)";
 
 /// This build's engine's table.
 #[cfg(any(windows, feature = "cef"))]
@@ -354,6 +341,39 @@ impl Page<'_> {
     /// Clears this call to touch a credential: `judged`'s decision.
     pub fn clear_credentials(&self) {
         self.credentials.store(true, Ordering::Relaxed);
+    }
+
+    /// A password field, or any field of a sign-in form, refused unless this call was
+    /// cleared for it: the floor under `judged`, which asks or clears first (#1072).
+    pub fn refuse_secret(&self, facts: &Facts) -> Result<(), Answer> {
+        if (facts.password() || facts.sign_in()) && !self.may_touch_credentials() {
+            return Err(Answer::error(
+                Code::PasswordField,
+                "that is a sign-in, and this agent's mode asks before signing in",
+            ));
+        }
+        Ok(())
+    }
+
+    /// Whether a key may go to the field that has the page's keyboard: never one that
+    /// would open a picker, and never a character into a password field - which in a
+    /// reader's tab may be the field the reader is typing their own password into.
+    pub fn may_press(&self, key: &Key) -> Result<(), Answer> {
+        if let Some(facts) = self.active_facts()? {
+            if facts.picker() && key.opens_a_picker() {
+                return Err(Answer::error(
+                    Code::BadArguments,
+                    "that key would open a list of the engine's own: use browser_select or browser_fill_form",
+                ));
+            }
+            if facts.password() && key.changes_words() && !self.may_touch_credentials() {
+                return Err(Answer::error(
+                    Code::PasswordField,
+                    "the field with the keyboard is a password field, and this agent's mode asks before signing in",
+                ));
+            }
+        }
+        Ok(())
     }
 }
 

@@ -34,36 +34,52 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ffi::c_void;
+use std::ptr::NonNull;
 use std::sync::atomic::Ordering;
 use std::sync::mpsc::{channel, sync_channel, Receiver, Sender};
 use std::sync::{Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
+use base64::Engine as _;
 use block2::{DynBlock, RcBlock};
 use objc2::rc::Retained;
 use objc2::runtime::{AnyObject, Bool, NSObject, ProtocolObject};
-use objc2::{define_class, msg_send, DefinedClass, MainThreadOnly};
+use objc2::{define_class, msg_send, DefinedClass, MainThreadOnly, Message as _};
+use objc2_app_kit::{
+    NSBitmapImageFileType, NSBitmapImageRep, NSEvent, NSEventModifierFlags, NSEventType, NSImage,
+    NSView, NSWindow,
+};
 use objc2_foundation::{
-    MainThreadMarker, NSError, NSHTTPURLResponse, NSObjectProtocol, NSString,
-    NSURLAuthenticationChallenge, NSURLCredential, NSURLCredentialPersistence, NSURLRequest,
-    NSURLResponse, NSURLSessionAuthChallengeDisposition, NSURL,
+    MainThreadMarker, NSArray, NSDate, NSDictionary, NSError, NSHTTPCookie, NSHTTPCookieDomain,
+    NSHTTPCookieExpires, NSHTTPCookieName, NSHTTPCookiePath, NSHTTPCookieSecure, NSHTTPCookieValue,
+    NSHTTPURLResponse, NSMutableDictionary, NSNumber, NSObjectProtocol, NSPoint, NSProcessInfo,
+    NSRect, NSSize, NSString, NSURLAuthenticationChallenge, NSURLCredential,
+    NSURLCredentialPersistence, NSURLRequest, NSURLResponse, NSURLSessionAuthChallengeDisposition,
+    NSURL,
 };
 use objc2_web_kit::{
     WKContentWorld, WKDownload, WKDownloadDelegate, WKFrameInfo, WKMediaCaptureType, WKNavigation,
     WKNavigationAction, WKNavigationActionPolicy, WKNavigationDelegate, WKNavigationResponse,
     WKNavigationResponsePolicy, WKOpenPanelParameters, WKPermissionDecision, WKSecurityOrigin,
-    WKUIDelegate, WKUserScript, WKUserScriptInjectionTime, WKWebView, WKWebViewConfiguration,
-    WKWindowFeatures,
+    WKSnapshotConfiguration, WKUIDelegate, WKUserScript, WKUserScriptInjectionTime, WKWebView,
+    WKWebViewConfiguration, WKWebsiteDataRecord, WKWebsiteDataStore, WKWindowFeatures,
 };
 use serde_json::{json, Map, Value};
 use tauri::webview::PlatformWebview;
 use tauri::{AppHandle, LogicalPosition, LogicalSize, Url, WebviewBuilder, WebviewUrl};
 
 use super::{refused, Engine, Page, Tree, View, SETTLED};
-use crate::agents::keys::Key;
-use crate::agents::policy::Facts;
+use crate::agents::keys::{self, Key};
+use crate::agents::policy::{self, Facts, Field};
 use crate::agents::quiet::{self, Owner, Said};
-use crate::agents::snapshot::Wanted;
+use crate::agents::scripts::{
+    self, paint_over, png_size, CARET_ALL, CARET_END, CLIPPED, DESCRIBED, FACTS, FIELDS, INSIDE,
+    IN_PAGE_KEY, SELECT, SET_VALUE, TEXT, TYPED_INTO, WHOLE,
+};
+use crate::agents::snapshot::{self, Part, Wanted};
+
+/// The tallest full-page picture, in CSS pixels, as on the `DevTools` Protocol.
+const TALLEST: f64 = 16_384.0;
 use crate::agents::verbs::{
     Answer, Code, ConsoleLines, Cookie, Dialog, DialogKind, Download, DownloadState, FieldValue,
     Match, Moment, Picture, ReadAs, Requests, Until,
@@ -775,10 +791,6 @@ fn downloading(held: &Held, download: &WKDownload, url: Option<String>) {
 }
 
 /// Where a download goes, and whether it may at all.
-#[allow(
-    unsafe_code,
-    reason = "a download's answer is a block the engine handed over"
-)]
 fn destined(
     fetching: &Fetching,
     response: &NSURLResponse,
@@ -1075,6 +1087,32 @@ fn waited<T>(page: &Page<'_>, heard: &Receiver<T>, most: Duration) -> Result<T, 
     }
 }
 
+thread_local! {
+    /// nib's own world, held for as long as the app runs. `WebKit` keeps a content world
+    /// only while something holds it: one asked for by name and let go of after a call is
+    /// torn down with every global of its own, so a ref the snapshot gave was gone at the
+    /// next call. A reader's tab's world lives in its user scripts (`web_worlds.rs`); an
+    /// agent's page has none there.
+    static NIB_WORLD: std::cell::OnceCell<Retained<WKContentWorld>> = const { std::cell::OnceCell::new() };
+}
+
+/// nib's own world, on the main thread.
+#[allow(
+    unsafe_code,
+    reason = "a content world is asked for by name through the Objective-C runtime"
+)]
+fn nib_world(mtm: MainThreadMarker) -> Retained<WKContentWorld> {
+    NIB_WORLD.with(|held| {
+        held.get_or_init(|| {
+            // SAFETY: a world asked for by name on the main thread.
+            unsafe {
+                WKContentWorld::worldWithName(&NSString::from_str(crate::web_worlds::WORLD), mtm)
+            }
+        })
+        .clone()
+    })
+}
+
 /// A function body run in the page - in nib's own world, or the page's - answering what
 /// it returns, as JSON. Its `await`s are waited for.
 #[allow(
@@ -1096,13 +1134,7 @@ fn run(page: &Page<'_>, body: &str, page_world: bool) -> Result<Value, Answer> {
                 // SAFETY: the page's own world, asked for on the main thread.
                 unsafe { WKContentWorld::pageWorld(mtm) }
             } else {
-                // SAFETY: nib's own world, asked for by name on the main thread.
-                unsafe {
-                    WKContentWorld::worldWithName(
-                        &NSString::from_str(crate::web_worlds::WORLD),
-                        mtm,
-                    )
-                }
+                nib_world(mtm)
             };
             let done = RcBlock::new(move |value: *mut AnyObject, error: *mut NSError| {
                 // SAFETY: the engine's own answer, alive for this call, on the main thread.
@@ -1141,10 +1173,6 @@ fn run(page: &Page<'_>, body: &str, page_world: bool) -> Result<Value, Answer> {
 }
 
 /// What a script that threw says: the page's exception, or the engine's reason.
-#[allow(
-    unsafe_code,
-    reason = "an error's details are read through the Objective-C runtime"
-)]
 fn thrown(error: &NSError) -> String {
     let info = error.userInfo();
     let message = info
@@ -1219,6 +1247,744 @@ fn stepped(view: &WKWebView, by: i64) -> bool {
 /// "network idle" on an engine that says nothing of its requests.
 const FETCHED: &str = "({ loaded: document.readyState === 'complete', fetched: performance.getEntriesByType('resource').length })";
 
+/// The agent's reach into a page (`snapshot.js`): refs, the tree, the elements a ref
+/// names.
+const AGENT: &str = include_str!("snapshot.js");
+
+/// The most nodes one snapshot reads.
+const MOST_NODES: usize = 20_000;
+
+/// A function body with `nibAgent` in scope: the page's own, made the first time this
+/// document is asked, with refs numbered from a start of this load's own, so a ref of a
+/// page the tab has left never names an element of the next.
+fn with_agent(page: &Page<'_>, body: &str) -> String {
+    let start = (heard(&page.label, |one| one.loads) + 1) * 100_000 + 1;
+    format!(
+        "if (!globalThis.nibAgent) {{\n{FIELDS}\n{AGENT}\nglobalThis.nibAgent = globalThis.nibAgentOf(describe, {start})\n}}\nconst nibAgent = globalThis.nibAgent;\n{body}"
+    )
+}
+
+/// A function body run with `nibAgent` in nib's own world.
+fn agent(page: &Page<'_>, body: &str) -> Result<Value, Answer> {
+    run(page, &with_agent(page, body), false)
+}
+
+/// A function run with the element a ref names as `this`, answering its value; an
+/// element that is gone says to look again.
+fn on(
+    page: &Page<'_>,
+    element: &Element,
+    function: &str,
+    arguments: &[Value],
+) -> Result<Value, Answer> {
+    let said = agent(
+        page,
+        &format!(
+            "const node = nibAgent.byId({}); if (!node) return {{ gone: true }}; return {{ value: await ({function}).apply(node, {}) }};",
+            element.backend,
+            Value::Array(arguments.to_vec()),
+        ),
+    )?;
+    if said.get("gone").and_then(Value::as_bool) == Some(true) {
+        return Err(gone());
+    }
+    Ok(said.get("value").cloned().unwrap_or_default())
+}
+
+/// What an element that is no longer in the page answers.
+fn gone() -> Answer {
+    Answer::error(
+        Code::NoSuchRef,
+        "that element is gone: take a snapshot again",
+    )
+}
+
+/// Where an element is in the viewport, in CSS pixels: left, top, width, height.
+fn box_of(page: &Page<'_>, element: &Element, scroll: bool) -> Result<[f64; 4], Answer> {
+    let said = agent(
+        page,
+        &format!("return nibAgent.box({}, {scroll});", element.backend),
+    )?;
+    if said.get("gone").and_then(Value::as_bool) == Some(true) {
+        return Err(gone());
+    }
+    let at = |key: &str| said.get(key).and_then(Value::as_f64).unwrap_or_default();
+    Ok([at("x"), at("y"), at("width"), at("height")])
+}
+
+/// Every field on the page words are typed into that is secret (`policy::secret`): its
+/// ref, whether it holds anything, and where it is in the viewport.
+fn secrets(page: &Page<'_>) -> Result<Vec<(u64, bool, [f64; 4])>, Answer> {
+    let said = agent(
+        page,
+        &format!(
+            "const list = {TYPED_INTO}; const described = ({}).call(list); return described.map((one, at) => {{ const el = list[at]; const box = el.getBoundingClientRect(); let x = box.left, y = box.top; for (let view = el.ownerDocument.defaultView; view && view !== window; view = view.parent) {{ const frame = view.frameElement; if (!frame) break; const outer = frame.getBoundingClientRect(); x += outer.left + frame.clientLeft; y += outer.top + frame.clientTop }} return Object.assign(one, {{ id: nibAgent.idOf(el), box: [x, y, box.width, box.height] }}) }});",
+            *DESCRIBED
+        ),
+    )?;
+    Ok(said
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|one| {
+            serde_json::from_value::<Field>((*one).clone())
+                .is_ok_and(|field| policy::secret(&field))
+        })
+        .filter_map(|one| {
+            let id = one.get("id")?.as_u64()?;
+            let filled = one.get("filled").and_then(Value::as_bool) != Some(false);
+            let place: Vec<f64> = one
+                .get("box")?
+                .as_array()?
+                .iter()
+                .filter_map(Value::as_f64)
+                .collect();
+            Some((
+                id,
+                filled,
+                [
+                    *place.first()?,
+                    *place.get(1)?,
+                    *place.get(2)?,
+                    *place.get(3)?,
+                ],
+            ))
+        })
+        .collect())
+}
+
+/// The page's cookies, as the engine keeps them for every site, from the main thread.
+#[allow(
+    unsafe_code,
+    reason = "the cookie store is reached through WKWebView's Objective-C interface"
+)]
+fn all_cookies(page: &Page<'_>) -> Result<Vec<Cookie>, Answer> {
+    on_main(page, PATIENCE, |view, said| {
+        // SAFETY: the view's own store, read on the main thread.
+        let store = unsafe { view.configuration().websiteDataStore().httpCookieStore() };
+        let handler = RcBlock::new(move |cookies: NonNull<NSArray<NSHTTPCookie>>| {
+            // SAFETY: the engine hands this block an array alive for its length.
+            let cookies = unsafe { cookies.as_ref() };
+            let _ = said.send(
+                cookies
+                    .iter()
+                    .map(|one| cookie_of(&one))
+                    .collect::<Vec<_>>(),
+            );
+        });
+        // SAFETY: as above; the engine copies the block and calls it once.
+        unsafe { store.getAllCookies(&handler) };
+    })
+}
+
+/// A cookie as the agent reads it.
+fn cookie_of(cookie: &NSHTTPCookie) -> Cookie {
+    Cookie {
+        name: cookie.name().to_string(),
+        value: cookie.value().to_string(),
+        domain: Some(cookie.domain().to_string()),
+        path: Some(cookie.path().to_string()),
+        expires: cookie
+            .expiresDate()
+            .map(|at| at.timeIntervalSince1970())
+            .filter(|at| *at > 0.0),
+        http_only: cookie.isHTTPOnly(),
+        secure: cookie.isSecure(),
+    }
+}
+
+/// Whether a cookie is one the page's address is sent: its domain the host or a domain
+/// above it, its path above the address's.
+fn sent_to(cookie: &Cookie, url: &Url) -> bool {
+    let host = url.host_str().unwrap_or_default().to_lowercase();
+    let domain = cookie
+        .domain
+        .as_deref()
+        .unwrap_or_default()
+        .trim_start_matches('.')
+        .to_lowercase();
+    let path = cookie.path.as_deref().unwrap_or("/");
+    let domain_matches = host == domain || host.ends_with(&format!(".{domain}"));
+    let path_matches = url.path().starts_with(path.trim_end_matches('/')) || path == "/";
+    domain_matches
+        && path_matches
+        && (!cookie.secure || url.scheme() == "https" || host == "127.0.0.1" || host == "localhost")
+}
+
+/// One cookie written to the page's store, or deleted from it.
+#[allow(
+    unsafe_code,
+    reason = "a cookie is made and stored through Foundation's and WKWebView's Objective-C interfaces"
+)]
+fn store_cookie(page: &Page<'_>, cookie: &Cookie, url: &Url, delete: bool) -> Result<bool, Answer> {
+    let (name, value, path, expires, secure, http_only) = (
+        cookie.name.clone(),
+        cookie.value.clone(),
+        cookie.path.clone().unwrap_or_else(|| "/".into()),
+        cookie.expires,
+        cookie.secure,
+        cookie.http_only,
+    );
+    let domain = cookie
+        .domain
+        .clone()
+        .unwrap_or_else(|| url.host_str().unwrap_or_default().to_string());
+    on_main(page, PATIENCE, move |view, said| {
+        let properties = NSMutableDictionary::<NSString, AnyObject>::new();
+        let put = |key: &NSString, value: &AnyObject| properties.insert(key, value);
+        // SAFETY: every key is `NSHTTPCookie`'s own, every value the type it takes.
+        let made = unsafe {
+            put(NSHTTPCookieName, &NSString::from_str(&name));
+            put(NSHTTPCookieValue, &NSString::from_str(&value));
+            put(NSHTTPCookieDomain, &NSString::from_str(&domain));
+            put(NSHTTPCookiePath, &NSString::from_str(&path));
+            if secure {
+                put(NSHTTPCookieSecure, &NSString::from_str("TRUE"));
+            }
+            if http_only {
+                put(&NSString::from_str("HttpOnly"), &NSString::from_str("TRUE"));
+            }
+            if let Some(at) = expires {
+                put(
+                    NSHTTPCookieExpires,
+                    &NSDate::dateWithTimeIntervalSince1970(at),
+                );
+            }
+            NSHTTPCookie::cookieWithProperties(&properties)
+        };
+        let Some(made) = made else {
+            let _ = said.send(false);
+            return;
+        };
+        // SAFETY: the view's own store, used on the main thread.
+        let store = unsafe { view.configuration().websiteDataStore().httpCookieStore() };
+        let done = RcBlock::new(move || {
+            let _ = said.send(true);
+        });
+        // SAFETY: as above; the engine copies the block and calls it once.
+        unsafe {
+            if delete {
+                store.deleteCookie_completionHandler(&made, Some(&done));
+            } else {
+                store.setCookie_completionHandler(&made, Some(&done));
+            }
+        }
+    })
+}
+
+/// Everything the page's store keeps for its site but its cookies, gone: storage,
+/// caches, databases.
+#[allow(
+    unsafe_code,
+    reason = "a store's data is removed through WKWebView's Objective-C interface"
+)]
+fn clear_site(page: &Page<'_>, host: String) -> Result<(), Answer> {
+    on_main(page, Duration::from_secs(10), move |view, said| {
+        let Some(mtm) = MainThreadMarker::new() else {
+            return;
+        };
+        // SAFETY: the view's own store, used on the main thread; each block is copied by
+        // the engine and called once.
+        unsafe {
+            let store = view.configuration().websiteDataStore();
+            let types = WKWebsiteDataStore::allWebsiteDataTypes(mtm);
+            let removing = store.clone();
+            let removed_types = types.clone();
+            let found = RcBlock::new(move |records: NonNull<NSArray<WKWebsiteDataRecord>>| {
+                let records = records.as_ref();
+                let site: Vec<Retained<WKWebsiteDataRecord>> = records
+                    .iter()
+                    .filter(|one| {
+                        let name = one.displayName().to_string().to_lowercase();
+                        host == name || host.ends_with(&format!(".{name}"))
+                    })
+                    .collect();
+                let said = said.clone();
+                let done = RcBlock::new(move || {
+                    let _ = said.send(());
+                });
+                let site = NSArray::from_retained_slice(&site);
+                removing.removeDataOfTypes_forDataRecords_completionHandler(
+                    &removed_types,
+                    &site,
+                    &done,
+                );
+            });
+            store.fetchDataRecordsOfTypes_completionHandler(&types, &found);
+        }
+    })
+}
+
+/// A picture of the view, as a PNG: of `rect` in the view's own points, `width` pixels
+/// across. `tall` is how tall the view is made while the picture is taken, for a picture
+/// of the whole page; it is put back after.
+#[allow(
+    unsafe_code,
+    reason = "WKWebView's snapshot is reached through the Objective-C runtime"
+)]
+fn photograph(
+    page: &Page<'_>,
+    rect: [f64; 4],
+    width: f64,
+    tall: Option<f64>,
+) -> Result<Option<Vec<u8>>, Answer> {
+    on_main(page, PATIENCE, move |view, said| {
+        let Some(mtm) = MainThreadMarker::new() else {
+            return;
+        };
+        let was = view.frame();
+        if let Some(tall) = tall {
+            view.setFrameSize(NSSize::new(was.size.width, tall));
+        }
+        // SAFETY: a configuration of the view's own, made and used on the main thread;
+        // the engine copies the block and calls it once.
+        unsafe {
+            let configuration = WKSnapshotConfiguration::new(mtm);
+            configuration.setRect(NSRect::new(
+                NSPoint::new(rect[0], rect[1]),
+                NSSize::new(rect[2], rect[3]),
+            ));
+            configuration.setSnapshotWidth(Some(&NSNumber::new_f64(width)));
+            configuration.setAfterScreenUpdates(true);
+            let restoring = view.retain();
+            let handler = RcBlock::new(move |image: *mut NSImage, _error: *mut NSError| {
+                if tall.is_some() {
+                    restoring.setFrameSize(was.size);
+                }
+                let _ = said.send(image.as_ref().and_then(png_of));
+            });
+            view.takeSnapshotWithConfiguration_completionHandler(Some(&configuration), &handler);
+        }
+    })
+}
+
+/// A picture as a PNG.
+#[allow(
+    unsafe_code,
+    reason = "a bitmap is encoded through AppKit's Objective-C interface"
+)]
+fn png_of(image: &NSImage) -> Option<Vec<u8>> {
+    let tiff = image.TIFFRepresentation()?;
+    let bitmap = NSBitmapImageRep::imageRepWithData(&tiff)?;
+    // SAFETY: an empty dictionary is a valid set of encoding properties.
+    let data = unsafe {
+        bitmap.representationUsingType_properties(NSBitmapImageFileType::PNG, &NSDictionary::new())
+    }?;
+    let bytes = data.to_vec();
+    (!bytes.is_empty()).then_some(bytes)
+}
+
+/// How many of the screen's pixels the view's window draws a point with.
+fn backing(page: &Page<'_>) -> f64 {
+    on_main(page, PATIENCE, |view, said| {
+        let _ = said.send(
+            view.window()
+                .map_or(1.0, |window| window.backingScaleFactor()),
+        );
+    })
+    .unwrap_or(1.0)
+    .max(1.0)
+}
+
+/// A statement list run in the page's world or nib's, answering the value of its last
+/// statement as `evaluateJavaScript` does: for what `browser_evaluate` is handed that is
+/// not one expression.
+#[allow(
+    unsafe_code,
+    reason = "a script is run in the page through the Objective-C runtime"
+)]
+fn statements(page: &Page<'_>, source: &str, page_world: bool) -> Result<Value, Answer> {
+    let source = source.to_string();
+    let said = on_main(
+        page,
+        PATIENCE,
+        move |view, said: Sender<Result<Value, String>>| {
+            let Some(mtm) = MainThreadMarker::new() else {
+                return;
+            };
+            let world = if page_world {
+                // SAFETY: the page's own world, asked for on the main thread.
+                unsafe { WKContentWorld::pageWorld(mtm) }
+            } else {
+                nib_world(mtm)
+            };
+            let done = RcBlock::new(move |value: *mut AnyObject, error: *mut NSError| {
+                // SAFETY: the engine's own answer, alive for this call, on the main thread.
+                let answer = unsafe {
+                    match error.as_ref() {
+                        Some(error) => Err(thrown(error)),
+                        None => Ok(value.as_ref().map_or(Value::Null, value_of)),
+                    }
+                };
+                let _ = said.send(answer);
+            });
+            // SAFETY: as in `run`.
+            unsafe {
+                view.evaluateJavaScript_inFrame_inContentWorld_completionHandler(
+                    &NSString::from_str(&source),
+                    None,
+                    &world,
+                    Some(&done),
+                );
+            }
+        },
+    )?;
+    said.map_err(|why| {
+        Answer::error(
+            Code::Failed,
+            format!("the script threw: {}", super::cut(why, 2_000)),
+        )
+    })
+}
+
+/// What the engine answered a script with, as JSON: strings, numbers, booleans, arrays
+/// and dictionaries of them, and nothing else.
+fn value_of(said: &AnyObject) -> Value {
+    if let Some(text) = said.downcast_ref::<NSString>() {
+        return Value::String(text.to_string());
+    }
+    if let Some(number) = said.downcast_ref::<NSNumber>() {
+        // A boolean is a number to Foundation; its type says which.
+        if number.encoding() == objc2::encode::Encoding::Char
+            || number.encoding() == objc2::encode::Encoding::Bool
+        {
+            return Value::Bool(number.as_bool());
+        }
+        let float = number.as_f64();
+        return serde_json::Number::from_f64(float).map_or(Value::Null, |one| {
+            if float.fract() == 0.0 && float.abs() < 9.0e15 {
+                #[allow(clippy::cast_possible_truncation, reason = "a whole number, checked")]
+                Value::from(float as i64)
+            } else {
+                Value::Number(one)
+            }
+        });
+    }
+    if let Some(list) = said.downcast_ref::<NSArray>() {
+        return Value::Array(list.iter().map(|one| value_of(&one)).collect());
+    }
+    if let Some(map) = said.downcast_ref::<NSDictionary>() {
+        let mut out = Map::new();
+        for key in map.allKeys() {
+            if let (Some(name), Some(one)) =
+                (key.downcast_ref::<NSString>(), map.objectForKey(&key))
+            {
+                out.insert(name.to_string(), value_of(&one));
+            }
+        }
+        return Value::Object(out);
+    }
+    Value::Null
+}
+
+/// What the pointer does, as `AppKit`'s events.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Pointer {
+    Moved,
+    Down,
+    Up,
+}
+
+/// The modifiers an agent held, as `AppKit`'s flags.
+fn flags_of(modifiers: u8) -> NSEventModifierFlags {
+    let mut flags = NSEventModifierFlags::empty();
+    if modifiers & 1 != 0 {
+        flags |= NSEventModifierFlags::Option;
+    }
+    if modifiers & 2 != 0 {
+        flags |= NSEventModifierFlags::Control;
+    }
+    if modifiers & 4 != 0 {
+        flags |= NSEventModifierFlags::Command;
+    }
+    if modifiers & 8 != 0 {
+        flags |= NSEventModifierFlags::Shift;
+    }
+    flags
+}
+
+/// The pointer at a point of the page's viewport, in CSS pixels, as an `NSEvent` sent to
+/// the view itself: trusted, inside the page, and never through the system's queue, so the
+/// system's own pointer and the window in front are untouched (docs/agent-native.md
+/// 12.2).
+fn send_pointer(
+    view: &WKWebView,
+    (x, y): (f64, f64),
+    kind: Pointer,
+    button: &str,
+    count: u8,
+    modifiers: u8,
+) -> bool {
+    let plain: &NSView = view;
+    let Some(window) = plain.window() else {
+        return false;
+    };
+    let height = plain.bounds().size.height;
+    let local = NSPoint::new(x, if plain.isFlipped() { y } else { height - y });
+    let at = plain.convertPoint_toView(local, None);
+    let type_of = match (kind, button) {
+        (Pointer::Moved, _) => NSEventType::MouseMoved,
+        (Pointer::Down, "left") => NSEventType::LeftMouseDown,
+        (Pointer::Up, "left") => NSEventType::LeftMouseUp,
+        (Pointer::Down, "right") => NSEventType::RightMouseDown,
+        (Pointer::Up, "right") => NSEventType::RightMouseUp,
+        (Pointer::Down, _) => NSEventType::OtherMouseDown,
+        (Pointer::Up, _) => NSEventType::OtherMouseUp,
+    };
+    let Some(event) = NSEvent::mouseEventWithType_location_modifierFlags_timestamp_windowNumber_context_eventNumber_clickCount_pressure(
+        type_of,
+        at,
+        flags_of(modifiers),
+        NSProcessInfo::processInfo().systemUptime(),
+        window.windowNumber(),
+        None,
+        0,
+        isize::from(count.max(1)),
+        if kind == Pointer::Down { 1.0 } else { 0.0 },
+    ) else {
+        return false;
+    };
+    keeping_focus(&window, || match type_of {
+        NSEventType::MouseMoved => plain.mouseMoved(&event),
+        NSEventType::LeftMouseDown => plain.mouseDown(&event),
+        NSEventType::LeftMouseUp => plain.mouseUp(&event),
+        NSEventType::RightMouseDown => plain.rightMouseDown(&event),
+        NSEventType::RightMouseUp => plain.rightMouseUp(&event),
+        NSEventType::OtherMouseDown => plain.otherMouseDown(&event),
+        _ => plain.otherMouseUp(&event),
+    });
+    true
+}
+
+/// Runs `act` and gives the window's keyboard back to whatever held it before: a press
+/// the engine answers by making its view the window's first responder would otherwise
+/// leave the reader's typing in Orden's window going to the agent's page (7.2), and a
+/// view that is first responder ignores the pointer moving outside what of it shows,
+/// which for a page out of sight is everywhere.
+fn keeping_focus<T>(window: &NSWindow, act: impl FnOnce() -> T) -> T {
+    let before = window.firstResponder();
+    let done = act();
+    let now = window.firstResponder();
+    let moved = match (&before, &now) {
+        (Some(before), Some(now)) => !std::ptr::eq(Retained::as_ptr(before), Retained::as_ptr(now)),
+        (None, None) => false,
+        _ => true,
+    };
+    if moved {
+        window.makeFirstResponder(before.as_deref());
+    }
+    done
+}
+
+/// One key pressed and let go of, as the `NSEvent`s a Mac's keyboard sends, to the view
+/// itself.
+fn send_key(view: &WKWebView, code: u16, typed: &str, plain_text: &str, modifiers: u8) -> bool {
+    let plain: &NSView = view;
+    let Some(window) = plain.window() else {
+        return false;
+    };
+    let key = |kind: NSEventType| {
+        NSEvent::keyEventWithType_location_modifierFlags_timestamp_windowNumber_context_characters_charactersIgnoringModifiers_isARepeat_keyCode(
+            kind,
+            NSPoint::new(0.0, 0.0),
+            flags_of(modifiers),
+            NSProcessInfo::processInfo().systemUptime(),
+            window.windowNumber(),
+            None,
+            &NSString::from_str(typed),
+            &NSString::from_str(plain_text),
+            false,
+            code,
+        )
+    };
+    let (Some(down), Some(up)) = (key(NSEventType::KeyDown), key(NSEventType::KeyUp)) else {
+        return false;
+    };
+    keeping_focus(&window, || {
+        plain.keyDown(&down);
+        plain.keyUp(&up);
+    });
+    true
+}
+
+/// Words put in where the page's caret is, through the view's own text input: what a
+/// person's typing becomes once the keyboard has done its part.
+#[allow(
+    unsafe_code,
+    reason = "a view's text input is reached through the Objective-C runtime"
+)]
+fn insert_text(view: &WKWebView, text: &str) {
+    let words = NSString::from_str(text);
+    let insert = || {
+        // SAFETY: `insertText:` is `NSResponder`'s, which WKWebView answers as its text
+        // input does, with a string; sent on the main thread.
+        unsafe {
+            let () = msg_send![view, insertText: &*words];
+        }
+    };
+    let plain: &NSView = view;
+    match plain.window() {
+        Some(window) => keeping_focus(&window, insert),
+        None => insert(),
+    }
+}
+
+/// Whether the pointer is over an element, as the page's style sees it.
+const HOVERED: &str = "function () { const el = this.nodeType === 1 ? this : this.parentElement; return !!el && el.matches(':hover') }";
+
+/// The events a pointer arriving over an element raises, as the page's own.
+const HOVER_EVENTS: &str = "function (x, y) { const el = this.nodeType === 1 ? this : this.parentElement; if (!el) return; for (const type of ['pointerover', 'pointerenter', 'mouseover', 'mouseenter', 'pointermove', 'mousemove']) { const Kind = type.startsWith('pointer') ? PointerEvent : MouseEvent; el.dispatchEvent(new Kind(type, { bubbles: !type.endsWith('enter'), cancelable: true, composed: true, clientX: x, clientY: y, view: window })) } }";
+
+/// The pointer, through the main thread.
+fn pointer(
+    page: &Page<'_>,
+    point: (f64, f64),
+    kind: Pointer,
+    button: &'static str,
+    count: u8,
+    modifiers: u8,
+) -> Result<(), Answer> {
+    let sent = on_main(page, PATIENCE, move |view, said| {
+        let _ = said.send(send_pointer(view, point, kind, button, count, modifiers));
+    })?;
+    if sent {
+        Ok(())
+    } else {
+        Err(Answer::error(
+            Code::Failed,
+            "the page has no window to be pressed in",
+        ))
+    }
+}
+
+/// A button's name as the pointer's events take it.
+fn button_of(button: &str) -> &'static str {
+    match button {
+        "right" => "right",
+        "middle" => "middle",
+        _ => "left",
+    }
+}
+
+/// A press at a point: the pointer moved there, pressed and let go `count` times, and
+/// the page let settle.
+fn press_at(
+    page: &Page<'_>,
+    point: (f64, f64),
+    button: &str,
+    count: u8,
+    modifiers: u8,
+) -> Result<(), Answer> {
+    let before = page.navigations();
+    let button = button_of(button);
+    pointer(page, point, Pointer::Moved, "none", 1, modifiers)?;
+    for press in 1..=count.max(1) {
+        pointer(page, point, Pointer::Down, button, press, modifiers)?;
+        pointer(page, point, Pointer::Up, button, press, modifiers)?;
+    }
+    page.settle(before);
+    Ok(())
+}
+
+/// Where an element can be pressed, scrolled into view first: its middle, then the middle
+/// of each quarter of it, as on the `DevTools` Protocol.
+fn points(page: &Page<'_>, element: &Element) -> Result<Vec<(f64, f64)>, Answer> {
+    let [x, y, width, height] = box_of(page, element, true)?;
+    if width <= 0.0 || height <= 0.0 {
+        return Err(Answer::error(
+            Code::Failed,
+            "the element is not visible: nothing of it is on the page",
+        ));
+    }
+    let middle = (x + width / 2.0, y + height / 2.0);
+    Ok(std::iter::once(middle)
+        .chain(
+            [
+                (x, y),
+                (x + width, y),
+                (x, y + height),
+                (x + width, y + height),
+            ]
+            .into_iter()
+            .map(|corner| {
+                (
+                    f64::midpoint(middle.0, corner.0),
+                    f64::midpoint(middle.1, corner.1),
+                )
+            }),
+        )
+        .collect())
+}
+
+/// The first of an element's points a press there lands on it: it, inside it, round it,
+/// its label, or a frame it is in; and what covers it when none does.
+fn landing(page: &Page<'_>, element: &Element) -> Result<(f64, f64), Answer> {
+    let mut first = None;
+    for (x, y) in points(page, element)? {
+        let said = agent(
+            page,
+            &format!(
+                "const target = nibAgent.byId({id}); if (!target) return {{ gone: true }}; const at = nibAgent.at({x}, {y}); const hit = at === null ? null : nibAgent.byId(at); if (!hit || hit === target) return {{ ok: true }}; if (({INSIDE}).call(hit, target) !== false) return {{ ok: true }}; const el = hit.nodeType === 1 ? hit : hit.parentElement; return {{ covered: at, what: el ? (el.getAttribute('aria-label') || el.innerText || el.tagName).replace(/\\s+/g, ' ').trim().slice(0, 80) : '' }};",
+                id = element.backend,
+            ),
+        )?;
+        if said.get("gone").and_then(Value::as_bool) == Some(true) {
+            return Err(gone());
+        }
+        if said.get("ok").and_then(Value::as_bool) == Some(true) {
+            return Ok((x, y));
+        }
+        let covered = said
+            .get("covered")
+            .and_then(Value::as_u64)
+            .unwrap_or_default();
+        let what = said.get("what").and_then(Value::as_str).unwrap_or_default();
+        first.get_or_insert_with(|| {
+            Answer::error(
+                Code::Failed,
+                format!("e{} is covered by e{covered} (\u{201c}{what}\u{201d}) where it would be pressed: deal with that first, or, where the element is what shows there, press there with browser_click's x and y", element.backend),
+            )
+        });
+    }
+    Err(first.unwrap_or_else(|| {
+        Answer::error(
+            Code::Failed,
+            "the element is not visible: nothing of it is on the page",
+        )
+    }))
+}
+
+/// Words put into the element with the keyboard through the page itself, in one task of
+/// the page's own: a reader's tab, where the reader may be typing too (7.3), and the road
+/// for words the view's own text input did not put in.
+fn insert_in_page(
+    page: &Page<'_>,
+    element: &Element,
+    text: &str,
+    placing: &str,
+) -> Result<bool, Answer> {
+    let said = on(
+        page,
+        element,
+        &format!("function (text) {{ this.focus(); ({placing}).call(this); return document.execCommand('insertText', false, text) }}"),
+        &[json!(text)],
+    )?;
+    Ok(said.as_bool() == Some(true))
+}
+
+/// What a field holds now, for whether words reached it.
+fn held_words(page: &Page<'_>, element: &Element) -> String {
+    on(
+        page,
+        element,
+        "function () { return String(this.value !== undefined ? this.value : this.innerText || '') }",
+        &[],
+    )
+    .ok()
+    .and_then(|one| one.as_str().map(str::to_string))
+    .unwrap_or_default()
+}
+
 impl Engine for Page<'_> {
     fn wake(&self) {}
 
@@ -1233,20 +1999,41 @@ impl Engine for Page<'_> {
             .unwrap_or_default()
     }
 
-    fn element(&self, _reference: &str) -> Result<Element, Answer> {
-        Err(refused("browser_snapshot"))
+    fn element(&self, reference: &str) -> Result<Element, Answer> {
+        match snapshot::parse_ref(reference) {
+            Some((None, backend)) => Ok(Element { backend }),
+            Some((Some(_), _)) => Err(Answer::error(
+                Code::NoSuchRef,
+                format!("{reference} is in a frame of another site, which WKWebView does not reach: take a snapshot again"),
+            )),
+            None => Err(Answer::error(
+                Code::NoSuchRef,
+                format!("{reference} is not a ref: refs look like e12 or f2e17"),
+            )),
+        }
     }
 
-    fn element_at(&self, _point: (f64, f64)) -> Result<Element, Answer> {
-        Err(refused("browser_click"))
+    fn element_at(&self, (x, y): (f64, f64)) -> Result<Element, Answer> {
+        agent(self, &format!("return nibAgent.at({x}, {y});"))?
+            .as_u64()
+            .map(|backend| Element { backend })
+            .ok_or_else(|| Answer::error(Code::Failed, "nothing of the page is at that point"))
     }
 
-    fn facts(&self, _element: &Element) -> Result<Facts, Answer> {
-        Err(refused("browser_click"))
+    fn facts(&self, element: &Element) -> Result<Facts, Answer> {
+        let said = on(self, element, &FACTS, &[])?;
+        Ok(serde_json::from_value(said).unwrap_or_default())
     }
 
     fn active_facts(&self) -> Result<Option<Facts>, Answer> {
-        Err(refused("browser_press"))
+        let said = agent(
+            self,
+            &format!(
+                "const id = nibAgent.active(); if (id === null) return null; return ({}).apply(nibAgent.byId(id));",
+                *FACTS
+            ),
+        )?;
+        Ok(serde_json::from_value(said).ok())
     }
 
     fn navigate(&self, url: &str) -> Result<(), Answer> {
@@ -1310,7 +2097,10 @@ impl Engine for Page<'_> {
                     ),
                 )
                 .is_ok_and(|found| found.as_bool() == Some(true)),
-                Until::Element { .. } => return Err(refused("browser_snapshot")),
+                Until::Element { element } => self.element(element).is_ok_and(|element| {
+                    box_of(self, &element, false)
+                        .is_ok_and(|[_, _, width, height]| width > 0.0 && height > 0.0)
+                }),
                 Until::Url { url } => self.view.url().contains(url.as_str()),
             };
             let spent = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
@@ -1374,23 +2164,71 @@ impl Engine for Page<'_> {
     }
 
     fn hosts(&self) -> Vec<String> {
-        Vec::new()
+        let said = isolated(
+            self,
+            "(() => { const all = new Set([location.host]); for (const one of performance.getEntriesByType('resource')) { try { all.add(new URL(one.name).host) } catch (_) {} } for (const frame of document.querySelectorAll('iframe, frame')) { try { all.add(new URL(frame.src).host) } catch (_) {} } return [...all].filter(Boolean) })()",
+        )
+        .unwrap_or_default();
+        said.as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(Value::as_str)
+            .filter_map(|host| policy::host_of(&format!("https://{host}/")))
+            .collect()
     }
 
     fn parts(&self) -> Result<Tree, Answer> {
-        Err(refused("browser_snapshot"))
+        let said = agent(self, &format!("return nibAgent.tree({MOST_NODES});"))?;
+        let nodes = said
+            .get("nodes")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        let secret = said
+            .get("fields")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter(|one| {
+                serde_json::from_value::<Field>((*one).clone())
+                    .is_ok_and(|field| policy::secret(&field))
+            })
+            .filter_map(|one| one.get("id").and_then(Value::as_u64))
+            .map(|id| (String::new(), id))
+            .collect();
+        Ok((
+            vec![Part {
+                prefix: String::new(),
+                nodes,
+                owner: None,
+            }],
+            secret,
+        ))
     }
 
-    fn find(&self, _wanted: &Wanted<'_>) -> Result<Vec<Match>, Answer> {
-        Err(refused("browser_find"))
+    fn find(&self, wanted: &Wanted<'_>) -> Result<Vec<Match>, Answer> {
+        let (parts, secret) = self.parts()?;
+        Ok(snapshot::find(&parts, &secret, wanted))
     }
 
-    fn read(&self, _app: &AppHandle, _shape: ReadAs) -> Result<(String, String, String), Answer> {
-        Err(refused("browser_read"))
+    fn read(&self, app: &AppHandle, shape: ReadAs) -> Result<(String, String, String), Answer> {
+        let said = match shape {
+            ReadAs::Text => isolated(self, TEXT)?,
+            ReadAs::Markdown => isolated(self, &WHOLE)?,
+            ReadAs::Article => isolated(self, &CLIPPED)?,
+        };
+        Ok(scripts::words(app, shape, &said))
     }
 
     fn clip(&self) -> Result<(String, String, String), Answer> {
-        Err(refused("capture_to_note"))
+        let said = isolated(self, &CLIPPED)?;
+        let text = |key: &str| {
+            said.get(key)
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .to_string()
+        };
+        Ok((text("url"), text("title"), text("html")))
     }
 
     fn pdf(&self, _paper: &PdfPage) -> Result<String, Answer> {
@@ -1399,50 +2237,244 @@ impl Engine for Page<'_> {
 
     fn click(
         &self,
-        _element: &Element,
-        _button: &str,
-        _count: u8,
-        _modifiers: u8,
+        element: &Element,
+        button: &str,
+        count: u8,
+        modifiers: u8,
     ) -> Result<(), Answer> {
-        Err(refused("browser_click"))
+        let facts = self.facts(element)?;
+        if facts.picker() {
+            return Err(Answer::error(
+                Code::BadArguments,
+                "that opens a list of the engine's own: set it with browser_select or browser_fill_form",
+            ));
+        }
+        let point = landing(self, element)?;
+        press_at(self, point, button, count, modifiers)
     }
 
     fn click_at(
         &self,
-        _point: (f64, f64),
-        _button: &str,
-        _count: u8,
-        _modifiers: u8,
+        point: (f64, f64),
+        button: &str,
+        count: u8,
+        modifiers: u8,
     ) -> Result<(), Answer> {
-        Err(refused("browser_click"))
+        let size = isolated(self, "[innerWidth, innerHeight]")?;
+        let width = size.get(0).and_then(Value::as_f64).unwrap_or_default();
+        let height = size.get(1).and_then(Value::as_f64).unwrap_or_default();
+        if !(0.0..width).contains(&point.0) || !(0.0..height).contains(&point.1) {
+            return Err(Answer::error(
+                Code::BadArguments,
+                format!(
+                    "{}, {} is outside the tab, which is {width} by {height}",
+                    point.0, point.1
+                ),
+            ));
+        }
+        if let Ok(element) = self.element_at(point) {
+            if self.facts(&element).is_ok_and(|facts| facts.picker()) {
+                return Err(Answer::error(
+                    Code::BadArguments,
+                    "that opens a list of the engine's own: set it with browser_select or browser_fill_form",
+                ));
+            }
+        }
+        press_at(self, point, button, count, modifiers)
     }
 
-    fn hover(&self, _element: &Element) -> Result<(), Answer> {
-        Err(refused("browser_hover"))
+    fn hover(&self, element: &Element) -> Result<(), Answer> {
+        let point = points(self, element)?[0];
+        // From a pixel beside it, so the engine sees the pointer arrive.
+        pointer(
+            self,
+            (point.0 - 1.0, point.1 - 1.0),
+            Pointer::Moved,
+            "none",
+            1,
+            0,
+        )?;
+        pointer(self, point, Pointer::Moved, "none", 1, 0)?;
+        // `WebKit` gives a page the pointer's moves only while its window is the active
+        // one; where Orden's is not, the element hears them as the page's own events
+        // instead (`isTrusted` false), as `WebKitGTK`'s would (docs/agent-native.md 12.2).
+        let over = on(self, element, HOVERED, &[])?;
+        if over.as_bool() != Some(true) {
+            on(
+                self,
+                element,
+                HOVER_EVENTS,
+                &[json!(point.0), json!(point.1)],
+            )?;
+        }
+        Ok(())
     }
 
-    fn type_text(&self, _element: &Element, _text: &str, _replace: bool) -> Result<(), Answer> {
-        Err(refused("browser_type"))
+    fn type_text(&self, element: &Element, text: &str, replace: bool) -> Result<(), Answer> {
+        let facts = self.facts(element)?;
+        self.refuse_secret(&facts)?;
+        if facts.sensitive() {
+            crate::agents::log::sensitive();
+        }
+        if facts.tag == "select" {
+            return Err(Answer::error(
+                Code::BadArguments,
+                "that is a list: use browser_select",
+            ));
+        }
+        if facts.kind == "file" {
+            return Err(Answer::error(
+                Code::BadArguments,
+                "that takes files: use browser_upload",
+            ));
+        }
+        if facts.picker() {
+            let said = on(self, element, SET_VALUE, &[json!(text)])?;
+            return if said.as_str() == Some(text) || text.is_empty() {
+                Ok(())
+            } else {
+                Err(Answer::error(
+                    Code::BadArguments,
+                    format!("the field did not take {text:?}: a date is written 2026-09-30, a time 14:30, a colour #336699"),
+                ))
+            };
+        }
+        if !facts.editable {
+            return Err(Answer::error(
+                Code::BadArguments,
+                "that is not a field words can be typed into",
+            ));
+        }
+        let placing = if replace { CARET_ALL } else { CARET_END };
+        // A reader's tab: in one task of the page's own, so a key of the reader's lands
+        // before the words or after them and never between (7.3).
+        if !self.own && !text.is_empty() && insert_in_page(self, element, text, placing)? {
+            return Ok(());
+        }
+        on(
+            self,
+            element,
+            &format!("function () {{ this.focus(); ({placing}).call(this) }}"),
+            &[],
+        )?;
+        if text.is_empty() {
+            if replace {
+                self.press(
+                    &keys::chord("Delete").map_err(|why| Answer::error(Code::Failed, why))?,
+                )?;
+            }
+            return Ok(());
+        }
+        let before = held_words(self, element);
+        let words = text.to_string();
+        on_main(self, PATIENCE, move |view, said| {
+            insert_text(view, &words);
+            let _ = said.send(());
+        })?;
+        // The view's text input goes where the window's keyboard is; where it did not
+        // reach the field, the words go in through the page, as in a reader's tab.
+        if held_words(self, element) == before && !insert_in_page(self, element, text, CARET_END)? {
+            return Err(Answer::error(Code::Failed, "the field took no words"));
+        }
+        Ok(())
     }
 
-    fn press(&self, _key: &Key) -> Result<(), Answer> {
-        Err(refused("browser_press"))
+    fn press(&self, key: &Key) -> Result<(), Answer> {
+        self.may_press(key)?;
+        let before = self.navigations();
+        let (code, typed, plain) = key.mac();
+        let modifiers = key.modifiers;
+        let sent = on_main(self, PATIENCE, move |view, said| {
+            let _ = said.send(send_key(view, code, &typed, &plain, modifiers));
+        })?;
+        if !sent {
+            return Err(Answer::error(
+                Code::Failed,
+                "the page has no window to press keys in",
+            ));
+        }
+        self.settle(before);
+        Ok(())
     }
 
-    fn press_in_page(&self, _key: &Key) -> Result<(), Answer> {
-        Err(refused("browser_press"))
+    fn press_in_page(&self, key: &Key) -> Result<(), Answer> {
+        self.may_press(key)?;
+        let before = self.navigations();
+        let said = agent(
+            self,
+            &format!(
+                "const at = nibAgent.active(); const node = (at === null ? null : nibAgent.byId(at)) || document.body; if (!node) return null; return ({IN_PAGE_KEY}).apply(node, {});",
+                json!([key.name, key.code, key.modifiers])
+            ),
+        )?;
+        if said.as_str() == Some("type") {
+            if let Some(text) = key.text.as_deref() {
+                let text = if text == "\r" { "\n" } else { text };
+                isolated(
+                    self,
+                    &format!("document.execCommand('insertText', false, {})", json!(text)),
+                )?;
+            }
+        }
+        self.settle(before);
+        Ok(())
     }
 
-    fn scroll(&self, _element: Option<&Element>, _dx: f64, _dy: f64) -> Result<(), Answer> {
-        Err(refused("browser_scroll"))
+    fn scroll(&self, element: Option<&Element>, dx: f64, dy: f64) -> Result<(), Answer> {
+        if let Some(element) = element {
+            box_of(self, element, true)?;
+            return Ok(());
+        }
+        isolated(
+            self,
+            &format!("window.scrollBy({{ left: {dx}, top: {dy}, behavior: 'instant' }})"),
+        )?;
+        Ok(())
     }
 
-    fn select(&self, _element: &Element, _values: &[String]) -> Result<Vec<String>, Answer> {
-        Err(refused("browser_select"))
+    fn select(&self, element: &Element, values: &[String]) -> Result<Vec<String>, Answer> {
+        let said = on(self, element, SELECT, &[json!(values)])?;
+        if let Some(error) = said.get("error").and_then(Value::as_str) {
+            return Err(Answer::error(Code::BadArguments, error));
+        }
+        Ok(said
+            .get("chosen")
+            .and_then(Value::as_array)
+            .map(|all| {
+                all.iter()
+                    .filter_map(Value::as_str)
+                    .map(str::to_string)
+                    .collect()
+            })
+            .unwrap_or_default())
     }
 
-    fn fill(&self, _element: &Element, _value: &FieldValue) -> Result<(), Answer> {
-        Err(refused("browser_fill_form"))
+    fn fill(&self, element: &Element, value: &FieldValue) -> Result<(), Answer> {
+        let facts = self.facts(element)?;
+        self.refuse_secret(&facts)?;
+        if facts.sensitive() {
+            crate::agents::log::sensitive();
+        }
+        match value {
+            FieldValue::Ticked(wanted) => {
+                if !matches!(facts.kind.as_str(), "checkbox" | "radio") {
+                    return Err(Answer::error(
+                        Code::BadArguments,
+                        "true and false are for a checkbox or a radio button",
+                    ));
+                }
+                let now = on(self, element, "function () { return this.checked }", &[])?;
+                if now.as_bool() != Some(*wanted) {
+                    self.click(element, "left", 1, 0)?;
+                }
+                Ok(())
+            }
+            FieldValue::Options(values) => self.select(element, values).map(|_| ()),
+            FieldValue::Words(text) if facts.tag == "select" => {
+                self.select(element, std::slice::from_ref(text)).map(|_| ())
+            }
+            FieldValue::Words(text) => self.type_text(element, text, true),
+        }
     }
 
     fn drag(&self, _from: &Element, _to: &Element) -> Result<(), Answer> {
@@ -1455,11 +2487,73 @@ impl Engine for Page<'_> {
 
     fn screenshot(
         &self,
-        _element: Option<&Element>,
-        _full: bool,
-        _scale: Option<f64>,
+        element: Option<&Element>,
+        full: bool,
+        scale: Option<f64>,
     ) -> Result<Picture, Answer> {
-        Err(refused("browser_screenshot"))
+        if !self.may_touch_credentials()
+            && self.active_facts()?.is_some_and(|facts| facts.password())
+        {
+            return Err(Answer::error(
+                Code::PasswordField,
+                "a password field has the keyboard: nothing is photographed while one does",
+            ));
+        }
+        let page = isolated(
+            self,
+            "({ width: innerWidth, height: innerHeight, x: scrollX, y: scrollY, tall: Math.max(document.documentElement.scrollHeight, document.body ? document.body.scrollHeight : 0), wide: document.documentElement.scrollWidth })",
+        )?;
+        let at = |key: &str| page.get(key).and_then(Value::as_f64).unwrap_or_default();
+        let (rect, tall) = match (element, full) {
+            (Some(element), _) => (box_of(self, element, true)?, None),
+            (None, true) => {
+                let tall = at("tall").clamp(at("height"), TALLEST);
+                // The whole page, from its top: the view made as tall as the page, and the
+                // page scrolled to its start while it is.
+                let _ = isolated(self, "window.scrollTo(0, 0)");
+                ([0.0, 0.0, at("width"), tall], Some(tall))
+            }
+            (None, false) => ([0.0, 0.0, at("width"), at("height")], None),
+        };
+        if rect[2] < 1.0 || rect[3] < 1.0 {
+            return Err(Answer::error(
+                Code::Failed,
+                "nothing of it is on the page to photograph",
+            ));
+        }
+        let wanted = scale.unwrap_or(1.0).clamp(0.1, 4.0);
+        let secret = secrets(self)?;
+        let png = photograph(self, rect, rect[2] * wanted / backing(self), tall)?
+            .ok_or_else(|| Answer::error(Code::Failed, "the engine took no picture"))?;
+        if full {
+            let _ = isolated(self, &format!("window.scrollTo({}, {})", at("x"), at("y")));
+        }
+        let png = base64::engine::general_purpose::STANDARD.encode(png);
+        let (width, height) = png_size(&png).unwrap_or_default();
+        let (across, down) = (f64::from(width) / rect[2], f64::from(height) / rect[3]);
+        let rects: Vec<[f64; 4]> = secret
+            .into_iter()
+            .filter(|(_, filled, _)| *filled)
+            .map(|(_, _, [x, y, w, h])| {
+                [
+                    (x - rect[0]) * across,
+                    (y - rect[1]) * down,
+                    (x + w - rect[0]) * across,
+                    (y + h - rect[1]) * down,
+                ]
+            })
+            .collect();
+        let png = if rects.is_empty() {
+            png
+        } else {
+            paint_over(&png, &rects).map_err(|why| {
+                Answer::error(
+                    Code::Failed,
+                    format!("a secret field could not be hidden in the picture, so there is none: {why}"),
+                )
+            })?
+        };
+        Ok(Picture { png, width, height })
     }
 
     fn console(&self, _since: Option<u64>, _level: Option<&str>) -> Result<ConsoleLines, Answer> {
@@ -1475,23 +2569,49 @@ impl Engine for Page<'_> {
         Err(refused("browser_network"))
     }
 
-    fn evaluate(&self, _expression: &str, _page_world: bool) -> Result<Value, Answer> {
-        Err(refused("browser_evaluate"))
+    fn evaluate(&self, expression: &str, page_world: bool) -> Result<Value, Answer> {
+        match run(self, &format!("return (\n{expression}\n);"), page_world) {
+            Err(Answer::Error { message, .. }) if message.contains("SyntaxError") => {
+                statements(self, expression, page_world)
+            }
+            answered => answered,
+        }
     }
 
     fn cookies(&self) -> Result<Vec<Cookie>, Answer> {
-        Err(refused("browser_storage"))
+        let url = Url::parse(&self.view.url())
+            .map_err(|_| Answer::error(Code::Failed, "the page has no address"))?;
+        Ok(all_cookies(self)?
+            .into_iter()
+            .filter(|one| sent_to(one, &url))
+            .collect())
     }
 
-    fn set_cookie(&self, _cookie: &Cookie) -> Result<(), Answer> {
-        Err(refused("browser_storage"))
+    fn set_cookie(&self, cookie: &Cookie) -> Result<(), Answer> {
+        let url = Url::parse(&self.view.url())
+            .map_err(|_| Answer::error(Code::Failed, "the page has no address"))?;
+        if store_cookie(self, cookie, &url, false)? {
+            Ok(())
+        } else {
+            Err(Answer::error(
+                Code::Failed,
+                "the engine refused that cookie",
+            ))
+        }
     }
 
     fn clear(&self) -> Result<(), Answer> {
-        Err(refused("browser_storage"))
+        let url = Url::parse(&self.view.url())
+            .map_err(|_| Answer::error(Code::Failed, "the page has no address"))?;
+        for cookie in self.cookies()? {
+            let _ = store_cookie(self, &cookie, &url, true);
+        }
+        let _ = isolated(self, "(() => { try { localStorage.clear() } catch (_) {} try { sessionStorage.clear() } catch (_) {} })()");
+        clear_site(self, url.host_str().unwrap_or_default().to_lowercase())
     }
 
     fn local(&self) -> Result<Map<String, Value>, Answer> {
-        Err(refused("browser_storage"))
+        let said = isolated(self, "(() => { const out = {}; for (let at = 0; at < localStorage.length; at++) { const key = localStorage.key(at); out[key] = localStorage.getItem(key) } return out })()")?;
+        Ok(said.as_object().cloned().unwrap_or_default())
     }
 }
