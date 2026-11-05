@@ -10,6 +10,7 @@
    *  the picture kept of it the last time it was on screen (faces.svelte.ts). With
    *  nothing to draw from, it is its mark, its name and where it is from. */
 
+  import { untrack } from 'svelte'
   import { readingHtml, unreadableHtml } from '../reading/render'
   import { trustsHtmlIn } from '../sharing.svelte'
   import TabMark from '../TabMark.svelte'
@@ -26,12 +27,14 @@
     face,
     width,
     height,
+    drawing,
   }: {
     tab: Tab
     /** The picture kept of it, if there is one. */
     face: Face | null
     width: number
     height: number
+    drawing?: (done: Promise<unknown>) => void
   } = $props()
 
   /** How its kind is drawn while it is not in front. */
@@ -48,11 +51,12 @@
     const text = readingFrom(tab.doc, tab.anchor, START)
     const note = { text, path: tab.path }
     let stale = false
-    void readingHtml(note, theme.current, trustsHtmlIn(tab.note))
+    const done = readingHtml(note, theme.current, trustsHtmlIn(tab.note))
       .catch(() => unreadableHtml(text))
       .then((made) => {
         if (!stale) html = made
       })
+    untrack(() => drawing?.(done))
     return () => {
       stale = true
     }
@@ -65,9 +69,10 @@
   $effect(() => {
     if (how !== 'scrollback') return
     let stale = false
-    void scrollbackOf(tab).then((one) => {
+    const done = scrollbackOf(tab).then((one) => {
       if (!stale) screen = one
     })
+    untrack(() => drawing?.(done))
     return () => {
       stale = true
     }
@@ -82,6 +87,14 @@
     }
     draw(kept)
     return { update: draw }
+  }
+
+  function decoded(node: HTMLImageElement, _shot: string) {
+    const decode = () => {
+      if (typeof node.decode === 'function') drawing?.(node.decode())
+    }
+    decode()
+    return { update: decode }
   }
 
   /** Where a tab with no picture is from: a page's site, a file's folder. */
@@ -107,7 +120,7 @@
   {:else if how === 'scrollback' && screen}
     <pre class="screen">{screen.text}</pre>
   {:else if how === 'photograph' && shot}
-    <img class="shot" src={shot} alt="" draggable="false" />
+    <img class="shot" src={shot} alt="" draggable="false" use:decoded={shot} />
   {:else if face?.html}
     <div
       class="kept"

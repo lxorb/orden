@@ -501,7 +501,10 @@
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
   const flights = new Map<string, Flight>()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
-  const elements = new Map<string, { window: HTMLElement; face: HTMLElement; chip: HTMLElement }>()
+  const elements = new Map<
+    string,
+    { window: HTMLElement; face: HTMLElement; chip: HTMLElement; ring: HTMLElement }
+  >()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
   const captions = new Map<string, HTMLElement>()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
@@ -600,6 +603,20 @@
   let frameAsked = 0
   let last = 0
 
+  const READY = 250
+  const LONGEST_FRAME = 1 / 30
+  let unready = 0
+  let entered = 0
+
+  function readying(done: Promise<unknown>) {
+    if (started) return
+    unready++
+    const settled = () => {
+      unready--
+    }
+    void done.then(settled, settled)
+  }
+
   function fly() {
     if (frameAsked) return
     last = performance.now()
@@ -608,7 +625,12 @@
 
   function tick(now: number) {
     frameAsked = 0
-    const seconds = Math.max(0, (now - last) / 1000)
+    if (!started && unready > 0 && now - entered < READY) {
+      last = now
+      frameAsked = requestAnimationFrame(tick)
+      return
+    }
+    const seconds = started ? Math.min(Math.max(0, (now - last) / 1000), LONGEST_FRAME) : 0
     last = now
     // The first frame that moves anything is the first the overview is seen in: until
     // then the app is what is on screen, unchanged (`started`).
@@ -637,18 +659,33 @@
   const opening = spring(0, SHARE)
   let ground = $state<HTMLElement>()
   let canvasNode = $state<HTMLElement>()
+  let top = $state<HTMLElement>()
+
+  let opens: HTMLElement[] = []
+  let slides: HTMLElement[] = []
+
+  function opensOf() {
+    opens = [
+      ...document.querySelectorAll<HTMLElement>(
+        "header[data-chrome='top'] :is(button, [role='button']), [data-side-toggle], [data-pane] > .here",
+      ),
+    ]
+    slides = [
+      ...document.querySelectorAll<HTMLElement>("[data-chrome='start'], [data-chrome='end']"),
+    ]
+  }
 
   function opened(at: number) {
     const value = String(Math.round(at * 1000) / 1000)
+    for (const one of [...opens, under, top]) one?.style.setProperty('--overview-open', value)
     // The sidebars slide out as far as the overview is out (`html[data-overview]`).
-    document.documentElement.style.setProperty('--overview-open', value)
+    for (const one of slides) one.style.setProperty('--overview-slide', value)
     if (ground) {
       ground.style.opacity = value
       // Not there at all at the ends: a ground over the app, however faint, has the app
       // drawn through it, which is not quite how the app draws itself.
       ground.style.visibility = at < 0.01 ? 'hidden' : ''
     }
-    canvasNode?.style.setProperty('--overview-open', value)
   }
 
   /** Whether a frame of the overview has been drawn since it was asked for. Before the
@@ -710,6 +747,7 @@
 
   function begin() {
     started = true
+    opensOf()
     for (const id of flights.keys()) paint(id)
   }
 
@@ -731,8 +769,10 @@
     Object.assign(parts.chip.style, styles.chip)
     // How far the window is scaled from its own size, which its ring is drawn back by,
     // so the ring is the same weight on the screen however small it flies.
-    parts.window.style.setProperty('--flight-x', String(slot.w / Math.max(pose.w, 1)))
-    parts.window.style.setProperty('--flight-y', String(slot.h / Math.max(pose.h, 1)))
+    parts.window.style.setProperty('--overview-lift', String(opening.at))
+    parts.ring.style.setProperty('--overview-open', String(opening.at))
+    parts.ring.style.setProperty('--flight-x', String(slot.w / Math.max(pose.w, 1)))
+    parts.ring.style.setProperty('--flight-y', String(slot.h / Math.max(pose.h, 1)))
     paintRider(id, home)
     if (started) movePane(id, pose)
     // The name under a window, and its cross, only once it is nearly in its place.
@@ -931,7 +971,9 @@
       corner = cardCorner()
       barBottom = barOf()
       places.recall(workspace.tabs)
-      void faces.read()
+      entered = performance.now()
+      started = false
+      readying(faces.read())
       // Where it was left, once there is somewhere; the space worked in the first time, and
       // whenever where it was left shows nothing of the tab in front, as after a switch to
       // another space: the keyboard is on that window.
@@ -952,7 +994,7 @@
         // bar over it: the live view stays where it was, out of sight under the canvas, and
         // is not told where the hole goes (`look` in WebTab.svelte). A window drawn from the
         // photograph alone was the page's picture over its bar at both ends of the way (#1136).
-        if (tab.kind === 'web') void pages.shoot(tab.id)
+        if (tab.kind === 'web') readying(pages.shoot(tab.id))
         const node = marked('pane', pane.id)
         const box = node?.getBoundingClientRect()
         if (!node || !box || box.width <= 0 || box.height <= 0) continue
@@ -978,7 +1020,6 @@
       tabsAsDrawn = tabCopies
       ridersDrawn = riderCopies
       at = workspace.activeTabId
-      started = false
       homes.clear()
     }
     shown = true
@@ -1036,7 +1077,10 @@
     tabOverview.out = []
     tabOverview.lifted = []
     delete document.documentElement.dataset.overview
-    document.documentElement.style.removeProperty('--overview-open')
+    for (const one of opens) one.style.removeProperty('--overview-open')
+    for (const one of slides) one.style.removeProperty('--overview-slide')
+    opens = []
+    slides = []
   }
 
   const close = () => (tabOverview.open = false)
@@ -1081,8 +1125,9 @@
   function placed(node: HTMLElement, id: string) {
     const face = node.querySelector<HTMLElement>(':scope > .face-box')
     const chip = node.querySelector<HTMLElement>(':scope > .chip')
-    if (!face || !chip) return
-    elements.set(id, { window: node, face, chip })
+    const ring = node.querySelector<HTMLElement>(':scope > .ring')
+    if (!face || !chip || !ring) return
+    elements.set(id, { window: node, face, chip, ring })
     const entry = windows.find((one) => one.tab.id === id)
     if (entry && !flights.has(id)) {
       const home = out ? homeOf(entry.tab, entry.slot) : null
@@ -1695,7 +1740,7 @@
   >
     <div class="floor" aria-hidden="true"></div>
 
-    <div class="top">
+    <div class="top" bind:this={top}>
       {#if spaces.length > 1}
         <!-- All spaces or This space: whether the other spaces' cells are there too. -->
         <Select
@@ -1713,12 +1758,7 @@
       >
     </div>
 
-    <div
-      class="world"
-      style:transform="translate({camera.x}px, {camera.y}px) scale({camera.zoom})"
-      style:--overview-unzoom={unzoom}
-      style:--overview-line={1 / camera.zoom}
-    >
+    <div class="world" style:transform="translate({camera.x}px, {camera.y}px) scale({camera.zoom})">
       {#each windows as { slot, tab } (tab.id)}
         {@const face = faceOf(slot)}
         <button
@@ -1744,7 +1784,13 @@
             <!-- A pane that is its window is under it, and the window only its ring; one whose
                  pane shows another tab now is its picture again. -->
             {#if !asPanes[tab.id] || workspace.panes.at(tab.paneId)?.activeTabId !== tab.id}
-              <WindowFace {tab} face={faces.of(tab.id)} width={face.w} height={face.h} />
+              <WindowFace
+                {tab}
+                face={faces.of(tab.id)}
+                width={face.w}
+                height={face.h}
+                drawing={readying}
+              />
             {/if}
           </span>
           <span class="chip" class:is-copy={!!tabsAsDrawn[tab.id]} aria-hidden="true">
@@ -1756,7 +1802,7 @@
               >
             {/if}
           </span>
-          <span class="ring" aria-hidden="true"></span>
+          <span class="ring" style:--overview-line={1 / camera.zoom} aria-hidden="true"></span>
         </button>
         <!-- Its cross, on its corner while the pointer is on it: beside the window and not
              in it, a button in a button being no button at all. -->
@@ -1768,6 +1814,7 @@
           title={t('Close')}
           aria-label={t('Close')}
           style:translate="{slot.x + slot.w}px {slot.y}px"
+          style:--overview-unzoom={unzoom}
           onpointerdown={(event) => event.stopPropagation()}
           onclick={(event) => shut(event, tab)}
           use:closing={tab.id}
@@ -1792,12 +1839,24 @@
      and the right one to the right, as if each were shut, as far as the overview is out -
      moved and not shut, so nothing is laid out again and the panes stay where they are.
      What they uncover is the ground they stood on, which is the canvas's. */
+  @property --overview-slide {
+    syntax: '<number>';
+    inherits: false;
+    initial-value: 0;
+  }
+
+  @property --overview-lift {
+    syntax: '<number>';
+    inherits: false;
+    initial-value: 1;
+  }
+
   :global(html[data-overview='slide'] [data-chrome='start']) {
-    translate: calc(var(--dir, 1) * -100% * var(--overview-open, 0)) 0;
+    translate: calc(var(--dir, 1) * -100% * var(--overview-slide, 0)) 0;
   }
 
   :global(html[data-overview='slide'] [data-chrome='end']) {
-    translate: calc(var(--dir, 1) * 100% * var(--overview-open, 0)) 0;
+    translate: calc(var(--dir, 1) * 100% * var(--overview-slide, 0)) 0;
   }
 
   /* The bar while the overview is up: what is the window's own and the overview's stays -
@@ -1954,8 +2013,8 @@
     background: none;
     /* Lifted off the canvas as far as the overview is out: none at all on the first
        frame and the last, where a window is its pane. */
-    box-shadow: 0 calc(24px * var(--overview-open, 1)) calc(64px * var(--overview-open, 1))
-      calc(-12px * var(--overview-open, 1)) rgb(0 0 0 / 0.26);
+    box-shadow: 0 calc(24px * var(--overview-lift, 1)) calc(64px * var(--overview-lift, 1))
+      calc(-12px * var(--overview-lift, 1)) rgb(0 0 0 / 0.26);
     cursor: pointer;
     outline: none;
     touch-action: none;

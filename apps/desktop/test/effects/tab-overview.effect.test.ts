@@ -265,16 +265,31 @@ test('a pane holding a web page moves as its window, its picture in its hole and
 
 test('the canvas is the window’s own ground, its sidebars sliding away, and the app blurred only when asked for', async () => {
   const { modes } = await import('../../src/lib/modes.svelte')
+  const bar = document.createElement('header')
+  bar.dataset.chrome = 'top'
+  bar.innerHTML = '<button>Back</button>'
+  const side = document.createElement('aside')
+  side.dataset.chrome = 'start'
+  document.body.append(bar, side)
+  onTestFinished(() => {
+    bar.remove()
+    side.remove()
+  })
+  const button = bar.querySelector('button')
   await opened()
   // Nothing laid over the app: no ground of its own, the sidebars slid all the way out.
   expect(document.querySelector('.ground')).toBe(null)
   expect(document.documentElement.dataset.overview).toBe('slide')
-  expect(document.documentElement.style.getPropertyValue('--overview-open')).toBe('1')
+  expect(side.style.getPropertyValue('--overview-slide')).toBe('1')
+  expect(button?.style.getPropertyValue('--overview-open')).toBe('1')
+  // On what fades and slides itself, never on the whole of the app under it.
+  expect(document.documentElement.style.getPropertyValue('--overview-open')).toBe('')
   expect(overlays.escape()).toBe(true)
   flushSync()
   await tick()
   expect(document.documentElement.dataset.overview).toBe(undefined)
-  expect(document.documentElement.style.getPropertyValue('--overview-open')).toBe('')
+  expect(side.style.getPropertyValue('--overview-slide')).toBe('')
+  expect(button?.style.getPropertyValue('--overview-open')).toBe('')
   modes.toggleOverviewBlur()
   try {
     await opened()
