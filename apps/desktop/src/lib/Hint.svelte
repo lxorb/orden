@@ -17,6 +17,7 @@
   import Help from 'lucide/dist/esm/icons/circle-question-mark.mjs'
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
+  import { hang } from './portal'
   import { dur } from './motion'
 
   const { text }: { text: string } = $props()
@@ -74,6 +75,7 @@
     <span
       class="nib-bubble sentence"
       aria-hidden="true"
+      use:hang={{ side: 'below', gap: 6, inset: -3 }}
       transition:fly={{ y: -4, duration: dur(120), easing: cubicOut }}>{text}</span
     >
   {/if}
@@ -136,12 +138,13 @@
 
   /* Where this one sits: under the glyph, and left-aligned to it rather than
      centred on it, because a label sits at the left of its row, so there is room
-     that way and none the other. The card itself is `.nib-bubble`. */
+     that way and none the other - 8px before the glyph, which stands `--mark-gap`
+     after the words (`inset` above). Hung over the window rather than inside the
+     label, which a row that cuts its names short or a pane that scrolls would cut it
+     with (#1129, portal.ts). The card itself is `.nib-bubble`. */
   .sentence {
-    position: absolute;
-    top: calc(100% + 6px);
-    inset-inline-start: calc(var(--mark-gap, 5px) - 8px);
-    z-index: var(--z-popover);
+    position: fixed;
+    z-index: var(--z-bubble);
   }
 
   /* A thumb needs a target, and the sentence needs the width the screen has.

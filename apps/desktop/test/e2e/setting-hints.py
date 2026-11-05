@@ -76,18 +76,18 @@ def the_sentence(page: Page) -> None:
         wrong("the glyph is not a question mark")
 
     glyph.hover()
-    shown = wait_for(page, "() => document.querySelector('.explain .nib-bubble')?.innerText ?? ''",
+    shown = wait_for(page, "() => document.querySelector('.nib-bubble.sentence')?.innerText ?? ''",
                      "the sentence on hover")
     say(f"on hover: {shown!r}")
     DRIVE.shot(page, "hover")
     page.mouse.move(5, 5)
-    wait_for(page, "() => !document.querySelector('.explain .nib-bubble')", "the sentence gone again")
+    wait_for(page, "() => !document.querySelector('.nib-bubble.sentence')", "the sentence gone again")
 
     page.evaluate("() => window.nibApp.settings.show('general')")
     smart = page.locator(".nib-setting", has_text="Smart dates").first
     before = smart.locator("[role=switch]").get_attribute("aria-checked")
     smart.locator(".explain button").focus()
-    shown = wait_for(page, "() => document.querySelector('.explain .nib-bubble')?.innerText ?? ''",
+    shown = wait_for(page, "() => document.querySelector('.nib-bubble.sentence')?.innerText ?? ''",
                      "the sentence on focus")
     say(f"on focus: {shown!r}")
     page.keyboard.press("Enter")

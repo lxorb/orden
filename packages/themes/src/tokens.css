@@ -391,8 +391,11 @@
      that; a surface that replaces part of the screen (the palette, signing in,
      choosing a space) over the drawer; a notice over all of it; the first sync
      covering the window; the settings; the theme store opened from them; a sheet
-     over any of those; a menu over everything open; a picture looked at on its
-     own; a deck being presented; and what the pointer is carrying. */
+     over any of those; a menu over everything open; a bubble hung from something
+     in any of them - the sentence behind a `?`, why a name cannot be taken - which
+     is drawn over the window rather than inside the layer it is about (#1129); a
+     picture looked at on its own; a deck being presented; and what the pointer is
+     carrying. */
   --z-float: 20;
   --z-bar: 25;
   --z-drawer: 30;
@@ -403,6 +406,7 @@
   --z-store: 45;
   --z-sheet: 51;
   --z-menu: 61;
+  --z-bubble: 65;
   --z-lightbox: 70;
   --z-stage: 200;
   --z-carried: 1000;

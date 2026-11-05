@@ -671,6 +671,7 @@ nothing said which of them had to be over which. Obsidian's `--layer-*` is the m
 | `--z-settings`, `--z-store` | the settings, and the theme store opened from them |
 | `--z-sheet` | a sheet over any of those |
 | `--z-menu` | a menu over everything open, the theme picker, a dropdown's sheet |
+| `--z-bubble` | a bubble hung from something in any layer, over the window: the sentence behind a `?`, why a name cannot be taken |
 | `--z-lightbox`, `--z-stage`, `--z-carried` | a picture on its own, a deck presented, what the pointer carries |
 
 A scrim names the rung of the layer it is put up under, `--scrim-z: var(--z-menu)`,

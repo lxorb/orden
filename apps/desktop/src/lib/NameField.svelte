@@ -27,6 +27,7 @@
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
+  import { hang } from './portal'
   import { dur } from './motion'
   import { type NameFault, nameFault, nameToCommit } from './naming'
   import { caretAtEnd, selectAll, selectStem } from './select-all'
@@ -206,10 +207,13 @@
 
   {#if fault === 'agents' && space}
     <!-- The same bubble, as the way to the setting. Its press takes no focus from the
-         name, because a blur there would end the field before the press lands. -->
+         name, because a blur there would end the field before the press lands. Held
+         to the row's width, as a longer sentence than the rest would otherwise leave
+         the side of the window. -->
     <span
       class="nib-bubble is-pressable reason held"
       aria-live="polite"
+      use:hang={{ side: 'below', gap: 4, stretch: true }}
       transition:fly={{ y: -4, duration: dur(120), easing: cubicOut }}
     >
       <button
@@ -244,6 +248,7 @@
     <span
       class="nib-bubble reason"
       aria-live="polite"
+      use:hang={{ side: 'below', gap: 4 }}
       transition:fly={{ y: -4, duration: dur(120), easing: cubicOut }}>{reason}</span
     >
   {/if}
@@ -288,21 +293,13 @@
     box-shadow: none;
   }
 
-  /* Under the name, at the left edge of it, over the rows below. The card itself
-     is `.nib-bubble` in the themes package, which the `i` after a setting's name
-     shows its sentence in too. */
+  /* Under the name, at the left edge of it, over the rows below - hung over the
+     window rather than inside the row, which a list that scrolls would cut it with
+     (#1129, portal.ts). The card itself is `.nib-bubble` in the themes package, which
+     the `?` after a setting's name shows its sentence in too. */
   .reason {
-    position: absolute;
-    top: calc(100% + 4px);
-    inset-inline-start: 0;
-    z-index: var(--z-popover);
-  }
-
-  /* The one that goes somewhere, and reads as a link does. Held to the row's width, as a
-     longer sentence than the rest would otherwise leave the side of the window. */
-  .held {
-    inset-inline-end: 0;
-    width: auto;
+    position: fixed;
+    z-index: var(--z-bubble);
   }
 
   .go {
