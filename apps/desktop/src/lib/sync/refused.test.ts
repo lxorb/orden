@@ -10,9 +10,11 @@ const world = vi.hoisted(() => {
     children: Entry[]
   }
 
+  /** One machine: its files, and the versions its saves kept of each. */
   class Device {
     disk = new Map<string, string>()
     kept = new Map<string, string[]>()
+    /** When each file was last written, by its path, where a test cares. */
     written = new Map<string, number>()
 
     keep(path: string, content: string) {
@@ -190,6 +192,7 @@ afterEach(() => {
   env.close()
 })
 
+/** One pass, as sync.svelte.ts runs it: take what the account has, then offer. */
 async function pass(mirror: Mirror) {
   world.use(device)
   await pull(mirror, token, NOBODY)

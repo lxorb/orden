@@ -128,6 +128,7 @@ export function noteValues(text: string): Record<string, Value> {
       if (read === null || typeof read !== 'object' || Array.isArray(read)) return {}
       return Object.fromEntries(Object.entries(read).map(([key, value]) => [key, fromYaml(value)]))
     } catch {
+      // A block that is not YAML holds no values; the note is still a row.
       return {}
     }
   }

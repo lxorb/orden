@@ -613,6 +613,8 @@ function collect(line: string, offset: number, at: number, found: FoundLink[]) {
       const link = parseWikilink(inner, embed)
       const closed = open + 2 + inner.length + 2
       if (link) {
+        // Where the target sits: past the `!`, the `[[`, and any space trimmed off
+        // the front of it.
         const targetFrom = offset + open + 2 + (inner.length - inner.trimStart().length)
         found.push({
           ...link,
@@ -662,12 +664,18 @@ function collect(line: string, offset: number, at: number, found: FoundLink[]) {
   }
 }
 
+/** One or more percent escapes in a row: how a heading's words are written in a link
+ *  when they hold a space or a character a URL cannot. */
 const ESCAPES = /(?:%[0-9A-Fa-f]{2})+/g
 
+/** The UTF-8 a run of escapes is read as. Not fatal, so a run that is not valid
+ *  encoding comes out as replacement characters rather than as an error. */
 const UTF8 = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true })
 
+/** A backslash and the punctuation it escapes, or a run of percent escapes. */
 const WRITTEN = /\\([!-/:-@[-`{-~])|(?:%[0-9A-Fa-f]{2})+/g
 
+/** The same UTF-8, for a name: a run that is not valid encoding is no name at all. */
 const STRICT_UTF8 = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true })
 
 function bytesOf(run: string): Uint8Array {
@@ -691,6 +699,9 @@ export function decodeTarget(target: string): string {
   }
 }
 
+/** A path as a markdown target: the characters a browser or an editor would
+ *  otherwise read as something else. `#` opens a fragment and a space ends the
+ *  target, and a `)` (`1) Intro.pdf`) ends the link, so those are written out. */
 export function encodeTarget(path: string): string {
   return encodeURI(path).replace(/[#?()]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)
 }

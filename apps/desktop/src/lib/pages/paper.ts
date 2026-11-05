@@ -130,6 +130,8 @@ function heldOf(at: PaperAt): Held | null {
   const known = held.get(key)
   if (known) return known
   const made: Held = { open: opened(at), drawn: new Map(), recent: [] }
+  // A paper that could not be opened is not kept as one: it may be on its way - from
+  // the account, or a pass from now (pages/carried.ts) - and the next ask tries again.
   made.open.catch(() => {
     if (held.get(key) === made) held.delete(key)
   })

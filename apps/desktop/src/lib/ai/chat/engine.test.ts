@@ -241,6 +241,7 @@ describe('a tool the thread is not given', () => {
   })
 })
 
+/** A crate that asks once for every call, and a reader who answers as each test says. */
 function askingOf(answer: (id: string) => boolean | null, category = 'writing') {
   const given: { id: string; allow: boolean }[] = []
   const waited: string[] = []

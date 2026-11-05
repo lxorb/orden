@@ -334,8 +334,12 @@ export async function pull(
 
     for (const remote of notes) {
       try {
+        // A name that would land outside the space is left where it is; see
+        // `placeable`.
         if (!placeable(remote.path)) continue
 
+        // Another sync tool's copy is never carried; see `inForeignCopy`. The account
+        // letting go of one is forgotten here, and the file, where there is one, stays.
         if (inForeignCopy(remote.path)) {
           if (remote.deleted && mirror.notes[remote.path]?.id === remote.id) {
             mirror.notes = without(mirror.notes, remote.path)
@@ -345,6 +349,7 @@ export async function pull(
 
         const target = joinPath(root, remote.path)
 
+        // Taken above, or still on their way to a new name; see `movedThere`.
         if (remote.deleted || waits.has(remote.id)) continue
 
         const tracked = mirror.notes[remote.path]
@@ -374,11 +379,17 @@ export async function pull(
         // the gap and deletes the note the way it always has.
         if (local === null && tracked !== undefined) continue
 
+        // There but unreadable (an encoding, a lock) is not a gap to fill.
         if (local === null && (await fileStamp(target)) !== null) {
           log('warn', `sync: ${target} unreadable, not written over`)
           continue
         }
 
+        // The file and the account already say the same thing, so there is nothing
+        // to bring down and nothing to settle: the entry is recorded and the note is
+        // done with. This is what mends a mirror that has lost entries - the note is
+        // found agreeing rather than judged - and it is the whole of a pass over a
+        // space nothing has changed, without a body being fetched for any of it.
         if (local !== null && (await holdsSameWords(local, remote.hash))) {
           wrote()
           continue
@@ -386,11 +397,41 @@ export async function pull(
 
         const { content } = await api.readNote(token, remote.id)
 
+        // Whether the copy up there says anything this machine has not said itself.
+        //
+        // Two ways it can be this device's own writing come back, and both of them are
+        // things the device wrote down rather than worked out: the body the last pass
+        // left the two agreeing on, and the body handed over whose answer never
+        // arrived. Either way there is no second writer in it however far the file has
+        // moved on since - the keystrokes after the push are simply what the push below
+        // will offer next.
+        //
+        // And a mirror that threw its note table away to fit in storage cannot say
+        // anything is news: the gap is its own doing. A folder freshly paired with a
+        // space that already held notes is the case that looks exactly like it and is
+        // not, and there both copies are kept; see `dropped` in mirror.ts.
+        //
+        // The old rule was the other way round - anything that did not match the one
+        // hash the last pass recorded counted as somebody else's writing - and on a
+        // machine that is the only one there is, that is every note being typed in
+        // whenever a reply went missing. Whose writing this is, is recorded, never
+        // inferred from two hashes failing to match.
         const news =
           remote.hash !== tracked?.hash &&
           !(remote.hash && remote.hash === mirror.offered[remote.path]) &&
           !(tracked === undefined && mirror.dropped)
 
+        // Whether the file here also carries writing the account has never seen, which
+        // is the other half of a disagreement. With an entry to compare against the
+        // answer is exact: a file whose words have moved since the last pass was
+        // written here. Without one - a storage wiped, a folder paired for the first
+        // time - the account is asked whether the note ever said these words: a copy
+        // that is only behind the account's is brought up to date, and any other is
+        // kept beside it. See sync/ancestry.ts.
+        //
+        // A note in a room is the exception either way: the room settled the two
+        // character by character before either of them ever became a file. And the
+        // app's own welcome note is nobody's writing, so it is simply replaced.
         const diverged =
           local !== null &&
           news &&
@@ -400,22 +441,54 @@ export async function pull(
             ? !(await onlyBehind(token, remote.id, local))
             : !(await holdsSameWords(local, tracked.hash)))
 
+        // Nothing up there this machine has not said, and a file that has moved on
+        // since it said it. The version is written down so the pass stops asking, and
+        // the file is left exactly as it is for the push below to offer. Writing the
+        // account's copy over it is what the line at the bottom does, and it would
+        // throw away every keystroke typed since the push.
         if (!news && local !== null && local !== content) {
           keep()
           continue
         }
 
         if (diverged && local !== content) {
+          // A canvas is put back together rather than copied: both drawings are
+          // kept, and what is written here is already the answer both devices
+          // will settle on, since the merge gives the same file either way round.
+          // Which is the same answer under every rule: nothing was lost, so there
+          // is nothing to choose between.
+          // A page note merges the way a canvas does, because it is the same file: the
+          // same objects with the same ids and the same times, so the union keeps every
+          // stroke either device wrote and every page either of them added.
+          //
+          // The merge itself is fetched by the first plane that needs one: it is the
+          // whole JSON Canvas format, and a pass that has only notes in it has nothing
+          // to merge. See canvas-merge.ts.
+          //
+          // A web note is settled too, the newer copy standing with the fields only the
+          // other one said carried across: it is a tab written down, two devices browsing
+          // one site write it seconds apart, and a copy beside it for each of those was
+          // a file list full of them. So under every rule. See web-tab/settle.ts.
           const together = await settled(remote.path, local, content, () =>
             theirsIsNewer(target, remote.updatedAt),
           )
 
           if (together !== null) {
             await writeDown(target, together, local)
+            // The account's copy, which the merged file is now ahead of: the push
+            // below sees the two differ and sends, and a room joined afterwards is
+            // told the truth about what the account last handed this device. An
+            // empty hash used to stand here to force that push, and a room reading
+            // it matched neither side and asked for a conflict copy of its own; see
+            // `startedFrom` in rooms/room.ts.
             wrote()
             continue
           }
 
+          // Both wrote since the words they last agreed on, and those words are known:
+          // edits that meet nowhere are one note again, under every rule, because there
+          // is nothing to choose between. What the file said is kept as a version on the
+          // way past, and the push below sends the merge on top of the account's copy.
           const merged = tracked
             ? await mergedOver(token, target, remote.id, tracked.hash, local, content)
             : null
@@ -425,6 +498,9 @@ export async function pull(
             continue
           }
 
+          // The space's own inbox is a list of tasks in a file nobody opens: never a
+          // question about it, never a hidden second copy, never one side lost. Every
+          // task of both, each once, and the push below sends that on top (#1044).
           if (carriedOwn(remote.path)) {
             await writeDown(target, withTasksOf(local, content), local)
             wrote()
@@ -433,6 +509,9 @@ export async function pull(
 
           const rule = waiting?.rule ?? DEFAULT_RULE
 
+          // Left exactly as it is, with the other copy held for somebody to look
+          // at. The entry takes the version we just saw so the pass stops asking
+          // about it, and `held` keeps the push below from sending ours over it.
           if (rule === 'ask') {
             waiting?.clashed?.({
               path: target,
@@ -442,10 +521,17 @@ export async function pull(
               at: Date.now(),
             })
 
+            // The one place an empty hash is the truth: nothing was settled, so there
+            // is no body the two sides agree on. A room joining this note reads it as
+            // "I cannot tell" and asks the same question again rather than writing
+            // either copy over the other, which is what `ask` means.
             keep('')
             continue
           }
 
+          // The later of the two stands. What loses is in this device's own
+          // history either way - `writeDown` keeps it on the way past - which is
+          // what makes this safe rather than lossy.
           if (rule === 'newest' && (await theirsIsNewer(target, remote.updatedAt))) {
             await writeDown(target, content, local)
             wrote()
@@ -454,6 +540,10 @@ export async function pull(
 
           if (rule === 'both') await writeDown(conflictPath(target), content)
 
+          // The account's copy, which ours is now beside rather than in step with:
+          // the push below sees the two differ and sends ours on top of the version
+          // we just saw, so it lands as the newest one. Truthful rather than empty,
+          // for the reason the merge above gives.
           wrote()
           continue
         }

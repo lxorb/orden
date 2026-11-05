@@ -1762,17 +1762,31 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
             // page because both want the one thread this runs on.
             #[cfg(all(windows, not(feature = "cef")))]
             session::keep(store.as_deref(), platform.environment());
+            // The store's extensions, handed to its profile the first time a page is built
+            // there this run; see extensions/webview2.rs.
             #[cfg(all(windows, not(feature = "cef")))]
             crate::extensions::webview2::seen(&asking, store.as_deref(), &platform);
+            // And a window asked for in it while an extension arrives, held back unless a
+            // person asked: the page an extension opens about its own install; see
+            // extensions/welcome.rs.
             #[cfg(windows)]
             crate::extensions::welcome::listen(&platform, store.as_deref(), &named);
+            // The browser's own chords, which the page is never offered, on a page in any
+            // store; see web_keys.rs.
             crate::web_keys::listen(&platform, asking.clone(), window.clone());
+            // Whether it has the keyboard, which is where it goes back to; see keyboard.rs.
             crate::keyboard::page(&asking, &platform, &label, &window);
+            // How a window it asks for was pressed for; see web_opens.rs.
             crate::web_opens::listen(&platform, asking.clone(), named.clone(), window.clone());
+            // Its sound, its full screen and its zoom; see web_page.rs. And finding in it;
+            // see web_find.rs.
             crate::web_page::listen(&platform, asking.clone(), named.clone(), window.clone());
             crate::web_find::listen(&platform, asking.clone(), named.clone(), window.clone());
             crate::downloads::listen(&platform, asking.clone(), window.clone());
+            // The site's own mark, followed for as long as the page is open; see
+            // web_icons.rs.
             crate::web_icons::listen(&platform, asking.clone(), named.clone(), window.clone());
+            // Its `alert`, `confirm` and `prompt`, in Orden's own card; see web_dialogs.rs.
             crate::web_dialogs::listen(&platform, asking.clone(), named.clone(), window.clone());
             ask::listen(&platform, asking, named, window);
 

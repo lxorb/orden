@@ -202,8 +202,12 @@ export function richPaste(): Extension {
         return true
       }
 
+      // Code takes the words as they are, and CodeMirror puts the plain text in: no
+      // table made of a CSV, and no markdown made of the HTML an editor copies too.
       if (view.state.selection.ranges.some((range) => rangeInCode(view.state, range))) return false
 
+      // A list on an empty item, from this app or as plain text. Whatever else those
+      // two come to, CodeMirror's plain paste below would nest its first line alone.
       if (
         view.state.selection.ranges.length === 1 &&
         (copiedHere(html, text) || !html.trim()) &&

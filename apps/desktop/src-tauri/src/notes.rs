@@ -129,6 +129,8 @@ fn note_written(target: &Path, shown: &str, content: &str) -> Result<(), String>
 /// already was".
 fn as_written(target: &Path, content: &str) -> String {
     let body = if crlf(target) {
+        // Only the newlines that stand alone: text that already carries `\r\n`, which
+        // a paste can, must not become `\r\r\n`.
         content.replace("\r\n", "\n").replace('\n', "\r\n")
     } else {
         content.to_owned()

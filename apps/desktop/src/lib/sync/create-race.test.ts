@@ -129,6 +129,9 @@ vi.mock('../tauri', async (importOriginal) => ({
   invoke: world.invoke,
 }))
 
+/** The Worker and its test harness, out of services/sync. Named through a variable so
+ *  the app's type check, which holds the app to the browser's types, does not walk
+ *  into a Worker held to Cloudflare's; the shapes this file uses are spelled below. */
 const SERVICE = new URL('../../../../../services/sync/', import.meta.url).href
 interface Env {
   db: { exec(sql: string): void }
@@ -192,6 +195,7 @@ afterEach(() => {
   env.close()
 })
 
+/** A person: a session on the account, and the id it is known by. */
 async function person(email: string) {
   const token = await signIn(env, email)
   const me = await call<{ user?: { id: string } }>(env, '/v1/me', { token })
@@ -206,12 +210,14 @@ async function spaceOf(token: string, name = 'Plans'): Promise<string> {
   return made.json.space?.id ?? ''
 }
 
+/** One pass, as sync.svelte.ts runs it: take what the account has, then offer. */
 async function pass(device: Device, mirror: Mirror, token: string) {
   world.use(device)
   await pull(mirror, token, NOBODY)
   await push(mirror, token, NOBODY)
 }
 
+/** The account's copy of the only note at `path` in a space. */
 async function accountHolds(token: string, spaceId: string, path = 'plan.md') {
   const page = await call<{ notes: { id: string; path: string; deleted: boolean }[] }>(
     env,

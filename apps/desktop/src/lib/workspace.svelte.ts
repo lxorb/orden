@@ -874,6 +874,7 @@ class Workspace {
     if (!isNative && !isPlugin()) {
       try {
         const { seed } = await import('./web/commands')
+        // What the old address's handoff waits for; see first-visit.svelte.ts.
         if (await seed()) {
           ;(await import('./first-visit.svelte')).firstVisit.seeded()
           settings.setup = -1

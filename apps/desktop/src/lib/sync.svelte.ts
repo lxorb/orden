@@ -835,7 +835,11 @@ class Sync {
         () => true,
         async (root) => {
           const mirror = mirrors.get(root)
-          if (!mirror || !workspace.spaces.some((space) => space.root === root)) return
+          if (!mirror) return
+          // A folder the workspace no longer lists is left alone until the next
+          // reconcile decides what becomes of its mirror. Syncing it would read
+          // every note as deleted here, and delete them from the account.
+          if (!workspace.spaces.some((space) => space.root === mirror.root)) return
 
           this.pulled = 0
           this.pushed = 0
@@ -847,6 +851,9 @@ class Sync {
             if (mirror.root === workspace.activeSpace?.root) shown = true
           }
 
+          // A space shared to read only comes down. Offering what is here would
+          // be refused by the account, and a folder somebody is reading is not a
+          // statement about what the space should hold.
           if (this.reads(mirror.spaceId)) {
             this.noted(mirror, began, null)
             return
@@ -857,6 +864,8 @@ class Sync {
             asked: new Set(record.clashes.map((one) => one.id)),
             sent: () => (this.pushed += 1),
             refused: (path: string) => this.notWritten(joinPath(mirror.root, path)),
+            // An old copy of a web note folded into it: the note open in a tab takes
+            // what it now says, the copy leaves the list. See sync/web-copies.ts.
             folded: ({ kept, gone }: Folded) => {
               void this.refresh(kept, joined)
               void workspace.fileGone(gone, 'file')
@@ -865,6 +874,9 @@ class Sync {
           }
           if (await push(mirror, token, joined, sending)) moved = true
 
+          // A whole pass has been through this space, so every note in the folder has
+          // an entry again and the table is a record rather than a hole. Said here
+          // because reaching this line is what makes it true; see `dropped`.
           mirror.dropped = false
           this.noted(mirror, began, null)
         },

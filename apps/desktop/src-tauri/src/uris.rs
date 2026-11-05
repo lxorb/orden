@@ -56,6 +56,7 @@ pub fn watch(app: &AppHandle) {
 
         #[cfg(desktop)]
         handing(&opened, urls);
+        // A phone has one window and the system has already brought it up.
         #[cfg(not(desktop))]
         let _ = opened.emit_to("main", OPENED, urls);
     });

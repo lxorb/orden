@@ -1,3 +1,10 @@
+/** A note this device's disk will not take, the app's engine against this Worker: it
+ *  stays wanted and is said, the rest of its batch lands and is remembered, and nothing
+ *  comes back from a restart as a second note.
+ *
+ *  The devices are the app's own engine (apps/desktop/src/lib/sync2/test-device.ts),
+ *  reached by its path for the reason sync2-engine.test.ts gives. */
+
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import app from '../src/index'
 import { call, signIn, type TestEnv, testEnv } from './harness'

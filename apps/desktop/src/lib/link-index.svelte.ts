@@ -1894,6 +1894,9 @@ class Links {
             const { before } = got
             let { words } = got
 
+            // Taken by the document in the same breath as its words were read, so no
+            // keystroke falls between the two; one landing while the write is in the air
+            // is the document's own, and marks it for its next write.
             const knew = doc.onDisk
             drawing.relinked =
               drawn !== null &&
@@ -2048,6 +2051,8 @@ class Links {
       const keepIt = () =>
         invoke('snapshot_note', { path: absolute, content: before }).catch(() => undefined)
 
+      // Taken by the document in the same breath as its words were read, for the
+      // reason `retarget` gives.
       const edit = oneEdit(before, after)
       if (doc) {
         const knew = doc.onDisk

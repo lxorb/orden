@@ -494,6 +494,8 @@ export async function putNote(
       .bind(space.id, path)
       .first()
     if (arrived) return read === undefined ? changedWhileWriting(path) : MOVED
+    // A space whose tree is rows holds one name per folder as Windows and a Mac
+    // compare names, so another spelling of a note that is there is that note.
     if (!(error instanceof NoteTaken)) throw error
     return `${path} is another spelling of a note that is already there. Read it first.`
   }

@@ -304,6 +304,7 @@ class Runner {
         this.keepCarried(await carriedIds(engine.core.store, isLocal, account.user?.id))
         await this.letGo(true)
       } else {
+        // Only the desktop keeps spaces signed out this way; see `startLocal` in sync.svelte.ts.
         if (!isDesktop) return
         const store = await openSyncStore(LOCAL_STORE)
         try {

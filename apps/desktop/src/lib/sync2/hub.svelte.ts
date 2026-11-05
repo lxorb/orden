@@ -421,6 +421,8 @@ const nativeWorld: HubWorld = {
     }
     return { post: (message) => channel.postMessage(message) }
   },
+  // Held for the window's life: the promise never settles, and the lock goes with
+  // the window, which is when the next one in line takes it.
   elect: (lead) =>
     heldForLife('nib:hub', () => {
       lead()

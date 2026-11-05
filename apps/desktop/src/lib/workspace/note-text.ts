@@ -354,6 +354,7 @@ async function writeClosed(
     if (read === null) return null
 
     const now = endingsLike(read, change.before)
+    // Worked out on one line ending, written into a file of others; see `appliedToFile`.
     const foreign = now !== read
     const same = now === change.before
     const edits = same ? change.edits : carriedPast(change.before, now, change.edits)

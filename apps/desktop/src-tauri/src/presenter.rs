@@ -35,6 +35,7 @@ fn built_window(app: &AppHandle, x: Option<f64>, y: Option<f64>) -> Result<(), S
         WebviewWindowBuilder::new(app, PRESENTER, WebviewUrl::App("presenter.html".into()))
             .title("Orden")
             .inner_size(WIDTH, HEIGHT)
+            // A drop is the page's, and never a pick; see `window_builder` in launch.rs.
             .disable_drag_drop_handler();
     let builder = match (x, y) {
         (Some(x), Some(y)) => builder.position(x, y),
