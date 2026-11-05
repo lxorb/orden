@@ -1264,8 +1264,14 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-05, to 3,634,800 and 398 modules, for #1129: the sentence behind a
  *  `?`, a name's reason and a hint's card hung over the window from what they are
  *  about rather than cut by what holds it (`hang` in portal.ts, which the first paint
- *  now reads for the file list's field). Measured 3,633,983 in 397. */
-const BUDGET = 3_634_800
+ *  now reads for the file list's field). Measured 3,633,983 in 397.
+ *
+ *  Raised 2026-11-05, to 3,638,200, for #1068: the spaces a desktop keeps itself, listed
+ *  beside the folders and asked of by `invoke` once one is mounted, the tree read ahead
+ *  left to them, their folders written down on the way out and the folders made into
+ *  them at the launch's last turn (tauri.ts, workspace/spaces.ts, workspace/ahead.ts,
+ *  start.ts). Measured 3,637,630. */
+const BUDGET = 3_638_200
 const MOST_FILES = 398
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

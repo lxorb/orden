@@ -140,6 +140,7 @@ export const APP_FOLDERS = [
   'foreign',
   'glass',
   'import',
+  'internal',
   'mobile',
   'online',
   'overview',
@@ -578,10 +579,17 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-05, to 5,940,500, for #1129: a bubble hung over the window
  *  from what it is about (`hang` in portal.ts, Hint.svelte, NameField.svelte).
  *  Measured 5,939,852.
+ *
+ *  The code raised on 2026-11-05, to 5,992,800, and the catalogues to 989,500, for
+ *  #1068: a space Orden keeps itself, a folder of its own with its bytes under keys and
+ *  one index of where each is, the commands that answer for it on a desktop, its folder
+ *  heard and its rows searched, new spaces kept so where a device says, each folder made
+ *  into one once and back, and a space exported as Markdown and folders (internal/; the
+ *  two commands' words in every catalogue). Measured 5,992,233 and 988,983.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_940_500,
-  catalogues: 988_600,
+  code: 5_992_800,
+  catalogues: 989_500,
   styles: 292_300,
   fonts: 260_000,
   pages: 40_000,
