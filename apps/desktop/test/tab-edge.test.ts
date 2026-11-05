@@ -222,4 +222,19 @@ describe('the open tab', () => {
     // The line either side of it is there at once, so the bar never blinks.
     expect(TABS).toMatch(/\.edge::after \{\s+content: '';[^}]*background: var\(--tab-line\);/)
   })
+
+  test('with nothing ahead of it, stands at its pane’s edge with no foot there (#1139)', () => {
+    expect(TABS).toMatch(/const lead = \$derived\(flush \? 0 : LEAD\)/)
+    expect(TABS).toContain('style:--lead="{lead}px"')
+    expect(rule('.tabs.flush .tab.first .fill')).toMatch(/inset-inline-start: 0;/)
+    expect(TABS).toMatch(
+      /:global\(:root:not\(\[dir='rtl'\]\)\) \.tabs\.flush \.tab\.first\.active \.fill::before,\s+:global\(:root\[dir='rtl'\]\) \.tabs\.flush \.tab\.first\.active \.fill::after \{\s+display: none;/,
+    )
+    const pane = readFileSync(
+      fileURLToPath(new URL('../src/lib/Pane.svelte', import.meta.url)),
+      'utf8',
+    )
+    expect(pane).toContain('class:straight={!stripped && flushFirst(pane.id)}')
+    expect(pane).toMatch(/\.pane\.straight \{\s+border-start-start-radius: 0;/)
+  })
 })

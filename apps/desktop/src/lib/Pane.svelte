@@ -70,6 +70,7 @@
   import { shortcuts } from './shortcuts.svelte'
   import { storeAttachment, storeImage } from './assets'
   import Tabs from './Tabs.svelte'
+  import { flushFirst } from './tab-strip/flush'
   import { followHref, followNote } from './open-link'
   import type { OpenHow } from './new-tab'
   import { usage } from './usage.svelte'
@@ -449,6 +450,7 @@
 <div
   class="pane"
   class:lifted={tabOverview.lifted.includes(pane.id)}
+  class:straight={!stripped && flushFirst(pane.id)}
   data-pane={pane.id}
   onpointerdowncapture={() => workspace.focusPane(pane.id)}
   ondragover={over}
@@ -780,6 +782,10 @@
     box-shadow:
       var(--card-shadow),
       0 0 0 1px var(--card-edge);
+  }
+
+  .pane.straight {
+    border-start-start-radius: 0;
   }
 
   .pane:has(> .head) {

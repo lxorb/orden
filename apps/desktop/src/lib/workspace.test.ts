@@ -190,6 +190,7 @@ const { agentMarks } = await import('./agent-marks.svelte')
 const { links } = await import('./link-index.svelte')
 const { startup } = await import('./startup.svelte')
 const ops = await import('./tab-strip/ops')
+const { flushFirst, flushStart } = await import('./tab-strip/flush')
 const { Tab } = await import('./workspace/documents.svelte')
 const { isDraft } = await import('./workspace/drafts')
 const { apartOf, readShortcut, readWebloc, writeShortcut } = await import('@orden/scan/shortcut')
@@ -1526,6 +1527,53 @@ describe('walking back along a trail', () => {
 
     expect(looking.trail).toEqual(['/space/b.md'])
     expect(looking.path).toBe('/space/b.md')
+  })
+})
+
+describe('a strip whose tabs start at its pane’s edge (#1139)', () => {
+  beforeEach(() => {
+    onePane()
+  })
+
+  test('is every strip but the bar’s first, with its first tab in front', async () => {
+    await workspace.open('/space/a.md')
+    expect(flushStart(workspace.panes.focusedId)).toBe(false)
+
+    workspace.split('row')
+    const [left, right] = workspace.panes.all
+    if (!left || !right) throw new Error('the split did not happen')
+    expect(flushStart(left.id)).toBe(false)
+    expect(flushFirst(right.id)).toBe(true)
+
+    workspace.panes.fills = right.id
+    expect(flushStart(right.id)).toBe(false)
+    workspace.panes.fills = null
+
+    workspace.focusPane(right.id)
+    await workspace.open('/space/b.md')
+    expect(workspace.tabsIn(right.id)).toHaveLength(2)
+    expect(flushStart(right.id)).toBe(true)
+    expect(flushFirst(right.id)).toBe(false)
+  })
+
+  test('and the strip of a pane under another one', async () => {
+    await workspace.open('/space/a.md')
+    workspace.split('column')
+    const [upper, lower] = workspace.panes.all
+    if (!upper || !lower) throw new Error('the split did not happen')
+    expect(flushStart(upper.id)).toBe(false)
+    expect(flushFirst(lower.id)).toBe(true)
+  })
+
+  test('but not while the steps back and forward stand ahead of the tabs', async () => {
+    await workspace.open('/space/a.md')
+    workspace.split('row')
+    const right = workspace.panes.all[1]
+    if (!right) throw new Error('the split did not happen')
+    const tab = workspace.tabsIn(right.id)[0]
+    if (!tab) throw new Error('the second pane is empty')
+    tab.trail = ['/space/b.md', '/space/a.md']
+    expect(flushStart(right.id)).toBe(false)
   })
 })
 

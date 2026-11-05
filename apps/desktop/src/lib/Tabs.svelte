@@ -31,6 +31,7 @@
   import UnsavedDot from './UnsavedDot.svelte'
   import { askPlace } from './save-place/door'
   import type { ClosingWidths } from './tab-strip/closing.svelte'
+  import { flushStart } from './tab-strip/flush'
   import { revealed } from './tab-strip/scroll'
   import { wheelAlong } from './tab-strip/wheel'
   import {
@@ -169,8 +170,11 @@
   let live = $state(false)
   let resizing = $state(false)
 
+  const flush = $derived(flushStart(paneId))
+  const lead = $derived(flush ? 0 : LEAD)
+
   const room = $derived(
-    stripWidth > 0 ? Math.max(0, stripWidth - LEAD - (viewport.touch ? 0 : PLUS)) : null,
+    stripWidth > 0 ? Math.max(0, stripWidth - lead - (viewport.touch ? 0 : PLUS)) : null,
   )
 
   /** Every part this strip fetches is heard only while the strip is there; see while-here.ts. */
@@ -406,7 +410,7 @@
    *  Room it no longer needs goes at the tabs' own pace, so a tab closed at its end
    *  draws the rest in rather than throwing them along; room it needs comes at once, so
    *  a tab opened there can be scrolled to straight away. */
-  const span = $derived(LEAD + layout.end + (viewport.touch ? 0 : PLUS))
+  const span = $derived(lead + layout.end + (viewport.touch ? 0 : PLUS))
   let shrinking = $state(false)
   let spanWas = 0
   $effect.pre(() => {
@@ -439,8 +443,8 @@
 
     const box = strip.getBoundingClientRect()
     return i18n.factor > 0
-      ? clientX - box.left - LEAD + strip.scrollLeft
-      : box.right - LEAD - clientX - strip.scrollLeft
+      ? clientX - box.left - lead + strip.scrollLeft
+      : box.right - lead - clientX - strip.scrollLeft
   }
 
   // What other strips ask this one, while it is on screen: where a tab carried in
@@ -484,7 +488,7 @@
       const box = layout.boxes[id]
       if (!box) return
       const at = node.scrollLeft * i18n.factor
-      const to = revealed(at, stripWidth, span, box.x, box.x + box.width + 2 * LEAD)
+      const to = revealed(at, stripWidth, span, box.x, box.x + box.width + lead + LEAD)
       if (Math.abs(to - at) < 1) return
       node.scrollTo({
         left: to * i18n.factor,
@@ -1006,7 +1010,7 @@
     data-tauri-drag-region={caption ? '' : undefined}
     bind:this={strip}
     bind:clientWidth={stripWidth}
-    style:--lead="{LEAD}px"
+    style:--lead="{lead}px"
     style:--tab-top="{TOP}px"
     use:roving={{
       across: true,
@@ -1029,6 +1033,7 @@
     class:live={live && !resizing}
     class:moving={drag.on}
     class:bare
+    class:flush
     ondragover={over}
     ondragleave={(event) => {
       const box = event.currentTarget.getBoundingClientRect()
@@ -1061,6 +1066,7 @@
           class="tab"
           data-box={tab.id}
           class:active={tab.id === activeId}
+          class:first={at === 0 && box.x <= 0}
           class:icon
           class:preview={tab.id === workspace.previewTabId}
           class:line={lines.has(tab.id)}
@@ -1581,6 +1587,33 @@
 
   .tab.active .edge::after {
     left: calc(100% + var(--tab-foot));
+  }
+
+  .tabs.flush .tab.first .fill {
+    inset-inline-start: 0;
+  }
+
+  .tabs.flush .tab.first .edge {
+    inset-inline-start: -1px;
+  }
+
+  :global(:root:not([dir='rtl'])) .tabs.flush .tab.first.active .fill::before,
+  :global(:root[dir='rtl']) .tabs.flush .tab.first.active .fill::after {
+    display: none;
+  }
+
+  :global(:root:not([dir='rtl'])) .tabs.flush .tab.first.active .edge::before {
+    right: auto;
+    left: -1px;
+    width: 1px;
+    height: var(--tab-foot);
+  }
+
+  :global(:root[dir='rtl']) .tabs.flush .tab.first.active .edge::after {
+    left: auto;
+    right: -1px;
+    width: 1px;
+    height: var(--tab-foot);
   }
 
   /* Hovered, a tab that is not the active one lights as a rounded box with the active
