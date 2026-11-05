@@ -2580,8 +2580,6 @@ impl Page<'_> {
         Ok(rects)
     }
 
-    /// Where a frame in a process of its own is now, as the frame says: the address it was
-    /// attached at may be older than a navigation inside it.
     fn frame_address(&self, frame: &cdp::Frame) -> Vec<String> {
         let world = self.world_in(Some(&frame.session)).ok();
         world

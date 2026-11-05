@@ -427,10 +427,7 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
             }
         }
 
-        match end {
-            Some(_) => at = stop + 1,
-            None => return None,
-        }
+        at = end? + 1;
     }
     None
 }

@@ -31,9 +31,7 @@ pub fn tags_in(body: &str) -> Vec<String> {
     // How many bytes of the note the block takes, fences included, or zero where
     // the note opens with anything else: the tags under its key are read first,
     // and the pass over the note's own words starts after it.
-    let block = front_matter::block(body);
-    let front = block.as_ref().map_or(0, |one| one.end);
-    let close = block.as_ref().map_or(0, |one| one.close);
+    let (front, close) = front_matter::block(body).map_or((0, 0), |one| (one.end, one.close));
 
     read_front(body, front, close, &mut found);
     read_inline(body, front, &mut found);

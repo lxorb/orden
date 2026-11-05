@@ -361,11 +361,7 @@ fn policy_place(html: &str) -> usize {
         let past = if rest.starts_with("<!--") {
             comment_end(rest)
         } else if rest.starts_with("<!doctype") {
-            let end = tag_end(rest);
-            if let Some(end) = end {
-                place = at + end;
-            }
-            end
+            tag_end(rest).inspect(|end| place = at + end)
         } else if rest.starts_with("<!") || rest.starts_with("<?") {
             rest.find('>').map(|end| end + 1)
         } else if is_tag(rest, "<html") {
@@ -411,11 +407,7 @@ fn comment_end(text: &str) -> Option<usize> {
     }
     let plain = body.find("-->").map(|end| end + 3);
     let bang = body.find("--!>").map(|end| end + 4);
-    let end = match (plain, bang) {
-        (Some(one), Some(other)) => one.min(other),
-        (one, other) => one.or(other)?,
-    };
-    Some(4 + end)
+    Some(4 + plain.into_iter().chain(bang).min()?)
 }
 
 /// The whole note for a moment in a folder other people on the machine share: readable by
