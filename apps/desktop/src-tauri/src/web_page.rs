@@ -60,6 +60,13 @@ pub enum Said {
     Arrived {
         url: String,
         failure: Option<Failure>,
+        /// The engine drew nothing for the failure: no error page of its own, the tab left
+        /// on whatever it held, which for a new tab is nothing at all - a black pane in a
+        /// dark theme (#1093). The window then says it instead; see `failed` in
+        /// `web-tab/pages.svelte.ts`. `WKWebView`'s; `WebView2` draws a page of its own.
+        bare: bool,
+        /// Why, in the engine's words and the reader's language, where it says.
+        reason: Option<String>,
     },
     /// The page's process has died: a white box from here on, until somebody builds it
     /// again. The pane offers that; see `ended` in pages.svelte.ts.
@@ -77,6 +84,28 @@ pub enum Failure {
     Unreachable,
     Certificate,
     Other,
+}
+
+/// Why a `WKWebView` navigation did not arrive, out of its error's domain and code, or
+/// `None` for one that is no failure to show: a navigation another one replaced
+/// (`NSURLErrorCancelled`), one that became a download or that the tab's own rule turned
+/// away (`WebKitErrorFrameLoadInterruptedByPolicyChange`), and a document a plug-in took.
+/// The same three kinds `WebView2`'s statuses are read into above: the connection
+/// failing is unreachable, so the bar's https-first falls back; a certificate is the
+/// certificate; a name that does not resolve, or no network at all, is anything else.
+#[cfg_attr(
+    not(all(target_os = "macos", not(feature = "cef"))),
+    allow(dead_code, reason = "only WKWebView's failures are read here")
+)]
+pub fn failure_of_error(domain: &str, code: isize) -> Option<Failure> {
+    match (domain, code) {
+        ("NSURLErrorDomain", -999) | ("WebKitErrorDomain", 102 | 204) => None,
+        // Every certificate error NSURLError has, and a TLS handshake that failed.
+        ("NSURLErrorDomain", -1206..=-1200) => Some(Failure::Certificate),
+        // Timed out, could not connect, the connection lost, or answered with nothing.
+        ("NSURLErrorDomain", -1001 | -1004 | -1005 | -1011 | -1017) => Some(Failure::Unreachable),
+        _ => Some(Failure::Other),
+    }
 }
 
 /// One of those, with the tab it is about.
@@ -247,7 +276,12 @@ mod heard {
                 }
                 Some(failure_of(status, answered))
             };
-            Some(Said::Arrived { url, failure })
+            Some(Said::Arrived {
+                url,
+                failure,
+                bare: false,
+                reason: None,
+            })
         }
     }
 
@@ -445,8 +479,25 @@ fn quieted(view: &tauri::Webview, muted: bool) -> Result<(), String> {
         .map_err(|error| format!("that page could not be reached: {error}"))
 }
 
+/// `WKWebView`: how a page arrived, and its frames judged as frames; see web_page/webkit.rs.
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
+#[path = "web_page/webkit.rs"]
+mod webkit;
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
+pub use webkit::listen;
+
 /// Every other engine says nothing about a page; see the top of this file.
-#[cfg(any(not(windows), feature = "cef"))]
+#[cfg(not(any(windows, target_os = "macos", feature = "cef")))]
+pub fn listen(
+    _webview: &tauri::webview::PlatformWebview,
+    _app: AppHandle,
+    _tab: String,
+    _window: String,
+) {
+}
+
+/// Nor does Orden's own Chromium, here.
+#[cfg(feature = "cef")]
 pub fn listen(
     _webview: &tauri::webview::PlatformWebview,
     _app: AppHandle,
@@ -477,7 +528,7 @@ pub fn mute(view: &tauri::Webview, muted: bool) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{leaves, Heard, Said, QUIET};
+    use super::{failure_of_error, leaves, Failure, Heard, Said, QUIET};
 
     #[test]
     fn escape_and_f11_give_the_screen_back() {
@@ -525,6 +576,69 @@ mod tests {
         assert_eq!(
             crashed,
             serde_json::json!({ "tab": "d", "said": "crashed" })
+        );
+    }
+
+    /// #1093: a Mac's failed navigation, read into the kinds the window decides on, and the
+    /// ones that are no failure at all left unsaid.
+    #[test]
+    fn a_webkit_failure_is_read_as_what_it_means() {
+        // Replaced by the next navigation, turned into a download, taken by a plug-in.
+        assert_eq!(failure_of_error("NSURLErrorDomain", -999), None);
+        assert_eq!(failure_of_error("WebKitErrorDomain", 102), None);
+        assert_eq!(failure_of_error("WebKitErrorDomain", 204), None);
+        // A certificate, however it is wrong, and a handshake that failed.
+        for code in [-1200, -1201, -1202, -1203, -1204, -1205, -1206] {
+            assert_eq!(
+                failure_of_error("NSURLErrorDomain", code),
+                Some(Failure::Certificate)
+            );
+        }
+        // The connection itself: what the bar's https-first falls back from.
+        for code in [-1001, -1004, -1005, -1011, -1017] {
+            assert_eq!(
+                failure_of_error("NSURLErrorDomain", code),
+                Some(Failure::Unreachable)
+            );
+        }
+        // A name that does not resolve, no network, anything else.
+        assert_eq!(
+            failure_of_error("NSURLErrorDomain", -1003),
+            Some(Failure::Other)
+        );
+        assert_eq!(
+            failure_of_error("NSURLErrorDomain", -1009),
+            Some(Failure::Other)
+        );
+        assert_eq!(
+            failure_of_error("WebKitErrorDomain", 101),
+            Some(Failure::Other)
+        );
+    }
+
+    /// The window reads an arrival's four fields, the bare one and the reason included.
+    #[test]
+    fn an_arrival_says_whether_anything_was_drawn_and_why() {
+        let json = serde_json::to_value(Heard {
+            tab: "e".into(),
+            said: Said::Arrived {
+                url: "https://no-such-host.invalid/".into(),
+                failure: Some(Failure::Other),
+                bare: true,
+                reason: Some("A server with the specified hostname could not be found.".into()),
+            },
+        })
+        .expect("json");
+        assert_eq!(
+            json,
+            serde_json::json!({
+                "tab": "e",
+                "said": "arrived",
+                "url": "https://no-such-host.invalid/",
+                "failure": "other",
+                "bare": true,
+                "reason": "A server with the specified hostname could not be found.",
+            })
         );
     }
 
@@ -607,6 +721,8 @@ mod arrivals {
         let said = serde_json::to_value(super::Said::Arrived {
             url: "https://a.example/".into(),
             failure: Some(Failure::Unreachable),
+            bare: false,
+            reason: None,
         })
         .expect("json");
         assert_eq!(said["said"], "arrived");
@@ -614,6 +730,8 @@ mod arrivals {
         let fine = serde_json::to_value(super::Said::Arrived {
             url: "https://a.example/".into(),
             failure: None,
+            bare: false,
+            reason: None,
         })
         .expect("json");
         assert!(fine["failure"].is_null());

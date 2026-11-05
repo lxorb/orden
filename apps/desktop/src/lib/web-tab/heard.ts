@@ -3,7 +3,8 @@
  *  Four things, each of them something a browser shows without being asked: the page is
  *  playing sound, or is muted; something in it holds the whole screen; it was zoomed
  *  inside the page; and how many matches a find found and which one is lit. And how a
- *  page arrived, which settles an address the bar gave `https:` to; see upgrade.ts. And that
+ *  page arrived, which settles an address the bar gave `https:` to; see upgrade.ts - and
+ *  when it did not, and the engine drew nothing for it, that it did not (#1093). And that
  *  its process has died, which leaves a white box unless somebody says so. The crate
  *  says them (see web_page.rs and web_find.rs); this reads them, because an event is a
  *  boundary like any other, and puts them where the tab strip, the bar and the find bar
@@ -30,11 +31,28 @@ export type Said = { tab: string } & (
   | { said: 'sound'; playing: boolean; muted: boolean }
   | { said: 'fill'; on: boolean }
   | { said: 'zoom'; factor: number }
-  | { said: 'arrived'; url: string; failure: Failure | null }
+  | {
+      said: 'arrived'
+      url: string
+      failure: Failure | null
+      /** The engine drew nothing for the failure; see `Arrived` in web_page.rs. */
+      bare: boolean
+      /** Why, in the engine's words. */
+      reason: string | null
+    }
   | { said: 'crashed' }
 )
 
 const FAILURES: readonly string[] = ['unreachable', 'certificate', 'other'] satisfies Failure[]
+
+/** A page that did not arrive and that the engine drew nothing for: where it was going,
+ *  why, and the engine's own words for it. The pane says it instead; see `failed` in
+ *  pages.svelte.ts. */
+export interface NotArrived {
+  url: string
+  failure: Failure
+  reason: string | null
+}
 
 /** How many matches a find has and which is lit, from nought, or -1 for none. */
 export interface Found {
@@ -56,7 +74,8 @@ export function readSaid(value: unknown): Said | null {
   }
   if (said === 'arrived' && typeof value.url === 'string') {
     const failure = FAILURES.includes(value.failure as string) ? (value.failure as Failure) : null
-    return { tab, said, url: value.url, failure }
+    const reason = typeof value.reason === 'string' && value.reason ? value.reason : null
+    return { tab, said, url: value.url, failure, bare: value.bare === true, reason }
   }
   if (said === 'crashed') return { tab, said }
   return null
@@ -78,7 +97,13 @@ export function readUnplayable(value: unknown): string | null {
 /** Where a page that did not arrive is sent instead: the tab and the address. */
 export type Go = (tab: string, url: string) => void
 
-export function heard(page: Page, said: Said, go?: Go, crashed?: (tab: string) => void): void {
+export function heard(
+  page: Page,
+  said: Said,
+  go?: Go,
+  crashed?: (tab: string) => void,
+  failed?: (tab: string, not: NotArrived) => void,
+): void {
   switch (said.said) {
     case 'sound': {
       // When it fell quiet, which a page out of sight is not frozen for a while after;
@@ -108,11 +133,20 @@ export function heard(page: Page, said: Said, go?: Go, crashed?: (tab: string) =
       // The https the bar chose for a host typed without a scheme, and nothing answered
       // there: plain http, as Chrome goes. See upgrade.ts.
       const upgrade = page.upgrade
-      if (!upgrade) return
-      const now = settled(upgrade, said.url, said.failure)
-      if (now === 'unrelated') return
-      page.upgrade = null
-      if (now === 'fallback') go?.(said.tab, upgrade.fallback)
+      const now = upgrade ? settled(upgrade, said.url, said.failure) : 'unrelated'
+      if (upgrade && now !== 'unrelated') {
+        page.upgrade = null
+        if (now === 'fallback') {
+          go?.(said.tab, upgrade.fallback)
+          return
+        }
+      }
+      // A page that did not arrive and that nothing was drawn for: never an empty pane
+      // under a spinner that does not stop, which is what a Mac showed for every site
+      // that failed to load (#1093). The pane says so, and offers it again.
+      if (said.failure && said.bare) {
+        failed?.(said.tab, { url: said.url, failure: said.failure, reason: said.reason })
+      }
       return
     }
   }
@@ -131,11 +165,12 @@ export async function listening(
   page: (tab: string) => Page | undefined,
   go: Go,
   crashed: (tab: string) => void,
+  failed?: (tab: string, not: NotArrived) => void,
 ): Promise<void> {
   await listen('nib://web-page', (event) => {
     const said = readSaid(event.payload)
     const one = said && page(said.tab)
-    if (one) heard(one, said, go, crashed)
+    if (one) heard(one, said, go, crashed, failed)
   })
   await listen('nib://web-found', (event) => {
     const said = readFound(event.payload)
