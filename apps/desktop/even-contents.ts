@@ -608,10 +608,11 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  claude/hunt-round-1 on top of the hunt's: an `ai` block's answer drawn as the note is
  *  (`TexDelimiters` in @orden/markdown/streamed), the agents' programs, the registry of
  *  what covers a page, measured 6,037,507. Catalogues 992,135 and styles 291,272 as they
- *  were.
+ *  were. Then to 6,037,800 for #1125 and #1063 and the device store's one rule, measured
+ *  6,037,649.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_037_600,
+  code: 6_037_800,
   catalogues: 992_400,
   styles: 291_500,
   fonts: 260_000,
