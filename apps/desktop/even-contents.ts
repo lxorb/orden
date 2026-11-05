@@ -637,9 +637,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *
  *  Raised on 2026-11-05 for #1150, a card of its own for each AI account and vault device
  *  (AiPane.svelte): the styles to 292,400, measured 292,070.
+ *
+ *  Raised on 2026-11-05 for #1063, a find sheet that lists every answer in a window of
+ *  rows (PromptSheet.svelte) and the applications' new words: the code to 6,129,300,
+ *  measured 6,129,039.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_127_800,
+  code: 6_129_300,
   catalogues: 1_010_800,
   styles: 292_400,
   fonts: 260_000,
