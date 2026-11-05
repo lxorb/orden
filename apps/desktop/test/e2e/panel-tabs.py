@@ -11,8 +11,8 @@ tab outside the pill. Measured here rather than clicked:
     narrow for that, the last tabs go behind More, which lists them;
   - the tab showing is always drawn.
 
-On the right side at its narrowest, at 300 and at its widest, with the five panels it
-starts with and again with seven, in both schemes. Shots under `shots/panel-tabs/`.
+On the right side at its narrowest, at 300 and at its widest, with the panels it
+starts with and again with two more moved over, in both schemes. Shots under `shots/panel-tabs/`.
 
 Run it from the repository root:
 
@@ -89,7 +89,8 @@ def fresh(browser: Browser, scheme: str) -> Page:
 def width(page: Page, pixels: int) -> None:
     """The right side to a width, by its own edge: Home is the narrowest, and on the
     right side's edge every left arrow is a step wider."""
-    edge = page.locator("aside.right .edge")
+    # The resize edge, not the edge drawn in the sidebar's own button (#1038).
+    edge = page.locator("aside.right [role=separator].edge")
     edge.focus()
     if pixels >= 520:
         edge.press("End")
@@ -139,18 +140,20 @@ def drive(browser: Browser, scheme: str) -> None:
     page.wait_for_timeout(500)
     for pixels in (180, 300, 520):
         width(page, pixels)
-        at = f"{scheme} {pixels} five"
+        at = f"{scheme} {pixels} own"
         judge(at, page.evaluate(MEASURE))
-        shot(page, f"{scheme}-{pixels}-five", clip=strip_clip(page))
+        shot(page, f"{scheme}-{pixels}-own", clip=strip_clip(page))
     # Both sides at once, the left one's three tabs as well.
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     page.wait_for_timeout(400)
     shot(page, f"{scheme}-window")
 
-    # Seven panels on the one side: at its narrowest some go behind More. The file list
-    # and the tasks moved over to the five; not the search, which has had no tab since
-    # 6de7fcf4 (a search bar over the file list instead), and not the chats or the
-    # agents, whose tabs wait for an account and for an agent that has spoken.
+    # Two more panels on the one side: at its narrowest some go behind More. The file
+    # list and the tasks moved over to the side's own; not the search, which has had no
+    # tab since 6de7fcf4 (a search bar over the file list instead), and not the chats,
+    # whose tab waits for an account. How many the side then has is counted at its
+    # widest, where every one is drawn: which panels a side offers is the tab in front's
+    # to say (#1120), so the count is the strip's, not a number written here.
     page.evaluate(
         """() => {
           const ws = window.nibApp.workspace
@@ -159,17 +162,23 @@ def drive(browser: Browser, scheme: str) -> None:
         }"""
     )
     page.wait_for_timeout(500)
-    for pixels in (180, 300, 520):
+    every = 0
+    for pixels in (520, 300, 180):
         width(page, pixels)
-        at = f"{scheme} {pixels} seven"
+        at = f"{scheme} {pixels} moved"
         row = page.evaluate(MEASURE)
         judge(at, row)
         labels = [one["label"] for one in row["tabs"]]
-        if pixels == 520 and "More" in labels:
-            wrong(f"[{at}] More at the widest, where all seven fit")
+        if pixels == 520:
+            every = len(labels)
+            say(f"[{at}] {every} panels on the side")
+            if "More" in labels:
+                wrong(f"[{at}] More at the widest, where all of them fit")
+            if every < 6:
+                wrong(f"[{at}] only {every} panels after two were moved over")
         if pixels == 180:
             if "More" not in labels:
-                wrong(f"[{at}] seven tabs at the narrowest and no More")
+                wrong(f"[{at}] {every} tabs at the narrowest and no More")
             else:
                 page.locator("aside.right [role=tab][aria-label=More]").click()
                 page.wait_for_timeout(300)
@@ -179,12 +188,12 @@ def drive(browser: Browser, scheme: str) -> None:
                 )
                 say(f"[{at}] behind More: {json.dumps(rows, ensure_ascii=False)}")
                 shot(page, f"{scheme}-{pixels}-more-menu")
-                hidden = 7 - (len(labels) - 1)
+                hidden = every - (len(labels) - 1)
                 if len(rows) != hidden:
                     wrong(f"[{at}] More lists {len(rows)} panels, not the {hidden} not drawn")
                 page.keyboard.press("Escape")
                 page.wait_for_timeout(200)
-        shot(page, f"{scheme}-{pixels}-seven", clip=strip_clip(page))
+        shot(page, f"{scheme}-{pixels}-moved", clip=strip_clip(page))
 
     page.context.close()
 

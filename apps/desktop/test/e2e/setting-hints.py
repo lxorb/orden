@@ -28,9 +28,12 @@ UNEXPLAINED = """
   const pane = document.querySelector('[role="dialog"][aria-label="Settings"]')
   const rows = [...pane.querySelectorAll('.nib-setting')].filter((row) =>
     !row.closest('.shortcut, .button, .extension') &&
+    // A row's control, in the shapes Settings draws them in: a value - a dropdown or a
+    // field - is `.nib-setting-value` or `.nib-field` since #1056, which put every one in
+    // one box and one column.
     row.querySelector(
-      '[role="switch"], .nib-switch, input[type="range"], .nib-segmented, .pick, .nib-swatches,' +
-        ' .swatches, input.inline, .pictures',
+      '[role="switch"], .nib-switch, input[type="range"], .nib-segmented, .nib-setting-value,' +
+        ' input.nib-field, .nib-swatches, .swatches, .pictures',
     ),
   )
   return {

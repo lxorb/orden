@@ -64,8 +64,12 @@ LOOK = """
 }
 """
 
-#: Enough for even the narrowest tabs not to fit in 900px, and all to fit in 2400px.
+#: Enough for even the narrowest tabs not to fit in 900px, and all to fit in `WIDE`.
 MANY = 80
+
+#: A window every one of them fits in, as Chrome draws tabs and as marks, which do not
+#: shrink below their icon (#1041): eighty marks are some 3700px.
+WIDE = 4200
 
 ACTIVATE = "(at) => { const ws = window.nibApp.workspace; ws.activate(ws.tabs.at(at).id) }"
 
@@ -79,8 +83,25 @@ def look(page: Page) -> dict:
 
 
 def settle(page: Page) -> None:
-    """Past every tab's easing, and past a smooth scroll."""
-    page.wait_for_timeout(700)
+    """Past every tab's easing, and past a smooth scroll - which takes longer the further
+    it goes, and a strip of marks is a long way: until the strip has not moved for a
+    few frames together."""
+    page.wait_for_timeout(300)
+    page.evaluate(
+        """() => new Promise((done) => {
+          const strip = document.querySelector('.tabs')
+          let last = NaN, same = 0, frames = 0
+          const look = () => {
+            const at = strip.scrollLeft
+            same = at === last ? same + 1 : 0
+            last = at
+            if (same >= 5 || ++frames > 300) done()
+            else requestAnimationFrame(look)
+          }
+          requestAnimationFrame(look)
+        })"""
+    )
+    page.wait_for_timeout(100)
 
 
 def over_strip(page: Page) -> None:
@@ -178,6 +199,10 @@ def overflowing(page: Page) -> None:
 
     to_the_end(page, "eighty tabs")
     DRIVE.shot(page, "02-the-end")
+    # The pointer off the strip, as a key opens a tab: a mark the pointer rests on opens
+    # out to its name and moves every tab after it (#1041), which would move the open
+    # tab after the strip had brought it to its edge.
+    page.mouse.move(10, 400)
 
     # The first tab opened from the end: the strip goes back to its start.
     page.evaluate(ACTIVATE, 0)
@@ -238,21 +263,26 @@ def widening(page: Page) -> None:
         wrong("eighty tabs in 700px do not overflow")
         return
     to_the_end(page, "eighty tabs in 700px")
-    page.set_viewport_size({"width": 2400, "height": 700})
+    page.set_viewport_size({"width": WIDE, "height": 700})
     settle(page)
-    still(page, "eighty tabs in 2400px")
+    still(page, f"eighty tabs in {WIDE}px")
     over_strip(page)
     turns(page, 0, 300)
-    still(page, "eighty tabs in 2400px, the wheel")
+    still(page, f"eighty tabs in {WIDE}px, the wheel")
     DRIVE.shot(page, "04-widened")
 
 
 def drive(browser: Browser) -> None:
     for step in (fitting, overflowing, closing, widening):
-        page = DRIVE.page(browser, viewport={"width": 1600, "height": 800})
-        DRIVE.open(page)
-        step(page)
-        page.context.close()
+        for icons in (True, False):
+            page = DRIVE.page(browser, viewport={"width": 1600, "height": 800})
+            page.context.add_init_script(
+                f"localStorage.setItem('nib:icon-tabs', {'yes' if icons else 'no'!r})"
+            )
+            DRIVE.open(page)
+            say(f"{step.__name__}, {'every tab but the open one its mark' if icons else 'as Chrome draws tabs'}")
+            step(page)
+            page.context.close()
 
 
 if __name__ == "__main__":
