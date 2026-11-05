@@ -30,7 +30,7 @@ import type { Doer, FileOp } from '../workspace/file-ops'
 import { owesLast, writing } from '../parting'
 import { isDesktop, isNative, joinPath } from '../tauri'
 import { keptAway } from '../web/away.svelte'
-import { keptBudget, TRIM_AFTER } from './budget'
+import { aloneHere, keptBudget, TRIM_AFTER } from './budget'
 import { links } from '../link-index.svelte'
 import { Indexing } from './indexing'
 import type { Leaving } from './keeping'
@@ -980,7 +980,8 @@ class Runner {
     clearTimeout(this.trimTimer)
     this.trimTimer = setTimeout(() => {
       void (async () => {
-        if (this.current !== engine) return
+        // Another window of the app may have open what this one would let go of.
+        if (this.current !== engine || !(await aloneHere())) return
         const indexing = this.indexing
         const went = await engine.trim(await keptBudget(), {
           ...lettingGo,

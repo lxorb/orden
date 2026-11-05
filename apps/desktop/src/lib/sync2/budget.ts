@@ -34,3 +34,41 @@ export async function keptBudget(): Promise<number> {
   const used = estimate?.usage ?? 0
   return used / quota > TIGHT ? Math.round(budget / 2) : Math.round(budget)
 }
+
+/** The lock every window of the app holds while it is open, shared, so a window can tell
+ *  whether it is the only one. */
+const WINDOW = 'nib:window'
+
+let holding: Promise<void> | null = null
+
+/** This window's hold on `WINDOW`, taken once and kept until it closes. */
+function holdWindow(locks: LockManager): Promise<void> {
+  holding ??= new Promise<void>((held) => {
+    void locks
+      .request(WINDOW, { mode: 'shared' }, () => {
+        held()
+        // Kept for as long as the window is open.
+        return new Promise<void>(() => undefined)
+      })
+      .catch(() => held())
+  })
+  return holding
+}
+
+/** Whether this is the only window of the app in this browser. Every window runs an
+ *  engine over the one store, and a note open in another window is no note this one may
+ *  let go of, so words are let go of only while one window is open. Where the browser
+ *  cannot say, never. */
+export async function aloneHere(): Promise<boolean> {
+  const locks = 'locks' in navigator ? navigator.locks : undefined
+  if (!locks) return false
+  await holdWindow(locks)
+  const state = await locks.query().catch(() => null)
+  if (!state) return false
+  return (state.held ?? []).filter((one) => one.name === WINDOW).length <= 1
+}
+
+/** For the tests: as a new page. */
+export function forgetWindow(): void {
+  holding = null
+}
