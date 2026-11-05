@@ -12,6 +12,7 @@
 //! | `limits`, `stop` | how fast, and the stop |
 //! | `log` | every call, written down |
 //! | `tabs`, `quiet` | the agent's own tabs nobody sees, and everything they may not do |
+//! | `engines` | which engine a page is on, and the one interface every act goes through |
 //! | `cdp`, `page`, `snapshot`, `keys` | the `DevTools` Protocol, and every act through it |
 //! | `browser`, `reader` | the browser verbs, on the agent's tabs and the reader's |
 //! | `capture` | a page read for the window's `capture_to_note` |
@@ -22,12 +23,14 @@
 //! is made on the first request that names an agent verb or carries an agent's token,
 //! and an installation nobody pairs an agent with never makes it (11).
 //!
-//! **Two engines drive a page, and the verbs are the same on both.** `WebView2` and Orden's
-//! own Chromium both speak the `DevTools` Protocol, and `engines` hands every verb the
-//! page on whichever it is; the system's engines on a Mac and on Linux answer
-//! `unsupported_on_this_engine` from the same verbs (section 12, and `engines` for why).
-//! The parts that are only reading and deciding - the policy, the snapshot's shape, the
-//! keys - are built and tested everywhere.
+//! **Every engine drives a page through one interface, and the verbs are the same on
+//! each** (#1092). `WebView2` and Orden's own Chromium speak the `DevTools` Protocol
+//! (`cdp`, `page`); `WKWebView` is driven through its own calls (`engines/webkit.rs`).
+//! Every verb is decided once, in `browser`, and done through `engines::Engine`; what an
+//! engine cannot do answers `unsupported_on_this_engine` with the reason from that
+//! engine's table (section 12, and `engines`). The parts that are only reading and
+//! deciding - the policy, the snapshot's shape, the keys - are built and tested
+//! everywhere.
 
 #[cfg_attr(
     not(any(windows, feature = "cef")),
@@ -104,25 +107,39 @@ mod snapshot;
 )]
 pub(crate) mod stop;
 
-#[cfg(any(windows, feature = "cef"))]
+#[cfg(any(windows, feature = "cef", target_os = "macos"))]
 pub mod engines;
 pub mod shell;
 
-#[cfg(any(windows, feature = "cef"))]
+#[cfg(any(windows, feature = "cef", target_os = "macos"))]
 mod browser;
 // The one door to the DevTools Protocol on a page of either Chromium; the web store merge
 // uses it too (see web_state/cdp.rs).
 #[cfg(any(windows, feature = "cef"))]
 pub(crate) mod cdp;
-#[cfg(any(windows, feature = "cef"))]
+#[cfg(any(windows, feature = "cef", target_os = "macos"))]
 mod memory;
 #[cfg(any(windows, feature = "cef"))]
 mod page;
-#[cfg(any(windows, feature = "cef"))]
+#[cfg(any(windows, feature = "cef", target_os = "macos"))]
+#[cfg_attr(
+    all(target_os = "macos", not(feature = "cef")),
+    allow(
+        dead_code,
+        reason = "WKWebView's dialogs, windows and downloads are built in #1092's next steps"
+    )
+)]
 mod quiet;
-#[cfg(any(windows, feature = "cef"))]
+#[cfg(any(windows, feature = "cef", target_os = "macos"))]
 mod reader;
-#[cfg(any(windows, feature = "cef"))]
+#[cfg(any(windows, feature = "cef", target_os = "macos"))]
+#[cfg_attr(
+    all(target_os = "macos", not(feature = "cef")),
+    allow(
+        dead_code,
+        reason = "WKWebView's agent pages are built in #1092's next steps"
+    )
+)]
 mod tabs;
 #[cfg(any(windows, feature = "cef"))]
 mod twin;
@@ -272,7 +289,7 @@ pub fn logged(
 
 /// One verb, answered.
 fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
-    #[cfg(any(windows, feature = "cef"))]
+    #[cfg(any(windows, feature = "cef", target_os = "macos"))]
     tabs::back(caller.id());
     match verb {
         Verb::Status(_) => status(app, caller),
@@ -288,7 +305,7 @@ fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
         }
         Verb::Pair(pair) => pair_client(app, caller, &pair),
         Verb::Bye(_) => {
-            #[cfg(any(windows, feature = "cef"))]
+            #[cfg(any(windows, feature = "cef", target_os = "macos"))]
             tabs::bye(caller.id());
             shell::bye(app, caller.id());
             process::end_all(Some(caller.id()));
@@ -326,34 +343,26 @@ fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
 }
 
 /// The browser's verbs, where the engine can answer them.
-#[cfg(any(windows, feature = "cef"))]
+#[cfg(any(windows, feature = "cef", target_os = "macos"))]
 fn browse(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer {
     browser::answer(app, caller, verb, since)
 }
 
-/// The system's engine on a Mac and on Linux: measured, not built (section 12). Its
-/// pages can be kept out of sight and alive, but every way a page reaches the reader -
-/// a file panel, a camera prompt, a window - is the engine's own delegate there, which
-/// Orden does not hold for an agent's page yet; so no verb pretends.
-#[cfg(not(any(windows, feature = "cef")))]
+/// A phone: no agent tabs at all, so no verb pretends.
+#[cfg(not(any(windows, feature = "cef", target_os = "macos")))]
 fn browse(_app: &AppHandle, _caller: &Caller, verb: Verb, _since: u64) -> Answer {
     Answer::error(
         Code::UnsupportedOnThisEngine,
         format!(
-            "{} is not available on {}: an agent's browser runs on Windows and on nib's own Chromium",
-            verb.name(),
-            if cfg!(target_os = "macos") {
-                "WKWebView"
-            } else {
-                "WebKitGTK"
-            }
+            "{} is not available here: an agent's browser runs on a desktop",
+            verb.name()
         ),
     )
 }
 
 /// Counts a navigation against the agent's limit, waiting for room.
 #[cfg_attr(
-    not(any(windows, feature = "cef")),
+    not(any(windows, feature = "cef", target_os = "macos")),
     allow(
         dead_code,
         reason = "only an engine with agent tabs navigates an agent's page"
@@ -396,9 +405,9 @@ fn status(app: &AppHandle, caller: &Caller) -> Answer {
         .grants
         .by_id(app, &grant.id)
         .unwrap_or_else(|| grant.as_ref().clone());
-    #[cfg(any(windows, feature = "cef"))]
+    #[cfg(any(windows, feature = "cef", target_os = "macos"))]
     let tabs = tabs::of(&grant.id).iter().map(tabs::Tab::listed).collect();
-    #[cfg(not(any(windows, feature = "cef")))]
+    #[cfg(not(any(windows, feature = "cef", target_os = "macos")))]
     let tabs = Vec::new();
     Answer::ok(verbs::Status {
         stopped: stop::stopped_for(&grant.id),
@@ -605,7 +614,7 @@ pub fn agents_ask(
 pub fn agents_state(webview: tauri::Webview, app: AppHandle) -> Result<Overview, String> {
     from_the_app(&webview)?;
     let agents = state(&app).grants.all(&app)?;
-    #[cfg(any(windows, feature = "cef"))]
+    #[cfg(any(windows, feature = "cef", target_os = "macos"))]
     let tabs = agents
         .iter()
         .flat_map(|grant| {
@@ -615,7 +624,7 @@ pub fn agents_state(webview: tauri::Webview, app: AppHandle) -> Result<Overview,
                 .collect::<Vec<_>>()
         })
         .collect();
-    #[cfg(not(any(windows, feature = "cef")))]
+    #[cfg(not(any(windows, feature = "cef", target_os = "macos")))]
     let tabs = Vec::new();
     Ok(Overview {
         agents,
@@ -684,9 +693,9 @@ pub fn agents_adopt(
     tab: String,
 ) -> Result<(), String> {
     from_the_app(&webview)?;
-    #[cfg(any(windows, feature = "cef"))]
+    #[cfg(any(windows, feature = "cef", target_os = "macos"))]
     return tabs::adopt(&app, &agent_tab, &tab);
-    #[cfg(not(any(windows, feature = "cef")))]
+    #[cfg(not(any(windows, feature = "cef", target_os = "macos")))]
     {
         let _ = (app, agent_tab, tab);
         Err("agent tabs are not available on this engine yet".into())

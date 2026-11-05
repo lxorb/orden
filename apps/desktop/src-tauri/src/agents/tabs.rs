@@ -39,8 +39,9 @@ use tauri::{AppHandle, Emitter as _, Url};
 #[cfg(all(windows, not(feature = "cef")))]
 use tauri::{LogicalPosition, LogicalSize, Manager as _, WebviewBuilder, WebviewUrl};
 
+#[cfg(any(windows, feature = "cef"))]
 use super::cdp;
-use super::engines::View;
+use super::engines::{self, View};
 use super::quiet::{self, Owner};
 use super::verbs::{AgentTab, Answer, Code, Event, Store, EVENT};
 
@@ -369,7 +370,7 @@ fn let_go(app: &AppHandle, label: &str) {
     if let Some(view) = super::engines::view(app, label) {
         view.close();
     }
-    cdp::forget(label);
+    engines::forget(label);
     quiet::forget(app, label);
 }
 
@@ -404,6 +405,7 @@ pub fn said(app: &AppHandle, tab: &Tab) {
 /// on nothing for a window the engine hands over. Waits for the build. A tab in a twin of
 /// the reader's store is handed the reader's cookies first, on a page that has loaded
 /// nothing yet (see `engines`).
+#[cfg(any(windows, feature = "cef"))]
 fn build(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
     let Some(reader) = super::engines::reader_of(tab.store_name.as_deref()) else {
         return build_page(app, tab, address);
@@ -420,6 +422,29 @@ fn build(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String
         )?;
     }
     Ok(())
+}
+
+/// Builds a tab's page on `WKWebView`, which runs no extensions and so needs no twin of the
+/// reader's store (see `engines`).
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
+fn build(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
+    build_page(app, tab, address)
+}
+
+/// Builds a tab's page on `WKWebView`; see `engines/webkit.rs`.
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
+fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
+    super::engines::webkit::build(
+        app,
+        &Owner {
+            agent: tab.agent.clone(),
+            tab: tab.id.clone(),
+            label: tab.label(),
+        },
+        tab.store_name.as_deref(),
+        tab.size,
+        address.map(Url::as_str),
+    )
 }
 
 /// Builds a tab's page on Orden's own Chromium: a browser with no window.
@@ -633,11 +658,7 @@ pub fn reserve_popup(opener: &Owner, url: &str) -> Option<String> {
     };
     let id = tab.id.clone();
     tabs().push(tab);
-    cdp::heard(&opener.label)
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .opened
-        .push(id.clone());
+    engines::opened(&opener.label, &id);
     Some(id)
 }
 
@@ -757,6 +778,14 @@ pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
     Err("an agent's page on nib's own Chromium has no window: the tab loads its address".into())
 }
 
+/// On `WKWebView` the agent's page is not built yet (#1092), so there is nothing to show.
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
+pub fn adopt(_app: &AppHandle, _id: &str, _reader: &str) -> Result<(), String> {
+    Err(super::engines::cannot("browser_show")
+        .unwrap_or("there is no such agent tab")
+        .to_string())
+}
+
 /// Any agent's tab, by its id.
 #[cfg(feature = "cef")]
 fn find_any(id: &str) -> Option<Tab> {
@@ -798,7 +827,7 @@ fn tick(app: &AppHandle) {
     for agent in gone {
         close_all(app, Some(&agent));
     }
-    cdp::sleep_idle(app);
+    engines::sleep_idle(app);
     super::approvals::expire(app);
 }
 

@@ -5,7 +5,16 @@
 //! | --- | --- | --- | --- |
 //! | `WebView2` | a child webview outside the window's client area (`tabs.rs`) | its webview | the `DevTools` Protocol, all of them |
 //! | Orden's own Chromium | a windowless browser with no native window at all (`cef.rs`) | its webview, through `engine/devtools.rs` | the same protocol, all of them |
-//! | `WKWebView`, `WebKitGTK` | none yet: measured by scripts/webkit-agent-probe, see docs/agent-native.md 12 | - | `unsupported_on_this_engine` |
+//! | `WKWebView` | none yet: measured by scripts/webkit-agent-probe, see docs/agent-native.md 12 | - | the same [`Engine`], every verb in [`WEBKIT_CANNOT`] answering `unsupported_on_this_engine` (`webkit.rs`) |
+//!
+//! **One interface every verb goes through** (#1092). A verb is decided in `browser.rs`:
+//! which tab, whether this agent may act there, what the page says it would be doing. It
+//! is done through [`Engine`], the one set of acts on a [`Page`], which each engine
+//! implements: the `DevTools` Protocol's in `page.rs`, `WKWebView`'s in `webkit.rs`. What
+//! an engine has no honest way to do is in its table ([`CDP_CANNOT`], [`WEBKIT_CANNOT`])
+//! with the reason, and the verb answers `unsupported_on_this_engine` with that reason
+//! before anything is tried; a verb an engine neither does nor names is a verb the
+//! parity script (scripts/agent-parity.py) fails on.
 //!
 //! **The reader's logins, never the reader's extensions.** Emil, 2026-10-03: an agent's
 //! tab never loads the reader's extensions. An extension is installed into a profile, and
@@ -30,8 +39,30 @@
 
 #[cfg(feature = "cef")]
 pub mod cef;
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
+pub mod webkit;
 
+use std::collections::HashSet;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Duration;
+
+use serde_json::{Map, Value};
 use tauri::{AppHandle, Manager as _, Webview};
+
+use super::keys::Key;
+use super::policy::Facts;
+use super::snapshot::{Part, Wanted};
+use super::verbs::{
+    Answer, Code, ConsoleLines, Cookie, FieldValue, Match, Picture, ReadAs, Requests, Until,
+};
+use crate::pdf::PdfPage;
+
+/// An element, resolved from a ref, as the engine finds it again.
+#[cfg(any(windows, feature = "cef"))]
+pub use super::page::Element;
+/// An element, resolved from a ref, as the engine finds it again.
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
+pub use webkit::Element;
 
 /// How an agent's tab reaches the reader's logins: see this file's comment.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -74,6 +105,13 @@ pub fn twin_of(reader: Option<&str>) -> String {
 #[allow(
     clippy::option_option,
     reason = "no twin, and a twin of the store every space shares, are two different answers"
+)]
+#[cfg_attr(
+    not(any(windows, feature = "cef")),
+    allow(
+        dead_code,
+        reason = "WKWebView runs no extensions, so its pages need no twin"
+    )
 )]
 pub fn reader_of(store: Option<&str>) -> Option<Option<&str>> {
     let rest = store?.strip_prefix(TWIN)?;
@@ -135,9 +173,305 @@ pub fn view(app: &AppHandle, label: &str) -> Option<View> {
     app.get_webview(label).map(View::Webview)
 }
 
+/// Everything the engine keeps about a page let go of, for a page that closed.
+pub fn forget(label: &str) {
+    #[cfg(any(windows, feature = "cef"))]
+    super::cdp::forget(label);
+    #[cfg(all(target_os = "macos", not(feature = "cef")))]
+    webkit::forget(label);
+}
+
+/// A tab a page opened, noted for the answer to the act that opened it (`Engine::opened`).
+pub fn opened(label: &str, tab: &str) {
+    #[cfg(any(windows, feature = "cef"))]
+    super::cdp::heard(label)
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .opened
+        .push(tab.to_string());
+    #[cfg(all(target_os = "macos", not(feature = "cef")))]
+    webkit::opened(label, tab);
+}
+
+/// Puts to sleep what the engine keeps awake for pages nobody called on for a minute; the
+/// agents' own timer calls it (`tabs`).
+pub fn sleep_idle(app: &AppHandle) {
+    #[cfg(any(windows, feature = "cef"))]
+    super::cdp::sleep_idle(app);
+    #[cfg(all(target_os = "macos", not(feature = "cef")))]
+    let _ = app;
+}
+
+/// What this build's engine is called where an answer names it.
+#[cfg(any(windows, feature = "cef"))]
+pub const NAME: &str = if cfg!(windows) {
+    "WebView2"
+} else {
+    "Chromium"
+};
+/// What this build's engine is called where an answer names it.
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
+pub const NAME: &str = "WKWebView";
+
+/// What the `DevTools` Protocol has no honest way to do: nothing. Every verb is done on
+/// `WebView2` and on Orden's own Chromium.
+#[cfg_attr(
+    not(any(windows, feature = "cef")),
+    allow(
+        dead_code,
+        reason = "the other engine's table, which the test reads beside this one's"
+    )
+)]
+pub const CDP_CANNOT: &[(&str, &str)] = &[];
+
+/// What `WKWebView` has no honest way to do yet, verb by verb, and why; see
+/// docs/agent-native.md 12.2. Each step of #1092 takes rows out of it.
+#[cfg_attr(
+    any(windows, feature = "cef"),
+    allow(
+        dead_code,
+        reason = "the other engine's table, which the test reads beside this one's"
+    )
+)]
+pub const WEBKIT_CANNOT: &[(&str, &str)] = &[
+    ("browser_open", NOT_BUILT),
+    ("browser_navigate", NOT_BUILT),
+    ("browser_wait", NOT_BUILT),
+    ("browser_snapshot", NOT_BUILT),
+    ("browser_find", NOT_BUILT),
+    ("browser_read", NOT_BUILT),
+    ("browser_click", NOT_BUILT),
+    ("browser_type", NOT_BUILT),
+    ("browser_press", NOT_BUILT),
+    ("browser_scroll", NOT_BUILT),
+    ("browser_select", NOT_BUILT),
+    ("browser_fill_form", NOT_BUILT),
+    ("browser_hover", NOT_BUILT),
+    ("browser_drag", NOT_BUILT),
+    ("browser_upload", NOT_BUILT),
+    ("browser_screenshot", NOT_BUILT),
+    ("browser_console", NOT_BUILT),
+    ("browser_network", NOT_BUILT),
+    ("browser_evaluate", NOT_BUILT),
+    ("browser_dialog", NOT_BUILT),
+    ("browser_storage", NOT_BUILT),
+    ("browser_show", NOT_BUILT),
+    ("browser_takeover", NOT_BUILT),
+    ("capture_to_note", NOT_BUILT),
+];
+
+/// Why a verb `WEBKIT_CANNOT` names is not done yet.
+#[cfg_attr(
+    any(windows, feature = "cef"),
+    allow(
+        dead_code,
+        reason = "the other engine's table, which the test reads beside this one's"
+    )
+)]
+const NOT_BUILT: &str = "an agent's page on WKWebView is not built yet: an agent's browser runs on Windows and on Linux";
+
+/// This build's engine's table.
+#[cfg(any(windows, feature = "cef"))]
+const CANNOT: &[(&str, &str)] = CDP_CANNOT;
+/// This build's engine's table.
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
+const CANNOT: &[(&str, &str)] = WEBKIT_CANNOT;
+
+/// Why this build's engine cannot do a verb, by its name, or `None` when it does it.
+pub fn cannot(verb: &str) -> Option<&'static str> {
+    CANNOT
+        .iter()
+        .find(|(name, _)| *name == verb)
+        .map(|(_, why)| *why)
+}
+
+/// The answer to a verb this build's engine cannot do: `unsupported_on_this_engine`,
+/// with the engine and the reason.
+pub fn refused(verb: &str) -> Answer {
+    Answer::error(
+        Code::UnsupportedOnThisEngine,
+        format!(
+            "{verb} is not available on {NAME}: {}",
+            cannot(verb).unwrap_or("this engine has no way to do it")
+        ),
+    )
+}
+
+/// Text cut at `most` characters, between two characters.
+pub fn cut(text: String, most: usize) -> String {
+    match text.char_indices().nth(most) {
+        Some((at, _)) => text[..at].to_string(),
+        None => text,
+    }
+}
+
+/// A page's trees, and the secret fields among their nodes.
+pub type Tree = (Vec<Part>, HashSet<(String, u64)>);
+
+/// A page an agent is acting on, on whichever engine has it.
+pub struct Page<'a> {
+    /// Its page, on whichever engine.
+    pub view: &'a View,
+    /// Its label.
+    pub label: String,
+    /// Whether it is an agent's own tab rather than the reader's.
+    #[cfg_attr(
+        not(any(windows, feature = "cef")),
+        allow(dead_code, reason = "WKWebView's acts are built in #1092's next steps")
+    )]
+    pub own: bool,
+    /// The stop the call started under.
+    pub since: u64,
+    /// Whether this call may touch a credential: type into a sign-in form, photograph a
+    /// focused password field, print a page with a filled one. Set by the one decision
+    /// (`judged` in browser.rs, from the grant's mode, #1072), never by the page.
+    pub credentials: AtomicBool,
+}
+
+impl Page<'_> {
+    /// Whether this call was cleared to touch a credential (`credentials`).
+    #[cfg_attr(
+        not(any(windows, feature = "cef")),
+        allow(dead_code, reason = "WKWebView's acts are built in #1092's next steps")
+    )]
+    pub fn may_touch_credentials(&self) -> bool {
+        self.credentials.load(Ordering::Relaxed)
+    }
+
+    /// Clears this call to touch a credential: `judged`'s decision.
+    pub fn clear_credentials(&self) {
+        self.credentials.store(true, Ordering::Relaxed);
+    }
+}
+
+/// Every act a verb does on a page (docs/agent-native.md 5.2), which each engine
+/// implements: one interface, so a verb is the same verb on every engine and `browser.rs`
+/// never asks an engine anything else. Each act settles before it answers, and refuses
+/// what 9.4 refuses, on every engine alike.
+pub trait Engine {
+    /// The page's domains woken for an agent's call, and the call noted.
+    fn wake(&self);
+    /// Where the page is.
+    fn url(&self) -> String;
+    /// What the page calls itself.
+    fn title(&self) -> String;
+    /// An element from a ref the agent passed.
+    fn element(&self, reference: &str) -> Result<Element, Answer>;
+    /// The element at a point of the viewport, in CSS pixels.
+    fn element_at(&self, point: (f64, f64)) -> Result<Element, Answer>;
+    /// What an element says about itself and its form, for the policy.
+    fn facts(&self, element: &Element) -> Result<Facts, Answer>;
+    /// What the element with the keyboard says about itself, if one has it.
+    fn active_facts(&self) -> Result<Option<Facts>, Answer>;
+    /// The page sent to an address.
+    fn navigate(&self, url: &str) -> Result<(), Answer>;
+    /// Back (-1), forward (1) or reload (0).
+    fn step(&self, by: i64) -> Result<(), Answer>;
+    /// Until the page has loaded, gone quiet or shows something; answers how long.
+    fn wait(&self, until: &Until, most: Duration) -> Result<u64, Answer>;
+    /// Waits for an act to settle: a navigation it started, then a still document.
+    fn settle(&self, navigations_before: u64);
+    /// How many navigations of the page's own frame have started.
+    fn navigations(&self) -> u64;
+    /// The agent tabs the page opened since this was last asked.
+    fn opened(&self) -> Vec<String>;
+    /// The hosts the page and its frames have talked to, for the payment processors.
+    fn hosts(&self) -> Vec<String>;
+    /// The page's accessibility trees and its secret fields, as `snapshot` writes them.
+    fn parts(&self) -> Result<Tree, Answer>;
+    /// The refs that match.
+    fn find(&self, wanted: &Wanted<'_>) -> Result<Vec<Match>, Answer>;
+    /// The page as words: `(url, title, text)`.
+    fn read(&self, app: &AppHandle, shape: ReadAs) -> Result<(String, String, String), Answer>;
+    /// The article as the clip button reads it: `(url, title, html)`.
+    fn clip(&self) -> Result<(String, String, String), Answer>;
+    /// The page printed on the reader's paper, as base64.
+    fn pdf(&self, paper: &PdfPage) -> Result<String, Answer>;
+    /// An element pressed where it shows.
+    fn click(
+        &self,
+        element: &Element,
+        button: &str,
+        count: u8,
+        modifiers: u8,
+    ) -> Result<(), Answer>;
+    /// A point of the viewport pressed.
+    fn click_at(
+        &self,
+        point: (f64, f64),
+        button: &str,
+        count: u8,
+        modifiers: u8,
+    ) -> Result<(), Answer>;
+    /// The pointer over an element.
+    fn hover(&self, element: &Element) -> Result<(), Answer>;
+    /// Words into a field, as text.
+    fn type_text(&self, element: &Element, text: &str, replace: bool) -> Result<(), Answer>;
+    /// A key into an agent's own page, through the engine.
+    fn press(&self, key: &Key) -> Result<(), Answer>;
+    /// A key into a reader's page, as the page's own events.
+    fn press_in_page(&self, key: &Key) -> Result<(), Answer>;
+    /// An element into view, or the page by an amount.
+    fn scroll(&self, element: Option<&Element>, dx: f64, dy: f64) -> Result<(), Answer>;
+    /// Options of a `<select>`, through the page.
+    fn select(&self, element: &Element, values: &[String]) -> Result<Vec<String>, Answer>;
+    /// One field of a form set.
+    fn fill(&self, element: &Element, value: &FieldValue) -> Result<(), Answer>;
+    /// One element dragged onto another.
+    fn drag(&self, from: &Element, to: &Element) -> Result<(), Answer>;
+    /// Files for a file input.
+    fn upload(&self, element: &Element, files: &[String]) -> Result<(), Answer>;
+    /// A PNG of the page, an element or the whole page, secrets painted over.
+    fn screenshot(
+        &self,
+        element: Option<&Element>,
+        full: bool,
+        scale: Option<f64>,
+    ) -> Result<Picture, Answer>;
+    /// The page's console since a line.
+    fn console(&self, since: Option<u64>, level: Option<&str>) -> Result<ConsoleLines, Answer>;
+    /// The page's requests since one, with bodies when asked.
+    fn network(
+        &self,
+        since: Option<u64>,
+        matching: Option<&str>,
+        bodies: bool,
+    ) -> Result<Requests, Answer>;
+    /// A script in nib's own world, or the page's.
+    fn evaluate(&self, expression: &str, page_world: bool) -> Result<Value, Answer>;
+    /// The page's store's cookies.
+    fn cookies(&self) -> Result<Vec<Cookie>, Answer>;
+    /// One cookie set in the page's store.
+    fn set_cookie(&self, cookie: &Cookie) -> Result<(), Answer>;
+    /// The page's site's cookies and storage cleared.
+    fn clear(&self) -> Result<(), Answer>;
+    /// The page's `localStorage`.
+    fn local(&self) -> Result<Map<String, Value>, Answer>;
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{reader_of, twin_of};
+    use super::{reader_of, twin_of, CDP_CANNOT, WEBKIT_CANNOT};
+    use crate::agents::verbs::NAMES;
+
+    /// #1092: every browser verb is done by each engine or named in its table with the
+    /// reason it cannot be, and the tables name nothing that is not a verb.
+    #[test]
+    fn every_engine_does_each_browser_verb_or_says_why_not() {
+        for (engine, table) in [("cdp", CDP_CANNOT), ("webkit", WEBKIT_CANNOT)] {
+            for (verb, why) in table {
+                assert!(
+                    NAMES.contains(verb) || *verb == "capture_to_note",
+                    "{engine}: {verb} is no verb"
+                );
+                assert!(why.len() > 20, "{engine}: {verb} says no reason");
+            }
+            let mut names: Vec<&str> = table.iter().map(|(verb, _)| *verb).collect();
+            names.sort_unstable();
+            names.dedup();
+            assert_eq!(names.len(), table.len(), "{engine}: a verb named twice");
+        }
+    }
 
     #[test]
     fn a_twin_names_the_store_it_carries_and_no_agent_s_store_is_one() {

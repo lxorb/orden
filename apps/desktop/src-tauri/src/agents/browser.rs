@@ -1,7 +1,8 @@
-//! The browser verbs, answered on `WebView2` and Orden's own Chromium alike - both speak the
-//! `DevTools` Protocol, and `engines` hands every verb the page whichever it is
-//! (docs/agent-native.md 5.2 and 12): which tab, whether
-//! this agent may act there, what the page says it would be doing, and then the act.
+//! The browser verbs, answered the same on every engine (docs/agent-native.md 5.2 and 12):
+//! which tab, whether this agent may act there, what the page says it would be doing, and
+//! then the act, through the one interface every engine implements (`engines::Engine`,
+//! #1092). A verb the engine has no honest way to do answers `unsupported_on_this_engine`
+//! with its reason before anything else (`engines::cannot`).
 //!
 //! Every verb on a tab goes through the same gate, in this order: the tab is this agent's
 //! own or a reader's tab it may reach (`browser.reader`, its spaces); the page is not
@@ -10,36 +11,27 @@
 //! or a write is then judged from the page (`policy`) and asks first when it has to,
 //! answering `needs_approval` at once.
 
-use std::collections::HashSet;
 use std::path::PathBuf;
-use std::sync::PoisonError;
 use std::time::Duration;
 
-use serde_json::{json, Value};
 use tauri::{AppHandle, Emitter as _};
 
 use super::approvals::{self, Asking};
-use super::engines::{self, ReaderStore, View};
+use super::engines::{self, Element, Engine, Page, ReaderStore, View};
 use super::grants::{Grant, Scope, SiteRule};
 use super::keys;
-use super::page::{Element, Page};
 use super::policy::{self, Act, Facts};
 use super::snapshot::{self, Asked, Wanted};
 use super::tabs::{self, Tab};
 use super::verbs::{
-    Acted, Answer, Category, Closed, Code, ConsoleLines, DownloadList, Evaluated, Event, Found,
-    Opened, PageText, Requests, Snapped, StorageOp, Store, Stored, TabList, Verb, Waited, World,
-    EVENT,
+    Acted, Answer, Category, Closed, Code, DownloadList, Evaluated, Event, Found, Opened, PageText,
+    Snapped, StorageOp, Store, Stored, TabList, Verb, Waited, World, EVENT,
 };
 use super::Caller;
 
 /// The longest `browser_wait` when none is asked for, and the longest ever.
 const WAIT: Duration = Duration::from_secs(30);
 const LONGEST_WAIT: Duration = Duration::from_secs(120);
-
-/// How many response bodies one `browser_network` reads, and how long each may be.
-const BODIES: usize = 20;
-const LONGEST_BODY: usize = 100_000;
 
 /// Where a verb acts.
 pub(super) enum Place {
@@ -69,6 +61,9 @@ impl Place {
 pub fn answer(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer {
     if !caller.holds(Scope::Browser) && !caller.holds(Scope::BrowserReader) {
         return Answer::error(Code::NotGranted, "this agent was not granted the browser");
+    }
+    if engines::cannot(verb.name()).is_some() {
+        return engines::refused(verb.name());
     }
     match verb {
         Verb::Tabs(_) => tabs_of(app, caller),
@@ -257,7 +252,6 @@ fn gate<'a>(
             verb: verb.to_string(),
         },
     );
-    super::cdp::awake(view, &label, own);
     // A credential is the mode's to clear (#1072): at once where the agent's mode does
     // not ask about signing in, and the reader's own command line always; otherwise once
     // `judged` has asked.
@@ -272,6 +266,7 @@ fn gate<'a>(
         since,
         credentials: std::sync::atomic::AtomicBool::new(cleared),
     };
+    page.wake();
     if let Caller::Agent(grant) = caller {
         if let Err(why) = policy::site_allowed(grant, &page.url(), place.store()) {
             return Err(Answer::error(Code::SiteDenied, why));
@@ -367,15 +362,9 @@ fn tab_of(verb: &Verb) -> Option<String> {
 
 /// What an act answers: where the page is, and the tabs it opened.
 fn acted(page: &Page<'_>) -> Answer {
-    let opened = std::mem::take(
-        &mut super::cdp::heard(&page.label)
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .opened,
-    );
     Answer::ok(Acted {
         url: page.url(),
-        opened,
+        opened: page.opened(),
     })
 }
 
@@ -395,15 +384,14 @@ fn judged(
 ) -> Result<(), Answer> {
     let cleared = || -> Result<(), Answer> {
         if policy::credential_act(facts, act) {
-            page.credentials
-                .store(true, std::sync::atomic::Ordering::Relaxed);
+            page.clear_credentials();
         }
         Ok(())
     };
     let Caller::Agent(grant) = caller else {
         return cleared();
     };
-    let hosts = page_hosts(page);
+    let hosts = page.hosts();
     let Some(question) = policy::judge(grant, facts, act, &page.url(), &hosts) else {
         return cleared();
     };
@@ -463,23 +451,6 @@ fn shown(app: &AppHandle, grant: &Grant, own: &Tab, summary: String, key: &str) 
         },
         super::verbs::ApprovalAnswer::Allowed,
     );
-}
-
-/// The hosts a page and its frames have talked to, for the payment processors.
-fn page_hosts(page: &Page<'_>) -> Vec<String> {
-    let heard = super::cdp::heard(&page.label);
-    let held = heard.lock().unwrap_or_else(PoisonError::into_inner);
-    let (requests, _) = held.requests(None, None);
-    let mut hosts: HashSet<String> = requests
-        .iter()
-        .filter_map(|one| policy::host_of(&one.url))
-        .collect();
-    for (_, frame) in held.frames() {
-        if let Some(host) = policy::host_of(&frame.url) {
-            hosts.insert(host);
-        }
-    }
-    hosts.into_iter().collect()
 }
 
 /// A ref resolved, or the answer to give.
@@ -597,7 +568,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 let (url, title, text) = page.read(app, asked.shape)?;
                 let most = asked.max_chars.unwrap_or(100_000);
                 let truncated = text.chars().count() > most;
-                let text = super::cdp::cut(text, most);
+                let text = engines::cut(text, most);
                 from_page(Answer::ok(PageText {
                     url,
                     title,
@@ -788,15 +759,9 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 let picture = page.screenshot(target.as_ref(), shot.full_page, shot.scale)?;
                 from_page(Answer::ok(picture))
             }
-            Verb::Console(asked) => {
-                super::cdp::listen_to_console(page.view, &page.label);
-                let heard = super::cdp::heard(&page.label);
-                let (lines, next) = heard
-                    .lock()
-                    .unwrap_or_else(PoisonError::into_inner)
-                    .console(asked.since, asked.level.as_deref());
-                from_page(Answer::ok(ConsoleLines { lines, next }))
-            }
+            Verb::Console(asked) => from_page(Answer::ok(
+                page.console(asked.since, asked.level.as_deref())?,
+            )),
             Verb::Network(asked) => {
                 if asked.bodies && !caller.holds(Scope::BrowserNetwork) {
                     return Err(Answer::error(
@@ -804,35 +769,11 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         "bodies need browser.network",
                     ));
                 }
-                let heard = super::cdp::heard(&page.label);
-                let (mut requests, next) = heard
-                    .lock()
-                    .unwrap_or_else(PoisonError::into_inner)
-                    .requests(asked.since, asked.matching.as_deref());
-                if asked.bodies {
-                    for row in requests.iter_mut().rev().take(BODIES) {
-                        let found = heard
-                            .lock()
-                            .unwrap_or_else(PoisonError::into_inner)
-                            .request_id(row.seq);
-                        if let Some((session, id)) = found {
-                            let session = (!session.is_empty()).then_some(session);
-                            if let Ok(body) = super::cdp::call_in(
-                                page.view,
-                                session.as_deref(),
-                                "Network.getResponseBody",
-                                &json!({ "requestId": id }),
-                                Duration::from_secs(5),
-                            ) {
-                                row.body = body
-                                    .get("body")
-                                    .and_then(Value::as_str)
-                                    .map(|text| super::cdp::cut(text.to_string(), LONGEST_BODY));
-                            }
-                        }
-                    }
-                }
-                from_page(Answer::ok(Requests { requests, next }))
+                from_page(Answer::ok(page.network(
+                    asked.since,
+                    asked.matching.as_deref(),
+                    asked.bodies,
+                )?))
             }
             Verb::Evaluate(evaluate) => {
                 if let Caller::Agent(grant) = caller {

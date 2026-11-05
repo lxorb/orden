@@ -73,10 +73,16 @@ fn no_paper() -> Answer {
     Answer::error(Code::BadArguments, "a PDF needs the paper it is printed on")
 }
 
-/// The page read through the engine, where the engine can be asked.
-#[cfg(any(windows, feature = "cef"))]
+/// The page read through the engine, where the engine can be asked: the same interface
+/// every browser verb goes through (`engines::Engine`).
+#[cfg(any(windows, feature = "cef", target_os = "macos"))]
 fn taken(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answer {
+    use super::engines::{self, Engine};
     use super::verbs::Captured;
+
+    if engines::cannot(VERB).is_some() {
+        return engines::refused(VERB);
+    }
 
     // An agent's own tab needs the scope for tabs of its own, whatever else it holds;
     // a reader's needs `browser.reader`, which the gate asks.
@@ -88,31 +94,30 @@ fn taken(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answer {
     }
     let since = super::stop::generation();
     super::browser::on_tab(app, caller, tab, VERB, since, false, |_, page| {
-        let url = page.url();
+        let url = Engine::url(page);
         let captured = match asked.shape {
-            CaptureAs::Clip => page.clip().map(|(url, title, html)| Captured {
+            CaptureAs::Clip => Engine::clip(page).map(|(url, title, html)| Captured {
                 url,
                 title,
                 html: Some(html),
                 ..Captured::default()
             }),
             CaptureAs::Screenshot => {
-                page.screenshot(None, asked.full_page, None)
-                    .map(|picture| Captured {
-                        url: url.clone(),
-                        title: page.title(),
-                        png: Some(picture.png),
-                        ..Captured::default()
-                    })
+                Engine::screenshot(page, None, asked.full_page, None).map(|picture| Captured {
+                    url: url.clone(),
+                    title: Engine::title(page),
+                    png: Some(picture.png),
+                    ..Captured::default()
+                })
             }
             CaptureAs::Pdf => asked
                 .paper
                 .as_ref()
                 .ok_or_else(no_paper)
-                .and_then(|paper| page.pdf(paper))
+                .and_then(|paper| Engine::pdf(page, paper))
                 .map(|pdf| Captured {
                     url: url.clone(),
-                    title: page.title(),
+                    title: Engine::title(page),
                     pdf: Some(pdf),
                     ..Captured::default()
                 }),
@@ -128,9 +133,9 @@ fn taken(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answer {
     })
 }
 
-/// Every other engine: no honest way yet (section 12). The window clips a reader's tab
-/// the clip button's way there, and takes no picture it could not paint over.
-#[cfg(not(any(windows, feature = "cef")))]
+/// A phone: no engine to ask. The window clips a reader's tab the clip button's way
+/// there, and takes no picture it could not paint over.
+#[cfg(not(any(windows, feature = "cef", target_os = "macos")))]
 fn taken(_app: &AppHandle, _caller: &Caller, _tab: &str, _asked: Asked) -> Answer {
     Answer::error(
         Code::UnsupportedOnThisEngine,

@@ -802,13 +802,8 @@ fn text_at(value: &Value, key: &str) -> String {
         .to_string()
 }
 
-/// Text cut at `most` characters, between two characters.
-pub fn cut(text: String, most: usize) -> String {
-    match text.char_indices().nth(most) {
-        Some((at, _)) => text[..at].to_string(),
-        None => text,
-    }
-}
+/// Text cut at `most` characters, between two characters: every engine's (`engines`).
+pub use super::engines::cut;
 
 /// Wakes a page's domains for an agent's call, and notes the call: the network log, the
 /// DOM agent, the page's events, and the frames in processes of their own. Frames each
