@@ -810,6 +810,16 @@
     opacity: 0;
   }
 
+  :global(html[data-overview]) .pane:has(> :global(.here)) {
+    background: none;
+    box-shadow: none;
+  }
+
+  :global(html[data-overview]) .pane > :global(.here) {
+    opacity: calc(1 - var(--overview-open, 0));
+    pointer-events: none;
+  }
+
   /* A pane beside another one carries its own strip. The window's single pane
      has none: its tabs are in the titlebar, where a browser puts them.
 
