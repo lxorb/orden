@@ -2262,17 +2262,17 @@ impl Page<'_> {
         }
         let (width, height, x, y) = self.viewport()?;
         // The wheel scrolls what is under it, which may be a frame of a site the agent may
-        // not act in (9.2); what cannot be told is scrolled as a whole page, below.
+        // not act in (9.2); that, and what cannot be told, is scrolled as a whole page
+        // instead, which moves the tab's own document and no frame in it.
         let middle = (width / 2.0, height / 2.0);
         let under = if self.limits_sites() {
             self.element_at(middle)
                 .ok()
-                .map(|one| self.facts(&one))
-                .transpose()?
+                .and_then(|one| self.facts(&one).ok())
         } else {
             None
         };
-        if !wheels(self.limits.as_ref(), under.as_ref())? {
+        if !wheels(self.limits.as_ref(), under.as_ref()) {
             self.isolated(&format!(
                 "window.scrollBy({{ left: {dx}, top: {dy}, behavior: 'instant' }})"
             ))?;
@@ -4065,15 +4065,11 @@ fn area(at: &[f64]) -> f64 {
 
 /// Whether a scroll of the page may wheel at the viewport's middle under a call's
 /// `limits`, by what is there (`None` when that cannot be told): not into a frame of a site
-/// the agent may not act in (9.2), and `false` where that cannot be told, which scrolls
-/// the page as a whole instead.
-fn wheels(limits: Option<&(Grant, Store)>, under: Option<&Facts>) -> Result<bool, Answer> {
-    if !engines::limits_sites(limits) {
-        return Ok(true);
-    }
-    under.map_or(Ok(false), |facts| {
-        engines::acts_in(limits, facts).map(|()| true)
-    })
+/// the agent may not act in (9.2), nor where that cannot be told; `false` scrolls the page
+/// as a whole instead.
+fn wheels(limits: Option<&(Grant, Store)>, under: Option<&Facts>) -> bool {
+    !engines::limits_sites(limits)
+        || under.is_some_and(|facts| engines::acts_in(limits, facts).is_ok())
 }
 
 /// Whether a console line is the agent's to read under a call's `limits`: one a frame of a
@@ -4211,22 +4207,20 @@ mod tests {
             at: at.iter().map(|one| (*one).to_string()).collect(),
             ..Facts::default()
         };
-        assert!(matches!(
-            wheels(Some(&limits), Some(&facts(&["https://bank.example/"]))),
-            Err(Answer::Error {
-                code: Code::SiteDenied,
-                ..
-            })
+        // RF-3: a denied frame at the middle scrolls the page as a whole, not an error.
+        assert!(!wheels(
+            Some(&limits),
+            Some(&facts(&["https://bank.example/"]))
         ));
-        assert!(matches!(
-            wheels(Some(&limits), Some(&facts(&["https://shop.example/"]))),
-            Ok(true)
+        assert!(wheels(
+            Some(&limits),
+            Some(&facts(&["https://shop.example/"]))
         ));
-        assert!(matches!(wheels(Some(&limits), None), Ok(false)));
+        assert!(!wheels(Some(&limits), None));
         // No rule for any site: the wheel, as before.
         let open = (Grant::own("a".into(), "A"), Store::Reader);
-        assert!(matches!(wheels(Some(&open), None), Ok(true)));
-        assert!(matches!(wheels(None, None), Ok(true)));
+        assert!(wheels(Some(&open), None));
+        assert!(wheels(None, None));
     }
 
     #[test]
