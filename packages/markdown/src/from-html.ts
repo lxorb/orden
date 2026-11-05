@@ -599,7 +599,7 @@ function preformattedText(node: Node): string {
   if (node.nodeType === 3) return node.nodeValue ?? ''
   if (node.nodeType !== 1) return ''
 
-  return [...node.childNodes].map((one) => preformattedText(one)).join('')
+  return [...node.childNodes].map(preformattedText).join('')
 }
 
 const BLOCKS =
@@ -778,19 +778,20 @@ function converter(options: FromHtmlOptions): TurndownService {
     replacement: (content, node) => {
       const element: Element = node
       const marks = marksFor(element) ?? ''
-      if (!content.trim() || !marks) return content
-      if (element.id.startsWith('docs-internal-guid')) return content
-      if (element.querySelector(BLOCKS)) return content
-      if (element.nodeName === 'SPAN' && element.closest('code,pre,h1,h2,h3,h4,h5,h6')) {
+      if (
+        !content.trim() ||
+        !marks ||
+        element.id.startsWith('docs-internal-guid') ||
+        element.querySelector(BLOCKS) ||
+        (element.nodeName === 'SPAN' && element.closest('code,pre,h1,h2,h3,h4,h5,h6')) ||
+        !marksHold(element)
+      ) {
         return content
       }
-      if (!marksHold(element)) return content
 
       const words = /^(\s*)([\s\S]*?)(\s*)$/u.exec(content)
       const opening = sameRun(element, element.previousSibling) ? '' : marks
-      const closing = sameRun(element, element.nextSibling)
-        ? ''
-        : marks.split('').reverse().join('')
+      const closing = sameRun(element, element.nextSibling) ? '' : marks
       return `${words?.[1] ?? ''}${opening}${words?.[2] ?? ''}${closing}${words?.[3] ?? ''}`
     },
   })

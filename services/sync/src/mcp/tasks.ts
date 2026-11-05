@@ -416,13 +416,9 @@ async function update(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
     const held = await readOf(env, space, path)
     if (held === null) throw new Said(`No note at ${path}.`)
     const edited = editedTask(held.words, space.name, path, anchor, change, done, today)
-    return { held, edited, said: answerOf(edited) }
+    const said = { at: edited.at, ...(edited.next ? { next: edited.next } : {}), space: space.name }
+    return { held, edited, said }
   }
-  const answerOf = (edited: { at: string; next?: string }) => ({
-    at: edited.at,
-    ...(edited.next ? { next: edited.next } : {}),
-    space: space.name,
-  })
   const taken = (edited: { text: string; at: string }) => {
     const block = taskBlock(
       edited.text,

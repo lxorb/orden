@@ -19,7 +19,7 @@
 import type { ChangeSpec, EditorState, StateCommand } from '@codemirror/state'
 import { syntaxTree } from '@codemirror/language'
 import type { Command, EditorView } from '@codemirror/view'
-import { blockIdOf, freeBlockId, blockIds, lines, ownLine } from '@orden/markdown/links'
+import { blockIdOf, freeBlockId, blockIds, ownLine, rowsOf } from '@orden/markdown/links'
 import { indentItems, outdentItems } from '../list-keys'
 import { headingLevel, headingText } from '../headings'
 import { enclosing } from '../nodes'
@@ -130,17 +130,17 @@ export function blockTarget(view: EditorView, pos: number): string | null {
 
   if (span.kind === 'properties') return null
 
-  const rows = [...lines(doc.toString())]
+  const rows = rowsOf(doc.toString())
+  const verbatim = verbatimLines(view.state, span.from, span.to)
   if (rows[first.number - 1]?.code) {
     for (let at = first.number - 1; rows[at]?.code; at++) {
       const old = rows[at]?.fenceName
       if (old) return `#^${old}`
     }
-    if (!verbatimLines(view.state, span.from, span.to).has(first.number)) return null
+    if (!verbatim.has(first.number)) return null
   }
 
   const last = doc.lineAt(ownEnd(view.state, span))
-  const verbatim = verbatimLines(view.state, span.from, span.to).has(last.number)
   const under = writtenLine(view.state, last.number + 1, 1)
   const already =
     under && ownLine(under.text)
@@ -151,7 +151,7 @@ export function blockTarget(view: EditorView, pos: number): string | null {
   const taken = new Set(blockIds(doc.toString()).map((one) => one.id))
   const id = freeBlockId(taken)
 
-  if (verbatim) {
+  if (verbatim.has(last.number)) {
     const below = last.number < doc.lines ? doc.line(last.number + 1).text.trim() : ''
     const insert = `\n\n^${id}${below ? '\n' : ''}`
     view.dispatch({ changes: { from: last.to, to: last.to, insert } })
@@ -204,10 +204,7 @@ function numberedLine(text: string, counting: Counting[]): string {
   const { indent, words } = wordsOf(text)
   const written = indent.length
 
-  for (let top = counting.at(-1); top && counting.length > 1 && top.written > written;) {
-    counting.pop()
-    top = counting.at(-1)
-  }
+  while (counting.length > 1 && (counting.at(-1)?.written ?? 0) > written) counting.pop()
   let level = counting.at(-1)
   if (!level || level.written < written) {
     level = { written, at: level ? level.column : written, column: 0, nth: 1 }

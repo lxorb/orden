@@ -188,11 +188,12 @@ function readFront(body: string, front: FrontMatterBlock, out: TagUse[]) {
       const value = at + line.length - rest.length
       const closes = valueClosesAt(body, value, front.close)
       if (closes !== -1) {
-        const said = body.slice(value, closes)
-        const words = said.replace(
-          /(^|\s)(#\s.*)$/gm,
-          (_, gap: string, comment: string) => `${gap}${' '.repeat(comment.length)}`,
-        )
+        const words = body
+          .slice(value, closes)
+          .replace(
+            /(^|\s)(#\s.*)$/gm,
+            (_, gap: string, comment: string) => `${gap}${' '.repeat(comment.length)}`,
+          )
         readValues(value, words, out)
         at = closes + 1
         continue

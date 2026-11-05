@@ -61,9 +61,8 @@ export function namedBlock(
   if (nameStandsApart(rows.slice(line, end + 1))) {
     const beneath = (rows[end + 1]?.text.trim() ?? '') === '' ? [] : [ending]
     lines.splice(end + 1, 0, ending, `^${name}${ending}`, ...beneath)
-    return { id: name, source: lines.join('\n') }
+  } else {
+    lines[end] = `${last.trimEnd()} ^${name}${ending}`
   }
-
-  lines[end] = `${last.trimEnd()} ^${name}${ending}`
   return { id: name, source: lines.join('\n') }
 }

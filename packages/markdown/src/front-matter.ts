@@ -185,8 +185,11 @@ export function frontMatterList(source: string, key: string): string[] {
 
   const closes = valueClosesAt(source, line.value.from, block.body.to)
   if (closes !== -1) {
-    const lines = source.slice(line.value.from, closes).split('\n')
-    const joined = lines.map((one) => uncommented(one.trim())).join(' ')
+    const joined = source
+      .slice(line.value.from, closes)
+      .split('\n')
+      .map((one) => uncommented(one.trim()))
+      .join(' ')
     return (flowItems(joined) ?? [unquoted(joined)]).filter(Boolean)
   }
 

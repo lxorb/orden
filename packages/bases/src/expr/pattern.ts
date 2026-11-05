@@ -21,6 +21,10 @@ const STEPS_A_LOOK = 4096
 
 const REFUSED: Cost = { open: Number.POSITIVE_INFINITY, ways: 1, first: null }
 
+function single(first: string | null = null): Cost {
+  return { open: 0, ways: 1, first }
+}
+
 const GROUP_OPENING = /^\?(?:[a-z-]*:|<[^=!>][^>]*>|=|!|<=|<!)/
 
 const COUNTED = /^\{(\d+)(,(\d*))?\}/
@@ -64,7 +68,7 @@ function measure(source: string, flags: string): Cost {
   }
 
   function sequence(): Cost {
-    const all: Cost = { open: 0, ways: 1, first: null }
+    const all = single()
     let start = true
 
     while (at < source.length && source[at] !== '|' && source[at] !== ')') {
@@ -81,7 +85,6 @@ function measure(source: string, flags: string): Cost {
   function escaped(): Cost {
     const next = String.fromCodePoint(source.codePointAt(at) ?? 0)
     at += next.length
-    const none: Cost = { open: 0, ways: 1, first: null }
 
     if (/[1-9]/.test(next) || (next === 'k' && source[at] === '<')) return REFUSED
 
@@ -91,16 +94,16 @@ function measure(source: string, flags: string): Cost {
       const plain = (next === 'x' ? /^[0-9a-f]{2}/i : /^[0-9a-f]{4}/i).exec(
         source.slice(at, at + 4),
       )
-      const written = braced?.[1] ?? plain?.[0]
-      if (written === undefined) return { ...none, first: next }
-      at += (braced ?? plain)?.[0].length ?? 0
-      return { ...none, first: String.fromCodePoint(Number.parseInt(written, 16)) }
+      const found = braced ?? plain
+      if (!found) return single(next)
+      at += found[0].length
+      return single(String.fromCodePoint(Number.parseInt(found[1] ?? found[0], 16)))
     }
     if (unicode && (next === 'p' || next === 'P')) {
       at += /^\{[^}]*\}/.exec(source.slice(at, at + 64))?.[0].length ?? 0
-      return none
+      return single()
     }
-    return /[\p{P}\p{S}]/u.test(next) ? { ...none, first: next } : none
+    return single(/[\p{P}\p{S}]/u.test(next) ? next : null)
   }
 
   function atom(): Cost {
@@ -110,18 +113,16 @@ function measure(source: string, flags: string): Cost {
     if (one === '\\') return escaped()
     if (one === '[') {
       skipClass()
-      return { open: 0, ways: 1, first: null }
+      return single()
     }
     if (one === '(') {
       const opening = GROUP_OPENING.exec(source.slice(at, at + 64))?.[0] ?? ''
       at += opening.length
       const inner = alternatives()
       at++
-      const looks = /^\?(?:=|!|<=|<!)/.test(opening)
-      return looks ? { ...inner, first: null } : inner
+      return /^\?(?:=|!|<=|<!)/.test(opening) ? { ...inner, first: null } : inner
     }
-    if (one === '.' || one === '^' || one === '$') return { open: 0, ways: 1, first: null }
-    return { open: 0, ways: 1, first: one }
+    return single(one === '.' || one === '^' || one === '$' ? null : one)
   }
 
   function skipClass() {
@@ -245,8 +246,7 @@ export function readPattern<T>(pattern: RegExp, value: string, read: () => T): T
   if (guarding === 0) return read()
 
   if (value.length > LONGEST_VALUE || !patternAllowed(pattern)) {
-    refused++
-    throw new BasesError(`/${pattern.source}/ could take too long on this value`)
+    throw refuse(`/${pattern.source}/ could take too long on this value`)
   }
 
   const start = performance.now()
@@ -254,10 +254,7 @@ export function readPattern<T>(pattern: RegExp, value: string, read: () => T): T
     since = start
     spent = 0
   }
-  if (spent >= MOST_MS) {
-    refused++
-    throw new BasesError(`/${pattern.source}/ has run for long enough`)
-  }
+  if (spent >= MOST_MS) throw refuse(`/${pattern.source}/ has run for long enough`)
   try {
     return read()
   } finally {
@@ -273,9 +270,13 @@ let lookedAt = 0
 let evaluatingSince = Number.NEGATIVE_INFINITY
 let refused = 0
 
-function tooLong(): BasesError {
+function refuse(message: string): BasesError {
   refused++
-  return new BasesError('This takes too long to answer')
+  return new BasesError(message)
+}
+
+function tooLong(): BasesError {
+  return refuse('This takes too long to answer')
 }
 
 export function refusing<T>(run: () => T): { value: T; partial: boolean } {

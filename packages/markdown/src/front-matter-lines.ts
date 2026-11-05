@@ -77,9 +77,9 @@ function pastKey(line: string, at: number): number {
   return -1
 }
 
-function staysOpen(line: string, from: number, open: Open): boolean {
+function staysOpen(line: string, open: Open): boolean {
   let starts = true
-  for (let at = from; at < line.length; at++) {
+  for (let at = 0; at < line.length; at++) {
     const one = line[at]
     if (open.quote === '"' || open.quote === "'") {
       if (open.quote === '"' && one === '\\') at++
@@ -123,12 +123,12 @@ export function valueClosesAt(source: string, from: number, limit: number): numb
   const said = source.slice(from, stop).trimStart().replace(PROPERTIES, '')
   if (!/^["'[{]/.test(said)) return -1
   const open: Open = { quote: '', depth: 0 }
-  if (!staysOpen(said.replace(/\r$/, ''), 0, open)) return -1
+  if (!staysOpen(said.replace(/\r$/, ''), open)) return -1
 
   while (stop + 1 < limit) {
     const at = stop + 1
     stop = lineEnd(at)
-    if (!staysOpen(source.slice(at, stop).replace(/\r$/, ''), 0, open)) return stop
+    if (!staysOpen(source.slice(at, stop).replace(/\r$/, ''), open)) return stop
   }
   return -1
 }
@@ -158,7 +158,7 @@ function closingFence(source: string, from: number): number {
     }
 
     if (open) {
-      if (!staysOpen(line, 0, open)) open = null
+      if (!staysOpen(line, open)) open = null
     } else {
       let indent = 0
       while (isBlank(line[indent])) indent++
@@ -184,7 +184,6 @@ function closingFence(source: string, from: number): number {
             col++
             while (isBlank(line[col])) col++
           }
-          const own = indent === base
 
           const complex =
             (line[col] === '?' || line[col] === ':') &&
@@ -201,7 +200,7 @@ function closingFence(source: string, from: number): number {
           const start = said.charAt(0)
           const empty = said === '' || start === '#'
 
-          if (own && dash < 0) list = empty
+          if (indent === base && dash < 0) list = empty
           whole = first && start === '{' && past === -1
 
           const asValue = past !== -1 || dash >= 0 || indent > base || whole
@@ -212,7 +211,7 @@ function closingFence(source: string, from: number): number {
             (start === '"' || start === "'" || start === '[' || start === '{')
           ) {
             const opening: Open = { quote: '', depth: 0 }
-            if (staysOpen(said, 0, opening)) {
+            if (staysOpen(said, opening)) {
               open = opening
               reread = stop + 1
             }

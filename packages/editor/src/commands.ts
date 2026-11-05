@@ -105,7 +105,7 @@ export function inside(state: EditorState, from: number, to: number): { from: nu
   if (!id || end !== line.from + line.text.trimEnd().length) return { from: start, to: end }
 
   const words = state.doc.sliceString(start, end - id.length - 1).trimEnd()
-  return words ? { from: start, to: start + words.length } : { from: start, to: end }
+  return { from: start, to: words ? start + words.length : end }
 }
 
 /** A run of whole lines, by number. */
@@ -808,7 +808,7 @@ export function insertTable(rows = 2, columns = 2): StateCommand {
 
   return (target) => {
     const line = target.state.doc.lineAt(target.state.selection.main.head)
-    return /^\s*\|/.test(line.text) ? false : block(target)
+    return !/^\s*\|/.test(line.text) && block(target)
   }
 }
 

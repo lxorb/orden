@@ -136,49 +136,43 @@ function placeLines(
   return changes
 }
 
-function dispatched(
-  { state, dispatch }: Parameters<StateCommand>[0],
-  changes: ChangeSpec[],
+function placing(
+  library: StateCommand,
+  to: (state: EditorState, line: Line, item: Item, unit: number) => number,
+  other: (line: Line, step: number) => ChangeSpec[],
   userEvent: string,
-): boolean {
-  const set = state.changes(changes)
-  dispatch(state.update({ changes: set, selection: state.selection.map(set, 1), userEvent }))
-  return true
+): StateCommand {
+  return (target) => {
+    const { state, dispatch } = target
+    if (!itemLines(state)) return library(target)
+    if (state.readOnly) return false
+
+    const unit = state.facet(indentUnit).length
+    const set = state.changes(placeLines(state, (line, item) => to(state, line, item, unit), other))
+    dispatch(state.update({ changes: set, selection: state.selection.map(set, 1), userEvent }))
+    return true
+  }
 }
 
-export const indentItems: StateCommand = (target) => {
-  const { state } = target
-  if (!itemLines(state)) return indentMore(target)
-  if (state.readOnly) return false
+export const indentItems: StateCommand = placing(
+  indentMore,
+  (state, line, item, unit) => {
+    const above = itemAbove(state, line.number, item.indent)
+    return above?.indent === item.indent ? above.column : item.indent + unit
+  },
+  shifted,
+  'input.indent',
+)
 
-  const unit = state.facet(indentUnit).length
-  const changes = placeLines(
-    state,
-    (line, item) => {
-      const above = itemAbove(state, line.number, item.indent)
-      return above?.indent === item.indent ? above.column : item.indent + unit
-    },
-    (line, step) => shifted(line, step),
-  )
-  return dispatched(target, changes, 'input.indent')
-}
-
-export const outdentItems: StateCommand = (target) => {
-  const { state } = target
-  if (!itemLines(state)) return indentLess(target)
-  if (state.readOnly) return false
-
-  const unit = state.facet(indentUnit).length
-  const changes = placeLines(
-    state,
-    (line, item) => {
-      const above = item.indent > 0 ? itemAbove(state, line.number, item.indent - 1) : null
-      return above ? above.indent : Math.max(0, item.indent - unit)
-    },
-    (line, step) => shifted(line, -step),
-  )
-  return dispatched(target, changes, 'delete.dedent')
-}
+export const outdentItems: StateCommand = placing(
+  indentLess,
+  (state, line, item, unit) => {
+    const above = item.indent > 0 ? itemAbove(state, line.number, item.indent - 1) : null
+    return above ? above.indent : Math.max(0, item.indent - unit)
+  },
+  (line, step) => shifted(line, -step),
+  'delete.dedent',
+)
 
 function tableBeside(
   state: EditorState,
@@ -191,26 +185,28 @@ function tableBeside(
   if (inDoc(near) && !doc.line(near).text.trim()) near += delta
   if (!inDoc(near)) return null
 
-  const at = doc.line(near).from
+  return tableAt(state, doc.line(near).from)
+}
+
+function tableAt(state: EditorState, at: number): { from: number; to: number } | null {
   return enclosingNamed(syntaxTree(state).resolveInner(at, 1), 'Table')
 }
 
 export function moveLineOver(delta: -1 | 1): StateCommand {
   return (target) => {
     const { state, dispatch } = target
+    const { doc } = state
     const library = delta < 0 ? moveLineUp : moveLineDown
     const range = state.selection.main
     if (state.selection.ranges.length > 1) return library(target)
 
-    const first = state.doc.lineAt(range.from)
-    const last = state.doc.lineAt(range.to)
+    const first = doc.lineAt(range.from)
+    const last = doc.lineAt(range.to)
     const table = tableBeside(state, delta < 0 ? first : last, delta)
-    const inside = enclosingNamed(syntaxTree(state).resolveInner(first.from, 1), 'Table')
-    const endsIn = enclosingNamed(syntaxTree(state).resolveInner(last.from, 1), 'Table')
-    if (inside?.from !== endsIn?.from) return true
+    const inside = tableAt(state, first.from)
+    if (inside?.from !== tableAt(state, last.from)?.from) return true
     if (!table || inside || state.readOnly) return library(target)
 
-    const doc = state.doc
     const before = first.number > 1 && doc.line(first.number - 1).text.trim() !== ''
     const after = last.number < doc.lines && doc.line(last.number + 1).text.trim() !== ''
     const moved = doc.sliceString(first.from, last.to)

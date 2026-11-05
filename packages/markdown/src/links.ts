@@ -368,8 +368,7 @@ const SIZE = /^(\d+)(?:x(\d+))?$/
  *  which of the two `300x200` means. */
 export function embedSize(alias: string | null): { width: number; height: number | null } | null {
   const found = alias === null ? null : SIZE.exec(alias)
-  if (found && Number(found[1]) === 0) return null
-  if (!found) return null
+  if (!found || Number(found[1]) === 0) return null
 
   const height = found[2]
   return { width: Number(found[1]), height: height === undefined ? null : Number(height) }
@@ -844,7 +843,8 @@ function blockSection(source: string, wanted: string): string | null {
 }
 
 export function ownLine(line: string): boolean {
-  return line.trim().startsWith('^') && blockIdOf(line.trim()) === line.trim().slice(1)
+  const trimmed = line.trim()
+  return trimmed.startsWith('^') && blockIdOf(trimmed) === trimmed.slice(1)
 }
 
 function blockAbove(source: string, lines: readonly string[], under: number): string {

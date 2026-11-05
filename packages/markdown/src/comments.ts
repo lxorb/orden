@@ -198,8 +198,11 @@ function valuesWithoutComments(body: string): string {
       out.push(line)
       continue
     }
-    out.push(text, ...lines.slice(at + 1, closes).map(() => ''))
-    out.push(stripLine(lines[closes] ?? '', inside).text)
+    out.push(
+      text,
+      ...lines.slice(at + 1, closes).map(() => ''),
+      stripLine(lines[closes] ?? '', inside).text,
+    )
     at = closes
   }
   return out.join('\n')
