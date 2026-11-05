@@ -12,6 +12,8 @@ const crate = vi.hoisted(() => ({
   held: null as null | { account: string; session: import('./store').SyncStore },
   mems: new Map<string, unknown>(),
   log: [] as string[],
+  /** The account never answering: a try of the way back that hangs. */
+  hang: false,
 }))
 
 vi.mock('./store', async (importOriginal) => {
@@ -56,6 +58,12 @@ vi.mock('./store', async (importOriginal) => {
         },
       }
     },
+    // Read beside the store, as `sync_store_device` does: nothing opened, nothing marked.
+    deviceOfSyncStore: (id: string) => {
+      crate.log.push(`look ${id}`)
+      const mem = crate.mems.get(id) as { device?: string } | undefined
+      return Promise.resolve(mem?.device ?? null)
+    },
     forgetSyncStore: (id: string) => {
       crate.log.push(`forget ${id}`)
       if (crate.held?.account === id) crate.held = null
@@ -70,7 +78,7 @@ vi.mock('./app-world', async () => {
   return {
     appWorld: () => ({
       disk: new MemoryDisk(),
-      account: { ask: () => Promise.resolve(null) },
+      account: { ask: () => (crate.hang ? new Promise(() => undefined) : Promise.resolve(null)) },
       name: 'here',
       now: () => 1000,
       random: Math.random,
@@ -176,6 +184,19 @@ vi.mock('../backoff', async (importOriginal) => ({
   pollDelay: () => 400,
 }))
 
+/** An account store this device already has, from an earlier session that quit cleanly. */
+async function storeHere(id: string) {
+  const { MemoryStore } = await import('./memory-store')
+  const mem = new MemoryStore(deviceOfStore(id))
+  crate.mems.set(id, mem)
+  const session = mem.open()
+  await session.cleanExit(true)
+  await session.close()
+  return mem
+}
+
+const opens = (id: string) => crate.log.filter((line) => line === `open ${id}`).length
+
 /** The device id the crate's store of an account keeps, as this harness makes it. */
 const deviceOfStore = (id: string) =>
   Array.from(new TextEncoder().encode(id), (byte) => byte.toString(16))
@@ -186,6 +207,7 @@ beforeEach(() => {
   crate.held = null
   crate.mems.clear()
   crate.log.length = 0
+  crate.hang = false
   Object.defineProperty(navigator, 'locks', { value: locksOf(), configurable: true })
 })
 
@@ -216,6 +238,7 @@ describe('the hub asking the device id', () => {
     ])
     await seed.close()
 
+    await storeHere('u1')
     const a = await aWindow()
     await a.runner.startLocal()
     const b = await aWindow()
@@ -235,19 +258,20 @@ describe('the hub asking the device id', () => {
     const engine = a.runner.engine ?? b.runner.engine
     expect(engine).not.toBeNull()
     expect(await device).toBe(engine?.core.store.opened.device)
+    expect(opens('u1')).toBe(1)
     const [row] = await engine!.core.store.read([get('meta', 'carried:/Notes')])
     expect(JSON.parse(String(row?.value))).toEqual({ 'Plan.md': id })
     expect(wrong()).toEqual([])
   })
 
   test('with no engine anywhere, it is the one the store of the account keeps', async () => {
+    await storeHere('u1')
     const one = await aWindow()
     const hub = await import('./hub.svelte')
     Object.assign(one.account, { user: { id: 'u1', syncVersion: 1 } })
-    const device = await hub.deviceId()
-    const store = crate.mems.get('u1') as InstanceType<typeof import('./memory-store').MemoryStore>
-    expect(device).toBe(store.open().opened.device)
+    expect(await hub.deviceId()).toBe(deviceOfStore('u1'))
     expect(crate.held).toBeNull()
+    expect(opens('u1')).toBe(0)
   })
 })
 
@@ -337,6 +361,7 @@ describe('who holds the device store, and for how long', () => {
   test('a v1 session has the device id of the store at once, in the window that dropped the local engine and in another (M3F-2)', async () => {
     vi.useFakeTimers()
     try {
+      await storeHere('u1')
       const a = await aWindow()
       const aHub = await import('./hub.svelte')
       Object.assign(a.account, { user: { id: 'u1', syncVersion: 1 } })
@@ -360,5 +385,48 @@ describe('who holds the device store, and for how long', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+describe('the device id read beside the store', () => {
+  test('asked at launch, before the engine opens the store, leaves a clean quit clean (S-2)', async () => {
+    vi.stubGlobal('fetch', () => new Promise(() => undefined))
+    await storeHere('u1')
+    const a = await aWindow()
+    const hub = await import('./hub.svelte')
+    Object.assign(a.account, { user: { id: 'u1', syncVersion: 2 }, token: 't' })
+    const device = hub.deviceId()
+    await settle(100)
+    signIn(a)
+    await settle(300)
+    expect(await device).toBe(deviceOfStore('u1'))
+    expect(a.runner.engine?.core.store.opened.wasClean).toBe(true)
+    expect(opens('u1')).toBe(1)
+  })
+
+  test('answers at once in the window walking back while a try hangs, and in another (S-3)', async () => {
+    vi.stubGlobal('fetch', () => new Promise(() => undefined))
+    crate.hang = true
+    const mem = await storeHere('u1')
+    const { put } = await import('./store')
+    const kept = mem.open()
+    await kept.write([
+      put('spaces', { space_id: 's1', root: '/Notes', cursor: 1, role: 'owner', store: null }),
+      put('meta', { key: 'first:s1', value: '1' }),
+    ])
+    await kept.cleanExit(true)
+    await kept.close()
+
+    const a = await aWindow()
+    Object.assign(a.account, { user: { id: 'u1', syncVersion: 1 }, token: 't' })
+    void a.runner.walkBack(() => true)
+    await settle(200)
+    const b = await aWindow()
+    Object.assign(b.account, { user: { id: 'u1', syncVersion: 1 }, token: 't' })
+    const asked = await Promise.race([
+      Promise.all([a.runner.deviceOf('u1'), b.runner.deviceOf('u1')]),
+      settle(100).then(() => 'late'),
+    ])
+    expect(asked).toEqual([deviceOfStore('u1'), deviceOfStore('u1')])
   })
 })

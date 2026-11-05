@@ -31,7 +31,7 @@ use tauri::ipc::{InvokeBody, Request, Response};
 use tauri::{AppHandle, Manager};
 
 use crate::paths::cannot;
-use store::{files_of, set_aside, Failed, Opened, Store};
+use store::{device_of, files_of, set_aside, Failed, Opened, Store};
 use wire::{frame, unframe, Change, Query};
 
 /// The store that is open, if one is, and whose it is; and the chats' store beside it
@@ -141,6 +141,15 @@ pub fn sync_store_open(
         led: lead,
     });
     Ok(opened)
+}
+
+/// The device id the account's store keeps, read beside it and never through it: no
+/// store is opened, closed or marked, so it is safe whichever window's engine holds the
+/// store, and it changes nothing about how the last session ended. None before the
+/// account has a store on this device.
+#[tauri::command(async)]
+pub fn sync_store_device(app: AppHandle, account: String) -> Result<Option<String>, String> {
+    Ok(device_of(&store_path(&app, &account)?))
 }
 
 /// Closes the store. Says nothing about whether the session ended cleanly; that is

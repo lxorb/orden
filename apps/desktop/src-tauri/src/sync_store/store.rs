@@ -6,7 +6,9 @@
 //! store open between commands.
 
 use rusqlite::types::Value as Sql;
-use rusqlite::{params_from_iter, Connection, ErrorCode, OptionalExtension, TransactionBehavior};
+use rusqlite::{
+    params_from_iter, Connection, ErrorCode, OpenFlags, OptionalExtension, TransactionBehavior,
+};
 use serde::Serialize;
 use serde_json::{Map, Value as Json};
 use std::fmt::Write as _;
@@ -457,6 +459,29 @@ pub fn migrated(conn: &Connection) -> Result<usize, Refused> {
     migrated_with(conn, &MIGRATIONS)
 }
 
+/// The device id a store at `path` keeps, read without opening it as a store: a
+/// connection of its own that only reads, so no migration, no device made, and no word on
+/// how the session ends (`mark_clean`) is written, and the engine's own connection may have
+/// it open meanwhile (the write-ahead log lets a reader in beside a writer). None where
+/// there is no store yet, or it has no device id.
+pub fn device_of(path: &Path) -> Option<String> {
+    if !path.is_file() {
+        return None;
+    }
+    let conn = Connection::open_with_flags(
+        path,
+        OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
+    )
+    .ok()?;
+    conn.busy_timeout(PATIENCE).ok()?;
+    conn.query_row("select value from meta where key = 'device'", [], |row| {
+        row.get(0)
+    })
+    .optional()
+    .ok()
+    .flatten()
+}
+
 /// This device's id: the one the store already has, or a new one kept from now on.
 fn device(conn: &Connection) -> Result<String, Refused> {
     let kept: Option<String> = conn
@@ -551,7 +576,7 @@ fn with_suffix(path: &Path, suffix: &str) -> PathBuf {
 
 #[cfg(test)]
 mod tests {
-    use super::{files_of, migrated_with, Refused, Store, MIGRATIONS, MOST_PARTS};
+    use super::{device_of, files_of, migrated_with, Refused, Store, MIGRATIONS, MOST_PARTS};
     use crate::sync_store::wire::{frame, unframe, Change, Parts, Query};
     use rusqlite::Connection;
     use serde_json::{json, Value as Json};
@@ -587,6 +612,27 @@ mod tests {
 
     fn file(hash: &str) -> Json {
         json!({ "t": "put", "table": "files", "row": { "hash": hash, "state": "here" } })
+    }
+
+    /// The device id read beside the store: none before there is one, the store's own
+    /// after, while it is open and after it closed, and nothing written by the read, so a
+    /// clean quit stays clean.
+    #[test]
+    fn the_device_id_is_read_without_opening_the_store() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let path = dir.path().join("sync.db");
+        assert_eq!(device_of(&path), None);
+        assert!(!path.exists(), "a look makes no store");
+
+        let store = Store::open(&path).expect("a store");
+        let device = store.opened.device.clone();
+        assert_eq!(device_of(&path).as_deref(), Some(device.as_str()));
+        store.mark_clean(true).expect("said");
+        store.close().expect("closed");
+
+        assert_eq!(device_of(&path).as_deref(), Some(device.as_str()));
+        let again = Store::open(&path).expect("again");
+        assert!(again.opened.was_clean, "the look left the quit clean");
     }
 
     #[test]

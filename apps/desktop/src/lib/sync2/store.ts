@@ -400,6 +400,19 @@ export async function openSyncStore(account: string, leads = false): Promise<Syn
   return openWeb(account)
 }
 
+/** The device id an account's store keeps, read beside it: nothing is opened, closed or
+ *  marked, so it is safe whichever window's engine holds the store and leaves how the last
+ *  session ended as it was (`sync_store_device`; on the web, a look into its database).
+ *  Null before the account has a store here. */
+export async function deviceOfSyncStore(account: string): Promise<string | null> {
+  if (isNative) {
+    const { deviceNative } = await import('../native-sync-store')
+    return deviceNative(account)
+  }
+  const { deviceWeb } = await import('../web/sync-store')
+  return deviceWeb(account)
+}
+
 /** Deletes an account's store, as signing out does. */
 export async function forgetSyncStore(account: string): Promise<void> {
   if (isNative) {

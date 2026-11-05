@@ -397,6 +397,7 @@ macro_rules! commands {
             sync_store::sync_store_write,
             sync_store::sync_store_clean_exit,
             sync_store::sync_store_forget,
+            sync_store::sync_store_device,
             sync_store::chats::chat_store_read,
             sync_store::chats::chat_store_write,
             sync_store::chats::chat_store_forget,

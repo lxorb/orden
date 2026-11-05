@@ -72,6 +72,37 @@ export async function openWeb(account: string): Promise<SyncStore> {
   }
 }
 
+/** The device id an account's store keeps, read in a connection of its own that only
+ *  looks: no version asked, so a store another tab has open is not upgraded or blocked,
+ *  and none made where there is none (the upgrade that would make one is called off). */
+export function deviceWeb(account: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const request = indexedDB.open(nameOf(account))
+    request.onupgradeneeded = () => request.transaction?.abort()
+    request.onerror = () => resolve(null)
+    request.onblocked = () => resolve(null)
+    request.onsuccess = () => {
+      const db = request.result
+      try {
+        const tx = db.transaction('meta', 'readonly')
+        const asked = tx.objectStore('meta').get('device')
+        asked.onsuccess = () => {
+          const value = (asked.result as { value?: unknown } | undefined)?.value
+          resolve(typeof value === 'string' ? value : null)
+        }
+        tx.oncomplete = () => db.close()
+        tx.onabort = () => {
+          db.close()
+          resolve(null)
+        }
+      } catch {
+        db.close()
+        resolve(null)
+      }
+    }
+  })
+}
+
 /** Deletes an account's store. */
 export function forgetWeb(account: string): Promise<void> {
   return new Promise((resolve, reject) => {
