@@ -653,11 +653,16 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  Raised on 2026-11-05 for #1097, every emoji with an outline in One colour and the grid
  *  showing only what is drawn in one colour (IconPicker.svelte, icon-sets.ts): the code to
  *  6,133,000, measured 6,132,537.
+ *
+ *  Raised on 2026-11-05 for #1152's Square bottom edge setting, off by default
+ *  (Appearance > Window, Pane.svelte, App.svelte): the code to 6,133,700, measured
+ *  6,133,342; the catalogues to 1,014,300, its words in every language, measured
+ *  1,014,026; the styles to 292,700, measured 292,429.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_133_000,
-  catalogues: 1_010_800,
-  styles: 292_400,
+  code: 6_133_700,
+  catalogues: 1_014_300,
+  styles: 292_700,
   fonts: 260_000,
   pages: 40_000,
 }

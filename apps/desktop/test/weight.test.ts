@@ -1312,8 +1312,13 @@ function holds(tail: string): boolean {
  *
  *  Raised on 2026-11-05, to 3,672,600, for #1149: a space's bookmarks remember whether the
  *  account has heard them, and are sent again until it has (workspace/bookmarks.svelte.ts).
- *  Measured 3,672,287 in 398. */
-const BUDGET = 3_672_600
+ *  Measured 3,672,287 in 398.
+ *
+ *  Raised on 2026-11-05, to 3,674,000, for #1152's Square bottom edge setting, off by
+ *  default: the panes on the window's bottom square at their foot, and a web tab's page
+ *  given its own pane's corner (Pane.svelte, App.svelte, pane-tree.ts, web-tab/). Measured
+ *  3,673,742 in 398. */
+const BUDGET = 3_674_000
 const MOST_FILES = 399
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
