@@ -404,17 +404,46 @@ export function fromHostOf(data: string): FromHost | null {
  *  picture's data channel, `input` (the host's `apps_host/input.rs` plays it into the
  *  application's display): the pointer at a point of the display in its own pixels, a
  *  button (a `PointerEvent`'s `button`) pressed or let go, the wheel turned by clicks
- *  (down and right positive), and a key pressed or let go, by the character it gave or
- *  its name (`KeyboardEvent.key`) and the key it was (`KeyboardEvent.code`). */
+ *  (down and right positive), a key pressed or let go, by the character it gave or its
+ *  name (`KeyboardEvent.key`) and the key it was (`KeyboardEvent.code`), and text an
+ *  input method made (step 5), typed as it is. An older host lets the text go. */
 export type InputEvent =
   | { t: 'move'; x: number; y: number }
   | { t: 'button'; button: number; down: boolean }
   | { t: 'wheel'; x: number; y: number }
   | { t: 'key'; key: string; code: string; down: boolean }
+  | { t: 'text'; text: string }
 
 /** An input event as the channel's message. */
 export function inputText(event: InputEvent): string {
   return JSON.stringify(event)
+}
+
+/** The largest picture of the application's pointer the tab takes, as its data URL. */
+export const MOST_POINTER = 256 * 1024
+
+/** What the host says on the picture's data channel (step 5): the application's pointer,
+ *  drawn so over the picture - its shape as a PNG with its hot spot in the display's
+ *  pixels, or hidden, as an application hides it to draw its own. */
+export type FromPicture =
+  { t: 'pointer'; png: string; x: number; y: number } | { t: 'pointer'; hidden: true }
+
+const POINTER_PNG = /^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/
+
+function isSpot(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 1024
+}
+
+/** The host's message on the data channel, or null for one that does not check or that
+ *  this side does not know yet. */
+export function fromPictureOf(data: unknown): FromPicture | null {
+  if (typeof data !== 'string' || data.length > MOST_POINTER + 1024) return null
+  const value = parsed(data)
+  if (!isRecord(value) || value.t !== 'pointer') return null
+  if (value.hidden === true) return { t: 'pointer', hidden: true }
+  const { png, x, y } = value
+  if (typeof png !== 'string' || png.length > MOST_POINTER || !POINTER_PNG.test(png)) return null
+  return isSpot(x) && isSpot(y) ? { t: 'pointer', png, x, y } : null
 }
 
 // ---------------------------------------------------------------------------

@@ -30,9 +30,16 @@
 //! **Its picture** goes to the device holding it, peer to peer (`stream.rs`, step 4),
 //! once that device offers to take it; the offer and the answer come and go through the
 //! window and the relay (`apps_signal`).
+//!
+//! **Its size is the holder's tab's** (step 5): the window hands on the holder's view
+//! whenever it changes - the tab resized, moved to another monitor, taken over by
+//! another device - and the display is made that size and ratio (`apps_view`), its
+//! windows fitted to it (`wm.rs`), and its picture read at that refresh rate.
 
 #![cfg_attr(not(target_os = "linux"), allow(dead_code))]
 
+#[cfg(target_os = "linux")]
+mod capture;
 #[cfg(target_os = "linux")]
 mod display;
 #[cfg(target_os = "linux")]
@@ -44,6 +51,8 @@ mod installed;
 mod stream;
 #[cfg(target_os = "linux")]
 mod stun;
+#[cfg(target_os = "linux")]
+mod wm;
 
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -89,13 +98,11 @@ fn sixty() -> f64 {
     60.0
 }
 
-/// The display an application draws on, as its picture is read from it: its name, its
-/// size in device pixels, and the holder's refresh rate.
+/// The display an application draws on, as its picture is read from it: its name, and
+/// the holder's refresh rate as it is now. Its size is the display's own.
 #[derive(Clone, Debug)]
 pub struct Screen {
     pub display: String,
-    pub width: u32,
-    pub height: u32,
     pub hz: f64,
 }
 
@@ -115,8 +122,11 @@ struct Running {
     events: Mutex<Option<Channel<Said>>>,
     /// Whether it was stopped, rather than ending by itself.
     stopping: AtomicBool,
-    /// Its display.
-    screen: Screen,
+    /// Its display, as its picture is read.
+    screen: Arc<Mutex<Screen>>,
+    /// The display itself, made the holder's size; gone once the application is.
+    #[cfg(target_os = "linux")]
+    display: Mutex<Option<display::Display>>,
 }
 
 impl Running {
@@ -277,6 +287,7 @@ fn run_on_its_display(
     }
     let (width, height) = display::screen(view.width, view.height, view.dpr);
     let display = display::Display::start(width, height, view.dpr).map_err(|_| "failed")?;
+    let name = display.name();
     let folder = cwd
         .map(PathBuf::from)
         .filter(|one| one.is_dir())
@@ -286,7 +297,7 @@ fn run_on_its_display(
     let mut child = Command::new(program)
         .args(rest)
         .current_dir(folder)
-        .env("DISPLAY", display.name())
+        .env("DISPLAY", &name)
         // Its own display and no other: a toolkit that would rather speak Wayland is
         // told there is none, or it would open on the reader's desktop.
         .env_remove("WAYLAND_DISPLAY")
@@ -307,12 +318,11 @@ fn run_on_its_display(
         pid: child.id(),
         events: Mutex::new(Some(events)),
         stopping: AtomicBool::new(false),
-        screen: Screen {
-            display: display.name(),
-            width,
-            height,
+        screen: Arc::new(Mutex::new(Screen {
+            display: name,
             hz: view.hz,
-        },
+        })),
+        display: Mutex::new(Some(display)),
     });
     app.state::<Hosted>()
         .apps()
@@ -326,6 +336,11 @@ fn run_on_its_display(
     // told whether it was stopped or ended by itself.
     std::thread::spawn(move || {
         let status = child.wait().ok();
+        let display = running
+            .display
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .take();
         drop(display);
         let hosted = app.state::<Hosted>();
         let mut apps = hosted.apps();
@@ -380,6 +395,40 @@ pub fn apps_stop(webview: Webview, key: String) -> Result<(), String> {
         end(&running, std::time::Duration::from_secs(3));
     }
     Ok(())
+}
+
+/// The holder's view, as it changes: the display made its size and ratio, and its
+/// picture read at its refresh rate. Nothing running, nothing happens; the next start is
+/// made at the view the window has kept.
+#[tauri::command(async)]
+pub fn apps_view(webview: Webview, key: String, view: View) -> Result<(), String> {
+    owner(&webview)?;
+    usable(&key)?;
+    let running = webview.state::<Hosted>().apps().get(&key).cloned();
+    if let Some(running) = running {
+        view_here(&running, view);
+    }
+    Ok(())
+}
+
+#[cfg(not(target_os = "linux"))]
+fn view_here(_running: &Running, _view: View) {}
+
+#[cfg(target_os = "linux")]
+fn view_here(running: &Running, view: View) {
+    running
+        .screen
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .hz = view.hz;
+    let (width, height) = display::screen(view.width, view.height, view.dpr);
+    let display = running
+        .display
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    if let Some(display) = display.as_ref() {
+        let _ = display.fit(width, height, view.dpr);
+    }
 }
 
 /// What the device holding it says of its picture, `data` of its `signal` frame

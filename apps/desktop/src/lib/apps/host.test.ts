@@ -13,9 +13,10 @@ import {
   type Speaking,
 } from './host.svelte'
 
-/** This computer as an application's host (issue 1063, steps 3 and 4; host.svelte.ts):
- *  which files it hosts, what it does with the holder's Start, Stop and Restart and its
- *  signalling, and what it says back - with the crate and the relay played here. */
+/** This computer as an application's host (issue 1063, steps 3 to 5; host.svelte.ts):
+ *  which files it hosts, what it does with the holder's Start, Stop and Restart, its
+ *  signalling and its view, and what it says back - with the crate and the relay played
+ *  here. */
 
 const GIMP: AppFile = {
   v: 1,
@@ -59,6 +60,10 @@ function world(files: Record<string, AppFile | string>) {
       if (data.includes('offer')) await tick()
       asked.push(`signalled ${key}`)
       return data.includes('offer') ? '{"answer":"v=0"}' : null
+    },
+    view(key, view) {
+      asked.push(`view ${key} ${view.width}x${view.height}@${view.dpr} ${view.hz}`)
+      return Promise.resolve()
     },
   }
   const made: HostWorld = {
@@ -180,6 +185,28 @@ describe('an application’s host', () => {
     here.stop()
     expect(here.links[1]?.closed).toBe(true)
     expect(here.asked).not.toContain('stop id-sTwoapplication')
+  })
+})
+
+describe('an application’s size', () => {
+  test('follows the holder’s view while it runs, and is started at the last one', async () => {
+    const here = world({ '/s/GIMP.application': GIMP })
+    await tick()
+    const heard = here.links[0]?.heard
+    heard?.({ t: 'view', view: VIEW })
+    expect(here.asked.filter((one) => one.startsWith('view'))).toEqual([])
+    heard?.({ t: 'run', what: 'start' })
+    await tick()
+    expect(here.asked).toContain('start id-sGIMPapplication gimp.desktop 1600')
+
+    // Resized, then taken over by a device with another screen.
+    heard?.({ t: 'view', view: { ...VIEW, width: 1200 } })
+    heard?.({ t: 'viewer', device: 'device-phone', name: 'Phone' })
+    heard?.({ t: 'view', view: { width: 400, height: 800, dpr: 3, hz: 60 } })
+    expect(here.asked.filter((one) => one.startsWith('view'))).toEqual([
+      'view id-sGIMPapplication 1200x900@2 120',
+      'view id-sGIMPapplication 400x800@3 60',
+    ])
   })
 })
 

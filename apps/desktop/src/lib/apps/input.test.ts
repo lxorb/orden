@@ -1,8 +1,16 @@
 import { describe, expect, test } from 'vitest'
-import { displayPoint, keyEvent, wheelClicks } from './input'
+import {
+  displayPoint,
+  drivesPointer,
+  HeldKeys,
+  keyEvent,
+  pointerStyle,
+  textEvent,
+  wheelClicks,
+} from './input'
 
 /** What the holder does over an application's picture, as its host is sent it (issue
- *  1063, step 4; input.ts). */
+ *  1063, steps 4 and 5; input.ts), and the application's pointer as the tab draws it. */
 
 const box = (left: number, top: number, width: number, height: number) =>
   ({ left, top, width, height }) as DOMRectReadOnly
@@ -60,5 +68,50 @@ describe('a key', () => {
       code: 'BracketLeft',
       down: false,
     })
+  })
+})
+
+describe('an input method', () => {
+  test('its text is typed as it is, once chosen; nothing chosen is nothing typed', () => {
+    expect(textEvent('日本語')).toEqual({ t: 'text', text: '日本語' })
+    expect(textEvent('')).toBeNull()
+    expect(textEvent(null)).toBeNull()
+  })
+})
+
+describe('a pointer', () => {
+  test('of a mouse, a pen or the first finger drives the application; a second does not', () => {
+    expect(drivesPointer({ isPrimary: true })).toBe(true)
+    expect(drivesPointer({ isPrimary: false })).toBe(false)
+  })
+})
+
+describe('the keys held', () => {
+  test('are let go when the tab loses the keyboard, once', () => {
+    const held = new HeldKeys()
+    held.saw({ t: 'key', key: 'Alt', code: 'AltLeft', down: true })
+    held.saw({ t: 'key', key: 'a', code: 'KeyA', down: true })
+    held.saw({ t: 'key', key: 'a', code: 'KeyA', down: false })
+    held.saw({ t: 'move', x: 1, y: 1 })
+    expect(held.letGo()).toEqual([{ t: 'key', key: '', code: 'AltLeft', down: false }])
+    expect(held.letGo()).toEqual([])
+  })
+})
+
+describe('the application’s pointer', () => {
+  const png = 'data:image/png;base64,iVBORw0KGgo='
+
+  test('is drawn at the tab’s ratio, its hot spot in CSS pixels', () => {
+    expect(pointerStyle({ t: 'pointer', png, x: 8, y: 16 }, 2)).toBe(
+      `-webkit-image-set(url("${png}") 2x) 4 8, default`,
+    )
+    expect(pointerStyle({ t: 'pointer', png, x: 3, y: 5 }, 1)).toBe(
+      `-webkit-image-set(url("${png}") 1x) 3 5, default`,
+    )
+  })
+
+  test('hidden is none, and unsaid is the engine’s own', () => {
+    expect(pointerStyle({ t: 'pointer', hidden: true }, 2)).toBe('none')
+    expect(pointerStyle(null, 2)).toBe('')
   })
 })

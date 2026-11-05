@@ -14,7 +14,11 @@
  *  And its picture (step 4): the holder's signalling, `signal` frames, handed to the
  *  crate as they come (`apps_host/stream.rs`), which answers the offer and sends the
  *  picture to that device directly; and its answer said back. A new holder, or none,
- *  ends the picture the last one had. */
+ *  ends the picture the last one had.
+ *
+ *  And its size (step 5): the holder's view, said by the relay whenever it changes and
+ *  whenever another device takes the application over, handed to the crate, which makes
+ *  the display that size. */
 
 import {
   type AppFile,
@@ -81,6 +85,8 @@ export interface Runner {
   stop(key: string): Promise<void>
   /** Hands the holder's signalling to the crate; answers what to say back, if anything. */
   signal(key: string, data: string): Promise<string | null>
+  /** The holder's view, as it changes: a running application's display made to it. */
+  view(key: string, view: View): Promise<void>
 }
 
 /** What ends the picture a holder had: the wire's goodbye. */
@@ -136,7 +142,10 @@ class Hosting {
         this.link.say(this.state)
         return
       case 'view':
+        // The tab resized, moved to another screen, or another device's: the display
+        // follows it while the application runs, and the next start is made at it.
         this.view = what.view
+        if (this.state.state === 'running') void this.runner.view(this.key, what.view)
         return
       case 'run':
         if (what.what === 'start') void this.start()
@@ -334,6 +343,9 @@ async function appWorld(): Promise<{
     },
     async signal(key, data) {
       return native.invoke<string | null>('apps_signal', { key, data }).catch(() => null)
+    },
+    async view(key, view) {
+      await native.invoke('apps_view', { key, view }).catch(() => undefined)
     },
   }
 

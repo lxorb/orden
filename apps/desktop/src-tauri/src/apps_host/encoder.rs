@@ -9,13 +9,17 @@
 //! **What the viewer decodes decides.** Hardware H.264 (NVENC, VAAPI, Quick Sync) goes to a
 //! viewer that offers H.264 - `WebView2` and `WKWebView` - and hardware VP9 or VP8 to any,
 //! Orden's own CEF included, which has no H.264. Each is told to hold nothing back: no
-//! B-frames, no look-ahead, its lowest-latency mode, a key frame every two seconds.
+//! B-frames, no look-ahead, its lowest-latency mode.
+//!
+//! **Fed frame by frame** (step 5): the picture is read off the display as it changes
+//! (`capture.rs`) and written to the encoder raw, each frame stamped with the time it
+//! came, so a still screen makes no frames at all. A key frame comes first, then only
+//! when the viewer asks for one - its picture broken by a loss on the way - and, as a
+//! net under that, after ten seconds' worth of frames.
 
 use std::process::{Command, Stdio};
 use std::sync::OnceLock;
 use std::time::{Duration, Instant};
-
-use super::Screen;
 
 /// The codec an encoder makes, as the viewer negotiates it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -195,7 +199,15 @@ fn tuning_args(encoder: Encoder, threads: usize) -> Vec<String> {
             "-profile:v",
             "baseline",
         ],
-        "h264_vaapi" => &["-bf", "0", "-profile:v", "constrained_baseline"],
+        "h264_vaapi" => &[
+            "-bf",
+            "0",
+            "-async_depth",
+            "1",
+            "-profile:v",
+            "constrained_baseline",
+        ],
+
         "h264_qsv" => &[
             "-bf",
             "0",
@@ -206,7 +218,7 @@ fn tuning_args(encoder: Encoder, threads: usize) -> Vec<String> {
             "-profile:v",
             "baseline",
         ],
-        "vp9_qsv" => &["-async_depth", "1"],
+        "vp9_qsv" | "vp9_vaapi" | "vp8_vaapi" => &["-async_depth", "1"],
         _ => &[],
     };
     let mut args: Vec<String> = words.iter().map(|&one| one.to_owned()).collect();
@@ -247,12 +259,11 @@ pub fn bit_rate(width: u32, height: u32, fps: u32) -> u64 {
     (pixels / 10).clamp(1_000_000, 20_000_000)
 }
 
-/// What ffmpeg is told: read the display at the frame rate, encode with this encoder
-/// holding no frame back, a key frame every two seconds, and write each frame to the
-/// pipe the moment it is made.
-pub fn encoder_args(encoder: Encoder, screen: &Screen) -> Vec<String> {
-    let fps = frame_rate(screen.hz);
-    let rate = bit_rate(screen.width, screen.height, fps);
+/// What ffmpeg is told: read raw frames of this size off its input as they come, each at
+/// the time it came, encode them with this encoder holding no frame back, and write each
+/// frame to the pipe the moment it is made.
+pub fn encoder_args(encoder: Encoder, width: u16, height: u16, fps: u32) -> Vec<String> {
+    let rate = bit_rate(u32::from(width), u32::from(height), fps);
     let threads = std::thread::available_parallelism()
         .map_or(2, std::num::NonZeroUsize::get)
         .clamp(1, 8);
@@ -260,16 +271,10 @@ pub fn encoder_args(encoder: Encoder, screen: &Screen) -> Vec<String> {
         .map(str::to_owned)
         .to_vec();
     args.extend(device_args(encoder.hardware));
-    args.extend([
-        "-f".to_owned(),
-        "x11grab".to_owned(),
-        "-framerate".to_owned(),
-        fps.to_string(),
-        "-draw_mouse".to_owned(),
-        "1".to_owned(),
-        "-i".to_owned(),
-        screen.display.clone(),
-    ]);
+    args.extend(words(&format!(
+        "-f rawvideo -pix_fmt bgr0 -video_size {width}x{height} -framerate {fps} \
+         -use_wallclock_as_timestamps 1 -i pipe:0"
+    )));
     args.extend(upload_args(encoder.hardware));
     args.extend(["-c:v".to_owned(), encoder.name.to_owned()]);
     args.extend(tuning_args(encoder, threads));
@@ -281,7 +286,10 @@ pub fn encoder_args(encoder: Encoder, screen: &Screen) -> Vec<String> {
         "-bufsize".to_owned(),
         (rate / 2).to_string(),
         "-g".to_owned(),
-        (fps * 2).to_string(),
+        (fps * 10).to_string(),
+        // A frame for each one written, at its own time: none made up for a still screen.
+        "-fps_mode".to_owned(),
+        "passthrough".to_owned(),
     ]);
     args.extend(output_args(encoder.made));
     args.extend(["-flush_packets", "1", "pipe:1"].map(str::to_owned));
@@ -333,15 +341,6 @@ fn next_delimiter(bytes: &[u8], from: usize) -> Option<usize> {
 mod tests {
     use super::*;
 
-    fn screen() -> Screen {
-        Screen {
-            display: ":123".to_owned(),
-            width: 1280,
-            height: 800,
-            hz: 120.0,
-        }
-    }
-
     #[test]
     fn takes_hardware_the_viewer_decodes_and_vp8_in_software_otherwise() {
         let nvenc = ALL[0];
@@ -379,24 +378,26 @@ mod tests {
 
     #[test]
     fn asks_libvpx_for_vp8_with_nothing_held_back() {
-        let args = encoder_args(SOFTWARE, &screen()).join(" ");
-        assert!(args.contains("-f x11grab -framerate 60 -draw_mouse 1 -i :123"));
+        let args = encoder_args(SOFTWARE, 1280, 800, 60).join(" ");
+        assert!(args.contains(
+            "-f rawvideo -pix_fmt bgr0 -video_size 1280x800 -framerate 60 -use_wallclock_as_timestamps 1 -i pipe:0"
+        ));
         assert!(args.contains("-pix_fmt yuv420p -c:v libvpx -deadline realtime"));
         assert!(args.contains("-lag-in-frames 0"));
-        assert!(args.contains("-g 120"));
+        assert!(args.contains("-g 600 -fps_mode passthrough"));
         assert!(args.ends_with("-f ivf -flush_packets 1 pipe:1"));
     }
 
     #[test]
     fn uploads_to_the_gpu_and_writes_h264_with_a_delimiter_before_each_frame() {
         let vaapi = ALL[1];
-        let args = encoder_args(vaapi, &screen()).join(" ");
+        let args = encoder_args(vaapi, 1280, 800, 60).join(" ");
         assert!(args.contains(
-            "-init_hw_device vaapi=va:/dev/dri/renderD128 -filter_hw_device va -f x11grab"
+            "-init_hw_device vaapi=va:/dev/dri/renderD128 -filter_hw_device va -f rawvideo"
         ));
-        assert!(args.contains("-vf format=nv12,hwupload -c:v h264_vaapi -bf 0"));
+        assert!(args.contains("-vf format=nv12,hwupload -c:v h264_vaapi -bf 0 -async_depth 1"));
         assert!(args.ends_with("-bsf:v h264_metadata=aud=insert -f h264 -flush_packets 1 pipe:1"));
-        let nvenc = encoder_args(ALL[0], &screen()).join(" ");
+        let nvenc = encoder_args(ALL[0], 1280, 800, 60).join(" ");
         assert!(nvenc.contains("-tune ull -zerolatency 1"));
         assert!(!nvenc.contains("hwupload"));
     }

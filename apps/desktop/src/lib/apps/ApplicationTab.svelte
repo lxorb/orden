@@ -3,11 +3,24 @@
    *  while this device holds it (picture.svelte.ts), and otherwise where it stands - which
    *  device it runs on, whether that device is there, whether it runs, who holds it -
    *  with Take over, Start, Stop and Restart. The session is the tab's and outlives
-   *  this; see session.svelte.ts. */
+   *  this; see session.svelte.ts.
+   *
+   *  The application's display is the pane's size in device pixels, at the pane's ratio
+   *  and the refresh rate of the screen it is on, and follows the pane as it changes
+   *  (view.ts). */
 
-  import type { NotStarted } from '@orden/online/apps'
-  import { displayPoint, keyEvent, wheelClicks } from './input'
+  import type { InputEvent, NotStarted } from '@orden/online/apps'
+  import {
+    displayPoint,
+    drivesPointer,
+    HeldKeys,
+    keyEvent,
+    pointerStyle,
+    textEvent,
+    wheelClicks,
+  } from './input'
   import type { PictureStatus } from './picture.svelte'
+  import { refreshRate, Settling } from './view'
   import { onMount, untrack } from 'svelte'
   import { t } from '../i18n.svelte'
   import { heldLine } from '../online/arrival.svelte'
@@ -21,32 +34,107 @@
 
   let place = $state<HTMLElement>()
   let video = $state<HTMLVideoElement>()
+  /** Where the keyboard goes while the picture shows: a text field of the page's own, so
+   *  that an input method composes in it, put where the pointer last pressed so that its
+   *  window opens there. */
+  let typing = $state<HTMLTextAreaElement>()
+  let typingAt = $state({ x: 0, y: 0 })
+  let dpr = $state(window.devicePixelRatio || 1)
 
   $effect(() => {
     const stream = session.picture.stream
     if (video && video.srcObject !== stream) video.srcObject = stream
   })
 
-  /** The pane's size, its pixel ratio, and a refresh rate until it is measured. */
+  /** The refresh rate of the screen the tab is on, once measured. */
+  let hz = 60
+
+  /** The pane's size, its pixel ratio, and the refresh rate of its screen. */
   function view() {
     const box = place?.getBoundingClientRect()
     return {
       width: Math.max(1, Math.round(box?.width ?? 1)),
       height: Math.max(1, Math.round(box?.height ?? 1)),
       dpr: window.devicePixelRatio || 1,
-      hz: 60,
+      hz,
     }
   }
 
   onMount(() => {
     void session.start(view())
-    const watching = new ResizeObserver(() => {
-      session.resize(view())
-    })
+    const settling = new Settling(
+      () => {
+        session.resize(view())
+      },
+      (ms, run) => {
+        const timer = setTimeout(run, ms)
+        return () => {
+          clearTimeout(timer)
+        }
+      },
+    )
+    const changed = () => {
+      settling.saw(null)
+    }
+    const watching = new ResizeObserver(changed)
     if (place) watching.observe(place)
+
+    // The refresh rate, measured off the frames the page draws: again when the tab may
+    // have gone to another screen.
+    let measuring = 0
+    const measure = () => {
+      cancelAnimationFrame(measuring)
+      if (document.visibilityState !== 'visible') return
+      const gaps: number[] = []
+      let last = 0
+      const frame = (at: number) => {
+        if (last) gaps.push(at - last)
+        last = at
+        if (gaps.length < 30) {
+          measuring = requestAnimationFrame(frame)
+          return
+        }
+        const rate = refreshRate(gaps)
+        if (rate !== null && rate !== hz) {
+          hz = rate
+          changed()
+        }
+      }
+      measuring = requestAnimationFrame(frame)
+    }
+    measure()
+
+    // Another ratio: the tab moved to another screen, or the page was zoomed.
+    let ratio: MediaQueryList | null = null
+    const ratioChanged = () => {
+      dpr = window.devicePixelRatio || 1
+      watchRatio()
+      changed()
+      measure()
+    }
+    const watchRatio = () => {
+      ratio?.removeEventListener('change', ratioChanged)
+      ratio = window.matchMedia(`(resolution: ${window.devicePixelRatio || 1}dppx)`)
+      ratio.addEventListener('change', ratioChanged)
+    }
+    watchRatio()
+    window.addEventListener('focus', measure)
+    document.addEventListener('visibilitychange', measure)
     return () => {
       watching.disconnect()
+      settling.end()
+      cancelAnimationFrame(measuring)
+      ratio?.removeEventListener('change', ratioChanged)
+      window.removeEventListener('focus', measure)
+      document.removeEventListener('visibilitychange', measure)
     }
+  })
+
+  /** The application's name, as the keyboard's field is called. */
+  const appName = $derived.by(() => {
+    const run = session.file?.run
+    if (!run) return ''
+    return run.kind === 'installed' ? run.name : (run.path.split(/[\\/]/).pop() ?? run.path)
   })
 
   const status = $derived(session.status)
@@ -116,8 +204,13 @@
   // What the holder does over the picture goes to the application (input.ts), and to
   // nothing behind it: the page neither scrolls, nor moves focus, nor opens its menu.
   let wheelLeft = { x: 0, y: 0 }
+  const held = new HeldKeys()
+  function send(event: InputEvent) {
+    held.saw(event)
+    session.picture.input(event)
+  }
   function pointer(event: PointerEvent, down: boolean | null) {
-    if (!video) return
+    if (!video || !drivesPointer(event)) return
     const at = displayPoint(
       event.clientX,
       event.clientY,
@@ -125,20 +218,22 @@
       video.videoWidth,
       video.videoHeight,
     )
-    if (at) session.picture.input({ t: 'move', ...at })
+    if (at) send({ t: 'move', ...at })
     if (down === null) return
     event.preventDefault()
     if (down) {
-      place?.focus()
+      const box = place?.getBoundingClientRect()
+      if (box) typingAt = { x: event.clientX - box.left, y: event.clientY - box.top }
+      typing?.focus({ preventScroll: true })
       video.setPointerCapture(event.pointerId)
     }
-    session.picture.input({ t: 'button', button: event.button, down })
+    send({ t: 'button', button: event.button, down })
   }
   function wheel(event: WheelEvent) {
     event.preventDefault()
     const turned = wheelClicks(wheelLeft, event.deltaX, event.deltaY, event.deltaMode)
     wheelLeft = turned.left
-    if (turned.x || turned.y) session.picture.input({ t: 'wheel', x: turned.x, y: turned.y })
+    if (turned.x || turned.y) send({ t: 'wheel', x: turned.x, y: turned.y })
   }
   // Not passive, which a wheel is unless it says otherwise, or the page would scroll.
   $effect(() => {
@@ -154,7 +249,27 @@
     const said = keyEvent(event, down)
     if (!said) return
     event.preventDefault()
-    session.picture.input(said)
+    send(said)
+  }
+  /** What an input method made, once chosen: typed as text, and the field emptied. */
+  function composed(event: CompositionEvent) {
+    const said = showing ? textEvent(event.data) : null
+    if (said) send(said)
+    if (typing) typing.value = ''
+  }
+  /** Text that came without a key the host was sent - a dead key's letter, a symbol
+   *  chosen from the system's picker - typed as text; a composition's is its end's. */
+  function typed(event: Event) {
+    const input = event as globalThis.InputEvent
+    if (!input.isComposing && input.inputType !== 'insertCompositionText') {
+      const said = showing ? textEvent(input.data) : null
+      if (said) send(said)
+      if (typing) typing.value = ''
+    }
+  }
+  /** The keyboard gone elsewhere: every key still held is let go in the application. */
+  function letGo() {
+    for (const one of held.letGo()) session.picture.input(one)
   }
 
   const waiting = $derived(
@@ -165,19 +280,11 @@
   )
 </script>
 
-<!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
-<div
-  class="application"
-  data-region="editor"
-  bind:this={place}
-  tabindex={showing ? 0 : -1}
-  role="application"
-  onkeydown={(event) => key(event, true)}
-  onkeyup={(event) => key(event, false)}
->
+<div class="application" data-region="editor" bind:this={place} role="application">
   <video
     bind:this={video}
     class:shown={showing}
+    style:cursor={showing ? pointerStyle(session.picture.pointer, dpr) : ''}
     autoplay
     muted
     playsinline
@@ -186,6 +293,21 @@
     onpointerup={(event) => pointer(event, false)}
     oncontextmenu={(event) => event.preventDefault()}
   ></video>
+  <textarea
+    bind:this={typing}
+    class="typing"
+    style:left="{typingAt.x}px"
+    style:top="{typingAt.y}px"
+    tabindex={showing ? 0 : -1}
+    aria-label={appName}
+    autocomplete="off"
+    autocapitalize="off"
+    spellcheck="false"
+    onkeydown={(event) => key(event, true)}
+    onkeyup={(event) => key(event, false)}
+    oncompositionend={composed}
+    oninput={typed}
+    onblur={letGo}></textarea>
   {#if showing}
     <div class="bar">
       <button type="button" class="nib-button" onclick={() => session.run('restart')}
@@ -245,6 +367,26 @@
 
   video.shown {
     visibility: visible;
+  }
+
+  /* A finger or a pen over the picture is the application's pointer: the page neither
+     pans nor zooms under it. */
+  video {
+    touch-action: none;
+  }
+
+  /* The keyboard's field: there for the input method, seen by nobody. */
+  .typing {
+    position: absolute;
+    width: 1px;
+    height: 1em;
+    padding: 0;
+    border: 0;
+    opacity: 0;
+    resize: none;
+    overflow: hidden;
+    pointer-events: none;
+    caret-color: transparent;
   }
 
   /* Restart and Stop over the picture, out of the way until the pointer comes. */

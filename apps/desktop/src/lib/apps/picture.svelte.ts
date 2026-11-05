@@ -10,7 +10,9 @@
 
 import {
   FALLBACK_ICE,
+  type FromPicture,
   fromHostOf,
+  fromPictureOf,
   ICE_PATH,
   type IceServer,
   iceServersOf,
@@ -76,6 +78,8 @@ export class Picture {
   status = $state<PictureStatus>({ is: 'off' })
   /** What the video element shows, once the host's track has come. */
   stream = $state<MediaStream | null>(null)
+  /** The application's pointer, as its host last said it on the channel. */
+  pointer = $state<FromPicture | null>(null)
   /** The channel input goes over, once it is open. */
   channel: RTCDataChannel | null = null
   private peer: RTCPeerConnection | null = null
@@ -152,6 +156,11 @@ export class Picture {
     channel.onopen = () => {
       if (this.peer === peer) this.channel = channel
     }
+    channel.onmessage = (event: MessageEvent) => {
+      if (this.peer !== peer) return
+      const said = fromPictureOf(event.data)
+      if (said?.t === 'pointer') this.pointer = said
+    }
     peer.ontrack = (event) => {
       if (this.peer !== peer) return
       this.stream = event.streams[0] ?? new MediaStream([event.track])
@@ -199,6 +208,7 @@ export class Picture {
     this.peer = null
     this.channel = null
     this.stream = null
+    this.pointer = null
     peer?.close()
   }
 
