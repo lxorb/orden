@@ -1259,9 +1259,14 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-05, to 3,625,000, for #1127: a tab unloaded from its menu, faded in the
  *  strip and in the Essentials, its editor state let go of by its pane and its page parked
  *  out of sight (Tabs.svelte, Bookmarks.svelte, BookmarkTile.svelte, Pane.svelte,
- *  workspace/documents.svelte.ts, web-tab/pages.svelte.ts). Measured 3,624,357. */
-const BUDGET = 3_625_000
-const MOST_FILES = 397
+ *  workspace/documents.svelte.ts, web-tab/pages.svelte.ts). Measured 3,624,357.
+ *
+ *  Raised 2026-11-05, to 3,634,800 and 398 modules, for #1129: the sentence behind a
+ *  `?`, a name's reason and a hint's card hung over the window from what they are
+ *  about rather than cut by what holds it (`hang` in portal.ts, which the first paint
+ *  now reads for the file list's field). Measured 3,633,983 in 397. */
+const BUDGET = 3_634_800
+const MOST_FILES = 398
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

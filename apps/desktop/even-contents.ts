@@ -574,9 +574,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  #1128: dictation into a field, the microphone, its chooser and the keys that Settings
  *  > AI draws in the plugin too, and their words in every language (dictation/,
  *  AiPane.svelte). Measured 5,937,052 and 987,975.
+ *
+ *  The code raised on 2026-11-05, to 5,940,500, for #1129: a bubble hung over the window
+ *  from what it is about (`hang` in portal.ts, Hint.svelte, NameField.svelte).
+ *  Measured 5,939,852.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_937_700,
+  code: 5_940_500,
   catalogues: 988_600,
   styles: 292_300,
   fonts: 260_000,
