@@ -1308,8 +1308,12 @@ function holds(tail: string): boolean {
  *
  *  Raised on 2026-11-05, to 3,671,300, for #552: a spaces folder outside Orden's own is
  *  asked about before the app mounts (main.ts, early.ts), and the line that says it was
- *  taken in is asked for by App.svelte. Measured 3,670,963 in 398. */
-const BUDGET = 3_671_300
+ *  taken in is asked for by App.svelte. Measured 3,670,963 in 398.
+ *
+ *  Raised on 2026-11-05, to 3,672,600, for #1149: a space's bookmarks remember whether the
+ *  account has heard them, and are sent again until it has (workspace/bookmarks.svelte.ts).
+ *  Measured 3,672,287 in 398. */
+const BUDGET = 3_672_600
 const MOST_FILES = 399
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

@@ -645,9 +645,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  Raised on 2026-11-05 for #331, a space carried over another pushing it aside and an
  *  empty space's bubble of its own (overview/pack.ts, Overview.svelte): the code to
  *  6,131,300, measured 6,130,968.
+ *
+ *  Raised on 2026-11-05 for #1149: a space's bookmarks remember whether the account has
+ *  heard them, and are sent again until it has (workspace/bookmarks.svelte.ts): the code
+ *  to 6,132,000, measured 6,131,698.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_131_300,
+  code: 6_132_000,
   catalogues: 1_010_800,
   styles: 292_400,
   fonts: 260_000,
