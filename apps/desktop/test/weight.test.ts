@@ -1270,9 +1270,14 @@ function holds(tail: string): boolean {
  *  beside the folders and asked of by `invoke` once one is mounted, the tree read ahead
  *  left to them, their folders written down on the way out and the folders made into
  *  them at the launch's last turn (tauri.ts, workspace/spaces.ts, workspace/ahead.ts,
- *  start.ts). Measured 3,637,630. */
-const BUDGET = 3_638_200
-const MOST_FILES = 398
+ *  start.ts). Measured 3,637,630.
+ *
+ *  Raised 2026-11-05, to 3,645,400 and 399 modules, for #1037: a split window keeps one top
+ *  row, the strips of the panes along the top laid out in the bar over their panes on the
+ *  panes' own grid (TopStrips.svelte, `topRow` and `tracks` in workspace/pane-tree.ts,
+ *  Titlebar.svelte). Measured 3,644,325 in 398. */
+const BUDGET = 3_645_400
+const MOST_FILES = 399
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

@@ -586,9 +586,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  heard and its rows searched, new spaces kept so where a device says, each folder made
  *  into one once and back, and a space exported as Markdown and folders (internal/; the
  *  two commands' words in every catalogue). Measured 5,992,233 and 988,983.
+ *
+ *  The code raised on 2026-11-05, to 5,994,700, for #1037: a split window's strips in its
+ *  one top row, over their panes on the panes' own grid (TopStrips.svelte,
+ *  workspace/pane-tree.ts, Titlebar.svelte). Measured 5,993,910.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_992_800,
+  code: 5_994_700,
   catalogues: 989_500,
   styles: 292_300,
   fonts: 260_000,
