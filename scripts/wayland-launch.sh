@@ -235,8 +235,6 @@ if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ 
   [ "${FLASH:-0}" = 1 ] && printf '<!doctype html><title>dark</title><meta name="color-scheme" content="dark"><style>html,body{margin:0;height:100%%;background:#1e1e1e}</style>' > "$out/site/index.html"
   # With SCHEME=1, a page whose colour says the scheme it is asked for (#427).
   [ "${SCHEME:-0}" = 1 ] && printf '<!doctype html><title>scheme</title><style>html,body{margin:0;height:100%%;background:#0000ff}@media (prefers-color-scheme: dark){html,body{background:#00ff00}}</style>' > "$out/site/index.html"
-  # With GLOBALS=1, a page and a frame from another address, each declaring `ipc` in a
-  # script of its own as Google's editor does, and saying what that left.
   if [ "${GLOBALS:-0}" = 1 ]; then
     said='<script>let ipc = 1</script><script>fetch("/said?" + new URLSearchParams({ who: "WHO", declared: String(ipc), ipc: typeof window.ipc, internals: typeof window.__TAURI_INTERNALS__ }))</script>'
     printf '<!doctype html><title>asked</title>%s<iframe src="http://localhost:8765/frame.html"></iframe>' "${said/WHO/page}" > "$out/site/index.html"

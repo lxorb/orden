@@ -247,8 +247,6 @@ export function start(): () => void {
     void startup.turn('rooms').then(() => import('./web-tab/one-window.svelte'))
   }
 
-  // The other windows' writes and file operations, and what is on the disk before a write
-  // goes over it; see workspace/across.ts. Sooner for a write that comes first.
   if (!__EVEN_PLUGIN__) {
     let fetched: Promise<Across> | null = null
     const across = () =>
@@ -257,8 +255,6 @@ export function start(): () => void {
     void startup.turn('rooms').then(across)
   }
 
-  // Changes other programs make in the spaces, where no sync engine hears them; see
-  // workspace/outside.svelte.ts.
   if (!__EVEN_PLUGIN__ && isDesktop) {
     void startup.turn('rooms').then(() =>
       import('./workspace/outside.svelte').then(({ hearOutside }) => {
@@ -310,8 +306,6 @@ async function guardClose() {
   // owed. A browser tab sent to the back, which a browser may also discard, gets
   // the same.
   document.addEventListener('visibilitychange', () => {
-    // A phone takes an app away from here without another word, so there this is the
-    // end as far as anything will hear. A desktop window hidden is only hidden.
     if (document.visibilityState === 'hidden') {
       if (isMobile) settle()
       else save()
@@ -386,8 +380,6 @@ async function onClose(event: Closing, window: Closable) {
   // Nothing being written or running and no update to put in place: the window just
   // goes. What runs is asked about first; see lib/quitting.
   const runs = anythingRuns()
-  // Nothing to ask about, so the window is going: said before the question below, whose
-  // answer includes the writes this starts. With something running it may yet stay.
   if (!runs) settle()
   if (!runs && !workspace.writing && !stillWriting() && !ready() && !going) return
 
@@ -419,8 +411,6 @@ function settle() {
   workspace.graphSettings.flush()
 }
 
-/** The same with the session going on: a window hidden, a close that may be called off.
- *  See `writeOwed` in parting.ts. */
 function save() {
   writeOwed()
   workspace.graphSettings.flush()

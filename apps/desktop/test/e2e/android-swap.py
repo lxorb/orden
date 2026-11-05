@@ -1,8 +1,3 @@
-"""Under an Android agent CodeMirror takes its keys through an EditContext, which it fills
-when a view is built and keeps up with transactions. A pane's one view swaps states when
-the note changes (packages/editor/src/held.ts), and each swap has to fill it again: keys
-after + threw `Invalid change range` and the draft stayed empty, and the keyboard read
-another note's words."""
 
 from __future__ import annotations
 
@@ -26,7 +21,6 @@ WORDS = "() => window.nibApp.workspace.active.note.latest"
 
 
 def pane(browser: Browser, label: str, steps: list[tuple[str, ...]]) -> None:
-    """A fresh phone, the steps on it, and after each one the keyboard's text and the note's."""
     phone = browser.new_context(
         viewport={"width": 390, "height": 844}, user_agent=AGENT, has_touch=True, is_mobile=True
     )
@@ -76,8 +70,6 @@ def pane(browser: Browser, label: str, steps: list[tuple[str, ...]]) -> None:
 
 
 def composing(browser: Browser) -> None:
-    """A word being composed as the note changes ends in its own note: the keyboard's next
-    letters are not the note swapped in's, and the caret is still there to type with."""
     phone = browser.new_context(
         viewport={"width": 390, "height": 844}, user_agent=AGENT, has_touch=True, is_mobile=True
     )
@@ -104,7 +96,6 @@ def composing(browser: Browser) -> None:
     say(f"composing across a swap: Bbb holds {json.dumps(words)}, context {json.dumps(context['text'])}")
     if context["text"] != words:
         wrong(f"after a composition across a swap the keyboard reads {context['text']!r}")
-    # At the caret of the note swapped in, not where the old composition stood in the other.
     if words != "word# Bbb\n\nshort\n":
         wrong(f"the composition reached into the note swapped in: {words!r}")
     page.evaluate(opening, "Aaa")

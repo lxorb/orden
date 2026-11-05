@@ -132,10 +132,6 @@ function keepChange(spec: ViewSpec, yaml: string): void {
   }
 }
 
-/** A tab about a space no space here is called. Renamed, by the record of it, the tab
- *  comes along; what was kept already has. Anything else - a space deleted, a rename from
- *  before there was a record - cannot be told apart, so the tab says it cannot be read,
- *  rather than taking the open space for that one or drawing an empty list for good. */
 function followLost(tab: Tab): void {
   const name = readSpec(tab.doc)?.space
   const spaces = workspace.spaces
@@ -190,16 +186,10 @@ export function panelSource(spec: ViewSpec): Source {
   }
 }
 
-/** A base fence as the page draws it: every one, in a quote or a list item too, and none
- *  shown inside a code block or a front matter value. The one reading of where a fence is,
- *  which is `CodeBlocks`, the renderer's. */
 interface DrawnFence {
-  /** Its words with what its container puts on each line off. */
   words: string
-  /** Where its lines are in the note, the closing fence's left out. */
   from: number
   to: number
-  /** Whether it stands at the margin, where its lines are its words and can be written. */
   margin: boolean
 }
 
@@ -231,7 +221,6 @@ function drawnFences(text: string): DrawnFence[] {
     if (open && code.fence === null) close(at)
     else if (open) {
       const { prefix }: { prefix: number } = open
-      // A quote's marks and an item's indent, up to as far in as the opening fence stood.
       const inner = prefix ? raw.replace(new RegExp(`^[ \\t>]{0,${prefix}}`), '') : raw
       ;(open as { lines: string[] }).lines.push(inner)
     }
@@ -247,14 +236,8 @@ function drawnFences(text: string): DrawnFence[] {
   return out
 }
 
-/** A fence's words as they are compared: however its lines end and however many blank
- *  ones it ends on, none of which the view reads. */
 const fenceWords = (words: string) => words.replace(/\r/g, '').trimEnd()
 
-/** The fence a base came from, found again in its note, where a change to the base can be
- *  written into it: the only drawn fence with these words, at the margin. Null otherwise,
- *  since a fence in a container has lines that are not its words, and with two nothing says
- *  which one the view is. */
 export function fenceAt(text: string, code: string): { from: number; to: number } | null {
   const wanted = fenceWords(code)
   const same = drawnFences(text).filter((one) => fenceWords(one.words) === wanted)
@@ -306,8 +289,6 @@ export function fenceSource(code: string, path: string | null, stranger = false)
       if (path !== null) remember(fenceKey(path, words), now)
     },
     async load() {
-      // A change to a view this could not write back would show, and be gone at the
-      // next draw, so the view is not offered as one to change.
       const text = path === null ? null : await noteText(workspace, path).catch(() => null)
       fixed = text === null || fenceAt(text, words) === null
       return readBase(words)

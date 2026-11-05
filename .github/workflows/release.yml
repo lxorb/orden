@@ -69,15 +69,6 @@ jobs:
         shell: bash
         run: bash scripts/build-version.sh edge
 
-  # A tag's release, as a draft until its manifest is up: `releases/latest/download/latest.json`
-  # is the address every install on the stable stream asks, and a published release is the
-  # latest at once, whose manifest would answer 404 until the upload ended, and for good if
-  # the job died first. A draft is nobody's latest; the last release goes on answering.
-  #
-  # Here and nowhere else, before anything is built: GitHub takes any number of drafts of
-  # one tag, so two workflows each asking whether it is there can make two. The phones
-  # (publish-mobile.yml) wait for this one. Looked for first, so a run again finds its own, and
-  # one published already stays so.
   draft:
     needs: version
     if: startsWith(github.ref, 'refs/tags/v')
@@ -471,8 +462,6 @@ jobs:
             done
           ls -l installers
           gh release upload "$TAG" installers/* --clobber
-          # And only over a release that holds every file it names: the updater's 404 is
-          # swallowed where it lands, so nobody else would ever hear of it.
           held=$(gh release view "$FILES" --json assets --jq '.assets[].name')
           jq -r '.platforms[].url | split("/") | last' latest.json | sort -u | while read -r name; do
             grep -qxF "$name" <<<"$held" || {
@@ -482,9 +471,6 @@ jobs:
           done
           gh release upload "$TAG" latest.json --clobber
 
-      # The release out, the moment its manifest is there; one a run before put out stays
-      # as it is. The latest only if no newer version is out: a publish is the latest unless
-      # told otherwise, and an old tag's draft run again must not take the address back.
       - name: Publish the release
         if: needs.version.outputs.rolling != 'true'
         run: |

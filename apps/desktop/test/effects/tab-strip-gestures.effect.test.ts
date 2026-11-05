@@ -110,8 +110,6 @@ async function strip() {
   for (const name of NAMES) workspace.openBlank(name, `# ${name}`)
   const paneId = workspace.panes.focusedId
   const tabs = workspace.tabsIn(paneId)
-  // Each is written where it goes in a moment: before that it is a draft with words, whose
-  // close asks, and nobody here answers.
   await settles(() => expect(tabs.every((one) => one.note.path !== null)).toBe(true))
   workspace.activate(tabs[1]?.id ?? '')
   workspace.activate(tabs[0]?.id ?? '')

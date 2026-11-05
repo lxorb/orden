@@ -217,11 +217,6 @@ function sourceOfTab(tab: Tab): string | null {
   return docSource({ path: tab.path, shared: tab.note.shared })
 }
 
-/** The site rule that keeps an address out of the reader's tabs for this agent, as the
- *  crate reads one (`site_allowed` in policy.rs): the longest site that covers the host,
- *  denied anywhere or kept to the agent's own store, by every spelling of either - a
- *  capital, the dot a fully qualified name ends on, letters typed or as an address writes
- *  them (#1078). */
 function keptSite(call: Call, url: string): string | null {
   const host = hostOf(url)?.replace(/\.+$/, '')
   const sites = call.caller.agent?.sites ?? {}

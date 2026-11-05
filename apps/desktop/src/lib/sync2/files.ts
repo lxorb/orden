@@ -45,7 +45,6 @@ export interface Blobs {
   /** A file's bytes on this disk, or null when it is not there or will not read. */
   read(path: string): Promise<Uint8Array | null>
   write(path: string, bytes: Uint8Array): Promise<void>
-  /** How many bytes a file holds, where the world can say without reading it. */
   size?(path: string): Promise<number | null>
   /** The hash a blob is named by. */
   hash(bytes: Uint8Array): Promise<string>
@@ -79,7 +78,6 @@ async function readBytes(
   const blobs = core.world.blobs
   if (!blobs || !entry.local_path) return null
   const full = core.world.join(space.row.root, entry.local_path)
-  // Asked first: one past what travels would cross the IPC whole on every pass.
   if (((await blobs.size?.(full)) ?? 0) > LARGEST) return 'large'
   const bytes = await blobs.read(full)
   if (!bytes) return (await core.world.disk.exists(full)) ? 'unread' : null
@@ -87,8 +85,6 @@ async function readBytes(
   return { bytes, hash: await blobs.hash(bytes) }
 }
 
-/** What the launch scan saw of a file now read and in step, written down with the next
- *  write of its entry. Whether there was any. */
 function stampLanded(core: Core, entry: EntryRow): boolean {
   const stamp = core.stampWaiting.get(entry.id)
   if (!stamp) return false
@@ -97,8 +93,6 @@ function stampLanded(core: Core, entry: EntryRow): boolean {
   return true
 }
 
-/** A file that is there and cannot be judged: told, at once where it will not change by
- *  waiting, and once it lasts where it may. */
 function cannotJudge(core: Core, entry: EntryRow, how: 'large' | 'unread'): void {
   if (how === 'large') saidUnsynced(core, entry)
   else readRefused(core, entry)
@@ -148,8 +142,6 @@ export async function sendMade(
     const read = await readBytes(core, space, entry)
     if (!read) continue
     if (typeof read === 'string') {
-      // Nothing to send yet, as for bytes the account would not take: tried in a while,
-      // and `settleFiles` skips a waiting create, so this is the one place it is told.
       cannotJudge(core, entry, read)
       core.refusedBytes.set(op.id, { at: core.world.now(), hash: '', full: false })
       waiting.add(op.id)
@@ -206,8 +198,6 @@ export async function settleFiles(
 
     const here = entry.local_path ? await readBytes(core, space, entry) : null
     if (typeof here === 'string') {
-      // Nothing is written over what could not be judged: it stays as it is. One that
-      // will not read may be held by a program for a moment, and is read again.
       cannotJudge(core, entry, here)
       if (here === 'unread') core.touched.add(entry.id)
       continue
@@ -228,7 +218,6 @@ export async function settleFiles(
       continue
     }
     if (changedHere) {
-      // Still to be read until the account has answered, however this pass ends.
       core.touched.add(entry.id)
       // Bytes the account refused a moment ago go again once the wait is over.
       if (resting(core, entry.id, here.hash, room)) continue

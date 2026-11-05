@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Palette, `Layout: <name>`: a chosen layout replaces what is open, and a terminal
- *  running something asks first, as for any way a tab closes. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../../test/disk').Disk | null }))
 const asked = vi.hoisted(() => ({ tabs: [] as string[][], answer: true }))
 vi.mock('./tauri', async (importOriginal) => ({

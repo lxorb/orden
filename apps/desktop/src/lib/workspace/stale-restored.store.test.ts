@@ -1,9 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 
-/** A stale tab over a newer file has two ways back: an open tab a launch restores and a
- *  closed one reopened, and a restored session holds both. They are one rule (`cameBack`,
- *  the closed stack's `wroteAll`), with the real store and across on a disk in memory. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../../../test/disk').Disk | null }))
 const refused = vi.hoisted(() => ({ write: false }))
 vi.mock('../tauri', async (importOriginal) => ({

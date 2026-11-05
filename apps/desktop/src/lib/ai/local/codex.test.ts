@@ -9,7 +9,6 @@ import { againAt, codexReader } from './codex'
 const said = (method: string, params: object) => JSON.stringify({ method, params })
 const turn = { threadId: 't', turnId: 'u' }
 
-/** The name the crate gives the server in a session's Codex config. */
 const crateServer = /pub const SERVER: &str = "([^"]+)";/.exec(
   readFileSync(
     fileURLToPath(new URL('../../../../src-tauri/src/ai_cli/args.rs', import.meta.url)),

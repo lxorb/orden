@@ -728,8 +728,6 @@ pub(crate) fn allowed(url: &Url) -> bool {
     !app_host(url.host_str().unwrap_or_default())
 }
 
-/// Whether a host is one of the app's own origins, however it is spelled: a trailing dot
-/// names the same host.
 pub(crate) fn app_host(host: &str) -> bool {
     matches!(
         host.trim_end_matches('.').to_ascii_lowercase().as_str(),
@@ -980,7 +978,6 @@ fn address(url: &str) -> Result<Url, String> {
 
 /// The reader script, told whether it is after a selection.
 pub(crate) fn reader(selection: bool) -> String {
-    // `/* __HIDE__ */` is where an agent's read leaves out what the policy names (page.rs).
     READER
         .replace("__SELECTION__", if selection { "yes" } else { "no" })
         .replace("__LONGEST__", &LONGEST_PAGE.to_string())
@@ -1765,31 +1762,17 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
             // page because both want the one thread this runs on.
             #[cfg(all(windows, not(feature = "cef")))]
             session::keep(store.as_deref(), platform.environment());
-            // The store's extensions, handed to its profile the first time a page is built
-            // there this run; see extensions/webview2.rs.
             #[cfg(all(windows, not(feature = "cef")))]
             crate::extensions::webview2::seen(&asking, store.as_deref(), &platform);
-            // And a window asked for in it while an extension arrives, held back unless a
-            // person asked: the page an extension opens about its own install; see
-            // extensions/welcome.rs.
             #[cfg(windows)]
             crate::extensions::welcome::listen(&platform, store.as_deref(), &named);
-            // The browser's own chords, which the page is never offered, on a page in any
-            // store; see web_keys.rs.
             crate::web_keys::listen(&platform, asking.clone(), window.clone());
-            // Whether it has the keyboard, which is where it goes back to; see keyboard.rs.
             crate::keyboard::page(&asking, &platform, &label, &window);
-            // How a window it asks for was pressed for; see web_opens.rs.
             crate::web_opens::listen(&platform, asking.clone(), named.clone(), window.clone());
-            // Its sound, its full screen and its zoom; see web_page.rs. And finding in it;
-            // see web_find.rs.
             crate::web_page::listen(&platform, asking.clone(), named.clone(), window.clone());
             crate::web_find::listen(&platform, asking.clone(), named.clone(), window.clone());
             crate::downloads::listen(&platform, asking.clone(), window.clone());
-            // The site's own mark, followed for as long as the page is open; see
-            // web_icons.rs.
             crate::web_icons::listen(&platform, asking.clone(), named.clone(), window.clone());
-            // Its `alert`, `confirm` and `prompt`, in Orden's own card; see web_dialogs.rs.
             crate::web_dialogs::listen(&platform, asking.clone(), named.clone(), window.clone());
             ask::listen(&platform, asking, named, window);
 
@@ -2572,18 +2555,6 @@ pub(crate) fn found(app: &AppHandle, tab: &str) -> Result<Webview, String> {
         .ok_or_else(|| "that tab has no page open".to_string())
 }
 
-/// Hands a tab's page to `then` on the window's own thread, if it is still there by then.
-///
-/// **For anything asked of a page from another thread that reads its window** - `with_webview`,
-/// `hide`, `show`, `set_bounds`. Asked directly from there, it joins the queue of a thread
-/// busy building other pages, whatever has become of the page in the meantime, and the page
-/// may be closed in between: the close is taken first, and the browser goes while the message
-/// waits. `tauri-runtime-cef` on Linux then reads the window of a browser that has none and
-/// asserts (`failed to get XID`, `platform/linux/webview.rs` in 3.0.0-alpha.6), on a queued
-/// message nothing can catch. Web tabs closed while they came up took the whole app down so:
-/// a close waiting for a page's build runs at the very moment `web_open` goes on to `listening`.
-/// On that thread a close has either run, and the page is not found, or has not, and whatever
-/// is asked here runs before it does.
 pub(crate) fn on_the_page(
     app: &AppHandle,
     label: &str,

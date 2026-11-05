@@ -19,7 +19,6 @@ import type { Scope } from '../verbs'
 import { type Call, done } from './call'
 import { answerOf, Refused } from './problem'
 
-/** What a built-in grant holds at the least: `Grant::own`. */
 const BUILT_IN: readonly Scope[] = [
   'context',
   'notes.read',
@@ -36,8 +35,6 @@ const BUILT_IN: readonly Scope[] = [
   'agents',
 ]
 
-/** Refuses an outside agent whose grant is narrower than the helper it would start. The
- *  AI panel's own sessions are that grant already. */
 function reachesAsFar(call: Call): void {
   const agent = call.caller.agent
   if (!agent || agent.builtIn) return

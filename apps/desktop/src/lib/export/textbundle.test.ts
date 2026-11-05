@@ -143,8 +143,6 @@ describe('the zip the packages are built with', () => {
   })
 })
 
-/** `picturesIn` finds every one of these, so the bytes are copied into the bundle, and
- *  the text has to come along or the bundle shows nothing once it is moved. */
 describe('a picture however it was written', () => {
   const asked = (source: string, src: string, name: string) =>
     String(

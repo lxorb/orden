@@ -18,8 +18,6 @@ import type { NoteDoc } from '../../workspace/documents.svelte'
 import type { Replacement } from './edits'
 import { Steps } from './steps'
 
-/** The last edit named, across every track: an agent has a track per note, and the review
- *  tells its edits apart by these alone. */
 let minted = 0
 
 /** How an agent's edit is named in the reader's history. */
@@ -363,12 +361,10 @@ export class Track {
     this.seen = null
   }
 
-  /** Its note was deleted: what it says stays as it last was. */
   setAside() {
     this.letGo()
   }
 
-  /** What its note said when last heard of, in the editor's line endings. */
   get says(): string | null {
     return this.held ? this.held.note.live.text.toString() : this.seen
   }

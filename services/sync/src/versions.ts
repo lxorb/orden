@@ -120,9 +120,6 @@ export function presentVersion(version: Version) {
   return { at: version.at, size: version.size, by: version.by, hash: version.hash }
 }
 
-/** The pictures a version's words show, for its `pictures` column, or null where they
- *  could not be read, which leaves it for `versionPictures` in used.ts to read again.
- *  Every address in raw HTML counts, as `liveHtml` has it: that only keeps bytes. */
 export function picturesOfVersion(content: string): string | null {
   try {
     return JSON.stringify([...picturesOf(content, true)])

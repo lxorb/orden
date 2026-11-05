@@ -120,9 +120,6 @@ describe('window permissions', () => {
     expect(missing.map(([call]) => call)).toEqual([])
   })
 
-  /** A window a page builds through the plugin is built past the crate, and on Linux
-   *  that is the profile a web extension runs in, with the app's commands in reach. So
-   *  no page may ask for one, and the presenter's is the crate's; see src-tauri/src/presenter.rs. */
   test('no page builds a window: the crate builds them, in the interface’s profile', () => {
     expect(read('../src/lib/slides/presenter.ts')).not.toContain('new WebviewWindow(')
     expect(capabilities.permissions).not.toContain('core:webview:allow-create-webview-window')

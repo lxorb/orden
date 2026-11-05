@@ -124,7 +124,6 @@ function referenceOf(name: string): string {
   return `&amp;${name};`
 }
 
-/** Whether `&#65;` or `&#x41;` names a character XML can carry. */
 function legalReference(reference: string): boolean {
   const hex = /x/i.test(reference.charAt(2))
   return legalCode(Number.parseInt(reference.slice(hex ? 3 : 2), hex ? 16 : 10))
@@ -135,7 +134,6 @@ function legalReference(reference: string): boolean {
 function escaped(text: string, quotes: boolean): string {
   return legalXml(text).replace(CHARACTER, (whole: string, name: string | undefined) => {
     if (name !== undefined) return referenceOf(name)
-    // XML reads only a small x, where HTML takes either.
     if (whole.startsWith('&#')) return legalReference(whole) ? whole.replace('&#X', '&#x') : ''
     if (whole === '&') return '&amp;'
     if (whole === '<') return '&lt;'
@@ -295,9 +293,6 @@ function closing(open: string[], name: string | null): string {
   return out
 }
 
-/** The namespaces an HTML parser gives these two by itself and an XML one does not:
- *  there a bare `<svg>` is an XHTML element nobody has heard of, so a chart comes out
- *  as its labels run together, with no height and no lines. */
 const XHTML = 'http://www.w3.org/1999/xhtml'
 const FOREIGN_ROOTS: Record<string, string> = {
   svg: 'http://www.w3.org/2000/svg',
@@ -305,8 +300,6 @@ const FOREIGN_ROOTS: Record<string, string> = {
 }
 
 function namespaceOf(name: string, attributes: string, parent: string | undefined): string {
-  // And what a `foreignObject` holds is XHTML again, which it would not otherwise be: it
-  // would inherit the drawing's namespace and draw as nothing.
   const inForeign = parent?.toLowerCase() === 'foreignobject'
   const space = inForeign ? XHTML : FOREIGN_ROOTS[name.toLowerCase()]
   return space && !/\sxmlns=/.test(attributes) ? ` xmlns="${space}"` : ''
@@ -330,7 +323,6 @@ export function toXhtml(html: string): string {
 
   const renamed = (name: string) => (foreign > 0 && name.toLowerCase() === 'p' ? 'span' : name)
 
-  // The whole of it rather than each piece: a comment and a name are written as they were.
   for (const piece of piecesOf(legalXml(html))) {
     switch (piece.kind) {
       case 'text':

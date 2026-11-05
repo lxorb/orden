@@ -61,19 +61,6 @@ export function closesFence(line: string, mark: string): boolean {
   return /^ {0,3}[`~]+[ \t]*\r?$/.test(line) || fenceName(line) !== null
 }
 
-/** The block name on a closing fence, as an older build wrote it: ` ``` ^abc123`. Such a
- *  note has to keep working, or everything under its fence would be code, and code that
- *  shows such a line has to stay code, or the page would end it there and turn every
- *  fence after it inside out. So the rule, for every reader of a note, the Rust twin and
- *  the editor's grammar among them (fence-table.json):
- *
- *      A fence line followed by one name closes a fence that is open, and never opens or
- *      names one. A name is letters, digits and hyphens, as somebody naming a block by
- *      hand writes one too (`^intro`). Anything else after the marks is code.
- *
- *  What is left: code showing a line just like that closes early. A fence with a caret
- *  name after it is not what code shows, none was found in a search of real notes and
- *  code, and a note that does show one can put more ticks round it. */
 export function fenceName(line: string): string | null {
   if (!couldBeFence(line)) return null
   return /^ {0,3}(?:`{3,}|~{3,})[ \t]+\^([A-Za-z0-9-]+)[ \t]*\r?$/.exec(line)?.[1] ?? null
@@ -164,8 +151,6 @@ export class CodeBlocks {
     return this.item
   }
 
-  /** The name on the fence the last line read closed: see `fenceName`. Past whatever
-   *  quote or list item the fence is in, as a look at the line alone would not be. */
   get closedName(): string | null {
     return this.named
   }

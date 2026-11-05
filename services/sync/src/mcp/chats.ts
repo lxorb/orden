@@ -27,7 +27,6 @@ const string = { type: 'string' }
 /** What a message sent from here says it came by. */
 const VIA = { agent: 'nib connector' }
 
-/** The most chats one listing names; a chat is found by its name or id among them all. */
 const MOST_LISTED = 500
 
 /** The most messages one read answers, and one search. */

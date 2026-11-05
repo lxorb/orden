@@ -1,9 +1,3 @@
-"""A note made from a PDF, out as a picture, and a PDF locked by its owner, kept in.
-
-A PNG or an SVG of a sheet carries the paper's page under the ink, counted in pixels of
-the file that came out. A paper with an owner's password opens and draws, and what is in
-it does not go out: no PDF and no print, a PNG with the ink alone, and each says why. Both
-papers are written here by Ghostscript, the second `-sOwnerPassword=own`."""
 
 from __future__ import annotations
 
@@ -139,7 +133,6 @@ async ({ base64, name }) => {
 }
 """
 
-# How much of a picture is ink on the paper rather than white or the red the pen drew in.
 DARK = """
 async (src) => {
   const image = new Image()

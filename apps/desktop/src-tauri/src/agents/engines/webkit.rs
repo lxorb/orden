@@ -1331,7 +1331,6 @@ fn box_of(page: &Page<'_>, element: &Element, scroll: bool) -> Result<[f64; 4], 
     Ok([at("x"), at("y"), at("width"), at("height")])
 }
 
-/// Whether a secret field on the page holds anything (`secrets`).
 fn holds_a_secret(page: &Page<'_>) -> Result<bool, Answer> {
     Ok(secrets(page)?.iter().any(|(_, filled, _)| *filled))
 }
@@ -2138,9 +2137,6 @@ impl Engine for Page<'_> {
     }
 
     fn step(&self, by: i64) -> Result<(), Answer> {
-        // The tab's history is the reader's too, and goes through sites they may reach and
-        // the agent may not: the DevTools page asks the grant of the entry before it steps.
-        // Here that entry's address is not read yet, so an agent does not step at all.
         if self.limits.is_some() {
             return Err(Answer::error(
                 Code::UnsupportedOnThisEngine,
@@ -2180,10 +2176,6 @@ impl Engine for Page<'_> {
                     }
                     loaded && fetched.is_some_and(|(_, since)| since.elapsed() >= QUIET)
                 }
-                // The DevTools page asks again with the secret regions out (9.4), which is not
-                // built here: an agent cannot wait for words on WKWebView yet.
-                // The DevTools page asks again with the secret regions out (9.4); here a
-                // filled secret field on the page is no answer either way.
                 Until::Text { .. } if self.limits.is_some() && holds_a_secret(self)? => {
                     return Err(Answer::error(
                         Code::PasswordField,
@@ -2313,8 +2305,6 @@ impl Engine for Page<'_> {
     }
 
     fn read(&self, app: &AppHandle, shape: ReadAs) -> Result<(String, String, String), Answer> {
-        // The DevTools page leaves a secret region's words out of a read (9.4); here an
-        // agent's read is refused while one is filled.
         if self.limits.is_some() && holds_a_secret(self)? {
             return Err(Answer::error(
                 Code::PasswordField,
@@ -2388,8 +2378,6 @@ impl Engine for Page<'_> {
             ));
         }
         let point = landing(self, element)?;
-        // What the press lands on there, a child or a frame of the element, is put to the
-        // question as the element was (the DevTools page's `press_judged`).
         let hit = self.element_at(point)?;
         if hit.backend != element.backend {
             gate(&hit)?;

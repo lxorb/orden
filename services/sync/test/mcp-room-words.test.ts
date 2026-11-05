@@ -1,8 +1,3 @@
-/** The connector's to-dos writing into a note somebody is typing in: what they read
- *  is what they name, so words typed before or during the call stay in the note, on
- *  a v2 note through its room and on a v1 note through its version. And a note made
- *  through the connector says where it landed, and is the kind its name says. */
-
 import { TEXT } from '@orden/rooms'
 import { seedUpdate, type PushResponse } from '@orden/sync-core'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
@@ -52,8 +47,6 @@ async function tool(name: string, args: Record<string, unknown>): Promise<string
   return answer.json.result.content[0]?.text ?? ''
 }
 
-/** Somebody typing on a device of their own: a push, in the room and not settled yet.
- *  `known` is what the note said when the device first read it. */
 const devices = new Map<string, { doc: Y.Doc; seq: number; pushes: number }>()
 
 async function typed(id: string, words: string, known: string): Promise<void> {
@@ -77,8 +70,6 @@ async function typed(id: string, words: string, known: string): Promise<void> {
   device.seq = answer?.seq ?? device.seq
 }
 
-/** Runs `work` the first time the bucket is read for this note: a moment after the
- *  tool has read the note and before it writes. */
 function afterItsRead(id: string, work: () => Promise<void>) {
   const get = env.NOTES.get.bind(env.NOTES)
   let done = false
@@ -92,7 +83,6 @@ function afterItsRead(id: string, work: () => Promise<void>) {
   }
 }
 
-/** The room's document, and a keystroke arriving in it with nothing awaited. */
 function keystroke(id: string, words: string): void {
   const doc = (rooms.of(id).room as never as { state: { doc: Y.Doc } }).state.doc
   doc.getText(TEXT).insert(doc.getText(TEXT).length, words)
@@ -131,8 +121,6 @@ describe('add_task on a note with a room', () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
     await rooms.settle()
-    // What arrives while `ingest` waits for the row is in the document and on no
-    // version, and the text it was handed knows nothing of it.
     const looking = /^select \* from notes where space_id = \? and path = \?/
     let fired = false
     env.justBefore(looking, () => {
@@ -201,7 +189,6 @@ describe('update_task on a note with a room', () => {
     const { tasks } = JSON.parse(await tool('list_tasks', {}))
     await typed(from, 'typed here\n', '- [ ] Ship\nkeep\n')
     await typed(into, 'typed there\n', 'later\n')
-    // And once more in the note it leaves, after the task has landed in the other.
     let armed = true
     const get = env.NOTES.get.bind(env.NOTES)
     env.NOTES.get = async (key: string) => {
@@ -230,7 +217,6 @@ describe('update_task on a note with a room', () => {
 })
 
 describe('a move whose note will not let go', () => {
-  /** The note it leaves, written in every time it is read once the task has landed. */
   function writtenIn(from: string, into: string, change: (at: number) => Promise<void>) {
     const get = env.NOTES.get.bind(env.NOTES)
     let busy = false
@@ -418,7 +404,6 @@ describe('add_task on a v1 note', () => {
 
   test('does not read the bytes of the version before as the row that says the next', async () => {
     const id = await made('Plan.md', 'one\n')
-    // A save has claimed the row and its bytes are on the way (`saveNote`).
     const hash = 'a'.repeat(64)
     env.db.prepare('update notes set version = 2, hash = ? where id = ?').run(hash, id)
 
@@ -430,8 +415,6 @@ describe('add_task on a v1 note', () => {
 
   test('does not write over a note that arrived where there was none', async () => {
     const id = await made('Other.md', 'theirs\n')
-    // Looked for and missing, and then a device renames its note to that name before
-    // the write looks again.
     const looking = /^select \* from notes where space_id = \? and path = \?/
     env.justBefore(looking, () => {
       env.justBefore(looking, () => {
@@ -493,7 +476,6 @@ describe('a task aimed at what is not a note', () => {
 })
 
 describe('a note the connector writes', () => {
-  /** The account's hub, as far as what it is asked to tell. */
   function hub(): { asked: number } {
     const heard = { asked: 0 }
     env.HUB = {

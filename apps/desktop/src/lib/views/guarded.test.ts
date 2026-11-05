@@ -1,10 +1,6 @@
 import { readBase } from '@orden/bases'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** A base somebody else could have written may not freeze the app for whoever opens it,
- *  and the reader's own runs exactly what it says. The same line raw HTML is held to;
- *  see expr/pattern.ts in @orden/bases. */
-
 let shared = false
 
 vi.mock('../sharing.svelte', () => ({

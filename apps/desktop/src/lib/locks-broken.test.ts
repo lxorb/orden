@@ -1,6 +1,3 @@
-/** Web Locks that are not there, that refuse, or that never answer must leave one window
- *  working: every use of them, the session's slot, the engine's election and a file's turn. */
-
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { leadSync } from './sync2/lead'
 import { heldForLife, holdIfFree, ifFree, locksWork } from './locks'
@@ -87,7 +84,6 @@ describe('with locks that work', () => {
     ).rejects.toThrow('refused')
   })
 
-  /** One holder per name, the way the browser's are, and nobody waits. */
   function working(): LockManager {
     const holders = new Set<string>()
     return {
@@ -118,8 +114,6 @@ describe('with locks that work', () => {
 })
 
 describe('a main thread busy past the timer', () => {
-  /** Locks that work, whose answers come `late` ms after the asking: what a task of two
-   *  seconds does to them. */
   function slow(late: number): LockManager {
     return {
       request: (_name: string, ...rest: unknown[]) => {

@@ -284,8 +284,6 @@ async function purgeNote(
     answerOf<{ hash: string }>(versions).map((one) => one.hash),
   ).catch(later)
   await tellEnded(env, answerOf<Ended>(terms), who).catch(later)
-  // Its room now rather than at the sweep: until then it holds the words, and whoever is
-  // still in it goes on hearing whoever else is. The list stays the guarantee.
   await eraseRooms(env, [note.id]).catch(later)
   await env.DB.batch([
     forgetWords(env, note.id),
@@ -406,9 +404,6 @@ async function purgeSpace(
     const theme = readSite(marker?.site ?? null).theme?.hash
     await env.DB.batch([
       ...noteUnused(env, space.id, theme ? [...listed, theme] : listed, at),
-      // And what its chats' members posted in them, while the rows that say who the members
-      // are still stand. Nobody reaches those chats now, and a month from now only the
-      // owner could be asked about (chats/sweep.ts).
       noteChatFiles(env, 'c.space_id = ?2', at, space.id),
       env.DB.prepare('delete from folders where space_id = ?').bind(space.id),
       env.DB.prepare('delete from tree_ops where space_id = ?').bind(space.id),

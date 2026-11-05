@@ -808,8 +808,6 @@ fn judged_as(naming: Naming, root: &Path, path: &str) -> Result<PathBuf, String>
     if !inside_as(naming, root, &target) || inside_as(naming, &root.join(TRASH), &target) {
         return Err(format!("{path} is outside the notes folder"));
     }
-    // On NTFS `a.md:x.md` is a stream of a.md that no list shows. The drive is a prefix,
-    // not a part, so its colon is not among these.
     if naming == Naming::Win32
         && target.components().any(
             |part| matches!(part, Component::Normal(name) if name.to_string_lossy().contains(':')),
@@ -1651,7 +1649,6 @@ mod tests {
         assert!(said(&["Documents", "Nib", ".trashy.md"]).is_ok());
     }
 
-    /// NTFS reads a colon in a name as a stream no list shows; Linux and a Mac as a name.
     #[test]
     fn the_gate_refuses_a_stream_only_where_a_colon_is_one() {
         let root = path(&["Documents", "Nib"]);

@@ -77,11 +77,8 @@ import { usage } from '../usage.svelte'
 
 type Light = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
 
-/** How long a window with no engine waits on the one that has it: a pass is what can take
- *  this long, and a window nobody answers in is a window that has gone. */
 const ASKS_AT_MOST = 30_000
 
-/** How long signing out in such a window waits for the engine's to let go of the store. */
 const SIGN_OUT_WAITS = 10_000
 
 /** How long after a change here the pass that sends it waits, so a burst of saves is one
@@ -194,20 +191,11 @@ class Runner {
     return next
   }
 
-  /** Starts the engine for the account signed in, once this window is the one that runs
-   *  it: one engine per device, whichever window or tab that is (`leadSync`), and after
-   *  the one kept signed out has let go. Until then this window speaks to the one that
-   *  does; see "The other windows" below. The wait for the lead is outside the lane, so
-   *  a stop meanwhile is never queued behind it. */
   async start(): Promise<void> {
     if (this.local) await this.inLane(() => this.carryLocal())
-    // A stop on its way for the engine running (it counted an attempt on past the lead's):
-    // this start comes after it, not instead of it.
     if (this.current && this.attempt !== this.leadOf) await this.inLane(() => Promise.resolve())
     const user = account.user
     if (!user || this.current || this.giving) return
-    // This start's own attempt: a stop or a later start makes it stale, and nothing a stale
-    // one does afterwards touches the newer one's lead, store or account.
     const mine = ++this.attempt
     const live = () => this.attempt === mine
     this.accountId = user.id
@@ -225,7 +213,6 @@ class Runner {
     this.giving = null
     this.lead = lead
     this.leadOf = mine
-    // Said again, held: a stop's letting go meanwhile may have cleared it.
     this.accountId = user.id
     try {
       const engine = await this.inLane(async () => {
@@ -235,38 +222,24 @@ class Runner {
       })
       if (engine) await this.tookOver(engine)
       else if (this.lead === lead) {
-        // No engine after all: nothing stands on the lead, nor on the store.
         this.letGoLead()
       }
     } catch (error) {
-      // No engine, here: whoever waits next may fare better, and nothing is owed to nobody.
       this.letGoLead()
       this.owed.clear()
       throw error
     }
   }
 
-  /** How the wait for the engine is given up. */
   private giving: AbortController | null = null
-  /** Which start is the live one: each start and each stop counts one on. */
   private attempt = 0
-  /** The start whose lead `lead` is. */
   private leadOf = 0
-  /** This window's being the one that runs the engine. */
   private lead: Leadership | null = null
 
-  /** This window's being the one that may open a store at all. The crate keeps one store
-   *  for every window of the app and closes whichever it holds, so an engine in one window
-   *  - the account's or the one kept signed out - would have its store closed under it by
-   *  another's starting or letting go. Whoever runs either engine holds this first, and
-   *  holds it from the one kept signed out to the account's and back, so no other window
-   *  ever comes between. Account ids are UUIDs, so no account's lead is ever this one. */
   private storeLead: Leadership | null = null
-  /** The wait for it, shared by whoever asks meanwhile: the lock is nobody's twice. */
   private storeWait: Promise<Leadership | null> | null = null
   private storeGiving: AbortController | null = null
 
-  /** Waits until this window holds the device's store; null once the wait is given up. */
   private holdStore(): Promise<Leadership | null> {
     if (this.storeLead) return Promise.resolve(this.storeLead)
     if (this.storeWait) return this.storeWait
@@ -288,19 +261,14 @@ class Runner {
     return wait
   }
 
-  /** Stops waiting for the device's store; one held is let go with the store, after it. */
   private stopHolding() {
     this.storeGiving?.abort()
     this.storeGiving = null
     this.storeWait = null
   }
 
-  /** What is under way here on the device's store without an engine of its own: a drop,
-   *  a walk back, a local start, a device id read. */
   private storeUses = 0
 
-  /** `work`, holding the device's store for it; undefined once the wait is given up. The
-   *  store is let go of after, by the one rule (`settleStore`). */
   private async usingStore<T>(work: () => Promise<T>): Promise<T | undefined> {
     this.storeUses += 1
     try {
@@ -312,11 +280,6 @@ class Runner {
     }
   }
 
-  /** The one rule for letting go of the device's store: when nothing in this window is on
-   *  it or on its way to it - no engine, no account lead, no start waiting for one, no
-   *  other use under way. Kept otherwise, so nothing that stands on it has it go from
-   *  under it; let go of then, so another window can read the device id out of it or
-   *  start the next engine. */
   private settleStore() {
     if (this.current || this.lead || this.giving || this.storeWait || this.storeUses) return
     this.storeLead?.release()
@@ -343,7 +306,6 @@ class Runner {
         this.keepCarried(await carriedIds(engine.core.store, isLocal, account.user?.id))
         await this.letGo(true)
       } else {
-        // Only the desktop keeps spaces signed out this way; see `startLocal` in sync.svelte.ts.
         if (!isDesktop) return
         const store = await openSyncStore(LOCAL_STORE)
         try {
@@ -380,8 +342,6 @@ class Runner {
     if (carried.size) await engine.core.commit(carriedRows(carried))
   }
 
-  /** Opens the account's store and starts its engine, in the lane: answers it, or null
-   *  once this session has moved on meanwhile. */
   private async running(user: { id: string }, live: () => boolean): Promise<Engine | null> {
     const store = await openSyncStore(user.id, true, madeDeviceId(user.id))
     const engine = await Engine.start(
@@ -482,7 +442,6 @@ class Runner {
    *  no rooms, no light in the corner. Answers once it runs, or once it will not. */
   async startLocal(): Promise<void> {
     if (account.user) return
-    // One window keeps it for all of them: the others wait, and take it when that one goes.
     await this.usingStore(() => this.inLane(() => this.startLocalNow()))
   }
 
@@ -529,19 +488,11 @@ class Runner {
   /** The spaces used signed out let go of, their ids carried (`carryLocal`): what
    *  signing in does, whichever engine the account runs. */
   async dropLocal(): Promise<void> {
-    // Only the window holding the device's store forgets it: another window may still be
-    // keeping it, and lets go of it first when it hears the same.
-    // Asked for a sign-in that may be over by the time the store is this window's: signed
-    // out since, the store it takes over is the one to keep, not to carry and forget.
     await this.usingStore(() =>
       this.inLane(() => (account.user ? this.carryLocal() : Promise.resolve())),
     )
   }
 
-  /** This device's id in the account's store (the hub's `deviceId`): the running engine's
-   *  here, else read beside the store (`deviceOfSyncStore`), which opens, closes and marks
-   *  nothing, so no window's engine has its store closed under it and a clean quit stays
-   *  clean. Null before the account has a store on this device. */
   async deviceOf(accountId: string): Promise<string | null> {
     const engine = this.engine
     if (engine && this.accountId === accountId) return engine.core.store.opened.device
@@ -586,8 +537,6 @@ class Runner {
     return this.inLane(() => this.letGo(keepLead, () => this.attempt !== at))
   }
 
-  /** `overtaken`: a start came after the stop this is for, and what it holds or says is its
-   *  own: only the engine before it goes, and a lead from before it. */
   private async letGo(keepLead = false, overtaken: () => boolean = () => false): Promise<void> {
     for (const stop of this.stops.splice(0)) stop()
     for (const key of this.carried) uncarry(key)
@@ -617,22 +566,18 @@ class Runner {
     if (keepLead) return
     if (!newer) this.letGoLead()
     else if (this.lead && this.leadOf !== this.attempt) {
-      // The lead of the start this stop was for: the newer one waits for it.
       this.lead.release()
       this.lead = null
       this.settleStore()
     }
   }
 
-  /** No longer the window that runs the engine, nor the one that may open a store: said
-   *  once its store is closed, so the next window's opens after it. */
   private letGoLead() {
     this.lead?.release()
     this.lead = null
     this.settleStore()
   }
 
-  /** A save: everything typed written down, after autosave's own last writes. */
   flushing() {
     const engine = this.current
     if (!engine) return
@@ -715,8 +660,6 @@ class Runner {
   /** The way back, tried until it is walked, at v1's cadence while the account cannot be
    *  reached. Answers whether v1 may start, false once `alive` says this session ended. */
   async walkBack(alive: () => boolean): Promise<boolean> {
-    // One window walks it: an engine for this is an engine like any other, so it opens the
-    // account's store only holding the device's, as `start` does (`usingStore`).
     const walked = await this.usingStore(async () => {
       const lead = await leadSync(undefined, account.user?.id)
       try {
@@ -794,19 +737,15 @@ class Runner {
         }
       }
     }
-    // Holding the device's store, this window is the one any engine would be in.
     const led = !!engine || !!this.lead || !!this.storeLead
     await this.halt(true)
     this.firsts.clear()
     if (led) {
-      // Held until the store is gone, so no window that has not heard yet opens it meanwhile.
       forgetMadeDeviceId(accountId)
       await forgetSyncStore(accountId).finally(() => this.letGoLead())
       if (!isNative) await forgetIndex(accountId)
       return
     }
-    // Another window runs the engine, and it hears this too (workspace/across.ts): the store
-    // goes once that window has let go of it, not from under it.
     const giving = new AbortController()
     const late = setTimeout(() => giving.abort(), SIGN_OUT_WAITS)
     const lead = await leadSync(giving.signal, accountId)
@@ -830,7 +769,6 @@ class Runner {
    *  Answers whether anything moved. */
   async passNow(): Promise<boolean> {
     if (!this.current) {
-      // Nobody to ask: starting, or an engine that would not start. Waiting would not help.
       return this.leaderId ? (await this.ask('pass', {})) === true : false
     }
     const before = this.lastSyncedAt
@@ -891,7 +829,6 @@ class Runner {
     if (!engine) return
     this.status = 'syncing'
     this.lastError = null
-    // Set by what runs below in its own function, which is more than a read of them can see.
     let offline = false as boolean
     let moved = false as boolean
     try {
@@ -904,10 +841,7 @@ class Runner {
           offline = true
         })
       }
-      // A browser keeps words away only while it is the app's one window (#1126): another
-      // lists what is on the disk, and the engine is not in it.
       if (!isNative) engine.core.crowded = !(await aloneHere())
-      // One space's trouble is that space's: the others have their turn, and it is said after.
       await eachDue(
         this.due,
         () => this.current === engine,
@@ -1122,8 +1056,6 @@ class Runner {
     written: () => {
       this.treeStale()
     },
-    // A file the engine wrote is one more write in that file's one line of writes, which
-    // the other windows hold the note of; see workspace/across.ts.
     writing: async (path, text, write) => {
       if (windows.alone) {
         await write()
@@ -1376,7 +1308,6 @@ class Runner {
    *  is read and hashed against what was last written, since the watcher's word on a
    *  change can come a moment after the change. */
   async holds(path: string, how: Holding = {}): Promise<boolean> {
-    // Not knowing is the safe answer: a delete then keeps its copy in this device's trash.
     if (!this.engine && this.accountId) return (await this.ask('holds', { path })) === true
     const engine = this.engine
     const entry = engine?.entryAt(path)
@@ -1439,32 +1370,16 @@ class Runner {
     return names?.get(device) ?? ''
   }
 
-  // -------------------------------------------------------------------------
-  // The other windows
-  //
-  // One window runs the engine. Each of the others keeps no engine and asks that one: what
-  // it did goes over in `owed`, and what the rest of the app asks of the engine in passing
-  // (which space a folder is, what the account holds of a note) is answered from what the
-  // engine's window last said. An open note in such a window is carried by its file,
-  // through the passes and workspace/across.ts, not by a room: the room is that window's.
-
-  /** The account's ids as the engine's window last said them. */
   private seen: Rows = { spaces: [], notes: [] }
   private seenAt = new Map<string, { id: string; version: number; hash: string }>()
   private readonly owed = new Owed((item) => this.say('sync-owed', { item }))
-  /** The window that runs the engine, as far as anyone has said. */
   private leaderId: string | null = null
-  /** A visible window's pass on the clock, kept by the window that runs them. */
   private beat: ReturnType<typeof setInterval> | undefined
 
-  /** Whether anything this window does has anywhere to go: to an engine on its way, here or
-   *  in the window that holds the lock, or to one that is running. */
   private get owedTo(): boolean {
     return !!this.giving || !!this.lead || !!this.leaderId
   }
 
-  /** Said for this account's windows and heard from them alone: two accounts are two
-   *  stores, and another's words must never reach this one's. */
   private say(kind: string, what: Record<string, unknown> = {}) {
     windows.say(kind, { ...what, account: this.accountId })
   }
@@ -1478,13 +1393,9 @@ class Runner {
   private leaderIs(id: unknown) {
     if (typeof id !== 'string' || this.engine) return
     this.leaderId = id
-    // Whoever is looking at this window is why a pass should not wait for that one to be
-    // looked at: its clock runs slow while it is hidden, this one keeps it to a visible
-    // window's. A window holding a lock is not frozen, so nobody need take over from it.
     this.beat ??= setInterval(() => this.lookedAt(), FALLBACK)
   }
 
-  /** Nobody runs the engine, as far as this window can say, and so nobody will answer. */
   private noLeader() {
     this.leaderId = null
     clearInterval(this.beat)
@@ -1497,14 +1408,10 @@ class Runner {
       this.say('sync-kick')
     }
   }
-  /** What this window hears while it is signed in, engine or not. */
   private readonly hearings: (() => void)[] = []
-  /** Questions asked of the engine's window, by id. */
   private readonly asked = new Map<string, (value: unknown) => void>()
-  /** Things owed by others, one at a time, as they were said. */
   private taking: Promise<unknown> = Promise.resolve()
 
-  /** Asks the engine's window. Nobody there, or nobody who answers soon: null. */
   private ask(what: string, args: Record<string, unknown>): Promise<unknown> {
     if (!this.leaderId) return Promise.resolve(null)
     return new Promise((resolve) => {
@@ -1522,8 +1429,6 @@ class Runner {
     })
   }
 
-  /** What a window with no engine listens to. A window that takes the engine goes on
-   *  hearing these, and nobody says them to it any more. */
   private hearLeader() {
     if (!isNative) holdThisWindow()
     if (this.hearings.length) return
@@ -1575,9 +1480,6 @@ class Runner {
     this.say('sync-hello')
   }
 
-  /** This window has the engine now: what it owed runs here, what the others owe comes
-   *  here, and they are told, so whatever the last engine's window never answered is said
-   *  again. */
   private async tookOver(engine: Engine) {
     this.noLeader()
     this.stops.push(
@@ -1605,8 +1507,6 @@ class Runner {
       }),
       this.hear('sync-hello', () => {
         this.sayAll()
-        // A window more: in a browser what this one kept away comes down now, as that one
-        // lists the disk (#1126; `crowded`).
         if (!isNative && engine.core.world.lazy) this.kick()
       }),
       $effect.root(() => {
@@ -1663,7 +1563,6 @@ class Runner {
     })
   }
 
-  /** What the other windows answer with, once there are any. */
   private sayRows() {
     const engine = this.engine
     if (!engine || windows.alone) return
@@ -1683,14 +1582,10 @@ class Runner {
     this.say('sync-rows', { rows })
   }
 
-  /** The document a note on screen here is joined to, for what another window wrote into
-   *  it to go in through: the binding then brings it to the note as an arrival. */
   joinedOf(note: NoteDoc): { text(): string; put(to: string): void } | null {
     const engine = this.engine
     const entry = note.path === null ? null : engine?.entryAt(note.path)
     if (!engine || !entry || engine.core.isHeld(entry.id)) return null
-    // Not yet where `attach` is still joining: words put in now reach the document and
-    // not the note, whose next write would put its older ones over the disk.
     if (![...this.bound.values()].some((one) => one.id === entry.id && !one.joining)) return null
     const doc = engine.core.docs.get(entry.id)
     if (!doc?.live || !engine.core.pinned.has(entry.id)) return null
@@ -1843,13 +1738,11 @@ class Runner {
   }
 }
 
-/** What the engine's window says of what the engine holds, for the others to answer from. */
 interface Rows {
   spaces: { id: string; root: string; role: string | null }[]
   notes: { path: string; id: string; version: number; hash: string }[]
 }
 
-/** A file operation as it goes to another window: a document's key means nothing there. */
 function withoutKey(op: FileOp): FileOp {
   if (op.op !== 'created') return op
   const said = { ...op }

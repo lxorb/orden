@@ -231,8 +231,6 @@ describe('the field for a space’s AGENTS.md', () => {
     expect(writes.at(-1)?.after).toBe('two')
   })
 
-  /** A file written on Windows: the crate keeps its line endings on every write (`notes.rs`),
-   *  and a text box only ever holds `\n`. */
   test('a CRLF file is the same file: a version once, and no stray CR', async () => {
     const { held, writes, hands } = disk('one\r\ntwo\r\n')
     hands.write.mockImplementation((_path, before, after, first) => {

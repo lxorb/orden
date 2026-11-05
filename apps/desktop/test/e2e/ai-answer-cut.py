@@ -1,13 +1,3 @@
-"""An answer that does not end the way answers end still leaves everything it said.
-
-Reloading while an answer streamed lost the message sent and every word that had
-arrived, since a thread was first written when its send finished (`answeringIn` and
-`keepAnswers` in ai/sidebar/chat.svelte.ts, `cutOff` in ai/chat/threads.ts). A connection
-that closed mid-answer read as a whole answer, with no error and no Ask again, and an
-answer of no words left the message with nothing under it (`finished` in ai/chat/wire.ts).
-
-    python apps/desktop/test/e2e/ai-answer-cut.py
-"""
 
 from __future__ import annotations
 
@@ -35,11 +25,9 @@ PANEL = "document.querySelector('.ask')?.innerText ?? ''"
 
 
 class Model(http.server.BaseHTTPRequestHandler):
-    """A compatible provider that answers the way `mode` says."""
 
     mode = "whole"
     words = ["Herons ", "stand ", "still."]
-    #: Set by the drive to let a held answer go on, which then ends the connection.
     gate = threading.Event()
 
     def log_message(self, format: str, *args: object) -> None:

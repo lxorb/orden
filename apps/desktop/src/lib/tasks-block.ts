@@ -105,9 +105,6 @@ export async function tasksRowsHtml(
     ])
   if (!space) return null
   const { base: read, unsupported } = readTasksQuery(code)
-  // A fence in a shared note runs what somebody else wrote; see expr/pattern.ts. Where
-  // the note says so itself: a space's root cannot tell for a note shared on its own,
-  // or a caller with no root for any note.
   const guarded = stranger || !trustsHtmlAt(root)
   const refused = guarded ? refusedPattern(read) : null
   if (refused !== null) return `<p class="nib-query-none">${escapeAll(refused)}</p>`

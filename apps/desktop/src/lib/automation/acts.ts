@@ -345,8 +345,6 @@ export const ONTO_INSTRUCTIONS = 'write_note writes them, and no note is moved o
 /** Whether a move would make something else the file at the top of the space at `root`. */
 export function ontoInstructions(root: string, from: string, to: string): boolean {
   if (samePath(from, to, root) || folderOf(to) || !isAgentsName(nameOf(to))) return false
-  // Respelled, they are still the file they were. Under any other ending or case a note is
-  // what `moveMany` refuses at the top of a space, and no link or field would take it.
   return folderOf(from) !== '' || !isAgentsName(nameOf(from))
 }
 
@@ -389,11 +387,6 @@ export async function movedIn(
 
   if (await onDisk(joinPath(into, name))) throw new Error(`${to} is already there`)
 
-  // A move and a rename are two steps, so the file stops somewhere between them, and that
-  // may not be another file's place or the top of the space under the name kept for its
-  // instructions, which the next step would then be taken for. Under its old name where
-  // it lands; else under its new name where it is; else a name free in both, which the
-  // rename at the end takes off again.
   const here = folderOf(source)
   const free = async (folderAt: string, called: string) =>
     !(samePath(folderAt, root) && isAgentsName(called)) &&

@@ -32,8 +32,6 @@ function splitRow(line: string): string[] {
 
   for (let i = 0; i < body.length; i++) {
     const character = body.charAt(i)
-    // In pairs, because `\\\\|` is a backslash and then a pipe that ends the cell, which
-    // is how the renderer reads it.
     if (character === '\\' && (body.charAt(i + 1) === '|' || body.charAt(i + 1) === '\\')) {
       current += character + body.charAt(i + 1)
       i++

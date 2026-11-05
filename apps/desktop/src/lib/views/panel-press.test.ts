@@ -62,7 +62,6 @@ describe('a press on a row of the Tasks panel', () => {
     expect(
       chosenIn({ row: { kind: 'project', space: 'Notes', path: 'H.md' }, in: was }, now),
     ).toEqual({ kind: 'project', space: 'Field', path: 'H.md' })
-    // A base is a path on this disk, and that has moved.
     expect(chosenIn({ row: { kind: 'base', path: '/s/Notes/B.base' }, in: was }, now)).toEqual({
       kind: 'todos',
     })

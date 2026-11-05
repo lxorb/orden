@@ -46,8 +46,6 @@ export interface Writes {
   keep(id: string): void
   scheduleSession(): void
   persist(): void
-  /** A note's file now says all its document does: whatever a closed tab kept of it is
-   *  on the disk, and the file is what to come back from. */
   wroteAll(path: string, key: string, words: string): void
   loadTree(): Promise<void>
   /** The name a folder will take: the wanted one, or the next number after it where
@@ -70,15 +68,8 @@ export interface Writes {
 export const IN_THE_AIR_AT_MOST = 10_000
 
 export class Saving {
-  /** What keeps writes in step with the disk and the other windows, once it is fetched.
-   *  Alone as well: a file has more writers than this app's windows, and a write that did
-   *  not look first put the old words over whatever a terminal, `git` or an editor wrote,
-   *  with no version holding them. One read a write; see across.ts. */
   across: Across | null = null
 
-  /** The way to fetch it, for a write before the launch's turn for it: a tab a crash left
-   *  dirty is written in the first second, and its file is the likeliest to have changed.
-   *  Not set in a store with no app around it. */
   acrossSoon: (() => Promise<Across>) | null = null
 
   /** The write that waits for a pause in the changes; see timing.ts. */
@@ -86,7 +77,6 @@ export class Saving {
 
   /** Pauses in a row that ended in a refused write. */
   private failures = 0
-  /** What the light in the corner said about them, and what it said before; see `tell`. */
   private said: { error: string; was: Status } | null = null
   private readonly retry = afterQuiet(
     () => void this.saveWaiting(),
@@ -109,7 +99,6 @@ export class Saving {
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
   private readonly held = new Map<NoteDoc, number>()
 
-  /** Documents whose file a delete has named; see `gone`. */
   private readonly deleted = new WeakSet<NoteDoc>()
 
   /** The `write_note` of each document not answered yet, which `holdingWrites` waits for. */
@@ -198,10 +187,6 @@ export class Saving {
     for (const note of this.ws.documents) note.flush()
   }
 
-  /** Everything that holds words of its own on the way to a document, handed over: a
-   *  table cell, the card being written in, a plane that commits after a pause. For
-   *  whatever is about to read a document and show it to somebody: an export read
-   *  before the plane's pause was over came out without the last strokes. */
   wordsNow() {
     flushTableEdits()
     flushCardEdits()
@@ -338,8 +323,6 @@ export class Saving {
     sync.lastError = error
   }
 
-  /** The note is written after all. Signed out no pass of sync's ever clears the light,
-   *  so it stayed red until a restart. Anything sync has said since is its own. */
   private async untell() {
     const said = this.said
     this.said = null
@@ -494,15 +477,9 @@ export class Saving {
     void done.then(() => this.running.delete(done))
   }
 
-  /** The paths drafts have taken and not landed at yet. Neither the listing nor the open
-   *  documents answer for them: a draft put away has no tab, and a space nobody has
-   *  listed has no tree for `born` to put a row in. */
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
   private readonly claimed = new Set<string>()
 
-  /** The same across the windows, which each have their own `claimed`: the lock of each path
-   *  claimed here, held until it has landed. Two windows placing one name in one moment
-   *  would otherwise both find it free, and the second's write take the first's note. */
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
   private readonly claimHeld = new Map<string, () => void>()
 
@@ -681,9 +658,6 @@ export class Saving {
     // Moved while the write was being got ready: the words follow the file.
     if (note.path !== null) path = note.path
 
-    // What is on the disk is taken in first, whoever put it there, and the words going down
-    // are read inside that turn; see across.ts. A file that went from under it writes
-    // nothing, which is what stops a delete being undone.
     const across = this.across ?? (await this.acrossSoon?.().catch(() => null)) ?? null
     const writing = path
     const down = (words: string) => invoke('write_note', { path: writing, content: words })

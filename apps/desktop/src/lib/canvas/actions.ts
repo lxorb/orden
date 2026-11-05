@@ -465,8 +465,6 @@ export const run = {
         openHref(node.url)
         break
       case 'file': {
-        // A picture the account keeps names its whole address (`dropImage`): a page, as
-        // a link card's is, and no path in the space.
         if (/^https?:\/\//i.test(node.file)) {
           openHref(node.file)
           break

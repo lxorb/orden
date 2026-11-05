@@ -394,7 +394,6 @@ async function writeNote(
   return typeof put === 'string' ? put : `Saved ${put.path}.`
 }
 
-/** The sentence for a note that moved under a write. */
 export function changedWhileWriting(path: string): string {
   return `${path} changed while I was writing it. Read it again first.`
 }
@@ -455,9 +454,6 @@ export async function putNote(
     return MOVED
   }
 
-  // A plane holds JSON Canvas and nothing else, here as in a note that is there: see
-  // `readsAs`. Prose taken at a new path reads back until the first settle, and then
-  // every device has an empty canvas.
   const named = noteKind({ path })
   if (!existing && !readsAs(named, content)) return notACanvas(path)
 
@@ -483,7 +479,6 @@ export async function putNote(
     if (saved === null) return `${path} could not be written just now. Try again.`
     if (saved === MOVED) return read === undefined ? changedWhileWriting(path) : MOVED
     if (saved === UNREADABLE) return notACanvas(path)
-    // A room says its own settles; a note with no room has nobody else to.
     if ((saved.epoch ?? 0) < 1) await pokeNow(env, space.id, saved.seq, device)
     return { path: saved.path }
   }
@@ -491,20 +486,14 @@ export async function putNote(
   try {
     const made = await addNote(env, space.id, path, content, '', device)
     await pokeNow(env, space.id, made.seq, device)
-    // A tree has one name per folder, as Windows and a Mac compare them, so a folder
-    // that a note's name or another spelling holds lands elsewhere; see sync2/ops.ts.
     return { path: made.path }
   } catch (error) {
-    // Somebody made it in the moment since it was looked for: the path's unique index,
-    // or the tree's. Moved, like any other note that arrived under a write.
     const arrived = await env.DB.prepare(
       "select 1 as one from notes where space_id = ? and path = ? and deleted = 0 and kind != 'file'",
     )
       .bind(space.id, path)
       .first()
     if (arrived) return read === undefined ? changedWhileWriting(path) : MOVED
-    // A space whose tree is rows holds one name per folder as Windows and a Mac
-    // compare names, so another spelling of a note that is there is that note.
     if (!(error instanceof NoteTaken)) throw error
     return `${path} is another spelling of a note that is already there. Read it first.`
   }

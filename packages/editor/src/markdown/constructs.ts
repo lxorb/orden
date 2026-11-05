@@ -221,8 +221,6 @@ function opensBlockMath(rest: string): boolean {
   return ONE_LINE.test(rest) || rest.trim() === '$$'
 }
 
-/** The `$$` that closes a block on its own line, with the block's name where it has one,
- *  which the page takes off before it looks. */
 const CLOSES_MATH = /^\$\$(?:[ \t]+\^[A-Za-z0-9-]+)?\s*$/
 
 /** A `$$` fence on its own line closed by another, or a whole line of `$$…$$`. */

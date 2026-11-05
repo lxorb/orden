@@ -58,15 +58,12 @@ pub fn key(verb: &str, tab: Option<&str>, element: Option<&str>) -> String {
     )
 }
 
-/// What a call is about on the page it would land on: an allowance is for one press on
-/// one site, so the same key or ref after the tab has moved on is another question.
 pub fn on_page(key: &str, url: &str, element: &str) -> String {
     let host = super::policy::host_of(url).unwrap_or_default();
     let element = element.split_whitespace().collect::<Vec<_>>().join(" ");
     format!("{key}:{host}:{element}")
 }
 
-/// Whether the reader allowed this call, leaving the allowance for `allowed` to spend.
 pub fn is_allowed(agent: &str, key: &str) -> bool {
     held().iter().any(|one| {
         one.approval.agent == agent

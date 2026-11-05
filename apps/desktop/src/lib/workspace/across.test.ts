@@ -1,5 +1,3 @@
-/** One note open in two windows, with real documents and one disk: H2-DESKTOP-14. */
-
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { EditorState } from '@orden/editor'
 import { oneWriteAt, Windows } from '../windows'
@@ -9,7 +7,6 @@ import type { FileOp } from './file-ops'
 
 vi.mock('../log', () => ({ log: vi.fn() }))
 
-/** A browser's locks, one holder per name in the order asked. */
 function fakeLocks(): LockManager {
   const tails = new Map<string, Promise<unknown>>()
   return {
@@ -30,8 +27,6 @@ function fakeLocks(): LockManager {
 beforeEach(() => vi.stubGlobal('navigator', { locks: fakeLocks() }))
 afterEach(() => vi.unstubAllGlobals())
 
-/** Windows' ends of one channel. Delivery is held until asked for, in whatever order: which
- *  is a window that has not heard yet. */
 function channel() {
   const ends: { onmessage: ((event: MessageEvent<unknown>) => void) | null }[] = []
   const flight: (() => void)[] = []
@@ -110,7 +105,6 @@ function aWindow(line: ReturnType<ReturnType<typeof channel>['end']>, disk: Map<
     documents.push(note)
     return note
   }
-  /** What autosave does. */
   const save = async (note: NoteDoc) => {
     const path = note.path
     if (path === null) return null
@@ -189,7 +183,6 @@ describe('one note in two windows', () => {
     const inB = b.open(BASE)
     a.type(inA, 'FROM-A ')
     await a.save(inA)
-    // B has heard nothing, and its autosave comes.
     b.type(inB, 'FROM-B ')
     await b.save(inB)
 
@@ -229,7 +222,6 @@ describe('one note in two windows', () => {
     await a.save(inA)
     b.type(inB, 'FROM-B ')
     const saving = b.save(inB)
-    // Pressed after the save read the note, before the merge came back.
     inB.live.edit([{ from: 0, to: 0, insert: 'KEY ' }])
     await saving
 
@@ -316,7 +308,6 @@ describe('one note in two windows', () => {
   })
 })
 
-/** A token typed into a note, one of a kind, so a count of it says lost or twice. */
 function random(seed: number) {
   let state = seed * 2654435761 + 1
   return (below: number) => {
@@ -384,7 +375,6 @@ describe('whatever order the news arrives in', () => {
       }
       await Promise.all(running)
 
-      // Everybody hears everything, in any order, and writes what they owe.
       for (let round = 0; round < 12; round += 1) {
         while (wires.flight.length) {
           const [one] = wires.flight.splice(pick(wires.flight.length), 1)
@@ -414,7 +404,6 @@ describe('around one write', () => {
     const inB = b.open(BASE)
     a.type(inA, 'FROM-A ')
     await a.save(inA)
-    // B's save asked before it hears, A's news handled while B waits on its read.
     b.type(inB, 'FROM-B ')
     const saving = b.save(inB)
     await wires.deliver()
@@ -452,7 +441,6 @@ describe('around one write', () => {
     b.type(inB, 'typed')
     disk.delete(PATH)
     disk.set('/Notes/Moved.md', BASE)
-    // The rename's news comes while the write is out.
     b.renamedSoon(inB, '/Notes/Moved.md')
 
     expect(await b.save(inB)).toBeNull()
@@ -462,7 +450,6 @@ describe('around one write', () => {
   })
 })
 
-/** The crate's write: the file keeps the line endings it has, whatever the editor holds. */
 function savingLikeTheCrate(window: ReturnType<typeof aWindow>, disk: Map<string, string>) {
   return async (note: NoteDoc) => {
     const path = note.path
@@ -534,7 +521,6 @@ describe('a file with CRLF endings', () => {
     const words = `FROM-A ${LF}FROM-B `
     expect(inA.latest).toBe(words)
     expect(inB.latest).toBe(words)
-    // Every line the file had keeps its ending; only what was typed since has none to keep.
     expect(disk.get(PATH)).toBe(words.replace(/\n/g, '\r\n'))
   })
 
@@ -608,8 +594,6 @@ describe('a file with CRLF endings', () => {
         if (!note) continue
         const move = pick(4)
         if (move === 0) {
-          // No two start or end alike: two inserts at one place meet by the letter, and a
-          // shared letter would read as a token cut in two.
           const token = `${String.fromCharCode(65 + tokens.length)}-${String(tokens.length)}-${String.fromCharCode(97 + tokens.length)}`
           tokens.push(token)
           const lines = note.live.text.toString().split('\n')
@@ -788,7 +772,6 @@ describe('a merge that throws does not stop the saving', () => {
 })
 
 describe('while an input method is composing', () => {
-  /** A view of the note that is in the middle of a composition. */
   const composing = (note: NoteDoc) => {
     const view = {
       state: EditorState.create({ doc: note.live.text }),
@@ -854,7 +837,6 @@ describe('a file operation in another window', () => {
     a.type(inA, 'WORDS ')
     const to = '/Notes/Moved.md'
     const saving = a.save(inA)
-    // A microtask later: the read is on its way.
     await Promise.resolve()
     inA.path = to
     disk.set(to, disk.get(PATH) ?? '')

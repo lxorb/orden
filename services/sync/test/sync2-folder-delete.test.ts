@@ -1,10 +1,3 @@
-/** A folder deleted on a device that has heard of a note in it and not fetched its words:
- *  the delete is refused whole (#1068), so nothing is lost and the folder comes back on
- *  the deleter with every note in it.
- *
- *  The devices are the app's own engine (apps/desktop/src/lib/sync2/test-device.ts),
- *  reached by its path for the reason sync2-engine.test.ts gives. */
-
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import app from '../src/index'
 import { call, signIn, type TestEnv, testEnv } from './harness'
@@ -141,7 +134,6 @@ test('a folder deleted while a new note in it is listed and not pulled comes bac
   await a.engine.created(`${a.root}/f/new.md`, false, 'new from A\n')
   await passed(a)
 
-  // B reads the feed and its words do not come: a network going away between the two.
   const { readFeed } = (await import(
     /* @vite-ignore */ new URL('../../../apps/desktop/src/lib/sync2/pass.ts', import.meta.url).href
   )) as { readFeed: (core: unknown, space: unknown, go: () => boolean) => Promise<unknown> }

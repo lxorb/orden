@@ -100,7 +100,6 @@
   let asked = $state(false)
   $effect(() => {
     if (!https || !url) {
-      // The page has gone from https to http: what the last one said is not about this one.
       certificate = null
       return
     }

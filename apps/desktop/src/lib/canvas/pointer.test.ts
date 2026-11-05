@@ -836,8 +836,6 @@ describe('rubbing out', () => {
     ])
   })
 
-  /** A quick swipe is a few events far apart, and a line it crossed between two of
-   *  them was crossed all the same. */
   test('answers along the way it went between two events, not only at each', () => {
     const { effects } = play(
       [
@@ -864,8 +862,6 @@ describe('rubbing out', () => {
     ])
   })
 
-  /** Hold the eraser still, scroll a page, move a pixel: the plane went past under it,
-   *  and the eraser did not go across the ink that went by. */
   test('walks no way the plane moved by itself under a still hand', () => {
     const { effects } = play(
       [

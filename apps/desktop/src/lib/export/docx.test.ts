@@ -503,8 +503,6 @@ describe('a coloured highlight', () => {
   })
 })
 
-/** Text pasted from Word, PowerPoint or a PDF carries what XML 1.0 has no way to say,
- *  and a strict reader refuses the whole file over one. */
 describe('characters XML cannot carry', () => {
   const FORBIDDEN = /[^\t\n\r\u{20}-\u{D7FF}\u{E000}-\u{FFFD}\u{10000}-\u{10FFFF}]/u
 

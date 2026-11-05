@@ -24,7 +24,6 @@ interface Section {
 const HEADING = /^(#{1,6})[ \t]+(.*?)[ \t]*#*[ \t]*$/
 const FENCE = /^[ \t]*(`{3,}|~{3,})/
 
-/** The first line past the note's front matter. */
 function wordsLine(text: string): number {
   const block = frontMatterBlock(text)
   return block ? text.slice(0, block.close).split('\n').length : 0

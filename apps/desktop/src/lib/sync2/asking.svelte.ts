@@ -90,7 +90,6 @@ interface Unsynced {
 export interface EngineEvents {
   resurrected: Resurrected
   unsynced: Unsynced
-  /** What an entry's file says now, which its document has taken in. */
   file: { id: string; text: string }
   /** A pass wrote a row to the store's log. */
   pass: LogRow

@@ -186,7 +186,6 @@ describe('the chats an agent sees', () => {
       path: '/spaces/Secret/thesis.chat',
     })
     const { answerThreadSpaces } = await import('../../automation/caller')
-    // A thread that works in a space holding no chat of that name; `Team` is in front.
     answerThreadSpaces((thread) => (thread === 'in-third' ? 'third' : null))
     const grant = {
       id: 'nib-claude',

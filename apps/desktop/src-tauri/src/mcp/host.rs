@@ -47,9 +47,6 @@ pub(crate) fn rendered(tool: &str, args: &Value, status: u16, body: &str) -> Val
     written(tool, args, &Outcome::from_endpoint(status, &said))
 }
 
-/// A question's category beside its id in what the window reads, for its Always, which
-/// covers everyday questions and never paying or the terminal (ai/chat/approvals.ts). The
-/// window's alone: the answer an outside agent reads keeps 9.3's shape.
 pub(crate) fn categorized(
     rendered: &mut Value,
     category_of: impl Fn(&str) -> Option<(crate::agents::verbs::Category, Option<String>)>,

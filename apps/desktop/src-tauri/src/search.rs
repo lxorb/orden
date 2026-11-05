@@ -378,9 +378,6 @@ fn best(mut loose: Vec<FuzzyHit>, most: usize) -> Vec<FuzzyHit> {
     loose
 }
 
-/// Hands whatever has been found to the window that asked, whose own numbering the id
-/// is: another window's search under the same number is another search. A window that has
-/// gone is not a search failure, so a send that fails is let go.
 fn send(window: &tauri::Window, id: u32, pending: &mut Vec<Hit>, loose: Vec<FuzzyHit>) {
     if pending.is_empty() && loose.is_empty() {
         return;

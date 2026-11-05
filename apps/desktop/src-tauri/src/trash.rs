@@ -226,10 +226,6 @@ fn recorded(dir: &Path, entry: TrashEntry, undo: impl FnOnce()) -> Result<TrashE
     Ok(entry)
 }
 
-/// A space's folder took a new name: what was deleted out of it goes back to where the space
-/// is now. Left saying the old name, a restore would make that folder again for the one note,
-/// and the next listing would take it for a second space. Said after the rename, which stands
-/// either way, so nothing here refuses it.
 pub fn space_renamed(app: &AppHandle, from: &Path, to: &Path) {
     let (Some(from), Some(to)) = (from.file_name(), to.file_name()) else {
         return;
@@ -242,9 +238,6 @@ pub fn space_renamed(app: &AppHandle, from: &Path, to: &Path) {
     }
 }
 
-/// `space_renamed` past its lock, on the trash at `dir`. A deleted space of the old name is its
-/// own thing, and stays, and so does what was deleted before it went: that was out of that
-/// space, and this one only has its name.
 fn follows(dir: &Path, from: &str, to: &str) -> Result<(), String> {
     let inside = format!("{from}/");
     let mut entries = read_manifest(dir);
@@ -573,7 +566,6 @@ mod tests {
         parts.iter().collect()
     }
 
-    /// Recently deleted's restore after a space's rename: back into the space as it is now.
     #[test]
     fn what_was_deleted_out_of_a_space_follows_its_new_name() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -596,8 +588,6 @@ mod tests {
         assert_eq!(from, ["Job/a.md", "Job/deep/b.md", "Workshop/c.md"]);
     }
 
-    /// `Work/old.md` deleted, then the space Work, then a new Work renamed: the note was never
-    /// in this one, and what was deleted out of it since was.
     #[test]
     fn what_was_deleted_before_its_space_stays_with_that_space() {
         let dir = tempfile::tempdir().expect("a folder");

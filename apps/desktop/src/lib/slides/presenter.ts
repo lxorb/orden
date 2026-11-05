@@ -164,7 +164,6 @@ export async function openPresenter(): Promise<boolean> {
     // The screen the deck is not on, so the notes are not projected.
     const other = screens.find((screen) => screen.name !== here?.name) ?? here
 
-    // Built by the crate: where it is built decides what it can hear, and what can see it.
     await invoke('presenter_open', {
       x: other ? other.position.x + 40 : null,
       y: other ? other.position.y + 40 : null,

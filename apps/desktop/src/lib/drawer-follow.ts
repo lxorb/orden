@@ -173,7 +173,6 @@ export function followDrawers(host: HTMLElement): () => void {
     const dy = touch.clientY - startY
 
     if (!claimed) {
-      // A card lifted by a hold within the edge strip is being carried, not pulled at.
       if (isThumbCarrying()) {
         letGo()
         return

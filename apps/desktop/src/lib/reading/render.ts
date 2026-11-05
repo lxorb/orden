@@ -36,8 +36,6 @@ export interface Note {
  *  the reading view. */
 export function pointer(note: Note): (link: Wikilink) => { href: string | null } | null {
   return (link) => {
-    // `[[#Heading]]` and `[[#^block]]` name a place on this very page, and the `#anchor`
-    // the renderer writes after the target is the whole of what it needs.
     if (!link.target) return link.heading === null && link.block === null ? null : { href: '' }
 
     // Through the index's own resolver rather than over the notes it holds: both

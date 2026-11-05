@@ -117,8 +117,6 @@ pub fn answer(app: &AppHandle, response: &UNNotificationResponse, name: &str) ->
         super::answered(app, id, Act::Reply, text);
     } else {
         super::answered(app, id, Act::Open, None);
-        // No window open and the app still in the Dock: a press on it asks for the app. What
-        // it was about went with the window that showed it, and a typed reply with it.
         if crate::agents::shell::host(app).is_none() {
             crate::launch::reopen(app);
         }

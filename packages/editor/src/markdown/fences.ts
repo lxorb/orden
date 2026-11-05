@@ -242,10 +242,6 @@ function withoutUnclosedFences(
   return changed ? out : fragments
 }
 
-/** The fragments with the top of the note taken out, down to where its front matter
- *  ends. Whether a `---` on the first line opens a block depends on lines far below it, so
- *  a parse that reused the top of the last tree, a rule at the first line and a paragraph
- *  under it, drew a block as a rule and a heading for as long as the note stayed open. */
 function withoutFrontMatter(
   fragments: readonly TreeFragment[],
   input: Input,

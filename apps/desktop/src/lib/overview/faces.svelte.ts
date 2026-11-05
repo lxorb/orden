@@ -38,8 +38,6 @@ const TAKE_LATER = 700
 class Faces {
   /** The pictures of this run's tabs, by tab id. */
   private byId = $state.raw<Record<string, Face>>({})
-  /** The name each tab's picture was last written or read under, which a tab whose title
-   *  or file has changed since no longer goes by. */
   private written = new Map<string, string>()
   private reading: Promise<void> | null = null
 
@@ -99,7 +97,6 @@ class Faces {
     const name = names.get(tab.id)
     if (!name || sizeOf(face) <= 0) return
     void writeFace(name, face)
-    // The same tab under another name now: what it wrote before is nobody's.
     const before = this.written.get(tab.id)
     this.written.set(tab.id, name)
     if (before && before !== name && ![...names.values()].includes(before)) {
@@ -112,8 +109,6 @@ class Faces {
   closed(names: ReadonlyMap<string, string>, open: readonly Tab[]) {
     const now = lastingKeys(open)
     const still = new Set(now.values())
-    // By the name the picture was written under as well: a title or a file changed since
-    // the tabs last changed is another name than `names` has.
     const gone = [...names, ...this.written].filter(([id]) => !now.has(id))
     if (!gone.length) return
     const leaving = new Set(gone.map(([id]) => id))

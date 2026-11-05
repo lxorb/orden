@@ -1,7 +1,3 @@
-"""An agent's edits of a note, after the note is renamed: the real docs on the real
-workspace, so the move reaches the tracks by the road the app's own moves take. Undo at
-the new name takes the edit back, the palette's row follows the note, and the old name
-answers nothing rather than throwing."""
 
 from __future__ import annotations
 

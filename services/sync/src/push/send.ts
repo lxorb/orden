@@ -12,9 +12,6 @@ import { sendApns } from './apns'
 import { sendFcm } from './fcm'
 import { sendWebPush, type SubscriptionKeys } from './webpush'
 
-/** What a push came to. `busy` is a push the service did not take and may yet: it could
- *  not be reached, or answered 429 or 503. `failed` is any other refusal, which says
- *  nothing about whether the device hears of it, so it is not tried again. */
 export type Delivery = 'sent' | 'gone' | 'failed' | 'busy' | 'off'
 
 export type TargetKind = 'webpush' | 'fcm' | 'apns'

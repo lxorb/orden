@@ -1,15 +1,10 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
-/** The list of spaces read again while it is being changed, or read when it will not answer:
- *  a listing that failed says nothing about the spaces, and one read before a space was made
- *  says nothing about that space. */
-
 const held = vi.hoisted(() => ({
   disk: null as import('../../../test/disk').Disk | null,
   listing: [] as { name: string; path: string }[],
   refuse: false,
   gate: null as Promise<void> | null,
-  /** What the answer of `create_space` waits for, the folder being there already. */
   making: null as Promise<void> | null,
 }))
 vi.mock('../tauri', async (importOriginal) => ({

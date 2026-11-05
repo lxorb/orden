@@ -35,9 +35,6 @@ export function touch(path: string, agent: { id: string; name: string }, edits: 
   else byNote.delete(path)
 }
 
-/** One agent's row of a note, at the name the note has now, beside the other agents'
- *  there. Answers the row it took the place of: a note at that name before this one, whose
- *  track waits for the name to come free. */
 export function touchedMoved(from: string, to: string, agent: string): Touched | null {
   const row = byNote.get(from)?.find((one) => one.id === agent)
   if (!row) return null

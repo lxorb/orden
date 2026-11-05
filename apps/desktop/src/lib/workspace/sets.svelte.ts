@@ -121,7 +121,6 @@ class Sets {
    *  could take put into the set on screen, so none of its tabs is lost. */
   async wake(): Promise<void> {
     for (const key of Object.keys(this.drafted)) {
-      // One that fails stays as it was read, and the next asking builds it.
       await this.built(key).catch((error: unknown) => {
         log('warn', `sets: ${key} was not built - ${String(error)}`)
       })

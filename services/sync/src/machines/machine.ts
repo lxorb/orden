@@ -172,9 +172,7 @@ const RECENT = 'recent'
 const METERED = 'metered'
 const GRACE = 'grace'
 const RESTORED = 'restored'
-/** How many of a terminal's sockets each tier of who may join keeps from the one below. */
 const KEPT_ABOVE = 5
-/** The tag of a socket let in only to be told why it is refused. */
 const REFUSED_SOCKET = 'refused'
 /** Sessions ended while there was no link to say it on, said on the next one. */
 const ENDING = 'ending'
@@ -423,10 +421,6 @@ export class Machine implements DurableObject {
    *  runtime to make the pair. `wake` is `yes` where the owner's socket may wake the
    *  machine, or why it may not. */
   async enter(server: WebSocket, viewer: Viewer, wake: string): Promise<void> {
-    // Each tier with room the one below cannot take: the owner's terminal is theirs, and
-    // whoever they invited to write is not shut out by those who follow a link to watch.
-    // A refused socket, here only to hear why, is not under the session's tag, and takes
-    // no room while its close lands.
     const invitedWriter = !viewer.guest && viewer.role === 'write'
     const room = viewer.owns ? MOST_SOCKETS : MOST_SOCKETS - KEPT_ABOVE * (invitedWriter ? 1 : 2)
     if (this.ctx.getWebSockets(viewer.session).length >= room) {

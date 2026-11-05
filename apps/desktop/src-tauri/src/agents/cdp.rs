@@ -331,7 +331,6 @@ pub struct Frame {
     pub id: String,
     /// Where it is.
     pub url: String,
-    /// The session of the frame it was attached under; empty for the page's own.
     pub parent: String,
 }
 
@@ -358,7 +357,6 @@ struct Placed {
 /// What the engine has said about one page, kept as it says it.
 #[derive(Default)]
 pub struct Heard {
-    /// The frames' sessions already asked to say what frames they hold in turn.
     nested: HashSet<String>,
     /// The console, oldest first, each line with where it came from.
     console: VecDeque<(ConsoleLine, Whence)>,
@@ -828,7 +826,6 @@ impl Heard {
         self.nested.remove(session);
     }
 
-    /// The frames' sessions not yet asked to say what frames they hold in turn.
     fn not_nested(&self) -> Vec<String> {
         self.frames()
             .into_iter()
@@ -1175,19 +1172,12 @@ pub fn awake(view: &View, label: &str, own: bool) {
     }
 }
 
-/// What has a session say which frames in it run in processes of their own.
 fn auto_attach() -> Value {
     json!({ "autoAttach": true, "waitForDebuggerOnStart": false, "flatten": true, "filter": [{ "type": "iframe" }] })
 }
 
-/// How many frames in processes of their own, each inside the last, are followed down. Past
-/// it is an error, like a frame that does not answer.
 const DEEPEST_FRAMES: usize = 32;
 
-/// Has every frame in a process of its own say what frames it holds in turn: the engine tells
-/// a session only of the frames directly in its own process, so a card frame on a third site
-/// inside a payment provider's would be on no list. Each session is asked once, and they are
-/// told before the answer comes. An error is a frame still there that could not be asked.
 pub fn follow_nested(view: &View, label: &str, patience: Duration) -> Result<(), String> {
     let page = heard(label);
     for _ in 0..DEEPEST_FRAMES {
@@ -1211,7 +1201,6 @@ pub fn follow_nested(view: &View, label: &str, patience: Duration) -> Result<(),
                 Ok(_) => {
                     held.nested.insert(session);
                 }
-                // A frame gone in the meantime has nothing to say.
                 Err(why) if held.not_nested().contains(&session) => return Err(why),
                 Err(_) => {}
             }

@@ -1,8 +1,5 @@
 import { expect, test, vi } from 'vitest'
 
-/** A change written into an open note in place, with this window alone: it looks at the disk
- *  first as any write does (`writeEdited`), and a refused one stays owed. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../../../test/disk').Disk | null }))
 const refused = vi.hoisted(() => ({ times: 0 }))
 vi.mock('../tauri', async (importOriginal) => ({

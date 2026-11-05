@@ -10,7 +10,6 @@ import { isTagName } from '@orden/markdown/tags'
 import { liftedFrom, renamedTo, type TagNode } from './tag-tree'
 import { workspace } from './workspace.svelte'
 
-/** Says so where a name would not read back as a tag, rather than doing nothing. */
 export function refusedAsTag(name: string): boolean {
   if (isTagName(name)) return false
   settings.error = t('That tag could not be renamed.')

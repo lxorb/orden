@@ -1,12 +1,3 @@
-"""An eraser takes what it passes over, wherever the points of the line happen to be.
-
-A pen line drawn at speed is a few points far apart, and the eraser only took recorded
-points: a slow pass straight across the middle of one fell between two and did nothing,
-no undo step and no hole. And it was tested only at its own events, so a quick swipe
-skipped over a line between two of them. See `erased` and `rubbedPath` in canvas/ink.ts.
-
-    python apps/desktop/test/e2e/eraser-between.py
-"""
 
 from __future__ import annotations
 
@@ -19,7 +10,6 @@ say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 
 
 def strokes(page: Page) -> list[list[float]]:
-    """The plane's ink as its file has it: each stroke, its points flat, six numbers each."""
     return page.evaluate(
         """async () => {
           await window.nibApp.workspace.writeNow()
@@ -50,7 +40,6 @@ def pass_over(page: Page, kind: str, maker: str = "createCanvas") -> None:
     start, end = (middle_x - 60, middle_y - 90), (middle_x + 60, middle_y + 90)
     page.mouse.move(*start)
     page.mouse.down()
-    # 100 small moves, or one long one with nothing between its ends.
     page.mouse.move(*end, steps=100 if kind == "slow" else 1)
     page.mouse.up()
     page.keyboard.press("v")
@@ -60,7 +49,6 @@ def pass_over(page: Page, kind: str, maker: str = "createCanvas") -> None:
     if len(left) != 2:
         wrong(f"a {kind} pass left {len(left)} strokes, not the two ends")
         return
-    # In the plane's units, so measured against each other: a hole between the two.
     gap = left[1][0] - left[0][-6]
     say(f"  a hole {gap:.0f} wide")
     if gap < 10:
@@ -90,7 +78,6 @@ def scrolled_under(page: Page) -> None:
     page.mouse.move(x + 100, y + 200, steps=8)
     page.mouse.up()
 
-    # Pressed well clear of the line, above it, then the line scrolled up past the eraser.
     page.keyboard.press("e")
     page.mouse.move(x, y - 60)
     page.mouse.down()

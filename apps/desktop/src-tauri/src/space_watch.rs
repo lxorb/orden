@@ -63,7 +63,6 @@ pub struct Listed {
     mtime: u64,
     /// What it is apart from where it is, or null where the file system would not say.
     id: Option<String>,
-    /// A folder whose children were not read; see `walk`. What is known under it is not gone.
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     unlisted: bool,
 }

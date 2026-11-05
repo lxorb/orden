@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-"""Two windows on one note, typed in at its head and its end, killed, closed and reloaded in a
-random order: every word typed is in the file once and every view says the same. A kill with
-no session write first gives up only what was inside the pause, so each kill here has written
-it. `FUZZ_SEED` and `FUZZ_OPS` repeat a run."""
 
 from __future__ import annotations
 

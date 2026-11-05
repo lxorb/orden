@@ -1,8 +1,5 @@
 import { expect, test, vi } from 'vitest'
 
-/** A picture the account keeps names its whole address on the card (#364), and a double
- *  click on it goes there, the way a link card does, not to a path in the space. */
-
 const opened = vi.hoisted(() => ({ hrefs: [] as string[], paths: [] as string[] }))
 
 vi.mock('../open-link', () => ({

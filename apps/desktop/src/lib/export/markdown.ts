@@ -38,23 +38,17 @@ export interface MarkdownOptions {
   picture?: (src: string) => string | null
 }
 
-/** A source written bare: anything without a space, with its parentheses balanced, to the
- *  two levels deep anyone writes, as CommonMark reads one. */
 const BARE = String.raw`(?:[^\s()\\]|\\.|\((?:[^\s()\\]|\\.|\([^\s()]*\))*\))*`
 
-/** What may follow a source: a title in any of markdown's three spellings. */
 const TITLE = String.raw`(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?`
 
 /** `![alt](src "title")`, with the parts kept apart so only the source moves. */
 const PICTURE = new RegExp(String.raw`!\[([^\]]*)\]\(\s*(<[^>]*>|${BARE})(${TITLE})\s*\)`, 'g')
 
-/** `[name]: src "title"`, which is where `![alt][name]` and `![name]` keep their source: on
- *  its own line, in a quote or not, and not a footnote's. */
 const DEFINITION = new RegExp(
   String.raw`^([ >]*\[(?!\^)[^\]]+\]:[ \t]*)(<[^>]*>|[^\s<]\S*)(${TITLE})[ \t]*$`,
 )
 
-/** A line that ends whatever came before it: a heading or a rule. */
 const STANDS_ALONE = /^(?:#{1,6}(?:\s|$)|(?:-[ \t]*){3,}$|(?:\*[ \t]*){3,}$|(?:_[ \t]*){3,}$)/
 
 /** The link as markdown: the words it showed, pointing where it now points. */
@@ -74,7 +68,6 @@ function asSource(path: string, written: string): string {
   return written.startsWith('<') || path.includes(' ') || !balanced(path) ? `<${path}>` : path
 }
 
-/** Whether a path's parentheses pair up, which is what lets one stand bare. */
 function balanced(path: string): boolean {
   let open = 0
   for (const one of path) {
@@ -84,12 +77,10 @@ function balanced(path: string): boolean {
   return open === 0
 }
 
-/** A source as it means once its backslashes are read, which is how the document names it. */
 function unescaped(written: string): string {
   return written.replace(/\\([!-/:-@[-`{-~])/g, '$1')
 }
 
-/** The edit that moves the source `written` at `from`, or null where it stays. */
 function sourceEdit(
   written: string,
   from: number,
@@ -101,8 +92,6 @@ function sourceEdit(
   return { from, to: from + written.length, text: asSource(wanted, written) }
 }
 
-/** The inline code spans of `source`. A span may go over lines but not past a blank one or a
- *  code block, so each run of lines is read alone, and a lone backtick reaches no further. */
 function spansByBlock(
   source: string,
   all: readonly { text: string; from: number; code: boolean }[],
@@ -149,7 +138,6 @@ function pictureEdits(source: string, rename: (src: string) => string | null): E
     for (const match of line.matchAll(PICTURE)) {
       if (inCode(spans, at + match.index)) continue
       const written = match[2] ?? ''
-      // Past `![`, the alt and `](`: an alt may hold the same characters.
       const past = (match[1]?.length ?? 0) + 4
       const from = at + match.index + match[0].indexOf(written, past)
       const edit = sourceEdit(written, from, rename)
@@ -170,9 +158,6 @@ function pictureEdits(source: string, rename: (src: string) => string | null): E
   return edits
 }
 
-/** `![[pic.png]]` as a plain markdown reader can draw it, where the picture has a place to
- *  be drawn from: a picture still, with the words the document reads under it. Null for
- *  anything else, which is an embed of a note and only ever a link. */
 function pictureEmbed(link: FoundLink, rename: (src: string) => string | null): string | null {
   if (!link.embed || embedKind(link.target) !== 'image') return null
 

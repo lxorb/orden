@@ -31,11 +31,6 @@ export function keepsSystemMenu(target: EventTarget | null, system: string): boo
   return field.tagName === 'INPUT' && typeof field.type === 'string' && WORDS.has(field.type)
 }
 
-/** Shift+F10 or the key with a menu printed on it, on a Mac, where the engine makes no
- *  `contextmenu` of them as Windows' and Linux's do: the app makes one, for what has the
- *  keyboard. VS Code keeps Shift+F10 on a Mac the same way. Nothing where something took
- *  the key first, as a row in a list does. Answers whether it was the key. Being no real
- *  press it cannot open the system's menu, so a field gets Orden's; see App.svelte. */
 export function macMenuKey(event: KeyboardEvent): boolean {
   if (event.key !== 'ContextMenu' && !(event.key === 'F10' && event.shiftKey)) return false
   const on = document.activeElement
@@ -46,9 +41,6 @@ export function macMenuKey(event: KeyboardEvent): boolean {
   return true
 }
 
-/** Where the menu of a key arrives: on the caret's line, or on what has the keyboard where
- *  there is no caret to read. On the line and not at its foot, since a note's menu is about
- *  the block at the press, and the foot of a line can already be the next. */
 function pressAt(box: DOMRect): MouseEvent {
   return new MouseEvent('contextmenu', {
     bubbles: true,
@@ -58,9 +50,6 @@ function pressAt(box: DOMRect): MouseEvent {
   })
 }
 
-/** Where the caret is, at the end of the selection that moves. An empty line's caret has no
- *  box, so there the line itself: what has the keyboard can be a whole note, whose foot is
- *  another block. */
 function caretBox(on: Element): DOMRect | null {
   const selection = on.ownerDocument.getSelection()
   const at = selection?.focusNode

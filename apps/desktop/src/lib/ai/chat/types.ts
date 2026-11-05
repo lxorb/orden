@@ -68,9 +68,7 @@ export interface ToolOutput {
   error: boolean
   /** The question's id, when the call asked the reader. */
   approval?: string
-  /** What that question is about, as the crate's `Category`. */
   category?: string
-  /** The site that question is about, where a page is. */
   site?: string
   /** The helper's thread a `run_agent` or `agent_result` call is about (#1062). */
   agent?: string
@@ -115,8 +113,6 @@ export type Part =
       state: ToolState
       result?: ToolOutput
       change?: { path: string; added: number; removed: number }
-      /** When the call was answered: where it comes among the agent's edits, for a rewind
-       *  to take them back in the true order (review/plan.ts). */
       at?: number
     }
   /** `threads`: the helpers' threads a command's line reports on (`/subtask`, `/batch`,
@@ -245,15 +241,8 @@ export interface Thread {
    *  the other (#1064; `unreadOf` in threads.ts). */
   answered?: number
   seen?: number
-  /** The turn being answered while the thread is written mid-answer, so one read back
-   *  with this still on it is an answer the window went on (`cutOff` in threads.ts). */
   answering?: string
-  /** The mode, model and effort that are the thread's own while one send runs on others
-   *  (`Once`, `run` in chat.svelte.ts). Those are what a write says: a send's own Auto read
-   *  back as the thread's would let later changes through without Approve. */
   own?: Pick<Thread, 'mode' | 'model' | 'effort'>
-  /** Read from a file another window is still answering in: not this window's to write
-   *  over, until something is sent here (`answeringIn` in threads.ts). */
   elsewhere?: boolean
   /** The provider's id in Settings > AI. */
   provider: string
@@ -300,7 +289,6 @@ export interface ThreadHead {
   archived?: boolean
   state?: SessionState
   pinned?: number
-  /** Another window is answering in it, as far as its head can tell. */
   elsewhere?: boolean
   /** The first words, for searching the list. */
   words: string

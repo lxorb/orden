@@ -229,8 +229,6 @@ describe('a note purged from Recently deleted', () => {
   })
 })
 
-/** An id a purge retired is nothing a v1 write comes back through: on sync v2 a room could
- *  not settle what the tree hides, for ever, and on v1 the tombstone came back alive. */
 describe('a write to a note purged since it was read', () => {
   test.each([
     ['on sync v1', false],
@@ -264,8 +262,6 @@ describe('a write to a note purged since it was read', () => {
   })
 })
 
-/** An erased room is one that holds nothing, including the object still in memory that the
- *  next join finds. */
 describe('a room erased while its object lives', () => {
   test('hands the next socket none of its words, and opens again', async () => {
     const id = await heldInARoom('Gone.md', 'TOP SECRET\n', 'more ')
@@ -283,8 +279,6 @@ describe('a room erased while its object lives', () => {
     expect(first.closed).toBe(true)
     expect(memory().getText(TEXT).toJSON()).toBe('')
 
-    // Nothing of the old document, and a room that opens again: `held` is what a settle
-    // writes from.
     await env.NOTES.delete(`spaces/${space}/${id}`)
     env.db.prepare("update notes set epoch = 0, epoch_base = '' where id = ?").run(id)
     const next = new FakeSocket()

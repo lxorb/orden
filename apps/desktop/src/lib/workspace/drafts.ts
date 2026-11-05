@@ -38,8 +38,6 @@ export function hasWords(note: NoteDoc): boolean {
   return note.kind === 'note' ? !note.blank : note.dirty
 }
 
-/** Whether a draft says anything a file should keep: not a list marker, a heading's
- *  hashes or a zero-width space on their own, which nobody has written yet. */
 export function worthAFile(note: NoteDoc): boolean {
   if (!hasWords(note)) return false
   if (note.kind !== 'note') return true

@@ -138,7 +138,6 @@
   const rows = $derived(items.flatMap((item) => (item.kind === 'row' ? [item] : [])))
   /** The rows selected that are still in the list: a task completed out of it goes. */
   const pickedRows = $derived(picked.size ? rows.filter((one) => picked.has(one.id)) : [])
-  /** The same as tasks, once each: selected under two of its labels, one is still ticked once. */
   const pickedTasks = $derived([...new Set(pickedRows.map((one) => one.row))])
 
   /** A row selected or let go; `range` selects every row from the last one pressed. */
@@ -265,7 +264,6 @@
     box: HTMLElement,
     from: Value | undefined,
   ) {
-    // The group it left: a row stands under each of its labels.
     const sameGroup = (from === undefined ? groupOf(carried) : groupName(from)) === groupName(key)
     if (carried === target && sameGroup) return
     const rect = box.getBoundingClientRect()

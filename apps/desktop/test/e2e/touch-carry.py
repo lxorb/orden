@@ -1,6 +1,3 @@
-"""A row carried by a thumb: held, then moved, it lands; a plain swipe still scrolls; and a
-thumb swiping across a timeline bar scrolls the track and writes nothing. Real touch
-through CDP, as Trello and Todoist are used: hold, then drag."""
 
 from __future__ import annotations
 
@@ -121,9 +118,7 @@ def board_on(browser, width, height, name):
     )
     before = in_column(page, "A")
     a = box(page, ".face", "A")
-    # A phone shows one column: the walk is across it, and what is asked is that it holds.
     b = box(page, ".face", "B") if name == "tablet" else {"x": a["x"] + 60, "y": a["y"] + 40}
-    # A hold, then a walk to the other column.
     touch(cdp, "touchStart", [(a["x"], a["y"])])
     page.wait_for_timeout(450)
     if not carried(page):
@@ -148,7 +143,6 @@ def board_on(browser, width, height, name):
     if name == "tablet" and after == before:
         wrong(f"[{name}] the drop did not land: A is still in {before!r}")
 
-    # A hold that does not move is the row's menu on a phone, a little after the lift.
     a = box(page, ".face", "A")
     touch(cdp, "touchStart", [(a["x"], a["y"])])
     page.wait_for_timeout(450)
@@ -163,7 +157,6 @@ def board_on(browser, width, height, name):
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
 
-    # A swipe that does not hold is no drag at all.
     a = box(page, ".face", "A")
     touch(cdp, "touchStart", [(a["x"], a["y"])])
     for step in range(1, 9):
@@ -173,14 +166,11 @@ def board_on(browser, width, height, name):
             wrong(f"[{name}] a swipe lifted a card")
     touch(cdp, "touchEnd", [])
     page.wait_for_timeout(500)
-    # On a phone the columns are pages (#1046): the swipe turned it, and A is on the one before.
     if name == "phone":
         turned = page.evaluate("() => document.querySelector('.strip [aria-selected=true]')?.textContent")
         say(f"[{name}] a swipe across a card: the column is {turned!r}")
         if not turned or "Doing" not in turned:
             wrong(f"[{name}] a swipe across a card did not turn the column: {turned!r}")
-    # And the swipe is the board's: a drawer that took it too stayed held over the page, as
-    # the card it began on went with the column and its touchend reached nobody.
     if name == "phone":
         if page.evaluate("() => !!document.querySelector('.scrim')"):
             wrong(f"[{name}] a swipe on the board pulled a drawer out")
@@ -189,11 +179,8 @@ def board_on(browser, width, height, name):
     if in_column(page, "A") != after:
         wrong(f"[{name}] a swipe moved a card")
 
-    # The edge strip is the drawer's, as Google Docs' and Spotify's: with no button on the
-    # bar it is the way to the file list from a board, and the column stays as it was.
     if name == "phone":
         column = page.evaluate("() => document.querySelector('.strip [aria-selected=true]')?.textContent")
-        # On the column itself, the card it holds, not any margin beside it.
         left = page.evaluate(
             "() => document.querySelector('[data-turns-pages]').getBoundingClientRect().x"
         )
@@ -218,7 +205,6 @@ def board_on(browser, width, height, name):
         page.evaluate("() => window.nibApp.workspace.closePanel()")
         page.wait_for_timeout(400)
 
-        # A swipe from the right edge has nothing to bring out over a board.
         touch(cdp, "touchStart", [(384, y0)])
         for step in range(1, 13):
             touch(cdp, "touchMove", [(384 - 26 * step, y0)])
@@ -230,7 +216,6 @@ def board_on(browser, width, height, name):
         page.locator('.strip [role="tab"]', has_text="To do").click()
         page.wait_for_timeout(300)
 
-        # A card held in the strip and carried sideways is a carry, and no drawer with it.
         a = box(page, ".face", "A")
         x1 = max(left + 2, 2)
         touch(cdp, "touchStart", [(x1 + 9, a["y"])])
@@ -248,7 +233,6 @@ def board_on(browser, width, height, name):
         if panel:
             wrong(f"[{name}] a card carried in the strip also opened the drawer")
 
-        # A long column still scrolls under a thumb going up and down.
         page.evaluate(WRITE, [[[f"Items/Long {n}.md", "---\nstatus: To do\n---\n\nwords\n"] for n in range(30)]])
         page.wait_for_timeout(1200)
         scroller = page.evaluate(
@@ -314,7 +298,6 @@ def timeline_on(browser, width, height):
     context, page, cdp = setup(browser, width, height)
     page.evaluate(OPEN_VIEW, "Time")
     wait_for(page, "() => document.querySelectorAll('.span').length >= 2", "the bars")
-    # Days are wide enough for the track to have somewhere to go.
     page.get_by_role("tab", name="Days").click()
     page.wait_for_timeout(400)
     places = lambda: page.evaluate(
@@ -327,7 +310,6 @@ def timeline_on(browser, width, height):
           return { x: at.x + at.width / 2, y: at.y + at.height / 2 } }"""
     )
     start = track()
-    # A thumb swiping sideways across a bar, not asking for a hold: the track goes.
     touch(cdp, "touchStart", [(span["x"], span["y"])])
     for step in range(1, 11):
         touch(cdp, "touchMove", [(span["x"] - 12 * step, span["y"])])
@@ -340,7 +322,6 @@ def timeline_on(browser, width, height):
     if track() == start:
         wrong("[timeline] a thumb swiping across a bar did not scroll the track")
 
-    # A hold, then a move: the bar goes, and its times stay.
     page.evaluate("() => { document.querySelector('.track').scrollLeft = 0 }")
     page.wait_for_timeout(200)
     span = page.evaluate(

@@ -65,11 +65,6 @@ export async function moveToSpace(ids: readonly string[], space: string): Promis
   return tabs.every((tab) => moved.includes(tab))
 }
 
-/** A closed tab's draft on its way back, in its own space, as Chrome's comes back in its
- *  own window: a note of another space among this one's tabs is a tab no switch would find
- *  where it belongs. Null where it does not come back: a file gone since switches to
- *  nothing, and a file in a space archived since stays with it, which is said. A draft
- *  whose space has gone comes back here: its words are nowhere else. */
 export async function reopening(draft: Draft): Promise<Draft | null> {
   const ws = workspace
   const owner = ownerOf(draft.path, draft.space ?? null, ws.spaces)
@@ -88,16 +83,11 @@ export async function reopening(draft: Draft): Promise<Draft | null> {
   return draft
 }
 
-/** Throws where a move's tabs could not follow its file to `path`: a space archived or
- *  gone since is no set on screen or to switch to, and a tab sent there would vanish. So
- *  the step stays, to be said and asked for again. */
 export function followsTo(path: string): void {
   const held = workspace.shownSpaces.some((one) => one.id === ownerOf(path, null, workspace.spaces))
   if (!held) throw new Error(`the space of ${path} is not here`)
 }
 
-/** The tabs of the file at `path` into the set of the space holding it now: a move between
- *  spaces undone or done again takes them with the file, as the move did. */
 export async function tabsFollow(path: string): Promise<void> {
   const ws = workspace
   const space = ownerOf(path, null, ws.spaces)

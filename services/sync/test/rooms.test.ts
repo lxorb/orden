@@ -1729,8 +1729,6 @@ describe('somebody who stops being in the space while the file is open', () => {
     expect((socket.deserializeAttachment() as { mayWrite: boolean }).mayWrite).toBe(false)
   })
 
-  /** A database that neither answers nor fails leaves a handshake unanswered and a socket
-   *  in the room that no device is on: closed with a reason, so the device comes back. */
   describe('a handshake the database never answers', () => {
     const LONGER_THAN_ANY_WAIT = 60 * 60 * 1000
 

@@ -136,7 +136,6 @@ describe('a browser that keeps only the words it uses', () => {
     await browser.engine.pass(SPACE)
     expect(browser.engine.awayFiles()).toHaveLength(2)
 
-    // Another window opens: its listing reads the disk, which holds only what is kept.
     browser.engine.core.crowded = true
     await browser.engine.pass(SPACE)
     expect(browser.engine.awayFiles()).toEqual([])

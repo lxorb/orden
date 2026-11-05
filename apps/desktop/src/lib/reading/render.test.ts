@@ -161,7 +161,6 @@ describe('the page a note is read on', () => {
     const html = await readingHtml(note('---\ntitle: x\n---\n\nA line. ^abc123\n'), 'light', true)
 
     expect(html).not.toContain('title: x')
-    // A link to the block lands on its id, and the name is no word of the page.
     expect(html).toContain('<span id="^abc123"></span>')
     expect(html.replaceAll('id="^abc123"', '')).not.toContain('^abc123')
     expect(html).toContain('A line.')

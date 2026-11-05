@@ -646,7 +646,6 @@ describe('the timeline', () => {
     expect(span.first > addDays(TODAY, -30)).toBe(true)
     expect(span.last < addDays(TODAY, 60)).toBe(true)
     expect(drawnOf(bar('1026-11-03'), span)).toMatchObject({ start: span.first, far: true })
-    // A real plan some years off is what the track is for.
     expect(spanOf([bar('2029-03-01'), ...near], TODAY).last > '2029-03-01').toBe(true)
     expect(spanOf([bar('2024-03-01'), ...near], TODAY).first < '2024-03-01').toBe(true)
   })
@@ -875,7 +874,6 @@ describe('the panel', () => {
     ]
     expect(panelCounts(rows, TODAY, 'Mine').labels.map((one) => one.tag)).toEqual(['both', 'mine'])
     expect(panelCounts(rows, TODAY, 'Mine').labels[0]?.count).toBe(1)
-    // The list of notes still knows every space: a favourite asks for its own.
     expect(panelCounts(rows, TODAY, 'Mine').notes).toHaveLength(2)
   })
 

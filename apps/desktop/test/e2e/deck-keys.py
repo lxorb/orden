@@ -1,6 +1,3 @@
-"""A deck: Escape closes the notes sheet before it leaves the deck, and the deck's PDF, where
-the print frame makes it, runs the lines that fit each slide to its sheet: the frame inherits
-the app's policy, which refuses any inline script it does not name by hash."""
 
 from __future__ import annotations
 

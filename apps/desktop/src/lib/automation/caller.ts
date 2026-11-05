@@ -16,8 +16,6 @@ import type { Scope } from '../agents/verbs'
 /** What the window needs of an agent's grant. The crate holds the rest. */
 interface Agent {
   id: string
-  /** Whether it is a provider's own grant for the AI panel, by the crate's mark on it
-   *  and never its name (`built_in` in src-tauri/src/agents/grants.rs). */
   builtIn: boolean
   name: string
   scopes: readonly string[]

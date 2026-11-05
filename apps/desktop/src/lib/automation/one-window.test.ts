@@ -2,16 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** A verb and a link run once, however many windows are open.
- *
- *  Each document window starts its own automation. The runtime hands an event sent to one
- *  label to that window's listeners and to every listener in any window whose target was
- *  left at Any, which is what `listen` from the event module registers: so a `run_terminal`
- *  sent to `main` ran once per window, for one call answered. The stand-in below keeps
- *  that rule, and two windows are two loads of the module. */
-
 interface Heard {
-  /** The label it listens on; null is the runtime's Any. */
   on: string | null
   event: string
   then: (event: { payload: unknown }) => void
@@ -21,11 +12,9 @@ const world = vi.hoisted(() => ({
   here: 'main',
   listeners: [] as Heard[],
   ran: [] as string[],
-  /** What the crate answers a window that takes a request. */
   claims: true,
 }))
 
-/** What `emit_to` does in the runtime. */
 function sendTo(label: string, event: string, payload: unknown) {
   for (const one of world.listeners) {
     if (one.event === event && (one.on === null || one.on === label)) one.then({ payload })
@@ -107,7 +96,6 @@ describe('with two windows open', () => {
   })
 })
 
-/** The crate's constants that it sends with `emit_to`, or may not send to all. */
 const here = join(import.meta.dirname, '..')
 const crate = join(here, '../../src-tauri/src')
 
@@ -119,7 +107,6 @@ function filesUnder(dir: string, ending: RegExp): string[] {
   })
 }
 
-/** Every event some file of the crate sends to one window by name. */
 function sentToOneWindow(): Set<string> {
   const events = new Set<string>()
   for (const file of filesUnder(crate, /\.rs$/)) {
@@ -139,8 +126,6 @@ function sentToOneWindow(): Set<string> {
 describe('the audit of every event a window hears', () => {
   test('a file that names an event sent to one window hears it on that window alone', () => {
     const events = sentToOneWindow()
-    // The list itself is what this test stands on: an edit that stopped finding them
-    // would pass everything.
     expect(events).toContain('nib://automation')
     expect(events).toContain('nib://web-key')
 
@@ -148,7 +133,6 @@ describe('the audit of every event a window hears', () => {
     for (const file of filesUnder(here, /\.(ts|svelte)$/)) {
       const source = readFileSync(file, 'utf8')
       const named = [...events].filter((event) => source.includes(`'${event}'`))
-      // `import type` is no listener.
       const hearsAny = /import\((['"])@tauri-apps\/api\/event\1\)/.test(source)
       if (named.length && hearsAny) wrong.push(`${file}: ${named.join(', ')}`)
     }

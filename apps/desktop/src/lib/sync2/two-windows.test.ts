@@ -1,8 +1,3 @@
-/** Two windows of one device, in the simulator (H2-DESKTOP-1, 3): one store, one disk, one
- *  engine. Window A holds it. Window B has none: what it does goes down on the disk and over
- *  to A as `owed.ts` says, and what A never answered runs where the engine goes next. The
- *  real engine, the real account, and the real queue; only the channel is a call. */
-
 import { CALM, simulate } from '@orden/sync-core/sim'
 import { describe, expect, test, vi } from 'vitest'
 import type { Engine } from './engine'
@@ -19,7 +14,6 @@ interface Private {
 }
 
 class TwoWindows extends EngineDevice {
-  /** What B owes A, and whether A is there to hear it. */
   private unheard: Owing[] = []
   private readonly owed = new Owed((item) => this.unheard.push(item))
 
@@ -27,7 +21,6 @@ class TwoWindows extends EngineDevice {
     return this as unknown as Private
   }
 
-  /** The channel: whatever has been said reaches the engine's window, and is answered. */
   private async hear(engine: Engine) {
     for (const item of this.unheard.splice(0)) {
       await takeOwed(engine, item, async (op) => {
@@ -42,14 +35,11 @@ class TwoWindows extends EngineDevice {
   override async act(action: Parameters<EngineDevice['act']>[0]) {
     const engine = await this.self.ready()
     if (action.t === 'type' && action.words.startsWith('B-')) {
-      // Window B: its autosave. The note's words at the end of the file, written down, and
-      // said. A has no word of them until it hears.
       const name = action.note === 0 ? 'Plan.md' : 'Log.md'
       const path = `${this.self.root}/${name}`
       const text = `${(await this.self.disk.read(path)) ?? ''}\n${action.words}`
       await this.self.disk.write(path, text)
       this.owed.add({ kind: 'wrote', path, text })
-      // Said to a window that crashes before it answers.
       if (engine && !action.words.startsWith('B-unheard')) await this.hear(engine)
       return
     }
@@ -61,7 +51,6 @@ class TwoWindows extends EngineDevice {
         op: { op: 'created', path, kind: 'file', root: this.self.root },
       })
       await this.hear(engine)
-      // The folder's watch hears the same file, and it is said once more besides.
       this.owed.add({
         kind: 'op',
         op: { op: 'created', path, kind: 'file', root: this.self.root },
@@ -72,7 +61,6 @@ class TwoWindows extends EngineDevice {
     await super.act(action)
   }
 
-  /** The engine's window, whichever that is now: what it was never told, it is told. */
   override async pass(link: Parameters<EngineDevice['pass']>[0]) {
     const engine = await this.self.ready()
     if (engine) await this.hear(engine)

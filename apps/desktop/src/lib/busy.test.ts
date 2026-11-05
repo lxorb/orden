@@ -24,7 +24,6 @@ describe('the line across the top of the document', () => {
     expect(busy.active).toBe(false)
   })
 
-  /** Started and not waited on, so nobody else is there to say it. */
   test('says what stopped work nobody is waiting on', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
     busy.start('Exporting', () => Promise.reject(new Error('the file is locked')))

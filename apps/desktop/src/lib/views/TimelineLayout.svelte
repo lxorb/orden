@@ -52,7 +52,6 @@
     })
   })
   const span = $derived(spanOf(bars, live.today))
-  /** A base of only old dates is drawn around them, and today is nowhere on its track. */
   const todayShown = $derived(live.today >= span.first && live.today <= span.last)
   const width = $derived(DAY_WIDTH[scale])
   const total = $derived((daysBetween(span.first, span.last) + 1) * width)
@@ -99,8 +98,6 @@
     ) as HTMLElement
     const startY = event.clientY
     let moved = false
-    // Under a thumb a bar is held first, as a board's card is: a swipe across it is the
-    // track's. See `holdsThumb`.
     const thumb = event.pointerType === 'touch'
     const hold = thumb
       ? setTimeout(() => {
@@ -136,7 +133,6 @@
       const held = carrying
       done()
       if (!moved) {
-        // A bar held and let go where it was has been asked for nothing.
         if (part === 'move' && !(thumb && held)) kit.choose(bar.row, linkModifier(next))
         return
       }
@@ -154,7 +150,6 @@
     window.addEventListener('pointercancel', done)
   }
 
-  /** Whether a thumb has held a bar long enough to carry it. */
   let carrying = false
 </script>
 

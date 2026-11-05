@@ -1,7 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 
-/** Who runs the one watch of the spaces: never two, and the engine's when it has one. */
-
 const watching = vi.hoisted(() => ({ roots: [] as string[][], stops: 0 }))
 vi.mock('../native', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../native')>()),
@@ -14,7 +12,6 @@ vi.mock('../native', async (importOriginal) => ({
     return Promise.resolve(undefined)
   },
 }))
-// One window, leading from the start; the election is sync2/lead.ts's own to test.
 vi.mock('../sync2/lead', () => ({
   leadSync: () => Promise.resolve({ release: () => undefined }),
 }))
@@ -71,8 +68,6 @@ describe('the watch of the spaces', () => {
     await settle()
     expect(watching.roots).toEqual([['/s', '/t']])
 
-    // Signing out's own write-down ends with the engine stopping its watch, after the
-    // one above was armed: asked for again.
     await unwatchSpaces()
     await settle()
     expect(watching.roots).toEqual([
@@ -96,7 +91,6 @@ describe('the watch of the spaces', () => {
     watch.settle()
     await settle()
     const first = watching.roots.length
-    // What another window's `onUnwatched` says, on the channel this one hears.
     const stop = hearsUnwatched(watch, line)
     line.say('spaces-unwatched')
     await settle()

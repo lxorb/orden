@@ -62,8 +62,6 @@ function foreign(path: string): boolean {
 /** Whether a path is something the engine keeps: a folder, a document, or - where the
  *  world carries bytes - any other file (files.ts). */
 export function kept(engine: Engine, path: string, dir: boolean): boolean {
-  // Inside its space: the folder a space lives in may be under a dotted one of its own,
-  // `~/.local/share` on Linux, and everything heard there read as the app's.
   const inside = [...engine.core.spaces.values()]
     .map((space) => relative(space.row.root, path, engine.core.world.foldsCase))
     .find((one) => one !== null)
@@ -110,8 +108,6 @@ export interface Watched {
    *  a space paired after the watch began - every space, on a device's first v2 launch -
    *  or one whose folder moved. */
   follow(): void
-  /** A space's first pass is over: its folder is read now if anything was heard of it
-   *  that the pass may have read past, so that waits for no next launch. */
   caughtUp(spaceId: string): void
   stop(): void
 }
@@ -141,8 +137,6 @@ export function watchFolders(how: Watching): Watched {
     }
   }
 
-  // The spaces something was heard of before their first pass was over, and the roots whose
-  // watch has said it started: that first word is no news, the pass lists the folder after it.
   const missed = new Set<string>()
   const started = new Set<string>()
   const behind = (id: string | undefined) => {
@@ -229,9 +223,6 @@ export function watchFolders(how: Watching): Watched {
 
 async function changed(how: Watching, change: SpaceChange): Promise<void> {
   const engine = how.engine
-  // A space's first pass is what matches its files to their entries, and reads the whole
-  // folder when it does. Before that a note v1 tracks has no entry, and a create queued
-  // for it here is the same note twice (as `scanned` waits, for the same reason).
   const placed = engine.placed(change.path)
   if (placed && !how.ready(placed.space.id)) return
   const disk = engine.core.world.disk
@@ -263,9 +254,6 @@ async function changed(how: Watching, change: SpaceChange): Promise<void> {
     if (!change.dir) await engine.foreign(change.path)
     return
   }
-  // A file with no entry that changed is a file with no entry: its `created` may have
-  // met it locked (a picture half copied on Windows), and nothing else would ask again
-  // before the next launch. A folder's change says nothing about the folder.
   if (change.kind === 'created' || !change.dir) await came(engine, change.path, change.dir)
 }
 
@@ -319,7 +307,6 @@ export async function scanned(how: Watching, root: string): Promise<void> {
   const listed = (await listInternal(root)) ?? (keptShaped(root) ? null : await scanSpace(root))
   if (!listed) return
   const seen = new Set<string>()
-  /** The folders the listing could not read into: nothing under them is known to be gone. */
   const unread: string[] = []
 
   for (const one of listed) {

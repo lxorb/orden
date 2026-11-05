@@ -450,8 +450,6 @@
     )
   }
 
-  // Where the workspace was asked to go in this note, a followed link's heading or block,
-  // once there is a page to go there on.
   $effect(() => {
     const asked = workspace.goto
     if (!asked || !html || workspace.active?.id !== tab.id || tab.path !== asked.path) return
@@ -460,8 +458,6 @@
     void tick().then(() => requestAnimationFrame(() => land(asked.line)))
   })
 
-  /** A line of the note brought into view: its block if it has a name, else by where it
-   *  is, which is exact for a heading. */
   function land(line: number) {
     const named = blockIds(tab.doc).find((one) => one.line === line)
     if (named) jump(`^${named.id}`)
@@ -486,7 +482,6 @@
     const said = decodeFragment(fragment)
     const found = page.querySelector(`[id="${CSS.escape(said)}"]`)
     if (found) {
-      // A block's id stands at its end, and it is the block that is gone to.
       const block = said.startsWith('^') ? found.closest('p, li, blockquote') : null
       ;(block ?? found).scrollIntoView({ block: 'start' })
       return

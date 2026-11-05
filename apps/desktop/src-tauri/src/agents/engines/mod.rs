@@ -309,17 +309,12 @@ pub const SETTLED: &str = r"(still, most) => new Promise((done) => {
 /// A page's trees, and the secret fields among their nodes.
 pub type Tree = (Vec<Part>, HashSet<(String, u64)>);
 
-/// The node of the secret that stands for a whole part of the page no field of which could
-/// be told: nothing of that part is written, and no picture of the page is taken.
 pub const UNREAD: u64 = 0;
 
-/// Whether a read of the page has left a part of it out, whichever part.
 pub fn left_a_part_out(secret: &HashSet<(String, u64)>) -> bool {
     secret.iter().any(|(_, node)| *node == UNREAD)
 }
 
-/// What a press is put to the question by, for each element it finds under the pointer
-/// other than the one already judged; see the `DevTools` page's `press_judged`.
 pub type Gate<'g> = &'g dyn Fn(&Element) -> Result<(), Answer>;
 
 /// A page an agent is acting on, on whichever engine has it.
@@ -336,8 +331,6 @@ pub struct Page<'a> {
     pub own: bool,
     /// The stop the call started under.
     pub since: u64,
-    /// What the agent may reach and the store the tab is in; none for the reader's own
-    /// command line.
     #[cfg_attr(
         not(any(windows, feature = "cef")),
         allow(dead_code, reason = "WKWebView's acts are built in #1092's next steps")
@@ -347,21 +340,16 @@ pub struct Page<'a> {
     /// focused password field, print a page with a filled one. Set by the one decision
     /// (`judged` in browser.rs, from the grant's mode, #1072), never by the page.
     pub credentials: AtomicBool,
-    /// nib's own world in each session the call has been in, where everything the gate goes
-    /// by is read: the page has no reach into it, however it dresses its own objects.
     #[cfg_attr(
         not(any(windows, feature = "cef")),
         allow(dead_code, reason = "WKWebView's acts are built in #1092's next steps")
     )]
     pub worlds: Mutex<HashMap<(Option<String>, String), i64>>,
-    /// The frames of each session, once for the call, with the one that last read a node
-    /// first: a page of many frames or fields asks once, and not for each of them.
     #[cfg_attr(
         not(any(windows, feature = "cef")),
         allow(dead_code, reason = "WKWebView's acts are built in #1092's next steps")
     )]
     pub frame_lists: Mutex<HashMap<Option<String>, Vec<String>>>,
-    /// Whether the call has looked again with new worlds, which it does once.
     #[cfg_attr(
         not(any(windows, feature = "cef")),
         allow(dead_code, reason = "WKWebView's acts are built in #1092's next steps")
@@ -370,13 +358,10 @@ pub struct Page<'a> {
 }
 
 impl Page<'_> {
-    /// Whether the frame an element is in may be acted in (9.2): a denied site does not
-    /// open for being in a frame. The same on every engine, from what `facts` says.
     pub fn frame_may_be_acted_in(&self, facts: &Facts) -> Result<(), Answer> {
         acts_in(self.limits.as_ref(), facts)
     }
 
-    /// Whether the agent's grant has a rule for any site, so that a frame can be denied.
     pub fn grant_limits_sites(&self) -> bool {
         limits_sites(self.limits.as_ref())
     }
@@ -497,19 +482,11 @@ pub trait Engine {
     fn element_at(&self, point: (f64, f64)) -> Result<Element, Answer>;
     /// What an element says about itself and its form, for the policy.
     fn facts(&self, element: &Element) -> Result<Facts, Answer>;
-    /// What a press on an element is judged by: the element its first point lands on,
-    /// read as `facts` reads one.
     fn facts_of_press(&self, element: &Element) -> Result<Facts, Answer>;
-    /// The element a press on `element` lands on, at its first point.
     fn at_first_point(&self, element: &Element) -> Result<Element, Answer>;
-    /// The element a press aimed at `element` lands on.
     fn aimed(&self, element: &Element) -> Result<Element, Answer>;
-    /// Whether an act in what `facts` describes is one the agent may do there: a frame of
-    /// a site it may not reach is refused.
     fn may_act_in(&self, facts: &Facts) -> Result<(), Answer>;
-    /// Whether the agent's grant limits the sites it reaches.
     fn limits_sites(&self) -> bool;
-    /// Whether a press on a box or a radio would change it to `wanted`.
     fn tick_changes(&self, element: &Element, wanted: bool) -> Result<bool, Answer>;
     /// What the element with the keyboard says about itself, if one has it.
     fn active_facts(&self) -> Result<Option<Facts>, Answer>;
@@ -571,8 +548,6 @@ pub trait Engine {
     fn select(&self, element: &Element, values: &[String]) -> Result<Vec<String>, Answer>;
     /// One field of a form set.
     fn fill(&self, element: &Element, value: &FieldValue, gate: Gate<'_>) -> Result<(), Answer>;
-    /// One element dragged onto another: each with what a press there lands on, and the
-    /// gates the start and the end are put to.
     fn drag(
         &self,
         from: (&Element, &Element),

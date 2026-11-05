@@ -1,17 +1,3 @@
-"""What the reading view and a file shared on its own do, driven in the built app.
-
-- a base or tasks fence in a file somebody shared on its own (no path to ask) runs
-  guarded, on both faces of the note, where the same fence in the reader's own runs
-- a link to a named block lands on the block, in the note and in another
-- a second box pressed before the page is drawn again ticks its own task
-- a base fence that cannot be written back offers no change to its view
-
-Run it from the repository root:
-
-    python apps/desktop/test/e2e/hunt3-views.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run.
-"""
 
 from __future__ import annotations
 
@@ -145,7 +131,6 @@ def drive_block_links(page: Page) -> None:
         }"""
     )
     say(f"[other note] {shown}")
-    # A tab of the note already in its reading view lands too, and a table row exactly.
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
     page.wait_for_timeout(600)
     near = page.evaluate(

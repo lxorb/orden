@@ -259,14 +259,8 @@ export function sortCompare(a: Val, b: Val): number {
   return compare(a, b) ?? 0
 }
 
-/** How deep a value of a guarded base may be, far past what anybody writes and far short
- *  of what a walk of it can take without running out of stack. */
 const DEEPEST_VALUE = 64
 
-/** Counts what walking a value will cost, and refuses a value too deep to walk. A list
- *  can hold itself twice for two steps, so what it costs to make says nothing of what it
- *  costs to read: this is what an evaluation of a guarded base owes for what it hands
- *  out, to a sort, a cell or a search that is no longer counting. */
 export function weigh(value: Val, depth = 0): void {
   if (typeof value === 'string') spend(stepsOfText(value.length))
   if (value === null || typeof value !== 'object') return
@@ -281,8 +275,6 @@ export function weigh(value: Val, depth = 0): void {
   }
 }
 
-/** The words of each item of a list, counted as they come rather than after, since the
- *  same long string can stand in a list any number of times. */
 export function textsOf(list: readonly Val[]): string[] {
   spend(list.length)
   return list.map((one) => {

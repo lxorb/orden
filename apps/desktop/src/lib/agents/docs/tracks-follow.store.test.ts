@@ -1,8 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 
-/** An agent's edits and what becomes of the note under them, on the real workspace: a
- *  draft given its place, and a note deleted with another made at its name. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../../../../test/disk').Disk | null }))
 vi.mock('../../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../tauri')>()),
@@ -74,7 +71,6 @@ describe('a note deleted and another made at its name', () => {
     if (!newId) throw new Error('no edit')
     expect(track.ids).toEqual([newId])
 
-    // Taken back, newest first, the way a rewind walks them.
     await docs.undoSomeIn(agent, '/s/n.md', new Set([newId]))
     expect(d.files.get('/s/n.md')).toBe('# new\n\nfresh words\n')
     await workspace.remove('/s/n.md', false)

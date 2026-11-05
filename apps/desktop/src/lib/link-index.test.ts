@@ -1633,7 +1633,6 @@ describe('a space’s AGENTS.md, which is a setting', () => {
   })
 })
 
-/** One holder per name in the order asked, the way a browser's are. */
 function lineOfLocks() {
   const tails = new Map<string, Promise<unknown>>()
   return {
@@ -1652,7 +1651,6 @@ function lineOfLocks() {
 }
 
 describe('another window writing the file as a link is rewritten', () => {
-  /** Another window's write in the file's turn while `work` asks for the same turn. */
   async function whileAnotherWrites(path: string, work: () => Promise<unknown>, write: () => void) {
     const locks = lineOfLocks()
     vi.stubGlobal('navigator', { locks })

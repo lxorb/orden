@@ -1,9 +1,5 @@
 import { expect, test, vi } from 'vitest'
 
-/** A note the account refuses on sync v1, changed in place through the other windows
- *  (`writeEdited`): the memo of the refusal holds the file as it was, so the words that went
- *  down are offered, and a write that did not go down is not. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../../../test/disk').Disk | null }))
 const refused = vi.hoisted(() => ({ times: 0 }))
 vi.mock('../tauri', async (importOriginal) => ({

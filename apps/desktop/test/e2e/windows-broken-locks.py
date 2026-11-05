@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-"""Web Locks that hang, refuse or throw leave two windows working: each starts in moments and
-each hears what the other writes, with no page error (locks.ts; H3-WINDOWS-L7)."""
 
 from __future__ import annotations
 

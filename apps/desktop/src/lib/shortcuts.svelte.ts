@@ -50,8 +50,6 @@ const PRESET_KEY = 'nib:preset'
  *  same numbers the server enforces; see services/sync/src/settings.ts. */
 const MOST_OVERRIDES = 200
 
-/** The keys typing moves and breaks lines with. Space goes with the letters, being one
- *  character. */
 const TYPING_KEYS: ReadonlySet<string> = new Set([
   'Enter',
   'Tab',
@@ -208,8 +206,6 @@ class Shortcuts {
     return null
   }
 
-  /** Whether this is the key a row starts with: the table's Delete, the picture's Enter.
-   *  One already saved for another row stays as it is; this only asks about a new one. */
   private ownKey(row: string | undefined, key: string): boolean {
     return row !== undefined && this.defaultFor(row) === key
   }

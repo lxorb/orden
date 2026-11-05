@@ -1,5 +1,3 @@
-"""Undo of a delete and a rename after the space was renamed, a delete that leaves a nested
-note beside a note of its name, and the text size slider by key, on the web build."""
 from __future__ import annotations
 from harness import Drive
 DRIVE = Drive(__file__, dev=True)

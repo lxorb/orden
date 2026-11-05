@@ -1,7 +1,3 @@
-#!/usr/bin/env python3
-"""One note in two windows (H2-DESKTOP-14): two pages on one origin. What one types reaches
-the other, neither overwrites the other, a note made in one is in the other's list, and a
-note deleted in one does not come back when the other types: its words stay, as a draft."""
 
 from __future__ import annotations
 
@@ -30,7 +26,6 @@ def drive(browser: Browser) -> None:
     b = ctx.new_page()
     b.goto(a.url)
     DRIVE.ready(b)
-    # The channel's windows have met by the launch's later turns.
     wait_for(b, "()=>window.nibApp.workspace.files.some(f=>f.name.startsWith('Both'))", "the list")
     DRIVE.open_note(b, "Both")
     root = a.evaluate("()=>window.nibApp.workspace.activeSpace.root")
@@ -53,7 +48,6 @@ def drive(browser: Browser) -> None:
     if a.evaluate(LIVE) != b.evaluate(LIVE):
         wrong(f"the windows differ: {a.evaluate(LIVE)!r} against {b.evaluate(LIVE)!r}")
 
-    # Both at once, before either has heard.
     a.evaluate("()=>{const n=window.nibApp.workspace.active.note;n.live.edit([{from:0,to:0,insert:'TOP-A '}]);}")
     b.evaluate("()=>{const n=window.nibApp.workspace.active.note;n.live.edit([{from:n.live.text.length,to:n.live.text.length,insert:'END-B '}]);}")
     wait_for(
@@ -64,12 +58,10 @@ def drive(browser: Browser) -> None:
         "both of a moment on the disk",
     )
 
-    # A note made in one is in the other's list.
     a.evaluate("async (r)=>{await window.nibApp.workspace.noteFrom('# Fresh\\n\\nx\\n',r)}", root)
     wait_for(b, "()=>window.nibApp.workspace.files.some(f=>f.name.startsWith('Fresh'))", "B's list")
     say("a note made in A is in B's list")
 
-    # Deleted in A while B is typing.
     b.bring_to_front()
     b.evaluate("()=>{const n=window.nibApp.workspace.active.note;n.live.edit([{from:0,to:0,insert:'LATE-B '}]);}")
     a.evaluate("async (p)=>{await window.nibApp.workspace.remove(p,false)}", path)

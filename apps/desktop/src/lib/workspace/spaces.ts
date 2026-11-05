@@ -53,12 +53,9 @@ async function withKept(
 /** Reads the spaces folder. It is the source of truth, so a space added or
  *  removed outside the app simply shows up that way. */
 export async function loadSpaces(ws: HoldsSpaces) {
-  // A listing that failed says nothing about the spaces, and one that crossed a change here
-  // (`addSpace`) knows nothing of it: read again, a few times at most.
   let found: { name: string; path: string }[] | null = null
   for (let round = 0; round < 3; round += 1) {
     const before = ws.spaces
-    // Read while the webview started, the first time; see workspace/ahead.ts.
     const ahead = await spacesAhead()
     found = ahead
       ? await withKept(ahead)

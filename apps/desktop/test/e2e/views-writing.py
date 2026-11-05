@@ -1,8 +1,3 @@
-"""What a person writing meets: a block paste, a list key, a block's handle, and a draft
-on a phone. Each step is the words the note holds afterwards, read from the editor.
-
-    python apps/desktop/test/e2e/views-writing.py
-"""
 
 from __future__ import annotations
 
@@ -20,7 +15,6 @@ counter = {"n": 0}
 
 
 def note(page, words):
-    """A note of its own, its body after a title line, and the caret at its start."""
     counter["n"] += 1
     title = f"T{counter['n']}x"
     DRIVE.seed(page, f"# {title}\n\n{words}")
@@ -34,7 +28,6 @@ def body(page):
 
 
 def caret(page, words, offset=0):
-    """The caret `offset` past where `words` begin in the note."""
     page.evaluate(
         """([words, offset]) => {
             const view = window.nib
@@ -84,7 +77,6 @@ def holds(page, what, wanted):
 
 
 def handle(page, words):
-    """The grip beside a line, pressed: the block's menu opens."""
     caret(page, words)
     spot = page.evaluate(
         """(words) => {
@@ -266,7 +258,6 @@ def phone(browser):
     page.keyboard.type("milk and eggs")
     page.wait_for_timeout(300)
 
-    # The plus again: the words must be a note in the list, and the new tab empty.
     tap(page, page.locator("button.fab"))
     DRIVE.wait_for(page, f"() => {named % 'Shopping list'}", "the draft to be written down")
     DRIVE.wait_for(page, f"() => {tabs}.length === 1", "the draft's tab to go")
@@ -274,9 +265,6 @@ def phone(browser):
         wrong("the new tab is not empty")
     say("ok: a draft the plus put away is a note")
 
-    # A press first: on this Android agent keys sent right after the plus, with a note
-    # with words before it, reach CodeMirror's EditContext and not the note, with or
-    # without a draft being written down.
     page.locator(".cm-content").first.click()
     page.keyboard.type("Second thought")
     page.wait_for_timeout(1000)

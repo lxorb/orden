@@ -471,10 +471,6 @@ fn listed(programs: &[String], program: &str, asked: &Process, windows: bool) ->
     programs.iter().any(|one| bare(one, windows) == name)
 }
 
-/// A program's name as a list holds it. On Windows, which runs `git.exe` for `git` and
-/// does not tell `GIT` from `git`, in lower case and without an ending it runs a bare name
-/// with (`PATHEXT`'s `.exe`, `.com`, `.bat`, `.cmd`); a `.sh` or `.ps1` is another file.
-/// On a Mac and Linux a name with any ending is another file, and the case counts.
 fn bare(program: &str, windows: bool) -> String {
     let name = program.trim();
     if !windows {
@@ -787,9 +783,6 @@ mod tests {
         }
     }
 
-    /// Windows runs `git.exe` for `git` and does not tell `GIT` from `git`: an ending it
-    /// runs a bare name with is the bare name there, and only those. On a Mac and Linux a
-    /// name with an ending is another file, and the case counts.
     #[test]
     fn an_ending_is_the_bare_name_only_where_windows_runs_it_so() {
         let programs = vec!["git".to_owned(), "Node.exe".to_owned()];

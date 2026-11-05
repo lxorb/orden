@@ -1,10 +1,3 @@
-/** How the runner goes through its spaces: one space's trouble is that space's.
- *
- *  A pass that throws for one space left the loop over all of them, so the spaces after
- *  it were not synced that round, and on the way back to v1 it kept every space on this
- *  device waiting for one the account no longer reaches. Here, where a test can hold it
- *  without the window around the runner. */
-
 import { ApiError } from '../api'
 import { Refused } from './transport'
 
@@ -12,15 +5,11 @@ function statusOf(error: unknown): number | null {
   return error instanceof Refused || error instanceof ApiError ? error.status : null
 }
 
-/** The account saying this space is not this person's to reach. */
 function outOfReach(error: unknown): boolean {
   const status = statusOf(error)
   return status === 403 || status === 404
 }
 
-/** Takes every space off `due`, each in its turn. The session having ended is everybody's
- *  answer and stops at once; anything else waits until the rest have had their turn, and
- *  is thrown then, the first of them, for the runner to say. */
 export async function eachDue(
   due: Set<string>,
   alive: () => boolean,
@@ -46,14 +35,6 @@ interface Sending {
   waiting(id: string): boolean
 }
 
-/** Passes over the spaces until nothing in them waits to go up, or a few rounds have
- *  gone by. Answers false where the account could not be reached. What still waits
- *  after that - refused, or held for the question - is left to v1's own judgement,
- *  through the words the mirrors say this device confirmed.
- *
- *  A space the account refuses has nothing that can go: whether it is out of reach for
- *  good is the listing's to say (`reachable`), and the other spaces do not wait to hear
- *  it. */
 export async function sentAll(
   engine: Sending,
   spaces: ReadonlySet<string>,
@@ -78,13 +59,6 @@ export async function sentAll(
   return true
 }
 
-/** Each space's listing, and the spaces gone: taken out of a shared space, or the space
- *  erased, while this device was closed. There is no mirror to write for one, and nothing it
- *  holds to send anywhere. Its files stay on the disk.
- *
- *  A refused listing alone does not say so, a proxy or a captive portal answers 403 too, and
- *  what goes with a space is its mirror. The account's own list of spaces says; one that is
- *  on it keeps its mirror, from what this device confirmed, with no listing here. */
 export async function reachable<T>(
   spaces: ReadonlySet<string>,
   listing: (id: string) => Promise<T>,

@@ -1,9 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { macMenuKey } from '../../src/lib/system-menu'
 
-/** The menu key on a Mac, whose engine makes no `contextmenu` of it. In the effects project
- *  for a document with something in it to have the keyboard. */
-
 const key = (init: KeyboardEventInit) =>
   new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init })
 
@@ -17,7 +14,6 @@ function holding(tag: string) {
   return heard
 }
 
-// jsdom lays nothing out, and has no box for a range to answer with.
 beforeEach(() => {
   Range.prototype.getBoundingClientRect = () => new DOMRect()
 })
@@ -27,7 +23,6 @@ afterEach(() => {
 })
 
 describe('a menu key on a Mac', () => {
-  // An empty line's caret has no box, and the foot of the note is another block.
   test('on an empty line asks from that line, not from the foot of what has the keyboard', () => {
     const note = document.createElement('div')
     note.contentEditable = 'true'

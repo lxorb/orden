@@ -11,7 +11,6 @@ describe('the fence a base came from, found again', () => {
     expect(fenceAt(`~~~~base\n${code}~~~~\n`, code)).not.toBeNull()
     expect(fenceAt(`\`\`\`base\r\n${code.replaceAll('\n', '\r\n')}\`\`\`\r\n`, code)).not.toBeNull()
     expect(fenceAt(`\`\`\`base\n${code}\`\`\``, code.trimEnd())).not.toBeNull()
-    // Another fence's words are no bar to it.
     expect(
       fenceAt(`\`\`\`base\nother: 1\n\`\`\`\n\`\`\`base\n${code}\`\`\`\n`, code),
     ).not.toBeNull()

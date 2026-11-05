@@ -332,7 +332,6 @@ pub fn hand_over(app: &AppHandle, handed: Handed, arrived: Vec<String>) {
     }
 }
 
-/// A window comes forward for what somebody asked of the app, from the tray too.
 pub fn brought_up(window: &tauri::Window) {
     if crate::placement::away().is_none() {
         let _ = window.show();
@@ -340,8 +339,6 @@ pub fn brought_up(window: &tauri::Window) {
     bring_forward(window);
 }
 
-/// Something is held for the next window that asks: with no window at all - a Mac app
-/// lives on in the Dock with every window closed - one has to be opened to ask.
 pub fn open_for_what_waits(app: &AppHandle) {
     let launched = app
         .try_state::<Pending>()

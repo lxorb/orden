@@ -128,14 +128,8 @@ export function blockTarget(view: EditorView, pos: number): string | null {
     return words ? `#${words}` : null
   }
 
-  // Front matter is the note's and not a block of it: a name on its closing line
-  // would leave it unclosed.
   if (span.kind === 'properties') return null
 
-  // The page's reading of what is code, which is not always this grammar's: a fence
-  // nothing closes, or one an older build closed with a name, is words to the grammar.
-  // The name it was closed with is this block's. A name written on one nothing closes
-  // is code on the page, under it as much as in it.
   const rows = [...lines(doc.toString())]
   if (rows[first.number - 1]?.code) {
     for (let at = first.number - 1; rows[at]?.code; at++) {
@@ -147,7 +141,6 @@ export function blockTarget(view: EditorView, pos: number): string | null {
 
   const last = doc.lineAt(ownEnd(view.state, span))
   const verbatim = verbatimLines(view.state, span.from, span.to).has(last.number)
-  // Where the name would already be: under the block, or at the end of its last line.
   const under = writtenLine(view.state, last.number + 1, 1)
   const already =
     under && ownLine(under.text)
@@ -159,8 +152,6 @@ export function blockTarget(view: EditorView, pos: number): string | null {
   const id = freeBlockId(taken)
 
   if (verbatim) {
-    // On a line of its own under the block, as Obsidian writes it. A name on a closing
-    // fence closes nothing, and on a table's last row is one more cell.
     const below = last.number < doc.lines ? doc.line(last.number + 1).text.trim() : ''
     const insert = `\n\n^${id}${below ? '\n' : ''}`
     view.dispatch({ changes: { from: last.to, to: last.to, insert } })
@@ -172,8 +163,6 @@ export function blockTarget(view: EditorView, pos: number): string | null {
   return `#^${id}`
 }
 
-/** Where a block's own words end. An item with children ends before them: a name at
- *  the very end of it is the name of the last child. */
 function ownEnd(state: EditorState, span: BlockSpan): number {
   if (span.kind !== 'list') return span.to
 
@@ -197,7 +186,6 @@ function ownEnd(state: EditorState, span: BlockSpan): number {
  *  side of it. */
 const PROSE = new Set<BlockKind>(['heading', 'paragraph', 'list', 'quote'])
 
-/** The line of a heading's underline, when it is written with one. */
 function underlineOf(state: EditorState, from: number): number | null {
   for (const node of enclosing(syntaxTree(state).resolveInner(from, 1))) {
     if (node.name.startsWith('SetextHeading')) return state.doc.lineAt(node.to).number
@@ -205,7 +193,6 @@ function underlineOf(state: EditorState, from: number): number | null {
   return null
 }
 
-/** One depth of a list being numbered. */
 interface Counting {
   written: number
   at: number
@@ -213,8 +200,6 @@ interface Counting {
   nth: number
 }
 
-/** A line as a numbered item, counting within its own depth and sitting under the words
- *  of the item it hangs from: two spaces under `1. ` nest nothing. */
 function numberedLine(text: string, counting: Counting[]): string {
   const { indent, words } = wordsOf(text)
   const written = indent.length
@@ -272,7 +257,6 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
     const verbatim = verbatimLines(view.state, span.from, doc.line(last).to)
 
     for (let number = first; number <= last; number++) {
-      // An item's block holds the items nested in it, and each is a block of its own.
       if (verbatim.has(number) || seen.has(number)) continue
       seen.add(number)
       const line = doc.line(number)
@@ -289,8 +273,6 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
       changes.push({ from: line.from, to: line.to, insert: text })
     }
 
-    // The underline said what kind of heading this was, and now it would say something
-    // else: a rule, or the same heading again under the new one.
     if (underline) changes.push({ from: doc.line(last).to, to: doc.line(underline).to })
   }
 

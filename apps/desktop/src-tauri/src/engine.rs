@@ -713,11 +713,6 @@ mod tests {
         assert!(inside.is_empty(), "a pump inside with_webview: {inside:?}");
     }
 
-    /// A window whose page is one of the app's own holds the app's commands and the key to
-    /// them, so on CEF it is in the interface's profile, where no extension installed for
-    /// the web runs. Read off the source, because a window built past it looks the same to
-    /// the compiler and comes up working. And no page builds one: see
-    /// test/permissions.test.ts.
     #[test]
     fn every_window_of_an_app_page_is_in_the_interface_s_profile() {
         let root = crate::app_dir().join("src");

@@ -3225,8 +3225,6 @@ describe('a note writes itself, wherever it is', () => {
 
   const written = () => sent.filter((one) => one.command === 'write_note').map((one) => one.path)
 
-  /** The snapshot a delete keeps is read from the disk, which the last few words had
-   *  not reached yet: Undo put the note back without them. */
   test('a note deleted straight after typing is on the disk when its snapshot is read', async () => {
     await typedIn('/space/a.md')
 
@@ -3237,7 +3235,6 @@ describe('a note writes itself, wherever it is', () => {
     expect(about.lastIndexOf('write_note')).toBeLessThan(about.lastIndexOf('read_note'))
   })
 
-  /** A disk that does not answer must not hold a delete up for ever. */
   test('a delete does not wait for ever on a write that never comes back', async () => {
     await typedIn('/space/a.md')
     const gate = { free: () => undefined as unknown }

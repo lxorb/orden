@@ -39,8 +39,6 @@ import { dayIn } from './values'
 export interface Prefill {
   /** The note it is written in, on this disk; the open space's inbox where absent. */
   path?: string
-  /** The space whose inbox it goes to where that is not the open one, by its root: a
-   *  tab of another's Todos or label, still showing after a switch. */
   root?: string
   heading?: string
   due?: string
@@ -88,7 +86,6 @@ export function prefillOf(
     (spec.builtin === 'todos' || spec.builtin === 'label') &&
     spec.space !== workspace.activeSpace?.name
   ) {
-    // Of two of a name, nothing says which: the open space, as ever.
     const [space, other] = workspace.spaces.filter((one) => one.name === spec.space)
     if (space && !other) out.root = space.root
   }
@@ -155,8 +152,6 @@ function idFor(base: Base): Record<string, string> {
   if (!id || !space) return {}
   const mine = rows.of(space.name)
   const context = contextFor({ rows: mine, today: todayHere(), now: nowHere() })
-  // An id counted from rows left out is one somebody has: this note goes without, and
-  // takes one when the base can be read again.
   const own = rowsInBase(base, mine, context)
   return own.partial ? {} : { [id.property]: nextId(own.rows, id.property, id.prefix) }
 }

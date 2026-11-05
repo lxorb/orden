@@ -25,35 +25,25 @@ export async function wrote(core: Core, entry: EntryRow, text: string): Promise<
   return [put('written', { id: entry.id, text: unixLines(text) }), put('entries', { ...entry })]
 }
 
-/** How many reads in a row a file has to refuse before the reader hears of it: a program
- *  holding it for a moment is no news. */
 const READS_TO_TELL = 3
 
-/** Tells the reader, once, that a file's edits here are not reaching the account. */
 export function saidUnsynced(core: Core, entry: EntryRow): void {
   if (core.unsyncedTold.has(entry.id)) return
   core.unsyncedTold.add(entry.id)
   core.events.unsynced?.({ id: entry.id, name: entry.name })
 }
 
-/** A file that is there refused a read, once more. */
 export function readRefused(core: Core, entry: EntryRow): void {
   const times = (core.unreadFor.get(entry.id) ?? 0) + 1
   core.unreadFor.set(entry.id, times)
   if (times >= READS_TO_TELL) saidUnsynced(core, entry)
 }
 
-/** A file reads again: a later spell of not reading is news again. */
 export function readFine(core: Core, id: string): void {
   core.unreadFor.delete(id)
   core.unsyncedTold.delete(id)
 }
 
-/** A file the disk would not take: a name it refuses, a read-only folder, a full disk, a
- *  program holding it. The note stays wanted, in the store as well, so the next pass asks
- *  for it again and writes it then, on the next launch too: with its entry left where it
- *  is, it neither vanishes here nor reads as a delete. The rest of its batch has nothing
- *  to do with it. The reader hears once it has refused a few times, as with a read. */
 export function notWritten(
   core: Core,
   space: SpaceState,
@@ -100,13 +90,8 @@ export async function project(
   const same = was !== null && unixLines(was) === unixLines(text)
   if (!entry.local_path && !same && was !== null) return []
   if (!entry.local_path && !same && (await core.world.disk.exists(full))) {
-    // Or it will not read: what is there cannot be told from what this note says, and
-    // the next pass, which may read it, asks again.
     return notWritten(core, space, entry, doc, new Error('its place on the disk will not read'))
   }
-  // A file that is there and will not read, saved as another encoding or grown past what
-  // a note holds: what it says cannot be kept as a version, so nothing is written over
-  // it. Read again next pass (`readAgain` in ingest.ts), and folded in like any edit.
   if (was === null && entry.local_path && (await core.world.disk.exists(full))) {
     readRefused(core, entry)
     return []
@@ -115,7 +100,6 @@ export async function project(
     const placed = !entry.local_path
     entry.local_path = path
     const digest = await core.world.digest(unixLines(text))
-    // A place newly given is news to the store, whatever the words.
     return entry.written_hash === digest && !placed ? [] : await wrote(core, entry, text)
   }
 

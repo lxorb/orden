@@ -91,10 +91,6 @@ export async function firstPass(
 
   if ((await world.account.ask('prepare', {}, space.id)) === null || !alive()) return false
 
-  // From the top, always. The feed is what files are matched against, and its cursor
-  // is written as it is read: one left by a pass that died meanwhile reads as an empty
-  // feed, which matches nothing, and then the file v1 wrote offline is taken for the
-  // words Orden last wrote there and the next pull writes over it.
   space.row.cursor = 0
   const items = new Map<string, FeedItem>()
   if (!(await readFeed(core, space, alive, (item) => items.set(item.id, item)))) return false
@@ -105,11 +101,6 @@ export async function firstPass(
   // would be a delete sent to the account.
   const listed = world.list ? await world.list(space.row.root) : []
   if (listed === null || !alive()) return false
-  // A note v1 knew that the listing does not show is gone only if the disk says so: a folder
-  // that would not list, or would not say what is in it, past the depth a listing goes, a
-  // link a listing leaves alone. One that reads is here. One nobody can look at waits, the
-  // pass with it: let through, its pairing with v1 is lost, and later it reads as a new note
-  // (or now, as a delete on every device).
   const everything = [...listed]
   const shown = new Set(listed.map((one) => space.key(one.path)))
   for (const path of Object.keys(v1?.notes ?? {})) {
@@ -304,8 +295,6 @@ export async function firstPass(
 
   changes.push(core.wantChange(space.id), ...done)
   if (!alive()) return false
-  // The commit is the pass: once it is in, so are the caller's `done` rows, and an engine
-  // stopped meanwhile must not have the space forgotten, its carried ids gone with it.
   await core.commit(changes)
   return true
 }

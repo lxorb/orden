@@ -426,9 +426,6 @@ async function readySvg(drawing: Drawing, palette: Palette, plain = false): Prom
   )
 }
 
-/** The colours a picture that leaves the app is in: Settings > Export > Appearance,
- *  which is the note's answer too (`look` in export/context.ts), and the screen's only
- *  where that says as the app is now. */
 function chosenPalette(drawing: Drawing): Palette {
   const chosen = settings.exportAppearance
   return chosen === 'app' ? drawing.palette : paletteOf(chosen)

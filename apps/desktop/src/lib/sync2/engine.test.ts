@@ -184,10 +184,6 @@ describe('a keystroke', () => {
   })
 })
 
-/** A session that said it ended and then did not: the window hid, the close was called
- *  off, the page came back. Whatever it writes after that was not ended by that word,
- *  and a client id reused after a crash is two histories under one name, which a device
- *  and its room never reconcile. */
 describe('a clean exit said too early', () => {
   async function typedAfter(say: (engine: Engine) => Promise<void>) {
     const one = await device()
@@ -197,7 +193,6 @@ describe('a clean exit said too early', () => {
     doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'after '), HERE)
     await one.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')
 
-    // Gone at once.
     one.engine.stop()
     const again = await one.launch()
     return { before, after: (await again.hold(PLAN))?.client }
@@ -819,8 +814,6 @@ test('a line said from beside the passes reaches the log and whoever has it open
 
 describe('an outbox folded while offline', () => {
   test('a note iCloud took off this Mac is no delete, by the watcher or a scan', async () => {
-    // macOS 13: `Plan.md` becomes `.Plan.md.icloud`, which no list holds. Taken for gone,
-    // the note left the account and every other device with it.
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const here = await device(account)
     await here.disk.remove(`${ROOT}/Plan.md`)
@@ -833,7 +826,6 @@ describe('an outbox folded while offline', () => {
     expect(names).toContain('Plan.md')
     expect(here.store.rows('outbox')).toEqual([])
 
-    // And the placeholder gone with no file back is a delete after all.
     await here.disk.remove(`${ROOT}/.Plan.md.icloud`)
     await here.engine.removed(`${ROOT}/Plan.md`)
     await here.engine.pass(SPACE)
@@ -1182,8 +1174,6 @@ describe('the folder watcher', () => {
   })
 
   test('makes a file it was told changed and has no entry for', async () => {
-    // A note that would not read at its `created`, as a Windows lock leaves one, is on
-    // no entry, and its next change is the next time anything says it is there.
     const here = await device()
     const heard: ((news: SpaceNews) => void)[] = []
     watch.mockImplementation((_roots: readonly string[], hear: (news: SpaceNews) => void) => {
@@ -1218,8 +1208,6 @@ describe('the folder watcher', () => {
   test.each(['modified', 'created'])(
     'leaves a space alone until its first pass is done: a %s event makes nothing',
     async (kind) => {
-      // A note v1 tracks has no entry yet. The first pass matches it to its entry, and a
-      // create queued here as well was `Plan.md` and `Plan 2.md`.
       const here = await device()
       const heard: ((news: SpaceNews) => void)[] = []
       watch.mockImplementation((_roots: readonly string[], hear: (news: SpaceNews) => void) => {
@@ -1404,7 +1392,6 @@ describe('the folder watcher', () => {
     expect(names).toContain('Plan.md')
     expect(names).not.toContain('_Plan.md')
 
-    // And back from a rename the disk would not make, under the account's name too.
     await expect(
       here.engine.moving(`${ROOT}/Work/_Plan.md`, `${ROOT}/Work/Goals.md`, () =>
         Promise.reject(new Error('in use')),
@@ -1697,13 +1684,10 @@ describe('two spaces whose folders differ only in case', () => {
     expect(relative('/s/Notes', '/s/notes/a.md', false)).toBeNull()
     expect(relative('/s/notes', '/s/notes/a.md', false)).toBe('a.md')
     expect(relative('/s/Notes', '/s/notes/a.md', true)).toBe('a.md')
-    // A backslash is a separator on Windows and a character of a name anywhere else.
     expect(relative('/s/notes', '/s/notes/a\\b.md', false)).toBe('a\\b.md')
     expect(relative('C:\\s\\notes', 'C:\\s\\notes\\a\\b.md', true)).toBe('a/b.md')
   })
 
-  // On Linux both can be there: a private note went up in the shared space, and a delete
-  // in the private one took the shared one's entry away on every device.
   test.each([true, false])('and goes to its own, where foldsCase is %s', async (foldsCase) => {
     const one = await device()
     const core = one.engine.core
@@ -1759,8 +1743,6 @@ describe('a note the disk will not read', () => {
     await one.engine.pass(SPACE)
     expect(told).toEqual([note.name])
 
-    // Readable again, what the other program saved is folded in like any other edit, with
-    // nothing to say so but the next pass.
     state.refused = false
     await one.engine.pass(SPACE)
     const words = (await one.engine.core.doc(note.id))?.text() ?? ''
@@ -1768,7 +1750,6 @@ describe('a note the disk will not read', () => {
     expect(words).toContain('and the desk wrote this')
     expect(one.disk.files.get(path)).toContain('and the desk wrote this')
 
-    // Recovered, a later spell of it is said again.
     state.refused = true
     for (let pass = 0; pass < 3; pass += 1) await one.engine.foreign(path)
     await one.engine.pass(SPACE)

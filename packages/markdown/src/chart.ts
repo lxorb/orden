@@ -97,9 +97,6 @@ function numberOf(written: string): number | null {
   return read !== '' && Number.isFinite(value) ? value : null
 }
 
-/** A key whose `[` is closed on a later line, as that one line: YAML reads a flow list
- *  across lines as one list, and the walk below reads a line at a time. A `[` nothing
- *  closes stays the line it was. */
 function flowsJoined(lines: readonly string[]): string[] {
   const out: string[] = []
   for (let at = 0; at < lines.length; at++) {
@@ -113,8 +110,6 @@ function flowsJoined(lines: readonly string[]): string[] {
   return out
 }
 
-/** A value without the comment after it. A flow list up to its closing bracket: YAML
- *  has no comment inside one here, since `[#1, #2]` was always two labels. */
 function valueOf(written: string): string {
   const value = written.trim()
   if (!value.startsWith('[')) return uncommented(written)
@@ -159,9 +154,6 @@ export function readChart(source: string): Chart | null {
   let labels: string[] = []
   const series: Series[] = []
   let inSeries = false
-  // A key with nothing after it, whose list is on the lines below: where the key's
-  // words begin, since YAML lets its dashes sit there or further in, and what the
-  // items are poured into.
   let list: { column: number; into: (item: string) => void } | null = null
 
   for (const line of lines) {
@@ -178,7 +170,6 @@ export function readChart(source: string): Chart | null {
     const found = pair(line)
     const listed = line.trimStart().startsWith('-')
 
-    // `series:` over a bare list of numbers, the block spelling of `series: [1, 2]`.
     if (found === null && listed && inSeries && item !== null) {
       const one = numberOf(uncommented(item))
       if (one === null) continue
@@ -208,7 +199,6 @@ export function readChart(source: string): Chart | null {
       // the reader can see what they asked for and change it. Silently drawing a bar
       // chart instead was the right numbers saying the wrong thing.
       if (found.key === 'type') kind = KINDS.get(unquoted(found.value).toLowerCase()) ?? null
-      // `#1 Sales` is a title for all a reader can tell; nothing else is lost by it.
       else if (found.key === 'title') title = unquoted(found.value || found.written) || null
       else if (found.key === 'labels') {
         if (found.value.trim() === '') {
@@ -258,8 +248,6 @@ function numbers(value: string): number[] {
     return one === null ? [] : [one]
   }
 
-  // Points or anything else with structure in it. Not numbers this can draw, and a
-  // row of zeroes would say there were.
   if (listed.some((written) => /^[[{]/u.test(written))) return []
 
   return listed.slice(0, MOST_POINTS).map((written) => numberOf(written) ?? 0)

@@ -14,7 +14,6 @@ function memoryStorage(): Storage {
   }
 }
 
-/** Two windows are two pages on one storage: here two loads of the module. */
 const listeners: ((event: { key: string }) => void)[][] = []
 
 async function aWindow() {
@@ -31,7 +30,6 @@ async function aWindow() {
   return modes
 }
 
-/** What storage does: tells every page but the one that wrote. */
 function storageMoved(except: number) {
   listeners.forEach((one, at) => {
     if (at !== except) for (const listener of one) listener({ key: 'nib:modes' })

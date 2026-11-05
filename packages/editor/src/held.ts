@@ -28,7 +28,6 @@ export interface StateView extends DocView {
   readonly scrollDOM: { scrollTop: number }
 }
 
-/** CodeMirror's keeper of an Android view's EditContext: the part a swap has to reach. */
 interface EditContextKeeper {
   pendingContextChange: unknown
   composing: unknown
@@ -42,9 +41,6 @@ function keeperOf(view: StateView): EditContextKeeper | null {
   )
 }
 
-/** A word being composed on Android ends with the note it was composed in: left going, the
- *  keyboard's next letters land in the note swapped in. Only losing the focus ends one, so
- *  the swap gives it up and answers the way to take it back. */
 function endComposing(view: StateView): () => void {
   const real = view as StateView & { contentDOM?: HTMLElement; focus?: () => void }
   if (!real.contentDOM || !keeperOf(view)?.composing) return () => undefined
@@ -52,12 +48,6 @@ function endComposing(view: StateView): () => void {
   return () => real.focus?.()
 }
 
-/** Fills an Android view's EditContext again after a swap. `setState` does not tell it
- *  (@codemirror/view 6.43), and it goes on holding the text and the positions of the note
- *  the view was built on: each key then lands at a position out of the new note and
- *  throws, and the keyboard suggests from the other note's words. No public call reaches
- *  it, and turning it off gives up what Android's composing needs, so this asks the
- *  keeper itself. test/e2e/android-swap.py is what notices if that ever goes. */
 function fillEditContext(view: StateView) {
   const keeper = keeperOf(view)
   if (!keeper) return

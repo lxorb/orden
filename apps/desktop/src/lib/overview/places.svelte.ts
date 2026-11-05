@@ -22,7 +22,6 @@ const KEY = 'nib:overview-places'
  *  (tab-keys.ts), since a tab's id is new every run. */
 const WINDOWS = 'nib:overview-windows-2'
 
-/** The same as an earlier version wrote it, with private tabs' titles among the names. */
 const WINDOWS_BEFORE = 'nib:overview-windows'
 
 /** Where the camera was as the view was last put away, which it opens at again (Emil,
@@ -64,8 +63,6 @@ export function nextPlace(all: Record<string, Box>, size: { w: number; h: number
   return { x: right + APART, y: top, ...size }
 }
 
-/** What an earlier version wrote, without the name of any web page that had no file: a
- *  private tab's title is one of those, and nothing tells which. At launch. */
 export function upgradeWindows() {
   if (storedText(WINDOWS_BEFORE) === null) return
   const before = readPlaces(stored(WINDOWS_BEFORE))
@@ -128,7 +125,6 @@ class Places {
     keepJson(WINDOWS, written)
   }
 
-  /** The window of tab `id` back where its panes would put it. */
   forgetWindow(id: string, tabs: readonly Keyed[]) {
     this.put = Object.fromEntries(Object.entries(this.put).filter(([one]) => one !== id))
     this.keepWindows({}, tabs)

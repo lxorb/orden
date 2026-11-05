@@ -63,13 +63,8 @@ pub fn words_of(target: &Path) -> Result<String, String> {
         .map_err(|error| cannot("read", target, &error))
 }
 
-/// The byte order mark a file saved "UTF-8 with BOM" opens with: Notepad's, `PowerShell`'s.
 const MARK: char = '\u{feff}';
 
-/// A file's words without its mark, which is no character of the note's. This is the one
-/// place it goes, where a note's text comes off the disk, so the renderer, the editor's
-/// grammar and every walk of a note read `# Title` on the first line as the heading it
-/// is; `as_written` puts it back, as it does the line endings.
 fn unmarked(words: String) -> String {
     match words.strip_prefix(MARK) {
         Some(rest) => rest.to_owned(),
@@ -134,14 +129,11 @@ fn note_written(target: &Path, shown: &str, content: &str) -> Result<(), String>
 /// already was".
 fn as_written(target: &Path, content: &str) -> String {
     let body = if crlf(target) {
-        // Only the newlines that stand alone: text that already carries `\r\n`, which
-        // a paste can, must not become `\r\r\n`.
         content.replace("\r\n", "\n").replace('\n', "\r\n")
     } else {
         content.to_owned()
     };
 
-    // The mark the file opened with, which was taken off when it was read; see `unmarked`.
     if marked(target) && !body.starts_with(MARK) {
         format!("{MARK}{body}")
     } else {
@@ -149,7 +141,6 @@ fn as_written(target: &Path, content: &str) -> String {
     }
 }
 
-/// Whether the file at `target` opens with a byte order mark.
 fn marked(target: &Path) -> bool {
     let Ok(mut file) = fs::File::open(target) else {
         return false;
@@ -278,7 +269,6 @@ fn renamed(source: &Path, target: &Path, hold: bool, alone: bool) -> Result<(), 
     renamed_as(source, target, hold, alone, false)
 }
 
-/// `renamed`, `arrived` saying the new name is the account's rather than the reader's.
 fn renamed_as(
     source: &Path,
     target: &Path,
@@ -535,17 +525,10 @@ pub fn file_stamp(app: AppHandle, path: String) -> Result<Option<Stamp>, String>
     Ok(stamp_of(&openable(&app, &path)?))
 }
 
-/// Whether a name's only fault is that Windows keeps it, for a note sync brings: "a note that
-/// arrived under one is still written and moved" (`named_for_every_machine`), and nothing
-/// anybody wrote is lost for the name it came with. Not on Windows, which cannot hold it and
-/// where the engine spells it otherwise first.
 fn may_arrive(arrived: Option<bool>) -> bool {
     arrived == Some(true) && !cfg!(windows)
 }
 
-/// Whether anything is at a path in a space, or nobody could look: sync's question before it
-/// reads a file's going as a delete. No permission, or a network drive away, says nothing is
-/// known to be gone. `file_stamp` answers null for those, for callers who only want a stamp.
 #[tauri::command(async)]
 pub fn file_there(app: AppHandle, path: String) -> Result<bool, String> {
     Ok(there_or_unsure(&openable(&app, &path)?))
@@ -558,7 +541,6 @@ fn there_or_unsure(target: &Path) -> bool {
     }
 }
 
-/// Whether a note that is not there is in iCloud all the same; see `icloud::evicted`.
 #[tauri::command(async)]
 pub fn note_evicted(app: AppHandle, path: String) -> Result<bool, String> {
     let target = openable(&app, &path)?;
@@ -566,7 +548,6 @@ pub fn note_evicted(app: AppHandle, path: String) -> Result<bool, String> {
     return Ok(icloud::evicted(&target));
     #[cfg(not(target_os = "macos"))]
     {
-        // Only a Mac leaves these.
         let _ = target;
         Ok(false)
     }
@@ -679,7 +660,6 @@ mod tests {
             let shut = dir.path().join("shut");
             fs::create_dir(&shut).expect("a folder");
             fs::set_permissions(&shut, fs::Permissions::from_mode(0o000)).expect("locked");
-            // Root reads through permissions, and then this says nothing.
             if fs::read_dir(&shut).is_err() {
                 assert!(super::there_or_unsure(&shut.join("note.md")));
             }
@@ -972,8 +952,6 @@ mod tests {
         );
     }
 
-    /// A file saved "UTF-8 with BOM": the note's words start past the mark, and a save
-    /// changes the file by what was typed and nothing else.
     #[test]
     fn reads_a_note_past_its_mark_and_writes_the_mark_back() {
         let dir = tempfile::tempdir().expect("a temp folder");

@@ -58,8 +58,6 @@ fn read_front(body: &str, front: usize, close: usize, found: &mut Vec<String>) {
         let line = &body[at..end];
 
         if let Some(rest) = key_value(line) {
-            // A flow list across lines, as Prettier breaks a long one, is one value. A
-            // `# ` is YAML's comment; a hash on a name is the name's.
             let value = at + line.len() - rest.len();
             if let Some(closes) = front_matter::value_closes_at(body, value, close) {
                 for one in body[value..closes].lines() {
@@ -80,7 +78,6 @@ fn read_front(body: &str, front: usize, close: usize, found: &mut Vec<String>) {
     }
 }
 
-/// A line of a flow list up to a `# ` that opens at its start or after a blank.
 fn without_comment(line: &str) -> &str {
     let opens = line.match_indices("# ").map(|(at, _)| at).find(|&at| {
         line[..at]
@@ -525,9 +522,7 @@ mod tests {
     fn reads_a_flow_list_across_lines_as_the_list_it_is() {
         let note = "---\ntags: [\n  work, # mine\n  # a comment\n  \"b\",\n]\nz: 1\n---\nrest\n";
         assert_eq!(tags_in(note), vec!["#work", "#b"]);
-        // Nothing closes this one, so it is the one line's.
         assert_eq!(tags_in("---\ntags: [a\nz: b\n---\n"), vec!["#a"]);
-        // A hash in a word opens no comment, and is no name of a tag either.
         assert_eq!(tags_in("---\ntags: [\n  a# b,\n]\n---\n"), vec!["#b"]);
         assert_eq!(tags_in("---\ntags: [a, b]\nz: 1\n---\n"), vec!["#a", "#b"]);
     }

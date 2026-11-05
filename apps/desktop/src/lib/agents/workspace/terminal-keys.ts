@@ -7,8 +7,6 @@
 
 import { type Os, onTheList, osOf, startsOnlyOne } from './shell-text'
 
-/** The system a terminal's shell runs on: an online terminal's is its machine's, which is
- *  Linux (docs/online-terminal.md), whatever this computer is; any other is this one's. */
 export function shellOs(online: boolean, platform: string): Os {
   return online ? 'unix' : osOf(platform)
 }

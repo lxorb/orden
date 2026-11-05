@@ -27,8 +27,6 @@ const VERBATIM = new Set([
   'HTMLTag',
   'HorizontalRule',
   'HardBreak',
-  // Where a link points and what it is called: `[[a _b_ c]]` names a note with
-  // underscores in it, and an asterisk there is a link to another note.
   'Wikilink',
   'URL',
   'LinkTitle',
@@ -180,8 +178,6 @@ function verbatim(tree: Tree, lines: readonly string[]): [number, number][][] {
   })
 }
 
-/** A list right beside another list is apart from it only by its marker: `- a` over
- *  `* b` is two lists, and the same marker on both would make it one. */
 function markersOfNeighbours(list: SyntaxNode, ranges: [number, number][]) {
   if (list.prevSibling?.name !== 'BulletList' && list.nextSibling?.name !== 'BulletList') return
 
@@ -205,8 +201,6 @@ function tidyAround(line: string, kept: readonly [number, number][]): string {
 function tidy(line: string): string {
   return (
     line
-      // One bullet character throughout. Not over a `+`, which a deck reads as a list
-      // that comes in one click at a time; see `fragmentsOf` in @orden/markdown/slides.
       .replace(/^(\s*)\*(\s+)/, '$1-$2')
       // Underscore emphasis becomes asterisk, which nests more predictably.
       .replace(/(^|[\s(])__(\S(?:[^_]*\S)?)__(?=[\s).,;:!?]|$)/g, '$1**$2**')

@@ -1,10 +1,3 @@
-"""One engine across a device's windows (H2-DESKTOP-1, 2, 3): two pages on one origin, signed
-in on sync v2, with the real Worker. Exactly one runs the engine. What the other types and
-makes reaches the account through it, nothing arrives twice, and when the first closes the
-other takes the engine over and goes on.
-
-    python apps/desktop/test/e2e/windows-engine.py
-"""
 
 from __future__ import annotations
 
@@ -137,10 +130,7 @@ def main() -> int:
             failed(f"B's words went when A's arrived: {account()!r}")
         say(f"both typed: {account()!r}")
 
-        # A note made in the window with no engine is one note, whichever way it comes.
         b.bring_to_front()
-        # Said by hand as an operation: a browser has no folder watch, and `createNote` leaves
-        # a new file to the desktop's watch, which is the same `created` a second time there.
         b.evaluate(
             "async (f) => { const ws = window.nibApp.workspace;"
             " await ws.createNote(f, 'Fresh one.md');"
@@ -161,11 +151,9 @@ def main() -> int:
         if len(fresh) != 1:
             failed(f"a note made in B is on the account as {fresh}")
 
-        # The engine's window goes; the other takes it over and goes on.
         a.close(run_before_unload=True)
         wait_for(b, engines, "[B] the engine, handed over")
         say("the first window closed, the second runs the engine")
-        # Making the note above put its tab in front.
         b.evaluate("(p) => window.nibApp.workspace.openEntry(p)", path)
         wait_for(b, "() => window.nibApp.workspace.active.note.latest.includes('FROM-A')", "[B] the note")
         type_at_end(b, "AFTER-HANDOVER ")
@@ -176,7 +164,6 @@ def main() -> int:
                 failed(f"{words} is gone: {account()!r}")
         say(f"at the end: {account()!r}")
 
-        # Signed out in a window with no engine: every window is, and the engine's goes.
         c = window("C")
         c.bring_to_front()
         c.evaluate("() => window.nibApp.account.signOut()")

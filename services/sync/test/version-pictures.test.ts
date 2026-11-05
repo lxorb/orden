@@ -1,7 +1,3 @@
-/** What a version of a note shows, as what keeps a picture: an account with more
- *  versions than one sweep reads gets to the end of them over several nights, keeps
- *  every picture a version shows, and is let go of the rest (0073, `versionPictures`). */
-
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { sweepUnused } from '../src/unused'
@@ -43,7 +39,6 @@ beforeEach(async () => {
 
 afterEach(() => env.close())
 
-/** Versions from before there was a column: a row, and words in the bucket. */
 async function older(many: number, words: (at: number) => string): Promise<void> {
   const row = env.db.prepare(
     'insert into note_versions (note_id, at, hash, size) values (?, ?, ?, 1)',

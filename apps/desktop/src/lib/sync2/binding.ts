@@ -40,7 +40,6 @@ import { judge, mergedOf, turn } from './kinds'
 export interface Held {
   readonly live: SharedDoc
   readonly latest: string
-  /** What the file is known to say; see workspace/across.ts. */
   onDisk?: string | null
 }
 
@@ -69,8 +68,6 @@ async function agree(
   if (note.latest === doc.text()) return { shared: doc.text() }
 
   const written = given ?? (await writtenOf(engine.core, id))
-  // Read after that wait, not before: what a pull or a key brought meanwhile is one of
-  // the two sides, and a change made from a stale text would take it out.
   const mine = note.latest
   const theirs = doc.text()
   if (mine === theirs) return { shared: theirs }
@@ -112,8 +109,6 @@ async function agree(
   return { shared }
 }
 
-/** How many times a note and its document are brought together before they are joined,
- *  for the keys typed while the last time was asked. */
 const AGREEING = 8
 
 /** Joins a note to its document. Answers how to part them again. `holds` is whether the
@@ -149,11 +144,6 @@ export async function attach(
   const join = () => {
     unbind = bind(note.live, text, holds)
   }
-  // A key typed while they were being brought together is in the note and not in the
-  // document, and every operation after it lands one place off (#543). A pull landed
-  // meanwhile is the other way about. So they meet again, against what they last shared,
-  // which tells the two apart: neither is taken for the other's deletion. Nothing is
-  // awaited between the last look and the join.
   const together = async (given?: string): Promise<Met> => {
     let met = await agree(engine, id, note, doc, given)
     for (let round = 0; round < AGREEING; round++) {
@@ -179,11 +169,6 @@ export async function attach(
   if (met.asked === undefined) join()
   else wait(met.asked)
 
-  // A file the engine read or wrote, whose words have reached the note through the join.
-  // The note's next write merges against what it knows the file says, and an edit of
-  // another program's it did not know of was merged in a second time beside its own. Only
-  // where the note says those words: another window's write is news of a file this note
-  // has yet to take in (across.ts), and marked as known here it never would.
   const unheard = engine.on('file', (event) => {
     if (event.id === id && unbind && !gone() && note.latest === event.text) {
       note.onDisk = event.text

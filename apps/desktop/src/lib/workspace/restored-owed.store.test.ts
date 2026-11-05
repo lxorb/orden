@@ -1,9 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
-/** Tabs a launch brought back with unwritten words, in the real store over a map of a
- *  disk: two panes on one note whose file has gone are one draft (R5), their write goes through
- *  across, fetched for it where the launch has not come to it yet, and nothing waits (R7). */
-
 const disk = vi.hoisted(() => ({ current: null as import('../../../test/disk').Disk | null }))
 
 vi.mock('../tauri', async (importOriginal) => ({
@@ -86,7 +82,6 @@ test('a restored tab fetches across for its write, and takes in what the file sa
     return startAcross()
   })
   await workspace.applyLayout(single(tab({})) as never, false)
-  // After the restore read it, before its write: what a launch's first second can meet.
   disk.current?.files.set(PATH, 'base\nnewer\n')
   await vi.waitFor(() => expect(disk.current?.files.get(PATH)).toContain('typed'), {
     timeout: 3_000,

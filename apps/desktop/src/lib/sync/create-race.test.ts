@@ -1,9 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Two devices meeting at one note inside the gap between a pull and a push, on fake
- *  devices against the real Worker (services/sync/test/harness.ts): nothing either wrote
- *  is lost, whichever way the account said so. */
-
 const world = vi.hoisted(() => {
   interface Entry {
     name: string
@@ -14,16 +10,12 @@ const world = vi.hoisted(() => {
     children: Entry[]
   }
 
-  /** One machine: its files, and the versions its saves kept of each. */
   class Device {
     disk = new Map<string, string>()
     kept = new Map<string, string[]>()
-    /** Folders that will not list, and whether the space itself will. */
     shut = new Set<string>()
     rootShut = false
-    /** Paths the disk refuses a new file at, as a name too long for it. */
     refused = new Set<string>()
-    /** And every conflict copy. */
     refusedCopies = false
 
     keep(path: string, content: string) {
@@ -50,7 +42,6 @@ const world = vi.hoisted(() => {
           return Promise.reject(new Error(`refused ${path}`))
         }
         if (here.refused.has(path)) return Promise.reject(new Error(`refused ${path}`))
-        // The crate's rule: no new file of a name Windows keeps, but for one that arrived.
         if (!here.disk.has(path) && /\/(con|aux)(\.[^/]*)?$/i.test(path) && args.arrived !== true) {
           return Promise.reject(new Error('a name Windows keeps'))
         }
@@ -138,9 +129,6 @@ vi.mock('../tauri', async (importOriginal) => ({
   invoke: world.invoke,
 }))
 
-/** The Worker and its test harness, out of services/sync. Named through a variable so
- *  the app's type check, which holds the app to the browser's types, does not walk
- *  into a Worker held to Cloudflare's; the shapes this file uses are spelled below. */
 const SERVICE = new URL('../../../../../services/sync/', import.meta.url).href
 interface Env {
   db: { exec(sql: string): void }
@@ -178,7 +166,6 @@ const COPY = 'from another device'
 const INBOX = `${ROOT}/.Inbox.md`
 
 let env: Env
-/** What the account does otherwise than the Worker in this tree. */
 let account = { wordless: false, readsAway: false, filesSaid: [] as string[] }
 
 beforeEach(() => {
@@ -195,7 +182,6 @@ beforeEach(() => {
     }
     const answer = await worker.fetch(asked, env)
     if (!account.wordless || answer.status !== 409) return answer
-    // The answer as it was before the 409 of a create carried the note's words.
     const { note, error } = (await answer.json()) as { note: unknown; error: string }
     return new Response(JSON.stringify({ note, error }), { status: 409 })
   })
@@ -206,7 +192,6 @@ afterEach(() => {
   env.close()
 })
 
-/** A person: a session on the account, and the id it is known by. */
 async function person(email: string) {
   const token = await signIn(env, email)
   const me = await call<{ user?: { id: string } }>(env, '/v1/me', { token })
@@ -221,14 +206,12 @@ async function spaceOf(token: string, name = 'Plans'): Promise<string> {
   return made.json.space?.id ?? ''
 }
 
-/** One pass, as sync.svelte.ts runs it: take what the account has, then offer. */
 async function pass(device: Device, mirror: Mirror, token: string) {
   world.use(device)
   await pull(mirror, token, NOBODY)
   await push(mirror, token, NOBODY)
 }
 
-/** The account's copy of the only note at `path` in a space. */
 async function accountHolds(token: string, spaceId: string, path = 'plan.md') {
   const page = await call<{ notes: { id: string; path: string; deleted: boolean }[] }>(
     env,
@@ -251,7 +234,6 @@ const sha = async (text: string) =>
     .map((byte) => byte.toString(16).padStart(2, '0'))
     .join('')
 
-/** A device that has pulled, and another note made at `path` before it pushes. */
 async function meetingInTheGap(path: string, ours: string, theirs: string) {
   const me = await person('a@example.com')
   const spaceId = await spaceOf(me.token)
@@ -344,8 +326,6 @@ describe('a create that meets a note made since the pull', () => {
     expect(words).toEqual(['A\n', 'B\n'])
   })
 
-  // Pull normally pairs first; a machine that lost the answer to its own create and
-  // meets it here is the case the words on the account being its own says.
   test("this machine's own earlier create is paired, not copied", async () => {
     const { me, spaceId, device, mirror } = await meetingInTheGap(
       'plan.md',
@@ -373,7 +353,6 @@ describe('a write refused for a rename made elsewhere', () => {
     await pass(device, mirror, me.token)
     const held = await accountHolds(me.token, spaceId)
 
-    // Elsewhere: renamed, after this device's pull of the round.
     await call(env, `/v1/notes/${held.id}`, {
       method: 'PUT',
       token: me.token,

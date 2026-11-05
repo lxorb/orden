@@ -38,7 +38,6 @@ vi.mock('../../tauri', () => ({
   },
 }))
 
-/** Two windows' ends of the channel: the code under test holds one, `other` the other. */
 vi.mock('../../windows', async (original) => {
   const { Windows } = await original<typeof import('../../windows')>()
   const ends: {
@@ -318,8 +317,6 @@ describe('a file written while its answer was on its way', () => {
   })
 })
 
-/** The file's clock against who says so now: a relaunch inside three minutes of a quit
- *  (nobody says), and a chat open beside the window answering in it (that window does). */
 describe('whether anybody is answering is asked, not read off the clock', () => {
   const inFile = (thread: Thread) => {
     disk.set(`work/${thread.id}`, {
@@ -368,15 +365,12 @@ describe('whether anybody is answering is asked, not read off the clock', () => 
     if (read) await keepThread({ ...read, title: 'Herons' })
     expect(writes).toHaveLength(before)
     expect(named).toHaveLength(1)
-    // The name given here, and nothing that window has moved on from since.
     expect(named[0]).toEqual({ title: 'Herons' })
     stop()
     stopNamed()
   })
 })
 
-/** Two windows hold one file. Window A's answer on its way is not an answer the window
- *  went on, and a Stopped row in B would offer Ask again over it. */
 describe('a file another window is still answering in', () => {
   const answered = (at: number, by = 'another window') =>
     threadIn({

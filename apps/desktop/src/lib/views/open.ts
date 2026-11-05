@@ -77,7 +77,6 @@ export function openProject(space: string, path: string, layout?: string, how: O
   return tab
 }
 
-/** A label's tasks and notes: in every space, or in the one named. */
 export function openLabel(tag: string, how: OpenHow = {}, space?: string) {
   const spec: ViewSpec =
     space === undefined ? { builtin: 'label', tag } : { builtin: 'label', space, tag }

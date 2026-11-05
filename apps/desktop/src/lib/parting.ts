@@ -37,42 +37,28 @@ export function owesLast(write: () => void): void {
   lastly.add(write)
 }
 
-/** What turns a surface into the words of its document, a plane's strokes above all:
- *  owed like the rest when the window goes, and asked for alone by whatever reads a
- *  document and is going to stay; see `wordsNow` in workspace/saving.svelte.ts. */
 const surfaces = new Set<() => void>()
 
-/** The same as `owes`, for a write that only turns something into words. */
 export function owesWords(write: () => void): void {
   surfaces.add(write)
   owing.add(write)
 }
 
-/** Every surface's words in its document, with nothing else that is owing started. */
 export function surfacesToWords(): void {
   for (const write of surfaces) write()
 }
 
-/** What only a session really ending may do: say so to the sync store, which reads it at
- *  the next launch and keeps every client id. Said by a save, the word stays true through
- *  all the typing after it, and a crash then reuses a client id the room has already seen
- *  further along; see `clean` in sync2/core.ts. */
 const ending = new Set<() => void>()
 
-/** The same as `owesLast`, for what only the session's end may run. */
 export function owesAtTheEnd(write: () => void): void {
   ending.add(write)
 }
 
-/** Everything owing, written now, with the session going on: Ctrl+S, a window hidden or
- *  left in the tray, a close that may yet be called off. */
 export function writeOwed(): void {
   for (const write of owing) write()
   for (const write of lastly) write()
 }
 
-/** The same, and the session over. Called where the window is going; see `onClose` in
- *  start.ts. */
 export function settleUp(): void {
   writeOwed()
   for (const write of ending) write()

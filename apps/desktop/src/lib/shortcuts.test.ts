@@ -335,7 +335,6 @@ describe('choosing a key', () => {
     expect(shortcuts.refuse('Mod-k')).toBeNull()
   })
 
-  /** Enter taken as an app key made no new line in any note until it was reset. */
   test('is refused for an app key where the key is one typing needs', () => {
     const { shortcuts } = registry
     for (const key of ['Enter', 'Tab', 'Backspace', 'Delete', 'ArrowLeft', 'Home', 'Shift-Enter']) {
@@ -349,7 +348,6 @@ describe('choosing a key', () => {
     expect(shortcuts.refuse('Enter', 'tree.rename')).toBeNull()
   })
 
-  /** Where such a key is a row's own, setting it back to that is no harm. */
   test('and so may a row whose own key it is', () => {
     const { shortcuts } = registry
     expect(shortcuts.refuse('Delete', 'table.delete')).toBeNull()

@@ -57,7 +57,6 @@ import { laidOut, localFaces, type Run, type TextCard } from './laid'
 import { cssColour, paperIsLocked, paperPicture, svgToPng } from './raster'
 import { escapeAll } from '@orden/markdown/html'
 
-/** Says why a paper with an owner's password is left out: opened and shown, not copied out. */
 function saidLocked(): void {
   busy.failed(t('This PDF is locked by its owner'))
 }
@@ -69,8 +68,6 @@ export interface PagesOut {
   /** The note's own path, so the PDF its pages name can be found beside it. */
   path: string | null
   root: string | null
-  /** The note's id on the account, for a note shared on its own: no path here, and its
-   *  paper the account's to hand over, as on screen; see `PaperAt`. */
   shared?: string | null
   name: string
   /** Whether the cards' HTML is markup rather than the characters it is made of,
@@ -261,9 +258,6 @@ export function pageSvg(
   ].join('')
 }
 
-/** The page of a paper a sheet shows, as a picture, or null for a sheet with none. The
- *  sheet comes out without it where the paper has gone, as it shows on screen, and where
- *  the paper's owner locked it, which is ink on white as it ever was and says why. */
 async function paperBehind(out: PagesOut, page: PageNode): Promise<string | null> {
   if (!page.file || page.page === undefined) return null
   const at = { file: page.file, note: out.path, root: out.root, shared: out.shared ?? null }
@@ -314,8 +308,6 @@ export async function exportPagesSvg(out: PagesOut): Promise<string | undefined>
   if (!pages.length) return
 
   const name = stem(out.name)
-  // One at a time: a page of a paper is drawn to be asked for, and a note of four hundred
-  // of them all at once would have paper.ts letting go of the ones not yet read.
   const entries: { path: string; body: string }[] = []
   for (const [at, page] of pages.entries()) {
     entries.push({
@@ -384,8 +376,6 @@ export async function pagesPdf(given: PagesOut): Promise<Uint8Array | null> {
   const source = papers.size === 1 ? [...papers][0] : null
   const bytes = source ? await paperBytes(paperPlaces(source, out.path, out.root)) : null
 
-  // A paper locked by its owner opens and draws, and what is in it does not go out of the
-  // app; pdf-lib could not copy from it either. No file, and the reason.
   const opened = bytes ? await PDFDocument.load(bytes, { ignoreEncryption: true }) : null
   if (opened?.isEncrypted) {
     saidLocked()
@@ -393,8 +383,6 @@ export async function pagesPdf(given: PagesOut): Promise<Uint8Array | null> {
   }
   const doc = opened ?? (await PDFDocument.create())
   const kept = opened ? await doc.copyPages(doc, doc.getPageIndices()) : []
-  // Which pages of the paper a sheet already is. A page can be only one sheet: inserted
-  // twice, one page is both, with the ink of both on it.
   const used = new Set<number>()
   const carried = doc.getPageCount()
   // Helvetica and Courier, which every reader has: the words stay text without a font

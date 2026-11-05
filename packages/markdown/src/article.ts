@@ -233,7 +233,6 @@ const NEVER_KEPT = /^(?:on|style$|srcdoc$|formaction$|xlink:href$)/i
 /** What a note never contains, plus what the page itself says is decoration. */
 export function clean(root: ParentNode): void {
   keepMaths(root)
-  // Forms first, since how many fields one has is what tells them apart.
   for (const form of root.querySelectorAll('form')) if (!formSays(form)) form.remove()
   for (const element of root.querySelectorAll(NOT_CONTENT)) element.remove()
 
@@ -358,8 +357,6 @@ function readable(
   const parsed = document.implementation.createHTMLDocument('')
   parsed.body.innerHTML = article.content
 
-  // The extractor's own wrapper stays when what it held is gone, so the markup is not
-  // what says there is something here.
   const html = contentOf(parsed.body, base)
   if (!parsed.body.textContent.trim() && !parsed.body.querySelector('img, picture')) return null
 

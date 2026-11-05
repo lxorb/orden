@@ -37,8 +37,6 @@ pub fn watch(app: &AppHandle) {
         let _ = app.deep_link().register_all();
     }
 
-    // By a name of its own, as `hand_over` can open a window: `watch` is a name half the
-    // crate calls, and the rule in lib.rs that a command opening one says async reads by name.
     #[cfg(desktop)]
     let handing: fn(&AppHandle, Vec<String>) = hand_over;
 
@@ -58,7 +56,6 @@ pub fn watch(app: &AppHandle) {
 
         #[cfg(desktop)]
         handing(&opened, urls);
-        // A phone has one window and the system has already brought it up.
         #[cfg(not(desktop))]
         let _ = opened.emit_to("main", OPENED, urls);
     });
@@ -88,15 +85,9 @@ pub fn watch(app: &AppHandle) {
     }
 }
 
-/// A link, to one window: followed by every window open it made its note or its task once
-/// in each. A link is somebody asking for this app, so that window comes forward, from the
-/// tray too, and is the one they see it land in. With none that listens it waits for the
-/// next to ask, which is opened if there is none at all.
 #[cfg(desktop)]
 fn hand_over(app: &AppHandle, urls: Vec<String>) {
     let waiting = app.state::<crate::endpoint::Waiting>();
-    // The window, not the webview window, which a window with a page in a tab is not; see
-    // web_tabs.rs.
     let windows: Vec<LinkWindow> = crate::launch::document_windows(app)
         .iter()
         .map(|one| LinkWindow {
@@ -120,7 +111,6 @@ fn hand_over(app: &AppHandle, urls: Vec<String>) {
     crate::launch::open_for_what_waits(app);
 }
 
-/// One window as a link weighs it.
 #[cfg(desktop)]
 struct LinkWindow {
     label: String,
@@ -129,8 +119,6 @@ struct LinkWindow {
     listening: bool,
 }
 
-/// The window a link goes to, of those that listen: the one in front, or else one on
-/// screen, the first window before another, and only then one hidden in the tray.
 #[cfg(desktop)]
 fn link_window(windows: &[LinkWindow]) -> Option<String> {
     windows
@@ -227,7 +215,6 @@ mod tests {
     #[cfg(desktop)]
     #[test]
     fn a_link_goes_to_the_window_in_front_and_never_to_one_hidden_while_another_shows() {
-        // `main` hidden in the tray, the work in `nib-2`.
         let windows = [
             window("main", false, false, true),
             window("nib-2", false, true, true),
@@ -246,7 +233,6 @@ mod tests {
         ];
         assert_eq!(link_window(&windows).as_deref(), Some("main"));
 
-        // All in the tray: the first window, which `brought_up` shows.
         let windows = [
             window("nib-2", false, false, true),
             window("main", false, false, true),
@@ -260,7 +246,6 @@ mod tests {
         assert_eq!(link_window(&[]), None);
         let windows = [window("main", true, true, false)];
         assert_eq!(link_window(&windows), None);
-        // In front and still loading, with another listening: the one that hears it.
         let windows = [
             window("nib-3", true, true, false),
             window("main", false, true, true),

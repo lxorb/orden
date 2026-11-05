@@ -1,14 +1,9 @@
-/** `frontMatterBlock` against the real YAML library, here because this is the package
- *  that has it: what YAML reads as a mapping is a block, and a mapping with a line of
- *  prose in it at the margin is not. */
-
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { describe, expect, test } from 'vitest'
 import { isMap, parseDocument, stringify } from 'yaml'
 import corpus from './front-matter-corpus.json'
 import { noteValues } from './note-values'
 
-/** The same runs on every machine: no wall clock and no Math.random. */
 function rng(seed: number) {
   let s = seed
   return (n: number) => {
@@ -52,7 +47,6 @@ function words(r: (n: number) => number): string {
   return out.join(' ')
 }
 
-/** A value as people write one by hand, in every shape a mapping's value comes in. */
 function value(r: (n: number) => number): unknown {
   switch (r(9)) {
     case 0:
@@ -84,8 +78,6 @@ function mapping(r: (n: number) => number): Record<string, unknown> {
   return out
 }
 
-/** One of the spellings the library writes, which between them hold block scalars, both
- *  list indents, flow collections, quotes over lines and long folded lines. */
 function spelled(r: (n: number) => number, map: Record<string, unknown>, style?: 'block'): string {
   return stringify(map, {
     indentSeq: r(2) === 0,
@@ -98,18 +90,12 @@ function spelled(r: (n: number) => number, map: Record<string, unknown>, style?:
   })
 }
 
-/** Whether YAML reads it as a mapping with no complaint. */
 function reads(body: string): boolean {
   const doc = parseDocument(body)
   return doc.errors.length === 0 && isMap(doc.contents)
 }
 
-/** What real tools write, shown to the reviewer of this rule. A note in here that YAML
- *  reads as a mapping is a block, but for the few the rule is honest about. */
-const HELD_BACK = new Set([
-  // Past YAML's own limit is no key to a reader; the library is more generous.
-  `---\n${'k'.repeat(1100)}: 2\n---\nrest`,
-])
+const HELD_BACK = new Set([`---\n${'k'.repeat(1100)}: 2\n---\nrest`])
 
 describe('the corpus of what real tools write', () => {
   test.each(corpus)('%j', (note) => {
@@ -153,13 +139,11 @@ describe('front matter against the YAML library', () => {
     ]
     let held = 0
     for (let at = 0; at < 6000; at++) {
-      // Between two keys, so it is no value's: a quote or a flow may hold any line.
       const keys = Object.entries(mapping(r)).map(([key, one]) =>
         spelled(r, { [key]: one }, 'block'),
       )
       keys.splice(r(keys.length + 1), 0, `\n${PROSE[r(PROSE.length)] ?? ''}\n\n`)
       const body = keys.join('')
-      // A heading is a comment to YAML as well.
       if (reads(body)) continue
       held++
       const block = frontMatterBlock(`---\n${body}---\nrest`)

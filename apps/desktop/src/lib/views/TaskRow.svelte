@@ -86,7 +86,6 @@
     picking?: boolean
     /** Selects it or lets it go; `range` every row from the last one selected. */
     onpick?: (range: boolean) => void
-    /** The group of the view it stands under, which a carry takes it out of. */
     from?: Value
   } = $props()
 

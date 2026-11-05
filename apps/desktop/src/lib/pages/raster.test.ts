@@ -1,8 +1,5 @@
 import { afterEach, expect, test, vi } from 'vitest'
 
-/** A page drawn for an export can be let go of by the tab closing or by paper.ts's cap
- *  before its pixels are read: a closed bitmap has no size. It is asked for again. */
-
 const paper = vi.hoisted(() => ({ widths: [] as number[], asked: 0 }))
 
 vi.mock('./paper', () => ({

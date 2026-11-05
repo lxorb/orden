@@ -37,7 +37,6 @@ export interface Telling {
   gone(path: string, kind: FileKind): Promise<void>
   /** One it wrote: `fresh` when nothing was there before. */
   written(path: string, fresh: boolean): void
-  /** The write itself, around whatever else has to know of it. */
   writing?(path: string, text: string, write: () => Promise<unknown>): Promise<unknown>
 }
 
@@ -64,9 +63,6 @@ const stamped = (path: string) =>
         () => false,
       )
 
-/** Whether something is at a path, for sync to read its going as a delete: nobody being able
- *  to look says nothing is gone (`file_there` in the crate). Where the app itself was not
- *  answered, the same. */
 const thereOrUnsure = (path: string): Promise<boolean> =>
   isNative ? invoke<boolean>('file_there', { path }).catch(() => true) : onDisk(path)
 
@@ -76,8 +72,6 @@ function diskOf(telling: Telling): Disk {
     async write(path, text) {
       const fresh = !(await stamped(path))
       await invoke('create_folder', { path: parentOf(path), arrived: true }).catch(() => undefined)
-      // `arrived`: the account's name, so one the crate makes no new note of still lands where
-      // this platform can hold it. Windows spells it otherwise first (`localName`).
       const write = () => invoke('write_note', { path, content: text, arrived: true })
       await (telling.writing ? telling.writing(path, text, write) : write())
       links.noteSaved(path, text)
@@ -210,7 +204,6 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[] | 
       if (child.is_dir) walk(child)
     }
   }
-  // A space that would not list is no listing at all, not an empty space.
   if (!tree || tree.unlisted) return null
   walk(tree)
   // The list leaves a dotted file out as the app's own; sync carries the space's own

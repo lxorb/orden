@@ -29,7 +29,6 @@
   }: {
     row: Row
     kit: Kit
-    /** The group of the view it stands under, which a carry takes it out of. */
     from?: Value
     dated?: boolean
     where?: boolean

@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { FileActions } from './undo.svelte'
 
-/** A gesture that ends when asked. */
 function gesture() {
   let end: (() => void) | undefined
   const until = new Promise<void>((go) => (end = go))
@@ -13,7 +12,6 @@ describe('what an undo waits for', () => {
     await expect(new FileActions().landed()).resolves.toBe(true)
   })
 
-  // The second joins the first's step, and is still out when the first has ended.
   test('is every gesture that overlapped, not only the first', async () => {
     const actions = new FileActions()
     const first = gesture()

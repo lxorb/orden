@@ -537,7 +537,6 @@ describe('the link under a position', () => {
   })
 
   test('a markdown link to a heading written percent-encoded names the heading it means', () => {
-    // The link the app writes to `C#.md`: the hash in the escape is part of the name.
     expect(linkAt(state('[S](C%23.md#a%20b)', 0), 2)).toMatchObject({
       target: 'C#.md',
       heading: 'a b',

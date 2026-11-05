@@ -39,7 +39,6 @@ describe('letting words go', () => {
   })
 
   test('a window without the engine is counted the moment it opens', async () => {
-    // One lock manager for two windows: the one that only holds, and the engine's.
     const shared = locks(0)
     vi.stubGlobal('navigator', { locks: shared })
     holdThisWindow()

@@ -90,8 +90,6 @@ function writtenAddress(src: string): string {
   return /[\s<>()]/.test(src) ? `<${src}>` : src
 }
 
-/** Alt text as markdown holds it: an unbalanced bracket typed into the field would
- *  end the picture early or stop it being one at all. */
 function writtenAlt(alt: string): string {
   return alt.replace(/[[\]]/g, '\\$&')
 }

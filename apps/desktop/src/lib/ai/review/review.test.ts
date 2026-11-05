@@ -17,20 +17,16 @@ const fake = vi.hoisted(() => ({
   unreadable: new Set<string>(),
   /** The moves made back: the space's folder, from, to. */
   moves: [] as string[][],
-  /** The tree's Undo, as far as a delete goes. */
   undone: { stack: [] as { kind: string; path: string; content: string }[] },
-  /** Writes that fail, by path. */
   unwritable: new Set<string>(),
 }))
 
 vi.mock('../../automation/acts', () => ({
   movedIn: async (root: string, from: string, to: string) => {
     fake.moves.push([root, from, to])
-    // The disk's name changes where the desk has the note, and what follows a move hears.
     const [was, now] = [`${root}/${from}`, `${root}/${to}`]
     const words = fake.desk.disk.get(was)
     if (words === undefined) return
-    // A move onto a name that is taken is refused, as the verb refuses it.
     if (fake.desk.disk.has(now)) throw new Error(`${to} is taken`)
     fake.desk.disk.delete(was)
     fake.desk.disk.set(now, words)
@@ -39,7 +35,6 @@ vi.mock('../../automation/acts', () => ({
   },
 }))
 
-// A note put back beside whatever is at its name now, as the trash puts one back.
 vi.mock('../../workspace/undoing', () => ({
   putBack: (step: { path: string; content: string }) => {
     const path = fake.desk.disk.has(step.path) ? step.path.replace('.md', ' 2.md') : step.path
@@ -70,7 +65,6 @@ vi.mock('../../workspace.svelte', () => ({
     get undone() {
       return fake.undone
     },
-    // A note back has its tracks again, as `workspace.fileOps` tells agents/docs.
     fileCame: async (
       path: string,
       _kind: string,
@@ -415,7 +409,6 @@ describe('a rewind over a thread that did things in any order', () => {
       result: { text: JSON.stringify(answer), images: [], error: false },
     }
   }
-  /** What a thread's calls do, each the way its verb does it, in the order given. */
   const acts = {
     edit: async (thread: Thread & { provider: string }, path: string, from: string, to: string) => {
       clock += 10
@@ -448,7 +441,6 @@ describe('a rewind over a thread that did things in any order', () => {
       return [row(`c${String(clock)}`, 'create_note', { path }, { path, created: true })]
     },
   }
-  /** The reader's message, and then the calls that answered it, each taking its turn. */
   const running = async (
     thread: Thread,
     steps: (() => Promise<Turn['parts']> | Turn['parts'])[],
@@ -528,7 +520,6 @@ describe('a rewind over a thread that did things in any order', () => {
     ])
     const { tracksRemoved } = await import('../../agents/docs/edit')
     tracksRemoved('/space/A.md')
-    // Nothing to take back of the words until the note is there: the delete's row is.
     expect(review.notes(thread)).toEqual([])
     expect(review.files(thread)).toHaveLength(1)
 

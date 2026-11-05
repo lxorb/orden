@@ -1,10 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Words that came back with no write of them, meeting the file's document already open: a
- *  note clicked in the launch before the restore reached it, a closed tab reopened over the
- *  same note opened again. The words are not dropped for the clean document, or written over
- *  what it holds. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../../../test/disk').Disk | null }))
 const versions = vi.hoisted(() => [] as string[])
 const slow = vi.hoisted(() => ({ hold: null as Promise<void> | null }))

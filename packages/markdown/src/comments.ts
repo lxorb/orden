@@ -168,11 +168,6 @@ export function withoutComments(source: string): string {
   return out.join('\n')
 }
 
-/** A whole note with its comments gone, what is below its front matter as `withoutComments`
- *  has it. In the block a comment is one that closes, on its line, or of whole lines: what
- *  somebody wrote to themselves there reaches no page either (#453). An opener nothing
- *  closes like that is the value's own, `50%% off`, or it would run on down the note and
- *  take the block's closing fence and the words under it along. */
 export function noteWithoutComments(source: string): string {
   const block = frontMatterBlock(source)
   if (!block) return withoutComments(source)
@@ -203,7 +198,6 @@ function valuesWithoutComments(body: string): string {
       out.push(line)
       continue
     }
-    // The lines stay, empty, as `withoutComments` leaves them.
     out.push(text, ...lines.slice(at + 1, closes).map(() => ''))
     out.push(stripLine(lines[closes] ?? '', inside).text)
     at = closes

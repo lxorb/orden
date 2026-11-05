@@ -172,9 +172,6 @@ export function fired(
   return effect
 }
 
-/** The rows that are the base's own, and whether that is all of them: a guarded base past
- *  what it may spend answers no for a row that may well be one. An id counted from that
- *  is one somebody already has. */
 export function rowsInBase(
   base: Base,
   rows: readonly Row[],

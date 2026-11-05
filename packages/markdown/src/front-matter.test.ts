@@ -75,7 +75,6 @@ describe('what a writer makes is what a reader takes', () => {
   test.each(NAMES)('%s', (name) => {
     if (!isPropertyName(name)) {
       expect(addProperty('# Note\n', name)).toBeNull()
-      // A row an import carries is written whatever it is called, and read back.
       const written = `${writeFrontMatter([[name, 'x']])}\n`
       expect(frontMatterBlock(written)).not.toBeNull()
       expect(frontMatterValue(written, name)).toBe('x')
@@ -483,8 +482,6 @@ describe('writing a block', () => {
   })
 })
 
-/** A value YAML reads across lines is one value, and a block that would stop being one
- *  says so rather than handing its lines to the page. */
 describe('a value across lines', () => {
   const apply = (source: string, key: string, value: string | null) => {
     const edit = frontMatterEdit(source, key, value)
@@ -547,8 +544,6 @@ describe('a value across lines', () => {
     expect(apply('---\ntitle: x\n# about\nz: 1\n---\nrest\n', 'title', null)).toBe(
       '---\n# about\nz: 1\n---\nrest\n',
     )
-    // What is left would be no block, so the key stays and says nothing: what it said
-    // is gone, a reader of it finds no value, and the comment is still a comment.
     for (const [note, after] of [
       ['---\ntitle: x\n# keep me\n---\nrest\n', '---\ntitle:\n# keep me\n---\nrest\n'],
       ['---\ntitle: x\nsome words\n---\nrest\n', '---\ntitle:\nsome words\n---\nrest\n'],

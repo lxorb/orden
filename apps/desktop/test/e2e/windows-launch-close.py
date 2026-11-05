@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-"""A window going in its launch (H4-WINDOWS-1 and 2): the session comes back a piece at a time,
-and a session written before a piece is back keeps that piece as it was read. A draft on
-screen and one in a set out of sight, through a session written at every moment of a launch,
-a reload as the list is up and the tabs are not, and a reload while the set is being built."""
 
 from __future__ import annotations
 
@@ -18,7 +13,6 @@ WS = "window.nibApp.workspace"
 ON_SCREEN = "ONLY-IN-THE-SESSION"
 IN_A_SET = "WORDS-IN-A-SET-OUT-OF-SIGHT"
 
-# Armed for one launch by sessionStorage: what a window going does, at the moment it says.
 WATCH = """
 (() => {
   const armed = sessionStorage.getItem('launch-close');
@@ -80,7 +74,6 @@ def kept_through(page: Page, armed: str, fires: bool, total: int) -> None:
     page.evaluate("(armed)=>sessionStorage.setItem('launch-close', armed)", armed)
     page.reload(wait_until="commit")
     if fires:
-        # The page's own reload comes when it comes, under whatever is being asked of it.
         through_reload(
             page,
             lambda: wait_for(

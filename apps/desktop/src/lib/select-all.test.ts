@@ -1,8 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { selectAll } from './select-all'
 
-/** The page around a name field: a frame that comes when told, and what the reader does
- *  told to whoever listens on the window. */
 function page() {
   const frames: FrameRequestCallback[] = []
   const heard = new Map<string, Set<() => void>>()
@@ -55,7 +53,6 @@ describe('a name field as it arrives', () => {
     expect(select).toHaveBeenCalledTimes(2)
   })
 
-  /** Tab pressed inside that frame went to the hint, and the field took it straight back. */
   test.each(['keydown', 'pointerdown'])('leaves it alone after a %s inside the frame', (kind) => {
     const { node, focus } = field()
     selectAll(node)

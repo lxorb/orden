@@ -72,11 +72,6 @@ const THEME_SCRIPT = "'sha256-iR2Aqj1jRJSx35wTBtrVLSatm9gSp55tpjHpCB3GAHs='"
  *  way one runs anything. The same test hashes the file and holds this to it. */
 const FRAME_SCRIPT = "'sha256-v841QeTG55+uEpzDrS3ofxcdk/VIgYtt2NynJyqxXik='"
 
-/** The lines that fit a deck to its sheets in the print frame, `DECK_LAYOUT_SCRIPT` in
- *  packages/markdown/src/deck.ts, by the SHA-256 of the same characters. The frame is the
- *  app's own document and inherits this policy, so without its hash a deck's PDF comes out
- *  unscaled and unfitted where the print frame makes it. They only lay out a deck, and
- *  the same test holds this to them. */
 const DECK_LAYOUT = "'sha256-7EyWWoiOaEITiSnztLnl41c924jo2MevGJiwDThhx64='"
 
 const POLICY: readonly string[] = [

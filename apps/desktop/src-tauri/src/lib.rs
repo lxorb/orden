@@ -161,7 +161,6 @@ mod pdf;
 mod placement;
 #[cfg(desktop)]
 mod presence;
-// The presenter's window; see presenter.rs.
 #[cfg(desktop)]
 mod presenter;
 mod query;
@@ -693,7 +692,6 @@ pub fn cef_helper() -> bool {
     if !std::env::args_os().any(|arg| arg.as_encoded_bytes().starts_with(b"--type=")) {
         return false;
     }
-    // Not the runtime's own helper, whose renderers write `window.ipc` into every page.
     engine::renderer::run();
     true
 }
@@ -877,8 +875,6 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
 /// `web_opens.rs`. The app's own links are pressed through its own code, and each
 /// one says where it goes; see open-link.ts.
 fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
-    // A window's page loading afresh has no listener until it says so again; see
-    // `endpoint::Waiting`. A web tab is a webview of another label.
     #[cfg(desktop)]
     let builder = builder.on_page_load(|webview, payload| {
         if payload.event() == tauri::webview::PageLoadEvent::Started {
@@ -1218,15 +1214,8 @@ mod tests {
         "tauri_plugin_opener::",
     ];
 
-    /// What building a webview says. `WebView2` runs a nested loop for it, waiting on a
-    /// callback it will not deliver into the handler a sync command runs inside: a deadlock
-    /// of the whole app, not a stall (`web_open` in `web_tabs.rs`).
     const BUILDS: [&str; 2] = ["WebviewWindowBuilder::new(", "WebviewBuilder::new("];
 
-    /// Quick add's window, built on a hot key's press and, from `quick_add_key`, from a
-    /// closure posted to the loop, neither of which is the command's callback. The reader
-    /// goes by name and cannot tell a closure from a call, and `pressed` is reached by
-    /// name from half the crate, so the walk stops here.
     const BUILT_OFF_THE_CALLBACK: [&str; 1] = ["bring_up"];
 
     /// One function of the crate: the name it is called by, and the body it runs.
@@ -1327,8 +1316,6 @@ mod tests {
         reaching(functions, &WAITS, &[])
     }
 
-    /// Every function that says one of these words, and then every one that calls one of
-    /// those, to the end of the chain; none of it through a function named in `stops`.
     fn reaching(functions: &[Function], words: &[&str], stops: &[&str]) -> HashSet<String> {
         let mut waits: HashSet<String> = HashSet::new();
         let mut made_by: HashMap<String, HashSet<String>> = HashMap::new();
@@ -1408,13 +1395,11 @@ mod tests {
         }
     }
 
-    /// A command that builds a webview, a call or two down, says `async`.
     #[test]
     fn a_command_that_builds_a_webview_says_async() {
         let sources = own_sources();
         let functions: Vec<Function> = sources.iter().flat_map(|one| functions(one)).collect();
         let builds = reaching(&functions, &BUILDS, &BUILT_OFF_THE_CALLBACK);
-        // The walk itself: both the windows of a press of the page's.
         assert!(builds.contains("built_window") && builds.contains("open_window"));
 
         for name in sources.iter().flat_map(|one| on_the_calling_thread(one)) {
@@ -1425,7 +1410,6 @@ mod tests {
         }
     }
 
-    /// And the shape: a sync command is caught a call down, one that says `async` is not.
     #[test]
     fn building_a_webview_is_followed_to_the_command() {
         let source = concat!(
@@ -1440,7 +1424,6 @@ mod tests {
         assert_eq!(sync, vec!["opens".to_owned(), "child".to_owned()]);
     }
 
-    /// The crate's own modules, as text.
     fn own_sources() -> Vec<String> {
         let src = crate::app_dir().join("src");
         let mut sources = Vec::new();

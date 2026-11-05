@@ -1,60 +1,22 @@
-/** What a regular expression may cost in a base somebody else could have written.
- *
- *  A base is a file, and it may arrive from a shared space: whoever opens it, or a
- *  note with its fence, runs its patterns on the UI thread, and the answer is
- *  synchronous, so nothing can stop one that has started. `/(a+)+$/` over twenty-eight
- *  `a`s took thirty seconds.
- *
- *  So a base marked `guarded` - the app marks one that is not the reader's own; see
- *  `LiveView.load` - answers to three limits, and every other base to none. Its
- *  patterns are measured from their source without running them, and one whose ways
- *  grow out of hand is refused: `refusedPattern` names it, and the view says it cannot
- *  be read rather than answering wrongly. No value longer than `LONGEST_VALUE` is read,
- *  and no more than `MOST_MS` of any second goes on patterns; past either, that one
- *  value answers nothing.
- *
- *  Patterns are one way to spend a second and lists are another: ten items mapped over
- *  ten items, seven deep, took three seconds, and ten deep would take the app. So a
- *  guarded base's evaluations are also counted in steps (`spend`), an item of a list a
- *  method is called on or a few characters of a string, `MOST_STEPS_ONE` to one evaluation,
- *  and timed, `MOST_EVALUATING_MS` of any second. Past either, the row answers nothing, and
- *  the answer says it is partial, so nobody takes it for the whole of the base.
- *
- *  Deliberately over-careful, and only where it is asked for: `^[a-z]+(-[a-z]+)*$` is
- *  safe and is refused in a guarded base, because telling it from `(a+-?)*` is the work
- *  of a far larger analyser. What stays exposed: a base copied in from elsewhere to a
- *  space of the reader's own is the reader's own, as raw HTML in a note is. */
-
 import { BasesError } from '../errors'
 import { parseExpression } from './parse'
 
-/** How long a value a guarded base may read, in characters. */
 const LONGEST_VALUE = 1000
 
-/** How many steps one read may take at worst: a fraction of a second. */
 const MOST_STEPS = 2e8
 
-/** How much of each second a guarded base may spend reading patterns. */
 const MOST_MS = 250
 
-/** How a part of a pattern can read a value. */
 interface Cost {
-  /** How many repeats in it the length of the value decides. Infinite when refused. */
   open: number
-  /** How many ways the rest of it can go, whatever the length of the value. */
   ways: number
-  /** The one character it must start with, or null where that is not known. */
   first: string | null
 }
 
-/** How many steps one evaluation of a guarded base may take: at most a quarter of a
- *  second where every step is a list made, and far past a formula over a long list. */
 const MOST_STEPS_ONE = 1e6
 
-/** How much of each second a guarded base's evaluations may take together. */
 const MOST_EVALUATING_MS = 500
 
-/** How many steps go by between looks at the clock. */
 const STEPS_A_LOOK = 4096
 
 const REFUSED: Cost = { open: Number.POSITIVE_INFINITY, ways: 1, first: null }
@@ -65,10 +27,6 @@ const COUNTED = /^\{(\d+)(,(\d*))?\}/
 
 const SYNTAX = /[\\^$.*+?()[\]{}|/]/g
 
-/** Whether the engine, folding case as it does under any flag a group may turn on,
- *  can take one character for the other. Asked of the engine because folding is not
- *  `toLowerCase`: `σ` and `ς` are one letter, so are `µ` and `μ`, and `ſ` and `s` only
- *  under `u`. */
 function sameLetter(one: string, other: string): boolean {
   const pattern = `^${one.replace(SYNTAX, '\\$&')}$`
   return new RegExp(pattern, 'i').test(other) || new RegExp(pattern, 'iu').test(other)
@@ -95,8 +53,6 @@ function measure(source: string, flags: string): Cost {
     }
     if (branches.length === 1) return opening
 
-    // Told apart by the first character, only one branch is ever tried on a given
-    // spot, so backtracking has no second way to read it: `(foo|bar)+` is linear.
     const told = apart(branches.map((one) => one.first))
     return {
       open: Math.max(...branches.map((one) => one.open)),
@@ -122,14 +78,11 @@ function measure(source: string, flags: string): Cost {
     return all
   }
 
-  /** The character an escape stands for, or null where it stands for several or for
-   *  none, with `at` left past it. */
   function escaped(): Cost {
     const next = String.fromCodePoint(source.codePointAt(at) ?? 0)
     at += next.length
     const none: Cost = { open: 0, ways: 1, first: null }
 
-    // A backreference can make the same pattern match any way at all.
     if (/[1-9]/.test(next) || (next === 'k' && source[at] === '<')) return REFUSED
 
     if (next === 'x' || next === 'u') {
@@ -164,7 +117,6 @@ function measure(source: string, flags: string): Cost {
       at += opening.length
       const inner = alternatives()
       at++
-      // A look around reads no character of its own for what follows it to differ by.
       const looks = /^\?(?:=|!|<=|<!)/.test(opening)
       return looks ? { ...inner, first: null } : inner
     }
@@ -172,7 +124,6 @@ function measure(source: string, flags: string): Cost {
     return { open: 0, ways: 1, first: one }
   }
 
-  /** Past a `[...]`. Only the `v` flag lets a class hold a class. */
   function skipClass() {
     let depth = 1
     while (at < source.length && depth > 0) {
@@ -184,7 +135,6 @@ function measure(source: string, flags: string): Cost {
     }
   }
 
-  /** What a quantifier after an atom makes of it. */
   function repeated(one: Cost): Cost {
     const mark = source[at]
     const counted = mark === '{' ? COUNTED.exec(source.slice(at, at + 32)) : null
@@ -206,15 +156,12 @@ function measure(source: string, flags: string): Cost {
       most = mark === '?' ? 1 : Number.POSITIVE_INFINITY
       at++
     }
-    // Lazy costs what greedy costs: it only tries the same ways in the other order.
     if (source[at] === '?') at++
 
     const first = least === 0 ? null : one.first
     if (least === most) return { open: one.open * most, ways: one.ways ** most, first }
     if (most === 1) return { open: one.open, ways: one.ways * 2, first }
 
-    // The repeat that makes it exponential: one count of the outer around more than
-    // one way of the inner is a choice per iteration.
     if (one.open > 0 || one.ways > 1) return REFUSED
 
     const range = most - least
@@ -226,9 +173,6 @@ function measure(source: string, flags: string): Cost {
 
 const measured = new WeakMap<RegExp, boolean>()
 
-/** Whether a guarded base may run this pattern at all: the scan from every start, times
- *  each open repeat over the longest value, times the ways, shared out between the open
- *  repeats' orderings, stays under `MOST_STEPS`. Measured from the source, never run. */
 export function patternAllowed(pattern: RegExp): boolean {
   const kept = measured.get(pattern)
   if (kept !== undefined) return kept
@@ -248,10 +192,6 @@ export function patternAllowed(pattern: RegExp): boolean {
   return allowed
 }
 
-/** The first pattern anywhere in a base that `patternAllowed` turns away, as written,
- *  or null. Every string of the base is tried as an expression, since that is what a
- *  filter, a formula, a column, a sort and a colour all are, and any new place one is
- *  kept is then looked at too. */
 export function refusedPattern(base: unknown): string | null {
   if (typeof base === 'string') {
     if (!base.includes('/')) return null
@@ -287,12 +227,10 @@ function refusedIn(node: unknown): string | null {
   return null
 }
 
-/** How many answers and cells of guarded bases are running around this moment. */
 let guarding = 0
 let spent = 0
 let since = Number.NEGATIVE_INFINITY
 
-/** Runs part of an answer, with a guarded base's limits on the patterns it reads. */
 export function underGuard<T>(guarded: boolean | undefined, run: () => T): T {
   if (!guarded) return run()
   guarding++
@@ -303,8 +241,6 @@ export function underGuard<T>(guarded: boolean | undefined, run: () => T): T {
   }
 }
 
-/** One read of a value by a pattern. Throws, which answers nothing for that value,
- *  where a guarded base may not. */
 export function readPattern<T>(pattern: RegExp, value: string, read: () => T): T {
   if (guarding === 0) return read()
 
@@ -335,7 +271,6 @@ let stepsUnseen = 0
 let evaluatingMs = 0
 let lookedAt = 0
 let evaluatingSince = Number.NEGATIVE_INFINITY
-/** How many times a guarded base has been told no: see `refusing`. */
 let refused = 0
 
 function tooLong(): BasesError {
@@ -343,15 +278,12 @@ function tooLong(): BasesError {
   return new BasesError('This takes too long to answer')
 }
 
-/** Whether what `run` did was told no anywhere, so its answer leaves something out. */
 export function refusing<T>(run: () => T): { value: T; partial: boolean } {
   const before = refused
   const value = run()
   return { value, partial: refused > before }
 }
 
-/** One evaluation of an expression: the steps start over here, and a formula it reads
- *  is part of it. Nothing at all where no guarded base is running. */
 export function evaluation<T, A>(run: (arg: A) => T, arg: A, weigh: (made: T) => void): T {
   if (guarding === 0 || evaluating) return run(arg)
 
@@ -371,14 +303,8 @@ export function evaluation<T, A>(run: (arg: A) => T, arg: A, weigh: (made: T) =>
   }
 }
 
-/** Counts steps about to be taken. Throws, which answers nothing for that row, where a
- *  guarded base may not take them. Asked before what is costly, so it is never built. Only
- *  an evaluation counts: nothing around it is there to take the no, and what it handed out
- *  has been paid for (`weigh` in runtime.ts). */
 export function spend(steps: number): void {
   if (guarding === 0 || !evaluating) return
-  // Not `>`'s opposite, so that a count that is no number is refused too, and before
-  // it is added, since the count of what is unseen outlives the evaluation.
   if (!(stepsOne + steps <= MOST_STEPS_ONE)) throw tooLong()
   stepsOne += steps
   stepsUnseen += steps
@@ -391,7 +317,6 @@ export function spend(steps: number): void {
   if (evaluatingMs >= MOST_EVALUATING_MS) throw tooLong()
 }
 
-/** The steps a string of this length stands for: it is copied, not walked by a closure. */
 export function stepsOfText(length: number): number {
   return length / 16
 }

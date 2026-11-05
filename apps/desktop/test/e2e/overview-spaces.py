@@ -1,12 +1,3 @@
-"""The overview across spaces, by a real mouse on the web build.
-
-A window dragged onto another space's cell and Ctrl+Z: the file and the tab come back
-together. A drop refused for a name already there says so and the window does not stay
-parked among the other space's. The camera left on one space does not open on nothing in
-the next. A tab closed in another space comes back in that space.
-
-    CHOKIDAR_USEPOLLING=1 python apps/desktop/test/e2e/overview-spaces.py
-"""
 
 from __future__ import annotations
 
@@ -122,7 +113,6 @@ def drive(browser: Browser) -> None:
     DRIVE.open(page)
     ids = page.evaluate(SEED)
 
-    # The camera left on this space, and the other one's windows.
     open_overview(page)
     page.get_by_role("combobox", name="Spaces").click()
     page.get_by_role("option", name="This space").click()
@@ -143,15 +133,12 @@ def drive(browser: Browser) -> None:
     page.evaluate("async (id) => { await window.nibApp.workspace.showSpace(id) }", ids["home"])
     page.wait_for_timeout(400)
 
-    # A window carried to the other space, and Ctrl+Z.
     open_overview(page)
     all_spaces(page)
     drag(page, box(page, "A2"), box(page, "B2"))
     if tab(page, "A2")["here"] or not tab(page, "A2")["path"].startswith(ids["beeRoot"]):
         wrong(f"the drag did not move the tab and its file: {tab(page, 'A2')}")
 
-    # The keyboard stays with the view, the window it was on gone: Ctrl+Z takes the move
-    # back from there, and the toast's Undo does not hand it to the note behind.
     say(f"after a drop the keyboard is on {keyboard(page)}")
     if not keyboard(page).startswith("canvas"):
         wrong(f"a drop left the keyboard on {keyboard(page)}")
@@ -189,7 +176,6 @@ def drive(browser: Browser) -> None:
         wrong(f"redone, the file and its tab did not go together: {moved}")
     page.evaluate("async () => { await window.nibApp.workspace.undoFileAction() }")
 
-    # A drop onto a name that is taken there.
     page.evaluate(
         """async (root) => {
           const { invoke } = await import('/src/lib/tauri.ts')
@@ -227,7 +213,6 @@ def drive(browser: Browser) -> None:
         ids["beeRoot"],
     )
 
-    # Closed here, reopened from the other space.
     page.evaluate(
         """async ([id, home]) => {
           const ws = window.nibApp.workspace

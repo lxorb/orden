@@ -81,7 +81,6 @@ export async function sendFcm(
   const service = account(serviceJson)
   if (!service) return 'off'
   const access = await accessToken(service, options.now, send)
-  // Nothing has been sent yet.
   if (!access) return 'busy'
 
   const answer = await send(

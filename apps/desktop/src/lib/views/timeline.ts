@@ -25,12 +25,10 @@ export interface Bar {
   /** The properties the two edges were read from, which a drag writes. */
   from: string
   to: string
-  /** The time of day each says after its day, as it is written, which a drag leaves. */
   fromTime?: string
   toTime?: string
 }
 
-/** What a value says after its day: `T09:30`, or nothing where it is a day alone. */
 function timeIn(value: Value): string {
   if (typeof value === 'string') return value.slice(10)
   if (!isDateValue(value) || !value.time) return ''
@@ -84,9 +82,6 @@ export function barOf(
   }
 }
 
-/** How far from the middle of a base's dates a date can stretch the track, in days each
- *  way. One further off is most often a year mistyped: `1026-11-03` drew a track of five
- *  million pixels and a hundred thousand marks, with every other bar far away to the right. */
 const FURTHEST = 3650
 
 /** The days the timeline spans: from a little before the first bar to a little after
@@ -108,8 +103,6 @@ export function spanOf(bars: readonly Bar[], today: string): { first: string; la
   return { first, last }
 }
 
-/** The days a bar is drawn over on this span, and whether it runs past it: a drag still
- *  moves the dates it says. */
 export function drawnOf(
   bar: Bar,
   span: { first: string; last: string },

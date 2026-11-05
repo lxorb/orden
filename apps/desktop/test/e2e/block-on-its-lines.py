@@ -1,11 +1,3 @@
-"""A block from the palette stands on its own lines and takes no words with it.
-
-With the caret inside a line, `Code block` wrote the closing fence glued to the rest of
-the line, which closes nothing, so the note below read as code. With words selected it
-deleted them and left an empty block. See `insertBlock` in packages/editor/src/commands.ts.
-
-    python apps/desktop/test/e2e/block-on-its-lines.py
-"""
 
 from __future__ import annotations
 
@@ -22,7 +14,6 @@ WORDS = "# Words\n\nLeft as they were.\n"
 MIDDLE = DOC.index("alpha")
 LINES = (DOC.index("First"), DOC.index("alpha.") + len("alpha."))
 
-#: What each row comes to, with the caret inside a line and with two lines selected.
 CASES = {
     "Code block": (
         "Second line \n```\n\n```\nalpha.",
@@ -87,7 +78,6 @@ def drive(browser: Browser) -> None:
             wrong(f"{row} over two lines: {text!r}")
 
     say("Ctrl+Z takes the block back and leaves the words")
-    # A note of its own, whose history holds nothing for the undo to run together with.
     DRIVE.open_note(page, "Words")
     page.evaluate(
         """(head) => {

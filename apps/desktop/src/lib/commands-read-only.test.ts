@@ -92,8 +92,6 @@ describe('the note in front', () => {
     expect(rows()).toEqual({ renames: false, moves: false })
   })
 
-  /** F2 belongs to a focused tab or row. With the caret in the note it goes to the
-   *  editor, so the palette's row does not promise it. */
   test('promises no key that only works on a focused tab', () => {
     rows()
     expect(appCommands().find((one) => one.id === 'rename')?.hint).toBeFalsy()

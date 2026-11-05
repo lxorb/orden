@@ -159,7 +159,6 @@ function rowOf(row: ListedRow) {
   }
 }
 
-/** The chats somebody reaches, the latest first; `most` of them, or null for them all. */
 export async function listed(
   env: Env,
   who: Whoever,

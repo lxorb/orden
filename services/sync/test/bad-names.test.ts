@@ -1,7 +1,3 @@
-/** A name a device refuses never reaches the feed from a new write, and one an account
- *  already holds does not stop anybody's: `feedPageOf` throws the whole page away for
- *  one item it cannot read, and every device of every member stops at that page. */
-
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { feedPageOf, isName, type FeedItem } from '@orden/sync-core'
 import { sha256 } from '../src/crypto'
@@ -59,7 +55,6 @@ async function baseFile(path: string, text: string) {
     .run()
 }
 
-/** A row from before the account refused such a name. */
 function badRow(table: 'notes' | 'folders', id: string, name: string, deleted = 0) {
   return table === 'notes'
     ? env.DB.prepare(

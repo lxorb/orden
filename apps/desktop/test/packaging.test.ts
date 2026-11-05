@@ -101,15 +101,12 @@ describe('the release', () => {
   const workflow = repo('.github', 'workflows', 'release.yml')
   const publishJob = () =>
     /\n {2}publish:\n([\s\S]*?)(?=\n {2}[a-z-]+:\n|$)/.exec(workflow)?.[1] ?? ''
-  /** One step's `run:` block, as the shell is handed it. */
   const stepRun = (name: string) => {
     const step = new RegExp(`- name: ${name}\\n([\\s\\S]*?)(?=\\n {6}- |$)`).exec(publishJob())?.[1]
     const block = /run: \|\n([\s\S]*)/.exec(step ?? '')?.[1] ?? ''
     return block.replace(/^ {10}/gm, '')
   }
 
-  /** The upload step run for real against a `gh` that fails where it is told to, and that
-   *  says the release holds what it was given. Under `bash -e`, as a runner runs it. */
   function upload(gh: { refuse?: string; drop?: string }) {
     const at = mkdtempSync(join(tmpdir(), 'nib-release-'))
     mkdirSync(join(at, 'bin'))
@@ -160,7 +157,6 @@ esac
     return { status: ran.status, calls: readFileSync(log, 'utf8'), said: ran.stdout + ran.stderr }
   }
 
-  // Bash on a runner of every kind this job is, Linux; a Windows desk has none to trust.
   describe.skipIf(process.platform === 'win32')('uploads', () => {
     test('a refused installer stops the step, before the manifest that names it', () => {
       const { status, calls } = upload({ refuse: 'updates artifacts/Nib-1.0.0-linux-x64.AppImage' })
@@ -182,10 +178,6 @@ esac
     })
   })
 
-  /** `releases/latest/download/latest.json` is what every install asks: a tag's release
-   *  is a draft until its manifest is up, so the address never answers 404 from a release
-   *  that is only half there. GitHub takes any number of drafts of one tag, so one job
-   *  makes it, first thing and before anything is built, and the phones wait for it. */
   describe('a tag', () => {
     const job = (workflowText: string, name: string) =>
       new RegExp(`\\n {2}${name}:\\n([\\s\\S]*?)(?=\\n {2}[a-z-]+:\\n|$)`).exec(
@@ -221,7 +213,6 @@ esac
       expect(mobile).not.toContain('--draft')
     })
 
-    /** The publish step run against a `gh` that says what is out. */
     function publish(tag: string, latest: string, draft: boolean) {
       const at = mkdtempSync(join(tmpdir(), 'nib-release-'))
       mkdirSync(join(at, 'bin'))

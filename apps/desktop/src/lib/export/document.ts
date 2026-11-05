@@ -121,7 +121,6 @@ interface Marks {
  *  around them already folded in. */
 function spansOf(tokens: readonly Token[] | undefined, marks: Marks = {}): Span[] {
   const out: Span[] = []
-  /** The element in the line being passed over: its words are not shown. */
   let passing: string | null = null
   for (const token of tokens ?? []) {
     if (token.type === 'html') {
@@ -207,8 +206,6 @@ function spansOfToken(token: Token, marks: Marks): Span[] {
       return [{ ...marks, text: '\n' }]
 
     case 'html':
-      // A tag in a line is markup, and the words around it are tokens of their own. A
-      // line break is the one that says something, and in a table cell the only way to.
       return /^<br\s*\/?>$/i.test(token.raw.trim()) ? [{ ...marks, text: '\n' }] : []
 
     case 'text':
@@ -421,12 +418,9 @@ function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {
         break
 
       case 'html': {
-        // A page break is the one piece of markup that means something to a writer, and
-        // the words a block holds are words here too: every other surface shows them.
         const html = String((token as Tokens.Generic).text ?? '')
         if (PAGE_BREAK.test(html)) out.push({ kind: 'break' })
         for (const words of wordsOfHtml(html)) {
-          // A break is a span of its own, as `br` is above.
           const spans = words
             .split('\n')
             .flatMap((text, at) => (at ? [{ text: '\n' }, { text }] : [{ text }]))
@@ -446,23 +440,17 @@ function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {
   return out
 }
 
-/** Elements whose words are no words of the page: never drawn, or what a browser draws
- *  only where it cannot draw them. */
 const NOT_SHOWN =
   /^(?:script|style|template|head|title|noscript|textarea|select|svg|canvas|object|video|audio|iframe|embed|dialog)$/i
 
-/** What keeps an element off the page wherever it is. An open dialog is drawn. */
 const HIDDEN =
   /\shidden(?:[\s=/>])|\sstyle\s*=\s*(?:"[^"]*display\s*:\s*none[^"]*"|'[^']*display\s*:\s*none[^']*')/i
 
-/** Elements that have no end of their own. */
 const VOID = /^(?:area|base|br|col|embed|hr|img|input|link|meta|source|track|wbr)$/i
 
-/** Elements that start a line of their own. A cell does not: a row is the line. */
 const STARTS_LINE =
   /^(?:address|article|aside|blockquote|center|dd|details|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hr|li|main|menu|nav|ol|p|pre|section|summary|table|tbody|tfoot|thead|tr|ul)$/i
 
-/** Latin-1 from 160 on, in order, which is most of what a note names by name. */
 const LATIN =
   'nbsp iexcl cent pound curren yen brvbar sect uml copy ordf laquo not shy reg macr deg plusmn sup2 sup3 acute micro para middot cedil sup1 ordm raquo frac14 frac12 frac34 iquest Agrave Aacute Acirc Atilde Auml Aring AElig Ccedil Egrave Eacute Ecirc Euml Igrave Iacute Icirc Iuml ETH Ntilde Ograve Oacute Ocirc Otilde Ouml times Oslash Ugrave Uacute Ucirc Uuml Yacute THORN szlig agrave aacute acirc atilde auml aring aelig ccedil egrave eacute ecirc euml igrave iacute icirc iuml eth ntilde ograve oacute ocirc otilde ouml divide oslash ugrave uacute ucirc uuml yacute thorn yuml'
 
@@ -505,12 +493,9 @@ function entitiesRead(text: string): string {
   })
 }
 
-/** The words of a block of raw HTML, a paragraph for each block element in it. No DOM,
- *  since this reading of a note is pure, and no more of HTML than where words are. */
 function wordsOfHtml(source: string): string[] {
   const out: string[] = []
   let line = ''
-  /** The element being passed over, and how many of its name are open inside it. */
   let skipping: { name: string; depth: number } | null = null
   let pre = 0
   let at = 0
@@ -525,8 +510,6 @@ function wordsOfHtml(source: string): string[] {
     line = ''
   }
 
-  // A comment never closed takes the rest, and no tag closes past the last `>`, which is
-  // what keeps `<a ` thirty thousand times from being read to its end from each of them.
   const comment = source.lastIndexOf('<!--')
   const html =
     comment !== -1 && !source.includes('-->', comment) ? source.slice(0, comment) : source

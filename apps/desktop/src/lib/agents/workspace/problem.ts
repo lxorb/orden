@@ -40,7 +40,6 @@ export type Code =
   | 'no_such_setting'
   | 'no_such_version'
   | 'not_found'
-  /** A name several things hold; the message names them by id. */
   | 'ambiguous'
   | 'unsupported_on_this_engine'
   | 'timeout'

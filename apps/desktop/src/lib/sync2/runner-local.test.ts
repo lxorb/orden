@@ -96,8 +96,6 @@ describe('the engine kept signed out', () => {
     const dropping = runner.dropLocal()
     await Promise.all([starting, dropping])
 
-    // The account's store opens once this window leads, which may come after the drop,
-    // and never before the store kept signed out has gone.
     expect(said.slice(0, 2)).toEqual(['open local', 'close local'])
     expect(said).toContain('open u1')
     expect(said.lastIndexOf('forget local')).toBeLessThan(said.indexOf('open u1'))

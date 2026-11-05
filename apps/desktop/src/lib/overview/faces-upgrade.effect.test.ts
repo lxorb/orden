@@ -4,8 +4,6 @@ import { expect, test, vi } from 'vitest'
 const { memoryStorage } = await import('../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
 
-/** The store as the version before it wrote it: a private tab's picture is under the name
- *  of any web page, so no web page's can stay. */
 function writtenBefore(): Promise<void> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('nib-overview-faces', 1)

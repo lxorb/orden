@@ -167,8 +167,6 @@ export function pinched(camera: Camera, before: [Point, Point], after: [Point, P
   return moved(zoomed, to.x - from.x, to.y - from.y)
 }
 
-/** Whether the middle of `what` on the canvas is inside `room` on the screen: whether a
- *  camera shows it, rather than a sliver of it or nothing. */
 export function isOnView(camera: Camera, what: Box, room: Box): boolean {
   const x = (what.x + what.w / 2) * camera.zoom + camera.x - room.x
   const y = (what.y + what.h / 2) * camera.zoom + camera.y - room.y

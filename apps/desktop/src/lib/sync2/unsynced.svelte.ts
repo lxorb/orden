@@ -14,7 +14,6 @@ import { UNDO_LINGER } from '../undo-toast.svelte'
 class Unsynced {
   /** The name of the file the toast is about, or null when it is not up. */
   said = $state<string | null>(null)
-  /** How many files the line is about. */
   many = $state(0)
 
   private readonly names = new Set<string>()

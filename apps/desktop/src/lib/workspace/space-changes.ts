@@ -59,7 +59,6 @@ export async function addSpace(ws: HoldsSpaces, name: string) {
 
   if (!created) return
 
-  // A listing heard meanwhile may have found the folder already, and given it an id.
   const listed = ws.spaces.find((one) => samePath(one.root, created.path))
   const space: Space = listed ?? { id: identifier(), name: created.name, root: created.path }
   if (!listed) ws.spaces = [...ws.spaces, space]
@@ -80,7 +79,6 @@ export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
   // for their writes and holds them until they have been told; see `move` in
   // workspace.svelte.ts.
   const done = { moved: false }
-  // Fetched before the folder moves: from then on there is no moment to wait in.
   const { followSpaceName } = await import('../views/space-follow')
   await ws.holdingUnder(space.root, async () => {
     const renamed = await invoke<{ name: string; path: string }>('rename_space', {
@@ -100,7 +98,6 @@ export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
     const was = space.name
     space.name = renamed.name
     space.root = renamed.path
-    // A view asks about a space by its name, which only this knows has changed.
     followSpaceName(
       was,
       renamed.name,
@@ -146,7 +143,6 @@ export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
   // workspace/file-ops.ts.
   await ws.fileGone(space.root, 'space')
   ws.spaces = ws.spaces.filter((entry) => entry.id !== id)
-  // Kept by its name, which nothing else may inherit; of two of a name, it may be the other's.
   if (!ws.spaces.some((entry) => entry.name === space.name)) forgetSpaceViews(space.name)
   // The sets, fetched after the list so the shared set of older builds is not given to
   // this space, and before the space on screen changes, since by the switch below they

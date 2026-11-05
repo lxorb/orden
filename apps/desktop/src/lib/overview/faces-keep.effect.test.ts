@@ -48,7 +48,6 @@ test('a private tab’s page is never written down, by picture or by name', () =
   expect(store.written).toEqual([])
   expect(faces.of(tab.id)).toBe(null)
 
-  // Dragged about in the overview, it lies where it was put this run and nowhere after.
   places.keepWindows({ [tab.id]: { x: 1, y: 2, w: 3, h: 4 } }, workspace.tabs)
   expect(places.windows[tab.id]).toEqual({ x: 1, y: 2, w: 3, h: 4 })
   expect(localStorage.getItem('nib:overview-windows-2')).toBe('{}')

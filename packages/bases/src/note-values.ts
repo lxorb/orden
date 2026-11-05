@@ -104,8 +104,6 @@ export function noteValues(text: string): Record<string, Value> {
     : `---\n${text}${text.endsWith('\n') ? '' : '\n'}---\n`
   const rows = readProperties(source)
   if (rows) {
-    // A key written twice reads its first, which is the one an edit writes: the cell
-    // would not change otherwise (`keyLine` in @orden/markdown/front-matter).
     const firsts = new Map<string, Value>()
     for (const row of rows) if (!firsts.has(row.key)) firsts.set(row.key, propertyValue(row))
     return Object.fromEntries(firsts)
@@ -120,9 +118,6 @@ export function noteValues(text: string): Record<string, Value> {
     if (read === null || typeof read !== 'object' || Array.isArray(read)) return {}
     return Object.fromEntries(Object.entries(read).map(([key, value]) => [key, fromYaml(value)]))
   } catch {
-    // Not YAML, most often for the moment a key has no colon yet: an autosave at that
-    // moment must not read as every property gone. What the block says apart from the
-    // lines at the margin that say no key.
     try {
       const kept = source
         .slice(block.body.from, block.body.to)
@@ -133,7 +128,6 @@ export function noteValues(text: string): Record<string, Value> {
       if (read === null || typeof read !== 'object' || Array.isArray(read)) return {}
       return Object.fromEntries(Object.entries(read).map(([key, value]) => [key, fromYaml(value)]))
     } catch {
-      // A block that is not YAML holds no values; the note is still a row.
       return {}
     }
   }

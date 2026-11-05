@@ -31,14 +31,12 @@ import { OWNED } from './door'
 /** What the door decided about a socket, kept on it across a hibernation. */
 export interface Party extends Holder {
   role: 'host' | 'viewer'
-  /** The hash of the sign-in it arrived with; see `alarm`. */
   login?: string
   /** Whether a viewer's hello said it takes part in the lock. */
   hold?: boolean
   view?: View
 }
 
-/** What a socket on a file no longer the person's is closed with. */
 const NOT_THEIRS = 4404
 
 /** Where the application stood, as its host last said it. */
@@ -163,9 +161,6 @@ export class AppRelay implements DurableObject {
     await this.gone(socket)
   }
 
-  /** The object's minute: what no longer reaches the application closes, a holder gone
-   *  quiet is let go of, and it stops once nobody is here. Not asked is not ended: a
-   *  database that did not answer is asked again the next minute. */
   async alarm(): Promise<void> {
     const sockets = this.ctx.getWebSockets().flatMap((socket) => {
       const party = partyOf(socket)
@@ -192,7 +187,6 @@ export class AppRelay implements DurableObject {
 
     const held = await this.lock.holder(first.session)
     await this.lock.settle(first.session)
-    // Handed to a device, the lock has told the host; freed for nobody, nothing has.
     if (held && !(await this.lock.holder(first.session))) await this.toldWho(first.session)
 
     if (this.ctx.getWebSockets().some((socket) => socket.readyState === OPEN)) {

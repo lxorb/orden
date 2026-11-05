@@ -50,7 +50,6 @@ function shifted(canvas: Canvas, moves: ReadonlyMap<string, { dx: number; dy: nu
 
   for (const [id, move] of moves) {
     if (!move.dx && !move.dy) continue
-    // What rounds is where the node lands, so its handwriting moves as far as it did.
     const node = canvas.nodes.find((one) => one.id === id)
     const whole = node
       ? { dx: Math.round(node.x + move.dx) - node.x, dy: Math.round(node.y + move.dy) - node.y }

@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Another program writing a space's files, with the real store and across on a disk in
- *  memory: a terminal agent, `git pull`, another editor, signed out and alone. What may
- *  never happen is the file's words gone with no version holding them. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../../test/disk').Disk | null }))
 vi.mock('./tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./tauri')>()),

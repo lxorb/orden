@@ -48,7 +48,6 @@ describe('tree', () => {
     expect('name' in again && again.name.length <= 255).toBe(true)
     expect('name' in again && again.name).not.toBe(folder)
 
-    // Half a character is not left behind.
     const emoji = `${'😀'.repeat(127)}.md`
     create(state, 'n4', emoji)
     const cut = create(state, 'n5', emoji)

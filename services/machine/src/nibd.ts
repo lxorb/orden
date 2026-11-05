@@ -68,7 +68,6 @@ async function call(url: string): Promise<number> {
 
 export class Nibd {
   private readonly sessions = new Map<string, Session>()
-  /** The opens still asking a session's holder whether it runs; see `receive`. */
   private readonly opening = new Map<string, Promise<void>>()
   private readonly saves: Saves
   private readonly options: Options
@@ -158,21 +157,15 @@ export class Nibd {
       return
     }
     if (!isSessionId(frame.session)) return
-    // The server does not wait for one frame before the next (server.ts): what follows an
-    // open that is still asking the holder, the `want` a reader's screen hangs on, is not
-    // to find no session and be dropped.
     const opening = frame.t === 'open' ? undefined : this.opening.get(frame.session)
     if (opening) await opening.catch(() => undefined)
     const session = this.sessions.get(frame.session)
     switch (frame.t) {
       case 'open':
         if (!session) {
-          // Nor a new shell for a watcher: only a program still running in its holder.
           if (frame.watching) await this.watcherOpens(frame.session, frame.cols, frame.rows)
           else this.sessions.set(frame.session, this.session(frame.session, frame.cols, frame.rows))
         } else if (!session.alive && !frame.watching) {
-          // Whoever may only watch does not start its shell again, which is `start`'s to
-          // ask for. `Machine` keeps no word of an ended shell across its own restart.
           session.restart()
         }
         return

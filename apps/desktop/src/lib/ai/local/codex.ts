@@ -125,8 +125,6 @@ function text(value: unknown): string {
   return typeof value === 'string' ? value : ''
 }
 
-/** The name Codex knows the app's own server by: `orden` (`SERVER` in the crate's
- *  ai_cli/args.rs), or `nib` in a session started before the rename. */
 const OWN = new Set<unknown>(['orden', 'nib'])
 
 /** One of Orden's tools, called: started, or answered. A tool of another server is not

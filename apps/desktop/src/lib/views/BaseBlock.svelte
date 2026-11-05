@@ -26,7 +26,6 @@
     view?: string | undefined
     /** The note it stands in, on this disk, or null for one with no file yet. */
     from: string | null
-    /** Whether that note is a file somebody shared on its own, which has no path to ask. */
     stranger?: boolean
     title: string
   } = $props()

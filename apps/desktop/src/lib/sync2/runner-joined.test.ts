@@ -1,7 +1,3 @@
-/** Which of a window's notes are joined to the engine's document, for what another window
- *  wrote to go in through (H3-WINDOWS-L6): not one `attach` is still joining, whose words
- *  would reach the document and not the note. */
-
 import { describe, expect, test, vi } from 'vitest'
 import type { NoteDoc } from '../workspace/documents.svelte'
 

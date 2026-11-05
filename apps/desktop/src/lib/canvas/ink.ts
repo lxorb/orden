@@ -817,8 +817,6 @@ export function nearStroke(stroke: InkStroke, point: Point, reach: number): bool
   return false
 }
 
-/** Which stretch of a segment lies inside a circle, as shares of its length, or null
- *  where none of it does. */
 function underCircle(
   from: Point,
   to: Point,
@@ -832,7 +830,6 @@ function underCircle(
 
   const a = dx * dx + dy * dy
   const c = fx * fx + fy * fy - radius * radius
-  // Two points on one spot: all of it or none of it.
   if (a === 0) return c <= 0 ? { enters: 0, leaves: 1 } : null
 
   const b = fx * dx + fy * dy
@@ -846,7 +843,6 @@ function underCircle(
   return { enters: Math.max(0, enters), leaves: Math.min(1, leaves) }
 }
 
-/** A point part of the way along a segment, with what the pen was doing there. */
 function pointBetween(from: InkPoint, to: InkPoint, share: number): InkPoint {
   const at = (one: number, other: number) => one + (other - one) * share
 
@@ -860,11 +856,6 @@ function pointBetween(from: InkPoint, to: InkPoint, share: number): InkPoint {
   }
 }
 
-/** Where an eraser has to answer between two of its events: a quick swipe is a few
- *  events far apart, and a line it crossed between two of them was crossed all the
- *  same. Points no further apart than half its reach, the last of them where it is now:
- *  circles a whole reach apart take a line down the middle of the swipe and leave one
- *  near its edge in dashes. */
 export function rubbedPath(from: Point, to: Point, reach: number): Point[] {
   const dx = to.x - from.x
   const dy = to.y - from.y
@@ -878,14 +869,8 @@ export function rubbedPath(from: Point, to: Point, reach: number): Point[] {
   )
 }
 
-/** How far past the hand the plane may seem to go, in pixels, before it counts as having
- *  moved by itself: what rounding the two readings of one event can come to. */
 const HAND_SLACK = 2
 
-/** The same between two events as they were read, in the plane and on the screen. Where
- *  the plane went further than the hand it moved by itself, a scroll or a zoom with the
- *  eraser held, and the way between the two points is ink that went by under a still
- *  hand: only where the eraser is now. */
 export function rubbedBetween(
   before: { at: Point; screen: Point },
   now: { at: Point; screen: Point },
@@ -898,8 +883,6 @@ export function rubbedBetween(
   return onPlane > onScreen + HAND_SLACK ? [now.at] : rubbedPath(before.at, now.at, reach)
 }
 
-/** The least an eraser reaches in the steps above, so a plane zoomed a long way out
- *  cannot ask for a walk of millions of them. */
 const MIN_REACH = 0.01
 
 /** The stroke with the part under the eraser taken out. One stroke goes in and

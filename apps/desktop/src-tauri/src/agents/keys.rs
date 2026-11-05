@@ -123,12 +123,10 @@ impl Key {
         self.name == "Enter" && self.modifiers & (CONTROL | ALT | META) == 0
     }
 
-    /// Whether what this press does depends on what has the keyboard.
     pub fn judged_by_the_page(&self) -> bool {
         self.changes_words() || self.sends() || self.submits() || self.presses()
     }
 
-    /// Whether this press presses what has the keyboard, as a click would.
     pub fn presses(&self) -> bool {
         matches!(self.name.as_str(), " " | "Enter")
     }

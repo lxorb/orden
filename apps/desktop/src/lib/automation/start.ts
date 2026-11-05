@@ -93,8 +93,6 @@ export async function startAutomation(): Promise<() => void> {
     // Only now does the crate send what it was asked: an event before this listener
     // reached nobody, and the caller waited out the endpoint's patience for nothing.
     await invoke('automation_listening')
-    // A link that found this window still loading was held for it: see `hand_over` in
-    // uris.rs.
     for (const uri of await invoke<string[]>('take_startup_uris').catch(() => [])) {
       await follow(uri)
     }
@@ -121,8 +119,6 @@ interface Request {
 
 /** One request, answered. */
 async function answer(id: number, asked: Request) {
-  // Taken from the crate first, so a request it gave up on while this page was busy, and
-  // asked of another window, does not run in both.
   if ((await invoke('automation_claim', { id }).catch(() => false)) !== true) return
 
   const verb = typeof asked.verb === 'string' ? asked.verb : ''

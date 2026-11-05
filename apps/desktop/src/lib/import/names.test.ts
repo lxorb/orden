@@ -15,7 +15,6 @@ describe('a title as a file name', () => {
   })
 
   test('loses a dot at the start, which hides a file from every list and from sync', () => {
-    // Beside `NET plan`, whichever comes first, the page of that name keeps it.
     expect(safeName('.NET plan')).toBe('_NET plan')
     expect(safeName('.Archive')).toBe('_Archive')
     expect(safeName('NET plan')).toBe('NET plan')

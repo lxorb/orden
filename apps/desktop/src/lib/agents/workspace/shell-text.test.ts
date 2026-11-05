@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { onTheList, plainOf, programOf, startsOnlyOne } from './shell-text'
 
-/** What a line gets on both systems, where they agree; where they do not, the test fails
- *  on a word saying so. */
 function onBoth(command: string, programs: readonly string[]): boolean | string {
   const windows = onTheList(command, programs, 'windows')
   const unix = onTheList(command, programs, 'unix')
@@ -104,7 +102,6 @@ describe('what actually runs', () => {
         expect(['git'], `${os}: ${line}`).not.toContain(programOf(line, os))
       }
     }
-    // Windows runs `git.exe` for `git`; elsewhere it is another file.
     expect(programOf('git.exe status', 'unix')).toBe('git.exe')
   })
 
@@ -455,10 +452,8 @@ describe('a line as the shell hands it over', () => {
     'pnpm --dir ./\\ run\\ /.. exec touch z',
     'bun --cwd "./ test /.." ./e.js',
     'yarn --cwd "./ test /.." exec touch z',
-    // A shell with no such quoting reads these the other way round.
     'npm --prefix a\\ exec test',
     'npm --prefix "a b" test',
-    // A quote never closed runs nothing it says.
     'npm test "',
     "git log '",
     'git "log',

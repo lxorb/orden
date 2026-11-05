@@ -92,7 +92,6 @@ const LIGHT = '─'
 interface Wrapped {
   line: Line
   rows: readonly string[]
-  /** A later part of a line cut for being longer than a page. Says no number. */
   continues?: boolean
 }
 
@@ -102,11 +101,7 @@ interface Taking {
   rows: number
   section: string
   rule: string
-  /** The heading that opened this page, which makes it a page with nothing under
-   *  it yet. */
   head: Line | null
-  /** A heading taken into the body rather than opening a page; see `pagesOf`. What the
-   *  pages after this one sit under. */
   next: { section: string; rule: string } | null
 }
 
@@ -114,9 +109,6 @@ function empty(section: string, rule: string, head: Line | null = null): Taking 
   return { taken: [], rows: 0, section, rule, head, next: null }
 }
 
-/** A wrapped line as parts that fit on a page. Marks know where a line of the note
- *  begins and not where each row of it does, so a part's place is that share of the
- *  way to the next line: near enough to find the part, and always going forwards. */
 function partsOf(whole: Wrapped, most: number, next: number): Wrapped[] {
   if (whole.rows.length <= most) return [whole]
 
@@ -240,7 +232,6 @@ export function pagesOf(source: string, paging: Paging): Page[] {
     // the run would move the whole page and make no progress at all.
     if (back + 1 >= taking.taken.length) return []
 
-    // Nor when the run and what is coming would overflow the next page as well.
     const run = taking.taken.slice(-(back + 1))
     const held = run.reduce((sum, one) => sum + one.rows.length, 0)
     if (held + rows.length > paging.rows) return []
@@ -255,9 +246,6 @@ export function pagesOf(source: string, paging: Paging): Page[] {
     if (paging.breakAt > 0 && line.level > 0 && line.level <= paging.breakAt) {
       const section = fold(line.text)
       const rule = line.level === 1 ? HEAVY : LIGHT
-      // A title directly over a section, the usual head of a note: the second heading
-      // goes on the first one's page, in the order they were written, rather than the
-      // note opening on a page of nothing.
       if (taking.head && taking.taken.every((one) => one.line.level > 0 || one.line.under)) {
         taking.next = { section, rule }
       } else {

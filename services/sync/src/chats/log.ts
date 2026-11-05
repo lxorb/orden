@@ -113,7 +113,6 @@ const NAMES_FILE = `select 1 from messages m
 /** How long the list of who the chat reaches is believed. */
 const REACHERS_FOR = 60_000
 
-/** Every blob a post held for later names; see `heldFilesOf`. */
 function filesOfHeld(post: Post): string[] {
   return [
     ...(post.files ?? []).flatMap((file) =>
@@ -193,7 +192,6 @@ export class ChatLog implements DurableObject {
     if (ask === 'revoke') {
       return await this.revoke(headers.get('x-nib-revoked') ?? '', headers.get('x-nib-role'))
     }
-    // Which files somebody's held posts need; see `heldFiles` in used.ts.
     if (ask === 'held-files') {
       return Response.json({ hashes: this.heldFilesOf(headers.get('x-nib-held-by') ?? '') })
     }
@@ -522,17 +520,11 @@ export class ChatLog implements DurableObject {
 
   /* ── Scheduled posts ──────────────────────────────────────────────────── */
 
-  /** Every blob this person's held posts name, the refused among them too, which its
-   *  author can still see and send again. */
   private heldFilesOf(who: string): string[] {
     const rows = this.sql.exec<{ post: string }>('select post from scheduled where author = ?', who)
     return rows.toArray().flatMap((row) => filesOfHeld(JSON.parse(row.post) as Post))
   }
 
-  /** The blobs a post that was held and is not any more named, written down for its
-   *  author: a hash let go of while the post held it came off the list as used, and
-   *  nothing else asks about it again (unused.ts). The list only asks. A guest holds
-   *  none. */
   private async heldNoMore(who: Who, hashes: readonly string[]): Promise<void> {
     if (!hashes.length || who.startsWith('guest:')) return
     await noteUnusedBy(this.env, hubIdOf(who), hashes, Date.now())

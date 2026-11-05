@@ -421,7 +421,6 @@ fn judged(
     judged_times(app, caller, page, place, facts, act, key, 1)
 }
 
-/// `judged`, for a press made so many times, which the question says.
 #[allow(
     clippy::too_many_arguments,
     reason = "the one decision every act goes through, and each of these is what it is about"
@@ -451,8 +450,6 @@ fn judged_times(
         return cleared();
     };
     let summary = said_times(question.summary.clone(), times);
-    // An allowance is for what was asked: the same button with other words round it, in a
-    // form that has grown a card field, or pressed more often, is another question.
     let key = approvals::on_page(key, &page.url(), &question_key(&question, &summary, facts));
     if approvals::allowed(&grant.id, &key) {
         return cleared();
@@ -468,7 +465,6 @@ fn judged_times(
     ))
 }
 
-/// A question with how many times, where it is more than once.
 fn said_times(summary: String, times: u8) -> String {
     if times > 1 {
         format!("{summary} ({times} times)")
@@ -477,10 +473,6 @@ fn said_times(summary: String, times: u8) -> String {
     }
 }
 
-/// What an allowance is for: the category, the control's name, what its dialog says and how
-/// it was put, short of what ticks. Another file named in the dialog or another amount is
-/// another question; a clock changes nothing asked, and each tick a question would be a pile of
-/// the same one in front of the reader.
 fn question_key(question: &policy::Question, summary: &str, facts: &Facts) -> String {
     steady(&format!(
         "{} {:?} {} {summary}",
@@ -488,8 +480,6 @@ fn question_key(question: &policy::Question, summary: &str, facts: &Facts) -> St
     ))
 }
 
-/// Whether a word is a time of day or a clock counting down: `9:58`, `09:58:12`, `3:45pm`. A
-/// whole word only, so `1:1000` is a ratio and stays.
 fn is_clock(word: &str) -> bool {
     let word = word.trim_matches(['(', ')', ',', '.', ';']).to_lowercase();
     let word = word
@@ -506,9 +496,6 @@ fn is_clock(word: &str) -> bool {
             .all(|one| one.len() == 2 && one.as_bytes()[0] < b'6')
 }
 
-/// Words with what ticks taken out of them: a clock, a countdown in seconds or minutes, and a
-/// spinner's mark. Every other number and sign stays, as an amount, a percentage, a currency, a
-/// count of files or of hours is the difference between two questions.
 fn steady(words: &str) -> String {
     const TICKING: &[&str] = &[
         "s", "sec", "secs", "second", "seconds", "min", "mins", "minute", "minutes", "sek",
@@ -553,7 +540,6 @@ fn steady(words: &str) -> String {
             continue;
         }
         if is_clock(word) {
-            // `12:03 PM`, apart.
             if all
                 .get(at)
                 .is_some_and(|next| matches!(next.to_lowercase().trim_matches('.'), "am" | "pm"))
@@ -562,7 +548,6 @@ fn steady(words: &str) -> String {
             }
             continue;
         }
-        // A number and its unit apart: `58 seconds`.
         if whole(word) && all.get(at).is_some_and(|next| unit(next)) {
             at += 1;
             continue;
@@ -572,20 +557,13 @@ fn steady(words: &str) -> String {
     kept.join(" ")
 }
 
-/// One press, however many times it is looked at on its way: one question. The look before
-/// the move, the look after it, each end of a drag and a tick judged before its form is set
-/// all come here, and what has been answered for this press is not asked again. An
-/// allowance is spent by being asked for, so a second question with the same words would
-/// never find one.
 struct OnePress<'a, 'p> {
     app: &'a AppHandle,
     caller: &'a Caller,
     page: &'a Page<'p>,
     place: &'a Place,
     key: String,
-    /// Asks only for what is more than a write: a tick's form has had that question.
     graver_only: bool,
-    /// How many presses this one question is for.
     times: u8,
     answered: std::cell::RefCell<Vec<String>>,
 }
@@ -647,7 +625,6 @@ impl<'a, 'p> OnePress<'a, 'p> {
         if self.graver_only && question.category == Category::Writing {
             return Ok(());
         }
-        // Every word of it, as two long names alike at the start read the same when cut.
         let said = question_key(&question, &question.summary, facts);
         if self.answered.borrow().contains(&said) {
             return Ok(());
@@ -735,8 +712,6 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
         Ok(match verb {
             Verb::Navigate(go) => {
                 if let Some(url) = &go.url {
-                    // The same address `browser_open` holds to, read once: a `file:` would
-                    // read this machine, a `javascript:` is a script without the scope.
                     let address = tabs::web_address(url)?;
                     if let Caller::Agent(grant) = caller {
                         policy::site_allowed(grant, address.as_str(), place.store())
@@ -803,7 +778,6 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     url,
                     title: page.title(),
                     text: written.text,
-                    // A part of the page it left out, as much as one it had no room for.
                     truncated: written.truncated || engines::left_a_part_out(&secret),
                 }))
             }
@@ -847,8 +821,6 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 let count = click.count.unwrap_or(1).clamp(1, 3);
                 let held = modifiers(&click.modifiers);
                 match (&click.element, click.x, click.y) {
-                    // By what it lands on, whatever the ref is of, and again by whatever
-                    // the page has put there when the pointer arrives (9.3).
                     (Some(reference), None, None) => {
                         let target = element(page, reference)?;
                         let key = approvals::key("browser_click", Some(&tab), Some(reference));
@@ -906,13 +878,11 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
             Verb::Press(pressing) => {
                 let key = keys::chord(&pressing.keys)
                     .map_err(|why| Answer::error(Code::BadArguments, why))?;
-                // Whichever key: the keyboard may have been tabbed into a denied frame.
                 if page.limits_sites() {
                     if let Ok(Some(facts)) = page.active_facts() {
                         page.may_act_in(&facts)?;
                     }
                 }
-                // Facts are asked once, and only of a key they can matter to.
                 let facts = if key.judged_by_the_page() {
                     page.active_facts()?
                 } else {
@@ -920,7 +890,6 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 };
                 // A key that types into a sign-in form is words into it, judged so.
                 if key.changes_words() {
-                    // Not Space or Enter on a button of the form, which is a press, below.
                     if let Some(facts) = facts.as_ref().filter(|one| {
                         (one.editable || !key.presses()) && (one.password() || one.sign_in())
                     }) {
@@ -977,10 +946,6 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     let key = approvals::key("browser_fill_form", Some(&tab), None);
                     judged(app, caller, page, place, facts, Act::Write, &key)?;
                 }
-                // A tick is a press, and what it is called is what it does; the question
-                // for every write under Confirm is the one the form has already had. Each
-                // one is asked before any is set, so a question leaves the form as it was,
-                // and not again when the tick is made.
                 let ticks: Vec<OnePress<'_, '_>> = form
                     .fields
                     .iter()
@@ -1010,14 +975,12 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
             }
             Verb::Hover(hover) => {
                 let target = element(page, &hover.element)?;
-                // Where the pointer comes to rest: a frame's ref is in the frame.
                 page.may_act_in(&page.facts(&page.at_first_point(&target)?)?)?;
                 page.hover(&target)?;
                 acted(page)
             }
             Verb::Drag(drag) => {
                 let (from, to) = (element(page, &drag.from)?, element(page, &drag.to)?);
-                // What the press and the release land on, whatever the refs are of.
                 let (picked, dropped) = (page.at_first_point(&from)?, page.at_first_point(&to)?);
                 let (mut from_facts, to_facts) = (
                     page.facts_of_press(&picked)?,
@@ -1025,15 +988,10 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 );
                 page.may_act_in(&from_facts)?;
                 page.may_act_in(&to_facts)?;
-                // Picked up and put down elsewhere, no click lands on a plain element, and a
-                // card called Pay rent is carried, not pressed. On itself it is a click.
                 let carried = drag.from != drag.to;
                 if carried && !from_facts.control {
                     from_facts.name.clear();
                 }
-                // A press on the one and a release on the other, which is a click on either
-                // to whatever only listens for those: one question for the whole drag, or a
-                // drag of Pay onto itself is the one call round paying (9.3).
                 let judged_by = match caller {
                     Caller::Agent(grant) => {
                         policy::of_a_drag(grant, &from_facts, &to_facts, &page.url(), &page.hosts())
@@ -1044,7 +1002,6 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 let key = approvals::key("browser_drag", Some(&tab), Some(&ends));
                 let press = OnePress::new(app, caller, page, place, key);
                 press.judge(judged_by)?;
-                // And again for what the page has put under the pointer at either end.
                 let at_start = |landed: &Element| -> Result<(), Answer> {
                     let mut facts = page.facts_of_press(landed)?;
                     if carried && !facts.control {
@@ -1078,7 +1035,6 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         &page.url(),
                         "",
                     );
-                    // Only looked at, as the press may yet ask: spent once nothing else does.
                     if !outside.is_empty()
                         && grant.asks(Category::Files)
                         && !approvals::is_allowed(&grant.id, &key)
@@ -1098,8 +1054,6 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                             &key,
                         ));
                     }
-                    // What is no file input is pressed to open its chooser, and is judged
-                    // as that press, whatever it turns out to do.
                     let facts = page.facts(&target)?;
                     if facts.kind == "file" {
                         judged(app, caller, page, place, &facts, Act::Write, &key)?;
@@ -1388,8 +1342,6 @@ fn files_of(
                 if inside && beyond_the_grant(root, &path, &grant.spaces) {
                     return Err(absent());
                 }
-                // Where a link really goes: into another space it is not there, and out
-                // of the spaces folder (`Alpha/key -> ~/.ssh/id_rsa`) it asks.
                 let real = (std::fs::canonicalize(root), std::fs::canonicalize(&path));
                 let (Ok(root), Ok(real)) = real else {
                     return Ok((path, false));
@@ -1404,7 +1356,6 @@ fn files_of(
         .collect()
 }
 
-/// Whether a path in the spaces folder is in a space the grant does not reach, or in none.
 fn beyond_the_grant(root: &Path, path: &Path, spaces: &Spaces) -> bool {
     if matches!(spaces, Spaces::All(_)) {
         return false;
@@ -1425,7 +1376,6 @@ mod tests {
     use crate::agents::verbs::{Dialog, DialogKind, Modifier, Store};
     use std::path::Path;
 
-    /// What an allowance is for, for a control in a dialog.
     fn key_of(name: &str, dialog: &str) -> String {
         let facts = Facts {
             tag: "button".into(),
@@ -1483,7 +1433,6 @@ mod tests {
         ] {
             assert_ne!(key_of("Yes", one), key_of("Yes", other), "{one}");
         }
-        // A button named Delete answers to its dialog's words as a Yes does.
         assert_ne!(
             key_of("Delete", "Are you sure? report-draft.txt"),
             key_of("Delete", "Are you sure? ALL PROJECTS"),

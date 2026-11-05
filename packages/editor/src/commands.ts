@@ -32,7 +32,6 @@ export function toggleWrap(before: string, after = before): StateCommand {
 
   return (target) => {
     const { state, dispatch } = target
-    // More than one line is a question of what those lines are; see marks.ts.
     if (across && state.selection.ranges.some((range) => spansLines(state, range))) {
       return across(target)
     }
@@ -44,8 +43,6 @@ export function toggleWrap(before: string, after = before): StateCommand {
       const leading = doc.sliceString(Math.max(0, from - before.length), from)
       const trailing = doc.sliceString(to, Math.min(doc.length, to + after.length))
 
-      // The star of `**word**` is half of bold's marker and not italic's: three stars
-      // are the ones that hold an italic.
       const line = doc.lineAt(from)
       const stars = italic
         ? (/\*+$/u.exec(line.text.slice(0, from - line.from))?.[0].length ?? 0)
@@ -89,7 +86,6 @@ export function toggleWrap(before: string, after = before): StateCommand {
   }
 }
 
-/** Whether a selection's words stand on more than one line. */
 function spansLines(state: EditorState, range: SelectionRange): boolean {
   const { from, to } = inside(state, range.from, range.to)
   return state.doc.lineAt(from).number !== state.doc.lineAt(to).number
@@ -167,8 +163,6 @@ export function setHeading(level: number): StateCommand {
     const insert = level && !already ? `${'#'.repeat(level)} ` : ''
 
     const changes: ChangeSpec[] = lines.map((line) => {
-      // A heading takes the place of a list marker: `## - item` is a heading with a
-      // dash in its words.
       const item = insert ? (ITEM_MARKER.exec(line.text)?.[0].length ?? 0) : 0
       return { from: line.from, to: line.from + (item || headingOf(line.text).length), insert }
     })
@@ -178,7 +172,6 @@ export function setHeading(level: number): StateCommand {
   }
 }
 
-/** A list marker at the head of a line, and the box after it. */
 const ITEM_MARKER = /^\s*(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?/
 
 export function shiftHeading(delta: number): StateCommand {
@@ -379,28 +372,19 @@ export const toggleOrderedList: StateCommand = ({ state, dispatch }) => {
   return true
 }
 
-/** What a block comes to, and where in it the caret goes. */
 interface Block {
   text: string
   caret: number
 }
 
-/** What a block needs round it besides its own lines. */
 interface Room {
-  /** Wraps what is selected, rather than going below it. */
   wrap?: (selected: string) => Block
-  /** A blank line above where words are: dashes under a line are its heading's underline,
-   *  and a line above a table is taken for its head. */
   above?: boolean
-  /** A blank line below where words are: a line under a callout is more of it, and a line
-   *  under a table is a row of it. */
   below?: boolean
 }
 
-/** A line whose words sit inside something: a list item, a quote, a heading, a row. */
 const STRUCTURED = /^\s*(?:[-*+]\s|\d+[.)]\s|>|#{1,6}\s|\|)/
 
-/** Whether the range takes a line of structure apart, leaving its marker behind empty. */
 function splitsStructure(state: EditorState, from: number, to: number): boolean {
   const first = state.doc.lineAt(from)
   const last = state.doc.lineAt(to)
@@ -412,7 +396,6 @@ function splitsStructure(state: EditorState, from: number, to: number): boolean 
   )
 }
 
-/** What a block's top needs to stand apart from what is above it at `at`. */
 function roomAbove(state: EditorState, at: number, blank: boolean): string {
   const line = state.doc.lineAt(at)
   if (at > line.from) return blank ? '\n\n' : '\n'
@@ -421,7 +404,6 @@ function roomAbove(state: EditorState, at: number, blank: boolean): string {
   return state.doc.line(line.number - 1).text.trim() ? '\n' : ''
 }
 
-/** What a block's foot needs to stand apart from what is below it at `at`. */
 function roomBelow(state: EditorState, at: number, text: string, blank: boolean): string {
   const line = state.doc.lineAt(at)
   if (state.sliceDoc(at, line.to) !== '') {
@@ -433,34 +415,21 @@ function roomBelow(state: EditorState, at: number, text: string, blank: boolean)
   return state.doc.line(line.number + 1).text.trim() ? '\n' : ''
 }
 
-/** Blocks whose lines mean nothing apart. */
 const HOLDS_ITS_LINES: ReadonlySet<string> = new Set(['Table', 'FencedCode', 'BlockMath'])
 
-/** Inserts a block on its own lines, leaving the caret where you type next.
- *
- *  Words after the caret stay on a line of their own: on the closing line of a fence
- *  they would close nothing, and every line below would read as code.
- *
- *  A selection is never written over. Whatever can hold words wraps them, as Quote does;
- *  anything else goes below them. And a line of structure is never split: the block goes
- *  below the whole of it. */
 function insertBlock(build: () => Block, room: Room = {}): StateCommand {
   return ({ state, dispatch }) => {
     const range = state.selection.main
-    // What holds its lines together goes on being one thing: a block never lands inside
-    // it, and a selection in it is not wrapped out of it.
     const inTree = syntaxTree(state).resolveInner(range.to, -1)
     const holder = enclosingNamed(inTree, HOLDS_ITS_LINES)
     const quote = !holder && !room.wrap ? enclosingNamed(inTree, 'Blockquote') : null
     const around = holder ?? quote
-    // A selection of the whole of it has nothing to take apart.
     const whole = around && (around.from < range.from || around.to > range.to) ? around : null
     const splits = !!whole || splitsStructure(state, range.from, range.to)
     const wrap = splits ? undefined : room.wrap
     const below = whole ? whole.to : splits ? state.doc.lineAt(range.to).to : range.to
 
     const from = wrap ? range.from : below
-    // The line break ending a selection of whole lines is not a word to wrap.
     const to = wrap && state.sliceDoc(from, below).endsWith('\n') ? below - 1 : below
 
     const { text, caret } = wrap && from < to ? wrap(state.sliceDoc(from, to)) : build()
@@ -479,7 +448,6 @@ function insertBlock(build: () => Block, room: Room = {}): StateCommand {
   }
 }
 
-/** A run of backticks that no line of `words` could close. */
 function fenceFor(words: string): string {
   const longest = Math.max(
     2,
@@ -797,7 +765,6 @@ export const insertComment = toggleWrap('<!-- ', ' -->')
  *  the writer's last line into a heading and break nothing. See
  *  packages/markdown/src/slides.ts. */
 export const insertSlideBreak: StateCommand = ({ state, dispatch }) => {
-  // Past a selection, which stays: no other block written from a menu takes words away.
   const at = state.selection.main.to
   const line = state.doc.lineAt(at)
   const emptyHere = line.text.slice(0, at - line.from).trim() === ''
@@ -839,7 +806,6 @@ export function insertTable(rows = 2, columns = 2): StateCommand {
     below: true,
   })
 
-  // No table in a table: its rows would only break the one around it.
   return (target) => {
     const line = target.state.doc.lineAt(target.state.selection.main.head)
     return /^\s*\|/.test(line.text) ? false : block(target)

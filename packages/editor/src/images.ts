@@ -37,13 +37,6 @@ function markdownFor(file: File, path: string): string {
   return formatWikilink({ target: name, heading: null, block: null, alias: null, embed: true })
 }
 
-/** Whether a clipboard with a file on it says something in words as well, and the
- *  words are what was copied.
- *
- *  Excel, Word and Numbers put a picture of the cells or the paragraph on the clipboard
- *  beside the cells and the words themselves, so a file is not enough to say this is a
- *  picture. Words are in the HTML, past its tags and its styles, or in tabs in the
- *  text. The name of a file, or the alt of a picture copied off a page, is not. */
 export function wordsBesidePicture(html: string, text: string): boolean {
   if (!text.trim()) return false
   if (text.includes('\t')) return true

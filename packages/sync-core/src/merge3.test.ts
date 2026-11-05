@@ -155,7 +155,6 @@ describe('merge3', () => {
   })
 })
 
-/** Words one side wrote and the other went on from: a write that landed unheard. */
 describe('mergedOn', () => {
   test.each([
     [
@@ -241,7 +240,6 @@ describe('mergedOn', () => {
 })
 
 describe('mergedOn takes nothing from either side', () => {
-  /** The lines of a note, each a word of its own that can be looked for. */
   const baseOf = (lines: number, ending: boolean) => {
     const made = Array.from({ length: lines }, (_, at) => `b${at}x`).join('\n')
     return ending ? `${made}\n` : made
@@ -274,15 +272,10 @@ describe('mergedOn takes nothing from either side', () => {
     expect(mergedOn(base, local, remote)).toBe(out)
   })
 
-  /** A deletion in the air: a later state with less in it reads the same as an earlier one,
-   *  and the longer stands. No word lost, and said plainly at `mergedOn`. */
   test('words taken out of what the other side went on from come back', () => {
     expect(mergedOn('b\n', 'b\ntyped\n', 'b\ntyped more\n')).toBe('b\ntyped more\n')
   })
 
-  /** Seeded, and counted rather than timed. Each side made of the base as a person makes it:
-   *  words put in, lines put in, lines taken out, at the end with or without a line break, and
-   *  half the time the one side going on from the other. */
   test('against merge3 over many shapes: no insert lost, no deletion undone, no doubling', () => {
     let seed = 20261104
     const next = (under: number) => {
@@ -322,7 +315,6 @@ describe('mergedOn takes nothing from either side', () => {
       return out
     }
 
-    // A word ends in its own last letter, and no other holds it, run together or not.
     const count = (text: string, token: string) => text.split(token).length - 1
     let goneOn = 0
     for (let round = 0; round < 40_000; round += 1) {
@@ -343,13 +335,11 @@ describe('mergedOn takes nothing from either side', () => {
         const out = mergedOn(base, one, other)
         const reference = merge3(base, one, other).text
         for (const token of [...inLocal, ...inRemote]) {
-          // Nothing merge3 keeps is lost, and nothing is said more than merge3 says it.
           const here = count(out, token)
           const there = count(reference, token)
           if ((there > 0 && here === 0) || here > Math.max(there, 1)) {
             expect.fail(`${token}: ${here} here, ${there} in merge3, in ${told}`)
           }
-          // The one side went on from the other, all its words there: said once.
           if (onward && inLocal.has(token) && here > 1 && remote.includes(token)) {
             const wholeRemote = count(remote, token)
             if (wholeRemote === 1 && there <= 1) expect.fail(`${token} doubled in ${told}`)

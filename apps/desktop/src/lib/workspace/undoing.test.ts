@@ -928,7 +928,6 @@ describe('a replacement put back with another window here', () => {
       const undoing = undoLastFileAction(ws)
       await vi.waitFor(() => expect(turns.length).toBe(1))
       expect(inTurn).toBe(false)
-      // Another window's write, ahead in line.
       disk.set('/s/a.md', 'gamma line\nWORDS-IN-B\n')
       turns[0]?.()
       await undoing

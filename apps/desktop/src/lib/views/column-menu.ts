@@ -165,7 +165,6 @@ export function columnMenu(
 ): MenuEntry[] {
   const live = kit.live
   const base = live.base
-  // Every row of it changes the base, as the head's own controls do (`writable`).
   if (!base || !kit.writable) return []
   const view = live.view
   const place = columns.indexOf(column)

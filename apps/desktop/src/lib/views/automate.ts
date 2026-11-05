@@ -38,7 +38,6 @@ export interface Planned {
 
 const EMPTY: Planned = { writes: [], moves: [], notices: [] }
 
-/** The rows of one base, made once per plan, and whether that is all of them. */
 function ownRows(base: Base, all: readonly Row[], context: Context) {
   return rowsInBase(
     base,
@@ -89,7 +88,6 @@ export function planned(
     const id = held.base.nib.id
     if (!id) continue
     const { rows: own, partial } = ownRows(held.base, all, context)
-    // Numbers read off rows left out would be numbers somebody already has.
     if (partial) continue
     if (was === undefined && idNumber(after.note[id.property], id.prefix) === null) {
       set(after, { [id.property]: nextId(own, id.property, id.prefix) })

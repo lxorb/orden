@@ -631,7 +631,6 @@ class Sheet {
     return this.where.at(from)
   }
 
-  /** Where a line of the file begins, if the file has that line. */
   startOf(line: number): number | undefined {
     return this.where.startOf(line)
   }
@@ -827,8 +826,6 @@ function fence(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
     inside += line.length + 1
   }
   if (marked) {
-    // Where its own line begins: `raw` may or may not end in a newline, and the
-    // closing fence may be longer than three.
     sheet.add(FENCE, from + raw.trimEnd().lastIndexOf('\n') + 1, nest, { glued: true })
   }
 }
@@ -949,8 +946,6 @@ function table(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
     one.align.map((given) => (given !== null && ALIGNS.has(given) ? given : 'left')),
     sheet.width - width(QUOTE.repeat(nest.quote) + STEP.repeat(nest.depth)),
   )
-  // Each row is a line of the file, and carries that line's place and number: a page
-  // cut inside a long table has to know which rows it holds.
   const from = where.take(rawOf(token))
   const first = sheet.lineAt(from)
   for (const [at, line] of lines.entries()) {

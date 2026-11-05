@@ -62,7 +62,6 @@ pub fn block(body: &str) -> Option<Block> {
     })
 }
 
-/// A fence: at the margin, three hyphens, and nothing else but blanks.
 fn is_fence(line: &str) -> bool {
     line.strip_prefix("---")
         .is_some_and(|rest| rest.bytes().all(is_blank))
@@ -72,18 +71,14 @@ const fn is_blank(one: u8) -> bool {
     one == b' ' || one == b'\t'
 }
 
-/// How long a key may be and still tell a block from a sentence that has a colon in it.
 const MOST_KEY_WORDS: usize = 6;
 const MOST_KEY_CHARACTERS: usize = 80;
 
-/// From how many words on a key and a value could be a sentence, if it ends like one.
 const SENTENCE_KEY_WORDS: usize = 3;
 const SENTENCE_VALUE_WORDS: usize = 3;
 
-/// YAML's own limit on a key written without a `?`.
 const MOST_KEY_LENGTH: usize = 1024;
 
-/// What opens a list item or a piece of HTML on the first line of a note: prose.
 fn not_the_first_key(text: &str) -> bool {
     let bytes = text.as_bytes();
     let Some(&first) = bytes.first() else {
@@ -104,8 +99,6 @@ fn not_the_first_key(text: &str) -> bool {
         && bytes.get(digits + 1).copied().is_some_and(is_blank)
 }
 
-/// A key written with no blank after its colon: `title:Foo`. A word first, so `12:30` is a
-/// time, and no `//` after it, so an address is an address.
 fn is_tight_key(text: &str) -> bool {
     let bytes = text.as_bytes();
     let Some(&first) = bytes.first() else {
@@ -127,8 +120,6 @@ fn is_tight_key(text: &str) -> bool {
         .is_some_and(|one| !one.is_whitespace() && one != ':')
 }
 
-/// Whether a line says a key, as the first line of a block has to. Liberal, and narrow
-/// only about what reads as a sentence. `isKeyLine` in front-matter-lines.ts.
 fn is_key_line(text: &str) -> bool {
     let Some(past) = past_key(text.as_bytes(), 0) else {
         return is_tight_key(text);
@@ -155,7 +146,6 @@ fn is_key_line(text: &str) -> bool {
         && value.ends_with(['.', '!', '?', '…']))
 }
 
-/// Past the quote that opens at `at`, or None where it does not close on the line.
 fn past_quote(line: &[u8], at: usize) -> Option<usize> {
     let quote = line[at];
     let mut over = at + 1;
@@ -174,9 +164,6 @@ fn past_quote(line: &[u8], at: usize) -> Option<usize> {
     None
 }
 
-/// Just past the colon of the key that starts at `at`, or None where the line says
-/// none: a line that is a quote, a table or a YAML shape is not a key whatever colon it
-/// holds further on.
 fn past_key(line: &[u8], at: usize) -> Option<usize> {
     let first = *line.get(at)?;
     if b"#*>|[]{}!&%@`,".contains(&first) {
@@ -207,16 +194,12 @@ fn past_key(line: &[u8], at: usize) -> Option<usize> {
     None
 }
 
-/// What a value still has open at the end of its line: a quote, or how deep in brackets.
 #[derive(Default, Clone, Copy)]
 struct Open {
     quote: u8,
     depth: i32,
 }
 
-/// Reads a value's text with a quote or a bracket open, and says whether it stays
-/// open past this line. A quote only opens where a value could start: `[don't, x]`
-/// holds a plain word.
 fn stays_open(line: &[u8], open: &mut Open) -> bool {
     let mut starts = true;
     let mut at = 0;
@@ -259,12 +242,6 @@ fn stays_open(line: &[u8], open: &mut Open) -> bool {
     true
 }
 
-/// Where a value that starts at `from` and holds a quote or a bracket open past its line
-/// closes: the break at the end of the line that closes it, read before `limit`. None
-/// where it closes on its own line, or nothing closes it, which makes it that one line's
-/// words.
-///
-/// The twin of `valueClosesAt` in front-matter-lines.ts.
 pub fn value_closes_at(body: &str, from: usize, limit: usize) -> Option<usize> {
     let bytes = body.as_bytes();
     let line_end = |at: usize| {
@@ -300,8 +277,6 @@ pub fn value_closes_at(body: &str, from: usize, limit: usize) -> Option<usize> {
     None
 }
 
-/// A value that is a block scalar's header, whose lines are the scalar's whatever
-/// they say: `|`, `>-`, `|2`, and perhaps a comment.
 fn is_block_scalar(said: &[u8]) -> bool {
     if !matches!(said.first(), Some(b'|' | b'>')) {
         return false;
@@ -315,7 +290,6 @@ fn is_block_scalar(said: &[u8]) -> bool {
     text.is_none_or(|at| rest[at] == b'#')
 }
 
-/// A value past the anchors and tags in front of it.
 fn without_properties(said: &[u8]) -> &[u8] {
     let mut rest = said;
     while matches!(rest.first(), Some(b'&' | b'!')) {
@@ -330,32 +304,15 @@ fn without_properties(said: &[u8]) -> &[u8] {
     rest
 }
 
-/// The line a block's closing fence starts on, walking from `from`, just past the
-/// opening one; or None where no block closes there or what is there is no metadata.
-///
-/// Decided by how the block opens and by its shape, never by whether every line parses,
-/// because somebody is typing in it: the first line that is not a comment says a key, a
-/// line directly under what came before is the block's whatever it says, and a line
-/// after a blank one has to be a key or what continues one.
-///
-/// The twin of `closingFence` in front-matter-lines.ts; both are held to
-/// front-matter-table.json, and that one to the YAML library.
 #[allow(clippy::too_many_lines)]
 fn closing_fence(body: &str, from: usize) -> Option<usize> {
-    // The indent of the mapping, once its first key is read.
     let mut base: Option<usize> = None;
     let mut comment = false;
-    // Whether a `- ` at the mapping's own indent belongs to the key above it.
     let mut list = false;
-    // Whether a blank line stands between the last line of the block and this one.
     let mut gap = false;
-    // Lines indented past this are a block scalar's, or a plain value's next lines.
     let mut scalar: Option<usize> = None;
     let mut open: Option<Open> = None;
-    // Whether the mapping was written whole as a `{...}`, which nothing can follow.
     let mut whole = false;
-    // Whether a quote or a bracket holds a value open past its line, and the line
-    // after the one that did.
     let mut opens = true;
     let mut reread = 0;
 
@@ -371,9 +328,6 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
             if open.is_none() {
                 return (base.is_some() || !comment).then_some(at);
             }
-            // Nothing closed that value, so it was one line's words. The lines it took
-            // are read again, once, which keeps the walk from growing with every value
-            // that opens.
             open = None;
             opens = false;
             at = reread;
@@ -430,8 +384,6 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
                         past_key(line, col)
                     };
                     let keyed = past.is_some() || is_tight_key(&text[col..]);
-                    // What only a line directly under the block may be: words with no
-                    // colon yet, a list under a value, a line left of the mapping.
                     let continues = indent > mapping || (dash.is_some() && list);
                     if gap && !keyed && !continues {
                         return None;
@@ -451,7 +403,6 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
                     }
                     whole = first && start == b'{' && past.is_none();
 
-                    // Words with no key are one line's, whatever they start with.
                     let as_value = past.is_some() || dash.is_some() || indent > mapping || whole;
                     if is_block_scalar(said) {
                         scalar = Some(if past.is_some() {
@@ -510,7 +461,6 @@ pub fn list(body: &str, block: &Block, key: &str) -> Vec<String> {
             continue;
         };
 
-        // A flow list across lines, as Prettier breaks a long one, is one value.
         let from = line.as_ptr() as usize - body.as_ptr() as usize;
         let past = line.find(':').map_or(0, |one| one + 1);
         if let Some(close) = value_closes_at(body, from + past, block.close) {
@@ -656,8 +606,6 @@ mod tests {
         assert_eq!(&note[found.end..], "\n\n# Plan\n");
     }
 
-    /// The notes front-matter.test.ts is held to as well, each with whether it opens
-    /// with a block.
     #[test]
     fn what_counts_as_front_matter_is_the_table_both_read() {
         let table: Vec<(String, bool)> = serde_json::from_str(include_str!(
@@ -784,7 +732,6 @@ mod tests {
             aliases("---\r\naliases: [\r\n  One,\r\n]\r\nz: 1\r\n---\r\n"),
             vec!["One"]
         );
-        // Nothing closes it, so it is what the line says.
         assert_eq!(aliases("---\naliases: [One\nz: 1\n---\n"), vec!["[One"]);
     }
 

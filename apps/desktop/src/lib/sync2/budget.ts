@@ -55,9 +55,6 @@ function holdWindow(locks: LockManager): Promise<void> {
   return holding
 }
 
-/** This window counted among the app's from now on, whether it runs the engine or not:
- *  with one engine for every window of the device, the others never ask `aloneHere`
- *  themselves, and the engine's window would count itself alone beside them. */
 export function holdThisWindow(): void {
   const locks =
     typeof navigator !== 'undefined' && 'locks' in navigator ? navigator.locks : undefined

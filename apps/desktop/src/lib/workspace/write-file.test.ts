@@ -1,6 +1,3 @@
-/** A whole file written by the app with another window here (H3-WINDOWS-4): under the file's
- *  turn, and said, so a note open over there brings it in. */
-
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const order: string[] = []

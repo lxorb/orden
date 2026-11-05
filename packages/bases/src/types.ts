@@ -248,8 +248,6 @@ export interface Base {
   nib: NibBase
   /** Every other top-level key, as written. */
   kept: Record<string, unknown>
-  /** Somebody else could have written it, so its patterns are limited; see
-   *  expr/pattern.ts. Said by the app that loaded it, and never written to the file. */
   guarded?: boolean
 }
 
@@ -293,6 +291,5 @@ export interface Answer {
   groups: Group[]
   total: number
   summaries: Record<string, Value>
-  /** A guarded base ran out of what it may spend, so rows are left out; expr/pattern.ts. */
   partial?: boolean
 }

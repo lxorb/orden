@@ -83,7 +83,6 @@ export interface CoreEvents {
   /** A file whose words its entry's kind cannot hold, kept on this device; see
    *  `unsynced` in ingest.ts. */
   unsynced: (event: { id: string; name: string }) => void
-  /** What an entry's file says now, which its document has taken in. */
   file: (event: { id: string; text: string }) => void
 }
 
@@ -109,10 +108,6 @@ export class Core {
   /** Documents whose words were asked for here - opened, or about to be - where this
    *  device keeps only the words it uses (keeping.ts). Memory only. */
   readonly asked = new Set<string>()
-  /** Whether another window of the app is open (`aloneHere` in budget.ts), said by the
-   *  runner before each pass: a browser keeps a note's words away only while it is alone,
-   *  as it lets words go only then, since another window may have the note open and lists
-   *  what is on the disk (#1126). Memory only. */
   crowded = false
   /** The newest epoch the account has said each document is on: a room is joined only by
    *  a document on it, since operations of two epochs cannot be merged. */
@@ -122,11 +117,7 @@ export class Core {
    *  were last read: what the next pass hashes (files.ts). Memory only - the launch
    *  scan says them again. */
   readonly touched = new Set<string>()
-  /** The launch scan's stamp of a file not yet read and in step with the account: written
-   *  down once it is, so a launch after one that stopped on the way up reads it again. */
   readonly stampWaiting = new Map<string, { mtime: number; size: number }>()
-  /** How many times in a row each file that is there would not read: read again every
-   *  pass, and said to the reader once it lasts (project.ts). Memory only. */
   readonly unreadFor = new Map<string, number>()
   /** Files whose bytes the account last refused, which, when, and whether for want of room:
    *  they wait a while before going again (files.ts). Memory only. */
@@ -143,7 +134,6 @@ export class Core {
    *  ingest.ts. */
   readonly unsyncedKept = new Set<string>()
   readonly unsyncedTold = new Set<string>()
-  /** How many writes in a row an entry's file has refused; see `notWritten` in project.ts. */
   readonly unwrittenFor = new Map<string, number>()
   /** Bumped when the engine stops, so work still in the air can tell it is too late. */
   life = 0
@@ -251,13 +241,8 @@ export class Core {
     return next
   }
 
-  /** Whether this session has said it ended and written nothing since. */
   private clean = false
 
-  /** Says this session ended cleanly, after every write already asked for. A window can
-   *  say so and then go on, a close called off, a page come back, so the next write takes
-   *  it back first: a crash after that word would keep every client id, and whatever the
-   *  room has heard from them since is a history the store no longer has. */
   endedCleanly(): Promise<void> {
     const next = this.writing.then(async () => {
       await this.store.cleanExit(true)

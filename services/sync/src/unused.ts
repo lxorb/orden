@@ -45,9 +45,6 @@ export function noteUnused(
   )
 }
 
-/** The statement that writes down the files somebody's deleted chat message stopped
- *  naming, for them: a chat knows who posted a message, and nobody else's row is theirs to
- *  ask about (see above). */
 export function noteUnusedBy(
   env: Env,
   userId: string,
@@ -61,14 +58,6 @@ export function noteUnusedBy(
   ).bind(userId, JSON.stringify(hashes), at)
 }
 
-/** The statement that writes down the files a chat that has gone named (`where`, on `f`,
- *  `?1` the moment and the rest its own).
- *
- *  Nothing left says who posted them: `chat_files` has no such column, and the row of
- *  somebody who did not may be for a note not written yet, as above. So only where
- *  somebody in the chat's space alone holds the bytes, since a post needs a row: theirs is
- *  the one that posted it, or the one it was handed to. Where two hold them neither is
- *  asked about, and the poster's goes on counting. */
 export function noteChatFiles(
   env: Env,
   where: string,

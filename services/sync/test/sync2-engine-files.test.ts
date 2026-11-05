@@ -315,12 +315,10 @@ describe('a file whose bytes on this disk cannot be judged', () => {
 
     expect(bytesAt(laptop, 'v.bin') === big).toBe(true)
     expect(told).toEqual(['v.bin'])
-    // Told by its size: a file past what travels does not cross the IPC every pass.
     expect(reads.mock.calls.filter(([at]) => at.endsWith('/v.bin'))).toEqual([])
     reads.mockRestore()
     expect(bytesAt(desktop, 'v.bin')).toEqual(picture(5))
 
-    // Small enough again, it is a replacement on both sides, and is asked about.
     await laptop.disk.writeBytes(`${laptop.root}/v.bin`, picture(9))
     await laptop.engine.foreign(`${laptop.root}/v.bin`)
     await laptop.engine.pass(space)
@@ -344,7 +342,6 @@ describe('a file whose bytes on this disk cannot be judged', () => {
     await laptop.engine.pass(space)
     expect(bytesAt(laptop, 'v.bin')).toEqual(picture(7))
 
-    // No news from the watcher here: it said so once, while the file was locked.
     locked = false
     await laptop.engine.pass(space)
     expect(bytesAt(laptop, 'v.bin')).toEqual(picture(7))
@@ -377,7 +374,6 @@ describe('a file whose bytes on this disk cannot be judged', () => {
     expect(bytesAt(laptop, 'v.bin')).toEqual(picture(5))
   })
 
-  // A download or an export: small when it was seen, past what travels by the first send.
   test('grown too large with its create waiting, the reader is told', async () => {
     const laptop = await device('laptop')
     const told: string[] = []
@@ -413,8 +409,6 @@ describe('a file whose bytes on this disk cannot be judged', () => {
     expect(bytesAt(desktop, 'new.bin')).toEqual(picture(3))
   })
 
-  // Taken off the list before it went, and never put back: every later pass said it had
-  // finished, and the account kept the old bytes until the file was edited again.
   test('a replacement seen while the account gives no answer goes up on a later pass', async () => {
     let busy = false
     const made = await (
@@ -443,7 +437,6 @@ describe('a file whose bytes on this disk cannot be judged', () => {
     await made.engine.stamped(path, 123, 456)
     busy = true
     await made.engine.pass(space)
-    // The next launch reads it too: the scan's stamp is not written down until it lands.
     expect(entryOf(made, 'p.png').mtime).not.toBe(123)
     busy = false
     await made.engine.pass(space)
@@ -453,7 +446,6 @@ describe('a file whose bytes on this disk cannot be judged', () => {
     expect(entryOf(made, 'p.png').mtime).toBe(123)
   })
 
-  /** A device whose uploads hang once `hanging`, and says when one has begun. */
   const hangingDevice = async () => {
     const hung = { hanging: false, begun: (): void => undefined, free: (): void => undefined }
     const made = await (
@@ -478,7 +470,6 @@ describe('a file whose bytes on this disk cannot be judged', () => {
     return { made, hung }
   }
 
-  /** Seen by the launch scan, and a pass stopped with its bytes on the way. */
   const stoppedOnTheWay = async ({ made, hung }: Awaited<ReturnType<typeof hangingDevice>>) => {
     const path = `${made.root}/p.png`
     await made.disk.writeBytes(path, picture(7))
@@ -512,7 +503,6 @@ describe('a file whose bytes on this disk cannot be judged', () => {
     const before = entryOf(made, 'p.png').file_key
     const { path } = await stoppedOnTheWay(held)
 
-    // No word from the watcher: the launch scan goes by the stamp, as watching.ts does.
     const k = await kit()
     const again = await k.Engine.start(made.engine.core.world, made.store.open())
     const row = () =>
@@ -528,7 +518,6 @@ describe('a file whose bytes on this disk cannot be judged', () => {
     expect(row().mtime).toBe(123)
   })
 
-  // Otherwise every launch after one change reads the file all over again.
   test('in step, a stamp is written down, and the scan has nothing more to read', async () => {
     const laptop = await device('laptop', { 'v.bin': picture(3) })
     const path = `${laptop.root}/v.bin`

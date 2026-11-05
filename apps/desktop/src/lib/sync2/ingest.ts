@@ -46,9 +46,6 @@ async function unsynced(core: Core, entry: EntryRow, full: string, read: string)
   saidUnsynced(core, entry)
 }
 
-/** The notes of a space that would not read when last asked, asked again: what each
- *  says now is folded in like any other edit, and what a pull could not write meanwhile
- *  is written. With no word from the watcher, since a lock that lifts says nothing. */
 export async function readAgain(core: Core, space: SpaceState): Promise<Change[]> {
   const changes: Change[] = []
   for (const id of [...core.unreadFor.keys()]) {
@@ -75,7 +72,6 @@ export async function foldIn(core: Core, space: SpaceState, entry: EntryRow): Pr
   const full = core.world.join(space.row.root, entry.local_path)
   const read = await core.world.disk.read(full)
   if (read === null) {
-    // What it says now cannot be told from what Orden wrote, so it is read again.
     if (await core.world.disk.exists(full)) readRefused(core, entry)
     else core.unreadFor.delete(entry.id)
     return []

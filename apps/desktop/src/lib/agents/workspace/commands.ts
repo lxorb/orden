@@ -62,8 +62,6 @@ const ASKS: Record<string, Category> = {
 /** The rows about the window itself, which no agent opens, closes, updates or quits. */
 const WINDOW = new Set(['new-window', 'close-window', 'update', 'logs', 'themes-folder'])
 
-/** The rows that take the reader somewhere or change what is on their screen, as
- *  `workspace_tabs` asks of the same acts (7.2). */
 const SCREEN = new Set([
   'agents-panel',
   'always-on-top',
@@ -115,7 +113,6 @@ const SCREEN = new Set([
   'web-stop',
 ])
 
-/** The rows that make a file and open it in front. */
 const MAKES_NOTE = new Set([
   'new-canvas',
   'new-database',
@@ -125,10 +122,8 @@ const MAKES_NOTE = new Set([
   'new-web-note',
 ])
 
-/** The rows that make a space, and go there. */
 const MAKES_SPACE = new Set(['new-space', 'space'])
 
-/** The rows that write in the note in front. */
 const WRITES = new Set([
   'ai-block',
   'convert-syntax',
@@ -143,7 +138,6 @@ const WRITES = new Set([
   'split-at-caret',
 ])
 
-/** The rows that move, make or take back files. */
 const TREE = new Set([
   'archive',
   'convert-website-notes',
@@ -154,7 +148,6 @@ const TREE = new Set([
   'undo-file',
 ])
 
-/** The rows that only show or hide a panel beside what the reader is reading. */
 const PANELS = new Set([
   'ask-panel',
   'files',
@@ -172,9 +165,6 @@ const PANELS = new Set([
   'sidebar',
 ])
 
-/** The scopes a row needs, or null for a row that is the reader's to press: every row not
- *  named here. That includes `export-*`, whose save dialog no verb has a scope for, and
- *  `copy-uri`, which writes to the reader's clipboard. */
 function scopesOf(id: string): readonly Scope[] | null {
   if (ASKS[id] || asksOfSetting(id) || PANELS.has(id) || id.startsWith('view.')) {
     return ['workspace']
@@ -189,12 +179,10 @@ function scopesOf(id: string): readonly Scope[] | null {
   return null
 }
 
-/** Whether a row opens a file dialog: Import and every Export. */
 function opensADialog(id: string): boolean {
   return id.startsWith('export-') || id === 'import'
 }
 
-/** The rows of a setting named by what it is set to: they ask as `write_setting` does. */
 function asksOfSetting(id: string): boolean {
   return /^(theme|scheme|accent|properties|code-theme):/.test(id) || id === 'read-only'
 }
@@ -213,8 +201,6 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
   if (found.ownWindow === true || found.byHand === true || WINDOW.has(id)) {
     readersOwn(call, `${id} is the reader's to press`)
   }
-  // A row whose dialog a path answers (#1078) is the crate's to say, which judges that path
-  // as `files` would (`agents_dialog_path`); without one its dialog is the reader's.
   const path = maybe(call, 'path')
   const scopes = path !== null && opensADialog(id) ? [] : scopesOf(id)
   if (scopes === null) readersOwn(call, `${id} is the reader's to press`)

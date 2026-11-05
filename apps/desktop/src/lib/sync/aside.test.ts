@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { asideOf, nameSetAside } from './pass'
 
 describe('where a note waits aside under v1', () => {
-  // Its id is whatever the account's feed said, and the rename follows the path it spells.
   test.each(['../../Private/AGENTS.md', '..\\..\\Private', 'C:evil', 'plain-id'])(
     'stays beside itself whatever its id is: %s',
     (id) => {

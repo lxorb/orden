@@ -1,7 +1,3 @@
-/** Marks over a selection of several lines, and Clear Format. Fetched through
- *  line-door.ts: one line's marks are commands.ts's and in hand, and these two have to
- *  read what the lines are, which nothing needs before somebody asks. */
-
 import { syntaxTree } from '@codemirror/language'
 import {
   type ChangeSpec,
@@ -15,11 +11,9 @@ import { verbatimLines } from './block/verbatim'
 import { inCode } from './code'
 import { inside } from './commands'
 
-/** A list marker or the marks that open a line, which wrapped words go behind. */
 const OPENING =
   /^[ \t]*(?:>[ \t]?)*[ \t]*(?:#{1,6}[ \t]+|(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)?/u
 
-/** What stops one pair of marks reaching across lines: a blank line, or another item. */
 const BLOCKS_APART = /\n[ \t]*\n|\n[ \t]*(?:[-*+]|\d+[.)])[ \t]/u
 
 interface Part {
@@ -27,10 +21,6 @@ interface Part {
   to: number
 }
 
-/** The parts of a selection marks go on one at a time. A run of marks ends with its
- *  block, so `**one\n\ntwo**` is stars and words; every line is one part then, the way
- *  Notion and Google Docs mark each paragraph. Nothing typed as it stands takes any:
- *  front matter, a table, a fence, maths, a rule, HTML, a link definition, or a name. */
 function partsOf(state: EditorState, from: number, to: number): Part[] {
   const verbatim = verbatimLines(state, from, to)
   if (!verbatim.size && !BLOCKS_APART.test(state.doc.sliceString(from, to))) return [{ from, to }]
@@ -51,8 +41,6 @@ function partsOf(state: EditorState, from: number, to: number): Part[] {
   return parts
 }
 
-/** Every part marked, or none of them where all of them already are. The star of
- *  `**a**` is half of bold's marker and not italic's: three stars hold an italic. */
 function wrapEach(
   state: EditorState,
   parts: readonly Part[],
@@ -83,7 +71,6 @@ function wrapEach(
   return { changes, range: EditorSelection.range(range.from, range.to + grown) }
 }
 
-/** Marks on the words of a selection over several lines, or off them. */
 export function marksAcross(mark: string): StateCommand {
   return ({ state, dispatch }) => {
     const update = state.changeByRange((range) => {
@@ -98,8 +85,6 @@ export function marksAcross(mark: string): StateCommand {
 
 const INLINE_MARKERS = /(\*\*|\*|~~|==|`|(?<![\p{L}\p{N}])__?|__?(?![\p{L}\p{N}]))/gu
 
-/** What a stretch of a note says without its marks. Code is not formatted: a fence
- *  stays as it is, and a code span gives up its backticks and keeps what they held. */
 function clearedOf(state: EditorState, from: number, to: number): string {
   let out = ''
   let at = from
@@ -127,7 +112,6 @@ function clearedOf(state: EditorState, from: number, to: number): string {
   return out
 }
 
-/** Strips inline markers from the selection - Typora's Clear Format. */
 export const clearFormatting: StateCommand = ({ state, dispatch }) => {
   const update = state.changeByRange((range) => {
     if (range.empty) return { range }

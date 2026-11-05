@@ -526,8 +526,6 @@ export class NoteRoom implements DurableObject {
       ...(joining.login ? { login: joining.login } : {}),
     } satisfies Attached)
 
-    // Nothing the device says can reach this wait: `fetch` hands it the socket's other end
-    // in its 101, after this. What the wait can do is never end; see `settleInTime`.
     if (!(await this.settleInTime(server, held, joining))) return
 
     // Rows nothing will take away are cleared after the join rather than before it:
@@ -868,7 +866,6 @@ export class NoteRoom implements DurableObject {
     return new Response(null, { status: 204 })
   }
 
-  /** A new document in place of the one held, since a Yjs document cannot be emptied. */
   private startEmpty() {
     this.state.doc.destroy()
     this.awareness.destroy()
@@ -1710,12 +1707,6 @@ export class NoteRoom implements DurableObject {
     if (!readsAs(held.kind, asked.text)) return { refused: UNREADABLE }
 
     const current = fileOf(held.kind, this.state.doc)
-    // A writer naming a version wrote on that version's words, so the document has to
-    // be holding them, or the difference between the two takes out what it holds besides.
-    // Text that says what the document says takes nothing out: a v1 rename. Words the
-    // settle would not write are no conflict of the writer's, so it is asked again
-    // rather than made to keep a second copy; a keystroke that arrived while the row was
-    // read or this was hashed is one. Nothing is awaited below.
     if (asked.base !== undefined && asked.text !== current) {
       if (!settled) return { refused: 'unsaved' }
       if (

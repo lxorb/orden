@@ -88,7 +88,6 @@ describe('what owns the gesture under the finger', () => {
   test('but not in a drawer’s edge strip, where the drawer goes first, as Google Docs’ does', () => {
     const board = Object.assign(box('visible', 320), { hasAttribute: () => true })
     expect(ownsGesture(nest(host, board, box('visible', 320)), host, true)).toBe(false)
-    // A table that scrolls is still the table's: only a page turn gives way.
     expect(ownsGesture(nest(host, box('auto', 900)), host, true)).toBe(true)
   })
 

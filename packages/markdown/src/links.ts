@@ -65,48 +65,25 @@ export interface FoundLink extends Wikilink {
  *  brackets" would be two grammars. */
 export const WIKILINK_INNER = '[^[\\]\\n]+'
 
-/** `[[…]]`, or `![[…]]`, read from just past its `[[`. A `[` after a backslash is passed
- *  over by the walk in `collect`, which is what makes `\\[[Note]]` text: a backslash
- *  escapes the bracket in markdown, and a link nobody wrote must not be rewritten when a
- *  note is renamed. */
 const WIKILINK = new RegExp(`(${WIKILINK_INNER})\\]\\]`, 'y')
 
-/** How far a `[label](target)` may run before it is not one. A label is a phrase and
- *  a target is a path, so this is room and then some, and it is what keeps the walk
- *  over a line linear: a `[` that opens nothing moves the walk on by one character,
- *  so a scan to the end of the line is one per `[` on it. The same number as
- *  `LONGEST_LINK` in apps/desktop/src-tauri/src/links.rs. */
 const LONGEST_LINK = 1000
 
-/** How deep a target's parentheses may go, which is cmark's own limit. */
 const DEEPEST_PARENS = 32
 
 const BLANK = /\s/
 
-/** Whether a character is one `\s` matches, without asking it about the printable ones:
- *  this is asked of every character of a target, of every bracket that opens one. */
 function endsTarget(one: string): boolean {
   return (one <= ' ' || one >= '\u0080') && BLANK.test(one)
 }
 
-/** One `[label](target)` on a line, and where its parts are. */
 interface MarkdownLink {
   label: string
-  /** The target as written, its `<>` left off. */
   written: string
   writtenFrom: number
-  /** Just past the closing parenthesis. */
   to: number
 }
 
-/** The `]` that closes the label each `[` of a line opens, for those that open one. A
- *  label holds balanced brackets and escaped ones, as in CommonMark. A bracket pair that
- *  opens a link of its own means the brackets around it open none, since links do not
- *  nest; `[[` is a wikilink's.
- *
- *  One pass over the line rather than a scan from each `[`: `a[` over a megabyte, which
- *  is one line of a note somebody shared, was a thousand characters read per bracket.
- *  Exported to say so in a test; the twin is `label_ends` in links.rs. */
 export function labelEnds(line: string): Map<number, number> {
   const ends = new Map<number, number>()
   const open: number[] = []
@@ -129,8 +106,6 @@ export function labelEnds(line: string): Map<number, number> {
   return ends
 }
 
-/** Just past a bare target starting at `from`, which ends at a blank or at a `)` it did
- *  not open. -1 when its parentheses do not balance. */
 function bareTargetEnd(line: string, from: number, stop: number): number {
   let depth = 0
   let at = from
@@ -393,7 +368,6 @@ const SIZE = /^(\d+)(?:x(\d+))?$/
  *  which of the two `300x200` means. */
 export function embedSize(alias: string | null): { width: number; height: number | null } | null {
   const found = alias === null ? null : SIZE.exec(alias)
-  // A width of nothing is a picture nobody would see, which is no thing to ask for.
   if (found && Number(found[1]) === 0) return null
   if (!found) return null
 
@@ -401,8 +375,6 @@ export function embedSize(alias: string | null): { width: number; height: number
   return { width: Number(found[1]), height: height === undefined ? null : Number(height) }
 }
 
-/** The size at the end of a markdown picture's words, where Obsidian writes it:
- *  `![a cat|300](a.png)`, or `![|100x200](a.png)`, its bar escaped in a table. */
 export function sizedAlt(alt: string): {
   alt: string
   size: { width: number; height: number | null } | null
@@ -449,13 +421,8 @@ export function parseWikilink(inner: string, embed = false): Wikilink | null {
   return { target, heading, block, alias: alias === '' ? null : alias, embed }
 }
 
-/** The characters a wikilink cannot hold in a name: `#` and `^` open a fragment, `|` an
- *  alias, and a bracket ends the link. Obsidian refuses all five in a link for the same
- *  reason, though a file may be named with them, so a link to such a file is a markdown
- *  link, which both apps read; see link-format.ts in the app. */
 const NOT_IN_WIKILINK = /[#^[\]|]/
 
-/** Whether `[[name]]` would read as something other than a link to `name`. */
 export function wikilinkCannotName(name: string): boolean {
   return NOT_IN_WIKILINK.test(name)
 }
@@ -573,7 +540,6 @@ export interface Row {
   code: boolean
   /** True on the front matter's lines: YAML, where `#` opens no heading. */
   matter: boolean
-  /** The name on a closing fence, as an older build wrote it: see `fenceName`. */
   fenceName: string | null
 }
 
@@ -632,13 +598,11 @@ export function rowsOf(text: string): Row[] {
  *  line up to its end, so `[x]([[a]])` is a link to `[[a]]` and `[[\\]](x)` a wikilink. */
 function collect(line: string, offset: number, at: number, found: FoundLink[]) {
   if (!line.includes('[')) return
-  // No `](`, no markdown link, and that is nearly every line with a bracket on it.
   const ends = line.includes('](') ? labelEnds(line) : new Map<number, number>()
 
   for (let open = line.indexOf('['); open !== -1; open = line.indexOf('[', open + 1)) {
     if (line[open - 1] === '\\') continue
 
-    // A backslash in front of the bang escapes the bang and leaves the link.
     const embed = line[open - 1] === '!' && line[open - 2] !== '\\'
     const from = offset + (embed ? open - 1 : open)
 
@@ -650,8 +614,6 @@ function collect(line: string, offset: number, at: number, found: FoundLink[]) {
       const link = parseWikilink(inner, embed)
       const closed = open + 2 + inner.length + 2
       if (link) {
-        // Where the target sits: past the `!`, the `[[`, and any space trimmed off
-        // the front of it.
         const targetFrom = offset + open + 2 + (inner.length - inner.trimStart().length)
         found.push({
           ...link,
@@ -701,18 +663,12 @@ function collect(line: string, offset: number, at: number, found: FoundLink[]) {
   }
 }
 
-/** One or more percent escapes in a row: how a heading's words are written in a link
- *  when they hold a space or a character a URL cannot. */
 const ESCAPES = /(?:%[0-9A-Fa-f]{2})+/g
 
-/** The UTF-8 a run of escapes is read as. Not fatal, so a run that is not valid
- *  encoding comes out as replacement characters rather than as an error. */
 const UTF8 = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true })
 
-/** A backslash and the punctuation it escapes, or a run of percent escapes. */
 const WRITTEN = /\\([!-/:-@[-`{-~])|(?:%[0-9A-Fa-f]{2})+/g
 
-/** The same UTF-8, for a name: a run that is not valid encoding is no name at all. */
 const STRICT_UTF8 = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true })
 
 function bytesOf(run: string): Uint8Array {
@@ -736,9 +692,6 @@ export function decodeTarget(target: string): string {
   }
 }
 
-/** A path as a markdown target: the characters a browser or an editor would
- *  otherwise read as something else. `#` opens a fragment and a space ends the
- *  target, and a `)` (`1) Intro.pdf`) ends the link, so those are written out. */
 export function encodeTarget(path: string): string {
   return encodeURI(path).replace(/[#?()]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)
 }
@@ -890,13 +843,10 @@ function blockSection(source: string, wanted: string): string | null {
   return block.join('\n').trimEnd()
 }
 
-/** Whether a line holds a block's name and nothing else. */
 export function ownLine(line: string): boolean {
   return line.trim().startsWith('^') && blockIdOf(line.trim()) === line.trim().slice(1)
 }
 
-/** The block a name on a line of its own stands under, past the blank lines between
- *  them and whatever blank lines a fence holds. */
 function blockAbove(source: string, lines: readonly string[], under: number): string {
   const rows = rowsOf(source)
   let end = under - 1
@@ -966,7 +916,6 @@ export function blocksOf(text: string): NoteBlock[] {
       continue
     }
 
-    // A name on a line of its own is the block above's.
     const above = current ? null : found.at(-1)
     if (above && !row.code && ownLine(row.text)) {
       above.id = blockIdOf(row.text)
@@ -996,9 +945,6 @@ export function withoutBlockIds(text: string): string {
   return replacingBlockIds(text, (kept) => kept)
 }
 
-/** The same with each name written over, so every offset in the note stays what it was.
- *  In tabs, since two blanks at the end of a line of words break the line; in blanks on a
- *  closing fence, the one thing a fence closes with. */
 export function blockIdsBlanked(text: string): string {
   return replacingBlockIds(
     text,
@@ -1006,19 +952,11 @@ export function blockIdsBlanked(text: string): string {
   )
 }
 
-/** Around a block's name while a page is rendered. */
 const ANCHOR_OPEN = '\uE0F0'
 const ANCHOR_CLOSE = '\uE0F1'
 
-/** A table's own line under its head. */
 const TABLE_RULE = /^\s*\|?[\s:|-]+\|?\s*$/
 
-/** The same with each name left as a mark `blockAnchorsDrawn` makes an id of, on the lines
- *  `holds` says a mark can stand on: `line` is the line's number, the words what is left
- *  of it. After a blank, so what closes an emphasis is still at the end of a word, and
- *  inside a table row's last cell, since another cell would be dropped. A name on its own
- *  line is a blank line once it is gone, so it goes at the end of the words above and
- *  leaves that blank, or where there are none, stands alone above it. */
 export function blockIdsAnchored(
   text: string,
   holds: (line: number, words: string) => boolean,
@@ -1039,27 +977,20 @@ export function blockIdsAnchored(
   })
 }
 
-/** Text with the marks of `blockIdsAnchored` gone, as they will be from any tag. */
 export function blockMarksOff(text: string): string {
   if (!text.includes(ANCHOR_OPEN)) return text
   return text.replace(new RegExp(`\\s?${ANCHOR_OPEN}[\\w-]+${ANCHOR_CLOSE}`, 'g'), '')
 }
 
-/** The marks of `blockIdsAnchored` as the empty elements a page scrolls to. A mark inside a
- *  tag, in an attribute, goes as the name would have: nothing a tag says is a place. */
 export function blockAnchorsDrawn(html: string): string {
   if (!html.includes(ANCHOR_OPEN)) return html
   const mark = `${ANCHOR_OPEN}([\\w-]+)${ANCHOR_CLOSE}`
   const anywhere = new RegExp(`\\s?${mark}`, 'g')
   const anchor = (id: string) => `<span id="^${id}"></span>`
-  return (
-    html
-      // No further than the next tag opening, or `<a ` thirty thousand times is read to its
-      // end from each one of them. A mark past a stray `<` in a tag is in the one it opens.
-      .replace(/<[a-z/](?:"[^"]*"|'[^']*'|[^'"<>])*>/gi, (tag) => tag.replace(anywhere, ''))
-      .replace(new RegExp(`<p>\\s*${mark}\\s*</p>`, 'g'), (_, id: string) => anchor(id))
-      .replace(new RegExp(mark, 'g'), (_, id: string) => anchor(id))
-  )
+  return html
+    .replace(/<[a-z/](?:"[^"]*"|'[^']*'|[^'"<>])*>/gi, (tag) => tag.replace(anywhere, ''))
+    .replace(new RegExp(`<p>\\s*${mark}\\s*</p>`, 'g'), (_, id: string) => anchor(id))
+    .replace(new RegExp(mark, 'g'), (_, id: string) => anchor(id))
 }
 
 function replacingBlockIds(

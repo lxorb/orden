@@ -264,7 +264,6 @@ function listMethod(
     case 'sort':
       return { value: [...list].sort(sortCompare) as Value[] }
     case 'unique':
-      // Every item asked against the ones before it.
       spend((list.length * list.length) / 64)
       return {
         value: list.filter(

@@ -13,13 +13,11 @@ export type Choice = 'both' | 'conversation' | 'notes' | 'summarize-from' | 'sum
 
 /** A file a tool call made: where the call said, relative to its space. */
 export interface Made {
-  /** The call that made it. */
   id: string
   path: string
   space?: string
 }
 
-/** One thing a rewind takes back. */
 export type Step =
   | { kind: 'edits'; changes: Change[] }
   | { kind: 'file'; file: FileChange }
@@ -31,8 +29,6 @@ export interface Plan {
   made: Made[]
   /** Notes moved or deleted since, oldest first. */
   files: FileChange[]
-  /** All of the above in the order to take it back, the thread's last act first. A note
-   *  moved aside and another made at its name only come back in this order. */
   steps: Step[]
   /** Whether something since cannot be taken back. */
   lasting: boolean
@@ -92,7 +88,6 @@ export function planFor(
   const since = changesSince(changes, thread.turns, turn)
   const made: Made[] = []
   const files: FileChange[] = []
-  /** Oldest first, with when each call was answered. */
   const acts: { at: number; step: Step }[] = []
   let lasting = false
   for (const part of callsSince(thread.turns, turn)) {
@@ -133,10 +128,6 @@ export function planFor(
   }
 }
 
-/** The acts and the edits between them, newest first. An edit is made while its call
- *  runs, so one made by the time an act's call was answered came before that act; two
- *  calls at once are as near as the clock can say. A call of a session before this one has
- *  no time, and comes before every edit there is: edits last the session. */
 function stepsBack(
   acts: readonly { at: number; step: Step }[],
   changes: readonly Change[],

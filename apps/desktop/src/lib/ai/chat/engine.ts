@@ -257,7 +257,6 @@ export function createApiEngine(setup: Setup): Engine {
     let stop: Stop = 'end'
     steering.set(thread.id, [])
 
-    /** Where the round in hand's parts begin in the turn. */
     let start = turn.parts.length
 
     const adjusted = (change: Adjusted) => {
@@ -279,7 +278,6 @@ export function createApiEngine(setup: Setup): Engine {
       if (change.toolsRefused) {
         listing = { ...listing, tools: [] }
         say({ kind: 'notice', code: 'no_tools', text: '' })
-        // Said before the round's first part, which goes after it rather than over it.
         start = turn.parts.length
       }
     }
@@ -342,7 +340,6 @@ export function createApiEngine(setup: Setup): Engine {
         addedNow = [...addedNow, ...result.answer.messages]
 
         const { ending, calls } = result.answer
-        // A message with nothing under it reads as if the panel had hung.
         if (
           ending === 'end' &&
           !turn.parts.some((part) => part.kind === 'text' || part.kind === 'tool')

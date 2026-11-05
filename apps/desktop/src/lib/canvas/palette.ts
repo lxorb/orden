@@ -63,8 +63,6 @@ export function readPalette(element: Element): Palette {
   return palette
 }
 
-/** The theme's colours as one of its sides has them, whichever side is on, read off
- *  an element that asks for it, as every theme answers `data-theme` on any element. */
 export function paletteOf(scheme: 'light' | 'dark'): Palette {
   const probe = document.createElement('div')
   probe.dataset.theme = scheme

@@ -80,12 +80,6 @@ function namespaced(xhtml: string): string {
   return `<div xmlns="${XHTML}">${xhtml}</div>`
 }
 
-/** The scheme the page asks for, said where this picture's stylesheet can hear it.
- *
- *  In an SVG image `:root` is the `<svg>`, not the `<html>` inside the
- *  `foreignObject`. Tokens that `:root` alone gives, the ground under the note among
- *  them, are read off it and inherited, so with nothing said there they came out dark
- *  under the page's dark text. */
 function schemeOf(html: string): string {
   const scheme = /<html\b[^>]*\sdata-theme="([^"]*)"/.exec(html)?.[1]
   return scheme ? ` data-theme="${escapeAll(scheme)}"` : ''

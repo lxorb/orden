@@ -663,7 +663,6 @@ describe('a fence, as every parser of a note reads it', () => {
   test.each(fenceTable as [string, string, string[]][])('%j', (note, shape, ids) => {
     const said = lines(note).join('\n')
     for (const id of ids) expect(said).not.toContain(id)
-    // The words under it are words: nothing of the fence comes after them.
     const last = shape.lastIndexOf('c')
     if (shape.endsWith('w') && last !== -1) expect(said.trimEnd().endsWith('words')).toBe(true)
   })
@@ -702,7 +701,6 @@ describe('a block name', () => {
   })
 })
 
-/** The phone's caret follows a line by its offset in the file. */
 describe('a block name', () => {
   test('moves no line, however many there are', () => {
     const note = Array.from({ length: 60 }, (_, at) => `Paragraph ${at} ^blk${at}\n`).join('\n')

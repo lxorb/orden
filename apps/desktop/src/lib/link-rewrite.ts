@@ -27,9 +27,6 @@ import { formatLink } from './link-format'
 import { shownName } from './note-name'
 import { folderOf, nameOf, relativePath } from './space-paths'
 
-/** Exported from here because the markdown export writes targets too: a
- *  `[[wikilink]]` that becomes a real link has to be spelled the same way a renamed
- *  one is. */
 export { encodeTarget }
 
 /** Where a link points now, and, for a link that names the place by its name,
@@ -79,7 +76,6 @@ export function retargetLinks(
     if (there === null) continue
     any = true
     const written = targetFor(link, source, there)
-    // A wikilink cannot say a name like `C# basics`, so the whole link changes spelling.
     if (link.kind === 'wikilink' && wikilinkCannotName(written)) {
       out += text.slice(at, link.from) + asMarkdown(link, source, there)
       at = link.to
@@ -93,13 +89,10 @@ export function retargetLinks(
   return any ? out + text.slice(at) : null
 }
 
-/** A wikilink as the markdown link that says the same, for a place it cannot name. */
 function asMarkdown(link: FoundLink, source: string, placed: string | Placed): string {
   const path = typeof placed === 'string' ? placed : placed.path
   const fragment = link.block === null ? link.heading : `^${link.block}`
-  // Words in a table's wikilink hold their bar escaped, and the label escapes it afresh.
   const words = link.alias?.replace(/\\\|/g, '|') ?? null
-  // A picture's size has a place in the other spelling too; see `sizedAlt`.
   const shown = link.embed && embedSize(words) ? `|${words ?? ''}` : words
   return formatLink(
     {

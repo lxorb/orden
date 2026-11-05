@@ -64,16 +64,10 @@ export function holdsWords(kind: TabKind): boolean {
   return TAB_KINDS[kind].words
 }
 
-/** The editor's line endings, whatever a file has. The rope holds these and only these, and
- *  every offset into a note is an offset into them. */
 export function unixLines(text: string): string {
   return text.includes('\r') ? text.replace(/\r\n?/g, '\n') : text
 }
 
-/** Edits worked out on `before`, in the editor's count of its line endings and with its
- *  line endings in what they put in. Words held in the editor's endings (`unixLines`)
- *  meeting edits that put in a file's `\r\n` - a file's whole text worked out against
- *  them - are taken as the one change from those words to the result's. */
 function inEditorCount(before: string, edits: readonly Edit[]): { words: string; edits: Edit[] } {
   if (before.includes('\r') || !edits.some((one) => one.insert.includes('\r'))) {
     return flatEdits(before, edits)
@@ -154,10 +148,6 @@ export class NoteDoc {
    *  no file or came back holding words the file never had; see `firstVersion`. */
   private before: string | null
 
-  /** The words this window last knew the file to hold, in the editor's line endings:
-   *  what a write and another window's write are each merged against, null for a document
-   *  with no file or one that came back holding words the file never had. See
-   *  workspace/across.ts. */
   get onDisk(): string | null {
     return this.knownOnDisk
   }
@@ -177,9 +167,6 @@ export class NoteDoc {
     this.path = start.path
     this.name = start.name
     this.dirty = start.dirty
-    // In the rope's line endings like every other word of it: `words` stands for the rope
-    // wherever it is not behind, so a note whose file has CRLF endings read offsets into
-    // the one that did not fit the other. `before` is the file as it was, for a version.
     this.words = unixLines(start.text)
     this.before = start.path !== null && !start.dirty ? start.text : null
     this.onDisk = this.before === null ? null : this.words
@@ -299,9 +286,6 @@ export class NoteDoc {
     if (this.words !== text) this.words = text
   }
 
-  /** Changes to the rope that leave the note in step with its file. A throw out of one
-   *  leaves it listening: a note that had stopped would take everything typed afterwards
-   *  for nothing owed, and never write again. */
   private quietly(change: () => void) {
     this.quiet = true
     try {
@@ -388,9 +372,6 @@ export class NoteDoc {
     return { text, edits: carried, flat }
   }
 
-  /** These words in the file's own line endings, as far as they are known: the file as
-   *  this document last knew it, or `read` from it, while either is still these words;
-   *  otherwise the words as they are. */
   private asFile(read?: string): string {
     for (const file of [this.before, read]) {
       if (file?.includes('\r') && unixLines(file) === this.words) return file
@@ -408,19 +389,13 @@ export class NoteDoc {
     if (this.before !== null) this.before = text
   }
 
-  /** Words of another window's, brought into this note as they arrive from a room: every
-   *  caret stays, no step of undo is made, and nothing is written for it here. `to` is
-   *  what the words are afterwards. */
   took(change: { from: number; to: number; insert: string } | null, to: string) {
     if (!change) return
     this.quietly(() => this.live.arrived([change]))
-    // A composition holds what arrives until it ends, and the rope says when it has.
     this.behind = this.live.text.toString() !== to
     if (!this.behind) this.words = to
   }
 
-  /** The same where the one span would not go in: the words whole, and the carets with them.
-   *  Nothing about the file changes by it. */
   tookWhole(to: string) {
     this.quietly(() => this.live.replace(to, false))
     this.words = to

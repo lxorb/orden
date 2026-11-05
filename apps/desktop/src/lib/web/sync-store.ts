@@ -72,9 +72,6 @@ export async function openWeb(account: string, made?: string): Promise<SyncStore
   }
 }
 
-/** The device id an account's store keeps, read in a connection of its own that only
- *  looks: no version asked, so a store another tab has open is not upgraded or blocked,
- *  and none made where there is none (the upgrade that would make one is called off). */
 export function deviceWeb(account: string): Promise<string | null> {
   return new Promise((resolve) => {
     const request = indexedDB.open(nameOf(account))

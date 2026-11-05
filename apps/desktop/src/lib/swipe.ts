@@ -37,9 +37,6 @@ export function ownsEveryTouch(action: string): boolean {
  *  had a wide table in it. */
 export function ownsGesture(from: Element | null, stopAt: Element, atDrawerEdge = false): boolean {
   for (let node: Element | null = from; node && node !== stopAt; node = node.parentElement) {
-    // A surface that turns its own pages on a sideways swipe says so: a phone's board.
-    // Not in a drawer's edge strip, where the drawer goes first, as Google Docs' and
-    // Spotify's do over what they scroll sideways: the rest of the width is the pages'.
     if (node.hasAttribute('data-turns-pages') && !atDrawerEdge) return true
 
     const style = getComputedStyle(node)

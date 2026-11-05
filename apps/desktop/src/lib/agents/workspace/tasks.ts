@@ -122,8 +122,6 @@ async function baseAt(
   }
 }
 
-/** A `.base` file read to be answered: somebody else's under the guard the app holds it
- *  to, so a call does not freeze what a look at the file would not. */
 async function baseToAnswer(call: Call, name = 'path') {
   const found = await baseAt(call, name)
   const base = guardedAt(found.base, onDisk(found.place, found.relative))

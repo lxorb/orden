@@ -105,9 +105,6 @@ describe('what somebody typed', () => {
   })
 })
 
-/** A word and a colon is not a scheme because it looks like one: Chrome takes a scheme it
- *  knows, or anything written with `//`, as an address. Of the rest, a phrase is words for
- *  the engine, and what could be a name and a password, or one of them, goes nowhere. */
 describe('a word with a colon after it', () => {
   test.each([
     ['site:github.com orden'],
@@ -189,7 +186,6 @@ describe('a word with a colon after it', () => {
   })
 })
 
-/** Nothing on this machine or its network goes to the engine, however it is written. */
 describe('a local path', () => {
   test.each([
     ['file:notes.txt'],

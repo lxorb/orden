@@ -87,7 +87,6 @@ export function defaultColumns(kinds: RowKinds, rows: readonly Row[]): string[] 
 /** The columns a view shows: its own order, else the defaults. */
 export function columnsOf(base: Base, at: number, rows: readonly Row[]): string[] {
   const view = base.views[at]
-  // Once each: a file may say one twice, and each column is drawn under its name.
   if (view?.order.length) return [...new Set(view.order)]
   return defaultColumns(view?.nib.rows ?? 'notes', rows)
 }

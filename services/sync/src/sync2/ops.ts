@@ -119,8 +119,6 @@ function applied(
   sizes: ReadonlyMap<string, number>,
   taken: ReadonlySet<string>,
 ): OpResult {
-  // A folder from before ids were refused: no device is handed what is in it. Refused
-  // here rather than by `opOf`, which would stop the whole batch of a device holding it.
   const into = op.t === 'move' || op.t === 'create' || op.t === 'mkdir' ? op.parent : null
   if (into !== null && !isEntryId(into) && !tree.answers(op.op)) {
     return { op: op.op, refused: 'gone' }
@@ -171,9 +169,6 @@ function foldersFor(tree: Tree, folders: readonly string[], context: OpContext):
   return parent
 }
 
-/** A path taken apart into its names. Whoever calls has held it to `cleanPath`; the feed
- *  hands each name to every device of the space, so one that is not a name is an error
- *  here rather than a row they all stop at. */
 function split(path: string): { folders: string[]; name: string } {
   const folders = path.split('/')
   const name = folders.pop() ?? path

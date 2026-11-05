@@ -34,9 +34,6 @@ export interface FieldHands {
   make(path: string, text: string): Promise<void>
 }
 
-/** The words as a text box holds them, which is `\n` whatever the file is written in: the
- *  crate keeps a CRLF file's endings on every write (`notes.rs`), so the two are one text,
- *  and read as two every write would look crossed and keep a version. */
 function inField(words: string): string {
   return words.replace(/\r\n?/g, '\n')
 }

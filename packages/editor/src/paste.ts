@@ -58,8 +58,6 @@ export function delimitedToTable(text: string): string | null {
   const [header = [], ...body] = rows
   const columns = header.length
   if (columns < 2 || rows.some((row) => row.length !== columns)) return null
-  // Commas written the way prose writes them, and not a number in sight: `Hello, world,
-  // again` over `Goodbye, moon, soon` are two sentences.
   if (
     separator === ',' &&
     lines.some((line) => /,\s/.test(line)) &&
@@ -111,8 +109,6 @@ function insert(view: EditorView, text: string) {
   view.dispatch(inserted(view.state, text))
 }
 
-/** A list's first line, and a line holding an item with nothing in it yet: what decides
- *  that a plain paste is not CodeMirror's to put in. See `intoEmptyItem`. */
 const AN_ITEM = /^(?:[-*+]|\d+[.)])[ \t]/
 const EMPTY_ITEM = /^[ \t>]*(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?$/
 
@@ -206,12 +202,8 @@ export function richPaste(): Extension {
         return true
       }
 
-      // Code takes the words as they are, and CodeMirror puts the plain text in: no
-      // table made of a CSV, and no markdown made of the HTML an editor copies too.
       if (view.state.selection.ranges.some((range) => rangeInCode(view.state, range))) return false
 
-      // A list on an empty item, from this app or as plain text. Whatever else those
-      // two come to, CodeMirror's plain paste below would nest its first line alone.
       if (
         view.state.selection.ranges.length === 1 &&
         (copiedHere(html, text) || !html.trim()) &&

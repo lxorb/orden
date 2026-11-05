@@ -162,7 +162,6 @@ describe('a tab about a space no space is called', () => {
     const base = await tabSource(tab as never).load()
     expect(readSpec(tab.doc)?.space).toBe('Job')
     expect(base.views[0]?.filters).toEqual(builtinView('todos', { space: 'Job' }).views[0]?.filters)
-    // What was kept moved with the rename, and is not moved over the space's own again.
     expect(todosView('Job')).toBeUndefined()
   })
 

@@ -28,7 +28,6 @@ function compileOne(filter: Filter): CompiledFilter {
         try {
           return truthy(expression.run(scope))
         } catch {
-          // Whatever one row made of it, `toFixed(200)` included, is that row's.
           return false
         }
       },

@@ -55,9 +55,6 @@ const STILL: Duration = Duration::from_millis(80);
 /// How long the element about to be pressed in a reader's tab is lit first (7.1).
 const LIT: Duration = Duration::from_millis(300);
 
-/// Whether what a press lands on (`this`) is the element meant (`target`): it, inside it,
-/// round it, its label, or a frame it may be in. Across shadow roots, which `contains`
-/// stops at: a button inside a web component is pressed through its host.
 static INSIDE: LazyLock<String> = LazyLock::new(|| {
     [
         "function (place) { ",
@@ -67,16 +64,11 @@ static INSIDE: LazyLock<String> = LazyLock::new(|| {
     .concat()
 });
 
-/// What is read of an element in a small script: as in `FIELDS`.
 const NATIVE: &str = "const read = (one, key) => Reflect.get(Object.getPrototypeOf(one), key, one); const call = (one, key, ...args) => read(one, key).apply(one, args); ";
 
 /// The tallest full-page picture, in CSS pixels.
 const TALLEST: f64 = 16_384.0;
 
-/// How the page's scripts read a field, as the policy's `Field` has it: shared by `FACTS`
-/// and the secret scan, so the two never read one field two ways. Reports what the page
-/// says - type, `autocomplete`, words, whether its style masks it, whether a message box
-/// @-mentions somebody - and leaves every judgement to `policy`.
 const FIELDS: &str = r"
   // What is read of an element, through its interface and past its own properties: a form's named field is its own property, in every world, and would answer for `nodeType`, `elements` or `parentElement`.
   const read = (one, key) => Reflect.get(Object.getPrototypeOf(one), key, one)
@@ -120,8 +112,6 @@ const FIELDS: &str = r"
   }
 ";
 
-/// What a page's element says about itself and its form, for the policy and for what
-/// may be done to it. Run with the element as `this`.
 const FACTS_BODY: &str = r"
   // A pseudo-element answers a hit test and has no node of its own, a root or a document
   // none that is an element. What is left says nothing, which the crate asks about.
@@ -311,13 +301,9 @@ const FACTS_BODY: &str = r"
   return { at, cut: walked >= 50000 || fields.length >= 200, control: !!control, tag, type: kind, name, autocomplete: String(call(el, 'getAttribute', 'autocomplete') || '').toLowerCase(), submit, link, editable, in_form: !!form, fields, field: describe(el), default_button: first ? nameOf(first) : '', opaque, dialog: dialogOf(), held }
 ";
 
-/// `FACTS_BODY` with `FIELDS` in front of it, as the function the protocol runs: `heard`
-/// is the element round it the engine found listening for a press, if asked.
 static FACTS: LazyLock<String> =
     LazyLock::new(|| ["function (heard) {", FIELDS, FACTS_BODY, "}"].concat());
 
-/// What is round an element that a press on it reaches, up to the page itself, whose
-/// listeners are every framework's and say nothing of this press.
 static ROUND_IT: LazyLock<String> = LazyLock::new(|| {
     [
         "function () { ",
@@ -327,13 +313,10 @@ static ROUND_IT: LazyLock<String> = LazyLock::new(|| {
     .concat()
 });
 
-/// How far up the engine is asked what listens: past that a thing held is no part of it.
 const MOST_LISTENED_ROUND: usize = 6;
 
-/// What a press is heard as by a listener.
 const PRESS_EVENTS: [&str; 5] = ["click", "mousedown", "mouseup", "pointerdown", "pointerup"];
 
-/// Whether `DOMDebugger.getEventListeners` answers one that hears a press.
 fn hears_a_press(said: &Value) -> bool {
     said.get("listeners")
         .and_then(Value::as_array)
@@ -349,7 +332,6 @@ fn hears_a_press(said: &Value) -> bool {
 /// What the secret scan's handles are held under, and let go of together.
 const SECRETS: &str = "nib-agent-secrets";
 
-/// A field described, and whether it holds anything. Run with the field as `this`.
 static DESCRIBED: LazyLock<String> = LazyLock::new(|| {
     [
         "function () {",
@@ -359,7 +341,6 @@ static DESCRIBED: LazyLock<String> = LazyLock::new(|| {
     .concat()
 });
 
-/// The form the element is in, or its document: what `FACTS_BODY` reads the fields of.
 static FIELDS_SCOPE: LazyLock<String> = LazyLock::new(|| {
     [
         "function () { ",
@@ -369,11 +350,9 @@ static FIELDS_SCOPE: LazyLock<String> = LazyLock::new(|| {
     .concat()
 });
 
-/// A field described, for the policy alone. Run with the field as `this`.
 static DESCRIBED_ONLY: LazyLock<String> =
     LazyLock::new(|| ["function () {", FIELDS, "return describe(this) }"].concat());
 
-/// The element whose name a press is judged by, for the engine to name; see `FACTS_BODY`.
 static PRESSED: LazyLock<String> = LazyLock::new(|| {
     [
         "function () {",
@@ -383,16 +362,10 @@ static PRESSED: LazyLock<String> = LazyLock::new(|| {
     .concat()
 });
 
-/// How long a frame in a process of its own has to answer what the scans ask. A frame that is
-/// reloading loses the question, and one that hangs never answers: either way it is a part
-/// not read, which is safe, and no reason to hold up the rest of the page for the full wait.
 pub(super) const FRAME_PATIENCE: Duration = Duration::from_secs(8);
 
-/// How long one read of a page spends on its frames: the frames it did not come to are not
-/// written, as a frame on a denied site is not.
 const MOST_ON_FRAMES: Duration = Duration::from_secs(10);
 
-/// Whether a part of the page is past what a read spends on frames. Never the page's own.
 fn prefix_past_budget(prefix: &str, started: Instant) -> bool {
     !prefix.is_empty() && started.elapsed() > MOST_ON_FRAMES
 }
@@ -405,17 +378,12 @@ fn patience_in(session: Option<&str>) -> Duration {
     }
 }
 
-/// The part an `UNREAD` secret names where a read left a frame out and the rest stands.
 const LEFT_OUT: &str = "left out";
 
-/// How many fields of one page are each asked about themselves, one by one. Past it, each
-/// counts as a secret: over-careful about a page of a thousand inputs, and never a leak.
 const MOST_FIELDS_ASKED: usize = 500;
 
-/// How many secrets a picture is painted over. Past it there is no picture.
 const MOST_PAINTED: usize = 500;
 
-/// Which secrets a picture hides, by part prefix and node, and the places it paints over.
 type Hidden = (HashSet<(String, u64)>, Vec<[f64; 4]>);
 
 /// A secret field on the page: which node, and whether anything is in it.
@@ -428,7 +396,6 @@ struct Secret {
     filled: bool,
 }
 
-/// The element that has the keyboard, into open shadow roots and frames of the same origin.
 const ACTIVE: &str = r"(() => {
   const read = (one, key) => Reflect.get(Object.getPrototypeOf(one), key, one)
   let at = document.activeElement
@@ -440,8 +407,6 @@ const ACTIVE: &str = r"(() => {
   return at
 })()";
 
-/// A key in a reader's page as the page's own events, and its default done the page's
-/// way; answers `type` when the key's text is still to be inserted.
 const IN_PAGE_KEY: &str = r"function (key, code, modifiers) {
   const init = { key, code, bubbles: true, cancelable: true, composed: true, altKey: !!(modifiers & 1), ctrlKey: !!(modifiers & 2), metaKey: !!(modifiers & 4), shiftKey: !!(modifiers & 8) }
   const went = this.dispatchEvent(new KeyboardEvent('keydown', init))
@@ -465,26 +430,16 @@ const IN_PAGE_KEY: &str = r"function (key, code, modifiers) {
   return answer
 }";
 
-/// The page as the reader reads it, for `browser_read` as text.
 const TEXT: &str = r"(() => ({ url: location.href, title: document.title, text: document.body ? document.body.innerText : '' }))()";
 
-/// What no field carries into the markup an agent reads (9.4): a password field is
-/// dropped and every other field's `value` too, so a page that writes a secret into the
-/// markup (a prefilled password, a card number) has nothing read back whatever the
-/// converter makes of a field. Words typed into a field are never in markup at all,
-/// which writes attributes, not a field's live value; nor in `innerText`, the text
-/// shape. The clip's reader (`web_tabs/reader.js`) holds its snapshot to the same rule.
 const UNVALUED: &str = r"const unvalued = (root) => {
   for (const one of root.querySelectorAll('input[type=password]')) one.remove()
   for (const one of root.querySelectorAll('input[value]')) one.removeAttribute('value')
   return root
 }";
 
-/// What a secret editable region is told apart by: the regions of a document in order, the
-/// same in the document and in a clone of it. `hidden` is which of them the policy named.
 const REGIONS: &str = r"[contenteditable]:not([contenteditable=false i]), [role=textbox]";
 
-/// The regions of a document, each said for the policy.
 static REGIONS_SAID: LazyLock<String> = LazyLock::new(|| {
     [
         "(() => {",
@@ -496,10 +451,6 @@ static REGIONS_SAID: LazyLock<String> = LazyLock::new(|| {
     .concat()
 });
 
-/// `document.body`'s words as `innerText` has them, the regions in `hidden` the mark a secret
-/// leaves, so the reader can see words are missing, and each
-/// other word as it stands: only such a region is cut, by node, whatever else on the page
-/// reads the same. Run only on a page with one, where it costs `innerText`'s fine points.
 const MASKED_TEXT: &str = r"
   const read = (one, key) => Reflect.get(Object.getPrototypeOf(one), key, one)
   const call = (one, key, ...args) => read(one, key).apply(one, args)
@@ -524,13 +475,11 @@ const MASKED_TEXT: &str = r"
   return say(document.body).replace(/\n{3,}/g, '\n\n').trim()
 ";
 
-/// The same on a clone of the body: `copy` has the regions in the document's order.
 const MASKED_CLONE: &str = r"
   const all = Array.from(copy.querySelectorAll('[contenteditable]:not([contenteditable=false i]), [role=textbox]'))
   for (const at of hidden) if (all[at]) all[at].textContent = '[hidden]'
 ";
 
-/// The page as text for `browser_read`, the regions in `hidden` left out by node.
 fn text_hiding(hidden: &[usize]) -> String {
     if hidden.is_empty() {
         return TEXT.to_string();
@@ -541,8 +490,6 @@ fn text_hiding(hidden: &[usize]) -> String {
     )
 }
 
-/// The whole page's HTML with its links made absolute and its scripts left out, for
-/// `browser_read` as markdown, unvalued, and the regions in `hidden` left out by node.
 fn whole_hiding(hidden: &[usize]) -> String {
     [
         "(() => {\n",
@@ -566,11 +513,6 @@ fn whole_hiding(hidden: &[usize]) -> String {
     .concat()
 }
 
-/// The article as the clip button reads it - the very script, `web_tabs::reader`, which
-/// leaves out every field's value by the same rule as `UNVALUED` - for `browser_read` as
-/// an article and for a clip, which are the same words. It answers a snapshot of the
-/// document; the window finds the article in it with the clipper's own extractor (see
-/// packages/markdown/src/article.ts `readSnapshot`), on the way to the markdown.
 fn clipped_hiding(hidden: &[usize]) -> String {
     crate::web_tabs::reader(false).replace(
         "/* __HIDE__ */",
@@ -581,16 +523,11 @@ fn clipped_hiding(hidden: &[usize]) -> String {
     )
 }
 
-/// Where a press goes and what it lands on there; see `Page::aim`.
 pub struct Aim {
     point: (f64, f64),
-    /// The element the press lands on.
     pub on: Element,
 }
 
-/// How a frame's own points sit in the page: its top left, and where a step along each of
-/// its axes goes. From the quad the engine draws it in and the frame's own size, so a
-/// `transform` or a `zoom` round it moves a point as it moves the frame.
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct FrameMap {
     origin: (f64, f64),
@@ -607,7 +544,6 @@ impl FrameMap {
         }
     }
 
-    /// `None` for a quad no straight mapping describes: `perspective`, or nothing drawn.
     fn of(quad: &[f64], width: f64, height: f64) -> Option<Self> {
         if quad.len() != 8 || width <= 0.0 || height <= 0.0 {
             return None;
@@ -622,8 +558,6 @@ impl FrameMap {
         (parallel && map.determinant().abs() > 1e-6).then_some(map)
     }
 
-    /// Whether a frame with this quad and size shows nothing at all: no map is wanted of it,
-    /// as nothing in it can be seen or pressed.
     fn nothing_drawn(quad: &[f64], width: f64, height: f64) -> bool {
         if quad.len() != 8 || width <= 0.0 || height <= 0.0 {
             return true;
@@ -635,7 +569,6 @@ impl FrameMap {
         area.abs() < 1e-6
     }
 
-    /// This frame's map to the page, from its map to the frame holding it and that frame's.
     fn within(self, outer: Self) -> Self {
         let step = |(x, y): (f64, f64)| {
             (
@@ -759,11 +692,6 @@ impl Page<'_> {
             .ok_or_else(|| stale("the element has no object"))
     }
 
-    /// A node's handle in nib's world in its own frame. The engine asks whether a world's
-    /// window may reach the node and answers nothing where not, as for a frame of another
-    /// origin in the same process, so each frame of the session is tried; the engine knows
-    /// a node's frame only by trying. `None` is a node no world of ours can read, which is
-    /// no answer about it.
     fn handle_in_world(&self, session: Option<&str>, backend: u64, group: &str) -> Option<String> {
         let resolve = |world: i64| {
             cdp::call_in(
@@ -781,9 +709,6 @@ impl Page<'_> {
             })
         };
         let started = Instant::now();
-        // A world goes with its document, so one more look with new ones after a navigation.
-        // Once for the call: a node that has gone with a reloading frame is no reason to ask
-        // for every frame's world again, field after field.
         for fresh in [false, true] {
             if fresh {
                 if self.worlds_renewed.swap(true, Ordering::Relaxed) {
@@ -792,7 +717,6 @@ impl Page<'_> {
                 self.forget_worlds(session);
             }
             for frame in self.frames_of(session) {
-                // Frames reloading as they are asked lose every question: no answer, soon.
                 if started.elapsed() > FRAME_PATIENCE {
                     return None;
                 }
@@ -805,7 +729,6 @@ impl Page<'_> {
         None
     }
 
-    /// The frames a session has in its process, the top one first.
     fn frames_of(&self, session: Option<&str>) -> Vec<String> {
         let key = session.map(str::to_string);
         if let Some(known) = self
@@ -834,7 +757,6 @@ impl Page<'_> {
         frames
     }
 
-    /// Puts the frame that read a node first, for the next: fields go together.
     fn frame_read(&self, session: Option<&str>, frame: &str) {
         if let Some(known) = self
             .frame_lists
@@ -848,8 +770,6 @@ impl Page<'_> {
         }
     }
 
-    /// A handle to an element in the page's own world, which is what a script that changes
-    /// its fields runs in. Nothing is judged by what runs there: `Page::object` is for that.
     fn page_object(&self, element: &Element) -> Result<String, Answer> {
         let resolved = self.call_on(
             element,
@@ -934,8 +854,6 @@ impl Page<'_> {
         self.run_with(element, &self.object(element)?, function, arguments)
     }
 
-    /// Runs a function on an element in the page's own world, for what it does to a field,
-    /// which the page's own frameworks must see done. Nothing it answers is judged.
     fn run_in_page(
         &self,
         element: &Element,
@@ -980,20 +898,14 @@ impl Page<'_> {
         Ok(self.facts_from(element, &said))
     }
 
-    /// What a press landing on an element would press, as `facts` says it, and with what
-    /// the engine alone can see: a listener round it no attribute shows. A control is its
-    /// own answer and a field its own.
     fn facts_of_press(&self, element: &Element) -> Result<Facts, Answer> {
         let mut facts = self.facts(element)?;
-        // A link with a listener of its own may do more than go. All of this reads the page in
-        // nib's own world and the engine's own lists.
         if facts.link && self.link_listens(element) {
             facts.link = false;
         }
         if facts.control || facts.editable {
             return Ok(facts);
         }
-        // A control by the engine's account alone: a component's `ElementInternals`.
         let engine = self.engine_control_round(element);
         let named = |mut facts: Facts| {
             if let Some(name) = &engine {
@@ -1022,7 +934,6 @@ impl Page<'_> {
         Ok(named(self.facts_from(element, &said)))
     }
 
-    /// Whether the control an element is in listens for a press itself.
     fn link_listens(&self, element: &Element) -> bool {
         let control = self.object(element).ok().and_then(|object| {
             let found = self
@@ -1040,9 +951,6 @@ impl Page<'_> {
         control.is_some_and(|object| self.hears(element, &object))
     }
 
-    /// Whether the node behind a handle of nib's has a listener for a press. A listener is
-    /// told only in the world it was added in, so the page's: the engine's list, and no
-    /// script of the page's runs for it.
     fn hears(&self, element: &Element, object: &str) -> bool {
         let page_side = (|| {
             let node = self
@@ -1071,8 +979,6 @@ impl Page<'_> {
         })
     }
 
-    /// What the engine calls the control it holds this element to be in, if any, though no
-    /// tag or attribute says so.
     fn engine_control_round(&self, element: &Element) -> Option<String> {
         let tree = self
             .call_on(
@@ -1084,7 +990,6 @@ impl Page<'_> {
         control_in_tree(tree.get("nodes")?.as_array()?)
     }
 
-    /// The nearest of an element and what is round it that listens for a press.
     fn listening(&self, element: &Element) -> Option<String> {
         let mut object = self.object(element).ok()?;
         for _ in 0..MOST_LISTENED_ROUND {
@@ -1108,7 +1013,6 @@ impl Page<'_> {
         if !facts.cut {
             match self.closed_fields(element) {
                 Some(closed) => facts.fields.extend(closed),
-                // What it is beside cannot be told: a press on it is unread.
                 None => facts.opaque = true,
             }
         }
@@ -1120,8 +1024,6 @@ impl Page<'_> {
         facts
     }
 
-    /// What the engine's own tree calls the control an element is in, which is what the
-    /// snapshot says it is called: the two agree whatever the page built it from.
     fn engine_name(&self, element: &Element) -> Option<String> {
         let object = self.object(element).ok()?;
         let control = self
@@ -1144,24 +1046,18 @@ impl Page<'_> {
             .map(str::to_string)
     }
 
-    /// Whether the frame an element is in may be acted in (9.2): a denied site does not
-    /// open for being in a frame.
     fn may_act_in(&self, facts: &Facts) -> Result<(), Answer> {
         self.frame_may_be_acted_in(facts)
     }
 
-    /// Whether the agent's grant has a rule for any site, so that a frame can be denied.
     fn limits_sites(&self) -> bool {
         self.grant_limits_sites()
     }
 
-    /// Whether a frame's words may be read, by where it is.
     fn may_read_frame(&self, at: &[String]) -> bool {
         engines::frame_readable(self.limits.as_ref(), at)
     }
 
-    /// The fields of an element's form, or its page, inside a closed shadow root, which no
-    /// script of the page's can see into and the engine can.
     fn closed_fields(&self, element: &Element) -> Option<Vec<Field>> {
         let session = element.session.as_deref();
         let call = |method: &str, params: &Value| {
@@ -1178,7 +1074,6 @@ impl Page<'_> {
         )?;
         let scope = scope.pointer("/node/backendNodeId")?.as_u64()?;
         let backends = fields_in_capture(&self.capture(session)?, Some(scope));
-        // One it cannot describe, or too many to ask about, and it cannot tell what is here.
         if backends.len() > 200 {
             return None;
         }
@@ -1199,11 +1094,6 @@ impl Page<'_> {
             .collect()
     }
 
-    /// The engine's flat copy of what a session's process holds of the page: every node of
-    /// every document in it, shadow roots of either kind included, each with its parent's
-    /// index. Flat so that no depth of page can reach this: a nested reply past the parser's
-    /// limit is simply lost, about 60 levels down, and a page's secrets with it. `None` is
-    /// a page that cannot be read, which the callers take as the worst.
     fn capture(&self, session: Option<&str>) -> Option<Value> {
         cdp::call_in(
             self.view,
@@ -1220,18 +1110,12 @@ impl Page<'_> {
         let Some((facts, object)) = self.active_in(None, None)? else {
             return Ok(None);
         };
-        // Nothing of this document has it, which is also how the keyboard in a frame of
-        // another process can read from here once it has come back round to it.
         if matches!(facts.tag.as_str(), "body" | "html") {
             return Ok(Some(self.active_in_a_frame().unwrap_or(facts)));
         }
         let Some(frame) = self.frame_held(None, &object) else {
             return Ok(Some(facts));
         };
-        // The keyboard is in a frame of another origin, whose document this one cannot
-        // read: what a key lands on is asked of the frame itself, through its session
-        // where it has a process of its own, through a world of ours in it where it
-        // shares this one (a frame of the same site).
         let session = self.frame_session(&frame);
         let inner = match &session {
             Some(session) => self.active_in(Some(session), None)?,
@@ -1251,7 +1135,6 @@ impl Page<'_> {
         }
     }
 
-    /// The frame an element holds, whatever its tag: `<iframe>`, `<object>`, `<embed>`.
     fn frame_held(&self, session: Option<&str>, object: &str) -> Option<String> {
         cdp::call_in(
             self.view,
@@ -1264,7 +1147,6 @@ impl Page<'_> {
         .and_then(|said| said.get("node").and_then(frame_of_holder))
     }
 
-    /// A world of ours in a frame that shares this process.
     fn frame_world(&self, frame: &str) -> Option<u64> {
         self.call(
             "Page.createIsolatedWorld",
@@ -1275,9 +1157,6 @@ impl Page<'_> {
         .as_u64()
     }
 
-    /// What has the keyboard in a frame in a process of its own: the frame that says it
-    /// has the focus first, or failing that one still holding an element, which at worst
-    /// asks about a press that lands nowhere.
     fn active_in_a_frame(&self) -> Option<Facts> {
         let frames = self
             .heard()
@@ -1312,7 +1191,6 @@ impl Page<'_> {
         held
     }
 
-    /// What has the keyboard in one session, and a handle to it.
     fn active_in(
         &self,
         session: Option<&str>,
@@ -1341,7 +1219,6 @@ impl Page<'_> {
             .map(|value| (facts_read(&value), object.to_string())))
     }
 
-    /// The session of a frame in a process of its own, by the frame's id.
     fn frame_session(&self, frame: &str) -> Option<String> {
         self.heard()
             .lock()
@@ -1538,17 +1415,12 @@ impl Page<'_> {
         }))
     }
 
-    /// Where a press on an element lands, and what it lands on there, which is what a press
-    /// is judged by and not the element named: a paragraph round a button pays as the
-    /// button does, a frame's ref presses what is in the frame, by the frame's site.
     pub fn aim(&self, element: &Element) -> Result<Aim, Answer> {
         let point = self.landing(element)?;
         let on = self.struck(element, point)?;
         Ok(Aim { point, on })
     }
 
-    /// What a press at a point of the element's lands on, or the element where the engine
-    /// has nothing there to say. A frame no one can read is refused, as for `element_at`.
     fn struck(&self, element: &Element, point: (f64, f64)) -> Result<Element, Answer> {
         if self.node_at(point).is_some() {
             self.element_at(point)
@@ -1557,8 +1429,6 @@ impl Page<'_> {
         }
     }
 
-    /// What the first point of an element lands on, where a drag starts or ends and a
-    /// hover rests, which take that point whatever covers it.
     fn at_first_point(&self, element: &Element) -> Result<Element, Answer> {
         let point = self.point(element)?;
         self.struck(element, point)
@@ -1598,10 +1468,6 @@ impl Page<'_> {
         Some(self.originating(None, backend))
     }
 
-    /// The element a pseudo-element or a shadow root hangs on, for a hit on one: a `::after`
-    /// over a button is the button, as it is to the press, and words directly under a shadow
-    /// root are its host's. Anything else is itself; one that will not say stays one, which
-    /// `FACTS` answers nothing about, and that asks.
     fn originating(&self, session: Option<&str>, backend: u64) -> u64 {
         let call = |method: &str, params: &Value| {
             cdp::call_in(self.view, session, method, params, cdp::PATIENCE).ok()
@@ -1647,14 +1513,11 @@ impl Page<'_> {
             backend,
         };
         let described = self.call("DOM.describeNode", &json!({ "backendNodeId": backend }))?;
-        // A frame by what it holds: `<object>` and `<embed>` hold one too.
         let node = described.get("node").cloned().unwrap_or_default();
         let Some(frame) = frame_of_holder(&node) else {
             return Ok(element);
         };
         let frame = frame.as_str();
-        // A frame in this process is hit through, so what came back is its edge. The
-        // engine says so, as it gives its document only for one here.
         if node.get("contentDocument").is_some() {
             return Ok(element);
         }
@@ -1666,8 +1529,6 @@ impl Page<'_> {
         })
     }
 
-    /// What is at a point of the page's viewport inside a frame in a process of its own;
-    /// `None` when that cannot be told, or the point is in a frame inside that one.
     fn element_in_frame(&self, frame: &str, (x, y): (f64, f64)) -> Option<Element> {
         let session = self.frame_session(frame)?;
         let inner = Element {
@@ -1699,13 +1560,10 @@ impl Page<'_> {
             .then_some(Element { backend, ..inner })
     }
 
-    /// How a frame in a process of its own sits in the page, for its elements' points, by
-    /// the engine's own quad for it: a transform or a zoom round it included.
     fn frame_map(&self, element: &Element) -> Result<FrameMap, Answer> {
         let Some(frame) = &element.frame else {
             return Ok(FrameMap::same());
         };
-        // Its owner is in the frame holding it, which sits in the page in its turn.
         let holder = self.frame_holding(frame)?;
         let ask = |method: &str, params: &Value| match &holder {
             Some(holder) => self.call_on(holder, method, params),
@@ -1719,16 +1577,12 @@ impl Page<'_> {
                 Ok(FrameMap::same())
             };
         };
-        // Its content box, inside its border and padding, which is what the frame's own
-        // points are drawn in: `getContentQuads` of a frame owner has them in.
         let boxes = ask("DOM.getBoxModel", &json!({ "backendNodeId": backend }))?;
         let quad: Vec<f64> = boxes
             .pointer("/model/content")
             .and_then(Value::as_array)
             .map(|all| all.iter().filter_map(Value::as_f64).collect())
             .unwrap_or_default();
-        // Its size with its bars, as the quad is: the layout viewport leaves a bar out, and
-        // every point would land that much further along than it was judged.
         let session = element.session.as_deref();
         let said = self.call_on(
             element,
@@ -1753,8 +1607,6 @@ impl Page<'_> {
         }
     }
 
-    /// The frame a frame in a process of its own is attached under, where it is another of
-    /// those and not the page's own document.
     fn frame_holding(&self, frame: &str) -> Result<Option<Element>, Answer> {
         let frames = self
             .heard()
@@ -1782,10 +1634,6 @@ impl Page<'_> {
             .ok_or_else(|| stale("the frame round it is gone"))
     }
 
-    /// Whether the element is what a press at the point lands on - it, something inside
-    /// it, or a label for it - and what does when it is not. In a frame the same, so a
-    /// point that comes out anywhere else in the frame than the element is seen; what the
-    /// page round the frame has put over it is judged as what the press lands on.
     fn lands_on(&self, element: &Element, point: (f64, f64)) -> Result<(), Answer> {
         let covered = if element.session.is_some() {
             match self.element_at(point) {
@@ -1807,8 +1655,6 @@ impl Page<'_> {
             return Ok(());
         }
         let target = self.object(element)?;
-        // A frame's own ref, with the frame's document under the press: what it lands on is
-        // the frame's, and is judged as that.
         if self
             .frame_held(element.session.as_deref(), &target)
             .is_some()
@@ -1816,8 +1662,6 @@ impl Page<'_> {
             return Ok(());
         }
         let above = self.object(&covered)?;
-        // The two in different documents have no way to be compared, and are not the one
-        // inside the other: a frame over the element covers it.
         let inside = self.call_on(
             element,
             "Runtime.callFunctionOn",
@@ -1833,8 +1677,6 @@ impl Page<'_> {
         {
             return Ok(());
         }
-        // Its tag and nothing it says: a refusal goes to the model unmarked, and the page's
-        // words would read as Orden's. The snapshot has its name, marked as the page's.
         let what = self
             .run_on(&covered, "function () { const el = this.nodeType === 1 ? this : this.parentElement; return el ? el.tagName.toLowerCase() : '' }", &[])
             .ok()
@@ -1949,10 +1791,6 @@ impl Page<'_> {
         self.press_judged(point, judged, button, count, modifiers, gate)
     }
 
-    /// The pointer brought to a point, and pressed there only for what is under it by then.
-    /// The move is the page's to answer, and it can take the judged element away and show
-    /// another: what has changed goes to the gate before the button goes down, each press.
-    /// A page's own timer can still swap it between the look and the press (9.3).
     fn press_judged(
         &self,
         point: (f64, f64),
@@ -1968,19 +1806,14 @@ impl Page<'_> {
         for press in 1..=count.max(1) {
             let now = match self.struck(judged, point) {
                 Ok(now) => now,
-                // The first press took the page away: no more to press.
                 Err(_) if press > 1 => break,
                 Err(refused) => return Err(refused),
             };
-            // The first press again whatever it is: the move may have changed what the same
-            // node says it is, and one question is still one (`OnePress`).
             if press == 1 || now != last {
                 gate(&now)?;
                 self.refuse_picker(&now)?;
                 last = now.clone();
             }
-            // The look above went through this crate's mapping of a frame's points. The
-            // frame's own account of where the pointer is did not, and a press goes there.
             if let Some(over) = self
                 .pointer_over(&now)
                 .filter(|over| !self.same_press(over, &now))
@@ -2187,7 +2020,6 @@ impl Page<'_> {
         }
     }
 
-    /// Whether setting a checkbox or a radio button takes a press, which only a change does.
     fn tick_changes(&self, element: &Element, wanted: bool) -> Result<bool, Answer> {
         let now = self.run_on(element, "function () { return this.checked }", &[])?;
         Ok(now.as_bool() != Some(wanted))
@@ -2486,8 +2318,6 @@ impl Page<'_> {
             ));
         }
         let wanted = scale.unwrap_or(1.0).clamp(0.1, 4.0);
-        // The same secrets before the picture and after it, each painted where it was either
-        // time: a field that goes in between is in the picture all the same.
         for _ in 0..2 {
             let (before, mut rects) = self.hidden_rects()?;
             let shot = self.call(
@@ -2556,10 +2386,6 @@ impl Page<'_> {
         Ok([left + x, top + y, right + x, bottom + y])
     }
 
-    /// Where on the page a picture of it is to be painted over (9.4), in CSS pixels, and which
-    /// secrets those are: each filled secret field, as a password's bullets say how long it is
-    /// and a card's number is its digits, and each frame of a denied site. A field that is not
-    /// drawn is not in the picture; what cannot be told keeps the picture from being handed out.
     fn hidden_rects(&self) -> Result<Hidden, Answer> {
         let secrets: Vec<Secret> = self
             .secrets(self.every_part()?)
@@ -2578,7 +2404,6 @@ impl Page<'_> {
                 "this page has too many secret fields to hide in a picture, so there is none",
             ));
         }
-        // One that is not drawn is not in the picture. One that cannot be told keeps it back.
         let mut drawn = Vec::with_capacity(secrets.len());
         let which = secrets
             .iter()
@@ -2598,7 +2423,6 @@ impl Page<'_> {
         Ok((which, drawn))
     }
 
-    /// Follows every frame down, however deep, or says a part of the page cannot be reached.
     fn nested_followed(&self) -> Result<(), Answer> {
         cdp::follow_nested(self.view, &self.label, FRAME_PATIENCE).map_err(|why| {
             Answer::error(
@@ -2627,7 +2451,6 @@ impl Page<'_> {
     /// The page's accessibility tree, with its frames, as the parts `snapshot` writes.
     fn parts(&self) -> Result<Tree, Answer> {
         let started = Instant::now();
-        // A frame not followed yet is on no list, and the read would not say it left it out.
         let _ = self.nested_followed();
         let own = self.call("Accessibility.getFullAXTree", &json!({}))?;
         let mut parts = vec![Part {
@@ -2641,8 +2464,6 @@ impl Page<'_> {
             .unwrap_or_else(PoisonError::into_inner)
             .frames();
         let away_ids: HashSet<String> = away.iter().map(|(_, frame)| frame.id.clone()).collect();
-        // A frame inside another's process is not written: nothing in it can be pressed by ref,
-        // as a point there is refused. A read says it left a part out.
         let mut whole = away.iter().all(|(_, frame)| frame.parent.is_empty());
         let away = away
             .into_iter()
@@ -2663,12 +2484,9 @@ impl Page<'_> {
             &mut places,
         );
         for frame in same.into_iter().filter(|one| !away_ids.contains(one)) {
-            // A frame on a site the agent may not reach is no part of what it reads.
             if !places.get(&frame).is_none_or(|at| self.may_read_frame(at)) {
                 continue;
             }
-            // The whole read is held to a budget: frames that reload as they are asked lose
-            // each question, and the rest of the page is not kept waiting on them.
             if started.elapsed() > MOST_ON_FRAMES {
                 whole = false;
                 break;
@@ -2731,8 +2549,6 @@ impl Page<'_> {
         Ok((parts, secret))
     }
 
-    /// Where each frame on a site the agent may not reach is on the page, to paint over: a
-    /// picture of a page is a reading of it. Its owner's box, in the page's own document.
     fn denied_frames(&self) -> Result<Vec<[f64; 4]>, Answer> {
         if self.limits.is_none() {
             return Ok(Vec::new());
@@ -2758,7 +2574,6 @@ impl Page<'_> {
         }
         let mut rects = Vec::new();
         for (id, _) in frames.iter().filter(|(_, at)| !self.may_read_frame(at)) {
-            // Its owner is where the frame holding it says, and sits in the page through that.
             let holder = self.frame_holding(id)?;
             let params = json!({ "frameId": id });
             let owner = match &holder {
@@ -2829,7 +2644,6 @@ impl Page<'_> {
             .collect()
     }
 
-    /// The session of a part of the page, by its prefix; none for the page's own.
     fn session_of_part(&self, prefix: &str) -> Option<String> {
         if prefix.is_empty() {
             return None;
@@ -2850,8 +2664,6 @@ impl Page<'_> {
         self.scanned(prefixes).0
     }
 
-    /// `secrets`, and every node the scan saw, by part prefix: what a tree read before it has
-    /// and it does not has gone in between, and nothing said any more whether it was a secret.
     fn scanned(
         &self,
         prefixes: impl IntoIterator<Item = String>,
@@ -2879,7 +2691,6 @@ impl Page<'_> {
                 )
             };
             let Some(capture) = self.capture(session.as_deref()) else {
-                // A part that cannot be read may hold anything (`UNREAD`).
                 found.push(Secret {
                     prefix: prefix.clone(),
                     backend: UNREAD,
@@ -2894,8 +2705,6 @@ impl Page<'_> {
             );
             let fields = fields_in_capture(&capture, None);
             for (at, backend) in fields.into_iter().enumerate() {
-                // Past the most, past the time, or what no world of ours can describe: a
-                // secret that is filled, as asking found nothing out. Never a field let by.
                 let said = (at < MOST_FIELDS_ASKED && started.elapsed() <= MOST_ON_FRAMES)
                     .then(|| self.handle_in_world(session.as_deref(), backend, SECRETS))
                     .flatten()
@@ -2933,10 +2742,6 @@ impl Page<'_> {
         (found, seen)
     }
 
-    /// Which of the document's editable regions (`REGIONS`) are secrets with words in them:
-    /// a field to the policy, and to `innerText` and markup words of the page like any,
-    /// which is why a read leaves them out itself. Any other's words, a document being
-    /// edited, are what a read is for. Frames are in no read.
     fn secret_regions(&self) -> Result<Vec<usize>, Answer> {
         let said = self.isolated(&REGIONS_SAID)?;
         let all = said.as_array().ok_or_else(|| {
@@ -2957,9 +2762,6 @@ impl Page<'_> {
             .collect())
     }
 
-    /// A read of the page with its secret regions left out, by their place among the regions:
-    /// a region that comes or goes between the look and the read moves every place after it,
-    /// so what the look found has to be what is there after. Failing twice, no read.
     fn read_hiding(&self, reading: fn(&[usize]) -> String) -> Result<Value, Answer> {
         for _ in 0..2 {
             let hidden = self.secret_regions()?;
@@ -3020,7 +2822,6 @@ impl Page<'_> {
     /// shapes that nothing here can paint over after the engine has laid them out. So
     /// the agent is told to take the picture instead, rather than handed a weaker print.
     pub fn pdf(&self, paper: &PdfPage) -> Result<String, Answer> {
-        // A picture paints a denied frame over; a print has no way to.
         if !self.denied_frames()?.is_empty() {
             return Err(Answer::error(
                 Code::SiteDenied,
@@ -3068,8 +2869,6 @@ impl Page<'_> {
                     .lock()
                     .unwrap_or_else(PoisonError::into_inner)
                     .idle_for(Duration::from_millis(500)),
-                // Asked of the words first, as this comes round many times, and only then
-                // with any secret region out, which is no answer either way (9.4).
                 Until::Text { text } => {
                     self.isolated(&format!(
                         "(document.body ? document.body.innerText : '').includes({})",
@@ -3191,8 +2990,6 @@ impl Page<'_> {
                 .and_then(Value::as_array)
                 .and_then(|all| all.get(usize::try_from(at).ok()?))
                 .ok_or_else(|| Answer::error(Code::BadArguments, "there is nowhere to step to"))?;
-            // The tab's history is the reader's too, and goes through sites they may reach
-            // and the agent may not.
             if let (Some((grant, store)), Some(url)) =
                 (&self.limits, found.get("url").and_then(Value::as_str))
             {
@@ -3654,9 +3451,6 @@ fn thrown(answered: &Value) -> Result<(), Answer> {
     ))
 }
 
-/// The frame a node holds, as `DOM.describeNode` tells it. The engine gives a frame's id on
-/// its document and its root as well, which hold nothing: a press on an empty stretch of a
-/// page is no press in a frame.
 fn frame_of_holder(node: &Value) -> Option<String> {
     let name = node.get("nodeName").and_then(Value::as_str)?;
     matches!(
@@ -3668,7 +3462,6 @@ fn frame_of_holder(node: &Value) -> Option<String> {
     .map(str::to_string)
 }
 
-/// The name of the nearest control up from the first node of an engine's partial tree.
 fn control_in_tree(nodes: &[Value]) -> Option<String> {
     let by_id: HashMap<&str, &Value> = nodes
         .iter()
@@ -3698,14 +3491,12 @@ fn control_in_tree(nodes: &[Value]) -> Option<String> {
     None
 }
 
-/// Whether a box could not be given because the element has none.
 fn undrawn(message: &str) -> bool {
     message.contains("Could not compute box model")
         || message.contains("is not on the page")
         || message.contains("gone")
 }
 
-/// A picture with these places, in CSS pixels on the page, painted over.
 fn painted_over(
     png: String,
     clip: (f64, f64, f64, f64),
@@ -3735,12 +3526,10 @@ fn painted_over(
     })
 }
 
-/// Whether what a field said cannot be read as a field, which counts as a secret.
 fn judged_failed(said: &Value) -> bool {
     serde_json::from_value::<Field>(said.clone()).is_err()
 }
 
-/// The frames of a frame tree, the top one first.
 fn frames_under(tree: &Value, out: &mut Vec<String>) {
     if let Some(id) = tree.pointer("/frame/id").and_then(Value::as_str) {
         out.push(id.to_string());
@@ -3755,14 +3544,10 @@ fn frames_under(tree: &Value, out: &mut Vec<String>) {
     }
 }
 
-/// What the page's answer says of an element. An answer that says nothing, or nothing that
-/// reads, is an element no one can name: `opaque`, which `policy::judge` asks about, and
-/// never `Facts::default()`, which it would let go as nothing at all.
 fn facts_read(said: &Value) -> Facts {
     let named = said.get("tag").and_then(Value::as_str).is_some();
     match serde_json::from_value::<Facts>(said.clone()) {
         Ok(mut facts) if named => {
-            // The line that says what it does, for the policy: nothing to the others.
             if let Some(line) = facts.held.iter().find(|line| policy::leads(line)) {
                 facts.name = joined_name(&facts.name, line);
             }
@@ -3775,7 +3560,6 @@ fn facts_read(said: &Value) -> Facts {
     }
 }
 
-/// A string of a page's answer, or nothing.
 fn text(value: &Value, key: &str) -> String {
     value
         .get(key)
@@ -3791,8 +3575,6 @@ fn nodes_of(tree: &Value) -> Vec<Value> {
         .unwrap_or_default()
 }
 
-/// A control's name as the page's script read it and as the engine's tree says it, both
-/// where they differ: a press is judged by all that it is called.
 fn joined_name(read: &str, engine: &str) -> String {
     let (read, engine) = (read.trim(), engine.trim());
     if read.contains(engine) {
@@ -3804,8 +3586,6 @@ fn joined_name(read: &str, engine: &str) -> String {
     }
 }
 
-/// Whether a cookie's domain is the host's, or one the host is under, short of a name
-/// nobody owns.
 fn cookie_fits(domain: &str, host: &str) -> bool {
     let domain = domain
         .trim_start_matches('.')
@@ -3817,8 +3597,6 @@ fn cookie_fits(domain: &str, host: &str) -> bool {
         && (domain == site || domain.ends_with(&format!(".{site}")))
 }
 
-/// Where each frame under this one is: its address, then those of the frames round it,
-/// the nearest first, for one with no address of its own (`policy::frame_allowed`).
 fn frame_places(tree: &Value, around: &[String], out: &mut HashMap<String, Vec<String>>) {
     let mut at = Vec::with_capacity(around.len() + 1);
     if let Some(url) = tree.pointer("/frame/url").and_then(Value::as_str) {
@@ -3838,7 +3616,6 @@ fn frame_places(tree: &Value, around: &[String], out: &mut HashMap<String, Vec<S
     }
 }
 
-/// Every node the engine's flat copy holds, in every document in it.
 fn nodes_in_capture(capture: &Value) -> Vec<u64> {
     capture
         .get("documents")
@@ -3851,15 +3628,10 @@ fn nodes_in_capture(capture: &Value) -> Vec<u64> {
         .collect()
 }
 
-/// The nodes of a tree that hold words of their own and that the scan after it did not see: a
-/// field remounted or taken away in between. Nothing can now say it was no secret, so it counts
-/// as one, by what the tree says of it.
 fn gone_fields(parts: &[Part], seen: &HashSet<(String, u64)>) -> Vec<(String, u64)> {
     parts
         .iter()
         .flat_map(|part| {
-            // Not what is inside another: the inner box of a field is the engine's own, and
-            // the scan has no account of it.
             let holders: HashSet<&str> = part
                 .nodes
                 .iter()
@@ -3882,12 +3654,6 @@ fn gone_fields(parts: &[Part], seen: &HashSet<(String, u64)>) -> Vec<(String, u6
         .collect()
 }
 
-/// The fields words can be typed into in the engine's flat copy of a process's documents
-/// (`Page::capture`), by node. With no `under`, every one, as the secret scan wants: each
-/// document, each shadow root of either kind. With `under`, only those inside it and inside
-/// a closed shadow root in its document, which is all a script of the page's cannot reach.
-/// The inside of an engine's own control is no field of the page's, and a type that takes
-/// no words is none. Parent before child, in one pass: no page is too deep for it.
 fn fields_in_capture(capture: &Value, under: Option<u64>) -> Vec<u64> {
     let strings: Vec<&str> = capture
         .get("strings")
@@ -3931,7 +3697,6 @@ fn fields_in_capture(capture: &Value, under: Option<u64>) -> Vec<u64> {
         }
         let empty = Vec::new();
         let attributes = list("attributes").unwrap_or(&empty);
-        // Per node: whether in a closed root, in an engine's own, and under `under`.
         let mut seen: Vec<(bool, bool, bool)> = Vec::with_capacity(backends.len());
         for (at, backend) in backends.iter().enumerate() {
             let parent = parents
@@ -3974,12 +3739,10 @@ fn fields_in_capture(capture: &Value, under: Option<u64>) -> Vec<u64> {
     out
 }
 
-/// A node's name as HTML writes it: XML keeps a tag's case and may put a prefix on it.
 fn local_name(name: &str) -> String {
     name.rsplit(':').next().unwrap_or(name).to_ascii_uppercase()
 }
 
-/// Whether a node's flat list of attributes makes it an editable region, a field of its own.
 fn edited(name: &str, attributes: &[&str]) -> bool {
     attributes.chunks(2).any(|pair| {
         let value = pair.get(1).copied().unwrap_or_default();
@@ -3988,7 +3751,6 @@ fn edited(name: &str, attributes: &[&str]) -> bool {
     })
 }
 
-/// Whether an input's `type`, in a node's flat list of attributes, is one that holds words.
 fn takes_words(attributes: &[&str]) -> bool {
     let kind = attributes
         .chunks(2)
@@ -4280,7 +4042,6 @@ mod tests {
         let inner =
             FrameMap::of(&[5.0, 5.0, 25.0, 5.0, 25.0, 15.0, 5.0, 15.0], 20.0, 10.0).expect("drawn");
         let map = inner.within(outer);
-        // The inner frame's own (1, 1) is (6, 6) of the outer, which draws at twice its size.
         assert_eq!(map.to_page((1.0, 1.0)), (22.0, 32.0));
         assert_eq!(map.to_frame((22.0, 32.0)), Some((1.0, 1.0)));
     }
@@ -4430,7 +4191,6 @@ mod tests {
         assert_eq!(control_in_tree(&nodes[2..]).as_deref(), Some("A sibling"));
         let plain = [json!({ "nodeId": "3", "role": { "value": "generic" } })];
         assert_eq!(control_in_tree(&plain), None);
-        // Round and round is no name, and no hang.
         let round = [json!({ "nodeId": "3", "parentId": "3", "role": { "value": "generic" } })];
         assert_eq!(control_in_tree(&round), None);
     }
@@ -4451,7 +4211,6 @@ mod tests {
 
     #[test]
     fn a_frames_size_with_its_bars_lands_where_the_quad_says() {
-        // A 300 by 200 frame: its own size is the quad's, whatever a bar takes of the layout.
         let map = FrameMap::of(
             &[0.0, 0.0, 300.0, 0.0, 300.0, 200.0, 0.0, 200.0],
             300.0,
@@ -4476,7 +4235,6 @@ mod tests {
 
     #[test]
     fn a_frame_under_a_transform_is_mapped_by_its_quad() {
-        // scale(.5) of a 200 by 100 frame.
         let half = FrameMap::of(
             &[0.0, 0.0, 100.0, 0.0, 100.0, 50.0, 0.0, 50.0],
             200.0,
@@ -4485,7 +4243,6 @@ mod tests {
         .expect("a straight quad");
         assert_eq!(half.to_frame((75.0, 25.0)), Some((150.0, 50.0)));
         assert_eq!(half.to_page((150.0, 50.0)), (75.0, 25.0));
-        // Moved and scaled, as translateX(50px) scale(.5).
         let moved = FrameMap::of(
             &[50.0, 0.0, 150.0, 0.0, 150.0, 50.0, 50.0, 50.0],
             200.0,
@@ -4493,7 +4250,6 @@ mod tests {
         )
         .expect("a straight quad");
         assert_eq!(moved.to_frame((75.0, 25.0)), Some((50.0, 50.0)));
-        // Turned a quarter.
         let turned = FrameMap::of(
             &[100.0, 0.0, 100.0, 200.0, 0.0, 200.0, 0.0, 0.0],
             200.0,
@@ -4502,7 +4258,6 @@ mod tests {
         .expect("a straight quad");
         assert_eq!(turned.to_page((10.0, 20.0)), (80.0, 10.0));
         assert_eq!(turned.to_frame((80.0, 10.0)), Some((10.0, 20.0)));
-        // Nothing, or what a straight mapping cannot follow.
         assert!(FrameMap::of(
             &[0.0, 0.0, 100.0, 10.0, 90.0, 50.0, 10.0, 40.0],
             200.0,
@@ -4595,8 +4350,6 @@ mod tests {
         assert!(!cookie_fits("op.example", "shop.example"));
     }
 
-    /// A flat copy as `DOMSnapshot.captureSnapshot` answers: `(parent, name, backend,
-    /// attributes)` in order, and which nodes are roots of what kind.
     fn captured(nodes: &[(i64, &str, u64, &[&str])], roots: &[(u64, &str)]) -> Value {
         let mut strings: Vec<String> = Vec::new();
         let mut index = |word: &str| {
@@ -4651,12 +4404,10 @@ mod tests {
             &[(4, "open"), (7, "closed"), (10, "user-agent")],
         );
         assert_eq!(fields_in_capture(&capture, None), [1, 3, 4, 5, 7]);
-        // The closed root alone, under what was asked about.
         assert_eq!(fields_in_capture(&capture, Some(100)), [4]);
         assert_eq!(fields_in_capture(&capture, Some(101)), Vec::<u64>::new());
     }
 
-    /// No page is too deep: the reply is flat, and so is the walk.
     #[test]
     fn a_field_a_thousand_levels_down_is_found() {
         let mut nodes: Vec<(i64, &str, u64, &[&str])> = vec![(-1, "#document", 5000, &[])];

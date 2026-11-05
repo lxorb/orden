@@ -111,8 +111,6 @@ export function readablePath(input: string): string | null {
   return path
 }
 
-/** A path a note may be put at: each of its names one every device can hold. The feed
- *  carries names one by one, and a device reads none past `LONGEST_NAME` (`isName`). */
 export function cleanPath(input: string): string | null {
   const path = readablePath(input)
   return path?.split('/').every(isName) ? path : null
@@ -360,9 +358,6 @@ export async function noteBeside(
   return null
 }
 
-/** Where a copy of the note at `path` goes, its name short enough to be one with the words
- *  and the number a copy's name takes: a note named near the limit keeps its copy too, and
- *  one in a folder from before `cleanPath` refused it keeps it at the top of the space. */
 function besidePath(path: string): string {
   const parts = path.split('/')
   const name = parts.pop() ?? path
@@ -592,10 +587,6 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
   return context.json({ note: presentNote(note) }, 201)
 })
 
-/** The 409 a create that met a note gets: that note, with its bytes, the same as the 409
- *  a save that lost (`conflict`). Two devices made one path with different words, and the
- *  one that lost keeps both copies from here; with no words here, an app takes the other
- *  device's for empty and writes its own over them. */
 async function alreadyThere(
   context: Context<{ Bindings: Env; Variables: Variables }>,
   note: Note,
@@ -636,9 +627,6 @@ async function reachedNote(
   // neither is words to read, write or delete here.
   if (!note || HIDDEN_FROM_V1.has(note.kind ?? 'note')) return null
 
-  // Nor is a note purged from Recently deleted, whose row stays only to retire its id:
-  // writing to it would bring back what the purge took away (`reachedNotes` in
-  // sync2/docs.ts).
   if (note.deleted && note.deleted_at === null) return null
 
   const space = await reachedSpace(env, who, note.space_id)
@@ -941,8 +929,6 @@ notes.put('/notes/:id', async (context) => {
     return context.json({ error: TOO_LARGE }, 413)
   }
 
-  // The path it already has is no new name: a note from before `cleanPath` held names to
-  // `isName` is still written where it is.
   const path = given === undefined || given === note.path ? note.path : cleanPath(given)
   if (!path) return context.json({ error: NOT_A_PATH }, 400)
 

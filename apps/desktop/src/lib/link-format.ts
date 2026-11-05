@@ -83,8 +83,6 @@ export function formatLink(target: LinkTarget, format: LinkFormat): string {
     return `${bang}[[${inner}${shown ? `|${shown}` : ''}]]`
   }
 
-  // A bracket would close the label and a backslash escape what closes it, and a bar
-  // would cut the row of a table the link stands in, so all are written escaped.
   const label = (shown || target.name || bareFragment(fragment)).replace(/[\\[\]|]/g, '\\$&')
   const anchor = fragment ? `#${markdownFragment(fragment)}` : ''
   const path = pathFor(target, format === 'wikilink' ? 'shortest' : format)
@@ -92,10 +90,6 @@ export function formatLink(target: LinkTarget, format: LinkFormat): string {
   return `${bang}[${label}](${encodeTarget(path)}${anchor})`
 }
 
-/** Whether a wikilink would say something else than this: a note named `C# basics` is
- *  legal, and `[[C# basics]]` is a link to the heading ` basics` of a note `C`. Those
- *  fall to the other spelling, which can say anything; Obsidian offers nothing better.
- *  After the name's `#` a heading may hold one more, and an alias may hold a bar. */
 function beyondWikilink(name: string, fragment: string, shown: string): boolean {
   return wikilinkCannotName(name) || /[[\]|]/.test(fragment) || /[[\]]/.test(shown)
 }

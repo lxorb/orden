@@ -250,8 +250,6 @@ pub fn set(id: &str, change: impl FnOnce(&mut Tab)) {
     }
 }
 
-/// An address an agent may send a page to: the web, and nothing of the machine's or of
-/// the app's own origins. The address as read here is the one to hand the engine.
 pub(super) fn web_address(url: &str) -> Result<Url, Answer> {
     let address: Url = url.trim().parse().map_err(|error| {
         Answer::error(
@@ -896,7 +894,6 @@ mod tests {
         assert!(web_address("https://nib.localhost/").is_err());
         assert!(web_address("http://tauri.localhost./").is_err());
         assert!(web_address("about:blank").is_ok());
-        // What goes to the engine is what was judged, not what was said.
         assert_eq!(
             web_address(" HTTP://Example.com/x")
                 .map(|one| one.to_string())

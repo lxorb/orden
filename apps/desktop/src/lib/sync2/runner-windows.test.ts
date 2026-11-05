@@ -1,6 +1,3 @@
-/** The runner in a window with no engine, against another window on the channel: never
- *  stuck when no engine comes, and nothing of one account ever said to another's. */
-
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Said } from '../windows'
 
@@ -51,8 +48,6 @@ function memoryStorage(): Storage {
 }
 vi.stubGlobal('localStorage', memoryStorage())
 
-/** Locks one holder at a time, the way a browser's are; `busy` is a lock another window
- *  holds, and letting it go hands it to whoever waits. */
 function locksOf() {
   const holders = new Map<string, boolean>()
   const waiting = new Map<string, (() => void)[]>()
@@ -150,8 +145,6 @@ describe('a window with no engine and nobody who has one', () => {
 
   test('while its own engine is starting, too', async () => {
     signedInAs('a')
-    // A store still opening holds the lane every store goes through, so it refuses in the
-    // end: a stop after it would otherwise wait on it for good.
     let refuse: () => void = () => undefined
     opening.open = () =>
       new Promise((_, reject) => (refuse = () => reject(new Error('the store refused'))))
@@ -267,7 +260,6 @@ describe('the engine’s window', () => {
 describe('signing out in a window with no engine', () => {
   test('tells nothing to delete under the engine: the store goes once its window let go', async () => {
     signedInAs('a')
-    // The engine's window holds the device's store as well as the account's lead.
     locks.busy('nib-sync:local')
     locks.busy('nib-sync:a')
     void runner.start()

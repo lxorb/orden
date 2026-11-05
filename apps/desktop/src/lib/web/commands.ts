@@ -1295,7 +1295,6 @@ export async function webInvoke<T>(
       const from = normalise(args.from as string)
       if (from !== target) {
         await renameNote(args.from as string, target)
-        // What was deleted out of it goes back to where it is now; see `follows` in trash.rs.
         const entries = await trashEntries()
         const gone = Math.max(
           -Infinity,

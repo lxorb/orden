@@ -45,8 +45,6 @@ export interface ListOptions {
   parentOf?: (row: Row) => string | null
 }
 
-/** A row as a tree knows it, and as a fold is kept: a view across spaces can hold one path
- *  in two of them. */
 export const foldKey = (row: Row): string => `${row.space}\n${rowId(row)}`
 
 /** A group's rows in tree order, each with its depth. */
@@ -101,11 +99,6 @@ function tree(
   return out
 }
 
-/** Keys for the rows of a drawn list, one key to a row in each group it stands under:
- *  grouped by a task's labels a row stands under each (`fanOut` in @orden/bases), and a
- *  keyed list given one key twice cannot draw. Where it first stands, and for a row under
- *  one group, the key is the row's alone, so the row keeps it moving to another group, and
- *  what is selected or being typed in moves with it. */
 export function distinctKeys(): (row: Row, group: string) => string {
   const given = new Set<string>()
   return (row, group) => {
@@ -116,8 +109,6 @@ export function distinctKeys(): (row: Row, group: string) => string {
   }
 }
 
-/** The rows of an answer's groups, once each, for what does not draw the groups: a row
- *  under several is still one task on a day, on a timeline, in a file. */
 export function everyRow(groups: readonly Group[]): Row[] {
   return [...new Set(groups.flatMap((group) => group.rows))]
 }

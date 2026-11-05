@@ -51,7 +51,6 @@ export interface PutsBack {
     back?: string,
     putBack?: boolean,
   ): Promise<void>
-  /** Asks for the same undo again. */
   undoFileAction(): Promise<void>
   /** A move on the disk, said to sync first; see `renameOnDisk` in workspace.svelte.ts. */
   renameOnDisk(from: string, to: string, kind: Kind): Promise<void>
@@ -93,9 +92,6 @@ export async function undoLastFileAction(ws: PutsBack): Promise<void> {
   ws.persist()
 }
 
-/** A step that would not go back says so, with the way to ask again and the way to let
- *  it go: it stays on top, and every later undo was the same silent nothing until twenty
- *  new steps had pushed it off. */
 async function refused(ws: PutsBack, action: FileAction) {
   const { failed } = await import('../views/failed.svelte')
   failed.tell(
@@ -269,14 +265,10 @@ export async function putBack(action: Extract<FileAction, { kind: 'delete' }>): 
   return writeBeside(action.path, action.content)
 }
 
-/** What the trash put back where it went from, carried to where that is now. The trash
- *  knows the path it was given: with its space renamed since, it made the old folder again
- *  for this one note, which the next listing took for a second space. */
 async function cameOver(action: Extract<FileAction, { kind: 'delete' }>, restored: string) {
   const left = action.trashedAt
   const from = restored || left?.path
   if (!left || !from) return action.path
-  // Moved away and back: the trash has it right.
   if (samePath(from, action.path)) {
     delete action.trashedAt
     return from
@@ -460,8 +452,6 @@ async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'r
       continue
     }
 
-    // Read again in the file's turn, for what the look above only said could be written:
-    // another window's write that came between would go under words worked out without it.
     const down = await inFileTurn(note.path, async () => {
       const file = await invoke<string>('read_note', { path: note.path }).catch(() => null)
       if (file === null)
@@ -535,7 +525,6 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
   if (action.nests) {
     await invoke('remove_empty_folder', { path: folderOf(action.to) }).catch(() => undefined)
   }
-  // Its tabs went to the other space with it, and come back with it.
   if (action.kind === 'move' && action.carries) {
     await (await import('./moving-space')).tabsFollow(action.from)
   }

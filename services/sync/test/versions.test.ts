@@ -1303,7 +1303,6 @@ describe('more history than an account may hold', () => {
   })
 
   test('and more versions going than one statement may bind all go', async () => {
-    // Three hundred of sixteen megabytes against a ceiling of two gigabytes: over 170 go.
     heavy(16 * 1024 * 1024, 300)
 
     await sweepVersions(env, Date.now())

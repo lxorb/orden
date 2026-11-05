@@ -1099,8 +1099,6 @@ class Links {
       this.handed.clear()
     }
 
-    // A file somebody shared on its own has no path either, and what runs in it is held
-    // to a line a note of the reader's with no file is not.
     const key = stranger ? 'stranger\n' : (path ?? '')
     const known = this.handed.get(key)
     if (known) return known
@@ -1892,9 +1890,6 @@ class Links {
             let words = worked(before)
             if (words === null || words === before) return null
 
-            // Taken by the document in the same breath as its words were read, so no
-            // keystroke falls between the two; one landing while the write is in the air
-            // is the document's own, and marks it for its next write.
             const knew = doc.onDisk
             drawing.relinked =
               drawn !== null &&
@@ -1907,8 +1902,7 @@ class Links {
             }
             return writeEdited(doc, target, words, knew, () => keepIt(before))
           })().catch(refused)
-        : // Worked out in the file's turn: another window's write that came first is in it.
-          await inFileTurn(target, async () => {
+        : await inFileTurn(target, async () => {
             const before = await this.wordsOf(absolute, target, open)
             if (before === null) return null
             read = listed?.(note.path) ?? note
@@ -2052,8 +2046,6 @@ class Links {
       const keepIt = () =>
         invoke('snapshot_note', { path: absolute, content: before }).catch(() => undefined)
 
-      // Taken by the document in the same breath as its words were read, for the
-      // reason `retarget` gives.
       const edit = oneEdit(before, after)
       if (doc) {
         const knew = doc.onDisk
@@ -2067,7 +2059,6 @@ class Links {
       this.noteSaved(absolute, after)
       return id
     }
-    // Worked out in the file's turn; see `retarget`.
     return doc ? name() : inFileTurn(absolute, name)
   }
 

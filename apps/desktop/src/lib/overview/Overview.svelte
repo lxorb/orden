@@ -1046,8 +1046,6 @@
     else if (untrack(() => shown)) untrack(leave)
   })
 
-  /** How many layers there are with this one the top of them: a sheet or a menu over it
-   *  has the keyboard, and what is on the view's keys is not asked. */
   let layers = 0
   $effect(() => {
     if (!shown || !tabOverview.open) return
@@ -1056,13 +1054,10 @@
     return gone
   })
 
-  /** The keyboard on the window it was on, or on the view. */
   function holdKeys() {
     ;(elements.get(at ?? '')?.window ?? canvasNode)?.focus({ preventScroll: true })
   }
 
-  /** The keyboard dropped on the page, the window or the toast that had it gone: it stays
-   *  with the view, which is what Escape and Ctrl+Z are about. */
   function keysLost() {
     if (!shown || !tabOverview.open || overlays.depth > layers) return
     const at = document.activeElement
@@ -1072,9 +1067,6 @@
     if (windows.length) queueMicrotask(keysLost)
   })
 
-  /** The view covers the app, so nothing behind it has the keyboard: a toast going hands it
-   *  back to the note (UndoToast.svelte), where words typed would land unseen. Its own row
-   *  is over the view, and so is anything opened over it. */
   function keptFromBehind(event: FocusEvent) {
     if (!shown || !tabOverview.open || overlays.depth > layers) return
     const to = event.target
@@ -1430,7 +1422,6 @@
 
   function keyed(event: KeyboardEvent) {
     if (overlays.depth > layers) return
-    // Undo and redo of what a drop did, which the sidebars' keys do not reach from here.
     const undo = shortcuts.pressed('edit.undo', event)
     if (
       undo ||

@@ -54,7 +54,6 @@ pub struct CodeBlocks {
 }
 
 impl CodeBlocks {
-    /// The name on the fence the last line read closed: see `fence_name`.
     pub fn closed_name(&self) -> Option<&str> {
         self.named.as_deref()
     }
@@ -263,10 +262,6 @@ fn closes_fence(line: &str, mark: u8, length: usize) -> bool {
         && (after.trim_start_matches([' ', '\t']).is_empty() || fence_name(line, mark).is_some())
 }
 
-/// The block name on a closing fence, as an older build wrote it: ` ``` ^abc123`. A fence
-/// line followed by one name closes a fence that is open, never opens or names one, and
-/// a name is letters, digits and hyphens; the rule and why in `fenceName` in fences.ts,
-/// both held to fence-table.json.
 fn fence_name(line: &str, mark: u8) -> Option<&str> {
     let run = line[spaces_at(line, 0)..]
         .bytes()
@@ -350,8 +345,6 @@ fn expanded(line: &str) -> Cow<'_, str> {
 mod tests {
     use super::{CodeBlocks, CodeLine};
 
-    /// The notes `CodeBlocks` in links.test.ts, the editor's grammar and the glasses are
-    /// held to as well.
     #[test]
     fn every_parser_of_a_fence_reads_the_one_table() {
         let table: Vec<(String, String, Vec<String>)> = serde_json::from_str(include_str!(

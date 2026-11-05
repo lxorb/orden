@@ -371,7 +371,6 @@ describe('sending', () => {
     const TOKEN = () => Response.json({ access_token: 'access', expires_in: 3600 })
     const MINUTE = 60_000
 
-    /** A service answering every message with `reply`, counting what it was sent. */
     function service(reply: () => Response) {
       const ids: string[] = []
       const send = ((input: string, init?: RequestInit) => {
@@ -396,7 +395,6 @@ describe('sending', () => {
       expect(await sendDue(env, AT, down.send)).toBe(0)
       expect(kept()).toMatchObject([{ sent_at: null }])
 
-      // Not the next minute.
       expect(await sendDue(env, AT + MINUTE, down.send)).toBe(0)
       expect(down.ids).toHaveLength(1)
 

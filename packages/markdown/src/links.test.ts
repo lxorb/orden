@@ -771,8 +771,6 @@ describe('the walk agrees with links.rs', () => {
 })
 
 describe('a line of brackets that open nothing', () => {
-  /** The brackets are matched in one pass; a scan from each would be a thousand
-   *  characters per bracket. */
   test('are matched once, not scanned from each', () => {
     const line = 'a['.repeat(50000)
     expect(labelEnds(line).size).toBe(0)
@@ -913,8 +911,6 @@ describe('a closing fence an older build named', () => {
     expect(renderMarkdown(listed)).not.toContain('^abc123')
   })
 
-  // The same notes every parser of a fence is held to: fences.test.ts, code_blocks.rs,
-  // the editor's grammar in @orden/editor and the glasses.
   test.each(fenceTable as [string, string, string[]][])('%j', (note, shape, ids) => {
     const code = new CodeBlocks()
     const said = note.split('\n').map((line) => 'wco'[code.line(line)])

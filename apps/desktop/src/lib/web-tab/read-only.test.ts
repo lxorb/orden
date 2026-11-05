@@ -168,7 +168,6 @@ describe('in a space shared to be read', () => {
 
     expect(before()).toEqual(was)
     expect(writes()).toEqual([])
-    // In the editor's line endings, as every note's words are.
     expect(tab.doc).toBe(SHORTCUT.replace(/\r\n/g, '\n'))
   })
 

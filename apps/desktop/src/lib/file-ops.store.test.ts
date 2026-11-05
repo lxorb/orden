@@ -976,7 +976,6 @@ describe('a note renamed while a canvas showing it is open in the back of its pa
 })
 
 describe('an undo asked for while a move is on its way', () => {
-  /** A move of Plan into Work whose rename answers when `land` is called. */
   async function moving() {
     const one = disk.current
     if (!one) throw new Error('no disk')
@@ -1005,7 +1004,6 @@ describe('an undo asked for while a move is on its way', () => {
   }
 
   test('takes back the move, not the step before it', async () => {
-    // A step before the move, which is what the undo took back with the move in the air.
     workspace.undone.record({ kind: 'create', path: `${ROOT}/Idea.md` })
 
     const { one, gone, land } = await moving()
@@ -1018,7 +1016,6 @@ describe('an undo asked for while a move is on its way', () => {
     expect(one.files.has(`${ROOT}/Idea.md`)).toBe(true)
   })
 
-  // The toast's Undo is about the step it was offered for, which by then is not the top.
   test('from the toast of the step before, takes back neither', async () => {
     await workspace.remove(`${ROOT}/Idea.md`, false)
     undoToast.dismiss()
@@ -1051,7 +1048,6 @@ describe('an undo asked for while a move is on its way', () => {
       expect(one.files.has(`${ROOT}/Idea.md`)).toBe(true)
       expect(failed.retry).not.toBeNull()
 
-      // At once, for as long as that one is still out.
       over = false
       void workspace.redoFileAction().then(() => (over = true))
       await vi.advanceTimersByTimeAsync(0)

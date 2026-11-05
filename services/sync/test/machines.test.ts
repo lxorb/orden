@@ -1111,8 +1111,6 @@ describe('a machine', () => {
     ])
   })
 
-  // The word of it is in memory, which a deploy empties: the reader's `open` then went
-  // down as anybody's, and `nibd` started the owner's program at a reader's hand.
   test('a watcher’s open says it only watches, and its owner’s still goes after it', async () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -1136,8 +1134,6 @@ describe('a machine', () => {
     expect(opens()).toEqual([{ t: 'open', session: 'session-1', cols: 80, rows: 24 }])
   })
 
-  // Anybody who may watch, a link's guest among them, could fill the bound and shut the
-  // owner out of their own terminal.
   test('watchers cannot take every socket on a terminal from its owner', async () => {
     const running = await machine(env, ID, user)
     const fill = async (who: string, role: 'read' | 'write', typing: 'owner' | 'writers') => {
@@ -1149,18 +1145,15 @@ describe('a machine', () => {
       }
       return joined
     }
-    // Refused ones are said so and closed, and hold nothing while that lands.
     const readers = await fill('reader', 'read', 'owner')
     expect(await fill('reader-again', 'read', 'owner')).toBe(0)
     expect(readers).toBeLessThan(MOST_SOCKETS)
     expect(running.state.getWebSockets('session-1')).toHaveLength(readers)
 
-    // Whoever was let in to type still gets in, past everybody who only watches.
     const writers = await fill('writer', 'write', 'writers')
     expect(writers).toBeGreaterThan(0)
     expect(readers + writers).toBeLessThan(MOST_SOCKETS)
 
-    // And the owner past them all, up to the bound and no further.
     let owners = 0
     for (; owners <= MOST_SOCKETS; owners += 1) {
       const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')

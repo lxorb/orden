@@ -259,8 +259,6 @@ function historyOf(post: LoggedPost, versions: readonly Version[]): Wording[] {
 /** Who reacted with what, each emoji in the order it was first put on, each person in
  *  the order they put it on. */
 function reactionsOf(marks: Marks): Record<string, Who[]> {
-  // By a map, because an emoji is whatever somebody sent: `constructor` is on every
-  // object already, and an array is what `??=` would not then make.
   const reactions = new Map<string, Who[]>()
   const on = [...marks.reactions.values()].filter((one) => one.value).sort((a, b) => a.seq - b.seq)
   for (const one of on) reactions.set(one.emoji, [...(reactions.get(one.emoji) ?? []), one.who])

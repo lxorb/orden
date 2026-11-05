@@ -37,7 +37,6 @@ pub async fn read(view: Webview, _address: &str) -> Option<Served> {
     use tauri::Manager as _;
 
     let (sending, said) = channel();
-    // A command's thread; see `on_the_page`.
     crate::web_tabs::on_the_page(view.app_handle(), view.label(), move |view| {
         let _ = view.with_webview(move |platform| {
             let read = platform

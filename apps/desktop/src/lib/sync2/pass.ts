@@ -599,14 +599,11 @@ async function pullDocs(
       doc.pulled = Math.max(doc.pulled, wanted.get(one.id)?.docSeq ?? 0)
       wanted.delete(one.id)
       changes.push(...core.docChanges(doc))
-      // One note's file is that note's: thrown, this left before the commit below, and every
-      // file the batch had written read on the next launch as a new note (`notWritten`).
       try {
         changes.push(...(await foldedThenProjected(core, space, entry, doc)))
       } catch (error) {
         changes.push(...notWritten(core, space, entry, doc, error))
       }
-      // Not written is not brought: it comes round again, and nothing here moved.
       if (!wanted.has(one.id)) brought += 1
     }
     changes.push(core.wantChange(space.id))

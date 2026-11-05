@@ -81,8 +81,6 @@ export function isPropertyName(name: string): boolean {
   return NAME.test(name) && isKeyLine(`${name}: x`)
 }
 
-/** A key as a line of a block says it: as it is, or in quotes where it would not read as
- *  a key, a column another app called something long, so the block is still a block. */
 function keyWritten(key: string): string {
   return isKeyLine(`${key}: x`) ? key : JSON.stringify(key)
 }
@@ -108,8 +106,6 @@ export function frontMatterBlock(source: string): FrontMatterBlock | null {
   }
 }
 
-/** Whether a note's opening `---` is front matter, rather than a rule with words below
- *  it. The same question as `frontMatterBlock`, for a caller with no use for where. */
 export function opensFrontMatter(source: string): boolean {
   return frontMatterLines(source) !== null
 }
@@ -187,7 +183,6 @@ export function frontMatterList(source: string, key: string): string[] {
 
   const value = source.slice(line.value.from, line.value.to).trim()
 
-  // A flow sequence across lines, as Prettier breaks a long one, is one value.
   const closes = valueClosesAt(source, line.value.from, block.body.to)
   if (closes !== -1) {
     const lines = source.slice(line.value.from, closes).split('\n')
@@ -273,7 +268,6 @@ function keyLine(source: string, block: FrontMatterBlock, key: string): KeyLine 
       other ??= line
     }
 
-    // What a value holds open across lines says no key, whatever it looks like.
     const closes = found ? valueClosesAt(source, at + found[0].length, block.body.to) : -1
     if (closes !== -1) {
       at = closes + 1
@@ -360,9 +354,6 @@ export function frontMatterEdit(
       source.slice(block.body.from, line.from) + source.slice(cutTo(source, line), block.body.to)
     if (!rest.trim()) return { from: block.from, to: blankAfter(source, block.to), insert: '' }
 
-    // What is left has to still be a block, the same one: a comment or a line of words
-    // alone is not, and the page would show them and two rules. So there the key stays
-    // and says nothing: a reader of it finds no value, and they are where they were.
     const to = cutTo(source, line)
     const left = frontMatterBlock(source.slice(0, line.from) + source.slice(to))
     if (left?.close !== block.close - (to - line.from)) {
@@ -404,7 +395,6 @@ function readAs(value: string): string {
  *  it only where more of it follows: inside a `|` or `>` value it is one of the value's
  *  own lines, and what is indented after it is still the value. */
 function withUnder(source: string, block: FrontMatterBlock, line: KeyLine): KeyLine {
-  // A quote or a bracket open across lines holds them at the margin too.
   const closes = valueClosesAt(source, line.value.from, block.body.to)
   let to = closes === -1 ? line.to : closes
   let at = to

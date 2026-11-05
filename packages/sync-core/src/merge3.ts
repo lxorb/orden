@@ -595,14 +595,10 @@ export function written(base: string, analysis: Analysis, writing: Writing): str
   return out + base.slice(at)
 }
 
-/** Whether `at`, in `text`, falls between two parts of one word. */
 function inWord(text: string, at: number): boolean {
   return WORDY.test(text.charAt(at - 1)) && WORDY.test(text.charAt(at))
 }
 
-/** Whether one side's words at a point are the other's as well: whole, at the start or the end
- *  of them for words gone on from, or anywhere for a passage. Never as the letters of a longer
- *  word: `no` is not in `not sure`, and is the reader's own. */
 function heldIn(words: string, other: string): boolean {
   const these = words.trim()
   if (!these) return false
@@ -615,7 +611,6 @@ function heldIn(words: string, other: string): boolean {
   return false
 }
 
-/** The whole lines two sides' words begin with alike. */
 function linesAlike(one: string, other: string): string {
   let at = 0
   while (at < one.length && one.charAt(at) === other.charAt(at)) at++
@@ -623,17 +618,6 @@ function linesAlike(one: string, other: string): string {
   return one.slice(0, one.lastIndexOf('\n', at - 1) + 1)
 }
 
-/** The merge where one side may be a later or an earlier state of the other's words, not
- *  another writer of its own: a write that landed unheard, and then the same note typed on.
- *  `merge3` keeps two sides' words at one point side by side, as it should for two people
- *  (`milk` and `eggs`), and so says `typed` twice over `typed` and `typed more`. Here the words
- *  one side holds of the other's at one span are said once, and neither side loses a word:
- *  only words the other side's text holds are left out. Not for what merges two devices'
- *  words: this says what one writer's history means, which the CRDT does not.
- *
- *  Which of the two is later nothing here can tell, so the one holding the other stands: words
- *  taken out in the air, `typed more` cut back to `typed` before either landed, come back.
- *  Such a deletion is undone and no word is lost; a deletion of what the base held stands. */
 export function mergedOn(base: string, local: string, remote: string): string {
   const analysis = analyse(base, local, remote)
   const mine = [...analysis.alone.local, ...analysis.meetings.flatMap((one) => one.local)]

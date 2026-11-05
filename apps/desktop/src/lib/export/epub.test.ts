@@ -393,9 +393,6 @@ describe('what a reader that checks the book insists on', () => {
   })
 
   test('a drawing the page wrote with no namespace is still a drawing', () => {
-    // An HTML parser gives a bare `<svg>` its namespace by itself. An XML one reads
-    // it as an XHTML element nobody has heard of: a chart comes out as its labels
-    // run together, with no height and no lines.
     expect(toXhtml('<svg viewBox="0 0 2 2"><path d="M0 0" /></svg>')).toContain(
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2">',
     )
@@ -667,8 +664,6 @@ describe('splitting', () => {
   })
 })
 
-/** Text pasted from Word, PowerPoint or a PDF carries what XML 1.0 has no way to say,
- *  and a reader refuses the whole book over one. */
 describe('characters XML cannot carry', () => {
   const FORBIDDEN = /[^\t\n\r\u{20}-\u{D7FF}\u{E000}-\u{FFFD}\u{10000}-\u{10FFFF}]/u
 

@@ -1,24 +1,15 @@
-/** Where a paste lands: markdown read as what it is, and a list on an empty item.
- *  Fetched through line-door.ts, with the first paste that needs it. */
-
 import { EditorSelection, type EditorState, type TransactionSpec } from '@codemirror/state'
 import { inserted } from './paste'
 
-/** What a line holds in front of a caret that the words on it stand behind: the indent
- *  and quote marks, which go on every line, then a list marker and its box. */
 const LEAD = /^([ \t]*(?:>[ \t]?)*[ \t]*)((?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)?/
 
 const AN_ITEM = /^(?:[-*+]|\d+[.)])[ \t]/
 
-/** A paste's first line, when markdown only reads it at the start of a line. */
 const OPENS_BLOCK =
   /^(?:#{1,6}[ \t]|\||`{3,}|~{3,}|>[ \t]?|(?:[-*+]|\d+[.)])[ \t]|\$\$|(?:-{3,}|\*{3,}|_{3,})$)/
 
-/** A paste's last line, when words carried on behind it would become part of it. */
 const CLOSES_BLOCK = /^(?:#{1,6}[ \t]|\||`{3,}|~{3,}|\$\$)/
 
-/** A list on an empty item: the item is the first of the list, whichever marker that
- *  has, and the rest follow it at its depth. Null for any other paste. */
 function intoEmptyItem(state: EditorState, text: string): TransactionSpec | null {
   const range = state.selection.main
   const line = state.doc.lineAt(range.from)
@@ -40,12 +31,6 @@ function intoEmptyItem(state: EditorState, text: string): TransactionSpec | null
   }
 }
 
-/** Markdown put where it is read as what it is.
- *
- *  A heading or a table is only one at the start of a line, so a page or a sheet pasted
- *  with the caret after words starts on a line of its own, and what stood behind the
- *  caret stays behind it; on an empty item, or inside an item or a quote, it stays in
- *  there. Google Docs and Notion both make a block of a block pasted into a line. */
 export function placed(state: EditorState, text: string): TransactionSpec {
   const special = intoEmptyItem(state, text)
   if (special) return special
@@ -69,8 +54,6 @@ export function placed(state: EditorState, text: string): TransactionSpec {
   const last = text.slice(text.lastIndexOf('\n') + 1)
   const opens = !inFront && OPENS_BLOCK.test(first)
   const closes = after.trim() !== '' && CLOSES_BLOCK.test(last)
-  // A table's next line is its next row, and its head is no head under a line of words,
-  // unless a blank line stands between.
   const doc = state.doc
   const words = (number: number) =>
     number >= 1 && number <= doc.lines && doc.line(number).text.trim() !== ''
@@ -94,8 +77,6 @@ export function placed(state: EditorState, text: string): TransactionSpec {
   }
 }
 
-/** Plain text as itself, but for a list on an empty item, which would otherwise be a
- *  list inside the item with only its first line in it. */
 export function plainly(state: EditorState, text: string): TransactionSpec {
   return intoEmptyItem(state, text) ?? inserted(state, text)
 }

@@ -1,10 +1,3 @@
-/** A note this device's disk will not take, the app's engine against this Worker: it
- *  stays wanted and is said, the rest of its batch lands and is remembered, and nothing
- *  comes back from a restart as a second note.
- *
- *  The devices are the app's own engine (apps/desktop/src/lib/sync2/test-device.ts),
- *  reached by its path for the reason sync2-engine.test.ts gives. */
-
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import app from '../src/index'
 import { call, signIn, type TestEnv, testEnv } from './harness'
@@ -143,8 +136,6 @@ async function tool(args: Record<string, unknown>) {
   await rooms.settle()
 }
 
-/** A device whose disk refuses a write of any path `refused` says, as `write_note` does a
- *  name it will not make, or a folder that is read-only does. */
 function refusing(one: Device, refused: (path: string) => boolean) {
   const write = one.disk.write.bind(one.disk)
   one.disk.write = async (path: string, text: string) => {
@@ -197,7 +188,6 @@ test('a note the disk refuses leaves its batch landed, and is written once it ca
     expect(outcome?.finished).toBe(true)
     await rooms.settle()
   }
-  // Told, once, and it goes on being asked for at no more than a pass's cost.
   expect(told).toEqual(['blocked.md'])
   expect((await desk.engine.pass(space))?.pulled).toBe(0)
   const landed = placed(desk.engine.core).filter((one) => one.local_path)
@@ -205,7 +195,6 @@ test('a note the disk refuses leaves its batch landed, and is written once it ca
   expect(landed).toHaveLength(30)
   expect(desk.store.rows('log').some((row) => row.failed?.includes('blocked.md'))).toBe(true)
 
-  // The disk takes it now.
   refuses = false
   await desk.engine.pass(space)
   expect(desk.disk.files.get(`${desk.root}/blocked.md`)).toBe('pros and cons\n')
@@ -229,7 +218,6 @@ test('after a restart nothing comes back as a new note, and the refused one stil
   const after = placed(again.core)
   expect(after.filter((one) => one.local_path)).toHaveLength(30)
 
-  // The launch scan: a file with no entry is made (`scanned` in watching.ts).
   const live = again.core.spaces.get(space) as unknown as { at(path: string): unknown }
   let strangers = 0
   for (const [path, text] of [...desk.disk.files]) {
@@ -345,15 +333,12 @@ test('a row a device cannot read does not stop its passes, whatever hangs under 
   await passed(laptop, desk)
 
   expect(desk.disk.files.get(`${desk.root}/after.md`)).toBe('after\n')
-  // A good note under a bad folder is not lost to the device: both have a name here.
   expect([...desk.disk.files.keys()].some((path) => path.endsWith('/__/pwn.md'))).toBe(true)
   const long2 = [...desk.disk.files.keys()].find((path) => path.includes('xxxx'))
   expect(long2?.slice(desk.root.length + 1).length).toBeLessThanOrEqual(255)
   expect((await desk.engine.pass(space))?.finished).toBe(true)
 })
 
-/** A first pass over a v1 space where `shut/inside.md` will not read or list, as a folder
- *  with no permission answers. */
 async function firstPassOverShut(words: string) {
   const laptop = await device('laptop', { 'shut/inside.md': 'inside\n', 'open.md': 'open\n' })
   await passed(laptop)
@@ -421,7 +406,6 @@ test('and when it reads with other words, they are the note edited, not a second
 
 test('a note v1 knew that no listing shows but still reads is the note, not a delete', async () => {
   const { desk, core, first } = await firstPassOverShut('inside\n')
-  // Past the depth a listing goes, or a link no listing follows: it reads all the same.
   const read = desk.disk.read.bind(desk.disk)
   desk.disk.read = (path) =>
     path.endsWith('/shut/inside.md') ? Promise.resolve('inside\n') : read(path)
@@ -441,7 +425,6 @@ test('a file met in step that has no place yet keeps the place it is given over 
     id: string
     local_path: string
   }
-  // Its record lost its place, the words of the file and of the note still one.
   entry.local_path = ''
   const live = core as unknown as {
     wanted(space: string): Map<string, { docSeq: number; epoch: number }>

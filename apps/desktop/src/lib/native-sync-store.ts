@@ -54,8 +54,6 @@ export async function openNative(
   }
 }
 
-/** The device id an account's store in the crate keeps, read beside it; see
- *  `deviceOfSyncStore`. */
 export async function deviceNative(account: string): Promise<string | null> {
   const device = await invoke<unknown>('sync_store_device', { account })
   return typeof device === 'string' ? device : null

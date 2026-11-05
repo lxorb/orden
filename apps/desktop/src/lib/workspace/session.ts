@@ -42,9 +42,6 @@ export interface Draft {
   /** What was folded, as pairs of line numbers. Absent for a tab with nothing
    *  folded, which is what a tab is unless it says otherwise. */
   folds?: readonly FoldLines[] | undefined
-  /** For a tab with a file and unwritten words: the version of the file they were typed on,
-   *  what they are merged against should the file have gone on since; see unwritten.ts.
-   *  Absent for every other tab, and in a session written before it was kept. */
   base?: string | undefined
   /** Which document this tab was a view of. Two panes showing the same note
    *  write the same key here, so a restart puts them back on one document rather
@@ -367,7 +364,6 @@ export function readClosed(value: unknown): ClosedTab | null {
   }
 }
 
-/** The arrangement a session read holds, whichever of the three shapes it was written in. */
 export function arrangementIn(state: Session): Layout | null {
   if (state.layout) return state.layout
 
@@ -391,10 +387,6 @@ export function arrangementIn(state: Session): Layout | null {
   }
 }
 
-/** What the session says while the arrangement it read is on its way into the window: all of
- *  that, as it was read, and `now` behind it in the pane with the focus, which is where the
- *  arrangement puts what it finds open (`arrange` in workspace.svelte.ts). A tab that holds
- *  nothing the arrangement's own tab of that file does not is that tab, as it is there. */
 export function arrivingWith(read: Layout, now: Layout): Layout {
   const held = panesOf(read.frame).flatMap((one) => one.tabs)
   const open = panesOf(now.frame)
@@ -558,8 +550,6 @@ export function writeSession(key: string, state: Session): boolean {
   const shorter: Session = { ...state, closed: [] }
   if (put(key, shorter)) return true
 
-  // What the words were typed on, next: without it they come back all the same, with the
-  // file kept as a version rather than merged.
   const unmerged = state.layout ? withoutBases(state.layout) : null
   if (unmerged && put(key, { ...shorter, layout: unmerged })) return true
 

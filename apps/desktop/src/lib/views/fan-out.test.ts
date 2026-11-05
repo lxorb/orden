@@ -5,9 +5,6 @@ import { dropInto } from './drop'
 import { taskRow } from './fixture'
 import { distinctKeys, everyRow, foldKey, listItems } from './list-items'
 
-/** A row under each of its labels (#1046): `answer` hands the same row to several groups,
- *  and everything that draws or counts them has to know. */
-
 const OPTIONS = { grouped: true, folded: new Set<string>(), shut: new Set<string>(), adding: true }
 const TWO = taskRow('E.md', '- [ ] Alpha #a #b', 1)
 const ONE = taskRow('E.md', '- [ ] Beta #a', 2)

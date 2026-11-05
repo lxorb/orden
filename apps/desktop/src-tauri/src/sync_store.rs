@@ -43,12 +43,10 @@ struct Held {
     account: String,
     path: PathBuf,
     store: Store,
-    /// Whether the window running the engine has asked for this store yet.
     led: bool,
 }
 
 impl Held {
-    /// What one who asks for the store already open hears; see `sync_store_open`.
     fn opened_for(&mut self, lead: bool) -> Result<Opened, String> {
         if lead && self.led {
             let was_clean = self
@@ -144,10 +142,6 @@ pub fn sync_store_open(
     Ok(opened)
 }
 
-/// The device id the account's store keeps, read beside it and never through it: no
-/// store is opened, closed or marked, so it is safe whichever window's engine holds the
-/// store, and it changes nothing about how the last session ended. None before the
-/// account has a store on this device.
 #[tauri::command(async)]
 pub fn sync_store_device(app: AppHandle, account: String) -> Result<Option<String>, String> {
     Ok(device_of(&store_path(&app, &account)?))
@@ -264,8 +258,6 @@ fn with_store<T>(
 
 #[cfg(test)]
 mod tests {
-    /// The store outlives a window. A window taking the engine over hears how the one before
-    /// it ended, and the hub asking for the device id changes nothing.
     #[test]
     fn a_window_taking_over_hears_how_the_last_ended() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -277,17 +269,13 @@ mod tests {
             store,
             led: false,
         };
-        // A new store has no history for a rotation to protect: the launch's word.
         assert!(held.opened_for(false).expect("a look").was_clean);
         assert!(held.opened_for(true).expect("the first").was_clean);
-        // That window crashed, saying nothing: the next must rotate, as must the one after.
         assert!(!held.opened_for(true).expect("after a crash").was_clean);
         assert!(!held.opened_for(true).expect("again").was_clean);
-        // A real end says so, and the one who takes over is the session not ended again.
         held.store.mark_clean(true).expect("said");
         assert!(held.opened_for(true).expect("after a quit").was_clean);
         assert!(!held.opened_for(true).expect("and it crashed").was_clean);
-        // A look in between changes nothing.
         held.store.mark_clean(true).expect("said");
         let _ = held.opened_for(false).expect("a look");
         assert!(held.opened_for(true).expect("still").was_clean);

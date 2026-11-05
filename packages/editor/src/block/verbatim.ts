@@ -1,10 +1,6 @@
-/** What in a note is typed exactly as it stands. */
-
 import { syntaxTree } from '@codemirror/language'
 import type { EditorState } from '@codemirror/state'
 
-/** Blocks whose lines are typed exactly as they stand: no shape is put on them, and
- *  a name on one is no name. */
 const VERBATIM = new Set([
   'FencedCode',
   'CodeBlock',
@@ -17,7 +13,6 @@ const VERBATIM = new Set([
   'LinkReference',
 ])
 
-/** Which lines between two positions belong to such a block, by number. */
 export function verbatimLines(state: EditorState, from: number, to: number): Set<number> {
   const found = new Set<number>()
 

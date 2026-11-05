@@ -1,20 +1,3 @@
-"""A task under each of its labels (#1046), in the built app.
-
-What this drives, against the real rows store and the real files:
-
-  * Display > Grouping > Label on Todos, with a task of two labels: the task stands under
-    both, the list and the panel draw, Display still opens, and a reload draws it again.
-  * Each layout the choice is carried to draws it: the table, the cards and the board under
-    each label, the calendar and the timeline once.
-  * Carried out of one label to another, the task swaps that one and keeps the rest, and
-    carried to none, it loses that one.
-  * The space renamed, the tab goes on showing it, with its layout and no second tab, and
-    what was kept for it is under the new name.
-
-    python apps/desktop/test/e2e/todos-labels.py
-
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/todos-labels/`.
-"""
 
 from __future__ import annotations
 
@@ -51,7 +34,6 @@ TODAY = """() => {
 
 TAGS = "() => window.tasks.rows.of().find((one) => one.task?.text.startsWith('Alpha'))?.task.tags ?? null"
 
-# The open tab's view, laid out another way, as its words.
 LAID_OUT = """(type) => {
   const tab = window.nibApp.workspace.tabs.find((one) => one.kind === 'view')
   const spec = JSON.parse(tab.doc)
@@ -115,7 +97,6 @@ def the_grouping(page: Page) -> None:
     wait_for(page, "document.querySelectorAll('.view-tab .head .fold').length >= 3", "the label heads")
     under_both(page, ".view-tab")
     DRIVE.shot(page, "01-under-both")
-    # The Display's selects still open, on the list as it now is.
     page.locator(".view-tab .display-button").first.click()
     wait_for(page, "document.querySelector('.pop .display')", "Display once more")
     page.locator(".pop [role=combobox][aria-label='Grouping']").click()
@@ -138,17 +119,14 @@ def after_a_reload(page: Page) -> None:
 
 
 def carried(page: Page) -> None:
-    # The second Alpha is the one under b.
     rows = page.locator(".view-tab [data-item^='row:']:has-text('Alpha')")
     carry(page, rows.nth(1), page.locator(".view-tab .nib-section.head:has-text('c')").first)
     if DRIVE.waited(page, f"() => ({TAGS})()?.join() === 'a,c'", "b swapped for c, a kept"):
         say(f"[carried] {page.evaluate(TAGS)}")
-    # Out of a, to no label: c stays.
     rows = page.locator(".view-tab [data-item^='row:']:has-text('Alpha')")
     carry(page, rows.nth(0), page.locator(".view-tab .nib-section.head").last)
     if DRIVE.waited(page, f"() => ({TAGS})()?.join() === 'c'", "a taken off, c kept"):
         say(f"[carried] {page.evaluate(TAGS)}")
-    # And back under two, for the layouts.
     page.evaluate(WRITE, ["Errands.md", NOTE.format(today=page.evaluate(TODAY))])
     wait_for(page, f"() => ({TAGS})()?.join() === 'a,b'", "both labels back")
     quiet(page)

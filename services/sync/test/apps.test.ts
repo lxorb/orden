@@ -348,7 +348,6 @@ describe('an application’s door', () => {
       const phone = await join('viewer', 'phone')
       await say(phone)
 
-      // The laptop goes quiet, and the grace passes with no timer: the object slept.
       vi.setSystemTime(Date.now() + HOLD_QUIET + 1000)
       phone.beatAt = new Date()
       await made.alarm()

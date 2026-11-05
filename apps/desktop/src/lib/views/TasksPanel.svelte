@@ -120,7 +120,6 @@
         mine,
         contextFor({ rows: mine, today, now: `${today}T00:00:00` }),
       )
-      // A count of what was read in time is no count of the base.
       return said.partial ? null : said.total
     } catch {
       return null
@@ -132,7 +131,6 @@
   let pressed = $state.raw<Parameters<typeof chosenIn>[0]>({ row: { kind: 'todos' }, in: null })
   const chosen = $derived(chosenIn(pressed, here))
 
-  /** A label's row: the open space's, as the panel lists its labels. */
   const labelRow = (tag: string): PanelRow =>
     space ? { kind: 'label', tag, space: space.name } : { kind: 'label', tag }
 

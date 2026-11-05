@@ -215,8 +215,6 @@ export class Engine implements AskedEngine {
 
   /** The space a path on this disk is in, and where in it, with `/` between folders. */
   placed(path: string): Placed | null {
-    // The folder spelled like the path first; another spelling only on a disk where it
-    // is the same folder. On Linux `Notes` and `notes` are two spaces.
     const spaces = [...this.core.spaces.values()]
     for (const foldsCase of this.core.world.foldsCase ? [false, true] : [false]) {
       for (const space of spaces) {
@@ -490,8 +488,6 @@ export class Engine implements AskedEngine {
         if (one.kind === 'folder') await this.make(path, true)
         else if (!holdsDocument(one.kind)) await this.make(path, false)
         else {
-          // One that will not read is no empty note to anybody: the folder's watcher makes
-          // it once it reads, as it does any file that came.
           const text = await this.core.world.disk.read(path)
           if (text !== null) await this.make(path, false, text)
         }
@@ -578,7 +574,6 @@ export class Engine implements AskedEngine {
     }
   }
 
-  /** A path as `relative` reads it, by the disk of the space it is in. */
   private normed(path: string): string {
     return norm(this.placed(path)?.space.row.root ?? path, path)
   }
@@ -651,8 +646,6 @@ export class Engine implements AskedEngine {
   private async remove(path: string, back?: string): Promise<void> {
     const placed = this.placed(path)
     if (!placed) return
-    // Every road to here reads a file not found as gone. On macOS 13 a note iCloud took
-    // off this Mac is exactly that, and it would leave the account and every other device.
     if (await this.core.world.disk.evicted(path)) return
     await this.core.commit(removed(this.core, placed.space, placed.path, back))
     await this.settle(placed.space)
@@ -838,7 +831,6 @@ export class Engine implements AskedEngine {
   // -------------------------------------------------------------------------
   // Life
 
-  /** Everything written down, with the session going on: a save. */
   flush(): Promise<void> {
     return this.core.use(() => this.writtenDown())
   }
@@ -863,13 +855,10 @@ export class Engine implements AskedEngine {
   }
 }
 
-/** A path with `/` between folders, as the disk `root` is on writes them: `\\` is a
- *  separator on Windows and a character of a name anywhere else. */
 function norm(root: string, value: string): string {
   return (windowsPath(root) ? value.replace(/\\/g, '/') : value).replace(/\/+$/, '')
 }
 
-/** Whether a folder is the top of a space, as `relative` compares them. */
 function sameFolder(root: string, folder: string, foldsCase: boolean): boolean {
   const base = norm(root, root)
   const full = norm(root, folder)

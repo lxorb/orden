@@ -284,7 +284,6 @@
   // a note, and only when nothing newer is on top of it; see overlays.ts.
   $effect(() => overlays.show(leave))
 
-  // The notes sheet is on top of the deck, so Escape puts it away first.
   $effect(() => {
     if (notesOpen && current?.notes) return overlays.show(() => (notesOpen = false))
   })

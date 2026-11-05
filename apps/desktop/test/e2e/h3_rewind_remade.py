@@ -1,5 +1,3 @@
-"""A note edited, deleted, made again at its name and edited: a rewind and Redo each hold
-their own words, on the real agents, review and workspace of the web build."""
 from __future__ import annotations
 from harness import Drive
 DRIVE = Drive(__file__, dev=True)

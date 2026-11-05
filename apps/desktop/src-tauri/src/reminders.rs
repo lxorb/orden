@@ -123,7 +123,6 @@ const ANSWERED_FOR_MS: i64 = 7 * 86_400_000;
 /// What the window is told when a press is waiting.
 const PRESSED: &str = "nib://reminder";
 
-/// `came_up_quietly`, until the window has answered once.
 static LAUNCHED_QUIETLY: AtomicBool = AtomicBool::new(false);
 
 /// The file the nonces are kept in, beside the settings.
@@ -375,8 +374,6 @@ pub fn pressed(app: &AppHandle, act: Act, id: &str, nonce: &str) {
 #[cfg(target_os = "macos")]
 pub fn pressed_by_id(app: &AppHandle, act: Act, id: &str) {
     press(app, act, id, None);
-    // No window open and the app still in the Dock: one comes up, and answers what waits as
-    // it starts.
     if crate::agents::shell::host(app).is_none() {
         crate::launch::reopen(app);
     }
@@ -398,7 +395,6 @@ fn press(app: &AppHandle, act: Act, id: &str, nonce: Option<&str>) {
             crate::placement::raised(&window);
         }
     }
-    // To one window, the one brought forward: it is the one that opens the note.
     if let Some(window) = crate::agents::shell::host(app) {
         let _ = app.emit_to(window.label(), PRESSED, ());
     }
@@ -433,14 +429,10 @@ pub fn reminders_quietly(webview: tauri::Webview, app: AppHandle) -> Result<(), 
     Ok(())
 }
 
-/// Whether answering a press ends the app: only what a launch for that press was for. Out
-/// of sight is not that: a window minimized on a Mac is not visible, and the reader's
-/// terminals and turns would end with it.
 fn goes_again(launched_quietly: bool, hidden: bool, in_tray: bool) -> bool {
     launched_quietly && hidden && !in_tray
 }
 
-/// This run came up without its window, for a reminder's Done.
 pub fn came_up_quietly() {
     LAUNCHED_QUIETLY.store(true, Ordering::Relaxed);
 }
@@ -462,9 +454,7 @@ mod tests {
     #[test]
     fn only_a_launch_for_a_done_goes_again_after_it() {
         assert!(goes_again(true, true, false));
-        // A window minimized, or hidden, with no tray, in a run the reader started.
         assert!(!goes_again(false, true, false));
-        // The reader opened the window meanwhile, or the tray keeps it.
         assert!(!goes_again(true, false, false));
         assert!(!goes_again(true, true, true));
     }

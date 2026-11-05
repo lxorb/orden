@@ -18,8 +18,6 @@ export interface Listed {
   /** Milliseconds since the epoch. */
   mtime: number
   id: string | null
-  /** A folder whose children were not read: it would not list, or is too deep. It may not be
-   *  empty, and what is known under it is not therefore gone; see `walk` in the crate. */
   unlisted?: true
 }
 
@@ -68,11 +66,8 @@ export function unwatchSpaces(): Promise<void> {
   })
 }
 
-/** Whoever would watch once nobody does: there is one watch, and the sync engine letting
- *  go of it may come well after signing out, while it writes down what it was holding. */
 const letGo = new Set<() => void>()
 
-/** Listens; answers the way to stop. */
 export function onUnwatched(listener: () => void): () => void {
   letGo.add(listener)
   return () => letGo.delete(listener)

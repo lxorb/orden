@@ -241,7 +241,6 @@ describe('a tool the thread is not given', () => {
   })
 })
 
-/** A crate that asks once for every call, and a reader who answers as each test says. */
 function askingOf(answer: (id: string) => boolean | null, category = 'writing') {
   const given: { id: string; allow: boolean }[] = []
   const waited: string[] = []
@@ -381,8 +380,6 @@ describe('Always in a thread', () => {
     sayAlways(thread, 'browser_click', 'shop.example')
     expect(alwaysCovers(thread, 'browser_click', 'writing', 'shop.example')).toBe(true)
     expect(alwaysCovers(thread, 'browser_click', 'writing', 'evil.example')).toBe(false)
-    // A question on a site is no question for one said with none, as a thread kept from
-    // before says.
     const before = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
     sayAlways(before, 'browser_click')
     expect(alwaysCovers(before, 'browser_click', 'writing', 'shop.example')).toBe(false)
@@ -639,7 +636,6 @@ describe('the registry', () => {
 })
 
 describe('a stream that stops before it says it is done', () => {
-  /** The bytes of a connection that closed, with no `[DONE]` after them. */
   const cut =
     (...events: unknown[]) =>
     () =>

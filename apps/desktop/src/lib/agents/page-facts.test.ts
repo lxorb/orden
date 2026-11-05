@@ -3,11 +3,6 @@ import { join } from 'node:path'
 import { JSDOM } from 'jsdom'
 import { describe, expect, test } from 'vitest'
 
-/** What the crate's script says about an element, run on a document of its own: the words
- *  the policy judges a press by, whatever the page built its button or its form out of.
- *  The script is page.rs's, read off the disk, because it is a string there no Rust test
- *  can run. */
-
 const source = readFileSync(
   join(import.meta.dirname, '../../../src-tauri/src/agents/page.rs'),
   'utf8',
@@ -38,7 +33,6 @@ interface Said {
 
 function page(html: string): Document {
   const { window } = new JSDOM(`<!doctype html><body>${html}`, { url: 'https://shop.example/a' })
-  // jsdom lays nothing out, so it has no innerText, and nothing it holds has a box.
   Object.defineProperty(window.HTMLElement.prototype, 'innerText', {
     get(this: HTMLElement) {
       return this.textContent
@@ -71,7 +65,6 @@ function pressOn(document: Document): Said {
   return factsOf(button)
 }
 
-/** Puts an open or closed shadow root on `#host` with these contents. */
 function rooted(document: Document, html: string, mode: 'open' | 'closed' = 'open'): ShadowRoot {
   const host = document.querySelector('#host')
   if (!host) throw new Error('no host')
@@ -237,7 +230,6 @@ describe('a huge page', () => {
     body.append(input)
     const started = performance.now()
     const facts = pressOn(document)
-    // Stopped short of the field, and it says it did.
     expect(facts.fields).toEqual([])
     expect(facts as unknown as { cut: boolean }).toMatchObject({ cut: true })
     expect(performance.now() - started).toBeLessThan(30_000)
@@ -267,7 +259,6 @@ describe('a press no control holds goes to what acts for it', () => {
     const facts = hit(html)
     expect(facts.held).toContain('Pay now')
     expect(facts.name).toContain('EUR')
-    // It is carried, not pressed, when a drag picks it up: no control.
     expect(facts.control).toBe(false)
   })
 
@@ -665,7 +656,6 @@ describe('a read with a secret on the way', () => {
 })
 
 describe('a form that names a field after what is read of it', () => {
-  // The named getter of a form is on the instance, in every world, as these are.
   const clobbered = (form: Element, names: Record<string, unknown>) => {
     for (const [name, value] of Object.entries(names)) {
       Object.defineProperty(form, name, { value, configurable: true })
@@ -689,8 +679,6 @@ describe('a form that names a field after what is read of it', () => {
     expect(factsOf(form).name).toContain('Pay now')
   })
 
-  // Not `parentElement` or `parentNode`: jsdom's selector engine walks them itself and spins,
-  // where the engine's is native. Those are driven live (l1, l2).
   test.each(['getRootNode', 'closest', 'matches', 'tagName'])(
     '`%s` does not turn the walk round',
     (name) => {

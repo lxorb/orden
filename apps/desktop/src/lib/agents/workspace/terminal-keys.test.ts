@@ -55,8 +55,6 @@ describe('what goes without asking', () => {
 
   test('nothing else: another program, a second command, no Enter, keys after it', () => {
     expect(typesFreely('rm -rf build', true, [], programs, 'unix')).toBe(false)
-    // What a line edits before Enter is run is not what it says: the shell clears, runs
-    // or rubs out by a control character, so the first word proves nothing.
     expect(typesFreely('git \u0015touch pwned', true, [], programs, 'unix')).toBe(false)
     expect(typesFreely('git status \u000ftouch pwned', true, [], programs, 'unix')).toBe(false)
     expect(typesFreely('git\u007f\u007f\u007ftouch pwned', true, [], programs, 'unix')).toBe(false)

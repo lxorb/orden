@@ -411,7 +411,6 @@ describe('a first pass that does not get through', () => {
     reachable = false
     expect(await kit.firstPass(before, state, v1)).toBe(false)
 
-    // No reset from the runner: the window is gone, and the store holds what it held.
     reachable = true
     device.engine.stop()
     const again = await kit.Engine.start(before.world, device.store.open(), { freshens: false })
@@ -466,7 +465,6 @@ describe('a first pass that does not get through', () => {
     const commit = core.commit.bind(core)
     core.commit = async (changes) => {
       await commit(changes)
-      // The window lets go as the last one lands: `engine.stop()` bumps the core's life.
       if ((changes as readonly unknown[]).includes(done))
         (core as unknown as { life: number }).life += 1
     }

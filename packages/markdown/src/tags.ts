@@ -148,9 +148,6 @@ export function tagNameAt(text: string, at: number): string | null {
   return NAME_AT.exec(text)?.[0] ?? null
 }
 
-/** Whether a tag can be called this: it reads back as exactly these words when written
- *  with its hash. `2024` is a number, `a.b` the tag `a` and a full stop, and `a,b` two
- *  tags in a list, so a note renamed to any of them has lost its tag. */
 export function isTagName(name: string): boolean {
   return name !== '' && !/\/\/|\/$/.test(name) && tagAt(`#${name}`, 0) === name
 }

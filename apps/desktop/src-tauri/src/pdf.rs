@@ -350,11 +350,6 @@ fn fenced(html: &str) -> String {
     )
 }
 
-/// Just inside the page's real head, or with none just past its doctype, or else its very
-/// start. The way the parser reads it and no further: what may stand before a head is white
-/// space, comments, a doctype and `<html>`, so anything else means there is no head to wait
-/// for, whatever the word `<head` is doing further down, in a comment, in `<title>` or as the
-/// start of `<header>`.
 fn policy_place(html: &str) -> usize {
     let lower = html.to_ascii_lowercase();
     let mut at = 0;
@@ -372,7 +367,6 @@ fn policy_place(html: &str) -> usize {
             }
             end
         } else if rest.starts_with("<!") || rest.starts_with("<?") {
-            // What the parser calls a bogus comment: it ends at the first `>`.
             rest.find('>').map(|end| end + 1)
         } else if is_tag(rest, "<html") {
             tag_end(rest)
@@ -388,14 +382,12 @@ fn policy_place(html: &str) -> usize {
     }
 }
 
-/// Whether the text starts with this tag and not a longer name: `<header>` is no `<head`.
 fn is_tag(text: &str, tag: &str) -> bool {
     text.strip_prefix(tag).is_some_and(|after| {
         after.starts_with(|one: char| one.is_ascii_whitespace() || one == '/' || one == '>')
     })
 }
 
-/// Just past the tag the text starts with: a `>` in a quoted attribute does not end it.
 fn tag_end(text: &str) -> Option<usize> {
     let mut quote = None;
     for (at, one) in text.char_indices() {
@@ -409,8 +401,6 @@ fn tag_end(text: &str) -> Option<usize> {
     None
 }
 
-/// Just past the comment the text starts with. `<!-->` and `<!--->` are whole comments to the
-/// parser, and `--!>` ends one as well as `-->` does.
 fn comment_end(text: &str) -> Option<usize> {
     let body = text.strip_prefix("<!--")?;
     if body.starts_with('>') {
@@ -947,8 +937,6 @@ mod tests {
         }
     }
 
-    /// Only a real head is the page's head: the word in a comment, or a `<header>`
-    /// standing where no head was written, must not put the policy behind what comes first.
     #[test]
     fn the_policy_goes_to_the_real_head() {
         let meta = "<meta http-equiv=\"Content-Security-Policy\"";
@@ -959,31 +947,26 @@ mod tests {
             "{page}"
         );
 
-        // No head at all: before the header and whatever follows it.
         let page = "<!doctype html><header><script>1</script></header><head>";
         assert!(
             super::fenced(page).starts_with(&format!("<!doctype html>{meta}")),
             "{page}"
         );
 
-        // A head named only further down, past something that runs, is no head to wait for.
         let page = "<script>1</script><head>";
         assert!(super::fenced(page).starts_with(meta), "{page}");
         let page = "<title><head></title><script>1</script>";
         assert!(super::fenced(page).starts_with(meta), "{page}");
 
-        // A `>` in an attribute does not end the tag.
         let page = "<html data-a=\"x>y\"><head data-b='p>q'><p>";
         assert!(
             super::fenced(page).contains(&format!("data-b='p>q'>{meta}")),
             "{page}"
         );
 
-        // A comment the parser closes at once hides nothing behind it.
         let page = "<!--><script>1</script><!-- --><head>";
         assert!(super::fenced(page).starts_with(meta), "{page}");
 
-        // Whitespace and a byte order mark before the head, and the tag's own boundary.
         let page = "\u{feff}\n <!DOCTYPE html>\n<HTML>\n<HEAD\nlang=en>\n<title>t</title>";
         assert!(
             super::fenced(page).contains(&format!("lang=en>{meta}")),

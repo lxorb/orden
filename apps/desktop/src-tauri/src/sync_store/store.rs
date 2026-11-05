@@ -159,7 +159,6 @@ impl Store {
         }
     }
 
-    /// `open_as` with no id given: what the tests open.
     #[cfg(test)]
     pub fn open(path: &Path) -> Result<Self, Refused> {
         Self::open_as(path, None)
@@ -469,11 +468,6 @@ pub fn migrated(conn: &Connection) -> Result<usize, Refused> {
     migrated_with(conn, &MIGRATIONS)
 }
 
-/// The device id a store at `path` keeps, read without opening it as a store: a
-/// connection of its own that only reads, so no migration, no device made, and no word on
-/// how the session ends (`mark_clean`) is written, and the engine's own connection may have
-/// it open meanwhile (the write-ahead log lets a reader in beside a writer). None where
-/// there is no store yet, or it has no device id.
 pub fn device_of(path: &Path) -> Option<String> {
     if !path.is_file() {
         return None;
@@ -492,8 +486,6 @@ pub fn device_of(path: &Path) -> Option<String> {
     .flatten()
 }
 
-/// This device's id: the one the store already has, or else `preferred` where it reads as
-/// a device id, or a new one, kept from now on.
 fn device(conn: &Connection, preferred: Option<&str>) -> Result<String, Refused> {
     let kept: Option<String> = conn
         .query_row("select value from meta where key = 'device'", [], |row| {
@@ -515,7 +507,6 @@ fn device(conn: &Connection, preferred: Option<&str>) -> Result<String, Refused>
     Ok(made)
 }
 
-/// Whether a word reads as a device id, as the hub takes one (`DEVICE` in hub-frames.ts).
 fn is_device_id(word: &str) -> bool {
     (8..=64).contains(&word.len())
         && word
@@ -636,8 +627,6 @@ mod tests {
         json!({ "t": "put", "table": "files", "row": { "hash": hash, "state": "here" } })
     }
 
-    /// A store made now takes the id the device already gave the hub; one that has an id
-    /// keeps it, and a word that is no device id is not taken.
     #[test]
     fn a_new_store_takes_the_device_id_it_is_given() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -655,9 +644,6 @@ mod tests {
         assert_eq!(odd.opened.device.len(), 36);
     }
 
-    /// The device id read beside the store: none before there is one, the store's own
-    /// after, while it is open and after it closed, and nothing written by the read, so a
-    /// clean quit stays clean.
     #[test]
     fn the_device_id_is_read_without_opening_the_store() {
         let dir = tempfile::tempdir().expect("a folder");

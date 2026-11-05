@@ -252,10 +252,6 @@ pub struct Grant {
     /// When it was made, in milliseconds since 1970.
     #[serde(default)]
     pub created: u64,
-    /// Whether it is a provider's own grant for the AI panel (`ai_agent.rs`): what lets a
-    /// call name a thread and start a helper without its reach being compared. Set by the
-    /// app when it makes one, never read off the name, and nothing the settings pane can
-    /// change.
     #[serde(default)]
     pub built_in: bool,
 }
@@ -394,9 +390,6 @@ fn as_orden(grant: &mut Grant) {
     }
 }
 
-/// Whether a grant kept without the mark is one the app made: a provider's id under the
-/// label only the app gives one. An outside client's id is made from its own name, so one
-/// called `nib-foo` holds no such label, and keeps its grant without the privileges.
 fn was_built_in(grant: &Grant) -> bool {
     grant.id.starts_with("nib-") && grant.client.starts_with(SIDEBAR)
 }
@@ -639,8 +632,6 @@ fn free_id(client: &str, taken: &[&str]) -> String {
     }
     let stem = stem.trim_end_matches('-');
     let stem = if stem.is_empty() { "agent" } else { stem };
-    // `nib` and what numbering makes of it are the AI panel's own grants' to be called
-    // (`grant_id` in ai_agent.rs): nothing somebody else names itself.
     let kept = format!("agent-{stem}");
     let stem = if stem == "nib" || stem.starts_with("nib-") {
         kept.as_str()
@@ -1009,7 +1000,6 @@ mod tests {
         );
         assert_eq!(free_id("  ", &[]), "agent");
         assert_eq!(free_id("nib-anthropic", &[]), "agent-nib-anthropic");
-        // Numbering earns no prefix either: `nib` taken makes no `nib-2`.
         assert_eq!(free_id("nib", &[]), "agent-nib");
         assert_eq!(free_id("nib", &["agent-nib"]), "agent-nib-2");
         assert_eq!(free_id("NIB ", &["nib"]), "agent-nib");

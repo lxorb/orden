@@ -265,7 +265,6 @@ describe('a space shared to be read', () => {
   test('a row keeps its own task when a tick above it has moved the lines', async () => {
     const { taskHash } = await import('@orden/bases')
     const { ws } = space({ [`${SPACE}/todo.md`]: '- [ ] new\n- [ ] Alpha\n- [ ] Bravo\n' })
-    // Drawn when Bravo was on line 1.
     expect(await toggleTaskAt(ws, `${SPACE}/todo.md`, 1, taskHash('Bravo'))).toBe(true)
     const said = (await noteText(ws, `${SPACE}/todo.md`)) ?? ''
     expect(said).toMatch(/^- \[ \] new\n- \[ \] Alpha\n- \[x\] Bravo/)
@@ -660,7 +659,6 @@ describe('an open file with Windows line endings', () => {
 
     expect(disk.get(URL_FILE)).toBe(CHOSEN)
     expect(live()).toBe(CHOSEN.replace(/\r\n/g, '\n'))
-    // The note holds the editor's line endings, whatever the file's (`unixLines`).
     expect(note.text).toBe(CHOSEN.replace(/\r\n/g, '\n'))
 
     // And taken back the same way.
@@ -899,7 +897,6 @@ describe('with another window here', () => {
       },
     ])
 
-    // What it merges against is what the file said, not the words not written yet.
     expect(seen).toEqual([{ base: 'one\ntwo\n', words: 'ONE\ntwo\n', dirty: true }])
     expect(disk.get('/space/a.md')).toBe('ONE\ntwo\n')
     expect(note.dirty).toBe(false)

@@ -37,7 +37,6 @@ export function pokeSpace(
   return Promise.resolve()
 }
 
-/** The same, waited for: a caller with no request context to hand the work to. */
 export async function pokeNow(
   env: Env,
   spaceId: string,

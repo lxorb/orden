@@ -241,7 +241,6 @@
    *  built-in view and in the settings of a base's. */
   function moreRows(event?: MouseEvent): MenuEntry[] {
     if (!base) return []
-    // Where a change has nowhere to go, what is left is what takes nothing away from it.
     if (!kit.writable) return csvRows()
     return [
       {
@@ -653,8 +652,6 @@
       </div>
       {@render lock()}
       <span class="spring"></span>
-      <!-- What cannot be kept is not offered: a fence that cannot be found to write into,
-           a base in a space shared to be read. Its tabs and its search change nothing. -->
       {#if kit.writable}{@render tools(['filter', 'sort'])}{/if}
       <!-- A base of tasks keeps what Todoist's Display narrows a view of tasks by. -->
       {#if tasky && kit.writable}{@render display()}{/if}

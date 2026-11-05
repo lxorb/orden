@@ -372,11 +372,9 @@ def tab_closed(page: Page) -> None:
         wrong(f"the keyboard went with the closed tab: {at}")
 
 
-#: A note's menu says which block it is about, in the row that cannot be pressed.
 ABOUT = "() => [...document.querySelectorAll('[role=menu] [role=menuitem]')].map((one) => one.textContent.trim())"
 
 
-#: What the caret's line says.
 LINE = """() => {
   const at = getSelection().focusNode
   return (at.nodeType === 1 ? at : at.parentElement).closest('.cm-line')?.textContent ?? null
@@ -384,8 +382,6 @@ LINE = """() => {
 
 
 def note_menu(page: Page) -> None:
-    """Shift+F10 in the note is about the block the caret is in: the same as a right click
-    on that line, and a row of it acts on that block, not on the last one of the note."""
     said = "# Menu key\n\nfirst para here\n\n\n\nlast words go here now"
     page.evaluate(
         """async (said) => {
@@ -400,8 +396,6 @@ def note_menu(page: Page) -> None:
     quiet(page)
 
     def caret_on(words: str | None) -> dict:
-        """The caret on the line saying `words`, or on the empty line before the last words,
-        by the keyboard from the top of the note; and where that line is."""
         page.evaluate("() => document.querySelector('.cm-content').focus()")
         page.keyboard.press("Meta+ArrowUp" if harness.WEBKIT else "Control+Home")
         past = False

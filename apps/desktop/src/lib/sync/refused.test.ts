@@ -1,10 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** A file the account will not take, on sync v1, on a fake device against the real Worker
- *  (services/sync/test/harness.ts), as in create-race.test.ts: that file stays here and
- *  is said, everything after it still goes up and a delete still lands, it is not asked
- *  about again until it changes, and a failure that may pass is not taken for one. */
-
 const world = vi.hoisted(() => {
   interface Entry {
     name: string
@@ -15,11 +10,9 @@ const world = vi.hoisted(() => {
     children: Entry[]
   }
 
-  /** One machine: its files, and the versions its saves kept of each. */
   class Device {
     disk = new Map<string, string>()
     kept = new Map<string, string[]>()
-    /** When each file was last written, by its path, where a test cares. */
     written = new Map<string, number>()
 
     keep(path: string, content: string) {
@@ -106,8 +99,6 @@ vi.mock('../tauri', async (importOriginal) => ({
   invoke: world.invoke,
 }))
 
-/** The Worker and its test harness, out of services/sync. Named through a variable for the
- *  reason create-race.test.ts gives; the shapes this file uses are spelled below. */
 const SERVICE = new URL('../../../../../services/sync/', import.meta.url).href
 interface Env {
   db: { exec(sql: string): void }
@@ -145,15 +136,11 @@ let env: Env
 let token: string
 let spaceId: string
 let device: Device
-/** Every note offered, by path: what a create or write said. */
 let offers: string[]
-/** What the account answers to an offer instead of the Worker, where it should. */
 let answering: { to: RegExp; status: number; left: number; page?: boolean } | null
 let told: string[]
-/** Every list of files said to the account. */
 let listsSaid: { path: string; hash: string }[][]
 
-/** The path a create or a write names. */
 async function offeredIn(asked: Request): Promise<string | null> {
   const isNote =
     (asked.method === 'POST' && asked.url.endsWith('/notes')) ||
@@ -184,7 +171,6 @@ beforeEach(async () => {
       answering.to.test(`${asked.method} ${asked.url} ${String(offered)}`)
     ) {
       answering.left -= 1
-      // An edge between here and the account answers with a page of its own.
       return new Response(answering.page ? '<html>too large</html>' : '{"error":"no"}', {
         status: answering.status,
       })
@@ -204,7 +190,6 @@ afterEach(() => {
   env.close()
 })
 
-/** One pass, as sync.svelte.ts runs it: take what the account has, then offer. */
 async function pass(mirror: Mirror) {
   world.use(device)
   await pull(mirror, token, NOBODY)
@@ -271,14 +256,12 @@ test('a tracked note grown past the limit stays the note it was, on both sides',
   await pass(mirror)
   await pass(mirror)
 
-  // Not read as a delete, by the pass or the one after it.
   expect(await pathsOnAccount()).toEqual(['grown.md', 'z.md'])
   expect(mirror.notes['grown.md']).toEqual(entry)
   expect(mirror.offered['grown.md']).toBeUndefined()
   expect(device.disk.get(`${ROOT}/grown.md`)).toBe(BIG)
   expect(told).toEqual(['grown.md'])
 
-  // Back under it, it goes up over the words it left.
   put('grown.md', 'small again\n')
   await pass(mirror)
   expect(told).toEqual(['grown.md'])
@@ -312,7 +295,6 @@ test('a refused file is not asked about again until it changes, or the next laun
   await pass(mirror)
   expect(offers).toEqual(['big.md', 'big.md'])
 
-  // Stored and read back, as a launch does: a limit raised on the account is met.
   await pass(JSON.parse(JSON.stringify(mirror)) as Mirror)
   expect(offers).toEqual(['big.md', 'big.md', 'big.md'])
 })
@@ -379,7 +361,6 @@ test('a write the account fails on is sent again', async () => {
   answering = { to: /PUT .*a\.md$/, status: 500, left: 1 }
 
   await expect(pass(mirror)).rejects.toMatchObject({ status: 500 })
-  // The write is in the air as far as this device knows.
   expect(mirror.offered['a.md']).toBeDefined()
 
   await pass(mirror)
@@ -399,11 +380,9 @@ test('a PDF too big to keep leaves the notes going, and is not read again', asyn
   expect(told).toEqual(['paper.pdf'])
   expect(mirror.files['paper.pdf']).toBeUndefined()
 
-  // Nothing asked of the account or the disk again: the fake would answer it this time.
   await pass(mirror)
   expect(mirror.files['paper.pdf']).toBeUndefined()
 
-  // Written again, it is offered again.
   device.written.set(`${ROOT}/paper.pdf`, 5)
   await pass(mirror)
   expect(mirror.files['paper.pdf']).toBeDefined()
@@ -429,7 +408,6 @@ test('a list of more PDFs than a space keeps leaves the notes going', async () =
   expect(mirror.files).toEqual({})
 })
 
-/** What the account holds of a note that left its path, by id. */
 async function wordsOf(id: string): Promise<string> {
   return (await call<{ content: string }>(env, `/v1/notes/${id}`, { token })).json.content
 }
@@ -450,7 +428,6 @@ test('a folder renamed past the path limit keeps its notes on the account', asyn
   expect(await pathsOnAccount()).toEqual(['notes/one.md', 'notes/two.md'])
   expect(mirror.notes['notes/one.md']).toBeDefined()
 
-  // Gone from there too, the delete lands: no words are waiting any more.
   device.disk.delete(`${ROOT}/${'long/'.repeat(90)}one.md`)
   device.disk.delete(`${ROOT}/${'long/'.repeat(90)}two.md`)
   await pass(mirror)
@@ -472,7 +449,6 @@ test('a note renamed and grown past the limit stays on the account', async () =>
   expect(await pathsOnAccount()).toEqual(['a.md'])
   expect(await wordsOf(id)).toBe(words)
 
-  // Back under the limit it goes up as what it is, and the old name goes.
   put('b.md', words)
   await pass(mirror)
   expect(await pathsOnAccount()).toEqual(['b.md'])
@@ -517,7 +493,6 @@ test('a delete waits where the account would not say what the note held', async 
   await pass(mirror)
   expect(await pathsOnAccount()).toEqual(['a.md'])
 
-  // Asked again, it says, and big words that share nothing let the delete go.
   put('b.md', BIG)
   await pass(mirror)
   expect(await pathsOnAccount()).toEqual([])
@@ -535,7 +510,6 @@ test('a full account still takes a delete, and says it is full', async () => {
   await expect(pass(mirror)).rejects.toMatchObject({ status: 507 })
 
   expect(await pathsOnAccount()).toEqual([])
-  // Nothing more is offered to an account that just said it is full.
   expect(offers.filter((one) => one === 'z.md')).toEqual([])
   expect(told).toEqual([])
 
@@ -619,7 +593,6 @@ test('a PDF on the list stays on it, as it was, when its new bytes are refused',
   expect(mirror.files['paper.pdf']?.hash).toBe(was)
   expect(listsSaid.at(-1)?.find((one) => one.path === 'paper.pdf')?.hash).toBe(was)
 
-  // And the next pass says nothing new: the list stands as the account has it.
   const lists = listsSaid.length
   await pass(mirror)
   expect(listsSaid).toHaveLength(lists)
@@ -635,7 +608,6 @@ test('a merge past the limit is that note’s trouble, and the notes after it go
   world.use(device)
   await pull(mirror, token, NOBODY)
 
-  // The account moves on between this device's pull and its push, and both sides grow.
   await call(env, `/v1/notes/${entry?.id ?? ''}`, {
     token,
     method: 'PUT',

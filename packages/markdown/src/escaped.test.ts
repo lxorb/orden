@@ -2,13 +2,6 @@
 import { describe, expect, test } from 'vitest'
 import { renderMarkdown } from './index'
 
-/** Someone else's words, where `escapeHtml` says they are words: a room, a shared space, a
- *  chat, an answer, a published page. Marked keeps a tag it does not accept as text, and
- *  after an inline `<kbd>`, `<pre>`, `<code>` or `<script>` it takes text to be escaped
- *  already; a browser accepts more than marked does, so the tag was live. Read here by a
- *  real parser, since no string check knows what a browser will make of the page. */
-
-/** What opens a run of text: the tags marked counts, and what a browser reads otherwise. */
 const OPENERS = [
   '<kbd>',
   '<pre>',
@@ -35,7 +28,6 @@ const OPENERS = [
   '',
 ]
 
-/** Tags marked turns away and a browser takes, closed or not. */
 const PAYLOADS = [
   '<img src=x onerror=alert(1) "">',
   '<a href="javascript:alert(1)" ">x</a>',
@@ -82,7 +74,6 @@ const OPTIONS = [
   { escapeHtml: true, toc: true, footnotes: true, cover: true, properties: 'properties' as const },
 ]
 
-/** The markup the renderer writes itself. */
 const OURS = new Set(
   (
     'A ABBR ASIDE B BLOCKQUOTE BR BUTTON CODE COL DD DEL DIV DL DT EM FIGCAPTION FIGURE H1 H2 H3 H4 H5 ' +
@@ -90,13 +81,11 @@ const OURS = new Set(
   ).split(' '),
 )
 
-/** What a page drew that the renderer did not write. */
 function live(html: string): string[] {
   const holder = document.createElement('div')
   holder.innerHTML = html
   const out: string[] = []
   for (const element of holder.querySelectorAll('*')) {
-    // A callout's icon, a web card's, and a cover's place in its frame, checked in cover.ts.
     if (element.closest('.callout svg, [class*="embed"] svg')) continue
     const cover = element.closest('.nib-cover') !== null
     if (!OURS.has(element.tagName)) out.push(element.tagName)

@@ -46,12 +46,10 @@ export { DocError, type Problem } from './problem'
 export { onTracks, trackedAgents, tracksAside, tracksOf } from './edit'
 export type { Span } from './track'
 
-// Fetched on the first agent call, and there is no track before that to follow a move.
 workspace.fileOps.follow((op) => {
   if (op.op === 'moved') tracksMoved(op.from, op.to, op.root ?? undefined)
   if (op.op === 'removed') tracksRemoved(op.path)
   if (op.op !== 'created') return undefined
-  // A draft given its place: what an agent did in it goes on under its file's name.
   if (op.key) tracksMoved(`unsaved:${op.key}`, op.path)
   return tracksCame(
     op.path,

@@ -1,23 +1,3 @@
-#!/usr/bin/env python3
-"""What a web tab hands a page on Linux: nothing, and what the app's own pages keep. The
-Linux half of scripts/web-globals-probe.py, which drives `WebView2`. tauri-runtime-cef's
-renderer wrote a read only, non-configurable `window.ipc` into every context, so a classic
-script declaring `let ipc` was a `SyntaxError` as a whole, and Google Sheets showed "Loading
-issue"; and quick add and the presenter's window were built in the profile a web extension
-runs in, with the app's commands. See src-tauri/src/engine/renderer.rs and `engine::own_profile`.
-
-Run with Orden up on a web tab (GLOBALS=1 in scripts/wayland-launch.sh), whose page and
-frame in `<out>/site` report what they were given to the server's log. It has to find:
-
-* a page and a frame from another address ran a script declaring `let ipc`, and hold
-  nothing of the app's on `window`;
-* the app's page holds `window.ipc`, and a command sent down it is answered, so that the
-  browser's side of the runtime still hears what the app's renderer writes;
-* `--quick-add` and `presenter_open` make pages the app's page can hear over a broadcast
-  channel, which reaches only its own profile.
-
-    python3 scripts/globals-drive.py <out folder> <the app's executable>
-"""
 
 import json
 import os
@@ -82,7 +62,6 @@ def until(code, seconds=20):
 
 
 def reports(seconds=30):
-    """What the page and its frame said, by who said it."""
     found = {}
     for _ in range(seconds * 2):
         log = (OUT / "site.log").read_text(errors="replace") if (OUT / "site.log").exists() else ""
@@ -116,7 +95,6 @@ if kept != '{"kind":"object"}':
 
 
 def hears(channel, kind):
-    """Starts the app's page listening; what it answers says whether that message came."""
     name = re.sub(r"\W", "_", channel)
     run(
         f"""(() => {{
@@ -143,9 +121,6 @@ subprocess.run([APP, "--quick-add"], check=False, timeout=30, capture_output=Tru
 if not until(heard):
     fail("the quick add window was never heard: it is not in the app's profile")
 
-# Down the channel itself: the page's custom protocol refused, as it may be, so
-# `ipc-protocol.js` falls back on `window.ipc.postMessage` from then on, for this page. Last
-# of all because of that.
 answered = run(
     """new Promise((settle) => {
   const internals = window.__TAURI_INTERNALS__

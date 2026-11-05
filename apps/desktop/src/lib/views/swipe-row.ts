@@ -63,7 +63,6 @@ export function swipeRow(node: HTMLElement, start: Swipes) {
   const move = (event: TouchEvent) => {
     const touch = event.touches[0]
     if (!from || !touch) return
-    // Held long enough to be carried: it is the drag's now, and goes where the drag goes.
     if (dragging.row) {
       from = null
       return

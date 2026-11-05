@@ -2,9 +2,6 @@ import { readBase } from '@orden/bases'
 import { render } from 'svelte/server'
 import { describe, expect, test, vi } from 'vitest'
 
-/** A fence whose changes have nowhere to go, or a base in a space shared to be read: what
- *  the head offers is what can be kept, and a new row has its own question. */
-
 vi.mock('../sharing.svelte', () => ({
   canWriteAt: (path: string) => !path.startsWith('/theirs'),
   trustsHtmlAt: () => true,

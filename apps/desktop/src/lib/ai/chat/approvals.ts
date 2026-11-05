@@ -22,9 +22,7 @@ interface Asked {
   id: string
   agent: string
   verb: string
-  /** What the question is about, as the crate's `Category`. */
   category: string
-  /** The site it is about, where a page is. */
   site?: string
 }
 
@@ -39,21 +37,16 @@ export interface Answers {
   asked(on: (asked: Asked) => void): Promise<() => void>
 }
 
-/** What Always may stand in for the reader on. A question that does not say is none. */
 const EVERYDAY = new Set(['writing', 'settings', 'showing'])
 
-/** Whether a question can be said Always to. */
 export function alwaysOffered(category: string | undefined): boolean {
   return category !== undefined && EVERYDAY.has(category)
 }
 
-/** What a thread keeps for an Always: the tool, and the site where a page is what it was
- *  said about, so a press trusted on one site is asked again on another. */
 function alwaysKey(verb: string, site: string | undefined): string {
   return site ? `${verb}@${site}` : verb
 }
 
-/** Whether the thread said Always to this tool, and it covers a question about this. */
 export function always(
   thread: Thread,
   verb: string,

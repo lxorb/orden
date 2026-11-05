@@ -51,9 +51,6 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
-      # `shell: bash` is what sets pipefail: under the bare default a failed download
-      # below is the sum of nothing, a green step, and an AUR package no machine of that
-      # architecture can install.
       - name: Point the PKGBUILD at this release
         working-directory: packaging/aur/nib-bin
         shell: bash

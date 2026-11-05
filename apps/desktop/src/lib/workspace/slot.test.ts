@@ -1,7 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import { FIRST_SESSION, sessionOf, slotOf, takeSlot } from './slot'
 
-/** Web Locks as one browser's, enough of them for `ifAvailable`. */
 function fakeLocks() {
   const held = new Set<string>()
   return {

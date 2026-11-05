@@ -58,8 +58,6 @@ describe('front matter being typed', () => {
   }
   const fresh = (doc: string) => top(EditorState.create({ doc, extensions: [language] }))
 
-  /** Types `typed` at `at`, a key at a time, and holds the tree the keystrokes built to
-   *  the tree a note opened with those words gets. */
   function typedAlong(doc: string, at: number, typed: string) {
     let state = EditorState.create({ doc, extensions: [language] })
     top(state)
@@ -95,7 +93,6 @@ describe('front matter being typed', () => {
 
   test('where a keystroke does turn a rule into a block or back, the trees agree', () => {
     const tail = `\n\n# Heading\n\n${'words words\n'.repeat(40)}`
-    // The first line becoming a key, the fence closing, a blank line and words under it.
     typedAlong(`---\n\n---${tail}`, 4, 'prose: x\n\nmore: y')
     typedAlong(`---\nprose words\n---${tail}`, 4 + 11, ': ')
     typedAlong(`---\ntitle: x\n${tail}`, 13, '---\n')

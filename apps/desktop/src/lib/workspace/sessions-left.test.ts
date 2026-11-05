@@ -429,8 +429,6 @@ describe('two different drafts of one document', () => {
     expect(out.length).toBeGreaterThan(0)
   })
 
-  /** Which was written later a session does not say, so the one holding the other stands: a
-   *  deletion made on top of words that never reached the file comes back in the draft. */
   test('the one holding the other is kept, even where the other came later', async () => {
     const out = await asDrafts(
       [

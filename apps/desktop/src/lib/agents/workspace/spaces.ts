@@ -37,8 +37,6 @@ export function reachable(call: Call): Space[] {
   return workspace.spaces.filter((space) => reaches(call, space))
 }
 
-/** The reader's tabs the caller may know of: a window's tabs are every set's, and another
- *  space's tabs do not exist to a grant that does not reach it (9.6). */
 export function tabsInReach(call: Call): Tab[] {
   const agent = call.caller.agent
   if (agent === null || agent.spaces === 'all') return workspace.tabs

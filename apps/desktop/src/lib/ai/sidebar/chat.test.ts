@@ -1436,7 +1436,6 @@ describe('an answer on its way', () => {
     localStorage.clear()
   })
 
-  /** The panel answering, with a hand on the engine's events: it never ends by itself. */
   async function answering() {
     const chat = await launched()
     chat.here('work')
@@ -1539,9 +1538,6 @@ describe('an answer on its way', () => {
     })
   })
 
-  /** `/review`, `/summarize`, `/todos` and `/init` run in Auto for that one send, on a
-   *  thread the reader keeps in Approve. Read back from a window lost mid-answer, that
-   *  Auto was the thread's, and every later change went through without asking. */
   test('is written with the thread’s own mode and model, not a one-shot send’s', async () => {
     const chat = await launched()
     chat.here('work')
@@ -1569,7 +1565,6 @@ describe('an answer on its way', () => {
       expect(again?.turns).toHaveLength(2)
       expect(again).toMatchObject({ mode: 'approve', model: 'm', effort: 'auto' })
     })
-    // And the send itself still runs as asked.
     expect(thread).toMatchObject({ mode: 'auto', model: 'other', effort: 'high' })
   })
 
@@ -1612,7 +1607,6 @@ describe('an answer on its way', () => {
     expect(thread.turns).toHaveLength(2)
     reading.mockRestore()
 
-    // That window's answer ended: the file has it, and nobody says they are answering.
     const finished = await readThread('work', thread.id)
     if (!finished) throw new Error('no thread')
     finished.turns[1] = { id: 'm', role: 'model', at: 2, parts: [{ kind: 'text', text: 'whole' }] }
@@ -1896,7 +1890,6 @@ describe('where a chat stands', () => {
     engine.send.mockReset()
   })
 
-  /** A chat answering, its model turn holding `parts`, told of them one by one. */
   async function answering() {
     const chat = await launched()
     chat.here('work')
@@ -1994,7 +1987,6 @@ describe('where a chat stands', () => {
     thread.turns = [{ id: 'u1', role: 'you', at: 1, parts: [] }]
     await keepThread(thread)
 
-    // A launch here is a window of its own, as this test has no session to keep its name in.
     const chat = await launched()
     chat.here('work')
     chat.know(['work'])

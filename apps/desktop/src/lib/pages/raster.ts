@@ -39,13 +39,8 @@ export async function svgToPng(
   }
 }
 
-/** A page of a paper as an address an `<image>` can hold and a PDF can embed, drawn as
- *  the sheet on screen draws it (see paper.ts). Null where the sheet on screen would
- *  show no paper either. */
 export async function paperPicture(at: PaperAt, number: number): Promise<string | null> {
   const { paperOf } = await import('./paper')
-  // A bitmap let go of by now - the tab closed, or paper.ts's cap reached - has no size,
-  // and the one asked for next is drawn again.
   let paper = await paperOf(at, number)
   if (paper && !paper.image.width) paper = await paperOf(at, number)
   if (!paper?.image.width) return null
@@ -61,7 +56,6 @@ export async function paperPicture(at: PaperAt, number: number): Promise<string 
   return sheet.toDataURL('image/png')
 }
 
-/** See `paperIsLocked` in paper.ts; here so a test has one module to stand in for. */
 export async function paperIsLocked(at: PaperAt): Promise<boolean> {
   const { paperIsLocked: asked } = await import('./paper')
   return asked(at)

@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** An agent's move through the real store, on a map of a disk: the two steps a move and a
- *  rename are must not stop anywhere the file may not be, or touch what is already there. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../../../test/disk').Disk | null }))
 
 vi.mock('../tauri', async (importOriginal) => ({

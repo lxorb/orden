@@ -4,10 +4,6 @@ import { emptyPages, pagesFromPdf } from '@orden/markdown/pages'
 import { busy } from '../busy.svelte'
 import type { Canvas, PageNode } from '../canvas/format'
 
-/** What of a paper goes out with the sheets that were made from it: its page under the
- *  ink in a PNG and an SVG, and a paper locked by its owner stays in the note. */
-
-/** A white pixel, which is as much of a page as these tests need. */
 const PIXEL =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=='
 
@@ -74,8 +70,6 @@ async function paper(pages = 2): Promise<PDFDocument> {
   return doc
 }
 
-/** A PDF locked by its owner the way a published paper is: anyone may open it, and pdf-lib
- *  refuses to copy from it. The trailer is written after the table, so nothing moves. */
 async function ownerLocked(): Promise<Uint8Array> {
   const plain = await (await paper()).save({ useObjectStreams: false })
   const text = String.fromCharCode(...plain)

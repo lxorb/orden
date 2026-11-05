@@ -139,8 +139,6 @@ export function notesIn(rows: readonly Row[]): { path: string; name: string }[] 
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
 
-/** What Todos' formula of when a task is due is called in a base (`WHEN`): a formula of the
- *  base's own called `when` stays its own. */
 const whenName = (base: Base) =>
   base.formulas.when === undefined || base.formulas.when === WHEN ? 'when' : WHEN_ASIDE
 

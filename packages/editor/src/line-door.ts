@@ -56,8 +56,6 @@ export const duplicateBlock = door((commands) => commands.duplicateBlock)
 export const moveBlockUp = door((commands) => commands.moveBlockUp)
 export const moveBlockDown = door((commands) => commands.moveBlockDown)
 
-/** The next three give way where the note cannot change, as the library's own do: Tab
- *  in a note nobody may write in moves the focus on, and takes no press. */
 const writable =
   <Target extends { state: { readOnly: boolean } }>(
     run: (target: Target) => boolean,
@@ -73,5 +71,4 @@ export const moveLineOver = (delta: -1 | 1) => writable(delta < 0 ? moveUp : mov
 
 export const clearFormatting = door((commands) => commands.clearFormatting)
 
-/** Marks over several lines, by which ones the marks are. */
 export const marksAcross = (mark: string) => door((commands) => commands.marksAcross(mark))

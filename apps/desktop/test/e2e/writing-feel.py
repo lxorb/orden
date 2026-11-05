@@ -248,8 +248,6 @@ def a_quoted_comma(page: Page) -> None:
     page.locator("#write .property[data-key='tags'] .property-chip-off").nth(1).click()
     quiet(page)
     said = next((one for one in page.evaluate(SAID).split("\n") if one.startswith("tags:")), "")
-    # What stays is as the note wrote it, in its own quotes; see `listItems` in
-    # property-edits.ts.
     is_true(said == 'tags: ["a, b"]', f"taking c off wrote {said!r}")
     is_true(page.evaluate(chips) == ["a, b"], f"the rows then read {page.evaluate(chips)}")
 

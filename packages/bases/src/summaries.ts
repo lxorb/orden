@@ -113,7 +113,6 @@ export function summarize(
   try {
     return settled(compile(source).run({ ...scope, locals: { values: [...values] as Value[] } }))
   } catch {
-    // Whatever the column made of it is that summary's; the view still answers.
     return null
   }
 }

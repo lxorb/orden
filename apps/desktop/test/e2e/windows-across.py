@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-"""One note across real windows, two pages or three on one origin and real locks.
-
-A CRLF file open in two windows keeps being heard and written (H3-WINDOWS-1). Words in a
-set out of sight come along from a window that went (H3-WINDOWS-2). A window that comes back
-with old words merges them with a file that went on (H3-WINDOWS-3), and a file that went stays
-gone with the words a draft. A link rewritten by a rename in one window reaches the note
-open in the other (H3-WINDOWS-4). A space made in one is offered in the other (H4-WINDOWS-4)."""
 
 from __future__ import annotations
 
@@ -106,8 +98,6 @@ def out_of_sight(browser: Browser) -> None:
 
 
 def no_room(browser: Browser) -> None:
-    """Storage takes nothing more from the window taking the words: the entry holding them
-    stays (H3-WINDOWS-L3)."""
     ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
     a = ctx.new_page()
     DRIVE.open(a)
@@ -153,7 +143,6 @@ def stale(browser: Browser, gone: bool) -> None:
     path = f"{root}/Both.md"
     a.bring_to_front()
     a.wait_for_timeout(1500)
-    # Words, and the window killed before the pause: the session holds them, dirty.
     type_in(a, "OLD-FROM-A ")
     a.evaluate(f"()=>{WS}.persist()")
     held = a.evaluate(
@@ -217,8 +206,6 @@ def heard_writes(browser: Browser) -> None:
 
 
 def rewrite_in_turn(browser: Browser) -> None:
-    """A rename's link rewrite queued behind another window's write takes that write in
-    (R1): a third page holds the file's turn for the length of a slow write."""
     ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
     a = ctx.new_page()
     DRIVE.open(a)
@@ -249,8 +236,6 @@ def rewrite_in_turn(browser: Browser) -> None:
 
 
 def busy_launch(browser: Browser) -> None:
-    """A task of more than two seconds in a launch does not put a second window on the
-    first one's session (R2)."""
     ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
     a = ctx.new_page()
     DRIVE.open(a)

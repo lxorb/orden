@@ -207,7 +207,6 @@ describe('the icon an open web note is given', () => {
 
     const file = written('/space/Docs.url') ?? ''
     expect(file).toBe(`${SPACE['/space/Docs.url'] ?? ''}Nib-Chosen-Icon=rocket\r\n`)
-    // In the editor's line endings, as every note's words are (`unixLines`).
     expect(workspace.tabs.find((one) => one.path === '/space/Docs.url')?.doc).toBe(
       file.replace(/\r\n/g, '\n'),
     )

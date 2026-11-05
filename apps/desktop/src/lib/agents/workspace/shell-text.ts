@@ -1,23 +1,11 @@
 /** A command line and what a terminal printed, as words. Pure; see terminal.ts. */
 
-/** The system a command line runs on, said so that both are tested on any machine: the
- *  callers pass the one the app runs on. */
 export type Os = 'windows' | 'unix'
 
-/** The `Os` of a name `platform()` gives. */
 export function osOf(platform: string): Os {
   return platform === 'windows' ? 'windows' : 'unix'
 }
 
-/** The program a command line starts, as a list of allowed programs names it: the first
- *  word, and only where it is a bare name the shell looks up on its path. A word with a
- *  folder or a quote is whatever file that names - `./git`, `/tmp/x/git.sh`,
- *  `"git"/../../bin/sh` - and no program on any list: the empty name.
- *
- *  On Windows, which runs `git.exe` for `git` and does not tell `GIT` from `git`, it is in
- *  lower case and without an ending Windows runs a bare name with (`PATHEXT`'s `.exe`,
- *  `.com`, `.bat`, `.cmd`); a `.sh` or a `.ps1` is another file. On a Mac and Linux a name
- *  with any ending is another file, and the case counts: `git.exe` is not `git` there. */
 export function programOf(command: string, os: Os): string {
   const word = /^\s*(\S+)/.exec(command)?.[1] ?? ''
   if (!/^[\w.+-]+$/.test(word)) return ''
@@ -25,16 +13,6 @@ export function programOf(command: string, os: Os): string {
   return os === 'windows' ? word.toLowerCase().replace(/\.(exe|com|bat|cmd)$/, '') : word
 }
 
-/** What a package manager is known to do freely, as git below: any other command asks, and
- *  so does any other option, since each one can set a config key (`--script-shell`,
- *  `--userconfig`, `--shell`, `--viewer`, pnpm's `--config.x`) and a config key can run
- *  anything. An abbreviation is not one of them: npm reads `exe` as `exec`. This is not what
- *  makes a listed program safe, which nothing can: a program on the list is trusted with
- *  all it can do, as docs/agent-native.md 8.9 says. It keeps the plainest ways out of a line
- *  that looks like a read in front of the reader's question.
- *
- *  `scripts` are the bare names taken for a package's own scripts, where a bare name is not
- *  only that: pnpm and bun's `run` start whatever else goes by the name on the path. */
 const PACKAGES = { long: ['--script-shell', '--node-options'] }
 const PLAIN = ['--version', '--help', '-v', '-h', '--silent', '-s']
 const SCRIPTS = [
@@ -52,13 +30,9 @@ const SCRIPTS = [
   'serve',
 ]
 
-/** A package's own script by its shape: no program on a path is called `test:unit`. */
 const SCRIPT_BY_SHAPE = /^[\w-]+:[\w:-]+$/
 
-/** What pnpm and yarn start out of the package's own `node_modules/.bin`, by the names
- *  everyone's toolchain has. Their options are held to the same list as any. */
 const TOOLS = ['tsc', 'vitest', 'jest', 'eslint', 'prettier']
-/** What is free after the command: where a value follows, it reads as any other word. */
 const OPTIONS_FREE = [
   ...PLAIN,
   '--save',
@@ -130,10 +104,7 @@ const REACH: Record<
     short: RegExp | null
     long: string[]
     commands: string[]
-    /** Options that may stand in front of the command and take no value. */
     before: string[]
-    /** And those that take one, as the next word or after a `=`. Anything else there may
-     *  be holding a value that would read as the command, so it asks. */
     valued: string[]
   }
 > = {
@@ -240,7 +211,6 @@ const REACH: Record<
     valued: ['--cwd'],
   },
   bun: {
-    // `-e1` and `-pe1`: short options bundle, and a value may hang on the end.
     short: /^-[a-zA-Z]*[ep]/,
     long: [...PACKAGES.long, '--eval', '--print'],
     commands: ['install', 'i', 'add', 'a', 'remove', 'rm', 'update', 'outdated', 'help'],
@@ -249,15 +219,8 @@ const REACH: Record<
   },
 }
 
-/** The programs whose whole work is to fetch something and run it. */
 const RUNS_WHAT_IT_FETCHES = new Set(['npx', 'pnpx', 'bunx'])
 
-/** Git can be told to run something in more ways than a list of them would ever hold -
- *  `-ccore.sshCommand=x`, `--template=x`, `rebase -x`, a config, an alias - so it goes the
- *  other way round: the commands known to be free and their options, and anything else
- *  asks. `flags` are the letters that take no value, in any bundle. `valued` are the
- *  letters that take one, attached or as the next word. `long` is whole names, with a `=`
- *  or the next word as their value: an abbreviation is not one of them. */
 interface Free {
   flags?: string
   valued?: string
@@ -465,14 +428,10 @@ const GIT: Record<string, Free> = {
   help: {},
 }
 
-/** Whether one option word is one this command is known to take freely. */
 function gitOptionFree(word: string, free: Free): boolean {
   if (word.startsWith('--')) return (free.long ?? []).includes(word.split('=')[0] ?? word)
-  // `-20`: so many commits.
   if (/^-\d+$/.test(word)) return free.valued?.includes('n') === true
 
-  // Letter by letter: flags go on, and a letter that takes a value ends the word, whatever
-  // hangs on the end of it. Any other letter is one nothing here has read.
   for (const letter of word.slice(1)) {
     if (free.valued?.includes(letter)) return true
     if (!free.flags?.includes(letter)) return false
@@ -480,7 +439,6 @@ function gitOptionFree(word: string, free: Free): boolean {
   return word.length > 1
 }
 
-/** Whether a line of git is a command known to be free with options known to be. */
 function gitStays(plain: readonly string[]): boolean {
   const at = plain.findIndex((word) => !word.startsWith('-'))
   const leading = at === -1 ? plain : plain.slice(0, at)
@@ -492,16 +450,12 @@ function gitStays(plain: readonly string[]): boolean {
   if (!free) return false
 
   for (const word of plain.slice(at + 1)) {
-    // Past `--` everything is a path.
     if (word === '--') return true
     if (word.startsWith('-') && !gitOptionFree(word, free)) return false
   }
   return true
 }
 
-/** A line's words as a POSIX shell hands them over: parted by a space or a tab and nothing
- *  else, quotes and backslashes gone, and what they held one word. `null` for a quote left
- *  open, which the shell would go on reading past Enter. */
 function wordsOf(line: string): string[] | null {
   const words: string[] = []
   let word: string | null = null
@@ -535,12 +489,9 @@ function wordsOf(line: string): string[] | null {
   return words
 }
 
-/** Whether a package manager's bare name is known to be one of these, with nothing after it
- *  that the program of that name would run: `pnpm format D:`, on a path that has one. */
 function bareNameStays(program: string, plain: readonly string[], at: number): boolean {
   const command = plain[at] ?? ''
   if (program === 'bun') {
-    // Its own commands, whatever follows.
     if (command === 'test' || command === 'build') return true
     const named = command === 'run' ? (plain[at + 1] ?? '') : command
     const past = command === 'run' ? at + 2 : at + 1
@@ -552,13 +503,11 @@ function bareNameStays(program: string, plain: readonly string[], at: number): b
   return SCRIPTS.includes(command) && (command === 'test' || !positional(plain, at + 1))
 }
 
-/** Whether any word past this one, short of `--`, is no option. */
 function positional(plain: readonly string[], from: number): boolean {
   const end = plain.indexOf('--', from)
   return plain.slice(from, end === -1 ? undefined : end).some((word) => !word.startsWith('-'))
 }
 
-/** Whether a program's arguments stay out of what it can be told to run. */
 function argumentsStay(program: string, plain: readonly string[]): boolean {
   if (RUNS_WHAT_IT_FETCHES.has(program)) return false
 
@@ -567,9 +516,6 @@ function argumentsStay(program: string, plain: readonly string[]): boolean {
   const reach = REACH[program]
   if (!reach) return true
 
-  // The options in front of the command, walked: a value is not the command. One with a
-  // space in it is read otherwise by a shell with other quoting (PowerShell's backslash is
-  // no escape), and is not worth finding out for a folder.
   let at = 0
   for (; at < plain.length; at++) {
     const word = plain[at] ?? ''
@@ -586,7 +532,6 @@ function argumentsStay(program: string, plain: readonly string[]): boolean {
     return false
   }
 
-  // `yarn workspace web build` is `build`, in `web`.
   if (program === 'yarn' && plain[at] === 'workspace') {
     at += 2
     if (at >= plain.length) return false
@@ -596,7 +541,6 @@ function argumentsStay(program: string, plain: readonly string[]): boolean {
     if (!reach.commands.includes(command) && !bareNameStays(program, plain, at)) return false
   }
 
-  // After it, as git's: known to be free or a question, and past `--` it is the script's.
   const end = plain.indexOf('--', at)
   for (const word of plain.slice(at + 1, end === -1 ? undefined : end)) {
     if (word.startsWith('-') && !OPTIONS_FREE.includes(word.split('=')[0] ?? word)) return false
@@ -611,17 +555,12 @@ function argumentsStay(program: string, plain: readonly string[]): boolean {
   })
 }
 
-/** Whether a line goes for being on a list: its first program is on it, named the way
- *  `programOf` reads a name on `os`, and its arguments do not tell that program to run or
- *  write something else. */
 export function onTheList(command: string, programs: readonly string[], os: Os): boolean {
   const program = programOf(command, os)
   if (program === '' || !programs.some((one) => programOf(one, os) === program)) return false
 
-  // A space of another kind is part of a word to the shell, and no way to read a line by eye.
   if (/(?! )\p{Zs}/u.test(command)) return false
 
-  // Held to what the lower-case name may do: `Git` on a list is git's rules all the same.
   const words = wordsOf(command.trim())
   return words !== null && argumentsStay(program.toLowerCase(), words.slice(1))
 }

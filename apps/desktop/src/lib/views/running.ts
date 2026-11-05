@@ -34,8 +34,6 @@ export function basesAre(paths: readonly string[]) {
 /** Whether any base is worth running at all. */
 const running = (): boolean => held.size > 0
 
-/** The bases of a space as they may run now: a held one is the file as it reads, and a
- *  shared one runs under the limits any other reader of it does. */
 function heldIn(space: string): HeldBase[] {
   return [...held.entries()].flatMap(([path, one]) => {
     const base = one.space === space ? guardedAt(one.base, path) : null
@@ -134,8 +132,6 @@ async function run(space: string, path: string, removed: readonly Row[]) {
   const plan = planned(bases, removed, rowsOf(space, path), all, context, clock())
 
   for (const write of plan.writes) ours.add(keyOf(write.row.space, write.row.path))
-  // A write that changes nothing raises no change, so the mark would wait for the
-  // next one somebody makes and swallow it.
   if (plan.writes.length && !(await writeEach(plan.writes, true))) {
     for (const write of plan.writes) ours.delete(keyOf(write.row.space, write.row.path))
   }

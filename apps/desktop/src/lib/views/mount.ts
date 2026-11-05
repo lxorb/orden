@@ -15,8 +15,6 @@ import { embeddedPath } from './source'
 /** What is drawn: a fence's words, or a base file a link names and one of its views. */
 export type BaseAsk = { code: string } | { target: string; view: string | null }
 
-/** Draws a base into `host`, for a note at `from` (on this disk, or null, `stranger`
- *  where that is a file somebody shared on its own). Answers what takes it away again. */
 export function mountBase(
   host: HTMLElement,
   ask: BaseAsk,

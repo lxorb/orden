@@ -619,7 +619,6 @@ pub fn agents_answer(
     Ok(approval)
 }
 
-/// What a question is about, by its id, and the site where a page is.
 pub fn question_category(id: &str) -> Option<(verbs::Category, Option<String>)> {
     approvals::any(id).map(|one| (one.category, one.site))
 }

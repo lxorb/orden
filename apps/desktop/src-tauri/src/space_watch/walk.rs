@@ -47,8 +47,6 @@ pub struct Found {
     /// would not say, which a file that vanished between the listing and the question
     /// also answers.
     pub id: Option<String>,
-    /// A folder whose children were not read: it would not list, or is past `MAX_DEPTH`.
-    /// It looks empty and may not be, and what is known under it is not therefore gone.
     pub unlisted: bool,
 }
 
@@ -86,7 +84,6 @@ pub fn found(root: &Path, rel: &Path) -> Option<Found> {
     looked(root, rel).ok().flatten()
 }
 
-/// `found`, with a look that could not be made told from nothing being there.
 fn looked(root: &Path, rel: &Path) -> std::io::Result<Option<Found>> {
     if rel.as_os_str().is_empty() || ignored_path(rel) {
         return Ok(None);
@@ -116,14 +113,11 @@ fn looked(root: &Path, rel: &Path) -> std::io::Result<Option<Found>> {
     }))
 }
 
-/// Whether a failed look at a path says nothing is there. Any other failure (no permission,
-/// a network drive away, a virus scanner in the way) says only that nobody could look.
 pub fn says_gone(error: &std::io::Error) -> bool {
     matches!(
         error.kind(),
         std::io::ErrorKind::NotFound
             | std::io::ErrorKind::NotADirectory
-            // No disk holds such a name, so nothing is there by it.
             | std::io::ErrorKind::InvalidFilename
     )
 }
@@ -135,21 +129,15 @@ pub fn present(root: &Path, rel: &Path) -> bool {
         && !ignored_path(rel)
         && match fs::symlink_metadata(root.join(rel)) {
             Ok(meta) => !meta.file_type().is_symlink(),
-            // Nobody could look: not a removal, which would leave the account too.
             Err(error) => !says_gone(&error),
         }
 }
 
-/// What a folder holds, in the order of its names, and whether that is all of it.
 struct Listing {
     found: Vec<Found>,
     whole: bool,
 }
 
-/// What sync keeps in a folder. An error partway through the listing is the listing failing:
-/// what it had got to is not all that is there. A child that will not say what it is (a
-/// folder that lists and will not stat, mode r--, or an ACL that says as much) is not there
-/// to be handed over, and the folder is not whole.
 fn listed_in(root: &Path, rel: &Path) -> std::io::Result<Listing> {
     let mut names = Vec::new();
     for entry in fs::read_dir(root.join(rel))? {
@@ -211,7 +199,6 @@ fn walk_listing(
             .checked_sub(1)
             .ok_or_else(|| format!("this space holds more than {MAX_ENTRIES} files and folders"))?;
 
-        // Listed before it is handed over, which is when it has to say whether it could be.
         let child = one.rel.clone();
         let inside =
             (one.dir && child.components().count() < MAX_DEPTH).then(|| listed_in(root, &child));
@@ -358,8 +345,6 @@ mod tests {
         }
     }
 
-    /// Permissions taken away for as long as it lives. Root reads through them, so a test
-    /// run as root says nothing.
     #[cfg(unix)]
     struct Locked(PathBuf);
 
@@ -412,7 +397,6 @@ mod tests {
         assert!(!present(root, Path::new("Never.md")));
     }
 
-    /// Lists, and will not say what any of it is: mode r--.
     #[cfg(unix)]
     #[test]
     fn a_folder_whose_children_will_not_stat_is_unlisted_too() {
@@ -423,7 +407,6 @@ mod tests {
         fs::create_dir_all(&half).expect("a folder");
         fs::write(half.join("Inside.md"), "words").expect("a note");
         fs::set_permissions(&half, fs::Permissions::from_mode(0o444)).expect("half shut");
-        // Root reads through permissions, and then this says nothing.
         if fs::symlink_metadata(half.join("Inside.md")).is_ok() {
             fs::set_permissions(&half, fs::Permissions::from_mode(0o755)).expect("opened");
             return;

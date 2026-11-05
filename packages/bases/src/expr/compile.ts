@@ -127,10 +127,8 @@ function thunks(args: readonly Fn[], scope: Scope): Arg[] {
   )
 }
 
-/** How many closures of an expression cost one step. */
 const NODES_A_STEP = 32
 
-/** How many nodes a part of the tree has. */
 function sizeOf(part: unknown): number {
   if (typeof part !== 'object' || part === null) return 0
   return Object.values(part).reduce<number>((sum, one) => sum + sizeOf(one), 1)
@@ -156,8 +154,6 @@ function compileCall(node: Extract<Node, { type: 'call' }>, facts: Facts): Fn {
     if (READS_OTHERS.has(callee.name)) facts.local = false
     const receiver = compileNode(callee.object, facts)
     const name = callee.name
-    // A list method runs its words once per item, and an item is counted as one step
-    // however long they are.
     const each = Math.floor(sizeOf(node.args) / NODES_A_STEP)
     return (scope) => {
       const on = receiver(scope)

@@ -875,7 +875,6 @@
   // at a line, so this lands on top.
   $effect(() => {
     const asked = workspace.goto
-    // A note in its reading view goes there itself; see Reading.svelte.
     if (!asked || !view || workspace.active?.path !== asked.path || workspace.active.reading) return
 
     // Taking the ask down runs this effect again, so nothing is returned to
@@ -1593,7 +1592,6 @@
     position: fixed;
   }
 
-  /* Over the overview, which covers the whole app: what a drop there did is said here. */
   .notices.above {
     position: fixed;
     z-index: var(--z-sheet);

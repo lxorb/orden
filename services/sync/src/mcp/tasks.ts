@@ -217,7 +217,6 @@ async function wordsAt(env: Env, space: Writable, path: string): Promise<string 
   return note ? noteBody(env, space.id, note.id) : null
 }
 
-/** A note's row and words, for a change to be written on top of. */
 async function readOf(
   env: Env,
   space: Writable,
@@ -231,26 +230,20 @@ async function readOf(
 /** A note path an argument names, `.md` added where it has no ending. */
 function notePath(asked: string): string {
   const named = asked.trim()
-  // A canvas or a page note holds no task lines, and `.md` added to one is a new note.
   if (isCanvasTarget(named) || isPagesTarget(named)) throw new Said(`${asked} is not a note.`)
   const path = cleanPath(MARKDOWN.test(named) ? named : `${named}.md`)
   if (!path) throw new Said(`${asked} is not a note path.`)
   return path
 }
 
-/** The note at `path` moved past what was read of it. */
 class Moved extends Error {
   constructor(readonly path: string) {
     super(`${path} moved`)
   }
 }
 
-/** How many times one change is read and made again on a note that keeps moving. */
 const TRIES = 5
 
-/** A change to a note, made again from a fresh read where the note moved under it, and
- *  answered in a sentence where it will not hold still. Nothing was written for a try
- *  that moved. */
 async function edits<T>(change: () => Promise<T>): Promise<T> {
   for (let tries = 1; ; tries++) {
     try {
@@ -262,8 +255,6 @@ async function edits<T>(change: () => Promise<T>): Promise<T> {
   }
 }
 
-/** Words written over `read`: what `readOf` answered for that path. Answers where the
- *  note now is, which a tree may have put elsewhere than it was asked (`putNote`). */
 async function written(
   env: Env,
   space: Writable,
@@ -335,8 +326,6 @@ async function list(env: Env, token: TokenRow, args: Args, seen: Space[]): Promi
   const names = new Set(
     rows.filter((row) => row.kind === 'note').map((row) => row.file.basename.toLowerCase()),
   )
-  // A number of tasks, from a caller a schema does not bind: below one answered none with
-  // a total saying otherwise, and a fraction cut where nobody asked.
   if (args.limit !== undefined && !(Number.isInteger(args.limit) && Number(args.limit) > 0)) {
     throw new Said('limit is a whole number of tasks, one or more.')
   }
@@ -434,7 +423,6 @@ async function update(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
     ...(edited.next ? { next: edited.next } : {}),
     space: space.name,
   })
-  // The task's lines and the note without them.
   const taken = (edited: { text: string; at: string }) => {
     const block = taskBlock(
       edited.text,
@@ -476,15 +464,11 @@ async function update(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
   })
   if (into === path) return { ...placedIn.said, at: placedIn.at }
 
-  // Read again, and only the task taken out of what it says now: what the other note
-  // was given is already written, and must not be given twice. From here a model told
-  // only that something failed moves it again, so it is told where the task is.
   const left = await edits(async () => {
     let read
     try {
       read = await editing()
     } catch (error) {
-      // Not there as it was: taken out, which is all this was going to do, or edited.
       if (error instanceof AgentError) {
         return `The task is no longer in ${path} as it was. If it was edited there, it is in both: check ${path}.`
       }
@@ -540,7 +524,6 @@ async function addRow(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
   const name = noteName(words(args, 'title') ?? 'Untitled')
   for (let counter = 1; counter < 100; counter++) {
     const file = counter === 1 ? `${name}.md` : `${name} ${counter}.md`
-    // A base's filter names the folder, and whoever can write a base can write that.
     const asked = folder ? `${folder}/${file}` : file
     const path = cleanPath(asked)
     if (!path) throw new Said(`${asked} is not a note path.`)
@@ -555,7 +538,6 @@ async function addRow(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
         null,
       )
     } catch (error) {
-      // A note took the name in between: the next name, and never over it.
       if (error instanceof Moved) continue
       throw error
     }

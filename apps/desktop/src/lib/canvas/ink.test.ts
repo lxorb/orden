@@ -1117,7 +1117,6 @@ describe('the way an eraser went between two of its events', () => {
     expect(rubbedPath({ x: 0, y: 0 }, { x: 5, y: 0 }, 30)).toEqual([{ x: 5, y: 0 }])
   })
 
-  /** Circles a whole reach apart leave a line near the edge of the swipe in dashes. */
   test('takes a line near the edge of a swipe whole', () => {
     const reach = 10
     let left = [stroke([point(0, 9.5), point(100, 9.5)], { size: 0 })]

@@ -186,11 +186,8 @@ function readFront(body: string, front: FrontMatterBlock, out: TagUse[]) {
       const [, rest = ''] = found
       // What is on the key's own line, then whatever items follow it.
       const value = at + line.length - rest.length
-      // A flow list across lines, as Prettier breaks a long one, is one value. A `# ` line
-      // of it is YAML's comment; here a hash on a name is the name's, as on the key's line.
       const closes = valueClosesAt(body, value, front.close)
       if (closes !== -1) {
-        // Blanked and not cut, so what follows is read at the offset it stands at.
         const said = body.slice(value, closes)
         const words = said.replace(
           /(^|\s)(#\s.*)$/gm,

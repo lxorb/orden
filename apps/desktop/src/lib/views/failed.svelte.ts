@@ -10,10 +10,8 @@ class Failed {
   /** What a press of Retry does, while the toast says so. */
   retry = $state.raw<(() => void) | null>(null)
 
-  /** Whether what did not happen was an undo, rather than a move. */
   undoing = $state(false)
 
-  /** What a press of Skip does, where what did not happen can be let go of. */
   skip = $state.raw<(() => void) | null>(null)
 
   private timer: ReturnType<typeof setTimeout> | undefined
@@ -37,7 +35,6 @@ class Failed {
     retry?.()
   }
 
-  /** Skip pressed: the toast goes, and what would not happen with it. */
   giveUp() {
     const skip = this.skip
     this.dismiss()

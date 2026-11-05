@@ -75,10 +75,6 @@ pub fn placeholder_of(target: &Path) -> Option<PathBuf> {
     Some(target.with_file_name(format!(".{name}{SUFFIX}")))
 }
 
-/// Whether a placeholder's bytes stand for a file of this name: the property list iCloud
-/// writes, with the name inside it. A stray file that only has the name of one is no reason
-/// to hold back a delete. How long ago it was evicted says nothing, as a note may stay in
-/// the cloud for years.
 pub fn stands_for(bytes: &[u8], name: &str) -> bool {
     let holds =
         |needle: &[u8]| !needle.is_empty() && bytes.windows(needle.len()).any(|at| at == needle);
@@ -86,11 +82,7 @@ pub fn stands_for(bytes: &[u8], name: &str) -> bool {
     bytes.starts_with(b"bplist") && (holds(name.as_bytes()) || holds(&wide))
 }
 
-/// Whether a file that is not there has a placeholder that stands for it, which sync must
-/// never read as a delete. Not a rename in the Finder of a note evicted on macOS 13: that
-/// renames the placeholder, and nothing here can tell it from a delete of the old name.
 pub fn evicted(target: &Path) -> bool {
-    /// A placeholder is a few hundred bytes.
     const LONGEST: u64 = 64 * 1024;
 
     if std::fs::symlink_metadata(target).is_ok() {
@@ -213,7 +205,6 @@ mod tests {
             &[b"bplist00".as_slice(), &wide].concat(),
             "Pl\u{e4}n.md"
         ));
-        // A stale stub of another note, or a file with nothing of one, holds nothing back.
         assert!(!stands_for(b"bplist00Other.md", "Plan.md"));
         assert!(!stands_for(b"Plan.md", "Plan.md"));
     }

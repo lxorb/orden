@@ -1,55 +1,13 @@
-//! What a renderer of Orden's own Chromium gives a page, in place of what
-//! `tauri-runtime-cef` gives one.
-//!
-//! The runtime's render handler writes `window.ipc` into every V8 context of every frame:
-//! a web tab's page, its frames, an extension's own pages and an extension's world. It
-//! writes it read only and not configurable, and a classic script may not declare `let
-//! ipc`, `const ipc` or `class ipc` at the top level while the global object carries such
-//! a property: the whole script is a `SyntaxError` before its first line. Nothing in the
-//! page can undo it, and neither can the sweep in `web_worlds.rs`, since `delete` answers
-//! false. Google Sheets declares one, and shows "Loading issue"; see docs/web-tabs.md,
-//! "What a page is given: nothing", where `WebView2`'s is the same story.
-//!
-//! The channel is only ever the app's: `ipc-protocol.js` calls it when its page's custom
-//! protocol fails, a web tab's page has no key to call it with, and nothing Orden puts in a
-//! web tab's world uses it, those speaking through `DevTools` bindings instead
-//! (`web_opens.rs`, `web_swipe.rs`). So it goes where it is used and nowhere else.
-//!
-//! **Why this is not a patch of the runtime.** Every process CEF starts beside the app is
-//! this executable with `--type=`, and `cef_helper` in lib.rs reaches it before anything
-//! of Tauri starts, so the handler is the app's to choose: the runtime's own helper is a
-//! dozen lines over `cef::execute_process`, repeated in `run` here. Its handler for the
-//! browser process's own renderer is reached only with `--single-process`, which Orden
-//! never runs. The browser's side, `on_process_message_received`, stays the runtime's:
-//! it hears the message written here, so `MESSAGE` is its `IPC_MESSAGE_NAME` and the two
-//! arguments are in its order. Look again when the `tauri-runtime-cef` pin moves;
-//! scripts/globals-drive.py sends a command down this channel, so a drift fails there.
-
-// The `cef` crate's `wrap_*` macros write these transmutes; nothing here does.
 #![allow(clippy::transmute_ptr_to_ptr)]
 
 use cef::*;
 
-/// The message the runtime's browser side hears: `IPC_MESSAGE_NAME` in its `cef_impl/ipc.rs`.
 const MESSAGE: &str = "tauri:ipc";
 
-/// The one function on the channel.
 const POST_MESSAGE: &str = "postMessage";
 
-/// The switch the browser process tells a child which CEF API version to declare with:
-/// `API_VERSION_SWITCH` in the runtime's `runtime.rs`, which keeps both to itself.
 const API_VERSION_SWITCH: &str = "tauri-cef-api-version";
 
-/// Whether a frame's address is the app's own: `http://tauri.localhost`, by scheme, host and
-/// port, since `*.localhost` is the loopback in Chromium and another port of that name is
-/// whatever is listening there. There is no second address: Linux's manifest has
-/// `custom-protocol` on for every build, `tauri dev` too, so `devUrl` is never the app's.
-///
-/// **The address, and not which browser the frame is in.** A renderer cannot be told that: the
-/// only thing it hears of a browser's maker is `extra_info`, which the runtime builds every
-/// browser with none of. So a web tab sent to `http://tauri.localhost/`, which the web's
-/// profile answers with nothing unless something listens on the loopback's port 80, or a frame
-/// of it, is given the channel too. It holds no key, so its `postMessage` is refused.
 pub(crate) fn own_origin(address: &str) -> bool {
     tauri::Url::parse(address).is_ok_and(|url| {
         url.scheme() == "http" && url.host_str() == Some("tauri.localhost") && url.port().is_none()
@@ -103,7 +61,6 @@ wrap_v8_handler! {
     }
 }
 
-/// `window.ipc` in a context, as the runtime writes it.
 fn install(context: &mut V8Context) {
     let Some(window) = context.global() else {
         return;
@@ -160,7 +117,6 @@ wrap_app! {
     }
 }
 
-/// The version a child was told to declare, the last one said: no CEF call may come first.
 fn told_version(args: impl IntoIterator<Item = std::ffi::OsString>) -> Option<i32> {
     let prefix = format!("--{API_VERSION_SWITCH}=");
     args.into_iter()
@@ -172,14 +128,9 @@ fn told_version(args: impl IntoIterator<Item = std::ffi::OsString>) -> Option<i3
         .last()
 }
 
-/// This process as what CEF started it to be, a renderer or any other: the runtime's
-/// `run_cef_helper_process` on Linux, which is the one platform on this engine, with the
-/// handler above. A zygote is included: the renderers it forks keep the handler it was given.
 pub(crate) fn run() {
     let args = cef::args::Args::new();
     let version = told_version(std::env::args_os()).unwrap_or(sys::CEF_API_VERSION_LAST);
-    // NULL where the loaded library does not support the version, and the next CEF call
-    // would crash.
     assert!(
         !cef::api_hash(version, 0).is_null(),
         "the loaded CEF library does not support CEF API version {version}"
@@ -196,7 +147,6 @@ pub(crate) fn run() {
 mod tests {
     use super::own_origin;
 
-    /// The app's own page, in the shapes it is served in, and nothing that only looks like it.
     #[test]
     fn only_the_app_s_own_origin_is_given_the_channel() {
         assert!(own_origin("http://tauri.localhost/"));
@@ -225,8 +175,6 @@ mod tests {
         }
     }
 
-    /// Linux's manifest has `custom-protocol` on for every build, `tauri dev` too, so the
-    /// app is served from the one address above and its `devUrl` is no address of the app's.
     #[test]
     fn the_dev_server_is_no_address_of_the_app_s() {
         assert!(!tauri::is_dev());

@@ -1210,7 +1210,6 @@ describe('a named block on a line that is no words of a paragraph or an item', (
 
 describe('a named block, as a page holds it', () => {
   const anchored = (source: string) => renderMarkdown(source, { blockAnchors: true })
-  /** What a page draws with its anchors taken off, and the name-free words beside it. */
   const without = (html: string) => html.replace(/\s?<span id="\^[\w-]+"><\/span>/g, '')
   const tight = (html: string) => html.replace(/>\s+</g, '><').trim()
 

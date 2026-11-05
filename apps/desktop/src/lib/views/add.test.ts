@@ -11,7 +11,6 @@ import { freePath } from '@orden/markdown/paths'
  *  over the note it named. */
 
 const { added, written, taken, on, held } = vi.hoisted(() => ({
-  /** The notes tasks were added to. */
   added: [] as string[],
   written: new Map<string, string>(),
   taken: new Set<string>(),

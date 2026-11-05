@@ -82,7 +82,6 @@ export async function loadTags(ws: HoldsNotes): Promise<void> {
  *
  *  `to` is the path the node becomes, or null to take the tag away. */
 export async function retagNotes(ws: HoldsNotes, from: string, to: string | null): Promise<number> {
-  // Every note would be written with something that is no tag, and have lost this one.
   if (to !== null && !isTagName(to)) return 0
 
   const { tagChanges } = await import('../tag-edits')
@@ -147,13 +146,10 @@ export function toggleTaskAt(
   return running
 }
 
-/** The tick being written in each note, the last asked for. */
 const toggling = new Map<string, Promise<boolean>>()
 
-/** How long a tick waits for the one before it, far past a slow disk. */
 const TICK_WAITS = 10_000
 
-/** When a tick may go on after this one: it has answered, either way, or it never will. */
 function waitedFor(tick: Promise<boolean>): Promise<void> {
   return new Promise((go) => {
     const timer = setTimeout(go, TICK_WAITS)
@@ -352,14 +348,11 @@ async function writeClosed(
   change: Change,
   keeping: Keeping,
 ): Promise<Undone | null> {
-  // One turn of the file, from the read to the write: what another window writes between
-  // the two would otherwise be replaced by words worked out without it.
   const turn = await inFileTurn(change.path, async () => {
     const read = await invoke<string>('read_note', { path: change.path }).catch(() => null)
     if (read === null) return null
 
     const now = endingsLike(read, change.before)
-    // Worked out on one line ending, written into a file of others; see `appliedToFile`.
     const foreign = now !== read
     const same = now === change.before
     const edits = same ? change.edits : carriedPast(change.before, now, change.edits)

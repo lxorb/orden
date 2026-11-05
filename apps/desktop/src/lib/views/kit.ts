@@ -96,8 +96,6 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
     const path = notePath(row)
     return path === null || canWriteAt(path)
   }
-  /** Whether where the base is kept takes writes at all, its fence found or not. A note
-   *  added to the view is a note of its own, and asks only this. */
   const reachable = () => {
     const at = live.writtenAt
     return at === null || canWriteAt(at)

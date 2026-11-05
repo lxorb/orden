@@ -81,8 +81,6 @@ afterEach(() => {
 })
 
 describe('the chat at a side', () => {
-  /** Work with the outline at its side, Home with nothing there, and the chat open in
-   *  Home: what the rules below start from. */
   async function chattingInHome() {
     await workspace.showSpace('work')
     workspace.showPanel('outline')
@@ -96,7 +94,6 @@ describe('the chat at a side', () => {
     workspace.closePanel('right')
   })
 
-  // #332: the open chat stays open when the space changes, whatever the space kept there.
   test('stays open through a space that had that side shut', async () => {
     await workspace.showSpace('home')
     workspace.closePanel('right')
@@ -109,8 +106,6 @@ describe('the chat at a side', () => {
     expect(workspace.openOn('right')).toBe('ask')
   })
 
-  // #1123: the sides are the window's, so a switch leaves whatever is open there open, and
-  // no space keeps a panel of its own under the chat.
   test("leaves any other panel open too, since the side is the window's", async () => {
     await workspace.showSpace('work')
     workspace.showPanel('outline')
@@ -168,7 +163,6 @@ describe('the chat at a side', () => {
     expect(workspace.openOn('right')).toBe('ask')
   })
 
-  // A switch opens neither side, so shut, the chat leaves the left side shut too.
   test('moved to the left, stays there through a switch, and shut leaves that side shut', async () => {
     workspace.movePanel('ask', 'left')
     try {

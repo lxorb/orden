@@ -56,10 +56,6 @@ export async function feedPage(
   }
 
   const page = rows.slice(0, FEED_PAGE)
-  // One made under an id that reads as a path before `opOf` refused them is not handed
-  // to a device from before `feedPageOf` left them out, but for its delete. One under a name
-  // no disk holds, from before `cleanPath` refused it, goes under the nearest that is one:
-  // such a device throws the whole page away for one item it cannot read, for good.
   const safe = (row: Row) =>
     row.deleted === 1 || (isEntryId(row.id) && (row.parent === null || isEntryId(row.parent)))
   return {

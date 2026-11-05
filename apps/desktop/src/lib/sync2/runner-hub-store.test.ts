@@ -2,17 +2,10 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { hash32 } from '@orden/sync-core/seed'
 
-/** Two windows of one desktop process on the crate, which holds one sync store at a time
- *  (sync_store.rs: `Stores(Mutex<Option<Held>>)`): opening another closes the one held,
- *  `sync_store_close` closes whatever is held, and reads and writes go to whatever is
- *  held. So one window at a time may run an engine, the one kept signed out as much as
- *  the account's, and no window closes a store it does not hold. */
-
 const crate = vi.hoisted(() => ({
   held: null as null | { account: string; session: import('./store').SyncStore },
   mems: new Map<string, unknown>(),
   log: [] as string[],
-  /** The account never answering: a try of the way back that hangs. */
   hang: false,
 }))
 
@@ -28,11 +21,9 @@ vi.mock('./store', async (importOriginal) => {
         if (crate.held) await crate.held.session.close()
         let mem = crate.mems.get(id) as InstanceType<typeof MemoryStore> | undefined
         if (!mem) {
-          // A device id the hub takes: 32 hex digits, one per store.
           const device = Array.from(new TextEncoder().encode(id), (byte) => byte.toString(16)).join(
             '',
           )
-          // A store made now takes the id it is given, as the crate's `open_as` does.
           mem = new MemoryStore(made ?? device.padEnd(32, '0'))
           crate.mems.set(id, mem)
         }
@@ -59,7 +50,6 @@ vi.mock('./store', async (importOriginal) => {
         },
       }
     },
-    // Read beside the store, as `sync_store_device` does: nothing opened, nothing marked.
     deviceOfSyncStore: (id: string) => {
       crate.log.push(`look ${id}`)
       const mem = crate.mems.get(id) as { device?: string } | undefined
@@ -106,7 +96,6 @@ function memoryStorage(): Storage {
 }
 vi.stubGlobal('localStorage', memoryStorage())
 
-/** One lock holder at a time, shared by both windows. */
 function locksOf() {
   const holders = new Set<string>()
   const waiting = new Map<string, (() => void)[]>()
@@ -158,7 +147,6 @@ async function aWindow() {
 }
 type Window = Awaited<ReturnType<typeof aWindow>>
 
-/** Signing in, heard by a window: what sync.svelte.ts does with it. */
 function signIn(one: Window) {
   Object.assign(one.account, { user: { id: 'u1', syncVersion: 2 } })
   void one.runner.dropLocal()
@@ -179,13 +167,11 @@ vi.mock('./watching', () => ({
   }),
 }))
 
-// The way back's wait between tries, short: what a test of a start in that wait needs.
 vi.mock('../backoff', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../backoff')>()),
   pollDelay: () => 400,
 }))
 
-/** An account store this device already has, from an earlier session that quit cleanly. */
 async function storeHere(id: string) {
   const { MemoryStore } = await import('./memory-store')
   const mem = new MemoryStore(deviceOfStore(id))
@@ -198,7 +184,6 @@ async function storeHere(id: string) {
 
 const opens = (id: string) => crate.log.filter((line) => line === `open ${id}`).length
 
-/** The device id the crate's store of an account keeps, as this harness makes it. */
 const deviceOfStore = (id: string) =>
   Array.from(new TextEncoder().encode(id), (byte) => byte.toString(16))
     .join('')
@@ -248,7 +233,6 @@ describe('the hub asking the device id', () => {
     await settle()
     expect(crate.held?.account).toBe('local')
 
-    // Signed in: B holds the hub's socket and asks its device id at once (hub.connect).
     Object.assign(b.account, { user: { id: 'u1', syncVersion: 2 } })
     const device = bHub.deviceId()
     await settle(20)
@@ -284,7 +268,6 @@ describe('the way back to v1', () => {
     void b.runner.startLocal()
     await settle()
 
-    // Signed in to an account back on v1: every window drops the local engine and walks.
     Object.assign(b.account, { user: { id: 'u1', syncVersion: 1 }, token: 't' })
     const walked = b.runner.walkBack(() => true)
     await settle(200)
@@ -306,20 +289,17 @@ describe('a drop left waiting from a v1 sign-in', () => {
     const b = await aWindow()
     void b.runner.startLocal()
     await settle()
-    // Signed in to an account still on v1: sync.svelte runs leaveLocal (dropLocal) and v1.
     for (const one of [a, b]) {
       Object.assign(one.account, { user: { id: 'u1', syncVersion: 1 } })
       void one.runner.dropLocal()
     }
     await settle()
-    // Signed out: forgetWithSession asks signedOut only of a runner with accountNow.
     for (const one of [a, b]) {
       Object.assign(one.account, { user: null })
       if (one.runner.accountNow) await one.runner.signedOut('u1')
       void one.runner.startLocal()
     }
     await settle(1000)
-    // A's window closes, and B takes the store over.
     await a.runner.stop()
     crate.log.length = 0
     await settle(1500)
@@ -332,15 +312,12 @@ describe('a drop left waiting from a v1 sign-in', () => {
 
 describe('who holds the device store, and for how long', () => {
   test('a start in the wait of the way back keeps the store the way back lets go of (M3F-1)', async () => {
-    // No account to reach: a pass that asked would be signed out by its answer.
     vi.stubGlobal('fetch', () => new Promise(() => undefined))
     const a = await aWindow()
     let alive = true
-    // The account back on v1 with no token: the way back cannot be walked, and waits.
     Object.assign(a.account, { user: { id: 'u1', syncVersion: 1 }, token: null })
     const walked = a.runner.walkBack(() => alive)
     await settle(100)
-    // The account on v2 again: the session that walked is over, and the engine starts.
     alive = false
     Object.assign(a.account, { user: { id: 'u1', syncVersion: 2 }, token: 't' })
     void a.runner.start()
@@ -349,7 +326,6 @@ describe('who holds the device store, and for how long', () => {
     expect(a.runner.engine).not.toBeNull()
     expect((a.runner as unknown as { storeLead: unknown }).storeLead).not.toBeNull()
 
-    // Another window asks the device id: answered, and the engine's store stays open.
     const b = await aWindow()
     const bHub = await import('./hub.svelte')
     Object.assign(b.account, { user: { id: 'u1', syncVersion: 2 }, token: 't' })
@@ -366,7 +342,6 @@ describe('who holds the device store, and for how long', () => {
       const a = await aWindow()
       const aHub = await import('./hub.svelte')
       Object.assign(a.account, { user: { id: 'u1', syncVersion: 1 } })
-      // sync.start() leaves the local engine on every launch: `leaveLocal` -> `dropLocal`.
       const dropped = a.runner.dropLocal()
       await vi.advanceTimersByTimeAsync(100)
       await dropped

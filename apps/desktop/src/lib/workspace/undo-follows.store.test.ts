@@ -1,7 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 
-/** Undo after what happened since, and the tree's small refusals, on the real workspace. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../../../test/disk').Disk | null }))
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
@@ -31,7 +29,6 @@ async function fresh(files: Record<string, string>) {
   await workspace.loadTree()
 }
 
-/** The space's folder renamed, as `renameSpace` says it. */
 async function spaceRenamed(to: string) {
   const space = workspace.spaces[0]
   if (!space) throw new Error('no space')
@@ -102,7 +99,6 @@ describe('an undo that will not go', () => {
     await fresh({ '/s/x.md': 'words\n', '/s/older.md': 'older\n' })
     await workspace.rename('/s/older.md', 'old.md')
     await workspace.rename('/s/x.md', 'y.md')
-    // Moved where nothing said so, and something else at the name.
     d.files.delete('/s/y.md')
     await workspace.undoFileAction()
     expect(failed.retry).not.toBe(null)

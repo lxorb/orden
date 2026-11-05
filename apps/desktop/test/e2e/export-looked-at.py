@@ -1,15 +1,3 @@
-"""An export is looked at, not only downloaded.
-
-No drive read a picture back, and a note's PNG came out near-black with dark words
-(`svgOf` in export/image.ts): in an SVG image `:root` is the `<svg>`, so the tokens only
-`:root` gives took the dark side under the page's light ones. A chart in one had no
-namespace and drew as its labels run together, with paper left over below (`toXhtml`).
-A canvas took its colours off the window whatever Settings > Export > Appearance said
-(`chosenPalette` in canvas/picture.ts). And a page note exported within a plane's pause
-came out from before the last edits (`openTarget` in export/context.ts).
-
-    python apps/desktop/test/e2e/export-looked-at.py
-"""
 
 from __future__ import annotations
 
@@ -28,8 +16,6 @@ CHARTED = (
     "```chart\ntype: bar\nlabels: [a,b]\nseries:\n  - name: x\n    data: [1,2]\n```\n\nlast words\n"
 )
 
-#: A picture's bytes drawn on a canvas: how big it is, what colour its top left corner
-#: is, and how far down the last row that is not the corner's colour lies.
 READ = """
 async (encoded) => {
   const bytes = Uint8Array.from(atob(encoded), (one) => one.charCodeAt(0))
@@ -55,7 +41,6 @@ async (encoded) => {
 
 
 def exported(page: Page, row: str) -> tuple[bytes, str]:
-    """What a row of the palette hands over."""
     page.keyboard.press("Control+Shift+P")
     page.wait_for_selector(".palette input")
     page.keyboard.type(row, delay=1)
@@ -186,10 +171,8 @@ def page_note_at_once(browser: Browser) -> None:
     page.mouse.move(x + 150, y + 60, steps=30)
     page.mouse.up()
     page.keyboard.press("v")
-    # The plane commits 1.2 seconds after the hand stops, and nothing here waits that.
     drawn, _ = exported(page, "Export as PDF")
     say(f"  with a stroke {len(drawn)} bytes")
-    # A blank page of pdf-lib's comes to some 630 bytes.
     if len(drawn) < 800:
         wrong(f"the PDF is from before the stroke: {len(drawn)} bytes")
 

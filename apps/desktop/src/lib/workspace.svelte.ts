@@ -210,7 +210,6 @@ const PLACEHOLDER: Record<NewKind, string> = {
 
 export type { Heading } from './outline'
 
-// The first window's; each window has its own, see workspace/slot.ts.
 const STORAGE_KEY = 'nib:workspace'
 const TREE_KEY = 'nib:tree'
 // Short enough that a crash costs a moment's typing, long enough that the strip
@@ -853,7 +852,6 @@ class Workspace {
   restored = $state(false)
 
   async restore() {
-    // Nothing is written until this window has read what it would write over; see `slot`.
     this.sessionKey = null
     try {
       await this.readSitting()
@@ -876,18 +874,15 @@ class Workspace {
     if (!isNative && !isPlugin()) {
       try {
         const { seed } = await import('./web/commands')
-        // What the old address's handoff waits for; see first-visit.svelte.ts.
         if (await seed()) {
           ;(await import('./first-visit.svelte')).firstVisit.seeded()
           settings.setup = -1
         }
       } catch (error) {
-        // Not a reason to leave the session unread, and nothing written from here on.
         log('warn', `first visit: nothing seeded - ${String(error)}`)
       }
     }
 
-    // Whatever goes wrong here, a window is the first window, as it always was.
     const slots = await import('./workspace/slot').catch(() => null)
     const slot = (await slots?.takeSlot().catch(() => 0)) ?? 0
     this.sessionKey = slots?.sessionOf(slot) ?? STORAGE_KEY
@@ -995,44 +990,28 @@ class Workspace {
     markPainted('active tab painted')
   }
 
-  /** Writes from here on keep in step with the other windows; see workspace/across.ts. */
   meetOthers(across: Across) {
     this.saving.across = across
     meetAcross(across)
   }
 
-  /** How a write before that fetches it; see `acrossSoon` in workspace/saving.svelte.ts. */
   acrossWhenWriting(fetch: () => Promise<Across>) {
     this.saving.acrossSoon = fetch
     fetchAcross(fetch)
   }
 
-  /** A note's file says all its document does; see `wroteAll` in workspace/closed.svelte.ts. */
   wroteAll(path: string, key: string, words: string) {
     this.closed.wroteAll(path, key, words)
   }
 
-  /** A note's words are owed to its file: another window's merged in, say. */
   owedWords(note: NoteDoc) {
     this.saving.owed(note)
   }
 
-  /** Which of the app's windows this is, once `readSitting` has asked; see slot.ts. */
   private slot = 0
-  /** Where this window's session goes: nowhere while the slot is being asked for. */
   private sessionKey: string | null = STORAGE_KEY
-  /** The arrangement the session held, until it is in the window, and null from then on.
-   *
-   *  The rule for every piece of a session that comes back later than the session is read,
-   *  which the arrangement and the sets out of sight do (`setsRead`, and `drafted` in
-   *  workspace/sets.svelte.ts): until a piece is in, a write of the session writes it as it
-   *  was read. A launch reads a note at a time and the window can go at any of them, or a
-   *  restored note's write can ask for the session, and writing what is on screen by then
-   *  took the words of every draft with it. See `persist`. */
   private arriving: Layout | null = null
 
-  /** The words a window that is gone left in its session, as tabs here; see
-   *  workspace/sessions-left.ts. Nothing to fetch unless there is such an entry. */
   private async takeWhatWasLeft(slot: number) {
     try {
       const { LEAVING_GRACE, othersInStorage } = await import('./workspace/slot')
@@ -1049,8 +1028,6 @@ class Workspace {
           this.panes.focusedId,
         )
         this.tabs = [...this.tabs, ...tabs]
-        // Written down here before the entry that held them lets them go, and that entry
-        // stays where storage would not take them.
         if (!this.persist()) throw new Error('no room to write them down')
       })
       if (waiting) setTimeout(() => void this.takeWhatWasLeft(slot), LEAVING_GRACE)
@@ -1144,8 +1121,6 @@ class Workspace {
 
         const already = draft.path ? this.opened.at(draft.path) : null
         if (already) {
-          // Of this strip's tabs, one per document: a note typed in a launch's gap and a kill
-          // leave two of it in the session.
           const met = await this.wordsMeet(already, draft)
           made.push(made.find((one) => one?.note === met) ?? this.viewOf(met, paneId, draft))
           continue
@@ -1170,7 +1145,6 @@ class Workspace {
                 home: draft.space ?? null,
               })
 
-        // A click on the list got there first, and that read answered for this one too.
         if (draft.dirty && draft.path && !open.read && holdsWords(draft.kind)) {
           const back = note
             ? await this.wordsMeet(note, draft)
@@ -1207,16 +1181,9 @@ class Workspace {
   private sameDocument(draft: Draft): NoteDoc | null {
     const shared = draft.share ? this.opened.withKey(draft.share) : null
     if (shared && samePath(shared.path, draft.path)) return shared
-    // The other pane of a note that came back a moment ago, whatever it came back as.
     return draft.share ? this.opened.cameBackAs(draft.share) : null
   }
 
-  /** A draft against the file's document, open already and no other view of the same one: a
-   *  note clicked in the launch before the restore got to it, a closed tab of a note opened
-   *  again since. With unwritten words the draft is not a view of that document, and those
-   *  words are in nothing else. They go into it as `cameBack` brings them onto a file, with
-   *  a version of what it held; where they do not merge they stay a draft of their own
-   *  beside it. Answers the document the draft is a view of from here on. */
   private async wordsMeet(open: NoteDoc, draft: Draft): Promise<NoteDoc> {
     const words = unixLines(draft.doc)
     const path = draft.path
@@ -1227,7 +1194,6 @@ class Workspace {
     for (;;) {
       const holds = unixLines(open.latest)
       const merged = await wordsOnto(draft, open.kind, holds)
-      // Read over a round trip of its own: a key that landed in it is in what comes next.
       if (unixLines(open.latest) !== holds) continue
 
       let met = open
@@ -1249,8 +1215,6 @@ class Workspace {
     }
   }
 
-  /** One draft's document with words its file never got, against what the file says now;
-   *  see workspace/unwritten.ts. */
   private async unwrittenBack(draft: Draft): Promise<NoteDoc | null> {
     const path = draft.path
     if (path === null) return null
@@ -1268,7 +1232,6 @@ class Workspace {
         },
       },
     )
-    // Open by now by a way that did not wait for this read: the preview taking a note on.
     const open = back.path === null ? null : this.opened.at(back.path)
     if (open) return this.wordsMeet(open, draft)
 
@@ -1430,7 +1393,6 @@ class Workspace {
     const rescued = asked ? open.filter((tab) => tab.dirty) : open
     const inFront = asked ? null : this.active
 
-    // What it replaces can be reopened, as a tab closed by hand can, all of it at once.
     if (asked) {
       const batch = Date.now()
       for (const tab of open) {
@@ -1545,7 +1507,6 @@ class Workspace {
       // cost its whole length to write out, on every pause.
       doc: copied ? tab.doc : '',
       dirty: copied && tab.dirty,
-      // What those words were typed on, for a file that goes on without them.
       ...(copied && tab.dirty && tab.path !== null && tab.note.onDisk !== null
         ? { base: tab.note.onDisk }
         : {}),
@@ -1566,11 +1527,8 @@ class Workspace {
     }
   }
 
-  /** Answers whether the session is written down. */
   persist(): boolean {
     this.session.cancel()
-    // Before this window has its slot there is nothing here yet that the session holds
-    // and nothing to overwrite another window's with.
     if (this.sessionKey === null) return false
 
     const state: Session = {
@@ -1590,8 +1548,6 @@ class Workspace {
 
     const written = writeSession(this.sessionKey, state)
 
-    // The next launch is the first window's, and has nothing to read ahead from a window
-    // that has not got its tabs yet.
     if (this.slot !== 0 || this.arriving) return written
 
     // And what the next launch will ask for first, for the crate to read while the
@@ -2034,11 +1990,8 @@ class Workspace {
     }
   }
 
-  /** Drafts on their way to a file, which the session keeps until they have landed: a
-   *  window killed in between brings the draft back rather than losing it. */
   private readonly puttingAway = new Set<Tab>()
 
-  /** A draft off the screen now, and its file behind that; see `putAway` in placing.ts. */
   private putAwayWritten(tab: Tab) {
     const paneId = tab.paneId
     const at = Math.max(this.tabsIn(paneId).indexOf(tab), 0)
@@ -2048,7 +2001,6 @@ class Workspace {
     void import('./workspace/placing').then((one) => one.putAway(this, tab, paneId, at))
   }
 
-  /** A draft's file landed, or could not. */
   putAwayDone(tab: Tab, paneId: string, at: number) {
     this.puttingAway.delete(tab)
     this.closed.record({ draft: this.draftOf(tab), paneId, at })
@@ -3153,8 +3105,6 @@ class Workspace {
     const entry = this.entryAt(folder)
     const back = entry && unnesting(entry)
     if (!back) return
-    // The name above is taken, by a note beside the folder: it stays nested. Moving onto
-    // that was refused after the delete that brought this on had been done.
     if (this.entryAt(joinPath(back.into, nameOf(back.note)))) return
 
     await this.move(back.note, back.into, 'follows')
@@ -3279,7 +3229,6 @@ class Workspace {
     // not there yet opens blank - for a folder whose note nobody has written.
     const doc = found ?? ((await unread(path)) || !options.blank ? null : '')
     if (doc === null) return null
-    // Not there and meant not to be, so a first write is no file gone from under it.
     const unwritten = found === null
 
     // A preview reuses the one preview tab rather than opening another, and only
@@ -3729,7 +3678,6 @@ class Workspace {
         const [tab] = await this.tabsFrom([draft], paneId)
         if (!tab) continue
 
-        // Of a strip's tabs, one per document: its note was opened again since it closed.
         const there = this.tabsIn(paneId).find((one) => one.note === tab.note)
         if (there) {
           back = { tab: there, paneId }
@@ -3782,7 +3730,6 @@ class Workspace {
     this.saving.flush()
   }
 
-  /** The same, and whatever else holds words of its own; see saving.svelte.ts. */
   wordsNow() {
     this.saving.wordsNow()
   }
@@ -3940,8 +3887,6 @@ class Workspace {
     return root ? linkedFiles(this.tree, root, carriedRows(transfer)) : []
   }
 
-  /** Whether a move into `intoFolder` would make one of `paths` the instructions of the
-   *  space it is the top of, which is said to the reader and not done. */
   refusedAsInstructions(paths: string[], intoFolder: string): boolean {
     if (
       !paths.some((path) => isAgentsName(nameOf(path))) ||
@@ -3953,8 +3898,6 @@ class Workspace {
     return true
   }
 
-  /** Answers whether the move was made: every refusal here is said to the reader, and a
-   *  caller with a name still to give or a caller of its own has to know. */
   async moveMany(paths: string[], intoFolder: string, undoing = false): Promise<boolean> {
     // A note called AGENTS in a folder stays one, and moves between folders; at the top
     // of a space it would stop being a note and become the setting. Only an Undo puts one
@@ -3970,8 +3913,6 @@ class Workspace {
       this.clearSelection()
       return false
     }
-    // A row refused - something already has its name there - stays and is said, and the
-    // rest go on: it went as an unhandled rejection, with no word, taking the rest with it.
     const stayed: string[] = []
     await this.undone.batch(async () => {
       await this.nestFor(intoFolder, paths)
@@ -4752,8 +4693,6 @@ class Workspace {
       root: this.rootHolding(from),
       into: this.rootHolding(to),
     } as const
-    // In the file's turn: another window's write that has read it lands first or finds it
-    // gone, and does not put it back; see workspace/across.ts.
     await this.fileOps.doing(op, () =>
       inFileTurn(from, () => invoke('rename_note', { from, to, ...how })),
     )
@@ -4850,9 +4789,6 @@ class Workspace {
   /** Deletes, answering what puts it back; recorded by the caller. See `Binning`. */
   async bin(path: string, isFolder: boolean, how: Binning = {}): Promise<Kept | null> {
     const { source, madeHere = false } = how
-    // The snapshot is read from the disk, so whatever was typed in the last moment has
-    // to have reached it: Undo would put the note back without it.
-    // Not for ever: a disk that does not answer has no words to give it either.
     this.saving.wordsNow()
     await Promise.race([this.saving.settled(), waited(GIVE_UP)])
     // A deleted note keeps one last snapshot, so the delete is recoverable. A PDF
@@ -4894,8 +4830,6 @@ class Workspace {
     try {
       if (toAccount) {
         const back = crypto.randomUUID()
-        // In the file's turn: another window's write that has read it lands first or finds
-        // it gone, and does not put it back; see workspace/across.ts.
         await this.fileOps.doing({ ...gone, back }, () =>
           inFileTurn(path, () => invoke(isFolder ? 'delete_folder' : 'delete_note', { path })),
         )
@@ -4969,8 +4903,6 @@ class Workspace {
     })
   }
 
-  /** Whether what is under way has landed for an undo or a redo to go ahead; where it will
-   *  not, nothing is taken back, and the toast says so with the way to ask again. */
   private async landedFor(again: () => void): Promise<boolean> {
     if (await this.undone.landed()) return true
     const { failed } = await import('./views/failed.svelte')
@@ -5709,9 +5641,6 @@ class Workspace {
   async useLayout(name: string) {
     const layout = this.layouts.of(name)
     if (!layout) return
-    // A layout replaces what is open, and a terminal running something asks first, as
-    // for any way a tab closes (`mayClose`). A shell in the layout is a fresh one, so
-    // every terminal open now is one that goes.
     const kept = panesOf(layout.frame).flatMap((pane) => pane.tabs.map((tab) => tab.path))
     const going = this.tabs.filter(
       (tab) =>

@@ -22,9 +22,6 @@ export function csvValue(value: Value): string {
   return text(value)
 }
 
-/** A cell a spreadsheet would run as a formula, with an apostrophe in front, as OWASP
- *  has it: what a view holds may be a shared space's words, or a note's name. A number,
- *  a minus in front of it too, is still the number. */
 export function sheetSafe(cell: string): string {
   if (!/^[=+\-@\t\r]/.test(cell) || !Number.isNaN(Number(cell))) return cell
   return `'${cell}`

@@ -244,8 +244,6 @@ describe('the `[[` popup, in a nested space', () => {
   })
 })
 
-/** A name the wikilink grammar reads as something else: legal on the disk, and in
- *  Obsidian refused in a link for the same reason. */
 describe('a link to a note a wikilink cannot name', () => {
   const name = 'C# basics'
   const about = { name, path: 'f/C# basics.md', from: 'g/n.md' }

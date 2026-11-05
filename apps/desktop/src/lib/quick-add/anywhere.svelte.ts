@@ -76,8 +76,6 @@ export function listen(): () => void {
     )
   }
 
-  // A page that is not a secure context has no locks, and is the one window there is. Stopped
-  // before the lock came: another window answers, and still does.
   heldForLife(ANSWERING, answering, stopping.signal)
 
   return () => {

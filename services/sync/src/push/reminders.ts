@@ -39,12 +39,8 @@ const AT_ONCE = 200
 /** How long a reminder is kept after its minute, sent or not. */
 const KEPT_FOR = 86_400_000
 
-/** How long after a push no service took it is tried again, twice as long each time. */
 export const TRY_AGAIN_AFTER = 300_000
 
-/** How many times one reminder is pushed before it is given up on: at its minute and five,
- *  fifteen and thirty-five minutes after, which is long enough for a service to come back
- *  and short of a ring nobody can use. */
 export const MOST_TRIES = 4
 
 /** A note as this reads it. */
@@ -167,7 +163,6 @@ export async function keepReminders(env: Env, note: Saved, content: string, now 
     before.results.flatMap((one) => (one.sent_at === null ? [] : [[one.id, one.sent_at] as const])),
   )
   const waiting = new Set(before.results.filter((one) => one.sent_at === null).map((one) => one.id))
-  // And one waiting to be tried again keeps its wait: typing does not push it sooner.
   const tried = new Map(before.results.map((one) => [one.id, one]))
 
   const kept = remindersIn(
@@ -239,8 +234,6 @@ export async function sendDue(
     .bind(now - KEPT_FOR)
     .run()
 
-  // One not tried yet goes before one being tried again, so a service that is down for
-  // some holds up nobody else's.
   const { results: due } = await env.DB.prepare(
     `select r.note_id, r.id, r.user_id, r.at, r.title, r.body, r.path, r.hash, r.line, r.tries,
             s.name as space
@@ -302,12 +295,6 @@ export async function sendDue(
       !delivered.includes('failed') &&
       one.tries + 1 < MOST_TRIES
     ) {
-      // This run's claim let go of for a later one, only where every device that was asked
-      // answered that it did not take it, so no phone that rang rings again: one that
-      // failed beside one that rang stays without. Nothing on a device tells a repeat
-      // apart yet: `topic` replaces only a push still waiting, `apns-collapse-id` replaces
-      // the one shown, FCM has neither, and nothing calls `Reminders.known` for a push. So
-      // a connection lost after a service took the push can ring twice.
       await env.DB.prepare(
         `update push_reminders set sent_at = null, tries = ?, retry_at = ?
           where note_id = ? and id = ? and sent_at = ?`,

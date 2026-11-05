@@ -212,8 +212,6 @@ describe('a delete or a new folder the disk refuses', () => {
 })
 
 describe('a file waiting aside', () => {
-  // The name it waits under was spelled from its id, which a writer of a shared space
-  // chooses: `../../Private/AGENTS.md` took it into another space of this device.
   test.each(['../../Private/AGENTS.md', '..\\..\\Private\\AGENTS.md', 'C:evil', 'plain'])(
     'stays in its folder whatever its id is: %s',
     async (id) => {

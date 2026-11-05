@@ -38,8 +38,6 @@ def listed(page: Page) -> list[str]:
     page.evaluate("() => { window.nibApp.settings.show('general'); window.nibApp.settings.listing = true }")
     wait_for(page, "() => !!document.querySelector('[role=\"dialog\"][aria-label=\"Settings\"] nav button')",
              "the settings' sections")
-    # Under their sheets: `innerText` is empty in WebKit while one is on its way, and the
-    # rows are not drawn until then.
     wait_for(page, f"() => {LANDED}", "the settings' sheets")
     return page.evaluate(LISTED)
 

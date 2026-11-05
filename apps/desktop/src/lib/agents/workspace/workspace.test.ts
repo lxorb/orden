@@ -830,7 +830,6 @@ describe('the reader tabs', () => {
         result: { tabs: { id: string }[] }
       }
       expect(context.result.tabs.map((one) => one.id)).toEqual(['t1', 't2', 'w1'])
-      // A grant that reaches it hears of it as before.
       const every = (await call('workspace_tabs', { op: 'list' }, agent({ spaces: 'all' }))) as {
         result: { id: string }[]
       }
@@ -869,7 +868,6 @@ describe('the reader tabs', () => {
         code: 'site_denied',
       })
     }
-    // The longest rule wins, as `rule_for` has it.
     workspace.openPage.mockClear()
     const carved = agent({ sites: { 'evil.example': 'deny', 'ok.evil.example': 'allow' } })
     expect(
@@ -2119,8 +2117,6 @@ describe('a panel thread works in its own space', () => {
   })
 })
 
-/** A helper runs as the provider's built-in grant, which reaches every space and the
- *  terminal: an outside agent narrower than that is refused one, never lent the rest. */
 describe('run_agent from a narrower grant', () => {
   const FULL = [
     'context',

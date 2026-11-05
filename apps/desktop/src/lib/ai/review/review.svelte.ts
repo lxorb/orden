@@ -67,9 +67,7 @@ export interface ReviewPanel {
   release?(): void
 }
 
-/** One thing a rewind took back, in a form to do again. */
 type Taken =
-  /** Edits under a token of their own, wherever their notes have got to since. */
   | { kind: 'edits'; token: string; agents: string[] }
   | { kind: 'made'; id: string; path: string; words: string }
   | { kind: 'file'; file: FileChange }
@@ -77,14 +75,11 @@ type Taken =
 /** What a rewind took back, to put back with Redo until the next message. */
 interface Redo {
   thread: string
-  /** What is left to do again, the first taken back first; done from the end. */
   taken: Taken[]
   turns: Turn[] | null
-  /** The compaction those turns held up, which Redo brings back with them. */
   compaction?: Thread['compaction']
 }
 
-/** Said of a rewind or a Redo that left something as it was. */
 function saidShort(): void {
   busy.failed(t('Part of this could not be undone'))
 }
@@ -136,7 +131,6 @@ class Review {
   private marked = new WeakSet<NoteDoc>()
   private readonly draw = onceAFrame(() => this.pushMarks())
   private saidTimer: ReturnType<typeof setTimeout> | undefined
-  /** A Redo running, which a second press must not start again. */
   private puttingBack = false
 
   constructor() {
@@ -175,7 +169,6 @@ class Review {
     for (const agent of agents) {
       const away = aside ? tracksAside(agent) : []
       for (const [path, track] of [...tracksOf(agent), ...away]) {
-        // Whatever is open at the name of a note deleted is another note.
         const open = away.some(([, one]) => one === track) ? null : documentOf(path)
         if (open) track.follow(open)
         for (const id of track.ids) {
@@ -199,7 +192,6 @@ class Review {
     // A helper works on any provider in use (`run_agent`), so a thread with helpers reads
     // every built-in agent's edits; `changesOf` keeps those of its own threads.
     const agents = thread.helpers?.length ? undefined : providersOf(thread).map(agentOf)
-    // With those of a note deleted: a rewind puts it back on the way to them.
     return changesOf(thread, this.edits(agents, deleted), answeringAt, this.kept)
   }
 
@@ -245,7 +237,6 @@ class Review {
     return more
   }
 
-  /** The taking back itself: how many went beyond those asked, and whether any stayed. */
   private async take(
     changes: readonly Edit[],
     token?: string,
@@ -267,15 +258,11 @@ class Review {
     return { more, short }
   }
 
-  /** All of a thread's card taken back: the moves and deletes first, so that a note edited
-   *  and then deleted is there for its edits to go back in, which come back with it. */
   async undoAll(thread: Reviewed & Thread, files: readonly FileChange[]): Promise<void> {
     await this.undoFiles(thread, files)
     await this.undo(this.changes(thread, false))
   }
 
-  /** All of a thread's card kept, the edits of a note deleted with it: back, it does not
-   *  ask again about what was kept. */
   keepAll(thread: Reviewed, files: readonly FileChange[]): void {
     this.keep(this.changes(thread))
     this.keepFiles(files)
@@ -339,7 +326,6 @@ class Review {
     else this.following.add(thread.id)
   }
 
-  /** What was heard in a note goes with it, or its next step taken back reads as a landing. */
   private landedMoved(agent: string, was: string, path: string): void {
     const seen = this.landed.get(`${agent}\n${was}`)
     if (!seen) return
@@ -485,9 +471,6 @@ class Review {
     }
   }
 
-  /** Takes back a plan's steps in their order, each on its own: one refused - a name
-   *  somebody else has taken since - keeps none of the rest from going. Answers what
-   *  went, in a form to do again, and whether something stayed. */
   private async stepsBack(
     thread: Thread,
     steps: readonly Step[],
@@ -512,8 +495,6 @@ class Review {
         const gone = await this.unmake(thread, step.made)
         if (gone === 'stayed') short = true
         else if (gone) {
-          // Taken back, like a file change: a note the reader makes at the name after
-          // this is theirs, and the next rewind leaves it alone.
           this.filesDone.add(step.made.id)
           taken.push({ kind: 'made', id: step.made.id, ...gone })
         }
@@ -522,8 +503,6 @@ class Review {
     return { taken, short }
   }
 
-  /** A note the thread made, to Recently deleted, its words kept for Redo. Null where it
-   *  is not there to send, 'stayed' where it is and would not go. */
   private async unmake(
     thread: Thread,
     one: Made,
@@ -584,8 +563,6 @@ class Review {
     }
   }
 
-  /** One thing done again. Answers whether it left something as it was, and throws where
-   *  whatever comes after it would stand on what did not happen. */
   private async doAgain(one: Taken, thread: Thread): Promise<boolean> {
     if (one.kind === 'file') {
       await redoFile(one.file, thread)

@@ -2,12 +2,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { hash32 } from '@orden/sync-core/seed'
 
-/** Two windows of one desktop process on the crate, which holds one sync store at a time
- *  (sync_store.rs: `Stores(Mutex<Option<Held>>)`): opening another closes the one held,
- *  `sync_store_close` closes whatever is held, and reads and writes go to whatever is
- *  held. So one window at a time may run an engine, the one kept signed out as much as
- *  the account's, and no window closes a store it does not hold. */
-
 const crate = vi.hoisted(() => ({
   held: null as null | { account: string; session: import('./store').SyncStore },
   mems: new Map<string, unknown>(),
@@ -92,7 +86,6 @@ function memoryStorage(): Storage {
 }
 vi.stubGlobal('localStorage', memoryStorage())
 
-/** One lock holder at a time, shared by both windows. */
 function locksOf() {
   const holders = new Set<string>()
   const waiting = new Map<string, (() => void)[]>()
@@ -138,14 +131,12 @@ async function aWindow() {
 }
 type Window = Awaited<ReturnType<typeof aWindow>>
 
-/** Signing in, heard by a window: what sync.svelte.ts does with it. */
 function signIn(one: Window) {
   Object.assign(one.account, { user: { id: 'u1', syncVersion: 2 } })
   void one.runner.dropLocal()
   void one.runner.start()
 }
 
-/** Signing out, heard by a window: what account.svelte.ts and sync.svelte.ts do. */
 async function signOut(one: Window) {
   Object.assign(one.account, { user: null })
   await one.runner.signedOut('u1')
@@ -170,13 +161,11 @@ describe('two windows on one crate store', () => {
     await settle()
     expect(crate.held?.account).toBe('local')
 
-    // A is where the account signs in: it leads and opens u1.
     Object.assign(a.account, { user: { id: 'u1', syncVersion: 2 } })
     await Promise.all([a.runner.start(), a.runner.dropLocal()])
     expect(a.runner.engine).not.toBeNull()
     expect(crate.held?.account).toBe('u1')
 
-    // B hears it a moment later, as across.ts tells it.
     signIn(b)
     await settle()
 
@@ -233,14 +222,12 @@ describe('two windows on one crate store', () => {
 
       const [one, two] = first === 'leader' ? [a, b] : [b, a]
       const from = crate.log.length
-      // Both hear it, the one a moment after the other (workspace/across.ts).
       const leaving = signOut(one)
       await settle(5)
       await Promise.all([leaving, signOut(two)])
       await settle()
 
       expect(crate.held?.account).toBe('local')
-      // One engine kept signed out, in one window: one store opened for it.
       expect(crate.log.slice(from).filter((line) => line === 'open local')).toHaveLength(1)
       expect(wrong()).toEqual([])
       await a.runner.stop()

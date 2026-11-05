@@ -317,8 +317,6 @@ describe('blocks', () => {
     expect(run(insertCodeFence, 'text|')).toBe('text\n```\n\n```')
   })
 
-  /** Words glued to the closing fence close nothing: every line below read as code up
-   *  to the next fence, and a later code block came out inverted. */
   test('ends a block on its own line where words follow', () => {
     expect(run(insertCodeFence, 'one |two\nthree')).toBe('one \n```\n\n```\ntwo\nthree')
     expect(run(insertMathBlock, 'one |two')).toBe('one \n$$\n\n$$\ntwo')
@@ -326,7 +324,6 @@ describe('blocks', () => {
     expect(run(insertCodeFence, '|two')).toBe('```\n\n```\ntwo')
   })
 
-  /** Dashes straight under words are the underline of a heading. */
   test('sets a rule apart from the words above it', () => {
     expect(run(insertHorizontalRule, '[words]')).toBe('words\n\n---\n')
     expect(run(insertHorizontalRule, 'words|')).toBe('words\n\n---\n')
@@ -335,8 +332,6 @@ describe('blocks', () => {
     expect(run(insertHorizontalRule, '|')).toBe('---\n')
   })
 
-  /** Part of a list item, a quote or a heading is not words that can leave it: the marker
-   *  stays behind empty and the list comes apart. */
   test('goes below a line of structure rather than splitting it', () => {
     expect(run(insertCodeFence, '- [item]\n- two')).toBe('- item\n```\n\n```\n- two')
     expect(run(insertCodeFence, '> [quoted]')).toBe('> quoted\n```\n\n```')
@@ -350,7 +345,6 @@ describe('blocks', () => {
     expect(run(insertCodeFence, '[- one\n- two]')).toBe('```\n- one\n- two\n```')
   })
 
-  /** A line under a callout is more of it, and a line round a table is a row of it. */
   test('closes a callout with a blank line where words follow', () => {
     expect(run(insertCallout, '[hello] world')).toBe('> [!NOTE]\n> hello\n\n world')
     expect(run(insertCallout, 'one |two')).toBe('one \n> [!NOTE]\n> \n\ntwo')
@@ -409,7 +403,6 @@ describe('blocks', () => {
     expect(run(insertCodeFence, '[```\nx\n```]')).toBe('````\n```\nx\n```\n````')
   })
 
-  /** Nothing to wrap in a table's cells or a rule: the words stay and it goes below. */
   test('keeps the words of a selection a block has no room for', () => {
     expect(run(insertTable(1, 1), '[one\ntwo]\nthree')).toBe(
       'one\ntwo\n\n| Column 1 |\n| --- |\n|     |\n\nthree',

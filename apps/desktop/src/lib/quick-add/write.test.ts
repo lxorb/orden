@@ -85,8 +85,6 @@ describe('a task sent to a note by name', () => {
   })
 })
 
-/** The file at the top of a space is hidden from the notes `>` reads, so the name read as
- *  a note nobody has, and the task went into the instructions or made them. */
 describe('a task sent to the name the space keeps for its instructions', () => {
   test.each([['AGENTS'], ['agents'], ['AGENTS.md']])('%s is refused and said', async (note) => {
     disk.set('/space/AGENTS.md', 'the instructions')

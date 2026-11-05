@@ -385,7 +385,6 @@ describe('a pattern in a base somebody else could have written', () => {
   })
 
   test('a counted repeat that is not one is read as what it is', () => {
-    // No `u`: `\u{61}` is the letter u sixty-one times, and `+` over a group of one way.
     expect(patternAllowed(new RegExp('^(\\u{61})+$'))).toBe(true)
     expect(patternAllowed(/^\p{L}+$/u)).toBe(true)
   })
@@ -435,7 +434,6 @@ describe('a pattern in a base somebody else could have written', () => {
     try {
       expect(cellValue(base, 'formula.f', row, context)).toBe('z')
       now += 1000
-      // Each look at the clock sees 400 ms gone, so this read took them all.
       step = 400
       expect(cellValue(base, 'formula.f', row, context)).toBe('z')
       step = 0

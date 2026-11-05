@@ -154,7 +154,6 @@ function freeName(
     }
   }
 
-  // The number has to fit too: past `LONGEST_NAME` the feed carries a name no device reads.
   let name = heldName(wanted)
   for (;;) {
     const found = first(name)

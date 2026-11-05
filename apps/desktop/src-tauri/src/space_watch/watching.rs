@@ -129,8 +129,6 @@ impl Drop for Watch {
 }
 
 impl Watch {
-    /// Stops it and gives its watches back to the system before it answers. Dropping the
-    /// watcher does that only some time later, on notify's own thread.
     fn let_go(self) {
         self.shared.stop();
         let mut watcher = lock_watcher(&self.watcher);
@@ -140,7 +138,6 @@ impl Watch {
     }
 }
 
-/// A watcher on the roots that says nothing yet, and what it could not watch.
 pub struct Armed {
     shared: Arc<Shared>,
     roots: Arc<Vec<Root>>,
@@ -154,7 +151,6 @@ pub fn watch(roots: Vec<Root>, sink: Sink) -> Result<Watch, String> {
     armed(roots)?.start(sink)
 }
 
-/// Puts a watcher on `roots`.
 pub fn armed(roots: Vec<Root>) -> Result<Armed, String> {
     let roots = Arc::new(roots);
     let shared = Arc::new(Shared::new(roots.len()));
@@ -175,7 +171,6 @@ pub fn armed(roots: Vec<Root>) -> Result<Armed, String> {
 }
 
 impl Armed {
-    /// Starts it answering into `sink`.
     pub fn start(self, sink: Sink) -> Result<Watch, String> {
         let Self {
             shared,
@@ -201,11 +196,6 @@ impl Armed {
         })
     }
 
-    /// About to take the place of `old`, which stays with the caller to replace once this
-    /// one has started, so a watch that cannot start leaves the spaces watched as they were.
-    /// Past the limit of watched folders it is `old` holding the folders this one was
-    /// refused, and they are the same folders: `old` is let go here and this one armed again
-    /// once they are free, or it would watch next to nothing for the whole of the run (#481).
     pub fn replacing(mut self, old: &mut Option<Watch>) -> Self {
         if !self.unwatched.contains(&Some(Unwatched::Limit)) {
             return self;
@@ -322,7 +312,6 @@ fn work(
                 // between is missed: it is either in the reading or heard after it.
                 let unwatched = {
                     let mut watcher = lock_watcher(watcher);
-                    // Let go meanwhile: the folders are the next watch's now.
                     if shared.stopped() {
                         return;
                     }
@@ -633,7 +622,6 @@ mod tests {
         (watch, heard)
     }
 
-    /// How many of this process's inotify instances hold a watch on `dir`.
     #[cfg(target_os = "linux")]
     fn holders(dir: &Path) -> usize {
         use std::os::unix::fs::MetadataExt;
@@ -650,9 +638,6 @@ mod tests {
             .count()
     }
 
-    /// #481: a watch replaced past the limit of watched folders. The old one holds what
-    /// the new one was refused, so it is let go, there and then, and the new one armed
-    /// again; said after that, nothing is left out.
     #[cfg(target_os = "linux")]
     #[test]
     fn a_watch_refused_past_the_limit_is_armed_again_once_the_old_lets_go() {
@@ -676,7 +661,6 @@ mod tests {
         );
         let mut made = armed(spelled()).expect("armed");
         assert_eq!(holders(&root.join("Deep")), 2);
-        // What the system's limit would have said. Nothing here can lower it.
         made.unwatched[0] = Some(Unwatched::Limit);
 
         let (tell, heard) = channel();
@@ -692,8 +676,6 @@ mod tests {
         assert_eq!(first[0].unwatched, None);
     }
 
-    /// One that was not refused leaves `old` to the caller, and running, so a start that
-    /// fails has not cost the spaces their watch.
     #[cfg(target_os = "linux")]
     #[test]
     fn a_watch_not_refused_has_nothing_armed_twice() {

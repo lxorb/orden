@@ -326,10 +326,6 @@ jobs:
             --title "unstable on a phone · $VERSION" \
             --notes ""
 
-      # The tag's draft, which release.yml makes as a tag's run starts and publishes once the
-      # updater's manifest is on it: GitHub takes any number of drafts of one tag, so one
-      # workflow makes it. A tag starts both, and this one has built for minutes by now; the
-      # wait is for a runner queue, and running out of it is said rather than papered over.
       - name: Wait for the draft
         if: needs.version.outputs.rolling != 'true'
         run: |

@@ -40,10 +40,8 @@ const LONGEST_NAME: usize = 160;
 /// words and digits out of the page with it, and says next to nothing.
 const SHORTEST_ECHO: usize = 3;
 
-/// How far down a page's tree is walked.
 const DEEPEST: usize = 256;
 
-/// The mark a secret leaves in a name: the reader can see words are missing.
 const HIDDEN: &str = "[hidden]";
 
 /// The longest snapshot when none is asked for, in characters.
@@ -101,7 +99,6 @@ impl<'a> Node<'a> {
         spoken_role(raw)
     }
 
-    /// The nodes the engine says it built this one's name from.
     fn name_points_at(&self) -> Vec<u64> {
         self.raw
             .pointer("/name/sources")
@@ -158,9 +155,6 @@ impl<'a> Node<'a> {
     }
 }
 
-/// Whether a node of the tree holds words of its own a field's would be: a value, or being
-/// editable, as a region's words are in the nodes under it. A slider takes none, and a player's
-/// own controls are sliders the engine's scan has no account of.
 pub fn holds_words(raw: &Value) -> bool {
     let node = Node { raw };
     (node.value().is_some_and(|value| !value.is_empty()) && node.role() != "slider")
@@ -359,10 +353,7 @@ struct Forest<'a> {
     hung: HashMap<(usize, u64), usize>,
     /// The secret fields the page named.
     secret: &'a HashSet<(String, u64)>,
-    /// The secret fields' values, by the nodes whose names the engine builds out of them:
-    /// a node round the field, by part and node id, for `said_of`.
     echoes: HashMap<(usize, &'a str), Vec<String>>,
-    /// The same by part and backend node, for a name that points at the field.
     echoes_by_backend: HashMap<(usize, u64), Vec<String>>,
 }
 
@@ -451,10 +442,6 @@ impl<'a> Forest<'a> {
         named || node.value().is_some_and(|value| masked(&value))
     }
 
-    /// A node's name, with a mark for any secret's value the engine built it out of: a field
-    /// inside the node, or one its name points at (`aria-labelledby`). Only those: the same
-    /// words anywhere else are the page's own, and cutting them would let a field take `not`
-    /// out of `Do not pay`.
     fn said_of<'n>(&self, part: usize, node: &Node<'n>) -> Cow<'n, str> {
         let mut said = Cow::Borrowed(node.name());
         let id = node.raw.get("nodeId").and_then(Value::as_str);
@@ -471,7 +458,6 @@ impl<'a> Forest<'a> {
                     .flatten(),
             );
         }
-        // The longest first, so a value inside another is not taken out of it first.
         echoes.sort_by_key(|one| std::cmp::Reverse(one.len()));
         for echo in echoes {
             if said.contains(echo.as_str()) {
@@ -563,7 +549,6 @@ struct Writer<'a> {
     most: usize,
     truncated: bool,
     origin: &'a str,
-    /// How far down the tree the walk is.
     down: usize,
 }
 
@@ -583,7 +568,6 @@ impl Writer<'_> {
         if self.truncated {
             return;
         }
-        // Past this a tree is cut and says so, rather than run out of stack.
         if self.down >= DEEPEST {
             self.truncated = true;
             return;
@@ -725,7 +709,6 @@ fn search(
     wanted: &Wanted<'_>,
     found: &mut Found<'_>,
 ) {
-    // Past this a tree is not looked in, rather than run out of stack.
     if found.2 < DEEPEST {
         found.2 += 1;
         searched(forest, part, raw, holder, wanted, found);
@@ -1079,7 +1062,6 @@ mod tests {
         assert_eq!(named[0].name, "Pay with [hidden]");
     }
 
-    /// A `<label>` that holds a secret names another field: the engine says so as a native source.
     #[test]
     fn a_label_holding_a_secret_cuts_it_from_the_field_it_names() {
         let label = node("2", "LabelText", "Code 123456", 2, &["3"]);
@@ -1121,8 +1103,6 @@ mod tests {
         assert!(text.contains("Code [hidden]"), "{text}");
     }
 
-    /// A secret's value is cut only from a name built out of it. The same words anywhere
-    /// else are the page's, and a page or a frame could otherwise cut any it liked.
     #[test]
     fn a_secret_cuts_nothing_but_a_name_built_out_of_it() {
         let field = with(

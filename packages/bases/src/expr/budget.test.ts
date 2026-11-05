@@ -5,9 +5,6 @@ import { readBase } from '../base-file'
 import { contextAt, noteRow } from '../fixtures/rows'
 import type { Base } from '../types'
 
-/** A guarded base may not take the app with it, whatever it asks for: a pattern is
- *  only one way to spend a second. The steps are counted, so none of this asks a clock. */
-
 const LIST = '[1,2,3,4,5,6,7,8,9,10]'
 const nested = (depth: number): string => (depth === 0 ? '1' : `${LIST}.map(${nested(depth - 1)})`)
 
@@ -31,7 +28,6 @@ const formula = (source: string, guarded?: boolean) =>
   )
 
 describe('how much one evaluation of a guarded base may take', () => {
-  /** Each test on a second of its own. */
   let second = 0
   beforeEach(() => {
     second += 10_000
@@ -66,7 +62,6 @@ describe('how much one evaluation of a guarded base may take', () => {
         true,
       ),
     ).toBeNull()
-    // Asked of itself over a long list, which is every item against every other.
     expect(formula('"a".repeat(90000).split("").unique().length', true)).toBeNull()
   })
 
@@ -83,9 +78,7 @@ describe('how much one evaluation of a guarded base may take', () => {
     expect(formula(`(${list} == ${bomb('[acc, acc]')})`, true)).toBeNull()
     expect(formula(`list(${list}).length`, true)).toBe(2)
     expect(formula(`({"a": ${list}}).a.length`, true)).toBeNull()
-    // Handed out as it is, it would be walked by whatever draws the cell.
     expect(formula(list, true)).toBeNull()
-    // The same through an object, which `settled` leaves as it is.
     const objects = bomb('{"a": acc, "b": acc}')
     expect(formula(objects, true)).toBeNull()
     expect(formula(`(${objects} + "x").length`, true)).toBeNull()
@@ -103,7 +96,6 @@ describe('how much one evaluation of a guarded base may take', () => {
     const long = '"a".repeat(8000000)'
     const each = `"b".repeat(50000).split("").map(escapeHTML(${long}).length)`
     expect(formula(`${each}.length`, true)).toBeNull()
-    // Written out in a list, or joined by.
     const items = Array.from({ length: 300 }, () => 'acc').join(',')
     expect(formula(`[1].reduce([${items}], ${long}).toString().length`, true)).toBeNull()
     expect(formula(`[1,2,3,4,5,6,7,8].join(${long}).length`, true)).toBeNull()
@@ -181,7 +173,6 @@ describe('how much one evaluation of a guarded base may take', () => {
   })
 
   test('half of any second is what they may take together, and the next second is new', () => {
-    // A clock that moves a tenth of a second each time it is asked.
     let now = 1e7
     const clock = vi.spyOn(performance, 'now').mockImplementation(() => (now += 100))
     const under = '"a".repeat(10000).split("").length == 10000'

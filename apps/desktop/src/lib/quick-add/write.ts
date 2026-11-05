@@ -76,9 +76,6 @@ async function targetOf(entry: Entry, root: string): Promise<string | null> {
   const relative = insideOnly(`${entry.note.replace(/\.md$/i, '')}.md`)
   if (relative === null) return null
   const path = insideSpace(root, relative)
-  // What nobody may name a note, `>` cannot either, as a link cannot (`followLink`). The
-  // file at the top is hidden from the notes read above, and is written by content; one
-  // in a folder the listing missed is a note, and is asked of the disk below.
   if (isAgentsName(nameOf(path)) && (samePath(folderOf(path), root) || !(await onDisk(path)))) {
     void import('../reserved-name.svelte').then((one) => one.reservedName.tell(root))
     return null

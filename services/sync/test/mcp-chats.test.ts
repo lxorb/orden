@@ -209,7 +209,6 @@ describe('chats through the connector', () => {
     chat = second
     expect(await state(owner)).toEqual([])
 
-    // Named back by id, and by id it is the one that was meant.
     expect(await tool(key, 'post_message', { chat: second, text: 'for Private' })).toMatch(
       /^Posted in #thesis/,
     )

@@ -31,9 +31,6 @@ function rootOf(change: FileChange, thread: Pick<Thread, 'space'>): string | nul
   return space?.root ?? null
 }
 
-/** The steps a rewind's own sending of a made note to Recently deleted left on the tree's
- *  Undo. Not the thread's deletes: a note it deleted and then made again at that name has
- *  two, and it is the older that comes back. */
 const unmade = new WeakSet()
 
 /** The step that deleted `path`, newest first, if it is still on the stack: on its own,
@@ -46,7 +43,6 @@ function deletion(path: string): Extract<FileAction, { kind: 'delete' }> | null 
   return null
 }
 
-/** The delete of `path` just made was a rewind's, of a note the thread made. */
 export function markUnmade(path: string): void {
   const step = deletion(path)
   if (step) unmade.add(step)
@@ -80,8 +76,6 @@ export async function undoFile(
     cameBackAt.set(change, back)
     await workspace.fileCame(back, 'file', undefined, undefined, true)
     await workspace.loadTree()
-    // Something else took the name since, so it came back beside that, and its track with
-    // it (`tracksCame`): where it is now is worth saying.
     if (!samePath(back, insideSpace(root, change.path))) {
       busy.failed(t('Back as {name}', { name: shownName(nameOf(back)) }))
     }

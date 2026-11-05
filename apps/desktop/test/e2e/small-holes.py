@@ -1,12 +1,3 @@
-"""Three small things a hand runs into, each in the real app.
-
-Undo of a delete made straight after typing put the note back without the last words
-(`bin` in workspace.svelte.ts). The palette's Rename promised F2, which only a focused
-tab or row hears (commands.ts). And a bare Enter could be taken as an app key, after
-which no note made a new line until it was reset (`refuse` in shortcuts.svelte.ts).
-
-    python apps/desktop/test/e2e/small-holes.py
-"""
 
 from __future__ import annotations
 
@@ -23,7 +14,6 @@ def delete_after_typing(page: Page) -> None:
     page.locator(".cm-content").first.click()
     page.keyboard.press("Control+End")
     page.keyboard.type(" last words", delay=1)
-    # In the same breath as the last key, as an agent or a `files` verb deletes.
     path = page.evaluate(
         """async () => {
           const ws = window.nibApp.workspace

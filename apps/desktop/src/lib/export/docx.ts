@@ -726,9 +726,6 @@ function runningOf(paper: PaperTwips) {
   }
 }
 
-/** A note or a sheet with every string in it as XML can carry it: the library writes what
- *  it is handed. All but `picture`, which is never written and is what finds a picture by
- *  the `src` the note spelled. */
 function legalStrings<T>(value: T): T {
   if (typeof value === 'string') return legalXml(value) as T
   if (Array.isArray(value)) return value.map(legalStrings) as T

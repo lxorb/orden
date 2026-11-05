@@ -57,8 +57,6 @@ export function safeName(title: string): string {
     // called `Plans.` would be written and then not found again.
     .replace(/[. ]+$/, '')
     .trim()
-    // A dot at the start hides a file from the tree and from sync. Not simply taken off:
-    // `.NET plan` beside a page called `NET plan`, which keeps its name whichever comes first.
     .replace(/^\.+ *(?=.)/, '_')
     .replace(/^\.+$/, '')
 

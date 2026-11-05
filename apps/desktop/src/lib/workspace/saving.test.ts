@@ -388,7 +388,6 @@ describe('the window going while the typing is still warm', () => {
 })
 
 describe('Ctrl+S', () => {
-  /** The session goes on after a save, so it must not say it ended. */
   test('runs nothing that only the end of the session may', async () => {
     const { saving } = open(`${SPACE}/ended.md`)
     const ended = vi.fn()

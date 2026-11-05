@@ -191,7 +191,6 @@ describe('a picture beside words on the clipboard', () => {
     expect(wordsBesidePicture('<img src="https://x.co/a.png" alt="a">', '')).toBe(false)
     expect(wordsBesidePicture('<img src="https://x.co/a.png" alt="a">', 'a')).toBe(false)
     expect(wordsBesidePicture(`${STYLE}<p><img src="a.png"></p>`, 'a.png')).toBe(false)
-    // A file from a file manager: its name beside it.
     expect(wordsBesidePicture('', 'photo.png')).toBe(false)
   })
 })

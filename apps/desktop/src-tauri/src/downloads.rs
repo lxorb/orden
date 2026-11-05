@@ -1233,9 +1233,6 @@ mod progress {
         };
         let state = text(params, "state");
         if state.as_deref() != Some("inProgress") {
-            // A completed one is the runtime's to say. One that broke is nobody else's:
-            // the runtime says nothing of an interruption (a 404, a connection reset), so
-            // it would stay going for good, its tab kept and its name taken.
             let broke = (state.as_deref() != Some("completed"))
                 .then(|| matched(&mut begun, at).zip(Some(begun[at].url.clone())))
                 .flatten();
@@ -1262,8 +1259,6 @@ mod progress {
         }
     }
 
-    /// A download the engine gave up on, ended in the list as failed, as `heard` ends one
-    /// the runtime said failed.
     fn broke_off(app: &AppHandle, window: &str, id: u64, url: &str) {
         let downloads = held(app);
         let Some(path) = downloads.going_to(id) else {

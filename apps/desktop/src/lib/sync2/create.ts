@@ -218,9 +218,6 @@ export function moved(core: Core, space: SpaceState, from: string, to: string): 
   return changes
 }
 
-/** The name a move to `to` leaves an entry: moved and not renamed keeps the account's, which
- *  a name this platform spells its own way here is not: `CON` on Windows would become `_CON`
- *  on every device. */
 function keptName(space: SpaceState, entry: EntryRow, from: string, to: string): string {
   const had = space.shown().entries.get(entry.id)?.name
   return had !== undefined && nameOf(from) === nameOf(to) ? had : nameOf(to)

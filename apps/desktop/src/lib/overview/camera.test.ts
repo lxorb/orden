@@ -122,7 +122,6 @@ test('a box is on view while its middle is, at the camera’s own zoom', () => {
   expect(isOnView(still, box, room)).toBe(false)
   expect(isOnView({ x: -1500, y: 0, zoom: 1 }, box, room)).toBe(true)
   expect(isOnView({ x: 0, y: 0, zoom: 0.4 }, box, room)).toBe(true)
-  // A sliver at the edge is not somewhere to open at.
   expect(isOnView({ x: -600, y: 0, zoom: 1 }, box, room)).toBe(false)
 })
 

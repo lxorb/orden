@@ -1,7 +1,3 @@
-/** A tab that comes back with words its file never got, against what the file says now:
- *  a window killed before the pause, and a tab closed a moment after its last keystroke.
- *  H3-WINDOWS-3 and H3-DESKTOP-2. */
-
 import { describe, expect, test, vi } from 'vitest'
 import type { Draft } from './session'
 import { cameBack } from './unwritten'
@@ -192,8 +188,6 @@ describe('a share not answering at the launch', () => {
 })
 
 describe('a file back at the version the words were typed on', () => {
-  /** The words landed, the session did not hear, and somebody took them out again: from
-   *  here that is a write that never landed, so the file is kept before it is replaced. */
   test('is kept as a version before they go down', async () => {
     const { desk, keepVersion } = disk(BASE)
     await cameBack(draft(), desk)

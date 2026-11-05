@@ -53,7 +53,6 @@ function getter(property: string): Getter {
         try {
           return compiled.run(scope)
         } catch {
-          // Whatever one row made of it, `toFixed(200)` included, is that row's.
           return null
         }
       },
