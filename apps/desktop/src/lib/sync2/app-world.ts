@@ -11,6 +11,7 @@ import { INBOX_PATH } from '@orden/bases/inbox'
 import { api, BASE } from '../api'
 import { fileBytes, sha256, toBase64 } from '../bytes'
 import { deviceName } from '../device'
+import { mountOf } from '../internal/roots'
 import { links } from '../link-index.svelte'
 import { onDisk } from '../on-disk'
 import { holderOf } from '../pages/held'
@@ -126,6 +127,16 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[]> {
   const inside = (path: string): string | null => {
     const at = path.replace(/\\/g, '/')
     return at.startsWith(`${base}/`) ? at.slice(base.length + 1) : null
+  }
+  // A space Orden keeps itself is its folder's index, every file in it (#1068).
+  const kept = mountOf(root)
+  if (kept) {
+    const top = kept.inside ? `${kept.inside}/` : ''
+    return (await kept.mount.folder.list()).flatMap(({ path, entry }) =>
+      path.startsWith(top) && path !== kept.inside
+        ? [{ path: path.slice(top.length), dir: !entry.key }]
+        : [],
+    )
   }
   // On a desktop, everything in the folder - pictures and recordings with the notes -
   // from the crate's own scan, which leaves out the dotted files that are the app's own.

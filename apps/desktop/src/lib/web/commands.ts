@@ -31,7 +31,19 @@ import {
 } from '@orden/markdown/links'
 import { assetType } from './asset-route'
 import { isReserved } from '../naming'
-import { assets, type FileRow, files, KEEP, meta, snapshots, stats } from './store'
+import {
+  assets,
+  type FileRow,
+  files,
+  KEEP,
+  keepsOwnRows,
+  meta,
+  snapshots,
+  stats,
+  treeAt,
+  type TreeRows,
+  trees,
+} from './store'
 import { markSeedSpace, markSeeded, wasSeeded } from '../seeded'
 import { breathe } from '../breathe'
 import { WELCOME, WELCOME_PATH, WELCOME_SPACE } from '../welcome'
@@ -242,7 +254,7 @@ async function tree(root: string, options: TreeOptions = {}): Promise<Entry> {
  *  of these as bytes (`kindOfName` in sync-core makes a base and a sidecar a file).
  *  Whatever arrives as bytes for one of them goes to `files`, so there is one place
  *  each path's words are, whoever wrote them. */
-function readsAsText(path: string): boolean {
+export function readsAsText(path: string): boolean {
   return (
     isMarkdown(path) ||
     isCanvas(path) ||
@@ -318,6 +330,12 @@ async function renameNote(from: string, to: string, hold = false, alone = false)
   const target = normalise(to)
   if (source === target) return
 
+  const tree = treeAt(source, target)
+  if (tree) {
+    await renameInTree(tree, source, target, hold, alone)
+    return
+  }
+
   // Before anything moves; see `paperInTheWay`. `hold` is the window turning a PDF into
   // its page note, the one move that may put a PDF where a page note takes it.
   const turning = hold && isPdf(target) && parent(source) === parent(target)
@@ -356,6 +374,41 @@ async function renameNote(from: string, to: string, hold = false, alone = false)
   // too: sync carries the paper with the note and never as an entry of its own (#551).
   // Its highlights are one, which sync moves by a move of their own.
   if (isPages(source)) await renamePaper(paperOf(source), paperOf(target), !alone)
+}
+
+/** `renameNote` in a store that keeps folders of its own (#1068, step 4c): the same
+ *  refusals, and then each thing moved as one step there - the file or the folder with
+ *  everything in it, a PDF's highlights, a page note's paper - so nothing moved changes
+ *  its identity on the way. */
+async function renameInTree(
+  tree: TreeRows,
+  source: string,
+  target: string,
+  hold: boolean,
+  alone: boolean,
+) {
+  const turning = hold && isPdf(target) && parent(source) === parent(target)
+  const there = await paperInTheWay(source, target)
+  if (there && !turning) throw new Error(`${there} is already there`)
+  if (!(await stats.holds(source))) throw new Error('nothing to rename')
+
+  await tree.move(source, target)
+
+  if (isPdf(source) && !alone) await besideInTree(tree, sidecarOf(source), sidecarOf(target))
+  if (isPages(source)) {
+    const paper = paperOf(source)
+    if (await besideInTree(tree, paper, paperOf(target))) {
+      if (!alone) await besideInTree(tree, sidecarOf(paper), sidecarOf(paperOf(target)))
+    }
+  }
+}
+
+/** What goes with a file that moved, moved after it, where it is and its new name is
+ *  free: quiet otherwise, as `renamePaper` is. Answers whether it moved. */
+async function besideInTree(tree: TreeRows, source: string, target: string): Promise<boolean> {
+  if (!(await stats.holds(source)) || (await stats.holds(target))) return false
+  await tree.move(source, target)
+  return true
 }
 
 /** The file a rename or a copy of `source` to `target` would put a page note and its
@@ -409,8 +462,10 @@ async function copyPath(from: string, to: string) {
 
   const under = (one: string) => one === source || one.startsWith(`${source}/`)
   const copied = (one: string) => target + one.slice(source.length)
-  const notes = (await files.all()).filter((row) => under(row.path))
-  const pictures = (await assets.all()).filter((row) => under(row.path))
+  // By path first, and only what is under the source read: every picture in the store
+  // was read, and decoded, to copy one note.
+  const notes = await rowsOf((await files.paths()).filter(under), files.get)
+  const pictures = await rowsOf((await assets.paths()).filter(under), assets.get)
   if (!notes.length && !pictures.length) throw new Error('nothing to copy')
 
   for (const row of notes) {
@@ -419,6 +474,16 @@ async function copyPath(from: string, to: string) {
   for (const row of pictures) await assets.put({ ...row, path: copied(row.path), modified: now() })
 
   await copyHeld(source, target)
+}
+
+/** The rows at `paths`, read one at a time, leaving out any gone meanwhile. */
+async function rowsOf<T>(paths: readonly string[], get: (path: string) => Promise<T | undefined>) {
+  const out: T[] = []
+  for (const path of paths) {
+    const row = await get(path)
+    if (row) out.push(row)
+  }
+  return out
 }
 
 /** What a file holds, copied with it: a PDF's highlights, and a page note's paper
@@ -438,6 +503,11 @@ async function copyHeld(source: string, target: string) {
 
 async function removeFolder(path: string) {
   const base = normalise(path)
+  const tree = treeAt(base)
+  if (tree) {
+    await tree.remove(base)
+    return
+  }
   const under = (one: string) => one === base || one.startsWith(`${base}/`)
 
   for (const one of (await files.paths()).filter(under)) await files.remove(one)
@@ -455,6 +525,11 @@ async function removeEmptyFolder(path: string) {
   const held = [...(await files.paths()), ...(await assets.paths())].filter(inside)
 
   if (held.some((one) => basename(one) !== KEEP)) return
+  const tree = treeAt(base)
+  if (tree) {
+    if (await stats.holds(base)) await tree.remove(base)
+    return
+  }
   for (const one of held) await files.remove(one)
 }
 
@@ -509,15 +584,37 @@ function entryOf(value: unknown): TrashEntry | null {
   return { id, kind, name, from, trashedAt, ...(apart === true ? { apart } : {}) }
 }
 
+/** Every trashed thing: this browser's, and what each store with a tree of its own holds
+ *  in its own trash. */
 async function trashEntries(): Promise<TrashEntry[]> {
+  const kept = (await Promise.all(trees().map((tree) => tree.trash.list()))).flat()
+  return [...(await ownTrash()), ...kept]
+}
+
+/** The store with a tree of its own whose trash holds `id`, or null for this browser's. */
+async function trashOf(id: string): Promise<TreeRows | null> {
+  for (const tree of trees()) {
+    if ((await tree.trash.list()).some((one) => one.id === id)) return tree
+  }
+  return null
+}
+
+/** This browser's own trash: what its manifest says. None on a desktop, which keeps
+ *  only what is mounted as rows. */
+async function ownTrash(): Promise<TrashEntry[]> {
+  if (!keepsOwnRows()) return []
   const held = parsed((await meta.get('trash')) ?? null)
   if (!Array.isArray(held)) return []
 
   return held.map(entryOf).filter((one): one is TrashEntry => one !== null)
 }
 
+/** This browser's manifest, written again without whatever a tree keeps itself. */
 async function saveTrash(entries: TrashEntry[]) {
-  await meta.put('trash', JSON.stringify(entries))
+  const kept = new Set(
+    (await Promise.all(trees().map((tree) => tree.trash.list()))).flat().map((one) => one.id),
+  )
+  await meta.put('trash', JSON.stringify(entries.filter((one) => !kept.has(one.id))))
 }
 
 async function occupied(path: string): Promise<boolean> {
@@ -584,6 +681,8 @@ async function trashItem(path: string, kind: string, alone = false): Promise<Tra
 
   const id = `${now()}-${trashCounter++}`
   const name = basename(source)
+  const tree = treeAt(source)
+  if (tree) return trashInTree(tree, source, { id: `internal-${id}`, kind, name, alone })
   await renameNote(source, `${TRASH}/${id}/${name}`, false, alone)
 
   const entry = {
@@ -598,6 +697,28 @@ async function trashItem(path: string, kind: string, alone = false): Promise<Tra
   return entry
 }
 
+/** `trashItem` in a store with a tree of its own: the thing and what goes with it into
+ *  that store's trash in one step, as a rename into the trash takes them here. */
+async function trashInTree(
+  tree: TreeRows,
+  source: string,
+  item: { id: string; kind: string; name: string; alone: boolean },
+): Promise<TrashEntry> {
+  const beside: string[] = []
+  if (isPdf(source) && !item.alone) beside.push(sidecarOf(source))
+  if (isPages(source))
+    beside.push(paperOf(source), ...(item.alone ? [] : [sidecarOf(paperOf(source))]))
+  const entry = {
+    id: item.id,
+    kind: item.kind,
+    name: item.name,
+    trashedAt: now(),
+    ...(item.alone ? { apart: true } : {}),
+  }
+  if (!(await tree.trash.take(source, entry, beside))) throw new Error('nothing is there')
+  return { ...entry, from: source }
+}
+
 /** Words that never had a file, in the trash as a note deleted from `path` would be;
  *  see `trash_words` in trash.rs. */
 async function trashWords(path: string, content: string): Promise<TrashEntry> {
@@ -606,6 +727,12 @@ async function trashWords(path: string, content: string): Promise<TrashEntry> {
 
   const id = `${now()}-${trashCounter++}`
   const name = basename(source)
+  const tree = treeAt(source)
+  if (tree) {
+    const entry = { id: `internal-${id}`, kind: 'note', name, trashedAt: now() }
+    await tree.trash.words(source, content, entry)
+    return { ...entry, from: source }
+  }
   await writeNote(`${TRASH}/${id}/${name}`, content)
 
   const entry = { id, kind: 'note', name, from: source, trashedAt: now() }
@@ -617,6 +744,16 @@ async function restoreTrash(id: string): Promise<string> {
   const entries = await trashEntries()
   const entry = entries.find((one) => one.id === id)
   if (!entry) throw new Error('nothing to restore')
+
+  const tree = await trashOf(id)
+  if (tree) {
+    const target =
+      entry.apart && (await rejoinsHighlights(entry.from))
+        ? entry.from
+        : await freeSpot(entry.from, entry.kind === 'note')
+    await tree.trash.restore(id, target)
+    return target
+  }
 
   const held = `${TRASH}/${entry.id}/${entry.name}`
   const rest = entries.filter((one) => one.id !== id)
@@ -644,6 +781,11 @@ async function rejoinsHighlights(pdf: string): Promise<boolean> {
 }
 
 async function purgeTrash(id: string) {
+  const tree = await trashOf(id)
+  if (tree) {
+    await tree.trash.purge(id)
+    return
+  }
   await removeFolder(`${TRASH}/${id}`)
   await saveTrash((await trashEntries()).filter((one) => one.id !== id))
 }

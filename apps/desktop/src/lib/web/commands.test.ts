@@ -29,6 +29,10 @@ const disk = vi.hoisted(() => {
 
 vi.mock('./store', () => ({
   KEEP: '.keep',
+  // Nothing mounted with a tree of its own: every row is this browser's.
+  treeAt: () => null,
+  trees: () => [],
+  keepsOwnRows: () => true,
   files: {
     get: (path: string) => Promise.resolve(disk.files.get(path)),
     all: () => Promise.resolve([...disk.files.values()]),

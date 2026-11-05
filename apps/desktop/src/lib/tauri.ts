@@ -66,12 +66,26 @@ if (isNative) void import('./native')
 export const asking = new Map<number, { command: string; at: number }>()
 let calls = 0
 
+/** The spaces a desktop keeps itself (#1068): what says whether a call names one, and
+ *  where a file in one is, set by the first one mounted (internal/roots.ts). Nothing of
+ *  that is loaded before, so a desktop with none asks nothing more than it did. */
+export const internal: {
+  routed: ((command: string, args?: Record<string, unknown>) => boolean) | null
+  file: ((path: string) => string | null) | null
+} = { routed: null, file: null }
+
 /** The browser build answers the same commands from its own storage, so every
- *  call site reads the same on all three. */
+ *  call site reads the same on all three - and so does a space a desktop keeps itself,
+ *  whose file commands are answered by those same commands over its own folder
+ *  (internal/route.ts, #1068). */
 export async function invoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   if (!isNative) {
     const { webInvoke } = await import('./web/commands')
     return webInvoke<T>(command, args)
+  }
+  if (internal.routed?.(command, args)) {
+    const { internalInvoke } = await import('./internal/route')
+    return internalInvoke<T>(command, args)
   }
 
   const call = ++calls
@@ -198,7 +212,9 @@ export function assetUrl(path: string): string {
     window as unknown as { __TAURI_INTERNALS__?: { convertFileSrc?: (p: string) => string } }
   ).__TAURI_INTERNALS__
 
-  return internals?.convertFileSrc?.(path) ?? path
+  // A picture in a space Orden keeps itself is a file under a name of its own.
+  const file = internal.file?.(path) ?? path
+  return internals?.convertFileSrc?.(file) ?? file
 }
 
 /** What the asset protocol's addresses look like on the way back. Two shapes,

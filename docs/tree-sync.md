@@ -132,12 +132,32 @@ good - is made again under a new id with what its file says, never left unsent.
 
 ## Storage of its own
 
-A space whose files Orden keeps itself, by id, is to answer the same file commands a
-folder does (#1068, step 4c), through the browser build's own: its commands
+A space whose files Orden keeps itself answers the same file commands a folder does
+(#1068, step 4c), through the browser build's own: its commands
 (apps/desktop/src/lib/web/commands.ts) read and write rows keyed by path, and a store of
 rows can be mounted at a folder (`mountRows` in web/store.ts), so what is at or under it
 is that store's and not the browser's. A read of every row is every store's, in path
-order. Nothing is mounted yet: every row is the browser's, as it always was.
+order.
+
+Such a space is a folder of Orden's own (apps/desktop/src/lib/internal): every file's
+bytes are `entries/<key>`, a key given when the file is made and never read a name off,
+and one index says which path each key is at, with the folders and the space's own
+Recently deleted. The index is written whole into the older of two slots, as a new file,
+so a write cut short leaves the one before; every window of the app changes it under one
+lock and tells the others, which read it again before they answer. A rename or a move is
+the index written again and no byte moves; a delete into the trash keeps the bytes, so
+what comes back from it comes back under its keys, and so under the ids the engine
+remembers it by (step 3a). Every change is said by what made it, exactly, as a folder's
+watcher would hear it (`heard`).
+
+On a desktop `invoke` sends the file commands for a path in such a space to those
+commands over its folder, and every path is turned into the browser's spelling on the way
+in and back on the way out (internal/route.ts); Recently deleted lists both sides. A call
+that would go from one such space to somewhere else is refused rather than made by the
+crate, and so is any path in no mounted store, so a call site that was missed fails
+loudly instead of writing where nothing of the space is. The engine's disk is the same
+commands, so its moves are index lines too, and the first pass of such a space lists the
+index. Nothing mounts one yet.
 
 ## What is kept about an entry
 
