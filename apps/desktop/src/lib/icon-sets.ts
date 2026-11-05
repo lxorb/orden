@@ -24,8 +24,9 @@
  *  - **Fluent Emoji High Contrast.** The emoji again, drawn in one colour (#1097): the
  *    one thing the platform's font cannot do is draw a face in the text's colour, so a
  *    row can wear 🤔 the way it wears a line, in either theme and in a tint. Microsoft's,
- *    MIT. Not cells of its own in the picker but the emoji's own, drawn as outlines when
- *    somebody asks for them; see `loadOutlines`.
+ *    MIT, with what it does not draw filled in out of Google's Noto Emoji (OFL). Not cells
+ *    of its own in the picker but the emoji's own, drawn as outlines when somebody asks for
+ *    them; see `loadOutlines`.
  *
  *  Two coloured sets with real breadth were weighed and refused on size: Twemoji
  *  (10.5 MB, CC-BY-4.0) and Fluent Emoji Flat (9.2 MB, MIT) both redraw the emoji
@@ -54,6 +55,7 @@ import {
   writtenIcon,
 } from './icons'
 import { key } from './i18n.svelte'
+import { outlineName, plain } from './outline-names'
 
 /** Lucide's own tags: what each of its icons is *for*, in the words people look for
  *  it by. 14,545 of them over 1,799 icons, and the angle carries "math", which is the
@@ -217,13 +219,6 @@ async function loadEmojiWords(): Promise<Map<string, string>> {
   )
 }
 
-/** An emoji without the selector that asks a platform to draw it in colour rather
- *  than as a glyph. The two lists disagree about it on 142 of them - ❤️ against ❤ -
- *  and it is not a character anybody searches by. */
-function plain(emoji: string): string {
-  return emoji.replace(/\uFE0F/g, '')
-}
-
 async function loadEmoji(): Promise<LoadedSet> {
   const [groups, said] = await Promise.all([
     import('unicode-emoji-json/data-by-group.json'),
@@ -380,15 +375,16 @@ async function loadFlatColour(): Promise<LoadedSet> {
   return { ...iconify(collection.default, tags), place: (name) => placed.get(name) ?? null }
 }
 
-/** An Iconify collection with the other names some of its drawings go by. */
+/** An Iconify collection with the other names some of its drawings go by, each its
+ *  parent's drawing turned over where it says so: 👉 is 👈 flipped. */
 interface Aliased extends IconifyCollection {
-  aliases?: Record<string, { parent: string }>
+  aliases?: Record<string, { parent: string; hFlip?: boolean; vFlip?: boolean }>
 }
 
-/** An emoji as Iconify's `chars.json` keys it: its code points in hex, joined by dashes. */
-function codePoints(emoji: string): string {
-  // Code points on purpose: the file keys a family by each of its parts.
-  return Array.from(emoji, (one) => one.codePointAt(0)?.toString(16) ?? '').join('-')
+/** A drawing turned over in its own box, the way an alias asks. */
+function flipped(body: string, wide: number, tall: number, h: boolean, v: boolean): string {
+  if (!h && !v) return body
+  return `<g transform="translate(${h ? wide : 0} ${v ? tall : 0}) scale(${h ? -1 : 1} ${v ? -1 : 1})">${body}</g>`
 }
 
 /** A drawing's clip paths and masks under ids of its own. The set reuses one id across
@@ -416,19 +412,24 @@ function ownIds(body: string, name: string): string {
  *
  *  Chosen over the other monochrome sets that cover the emoji: Noto's monochrome emoji
  *  ships as a font, which would put a second emoji font in the app to draw one icon, and
- *  OpenMoji's black set is CC BY-SA, attribution and share-alike both, against MIT. What it does not draw: the flags (262 of them, none in any colour of one),
- *  the newest emoji, and a few of the families; those stay the colour emoji they are.
+ *  OpenMoji's black set is CC BY-SA, attribution and share-alike both, against MIT. What
+ *  it does not draw - the flags, the newest emoji, the families and couples - and the one
+ *  drawing that fills its box are drawn out of Noto's font at build time instead, so every
+ *  emoji has an outline; see emoji-outlines.ts.
  *
  *  Matched to the emoji by character, the one key the two files share, and by name for
- *  the handful whose character the set files under another spelling. */
+ *  the handful whose character the set files under another spelling; see outline-names.ts. */
 async function loadOutlines(): Promise<LoadedSet> {
-  const [collection, chars, groups] = await Promise.all([
+  const [collection, chars, groups, noto] = await Promise.all([
     import('@iconify-json/fluent-emoji-high-contrast/icons.json'),
     import('@iconify-json/fluent-emoji-high-contrast/chars.json'),
     import('unicode-emoji-json/data-by-group.json'),
+    import('virtual:noto-outlines'),
   ])
   const set = collection.default as Aliased
-  const icons = Object.fromEntries(
+  const wide = set.width ?? 16
+  const tall = set.height ?? 16
+  const icons: IconifyCollection['icons'] = Object.fromEntries(
     Object.entries(set.icons).map(([name, icon]) => [
       name,
       { ...icon, body: ownIds(icon.body, name) },
@@ -436,18 +437,24 @@ async function loadOutlines(): Promise<LoadedSet> {
   )
   for (const [name, alias] of Object.entries(set.aliases ?? {})) {
     const parent = icons[alias.parent]
-    if (parent) icons[name] = parent
+    if (!parent) continue
+    const body = flipped(
+      parent.body,
+      parent.width ?? wide,
+      parent.height ?? tall,
+      !!alias.hFlip,
+      !!alias.vFlip,
+    )
+    icons[name] = { ...parent, body }
   }
+  for (const [name, body] of Object.entries(noto.default)) icons[name] = { body }
   const held = iconify({ ...set, icons }, new Map())
   const named = chars.default as Record<string, string>
 
   const twins = new Map<string, string>()
   for (const group of groups.default as EmojiGroup[]) {
     for (const one of group.emojis) {
-      const name =
-        named[codePoints(one.emoji)] ??
-        named[codePoints(plain(one.emoji))] ??
-        one.slug.replace(/_/g, '-')
+      const name = outlineName(one.emoji, one.slug, named)
       if (icons[name]) twins.set(one.emoji, name)
     }
   }
@@ -541,7 +548,7 @@ export const ICON_SETS: readonly IconSet[] = [
   {
     id: EMOJI_OUTLINE,
     label: key('One colour'),
-    credit: 'Fluent Emoji High Contrast by Microsoft, MIT',
+    credit: 'Fluent Emoji High Contrast by Microsoft, MIT; Noto Emoji by Google, OFL 1.1',
     load: loadOutlines,
   },
   {

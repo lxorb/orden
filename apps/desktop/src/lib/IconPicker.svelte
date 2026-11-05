@@ -36,6 +36,7 @@
   import {
     EMOJI_OUTLINE,
     type IconEntry,
+    inOneColour,
     rankIcons,
     readIcon,
     sameIcon,
@@ -117,6 +118,10 @@
     return twin ? writtenIcon(EMOJI_OUTLINE, twin) : name
   }
 
+  /** Whether a cell is shown: once the outlines are here, only what is drawn in one
+   *  colour, so a coloured drawing or a site's picture is not among them. */
+  const shows = (name: string): boolean => !twins || inOneColour(readIcon(variant(name)))
+
   /** Whether a set the sheet opens with is still on its way. A set this build leaves
    *  out does not hold the others back, and nor does one that waits for a search: the
    *  list is what did arrive. */
@@ -166,8 +171,8 @@
    *  sites, or with nothing typed the latest sites and then the sets' own order. */
   const cells = $derived.by(() => {
     if (!held) return []
-    if (query) return rankIcons([...sites, ...held.entries], query, FOUND)
-    return [...siteRow.map((one) => one.name), ...held.entries.map((one) => one.name)]
+    if (query) return rankIcons([...sites, ...held.entries], query, FOUND).filter(shows)
+    return [...siteRow.map((one) => one.name), ...held.entries.map((one) => one.name)].filter(shows)
   })
 
   /** A row of the grid: a heading where a group begins, or a run of cells. Every row is
@@ -193,18 +198,22 @@
     if (query || !held.groups.length) return runs(cells)
 
     // The sites first, as a group of their own, and a line where there are none yet.
-    const web: Row[] = !siteSet
-      ? []
-      : [
-          { head: t('Web icons') },
-          ...(siteRow.length
-            ? runs(siteRow.map((one) => one.name))
-            : [{ note: t('Sites you visit will appear here') }]),
-        ]
+    const web: Row[] =
+      !siteSet || twins
+        ? []
+        : [
+            { head: t('Web icons') },
+            ...(siteRow.length
+              ? runs(siteRow.map((one) => one.name))
+              : [{ note: t('Sites you visit will appear here') }]),
+          ]
 
     return [
       ...web,
-      ...held.groups.flatMap((group) => [{ head: group.label }, ...runs(group.names)]),
+      ...held.groups.flatMap((group) => [
+        { head: group.label },
+        ...runs(group.names.filter(shows)),
+      ]),
     ]
   })
 

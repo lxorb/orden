@@ -26,11 +26,12 @@ import { describe, expect, test } from 'vitest'
 const APP = fileURLToPath(new URL('..', import.meta.url))
 const SOURCE = join(APP, 'src')
 
-/** The set data, by the specifier that asks for it. The same seven names
+/** The set data, by the specifier that asks for it. The same eight names
  *  `vite.even.config.ts` leaves out, which is what the last test holds.
  *
  *  Four of them are the sets themselves, one the characters the emoji's outlines are
- *  filed under (#1097), and two are what the sets are searched by:
+ *  filed under (#1097), one the outlines drawn out of Noto where that set has none, and
+ *  two are what the sets are searched by:
  *  Lucide's tags and the emoji's keywords, neither of any use until somebody has
  *  typed something into the picker. */
 const DATA = [
@@ -39,6 +40,7 @@ const DATA = [
   '@iconify-json/simple-icons/icons.json',
   '@iconify-json/fluent-emoji-high-contrast/icons.json',
   '@iconify-json/fluent-emoji-high-contrast/chars.json',
+  'virtual:noto-outlines',
   'lucide-static/tags.json',
   'emojilib/emojis.json',
 ]
@@ -47,7 +49,8 @@ function sources(dir: string, found: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
     const path = join(dir, name)
     if (statSync(path).isDirectory()) sources(path, found)
-    else if (/\.(ts|svelte)$/.test(name)) found.push(path)
+    // A declaration imports nothing: env.d.ts names the outlines' module to type it.
+    else if (/\.(ts|svelte)$/.test(name) && !name.endsWith('.d.ts')) found.push(path)
   }
 
   return found

@@ -1,5 +1,6 @@
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { defaultExclude, defineConfig } from 'vitest/config'
+import { emojiOutlines } from './emoji-outlines'
 
 /** Two projects, because there are two kinds of test here and only one of them
  *  can run an effect.
@@ -32,7 +33,7 @@ const clocks = { hookTimeout: 30000, testTimeout: 30000 }
 
 export default defineConfig({
   // The Svelte plugin is what compiles the runes in `.svelte.ts` stores.
-  plugins: [svelte()],
+  plugins: [svelte(), emojiOutlines()],
   // The build stamps the first in and sets the second; a test is the app rather
   // than the plugin, and the one test that wants the plugin says so for itself.
   define: {

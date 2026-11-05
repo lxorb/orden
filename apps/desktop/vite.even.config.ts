@@ -82,6 +82,7 @@ const LEFT_OUT = new Set([
   // for the same picker (#1097).
   '@iconify-json/fluent-emoji-high-contrast/icons.json',
   '@iconify-json/fluent-emoji-high-contrast/chars.json',
+  'virtual:noto-outlines',
   // And what those sets are searched by: Lucide's tags, another 256 KB, and the
   // emoji's keywords, which `node-emoji` brings along for the editor regardless and
   // which are named here for the rule rather than for the weight. The picker still

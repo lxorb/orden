@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { everySurface } from '@orden/themes/write'
+import { emojiOutlines } from './emoji-outlines'
 import manifest from './even.app.json'
 import tauri from './src-tauri/tauri.conf.json'
 import { CSP } from './src/csp'
@@ -79,7 +80,7 @@ const everyPage = {
 }
 
 export default defineConfig(({ command, mode }) => ({
-  plugins: [svelte()],
+  plugins: [svelte(), emojiOutlines()],
   // This build is the editor: on the desktop, on the web, in the presenter's
   // window, and on the `/even/` page the web serves. The package that goes on a
   // phone is built by `vite.even.config.ts`, which sets the second of these true

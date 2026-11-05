@@ -81,3 +81,10 @@ interface ImportMetaEnv {
    *  browser that asked for it; unset in every other build. See updater.ts. */
   readonly VITE_ORDEN_CHANNEL?: string
 }
+
+/** The emoji's outlines Fluent Emoji High Contrast does not draw, by name, each a body in
+ *  its 32 unit box: drawn out of Noto Emoji at build time (emoji-outlines.ts). */
+declare module 'virtual:noto-outlines' {
+  const drawn: Record<string, string>
+  export default drawn
+}

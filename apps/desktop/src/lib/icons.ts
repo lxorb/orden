@@ -155,6 +155,12 @@ export function takesTint(icon: WrittenIcon | null): boolean {
   return icon.kind === 'lucide' || (icon.kind === 'set' && TINTED_SETS.has(icon.set))
 }
 
+/** Whether an icon is drawn in one colour: a line, an emoji's outline, a logo. What the
+ *  picker shows when it is asked for one colour (#1097). */
+export function inOneColour(icon: WrittenIcon | null): boolean {
+  return takesTint(icon) || (icon?.kind === 'set' && icon.set === BRANDS)
+}
+
 /** The written value of a brand's logo, by Simple Icons' slug - `github`, `claude`,
  *  `openai` - for code that wants a company's mark by its name rather than an icon
  *  somebody chose: a website with no favicon of its own, an AI chat's provider (#1089).

@@ -4,6 +4,7 @@ import {
   brandIcon,
   EMOJI_OUTLINE,
   EMOJI_SET,
+  inOneColour,
   LUCIDE,
   rankIcons,
   readIcon,
@@ -11,6 +12,7 @@ import {
   takesTint,
   writtenIcon,
 } from './icons'
+import { notoOutlines } from '../../emoji-outlines'
 import { BESIDE, LOOSE, SAME } from './flat-colour-places'
 import {
   FLAT_COLOUR,
@@ -23,6 +25,7 @@ import {
   pickerCredit,
   setNamed,
 } from './icon-sets'
+import { FILLS_ITS_BOX } from './outline-names'
 
 /** The three sets, loaded for real. Each is a chunk of its own in the app and a plain
  *  import here, which is the point of the test: the data has to be the shape the picker
@@ -475,25 +478,58 @@ describe('the emoji in one colour', () => {
   let held: LoadedSet | null = null
   const outlines = async () => (held ??= await setNamed(EMOJI_OUTLINE)!.load())
 
-  test('draw nearly every emoji but the flags, each by its own character', async () => {
+  /** Every emoji of every group, the flags, the newest and the families among them: the
+   *  ones the set does not draw are drawn out of Noto at build time (emoji-outlines.ts). */
+  test('draw every emoji, each by its own character', async () => {
     const set = await outlines()
     const emoji = await setNamed(EMOJI_SET)!.load()
-    const flags = emoji.groups.find((one) => one.label === 'Flags')!.names
-    const others = emoji.groups.filter((one) => one.label !== 'Flags').flatMap((one) => one.names)
+    const every = emoji.groups.flatMap((one) => one.names)
 
+    expect(every.length).toBeGreaterThan(1900)
+    for (const one of every) expect(set.shape(set.twin?.(one) ?? '')?.kind, one).toBe('drawn')
     expect(set.twin?.('🤔')).toBe('thinking-face')
     expect(set.twin?.('❤️')).toBe('red-heart')
     // Filed under another name than its character.
     expect(set.twin?.('👉')).toBe('backhand-index-pointing-right')
-    expect(set.twin?.('🇨🇭')).toBeNull()
+    // Filed under `0023-20e3`, four digits a code point.
+    expect(set.twin?.('#️⃣')).toBe('keycap-hashtag')
+    // Drawn out of Noto, under the emoji's slug.
+    expect(set.twin?.('🫩')).toBe('face-with-bags-under-eyes')
+    expect(set.twin?.('🇨🇭')).toBe('flag-switzerland')
+    expect(set.twin?.('👨‍👩‍👧‍👦')).toBe('family-man-woman-girl-boy')
     expect(set.twin?.('rocket')).toBeNull()
-    const drawn = others.filter((one) => set.twin?.(one))
-    expect(drawn.length / others.length).toBeGreaterThan(0.95)
-    for (const one of drawn) expect(set.shape(set.twin!(one)!)?.kind, one).toBe('drawn')
-    // A country's flag is two letters, drawn in its colours or not at all.
-    const countries = flags.filter((one) => /^\p{Regional_Indicator}+$/u.test(one))
-    expect(countries.length).toBeGreaterThan(250)
-    expect(countries.some((one) => set.twin?.(one))).toBe(false)
+  })
+
+  /** An alias is its parent's drawing as the alias says to draw it: 👉 is 👈 turned over,
+   *  and was drawn pointing left. */
+  test('draw an alias turned the way it says', async () => {
+    const set = await outlines()
+    const left = set.shape('backhand-index-pointing-left') as { body: string }
+    const right = set.shape('backhand-index-pointing-right') as { body: string }
+
+    expect(right.body).toBe(`<g transform="translate(32 0) scale(-1 1)">${left.body}</g>`)
+  })
+
+  /** The set's 😶‍🌫️ is clouds to every edge of its box, a square of noise in a cell. */
+  test('draw again out of Noto what fills its box', async () => {
+    const set = await outlines()
+
+    for (const name of FILLS_ITS_BOX) {
+      expect((set.shape(name) as { body: string }).body, name).toBe(notoOutlines()[name])
+    }
+  })
+
+  /** Each glyph is fitted to the set's box, a unit inside its edges, as the set's own are. */
+  test('fit what Noto draws into the box', () => {
+    const drawn = Object.entries(notoOutlines())
+
+    expect(drawn.length).toBeGreaterThan(300)
+    for (const [name, body] of drawn) {
+      expect(body, name).toMatch(/^<path fill="currentColor" d="M[^"]+Z"\/>$/)
+      const numbers = (body.match(/-?\d*\.?\d+/g) ?? []).map(Number)
+      expect(Math.min(...numbers), name).toBeGreaterThanOrEqual(0.9)
+      expect(Math.max(...numbers), name).toBeLessThanOrEqual(31.1)
+    }
   })
 
   /** A mask and a clip path are drawn in black and white to say what shows, which is no
@@ -505,7 +541,7 @@ describe('the emoji in one colour', () => {
       const shape = set.shape(name)
       if (shape?.kind !== 'drawn') throw new Error(name)
       const shown = shape.body.replace(/<(mask|clipPath)\b.*?<\/\1>/g, '')
-      expect(shown, name).not.toMatch(/fill="#|stroke="#|fill="(?!currentColor|none)/)
+      expect(shown, name).not.toMatch(/(fill|stroke)="(?!currentColor"|none")/)
     }
   })
 
@@ -540,6 +576,15 @@ describe('the emoji in one colour', () => {
     expect(readIcon('🤔')).toEqual({ kind: 'emoji', text: '🤔' })
   })
 
+  test('are shown in one colour with the lines and the logos, where an emoji, a drawing and a site are not', () => {
+    expect(inOneColour(readIcon('fluent-emoji-high-contrast:thinking-face'))).toBe(true)
+    expect(inOneColour(readIcon('rocket'))).toBe(true)
+    expect(inOneColour(readIcon('simple-icons:github'))).toBe(true)
+    expect(inOneColour(readIcon('🤔'))).toBe(false)
+    expect(inOneColour(readIcon('flat-color-icons:calendar'))).toBe(false)
+    expect(inOneColour(readIcon('site:github.com'))).toBe(false)
+  })
+
   test('take a tint as a line does, where an emoji, a drawing and a logo take none', () => {
     expect(takesTint(readIcon('fluent-emoji-high-contrast:thinking-face'))).toBe(true)
     expect(takesTint(readIcon('rocket'))).toBe(true)
@@ -549,11 +594,13 @@ describe('the emoji in one colour', () => {
     expect(takesTint(null)).toBe(false)
   })
 
-  test('credit Microsoft and the licence', () => {
+  test('credit Microsoft, Google and the licences', () => {
     const credit = setNamed(EMOJI_OUTLINE)!.credit
 
     expect(credit).toContain('Fluent Emoji High Contrast')
     expect(credit).toContain('MIT')
+    expect(credit).toContain('Noto Emoji')
+    expect(credit).toContain('OFL')
     expect(pickerCredit()).toContain(credit)
   })
 })
