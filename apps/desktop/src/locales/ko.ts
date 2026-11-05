@@ -2322,6 +2322,14 @@ export const ko: Dictionary = {
   'The picture could not be sent.': '화면을 보내지 못했습니다.',
   'This device cannot show the picture.': '이 기기는 화면을 표시할 수 없습니다.',
   'Share the clipboard with applications': '애플리케이션과 클립보드 공유',
+  'Stream stats': '스트림 통계',
+  'Glass to glass': '화면에서 화면까지',
+  'Round trip': '왕복 시간',
+  'Frame pacing': '프레임 간격',
+  Dropped: '버려짐',
+  Lost: '손실',
+  Hardware: '하드웨어',
+  Software: '소프트웨어',
   'An application on another of your computers pastes what you copied here, and what it copies comes here.':
     '다른 컴퓨터의 애플리케이션이 여기서 복사한 내용을 붙여 넣고, 그 애플리케이션이 복사한 내용은 여기로 옵니다.',
   'None of your devices can run an application yet':

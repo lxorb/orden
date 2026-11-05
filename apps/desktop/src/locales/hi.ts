@@ -2356,6 +2356,14 @@ export const hi: Dictionary = {
   'The picture could not be sent.': 'तस्वीर भेजी नहीं जा सकी।',
   'This device cannot show the picture.': 'यह डिवाइस तस्वीर नहीं दिखा सकता।',
   'Share the clipboard with applications': 'ऐप्लिकेशन के साथ क्लिपबोर्ड साझा करें',
+  'Stream stats': 'स्ट्रीम के आँकड़े',
+  'Glass to glass': 'काँच से काँच',
+  'Round trip': 'राउंड ट्रिप',
+  'Frame pacing': 'फ़्रेम की लय',
+  Dropped: 'छोड़े गए',
+  Lost: 'खोए हुए',
+  Hardware: 'हार्डवेयर',
+  Software: 'सॉफ़्टवेयर',
   'An application on another of your computers pastes what you copied here, and what it copies comes here.':
     'आपके दूसरे कंप्यूटर का ऐप्लिकेशन यहाँ कॉपी की गई चीज़ पेस्ट करता है, और जो वह कॉपी करता है वह यहाँ आता है।',
   'None of your devices can run an application yet':

@@ -2313,6 +2313,14 @@ export const th: Dictionary = {
   'The picture could not be sent.': 'ส่งภาพไม่ได้',
   'This device cannot show the picture.': 'อุปกรณ์นี้แสดงภาพไม่ได้',
   'Share the clipboard with applications': 'แชร์คลิปบอร์ดกับแอปพลิเคชัน',
+  'Stream stats': 'สถิติสตรีม',
+  'Glass to glass': 'จากจอถึงจอ',
+  'Round trip': 'เวลาไปกลับ',
+  'Frame pacing': 'จังหวะเฟรม',
+  Dropped: 'ที่ทิ้ง',
+  Lost: 'ที่หาย',
+  Hardware: 'ฮาร์ดแวร์',
+  Software: 'ซอฟต์แวร์',
   'An application on another of your computers pastes what you copied here, and what it copies comes here.':
     'แอปพลิเคชันบนคอมพิวเตอร์เครื่องอื่นของคุณวางสิ่งที่คุณคัดลอกไว้ที่นี่ และสิ่งที่แอปคัดลอกจะมาที่นี่',
   'None of your devices can run an application yet':

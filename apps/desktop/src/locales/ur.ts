@@ -2356,6 +2356,14 @@ export const ur: Dictionary = {
   'The picture could not be sent.': 'تصویر بھیجی نہ جا سکی۔',
   'This device cannot show the picture.': 'یہ آلہ تصویر نہیں دکھا سکتا۔',
   'Share the clipboard with applications': 'کلپ بورڈ کو ایپلیکیشنز کے ساتھ شیئر کریں',
+  'Stream stats': 'اسٹریم کے اعداد و شمار',
+  'Glass to glass': 'شیشے سے شیشے تک',
+  'Round trip': 'آنے جانے کا وقت',
+  'Frame pacing': 'فریم کی ترتیب',
+  Dropped: 'چھوڑے گئے',
+  Lost: 'گم شدہ',
+  Hardware: 'ہارڈویئر',
+  Software: 'سافٹ ویئر',
   'An application on another of your computers pastes what you copied here, and what it copies comes here.':
     'آپ کے دوسرے کمپیوٹر کی ایپلیکیشن وہ پیسٹ کرتی ہے جو آپ نے یہاں کاپی کیا، اور جو وہ کاپی کرتی ہے وہ یہاں آتا ہے۔',
   'None of your devices can run an application yet':

@@ -2350,6 +2350,14 @@ export const gu: Dictionary = {
   'The picture could not be sent.': 'ચિત્ર મોકલી શકાયું નહીં.',
   'This device cannot show the picture.': 'આ ઉપકરણ ચિત્ર બતાવી શકતું નથી.',
   'Share the clipboard with applications': 'એપ્લિકેશન સાથે ક્લિપબોર્ડ શેર કરો',
+  'Stream stats': 'સ્ટ્રીમના આંકડા',
+  'Glass to glass': 'કાચથી કાચ',
+  'Round trip': 'રાઉન્ડ ટ્રિપ',
+  'Frame pacing': 'ફ્રેમની નિયમિતતા',
+  Dropped: 'છોડી દેવાયેલા',
+  Lost: 'ખોવાયેલા',
+  Hardware: 'હાર્ડવેર',
+  Software: 'સૉફ્ટવેર',
   'An application on another of your computers pastes what you copied here, and what it copies comes here.':
     'તમારા બીજા કમ્પ્યુટર પરની એપ્લિકેશન તમે અહીં કૉપિ કરેલું પેસ્ટ કરે છે, અને તે જે કૉપિ કરે છે તે અહીં આવે છે.',
   'None of your devices can run an application yet':

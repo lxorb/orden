@@ -2360,6 +2360,14 @@ export const mr: Dictionary = {
   'The picture could not be sent.': 'चित्र पाठवता आले नाही.',
   'This device cannot show the picture.': 'हे उपकरण चित्र दाखवू शकत नाही.',
   'Share the clipboard with applications': 'ॲप्लिकेशनसोबत क्लिपबोर्ड शेअर करा',
+  'Stream stats': 'प्रवाहाची आकडेवारी',
+  'Glass to glass': 'काचेपासून काचेपर्यंत',
+  'Round trip': 'राउंड ट्रिप',
+  'Frame pacing': 'फ्रेमची लय',
+  Dropped: 'टाकून दिलेले',
+  Lost: 'हरवलेले',
+  Hardware: 'हार्डवेअर',
+  Software: 'सॉफ्टवेअर',
   'An application on another of your computers pastes what you copied here, and what it copies comes here.':
     'तुमच्या दुसऱ्या संगणकावरील ॲप्लिकेशन तुम्ही इथे कॉपी केलेले पेस्ट करते, आणि ते जे कॉपी करते ते इथे येते.',
   'None of your devices can run an application yet':

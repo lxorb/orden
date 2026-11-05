@@ -2392,6 +2392,14 @@ export const ta: Dictionary = {
   'The picture could not be sent.': 'படத்தை அனுப்ப முடியவில்லை.',
   'This device cannot show the picture.': 'இந்தச் சாதனத்தால் படத்தைக் காட்ட முடியாது.',
   'Share the clipboard with applications': 'பயன்பாடுகளுடன் கிளிப்போர்டைப் பகிர்',
+  'Stream stats': 'ஸ்ட்ரீம் புள்ளிவிவரம்',
+  'Glass to glass': 'கண்ணாடியிலிருந்து கண்ணாடி',
+  'Round trip': 'சென்று திரும்பும் நேரம்',
+  'Frame pacing': 'சட்டக ஒழுங்கு',
+  Dropped: 'கைவிடப்பட்டவை',
+  Lost: 'தொலைந்தவை',
+  Hardware: 'வன்பொருள்',
+  Software: 'மென்பொருள்',
   'An application on another of your computers pastes what you copied here, and what it copies comes here.':
     'உங்கள் மற்றொரு கணினியில் உள்ள பயன்பாடு நீங்கள் இங்கே நகலெடுத்ததை ஒட்டுகிறது, அது நகலெடுப்பது இங்கே வருகிறது.',
   'None of your devices can run an application yet':

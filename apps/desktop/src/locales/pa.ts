@@ -2363,6 +2363,14 @@ export const pa: Dictionary = {
   'The picture could not be sent.': 'ਤਸਵੀਰ ਭੇਜੀ ਨਹੀਂ ਜਾ ਸਕੀ।',
   'This device cannot show the picture.': 'ਇਹ ਡਿਵਾਈਸ ਤਸਵੀਰ ਨਹੀਂ ਦਿਖਾ ਸਕਦੀ।',
   'Share the clipboard with applications': 'ਐਪਲੀਕੇਸ਼ਨਾਂ ਨਾਲ ਕਲਿੱਪਬੋਰਡ ਸਾਂਝਾ ਕਰੋ',
+  'Stream stats': 'ਸਟ੍ਰੀਮ ਦੇ ਅੰਕੜੇ',
+  'Glass to glass': 'ਸ਼ੀਸ਼ੇ ਤੋਂ ਸ਼ੀਸ਼ੇ ਤੱਕ',
+  'Round trip': 'ਆਉਣ-ਜਾਣ ਦਾ ਸਮਾਂ',
+  'Frame pacing': 'ਫ੍ਰੇਮ ਦੀ ਲੈਅ',
+  Dropped: 'ਛੱਡੇ ਗਏ',
+  Lost: 'ਗੁੰਮ',
+  Hardware: 'ਹਾਰਡਵੇਅਰ',
+  Software: 'ਸੌਫਟਵੇਅਰ',
   'An application on another of your computers pastes what you copied here, and what it copies comes here.':
     'ਤੁਹਾਡੇ ਦੂਜੇ ਕੰਪਿਊਟਰ ਦੀ ਐਪਲੀਕੇਸ਼ਨ ਇੱਥੇ ਕਾਪੀ ਕੀਤਾ ਪੇਸਟ ਕਰਦੀ ਹੈ, ਅਤੇ ਜੋ ਉਹ ਕਾਪੀ ਕਰਦੀ ਹੈ ਉਹ ਇੱਥੇ ਆਉਂਦਾ ਹੈ।',
   'None of your devices can run an application yet':

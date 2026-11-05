@@ -189,6 +189,23 @@ describe('the holder’s input', () => {
 })
 
 describe('what the host says on the picture’s channel', () => {
+  it('reads the host’s pong, its encoder dropped where it is no name', () => {
+    expect(
+      fromPictureOf(
+        '{"t":"pong","at":5,"began":1000,"now":1250.5,"encoder":"libvpx","hardware":false}',
+      ),
+    ).toEqual({ t: 'pong', at: 5, began: 1000, now: 1250.5, encoder: 'libvpx', hardware: false })
+    expect(fromPictureOf('{"t":"pong","at":5,"began":1000,"now":1,"encoder":null}')).toEqual({
+      t: 'pong',
+      at: 5,
+      began: 1000,
+      now: 1,
+      encoder: null,
+      hardware: false,
+    })
+    expect(fromPictureOf('{"t":"pong","at":"5","began":1000,"now":1}')).toBeNull()
+  })
+
   it('reads what the application copied, up to the most a message carries', () => {
     expect(fromPictureOf('{"t":"clipboard","text":"copied"}')).toEqual({
       t: 'clipboard',

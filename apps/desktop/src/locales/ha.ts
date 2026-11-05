@@ -2389,6 +2389,14 @@ export const ha: Dictionary = {
   'The picture could not be sent.': 'Ba a iya aika hoton ba.',
   'This device cannot show the picture.': 'Wannan na’urar ba za ta iya nuna hoton ba.',
   'Share the clipboard with applications': 'Raba allon kwafi da manhajoji',
+  'Stream stats': 'Ƙididdigar rafi',
+  'Glass to glass': 'Daga gilashi zuwa gilashi',
+  'Round trip': 'Zuwa da dawowa',
+  'Frame pacing': 'Daidaiton firam',
+  Dropped: 'Waɗanda aka jefar',
+  Lost: 'Waɗanda suka ɓace',
+  Hardware: 'Na’ura',
+  Software: 'Manhaja',
   'An application on another of your computers pastes what you copied here, and what it copies comes here.':
     'Manhaja a wata kwamfutarka tana manna abin da ka kwafa a nan, kuma abin da ta kwafa yana zuwa nan.',
   'None of your devices can run an application yet':

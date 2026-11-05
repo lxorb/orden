@@ -419,6 +419,8 @@ export type InputEvent =
    *  the channel opens and whenever it changes; the host gives and takes nothing until
    *  it has been told yes. */
   | { t: 'share'; clipboard: boolean }
+  /** The tab's clock, for the host to answer with its own (step 9): `pong`. */
+  | { t: 'ping'; at: number }
 
 /** An input event as the channel's message. */
 export function inputText(event: InputEvent): string {
@@ -436,7 +438,24 @@ export const MOST_CLIPBOARD = 200 * 1024
  *  drawn so over the picture - its shape as a PNG with its hot spot in the display's
  *  pixels, or hidden, as an application hides it to draw its own - and what the
  *  application copied, while the holder shares its clipboard (step 6). */
-export type FromPicture = PointerShape | { t: 'clipboard'; text: string }
+export type FromPicture = PointerShape | { t: 'clipboard'; text: string } | Pong
+
+/** The host's answer to a ping (step 9): the tab's time back, when the connection began
+ *  and what time it is, on the host's clock in milliseconds since 1970, and the encoder
+ *  the picture is made with. A frame's RTP time counts from `began` at 90 kHz, from the
+ *  moment its picture was read off the display. */
+export interface Pong {
+  t: 'pong'
+  at: number
+  began: number
+  now: number
+  encoder: string | null
+  hardware: boolean
+}
+
+function isTime(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0
+}
 
 /** The application's pointer: its shape and hot spot, or hidden. */
 export type PointerShape =
@@ -459,6 +478,12 @@ export function fromPictureOf(data: unknown): FromPicture | null {
     return typeof text === 'string' && text.length <= MOST_CLIPBOARD
       ? { t: 'clipboard', text }
       : null
+  }
+  if (value.t === 'pong') {
+    const { at, began, now, encoder, hardware } = value
+    if (!isTime(at) || !isTime(began) || !isTime(now)) return null
+    const named = typeof encoder === 'string' && encoder.length <= 64 ? encoder : null
+    return { t: 'pong', at, began, now, encoder: named, hardware: hardware === true }
   }
   if (value.t !== 'pointer') return null
   if (value.hidden === true) return { t: 'pointer', hidden: true }

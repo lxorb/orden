@@ -2449,6 +2449,14 @@ export const ru: Dictionary = {
   'The picture could not be sent.': 'Не удалось отправить изображение.',
   'This device cannot show the picture.': 'Это устройство не может показать изображение.',
   'Share the clipboard with applications': 'Общий буфер обмена с приложениями',
+  'Stream stats': 'Статистика потока',
+  'Glass to glass': 'От стекла до стекла',
+  'Round trip': 'Время туда и обратно',
+  'Frame pacing': 'Ровность кадров',
+  Dropped: 'Отброшено',
+  Lost: 'Потеряно',
+  Hardware: 'Аппаратный',
+  Software: 'Программный',
   'An application on another of your computers pastes what you copied here, and what it copies comes here.':
     'Приложение на другом вашем компьютере вставляет то, что вы скопировали здесь, а то, что копирует оно, приходит сюда.',
   'None of your devices can run an application yet':

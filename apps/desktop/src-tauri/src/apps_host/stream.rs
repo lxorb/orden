@@ -37,6 +37,7 @@
 //! **Sound** (step 6): a viewer that offers to take audio too is sent the application's
 //! sink as Opus, once connected (`audio.rs`).
 
+use std::collections::VecDeque;
 use std::io::{self, Read, Write as _};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
 use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
@@ -69,6 +70,8 @@ const LONGEST_WAIT: Duration = Duration::from_millis(20);
 const LISTEN_FOR: Duration = Duration::from_millis(250);
 /// The largest frame read off the encoder: a key frame of a 16K screen fits.
 const LARGEST_FRAME: usize = 16 * 1024 * 1024;
+/// How long the H.264 stream pauses before the frame read so far counts as whole.
+const FRAME_PAUSE: Duration = Duration::from_millis(2);
 /// The least time between two whole pictures the viewer asks for: it asks again while the
 /// first is on its way.
 const WHOLE_AT_MOST: Duration = Duration::from_millis(500);
@@ -163,6 +166,9 @@ struct Shared {
     pointer: Option<String>,
     /// Whoever reads the picture, told when the viewer asks for a whole one.
     news: Option<Sender<News>>,
+    /// When the connection began on this computer's clock, in milliseconds since 1970:
+    /// what a frame's time counts from, as the tab reads it (step 9).
+    began_wall: f64,
     /// The display's clipboard, and whether the holder shares its own with it.
     clipboard: Option<Arc<Clipboard>>,
     sharing: bool,
@@ -290,6 +296,7 @@ impl Peer {
                 channel: None,
                 pointer: None,
                 news: None,
+                began_wall: wall_now(),
                 clipboard: clipboard.clone(),
                 sharing: false,
                 audio: None,
@@ -348,6 +355,30 @@ impl Drop for Peer {
             clipboard.listen(None);
         }
     }
+}
+
+/// This computer's clock, in milliseconds since 1970.
+fn wall_now() -> f64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0.0, |since| since.as_secs_f64() * 1000.0)
+}
+
+/// The answer to the tab's ping (step 9): its own time back, when the connection began
+/// and what time it is here, on this computer's clock, which together set the two
+/// clocks side by side and a frame's time on the tab's; and the encoder the picture is
+/// made with.
+fn pong_text(at: f64, began: f64, now: f64, video: Option<(Mid, Pt, Encoder)>) -> String {
+    let encoder = video.map(|(_, _, one)| one);
+    serde_json::json!({
+        "t": "pong",
+        "at": at,
+        "began": began,
+        "now": now,
+        "encoder": encoder.map(|one| one.name),
+        "hardware": encoder.is_some_and(|one| one.hardware != encoder::Hardware::None),
+    })
+    .to_string()
 }
 
 /// What the application copied, sent to the holder's tab while it shares its clipboard.
@@ -563,6 +594,10 @@ fn heard(shared: &mut Shared, event: Event) -> bool {
             };
             match event {
                 InputEvent::Share { clipboard } => shared.sharing = clipboard,
+                InputEvent::Ping { at } => {
+                    let pong = pong_text(at, shared.began_wall, wall_now(), shared.video);
+                    write_channel(shared, &pong);
+                }
                 InputEvent::Clipboard { text } => {
                     if let (true, Some(clipboard)) = (shared.sharing, shared.clipboard.as_ref()) {
                         clipboard.give(&text);
@@ -727,6 +762,9 @@ struct Encoding {
     frames: ChildStdin,
     size: (u16, u16),
     began: Instant,
+    /// When each frame written and not yet made was read off the display: what the
+    /// frame is timed by, so its time is when it was seen (step 9).
+    seen: Arc<Mutex<VecDeque<Instant>>>,
 }
 
 impl Drop for Encoding {
@@ -849,6 +887,7 @@ fn pictures(inner: &Arc<Inner>) {
         let Some(writing) = encoding.as_mut() else {
             break;
         };
+        lock(&writing.seen).push_back(now);
         if writing.frames.write_all(image).is_err() {
             break;
         }
@@ -881,46 +920,71 @@ fn start_encoder(
         return None;
     };
     let sending = inner.clone();
-    std::thread::spawn(move || send_frames(&sending, made, chosen.made, generation));
+    let seen = Arc::new(Mutex::new(VecDeque::new()));
+    let timing = seen.clone();
+    std::thread::spawn(move || send_frames(&sending, made, chosen.made, generation, &timing));
     Some(Encoding {
         child,
         frames,
         size,
         began: Instant::now(),
+        seen,
     })
 }
 
-/// The frames one encoder makes, written to the video while it is the one in use. The
-/// one in use ending by itself ends the picture.
-fn send_frames(inner: &Arc<Inner>, mut made: ChildStdout, codec: Made, generation: u64) {
+/// The frames one encoder makes, written to the video while it is the one in use, each
+/// at the time its picture was read off the display. The one in use ending by itself
+/// ends the picture.
+fn send_frames(
+    inner: &Arc<Inner>,
+    made: ChildStdout,
+    codec: Made,
+    generation: u64,
+    seen: &Mutex<VecDeque<Instant>>,
+) {
     let current = || inner.generation.load(Ordering::SeqCst) == generation;
+    let send = |frame: Vec<u8>| {
+        // One frame out for each written: ffmpeg is told to make one of each, no more.
+        let at = lock(seen).pop_front().unwrap_or_else(Instant::now);
+        if current() {
+            send_frame(inner, frame, at);
+        }
+    };
     match codec {
         Made::Vp8 | Made::Vp9 => {
+            let mut made = made;
             if ivf_header(&mut made).is_ok() {
                 while !inner.over() && current() {
                     let Ok(frame) = ivf_frame(&mut made) else {
                         break;
                     };
-                    if current() {
-                        send_frame(inner, frame);
-                    }
+                    send(frame);
                 }
             }
         }
         Made::H264 => {
-            let mut units = AccessUnits::default();
-            let mut buffer = vec![0_u8; 64 * 1024];
-            while !inner.over() && current() {
-                let Ok(length) = made.read(&mut buffer) else {
-                    break;
-                };
-                if length == 0 {
-                    break;
-                }
-                for frame in units.take(&buffer[..length]) {
-                    if current() {
-                        send_frame(inner, frame);
+            // Read on a thread of its own, so that a pause in the stream - the end of a
+            // frame, with no next one to say so - is seen.
+            let (bytes, came) = mpsc::channel::<Vec<u8>>();
+            std::thread::spawn(move || {
+                let mut made = made;
+                let mut buffer = vec![0_u8; 64 * 1024];
+                while let Ok(length) = made.read(&mut buffer) {
+                    if length == 0 || bytes.send(buffer[..length].to_vec()).is_err() {
+                        break;
                     }
+                }
+            });
+            let mut units = AccessUnits::default();
+            while !inner.over() && current() {
+                match came.recv_timeout(FRAME_PAUSE) {
+                    Ok(some) => units.take(&some).into_iter().for_each(send),
+                    Err(RecvTimeoutError::Timeout) => {
+                        if let Some(frame) = units.flush() {
+                            send(frame);
+                        }
+                    }
+                    Err(RecvTimeoutError::Disconnected) => break,
                 }
             }
         }
@@ -928,6 +992,12 @@ fn send_frames(inner: &Arc<Inner>, mut made: ChildStdout, codec: Made, generatio
     if current() {
         inner.end();
     }
+}
+
+fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
+    mutex
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
 /// A message to the tab on the data channel, once it is open.
@@ -939,14 +1009,15 @@ fn write_channel(shared: &mut Shared, text: &str) {
     }
 }
 
-/// One frame written to the video, at the time it came, on the 90 kHz clock.
-fn send_frame(inner: &Arc<Inner>, frame: Vec<u8>) {
+/// One frame written to the video at the time its picture was read off the display, on
+/// the 90 kHz clock from when the connection began.
+fn send_frame(inner: &Arc<Inner>, frame: Vec<u8>, seen: Instant) {
     let mut shared = inner.lock();
     let (Some((mid, pt, _)), Some(_)) = (shared.video, shared.connected) else {
         return;
     };
     let now = Instant::now();
-    let ticks = now.duration_since(inner.began).as_micros() * 9 / 100;
+    let ticks = seen.saturating_duration_since(inner.began).as_micros() * 9 / 100;
     let time = MediaTime::from_90khz(u64::try_from(ticks).unwrap_or(u64::MAX));
     let written = shared
         .rtc
@@ -1053,6 +1124,18 @@ mod tests {
             FromViewer::Bye { .. }
         ));
         assert!(serde_json::from_str::<FromViewer>(r#"{"run":"rm -rf ~"}"#).is_err());
+    }
+
+    #[test]
+    fn answers_a_ping_with_both_clocks_and_its_encoder() {
+        let said: serde_json::Value =
+            serde_json::from_str(&pong_text(5.0, 1000.0, 1250.5, None)).unwrap();
+        assert_eq!(said["t"], "pong");
+        assert_eq!(said["at"], 5.0);
+        assert_eq!(said["began"], 1000.0);
+        assert_eq!(said["now"], 1250.5);
+        assert!(said["encoder"].is_null());
+        assert_eq!(said["hardware"], false);
     }
 
     #[test]
@@ -1626,5 +1709,112 @@ mod tests {
             let _ = server.kill();
             let _ = server.wait();
         }
+    }
+
+    /// The latency benchmark (step 9): from something drawn on the display to its frame
+    /// arriving at a viewer on the loopback - reading, encoding, sending, receiving, the
+    /// part of glass to glass that is the host's and the network's - and the frames of an
+    /// application drawing at the refresh rate arriving at it, evenly. The bounds are
+    /// far above what CI's runners measure (a few milliseconds), so that only a real
+    /// regression - a frame held back, a refresh missed - fails them. CI installs Xvfb
+    /// and ffmpeg; elsewhere the test says nothing without them.
+    #[test]
+    #[allow(
+        clippy::too_many_lines,
+        reason = "one benchmark, its two halves told in order"
+    )]
+    fn latency_benchmark() {
+        use x11rb::connection::Connection as _;
+        use x11rb::protocol::xproto::{ChangeGCAux, ConnectionExt as _, CreateGCAux, Rectangle};
+
+        let ready =
+            super::super::display::available() && super::super::installed::on_path("ffmpeg");
+        if !ready {
+            assert!(
+                std::env::var_os("CI").is_none() || !cfg!(target_os = "linux"),
+                "CI installs xvfb and ffmpeg for this test"
+            );
+            return;
+        }
+        let display = super::super::display::Display::start(640, 400, 1.0).unwrap();
+        let (peer, mut viewer, _, _) = Viewer::connect(&display, None);
+        let (x, number) = x11rb::connect(Some(display.name().as_str())).unwrap();
+        let root = x.setup().roots[number].root;
+        let pen = x.generate_id().unwrap();
+        x.create_gc(pen, root, &CreateGCAux::new()).unwrap();
+        let mut colour = 0_u32;
+        let mut draw = || {
+            colour = colour.wrapping_add(0x0011_2233) & 0x00ff_ffff;
+            x.change_gc(pen, &ChangeGCAux::new().foreground(colour))
+                .unwrap();
+            x.poly_fill_rectangle(
+                root,
+                pen,
+                &[Rectangle {
+                    x: 0,
+                    y: 0,
+                    width: 640,
+                    height: 400,
+                }],
+            )
+            .unwrap();
+            x.flush().unwrap();
+        };
+        let frames = std::cell::Cell::new(0_usize);
+        let arrived = std::cell::RefCell::new(Vec::<Instant>::new());
+        let heard = |_: &mut Rtc, event: Event| {
+            if let Event::MediaData(_) = event {
+                frames.set(frames.get() + 1);
+                arrived.borrow_mut().push(Instant::now());
+            }
+        };
+        assert!(viewer.run(Duration::from_secs(30), heard, || frames.get() > 0));
+        viewer.run(Duration::from_millis(300), heard, || false);
+
+        // Drawn to arrived, one frame at a time.
+        let mut latencies = Vec::new();
+        for _ in 0..20 {
+            let before = frames.get();
+            draw();
+            let drawn = Instant::now();
+            assert!(viewer.run(Duration::from_secs(5), heard, || frames.get() > before));
+            latencies.push(drawn.elapsed());
+            viewer.run(Duration::from_millis(60), heard, || false);
+        }
+        latencies.sort();
+        let median = latencies[latencies.len() / 2];
+        let worst = latencies[latencies.len() * 9 / 10];
+        eprintln!("drawn to arrived: median {median:?}, 90th {worst:?}");
+        assert!(median < Duration::from_millis(50), "median {median:?}");
+        assert!(worst < Duration::from_millis(120), "90th {worst:?}");
+
+        // Drawing at the holder's refresh rate, 30 here: as many frames, evenly.
+        arrived.borrow_mut().clear();
+        let began = Instant::now();
+        let mut next = began;
+        let mut drawn = 0;
+        while began.elapsed() < Duration::from_secs(2) {
+            if Instant::now() >= next {
+                draw();
+                drawn += 1;
+                next += Duration::from_millis(33);
+            }
+            viewer.run(Duration::from_millis(2), heard, || false);
+        }
+        viewer.run(Duration::from_millis(200), heard, || false);
+        let times = arrived.borrow();
+        let gaps: Vec<Duration> = times.windows(2).map(|two| two[1] - two[0]).collect();
+        let longest = gaps.iter().max().copied().unwrap_or_default();
+        eprintln!(
+            "{drawn} drawn, {} arrived, longest gap {longest:?}",
+            times.len()
+        );
+        assert!(times.len() * 10 >= drawn * 8, "{} of {drawn}", times.len());
+        assert!(
+            longest < Duration::from_millis(250),
+            "longest gap {longest:?}"
+        );
+        drop(times);
+        drop(peer);
     }
 }

@@ -211,3 +211,30 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
 - **Not done**: dragging files in and out, and downloads. Both need files carried over the
   connection and, for a drop, X's drag-and-drop played into the application; they are left
   for later.
+
+## Measured (step 9)
+
+- **The developer overlay**: **Stream stats** in the bar over the picture shows, once a
+  second while it is open, the picture's size, frame rate and bit rate, glass to glass, the
+  connection's round trip and route (`host` straight across, `srflx` or `prflx` through a
+  router, `relay` through TURN), frame pacing (the spread of the gaps between frames over
+  the second), frames dropped and packets lost, the codec, and the host's encoder, in
+  hardware or software (`apps/desktop/src/lib/apps/stats.ts`). Closed, nothing is measured.
+- **Glass to glass** is from the moment the host read a frame's picture off the display to
+  the moment this screen shows it. A frame's RTP time is when its picture was read, at
+  90 kHz from when the connection began on the host's clock. The tab pings the host over the
+  data channel (`{"t":"ping","at":...}`), and the host answers with that time back, when the
+  connection began and its own time now (`{"t":"pong",...}`, with its encoder). Half the
+  round trip is taken as the way there, which sets the two clocks side by side to within
+  half a round trip. The engine says each shown frame's RTP time and when it is shown
+  (`requestVideoFrameCallback`), and the overlay shows the middle of the last second's.
+  What the application itself takes to draw, before the display has it, is not counted.
+- **The benchmark** (`latency_benchmark` in `apps_host/stream.rs`, run by CI): on a real
+  Xvfb and ffmpeg, from something drawn to its frame arriving at a viewer on the loopback
+  (reading, encoding, sending, receiving) in the middle of 20 draws under 50 ms and nine in
+  ten under 120 ms; and an application drawing at the refresh rate, 30 here, arriving as at
+  least eight frames in ten with no gap over 250 ms. The bounds are well above a quiet
+  runner's, so only a real regression fails them; on a loaded machine they can.
+- **H.264 frames are not held back**: a frame of H.264 is cut where the next one begins, so
+  the last frame before a still screen used to wait for the next. It is now handed on once
+  the encoder's output pauses for 2 ms.
