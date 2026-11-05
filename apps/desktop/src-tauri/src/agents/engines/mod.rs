@@ -373,27 +373,65 @@ impl Page<'_> {
     /// Whether the frame an element is in may be acted in (9.2): a denied site does not
     /// open for being in a frame. The same on every engine, from what `facts` says.
     pub fn frame_may_be_acted_in(&self, facts: &Facts) -> Result<(), Answer> {
-        // Nowhere is no answer to where, for an agent with a site it may not act in.
-        if facts.at.is_empty() && facts.opaque && self.grant_limits_sites() {
-            return Err(Answer::error(
-                Code::SiteDenied,
-                "what is at that point says nothing of itself or of where it is: take a snapshot and press something else",
-            ));
-        }
-        match &self.limits {
-            Some((grant, store)) => super::policy::frame_allowed(grant, &facts.at, *store)
-                .map_err(|why| Answer::error(Code::SiteDenied, why)),
-            None => Ok(()),
-        }
+        acts_in(self.limits.as_ref(), facts)
     }
 
     /// Whether the agent's grant has a rule for any site, so that a frame can be denied.
     pub fn grant_limits_sites(&self) -> bool {
-        self.limits
-            .as_ref()
-            .is_some_and(|(grant, _)| !grant.sites.is_empty())
+        limits_sites(self.limits.as_ref())
     }
+}
 
+/// Whether a call's `limits` have a rule for any site, so that a frame can be denied.
+pub fn limits_sites(limits: Option<&(Grant, Store)>) -> bool {
+    limits.is_some_and(|(grant, _)| !grant.sites.is_empty())
+}
+
+/// `Page::frame_may_be_acted_in`, under a call's `limits`.
+pub fn acts_in(limits: Option<&(Grant, Store)>, facts: &Facts) -> Result<(), Answer> {
+    // Nowhere is no answer to where, for an agent with a site it may not act in.
+    if facts.at.is_empty() && facts.opaque && limits_sites(limits) {
+        return Err(Answer::error(
+            Code::SiteDenied,
+            "what is at that point says nothing of itself or of where it is: take a snapshot and press something else",
+        ));
+    }
+    match limits {
+        Some((grant, store)) => super::policy::frame_allowed(grant, &facts.at, *store)
+            .map_err(|why| Answer::error(Code::SiteDenied, why)),
+        None => Ok(()),
+    }
+}
+
+/// Whether a frame's words may be read under a call's `limits`, by where it is (`at` as
+/// `Facts::at` is).
+#[cfg_attr(
+    not(any(windows, feature = "cef")),
+    allow(dead_code, reason = "WKWebView reads no frame by its address")
+)]
+pub fn frame_readable(limits: Option<&(Grant, Store)>, at: &[String]) -> bool {
+    limits.is_none_or(|(grant, store)| super::policy::frame_allowed(grant, at, *store).is_ok())
+}
+
+/// Whether what a frame raised or said - a dialog, a console line, a request it sent - is
+/// the agent's, by where the engine says it came from (`at`, the frame's address first): a
+/// denied site's is that site's (9.2), and for an agent with a site it may not reach, one
+/// that says nothing of where it came from is nobody's.
+pub fn from_allowed(limits: Option<&(Grant, Store)>, at: &[String]) -> Result<(), String> {
+    let Some((grant, store)) = limits else {
+        return Ok(());
+    };
+    let placed = at.iter().any(|one| {
+        tauri::Url::parse(one)
+            .is_ok_and(|url| matches!(url.scheme(), "http" | "https") && url.host().is_some())
+    });
+    if !placed && limits_sites(limits) {
+        return Err("the engine did not say which site that came from".into());
+    }
+    super::policy::frame_allowed(grant, at, *store)
+}
+
+impl Page<'_> {
     /// Whether this call was cleared to touch a credential (`credentials`).
     #[cfg_attr(
         not(any(windows, feature = "cef")),
@@ -573,8 +611,95 @@ pub trait Engine {
 
 #[cfg(test)]
 mod tests {
-    use super::{reader_of, twin_of, CDP_CANNOT, WEBKIT_CANNOT};
-    use crate::agents::verbs::NAMES;
+    use super::{
+        acts_in, frame_readable, from_allowed, reader_of, twin_of, CDP_CANNOT, WEBKIT_CANNOT,
+    };
+    use crate::agents::grants::{Grant, SiteRule};
+    use crate::agents::policy::Facts;
+    use crate::agents::verbs::{Answer, Code, Store, NAMES};
+
+    /// An agent denied bank.example, in the reader's store.
+    fn denying() -> (Grant, Store) {
+        let mut grant = Grant::own("a".into(), "A");
+        grant.sites.insert("bank.example".into(), SiteRule::Deny);
+        (grant, Store::Reader)
+    }
+
+    fn at(addresses: &[&str]) -> Vec<String> {
+        addresses.iter().map(|one| (*one).to_string()).collect()
+    }
+
+    #[test]
+    fn a_frame_of_a_denied_site_is_not_acted_in_and_one_that_says_nothing_is_not_either() {
+        let limits = denying();
+        let facts = |addresses: &[&str], opaque: bool| Facts {
+            at: at(addresses),
+            opaque,
+            ..Facts::default()
+        };
+        let refused = |facts: &Facts| {
+            matches!(
+                acts_in(Some(&limits), facts),
+                Err(Answer::Error {
+                    code: Code::SiteDenied,
+                    ..
+                })
+            )
+        };
+        assert!(refused(&facts(&["https://bank.example/pay"], false)));
+        // An about:blank frame by the origin round it.
+        assert!(refused(&facts(
+            &["about:blank", "https://bank.example"],
+            false
+        )));
+        assert!(refused(&facts(&[], true)));
+        assert!(acts_in(Some(&limits), &facts(&["https://shop.example/"], false)).is_ok());
+        // The reader's own command line goes anywhere.
+        assert!(acts_in(None, &facts(&["https://bank.example/"], false)).is_ok());
+        assert!(acts_in(None, &facts(&[], true)).is_ok());
+    }
+
+    #[test]
+    fn a_frame_of_a_denied_site_is_not_read() {
+        let limits = denying();
+        assert!(!frame_readable(
+            Some(&limits),
+            &at(&["https://bank.example/x"])
+        ));
+        assert!(!frame_readable(
+            Some(&limits),
+            &at(&["https://www.bank.example/x"])
+        ));
+        assert!(frame_readable(
+            Some(&limits),
+            &at(&["https://shop.example/"])
+        ));
+        assert!(frame_readable(None, &at(&["https://bank.example/"])));
+    }
+
+    #[test]
+    fn what_a_frame_raised_or_said_is_the_agent_s_only_where_the_engine_placed_it() {
+        let limits = denying();
+        assert!(from_allowed(Some(&limits), &at(&["https://bank.example/"])).is_err());
+        // The document first, then the frame its session is.
+        assert!(from_allowed(
+            Some(&limits),
+            &at(&["about:blank", "https://bank.example/"])
+        )
+        .is_err());
+        assert!(from_allowed(Some(&limits), &at(&["https://shop.example/"])).is_ok());
+        // Nowhere, or nowhere on the web, is nobody's for an agent with a denied site...
+        for nowhere in [&[][..], &["null"], &[":3"], &["about:blank"]] {
+            assert!(
+                from_allowed(Some(&limits), &at(nowhere)).is_err(),
+                "{nowhere:?}"
+            );
+        }
+        // ...and anybody's for one with no rule for any site, or the reader.
+        let open = (Grant::own("a".into(), "A"), Store::Reader);
+        assert!(from_allowed(Some(&open), &[]).is_ok());
+        assert!(from_allowed(None, &[]).is_ok());
+    }
 
     /// #1092: every browser verb is done by each engine or named in its table with the
     /// reason it cannot be, and the tables name nothing that is not a verb.

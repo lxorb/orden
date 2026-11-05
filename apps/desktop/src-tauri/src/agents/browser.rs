@@ -24,8 +24,9 @@ use super::policy::{self, Act, Facts};
 use super::snapshot::{self, Asked, Wanted};
 use super::tabs::{self, Tab};
 use super::verbs::{
-    Acted, Answer, Category, Closed, Code, DownloadList, Evaluated, Event, FieldValue, Found,
-    Opened, PageText, Snapped, StorageOp, Store, Stored, TabList, Verb, Waited, World, EVENT,
+    Acted, Answer, Category, Closed, Code, Dialog, DownloadList, Evaluated, Event, FieldValue,
+    Found, Opened, PageText, Snapped, StorageOp, Store, Stored, TabList, Verb, Waited, World,
+    EVENT,
 };
 use super::Caller;
 
@@ -335,10 +336,32 @@ pub(super) fn on_tab(
             Code::Failed,
             "the page is holding a dialog: answer it with browser_dialog first",
         )
-        .with_dialog(held);
+        .with_dialog(seen(page.limits.as_ref(), held));
     }
     let answered = act(&place, &page);
-    answered.with_dialog(super::quiet::dialog_of(&page.label))
+    answered.with_dialog(seen(
+        page.limits.as_ref(),
+        super::quiet::dialog_of(&page.label),
+    ))
+}
+
+/// A held dialog as the agent is shown it: one a site it may not reach raised - from a
+/// frame of that site's, or the site's own sign-in box for a request to it - says that it
+/// holds the page and nothing of what it says or offers (9.2).
+fn seen(limits: Option<&(Grant, Store)>, held: Option<Dialog>) -> Option<Dialog> {
+    held.map(|mut one| {
+        if engines::from_allowed(limits, std::slice::from_ref(&one.url)).is_err() {
+            one.message = String::new();
+            one.default_text = None;
+            // Where on the site, and what its address carries, is the site's too.
+            one.url = tauri::Url::parse(&one.url)
+                .ok()
+                .map(|url| url.origin().ascii_serialization())
+                .filter(|origin| origin != "null")
+                .unwrap_or_default();
+        }
+        one
+    })
 }
 
 /// The tab a verb names.
@@ -1153,6 +1176,16 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         "the page is holding no dialog",
                     ));
                 };
+                // A denied site's dialog is that site's to answer, whatever the mode: its
+                // words, a prompt's answer or a sign-in would go to it (9.2).
+                if let Err(why) =
+                    engines::from_allowed(page.limits.as_ref(), std::slice::from_ref(&held.url))
+                {
+                    return Err(Answer::error(
+                        Code::SiteDenied,
+                        format!("{why}: the dialog is that site's, and is answered the safe way by itself before long"),
+                    ));
+                }
                 // A site's sign-in box or certificate request answered yes signs in, and
                 // asks as the mode says: nothing under Full permissions (#1072).
                 if let Caller::Agent(grant) = caller {
@@ -1387,9 +1420,9 @@ fn beyond_the_grant(root: &Path, path: &Path, spaces: &Spaces) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{beyond_the_grant, modifiers, policy, question_key, Act, Facts, Grant};
-    use crate::agents::grants::{Every, Spaces};
-    use crate::agents::verbs::Modifier;
+    use super::{beyond_the_grant, modifiers, policy, question_key, seen, Act, Facts, Grant};
+    use crate::agents::grants::{Every, SiteRule, Spaces};
+    use crate::agents::verbs::{Dialog, DialogKind, Modifier, Store};
     use std::path::Path;
 
     /// What an allowance is for, for a control in a dialog.
@@ -1493,5 +1526,71 @@ mod tests {
         assert_eq!(modifiers(&[]), 0);
         assert_eq!(modifiers(&[Modifier::Control, Modifier::Shift]), 10);
         assert_eq!(modifiers(&[Modifier::Alt, Modifier::Meta]), 5);
+    }
+
+    /// RE-1: a dialog a denied site raised - `confirm` in its frame, or its sign-in box for
+    /// a request to it - is shown to the agent as holding the page and nothing else, and
+    /// `browser_dialog` refuses it by the same test.
+    #[test]
+    fn a_denied_site_s_dialog_says_nothing_to_the_agent_and_is_not_its_to_answer() {
+        let mut grant = Grant::own("a".into(), "A");
+        grant.sites.insert("bank.example".into(), SiteRule::Deny);
+        let limits = (grant, Store::Reader);
+        let dialog = |kind: DialogKind, url: &str| Dialog {
+            kind,
+            message: "Transfer 500 EUR to X?".into(),
+            default_text: (kind == DialogKind::Prompt).then(|| "500".into()),
+            url: url.into(),
+            open_ms: 0,
+        };
+        for (kind, url) in [
+            (DialogKind::Confirm, "https://bank.example/transfer"),
+            (
+                DialogKind::Prompt,
+                "https://www.bank.example/transfer?iban=DE00",
+            ),
+            (DialogKind::SignIn, "https://bank.example/"),
+            // A frame the engine did not place is nobody's.
+            (DialogKind::Prompt, ""),
+        ] {
+            let shown = seen(Some(&limits), Some(dialog(kind, url))).expect("still held");
+            assert_eq!(shown.kind, kind);
+            // RF-6: the site, and not where on it or what its address carries.
+            assert!(
+                !shown.url.contains('/') || shown.url.matches('/').count() == 2,
+                "{}",
+                shown.url
+            );
+            assert!(!shown.url.contains('?'), "{}", shown.url);
+            assert!(shown.message.is_empty(), "{url}");
+            assert!(shown.default_text.is_none(), "{url}");
+            assert!(
+                super::engines::from_allowed(Some(&limits), &[url.to_string()]).is_err(),
+                "{url}"
+            );
+        }
+        let cut = seen(
+            Some(&limits),
+            Some(dialog(
+                DialogKind::SignIn,
+                "https://bank.example/api/session?token=t",
+            )),
+        );
+        assert_eq!(
+            cut.map(|one| one.url).as_deref(),
+            Some("https://bank.example")
+        );
+        let allowed = dialog(DialogKind::Prompt, "https://shop.example/");
+        assert_eq!(
+            seen(Some(&limits), Some(allowed.clone())),
+            Some(allowed.clone())
+        );
+        assert!(
+            super::engines::from_allowed(Some(&limits), std::slice::from_ref(&allowed.url)).is_ok()
+        );
+        // The reader's own command line sees every dialog.
+        let denied = dialog(DialogKind::Confirm, "https://bank.example/");
+        assert_eq!(seen(None, Some(denied.clone())), Some(denied));
+        assert_eq!(seen(Some(&limits), None), None);
     }
 }

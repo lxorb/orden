@@ -27,14 +27,16 @@ use std::time::{Duration, Instant};
 
 use serde_json::{json, Value};
 
-use super::cdp::{self, Heard};
-use super::engines::{Engine, Gate, Page, Tree, SETTLED, UNREAD};
+use super::cdp::{self, Heard, Whence};
+use super::engines::{self, Engine, Gate, Page, Tree, SETTLED, UNREAD};
+use super::grants::Grant;
 use super::keys::{self, Key};
 use super::policy::{self, Facts, Field};
 use super::scripts::{self, paint_over, png_size, CARET_ALL, CARET_END};
 use super::snapshot::{self, Part};
 use super::verbs::{
-    Answer, Code, ConsoleLines, Cookie, FieldValue, Match, Moment, Picture, ReadAs, Requests, Until,
+    Answer, Code, ConsoleLine, ConsoleLines, Cookie, FieldValue, Match, Moment, Picture, ReadAs,
+    Request, Requests, Store, Until,
 };
 use crate::pdf::{printing, PdfPage};
 
@@ -1155,9 +1157,7 @@ impl Page<'_> {
 
     /// Whether a frame's words may be read, by where it is.
     fn may_read_frame(&self, at: &[String]) -> bool {
-        self.limits
-            .as_ref()
-            .is_none_or(|(grant, store)| policy::frame_allowed(grant, at, *store).is_ok())
+        engines::frame_readable(self.limits.as_ref(), at)
     }
 
     /// The fields of an element's form, or its page, inside a closed shadow root, which no
@@ -2261,9 +2261,26 @@ impl Page<'_> {
             return Ok(());
         }
         let (width, height, x, y) = self.viewport()?;
+        // The wheel scrolls what is under it, which may be a frame of a site the agent may
+        // not act in (9.2); that, and what cannot be told, is scrolled as a whole page
+        // instead, which moves the tab's own document and no frame in it.
+        let middle = (width / 2.0, height / 2.0);
+        let under = if self.limits_sites() {
+            self.element_at(middle)
+                .ok()
+                .and_then(|one| self.facts(&one).ok())
+        } else {
+            None
+        };
+        if !wheels(self.limits.as_ref(), under.as_ref()) {
+            self.isolated(&format!(
+                "window.scrollBy({{ left: {dx}, top: {dy}, behavior: 'instant' }})"
+            ))?;
+            return Ok(());
+        }
         self.call(
             "Input.dispatchMouseEvent",
-            &json!({ "type": "mouseWheel", "x": width / 2.0, "y": height / 2.0, "deltaX": dx, "deltaY": dy }),
+            &json!({ "type": "mouseWheel", "x": middle.0, "y": middle.1, "deltaX": dx, "deltaY": dy }),
         )?;
         // The wheel is what a person's scroll is, and what a page's own scrolling listens
         // to; a page it did not move is scrolled as a whole instead.
@@ -2766,11 +2783,6 @@ impl Page<'_> {
         Ok(rects)
     }
 
-    /// Whether a row of the console or the network is about a site the agent may read.
-    pub fn may_read_row(&self, url: &str) -> bool {
-        self.may_read_frame(&[url.to_string()])
-    }
-
     /// Where a frame in a process of its own is now, as the frame says: the address it was
     /// attached at may be older than a navigation inside it.
     fn frame_address(&self, frame: &cdp::Frame) -> Vec<String> {
@@ -3106,6 +3118,7 @@ impl Page<'_> {
                             .lock()
                             .unwrap_or_else(PoisonError::into_inner)
                             .in_flight();
+                        let open = still_in_flight(self.limits.as_ref(), open);
                         format!(": still in flight, {}", open.join(", "))
                     }
                     _ => String::new(),
@@ -3399,7 +3412,7 @@ impl Engine for Page<'_> {
         let (requests, _) = held.requests(None, None);
         let mut hosts: HashSet<String> = requests
             .iter()
-            .filter_map(|one| policy::host_of(&one.url))
+            .filter_map(|(one, _)| policy::host_of(&one.url))
             .collect();
         for (_, frame) in held.frames() {
             if let Some(host) = policy::host_of(&frame.url) {
@@ -3513,14 +3526,10 @@ impl Engine for Page<'_> {
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .console(since, level);
-        // A line a frame of a site the agent may not reach printed is that site's.
         let lines = lines
             .into_iter()
-            .filter(|one| {
-                one.source
-                    .as_deref()
-                    .is_none_or(|url| self.may_read_row(url))
-            })
+            .filter(|(one, whence)| line_readable(self.limits.as_ref(), one, whence))
+            .map(|(one, _)| one)
             .collect();
         Ok(ConsoleLines { lines, next })
     }
@@ -3532,12 +3541,15 @@ impl Engine for Page<'_> {
         bodies: bool,
     ) -> Result<Requests, Answer> {
         let heard = self.heard();
-        let (mut requests, next) = heard
+        let (requests, next) = heard
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .requests(since, matching);
-        // A request to or from a site the agent may not reach is that site's.
-        requests.retain(|one| self.may_read_row(&one.url));
+        let mut requests: Vec<Request> = requests
+            .into_iter()
+            .filter(|(one, from)| request_readable(self.limits.as_ref(), one, from))
+            .map(|(one, _)| one)
+            .collect();
         if bodies {
             for row in requests.iter_mut().rev().take(BODIES) {
                 let found = heard
@@ -4052,9 +4064,210 @@ fn area(at: &[f64]) -> f64 {
     (twice / 2.0).abs()
 }
 
+/// Whether a scroll of the page may wheel at the viewport's middle under a call's
+/// `limits`, by what is there (`None` when that cannot be told): not into a frame of a site
+/// the agent may not act in (9.2), nor where that cannot be told; `false` scrolls the page
+/// as a whole instead.
+fn wheels(limits: Option<&(Grant, Store)>, under: Option<&Facts>) -> bool {
+    !engines::limits_sites(limits)
+        || under.is_some_and(|facts| engines::acts_in(limits, facts).is_ok())
+}
+
+/// The addresses of the requests still in flight that the agent may read, for a wait
+/// that timed out on the network: the same rows `browser_network` shows.
+fn still_in_flight(limits: Option<&(Grant, Store)>, rows: Vec<(Request, Whence)>) -> Vec<String> {
+    rows.into_iter()
+        .filter(|(one, from)| request_readable(limits, one, from))
+        .map(|(one, _)| one.url)
+        .collect()
+}
+
+/// Whether a console line is the agent's to read under a call's `limits`: one a frame of a
+/// site it may not reach printed is that site's, whichever site its script came from, as is
+/// one a script of such a site printed; one the engine did not place is nobody's.
+fn line_readable(limits: Option<&(Grant, Store)>, line: &ConsoleLine, whence: &Whence) -> bool {
+    match whence {
+        Whence::Orden => true,
+        Whence::Frame(at) => {
+            engines::from_allowed(limits, at).is_ok()
+                && line
+                    .source
+                    .as_ref()
+                    .is_none_or(|url| engines::frame_readable(limits, std::slice::from_ref(url)))
+        }
+    }
+}
+
+/// Whether a request is the agent's to read under a call's `limits`: one to or from a site
+/// it may not reach is that site's, and one from a frame the engine did not place is
+/// nobody's.
+fn request_readable(limits: Option<&(Grant, Store)>, row: &Request, from: &Whence) -> bool {
+    engines::frame_readable(limits, std::slice::from_ref(&row.url))
+        && match from {
+            Whence::Orden => true,
+            Whence::Frame(at) => engines::from_allowed(limits, at).is_ok(),
+        }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::agents::grants::SiteRule;
+
+    /// An agent denied bank.example, in the reader's store.
+    fn denying() -> (Grant, Store) {
+        let mut grant = Grant::own("a".into(), "A");
+        grant.sites.insert("bank.example".into(), SiteRule::Deny);
+        (grant, Store::Reader)
+    }
+
+    fn frame(at: &[&str]) -> Whence {
+        Whence::Frame(at.iter().map(|one| (*one).to_string()).collect())
+    }
+
+    /// RE-2: a line a denied frame printed stays out of `browser_console`, whichever site
+    /// its script came from or none, and so does one the engine did not place.
+    #[test]
+    fn a_denied_frame_s_console_line_is_not_read_whatever_its_script() {
+        let limits = denying();
+        let line = |source: Option<&str>| ConsoleLine {
+            seq: 1,
+            level: "log".into(),
+            text: "balance 1200".into(),
+            source: source.map(str::to_string),
+        };
+        let bank = frame(&["https://bank.example"]);
+        let shop = frame(&["https://shop.example"]);
+        for source in [Some("https://cdn.example/app.js:3"), Some(":1"), None] {
+            assert!(
+                !line_readable(Some(&limits), &line(source), &bank),
+                "{source:?}"
+            );
+            assert!(
+                !line_readable(Some(&limits), &line(source), &frame(&[])),
+                "{source:?}"
+            );
+            assert!(
+                line_readable(Some(&limits), &line(source), &shop),
+                "{source:?}"
+            );
+        }
+        // A script of the denied site, in an allowed frame, is still that site's.
+        let theirs = line(Some("https://bank.example/widget.js:9"));
+        assert!(!line_readable(Some(&limits), &theirs, &shop));
+        // Orden's own lines, and the reader's command line.
+        assert!(line_readable(
+            Some(&limits),
+            &line(Some("nib")),
+            &Whence::Orden
+        ));
+        assert!(line_readable(None, &line(None), &bank));
+    }
+
+    /// RE-3: a request a denied frame sent is out of `browser_network`, whichever host it
+    /// went to, as is one to the denied site.
+    #[test]
+    fn a_denied_frame_s_request_is_not_read_whatever_its_host() {
+        let limits = denying();
+        let row = |url: &str| Request {
+            seq: 1,
+            method: "GET".into(),
+            url: url.into(),
+            status: Some(200),
+            kind: "Fetch".into(),
+            ms: None,
+            failed: None,
+            body: None,
+        };
+        let api = row("https://api.backend.example/accounts");
+        assert!(!request_readable(
+            Some(&limits),
+            &api,
+            &frame(&["https://bank.example/app"])
+        ));
+        assert!(!request_readable(
+            Some(&limits),
+            &api,
+            &frame(&["about:blank", "https://bank.example/app"])
+        ));
+        assert!(!request_readable(Some(&limits), &api, &frame(&[])));
+        assert!(request_readable(
+            Some(&limits),
+            &api,
+            &frame(&["https://shop.example/"])
+        ));
+        assert!(!request_readable(
+            Some(&limits),
+            &row("https://bank.example/pixel"),
+            &frame(&["https://shop.example/"])
+        ));
+        assert!(request_readable(
+            None,
+            &api,
+            &frame(&["https://bank.example/"])
+        ));
+    }
+
+    /// RE-4: a scroll by no ref wheels into a denied frame at the middle not at all, and
+    /// scrolls the page as a whole where what is there cannot be told.
+    #[test]
+    fn a_scroll_by_no_ref_does_not_wheel_a_denied_frame() {
+        let limits = denying();
+        let facts = |at: &[&str]| Facts {
+            at: at.iter().map(|one| (*one).to_string()).collect(),
+            ..Facts::default()
+        };
+        // RF-3: a denied frame at the middle scrolls the page as a whole, not an error.
+        assert!(!wheels(
+            Some(&limits),
+            Some(&facts(&["https://bank.example/"]))
+        ));
+        assert!(wheels(
+            Some(&limits),
+            Some(&facts(&["https://shop.example/"]))
+        ));
+        assert!(!wheels(Some(&limits), None));
+        // No rule for any site: the wheel, as before.
+        let open = (Grant::own("a".into(), "A"), Store::Reader);
+        assert!(wheels(Some(&open), None));
+        assert!(wheels(None, None));
+    }
+
+    /// RF-1: a wait that timed out on the network names only the requests the agent may
+    /// read, not a denied frame's or one to a denied site.
+    #[test]
+    fn a_network_wait_names_only_the_requests_the_agent_may_read() {
+        let limits = denying();
+        let row = |url: &str| Request {
+            seq: 1,
+            method: "GET".into(),
+            url: url.into(),
+            status: None,
+            kind: "Fetch".into(),
+            ms: None,
+            failed: None,
+            body: None,
+        };
+        let rows = vec![
+            (
+                row("https://bank.example/stream?session=abc"),
+                frame(&["https://shop.example/"]),
+            ),
+            (
+                row("https://api.backend.example/accounts?acct=123"),
+                frame(&["https://bank.example/app"]),
+            ),
+            (
+                row("https://shop.example/poll"),
+                frame(&["https://shop.example/"]),
+            ),
+        ];
+        assert_eq!(
+            still_in_flight(Some(&limits), rows.clone()),
+            ["https://shop.example/poll"]
+        );
+        assert_eq!(still_in_flight(None, rows).len(), 3);
+    }
 
     #[test]
     fn a_frame_inside_a_frame_maps_through_both() {
