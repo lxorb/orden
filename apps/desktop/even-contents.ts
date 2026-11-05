@@ -667,9 +667,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  .deb or an .rpm, and the command it says without (UpdateNotice.svelte, updater.ts): the
  *  code to 6,136,500, measured 6,136,202; the catalogues to 1,015,600, its sentence in
  *  every language, measured 1,015,323.
+ *
+ *  Raised on 2026-11-05 for #1153, Todos one list of every space and the reader's one
+ *  inbox (rows/home.svelte.ts, views/source.ts, views/display.ts): the code to 6,138,100,
+ *  measured 6,137,776.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_136_500,
+  code: 6_138_100,
   catalogues: 1_015_600,
   styles: 293_100,
   fonts: 260_000,
