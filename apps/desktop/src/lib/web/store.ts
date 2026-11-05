@@ -53,7 +53,7 @@ export interface SnapshotRow {
  *  the file and said; see `stats.learn`. Learnt rather than filled in by an upgrade
  *  of the database, because an upgrade waits on every tab still holding the old
  *  version open, and the tab an update leaves behind never lets go of it. */
-export interface StatRow {
+interface StatRow {
   path: string
   modified: number
   created: number
@@ -322,7 +322,7 @@ function slice<T>(store: string, after: string | null, most: number): Promise<T[
 const WITH_STATS = ['files', 'stats'] as const
 const ASSETS_WITH_STATS = ['assets', 'stats'] as const
 
-export const files = {
+const ownFiles = {
   get: (path: string) => run<FileRow | undefined>('files', 'readonly', (s) => s.get(path)),
   all: () => run<FileRow[]>('files', 'readonly', (s) => s.getAll()),
   /** Every path, in path order, and not one body. What anything that only has to
@@ -396,7 +396,7 @@ export const files = {
     ),
 }
 
-export const assets = {
+const ownAssets = {
   get: (path: string) => run<AssetRow | undefined>('assets', 'readonly', (s) => s.get(path)),
   all: () => run<AssetRow[]>('assets', 'readonly', (s) => s.getAll()),
   /** Every path, and not one picture. A picture is a data URI in its row, so this
@@ -418,7 +418,7 @@ export const assets = {
  *  a whole, because that is the one question it exists to answer - and in slices,
  *  because on the way up it is the one question that holds everything else; see
  *  `inSlices`. */
-export const stats = {
+const ownStats = {
   /** Whether anything is at `path` or under it, by a key and not a row: one lookup,
    *  where listing the tree to ask read every row in the store. */
   holds: async (path: string) => {
@@ -458,6 +458,137 @@ export const stats = {
         }
       }
     }),
+}
+
+/** The tables a store of rows keyed by path answers: this browser's own, above, or
+ *  another mounted at a folder (`mountRows`). */
+export interface Rows {
+  files: typeof ownFiles
+  assets: typeof ownAssets
+  stats: typeof ownStats
+}
+
+const OWN: Rows = { files: ownFiles, assets: ownAssets, stats: ownStats }
+
+/** Stores of rows mounted at a folder, by the folder: what is at or under it is theirs
+ *  and not this browser's (#1068, step 4c). A space whose files Orden keeps itself, by
+ *  id, answers the same commands the browser build does through the same tables, so
+ *  nothing above them can tell; with nothing mounted, every row is this browser's. */
+const mounts = new Map<string, Rows>()
+
+/** Mounts `rows` at `root`. Answers how to take them away again. */
+export function mountRows(root: string, rows: Rows): () => void {
+  mounts.set(root, rows)
+  return () => {
+    if (mounts.get(root) === rows) mounts.delete(root)
+  }
+}
+
+/** Whether `path` is `root` or under it. */
+function under(root: string, path: string): boolean {
+  return path === root || path.startsWith(root.endsWith('/') ? root : `${root}/`)
+}
+
+/** The rows a path is kept in: the deepest mount it is at or under, or this browser's. */
+function rowsAt(path: string): Rows {
+  let found: Rows = OWN
+  let depth = -1
+  for (const [root, rows] of mounts) {
+    if (root.length > depth && under(root, path)) {
+      found = rows
+      depth = root.length
+    }
+  }
+  return found
+}
+
+/** Every store of rows, this browser's first. */
+function everyRows(): Rows[] {
+  return [OWN, ...mounts.values()]
+}
+
+/** What every store answers to a whole-store read, as one list in path order, which is
+ *  the order each answers in. */
+async function together<T>(
+  read: (rows: Rows) => Promise<T[]>,
+  keyOf: (row: T) => string,
+): Promise<T[]> {
+  const lists = await Promise.all(everyRows().map(read))
+  if (lists.length === 1) return lists[0] ?? []
+  return lists.flat().sort((a, b) => (keyOf(a) < keyOf(b) ? -1 : keyOf(a) > keyOf(b) ? 1 : 0))
+}
+
+/** Paths, each with the store it is kept in. */
+function byRows<T>(items: readonly T[], pathOf: (item: T) => string): Map<Rows, T[]> {
+  const out = new Map<Rows, T[]>()
+  for (const item of items) {
+    const rows = rowsAt(pathOf(item))
+    out.set(rows, [...(out.get(rows) ?? []), item])
+  }
+  return out
+}
+
+const own = (path: string) => path
+
+export const files: Rows['files'] = {
+  get: (path) => rowsAt(path).files.get(path),
+  all: () =>
+    together(
+      (rows) => rows.files.all(),
+      (row) => row.path,
+    ),
+  paths: () => together((rows) => rows.files.paths(), own),
+  each: async (visit) => {
+    for (const rows of everyRows()) await rows.files.each(visit)
+  },
+  between: (from, to) =>
+    together(
+      (rows) => rows.files.between(from, to),
+      (row) => row.path,
+    ),
+  put: (row) => rowsAt(row.path).files.put(row),
+  write: (path, content, at, plane) => rowsAt(path).files.write(path, content, at, plane),
+  remove: (path) => rowsAt(path).files.remove(path),
+  /** All or nothing within each store; a move from one store into another is the
+   *  writes in the one and the drops in the other. */
+  move: async (rows, gone) => {
+    const writes = byRows(rows, (row) => row.path)
+    const drops = byRows(gone, own)
+    for (const store of new Set([...writes.keys(), ...drops.keys()])) {
+      await store.files.move(writes.get(store) ?? [], drops.get(store) ?? [])
+    }
+  },
+}
+
+export const assets: Rows['assets'] = {
+  get: (path) => rowsAt(path).assets.get(path),
+  all: () =>
+    together(
+      (rows) => rows.assets.all(),
+      (row) => row.path,
+    ),
+  paths: () => together((rows) => rows.assets.paths(), own),
+  put: (row) => rowsAt(row.path).assets.put(row),
+  remove: (path) => rowsAt(path).assets.remove(path),
+}
+
+export const stats: Rows['stats'] = {
+  /** Under the store the path is kept in, or under a store mounted inside it. */
+  holds: async (path) => {
+    if (await rowsAt(path).stats.holds(path)) return true
+    for (const [root, rows] of mounts) {
+      if (root !== path && under(path, root) && (await rows.stats.holds(root))) return true
+    }
+    return false
+  },
+  all: () =>
+    together(
+      (rows) => rows.stats.all(),
+      (row) => row.path,
+    ),
+  learn: async (found) => {
+    for (const [rows, some] of byRows(found, (one) => one.path)) await rows.stats.learn(some)
+  },
 }
 
 export const meta = {
