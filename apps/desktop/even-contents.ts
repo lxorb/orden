@@ -568,10 +568,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  menu, its three rows, the question before a page with something typed into it goes
  *  and the switch under General > Tabs, in every language (tab-strip/unloading.svelte.ts,
  *  general-pane.ts). Its code and its faded marks fit in the room. Measured 984,540.
+ *
+ *  The code raised on 2026-11-05, to 5,937,700, and the catalogues to 988,600, for
+ *  #1128: dictation into a field, the microphone, its chooser and the keys that Settings
+ *  > AI draws in the plugin too, and their words in every language (dictation/,
+ *  AiPane.svelte). Measured 5,937,052 and 987,975.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_935_600,
-  catalogues: 985_000,
+  code: 5_937_700,
+  catalogues: 988_600,
   styles: 292_300,
   fonts: 260_000,
   pages: 40_000,
