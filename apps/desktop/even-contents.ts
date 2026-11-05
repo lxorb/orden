@@ -603,9 +603,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  Raised on 2026-11-05 as #1110, #1114, #1063 and #331 came to claude/hunt-round-1 on
  *  top of the hunt's: the code to 6,035,500, measured 6,035,357; the catalogues to
  *  992,400, measured 992,135. The styles keep #1114's 291,500, measured 291,272.
+ *
+ *  The code raised on 2026-11-05, to 6,038,500, as #1122, #1078, #1124 and #1068 came to
+ *  claude/hunt-round-1 on top of the hunt's: an `ai` block's answer drawn as the note is
+ *  (`TexDelimiters` in @orden/markdown/streamed), the agents' programs, the registry of
+ *  what covers a page, measured 6,038,202. Catalogues 992,135 and styles 291,272 as they
+ *  were.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_035_500,
+  code: 6_038_500,
   catalogues: 992_400,
   styles: 291_500,
   fonts: 260_000,
