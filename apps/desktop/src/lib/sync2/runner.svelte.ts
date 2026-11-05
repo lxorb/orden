@@ -471,7 +471,9 @@ class Runner {
     // Only the window holding the device's store forgets it: another window may still be
     // keeping it, and lets go of it first when it hears the same.
     if (!(await this.holdStore())) return
-    return this.inLane(() => this.carryLocal())
+    // Asked for a sign-in that may be over by the time the store is this window's: signed
+    // out since, the store it takes over is the one to keep, not to carry and forget.
+    return this.inLane(() => (account.user ? this.carryLocal() : undefined))
   }
 
   /** This device's id in the account's store (the hub's `deviceId`), read only where this

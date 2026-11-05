@@ -268,3 +268,33 @@ describe('the way back to v1', () => {
   })
 })
 
+describe('a drop left waiting from a v1 sign-in', () => {
+  test('signed out again, the window that takes the store over keeps its engine (M3-3)', async () => {
+    const a = await aWindow()
+    await a.runner.startLocal()
+    const b = await aWindow()
+    void b.runner.startLocal()
+    await settle()
+    // Signed in to an account still on v1: sync.svelte runs leaveLocal (dropLocal) and v1.
+    for (const one of [a, b]) {
+      Object.assign(one.account, { user: { id: 'u1', syncVersion: 1 } })
+      void one.runner.dropLocal()
+    }
+    await settle()
+    // Signed out: forgetWithSession asks signedOut only of a runner with accountNow.
+    for (const one of [a, b]) {
+      Object.assign(one.account, { user: null })
+      if (one.runner.accountNow) await one.runner.signedOut('u1')
+      void one.runner.startLocal()
+    }
+    await settle(1000)
+    // A's window closes, and B takes the store over.
+    await a.runner.stop()
+    crate.log.length = 0
+    await settle(1500)
+    const kept = b.runner as unknown as { current: unknown; local: boolean }
+    expect(kept.current).not.toBeNull()
+    expect(kept.local).toBe(true)
+    expect(crate.log).not.toContain('forget local')
+  })
+})
