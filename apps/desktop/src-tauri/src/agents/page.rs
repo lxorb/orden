@@ -21,6 +21,7 @@
 //! has each filled one painted over (9.4).
 
 use std::collections::{HashMap, HashSet};
+use std::sync::atomic::Ordering;
 use std::sync::{Arc, LazyLock, Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
@@ -28,7 +29,7 @@ use base64::Engine as _;
 use serde_json::{json, Value};
 
 use super::cdp::{self, Heard};
-use super::engines::{Engine, Gate, Page, Tree, View};
+use super::engines::{Engine, Gate, Page, Tree};
 use super::keys::{self, Key};
 use super::policy::{self, Facts, Field};
 use super::snapshot::{self, Part};
@@ -1004,7 +1005,7 @@ impl Page<'_> {
     /// What a press landing on an element would press, as `facts` says it, and with what
     /// the engine alone can see: a listener round it no attribute shows. A control is its
     /// own answer and a field its own.
-    pub fn facts_of_press(&self, element: &Element) -> Result<Facts, Answer> {
+    fn facts_of_press(&self, element: &Element) -> Result<Facts, Answer> {
         let mut facts = self.facts(element)?;
         // A link with a listener of its own may do more than go. All of this reads the page in
         // nib's own world and the engine's own lists.
@@ -1167,7 +1168,7 @@ impl Page<'_> {
 
     /// Whether the frame an element is in may be acted in (9.2): a denied site does not
     /// open for being in a frame.
-    pub fn may_act_in(&self, facts: &Facts) -> Result<(), Answer> {
+    fn may_act_in(&self, facts: &Facts) -> Result<(), Answer> {
         // Nowhere is no answer to where, for an agent with a site it may not act in.
         if facts.at.is_empty() && facts.opaque && self.limits_sites() {
             return Err(Answer::error(
@@ -1183,7 +1184,7 @@ impl Page<'_> {
     }
 
     /// Whether the agent's grant has a rule for any site, so that a frame can be denied.
-    pub fn limits_sites(&self) -> bool {
+    fn limits_sites(&self) -> bool {
         self.limits
             .as_ref()
             .is_some_and(|(grant, _)| !grant.sites.is_empty())
@@ -1252,7 +1253,7 @@ impl Page<'_> {
     }
 
     /// What the element with the keyboard says about itself, if one has it.
-    pub fn active_facts(&self) -> Result<Option<Facts>, Answer> {
+    fn active_facts(&self) -> Result<Option<Facts>, Answer> {
         let Some((facts, object)) = self.active_in(None, None)? else {
             return Ok(None);
         };
@@ -1595,7 +1596,7 @@ impl Page<'_> {
 
     /// What the first point of an element lands on, where a drag starts or ends and a
     /// hover rests, which take that point whatever covers it.
-    pub fn at_first_point(&self, element: &Element) -> Result<Element, Answer> {
+    fn at_first_point(&self, element: &Element) -> Result<Element, Answer> {
         let point = self.point(element)?;
         self.struck(element, point)
     }
@@ -1673,7 +1674,7 @@ impl Page<'_> {
     /// frame of another origin where the point is in one, since the frame's element says
     /// nothing of the button a press lands on (a card form, a pay button). A point in a
     /// frame that cannot be read is refused, for a press by ref, rather than judged blind.
-    pub fn element_at(&self, point: (f64, f64)) -> Result<Element, Answer> {
+    fn element_at(&self, point: (f64, f64)) -> Result<Element, Answer> {
         let backend = self
             .node_at(point)
             .ok_or_else(|| Answer::error(Code::Failed, "nothing of the page is at that point"))?;
@@ -2076,7 +2077,7 @@ impl Page<'_> {
         .is_ok_and(|said| said.pointer("/result/value").and_then(Value::as_bool) != Some(false))
     }
 
-    pub fn hover(&self, element: &Element) -> Result<(), Answer> {
+    fn hover(&self, element: &Element) -> Result<(), Answer> {
         let point = self.point(element)?;
         self.mouse("mouseMoved", point, "none", 0, 0)
     }
@@ -2166,7 +2167,7 @@ impl Page<'_> {
     }
 
     /// Options of a `<select>` chosen through the page, never by opening its list.
-    pub fn select(&self, element: &Element, values: &[String]) -> Result<Vec<String>, Answer> {
+    fn select(&self, element: &Element, values: &[String]) -> Result<Vec<String>, Answer> {
         let said = self.run_in_page(
             element,
             r"function (values) {
@@ -2200,12 +2201,7 @@ impl Page<'_> {
     }
 
     /// One field of a form set to a value, by what kind of field it is.
-    pub fn fill(
-        &self,
-        element: &Element,
-        value: &FieldValue,
-        gate: Gate<'_>,
-    ) -> Result<(), Answer> {
+    fn fill(&self, element: &Element, value: &FieldValue, gate: Gate<'_>) -> Result<(), Answer> {
         let facts = self.facts(element)?;
         self.refuse_secret(&facts)?;
         if facts.sensitive() {
@@ -2233,7 +2229,7 @@ impl Page<'_> {
     }
 
     /// Whether setting a checkbox or a radio button takes a press, which only a change does.
-    pub fn tick_changes(&self, element: &Element, wanted: bool) -> Result<bool, Answer> {
+    fn tick_changes(&self, element: &Element, wanted: bool) -> Result<bool, Answer> {
         let now = self.run_on(element, "function () { return this.checked }", &[])?;
         Ok(now.as_bool() != Some(wanted))
     }
@@ -2362,7 +2358,7 @@ impl Page<'_> {
     /// One element dragged onto another, with the engine's own drag when the page drags
     /// and plain presses and moves when it only listens to the pointer. The engine's drag
     /// is intercepted rather than started, so no drag of the system's ever begins.
-    pub fn drag(
+    fn drag(
         &self,
         (from, picked): (&Element, &Element),
         (to, dropped): (&Element, &Element),
@@ -2420,12 +2416,7 @@ impl Page<'_> {
 
     /// Files handed to a file input: the input itself, or the chooser a press on the
     /// element opens, which the engine intercepts rather than shows (6.2).
-    pub fn upload(
-        &self,
-        element: &Element,
-        files: &[String],
-        gate: Gate<'_>,
-    ) -> Result<(), Answer> {
+    fn upload(&self, element: &Element, files: &[String], gate: Gate<'_>) -> Result<(), Answer> {
         let facts = self.facts(element)?;
         let input = if facts.kind == "file" {
             element.clone()
@@ -2691,7 +2682,7 @@ impl Page<'_> {
     }
 
     /// The page's accessibility tree, with its frames, as the parts `snapshot` writes.
-    pub fn parts(&self) -> Result<Tree, Answer> {
+    fn parts(&self) -> Result<Tree, Answer> {
         let started = Instant::now();
         // A frame not followed yet is on no list, and the read would not say it left it out.
         let _ = self.nested_followed();
@@ -3357,7 +3348,7 @@ impl Page<'_> {
 
     /// Sets a cookie for the page's address, or a domain the page is on: a cookie for any
     /// other would plant it for a site the agent may not reach at all.
-    pub fn set_cookie(&self, cookie: &Cookie) -> Result<(), Answer> {
+    fn set_cookie(&self, cookie: &Cookie) -> Result<(), Answer> {
         if let Some(domain) = &cookie.domain {
             if !policy::host_of(&self.url()).is_some_and(|host| cookie_fits(domain, &host)) {
                 return Err(Answer::error(

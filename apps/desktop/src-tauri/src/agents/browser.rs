@@ -11,7 +11,6 @@
 //! or a write is then judged from the page (`policy`) and asks first when it has to,
 //! answering `needs_approval` at once.
 
-use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
