@@ -2370,6 +2370,9 @@ export const tr: Dictionary = {
     '{device}, görüntüsünü göndermek için ffmpeg’e ihtiyaç duyar.',
   'The picture could not be sent.': 'Görüntü gönderilemedi.',
   'This device cannot show the picture.': 'Bu cihaz görüntüyü gösteremiyor.',
+  'Share the clipboard with applications': 'Panoyu uygulamalarla paylaş',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'Diğer bilgisayarlarınızdan birindeki uygulama burada kopyaladığınızı yapıştırır, onun kopyaladığı da buraya gelir.',
   'None of your devices can run an application yet':
     'Cihazlarınızın hiçbiri henüz uygulama çalıştıramıyor',
   'Where does it run?': 'Nerede çalışsın?',

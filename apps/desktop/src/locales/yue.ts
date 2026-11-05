@@ -2293,6 +2293,9 @@ export const yue: Dictionary = {
   '{device} needs ffmpeg to send its picture.': '{device} 要有 ffmpeg 先可以傳送畫面。',
   'The picture could not be sent.': '畫面傳送唔到。',
   'This device cannot show the picture.': '呢部裝置顯示唔到畫面。',
+  'Share the clipboard with applications': '同應用程式共用剪貼簿',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    '你另一部電腦上面嘅應用程式可以貼上你喺度複製嘅嘢，佢複製嘅嘢都會嚟到呢度。',
   'None of your devices can run an application yet': '你仲未有裝置可以運行應用程式',
   'Where does it run?': '喺邊度運行？',
   'What does it run?': '運行咩？',

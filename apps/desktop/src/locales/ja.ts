@@ -2340,6 +2340,9 @@ export const ja: Dictionary = {
   '{device} needs ffmpeg to send its picture.': '画面を送るには {device} に ffmpeg が必要です。',
   'The picture could not be sent.': '画面を送信できませんでした。',
   'This device cannot show the picture.': 'このデバイスでは画面を表示できません。',
+  'Share the clipboard with applications': 'クリップボードをアプリケーションと共有',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'ほかのコンピューターのアプリケーションに、ここでコピーしたものを貼り付けられ、そこでコピーしたものがここに届きます。',
   'None of your devices can run an application yet':
     'アプリケーションを実行できるデバイスはまだありません',
   'Where does it run?': 'どこで実行しますか？',

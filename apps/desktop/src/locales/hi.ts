@@ -2355,6 +2355,9 @@ export const hi: Dictionary = {
   '{device} needs ffmpeg to send its picture.': 'तस्वीर भेजने के लिए {device} को ffmpeg चाहिए।',
   'The picture could not be sent.': 'तस्वीर भेजी नहीं जा सकी।',
   'This device cannot show the picture.': 'यह डिवाइस तस्वीर नहीं दिखा सकता।',
+  'Share the clipboard with applications': 'ऐप्लिकेशन के साथ क्लिपबोर्ड साझा करें',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'आपके दूसरे कंप्यूटर का ऐप्लिकेशन यहाँ कॉपी की गई चीज़ पेस्ट करता है, और जो वह कॉपी करता है वह यहाँ आता है।',
   'None of your devices can run an application yet':
     'आपका कोई भी डिवाइस अभी एप्लिकेशन नहीं चला सकता',
   'Where does it run?': 'यह कहाँ चले?',

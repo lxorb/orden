@@ -2402,6 +2402,9 @@ export const fil: Dictionary = {
     'Kailangan ng {device} ang ffmpeg para maipadala ang larawan nito.',
   'The picture could not be sent.': 'Hindi naipadala ang larawan.',
   'This device cannot show the picture.': 'Hindi maipakita ng device na ito ang larawan.',
+  'Share the clipboard with applications': 'Ibahagi ang clipboard sa mga application',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'Ipinapaste ng application sa iba mong computer ang kinopya mo rito, at ang kinokopya nito ay napupunta rito.',
   'None of your devices can run an application yet':
     'Wala pa sa mga device mo ang makakapagpatakbo ng application',
   'Where does it run?': 'Saan ito tatakbo?',

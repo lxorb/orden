@@ -2391,6 +2391,9 @@ export const ta: Dictionary = {
   '{device} needs ffmpeg to send its picture.': 'படத்தை அனுப்ப {device}க்கு ffmpeg தேவை.',
   'The picture could not be sent.': 'படத்தை அனுப்ப முடியவில்லை.',
   'This device cannot show the picture.': 'இந்தச் சாதனத்தால் படத்தைக் காட்ட முடியாது.',
+  'Share the clipboard with applications': 'பயன்பாடுகளுடன் கிளிப்போர்டைப் பகிர்',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'உங்கள் மற்றொரு கணினியில் உள்ள பயன்பாடு நீங்கள் இங்கே நகலெடுத்ததை ஒட்டுகிறது, அது நகலெடுப்பது இங்கே வருகிறது.',
   'None of your devices can run an application yet':
     'உங்கள் எந்தச் சாதனமும் இன்னும் பயன்பாட்டை இயக்க முடியாது',
   'Where does it run?': 'இது எங்கே இயங்கும்?',

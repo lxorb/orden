@@ -2402,6 +2402,9 @@ export const ptBR: Dictionary = {
     '{device} precisa do ffmpeg para enviar sua imagem.',
   'The picture could not be sent.': 'Não foi possível enviar a imagem.',
   'This device cannot show the picture.': 'Este dispositivo não consegue mostrar a imagem.',
+  'Share the clipboard with applications': 'Compartilhar a área de transferência com aplicativos',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'Um aplicativo em outro dos seus computadores cola o que você copiou aqui, e o que ele copia chega aqui.',
   'None of your devices can run an application yet':
     'Nenhum dos seus dispositivos consegue executar um aplicativo ainda',
   'Where does it run?': 'Onde ele roda?',

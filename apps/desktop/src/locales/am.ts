@@ -2330,6 +2330,9 @@ export const am: Dictionary = {
   '{device} needs ffmpeg to send its picture.': '{device} ምስሉን ለመላክ ffmpeg ያስፈልገዋል።',
   'The picture could not be sent.': 'ምስሉ ሊላክ አልቻለም።',
   'This device cannot show the picture.': 'ይህ መሣሪያ ምስሉን ማሳየት አይችልም።',
+  'Share the clipboard with applications': 'ቅንጥብ ሰሌዳውን ከመተግበሪያዎች ጋር አጋራ',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'በሌላ ኮምፒውተርዎ ላይ ያለ መተግበሪያ እዚህ የገለበጡትን ይለጥፋል፣ እሱ የሚገለብጠውም ወደዚህ ይመጣል።',
   'None of your devices can run an application yet': 'ከመሣሪያዎችዎ አንዱም ገና መተግበሪያ ማስኬድ አይችልም',
   'Where does it run?': 'የት ይሠራል?',
   'What does it run?': 'ምን ያስኬዳል?',

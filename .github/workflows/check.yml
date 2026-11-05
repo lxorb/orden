@@ -376,12 +376,12 @@ jobs:
       # build script downloads, on GTK 4 - 4.14 at least, so Ubuntu 24.04's. And
       # pandoc, so the tests in pandoc.rs run it for real on one row at least. And Xvfb
       # and ffmpeg, so a viewer in apps_host/stream.rs's tests connects to a real display
-      # and gets its picture.
+      # and gets its picture; and PulseAudio and its tools, so it hears its sound.
       - name: System dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-4-dev libdbus-1-dev cmake ninja-build pandoc xvfb ffmpeg
+          sudo apt-get install -y libgtk-4-dev libdbus-1-dev cmake ninja-build pandoc xvfb ffmpeg pulseaudio pulseaudio-utils
           bash scripts/linux-cef.sh cef
 
       # Tauri's build script embeds the built frontend, so it has to exist

@@ -17,12 +17,14 @@
 
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use x11rb::connection::{Connection as _, RequestConnection as _};
 use x11rb::protocol::randr::{self, ConnectionExt as _};
 use x11rb::protocol::xproto::ConnectionExt as _;
 
+use super::clipboard::Clipboard;
 use super::wm::Desk;
 
 /// The display numbers tried, clear of the ones a desktop and `ssh -X` use.
@@ -194,6 +196,11 @@ impl Display {
     /// What an application is told its display is.
     pub fn name(&self) -> String {
         format!(":{}", self.number)
+    }
+
+    /// Its clipboard (`clipboard.rs`).
+    pub fn clipboard(&self) -> Option<Arc<Clipboard>> {
+        self.desk.as_ref().map(|desk| desk.clipboard().clone())
     }
 
     /// Makes the screen this size, within its room, at this ratio: `RandR`'s screen and

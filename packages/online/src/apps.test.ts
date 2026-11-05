@@ -8,6 +8,7 @@ import {
   inputText,
   MOST_ICON,
   MOST_INSTALLED,
+  MOST_CLIPBOARD,
   MOST_POINTER,
   appFileOf,
   appFileText,
@@ -183,10 +184,22 @@ describe('the holder’s input', () => {
       '{"t":"key","key":"a","code":"KeyA","down":true}',
     )
     expect(inputText({ t: 'text', text: '日本' })).toBe('{"t":"text","text":"日本"}')
+    expect(inputText({ t: 'share', clipboard: false })).toBe('{"t":"share","clipboard":false}')
   })
 })
 
 describe('what the host says on the picture’s channel', () => {
+  it('reads what the application copied, up to the most a message carries', () => {
+    expect(fromPictureOf('{"t":"clipboard","text":"copied"}')).toEqual({
+      t: 'clipboard',
+      text: 'copied',
+    })
+    expect(
+      fromPictureOf(JSON.stringify({ t: 'clipboard', text: 'x'.repeat(MOST_CLIPBOARD + 1) })),
+    ).toBeNull()
+    expect(fromPictureOf('{"t":"clipboard","text":3}')).toBeNull()
+  })
+
   it('reads the pointer’s shape with its hot spot, or that it is hidden', () => {
     const png = 'data:image/png;base64,iVBORw0KGgo='
     expect(fromPictureOf(JSON.stringify({ t: 'pointer', png, x: 3, y: 4 }))).toEqual({
@@ -209,7 +222,7 @@ describe('what the host says on the picture’s channel', () => {
     expect(fromPictureOf(JSON.stringify({ t: 'pointer', png, x: 1.5, y: 0 }))).toBeNull()
     const huge = `data:image/png;base64,${'A'.repeat(MOST_POINTER)}`
     expect(fromPictureOf(JSON.stringify({ t: 'pointer', png: huge, x: 0, y: 0 }))).toBeNull()
-    expect(fromPictureOf('{"t":"clipboard","text":"x"}')).toBeNull()
+    expect(fromPictureOf('{"t":"title","text":"x"}')).toBeNull()
     expect(fromPictureOf(new ArrayBuffer(4))).toBeNull()
     expect(fromPictureOf('nope')).toBeNull()
   })

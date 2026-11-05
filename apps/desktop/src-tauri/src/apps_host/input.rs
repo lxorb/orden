@@ -52,6 +52,11 @@ pub enum InputEvent {
     },
     /// Text an input method made, typed character by character.
     Text { text: String },
+    /// The holder's clipboard, given to the application's next paste (step 6;
+    /// `clipboard.rs`, not played here).
+    Clipboard { text: String },
+    /// Whether the holder shares its clipboard with the application (step 6).
+    Share { clipboard: bool },
 }
 
 /// The most characters one message of text types.
@@ -229,11 +234,8 @@ impl Input {
         })
     }
 
-    /// Plays one thing the holder did. A message that does not read is let go.
-    pub fn play(&mut self, message: &[u8]) {
-        let Ok(event) = serde_json::from_slice::<InputEvent>(message) else {
-            return;
-        };
+    /// Plays one thing the holder did.
+    pub fn play(&mut self, event: InputEvent) {
         match event {
             InputEvent::Move { x, y } => {
                 self.fake(MOTION_NOTIFY_EVENT, 0, coordinate(x), coordinate(y));
@@ -264,6 +266,7 @@ impl Input {
             }
             InputEvent::Key { key, code, down } => self.key(&key, code, down),
             InputEvent::Text { text } => self.text(&text),
+            InputEvent::Clipboard { .. } | InputEvent::Share { .. } => {}
         }
         let _ = self.connection.flush();
     }
@@ -383,6 +386,16 @@ mod tests {
             Some(InputEvent::Text {
                 text: "日本".to_owned()
             })
+        );
+        assert_eq!(
+            read(r#"{"t":"clipboard","text":"x"}"#),
+            Some(InputEvent::Clipboard {
+                text: "x".to_owned()
+            })
+        );
+        assert_eq!(
+            read(r#"{"t":"share","clipboard":false}"#),
+            Some(InputEvent::Share { clipboard: false })
         );
         assert_eq!(read(r#"{"t":"run","line":"rm -rf ~"}"#), None);
     }

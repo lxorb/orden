@@ -2297,6 +2297,9 @@ export const zhHans: Dictionary = {
   '{device} needs ffmpeg to send its picture.': '{device} 需要 ffmpeg 才能发送画面。',
   'The picture could not be sent.': '画面无法发送。',
   'This device cannot show the picture.': '此设备无法显示画面。',
+  'Share the clipboard with applications': '与应用程序共享剪贴板',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    '你另一台电脑上的应用程序可以粘贴你在这里复制的内容，它复制的内容也会到这里。',
   'None of your devices can run an application yet': '你还没有可以运行应用程序的设备',
   'Where does it run?': '在哪里运行？',
   'What does it run?': '运行什么？',

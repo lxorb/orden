@@ -2349,6 +2349,9 @@ export const gu: Dictionary = {
   '{device} needs ffmpeg to send its picture.': 'ચિત્ર મોકલવા માટે {device}ને ffmpeg જોઈએ.',
   'The picture could not be sent.': 'ચિત્ર મોકલી શકાયું નહીં.',
   'This device cannot show the picture.': 'આ ઉપકરણ ચિત્ર બતાવી શકતું નથી.',
+  'Share the clipboard with applications': 'એપ્લિકેશન સાથે ક્લિપબોર્ડ શેર કરો',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'તમારા બીજા કમ્પ્યુટર પરની એપ્લિકેશન તમે અહીં કૉપિ કરેલું પેસ્ટ કરે છે, અને તે જે કૉપિ કરે છે તે અહીં આવે છે.',
   'None of your devices can run an application yet':
     'તમારું કોઈ ઉપકરણ હજુ એપ્લિકેશન ચલાવી શકતું નથી',
   'Where does it run?': 'તે ક્યાં ચાલે?',

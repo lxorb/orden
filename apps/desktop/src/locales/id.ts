@@ -2345,6 +2345,9 @@ export const id: Dictionary = {
     '{device} memerlukan ffmpeg untuk mengirim gambarnya.',
   'The picture could not be sent.': 'Gambar tidak dapat dikirim.',
   'This device cannot show the picture.': 'Perangkat ini tidak dapat menampilkan gambar.',
+  'Share the clipboard with applications': 'Bagikan papan klip dengan aplikasi',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'Aplikasi di komputer Anda yang lain menempelkan apa yang Anda salin di sini, dan yang disalinnya sampai ke sini.',
   'None of your devices can run an application yet':
     'Belum ada perangkat Anda yang bisa menjalankan aplikasi',
   'Where does it run?': 'Di mana berjalan?',

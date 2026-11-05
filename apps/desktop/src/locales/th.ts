@@ -2312,6 +2312,9 @@ export const th: Dictionary = {
   '{device} needs ffmpeg to send its picture.': '{device} ต้องมี ffmpeg เพื่อส่งภาพ',
   'The picture could not be sent.': 'ส่งภาพไม่ได้',
   'This device cannot show the picture.': 'อุปกรณ์นี้แสดงภาพไม่ได้',
+  'Share the clipboard with applications': 'แชร์คลิปบอร์ดกับแอปพลิเคชัน',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'แอปพลิเคชันบนคอมพิวเตอร์เครื่องอื่นของคุณวางสิ่งที่คุณคัดลอกไว้ที่นี่ และสิ่งที่แอปคัดลอกจะมาที่นี่',
   'None of your devices can run an application yet':
     'ยังไม่มีอุปกรณ์ของคุณที่เรียกใช้แอปพลิเคชันได้',
   'Where does it run?': 'ทำงานที่ไหน?',

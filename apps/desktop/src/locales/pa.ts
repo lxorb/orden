@@ -2362,6 +2362,9 @@ export const pa: Dictionary = {
   '{device} needs ffmpeg to send its picture.': 'ਤਸਵੀਰ ਭੇਜਣ ਲਈ {device} ਨੂੰ ffmpeg ਚਾਹੀਦਾ ਹੈ।',
   'The picture could not be sent.': 'ਤਸਵੀਰ ਭੇਜੀ ਨਹੀਂ ਜਾ ਸਕੀ।',
   'This device cannot show the picture.': 'ਇਹ ਡਿਵਾਈਸ ਤਸਵੀਰ ਨਹੀਂ ਦਿਖਾ ਸਕਦੀ।',
+  'Share the clipboard with applications': 'ਐਪਲੀਕੇਸ਼ਨਾਂ ਨਾਲ ਕਲਿੱਪਬੋਰਡ ਸਾਂਝਾ ਕਰੋ',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'ਤੁਹਾਡੇ ਦੂਜੇ ਕੰਪਿਊਟਰ ਦੀ ਐਪਲੀਕੇਸ਼ਨ ਇੱਥੇ ਕਾਪੀ ਕੀਤਾ ਪੇਸਟ ਕਰਦੀ ਹੈ, ਅਤੇ ਜੋ ਉਹ ਕਾਪੀ ਕਰਦੀ ਹੈ ਉਹ ਇੱਥੇ ਆਉਂਦਾ ਹੈ।',
   'None of your devices can run an application yet':
     'ਤੁਹਾਡਾ ਕੋਈ ਵੀ ਡਿਵਾਈਸ ਅਜੇ ਐਪਲੀਕੇਸ਼ਨ ਨਹੀਂ ਚਲਾ ਸਕਦਾ',
   'Where does it run?': 'ਇਹ ਕਿੱਥੇ ਚੱਲੇ?',

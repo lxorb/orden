@@ -2369,6 +2369,9 @@ export const te: Dictionary = {
   '{device} needs ffmpeg to send its picture.': 'చిత్రాన్ని పంపడానికి {device}కి ffmpeg కావాలి.',
   'The picture could not be sent.': 'చిత్రాన్ని పంపలేకపోయాం.',
   'This device cannot show the picture.': 'ఈ పరికరం చిత్రాన్ని చూపలేదు.',
+  'Share the clipboard with applications': 'అప్లికేషన్‌లతో క్లిప్‌బోర్డ్‌ను పంచుకో',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'మీ మరో కంప్యూటర్‌లోని అప్లికేషన్ మీరు ఇక్కడ కాపీ చేసినదాన్ని అతికిస్తుంది, అది కాపీ చేసింది ఇక్కడికి వస్తుంది.',
   'None of your devices can run an application yet': 'మీ పరికరాల్లో ఏదీ ఇంకా అప్లికేషన్‌ను నడపలేదు',
   'Where does it run?': 'ఇది ఎక్కడ నడుస్తుంది?',
   'What does it run?': 'ఇది ఏమి నడుపుతుంది?',

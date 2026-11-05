@@ -3,6 +3,7 @@ import {
   displayPoint,
   drivesPointer,
   HeldKeys,
+  isPaste,
   keyEvent,
   pointerStyle,
   textEvent,
@@ -113,5 +114,18 @@ describe('the application’s pointer', () => {
   test('hidden is none, and unsaid is the engine’s own', () => {
     expect(pointerStyle({ t: 'pointer', hidden: true }, 2)).toBe('none')
     expect(pointerStyle(null, 2)).toBe('')
+  })
+})
+
+describe('a paste', () => {
+  test('is Ctrl or Command with V, or Shift with Insert, and nothing else', () => {
+    const key = (key: string, mods: Partial<Record<'ctrlKey' | 'metaKey' | 'shiftKey', boolean>>) =>
+      isPaste({ key, ctrlKey: false, metaKey: false, shiftKey: false, ...mods })
+    expect(key('v', { ctrlKey: true })).toBe(true)
+    expect(key('V', { ctrlKey: true, shiftKey: true })).toBe(true)
+    expect(key('v', { metaKey: true })).toBe(true)
+    expect(key('Insert', { shiftKey: true })).toBe(true)
+    expect(key('v', {})).toBe(false)
+    expect(key('c', { ctrlKey: true })).toBe(false)
   })
 })

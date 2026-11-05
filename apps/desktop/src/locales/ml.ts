@@ -2385,6 +2385,9 @@ export const ml: Dictionary = {
   '{device} needs ffmpeg to send its picture.': 'ചിത്രം അയയ്ക്കാൻ {device}-ന് ffmpeg വേണം.',
   'The picture could not be sent.': 'ചിത്രം അയയ്ക്കാനായില്ല.',
   'This device cannot show the picture.': 'ഈ ഉപകരണത്തിന് ചിത്രം കാണിക്കാനാകില്ല.',
+  'Share the clipboard with applications': 'ആപ്ലിക്കേഷനുകളുമായി ക്ലിപ്പ്ബോർഡ് പങ്കിടുക',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'നിങ്ങളുടെ മറ്റൊരു കമ്പ്യൂട്ടറിലെ ആപ്ലിക്കേഷൻ ഇവിടെ നിങ്ങൾ പകർത്തിയത് ഒട്ടിക്കുന്നു, അത് പകർത്തുന്നത് ഇവിടെ എത്തുന്നു.',
   'None of your devices can run an application yet':
     'നിങ്ങളുടെ ഒരു ഉപകരണത്തിനും ഇതുവരെ ആപ്ലിക്കേഷൻ പ്രവർത്തിപ്പിക്കാൻ കഴിയില്ല',
   'Where does it run?': 'ഇത് എവിടെ പ്രവർത്തിക്കും?',

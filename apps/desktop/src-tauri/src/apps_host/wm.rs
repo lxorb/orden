@@ -18,7 +18,8 @@
 //!   the dots an inch from XSETTINGS, which this owns and changes live, and Qt, Electron
 //!   and the rest read `Xft.dpi` from the screen's resources.
 //!
-//! It draws no frames: a tab is the frame.
+//! It draws no frames: a tab is the frame. Its thread hands the clipboard its events
+//! too (`clipboard.rs`, step 6).
 
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
@@ -35,6 +36,8 @@ use x11rb::protocol::Event;
 use x11rb::rust_connection::RustConnection;
 use x11rb::wrapper::ConnectionExt as _;
 use x11rb::{CURRENT_TIME, NONE};
+
+use super::clipboard::Clipboard;
 
 x11rb::atom_manager! {
     /// The names this asks the server for once.
@@ -61,6 +64,7 @@ pub struct Desk {
     atoms: Atoms,
     /// Counted up by every change of the settings, as XSETTINGS asks.
     serial: AtomicU32,
+    clipboard: Arc<Clipboard>,
 }
 
 impl Desk {
@@ -107,12 +111,15 @@ impl Desk {
                 &CreateWindowAux::new(),
             )
             .map_err(|e| said(&e))?;
+        let connection = Arc::new(connection);
+        let clipboard = Arc::new(Clipboard::open(connection.clone(), root)?);
         let desk = Desk {
-            connection: Arc::new(connection),
+            connection,
             root,
             owner,
             atoms,
             serial: AtomicU32::new(0),
+            clipboard,
         };
         desk.scale(dpr);
         let x = &desk.connection;
@@ -134,8 +141,14 @@ impl Desk {
             .and_then(|_| x.flush());
         claimed.map_err(|e| said(&e))?;
         let managing = desk.connection.clone();
-        std::thread::spawn(move || manage(&managing, root, atoms));
+        let clipboard = desk.clipboard.clone();
+        std::thread::spawn(move || manage(&managing, root, atoms, &clipboard));
         Ok(desk)
+    }
+
+    /// The display's clipboard.
+    pub fn clipboard(&self) -> &Arc<Clipboard> {
+        &self.clipboard
     }
 
     /// The connection, as the display's resizing uses it.
@@ -224,7 +237,7 @@ struct Managed {
 }
 
 /// The window manager's loop, until the display ends.
-fn manage(x: &RustConnection, root: Window, atoms: Atoms) {
+fn manage(x: &RustConnection, root: Window, atoms: Atoms, clipboard: &Clipboard) {
     let Some(at) = x.get_geometry(root).ok().and_then(|one| one.reply().ok()) else {
         return;
     };
@@ -235,6 +248,9 @@ fn manage(x: &RustConnection, root: Window, atoms: Atoms) {
         let Ok(event) = x.wait_for_event() else {
             return;
         };
+        if clipboard.heard(&event) {
+            continue;
+        }
         match event {
             Event::MapRequest(asked) => {
                 let window = asked.window;

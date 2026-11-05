@@ -177,3 +177,37 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
   finer, with nothing left over lost.
 - **Keys held when the tab loses the keyboard** - the window left with Alt held - are let
   go in the application.
+
+## Sound and the clipboard (step 6)
+
+- **Sound** (`apps_host/audio.rs`): as an application starts, the host makes it a sink of its
+  own on this computer's sound server (PulseAudio's null sink, with `pactl`; PipeWire's
+  pulse server makes one too) and names it to the application as `PULSE_SINK`. Without a
+  sound server, or without `pactl` and `parec`, the application is given none
+  (`PULSE_SERVER` names nowhere), so nothing it plays ever reaches this computer's speakers.
+  The sink goes when the application does.
+- The tab offers to take audio beside the video. Once connected, `parec` reads the sink's
+  monitor, 10 ms at a time, and ffmpeg encodes it as Opus in its low-delay mode, 10 ms a
+  packet, an Ogg page a packet; each packet goes on the connection as it comes, timed by the
+  samples it holds. The tab plays it in an `<audio>` of its own, the picture's `<video>`
+  staying muted. A host older than this answers no audio, and a tab older than this offers
+  none.
+- **The clipboard** (`apps_host/clipboard.rs`), text both ways, while the holder shares it:
+  **Share the clipboard with applications**, under Code in General while developer mode is
+  on, on out of the box and kept on this device (`lib/settings/apps-clipboard.svelte.ts`). The tab says
+  whether it shares as the data channel opens and whenever that changes
+  (`{"t":"share","clipboard":...}`), and the host gives and takes nothing until told yes.
+- **A paste**: Ctrl or Command with V, or Shift with Insert, over the picture. Its press is
+  held back while the page pastes into the keyboard's field, which reads this device's
+  clipboard without asking for a permission; the text goes to the host
+  (`{"t":"clipboard","text":...}`), which takes the display's `CLIPBOARD` and gives it to the
+  application's paste in whatever form it asks (`TARGETS`, `UTF8_STRING`, `STRING`, `TEXT`,
+  `text/plain`), and then the press. A paste from the application's own menu with the mouse
+  gets what this device last pasted there.
+- **A copy**: whoever owns the display's `CLIPBOARD` changing (XFIXES) has the host ask the
+  new owner for its text, which goes to the tab, which puts it on this device's clipboard.
+- At most 200 KiB of text either way, what one data channel message carries everywhere. A
+  transfer in pieces (`INCR`) is let go.
+- **Not done**: dragging files in and out, and downloads. Both need files carried over the
+  connection and, for a drop, X's drag-and-drop played into the application; they are left
+  for later.
