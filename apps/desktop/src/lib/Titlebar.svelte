@@ -101,7 +101,12 @@
      phone apps. -->
 {#snippet edgeMark()}
   {#if !__EVEN_PLUGIN__ && webChannel === 'unstable'}
-    <button class="channel" title={t('Web version')} onclick={() => settings.show('general')}>
+    <button
+      class="channel"
+      data-overview-keeps
+      title={t('Web version')}
+      onclick={() => settings.show('general')}
+    >
       {t('Unstable')}
     </button>
   {/if}
@@ -112,6 +117,7 @@
 {#snippet searchGlyph()}
   <button
     class="nib-glyph search"
+    data-overview-keeps
     title={shortcuts.tooltip(t('Search'), 'app.palette')}
     aria-label={t('Search notes and commands')}
     onpointerdown={keepFocus}
@@ -126,6 +132,7 @@
 {#snippet overviewGlyph()}
   <button
     class="nib-glyph overview"
+    data-overview-keeps
     class:is-on={tabOverview.open}
     aria-pressed={tabOverview.open}
     title={shortcuts.tooltip(t('Tabs'), 'app.tab-overview')}
@@ -225,7 +232,7 @@
        system's own frame (which has these three already); see modes.svelte.ts. -->
   {#if isDesktop && !mac}
     {#if modes.frame === 'nib'}
-      <div class="controls">
+      <div class="controls" data-overview-keeps>
         <button onclick={minimize} aria-label={t('Minimize')}>
           <svg viewBox="0 0 10 10"><path d="M0 5h10" /></svg>
         </button>
