@@ -195,6 +195,9 @@ class Runner {
    *  a stop meanwhile is never queued behind it. */
   async start(): Promise<void> {
     if (this.local) await this.inLane(() => this.carryLocal())
+    // A stop on its way for the engine running (it counted an attempt on past the lead's):
+    // this start comes after it, not instead of it.
+    if (this.current && this.attempt !== this.leadOf) await this.inLane(() => Promise.resolve())
     const user = account.user
     if (!user || this.current || this.giving) return
     // This start's own attempt: a stop or a later start makes it stale, and nothing a stale

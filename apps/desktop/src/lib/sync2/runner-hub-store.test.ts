@@ -487,3 +487,19 @@ describe('one id for a device and an account', () => {
     expect(await hub.deviceId()).not.toBe(other)
   })
 })
+
+describe('a stop and a start in one tick', () => {
+  test('the start comes after the stop, and the window keeps an engine (DEV-2)', async () => {
+    vi.stubGlobal('fetch', () => new Promise(() => undefined))
+    const a = await aWindow()
+    Object.assign(a.account, { user: { id: 'u1', syncVersion: 2 }, token: 't' })
+    await a.runner.start()
+    await settle(100)
+    expect(a.runner.engine).not.toBeNull()
+    void a.runner.stop()
+    void a.runner.start()
+    await settle(500)
+    expect(a.runner.engine).not.toBeNull()
+    expect(wrong()).toEqual([])
+  })
+})
