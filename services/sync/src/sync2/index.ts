@@ -4,6 +4,7 @@
  *  request is answered in the shape it arrived in; see envelope.ts. */
 
 import { keepRequestOf, opsRequestOf, pullRequestOf, pushRequestOf } from '@orden/sync-core'
+import { indexRequestOf, searchRequestOf } from '@orden/scan/wire'
 import { Hono } from 'hono'
 import { laterOf, pokeSpace } from '../hub/poke'
 import { mayChangeTree, mayKeepVersions, mayPushDocuments } from '../limits'
@@ -18,6 +19,7 @@ import { feedPage } from './feed'
 import { reproject } from './maps'
 import { applyOps } from './ops'
 import { preparedSpace, prepareSpace } from './prepare'
+import { indexItems, searchPage } from './reading'
 
 interface App {
   Bindings: Env
@@ -83,6 +85,23 @@ v2Spaces.get('/:space/snapshot', atLeast('read', 'space'), async (context) => {
   await preparedSpace(context.env, space)
   const after = context.req.query('after') ?? ''
   return answer(context, await snapshotPage(context.env, space.id, after))
+})
+
+/** Each note's scan, for a browser that keeps no words of it (#1126); see reading.ts. */
+v2Spaces.post('/:space/index', atLeast('read', 'space'), async (context) => {
+  const space = spaceOf(context)
+  const request = indexRequestOf(await requestBody(context))
+  if (!request) return context.json({ error: NOT_A_REQUEST }, 400)
+  return answer(context, { items: await indexItems(context.env, space.id, request.ids) })
+})
+
+/** One page of a search over the space's notes, for the same browser; see reading.ts. */
+v2Spaces.post('/:space/search', atLeast('read', 'space'), async (context) => {
+  const space = spaceOf(context)
+  const request = searchRequestOf(await requestBody(context))
+  if (!request) return context.json({ error: NOT_A_REQUEST }, 400)
+  const page = await searchPage(context.env, space.id, request)
+  return answer(context, { hits: page.hits, loose: page.loose, after: page.after })
 })
 
 export const v2Docs = new Hono<App>()

@@ -640,6 +640,9 @@ importers:
       '@orden/rooms':
         specifier: workspace:*
         version: link:../../packages/rooms
+      '@orden/scan':
+        specifier: workspace:*
+        version: link:../../packages/scan
       '@orden/sync-core':
         specifier: workspace:*
         version: link:../../packages/sync-core

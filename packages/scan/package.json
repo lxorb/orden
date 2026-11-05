@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     "./canvas": "./src/scan-canvas.ts",
+    "./indexed": "./src/indexed.ts",
     "./json-skim": "./src/json-skim.ts",
     "./note": "./src/scan-note.ts",
     "./search/fuzzy": "./src/search/fuzzy.ts",
@@ -13,8 +14,10 @@
     "./search/match": "./src/search/match.ts",
     "./search/query": "./src/search/query.ts",
     "./search/tags": "./src/search/tags.ts",
+    "./search/walk": "./src/search/walk.ts",
     "./shortcut": "./src/shortcut.ts",
-    "./web-address": "./src/web-address.ts"
+    "./web-address": "./src/web-address.ts",
+    "./wire": "./src/wire.ts"
   },
   "scripts": {
     "test": "vitest run",
