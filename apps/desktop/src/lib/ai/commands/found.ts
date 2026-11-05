@@ -16,7 +16,7 @@
  *  `noMoreThan` in modes.ts), and its words reach the model marked as from outside. */
 
 import { links } from '../../link-index.svelte'
-import type { Query } from '../../search/query'
+import type { Query } from '@orden/scan/search/query'
 import { workspace } from '../../workspace.svelte'
 import { untrusted } from '../chat/transcript'
 import { NOTE_KEYS, type NoteCommand, type NoteKind, rolesOf } from './notes'

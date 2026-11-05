@@ -1919,7 +1919,7 @@ keep a profile per space, which is what Orden had and what #239 took away.
   the call Delete browsing data makes. A store nobody names is a login nobody can see.
 
 **The note's file is the choice.** `Nib-Data=<sixteen hex digits>` beside `Nib-Home` and
-`Nib-Icon` (`web-tab/shortcut.ts`), an id made when it is turned on, and the store is
+`Nib-Icon` (`@orden/scan/shortcut`), an id made when it is turned on, and the store is
 `note_<id>`. In the file, so it moves and is renamed with the note, syncs with it, and opens
 in a store of the same name on another computer, empty there: a computer's web logins stay
 on it (#393, docs/sync-v2.md section 6). Every
@@ -2311,7 +2311,7 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src-tauri/src/search.rs`                | a shortcut is searched as the text it is, so a site is found by its address                                                                                                                                                                            |
 | `apps/desktop/src-tauri/src/links.rs`                 | a website as a node in the index, and `url:` off every note, which now means a note that wants converting                                                                                                                                              |
 | `apps/desktop/src-tauri/capabilities/default.json`    | webviews, not windows                                                                                                                                                                                                                                  |
-| `apps/desktop/src/lib/web-tab/shortcut.ts`            | the file: written, read, and `.webloc` read. Pure, tested                                                                                                                                                                                              |
+| `packages/scan/src/shortcut.ts`            | the file: written, read, and `.webloc` read. Pure, tested                                                                                                                                                                                              |
 | `apps/desktop/src/lib/web-tab/note.ts`                | what a clip says, and what the old format said. Pure, tested                                                                                                                                                                                           |
 | `apps/desktop/src/lib/web-tab/address.ts`             | which addresses a tab may open, and the origin plainly. Pure, tested                                                                                                                                                                                   |
 | `apps/desktop/src/lib/web-tab/typed.ts`               | what somebody typed: an address with the scheme Chrome gives it, or words. Pure, tested                                                                                                                                                                |

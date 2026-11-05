@@ -571,6 +571,8 @@ export const bn: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Orden-এর নিজস্ব পটভূমির বদলে উইন্ডোগুলোর পেছনে অ্যাপটি ঝাপসা দেখায়।',
   'Swipe in from the edge to see your notes.': 'আপনার নোট দেখতে কিনারা থেকে ভেতরে সোয়াইপ করুন।',
+  'Point at the edge of the window to see your notes.':
+    'আপনার নোট দেখতে পয়েন্টারটি উইন্ডোর কিনারায় নিন।',
   'Show other tabs as icons': 'অন্য ট্যাবগুলো আইকন হিসেবে দেখান',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'সামনের ট্যাব ছাড়া প্রতিটি ট্যাব শুধু আইকন দেখায়; কোনোটির ওপর পয়েন্টার রাখলে নাম দেখায়।',
@@ -2131,6 +2133,13 @@ export const bn: Dictionary = {
     'এই কম্পিউটারের যেকোনো জায়গার ফাইল পড়া ও বদলানো',
   Programs: 'প্রোগ্রাম',
   'Run programs on this computer': 'এই কম্পিউটারে প্রোগ্রাম চালানো',
+  'Web requests': 'ওয়েব অনুরোধ',
+  'Send requests to any site, outside your tabs': 'আপনার ট্যাবের বাইরে যেকোনো সাইটে অনুরোধ পাঠানো',
+  'Read and change the clipboard': 'ক্লিপবোর্ড পড়া ও বদলানো',
+  'Ask you a question or tell you something': 'আপনাকে প্রশ্ন করা বা কিছু জানানো',
+  'Select, mark and fold in your notes': 'আপনার নোটে নির্বাচন, চিহ্নিত ও ভাঁজ করা',
+  Applications: 'অ্যাপ্লিকেশন',
+  'Start, see and use your applications': 'আপনার অ্যাপ্লিকেশন চালু করা, দেখা ও ব্যবহার করা',
   Paying: 'অর্থ প্রদান',
   'Sending messages': 'বার্তা পাঠানো',
   'Publishing and sharing': 'প্রকাশ ও শেয়ার করা',
@@ -2827,4 +2836,7 @@ export const bn: Dictionary = {
   'Writing down what you said': 'আপনি যা বলেছেন তা লেখা হচ্ছে',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'অডিও এই ডিভাইসের কথা চেনার ব্যবস্থায় যায়, যা নির্মাতার সার্ভার ব্যবহার করতে পারে',
+  'Not on this device': 'এই ডিভাইসে নেই',
+  'Not on this device. It opens once you are online again.':
+    'এই ডিভাইসে নেই। আপনি আবার অনলাইনে এলে এটি খুলবে।',
 }

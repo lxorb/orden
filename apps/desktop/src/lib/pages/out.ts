@@ -757,12 +757,12 @@ export async function printPages(out: PagesOut): Promise<void> {
   const bytes = await pagesPdf(out)
   if (!bytes) return
 
-  const [{ pdfjs }, { printInFrame }] = await Promise.all([
+  const [{ loading, pdfjs }, { printInFrame }] = await Promise.all([
     import('../pdf/document'),
     import('../export'),
   ])
   const library = await pdfjs()
-  const task = library.getDocument({ data: bytes })
+  const task = loading(library, bytes)
   const doc = await task.promise
   const sheets: { src: string; width: number; height: number }[] = []
 

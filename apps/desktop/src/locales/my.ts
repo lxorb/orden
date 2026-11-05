@@ -570,6 +570,8 @@ export const my: Dictionary = {
     'Orden ၏ ကိုယ်ပိုင်နောက်ခံအစား ဝင်းဒိုးများနောက်တွင် အက်ပ်ကို ဝါးဝါးပြသည်။',
   'Swipe in from the edge to see your notes.':
     'သင့်မှတ်စုများကို ကြည့်ရန် အစွန်းမှ အတွင်းသို့ ပွတ်ဆွဲပါ။',
+  'Point at the edge of the window to see your notes.':
+    'သင့်မှတ်စုများကို ကြည့်ရန် ညွှန်တံကို ဝင်းဒိုး၏ အစွန်းသို့ ရွှေ့ပါ။',
   'Show other tabs as icons': 'အခြားတဘ်များကို အိုင်ကွန်အဖြစ် ပြပါ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ရှေ့ရှိတဘ်မှလွဲ၍ တဘ်တိုင်းသည် အိုင်ကွန်ကိုသာ ပြသည်၊ တစ်ခုကို ညွှန်လျှင် ၎င်း၏အမည် ပေါ်လာသည်။',
@@ -2115,6 +2117,16 @@ export const my: Dictionary = {
     'ဤကွန်ပျူတာပေါ်ရှိ မည်သည့်နေရာမှ ဖိုင်များကိုမဆို ဖတ်ပြီး ပြောင်းရန်',
   Programs: 'ပရိုဂရမ်များ',
   'Run programs on this computer': 'ဤကွန်ပျူတာပေါ်တွင် ပရိုဂရမ်များ လုပ်ဆောင်ရန်',
+  'Web requests': 'ဝဘ် တောင်းဆိုမှုများ',
+  'Send requests to any site, outside your tabs':
+    'သင့်တက်ဘ်များ အပြင်ဘက်မှ မည်သည့်ဆိုက်သို့မဆို တောင်းဆိုမှုများ ပို့ရန်',
+  'Read and change the clipboard': 'ကလစ်ဘုတ်ကို ဖတ်ရန်နှင့် ပြောင်းရန်',
+  'Ask you a question or tell you something': 'သင့်ကို မေးခွန်းမေးရန် သို့မဟုတ် တစ်ခုခု ပြောရန်',
+  'Select, mark and fold in your notes':
+    'သင့်မှတ်စုများတွင် ရွေးရန်၊ အမှတ်အသားပြုရန်နှင့် ခေါက်ရန်',
+  Applications: 'အပလီကေးရှင်းများ',
+  'Start, see and use your applications':
+    'သင့်အပလီကေးရှင်းများကို စတင်ခြင်း၊ ကြည့်ခြင်းနှင့် အသုံးပြုခြင်း',
   Paying: 'ငွေပေးချေခြင်း',
   'Sending messages': 'မက်ဆေ့ချ် ပို့ခြင်း',
   'Publishing and sharing': 'ထုတ်ဝေခြင်းနှင့် မျှဝေခြင်း',
@@ -2818,4 +2830,7 @@ export const my: Dictionary = {
   'Writing down what you said': 'သင်ပြောသည်ကို ရေးနေသည်',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'အသံကို ဤစက်၏ စကားသံမှတ်သားမှုသို့ ပို့ပြီး ၎င်းသည် ထုတ်လုပ်သူ၏ ဆာဗာများကို သုံးနိုင်သည်',
+  'Not on this device': 'ဤစက်ပေါ်တွင် မရှိပါ',
+  'Not on this device. It opens once you are online again.':
+    'ဤစက်ပေါ်တွင် မရှိပါ။ အွန်လိုင်းပြန်ဖြစ်သည့်အခါ ပွင့်ပါမည်။',
 }

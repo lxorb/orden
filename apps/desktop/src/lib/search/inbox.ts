@@ -5,8 +5,8 @@
 import { INBOX_NAME, INBOX_PATH } from '@orden/bases/inbox'
 import { insideSpace } from '../space-paths'
 import { invoke } from '../tauri'
-import { type Hit, Matcher } from './match'
-import type { Query } from './query'
+import { type Hit, Matcher } from '@orden/scan/search/match'
+import type { Query } from '@orden/scan/search/query'
 
 export async function inboxHits(root: string, query: Query, limit: number): Promise<Hit[]> {
   const path = insideSpace(root, INBOX_PATH)

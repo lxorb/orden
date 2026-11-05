@@ -12,7 +12,7 @@
  *  and leaves the match ready to copy. Reading it as one string is what lets a
  *  match run across a tag: `the **word**` is two nodes and one phrase. */
 
-import { fold } from '../search/match'
+import { fold } from '@orden/scan/search/match'
 
 /** Where one text node's words start in the page's words. */
 export interface Piece {

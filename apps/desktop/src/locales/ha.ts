@@ -576,6 +576,8 @@ export const ha: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Yana nuna manhajar a dushe a bayan tagogi, maimakon bangon Orden na kansa.',
   'Swipe in from the edge to see your notes.': 'Goge daga gefe zuwa ciki don ganin bayananka.',
+  'Point at the edge of the window to see your notes.':
+    'Kai alamar linzami gefen taga don ganin bayananka.',
   'Show other tabs as icons': 'Nuna sauran shafuka a matsayin gumaka',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Kowane shafi banda na gaba yana nuna gumakinsa kawai; idan ka nuna ɗaya, sunansa zai bayyana.',
@@ -2162,6 +2164,14 @@ export const ha: Dictionary = {
     'Karanta da canza fayiloli a ko’ina a wannan kwamfuta',
   Programs: 'Shirye-shirye',
   'Run programs on this computer': 'Gudanar da shirye-shirye a wannan kwamfuta',
+  'Web requests': 'Buƙatun yanar gizo',
+  'Send requests to any site, outside your tabs':
+    'Aika buƙatu zuwa kowane shafi, a wajen shafukanka',
+  'Read and change the clipboard': 'Karanta da canza allon kwafi',
+  'Ask you a question or tell you something': 'Yi maka tambaya ko gaya maka wani abu',
+  'Select, mark and fold in your notes': 'Zaɓi, yi alama da naɗe a cikin bayananka',
+  Applications: 'Manhajoji',
+  'Start, see and use your applications': 'Fara, gani da amfani da manhajojinka',
   Paying: 'Biyan kuɗi',
   'Sending messages': 'Aika saƙonni',
   'Publishing and sharing': 'Wallafa da rabawa',
@@ -2871,4 +2881,7 @@ export const ha: Dictionary = {
   'Writing down what you said': 'Ana rubuta abin da ka faɗa',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Sautin yana zuwa gane magana na wannan na’ura, wanda zai iya amfani da sabar masu ƙera ta',
+  'Not on this device': 'Ba ya kan wannan na’ura',
+  'Not on this device. It opens once you are online again.':
+    'Ba ya kan wannan na’ura. Zai buɗe da zarar kun dawo kan intanet.',
 }

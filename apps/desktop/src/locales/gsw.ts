@@ -572,6 +572,8 @@ export const gsw: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Zeigt d App verschwumme hinder de Fänschter statt em eigete Hintergrund vo Orden.',
   'Swipe in from the edge to see your notes.': 'Wisch vom Rand ine, zum dini Notize z gseh.',
+  'Point at the edge of the window to see your notes.':
+    'Fahr mit em Zeiger a de Rand vom Fänschter, zum dini Notize z gseh.',
   'Show other tabs as icons': 'Anderi Tabs als Symbol zeige',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Jede Tab usser em vordere zeigt nur sis Symbol; wenn du druf zeigsch, chunnt sin Name.',
@@ -2143,6 +2145,14 @@ export const gsw: Dictionary = {
     'Dateie überall uf däm Computer läse und ändere',
   Programs: 'Programm',
   'Run programs on this computer': 'Programm uf däm Computer usfüere',
+  'Web requests': 'Web-Aafrooge',
+  'Send requests to any site, outside your tabs':
+    'Aafrooge a jedi Websiite schicke, usserhalb vo dine Tabs',
+  'Read and change the clipboard': 'D Zwüscheablaag läse und ändere',
+  'Ask you a question or tell you something': 'Dir e Frag stelle oder dir öppis säge',
+  'Select, mark and fold in your notes': 'I dine Notize uswähle, markiere und zämeklappe',
+  Applications: 'Aawändige',
+  'Start, see and use your applications': 'Dini Aawändige starte, aaluege und bediene',
   Paying: 'Zahle',
   'Sending messages': 'Nachrichte schicke',
   'Publishing and sharing': 'Veröffentliche und Teile',
@@ -2851,4 +2861,7 @@ export const gsw: Dictionary = {
   'Writing down what you said': 'Schriibe uf, was du gseit häsch',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Audio gaht a d Spracherchännig vo däm Grät, wo d Server vo sim Härsteller cha bruuche',
+  'Not on this device': 'Nöd uf däm Gräät',
+  'Not on this device. It opens once you are online again.':
+    'Nöd uf däm Gräät. Es gaht uf, sobald du wider online bisch.',
 }

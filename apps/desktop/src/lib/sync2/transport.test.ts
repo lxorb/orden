@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import { unframe } from '@orden/sync-core/wire'
 import { testDevice } from './test-device'
-import { Refused, remoteFiles } from './transport'
+import { readingOver, Refused, remoteFiles } from './transport'
+import { parseQuery } from '@orden/scan/search/query'
 
 /** What a pass hears from the network (transport.ts): an answer, no answer - which stops
  *  the pass and keeps what this device made waiting, the light hollow - or a refusal,
@@ -93,5 +94,42 @@ describe('a file’s bytes over the network', () => {
   test('an account that cannot say which bytes it keeps says nothing', async () => {
     expect(await over(404).have?.(['h'])).toBeNull()
     expect(await over(503).have?.(['h'])).toBeNull()
+  })
+})
+
+describe('what a browser asks about the notes it keeps no words of (#1126)', () => {
+  const over = (answer: () => Promise<Response>) =>
+    readingOver({
+      base: 'https://account.test',
+      token: () => 'token-1',
+      device: () => 'Browser',
+      fetch: answer,
+    })
+  const json = (body: unknown, status = 200) =>
+    Promise.resolve(new Response(JSON.stringify(body), { status }))
+  const request = { query: parseQuery('plan'), terms: [], limit: 10 }
+
+  test('reads the answers', async () => {
+    const items = [{ id: 'n1', refused: 'gone' }]
+    expect(await over(() => json({ items })).index(SPACE, ['n1'])).toEqual(items)
+    const page = { hits: [], loose: [], after: null }
+    expect(await over(() => json(page)).search(SPACE, request)).toEqual(page)
+  })
+
+  test('an account with no such route is one from before them: missing', async () => {
+    const router = () => Promise.resolve(new Response('404 Not Found', { status: 404 }))
+    expect(await over(router).index(SPACE, ['n1'])).toBe('missing')
+    expect(await over(router).search(SPACE, request)).toBe('missing')
+  })
+
+  test('a space it does not have, no network or a busy account is no answer', async () => {
+    for (const answer of [
+      () => json({ error: 'no such space' }, 404),
+      () => Promise.reject(new TypeError('Failed to fetch')),
+      () => json({}, 503),
+    ]) {
+      expect(await over(answer).index(SPACE, ['n1'])).toBeNull()
+      expect(await over(answer).search(SPACE, request)).toBeNull()
+    }
   })
 })

@@ -34,7 +34,7 @@
   import { ASK_MARK, GRAPH_MARK } from './panel-marks'
   import { terminalMark } from './surfaces.svelte'
   import { type Page, pages, siteMark } from './web-tab/pages.svelte'
-  import { readWebFile } from './web-tab/shortcut'
+  import { readWebFile } from '@orden/scan/shortcut'
   import { type Tab, workspace } from './workspace.svelte'
   import { TAB_KINDS } from './workspace/tab-kinds'
 

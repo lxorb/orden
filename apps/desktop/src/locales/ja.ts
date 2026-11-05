@@ -568,6 +568,8 @@ export const ja: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Orden 自身の背景の代わりに、ウィンドウの背後にぼかしたアプリを表示します。',
   'Swipe in from the edge to see your notes.': '端から内側へスワイプするとノートが見られます。',
+  'Point at the edge of the window to see your notes.':
+    'ポインタをウインドウの端に寄せるとノートが見られます。',
   'Show other tabs as icons': 'ほかのタブをアイコンで表示',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '手前のタブ以外はアイコンだけを表示し、ポインターを当てると名前が出ます。',
@@ -2119,6 +2121,13 @@ export const ja: Dictionary = {
     'このコンピュータのどこにあるファイルでも読み書きする',
   Programs: 'プログラム',
   'Run programs on this computer': 'このコンピューターでプログラムを実行',
+  'Web requests': 'Web リクエスト',
+  'Send requests to any site, outside your tabs': 'タブの外から任意のサイトにリクエストを送信',
+  'Read and change the clipboard': 'クリップボードの読み取りと変更',
+  'Ask you a question or tell you something': 'あなたに質問する、または何かを伝える',
+  'Select, mark and fold in your notes': 'ノートで選択・マーク・折りたたみ',
+  Applications: 'アプリケーション',
+  'Start, see and use your applications': 'アプリケーションの起動、表示、操作',
   Paying: '支払い',
   'Sending messages': 'メッセージの送信',
   'Publishing and sharing': '公開と共有',
@@ -2804,4 +2813,7 @@ export const ja: Dictionary = {
   'Writing down what you said': '話した内容を書き起こしています',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     '音声はこのデバイスの音声認識に送られ、メーカーのサーバーが使われることがあります',
+  'Not on this device': 'このデバイスにはありません',
+  'Not on this device. It opens once you are online again.':
+    'このデバイスにはありません。オンラインに戻ると開きます。',
 }

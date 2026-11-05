@@ -120,6 +120,7 @@ export const PACKAGES = [
   'lang-html',
   'markdown',
   'rooms',
+  'scan',
   'sync-core',
   'themes',
 ]
@@ -634,11 +635,16 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  Raised on 2026-11-05 as #1068's kept spaces came to claude/hunt-round-1, as unstable
  *  raised its own: the code to 6,111,000, measured 6,110,700; the catalogues to 1,004,400,
  *  measured 1,004,236; the styles to 289,500, measured 289,408.
+ *
+ *  Raised on 2026-11-05 as #1126's browser keeping only the words it uses and #1092's
+ *  agent rows came to claude/hunt-round-1, as unstable raised its own: the code to
+ *  6,126,300, measured 6,125,997; the catalogues to 1,006,300, measured 1,006,088; the
+ *  styles to 289,800, measured 289,721.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_111_000,
-  catalogues: 1_004_400,
-  styles: 289_500,
+  code: 6_126_300,
+  catalogues: 1_006_300,
+  styles: 289_800,
   fonts: 260_000,
   pages: 40_000,
 }

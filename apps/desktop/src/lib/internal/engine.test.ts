@@ -213,7 +213,7 @@ describe('the engine over a space Orden keeps', () => {
 
   test('is searched over its rows, and the held words follow every change', async () => {
     const { searchInternal } = await import('./search')
-    const { parseQuery } = await import('../search/query')
+    const { parseQuery } = await import('@orden/scan/search/query')
     const root = 'C:\\Orden\\Plans'
     const { folder } = await kept('/internal-s')
     undo.push(mountRoot({ root, web: '/internal-s', folder }))
@@ -250,7 +250,7 @@ describe('the engine over a space Orden keeps', () => {
     const { listInternal } = await import('./watch')
     const { searchInternal } = await import('./search')
     const { inboxHits } = await import('../search/inbox')
-    const { parseQuery } = await import('../search/query')
+    const { parseQuery } = await import('@orden/scan/search/query')
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const root = '/internal-i'
     const { folder, bytes } = await kept(root)

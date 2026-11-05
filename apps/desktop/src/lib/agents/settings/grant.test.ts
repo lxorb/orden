@@ -45,6 +45,11 @@ describe('the defaults', () => {
       'terminal',
       'files',
       'processes',
+      'network',
+      'clipboard',
+      'ask',
+      'editor',
+      'applications',
       'agents',
     ])
     expect(grant.spaces).toBe('all')

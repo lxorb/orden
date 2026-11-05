@@ -8,8 +8,8 @@
 import { scratchpad } from '../scratchpad/pad'
 import { SCRATCHPAD } from '../scratchpad/is.svelte'
 import { noteName } from '../space-paths'
-import { type Hit, Matcher } from './match'
-import type { Query } from './query'
+import { type Hit, Matcher } from '@orden/scan/search/match'
+import type { Query } from '@orden/scan/search/query'
 
 export async function scratchpadHits(query: Query, most: number): Promise<Hit[]> {
   const path = await scratchpad.where().catch(() => null)

@@ -4,9 +4,9 @@
  *  questions (web/space-cache.ts) follows the folder's own word on every change, as the
  *  browser's follows its rows, and every hit is said at the path the app holds. */
 
-import type { FuzzyHit } from '../search/fuzzy'
-import type { Hit } from '../search/match'
-import type { Query } from '../search/query'
+import type { FuzzyHit } from '@orden/scan/search/fuzzy'
+import type { Hit } from '@orden/scan/search/match'
+import type { Query } from '@orden/scan/search/query'
 import type { Warmth } from '../search/warmth'
 import { joinPath } from '../tauri'
 import { type Mounted, mountOf } from './roots'

@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { scanNote } from '../scan-note'
+import { scanNote } from '@orden/scan/note'
 
 /** The note behind a hover preview, and the note inside an `![[embed]]`, read
  *  through the editor exactly as the app wires it - against the reading view of

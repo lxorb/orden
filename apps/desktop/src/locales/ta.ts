@@ -573,6 +573,8 @@ export const ta: Dictionary = {
     'Orden-இன் சொந்தப் பின்னணிக்குப் பதிலாக, சாளரங்களின் பின்னால் செயலியை மங்கலாகக் காட்டும்.',
   'Swipe in from the edge to see your notes.':
     'உங்கள் குறிப்புகளைப் பார்க்க ஓரத்திலிருந்து உள்ளே தேய்க்கவும்.',
+  'Point at the edge of the window to see your notes.':
+    'உங்கள் குறிப்புகளைப் பார்க்க சுட்டியைச் சாளரத்தின் ஓரத்திற்குக் கொண்டு செல்லவும்.',
   'Show other tabs as icons': 'மற்ற தாவல்களை உருவங்களாகக் காட்டு',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'முன்னால் உள்ளதைத் தவிர ஒவ்வொரு தாவலும் உருவத்தை மட்டும் காட்டும்; ஒன்றின் மேல் சுட்டினால் அதன் பெயர் தெரியும்.',
@@ -2165,6 +2167,15 @@ export const ta: Dictionary = {
     'இந்தக் கணினியில் எங்கும் உள்ள கோப்புகளைப் படித்து மாற்றுதல்',
   Programs: 'நிரல்கள்',
   'Run programs on this computer': 'இந்தக் கணினியில் நிரல்களை இயக்கு',
+  'Web requests': 'இணையக் கோரிக்கைகள்',
+  'Send requests to any site, outside your tabs':
+    'உங்கள் தாவல்களுக்கு வெளியே எந்தத் தளத்திற்கும் கோரிக்கைகளை அனுப்பு',
+  'Read and change the clipboard': 'கிளிப்போர்டைப் படித்து மாற்று',
+  'Ask you a question or tell you something': 'உங்களிடம் கேள்வி கேள் அல்லது ஏதாவது சொல்',
+  'Select, mark and fold in your notes': 'உங்கள் குறிப்புகளில் தேர்ந்தெடு, குறியிடு, மடி',
+  Applications: 'பயன்பாடுகள்',
+  'Start, see and use your applications':
+    'உங்கள் பயன்பாடுகளைத் தொடங்குதல், பார்த்தல், பயன்படுத்துதல்',
   Paying: 'பணம் செலுத்துதல்',
   'Sending messages': 'செய்திகளை அனுப்புதல்',
   'Publishing and sharing': 'வெளியிடுதல், பகிர்தல்',
@@ -2880,4 +2891,7 @@ export const ta: Dictionary = {
   'Writing down what you said': 'நீங்கள் சொன்னதை எழுதுகிறது',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'ஒலி இந்தச் சாதனத்தின் பேச்சு அறிதலுக்குச் செல்கிறது, அது அதன் தயாரிப்பாளரின் சேவையகங்களைப் பயன்படுத்தக்கூடும்',
+  'Not on this device': 'இந்தச் சாதனத்தில் இல்லை',
+  'Not on this device. It opens once you are online again.':
+    'இந்தச் சாதனத்தில் இல்லை. நீங்கள் மீண்டும் இணையத்தில் வந்ததும் இது திறக்கும்.',
 }

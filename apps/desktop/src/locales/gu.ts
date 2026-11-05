@@ -571,6 +571,8 @@ export const gu: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Orden ની પોતાની પૃષ્ઠભૂમિને બદલે વિન્ડોઝ પાછળ ઍપને ઝાંખી બતાવે છે.',
   'Swipe in from the edge to see your notes.': 'તમારી નોંધો જોવા માટે કિનારેથી અંદર સ્વાઇપ કરો.',
+  'Point at the edge of the window to see your notes.':
+    'તમારી નોંધો જોવા માટે પોઇન્ટરને વિન્ડોની કિનારે લઈ જાઓ.',
   'Show other tabs as icons': 'બીજી ટૅબ આઇકન તરીકે બતાવો',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'આગળની ટૅબ સિવાય દરેક ટૅબ ફક્ત તેનું આઇકન બતાવે છે; કોઈ પર પોઇન્ટર રાખતાં તેનું નામ દેખાય છે.',
@@ -2123,6 +2125,13 @@ export const gu: Dictionary = {
     'આ કમ્પ્યુટર પર ક્યાંય પણ ફાઇલો વાંચવી અને બદલવી',
   Programs: 'પ્રોગ્રામ',
   'Run programs on this computer': 'આ કમ્પ્યુટર પર પ્રોગ્રામ ચલાવો',
+  'Web requests': 'વેબ વિનંતીઓ',
+  'Send requests to any site, outside your tabs': 'તમારા ટૅબની બહાર કોઈપણ સાઇટ પર વિનંતીઓ મોકલો',
+  'Read and change the clipboard': 'ક્લિપબોર્ડ વાંચો અને બદલો',
+  'Ask you a question or tell you something': 'તમને પ્રશ્ન પૂછો અથવા કંઈક કહો',
+  'Select, mark and fold in your notes': 'તમારી નોંધોમાં પસંદ કરો, ચિહ્નિત કરો અને સંકેલો',
+  Applications: 'એપ્લિકેશનો',
+  'Start, see and use your applications': 'તમારી એપ્લિકેશનો શરૂ કરવી, જોવી અને વાપરવી',
   Paying: 'ચુકવણી',
   'Sending messages': 'સંદેશા મોકલવા',
   'Publishing and sharing': 'પ્રકાશિત અને શેર કરવું',
@@ -2817,4 +2826,7 @@ export const gu: Dictionary = {
   'Writing down what you said': 'તમે જે કહ્યું તે લખાઈ રહ્યું છે',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'ઑડિયો આ ઉપકરણની વાણી ઓળખ પર જાય છે, જે તેના ઉત્પાદકના સર્વર વાપરી શકે છે',
+  'Not on this device': 'આ ઉપકરણ પર નથી',
+  'Not on this device. It opens once you are online again.':
+    'આ ઉપકરણ પર નથી. તમે ફરી ઑનલાઇન થશો ત્યારે તે ખુલશે.',
 }

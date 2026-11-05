@@ -19,6 +19,8 @@ import {
   againstOf,
   goneKey,
   goneOf,
+  keepingOf,
+  keepKey,
   numbersKey,
   numbersOf,
   numbersRow,
@@ -33,6 +35,7 @@ import {
   type Against,
   type DocNumbers,
   type Gone,
+  type Keeping,
   type Ordering,
   type Outgoing,
   type Wanted,
@@ -103,6 +106,9 @@ export class Core {
   readonly by = new Map<string, string>()
   /** Documents a live room's socket carries: a pass leaves them to it. */
   readonly carried = new Set<string>()
+  /** Documents whose words were asked for here - opened, or about to be - where this
+   *  device keeps only the words it uses (keeping.ts). Memory only. */
+  readonly asked = new Set<string>()
   /** The newest epoch the account has said each document is on: a room is joined only by
    *  a document on it, since operations of two epochs cannot be merged. */
   readonly epochs = new Map<string, number>()
@@ -165,7 +171,10 @@ export class Core {
 
     const orderings = new Map<string, Ordering>()
     const gones = new Map<string, Gone>()
+    const keepings = new Map<string, Keeping>()
     for (const row of meta) {
+      const keeping = keepingOf(row)
+      if (keeping) keepings.set(keeping.space, keeping.keeping)
       const ordering = orderingOf(row)
       if (ordering) orderings.set(ordering.space, ordering.ordering)
       const gone = goneOf(row)
@@ -203,6 +212,7 @@ export class Core {
         orderings.get(space.space_id),
       )
       state.gone = gones.get(space.space_id) ?? state.gone
+      state.keeping = keepings.get(space.space_id) ?? state.keeping
       core.spaces.set(space.space_id, state)
     }
 
@@ -298,6 +308,7 @@ export class Core {
       remove('meta', wantKey(spaceId)),
       remove('meta', orderKey(spaceId)),
       remove('meta', goneKey(spaceId)),
+      remove('meta', keepKey(spaceId)),
     )
     return changes
   }

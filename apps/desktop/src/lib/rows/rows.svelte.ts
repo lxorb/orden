@@ -15,7 +15,7 @@ import type { Row } from '@orden/bases'
 import { untrack } from 'svelte'
 import { breathe } from '../breathe'
 import { links } from '../link-index.svelte'
-import type { SpaceLinks } from '../scan-note'
+import type { SpaceLinks } from '@orden/scan/note'
 import { insideSpace } from '../space-paths'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
@@ -44,6 +44,7 @@ const store = new RowsStore({
 // Every write in any space says itself to the link index, and every file operation
 // to everything kept by path; the rows hear both, and nothing that writes names them.
 links.hearSaves((path, content) => store.saved(path, content))
+links.hearIndexed((root, scans) => store.indexed(root, scans))
 workspace.fileOps.follow((op) => store.follow(op))
 workspace.fileOps.follow(keeping(inboxes))
 workspace.fileOps.follow(keeping(projectFolders))

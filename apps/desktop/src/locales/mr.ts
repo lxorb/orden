@@ -571,6 +571,8 @@ export const mr: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Orden च्या स्वतःच्या पार्श्वभूमीऐवजी विंडोंमागे ॲप धूसर दाखवते.',
   'Swipe in from the edge to see your notes.': 'तुमच्या नोंदी पाहण्यासाठी कडेपासून आत स्वाइप करा.',
+  'Point at the edge of the window to see your notes.':
+    'तुमच्या नोंदी पाहण्यासाठी पॉइंटर विंडोच्या कडेला न्या.',
   'Show other tabs as icons': 'इतर टॅब चिन्हांच्या रूपात दाखवा',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'पुढच्या टॅबशिवाय प्रत्येक टॅब फक्त त्याचे चिन्ह दाखवतो; एकावर पॉइंटर नेल्यास त्याचे नाव दिसते.',
@@ -2133,6 +2135,14 @@ export const mr: Dictionary = {
   'Read and change files anywhere on this computer': 'या संगणकावर कुठेही फाइल्स वाचा आणि बदला',
   Programs: 'प्रोग्राम',
   'Run programs on this computer': 'या संगणकावर प्रोग्राम चालवा',
+  'Web requests': 'वेब विनंत्या',
+  'Send requests to any site, outside your tabs':
+    'तुमच्या टॅबबाहेर कोणत्याही साइटला विनंत्या पाठवा',
+  'Read and change the clipboard': 'क्लिपबोर्ड वाचा आणि बदला',
+  'Ask you a question or tell you something': 'तुम्हाला प्रश्न विचारा किंवा काहीतरी सांगा',
+  'Select, mark and fold in your notes': 'तुमच्या नोंदींमध्ये निवडा, खूण करा आणि घडी करा',
+  Applications: 'ॲप्लिकेशन्स',
+  'Start, see and use your applications': 'तुमची ॲप्लिकेशन्स सुरू करणे, पाहणे आणि वापरणे',
   Paying: 'पैसे भरणे',
   'Sending messages': 'संदेश पाठवणे',
   'Publishing and sharing': 'प्रकाशित करणे आणि शेअर करणे',
@@ -2830,4 +2840,7 @@ export const mr: Dictionary = {
   'Writing down what you said': 'तुम्ही जे बोललात ते लिहिले जात आहे',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'ऑडिओ या उपकरणाच्या वाक् ओळखीकडे जातो, जी त्याच्या निर्मात्याचे सर्व्हर वापरू शकते',
+  'Not on this device': 'या डिव्हाइसवर नाही',
+  'Not on this device. It opens once you are online again.':
+    'या डिव्हाइसवर नाही. तुम्ही पुन्हा ऑनलाइन आल्यावर ते उघडेल.',
 }

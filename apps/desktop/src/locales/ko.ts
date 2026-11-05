@@ -568,6 +568,8 @@ export const ko: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Orden 자체 배경 대신 창 뒤에 앱을 흐리게 표시합니다.',
   'Swipe in from the edge to see your notes.': '가장자리에서 안쪽으로 밀어 노트를 보세요.',
+  'Point at the edge of the window to see your notes.':
+    '포인터를 창 가장자리로 옮겨 노트를 보세요.',
   'Show other tabs as icons': '다른 탭을 아이콘으로 보기',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '앞에 있는 탭을 빼고 모든 탭이 아이콘만 보여 주며, 가리키면 이름이 나타납니다.',
@@ -2101,6 +2103,13 @@ export const ko: Dictionary = {
   'Read and change files anywhere on this computer': '이 컴퓨터 어디서나 파일 읽기 및 변경',
   Programs: '프로그램',
   'Run programs on this computer': '이 컴퓨터에서 프로그램 실행',
+  'Web requests': '웹 요청',
+  'Send requests to any site, outside your tabs': '탭 밖에서 모든 사이트로 요청 보내기',
+  'Read and change the clipboard': '클립보드 읽기 및 변경',
+  'Ask you a question or tell you something': '질문하거나 무언가를 알려 주기',
+  'Select, mark and fold in your notes': '노트에서 선택, 표시, 접기',
+  Applications: '애플리케이션',
+  'Start, see and use your applications': '애플리케이션 시작, 보기, 사용',
   Paying: '결제',
   'Sending messages': '메시지 보내기',
   'Publishing and sharing': '게시 및 공유',
@@ -2793,4 +2802,7 @@ export const ko: Dictionary = {
   'Writing down what you said': '말한 내용을 적는 중',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     '오디오가 이 기기의 음성 인식으로 전송되며, 제조사의 서버를 사용할 수 있습니다',
+  'Not on this device': '이 기기에 없음',
+  'Not on this device. It opens once you are online again.':
+    '이 기기에 없습니다. 다시 온라인 상태가 되면 열립니다.',
 }

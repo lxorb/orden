@@ -24,7 +24,7 @@ const { Disk, memoryStorage } = await import('../disk')
 disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { scanNote } = await import('../../src/lib/scan-note')
+const { scanNote } = await import('@orden/scan/note')
 const { scanRows } = await import('@orden/bases/scan')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { links } = await import('../../src/lib/link-index.svelte')

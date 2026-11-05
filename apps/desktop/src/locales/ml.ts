@@ -578,6 +578,8 @@ export const ml: Dictionary = {
     'Orden-ന്റെ സ്വന്തം പശ്ചാത്തലത്തിന് പകരം, ജാലകങ്ങൾക്ക് പിന്നിൽ ആപ്പ് മങ്ങിച്ച് കാണിക്കുന്നു.',
   'Swipe in from the edge to see your notes.':
     'നിങ്ങളുടെ കുറിപ്പുകൾ കാണാൻ അരികിൽ നിന്ന് അകത്തേക്ക് സ്വൈപ്പ് ചെയ്യുക.',
+  'Point at the edge of the window to see your notes.':
+    'നിങ്ങളുടെ കുറിപ്പുകൾ കാണാൻ പോയിന്റർ വിൻഡോയുടെ അരികിലേക്ക് നീക്കുക.',
   'Show other tabs as icons': 'മറ്റ് ടാബുകൾ ഐക്കണുകളായി കാണിക്കുക',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'മുന്നിലുള്ളതൊഴികെ ഓരോ ടാബും ഐക്കൺ മാത്രം കാണിക്കുന്നു; ഒന്നിലേക്ക് ചൂണ്ടുമ്പോൾ പേര് കാണാം.',
@@ -2160,6 +2162,16 @@ export const ml: Dictionary = {
     'ഈ കമ്പ്യൂട്ടറിൽ എവിടെയുമുള്ള ഫയലുകൾ വായിക്കാനും മാറ്റാനും',
   Programs: 'പ്രോഗ്രാമുകൾ',
   'Run programs on this computer': 'ഈ കമ്പ്യൂട്ടറിൽ പ്രോഗ്രാമുകൾ പ്രവർത്തിപ്പിക്കുക',
+  'Web requests': 'വെബ് അഭ്യർത്ഥനകൾ',
+  'Send requests to any site, outside your tabs':
+    'നിങ്ങളുടെ ടാബുകൾക്ക് പുറത്ത് ഏത് സൈറ്റിലേക്കും അഭ്യർത്ഥനകൾ അയയ്ക്കുക',
+  'Read and change the clipboard': 'ക്ലിപ്പ്ബോർഡ് വായിക്കുക, മാറ്റുക',
+  'Ask you a question or tell you something':
+    'നിങ്ങളോട് ചോദ്യം ചോദിക്കുക അല്ലെങ്കിൽ എന്തെങ്കിലും പറയുക',
+  'Select, mark and fold in your notes':
+    'നിങ്ങളുടെ കുറിപ്പുകളിൽ തിരഞ്ഞെടുക്കുക, അടയാളപ്പെടുത്തുക, മടക്കുക',
+  Applications: 'ആപ്ലിക്കേഷനുകൾ',
+  'Start, see and use your applications': 'നിങ്ങളുടെ ആപ്ലിക്കേഷനുകൾ തുടങ്ങുക, കാണുക, ഉപയോഗിക്കുക',
   Paying: 'പണമടയ്ക്കൽ',
   'Sending messages': 'സന്ദേശങ്ങൾ അയയ്ക്കൽ',
   'Publishing and sharing': 'പ്രസിദ്ധീകരിക്കലും പങ്കിടലും',
@@ -2871,4 +2883,7 @@ export const ml: Dictionary = {
   'Writing down what you said': 'നിങ്ങൾ പറഞ്ഞത് എഴുതുന്നു',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'ഓഡിയോ ഈ ഉപകരണത്തിന്റെ സംഭാഷണ തിരിച്ചറിയലിലേക്ക് പോകുന്നു, അത് നിർമ്മാതാവിന്റെ സെർവറുകൾ ഉപയോഗിച്ചേക്കാം',
+  'Not on this device': 'ഈ ഉപകരണത്തിൽ ഇല്ല',
+  'Not on this device. It opens once you are online again.':
+    'ഈ ഉപകരണത്തിൽ ഇല്ല. വീണ്ടും ഓൺലൈനായാൽ ഇത് തുറക്കും.',
 }

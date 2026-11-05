@@ -583,6 +583,8 @@ export const fr: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Affiche l’app floutée derrière les fenêtres, au lieu de l’arrière-plan d’Orden.',
   'Swipe in from the edge to see your notes.': 'Balayez depuis le bord pour voir vos notes.',
+  'Point at the edge of the window to see your notes.':
+    'Amenez le pointeur au bord de la fenêtre pour voir vos notes.',
   'Show other tabs as icons': 'Afficher les autres onglets en icônes',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Chaque onglet sauf celui au premier plan n’affiche que son icône ; en le pointant, son nom apparaît.',
@@ -2198,6 +2200,14 @@ export const fr: Dictionary = {
     'Lire et modifier des fichiers partout sur cet ordinateur',
   Programs: 'Programmes',
   'Run programs on this computer': 'Lancer des programmes sur cet ordinateur',
+  'Web requests': 'Requêtes web',
+  'Send requests to any site, outside your tabs':
+    'Envoyer des requêtes à n’importe quel site, hors de vos onglets',
+  'Read and change the clipboard': 'Lire et modifier le presse-papiers',
+  'Ask you a question or tell you something': 'Vous poser une question ou vous dire quelque chose',
+  'Select, mark and fold in your notes': 'Sélectionner, marquer et replier dans vos notes',
+  Applications: 'Applications',
+  'Start, see and use your applications': 'Démarrer, voir et utiliser vos applications',
   Paying: 'Payer',
   'Sending messages': 'Envoyer des messages',
   'Publishing and sharing': 'Publier et partager',
@@ -2916,4 +2926,7 @@ export const fr: Dictionary = {
   'Writing down what you said': 'Transcription de ce que vous avez dit',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'L’audio va à la reconnaissance vocale de cet appareil, qui peut utiliser les serveurs de son fabricant',
+  'Not on this device': 'Pas sur cet appareil',
+  'Not on this device. It opens once you are online again.':
+    'Pas sur cet appareil. Elle s’ouvrira dès que vous serez de nouveau en ligne.',
 }

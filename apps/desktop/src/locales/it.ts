@@ -581,6 +581,8 @@ export const it: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Mostra l’app sfocata dietro le finestre, invece dello sfondo di Orden.',
   'Swipe in from the edge to see your notes.': 'Scorri dal bordo per vedere le tue note.',
+  'Point at the edge of the window to see your notes.':
+    'Porta il puntatore sul bordo della finestra per vedere le tue note.',
   'Show other tabs as icons': 'Mostra le altre schede come icone',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Ogni scheda tranne quella in primo piano mostra solo la sua icona; puntandone una ne appare il nome.',
@@ -2195,6 +2197,14 @@ export const it: Dictionary = {
     'Leggere e modificare file ovunque su questo computer',
   Programs: 'Programmi',
   'Run programs on this computer': 'Eseguire programmi su questo computer',
+  'Web requests': 'Richieste web',
+  'Send requests to any site, outside your tabs':
+    'Inviare richieste a qualsiasi sito, fuori dalle tue schede',
+  'Read and change the clipboard': 'Leggere e modificare gli appunti',
+  'Ask you a question or tell you something': 'Farti una domanda o dirti qualcosa',
+  'Select, mark and fold in your notes': 'Selezionare, segnare e comprimere nelle tue note',
+  Applications: 'Applicazioni',
+  'Start, see and use your applications': 'Avviare, vedere e usare le tue applicazioni',
   Paying: 'Pagare',
   'Sending messages': 'Inviare messaggi',
   'Publishing and sharing': 'Pubblicare e condividere',
@@ -2911,4 +2921,7 @@ export const it: Dictionary = {
   'Writing down what you said': 'Sto scrivendo quello che hai detto',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'L’audio va al riconoscimento vocale di questo dispositivo, che può usare i server del produttore',
+  'Not on this device': 'Non è su questo dispositivo',
+  'Not on this device. It opens once you are online again.':
+    'Non è su questo dispositivo. Si aprirà appena sarai di nuovo online.',
 }

@@ -11,6 +11,7 @@
   import { t } from '../../i18n.svelte'
   import { agentOpen } from '../../ai/sidebar/agent-open.svelte'
   import { chat } from '../../ai/sidebar/chat.svelte'
+  import { asking } from './asking.svelte'
   import { started } from './live.svelte'
   import { ACTIVE_FOR } from './marks'
   import Spark from './Spark.svelte'
@@ -20,7 +21,11 @@
   const rows = $derived(
     activity.listed.map((agent) => {
       const last = activity.seen.doing[agent]
-      const asks = activity.questions.filter((one) => one.agent === agent)
+      const asks = [
+        ...activity.questions.filter((one) => one.agent === agent).map((one) => one.summary),
+        // What it asked with `ask_reader` (#1078) wants the reader as much.
+        ...asking.of(agent).map((one) => one.message),
+      ]
       return {
         agent,
         name: activity.nameOf(agent),
@@ -28,7 +33,7 @@
         connected: activity.seen.connected.includes(agent),
         stopped: activity.stopped(agent),
         acting: !!last && activity.now - last.at < ACTIVE_FOR,
-        asking: asks[0]?.summary ?? null,
+        asking: asks[0] ?? null,
         asks: asks.length,
       }
     }),

@@ -569,6 +569,8 @@ export const jv: Dictionary = {
     'Nuduhaké aplikasi burek ing mburi jendhela, tinimbang latar mburi Orden dhéwé.',
   'Swipe in from the edge to see your notes.':
     'Gesek mlebu saka pinggir kanggo ndeleng cathetanmu.',
+  'Point at the edge of the window to see your notes.':
+    'Pindhahna penunjuk menyang pinggir jendhela kanggo ndeleng cathetanmu.',
   'Show other tabs as icons': 'Tampilake tab liyane minangka lambang',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Saben tab kajaba sing ngarep mung nampilake lambange; yen diarahake, jenenge katon.',
@@ -2117,6 +2119,14 @@ export const jv: Dictionary = {
     'Maca lan ngowahi file ing ngendi wae ing komputer iki',
   Programs: 'Program',
   'Run programs on this computer': 'Mlaku program ing komputer iki',
+  'Web requests': 'Panjaluk web',
+  'Send requests to any site, outside your tabs':
+    'Ngirim panjaluk menyang situs apa wae, ing njaba tab sampeyan',
+  'Read and change the clipboard': 'Maca lan ngganti papan klip',
+  'Ask you a question or tell you something': 'Takon utawa ngandhani sampeyan bab',
+  'Select, mark and fold in your notes': 'Milih, menehi tandha lan nglempit ing cathetan sampeyan',
+  Applications: 'Aplikasi',
+  'Start, see and use your applications': 'Miwiti, ndeleng lan nggunakake aplikasi sampeyan',
   Paying: 'Mbayar',
   'Sending messages': 'Ngirim pesen',
   'Publishing and sharing': 'Nerbitake lan nuduhake',
@@ -2815,4 +2825,7 @@ export const jv: Dictionary = {
   'Writing down what you said': 'Lagi nulis apa sing sampeyan omongake',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Audio dikirim menyang pangenalan swara piranti iki, sing bisa nganggo server gawéyané',
+  'Not on this device': 'Ora ana ing piranti iki',
+  'Not on this device. It opens once you are online again.':
+    'Ora ana ing piranti iki. Bakal kabuka yen sampeyan wis online maneh.',
 }

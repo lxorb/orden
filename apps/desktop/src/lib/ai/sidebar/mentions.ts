@@ -2,7 +2,7 @@
  *  mean. The candidates are built by the panel from the space; this file only ranks
  *  them, the way quick open ranks a note's name, so it is pure and tested alone. */
 
-import { fit } from '../../search/fuzzy'
+import { fit } from '@orden/scan/search/fuzzy'
 
 /** The kinds of thing a chip can be. `note` and `selection` are also the two the
  *  panel offers on its own, dim, for the note in front. */

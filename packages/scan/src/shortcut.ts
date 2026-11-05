@@ -40,7 +40,7 @@
  *  extension it has never heard of, which is a row that is not there rather than a
  *  row that is wrong. See docs/web-tabs.md. */
 
-import { isWebAddress } from './address'
+import { isWebAddress } from './web-address'
 
 /** The one section a `.url` file has. Compared without case, because an INI
  *  section is a name and not a string. */

@@ -10,7 +10,7 @@ import type { Lost, Planned } from './plan'
 import type { Sidebar, SidebarFolder, SidebarSpace, SidebarTab } from './sidebar'
 import { zenIcon, zenTint } from './zen-icons'
 import { isWebAddress } from '../web-tab/address'
-import { writeShortcut } from '../web-tab/shortcut'
+import { writeShortcut } from '@orden/scan/shortcut'
 import { readIcon, takesTint } from '../icons'
 
 /** One of the browser's spaces as an Orden space. */

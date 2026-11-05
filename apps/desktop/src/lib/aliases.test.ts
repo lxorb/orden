@@ -9,9 +9,9 @@
  *  packages/editor/src/wikilink/wikilink.test.ts. */
 
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { Hit } from './search/match'
-import type { Query } from './search/query'
-import { scanNote, type SpaceLinks } from './scan-note'
+import type { Hit } from '@orden/scan/search/match'
+import type { Query } from '@orden/scan/search/query'
+import { scanNote, type SpaceLinks } from '@orden/scan/note'
 
 const ROOT = '/space'
 
@@ -59,7 +59,7 @@ vi.mock('./search/space', () => ({
     limit: number,
     onFound: (found: { hits: Hit[]; loose: Hit[] }) => void,
   ) => {
-    const { Matcher } = await import('./search/match')
+    const { Matcher } = await import('@orden/scan/search/match')
     const matcher = new Matcher(query)
     const hits: Hit[] = []
 

@@ -343,6 +343,11 @@ export function removed(core: Core, space: SpaceState, path: string, back?: stri
   const wanted = core.wanted(space.id)
   for (const one of new Set([...gone, ...inside(space, entry.id)])) {
     if (!wanted.has(one.id)) continue
+    // A note this device keeps no words of by choice (keeping.ts, #1126) was seen as the
+    // feed listed it, at the space's cursor: what anybody wrote or moved before that
+    // stood in the list the person deleted from, and only what came after is kept from
+    // the delete. Not a note whose words are on their way, which nobody here has seen.
+    if (space.keepsFew && !core.hasDoc(one.id)) continue
     seen = Math.min(seen, core.numbers.get(one.id)?.pulled ?? 0)
   }
 

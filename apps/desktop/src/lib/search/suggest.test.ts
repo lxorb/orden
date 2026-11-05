@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { OPERATORS, parseQuery, type Query } from './query'
+import { OPERATORS, parseQuery, type Query } from '@orden/scan/search/query'
 import { chosen, completing, naming, offered } from './suggest'
 
 /** The caret sits where the pipe is, which is how these read. */

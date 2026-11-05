@@ -1,7 +1,8 @@
 /** The file list, shut, brought out by the pointer reaching the window's edge: Zen's
  *  way (#1034). Over the note rather than beside it, so nothing moves, and only while
  *  the pointer is over it - it goes again once the pointer has left, and pinning it
- *  open is still the sidebar button's.
+ *  open is still the sidebar button's, which is in it (#1038). The right side comes out
+ *  of the other edge the same way: one of these for each side (`edgePeek`, `endPeek`).
  *
  *  What decides it is here, with the clock and the window handed in, so every rule is
  *  a line a test can play; the column it brings out is Sidebar.svelte's (`peek`).
@@ -45,6 +46,11 @@ export interface Room {
   /** How wide the window is, and whether its start edge is on the right. */
   width: () => number
   rtl: () => boolean
+  /** Where the side's own column starts down the window: the edge beside it brings it
+   *  out, and the edge above it does not. The right side stands under the bar, where the
+   *  window's own buttons are at that edge, and a pointer thrown into the corner for the
+   *  close button is not asking for a sidebar. */
+  top?: () => number
   /** Whether a point is on the list that came out, or on something it opened. */
   over: (x: number, y: number) => boolean
   /** Whether it is busy and must stay: a menu of its own open, a name being typed in
@@ -57,6 +63,10 @@ type Timer = ReturnType<typeof setTimeout>
 export class EdgePeek {
   /** Whether the list is out over the note. */
   out = $state(false)
+
+  /** Whether this is the side at the end of the window's reading - the right one,
+   *  which is on the left where the words run right to left - rather than its start. */
+  constructor(private readonly end = false) {}
 
   private room: Room | null = null
   private going: Timer | null = null
@@ -76,14 +86,19 @@ export class EdgePeek {
     const room = this.room
     if (!room) return
 
+    const right = room.rtl() !== this.end
+    const edge = right ? event.clientX >= room.width() - 1 - EDGE : event.clientX <= EDGE
+    const beside = event.clientY >= (room.top?.() ?? 0)
+
+    // The edge that brought it out keeps it too: the card stands in from the window's
+    // edge, and a pointer resting at the edge, a pixel this way or that, has not left.
     if (this.out) {
-      if (room.over(event.clientX, event.clientY)) this.stay()
+      if (room.over(event.clientX, event.clientY) || (edge && beside)) this.stay()
       else this.leave()
       return
     }
-
-    const edge = room.rtl() ? event.clientX >= room.width() - 1 - EDGE : event.clientX <= EDGE
-    if (edge && event.buttons === 0 && event.pointerType !== 'touch' && room.may()) this.out = true
+    if (edge && beside && event.buttons === 0 && event.pointerType !== 'touch' && room.may())
+      this.out = true
   }
 
   /** The pointer left the window altogether. */
@@ -120,4 +135,6 @@ export class EdgePeek {
   }
 }
 
+/** The left side's, at the start edge, and the right side's, at the end edge (#1038). */
 export const edgePeek = new EdgePeek()
+export const endPeek = new EdgePeek(true)

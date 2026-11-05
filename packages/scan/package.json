@@ -1,0 +1,35 @@
+{
+  "name": "@orden/scan",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    "./canvas": "./src/scan-canvas.ts",
+    "./indexed": "./src/indexed.ts",
+    "./json-skim": "./src/json-skim.ts",
+    "./note": "./src/scan-note.ts",
+    "./search/fuzzy": "./src/search/fuzzy.ts",
+    "./search/lines": "./src/search/lines.ts",
+    "./search/match": "./src/search/match.ts",
+    "./search/query": "./src/search/query.ts",
+    "./search/tags": "./src/search/tags.ts",
+    "./search/walk": "./src/search/walk.ts",
+    "./shortcut": "./src/shortcut.ts",
+    "./web-address": "./src/web-address.ts",
+    "./wire": "./src/wire.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@orden/bases": "workspace:*",
+    "@orden/markdown": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.0"
+  }
+}

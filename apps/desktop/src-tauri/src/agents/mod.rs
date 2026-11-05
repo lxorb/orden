@@ -64,6 +64,7 @@ mod approvals;
 )]
 mod capture;
 mod files;
+mod http;
 #[cfg_attr(
     not(any(windows, feature = "cef")),
     allow(
@@ -107,6 +108,7 @@ mod snapshot;
     )
 )]
 pub(crate) mod stop;
+mod system;
 
 #[cfg(any(windows, feature = "cef", target_os = "macos"))]
 pub mod engines;
@@ -348,6 +350,14 @@ fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
             if let Verb::Process(asked) = &browsing {
                 return process::answer(app, caller, asked, since);
             }
+            // And requests to any site (#1078).
+            if let Verb::Http(asked) = &browsing {
+                return http::answer(app, caller, asked, since);
+            }
+            // And the system around the app (#1078).
+            if let Verb::System(asked) = &browsing {
+                return system::answer(app, caller, asked);
+            }
             browse(app, caller, browsing, since)
         }
     }
@@ -548,6 +558,40 @@ pub fn agents_resume(
     from_the_app(&webview)?;
     stop::resume(&app, agent.as_deref());
     Ok(())
+}
+
+/// A file dialog an agent's command would open, answered by the path the agent gave
+/// instead (#1078): the file read or written only where `files` would let it be - the
+/// scope, never behind a fence, and the question it raises. Answers `{"path"}` made
+/// absolute, the question, or why not.
+#[tauri::command(async)]
+pub fn agents_dialog_path(
+    webview: tauri::Webview,
+    app: AppHandle,
+    agent: String,
+    path: String,
+    write: bool,
+) -> Answer {
+    if let Err(why) = from_the_app(&webview) {
+        return Answer::error(Code::NotGranted, why);
+    }
+    let Some(grant) = state(&app).grants.by_id(&app, &agent) else {
+        return Answer::error(Code::NotGranted, "there is no such agent");
+    };
+    let op = if write {
+        verbs::FilesOp::Write
+    } else {
+        verbs::FilesOp::Read
+    };
+    match files::reachable(&app, &Caller::Agent(Box::new(grant)), &path, op) {
+        Ok(path) => {
+            // What the dialog's pick would have let the app's writers and readers reach,
+            // which `write_bytes`, `write_note` and the import stand behind.
+            crate::paths::picked_for_an_agent(&app, &files::pick_reach(&app, &path));
+            Answer::ok(serde_json::json!({ "path": path.display().to_string() }))
+        }
+        Err(answer) => answer,
+    }
 }
 
 /// The reader's answer to a question: Allow or Don't allow, and "Always on this site".

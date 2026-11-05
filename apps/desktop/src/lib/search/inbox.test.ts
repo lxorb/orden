@@ -24,7 +24,7 @@ vi.mock('../pdf/papers', () => ({
 }))
 
 const { searchSpace } = await import('./space')
-const { parseQuery } = await import('./query')
+const { parseQuery } = await import('@orden/scan/search/query')
 
 test('a word in the space’s own inbox is found, named Inbox', async () => {
   const found: { path: string; name: string }[] = []

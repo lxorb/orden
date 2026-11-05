@@ -11,7 +11,7 @@ import { canWriteAt } from '../sharing.svelte'
 import { nameOf } from '../space-paths'
 import type { Tab } from '../workspace/documents.svelte'
 import { writeFile } from '../workspace/write-file'
-import { aimWebloc, readWebFile, rewriteShortcut, writeShortcut } from './shortcut'
+import { aimWebloc, readWebFile, rewriteShortcut, writeShortcut } from '@orden/scan/shortcut'
 
 export async function aimed(
   ws: { keep(id: string): void; persist(): void },

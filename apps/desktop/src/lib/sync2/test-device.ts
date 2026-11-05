@@ -7,7 +7,7 @@
 import { Engine } from './engine'
 import { MemoryDisk } from './memory-disk'
 import { MemoryStore } from './memory-store'
-import { accountOver, remoteFiles } from './transport'
+import { accountOver, type Reading, readingOver, remoteFiles } from './transport'
 
 export interface TestDevice {
   root: string
@@ -16,6 +16,8 @@ export interface TestDevice {
   engine: Engine
   /** Every route asked, in order, with the space or document it named. */
   asked: string[]
+  /** What a browser asks of the notes it keeps no words of (#1126). */
+  reading: Reading
 }
 
 export interface Making {
@@ -27,6 +29,8 @@ export interface Making {
   files?: Record<string, string | Uint8Array>
   name?: string
   base?: string
+  /** A browser, which keeps only the words it uses where the account serves the rest. */
+  lazy?: boolean
 }
 
 async function sha256(data: string | Uint8Array): Promise<string> {
@@ -74,6 +78,7 @@ export async function testDevice(making: Making): Promise<TestDevice> {
       join: (folder, path) => `${folder}/${path}`,
       foldsCase: true,
       platform: 'other',
+      ...(making.lazy ? { lazy: true } : {}),
       list: (at) => {
         const listed: { path: string; dir: boolean }[] = []
         for (const folder of disk.folders) {
@@ -105,5 +110,5 @@ export async function testDevice(making: Making): Promise<TestDevice> {
     store.open(),
     { freshens: false },
   )
-  return { root, disk, store, engine, asked }
+  return { root, disk, store, engine, asked, reading: readingOver(reaching) }
 }

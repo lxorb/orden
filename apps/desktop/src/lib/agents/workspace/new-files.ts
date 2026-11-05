@@ -58,7 +58,7 @@ async function firstWords(call: Call, kind: Exclude<FileKind, 'note'>, name: str
       if (url === null || !isWebAddress(url)) {
         throw new Refused('bad_arguments', 'a web note says its url, a web address')
       }
-      const { writeShortcut } = await import('../../web-tab/shortcut')
+      const { writeShortcut } = await import('@orden/scan/shortcut')
       return writeShortcut(url, shownName(name), new Date())
     }
   }

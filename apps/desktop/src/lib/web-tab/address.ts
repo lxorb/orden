@@ -11,30 +11,8 @@
 /** Chrome's "View page source": a page's own address behind it. */
 const SOURCE = /^view-source:/i
 
-/** Whether an address is one a web tab may open: the web, and not the app.
- *
- *  The app's own origins are refused because a tab holding Orden inside Orden is a
- *  page whose script sits beside the app's, and every other scheme is refused
- *  because a tab is a browser and not a way to reach this machine. The crate says
- *  the same thing again on every navigation, which is what makes it true for the
- *  links inside the page as well as for this field. */
-export function isWebAddress(url: string): boolean {
-  const inner = url.replace(SOURCE, '')
-  if (inner !== url) return !SOURCE.test(inner) && isWebAddress(inner)
-
-  let parsed: URL
-  try {
-    parsed = new URL(url)
-  } catch {
-    return false
-  }
-
-  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false
-
-  return !['tauri.localhost', 'ipc.localhost', 'asset.localhost', 'nib.localhost'].includes(
-    parsed.hostname.toLowerCase().replace(/\.+$/, ''),
-  )
-}
+/** Whether an address is one a web tab may open; see @orden/scan/web-address. */
+export { isWebAddress } from '@orden/scan/web-address'
 
 /** How a host reads, once idn.ts has been loaded: most sessions never meet a name that is
  *  not ASCII, and what decides about one is a table too large to read before the first

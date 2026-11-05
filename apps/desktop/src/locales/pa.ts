@@ -574,6 +574,8 @@ export const pa: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Orden ਦੇ ਆਪਣੇ ਪਿਛੋਕੜ ਦੀ ਥਾਂ ਵਿੰਡੋਆਂ ਦੇ ਪਿੱਛੇ ਐਪ ਨੂੰ ਧੁੰਦਲਾ ਦਿਖਾਉਂਦਾ ਹੈ।',
   'Swipe in from the edge to see your notes.': 'ਆਪਣੇ ਨੋਟ ਦੇਖਣ ਲਈ ਕਿਨਾਰੇ ਤੋਂ ਅੰਦਰ ਸਵਾਈਪ ਕਰੋ।',
+  'Point at the edge of the window to see your notes.':
+    'ਆਪਣੇ ਨੋਟ ਦੇਖਣ ਲਈ ਪੁਆਇੰਟਰ ਨੂੰ ਵਿੰਡੋ ਦੇ ਕਿਨਾਰੇ ਉੱਤੇ ਲੈ ਜਾਓ।',
   'Show other tabs as icons': 'ਹੋਰ ਟੈਬ ਆਈਕਨ ਵਜੋਂ ਦਿਖਾਓ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ਅੱਗੇ ਵਾਲੀ ਤੋਂ ਬਿਨਾਂ ਹਰ ਟੈਬ ਸਿਰਫ਼ ਆਪਣਾ ਆਈਕਨ ਦਿਖਾਉਂਦੀ ਹੈ; ਕਿਸੇ ਉੱਤੇ ਪੁਆਇੰਟਰ ਲਿਆਉਣ ਨਾਲ ਨਾਂ ਦਿਖਦਾ ਹੈ।',
@@ -2136,6 +2138,14 @@ export const pa: Dictionary = {
     'ਇਸ ਕੰਪਿਊਟਰ ਉੱਤੇ ਕਿਤੇ ਵੀ ਫ਼ਾਈਲਾਂ ਪੜ੍ਹੋ ਅਤੇ ਬਦਲੋ',
   Programs: 'ਪ੍ਰੋਗਰਾਮ',
   'Run programs on this computer': 'ਇਸ ਕੰਪਿਊਟਰ ਉੱਤੇ ਪ੍ਰੋਗਰਾਮ ਚਲਾਓ',
+  'Web requests': 'ਵੈੱਬ ਬੇਨਤੀਆਂ',
+  'Send requests to any site, outside your tabs':
+    'ਆਪਣੀਆਂ ਟੈਬਾਂ ਤੋਂ ਬਾਹਰ ਕਿਸੇ ਵੀ ਸਾਈਟ ਨੂੰ ਬੇਨਤੀਆਂ ਭੇਜੋ',
+  'Read and change the clipboard': 'ਕਲਿੱਪਬੋਰਡ ਪੜ੍ਹੋ ਅਤੇ ਬਦਲੋ',
+  'Ask you a question or tell you something': 'ਤੁਹਾਨੂੰ ਸਵਾਲ ਪੁੱਛੋ ਜਾਂ ਕੁਝ ਦੱਸੋ',
+  'Select, mark and fold in your notes': 'ਆਪਣੇ ਨੋਟਾਂ ਵਿੱਚ ਚੁਣੋ, ਨਿਸ਼ਾਨ ਲਗਾਓ ਅਤੇ ਸਮੇਟੋ',
+  Applications: 'ਐਪਲੀਕੇਸ਼ਨਾਂ',
+  'Start, see and use your applications': 'ਆਪਣੀਆਂ ਐਪਲੀਕੇਸ਼ਨਾਂ ਸ਼ੁਰੂ ਕਰਨਾ, ਵੇਖਣਾ ਅਤੇ ਵਰਤਣਾ',
   Paying: 'ਭੁਗਤਾਨ',
   'Sending messages': 'ਸੁਨੇਹੇ ਭੇਜਣਾ',
   'Publishing and sharing': 'ਪ੍ਰਕਾਸ਼ਿਤ ਅਤੇ ਸਾਂਝਾ ਕਰਨਾ',
@@ -2839,4 +2849,7 @@ export const pa: Dictionary = {
   'Writing down what you said': 'ਤੁਸੀਂ ਜੋ ਕਿਹਾ ਉਹ ਲਿਖਿਆ ਜਾ ਰਿਹਾ ਹੈ',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'ਆਡੀਓ ਇਸ ਡਿਵਾਈਸ ਦੀ ਬੋਲੀ ਪਛਾਣ ਤੇ ਜਾਂਦਾ ਹੈ, ਜੋ ਇਸਦੇ ਨਿਰਮਾਤਾ ਦੇ ਸਰਵਰ ਵਰਤ ਸਕਦੀ ਹੈ',
+  'Not on this device': 'ਇਸ ਡਿਵਾਈਸ ’ਤੇ ਨਹੀਂ',
+  'Not on this device. It opens once you are online again.':
+    'ਇਸ ਡਿਵਾਈਸ ’ਤੇ ਨਹੀਂ। ਤੁਹਾਡੇ ਮੁੜ ਔਨਲਾਈਨ ਹੁੰਦੇ ਹੀ ਇਹ ਖੁੱਲ੍ਹੇਗਾ।',
 }

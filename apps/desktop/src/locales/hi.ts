@@ -572,6 +572,8 @@ export const hi: Dictionary = {
     'Orden की अपनी पृष्ठभूमि के बजाय विंडो के पीछे ऐप को धुंधला दिखाता है।',
   'Swipe in from the edge to see your notes.':
     'अपने नोट्स देखने के लिए किनारे से अंदर स्वाइप करें।',
+  'Point at the edge of the window to see your notes.':
+    'अपने नोट्स देखने के लिए पॉइंटर को विंडो के किनारे पर ले जाएँ।',
   'Show other tabs as icons': 'बाकी टैब आइकन के रूप में दिखाएँ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'सामने वाले को छोड़ हर टैब सिर्फ़ अपना आइकन दिखाता है; किसी पर पॉइंटर ले जाने पर उसका नाम दिखता है।',
@@ -2130,6 +2132,13 @@ export const hi: Dictionary = {
     'इस कंप्यूटर पर कहीं भी फ़ाइलें पढ़ें और बदलें',
   Programs: 'प्रोग्राम',
   'Run programs on this computer': 'इस कंप्यूटर पर प्रोग्राम चलाएँ',
+  'Web requests': 'वेब अनुरोध',
+  'Send requests to any site, outside your tabs': 'अपने टैब के बाहर किसी भी साइट को अनुरोध भेजें',
+  'Read and change the clipboard': 'क्लिपबोर्ड पढ़ें और बदलें',
+  'Ask you a question or tell you something': 'आपसे प्रश्न पूछें या कुछ बताएँ',
+  'Select, mark and fold in your notes': 'अपने नोट्स में चुनें, चिह्नित करें और समेटें',
+  Applications: 'एप्लिकेशन',
+  'Start, see and use your applications': 'आपके एप्लिकेशन शुरू करना, देखना और इस्तेमाल करना',
   Paying: 'भुगतान',
   'Sending messages': 'संदेश भेजना',
   'Publishing and sharing': 'प्रकाशित और साझा करना',
@@ -2831,4 +2840,7 @@ export const hi: Dictionary = {
   'Writing down what you said': 'आपने जो कहा वह लिखा जा रहा है',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'ऑडियो इस डिवाइस की वाक् पहचान पर जाता है, जो उसके निर्माता के सर्वर इस्तेमाल कर सकती है',
+  'Not on this device': 'इस डिवाइस पर नहीं है',
+  'Not on this device. It opens once you are online again.':
+    'इस डिवाइस पर नहीं है। आपके फिर से ऑनलाइन होते ही यह खुलेगा।',
 }

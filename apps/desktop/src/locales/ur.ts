@@ -571,6 +571,8 @@ export const ur: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'ونڈوز کے پیچھے ایپ کو دھندلا دکھاتا ہے، Orden کے اپنے پس منظر کے بجائے۔',
   'Swipe in from the edge to see your notes.': 'اپنے نوٹس دیکھنے کے لیے کنارے سے اندر سوائپ کریں۔',
+  'Point at the edge of the window to see your notes.':
+    'اپنے نوٹس دیکھنے کے لیے پوائنٹر کو ونڈو کے کنارے پر لے جائیں۔',
   'Show other tabs as icons': 'دوسرے ٹیب آئیکن کے طور پر دکھائیں',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'سامنے والے کے سوا ہر ٹیب صرف اپنا آئیکن دکھاتا ہے؛ کسی پر پوائنٹر لے جائیں تو اس کا نام دکھتا ہے۔',
@@ -2130,6 +2132,14 @@ export const ur: Dictionary = {
     'اس کمپیوٹر پر کہیں بھی فائلیں پڑھنا اور بدلنا',
   Programs: 'پروگرام',
   'Run programs on this computer': 'اس کمپیوٹر پر پروگرام چلائیں',
+  'Web requests': 'ویب درخواستیں',
+  'Send requests to any site, outside your tabs':
+    'اپنے ٹیبز سے باہر کسی بھی سائٹ کو درخواستیں بھیجیں',
+  'Read and change the clipboard': 'کلپ بورڈ پڑھیں اور بدلیں',
+  'Ask you a question or tell you something': 'آپ سے سوال پوچھیں یا کچھ بتائیں',
+  'Select, mark and fold in your notes': 'اپنے نوٹس میں منتخب کریں، نشان لگائیں اور سمیٹیں',
+  Applications: 'ایپلیکیشنز',
+  'Start, see and use your applications': 'اپنی ایپلیکیشنز شروع کرنا، دیکھنا اور استعمال کرنا',
   Paying: 'ادائیگی',
   'Sending messages': 'پیغامات بھیجنا',
   'Publishing and sharing': 'شائع کرنا اور شیئر کرنا',
@@ -2826,4 +2836,7 @@ export const ur: Dictionary = {
   'Writing down what you said': 'آپ نے جو کہا وہ لکھا جا رہا ہے',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'آڈیو اس آلے کی آواز پہچان پر جاتا ہے، جو اس کے بنانے والے کے سرور استعمال کر سکتی ہے',
+  'Not on this device': 'اس آلے پر نہیں',
+  'Not on this device. It opens once you are online again.':
+    'اس آلے پر نہیں۔ جیسے ہی آپ دوبارہ آن لائن ہوں گے، یہ کھل جائے گا۔',
 }

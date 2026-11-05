@@ -20,7 +20,7 @@ import { type FoundLink, isPagesTarget } from '@orden/markdown/links'
 import { paperOf } from './pages/held'
 import { folderOf } from './space-paths'
 import type { NoteDoc } from './workspace/documents.svelte'
-import { skim, type Span } from './json-skim'
+import { skim, type Span } from '@orden/scan/json-skim'
 import { type Move, type Placed, retargetLinks } from './link-rewrite'
 
 /** The plane with every card that points at `move.from` pointing at `move.to`, or

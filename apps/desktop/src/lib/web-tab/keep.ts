@@ -27,7 +27,7 @@ import { canWriteAt } from '../sharing.svelte'
 import { invoke } from '../tauri'
 import { afterQuiet, type Later } from '../timing'
 import { isWebAddress } from './address'
-import { aimWebloc, readWebFile, rewriteShortcut, writeShortcut } from './shortcut'
+import { aimWebloc, readWebFile, rewriteShortcut, writeShortcut } from '@orden/scan/shortcut'
 
 /** What one web note's file needs to be brought up to date. Named rather than
  *  positional because four strings in a row is four chances to swap two. */

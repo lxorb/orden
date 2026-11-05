@@ -48,6 +48,8 @@ use super::verbs::{Category, DialogKind, Store};
 /// host (`bank.example.`), which every rule below would otherwise read as another one.
 pub fn host_of(url: &str) -> Option<String> {
     let parsed: tauri::Url = url.parse().ok()?;
+    // `bank.example.` is `bank.example` to every resolver: a rule is not got round by the
+    // dot that ends a fully qualified name (#1078).
     parsed
         .host_str()
         .map(|host| host.trim_end_matches('.').to_lowercase())
@@ -157,12 +159,24 @@ pub fn rule_for(grant: &Grant, host: &str) -> Option<SiteRule> {
 
 /// Whether a site the reader named covers a host.
 fn covers(site: &str, host: &str) -> bool {
-    let site = site
-        .trim()
-        .trim_start_matches("*.")
+    let site = named(site.trim().trim_start_matches("*."));
+    let host = host.trim_end_matches('.');
+    !site.is_empty() && (host == site || host.ends_with(&format!(".{site}")))
+}
+
+/// A site as an address names it: `bücher.example` as `xn--bcher-kva.example`, the way
+/// the host of every address an agent reaches is written, in lower case and without the
+/// dot a fully qualified name ends on. A rule typed in letters of its own covers the
+/// address it names (#1078).
+fn named(site: &str) -> String {
+    let site = site.trim_end_matches('.');
+    format!("http://{site}/")
+        .parse::<tauri::Url>()
+        .ok()
+        .and_then(|url| url.host_str().map(str::to_owned))
+        .unwrap_or_else(|| site.to_owned())
         .trim_end_matches('.')
-        .to_lowercase();
-    host == site || host.ends_with(&format!(".{site}"))
+        .to_lowercase()
 }
 
 /// Whether an agent may be at an address in a tab of this store: nowhere off the web, a
@@ -2436,6 +2450,30 @@ mod tests {
         assert!(site_allowed(&grant, "https://bank.example/", Store::Reader).is_err());
         assert!(site_allowed(&grant, "https://bank.example/", Store::Agent).is_ok());
         assert!(site_allowed(&grant, "https://ok.evil.example/", Store::Reader).is_ok());
+    }
+
+    /// A denied site by every name it has: a capital, the dot a fully qualified name ends
+    /// on, its letters as typed or as an address writes them (#1078).
+    #[test]
+    fn a_rule_is_not_got_round_by_another_spelling_of_its_site() {
+        let mut grant = grant();
+        grant.sites.insert("Evil.Example.".into(), SiteRule::Deny);
+        grant.sites.insert("bücher.example".into(), SiteRule::Deny);
+        for url in [
+            "https://evil.example./",
+            "https://EVIL.example/",
+            "https://a.evil.example./x",
+            "https://bücher.example/",
+            "https://xn--bcher-kva.example/",
+            "https://www.BÜCHER.example./",
+        ] {
+            assert!(site_allowed(&grant, url, Store::Agent).is_err(), "{url}");
+        }
+        assert!(site_allowed(&grant, "https://notevil.example/", Store::Agent).is_ok());
+        assert_eq!(
+            host_of("https://Evil.Example./"),
+            Some("evil.example".into())
+        );
     }
 
     /// The table: a press, the page it is on, and what it asks. Several languages each.

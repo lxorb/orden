@@ -96,8 +96,20 @@ async function card() {
   return column
 }
 
+/** The right side's one button where it can be pressed: on a desktop the bar's while the
+ *  side is shut, and the side's own while it is open (#1038). */
 const rightButton = () =>
-  target.querySelector<HTMLButtonElement>('header button[aria-label$="right sidebar"]')
+  [...target.querySelectorAll<HTMLButtonElement>('button[aria-label$="right sidebar"]')].find(
+    (one) => one.closest('[inert]') === null,
+  )
+
+/** The bar and the right side beside it, as App.svelte draws them. */
+function barAndSide() {
+  bar()
+  const made = mount(Sidebar, { target, props: { side: 'right' } })
+  flushSync()
+  undo.push(() => void unmount(made, { outro: false }))
+}
 
 /** #1032: the scratchpad's own switch and the right side's fought, each turning the edge
  *  into the other. A desktop's bar has one button for the right side now, and the
@@ -106,6 +118,21 @@ test('the bar has one button for the right side and no switch of the scratchpad�
   bar()
   expect(target.querySelector('header button.pad')).toBeNull()
   expect(target.querySelectorAll('header button[aria-label$="right sidebar"]')).toHaveLength(1)
+})
+
+/** #1038: on a desktop the button is the side's own while the side is open, and the bar
+ *  keeps it, said and not shown, only while it is shut. */
+test('open, the right side has the button and the bar has none', () => {
+  barAndSide()
+  workspace.showRight('outline')
+  flushSync()
+  expect(target.querySelectorAll('header button[aria-label$="right sidebar"]')).toHaveLength(0)
+  expect(target.querySelectorAll('aside button[aria-label$="right sidebar"]')).toHaveLength(1)
+
+  workspace.closeRight()
+  flushSync()
+  const said = target.querySelector('header button[aria-label$="right sidebar"]')
+  expect(said?.classList.contains('nib-said')).toBe(true)
 })
 
 /** #1030: a phone's note bar has no scratchpad on it either: it is in the drawer's foot. */
@@ -118,7 +145,7 @@ test('a phone’s bar has no switch of the scratchpad’s', async () => {
 })
 
 test('pressed with the card up it shuts the side whole, and again it brings the card back', () => {
-  bar()
+  barAndSide()
   const tabs = workspace.tabs.length
   workspace.showRight('outline')
   workspace.showRight('scratchpad', false)

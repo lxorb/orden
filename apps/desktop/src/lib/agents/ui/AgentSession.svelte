@@ -17,7 +17,9 @@
   import { dur } from '../../motion'
   import { workspace } from '../../workspace.svelte'
   import { ACTIVE_FOR } from './marks'
+  import { asking } from './asking.svelte'
   import Question from './Question.svelte'
+  import ReaderAsk from './ReaderAsk.svelte'
   import { aboutOf, hostOf } from './session'
   import Spark from './Spark.svelte'
   import { started } from './live.svelte'
@@ -36,6 +38,8 @@
   const colour = $derived(activity.colourOf(agent))
   const stopped = $derived(activity.stopped(agent))
   const questions = $derived(activity.questions.filter((one) => one.agent === agent))
+  /** What it asked the reader with `ask_reader`, still waiting (#1078). */
+  const asked = $derived(asking.of(agent))
   const tabs = $derived(Object.values(activity.seen.tabs).filter((one) => one.agent === agent))
   const calls = $derived(activity.callsOf(agent))
   const undoable = $derived(activity.undoable(agent) !== null)
@@ -110,6 +114,10 @@
 
   {#each questions as approval (approval.id)}
     <Question {activity} {approval} />
+  {/each}
+
+  {#each asked as question (question.id)}
+    <ReaderAsk {question} />
   {/each}
 
   <!-- Its own pages, by name: a press makes one a tab of the reader's, beside the one in

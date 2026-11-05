@@ -19,7 +19,7 @@ import { taskAt } from '@orden/markdown/tasks'
 import type { SpaceTag } from '@orden/editor'
 import { links } from '../link-index.svelte'
 import type { Change } from '../search/apply'
-import { lineStarts } from '../search/lines'
+import { lineStarts } from '@orden/scan/search/lines'
 import { isMarkdownPath, samePath } from '../space-paths'
 import {
   applied,

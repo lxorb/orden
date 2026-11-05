@@ -60,6 +60,12 @@ export class AppSession {
 
   constructor(private readonly tab: Tab) {}
 
+  /** Whether this device holds it now: the one device whose input, Start, Stop and
+   *  Restart its host takes (an agent's too, which never takes it over). */
+  get holds(): boolean {
+    return this.holding && this.holder === null && this.open
+  }
+
   get status(): AppStatus {
     if (this.damaged) return { is: 'damaged' }
     if (!this.file) return { is: 'reading' }

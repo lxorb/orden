@@ -98,8 +98,11 @@ pub fn reaches(grant: &Grant, name: &str) -> bool {
         name if name.starts_with("browser_") => browsing,
         // Files anywhere outside the spaces (#1078).
         "files" => grant.holds(Scope::Files),
-        // Programs on this computer (#1078).
-        "process" => grant.holds(Scope::Processes),
+        // Programs on this computer, and the system around the app, which starts one to
+        // open a file (#1078).
+        "process" | "system" => grant.holds(Scope::Processes),
+        // Requests to any site (#1078).
+        "http" => grant.holds(Scope::Network),
         name => AGENT_VERBS
             .iter()
             .find(|(verb, _)| *verb == name)
@@ -476,6 +479,19 @@ mod tests {
     /// characters, listed only to a grant holding processes, from a table at 35 789.
     /// Raised to 36 900 the next day for a terminal of the reader's, online ones too, to run
     /// a command in (#1125): `run_terminal`'s `tab`, 75 characters, from a table at 36 732.
+    /// Raised to 37 500 on 2026-11-05 for requests (#1078, step 3): one tool, `http`, 631
+    /// characters, listed only to a grant holding network, from a table at 36 807.
+    /// Raised to 38 800 the same day for the app and its window (#1078, step 4): two tools,
+    /// `system_clipboard` 238 and `ask_reader` 471 characters, each listed only to a grant
+    /// holding its scope, and the words `workspace_tabs`, `run_command` and `read_setting`
+    /// need for moving and arranging tabs, a dialog's path and every setting by its key,
+    /// from a table at 37 438. Raised to 39 600 the same day for a note's editor (#1078,
+    /// step 5): one tool, `note_editor`, 822 characters, listed only to a grant holding
+    /// editor, from a table at 38 677. Raised to 40 100 the same day for the system around
+    /// the app (#1078, step 6): one tool, `system`, 487 characters, listed only to a grant
+    /// holding processes, from a table at 39 499. Raised to 40 700 on 2026-11-05 for the
+    /// reader's applications (#1063, step 7): one tool, `application_tabs`, 563 characters,
+    /// listed only to a grant holding applications, from a table at 39 986.
     #[test]
     fn the_table_stays_small() {
         let mut sizes = BTreeMap::new();
@@ -484,7 +500,7 @@ mod tests {
         }
         let total: usize = sizes.values().sum();
         assert!(
-            total < 36_900,
+            total < 40_700,
             "the tools are {total} characters: {sizes:?}"
         );
         for (name, size) in &sizes {

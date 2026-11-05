@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { readShortcut } from '../web-tab/shortcut'
+import { readShortcut } from '@orden/scan/shortcut'
 import { safariSidebar } from './safari'
 import { BOOKMARKS, SESSION, TABS } from './safari.fixture'
 import type { FolderWords } from './sidebar-made'

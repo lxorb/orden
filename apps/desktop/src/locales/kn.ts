@@ -576,6 +576,8 @@ export const kn: Dictionary = {
     'Orden ನ ಸ್ವಂತ ಹಿನ್ನೆಲೆಯ ಬದಲು, ವಿಂಡೋಗಳ ಹಿಂದೆ ಆ್ಯಪ್ ಅನ್ನು ಮಸುಕಾಗಿ ತೋರಿಸುತ್ತದೆ.',
   'Swipe in from the edge to see your notes.':
     'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ನೋಡಲು ಅಂಚಿನಿಂದ ಒಳಗೆ ಸ್ವೈಪ್ ಮಾಡಿ.',
+  'Point at the edge of the window to see your notes.':
+    'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ನೋಡಲು ಪಾಯಿಂಟರ್ ಅನ್ನು ವಿಂಡೋದ ಅಂಚಿಗೆ ಸರಿಸಿ.',
   'Show other tabs as icons': 'ಇತರ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಐಕಾನ್‌ಗಳಾಗಿ ತೋರಿಸಿ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ಮುಂದಿನದನ್ನು ಬಿಟ್ಟು ಪ್ರತಿ ಟ್ಯಾಬ್ ತನ್ನ ಐಕಾನ್ ಮಾತ್ರ ತೋರಿಸುತ್ತದೆ; ಒಂದರ ಮೇಲೆ ಪಾಯಿಂಟರ್ ಇಟ್ಟರೆ ಹೆಸರು ಕಾಣುತ್ತದೆ.',
@@ -2153,6 +2155,15 @@ export const kn: Dictionary = {
     'ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ ಎಲ್ಲಿಯಾದರೂ ಫೈಲ್‌ಗಳನ್ನು ಓದಿ ಬದಲಿಸಿ',
   Programs: 'ಪ್ರೋಗ್ರಾಂಗಳು',
   'Run programs on this computer': 'ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ ಪ್ರೋಗ್ರಾಂಗಳನ್ನು ಚಲಾಯಿಸಿ',
+  'Web requests': 'ವೆಬ್ ವಿನಂತಿಗಳು',
+  'Send requests to any site, outside your tabs':
+    'ನಿಮ್ಮ ಟ್ಯಾಬ್‌ಗಳ ಹೊರಗೆ ಯಾವುದೇ ಸೈಟ್‌ಗೆ ವಿನಂತಿಗಳನ್ನು ಕಳುಹಿಸಿ',
+  'Read and change the clipboard': 'ಕ್ಲಿಪ್‌ಬೋರ್ಡ್ ಓದಿ ಮತ್ತು ಬದಲಿಸಿ',
+  'Ask you a question or tell you something': 'ನಿಮಗೆ ಪ್ರಶ್ನೆ ಕೇಳಿ ಅಥವಾ ಏನನ್ನಾದರೂ ತಿಳಿಸಿ',
+  'Select, mark and fold in your notes': 'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳಲ್ಲಿ ಆಯ್ಕೆ, ಗುರುತು ಮತ್ತು ಮಡಚುವಿಕೆ',
+  Applications: 'ಅಪ್ಲಿಕೇಶನ್‌ಗಳು',
+  'Start, see and use your applications':
+    'ನಿಮ್ಮ ಅಪ್ಲಿಕೇಶನ್‌ಗಳನ್ನು ಪ್ರಾರಂಭಿಸುವುದು, ನೋಡುವುದು ಮತ್ತು ಬಳಸುವುದು',
   Paying: 'ಪಾವತಿ',
   'Sending messages': 'ಸಂದೇಶಗಳನ್ನು ಕಳುಹಿಸುವುದು',
   'Publishing and sharing': 'ಪ್ರಕಟಿಸುವುದು ಮತ್ತು ಹಂಚಿಕೊಳ್ಳುವುದು',
@@ -2862,4 +2873,7 @@ export const kn: Dictionary = {
   'Writing down what you said': 'ನೀವು ಹೇಳಿದ್ದನ್ನು ಬರೆಯಲಾಗುತ್ತಿದೆ',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'ಆಡಿಯೊ ಈ ಸಾಧನದ ಧ್ವನಿ ಗುರುತಿಸುವಿಕೆಗೆ ಹೋಗುತ್ತದೆ, ಅದು ತಯಾರಕರ ಸರ್ವರ್‌ಗಳನ್ನು ಬಳಸಬಹುದು',
+  'Not on this device': 'ಈ ಸಾಧನದಲ್ಲಿ ಇಲ್ಲ',
+  'Not on this device. It opens once you are online again.':
+    'ಈ ಸಾಧನದಲ್ಲಿ ಇಲ್ಲ. ನೀವು ಮತ್ತೆ ಆನ್‌ಲೈನ್‌ಗೆ ಬಂದಾಗ ಇದು ತೆರೆಯುತ್ತದೆ.',
 }

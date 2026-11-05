@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./agent-hands": "./src/agent-hands.ts",
     "./flow": "./src/live-preview/flow.ts",
     "./menu": "./src/menu.ts",
     "./note-links": "./src/wikilink/note-links.ts",

@@ -16,8 +16,8 @@
  *  start.svelte.ts for the app's. */
 
 import type { Row } from '@orden/bases'
-import type { ScannedNote, SpaceLinks } from '../scan-note'
-import { scanNote } from '../scan-note'
+import type { ScannedNote, SpaceLinks } from '@orden/scan/note'
+import { scanNote } from '@orden/scan/note'
 import { AGENTS_NAME } from '../note-name'
 import { scanRows } from '@orden/bases/scan'
 import { insideSpace, isMarkdownPath, pathKey, samePath, within } from '../space-paths'
@@ -166,6 +166,18 @@ export class RowsStore {
         readOf({ ...scanNote(relative, content), ...scanRows(content), stamp }),
       )
     })
+  }
+
+  /** What the account says of notes a browser keeps no words of (#1126): each one's
+   *  scan, relative to the space at `root`, with the front matter and the task lines
+   *  its rows are made of. */
+  indexed(root: string, scans: readonly ScannedNote[]) {
+    const held = this.spaces.get(pathKey(root))
+    if (!held) return
+    for (const scan of scans) {
+      if (!isMarkdownPath(scan.path) || scan.tasks === undefined) continue
+      this.edit(held, pathKey(scan.path, held.root), () => this.rowsIn(held, readOf(scan)))
+    }
   }
 
   /** A file operation, heard as everything kept by path hears one. */

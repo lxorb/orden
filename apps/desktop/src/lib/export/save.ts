@@ -64,6 +64,14 @@ export async function chooseTarget(
   extension: string,
   label: string,
 ): Promise<string | null> {
+  // An agent's command names the file instead (#1078).
+  const given = (await import('../dialog-answer')).dialogAnswer()
+  if (given) {
+    const chosen = await given(true)
+    if (chosen) downloadStarted(nameOf(chosen))
+    return chosen
+  }
+
   const { save } = await import('@tauri-apps/plugin-dialog')
   const file = fileNameFor(name, extension)
   // A browser told to keep no site data starts wherever the dialog last was.

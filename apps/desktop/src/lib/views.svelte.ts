@@ -16,12 +16,17 @@ class Views {
    *  recursive and would carry it for no other reason. */
   onSelection: ((view: EditorView) => void) | null = null
 
+  /** What is told of every editor a pane puts here: the marks agents drew in its note,
+   *  drawn again in a view built fresh for it (agents/workspace/editor.ts, #1078). */
+  onPut: ((paneId: string, view: EditorView) => void) | null = null
+
   of(paneId: string): EditorView | undefined {
     return this.held.get(paneId)
   }
 
   put(paneId: string, view: EditorView) {
     this.held.set(paneId, view)
+    this.onPut?.(paneId, view)
   }
 
   /** A pane's editor taken apart. Nothing moves in a view that no longer exists, so

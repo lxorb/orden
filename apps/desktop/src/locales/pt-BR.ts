@@ -581,6 +581,8 @@ export const ptBR: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Mostra o app desfocado atrás das janelas, em vez do fundo do próprio Orden.',
   'Swipe in from the edge to see your notes.': 'Deslize a partir da borda para ver suas notas.',
+  'Point at the edge of the window to see your notes.':
+    'Leve o ponteiro até a borda da janela para ver suas notas.',
   'Show other tabs as icons': 'Mostrar as outras abas como ícones',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Cada aba, exceto a da frente, mostra só o ícone; ao apontar para uma, aparece o nome dela.',
@@ -2172,6 +2174,14 @@ export const ptBR: Dictionary = {
     'Ler e alterar arquivos em qualquer lugar deste computador',
   Programs: 'Programas',
   'Run programs on this computer': 'Executar programas neste computador',
+  'Web requests': 'Requisições web',
+  'Send requests to any site, outside your tabs':
+    'Enviar requisições a qualquer site, fora das suas abas',
+  'Read and change the clipboard': 'Ler e alterar a área de transferência',
+  'Ask you a question or tell you something': 'Fazer uma pergunta ou dizer algo a você',
+  'Select, mark and fold in your notes': 'Selecionar, marcar e recolher nas suas notas',
+  Applications: 'Aplicativos',
+  'Start, see and use your applications': 'Iniciar, ver e usar seus aplicativos',
   Paying: 'Pagar',
   'Sending messages': 'Enviar mensagens',
   'Publishing and sharing': 'Publicar e compartilhar',
@@ -2883,4 +2893,7 @@ export const ptBR: Dictionary = {
   'Writing down what you said': 'Escrevendo o que você disse',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'O áudio vai para o reconhecimento de fala deste dispositivo, que pode usar os servidores do fabricante',
+  'Not on this device': 'Não está neste dispositivo',
+  'Not on this device. It opens once you are online again.':
+    'Não está neste dispositivo. Abre assim que você estiver online de novo.',
 }

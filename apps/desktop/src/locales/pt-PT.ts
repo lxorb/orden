@@ -586,6 +586,8 @@ export const ptPT: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Mostra a app desfocada por trás das janelas, em vez do fundo do próprio Orden.',
   'Swipe in from the edge to see your notes.': 'Deslize a partir da margem para ver as suas notas.',
+  'Point at the edge of the window to see your notes.':
+    'Leve o ponteiro até à margem da janela para ver as suas notas.',
   'Show other tabs as icons': 'Mostrar os outros separadores como ícones',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Cada separador, exceto o da frente, mostra só o ícone; ao apontar para um, aparece o nome.',
@@ -2186,6 +2188,14 @@ export const ptPT: Dictionary = {
     'Ler e alterar ficheiros em qualquer local deste computador',
   Programs: 'Programas',
   'Run programs on this computer': 'Executar programas neste computador',
+  'Web requests': 'Pedidos web',
+  'Send requests to any site, outside your tabs':
+    'Enviar pedidos a qualquer site, fora dos seus separadores',
+  'Read and change the clipboard': 'Ler e alterar a área de transferência',
+  'Ask you a question or tell you something': 'Fazer-lhe uma pergunta ou dizer-lhe algo',
+  'Select, mark and fold in your notes': 'Selecionar, marcar e recolher nas suas notas',
+  Applications: 'Aplicações',
+  'Start, see and use your applications': 'Iniciar, ver e usar as suas aplicações',
   Paying: 'Pagar',
   'Sending messages': 'Enviar mensagens',
   'Publishing and sharing': 'Publicar e partilhar',
@@ -2898,4 +2908,7 @@ export const ptPT: Dictionary = {
   'Writing down what you said': 'A escrever o que disse',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'O áudio vai para o reconhecimento de voz deste dispositivo, que pode usar os servidores do fabricante',
+  'Not on this device': 'Não está neste dispositivo',
+  'Not on this device. It opens once you are online again.':
+    'Não está neste dispositivo. Abre assim que voltar a estar online.',
 }

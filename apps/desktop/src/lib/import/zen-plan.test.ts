@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { readShortcut } from '../web-tab/shortcut'
+import { readShortcut } from '@orden/scan/shortcut'
 import { readZenSession, type ZenSession } from './zen'
 import { SIDEBAR } from './zen.fixture'
 import { zenImport } from './zen-plan'

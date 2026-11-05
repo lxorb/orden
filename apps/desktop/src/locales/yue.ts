@@ -568,6 +568,7 @@ export const yue: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     '喺視窗後面顯示模糊咗嘅 app，而唔係 Orden 自己嘅背景。',
   'Swipe in from the edge to see your notes.': '由邊緣向內掃就睇到你嘅筆記。',
+  'Point at the edge of the window to see your notes.': '將指標移到視窗邊緣就睇到你嘅筆記。',
   'Show other tabs as icons': '其他分頁只顯示圖示',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '除咗前面嗰個，每個分頁淨係顯示圖示；指住其中一個就會見到佢個名。',
@@ -2073,6 +2074,13 @@ export const yue: Dictionary = {
   'Read and change files anywhere on this computer': '讀取同修改呢部電腦任何地方嘅檔案',
   Programs: '程式',
   'Run programs on this computer': '喺呢部電腦度執行程式',
+  'Web requests': '網絡請求',
+  'Send requests to any site, outside your tabs': '喺你嘅分頁以外向任何網站發送請求',
+  'Read and change the clipboard': '讀取同改變剪貼簿',
+  'Ask you a question or tell you something': '問你問題或者話你知啲嘢',
+  'Select, mark and fold in your notes': '喺你嘅筆記度選取、標記同摺埋',
+  Applications: '應用程式',
+  'Start, see and use your applications': '啟動、睇同使用你嘅應用程式',
   Paying: '俾錢',
   'Sending messages': '發訊息',
   'Publishing and sharing': '發佈同分享',
@@ -2738,4 +2746,6 @@ export const yue: Dictionary = {
   'Writing down what you said': '寫緊你講嘅嘢',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     '聲音會傳去呢部裝置嘅語音辨識，可能會用到製造商嘅伺服器',
+  'Not on this device': '唔喺呢部裝置度',
+  'Not on this device. It opens once you are online again.': '唔喺呢部裝置度。你再上線就會打開。',
 }

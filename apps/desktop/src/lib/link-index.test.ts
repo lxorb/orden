@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { shownName } from './note-name'
-import { scanNote } from './scan-note'
-import type { Hit } from './search/match'
-import type { Query } from './search/query'
+import { scanNote } from '@orden/scan/note'
+import type { Hit } from '@orden/scan/search/match'
+import type { Query } from '@orden/scan/search/query'
 
 /** The index reads a space through the platform shim. Under node there is none,
  *  so a folder of notes stands in for one - which is why the store is imported
@@ -121,7 +121,7 @@ vi.mock('./search/space', () => ({
     onFound: (found: { hits: Hit[]; loose: Hit[] }) => void,
     excluded: readonly string[] = [],
   ) => {
-    const { Matcher } = await import('./search/match')
+    const { Matcher } = await import('@orden/scan/search/match')
     const matcher = new Matcher(query)
     const hits: Hit[] = []
 
@@ -611,7 +611,7 @@ describe('a space still being read', () => {
    *  the asking and the reading. Fetched here first, so that what the app's own
    *  `import` waits for is a microtask rather than a disk this test cannot time. */
   test('does not take a plane read in the space before it', async () => {
-    await import('./scan-canvas')
+    await import('@orden/scan/canvas')
     await space({ 'Plan.md': '# Plan' })
     links.canvasRead(at('Board.canvas'), JSON.stringify({ nodes: [], edges: [] }))
 
@@ -624,7 +624,7 @@ describe('a space still being read', () => {
   /** Every card on a plane is drawn from the index, so a new list of notes is every
    *  card drawn again: a stroke saved must leave it as it was. */
   test('keeps its notes as they were when a plane is saved with only ink changed', async () => {
-    const { scanCanvas } = await import('./scan-canvas')
+    const { scanCanvas } = await import('@orden/scan/canvas')
     await space({ 'Plan.md': '# Plan' })
     const plane = (strokes: number) =>
       JSON.stringify({
@@ -642,7 +642,7 @@ describe('a space still being read', () => {
     const before = links.index(null).notes
 
     links.noteSaved(at('Board.canvas'), plane(2))
-    await import('./scan-canvas')
+    await import('@orden/scan/canvas')
     await Promise.resolve()
 
     expect(scanCanvas('Board.canvas', plane(2)).icon).toBe('rocket')
@@ -818,7 +818,7 @@ describe('renaming a note rewrites the links to it', () => {
       ],
       edges: [],
     })
-    await import('./scan-canvas')
+    await import('@orden/scan/canvas')
     await space({ 'Plan.md': '# Plan' }, ['Board.canvas'])
     notes['Board.canvas'] = board
     links.canvasRead(at('Board.canvas'), board)
@@ -1420,7 +1420,7 @@ describe('a folder renamed', () => {
       ],
       edges: [],
     })
-    await import('./scan-canvas')
+    await import('@orden/scan/canvas')
     await space(
       {
         'Projects/Plan.md': '# Plan',

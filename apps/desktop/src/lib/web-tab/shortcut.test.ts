@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { withOwn } from './own-file'
-import { apartOf, readShortcut, readWebloc, writeShortcut } from './shortcut'
+import { apartOf, readShortcut, readWebloc, writeShortcut } from '@orden/scan/shortcut'
 
 const WHEN = new Date('2026-09-12T08:30:00.000Z')
 

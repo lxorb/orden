@@ -16,7 +16,7 @@
  *  9.6). */
 
 import { searchSpace } from '../../search/space'
-import { parseQuery } from '../../search/query'
+import { parseQuery } from '@orden/scan/search/query'
 import { scratchpad } from '../../scratchpad/pad'
 import { insideSpace, relativeTo, within, withinSpace } from '../../space-paths'
 import { pages } from '../../web-tab/pages.svelte'

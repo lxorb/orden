@@ -10,6 +10,13 @@
  *  this person (403, 404), which the step that asked decides about. */
 
 import { frame, unframe } from '@orden/sync-core/wire'
+import {
+  indexAnswerOf,
+  type IndexItem,
+  searchAnswerOf,
+  type SearchAnswer,
+  type SearchRequest,
+} from '@orden/scan/wire'
 import type { Blobs, Replaced } from './files'
 import type { Account, Route } from './world'
 
@@ -176,6 +183,57 @@ export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 're
       if ('moved' in said) return said as Extract<Replaced, { moved: unknown }>
       if ('ok' in said && 'seq' in said) return { ok: true, seq: Number(said.seq) }
       return null
+    },
+  }
+}
+
+/** What a browser that keeps only some of the words asks the account about the rest
+ *  (#1126; @orden/scan/wire): each note's scan, and a page of a search. `missing` where
+ *  the account has no such route - a Worker from before them, which keeps the browser
+ *  whole - and null where it did not answer, or refused this one request. */
+export interface Reading {
+  index(space: string, ids: readonly string[]): Promise<IndexItem[] | 'missing' | null>
+  search(space: string, request: SearchRequest): Promise<SearchAnswer | 'missing' | null>
+}
+
+export function readingOver(reaching: Reaching): Reading {
+  const ask = async (space: string, route: 'index' | 'search', body: object) => {
+    const token = reaching.token()
+    if (!token) return null
+    let response: Response
+    try {
+      response = await reaching.fetch(
+        new Request(`${reaching.base}/v2/spaces/${encodeURIComponent(space)}/${route}`, {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${token}`,
+            'content-type': 'application/json',
+            'x-nib-device': reaching.device(),
+          },
+          body: JSON.stringify(body),
+        }),
+      )
+    } catch {
+      return null
+    }
+    const said: unknown = await response.json().catch(() => undefined)
+    // A route the account does not have is the router's own 404, with no sentence of
+    // ours in it; a space it does not have says so.
+    if (response.status === 404) {
+      const sentence = typeof said === 'object' && said !== null && 'error' in said
+      return sentence ? null : 'missing'
+    }
+    return response.ok ? said : null
+  }
+
+  return {
+    async index(space, ids) {
+      const said = await ask(space, 'index', { ids })
+      return said === null || said === 'missing' ? said : indexAnswerOf(said)
+    },
+    async search(space, request) {
+      const said = await ask(space, 'search', request)
+      return said === null || said === 'missing' ? said : searchAnswerOf(said)
     },
   }
 }

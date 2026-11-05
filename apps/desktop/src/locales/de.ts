@@ -576,6 +576,8 @@ export const de: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Zeigt die App weichgezeichnet hinter den Fenstern statt Ordens eigenem Hintergrund.',
   'Swipe in from the edge to see your notes.': 'Wische vom Rand herein, um deine Notizen zu sehen.',
+  'Point at the edge of the window to see your notes.':
+    'Fahre mit dem Zeiger an den Fensterrand, um deine Notizen zu sehen.',
   'Show other tabs as icons': 'Andere Tabs als Symbole zeigen',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Jeder Tab außer dem vorderen zeigt nur sein Symbol; zeigst du auf einen, erscheint sein Name.',
@@ -2174,6 +2176,14 @@ export const de: Dictionary = {
     'Dateien überall auf diesem Computer lesen und ändern',
   Programs: 'Programme',
   'Run programs on this computer': 'Programme auf diesem Computer ausführen',
+  'Web requests': 'Web-Anfragen',
+  'Send requests to any site, outside your tabs':
+    'Anfragen an beliebige Websites senden, außerhalb deiner Tabs',
+  'Read and change the clipboard': 'Die Zwischenablage lesen und ändern',
+  'Ask you a question or tell you something': 'Dir eine Frage stellen oder dir etwas mitteilen',
+  'Select, mark and fold in your notes': 'In deinen Notizen auswählen, markieren und falten',
+  Applications: 'Anwendungen',
+  'Start, see and use your applications': 'Deine Anwendungen starten, sehen und bedienen',
   Paying: 'Bezahlen',
   'Sending messages': 'Nachrichten senden',
   'Publishing and sharing': 'Veröffentlichen und Teilen',
@@ -2890,4 +2900,7 @@ export const de: Dictionary = {
   'Writing down what you said': 'Schreibe auf, was du gesagt hast',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Audio geht an die Spracherkennung dieses Geräts, die die Server ihres Herstellers nutzen kann',
+  'Not on this device': 'Nicht auf diesem Gerät',
+  'Not on this device. It opens once you are online again.':
+    'Nicht auf diesem Gerät. Öffnet sich, sobald du wieder online bist.',
 }

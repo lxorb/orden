@@ -216,6 +216,7 @@ function crate(command: string, args: Record<string, unknown> = {}): Promise<unk
       folders.add(path)
       return Promise.resolve()
     case 'agents_ask':
+    case 'agents_dialog_path':
       return Promise.resolve(answer)
     case 'agents_capture':
       return Promise.resolve(captured)
@@ -311,7 +312,7 @@ vi.mock('../../link-index.svelte', () => {
   return { links, spaceLinks: () => new Links() }
 })
 
-vi.mock('../../search/query', () => ({ parseQuery: (text: string) => ({ text }) }))
+vi.mock('@orden/scan/search/query', () => ({ parseQuery: (text: string) => ({ text }) }))
 
 /** Which roots were searched. */
 const searched: string[] = []
@@ -385,11 +386,65 @@ vi.mock('../../commands', () => ({
     { id: 'new-unique', label: 'New note', run: () => ran.push('new-unique') },
     { id: 'new-canvas', label: 'New canvas', run: () => ran.push('new-canvas') },
     { id: 'new-database', label: 'New base', run: () => ran.push('new-database') },
-    { id: 'export-pdf', label: 'Export', run: () => ran.push('export') },
     { id: 'copy-uri', label: 'Copy link', run: () => ran.push('copy') },
+    {
+      id: 'export-pdf',
+      label: 'Export as PDF',
+      run: () =>
+        void import('../../dialog-answer').then(async ({ dialogAnswer }) => {
+          ran.push(`export-pdf:${(await dialogAnswer()?.(true)) ?? 'cancelled'}`)
+        }),
+    },
   ],
 }))
 const ran: string[] = []
+
+/** Settings' rows with a name, as declarations.ts gathers them (#1078). */
+const rows = {
+  focus: false,
+  accent: 'violet',
+  languages: new Set(['en']),
+}
+vi.mock('../../settings/declarations', () => ({
+  declarations: () =>
+    Promise.resolve([
+      {
+        kind: 'switch',
+        key: 'editor.focusMode',
+        label: 'Focus mode',
+        hint: 'Dims every paragraph but the one being written.',
+        get: () => rows.focus,
+        set: (on: boolean) => (rows.focus = on),
+      },
+      {
+        kind: 'swatches',
+        key: 'appearance.accent',
+        label: 'Accent',
+        hint: 'The colour of buttons, links and the selection.',
+        options: [{ value: 'violet' }, { value: 'blue' }],
+        get: () => rows.accent,
+        set: (value: string) => (rows.accent = value),
+      },
+      {
+        kind: 'switch',
+        key: 'appearance.frame',
+        label: 'Frame',
+        hint: 'The window frame.',
+        declared: '/etc/orden/settings.json',
+        get: (): boolean => true,
+        set: () => undefined,
+      },
+      ...['en', 'de'].map((member) => ({
+        kind: 'switch',
+        key: 'spelling.languages',
+        member,
+        label: member,
+        hint: 'The languages spelling is checked in.',
+        get: () => rows.languages.has(member),
+        set: (on: boolean) => (on ? rows.languages.add(member) : rows.languages.delete(member)),
+      })),
+    ]),
+}))
 
 /** The page a lent tab has, as the pages store keeps it. */
 const lentPage: Record<string, unknown> = { url: null, space: null }
@@ -899,6 +954,60 @@ describe('what asks the reader first', () => {
       { path: 'Soup.md', space: 'home' },
       'old words',
     )
+  })
+
+  test('every setting with a row is reached by its name, as the settings file names it', async () => {
+    expect(await call('read_setting', { key: 'appearance.accent' })).toMatchObject({
+      result: { key: 'appearance.accent', value: 'violet', choices: ['violet', 'blue'] },
+    })
+    expect(await call('read_setting', { key: 'appearance' })).toMatchObject({
+      result: {
+        pane: 'appearance',
+        settings: [
+          { key: 'appearance.accent', value: 'violet' },
+          { key: 'appearance.frame', value: true },
+        ],
+      },
+    })
+    expect(
+      await call('write_setting', { key: 'appearance.accent', value: 'orange' }),
+    ).toMatchObject({ code: 'bad_arguments' })
+    expect(await call('write_setting', { key: 'appearance.frame', value: false })).toMatchObject({
+      code: 'read_only',
+    })
+
+    answer = { status: 'ok', result: {} }
+    expect(await call('write_setting', { key: 'editor.focusMode', value: true })).toMatchObject({
+      result: { key: 'editor.focusMode', value: true, changed: true },
+    })
+    expect(rows.focus).toBe(true)
+    expect(asked.find((one) => one.command === 'agents_ask')?.args).toMatchObject({
+      category: 'settings',
+    })
+    await call('write_setting', { key: 'spelling.languages', value: ['de'] })
+    expect([...rows.languages]).toEqual(['de'])
+    expect(await call('read_setting', { key: 'spelling.languages' })).toMatchObject({
+      result: { value: ['de'] },
+    })
+  })
+
+  test('a file dialog a command opens is answered by the path, as files would', async () => {
+    answer = { status: 'ok', result: { path: '/home/me/out.pdf' } }
+    expect(
+      await call('run_command', { id: 'export-pdf', path: '~/out.pdf' }, agent()),
+    ).toMatchObject({ result: { id: 'export-pdf', path: '~/out.pdf' } })
+    expect(asked.find((one) => one.command === 'agents_dialog_path')?.args).toMatchObject({
+      path: '~/out.pdf',
+      write: true,
+    })
+    await vi.waitFor(() => expect(ran).toContain('export-pdf:/home/me/out.pdf'))
+
+    // A question or a refusal the crate raises is the answer, and the dialog is put away.
+    answer = { status: 'needs_approval', approval: 'a9', summary: 'Write out.pdf' }
+    expect(
+      await call('run_command', { id: 'export-pdf', path: '~/out.pdf' }, agent()),
+    ).toMatchObject({ status: 'needs_approval' })
+    await vi.waitFor(() => expect(ran).toContain('export-pdf:cancelled'))
   })
 
   test('a setting asks, and a value it cannot be is refused before anybody is asked', async () => {

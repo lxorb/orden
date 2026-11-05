@@ -70,6 +70,10 @@ export interface FeedPage {
   /** Whether the account keeps positions (`place`, and `pos` on the rest; #1068). An
    *  account from before them says nothing, and is sent neither. */
   order?: true
+  /** Whether the account answers each note's scan and a search over the notes
+   *  (`POST /v2/spaces/:space/index` and `/search`; #1126), so a browser may keep only
+   *  the words it uses. An account from before them says nothing, and is kept whole. */
+  index?: true
 }
 
 /** The most items one page of the feed carries. */
@@ -615,6 +619,7 @@ export function feedPageOf(value: unknown): FeedPage | null {
   if (!items) return null
   const page: FeedPage = { items, cursor: value.cursor, more: value.more }
   if (value.order === true) page.order = true
+  if (value.index === true) page.index = true
   return page
 }
 

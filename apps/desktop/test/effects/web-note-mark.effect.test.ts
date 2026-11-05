@@ -37,7 +37,7 @@ vi.mock('../../src/lib/own-window', () => ({
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { pages } = await import('../../src/lib/web-tab/pages.svelte')
 const { NoteDoc, Tab } = await import('../../src/lib/workspace/documents.svelte')
-const { writeShortcut } = await import('../../src/lib/web-tab/shortcut')
+const { writeShortcut } = await import('@orden/scan/shortcut')
 const FileMark = (await import('../../src/lib/FileMark.svelte')).default
 
 /** One-pixel PNGs told apart by a byte: what the file wrote, the badge on and off. */

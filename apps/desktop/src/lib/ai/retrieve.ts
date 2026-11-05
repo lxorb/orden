@@ -25,8 +25,8 @@
  *  Pure except for `retrieve`, which is the one function here that searches. */
 
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import type { Hit } from '../search/match'
-import type { Query } from '../search/query'
+import type { Hit } from '@orden/scan/search/match'
+import type { Query } from '@orden/scan/search/query'
 import { searchSpace } from '../search/space'
 import { waited } from '../timing'
 import type { Message } from './providers'

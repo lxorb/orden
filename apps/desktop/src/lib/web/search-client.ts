@@ -11,10 +11,10 @@
  *  below sets going: see space-cache.ts for what is held and warm.svelte.ts for
  *  who asks. */
 
-import type { Found } from './search'
+import type { Found } from '@orden/scan/search/walk'
 import { type Answer, type Ask, isAnswer, type Warm } from './search-protocol'
 import type { Warmth } from '../search/warmth'
-import type { Query } from '../search/query'
+import type { Query } from '@orden/scan/search/query'
 
 let worker: Worker | null = null
 

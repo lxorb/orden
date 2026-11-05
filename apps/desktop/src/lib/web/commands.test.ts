@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { AssetRow, FileRow, SnapshotRow } from './store'
 import type { Opener } from '../openers'
+import type { SpaceLinks } from '@orden/scan/note'
 
 /** The browser's stand-in for the file commands, driven against a disk that
  *  lives in a Map rather than in IndexedDB. Node has no IndexedDB, and the
@@ -167,6 +168,8 @@ const { stamped, stampOf } = await import('../themes/stamp')
 const { forgetSeedStore, rememberSeedIn, seedSpaceRoot } = await import('../seeded')
 const { WELCOME, WELCOME_PATH } = await import('../welcome')
 const { openerFor } = await import('../openers')
+const { keptAway, NOT_HERE } = await import('./away.svelte')
+const { indexed } = await import('@orden/scan/indexed')
 
 const write = (path: string, content = '') => webInvoke('write_note', { path, content })
 const read = (path: string) => webInvoke<string>('read_note', { path })
@@ -183,6 +186,7 @@ beforeEach(() => {
   disk.planes.clear()
   localStorage.clear()
   forgetSeedStore()
+  keptAway.clear()
 })
 
 describe('a note too large to be one', () => {
@@ -1366,5 +1370,126 @@ describe('reading a whole space for the link index', () => {
     })
 
     expect(found).toEqual({ notes: [], files: [] })
+  })
+})
+
+/** A note this browser keeps no words of (#1126; away.svelte.ts): listed, found and
+ *  moved as any other, its words fetched when something reads it, and never counted by
+ *  the engine's own reads, which say `raw`. */
+describe('a note kept away', () => {
+  /** Plan.md kept away, fetched by writing its row as the engine does, or not at all
+   *  while `offline`. */
+  function away(offline = { yes: false }) {
+    const asked: string[] = []
+    keptAway.keep([{ id: 'n1', path: '/Notes/Plan.md', size: 12, modified: 5 }], (path) => {
+      asked.push(path)
+      if (offline.yes) return Promise.resolve(false)
+      disk.files.set(path, { path, content: 'Ship Monday', created: 5, modified: 5 })
+      return Promise.resolve(true)
+    })
+    return asked
+  }
+
+  test('is listed with its cloud, and counts as there', async () => {
+    await write('/Notes/Idea.md', 'idea')
+    away()
+    const tree = await webInvoke<{ children: { path: string; evicted?: boolean }[] }>('read_tree', {
+      root: '/Notes',
+    })
+    expect(tree.children.map((one) => [one.path, one.evicted === true])).toEqual([
+      ['/Notes/Idea.md', false],
+      ['/Notes/Plan.md', true],
+    ])
+    expect(await webInvoke('path_exists', { path: '/Notes/Plan.md' })).toBe(true)
+    expect(await webInvoke('path_exists', { path: '/Notes' })).toBe(true)
+    expect(await webInvoke('list_spaces')).toEqual([{ name: 'Notes', path: '/Notes' }])
+  })
+
+  test('is not there for the engine, which reads the rows as they are', async () => {
+    const asked = away()
+    const tree = await webInvoke<{ children: unknown[] }>('read_tree', {
+      root: '/Notes',
+      raw: true,
+    })
+    expect(tree.children).toEqual([])
+    expect(await webInvoke('path_exists', { path: '/Notes/Plan.md', raw: true })).toBe(false)
+    await expect(webInvoke('read_note', { path: '/Notes/Plan.md', raw: true })).rejects.toThrow()
+    expect(asked).toEqual([])
+  })
+
+  test('is fetched when it is read, and read like any other from then on', async () => {
+    const asked = away()
+    expect(await read('/Notes/Plan.md')).toBe('Ship Monday')
+    expect(await read('/Notes/Plan.md')).toBe('Ship Monday')
+    expect(asked).toEqual(['/Notes/Plan.md'])
+    expect(keptAway.at('/Notes/Plan.md')).toBeNull()
+  })
+
+  test('offline, says it is not here rather than that it is not anywhere', async () => {
+    away({ yes: true })
+    await expect(read('/Notes/Plan.md')).rejects.toThrow(NOT_HERE)
+    expect(keptAway.offline).toBe(true)
+    expect(keptAway.at('/Notes/Plan.md')).not.toBeNull()
+  })
+
+  test('is renamed with no row to move, and no name is given out over it', async () => {
+    const asked = away()
+    await webInvoke('rename_note', { from: '/Notes/Plan.md', to: '/Notes/Later.md' })
+    expect(asked).toEqual([])
+    await write('/Notes/Other.md', 'other')
+    await expect(
+      webInvoke('rename_note', { from: '/Notes/Other.md', to: '/Notes/Plan.md' }),
+    ).rejects.toThrow('something already lives there')
+  })
+
+  test('is fetched before it is copied, and a copy offline is refused', async () => {
+    const offline = { yes: true }
+    away(offline)
+    await expect(
+      webInvoke('copy_path', { from: '/Notes/Plan.md', to: '/Notes/Copy.md' }),
+    ).rejects.toThrow(NOT_HERE)
+    expect(disk.files.has('/Notes/Copy.md')).toBe(false)
+
+    offline.yes = false
+    await webInvoke('copy_path', { from: '/Notes', to: '/Copied' })
+    expect(disk.files.get('/Copied/Plan.md')?.content).toBe('Ship Monday')
+  })
+
+  test('is in the link index as the account read it, and by its name before that', async () => {
+    await write('/Notes/Idea.md', 'see [[Plan]]')
+    keptAway.keep(
+      [
+        { id: 'n1', path: '/Notes/Work/Plan.md', size: 12, modified: 5 },
+        { id: 'n2', path: '/Notes/Later.md', size: 3, modified: 5 },
+      ],
+      () => Promise.resolve(false),
+    )
+    const stamp = { size: 12, mtime: 5, ctime: 5 }
+    // Read by the account at its old name, before it moved into Work.
+    const said = indexed('Plan.md', '# Plan\n\n- [ ] ship #work\n', stamp)
+    if (said) keptAway.answeredBy(new Map([['n1', said]]), () => Promise.resolve())
+
+    const found = await webInvoke<SpaceLinks>('scan_links', { root: '/Notes' })
+    const plan = found.notes.find((one) => one.path === 'Work/Plan.md')
+    expect(plan).toMatchObject({ name: 'Plan', headings: ['Plan'], tags: ['work'] })
+    expect(plan?.tasks?.map((one) => one.text)).toEqual(['ship #work'])
+    expect(found.notes.find((one) => one.path === 'Later.md')).toMatchObject({
+      name: 'Later',
+      links: [],
+      bare: false,
+    })
+    expect(found.notes.map((one) => one.path).sort()).toEqual([
+      'Idea.md',
+      'Later.md',
+      'Work/Plan.md',
+    ])
+    expect(await webInvoke('space_tags', { root: '/Notes' })).toEqual([{ tag: 'work', count: 1 }])
+  })
+
+  test('let go of, its row goes with nothing kept', async () => {
+    await write('/Notes/Plan.md', 'Ship Monday')
+    await webInvoke('let_go_note', { path: '/Notes/Plan.md' })
+    expect(disk.files.has('/Notes/Plan.md')).toBe(false)
+    expect(disk.snapshots).toEqual([])
   })
 })

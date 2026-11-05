@@ -332,6 +332,13 @@ describe('the feed', () => {
     }
     expect(feedPageOf(page)).toEqual(page)
     expect(feedPageOf({ ...page, more: 'no' })).toBeNull()
+    // What the account says it serves, and nothing for an account that says nothing.
+    expect(feedPageOf({ ...page, order: true, index: true })).toEqual({
+      ...page,
+      order: true,
+      index: true,
+    })
+    expect(feedPageOf({ ...page, index: 'yes' })).toEqual(page)
   })
 })
 

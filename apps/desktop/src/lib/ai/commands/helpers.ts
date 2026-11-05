@@ -13,7 +13,7 @@
 
 import { TAG_NAME } from '@orden/markdown/tags'
 import { t } from '../../i18n.svelte'
-import type { Query } from '../../search/query'
+import type { Query } from '@orden/scan/search/query'
 import { within } from '../../space-paths'
 import { workspace } from '../../workspace.svelte'
 import { branchThread, newThread } from '../chat/threads'

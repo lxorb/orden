@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { writeShortcut } from '../web-tab/shortcut'
+import { writeShortcut } from '@orden/scan/shortcut'
 import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { MINE } from './docs'

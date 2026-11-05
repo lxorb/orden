@@ -569,6 +569,7 @@ export const am: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'ከOrden የራሱ ዳራ ይልቅ መተግበሪያውን ከመስኮቶቹ በስተጀርባ ደብዝዞ ያሳያል።',
   'Swipe in from the edge to see your notes.': 'ማስታወሻዎችዎን ለማየት ከጠርዙ ወደ ውስጥ ያንሸራትቱ።',
+  'Point at the edge of the window to see your notes.': 'ማስታወሻዎችዎን ለማየት ጠቋሚውን ወደ መስኮቱ ጠርዝ ይውሰዱ።',
   'Show other tabs as icons': 'ሌሎች ትሮችን እንደ አዶ አሳይ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ከፊት ካለው በስተቀር እያንዳንዱ ትር አዶውን ብቻ ያሳያል፤ ወደ አንዱ ሲጠቁሙ ስሙን ያሳያል።',
@@ -2104,6 +2105,13 @@ export const am: Dictionary = {
   'Read and change files anywhere on this computer': 'በዚህ ኮምፒውተር ላይ የትም ያሉ ፋይሎችን ማንበብና መቀየር',
   Programs: 'ፕሮግራሞች',
   'Run programs on this computer': 'በዚህ ኮምፒውተር ላይ ፕሮግራሞችን ማስኬድ',
+  'Web requests': 'የድር ጥያቄዎች',
+  'Send requests to any site, outside your tabs': 'ከትሮችዎ ውጭ ወደ ማንኛውም ጣቢያ ጥያቄዎችን መላክ',
+  'Read and change the clipboard': 'ቅንጥብ ሰሌዳን ማንበብና መቀየር',
+  'Ask you a question or tell you something': 'ጥያቄ መጠየቅ ወይም አንድ ነገር መንገር',
+  'Select, mark and fold in your notes': 'በማስታወሻዎችዎ ውስጥ መምረጥ፣ ምልክት ማድረግና መሰብሰብ',
+  Applications: 'መተግበሪያዎች',
+  'Start, see and use your applications': 'መተግበሪያዎችዎን ማስጀመር፣ ማየት እና መጠቀም',
   Paying: 'መክፈል',
   'Sending messages': 'መልዕክቶችን መላክ',
   'Publishing and sharing': 'ማተም እና ማጋራት',
@@ -2777,4 +2785,7 @@ export const am: Dictionary = {
   'Writing down what you said': 'የተናገሩትን በመጻፍ ላይ',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'ድምጹ ወደዚህ መሣሪያ የንግግር ማወቂያ ይሄዳል፣ ይህም የአምራቹን አገልጋዮች ሊጠቀም ይችላል',
+  'Not on this device': 'በዚህ መሣሪያ ላይ የለም',
+  'Not on this device. It opens once you are online again.':
+    'በዚህ መሣሪያ ላይ የለም። እንደገና መስመር ላይ ሲሆኑ ይከፈታል።',
 }

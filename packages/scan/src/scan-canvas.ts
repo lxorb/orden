@@ -9,7 +9,7 @@
  *  The same shape `scanNote` answers, and the same shape the desktop's `scan_links`
  *  returns: one index, whatever kind of file went into it. */
 
-import { readCanvas } from './canvas/format'
+import { readCanvas } from '@orden/markdown/canvas'
 import { skim } from './json-skim'
 import type { ScannedNote } from './scan-note'
 

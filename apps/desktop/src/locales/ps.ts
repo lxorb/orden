@@ -571,6 +571,8 @@ export const ps: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'د Orden د خپل شالید پر ځای، اپ د کړکیو شاته تت ښيي.',
   'Swipe in from the edge to see your notes.': 'خپلې یادښتونه د لیدو لپاره له څنډې دننه سوایپ کړئ.',
+  'Point at the edge of the window to see your notes.':
+    'خپلې یادښتونه د لیدو لپاره نښه د کړکۍ څنډې ته یوسئ.',
   'Show other tabs as icons': 'نور ټبونه د نښو په توګه ښکاره کړئ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'له مخکني پرته هر ټب یوازې خپله نښه ښيي؛ کله چې یو ته اشاره وکړئ، نوم یې ښکاره کېږي.',
@@ -2134,6 +2136,13 @@ export const ps: Dictionary = {
     'په دې کمپیوټر کې هر چېرته فایلونه لوستل او بدلول',
   Programs: 'پروګرامونه',
   'Run programs on this computer': 'په دې کمپیوټر کې پروګرامونه چلول',
+  'Web requests': 'د وېب غوښتنې',
+  'Send requests to any site, outside your tabs': 'ستاسو له ټبونو بهر هر سایټ ته غوښتنې لېږل',
+  'Read and change the clipboard': 'کلیپ بورډ لوستل او بدلول',
+  'Ask you a question or tell you something': 'تاسو ته پوښتنه کول یا څه ویل',
+  'Select, mark and fold in your notes': 'په خپلو یادښتونو کې ټاکل، نښه کول او قاتول',
+  Applications: 'اپلیکیشنونه',
+  'Start, see and use your applications': 'ستاسو اپلیکیشنونه پیلول، لیدل او کارول',
   Paying: 'تادیه',
   'Sending messages': 'پیغامونه لېږل',
   'Publishing and sharing': 'خپرول او شریکول',
@@ -2831,4 +2840,7 @@ export const ps: Dictionary = {
   'Writing down what you said': 'هغه څه لیکل کېږي چې تاسو وویل',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'غږ د دې وسیلې د خبرو پېژندنې ته ځي، چې کېدای شي د جوړوونکي سرورونه وکاروي',
+  'Not on this device': 'په دې وسیله کې نشته',
+  'Not on this device. It opens once you are online again.':
+    'په دې وسیله کې نشته. کله چې بیا آنلاین شئ، خلاصېږي.',
 }

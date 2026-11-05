@@ -172,6 +172,15 @@ vi.mock('../native', () => ({
   },
 }))
 
+/** The system's folder dialog: what opened it, which an agent's command never does. */
+const dialogs = vi.hoisted(() => ({ opened: 0 }))
+vi.mock('@tauri-apps/plugin-dialog', () => ({
+  open: () => {
+    dialogs.opened += 1
+    return Promise.resolve('/shown')
+  },
+}))
+
 // The window's storage, where this device says it keeps new spaces itself.
 const said = new Map<string, string>()
 vi.stubGlobal('localStorage', {
@@ -461,6 +470,50 @@ describe('a space written out as Markdown and folders', () => {
     await exportSpaceTo('/spaces/Disk', 'Disk', '/picked')
     expect(disk.files.get('/picked/Disk/Work/Plan.md')).toEqual(new TextEncoder().encode('ship it'))
     expect(disk.files.get('/picked/Disk/.Inbox.md')).toEqual(new TextEncoder().encode('- [ ] eggs'))
+  })
+})
+
+describe("a space written out for an agent's command (#1078)", () => {
+  test('goes into the folder its path names, and the dialog is never shown', async () => {
+    const { answerNextDialog } = await import('../dialog-answer')
+    const { exportSpace } = await import('./export')
+    disk.dirs.add('/spaces/Disk')
+    disk.files.set('/spaces/Disk/Plan.md', 'ship it')
+    const asked: boolean[] = []
+    answerNextDialog((write) => {
+      asked.push(write)
+      return Promise.resolve('/agent')
+    })
+
+    const opened = dialogs.opened
+    expect(await exportSpace('/spaces/Disk', 'Disk')).toBe('/agent/Disk')
+    expect(asked).toEqual([true])
+    expect(dialogs.opened).toBe(opened)
+    expect(disk.files.get('/agent/Disk/Plan.md')).toEqual(new TextEncoder().encode('ship it'))
+  })
+
+  test('writes nothing where the crate refused the path', async () => {
+    const { answerNextDialog } = await import('../dialog-answer')
+    const { exportSpace } = await import('./export')
+    disk.dirs.add('/spaces/Disk')
+    disk.files.set('/spaces/Disk/Plan.md', 'ship it')
+    answerNextDialog(() => Promise.resolve(null))
+    const files = disk.files.size
+    const opened = dialogs.opened
+
+    expect(await exportSpace('/spaces/Disk', 'Disk')).toBeNull()
+    expect(disk.files.size).toBe(files)
+    expect(dialogs.opened).toBe(opened)
+  })
+
+  test('shows the reader the dialog when no agent answered it', async () => {
+    const { exportSpace } = await import('./export')
+    disk.dirs.add('/spaces/Disk')
+    disk.files.set('/spaces/Disk/Plan.md', 'ship it')
+    const opened = dialogs.opened
+
+    expect(await exportSpace('/spaces/Disk', 'Disk')).toBe('/shown/Disk')
+    expect(dialogs.opened).toBe(opened + 1)
   })
 })
 

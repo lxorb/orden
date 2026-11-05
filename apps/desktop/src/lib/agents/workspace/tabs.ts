@@ -26,7 +26,7 @@ import { hostOf } from '../../web-tab/web-data'
 import { agentMarks } from '../../agent-marks.svelte'
 import { lend, unlend } from '../../web-tab/lending'
 import { pages } from '../../web-tab/pages.svelte'
-import { apartOf } from '../../web-tab/shortcut'
+import { apartOf } from '@orden/scan/shortcut'
 import { type Tab, workspace } from '../../workspace.svelte'
 import { fileNamed, isDraft, isUnsaved } from '../../workspace/drafts'
 import { TAB_KINDS } from '../../workspace/tab-kinds'
@@ -217,23 +217,28 @@ function sourceOfTab(tab: Tab): string | null {
 
 /** The site rule that keeps an address out of the reader's tabs for this agent, as the
  *  crate reads one (`site_allowed` in policy.rs): the longest site that covers the host,
- *  denied anywhere or kept to the agent's own store. */
+ *  denied anywhere or kept to the agent's own store, by every spelling of either - a
+ *  capital, the dot a fully qualified name ends on, letters typed or as an address writes
+ *  them (#1078). */
 function keptSite(call: Call, url: string): string | null {
   const host = hostOf(url)?.replace(/\.+$/, '')
   const sites = call.caller.agent?.sites ?? {}
   if (!host) return null
 
   const covering = Object.keys(sites)
-    .map((site) => ({
-      site,
-      bare: site.trim().replace(/^\*\./, '').replace(/\.+$/, '').toLowerCase(),
-    }))
-    .filter(({ bare }) => host === bare || host.endsWith(`.${bare}`))
-    .sort((one, other) => other.site.length - one.site.length)[0]
+    .map((site) => ({ site, bare: siteNamed(site) }))
+    .filter(({ bare }) => bare !== '' && (host === bare || host.endsWith(`.${bare}`)))
+    .sort((one, other) => other.bare.length - one.bare.length)[0]
   if (!covering) return null
 
   const rule = sites[covering.site]
   return rule === 'deny' || rule === 'agent-store' ? covering.bare : null
+}
+
+/** A site as an address names it, as `named` in policy.rs does. */
+function siteNamed(site: string): string {
+  const bare = site.trim().replace(/^\*\./, '').replace(/\.+$/, '')
+  return (hostOf(`http://${bare}/`) ?? bare).replace(/\.+$/, '').toLowerCase()
 }
 
 /** An address an agent may open in one of the reader's tabs. */
@@ -472,10 +477,30 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
       return answered(tab)
     }
 
+    case 'move': {
+      const tab = tabNamed(call)
+      const pane = view.paneFor(tab, maybe(call, 'pane'), maybe(call, 'toward'))
+      if (pane === null) {
+        throw new Refused(
+          'bad_arguments',
+          'say pane, a pane id from list, or toward: left, right, up or down',
+        )
+      }
+      const at = 'at' in call.args ? Number(call.args.at) : null
+      view.moveTabTo(call, tab, pane, at !== null && Number.isInteger(at) && at >= 0 ? at : null)
+      return done(workspace.tabs.map(tabOf))
+    }
+
+    case 'arrange': {
+      const named = maybe(call, 'tab') === null ? null : tabNamed(call)
+      view.arrangePanes(call, need(call, 'layout'), named)
+      return done(workspace.tabs.map(tabOf))
+    }
+
     default:
       throw new Refused(
         'bad_arguments',
-        'op is one of list, open, new, rename, save, close, split, focus',
+        'op is one of list, open, new, rename, save, close, split, focus, move, arrange',
       )
   }
 }

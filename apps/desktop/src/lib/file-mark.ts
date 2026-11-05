@@ -139,7 +139,7 @@ const Pdf: IconNode = typeMark([
  *  Internet Shortcut format that Explorer and every browser already write. It used
  *  to be the one mark a name could not earn - a website was a note with `url:` in
  *  its front matter, and the row had to ask the link index what the file said - and
- *  now it is a name like every other kind here. See web-tab/shortcut.ts. */
+ *  now it is a name like every other kind here. See @orden/scan/shortcut. */
 export type FileMark =
   | 'note'
   | 'folder'

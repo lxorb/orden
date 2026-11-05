@@ -577,6 +577,8 @@ export const fil: Dictionary = {
     'Ipinapakita ang app na naka-blur sa likod ng mga window, sa halip na ang sariling background ng Orden.',
   'Swipe in from the edge to see your notes.':
     'Mag-swipe papasok mula sa gilid para makita ang iyong mga tala.',
+  'Point at the edge of the window to see your notes.':
+    'Itutok ang pointer sa gilid ng window para makita ang iyong mga tala.',
   'Show other tabs as icons': 'Ipakita ang ibang tab bilang icon',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Bawat tab maliban sa nasa harap ay icon lang ang ipinapakita; kapag tinuro ang isa, lalabas ang pangalan nito.',
@@ -2176,6 +2178,14 @@ export const fil: Dictionary = {
     'Basahin at baguhin ang mga file saanman sa computer na ito',
   Programs: 'Mga program',
   'Run programs on this computer': 'Magpatakbo ng mga program sa computer na ito',
+  'Web requests': 'Mga web request',
+  'Send requests to any site, outside your tabs':
+    'Magpadala ng mga request sa anumang site, labas sa iyong mga tab',
+  'Read and change the clipboard': 'Basahin at baguhin ang clipboard',
+  'Ask you a question or tell you something': 'Magtanong sa iyo o may sabihin sa iyo',
+  'Select, mark and fold in your notes': 'Pumili, mamarkahan at magtiklop sa iyong mga tala',
+  Applications: 'Mga application',
+  'Start, see and use your applications': 'Simulan, tingnan at gamitin ang iyong mga application',
   Paying: 'Pagbabayad',
   'Sending messages': 'Pagpapadala ng mensahe',
   'Publishing and sharing': 'Pag-publish at pagbabahagi',
@@ -2890,4 +2900,7 @@ export const fil: Dictionary = {
   'Writing down what you said': 'Isinusulat ang sinabi mo',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Napupunta ang audio sa speech recognition ng device na ito, na maaaring gumamit ng mga server ng gumawa nito',
+  'Not on this device': 'Wala sa device na ito',
+  'Not on this device. It opens once you are online again.':
+    'Wala sa device na ito. Magbubukas ito kapag online ka na ulit.',
 }

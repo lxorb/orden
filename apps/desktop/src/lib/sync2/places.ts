@@ -19,7 +19,9 @@ import { hash32 } from '@orden/sync-core/seed'
 import { byPosition } from '@orden/sync-core/order'
 import { applyOp, nameKey, type TreeEntry, type TreeState, treeState } from '@orden/sync-core/tree'
 import { isReserved } from '../naming'
-import type { Gone, Ordering, Outgoing } from './records'
+import { holdsDocument } from './kinds'
+import { emptyKeeping } from './keeping'
+import type { Gone, Keeping, Ordering, Outgoing } from './records'
 import type { EntryRow, OutboxRow, SpaceRow } from './store'
 import type { Disk, FileKind, World } from './world'
 
@@ -79,6 +81,8 @@ export class SpaceState {
   ordering: Ordering
   /** Where what this device deleted was on this disk (`Gone` in records.ts). */
   gone: Gone = new Map()
+  /** Which of its words this device keeps, where it keeps only some (keeping.ts). */
+  keeping: Keeping = emptyKeeping()
   /** When the files held in step here were last checked against what the account
    *  keeps; see `recoverLost` in files.ts. Never, at launch. */
   lostCheckedAt = -Infinity
@@ -91,7 +95,7 @@ export class SpaceState {
     entries: readonly EntryRow[],
     outbox: readonly Outboxed[],
     private readonly device: string,
-    private readonly world: Pick<World, 'platform' | 'foldsCase'>,
+    private readonly world: Pick<World, 'platform' | 'foldsCase' | 'lazy'>,
     ordering: Ordering = { on: false, positions: new Map() },
   ) {
     this.entries = new Map(entries.map((entry) => [entry.id, entry]))
@@ -233,11 +237,25 @@ export class SpaceState {
     return this.world.foldsCase ? nameKey(path) : path.normalize('NFC')
   }
 
-  /** The entry whose file is at `path` on this disk now. */
+  /** Whether this device keeps only the words it uses of this space (keeping.ts). */
+  get keepsFew(): boolean {
+    return this.world.lazy === true && this.keeping.on && !this.keeping.refused
+  }
+
+  /** The entry whose file is at `path` on this disk now - or, where this device keeps
+   *  only the words it uses, the document it keeps no words of that is shown there, as
+   *  everything the person does with it names it by that path (keeping.ts, #1126). */
   at(path: string): EntryRow | null {
     const wanted = this.key(path)
     for (const entry of this.entries.values()) {
       if (entry.local_path && this.key(entry.local_path) === wanted) return entry
+    }
+    if (!this.keepsFew) return null
+    for (const [id, shown] of this.paths()) {
+      if (this.key(shown) !== wanted) continue
+      const entry = this.entries.get(id)
+      if (entry && !entry.local_path && entry.seq !== null && holdsDocument(entry.kind))
+        return entry
     }
     return null
   }

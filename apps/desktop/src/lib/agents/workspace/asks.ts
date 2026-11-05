@@ -78,7 +78,7 @@ export async function asked(
 }
 
 /** The crate's answer to a question, read: null for "go ahead". */
-function answered(said: unknown): AgentAnswer | null {
+export function answered(said: unknown): AgentAnswer | null {
   const record = typeof said === 'object' && said !== null ? (said as Record<string, unknown>) : {}
   const words = (key: string) => (typeof record[key] === 'string' ? record[key] : '')
 

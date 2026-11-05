@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 import { settleShortcuts } from '../src/lib/web-tab/settle'
 import { withOwn } from '../src/lib/web-tab/own-file'
-import { readShortcut, rewriteShortcut, writeShortcut } from '../src/lib/web-tab/shortcut'
+import { readShortcut, rewriteShortcut, writeShortcut } from '@orden/scan/shortcut'
 
 /** Every `.url` the app writes again keeps what it said (#1098).
  *
@@ -30,7 +30,6 @@ function files(dir: string, found: string[] = []): string[] {
 
 /** The modules that write a shortcut from its parts, and why each may. */
 const FRESH: Record<string, string> = {
-  'lib/web-tab/shortcut.ts': 'where both are defined',
   'lib/web-tab/new-site.ts': 'a website made from an address',
   'lib/web-tab/convert.ts': 'an old `url:` note made into a shortcut',
   'lib/agents/workspace/new-files.ts': 'a website an agent makes',

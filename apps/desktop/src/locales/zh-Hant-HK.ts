@@ -568,6 +568,7 @@ export const zhHantHK: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     '在視窗後顯示模糊的應用程式，而非 Orden 本身的背景。',
   'Swipe in from the edge to see your notes.': '從邊緣向內滑動即可查看筆記。',
+  'Point at the edge of the window to see your notes.': '將指標移到視窗邊緣即可查看筆記。',
   'Show other tabs as icons': '其他分頁只顯示圖示',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '除前面的分頁外，每個分頁只顯示圖示；指向某個分頁時會顯示其名稱。',
@@ -2076,6 +2077,13 @@ export const zhHantHK: Dictionary = {
   'Read and change files anywhere on this computer': '讀取及更改此電腦上任何位置的檔案',
   Programs: '程式',
   'Run programs on this computer': '在這部電腦上執行程式',
+  'Web requests': '網絡請求',
+  'Send requests to any site, outside your tabs': '在你的分頁以外向任何網站發送請求',
+  'Read and change the clipboard': '讀取和更改剪貼簿',
+  'Ask you a question or tell you something': '向你提問或告訴你一些事',
+  'Select, mark and fold in your notes': '在你的筆記中選取、標記和摺疊',
+  Applications: '應用程式',
+  'Start, see and use your applications': '啟動、查看及使用你的應用程式',
   Paying: '付款',
   'Sending messages': '傳送訊息',
   'Publishing and sharing': '發佈及共享',
@@ -2745,4 +2753,6 @@ export const zhHantHK: Dictionary = {
   'Writing down what you said': '正在寫下你說的話',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     '音訊傳送到這部裝置的語音辨識，可能會使用其製造商的伺服器',
+  'Not on this device': '不在此裝置上',
+  'Not on this device. It opens once you are online again.': '不在此裝置上。重新連線後即可開啟。',
 }

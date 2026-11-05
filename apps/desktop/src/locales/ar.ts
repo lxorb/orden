@@ -603,6 +603,8 @@ export const ar: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'يعرض التطبيق مموّهًا خلف النوافذ بدلًا من خلفية Orden الخاصة.',
   'Swipe in from the edge to see your notes.': 'اسحب من الحافة لترى ملاحظاتك.',
+  'Point at the edge of the window to see your notes.':
+    'حرّك المؤشر إلى حافة النافذة لترى ملاحظاتك.',
   'Show other tabs as icons': 'اعرض علامات التبويب الأخرى كأيقونات',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'كل علامة تبويب غير التي في الواجهة تعرض أيقونتها فقط، وتظهر اسمها عند الإشارة إليها.',
@@ -2245,6 +2247,13 @@ export const ar: Dictionary = {
     'قراءة الملفات وتغييرها في أي مكان على هذا الكمبيوتر',
   Programs: 'البرامج',
   'Run programs on this computer': 'تشغيل البرامج على هذا الكمبيوتر',
+  'Web requests': 'طلبات الويب',
+  'Send requests to any site, outside your tabs': 'إرسال طلبات إلى أي موقع خارج علاماتك',
+  'Read and change the clipboard': 'قراءة الحافظة وتغييرها',
+  'Ask you a question or tell you something': 'طرح سؤال عليك أو إخبارك بشيء',
+  'Select, mark and fold in your notes': 'التحديد والتعليم والطي في ملاحظاتك',
+  Applications: 'التطبيقات',
+  'Start, see and use your applications': 'تشغيل تطبيقاتك ورؤيتها واستخدامها',
   Paying: 'الدفع',
   'Sending messages': 'إرسال الرسائل',
   'Publishing and sharing': 'النشر والمشاركة',
@@ -2940,4 +2949,7 @@ export const ar: Dictionary = {
   'Writing down what you said': 'جارٍ كتابة ما قلته',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'يذهب الصوت إلى التعرّف على الكلام في هذا الجهاز، وقد يستخدم خوادم الشركة المصنّعة',
+  'Not on this device': 'ليست على هذا الجهاز',
+  'Not on this device. It opens once you are online again.':
+    'ليست على هذا الجهاز. ستُفتح عندما تعود إلى الاتصال بالإنترنت.',
 }

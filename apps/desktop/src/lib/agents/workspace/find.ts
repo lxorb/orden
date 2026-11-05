@@ -14,8 +14,8 @@
  *  one, and the words, cut at the same two hundred characters. */
 
 import type { AgentAnswer } from '../../automation/caller'
-import type { Hit } from '../../search/match'
-import { parseQuery } from '../../search/query'
+import type { Hit } from '@orden/scan/search/match'
+import { parseQuery } from '@orden/scan/search/query'
 import { searchSpace } from '../../search/space'
 import { notePath, relativeTo } from '../../space-paths'
 import { workspace } from '../../workspace.svelte'

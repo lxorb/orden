@@ -7,14 +7,19 @@ strip every other tab keeps its width, so the next cross is already under it. Wh
 wrong was the closed tab going on being drawn as the one in front - two fills and two pairs
 of feet for the whole shrink, the flash - with its lit cross riding the shrinking edge.
 
-What this watches, every frame from the press to the end, in the light and the dark:
+What this watches, every frame from the press to the end, in the light and the dark, with
+the tabs drawn as their marks and as Chrome draws them:
 
   - never two tabs drawn in front, and the closed one never with a fill;
   - the closed tab's trailing edge and the next tab's leading edge together within a
     pixel or two the whole way, so nothing jumps and no gap opens;
-  - every other tab's width the same from the first frame to the last;
-  - a second press where the first one was closes the next tab, which is what holding
-    the widths is for.
+  - every other tab's width the same from the first frame to the last - but, where every
+    tab not in front is its mark alone (#1041, on out of the box), the one that comes in
+    front and the one the pointer comes to rest on, which open out to their names;
+  - drawn as Chrome draws them, a second press where the first one was closes the next
+    tab, which is what holding the widths is for. Drawn as marks there is no next cross
+    under the pointer: the closed tab was the wide one in front, and what slides under
+    the pointer is a mark, which opens out to its name as any mark under it does.
 
 Run it from the repository root:
 
@@ -40,7 +45,10 @@ NAMES = [f"Note {letter}" for letter in "ABCDEFGHIJKL"]
 PARTED = 3
 
 # Twelve notes in the space, each in a tab of its own: narrower than they would like in a
-# window this size, which is when a close holds the widths.
+# window this size, which is when a close holds the widths - and still wide enough for an
+# inactive tab to draw its cross (68 of contents, docs/chrome-tabs.md), which in the 1000
+# this was written for they no longer were once the window's top row took the strip's
+# ends for its own buttons (#1037).
 SEED = """
 async (names) => {
   const ws = window.nibApp.workspace
@@ -89,8 +97,9 @@ def frames(page: Page) -> list[list[dict]]:
     return page.evaluate("() => window.__frames")
 
 
-def closing(page: Page, scheme: str) -> None:
-    page.emulate_media(color_scheme=scheme)
+def closing(page: Page, look: str, icons: bool) -> None:
+    page.emulate_media(color_scheme=look)  # type: ignore[arg-type]
+    scheme = look if icons else f"{look}-chrome"
     page.evaluate(SEED, NAMES)
     wait_for(page, f"document.querySelectorAll('.tabs .tab').length === {len(NAMES)}", "the strip")
     page.locator(f"{tab('Note D')} .pick").click()
@@ -109,6 +118,16 @@ def closing(page: Page, scheme: str) -> None:
     seen = frames(page)
 
     first = {one["name"]: one["width"] for one in seen[0] if one["name"] != "Note D"}
+    # The tab that comes in front of the closed one. Drawn as Chrome draws tabs, it holds
+    # its width like the rest; drawn as marks, it opens out to its name.
+    front = next((one["name"] for one in seen[-1] if one["active"]), None)
+    say(f"[{scheme}] in front after the close: {front}")
+    if icons and front in first:
+        del first[front]
+    rest = next((one["name"] for one in seen[-1] if one["left"] <= x <= one["right"]), None)
+    say(f"[{scheme}] under the pointer after the close: {rest}")
+    if icons and rest in first:
+        del first[rest]
     worst = 0.0
     for at, frame in enumerate(seen):
         active = [one["name"] for one in frame if one["active"]]
@@ -136,6 +155,10 @@ def closing(page: Page, scheme: str) -> None:
     if worst > PARTED and not WEBKIT:
         wrong(f"[{scheme}] the closed tab and the next one parted by {worst:.1f} px")
 
+    if icons:
+        page.mouse.move(x, y + 300)
+        return
+
     # The next cross is where this one was: a second press closes Note E.
     page.mouse.down()
     page.mouse.up()
@@ -150,11 +173,15 @@ def closing(page: Page, scheme: str) -> None:
 
 
 def drive(browser: Browser) -> None:
-    for scheme in ("light", "dark"):
-        page = DRIVE.page(browser, viewport={"width": 1000, "height": 700})
-        DRIVE.open(page)
-        closing(page, scheme)
-        page.context.close()
+    for icons in (True, False):
+        for scheme in ("light", "dark"):
+            page = DRIVE.page(browser, viewport={"width": 1280, "height": 700})
+            page.context.add_init_script(
+                f"localStorage.setItem('nib:icon-tabs', {'yes' if icons else 'no'!r})"
+            )
+            DRIVE.open(page)
+            closing(page, scheme, icons)
+            page.context.close()
 
 
 if __name__ == "__main__":

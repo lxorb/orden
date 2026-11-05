@@ -573,6 +573,8 @@ export const tr: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Orden’in kendi arka planı yerine pencerelerin arkasında uygulamayı bulanık gösterir.',
   'Swipe in from the edge to see your notes.': 'Notlarını görmek için kenardan içeri kaydır.',
+  'Point at the edge of the window to see your notes.':
+    'Notlarını görmek için işaretçiyi pencerenin kenarına götür.',
   'Show other tabs as icons': 'Diğer sekmeleri simge olarak göster',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Öndeki dışındaki her sekme yalnızca simgesini gösterir; birinin üzerine gelince adı görünür.',
@@ -2142,6 +2144,14 @@ export const tr: Dictionary = {
     'Bu bilgisayarın her yerindeki dosyaları okuma ve değiştirme',
   Programs: 'Programlar',
   'Run programs on this computer': 'Bu bilgisayarda program çalıştırma',
+  'Web requests': 'Web istekleri',
+  'Send requests to any site, outside your tabs':
+    'Sekmelerinizin dışında herhangi bir siteye istek gönderme',
+  'Read and change the clipboard': 'Panoyu okuma ve değiştirme',
+  'Ask you a question or tell you something': 'Size soru sorma veya bir şey söyleme',
+  'Select, mark and fold in your notes': 'Notlarınızda seçme, işaretleme ve katlama',
+  Applications: 'Uygulamalar',
+  'Start, see and use your applications': 'Uygulamalarınızı başlatmak, görmek ve kullanmak',
   Paying: 'Ödeme',
   'Sending messages': 'Mesaj gönderme',
   'Publishing and sharing': 'Yayımlama ve paylaşma',
@@ -2848,4 +2858,7 @@ export const tr: Dictionary = {
   'Writing down what you said': 'Söyledikleriniz yazılıyor',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Ses bu cihazın konuşma tanımasına gider; bu, üreticisinin sunucularını kullanabilir',
+  'Not on this device': 'Bu cihazda değil',
+  'Not on this device. It opens once you are online again.':
+    'Bu cihazda değil. Yeniden çevrimiçi olduğunuzda açılır.',
 }

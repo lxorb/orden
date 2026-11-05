@@ -1180,8 +1180,8 @@
       <!-- The note and, beside it, the other side of the window - which is empty
            for everybody until a panel is moved over to it: nothing is drawn at all
            until then, so the left side, the foot row and the tab strip are exactly
-           where they always were. Its own toggle is in the bar and appears with
-           it; see Titlebar.svelte.
+           where they always were. Its own toggle is in it on a desktop, and shut it
+           comes out at the window's edge (#1038); see Sidebar.svelte and Titlebar.svelte.
 
            Under the bar rather than beside it, which is where the left sidebar
            sits: the bar carries the window's own buttons at its right end, and a

@@ -38,6 +38,8 @@ export const BROWSER_VERBS = [
   'browser_takeover',
   'files',
   'process',
+  'http',
+  'system',
   'agent_status',
   'approval_status',
   'agent_pair',
@@ -89,6 +91,10 @@ export const AGENT_WINDOW_VERBS: Readonly<Record<string, Scope | null>> = {
   run_terminal: 'terminal',
   read_terminal: 'context',
   type_terminal: 'terminal',
+  system_clipboard: 'clipboard',
+  ask_reader: 'ask',
+  note_editor: 'editor',
+  application_tabs: 'applications',
   recently_deleted: 'tree',
   list_chats: 'chats.read',
   read_chat: 'chats.read',
@@ -138,6 +144,11 @@ export type Scope =
   | 'terminal'
   | 'files'
   | 'processes'
+  | 'network'
+  | 'clipboard'
+  | 'ask'
+  | 'editor'
+  | 'applications'
 
 /** What a question is about (9.3), and the questions Orden asks for itself. */
 export type Category =
@@ -296,6 +307,7 @@ export const AGENT_COMMANDS = [
   'agents_resume',
   'agents_answer',
   'agents_ask',
+  'agents_dialog_path',
   'agents_state',
   'agents_log',
   'agents_log_days',

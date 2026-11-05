@@ -3,6 +3,7 @@ import { account } from './account.svelte'
 import { hiddenKinds, settings } from './settings.svelte'
 import { modes } from './modes.svelte'
 import { arriving } from './arriving.svelte'
+import { keptAway } from './web/away.svelte'
 import {
   blockIds,
   isApplicationTarget,
@@ -124,7 +125,7 @@ import { log } from './log'
 import { invoke, isDesktop, isNative, joinPath, openExternal } from './tauri'
 import { viewport } from './viewport.svelte'
 import { plainOrigin } from './web-tab/address'
-import { apartOf, readWebFile } from './web-tab/shortcut'
+import { apartOf, readWebFile } from '@orden/scan/shortcut'
 import { pages } from './web-tab/pages.svelte'
 import { agentMarks } from './agent-marks.svelte'
 import { besideAt, howFor, type LinkAsk, type OpenHow, type TabAsk } from './new-tab'
@@ -3255,7 +3256,9 @@ class Workspace {
     //
     // Before the blank below, and for the same reason: a note on its way is not a
     // note nobody has written.
-    if (found === null && arriving.coming.has(path)) {
+    // And one this browser keeps no words of, which the read could not fetch: the
+    // account was out of reach. It fills in the same way once it is fetched (#1126).
+    if (found === null && (arriving.coming.has(path) || keptAway.at(path))) {
       const waiting = this.document({
         kind: 'note',
         path,

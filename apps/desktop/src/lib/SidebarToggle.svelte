@@ -20,6 +20,7 @@
    *  read as a window with a thick left edge - a different icon, which is what it
    *  was reported as. A button that redraws itself is a button you have to read
    *  twice, and the state is already said three ways. */
+  import { tick } from 'svelte'
   import { intoSide } from './focus'
   import { t } from './i18n.svelte'
   import { shortcuts } from './shortcuts.svelte'
@@ -62,9 +63,28 @@
    *  would be a ring with no way out, since the left side leads back to the bar. */
   let opened = false
 
-  function pressed(event: MouseEvent) {
+  function pressed(event: MouseEvent & { currentTarget: HTMLElement }) {
     workspace.toggleSidebar(side)
     opened = event.detail === 0 && open
+    if (event.detail === 0) void handOn(event.currentTarget)
+  }
+
+  /** On a desktop the button is the side's own while it is open and the bar's while it is
+   *  shut (#1038), so a key that opens or shuts the side takes away the button it was
+   *  pressed on - into a side shut and out of reach, or out of the bar. The keyboard goes
+   *  on to the side's other button, where the same key puts it back, rather than to
+   *  nowhere. A few frames at most: a side opened for the first time is built shut and
+   *  opens on the next. */
+  async function handOn(from: HTMLElement, left = 8) {
+    await tick()
+    const lost = !from.isConnected || from.closest('[inert]') !== null
+    if (!lost || (document.activeElement !== document.body && document.activeElement !== from))
+      return
+    const other = [...document.querySelectorAll<HTMLElement>(`[data-side-toggle="${side}"]`)].find(
+      (one) => one !== from && one.isConnected && one.closest('[inert]') === null,
+    )
+    if (other) other.focus()
+    else if (left > 0) requestAnimationFrame(() => void handOn(from, left - 1))
   }
 
   /** Tab into the side just opened, and Shift+Tab from there back to here. */

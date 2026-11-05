@@ -28,11 +28,17 @@ import { isRecord, keepJson, stored } from '../stored'
 import { workspace } from '../workspace.svelte'
 import type { Doer, FileOp } from '../workspace/file-ops'
 import { owesAtTheEnd, owesLast, writing } from '../parting'
-import { isDesktop, joinPath } from '../tauri'
+import { isDesktop, isNative, joinPath } from '../tauri'
+import { keptAway } from '../web/away.svelte'
+import { aloneHere, keptBudget, TRIM_AFTER } from './budget'
+import { links } from '../link-index.svelte'
+import { Indexing } from './indexing'
+import type { Leaving } from './keeping'
+import { forgetIndex, type IndexStore, openIndex } from '../web/index-store'
 import { pathKey, samePath } from '../space-paths'
 import { oneWriteAt, type Said, windows } from '../windows'
 import { waited } from '../timing'
-import { appWorld, type Telling } from './app-world'
+import { appWorld, lettingGo, readingFor, type Telling } from './app-world'
 import type { NoteDoc } from '../workspace/documents.svelte'
 import type { PlaneSurface } from '../canvas/shared'
 import type { Watched } from './watching'
@@ -390,6 +396,17 @@ class Runner {
       return null
     }
     this.current = engine
+    // What the browser knows of the notes it keeps no words of (#1126; indexing.ts).
+    if (!isNative) {
+      const store = await openIndex(user.id).catch(() => null)
+      if (store)
+        this.indexing = new Indexing(
+          engine,
+          readingFor(() => account.token),
+          store,
+        )
+      this.indexStore = store
+    }
     await this.carriedIn(engine)
     engine.held.changed = (notes) => (this.heldNotes = notes)
     this.heldNotes = engine.held.notes
@@ -580,6 +597,12 @@ class Runner {
     for (const one of this.bound.values()) one.part()
     this.bound.clear()
     clearTimeout(this.timer)
+    clearTimeout(this.trimTimer)
+    this.awayPaths.clear()
+    keptAway.clear()
+    this.indexing = null
+    this.indexStore?.close()
+    this.indexStore = null
     const engine = this.current
     const newer = overtaken()
     this.current = null
@@ -684,6 +707,7 @@ class Runner {
       if (back) {
         this.firsts.clear()
         await forgetSyncStore(user.id).catch(() => undefined)
+        if (!isNative) await forgetIndex(user.id)
       }
     }
   }
@@ -778,6 +802,7 @@ class Runner {
       // Held until the store is gone, so no window that has not heard yet opens it meanwhile.
       forgetMadeDeviceId(accountId)
       await forgetSyncStore(accountId).finally(() => this.letGoLead())
+      if (!isNative) await forgetIndex(accountId)
       return
     }
     // Another window runs the engine, and it hears this too (workspace/across.ts): the store
@@ -790,6 +815,7 @@ class Runner {
     await forgetSyncStore(accountId)
       .catch(() => undefined)
       .finally(() => lead?.release())
+    if (!isNative) await forgetIndex(accountId)
   }
 
   // -------------------------------------------------------------------------
@@ -921,6 +947,8 @@ class Runner {
             this.watched?.caughtUp(id)
           }
           const passed = await engine.pass(id)
+          await this.awayHeard(engine, true)
+          if (passed?.finished) await this.indexHeard(engine)
           if (!this.local) this.placesHeard(engine, space.row.root)
           if (passed?.full) this.full.add(id)
           else if (passed?.finished) this.full.delete(id)
@@ -949,6 +977,8 @@ class Runner {
       this.lastSyncedAt = Date.now()
       this.status = offline ? 'offline' : 'idle'
       if (moved) this.sayRows()
+      keptAway.offline = offline
+      this.trimSoon()
     } catch (error) {
       if (this.current !== engine) return
       // The session ended on the account: signed out here too, as every other request
@@ -1118,17 +1148,103 @@ class Runner {
       await run()
       return
     }
-    if (op.op === 'moved') {
-      await engine.moving(op.from, op.to, async () => {
-        await run()
-      })
-    } else {
-      await engine.removing(op.path, async () => {
-        const back = await run()
-        return typeof back === 'string' && back ? back : op.back
-      })
+    try {
+      if (op.op === 'moved') {
+        await engine.moving(op.from, op.to, async () => {
+          await run()
+        })
+      } else {
+        await engine.removing(op.path, async () => {
+          const back = await run()
+          return typeof back === 'string' && back ? back : op.back
+        })
+      }
+    } finally {
+      // What this browser keeps no words of moved or went with it, as this person did:
+      // everything kept by path has heard so already.
+      await this.awayHeard(engine, false)
     }
     this.nudge()
+  }
+
+  // -------------------------------------------------------------------------
+  // Words kept only while used, in the browser (keeping.ts, #1126)
+
+  /** Where each file this browser keeps no words of was last said to be, by id. */
+  private awayPaths = new Map<string, string>()
+
+  /** The files kept away told to the browser's commands. `told`: where the engine's tree
+   *  moved under them by somebody else's doing, everything kept by path hears of a move
+   *  or a delete of one too, as it hears of a file the engine moved or took away; a file
+   *  that came to be here is the engine's write, which says itself. */
+  private async awayHeard(engine: Engine, told: boolean) {
+    if (isNative || this.current !== engine) return
+    const files = engine.awayFiles()
+    const now = new Map(files.map((one) => [one.id, one.path]))
+    const was = this.awayPaths
+    this.awayPaths = now
+    if (told) {
+      for (const [id, path] of was) {
+        const is = now.get(id)
+        if (is !== undefined && is !== path) await this.telling.moved(path, is, 'file')
+        else if (is === undefined && !engine.isLive(id)) await this.telling.gone(path, 'file')
+      }
+    }
+    const back = keptAway.keep(files, (path) => this.fetchAway(engine, path))
+    if (this.indexing) keptAway.answeredBy(this.indexing.scans(), this.indexing.search)
+    if (back.length || files.length !== was.size) this.treeStale()
+    // A note opened while it was away, waiting in its tab, has its words now.
+    for (const path of back) void workspace.arrived(path)
+  }
+
+  /** A file kept away, fetched now. */
+  private async fetchAway(engine: Engine, path: string): Promise<boolean> {
+    if (this.current !== engine) return false
+    const here = await engine.fetch(path)
+    await this.awayHeard(engine, false)
+    this.trimSoon()
+    return here
+  }
+
+  /** What the browser knows of the notes it keeps no words of, and where it keeps it. */
+  private indexing: Indexing | null = null
+  private indexStore: IndexStore | null = null
+
+  /** The scans older than the words the feed names, asked for again after a pass, and
+   *  what came told to the link index and the rows (indexing.ts). */
+  private async indexHeard(engine: Engine) {
+    const indexing = this.indexing
+    if (!indexing || this.current !== engine) return
+    const refreshed = await indexing.refresh().catch((error: unknown) => {
+      log('warn', `sync: the index stays as it was - ${String(error)}`)
+      return []
+    })
+    if (this.current !== engine || this.indexing !== indexing) return
+    keptAway.answeredBy(indexing.scans(), indexing.search)
+    for (const one of refreshed) links.indexed(one.root, one.scans)
+    // A space whose account had no route for it is kept whole from now on.
+    if (!engine.keepingFew().length) await this.awayHeard(engine, false)
+  }
+
+  private trimTimer: ReturnType<typeof setTimeout> | undefined
+
+  /** The words kept here brought within the budget, a moment after they last grew. */
+  private trimSoon() {
+    const engine = this.current
+    if (isNative || !engine) return
+    clearTimeout(this.trimTimer)
+    this.trimTimer = setTimeout(() => {
+      void (async () => {
+        // Another window of the app may have open what this one would let go of.
+        if (this.current !== engine || !(await aloneHere())) return
+        const indexing = this.indexing
+        const went = await engine.trim(await keptBudget(), {
+          ...lettingGo,
+          ...(indexing ? { leaving: (one: Leaving) => indexing.leaving(one) } : {}),
+        })
+        if (went) await this.awayHeard(engine, false)
+      })().catch((error: unknown) => log('warn', `sync: words kept stayed - ${String(error)}`))
+    }, TRIM_AFTER)
   }
 
   /** A file operation, heard as everything kept by path hears it. Answers what is left to

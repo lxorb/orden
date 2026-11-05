@@ -96,6 +96,13 @@ whose file is not there yet - is the engine's own work under way and nothing to 
 made that is gone again went again. What is left is somebody else's doing: a program, or
 a person in Explorer or Finder.
 
+A browser that keeps only the words it uses (docs/sync-v2.md 9.4, #1126) lists every
+entry of the tree, and one it keeps no words of is where the tree shows it: the file list,
+an agent or an undo moving or deleting one says it to the engine by its id exactly as for
+any other, and there is no row to move. What its delete takes is what the person saw
+listed, as of the space's cursor: anything written or moved in before then goes with it,
+and anything after is kept from the delete, as for a delete made anywhere else.
+
 ## Signed out
 
 A space used with nobody signed in is kept by the same engine, with no account behind it

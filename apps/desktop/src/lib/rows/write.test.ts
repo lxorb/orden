@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Row } from '@orden/bases'
 import { readTask } from '@orden/markdown/task-line'
 import { rowsOf } from '@orden/bases/rows'
-import { scanNote } from '../scan-note'
+import { scanNote } from '@orden/scan/note'
 import { scanRows } from '@orden/bases/scan'
 
 /** The one write path: a property of a note and a field of a task, as edits of the

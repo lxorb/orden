@@ -594,6 +594,8 @@ export const ru: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Показывает размытое приложение за окнами вместо собственного фона Orden.',
   'Swipe in from the edge to see your notes.': 'Проведите от края, чтобы увидеть заметки.',
+  'Point at the edge of the window to see your notes.':
+    'Наведите указатель на край окна, чтобы увидеть заметки.',
   'Show other tabs as icons': 'Показывать остальные вкладки значками',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Все вкладки, кроме передней, показывают только значок; при наведении появляется название.',
@@ -2217,6 +2219,14 @@ export const ru: Dictionary = {
     'Читать и изменять файлы в любом месте этого компьютера',
   Programs: 'Программы',
   'Run programs on this computer': 'Запускать программы на этом компьютере',
+  'Web requests': 'Веб-запросы',
+  'Send requests to any site, outside your tabs':
+    'Отправлять запросы на любой сайт вне ваших вкладок',
+  'Read and change the clipboard': 'Читать и изменять буфер обмена',
+  'Ask you a question or tell you something': 'Задавать вам вопросы или сообщать что-то',
+  'Select, mark and fold in your notes': 'Выделять, отмечать и сворачивать в ваших заметках',
+  Applications: 'Приложения',
+  'Start, see and use your applications': 'Запускать, видеть и использовать ваши приложения',
   Paying: 'Оплата',
   'Sending messages': 'Отправка сообщений',
   'Publishing and sharing': 'Публикация и доступ',
@@ -2926,4 +2936,7 @@ export const ru: Dictionary = {
   'Writing down what you said': 'Записываю сказанное',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Звук отправляется в распознавание речи этого устройства, которое может использовать серверы производителя',
+  'Not on this device': 'Нет на этом устройстве',
+  'Not on this device. It opens once you are online again.':
+    'Нет на этом устройстве. Откроется, как только вы снова будете в сети.',
 }

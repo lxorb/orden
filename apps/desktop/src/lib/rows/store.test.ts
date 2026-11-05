@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { Row } from '@orden/bases'
-import { scanNote, type ScannedNote, type SpaceLinks } from '../scan-note'
+import { scanNote, type ScannedNote, type SpaceLinks } from '@orden/scan/note'
 import { scanRows } from '@orden/bases/scan'
 import { type Host, type RowsChange, RowsStore } from './store'
 
@@ -88,6 +88,25 @@ const tasks = (rows: readonly Row[]) =>
     .map((row) => `${row.space}:${row.path}:${row.task?.text}`)
 
 describe('the rows of every space', () => {
+  /** What the account said of a note a browser keeps no words of (#1126) is that
+   *  note's rows, in any space, as a save is. */
+  test('take what the account says of a note kept away', async () => {
+    const { store, answer, settled } = rig({ [`${WORK}/Plan.md`]: '- [ ] Ship it\n' })
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    await settled()
+    answer(WORK)
+    await settled()
+
+    store.indexed(WORK, [
+      scanned('Away.md', '- [ ] Call the bank\n'),
+      // A scan without the rows' fields is the index's alone, and changes no rows.
+      scanNote('Bare.md', '- [ ] Not a row\n'),
+    ])
+    expect(tasks(store.of())).toEqual(['Work:Plan.md:Ship it', 'Work:Away.md:Call the bank'])
+    store.indexed(HOME, [scanned('Elsewhere.md', "- [ ] Nobody's\n")])
+    expect(tasks(store.of())).toHaveLength(2)
+  })
+
   /** A `📅` is a deadline in an Obsidian vault and a start date anywhere else (#371):
    *  the rows say which, and a note saved later is read the same way. */
   test("an Obsidian vault's tasks say their 📅 is a deadline", async () => {

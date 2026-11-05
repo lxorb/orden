@@ -24,8 +24,8 @@
 
 import { isPagesTarget } from '@orden/markdown/links'
 import { holderOf, paperOf } from '../pages/held'
-import { type Hit, Matcher } from '../search/match'
-import type { Query } from '../search/query'
+import { type Hit, Matcher } from '@orden/scan/search/match'
+import type { Query } from '@orden/scan/search/query'
 import { warm } from '../search/warm.svelte'
 import { folderOf, pathKey, pathKeys } from '../space-paths'
 import { afterQuiet } from '../timing'

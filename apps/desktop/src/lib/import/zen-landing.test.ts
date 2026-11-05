@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { toBase64 } from '../bytes'
-import { writeShortcut } from '../web-tab/shortcut'
+import { writeShortcut } from '@orden/scan/shortcut'
 import type { Planned } from './plan'
 import { mozLz4Of, SIDEBAR } from './zen.fixture'
 

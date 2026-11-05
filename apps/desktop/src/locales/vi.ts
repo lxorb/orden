@@ -568,6 +568,8 @@ export const vi: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Hiển thị ứng dụng bị làm mờ phía sau các cửa sổ, thay cho nền riêng của Orden.',
   'Swipe in from the edge to see your notes.': 'Vuốt vào từ mép để xem ghi chú của bạn.',
+  'Point at the edge of the window to see your notes.':
+    'Đưa con trỏ tới mép cửa sổ để xem ghi chú của bạn.',
   'Show other tabs as icons': 'Hiện các thẻ khác dưới dạng biểu tượng',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Mọi thẻ trừ thẻ ở phía trước chỉ hiện biểu tượng; trỏ vào một thẻ sẽ thấy tên của nó.',
@@ -2109,6 +2111,14 @@ export const vi: Dictionary = {
     'Đọc và thay đổi tệp ở bất kỳ đâu trên máy tính này',
   Programs: 'Chương trình',
   'Run programs on this computer': 'Chạy chương trình trên máy tính này',
+  'Web requests': 'Yêu cầu web',
+  'Send requests to any site, outside your tabs':
+    'Gửi yêu cầu đến bất kỳ trang nào, bên ngoài các thẻ của bạn',
+  'Read and change the clipboard': 'Đọc và thay đổi bộ nhớ tạm',
+  'Ask you a question or tell you something': 'Hỏi bạn một câu hoặc báo bạn điều gì đó',
+  'Select, mark and fold in your notes': 'Chọn, đánh dấu và thu gọn trong ghi chú của bạn',
+  Applications: 'Ứng dụng',
+  'Start, see and use your applications': 'Khởi động, xem và dùng các ứng dụng của bạn',
   Paying: 'Thanh toán',
   'Sending messages': 'Gửi tin nhắn',
   'Publishing and sharing': 'Xuất bản và chia sẻ',
@@ -2801,4 +2811,7 @@ export const vi: Dictionary = {
   'Writing down what you said': 'Đang ghi lại những gì bạn nói',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Âm thanh được gửi đến tính năng nhận dạng giọng nói của thiết bị này, có thể dùng máy chủ của nhà sản xuất',
+  'Not on this device': 'Không có trên thiết bị này',
+  'Not on this device. It opens once you are online again.':
+    'Không có trên thiết bị này. Sẽ mở khi bạn trực tuyến trở lại.',
 }

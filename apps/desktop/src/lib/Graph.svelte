@@ -26,7 +26,7 @@
   import { type GraphColours, paint, radiusOf } from './graph-paint'
   import { t } from './i18n.svelte'
   import { stillness } from './motion'
-  import { parseQuery } from './search/query'
+  import { parseQuery } from '@orden/scan/search/query'
   import { relativeTo } from './space-paths'
   import { theme } from './theme.svelte'
   import { workspace } from './workspace.svelte'

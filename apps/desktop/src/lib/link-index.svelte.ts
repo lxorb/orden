@@ -54,10 +54,10 @@ import { buildGraph, type NoteGraph } from './graph'
 import { type Placed, retargetLinks } from './link-rewrite'
 import { t } from './i18n.svelte'
 import { AGENTS_NAME, shownName } from './note-name'
-import type { Hit } from './search/match'
-import { parseQuery } from './search/query'
+import type { Hit } from '@orden/scan/search/match'
+import { parseQuery } from '@orden/scan/search/query'
 import { searchSpace } from './search/space'
-import { type ScannedNote, scanNote, scanShortcut, type SpaceLinks } from './scan-note'
+import { type ScannedNote, scanNote, scanShortcut, type SpaceLinks } from '@orden/scan/note'
 import { startup } from './startup.svelte'
 import { mark } from './trace'
 import {
@@ -168,6 +168,10 @@ let queryBlock: typeof import('./query-block') | null = null
 
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- listeners, never rendered
 const hearing = new Set<(path: string, content: string) => void>()
+
+/** Whoever hears what the account says of the notes a browser keeps no words of. */
+// eslint-disable-next-line svelte/prefer-svelte-reactivity -- listeners, never rendered
+const indexing = new Set<(root: string, scans: readonly ScannedNote[]) => void>()
 
 /** How `retarget` runs. */
 export interface Retargeting {
@@ -664,7 +668,7 @@ class Links {
    *  which is why no list asks this any more. What is left in here is the old format:
    *  a `.md` note with `url:` in its front matter, from a space written by an older
    *  Orden. So this map is what says a note wants converting, and the only thing it
-   *  says; see web-tab/shortcut.ts and `workspace.asShortcut`.
+   *  says; see @orden/scan/shortcut and `workspace.asShortcut`.
    *
    *  The same shape as the icons above and for the same reason: a space of a
    *  thousand notes holds a handful of these, so the map is the size of what is
@@ -895,6 +899,21 @@ class Links {
     return () => hearing.delete(hear)
   }
 
+  /** What the account says of notes a browser keeps no words of, newer than what the
+   *  index held (#1126; sync2/indexing.ts): each one's scan, relative to the space at
+   *  `root`, taken in here where it is the open space, and told to the rows of every
+   *  space as a save is (`hearIndexed`). */
+  indexed(root: string, scans: readonly ScannedNote[]) {
+    if (!scans.length) return
+    if (this === links) for (const hear of indexing) hear(root, scans)
+    if (this.root !== null && samePath(root, this.root)) this.put(...scans)
+  }
+
+  hearIndexed(hear: (root: string, scans: readonly ScannedNote[]) => void): () => void {
+    indexing.add(hear)
+    return () => indexing.delete(hear)
+  }
+
   /** The open space's notes as the index holds them: its scan, which the rows of the
    *  space are made from rather than a second read of every note. */
   held(): readonly ScannedNote[] {
@@ -930,7 +949,7 @@ class Links {
     // stale row put here would be replayed over the rows the new space brings
     // back. See `edit`.
     const mine = this.scans
-    void import('./scan-canvas').then(({ scanCanvas }) => {
+    void import('@orden/scan/canvas').then(({ scanCanvas }) => {
       if (this.scans !== mine) return
 
       // A stroke changes nothing the index holds, and a new list of notes is every

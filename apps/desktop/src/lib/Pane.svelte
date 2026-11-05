@@ -38,6 +38,7 @@
   import { dragged, isTreeDrag } from './drag-paths'
   import Editor from './Editor.svelte'
   import { key, message, t } from './i18n.svelte'
+  import { keptAway } from './web/away.svelte'
   import { busy } from './busy.svelte'
 
   import { chrome } from './glass/chrome.svelte'
@@ -614,7 +615,11 @@
          empty editor here would be something to type into, and typing into it would
          be writing over the copy that is on its way. It fills itself in without
          anybody asking again; see `arrived` in workspace.svelte.ts. -->
-    <div class="coming" role="status">{t('Loading…')}</div>
+    <div class="coming" role="status">
+      {keptAway.offline && tab.path !== null && keptAway.at(tab.path) !== null
+        ? t('Not on this device. It opens once you are online again.')
+        : t('Loading…')}
+    </div>
   {:else if tab?.reading}
     <!-- The note through the renderer. A tab keeps its own face, so the same note
          can be read here and written in next door. Fetched like the surfaces above

@@ -953,6 +953,17 @@ impl Picked {
     }
 }
 
+/// A path an agent's command was answered with in a dialog's place (#1078), let in as
+/// the dialog's own pick would be: `reach` exactly, which the agents' crate has judged
+/// under `files`' rules (agents/files.rs, `pick_reach`).
+pub fn picked_for_an_agent(app: &AppHandle, reach: &Path) {
+    if let Some(picked) = app.try_state::<Picked>() {
+        if let Ok(mut all) = picked.0.lock() {
+            all.insert(folded(reach));
+        }
+    }
+}
+
 /// Starts hearing the dialog's picks. Called once the launch has put the spaces
 /// folder in the same scope, so that is not taken for a pick.
 pub fn hear_picks(app: &AppHandle) {

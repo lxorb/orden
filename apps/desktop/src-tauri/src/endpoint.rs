@@ -39,7 +39,7 @@ use std::fs;
 use std::io::{Read, Write as _};
 use std::net::{Ipv4Addr, SocketAddr, TcpListener, TcpStream};
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicU16, AtomicU64, Ordering};
 use std::sync::mpsc::{sync_channel, SyncSender};
 use std::sync::{Condvar, Mutex};
 use std::time::{Duration, Instant};
@@ -74,6 +74,18 @@ const SECRET_BYTES: usize = 32;
 /// Which request an answer belongs to. Counted rather than random: it never
 /// leaves this machine and two requests only have to tell each other apart.
 static NEXT: AtomicU64 = AtomicU64::new(1);
+
+/// The port this launch listens on, nought before it does.
+static PORT: AtomicU16 = AtomicU16::new(0);
+
+/// The port this launch answers on, where it does: what an agent's `http` may never
+/// reach on this machine (agents/http.rs).
+pub fn own_port() -> Option<u16> {
+    match PORT.load(Ordering::SeqCst) {
+        0 => None,
+        port => Some(port),
+    }
+}
 
 /// What the file in the config folder says, which is everything a caller needs to
 /// reach the app and nothing else.
@@ -248,6 +260,7 @@ pub fn start(app: &AppHandle) {
 
     let app = app.clone();
     let port = address.port();
+    PORT.store(port, Ordering::SeqCst);
     std::thread::spawn(move || {
         // The file the port and the secret are written down in, written on this
         // thread rather than before it. It is a read, a folder made and a write,

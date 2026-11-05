@@ -16,15 +16,20 @@
  *  - and past those a row needs what the verb behind it needs (`scopesOf`): a row that
  *    closes a tab the reader can see what `workspace_tabs close` needs, one that rewrites
  *    a note `notes.write`. A row this list does not know is the reader's to press, so a
- *    row added to the palette is not an agent's until somebody says which it is. */
+ *    row added to the palette is not an agent's until somebody says which it is.
+ *
+ *  A row that opens a file dialog - Import, every Export - is answered by `path` instead
+ *  (#1078): the file read or written only where `files` would let it be, which the crate
+ *  says (`agents_dialog_path`), so the dialog is never shown to an agent's command. */
 
 import { appCommands, type Command } from '../../commands'
+import { invoke } from '../../tauri'
 import type { AgentAnswer } from '../../automation/caller'
 import { views } from '../../views.svelte'
 import { workspace } from '../../workspace.svelte'
 import type { Category, Scope } from '../verbs'
-import { asked, readersOwn } from './asks'
-import { type Call, done, need, needScope } from './call'
+import { asked, answered, readersOwn } from './asks'
+import { type Call, done, maybe, need, needScope } from './call'
 import { Refused } from './problem'
 import { placeFor } from './spaces'
 
@@ -184,6 +189,11 @@ function scopesOf(id: string): readonly Scope[] | null {
   return null
 }
 
+/** Whether a row opens a file dialog: Import and every Export. */
+function opensADialog(id: string): boolean {
+  return id.startsWith('export-') || id === 'import'
+}
+
 /** The rows of a setting named by what it is set to: they ask as `write_setting` does. */
 function asksOfSetting(id: string): boolean {
   return /^(theme|scheme|accent|properties|code-theme):/.test(id) || id === 'read-only'
@@ -203,7 +213,10 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
   if (found.ownWindow === true || found.byHand === true || WINDOW.has(id)) {
     readersOwn(call, `${id} is the reader's to press`)
   }
-  const scopes = scopesOf(id)
+  // A row whose dialog a path answers (#1078) is the crate's to say, which judges that path
+  // as `files` would (`agents_dialog_path`); without one its dialog is the reader's.
+  const path = maybe(call, 'path')
+  const scopes = path !== null && opensADialog(id) ? [] : scopesOf(id)
   if (scopes === null) readersOwn(call, `${id} is the reader's to press`)
   for (const scope of scopes ?? []) needScope(call, scope, id)
 
@@ -211,6 +224,45 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, category, found.label)
   if (question) return question
 
+  if (path === null) {
+    found.run()
+    return done({ id, label: found.label })
+  }
+  return withPath(call, found, path)
+}
+
+/** How long a row is given to open its dialog before its path is taken to be one it had
+ *  no use for. */
+const DIALOG_WITHIN = 15_000
+
+/** A row run with its file dialog answered by `path`: what the crate said about the
+ *  path where it was not a yes, and otherwise the row, done. */
+async function withPath(call: Call, found: Command, path: string): Promise<AgentAnswer> {
+  const { answerNextDialog } = await import('../../dialog-answer')
+  const agent = call.caller.agent
+  let settle: (said: AgentAnswer | null) => void = () => undefined
+  const judged = new Promise<AgentAnswer | null>((go) => (settle = go))
+  answerNextDialog(async (write) => {
+    if (agent === null) {
+      settle(null)
+      return path
+    }
+    const said = await invoke<unknown>('agents_dialog_path', {
+      agent: agent.id,
+      path,
+      write,
+    }).catch((error: unknown) => ({ status: 'error', code: 'failed', message: String(error) }))
+    const refused = answered(said)
+    settle(refused)
+    if (refused !== null) return null
+    const result = (said as { result?: { path?: unknown } }).result
+    return typeof result?.path === 'string' ? result.path : null
+  })
+
   found.run()
-  return done({ id, label: found.label })
+  const over = new Promise<'unused'>((go) => setTimeout(() => go('unused'), DIALOG_WITHIN))
+  const outcome = await Promise.race([judged, over])
+  answerNextDialog(null)
+  if (outcome === 'unused') return done({ id: found.id, label: found.label, path_unused: true })
+  return outcome ?? done({ id: found.id, label: found.label, path })
 }

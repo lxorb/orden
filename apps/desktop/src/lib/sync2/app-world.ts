@@ -21,7 +21,7 @@ import { scanSpace } from '../space-watch'
 import { windowsPath } from './places'
 import { invoke, isDesktop, isNative, joinPath, platform } from '../tauri'
 import { classifier } from './classify'
-import { accountOver, remoteFiles } from './transport'
+import { accountOver, type Reading, readingOver, remoteFiles } from './transport'
 import type { Disk, FileKind, World } from './world'
 import { syncDeletes } from '../sync/deletes'
 
@@ -46,10 +46,23 @@ function parentOf(path: string): string {
   return at > 0 ? path.slice(0, at) : path
 }
 
+/** What the engine's reads say in the browser: of the rows as they are, never fetching a
+ *  note this browser keeps no words of (#1126; web/away.svelte.ts). Nothing on a desktop,
+ *  whose crate has no such thing to leave out. */
+const RAW = isNative ? {} : { raw: true }
+
 /** Whether a file is there: the crate's stamp, or in the browser, which keeps none,
  *  a read; see on-disk.ts. A stamp alone answered no for every path in the browser,
- *  so a note deleted on another device was never deleted there. */
-const stamped = onDisk
+ *  so a note deleted on another device was never deleted there. In the browser the
+ *  engine asks of the rows as they are (`raw`), never counting a note it keeps no words
+ *  of (#1126), which it is itself the one to bring. */
+const stamped = (path: string) =>
+  isNative
+    ? onDisk(path)
+    : invoke<unknown>('path_exists', { path, ...RAW }).then(
+        (there) => there === true,
+        () => false,
+      )
 
 /** Whether something is at a path, for sync to read its going as a delete: nobody being able
  *  to look says nothing is gone (`file_there` in the crate). Where the app itself was not
@@ -59,7 +72,7 @@ const thereOrUnsure = (path: string): Promise<boolean> =>
 
 function diskOf(telling: Telling): Disk {
   return {
-    read: (path) => invoke<string>('read_note', { path }).catch(() => null),
+    read: (path) => invoke<string>('read_note', { path, ...RAW }).catch(() => null),
     async write(path, text) {
       const fresh = !(await stamped(path))
       await invoke('create_folder', { path: parentOf(path), arrived: true }).catch(() => undefined)
@@ -106,7 +119,7 @@ function diskOf(telling: Telling): Disk {
     async remove(path, kind) {
       // A version of the words kept first, the way a delete made here keeps one.
       if (kind === 'file') {
-        const words = await invoke<string>('read_note', { path }).catch(() => null)
+        const words = await invoke<string>('read_note', { path, ...RAW }).catch(() => null)
         if (words?.trim())
           await invoke('snapshot_note', { path, content: words }).catch(() => undefined)
       }
@@ -134,6 +147,12 @@ function diskOf(telling: Telling): Disk {
     exists: thereOrUnsure,
     evicted: evictedHere,
   }
+}
+
+/** How the browser lets go of a note's row when it keeps only the words it uses
+ *  (sync2/keeping.ts, #1126): the row, as no delete, and nothing told of it. */
+export const lettingGo = {
+  drop: (path: string) => invoke('let_go_note', { path }).then(() => undefined),
 }
 
 /** Every file and folder under a space's root, from the tree the list reads. */
@@ -180,6 +199,7 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[] | 
   const tree = await invoke<Listed>('read_tree', {
     root,
     options: { showHidden: false, papers: true },
+    ...RAW,
   }).catch(() => null)
   const out: { path: string; dir: boolean }[] = []
   const walk = (node: Listed) => {
@@ -203,14 +223,18 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[] | 
 }
 
 /** The app's world for one account's engine. */
+function reachingOf(token: () => string | null) {
+  return { base: BASE, token, device: deviceName, fetch: (request: Request) => fetch(request) }
+}
+
+/** What a browser that keeps only some of the words asks about the rest (#1126). */
+export function readingFor(token: () => string | null): Reading {
+  return readingOver(reachingOf(token))
+}
+
 export function appWorld(token: () => string | null, telling: Telling): World {
   const os = platform()
-  const reaching = {
-    base: BASE,
-    token,
-    device: deviceName,
-    fetch: (request: Request) => fetch(request),
-  }
+  const reaching = reachingOf(token)
   return {
     disk: diskOf(telling),
     account: accountOver(reaching),
@@ -223,6 +247,7 @@ export function appWorld(token: () => string | null, telling: Telling): World {
     platform: os === 'windows' ? 'windows' : os === 'macos' || os === 'ios' ? 'mac' : 'other',
     list: listed,
     classify: classifier(),
+    lazy: !isNative,
     blobs: {
       async read(path) {
         return await fileBytes(path).catch(() => null)

@@ -45,7 +45,7 @@ export async function feedPage(
   env: Env,
   spaceId: string,
   since: number,
-): Promise<{ items: FeedItem[]; cursor: number; more: boolean; order: true }> {
+): Promise<{ items: FeedItem[]; cursor: number; more: boolean; order: true; index: true }> {
   let rows = await changedSince(env, spaceId, since)
 
   // A note a v1 app wrote while the space was being prepared has no place yet: it is
@@ -72,6 +72,9 @@ export async function feedPage(
     more: rows.length > FEED_PAGE,
     // This account keeps positions, so a device may send them (#1068).
     order: true,
+    // And answers each note's scan and a search over the notes (reading.ts), so a
+    // browser may keep only the words it uses (#1126).
+    index: true,
   }
 }
 

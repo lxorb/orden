@@ -568,6 +568,8 @@ export const th: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'แสดงแอปแบบเบลอด้านหลังหน้าต่าง แทนพื้นหลังของ Orden เอง',
   'Swipe in from the edge to see your notes.': 'ปัดเข้ามาจากขอบเพื่อดูโน้ตของคุณ',
+  'Point at the edge of the window to see your notes.':
+    'เลื่อนตัวชี้ไปที่ขอบหน้าต่างเพื่อดูโน้ตของคุณ',
   'Show other tabs as icons': 'แสดงแท็บอื่นเป็นไอคอน',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ทุกแท็บยกเว้นแท็บด้านหน้าแสดงแค่ไอคอน ชี้ที่แท็บใดก็จะเห็นชื่อ',
@@ -2091,6 +2093,13 @@ export const th: Dictionary = {
     'อ่านและเปลี่ยนไฟล์ได้ทุกที่ในคอมพิวเตอร์เครื่องนี้',
   Programs: 'โปรแกรม',
   'Run programs on this computer': 'เรียกใช้โปรแกรมบนคอมพิวเตอร์เครื่องนี้',
+  'Web requests': 'คำขอเว็บ',
+  'Send requests to any site, outside your tabs': 'ส่งคำขอไปยังเว็บไซต์ใดก็ได้ นอกแท็บของคุณ',
+  'Read and change the clipboard': 'อ่านและเปลี่ยนคลิปบอร์ด',
+  'Ask you a question or tell you something': 'ถามคำถามหรือบอกบางอย่างกับคุณ',
+  'Select, mark and fold in your notes': 'เลือก ทำเครื่องหมาย และพับในโน้ตของคุณ',
+  Applications: 'แอปพลิเคชัน',
+  'Start, see and use your applications': 'เริ่ม ดู และใช้แอปพลิเคชันของคุณ',
   Paying: 'การชำระเงิน',
   'Sending messages': 'การส่งข้อความ',
   'Publishing and sharing': 'การเผยแพร่และแชร์',
@@ -2772,4 +2781,7 @@ export const th: Dictionary = {
   'Writing down what you said': 'กำลังเขียนสิ่งที่คุณพูด',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'เสียงถูกส่งไปยังระบบรู้จำเสียงพูดของอุปกรณ์นี้ ซึ่งอาจใช้เซิร์ฟเวอร์ของผู้ผลิต',
+  'Not on this device': 'ไม่ได้อยู่ในอุปกรณ์นี้',
+  'Not on this device. It opens once you are online again.':
+    'ไม่ได้อยู่ในอุปกรณ์นี้ จะเปิดได้เมื่อคุณกลับมาออนไลน์',
 }

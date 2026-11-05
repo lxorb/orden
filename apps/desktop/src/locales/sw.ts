@@ -576,6 +576,8 @@ export const sw: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Huonyesha programu ikiwa imefifishwa nyuma ya madirisha, badala ya mandharinyuma ya Orden yenyewe.',
   'Swipe in from the edge to see your notes.': 'Telezesha kutoka ukingoni kuona madokezo yako.',
+  'Point at the edge of the window to see your notes.':
+    'Peleka kielekezi ukingoni mwa dirisha kuona madokezo yako.',
   'Show other tabs as icons': 'Onyesha vichupo vingine kama aikoni',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Kila kichupo isipokuwa cha mbele kinaonyesha aikoni yake tu; ukielekeza kimoja, jina lake linaonekana.',
@@ -2162,6 +2164,14 @@ export const sw: Dictionary = {
     'Kusoma na kubadilisha faili popote kwenye kompyuta hii',
   Programs: 'Programu',
   'Run programs on this computer': 'Kuendesha programu kwenye kompyuta hii',
+  'Web requests': 'Maombi ya wavuti',
+  'Send requests to any site, outside your tabs':
+    'Kutuma maombi kwa tovuti yoyote, nje ya vichupo vyako',
+  'Read and change the clipboard': 'Kusoma na kubadilisha ubao klipu',
+  'Ask you a question or tell you something': 'Kukuuliza swali au kukuambia jambo',
+  'Select, mark and fold in your notes': 'Kuchagua, kuweka alama na kukunja katika madokezo yako',
+  Applications: 'Programu',
+  'Start, see and use your applications': 'Kuanzisha, kuona na kutumia programu zako',
   Paying: 'Kulipa',
   'Sending messages': 'Kutuma ujumbe',
   'Publishing and sharing': 'Kuchapisha na kushiriki',
@@ -2870,4 +2880,7 @@ export const sw: Dictionary = {
   'Writing down what you said': 'Inaandika ulichosema',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Sauti inakwenda kwenye utambuzi wa sauti wa kifaa hiki, ambao unaweza kutumia seva za mtengenezaji wake',
+  'Not on this device': 'Haipo kwenye kifaa hiki',
+  'Not on this device. It opens once you are online again.':
+    'Haipo kwenye kifaa hiki. Itafunguka utakapokuwa mtandaoni tena.',
 }

@@ -91,6 +91,108 @@ pub(super) fn answer(app: &AppHandle, caller: &Caller, asked: &Files) -> Answer 
     }
 }
 
+/// Where another verb may write a file for an agent - `http`'s `save_to` (#1078) - under
+/// exactly the rules a `write` keeps: the `files` scope, never behind a fence, and the
+/// question a write raises. The path made absolute, or what the call answers instead.
+pub(super) fn writable(app: &AppHandle, caller: &Caller, asked: &str) -> Result<PathBuf, Answer> {
+    reachable(app, caller, asked, FilesOp::Write)
+}
+
+/// Where a verb may read or write one file for an agent - a file dialog an agent's
+/// command opens, answered by a path (#1078) - under the rules `op` keeps here.
+pub(super) fn reachable(
+    app: &AppHandle,
+    caller: &Caller,
+    asked: &str,
+    op: FilesOp,
+) -> Result<PathBuf, Answer> {
+    let write = Files {
+        op,
+        path: asked.to_owned(),
+        to: None,
+        content: None,
+        base64: false,
+        glob: None,
+        text: None,
+        since: None,
+    };
+    if !caller.holds(Scope::Files) {
+        return Err(Answer::error(
+            Code::NotGranted,
+            "saving to a file needs the files scope, which the reader grants in Settings > Agents",
+        ));
+    }
+    let path = resolved(app, asked).map_err(|why| Answer::error(Code::BadArguments, why))?;
+    if let Caller::Agent(grant) = caller {
+        if let Some(refused) = refused(&fences(app), op, &path, None) {
+            return Err(refused);
+        }
+        if let Some(question) = question(app, grant, &write, &path, None) {
+            return Err(question);
+        }
+    }
+    Ok(path)
+}
+
+/// What a dialog answered by an agent's path lets the app's own writers and readers
+/// reach (`paths::picked_for_an_agent`), as the system dialog's pick would: a folder
+/// itself, and for a file the folder it is in - where an export's pictures land beside
+/// it - unless that folder holds Orden's own, by name or through a link, or is the top
+/// of a disk; then the file alone.
+pub(super) fn pick_reach(app: &AppHandle, path: &Path) -> PathBuf {
+    reach_of(&own_folders(app), path)
+}
+
+/// `pick_reach`, against the folders given.
+fn reach_of(fenced: &[PathBuf], path: &Path) -> PathBuf {
+    if path.is_dir() {
+        return path.to_path_buf();
+    }
+    match path.parent() {
+        Some(folder)
+            if folder
+                .parent()
+                .is_some_and(|above| !above.as_os_str().is_empty())
+                && refused(fenced, FilesOp::Copy, folder, None).is_none() =>
+        {
+            folder.to_path_buf()
+        }
+        _ => path.to_path_buf(),
+    }
+}
+
+/// A path as an agent gave it, made absolute: `~/` is the home folder (system.rs).
+pub(super) fn absolute(app: &AppHandle, asked: &str) -> Result<PathBuf, String> {
+    resolved(app, asked)
+}
+
+/// Why no agent may hand this path to the system: it is in Orden's own folders, by its
+/// name or by where its links lead. Nothing where it is not; the spaces are the reader's,
+/// and theirs to open, and a folder that holds Orden's is only shown.
+pub(super) fn fenced_out(app: &AppHandle, path: &Path) -> Option<Answer> {
+    behind(&own_folders(app), path)
+}
+
+/// `fenced_out`, against the folders given.
+fn behind(fenced: &[PathBuf], path: &Path) -> Option<Answer> {
+    let real_path = real(path);
+    fenced
+        .iter()
+        .any(|fence| {
+            let real_fence = real(fence);
+            crate::paths::inside(fence, path) || crate::paths::inside(&real_fence, &real_path)
+        })
+        .then(|| {
+            Answer::error(
+                Code::NotGranted,
+                format!(
+                    "{} is in Orden's own folder, with the agents' grants and the sites' cookies: no agent reaches it",
+                    path.display()
+                ),
+            )
+        })
+}
+
 /// Whether an op answers what files say, which is the files' words and not the reader's.
 fn reads(op: FilesOp) -> bool {
     matches!(
@@ -142,8 +244,17 @@ fn resolved(app: &AppHandle, asked: &str) -> Result<PathBuf, String> {
 /// The folders no agent reaches, whatever it holds: the spaces, which have tools of
 /// their own, and the app's own folders.
 fn fences(app: &AppHandle) -> Vec<PathBuf> {
+    crate::paths::spaces_dir(app)
+        .ok()
+        .into_iter()
+        .chain(own_folders(app))
+        .collect()
+}
+
+/// Orden's own folders: its config and its data, with the grants, the endpoint's secret
+/// and the web tabs' cookies in them.
+fn own_folders(app: &AppHandle) -> Vec<PathBuf> {
     [
-        crate::paths::spaces_dir(app).ok(),
         crate::paths::config_dir(app).ok(),
         app.path().app_config_dir().ok(),
         app.path().app_data_dir().ok(),
@@ -837,6 +948,59 @@ mod tests {
             .file_type()
             .is_symlink());
         assert_eq!(fs::read_link(copy.join("door")).expect("where"), fence);
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    /// A path handed to the system (system.rs) is never in Orden's own folders, by its
+    /// name or through a link; the folder holding them is only shown, and every other
+    /// path is the reader's.
+    #[cfg(unix)]
+    #[test]
+    fn a_path_handed_to_the_system_is_never_behind_orden_s_fence() {
+        let root = temp();
+        let fence = root.join("Orden");
+        fs::create_dir_all(&fence).expect("fence");
+        fs::write(fence.join("agents.json"), "secret plan").expect("grants");
+        let mine = root.join("mine");
+        fs::create_dir_all(&mine).expect("mine");
+        std::os::unix::fs::symlink(&fence, mine.join("door")).expect("link");
+        std::os::unix::fs::symlink(fence.join("agents.json"), mine.join("grants")).expect("link");
+        let fenced = [fence.clone()];
+
+        assert!(behind(&fenced, &fence).is_some());
+        assert!(behind(&fenced, &fence.join("agents.json")).is_some());
+        assert!(behind(&fenced, &mine.join("door")).is_some());
+        assert!(behind(&fenced, &mine.join("door/agents.json")).is_some());
+        assert!(behind(&fenced, &mine.join("grants")).is_some());
+        assert!(behind(&fenced, &root).is_none());
+        assert!(behind(&fenced, &mine).is_none());
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    /// A dialog answered by an agent's path reaches what the system's pick would, and
+    /// never a folder that holds Orden's own: a file beside the fence is reached alone.
+    #[cfg(unix)]
+    #[test]
+    fn a_path_an_agent_answers_a_dialog_with_reaches_no_further_than_a_pick() {
+        let root = temp();
+        let config = root.join("config");
+        let fence = config.join("Orden");
+        fs::create_dir_all(&fence).expect("fence");
+        let desk = root.join("Desktop");
+        fs::create_dir_all(&desk).expect("desk");
+        std::os::unix::fs::symlink(&config, root.join("alias")).expect("alias");
+        let fenced = [fence.clone()];
+
+        assert_eq!(reach_of(&fenced, &desk.join("Plan.pdf")), desk);
+        assert_eq!(reach_of(&fenced, &desk), desk);
+        let beside = config.join("Plan.pdf");
+        assert_eq!(reach_of(&fenced, &beside), beside);
+        let through = root.join("alias").join("Plan.pdf");
+        assert_eq!(reach_of(&fenced, &through), through);
+        assert_eq!(
+            reach_of(&fenced, Path::new("/Plan.pdf")),
+            Path::new("/Plan.pdf")
+        );
         let _ = fs::remove_dir_all(&root);
     }
 

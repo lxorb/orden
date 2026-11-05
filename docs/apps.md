@@ -259,3 +259,19 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
 - **Not yet**: online terminals (the machine does not say), agent tabs and web tabs, whose
   processes are the web engine's (CEF, WebView2, WebKit each count them their own way) and
   are sequenced with the owners of that code.
+
+## Agents (step 7)
+
+An agent uses an application through its tab: `application_tabs` (docs/agent-native.md 8.18),
+under the `applications` scope. It lists the application tabs, starts, stops and restarts
+them, reads the frame the tab receives as a PNG, and sends input in the display's pixels
+over the picture's own data channel, as the holder's hands do.
+
+- **Only through the holder's connection.** Everything but the list goes only while this
+  device holds the application, since the host takes input, Start, Stop and Restart from
+  the holder alone. Held by another device, it is refused: Take over is the reader's, and
+  no agent presses it. So an agent on computer A drives an application on computer B only
+  while A holds it, and never through a real mouse or keyboard.
+- In `confirm` mode a start, stop or restart and any input ask first, with "Always" for the
+  application; Full permissions asks nothing.
+- Not yet: the accessibility tree (AT-SPI), and the clipboard beyond typing text.

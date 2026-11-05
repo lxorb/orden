@@ -569,6 +569,8 @@ export const ms: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Menunjukkan apl yang dikaburkan di belakang tetingkap, bukannya latar belakang Orden sendiri.',
   'Swipe in from the edge to see your notes.': 'Leret masuk dari tepi untuk melihat nota anda.',
+  'Point at the edge of the window to see your notes.':
+    'Halakan penuding ke tepi tetingkap untuk melihat nota anda.',
   'Show other tabs as icons': 'Tunjukkan tab lain sebagai ikon',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Setiap tab kecuali yang di hadapan hanya menunjukkan ikonnya; tuding pada satu untuk melihat namanya.',
@@ -2126,6 +2128,14 @@ export const ms: Dictionary = {
     'Baca dan ubah fail di mana-mana pada komputer ini',
   Programs: 'Program',
   'Run programs on this computer': 'Jalankan program pada komputer ini',
+  'Web requests': 'Permintaan web',
+  'Send requests to any site, outside your tabs':
+    'Hantar permintaan ke mana-mana tapak, di luar tab anda',
+  'Read and change the clipboard': 'Baca dan ubah papan keratan',
+  'Ask you a question or tell you something': 'Tanya anda soalan atau beritahu anda sesuatu',
+  'Select, mark and fold in your notes': 'Pilih, tanda dan lipat dalam nota anda',
+  Applications: 'Aplikasi',
+  'Start, see and use your applications': 'Mula, lihat dan guna aplikasi anda',
   Paying: 'Membayar',
   'Sending messages': 'Menghantar mesej',
   'Publishing and sharing': 'Menerbitkan dan berkongsi',
@@ -2828,4 +2838,7 @@ export const ms: Dictionary = {
   'Writing down what you said': 'Menulis apa yang anda katakan',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Audio dihantar ke pengecaman pertuturan peranti ini, yang mungkin menggunakan pelayan pembuatnya',
+  'Not on this device': 'Tiada pada peranti ini',
+  'Not on this device. It opens once you are online again.':
+    'Tiada pada peranti ini. Ia akan dibuka sebaik sahaja anda dalam talian semula.',
 }

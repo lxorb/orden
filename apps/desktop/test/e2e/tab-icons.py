@@ -61,7 +61,7 @@ DRESSED = "---\nicon: rocket\n---\n\n# Plan\n\nA note that chose an icon.\n"
 
 def shortcut(url: str, title: str, icon: str | None) -> str:
     """A website as its file: the Windows Internet Shortcut the app writes, with nib's
-    own keys in the same block. See apps/desktop/src/lib/web-tab/shortcut.ts."""
+    own keys in the same block. See packages/scan/src/shortcut.ts."""
 
     rows = [f"URL={url}", f"Title={title}", "Nib-Added=2026-09-13T08:00:00.000Z"]
     if icon:

@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { readCanvas } from './canvas/format'
+import { readCanvas } from '@orden/markdown/canvas'
 import { scanCanvas } from './scan-canvas'
 import { scanNote, scanShortcut } from './scan-note'
 

@@ -12,9 +12,9 @@
  *  the space has been read. Both sides send them last; see fuzzy.ts. */
 
 import { internal, invoke, isNative } from '../tauri'
-import type { FuzzyHit } from './fuzzy'
-import type { Hit } from './match'
-import type { Query } from './query'
+import type { FuzzyHit } from '@orden/scan/search/fuzzy'
+import type { Hit } from '@orden/scan/search/match'
+import type { Query } from '@orden/scan/search/query'
 
 const HITS = 'nib://search-hits'
 
@@ -68,7 +68,21 @@ export async function searchSpace(
 
   if (!isNative) {
     const { searchInWorker } = await import('../web/search-client')
-    await searchInWorker(root, query, terms, limit, onFound, excluded)
+    let found = 0
+    await searchInWorker(
+      root,
+      query,
+      terms,
+      limit,
+      (batch) => {
+        found += batch.hits.length
+        onFound(batch)
+      },
+      excluded,
+    )
+    // And what this browser keeps no words of, searched by the account (#1126).
+    const { keptAway } = await import('../web/away.svelte')
+    await keptAway.search(root, query, terms, limit - found, onFound, excluded)
     return
   }
 

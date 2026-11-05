@@ -594,6 +594,8 @@ export const uk: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Показує розмитий застосунок за вікнами замість власного тла Orden.',
   'Swipe in from the edge to see your notes.': 'Проведіть від краю, щоб побачити нотатки.',
+  'Point at the edge of the window to see your notes.':
+    'Наведіть вказівник на край вікна, щоб побачити нотатки.',
   'Show other tabs as icons': 'Показувати інші вкладки значками',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Кожна вкладка, крім передньої, показує лише значок; якщо навести на неї, з’являється назва.',
@@ -2210,6 +2212,14 @@ export const uk: Dictionary = {
     'Читати й змінювати файли будь-де на цьому комп’ютері',
   Programs: 'Програми',
   'Run programs on this computer': 'Запускати програми на цьому комп’ютері',
+  'Web requests': 'Веб-запити',
+  'Send requests to any site, outside your tabs':
+    'Надсилати запити на будь-який сайт поза вашими вкладками',
+  'Read and change the clipboard': 'Читати й змінювати буфер обміну',
+  'Ask you a question or tell you something': 'Ставити вам запитання або щось повідомляти',
+  'Select, mark and fold in your notes': 'Виділяти, позначати й згортати у ваших нотатках',
+  Applications: 'Програми',
+  'Start, see and use your applications': 'Запускати, бачити й використовувати ваші програми',
   Paying: 'Оплата',
   'Sending messages': 'Надсилання повідомлень',
   'Publishing and sharing': 'Публікація й поширення',
@@ -2919,4 +2929,7 @@ export const uk: Dictionary = {
   'Writing down what you said': 'Записую сказане',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Звук надсилається до розпізнавання мовлення цього пристрою, яке може використовувати сервери виробника',
+  'Not on this device': 'Немає на цьому пристрої',
+  'Not on this device. It opens once you are online again.':
+    'Немає на цьому пристрої. Відкриється, щойно ви знову будете в мережі.',
 }

@@ -573,6 +573,8 @@ export const te: Dictionary = {
     'Orden సొంత నేపథ్యానికి బదులుగా, విండోల వెనుక యాప్‌ను మసకగా చూపిస్తుంది.',
   'Swipe in from the edge to see your notes.':
     'మీ నోట్‌లను చూడడానికి అంచు నుండి లోపలికి స్వైప్ చేయండి.',
+  'Point at the edge of the window to see your notes.':
+    'మీ నోట్‌లను చూడడానికి పాయింటర్‌ను విండో అంచుకు తీసుకెళ్లండి.',
   'Show other tabs as icons': 'ఇతర ట్యాబ్‌లను ఐకాన్‌లుగా చూపించు',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ముందున్నది తప్ప ప్రతి ట్యాబ్ తన ఐకాన్ మాత్రమే చూపిస్తుంది; ఒకదానిపై పాయింటర్ ఉంచితే పేరు కనిపిస్తుంది.',
@@ -2144,6 +2146,13 @@ export const te: Dictionary = {
     'ఈ కంప్యూటర్‌లో ఎక్కడైనా ఫైళ్లను చదవడం మరియు మార్చడం',
   Programs: 'ప్రోగ్రామ్‌లు',
   'Run programs on this computer': 'ఈ కంప్యూటర్‌లో ప్రోగ్రామ్‌లను అమలు చేయండి',
+  'Web requests': 'వెబ్ అభ్యర్థనలు',
+  'Send requests to any site, outside your tabs': 'మీ ట్యాబ్‌ల బయట ఏ సైట్‌కైనా అభ్యర్థనలు పంపండి',
+  'Read and change the clipboard': 'క్లిప్‌బోర్డ్‌ను చదవండి, మార్చండి',
+  'Ask you a question or tell you something': 'మిమ్మల్ని ప్రశ్న అడగండి లేదా ఏదైనా చెప్పండి',
+  'Select, mark and fold in your notes': 'మీ నోట్స్‌లో ఎంచుకోండి, గుర్తించండి, మడవండి',
+  Applications: 'అప్లికేషన్లు',
+  'Start, see and use your applications': 'మీ అప్లికేషన్లను ప్రారంభించడం, చూడడం, వాడడం',
   Paying: 'చెల్లింపు',
   'Sending messages': 'సందేశాలు పంపడం',
   'Publishing and sharing': 'ప్రచురించడం, షేర్ చేయడం',
@@ -2846,4 +2855,7 @@ export const te: Dictionary = {
   'Writing down what you said': 'మీరు చెప్పింది రాస్తోంది',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'ఆడియో ఈ పరికరం యొక్క మాట గుర్తింపుకు వెళ్తుంది, అది తయారీదారు సర్వర్లను వాడవచ్చు',
+  'Not on this device': 'ఈ పరికరంలో లేదు',
+  'Not on this device. It opens once you are online again.':
+    'ఈ పరికరంలో లేదు. మీరు మళ్లీ ఆన్‌లైన్‌కి రాగానే ఇది తెరుచుకుంటుంది.',
 }

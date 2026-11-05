@@ -48,6 +48,8 @@ vi.mock('../assets', () => ({
   },
 }))
 vi.mock('../pdf/document', () => ({
+  loading: (library: { getDocument: (source: object) => unknown }, data: Uint8Array) =>
+    library.getDocument({ data }),
   pdfjs: () =>
     Promise.resolve({
       getDocument: () => ({

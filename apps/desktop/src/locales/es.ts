@@ -582,6 +582,8 @@ export const es: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Muestra la app desenfocada detrás de las ventanas, en lugar del fondo propio de Orden.',
   'Swipe in from the edge to see your notes.': 'Desliza desde el borde para ver tus notas.',
+  'Point at the edge of the window to see your notes.':
+    'Lleva el puntero al borde de la ventana para ver tus notas.',
   'Show other tabs as icons': 'Mostrar las demás pestañas como iconos',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Cada pestaña salvo la del frente muestra solo su icono; al señalar una, muestra su nombre.',
@@ -2188,6 +2190,14 @@ export const es: Dictionary = {
     'Leer y cambiar archivos en cualquier lugar de este equipo',
   Programs: 'Programas',
   'Run programs on this computer': 'Ejecutar programas en este equipo',
+  'Web requests': 'Solicitudes web',
+  'Send requests to any site, outside your tabs':
+    'Enviar solicitudes a cualquier sitio, fuera de tus pestañas',
+  'Read and change the clipboard': 'Leer y cambiar el portapapeles',
+  'Ask you a question or tell you something': 'Hacerte una pregunta o decirte algo',
+  'Select, mark and fold in your notes': 'Seleccionar, marcar y plegar en tus notas',
+  Applications: 'Aplicaciones',
+  'Start, see and use your applications': 'Iniciar, ver y usar tus aplicaciones',
   Paying: 'Pagar',
   'Sending messages': 'Enviar mensajes',
   'Publishing and sharing': 'Publicar y compartir',
@@ -2901,4 +2911,7 @@ export const es: Dictionary = {
   'Writing down what you said': 'Escribiendo lo que dijiste',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'El audio va al reconocimiento de voz de este dispositivo, que puede usar los servidores de su fabricante',
+  'Not on this device': 'No está en este dispositivo',
+  'Not on this device. It opens once you are online again.':
+    'No está en este dispositivo. Se abrirá cuando vuelvas a estar en línea.',
 }

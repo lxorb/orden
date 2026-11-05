@@ -15,7 +15,7 @@
  *  up is `graph-layout.ts`. */
 
 import { embedKind, foldName, type LinkKind } from '@orden/markdown/links'
-import type { ScannedNote } from './scan-note'
+import type { ScannedNote } from '@orden/scan/note'
 
 export interface GraphNode {
   /** A note's path relative to the space, `?name` for a target the space holds no

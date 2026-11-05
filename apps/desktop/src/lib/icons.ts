@@ -327,15 +327,9 @@ export function sameIcon(one: string | null, other: string | null): boolean {
   return JSON.stringify(mine) === JSON.stringify(yours)
 }
 
-/** The two keys a note keeps this under, and the names the same two things go by in
- *  a canvas's `nib` key and in a space's own store.
- *
- *  Written out here, in the module about icon values, because three readers have to
- *  agree on them: the writer, the scan that reads a whole space, and the Rust twin of
- *  that scan. `icon` is Obsidian's Iconize spelling, which is the point of it; the
- *  colour is hyphenated beside it in the way YAML keys in a note usually are. */
-export const ICON_KEY = 'icon'
-export const ICON_COLOUR_KEY = 'icon-color'
+/** The two keys a note keeps this under: the scan's (@orden/scan/note), which the
+ *  writer here, the scan of a whole space and the scan's Rust twin all agree on. */
+export { ICON_COLOUR_KEY, ICON_KEY } from '@orden/scan/note'
 
 /** The colours a stroked icon may be drawn in.
  *

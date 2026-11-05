@@ -76,7 +76,7 @@ OLD_NOTE = "/Notes/A page written as a note.md"
 
 def shortcut(url: str, title: str) -> str:
     """A website as a file: the Windows Internet Shortcut, which is what the app
-    writes now. See apps/desktop/src/lib/web-tab/shortcut.ts."""
+    writes now. See packages/scan/src/shortcut.ts."""
 
     return (
         "[InternetShortcut]\r\n"

@@ -571,6 +571,8 @@ export const fa: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'برنامه را پشت پنجره‌ها محو نشان می‌دهد، به‌جای پس‌زمینهٔ خود Orden.',
   'Swipe in from the edge to see your notes.': 'برای دیدن یادداشت‌هایتان از لبه به داخل بکشید.',
+  'Point at the edge of the window to see your notes.':
+    'برای دیدن یادداشت‌هایتان نشانگر را به لبهٔ پنجره ببرید.',
   'Show other tabs as icons': 'نمایش زبانه‌های دیگر به‌صورت نماد',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'هر زبانه جز زبانهٔ جلو فقط نمادش را نشان می‌دهد؛ با اشاره به یکی، نامش نمایان می‌شود.',
@@ -2133,6 +2135,14 @@ export const fa: Dictionary = {
   'Read and change files anywhere on this computer': 'خواندن و تغییر فایل‌ها در هر جای این رایانه',
   Programs: 'برنامه‌ها',
   'Run programs on this computer': 'اجرای برنامه‌ها روی این رایانه',
+  'Web requests': 'درخواست‌های وب',
+  'Send requests to any site, outside your tabs':
+    'ارسال درخواست به هر سایتی، بیرون از زبانه‌های شما',
+  'Read and change the clipboard': 'خواندن و تغییر کلیپ‌بورد',
+  'Ask you a question or tell you something': 'از شما سؤالی بپرسد یا چیزی بگوید',
+  'Select, mark and fold in your notes': 'انتخاب، علامت‌گذاری و جمع کردن در یادداشت‌های شما',
+  Applications: 'برنامه‌ها',
+  'Start, see and use your applications': 'اجرا، دیدن و استفاده از برنامه‌های شما',
   Paying: 'پرداخت',
   'Sending messages': 'فرستادن پیام',
   'Publishing and sharing': 'انتشار و اشتراک‌گذاری',
@@ -2833,4 +2843,7 @@ export const fa: Dictionary = {
   'Writing down what you said': 'در حال نوشتن آنچه گفتید',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'صدا به تشخیص گفتار این دستگاه می‌رود که ممکن است از سرورهای سازنده‌اش استفاده کند',
+  'Not on this device': 'روی این دستگاه نیست',
+  'Not on this device. It opens once you are online again.':
+    'روی این دستگاه نیست. وقتی دوباره آنلاین شوید باز می‌شود.',
 }

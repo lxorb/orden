@@ -568,6 +568,7 @@ export const zhHans: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     '在窗口后显示模糊的应用，而不是 Orden 自己的背景。',
   'Swipe in from the edge to see your notes.': '从边缘向内滑动即可查看笔记。',
+  'Point at the edge of the window to see your notes.': '将指针移到窗口边缘即可查看笔记。',
   'Show other tabs as icons': '其他标签页只显示图标',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '除前面的标签页外，每个标签页只显示图标；指向某个标签页时会显示其名称。',
@@ -2077,6 +2078,13 @@ export const zhHans: Dictionary = {
   'Read and change files anywhere on this computer': '读取和更改此电脑上任何位置的文件',
   Programs: '程序',
   'Run programs on this computer': '在这台电脑上运行程序',
+  'Web requests': '网络请求',
+  'Send requests to any site, outside your tabs': '在你的标签页之外向任意网站发送请求',
+  'Read and change the clipboard': '读取和更改剪贴板',
+  'Ask you a question or tell you something': '向你提问或告诉你一些事',
+  'Select, mark and fold in your notes': '在你的笔记中选择、标记和折叠',
+  Applications: '应用程序',
+  'Start, see and use your applications': '启动、查看和使用你的应用程序',
   Paying: '付款',
   'Sending messages': '发送消息',
   'Publishing and sharing': '发布与共享',
@@ -2745,4 +2753,6 @@ export const zhHans: Dictionary = {
   'Writing down what you said': '正在写下你说的话',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     '音频发送到这台设备的语音识别，可能会使用其制造商的服务器',
+  'Not on this device': '不在此设备上',
+  'Not on this device. It opens once you are online again.': '不在此设备上。重新联网后即可打开。',
 }

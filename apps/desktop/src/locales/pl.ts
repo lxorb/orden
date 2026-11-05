@@ -594,6 +594,8 @@ export const pl: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Pokazuje rozmytą aplikację za oknami zamiast własnego tła Ordena.',
   'Swipe in from the edge to see your notes.': 'Przesuń od krawędzi, aby zobaczyć swoje notatki.',
+  'Point at the edge of the window to see your notes.':
+    'Przesuń wskaźnik do krawędzi okna, aby zobaczyć swoje notatki.',
   'Show other tabs as icons': 'Pokazuj pozostałe karty jako ikony',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Każda karta poza tą na wierzchu pokazuje tylko ikonę; po wskazaniu pokazuje swoją nazwę.',
@@ -2217,6 +2219,14 @@ export const pl: Dictionary = {
     'Odczyt i zmiana plików w dowolnym miejscu na tym komputerze',
   Programs: 'Programy',
   'Run programs on this computer': 'Uruchamianie programów na tym komputerze',
+  'Web requests': 'Żądania sieciowe',
+  'Send requests to any site, outside your tabs':
+    'Wysyłanie żądań do dowolnej witryny, poza Twoimi kartami',
+  'Read and change the clipboard': 'Odczyt i zmiana schowka',
+  'Ask you a question or tell you something': 'Zadawanie Ci pytań lub przekazywanie informacji',
+  'Select, mark and fold in your notes': 'Zaznaczanie, oznaczanie i zwijanie w notatkach',
+  Applications: 'Aplikacje',
+  'Start, see and use your applications': 'Uruchamianie, oglądanie i używanie twoich aplikacji',
   Paying: 'Płacenie',
   'Sending messages': 'Wysyłanie wiadomości',
   'Publishing and sharing': 'Publikowanie i udostępnianie',
@@ -2926,4 +2936,7 @@ export const pl: Dictionary = {
   'Writing down what you said': 'Zapisuję to, co powiedziałeś',
   'Audio goes to this device’s speech recognition, which may use its maker’s servers':
     'Dźwięk trafia do rozpoznawania mowy tego urządzenia, które może korzystać z serwerów producenta',
+  'Not on this device': 'Nie ma na tym urządzeniu',
+  'Not on this device. It opens once you are online again.':
+    'Nie ma na tym urządzeniu. Otworzy się, gdy znów będziesz online.',
 }

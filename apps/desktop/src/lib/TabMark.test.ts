@@ -40,7 +40,7 @@ const { MARKS } = await import('./file-mark')
 const { GRAPH_MARK } = await import('./panel-marks')
 const { NoteDoc, Tab } = await import('./workspace/documents.svelte')
 const { pages } = await import('./web-tab/pages.svelte')
-const { writeShortcut } = await import('./web-tab/shortcut')
+const { writeShortcut } = await import('@orden/scan/shortcut')
 const TabMark = (await import('./TabMark.svelte')).default
 
 /** The stroked set, in place before anything is drawn: in the app it arrives a moment
