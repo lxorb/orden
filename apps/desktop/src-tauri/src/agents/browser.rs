@@ -353,6 +353,12 @@ fn seen(limits: Option<&(Grant, Store)>, held: Option<Dialog>) -> Option<Dialog>
         if engines::from_allowed(limits, std::slice::from_ref(&one.url)).is_err() {
             one.message = String::new();
             one.default_text = None;
+            // Where on the site, and what its address carries, is the site's too.
+            one.url = tauri::Url::parse(&one.url)
+                .ok()
+                .map(|url| url.origin().ascii_serialization())
+                .filter(|origin| origin != "null")
+                .unwrap_or_default();
         }
         one
     })
@@ -1539,13 +1545,23 @@ mod tests {
         };
         for (kind, url) in [
             (DialogKind::Confirm, "https://bank.example/transfer"),
-            (DialogKind::Prompt, "https://www.bank.example/"),
+            (
+                DialogKind::Prompt,
+                "https://www.bank.example/transfer?iban=DE00",
+            ),
             (DialogKind::SignIn, "https://bank.example/"),
             // A frame the engine did not place is nobody's.
             (DialogKind::Prompt, ""),
         ] {
             let shown = seen(Some(&limits), Some(dialog(kind, url))).expect("still held");
             assert_eq!(shown.kind, kind);
+            // RF-6: the site, and not where on it or what its address carries.
+            assert!(
+                !shown.url.contains('/') || shown.url.matches('/').count() == 2,
+                "{}",
+                shown.url
+            );
+            assert!(!shown.url.contains('?'), "{}", shown.url);
             assert!(shown.message.is_empty(), "{url}");
             assert!(shown.default_text.is_none(), "{url}");
             assert!(
@@ -1553,6 +1569,17 @@ mod tests {
                 "{url}"
             );
         }
+        let cut = seen(
+            Some(&limits),
+            Some(dialog(
+                DialogKind::SignIn,
+                "https://bank.example/api/session?token=t",
+            )),
+        );
+        assert_eq!(
+            cut.map(|one| one.url).as_deref(),
+            Some("https://bank.example")
+        );
         let allowed = dialog(DialogKind::Prompt, "https://shop.example/");
         assert_eq!(
             seen(Some(&limits), Some(allowed.clone())),
