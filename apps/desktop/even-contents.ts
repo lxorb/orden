@@ -558,11 +558,16 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-05, to 5,935,100, for #1061: the arrow after a link that
  *  leaves the app as one mark with the `?`, on the letters and kept with the last word
  *  (Outward.svelte, Hint.svelte, base.css). Measured 5,934,516.
+ *
+ *  The code raised on 2026-11-05, to 5,935,600, and the styles to 292,300, for #1063: a
+ *  tab's hover card saying what the tab uses in developer mode (tab-strip/facts.ts,
+ *  fetched apart and never in the plugin; the card's lines for it). Measured 5,935,326
+ *  and 292,272.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_935_100,
+  code: 5_935_600,
   catalogues: 977_400,
-  styles: 292_200,
+  styles: 292_300,
   fonts: 260_000,
   pages: 40_000,
 }
