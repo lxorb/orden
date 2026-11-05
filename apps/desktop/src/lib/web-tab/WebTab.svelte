@@ -213,6 +213,8 @@
    *  anywhere in the window asks this question, and most presses have not moved
    *  anything. */
   let told = ''
+  /** Whether what was told had all of the page under the app's layers. */
+  let toldWhole = false
 
   /** What was told while the hole had no room for the page: the page out of sight. */
   const NO_ROOM = 'no room'
@@ -320,6 +322,7 @@
       // with the room, because what was told is forgotten.
       if (last && told !== NO_ROOM) {
         told = NO_ROOM
+        toldWhole = false
         void pages.place(tab.id, last, false)
       }
       return
@@ -345,6 +348,12 @@
     }
     if (!visible && hole && moving(hole)) follow()
 
+    // All of the page under a layer is out of sight wherever its hole goes, so a hole that
+    // moves under one - a pane shrinking into its window under the tab overview - is not
+    // told on every frame, each a placement of a page nobody sees and its photograph
+    // thrown away for the new size (#1136). Where the hole is is told when the page is seen.
+    if (cut?.all && toldWhole && page.live) return
+
     const frame = frameOf()
     // The scale is part of it: the same box on a screen of another scale is another page
     // window, and nothing else in the layout says the scale changed.
@@ -355,6 +364,7 @@
     if (said === told && page.live) return
 
     told = said
+    toldWhole = cut?.all === true
     // Which space the tab is in, and before its first page whether its note keeps its own
     // web data; said with the page, since a tab opened by hand asks for it as it mounts.
     page.space = space

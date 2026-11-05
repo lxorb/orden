@@ -13,7 +13,7 @@
  *  of the site. That is what "it loads for an eternity" was. */
 
 import { flushSync, mount, unmount } from 'svelte'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, onTestFinished, test, vi } from 'vitest'
 import type { Cut } from '../../src/lib/web-tab/covers'
 
 /** Every call the pane made to the crate, in order. */
@@ -1005,6 +1005,58 @@ test('a picture of the page goes when the page is shown at another size', async 
   expect(pages.of(tab.id).shot).toBeNull()
 
   void unmount(app)
+})
+
+/** #1136: under the tab overview a web tab's pane shrinks into its window, its hole with
+ *  it, while the page is under the overview's scrim. A page told where its hole was on
+ *  every frame was a placement of a page nobody saw on each of them, and on an engine that
+ *  photographs it its picture thrown away for every new size; it stays where it was until
+ *  it is seen, and is then put where the hole is. */
+describe('a page all under a layer stays where it is while its hole moves', () => {
+  for (const cutting of [true, false]) {
+    test(cutting ? 'cut out whole' : 'hidden', async () => {
+      cuts = cutting
+      const { tab, app } = await opened(`https://example.com/under-${String(cutting)}`)
+      pages.of(tab.id).shot = 'data:image/png;base64,iVBORw0KGgo='
+      const scrim = layer('nib-scrim', { x: 0, y: 0, width: 800, height: 600 })
+      await settle()
+      await frames()
+      const hole = document.querySelector('.hole')
+      if (!hole) throw new Error('no hole')
+      onTestFinished(() => {
+        scrim.remove()
+        hole.removeAttribute('data-box')
+        void unmount(app)
+      })
+
+      asked.length = 0
+      for (const [step, scale] of [0.9, 0.7, 0.5].entries()) {
+        const box = {
+          x: 30 * (step + 1),
+          y: 40 + 20 * (step + 1),
+          width: 800 * scale,
+          height: 560 * scale,
+        }
+        hole.setAttribute('data-box', JSON.stringify(box))
+        scrim.style.setProperty('--overview-open', String(1 - scale))
+        await settle()
+        await frames()
+      }
+      expect(asked.filter((one) => one.command === 'web_place')).toEqual([])
+      expect(pages.of(tab.id).shot).not.toBeNull()
+
+      hole.removeAttribute('data-box')
+      scrim.remove()
+      await settle()
+      await frames()
+      const last = asked.filter((one) => one.command === 'web_place').at(-1)
+      expect(last?.args).toMatchObject({
+        visible: true,
+        cut: null,
+        pane: { x: 0, y: 40, width: 800, height: 560 },
+      })
+    })
+  }
 })
 
 /** The hole's box is the one source of where the page goes, and that includes a box with

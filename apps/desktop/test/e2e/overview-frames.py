@@ -1,17 +1,18 @@
 """Every frame of the tab overview's way in and home, one at a time: none flashes, and no
-web page is drawn under it (#1136).
+web page is drawn anywhere but in its window (#1136).
 
 Reported on Windows: the overview flashed for the whole of its way in, and a web tab's
-page stood behind it. The page here is the pane's own drawing of it - its bar, its hole
-and the picture in the hole - which the pane is to stand back from while the page's
-window is on the canvas; a style scoped to the pane never reached the web tab inside it,
-so all of that stayed drawn behind the windows.
+page stood behind it. A web tab's window was the page's photograph alone, drawn over its
+pane's bar as it left and as it came home, while the pane stayed behind it with its bar
+and its page: a style scoped to the pane never reached the web tab inside it. Its pane
+now moves as its window, as a note's does.
 
 The clock the overview moves by is stepped by hand, a sixtieth of a second at a time, and
 the window photographed after each step, so every frame is seen whatever the machine:
 
     no frame is far from both of its neighbours while they are near each other
-    no frame draws anything of a web tab's pane but its strip while the overview is up
+    no frame draws a web tab's pane anywhere but where its window is, nor a picture in
+      the window of a pane that is its window
 
     python apps/desktop/test/e2e/overview-frames.py
 """
@@ -56,8 +57,8 @@ CLOCK = """
 }
 """
 
-#: What of a web tab's pane is drawn, but its strip, while the tab's window is away from it
-#: on the canvas. Near home the window is handed over to the pane under it, by design.
+#: What of a web tab is drawn twice: its pane away from its window, but for the pane's
+#: strip, and a picture in the window of the tab in front of its pane, which is that pane.
 WEB_DRAWN = """
 () => {
   if (!document.querySelector('.canvas')) return null
@@ -69,6 +70,7 @@ WEB_DRAWN = """
     const node = document.querySelector(`[data-pane="${pane.id}"]`)
     const window = [...document.querySelectorAll('.window')].find((one) => one.getAttribute('aria-label') === tab.shown)
     if (!node || !window) continue
+    if (window.querySelector('.face-box > .face')) drawn.push('a picture in the window of the tab in front of its pane')
     const home = node.getBoundingClientRect()
     const head = node.querySelector(':scope > .head')?.getBoundingClientRect().height ?? 0
     const at = window.getBoundingClientRect()
@@ -107,7 +109,7 @@ def filmed(page, label: str, act) -> None:
         frames.append(small(page.screenshot()))
         drawn = page.evaluate(WEB_DRAWN)
         if drawn:
-            wrong(f"[{label}] frame {index + 1}: the web tab's pane is drawn under the overview: {', '.join(drawn)}")
+            wrong(f"[{label}] frame {index + 1}: the web tab is drawn twice: {', '.join(drawn)}")
             shot(page, f"{label}-drawn")
             return
     steps = [apart(frames[i - 1], frames[i]) for i in range(1, len(frames))]
@@ -146,4 +148,4 @@ def drive(browser: Browser) -> None:
 
 
 if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the overview's frames: none flashes, no web page under it"))
+    raise SystemExit(DRIVE.run(drive, "the overview's frames: none flashes, a web tab drawn once"))

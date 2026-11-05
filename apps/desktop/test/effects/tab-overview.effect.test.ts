@@ -240,9 +240,10 @@ test('each pane is its own window, moved where it is and never copied, and every
   expect(tabOverview.out).toEqual([])
 })
 
-test('a pane holding a web page stands back while its picture is its window', async () => {
+test('a pane holding a web page moves as its window, its picture in its hole and no copy of it', async () => {
   const page = workspace.openPage('https://example.com/') ?? ''
   pages.of(page).shot = 'data:image/png;base64,AA=='
+  const shoot = vi.spyOn(pages, 'shoot')
   const paneId = workspace.tabs.find((one) => one.id === page)?.paneId ?? ''
   const pane = document.createElement('div')
   pane.dataset.pane = paneId
@@ -250,8 +251,16 @@ test('a pane holding a web page stands back while its picture is its window', as
   document.body.append(pane)
   onTestFinished(() => pane.remove())
   await opened()
-  expect(pane.style.transform).toBe('')
-  expect(tabOverview.lifted).toContain(paneId)
+  // A window drawn from the photograph alone was the page over its pane's bar as it left
+  // and as it came home (#1136); the pane itself moves now, as a note's does.
+  expect(pane.style.transform).toContain('scale(')
+  expect(tabOverview.lifted).not.toContain(paneId)
+  const window = windows().find(
+    (one) =>
+      one.getAttribute('aria-label') === workspace.tabs.find((tab) => tab.id === page)?.shown,
+  )
+  expect(window?.querySelector('.face-box > .face')).toBe(null)
+  expect(shoot).toHaveBeenCalledWith(page)
 })
 
 test('the canvas is the window’s own ground, its sidebars sliding away, and the app blurred only when asked for', async () => {

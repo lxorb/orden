@@ -948,12 +948,11 @@
       for (const pane of workspace.panes.all) {
         const tab = pane.activeTabId ? byId.get(pane.activeTabId) : undefined
         if (!tab) continue
-        // A page is its photograph, its live view out of sight behind it: no style moves a
-        // native view, and one that moved would be told every frame where it is.
-        if (tab.kind === 'web') {
-          void pages.shoot(tab.id)
-          continue
-        }
+        // A page's pane moves as its window too, the page's photograph in its hole and its
+        // bar over it: the live view stays where it was, out of sight under the canvas, and
+        // is not told where the hole goes (`look` in WebTab.svelte). A window drawn from the
+        // photograph alone was the page's picture over its bar at both ends of the way (#1136).
+        if (tab.kind === 'web') void pages.shoot(tab.id)
         const node = marked('pane', pane.id)
         const box = node?.getBoundingClientRect()
         if (!node || !box || box.width <= 0 || box.height <= 0) continue
