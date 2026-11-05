@@ -1346,8 +1346,9 @@ function holds(tail: string): boolean {
  *  claude/hunt-round-1, as unstable raised its own. Measured 3,745,458, 400 modules.
  *
  *  Lowered on 2026-11-05, to 3,703,700 and 396 modules, as #1126 moved a note's scan and
- *  the search into @orden/scan. Measured 3,703,478, 396 modules. */
-const BUDGET = 3_703_700
+ *  the search into @orden/scan. Measured 3,703,478, 396 modules. Then to 3,704,000 for
+ *  every window counted among the app's (`holdThisWindow`), measured 3,703,723. */
+const BUDGET = 3_704_000
 const MOST_FILES = 397
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
