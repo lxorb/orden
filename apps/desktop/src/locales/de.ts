@@ -1308,6 +1308,10 @@ export const de: Dictionary = {
   'Share {name}': '{name} teilen',
   'Share this space': 'Diesen Bereich teilen',
   'Export this space as Markdown and folders': 'Diesen Bereich als Markdown und Ordner exportieren',
+  'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
+    'Orden öffnet {folder} nicht mehr an Ort und Stelle. Seine Bereiche liegen jetzt in Orden, und der Ordner bleibt, wie er war. Um mehr daraus zu holen, nutze Importieren.',
+  'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
+    'Noch nicht kopiert und daher nur in diesem Ordner: {names}. Orden versucht es beim nächsten Start noch einmal.',
   'Turn this space back into a folder': 'Diesen Bereich wieder zum Ordner machen',
   'Share this note': 'Diese Notiz teilen',
   'Everyone in the space already has it.': 'Alle im Bereich haben sie schon.',

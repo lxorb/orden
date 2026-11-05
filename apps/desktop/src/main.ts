@@ -64,6 +64,20 @@ if (isMobile && (await (await import('./lib/workspace/moved')).spacesMoved())) {
   await new Promise<never>(() => undefined)
 }
 
+// A spaces folder a hand-edited setting pointed outside Orden's own (#552): its spaces
+// taken in once, what was stored about them said again under their new roots, and the
+// page started over the same way; see lib/workspace/outside.ts. Fetched only where the
+// crate said there is one, which early.ts asked before a module of the app ran.
+const outside: unknown = await (window as { nibOutside?: Promise<unknown> }).nibOutside
+if (
+  isDesktop &&
+  typeof outside === 'string' &&
+  (await (await import('./lib/workspace/outside')).takeIn())
+) {
+  location.reload()
+  await new Promise<never>(() => undefined)
+}
+
 mark('mounting')
 
 // What somebody does first, whenever they do it: the one honest reading of

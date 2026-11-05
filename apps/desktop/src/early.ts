@@ -20,5 +20,7 @@ const internals = (window as unknown as { __TAURI_INTERNALS__?: Internals }).__T
 if (internals) {
   Object.assign(window, {
     nibEarly: internals.invoke('launch_ahead').catch(() => null),
+    // Whether `spaces-folder` names a folder outside Orden's own (#552); see main.ts.
+    nibOutside: internals.invoke('outside_spaces').catch(() => null),
   })
 }

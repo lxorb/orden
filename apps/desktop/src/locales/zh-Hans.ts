@@ -1270,6 +1270,10 @@ export const zhHans: Dictionary = {
   'Share {name}': '共享{name}',
   'Share this space': '共享此空间',
   'Export this space as Markdown and folders': '将此空间导出为 Markdown 和文件夹',
+  'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
+    'Orden 不再在原处打开 {folder}。其中的空间现在保存在 Orden 中，文件夹保持原样。要从中导入更多内容，请使用“导入”。',
+  'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
+    '尚未复制，因此仍只在该文件夹中：{names}。Orden 下次启动时会再试一次。',
   'Turn this space back into a folder': '将此空间变回文件夹',
   'Share this note': '共享此笔记',
   'Everyone in the space already has it.': '此空间中的每个人都已有权限。',

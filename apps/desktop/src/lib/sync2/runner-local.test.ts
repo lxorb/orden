@@ -115,6 +115,55 @@ describe('the engine kept signed out', () => {
     Object.assign(account, { user: null })
   })
 
+  test('follows a space whose folder moved before the page ran, keeping its ids (#552)', async () => {
+    said.length = 0
+    const { MemoryStore } = await import('./memory-store')
+    const { put, get } = await import('./store')
+    const local = new MemoryStore('local')
+    stores.set('local', local)
+    const id = '7d'.repeat(16)
+    await local.open().write([
+      put('spaces', {
+        space_id: 'local-9',
+        root: '/Vault/Notes',
+        cursor: 1,
+        role: 'owner',
+        store: null,
+      }),
+      put('entries', {
+        id,
+        space_id: 'local-9',
+        kind: 'note',
+        parent: null,
+        name: 'Plan.md',
+        local_path: 'Plan.md',
+        file_key: null,
+        written_hash: null,
+        mtime: null,
+        size: null,
+        seq: 1,
+        deleted: false,
+      }),
+    ])
+    const { noteRootsMoved, rootsMoved } = await import('../workspace/roots-moved')
+    noteRootsMoved([{ from: '/Vault/Notes', to: '/Spaces/Notes' }])
+    const { workspace } = await import('../workspace.svelte')
+    workspace.spaces = [{ id: 'w9', name: 'Notes', root: '/Spaces/Notes' }]
+
+    try {
+      await runner.startLocal()
+      await new Promise((settle) => setTimeout(settle, 50))
+
+      const [row] = await local.open().read([get('spaces', 'local-9')])
+      expect(row).toMatchObject({ space_id: 'local-9', root: '/Spaces/Notes' })
+      expect(rootsMoved()).toEqual([])
+    } finally {
+      await runner.stop()
+      workspace.spaces = []
+      stores.delete('local')
+    }
+  })
+
   test('carries the ids of what it kept into the account’s store, for each space’s first pass', async () => {
     said.length = 0
     const { MemoryStore } = await import('./memory-store')

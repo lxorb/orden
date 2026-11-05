@@ -1290,6 +1290,10 @@ export const ja: Dictionary = {
   'Share {name}': '{name} を共有',
   'Share this space': 'このスペースを共有',
   'Export this space as Markdown and folders': 'このスペースを Markdown とフォルダとして書き出す',
+  'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
+    'Orden は {folder} をその場所で開かなくなりました。そのスペースは今は Orden の中に保存され、フォルダは元のまま残されています。ほかのものを取り込むには、インポートを使ってください。',
+  'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
+    'まだコピーされていないため、そのフォルダにだけあります：{names}。Orden は次回の起動時にもう一度試します。',
   'Turn this space back into a folder': 'このスペースをフォルダに戻す',
   'Share this note': 'このノートを共有',
   'Everyone in the space already has it.': 'スペースの全員がすでに見られます。',

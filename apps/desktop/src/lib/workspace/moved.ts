@@ -21,6 +21,7 @@
 
 import { forget, keep, stored, storedText } from '../stored'
 import { invoke, isMobile } from '../tauri'
+import { noteRootsMoved, ROOTS_MOVED } from './roots-moved'
 import { readSession } from './session'
 
 /** Where the spaces folder was when this storage was last written. */
@@ -79,7 +80,7 @@ export function restate(was: string, now: string, storage: Storage = localStorag
   const keys: string[] = []
   for (let at = 0; at < storage.length; at++) {
     const key = storage.key(at)
-    if (key?.startsWith('nib:') && key !== SPACES_ROOT) keys.push(key)
+    if (key?.startsWith('nib:') && key !== SPACES_ROOT && key !== ROOTS_MOVED) keys.push(key)
   }
 
   for (const key of keys) {
@@ -150,6 +151,7 @@ export async function spacesMoved(): Promise<boolean> {
     // folder; see `rehome_snapshots` in history.rs. A history left behind is not a
     // reason to keep the page from starting.
     await invoke<number>('rehome_snapshots', { from: was, to: now }).catch(() => 0)
+    noteRootsMoved([{ from: was, to: now }])
     return true
   } catch {
     // Nothing to compare against: the spaces are listed afresh, as they always were.

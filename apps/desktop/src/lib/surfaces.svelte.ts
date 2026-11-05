@@ -279,6 +279,16 @@ export const keysMovedNotice = latched(() => {
   return import('./ai/KeysMoved.svelte')
 })
 
+/** What says a folder outside Orden's own was taken in (#552), for the line below. */
+export const OUTSIDE = 'nib:outside-folder'
+
+/** The line that says a spaces folder outside Orden's own was taken in (#552), fetched
+ *  only for the launch that says it; see OutsideFolder.svelte. */
+export const outsideNotice = latched(() => {
+  if (__EVEN_PLUGIN__) throw new Error('no spaces folder in the Even Realities plugin')
+  return import('./OutsideFolder.svelte')
+})
+
 /** What the app menu's rows are built out of: every command in the app, named, asked
  *  whether it may run, with the export list and the shortcut hints beside them. Not a
  *  component but the same bargain - nothing of it is worth a byte before somebody

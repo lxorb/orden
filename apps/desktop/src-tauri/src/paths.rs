@@ -446,11 +446,16 @@ pub(crate) const SPACES: &str = "Spaces";
 /// The file in the settings folder that says which folder this install's spaces are in,
 /// written the first time it is decided and read from then on, so the answer never
 /// changes under somebody's notes: not when a `Documents/Nib` appears later, made by an
-/// older build or by hand, and not when one is emptied. A path written into it by hand
-/// is where the spaces are from the next launch, which is the one way to put them
-/// somewhere else.
+/// older build or by hand, and not when one is emptied. Only Orden's own folders are
+/// taken from it; a path written into it by hand names a folder outside (#552), whose
+/// spaces are taken in once and never used where they are (outside.rs).
 #[cfg(desktop)]
 pub(crate) const SPACES_KEPT: &str = "spaces-folder";
+
+/// The folder outside Orden's own that `SPACES_KEPT` named as this launch started, until
+/// its spaces are taken in (outside.rs): nothing of it is listed, watched or written.
+#[cfg(desktop)]
+pub(crate) static SPACES_OUTSIDE: Mutex<Option<PathBuf>> = Mutex::new(None);
 
 /// What a desktop decided, once a launch, before anything else: `spaces_dir` is asked
 /// before every note, and many of the commands that ask it answer on the window's own
@@ -524,7 +529,16 @@ fn chosen_spaces(app: &AppHandle) -> Result<PathBuf, String> {
         .app_local_data_dir()
         .map_err(|error| format!("could not find the app's data folder: {error}"))?
         .join(SPACES);
-    let old = documents_nib(app).ok().filter(|dir| dir.is_dir());
+    let nib = documents_nib(app).ok();
+    let outside = outside_folder(said.as_deref(), &[Some(fresh.as_path()), nib.as_deref()]);
+    let old = nib.filter(|dir| dir.is_dir());
+    if let Some(outside) = outside {
+        if let Ok(mut pending) = SPACES_OUTSIDE.lock() {
+            *pending = Some(outside);
+        }
+        // Kept as it is until the spaces there are taken in, which writes this folder.
+        return Ok(spaces_folder(None, old, fresh));
+    }
     let chosen = spaces_folder(said.as_deref(), old, fresh);
     if folder_named(said.as_deref().map(str::trim).map(OsStr::new)).is_none() {
         // Written once; a disk that will not take it decides again next launch, the
@@ -565,6 +579,17 @@ pub(crate) fn spaces_folder(said: Option<&str>, old: Option<PathBuf>, fresh: Pat
         return kept;
     }
     old.unwrap_or(fresh)
+}
+
+/// The folder `said` names where it is none of Orden's own (`own`: the new default and
+/// `Documents/Nib`, whether it is there or not): one somebody wrote into `SPACES_KEPT`,
+/// such as an Obsidian vault or any folder Orden did not make (#552). Pure, like
+/// `spaces_folder`.
+#[cfg(desktop)]
+pub(crate) fn outside_folder(said: Option<&str>, own: &[Option<&Path>]) -> Option<PathBuf> {
+    let named = folder_named(said.map(str::trim).map(OsStr::new))?;
+    let ours = own.iter().flatten().any(|one| same_path(one, &named));
+    (!ours).then_some(named)
 }
 
 /// The same folder, made if it is not there yet. What the commands that read or
@@ -1549,6 +1574,45 @@ mod tests {
             super::spaces_folder(Some(""), Some(old.clone()), fresh),
             old
         );
+    }
+
+    /// #552: the kept answer is taken only where it names one of Orden's own folders. A
+    /// folder written into it by hand - a vault, anything Orden did not make - is outside,
+    /// even inside `Documents/Nib`, and the spaces are then where they would be without it.
+    #[cfg(desktop)]
+    #[test]
+    fn a_kept_answer_naming_somebody_else_s_folder_is_outside() {
+        let root = |parts: &[&str]| {
+            let mut all = vec![if cfg!(windows) { r"C:\" } else { "/" }];
+            all.extend_from_slice(parts);
+            path(&all)
+        };
+        let fresh = root(&["data", "ch.emilvinu.nib", "Spaces"]);
+        let nib = root(&["home", "Documents", "Nib"]);
+        let own = [Some(fresh.as_path()), Some(nib.as_path())];
+        let said = |at: &Path| format!("{}\n", at.to_string_lossy());
+
+        assert_eq!(super::outside_folder(Some(&said(&fresh)), &own), None);
+        assert_eq!(super::outside_folder(Some(&said(&nib)), &own), None);
+        assert_eq!(super::outside_folder(Some("Spaces"), &own), None);
+        assert_eq!(super::outside_folder(None, &own), None);
+
+        let vault = root(&["home", "Obsidian", "Vault"]);
+        assert_eq!(
+            super::outside_folder(Some(&said(&vault)), &own),
+            Some(vault.clone())
+        );
+        let within = root(&["home", "Documents", "Nib", "Work"]);
+        assert_eq!(
+            super::outside_folder(Some(&said(&within)), &own),
+            Some(within)
+        );
+        // `Documents/Nib` is Orden's own whether it is there or not, and only it.
+        assert_eq!(
+            super::outside_folder(Some(&said(&nib)), &[Some(fresh.as_path()), None]),
+            Some(nib.clone())
+        );
+        assert_eq!(super::spaces_folder(None, None, fresh.clone()), fresh);
     }
 
     /// Anything that is not an absolute path is not an override. A relative one would be

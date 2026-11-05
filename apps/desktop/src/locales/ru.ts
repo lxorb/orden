@@ -1335,6 +1335,10 @@ export const ru: Dictionary = {
   'Share {name}': 'Поделиться {name}',
   'Share this space': 'Поделиться пространством',
   'Export this space as Markdown and folders': 'Экспортировать пространство в Markdown и папки',
+  'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
+    'Orden больше не открывает {folder} на месте. Его пространства теперь хранятся в Orden, а папка осталась как была. Чтобы перенести из неё что-то ещё, используйте Импорт.',
+  'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
+    'Ещё не скопированы и пока есть только в той папке: {names}. Orden попробует снова при следующем запуске.',
   'Turn this space back into a folder': 'Снова сделать пространство папкой',
   'Share this note': 'Поделиться заметкой',
   'Everyone in the space already has it.': 'У всех в пространстве она уже есть.',

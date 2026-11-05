@@ -1283,6 +1283,10 @@ export const ko: Dictionary = {
   'Share {name}': '{name} 공유',
   'Share this space': '이 공간 공유',
   'Export this space as Markdown and folders': '이 공간을 Markdown과 폴더로 내보내기',
+  'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
+    'Orden은 더 이상 {folder}를 그 자리에서 열지 않습니다. 그 안의 공간은 이제 Orden에 보관되고, 폴더는 그대로 남아 있습니다. 더 가져오려면 가져오기를 사용하세요.',
+  'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
+    '아직 복사되지 않아 그 폴더에만 있습니다: {names}. Orden이 다음에 시작할 때 다시 시도합니다.',
   'Turn this space back into a folder': '이 공간을 다시 폴더로 되돌리기',
   'Share this note': '이 노트 공유',
   'Everyone in the space already has it.': '이 공간의 모두가 이미 가지고 있습니다.',

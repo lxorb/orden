@@ -380,7 +380,8 @@ the answer never changes under somebody's notes:
 | --- | --- |
 | a new install | `Spaces` in the app's local data, under the identifier: `%LOCALAPPDATA%\ch.emilvinu.nib\Spaces` on Windows, `~/Library/Application Support/ch.emilvinu.nib/Spaces` on a Mac, `$XDG_DATA_HOME/ch.emilvinu.nib/Spaces` (`~/.local/share/...`) on Linux. Emil, 2026-10-17: the folder is nothing a person should reach directly, but through Orden |
 | an install that already has `Documents/Nib` | `Documents/Nib`, where every space used to be: nobody's spaces are moved |
-| `spaces-folder` there already | the folder it names, whatever appears in Documents later; a path written into it by hand is where the spaces are from the next launch |
+| `spaces-folder` there already | the folder it names, whatever appears in Documents later, where that is one of Orden's own (the two above) |
+| `spaces-folder` naming any other folder | written by hand: an Obsidian vault, any folder Orden did not make (#552). It is never used in place. As the page starts, every space in it is copied once into Orden's own folder, checked byte for byte, under a name no space there has, and the folder is left as it was (`outside.rs`, `workspace/outside.ts`). Every path stored under each space is said again under its new root, so ids, tabs, versions and sync follow it, and only then is `spaces-folder` written with Orden's own folder. A line says so once, with the way to Import. A space that did not copy stays only there and is tried again at the next launch |
 | a phone | `Documents/Nib` as before, which is inside the app's own container there |
 
 Every space is in the one folder, synced ones included: a space Orden sync brings to this

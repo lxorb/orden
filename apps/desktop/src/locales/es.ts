@@ -1312,6 +1312,10 @@ export const es: Dictionary = {
   'Share {name}': 'Compartir {name}',
   'Share this space': 'Compartir este espacio',
   'Export this space as Markdown and folders': 'Exportar este espacio como Markdown y carpetas',
+  'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
+    'Orden ya no abre {folder} en su sitio. Sus espacios se guardan ahora en Orden y la carpeta se queda como estaba. Para traer más de ella, usa Importar.',
+  'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
+    'Aún sin copiar, así que siguen solo en esa carpeta: {names}. Orden lo intentará de nuevo la próxima vez que se inicie.',
   'Turn this space back into a folder': 'Volver a convertir este espacio en una carpeta',
   'Share this note': 'Compartir esta nota',
   'Everyone in the space already has it.': 'Todos los del espacio ya la tienen.',

@@ -1293,6 +1293,10 @@ export const bn: Dictionary = {
   'Share {name}': '{name} শেয়ার',
   'Share this space': 'এই স্পেস শেয়ার',
   'Export this space as Markdown and folders': 'এই স্পেস Markdown ও ফোল্ডার হিসেবে এক্সপোর্ট',
+  'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
+    'Orden আর {folder} জায়গাতেই খোলে না। এর স্পেসগুলো এখন Orden-এ রাখা আছে, আর ফোল্ডারটি যেমন ছিল তেমনই রাখা হয়েছে। এখান থেকে আরও আনতে ইমপোর্ট ব্যবহার করুন।',
+  'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
+    'এখনও কপি হয়নি, তাই এখনও শুধু ওই ফোল্ডারেই আছে: {names}। পরের বার চালু হলে Orden আবার চেষ্টা করবে।',
   'Turn this space back into a folder': 'এই স্পেস আবার ফোল্ডারে ফেরাও',
   'Share this note': 'এই নোট শেয়ার',
   'Everyone in the space already has it.': 'স্পেসের সবার কাছে এটি আগেই আছে।',

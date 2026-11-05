@@ -75,6 +75,8 @@
     menuBarDoor,
     undoToastNotice,
     keysMovedNotice,
+    outsideNotice,
+    OUTSIDE,
   } from './lib/surfaces.svelte'
   import { canWriteAt, canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
   import { start } from './lib/start'
@@ -88,6 +90,7 @@
   import { updates } from './lib/updates.svelte'
   import { usage } from './lib/usage.svelte'
   import { invoke, isDesktop, isNative, platform } from './lib/tauri'
+  import { storedText } from './lib/stored'
   import { theme } from './lib/theme.svelte'
   import { type ShownTab, views, viewShowing, WhenShown } from './lib/views.svelte'
   import { workspace } from './lib/workspace.svelte'
@@ -115,6 +118,9 @@
         .then((say) => (say ? keysMovedNotice.ask() : undefined))
     }, 3000)
   }
+
+  // A spaces folder outside Orden's own, taken in as the page started (#552).
+  if (isDesktop && !__EVEN_PLUGIN__ && storedText(OUTSIDE) !== null) void outsideNotice.ask()
 
   // The applications this computer runs for the reader's other devices (docs/apps.md):
   // developer mode's, on a desktop and signed in, and fetched only then.
@@ -1325,6 +1331,11 @@
     {#if keysMovedNotice.asked}
       {#await keysMovedNotice.asked then KeysMoved}
         <KeysMoved />
+      {/await}
+    {/if}
+    {#if outsideNotice.asked}
+      {#await outsideNotice.asked then OutsideFolder}
+        <OutsideFolder />
       {/await}
     {/if}
     {#if renamed.showing && renameNotice.asked}

@@ -1300,6 +1300,10 @@ export const te: Dictionary = {
   'Share this space': 'ఈ స్పేస్ షేర్ చేయి',
   'Export this space as Markdown and folders':
     'ఈ స్పేస్‌ను Markdown మరియు ఫోల్డర్‌లుగా ఎగుమతి చేయి',
+  'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
+    'Orden ఇకపై {folder} ను దాని స్థానంలోనే తెరవదు. దానిలోని స్పేస్‌లు ఇప్పుడు Orden లో ఉన్నాయి, ఫోల్డర్ అలాగే ఉంచబడింది. దాని నుంచి ఇంకా తెచ్చేందుకు ఇంపోర్ట్ వాడండి.',
+  'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
+    'ఇంకా కాపీ కాలేదు, కాబట్టి ఇంకా ఆ ఫోల్డర్‌లో మాత్రమే ఉన్నాయి: {names}. తదుపరి సారి ప్రారంభమైనప్పుడు Orden మళ్లీ ప్రయత్నిస్తుంది.',
   'Turn this space back into a folder': 'ఈ స్పేస్‌ను మళ్లీ ఫోల్డర్‌గా మార్చు',
   'Share this note': 'ఈ నోట్ షేర్ చేయి',
   'Everyone in the space already has it.': 'స్పేస్‌లోని అందరికీ ఇప్పటికే ఉంది.',

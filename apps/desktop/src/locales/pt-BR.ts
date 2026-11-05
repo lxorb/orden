@@ -1308,6 +1308,10 @@ export const ptBR: Dictionary = {
   'Share {name}': 'Compartilhar {name}',
   'Share this space': 'Compartilhar este espaço',
   'Export this space as Markdown and folders': 'Exportar este espaço como Markdown e pastas',
+  'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
+    'O Orden não abre mais {folder} no lugar. Os espaços dela agora ficam no Orden, e a pasta ficou como estava. Para trazer mais dela, use Importar.',
+  'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
+    'Ainda não copiados, então continuam só naquela pasta: {names}. O Orden tenta de novo na próxima vez que abrir.',
   'Turn this space back into a folder': 'Transformar este espaço de volta em pasta',
   'Share this note': 'Compartilhar esta nota',
   'Everyone in the space already has it.': 'Todo mundo no espaço já tem.',

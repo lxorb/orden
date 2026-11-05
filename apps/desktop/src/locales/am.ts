@@ -1280,6 +1280,10 @@ export const am: Dictionary = {
   'Share {name}': '{name} አጋራ',
   'Share this space': 'ይህን ቦታ አጋራ',
   'Export this space as Markdown and folders': 'ይህን ቦታ እንደ Markdown እና አቃፊዎች ላክ',
+  'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
+    'Orden {folder} ን ከእንግዲህ በቦታው አይከፍትም። ቦታዎቹ አሁን በOrden ውስጥ ተቀምጠዋል፤ አቃፊው እንደነበረ ቀርቷል። ተጨማሪ ከእሱ ለማምጣት «አምጣ»ን ይጠቀሙ።',
+  'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
+    'ገና አልተገለበጡም፤ ስለዚህ አሁንም በዚያ አቃፊ ውስጥ ብቻ ናቸው፦ {names}። Orden በሚቀጥለው ሲጀምር እንደገና ይሞክራል።',
   'Turn this space back into a folder': 'ይህን ቦታ ወደ አቃፊ መልስ',
   'Share this note': 'ይህን ማስታወሻ አጋራ',
   'Everyone in the space already has it.': 'በቦታው ያለ ሁሉ አስቀድሞ አለው።',

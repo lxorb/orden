@@ -1293,6 +1293,10 @@ export const ps: Dictionary = {
   'Share {name}': '{name} شريکول',
   'Share this space': 'دا ځای شريکول',
   'Export this space as Markdown and folders': 'دا ځای د Markdown او فولډرونو په توګه صادرول',
+  'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
+    'Orden نور {folder} په خپل ځای کې نه پرانیزي. د هغه ځایونه اوس په Orden کې ساتل کېږي، او فولډر لکه څنګه چې و هماغسې پرېښودل شوی. له هغه نه د نورو راوړلو لپاره واردول وکاروئ.',
+  'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
+    'لا نه دي کاپي شوي، نو لا هم یوازې په هغه فولډر کې دي: {names}. Orden به بل ځل چې پیل شي بیا هڅه وکړي.',
   'Turn this space back into a folder': 'دا ځای بېرته فولډر کړئ',
   'Share this note': 'دا يادښت شريکول',
   'Everyone in the space already has it.': 'په ځای کې هر څوک دمخه لري.',

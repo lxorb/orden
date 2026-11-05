@@ -1333,6 +1333,10 @@ export const uk: Dictionary = {
   'Share {name}': 'Поділитися {name}',
   'Share this space': 'Поділитися простором',
   'Export this space as Markdown and folders': 'Експортувати простір у Markdown і теки',
+  'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
+    'Orden більше не відкриває {folder} на місці. Його простори тепер зберігаються в Orden, а теку залишено такою, як була. Щоб перенести з неї ще щось, скористайтеся Імпортом.',
+  'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
+    'Ще не скопійовано, тож вони досі лише в тій теці: {names}. Orden спробує знову під час наступного запуску.',
   'Turn this space back into a folder': 'Знову зробити простір текою',
   'Share this note': 'Поділитися нотаткою',
   'Everyone in the space already has it.': 'У всіх у просторі вона вже є.',

@@ -1288,6 +1288,10 @@ export const jv: Dictionary = {
   'Share {name}': 'Bagi {name}',
   'Share this space': 'Bagi papan iki',
   'Export this space as Markdown and folders': 'Ekspor papan iki dadi Markdown lan folder',
+  'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
+    'Orden ora mbukak {folder} ing panggonane maneh. Papan-papane saiki disimpen ing Orden, lan folder kasebut ditinggal kaya sakdurunge. Kanggo nggawa luwih akeh saka kono, gunakake Impor.',
+  'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
+    'Durung disalin, dadi isih mung ana ing folder kasebut: {names}. Orden bakal nyoba maneh nalika diwiwiti sabanjure.',
   'Turn this space back into a folder': 'Balekake papan iki dadi folder',
   'Share this note': 'Bagi cathetan iki',
   'Everyone in the space already has it.': 'Kabeh wong ing papan iki wis duwe.',

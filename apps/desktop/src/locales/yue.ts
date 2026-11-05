@@ -1270,6 +1270,10 @@ export const yue: Dictionary = {
   'Share {name}': '分享{name}',
   'Share this space': '分享呢個空間',
   'Export this space as Markdown and folders': '將呢個空間匯出做 Markdown 同資料夾',
+  'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
+    'Orden 唔會再喺原位打開 {folder}。入面嘅空間而家放咗喺 Orden，個資料夾就保持原狀。想再匯入多啲，就用「匯入」。',
+  'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
+    '仲未複製到，所以仲係只喺嗰個資料夾度：{names}。Orden 下次開嘅時候會再試。',
   'Turn this space back into a folder': '將呢個空間變返做資料夾',
   'Share this note': '分享呢篇筆記',
   'Everyone in the space already has it.': '呢個空間入面嘅每個人都已經有喇。',

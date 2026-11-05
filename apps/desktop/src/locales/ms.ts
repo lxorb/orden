@@ -1292,6 +1292,10 @@ export const ms: Dictionary = {
   'Share {name}': 'Kongsi {name}',
   'Share this space': 'Kongsi ruang ini',
   'Export this space as Markdown and folders': 'Eksport ruang ini sebagai Markdown dan folder',
+  'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
+    'Orden tidak lagi membuka {folder} di tempatnya. Ruangnya kini disimpan dalam Orden, dan folder itu dibiarkan seperti asal. Untuk membawa masuk lebih banyak daripadanya, gunakan Import.',
+  'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
+    'Belum disalin, jadi masih hanya dalam folder itu: {names}. Orden akan mencuba lagi apabila ia dimulakan semula.',
   'Turn this space back into a folder': 'Kembalikan ruang ini kepada folder',
   'Share this note': 'Kongsi nota ini',
   'Everyone in the space already has it.': 'Semua orang dalam ruang ini sudah ada.',

@@ -154,6 +154,9 @@ mod package_manager;
 #[cfg(desktop)]
 mod pandoc;
 mod papers;
+// A spaces folder pointed at a folder outside Orden's own, taken in once; see outside.rs.
+#[cfg(desktop)]
+mod outside;
 mod paths;
 #[cfg(desktop)]
 mod pdf;
@@ -518,6 +521,9 @@ macro_rules! desktop_commands {
             launch::show_window,
             ahead::launch_ahead,
             ahead::remember_launch,
+            outside::outside_spaces,
+            outside::take_in_outside,
+            outside::settle_outside,
             default_browser::default_browser,
             default_browser::make_default_browser,
             lifecycle::keep_running,

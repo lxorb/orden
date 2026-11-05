@@ -1298,6 +1298,10 @@ export const hi: Dictionary = {
   'Share this space': 'यह स्पेस साझा करें',
   'Export this space as Markdown and folders':
     'यह स्पेस Markdown और फ़ोल्डरों के रूप में एक्सपोर्ट करें',
+  'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
+    'Orden अब {folder} को उसी जगह पर नहीं खोलता। उसके स्पेस अब Orden में रखे हैं, और फ़ोल्डर जैसा था वैसा ही छोड़ दिया गया है। उससे और लाने के लिए इंपोर्ट का इस्तेमाल करें।',
+  'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
+    'अभी कॉपी नहीं हुए, इसलिए अभी भी सिर्फ़ उसी फ़ोल्डर में हैं: {names}। अगली बार शुरू होने पर Orden फिर कोशिश करेगा।',
   'Turn this space back into a folder': 'इस स्पेस को फिर से फ़ोल्डर बनाएँ',
   'Share this note': 'यह नोट साझा करें',
   'Everyone in the space already has it.': 'स्पेस के सभी लोगों के पास यह पहले से है।',

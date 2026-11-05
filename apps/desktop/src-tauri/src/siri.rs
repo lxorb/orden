@@ -25,8 +25,8 @@ use security_framework::os::macos::code_signing::{Flags, SecCode, SecRequirement
 use tauri::AppHandle;
 
 use crate::paths::{
-    config_dir, folder_named, in_spaces, inside, made, spaces_folder, write_atomically, SPACES,
-    SPACES_DIR, SPACES_KEPT, TRASH,
+    config_dir, folder_named, in_spaces, inside, made, outside_folder, spaces_folder,
+    write_atomically, SPACES, SPACES_DIR, SPACES_KEPT, TRASH,
 };
 
 /// The inbox of a space that says nothing else: Orden's own, hidden (`INBOX_PATH` in
@@ -139,13 +139,15 @@ fn decided_spaces() -> Result<PathBuf, String> {
 /// The spaces folder as `chosen_spaces` in paths.rs finds it, with the folders it starts
 /// from already found: the one the settings folder keeps, else `Documents/Nib` where it
 /// is there, else `Spaces` in the app's data - which on a Mac is the settings folder.
-/// Not `Documents/Nib` alone, which is where spaces were only until #376.
+/// Not `Documents/Nib` alone, which is where spaces were only until #376, and never a
+/// folder outside Orden's own that the settings folder names (#552).
 fn spaces_in(settings: &Path, documents: Option<&Path>) -> PathBuf {
     let said = fs::read_to_string(settings.join(SPACES_KEPT)).ok();
-    let old = documents
-        .map(|base| base.join("Nib"))
-        .filter(|dir| dir.is_dir());
-    spaces_folder(said.as_deref(), old, settings.join(SPACES))
+    let fresh = settings.join(SPACES);
+    let nib = documents.map(|base| base.join("Nib"));
+    let outside = outside_folder(said.as_deref(), &[Some(fresh.as_path()), nib.as_deref()]);
+    let said = said.filter(|_| outside.is_none());
+    spaces_folder(said.as_deref(), nib.filter(|dir| dir.is_dir()), fresh)
 }
 
 /// The first space, alphabetical, as the space list orders them.
@@ -273,13 +275,24 @@ mod tests {
         );
 
         // And whatever the settings folder says, once the app has said it.
-        let kept = dir.path().join("Elsewhere");
+        let kept = settings.join(SPACES);
         fs::write(
             settings.join(SPACES_KEPT),
             kept.to_string_lossy().as_bytes(),
         )
         .unwrap();
         assert_eq!(spaces_in(&settings, Some(&documents)), kept);
+
+        // But never a folder of somebody else's written there by hand (#552).
+        fs::write(
+            settings.join(SPACES_KEPT),
+            dir.path().join("Elsewhere").to_string_lossy().as_bytes(),
+        )
+        .unwrap();
+        assert_eq!(
+            spaces_in(&settings, Some(&documents)),
+            documents.join("Nib")
+        );
     }
 
     #[test]

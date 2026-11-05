@@ -36,6 +36,7 @@ import { Indexing } from './indexing'
 import type { Leaving } from './keeping'
 import { forgetIndex, type IndexStore, openIndex } from '../web/index-store'
 import { pathKey, samePath } from '../space-paths'
+import { followRoots } from '../workspace/roots-moved'
 import { oneWriteAt, type Said, windows } from '../windows'
 import { waited } from '../timing'
 import { appWorld, lettingGo, readingFor, type Telling } from './app-world'
@@ -355,6 +356,7 @@ class Runner {
       return null
     }
     this.current = engine
+    await followRoots(engine.core)
     // What the browser knows of the notes it keeps no words of (#1126; indexing.ts).
     if (!isNative) {
       const store = await openIndex(user.id).catch(() => null)
@@ -459,6 +461,7 @@ class Runner {
     }
     this.local = true
     this.current = engine
+    await followRoots(engine.core)
     // The ids the account's store had, signing out, for each space's first pass here;
     // nothing carried the other way, which was for an account.
     const from = this.carriedFrom
