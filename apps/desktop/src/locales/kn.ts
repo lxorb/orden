@@ -576,6 +576,8 @@ export const kn: Dictionary = {
     'Orden ನ ಸ್ವಂತ ಹಿನ್ನೆಲೆಯ ಬದಲು, ವಿಂಡೋಗಳ ಹಿಂದೆ ಆ್ಯಪ್ ಅನ್ನು ಮಸುಕಾಗಿ ತೋರಿಸುತ್ತದೆ.',
   'Swipe in from the edge to see your notes.':
     'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ನೋಡಲು ಅಂಚಿನಿಂದ ಒಳಗೆ ಸ್ವೈಪ್ ಮಾಡಿ.',
+  'Point at the edge of the window to see your notes.':
+    'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ನೋಡಲು ಪಾಯಿಂಟರ್ ಅನ್ನು ವಿಂಡೋದ ಅಂಚಿಗೆ ಸರಿಸಿ.',
   'Show other tabs as icons': 'ಇತರ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಐಕಾನ್‌ಗಳಾಗಿ ತೋರಿಸಿ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ಮುಂದಿನದನ್ನು ಬಿಟ್ಟು ಪ್ರತಿ ಟ್ಯಾಬ್ ತನ್ನ ಐಕಾನ್ ಮಾತ್ರ ತೋರಿಸುತ್ತದೆ; ಒಂದರ ಮೇಲೆ ಪಾಯಿಂಟರ್ ಇಟ್ಟರೆ ಹೆಸರು ಕಾಣುತ್ತದೆ.',

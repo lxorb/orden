@@ -568,6 +568,8 @@ export const ja: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Orden 自身の背景の代わりに、ウィンドウの背後にぼかしたアプリを表示します。',
   'Swipe in from the edge to see your notes.': '端から内側へスワイプするとノートが見られます。',
+  'Point at the edge of the window to see your notes.':
+    'ポインタをウインドウの端に寄せるとノートが見られます。',
   'Show other tabs as icons': 'ほかのタブをアイコンで表示',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '手前のタブ以外はアイコンだけを表示し、ポインターを当てると名前が出ます。',

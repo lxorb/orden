@@ -572,6 +572,8 @@ export const gsw: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Zeigt d App verschwumme hinder de Fänschter statt em eigete Hintergrund vo Orden.',
   'Swipe in from the edge to see your notes.': 'Wisch vom Rand ine, zum dini Notize z gseh.',
+  'Point at the edge of the window to see your notes.':
+    'Fahr mit em Zeiger a de Rand vom Fänschter, zum dini Notize z gseh.',
   'Show other tabs as icons': 'Anderi Tabs als Symbol zeige',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Jede Tab usser em vordere zeigt nur sis Symbol; wenn du druf zeigsch, chunnt sin Name.',

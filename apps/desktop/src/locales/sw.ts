@@ -576,6 +576,8 @@ export const sw: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Huonyesha programu ikiwa imefifishwa nyuma ya madirisha, badala ya mandharinyuma ya Orden yenyewe.',
   'Swipe in from the edge to see your notes.': 'Telezesha kutoka ukingoni kuona madokezo yako.',
+  'Point at the edge of the window to see your notes.':
+    'Peleka kielekezi ukingoni mwa dirisha kuona madokezo yako.',
   'Show other tabs as icons': 'Onyesha vichupo vingine kama aikoni',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Kila kichupo isipokuwa cha mbele kinaonyesha aikoni yake tu; ukielekeza kimoja, jina lake linaonekana.',

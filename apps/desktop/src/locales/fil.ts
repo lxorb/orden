@@ -577,6 +577,8 @@ export const fil: Dictionary = {
     'Ipinapakita ang app na naka-blur sa likod ng mga window, sa halip na ang sariling background ng Orden.',
   'Swipe in from the edge to see your notes.':
     'Mag-swipe papasok mula sa gilid para makita ang iyong mga tala.',
+  'Point at the edge of the window to see your notes.':
+    'Itutok ang pointer sa gilid ng window para makita ang iyong mga tala.',
   'Show other tabs as icons': 'Ipakita ang ibang tab bilang icon',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Bawat tab maliban sa nasa harap ay icon lang ang ipinapakita; kapag tinuro ang isa, lalabas ang pangalan nito.',

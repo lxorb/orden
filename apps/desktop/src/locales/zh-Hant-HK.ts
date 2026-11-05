@@ -568,6 +568,7 @@ export const zhHantHK: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     '在視窗後顯示模糊的應用程式，而非 Orden 本身的背景。',
   'Swipe in from the edge to see your notes.': '從邊緣向內滑動即可查看筆記。',
+  'Point at the edge of the window to see your notes.': '將指標移到視窗邊緣即可查看筆記。',
   'Show other tabs as icons': '其他分頁只顯示圖示',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '除前面的分頁外，每個分頁只顯示圖示；指向某個分頁時會顯示其名稱。',

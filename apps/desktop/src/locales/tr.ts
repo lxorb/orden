@@ -573,6 +573,8 @@ export const tr: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Orden’in kendi arka planı yerine pencerelerin arkasında uygulamayı bulanık gösterir.',
   'Swipe in from the edge to see your notes.': 'Notlarını görmek için kenardan içeri kaydır.',
+  'Point at the edge of the window to see your notes.':
+    'Notlarını görmek için işaretçiyi pencerenin kenarına götür.',
   'Show other tabs as icons': 'Diğer sekmeleri simge olarak göster',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Öndeki dışındaki her sekme yalnızca simgesini gösterir; birinin üzerine gelince adı görünür.',

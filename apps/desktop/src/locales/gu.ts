@@ -571,6 +571,8 @@ export const gu: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Orden ની પોતાની પૃષ્ઠભૂમિને બદલે વિન્ડોઝ પાછળ ઍપને ઝાંખી બતાવે છે.',
   'Swipe in from the edge to see your notes.': 'તમારી નોંધો જોવા માટે કિનારેથી અંદર સ્વાઇપ કરો.',
+  'Point at the edge of the window to see your notes.':
+    'તમારી નોંધો જોવા માટે પોઇન્ટરને વિન્ડોની કિનારે લઈ જાઓ.',
   'Show other tabs as icons': 'બીજી ટૅબ આઇકન તરીકે બતાવો',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'આગળની ટૅબ સિવાય દરેક ટૅબ ફક્ત તેનું આઇકન બતાવે છે; કોઈ પર પોઇન્ટર રાખતાં તેનું નામ દેખાય છે.',

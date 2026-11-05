@@ -571,6 +571,8 @@ export const ps: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'د Orden د خپل شالید پر ځای، اپ د کړکیو شاته تت ښيي.',
   'Swipe in from the edge to see your notes.': 'خپلې یادښتونه د لیدو لپاره له څنډې دننه سوایپ کړئ.',
+  'Point at the edge of the window to see your notes.':
+    'خپلې یادښتونه د لیدو لپاره نښه د کړکۍ څنډې ته یوسئ.',
   'Show other tabs as icons': 'نور ټبونه د نښو په توګه ښکاره کړئ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'له مخکني پرته هر ټب یوازې خپله نښه ښيي؛ کله چې یو ته اشاره وکړئ، نوم یې ښکاره کېږي.',

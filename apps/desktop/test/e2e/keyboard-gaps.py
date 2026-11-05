@@ -431,15 +431,23 @@ def axe_says(page: Page, surface: str) -> None:
 
 
 def toggle_order(page: Page) -> None:
+    """A side opened from its button by a key, and where the keyboard goes (#523). On a
+    desktop the button is the side's own while it is open and the bar's, said and not
+    shown, while it is shut (#1038): Enter on the bar's opens the side and the keyboard
+    goes on to the side's own, inside it, so Tab walks on into the side and Shift+Tab
+    comes back to the button; Enter there puts the side away and the keyboard back on the
+    bar's."""
     for side, selector in (("left", ".panels:not(.right) aside"), ("right", ".panels.right aside")):
-        toggle = f"[data-side-toggle={side}]"
+        said = f"header [data-side-toggle={side}]"
+        own = f"{selector} [data-side-toggle={side}]"
         page.evaluate(
             "(side) => { const ws = window.nibApp.workspace; if (ws.openOn(side)) ws.toggleSidebar(side) }", side
         )
         quiet(page)
-        page.evaluate("(toggle) => document.querySelector(toggle).focus()", toggle)
+        page.evaluate("(toggle) => document.querySelector(toggle).focus()", said)
         press(page, "Enter")
         wait_for(page, f"window.nibApp.workspace.openOn('{side}')", f"the {side} side to open")
+        wait_for(page, f"document.activeElement === document.querySelector('{own}')", f"the {side} side's button")
         at = press(page, "Tab")
         inside = page.evaluate("(selector) => !!document.activeElement?.closest(selector)", selector)
         say(f"[toggle] {side}: Tab after opening lands on {at}")
@@ -447,16 +455,12 @@ def toggle_order(page: Page) -> None:
             wrong(f"Tab after opening the {side} sidebar did not go into it: {at}")
         at = press(page, "Shift+Tab")
         say(f"[toggle] {side}: Shift+Tab back: {at}")
-        back = page.evaluate("(toggle) => document.activeElement === document.querySelector(toggle)", toggle)
+        back = page.evaluate("(toggle) => document.activeElement === document.querySelector(toggle)", own)
         if not back:
             wrong(f"Shift+Tab did not go back to the {side} toggle: {at}")
-        # Only the press that opened it: from the toggle again Tab goes on along the bar, or
-        # the side and the toggle are a ring with no way past it.
-        at = press(page, "Tab")
-        inside = page.evaluate("(selector) => !!document.activeElement?.closest(selector)", selector)
-        say(f"[toggle] {side}: Tab again from the toggle: {at}")
-        if inside:
-            wrong(f"Tab from the {side} toggle went into the sidebar a second time: {at}")
+        press(page, "Enter")
+        wait_for(page, f"!window.nibApp.workspace.openOn('{side}')", f"the {side} side to shut")
+        wait_for(page, f"document.activeElement === document.querySelector('{said}')", f"the bar's {side} button")
 
 
 def version_row(page: Page) -> None:

@@ -586,6 +586,8 @@ export const ptPT: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Mostra a app desfocada por trás das janelas, em vez do fundo do próprio Orden.',
   'Swipe in from the edge to see your notes.': 'Deslize a partir da margem para ver as suas notas.',
+  'Point at the edge of the window to see your notes.':
+    'Leve o ponteiro até à margem da janela para ver as suas notas.',
   'Show other tabs as icons': 'Mostrar os outros separadores como ícones',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Cada separador, exceto o da frente, mostra só o ícone; ao apontar para um, aparece o nome.',

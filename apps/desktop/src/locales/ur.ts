@@ -571,6 +571,8 @@ export const ur: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'ونڈوز کے پیچھے ایپ کو دھندلا دکھاتا ہے، Orden کے اپنے پس منظر کے بجائے۔',
   'Swipe in from the edge to see your notes.': 'اپنے نوٹس دیکھنے کے لیے کنارے سے اندر سوائپ کریں۔',
+  'Point at the edge of the window to see your notes.':
+    'اپنے نوٹس دیکھنے کے لیے پوائنٹر کو ونڈو کے کنارے پر لے جائیں۔',
   'Show other tabs as icons': 'دوسرے ٹیب آئیکن کے طور پر دکھائیں',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'سامنے والے کے سوا ہر ٹیب صرف اپنا آئیکن دکھاتا ہے؛ کسی پر پوائنٹر لے جائیں تو اس کا نام دکھتا ہے۔',

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { swipeOpens } from './swipe-opens'
   import { chrome } from './glass/chrome.svelte'
+  import { edgePeek, endPeek } from './edge-peek.svelte'
   import { i18n, t } from './i18n.svelte'
   import { keepFocus } from './focus'
   import { modes } from './modes.svelte'
@@ -44,6 +45,14 @@
   $effect(() => {
     if (swiped && workspace.openOn('left')) {
       void import('./hints.svelte').then(({ hints }) => hints.dismiss('drawer'))
+    }
+  })
+
+  /** A side brought out at the window's edge: the edge has been found, so the hint about
+   *  it is put away for good, the same way (#1038). */
+  $effect(() => {
+    if (edgePeek.out || endPeek.out) {
+      void import('./hints.svelte').then(({ hints }) => hints.dismiss('edge'))
     }
   })
 
@@ -181,10 +190,17 @@
 
 <!-- The right side's one button, whatever it shows: the scratchpad is one of its tabs
      on a desktop, so this opens it on what it showed last and shuts it whole (#1032).
-     A phone's scratchpad is in the drawer's foot (#1030). -->
+     A phone's scratchpad is in the drawer's foot (#1030). On a desktop the button is the
+     side's own, in it (#1038; Sidebar.svelte), and the side comes out at the window's
+     edge; shut, the bar keeps the button said and not shown, for a screen reader and a
+     keyboard, which see it while they are on it. -->
 {#snippet rightToggle()}
-  {#if workspace.right.length || (!viewport.touch && !__EVEN_PLUGIN__)}
-    <SidebarToggle side="right" />
+  {#if viewport.touch}
+    {#if workspace.right.length}
+      <SidebarToggle side="right" />
+    {/if}
+  {:else if (workspace.right.length || !__EVEN_PLUGIN__) && workspace.rightShows === null}
+    <SidebarToggle side="right" unseen />
   {/if}
 {/snippet}
 
@@ -221,10 +237,13 @@
      fresh start's space is made (fresh-start.ts). Where a swipe from the edge pulls the
      list out as a drawer - a phone, a tablet held upright - the button is said and not
      shown (#1066): a screen reader and a keyboard still have it, and so does its key,
-     and somebody new is told about the swipe once (hints.svelte.ts). -->
+     and somebody new is told about the swipe once (hints.svelte.ts). On a desktop the
+     button is the file list's own, in its head (#1038; Sidebar.svelte), and the list comes
+     out at the window's edge; shut, the bar keeps it said and not shown in the same way,
+     and open, the list has it. -->
 {#snippet leftToggle()}
-  {#if !listless}
-    <SidebarToggle unseen={swiped} />
+  {#if !listless && (viewport.touch || !workspace.openOn('left'))}
+    <SidebarToggle unseen={swiped || !viewport.touch} />
     {#if swiped && startup.settled && !__EVEN_PLUGIN__}
       <span class="swipe-hint">
         {#await import('./HintCard.svelte') then card}
@@ -237,6 +256,22 @@
         {/await}
       </span>
     {/if}
+  {/if}
+  <!-- The same once for a pointer, whose list is brought out at the window's edge now that
+       its button is in it: told once, while the list is shut, and put away for good as
+       soon as a side has come out at an edge (#1038). -->
+  {#if !viewport.touch && !listless && startup.settled && !__EVEN_PLUGIN__}
+    <span class="swipe-hint">
+      {#await import('./HintCard.svelte') then card}
+        <card.default
+          hint="edge"
+          side="below"
+          when={!workspace.openOn('left')}
+          text={t('Point at the edge of the window to see your notes.')}
+          onpress={() => workspace.toggleSidebar()}
+        />
+      {/await}
+    </span>
   {/if}
 {/snippet}
 

@@ -569,6 +569,7 @@ export const am: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'ከOrden የራሱ ዳራ ይልቅ መተግበሪያውን ከመስኮቶቹ በስተጀርባ ደብዝዞ ያሳያል።',
   'Swipe in from the edge to see your notes.': 'ማስታወሻዎችዎን ለማየት ከጠርዙ ወደ ውስጥ ያንሸራትቱ።',
+  'Point at the edge of the window to see your notes.': 'ማስታወሻዎችዎን ለማየት ጠቋሚውን ወደ መስኮቱ ጠርዝ ይውሰዱ።',
   'Show other tabs as icons': 'ሌሎች ትሮችን እንደ አዶ አሳይ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ከፊት ካለው በስተቀር እያንዳንዱ ትር አዶውን ብቻ ያሳያል፤ ወደ አንዱ ሲጠቁሙ ስሙን ያሳያል።',

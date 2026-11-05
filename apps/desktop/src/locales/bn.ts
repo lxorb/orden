@@ -571,6 +571,8 @@ export const bn: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Orden-এর নিজস্ব পটভূমির বদলে উইন্ডোগুলোর পেছনে অ্যাপটি ঝাপসা দেখায়।',
   'Swipe in from the edge to see your notes.': 'আপনার নোট দেখতে কিনারা থেকে ভেতরে সোয়াইপ করুন।',
+  'Point at the edge of the window to see your notes.':
+    'আপনার নোট দেখতে পয়েন্টারটি উইন্ডোর কিনারায় নিন।',
   'Show other tabs as icons': 'অন্য ট্যাবগুলো আইকন হিসেবে দেখান',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'সামনের ট্যাব ছাড়া প্রতিটি ট্যাব শুধু আইকন দেখায়; কোনোটির ওপর পয়েন্টার রাখলে নাম দেখায়।',

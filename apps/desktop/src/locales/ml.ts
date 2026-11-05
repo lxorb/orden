@@ -578,6 +578,8 @@ export const ml: Dictionary = {
     'Orden-ന്റെ സ്വന്തം പശ്ചാത്തലത്തിന് പകരം, ജാലകങ്ങൾക്ക് പിന്നിൽ ആപ്പ് മങ്ങിച്ച് കാണിക്കുന്നു.',
   'Swipe in from the edge to see your notes.':
     'നിങ്ങളുടെ കുറിപ്പുകൾ കാണാൻ അരികിൽ നിന്ന് അകത്തേക്ക് സ്വൈപ്പ് ചെയ്യുക.',
+  'Point at the edge of the window to see your notes.':
+    'നിങ്ങളുടെ കുറിപ്പുകൾ കാണാൻ പോയിന്റർ വിൻഡോയുടെ അരികിലേക്ക് നീക്കുക.',
   'Show other tabs as icons': 'മറ്റ് ടാബുകൾ ഐക്കണുകളായി കാണിക്കുക',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'മുന്നിലുള്ളതൊഴികെ ഓരോ ടാബും ഐക്കൺ മാത്രം കാണിക്കുന്നു; ഒന്നിലേക്ക് ചൂണ്ടുമ്പോൾ പേര് കാണാം.',

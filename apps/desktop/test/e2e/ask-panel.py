@@ -213,8 +213,12 @@ def the_sides(page: Page) -> None:
     say(f"the sides as the window opens: {sides}")
     if sides["right"] != ["outline", "links", "ask", "tasks"] or sides["open"]:
         wrong(f"the right side does not start homed and shut: {sides}")
-    if page.locator("button.toggle.right").count() != 1:
-        wrong("the right side's button is not in the bar")
+    # The side's own button, at the end of its first row, and shut, the bar's said one for a
+    # screen reader and a keyboard (#1038).
+    if page.locator(".panels.right button.toggle.right").count() != 1:
+        wrong("the right side has no button of its own")
+    if page.locator("header button.toggle.right.nib-said").count() != 1:
+        wrong("the bar does not say the shut right side's button")
 
     page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
     page.keyboard.press("Control+Alt+b")

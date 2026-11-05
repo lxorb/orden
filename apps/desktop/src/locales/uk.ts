@@ -594,6 +594,8 @@ export const uk: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Показує розмитий застосунок за вікнами замість власного тла Orden.',
   'Swipe in from the edge to see your notes.': 'Проведіть від краю, щоб побачити нотатки.',
+  'Point at the edge of the window to see your notes.':
+    'Наведіть вказівник на край вікна, щоб побачити нотатки.',
   'Show other tabs as icons': 'Показувати інші вкладки значками',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Кожна вкладка, крім передньої, показує лише значок; якщо навести на неї, з’являється назва.',

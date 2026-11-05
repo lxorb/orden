@@ -98,6 +98,14 @@ describe('the list out over the note', () => {
     expect(peek.out).toBe(true)
   })
 
+  test('stays while the pointer rests at the edge that brought it out, outside the card', () => {
+    at(1)
+    at(0)
+    at(2)
+    vi.advanceTimersByTime(GRACE * 4)
+    expect(peek.out).toBe(true)
+  })
+
   test('goes a moment after the pointer leaves it', () => {
     at(600)
     vi.advanceTimersByTime(GRACE - 1)
@@ -145,14 +153,71 @@ describe('the list out over the note', () => {
   })
 })
 
+describe('the right side, at the other edge (#1038)', () => {
+  let end: EdgePeek
+  let off: () => void
+  /** The bar's height: the right side stands under it. */
+  const BAR = 38
+
+  beforeEach(() => {
+    end = new EdgePeek(true)
+    off = end.watch({
+      ...room,
+      top: () => BAR,
+      over: (x) => (room.rightToLeft ? x <= LIST : x >= WIDTH - LIST),
+    })
+  })
+
+  afterEach(() => off())
+
+  const near = (clientX: number, clientY = 300) =>
+    end.moved({ clientX, clientY, buttons: 0, pointerType: 'mouse' })
+
+  test('comes out at the end edge, not the start one', () => {
+    near(0)
+    expect(end.out).toBe(false)
+    near(WIDTH - 1)
+    expect(end.out).toBe(true)
+  })
+
+  test('and at the start edge where the window reads right to left', () => {
+    room.rightToLeft = true
+    near(WIDTH - 1)
+    expect(end.out).toBe(false)
+    near(0)
+    expect(end.out).toBe(true)
+  })
+
+  test("not beside the bar, where the edge is the window's buttons' corner", () => {
+    near(WIDTH - 1, BAR - 1)
+    expect(end.out).toBe(false)
+    near(WIDTH - 1, BAR)
+    expect(end.out).toBe(true)
+  })
+
+  test('stays while the pointer rests at its own edge', () => {
+    near(WIDTH - 1)
+    near(WIDTH - 2)
+    vi.advanceTimersByTime(GRACE * 2)
+    expect(end.out).toBe(true)
+  })
+
+  test('goes once the pointer has left it, after the same grace', () => {
+    near(WIDTH - 1)
+    near(400)
+    vi.advanceTimersByTime(GRACE)
+    expect(end.out).toBe(false)
+  })
+})
+
 /** What the left side asks before the list comes out, and what it is once it is: read
  *  out of Sidebar.svelte, which is where the window is described to it. */
-describe('the left side', () => {
+describe('each side', () => {
   const sidebar = readFileSync(new URL('./Sidebar.svelte', import.meta.url), 'utf8')
 
   test('lets it out only shut, as a column, outside full screen and under nothing', () => {
     for (const rule of [
-      'workspace.panel === null',
+      "(side === 'left' ? workspace.panel === null : workspace.rightShows === null)",
       '!viewport.drawer',
       '!fullscreen.on',
       '!alone.on',
@@ -160,12 +225,13 @@ describe('the left side', () => {
       'overlays.depth === 0',
     ])
       expect(sidebar, rule).toContain(rule)
-    expect(sidebar).toMatch(/if \(side !== 'left' \|\| viewport\.touch\) return/)
+    expect(sidebar).toMatch(/if \(viewport\.touch\) return\s+const stop = peeker\.watch\(/)
+    expect(sidebar).toContain("const peeker = $derived(side === 'left' ? edgePeek : endPeek)")
   })
 
   test('and out, it is a layer on the stack: Escape, a press past it, a web page stepping aside', () => {
     expect(sidebar).toMatch(
-      /peek\s*\?\s*overlays\.show\(\s*\(\) => edgePeek\.hide\(\),\s*\(\) => \[aside\],?\s*\)/,
+      /peek\s*\?\s*overlays\.show\(\s*\(\) => peeker\.hide\(\),\s*\(\) => \[aside\],?\s*\)/,
     )
   })
 
@@ -188,6 +254,11 @@ describe('the left side', () => {
         ':global(:root:not([data-touch], [data-drawer])) .column.shut:not(.moving, .right, .peek) aside',
       ),
     ).toMatch(/transform: translateX\(calc\(var\(--dir\) \* \(-100%/)
+    expect(
+      rule(
+        ':global(:root:not([data-touch], [data-drawer])) .column.right.shut:not(.moving, .peek) aside',
+      ),
+    ).toMatch(/transform: translateX\(calc\(var\(--dir\) \* \(100%/)
     expect(rule('.column.shut.floating.peek aside')).toMatch(/transform: none;/)
     const effect = sidebar.slice(sidebar.indexOf('let floating = $state(false)'))
     expect(effect.slice(0, effect.indexOf('/** Whether a row is being carried'))).not.toMatch(
@@ -214,6 +285,9 @@ describe('the left side', () => {
       'border: 0;',
     ])
       expect(card, token).toContain(token)
+    expect(rule('.column.right.shut.floating aside')).toContain(
+      'inset-inline: auto var(--card-inset);',
+    )
   })
 
   /** The bar a filled window brings down at its top edge is the same gesture, and keeps

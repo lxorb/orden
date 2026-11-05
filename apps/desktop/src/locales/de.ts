@@ -576,6 +576,8 @@ export const de: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Zeigt die App weichgezeichnet hinter den Fenstern statt Ordens eigenem Hintergrund.',
   'Swipe in from the edge to see your notes.': 'Wische vom Rand herein, um deine Notizen zu sehen.',
+  'Point at the edge of the window to see your notes.':
+    'Fahre mit dem Zeiger an den Fensterrand, um deine Notizen zu sehen.',
   'Show other tabs as icons': 'Andere Tabs als Symbole zeigen',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Jeder Tab außer dem vorderen zeigt nur sein Symbol; zeigst du auf einen, erscheint sein Name.',

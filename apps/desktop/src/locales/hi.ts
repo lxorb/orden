@@ -572,6 +572,8 @@ export const hi: Dictionary = {
     'Orden की अपनी पृष्ठभूमि के बजाय विंडो के पीछे ऐप को धुंधला दिखाता है।',
   'Swipe in from the edge to see your notes.':
     'अपने नोट्स देखने के लिए किनारे से अंदर स्वाइप करें।',
+  'Point at the edge of the window to see your notes.':
+    'अपने नोट्स देखने के लिए पॉइंटर को विंडो के किनारे पर ले जाएँ।',
   'Show other tabs as icons': 'बाकी टैब आइकन के रूप में दिखाएँ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'सामने वाले को छोड़ हर टैब सिर्फ़ अपना आइकन दिखाता है; किसी पर पॉइंटर ले जाने पर उसका नाम दिखता है।',

@@ -568,6 +568,7 @@ export const zhHans: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     '在窗口后显示模糊的应用，而不是 Orden 自己的背景。',
   'Swipe in from the edge to see your notes.': '从边缘向内滑动即可查看笔记。',
+  'Point at the edge of the window to see your notes.': '将指针移到窗口边缘即可查看笔记。',
   'Show other tabs as icons': '其他标签页只显示图标',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '除前面的标签页外，每个标签页只显示图标；指向某个标签页时会显示其名称。',

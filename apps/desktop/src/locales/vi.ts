@@ -568,6 +568,8 @@ export const vi: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Hiển thị ứng dụng bị làm mờ phía sau các cửa sổ, thay cho nền riêng của Orden.',
   'Swipe in from the edge to see your notes.': 'Vuốt vào từ mép để xem ghi chú của bạn.',
+  'Point at the edge of the window to see your notes.':
+    'Đưa con trỏ tới mép cửa sổ để xem ghi chú của bạn.',
   'Show other tabs as icons': 'Hiện các thẻ khác dưới dạng biểu tượng',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Mọi thẻ trừ thẻ ở phía trước chỉ hiện biểu tượng; trỏ vào một thẻ sẽ thấy tên của nó.',

@@ -569,6 +569,8 @@ export const jv: Dictionary = {
     'Nuduhaké aplikasi burek ing mburi jendhela, tinimbang latar mburi Orden dhéwé.',
   'Swipe in from the edge to see your notes.':
     'Gesek mlebu saka pinggir kanggo ndeleng cathetanmu.',
+  'Point at the edge of the window to see your notes.':
+    'Pindhahna penunjuk menyang pinggir jendhela kanggo ndeleng cathetanmu.',
   'Show other tabs as icons': 'Tampilake tab liyane minangka lambang',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Saben tab kajaba sing ngarep mung nampilake lambange; yen diarahake, jenenge katon.',

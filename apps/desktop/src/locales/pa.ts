@@ -574,6 +574,8 @@ export const pa: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Orden ਦੇ ਆਪਣੇ ਪਿਛੋਕੜ ਦੀ ਥਾਂ ਵਿੰਡੋਆਂ ਦੇ ਪਿੱਛੇ ਐਪ ਨੂੰ ਧੁੰਦਲਾ ਦਿਖਾਉਂਦਾ ਹੈ।',
   'Swipe in from the edge to see your notes.': 'ਆਪਣੇ ਨੋਟ ਦੇਖਣ ਲਈ ਕਿਨਾਰੇ ਤੋਂ ਅੰਦਰ ਸਵਾਈਪ ਕਰੋ।',
+  'Point at the edge of the window to see your notes.':
+    'ਆਪਣੇ ਨੋਟ ਦੇਖਣ ਲਈ ਪੁਆਇੰਟਰ ਨੂੰ ਵਿੰਡੋ ਦੇ ਕਿਨਾਰੇ ਉੱਤੇ ਲੈ ਜਾਓ।',
   'Show other tabs as icons': 'ਹੋਰ ਟੈਬ ਆਈਕਨ ਵਜੋਂ ਦਿਖਾਓ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ਅੱਗੇ ਵਾਲੀ ਤੋਂ ਬਿਨਾਂ ਹਰ ਟੈਬ ਸਿਰਫ਼ ਆਪਣਾ ਆਈਕਨ ਦਿਖਾਉਂਦੀ ਹੈ; ਕਿਸੇ ਉੱਤੇ ਪੁਆਇੰਟਰ ਲਿਆਉਣ ਨਾਲ ਨਾਂ ਦਿਖਦਾ ਹੈ।',

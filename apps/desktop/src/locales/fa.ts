@@ -571,6 +571,8 @@ export const fa: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'برنامه را پشت پنجره‌ها محو نشان می‌دهد، به‌جای پس‌زمینهٔ خود Orden.',
   'Swipe in from the edge to see your notes.': 'برای دیدن یادداشت‌هایتان از لبه به داخل بکشید.',
+  'Point at the edge of the window to see your notes.':
+    'برای دیدن یادداشت‌هایتان نشانگر را به لبهٔ پنجره ببرید.',
   'Show other tabs as icons': 'نمایش زبانه‌های دیگر به‌صورت نماد',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'هر زبانه جز زبانهٔ جلو فقط نمادش را نشان می‌دهد؛ با اشاره به یکی، نامش نمایان می‌شود.',

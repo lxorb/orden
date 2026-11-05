@@ -571,6 +571,8 @@ export const mr: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Orden च्या स्वतःच्या पार्श्वभूमीऐवजी विंडोंमागे ॲप धूसर दाखवते.',
   'Swipe in from the edge to see your notes.': 'तुमच्या नोंदी पाहण्यासाठी कडेपासून आत स्वाइप करा.',
+  'Point at the edge of the window to see your notes.':
+    'तुमच्या नोंदी पाहण्यासाठी पॉइंटर विंडोच्या कडेला न्या.',
   'Show other tabs as icons': 'इतर टॅब चिन्हांच्या रूपात दाखवा',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'पुढच्या टॅबशिवाय प्रत्येक टॅब फक्त त्याचे चिन्ह दाखवतो; एकावर पॉइंटर नेल्यास त्याचे नाव दिसते.',

@@ -568,6 +568,8 @@ export const id: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Menampilkan aplikasi buram di balik jendela, bukan latar belakang Orden sendiri.',
   'Swipe in from the edge to see your notes.': 'Geser masuk dari tepi untuk melihat catatanmu.',
+  'Point at the edge of the window to see your notes.':
+    'Arahkan penunjuk ke tepi jendela untuk melihat catatanmu.',
   'Show other tabs as icons': 'Tampilkan tab lain sebagai ikon',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Setiap tab kecuali yang di depan hanya menampilkan ikonnya; arahkan ke salah satunya untuk melihat namanya.',

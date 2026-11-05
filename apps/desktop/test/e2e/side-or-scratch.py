@@ -62,10 +62,27 @@ async (press) => {
 #: The scratchpad's tab and the outline's on the right side, and the side's one button.
 PAD = '[data-tab="scratchpad"]'
 OUTLINE = '[data-tab="outline"]'
-RIGHT = 'header [data-side-toggle="right"]'
+#: The right side's own button, at the end of its first row (#1038).
+RIGHT = '.panels.right [data-side-toggle="right"]'
 PRESS_PAD = f"document.querySelector('{PAD}').click()"
 #: A phone's scratchpad, in the left drawer's foot.
 FOOT_PAD = '[data-region="foot"] button[aria-label="Scratchpad"]'
+
+
+def press_right(page: Page) -> None:
+    """The right side's one button, by the pointer: shut, the side is brought out at the
+    window's end edge first, where its button is (#1038)."""
+    if not page.evaluate("() => window.nibApp.workspace.rightShows !== null"):
+        width = page.viewport_size["width"]
+        # Until it comes: a side built late in the launch hears no move before it is.
+        for _ in range(20):
+            page.mouse.move(width / 2, 400)
+            page.mouse.move(width - 1, 400)
+            page.wait_for_timeout(100)
+            if page.locator(".column.right.peek").count():
+                break
+        page.locator(".column.right.peek").wait_for(state="attached", timeout=5000)
+    page.locator(RIGHT).click()
 
 
 def smooth(frames: list[list[int]], what: str) -> None:
@@ -119,7 +136,7 @@ def desktop(browser: Browser) -> None:
     say(f"the side's button over the card: {now}")
     if now["side"] is not None or now["pad"]:
         wrong(f"the right side's button did not shut the side whole: {now}")
-    page.locator(RIGHT).click()
+    press_right(page)
     page.wait_for_timeout(500)
     now = edge(page)
     say(f"the side's button again: {now}")

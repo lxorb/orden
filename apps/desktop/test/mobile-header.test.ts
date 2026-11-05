@@ -51,7 +51,9 @@ describe('the button that opens the file list', () => {
       ['lib/Sidebar.svelte', sidebar],
     ] as const) {
       expect(text, `${name} draws the glyph again`).not.toContain(PANEL)
-      expect(text, `${name} uses the component`).toMatch(/<SidebarToggle( unseen=\{swiped\})? \/>/)
+      expect(text, `${name} uses the component`).toMatch(
+        /<SidebarToggle( unseen=\{swiped \|\| !viewport\.touch\})? \/>/,
+      )
     }
   })
 
@@ -60,7 +62,9 @@ describe('the button that opens the file list', () => {
    *  opened a list of a space that did not exist yet. So the bar does not offer it.
    *  The plus stays: a tab is how a note is written with no space yet. */
   test('is not in the bar while there is nothing to list', () => {
-    expect(titlebar).toMatch(/\{#if !listless\}\s*<SidebarToggle unseen=\{swiped\} \/>/)
+    expect(titlebar).toMatch(
+      /\{#if !listless && \(viewport\.touch \|\| !workspace\.openOn\('left'\)\)\}\s*<SidebarToggle unseen=\{swiped \|\| !viewport\.touch\} \/>/,
+    )
     expect(titlebar).toContain('!workspace.spaces.length && !workspace.tabs.length')
   })
 
@@ -112,8 +116,8 @@ describe('the button that opens the file list', () => {
 
   /** Where the sidebar is a drawer it covers the bar the button sits in, so the
    *  drawer's own head carries the same button at the same corner of the screen -
-   *  and only there, or a tablet with the sidebar docked beside the note would
-   *  have two of them in one row.
+   *  and there or on a desktop, where the button is the list's own (#1038), or a tablet
+   *  with the sidebar docked beside the note would have two of them in one row.
    *
    *  Read with the whitespace squeezed out: what this is about is the condition
    *  around the button, and the head it sits in is itself inside a condition now.
@@ -122,8 +126,36 @@ describe('the button that opens the file list', () => {
   test('is in the drawer head exactly where the sidebar is a drawer', () => {
     const squeezed = sidebar.replace(/\s+/g, ' ')
 
-    expect(squeezed).toContain('{#if viewport.drawer} <SidebarToggle /> {/if}')
+    expect(squeezed).toContain('{#if viewport.drawer || !viewport.touch} <SidebarToggle /> {/if}')
     expect(squeezed).toContain('{#if side === \'left\'} <div class="head"')
+  })
+})
+
+/** On a desktop each side's button is in the side (#1038): the file list's in its head,
+ *  the right side's at the end of its first row, both at the window's edge the side comes
+ *  out of. Shut, the bar keeps the button said and not shown, for a screen reader and a
+ *  keyboard; a finger, which has no edge to hover, keeps the bar's as it was. */
+describe("the sides' buttons on a desktop", () => {
+  test('are in the sides', () => {
+    expect(sidebar.replace(/\s+/g, ' ')).toContain(
+      '{#if side === \'right\' && !viewport.touch} <SidebarToggle side="right" /> {/if}',
+    )
+  })
+
+  test('are in the bar only while the side is shut, and only said there', () => {
+    const squeezed = titlebar.replace(/\s+/g, ' ')
+    expect(squeezed).toContain(
+      '{:else if (workspace.right.length || !__EVEN_PLUGIN__) && workspace.rightShows === null} <SidebarToggle side="right" unseen />',
+    )
+    expect(squeezed).toContain(
+      '{#if viewport.touch} {#if workspace.right.length} <SidebarToggle side="right" /> {/if}',
+    )
+  })
+
+  test('and somebody new is told once that the edge brings the list out', () => {
+    expect(titlebar).toMatch(/hint="edge"/)
+    expect(titlebar).toContain("when={!workspace.openOn('left')}")
+    expect(read('lib/hints.svelte.ts')).toMatch(/HINTS = \['drawer', 'edge'/)
   })
 })
 

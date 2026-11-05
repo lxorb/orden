@@ -28,8 +28,9 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 PLAN = "# Plan\n\nWhat we are doing this week, and why it matters.\n"
 
-#: The right side's one button in the bar, and the scratchpad's tab on that side (#1032).
-RIGHT = 'header [data-side-toggle="right"]'
+#: The right side's one button, at the end of its first row (#1038), and the scratchpad's
+#: tab on that side (#1032).
+RIGHT = '.panels.right [data-side-toggle="right"]'
 PAD_TAB = '[data-tab="scratchpad"]'
 #: A phone's: the scratchpad's glyph in the left drawer's foot (#1030).
 FOOT_GLYPH = '[data-region="foot"] button[aria-label="Scratchpad"]'
@@ -61,6 +62,22 @@ STATE = """() => ({
 })"""
 
 
+def press_right(page: Page) -> None:
+    """The right side's one button, by the pointer: shut, the side is brought out at the
+    window's end edge first, where its button is (#1038)."""
+    if not page.evaluate("() => window.nibApp.workspace.rightShows !== null"):
+        width = page.viewport_size["width"]
+        # Until it comes: a side built late in the launch hears no move before it is.
+        for _ in range(20):
+            page.mouse.move(width / 2, 400)
+            page.mouse.move(width - 1, 400)
+            page.wait_for_timeout(100)
+            if page.locator(".column.right.peek").count():
+                break
+        page.locator(".column.right.peek").wait_for(state="attached", timeout=5000)
+    page.locator(RIGHT).click()
+
+
 def opened(browser: Browser, scheme: str, phone: bool = False) -> Page:
     page = DRIVE.page(
         browser,
@@ -80,7 +97,7 @@ def show_pad(page: Page) -> None:
     """The scratchpad by the pointer on a desktop: the right side's button if the side is
     shut, then the scratchpad's tab on it."""
     if not page.locator(PAD_TAB).is_visible():
-        page.locator(RIGHT).click()
+        press_right(page)
         page.locator(PAD_TAB).wait_for(state="visible", timeout=5000)
     if page.locator(PAD_TAB).get_attribute("aria-selected") != "true":
         page.locator(PAD_TAB).click()
@@ -166,7 +183,7 @@ def desktop(browser: Browser, scheme: str) -> None:
     shot(page, f"{scheme}/04-after-a-reload")
 
     # The right side's button shuts the side whole, the card with it (#1032).
-    page.locator(RIGHT).click()
+    press_right(page)
     page.wait_for_timeout(400)
     gone(page)
     if page.evaluate(STATE)["card"]:

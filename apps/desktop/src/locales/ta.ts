@@ -573,6 +573,8 @@ export const ta: Dictionary = {
     'Orden-இன் சொந்தப் பின்னணிக்குப் பதிலாக, சாளரங்களின் பின்னால் செயலியை மங்கலாகக் காட்டும்.',
   'Swipe in from the edge to see your notes.':
     'உங்கள் குறிப்புகளைப் பார்க்க ஓரத்திலிருந்து உள்ளே தேய்க்கவும்.',
+  'Point at the edge of the window to see your notes.':
+    'உங்கள் குறிப்புகளைப் பார்க்க சுட்டியைச் சாளரத்தின் ஓரத்திற்குக் கொண்டு செல்லவும்.',
   'Show other tabs as icons': 'மற்ற தாவல்களை உருவங்களாகக் காட்டு',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'முன்னால் உள்ளதைத் தவிர ஒவ்வொரு தாவலும் உருவத்தை மட்டும் காட்டும்; ஒன்றின் மேல் சுட்டினால் அதன் பெயர் தெரியும்.',

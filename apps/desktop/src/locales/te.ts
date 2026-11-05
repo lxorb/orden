@@ -573,6 +573,8 @@ export const te: Dictionary = {
     'Orden సొంత నేపథ్యానికి బదులుగా, విండోల వెనుక యాప్‌ను మసకగా చూపిస్తుంది.',
   'Swipe in from the edge to see your notes.':
     'మీ నోట్‌లను చూడడానికి అంచు నుండి లోపలికి స్వైప్ చేయండి.',
+  'Point at the edge of the window to see your notes.':
+    'మీ నోట్‌లను చూడడానికి పాయింటర్‌ను విండో అంచుకు తీసుకెళ్లండి.',
   'Show other tabs as icons': 'ఇతర ట్యాబ్‌లను ఐకాన్‌లుగా చూపించు',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ముందున్నది తప్ప ప్రతి ట్యాబ్ తన ఐకాన్ మాత్రమే చూపిస్తుంది; ఒకదానిపై పాయింటర్ ఉంచితే పేరు కనిపిస్తుంది.',

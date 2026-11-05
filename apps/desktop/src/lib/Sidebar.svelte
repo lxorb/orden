@@ -54,7 +54,7 @@
   import { search } from './search.svelte'
   import { SidebarWidth } from './sidebar-width.svelte'
   import { viewport } from './viewport.svelte'
-  import { edgePeek } from './edge-peek.svelte'
+  import { edgePeek, endPeek } from './edge-peek.svelte'
   import { overlays } from './overlays'
   import { fullscreen } from './fullscreen.svelte'
   import { alone } from './alone.svelte'
@@ -178,9 +178,11 @@
   const shut = $derived(!open || !entered)
 
   /** Brought out over the note by the pointer reaching the window's edge, while the
-   *  left side is shut: Zen's way (#1034; see edge-peek.svelte.ts). Not opened: the
-   *  note does not move, and the list goes again once the pointer has left it. */
-  const peek = $derived(side === 'left' && shut && edgePeek.out)
+   *  side is shut: Zen's way (#1034; see edge-peek.svelte.ts), the left side at the start
+   *  edge and the right one at the end edge (#1038). Not opened: the note does not move,
+   *  and the side goes again once the pointer has left it. */
+  const peeker = $derived(side === 'left' ? edgePeek : endPeek)
+  const peek = $derived(shut && peeker.out)
   /** Whether it is floating over the note at all, which outlasts `peek` by the slide
    *  back. No frame waited for between the two: shut, the panel already stands past the
    *  window's edge (see `.column.shut`), so the slide in starts on the style change that
@@ -205,13 +207,17 @@
   /** Whether a row is being carried out of the list, which keeps it out until it lands. */
   let carrying = false
 
-  // The edge is watched by the left side alone, and only with a pointer: a drawer has
-  // an edge of its own, dragged by a finger.
+  /** The column, whose top is where the edge beside it starts: the left one runs the
+   *  window's height, the right one stands under the bar. */
+  let column = $state<HTMLElement>()
+
+  // Each side watches its own edge, and only with a pointer: a drawer has an edge of its
+  // own, dragged by a finger.
   $effect(() => {
-    if (side !== 'left' || viewport.touch) return
-    const stop = edgePeek.watch({
+    if (viewport.touch) return
+    const stop = peeker.watch({
       may: () =>
-        workspace.panel === null &&
+        (side === 'left' ? workspace.panel === null : workspace.rightShows === null) &&
         !viewport.drawer &&
         !fullscreen.on &&
         !alone.on &&
@@ -219,6 +225,7 @@
         overlays.depth === 0,
       width: () => window.innerWidth,
       rtl: () => getComputedStyle(document.documentElement).direction === 'rtl',
+      top: () => column?.getBoundingClientRect().top ?? 0,
       over: (x, y) => {
         const box = aside?.getBoundingClientRect()
         return !!box && x >= box.left && x <= box.right && y >= box.top && y <= box.bottom
@@ -233,9 +240,9 @@
         return carrying || typing || overlays.depth > 1
       },
     })
-    const moved = (event: PointerEvent) => edgePeek.moved(event)
+    const moved = (event: PointerEvent) => peeker.moved(event)
     const out = (event: MouseEvent) => {
-      if (event.relatedTarget === null) edgePeek.away()
+      if (event.relatedTarget === null) peeker.away()
     }
     const carried = (event: DragEvent) => {
       carrying = event.type === 'dragstart' && !!aside?.contains(event.target as Node)
@@ -259,13 +266,13 @@
   $effect(() =>
     peek
       ? overlays.show(
-          () => edgePeek.hide(),
+          () => peeker.hide(),
           () => [aside],
         )
       : undefined,
   )
   $effect(() => {
-    if (side === 'left' && !shut) untrack(() => edgePeek.hide())
+    if (!shut) untrack(() => peeker.hide())
   })
 
   /** Whether the column is sliding, which is the only time it clips: at rest an
@@ -692,6 +699,7 @@
      width the moment it exists, or the drag that opened it measures a sidebar
      still growing; there the column is no box at all. -->
 <div
+  bind:this={column}
   class="column"
   class:right={side === 'right'}
   class:shut
@@ -762,9 +770,11 @@
         <!-- Where the panel is a drawer over the note it covers the bar the sidebar
          button sits in, so the drawer carries the same button at the same corner
          of the screen - one component, one glyph, one movement; see
-         SidebarToggle.svelte. A docked panel leaves the bar's own button where
-         it is and has none of its own. -->
-        {#if viewport.drawer}
+         SidebarToggle.svelte. On a desktop the button is the panel's own wherever
+         it is, docked or brought out at the window's edge (#1038), and the bar keeps
+         only what is the window's. A panel docked by a finger, which has no edge to
+         hover, leaves the bar's own button where it is and has none of its own. -->
+        {#if viewport.drawer || !viewport.touch}
           <SidebarToggle />
         {/if}
 
@@ -1007,6 +1017,12 @@
           >
             <svg viewBox="0 0 13 13"><path d={THREADS_MARK} /></svg>
           </button>
+        {/if}
+        <!-- The right side's own button, at the end of its first row, which is the window's
+             edge it slides out of and back into (#1038): the bar keeps only what is the
+             window's. A drawer from the right is put away by its scrim and the bar's. -->
+        {#if side === 'right' && !viewport.touch}
+          <SidebarToggle side="right" />
         {/if}
       </div>
     </div>
@@ -1264,9 +1280,14 @@
      its shadow: there is nothing to see of it, and the slide out over the note has its
      start already, so it begins on the style change that floats it rather than a frame
      after, and slides back to it once the pointer has gone. Only where it can come out:
-     a drawer's panel is placed by its drawer. */
+     a drawer's panel is placed by its drawer. The right one the same past the other edge
+     (#1038). */
   :global(:root:not([data-touch], [data-drawer])) .column.shut:not(.moving, .right, .peek) aside {
     transform: translateX(calc(var(--dir) * (-100% - var(--card-inset) - var(--space-6))));
+  }
+
+  :global(:root:not([data-touch], [data-drawer])) .column.right.shut:not(.moving, .peek) aside {
+    transform: translateX(calc(var(--dir) * (100% + var(--card-inset) + var(--space-6))));
   }
 
   /* Brought out by the pointer at the window's edge (#1034): a card over the note, in
@@ -1298,6 +1319,11 @@
     /* Begun a frame in: a transition is drawn at its start on the frame it begins, which
        is a frame with nothing of the list to see yet. */
     transition: transform var(--dur-fast) var(--ease-out) -16ms;
+  }
+
+  /* The right side's from the other edge, and under the bar, as its column is. */
+  .column.right.shut.floating aside {
+    inset-inline: auto var(--card-inset);
   }
 
   .column.shut.floating.peek aside {

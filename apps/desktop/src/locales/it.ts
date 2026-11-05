@@ -581,6 +581,8 @@ export const it: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Mostra l’app sfocata dietro le finestre, invece dello sfondo di Orden.',
   'Swipe in from the edge to see your notes.': 'Scorri dal bordo per vedere le tue note.',
+  'Point at the edge of the window to see your notes.':
+    'Porta il puntatore sul bordo della finestra per vedere le tue note.',
   'Show other tabs as icons': 'Mostra le altre schede come icone',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Ogni scheda tranne quella in primo piano mostra solo la sua icona; puntandone una ne appare il nome.',

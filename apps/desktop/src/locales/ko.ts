@@ -568,6 +568,8 @@ export const ko: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     'Orden 자체 배경 대신 창 뒤에 앱을 흐리게 표시합니다.',
   'Swipe in from the edge to see your notes.': '가장자리에서 안쪽으로 밀어 노트를 보세요.',
+  'Point at the edge of the window to see your notes.':
+    '포인터를 창 가장자리로 옮겨 노트를 보세요.',
   'Show other tabs as icons': '다른 탭을 아이콘으로 보기',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '앞에 있는 탭을 빼고 모든 탭이 아이콘만 보여 주며, 가리키면 이름이 나타납니다.',

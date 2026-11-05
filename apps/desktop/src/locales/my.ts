@@ -570,6 +570,8 @@ export const my: Dictionary = {
     'Orden ၏ ကိုယ်ပိုင်နောက်ခံအစား ဝင်းဒိုးများနောက်တွင် အက်ပ်ကို ဝါးဝါးပြသည်။',
   'Swipe in from the edge to see your notes.':
     'သင့်မှတ်စုများကို ကြည့်ရန် အစွန်းမှ အတွင်းသို့ ပွတ်ဆွဲပါ။',
+  'Point at the edge of the window to see your notes.':
+    'သင့်မှတ်စုများကို ကြည့်ရန် ညွှန်တံကို ဝင်းဒိုး၏ အစွန်းသို့ ရွှေ့ပါ။',
   'Show other tabs as icons': 'အခြားတဘ်များကို အိုင်ကွန်အဖြစ် ပြပါ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ရှေ့ရှိတဘ်မှလွဲ၍ တဘ်တိုင်းသည် အိုင်ကွန်ကိုသာ ပြသည်၊ တစ်ခုကို ညွှန်လျှင် ၎င်း၏အမည် ပေါ်လာသည်။',

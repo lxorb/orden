@@ -568,6 +568,7 @@ export const yue: Dictionary = {
   'Shows the app blurred behind the windows, instead of Orden’s own background.':
     '喺視窗後面顯示模糊咗嘅 app，而唔係 Orden 自己嘅背景。',
   'Swipe in from the edge to see your notes.': '由邊緣向內掃就睇到你嘅筆記。',
+  'Point at the edge of the window to see your notes.': '將指標移到視窗邊緣就睇到你嘅筆記。',
   'Show other tabs as icons': '其他分頁只顯示圖示',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '除咗前面嗰個，每個分頁淨係顯示圖示；指住其中一個就會見到佢個名。',
