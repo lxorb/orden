@@ -60,12 +60,22 @@ const rootIn = (folder: string, name: string) => joinPath(folder, name)
  *  short). */
 let finding: Promise<Space[]> | null = null
 
-export function keptSpaces(): Promise<Space[]> {
+function keptSpaces(): Promise<Space[]> {
   finding ??= find().finally(() => {
     finding = null
   })
   return finding
 }
+
+/** Which folder each kept space was before it was kept (step 4e), by its root. */
+const fromOf = new Map<string, string>()
+
+/** What a kept space says it was, beside its index: the folder it came from. */
+const FROM = '.from'
+
+/** The folders spaces were made of here and that are no space any more, beyond what each
+ *  space says itself: one deleted after it was made of one. In `.orden`, as lines. */
+const RETIRED = '.retired'
 
 async function find(): Promise<Space[]> {
   const at = await home()
@@ -82,9 +92,31 @@ async function find(): Promise<Space[]> {
       await crate('write_note', { path: root, content: '' }).catch(() => undefined)
     }
     await mounted(root, one.path)
+    const was = await crate<string>('read_note', { path: joinPath(one.path, FROM) }).catch(() => '')
+    if (was.trim()) fromOf.set(root, was.trim())
     out.push({ name: one.name, path: root })
   }
   return out
+}
+
+/** The folders the kept spaces here were made of, which are not spaces any more: what
+ *  is listed of the crate's folders leaves them out. */
+export async function keptFrom(): Promise<string[]> {
+  await keptSpaces()
+  const retired = await crate<string>('read_note', { path: joinPath(await home(), RETIRED) }).catch(
+    () => '',
+  )
+  return [...fromOf.values(), ...retired.split('\n').filter(Boolean)]
+}
+
+/** The crate's folders, without those a kept space was made of, and the kept spaces,
+ *  in the crate's order: by name. */
+export async function listedWith(folders: readonly Space[]): Promise<Space[]> {
+  const kept = await keptSpaces()
+  const gone = new Set(await keptFrom())
+  return [...folders.filter((one) => !gone.has(one.path)), ...kept].sort((a, b) =>
+    a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
+  )
 }
 
 /** What lets each mounted space go, by its root. */
@@ -126,11 +158,21 @@ export async function makeKept(name: string): Promise<Space> {
   if (!wanted) throw new Error('that name cannot be used for a space')
   const chosen = freeName(wanted, await names())
   const folder = joinPath(await home(), chosen)
-  const root = rootIn(folder, chosen)
   await crate('create_folder', { path: folder })
+  return { name: chosen, path: await mountKept(folder, chosen) }
+}
+
+/** The kept space in `folder`, its index written already, given its root and mounted,
+ *  and said to have been the folder `from` where it was one. Answers its root. */
+export async function mountKept(folder: string, name: string, from?: string): Promise<string> {
+  const root = rootIn(folder, name)
   await crate('write_note', { path: root, content: '' })
+  if (from) {
+    await crate('write_note', { path: joinPath(folder, FROM), content: from })
+    fromOf.set(root, from)
+  }
   await mounted(root, folder)
-  return { name: chosen, path: root }
+  return root
 }
 
 /** The kept space at `from` under another name: its folder renamed, and mounted again
@@ -158,6 +200,9 @@ export async function renameKept(from: string, name: string): Promise<Space> {
   const root = rootIn(folder, wanted)
   await crate('write_note', { path: root, content: '' })
   await mounted(root, folder)
+  const madeOf = fromOf.get(from)
+  fromOf.delete(from)
+  if (madeOf) fromOf.set(root, madeOf)
   return { name: wanted, path: root }
 }
 
@@ -168,6 +213,14 @@ export async function removeKept(root: string, forGood: boolean): Promise<unknow
   if (!found || found.inside) throw new Error(`${root} is not a space kept here`)
   const folder = found.mount.folder.name
   await found.mount.folder.flush()
+  // The folder it was made of stays no space, whatever becomes of this one.
+  const was = fromOf.get(root)
+  if (was) {
+    const path = joinPath(await home(), RETIRED)
+    const said = await crate<string>('read_note', { path }).catch(() => '')
+    await crate('write_note', { path, content: `${said}${was}\n` })
+    fromOf.delete(root)
+  }
   unmount(root)
   return forGood
     ? crate('delete_folder', { path: folder })

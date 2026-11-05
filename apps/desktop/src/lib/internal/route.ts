@@ -227,11 +227,11 @@ async function spaces(
   const kept = await import('./spaces')
   const own = (path: unknown) => typeof path === 'string' && mountOf(path)?.inside === ''
   switch (command) {
-    case 'list_spaces': {
-      const all = [...(await crate<{ name: string }[]>(command)), ...(await kept.keptSpaces())]
-      all.sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1))
-      return { done: true, value: all }
-    }
+    case 'list_spaces':
+      return {
+        done: true,
+        value: await kept.listedWith(await crate<{ name: string; path: string }[]>(command)),
+      }
     case 'create_space':
       if (!kept.keepsNewSpaces()) return { done: false }
       return { done: true, value: await kept.makeKept(String(args.name)) }

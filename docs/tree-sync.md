@@ -192,6 +192,19 @@ written where it goes, with its highlights or its paper, before it is taken from
 it was; between two such spaces it goes as rows from one store into the other. A PDF
 handed to Orden is not yet brought into one.
 
+Where a device says so, each space that is still a folder becomes one of these too,
+once (step 4e, internal/convert.ts), at the last turn of the launch: every file the
+space holds - what the list shows, the papers page notes hold, every other file, and
+the inbox, but none of the app's other dotted files - is copied in under the path it
+had, read back and checked against the file it came from; then, with the writes of
+every note open in it held, what changed meanwhile is copied again, and the space moves
+to its new root as a rename does, so everything kept by path follows it and the engine's
+entries keep their ids. A copy that does not check out leaves the space the folder it
+was, to be tried again next launch. The folder is left exactly as it was and is listed
+and written no more - the kept space says which folder it was (`.from`), and one deleted
+afterwards leaves a line in `.orden/.retired` - so a build from before reads that folder
+as it always did, and going back costs only what was written since.
+
 ## What is kept about an entry
 
 A folder's icon and its colour are kept on the account by the folder's id, and a

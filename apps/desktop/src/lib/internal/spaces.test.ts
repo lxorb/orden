@@ -135,7 +135,11 @@ const disk = vi.hoisted(() => {
         throw new Error(`the memory crate has no ${command}`)
     }
   }
-  return { files, dirs, crate }
+  return {
+    files,
+    dirs,
+    crate,
+  }
 })
 
 vi.mock('../native', () => ({
@@ -282,5 +286,117 @@ describe('a new space, where this device keeps new spaces itself', () => {
     await call('rename_note', { from: `${made.path}/Paper.pdf`, to: `${other.path}/Paper.pdf` })
     expect(await call('read_highlights', { path: `${other.path}/Paper.pdf` })).toBe('[]')
     expect(await call('path_exists', { path: `${made.path}/Paper.pdf` })).toBe(false)
+  })
+})
+
+describe('a space that is a folder, where this device keeps new spaces itself', () => {
+  /** The workspace, as much of it as a conversion asks: the list, a hold on what is open
+   *  under a folder, and the move said once. */
+  function workspace(roots: string[]) {
+    const said: string[] = []
+    const ws = {
+      spaces: roots.map((root, at) => ({
+        id: `s${String(at)}`,
+        name: root.split('/').pop() ?? '',
+        root,
+      })),
+      activeSpaceId: 's0',
+      tree: null,
+      naming: null,
+      notes: [],
+      tabs: [],
+      setsRead: undefined,
+      held: [] as string[],
+      during: null as (() => void) | null,
+      fileMoved: (from: string, to: string, kind: 'space') => {
+        said.push(`${kind} ${from} -> ${to}`)
+        return Promise.resolve()
+      },
+      fileGone: () => Promise.resolve(),
+      async holdingUnder(path: string, run: () => Promise<void>) {
+        ws.held.push(path)
+        ws.during?.()
+        await run()
+      },
+      close: () => undefined,
+      clearSelection: () => undefined,
+      loadTree: () => Promise.resolve(),
+      persist: () => undefined,
+    }
+    return { ws, said }
+  }
+
+  test('is copied whole, checked, and moved to its new root; the folder stays as it was', async () => {
+    const { convertAll } = await import('./convert')
+    disk.dirs.add('/spaces/Notes')
+    disk.dirs.add('/spaces/Notes/Work')
+    disk.dirs.add('/spaces/Notes/Empty')
+    disk.files.set('/spaces/Notes/Plan.md', 'ship it')
+    disk.files.set('/spaces/Notes/Work/cat.png', new Uint8Array([1, 2]))
+    disk.files.set('/spaces/Notes/.Inbox.md', '- [ ] eggs')
+    disk.files.set('/spaces/Notes/.obsidian', 'theirs')
+    const before = new Map(disk.files)
+    const { ws, said } = workspace(['/spaces/Notes'])
+    // Written while the rest was being copied, before the hold.
+    ws.during = () => disk.files.set('/spaces/Notes/Plan.md', 'ship it today')
+
+    await convertAll(ws)
+
+    const root = '/spaces/.orden/Notes/Notes'
+    expect(said).toEqual([`space /spaces/Notes -> ${root}`])
+    expect(ws.spaces[0]?.root).toBe(root)
+    expect(ws.held).toEqual(['/spaces/Notes'])
+    expect(await call('read_note', { path: `${root}/Plan.md` })).toBe('ship it today')
+    expect(await call('read_note', { path: `${root}/.Inbox.md` })).toBe('- [ ] eggs')
+    expect(
+      new Uint8Array(await call<ArrayBuffer>('read_file', { path: `${root}/Work/cat.png` })),
+    ).toEqual(new Uint8Array([1, 2]))
+    expect(await call('path_exists', { path: `${root}/Empty` })).toBe(true)
+    expect(await call('path_exists', { path: `${root}/.obsidian` })).toBe(false)
+    // The folder as it was, bar what was written into it before the hold; and listed no more.
+    for (const [path, held] of before) {
+      if (path !== '/spaces/Notes/Plan.md') expect(disk.files.get(path)).toEqual(held)
+    }
+    expect(await call('list_spaces')).toEqual([{ name: 'Notes', path: root }])
+
+    // Once: the next launch finds nothing to do, and a delete leaves the folder no space.
+    await convertAll(ws)
+    expect(said).toHaveLength(1)
+    await call('delete_space', { path: root })
+    expect(await call('list_spaces')).toEqual([])
+  })
+
+  test('stays the folder where a copy does not read back as it was', async () => {
+    const { convertSpace } = await import('./convert')
+    disk.dirs.add('/spaces/Notes')
+    disk.files.set('/spaces/Notes/Plan.md', 'ship it')
+    const { ws, said } = workspace(['/spaces/Notes'])
+    const write = disk.crate
+    disk.crate = (command, args) => {
+      // Every byte written into a kept space's folder comes out wrong.
+      if (command === 'write_bytes' && String(args.path).includes('/.entries/')) {
+        return write(command, { ...args, base64: 'AA==' })
+      }
+      return write(command, args)
+    }
+    try {
+      expect(await convertSpace(ws, 's0')).toBe(false)
+    } finally {
+      disk.crate = write
+    }
+
+    expect(said).toEqual([])
+    expect(ws.spaces[0]?.root).toBe('/spaces/Notes')
+    expect(disk.dirs.has('/spaces/.orden/Notes')).toBe(false)
+    expect(await call('list_spaces')).toEqual([{ name: 'Notes', path: '/spaces/Notes' }])
+  })
+
+  test('is left as it is where this device does not say otherwise', async () => {
+    const { convertAll } = await import('./convert')
+    localStorage.removeItem(KEEP_SPACES)
+    disk.dirs.add('/spaces/Notes')
+    const { ws, said } = workspace(['/spaces/Notes'])
+    await convertAll(ws)
+    expect(said).toEqual([])
   })
 })

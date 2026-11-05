@@ -223,6 +223,16 @@ export function start(): () => void {
     )
   }
 
+  // The spaces that are folders made ones Orden keeps itself, once, where this device
+  // says new spaces are kept so (#1068); never the glasses' plugin. See
+  // internal/convert.ts.
+  if (!__EVEN_PLUGIN__ && isDesktop) {
+    void startup
+      .turn('right')
+      .then(() => import('./internal/convert'))
+      .then(({ convertAll }) => convertAll(workspace))
+  }
+
   // A web note is open in one window of the app; see web-tab/one-window.svelte.ts.
   if (!__EVEN_PLUGIN__ && isDesktop) {
     void startup.turn('rooms').then(() => import('./web-tab/one-window.svelte'))

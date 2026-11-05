@@ -38,18 +38,16 @@ export interface HoldsSpaces {
   persist(): void
 }
 
-/** The spaces the crate read ahead, with the ones a desktop keeps itself beside them
- *  (#1068, internal/spaces.ts), in the order the crate lists its own: by name. */
+/** The spaces the crate read ahead, with the ones a desktop keeps itself beside them and
+ *  without the folders those were made of (#1068, internal/spaces.ts), by name. */
 async function withKept(
   ahead: { name: string; path: string }[],
 ): Promise<{ name: string; path: string }[]> {
   if (!isDesktop) return ahead
-  const kept = await import('../internal/spaces').then(
-    ({ keptSpaces }) => keptSpaces(),
-    () => [],
+  return await import('../internal/spaces').then(
+    ({ listedWith }) => listedWith(ahead),
+    () => ahead,
   )
-  if (!kept.length) return ahead
-  return [...ahead, ...kept].sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1))
 }
 
 /** Reads the spaces folder. It is the source of truth, so a space added or
