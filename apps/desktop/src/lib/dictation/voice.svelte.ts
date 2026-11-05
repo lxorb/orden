@@ -10,7 +10,7 @@
 import { key, message } from '../i18n.svelte'
 import { settings } from '../settings.svelte'
 import { engines } from './engines.svelte'
-import type { Listening } from './listening'
+import type { Hooks, Listening } from './listening'
 import type { Field } from './spot'
 
 /** Idle; the microphone being opened; listening; and the final pass being heard. */
@@ -63,16 +63,19 @@ class Voice {
     this.owner = owner
     this.state = 'opening'
     this.finishWhenOpen = false
+    const hooks: Hooks = {
+      level: (level) => (this.level = level),
+      full: () => void this.finish(),
+      ended: () => {
+        if (this.owner === owner) this.reset()
+      },
+      trouble: (said) => this.say(owner, said),
+    }
     try {
-      const { listen } = await import('./listening')
-      const running = await listen(field, engine, owner.words?.() ?? [], {
-        level: (level) => (this.level = level),
-        full: () => void this.finish(),
-        ended: () => {
-          if (this.owner === owner) this.reset()
-        },
-        trouble: (said) => this.say(owner, said),
-      })
+      const running =
+        engine === 'device'
+          ? await (await import('./device')).listenOnDevice(field, hooks)
+          : await (await import('./listening')).listen(field, engine, owner.words?.() ?? [], hooks)
       if (!this.stillOpening(owner)) {
         running.cancel()
         return

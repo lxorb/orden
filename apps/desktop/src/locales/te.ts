@@ -2830,4 +2830,6 @@ export const te: Dictionary = {
     'ఆడియో Orden మరియు Cloudflareకి వెళ్తుంది, దాచి ఉంచబడదు',
   'Stop dictating': 'డిక్టేషన్ ఆపు',
   'Writing down what you said': 'మీరు చెప్పింది రాస్తోంది',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'ఆడియో ఈ పరికరం యొక్క మాట గుర్తింపుకు వెళ్తుంది, అది తయారీదారు సర్వర్లను వాడవచ్చు',
 }

@@ -2868,4 +2868,6 @@ export const ptBR: Dictionary = {
     'O áudio vai para a Orden e a Cloudflare, e não é guardado',
   'Stop dictating': 'Parar de ditar',
   'Writing down what you said': 'Escrevendo o que você disse',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'O áudio vai para o reconhecimento de fala deste dispositivo, que pode usar os servidores do fabricante',
 }

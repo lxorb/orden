@@ -2836,4 +2836,6 @@ export const gsw: Dictionary = {
     'Audio gaht a Orden und Cloudflare und wird nöd gspeicheret',
   'Stop dictating': 'Diktiere beände',
   'Writing down what you said': 'Schriibe uf, was du gseit häsch',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'Audio gaht a d Spracherchännig vo däm Grät, wo d Server vo sim Härsteller cha bruuche',
 }

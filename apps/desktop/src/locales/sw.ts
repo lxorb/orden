@@ -2855,4 +2855,6 @@ export const sw: Dictionary = {
     'Sauti inakwenda Orden na Cloudflare, na haihifadhiwi',
   'Stop dictating': 'Acha kuandika kwa sauti',
   'Writing down what you said': 'Inaandika ulichosema',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'Sauti inakwenda kwenye utambuzi wa sauti wa kifaa hiki, ambao unaweza kutumia seva za mtengenezaji wake',
 }

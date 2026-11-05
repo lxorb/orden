@@ -724,12 +724,15 @@ this means with no signal.
 
 ### Dictation
 
-Dictation (#1128) is the same two roads into a field rather than a note: the chat
-composer, quick add and the new-todo editor, and the quick question. **The road is
-chosen, not guessed**: Settings > AI > Dictation, or the chooser the first press opens,
-which says where each road sends a voice - the provider's server, this machine for a
-local one, or Orden's Worker and Cloudflare's Workers AI. Nothing is recorded before a
-road is chosen, and the choice is this device's.
+Dictation (#1128) is the same two roads into a field rather than a note, and a third:
+the chat composer, quick add and the new-todo editor, and the quick question. **The road
+is chosen, not guessed**: Settings > AI > Dictation, or the chooser the first press
+opens, which says where each road sends a voice - the provider's server, this machine
+for a local one, Orden's Worker and Cloudflare's Workers AI, or the device's own
+recogniser (Android's, or the web's where it works: Apple's on a Mac and an iPhone; not
+WebView2 or CEF, which carry the name with no service behind it). Nothing is recorded
+before a road is chosen, and the choice is this device's. The device's road hears in
+the app's language alone and has no final pass (`dictation/device.ts`).
 
 The page records 16 kHz samples itself (`dictation/capture.ts`) and never writes a file.
 While the voice goes on, the stretch since the last pause is heard again and drawn in the

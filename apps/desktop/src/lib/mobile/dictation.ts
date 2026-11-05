@@ -13,18 +13,13 @@
  *  desktop with no recogniser simply never offers the row. */
 
 import type { EditorView } from '@orden/editor'
+import { speechRecogniser } from '../dictation/recogniser'
 import { workspace } from '../workspace.svelte'
 import { method } from './bridge'
 
-/** The browser's recogniser, under either of its two names, or nothing where the
- *  browser has none. Answered as the constructor rather than as a boolean because
- *  dictating.ts builds one from it: one place knows the two spellings. */
-export function speechRecogniser(): unknown {
-  const held = globalThis as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }
-  const found = held.SpeechRecognition ?? held.webkitSpeechRecognition
-
-  return typeof found === 'function' ? found : undefined
-}
+// The browser's recogniser, which field dictation asks about too, and so lives in a leaf
+// of its own; see dictation/recogniser.ts.
+export { speechRecogniser }
 
 /** Whether anything can hear at all. Asked before the row is offered, so nobody
  *  presses a row that cannot work. */

@@ -2800,4 +2800,6 @@ export const jv: Dictionary = {
     'Audio dikirim menyang Orden lan Cloudflare, lan ora disimpen',
   'Stop dictating': 'Mandhegake dikte',
   'Writing down what you said': 'Lagi nulis apa sing sampeyan omongake',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'Audio dikirim menyang pangenalan swara piranti iki, sing bisa nganggo server gawéyané',
 }

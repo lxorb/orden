@@ -2911,4 +2911,6 @@ export const ru: Dictionary = {
     'Звук отправляется в Orden и Cloudflare и не хранится',
   'Stop dictating': 'Остановить диктовку',
   'Writing down what you said': 'Записываю сказанное',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'Звук отправляется в распознавание речи этого устройства, которое может использовать серверы производителя',
 }

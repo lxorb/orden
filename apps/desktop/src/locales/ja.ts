@@ -2790,4 +2790,6 @@ export const ja: Dictionary = {
     '音声は Orden と Cloudflare に送られ、保存されません',
   'Stop dictating': '音声入力を停止',
   'Writing down what you said': '話した内容を書き起こしています',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    '音声はこのデバイスの音声認識に送られ、メーカーのサーバーが使われることがあります',
 }

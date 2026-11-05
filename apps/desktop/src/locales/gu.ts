@@ -2802,4 +2802,6 @@ export const gu: Dictionary = {
     'ઑડિયો Orden અને Cloudflare પર જાય છે, અને રાખવામાં આવતો નથી',
   'Stop dictating': 'શ્રુતલેખન બંધ કરો',
   'Writing down what you said': 'તમે જે કહ્યું તે લખાઈ રહ્યું છે',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'ઑડિયો આ ઉપકરણની વાણી ઓળખ પર જાય છે, જે તેના ઉત્પાદકના સર્વર વાપરી શકે છે',
 }

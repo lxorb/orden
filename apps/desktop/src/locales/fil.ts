@@ -2874,4 +2874,6 @@ export const fil: Dictionary = {
     'Napupunta ang audio sa Orden at Cloudflare, at hindi ito itinatago',
   'Stop dictating': 'Ihinto ang pagdidikta',
   'Writing down what you said': 'Isinusulat ang sinabi mo',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'Napupunta ang audio sa speech recognition ng device na ito, na maaaring gumamit ng mga server ng gumawa nito',
 }

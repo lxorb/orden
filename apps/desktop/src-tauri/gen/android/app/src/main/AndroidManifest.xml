@@ -19,6 +19,15 @@
       a grant before it would open the camera at all. See docs/mobile.md.
     -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!--
+      And beside it the one wry's WebChromeClient asks for together with the microphone
+      whenever a page calls `getUserMedia` (RustWebChromeClient.onPermissionRequest): it
+      grants the page only if every permission asked for was granted, and a permission
+      the manifest never declared is refused. A normal permission, granted at install
+      and never asked about; without it the recorder and field dictation (#1128) would be
+      refused the microphone however the reader answered.
+    -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
     <!--
       Reminders that ring with nib closed (docs/tasks.md 5.10; see Reminders.kt): leave

@@ -2813,4 +2813,6 @@ export const id: Dictionary = {
     'Audio dikirim ke Orden dan Cloudflare, dan tidak disimpan',
   'Stop dictating': 'Hentikan dikte',
   'Writing down what you said': 'Menuliskan yang Anda ucapkan',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'Audio dikirim ke pengenalan suara perangkat ini, yang mungkin memakai server pembuatnya',
 }

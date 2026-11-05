@@ -2904,4 +2904,6 @@ export const uk: Dictionary = {
     'Звук надсилається до Orden і Cloudflare і не зберігається',
   'Stop dictating': 'Зупинити диктування',
   'Writing down what you said': 'Записую сказане',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'Звук надсилається до розпізнавання мовлення цього пристрою, яке може використовувати сервери виробника',
 }

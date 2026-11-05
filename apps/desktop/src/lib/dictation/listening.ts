@@ -29,8 +29,11 @@ import { cleaned, promptOf } from './heard'
 import { Ear, FRAME, meter } from './speech'
 import { type Field, Spot } from './spot'
 
+/** The roads that hear through Whisper; the device's own is device.ts. */
+export type Road = Exclude<Engine, 'device'>
+
 /** How long after one live pass the next may start, by road. */
-const LIVE_EVERY: Record<Engine, number> = { provider: 1_200, account: 2_500 }
+const LIVE_EVERY: Record<Road, number> = { provider: 1_200, account: 2_500 }
 
 /** How much new speech a live pass waits for: a quarter of a second, in frames. */
 const NEW_SPEECH = 8
@@ -66,7 +69,7 @@ type Hears = (samples: Float32Array, prompt: string, tries: number) => Promise<s
 /** Opens the microphone over a field and starts listening into it. */
 export async function listen(
   field: Field,
-  engine: Engine,
+  engine: Road,
   words: readonly string[],
   hooks: Hooks,
 ): Promise<Listening> {

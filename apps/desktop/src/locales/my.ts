@@ -2804,4 +2804,6 @@ export const my: Dictionary = {
     'အသံကို Orden နှင့် Cloudflare သို့ ပို့ပြီး သိမ်းမထားပါ',
   'Stop dictating': 'အသံဖြင့်စာရိုက်ခြင်း ရပ်ရန်',
   'Writing down what you said': 'သင်ပြောသည်ကို ရေးနေသည်',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'အသံကို ဤစက်၏ စကားသံမှတ်သားမှုသို့ ပို့ပြီး ၎င်းသည် ထုတ်လုပ်သူ၏ ဆာဗာများကို သုံးနိုင်သည်',
 }

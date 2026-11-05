@@ -2824,4 +2824,6 @@ export const pa: Dictionary = {
     'ਆਡੀਓ Orden ਅਤੇ Cloudflare ਤੇ ਜਾਂਦਾ ਹੈ, ਅਤੇ ਰੱਖਿਆ ਨਹੀਂ ਜਾਂਦਾ',
   'Stop dictating': 'ਬੋਲ ਕੇ ਲਿਖਣਾ ਬੰਦ ਕਰੋ',
   'Writing down what you said': 'ਤੁਸੀਂ ਜੋ ਕਿਹਾ ਉਹ ਲਿਖਿਆ ਜਾ ਰਿਹਾ ਹੈ',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'ਆਡੀਓ ਇਸ ਡਿਵਾਈਸ ਦੀ ਬੋਲੀ ਪਛਾਣ ਤੇ ਜਾਂਦਾ ਹੈ, ਜੋ ਇਸਦੇ ਨਿਰਮਾਤਾ ਦੇ ਸਰਵਰ ਵਰਤ ਸਕਦੀ ਹੈ',
 }

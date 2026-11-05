@@ -530,11 +530,18 @@
             { value: '', label: t('Ask on first use') },
             ...engines.offered().map((one) => ({
               value: one,
-              label: one === 'account' ? t('Orden account') : (ai.transcriber?.name ?? ''),
+              label:
+                one === 'account'
+                  ? t('Orden account')
+                  : one === 'device'
+                    ? t('This device')
+                    : (ai.transcriber?.name ?? ''),
             })),
           ]}
           onchange={(value: string) =>
-            engines.choose(value === 'provider' || value === 'account' ? value : null)}
+            engines.choose(
+              value === 'provider' || value === 'account' || value === 'device' ? value : null,
+            )}
           label={t('Dictate with')}
           plain={viewport.touch}
         />

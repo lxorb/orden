@@ -2864,4 +2864,6 @@ export const ta: Dictionary = {
     'ஒலி Orden மற்றும் Cloudflare-க்குச் செல்கிறது, சேமிக்கப்படுவதில்லை',
   'Stop dictating': 'சொல்லி எழுதுவதை நிறுத்து',
   'Writing down what you said': 'நீங்கள் சொன்னதை எழுதுகிறது',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    'ஒலி இந்தச் சாதனத்தின் பேச்சு அறிதலுக்குச் செல்கிறது, அது அதன் தயாரிப்பாளரின் சேவையகங்களைப் பயன்படுத்தக்கூடும்',
 }

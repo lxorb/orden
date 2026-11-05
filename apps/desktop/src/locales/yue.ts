@@ -2724,4 +2724,6 @@ export const yue: Dictionary = {
     '聲音會傳去 Orden 同 Cloudflare，而且唔會保留',
   'Stop dictating': '停止語音輸入',
   'Writing down what you said': '寫緊你講嘅嘢',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    '聲音會傳去呢部裝置嘅語音辨識，可能會用到製造商嘅伺服器',
 }

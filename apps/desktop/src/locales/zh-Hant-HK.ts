@@ -2731,4 +2731,6 @@ export const zhHantHK: Dictionary = {
     '音訊傳送到 Orden 和 Cloudflare，且不會保留',
   'Stop dictating': '停止聽寫',
   'Writing down what you said': '正在寫下你說的話',
+  'Audio goes to this device’s speech recognition, which may use its maker’s servers':
+    '音訊傳送到這部裝置的語音辨識，可能會使用其製造商的伺服器',
 }

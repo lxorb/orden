@@ -18,6 +18,11 @@ import org.json.JSONObject
  * the caret is - the same place a paste lands - so there is nothing new on screen
  * except the mark that says it is listening.
  *
+ * Each turn says what it hears as it goes, as well as the sentence at its end: the
+ * partial words and the voice's level, a few times a second, which a field's
+ * dictation draws as live words and a meter (dictation/device.ts in the app). The
+ * note's own dictation reads only the sentences.
+ *
  * It listens in turns, because that is what Android offers: the recogniser ends
  * each time the speaker pauses, and it is started again while dictation is still
  * on. Errors that mean "nothing was said" are part of that rhythm and are not
@@ -31,6 +36,10 @@ class Dictation(private val activity: MainActivity) {
   private var recogniser: SpeechRecognizer? = null
   private var wanted = false
   private var failures = 0
+
+  /** When the level was last said, so the page hears it a few times a second rather
+   *  than at the recogniser's own rate. */
+  private var levelSaid = 0L
 
   /** Whether this phone has a recogniser at all. Asked before the row is offered
    *  rather than after it is pressed. */
@@ -96,6 +105,7 @@ class Dictation(private val activity: MainActivity) {
         // No language of its own: whatever the phone is set to is the language
         // its owner is about to speak.
         .putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+        .putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
 
     try {
       made.startListening(intent)
@@ -141,13 +151,34 @@ class Dictation(private val activity: MainActivity) {
     return json.toString()
   }
 
+  private fun partly(text: String): String {
+    val json = JSONObject()
+    json.put("state", "listening")
+    json.put("partial", text)
+    return json.toString()
+  }
+
+  private fun level(rms: Float): String {
+    val json = JSONObject()
+    json.put("level", rms.toDouble())
+    return json.toString()
+  }
+
+  private fun firstOf(results: Bundle?): String =
+    results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty()
+
   private val listener =
     object : RecognitionListener {
       override fun onReadyForSpeech(params: Bundle?) {}
 
       override fun onBeginningOfSpeech() {}
 
-      override fun onRmsChanged(rms: Float) {}
+      override fun onRmsChanged(rms: Float) {
+        val now = System.currentTimeMillis()
+        if (now - levelSaid < 100) return
+        levelSaid = now
+        activity.heard(level(rms))
+      }
 
       override fun onBufferReceived(buffer: ByteArray?) {}
 
@@ -155,17 +186,16 @@ class Dictation(private val activity: MainActivity) {
 
       override fun onResults(results: Bundle?) {
         failures = 0
-        val said =
-          results
-            ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-            ?.firstOrNull()
-            .orEmpty()
+        val said = firstOf(results)
 
         if (said.isNotEmpty()) activity.heard(words(said))
         again()
       }
 
-      override fun onPartialResults(partial: Bundle?) {}
+      override fun onPartialResults(partial: Bundle?) {
+        val said = firstOf(partial)
+        if (said.isNotEmpty()) activity.heard(partly(said))
+      }
 
       override fun onEvent(type: Int, params: Bundle?) {}
 
