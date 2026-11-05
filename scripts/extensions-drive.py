@@ -173,6 +173,11 @@ if PHASE == "installed":
         raise SystemExit(f"::error::installed: the engine never listed {NAME}: {listed()}")
     one = found[0]
     print(f"installed: the engine lists {NAME} as {one.get('id')}")
+    # #1084: it names no picture anywhere, and the app that listed it is still up.
+    if one.get("picture") is not None:
+        fail(f"a picture for an extension that names none: {one.get('picture')!r}")
+    if quick("'here'") != "here":
+        fail("the app went down listing an extension that names no picture")
 
     for _ in range(40):
         if run("!!document.querySelector('[data-opens=\"extensions\"]')"):

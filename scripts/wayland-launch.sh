@@ -378,10 +378,12 @@ icon = (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 16, 16, 8,
 (folder / "background.js").write_text(
     "chrome.runtime.onMessage.addListener((message, sender, answer) => { answer('heard ' + message) });"
 )
+# And no picture named anywhere in its manifest - no `icons`, no `default_icon` - as some
+# extensions ship (#1084): listing one took the whole app down. Its button wears the
+# puzzle. The picture is still in its folder, named by nothing.
 (folder / "manifest.json").write_text(json.dumps({
     "manifest_version": 3, "name": name, "version": "1.0",
-    "icons": {"16": "icon.png"},
-    "action": {"default_title": name, "default_icon": "icon.png", "default_popup": "popup.html"},
+    "action": {"default_title": name, "default_popup": "popup.html"},
     "background": {"service_worker": "background.js"},
 }))
 MAKE
