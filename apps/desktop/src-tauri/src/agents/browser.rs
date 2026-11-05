@@ -133,7 +133,8 @@ fn open_tab(app: &AppHandle, caller: &Caller, open: &super::verbs::Open) -> Answ
         return Answer::error(Code::BadArguments, "store \"space\" needs the space");
     }
     // Never the reader's own store, whose pages run the reader's extensions: its twin,
-    // or the agent's own (see `engines`).
+    // or the agent's own (see `engines`). An engine with no extensions has no twin, and
+    // its tab is in the reader's store itself.
     if store != Store::Agent && engines::reader_store() == ReaderStore::Blocked {
         store = Store::Agent;
     }
@@ -141,7 +142,11 @@ fn open_tab(app: &AppHandle, caller: &Caller, open: &super::verbs::Open) -> Answ
         Store::Agent => Some(format!("agent_{}", caller.id())),
         Store::Reader | Store::Space => {
             let reader = store_for(app, open.space.as_deref(), &open.url);
-            Some(engines::twin_of(reader.as_deref()))
+            if engines::TWINS {
+                Some(engines::twin_of(reader.as_deref()))
+            } else {
+                reader
+            }
         }
     };
     let most = match caller {

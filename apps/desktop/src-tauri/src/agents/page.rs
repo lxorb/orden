@@ -28,7 +28,7 @@ use base64::Engine as _;
 use serde_json::{json, Value};
 
 use super::cdp::{self, Heard};
-use super::engines::{Engine, Page, Tree};
+use super::engines::{Engine, Page, Tree, SETTLED};
 use super::keys::{self, Key};
 use super::policy::{self, Facts, Field};
 use super::snapshot::{self, Part};
@@ -239,18 +239,6 @@ static WHOLE: LazyLock<String> = LazyLock::new(|| {
 /// document; the window finds the article in it with the clipper's own extractor (see
 /// packages/markdown/src/article.ts `readSnapshot`), on the way to the markdown.
 static CLIPPED: LazyLock<String> = LazyLock::new(|| crate::web_tabs::reader(false));
-
-/// Whether the document has stopped changing: resolves once nothing moved for `still`
-/// milliseconds, or at `most`.
-const SETTLED: &str = r"(still, most) => new Promise((done) => {
-  if (!document.body) return done(true)
-  let quiet
-  const watcher = new MutationObserver(() => { clearTimeout(quiet); quiet = setTimeout(end, still) })
-  const end = () => { watcher.disconnect(); done(true) }
-  watcher.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true })
-  quiet = setTimeout(end, still)
-  setTimeout(end, most)
-})";
 
 /// An element, resolved from a ref.
 #[derive(Clone, Debug)]
