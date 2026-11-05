@@ -191,23 +191,6 @@ describe('the call to the crate, on a desktop', () => {
     expect(crate.calls).toEqual([])
   })
 
-  test('refuses what would go from a kept space to somewhere else', async () => {
-    const { internalInvoke } = await import('./route')
-    const { folder, root } = await mounted()
-    await internalInvoke('write_note', { path: `${root}\\Plan.md`, content: 'x' }, [
-      { root, web: WEB, folder },
-    ])
-
-    await expect(
-      internalInvoke(
-        'rename_note',
-        { from: `${root}\\Plan.md`, to: 'C:\\Users\\me\\Orden\\Disk\\Plan.md' },
-        [{ root, web: WEB, folder }],
-      ),
-    ).rejects.toThrow('kept apart')
-    expect(await folder.at('Plan.md')).not.toBeNull()
-  })
-
   test('Recently deleted lists both, and each item is put back by whoever holds it', async () => {
     const { internalInvoke } = await import('./route')
     const { folder, root } = await mounted()

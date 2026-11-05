@@ -14,7 +14,7 @@
 
 import { spacesAhead } from './ahead'
 import { identifier } from '../identifier'
-import { invoke } from '../tauri'
+import { invoke, isDesktop } from '../tauri'
 import type { Entry, Naming, Space } from '../workspace.svelte'
 import type { Tab } from './documents.svelte'
 
@@ -38,13 +38,28 @@ export interface HoldsSpaces {
   persist(): void
 }
 
+/** The spaces the crate read ahead, with the ones a desktop keeps itself beside them
+ *  (#1068, internal/spaces.ts), in the order the crate lists its own: by name. */
+async function withKept(
+  ahead: { name: string; path: string }[],
+): Promise<{ name: string; path: string }[]> {
+  if (!isDesktop) return ahead
+  const kept = await import('../internal/spaces').then(
+    ({ keptSpaces }) => keptSpaces(),
+    () => [],
+  )
+  if (!kept.length) return ahead
+  return [...ahead, ...kept].sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1))
+}
+
 /** Reads the spaces folder. It is the source of truth, so a space added or
  *  removed outside the app simply shows up that way. */
 export async function loadSpaces(ws: HoldsSpaces) {
   // Read while the webview started, the first time; see workspace/ahead.ts.
-  const found =
-    (await spacesAhead()) ??
-    (await invoke<{ name: string; path: string }[]>('list_spaces').catch(() => []))
+  const ahead = await spacesAhead()
+  const found = ahead
+    ? await withKept(ahead)
+    : await invoke<{ name: string; path: string }[]>('list_spaces').catch(() => [])
 
   // Ids are kept across a reload so the selected space survives one.
   const byRoot = new Map(ws.spaces.map((space) => [space.root, space]))

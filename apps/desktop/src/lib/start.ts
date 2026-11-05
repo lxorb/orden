@@ -23,7 +23,7 @@ import { record } from './sync/record.svelte'
 import { hiddenKinds, settings } from './settings.svelte'
 import { startup } from './startup.svelte'
 import { shortcuts } from './shortcuts.svelte'
-import { currentWindow, isDesktop, isMobile } from './tauri'
+import { currentWindow, internal, isDesktop, isMobile } from './tauri'
 import { waited } from './timing'
 import { factsOfLaunch, mark } from './trace'
 import { theme } from './theme.svelte'
@@ -375,7 +375,9 @@ function settle() {
 
 /** The writes on their way to the disk, landed. */
 function owed() {
-  return Promise.all([workspace.writesSettled(), written()])
+  // And when the files of a space Orden keeps itself were last written, which its
+  // folder writes down a moment after them (internal/folder.ts).
+  return Promise.all([workspace.writesSettled(), written(), internal.flush?.()])
 }
 
 /** The writes that are owed, waited for; and a waiting update put in place. */

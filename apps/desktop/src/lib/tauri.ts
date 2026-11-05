@@ -72,7 +72,13 @@ let calls = 0
 export const internal: {
   routed: ((command: string, args?: Record<string, unknown>) => boolean) | null
   file: ((path: string) => string | null) | null
-} = { routed: null, file: null }
+  /** What each one has not written down yet, written down: on the way out. */
+  flush: (() => Promise<void>) | null
+} = { routed: null, file: null, flush: null }
+
+/** The commands about the spaces themselves, which a desktop answers with the spaces it
+ *  keeps itself beside the crate's folders (internal/spaces.ts). */
+const SPACE_COMMANDS = new Set(['list_spaces', 'create_space', 'rename_space', 'delete_space'])
 
 /** The browser build answers the same commands from its own storage, so every
  *  call site reads the same on all three - and so does a space a desktop keeps itself,
@@ -83,7 +89,7 @@ export async function invoke<T>(command: string, args?: Record<string, unknown>)
     const { webInvoke } = await import('./web/commands')
     return webInvoke<T>(command, args)
   }
-  if (internal.routed?.(command, args)) {
+  if (internal.routed?.(command, args) || (isDesktop && SPACE_COMMANDS.has(command))) {
     const { internalInvoke } = await import('./internal/route')
     return internalInvoke<T>(command, args)
   }

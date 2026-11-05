@@ -13,7 +13,7 @@
 
 import { sameSpelling } from '../space-paths'
 import { isRecord, isString } from '../stored'
-import { invoke, isDesktop } from '../tauri'
+import { internal, invoke, isDesktop } from '../tauri'
 import type { Entry, TreeOptions } from '../workspace.svelte'
 
 /** What the next launch will ask for first. */
@@ -86,6 +86,9 @@ export async function spacesAhead(): Promise<{ name: string; path: string }[] | 
  *  options. */
 export async function treeAhead(root: string, options: TreeOptions): Promise<Entry | null> {
   if (!asked()) return null
+  // A space Orden keeps itself is read off its index; at its root the crate finds only
+  // the file that stands for it (internal/spaces.ts).
+  if (internal.routed?.('read_tree', { root })) return null
 
   const got = await received()
   // Spelled alike, and not merely the same folder: every path in the tree is spelled

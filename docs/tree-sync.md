@@ -140,7 +140,7 @@ is that store's and not the browser's. A read of every row is every store's, in 
 order.
 
 Such a space is a folder of Orden's own (apps/desktop/src/lib/internal): every file's
-bytes are `entries/<key>`, a key given when the file is made and never read a name off,
+bytes are `.entries/<key>`, a key given when the file is made and never read a name off,
 and one index says which path each key is at, with the folders and the space's own
 Recently deleted. The index is written whole into the older of two slots, as a new file,
 so a write cut short leaves the one before; every window of the app changes it under one
@@ -177,7 +177,20 @@ did, and a search finds the inbox once, by itself, on all three. Sync carries it
 note it has always been, under the name it has always had, so an older app and an older
 account see what they always saw; a space's hidden file is taken in with the rest of it
 when the space is converted (step 4e), and written out again by Export (step 4f).
-Nothing mounts one yet.
+
+Where a device says so (`nib:keep-spaces` in the window's storage, step 4d), a new space
+is one of these: a folder of `.orden` in the spaces folder, named as the space, holding
+its bytes and its index hidden and one file named as the space too, which is the space's
+root - the address the rest of the app holds it by. A file, so nothing can be made under
+it: a call that reaches the crate with a path in the space by mistake fails out loud
+instead of writing beside the bytes. The crate lists a dotted folder as no space, so the
+spaces are listed by Orden beside the crate's folders, found as the folders of `.orden`
+whatever the device says, and mounted as they are found; a rename renames the folder
+and moves nothing in it, and a delete takes the folder whole into Recently deleted, from
+which it comes back whole. A note moved or copied between such a space and a folder is
+written where it goes, with its highlights or its paper, before it is taken from where
+it was; between two such spaces it goes as rows from one store into the other. A PDF
+handed to Orden is not yet brought into one.
 
 ## What is kept about an entry
 

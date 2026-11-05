@@ -1,8 +1,8 @@
 /** A space Orden keeps itself, mounted on a desktop (#1068, step 4c): its folder
  *  opened, its rows mounted where the browser build's commands find them, and its root
  *  told to `invoke`, so every file command for a path in it is answered from the folder
- *  and none reaches the crate. Nothing mounts one yet; new spaces kept this way come
- *  next, behind a flag (step 4d). */
+ *  and none reaches the crate. Each is mounted as internal/spaces.ts finds or makes it
+ *  (step 4d). */
 
 import { readsAsText } from '../web/commands'
 import { mountRows } from '../web/store'

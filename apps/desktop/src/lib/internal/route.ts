@@ -6,12 +6,14 @@
  *  The browser's commands speak its own paths, `/` between folders and a space a folder
  *  at the top (`/<name>`). So every path a call names is turned into that space's
  *  address there on the way in, and every path an answer names back into the root the
- *  app holds on the way out. A call that names a kept space and something else - a
- *  move out of one into a folder, or into another kept space - is refused, loudly:
- *  neither side could make it alone, and the crate making it would write a file where
- *  nothing of the space is on the disk. Recently deleted holds both sides' trash, so
- *  its four commands are answered by both. */
+ *  app holds on the way out. A move or a copy from a kept space into another is rows
+ *  going from one store into another; between a kept space and a folder it is made here,
+ *  since neither side could make it alone and the crate making it would write a file
+ *  where nothing of the space is on the disk (`across`). Recently deleted holds both
+ *  sides' trash, so its four commands are answered by both, and the space commands list
+ *  and make the spaces kept here beside the crate's folders (internal/spaces.ts). */
 
+import { toBase64 } from '../bytes'
 import { joinPath } from '../tauri'
 import { normalise } from '../web/paths'
 import type { Trashed } from '../web/store'
@@ -99,6 +101,158 @@ async function trash<T>(
 }
 
 /** One call that names a kept space, or Recently deleted. */
+/** What is at `path` and under it, by where under it (`''` itself), with whatever goes
+ *  with a file wherever it goes: a PDF's highlights, a page note's paper and the paper's
+ *  own. Read off the kept space's index, or the crate's tree. */
+async function what(path: string): Promise<{ rest: string; dir: boolean }[]> {
+  const kept = mountOf(path)
+  const { SIDECAR } = await import('../pdf/highlights')
+  const beside = [SIDECAR, '.pdf', `.pdf${SIDECAR}`]
+  if (kept) {
+    const top = kept.inside
+    const out: { rest: string; dir: boolean }[] = []
+    for (const { path: one, entry } of await kept.mount.folder.list()) {
+      const rest = one === top ? '' : one.startsWith(`${top}/`) ? one.slice(top.length) : null
+      if (rest !== null) out.push({ rest, dir: !entry.key })
+      else if (entry.key && beside.some((end) => one === `${top}${end}`)) {
+        out.push({ rest: one.slice(top.length), dir: false })
+      }
+    }
+    return out
+  }
+  if (await crate<unknown>('file_stamp', { path }).catch(() => null)) {
+    const out = [{ rest: '', dir: false }]
+    for (const end of beside) {
+      if (await crate<unknown>('file_stamp', { path: `${path}${end}` }).catch(() => null)) {
+        out.push({ rest: end, dir: false })
+      }
+    }
+    return out
+  }
+  const tree = await crate<Listed>('read_tree', {
+    root: path,
+    options: { every: true, papers: true, showHidden: true },
+  }).catch(() => null)
+  if (!tree) return []
+  const out: { rest: string; dir: boolean }[] = [{ rest: '', dir: true }]
+  const base = path.replace(/\\/g, '/').replace(/\/+$/, '')
+  const walk = (node: Listed) => {
+    for (const child of node.children ?? []) {
+      out.push({ rest: child.path.replace(/\\/g, '/').slice(base.length), dir: child.is_dir })
+      if (child.is_dir) walk(child)
+    }
+  }
+  walk(tree)
+  return out
+}
+
+interface Listed {
+  path: string
+  is_dir: boolean
+  children?: Listed[]
+}
+
+/** A path in either kind of space, as a call names it there: the browser's address of
+ *  a kept space's path, or the path itself for the crate. */
+function addressed(path: string): { kept: boolean; at: string } {
+  const found = mountOf(path)
+  if (!found) return { kept: false, at: path }
+  return { kept: true, at: found.inside ? `${found.mount.web}/${found.inside}` : found.mount.web }
+}
+
+/** A move or a copy between a kept space and a folder, which neither can make alone:
+ *  every file's bytes written where it goes, its folders first, and only then, for a
+ *  move, what was where it came from taken away - so a move cut short leaves two
+ *  copies, never none. */
+async function across<T>(command: string, args: Record<string, unknown>): Promise<T> {
+  if (command !== 'rename_note' && command !== 'copy_path') {
+    throw new Error(`${command} cannot reach a space Orden keeps and a folder at once`)
+  }
+  const from = String(args.from)
+  const to = String(args.to)
+  const going = (await what(from)).sort((a, b) => a.rest.length - b.rest.length)
+  if (!going.length) throw new Error(`nothing is at ${from}`)
+  if ((await what(to)).length) throw new Error('something already lives there')
+
+  const source = addressed(from)
+  const target = addressed(to)
+  // Under it, or beside it: `/x/y` is inside, `.highlights.json` goes with it.
+  const join = (base: string, rest: string, kept: boolean) =>
+    !rest ? base : kept || !rest.startsWith('/') ? `${base}${rest}` : joinPath(base, rest.slice(1))
+  for (const one of going) {
+    const into = join(target.at, one.rest, target.kept)
+    if (one.dir) {
+      await (target.kept ? web : crate)('create_folder', { path: into })
+      continue
+    }
+    const bytes = source.kept
+      ? await keptBytes(from, one.rest)
+      : new Uint8Array(await crate<ArrayBuffer>('read_file', { path: join(from, one.rest, false) }))
+    await (target.kept ? web : crate)('write_bytes', { path: into, base64: toBase64(bytes) })
+  }
+  if (command === 'copy_path') return undefined as T
+
+  const remove = (call: string, path: string) => (source.kept ? web : crate)(call, { path })
+  if (going[0]?.dir) {
+    await remove('delete_folder', source.at)
+    return undefined as T
+  }
+  await remove('delete_note', source.at)
+  // What went with it, where taking the file away did not take it too.
+  for (const one of going.slice(1)) {
+    await remove('delete_note', join(source.at, one.rest, source.kept)).catch(() => undefined)
+  }
+  return undefined as T
+}
+
+/** The bytes of a kept space's file, read off its folder: what `read_file` has no
+ *  command of the browser's for. */
+async function keptBytes(path: string, rest: string): Promise<Uint8Array> {
+  const found = mountOf(path)
+  const bytes = found ? await found.mount.folder.read(`${found.inside}${rest}`) : null
+  if (!bytes) throw new Error(`nothing is at ${path}${rest}`)
+  return bytes
+}
+
+/** The space commands, which a desktop answers with the spaces it keeps itself beside
+ *  the crate's folders. */
+const SPACE_COMMANDS = new Set(['list_spaces', 'create_space', 'rename_space', 'delete_space'])
+
+/** A space command, where a kept space has a part in it: `done` with the answer, or
+ *  not, for the crate to answer alone. */
+async function spaces(
+  command: string,
+  args: Record<string, unknown>,
+): Promise<{ done: true; value: unknown } | { done: false }> {
+  const kept = await import('./spaces')
+  const own = (path: unknown) => typeof path === 'string' && mountOf(path)?.inside === ''
+  switch (command) {
+    case 'list_spaces': {
+      const all = [...(await crate<{ name: string }[]>(command)), ...(await kept.keptSpaces())]
+      all.sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1))
+      return { done: true, value: all }
+    }
+    case 'create_space':
+      if (!kept.keepsNewSpaces()) return { done: false }
+      return { done: true, value: await kept.makeKept(String(args.name)) }
+    case 'rename_space':
+      if (!own(args.from)) return { done: false }
+      return {
+        done: true,
+        value: await kept.renameKept(String(args.from), String(args.name)),
+      }
+    case 'delete_space':
+    case 'trash_item':
+      if (!own(args.path)) return { done: false }
+      return {
+        done: true,
+        value: await kept.removeKept(String(args.path), command === 'delete_space'),
+      }
+    default:
+      return { done: false }
+  }
+}
+
 export async function internalInvoke<T>(
   command: string,
   args: Record<string, unknown> = {},
@@ -123,23 +277,30 @@ export async function internalInvoke<T>(
     return trash<T>(command, args, mounts)
   }
 
-  let mount: Mounted | null = null
+  if (SPACE_COMMANDS.has(command) || (command === 'trash_item' && args.kind === 'space')) {
+    const answer = await spaces(command, args)
+    if (answer.done) return answer.value as T
+  }
+
   const inWeb: Record<string, unknown> = { ...args }
+  const named = new Set<Mounted | null>()
   for (const key of PATH_ARGS) {
     const value = args[key]
     if (typeof value !== 'string') continue
     const found = mountOf(value)
-    if (!found || (mount && found.mount !== mount)) {
-      throw new Error(
-        `${String(args.from ?? args.path)} and ${String(args.to ?? args.notePath)} are kept apart, and nothing can go from one to the other yet`,
-      )
-    }
-    mount = found.mount
-    inWeb[key] = found.inside ? `${found.mount.web}/${found.inside}` : found.mount.web
+    named.add(found?.mount ?? null)
+    if (found) inWeb[key] = found.inside ? `${found.mount.web}/${found.inside}` : found.mount.web
   }
-  if (!mount) throw new Error(`${command} names no space kept here`)
-  const named = typeof args.path === 'string' ? args.path : args.root
-  const at = (typeof named === 'string' ? mountOf(named)?.inside : undefined) ?? ''
+  // From one space into another: two kept ones are two stores of rows the browser's
+  // commands move between themselves; a kept one and a folder are this module's.
+  if (named.size > 1) {
+    if (named.has(null)) return across<T>(command, args)
+    return web<T>(command, inWeb)
+  }
+  const [mount] = [...named]
+  if (!mount) return crate<T>(command, args)
+  const pathArg = typeof args.path === 'string' ? args.path : args.root
+  const at = (typeof pathArg === 'string' ? mountOf(pathArg)?.inside : undefined) ?? ''
 
   switch (command) {
     // The crate's own shapes, which the browser's commands do not have.

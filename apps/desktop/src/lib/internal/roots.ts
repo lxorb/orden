@@ -25,6 +25,9 @@ export function mountRoot(one: Mounted): () => void {
   mounted.set(key, one)
   internal.routed = forInternal
   internal.file = bytesOf
+  internal.flush = async () => {
+    await Promise.all(mounts().map((mount) => mount.folder.flush()))
+  }
   return () => {
     if (mounted.get(key) === one) mounted.delete(key)
   }

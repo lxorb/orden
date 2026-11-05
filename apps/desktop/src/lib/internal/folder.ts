@@ -4,7 +4,7 @@
  *
  *  It is a disk, as the engine and every command already know one: paths, folders,
  *  files with words or bytes, a move, a delete. What makes it Orden's own is that the
- *  paths are only the index. A file's bytes are `entries/<key>` from the moment it is
+ *  paths are only the index. A file's bytes are `.entries/<key>` from the moment it is
  *  made, a key nobody reads a name off, so a move or a rename is a line of the index
  *  written again and no byte moves; nothing else writes the folder, so nothing there has
  *  to be guessed about; and every change is said, exactly, by what made it (`heard`).
