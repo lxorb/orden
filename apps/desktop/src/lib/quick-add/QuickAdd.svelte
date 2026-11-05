@@ -36,6 +36,10 @@
   import Target from 'lucide/dist/esm/icons/target.mjs'
   import Timer from 'lucide/dist/esm/icons/timer.mjs'
   import { onMount, tick, untrack } from 'svelte'
+  import DictateButton from '../dictation/DictateButton.svelte'
+  import { canDictate } from '../dictation/engines.svelte'
+  import { dictating } from '../dictation/keys'
+  import type { Dictates } from '../dictation/voice.svelte'
   import { t } from '../i18n.svelte'
   import type { Provider } from '../ai/providers'
   import type { MenuEntry } from '../menu-item'
@@ -68,6 +72,7 @@
     onpicking,
     headingsOf,
     provider = null,
+    dictates = true,
   }: {
     /** The app's language first; English is always read too. */
     langs: readonly string[]
@@ -91,6 +96,10 @@
     headingsOf?: (note: string) => readonly string[]
     /** The model Add with AI asks; without one there is no such button. */
     provider?: Provider | null
+    /** Whether the field offers dictation (#1128). Not over other apps: the global
+     *  window's webview answers no microphone, and it hides the moment the system's
+     *  permission prompt takes the focus. */
+    dictates?: boolean
   } = $props()
 
   // What the opener knew, taken once: the field is made again for every opening.
@@ -165,6 +174,21 @@
   )
 
   onMount(() => input?.focus())
+
+  /** The field dictated words go into: the line, or the description once it was the
+   *  one typed in last. */
+  let spoken = $state<HTMLInputElement | HTMLTextAreaElement>()
+
+  /** Quick add as dictation sees it: the note the task goes to and the space's labels
+   *  and notes, the names a task is likely to say. */
+  const voiceField: Dictates = {
+    field: () => spoken ?? input,
+    words: () => [
+      ...(note ? [note.split('/').at(-1) ?? note] : []),
+      ...tags.slice(0, 12),
+      ...notes.slice(0, 12).map((one) => one.split('/').at(-1) ?? one),
+    ],
+  }
 
   // The spans turned back into words move with the words around them.
   $effect(() => {
@@ -532,7 +556,9 @@
     <input
       bind:this={input}
       bind:value={text}
+      use:dictating={voiceField}
       class="field"
+      onfocus={() => (spoken = input)}
       {onkeydown}
       {onpaste}
       oninput={follow}
@@ -574,7 +600,9 @@
     <textarea
       bind:this={words}
       bind:value={description}
+      use:dictating={voiceField}
       class="words"
+      onfocus={() => (spoken = words)}
       rows="2"
       placeholder={t('Description')}
       onkeydown={wordsKey}
@@ -679,6 +707,9 @@
         >
           <Glyph icon={Sparkles} />
         </button>
+      {/if}
+      {#if dictates && canDictate()}
+        <DictateButton owner={voiceField} below />
       {/if}
       <button type="button" class="add" disabled={!read.text} onclick={() => void submit(false)}
         >{mode === 'edit' ? t('Save') : t('Add')}</button

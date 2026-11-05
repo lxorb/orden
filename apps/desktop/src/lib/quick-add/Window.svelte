@@ -92,6 +92,7 @@
       {langs}
       {notes}
       {smart}
+      dictates={false}
       onsubmit={added}
       onclose={() => hide()}
       onpicking={(open) => void invoke('quick_add_tall', { tall: open }).catch(() => undefined)}
