@@ -2454,6 +2454,8 @@ export const kn: Dictionary = {
   '{device} needs Xvfb to run an application.': 'ಅಪ್ಲಿಕೇಶನ್ ಚಲಾಯಿಸಲು {device}ಗೆ Xvfb ಬೇಕು.',
   '{device} did not allow this program.': '{device} ಈ ಪ್ರೋಗ್ರಾಂಗೆ ಅನುಮತಿಸಲಿಲ್ಲ.',
   '{device} does not have this application.': '{device}ನಲ್ಲಿ ಈ ಅಪ್ಲಿಕೇಶನ್ ಇಲ್ಲ.',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device} ತನ್ನದೇ ಆದ ಡೆಸ್ಕ್‌ಟಾಪ್‌ನಲ್ಲಿ Store ಅಪ್ಲಿಕೇಶನ್ ಅನ್ನು ಪ್ರಾರಂಭಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.',
   'It did not start on {device}.': 'ಇದು {device}ನಲ್ಲಿ ಪ್ರಾರಂಭವಾಗಲಿಲ್ಲ.',
   'Start online machine': 'ಆನ್‌ಲೈನ್ ಯಂತ್ರವನ್ನು ಪ್ರಾರಂಭಿಸಿ',
   'Stop online machine': 'ಆನ್‌ಲೈನ್ ಯಂತ್ರವನ್ನು ನಿಲ್ಲಿಸಿ',

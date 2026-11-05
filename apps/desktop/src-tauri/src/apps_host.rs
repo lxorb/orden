@@ -219,7 +219,7 @@ pub fn apps_installed(webview: Webview) -> Result<Vec<installed::Listed>, String
 
 /// Starts it, or - already running - tells this window where it stands. Errs with the
 /// wire's reason it did not start (`NotStarted` in `@orden/online/apps`): `missing`,
-/// `refused`, `isolation`, `display` or `failed`.
+/// `packaged`, `refused`, `isolation`, `display` or `failed`.
 #[tauri::command(async)]
 pub fn apps_start(
     webview: Webview,
@@ -244,7 +244,15 @@ pub fn apps_start(
     }
 
     let (argv, cwd) = match &run {
-        Run::Installed { id } => (installed::find(id).ok_or("missing")?.argv, None),
+        Run::Installed { id } => {
+            let entry = installed::find(id).ok_or("missing")?;
+            // A Store application is started by Windows itself, on the reader's desktop
+            // and no other.
+            if entry.packaged {
+                return Err("packaged".to_owned());
+            }
+            (entry.argv, entry.cwd)
+        }
         Run::Path { path, args, cwd } => {
             if !installed::on_path(path) {
                 return Err("missing".to_owned());

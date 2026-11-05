@@ -2441,6 +2441,8 @@ export const te: Dictionary = {
   '{device} needs Xvfb to run an application.': 'అప్లికేషన్ నడపడానికి {device}కు Xvfb కావాలి.',
   '{device} did not allow this program.': '{device} ఈ ప్రోగ్రామ్‌ను అనుమతించలేదు.',
   '{device} does not have this application.': '{device}లో ఈ అప్లికేషన్ లేదు.',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device} తన సొంత డెస్క్‌టాప్‌లో Store అప్లికేషన్‌ను ప్రారంభించలేదు.',
   'It did not start on {device}.': 'ఇది {device}లో ప్రారంభం కాలేదు.',
   'Start online machine': 'ఆన్‌లైన్ మెషీన్‌ను ప్రారంభించండి',
   'Stop online machine': 'ఆన్‌లైన్ మెషీన్‌ను ఆపండి',

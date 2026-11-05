@@ -2429,6 +2429,8 @@ export const hi: Dictionary = {
   '{device} needs Xvfb to run an application.': 'ऐप्लिकेशन चलाने के लिए {device} को Xvfb चाहिए।',
   '{device} did not allow this program.': '{device} ने इस प्रोग्राम की अनुमति नहीं दी।',
   '{device} does not have this application.': '{device} पर यह ऐप्लिकेशन नहीं है।',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device} अपने अलग डेस्कटॉप पर Store ऐप्लिकेशन शुरू नहीं कर सकता।',
   'It did not start on {device}.': 'यह {device} पर शुरू नहीं हुआ।',
   'Start online machine': 'ऑनलाइन मशीन शुरू करें',
   'Stop online machine': 'ऑनलाइन मशीन रोकें',

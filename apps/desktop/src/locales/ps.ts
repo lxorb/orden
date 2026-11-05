@@ -2433,6 +2433,8 @@ export const ps: Dictionary = {
     '{device} د اپلیکیشن چلولو لپاره Xvfb ته اړتیا لري.',
   '{device} did not allow this program.': '{device} دې پروګرام ته اجازه ورنکړه.',
   '{device} does not have this application.': '{device} دا اپلیکیشن نه لري.',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device} نشي کولای په خپل جلا ډیسکټاپ کې د Store اپلیکیشن پیل کړي.',
   'It did not start on {device}.': 'پر {device} پیل نه شو.',
   'Start online machine': 'آنلاین ماشین پیل کړئ',
   'Stop online machine': 'آنلاین ماشین ودروئ',

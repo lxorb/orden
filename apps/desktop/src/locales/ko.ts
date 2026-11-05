@@ -2395,6 +2395,8 @@ export const ko: Dictionary = {
     '{device}에서 애플리케이션을 실행하려면 Xvfb가 필요합니다.',
   '{device} did not allow this program.': '{device}에서 이 프로그램을 허용하지 않았습니다.',
   '{device} does not have this application.': '{device}에 이 애플리케이션이 없습니다.',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device}은(는) Store 애플리케이션을 자체 데스크톱에서 시작할 수 없습니다.',
   'It did not start on {device}.': '{device}에서 시작되지 않았습니다.',
   'Start online machine': '온라인 머신 시작',
   'Stop online machine': '온라인 머신 중지',

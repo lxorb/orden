@@ -1,10 +1,13 @@
 <script lang="ts">
+  import { untrack } from 'svelte'
   import { closeOnBack } from './backstack.svelte'
   import { overlays } from './overlays'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import FileMark from './FileMark.svelte'
   import { rank } from './fuzzy'
+  import { offsetOf, type Rows, windowFor } from './row-window'
+  import { ListView } from './row-window.svelte'
   import { t } from './i18n.svelte'
   import { prompt } from './prompt.svelte'
   import { selectAll } from './select-all'
@@ -18,17 +21,67 @@
   $effect(() => closeOnBack(prompt.open, () => prompt.dismiss()))
 
   /** How many rows a search through many answers shows at once. Enough to pick
-   *  from without the sheet becoming a page. */
+   *  from without the sheet becoming a page; the rest are a scroll away, every one of
+   *  them, and only those near the view are in the page (row-window.ts). */
   const MOST_SHOWN = 8
+  const OVERSCAN = 6
+  /** A row before there is one to measure: the mark's box and its padding. */
+  const LEAST = 32
 
   let cursor = $state(0)
 
-  /** The answers that match what has been typed, best first. */
+  /** The answers that match what has been typed, best first: all of them. */
   const matches = $derived(
     prompt.mode === 'find'
-      ? rank(prompt.value.trim(), prompt.options, (option) => option.label).slice(0, MOST_SHOWN)
+      ? rank(prompt.value.trim(), prompt.options, (option) => option.label)
       : [],
   )
+
+  let list = $state<HTMLUListElement>()
+  const where = new ListView()
+  const rows = $derived<Rows>({
+    count: matches.length,
+    height: where.row || LEAST,
+    top: where.top,
+    room: where.room,
+    overscan: OVERSCAN,
+    pinned: [cursor],
+  })
+  const view = $derived(windowFor(rows))
+  /** The rows in the page: the window's, and the cursor's wherever it is. */
+  const drawn = $derived.by(() => {
+    const out: { at: number; option: (typeof matches)[number]; away: boolean }[] = []
+    const add = (at: number, away: boolean) => {
+      const option = matches[at]
+      if (option) out.push({ at, option, away })
+    }
+    for (const at of view.pinned) if (at < view.first) add(at, true)
+    for (let at = view.first; at <= view.last; at++) add(at, false)
+    for (const at of view.pinned) if (at > view.last) add(at, true)
+    return out
+  })
+
+  $effect(() => {
+    const ul = list
+    if (!ul) return
+    return where.follow(ul, (one) => {
+      const row = one.querySelector('li[data-row]')
+      const tall = row instanceof HTMLElement ? row.getBoundingClientRect().height : 0
+      return tall > 0 ? tall : LEAST
+    })
+  })
+
+  /** The cursor's row brought into view, as the arrows move it. */
+  function reach(index: number) {
+    const box = where.box
+    if (!box) return
+    const height = where.row || LEAST
+    const top = offsetOf(index, rows) + (box.scrollTop - where.top)
+    if (top < box.scrollTop) box.scrollTop = top
+    else if (top + height > box.scrollTop + box.clientHeight)
+      box.scrollTop = top + height - box.clientHeight
+    where.refresh()
+  }
 
   /** Reads a value for its own sake, so the effect around it follows it. */
   const follows = (_value: unknown) => undefined
@@ -38,6 +91,9 @@
   $effect(() => {
     follows(matches)
     cursor = 0
+    untrack(() => {
+      if (where.box) where.box.scrollTop = 0
+    })
   })
 
   // Escape closes it, like everything else the app puts over a note; see
@@ -45,16 +101,19 @@
   $effect(() => (prompt.open ? overlays.show(() => prompt.dismiss()) : undefined))
 
   function onFindKey(event: KeyboardEvent) {
-    if (event.key === 'ArrowDown') {
-      event.preventDefault()
-      cursor = (cursor + 1) % Math.max(matches.length, 1)
-      return
+    const count = Math.max(matches.length, 1)
+    const page = Math.max(1, MOST_SHOWN - 1)
+    const moves: Record<string, number> = {
+      ArrowDown: (cursor + 1) % count,
+      ArrowUp: (cursor - 1 + count) % count,
+      PageDown: Math.min(cursor + page, count - 1),
+      PageUp: Math.max(cursor - page, 0),
     }
-
-    if (event.key === 'ArrowUp') {
-      event.preventDefault()
-      cursor = (cursor - 1 + matches.length) % Math.max(matches.length, 1)
-    }
+    const to = moves[event.key]
+    if (to === undefined) return
+    event.preventDefault()
+    cursor = to
+    reach(to)
   }
 
   /** A Mac's order for a row of answers: the default last, at the right edge, where
@@ -122,33 +181,47 @@
         />
 
         {#if matches.length}
-          <ul class="found">
-            {#each matches as option, index (option.id)}
-              <li>
-                <button
-                  type="button"
-                  class="found-row"
-                  class:at={index === cursor}
-                  onmouseenter={() => (cursor = index)}
-                  onclick={() => prompt.pick(option.id)}
+          <div class="found-box" style:max-height="{MOST_SHOWN * (where.row || LEAST)}px">
+            <ul class="found" bind:this={list}>
+              <li class="gap" style:height="{view.above}px" aria-hidden="true"></li>
+              {#each drawn as { at: index, option, away } (option.id)}
+                <li
+                  data-row={index}
+                  class:away
+                  style:top={away ? `${offsetOf(index, rows)}px` : undefined}
                 >
-                  <!-- Where the answers are things the file list also shows, they
+                  <button
+                    type="button"
+                    class="found-row"
+                    class:at={index === cursor}
+                    onmouseenter={() => (cursor = index)}
+                    onclick={() => prompt.pick(option.id)}
+                  >
+                    <!-- Where the answers are things the file list also shows, they
                        wear the same marks here: a note that chose an icon is that
                        icon in the tree and in the sheet that moves into it. A
                        space wears what the switcher gives it, in the same box, so
                        the names still read as one column. -->
-                  {#if option.space}
-                    <span class="space"><SpaceMark {...option.space} /></span>
-                  {:else if option.picture}
-                    <img class="picture" src={option.picture} alt="" draggable="false" />
-                  {:else if option.mark}
-                    <FileMark mark={option.mark} path={option.id} />
-                  {/if}
-                  <span class="found-label">{option.label}</span>
-                </button>
-              </li>
-            {/each}
-          </ul>
+                    {#if option.space}
+                      <span class="space"><SpaceMark {...option.space} /></span>
+                    {:else if option.picture}
+                      <img
+                        class="picture"
+                        src={option.picture}
+                        alt=""
+                        draggable="false"
+                        decoding="async"
+                      />
+                    {:else if option.mark}
+                      <FileMark mark={option.mark} path={option.id} />
+                    {/if}
+                    <span class="found-label">{option.label}</span>
+                  </button>
+                </li>
+              {/each}
+              <li class="gap" style:height="{view.below}px" aria-hidden="true"></li>
+            </ul>
+          </div>
         {:else}
           <p class="detail">{t('Nothing found')}</p>
         {/if}
@@ -239,10 +312,24 @@
   /* The answers to a question with too many of them, narrowed by typing. The
      gap the form puts between its children is the whole spacing here: the list
      sits under the field like the field sits under the title. */
-  .found {
-    list-style: none;
+  .found-box {
     margin: calc(var(--space-4) * -1 + var(--space-1)) 0 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .found {
+    position: relative;
+    list-style: none;
+    margin: 0;
     padding: 0;
+  }
+
+  /* The cursor's row while the window is elsewhere: at its own place, out of the flow. */
+  .found .away {
+    position: absolute;
+    left: 0;
+    right: 0;
   }
 
   .found-row {

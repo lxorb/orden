@@ -2521,6 +2521,8 @@ export const ru: Dictionary = {
   '{device} needs Xvfb to run an application.': 'Для запуска приложения {device} нужен Xvfb.',
   '{device} did not allow this program.': '{device} не разрешил эту программу.',
   '{device} does not have this application.': 'На {device} нет этого приложения.',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device} не может запустить приложение из Store на отдельном рабочем столе.',
   'It did not start on {device}.': 'Не запустилось на {device}.',
   'Start online machine': 'Запустить онлайн-машину',
   'Stop online machine': 'Остановить онлайн-машину',

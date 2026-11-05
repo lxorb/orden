@@ -2413,6 +2413,8 @@ export const ja: Dictionary = {
     'アプリケーションを実行するには {device} に Xvfb が必要です。',
   '{device} did not allow this program.': '{device} はこのプログラムを許可しませんでした。',
   '{device} does not have this application.': '{device} にはこのアプリケーションがありません。',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device} は Store アプリケーションを専用のデスクトップで起動できません。',
   'It did not start on {device}.': '{device} で起動しませんでした。',
   'Start online machine': 'オンラインマシンを起動',
   'Stop online machine': 'オンラインマシンを停止',

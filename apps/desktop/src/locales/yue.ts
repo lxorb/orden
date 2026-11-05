@@ -2360,6 +2360,8 @@ export const yue: Dictionary = {
   '{device} needs Xvfb to run an application.': '{device} 要有 Xvfb 先可以運行應用程式。',
   '{device} did not allow this program.': '{device} 唔准呢個程式。',
   '{device} does not have this application.': '{device} 冇呢個應用程式。',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device} 冇辦法喺自己嘅桌面開 Store 應用程式。',
   'It did not start on {device}.': '喺 {device} 度開唔到。',
   'Start online machine': '開啟網上機器',
   'Stop online machine': '停止網上機器',

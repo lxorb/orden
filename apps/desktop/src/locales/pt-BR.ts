@@ -2477,6 +2477,8 @@ export const ptBR: Dictionary = {
     '{device} precisa do Xvfb para rodar um aplicativo.',
   '{device} did not allow this program.': '{device} não permitiu este programa.',
   '{device} does not have this application.': '{device} não tem este aplicativo.',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device} não consegue iniciar um aplicativo da Store em uma área de trabalho própria.',
   'It did not start on {device}.': 'Não iniciou em {device}.',
   'Start online machine': 'Iniciar máquina online',
   'Stop online machine': 'Parar máquina online',

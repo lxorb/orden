@@ -2462,6 +2462,8 @@ export const ha: Dictionary = {
   '{device} needs Xvfb to run an application.': '{device} na buƙatar Xvfb don gudanar da manhaja.',
   '{device} did not allow this program.': '{device} bai yarda da wannan shirin ba.',
   '{device} does not have this application.': '{device} ba shi da wannan manhaja.',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device} ba zai iya fara manhajar Store a na’urar kwamfutarsa ta daban ba.',
   'It did not start on {device}.': 'Bai fara a kan {device} ba.',
   'Start online machine': 'Kunna na’urar kan layi',
   'Stop online machine': 'Dakatar da na’urar kan layi',

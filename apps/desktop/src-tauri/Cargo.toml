@@ -42,7 +42,8 @@ missing_docs = "warn"
 # `kill(2)` on the process group of an application this computer hosts, which is how it
 # and everything it started are ended (src/apps_host.rs), and the memory its display's
 # picture is read through, shared with that display's X server (`mmap(2)` and
-# `munmap(2)`, src/apps_host/capture.rs). And a test's count of the steps SQLite took
+# `munmap(2)`, src/apps_host/capture.rs); and on Windows what the Start menu lists, with
+# its icons (src/apps_host/installed/windows.rs). And a test's count of the steps SQLite took
 # over a chat's window (src/sync_store/chats.rs). None of
 # them has a safe wrapper to use instead, and anything new that wants unsafe has to
 # say so at the function and say why.
@@ -509,6 +510,12 @@ windows = { version = "0.58", features = [
   # decided as they lift and not before; see touchpad.rs.
   "Win32_UI_Input",
   "Win32_Devices_HumanInterfaceDevice",
+  # What the Start menu lists, for New application: its shortcuts read with the shell's
+  # IShellLink, the Store's applications from its Apps folder, and each one's icon as
+  # Explorer draws it; see apps_host/installed/windows.rs.
+  "Win32_System_Com",
+  "Win32_Storage_FileSystem",
+  "Win32_UI_Shell_PropertiesSystem",
   # Reminders put on Windows' own schedule of toasts, which rings them with nib not
   # running: the notifier, the toast's XML and the moment it rings. See
   # reminders/toasts.rs.

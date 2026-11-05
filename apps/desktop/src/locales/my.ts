@@ -2412,6 +2412,8 @@ export const my: Dictionary = {
     'အက်ပလီကေးရှင်း ဖွင့်ရန် {device} တွင် Xvfb လိုအပ်သည်။',
   '{device} did not allow this program.': '{device} က ဤပရိုဂရမ်ကို ခွင့်မပြုခဲ့ပါ။',
   '{device} does not have this application.': '{device} တွင် ဤအက်ပလီကေးရှင်း မရှိပါ။',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device} သည် ကိုယ်ပိုင် ဒက်စ်တော့ပေါ်တွင် Store အက်ပလီကေးရှင်းကို မစတင်နိုင်ပါ။',
   'It did not start on {device}.': '{device} ပေါ်တွင် မစတင်ခဲ့ပါ။',
   'Start online machine': 'အွန်လိုင်း စက်ကို စတင်ရန်',
   'Stop online machine': 'အွန်လိုင်း စက်ကို ရပ်ရန်',

@@ -2444,6 +2444,8 @@ export const tr: Dictionary = {
     '{device} bir uygulamayı çalıştırmak için Xvfb’ye ihtiyaç duyuyor.',
   '{device} did not allow this program.': '{device} bu programa izin vermedi.',
   '{device} does not have this application.': '{device} cihazında bu uygulama yok.',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device} bir Store uygulamasını kendi masaüstünde başlatamaz.',
   'It did not start on {device}.': '{device} üzerinde başlamadı.',
   'Start online machine': 'Çevrimiçi makineyi başlat',
   'Stop online machine': 'Çevrimiçi makineyi durdur',

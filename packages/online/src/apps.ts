@@ -44,12 +44,21 @@ export type AppState = 'stopped' | 'starting' | 'running' | 'exited'
 const APP_STATES: readonly AppState[] = ['stopped', 'starting', 'running', 'exited']
 
 /** Why a host did not start it, with a `stopped` or `exited` state: its platform cannot
- *  give an application a display of its own yet (Windows and macOS, until step 8), the
- *  display server it needs is not installed (Xvfb), the reader at the host said no to a
- *  program by its path, what the file names is not on the host, or it failed to start. */
-export type NotStarted = 'isolation' | 'display' | 'refused' | 'missing' | 'failed'
+ *  give an application a display of its own yet (macOS), the display server it needs is
+ *  not installed (Xvfb), the reader at the host said no to a program by its path, what
+ *  the file names is not on the host, it is a Store application that Windows starts only
+ *  on the reader's own desktop (`packaged`), or it failed to start. */
+export type NotStarted = 'isolation' | 'display' | 'refused' | 'missing' | 'packaged' | 'failed'
 
-const NOT_STARTED: readonly NotStarted[] = ['isolation', 'display', 'refused', 'missing', 'failed']
+/** Every reason, as the wire reads them. */
+export const NOT_STARTED: readonly NotStarted[] = [
+  'isolation',
+  'display',
+  'refused',
+  'missing',
+  'packaged',
+  'failed',
+]
 
 /** The state frame, as either side sends it. */
 export interface StateFrame {
@@ -325,12 +334,13 @@ export interface Installed {
   icon?: string
 }
 
-/** The most applications one host lists. */
-export const MOST_INSTALLED = 600
-/** The largest icon kept, as its data URL: a 48 pixel PNG or a small SVG. */
+/** The most applications one host lists: more than any Start menu holds. */
+export const MOST_INSTALLED = 2000
+/** The largest icon kept, as its data URL: a 32 pixel PNG or a small SVG. */
 export const MOST_ICON = 48 * 1024
-/** The largest catalogue, in characters of JSON. */
-export const MOST_CATALOGUE = 4 * 1024 * 1024
+/** The largest catalogue, in characters of JSON: under the two million bytes a row of the
+ *  account's database holds. */
+export const MOST_CATALOGUE = 1_900_000
 
 const ICON = /^data:image\/(png|svg\+xml);base64,[A-Za-z0-9+/]+={0,2}$/
 
@@ -357,6 +367,21 @@ export function catalogueOf(value: unknown): Installed[] | null {
     if (apps.length === MOST_INSTALLED) break
   }
   return apps
+}
+
+/** A catalogue that fits `MOST_CATALOGUE` as `{"apps": [...]}`: every application kept,
+ *  and where they do not all fit with their icons, the icons of the last ones let go
+ *  first. */
+export function fitCatalogue(apps: readonly Installed[], most = MOST_CATALOGUE): Installed[] {
+  const fitted = [...apps]
+  let length = JSON.stringify({ apps: fitted }).length
+  for (let at = fitted.length - 1; at >= 0 && length > most; at--) {
+    const one = fitted[at]
+    if (!one?.icon) continue
+    length -= JSON.stringify(one).length - JSON.stringify({ id: one.id, name: one.name }).length
+    fitted[at] = { id: one.id, name: one.name }
+  }
+  return fitted
 }
 
 /** Where a host's catalogue is kept on the account: `PUT` by the host for itself, `GET`

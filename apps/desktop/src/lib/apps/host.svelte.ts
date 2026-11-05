@@ -25,9 +25,12 @@ import {
   appFileOf,
   appSocketPath,
   CATALOGUE_PATH,
+  catalogueOf,
+  fitCatalogue,
   HOST_PROTOCOL,
   ICE_PATH,
   type HostFrame,
+  NOT_STARTED,
   type NotStarted,
   type RelayToHost,
   type StateFrame,
@@ -360,8 +363,7 @@ async function appWorld(): Promise<{
         return null
       } catch (error) {
         const why = String(error)
-        const known: NotStarted[] = ['isolation', 'display', 'refused', 'missing', 'failed']
-        return known.find((one) => one === why) ?? 'failed'
+        return NOT_STARTED.find((one) => one === why) ?? 'failed'
       }
     },
     async watch(key, said) {
@@ -384,11 +386,12 @@ async function appWorld(): Promise<{
   // reader's other devices. An account that does not know the route yet answers 404,
   // which is no news.
   void native
-    .invoke<unknown[]>('apps_installed')
-    .then((apps) => {
+    .invoke<unknown>('apps_installed')
+    .then((listed) => {
       const token = account.accountToken
-      if (!token) return
-      return request(CATALOGUE_PATH, { method: 'PUT', token, body: { apps } })
+      const apps = catalogueOf(listed)
+      if (!token || !apps) return
+      return request(CATALOGUE_PATH, { method: 'PUT', token, body: { apps: fitCatalogue(apps) } })
     })
     .catch(() => undefined)
 

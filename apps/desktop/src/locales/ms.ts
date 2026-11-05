@@ -2421,6 +2421,8 @@ export const ms: Dictionary = {
     '{device} memerlukan Xvfb untuk menjalankan aplikasi.',
   '{device} did not allow this program.': '{device} tidak membenarkan program ini.',
   '{device} does not have this application.': '{device} tiada aplikasi ini.',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device} tidak dapat memulakan aplikasi Store pada desktopnya sendiri.',
   'It did not start on {device}.': 'Ia tidak bermula pada {device}.',
   'Start online machine': 'Mulakan mesin dalam talian',
   'Stop online machine': 'Hentikan mesin dalam talian',

@@ -2364,6 +2364,8 @@ export const zhHant: Dictionary = {
   '{device} needs Xvfb to run an application.': '{device} 需要 Xvfb 才能執行應用程式。',
   '{device} did not allow this program.': '{device} 未允許此程式。',
   '{device} does not have this application.': '{device} 上沒有此應用程式。',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device} 無法在自己的桌面上啟動 Store 應用程式。',
   'It did not start on {device}.': '無法在 {device} 上啟動。',
   'Start online machine': '啟動線上機器',
   'Stop online machine': '停止線上機器',

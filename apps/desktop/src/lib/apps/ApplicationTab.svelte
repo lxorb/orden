@@ -185,9 +185,10 @@
         return t('Not running on {device}', { device })
     }
   })
-  /** Why its computer did not start it: Windows and macOS have no display of an
-   *  application's own yet (step 8 of issue 1063), Linux needs Xvfb, the reader there
-   *  said no to a program by its path, or what the file names is not there. */
+  /** Why its computer did not start it: macOS has no display of an application's own
+   *  yet (step 8 of issue 1063), Linux needs Xvfb, the reader there said no to a program
+   *  by its path, what the file names is not there, or it is a Store application, which
+   *  Windows starts only on the reader's own desktop. */
   function notStarted(why: NotStarted, device: string): string {
     switch (why) {
       case 'isolation':
@@ -198,6 +199,10 @@
         return t('{device} did not allow this program.', { device })
       case 'missing':
         return t('{device} does not have this application.', { device })
+      case 'packaged':
+        return t('{device} cannot start a Store application on a desktop of its own.', {
+          device,
+        })
       case 'failed':
         return t('It did not start on {device}.', { device })
     }

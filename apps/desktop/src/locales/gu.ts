@@ -2422,6 +2422,8 @@ export const gu: Dictionary = {
   '{device} needs Xvfb to run an application.': 'એપ્લિકેશન ચલાવવા માટે {device}ને Xvfb જોઈએ.',
   '{device} did not allow this program.': '{device}એ આ પ્રોગ્રામની મંજૂરી ન આપી.',
   '{device} does not have this application.': '{device} પાસે આ એપ્લિકેશન નથી.',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device} પોતાના અલગ ડેસ્કટોપ પર Store એપ્લિકેશન શરૂ કરી શકતું નથી.',
   'It did not start on {device}.': 'તે {device} પર શરૂ ન થઈ.',
   'Start online machine': 'ઑનલાઇન મશીન શરૂ કરો',
   'Stop online machine': 'ઑનલાઇન મશીન બંધ કરો',

@@ -2383,6 +2383,8 @@ export const th: Dictionary = {
   '{device} needs Xvfb to run an application.': '{device} ต้องใช้ Xvfb เพื่อเรียกใช้แอปพลิเคชัน',
   '{device} did not allow this program.': '{device} ไม่อนุญาตโปรแกรมนี้',
   '{device} does not have this application.': '{device} ไม่มีแอปพลิเคชันนี้',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device} เริ่มแอปพลิเคชัน Store บนเดสก์ท็อปของตัวเองไม่ได้',
   'It did not start on {device}.': 'ไม่ได้เริ่มทำงานบน {device}',
   'Start online machine': 'เปิดเครื่องออนไลน์',
   'Stop online machine': 'หยุดเครื่องออนไลน์',

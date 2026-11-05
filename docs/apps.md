@@ -91,6 +91,30 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
 - **Not yet**: a host serves the applications of the space it has open; a program that speaks
   only Wayland needs a headless compositor (weston), which comes with the capture in step 4.
 
+## What a computer has installed, with icons
+
+- **Every one**, as the system's own list shows them, each with its own icon made 32 pixels
+  across (`apps_host/installed.rs`, `installed/icons.rs`):
+  - **Linux**: the desktop entries of the XDG data folders and of Flatpak's and Snap's exports;
+    not hidden ones, not ones `OnlyShowIn`/`NotShowIn` keeps off this desktop, not terminal
+    programs; named in the reader's language; icons by the Icon Theme Specification (the
+    reader's theme from KDE's, GNOME's or GTK's setting, the themes it inherits, hicolor,
+    `pixmaps`), a large PNG made small, an SVG sent as it is where it is small.
+  - **Windows** (`installed/windows.rs`): what All apps lists. The Start menu's shortcuts, the
+    machine's and the reader's, read with the shell's `IShellLink` (program, arguments,
+    folder) and named as Explorer names them; the Store's applications from the shell's Apps
+    folder; and `App Paths` where no shortcut already starts that program. Not a shortcut to
+    a document, a help file, a page or a folder, nor an uninstaller; each program and each
+    name once. Icons are the shell's own picture of each.
+  - **macOS** (`installed/macos.rs`): the bundles in `~/Applications`, `/Applications` and
+    `/System/Applications`, two folders deep, by their own names, once each by bundle id, not
+    background agents; the icon is the smallest PNG of the bundle's `icns` that is large
+    enough.
+- **The chooser holds all of them**: a find sheet lists every match and scrolls, with only the
+  rows near the view in the page (`row-window.ts`), and keeps working as it is typed into.
+- **The catalogue** is kept under D1's row limit (`MOST_CATALOGUE`): a host with more than fits
+  drops the icons of the last ones first (`fitCatalogue`).
+
 ## The picture (step 4)
 
 - **The host sends it** (`apps_host/stream.rs`): the holder offers a receive-only video and a

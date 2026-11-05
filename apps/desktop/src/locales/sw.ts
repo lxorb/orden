@@ -2461,6 +2461,8 @@ export const sw: Dictionary = {
   '{device} needs Xvfb to run an application.': '{device} inahitaji Xvfb ili kuendesha programu.',
   '{device} did not allow this program.': '{device} haikuruhusu programu hii.',
   '{device} does not have this application.': '{device} haina programu hii.',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device} haiwezi kuanzisha programu ya Store kwenye eneo-kazi lake lenyewe.',
   'It did not start on {device}.': 'Haikuanza kwenye {device}.',
   'Start online machine': 'Washa mashine ya mtandaoni',
   'Stop online machine': 'Zima mashine ya mtandaoni',

@@ -2443,6 +2443,8 @@ export const gsw: Dictionary = {
   '{device} needs Xvfb to run an application.': '{device} bruucht Xvfb, zum e Aawändig laufe loo.',
   '{device} did not allow this program.': '{device} hät das Programm nöd erlaubt.',
   '{device} does not have this application.': '{device} hät die Aawändig nöd.',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device} cha kei Store-Aawändig uf emene eigete Desktop starte.',
   'It did not start on {device}.': 'Si isch uf {device} nöd gstartet.',
   'Start online machine': 'Online-Maschine starte',
   'Stop online machine': 'Online-Maschine stoppe',

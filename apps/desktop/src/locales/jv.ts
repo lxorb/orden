@@ -2409,6 +2409,8 @@ export const jv: Dictionary = {
   '{device} needs Xvfb to run an application.': '{device} butuh Xvfb kanggo mbukak aplikasi.',
   '{device} did not allow this program.': '{device} ora ngidini program iki.',
   '{device} does not have this application.': '{device} ora duwé aplikasi iki.',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device} ora bisa miwiti aplikasi Store ing desktop dhewe.',
   'It did not start on {device}.': 'Ora mlaku ing {device}.',
   'Start online machine': 'Wiwiti mesin online',
   'Stop online machine': 'Mandhegake mesin online',

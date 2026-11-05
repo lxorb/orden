@@ -2501,6 +2501,8 @@ export const it: Dictionary = {
     '{device} ha bisogno di Xvfb per eseguire un’applicazione.',
   '{device} did not allow this program.': '{device} non ha permesso questo programma.',
   '{device} does not have this application.': '{device} non ha questa applicazione.',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device} non può avviare un’applicazione dello Store su un desktop separato.',
   'It did not start on {device}.': 'Non si è avviata su {device}.',
   'Start online machine': 'Avvia macchina online',
   'Stop online machine': 'Arresta macchina online',

@@ -2432,6 +2432,8 @@ export const fa: Dictionary = {
   '{device} needs Xvfb to run an application.': '{device} برای اجرای برنامه به Xvfb نیاز دارد.',
   '{device} did not allow this program.': '{device} اجازهٔ این برنامه را نداد.',
   '{device} does not have this application.': '{device} این برنامه را ندارد.',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device} نمی‌تواند برنامه‌ای از Store را روی دسکتاپ جداگانهٔ خود اجرا کند.',
   'It did not start on {device}.': 'روی {device} شروع نشد.',
   'Start online machine': 'روشن کردن ماشین آنلاین',
   'Stop online machine': 'خاموش کردن ماشین آنلاین',

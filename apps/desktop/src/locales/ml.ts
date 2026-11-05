@@ -2463,6 +2463,8 @@ export const ml: Dictionary = {
     'ആപ്ലിക്കേഷൻ പ്രവർത്തിപ്പിക്കാൻ {device}-ന് Xvfb വേണം.',
   '{device} did not allow this program.': '{device} ഈ പ്രോഗ്രാം അനുവദിച്ചില്ല.',
   '{device} does not have this application.': '{device}-ൽ ഈ ആപ്ലിക്കേഷൻ ഇല്ല.',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device}-ന് സ്വന്തം ഡെസ്ക്ടോപ്പിൽ Store ആപ്ലിക്കേഷൻ ആരംഭിക്കാൻ കഴിയില്ല.',
   'It did not start on {device}.': '{device}-ൽ ഇത് ആരംഭിച്ചില്ല.',
   'Start online machine': 'ഓൺലൈൻ മെഷീൻ ആരംഭിക്കുക',
   'Stop online machine': 'ഓൺലൈൻ മെഷീൻ നിർത്തുക',

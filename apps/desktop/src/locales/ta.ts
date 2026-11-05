@@ -2467,6 +2467,8 @@ export const ta: Dictionary = {
   '{device} needs Xvfb to run an application.': 'பயன்பாட்டை இயக்க {device}-க்கு Xvfb தேவை.',
   '{device} did not allow this program.': '{device} இந்த நிரலை அனுமதிக்கவில்லை.',
   '{device} does not have this application.': '{device}-இல் இந்தப் பயன்பாடு இல்லை.',
+  '{device} cannot start a Store application on a desktop of its own.':
+    '{device}-ஆல் Store பயன்பாட்டைத் தனக்கென்று தனி டெஸ்க்டாப்பில் தொடங்க முடியாது.',
   'It did not start on {device}.': 'இது {device}-இல் தொடங்கவில்லை.',
   'Start online machine': 'ஆன்லைன் இயந்திரத்தைத் தொடங்கு',
   'Stop online machine': 'ஆன்லைன் இயந்திரத்தை நிறுத்து',

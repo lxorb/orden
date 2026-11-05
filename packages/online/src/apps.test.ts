@@ -8,6 +8,7 @@ import {
   inputText,
   MOST_ICON,
   MOST_INSTALLED,
+  fitCatalogue,
   MOST_CLIPBOARD,
   MOST_POINTER,
   appFileOf,
@@ -147,6 +148,22 @@ describe('a host’s catalogue', () => {
       { id: 'big.desktop', name: 'Big' },
     ])
     expect(catalogueOf({ apps: [] })).toBeNull()
+  })
+
+  it('fits the account by letting go of the last ones’ icons first, and of no application', () => {
+    const icon = `data:image/png;base64,${'A'.repeat(1000)}`
+    const apps = Array.from({ length: 10 }, (_, at) => ({ id: `${at}`, name: `${at}`, icon }))
+    const whole = JSON.stringify({ apps }).length
+    expect(fitCatalogue(apps, whole)).toEqual(apps)
+    const fitted = fitCatalogue(apps, whole - 2500)
+    expect(fitted.map((one) => one.id)).toEqual(apps.map((one) => one.id))
+    expect(fitted.map((one) => 'icon' in one)).toEqual([
+      ...Array(7).fill(true),
+      false,
+      false,
+      false,
+    ])
+    expect(JSON.stringify({ apps: fitted }).length).toBeLessThanOrEqual(whole - 2500)
   })
 
   it('lists at most MOST_INSTALLED', () => {

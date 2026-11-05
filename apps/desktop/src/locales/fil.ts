@@ -2478,6 +2478,8 @@ export const fil: Dictionary = {
     'Kailangan ng {device} ang Xvfb para magpatakbo ng application.',
   '{device} did not allow this program.': 'Hindi pinayagan ng {device} ang program na ito.',
   '{device} does not have this application.': 'Wala sa {device} ang application na ito.',
+  '{device} cannot start a Store application on a desktop of its own.':
+    'Hindi makapagsimula ang {device} ng Store application sa sarili nitong desktop.',
   'It did not start on {device}.': 'Hindi ito nagsimula sa {device}.',
   'Start online machine': 'Simulan ang online na makina',
   'Stop online machine': 'Ihinto ang online na makina',
