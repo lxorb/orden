@@ -1347,9 +1347,14 @@ function holds(tail: string): boolean {
  *
  *  Lowered on 2026-11-05, to 3,703,700 and 396 modules, as #1126 moved a note's scan and
  *  the search into @orden/scan. Measured 3,703,478, 396 modules. Then to 3,704,000 for
- *  every window counted among the app's (`holdThisWindow`), measured 3,703,723. */
-const BUDGET = 3_704_000
-const MOST_FILES = 397
+ *  every window counted among the app's (`holdThisWindow`), measured 3,703,723.
+ *
+ *  Raised 2026-11-05, to 3,705,600 and 398 modules, for #1139: a strip with nothing ahead
+ *  of its tabs starts them at its pane's edge, and the first one in front runs straight
+ *  down into the page with no foot ahead of it (the new tab-strip/flush.ts, Tabs.svelte,
+ *  Pane.svelte). Measured 3,705,341 in 397. */
+const BUDGET = 3_705_600
+const MOST_FILES = 398
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

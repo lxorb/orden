@@ -641,11 +641,16 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  6,126,300, measured 6,125,997; the catalogues to 1,006,300, measured 1,006,088; the
  *  styles to 289,800, measured 289,721. Then the styles to 290,000 for #1126's away
  *  mark in a pane, measured 289,913.
+ *
+ *  Raised on 2026-11-05 for #1139: a strip with nothing ahead of its tabs starts them at
+ *  its pane's edge, and the first one in front runs straight down into the page with no
+ *  foot ahead of it (tab-strip/flush.ts, Tabs.svelte, Pane.svelte). The code to
+ *  6,126,700, measured 6,126,404; the styles to 291,000, measured 290,785.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_126_300,
+  code: 6_126_700,
   catalogues: 1_006_300,
-  styles: 290_000,
+  styles: 291_000,
   fonts: 260_000,
   pages: 40_000,
 }
