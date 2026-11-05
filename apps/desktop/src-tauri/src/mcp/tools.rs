@@ -491,7 +491,9 @@ mod tests {
     /// the app (#1078, step 6): one tool, `system`, 487 characters, listed only to a grant
     /// holding processes, from a table at 39 499. Raised to 40 700 on 2026-11-05 for the
     /// reader's applications (#1063, step 7): one tool, `application_tabs`, 563 characters,
-    /// listed only to a grant holding applications, from a table at 39 986.
+    /// listed only to a grant holding applications, from a table at 39 986. A row was held
+    /// under 1 600 until 2026-11-05, then under 1 700 for an online terminal an agent opens
+    /// (#1125): `workspace_tabs`' kind `online`, 88 characters, from a row at 1 576.
     #[test]
     fn the_table_stays_small() {
         let mut sizes = BTreeMap::new();
@@ -504,7 +506,7 @@ mod tests {
             "the tools are {total} characters: {sizes:?}"
         );
         for (name, size) in &sizes {
-            assert!(*size < 1_600, "{name} is {size} characters");
+            assert!(*size < 1_700, "{name} is {size} characters");
         }
     }
 }
