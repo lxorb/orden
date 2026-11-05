@@ -28,7 +28,7 @@ use std::time::{Duration, Instant};
 use serde_json::{json, Value};
 
 use super::cdp::{self, Heard};
-use super::engines::{Engine, Gate, Page, Tree, SETTLED, UNREAD};
+use super::engines::{self, Engine, Gate, Page, Tree, SETTLED, UNREAD};
 use super::keys::{self, Key};
 use super::policy::{self, Facts, Field};
 use super::scripts::{self, paint_over, png_size, CARET_ALL, CARET_END};
@@ -1155,9 +1155,7 @@ impl Page<'_> {
 
     /// Whether a frame's words may be read, by where it is.
     fn may_read_frame(&self, at: &[String]) -> bool {
-        self.limits
-            .as_ref()
-            .is_none_or(|(grant, store)| policy::frame_allowed(grant, at, *store).is_ok())
+        engines::frame_readable(self.limits.as_ref(), at)
     }
 
     /// The fields of an element's form, or its page, inside a closed shadow root, which no

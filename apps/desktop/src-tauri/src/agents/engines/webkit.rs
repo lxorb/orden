@@ -381,11 +381,11 @@ define_class!(
         #[unsafe(method(webView:didReceiveAuthenticationChallenge:completionHandler:))]
         fn did_receive_authentication_challenge(
             &self,
-            webview: &WKWebView,
+            _webview: &WKWebView,
             challenge: &NSURLAuthenticationChallenge,
             answer: &DynBlock<dyn Fn(NSURLSessionAuthChallengeDisposition, *mut NSURLCredential)>,
         ) {
-            challenged(self.ivars(), webview, challenge, answer);
+            challenged(self.ivars(), challenge, answer);
         }
 
         /// A link or a script's navigation turned out to be a download.
@@ -858,7 +858,6 @@ fn finished_download(fetching: &Fetching, state: DownloadState) {
 )]
 fn challenged(
     held: &Held,
-    webview: &WKWebView,
     challenge: &NSURLAuthenticationChallenge,
     answer: &DynBlock<dyn Fn(NSURLSessionAuthChallengeDisposition, *mut NSURLCredential)>,
 ) {
@@ -877,11 +876,16 @@ fn challenged(
                 return;
             }
             let realm = space.realm().map(|one| one.to_string()).unwrap_or_default();
-            // SAFETY: the view's own address, read on the main thread.
-            let url = unsafe { webview.URL() }
-                .and_then(|one| one.absoluteString())
-                .map(|one| one.to_string())
-                .unwrap_or_default();
+            // The site that asks, which is the one the sign-in goes to: a frame's or a
+            // request's of a site the agent may not reach is that site's (9.2), however
+            // allowed the page round it.
+            let url = format!(
+                "{}://{}/",
+                space
+                    .protocol()
+                    .map_or_else(|| "https".to_string(), |one| one.to_string()),
+                space.host()
+            );
             held_dialog(
                 held,
                 DialogKind::SignIn,
