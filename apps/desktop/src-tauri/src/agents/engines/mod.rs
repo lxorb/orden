@@ -405,6 +405,10 @@ pub fn acts_in(limits: Option<&(Grant, Store)>, facts: &Facts) -> Result<(), Ans
 
 /// Whether a frame's words may be read under a call's `limits`, by where it is (`at` as
 /// `Facts::at` is).
+#[cfg_attr(
+    not(any(windows, feature = "cef")),
+    allow(dead_code, reason = "WKWebView reads no frame by its address")
+)]
 pub fn frame_readable(limits: Option<&(Grant, Store)>, at: &[String]) -> bool {
     limits.is_none_or(|(grant, store)| super::policy::frame_allowed(grant, at, *store).is_ok())
 }
