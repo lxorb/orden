@@ -94,3 +94,24 @@ export function isEngineAddress(url: string): boolean {
   const said = url.trim()
   return said.includes(WORDS) && isWebAddress(said.replaceAll(WORDS, 'nib'))
 }
+
+/** The engine of the list another browser's search goes to (import/search-engines.ts):
+ *  the one of its name, else the one whose search is on the same site. Null for one
+ *  not on the list. */
+export function engineFor(name: string | null, search: string | null): Engine | null {
+  const called = name?.trim().toLowerCase()
+  const named = called ? ALL.find((one) => one.name.toLowerCase() === called) : undefined
+  if (named) return named
+
+  const site = search ? siteOf(search) : null
+  return site === null ? null : (ALL.find((one) => siteOf(one.url) === site) ?? null)
+}
+
+/** The site an engine's search is on, without the `www.` in front. */
+function siteOf(search: string): string | null {
+  try {
+    return new URL(search.replaceAll(WORDS, 'nib')).hostname.replace(/^www\./, '')
+  } catch {
+    return null
+  }
+}

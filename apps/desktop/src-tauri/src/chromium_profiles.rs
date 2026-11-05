@@ -1,7 +1,7 @@
-//! The profiles Chrome, Edge, Brave, Chromium and Vivaldi keep on this machine, and
-//! the files of each the import reads.
+//! The profiles Chrome, Edge, Brave, Chromium, Vivaldi, Opera, Opera GX and Arc keep on
+//! this machine, and the files of each the import reads.
 //!
-//! All five are Chromium and keep the same folder: a "user data" folder per browser,
+//! All of them are Chromium and keep the same folder: a "user data" folder per browser,
 //! with `Local State` in it naming every profile (`profile.info_cache`, in the order
 //! `profile.profiles_order` gives) and a folder per profile. Of a profile the import
 //! reads `Bookmarks`, a JSON file, and `AccountBookmarks`, the same file of what a
@@ -9,9 +9,16 @@
 //! `Sessions/Session_*` first, older ones behind it, and an older Chromium's `Current
 //! Session` and `Last Session`. A newer Chromium writes the same session encrypted into
 //! `Sessions_Encrypted/` too, with a key in the system's keychain that nothing here
-//! asks for; the newest of those is listed so the app can say why it read no tabs. Those
-//! files, by those names, of a profile `Local State` names, and nothing else. Never
-//! written.
+//! asks for; the newest of those is listed so the app can say why it read no tabs. And
+//! `Preferences`, for its search engine, and its two databases, `History` and
+//! `Favicons`, which `browser_data.rs` reads. Those files, by those names, of a profile
+//! `Local State` names, and nothing else. Never written.
+//!
+//! Opera keeps its first profile in the user data folder itself rather than in a
+//! `Default` inside it, so that folder is a profile too where it holds one. Arc keeps
+//! its sidebar - its spaces, their pinned and open tabs, its Favorites - in
+//! `StorableSidebar.json` beside its user data folder, one file for every profile;
+//! `read_arc_sidebar` hands it over.
 
 use serde_json::Value;
 use std::fs;
@@ -22,7 +29,15 @@ use crate::firefox_profiles::BROWSERS_DIR;
 use crate::paths::folder_named;
 
 /// The Chromium browsers the import reads, by the id the app names each with.
-pub(crate) const BROWSERS: [&str; 5] = ["chrome", "edge", "brave", "chromium", "vivaldi"];
+pub(crate) const BROWSERS: [&str; 8] = [
+    "chrome", "edge", "brave", "chromium", "vivaldi", "opera", "opera-gx", "arc",
+];
+
+/// Arc's sidebar, in the folder its user data folder is in.
+const ARC_SIDEBAR: &str = "StorableSidebar.json";
+
+/// More than any sidebar is.
+const MOST_SIDEBAR_BYTES: u64 = 64 * 1024 * 1024;
 
 /// How many of a profile's sessions are listed: the one it is writing and the ones
 /// before it, which Chromium keeps two or three of.
@@ -31,12 +46,16 @@ const SESSIONS_KEPT: usize = 3;
 /// The profiles of one of the browsers that hold anything to read, in the order the
 /// browser's own profile picker shows them.
 pub(crate) fn profiles(browser: &str) -> Vec<Profile> {
-    once(homes(browser).iter().flat_map(|home| profiles_in(home)))
+    once(
+        user_data_folders(browser)
+            .iter()
+            .flat_map(|home| profiles_in(home)),
+    )
 }
 
 /// Each user data folder the browser keeps, on this system and in every packaging of
 /// it: Linux's own, the Snap's and the Flatpak's; a Mac's and Windows' application data.
-fn homes(browser: &str) -> Vec<PathBuf> {
+fn user_data_folders(browser: &str) -> Vec<PathBuf> {
     if let Some(named) = folder_named(std::env::var_os(BROWSERS_DIR).as_deref()) {
         return vec![named.join(browser)];
     }
@@ -50,6 +69,7 @@ fn homes(browser: &str) -> Vec<PathBuf> {
             "brave" => &["BraveSoftware/Brave-Browser"],
             "chromium" => &["chromium"],
             "vivaldi" => &["vivaldi"],
+            "opera" => &["opera"],
             _ => &[],
         };
         let home: &[&str] = match browser {
@@ -64,6 +84,10 @@ fn homes(browser: &str) -> Vec<PathBuf> {
                 ".var/app/org.chromium.Chromium/config/chromium",
             ],
             "vivaldi" => &[".var/app/com.vivaldi.Vivaldi/config/vivaldi"],
+            "opera" => &[
+                "snap/opera/current/.config/opera",
+                ".var/app/com.opera.Opera/config/opera",
+            ],
             _ => &[],
         };
         if let Some(base) = dirs::config_dir() {
@@ -81,6 +105,9 @@ fn homes(browser: &str) -> Vec<PathBuf> {
             "brave" => "BraveSoftware/Brave-Browser",
             "chromium" => "Chromium",
             "vivaldi" => "Vivaldi",
+            "opera" => "com.operasoftware.Opera",
+            "opera-gx" => "com.operasoftware.OperaGX",
+            "arc" => "Arc/User Data",
             _ => return found,
         };
         found.push(support.join(folder));
@@ -93,12 +120,70 @@ fn homes(browser: &str) -> Vec<PathBuf> {
             "brave" => "BraveSoftware/Brave-Browser/User Data",
             "chromium" => "Chromium/User Data",
             "vivaldi" => "Vivaldi/User Data",
-            _ => return found,
+            "arc" => return arc_homes(&local),
+            _ => "",
         };
-        found.push(local.join(folder));
+        if !folder.is_empty() {
+            found.push(local.join(folder));
+        }
+    }
+    // Opera keeps its user data with the roaming profile.
+    #[cfg(windows)]
+    if let Some(roaming) = dirs::data_dir() {
+        match browser {
+            "opera" => found.push(roaming.join("Opera Software/Opera Stable")),
+            "opera-gx" => found.push(roaming.join("Opera Software/Opera GX Stable")),
+            _ => {}
+        }
     }
 
     found
+}
+
+/// Arc's user data on Windows, inside the folder its Store package keeps: named for
+/// the package and its publisher, which is the part a folder is looked for by.
+#[cfg(windows)]
+fn arc_homes(local: &Path) -> Vec<PathBuf> {
+    fs::read_dir(local.join("Packages"))
+        .into_iter()
+        .flatten()
+        .flatten()
+        .filter(|entry| {
+            entry
+                .file_name()
+                .to_str()
+                .is_some_and(|name| name.starts_with("TheBrowserCompany.Arc_"))
+        })
+        .map(|entry| entry.path().join("LocalCache/Local/Arc/User Data"))
+        .collect()
+}
+
+/// Arc's sidebar, read whole, for one of the profiles Arc lists: the file is every
+/// profile's, and which of its spaces are this profile's is the app's to read
+/// (`import/arc.ts`).
+#[tauri::command(async)]
+pub fn read_arc_sidebar(profile: String) -> Result<String, String> {
+    let listed = profiles("arc");
+    let asked = crate::paths::folded(Path::new(&profile));
+    let one = listed
+        .iter()
+        .find(|one| crate::paths::folded(Path::new(&one.path)) == asked)
+        .ok_or_else(|| format!("{profile} is not a profile Arc lists"))?;
+    let path = sidebar_of(Path::new(&one.path)).ok_or("Arc keeps no sidebar here")?;
+    let size = fs::metadata(&path)
+        .map_err(|error| format!("{ARC_SIDEBAR}: {error}"))?
+        .len();
+    if size > MOST_SIDEBAR_BYTES {
+        return Err(format!("{ARC_SIDEBAR} is larger than any sidebar"));
+    }
+    fs::read_to_string(&path).map_err(|error| format!("{ARC_SIDEBAR} could not be read: {error}"))
+}
+
+/// Where Arc's sidebar is for one of its profiles: beside the user data folder the
+/// profile is in.
+fn sidebar_of(profile: &Path) -> Option<PathBuf> {
+    let path = profile.parent()?.parent()?.join(ARC_SIDEBAR);
+    path.is_file().then_some(path)
 }
 
 /// The profiles one user data folder holds, by what its `Local State` says: each
@@ -113,7 +198,7 @@ fn profiles_in(home: &Path) -> Vec<Profile> {
         names_in,
     );
 
-    named
+    let listed: Vec<Profile> = named
         .into_iter()
         .filter(|(folder, _)| is_profile_folder(folder))
         .filter_map(|(folder, name)| {
@@ -125,7 +210,21 @@ fn profiles_in(home: &Path) -> Vec<Profile> {
                 files,
             })
         })
-        .collect()
+        .collect();
+    if !listed.is_empty() {
+        return listed;
+    }
+
+    // Opera's first profile is the folder itself.
+    let files = files_of(home);
+    if files.iter().any(|one| one != "Preferences") {
+        return vec![Profile {
+            name: "Default".into(),
+            path: home.to_string_lossy().into_owned(),
+            files,
+        }];
+    }
+    Vec::new()
 }
 
 /// Each profile's folder and name, in `profiles_order`'s order and then the rest of
@@ -170,7 +269,8 @@ fn is_profile_folder(folder: &str) -> bool {
 }
 
 /// The files of a profile the import reads: the bookmarks and the account's, the
-/// sessions newest first, an older Chromium's two, and the newest encrypted session.
+/// sessions newest first, an older Chromium's two, the newest encrypted session, and
+/// the search engine's and the two databases' after them.
 fn files_of(profile: &Path) -> Vec<String> {
     let mut found: Vec<String> = ["Bookmarks", "AccountBookmarks"]
         .into_iter()
@@ -185,6 +285,12 @@ fn files_of(profile: &Path) -> Vec<String> {
             .map(str::to_owned),
     );
     found.extend(newest(profile, "Sessions_Encrypted", 1));
+    found.extend(
+        ["Preferences", "History", "Favicons"]
+            .into_iter()
+            .filter(|name| profile.join(name).is_file())
+            .map(str::to_owned),
+    );
     found
 }
 
@@ -294,6 +400,51 @@ mod tests {
                 "Sessions_Encrypted/Session_13436813666016901",
             ]
         );
+    }
+
+    #[test]
+    fn the_engine_and_the_databases_come_last() {
+        let home = tempfile::tempdir().expect("a folder");
+        let profile = home.path().join("Default");
+        for file in [
+            "Favicons",
+            "History",
+            "Preferences",
+            "Bookmarks",
+            "Login Data",
+        ] {
+            touch(&profile.join(file));
+        }
+        assert_eq!(
+            files_of(&profile),
+            vec!["Bookmarks", "Preferences", "History", "Favicons"]
+        );
+    }
+
+    #[test]
+    fn operas_first_profile_is_its_user_data_folder() {
+        let home = tempfile::tempdir().expect("a folder");
+        fs::write(home.path().join("Local State"), "{}").expect("the state");
+        touch(&home.path().join("Bookmarks"));
+        touch(&home.path().join("Preferences"));
+        let found = profiles_in(home.path());
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0].path, home.path().to_string_lossy());
+        assert_eq!(found[0].files, vec!["Bookmarks", "Preferences"]);
+
+        let bare = tempfile::tempdir().expect("a folder");
+        touch(&bare.path().join("Preferences"));
+        assert!(profiles_in(bare.path()).is_empty());
+    }
+
+    #[test]
+    fn arcs_sidebar_is_beside_its_user_data() {
+        let arc = tempfile::tempdir().expect("a folder");
+        let profile = arc.path().join("User Data/Default");
+        touch(&profile.join("History"));
+        assert_eq!(sidebar_of(&profile), None);
+        touch(&arc.path().join(ARC_SIDEBAR));
+        assert_eq!(sidebar_of(&profile), Some(arc.path().join(ARC_SIDEBAR)));
     }
 
     #[test]

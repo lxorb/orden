@@ -39,6 +39,14 @@ export const sw: Dictionary = {
   'Zen’s tabs could not be read.': 'Vichupo vya Zen havikuweza kusomwa.',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'Kontena zinabaki ndani ya Firefox',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser} hutafuta kwa {engine}: kichague kwenye Mipangilio ili kutafuta nacho hapa pia',
+  'Saved tab groups and the reading list stay in {browser}':
+    'Vikundi vya vichupo vilivyohifadhiwa na orodha ya kusoma vinabaki kwenye {browser}',
+  '{browser}’s workspaces come in as one space':
+    'Nafasi za kazi za {browser} zinaingia kama nafasi moja',
+  'Workspaces and collections stay in Edge': 'Nafasi za kazi na mikusanyiko vinabaki kwenye Edge',
+  'Easels and notes stay in Arc': 'Easel na madokezo vinabaki kwenye Arc',
   'Nothing could be read out of {browser}.': 'Hakuna kilichoweza kusomwa kutoka {browser}.',
   'Saved groups': 'Vikundi vilivyohifadhiwa',
   'Tab group': 'Kikundi cha vichupo',

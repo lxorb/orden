@@ -38,6 +38,14 @@ export const fil: Dictionary = {
   'Zen’s tabs could not be read.': 'Hindi mabasa ang mga tab ng Zen.',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'Nananatili sa Firefox ang mga container',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    'Naghahanap ang {browser} gamit ang {engine}: piliin ito sa Settings para maghanap gamit ito dito rin',
+  'Saved tab groups and the reading list stay in {browser}':
+    'Naiiwan sa {browser} ang mga naka-save na grupo ng tab at ang reading list',
+  '{browser}’s workspaces come in as one space':
+    'Pumapasok ang mga workspace ng {browser} bilang isang space',
+  'Workspaces and collections stay in Edge': 'Naiiwan sa Edge ang mga workspace at koleksyon',
+  'Easels and notes stay in Arc': 'Naiiwan sa Arc ang mga easel at tala',
   'Nothing could be read out of {browser}.': 'Walang nabasa mula sa {browser}.',
   'Saved groups': 'Mga naka-save na grupo',
   'Tab group': 'Grupo ng tab',

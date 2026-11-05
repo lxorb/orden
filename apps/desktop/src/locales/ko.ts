@@ -38,6 +38,14 @@ export const ko: Dictionary = {
   'Zen’s tabs could not be read.': 'Zen의 탭을 읽을 수 없습니다.',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': '컨테이너는 Firefox에 남습니다',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser}은(는) {engine}(으)로 검색합니다: 여기서도 쓰려면 설정에서 선택하세요',
+  'Saved tab groups and the reading list stay in {browser}':
+    '저장된 탭 그룹과 읽기 목록은 {browser}에 남습니다',
+  '{browser}’s workspaces come in as one space':
+    '{browser}의 작업 공간은 하나의 공간으로 들어옵니다',
+  'Workspaces and collections stay in Edge': '작업 공간과 컬렉션은 Edge에 남습니다',
+  'Easels and notes stay in Arc': '이젤과 메모는 Arc에 남습니다',
   'Nothing could be read out of {browser}.': '{browser}에서 아무것도 읽지 못했습니다.',
   'Saved groups': '저장된 그룹',
   'Tab group': '탭 그룹',

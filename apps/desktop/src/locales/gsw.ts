@@ -39,6 +39,14 @@ export const gsw: Dictionary = {
   'Zen’s tabs could not be read.': 'D Tabs vo Zen hend nöd chöne gläse werde.',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'D Container blibe im Firefox',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser} suecht mit {engine}: Wähl s i de Iistellige, zum au do demit z sueche',
+  'Saved tab groups and the reading list stay in {browser}':
+    'Gspeichereti Tab-Gruppe und d Leselischte blibe i {browser}',
+  '{browser}’s workspaces come in as one space':
+    'D Arbetsbereich vo {browser} chömed als ein Bereich',
+  'Workspaces and collections stay in Edge': 'Arbetsbereich und Sammlige blibe i Edge',
+  'Easels and notes stay in Arc': 'Easels und Notize blibe i Arc',
   'Nothing could be read out of {browser}.': 'Us {browser} het sich nüüt lo läse.',
   'Saved groups': 'Gspeichereti Gruppe',
   'Tab group': 'Tab-Gruppe',

@@ -38,6 +38,14 @@ export const bn: Dictionary = {
   'Zen’s tabs could not be read.': 'Zen-এর ট্যাবগুলো পড়া গেল না।',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'কন্টেইনারগুলো Firefox-এ থেকে যায়',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser} {engine} দিয়ে খোঁজে: এখানেও এটি দিয়ে খুঁজতে সেটিংসে এটি বেছে নিন',
+  'Saved tab groups and the reading list stay in {browser}':
+    'সংরক্ষিত ট্যাব গ্রুপ ও পড়ার তালিকা {browser}-এ থেকে যায়',
+  '{browser}’s workspaces come in as one space':
+    '{browser}-এর ওয়ার্কস্পেসগুলো একটি স্পেস হিসেবে আসে',
+  'Workspaces and collections stay in Edge': 'ওয়ার্কস্পেস ও কালেকশন Edge-এ থেকে যায়',
+  'Easels and notes stay in Arc': 'ইজেল ও নোট Arc-এ থেকে যায়',
   'Nothing could be read out of {browser}.': '{browser} থেকে কিছুই পড়া যায়নি।',
   'Saved groups': 'সংরক্ষিত গ্রুপ',
   'Tab group': 'ট্যাব গ্রুপ',

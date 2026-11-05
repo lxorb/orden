@@ -39,6 +39,14 @@ export const ru: Dictionary = {
   'Zen’s tabs could not be read.': 'Не удалось прочитать вкладки Zen.',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'Контейнеры остаются в Firefox',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser} ищет через {engine}: выберите его в настройках, чтобы искать так и здесь',
+  'Saved tab groups and the reading list stay in {browser}':
+    'Сохранённые группы вкладок и список для чтения остаются в {browser}',
+  '{browser}’s workspaces come in as one space':
+    'Рабочие пространства {browser} приходят одним пространством',
+  'Workspaces and collections stay in Edge': 'Рабочие пространства и коллекции остаются в Edge',
+  'Easels and notes stay in Arc': 'Мольберты и заметки остаются в Arc',
   'Nothing could be read out of {browser}.': 'Из {browser} ничего не удалось прочитать.',
   'Saved groups': 'Сохранённые группы',
   'Tab group': 'Группа вкладок',

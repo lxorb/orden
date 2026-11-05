@@ -38,6 +38,13 @@ export const th: Dictionary = {
   'Zen’s tabs could not be read.': 'อ่านแท็บของ Zen ไม่ได้',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'คอนเทนเนอร์ยังอยู่ใน Firefox',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser} ค้นหาด้วย {engine}: เลือกในการตั้งค่าเพื่อค้นหาด้วยสิ่งนั้นที่นี่ด้วย',
+  'Saved tab groups and the reading list stay in {browser}':
+    'กลุ่มแท็บที่บันทึกไว้และรายการเรื่องรออ่านยังอยู่ใน {browser}',
+  '{browser}’s workspaces come in as one space': 'พื้นที่ทำงานของ {browser} เข้ามาเป็นพื้นที่เดียว',
+  'Workspaces and collections stay in Edge': 'พื้นที่ทำงานและคอลเลกชันยังอยู่ใน Edge',
+  'Easels and notes stay in Arc': 'อีเซลและโน้ตยังอยู่ใน Arc',
   'Nothing could be read out of {browser}.': 'ไม่สามารถอ่านสิ่งใดจาก {browser} ได้',
   'Saved groups': 'กลุ่มที่บันทึกไว้',
   'Tab group': 'กลุ่มแท็บ',

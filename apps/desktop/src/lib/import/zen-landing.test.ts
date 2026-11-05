@@ -4,6 +4,7 @@ import { toBase64 } from '../bytes'
 import { writeShortcut } from '@orden/scan/shortcut'
 import type { Planned } from './plan'
 import { mozLz4Of, SIDEBAR } from './zen.fixture'
+import { ZEN_1_17, ZEN_1_17_PLACES } from './zen-versions.fixture'
 
 /** What is on the disk, by path. */
 const disk = new Map<string, string>()
@@ -16,15 +17,22 @@ const spaces: { id: string; name: string; root: string }[] = []
 const done: string[] = []
 const marks: { kind: string; path: string; text: string }[] = []
 
-/** What Zen's session file holds. */
+/** What Zen's session file holds, and Firefox's beside it, and Places. */
 let sidebar: unknown = SIDEBAR
+let firefoxSession: unknown = null
+let places: unknown = null
 
 vi.mock('../tauri', () => ({
   invoke: (command: string, args: Record<string, unknown>) => {
+    const packed = (said: unknown) =>
+      Promise.resolve(toBase64(mozLz4Of(new TextEncoder().encode(JSON.stringify(said)))))
     if (command === 'read_zen_file') {
-      return args.file === 'zen-sessions.jsonlz4'
-        ? Promise.resolve(toBase64(mozLz4Of(new TextEncoder().encode(JSON.stringify(sidebar)))))
-        : Promise.reject(new Error('no such file'))
+      if (args.file === 'zen-sessions.jsonlz4') return packed(sidebar)
+      if (args.file === 'sessionstore.jsonlz4' && firefoxSession) return packed(firefoxSession)
+      return Promise.reject(new Error('no such file'))
+    }
+    if (command === 'read_zen_places') {
+      return places ? Promise.resolve(JSON.stringify(places)) : Promise.reject(new Error('locked'))
     }
     if (command === 'read_note') {
       const held = disk.get(String(args.path))
@@ -107,6 +115,8 @@ const PROFILE = {
 
 beforeEach(() => {
   sidebar = SIDEBAR
+  firefoxSession = null
+  places = null
   disk.clear()
   written.length = 0
   spaces.length = 0
@@ -186,6 +196,19 @@ describe('Zen brought into nib', () => {
       'Zen’s tabs could not be read.',
     )
     expect(spaces).toEqual([])
+  })
+})
+
+describe('a Zen up to 1.17 brought into nib', () => {
+  test('takes its spaces and its Essentials out of Places, which its session lacks', async () => {
+    firefoxSession = ZEN_1_17
+    places = ZEN_1_17_PLACES
+
+    const first = await landZen({ ...PROFILE, files: ['sessionstore.jsonlz4', 'places.sqlite'] })
+
+    expect(first.name).toBe('Home')
+    expect(spaces.map((one) => one.name)).toEqual(['Home', 'Work'])
+    expect(marks.map((one) => one.path)).toEqual(['Mail.url', 'Calendar.url', 'Chat.url'])
   })
 })
 

@@ -1,19 +1,24 @@
 /** A browser's profile brought in as a space of its own: its open tabs, its pinned ones
  *  as the Essentials, its tab groups as folders and its bookmarks in a folder of their
  *  own, read by the browser's reader and written the way Zen's spaces are
- *  (sidebar-plan.ts, sidebar-landing.ts). Importing again brings only what is new.
+ *  (sidebar-plan.ts, sidebar-landing.ts) - Arc's spaces as spaces, as Zen's are
+ *  (arc.ts). Its sites' marks, its history and its search engine come along
+ *  (browser-extras.ts). Importing again brings only what is new.
  *
  *  The space is named for the browser, and for the profile too where the browser keeps
- *  several, so two profiles are two spaces and a profile imported twice is one. */
+ *  several, so two profiles are two spaces and a profile imported twice is one. What
+ *  the browser keeps that has nowhere to go here is said in a line. */
 
 import { key, t } from '../i18n.svelte'
 import type { Space } from '../workspace.svelte'
-import { BROWSER_NAMES, browserFile, type BrowserProfile } from './browsers'
+import { arcSidebar } from './arc'
+import { bringHistory, droppedLine, folderWords, takeEngine, withMarks } from './browser-extras'
+import { BROWSER_NAMES, browserFile, type BrowserId, type BrowserProfile } from './browsers'
 import { chromiumSidebar } from './chromium'
 import { firefoxSidebar } from './firefox'
-import type { FolderWords } from './sidebar-made'
 import { unmozLz4 } from './mozlz4'
 import type { Lost } from './plan'
+import { type BrowserEngine, chromiumEngine, mozillaEngine, safariEngine } from './search-engines'
 import type { Sidebar } from './sidebar'
 import { landSpaces } from './sidebar-landing'
 import { sidebarImport } from './sidebar-plan'
@@ -21,14 +26,32 @@ import { safariSidebar } from './safari'
 import { readSnss, type SnssSession } from './snss'
 import { invoke } from '../tauri'
 
-/** What a browser's profile came to: its sidebar, and what could not come with it. */
+/** What a browser's profile came to: its sidebar, its search engine, and what could not
+ *  come with it. */
 interface Read {
   sidebar: Sidebar
+  engine: BrowserEngine | null
   lost: Lost[]
 }
 
 /** Only Firefox has containers to leave behind. */
 const CONTAINERS: Lost = { text: key('Containers stay in Firefox') }
+
+/** What a Chromium keeps that its files here do not hold, or that has nowhere to go:
+ *  the tab groups it saved and its reading list are in its sync database, a workspace
+ *  of Vivaldi's or Opera's is a list of tabs that come anyway, and Edge keeps its
+ *  workspaces and collections with its account. */
+const SAVED: Lost = { text: key('Saved tab groups and the reading list stay in {browser}') }
+const WORKSPACES: Lost = { text: key('{browser}’s workspaces come in as one space') }
+const KEPT: Partial<Record<BrowserId, Lost>> = {
+  chrome: SAVED,
+  chromium: SAVED,
+  brave: SAVED,
+  edge: { text: key('Workspaces and collections stay in Edge') },
+  vivaldi: WORKSPACES,
+  opera: WORKSPACES,
+  'opera-gx': WORKSPACES,
+}
 
 /** The profile written into its space; `several` where the browser keeps more than
  *  one profile. Answers the space, to land in. */
@@ -36,48 +59,35 @@ export async function landBrowser(profile: BrowserProfile, several: boolean): Pr
   const browser = BROWSER_NAMES[profile.browser]
   const name = several ? `${browser} · ${profile.name}` : browser
   const firefox = profile.browser === 'firefox'
-  const read =
-    profile.browser === 'safari'
-      ? await readSafari(name)
-      : firefox
-        ? await readFirefox(profile, name)
-        : await readChromium(profile, name)
   const nothing = t('Nothing could be read out of {browser}.', { browser })
+  const read = await readProfile(profile, name)
   if (!read) throw new Error(nothing)
 
-  const { spaces, lost } = sidebarImport(read.sidebar, new Date(), firefox ? CONTAINERS : null)
-  return landSpaces(spaces, [...lost, ...read.lost, ...droppedLine(read.sidebar)], nothing)
-}
-
-/** The line that counts the pages left behind for not being on the web, where any were. */
-function droppedLine(sidebar: Sidebar): Lost[] {
-  const count = sidebar.dropped ?? 0
-  if (!count) return []
-  return [
-    {
-      text: key('{count} pages not on the web stay behind'),
-      // Filed under its `other` form; see notion.ts and i18n.svelte.ts.
-      one: '{count} page not on the web stays behind',
-      values: { count },
-    },
+  const sidebar = await withMarks(read.sidebar, profile.browser, profile.path)
+  const { spaces, lost } = sidebarImport(sidebar, new Date(), firefox ? CONTAINERS : null)
+  const kept = KEPT[profile.browser]
+  const lines = [
+    ...lost,
+    ...read.lost,
+    ...droppedLine(sidebar),
+    ...(kept ? [{ ...kept, values: { browser } }] : []),
+    ...(await takeEngine(read.engine, browser)),
   ]
+  const first = await landSpaces(spaces, lines, nothing)
+  await bringHistory(profile.browser, profile.path)
+  return first
 }
 
-/** The names of the folders the import makes, in the reader's language. */
-function folderWords(): FolderWords {
-  return {
-    bookmarks: t('Bookmarks'),
-    savedGroups: t('Saved groups'),
-    group: t('Tab group'),
-    toolbar: t('Bookmarks toolbar'),
-    bar: t('Bookmarks bar'),
-    menu: t('Bookmarks menu'),
-    other: t('Other bookmarks'),
-    mobile: t('Mobile bookmarks'),
-    favorites: t('Favorites'),
-    readingList: t('Reading List'),
-  }
+/** The profile read by its browser's reader. */
+async function readProfile(profile: BrowserProfile, name: string): Promise<Read | null> {
+  if (profile.browser === 'safari') return readSafari(name)
+  if (profile.browser === 'firefox') return readFirefox(profile, name)
+  if (profile.browser === 'arc') return (await readArc(profile)) ?? readChromium(profile, name)
+  return readChromium(profile, name)
 }
+
+/** Firefox's search engines. */
+const SEARCH = 'search.json.mozlz4'
 
 /** Firefox's session, the first of its files that reads, and its bookmarks: out of
  *  `places.sqlite` where the crate could copy it, else its newest daily copy. Null
@@ -99,11 +109,19 @@ async function readFirefox(profile: BrowserProfile, name: string): Promise<Read 
   if (!bookmarks && backup) bookmarks = mozJson(await browserFile(profile, backup))
 
   if (!session && !bookmarks) return null
-  return { sidebar: firefoxSidebar(session, bookmarks, name, folderWords()), lost: [] }
+  const engine = profile.files.includes(SEARCH)
+    ? mozillaEngine(mozJson(await browserFile(profile, SEARCH)))
+    : null
+  return { sidebar: firefoxSidebar(session, bookmarks, name, folderWords()), engine, lost: [] }
 }
 
 /** A Chromium's bookmark files: its own, and its Google account's. */
 const BOOKMARK_FILES = ['Bookmarks', 'AccountBookmarks']
+
+/** A Chromium's session files: the newest first, an older Chromium's two after them. */
+function isSession(file: string): boolean {
+  return file.startsWith('Sessions') || file === 'Current Session' || file === 'Last Session'
+}
 
 /** A Chromium's session, the first of its files that reads, and its bookmarks and its
  *  account's. A session written encrypted is said in a line, and the bookmarks come
@@ -111,7 +129,7 @@ const BOOKMARK_FILES = ['Bookmarks', 'AccountBookmarks']
 async function readChromium(profile: BrowserProfile, name: string): Promise<Read | null> {
   let session: SnssSession | null = null
   let locked = false
-  for (const file of profile.files.filter((one) => !BOOKMARK_FILES.includes(one))) {
+  for (const file of profile.files.filter(isSession)) {
     const bytes = await browserFile(profile, file)
     const read = bytes ? readSnss(bytes) : null
     if (read === 'locked') locked = true
@@ -137,7 +155,30 @@ async function readChromium(profile: BrowserProfile, name: string): Promise<Read
           },
         ]
       : []
-  return { sidebar: chromiumSidebar(session, bookmarks, name, folderWords(), account), lost }
+  return {
+    sidebar: chromiumSidebar(session, bookmarks, name, folderWords(), account),
+    engine: await preferencesEngine(profile),
+    lost,
+  }
+}
+
+/** Arc's spaces and Favorites out of its sidebar, the profile's own; null where Arc keeps
+ *  no sidebar for it, and then its files are read as any Chromium's are. */
+async function readArc(profile: BrowserProfile): Promise<Read | null> {
+  const said = await invoke<string>('read_arc_sidebar', { profile: profile.path })
+    .then((text) => JSON.parse(text) as unknown)
+    .catch(() => null)
+  const arc = arcSidebar(said, profile.path.split(/[\\/]/).pop() ?? 'Default')
+  if (!arc) return null
+
+  const lost: Lost[] = arc.stayed ? [{ text: key('Easels and notes stay in Arc') }] : []
+  return { sidebar: arc.sidebar, engine: await preferencesEngine(profile), lost }
+}
+
+/** A Chromium's search engine, out of its `Preferences`. */
+async function preferencesEngine(profile: BrowserProfile): Promise<BrowserEngine | null> {
+  if (!profile.files.includes('Preferences')) return null
+  return chromiumEngine(jsonOf(await browserFile(profile, 'Preferences')))
 }
 
 /** What a JSON file holds, or null for one that is not whole: a file Chromium was
@@ -154,9 +195,10 @@ function jsonOf(bytes: Uint8Array | null): unknown {
 /** What the crate answers when macOS would not let Safari's files be read. */
 const NO_ACCESS = 'no access'
 
-/** Safari's tabs, bookmarks and Reading List, read whole by the crate. Where macOS
- *  keeps them behind Full Disk Access, the setting is opened and the reason said:
- *  a line naming a permission and leaving the reader to find it asks twice. */
+/** Safari's tabs, bookmarks and Reading List, read whole by the crate, and the name of
+ *  its search engine. Where macOS keeps them behind Full Disk Access, the setting is
+ *  opened and the reason said: a line naming a permission and leaving the reader to
+ *  find it asks twice. */
 async function readSafari(name: string): Promise<Read | null> {
   let said: string
   try {
@@ -173,7 +215,12 @@ async function readSafari(name: string): Promise<Read | null> {
     }
     return null
   }
-  const files = JSON.parse(said) as { bookmarks?: unknown; tabs?: unknown; session?: unknown }
+  const files = JSON.parse(said) as {
+    bookmarks?: unknown
+    tabs?: unknown
+    session?: unknown
+    engine?: unknown
+  }
   return {
     sidebar: safariSidebar(
       {
@@ -184,6 +231,7 @@ async function readSafari(name: string): Promise<Read | null> {
       name,
       folderWords(),
     ),
+    engine: safariEngine(files.engine),
     lost: [],
   }
 }

@@ -71,24 +71,31 @@ came in, and lands in it.
   profiles (the one Zen opens first in front, a list where there are several), and
   `zen-sessions.jsonlz4` holds every space, pinned tab, Essential and folder, with
   Zen's backups and Firefox's `recovery.jsonlz4` behind it for a profile from before
-  that file. Read and never written, while Zen runs; the crate hands over those few
-  files of a listed profile and nothing else (`zen_profiles.rs`), the app unpacks
-  Mozilla's LZ4 (`import/mozlz4.ts`) and reads the lists (`import/zen.ts`). Each Zen
+  that file. A Zen up to 1.17 kept its spaces and its pinned tabs and Essentials in
+  `places.sqlite` (`zen_workspaces`, `zen_pins`) and wrote an Essential's flag as the
+  word `"true"`; both are read (#1149, `import/zen-versions.fixture.ts`). Read and never
+  written, while Zen runs; the crate hands over those few files of a listed profile and
+  nothing else (`zen_profiles.rs`), the app unpacks Mozilla's LZ4 (`import/mozlz4.ts`)
+  and reads the lists (`import/zen.ts`). Each Zen
   space becomes the Orden space of its name, with its icon (an emoji as it is, Zen's
   drawings as Lucide's) and its colour as the nearest accent; each tab a web note in
   the place the sidebar has it and that order kept as the list's arranged order; a
   folder a folder, an empty one an empty note; a pinned tab's address it goes back
   to the note's home; the Essentials web notes at the top of the first space (or of
-  their container's) and bookmarks of it. Pages that are not on the web stay behind,
-  and so do containers, which Orden's one browsing profile has nothing to become; the
-  line says so. Importing again brings only what is new: a space of the same name is
+  their container's) and bookmarks of it, since Orden keeps Essentials per space. Zen's
+  bookmarks come as Firefox's do, in the first space, or in the first space Zen shows
+  them in. Pages that are not on the web stay behind, and so do containers, which
+  Orden's one browsing profile has nothing to become; the line says so. Importing again brings only what is new: a space of the same name is
   the same space, and a web note already there pointing at the same page is not
   written twice. Cookies and logins are not read. See `import/zen-plan.ts` and
   `import/zen-landing.ts`, and `scripts/zen-import-probe.py`, which reads a Zen of
   its own through `NIB_ZEN_DIR`.
 - **Every other browser's tabs and bookmarks** (#377). On a desktop there is a row for
   each browser the machine has a profile of: Firefox, then Chrome, Edge, Brave,
-  Chromium and Vivaldi, which are all Chromium and keep the same files. Each browser's
+  Chromium, Vivaldi, Opera, Opera GX and Arc, which are all Chromium and keep the same
+  files. Arc's spaces, their pinned and open tabs and its Favorites are in
+  `StorableSidebar.json` beside its user data, and come as Zen's spaces and Essentials
+  do (`import/arc.ts`). Each browser's
   own list of profiles is read - Firefox's `profiles.ini`, a Chromium's `Local State` -
   and a browser with several shows them by name, the way Zen's are. A profile becomes
   one space, named for the browser (and for the profile where there are several), and
@@ -121,9 +128,20 @@ came in, and lands in it.
   system's keychain); where only that one is there, the profile brings its bookmarks and
   the line says the open tabs stayed locked. Containers stay in Firefox, and the line
   says so. The crate hands over only the files it listed for a profile it listed
-  (`browser_profiles.rs`, `chromium_profiles.rs`), never a cookie, a password or the
-  history, and `scripts/browser-import-probe.py` reads browsers of its own through
+  (`browser_profiles.rs`, `chromium_profiles.rs`), never a cookie or a password, and
+  `scripts/browser-import-probe.py` reads browsers of its own through
   `NIB_BROWSERS_DIR`. Importing again brings only what is new, as Zen's does.
+
+  Every browser's import, Zen's too, also brings (#1149, `import/browser-extras.ts`):
+  the sites' marks out of the profile's own store of them (`favicons.sqlite`, a
+  Chromium's `Favicons`), since a session seldom keeps one as a picture; its history,
+  the most recent pages Orden's history holds, folded into the one every page shares
+  (`places.sqlite`, `History`, Safari's `History.db`; `browser_data.rs`); and its search
+  engine, where somebody chose one there, as Orden's own where none was chosen here and
+  as a line where one was (`import/search-engines.ts`). What a browser keeps that does
+  not come is said in the line: a Chromium's saved tab groups and reading list, Edge's
+  workspaces and collections, Arc's easels and notes; Vivaldi's and Opera's workspaces
+  come as the one space their tabs are in.
 - **Safari** (#394), on a Mac, first among the browsers, since it is the Mac's own.
   Safari keeps no list of profiles; what is read is three files of the home folder,
   which the crate reads whole and hands over as JSON (`safari.rs`), and

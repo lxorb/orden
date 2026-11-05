@@ -38,6 +38,13 @@ export const yue: Dictionary = {
   'Zen’s tabs could not be read.': '讀唔到 Zen 嘅分頁。',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': '容器留喺 Firefox',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser} 用 {engine} 搜尋：喺設定揀佢，喺呢度都用佢搜尋',
+  'Saved tab groups and the reading list stay in {browser}':
+    '儲存咗嘅分頁群組同閱讀清單留喺 {browser}',
+  '{browser}’s workspaces come in as one space': '{browser} 嘅工作區會變成一個空間',
+  'Workspaces and collections stay in Edge': '工作區同收藏集留喺 Edge',
+  'Easels and notes stay in Arc': '畫架同筆記留喺 Arc',
   'Nothing could be read out of {browser}.': '讀唔到 {browser} 入面任何嘢。',
   'Saved groups': '已儲存嘅群組',
   'Tab group': '分頁群組',

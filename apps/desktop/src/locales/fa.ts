@@ -38,6 +38,14 @@ export const fa: Dictionary = {
   'Zen’s tabs could not be read.': 'زبانه‌های Zen خوانده نشدند.',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'کانتینرها در Firefox می‌مانند',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser} با {engine} جست‌وجو می‌کند: برای جست‌وجو با آن در اینجا، آن را در تنظیمات انتخاب کنید',
+  'Saved tab groups and the reading list stay in {browser}':
+    'گروه‌های زبانهٔ ذخیره‌شده و فهرست خواندن در {browser} می‌مانند',
+  '{browser}’s workspaces come in as one space':
+    'فضاهای کاری {browser} به‌صورت یک فضا وارد می‌شوند',
+  'Workspaces and collections stay in Edge': 'فضاهای کاری و مجموعه‌ها در Edge می‌مانند',
+  'Easels and notes stay in Arc': 'بوم‌ها و یادداشت‌ها در Arc می‌مانند',
   'Nothing could be read out of {browser}.': 'هیچ چیزی از {browser} خوانده نشد.',
   'Saved groups': 'گروه‌های ذخیره‌شده',
   'Tab group': 'گروه زبانه',

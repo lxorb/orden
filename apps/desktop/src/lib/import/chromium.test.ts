@@ -103,3 +103,29 @@ describe("Chrome's tabs and bookmarks as nib's", () => {
     expect(space(null, null)?.files).toEqual([])
   })
 })
+
+describe("Opera's bookmarks", () => {
+  test("bring its own roots after Chromium's, by their names, and leave its trash", () => {
+    const opera = {
+      roots: {
+        bookmark_bar: { children: [{ type: 'url', url: 'https://bar.example.com/', name: 'Bar' }] },
+        custom_root: {
+          speedDial: {
+            type: 'folder',
+            name: 'Speed Dials',
+            children: [{ type: 'url', url: 'https://dial.example.com/', name: 'Dial' }],
+          },
+          trash: {
+            type: 'folder',
+            name: 'Trash',
+            children: [{ type: 'url', url: 'https://gone.example.com/', name: 'Gone' }],
+          },
+          unsorted: { type: 'folder', name: 'Unsorted Bookmarks', children: [] },
+        },
+      },
+    }
+    const order = space(opera, null)?.order
+    expect(order?.Bookmarks).toEqual(['Bookmarks bar', 'Speed Dials'])
+    expect(order?.['Bookmarks/Speed Dials']).toEqual(['Dial.url'])
+  })
+})

@@ -38,6 +38,13 @@ export const ar: Dictionary = {
   'Zen’s tabs could not be read.': 'تعذّرت قراءة علامات تبويب Zen.',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'تبقى الحاويات في Firefox',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    'يبحث {browser} باستخدام {engine}: اختره في الإعدادات للبحث به هنا أيضًا',
+  'Saved tab groups and the reading list stay in {browser}':
+    'تبقى مجموعات علامات التبويب المحفوظة وقائمة القراءة في {browser}',
+  '{browser}’s workspaces come in as one space': 'تأتي مساحات عمل {browser} كمساحة واحدة',
+  'Workspaces and collections stay in Edge': 'تبقى مساحات العمل والمجموعات في Edge',
+  'Easels and notes stay in Arc': 'تبقى اللوحات والملاحظات في Arc',
   'Nothing could be read out of {browser}.': 'تعذّرت قراءة أي شيء من {browser}.',
   'Saved groups': 'المجموعات المحفوظة',
   'Tab group': 'مجموعة علامات تبويب',

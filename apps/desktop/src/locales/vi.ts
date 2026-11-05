@@ -38,6 +38,15 @@ export const vi: Dictionary = {
   'Zen’s tabs could not be read.': 'Không thể đọc các thẻ của Zen.',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'Các ngăn chứa vẫn ở lại Firefox',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser} tìm kiếm bằng {engine}: chọn nó trong Cài đặt để tìm bằng nó ở đây nữa',
+  'Saved tab groups and the reading list stay in {browser}':
+    'Các nhóm thẻ đã lưu và danh sách đọc vẫn ở lại trong {browser}',
+  '{browser}’s workspaces come in as one space':
+    'Các không gian làm việc của {browser} được đưa vào thành một không gian',
+  'Workspaces and collections stay in Edge':
+    'Không gian làm việc và bộ sưu tập vẫn ở lại trong Edge',
+  'Easels and notes stay in Arc': 'Easel và ghi chú vẫn ở lại trong Arc',
   'Nothing could be read out of {browser}.': 'Không đọc được gì từ {browser}.',
   'Saved groups': 'Nhóm đã lưu',
   'Tab group': 'Nhóm thẻ',

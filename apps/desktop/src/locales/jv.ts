@@ -38,6 +38,13 @@ export const jv: Dictionary = {
   'Zen’s tabs could not be read.': 'Tab Zen ora bisa diwaca.',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'Kontainer tetep ana ing Firefox',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser} nggolèk nganggo {engine}: pilih ing Setelan kanggo nggolèk nganggo kuwi ing kéné uga',
+  'Saved tab groups and the reading list stay in {browser}':
+    'Grup tab sing disimpen lan dhaptar wacan tetep ana ing {browser}',
+  '{browser}’s workspaces come in as one space': 'Ruang kerja {browser} mlebu dadi siji ruang',
+  'Workspaces and collections stay in Edge': 'Ruang kerja lan koleksi tetep ana ing Edge',
+  'Easels and notes stay in Arc': 'Easel lan cathetan tetep ana ing Arc',
   'Nothing could be read out of {browser}.': 'Ora ana sing bisa diwaca saka {browser}.',
   'Saved groups': 'Grup sing disimpen',
   'Tab group': 'Grup tab',

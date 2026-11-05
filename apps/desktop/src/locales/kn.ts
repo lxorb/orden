@@ -39,6 +39,15 @@ export const kn: Dictionary = {
   'Zen’s tabs could not be read.': 'Zen ಟ್ಯಾಬ್‌ಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ.',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'ಕಂಟೇನರ್‌ಗಳು Firefox ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser} {engine} ಮೂಲಕ ಹುಡುಕುತ್ತದೆ: ಇಲ್ಲಿಯೂ ಅದರಿಂದ ಹುಡುಕಲು ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಅದನ್ನು ಆರಿಸಿ',
+  'Saved tab groups and the reading list stay in {browser}':
+    'ಉಳಿಸಿದ ಟ್ಯಾಬ್ ಗುಂಪುಗಳು ಮತ್ತು ಓದುವ ಪಟ್ಟಿ {browser} ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
+  '{browser}’s workspaces come in as one space':
+    '{browser} ನ ವರ್ಕ್‌ಸ್ಪೇಸ್‌ಗಳು ಒಂದೇ ಸ್ಪೇಸ್ ಆಗಿ ಬರುತ್ತವೆ',
+  'Workspaces and collections stay in Edge':
+    'ವರ್ಕ್‌ಸ್ಪೇಸ್‌ಗಳು ಮತ್ತು ಸಂಗ್ರಹಗಳು Edge ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
+  'Easels and notes stay in Arc': 'ಈಸೆಲ್‌ಗಳು ಮತ್ತು ಟಿಪ್ಪಣಿಗಳು Arc ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
   'Nothing could be read out of {browser}.': '{browser} ನಿಂದ ಏನನ್ನೂ ಓದಲು ಆಗಲಿಲ್ಲ.',
   'Saved groups': 'ಉಳಿಸಿದ ಗುಂಪುಗಳು',
   'Tab group': 'ಟ್ಯಾಬ್ ಗುಂಪು',

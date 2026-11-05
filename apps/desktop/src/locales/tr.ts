@@ -39,6 +39,14 @@ export const tr: Dictionary = {
   'Zen’s tabs could not be read.': 'Zen’in sekmeleri okunamadı.',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'Kapsayıcılar Firefox’ta kalır',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser}, {engine} ile arar: burada da onunla aramak için Ayarlar’dan seçin',
+  'Saved tab groups and the reading list stay in {browser}':
+    'Kaydedilen sekme grupları ve okuma listesi {browser} içinde kalır',
+  '{browser}’s workspaces come in as one space':
+    '{browser} çalışma alanları tek bir alan olarak gelir',
+  'Workspaces and collections stay in Edge': 'Çalışma alanları ve koleksiyonlar Edge içinde kalır',
+  'Easels and notes stay in Arc': 'Şövaleler ve notlar Arc içinde kalır',
   'Nothing could be read out of {browser}.': '{browser} içinden hiçbir şey okunamadı.',
   'Saved groups': 'Kaydedilen gruplar',
   'Tab group': 'Sekme grubu',

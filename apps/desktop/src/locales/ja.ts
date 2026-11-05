@@ -38,6 +38,14 @@ export const ja: Dictionary = {
   'Zen’s tabs could not be read.': 'Zen のタブを読み込めませんでした。',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'コンテナは Firefox に残ります',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser} は {engine} で検索します: ここでも使うには設定で選んでください',
+  'Saved tab groups and the reading list stay in {browser}':
+    '保存したタブグループとリーディングリストは {browser} に残ります',
+  '{browser}’s workspaces come in as one space':
+    '{browser} のワークスペースは 1 つのスペースとして取り込まれます',
+  'Workspaces and collections stay in Edge': 'ワークスペースとコレクションは Edge に残ります',
+  'Easels and notes stay in Arc': 'イーゼルとメモは Arc に残ります',
   'Nothing could be read out of {browser}.': '{browser} から何も読み取れませんでした。',
   'Saved groups': '保存したグループ',
   'Tab group': 'タブグループ',

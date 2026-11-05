@@ -15,7 +15,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::paths::folded;
-use crate::{chromium_profiles, firefox_profiles, safari};
+use crate::{chromium_profiles, firefox_profiles, safari, zen_profiles};
 
 /// One profile, the way the browser's own profile manager shows it.
 #[derive(Serialize, Debug, PartialEq, Eq)]
@@ -49,21 +49,28 @@ pub fn browser_profiles() -> Vec<Browser> {
 }
 
 /// One listed file of a listed profile of a browser, as base64. Never a database:
-/// Firefox's bookmarks are read out of theirs by `read_firefox_places`.
+/// Firefox's bookmarks are read out of theirs by `read_firefox_places`, and the
+/// history and the sites' marks out of theirs by `browser_data.rs`.
 #[tauri::command(async)]
 pub fn read_browser_file(browser: String, profile: String, file: String) -> Result<String, String> {
-    if Path::new(&file)
-        .extension()
-        .is_some_and(|one| one.eq_ignore_ascii_case("sqlite"))
-    {
-        return Err(format!("{file} is a database"));
-    }
     read_listed(&browser, &profile, &file, &profiles_of(&browser))
 }
 
+/// The databases a profile lists: Firefox's and Zen's `.sqlite` files, a Chromium's
+/// `History` and `Favicons`.
+const DATABASES: [&str; 2] = ["History", "Favicons"];
+
+fn is_database(file: &str) -> bool {
+    Path::new(file)
+        .extension()
+        .is_some_and(|one| one.eq_ignore_ascii_case("sqlite"))
+        || DATABASES.contains(&file)
+}
+
 /// A browser's profiles, by its id; none for a browser this does not read.
-fn profiles_of(browser: &str) -> Vec<Profile> {
+pub(crate) fn profiles_of(browser: &str) -> Vec<Profile> {
     match browser {
+        "zen" => zen_profiles::listed(),
         "safari" => safari::profiles(),
         "firefox" => firefox_profiles::profiles(),
         _ if chromium_profiles::BROWSERS.contains(&browser) => chromium_profiles::profiles(browser),
@@ -83,6 +90,9 @@ pub(crate) fn read_listed(
     file: &str,
     listed: &[Profile],
 ) -> Result<String, String> {
+    if is_database(file) {
+        return Err(format!("{file} is a database"));
+    }
     let path = known(browser, profile, file, listed)?;
     let size = fs::metadata(&path)
         .map_err(|error| format!("{file}: {error}"))?

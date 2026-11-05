@@ -35,6 +35,10 @@ const SESSIONS: [&str; 3] = [
 
 /// The bookmarks, and where Firefox keeps a copy of them every day.
 pub(crate) const PLACES: &str = "places.sqlite";
+/// The sites' marks, and the search engines; see `browser_data.rs` and
+/// `import/search-engines.ts`.
+pub(crate) const FAVICONS: &str = "favicons.sqlite";
+pub(crate) const SEARCH: &str = "search.json.mozlz4";
 const BACKUPS: &str = "bookmarkbackups";
 const BACKUP_PREFIX: &str = "bookmarks-";
 const BACKUP_SUFFIX: &str = ".jsonlz4";
@@ -99,7 +103,7 @@ fn homes() -> Vec<PathBuf> {
 fn files_of(profile: &Path) -> Vec<String> {
     let mut found: Vec<String> = SESSIONS
         .iter()
-        .chain(&[PLACES])
+        .chain(&[PLACES, FAVICONS, SEARCH])
         .filter(|name| profile.join(name).is_file())
         .map(|name| (*name).to_owned())
         .collect();
@@ -132,7 +136,7 @@ struct Row {
 
 /// Every bookmark, folder and separator, nested as Firefox nests them and in its
 /// order, from the root down. The tags are left out.
-fn tree_of(db: &Connection) -> rusqlite::Result<Value> {
+pub(crate) fn tree_of(db: &Connection) -> rusqlite::Result<Value> {
     let mut statement = db.prepare(
         "SELECT b.id, b.parent, b.type, IFNULL(b.title, ''), IFNULL(b.dateAdded, 0), \
          IFNULL(b.guid, ''), p.url \

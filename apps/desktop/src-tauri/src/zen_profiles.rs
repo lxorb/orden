@@ -9,21 +9,31 @@
 //!
 //! The sidebar is in `zen-sessions.jsonlz4` in the profile, with backups beside it;
 //! a profile from before that file holds the same lists in Firefox's own session,
-//! `sessionstore-backups/recovery.jsonlz4`. Those few files, by those names, are all
-//! this reads, and only out of a profile Zen lists: a narrow way past paths.rs, as
-//! `obsidian_vaults.rs` is. Never written, and read while Zen runs: `fs::read` opens a
+//! `sessionstore-backups/recovery.jsonlz4`, all but the spaces and the pinned tabs,
+//! which a Zen up to 1.17 kept in `places.sqlite` (`zen_workspaces`, `zen_pins`).
+//! That database also holds the bookmarks, and which spaces each is shown in; see
+//! `read_zen_places`. The sites' marks, the history and the search engines are
+//! Firefox's files and read the way Firefox's are (`browser_data.rs`). Those few
+//! files, by those names, are all this reads, and only out of a profile Zen lists: a
+//! narrow way past paths.rs, as `obsidian_vaults.rs` is. Never written, and read while Zen runs: `fs::read` opens a
 //! file sharing it for reading, writing and deleting, which is how Zen replaces it,
 //! and the bytes are a copy the moment they are read. The unpacking is the app's;
 //! see `import/mozlz4.ts`.
 //!
 //! Desktop only: a phone's Zen, where there is one, is somebody else's sandbox.
 
+use rusqlite::types::ValueRef;
+use rusqlite::Connection;
+use serde_json::{json, Map, Value};
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::browser_profiles::{
+    copied, ini_profiles, known as listed_file, once, read_listed, Profile,
+};
 #[cfg(test)]
 use crate::browser_profiles::{entries_in, installed_defaults};
-use crate::browser_profiles::{ini_profiles, once, read_listed, Profile};
+use crate::firefox_profiles::{tree_of, FAVICONS, PLACES, SEARCH};
 use crate::paths::folder_named;
 
 /// One profile, the way Zen's profile manager shows it.
@@ -62,7 +72,63 @@ pub fn read_zen_file(profile: String, file: String) -> Result<String, String> {
     read_listed("Zen", &profile, &file, &listed())
 }
 
-fn listed() -> Vec<ZenProfile> {
+/// What a listed profile keeps in `places.sqlite`, as one JSON object: `bookmarks`,
+/// the tree `read_firefox_places` answers; and the rows of Zen's own tables by their
+/// column names, each table's empty where it is not there - `spaces`
+/// (`zen_workspaces`) and `pins` (`zen_pins`), which a Zen up to 1.17 kept its
+/// sidebar in, and `assigned` (`zen_bookmarks_workspaces`), the spaces a bookmark is
+/// shown in. The app reads what they mean; see `import/zen.ts`.
+#[tauri::command(async)]
+pub fn read_zen_places(profile: String) -> Result<String, String> {
+    let path = listed_file("Zen", &profile, PLACES, &listed())?;
+    let folder = path.parent().ok_or("a profile has a folder")?;
+    let copy =
+        copied(folder, PLACES).map_err(|error| format!("{PLACES} could not be copied: {error}"))?;
+    let db = Connection::open(copy.path().join(PLACES))
+        .map_err(|error| format!("{PLACES} could not be opened: {error}"))?;
+    Ok(places_of(&db).to_string())
+}
+
+fn places_of(db: &Connection) -> Value {
+    json!({
+        "bookmarks": tree_of(db).unwrap_or(Value::Null),
+        "spaces": table_rows(db, "SELECT * FROM zen_workspaces"),
+        "pins": table_rows(db, "SELECT * FROM zen_pins"),
+        "assigned": table_rows(db, "SELECT bookmark_guid, workspace_uuid FROM zen_bookmarks_workspaces"),
+    })
+}
+
+/// Every row a query answers, each by its column names; none where the table is not
+/// there, which is every table Zen added in a version this profile never ran. A
+/// blob is nothing.
+fn table_rows(db: &Connection, query: &str) -> Vec<Value> {
+    let Ok(mut statement) = db.prepare(query) else {
+        return Vec::new();
+    };
+    let names: Vec<String> = statement
+        .column_names()
+        .into_iter()
+        .map(str::to_owned)
+        .collect();
+    let Ok(rows) = statement.query_map([], |row| {
+        let mut out = Map::new();
+        for (at, name) in names.iter().enumerate() {
+            let value = match row.get_ref(at)? {
+                ValueRef::Integer(one) => json!(one),
+                ValueRef::Real(one) => json!(one),
+                ValueRef::Text(one) => json!(String::from_utf8_lossy(one)),
+                ValueRef::Null | ValueRef::Blob(_) => Value::Null,
+            };
+            out.insert(name.clone(), value);
+        }
+        Ok(Value::Object(out))
+    }) else {
+        return Vec::new();
+    };
+    rows.flatten().collect()
+}
+
+pub(crate) fn listed() -> Vec<ZenProfile> {
     once(homes().iter().flat_map(|home| profiles_in(home)))
 }
 
@@ -94,13 +160,18 @@ fn profiles_in(home: &Path) -> Vec<ZenProfile> {
     ini_profiles(home, files_of)
 }
 
-/// The session files a profile holds, in the order they are worth reading.
+/// The session files a profile holds, in the order they are worth reading, and the
+/// databases and the search engines after them. A profile with no session is not
+/// listed: there is no sidebar to bring.
 fn files_of(profile: &Path) -> Vec<String> {
     let mut found: Vec<String> = SESSIONS
         .iter()
         .filter(|name| profile.join(name).is_file())
         .map(|name| (*name).to_owned())
         .collect();
+    if found.is_empty() {
+        return found;
+    }
 
     let newest = fs::read_dir(profile.join(BACKUPS))
         .into_iter()
@@ -116,6 +187,12 @@ fn files_of(profile: &Path) -> Vec<String> {
             .unwrap_or(found.len());
         found.insert(at, format!("{BACKUPS}/{name}"));
     }
+    found.extend(
+        [PLACES, FAVICONS, SEARCH]
+            .into_iter()
+            .filter(|name| profile.join(name).is_file())
+            .map(str::to_owned),
+    );
 
     found
 }
@@ -232,6 +309,53 @@ mod tests {
         assert!(known("/home/me/.zen/p", "../../.ssh/id_ed25519", &listed).is_err());
         assert!(known("/home/me/.zen/p", "places.sqlite", &listed).is_err());
         assert!(known("/home/me/.zen/other", "zen-sessions.jsonlz4", &listed).is_err());
+    }
+
+    #[test]
+    fn the_databases_and_the_engines_come_after_the_sessions_and_only_with_one() {
+        let here = tempfile::tempdir().expect("a folder");
+        profile(
+            here.path(),
+            "p",
+            &["zen-sessions.jsonlz4", PLACES, FAVICONS, SEARCH],
+        );
+        profile(here.path(), "q", &[PLACES]);
+
+        assert_eq!(
+            files_of(&here.path().join("p")),
+            vec!["zen-sessions.jsonlz4", PLACES, FAVICONS, SEARCH]
+        );
+        assert!(files_of(&here.path().join("q")).is_empty());
+    }
+
+    #[test]
+    fn the_places_of_a_zen_before_its_sessions_file_come_as_rows() {
+        let db = Connection::open_in_memory().expect("a database");
+        db.execute_batch(
+            "CREATE TABLE moz_places (id INTEGER PRIMARY KEY, url TEXT);
+             CREATE TABLE moz_bookmarks (id INTEGER PRIMARY KEY, type INTEGER, fk INTEGER,
+               parent INTEGER, position INTEGER, title TEXT, dateAdded INTEGER, guid TEXT);
+             INSERT INTO moz_bookmarks VALUES (1, 2, NULL, 0, 0, '', 1, 'root________');
+             CREATE TABLE zen_workspaces (id INTEGER PRIMARY KEY, uuid TEXT, name TEXT,
+               icon TEXT, container_id INTEGER, position INTEGER, theme_colors TEXT,
+               theme_opacity REAL);
+             INSERT INTO zen_workspaces VALUES (2, '{h}', 'Home', NULL, NULL, 1000, '[]', 0.5);
+             CREATE TABLE zen_pins (id INTEGER PRIMARY KEY, uuid TEXT, is_essential INTEGER,
+               folder_icon BLOB);
+             INSERT INTO zen_pins VALUES (8, '{m}', 1, x'00');",
+        )
+        .expect("the tables");
+
+        let places = places_of(&db);
+        assert_eq!(places["bookmarks"]["guid"], "root________");
+        assert_eq!(
+            places["spaces"],
+            json!([{ "id": 2, "uuid": "{h}", "name": "Home", "icon": null, "container_id": null,
+                "position": 1000, "theme_colors": "[]", "theme_opacity": 0.5 }])
+        );
+        assert_eq!(places["pins"][0]["is_essential"], 1);
+        assert_eq!(places["pins"][0]["folder_icon"], Value::Null);
+        assert_eq!(places["assigned"], json!([]));
     }
 
     #[test]

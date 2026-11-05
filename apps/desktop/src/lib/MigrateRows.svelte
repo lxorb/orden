@@ -49,6 +49,9 @@
     brave: 'brave',
     chromium: null,
     vivaldi: 'vivaldi',
+    opera: 'opera',
+    'opera-gx': 'operagx',
+    arc: 'arc',
   }
 
   /** What the browser profile list is a list of: the browser of its first profile. */

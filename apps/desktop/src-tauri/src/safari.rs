@@ -12,7 +12,12 @@
 //!   `Library/Containers/com.apple.Safari/Data/Library/Safari/`, and is open while
 //!   Safari runs, so it is copied with its log and the copy is read, the way
 //!   Firefox's bookmarks are;
-//! - `Library/Safari/LastSession.plist`, the windows of a Safari from before that.
+//! - `Library/Safari/LastSession.plist`, the windows of a Safari from before that;
+//! - and Safari's settings, `com.apple.Safari.plist` in its container's preferences
+//!   or, before Safari kept a container, the home folder's, for the name of the
+//!   search engine it sends a search to (`SearchProviderShortName`).
+//!
+//! Its history is `Library/Safari/History.db`, which `browser_data.rs` reads.
 //!
 //! The property lists are handed over as JSON, a date as its ISO day and time and a
 //! blob of bytes as nothing, and the tabs as their rows: what each means is the
@@ -37,6 +42,11 @@ const TABS: [&str; 2] = [
     "Library/Safari",
 ];
 const TABS_DATABASE: &str = "SafariTabs.db";
+const SETTINGS: [&str; 2] = [
+    "Library/Containers/com.apple.Safari/Data/Library/Preferences/com.apple.Safari.plist",
+    "Library/Preferences/com.apple.Safari.plist",
+];
+const ENGINE: &str = "SearchProviderShortName";
 
 /// What the app is answered when macOS refused every file: the setting is the way
 /// in, and saying so is the app's business.
@@ -104,10 +114,18 @@ fn read_from(home: &Path) -> Result<Value, String> {
         Got::Read(value) => value,
         Got::Missing | Got::Refused => Value::Null,
     };
+    let engine = SETTINGS
+        .iter()
+        .find_map(|path| match plist_at(&home.join(path)) {
+            Got::Read(settings) => settings.get(ENGINE).filter(|one| one.is_string()).cloned(),
+            Got::Missing | Got::Refused => None,
+        })
+        .unwrap_or(Value::Null);
     let read = json!({
         "bookmarks": value(bookmarks),
         "tabs": value(tabs),
         "session": value(session),
+        "engine": engine,
     });
 
     if ["bookmarks", "tabs", "session"]
@@ -313,6 +331,27 @@ mod tests {
         assert_eq!(rows[2]["title"], "One");
         assert_eq!(rows[3]["deleted"], true);
         assert!(read["session"].is_null());
+    }
+
+    #[test]
+    fn the_search_engine_is_read_out_of_the_settings_in_the_container_first() {
+        let home = tempfile::tempdir().expect("a folder");
+        bookmarks(&home.path().join(BOOKMARKS));
+        assert!(read_from(home.path()).expect("bookmarks")["engine"].is_null());
+
+        for (path, engine) in [(SETTINGS[1], "Bing"), (SETTINGS[0], "DuckDuckGo")] {
+            let mut settings = Dictionary::new();
+            settings.insert(ENGINE.into(), P::String(engine.into()));
+            let at = home.path().join(path);
+            fs::create_dir_all(at.parent().expect("a folder")).expect("the folder");
+            P::Dictionary(settings)
+                .to_file_binary(&at)
+                .expect("the settings");
+        }
+        assert_eq!(
+            read_from(home.path()).expect("bookmarks")["engine"],
+            "DuckDuckGo"
+        );
     }
 
     #[test]

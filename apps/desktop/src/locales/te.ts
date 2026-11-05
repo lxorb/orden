@@ -39,6 +39,13 @@ export const te: Dictionary = {
   'Zen’s tabs could not be read.': 'Zen ట్యాబ్‌లను చదవలేకపోయాము.',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'కంటైనర్‌లు Firefox లోనే ఉంటాయి',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser} {engine}తో వెతుకుతుంది: ఇక్కడ కూడా దానితో వెతకడానికి సెట్టింగ్‌లలో దాన్ని ఎంచుకోండి',
+  'Saved tab groups and the reading list stay in {browser}':
+    'సేవ్ చేసిన ట్యాబ్ గ్రూప్‌లు, చదవాల్సిన జాబితా {browser}లోనే ఉంటాయి',
+  '{browser}’s workspaces come in as one space': '{browser} వర్క్‌స్పేస్‌లు ఒకే స్పేస్‌గా వస్తాయి',
+  'Workspaces and collections stay in Edge': 'వర్క్‌స్పేస్‌లు, కలెక్షన్‌లు Edgeలోనే ఉంటాయి',
+  'Easels and notes stay in Arc': 'ఈసెల్‌లు, నోట్‌లు Arcలోనే ఉంటాయి',
   'Nothing could be read out of {browser}.': '{browser} నుండి ఏమీ చదవలేకపోయాము.',
   'Saved groups': 'సేవ్ చేసిన గ్రూప్‌లు',
   'Tab group': 'ట్యాబ్ గ్రూప్',

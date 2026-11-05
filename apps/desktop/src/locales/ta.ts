@@ -39,6 +39,13 @@ export const ta: Dictionary = {
   'Zen’s tabs could not be read.': 'Zen தாவல்களைப் படிக்க முடியவில்லை.',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'கண்டெய்னர்கள் Firefox-இலேயே இருக்கும்',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser} {engine} மூலம் தேடுகிறது: இங்கேயும் அதைக் கொண்டு தேட அமைப்புகளில் அதைத் தேர்வுசெய்யவும்',
+  'Saved tab groups and the reading list stay in {browser}':
+    'சேமித்த தாவல் குழுக்களும் வாசிப்புப் பட்டியலும் {browser}-இல் இருக்கும்',
+  '{browser}’s workspaces come in as one space': '{browser}-இன் பணியிடங்கள் ஒரே இடமாக வருகின்றன',
+  'Workspaces and collections stay in Edge': 'பணியிடங்களும் தொகுப்புகளும் Edge-இல் இருக்கும்',
+  'Easels and notes stay in Arc': 'ஈசல்களும் குறிப்புகளும் Arc-இல் இருக்கும்',
   'Nothing could be read out of {browser}.': '{browser}-இலிருந்து எதையும் படிக்க முடியவில்லை.',
   'Saved groups': 'சேமித்த குழுக்கள்',
   'Tab group': 'தாவல் குழு',

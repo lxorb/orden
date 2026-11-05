@@ -38,6 +38,13 @@ export const ms: Dictionary = {
   'Zen’s tabs could not be read.': 'Tab Zen tidak dapat dibaca.',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'Bekas kekal dalam Firefox',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser} mencari dengan {engine}: pilihnya dalam Tetapan untuk mencari dengannya di sini juga',
+  'Saved tab groups and the reading list stay in {browser}':
+    'Kumpulan tab yang disimpan dan senarai bacaan kekal dalam {browser}',
+  '{browser}’s workspaces come in as one space': 'Ruang kerja {browser} masuk sebagai satu ruang',
+  'Workspaces and collections stay in Edge': 'Ruang kerja dan koleksi kekal dalam Edge',
+  'Easels and notes stay in Arc': 'Easel dan nota kekal dalam Arc',
   'Nothing could be read out of {browser}.': 'Tiada apa-apa dapat dibaca daripada {browser}.',
   'Saved groups': 'Kumpulan disimpan',
   'Tab group': 'Kumpulan tab',

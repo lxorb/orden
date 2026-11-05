@@ -16,6 +16,7 @@ import { forget as forgetStored, Shared } from '../stored'
 import { forget } from './favicons'
 import { completion, suggested, type Completion } from './omnibox'
 import {
+  broughtIn,
   named,
   typedTo,
   unvisited,
@@ -101,6 +102,12 @@ class Visited {
   /** Somebody typed their way to `url`. */
   typed(book: Book, url: string) {
     this.write(book, typedTo(this.rows(book), url, Date.now()))
+  }
+
+  /** Another browser's history, read row by row as an earlier run's would be, folded
+   *  in; see `broughtIn`. */
+  brought(book: Book, rows: unknown) {
+    this.write(book, broughtIn(this.rows(book), visitsFrom(rows)))
   }
 
   /** `into` written as `rows`, and `from` forgotten: a history folded into another. */

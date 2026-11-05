@@ -38,6 +38,13 @@ export const zhHantHK: Dictionary = {
   'Zen’s tabs could not be read.': '無法讀取 Zen 的分頁。',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': '容器會留在 Firefox',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser} 使用 {engine} 搜尋：在設定中選擇它，即可在這裡也用它搜尋',
+  'Saved tab groups and the reading list stay in {browser}':
+    '已儲存的分頁群組和閱讀清單留在 {browser} 中',
+  '{browser}’s workspaces come in as one space': '{browser} 的工作區會作為一個空間匯入',
+  'Workspaces and collections stay in Edge': '工作區和集錦留在 Edge 中',
+  'Easels and notes stay in Arc': '畫架和筆記留在 Arc 中',
   'Nothing could be read out of {browser}.': '無法從 {browser} 讀取任何內容。',
   'Saved groups': '已儲存的群組',
   'Tab group': '分頁群組',

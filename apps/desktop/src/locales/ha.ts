@@ -39,6 +39,14 @@ export const ha: Dictionary = {
   'Zen’s tabs could not be read.': 'Ba a iya karanta shafukan Zen ba.',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'Kwantenoni suna zama a Firefox',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser} yana bincike da {engine}: zaɓe shi a Saituna don bincike da shi a nan ma',
+  'Saved tab groups and the reading list stay in {browser}':
+    'Rukunin shafuka da aka adana da jerin karatu suna zama a {browser}',
+  '{browser}’s workspaces come in as one space':
+    'Wuraren aikin {browser} suna shigowa a matsayin wuri ɗaya',
+  'Workspaces and collections stay in Edge': 'Wuraren aiki da tarin abubuwa suna zama a Edge',
+  'Easels and notes stay in Arc': 'Allunan zane da bayanan kula suna zama a Arc',
   'Nothing could be read out of {browser}.': 'Ba a iya karanta komai daga {browser} ba.',
   'Saved groups': 'Ƙungiyoyin da aka adana',
   'Tab group': 'Ƙungiyar shafuka',

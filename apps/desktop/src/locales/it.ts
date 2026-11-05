@@ -39,6 +39,14 @@ export const it: Dictionary = {
   'Zen’s tabs could not be read.': 'Impossibile leggere le schede di Zen.',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'I contenitori restano in Firefox',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser} cerca con {engine}: sceglilo nelle Impostazioni per cercare con quello anche qui',
+  'Saved tab groups and the reading list stay in {browser}':
+    'I gruppi di schede salvati e l’elenco di lettura restano in {browser}',
+  '{browser}’s workspaces come in as one space':
+    'Gli spazi di lavoro di {browser} arrivano come un solo spazio',
+  'Workspaces and collections stay in Edge': 'Gli spazi di lavoro e le raccolte restano in Edge',
+  'Easels and notes stay in Arc': 'Easel e note restano in Arc',
   'Nothing could be read out of {browser}.': 'Non è stato possibile leggere nulla da {browser}.',
   'Saved groups': 'Gruppi salvati',
   'Tab group': 'Gruppo di schede',

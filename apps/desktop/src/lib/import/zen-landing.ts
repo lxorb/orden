@@ -16,14 +16,25 @@
 
 import { t } from '../i18n.svelte'
 import type { Space } from '../workspace.svelte'
+import { bringHistory, droppedLine, folderWords, takeEngine, withMarks } from './browser-extras'
 import { landSpaces } from './sidebar-landing'
 import { zenProfiles, zenSession, type ZenProfile } from './zen-profiles'
 import { zenImport } from './zen-plan'
 
 export { zenProfiles, type ZenProfile }
 
-/** The profile's spaces, written. Answers the first of them, to land in. */
+/** The profile's spaces, written, its history and its search engine with them. Answers
+ *  the first of them, to land in. */
 export async function landZen(profile: ZenProfile): Promise<Space> {
-  const { spaces, lost } = zenImport(await zenSession(profile), new Date())
-  return landSpaces(spaces, lost, t('Zen’s tabs could not be read.'))
+  const read = await zenSession(profile, folderWords())
+  const sidebar = await withMarks(read.sidebar, 'zen', profile.path)
+  const { spaces, lost } = zenImport(sidebar, new Date())
+  const engine = await takeEngine(read.engine, 'Zen')
+  const first = await landSpaces(
+    spaces,
+    [...lost, ...droppedLine(sidebar), ...engine],
+    t('Zen’s tabs could not be read.'),
+  )
+  await bringHistory('zen', profile.path)
+  return first
 }

@@ -39,6 +39,14 @@ function read(): Choice {
 class SearchEngine {
   private choice = $state<Choice>(read())
 
+  /** Whether somebody chose on this device, rather than it being Google for want of a
+   *  choice: what another browser's import may answer for (import/browser-extras.ts). */
+  private made = $state(isRecord(stored(KEY)))
+
+  get chosen(): boolean {
+    return this.made
+  }
+
   /** The chosen engine's id, or `CUSTOM`. */
   get id(): string {
     return this.choice.id
@@ -79,6 +87,7 @@ class SearchEngine {
 
   private write(next: Choice) {
     this.choice = next
+    this.made = true
     keepJson(KEY, next)
   }
 }

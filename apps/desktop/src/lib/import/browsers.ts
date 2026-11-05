@@ -10,8 +10,19 @@ import { fromBase64 } from '../bytes'
 import { invoke, isDesktop } from '../tauri'
 
 /** The browsers the import reads besides Zen, in the order the rows show them: Safari,
- *  a Mac's own, first. Chrome and the rest are Chromium, and read alike (chromium.ts). */
-export type BrowserId = 'safari' | 'firefox' | 'chrome' | 'edge' | 'brave' | 'chromium' | 'vivaldi'
+ *  a Mac's own, first. Chrome and the rest are Chromium, and read alike (chromium.ts);
+ *  Arc keeps its sidebar in a file of its own (arc.ts). */
+export type BrowserId =
+  | 'safari'
+  | 'firefox'
+  | 'chrome'
+  | 'edge'
+  | 'brave'
+  | 'chromium'
+  | 'vivaldi'
+  | 'opera'
+  | 'opera-gx'
+  | 'arc'
 
 /** A browser's name is its name in every language, as an app's is in the import. */
 export const BROWSER_NAMES: Record<BrowserId, string> = {
@@ -22,6 +33,9 @@ export const BROWSER_NAMES: Record<BrowserId, string> = {
   brave: 'Brave',
   chromium: 'Chromium',
   vivaldi: 'Vivaldi',
+  opera: 'Opera',
+  'opera-gx': 'Opera GX',
+  arc: 'Arc',
 }
 
 export interface BrowserProfile {

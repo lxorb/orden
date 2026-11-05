@@ -39,6 +39,14 @@ export const ml: Dictionary = {
   'Zen’s tabs could not be read.': 'Zen-ന്റെ ടാബുകൾ വായിക്കാനായില്ല.',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'കണ്ടെയ്‌നറുകൾ Firefox-ൽ തന്നെ തുടരും',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser} {engine} ഉപയോഗിച്ച് തിരയുന്നു: ഇവിടെയും അതുപയോഗിച്ച് തിരയാൻ ക്രമീകരണങ്ങളിൽ അത് തിരഞ്ഞെടുക്കുക',
+  'Saved tab groups and the reading list stay in {browser}':
+    'സംരക്ഷിച്ച ടാബ് ഗ്രൂപ്പുകളും വായനാ ലിസ്റ്റും {browser}-ൽ തന്നെ തുടരും',
+  '{browser}’s workspaces come in as one space':
+    '{browser}-ന്റെ വർക്ക്‌സ്‌പേസുകൾ ഒരൊറ്റ സ്‌പേസായി വരും',
+  'Workspaces and collections stay in Edge': 'വർക്ക്‌സ്‌പേസുകളും ശേഖരങ്ങളും Edge-ൽ തന്നെ തുടരും',
+  'Easels and notes stay in Arc': 'ഈസലുകളും കുറിപ്പുകളും Arc-ൽ തന്നെ തുടരും',
   'Nothing could be read out of {browser}.': '{browser}-ൽ നിന്ന് ഒന്നും വായിക്കാനായില്ല.',
   'Saved groups': 'സംരക്ഷിച്ച ഗ്രൂപ്പുകൾ',
   'Tab group': 'ടാബ് ഗ്രൂപ്പ്',

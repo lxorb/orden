@@ -39,6 +39,14 @@ export const ptPT: Dictionary = {
   'Zen’s tabs could not be read.': 'Não foi possível ler os separadores do Zen.',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'Os contentores ficam no Firefox',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    'O {browser} pesquisa com {engine}: escolha-o nas Definições para pesquisar com ele aqui também',
+  'Saved tab groups and the reading list stay in {browser}':
+    'Os grupos de separadores guardados e a lista de leitura ficam no {browser}',
+  '{browser}’s workspaces come in as one space':
+    'Os espaços de trabalho do {browser} chegam como um só espaço',
+  'Workspaces and collections stay in Edge': 'Os espaços de trabalho e as coleções ficam no Edge',
+  'Easels and notes stay in Arc': 'Os easels e as notas ficam no Arc',
   'Nothing could be read out of {browser}.': 'Não foi possível ler nada do {browser}.',
   'Saved groups': 'Grupos guardados',
   'Tab group': 'Grupo de separadores',

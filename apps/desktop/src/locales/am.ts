@@ -38,6 +38,13 @@ export const am: Dictionary = {
   'Zen’s tabs could not be read.': 'የZen ትሮች ሊነበቡ አልቻሉም።',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'ኮንቴይነሮች በFirefox ውስጥ ይቀራሉ',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser} በ{engine} ይፈልጋል፦ እዚህም በእሱ ለመፈለግ በቅንብሮች ውስጥ ይምረጡት',
+  'Saved tab groups and the reading list stay in {browser}':
+    'የተቀመጡ የትር ቡድኖች እና የንባብ ዝርዝሩ በ{browser} ውስጥ ይቀራሉ',
+  '{browser}’s workspaces come in as one space': 'የ{browser} የሥራ ቦታዎች እንደ አንድ ቦታ ይገባሉ',
+  'Workspaces and collections stay in Edge': 'የሥራ ቦታዎች እና ስብስቦች በEdge ውስጥ ይቀራሉ',
+  'Easels and notes stay in Arc': 'ሸራዎች እና ማስታወሻዎች በArc ውስጥ ይቀራሉ',
   'Nothing could be read out of {browser}.': 'ከ{browser} ምንም ሊነበብ አልቻለም።',
   'Saved groups': 'የተቀመጡ ቡድኖች',
   'Tab group': 'የትር ቡድን',

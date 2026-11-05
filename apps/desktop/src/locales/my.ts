@@ -38,6 +38,15 @@ export const my: Dictionary = {
   'Zen’s tabs could not be read.': 'Zen ၏ တဘ်များကို ဖတ်၍ မရပါ။',
   // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'ကွန်တိန်နာများ Firefox တွင် ကျန်ရစ်သည်',
+  '{browser} searches with {engine}: choose it in Settings to search with it here':
+    '{browser} သည် {engine} ဖြင့် ရှာသည်- ဤနေရာတွင်လည်း ၎င်းဖြင့် ရှာရန် ဆက်တင်များတွင် ရွေးပါ',
+  'Saved tab groups and the reading list stay in {browser}':
+    'သိမ်းထားသော တဘ်အုပ်စုများနှင့် ဖတ်ရန်စာရင်းသည် {browser} တွင် ကျန်ရစ်သည်',
+  '{browser}’s workspaces come in as one space':
+    '{browser} ၏ အလုပ်နေရာများသည် နေရာတစ်ခုအဖြစ် ဝင်လာသည်',
+  'Workspaces and collections stay in Edge':
+    'အလုပ်နေရာများနှင့် စုစည်းမှုများသည် Edge တွင် ကျန်ရစ်သည်',
+  'Easels and notes stay in Arc': 'ပန်းချီစင်များနှင့် မှတ်စုများသည် Arc တွင် ကျန်ရစ်သည်',
   'Nothing could be read out of {browser}.': '{browser} မှ ဘာမျှ ဖတ်၍ မရပါ။',
   'Saved groups': 'သိမ်းထားသော အုပ်စုများ',
   'Tab group': 'တဘ် အုပ်စု',

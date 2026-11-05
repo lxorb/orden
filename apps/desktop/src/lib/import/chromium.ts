@@ -1,6 +1,6 @@
-/** What Chrome, Edge, Brave, Chromium and Vivaldi say of a profile, read into a
+/** What Chrome, Edge, Brave, Chromium, Vivaldi and Opera say of a profile, read into a
  *  browser's sidebar (sidebar.ts): its open tabs, the pinned ones, its tab groups and
- *  its bookmarks. All five are Chromium and keep the same files.
+ *  its bookmarks. All of them are Chromium and keep the same files.
  *
  *  A profile is one space. Its open windows are its session (snss.ts), every ordinary
  *  window's tabs in their order:
@@ -14,7 +14,9 @@
  *    folder in them a folder and each bookmark a web note kept on the day it was made.
  *    A profile signed in to its Google account keeps the account's bookmarks apart, in
  *    `AccountBookmarks`, of the same three roots; Chromium shows each root's two
- *    together, the account's first, and so do these.
+ *    together, the account's first, and so do these. Opera keeps roots of its own in
+ *    `custom_root` - its Speed Dial, its unsorted bookmarks - which come after the
+ *    three under the names Opera gives them; its trash does not.
  *
  *  A group closed and saved is kept in the profile's sync database rather than in its
  *  session, and does not come. A session written encrypted cannot be read at all, and
@@ -77,21 +79,37 @@ function readWindows(session: SnssSession, made: Made, words: FolderWords) {
   }
 }
 
+/** Opera's root of roots, and the one of them that is its trash. */
+const CUSTOM = 'custom_root'
+const TRASH = 'trash'
+
 /** Each root that holds a bookmark a folder in Bookmarks, under the reader's name for
- *  it: Chromium writes its roots' names in English whatever language it is in. */
+ *  it: Chromium writes its roots' names in English whatever language it is in. Then
+ *  Opera's own, by the names it gives them. */
 function readBookmarks(
   files: ({ roots: Said; prefix: string } | null)[],
   made: Made,
   words: FolderWords,
 ) {
+  const root = (key: string, name: string, node: Said, prefix: string) => {
+    made.folder('bookmarks', words.bookmarks, null)
+    const id = `bookmark:${key}`
+    made.folder(id, name, 'bookmarks')
+    walk(node, id, prefix, made, words, 0)
+  }
+
   for (const [key, word] of ROOTS) {
     for (const file of files) {
-      const root = file?.roots[key]
-      if (!file || !isObject(root)) continue
-      made.folder('bookmarks', words.bookmarks, null)
-      const id = `bookmark:${key}`
-      made.folder(id, words[word], 'bookmarks')
-      walk(root, id, file.prefix, made, words, 0)
+      const node = file?.roots[key]
+      if (file && isObject(node)) root(key, words[word], node, file.prefix)
+    }
+  }
+  for (const file of files) {
+    const custom = file?.roots[CUSTOM]
+    if (!file || !isObject(custom)) continue
+    for (const [key, node] of Object.entries(custom)) {
+      if (key === TRASH || !isObject(node)) continue
+      root(`${CUSTOM}:${key}`, text(node.name) ?? words.other, node, file.prefix)
     }
   }
 }

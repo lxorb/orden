@@ -311,10 +311,14 @@ mod browser_profiles;
 // firefox_profiles.rs.
 #[cfg(desktop)]
 mod firefox_profiles;
-// The profiles Chrome, Edge, Brave, Chromium and Vivaldi keep, for the import's rows;
-// see chromium_profiles.rs.
+// The profiles Chrome, Edge, Brave, Chromium, Vivaldi, Opera and Arc keep, for the
+// import's rows; see chromium_profiles.rs.
 #[cfg(desktop)]
 mod chromium_profiles;
+// The history and the sites' marks out of a browser's databases, for the import; see
+// browser_data.rs.
+#[cfg(desktop)]
+mod browser_data;
 // Safari's tabs and bookmarks, for the import's Safari row on a Mac; see safari.rs.
 #[cfg(desktop)]
 mod safari;
@@ -508,9 +512,13 @@ macro_rules! desktop_commands {
             full_screen::window_is_fullscreen,
             zen_profiles::zen_profiles,
             zen_profiles::read_zen_file,
+            zen_profiles::read_zen_places,
             browser_profiles::browser_profiles,
             browser_profiles::read_browser_file,
             firefox_profiles::read_firefox_places,
+            chromium_profiles::read_arc_sidebar,
+            browser_data::read_browser_history,
+            browser_data::read_browser_icons,
             safari::read_safari,
             browser_themes::browser_themes,
             page_style::wear_page_styles,
