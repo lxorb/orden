@@ -1216,6 +1216,20 @@ describe('reading a whole space for the link index', () => {
     expect(found.files).toEqual(['pictures/shot.png'])
   })
 
+  test("leaves the app's own files out, the inbox among them, as the crate's scan does", async () => {
+    await write('/Notes/Idea.md', '[[Plan]]')
+    await write('/Notes/.Inbox.md', '- [ ] buy eggs [[Idea]]')
+    await write('/Notes/.nib/Draft.md', 'x')
+    await write('/Notes/.nib/shot.png', '')
+
+    const found = await webInvoke<{ notes: { path: string }[]; files: string[] }>('scan_links', {
+      root: '/Notes',
+    })
+
+    expect(found.notes.map((one) => one.path)).toEqual(['Idea.md'])
+    expect(found.files).toEqual([])
+  })
+
   /** What a chunk read costs is what its notes are long, not how many there are:
    *  128 notes a chunk put a canvas of seven megabytes in one task with the notes
    *  beside it. So what is counted is the characters each read handed back. */

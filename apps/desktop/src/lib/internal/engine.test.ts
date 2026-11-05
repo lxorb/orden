@@ -242,4 +242,48 @@ describe('the engine over a space Orden keeps', () => {
       await searchInternal('C:\\Elsewhere', parseQuery('ham'), [], 5, () => undefined, []),
     ).toBe(false)
   })
+
+  test("keeps the space's inbox as a document only its store holds: carried, never listed or walked", async () => {
+    const { watchFolders } = await import('../sync2/watching')
+    const { listInternal } = await import('./watch')
+    const { searchInternal } = await import('./search')
+    const { inboxHits } = await import('../search/inbox')
+    const { parseQuery } = await import('../search/query')
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const root = '/internal-i'
+    const { folder, bytes } = await kept(root)
+    const here = await device(account, 'd0', root, commandsDisk())
+    const watched = watchFolders({ engine: here, ready: () => true, changed: () => undefined })
+    await settled()
+
+    await webInvoke('write_note', { path: `${root}/.Inbox.md`, content: '- [ ] buy kumquats' })
+    await settled()
+
+    // In the store alone: a line of its index and bytes under a key, and no file anywhere.
+    const inbox = await folder.at('.Inbox.md')
+    expect(bytes.texts.get(inbox?.key ?? '')).toBe('- [ ] buy kumquats')
+    // Carried as the note it has always been, so an older app and the account see it.
+    expect(here.entryAt(`${root}/.Inbox.md`)?.kind).toBe('note')
+    expect((await listInternal(root))?.map((one) => one.path)).toContain(`${root}/.Inbox.md`)
+    // Never a row of the list, a note of the link scan, or a hit of the walk; the
+    // search finds it once, as the inbox.
+    const tree = await webInvoke<{ children: { name: string }[] }>('read_tree', { root })
+    expect(tree.children.map((one) => one.name)).not.toContain('.Inbox.md')
+    const links = await webInvoke<{ notes: { path: string }[] }>('scan_links', { root })
+    expect(links.notes.map((one) => one.path)).not.toContain('.Inbox.md')
+    const walked: string[] = []
+    await searchInternal(
+      root,
+      parseQuery('kumquats'),
+      [],
+      9,
+      ({ hits }) => walked.push(...hits.map((one) => one.path)),
+      [],
+    )
+    expect(walked).toEqual([])
+    expect((await inboxHits(root, parseQuery('kumquats'), 9)).map((one) => one.name)).toEqual([
+      'Inbox',
+    ])
+    watched.stop()
+  })
 })

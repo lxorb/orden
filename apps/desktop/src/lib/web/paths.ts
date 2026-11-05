@@ -39,6 +39,17 @@ export function join(dir: string, name: string): string {
   return normalise(`${normalise(dir)}/${name}`)
 }
 
+/** Whether `path` is the app's own under `root`: it, or a folder it is in below
+ *  `root`, has a name that starts with a dot. What the crate's walks leave out
+ *  (`gather` in paths.rs), and so what the browser's do: the space's own inbox among
+ *  them (#1044), which the search adds by itself and the link scan never reads. */
+export function hiddenUnder(root: string, path: string): boolean {
+  const base = normalise(root)
+  const at = normalise(path)
+  const inside = base === '/' ? at.slice(1) : at.slice(base.length + 1)
+  return inside.split('/').some((part) => part.startsWith('.'))
+}
+
 /** True when `path` sits anywhere under `root`. */
 export function within(root: string, path: string): boolean {
   const base = normalise(root)

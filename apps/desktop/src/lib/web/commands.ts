@@ -11,6 +11,7 @@ import { isNumber, isRecord, isString, parsed } from '../stored'
 import { tagsIn } from '../search/tags'
 import {
   basename,
+  hiddenUnder,
   isCanvas,
   isMarkdown,
   isPages,
@@ -854,7 +855,11 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
 
   const notes: SpaceLinks['notes'] = []
   const beside: string[] = []
-  const paths = (await files.paths()).filter((path) => within(base, path))
+  // The app's own files, the inbox among them, are no note of the space's to scan, as
+  // they are none of the crate's.
+  const paths = (await files.paths()).filter(
+    (path) => within(base, path) && !hiddenUnder(base, path),
+  )
   const sizes = new Map<string, number>()
   const marked = new Map<string, PlaneMarks>()
   for (const row of await stats.all()) {
@@ -929,7 +934,9 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
   if (learnt.length) await stats.learn(learnt).catch(() => undefined)
 
   // Pictures live in their own store here, and only their names are wanted.
-  const pictures = (await assets.paths()).filter((path) => within(base, path))
+  const pictures = (await assets.paths()).filter(
+    (path) => within(base, path) && !hiddenUnder(base, path),
+  )
 
   return {
     notes: notes.sort((a, b) => (a.path < b.path ? -1 : 1)),

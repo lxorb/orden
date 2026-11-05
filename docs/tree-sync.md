@@ -167,7 +167,17 @@ search held warm between two questions are the browser build's walk over the row
 the window's thread, following the folder's word on every change (internal/search.ts).
 A shell is started where one with no folder starts, the Mac's Shortcuts keep adding to
 the inbox they had, and a PDF handed to Orden is refused there rather than written onto
-the disk at the space's address. Nothing mounts one yet.
+the disk at the space's address.
+
+Such a space's inbox (`.Inbox.md`, #1044) is a document only its store holds (step
+4c3): a line of its index and bytes under a key, never a file in a folder anybody else
+reads, and never a row of the list, a note of the link scan or a hit of the walk - the
+browser build's walks now leave the app's own dotted files out as the crate's always
+did, and a search finds the inbox once, by itself, on all three. Sync carries it as the
+note it has always been, under the name it has always had, so an older app and an older
+account see what they always saw; a space's hidden file is taken in with the rest of it
+when the space is converted (step 4e), and written out again by Export (step 4f).
+Nothing mounts one yet.
 
 ## What is kept about an entry
 

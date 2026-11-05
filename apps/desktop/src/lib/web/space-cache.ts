@@ -28,8 +28,15 @@ import { lineStarts } from '../search/lines'
 import { fold, type SearchNote } from '../search/match'
 import type { Warmth } from '../search/warmth'
 import { breathe } from '../breathe'
-import { isMarkdown, normalise, within } from './paths'
+import { hiddenUnder, isMarkdown, normalise, within } from './paths'
 import { type FileRow, files } from './store'
+
+/** Whether a search of the space at `base` reads `path`: a note in it, and not one of
+ *  the app's own, which the crate's walk leaves out too - the space's inbox is searched
+ *  by itself (search/inbox.ts). */
+function searched(base: string, path: string): boolean {
+  return within(base, path) && isMarkdown(path) && !hiddenUnder(base, path)
+}
 
 /** How much note text the worker holds, in characters.
  *
@@ -139,7 +146,7 @@ class Space {
     // the bodies come in stretches below with a breath between them. A pass that
     // yielded nowhere would be one long task in the worker, which is a message
     // from the page waiting behind it.
-    const paths = (await files.paths()).filter((path) => within(base, path) && isMarkdown(path))
+    const paths = (await files.paths()).filter((path) => searched(base, path))
     if (this.root !== base) return
 
     this.order = paths
@@ -162,7 +169,7 @@ class Space {
 
       this.read += rows.length
       for (const row of rows) {
-        if (isMarkdown(row.path)) this.keep(base, row)
+        if (searched(base, row.path)) this.keep(base, row)
       }
 
       await breathe()
@@ -213,7 +220,7 @@ class Space {
    *  written and nothing else is touched. */
   wrote(row: FileRow): void {
     const base = this.root
-    if (base === null || !within(base, row.path) || !isMarkdown(row.path)) return
+    if (base === null || !searched(base, row.path)) return
 
     if (!this.held.has(row.path)) this.place(row.path)
     this.keep(base, row)
@@ -226,7 +233,7 @@ class Space {
    *  and only where it is a note of the space held. See `RowChange` in store.ts. */
   async rewritten(path: string): Promise<void> {
     const base = this.root
-    if (base === null || !within(base, path) || !isMarkdown(path)) return
+    if (base === null || !searched(base, path)) return
 
     const row = await files.get(path)
     if (row) this.wrote(row)
@@ -270,7 +277,7 @@ class Space {
       if (!walking.on) return
 
       this.read += 1
-      if (!within(base, row.path) || !isMarkdown(row.path)) return
+      if (!searched(base, row.path)) return
 
       this.order.push(row.path)
       if (!visit(this.keep(base, row))) walking.on = false

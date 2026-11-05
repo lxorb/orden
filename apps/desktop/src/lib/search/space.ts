@@ -62,6 +62,10 @@ export async function searchSpace(
   const papers = searchPapers(root, query, PAPERS, excluded)
   if (papers.length) onFound({ hits: papers, loose: [] })
 
+  // The space's own inbox, which every walk below leaves out as hidden (#1044).
+  const inbox = await (await import('./inbox')).inboxHits(root, query, limit)
+  if (inbox.length) onFound({ hits: inbox, loose: [] })
+
   if (!isNative) {
     const { searchInWorker } = await import('../web/search-client')
     await searchInWorker(root, query, terms, limit, onFound, excluded)
@@ -73,10 +77,6 @@ export async function searchSpace(
     const { searchInternal } = await import('../internal/search')
     if (await searchInternal(root, query, terms, limit, onFound, excluded)) return
   }
-
-  // The space's own inbox, which the crate's walk leaves out as hidden (#1044).
-  const inbox = await (await import('./inbox')).inboxHits(root, query, limit)
-  if (inbox.length) onFound({ hits: inbox, loose: [] })
 
   const id = ++asked
   const { listen } = await import('@tauri-apps/api/event')
