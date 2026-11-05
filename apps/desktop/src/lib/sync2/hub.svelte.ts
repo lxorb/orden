@@ -348,7 +348,9 @@ function madeId(): string {
  *  the runner may (`deviceOf`): never by opening a store another window's engine runs on. */
 export async function deviceId(): Promise<string> {
   const user = account.user
-  if (user) {
+  // The glasses' plugin runs no engine and keeps no store: its own id, and none of the
+  // runner in its bundle.
+  if (user && !__EVEN_PLUGIN__) {
     const { runner } = await import('./runner.svelte')
     const device = await runner.deviceOf(user.id).catch(() => null)
     if (device && DEVICE.test(device)) return device
