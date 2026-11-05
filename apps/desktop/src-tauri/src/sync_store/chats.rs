@@ -708,7 +708,6 @@ mod tests {
     use super::{Ask, Change, ChatStore};
     use serde_json::{json, Value as Json};
     use std::path::Path;
-    use std::time::Instant;
 
     fn opened(path: &Path) -> ChatStore {
         ChatStore::open(path).expect("a chats' store")
@@ -934,8 +933,8 @@ mod tests {
         assert_eq!(ask(&mut store, json!({ "t": "chats" })), json!([]));
     }
 
-    /// docs/chats.md 6.2: a chat of 100,000 messages, the window around a read place in
-    /// under 10 ms.
+    /// docs/chats.md 6.2: a chat of 100,000 messages, the window around a read place read
+    /// off the index, in a few steps for each row it answers.
     #[test]
     fn a_window_of_a_hundred_thousand_is_quick() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -946,28 +945,43 @@ mod tests {
                 .collect();
             write(&mut store, Json::Array(batch));
         }
-        // Warm the statement and the pages, as an open chat has.
-        ask(
-            &mut store,
-            json!({ "t": "window", "chat": "c", "around": 50_000, "limit": 100 }),
-        );
 
-        // The fastest of five places, each a window of its own: a busy machine takes the
-        // thread away for a slice now and then, which is no part of what a window costs.
-        let took = [73_210, 61_377, 84_052, 12_904, 95_118]
-            .into_iter()
-            .map(|place| {
-                let started = Instant::now();
-                let around = ask(
-                    &mut store,
-                    json!({ "t": "window", "chat": "c", "around": place, "limit": 100 }),
-                );
-                let took = started.elapsed();
-                assert_eq!(seqs(&around).len(), 100);
-                took
-            })
-            .min()
-            .expect("five windows");
-        assert!(took.as_millis() < 10, "the window took {took:?}");
+        // Quick is the rows a window reads, counted in SQLite's own steps rather than timed:
+        // a clock says how busy the machine was (#446). A window that walked the chat
+        // would take a step or more for each of its hundred thousand rows; one read off
+        // the index takes a few for each of the hundred it answers.
+        for place in [73_210, 61_377, 84_052, 12_904, 95_118] {
+            steps(&store);
+            let around = ask(
+                &mut store,
+                json!({ "t": "window", "chat": "c", "around": place, "limit": 100 }),
+            );
+            let took = steps(&store);
+            assert_eq!(seqs(&around).len(), 100);
+            assert!(took < 10_000, "the window around {place} took {took} steps");
+        }
+    }
+
+    /// The steps SQLite's machine has taken in every statement of the store since this
+    /// was last asked, which is the work a read did, however slowly it was done.
+    #[allow(unsafe_code)]
+    fn steps(store: &ChatStore) -> i64 {
+        use rusqlite::ffi;
+        let mut total = 0;
+        // SAFETY: the connection is the store's, open for as long as the borrow, and only
+        // its statements' counters are read and reset; none of them is stepped here.
+        unsafe {
+            let db = store.conn.handle();
+            let mut statement = ffi::sqlite3_next_stmt(db, std::ptr::null_mut());
+            while !statement.is_null() {
+                total += i64::from(ffi::sqlite3_stmt_status(
+                    statement,
+                    ffi::SQLITE_STMTSTATUS_VM_STEP,
+                    1,
+                ));
+                statement = ffi::sqlite3_next_stmt(db, statement);
+            }
+        }
+        total
     }
 }

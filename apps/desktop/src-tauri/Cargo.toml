@@ -42,7 +42,8 @@ missing_docs = "warn"
 # `kill(2)` on the process group of an application this computer hosts, which is how it
 # and everything it started are ended (src/apps_host.rs), and the memory its display's
 # picture is read through, shared with that display's X server (`mmap(2)` and
-# `munmap(2)`, src/apps_host/capture.rs). None of
+# `munmap(2)`, src/apps_host/capture.rs). And a test's count of the steps SQLite took
+# over a chat's window (src/sync_store/chats.rs). None of
 # them has a safe wrapper to use instead, and anything new that wants unsafe has to
 # say so at the function and say why.
 unsafe_code = "deny"
