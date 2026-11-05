@@ -65,7 +65,7 @@ const {
   searchPapers,
   writePapers,
 } = await import('./papers')
-const { parseQuery } = await import('../search/query')
+const { parseQuery } = await import('@orden/scan/search/query')
 const { shownName } = await import('../note-name')
 
 const ROOT = '/space'

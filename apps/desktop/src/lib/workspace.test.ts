@@ -191,7 +191,7 @@ const { startup } = await import('./startup.svelte')
 const ops = await import('./tab-strip/ops')
 const { Tab } = await import('./workspace/documents.svelte')
 const { isDraft } = await import('./workspace/drafts')
-const { apartOf, readShortcut, readWebloc, writeShortcut } = await import('./web-tab/shortcut')
+const { apartOf, readShortcut, readWebloc, writeShortcut } = await import('@orden/scan/shortcut')
 const { STARTS_RIGHT } = await import('./workspace/panels')
 const {
   shown: pad,
@@ -2877,7 +2877,7 @@ describe('a new tab', () => {
   })
 
   /** The shortcut holds the address the tab is on and is named after the page. See
-   *  web-tab/shortcut.ts. */
+   *  @orden/scan/shortcut. */
   test('a website is saved as a shortcut holding the address it is on', async () => {
     workspace.openWebsite()
     const tab = workspace.active
@@ -5129,7 +5129,7 @@ describe('a search of the space', () => {
     if (!tab) throw new Error('nothing opened')
     tab.note.live.replace('# Plan\n\nbuy milk')
     const { unsavedHits } = await import('./search/unsaved')
-    const { parseQuery } = await import('./search/query')
+    const { parseQuery } = await import('@orden/scan/search/query')
 
     expect(unsavedHits(parseQuery('milk'), 's', 10)).toEqual([
       expect.objectContaining({ tab: tab.id, line: 2, text: 'buy milk' }),
@@ -5344,7 +5344,7 @@ describe('the words of the paper a page note holds', () => {
   const papers = () => import('./pdf/papers')
   const hits = async (root: string) => {
     const { searchPapers } = await papers()
-    const { parseQuery } = await import('./search/query')
+    const { parseQuery } = await import('@orden/scan/search/query')
     return searchPapers(root, parseQuery('entropy'), 20).map((hit) => hit.path)
   }
   const settled = () => new Promise((done) => setTimeout(done, 0))

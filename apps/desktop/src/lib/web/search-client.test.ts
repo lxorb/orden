@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { parseQuery } from '../search/query'
+import { parseQuery } from '@orden/scan/search/query'
 
 /** A worker that cannot be started is a worker that fell over: the field has no
  *  answer to this word, and the next question tries again. Neither the warming nor

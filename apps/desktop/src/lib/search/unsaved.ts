@@ -9,8 +9,8 @@
 import { workspace } from '../workspace.svelte'
 import type { NoteDoc } from '../workspace/documents.svelte'
 import { isDraft } from '../workspace/drafts'
-import { type Hit, Matcher } from './match'
-import type { Query } from './query'
+import { type Hit, Matcher } from '@orden/scan/search/match'
+import type { Query } from '@orden/scan/search/query'
 
 export function unsavedHits(query: Query, space: string | null, most: number): Hit[] {
   const matcher = new Matcher(query)

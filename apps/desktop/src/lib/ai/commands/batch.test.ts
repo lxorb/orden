@@ -2,8 +2,8 @@
 // like it somewhere else, or one whose name only ends the same, is not it.
 
 import { expect, test, vi } from 'vitest'
-import { Matcher } from '../../search/match'
-import type { Query } from '../../search/query'
+import { Matcher } from '@orden/scan/search/match'
+import type { Query } from '@orden/scan/search/query'
 import { newThread } from '../chat/threads'
 import type { Thread } from '../chat/types'
 import type { Host } from './host'

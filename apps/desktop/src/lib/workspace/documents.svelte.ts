@@ -497,7 +497,7 @@ export class Tab {
 
   /** For a website with no file made at a web note's page - a second tab of it, a link
    *  out of it: that note's own web data, so the page stays signed in where the note is.
-   *  Read through `apartOf` in web-tab/shortcut.ts, never on its own. */
+   *  Read through `apartOf` in @orden/scan/shortcut, never on its own. */
   apart = $state<string | null>(null)
 
   /** For a website: a private tab, whose page writes nothing down and is never written

@@ -8,8 +8,8 @@
  *  job, which is the one that owns files. */
 
 import { isMarkdownPath, relativeTo } from '../space-paths'
-import { type Hit, Matcher } from './match'
-import type { Query } from './query'
+import { type Hit, Matcher } from '@orden/scan/search/match'
+import type { Query } from '@orden/scan/search/query'
 import { changeOf, type Edit, replaceIn } from './replace'
 
 export interface Change {

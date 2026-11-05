@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { changesFor } from './apply'
-import type { Hit } from './match'
-import { parseQuery } from './query'
+import type { Hit } from '@orden/scan/search/match'
+import { parseQuery } from '@orden/scan/search/query'
 
 const ROOT = '/space'
 

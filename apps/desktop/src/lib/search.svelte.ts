@@ -9,8 +9,8 @@ import { SvelteSet } from 'svelte/reactivity'
 import type { EditorView } from '@orden/editor'
 import { revealPanel } from './focus'
 import { isScratchpad } from './scratchpad/is.svelte'
-import type { Hit } from './search/match'
-import { isEmpty, parseQuery } from './search/query'
+import type { Hit } from '@orden/scan/search/match'
+import { isEmpty, parseQuery } from '@orden/scan/search/query'
 import { selectedWords } from './search/seed'
 import { searchSpace } from './search/space'
 import { isMarkdownPath } from './space-paths'
@@ -259,7 +259,7 @@ class Search {
     // been asked anything yet. One fetch per session - the module registry holds it -
     // and the panel it belongs to has already asked for it by the time anybody types,
     // because the panel carries it too. See `warmDoors` in surfaces.svelte.ts.
-    const { fuzzyTerms } = await import('./search/fuzzy')
+    const { fuzzyTerms } = await import('@orden/scan/search/fuzzy')
     const terms = this.replacing ? [] : fuzzyTerms(this.query)
 
     // Rows arrive in handfuls and go on the end, so the list fills from the

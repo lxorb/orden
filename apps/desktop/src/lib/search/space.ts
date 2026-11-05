@@ -12,9 +12,9 @@
  *  the space has been read. Both sides send them last; see fuzzy.ts. */
 
 import { internal, invoke, isNative } from '../tauri'
-import type { FuzzyHit } from './fuzzy'
-import type { Hit } from './match'
-import type { Query } from './query'
+import type { FuzzyHit } from '@orden/scan/search/fuzzy'
+import type { Hit } from '@orden/scan/search/match'
+import type { Query } from '@orden/scan/search/query'
 
 const HITS = 'nib://search-hits'
 

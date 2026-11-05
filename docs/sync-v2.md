@@ -95,7 +95,7 @@ Emil, 2026-09-30:
 | files that are not notes | PDFs and `publish.css/js` go up as blobs for publishing and never come down; pasted pictures go to the account's blob store when signed in, beside the note otherwise; sound and dropped files stay beside the note and never travel | `mirror.ts` `pushFiles`, `assets.ts` |
 | files changed by other programs | nothing is watched: Orden opens nothing from outside its spaces, and a space's notes follow a pass (`refresh` in `sync.svelte.ts`) | - |
 | web data | a WebView2 user data folder (or WebKit store) per Global, Space or Site store, on this device only; session cookies given a 400-day expiry | `web_stores.rs`, `web_cookies.rs`, `web-tab/web-data.ts` |
-| web notes | a `.url` file (`URL`, which follows the reading two seconds after it settles, `Title`, `Nib-Added`, `Nib-Home`, `Nib-Icon` as a `data:` PNG); syncs as a small note and is never in a room; the scroll and the trail stay on the device (`nib:web-places`) | `web-tab/shortcut.ts`, `web-tab/keep.ts`, `web-tab/place.ts` |
+| web notes | a `.url` file (`URL`, which follows the reading two seconds after it settles, `Title`, `Nib-Added`, `Nib-Home`, `Nib-Icon` as a `data:` PNG); syncs as a small note and is never in a room; the scroll and the trail stay on the device (`nib:web-places`) | `@orden/scan/shortcut`, `web-tab/keep.ts`, `web-tab/place.ts` |
 
 ### Every road to a second file, or to lost work
 

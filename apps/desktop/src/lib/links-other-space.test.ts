@@ -1,5 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
-import { scanNote } from './scan-note'
+import { scanNote } from '@orden/scan/note'
 
 /** A note of one space open while another is active (B385). Tabs are shared across
  *  spaces, so `A/Note.md` stays open after switching to B. Its `[[Plan]]` is A's Plan,

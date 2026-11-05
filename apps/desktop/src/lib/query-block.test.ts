@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { Hit } from './search/match'
+import type { Hit } from '@orden/scan/search/match'
 
 /** A ` ```query ` fence answers with HTML built out of what notes say, so what is
  *  tested here is the shape of it and, above everything, that nothing a note says

@@ -17,7 +17,7 @@
  *  sync pane, and the sweep over the copies already made - settles them the same way.
  *  See sync/pass.ts and sync/web-copies.ts. */
 
-import { readWebFile, rewriteShortcut, type Shortcut } from './shortcut'
+import { readWebFile, rewriteShortcut, type Shortcut } from '@orden/scan/shortcut'
 
 /** The one file two copies of the web note at `path` come to. `theirsNewer` says
  *  which side was written last. A side that is not a shortcut at all - a `.webloc`,

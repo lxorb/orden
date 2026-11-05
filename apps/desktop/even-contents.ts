@@ -120,6 +120,7 @@ export const PACKAGES = [
   'lang-html',
   'markdown',
   'rooms',
+  'scan',
   'sync-core',
   'themes',
 ]

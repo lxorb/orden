@@ -1223,7 +1223,7 @@ export function appCommands(view?: EditorView): Command[] {
             // A row in the file list, named before it has an address: the name is the
             // title, and the bar asks where it points next. The file is a shortcut -
             // `Svelte docs.url` - which is what Explorer and every browser write; see
-            // web-tab/shortcut.ts and docs/web-tabs.md.
+            // @orden/scan/shortcut and docs/web-tabs.md.
             id: 'new-web-note',
             label: t('New web note'),
             disabled: readOnly,

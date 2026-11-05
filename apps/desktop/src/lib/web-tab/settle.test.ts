@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { sameSite, sameWebNote, settleShortcuts } from './settle'
-import { readShortcut } from './shortcut'
+import { readShortcut } from '@orden/scan/shortcut'
 
 /** Two copies of one web note made into one: the newer stands, and what only the
  *  older said comes across. See settle.ts. */

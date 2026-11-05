@@ -170,7 +170,7 @@ export function isPagesTarget(target: string): boolean {
  *  which is what Explorer and every browser make when a page is dragged out onto
  *  the desktop - and it is the one Orden writes. `.webloc` is the same idea on macOS,
  *  a plist, which is what Safari makes; Orden reads one and never writes one. See
- *  `web-tab/shortcut.ts`. */
+ *  `@orden/scan/shortcut`. */
 export function isWebTarget(target: string): boolean {
   return /\.(url|webloc)$/i.test(target.trim())
 }

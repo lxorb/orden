@@ -20,7 +20,7 @@
  *  inside that loop is built five thousand times. */
 
 import type { GraphNode } from './graph'
-import { aKindOfLine, type Query } from './search/query'
+import { aKindOfLine, type Query } from '@orden/scan/search/query'
 
 /** Whether one note stays in the picture. */
 export type Keeps = (node: GraphNode) => boolean

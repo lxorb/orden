@@ -1,5 +1,5 @@
 import { taskAt } from '@orden/markdown/tasks'
-import type { Hit, Range } from './match'
+import type { Hit, Range } from '@orden/scan/search/match'
 
 /** The task a hit's line is, or null for a line that is not one: whether it is
  *  done, and the words after the marker with what matched moved along with them.

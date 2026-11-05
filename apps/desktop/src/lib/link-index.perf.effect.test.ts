@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { scanNote } from './scan-note'
+import { scanNote } from '@orden/scan/note'
 
 /** What renaming or moving a large folder costs the link rewrite, as the space gets
  *  larger.

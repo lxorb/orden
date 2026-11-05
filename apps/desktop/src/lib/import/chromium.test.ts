@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 
 import { fromBase64 } from '../bytes'
-import { readShortcut } from '../web-tab/shortcut'
+import { readShortcut } from '@orden/scan/shortcut'
 import { chromiumSidebar } from './chromium'
 import { BOOKMARKS, SESSION } from './chromium.fixture'
 import type { FolderWords } from './sidebar-made'

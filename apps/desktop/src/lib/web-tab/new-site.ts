@@ -20,7 +20,7 @@ import { joinPath } from '../tauri'
 import type { Entry, Space } from '../workspace.svelte'
 import { UNTITLED } from '../workspace/documents.svelte'
 import { writeFile } from '../workspace/write-file'
-import { writeShortcut } from './shortcut'
+import { writeShortcut } from '@orden/scan/shortcut'
 
 /** What making one needs of the store. */
 export interface Sites {

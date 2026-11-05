@@ -1,5 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
-import { scanNote } from './scan-note'
+import { scanNote } from '@orden/scan/note'
 
 /** Links that follow a note renamed or moved in a space that is not the open one
  *  (B405). A rename in A undone after switching to B puts the file back, and the

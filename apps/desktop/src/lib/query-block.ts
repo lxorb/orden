@@ -20,9 +20,9 @@
 
 import { escapeAll } from '@orden/markdown/html'
 import { shownName } from './note-name'
-import type { Hit } from './search/match'
+import type { Hit } from '@orden/scan/search/match'
 import { taskOf } from './search/task'
-import { parseQuery } from './search/query'
+import { parseQuery } from '@orden/scan/search/query'
 import { searchSpace } from './search/space'
 
 /** How many rows a fence in a note is worth. Past this it is a second copy of the

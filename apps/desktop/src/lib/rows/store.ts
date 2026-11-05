@@ -16,8 +16,8 @@
  *  start.svelte.ts for the app's. */
 
 import type { Row } from '@orden/bases'
-import type { ScannedNote, SpaceLinks } from '../scan-note'
-import { scanNote } from '../scan-note'
+import type { ScannedNote, SpaceLinks } from '@orden/scan/note'
+import { scanNote } from '@orden/scan/note'
 import { AGENTS_NAME } from '../note-name'
 import { scanRows } from '@orden/bases/scan'
 import { insideSpace, isMarkdownPath, pathKey, samePath, within } from '../space-paths'

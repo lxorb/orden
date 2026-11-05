@@ -29,7 +29,7 @@ import { sitesSince } from './clearing'
 import { keepNow } from './keep'
 import { pages } from './pages.svelte'
 import { withOwn } from './own-file'
-import { readWebFile } from './shortcut'
+import { readWebFile } from '@orden/scan/shortcut'
 import { freshOwn, isCopying, ownStore, webData } from './web-data.svelte'
 
 /** The two places a web note's pages may keep what websites store. */

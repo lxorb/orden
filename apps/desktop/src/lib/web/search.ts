@@ -12,9 +12,9 @@
  *  order, which is the order the desktop walks a space in, so the two builds fill
  *  a list the same way. */
 
-import { Fuzzy, type FuzzyHit, withoutWords } from '../search/fuzzy'
-import { type Hit, Matcher } from '../search/match'
-import type { Query } from '../search/query'
+import { Fuzzy, type FuzzyHit, withoutWords } from '@orden/scan/search/fuzzy'
+import { type Hit, Matcher } from '@orden/scan/search/match'
+import type { Query } from '@orden/scan/search/query'
 import { normalise } from './paths'
 import { space } from './space-cache'
 

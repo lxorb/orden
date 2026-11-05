@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { Row } from '@orden/bases'
-import { scanNote, type ScannedNote, type SpaceLinks } from '../scan-note'
+import { scanNote, type ScannedNote, type SpaceLinks } from '@orden/scan/note'
 import { scanRows } from '@orden/bases/scan'
 import { type Host, type RowsChange, RowsStore } from './store'
 

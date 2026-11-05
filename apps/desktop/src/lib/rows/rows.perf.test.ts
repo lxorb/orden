@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import * as taskLine from '@orden/markdown/task-line'
-import { scanNote, type ScannedNote } from '../scan-note'
+import { scanNote, type ScannedNote } from '@orden/scan/note'
 import { scanRows } from '@orden/bases/scan'
 import { type Host, RowsStore } from './store'
 

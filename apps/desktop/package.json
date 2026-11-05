@@ -27,6 +27,7 @@
     "@orden/markdown": "workspace:*",
     "@orden/online": "workspace:*",
     "@orden/rooms": "workspace:*",
+    "@orden/scan": "workspace:*",
     "@orden/sync-core": "workspace:*",
     "@orden/themes": "workspace:*",
     "@tauri-apps/api": "^2.11.1",

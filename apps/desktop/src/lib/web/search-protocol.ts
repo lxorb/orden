@@ -7,9 +7,9 @@
  *  boundary like any other: what comes through it is unknown until something
  *  has looked. */
 
-import type { FuzzyHit } from '../search/fuzzy'
-import type { Hit } from '../search/match'
-import type { Query } from '../search/query'
+import type { FuzzyHit } from '@orden/scan/search/fuzzy'
+import type { Hit } from '@orden/scan/search/match'
+import type { Query } from '@orden/scan/search/query'
 import type { Warmth } from '../search/warmth'
 
 /** One search, asked. `id` is which search it is: typing outruns the storage,

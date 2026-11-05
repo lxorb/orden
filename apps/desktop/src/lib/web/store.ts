@@ -15,7 +15,7 @@
  *  the two cannot come apart even if the tab is closed mid-write. */
 
 import { breathe } from '../breathe'
-import type { PlaneMarks } from '../scan-canvas'
+import type { PlaneMarks } from '@orden/scan/canvas'
 
 const NAME = 'nib'
 const VERSION = 2

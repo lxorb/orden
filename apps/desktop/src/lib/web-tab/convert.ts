@@ -23,7 +23,7 @@ import type { Entry, Space } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
 import { keptBody, webTitleOf, webUrlOf } from './note'
 import { sameSite } from './settle'
-import { readWebFile, writeShortcut } from './shortcut'
+import { readWebFile, writeShortcut } from '@orden/scan/shortcut'
 
 /** What turning a note into a shortcut needs of the store: the tree it draws the
  *  new row into, and the space it is walking. The optimistic row and the listing

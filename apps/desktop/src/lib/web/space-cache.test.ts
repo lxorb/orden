@@ -37,7 +37,7 @@ vi.mock('./store', () => ({
 
 const { holdAtMost, space } = await import('./space-cache')
 const { searchRows } = await import('./search')
-const { parseQuery } = await import('../search/query')
+const { parseQuery } = await import('@orden/scan/search/query')
 
 const ROOT = '/Space'
 

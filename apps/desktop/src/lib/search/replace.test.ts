@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { Matcher } from './match'
-import { parseQuery } from './query'
+import { Matcher } from '@orden/scan/search/match'
+import { parseQuery } from '@orden/scan/search/query'
 import { applied, expand, replaceIn, reverse } from './replace'
 
 /** What the panel does to one note: find, keep the lines that are ticked,

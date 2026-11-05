@@ -4,11 +4,11 @@
 import { holderOf, paperOf } from '../pages/held'
 import { SIDECAR } from '../pdf/highlights'
 import { staleSnapshots } from '../recovery'
-import { markedPlane, type PlaneMarks, planeMarks } from '../scan-canvas'
-import { scanNote, scanShortcut, type SpaceLinks } from '../scan-note'
+import { markedPlane, type PlaneMarks, planeMarks } from '@orden/scan/canvas'
+import { scanNote, scanShortcut, type SpaceLinks } from '@orden/scan/note'
 import { scanRows } from '@orden/bases/scan'
 import { isNumber, isRecord, isString, parsed } from '../stored'
-import { tagsIn } from '../search/tags'
+import { tagsIn } from '@orden/scan/search/tags'
 import {
   basename,
   hiddenUnder,

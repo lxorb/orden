@@ -24,6 +24,7 @@
     "packages/markdown": {},
     "packages/online": {},
     "packages/rooms": {},
+    "packages/scan": {},
     "packages/sync-core": {},
     "apps/desktop": {
       "entry": [

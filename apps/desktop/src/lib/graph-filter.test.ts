@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import type { GraphNode } from './graph'
 import { graphFilter } from './graph-filter'
-import { parseQuery } from './search/query'
+import { parseQuery } from '@orden/scan/search/query'
 
 /** One node of a picture, as much of it as a filter reads. */
 const node = (id: string, tags: string[] = []): GraphNode => ({

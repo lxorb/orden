@@ -309,7 +309,7 @@ vi.mock('../../link-index.svelte', () => {
   return { links, spaceLinks: () => new Links() }
 })
 
-vi.mock('../../search/query', () => ({ parseQuery: (text: string) => ({ text }) }))
+vi.mock('@orden/scan/search/query', () => ({ parseQuery: (text: string) => ({ text }) }))
 
 /** Which roots were searched. */
 const searched: string[] = []

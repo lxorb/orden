@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import type { Found } from '../search/space'
-import type { Hit } from '../search/match'
-import type { Query } from '../search/query'
+import type { Hit } from '@orden/scan/search/match'
+import type { Query } from '@orden/scan/search/query'
 import {
   citationLinks,
   citedIn,

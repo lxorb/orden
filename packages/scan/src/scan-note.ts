@@ -9,10 +9,19 @@
 import { COVER_KEY } from '@orden/markdown/cover'
 import { frontMatterList, frontMatterValue, stripFrontMatter } from '@orden/markdown/front-matter'
 import { blockIds, findLinks, headingsOf, type LinkKind } from '@orden/markdown/links'
-import { ICON_COLOUR_KEY, ICON_KEY } from './icons'
 import type { ScannedTask, Stamp } from '@orden/bases/scan'
 import { tagsIn } from './search/tags'
-import { readWebFile } from './web-tab/shortcut'
+import { readWebFile } from './shortcut'
+
+/** The two keys a note keeps this under, and the names the same two things go by in
+ *  a canvas's `nib` key and in a space's own store.
+ *
+ *  Written out here, beside the scan, because three readers have to agree on them:
+ *  the writer (the app's icons.ts), the scan that reads a whole space, and the Rust
+ *  twin of that scan. `icon` is Obsidian's Iconize spelling, which is the point of it;
+ *  the colour is hyphenated beside it in the way YAML keys in a note usually are. */
+export const ICON_KEY = 'icon'
+export const ICON_COLOUR_KEY = 'icon-color'
 
 /** One link out of a note. Named for the shape below rather than for a caller:
  *  everything outside reads a whole note, never one of its links. */
@@ -66,7 +75,7 @@ export interface ScannedNote {
    *  draws the favicon in front of the row rather than the plain globe - before the
    *  page has loaded and on a machine that has never opened it. Null for every note
    *  and canvas, and for a website nobody has followed a link out of yet. The twin of
-   *  the same field in links.rs. See web-tab/shortcut.ts. */
+   *  the same field in links.rs. See @orden/scan/shortcut. */
   favicon: string | null
   /** Where a website points, which the device's own marks are looked up by; null for
    *  everything else. Not `url`, which says a note is a website in the old format. The
@@ -177,7 +186,7 @@ export function scanShortcut(path: string, content: string): ScannedNote {
     iconColor: said?.chosenColour ?? null,
     aliases: [],
     // What `url:` means is a note that is a website in the old format and wants
-    // converting; a shortcut is already one. See web-tab/shortcut.ts.
+    // converting; a shortcut is already one. See @orden/scan/shortcut.
     url: null,
     // The site's mark for the row, and where it points; a `.webloc` has no mark.
     favicon: said?.icon ?? null,

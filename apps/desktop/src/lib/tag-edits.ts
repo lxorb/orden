@@ -13,7 +13,7 @@
 
 import type { Change } from './search/apply'
 import { changeOf, type Edit } from './search/replace'
-import { tagCuts, tagSpans } from './search/tags'
+import { tagCuts, tagSpans } from '@orden/scan/search/tags'
 
 /** What one note becomes, or null when the tag is not in it.
  *

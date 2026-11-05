@@ -8,8 +8,8 @@
  *  row offered and Enter still means Enter. See `OPERATORS` in query.ts, which is
  *  the list, and SearchPanel.svelte, which is what does not preselect it. */
 
-import { fit } from './fuzzy'
-import { OPERATORS } from './query'
+import { fit } from '@orden/scan/search/fuzzy'
+import { OPERATORS } from '@orden/scan/search/query'
 
 type Field = 'path' | 'file' | 'tag'
 

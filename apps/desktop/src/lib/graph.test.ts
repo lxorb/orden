@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { buildGraph, type NoteGraph, without } from './graph'
 import { neighbourhood, neighbours, signature } from './graph-walk'
-import { scanNote, type ScannedNote } from './scan-note'
+import { scanNote, type ScannedNote } from '@orden/scan/note'
 
 /** A folder of notes, read the way the index reads one. */
 const scan = (notes: Record<string, string>) =>

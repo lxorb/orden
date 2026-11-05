@@ -2,7 +2,7 @@
 
 import type { Row } from '@orden/bases'
 import { rowsOf } from '@orden/bases/rows'
-import { scanNote } from '../scan-note'
+import { scanNote } from '@orden/scan/note'
 import { scanRows } from '@orden/bases/scan'
 
 export function rowsIn(space: string, path: string, content: string): Row[] {

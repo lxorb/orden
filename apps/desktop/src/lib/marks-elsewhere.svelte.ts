@@ -24,11 +24,11 @@ import {
   isWebTarget,
 } from '@orden/markdown/links'
 import { SvelteMap } from 'svelte/reactivity'
-import { saysNothing } from './scan-note'
+import { saysNothing } from '@orden/scan/note'
 import { ICON_COLOUR_KEY, ICON_KEY } from './icons'
 import { isMarkdownPath, noteName, pathKey, within } from './space-paths'
 import { invoke } from './tauri'
-import { readWebFile } from './web-tab/shortcut'
+import { readWebFile } from '@orden/scan/shortcut'
 
 /** What one file wears, in the link index's own words for each. */
 interface Worn {
@@ -94,7 +94,7 @@ async function wornBy(path: string, content: string): Promise<Worn> {
   }
 
   if (isCanvasTarget(path) || isPagesTarget(path)) {
-    const { planeMarks } = await import('./scan-canvas')
+    const { planeMarks } = await import('@orden/scan/canvas')
     const { icon, iconColor } = planeMarks(content)
     return { ...NOTHING, icon, iconColor }
   }

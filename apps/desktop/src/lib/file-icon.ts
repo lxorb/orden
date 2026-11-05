@@ -114,7 +114,7 @@ async function webIconEdit(
   icon: string | null,
   colour: string | null,
 ): Promise<TextEdit | null> {
-  const { readWebFile, rewriteShortcut } = await import('./web-tab/shortcut')
+  const { readWebFile, rewriteShortcut } = await import('@orden/scan/shortcut')
   const said = /\.webloc$/i.test(path.trim()) ? null : readWebFile(path, before)
   if (!said) return null
   return oneEdit(before, rewriteShortcut(said, { chosen: icon, chosenColour: colour }))
