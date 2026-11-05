@@ -95,6 +95,73 @@ def closed():
     time.sleep(0.5)
 
 
+def answering(seconds, what):
+    """The app asked something small over and over for `seconds`: the longest it took to
+    answer, or None where it did not answer within a few seconds at all."""
+    worst, until = 0.0, time.monotonic() + seconds
+    while time.monotonic() < until:
+        began = time.monotonic()
+        said = quick("'here'")
+        took = time.monotonic() - began
+        if said != "here":
+            fail(f"{what}: the app stopped answering ({took:.1f} s, {said!r})")
+            return None
+        worst = max(worst, took)
+        time.sleep(0.2)
+    return worst
+
+
+def quick(code):
+    """One question, given three seconds and no second try: a frozen app is an answer."""
+    body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
+    asked = urllib.request.Request(
+        f"http://127.0.0.1:{PORT}/",
+        data=body.encode(),
+        headers={"authorization": f"Bearer {SECRET}", "content-type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(asked, timeout=3) as answer:
+            said = json.loads(answer.read())
+        return said.get("value") if said.get("ok") else said.get("error")
+    except (TimeoutError, OSError) as error:
+        return f"no answer: {error}"
+
+
+BUTTON = f"document.querySelector('button.extension[aria-label={json.dumps(NAME)}]')"
+BUBBLE = "(() => { const box = document.querySelector('.popup.nib-bubble')?.getBoundingClientRect(); return box ? `${Math.round(box.width)}x${Math.round(box.height)}` : null })()"
+
+
+def pressed():
+    """#1035: the extension's own button pressed opens its popup, and the app answers all
+    the while - pressed once, and then again and again, as a hand does that thinks nothing
+    happened."""
+    for _ in range(40):
+        if run(f"!!{BUTTON}"):
+            break
+        time.sleep(0.5)
+    if not run(f"!!{BUTTON}"):
+        fail("no button of its own in the web bar")
+        return
+    quick(f"({BUTTON}.click(), 'pressed')")
+    worst = answering(8, "its popup opening")
+    sized = quick(BUBBLE)
+    if not sized or sized.startswith("no answer"):
+        fail(f"no popup over the bar after its button was pressed: {sized!r}")
+    subprocess.run(["grim", str(OUT / "extension-popup.png")], check=False)
+    print(f"installed: its button pressed, the app answered within {worst} s; popup {sized}")
+    # Pressed again and again: each press closes the popup open and opens it anew.
+    for _ in range(6):
+        quick(f"({BUTTON}.click(), 'pressed')")
+        time.sleep(0.15)
+    worst = answering(8, "its button pressed again and again")
+    print(f"installed: pressed six times more, the app answered within {worst} s")
+    if worst is not None and worst > 2:
+        fail(f"the app took {worst:.1f} s to answer while the popup opened")
+    quick("(document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })), 'closed')")
+    time.sleep(0.5)
+
+
 if PHASE == "installed":
     found = []
     for _ in range(60):
@@ -124,6 +191,7 @@ if PHASE == "installed":
     else:
         print(f"installed: the web bar's bubble names it: {bubble.strip()[:120]!r}")
     run("(document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })), 'closed')")
+    pressed()
 
     rows = settings_rows()
     subprocess.run(["grim", str(OUT / "extensions-settings.png")], check=False)

@@ -365,10 +365,24 @@ rows = b"".join(b"\x00" + b"\x2b\x8a\x6e\xff" * 16 for _ in range(16))
 icon = (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 16, 16, 8, 6, 0, 0, 0))
         + chunk(b"IDAT", zlib.compress(rows)) + chunk(b"IEND", b""))
 (folder / "icon.png").write_bytes(icon)
+# A popup of its own, as almost every extension's button opens (#1035): it draws itself
+# after it loads, as most do, and talks to its own background.
+(folder / "popup.html").write_text(
+    '<!doctype html><meta charset="utf-8"><body style="margin:0"><div id="said" style="width:320px;padding:12px">popup</div>'
+    '<script src="popup.js"></script>'
+)
+(folder / "popup.js").write_text(
+    "setTimeout(() => { document.getElementById('said').style.height = '240px' }, 300);"
+    "chrome.runtime.sendMessage('hello', (answer) => { document.getElementById('said').textContent = 'popup ' + (answer || '') });"
+)
+(folder / "background.js").write_text(
+    "chrome.runtime.onMessage.addListener((message, sender, answer) => { answer('heard ' + message) });"
+)
 (folder / "manifest.json").write_text(json.dumps({
     "manifest_version": 3, "name": name, "version": "1.0",
     "icons": {"16": "icon.png"},
-    "action": {"default_title": name, "default_icon": "icon.png"},
+    "action": {"default_title": name, "default_icon": "icon.png", "default_popup": "popup.html"},
+    "background": {"service_worker": "background.js"},
 }))
 MAKE
   NIB_CEF_ARGS="load-extension=$(cd "$out/extension" && pwd)"
