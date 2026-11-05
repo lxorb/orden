@@ -574,6 +574,18 @@ export const ko: Dictionary = {
   'Tabs as wide as their names': '이름만큼 넓은 탭',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     '각 탭은 아이콘, 이름, 닫기 버튼에 필요한 만큼만 넓어집니다. 끄면 모든 탭이 같은 너비가 됩니다.',
+  'Unload tabs from their menu': '메뉴에서 탭 언로드',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    '탭 메뉴에 탭 언로드가 나타나며, 다시 선택될 때까지 페이지와 메모리를 내려놓습니다.',
+  'Unload tab': '탭 언로드',
+  'Unload other tabs': '다른 탭 언로드',
+  'Unload tabs to the right': '오른쪽 탭 언로드',
+  'Unload tabs to the left': '왼쪽 탭 언로드',
+  'Unload {name}?': '{name}을(를) 언로드할까요?',
+  'Unload these tabs?': '이 탭들을 언로드할까요?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    '페이지에 입력하고 보내지 않은 내용이나 보내는 중인 내용은 사라집니다.',
+  Unload: '언로드',
   'Tab preview delay': '탭 미리보기 지연',
   'How long the pointer rests on a tab before its preview shows.':
     '미리보기가 나타나기 전에 포인터가 탭 위에 머무는 시간입니다.',

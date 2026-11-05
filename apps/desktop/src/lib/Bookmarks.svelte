@@ -61,6 +61,16 @@
      *  state than `active`, which is the essential shown where a tab shows, and both
      *  can hold at once. */
     front: boolean
+    /** Whether the essential's own tab was unloaded from its menu (#1127), which its
+     *  mark says the way the strip's does. */
+    unloaded: boolean
+  }
+
+  /** The tab an essential is open in, if it is open. */
+  function essentialOf(path: string | null) {
+    return path === null
+      ? undefined
+      : workspace.tabs.find((one) => one.essential !== null && samePath(one.essential, path))
   }
 
   const byPath = $derived.by(() => {
@@ -93,6 +103,7 @@
         kind: null,
         active: false,
         front: false,
+        unloaded: false,
       }
     }
 
@@ -124,6 +135,7 @@
         mark.kind === 'note' &&
         !workspace.active?.essential &&
         samePath(workspace.active?.path ?? null, entry.path),
+      unloaded: mark.kind === 'note' && !!essentialOf(entry.path)?.unloaded,
     }
   }
 
@@ -341,13 +353,14 @@
   /** What a row offers: keeping or dropping the bookmark, a new group to sort
    *  them into, and - for a group - the two things only a group can do. Removing
    *  a group keeps what was in it; see remove in bookmarks.svelte.ts. */
-  function rowMenu(row: Row): MenuEntry[] {
+  function rowMenu(row: Row, unloading: MenuEntry[] = []): MenuEntry[] {
     const group = row.mark.kind === 'group'
 
     return [
       ...(row.mark.kind === 'note' && row.path
         ? [{ label: t('Open in new tab'), run: () => pressed(row, 'front') }, DIVIDER]
         : []),
+      ...(unloading.length ? [...unloading, DIVIDER] : []),
       ...(group
         ? [
             { label: t('Rename'), run: () => void renameGroup(row.mark) },
@@ -367,8 +380,21 @@
     ]
   }
 
-  const showMenu = (event: MouseEvent, row: Row) =>
-    menu.show(event, rowMenu(row), { title: titleOf(row) })
+  /** An essential open in a tab offers its tab's Unload too, fetched with the press
+   *  like the strip's own menu: its tab let go of, the essential kept (#1127). See
+   *  tab-strip/unloading.svelte.ts. */
+  function showMenu(event: MouseEvent, row: Row) {
+    const own = row.mark.kind === 'note' ? essentialOf(row.path) : undefined
+    if (!own) {
+      menu.show(event, rowMenu(row), { title: titleOf(row) })
+      return
+    }
+    event.preventDefault()
+    event.stopPropagation()
+    void import('./tab-strip/unloading.svelte').then(({ unloadEntries }) =>
+      menu.show(event, rowMenu(row, unloadEntries(own)), { title: titleOf(row) }),
+    )
+  }
 
   async function newGroup() {
     const { prompt } = await import('./prompt.svelte')
@@ -455,6 +481,7 @@
               mark={tile.kind ?? 'note'}
               active={tile.active}
               front={tile.front}
+              unloaded={tile.unloaded}
               slot={landing?.at === tile.at ? (landing.after ? 'after' : 'before') : null}
               data-at={tile.at}
               {...letterOf(tile)}
@@ -500,6 +527,7 @@
                 class="nib-row row"
                 class:is-quiet={row.mark.kind === 'folder'}
                 class:is-on={row.active}
+                class:is-unloaded={row.unloaded}
                 class:above={lands && !landing.after}
                 class:below={lands && landing.after}
                 class:nested={row.mark.kind !== 'group'}
@@ -618,6 +646,12 @@
     flex: 1;
     min-width: 0;
     padding-inline-start: calc(var(--level, 0) * var(--row-indent) + var(--lead));
+  }
+
+  /* An essential whose tab was unloaded (#1127): its mark faded, as the strip fades
+     one. */
+  .row.is-unloaded > :global(.mark) {
+    opacity: 0.45;
   }
 
   .row.nested {

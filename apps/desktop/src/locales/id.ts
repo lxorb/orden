@@ -574,6 +574,18 @@ export const id: Dictionary = {
   'Tabs as wide as their names': 'Tab selebar namanya',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'Setiap tab hanya selebar yang dibutuhkan ikon, nama, dan tombol tutupnya; jika dimatikan, semua tab sama lebar.',
+  'Unload tabs from their menu': 'Lepas tab dari menunya',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'Menu tab menawarkan Lepas tab, yang melepas halaman dan memorinya sampai tab dipilih lagi.',
+  'Unload tab': 'Lepas tab',
+  'Unload other tabs': 'Lepas tab lain',
+  'Unload tabs to the right': 'Lepas tab di kanan',
+  'Unload tabs to the left': 'Lepas tab di kiri',
+  'Unload {name}?': 'Lepas {name}?',
+  'Unload these tabs?': 'Lepas tab-tab ini?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'Apa pun yang diketik di halaman dan belum dikirim, atau masih dikirim, akan hilang.',
+  Unload: 'Lepas',
   'Tab preview delay': 'Jeda pratinjau tab',
   'How long the pointer rests on a tab before its preview shows.':
     'Berapa lama penunjuk berada di atas tab sebelum pratinjaunya muncul.',

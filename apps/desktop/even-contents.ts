@@ -622,11 +622,16 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  catalogues to 989,200, measured 989,126; the styles to 288,400, measured 288,383.
  *  Then the code to 6,046,900 and the styles to 288,600 for #1063's hover card saying
  *  what a tab uses, measured 6,046,692 and 288,535.
+ *
+ *  Raised on 2026-11-05 as #1127's unloaded tabs and #1092's agent tab on a Mac came to
+ *  claude/hunt-round-1: the code to 6,051,600, measured 6,051,343; the catalogues to
+ *  1,000,000, the menu's and the setting's words in every language, measured 999,745; the
+ *  styles to 288,800, measured 288,696.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_046_900,
-  catalogues: 989_200,
-  styles: 288_600,
+  code: 6_051_600,
+  catalogues: 1_000_000,
+  styles: 288_800,
   fonts: 260_000,
   pages: 40_000,
 }

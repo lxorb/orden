@@ -577,6 +577,18 @@ export const ur: Dictionary = {
   'Tabs as wide as their names': 'نام جتنے چوڑے ٹیب',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'ہر ٹیب صرف اتنا چوڑا ہوتا ہے جتنا اس کے آئیکن، نام اور بند کرنے کے بٹن کو چاہیے؛ بند ہونے پر سب ٹیب برابر چوڑے ہوتے ہیں۔',
+  'Unload tabs from their menu': 'ٹیب ان کے مینو سے ان لوڈ کریں',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'ٹیب کے مینو میں ٹیب ان لوڈ کریں ملتا ہے، جو دوبارہ چنے جانے تک اس کا صفحہ اور میموری چھوڑ دیتا ہے۔',
+  'Unload tab': 'ٹیب ان لوڈ کریں',
+  'Unload other tabs': 'باقی ٹیب ان لوڈ کریں',
+  'Unload tabs to the right': 'دائیں جانب کے ٹیب ان لوڈ کریں',
+  'Unload tabs to the left': 'بائیں جانب کے ٹیب ان لوڈ کریں',
+  'Unload {name}?': 'کیا {name} ان لوڈ کریں؟',
+  'Unload these tabs?': 'کیا یہ ٹیب ان لوڈ کریں؟',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'صفحے میں ٹائپ کیا گیا جو بھیجا نہیں گیا، یا ابھی بھیجا جا رہا ہے، سب ضائع ہو جائے گا۔',
+  Unload: 'ان لوڈ کریں',
   'Tab preview delay': 'ٹیب پیش نظارہ کی تاخیر',
   'How long the pointer rests on a tab before its preview shows.':
     'پیش نظارہ دکھنے سے پہلے پوائنٹر ٹیب پر کتنی دیر رکتا ہے۔',

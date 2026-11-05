@@ -17,6 +17,7 @@
     mark,
     active,
     front,
+    unloaded = false,
     slot,
     onopen,
     onmenu,
@@ -28,6 +29,9 @@
     active: boolean
     /** Whether the note's own tab in the strip is the one in front (#1110). */
     front: boolean
+    /** Whether its tab was unloaded from its menu (#1127): the face faded, as the
+     *  strip fades a tab's mark. */
+    unloaded?: boolean
     /** Which edge a tile let go of now would arrive at, or null for none. */
     slot: 'before' | 'after' | null
     onopen: (ask: TabAsk) => void
@@ -42,6 +46,7 @@
   class="nib-tile tile"
   class:is-on={active}
   class:is-front={front}
+  class:is-unloaded={unloaded}
   class:is-before={slot === 'before'}
   class:is-after={slot === 'after'}
   title={name}
@@ -59,3 +64,11 @@
     <span class="nib-tile-face" aria-hidden="true"><FileMark {mark} {path} /></span>
   {/if}
 </button>
+
+<style>
+  /* An essential whose tab was unloaded (#1127): its face faded, as the strip fades a
+     tab's mark, until it is shown again. */
+  .tile.is-unloaded > span {
+    opacity: 0.45;
+  }
+</style>

@@ -582,6 +582,18 @@ export const sw: Dictionary = {
   'Tabs as wide as their names': 'Vichupo vyenye upana wa majina yao',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'Kila kichupo kina upana unaohitajika na aikoni, jina na kitufe chake cha kufunga tu; kikizimwa, vichupo vyote vina upana sawa.',
+  'Unload tabs from their menu': 'Toa vichupo kwenye kumbukumbu kutoka menyu yao',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'Menyu ya kichupo inatoa Toa kichupo kwenye kumbukumbu, kinachoachilia ukurasa na kumbukumbu yake hadi kichaguliwe tena.',
+  'Unload tab': 'Toa kichupo kwenye kumbukumbu',
+  'Unload other tabs': 'Toa vichupo vingine kwenye kumbukumbu',
+  'Unload tabs to the right': 'Toa vichupo vya kulia kwenye kumbukumbu',
+  'Unload tabs to the left': 'Toa vichupo vya kushoto kwenye kumbukumbu',
+  'Unload {name}?': 'Toa {name} kwenye kumbukumbu?',
+  'Unload these tabs?': 'Toa vichupo hivi kwenye kumbukumbu?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'Chochote kilichoandikwa kwenye ukurasa na hakijatumwa, au bado kinatumwa, kitapotea.',
+  Unload: 'Toa',
   'Tab preview delay': 'Muda wa kusubiri onyesho la kichupo',
   'How long the pointer rests on a tab before its preview shows.':
     'Muda ambao kiashiria hukaa kwenye kichupo kabla onyesho lake halijaonekana.',

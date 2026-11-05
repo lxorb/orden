@@ -13,7 +13,7 @@ import { saver } from './saver.svelte'
 /** As much of the pages store as this needs. */
 export interface Held {
   each(): [string, Page][]
-  park(tabId: string): Promise<void>
+  park(tabId: string, hidden?: boolean): Promise<void>
 }
 
 /** Every page as the rules read it. */
@@ -54,7 +54,7 @@ export function rest(pages: Held, tabId: string, refused = false): void {
     ? { act: null, again: FROZEN_AFTER }
     : judged(one, saver.mode, Date.now())
   if (act === 'park') {
-    void pages.park(tabId)
+    void pages.park(tabId, true)
     return
   }
   if (act === 'freeze') void lull(pages, tabId, page, true)
@@ -84,5 +84,5 @@ export function lull(pages: Held, tabId: string, page: Page, paused: boolean): P
 /** Memory saver's cap, kept as one more page is built. A page in a pane on screen is
  *  never parked, nor one under a menu. */
 export function bound(pages: Held): void {
-  for (const id of overCap(resting(pages), saver.mode, Date.now())) void pages.park(id)
+  for (const id of overCap(resting(pages), saver.mode, Date.now())) void pages.park(id, true)
 }

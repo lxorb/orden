@@ -450,6 +450,11 @@
     "default": false,
     "description": "Today also lists the tasks that have no start date; off shows only those dated today or earlier."
   },
+  "general.unloadTabs": {
+    "type": "boolean",
+    "default": false,
+    "description": "A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again."
+  },
   "general.warnBeforeQuitting": {
     "type": "string",
     "enum": [

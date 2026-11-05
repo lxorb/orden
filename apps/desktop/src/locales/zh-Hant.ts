@@ -574,6 +574,18 @@ export const zhHant: Dictionary = {
   'Tabs as wide as their names': '分頁寬度隨名稱',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     '每個分頁只佔其圖示、名稱和關閉按鈕所需的寬度；關閉後，所有分頁寬度相同。',
+  'Unload tabs from their menu': '從分頁選單卸載分頁',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    '分頁的選單會提供「卸載分頁」，在再次選取前釋放其網頁和記憶體。',
+  'Unload tab': '卸載分頁',
+  'Unload other tabs': '卸載其他分頁',
+  'Unload tabs to the right': '卸載右側分頁',
+  'Unload tabs to the left': '卸載左側分頁',
+  'Unload {name}?': '卸載 {name}？',
+  'Unload these tabs?': '卸載這些分頁？',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    '網頁中已輸入但未傳送或正在傳送的內容將會遺失。',
+  Unload: '卸載',
   'Tab preview delay': '分頁預覽延遲',
   'How long the pointer rests on a tab before its preview shows.':
     '指標在分頁上停留多久後顯示預覽。',

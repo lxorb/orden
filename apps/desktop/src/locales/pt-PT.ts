@@ -592,6 +592,18 @@ export const ptPT: Dictionary = {
   'Tabs as wide as their names': 'Separadores da largura dos seus nomes',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'Cada separador tem apenas a largura de que precisam o ícone, o nome e o botão de fechar; desligado, todos têm a mesma largura.',
+  'Unload tabs from their menu': 'Descarregar separadores a partir do seu menu',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'O menu de um separador oferece Descarregar separador, que liberta a página e a memória até voltar a ser escolhido.',
+  'Unload tab': 'Descarregar separador',
+  'Unload other tabs': 'Descarregar outros separadores',
+  'Unload tabs to the right': 'Descarregar separadores à direita',
+  'Unload tabs to the left': 'Descarregar separadores à esquerda',
+  'Unload {name}?': 'Descarregar {name}?',
+  'Unload these tabs?': 'Descarregar estes separadores?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'O que foi escrito numa página e não enviado, ou ainda está a ser enviado, perde-se.',
+  Unload: 'Descarregar',
   'Tab preview delay': 'Atraso da pré-visualização de separadores',
   'How long the pointer rests on a tab before its preview shows.':
     'Quanto tempo o ponteiro fica sobre um separador antes de a pré-visualização aparecer.',

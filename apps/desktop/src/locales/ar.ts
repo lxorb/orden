@@ -609,6 +609,18 @@ export const ar: Dictionary = {
   'Tabs as wide as their names': 'علامات تبويب بعرض أسمائها',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'كل علامة تبويب بالعرض الذي يحتاجه رمزها واسمها وزر إغلاقها فقط؛ وعند الإيقاف تكون كل العلامات بالعرض نفسه.',
+  'Unload tabs from their menu': 'إلغاء تحميل التبويبات من قائمتها',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'تعرض قائمة التبويب «إلغاء تحميل التبويب»، فيحرر صفحته وذاكرته حتى يُختار مجددًا.',
+  'Unload tab': 'إلغاء تحميل التبويب',
+  'Unload other tabs': 'إلغاء تحميل التبويبات الأخرى',
+  'Unload tabs to the right': 'إلغاء تحميل التبويبات على اليمين',
+  'Unload tabs to the left': 'إلغاء تحميل التبويبات على اليسار',
+  'Unload {name}?': 'إلغاء تحميل {name}؟',
+  'Unload these tabs?': 'إلغاء تحميل هذه التبويبات؟',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'يضيع كل ما كُتب في صفحة ولم يُرسل، أو ما زال قيد الإرسال.',
+  Unload: 'إلغاء التحميل',
   'Tab preview delay': 'تأخير معاينة علامة التبويب',
   'How long the pointer rests on a tab before its preview shows.':
     'المدة التي يستقر فيها المؤشر على علامة التبويب قبل ظهور معاينتها.',

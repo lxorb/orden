@@ -578,6 +578,18 @@ export const hi: Dictionary = {
   'Tabs as wide as their names': 'नाम जितने चौड़े टैब',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'हर टैब बस उतना चौड़ा होता है जितना उसके आइकन, नाम और बंद करने के बटन को चाहिए; बंद होने पर सब टैब बराबर चौड़े होते हैं।',
+  'Unload tabs from their menu': 'टैब को उनके मेन्यू से अनलोड करें',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'टैब के मेन्यू में टैब अनलोड करें मिलता है, जो फिर से चुने जाने तक उसका पेज और मेमोरी छोड़ देता है।',
+  'Unload tab': 'टैब अनलोड करें',
+  'Unload other tabs': 'बाकी टैब अनलोड करें',
+  'Unload tabs to the right': 'दाईं ओर के टैब अनलोड करें',
+  'Unload tabs to the left': 'बाईं ओर के टैब अनलोड करें',
+  'Unload {name}?': '{name} अनलोड करें?',
+  'Unload these tabs?': 'ये टैब अनलोड करें?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'पेज में टाइप किया गया जो भेजा नहीं गया, या अभी भेजा जा रहा है, वह सब खो जाएगा।',
+  Unload: 'अनलोड करें',
   'Tab preview delay': 'टैब पूर्वावलोकन की देरी',
   'How long the pointer rests on a tab before its preview shows.':
     'पूर्वावलोकन दिखने से पहले पॉइंटर टैब पर कितनी देर रुकता है।',

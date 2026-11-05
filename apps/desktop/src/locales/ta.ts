@@ -579,6 +579,18 @@ export const ta: Dictionary = {
   'Tabs as wide as their names': 'பெயர் அளவு அகலமான தாவல்கள்',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'ஒவ்வொரு தாவலும் அதன் ஐகான், பெயர், மூடும் பொத்தான் ஆகியவற்றுக்குத் தேவையான அகலம் மட்டுமே; அணைத்தால் எல்லாத் தாவல்களும் ஒரே அகலம்.',
+  'Unload tabs from their menu': 'தாவல்களை அவற்றின் மெனுவிலிருந்து இறக்கு',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'தாவலின் மெனுவில் தாவலை இறக்கு கிடைக்கும், அது மீண்டும் தேர்ந்தெடுக்கப்படும் வரை அதன் பக்கத்தையும் நினைவகத்தையும் விடுவிக்கும்.',
+  'Unload tab': 'தாவலை இறக்கு',
+  'Unload other tabs': 'மற்ற தாவல்களை இறக்கு',
+  'Unload tabs to the right': 'வலதுபுறத் தாவல்களை இறக்கு',
+  'Unload tabs to the left': 'இடதுபுறத் தாவல்களை இறக்கு',
+  'Unload {name}?': '{name} ஐ இறக்கவா?',
+  'Unload these tabs?': 'இந்தத் தாவல்களை இறக்கவா?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'பக்கத்தில் தட்டச்சு செய்து அனுப்பாதவை, அல்லது இன்னும் அனுப்பப்படுபவை அனைத்தும் இழக்கப்படும்.',
+  Unload: 'இறக்கு',
   'Tab preview delay': 'தாவல் முன்னோட்டத் தாமதம்',
   'How long the pointer rests on a tab before its preview shows.':
     'முன்னோட்டம் தோன்றும் முன் சுட்டி தாவலின் மேல் எவ்வளவு நேரம் இருக்க வேண்டும்.',

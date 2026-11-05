@@ -29,7 +29,7 @@ use base64::Engine as _;
 use serde_json::{json, Value};
 
 use super::cdp::{self, Heard};
-use super::engines::{Engine, Gate, Page, Tree, UNREAD};
+use super::engines::{Engine, Gate, Page, Tree, SETTLED, UNREAD};
 use super::keys::{self, Key};
 use super::policy::{self, Facts, Field};
 use super::snapshot::{self, Part};
@@ -581,18 +581,6 @@ fn clipped_hiding(hidden: &[usize]) -> String {
         ),
     )
 }
-
-/// Whether the document has stopped changing: resolves once nothing moved for `still`
-/// milliseconds, or at `most`.
-const SETTLED: &str = r"(still, most) => new Promise((done) => {
-  if (!document.body) return done(true)
-  let quiet
-  const watcher = new MutationObserver(() => { clearTimeout(quiet); quiet = setTimeout(end, still) })
-  const end = () => { watcher.disconnect(); done(true) }
-  watcher.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true })
-  quiet = setTimeout(end, still)
-  setTimeout(end, most)
-})";
 
 /// Where a press goes and what it lands on there; see `Page::aim`.
 pub struct Aim {
@@ -1160,25 +1148,12 @@ impl Page<'_> {
     /// Whether the frame an element is in may be acted in (9.2): a denied site does not
     /// open for being in a frame.
     fn may_act_in(&self, facts: &Facts) -> Result<(), Answer> {
-        // Nowhere is no answer to where, for an agent with a site it may not act in.
-        if facts.at.is_empty() && facts.opaque && self.limits_sites() {
-            return Err(Answer::error(
-                Code::SiteDenied,
-                "what is at that point says nothing of itself or of where it is: take a snapshot and press something else",
-            ));
-        }
-        match &self.limits {
-            Some((grant, store)) => policy::frame_allowed(grant, &facts.at, *store)
-                .map_err(|why| Answer::error(Code::SiteDenied, why)),
-            None => Ok(()),
-        }
+        self.frame_may_be_acted_in(facts)
     }
 
     /// Whether the agent's grant has a rule for any site, so that a frame can be denied.
     fn limits_sites(&self) -> bool {
-        self.limits
-            .as_ref()
-            .is_some_and(|(grant, _)| !grant.sites.is_empty())
+        self.grant_limits_sites()
     }
 
     /// Whether a frame's words may be read, by where it is.

@@ -583,6 +583,18 @@ export const fil: Dictionary = {
   'Tabs as wide as their names': 'Mga tab na kasinlapad ng pangalan nila',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'Kasinlapad lang ang bawat tab ng kailangan ng icon, pangalan at close button nito; kapag naka-off, pare-pareho ang lapad ng lahat.',
+  'Unload tabs from their menu': 'Mag-unload ng mga tab mula sa menu nila',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'Nag-aalok ang menu ng tab ng I-unload ang tab, na binibitawan ang page at memory nito hanggang piliin itong muli.',
+  'Unload tab': 'I-unload ang tab',
+  'Unload other tabs': 'I-unload ang ibang tab',
+  'Unload tabs to the right': 'I-unload ang mga tab sa kanan',
+  'Unload tabs to the left': 'I-unload ang mga tab sa kaliwa',
+  'Unload {name}?': 'I-unload ang {name}?',
+  'Unload these tabs?': 'I-unload ang mga tab na ito?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'Mawawala ang anumang na-type sa isang page na hindi pa naipapadala, o ipinapadala pa.',
+  Unload: 'I-unload',
   'Tab preview delay': 'Antala ng preview ng tab',
   'How long the pointer rests on a tab before its preview shows.':
     'Gaano katagal nakapatong ang pointer sa tab bago lumabas ang preview nito.',

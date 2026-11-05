@@ -582,6 +582,18 @@ export const de: Dictionary = {
   'Tabs as wide as their names': 'Tabs so breit wie ihre Namen',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'Jeder Tab ist nur so breit, wie Symbol, Name und Schließen-Knopf brauchen; aus, sind alle Tabs gleich breit.',
+  'Unload tabs from their menu': 'Tabs über ihr Menü entladen',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'Das Menü eines Tabs bietet „Tab entladen“, das Seite und Speicher freigibt, bis der Tab wieder gewählt wird.',
+  'Unload tab': 'Tab entladen',
+  'Unload other tabs': 'Andere Tabs entladen',
+  'Unload tabs to the right': 'Tabs rechts entladen',
+  'Unload tabs to the left': 'Tabs links entladen',
+  'Unload {name}?': '{name} entladen?',
+  'Unload these tabs?': 'Diese Tabs entladen?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'Was in eine Seite getippt und nicht gesendet wurde oder gerade gesendet wird, geht verloren.',
+  Unload: 'Entladen',
   'Tab preview delay': 'Verzögerung der Tab-Vorschau',
   'How long the pointer rests on a tab before its preview shows.':
     'Wie lange der Zeiger auf einem Tab ruht, bevor seine Vorschau erscheint.',

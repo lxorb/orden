@@ -582,6 +582,18 @@ export const ha: Dictionary = {
   'Tabs as wide as their names': 'Shafuka masu faɗin sunayensu',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'Kowace shafi tana da faɗin da alamarta, sunanta da maɓallin rufewa ke buƙata kawai; idan an kashe, duk shafuka faɗinsu ɗaya.',
+  'Unload tabs from their menu': 'Sauke shafuka daga menu ɗinsu',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'Menu na shafi yana ba da Sauke shafi, wanda ke sakin shafin yanar gizonsa da ƙwaƙwalwarsa har sai an sake zaɓensa.',
+  'Unload tab': 'Sauke shafi',
+  'Unload other tabs': 'Sauke sauran shafuka',
+  'Unload tabs to the right': 'Sauke shafukan dama',
+  'Unload tabs to the left': 'Sauke shafukan hagu',
+  'Unload {name}?': 'A sauke {name}?',
+  'Unload these tabs?': 'A sauke waɗannan shafuka?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'Duk abin da aka rubuta a shafi ba a aika ba, ko ana kan aikawa, zai ɓace.',
+  Unload: 'Sauke',
   'Tab preview delay': 'Jinkirin samfoti na shafi',
   'How long the pointer rests on a tab before its preview shows.':
     'Tsawon lokacin da mai nuni zai tsaya a kan shafi kafin samfotinsa ya bayyana.',

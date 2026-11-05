@@ -587,6 +587,18 @@ export const it: Dictionary = {
   'Tabs as wide as their names': 'Schede larghe quanto il loro nome',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'Ogni scheda è larga solo quanto servono la sua icona, il suo nome e il pulsante di chiusura; disattivato, tutte hanno la stessa larghezza.',
+  'Unload tabs from their menu': 'Scarica le schede dal loro menu',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'Il menu di una scheda offre Scarica scheda, che libera la pagina e la memoria finché non viene scelta di nuovo.',
+  'Unload tab': 'Scarica scheda',
+  'Unload other tabs': 'Scarica le altre schede',
+  'Unload tabs to the right': 'Scarica le schede a destra',
+  'Unload tabs to the left': 'Scarica le schede a sinistra',
+  'Unload {name}?': 'Scaricare {name}?',
+  'Unload these tabs?': 'Scaricare queste schede?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'Ciò che è stato digitato in una pagina e non inviato, o è ancora in invio, va perso.',
+  Unload: 'Scarica',
   'Tab preview delay': 'Ritardo dell’anteprima delle schede',
   'How long the pointer rests on a tab before its preview shows.':
     'Quanto il puntatore resta su una scheda prima che compaia l’anteprima.',

@@ -690,6 +690,34 @@ pub fn build_popup(app: &AppHandle, id: &str) {
     });
 }
 
+/// A window a page on `WKWebView` asked for: another agent tab of the same agent, built
+/// at the address it asked for, if the agent may go there. `WKWebView` makes the new
+/// window's page with the opener's own configuration, which only a page it builds itself
+/// can take, so the new tab is a page of its own and `window.opener` is not kept.
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
+pub fn open_popup(app: &AppHandle, opener: &Owner, url: &str) {
+    let Ok(address) = web_address(url) else {
+        return;
+    };
+    if may_open(opener, url).is_err() {
+        return;
+    }
+    let Some(id) = reserve_popup(opener, url) else {
+        return;
+    };
+    let Some(tab) = tabs().iter().find(|one| one.id == id).cloned() else {
+        return;
+    };
+    let building = app.clone();
+    std::thread::spawn(move || {
+        if build(&building, &tab, Some(&address)).is_err() {
+            tabs().retain(|one| one.id != tab.id);
+        } else {
+            said(&building, &tab);
+        }
+    });
+}
+
 /// Agent tabs the reader was shown, by the agent tab's id: the reader's tab each became.
 static SHOWN: Mutex<Vec<(String, String)>> = Mutex::new(Vec::new());
 

@@ -600,6 +600,18 @@ export const pl: Dictionary = {
   'Tabs as wide as their names': 'Karty szerokie jak ich nazwy',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'Każda karta jest tak szeroka, jak potrzebują jej ikona, nazwa i przycisk zamykania; po wyłączeniu wszystkie mają tę samą szerokość.',
+  'Unload tabs from their menu': 'Zwalniaj karty z ich menu',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'Menu karty oferuje Zwolnij kartę, co oddaje jej stronę i pamięć, dopóki nie zostanie znów wybrana.',
+  'Unload tab': 'Zwolnij kartę',
+  'Unload other tabs': 'Zwolnij pozostałe karty',
+  'Unload tabs to the right': 'Zwolnij karty po prawej',
+  'Unload tabs to the left': 'Zwolnij karty po lewej',
+  'Unload {name}?': 'Zwolnić {name}?',
+  'Unload these tabs?': 'Zwolnić te karty?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'Wszystko, co wpisano na stronie i nie wysłano albo co jest właśnie wysyłane, przepadnie.',
+  Unload: 'Zwolnij',
   'Tab preview delay': 'Opóźnienie podglądu karty',
   'How long the pointer rests on a tab before its preview shows.':
     'Jak długo wskaźnik spoczywa na karcie, zanim pojawi się jej podgląd.',

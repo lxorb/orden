@@ -559,6 +559,21 @@ class Pages {
     return this.held.get(tabId)?.loading ?? false
   }
 
+  /** Whether an agent has been lent the tab's page; see lending.ts. Never makes a page. */
+  lentOf(tabId: string): boolean {
+    return this.held.get(tabId)?.lent ?? false
+  }
+
+  /** Whether parking the page now would lose something (#1127): a field typed into and
+   *  not sent, as the page says when asked, or a load still on its way - a form being
+   *  sent among them. False for a tab with no page running. Never makes a page. */
+  async losing(tabId: string): Promise<boolean> {
+    const page = this.held.get(tabId)
+    if (!page?.live) return false
+    await this.look(tabId)
+    return page.edited || page.loading
+  }
+
   /** What the tab is pointing at, for the session and for the bar. */
   addressOf(tabId: string): string | null {
     return this.held.get(tabId)?.url ?? null
@@ -991,12 +1006,18 @@ class Pages {
 
   /** Parks the page and keeps the tab: the webview goes and everything about where the
    *  tab is stays, so looking at it again opens the page it was on at the place it was
-   *  at. Memory saver's, and a login's that went to another computer. */
-  async park(tabId: string): Promise<void> {
+   *  at. Memory saver's, a tab's menu's (#1127), and a login's that went to another
+   *  computer.
+   *
+   *  `hidden` is a park of a page out of sight, which a page shown again while it was
+   *  being asked where it is outlives: a tab chosen as it was being parked keeps its page
+   *  rather than showing none. A move to another store parks the page on screen. */
+  async park(tabId: string, hidden = false): Promise<void> {
     const page = this.held.get(tabId)
     if (!page?.live) return
 
     await this.look(tabId)
+    if (hidden && page.onScreen) return
     page.live = false
     page.frozen = false
     page.loading = false

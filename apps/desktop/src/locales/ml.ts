@@ -584,6 +584,18 @@ export const ml: Dictionary = {
   'Tabs as wide as their names': 'പേരിന്റെ വീതിയിൽ ടാബുകൾ',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'ഓരോ ടാബിനും അതിന്റെ ഐക്കൺ, പേര്, അടയ്ക്കൽ ബട്ടൺ എന്നിവയ്ക്ക് വേണ്ടത്ര വീതി മാത്രം; ഓഫാക്കിയാൽ എല്ലാ ടാബുകൾക്കും ഒരേ വീതി.',
+  'Unload tabs from their menu': 'ടാബുകൾ അവയുടെ മെനുവിൽ നിന്ന് അൺലോഡ് ചെയ്യുക',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'ടാബിന്റെ മെനുവിൽ ടാബ് അൺലോഡ് ചെയ്യുക ലഭിക്കും, അത് വീണ്ടും തിരഞ്ഞെടുക്കുന്നതുവരെ അതിന്റെ പേജും മെമ്മറിയും വിട്ടുകൊടുക്കുന്നു.',
+  'Unload tab': 'ടാബ് അൺലോഡ് ചെയ്യുക',
+  'Unload other tabs': 'മറ്റ് ടാബുകൾ അൺലോഡ് ചെയ്യുക',
+  'Unload tabs to the right': 'വലതുവശത്തെ ടാബുകൾ അൺലോഡ് ചെയ്യുക',
+  'Unload tabs to the left': 'ഇടതുവശത്തെ ടാബുകൾ അൺലോഡ് ചെയ്യുക',
+  'Unload {name}?': '{name} അൺലോഡ് ചെയ്യണോ?',
+  'Unload these tabs?': 'ഈ ടാബുകൾ അൺലോഡ് ചെയ്യണോ?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'പേജിൽ ടൈപ്പ് ചെയ്ത് അയയ്ക്കാത്തതോ ഇപ്പോഴും അയച്ചുകൊണ്ടിരിക്കുന്നതോ ആയതെല്ലാം നഷ്ടപ്പെടും.',
+  Unload: 'അൺലോഡ് ചെയ്യുക',
   'Tab preview delay': 'ടാബ് പ്രിവ്യൂ കാലതാമസം',
   'How long the pointer rests on a tab before its preview shows.':
     'പ്രിവ്യൂ കാണിക്കുന്നതിന് മുമ്പ് പോയിന്റർ ടാബിൽ എത്ര നേരം നിൽക്കണം.',

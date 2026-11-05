@@ -575,6 +575,18 @@ export const am: Dictionary = {
   'Tabs as wide as their names': 'ትሮች እንደ ስማቸው ስፋት',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'እያንዳንዱ ትር ምልክቱ፣ ስሙ እና የመዝጊያ ቁልፉ የሚፈልጉትን ያህል ብቻ ይሰፋል፤ ሲጠፋ ሁሉም ትሮች እኩል ስፋት አላቸው።',
+  'Unload tabs from their menu': 'ትሮችን ከምናሌያቸው አውርድ',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'የትር ምናሌ ትርን አውርድ ያቀርባል፤ ትሩ እንደገና እስኪመረጥ ድረስ ገጹንና ማህደረ ትውስታውን ይለቃል።',
+  'Unload tab': 'ትርን አውርድ',
+  'Unload other tabs': 'ሌሎቹን ትሮች አውርድ',
+  'Unload tabs to the right': 'በቀኝ ያሉትን ትሮች አውርድ',
+  'Unload tabs to the left': 'በግራ ያሉትን ትሮች አውርድ',
+  'Unload {name}?': '{name} ይውረድ?',
+  'Unload these tabs?': 'እነዚህ ትሮች ይውረዱ?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'በገጽ ውስጥ የተተየበና ያልተላከ፣ ወይም በመላክ ላይ ያለ ሁሉ ይጠፋል።',
+  Unload: 'አውርድ',
   'Tab preview delay': 'የትር ቅድመ እይታ መዘግየት',
   'How long the pointer rests on a tab before its preview shows.':
     'ቅድመ እይታው ከመታየቱ በፊት ጠቋሚው በትሩ ላይ የሚያርፍበት ጊዜ።',

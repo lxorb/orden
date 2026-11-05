@@ -1336,8 +1336,11 @@ function holds(tail: string): boolean {
  *  claude/hunt-round-1 on top of the hunt's 3,702,000. Measured 3,717,496, 396 modules.
  *
  *  Raised on 2026-11-05, to 3,722,200 and 398 modules, as #1120's panels a tab can fill
- *  came to claude/hunt-round-1. Measured 3,721,952, 398 modules. */
-const BUDGET = 3_722_200
+ *  came to claude/hunt-round-1. Measured 3,721,952, 398 modules.
+ *
+ *  Raised on 2026-11-05, to 3,725,700, as #1127's unloaded tabs came to
+ *  claude/hunt-round-1. Measured 3,725,488, 398 modules. */
+const BUDGET = 3_725_700
 const MOST_FILES = 399
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

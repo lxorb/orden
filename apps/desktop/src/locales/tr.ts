@@ -579,6 +579,18 @@ export const tr: Dictionary = {
   'Tabs as wide as their names': 'Adları kadar geniş sekmeler',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'Her sekme yalnızca simgesinin, adının ve kapatma düğmesinin gerektirdiği kadar geniştir; kapalıyken tüm sekmeler aynı genişlikte olur.',
+  'Unload tabs from their menu': 'Sekmeleri menülerinden boşalt',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'Sekmenin menüsünde Sekmeyi boşalt yer alır ve sekme yeniden seçilene kadar sayfasını ve belleğini bırakır.',
+  'Unload tab': 'Sekmeyi boşalt',
+  'Unload other tabs': 'Diğer sekmeleri boşalt',
+  'Unload tabs to the right': 'Sağdaki sekmeleri boşalt',
+  'Unload tabs to the left': 'Soldaki sekmeleri boşalt',
+  'Unload {name}?': '{name} boşaltılsın mı?',
+  'Unload these tabs?': 'Bu sekmeler boşaltılsın mı?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'Bir sayfaya yazılıp gönderilmeyen ya da hâlâ gönderilmekte olan her şey kaybolur.',
+  Unload: 'Boşalt',
   'Tab preview delay': 'Sekme önizleme gecikmesi',
   'How long the pointer rests on a tab before its preview shows.':
     'Önizleme görünmeden önce işaretçinin sekme üzerinde ne kadar durduğu.',

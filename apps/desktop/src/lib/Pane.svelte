@@ -100,8 +100,14 @@
   /** Every note this pane holds, the essentials shown in it among them. The editor
    *  keeps a state for each one it has shown, and this is what tells it which of them
    *  are still open. The tabs themselves, because a tab is what a state is kept
-   *  under; see editor-states.ts. */
-  const held = $derived(workspace.heldIn(pane.id))
+   *  under; see editor-states.ts. A tab unloaded from its menu is not among them, so
+   *  its state is let go of and built again as it is next shown (#1127). */
+  const held = $derived(workspace.heldIn(pane.id).filter((one) => !one.unloaded))
+
+  // Showing an unloaded tab is what loads it again; see tab-strip/unloading.svelte.ts.
+  $effect(() => {
+    if (tab?.unloaded) tab.unloaded = false
+  })
   /** The strips live in the panes as soon as there is more than one of them.
    *  With one pane the window's own strip is in the titlebar, where a browser
    *  puts it and where it has been all along - as it is for a pane filling the window. */

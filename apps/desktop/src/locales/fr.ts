@@ -589,6 +589,18 @@ export const fr: Dictionary = {
   'Tabs as wide as their names': 'Onglets aussi larges que leur nom',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'Chaque onglet n’est large que de ce qu’il faut à son icône, son nom et son bouton de fermeture ; désactivé, tous ont la même largeur.',
+  'Unload tabs from their menu': 'Décharger les onglets depuis leur menu',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'Le menu d’un onglet propose Décharger l’onglet, qui libère sa page et sa mémoire jusqu’à ce qu’il soit de nouveau choisi.',
+  'Unload tab': 'Décharger l’onglet',
+  'Unload other tabs': 'Décharger les autres onglets',
+  'Unload tabs to the right': 'Décharger les onglets à droite',
+  'Unload tabs to the left': 'Décharger les onglets à gauche',
+  'Unload {name}?': 'Décharger {name} ?',
+  'Unload these tabs?': 'Décharger ces onglets ?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'Ce qui a été saisi dans une page sans être envoyé, ou qui est en cours d’envoi, est perdu.',
+  Unload: 'Décharger',
   'Tab preview delay': 'Délai de l’aperçu des onglets',
   'How long the pointer rests on a tab before its preview shows.':
     'Le temps pendant lequel le pointeur reste sur un onglet avant que son aperçu apparaisse.',

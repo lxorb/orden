@@ -582,6 +582,18 @@ export const kn: Dictionary = {
   'Tabs as wide as their names': 'ಹೆಸರಿನಷ್ಟು ಅಗಲದ ಟ್ಯಾಬ್‌ಗಳು',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'ಪ್ರತಿ ಟ್ಯಾಬ್ ತನ್ನ ಐಕಾನ್, ಹೆಸರು ಮತ್ತು ಮುಚ್ಚುವ ಬಟನ್‌ಗೆ ಬೇಕಾದಷ್ಟು ಮಾತ್ರ ಅಗಲವಿರುತ್ತದೆ; ಆಫ್ ಇದ್ದಾಗ ಎಲ್ಲ ಟ್ಯಾಬ್‌ಗಳು ಒಂದೇ ಅಗಲ.',
+  'Unload tabs from their menu': 'ಟ್ಯಾಬ್‌ಗಳನ್ನು ಅವುಗಳ ಮೆನುವಿನಿಂದ ಅನ್‌ಲೋಡ್ ಮಾಡಿ',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'ಟ್ಯಾಬ್‌ನ ಮೆನು ಟ್ಯಾಬ್ ಅನ್‌ಲೋಡ್ ಮಾಡಿ ಅನ್ನು ನೀಡುತ್ತದೆ, ಅದು ಮತ್ತೆ ಆಯ್ಕೆಯಾಗುವವರೆಗೆ ಅದರ ಪುಟ ಮತ್ತು ಮೆಮೊರಿಯನ್ನು ಬಿಡುತ್ತದೆ.',
+  'Unload tab': 'ಟ್ಯಾಬ್ ಅನ್‌ಲೋಡ್ ಮಾಡಿ',
+  'Unload other tabs': 'ಉಳಿದ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಅನ್‌ಲೋಡ್ ಮಾಡಿ',
+  'Unload tabs to the right': 'ಬಲಗಡೆಯ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಅನ್‌ಲೋಡ್ ಮಾಡಿ',
+  'Unload tabs to the left': 'ಎಡಗಡೆಯ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಅನ್‌ಲೋಡ್ ಮಾಡಿ',
+  'Unload {name}?': '{name} ಅನ್‌ಲೋಡ್ ಮಾಡಬೇಕೇ?',
+  'Unload these tabs?': 'ಈ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಅನ್‌ಲೋಡ್ ಮಾಡಬೇಕೇ?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'ಪುಟದಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ ಕಳುಹಿಸದ, ಅಥವಾ ಇನ್ನೂ ಕಳುಹಿಸಲಾಗುತ್ತಿರುವ ಎಲ್ಲವೂ ಕಳೆದುಹೋಗುತ್ತದೆ.',
+  Unload: 'ಅನ್‌ಲೋಡ್ ಮಾಡಿ',
   'Tab preview delay': 'ಟ್ಯಾಬ್ ಮುನ್ನೋಟದ ವಿಳಂಬ',
   'How long the pointer rests on a tab before its preview shows.':
     'ಮುನ್ನೋಟ ತೋರುವ ಮೊದಲು ಪಾಯಿಂಟರ್ ಟ್ಯಾಬ್ ಮೇಲೆ ಎಷ್ಟು ಹೊತ್ತು ಇರಬೇಕು.',

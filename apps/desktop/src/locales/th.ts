@@ -574,6 +574,18 @@ export const th: Dictionary = {
   'Tabs as wide as their names': 'แท็บกว้างเท่าชื่อ',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'แต่ละแท็บกว้างเท่าที่ไอคอน ชื่อ และปุ่มปิดต้องการเท่านั้น เมื่อปิด แท็บทั้งหมดจะกว้างเท่ากัน',
+  'Unload tabs from their menu': 'ยกเลิกการโหลดแท็บจากเมนูของแท็บ',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'เมนูของแท็บมีคำสั่งยกเลิกการโหลดแท็บ ซึ่งปล่อยหน้าเว็บและหน่วยความจำไว้จนกว่าจะเลือกอีกครั้ง',
+  'Unload tab': 'ยกเลิกการโหลดแท็บ',
+  'Unload other tabs': 'ยกเลิกการโหลดแท็บอื่น',
+  'Unload tabs to the right': 'ยกเลิกการโหลดแท็บทางขวา',
+  'Unload tabs to the left': 'ยกเลิกการโหลดแท็บทางซ้าย',
+  'Unload {name}?': 'ยกเลิกการโหลด {name} ไหม',
+  'Unload these tabs?': 'ยกเลิกการโหลดแท็บเหล่านี้ไหม',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'สิ่งที่พิมพ์ลงในหน้าเว็บแต่ยังไม่ได้ส่ง หรือกำลังส่งอยู่ จะหายไป',
+  Unload: 'ยกเลิกการโหลด',
   'Tab preview delay': 'ระยะหน่วงของภาพตัวอย่างแท็บ',
   'How long the pointer rests on a tab before its preview shows.':
     'ระยะเวลาที่ตัวชี้ต้องค้างบนแท็บก่อนภาพตัวอย่างจะแสดง',

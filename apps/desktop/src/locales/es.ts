@@ -588,6 +588,18 @@ export const es: Dictionary = {
   'Tabs as wide as their names': 'Pestañas tan anchas como sus nombres',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'Cada pestaña mide solo lo que necesitan su icono, su nombre y su botón de cerrar; desactivado, todas miden lo mismo.',
+  'Unload tabs from their menu': 'Descargar pestañas desde su menú',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'El menú de una pestaña ofrece Descargar pestaña, que libera su página y su memoria hasta que se vuelva a elegir.',
+  'Unload tab': 'Descargar pestaña',
+  'Unload other tabs': 'Descargar las demás pestañas',
+  'Unload tabs to the right': 'Descargar pestañas a la derecha',
+  'Unload tabs to the left': 'Descargar pestañas a la izquierda',
+  'Unload {name}?': '¿Descargar {name}?',
+  'Unload these tabs?': '¿Descargar estas pestañas?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'Se pierde lo que se escribió en una página y no se envió, o lo que aún se está enviando.',
+  Unload: 'Descargar',
   'Tab preview delay': 'Retraso de la vista previa de pestañas',
   'How long the pointer rests on a tab before its preview shows.':
     'Cuánto descansa el puntero sobre una pestaña antes de que aparezca su vista previa.',

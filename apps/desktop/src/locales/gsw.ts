@@ -578,6 +578,18 @@ export const gsw: Dictionary = {
   'Tabs as wide as their names': 'Tabs so breit wie iri Näme',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'Jede Tab isch nur so breit, wie Symbol, Name und Zuemache-Chnopf bruuched; uus, sind alli Tabs glich breit.',
+  'Unload tabs from their menu': 'Tabs über ihres Menü entlade',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'S Menü vo me Tab bietet „Tab entlade“ aa, wo Siite und Spiicher freigit, bis de Tab wider gwählt wird.',
+  'Unload tab': 'Tab entlade',
+  'Unload other tabs': 'Anderi Tabs entlade',
+  'Unload tabs to the right': 'Tabs rächts entlade',
+  'Unload tabs to the left': 'Tabs links entlade',
+  'Unload {name}?': '{name} entlade?',
+  'Unload these tabs?': 'Die Tabs entlade?',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'Was i e Siite tippt und nöd gschickt worde isch oder grad gschickt wird, gaht verlore.',
+  Unload: 'Entlade',
   'Tab preview delay': 'Verzögerig vo de Tab-Vorschau',
   'How long the pointer rests on a tab before its preview shows.':
     'Wie lang de Zeiger uf eme Tab ruet, bevor sini Vorschau chunnt.',

@@ -12,6 +12,7 @@ import { chatsGroups } from '../chats-settings'
 import { tabCycle } from '../tab-cycle.svelte'
 import { fitTabs, iconTabs } from '../tab-strip/icon-tabs.svelte'
 import { PREVIEW_DELAY, previewDelay } from '../tab-strip/preview-delay.svelte'
+import { unloadTabs } from '../tab-strip/unloading.svelte'
 import { isDesktop, isMobile, platform } from '../tauri'
 import { swipeChoice } from '../back-swipe/choice.svelte'
 import { BY_ID } from '../shortcuts/registry'
@@ -388,6 +389,21 @@ export function generalPane(): Pane {
             initial: false,
             get: () => tabCycle.byUse,
             set: (on) => tabCycle.setByUse(on),
+          },
+          // Unload tab, and the others and those to the right, in a tab's menu, as in
+          // Firefox and Edge (#1127); see tab-strip/unloading.svelte.ts.
+          {
+            kind: 'switch',
+            key: 'general.unloadTabs',
+            store: { on: unloadTabs, name: 'on' },
+            label: t('Unload tabs from their menu'),
+            hint: t(
+              'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.',
+            ),
+            words: ['unload', 'discard', 'sleep', 'memory', 'ram', 'free', 'tabs'],
+            initial: false,
+            get: () => unloadTabs.on,
+            set: (on) => unloadTabs.set(on),
           },
           // How long a tab is rested on before its card comes, at most two seconds
           // (#1088). Not on a phone, whose tabs have no pointer to rest on them. See

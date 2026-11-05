@@ -577,6 +577,18 @@ export const ps: Dictionary = {
   'Tabs as wide as their names': 'ټبونه د خپلو نومونو په پلنوالي',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     'هر ټب یوازې هومره پلن دی چې د هغه نښه، نوم او د تړلو تڼۍ ورته اړتیا لري؛ کله چې بند وي، ټول ټبونه یو شان پلن وي.',
+  'Unload tabs from their menu': 'ټبونه له خپل مېنو څخه خالي کول',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'د ټب مېنو «ټب خالي کول» وړاندې کوي، چې تر بیا ټاکلو پورې یې پاڼه او حافظه پرېږدي.',
+  'Unload tab': 'ټب خالي کول',
+  'Unload other tabs': 'نور ټبونه خالي کول',
+  'Unload tabs to the right': 'ښي خوا ټبونه خالي کول',
+  'Unload tabs to the left': 'کيڼ اړخ ټبونه خالي کول',
+  'Unload {name}?': '{name} خالي شي؟',
+  'Unload these tabs?': 'دا ټبونه خالي شي؟',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'هر هغه څه چې په پاڼه کې ټایپ شوي او نه دي لېږل شوي، یا لا لېږل کېږي، له منځه ځي.',
+  Unload: 'خالي کول',
   'Tab preview delay': 'د ټب د مخکتنې ځنډ',
   'How long the pointer rests on a tab before its preview shows.':
     'څومره وخت چې اشاره ګر په ټب پاتې کیږي مخکې له دې چې مخکتنه یې ښکاره شي.',

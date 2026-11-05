@@ -574,6 +574,18 @@ export const ja: Dictionary = {
   'Tabs as wide as their names': 'タブを名前の幅にする',
   'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.':
     '各タブはアイコン、名前、閉じるボタンに必要な幅だけになります。オフにすると、すべてのタブが同じ幅になります。',
+  'Unload tabs from their menu': 'メニューからタブをアンロード',
+  'A tab’s menu offers Unload tab, which lets go of its page and memory until it is chosen again.':
+    'タブのメニューに「タブをアンロード」が出て、もう一度選ばれるまでページとメモリを手放します。',
+  'Unload tab': 'タブをアンロード',
+  'Unload other tabs': '他のタブをアンロード',
+  'Unload tabs to the right': '右側のタブをアンロード',
+  'Unload tabs to the left': '左側のタブをアンロード',
+  'Unload {name}?': '{name} をアンロードしますか？',
+  'Unload these tabs?': 'これらのタブをアンロードしますか？',
+  'Anything typed into a page and not sent, or still being sent, is lost.':
+    'ページに入力して送信していない内容や、送信中の内容は失われます。',
+  Unload: 'アンロード',
   'Tab preview delay': 'タブのプレビューまでの時間',
   'How long the pointer rests on a tab before its preview shows.':
     'タブにポインターを置いてからプレビューが表示されるまでの時間です。',

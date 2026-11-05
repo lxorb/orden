@@ -122,7 +122,14 @@ objc2-foundation = { version = "0.3", default-features = false, features = [
   "NSSet",
   "NSString",
   "NSURL",
+  # An agent's page on a Mac answers a site's sign-in box and decides its downloads; see
+  # agents/engines/webkit.rs.
+  "NSURLAuthenticationChallenge",
+  "NSURLCredential",
+  "NSURLProtectionSpace",
   "NSURLRequest",
+  "NSURLResponse",
+  "NSURLSession",
   "NSUserDefaults",
   "NSValue",
 ] }
@@ -170,6 +177,11 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
   "WKContentWorld",
   "WKNavigation",
   "WKDownload",
+  # An agent's page on a Mac: its downloads, its file chooser and the windows it asks
+  # for, answered by Orden's own delegates; see agents/engines/webkit.rs.
+  "WKDownloadDelegate",
+  "WKOpenPanelParameters",
+  "WKWindowFeatures",
   "WKFrameInfo",
   "WKHTTPCookieStore",
   "WKNavigationAction",

@@ -1148,7 +1148,7 @@
                whole of what a tab drawn as an icon is reduced to. See TabMark.svelte.
                Where two such tabs would wear the same drawing - two notes that chose
                none - each wears its first letter on it as well (`lettered`). -->
-            <span class="face" class:hidden={!parts.mark}
+            <span class="face" class:hidden={!parts.mark} class:unloaded={tab.unloaded}
               ><TabMark {tab} />{#if icon && lettered.has(tab.id)}<span
                   class="letter"
                   aria-hidden="true">{initialOf(tab.shown)}</span
@@ -1689,6 +1689,12 @@
     position: relative;
     display: flex;
     flex: none;
+  }
+
+  /* A tab unloaded from its menu (#1127): its mark faded, as Firefox fades one, until
+     it is shown again. */
+  .face.unloaded {
+    opacity: 0.45;
   }
 
   /* The first letter a tab drawn as an icon wears where another would look the same

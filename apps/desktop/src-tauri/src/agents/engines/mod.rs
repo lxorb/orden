@@ -204,6 +204,11 @@ pub fn sleep_idle(app: &AppHandle) {
     let _ = app;
 }
 
+/// Whether an agent's tab in the reader's store is in its twin (see this file's comment):
+/// on the engines that run the reader's extensions. `WKWebView` runs none, so its tab is
+/// in the reader's store itself (docs/agent-native.md 12.3).
+pub const TWINS: bool = cfg!(any(windows, feature = "cef"));
+
 /// What this build's engine is called where an answer names it.
 #[cfg(any(windows, feature = "cef"))]
 pub const NAME: &str = if cfg!(windows) {
@@ -236,9 +241,6 @@ pub const CDP_CANNOT: &[(&str, &str)] = &[];
     )
 )]
 pub const WEBKIT_CANNOT: &[(&str, &str)] = &[
-    ("browser_open", NOT_BUILT),
-    ("browser_navigate", NOT_BUILT),
-    ("browser_wait", NOT_BUILT),
     ("browser_snapshot", NOT_BUILT),
     ("browser_find", NOT_BUILT),
     ("browser_read", NOT_BUILT),
@@ -255,7 +257,6 @@ pub const WEBKIT_CANNOT: &[(&str, &str)] = &[
     ("browser_console", NOT_BUILT),
     ("browser_network", NOT_BUILT),
     ("browser_evaluate", NOT_BUILT),
-    ("browser_dialog", NOT_BUILT),
     ("browser_storage", NOT_BUILT),
     ("browser_show", NOT_BUILT),
     ("browser_takeover", NOT_BUILT),
@@ -270,7 +271,7 @@ pub const WEBKIT_CANNOT: &[(&str, &str)] = &[
         reason = "the other engine's table, which the test reads beside this one's"
     )
 )]
-const NOT_BUILT: &str = "an agent's page on WKWebView is not built yet: an agent's browser runs on Windows and on Linux";
+const NOT_BUILT: &str = "this verb is not built on WKWebView yet: on a Mac an agent's tab opens, goes, waits and answers its dialogs, and the rest follows (#1092)";
 
 /// This build's engine's table.
 #[cfg(any(windows, feature = "cef"))]
@@ -306,6 +307,18 @@ pub fn cut(text: String, most: usize) -> String {
         None => text,
     }
 }
+
+/// Whether the document has stopped changing: resolves once nothing moved for `still`
+/// milliseconds, or at `most`.
+pub const SETTLED: &str = r"(still, most) => new Promise((done) => {
+  if (!document.body) return done(true)
+  let quiet
+  const watcher = new MutationObserver(() => { clearTimeout(quiet); quiet = setTimeout(end, still) })
+  const end = () => { watcher.disconnect(); done(true) }
+  watcher.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true })
+  quiet = setTimeout(end, still)
+  setTimeout(end, most)
+})";
 
 /// A page's trees, and the secret fields among their nodes.
 pub type Tree = (Vec<Part>, HashSet<(String, u64)>);
@@ -371,6 +384,30 @@ pub struct Page<'a> {
 }
 
 impl Page<'_> {
+    /// Whether the frame an element is in may be acted in (9.2): a denied site does not
+    /// open for being in a frame. The same on every engine, from what `facts` says.
+    pub fn frame_may_be_acted_in(&self, facts: &Facts) -> Result<(), Answer> {
+        // Nowhere is no answer to where, for an agent with a site it may not act in.
+        if facts.at.is_empty() && facts.opaque && self.grant_limits_sites() {
+            return Err(Answer::error(
+                Code::SiteDenied,
+                "what is at that point says nothing of itself or of where it is: take a snapshot and press something else",
+            ));
+        }
+        match &self.limits {
+            Some((grant, store)) => super::policy::frame_allowed(grant, &facts.at, *store)
+                .map_err(|why| Answer::error(Code::SiteDenied, why)),
+            None => Ok(()),
+        }
+    }
+
+    /// Whether the agent's grant has a rule for any site, so that a frame can be denied.
+    pub fn grant_limits_sites(&self) -> bool {
+        self.limits
+            .as_ref()
+            .is_some_and(|(grant, _)| !grant.sites.is_empty())
+    }
+
     /// Whether this call was cleared to touch a credential (`credentials`).
     #[cfg_attr(
         not(any(windows, feature = "cef")),
