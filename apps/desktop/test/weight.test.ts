@@ -1249,9 +1249,14 @@ function holds(tail: string): boolean {
  *  a tab carried in is given, the numbers following their tabs, a terminal's open tab on
  *  its ground, an essential's ring while its tab is in front and its press in a split
  *  window (Tabs.svelte, tab-strip/, drag-paths.ts, Bookmarks.svelte, essentials.svelte.ts).
- *  Measured 3,616,365. */
-const BUDGET = 3_617_200
-const MOST_FILES = 395
+ *  Measured 3,616,365.
+ *
+ *  Raised 2026-11-05, to 3,622,000 and 397 modules, for #1120: a side offers only the
+ *  panels the tab in front can fill, asked of the one table of panels, which the
+ *  workspace now reads at once rather than with a press (panel-tab.ts), and a PDF's
+ *  own contents for the Outline (pdf/outline.svelte.ts). Measured 3,620,924. */
+const BUDGET = 3_622_000
+const MOST_FILES = 397
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
