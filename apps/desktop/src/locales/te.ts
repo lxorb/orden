@@ -1946,6 +1946,9 @@ export const te: Dictionary = {
   'Restored {time}': 'పునరుద్ధరించబడింది {time}',
   'Stop what is running in {name}?': '{name}లో నడుస్తున్నదాన్ని ఆపాలా?',
   'Stop what is running in these terminals?': 'ఈ టెర్మినల్స్‌లో నడుస్తున్నదాన్ని ఆపాలా?',
+  'End these online terminals?': 'ఈ ఆన్‌లైన్ టెర్మినల్‌లను ముగించాలా?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'ఎక్కడా సేవ్ చేయలేదు; నడుస్తూ ఉంచిన సెషన్ మళ్లీ సెట్టింగ్‌లు, {pane}లో దొరుకుతుంది.',
   'Paste {count} lines?': {
     one: '{count} పంక్తిని అతికించాలా?',
     other: '{count} పంక్తులను అతికించాలా?',

@@ -1976,6 +1976,9 @@ export const fil: Dictionary = {
   'Restored {time}': 'Naibalik {time}',
   'Stop what is running in {name}?': 'Ihinto ang tumatakbo sa {name}?',
   'Stop what is running in these terminals?': 'Ihinto ang tumatakbo sa mga terminal na ito?',
+  'End these online terminals?': 'Tapusin ang mga online terminal na ito?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Hindi naka-save kahit saan; ang session na pinatakbo pa ay makikita muli sa Settings, {pane}.',
   'Paste {count} lines?': {
     one: 'I-paste ang {count} linya?',
     other: 'I-paste ang {count} na linya?',

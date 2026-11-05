@@ -1932,6 +1932,9 @@ export const id: Dictionary = {
   'Restored {time}': 'Dipulihkan {time}',
   'Stop what is running in {name}?': 'Hentikan yang berjalan di {name}?',
   'Stop what is running in these terminals?': 'Hentikan yang berjalan di terminal ini?',
+  'End these online terminals?': 'Akhiri terminal daring ini?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Tidak disimpan di mana pun; sesi yang tetap berjalan bisa ditemukan lagi di Pengaturan, {pane}.',
   'Paste {count} lines?': 'Tempel {count} baris?',
   // Orden as the default browser
   'Default browser': 'Peramban bawaan',

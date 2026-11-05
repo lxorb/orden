@@ -1955,6 +1955,9 @@ export const kn: Dictionary = {
   'Restored {time}': 'ಮರುಸ್ಥಾಪಿಸಲಾಗಿದೆ {time}',
   'Stop what is running in {name}?': '{name} ನಲ್ಲಿ ನಡೆಯುತ್ತಿರುವುದನ್ನು ನಿಲ್ಲಿಸಬೇಕೆ?',
   'Stop what is running in these terminals?': 'ಈ ಟರ್ಮಿನಲ್‌ಗಳಲ್ಲಿ ನಡೆಯುತ್ತಿರುವುದನ್ನು ನಿಲ್ಲಿಸಬೇಕೆ?',
+  'End these online terminals?': 'ಈ ಆನ್‌ಲೈನ್ ಟರ್ಮಿನಲ್‌ಗಳನ್ನು ಕೊನೆಗೊಳಿಸುವುದೇ?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'ಎಲ್ಲಿಯೂ ಉಳಿಸಿಲ್ಲ; ಚಾಲನೆಯಲ್ಲಿ ಬಿಟ್ಟ ಸೆಷನ್ ಮತ್ತೆ ಸೆಟ್ಟಿಂಗ್‌ಗಳು, {pane} ನಲ್ಲಿ ಸಿಗುತ್ತದೆ.',
   'Paste {count} lines?': {
     one: '{count} ಸಾಲನ್ನು ಅಂಟಿಸಬೇಕೆ?',
     other: '{count} ಸಾಲುಗಳನ್ನು ಅಂಟಿಸಬೇಕೆ?',

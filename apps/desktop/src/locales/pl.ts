@@ -2017,6 +2017,9 @@ export const pl: Dictionary = {
   'Restored {time}': 'Przywrócono {time}',
   'Stop what is running in {name}?': 'Zatrzymać to, co działa w {name}?',
   'Stop what is running in these terminals?': 'Zatrzymać to, co działa w tych terminalach?',
+  'End these online terminals?': 'Zakończyć te terminale online?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Nigdzie niezapisana: sesję, która dalej działa, znajdziesz znów w Ustawieniach, {pane}.',
   'Paste {count} lines?': {
     one: 'Wkleić {count} wiersz?',
     few: 'Wkleić {count} wiersze?',

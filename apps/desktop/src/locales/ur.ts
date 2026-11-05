@@ -1935,6 +1935,9 @@ export const ur: Dictionary = {
   'Restored {time}': 'بحال کیا گیا {time}',
   'Stop what is running in {name}?': '{name} میں جو چل رہا ہے اسے روکیں؟',
   'Stop what is running in these terminals?': 'ان ٹرمینلز میں جو چل رہا ہے اسے روکیں؟',
+  'End these online terminals?': 'کیا یہ آن لائن ٹرمینل ختم کریں؟',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'کہیں محفوظ نہیں؛ چلتا چھوڑا گیا سیشن دوبارہ ترتیبات، {pane} میں ملے گا۔',
   'Paste {count} lines?': { one: '{count} سطر چسپاں کریں؟', other: '{count} سطریں چسپاں کریں؟' },
   // Orden as the default browser
   'Default browser': 'طے شدہ براؤزر',

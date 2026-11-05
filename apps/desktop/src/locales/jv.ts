@@ -1926,6 +1926,9 @@ export const jv: Dictionary = {
   'Restored {time}': 'Dibalèkaké {time}',
   'Stop what is running in {name}?': 'Mandhegake sing mlaku ing {name}?',
   'Stop what is running in these terminals?': 'Mandhegake sing mlaku ing terminal iki?',
+  'End these online terminals?': 'Mungkasi terminal daring iki?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Ora disimpen ing ngendi-endi; sesi sing tetep mlaku bisa ditemokaké manèh ing Setélan, {pane}.',
   'Paste {count} lines?': 'Tempel {count} baris?',
   // Orden as the default browser
   'Default browser': 'Panjelajah gawan',

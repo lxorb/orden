@@ -1891,6 +1891,9 @@ export const zhHans: Dictionary = {
   'Restored {time}': '已恢复 {time}',
   'Stop what is running in {name}?': '停止 {name} 中正在运行的内容？',
   'Stop what is running in these terminals?': '停止这些终端中正在运行的内容？',
+  'End these online terminals?': '结束这些在线终端？',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    '未保存在任何地方；保持运行的会话可在“设置”的“{pane}”中再次找到。',
   'Paste {count} lines?': '粘贴 {count} 行？',
   // Orden as the default browser
   'Default browser': '默认浏览器',

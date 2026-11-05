@@ -1949,6 +1949,9 @@ export const gsw: Dictionary = {
   'Restored {time}': 'Widerhergstellt {time}',
   'Stop what is running in {name}?': 'Beände, was i {name} lauft?',
   'Stop what is running in these terminals?': 'Beände, was i dene Terminals lauft?',
+  'End these online terminals?': 'Die Online-Terminals beände?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Niene gspeicheret: E Sitzig, wo witerlauft, findsch wider under Iistellige, {pane}.',
   'Paste {count} lines?': { one: '{count} Ziile iifüege?', other: '{count} Ziile iifüege?' },
   // Orden as the default browser
   'Default browser': 'Standardbrowser',

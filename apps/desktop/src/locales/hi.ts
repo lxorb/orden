@@ -1935,6 +1935,9 @@ export const hi: Dictionary = {
   'Restored {time}': 'पुनर्स्थापित {time}',
   'Stop what is running in {name}?': '{name} में जो चल रहा है उसे रोकें?',
   'Stop what is running in these terminals?': 'इन टर्मिनलों में जो चल रहा है उसे रोकें?',
+  'End these online terminals?': 'इन ऑनलाइन टर्मिनलों को समाप्त करें?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'कहीं सहेजा नहीं गया; चलता छोड़ा गया सत्र फिर से सेटिंग्स, {pane} में मिलेगा।',
   'Paste {count} lines?': { one: '{count} पंक्ति चिपकाएँ?', other: '{count} पंक्तियाँ चिपकाएँ?' },
   // Orden as the default browser
   'Default browser': 'डिफ़ॉल्ट ब्राउज़र',

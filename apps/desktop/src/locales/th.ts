@@ -1901,6 +1901,9 @@ export const th: Dictionary = {
   'Restored {time}': 'กู้คืนแล้ว {time}',
   'Stop what is running in {name}?': 'หยุดสิ่งที่กำลังทำงานใน {name} หรือไม่',
   'Stop what is running in these terminals?': 'หยุดสิ่งที่กำลังทำงานในเทอร์มินัลเหล่านี้หรือไม่',
+  'End these online terminals?': 'จบเทอร์มินัลออนไลน์เหล่านี้หรือไม่',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'ไม่ได้บันทึกไว้ที่ใด เซสชันที่ปล่อยให้ทำงานต่อจะพบได้อีกในการตั้งค่า {pane}',
   'Paste {count} lines?': 'วาง {count} บรรทัดหรือไม่',
   // Orden as the default browser
   'Default browser': 'เบราว์เซอร์ค่าเริ่มต้น',

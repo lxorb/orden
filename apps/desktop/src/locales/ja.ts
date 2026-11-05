@@ -1929,6 +1929,9 @@ export const ja: Dictionary = {
   'Restored {time}': '{time} から復元',
   'Stop what is running in {name}?': '{name} で実行中のものを停止しますか？',
   'Stop what is running in these terminals?': 'これらのターミナルで実行中のものを停止しますか？',
+  'End these online terminals?': 'これらのオンラインターミナルを終了しますか？',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'どこにも保存されていません。実行したままのセッションは「設定」の「{pane}」で再び見つけられます。',
   'Paste {count} lines?': '{count} 行を貼り付けますか？',
   // Orden as the default browser
   'Default browser': '既定のブラウザ',

@@ -1914,6 +1914,9 @@ export const am: Dictionary = {
   'Restored {time}': 'ተመልሷል {time}',
   'Stop what is running in {name}?': 'በ{name} ውስጥ የሚሰራው ይቁም?',
   'Stop what is running in these terminals?': 'በእነዚህ ተርሚናሎች ውስጥ የሚሰራው ይቁም?',
+  'End these online terminals?': 'እነዚህን የመስመር ላይ ተርሚናሎች ይጨርሱ?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'የትም አልተቀመጠም፤ እንዲሠራ የተተወ ክፍለ ጊዜ በቅንብሮች፣ {pane} ውስጥ እንደገና ይገኛል።',
   'Paste {count} lines?': { one: '{count} መስመር ይለጠፍ?', other: '{count} መስመሮች ይለጠፉ?' },
   // Orden as the default browser
   'Default browser': 'ነባር አሳሽ',

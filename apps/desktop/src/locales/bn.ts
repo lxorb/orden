@@ -1934,6 +1934,9 @@ export const bn: Dictionary = {
   'Restored {time}': 'পুনরুদ্ধার করা হয়েছে {time}',
   'Stop what is running in {name}?': '{name}-এ যা চলছে তা বন্ধ করবেন?',
   'Stop what is running in these terminals?': 'এই টার্মিনালগুলিতে যা চলছে তা বন্ধ করবেন?',
+  'End these online terminals?': 'এই অনলাইন টার্মিনালগুলো শেষ করবেন?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'কোথাও সংরক্ষিত নয়; চালু রাখা সেশন আবার পাবেন সেটিংস, {pane}-এ।',
   'Paste {count} lines?': {
     one: '{count}টি লাইন পেস্ট করবেন?',
     other: '{count}টি লাইন পেস্ট করবেন?',

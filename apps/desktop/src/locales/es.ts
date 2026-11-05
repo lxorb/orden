@@ -1988,6 +1988,9 @@ export const es: Dictionary = {
   'Restored {time}': 'Restaurado {time}',
   'Stop what is running in {name}?': '¿Detener lo que se ejecuta en {name}?',
   'Stop what is running in these terminals?': '¿Detener lo que se ejecuta en estos terminales?',
+  'End these online terminals?': '¿Terminar estos terminales en línea?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'No está guardada en ningún sitio: una sesión que sigue en marcha se vuelve a encontrar en Ajustes, {pane}.',
   'Paste {count} lines?': {
     one: '¿Pegar {count} línea?',
     many: '¿Pegar {count} de líneas?',

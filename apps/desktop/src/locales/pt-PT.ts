@@ -1987,6 +1987,9 @@ export const ptPT: Dictionary = {
   'Restored {time}': 'Restaurado {time}',
   'Stop what is running in {name}?': 'Parar o que está a ser executado em {name}?',
   'Stop what is running in these terminals?': 'Parar o que está a ser executado nestes terminais?',
+  'End these online terminals?': 'Terminar estes terminais online?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Não guardada em lado nenhum: uma sessão mantida em execução volta a encontrar-se em Definições, {pane}.',
   'Paste {count} lines?': {
     one: 'Colar {count} linha?',
     many: 'Colar {count} de linhas?',

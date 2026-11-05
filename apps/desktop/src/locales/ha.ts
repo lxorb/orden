@@ -1968,6 +1968,9 @@ export const ha: Dictionary = {
   'Restored {time}': 'An maido {time}',
   'Stop what is running in {name}?': 'A dakatar da abin da ke gudana a {name}?',
   'Stop what is running in these terminals?': 'A dakatar da abin da ke gudana a waɗannan tashoshi?',
+  'End these online terminals?': 'A gama waɗannan tashoshin kan layi?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    "Ba a ajiye ko'ina ba; zaman da aka bari yana gudana ana sake samunsa a Saituna, {pane}.",
   'Paste {count} lines?': { one: 'A liƙa layi {count}?', other: 'A liƙa layuka {count}?' },
   // Orden as the default browser
   'Default browser': 'Birawuza na asali',

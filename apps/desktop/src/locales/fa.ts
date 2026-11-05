@@ -1941,6 +1941,9 @@ export const fa: Dictionary = {
   'Restored {time}': 'بازیابی‌شده {time}',
   'Stop what is running in {name}?': 'آنچه در {name} اجرا می‌شود متوقف شود؟',
   'Stop what is running in these terminals?': 'آنچه در این ترمینال‌ها اجرا می‌شود متوقف شود؟',
+  'End these online terminals?': 'این ترمینال‌های آنلاین پایان یابند؟',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'جایی ذخیره نشده؛ نشستی که در حال اجرا بماند را دوباره در تنظیمات، {pane} پیدا می‌کنید.',
   'Paste {count} lines?': { one: '{count} خط چسبانده شود؟', other: '{count} خط چسبانده شود؟' },
   // Orden as the default browser
   'Default browser': 'مرورگر پیش‌فرض',

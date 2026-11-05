@@ -1924,6 +1924,9 @@ export const my: Dictionary = {
   'Restored {time}': 'ပြန်ယူထားသည် {time}',
   'Stop what is running in {name}?': '{name} တွင် လုပ်ဆောင်နေသည်ကို ရပ်မလား?',
   'Stop what is running in these terminals?': 'ဤတာမင်နယ်များတွင် လုပ်ဆောင်နေသည်ကို ရပ်မလား?',
+  'End these online terminals?': 'ဤအွန်လိုင်း တာမီနယ်များကို အဆုံးသတ်မလား?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'မည်သည့်နေရာတွင်မျှ မသိမ်းထားပါ။ ဆက်လည်ပတ်ထားသော ဆက်ရှင်ကို ဆက်တင်များ၊ {pane} တွင် ပြန်တွေ့နိုင်သည်။',
   'Paste {count} lines?': 'စာကြောင်း {count} ကြောင်း ကူးထည့်မလား?',
   // Orden as the default browser
   'Default browser': 'မူရင်း ဘရောက်ဇာ',

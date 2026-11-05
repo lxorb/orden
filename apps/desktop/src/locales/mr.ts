@@ -1940,6 +1940,9 @@ export const mr: Dictionary = {
   'Restored {time}': 'पुनर्संचयित {time}',
   'Stop what is running in {name}?': '{name} मध्ये चालू असलेले थांबवायचे?',
   'Stop what is running in these terminals?': 'या टर्मिनलमध्ये चालू असलेले थांबवायचे?',
+  'End these online terminals?': 'हे ऑनलाइन टर्मिनल संपवायचे?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'कुठेही जतन केलेले नाही; चालू ठेवलेले सत्र पुन्हा सेटिंग्ज, {pane} मध्ये सापडेल.',
   'Paste {count} lines?': { one: '{count} ओळ पेस्ट करायची?', other: '{count} ओळी पेस्ट करायच्या?' },
   // Orden as the default browser
   'Default browser': 'मूळ ब्राउझर',

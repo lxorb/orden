@@ -2010,6 +2010,9 @@ export const uk: Dictionary = {
   'Restored {time}': 'Відновлено {time}',
   'Stop what is running in {name}?': 'Зупинити те, що виконується в {name}?',
   'Stop what is running in these terminals?': 'Зупинити те, що виконується в цих терміналах?',
+  'End these online terminals?': 'Завершити ці онлайн-термінали?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Ніде не збережено: залишений працювати сеанс знову знайдеться в Налаштуваннях, {pane}.',
   'Paste {count} lines?': {
     one: 'Вставити {count} рядок?',
     few: 'Вставити {count} рядки?',

@@ -1947,6 +1947,9 @@ export const tr: Dictionary = {
   'Restored {time}': 'Geri yüklendi {time}',
   'Stop what is running in {name}?': '{name} içinde çalışan durdurulsun mu?',
   'Stop what is running in these terminals?': 'Bu terminallerde çalışan durdurulsun mu?',
+  'End these online terminals?': 'Bu çevrimiçi terminaller sonlandırılsın mı?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Hiçbir yere kaydedilmedi; çalışmaya devam eden oturum Ayarlar, {pane} içinde yeniden bulunur.',
   'Paste {count} lines?': {
     one: '{count} satır yapıştırılsın mı?',
     other: '{count} satır yapıştırılsın mı?',

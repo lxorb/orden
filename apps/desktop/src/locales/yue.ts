@@ -1887,6 +1887,9 @@ export const yue: Dictionary = {
   'Restored {time}': '已還原 {time}',
   'Stop what is running in {name}?': '要停止 {name} 入面運行緊嘅嘢嗎？',
   'Stop what is running in these terminals?': '要停止呢啲終端機入面運行緊嘅嘢嗎？',
+  'End these online terminals?': '結束呢啲網上終端機？',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    '冇存喺任何地方；保持運行嘅工作階段可以喺設定、{pane}度再搵到。',
   'Paste {count} lines?': '要貼上 {count} 行嗎？',
   // Orden as the default browser
   'Default browser': '預設瀏覽器',

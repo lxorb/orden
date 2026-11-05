@@ -1929,6 +1929,9 @@ export const gu: Dictionary = {
   'Restored {time}': 'પુનઃસ્થાપિત {time}',
   'Stop what is running in {name}?': '{name} માં જે ચાલે છે તે બંધ કરવું?',
   'Stop what is running in these terminals?': 'આ ટર્મિનલોમાં જે ચાલે છે તે બંધ કરવું?',
+  'End these online terminals?': 'આ ઑનલાઇન ટર્મિનલ સમાપ્ત કરવા?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'ક્યાંય સાચવેલું નથી; ચાલુ રાખેલું સત્ર ફરી સેટિંગ્સ, {pane}માં મળશે.',
   'Paste {count} lines?': { one: '{count} લાઇન પેસ્ટ કરવી?', other: '{count} લાઇનો પેસ્ટ કરવી?' },
   // Orden as the default browser
   'Default browser': 'મૂળ બ્રાઉઝર',

@@ -2043,6 +2043,9 @@ export const ar: Dictionary = {
   'Restored {time}': 'تمت الاستعادة {time}',
   'Stop what is running in {name}?': 'إيقاف ما يعمل في {name}؟',
   'Stop what is running in these terminals?': 'إيقاف ما يعمل في هذه الطرفيات؟',
+  'End these online terminals?': 'إنهاء هذه الطرفيات عبر الإنترنت؟',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'غير محفوظة في أي مكان؛ الجلسة التي تبقى تعمل تجدها مجددًا في الإعدادات، {pane}.',
   'Paste {count} lines?': {
     zero: 'لصق {count} سطر؟',
     one: 'لصق {count} سطر؟',

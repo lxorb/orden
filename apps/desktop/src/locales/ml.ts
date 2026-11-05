@@ -1963,6 +1963,9 @@ export const ml: Dictionary = {
   'Restored {time}': 'പുനഃസ്ഥാപിച്ചു {time}',
   'Stop what is running in {name}?': '{name}-ൽ പ്രവർത്തിക്കുന്നത് നിർത്തണോ?',
   'Stop what is running in these terminals?': 'ഈ ടെർമിനലുകളിൽ പ്രവർത്തിക്കുന്നത് നിർത്തണോ?',
+  'End these online terminals?': 'ഈ ഓൺലൈൻ ടെർമിനലുകൾ അവസാനിപ്പിക്കണോ?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'എവിടെയും സേവ് ചെയ്തിട്ടില്ല; പ്രവർത്തിക്കാൻ വിട്ട സെഷൻ ക്രമീകരണങ്ങൾ, {pane} എന്നതിൽ വീണ്ടും കാണാം.',
   'Paste {count} lines?': { one: '{count} വരി ഒട്ടിക്കണോ?', other: '{count} വരികൾ ഒട്ടിക്കണോ?' },
   // Orden as the default browser
   'Default browser': 'ഡിഫോൾട്ട് ബ്രൗസർ',

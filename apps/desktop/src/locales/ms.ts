@@ -1934,6 +1934,9 @@ export const ms: Dictionary = {
   'Restored {time}': 'Dipulihkan {time}',
   'Stop what is running in {name}?': 'Hentikan yang sedang berjalan dalam {name}?',
   'Stop what is running in these terminals?': 'Hentikan yang sedang berjalan dalam terminal ini?',
+  'End these online terminals?': 'Tamatkan terminal dalam talian ini?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Tidak disimpan di mana-mana; sesi yang terus berjalan boleh ditemui semula dalam Tetapan, {pane}.',
   'Paste {count} lines?': 'Tampal {count} baris?',
   // Orden as the default browser
   'Default browser': 'Pelayar lalai',

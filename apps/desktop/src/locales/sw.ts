@@ -1967,6 +1967,9 @@ export const sw: Dictionary = {
   'Restored {time}': 'Imerejeshwa {time}',
   'Stop what is running in {name}?': 'Simamisha kinachoendeshwa katika {name}?',
   'Stop what is running in these terminals?': 'Simamisha kinachoendeshwa katika terminali hizi?',
+  'End these online terminals?': 'Kumaliza vituo hivi vya mtandaoni?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Haijahifadhiwa popote; kipindi kinachoachwa kiendelee kinapatikana tena katika Mipangilio, {pane}.',
   'Paste {count} lines?': { one: 'Bandika mstari {count}?', other: 'Bandika mistari {count}?' },
   // Orden as the default browser
   'Default browser': 'Kivinjari chaguomsingi',

@@ -1918,6 +1918,9 @@ export const vi: Dictionary = {
   'Restored {time}': 'Đã khôi phục {time}',
   'Stop what is running in {name}?': 'Dừng những gì đang chạy trong {name}?',
   'Stop what is running in these terminals?': 'Dừng những gì đang chạy trong các terminal này?',
+  'End these online terminals?': 'Kết thúc các terminal trực tuyến này?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Không được lưu ở đâu; phiên vẫn chạy có thể tìm lại trong Cài đặt, {pane}.',
   'Paste {count} lines?': 'Dán {count} dòng?',
   // Orden as the default browser
   'Default browser': 'Trình duyệt mặc định',

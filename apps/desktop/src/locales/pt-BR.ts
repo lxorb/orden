@@ -1973,6 +1973,9 @@ export const ptBR: Dictionary = {
   'Restored {time}': 'Restaurado {time}',
   'Stop what is running in {name}?': 'Parar o que está em execução em {name}?',
   'Stop what is running in these terminals?': 'Parar o que está em execução nestes terminais?',
+  'End these online terminals?': 'Encerrar estes terminais online?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Não salva em lugar nenhum: uma sessão mantida em execução é encontrada de novo em Configurações, {pane}.',
   'Paste {count} lines?': {
     one: 'Colar {count} linha?',
     many: 'Colar {count} de linhas?',

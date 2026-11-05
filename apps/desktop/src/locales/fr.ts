@@ -1999,6 +1999,9 @@ export const fr: Dictionary = {
   'Restored {time}': 'Restauré {time}',
   'Stop what is running in {name}?': 'Arrêter ce qui tourne dans {name} ?',
   'Stop what is running in these terminals?': 'Arrêter ce qui tourne dans ces terminaux ?',
+  'End these online terminals?': 'Terminer ces terminaux en ligne ?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Enregistrée nulle part, une session laissée en marche se retrouve dans Réglages, {pane}.',
   'Paste {count} lines?': {
     one: 'Coller {count} ligne ?',
     many: 'Coller {count} de lignes ?',
