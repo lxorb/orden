@@ -74,6 +74,17 @@ define_class!(
             decided(self, webview, action, decide);
         }
 
+        /// The page's own frame started a navigation: told to wry, and noted for an agent
+        /// acting in the tab (#1092).
+        #[unsafe(method(webView:didStartProvisionalNavigation:))]
+        fn did_start_provisional_navigation(
+            &self,
+            webview: &WKWebView,
+            navigation: Option<&WKNavigation>,
+        ) {
+            started(self, webview, navigation);
+        }
+
         /// The page's own load ended.
         #[unsafe(method(webView:didFinishNavigation:))]
         fn did_finish_navigation(&self, webview: &WKWebView, navigation: Option<&WKNavigation>) {
@@ -196,6 +207,25 @@ fn decided(
     }
 }
 
+/// A navigation of the page's own frame started: wry is told, and an agent acting in the
+/// tab can wait for where it goes (`agents/engines/webkit.rs`).
+#[allow(
+    unsafe_code,
+    reason = "wry's delegate is called through the Objective-C runtime with the engine's own arguments"
+)]
+fn started(watcher: &Watcher, webview: &WKWebView, navigation: Option<&WKNavigation>) {
+    let selector = objc2::sel!(webView:didStartProvisionalNavigation:);
+    if let Some(inner) = &watcher.ivars().inner {
+        if inner.respondsToSelector(selector) {
+            // SAFETY: as in `decided`.
+            unsafe {
+                let () = msg_send![&**inner, webView: webview, didStartProvisionalNavigation: navigation];
+            }
+        }
+    }
+    crate::agents::engines::webkit::started(&crate::web_tabs::label_of(&watcher.ivars().tab));
+}
+
 /// The page's load ended: wry is told first, which is the tab's own end of load, and then
 /// the window hears that it arrived.
 #[allow(
@@ -212,6 +242,7 @@ fn finished(watcher: &Watcher, webview: &WKWebView, navigation: Option<&WKNaviga
             }
         }
     }
+    crate::agents::engines::webkit::arrived(&crate::web_tabs::label_of(&watcher.ivars().tab), None);
     // SAFETY: the view's own address, read on the main thread.
     let url = unsafe { webview.URL() }
         .and_then(|url| url.absoluteString())
@@ -267,8 +298,19 @@ fn failed(
     }
 
     let Some(failure) = failure_of_error(&error.domain().to_string(), error.code()) else {
+        crate::agents::engines::webkit::arrived(
+            &crate::web_tabs::label_of(&watcher.ivars().tab),
+            None,
+        );
         return;
     };
+    crate::agents::engines::webkit::arrived(
+        &crate::web_tabs::label_of(&watcher.ivars().tab),
+        Some(format!(
+            "the page could not be reached: {}",
+            error.localizedDescription()
+        )),
+    );
     // Where it was going: the failing address the error carries - as a string, or as the
     // address itself, whichever this system's error has - or the view's own.
     let said = error.userInfo();

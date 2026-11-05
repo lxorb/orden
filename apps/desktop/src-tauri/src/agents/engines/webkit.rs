@@ -50,19 +50,20 @@ use objc2_app_kit::{
     NSView, NSWindow,
 };
 use objc2_foundation::{
-    MainThreadMarker, NSArray, NSDate, NSDictionary, NSError, NSHTTPCookie, NSHTTPCookieDomain,
-    NSHTTPCookieExpires, NSHTTPCookieName, NSHTTPCookiePath, NSHTTPCookieSecure, NSHTTPCookieValue,
-    NSHTTPURLResponse, NSMutableDictionary, NSNumber, NSObjectProtocol, NSPoint, NSProcessInfo,
-    NSRect, NSSize, NSString, NSURLAuthenticationChallenge, NSURLCredential,
-    NSURLCredentialPersistence, NSURLRequest, NSURLResponse, NSURLSessionAuthChallengeDisposition,
-    NSURL,
+    MainThreadMarker, NSArray, NSData, NSDate, NSDictionary, NSError, NSHTTPCookie,
+    NSHTTPCookieDomain, NSHTTPCookieExpires, NSHTTPCookieName, NSHTTPCookiePath,
+    NSHTTPCookieSecure, NSHTTPCookieValue, NSHTTPURLResponse, NSMutableDictionary, NSNumber,
+    NSObjectProtocol, NSPoint, NSProcessInfo, NSRect, NSSize, NSString,
+    NSURLAuthenticationChallenge, NSURLCredential, NSURLCredentialPersistence, NSURLRequest,
+    NSURLResponse, NSURLSessionAuthChallengeDisposition, NSURL,
 };
 use objc2_web_kit::{
     WKContentWorld, WKDownload, WKDownloadDelegate, WKFrameInfo, WKMediaCaptureType, WKNavigation,
     WKNavigationAction, WKNavigationActionPolicy, WKNavigationDelegate, WKNavigationResponse,
-    WKNavigationResponsePolicy, WKOpenPanelParameters, WKPermissionDecision, WKSecurityOrigin,
-    WKSnapshotConfiguration, WKUIDelegate, WKUserScript, WKUserScriptInjectionTime, WKWebView,
-    WKWebViewConfiguration, WKWebsiteDataRecord, WKWebsiteDataStore, WKWindowFeatures,
+    WKNavigationResponsePolicy, WKOpenPanelParameters, WKPDFConfiguration, WKPermissionDecision,
+    WKSecurityOrigin, WKSnapshotConfiguration, WKUIDelegate, WKUserScript,
+    WKUserScriptInjectionTime, WKWebView, WKWebViewConfiguration, WKWebsiteDataRecord,
+    WKWebsiteDataStore, WKWindowFeatures,
 };
 use serde_json::{json, Map, Value};
 use tauri::webview::PlatformWebview;
@@ -152,6 +153,22 @@ pub fn forget(label: &str) {
     {
         all.remove(label);
     }
+}
+
+/// A navigation of a page's own frame started: an agent's page's, from Orden's own
+/// delegate, or a reader's tab's, from its own (`web_page/webkit.rs`).
+pub fn started(label: &str) {
+    heard(label, |one| one.navigations += 1);
+}
+
+/// A navigation of a page's own frame ended, and why it failed if it did.
+pub fn arrived(label: &str, failure: Option<String>) {
+    heard(label, |one| {
+        one.loads += 1;
+        if let Some(why) = failure {
+            one.failed = Some((one.loads, why));
+        }
+    });
 }
 
 /// Notes a tab a page opened, for the answer to the act that opened it.
@@ -328,7 +345,7 @@ define_class!(
             _navigation: Option<&WKNavigation>,
         ) {
             let owner = &self.ivars().owner;
-            heard(&owner.label, |one| one.navigations += 1);
+            started(&owner.label);
             crate::agents::tabs::set(&owner.tab, |one| one.loading = true);
         }
 
@@ -685,12 +702,10 @@ fn ended(held: &Held, webview: &WKWebView, error: Option<&NSError>) {
                 || (domain == "WebKitErrorDomain" && one.code() == 102))
         })
         .map(|one| one.localizedDescription().to_string());
-    heard(&owner.label, |one| {
-        one.loads += 1;
-        if let Some(why) = failure {
-            one.failed = Some((one.loads, format!("the page could not be reached: {why}")));
-        }
-    });
+    arrived(
+        &owner.label,
+        failure.map(|why| format!("the page could not be reached: {why}")),
+    );
     // SAFETY: the view's own address and title, read on the main thread.
     let (url, title) = unsafe {
         (
@@ -1985,6 +2000,37 @@ fn held_words(page: &Page<'_>, element: &Element) -> String {
     .unwrap_or_default()
 }
 
+/// The page as a PDF, as `WKWebView` makes one: the whole page laid out as it shows, on
+/// one sheet as tall as it is, `[width, height]` in CSS pixels.
+#[allow(
+    unsafe_code,
+    reason = "WKWebView's PDF is made through the Objective-C runtime"
+)]
+fn printed(page: &Page<'_>, size: [f64; 2]) -> Result<Option<Vec<u8>>, Answer> {
+    on_main(page, Duration::from_secs(30), move |view, said| {
+        let Some(mtm) = MainThreadMarker::new() else {
+            return;
+        };
+        // SAFETY: a configuration of the view's own, made and used on the main thread;
+        // the engine copies the block and calls it once.
+        unsafe {
+            let configuration = WKPDFConfiguration::new(mtm);
+            configuration.setRect(NSRect::new(
+                NSPoint::new(0.0, 0.0),
+                NSSize::new(size[0], size[1]),
+            ));
+            let handler = RcBlock::new(move |data: *mut NSData, _error: *mut NSError| {
+                let _ = said.send(
+                    data.as_ref()
+                        .map(NSData::to_vec)
+                        .filter(|one| !one.is_empty()),
+                );
+            });
+            view.createPDFWithConfiguration_completionHandler(Some(&configuration), &handler);
+        }
+    })
+}
+
 impl Engine for Page<'_> {
     fn wake(&self) {}
 
@@ -2232,7 +2278,29 @@ impl Engine for Page<'_> {
     }
 
     fn pdf(&self, _paper: &PdfPage) -> Result<String, Answer> {
-        Err(refused("capture_to_note"))
+        if !self.may_touch_credentials() && secrets(self)?.iter().any(|(_, filled, _)| *filled) {
+            return Err(Answer::error(
+                Code::PasswordField,
+                "a filled secret field is on the page, and it would print as bullets that say how long it is: capture a screenshot, which paints it over",
+            ));
+        }
+        let size = isolated(
+            self,
+            "[document.documentElement.scrollWidth, Math.max(document.documentElement.scrollHeight, document.body ? document.body.scrollHeight : 0)]",
+        )?;
+        let width = size
+            .get(0)
+            .and_then(Value::as_f64)
+            .unwrap_or(1280.0)
+            .max(1.0);
+        let height = size
+            .get(1)
+            .and_then(Value::as_f64)
+            .unwrap_or(800.0)
+            .clamp(1.0, TALLEST);
+        printed(self, [width, height])?
+            .map(|bytes| base64::engine::general_purpose::STANDARD.encode(bytes))
+            .ok_or_else(|| Answer::error(Code::Failed, "the engine printed nothing"))
     }
 
     fn click(

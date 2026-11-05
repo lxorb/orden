@@ -190,6 +190,7 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
   # for, answered by Orden's own delegates; see agents/engines/webkit.rs.
   "WKDownloadDelegate",
   "WKOpenPanelParameters",
+  "WKPDFConfiguration",
   "WKWindowFeatures",
   "WKFrameInfo",
   "WKHTTPCookieStore",

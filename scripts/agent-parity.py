@@ -49,8 +49,6 @@ CANNOT: dict[str, set[str]] = {
         "browser_upload",
         "browser_console",
         "browser_network",
-        "browser_show",
-        "browser_takeover",
     },
 }
 

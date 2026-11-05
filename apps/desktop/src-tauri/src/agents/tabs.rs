@@ -806,12 +806,23 @@ pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
     Err("an agent's page on nib's own Chromium has no window: the tab loads its address".into())
 }
 
-/// On `WKWebView` the agent's page is not built yet (#1092), so there is nothing to show.
+/// On `WKWebView` an agent's page has delegates of Orden's own in place of wry's, which a
+/// reader's tab needs back - its navigations, its downloads, its windows - and wry does not
+/// hand them out again. So Show opens its address as the reader's tab, which loads it
+/// again in the same store (the window builds it the ordinary way when this answers no
+/// page), and the agent's own tab closes; the agent acts on in the reader's tab by either
+/// id, as on Orden's own Chromium.
 #[cfg(all(target_os = "macos", not(feature = "cef")))]
-pub fn adopt(_app: &AppHandle, _id: &str, _reader: &str) -> Result<(), String> {
-    Err(super::engines::cannot("browser_show")
-        .unwrap_or("there is no such agent tab")
-        .to_string())
+pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
+    if !tabs().iter().any(|one| one.id == id) {
+        return Err("there is no such agent tab".into());
+    }
+    SHOWN
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .push((id.to_string(), reader.to_string()));
+    close(app, id);
+    Err("an agent's page on WKWebView is shown as a reader's tab of its own: the tab loads its address".into())
 }
 
 /// Any agent's tab, by its id.
