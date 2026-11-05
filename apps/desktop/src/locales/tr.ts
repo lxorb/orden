@@ -575,6 +575,10 @@ export const tr: Dictionary = {
   'Swipe in from the edge to see your notes.': 'Notlarını görmek için kenardan içeri kaydır.',
   'Point at the edge of the window to see your notes.':
     'Notlarını görmek için işaretçiyi pencerenin kenarına götür.',
+  Sidebars: 'Kenar çubukları',
+  'Sidebar toggles inside the sidebars': 'Kenar çubuğu düğmeleri kenar çubuklarının içinde',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'Her kenar çubuğunun düğmesi kendi içindedir ve sağ kenar çubuğu pencerenin o kenarından çıkar.',
   'Show other tabs as icons': 'Diğer sekmeleri simge olarak göster',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Öndeki dışındaki her sekme yalnızca simgesini gösterir; birinin üzerine gelince adı görünür.',

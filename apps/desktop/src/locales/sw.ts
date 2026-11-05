@@ -578,6 +578,10 @@ export const sw: Dictionary = {
   'Swipe in from the edge to see your notes.': 'Telezesha kutoka ukingoni kuona madokezo yako.',
   'Point at the edge of the window to see your notes.':
     'Peleka kielekezi ukingoni mwa dirisha kuona madokezo yako.',
+  Sidebars: 'Tepe za pembeni',
+  'Sidebar toggles inside the sidebars': 'Vitufe vya tepe ndani ya tepe za pembeni',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'Kitufe cha kila utepe wa pembeni kiko ndani yake, na utepe wa kulia hutokea ukingoni mwake mwa dirisha.',
   'Show other tabs as icons': 'Onyesha vichupo vingine kama aikoni',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Kila kichupo isipokuwa cha mbele kinaonyesha aikoni yake tu; ukielekeza kimoja, jina lake linaonekana.',

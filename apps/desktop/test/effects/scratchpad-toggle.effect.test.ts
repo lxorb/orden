@@ -51,6 +51,7 @@ const { default: ScratchpadCard } = await import('../../src/lib/scratchpad/Scrat
 const { shown, toggleScratchpad } = await import('../../src/lib/scratchpad/is.svelte')
 const { scratchpad } = await import('../../src/lib/scratchpad/pad')
 const { workspace } = await import('../../src/lib/workspace.svelte')
+const { sideToggles } = await import('../../src/lib/side-toggles.svelte')
 const { menu } = await import('../../src/lib/menu.svelte')
 const { tabMenu } = await import('../../src/lib/tab-strip/menu')
 type MenuEntry = import('../../src/lib/menu-item').MenuEntry
@@ -73,6 +74,7 @@ afterEach(() => {
   for (const one of undo) one()
   undo = []
   target.remove()
+  sideToggles.set(false)
 })
 
 function bar() {
@@ -123,6 +125,7 @@ test('the bar has one button for the right side and no switch of the scratchpadâ
 /** #1038: on a desktop the button is the side's own while the side is open, and the bar
  *  keeps it, said and not shown, only while it is shut. */
 test('open, the right side has the button and the bar has none', () => {
+  sideToggles.inside = true
   barAndSide()
   workspace.showRight('outline')
   flushSync()
@@ -133,6 +136,25 @@ test('open, the right side has the button and the bar has none', () => {
   flushSync()
   const said = target.querySelector('header button[aria-label$="right sidebar"]')
   expect(said?.classList.contains('nib-said')).toBe(true)
+})
+
+test('with the toggles in the bar, open or shut the bar has the button and the side none', () => {
+  barAndSide()
+  workspace.showRight('outline')
+  flushSync()
+  const shown = () => target.querySelector('header button[aria-label$="right sidebar"]')
+  expect(shown()?.classList.contains('nib-said')).toBe(false)
+  expect(target.querySelectorAll('aside button[aria-label$="right sidebar"]')).toHaveLength(0)
+
+  workspace.closeRight()
+  flushSync()
+  expect(shown()?.classList.contains('nib-said')).toBe(false)
+
+  sideToggles.set(true)
+  workspace.showRight('outline')
+  flushSync()
+  expect(shown()).toBe(null)
+  expect(target.querySelectorAll('aside button[aria-label$="right sidebar"]')).toHaveLength(1)
 })
 
 /** #1030: a phone's note bar has no scratchpad on it either: it is in the drawer's foot. */

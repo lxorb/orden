@@ -596,6 +596,10 @@ export const pl: Dictionary = {
   'Swipe in from the edge to see your notes.': 'Przesuń od krawędzi, aby zobaczyć swoje notatki.',
   'Point at the edge of the window to see your notes.':
     'Przesuń wskaźnik do krawędzi okna, aby zobaczyć swoje notatki.',
+  Sidebars: 'Panele boczne',
+  'Sidebar toggles inside the sidebars': 'Przełączniki paneli bocznych w panelach',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'Przełącznik każdego panelu bocznego jest w nim, a prawy panel wysuwa się przy swojej krawędzi okna.',
   'Show other tabs as icons': 'Pokazuj pozostałe karty jako ikony',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Każda karta poza tą na wierzchu pokazuje tylko ikonę; po wskazaniu pokazuje swoją nazwę.',

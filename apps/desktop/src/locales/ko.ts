@@ -570,6 +570,10 @@ export const ko: Dictionary = {
   'Swipe in from the edge to see your notes.': '가장자리에서 안쪽으로 밀어 노트를 보세요.',
   'Point at the edge of the window to see your notes.':
     '포인터를 창 가장자리로 옮겨 노트를 보세요.',
+  Sidebars: '사이드바',
+  'Sidebar toggles inside the sidebars': '사이드바 토글을 사이드바 안에',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    '각 사이드바의 토글이 사이드바 안에 있고, 오른쪽 사이드바는 창의 해당 가장자리에서 나옵니다.',
   'Show other tabs as icons': '다른 탭을 아이콘으로 보기',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '앞에 있는 탭을 빼고 모든 탭이 아이콘만 보여 주며, 가리키면 이름이 나타납니다.',

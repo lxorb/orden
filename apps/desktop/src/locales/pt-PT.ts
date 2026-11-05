@@ -588,6 +588,10 @@ export const ptPT: Dictionary = {
   'Swipe in from the edge to see your notes.': 'Deslize a partir da margem para ver as suas notas.',
   'Point at the edge of the window to see your notes.':
     'Leve o ponteiro até à margem da janela para ver as suas notas.',
+  Sidebars: 'Barras laterais',
+  'Sidebar toggles inside the sidebars': 'Botões das barras laterais dentro delas',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'O botão de cada barra lateral fica dentro dela, e a barra direita surge na margem dela na janela.',
   'Show other tabs as icons': 'Mostrar os outros separadores como ícones',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Cada separador, exceto o da frente, mostra só o ícone; ao apontar para um, aparece o nome.',

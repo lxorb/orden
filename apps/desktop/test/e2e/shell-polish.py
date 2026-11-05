@@ -220,7 +220,7 @@ BAR = """
 
   const want = [
     ['the menu', 'header > :first-child button, header > button:first-child'],
-    ['the overview button', 'header .overview'],
+    ['the sidebar button', 'header .toggle'],
     ['the first tab', 'header .tab, header [role=tab], header .strip button'],
   ]
 
@@ -257,9 +257,9 @@ BAR = """
 # glyph that did.
 TOGGLE = """
 () => {
-  // Wherever it is drawn: the panel's own head on a desktop (#1038), the drawer's own
-  // head under a thumb. One component, drawn once; see mobile-header.test.ts.
-  const button = document.querySelector('aside .head .toggle')
+  // Wherever it is drawn: the title bar on a desktop, the drawer's own head under
+  // a thumb. One component, drawn once; see mobile-header.test.ts.
+  const button = document.querySelector('.toggle')
   if (!button) return null
 
   const seat = button.getBoundingClientRect()
@@ -933,7 +933,7 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
         placed = [one for one in bar["parts"] if not one.get("missing")]
         check(
             len(placed) >= 3,
-            f"[{label}] the bar holds the search, the overview button and a tab",
+            f"[{label}] the bar holds the menu, the button and a tab",
         )
         for one in placed:
             check(
@@ -941,22 +941,15 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
                 f"[{label}] {one['name']} is on the bar's centre line (off by {one['off']}px)",
             )
 
-        # Shut, the button is in the panel brought out at the window's edge (#1038).
-        page.mouse.move(viewport["width"] / 2, 400)
-        page.mouse.move(0, 400)
-        page.locator(".column.peek aside .head .toggle").wait_for(timeout=5000)
-        page.wait_for_timeout(300)
         shut = page.evaluate(TOGGLE)
         say(f"[{label}] the sidebar button shut: {shut}")
-        page.locator("aside .head .toggle").first.screenshot(path=str(SHOTS / f"toggle-shut-{label}.png"))
-        page.mouse.move(viewport["width"] / 2, 400)
-        page.wait_for_timeout(400)
+        page.locator(".toggle").first.screenshot(path=str(SHOTS / f"toggle-shut-{label}.png"))
 
         page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
         page.wait_for_timeout(500)
         opened = page.evaluate(TOGGLE)
         say(f"[{label}] the sidebar button open: {opened}")
-        page.locator("aside .head .toggle").first.screenshot(path=str(SHOTS / f"toggle-open-{label}.png"))
+        page.locator(".toggle").first.screenshot(path=str(SHOTS / f"toggle-open-{label}.png"))
         say(f"[{label}] wrote toggle-shut-{label}.png and toggle-open-{label}.png")
 
         same_glyph(label, shut, opened)

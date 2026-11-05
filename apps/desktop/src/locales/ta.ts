@@ -575,6 +575,10 @@ export const ta: Dictionary = {
     'உங்கள் குறிப்புகளைப் பார்க்க ஓரத்திலிருந்து உள்ளே தேய்க்கவும்.',
   'Point at the edge of the window to see your notes.':
     'உங்கள் குறிப்புகளைப் பார்க்க சுட்டியைச் சாளரத்தின் ஓரத்திற்குக் கொண்டு செல்லவும்.',
+  Sidebars: 'பக்கப்பட்டிகள்',
+  'Sidebar toggles inside the sidebars': 'பக்கப்பட்டி மாற்றிகள் பக்கப்பட்டிகளுக்குள்',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'ஒவ்வொரு பக்கப்பட்டியின் மாற்றியும் அதற்குள் இருக்கும், வலது பக்கப்பட்டி சாளரத்தின் அந்த ஓரத்தில் வெளிவரும்.',
   'Show other tabs as icons': 'மற்ற தாவல்களை உருவங்களாகக் காட்டு',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'முன்னால் உள்ளதைத் தவிர ஒவ்வொரு தாவலும் உருவத்தை மட்டும் காட்டும்; ஒன்றின் மேல் சுட்டினால் அதன் பெயர் தெரியும்.',

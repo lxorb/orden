@@ -10,10 +10,9 @@ What this measures, in every state the row has:
 
   - the buttons from the strip's last one to the window's own are one group, every one
     against the next with the same step, nothing between them;
-  - the bar's own end - the window's buttons, and the right side's button until it went
-    into the side (#1038), and before that the scratchpad's switch (#1032) - is in the
-    same place whether the note's `⋯` is there or not, so nothing jumps as a web tab and
-    a note change places;
+  - the right side's button - the scratchpad's switch until it became one of the right
+    side's tabs (#1032) - is in the same place whether the note's `⋯` is there or not,
+    so nothing jumps as a web tab and a note change places;
   - there is always a stretch to drag the window by, at least the sliver wide, ahead of
     that group, however many tabs there are.
 
@@ -41,9 +40,7 @@ SLIVER = 24
 MEASURE = """
 () => {
   const bar = document.querySelector('header[data-chrome="top"]')
-  // Seen: a button said and not shown - the shut right side's, for a screen reader and a
-  // keyboard (#1038) - is not one an eye counts.
-  const shown = (one) => one && one.getClientRects().length > 0 && !one.classList.contains('nib-said')
+  const shown = (one) => one && one.getClientRects().length > 0
   const strips = [...bar.querySelectorAll('[data-top-strip]')]
   const last = strips.at(-1)
   const group = [
@@ -60,9 +57,7 @@ MEASURE = """
     .map((one) => one.getBoundingClientRect())
     .filter((box) => box.right <= first + 0.5)
     .map((box) => box.width)
-  // Where the bar's own end starts: the window's buttons, and the right side's while it
-  // was in the bar.
-  const right = bar.querySelector(':scope > .end')?.getBoundingClientRect()
+  const right = bar.querySelector('.end > [data-side-toggle="right"]')?.getBoundingClientRect()
   return { boxes, drag: Math.max(0, ...drags), right: right ? right.left : null }
 }
 """
@@ -95,9 +90,9 @@ def drive(browser: Any) -> None:
     wait_for(page, "window.nibApp.workspace.active?.note?.kind === 'web'", "the web tab")
     web = row(page, "02-web-tab")
     if note["right"] is None or web["right"] is None:
-        wrong(f"the bar has no end of its own: {note['right']}, {web['right']}")
+        wrong(f"the right side's button is not in the bar: {note['right']}, {web['right']}")
     elif abs(note["right"] - web["right"]) > 0.5:
-        wrong(f"the bar's end moves between a note and a web tab: {note['right']} -> {web['right']}")
+        wrong(f"the right side's button moves between a note and a web tab: {note['right']} -> {web['right']}")
 
     DRIVE.open_note(page, "Plan")
     page.evaluate("() => window.nibApp.workspace.toggleSidebar('left')")

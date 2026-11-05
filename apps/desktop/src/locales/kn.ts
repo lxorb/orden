@@ -578,6 +578,10 @@ export const kn: Dictionary = {
     'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ನೋಡಲು ಅಂಚಿನಿಂದ ಒಳಗೆ ಸ್ವೈಪ್ ಮಾಡಿ.',
   'Point at the edge of the window to see your notes.':
     'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ನೋಡಲು ಪಾಯಿಂಟರ್ ಅನ್ನು ವಿಂಡೋದ ಅಂಚಿಗೆ ಸರಿಸಿ.',
+  Sidebars: 'ಸೈಡ್‌ಬಾರ್‌ಗಳು',
+  'Sidebar toggles inside the sidebars': 'ಸೈಡ್‌ಬಾರ್ ಟಾಗಲ್‌ಗಳು ಸೈಡ್‌ಬಾರ್‌ಗಳ ಒಳಗೆ',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'ಪ್ರತಿ ಸೈಡ್‌ಬಾರ್‌ನ ಟಾಗಲ್ ಅದರ ಒಳಗೆ ಇರುತ್ತದೆ, ಮತ್ತು ಬಲ ಸೈಡ್‌ಬಾರ್ ವಿಂಡೋದ ಆ ಅಂಚಿನಿಂದ ಹೊರಬರುತ್ತದೆ.',
   'Show other tabs as icons': 'ಇತರ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಐಕಾನ್‌ಗಳಾಗಿ ತೋರಿಸಿ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ಮುಂದಿನದನ್ನು ಬಿಟ್ಟು ಪ್ರತಿ ಟ್ಯಾಬ್ ತನ್ನ ಐಕಾನ್ ಮಾತ್ರ ತೋರಿಸುತ್ತದೆ; ಒಂದರ ಮೇಲೆ ಪಾಯಿಂಟರ್ ಇಟ್ಟರೆ ಹೆಸರು ಕಾಣುತ್ತದೆ.',

@@ -584,6 +584,10 @@ export const es: Dictionary = {
   'Swipe in from the edge to see your notes.': 'Desliza desde el borde para ver tus notas.',
   'Point at the edge of the window to see your notes.':
     'Lleva el puntero al borde de la ventana para ver tus notas.',
+  Sidebars: 'Barras laterales',
+  'Sidebar toggles inside the sidebars': 'Botones de las barras laterales dentro de ellas',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'El botón de cada barra lateral está dentro de ella, y la barra derecha aparece en su borde de la ventana.',
   'Show other tabs as icons': 'Mostrar las demás pestañas como iconos',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Cada pestaña salvo la del frente muestra solo su icono; al señalar una, muestra su nombre.',

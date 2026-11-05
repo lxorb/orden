@@ -570,6 +570,10 @@ export const am: Dictionary = {
     'ከOrden የራሱ ዳራ ይልቅ መተግበሪያውን ከመስኮቶቹ በስተጀርባ ደብዝዞ ያሳያል።',
   'Swipe in from the edge to see your notes.': 'ማስታወሻዎችዎን ለማየት ከጠርዙ ወደ ውስጥ ያንሸራትቱ።',
   'Point at the edge of the window to see your notes.': 'ማስታወሻዎችዎን ለማየት ጠቋሚውን ወደ መስኮቱ ጠርዝ ይውሰዱ።',
+  Sidebars: 'የጎን ሰሌዳዎች',
+  'Sidebar toggles inside the sidebars': 'የጎን ሰሌዳ መቀያየሪያዎች በጎን ሰሌዳዎቹ ውስጥ',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'የእያንዳንዱ የጎን ሰሌዳ መቀያየሪያ በጎን ሰሌዳው ውስጥ ይቀመጣል፤ የቀኝ ጎን ሰሌዳውም በመስኮቱ ጠርዝ ይወጣል።',
   'Show other tabs as icons': 'ሌሎች ትሮችን እንደ አዶ አሳይ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ከፊት ካለው በስተቀር እያንዳንዱ ትር አዶውን ብቻ ያሳያል፤ ወደ አንዱ ሲጠቁሙ ስሙን ያሳያል።',

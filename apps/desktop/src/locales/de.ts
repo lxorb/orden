@@ -578,6 +578,10 @@ export const de: Dictionary = {
   'Swipe in from the edge to see your notes.': 'Wische vom Rand herein, um deine Notizen zu sehen.',
   'Point at the edge of the window to see your notes.':
     'Fahre mit dem Zeiger an den Fensterrand, um deine Notizen zu sehen.',
+  Sidebars: 'Seitenleisten',
+  'Sidebar toggles inside the sidebars': 'Seitenleisten-Schalter in den Seitenleisten',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'Der Schalter jeder Seitenleiste sitzt in ihr, und die rechte Seitenleiste kommt an ihrem Fensterrand heraus.',
   'Show other tabs as icons': 'Andere Tabs als Symbole zeigen',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Jeder Tab außer dem vorderen zeigt nur sein Symbol; zeigst du auf einen, erscheint sein Name.',

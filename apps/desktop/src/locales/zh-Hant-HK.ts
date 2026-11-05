@@ -569,6 +569,10 @@ export const zhHantHK: Dictionary = {
     '在視窗後顯示模糊的應用程式，而非 Orden 本身的背景。',
   'Swipe in from the edge to see your notes.': '從邊緣向內滑動即可查看筆記。',
   'Point at the edge of the window to see your notes.': '將指標移到視窗邊緣即可查看筆記。',
+  Sidebars: '側邊欄',
+  'Sidebar toggles inside the sidebars': '側邊欄開關位於側邊欄內',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    '每個側邊欄的開關位於側邊欄內，右側邊欄從視窗的那一側邊緣滑出。',
   'Show other tabs as icons': '其他分頁只顯示圖示',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     '除前面的分頁外，每個分頁只顯示圖示；指向某個分頁時會顯示其名稱。',

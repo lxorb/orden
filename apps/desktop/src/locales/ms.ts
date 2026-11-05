@@ -571,6 +571,10 @@ export const ms: Dictionary = {
   'Swipe in from the edge to see your notes.': 'Leret masuk dari tepi untuk melihat nota anda.',
   'Point at the edge of the window to see your notes.':
     'Halakan penuding ke tepi tetingkap untuk melihat nota anda.',
+  Sidebars: 'Bar sisi',
+  'Sidebar toggles inside the sidebars': 'Togol bar sisi di dalam bar sisi',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'Togol setiap bar sisi berada di dalamnya, dan bar sisi kanan keluar di tepinya pada tetingkap.',
   'Show other tabs as icons': 'Tunjukkan tab lain sebagai ikon',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Setiap tab kecuali yang di hadapan hanya menunjukkan ikonnya; tuding pada satu untuk melihat namanya.',

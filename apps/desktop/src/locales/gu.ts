@@ -573,6 +573,10 @@ export const gu: Dictionary = {
   'Swipe in from the edge to see your notes.': 'તમારી નોંધો જોવા માટે કિનારેથી અંદર સ્વાઇપ કરો.',
   'Point at the edge of the window to see your notes.':
     'તમારી નોંધો જોવા માટે પોઇન્ટરને વિન્ડોની કિનારે લઈ જાઓ.',
+  Sidebars: 'બાજુપટ્ટીઓ',
+  'Sidebar toggles inside the sidebars': 'બાજુપટ્ટીનાં ટૉગલ બાજુપટ્ટીની અંદર',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'દરેક બાજુપટ્ટીનું ટૉગલ તેની અંદર રહે છે, અને જમણી બાજુપટ્ટી વિન્ડોની તે કિનારેથી બહાર આવે છે.',
   'Show other tabs as icons': 'બીજી ટૅબ આઇકન તરીકે બતાવો',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'આગળની ટૅબ સિવાય દરેક ટૅબ ફક્ત તેનું આઇકન બતાવે છે; કોઈ પર પોઇન્ટર રાખતાં તેનું નામ દેખાય છે.',

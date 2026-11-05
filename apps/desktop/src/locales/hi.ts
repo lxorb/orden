@@ -574,6 +574,10 @@ export const hi: Dictionary = {
     'अपने नोट्स देखने के लिए किनारे से अंदर स्वाइप करें।',
   'Point at the edge of the window to see your notes.':
     'अपने नोट्स देखने के लिए पॉइंटर को विंडो के किनारे पर ले जाएँ।',
+  Sidebars: 'साइडबार',
+  'Sidebar toggles inside the sidebars': 'साइडबार के टॉगल साइडबार के अंदर',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'हर साइडबार का टॉगल उसके अंदर रहता है, और दायाँ साइडबार विंडो के उस किनारे से बाहर आता है।',
   'Show other tabs as icons': 'बाकी टैब आइकन के रूप में दिखाएँ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'सामने वाले को छोड़ हर टैब सिर्फ़ अपना आइकन दिखाता है; किसी पर पॉइंटर ले जाने पर उसका नाम दिखता है।',

@@ -575,6 +575,10 @@ export const te: Dictionary = {
     'మీ నోట్‌లను చూడడానికి అంచు నుండి లోపలికి స్వైప్ చేయండి.',
   'Point at the edge of the window to see your notes.':
     'మీ నోట్‌లను చూడడానికి పాయింటర్‌ను విండో అంచుకు తీసుకెళ్లండి.',
+  Sidebars: 'సైడ్‌బార్‌లు',
+  'Sidebar toggles inside the sidebars': 'సైడ్‌బార్ టాగుల్‌లు సైడ్‌బార్‌ల లోపల',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'ప్రతి సైడ్‌బార్ టాగుల్ దాని లోపల ఉంటుంది, కుడి సైడ్‌బార్ విండో యొక్క ఆ అంచు నుండి బయటకు వస్తుంది.',
   'Show other tabs as icons': 'ఇతర ట్యాబ్‌లను ఐకాన్‌లుగా చూపించు',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ముందున్నది తప్ప ప్రతి ట్యాబ్ తన ఐకాన్ మాత్రమే చూపిస్తుంది; ఒకదానిపై పాయింటర్ ఉంచితే పేరు కనిపిస్తుంది.',

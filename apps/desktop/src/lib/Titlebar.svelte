@@ -2,6 +2,7 @@
   import { swipeOpens } from './swipe-opens'
   import { chrome } from './glass/chrome.svelte'
   import { edgePeek, endPeek } from './edge-peek.svelte'
+  import { sideToggles } from './side-toggles.svelte'
   import { i18n, t } from './i18n.svelte'
   import { keepFocus } from './focus'
   import { modes } from './modes.svelte'
@@ -87,6 +88,9 @@
    *  left the panel docks at the right, so the corner is this bar's either way. */
   const cornered = $derived(
     lights && (i18n.direction === 'rtl' || !(workspace.panel && !viewport.drawer)),
+  )
+  const bare = $derived(
+    !(isDesktop && !mac && modes.frame === 'nib') && !(cornered && i18n.direction === 'rtl'),
   )
 
   $effect(() => (isDesktop ? shape.follow(currentWindow) : undefined))
@@ -199,6 +203,10 @@
     {#if workspace.right.length}
       <SidebarToggle side="right" />
     {/if}
+  {:else if !sideToggles.inside}
+    {#if workspace.right.length || !__EVEN_PLUGIN__}
+      <SidebarToggle side="right" />
+    {/if}
   {:else if (workspace.right.length || !__EVEN_PLUGIN__) && workspace.rightShows === null}
     <SidebarToggle side="right" unseen />
   {/if}
@@ -242,8 +250,8 @@
      out at the window's edge; shut, the bar keeps it said and not shown in the same way,
      and open, the list has it. -->
 {#snippet leftToggle()}
-  {#if !listless && (viewport.touch || !workspace.openOn('left'))}
-    <SidebarToggle unseen={swiped || !viewport.touch} />
+  {#if !listless && (viewport.touch || !sideToggles.inside || !workspace.openOn('left'))}
+    <SidebarToggle unseen={swiped || (!viewport.touch && sideToggles.inside)} />
     {#if swiped && startup.settled && !__EVEN_PLUGIN__}
       <span class="swipe-hint">
         {#await import('./HintCard.svelte') then card}
@@ -260,7 +268,7 @@
   <!-- The same once for a pointer, whose list is brought out at the window's edge now that
        its button is in it: told once, while the list is shut, and put away for good as
        soon as a side has come out at an edge (#1038). -->
-  {#if !viewport.touch && !listless && startup.settled && !__EVEN_PLUGIN__}
+  {#if !viewport.touch && sideToggles.inside && !listless && startup.settled && !__EVEN_PLUGIN__}
     <span class="swipe-hint">
       {#await import('./HintCard.svelte') then card}
         <card.default
@@ -331,7 +339,7 @@
       <TopStrips frame={strips} />
     </div>
 
-    <div class="end" bind:clientWidth={endWide}>
+    <div class="end" class:bare bind:clientWidth={endWide}>
       {@render edgeMark()}
       {@render rightToggle()}
       {@render windowButtons()}
@@ -387,6 +395,10 @@
     flex: none;
     display: flex;
     align-items: stretch;
+  }
+
+  .end.bare {
+    padding-inline-end: var(--space-1);
   }
 
   /* The strips, over the panes: from the card's edge, as wide as the panes less theirs.

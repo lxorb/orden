@@ -574,6 +574,10 @@ export const gsw: Dictionary = {
   'Swipe in from the edge to see your notes.': 'Wisch vom Rand ine, zum dini Notize z gseh.',
   'Point at the edge of the window to see your notes.':
     'Fahr mit em Zeiger a de Rand vom Fänschter, zum dini Notize z gseh.',
+  Sidebars: 'Sitteleischte',
+  'Sidebar toggles inside the sidebars': 'Sitteleischte-Schalter i de Sitteleischte',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'De Schalter vo jedere Sitteleischte isch i ire, und di rächt chunnt a irem Fänschterrand use.',
   'Show other tabs as icons': 'Anderi Tabs als Symbol zeige',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Jede Tab usser em vordere zeigt nur sis Symbol; wenn du druf zeigsch, chunnt sin Name.',

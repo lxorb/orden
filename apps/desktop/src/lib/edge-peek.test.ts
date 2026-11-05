@@ -225,7 +225,9 @@ describe('each side', () => {
       'overlays.depth === 0',
     ])
       expect(sidebar, rule).toContain(rule)
-    expect(sidebar).toMatch(/if \(viewport\.touch\) return\s+const stop = peeker\.watch\(/)
+    expect(sidebar).toMatch(
+      /if \(viewport\.touch \|\| \(side === 'right' && !sideToggles\.inside\)\) return\s+const stop = peeker\.watch\(/,
+    )
     expect(sidebar).toContain("const peeker = $derived(side === 'left' ? edgePeek : endPeek)")
   })
 

@@ -571,6 +571,10 @@ export const jv: Dictionary = {
     'Gesek mlebu saka pinggir kanggo ndeleng cathetanmu.',
   'Point at the edge of the window to see your notes.':
     'Pindhahna penunjuk menyang pinggir jendhela kanggo ndeleng cathetanmu.',
+  Sidebars: 'Bar sisih',
+  'Sidebar toggles inside the sidebars': 'Tombol bar sisih ing njero bar sisih',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'Tombol saben bar sisih ana ing njerone, lan bar sisih tengen metu saka pinggire jendhela.',
   'Show other tabs as icons': 'Tampilake tab liyane minangka lambang',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Saben tab kajaba sing ngarep mung nampilake lambange; yen diarahake, jenenge katon.',

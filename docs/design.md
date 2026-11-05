@@ -1248,7 +1248,7 @@ a home:
 | The theme, and settings | The right of that same row |
 | The three bars | The left end of the title bar, which is the corner of the screen they were already in |
 | The sidebar button, where the panel is a drawer | The drawer's own head, which is the corner of the screen it was already in |
-| Each sidebar's button, on a desktop (#1038) | In the sidebar itself: the file list's at the start of its head, the right side's at the end of its first row. Shut, a side comes out over the note when the pointer reaches the window's edge it went into, under the bar on the right, where the window's buttons hold the corner, and its button there pins it. The bar keeps the button said and not shown while the side is shut, for a screen reader and a keyboard, and somebody new is told once that the edge brings the list out |
+| Each sidebar's button, on a desktop, with Appearance > Sidebars > Sidebar toggles inside the sidebars on (#1038; off by default, the buttons stay in the title bar and only the file list comes out of its edge) | In the sidebar itself: the file list's at the start of its head, the right side's at the end of its first row. Shut, a side comes out over the note when the pointer reaches the window's edge it went into, under the bar on the right, where the window's buttons hold the corner, and its button there pins it. The bar keeps the button said and not shown while the side is shut, for a screen reader and a keyboard, and somebody new is told once that the edge brings the list out |
 
 Two things are better for it rather than merely relocated. The switcher's rows
 are rows - a mark, a name, a dot - so a space is read the way a note is, and a

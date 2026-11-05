@@ -573,6 +573,10 @@ export const ur: Dictionary = {
   'Swipe in from the edge to see your notes.': 'اپنے نوٹس دیکھنے کے لیے کنارے سے اندر سوائپ کریں۔',
   'Point at the edge of the window to see your notes.':
     'اپنے نوٹس دیکھنے کے لیے پوائنٹر کو ونڈو کے کنارے پر لے جائیں۔',
+  Sidebars: 'سائیڈ بارز',
+  'Sidebar toggles inside the sidebars': 'سائیڈ بار کے ٹوگل سائیڈ بارز کے اندر',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'ہر سائیڈ بار کا ٹوگل اس کے اندر ہوتا ہے، اور دائیں سائیڈ بار ونڈو کے اس کنارے سے باہر آتی ہے۔',
   'Show other tabs as icons': 'دوسرے ٹیب آئیکن کے طور پر دکھائیں',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'سامنے والے کے سوا ہر ٹیب صرف اپنا آئیکن دکھاتا ہے؛ کسی پر پوائنٹر لے جائیں تو اس کا نام دکھتا ہے۔',

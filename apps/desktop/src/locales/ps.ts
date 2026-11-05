@@ -573,6 +573,10 @@ export const ps: Dictionary = {
   'Swipe in from the edge to see your notes.': 'خپلې یادښتونه د لیدو لپاره له څنډې دننه سوایپ کړئ.',
   'Point at the edge of the window to see your notes.':
     'خپلې یادښتونه د لیدو لپاره نښه د کړکۍ څنډې ته یوسئ.',
+  Sidebars: 'څنګ پټې',
+  'Sidebar toggles inside the sidebars': 'د څنګ پټو تڼۍ د هغو دننه',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'د هرې څنګ پټې تڼۍ د هغې دننه وي، او ښي څنګ پټه د کړکۍ له هغې څنډې راووځي.',
   'Show other tabs as icons': 'نور ټبونه د نښو په توګه ښکاره کړئ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'له مخکني پرته هر ټب یوازې خپله نښه ښيي؛ کله چې یو ته اشاره وکړئ، نوم یې ښکاره کېږي.',

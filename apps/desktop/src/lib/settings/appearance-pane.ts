@@ -1,7 +1,8 @@
 import { key, t } from '../i18n.svelte'
 import { DEFAULTS, type FontPlace, INTERFACE_ZOOMS, modes } from '../modes.svelte'
-import { isDesktop, platform } from '../tauri'
+import { isDesktop, isMobile, platform } from '../tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from '../schemes'
+import { sideToggles } from '../side-toggles.svelte'
 import { appSettings, builtIns, type SchemeChoice, theme } from '../theme.svelte'
 import { type ChosenSettings, SHARED, type ThemeSetting, type ThemeValue } from '../themes/settings'
 import { WALLPAPER_THEME } from '../wallpaper/held'
@@ -325,6 +326,29 @@ export function appearancePane(): Pane {
           },
         ],
       },
+
+      ...(isMobile
+        ? []
+        : ([
+            {
+              title: t('Sidebars'),
+              fields: [
+                {
+                  kind: 'switch',
+                  key: 'appearance.sideTogglesInside',
+                  store: { on: sideToggles, name: 'inside' },
+                  label: t('Sidebar toggles inside the sidebars'),
+                  hint: t(
+                    'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.',
+                  ),
+                  words: ['sidebar', 'toggle', 'button', 'title bar', 'edge', 'hover', 'peek'],
+                  initial: false,
+                  get: () => sideToggles.inside,
+                  set: (on) => sideToggles.set(on),
+                },
+              ],
+            },
+          ] satisfies Group[])),
 
       {
         title: t('Pointer'),

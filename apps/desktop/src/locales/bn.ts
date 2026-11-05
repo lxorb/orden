@@ -573,6 +573,10 @@ export const bn: Dictionary = {
   'Swipe in from the edge to see your notes.': 'আপনার নোট দেখতে কিনারা থেকে ভেতরে সোয়াইপ করুন।',
   'Point at the edge of the window to see your notes.':
     'আপনার নোট দেখতে পয়েন্টারটি উইন্ডোর কিনারায় নিন।',
+  Sidebars: 'সাইডবার',
+  'Sidebar toggles inside the sidebars': 'সাইডবারের টগল সাইডবারের ভেতরে',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'প্রতিটি সাইডবারের টগল সাইডবারের ভেতরে থাকে, আর ডান সাইডবার উইন্ডোর সেই কিনারা থেকে বেরিয়ে আসে।',
   'Show other tabs as icons': 'অন্য ট্যাবগুলো আইকন হিসেবে দেখান',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'সামনের ট্যাব ছাড়া প্রতিটি ট্যাব শুধু আইকন দেখায়; কোনোটির ওপর পয়েন্টার রাখলে নাম দেখায়।',

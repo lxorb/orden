@@ -596,6 +596,10 @@ export const ru: Dictionary = {
   'Swipe in from the edge to see your notes.': 'Проведите от края, чтобы увидеть заметки.',
   'Point at the edge of the window to see your notes.':
     'Наведите указатель на край окна, чтобы увидеть заметки.',
+  Sidebars: 'Боковые панели',
+  'Sidebar toggles inside the sidebars': 'Переключатели боковых панелей внутри панелей',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'Переключатель каждой боковой панели находится в ней, а правая панель выезжает у своего края окна.',
   'Show other tabs as icons': 'Показывать остальные вкладки значками',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Все вкладки, кроме передней, показывают только значок; при наведении появляется название.',

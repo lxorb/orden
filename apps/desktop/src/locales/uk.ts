@@ -596,6 +596,10 @@ export const uk: Dictionary = {
   'Swipe in from the edge to see your notes.': 'Проведіть від краю, щоб побачити нотатки.',
   'Point at the edge of the window to see your notes.':
     'Наведіть вказівник на край вікна, щоб побачити нотатки.',
+  Sidebars: 'Бічні панелі',
+  'Sidebar toggles inside the sidebars': 'Перемикачі бічних панелей усередині панелей',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'Перемикач кожної бічної панелі розташований у ній, а права панель висувається біля свого краю вікна.',
   'Show other tabs as icons': 'Показувати інші вкладки значками',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Кожна вкладка, крім передньої, показує лише значок; якщо навести на неї, з’являється назва.',

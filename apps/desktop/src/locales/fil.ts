@@ -579,6 +579,10 @@ export const fil: Dictionary = {
     'Mag-swipe papasok mula sa gilid para makita ang iyong mga tala.',
   'Point at the edge of the window to see your notes.':
     'Itutok ang pointer sa gilid ng window para makita ang iyong mga tala.',
+  Sidebars: 'Mga sidebar',
+  'Sidebar toggles inside the sidebars': 'Mga toggle ng sidebar sa loob ng mga sidebar',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'Nasa loob ng bawat sidebar ang toggle nito, at lumalabas ang kanang sidebar sa gilid nito ng window.',
   'Show other tabs as icons': 'Ipakita ang ibang tab bilang icon',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Bawat tab maliban sa nasa harap ay icon lang ang ipinapakita; kapag tinuro ang isa, lalabas ang pangalan nito.',

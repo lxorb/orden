@@ -578,6 +578,10 @@ export const ha: Dictionary = {
   'Swipe in from the edge to see your notes.': 'Goge daga gefe zuwa ciki don ganin bayananka.',
   'Point at the edge of the window to see your notes.':
     'Kai alamar linzami gefen taga don ganin bayananka.',
+  Sidebars: 'Gefen mashaya',
+  'Sidebar toggles inside the sidebars': 'Maɓallan gefen mashaya a cikin gefen mashayan',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'Maɓallin kowane gefen mashaya yana cikinsa, kuma gefen mashaya na dama yana fitowa a gefensa na taga.',
   'Show other tabs as icons': 'Nuna sauran shafuka a matsayin gumaka',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Kowane shafi banda na gaba yana nuna gumakinsa kawai; idan ka nuna ɗaya, sunansa zai bayyana.',

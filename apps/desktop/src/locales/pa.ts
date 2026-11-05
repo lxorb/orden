@@ -576,6 +576,10 @@ export const pa: Dictionary = {
   'Swipe in from the edge to see your notes.': 'ਆਪਣੇ ਨੋਟ ਦੇਖਣ ਲਈ ਕਿਨਾਰੇ ਤੋਂ ਅੰਦਰ ਸਵਾਈਪ ਕਰੋ।',
   'Point at the edge of the window to see your notes.':
     'ਆਪਣੇ ਨੋਟ ਦੇਖਣ ਲਈ ਪੁਆਇੰਟਰ ਨੂੰ ਵਿੰਡੋ ਦੇ ਕਿਨਾਰੇ ਉੱਤੇ ਲੈ ਜਾਓ।',
+  Sidebars: 'ਪਾਸੇ ਦੀਆਂ ਪੱਟੀਆਂ',
+  'Sidebar toggles inside the sidebars': 'ਪਾਸੇ ਦੀ ਪੱਟੀ ਦੇ ਟੌਗਲ ਪੱਟੀਆਂ ਦੇ ਅੰਦਰ',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'ਹਰ ਪਾਸੇ ਦੀ ਪੱਟੀ ਦਾ ਟੌਗਲ ਉਸਦੇ ਅੰਦਰ ਹੁੰਦਾ ਹੈ, ਅਤੇ ਸੱਜੀ ਪੱਟੀ ਵਿੰਡੋ ਦੇ ਉਸ ਕਿਨਾਰੇ ਤੋਂ ਬਾਹਰ ਆਉਂਦੀ ਹੈ।',
   'Show other tabs as icons': 'ਹੋਰ ਟੈਬ ਆਈਕਨ ਵਜੋਂ ਦਿਖਾਓ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ਅੱਗੇ ਵਾਲੀ ਤੋਂ ਬਿਨਾਂ ਹਰ ਟੈਬ ਸਿਰਫ਼ ਆਪਣਾ ਆਈਕਨ ਦਿਖਾਉਂਦੀ ਹੈ; ਕਿਸੇ ਉੱਤੇ ਪੁਆਇੰਟਰ ਲਿਆਉਣ ਨਾਲ ਨਾਂ ਦਿਖਦਾ ਹੈ।',

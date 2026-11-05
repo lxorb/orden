@@ -580,6 +580,10 @@ export const ml: Dictionary = {
     'നിങ്ങളുടെ കുറിപ്പുകൾ കാണാൻ അരികിൽ നിന്ന് അകത്തേക്ക് സ്വൈപ്പ് ചെയ്യുക.',
   'Point at the edge of the window to see your notes.':
     'നിങ്ങളുടെ കുറിപ്പുകൾ കാണാൻ പോയിന്റർ വിൻഡോയുടെ അരികിലേക്ക് നീക്കുക.',
+  Sidebars: 'സൈഡ്‌ബാറുകൾ',
+  'Sidebar toggles inside the sidebars': 'സൈഡ്‌ബാർ ടോഗിളുകൾ സൈഡ്‌ബാറുകൾക്കുള്ളിൽ',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'ഓരോ സൈഡ്‌ബാറിന്റെയും ടോഗിൾ അതിനുള്ളിലാണ്, വലത്തെ സൈഡ്‌ബാർ വിൻഡോയുടെ ആ അരികിൽ നിന്ന് പുറത്തുവരും.',
   'Show other tabs as icons': 'മറ്റ് ടാബുകൾ ഐക്കണുകളായി കാണിക്കുക',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'മുന്നിലുള്ളതൊഴികെ ഓരോ ടാബും ഐക്കൺ മാത്രം കാണിക്കുന്നു; ഒന്നിലേക്ക് ചൂണ്ടുമ്പോൾ പേര് കാണാം.',

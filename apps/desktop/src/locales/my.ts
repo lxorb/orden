@@ -572,6 +572,10 @@ export const my: Dictionary = {
     'သင့်မှတ်စုများကို ကြည့်ရန် အစွန်းမှ အတွင်းသို့ ပွတ်ဆွဲပါ။',
   'Point at the edge of the window to see your notes.':
     'သင့်မှတ်စုများကို ကြည့်ရန် ညွှန်တံကို ဝင်းဒိုး၏ အစွန်းသို့ ရွှေ့ပါ။',
+  Sidebars: 'ဘေးတန်းများ',
+  'Sidebar toggles inside the sidebars': 'ဘေးတန်း ခလုတ်များကို ဘေးတန်းများအတွင်း',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'ဘေးတန်းတစ်ခုစီ၏ ခလုတ်သည် ၎င်းအတွင်း ရှိပြီး ညာဘေးတန်းသည် ဝင်းဒိုး၏ ထိုအစွန်းမှ ထွက်လာသည်။',
   'Show other tabs as icons': 'အခြားတဘ်များကို အိုင်ကွန်အဖြစ် ပြပါ',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ရှေ့ရှိတဘ်မှလွဲ၍ တဘ်တိုင်းသည် အိုင်ကွန်ကိုသာ ပြသည်၊ တစ်ခုကို ညွှန်လျှင် ၎င်း၏အမည် ပေါ်လာသည်။',

@@ -605,6 +605,10 @@ export const ar: Dictionary = {
   'Swipe in from the edge to see your notes.': 'اسحب من الحافة لترى ملاحظاتك.',
   'Point at the edge of the window to see your notes.':
     'حرّك المؤشر إلى حافة النافذة لترى ملاحظاتك.',
+  Sidebars: 'الأشرطة الجانبية',
+  'Sidebar toggles inside the sidebars': 'أزرار الأشرطة الجانبية داخلها',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'يوضع زر كل شريط جانبي داخله، ويظهر الشريط الجانبي الأيمن عند حافته من النافذة.',
   'Show other tabs as icons': 'اعرض علامات التبويب الأخرى كأيقونات',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'كل علامة تبويب غير التي في الواجهة تعرض أيقونتها فقط، وتظهر اسمها عند الإشارة إليها.',

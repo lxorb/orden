@@ -52,7 +52,7 @@ describe('the button that opens the file list', () => {
     ] as const) {
       expect(text, `${name} draws the glyph again`).not.toContain(PANEL)
       expect(text, `${name} uses the component`).toMatch(
-        /<SidebarToggle( unseen=\{swiped \|\| !viewport\.touch\})? \/>/,
+        /<SidebarToggle( unseen=\{swiped \|\| \(!viewport\.touch && sideToggles\.inside\)\})? \/>/,
       )
     }
   })
@@ -63,7 +63,7 @@ describe('the button that opens the file list', () => {
    *  The plus stays: a tab is how a note is written with no space yet. */
   test('is not in the bar while there is nothing to list', () => {
     expect(titlebar).toMatch(
-      /\{#if !listless && \(viewport\.touch \|\| !workspace\.openOn\('left'\)\)\}\s*<SidebarToggle unseen=\{swiped \|\| !viewport\.touch\} \/>/,
+      /\{#if !listless && \(viewport\.touch \|\| !sideToggles\.inside \|\| !workspace\.openOn\('left'\)\)\}\s*<SidebarToggle unseen=\{swiped \|\| \(!viewport\.touch && sideToggles\.inside\)\} \/>/,
     )
     expect(titlebar).toContain('!workspace.spaces.length && !workspace.tabs.length')
   })
@@ -126,7 +126,9 @@ describe('the button that opens the file list', () => {
   test('is in the drawer head exactly where the sidebar is a drawer', () => {
     const squeezed = sidebar.replace(/\s+/g, ' ')
 
-    expect(squeezed).toContain('{#if viewport.drawer || !viewport.touch} <SidebarToggle /> {/if}')
+    expect(squeezed).toContain(
+      '{#if viewport.drawer || (!viewport.touch && sideToggles.inside)} <SidebarToggle /> {/if}',
+    )
     expect(squeezed).toContain('{#if side === \'left\'} <div class="head"')
   })
 })
@@ -138,7 +140,7 @@ describe('the button that opens the file list', () => {
 describe("the sides' buttons on a desktop", () => {
   test('are in the sides', () => {
     expect(sidebar.replace(/\s+/g, ' ')).toContain(
-      '{#if side === \'right\' && !viewport.touch} <SidebarToggle side="right" /> {/if}',
+      '{#if side === \'right\' && !viewport.touch && sideToggles.inside} <SidebarToggle side="right" /> {/if}',
     )
   })
 
@@ -149,6 +151,17 @@ describe("the sides' buttons on a desktop", () => {
     )
     expect(squeezed).toContain(
       '{#if viewport.touch} {#if workspace.right.length} <SidebarToggle side="right" /> {/if}',
+    )
+  })
+
+  test('are in the bar, shown, unless the setting puts them in the sides', () => {
+    const squeezed = titlebar.replace(/\s+/g, ' ')
+    expect(squeezed).toContain(
+      '{:else if !sideToggles.inside} {#if workspace.right.length || !__EVEN_PLUGIN__} <SidebarToggle side="right" /> {/if}',
+    )
+    expect(read('lib/side-toggles.svelte.ts')).toContain("storedText(KEY) === 'yes'")
+    expect(read('lib/Sidebar.svelte')).toContain(
+      "if (viewport.touch || (side === 'right' && !sideToggles.inside)) return",
     )
   })
 

@@ -55,6 +55,7 @@
   import { SidebarWidth } from './sidebar-width.svelte'
   import { viewport } from './viewport.svelte'
   import { edgePeek, endPeek } from './edge-peek.svelte'
+  import { sideToggles } from './side-toggles.svelte'
   import { overlays } from './overlays'
   import { fullscreen } from './fullscreen.svelte'
   import { alone } from './alone.svelte'
@@ -214,7 +215,7 @@
   // Each side watches its own edge, and only with a pointer: a drawer has an edge of its
   // own, dragged by a finger.
   $effect(() => {
-    if (viewport.touch) return
+    if (viewport.touch || (side === 'right' && !sideToggles.inside)) return
     const stop = peeker.watch({
       may: () =>
         (side === 'left' ? workspace.panel === null : workspace.rightShows === null) &&
@@ -774,7 +775,7 @@
          it is, docked or brought out at the window's edge (#1038), and the bar keeps
          only what is the window's. A panel docked by a finger, which has no edge to
          hover, leaves the bar's own button where it is and has none of its own. -->
-        {#if viewport.drawer || !viewport.touch}
+        {#if viewport.drawer || (!viewport.touch && sideToggles.inside)}
           <SidebarToggle />
         {/if}
 
@@ -1021,7 +1022,7 @@
         <!-- The right side's own button, at the end of its first row, which is the window's
              edge it slides out of and back into (#1038): the bar keeps only what is the
              window's. A drawer from the right is put away by its scrim and the bar's. -->
-        {#if side === 'right' && !viewport.touch}
+        {#if side === 'right' && !viewport.touch && sideToggles.inside}
           <SidebarToggle side="right" />
         {/if}
       </div>

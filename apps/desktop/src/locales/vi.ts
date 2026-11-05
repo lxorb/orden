@@ -570,6 +570,10 @@ export const vi: Dictionary = {
   'Swipe in from the edge to see your notes.': 'Vuốt vào từ mép để xem ghi chú của bạn.',
   'Point at the edge of the window to see your notes.':
     'Đưa con trỏ tới mép cửa sổ để xem ghi chú của bạn.',
+  Sidebars: 'Thanh bên',
+  'Sidebar toggles inside the sidebars': 'Nút bật tắt thanh bên nằm trong thanh bên',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'Nút bật tắt của mỗi thanh bên nằm trong thanh đó, và thanh bên phải hiện ra ở mép đó của cửa sổ.',
   'Show other tabs as icons': 'Hiện các thẻ khác dưới dạng biểu tượng',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'Mọi thẻ trừ thẻ ở phía trước chỉ hiện biểu tượng; trỏ vào một thẻ sẽ thấy tên của nó.',

@@ -573,6 +573,10 @@ export const mr: Dictionary = {
   'Swipe in from the edge to see your notes.': 'तुमच्या नोंदी पाहण्यासाठी कडेपासून आत स्वाइप करा.',
   'Point at the edge of the window to see your notes.':
     'तुमच्या नोंदी पाहण्यासाठी पॉइंटर विंडोच्या कडेला न्या.',
+  Sidebars: 'साइडबार',
+  'Sidebar toggles inside the sidebars': 'साइडबारची टॉगल साइडबारच्या आत',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'प्रत्येक साइडबारचे टॉगल त्याच्या आत असते, आणि उजवा साइडबार विंडोच्या त्या कडेवरून बाहेर येतो.',
   'Show other tabs as icons': 'इतर टॅब चिन्हांच्या रूपात दाखवा',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'पुढच्या टॅबशिवाय प्रत्येक टॅब फक्त त्याचे चिन्ह दाखवतो; एकावर पॉइंटर नेल्यास त्याचे नाव दिसते.',

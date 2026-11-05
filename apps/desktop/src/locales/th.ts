@@ -570,6 +570,10 @@ export const th: Dictionary = {
   'Swipe in from the edge to see your notes.': 'ปัดเข้ามาจากขอบเพื่อดูโน้ตของคุณ',
   'Point at the edge of the window to see your notes.':
     'เลื่อนตัวชี้ไปที่ขอบหน้าต่างเพื่อดูโน้ตของคุณ',
+  Sidebars: 'แถบข้าง',
+  'Sidebar toggles inside the sidebars': 'ปุ่มสลับแถบข้างอยู่ในแถบข้าง',
+  'Each sidebar’s toggle sits in the sidebar, and the right sidebar comes out at its edge of the window.':
+    'ปุ่มสลับของแถบข้างแต่ละอันอยู่ในแถบข้าง และแถบข้างขวาจะเลื่อนออกมาที่ขอบหน้าต่างด้านนั้น',
   'Show other tabs as icons': 'แสดงแท็บอื่นเป็นไอคอน',
   'Every tab but the one in front shows only its icon; pointing at one shows its name.':
     'ทุกแท็บยกเว้นแท็บด้านหน้าแสดงแค่ไอคอน ชี้ที่แท็บใดก็จะเห็นชื่อ',
