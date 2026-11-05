@@ -15,6 +15,7 @@ import type { Camera } from '../camera'
 import { identifier } from '../identifier'
 import { t } from '../i18n.svelte'
 import { draftName, shownName, TITLE_CHARS } from '../note-name'
+import { oneEdit } from '@orden/markdown/edits'
 import { applied, appliedToFile, type Edit, flatEdits } from '../search/replace'
 import { samePath } from '../space-paths'
 import { type TabKind, TAB_KINDS } from './tab-kinds'
@@ -67,6 +68,18 @@ export function holdsWords(kind: TabKind): boolean {
  *  every offset into a note is an offset into them. */
 export function unixLines(text: string): string {
   return text.includes('\r') ? text.replace(/\r\n?/g, '\n') : text
+}
+
+/** Edits worked out on `before`, in the editor's count of its line endings and with its
+ *  line endings in what they put in. Words held in the editor's endings (`unixLines`)
+ *  meeting edits that put in a file's `\r\n` - a file's whole text worked out against
+ *  them - are taken as the one change from those words to the result's. */
+function inEditorCount(before: string, edits: readonly Edit[]): { words: string; edits: Edit[] } {
+  if (before.includes('\r') || !edits.some((one) => one.insert.includes('\r'))) {
+    return flatEdits(before, edits)
+  }
+  const one = oneEdit(before, unixLines(applied(before, edits)))
+  return { words: before, edits: one ? [one] : [] }
 }
 
 export interface DocumentStart {
@@ -356,7 +369,7 @@ export class NoteDoc {
    *  on its fourth line, inside the date (#1110). */
   edited(changes: readonly { from: number; to: number; insert: string }[], text: string) {
     const from = text.includes('\r') ? this.asFile() : this.words
-    this.applyLive(flatEdits(from, changes).edits, text)
+    this.applyLive(inEditorCount(from, changes).edits, text)
   }
 
   /** Edits worked out on `before` - these words as somebody read them a moment ago,
@@ -367,7 +380,7 @@ export class NoteDoc {
   take(edits: readonly Edit[], before: string): { text: string; edits: Edit[]; flat: string } {
     this.flush()
     const flat = this.words
-    const worked = flatEdits(before, edits)
+    const worked = inEditorCount(before, edits)
     const file = this.asFile(before)
     const carried = this.live.carried(worked.edits, worked.words, true) ?? worked.edits
     const text = file === flat ? applied(flat, carried) : appliedToFile(file, carried)
