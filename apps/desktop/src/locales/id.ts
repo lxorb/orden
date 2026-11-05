@@ -1284,6 +1284,8 @@ export const id: Dictionary = {
   Share: 'Bagikan',
   'Share {name}': 'Bagikan {name}',
   'Share this space': 'Bagikan ruang ini',
+  'Export this space as Markdown and folders': 'Ekspor ruang ini sebagai Markdown dan folder',
+  'Turn this space back into a folder': 'Kembalikan ruang ini menjadi folder',
   'Share this note': 'Bagikan catatan ini',
   'Everyone in the space already has it.': 'Semua orang di ruang ini sudah punya.',
   'Remove from your list': 'Hapus dari daftar Anda',

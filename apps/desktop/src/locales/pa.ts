@@ -1292,6 +1292,8 @@ export const pa: Dictionary = {
   Share: 'ਸਾਂਝਾ ਕਰੋ',
   'Share {name}': '{name} ਸਾਂਝਾ ਕਰੋ',
   'Share this space': 'ਇਹ ਥਾਂ ਸਾਂਝੀ ਕਰੋ',
+  'Export this space as Markdown and folders': 'ਇਹ ਥਾਂ Markdown ਅਤੇ ਫੋਲਡਰਾਂ ਵਜੋਂ ਐਕਸਪੋਰਟ ਕਰੋ',
+  'Turn this space back into a folder': 'ਇਸ ਥਾਂ ਨੂੰ ਮੁੜ ਫੋਲਡਰ ਬਣਾਓ',
   'Share this note': 'ਇਹ ਨੋਟ ਸਾਂਝੀ ਕਰੋ',
   'Everyone in the space already has it.': 'ਥਾਂ ਵਿੱਚ ਸਭ ਕੋਲ ਪਹਿਲਾਂ ਹੀ ਹੈ।',
   'Remove from your list': 'ਆਪਣੀ ਸੂਚੀ ਤੋਂ ਹਟਾਓ',

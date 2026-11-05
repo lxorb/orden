@@ -94,7 +94,7 @@ import { shortcuts } from './shortcuts.svelte'
 import { toggleFill } from './tab-fill/fill'
 import { fullscreen } from './fullscreen.svelte'
 import { ISSUES_URL, RELEASES_URL, SOURCE_URL } from './links'
-import { closeWindow, invoke, isDesktop, isNative, openExternal } from './tauri'
+import { closeWindow, internal, invoke, isDesktop, isNative, openExternal } from './tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
 import { theme } from './theme.svelte'
 import { viewport } from './viewport.svelte'
@@ -1064,6 +1064,36 @@ function spaceCommands(): Command[] {
     { id: 'new-space', label: t('New space'), run: () => void newSpace() },
     ...(canShare(space)
       ? [{ id: 'share', label: t('Share this space'), run: () => void shareSpace(space) }]
+      : []),
+    // The whole space as files anybody can read, into a folder picked for it (#1068):
+    // how a space Orden keeps itself is taken anywhere else, offered for such a space
+    // alone, since a folder is files already. See internal/export.ts.
+    ...(isDesktop && !__EVEN_PLUGIN__ && internal.routed?.('read_tree', { root: space.root })
+      ? [
+          {
+            id: 'export-space',
+            label: t('Export this space as Markdown and folders'),
+            run: () =>
+              busy.start(t('Exporting'), async () => {
+                const { exportSpace } = await import('./internal/export')
+                await exportSpace(space.root, space.name)
+              }),
+          },
+        ]
+      : []),
+    // A space made of a folder on this device, that folder again (#1068); see
+    // internal/convert.ts.
+    ...(internal.madeOf?.(space.root)
+      ? [
+          {
+            id: 'space-to-folder',
+            label: t('Turn this space back into a folder'),
+            run: () =>
+              void import('./internal/convert').then(({ revertSpace }) =>
+                revertSpace(workspace, space.id),
+              ),
+          },
+        ]
       : []),
     // And the one document in front of the reader, which is the other size of the
     // same act. Offered only where there is one and it can be shared; see

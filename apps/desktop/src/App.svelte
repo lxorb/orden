@@ -186,6 +186,8 @@
       (padDocked && pad.on) ||
       (startup.reached('right') && (workspace.nextRight !== null || padDocked))),
   )
+  /** How wide the panes are drawn, which the strips in the bar line up with (#1037). */
+  let panesWide = $state(0)
   let palette = $state(false)
   /** The palette itself, for the one thing a flag cannot say: Ctrl+Shift+P opens it
    *  on the commands, which is a `>` in its field and a caret after it. */
@@ -1195,7 +1197,13 @@
       <div class="body">
         <!-- One pane, or up to four of them; see PaneTree.svelte. Anything slow
              enough to be waited for draws a line along the top of them. -->
-        <div class="panes" data-panes class:under-pad={padOver} inert={padOver}>
+        <div
+          class="panes"
+          data-panes
+          class:under-pad={padOver}
+          inert={padOver}
+          bind:clientWidth={panesWide}
+        >
           <Progress />
           <!-- What the app says about itself, over the foot of the panes rather than
                shoving them up (#218); a web page is cut round it (web-tab/covers.ts).
@@ -1343,6 +1351,7 @@
 
 {#snippet bar()}
   <Titlebar
+    panes={panesWide}
     onpalette={() => {
       palette = true
     }}

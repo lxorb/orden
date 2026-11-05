@@ -1292,6 +1292,8 @@ export const tr: Dictionary = {
   Share: 'Paylaş',
   'Share {name}': '{name} paylaş',
   'Share this space': 'Bu alanı paylaş',
+  'Export this space as Markdown and folders': 'Bu alanı Markdown ve klasörler olarak dışa aktar',
+  'Turn this space back into a folder': 'Bu alanı yeniden klasöre çevir',
   'Share this note': 'Bu notu paylaş',
   'Everyone in the space already has it.': 'Alandaki herkeste zaten var.',
   'Remove from your list': 'Listenizden kaldır',

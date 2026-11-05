@@ -1285,6 +1285,8 @@ export const ms: Dictionary = {
   Share: 'Kongsi',
   'Share {name}': 'Kongsi {name}',
   'Share this space': 'Kongsi ruang ini',
+  'Export this space as Markdown and folders': 'Eksport ruang ini sebagai Markdown dan folder',
+  'Turn this space back into a folder': 'Kembalikan ruang ini kepada folder',
   'Share this note': 'Kongsi nota ini',
   'Everyone in the space already has it.': 'Semua orang dalam ruang ini sudah ada.',
   'Remove from your list': 'Buang daripada senarai anda',

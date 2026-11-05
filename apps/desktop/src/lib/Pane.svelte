@@ -32,7 +32,7 @@
   import { alone } from './alone.svelte'
   import { isDeck } from '@orden/markdown/slide-breaks'
   import type { Tab } from './workspace.svelte'
-  import type { Pane } from './workspace/pane-tree'
+  import { type Pane, panesIn, topRow } from './workspace/pane-tree'
   import type { Landing } from './workspace/panes.svelte'
   import { TAB_KINDS } from './workspace/tab-kinds'
   import { dragged, isTreeDrag } from './drag-paths'
@@ -110,8 +110,16 @@
   })
   /** The strips live in the panes as soon as there is more than one of them.
    *  With one pane the window's own strip is in the titlebar, where a browser
-   *  puts it and where it has been all along - as it is for a pane filling the window. */
-  const stripped = $derived(workspace.panes.count > 1 && !workspace.panes.fills && !alone.on)
+   *  puts it and where it has been all along - as it is for a pane filling the window.
+   *  Split, so are the strips of the panes along the top, each over its pane, so the
+   *  window keeps one top row (#1037; TopStrips.svelte); a pane under another one
+   *  carries its own. */
+  const stripped = $derived(
+    workspace.panes.count > 1 &&
+      !workspace.panes.fills &&
+      !alone.on &&
+      !panesIn(topRow(workspace.panes.frame)).some((one) => one.id === pane.id),
+  )
   /** Whether what is showing takes a dropped note itself; see `answers`. A terminal
    *  types its path. */
   const ownSurface = $derived(!!tab && TAB_KINDS[tab.kind].takesDrops)

@@ -229,3 +229,21 @@ export function paneToward(frame: Frame, id: string, toward: Toward): Pane | nul
 
   return best?.place.pane ?? null
 }
+
+/** The frame as the window's top row sees it: every split side by side kept whole, and
+ *  of a split one above the other only its upper side, since that is the side touching
+ *  the bar. Its panes are the ones whose strips are the bar's (#1037), left to right;
+ *  every other pane carries its strip on its own card. */
+export function topRow(frame: Frame): Frame {
+  if (frame.kind === 'pane') return frame
+  if (frame.along === 'column') return topRow(frame.sides[0])
+  return { ...frame, sides: [topRow(frame.sides[0]), topRow(frame.sides[1])] }
+}
+
+/** The tracks of a split's grid: the two sides' shares of what is left once the room
+ *  between them is taken. Shares of the whole and the room besides made the split wider
+ *  than its room, under the right side by that much (#1076). One rule for the panes and
+ *  for the strips over them in the bar, so a strip is as wide as its pane (#1037). */
+export function tracks(split: Split): string {
+  return `minmax(0, ${split.fraction.toFixed(5)}fr) var(--card-gap) minmax(0, ${(1 - split.fraction).toFixed(5)}fr)`
+}

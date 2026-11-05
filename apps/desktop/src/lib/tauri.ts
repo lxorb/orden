@@ -66,12 +66,35 @@ if (isNative) void import('./native')
 export const asking = new Map<number, { command: string; at: number }>()
 let calls = 0
 
+/** The spaces a desktop keeps itself (#1068): what says whether a call names one, and
+ *  where a file in one is, set by the first one mounted (internal/roots.ts). Nothing of
+ *  that is loaded before, so a desktop with none asks nothing more than it did. */
+export const internal: {
+  routed: ((command: string, args?: Record<string, unknown>) => boolean) | null
+  file: ((path: string) => string | null) | null
+  /** What each one has not written down yet, written down: on the way out. */
+  flush: (() => Promise<void>) | null
+  /** The folder a space at `root` was made of, where it was made of one and can be
+   *  turned back into it (internal/convert.ts). */
+  madeOf: ((root: string) => string | undefined) | null
+} = { routed: null, file: null, flush: null, madeOf: null }
+
+/** The commands about the spaces themselves, which a desktop answers with the spaces it
+ *  keeps itself beside the crate's folders (internal/spaces.ts). */
+const SPACE_COMMANDS = new Set(['list_spaces', 'create_space', 'rename_space', 'delete_space'])
+
 /** The browser build answers the same commands from its own storage, so every
- *  call site reads the same on all three. */
+ *  call site reads the same on all three - and so does a space a desktop keeps itself,
+ *  whose file commands are answered by those same commands over its own folder
+ *  (internal/route.ts, #1068). */
 export async function invoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   if (!isNative) {
     const { webInvoke } = await import('./web/commands')
     return webInvoke<T>(command, args)
+  }
+  if (internal.routed?.(command, args) || (isDesktop && SPACE_COMMANDS.has(command))) {
+    const { internalInvoke } = await import('./internal/route')
+    return internalInvoke<T>(command, args)
   }
 
   const call = ++calls
@@ -198,7 +221,9 @@ export function assetUrl(path: string): string {
     window as unknown as { __TAURI_INTERNALS__?: { convertFileSrc?: (p: string) => string } }
   ).__TAURI_INTERNALS__
 
-  return internals?.convertFileSrc?.(path) ?? path
+  // A picture in a space Orden keeps itself is a file under a name of its own.
+  const file = internal.file?.(path) ?? path
+  return internals?.convertFileSrc?.(file) ?? file
 }
 
 /** What the asset protocol's addresses look like on the way back. Two shapes,

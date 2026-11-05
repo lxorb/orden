@@ -26,6 +26,8 @@ import {
   watchSpaces,
 } from '../space-watch'
 import { carriedOwn } from '@orden/bases/inbox'
+import { keptShaped } from '../internal/roots'
+import { hearInternal, listInternal, mountedFor } from '../internal/watch'
 import { inForeignCopy } from '@orden/sync-core/foreign'
 import { t } from '../i18n.svelte'
 import { syncMark } from '../surfaces.svelte'
@@ -167,11 +169,38 @@ export function watchFolders(how: Watching): Watched {
     void drain()
   }
 
+  // A space Orden keeps itself is heard from its own folder, which says every change
+  // exactly, and read whole once as it is first heard, for whatever changed before
+  // (#1068). Its root is none of the crate's to watch: nothing is at it on the disk.
+  const inside = new Map<string, () => void>()
+  const hearInside = (roots: readonly string[]) => {
+    for (const [root, stop] of inside) {
+      if (roots.includes(root)) continue
+      stop()
+      inside.delete(root)
+    }
+    for (const root of roots) {
+      if (inside.has(root)) continue
+      const stop = hearInternal(root, (changes) => {
+        heard({ root, changes, scan: false, gone: false })
+      })
+      if (!stop) {
+        // One the launch has not mounted yet: heard once it is, and never the crate's.
+        if (keptShaped(root)) void mountedFor(root).then((yes) => yes && follow())
+        continue
+      }
+      inside.set(root, stop)
+      heard({ root, changes: [], scan: true, gone: false })
+    }
+  }
+
   // The roots watched, said as one string so a follow that changes nothing does nothing.
   let watched: string | null = null
   const follow = () => {
     if (stopped) return
-    const roots = [...how.engine.core.spaces.values()].map((space) => space.row.root).sort()
+    const all = [...how.engine.core.spaces.values()].map((space) => space.row.root).sort()
+    hearInside(all)
+    const roots = all.filter((root) => !inside.has(root) && !keptShaped(root))
     const said = JSON.stringify(roots)
     if (said === watched) return
     watched = said
@@ -191,6 +220,8 @@ export function watchFolders(how: Watching): Watched {
     },
     stop: () => {
       stopped = true
+      for (const stop of inside.values()) stop()
+      inside.clear()
       void unwatchSpaces().catch(() => undefined)
     },
   }
@@ -283,7 +314,10 @@ export async function scanned(how: Watching, root: string): Promise<void> {
   const engine = how.engine
   const space = spaceAt(engine, root)
   if (!space || !how.ready(space.id)) return
-  const listed = await scanSpace(root)
+  // A kept space not mounted is no folder to list: a listing of nothing there would
+  // read as everything in it deleted.
+  const listed = (await listInternal(root)) ?? (keptShaped(root) ? null : await scanSpace(root))
+  if (!listed) return
   const seen = new Set<string>()
   /** The folders the listing could not read into: nothing under them is known to be gone. */
   const unread: string[] = []

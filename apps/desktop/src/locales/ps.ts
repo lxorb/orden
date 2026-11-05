@@ -1286,6 +1286,8 @@ export const ps: Dictionary = {
   Share: 'شريکول',
   'Share {name}': '{name} شريکول',
   'Share this space': 'دا ځای شريکول',
+  'Export this space as Markdown and folders': 'دا ځای د Markdown او فولډرونو په توګه صادرول',
+  'Turn this space back into a folder': 'دا ځای بېرته فولډر کړئ',
   'Share this note': 'دا يادښت شريکول',
   'Everyone in the space already has it.': 'په ځای کې هر څوک دمخه لري.',
   'Remove from your list': 'له خپل لړ ليرې کول',

@@ -1326,6 +1326,8 @@ export const uk: Dictionary = {
   Share: 'Поділитися',
   'Share {name}': 'Поділитися {name}',
   'Share this space': 'Поділитися простором',
+  'Export this space as Markdown and folders': 'Експортувати простір у Markdown і теки',
+  'Turn this space back into a folder': 'Знову зробити простір текою',
   'Share this note': 'Поділитися нотаткою',
   'Everyone in the space already has it.': 'У всіх у просторі вона вже є.',
   'Remove from your list': 'Прибрати зі свого списку',

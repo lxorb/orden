@@ -140,6 +140,7 @@ export const APP_FOLDERS = [
   'foreign',
   'glass',
   'import',
+  'internal',
   'mobile',
   'online',
   'overview',
@@ -629,11 +630,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  1,000,000, the menu's and the setting's words in every language, measured 999,745; the
  *  styles to 288,800, measured 288,696. Then the code to 6,053,400 and the catalogues to
  *  1,003,400 for dictation's engines and keys, measured 6,053,129 and 1,003,220.
+ *
+ *  Raised on 2026-11-05 as #1068's kept spaces came to claude/hunt-round-1, as unstable
+ *  raised its own: the code to 6,111,000, measured 6,110,700; the catalogues to 1,004,400,
+ *  measured 1,004,236; the styles to 289,500, measured 289,408.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_053_400,
-  catalogues: 1_003_400,
-  styles: 288_800,
+  code: 6_111_000,
+  catalogues: 1_004_400,
+  styles: 289_500,
   fonts: 260_000,
   pages: 40_000,
 }

@@ -1264,6 +1264,8 @@ export const zhHantHK: Dictionary = {
   Share: '分享',
   'Share {name}': '分享{name}',
   'Share this space': '分享此空間',
+  'Export this space as Markdown and folders': '將此空間匯出為 Markdown 及資料夾',
+  'Turn this space back into a folder': '將此空間變回資料夾',
   'Share this note': '分享此筆記',
   'Everyone in the space already has it.': '此空間裏的每個人都已經有了。',
   'Remove from your list': '從你的列表移除',

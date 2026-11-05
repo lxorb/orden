@@ -1307,6 +1307,8 @@ export const ptPT: Dictionary = {
   Share: 'Partilhar',
   'Share {name}': 'Partilhar {name}',
   'Share this space': 'Partilhar este espaço',
+  'Export this space as Markdown and folders': 'Exportar este espaço como Markdown e pastas',
+  'Turn this space back into a folder': 'Voltar a fazer deste espaço uma pasta',
   'Share this note': 'Partilhar esta nota',
   'Everyone in the space already has it.': 'Todos no espaço já a têm.',
   'Remove from your list': 'Remover da lista',

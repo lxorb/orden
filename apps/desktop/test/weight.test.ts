@@ -1340,9 +1340,12 @@ function holds(tail: string): boolean {
  *
  *  Raised on 2026-11-05, to 3,725,700, as #1127's unloaded tabs came to
  *  claude/hunt-round-1. Measured 3,725,488, 398 modules. Then to 3,726,200 for
- *  dictation's keys, measured 3,725,927. */
-const BUDGET = 3_726_200
-const MOST_FILES = 399
+ *  dictation's keys, measured 3,725,927.
+ *
+ *  Raised on 2026-11-05, to 3,745,700 and 400 modules, as #1068's kept spaces came to
+ *  claude/hunt-round-1, as unstable raised its own. Measured 3,745,458, 400 modules. */
+const BUDGET = 3_745_700
+const MOST_FILES = 401
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

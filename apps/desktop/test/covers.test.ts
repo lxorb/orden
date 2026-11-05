@@ -207,3 +207,65 @@ test('nothing is excused that is in the registry after all, or is no layer any m
     ).toBe(true)
   }
 })
+
+/** And a bubble is drawn over the window, never inside what holds it (#1129).
+ *
+ *  A bubble placed `position: absolute` against the element it is about is drawn inside
+ *  every box that holds that element and cut by the first that clips: the sentence
+ *  behind the `?` after a name in Settings > AI was a strip the height of the name, cut
+ *  by a row that keeps its names to one line. So every element in the bubble's shape is
+ *  placed in the window's own coordinates, `position: fixed` - hung from what it is
+ *  about by `use:hang` (lib/portal.ts), which also takes it out of every holder, or placed
+ *  by its own sums - and nothing places one `absolute`. */
+/** Bubbles still placed against what they are about, each with why nothing cuts it. */
+const PLACED_INSIDE: Record<string, string> = {
+  'lib/web-tab/WebAsk.svelte .ask':
+    'under a web tab’s bar, inside the tab it is about, which it never leaves',
+  'lib/web-tab/WebDialog.svelte .dialog': 'under a web tab’s bar: see WebAsk',
+  'lib/web-tab/WebDownloads.svelte .downloads': 'under a web tab’s bar: see WebAsk',
+  'lib/web-tab/WebExtensionPopup.svelte .popup.sized': 'under a web tab’s bar: see WebAsk',
+  'lib/web-tab/WebExtensions.svelte .extensions': 'under a web tab’s bar: see WebAsk',
+  'lib/web-tab/WebSite.svelte .site': 'under a web tab’s bar: see WebAsk',
+}
+
+test('every bubble is placed in the window, where nothing that holds it can cut it', () => {
+  const OWN = new Set(['nib-bubble', 'is-pressable', 'nib-host'])
+  const bubbles: string[] = []
+  const cut: string[] = []
+  for (const path of components(SRC)) {
+    const file = path.slice(SRC.length).replaceAll('\\', '/')
+    const source = readFileSync(path, 'utf8')
+    const tree = parse(source, { modern: true })
+    const placing = [...rules(tree.css?.children ?? [])].map((rule) => ({
+      subjects: subjects(source.slice(rule.prelude.start, rule.prelude.end).replace(/\s+/g, ' ')),
+      body: source.slice(rule.block.start, rule.block.end),
+    }))
+    for (const { node } of elements(tree.fragment)) {
+      const classes = classesOf(node)
+      if (!classes.includes('nib-bubble')) continue
+      const own = classes.filter((one) => !OWN.has(one))
+      const key = `${file} .${own.join('.') || 'nib-bubble'}`
+      bubbles.push(key)
+      if (key in PLACED_INSIDE) continue
+      const bodies = placing
+        .filter((rule) =>
+          rule.subjects.some(
+            (subject) =>
+              subject.some((one) => own.includes(one)) &&
+              subject.every((one) => classes.includes(one)),
+          ),
+        )
+        .map((rule) => rule.body)
+      if (bodies.some((body) => /position:\s*absolute/.test(body))) cut.push(`${key}: absolute`)
+      else if (!bodies.some((body) => /position:\s*fixed/.test(body)))
+        cut.push(`${key}: not placed in the window`)
+      const hung = (node.attributes ?? []).some(
+        (one) => one.type === 'UseDirective' && one.name === 'hang',
+      )
+      if (hung && !bodies.some((body) => /position:\s*fixed/.test(body)))
+        cut.push(`${key}: hung, but not fixed`)
+    }
+  }
+  expect(bubbles.length).toBeGreaterThan(12)
+  expect(cut).toEqual([])
+})

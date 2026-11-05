@@ -80,7 +80,10 @@ LOOK = """
     fills: window.nibApp.workspace.panes.fills,
     sidebar: !!document.querySelector('aside'),
     panes: [...document.querySelectorAll('[data-pane]')].map((one) => one.dataset.pane),
-    strips: document.querySelectorAll('[data-pane] > .head').length,
+    // A pane's own, or its strip in the window's top row (#1037), but not the one in the
+    // bar a filled window brings down from the top edge.
+    strips: [...document.querySelectorAll('[data-pane] > .head, header [data-top-strip]')]
+      .filter((one) => !one.closest('.bar')).length,
     status: !!document.querySelector('[data-region="status"]'),
     pane: box(document.querySelector('[data-pane]')),
     window: [window.innerWidth, window.innerHeight],

@@ -27,6 +27,13 @@ function field(props: Record<string, unknown> = {}) {
   return input
 }
 
+/** The bubble under the field, which hangs at the end of the page while it is up
+ *  (portal.ts, #1129), or something in it. */
+function bubble(inside?: string): HTMLElement | null {
+  const reason = document.querySelector<HTMLElement>('.nib-bubble.reason')
+  return inside ? (reason?.querySelector<HTMLElement>(inside) ?? null) : reason
+}
+
 function typed(input: HTMLInputElement, words: string) {
   input.value = words
   input.dispatchEvent(new Event('input', { bubbles: true }))
@@ -48,15 +55,16 @@ afterEach(() => {
   close = undefined
   target.remove()
   reservedName.dismiss()
+  for (const one of document.querySelectorAll('.nib-bubble')) one.remove()
 })
 
 describe('a row named AGENTS', () => {
   test('says so in a bubble that is announced and can be pressed', () => {
     const input = field()
-    expect(target.querySelector('button')).toBeNull()
+    expect(bubble('button')).toBeNull()
 
     typed(input, 'agents')
-    const hint = target.querySelector('button')
+    const hint = bubble('button')
     expect(hint?.textContent).toContain('agent instructions')
     expect(hint?.closest('[aria-live="polite"]')).not.toBeNull()
     expect(input.getAttribute('aria-invalid')).toBe('true')
@@ -65,14 +73,14 @@ describe('a row named AGENTS', () => {
   test('another fault keeps its plain sentence', () => {
     const input = field()
     typed(input, 'a/b')
-    expect(target.querySelector('button')).toBeNull()
-    expect(target.querySelector('.reason')?.textContent).toContain('slash')
+    expect(bubble('button')).toBeNull()
+    expect(bubble()?.textContent).toContain('slash')
   })
 
   test('pressed, the bubble opens the space’s pane on its field, and the row writes nothing', async () => {
     const input = field()
     typed(input, 'AGENTS')
-    target.querySelector('button')?.click()
+    bubble('button')?.click()
     await flushed()
 
     expect(settings.open).toBe(true)
@@ -89,7 +97,7 @@ describe('a row named AGENTS', () => {
     input.focus()
 
     input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }))
-    const hint = target.querySelector('button')
+    const hint = bubble('button')
     expect(document.activeElement).toBe(hint)
     expect(oncancel).not.toHaveBeenCalled()
 
@@ -101,9 +109,7 @@ describe('a row named AGENTS', () => {
   test('Enter on the bubble goes where a press does', async () => {
     const input = field()
     typed(input, 'AGENTS')
-    target
-      .querySelector('button')
-      ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    bubble('button')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
     await flushed()
 
     expect(settings.section).toBe('space')
@@ -114,9 +120,7 @@ describe('a row named AGENTS', () => {
     const input = field()
     typed(input, 'AGENTS')
     input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }))
-    target
-      .querySelector('button')
-      ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    bubble('button')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
     expect(oncancel).toHaveBeenCalledTimes(1)
     expect(settings.open).toBe(false)
   })
@@ -142,7 +146,7 @@ describe('a row named AGENTS', () => {
 
   test('a note in a folder already called it renames with no hint in the way', () => {
     const input = field({ value: 'AGENTS', current: 'AGENTS.md' })
-    expect(target.querySelector('button')).toBeNull()
+    expect(bubble('button')).toBeNull()
     typed(input, 'Rules')
     input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
     expect(oncommit).toHaveBeenCalledWith('Rules.md')
@@ -151,7 +155,7 @@ describe('a row named AGENTS', () => {
   test('a folder may have the name', () => {
     const input = field({ extension: '', value: 'Plan' })
     typed(input, 'AGENTS')
-    expect(target.querySelector('button')).toBeNull()
+    expect(bubble('button')).toBeNull()
     input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
     expect(oncommit).toHaveBeenCalledWith('AGENTS')
   })

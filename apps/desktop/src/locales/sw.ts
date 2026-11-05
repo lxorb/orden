@@ -1297,6 +1297,8 @@ export const sw: Dictionary = {
   Share: 'Shiriki',
   'Share {name}': 'Shiriki {name}',
   'Share this space': 'Shiriki nafasi hii',
+  'Export this space as Markdown and folders': 'Hamisha nafasi hii kama Markdown na folda',
+  'Turn this space back into a folder': 'Rudisha nafasi hii kuwa folda',
   'Share this note': 'Shiriki dokezo hili',
   'Everyone in the space already has it.': 'Kila mtu katika nafasi anayo tayari.',
   'Remove from your list': 'Ondoa kwenye orodha yako',

@@ -40,10 +40,13 @@ afterEach(() => {
   if (shown) void unmount(shown)
   shown = undefined
   host.remove()
+  // A card on its way out is left at the end of the page: jsdom never finishes the fly.
+  for (const one of document.querySelectorAll('.nib-bubble')) one.remove()
 })
 
+/** The card, which hangs at the end of the page while it is up (portal.ts, #1129). */
 function card(): HTMLElement | null {
-  return host.querySelector('.hint')
+  return document.querySelector('.nib-bubble.hint')
 }
 
 test('a card drawn once the session has settled stays up', () => {
@@ -72,7 +75,7 @@ test('its cross puts it away', () => {
   shown = mount(HintCard, { target: host, props: { hint: 'graph', text: 'See them' } })
   flushSync()
 
-  host.querySelector<HTMLButtonElement>('.shut')?.click()
+  card()?.querySelector<HTMLButtonElement>('.shut')?.click()
   flushSync()
 
   // Gone, on its way out: jsdom never finishes the fly, so the store is what is asked.

@@ -11,6 +11,8 @@ import { INBOX_PATH } from '@orden/bases/inbox'
 import { api, BASE } from '../api'
 import { fileBytes, sha256, toBase64 } from '../bytes'
 import { deviceName } from '../device'
+import { keptShaped, mountOf } from '../internal/roots'
+import { mountedFor } from '../internal/watch'
 import { links } from '../link-index.svelte'
 import { evictedHere } from '../icloud-placeholder'
 import { onDisk } from '../on-disk'
@@ -148,6 +150,18 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[] | 
   const inside = (path: string): string | null => {
     const at = slashed(path)
     return at.startsWith(`${base}/`) ? at.slice(base.length + 1) : null
+  }
+  // A space Orden keeps itself is its folder's index, every file in it (#1068); one the
+  // launch has not mounted yet is waited for, and never listed as a folder with nothing.
+  const kept = (await mountedFor(root)) ? mountOf(root) : null
+  if (!kept && keptShaped(root)) throw new Error(`${root} is a space kept here, not mounted`)
+  if (kept) {
+    const top = kept.inside ? `${kept.inside}/` : ''
+    return (await kept.mount.folder.list()).flatMap(({ path, entry }) =>
+      path.startsWith(top) && path !== kept.inside
+        ? [{ path: path.slice(top.length), dir: !entry.key }]
+        : [],
+    )
   }
   // On a desktop, everything in the folder - pictures and recordings with the notes -
   // from the crate's own scan, which leaves out the dotted files that are the app's own.

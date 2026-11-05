@@ -460,15 +460,66 @@ const ownStats = {
     }),
 }
 
+/** Something deleted into a store's trash, as Recently deleted lists it: the desktop's
+ *  `TrashEntry` in trash.rs. */
+export interface Trashed {
+  id: string
+  kind: string
+  name: string
+  from: string
+  trashedAt: number
+  /** Deleted by sync, which leaves a PDF's highlights out of the slot; see trash.rs. */
+  apart?: boolean
+}
+
+/** What a store that keeps folders of its own does in one step (#1068, step 4c): a move
+ *  of a path with everything under it, and a delete of one. Rows written under the new
+ *  path and dropped under the old are a copy and a delete to such a store - every file
+ *  under a new identity - so the commands ask it for the step itself. */
+export interface TreeRows {
+  /** `from`, and everything under it, at `to`. Refuses a path that is taken. */
+  move(from: string, to: string): Promise<void>
+  /** `path` and everything under it gone. */
+  remove(path: string): Promise<void>
+  /** Recently deleted, kept beside the files rather than as rows of a trash folder, so
+   *  what comes back is what went. */
+  trash: {
+    /** What is at `path` into the trash as `item`, with what goes with it (`beside`, each
+     *  a path beginning with `path`'s: a PDF's highlights, a page note's paper). Answers
+     *  false where nothing is. */
+    take(path: string, item: Omit<Trashed, 'from'>, beside: readonly string[]): Promise<boolean>
+    /** Words that never had a file, as a note deleted from `path` would be. */
+    words(path: string, content: string, item: Omit<Trashed, 'from'>): Promise<void>
+    list(): Promise<Trashed[]>
+    /** One trashed thing back at `to`. */
+    restore(id: string, to: string): Promise<void>
+    purge(id: string): Promise<void>
+  }
+}
+
 /** The tables a store of rows keyed by path answers: this browser's own, above, or
- *  another mounted at a folder (`mountRows`). */
+ *  another mounted at a folder (`mountRows`), which may keep folders of its own. */
 export interface Rows {
   files: typeof ownFiles
   assets: typeof ownAssets
   stats: typeof ownStats
+  tree?: TreeRows
 }
 
 const OWN: Rows = { files: ownFiles, assets: ownAssets, stats: ownStats }
+
+/** This browser's own rows, where there are any: a desktop's files are the crate's, and
+ *  only a store mounted at a folder answers there, so a path under none of them is a
+ *  call that should have gone to the crate, refused rather than written into the
+ *  webview's storage where nothing would read it again. */
+const OWN_HERE: Rows | null = native() ? null : OWN
+
+/** Inside the Tauri app: `isNative` in tauri.ts, said again here rather than imported,
+ *  since the search worker reads these rows too and has no window and no use for what
+ *  that module brings with it. */
+function native(): boolean {
+  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+}
 
 /** Stores of rows mounted at a folder, by the folder: what is at or under it is theirs
  *  and not this browser's (#1068, step 4c). A space whose files Orden keeps itself, by
@@ -489,22 +540,45 @@ function under(root: string, path: string): boolean {
   return path === root || path.startsWith(root.endsWith('/') ? root : `${root}/`)
 }
 
-/** The rows a path is kept in: the deepest mount it is at or under, or this browser's. */
-function rowsAt(path: string): Rows {
-  let found: Rows = OWN
-  let depth = -1
+/** The rows a path is kept in, and where they are mounted: the deepest mount it is at
+ *  or under, or this browser's. */
+function mountAt(path: string): { root: string; rows: Rows } | null {
+  let found: { root: string; rows: Rows } | null = null
   for (const [root, rows] of mounts) {
-    if (root.length > depth && under(root, path)) {
-      found = rows
-      depth = root.length
-    }
+    if ((!found || root.length > found.root.length) && under(root, path)) found = { root, rows }
   }
   return found
 }
 
+function rowsAt(path: string): Rows {
+  const found = mountAt(path)?.rows ?? OWN_HERE
+  if (!found) throw new Error(`${path} is in no space kept here`)
+  return found
+}
+
+/** The tree of the store `from` and `to` are both kept in, where it keeps one: a move
+ *  or a delete within it is one step there. Null where either is in another store, or
+ *  the store keeps rows alone. */
+export function treeAt(from: string, to: string = from): TreeRows | null {
+  const one = mountAt(from)
+  if (!one?.rows.tree || mountAt(to)?.root !== one.root) return null
+  return one.rows.tree
+}
+
+/** Every store mounted with a tree of its own: whose trash Recently deleted lists too. */
+export function trees(): TreeRows[] {
+  return [...mounts.values()].flatMap((rows) => (rows.tree ? [rows.tree] : []))
+}
+
+/** Whether this browser keeps rows of its own here: not on a desktop, where only what is
+ *  mounted is rows. */
+export function keepsOwnRows(): boolean {
+  return OWN_HERE !== null
+}
+
 /** Every store of rows, this browser's first. */
 function everyRows(): Rows[] {
-  return [OWN, ...mounts.values()]
+  return [...(OWN_HERE ? [OWN_HERE] : []), ...mounts.values()]
 }
 
 /** What every store answers to a whole-store read, as one list in path order, which is

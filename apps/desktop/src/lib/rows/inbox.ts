@@ -5,7 +5,8 @@
  *  search, the link scan, the graph and Obsidian all leave it out. A task with no place
  *  puts no file into the space the reader did not make, and the inbox is still a note
  *  underneath: the rows read it (`own` in store.ts), the one write path edits it, sync
- *  carries it as a note (`carriedOwn`) and it is in any copy of the space's folder. A
+ *  carries it as a note (`carriedOwn`) and it is in any copy of the space's folder - or,
+ *  in a space Orden keeps itself, in that space's store alone (internal/folder.ts). A
  *  quick add that names no note lands there, and the Inbox view lists the open tasks of
  *  every space's inbox.
  *

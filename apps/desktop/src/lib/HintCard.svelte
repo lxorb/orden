@@ -14,6 +14,7 @@
   import Cross from './Cross.svelte'
   import { type Hint, hints } from './hints.svelte'
   import { t } from './i18n.svelte'
+  import { hang } from './portal'
   import { dur } from './motion'
 
   const {
@@ -43,8 +44,9 @@
 
 {#if hints.current === hint}
   <div
-    class="nib-bubble is-pressable hint {side}"
+    class="nib-bubble is-pressable hint"
     role="status"
+    use:hang={{ side, gap: 4, inset: '--space-2' }}
     transition:fly={{ y: side === 'above' ? 4 : -4, duration: dur(180), easing: cubicOut }}
   >
     <button class="say" onclick={press}>{text}</button>
@@ -55,23 +57,17 @@
 {/if}
 
 <style>
+  /* Beside its holder, `--space-2` in from its start, hung over the window rather
+     than inside the holder, which a column that clips or slides shut would cut it with
+     (#1129, portal.ts). */
   .hint {
-    position: absolute;
-    inset-inline-start: var(--space-2);
+    position: fixed;
     /* A step under the popovers: a hint shown while the list of spaces is open sits
        where that list's rows are, and a press there is the row's, not the hint's (#661). */
     z-index: calc(var(--z-popover) - 1);
     display: flex;
     align-items: center;
     gap: var(--space-1);
-  }
-
-  .above {
-    bottom: calc(100% + var(--space-1));
-  }
-
-  .below {
-    top: calc(100% + var(--space-1));
   }
 
   .say {

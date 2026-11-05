@@ -74,6 +74,17 @@ beforeEach(() => {
 })
 
 describe('the space a search holds', () => {
+  test("leaves the app's own notes out, warm or cold, as the crate's walk does", async () => {
+    write('.Inbox.md', '- [ ] wind the clock')
+    write('.nib/Draft.md', 'wind')
+
+    expect((await searched('wind')).names).toEqual(['Kestrel.md', 'Plan.md'])
+    await space.fill(ROOT)
+    expect((await searched('wind')).names).toEqual(['Kestrel.md', 'Plan.md'])
+    await space.rewritten(`${ROOT}/.Inbox.md`)
+    expect((await searched('wind')).names).toEqual(['Kestrel.md', 'Plan.md'])
+  })
+
   test('the first search reads the store and the next reads nothing', async () => {
     const cold = await searched('wind')
     expect(cold.names).toEqual(['Kestrel.md', 'Plan.md'])

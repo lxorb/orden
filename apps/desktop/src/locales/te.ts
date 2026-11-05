@@ -1292,6 +1292,9 @@ export const te: Dictionary = {
   Share: 'షేర్ చేయి',
   'Share {name}': '{name} షేర్ చేయి',
   'Share this space': 'ఈ స్పేస్ షేర్ చేయి',
+  'Export this space as Markdown and folders':
+    'ఈ స్పేస్‌ను Markdown మరియు ఫోల్డర్‌లుగా ఎగుమతి చేయి',
+  'Turn this space back into a folder': 'ఈ స్పేస్‌ను మళ్లీ ఫోల్డర్‌గా మార్చు',
   'Share this note': 'ఈ నోట్ షేర్ చేయి',
   'Everyone in the space already has it.': 'స్పేస్‌లోని అందరికీ ఇప్పటికే ఉంది.',
   'Remove from your list': 'మీ జాబితా నుండి తీసివేయి',

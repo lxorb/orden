@@ -1282,6 +1282,8 @@ export const my: Dictionary = {
   Share: 'မျှဝေပါ',
   'Share {name}': '{name} မျှဝေပါ',
   'Share this space': 'ဤနေရာကို မျှဝေပါ',
+  'Export this space as Markdown and folders': 'ဤနေရာကို Markdown နှင့် ဖိုင်တွဲများအဖြစ် ထုတ်ယူပါ',
+  'Turn this space back into a folder': 'ဤနေရာကို ဖိုင်တွဲအဖြစ် ပြန်ပြောင်းပါ',
   'Share this note': 'ဤမှတ်စုကို မျှဝေပါ',
   'Everyone in the space already has it.': 'နေရာအတွင်းရှိ အားလုံး ရပြီးဖြစ်သည်။',
   'Remove from your list': 'သင့်စာရင်းမှ ဖယ်ပါ',

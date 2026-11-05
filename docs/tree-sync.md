@@ -132,12 +132,101 @@ good - is made again under a new id with what its file says, never left unsent.
 
 ## Storage of its own
 
-A space whose files Orden keeps itself, by id, is to answer the same file commands a
-folder does (#1068, step 4c), through the browser build's own: its commands
+A space whose files Orden keeps itself answers the same file commands a folder does
+(#1068, step 4c), through the browser build's own: its commands
 (apps/desktop/src/lib/web/commands.ts) read and write rows keyed by path, and a store of
 rows can be mounted at a folder (`mountRows` in web/store.ts), so what is at or under it
 is that store's and not the browser's. A read of every row is every store's, in path
-order. Nothing is mounted yet: every row is the browser's, as it always was.
+order.
+
+Such a space is a folder of Orden's own (apps/desktop/src/lib/internal): every file's
+bytes are `.entries/<key>`, a key given when the file is made and never read a name off,
+and one index says which path each key is at, with the folders and the space's own
+Recently deleted. The index is written whole into the older of two slots, as a new file,
+so a write cut short leaves the one before; every window of the app changes it under one
+lock and tells the others, which read it again before they answer. A rename or a move is
+the index written again and no byte moves; a delete into the trash keeps the bytes, so
+what comes back from it comes back under its keys, and so under the ids the engine
+remembers it by (step 3a). Every change is said by what made it, exactly, as a folder's
+watcher would hear it (`heard`).
+
+On a desktop `invoke` sends the file commands for a path in such a space to those
+commands over its folder, and every path is turned into the browser's spelling on the way
+in and back on the way out (internal/route.ts); Recently deleted lists both sides. A call
+that would go from one such space to somewhere else is refused rather than made by the
+crate, and so is any path in no mounted store, so a call site that was missed fails
+loudly instead of writing where nothing of the space is. The engine's disk is the same
+commands, so its moves are index lines too, and the first pass of such a space lists the
+index.
+
+Nothing of the crate walks such a space (step 4c2): the engine hears its folder's own
+word on every change in place of the crate's watcher, and reads its index in place of
+the crate's listing when the watch begins (`hearInternal`, `listInternal`); the file
+list, the link scan and a PDF's highlights are the commands above; a search and the
+search held warm between two questions are the browser build's walk over the rows, on
+the window's thread, following the folder's word on every change (internal/search.ts).
+A shell is started where one with no folder starts, the Mac's Shortcuts keep adding to
+the inbox they had, and a PDF handed to Orden is refused there rather than written onto
+the disk at the space's address.
+
+Such a space's inbox (`.Inbox.md`, #1044) is a document only its store holds (step
+4c3): a line of its index and bytes under a key, never a file in a folder anybody else
+reads, and never a row of the list, a note of the link scan or a hit of the walk - the
+browser build's walks now leave the app's own dotted files out as the crate's always
+did, and a search finds the inbox once, by itself, on all three. Sync carries it as the
+note it has always been, under the name it has always had, so an older app and an older
+account see what they always saw; a space's hidden file is taken in with the rest of it
+when the space is converted (step 4e), and written out again by Export (step 4f).
+
+Where a device says so (`nib:keep-spaces` in the window's storage, step 4d), a new space
+is one of these: a folder of `.orden` in the spaces folder, named as the space, holding
+its bytes and its index hidden and one file named as the space too, which is the space's
+root - the address the rest of the app holds it by. A file, so nothing can be made under
+it: a call that reaches the crate with a path in the space by mistake fails out loud
+instead of writing beside the bytes. The crate lists a dotted folder as no space, so the
+spaces are listed by Orden beside the crate's folders, found as the folders of `.orden`
+whatever the device says, and mounted as they are found; a rename renames the folder
+and moves nothing in it, and a delete takes the folder whole into Recently deleted, from
+which it comes back whole. A note moved or copied between such a space and a folder is
+written where it goes, with its highlights or its paper, before it is taken from where
+it was; between two such spaces it goes as rows from one store into the other. A PDF
+handed to Orden is not yet brought into one.
+
+Where a device says so, each space that is still a folder becomes one of these too,
+once (step 4e, internal/convert.ts), at the last turn of the launch: every file the
+space holds - what the list shows, the papers page notes hold, every other file, and
+the inbox, but none of the app's other dotted files - is copied in under the path it
+had, read back and checked against the file it came from; then, with the writes of
+every note open in it held, what changed meanwhile is copied again, and the space moves
+to its new root as a rename does, so everything kept by path follows it and the engine's
+entries keep their ids. A copy that does not check out leaves the space the folder it
+was, to be tried again next launch: a full disk, a file that reads back wrong, two names
+the folder tells apart that are one name here. Before anything is copied the folder is
+copied whole into `.orden/.backups`; while the copy is made, the kept folder says so
+(`.converting`), so one a crash cut short is never listed and is begun again from the
+start, and one conversion runs at a time. Turn this space back into a folder makes it
+the folder again: the folder backed up once more, every file of the space written into
+it as the space has it now, what the space no longer has taken into Recently deleted,
+the space moved back as a rename does and its kept folder into Recently deleted whole;
+that folder is made a kept space no more on this device (`.orden/.folders`). Until then
+the folder is left exactly as it was and is listed and written no more - the kept space says which folder it was (`.from`), and one deleted
+afterwards leaves a line in `.orden/.retired` - so a build from before reads that folder
+as it always did, and going back costs only what was written since.
+
+A space is files anybody else can read only when somebody asks for them (step 4f,
+internal/export.ts): Export this space as Markdown and folders writes every file of it,
+the inbox too, where it is in the space and under its own name, into a folder of its own
+inside a folder picked for it, numbered where the name is taken, so nothing there is
+written over. It is made once, when asked, and never kept in step after; a space that is
+a folder is written out the same way.
+
+A folder from outside - an Obsidian vault, a folder of somebody else's notes - is only
+ever read, by an import into a space (#552, step 4g): nothing opens one in place, and
+an import into a space Orden keeps lands in its store like any other write. A space that
+was a folder in place, a vault among them, is taken in once by the conversion above with
+its ids, its sync and its versions (`rehome_snapshots`), and with what says it was a
+vault (`.obsidian`'s settings files, so a `📅` stays a deadline there, #371); the rest of
+Obsidian's settings, and the folder itself, stay where they were and are changed no more.
 
 ## What is kept about an entry
 
