@@ -601,7 +601,7 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  #331's 290,700, measured 290,524.
  *
  *  Raised on 2026-11-05 as #1110, #1114, #1063 and #331 came to claude/hunt-round-1 on
- *  top of the hunt's: the code to 6,035,500, measured 6,035,186; the catalogues to
+ *  top of the hunt's: the code to 6,035,500, measured 6,035,357; the catalogues to
  *  992,400, measured 992,135. The styles keep #1114's 291,500, measured 291,272.
  */
 export const BUDGETS: Record<Part, number> = {
