@@ -595,9 +595,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  sidebar, the right side out of the window's end edge, and the hint about the edge
  *  (edge-peek.svelte.ts, Sidebar.svelte, SidebarToggle.svelte, Titlebar.svelte). Measured
  *  5,995,265.
+ *
+ *  The code raised on 2026-11-05, to 6,002,700, for #1126: a note's scan and the search
+ *  matcher moved into a package of their own (@orden/scan), so the account runs the same
+ *  code over its copy of the notes. Nothing new is in the plugin; the moved modules make
+ *  chunks of their own and every chunk that reads them imports them by a new name.
+ *  Measured 6,001,972.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_996_000,
+  code: 6_002_700,
   catalogues: 989_500,
   styles: 292_300,
   fonts: 260_000,
