@@ -545,11 +545,17 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-05, to 5,919,400, for #1122: an `ai` block's answer has
  *  LaTeX's `\(…\)` and `\[…\]` spelled the way the note draws formulas as it arrives
  *  (`TexDelimiters` in @orden/markdown/streamed, ai/answering.ts). Measured 5,918,818.
+ *
+ *  The code raised on 2026-11-05, to 5,928,600, and the styles to 292,200, for #331: the
+ *  tab overview's spaces packed round a middle, several windows chosen and carried at
+ *  once, a space carried by its name, the tab in front riding on its window, the zoom
+ *  eased in time and the bar quiet while it is up (overview/pack.ts,
+ *  overview/Overview.svelte). Measured 5,928,010 and 292,112.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_919_400,
+  code: 5_928_600,
   catalogues: 977_400,
-  styles: 291_500,
+  styles: 292_200,
   fonts: 260_000,
   pages: 40_000,
 }
