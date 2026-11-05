@@ -201,9 +201,9 @@ a thread, a feature in Used for, the default - and is answered by the account in
 (`ai.provider(id)` in `store.svelte.ts`, `resolve` in `accounts.ts`), so a switch reaches
 every thread on that provider at its next question. A question already being answered
 finishes on the account it started on, as Roo Code keeps a task's profile for its life.
-A provider of several accounts is a row of its own over them in Settings > AI, **Use** on
-each one not in use; the palette lists `AI account: Claude · Work` for each, the one in
-use ticked.
+In Settings > AI each account is a card of its own under its provider's name (#1150), the
+one in use marked on its card and **Use** on each other one; the palette lists
+`AI account: Claude · Work` for each, the one in use ticked.
 
 The accounts are one file, `<local data>/ai/accounts.json` (`src-tauri/src/ai_accounts.rs`),
 not the page's storage, which is one browsing profile's: while the app could run on Orden's

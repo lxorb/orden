@@ -221,6 +221,10 @@
     white-space: nowrap;
   }
 
+  .setting .name.hint {
+    white-space: normal;
+  }
+
   .row {
     flex: none;
     display: flex;

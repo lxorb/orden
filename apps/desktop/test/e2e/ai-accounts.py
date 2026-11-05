@@ -3,9 +3,9 @@
 Seeds the accounts a reader with two Claude Code sign-ins, a work key and an OpenAI key
 would have (in a browser they are this tab's own storage, `nib:ai-accounts`; see
 src/lib/ai/accounts-file.ts), opens Settings > AI, and checks what docs/ai.md says the
-page is: Claude as a row of its own over its three accounts, one of them in use; OpenAI,
-with one account, as that account's row; a press on Use moving the provider to another
-account; the palette offering `AI account: Claude · ...` with the one in use ticked; and
+page is: every account a card of its own under its provider's name (#1150), the one of
+Claude's in use marked on its card; a press on Use moving the provider and the mark to
+another account; the palette offering `AI account: Claude · ...` with the one in use ticked; and
 Access under the accounts, where an old link to Agents lands.
 
     python apps/desktop/test/e2e/ai-accounts.py
@@ -56,10 +56,29 @@ def drive(browser) -> None:
     shot(page, "01-accounts")
 
     sheet = page.locator(".sheet")
-    check("Claude is a row of its own over its accounts", sheet.locator(".name.strong", has_text="Claude").count() == 1)
-    check("one Claude account is in use", sheet.get_by_text("In use", exact=True).count() == 1)
-    check("the other can be switched to", sheet.get_by_role("button", name="Use", exact=True).count() == 1)
-    check("OpenAI's one account is its own row", sheet.locator(".name.strong", has_text="OpenAI").count() == 0)
+    cards = sheet.locator(".card[data-account]")
+    check("every account is a card of its own", cards.count() == len(ACCOUNTS["accounts"]))
+    for one in ACCOUNTS["accounts"]:
+        card = sheet.locator(f'.card[data-account="{one["id"]}"]')
+        check(
+            f"{one['id']}'s card holds its own Remove and Model",
+            card.get_by_role("button", name="Remove", exact=True).count() >= 1
+            and card.get_by_text("Model", exact=True).count() == 1,
+        )
+    check("each provider has its name over its cards", sheet.locator("[data-vendor]").count() == 2)
+    check("the provider keeps its Default", sheet.locator('[data-vendor="claude"]').get_by_text("Default", exact=True).count() == 1)
+    check("OpenAI keeps its Make default", sheet.locator('[data-vendor="openai"]').get_by_role("button", name="Make default").count() == 1)
+    boxed = page.evaluate(
+        """() => [...document.querySelectorAll('.card[data-account]')].map((card) => {
+          const look = getComputedStyle(card)
+          return parseFloat(look.borderTopWidth) > 0 && parseFloat(look.borderTopLeftRadius) > 0 && parseFloat(look.paddingInlineStart) > 0
+        })"""
+    )
+    check("each card is drawn as a card", all(boxed))
+    in_use = sheet.locator('.card[data-account="anthropic"]')
+    check("the account in use is marked on its card", "using" in (in_use.get_attribute("class") or "") and in_use.get_by_text("In use", exact=True).count() == 1)
+    check("only one card is marked", sheet.locator(".card.using").count() == 1)
+    check("the other can be switched to", sheet.locator('.card[data-account="anthropic-2"]').get_by_role("button", name="Use", exact=True).count() == 1)
     # Access is fetched as the page opens (`{#await import(...)}` in SettingsPanel.svelte),
     # so it is waited for: counted at once it was missing whenever the fetch took longer
     # than the page took to settle, which WebKit's did now and then (#446).
@@ -74,6 +93,7 @@ def drive(browser) -> None:
     quiet(page)
     active = page.evaluate("JSON.parse(localStorage.getItem('nib:ai-accounts')).active.claude")
     check("Use moved Claude to the other account", active == "anthropic-2")
+    check("the mark moved with it", (sheet.locator(".card.using").get_attribute("data-account") or "") == "anthropic-2")
     shot(page, "02-switched")
 
     page.keyboard.press("Escape")

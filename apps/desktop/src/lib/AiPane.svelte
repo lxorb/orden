@@ -2,10 +2,9 @@
   /** Settings > AI: the providers and their accounts, where the keys are, the plans, and
    *  which provider each feature asks.
    *
-   *  A provider with several accounts (two Claude Code sign-ins, a work key and one's
-   *  own) is a row of its own over them, and one of them is in use: the rest wait to be
-   *  switched to, here or from the palette. A provider of one account is that account's
-   *  row, as it always was. See ai/accounts.ts.
+   *  Each account (two Claude Code sign-ins, a work key and one's own) is a card of its
+   *  own under its provider's name, and where a provider has several one of them is in
+   *  use: the rest wait to be switched to, here or from the palette. See ai/accounts.ts.
    *
    *  Its own component rather than rows in the panel's table, because a provider is
    *  not a setting: it is two or three fields, a list fetched from a server, and one
@@ -301,7 +300,7 @@
 {#if vault.standing === 'open' && vault.allowed.length}
   <h3>{t('Devices with your AI vault')}</h3>
   {#each vault.allowed as one (one.id)}
-    <div class="card" data-device={one.id} transition:slide={{ duration: dur(160) }}>
+    <div class="card boxed" data-device={one.id} transition:slide={{ duration: dur(160) }}>
       <div class="nib-setting setting">
         <span class="name">{one.name}</span>
         <div class="row">
@@ -318,29 +317,28 @@
 {#if ai.accounts.length}
   {#each ai.vendors as vendor (vendor)}
     {@const mine = ai.accountsOf(vendor)}
-    <!-- A provider of several accounts: its name and whether a block asks it without
-         being told, over its accounts, one of which answers. A provider of one is the
-         account's own row, as it always was. -->
-    {#if mine.length > 1}
-      <div class="card" transition:slide={{ duration: dur(160) }}>
-        <div class="nib-setting setting">
-          <span class="name strong">{named(vendor)}</span>
-          <div class="row">{@render defaulting(vendor)}</div>
-        </div>
-      </div>
-    {/if}
+    <!-- A provider's name and whether a block asks it without being told, over a card for
+         each of its accounts; where it has several, one of them answers. -->
+    <div class="nib-setting setting" data-vendor={vendor} transition:slide={{ duration: dur(160) }}>
+      <span class="name strong">{named(vendor)}</span>
+      <div class="row">{@render defaulting(vendor)}</div>
+    </div>
     {#each mine as provider (provider.id)}
-      <div class="card" class:account={mine.length > 1} transition:slide={{ duration: dur(160) }}>
+      {@const using = mine.length > 1 && ai.isActive(provider.id)}
+      <div
+        class="card boxed"
+        class:using
+        data-account={provider.id}
+        transition:slide={{ duration: dur(160) }}
+      >
         <div class="nib-setting setting">
-          <span class="name">
-            {mine.length > 1 ? labelOf(provider) : provider.name || t(KIND_NAMES[provider.kind])}
+          <span class="name strong">
+            {provider.kind === 'compatible' ? t(KIND_NAMES.compatible) : labelOf(provider)}
           </span>
           <div class="row">
-            {#if mine.length === 1}
-              {@render defaulting(vendor)}
-            {:else if ai.isActive(provider.id)}
-              <span class="hint">{t('In use')}</span>
-            {:else}
+            {#if using}
+              <span class="hint on">{t('In use')}</span>
+            {:else if mine.length > 1}
               <button class="nib-chip" onclick={() => ai.activate(provider.id)}>{t('Use')}</button>
             {/if}
             <button class="nib-chip is-quiet" onclick={() => forget(provider)}>{t('Remove')}</button
@@ -456,14 +454,14 @@
           </div>
         {/if}
 
+        {#if !__EVEN_PLUGIN__ && provider.kind === 'chatgpt' && plans.chatgpt}
+          <!-- OpenAI's own words for it, beside the model it is spent on. -->
+          <p class="hint">{t('Using ChatGPT plan')}</p>
+        {/if}
         {#if trouble[provider.id]}
           <p class="hint bad">{trouble[provider.id]}</p>
         {/if}
       </div>
-      {#if !__EVEN_PLUGIN__ && provider.kind === 'chatgpt' && plans.chatgpt}
-        <!-- OpenAI's own words for it, beside the model it is spent on. -->
-        <p class="hint caption">{t('Using ChatGPT plan')}</p>
-      {/if}
     {/each}
   {/each}
 {:else}
@@ -643,9 +641,13 @@
     padding: 0 2px;
   }
 
-  /* A provider's own row over its accounts, and the accounts set in a step under it. */
+  /* A provider's name over its accounts' cards, and each account's name atop its own. */
   .strong {
     font-weight: 600;
+  }
+
+  .hint.on {
+    color: var(--accent);
   }
 
   /* The code both screens show, in figures of one width. */
@@ -654,8 +656,19 @@
     letter-spacing: 0.04em;
   }
 
-  .account {
-    padding-inline-start: var(--space-3);
+  .boxed {
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  .boxed > p.hint {
+    padding-block: var(--space-2);
+  }
+
+  .boxed.using {
+    border-color: var(--accent);
   }
 
   /* A phone draws the box, the touch rows and the hairlines. The sheet is the
@@ -665,6 +678,18 @@
     border-radius: var(--radius-lg);
     background: var(--surface);
     overflow: hidden;
+  }
+
+  :global(.sheet.phone) .boxed {
+    padding: 0;
+  }
+
+  :global(.sheet.phone) .boxed.using {
+    border-color: var(--accent);
+  }
+
+  :global(.sheet.phone) .boxed > p.hint {
+    padding: var(--space-2) var(--touch-pad);
   }
 
   :global(.sheet.phone) .setting {
