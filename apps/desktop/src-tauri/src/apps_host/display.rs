@@ -58,10 +58,13 @@ pub struct Display {
     desk: Option<Desk>,
 }
 
-/// The first number nobody holds: no lock file and no socket under `root` (`/tmp`).
+/// The first number nobody holds: no lock file, no lock being made (a server's
+/// `.tX` file, which one ended as it began leaves behind) and no socket under `root`
+/// (`/tmp`).
 pub fn free_number(root: &Path) -> Option<u32> {
     NUMBERS.into_iter().find(|number| {
         !root.join(format!(".X{number}-lock")).exists()
+            && !root.join(format!(".tX{number}-lock")).exists()
             && !root.join(format!(".X11-unix/X{number}")).exists()
     })
 }
@@ -139,7 +142,7 @@ impl Display {
                 Err(Starting::Failed(why)) => return Err(why),
             }
         }
-        Err("Xvfb ended as it started".to_owned())
+        Err("no display number would start".to_owned())
     }
 
     fn start_once(width: u32, height: u32, dpr: f64) -> Result<Display, Starting> {
@@ -176,9 +179,11 @@ impl Display {
                 return Err(Starting::Taken);
             }
             if began.elapsed() > READY_WITHIN {
+                // Waiting on a number something else holds in a way not seen here: the
+                // next one is tried.
                 let _ = server.kill();
                 let _ = server.wait();
-                return Err(Starting::Failed("Xvfb did not start in time".to_owned()));
+                return Err(Starting::Taken);
             }
             std::thread::sleep(Duration::from_millis(25));
         }
@@ -339,6 +344,8 @@ mod tests {
         std::fs::write(root.join(".X100-lock"), "").unwrap();
         std::fs::write(root.join(".X11-unix/X101"), "").unwrap();
         assert_eq!(free_number(&root), Some(102));
+        std::fs::write(root.join(".tX102-lock"), "").unwrap();
+        assert_eq!(free_number(&root), Some(103));
         let _ = std::fs::remove_dir_all(root);
     }
 
