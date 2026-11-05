@@ -2072,6 +2072,8 @@ export const zhHans: Dictionary = {
   'Run programs on this computer': '在这台电脑上运行程序',
   'Web requests': '网络请求',
   'Send requests to any site, outside your tabs': '在你的标签页之外向任意网站发送请求',
+  'Read and change the clipboard': '读取和更改剪贴板',
+  'Ask you a question or tell you something': '向你提问或告诉你一些事',
   Paying: '付款',
   'Sending messages': '发送消息',
   'Publishing and sharing': '发布与共享',

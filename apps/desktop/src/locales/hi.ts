@@ -2124,6 +2124,8 @@ export const hi: Dictionary = {
   'Run programs on this computer': 'इस कंप्यूटर पर प्रोग्राम चलाएँ',
   'Web requests': 'वेब अनुरोध',
   'Send requests to any site, outside your tabs': 'अपने टैब के बाहर किसी भी साइट को अनुरोध भेजें',
+  'Read and change the clipboard': 'क्लिपबोर्ड पढ़ें और बदलें',
+  'Ask you a question or tell you something': 'आपसे प्रश्न पूछें या कुछ बताएँ',
   Paying: 'भुगतान',
   'Sending messages': 'संदेश भेजना',
   'Publishing and sharing': 'प्रकाशित और साझा करना',

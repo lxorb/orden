@@ -2190,6 +2190,8 @@ export const it: Dictionary = {
   'Web requests': 'Richieste web',
   'Send requests to any site, outside your tabs':
     'Inviare richieste a qualsiasi sito, fuori dalle tue schede',
+  'Read and change the clipboard': 'Leggere e modificare gli appunti',
+  'Ask you a question or tell you something': 'Farti una domanda o dirti qualcosa',
   Paying: 'Pagare',
   'Sending messages': 'Inviare messaggi',
   'Publishing and sharing': 'Pubblicare e condividere',

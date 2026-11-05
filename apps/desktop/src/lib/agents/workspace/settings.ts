@@ -1,12 +1,14 @@
 /** The settings an agent may read and change: `read_setting` and `write_setting`
  *  (docs/agent-native.md 8.8).
  *
- *  A short list, read freely and written only with `settings` and the reader's say:
- *  how the app looks, which language it speaks, the editor's options, and where a
- *  space keeps what websites store. Never the account, the sync, the AI keys, the
- *  agents' own grants or anything in `automation.json` - those are not in the list, so
- *  there is no name to ask for them by. Each is written through the call the settings
- *  pane itself makes, so what changes is what the pane would have changed. */
+ *  Every setting Settings has a row for, by the name the settings file sets it by
+ *  (`appearance.accent`, `editor.textSize`, `shortcuts.new-note`: #673's keys, #1078),
+ *  read freely and written only with `settings` and the reader's say; and a short list of
+ *  older names beside them. Never the account, the sync, the AI keys, the agents' own
+ *  grants or anything in `automation.json` - none of those has a row with a name, so
+ *  there is no name to ask for them by. Each is written through the row's own control,
+ *  so what changes is what the pane would have changed; one the settings file holds is
+ *  the file's, and refused. A pane's name alone (`appearance`) lists its settings. */
 
 import type { AgentAnswer } from '../../automation/caller'
 import { ACCENTS } from '../../accents'
@@ -14,6 +16,7 @@ import { CATALOGUE_IDS, i18n } from '../../i18n.svelte'
 import { LINK_FORMATS } from '../../link-format'
 import { LINE_HEIGHTS, modes, WIDTHS } from '../../modes.svelte'
 import { theme } from '../../theme.svelte'
+import type { Field } from '../../settings/fields'
 import { asked } from './asks'
 import { type Call, done, need } from './call'
 import { Refused } from './problem'
@@ -25,6 +28,8 @@ interface Setting {
   about: string
   read: (call: Call) => unknown
   write: (value: unknown, call: Call) => Change | Promise<Change>
+  /** What it may be, where that is a short list. */
+  choices?: readonly string[]
 }
 
 type Change = () => unknown
@@ -68,6 +73,9 @@ function toggled(read: () => boolean, toggle: () => void, about: string): Settin
 const SETTINGS: Record<string, Setting> = {
   theme: {
     about: 'the theme, by id',
+    get choices() {
+      return theme.all.map((one) => one.id)
+    },
     read: () => theme.id,
     write: (value) => {
       const id = oneOf(
@@ -155,27 +163,117 @@ const SETTINGS: Record<string, Setting> = {
   },
 }
 
-/** The setting a call names, or a refusal that lists the ones there are. */
-function settingOf(call: Call): { key: string; setting: Setting } {
+/** Every row Settings has with a name, fetched with the first call that needs them. */
+async function rows(): Promise<Field[]> {
+  const { declarations } = await import('../../settings/declarations')
+  return declarations()
+}
+
+/** A row of Settings, by its name, as a setting: read and written through its own control,
+ *  and held to what the settings file's schema says it may be. */
+async function declaredSetting(key: string, all: Field[]): Promise<Setting | null> {
+  const { refusal, schemaOf } = await import('../../settings/file-schema')
+  const named = all.filter((one) => one.key === key)
+  const schema = schemaOf(named)[key]
+  const [first] = named
+  if (!first || !schema) return null
+
+  const read = () =>
+    schema.type === 'list'
+      ? named.filter((one) => one.kind === 'switch' && one.get()).map((one) => one.member)
+      : (first as { get(): unknown }).get()
+  return {
+    about: first.hint,
+    ...(schema.enum ? { choices: schema.enum } : {}),
+    read,
+    write: (value) => {
+      const held = named.find((one) => one.declared)
+      if (held)
+        throw new Refused('read_only', `${key} is set by the settings file at ${held.declared}`)
+      if (named.some((one) => one.kind === 'value' || one.kind === 'picture')) {
+        throw new Refused('read_only', `${key} is chosen in Settings, not written`)
+      }
+      const why =
+        refusal(schema, value) ??
+        named
+          .map((one) => (typeof value === 'string' ? (one.check?.(value) ?? null) : null))
+          .find(Boolean) ??
+        null
+      if (why !== null) throw new Refused('bad_arguments', `${key} ${why}`)
+
+      return () => {
+        if (schema.type === 'list') {
+          const listed = value as string[]
+          // Those in the list on first, so the last one on is never turned off on the way.
+          const members = [...named].sort(
+            (a, b) =>
+              Number(listed.includes(b.member ?? '')) - Number(listed.includes(a.member ?? '')),
+          )
+          for (const one of members) put(one, listed.includes(one.member ?? ''))
+        } else put(first, value)
+      }
+    },
+  }
+}
+
+/** A row set to `value` where it differs, since a switch's setter may be a toggle. */
+function put(field: Field, value: unknown): void {
+  const one = field as unknown as { get(): unknown; set(value: unknown): void }
+  if (one.get() !== value) one.set(value)
+}
+
+/** The setting a call names, or a refusal that says how they are named. */
+async function settingOf(call: Call): Promise<{ key: string; setting: Setting }> {
   const key = need(call, 'key')
-  const setting = SETTINGS[key]
+  const setting = SETTINGS[key] ?? (await declaredSetting(key, await rows()))
   if (!setting) {
     throw new Refused(
       'no_such_setting',
-      `the settings an agent reaches are ${Object.keys(SETTINGS).join(', ')}`,
+      `${key} is no setting: name one as the settings file does (appearance.accent), list a pane's with its name (appearance, editor, general), or use ${Object.keys(SETTINGS).join(', ')}`,
     )
   }
 
   return { key, setting }
 }
 
+/** A pane's settings, by its name: every row whose name starts with it. */
+async function paneOf(prefix: string, call: Call): Promise<AgentAnswer | null> {
+  const all = await rows()
+  const keys = [
+    ...new Set(all.map((one) => one.key ?? '').filter((one) => one.startsWith(`${prefix}.`))),
+  ]
+  if (!keys.length) return null
+  const listed = []
+  for (const key of keys.sort()) {
+    const setting = await declaredSetting(key, all)
+    if (!setting) continue
+    listed.push({
+      key,
+      value: await setting.read(call),
+      about: setting.about,
+      ...(setting.choices ? { choices: setting.choices } : {}),
+    })
+  }
+  return done({ pane: prefix, settings: listed })
+}
+
 export async function readSetting(call: Call): Promise<AgentAnswer> {
-  const { key, setting } = settingOf(call)
-  return done({ key, value: await setting.read(call), about: setting.about })
+  const named = need(call, 'key')
+  if (!named.includes('.') && !(named in SETTINGS)) {
+    const pane = await paneOf(named, call)
+    if (pane) return pane
+  }
+  const { key, setting } = await settingOf(call)
+  return done({
+    key,
+    value: await setting.read(call),
+    about: setting.about,
+    ...(setting.choices ? { choices: setting.choices } : {}),
+  })
 }
 
 export async function writeSetting(call: Call): Promise<AgentAnswer> {
-  const { key, setting } = settingOf(call)
+  const { key, setting } = await settingOf(call)
   if (!('value' in call.args)) throw new Refused('bad_arguments', 'say the value')
 
   const value = call.args.value

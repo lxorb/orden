@@ -83,6 +83,12 @@ pub enum Scope {
     /// Requests to any site, outside every tab (#1078).
     #[serde(rename = "network")]
     Network,
+    /// The system clipboard, read and written (#1078).
+    #[serde(rename = "clipboard")]
+    Clipboard,
+    /// A question put to the reader: a notice, a choice, a line to type (#1078).
+    #[serde(rename = "ask")]
+    Ask,
     /// Helpers on the reader's AI accounts: another model, Claude's or `OpenAI`'s, started
     /// on a task, whose answer comes back (`run_agent`; docs/ai.md, "Helpers").
     #[serde(rename = "agents")]
@@ -91,7 +97,7 @@ pub enum Scope {
 
 impl Scope {
     /// Every scope, in the settings pane's order.
-    pub const ALL: [Scope; 19] = [
+    pub const ALL: [Scope; 21] = [
         Scope::Context,
         Scope::NotesRead,
         Scope::NotesWrite,
@@ -110,6 +116,8 @@ impl Scope {
         Scope::Files,
         Scope::Processes,
         Scope::Network,
+        Scope::Clipboard,
+        Scope::Ask,
         Scope::Agents,
     ];
 }
@@ -285,6 +293,8 @@ impl Grant {
                     | Scope::Files
                     | Scope::Processes
                     | Scope::Network
+                    | Scope::Clipboard
+                    | Scope::Ask
             )
         });
         grant.mode = Mode::Confirm;
@@ -873,6 +883,7 @@ mod tests {
         // not on the agent's list.
         assert!(own.holds(Scope::Processes));
         assert!(own.holds(Scope::Network));
+        assert!(own.holds(Scope::Clipboard) && own.holds(Scope::Ask));
         assert!(own.asks(Category::Terminal));
         assert_eq!(own.mode, Mode::Unsupervised);
         assert!(own.asks(Category::Paying));
@@ -894,6 +905,7 @@ mod tests {
         assert!(!other.holds(Scope::Files));
         assert!(!other.holds(Scope::Processes));
         assert!(!other.holds(Scope::Network));
+        assert!(!other.holds(Scope::Clipboard) && !other.holds(Scope::Ask));
         assert_eq!(other.mode, Mode::Confirm);
     }
 

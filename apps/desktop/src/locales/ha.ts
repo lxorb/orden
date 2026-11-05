@@ -2158,6 +2158,8 @@ export const ha: Dictionary = {
   'Web requests': 'Buƙatun yanar gizo',
   'Send requests to any site, outside your tabs':
     'Aika buƙatu zuwa kowane shafi, a wajen shafukanka',
+  'Read and change the clipboard': 'Karanta da canza allon kwafi',
+  'Ask you a question or tell you something': 'Yi maka tambaya ko gaya maka wani abu',
   Paying: 'Biyan kuɗi',
   'Sending messages': 'Aika saƙonni',
   'Publishing and sharing': 'Wallafa da rabawa',

@@ -16,9 +16,11 @@
 import type { Said } from '../../automation/args'
 import type { AgentAnswer, Caller } from '../../automation/caller'
 import { workspace } from '../../workspace.svelte'
+import { askReader } from './ask'
 import { bookmarks } from './bookmarks'
 import { type Call, done } from './call'
 import { readCanvas, editCanvas } from './canvas'
+import { clipboard } from './clipboard'
 import { captureToNote } from './capture'
 import { draftMessage, listChats, postMessage, react, readChat, searchChats } from './chats'
 import { runCommand } from './commands'
@@ -98,6 +100,8 @@ const VERBS: Record<string, (call: Call) => AgentAnswer | Promise<AgentAnswer>> 
   run_terminal: runTerminal,
   read_terminal: readTerminal,
   type_terminal: typeTerminal,
+  system_clipboard: clipboard,
+  ask_reader: askReader,
   recently_deleted: recentlyDeleted,
   list_chats: listChats,
   read_chat: readChat,

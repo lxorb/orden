@@ -2155,6 +2155,9 @@ export const ml: Dictionary = {
   'Web requests': 'വെബ് അഭ്യർത്ഥനകൾ',
   'Send requests to any site, outside your tabs':
     'നിങ്ങളുടെ ടാബുകൾക്ക് പുറത്ത് ഏത് സൈറ്റിലേക്കും അഭ്യർത്ഥനകൾ അയയ്ക്കുക',
+  'Read and change the clipboard': 'ക്ലിപ്പ്ബോർഡ് വായിക്കുക, മാറ്റുക',
+  'Ask you a question or tell you something':
+    'നിങ്ങളോട് ചോദ്യം ചോദിക്കുക അല്ലെങ്കിൽ എന്തെങ്കിലും പറയുക',
   Paying: 'പണമടയ്ക്കൽ',
   'Sending messages': 'സന്ദേശങ്ങൾ അയയ്ക്കൽ',
   'Publishing and sharing': 'പ്രസിദ്ധീകരിക്കലും പങ്കിടലും',

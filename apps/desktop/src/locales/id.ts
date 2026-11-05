@@ -2119,6 +2119,9 @@ export const id: Dictionary = {
   'Web requests': 'Permintaan web',
   'Send requests to any site, outside your tabs':
     'Mengirim permintaan ke situs mana pun, di luar tab Anda',
+  'Read and change the clipboard': 'Membaca dan mengubah papan klip',
+  'Ask you a question or tell you something':
+    'Mengajukan pertanyaan atau memberi tahu Anda sesuatu',
   Paying: 'Membayar',
   'Sending messages': 'Mengirim pesan',
   'Publishing and sharing': 'Menerbitkan dan berbagi',

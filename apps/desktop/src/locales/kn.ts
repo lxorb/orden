@@ -2149,6 +2149,8 @@ export const kn: Dictionary = {
   'Web requests': 'ವೆಬ್ ವಿನಂತಿಗಳು',
   'Send requests to any site, outside your tabs':
     'ನಿಮ್ಮ ಟ್ಯಾಬ್‌ಗಳ ಹೊರಗೆ ಯಾವುದೇ ಸೈಟ್‌ಗೆ ವಿನಂತಿಗಳನ್ನು ಕಳುಹಿಸಿ',
+  'Read and change the clipboard': 'ಕ್ಲಿಪ್‌ಬೋರ್ಡ್ ಓದಿ ಮತ್ತು ಬದಲಿಸಿ',
+  'Ask you a question or tell you something': 'ನಿಮಗೆ ಪ್ರಶ್ನೆ ಕೇಳಿ ಅಥವಾ ಏನನ್ನಾದರೂ ತಿಳಿಸಿ',
   Paying: 'ಪಾವತಿ',
   'Sending messages': 'ಸಂದೇಶಗಳನ್ನು ಕಳುಹಿಸುವುದು',
   'Publishing and sharing': 'ಪ್ರಕಟಿಸುವುದು ಮತ್ತು ಹಂಚಿಕೊಳ್ಳುವುದು',

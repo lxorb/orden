@@ -2181,6 +2181,8 @@ export const ptPT: Dictionary = {
   'Web requests': 'Pedidos web',
   'Send requests to any site, outside your tabs':
     'Enviar pedidos a qualquer site, fora dos seus separadores',
+  'Read and change the clipboard': 'Ler e alterar a área de transferência',
+  'Ask you a question or tell you something': 'Fazer-lhe uma pergunta ou dizer-lhe algo',
   Paying: 'Pagar',
   'Sending messages': 'Enviar mensagens',
   'Publishing and sharing': 'Publicar e partilhar',

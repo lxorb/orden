@@ -92,6 +92,8 @@ const SCOPES: readonly Scope[] = [
   'files',
   'processes',
   'network',
+  'clipboard',
+  'ask',
   'agents',
 ]
 

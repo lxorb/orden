@@ -1678,6 +1678,8 @@ pub mod window {
         ("run_terminal", Some(Scope::Terminal)),
         ("read_terminal", Some(Scope::Context)),
         ("type_terminal", Some(Scope::Terminal)),
+        ("system_clipboard", Some(Scope::Clipboard)),
+        ("ask_reader", Some(Scope::Ask)),
         ("recently_deleted", Some(Scope::Tree)),
         ("list_chats", Some(Scope::ChatsRead)),
         ("read_chat", Some(Scope::ChatsRead)),

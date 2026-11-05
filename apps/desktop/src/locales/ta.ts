@@ -2160,6 +2160,8 @@ export const ta: Dictionary = {
   'Web requests': 'இணையக் கோரிக்கைகள்',
   'Send requests to any site, outside your tabs':
     'உங்கள் தாவல்களுக்கு வெளியே எந்தத் தளத்திற்கும் கோரிக்கைகளை அனுப்பு',
+  'Read and change the clipboard': 'கிளிப்போர்டைப் படித்து மாற்று',
+  'Ask you a question or tell you something': 'உங்களிடம் கேள்வி கேள் அல்லது ஏதாவது சொல்',
   Paying: 'பணம் செலுத்துதல்',
   'Sending messages': 'செய்திகளை அனுப்புதல்',
   'Publishing and sharing': 'வெளியிடுதல், பகிர்தல்',

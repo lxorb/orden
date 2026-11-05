@@ -2171,6 +2171,8 @@ export const fil: Dictionary = {
   'Web requests': 'Mga web request',
   'Send requests to any site, outside your tabs':
     'Magpadala ng mga request sa anumang site, labas sa iyong mga tab',
+  'Read and change the clipboard': 'Basahin at baguhin ang clipboard',
+  'Ask you a question or tell you something': 'Magtanong sa iyo o may sabihin sa iyo',
   Paying: 'Pagbabayad',
   'Sending messages': 'Pagpapadala ng mensahe',
   'Publishing and sharing': 'Pag-publish at pagbabahagi',

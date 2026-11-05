@@ -2128,6 +2128,8 @@ export const mr: Dictionary = {
   'Web requests': 'वेब विनंत्या',
   'Send requests to any site, outside your tabs':
     'तुमच्या टॅबबाहेर कोणत्याही साइटला विनंत्या पाठवा',
+  'Read and change the clipboard': 'क्लिपबोर्ड वाचा आणि बदला',
+  'Ask you a question or tell you something': 'तुम्हाला प्रश्न विचारा किंवा काहीतरी सांगा',
   Paying: 'पैसे भरणे',
   'Sending messages': 'संदेश पाठवणे',
   'Publishing and sharing': 'प्रकाशित करणे आणि शेअर करणे',

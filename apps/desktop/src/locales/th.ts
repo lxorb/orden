@@ -2086,6 +2086,8 @@ export const th: Dictionary = {
   'Run programs on this computer': 'เรียกใช้โปรแกรมบนคอมพิวเตอร์เครื่องนี้',
   'Web requests': 'คำขอเว็บ',
   'Send requests to any site, outside your tabs': 'ส่งคำขอไปยังเว็บไซต์ใดก็ได้ นอกแท็บของคุณ',
+  'Read and change the clipboard': 'อ่านและเปลี่ยนคลิปบอร์ด',
+  'Ask you a question or tell you something': 'ถามคำถามหรือบอกบางอย่างกับคุณ',
   Paying: 'การชำระเงิน',
   'Sending messages': 'การส่งข้อความ',
   'Publishing and sharing': 'การเผยแพร่และแชร์',

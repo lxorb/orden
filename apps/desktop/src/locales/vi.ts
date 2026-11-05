@@ -2104,6 +2104,8 @@ export const vi: Dictionary = {
   'Web requests': 'Yêu cầu web',
   'Send requests to any site, outside your tabs':
     'Gửi yêu cầu đến bất kỳ trang nào, bên ngoài các thẻ của bạn',
+  'Read and change the clipboard': 'Đọc và thay đổi bộ nhớ tạm',
+  'Ask you a question or tell you something': 'Hỏi bạn một câu hoặc báo bạn điều gì đó',
   Paying: 'Thanh toán',
   'Sending messages': 'Gửi tin nhắn',
   'Publishing and sharing': 'Xuất bản và chia sẻ',

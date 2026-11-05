@@ -2125,6 +2125,8 @@ export const ur: Dictionary = {
   'Web requests': 'ویب درخواستیں',
   'Send requests to any site, outside your tabs':
     'اپنے ٹیبز سے باہر کسی بھی سائٹ کو درخواستیں بھیجیں',
+  'Read and change the clipboard': 'کلپ بورڈ پڑھیں اور بدلیں',
+  'Ask you a question or tell you something': 'آپ سے سوال پوچھیں یا کچھ بتائیں',
   Paying: 'ادائیگی',
   'Sending messages': 'پیغامات بھیجنا',
   'Publishing and sharing': 'شائع کرنا اور شیئر کرنا',

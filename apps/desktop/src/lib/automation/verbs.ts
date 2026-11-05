@@ -216,6 +216,8 @@ const VERBS: Record<string, Verb> = {
   run_terminal: needs('terminal'),
   read_terminal: needs('context'),
   type_terminal: needs('terminal'),
+  system_clipboard: needs('clipboard'),
+  ask_reader: needs('ask'),
   recently_deleted: needs('tree'),
   list_chats: needs('chats.read'),
   read_chat: needs('chats.read'),

@@ -11,15 +11,20 @@
  *  - the rows that change a setting ask the same way `write_setting` does (9.3);
  *  - the rows that take the reader somewhere else - another space, another window, a
  *    presentation - move what they are looking at, and need `workspace.focus` (7.2),
- *    with the window itself never an agent's to open, close or quit. */
+ *    with the window itself never an agent's to open, close or quit.
+ *
+ *  A row that opens a file dialog - Import, every Export - is answered by `path` instead
+ *  (#1078): the file read or written only where `files` would let it be, which the crate
+ *  says (`agents_dialog_path`), so the dialog is never shown to an agent's command. */
 
 import { appCommands, type Command } from '../../commands'
+import { invoke } from '../../tauri'
 import type { AgentAnswer } from '../../automation/caller'
 import { views } from '../../views.svelte'
 import { workspace } from '../../workspace.svelte'
 import type { Category } from '../verbs'
-import { asked, readersOwn } from './asks'
-import { type Call, done, need, needScope } from './call'
+import { asked, answered, readersOwn } from './asks'
+import { type Call, done, maybe, need, needScope } from './call'
 import { Refused } from './problem'
 import { placeFor } from './spaces'
 
@@ -79,6 +84,46 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, category, found.label)
   if (question) return question
 
+  const path = maybe(call, 'path')
+  if (path === null) {
+    found.run()
+    return done({ id, label: found.label })
+  }
+  return withPath(call, found, path)
+}
+
+/** How long a row is given to open its dialog before its path is taken to be one it had
+ *  no use for. */
+const DIALOG_WITHIN = 15_000
+
+/** A row run with its file dialog answered by `path`: what the crate said about the
+ *  path where it was not a yes, and otherwise the row, done. */
+async function withPath(call: Call, found: Command, path: string): Promise<AgentAnswer> {
+  const { answerNextDialog } = await import('../../dialog-answer')
+  const agent = call.caller.agent
+  let settle: (said: AgentAnswer | null) => void = () => undefined
+  const judged = new Promise<AgentAnswer | null>((go) => (settle = go))
+  answerNextDialog(async (write) => {
+    if (agent === null) {
+      settle(null)
+      return path
+    }
+    const said = await invoke<unknown>('agents_dialog_path', {
+      agent: agent.id,
+      path,
+      write,
+    }).catch((error: unknown) => ({ status: 'error', code: 'failed', message: String(error) }))
+    const refused = answered(said)
+    settle(refused)
+    if (refused !== null) return null
+    const result = (said as { result?: { path?: unknown } }).result
+    return typeof result?.path === 'string' ? result.path : null
+  })
+
   found.run()
-  return done({ id, label: found.label })
+  const over = new Promise<'unused'>((go) => setTimeout(() => go('unused'), DIALOG_WITHIN))
+  const outcome = await Promise.race([judged, over])
+  answerNextDialog(null)
+  if (outcome === 'unused') return done({ id: found.id, label: found.label, path_unused: true })
+  return outcome ?? done({ id: found.id, label: found.label, path })
 }

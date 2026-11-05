@@ -2114,6 +2114,8 @@ export const ja: Dictionary = {
   'Run programs on this computer': 'このコンピューターでプログラムを実行',
   'Web requests': 'Web リクエスト',
   'Send requests to any site, outside your tabs': 'タブの外から任意のサイトにリクエストを送信',
+  'Read and change the clipboard': 'クリップボードの読み取りと変更',
+  'Ask you a question or tell you something': 'あなたに質問する、または何かを伝える',
   Paying: '支払い',
   'Sending messages': 'メッセージの送信',
   'Publishing and sharing': '公開と共有',

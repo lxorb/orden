@@ -2138,6 +2138,8 @@ export const te: Dictionary = {
   'Run programs on this computer': 'ఈ కంప్యూటర్‌లో ప్రోగ్రామ్‌లను అమలు చేయండి',
   'Web requests': 'వెబ్ అభ్యర్థనలు',
   'Send requests to any site, outside your tabs': 'మీ ట్యాబ్‌ల బయట ఏ సైట్‌కైనా అభ్యర్థనలు పంపండి',
+  'Read and change the clipboard': 'క్లిప్‌బోర్డ్‌ను చదవండి, మార్చండి',
+  'Ask you a question or tell you something': 'మిమ్మల్ని ప్రశ్న అడగండి లేదా ఏదైనా చెప్పండి',
   Paying: 'చెల్లింపు',
   'Sending messages': 'సందేశాలు పంపడం',
   'Publishing and sharing': 'ప్రచురించడం, షేర్ చేయడం',

@@ -2138,6 +2138,8 @@ export const tr: Dictionary = {
   'Web requests': 'Web istekleri',
   'Send requests to any site, outside your tabs':
     'Sekmelerinizin dışında herhangi bir siteye istek gönderme',
+  'Read and change the clipboard': 'Panoyu okuma ve değiştirme',
+  'Ask you a question or tell you something': 'Size soru sorma veya bir şey söyleme',
   Paying: 'Ödeme',
   'Sending messages': 'Mesaj gönderme',
   'Publishing and sharing': 'Yayımlama ve paylaşma',

@@ -480,6 +480,11 @@ mod tests {
     /// a command in (#1125): `run_terminal`'s `tab`, 75 characters, from a table at 36 732.
     /// Raised to 37 500 on 2026-11-05 for requests (#1078, step 3): one tool, `http`, 631
     /// characters, listed only to a grant holding network, from a table at 36 807.
+    /// Raised to 38 800 the same day for the app and its window (#1078, step 4): two tools,
+    /// `system_clipboard` 238 and `ask_reader` 471 characters, each listed only to a grant
+    /// holding its scope, and the words `workspace_tabs`, `run_command` and `read_setting`
+    /// need for moving and arranging tabs, a dialog's path and every setting by its key,
+    /// from a table at 37 438.
     #[test]
     fn the_table_stays_small() {
         let mut sizes = BTreeMap::new();
@@ -488,7 +493,7 @@ mod tests {
         }
         let total: usize = sizes.values().sum();
         assert!(
-            total < 37_500,
+            total < 38_800,
             "the tools are {total} characters: {sizes:?}"
         );
         for (name, size) in &sizes {

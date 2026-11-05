@@ -21,7 +21,9 @@ import type { AgentAnswer } from '../../automation/caller'
 import { agentMarks } from '../../agent-marks.svelte'
 import { settings, type Section } from '../../settings.svelte'
 import { type Tab, workspace } from '../../workspace.svelte'
+import { panesIn, paneToward, type Toward } from '../../workspace/pane-tree'
 import { type Call, done, flag, needScope } from './call'
+import { Refused } from './problem'
 
 /** Whether the call asked for the front, which needs `workspace.focus`; everything else
  *  is behind. `why` is what the refusal names. */
@@ -136,4 +138,46 @@ export function showTab(call: Call, tab: Tab): void {
 export function splitBeside(call: Call, tab: Tab): void {
   needScope(call, 'workspace.focus', 'a split')
   workspace.split('row', tab.id)
+}
+
+/** The pane a tab is to go to: one named by its id, or the one toward a side of the
+ *  tab's own. Null where there is none. */
+export function paneFor(tab: Tab, pane: string | null, toward: string | null): string | null {
+  if (pane !== null) return workspace.panes.at(pane) ? pane : null
+  if (toward === null || !['left', 'right', 'up', 'down'].includes(toward)) return null
+  return paneToward(workspace.panes.frame, tab.paneId, toward as Toward)?.id ?? null
+}
+
+/** A tab carried to another pane, or to another place in its own strip, as a drag carries
+ *  it (#1078): the reader's screen changes, so only ever asked for. A pane left with no
+ *  tab goes, as it does after a drag. */
+export function moveTabTo(call: Call, tab: Tab, pane: string, at: number | null): void {
+  needScope(call, 'workspace.focus', 'moving a tab')
+  workspace.moveTab(tab.id, pane, at)
+}
+
+/** The panes arranged (#1078): the tab's pane split into columns or rows - the tab shown
+ *  in both, as a split shows it - every split made even, or every tab gathered into the
+ *  pane in front and the rest gone. Only ever asked for. */
+export function arrangePanes(call: Call, layout: string, tab: Tab | null): void {
+  needScope(call, 'workspace.focus', 'arranging the panes')
+  const panes = panesIn(workspace.panes.frame)
+  switch (layout) {
+    case 'columns':
+    case 'rows':
+      workspace.split(layout === 'columns' ? 'row' : 'column', tab?.id)
+      return
+    case 'even':
+      for (const one of panes) workspace.panes.equalise(one.id)
+      return
+    case 'single': {
+      const into = workspace.panes.focusedId
+      for (const one of [...workspace.tabs]) {
+        if (one.paneId !== into) workspace.moveTab(one.id, into)
+      }
+      return
+    }
+    default:
+      throw new Refused('bad_arguments', 'layout is columns, rows, even or single')
+  }
 }

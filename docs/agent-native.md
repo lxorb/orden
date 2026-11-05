@@ -482,13 +482,13 @@ the AI sidebar, with the chat attached, and the answer comes back as a draft (de
 | `recently_deleted` | `op`: `list`, `restore`; `id` | Recently deleted as the panel lists it, as far as the grant reaches, and one thing put back where it was, as the panel's Restore does. Nothing is deleted for good |
 | `trash_file` | `path` | to Recently deleted, which is undoable, so it is not "deleting for good"; a file in front of the reader needs `workspace.focus`, since its tab closes, and one in a tab behind it does not |
 | `create_folder` | `path` | |
-| `workspace_tabs` | `op`: `list`, `open`, `new`, `rename`, `save`, `close`, `split`, `focus`; `tab`, `path`, `url`, `view`, `kind`, `content`, `shell`, `cwd`, `name`, `background`? | `open` a file, a page (`url`), the graph, the scratchpad or Settings at a `section` (`view`; Settings is a sheet, always in front; the scratchpad is its card, never a tab, and takes the keyboard only with `background` false); `new` a tab with no file of any kind - a note with its words, a canvas, a page note, a web tab on `url`, a terminal in `shell` and `cwd` - the plus pressed for the reader; `rename` a tab, which for a file is the tree's own rename (links rewritten, one step to undo, every store kept by path told through `file-ops.ts`) and for an unsaved tab the name it will be saved under; `save` an unsaved tab at a path, as Save does. Everything lands behind the tab in front, beside the selected one, unless `background` is false; that, `focus`, `split`, the graph, closing the tab in front and another space need `workspace.focus`, because they change what the reader is looking at. A denied site opens in no tab |
+| `workspace_tabs` | `op`: `list`, `open`, `new`, `rename`, `save`, `close`, `split`, `focus`, `move`, `arrange`; `tab`, `path`, `url`, `view`, `kind`, `content`, `shell`, `cwd`, `name`, `background`?, `pane`, `toward`, `at`, `layout` | `open` a file, a page (`url`), the graph, the scratchpad or Settings at a `section` (`view`; Settings is a sheet, always in front; the scratchpad is its card, never a tab, and takes the keyboard only with `background` false); `new` a tab with no file of any kind - a note with its words, a canvas, a page note, a web tab on `url`, a terminal in `shell` and `cwd` - the plus pressed for the reader; `rename` a tab, which for a file is the tree's own rename (links rewritten, one step to undo, every store kept by path told through `file-ops.ts`) and for an unsaved tab the name it will be saved under; `save` an unsaved tab at a path, as Save does; `move` a tab to a `pane` or `toward` a side, at a place `at` in its strip, as a drag does; `arrange` the panes into `columns` or `rows`, make every split `even`, or gather every tab into a `single` pane (8.14). Everything lands behind the tab in front, beside the selected one, unless `background` is false; that, `focus`, `split`, `move`, `arrange`, the graph, closing the tab in front and another space need `workspace.focus`, because they change what the reader is looking at. A denied site opens in no tab |
 | `bookmarks` | `op`: `list`, `add`, `remove` | |
 | `list_spaces` | - | the spaces this agent may reach |
 | `read_canvas`, `edit_canvas` | `path` or `tab`; `ops`: `add_card`, `edit_text`, `move`, `connect`, `remove`, and in a page note `add_page`, `remove_page`, `move_page` | a canvas or a page note as JSON Canvas, edited object by object, a tab drawn and never saved included; a page note read as its pages and each card's page (8.7) |
 | `read_pdf` | `path` or `tab`, `pages`? | a PDF's text (`papers.rs`) |
 | `pdf_highlights` | `path`, `op`: `list`, `add` (`quote`, `page`, `colour`, `comment`) | |
-| `read_setting`, `write_setting` | `key`, `value` | an allowlist of keys (8.8); writing asks |
+| `read_setting`, `write_setting` | `key`, `value` | every setting with a row in Settings, by the settings file's key, with its choices; a pane's name lists its settings (8.8); writing asks |
 | `capture_to_note` | `tab`, `note`?, `as`: `clip`, `screenshot`, `pdf`, `link`; `under`?, `full_page`?, `folder`?, `space`? | a page into a note, from an agent's tab or the reader's: the clipper's markdown with `source:`, a screenshot or a PDF kept beside the note and embedded, or the address; answers the note |
 | `files` | `op`: `read`, `write`, `append`, `list`, `stat`, `mkdir`, `move`, `copy`, `delete`, `search`, `changes`; `path`, `to`?, `content`?, `base64`?, `glob`?, `text`?, `since`? | files and folders anywhere the user account reaches, outside the spaces, with `files` (8.11) |
 | `process` | `op`: `run`, `start`, `list`, `read`, `write`, `kill`; `program`?, `args`?, `env`?, `cwd`?, `stdin`?, `timeout_ms`?, `id`?, `since`?, `wait_ms`?, `close`? | a program on this computer, never through a shell: run to its end, or started and read, written to and ended, with `processes` (8.12) |
@@ -496,7 +496,9 @@ the AI sidebar, with the chat attached, and the answer comes back as a draft (de
 | `run_terminal` | `command`, `cwd`?, `tab`? | only when the terminal tab exists, and only with `terminal` (8.9); with `tab`, typed into that terminal of the reader's, local or online, and what it printed until it went quiet |
 | `read_terminal` | `tab`, `lines`? | one of the reader's terminal tabs as words: scrollback and screen, wrapped lines joined, marked as the terminal's; one not shown since a restart answers the lines it came back with. `context` (8.9) |
 | `type_terminal` | `tab`, `text`?, `enter`?, `keys`?, `wait_ms`? | one line typed into the reader's own shell, Enter unless told otherwise, then named keys (`Ctrl+C`, the arrows, `Tab`...); answers what it printed until it went quiet. `terminal`, and it asks like `run_terminal` (8.9) |
-| `run_command` | `id` | one row of the palette's registry, as `orden commands run` does; never the rows only somebody at the keyboard may press (`byHand`: recording, the camera, dictation, signing out), and the rows that publish, share or change settings ask (9.3) |
+| `run_command` | `id`, `path`? | one row of the palette's registry, as `orden commands run` does; never the rows only somebody at the keyboard may press (`byHand`: recording, the camera, dictation, signing out), and the rows that publish, share or change settings ask (9.3); a file dialog the row opens is answered by `path` under `files`' rules (8.14) |
+| `system_clipboard` | `op`: `read`, `write`; `text`? | the system clipboard's text, with `clipboard` (8.14) |
+| `ask_reader` | `kind`: `notice`, `choice`, `text`; `message`, `choices`?, `placeholder`?, `id`?, `wait_ms`? | a question in the agent's session in the Ask panel, with `ask` (8.14) |
 | `attach_agent_log` | `note`, `session`? | this session's log, written into a note (9.5) |
 | `approval_status` | `id` | what the reader answered (9.3) |
 
@@ -916,9 +918,15 @@ its quote, like a person's.
 
 ### 8.8 Settings
 
-A short allowlist, read freely and written only with `settings` and a question (9.3): the
-theme, the language, the editor's options, a space's web data choice. Never the account,
-the sync, the AI keys, the agents' own grants, or anything in `automation.json`.
+Every setting with a row in Settings, by the key the settings file sets it by (#673:
+`appearance.accent`, `editor.textSize`, `shortcuts.new-note`), read freely and written only
+with `settings` and a question (9.3), through the row's own control and held to the file's
+schema; a pane's name alone (`appearance`) lists its settings with their values and
+choices, and `theme` answers every theme there is to choose from. A setting the settings
+file holds is the file's, and refused. A few older names stay beside them: the theme, the
+language, the editor's options, a space's web data choice. Never the account, the sync, the
+AI keys, the agents' own grants, or anything in `automation.json`: none of those has a row
+with a key, so there is no name to ask for them by (#1078).
 
 ### 8.9 The terminal
 
@@ -1068,6 +1076,35 @@ the reader's own agents hold and a third party is granted (`http.rs`).
   Every other address, this machine's dev servers included, is reached.
 - What a site said is its words, marked untrusted (9.6).
 
+### 8.14 The app and its window
+
+What a VS Code extension does with the window (#1078), each through the rules every
+change to the reader's screen keeps (`reader-view.ts`, #1070):
+
+- **Settings**, every one by its key (8.8), themes among them.
+- **A file dialog** a command opens - Import, every Export - is answered by `run_command`'s
+  `path` instead of shown, as an extension's command takes a file where a person would
+  be shown `showOpenDialog`: the crate says whether the agent may read or write there
+  (`agents_dialog_path`), under exactly `files`' rules - the scope, the fences, the
+  question (8.11). A row that opens no dialog says `path_unused`.
+- **The clipboard**: `system_clipboard` reads and writes its text, under its own scope,
+  `clipboard`, since what was copied last may be a password; reading is marked as the
+  clipboard's words (9.6), and writing asks in `confirm` mode, as every write does.
+- **Questions**: `ask_reader` puts a `notice` (a notification), a `choice` among up to
+  twelve answers, or a `text` to type, as `showInformationMessage`, `showQuickPick` and
+  `showInputBox` do - under its own scope, `ask`. A choice or a text is shown in the agent's
+  session in the Ask panel (9.5) and counted on its row there, and told once as a
+  notification that opens the session, whose own field answers a text where the system
+  has one; the call waits up to `wait_ms` (a minute,
+  two at most) and is otherwise answered the question's `id`, to ask about again.
+  Dismissed is an answer too. Only an agent the reader is talking to asks: a stopped one is
+  refused, and its questions are taken back.
+- **Tabs and panes**: `workspace_tabs` moves a tab to another pane or place and arranges
+  the panes, with `workspace.focus`, as a drag and the pane menu do.
+
+Registering commands, views or status items is left out: an agent is a session, not code
+loaded into the window, so what it registered would outlive the agent that answers it.
+
 ---
 
 ## 9. Safety and permissions
@@ -1085,7 +1122,7 @@ Each agent holds:
 
 | part | what it is | Emil's default |
 | --- | --- | --- |
-| scopes | `context`, `notes.read`, `notes.write`, `chats.read`, `chats.write`, `tree`, `workspace`, `workspace.focus`, `browser`, `browser.reader`, `browser.script`, `browser.network`, `browser.storage`, `settings`, `terminal`, `files`, `processes`, `network`, `agents` | all but `browser.script`, `browser.storage`, `settings` |
+| scopes | `context`, `notes.read`, `notes.write`, `chats.read`, `chats.write`, `tree`, `workspace`, `workspace.focus`, `browser`, `browser.reader`, `browser.script`, `browser.network`, `browser.storage`, `settings`, `terminal`, `files`, `processes`, `network`, `clipboard`, `ask`, `agents` | all but `browser.script`, `browser.storage`, `settings` |
 | spaces | which spaces it may reach; another space's tabs and notes do not exist to it | every space |
 | sites | allow, deny, and "agent store only", by site (registrable domain, as `siteOf`) | none set |
 | mode | `unsupervised` or `confirm` | unsupervised |
@@ -1093,9 +1130,10 @@ Each agent holds:
 | limits | tabs, calls a minute, pages a minute, browser memory | 4 tabs, 600 calls, 60 navigations, no memory limit |
 
 A third-party agent starts with `context` off, `browser.reader` off, both chats scopes off
-(a chat is other people's words), the terminal, helpers, files anywhere, programs and
-requests off, and `confirm` mode. A grant kept from before #1078 has no `files`,
-`processes` or `network` until the reader turns them on. A grant kept from before chats were
+(a chat is other people's words), the terminal, helpers, files anywhere, programs,
+requests, the clipboard and questions off, and `confirm` mode. A grant kept from before
+#1078 has none of `files`, `processes`, `network`, `clipboard` or `ask` until the reader
+turns them on. A grant kept from before chats were
 is given `chats.read` and `chats.write` where it holds `notes.read` and `notes.write` and is
 the reader's own (it holds `context`); once the file has been written with them, a scope
 taken away stays away. "Always in this chat" is kept the way "Always on this site" is, under

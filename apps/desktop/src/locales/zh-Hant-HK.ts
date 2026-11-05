@@ -2071,6 +2071,8 @@ export const zhHantHK: Dictionary = {
   'Run programs on this computer': '在這部電腦上執行程式',
   'Web requests': '網絡請求',
   'Send requests to any site, outside your tabs': '在你的分頁以外向任何網站發送請求',
+  'Read and change the clipboard': '讀取和更改剪貼簿',
+  'Ask you a question or tell you something': '向你提問或告訴你一些事',
   Paying: '付款',
   'Sending messages': '傳送訊息',
   'Publishing and sharing': '發佈及共享',

@@ -2068,6 +2068,8 @@ export const yue: Dictionary = {
   'Run programs on this computer': '喺呢部電腦度執行程式',
   'Web requests': '網絡請求',
   'Send requests to any site, outside your tabs': '喺你嘅分頁以外向任何網站發送請求',
+  'Read and change the clipboard': '讀取同改變剪貼簿',
+  'Ask you a question or tell you something': '問你問題或者話你知啲嘢',
   Paying: '俾錢',
   'Sending messages': '發訊息',
   'Publishing and sharing': '發佈同分享',

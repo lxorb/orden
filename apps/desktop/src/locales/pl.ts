@@ -2212,6 +2212,8 @@ export const pl: Dictionary = {
   'Web requests': 'Żądania sieciowe',
   'Send requests to any site, outside your tabs':
     'Wysyłanie żądań do dowolnej witryny, poza Twoimi kartami',
+  'Read and change the clipboard': 'Odczyt i zmiana schowka',
+  'Ask you a question or tell you something': 'Zadawanie Ci pytań lub przekazywanie informacji',
   Paying: 'Płacenie',
   'Sending messages': 'Wysyłanie wiadomości',
   'Publishing and sharing': 'Publikowanie i udostępnianie',

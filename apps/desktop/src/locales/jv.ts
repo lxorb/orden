@@ -2112,6 +2112,8 @@ export const jv: Dictionary = {
   'Web requests': 'Panjaluk web',
   'Send requests to any site, outside your tabs':
     'Ngirim panjaluk menyang situs apa wae, ing njaba tab sampeyan',
+  'Read and change the clipboard': 'Maca lan ngganti papan klip',
+  'Ask you a question or tell you something': 'Takon utawa ngandhani sampeyan bab',
   Paying: 'Mbayar',
   'Sending messages': 'Ngirim pesen',
   'Publishing and sharing': 'Nerbitake lan nuduhake',

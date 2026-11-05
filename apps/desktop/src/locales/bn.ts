@@ -2125,6 +2125,8 @@ export const bn: Dictionary = {
   'Run programs on this computer': 'এই কম্পিউটারে প্রোগ্রাম চালানো',
   'Web requests': 'ওয়েব অনুরোধ',
   'Send requests to any site, outside your tabs': 'আপনার ট্যাবের বাইরে যেকোনো সাইটে অনুরোধ পাঠানো',
+  'Read and change the clipboard': 'ক্লিপবোর্ড পড়া ও বদলানো',
+  'Ask you a question or tell you something': 'আপনাকে প্রশ্ন করা বা কিছু জানানো',
   Paying: 'অর্থ প্রদান',
   'Sending messages': 'বার্তা পাঠানো',
   'Publishing and sharing': 'প্রকাশ ও শেয়ার করা',

@@ -2121,6 +2121,8 @@ export const ms: Dictionary = {
   'Web requests': 'Permintaan web',
   'Send requests to any site, outside your tabs':
     'Hantar permintaan ke mana-mana tapak, di luar tab anda',
+  'Read and change the clipboard': 'Baca dan ubah papan keratan',
+  'Ask you a question or tell you something': 'Tanya anda soalan atau beritahu anda sesuatu',
   Paying: 'Membayar',
   'Sending messages': 'Menghantar mesej',
   'Publishing and sharing': 'Menerbitkan dan berkongsi',

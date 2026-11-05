@@ -339,14 +339,29 @@ export async function importDocument(): Promise<{
   if (!isDesktop) return null
 
   const { open } = await import('@tauri-apps/plugin-dialog')
-  const picked = await open({
-    filters: [
-      {
-        name: 'Documents',
-        extensions: ['docx', 'odt', 'rtf', 'epub', 'rst', 'textile', 'tex', 'html', 'opml', 'org'],
-      },
-    ],
-  })
+  // An agent's command names the file instead (#1078).
+  const given = (await import('./dialog-answer')).dialogAnswer()
+  const picked = given
+    ? await given(false)
+    : await open({
+        filters: [
+          {
+            name: 'Documents',
+            extensions: [
+              'docx',
+              'odt',
+              'rtf',
+              'epub',
+              'rst',
+              'textile',
+              'tex',
+              'html',
+              'opml',
+              'org',
+            ],
+          },
+        ],
+      })
 
   if (typeof picked !== 'string') return null
 

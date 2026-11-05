@@ -46,6 +46,8 @@ describe('the defaults', () => {
       'files',
       'processes',
       'network',
+      'clipboard',
+      'ask',
       'agents',
     ])
     expect(grant.spaces).toBe('all')

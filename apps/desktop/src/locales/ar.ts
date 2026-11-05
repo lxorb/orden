@@ -2240,6 +2240,8 @@ export const ar: Dictionary = {
   'Run programs on this computer': 'تشغيل البرامج على هذا الكمبيوتر',
   'Web requests': 'طلبات الويب',
   'Send requests to any site, outside your tabs': 'إرسال طلبات إلى أي موقع خارج علاماتك',
+  'Read and change the clipboard': 'قراءة الحافظة وتغييرها',
+  'Ask you a question or tell you something': 'طرح سؤال عليك أو إخبارك بشيء',
   Paying: 'الدفع',
   'Sending messages': 'إرسال الرسائل',
   'Publishing and sharing': 'النشر والمشاركة',

@@ -475,10 +475,30 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
       return answered(tab)
     }
 
+    case 'move': {
+      const tab = tabNamed(call)
+      const pane = view.paneFor(tab, maybe(call, 'pane'), maybe(call, 'toward'))
+      if (pane === null) {
+        throw new Refused(
+          'bad_arguments',
+          'say pane, a pane id from list, or toward: left, right, up or down',
+        )
+      }
+      const at = 'at' in call.args ? Number(call.args.at) : null
+      view.moveTabTo(call, tab, pane, at !== null && Number.isInteger(at) && at >= 0 ? at : null)
+      return done(workspace.tabs.map(tabOf))
+    }
+
+    case 'arrange': {
+      const named = maybe(call, 'tab') === null ? null : tabNamed(call)
+      view.arrangePanes(call, need(call, 'layout'), named)
+      return done(workspace.tabs.map(tabOf))
+    }
+
     default:
       throw new Refused(
         'bad_arguments',
-        'op is one of list, open, new, rename, save, close, split, focus',
+        'op is one of list, open, new, rename, save, close, split, focus, move, arrange',
       )
   }
 }

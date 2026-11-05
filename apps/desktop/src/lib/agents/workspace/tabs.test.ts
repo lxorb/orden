@@ -60,7 +60,26 @@ const workspace = {
   },
   activeTabId: 'n1',
   previewTabId: null as string | null,
-  panes: { focusedId: 'p1' },
+  panes: {
+    focusedId: 'p1',
+    /** Two panes side by side: p1 on the left, p2 on the right. */
+    frame: {
+      kind: 'split',
+      id: 's1',
+      along: 'row',
+      fraction: 0.3,
+      sides: [
+        { kind: 'pane', id: 'p1', activeTabId: null, linked: false, stacked: false },
+        { kind: 'pane', id: 'p2', activeTabId: null, linked: false, stacked: false },
+      ],
+    },
+    at: (id: string) => (['p1', 'p2'].includes(id) ? { id } : null),
+    equalise: vi.fn(),
+  },
+  moveTab: vi.fn((id: string, pane: string) => {
+    const one = tabs.find((tab) => tab.id === id)
+    if (one) one.paneId = pane
+  }),
   get active() {
     return tabs.find((one) => one.id === this.activeTabId) ?? null
   },
@@ -761,6 +780,38 @@ describe('a PDF, Settings and Recently deleted', () => {
       code: 'read_only',
     })
     expect(trash.restore).not.toHaveBeenCalled()
+  })
+})
+
+describe('tabs moved and panes arranged (#1078)', () => {
+  test('a tab goes to a pane by its id or toward a side, only when asked for', async () => {
+    expect(await call('workspace_tabs', { op: 'move', tab: 'n1', pane: 'p2' })).toMatchObject({
+      code: 'not_granted',
+    })
+    expect(workspace.moveTab).not.toHaveBeenCalled()
+
+    await call('workspace_tabs', { op: 'move', tab: 'n1', pane: 'p2', at: 0 }, agent(focusing))
+    expect(workspace.moveTab).toHaveBeenLastCalledWith('n1', 'p2', 0)
+    await call('workspace_tabs', { op: 'move', tab: 'c1', toward: 'left' }, agent(focusing))
+    expect(workspace.moveTab).toHaveBeenLastCalledWith('c1', 'p1', null)
+    expect(
+      await call('workspace_tabs', { op: 'move', tab: 'n1', toward: 'up' }, agent(focusing)),
+    ).toMatchObject({ code: 'bad_arguments' })
+    expect(
+      await call('workspace_tabs', { op: 'move', tab: 'n1', pane: 'p9' }, agent(focusing)),
+    ).toMatchObject({ code: 'bad_arguments' })
+  })
+
+  test('the panes split, made even or gathered into one', async () => {
+    await call('workspace_tabs', { op: 'arrange', layout: 'rows', tab: 'n1' }, agent(focusing))
+    expect(workspace.split).toHaveBeenLastCalledWith('column', 'n1')
+    await call('workspace_tabs', { op: 'arrange', layout: 'even' }, agent(focusing))
+    expect(workspace.panes.equalise).toHaveBeenCalledWith('p1')
+    await call('workspace_tabs', { op: 'arrange', layout: 'single' }, agent(focusing))
+    expect(workspace.moveTab).toHaveBeenCalledWith('c1', 'p1')
+    expect(
+      await call('workspace_tabs', { op: 'arrange', layout: 'grid' }, agent(focusing)),
+    ).toMatchObject({ code: 'bad_arguments' })
   })
 })
 

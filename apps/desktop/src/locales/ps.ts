@@ -2128,6 +2128,8 @@ export const ps: Dictionary = {
   'Run programs on this computer': 'په دې کمپیوټر کې پروګرامونه چلول',
   'Web requests': 'د وېب غوښتنې',
   'Send requests to any site, outside your tabs': 'ستاسو له ټبونو بهر هر سایټ ته غوښتنې لېږل',
+  'Read and change the clipboard': 'کلیپ بورډ لوستل او بدلول',
+  'Ask you a question or tell you something': 'تاسو ته پوښتنه کول یا څه ویل',
   Paying: 'تادیه',
   'Sending messages': 'پیغامونه لېږل',
   'Publishing and sharing': 'خپرول او شریکول',

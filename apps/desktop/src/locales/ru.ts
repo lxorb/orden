@@ -2212,6 +2212,8 @@ export const ru: Dictionary = {
   'Web requests': 'Веб-запросы',
   'Send requests to any site, outside your tabs':
     'Отправлять запросы на любой сайт вне ваших вкладок',
+  'Read and change the clipboard': 'Читать и изменять буфер обмена',
+  'Ask you a question or tell you something': 'Задавать вам вопросы или сообщать что-то',
   Paying: 'Оплата',
   'Sending messages': 'Отправка сообщений',
   'Publishing and sharing': 'Публикация и доступ',

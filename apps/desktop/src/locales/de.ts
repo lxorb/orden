@@ -2169,6 +2169,8 @@ export const de: Dictionary = {
   'Web requests': 'Web-Anfragen',
   'Send requests to any site, outside your tabs':
     'Anfragen an beliebige Websites senden, außerhalb deiner Tabs',
+  'Read and change the clipboard': 'Die Zwischenablage lesen und ändern',
+  'Ask you a question or tell you something': 'Dir eine Frage stellen oder dir etwas mitteilen',
   Paying: 'Bezahlen',
   'Sending messages': 'Nachrichten senden',
   'Publishing and sharing': 'Veröffentlichen und Teilen',

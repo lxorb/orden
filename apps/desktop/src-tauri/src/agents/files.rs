@@ -95,8 +95,19 @@ pub(super) fn answer(app: &AppHandle, caller: &Caller, asked: &Files) -> Answer 
 /// exactly the rules a `write` keeps: the `files` scope, never behind a fence, and the
 /// question a write raises. The path made absolute, or what the call answers instead.
 pub(super) fn writable(app: &AppHandle, caller: &Caller, asked: &str) -> Result<PathBuf, Answer> {
+    reachable(app, caller, asked, FilesOp::Write)
+}
+
+/// Where a verb may read or write one file for an agent - a file dialog an agent's
+/// command opens, answered by a path (#1078) - under the rules `op` keeps here.
+pub(super) fn reachable(
+    app: &AppHandle,
+    caller: &Caller,
+    asked: &str,
+    op: FilesOp,
+) -> Result<PathBuf, Answer> {
     let write = Files {
-        op: FilesOp::Write,
+        op,
         path: asked.to_owned(),
         to: None,
         content: None,
@@ -113,7 +124,7 @@ pub(super) fn writable(app: &AppHandle, caller: &Caller, asked: &str) -> Result<
     }
     let path = resolved(app, asked).map_err(|why| Answer::error(Code::BadArguments, why))?;
     if let Caller::Agent(grant) = caller {
-        if let Some(refused) = refused(&fences(app), FilesOp::Write, &path, None) {
+        if let Some(refused) = refused(&fences(app), op, &path, None) {
             return Err(refused);
         }
         if let Some(question) = question(app, grant, &write, &path, None) {

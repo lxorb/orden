@@ -1110,13 +1110,24 @@
   },
   {
     "name": "workspace_tabs",
-    "description": "The reader's tabs. open: a `path`, a `url` or a `view` (graph, scratchpad, settings at `section`). new: a tab of `kind` with no file (a note with `content`, a web tab with `url`, a terminal with `shell` and `cwd`). rename: a tab's `name`, a file's renamed with its links. save: an unsaved tab written at `path`. close, split, focus. Tabs open behind the reader's and never move their screen, keyboard or scroll; `background` false, focus, split and closing the tab in front need workspace.focus, only when the reader asked to be shown it.",
+    "description": "The reader's tabs. open: a `path`, a `url` or a `view` (graph, scratchpad, settings at `section`). new: a tab of `kind` with no file (a note with `content`, a web tab with `url`, a terminal with `shell` and `cwd`). rename: a tab's `name`, a file's renamed with its links. save: an unsaved tab written at `path`. close, split, focus. move: a tab to `pane` (an id from list) or `toward` a side, at `at`. arrange: `layout` columns, rows, even or single. Tabs open behind the reader's and never move their screen, keyboard or scroll; `background` false, focus, split, move, arrange and closing the tab in front need workspace.focus, only when the reader asked to be shown it.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "op": {
           "type": "string",
-          "enum": ["list", "open", "new", "rename", "save", "close", "split", "focus"]
+          "enum": [
+            "list",
+            "open",
+            "new",
+            "rename",
+            "save",
+            "close",
+            "split",
+            "focus",
+            "move",
+            "arrange"
+          ]
         },
         "tab": { "type": "string", "description": "A tab id from get_context." },
         "space": { "type": "string" },
@@ -1129,7 +1140,11 @@
         "shell": { "type": "string" },
         "cwd": { "type": "string" },
         "name": { "type": "string" },
-        "background": { "type": "boolean" }
+        "background": { "type": "boolean" },
+        "pane": { "type": "string" },
+        "toward": { "type": "string", "enum": ["left", "right", "up", "down"] },
+        "at": { "type": "integer" },
+        "layout": { "type": "string", "enum": ["columns", "rows", "even", "single"] }
       },
       "required": ["op"]
     },
@@ -1151,16 +1166,16 @@
   },
   {
     "name": "run_command",
-    "description": "Run one command of nib's palette by id. Those that publish, share or change settings ask the reader first; those only a person at the keyboard may run are refused.",
+    "description": "Run one command of nib's palette by id. Those that publish, share or change settings ask the reader first; those only a person at the keyboard may run are refused. A file dialog it opens is answered by path, as files reads and writes.",
     "inputSchema": {
       "type": "object",
-      "properties": { "id": { "type": "string" } },
+      "properties": { "id": { "type": "string" }, "path": { "type": "string" } },
       "required": ["id"]
     }
   },
   {
     "name": "read_setting",
-    "description": "One of nib's settings: the theme, the language, the editor's options, a space's web data.",
+    "description": "One of nib's settings, by the settings file's key (appearance.accent, editor.textSize), with its choices; a pane's name (appearance, editor, general) lists its settings. Also theme, language and a space's web data.",
     "inputSchema": {
       "type": "object",
       "properties": { "key": { "type": "string" } },
@@ -1177,6 +1192,33 @@
       "required": ["key", "value"]
     },
     "annotations": { "openWorldHint": false }
+  },
+  {
+    "name": "system_clipboard",
+    "description": "The system clipboard: read its text, or write text to it.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "op": { "type": "string", "enum": ["read", "write"] },
+        "text": { "type": "string" }
+      },
+      "required": ["op"]
+    }
+  },
+  {
+    "name": "ask_reader",
+    "description": "Ask the reader: a notice, a choice among choices, or a line of text. Waits up to wait_ms for the answer; without one, ask again with the id.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "kind": { "type": "string", "enum": ["notice", "choice", "text"] },
+        "message": { "type": "string" },
+        "choices": { "type": "array", "items": { "type": "string" } },
+        "placeholder": { "type": "string" },
+        "id": { "type": "string" },
+        "wait_ms": { "type": "integer" }
+      }
+    }
   },
   {
     "name": "run_terminal",

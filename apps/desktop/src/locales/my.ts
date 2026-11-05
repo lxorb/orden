@@ -2111,6 +2111,8 @@ export const my: Dictionary = {
   'Web requests': 'ဝဘ် တောင်းဆိုမှုများ',
   'Send requests to any site, outside your tabs':
     'သင့်တက်ဘ်များ အပြင်ဘက်မှ မည်သည့်ဆိုက်သို့မဆို တောင်းဆိုမှုများ ပို့ရန်',
+  'Read and change the clipboard': 'ကလစ်ဘုတ်ကို ဖတ်ရန်နှင့် ပြောင်းရန်',
+  'Ask you a question or tell you something': 'သင့်ကို မေးခွန်းမေးရန် သို့မဟုတ် တစ်ခုခု ပြောရန်',
   Paying: 'ငွေပေးချေခြင်း',
   'Sending messages': 'မက်ဆေ့ချ် ပို့ခြင်း',
   'Publishing and sharing': 'ထုတ်ဝေခြင်းနှင့် မျှဝေခြင်း',

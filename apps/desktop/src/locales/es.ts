@@ -2183,6 +2183,8 @@ export const es: Dictionary = {
   'Web requests': 'Solicitudes web',
   'Send requests to any site, outside your tabs':
     'Enviar solicitudes a cualquier sitio, fuera de tus pestañas',
+  'Read and change the clipboard': 'Leer y cambiar el portapapeles',
+  'Ask you a question or tell you something': 'Hacerte una pregunta o decirte algo',
   Paying: 'Pagar',
   'Sending messages': 'Enviar mensajes',
   'Publishing and sharing': 'Publicar y compartir',

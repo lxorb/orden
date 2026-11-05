@@ -548,6 +548,35 @@ pub fn agents_resume(
     Ok(())
 }
 
+/// A file dialog an agent's command would open, answered by the path the agent gave
+/// instead (#1078): the file read or written only where `files` would let it be - the
+/// scope, never behind a fence, and the question it raises. Answers `{"path"}` made
+/// absolute, the question, or why not.
+#[tauri::command(async)]
+pub fn agents_dialog_path(
+    webview: tauri::Webview,
+    app: AppHandle,
+    agent: String,
+    path: String,
+    write: bool,
+) -> Answer {
+    if let Err(why) = from_the_app(&webview) {
+        return Answer::error(Code::NotGranted, why);
+    }
+    let Some(grant) = state(&app).grants.by_id(&app, &agent) else {
+        return Answer::error(Code::NotGranted, "there is no such agent");
+    };
+    let op = if write {
+        verbs::FilesOp::Write
+    } else {
+        verbs::FilesOp::Read
+    };
+    match files::reachable(&app, &Caller::Agent(Box::new(grant)), &path, op) {
+        Ok(path) => Answer::ok(serde_json::json!({ "path": path.display().to_string() })),
+        Err(answer) => answer,
+    }
+}
+
 /// The reader's answer to a question: Allow or Don't allow, and "Always on this site".
 #[tauri::command(async)]
 pub fn agents_answer(

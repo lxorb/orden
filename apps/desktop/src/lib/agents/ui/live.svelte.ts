@@ -17,6 +17,7 @@ import { t } from '../../i18n.svelte'
 import { shortcuts } from '../../shortcuts.svelte'
 import { accelerator } from '../../accelerator'
 import { Activity } from './activity.svelte'
+import { asking } from './asking.svelte'
 import { nextLapse, sameMarks, wornAt } from './marks'
 import PairingBubble from './PairingBubble.svelte'
 import { readEvent } from './read'
@@ -99,6 +100,14 @@ export function started(source: Source = crate): Activity {
         pairing: t('{client} wants to connect'),
       }
       untrack(() => void source.shell(system, words).catch(() => undefined))
+    })
+
+    // What an agent asked the reader goes with it (#1078): it is the one being talked to
+    // only while it is connected and not stopped.
+    $effect(() => {
+      // eslint-disable-next-line svelte/prefer-svelte-reactivity -- handed on at once, never drawn
+      const here = new Set(activity.seen.connected.filter((one) => !activity.stopped(one)))
+      untrack(() => asking.keepOnly(here))
     })
 
     // A client asking to become an agent: the bubble, for as long as it asks.

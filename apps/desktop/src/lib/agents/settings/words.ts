@@ -21,6 +21,8 @@ export const GROUP_WORDS: Record<ScopeGroup, () => string> = {
   files: () => t('Files'),
   processes: () => t('Programs'),
   network: () => t('Web requests'),
+  clipboard: () => t('Clipboard'),
+  questions: () => t('Questions'),
   helpers: () => t('Helpers'),
 }
 
@@ -43,6 +45,8 @@ export const SCOPE_WORDS: Record<Scope, () => string> = {
   files: () => t('Read and change files anywhere on this computer'),
   processes: () => t('Run programs on this computer'),
   network: () => t('Send requests to any site, outside your tabs'),
+  clipboard: () => t('Read and change the clipboard'),
+  ask: () => t('Ask you a question or tell you something'),
   agents: () => t('Start helpers on your AI accounts'),
 }
 

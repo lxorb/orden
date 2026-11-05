@@ -2129,6 +2129,8 @@ export const fa: Dictionary = {
   'Web requests': 'درخواست‌های وب',
   'Send requests to any site, outside your tabs':
     'ارسال درخواست به هر سایتی، بیرون از زبانه‌های شما',
+  'Read and change the clipboard': 'خواندن و تغییر کلیپ‌بورد',
+  'Ask you a question or tell you something': 'از شما سؤالی بپرسد یا چیزی بگوید',
   Paying: 'پرداخت',
   'Sending messages': 'فرستادن پیام',
   'Publishing and sharing': 'انتشار و اشتراک‌گذاری',

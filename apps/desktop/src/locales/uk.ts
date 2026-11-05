@@ -2205,6 +2205,8 @@ export const uk: Dictionary = {
   'Web requests': 'Веб-запити',
   'Send requests to any site, outside your tabs':
     'Надсилати запити на будь-який сайт поза вашими вкладками',
+  'Read and change the clipboard': 'Читати й змінювати буфер обміну',
+  'Ask you a question or tell you something': 'Ставити вам запитання або щось повідомляти',
   Paying: 'Оплата',
   'Sending messages': 'Надсилання повідомлень',
   'Publishing and sharing': 'Публікація й поширення',

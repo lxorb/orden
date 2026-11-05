@@ -2131,6 +2131,8 @@ export const pa: Dictionary = {
   'Web requests': 'ਵੈੱਬ ਬੇਨਤੀਆਂ',
   'Send requests to any site, outside your tabs':
     'ਆਪਣੀਆਂ ਟੈਬਾਂ ਤੋਂ ਬਾਹਰ ਕਿਸੇ ਵੀ ਸਾਈਟ ਨੂੰ ਬੇਨਤੀਆਂ ਭੇਜੋ',
+  'Read and change the clipboard': 'ਕਲਿੱਪਬੋਰਡ ਪੜ੍ਹੋ ਅਤੇ ਬਦਲੋ',
+  'Ask you a question or tell you something': 'ਤੁਹਾਨੂੰ ਸਵਾਲ ਪੁੱਛੋ ਜਾਂ ਕੁਝ ਦੱਸੋ',
   Paying: 'ਭੁਗਤਾਨ',
   'Sending messages': 'ਸੁਨੇਹੇ ਭੇਜਣਾ',
   'Publishing and sharing': 'ਪ੍ਰਕਾਸ਼ਿਤ ਅਤੇ ਸਾਂਝਾ ਕਰਨਾ',

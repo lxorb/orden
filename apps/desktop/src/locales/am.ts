@@ -2099,6 +2099,8 @@ export const am: Dictionary = {
   'Run programs on this computer': 'በዚህ ኮምፒውተር ላይ ፕሮግራሞችን ማስኬድ',
   'Web requests': 'የድር ጥያቄዎች',
   'Send requests to any site, outside your tabs': 'ከትሮችዎ ውጭ ወደ ማንኛውም ጣቢያ ጥያቄዎችን መላክ',
+  'Read and change the clipboard': 'ቅንጥብ ሰሌዳን ማንበብና መቀየር',
+  'Ask you a question or tell you something': 'ጥያቄ መጠየቅ ወይም አንድ ነገር መንገር',
   Paying: 'መክፈል',
   'Sending messages': 'መልዕክቶችን መላክ',
   'Publishing and sharing': 'ማተም እና ማጋራት',
