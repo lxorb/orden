@@ -22,6 +22,9 @@ use serde_json::{Map, Value};
 #[serde(rename_all = "camelCase")]
 pub struct About {
     pub name: String,
+    /// The version its manifest says. Never sent: a row's version is the list's, and a
+    /// manifest with none, or with a number, wrote an empty one over it.
+    #[serde(skip_serializing)]
     pub version: String,
     /// The largest picture it names, as a path inside its folder.
     pub icon: Option<String>,

@@ -196,6 +196,9 @@ fn shown(kept: Kept, folder: &Path) -> Shown {
     }
 }
 
+/// The largest picture a row carries, so a manifest naming a large file is not read whole.
+const LARGEST: u64 = 512 * 1024;
+
 /// A picture in an extension's folder as a `data:` address, if it is a small one.
 fn picture(folder: &Path, path: &str) -> Option<String> {
     use base64::Engine as _;
@@ -209,13 +212,19 @@ fn picture(folder: &Path, path: &str) -> Option<String> {
         "ico" => "image/x-icon",
         _ => return None,
     };
-    let bytes = std::fs::read(folder.join(path)).ok()?;
-    (bytes.len() <= 512 * 1024).then(|| {
-        format!(
-            "data:{kind};base64,{}",
-            base64::engine::general_purpose::STANDARD.encode(bytes)
-        )
-    })
+    let file = folder.join(path);
+    if !std::fs::metadata(&file).is_ok_and(|one| one.is_file() && one.len() <= LARGEST) {
+        return None;
+    }
+    let bytes = std::fs::read(&file).ok()?;
+    u64::try_from(bytes.len())
+        .is_ok_and(|size| size <= LARGEST)
+        .then(|| {
+            format!(
+                "data:{kind};base64,{}",
+                base64::engine::general_purpose::STANDARD.encode(bytes)
+            )
+        })
 }
 
 /// Tells the window the list changed, and every `WebView2` store what it now holds.
@@ -475,6 +484,121 @@ pub fn tidy(app: &AppHandle) {
         match list.iter().find(|one| one.id == name) {
             Some(one) => library::prune(&root, &one.id, &one.version),
             None => library::forget(&root, &name),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+    use std::path::Path;
+
+    use serde_json::{json, Value};
+
+    use super::{shown, Kept, Store, LARGEST};
+
+    fn kept() -> Kept {
+        Kept {
+            id: "abcdefghijklmnopabcdefghijklmnop".to_owned(),
+            store: Store::Chrome,
+            version: "1.0".to_owned(),
+            enabled: true,
+            pinned: true,
+        }
+    }
+
+    fn row(folder: &Path, manifest: &str) -> Value {
+        fs::write(folder.join("manifest.json"), manifest).expect("a manifest");
+        serde_json::to_value(shown(kept(), folder)).expect("a row")
+    }
+
+    /// Whatever an extension's manifest says, or fails to say, its row is the list's id
+    /// and version and is drawn (#1084): no field is assumed, of any type or size.
+    #[test]
+    fn any_manifest_at_all_makes_a_row() {
+        let folder = tempfile::tempdir().expect("a folder");
+        let locale = folder.path().join("_locales/zh_CN");
+        fs::create_dir_all(&locale).expect("a locale");
+        fs::write(
+            locale.join("messages.json"),
+            r#"{"extName": {"message": 5}}"#,
+        )
+        .expect("words");
+        let deep = format!("{}{}", "[".repeat(100_000), "]".repeat(100_000));
+        let large = json!({
+            "name": "x".repeat(4 << 20),
+            "permissions": vec!["storage"; 10_000]
+        })
+        .to_string();
+        let manifests = [
+            String::new(),
+            "not a manifest".to_owned(),
+            "[]".to_owned(),
+            "null".to_owned(),
+            "42".to_owned(),
+            r#""text""#.to_owned(),
+            "{}".to_owned(),
+            "\u{feff}{\"name\": 5, \"version\": 2}".to_owned(),
+            json!({
+                "name": ["x"], "version": { "a": 1 }, "icons": "icon.png", "action": "yes",
+                "options_ui": [], "options_page": 3, "permissions": "storage",
+                "host_permissions": [1, null, {}], "content_scripts": { "matches": "x" },
+                "default_locale": 7
+            })
+            .to_string(),
+            json!({
+                "icons": { "16": 5, "abc": "a.png", "4294967296": "b.png", "-1": "c.png" },
+                "action": { "default_icon": 7, "default_popup": {} }
+            })
+            .to_string(),
+            json!({
+                "name": "__MSG_extName__", "short_name": "__MSG___", "default_locale": "zh_CN",
+                "icons": { "128": "图标/ícone 🧩.png" },
+                "action": { "default_popup": "ポップ.html#ä" }
+            })
+            .to_string(),
+            json!({ "name": "名前 🧩\u{0}", "default_locale": "../../x" }).to_string(),
+            format!(r#"{{"name": "deep", "icons": {deep}}}"#),
+            large,
+        ];
+        for manifest in &manifests {
+            let said = row(folder.path(), manifest);
+            let start = manifest.chars().take(80).collect::<String>();
+            assert_eq!(said["id"], kept().id, "{start}");
+            assert_eq!(said["version"], "1.0", "{start}");
+            assert!(said["name"].is_string(), "{start}");
+            assert!(said["permissions"].is_array(), "{start}");
+        }
+
+        fs::remove_file(folder.path().join("manifest.json")).expect("gone");
+        let said = serde_json::to_value(shown(kept(), folder.path())).expect("a row");
+        assert_eq!(said["version"], "1.0");
+        assert_eq!(said["picture"], Value::Null);
+    }
+
+    /// A picture is carried only when it is a small file: never a folder, a file that is
+    /// not there, or a large one, which is not read at all.
+    #[test]
+    fn only_a_small_picture_is_carried() {
+        let folder = tempfile::tempdir().expect("a folder");
+        fs::write(folder.path().join("small.png"), b"\x89PNG").expect("a picture");
+        fs::create_dir(folder.path().join("folder.png")).expect("a folder");
+        fs::File::create(folder.path().join("large.png"))
+            .and_then(|file| file.set_len(LARGEST + 1))
+            .expect("a large picture");
+
+        let picture = |path: &str| {
+            row(
+                folder.path(),
+                &json!({ "icons": { "16": path } }).to_string(),
+            )["picture"]
+                .clone()
+        };
+        assert!(picture("small.png")
+            .as_str()
+            .is_some_and(|said| said.starts_with("data:image/png;base64,")));
+        for path in ["folder.png", "large.png", "nowhere.png", "small.txt"] {
+            assert_eq!(picture(path), Value::Null, "{path}");
         }
     }
 }

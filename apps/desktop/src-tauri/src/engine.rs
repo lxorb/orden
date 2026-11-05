@@ -796,6 +796,26 @@ mod tests {
         assert!(super::switches("").is_empty());
     }
 
+    /// A feature list a run asks for joins the engine's own (#1084). Put on the command
+    /// line as it came, it replaced the list CEF turns off to keep Chrome from crashing in
+    /// a CEF browser, and the first `extensions_list` took the app down.
+    #[cfg(feature = "cef")]
+    #[test]
+    fn a_feature_list_a_run_asks_for_joins_the_engine_s_own() {
+        let engine = tauri_runtime_cef::Cef::default().command_line_args(super::switches(
+            "disable-features=DisableLoadExtensionCommandLineSwitch,enable-features=Probe,v=1",
+        ));
+        let said = format!("{engine:?}");
+        let switches = said.split("disabled_features").next().unwrap_or_default();
+        assert!(!switches.contains("features"), "{said}");
+        assert!(switches.contains(r#"("v", Some("1"))"#), "{said}");
+        assert!(
+            said.contains(r#"disabled_features: ["DisableLoadExtensionCommandLineSwitch"]"#),
+            "{said}"
+        );
+        assert!(said.contains(r#"enabled_features: ["Probe"]"#), "{said}");
+    }
+
     /// A build that ships reads none of the variables that would reopen what the runtime
     /// shuts; a drive's build reads them. `PATH` stands for them, being there already.
     #[test]

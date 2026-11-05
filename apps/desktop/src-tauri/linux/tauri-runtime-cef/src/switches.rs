@@ -146,7 +146,7 @@ pub(crate) fn append_merged_switch(
 
 /// Strips the `-`/`--` prefix Chromium tolerates on a switch name, so a switch spelled
 /// either way is recognised.
-fn switch_key(argument: &str) -> &str {
+pub(crate) fn switch_key(argument: &str) -> &str {
   argument.trim_start_matches('-')
 }
 

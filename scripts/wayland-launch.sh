@@ -380,7 +380,9 @@ icon = (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 16, 16, 8,
     "action": {"default_title": name, "default_icon": "icon.png"},
 }))
 MAKE
-  NIB_CEF_ARGS="load-extension=$(cd "$out/extension" && pwd)"
+  # With a feature list of the run's own, as somebody chasing an extension passes one:
+  # it replaced CEF's own, and listing the extensions took the app down (#1084).
+  NIB_CEF_ARGS="load-extension=$(cd "$out/extension" && pwd),disable-features=DisableLoadExtensionCommandLineSwitch"
   export NIB_CEF_ARGS
 fi
 # With TEXTSIZE=1, the endpoint and no page: the launch opens on its note (#680).

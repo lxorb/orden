@@ -579,15 +579,16 @@ impl Cef {
   /// the command line of a non-browser process "may result in undefined behavior
   /// including crashes", and Chromium already forwards to each child process the
   /// switches it needs.
+  ///
+  /// A `--disable-features` or `--enable-features` is added to its list, as
+  /// [`Self::disable_features`] and [`Self::enable_features`] add, rather than replacing it.
   #[must_use]
   pub fn command_line_arg<K: Into<String>, V: Into<String>>(
     mut self,
     key: K,
     value: Option<V>,
   ) -> Self {
-    self
-      .command_line_args
-      .push((key.into(), value.map(Into::into)));
+    self.push_command_line_arg(key.into(), value.map(Into::into));
     self
   }
 
@@ -599,10 +600,21 @@ impl Cef {
     mut self,
     args: impl IntoIterator<Item = (K, Option<V>)>,
   ) -> Self {
+    for (key, value) in args {
+      self.push_command_line_arg(key.into(), value.map(Into::into));
+    }
     self
-      .command_line_args
-      .extend(args.into_iter().map(|(k, v)| (k.into(), v.map(Into::into))));
-    self
+  }
+
+  /// Orden's patch (lxorb/orden#1084): a feature list given as a switch replaced CEF's
+  /// own, which turns off what crashes Chrome in a CEF browser, and a browser opened on
+  /// `chrome://extensions` then took the whole app down. Both lists are merged instead.
+  fn push_command_line_arg(&mut self, key: String, value: Option<String>) {
+    match (crate::switches::switch_key(&key), value) {
+      ("disable-features", Some(value)) => self.disabled_features.push(value),
+      ("enable-features", Some(value)) => self.enabled_features.push(value),
+      (_, value) => self.command_line_args.push((key, value)),
+    }
   }
 
   /// Appends a list of deep link schemes detected by CEF's on_already_running_app_relaunch hook.
