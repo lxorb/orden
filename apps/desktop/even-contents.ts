@@ -649,9 +649,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  Raised on 2026-11-05 for #1149: a space's bookmarks remember whether the account has
  *  heard them, and are sent again until it has (workspace/bookmarks.svelte.ts): the code
  *  to 6,132,000, measured 6,131,698.
+ *
+ *  Raised on 2026-11-05 for #1097, every emoji with an outline in One colour and the grid
+ *  showing only what is drawn in one colour (IconPicker.svelte, icon-sets.ts): the code to
+ *  6,133,000, measured 6,132,537.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_132_000,
+  code: 6_133_000,
   catalogues: 1_010_800,
   styles: 292_400,
   fonts: 260_000,
