@@ -27,7 +27,9 @@ vi.mock('./store', async (importOriginal) => {
         let mem = crate.mems.get(id) as InstanceType<typeof MemoryStore> | undefined
         if (!mem) {
           // A device id the hub takes: 32 hex digits, one per store.
-          const device = [...id].map((one) => one.charCodeAt(0).toString(16)).join('')
+          const device = Array.from(new TextEncoder().encode(id), (byte) => byte.toString(16)).join(
+            '',
+          )
           mem = new MemoryStore(device.padEnd(32, '0'))
           crate.mems.set(id, mem)
         }
@@ -231,8 +233,7 @@ describe('the hub asking the device id', () => {
     const hub = await import('./hub.svelte')
     Object.assign(one.account, { user: { id: 'u1', syncVersion: 1 } })
     const device = await hub.deviceId()
-    const { MemoryStore } = await import('./memory-store')
-    const store = crate.mems.get('u1') as InstanceType<typeof MemoryStore>
+    const store = crate.mems.get('u1') as InstanceType<typeof import('./memory-store').MemoryStore>
     expect(device).toBe(store.open().opened.device)
     expect(crate.held).toBeNull()
   })
