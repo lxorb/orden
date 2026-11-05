@@ -20,6 +20,7 @@
 
 import { mount } from 'svelte'
 import { i18n } from '../i18n.svelte'
+import { modes } from '../modes.svelte'
 import { overlays } from '../overlays'
 import { viewport } from '../viewport.svelte'
 import { pages } from '../web-tab/pages.svelte'
@@ -59,9 +60,16 @@ const WIDE_REM = 16
  *  and a line of where, and a still of sixteen by nine under them. */
 const WORDS_TALL = 72
 const STILL_TALL = 144
+/** And in developer mode, room for the three lines of what a tab uses (facts.ts). */
+const FACTS_TALL = 48
 
 class Hovering {
   card = $state<Shown | null>(null)
+  /** In developer mode, what the tab under the card uses, read once a second while the
+   *  card is up (facts.ts, issue 1063 step 10): lines under its name, or none. */
+  facts = $state<string[]>([])
+  /** Stops reading the facts, of the tab they are being read for. */
+  private unwatch: { id: string; stop: () => void } | null = null
 
   private aim: Aim | null = null
   private timer: ReturnType<typeof setTimeout> | undefined
@@ -160,7 +168,8 @@ class Hovering {
     const width = wide()
     const at = spot(aim.box, width, window.innerWidth, i18n.factor)
     const still = await this.stillFor(aim)
-    const tall = WORDS_TALL + (still ? STILL_TALL : 0)
+    const facts = !__EVEN_PLUGIN__ && modes.coder ? FACTS_TALL : 0
+    const tall = WORDS_TALL + (still ? STILL_TALL : 0) + facts
     const sliding = this.card !== null
 
     // Every card, the first and each one it slides on to: the pages under where it is
@@ -206,10 +215,38 @@ class Hovering {
       this.uncover = overlays.show(() => this.hush())
     }
 
+    this.watchFacts(tab)
+
     if (!this.mounted) {
       this.mounted = true
       mount(TabCard, { target: document.body, props: { hovering: this } })
     }
+  }
+
+  /** Reads the facts of the tab the card is up for, in developer mode; another tab's,
+   *  or none, stop. Fetched with the first, and never in the glasses' plugin. */
+  private watchFacts(tab: Tab | null) {
+    if (this.unwatch?.id === tab?.id) return
+    this.unwatch?.stop()
+    this.unwatch = null
+    this.facts = []
+    if (__EVEN_PLUGIN__ || !tab || !modes.coder) return
+    if (tab.kind !== 'application' && tab.kind !== 'terminal') return
+    let stop: (() => void) | null = null
+    let gone = false
+    this.unwatch = {
+      id: tab.id,
+      stop: () => {
+        gone = true
+        stop?.()
+      },
+    }
+    void import('./facts').then(({ watchFacts }) => {
+      if (gone) return
+      stop = watchFacts(tab, (lines) => {
+        if (this.card?.id === tab.id) this.facts = lines
+      })
+    })
   }
 
   /** The page's still for a web tab that is not the one in front - Chrome shows none for
@@ -226,6 +263,7 @@ class Hovering {
   private hide(left: boolean) {
     if (left && this.card) this.leftAt = performance.now()
     this.card = null
+    this.watchFacts(null)
     this.uncover?.()
     this.uncover = null
   }

@@ -2346,6 +2346,14 @@ export const jv: Dictionary = {
   'The picture could not be sent.': 'Gambar ora bisa dikirim.',
   'This device cannot show the picture.': 'Piranti iki ora bisa nuduhaké gambar.',
   'Share the clipboard with applications': 'Bagi papan klip karo aplikasi',
+  'Stream stats': 'Statistik stream',
+  'Glass to glass': 'Kaca menyang kaca',
+  'Round trip': 'Bolak-balik',
+  'Frame pacing': 'Irama bingkai',
+  Dropped: 'Dibuwang',
+  Lost: 'Ilang',
+  Hardware: 'Piranti keras',
+  Software: 'Piranti lunak',
   'An application on another of your computers pastes what you copied here, and what it copies comes here.':
     'Aplikasi ing komputer liyané nempelaké apa sing kok salin ing kéné, lan apa sing disalin teka ing kéné.',
   'None of your devices can run an application yet':

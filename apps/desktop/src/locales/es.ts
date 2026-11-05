@@ -2426,6 +2426,14 @@ export const es: Dictionary = {
   'The picture could not be sent.': 'No se pudo enviar la imagen.',
   'This device cannot show the picture.': 'Este dispositivo no puede mostrar la imagen.',
   'Share the clipboard with applications': 'Compartir el portapapeles con las aplicaciones',
+  'Stream stats': 'Estadísticas de la transmisión',
+  'Glass to glass': 'De cristal a cristal',
+  'Round trip': 'Ida y vuelta',
+  'Frame pacing': 'Ritmo de fotogramas',
+  Dropped: 'Descartados',
+  Lost: 'Perdidos',
+  Hardware: 'Hardware',
+  Software: 'Software',
   'An application on another of your computers pastes what you copied here, and what it copies comes here.':
     'Una aplicación en otro de tus ordenadores pega lo que copiaste aquí, y lo que ella copia llega aquí.',
   'None of your devices can run an application yet':

@@ -20,6 +20,7 @@ import {
   toHostOf,
   toHostText,
   toViewerOf,
+  usageOf,
   type ViewerFrame,
   viewerFrameOf,
   viewOf,
@@ -189,6 +190,43 @@ describe('the holder’s input', () => {
 })
 
 describe('what the host says on the picture’s channel', () => {
+  it('reads the host’s pong, its encoder dropped where it is no name', () => {
+    expect(
+      fromPictureOf(
+        '{"t":"pong","at":5,"began":1000,"now":1250.5,"encoder":"libvpx","hardware":false}',
+      ),
+    ).toEqual({
+      t: 'pong',
+      at: 5,
+      began: 1000,
+      now: 1250.5,
+      encoder: 'libvpx',
+      hardware: false,
+      usage: null,
+    })
+    expect(fromPictureOf('{"t":"pong","at":5,"began":1000,"now":1,"encoder":null}')).toEqual({
+      t: 'pong',
+      at: 5,
+      began: 1000,
+      now: 1,
+      encoder: null,
+      hardware: false,
+      usage: null,
+    })
+    expect(fromPictureOf('{"t":"pong","at":"5","began":1000,"now":1}')).toBeNull()
+  })
+
+  it('reads what the application uses, a GPU it could not read left out', () => {
+    expect(usageOf({ cpu: 12.5, memory: 1024, gpu: 3 })).toEqual({
+      cpu: 12.5,
+      memory: 1024,
+      gpu: 3,
+    })
+    expect(usageOf({ cpu: 12.5, memory: 1024 })).toEqual({ cpu: 12.5, memory: 1024 })
+    expect(usageOf({ cpu: -1, memory: 1024 })).toBeNull()
+    expect(usageOf(null)).toBeNull()
+  })
+
   it('reads what the application copied, up to the most a message carries', () => {
     expect(fromPictureOf('{"t":"clipboard","text":"copied"}')).toEqual({
       t: 'clipboard',

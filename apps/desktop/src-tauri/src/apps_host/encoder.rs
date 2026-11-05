@@ -317,6 +317,13 @@ impl AccessUnits {
         }
         frames
     }
+
+    /// The frame kept so far, whole once no more bytes have come for a moment: ffmpeg
+    /// writes each frame at once, so a pause after it is its end, and the last frame
+    /// before a still screen is not kept waiting for the next one.
+    pub fn flush(&mut self) -> Option<Vec<u8>> {
+        (self.kept.len() > 4).then(|| std::mem::take(&mut self.kept))
+    }
 }
 
 /// Where the next access unit delimiter begins, its three-byte start code found at or
@@ -420,6 +427,15 @@ mod tests {
                 "cut at {cut}"
             );
         }
+    }
+
+    #[test]
+    fn hands_out_the_last_frame_once_the_stream_pauses() {
+        let frame = [0, 0, 0, 1, 9, 0xf0, 0, 0, 1, 0x41, 4];
+        let mut units = AccessUnits::default();
+        assert_eq!(units.take(&frame), Vec::<Vec<u8>>::new());
+        assert_eq!(units.flush(), Some(frame.to_vec()));
+        assert_eq!(units.flush(), None);
     }
 
     #[test]

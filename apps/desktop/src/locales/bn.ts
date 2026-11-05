@@ -2366,6 +2366,14 @@ export const bn: Dictionary = {
   'The picture could not be sent.': 'ছবিটি পাঠানো যায়নি।',
   'This device cannot show the picture.': 'এই ডিভাইস ছবিটি দেখাতে পারে না।',
   'Share the clipboard with applications': 'অ্যাপ্লিকেশনের সঙ্গে ক্লিপবোর্ড শেয়ার করুন',
+  'Stream stats': 'স্ট্রিমের পরিসংখ্যান',
+  'Glass to glass': 'কাচ থেকে কাচ',
+  'Round trip': 'রাউন্ড ট্রিপ',
+  'Frame pacing': 'ফ্রেমের সমতা',
+  Dropped: 'বাদ পড়া',
+  Lost: 'হারানো',
+  Hardware: 'হার্ডওয়্যার',
+  Software: 'সফটওয়্যার',
   'An application on another of your computers pastes what you copied here, and what it copies comes here.':
     'আপনার অন্য কম্পিউটারের একটি অ্যাপ্লিকেশন এখানে কপি করা জিনিস পেস্ট করে, আর সেটি যা কপি করে তা এখানে আসে।',
   'None of your devices can run an application yet':

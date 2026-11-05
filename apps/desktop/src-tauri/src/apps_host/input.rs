@@ -57,6 +57,8 @@ pub enum InputEvent {
     Clipboard { text: String },
     /// Whether the holder shares its clipboard with the application (step 6).
     Share { clipboard: bool },
+    /// The tab's ping, to set its clock beside the host's (step 9; `stream.rs`).
+    Ping { at: f64 },
 }
 
 /// The most characters one message of text types.
@@ -266,7 +268,7 @@ impl Input {
             }
             InputEvent::Key { key, code, down } => self.key(&key, code, down),
             InputEvent::Text { text } => self.text(&text),
-            InputEvent::Clipboard { .. } | InputEvent::Share { .. } => {}
+            InputEvent::Clipboard { .. } | InputEvent::Share { .. } | InputEvent::Ping { .. } => {}
         }
         let _ = self.connection.flush();
     }

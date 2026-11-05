@@ -2354,6 +2354,14 @@ export const id: Dictionary = {
   'The picture could not be sent.': 'Gambar tidak dapat dikirim.',
   'This device cannot show the picture.': 'Perangkat ini tidak dapat menampilkan gambar.',
   'Share the clipboard with applications': 'Bagikan papan klip dengan aplikasi',
+  'Stream stats': 'Statistik stream',
+  'Glass to glass': 'Kaca ke kaca',
+  'Round trip': 'Pulang-pergi',
+  'Frame pacing': 'Ritme bingkai',
+  Dropped: 'Dibuang',
+  Lost: 'Hilang',
+  Hardware: 'Perangkat keras',
+  Software: 'Perangkat lunak',
   'An application on another of your computers pastes what you copied here, and what it copies comes here.':
     'Aplikasi di komputer Anda yang lain menempelkan apa yang Anda salin di sini, dan yang disalinnya sampai ke sini.',
   'None of your devices can run an application yet':

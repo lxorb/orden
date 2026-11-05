@@ -13,7 +13,9 @@
   import SpaceMark from '../SpaceMark.svelte'
   import type { Shown } from './hover-card.svelte'
 
-  const { hovering }: { hovering: { readonly card: Shown | null } } = $props()
+  const {
+    hovering,
+  }: { hovering: { readonly card: Shown | null; readonly facts: readonly string[] } } = $props()
 
   const card = $derived(hovering.card)
 </script>
@@ -45,6 +47,10 @@
             {/if}
           </span>
         {/if}
+        <!-- In developer mode, what the tab uses: facts.ts. -->
+        {#each hovering.facts as fact (fact)}
+          <span class="fact">{fact}</span>
+        {/each}
       </div>
     {/key}
     {#if card.still}
@@ -98,6 +104,15 @@
     min-width: 0;
     color: var(--muted);
     white-space: nowrap;
+  }
+
+  .fact {
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .site {

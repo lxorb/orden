@@ -213,6 +213,10 @@ mod tree;
 #[cfg(desktop)]
 mod updates;
 mod uris;
+// What a terminal's or an application's processes use of this computer, for a tab's hover
+// card in developer mode (issue 1063); see usage.rs.
+#[cfg(desktop)]
+mod usage;
 // Whether a web tab's browser answers before the window's thread waits on it; see
 // web_answers.rs.
 #[cfg(desktop)]
@@ -551,6 +555,7 @@ macro_rules! desktop_commands {
             apps_host::apps_signal,
             apps_host::apps_view,
             terminal::pty_folder,
+            terminal::pty_usage,
             terminal::pty_program,
             terminal::pty_kill,
             terminal::history::terminal_history_read,

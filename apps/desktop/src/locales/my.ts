@@ -2345,6 +2345,14 @@ export const my: Dictionary = {
   'The picture could not be sent.': 'ပုံကို ပို့၍ မရပါ။',
   'This device cannot show the picture.': 'ဤစက်ပစ္စည်းသည် ပုံကို မပြနိုင်ပါ။',
   'Share the clipboard with applications': 'ကလစ်ဘုတ်ကို အပလီကေးရှင်းများနှင့် မျှဝေရန်',
+  'Stream stats': 'စီးကြောင်း စာရင်းအင်း',
+  'Glass to glass': 'မှန်မှ မှန်သို့',
+  'Round trip': 'အသွားအပြန်',
+  'Frame pacing': 'ဘောင်အချိန်ညီမှု',
+  Dropped: 'ချန်ထားခဲ့',
+  Lost: 'ပျောက်',
+  Hardware: 'ဟာ့ဒ်ဝဲ',
+  Software: 'ဆော့ဖ်ဝဲ',
   'An application on another of your computers pastes what you copied here, and what it copies comes here.':
     'သင့်အခြားကွန်ပျူတာရှိ အပလီကေးရှင်းသည် ဤနေရာတွင် ကူးထားသည်ကို ကူးထည့်ပြီး ၎င်းကူးသည့်အရာ ဤနေရာသို့ ရောက်လာသည်။',
   'None of your devices can run an application yet':

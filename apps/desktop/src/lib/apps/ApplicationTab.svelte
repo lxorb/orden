@@ -303,6 +303,35 @@
     for (const one of held.letGo()) session.picture.input(one)
   }
 
+  /** The developer overlay (step 9): the stream's numbers and glass to glass. */
+  let overlay = $state(false)
+  $effect(() => {
+    if (overlay && showing) return session.picture.hold()
+  })
+  // Each frame the engine shows, by its RTP time, while the overlay is open: what glass
+  // to glass is measured from (stats.ts).
+  $effect(() => {
+    const over = video
+    if (!over || !overlay || !('requestVideoFrameCallback' in over)) return
+    let handle = 0
+    const each = (_now: number, frame: VideoFrameCallbackMetadata) => {
+      if (frame.rtpTimestamp !== undefined)
+        session.picture.presented(
+          frame.rtpTimestamp,
+          performance.timeOrigin + frame.expectedDisplayTime,
+        )
+      handle = over.requestVideoFrameCallback(each)
+    }
+    handle = over.requestVideoFrameCallback(each)
+    return () => {
+      over.cancelVideoFrameCallback(handle)
+    }
+  })
+  /** A number as the overlay shows it, or a dash for none. */
+  function figure(value: number | null | undefined, digits = 0): string {
+    return value === null || value === undefined ? '–' : value.toFixed(digits)
+  }
+
   const waiting = $derived(
     status.is === 'reading' ||
       status.is === 'connecting' ||
@@ -343,12 +372,38 @@
     onblur={letGo}></textarea>
   {#if showing}
     <div class="bar">
+      <button
+        type="button"
+        class="nib-button"
+        aria-pressed={overlay}
+        onclick={() => (overlay = !overlay)}>{t('Stream stats')}</button
+      >
       <button type="button" class="nib-button" onclick={() => session.run('restart')}
         >{t('Restart')}</button
       >
       <button type="button" class="nib-button" onclick={() => session.run('stop')}
         >{t('Stop')}</button
       >
+    </div>
+  {/if}
+  {#if showing && overlay}
+    {@const stats = session.picture.stats}
+    {@const encoder = session.picture.encoder}
+    <div class="stats">
+      <p>
+        {figure(stats?.width)}×{figure(stats?.height)} · {figure(stats?.fps)} fps · {figure(
+          stats?.bitrate == null ? null : stats.bitrate / 1e6,
+          1,
+        )} Mb/s
+      </p>
+      <p>{t('Glass to glass')} {figure(session.picture.latency)} ms</p>
+      <p>{t('Round trip')} {figure(stats?.rtt)} ms · {stats?.route ?? '–'}</p>
+      <p>{t('Frame pacing')} ±{figure(stats?.pacing, 1)} ms</p>
+      <p>{t('Dropped')} {stats?.dropped ?? 0} · {t('Lost')} {stats?.lost ?? 0}</p>
+      <p>
+        {stats?.codec ?? '–'} · {encoder?.name ?? '–'}
+        {#if encoder}({encoder.hardware ? t('Hardware') : t('Software')}){/if}
+      </p>
     </div>
   {/if}
   <div class="status" role="status" hidden={showing}>
@@ -436,6 +491,24 @@
   .application:hover .bar,
   .bar:focus-within {
     opacity: 1;
+  }
+
+  /* The developer overlay, over the picture's corner. */
+  .stats {
+    position: absolute;
+    top: var(--space-2);
+    left: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--surface) 85%, transparent);
+    pointer-events: none;
+  }
+
+  .stats p {
+    color: var(--text-strong);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-align: start;
   }
 
   /* The online terminal's card, in the middle of the pane. */

@@ -2457,6 +2457,14 @@ export const pl: Dictionary = {
   'The picture could not be sent.': 'Nie udało się wysłać obrazu.',
   'This device cannot show the picture.': 'To urządzenie nie może wyświetlić obrazu.',
   'Share the clipboard with applications': 'Udostępniaj schowek aplikacjom',
+  'Stream stats': 'Statystyki strumienia',
+  'Glass to glass': 'Od szyby do szyby',
+  'Round trip': 'Czas w obie strony',
+  'Frame pacing': 'Równość klatek',
+  Dropped: 'Odrzucone',
+  Lost: 'Utracone',
+  Hardware: 'Sprzęt',
+  Software: 'Oprogramowanie',
   'An application on another of your computers pastes what you copied here, and what it copies comes here.':
     'Aplikacja na innym z Twoich komputerów wkleja to, co skopiowano tutaj, a to, co ona kopiuje, trafia tutaj.',
   'None of your devices can run an application yet':

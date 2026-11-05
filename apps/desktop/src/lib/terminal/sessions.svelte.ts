@@ -16,6 +16,7 @@
  *  Fetched with the first terminal, and with xterm.js, which is what makes it a
  *  surface's worth: nothing of it is in front of the first paint. */
 
+import type { Usage } from '@orden/online/apps'
 import { FitAddon } from '@xterm/addon-fit'
 import { type ISearchOptions, SearchAddon } from '@xterm/addon-search'
 import { SerializeAddon } from '@xterm/addon-serialize'
@@ -639,6 +640,12 @@ class Session {
     this.term.write(`${tidied(this.left(), false)}\r\n`)
     void this.start()
     this.focus()
+  }
+
+  /** What the shell and everything under it use of this computer, for the hover card in
+   *  developer mode; null where it cannot be read, an online session's included. */
+  async usage(): Promise<Usage | null> {
+    return (await this.source?.usage?.()) ?? null
   }
 
   /** The online card's button, and Enter under it: Take over where another device holds
@@ -1615,6 +1622,11 @@ function placeOf(tab: Tab): Place {
 /** Every terminal, by its tab's id. */
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- a registry of screens; nothing renders from it
 const sessions = new Map<string, Session>()
+
+/** What a terminal tab's processes use, if it has a terminal yet; null otherwise. */
+export async function usageOfTab(tab: Tab): Promise<Usage | null> {
+  return (await sessions.get(tab.id)?.usage()) ?? null
+}
 
 /** The terminal a tab has, made the first time it is asked for. */
 export function sessionOf(tab: Tab): Session {

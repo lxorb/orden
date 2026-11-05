@@ -2394,6 +2394,14 @@ export const ml: Dictionary = {
   'The picture could not be sent.': 'ചിത്രം അയയ്ക്കാനായില്ല.',
   'This device cannot show the picture.': 'ഈ ഉപകരണത്തിന് ചിത്രം കാണിക്കാനാകില്ല.',
   'Share the clipboard with applications': 'ആപ്ലിക്കേഷനുകളുമായി ക്ലിപ്പ്ബോർഡ് പങ്കിടുക',
+  'Stream stats': 'സ്ട്രീം കണക്കുകൾ',
+  'Glass to glass': 'ഗ്ലാസ് മുതൽ ഗ്ലാസ് വരെ',
+  'Round trip': 'പോയി വരാനുള്ള സമയം',
+  'Frame pacing': 'ഫ്രെയിം താളം',
+  Dropped: 'ഉപേക്ഷിച്ചവ',
+  Lost: 'നഷ്ടപ്പെട്ടവ',
+  Hardware: 'ഹാർഡ്‌വെയർ',
+  Software: 'സോഫ്റ്റ്‌വെയർ',
   'An application on another of your computers pastes what you copied here, and what it copies comes here.':
     'നിങ്ങളുടെ മറ്റൊരു കമ്പ്യൂട്ടറിലെ ആപ്ലിക്കേഷൻ ഇവിടെ നിങ്ങൾ പകർത്തിയത് ഒട്ടിക്കുന്നു, അത് പകർത്തുന്നത് ഇവിടെ എത്തുന്നു.',
   'None of your devices can run an application yet':

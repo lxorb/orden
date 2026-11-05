@@ -341,6 +341,18 @@ pub fn pty_folder(webview: Webview, id: String) -> Result<Option<String>, String
         .with(&owner, &id, Session::folder)
 }
 
+/// What the shell and everything under it use of this computer, for the tab's hover
+/// card in developer mode (issue 1063, step 10; usage.rs); None where it cannot be read.
+#[tauri::command(async)]
+pub fn pty_usage(webview: Webview, id: String) -> Result<Option<crate::usage::Usage>, String> {
+    let owner = owner(&webview)?;
+    let pid = webview
+        .state::<Terminals>()
+        .with(&owner, &id, Session::shell)?;
+    Ok(pid
+        .and_then(|pid| crate::usage::sample(&format!("pty:{id}"), crate::usage::Whose::Tree(pid))))
+}
+
 /// The tab has closed, or is starting its shell again: this one goes.
 #[tauri::command]
 pub fn pty_kill(webview: Webview, id: String) -> Result<(), String> {

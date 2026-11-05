@@ -2397,6 +2397,14 @@ export const sw: Dictionary = {
   'The picture could not be sent.': 'Picha haikuweza kutumwa.',
   'This device cannot show the picture.': 'Kifaa hiki hakiwezi kuonyesha picha.',
   'Share the clipboard with applications': 'Shiriki ubao wa kunakili na programu',
+  'Stream stats': 'Takwimu za mtiririko',
+  'Glass to glass': 'Kioo hadi kioo',
+  'Round trip': 'Kwenda na kurudi',
+  'Frame pacing': 'Mdundo wa fremu',
+  Dropped: 'Zilizotupwa',
+  Lost: 'Zilizopotea',
+  Hardware: 'Maunzi',
+  Software: 'Programu',
   'An application on another of your computers pastes what you copied here, and what it copies comes here.':
     'Programu kwenye kompyuta yako nyingine hubandika ulichonakili hapa, na inachonakili huja hapa.',
   'None of your devices can run an application yet':

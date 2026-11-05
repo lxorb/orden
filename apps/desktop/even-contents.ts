@@ -620,11 +620,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  Lowered on 2026-11-05 as #1120 came to claude/hunt-round-1, the agents' activity in the
  *  Ask panel in place of their own: the code to 6,046,300, measured 6,046,126; the
  *  catalogues to 989,200, measured 989,126; the styles to 288,400, measured 288,383.
+ *  Then the code to 6,046,900 and the styles to 288,600 for #1063's hover card saying
+ *  what a tab uses, measured 6,046,692 and 288,535.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_046_300,
+  code: 6_046_900,
   catalogues: 989_200,
-  styles: 288_400,
+  styles: 288_600,
   fonts: 260_000,
   pages: 40_000,
 }

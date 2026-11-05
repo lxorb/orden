@@ -47,6 +47,11 @@ class FakePeer {
   close() {
     this.closed = true
   }
+  getStats() {
+    return Promise.resolve(
+      new Map([['v', { id: 'v', type: 'inbound-rtp', kind: 'video', frameWidth: 640 }]]),
+    )
+  }
   becomes(state: RTCPeerConnectionState) {
     this.connectionState = state
     this.onconnectionstatechange?.()
@@ -59,6 +64,7 @@ function world(engine = true) {
   const said: string[] = []
   const offered: unknown[] = []
   const copied: string[] = []
+  const clock = { now: 1000 }
   const made: PeerWorld = {
     servers: () => Promise.resolve([{ urls: ['stun:stun.example:3478'] }]),
     make: (servers) => {
@@ -76,6 +82,7 @@ function world(engine = true) {
       }
     },
     copy: (text) => copied.push(text),
+    now: () => clock.now,
   }
   const picture = new Picture((data) => said.push(data), made)
   /** Runs the timers due after `ms`, as the clock would. */
@@ -86,7 +93,7 @@ function world(engine = true) {
       else timers.push(timer)
     }
   }
-  return { picture, peers, said, wait, offered, copied }
+  return { picture, peers, said, wait, offered, copied, clock }
 }
 
 describe('an application’s picture', () => {
@@ -287,5 +294,40 @@ describe('an application’s picture', () => {
     if (again) again.readyState = 'open'
     again?.onopen?.()
     expect(again?.sent).toEqual(['{"t":"share","clipboard":true}'])
+  })
+
+  test('measures once a second while the overlay is open: a ping, the engine, glass to glass', async () => {
+    const here = world()
+    here.picture.want(true)
+    await tick()
+    const channel = here.peers[0]?.channel
+    if (channel) channel.readyState = 'open'
+    channel?.onopen?.()
+    const release = here.picture.hold()
+    const other = here.picture.hold()
+    await tick()
+    expect(channel?.sent.at(-1)).toBe('{"t":"ping","at":1000}')
+    expect(here.picture.stats?.width).toBe(640)
+
+    // The host is 4000 ahead, and began at 4000 there; the answer came 20 later.
+    here.clock.now = 1020
+    channel?.onmessage?.({
+      data: '{"t":"pong","at":1000,"began":4000,"now":5010,"encoder":"libvpx","hardware":false,"usage":{"cpu":5,"memory":2048}}',
+    })
+    expect(here.picture.usage).toEqual({ cpu: 5, memory: 2048 })
+    expect(here.picture.encoder).toEqual({ name: 'libvpx', hardware: false })
+    // A frame read 2 s in (at 2000 here), shown at 2035 here.
+    here.clock.now = 2040
+    here.picture.presented(180_000, 2035)
+    here.wait(1000)
+    expect(here.picture.latency).toBeCloseTo(35)
+
+    // Still wanted by the other: going on.
+    release()
+    release()
+    expect(here.picture.stats).not.toBeNull()
+    other()
+    expect(here.picture.stats).toBeNull()
+    expect(here.picture.latency).toBeNull()
   })
 })

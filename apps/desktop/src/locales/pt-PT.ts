@@ -2424,6 +2424,14 @@ export const ptPT: Dictionary = {
   'The picture could not be sent.': 'Não foi possível enviar a imagem.',
   'This device cannot show the picture.': 'Este dispositivo não consegue mostrar a imagem.',
   'Share the clipboard with applications': 'Partilhar a área de transferência com aplicações',
+  'Stream stats': 'Estatísticas da transmissão',
+  'Glass to glass': 'De vidro a vidro',
+  'Round trip': 'Ida e volta',
+  'Frame pacing': 'Ritmo das imagens',
+  Dropped: 'Descartadas',
+  Lost: 'Perdidos',
+  Hardware: 'Hardware',
+  Software: 'Software',
   'An application on another of your computers pastes what you copied here, and what it copies comes here.':
     'Uma aplicação noutro dos seus computadores cola o que copiou aqui, e o que ela copia chega aqui.',
   'None of your devices can run an application yet':

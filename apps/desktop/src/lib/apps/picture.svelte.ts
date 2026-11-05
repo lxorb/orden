@@ -21,9 +21,19 @@ import {
   MOST_CLIPBOARD,
   type NoPicture,
   type PointerShape,
+  type Usage,
   toHostText,
   type ToHost,
 } from '@orden/online/apps'
+import {
+  type Clock,
+  clockOf,
+  type Counts,
+  middle,
+  seenAt,
+  type StreamStats,
+  streamStats,
+} from './stats'
 
 export type PictureStatus =
   | { is: 'off' }
@@ -51,6 +61,8 @@ export interface PeerWorld {
   after(ms: number, run: () => void): () => void
   /** Puts what the application copied on this device's clipboard. */
   copy(text: string): void
+  /** This clock, in milliseconds since 1970. */
+  now(): number
 }
 
 const pageWorld: PeerWorld = {
@@ -76,6 +88,7 @@ const pageWorld: PeerWorld = {
       clearTimeout(timer)
     }
   },
+  now: () => Date.now(),
   copy: (text) => {
     void import('../clipboard').then(({ copyText }) => copyText(text)).catch(() => undefined)
   },
@@ -91,6 +104,21 @@ export class Picture {
   sound = $state<MediaStream | null>(null)
   /** Whether this device shares its clipboard with the application. */
   private sharing = false
+  /** The developer overlay's numbers, once a second while it is open (step 9). */
+  stats = $state<StreamStats | null>(null)
+  /** Glass to glass over the last second, in milliseconds: the middle of the frames'. */
+  latency = $state<number | null>(null)
+  /** The encoder the host makes the picture with, as its pong said. */
+  encoder = $state<{ name: string | null; hardware: boolean } | null>(null)
+  /** What the application uses of its host, as its last pong said (step 10). */
+  usage = $state<Usage | null>(null)
+  private measuring: (() => void) | null = null
+  /** How many want the numbers: the overlay, and a tab's hover card. */
+  private holders = 0
+  private counts: Counts | null = null
+  private clock: Clock | null = null
+  private began: number | null = null
+  private shown: number[] = []
   /** The channel input goes over, once it is open. */
   channel: RTCDataChannel | null = null
   private peer: RTCPeerConnection | null = null
@@ -154,7 +182,69 @@ export class Picture {
 
   /** The tab has gone. */
   end(): void {
+    this.holders = 0
+    this.measure(false)
     this.want(false)
+  }
+
+  /** The numbers wanted - by the overlay, or a hover card - until what this answers is
+   *  called: while anybody wants them, the clocks are set side by side and the engine's
+   *  numbers and the host's usage read, once a second. */
+  hold(): () => void {
+    this.holders += 1
+    this.measure(true)
+    let held = true
+    return () => {
+      if (!held) return
+      held = false
+      this.holders = Math.max(0, this.holders - 1)
+      if (this.holders === 0) this.measure(false)
+    }
+  }
+
+  private measure(on: boolean): void {
+    if (on === (this.measuring !== null)) return
+    if (!on) {
+      this.measuring?.()
+      this.measuring = null
+      this.stats = null
+      this.latency = null
+      this.usage = null
+      return
+    }
+    let cancel: () => void = () => undefined
+    const tick = () => {
+      this.input({ t: 'ping', at: this.world.now() })
+      this.latency = middle(this.shown)
+      this.shown = []
+      const peer = this.peer
+      void peer
+        ?.getStats()
+        .then((report) => {
+          if (this.peer !== peer || !this.measuring) return
+          const read = streamStats(
+            report.values() as Iterable<Record<string, unknown>>,
+            this.counts,
+            this.world.now(),
+          )
+          this.stats = read.stats
+          this.counts = read.counts
+        })
+        .catch(() => undefined)
+      cancel = this.world.after(1000, tick)
+    }
+    this.measuring = () => {
+      cancel()
+    }
+    tick()
+  }
+
+  /** A frame this screen showed, by its RTP time, at `shownAt` on this clock: its glass
+   *  to glass, once the clocks are side by side. */
+  presented(rtp: number, shownAt: number): void {
+    if (!this.measuring || !this.clock || this.began === null) return
+    const took = shownAt - seenAt(rtp, this.began, this.clock, this.world.now())
+    if (Number.isFinite(took) && this.shown.length < 1000) this.shown.push(took)
   }
 
   private async begin(): Promise<void> {
@@ -187,6 +277,12 @@ export class Picture {
       const said = fromPictureOf(event.data)
       if (said?.t === 'pointer') this.pointer = said
       else if (said?.t === 'clipboard' && this.sharing) this.world.copy(said.text)
+      else if (said?.t === 'pong') {
+        this.clock = clockOf(said, this.world.now())
+        this.began = said.began
+        this.encoder = { name: said.encoder, hardware: said.hardware }
+        this.usage = said.usage
+      }
     }
     peer.ontrack = (event) => {
       if (this.peer !== peer) return
@@ -239,6 +335,11 @@ export class Picture {
     this.stream = null
     this.sound = null
     this.pointer = null
+    this.clock = null
+    this.began = null
+    this.counts = null
+    this.shown = []
+    this.encoder = null
     peer?.close()
   }
 
