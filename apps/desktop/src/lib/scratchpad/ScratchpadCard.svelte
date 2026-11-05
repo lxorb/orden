@@ -184,7 +184,7 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="card nib-layer" class:resizing class:docked data-scratchpad-card onkeydown={onKey}>
+<div class="card" class:resizing class:docked data-scratchpad-card data-covers onkeydown={onKey}>
   <!-- No width to drag on a phone or a tablet, where the card is the one note there is,
        nor in the right side, whose own edge it is. -->
   {#if !viewport.touch && !docked}
@@ -237,8 +237,6 @@
     margin: 0;
     border: none;
     border-radius: 0;
-    box-shadow: none;
-    background: var(--bg);
   }
 
   /* Held at its width while the column slides. */
@@ -260,6 +258,8 @@
     display: flex;
     min-width: 0;
     overflow: hidden;
+    border: 1px solid var(--card-edge);
+    border-radius: var(--card-radius);
     background: var(--bg);
   }
 

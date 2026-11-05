@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
+import { parse } from 'svelte/compiler'
 import { describe, expect, test } from 'vitest'
 
 /** Chrome and the app's theme are easy to drift apart quietly, because the
@@ -185,6 +186,75 @@ describe('the paper a note is written on', () => {
       .map((one) => one.name)
 
     expect(offenders, `these lay the see-through paper: ${offenders.join(', ')}`).toEqual([])
+  })
+})
+
+/** A side's body is a place on the window, and what it shows stands in it: the
+ *  scratchpad's card wore a menu's shape there, whose shadow fell below its foot and out
+ *  past its corner as a darker band (#1110). So nothing a side shows wears a floating
+ *  layer's shape, or casts a shadow, at its outermost element. */
+describe('what a side shows', () => {
+  const FLOATING = ['nib-layer', 'nib-screen', 'nib-bubble']
+  const sidebar = readFileSync(join(SOURCE, 'lib/Sidebar.svelte'), 'utf8')
+  const surfaces = readFileSync(join(SOURCE, 'lib/surfaces.svelte.ts'), 'utf8')
+  const shown = [...sidebar.matchAll(/\{#await (\w+)\(\) then/g)].map((one) => {
+    const door = one[1] ?? ''
+    const from = new RegExp(`export const ${door} = [\\s\\S]*?import\\('\\./([^']+)'\\)`)
+    return `lib/${from.exec(surfaces)?.[1] ?? door}`
+  })
+
+  interface Node {
+    type?: string
+    [key: string]: unknown
+  }
+
+  function* outermost(node: unknown): Generator<Node> {
+    if (!node || typeof node !== 'object') return
+    if (Array.isArray(node)) {
+      for (const one of node) yield* outermost(one)
+      return
+    }
+    const one = node as Node
+    if (one.type === 'RegularElement') {
+      yield one
+      return
+    }
+    for (const [key, value] of Object.entries(one)) if (key !== 'parent') yield* outermost(value)
+  }
+
+  function classesOf(node: Node): string[] {
+    const words: string[] = []
+    for (const one of (node.attributes ?? []) as Node[]) {
+      if (one.type === 'ClassDirective') words.push(String(one.name))
+      if (one.type !== 'Attribute' || one.name !== 'class' || !Array.isArray(one.value)) continue
+      for (const part of one.value as Node[])
+        if (part.type === 'Text') words.push(...String(part.data).split(/\s+/))
+    }
+    return words.filter(Boolean)
+  }
+
+  test('finds the panels', () => {
+    expect(shown).toContain('lib/scratchpad/ScratchpadCard.svelte')
+    expect(shown).toContain('lib/views/TasksPanel.svelte')
+    expect(shown).toContain('lib/ai/sidebar/ChatPanel.svelte')
+  })
+
+  test.each(shown.map((name) => [name]))('%s stands in it', (name) => {
+    const source = readFileSync(join(SOURCE, name), 'utf8')
+    const tree = parse(source, { modern: true })
+    const style = styleOf(source)
+    for (const root of outermost(tree.fragment)) {
+      const classes = classesOf(root)
+      expect(
+        classes.filter((one) => FLOATING.includes(one)),
+        name,
+      ).toEqual([])
+      for (const one of classes) {
+        const rule = new RegExp(`(?:^|\\n)\\s*\\.${one}(?:\\.[\\w-]+)*\\s*\\{([^}]*)\\}`, 'g')
+        for (const [, body] of style.matchAll(rule))
+          expect(/box-shadow:(?!\s*(?:none|inset))/.test(body ?? ''), `${name} .${one}`).toBe(false)
+      }
+    }
   })
 })
 
