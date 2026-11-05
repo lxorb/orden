@@ -473,7 +473,7 @@ class Runner {
     if (!(await this.holdStore())) return
     // Asked for a sign-in that may be over by the time the store is this window's: signed
     // out since, the store it takes over is the one to keep, not to carry and forget.
-    return this.inLane(() => (account.user ? this.carryLocal() : undefined))
+    return this.inLane(() => (account.user ? this.carryLocal() : Promise.resolve()))
   }
 
   /** This device's id in the account's store (the hub's `deviceId`), read only where this

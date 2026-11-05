@@ -467,7 +467,7 @@ describe('a first pass that does not get through', () => {
     core.commit = async (changes) => {
       await commit(changes)
       // The window lets go as the last one lands: `engine.stop()` bumps the core's life.
-      if (changes.includes(done as never)) core.life += 1
+      if (changes.includes(done as never)) (core as unknown as { life: number }).life += 1
     }
 
     expect(await kit.firstPass(core, state, null, undefined, [done as never])).toBe(true)

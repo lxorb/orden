@@ -154,13 +154,6 @@ function signIn(one: Window) {
   void one.runner.start()
 }
 
-/** Signing out, heard by a window: what account.svelte.ts and sync.svelte.ts do. */
-async function signOut(one: Window) {
-  Object.assign(one.account, { user: null })
-  await one.runner.signedOut('u1')
-  void one.runner.startLocal()
-}
-
 const wrong = () => crate.log.filter((line) => line.startsWith('WRONG'))
 
 vi.mock('../tauri', async (importOriginal) => ({
