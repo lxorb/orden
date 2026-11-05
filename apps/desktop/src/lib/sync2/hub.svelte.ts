@@ -344,17 +344,14 @@ function madeId(): string {
 }
 
 /** This device's id: the one the account's sync store keeps (section 9.2), which is
- *  the id the engine's documents are written under too, else one of its own. */
+ *  the id the engine's documents are written under too, else one of its own. Read the way
+ *  the runner may (`deviceOf`): never by opening a store another window's engine runs on. */
 export async function deviceId(): Promise<string> {
   const user = account.user
   if (user) {
-    try {
-      const { openSyncStore } = await import('./store')
-      const { device } = (await openSyncStore(user.id)).opened
-      if (DEVICE.test(device)) return device
-    } catch {
-      // No store to be had here; the device's own id stands in.
-    }
+    const { runner } = await import('./runner.svelte')
+    const device = await runner.deviceOf(user.id).catch(() => null)
+    if (device && DEVICE.test(device)) return device
   }
   return madeId()
 }

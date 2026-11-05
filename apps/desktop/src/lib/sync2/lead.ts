@@ -47,3 +47,20 @@ export async function leadSync(signal?: AbortSignal, account = ''): Promise<Lead
     }
   })
 }
+
+/** Runs `run` holding this account's lock where nobody holds it now, and answers what it
+ *  did; undefined, with nothing run, while somebody does. For a moment's work that must
+ *  not come between whoever holds the lock and what they hold (`deviceOf` in
+ *  runner.svelte.ts). Locks that are missing or refuse run it at once, as `leadSync` leads
+ *  at once. */
+export async function whileFree<T>(
+  account: string,
+  run: () => Promise<T>,
+): Promise<{ value: T } | undefined> {
+  const locks = locksHere()
+  if (!locks || !(await locksWork(locks))) return { value: await run() }
+
+  return await locks.request(`${LEADER}:${account}`, { ifAvailable: true }, async (lock) =>
+    lock ? { value: await run() } : undefined,
+  )
+}

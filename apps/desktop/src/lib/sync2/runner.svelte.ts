@@ -44,7 +44,7 @@ import { carry, uncarry } from './carry'
 import { kindOfName } from './create'
 import { MINE } from './docs'
 import { Engine } from './engine'
-import { type Leadership, leadSync } from './lead'
+import { type Leadership, leadSync, whileFree } from './lead'
 import { Owed, type Owing, takeOwed } from './owed'
 import { placesOf } from './placing'
 import { type Holding, spend } from '../sync/holding'
@@ -76,6 +76,11 @@ const ASKS_AT_MOST = 30_000
 
 /** How long signing out in such a window waits for the engine's to let go of the store. */
 const SIGN_OUT_WAITS = 10_000
+
+/** How long the hub's device id waits for a store this window may read it from, and how
+ *  often it looks again meanwhile: an engine signing in is a second or two. */
+const DEVICE_WAITS = 30_000
+const DEVICE_AGAIN = 250
 
 /** How long after a change here the pass that sends it waits, so a burst of saves is one
  *  pass. */
@@ -467,6 +472,39 @@ class Runner {
     // keeping it, and lets go of it first when it hears the same.
     if (!(await this.holdStore())) return
     return this.inLane(() => this.carryLocal())
+  }
+
+  /** This device's id in the account's store (the hub's `deviceId`), read only where this
+   *  window may: off the account's engine running here, from the window that runs it, or
+   *  out of the store while no window holds the device's (`nib-sync:local`). The crate
+   *  holds one store for every window, so opening it otherwise would close the one another
+   *  window's engine runs on, the one kept signed out as much as the account's. Null where
+   *  there is no store to be had, or none came in time. */
+  async deviceOf(accountId: string): Promise<string | null> {
+    const until = Date.now() + DEVICE_WAITS
+    for (;;) {
+      const engine = this.engine
+      if (engine && this.accountId === accountId) return engine.core.store.opened.device
+      if (this.leaderId && this.accountId === accountId) {
+        const said = await this.ask('device', {})
+        if (typeof said === 'string') return said
+      }
+      const read = await whileFree(LOCAL_STORE, async () => {
+        try {
+          const store = await openSyncStore(accountId)
+          try {
+            return store.opened.device
+          } finally {
+            await store.close().catch(() => undefined)
+          }
+        } catch {
+          return null
+        }
+      }).catch(() => undefined)
+      if (read) return read.value
+      if (Date.now() >= until || account.user?.id !== accountId) return null
+      await waited(DEVICE_AGAIN)
+    }
   }
 
   /** A held note answered: Keep mine, Keep theirs or Keep both. Answers the copy's path
@@ -1444,6 +1482,7 @@ class Runner {
       return moved
     }
     if (said.what === 'holds') return await this.holds(args.path ?? '')
+    if (said.what === 'device') return this.engine?.core.store.opened.device ?? null
     if (said.what === 'forget') {
       await this.forget(args.root ?? '')
       this.sayRows()
