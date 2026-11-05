@@ -42,6 +42,7 @@ import { scanFootnotes } from './footnotes'
 import { lineOfHeading, scanHeadings } from './outline'
 import type { Change } from './search/apply'
 import { startup } from './startup.svelte'
+import { tabOverview } from './surfaces.svelte'
 import { nextTask } from './breathe'
 import { mark, markPainted } from './trace'
 import { afterQuiet, waited } from './timing'
@@ -5421,8 +5422,10 @@ class Workspace {
   /** Opens or shuts one side: the left on the file list. The right is one side
    *  whatever it holds (#1032): shut whole if it shows anything, the scratchpad or a
    *  panel, and otherwise opened on what it showed last - the scratchpad, or
-   *  `nextRight`. The one rule for the bar's button, the key and the menu. */
+   *  `nextRight`. The one rule for the bar's button, the key and the menu. Nothing while
+   *  the tab overview is up, whose canvas is where the sides were (Emil, #331 round 4). */
   toggleSidebar(side: PanelSide = 'left') {
+    if (tabOverview.open) return
     if (side === 'right') {
       if (this.unfill() && this.rightShows !== null) return
       if (this.rightShows !== null) {

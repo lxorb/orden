@@ -29,8 +29,8 @@
     inside: (key: string) => readonly Box[]
     /** Whether a window is held, which a bubble standing still wakes for. */
     holding: boolean
-    /** The window held, and the cell it is in now, read every frame. */
-    pushed: () => { key: string; box: Box } | null
+    /** The windows held, and the cell they are in now, read every frame. */
+    pushed: () => { key: string; boxes: readonly Box[] } | null
   } = $props()
 
   interface Kept {
@@ -42,10 +42,13 @@
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
   const kept = new Map<string, Kept>()
 
-  /** A cell's windows this frame, the held one with them while it is in this cell. */
-  function boxesOf(key: string, hand: { key: string; box: Box } | null): readonly Box[] {
+  /** A cell's windows this frame, the held ones with them while they are in this cell. */
+  function boxesOf(
+    key: string,
+    hand: { key: string; boxes: readonly Box[] } | null,
+  ): readonly Box[] {
     const own = inside(key)
-    return hand?.key === key ? [...own, hand.box] : own
+    return hand?.key === key ? [...own, ...hand.boxes] : own
   }
 
   function keptOf(key: string): Kept {
@@ -135,7 +138,13 @@
   {/each}
 </svg>
 {#each cells as cell (cell.key)}
-  <span class="name" class:is-on={cell.on} aria-hidden="true" use:named={cell.key}>{cell.name}</span
+  <!-- What a space is carried by, its windows and all (Overview.svelte `grounded`). -->
+  <span
+    class="name"
+    class:is-on={cell.on}
+    data-space-name={cell.key}
+    aria-hidden="true"
+    use:named={cell.key}>{cell.name}</span
   >
 {/each}
 
@@ -155,11 +164,13 @@
     opacity: var(--overview-open, 0);
   }
 
-  /* A bubble: a faint wash of the space's colour inside, a soft line at its edge. */
+  /* A bubble: a faint wash of the space's colour inside, a soft line at its edge - the
+     same weight on the screen however far out the camera is (`--overview-line` is the
+     canvas's length of a pixel of the screen). */
   .bubble {
     fill: color-mix(in srgb, var(--tint) 7%, transparent);
-    stroke: color-mix(in srgb, var(--tint) 45%, transparent);
-    stroke-width: 2.5;
+    stroke: color-mix(in srgb, var(--tint) 50%, transparent);
+    stroke-width: calc(3px * var(--overview-line, 1));
     stroke-linejoin: round;
   }
 
@@ -168,8 +179,11 @@
     stroke: color-mix(in srgb, var(--tint) 70%, transparent);
   }
 
-  /* A space's name, over the top of its bubble, at the overview's own size for it
-     whatever the zoom (Overview.svelte's tokens). */
+  /* A space's name, over the top of its bubble, at the overview's own size for it until
+     it would take more than the room kept over the bubble for it, and from there as
+     small as the camera draws the canvas (`--overview-space-names`, Overview.svelte):
+     the room is the canvas's, the same at every zoom, and no name lies on another
+     bubble. It carries its space, windows and all (Overview.svelte `grounded`). */
   .name {
     position: absolute;
     top: 0;
@@ -180,7 +194,7 @@
     white-space: nowrap;
     pointer-events: none;
     transform-origin: 0 0;
-    scale: var(--overview-unzoom);
+    scale: var(--overview-space-names);
     transform: translate(-50%, calc(-100% - var(--space-2)));
   }
 

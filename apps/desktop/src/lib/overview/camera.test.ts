@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest'
 import {
   boxToCanvas,
+  aimed,
   eased,
   isNotch,
   notched,
@@ -123,4 +124,33 @@ test('a box is on view while its middle is, at the camera’s own zoom', () => {
   expect(isOnView({ x: 0, y: 0, zoom: 0.4 }, box, room)).toBe(true)
   // A sliver at the edge is not somewhere to open at.
   expect(isOnView({ x: -600, y: 0, zoom: 1 }, box, room)).toBe(false)
+})
+
+test('fingers handed over in few, large turns are followed smoothly, frame by frame', () => {
+  // Emil, round 4: smooth in Firefox, in steps in the app. WebView2 can hand a touchpad's
+  // fingers over a dozen times a second in turns of tens of pixels, and a mouse's wheel in
+  // lines; each turn aims the zoom, and the camera eases there a frame at a time.
+  const at = { x: 300, y: 200 }
+  for (const turn of [
+    { deltaX: 0, deltaY: -36, deltaMode: 0, ctrlKey: false, metaKey: false, ...at },
+    { deltaX: 0, deltaY: -1.5, deltaMode: 1, ctrlKey: false, metaKey: false, ...at },
+    { deltaX: 0, deltaY: -40, deltaMode: 0, ctrlKey: true, metaKey: false, ...at },
+    { deltaX: 0, deltaY: -100, deltaMode: 0, ctrlKey: false, metaKey: false, ...at },
+  ]) {
+    let camera = { x: 0, y: 0, zoom: 0.5 }
+    let goal = { zoom: camera.zoom, ease: 0.08 }
+    let sharpest = 0
+    for (let frame = 0; frame < 90; frame++) {
+      // A turn every sixth frame, ten a second, for the first half second.
+      if (frame % 6 === 0 && frame < 30) goal = aimed(goal.zoom, turn)
+      const next = eased(camera, goal.zoom, at, 1 / 60, goal.ease)
+      sharpest = Math.max(sharpest, Math.abs(Math.log(next.zoom / camera.zoom)))
+      camera = next
+    }
+    expect(camera.zoom).toBeCloseTo(goal.zoom, 2)
+    expect(camera.zoom).toBeGreaterThan(0.5)
+    // No frame is a leap: each is well under what the same turn all at once would be.
+    const leap = Math.abs(Math.log(aimed(0.5, turn).zoom / 0.5))
+    expect(sharpest).toBeLessThan(leap * 0.5)
+  }
 })

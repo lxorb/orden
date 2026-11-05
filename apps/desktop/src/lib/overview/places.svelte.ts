@@ -134,13 +134,26 @@ class Places {
     this.keepWindows({}, tabs)
   }
 
-  /** Every space and window back where its panes would put it, the spaces in a row
-   *  again: the overview's Tidy up. */
-  tidy() {
+  /** Every window back where its panes would put it, and the spaces placed afresh -
+   *  `arranged`, packed round a middle (pack.ts): the overview's Tidy up. */
+  tidy(arranged: Readonly<Record<string, Box>> = {}) {
     this.put = {}
-    this.all = {}
+    this.all = { ...arranged }
     keepJson(WINDOWS, {})
-    keepJson(KEY, {})
+    keepJson(KEY, this.all)
+  }
+
+  /** Gives each space of `more` the place it says, keeping every other's. Never from
+   *  inside a derived: it writes. */
+  arrange(more: Readonly<Record<string, Box>>) {
+    if (!Object.keys(more).length) return
+    this.all = { ...this.all, ...more }
+    keepJson(KEY, this.all)
+  }
+
+  /** Every space's place, by space. */
+  every(): Readonly<Record<string, Box>> {
+    return this.all
   }
 
   /** The place of `space`, or null before it has one. */

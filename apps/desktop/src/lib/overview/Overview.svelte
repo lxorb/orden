@@ -22,12 +22,15 @@
    *
    *  A window can be dragged: it stays under the hand exactly, the others make room for it
    *  where it would land, and letting go moves the tab there - along its pane's strip, or
-   *  into another pane's (drag.ts).
+   *  into another pane's (drag.ts). Ctrl+Click, Cmd on a Mac, chooses several, which move
+   *  and drop together, and a space's name carries its space, windows and all.
    *
    *  All spaces shows the other spaces too, each in its place on the one canvas inside a
    *  bubble that is its windows (Cells.svelte); a window dragged out of its cell takes the
    *  bubble with it, and pointed into another's plops across, which moves its tab to
-   *  that space when it is let go (cells.ts). */
+   *  that space when it is let go (cells.ts). Tidy up packs the bubbles round a middle,
+   *  each in the free place nearest it (pack.ts). A zoom only moves the camera: nothing
+   *  on the canvas is laid out by how near it is. */
 
   import { tick as laidOut, untrack } from 'svelte'
   import { closeOnBack } from '../backstack.svelte'
@@ -44,18 +47,17 @@
   import { isUnsaved } from '../workspace/drafts'
   import { type Tab, workspace } from '../workspace.svelte'
   import {
+    aimed,
     boxToCanvas,
     type Camera,
     eased,
-    isNotch,
     isOnView,
     lookingAt,
-    notched,
     pinched,
     type Point,
     showing,
     toCanvas,
-    turned,
+    zoomedAt,
     moved as panned,
   } from './camera'
   import { isDrag, type Landing } from './drag'
@@ -73,7 +75,8 @@
   import { faces } from './faces.svelte'
   import { drawn, Flight, paneDrawn, type Pose } from './flight'
   import { land as landSpring, resting as sprung, SHARE, spring, step } from './spring'
-  import { roomFor, settled, stripLanding } from './free'
+  import { readsBefore, roomFor, settled, stripLanding } from './free'
+  import { meets, packed } from './pack'
   import { around, type Box, type Laid, lay, seamPath, seamsAmong, type Slot } from './layout'
   import { marked, shownBox, tabCopyOf } from './mirror'
   import { walk, wayOf } from './walk'
@@ -115,8 +118,10 @@
   /** And which tabs those are, for what their windows draw: nothing but a ring, the pane
    *  being under it. */
   let asPanes = $state<Record<string, true>>({})
-  /** The copy of each tab as its strip draws it, by tab (mirror.ts `tabCopyOf`). */
+  /** The copy of each tab as its strip draws it, by tab (mirror.ts `tabCopyOf`), and a
+   *  second of each, which rides on its window where that is its pane (`paintRider`). */
   let tabsAsDrawn = $state<Record<string, HTMLElement>>({})
+  let ridersDrawn = $state<Record<string, HTMLElement>>({})
 
   const frame = $derived(workspace.panes.frame)
   /** The room the windows are laid out in on the screen, at one to one. */
@@ -140,6 +145,7 @@
 
   /** The camera on the space being worked in, its place given it if it has none yet. */
   function lookAtSpace() {
+    placeNew([spaceKey])
     const place = places.place(spaceKey, { w: screenRoom.w, h: screenRoom.h })
     camera = lookingAt(place, screenRoom)
     // Then all of its cell, bubble, name and all, where it is drawn as one, never
@@ -151,18 +157,78 @@
 
   /** Where some cells are drawn, their bubbles and names and all. */
   function wholeOf(cells: readonly Cell[]): Box {
-    const named = NAME_ROOM * Math.max(1, 1 / camera.zoom)
-    const boxes = cells.map(({ box }) => {
-      const grown = grownOf(box)
-      return { ...grown, y: grown.y - named, h: grown.h + named }
-    })
-    return around(boxes) ?? room
+    return around(cells.map(({ box }) => extentOf(box))) ?? room
   }
 
-  /** Tidy up: every window of every space back where its panes put it, the spaces in a
-   *  row again, and the camera brought round to all of them (places.svelte.ts). */
+  /** Where a cell is drawn round its windows and their names (`box`): its bubble, and the
+   *  room over it for its name. Lengths of the canvas, the same at every zoom: nothing
+   *  is laid out by how near the camera is (Emil, round 4), and the names keep to this
+   *  room however far out it is (`NAMES_MOST`). */
+  function extentOf(box: Box): Box {
+    const grown = grownOf(box)
+    return { ...grown, y: grown.y - NAME_ROOM, h: grown.h + NAME_ROOM }
+  }
+
+  /** The room between two cells' bubbles, names and all, as they are packed. */
+  const CELLS_APART = 56
+
+  /** Where a space's cell would be with its place at the canvas's corner: its windows
+   *  where its panes put them, nothing put by hand. Null for a space with no panes. */
+  function cellAlone(key: string): Box | null {
+    const panesOf = key === spaceKey ? frame : sets?.frameOf(key)
+    if (!panesOf) return null
+    const corner = { x: 0, y: 0, w: screenRoom.w, h: screenRoom.h }
+    const inside = around(lay(panesOf, corner, { tabsOf, shapeOf }).slots)
+    return inside ? extentOf(captioned(inside)) : null
+  }
+
+  /** The places of `keys`, each where its cell lands packed among `taken` round
+   *  `middle`, nearest it first (pack.ts): what each place is, given where in it the
+   *  cell lies. A space with no panes is given none here. */
+  function packedPlaces(keys: readonly string[], taken: readonly Box[], middle: Point) {
+    const cells = keys.flatMap((key) => {
+      const box = cellAlone(key)
+      return box ? [{ key, box }] : []
+    })
+    const spots = packed(
+      cells.map(({ key, box }) => ({ key, w: box.w, h: box.h })),
+      CELLS_APART,
+      taken,
+      middle,
+      screenRoom.w / screenRoom.h,
+    )
+    const out: Record<string, Box> = {}
+    for (const { key, box } of cells) {
+      const spot = spots[key]
+      if (spot)
+        out[key] = { x: spot.x - box.x, y: spot.y - box.y, w: screenRoom.w, h: screenRoom.h }
+    }
+    return out
+  }
+
+  /** The spaces of `keys` with no place yet given one: in the free place nearest the
+   *  middle of those placed (Emil, round 4: round a middle, never in a row). */
+  function placeNew(keys: readonly string[]) {
+    const fresh = keys.filter((key) => !places.at(key))
+    if (!fresh.length) return
+    const known = new Map(cellBoxes.map((one) => [one.key, one.box]))
+    const taken = Object.entries(places.every()).map(([key, place]) => {
+      const box = known.get(key)
+      return box ? extentOf(box) : place
+    })
+    const whole = around(taken)
+    const middle = whole
+      ? { x: whole.x + whole.w / 2, y: whole.y + whole.h / 2 }
+      : { x: screenRoom.w / 2, y: screenRoom.h / 2 }
+    places.arrange(packedPlaces(fresh, taken, middle))
+  }
+
+  /** Tidy up: every window of every space back where its panes put it, the spaces packed
+   *  round a middle afresh, the one worked in on it, and the camera brought round to all
+   *  of them (places.svelte.ts, pack.ts). */
   async function tidy() {
-    places.tidy()
+    const keys = [spaceKey, ...shownKeys.filter((key) => key !== spaceKey)]
+    places.tidy(packedPlaces(keys, [], { x: 0, y: 0 }))
     for (const key of shownKeys) places.place(key, { w: screenRoom.w, h: screenRoom.h })
     await laidOut()
     flyTo(lookingAt(wholeOf(cellBoxes), screenRoom))
@@ -213,8 +279,13 @@
     flyFrame = 0
   }
 
-  /** The room a cell's name takes over its bubble. */
-  const NAME_ROOM = 48
+  /** The room a cell's name takes over its bubble, on the canvas, and how much larger
+   *  than the canvas draws them a space's name and a window's are kept as the camera
+   *  draws back: as far as each still fits the room kept for it, and from there as small
+   *  as the canvas, so no name ever lies on another's room. */
+  const NAME_ROOM = 72
+  const SPACE_NAMES_MOST = 2
+  const NAMES_MOST = 1.8
 
   const shapeOf = (paneId: string): number => {
     const measured = shownBox(paneId)
@@ -250,14 +321,19 @@
     return [spaceKey, ...keys]
   })
 
-  /** Each space shown is given its place on the canvas, once (places.svelte.ts). */
+  /** Each space shown is given its place on the canvas, once, packed in among the others
+   *  (places.svelte.ts). */
   $effect(() => {
-    for (const key of shownKeys)
-      untrack(() => places.place(key, { w: screenRoom.w, h: screenRoom.h }))
+    const keys = shownKeys
+    untrack(() => {
+      placeNew(keys)
+      for (const key of keys) places.place(key, { w: screenRoom.w, h: screenRoom.h })
+    })
   })
 
   /** The window under the hand: which, where it was taken hold of (as a share of its
-   *  width and height), where it lies now, and whether it is over another space's cell. */
+   *  width and height), where it lies now, and whether it is over another space's cell;
+   *  and the others carried with it. */
   let held = $state<{
     id: string
     fx: number
@@ -268,7 +344,32 @@
     /** The space whose cell it was taken out of, and those it may go to. */
     from: string
     goes: readonly string[]
+    /** The others carried with it - the windows chosen with it, or the rest of a space
+     *  carried by its name - each where it lay against it. */
+    with: readonly { id: string; dx: number; dy: number; w: number; h: number }[]
+    /** The space carried whole by its name, which plops into no other. */
+    whole: string | null
   } | null>(null)
+
+  /** The windows chosen by Ctrl+Click (or Cmd on a Mac), which move and drop together. */
+  let chosen = $state<readonly string[]>([])
+
+  /** Every window held, where it lies under the hand. */
+  const heldBoxes = $derived.by(() => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- made afresh by the derived, never changed after
+    const boxes = new Map<string, Box>()
+    const box = held?.box
+    if (!held || !box) return boxes
+    boxes.set(held.id, box)
+    for (const one of held.with)
+      boxes.set(one.id, { x: box.x + one.dx, y: box.y + one.dy, w: one.w, h: one.h })
+    return boxes
+  })
+
+  /** Which windows are held, moved or not yet. */
+  const heldIds = $derived<ReadonlySet<string>>(
+    new Set(held ? [held.id, ...held.with.map((one) => one.id)] : []),
+  )
 
   /** Each cell's windows where its panes would put them (layout.ts), with its panes,
    *  which the lines between a split's sides are drawn from. */
@@ -282,7 +383,7 @@
         {
           key,
           frame: panesOf,
-          slots: lay(panesOf, place, { tabsOf, shapeOf, named: namedRoom }).slots,
+          slots: lay(panesOf, place, { tabsOf, shapeOf }).slots,
         },
       ]
     }),
@@ -297,7 +398,7 @@
       const box = put[slot.id]
       return box ? { ...slot, x: box.x, y: box.y, w: box.w, h: box.h } : slot
     })
-    return settled(lying, new Set(all.filter((one) => put[one.id]).map((one) => one.id)), namedRoom)
+    return settled(lying, new Set(all.filter((one) => put[one.id]).map((one) => one.id)))
   })
 
   /** Which cell each window lies in, by tab: its space's, or the one the held window is
@@ -307,7 +408,8 @@
     const map = new Map(
       gridCells.flatMap((one) => one.slots.map((slot) => [slot.id, one.key] as const)),
     )
-    if (held?.landing?.kind === 'space') map.set(held.id, held.landing.key)
+    const landing = held?.landing
+    if (landing?.kind === 'space') for (const id of heldIds) map.set(id, landing.key)
     return map
   })
 
@@ -316,11 +418,10 @@
    *  hand moves on. Another cell's windows stay put, which the hand points into (free.ts
    *  `roomFor`). */
   const slots = $derived.by((): Slot[] => {
-    const hand = held?.box
     const id = held?.id
-    if (!hand || !id) return resting
+    if (!heldBoxes.size || !id) return resting
     const key = cellOf.get(id)
-    return roomFor(resting, id, hand, (one) => cellOf.get(one) === key, namedRoom)
+    return roomFor(resting, heldBoxes, (one) => cellOf.get(one) === key)
   })
 
   /** Every window, and the lines between each split's sides. */
@@ -329,7 +430,7 @@
     seams: gridCells.flatMap((one) =>
       seamsAmong(
         one.frame,
-        slots.filter((slot) => cellOf.get(slot.id) === one.key && slot.id !== held?.id),
+        slots.filter((slot) => cellOf.get(slot.id) === one.key && !heldIds.has(slot.id)),
       ),
     ),
   })
@@ -341,11 +442,11 @@
   const cellBoxes = $derived<Cell[]>(
     gridCells.map((one) => {
       const inside = resting.filter(
-        (slot) => cellOf.get(slot.id) === one.key && slot.id !== held?.id,
+        (slot) => cellOf.get(slot.id) === one.key && !heldIds.has(slot.id),
       )
-      // A cell whose one window is held is where that window was taken from.
+      // A cell whose windows are all held is where they were taken from.
       const from = resting.filter(
-        (slot) => slot.id === held?.id && one.slots.some((own) => own.id === slot.id),
+        (slot) => heldIds.has(slot.id) && one.slots.some((own) => own.id === slot.id),
       )
       return {
         key: one.key,
@@ -366,6 +467,8 @@
   )
 
   const byId = $derived(new Map(workspace.tabs.map((tab) => [tab.id, tab])))
+  /** How much larger than the canvas draws them what keeps its size on the screen is. */
+  const unzoom = $derived(Math.max(1, 1 / camera.zoom))
   const windows = $derived(
     laid.slots.flatMap((slot) => {
       const tab = byId.get(slot.id)
@@ -380,26 +483,16 @@
     return { w: slot.w * 3, h: slot.h * 3 }
   }
 
-  /** How much room a window's name takes under it on the screen, at most. */
-  const CAPTION_ROOM = 36
-
-  /** The room the windows are laid out with under each for its name, on the canvas: as
-   *  much as the name takes at the zoom the camera came to rest at, so no window lies on
-   *  another's name. Followed once a zoom has stopped, not on every step of it, so the
-   *  windows make room once rather than shuffling under the fingers (free.ts). */
-  let namedZoom = $state(1)
-  const namedRoom = $derived(CAPTION_ROOM * Math.max(1, 1 / namedZoom) + 12)
-  let namedLater: ReturnType<typeof setTimeout> | undefined
-  $effect(() => {
-    const zoom = camera.zoom
-    clearTimeout(namedLater)
-    if (zoom !== untrack(() => namedZoom)) namedLater = setTimeout(() => (namedZoom = zoom), 250)
-    return () => clearTimeout(namedLater)
-  })
+  /** How much room a window's name takes under it on the canvas: the same at every zoom,
+   *  so where the windows lie and how big their bubbles are is the canvas's and never
+   *  the camera's (Emil, round 4: zooming changed the bubbles). The name stays its size
+   *  on the screen as the camera draws back for as long as it fits here (`NAMES_MOST`),
+   *  and from there is drawn as small as the canvas is. */
+  const CAPTION_ROOM = 44
 
   /** A window's box with its name under it, which its cell holds as well. */
   function captioned(box: Box): Box {
-    return { ...box, h: box.h + CAPTION_ROOM * Math.max(1, 1 / camera.zoom) }
+    return { ...box, h: box.h + CAPTION_ROOM }
   }
 
   /** How far from its place, in pixels all told, a window's name starts to show. */
@@ -425,7 +518,7 @@
   function insideOf(key: string): Box[] {
     const boxes: Box[] = []
     for (const slot of laid.slots) {
-      if (slot.id === held?.id || cellOf.get(slot.id) !== key) continue
+      if (heldIds.has(slot.id) || cellOf.get(slot.id) !== key) continue
       const pose = arrived.has(slot.id) ? flights.get(slot.id)?.pose : null
       boxes.push(captioned(pose ? { x: pose.x, y: pose.y, w: pose.w, h: pose.h } : slot))
     }
@@ -447,12 +540,29 @@
             laidOut.box.height - laidOut.head,
           )
         : shownBox(tab.paneId)
-      if (box && box.width > 0) return onCanvas(box, 0)
+      if (box && box.width > 0) {
+        rides(tab.id, box)
+        return onCanvas(box, 0)
+      }
     }
+    riders.delete(tab.id)
     // The tab's own shape in the strip; see Tabs.svelte.
     const chip = marked('box', tab.id)?.getBoundingClientRect()
     if (chip && chip.width > 0 && chip.right > 0 && chip.left < width) return onCanvas(chip, 1)
     return { ...lifted(slot), alpha: 0 }
+  }
+
+  /** Where the tab of a window that goes home to its pane (`box`, on the screen) is in
+   *  its strip, against the pane: what it rides on its window as (`paintRider`). Read off
+   *  the strip as the window leaves and as it goes home, where the tab is laid out though
+   *  out of sight. */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once a frame, never rendered
+  const riders = new Map<string, { dx: number; dy: number; width: number }>()
+
+  function rides(id: string, box: DOMRect) {
+    const chip = marked('box', id)?.getBoundingClientRect()
+    if (!chip || chip.width <= 0) return void riders.delete(id)
+    riders.set(id, { dx: chip.x - box.x, dy: chip.y - box.y, width: box.width })
   }
 
   /** Where a box of the screen is on the canvas, as a pose `tab` much a tab. */
@@ -510,12 +620,14 @@
     for (const [id, flight] of flights) {
       if (!flight.step(seconds)) moving = true
       else if (out) arrived.add(id)
-      if (id === held?.id) follow()
+      if (heldIds.has(id)) follow(id)
       else paint(id)
     }
     awayFromStrip()
-    if (moving) fly()
-    else if (!out) gone()
+    if (moving) {
+      stirred()
+      fly()
+    } else if (!out) gone()
   }
 
   /** How far out the overview is, 0 the app as it was and 1 all the way: what the
@@ -617,6 +729,11 @@
     Object.assign(parts.window.style, styles.window)
     Object.assign(parts.face.style, styles.face)
     Object.assign(parts.chip.style, styles.chip)
+    // How far the window is scaled from its own size, which its ring is drawn back by,
+    // so the ring is the same weight on the screen however small it flies.
+    parts.window.style.setProperty('--flight-x', String(slot.w / Math.max(pose.w, 1)))
+    parts.window.style.setProperty('--flight-y', String(slot.h / Math.max(pose.h, 1)))
+    paintRider(id, home)
     if (started) movePane(id, pose)
     // The name under a window, and its cross, only once it is nearly in its place.
     const off =
@@ -628,6 +745,52 @@
     const caption = captions.get(id)
     if (caption) caption.style.opacity = String(near)
     closers.get(id)?.style.setProperty('--near', String(near))
+  }
+
+  /** The tab of a window that is its pane's, riding on top of its window, as the window
+   *  leaves its pane or comes home to it (Emil, round 4: the tab in the bar vanished as
+   *  the overview began and ended, and to the eye it is part of its window). Where it is
+   *  in its strip against its pane, shrunk with the window and moved with it; and fading
+   *  into the window's head as the window comes down to its size on the canvas, coming
+   *  back out of it on the way home, where it is handed over to the tab itself just as
+   *  the window is to its pane (`near`, 0 to 1, or null for not near home at all). */
+  function paintRider(id: string, near: number | null = null) {
+    const node = riderNodes.get(id)
+    if (!node) return
+    const at = riders.get(id)
+    const pose = flights.get(id)?.pose
+    const slot = laid.slots.find((one) => one.id === id)
+    const home = homes.get(id)
+    if (!at || !pose || !slot || !home || home.tab >= 0.5 || home.alpha < 0.5) {
+      node.style.opacity = '0'
+      return
+    }
+    const scale = (pose.w * camera.zoom) / Math.max(at.width, 1)
+    const x = camera.x + pose.x * camera.zoom + at.dx * scale
+    const y = camera.y + pose.y * camera.zoom + at.dy * scale
+    // How far down to its size on the canvas the window has come, 0 at home and 1 there.
+    const span = home.w - slot.w
+    const down = Math.abs(span) > 1 ? (home.w - pose.w) / span : opening.at
+    let alpha = Math.min(1, Math.max(0, 1 - down / 0.6)) * pose.alpha
+    if (near !== null && near < NEAR) alpha *= near / NEAR
+    node.style.transform = `translate(${x}px, ${y}px) scale(${scale})`
+    node.style.opacity = String(alpha)
+  }
+
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
+  const riderNodes = new Map<string, HTMLElement>()
+
+  /** A rider's element, its tab's copy in it. */
+  function riding(node: HTMLElement, id: string) {
+    const copy = ridersDrawn[id]
+    if (copy) node.replaceChildren(copy)
+    riderNodes.set(id, node)
+    paintRider(id, started ? null : 0)
+    return {
+      destroy() {
+        if (riderNodes.get(id) === node) riderNodes.delete(id)
+      },
+    }
   }
 
   /** Whether the pane of tab `id` is that tab's window: it was in front as the layer came
@@ -647,26 +810,64 @@
     const styles = paneDrawn(pose, camera, one.box, one.head, corner, opening.at)
     Object.assign(one.node.style, styles, {
       transformOrigin: '0 0',
-      zIndex: id === held?.id ? 'var(--z-sheet)' : 'var(--z-raised)',
+      // Over the canvas while it is held, as the window under the hand is; under every
+      // surface that comes up over the overview, a drawer, the palette, a sheet.
+      zIndex: heldIds.has(id) ? 'var(--z-drawer)' : 'var(--z-raised)',
       pointerEvents: 'none',
-      // A layer of its own while it moves; at rest drawn again at the size it is shown,
-      // so its words are as sharp as the other windows'.
-      willChange: flights.get(id)?.resting && id !== held?.id ? 'auto' : 'transform',
+      // A layer of its own while anything moves; at rest drawn again at the size it is
+      // shown, so its words are as sharp as the other windows'.
+      willChange: stirring ? 'transform' : 'auto',
     })
   }
 
   /** The camera moved - a pan, a pinch, a notch - and the panes moving as their windows
-   *  with it, which no world they are in moves for them. */
+   *  with it, which no world they are in moves for them, and the tabs riding on them. */
   $effect(() => {
     const looking = { ...camera }
     untrack(() => {
       if (!shown || !started || looking.zoom <= 0) return
+      stirred()
       for (const id of panesAsWindows.keys()) {
         const pose = flights.get(id)?.pose
         if (pose) movePane(id, pose)
       }
+      for (const id of riderNodes.keys()) paintRider(id, out ? null : fromHome(id))
     })
   })
+
+  /** Whether anything moves: a window flying, the camera, a hand. While it does, the
+   *  windows, the panes moving as theirs and the canvas under them are each a layer of
+   *  their own, which the screen only moves and scales; a moment after it stops, each is
+   *  drawn again at the size it is shown at - a page's picture smoothly scaled once, the
+   *  words of a pane drawn at their size - rather than a layer drawn at another size
+   *  scaled on every frame, which is jagged far out and slow in an engine such as
+   *  WebView2 (Emil, round 4). */
+  let stirring = false
+  let stillLater: ReturnType<typeof setTimeout> | undefined
+  let under = $state<HTMLElement>()
+
+  function stirred() {
+    clearTimeout(stillLater)
+    stillLater = setTimeout(settle, 180)
+    if (stirring) return
+    stirring = true
+    canvasNode?.classList.add('is-moving')
+    under?.classList.add('is-moving')
+    for (const [id, one] of panesAsWindows)
+      if (movesAsWindow(id)) one.node.style.willChange = 'transform'
+  }
+
+  function settle() {
+    if (frameAsked || zoomFrame || flyFrame || held) {
+      stillLater = setTimeout(settle, 180)
+      return
+    }
+    stirring = false
+    canvasNode?.classList.remove('is-moving')
+    under?.classList.remove('is-moving')
+    for (const [id, one] of panesAsWindows)
+      if (movesAsWindow(id)) one.node.style.willChange = 'auto'
+  }
 
   const PANE_STYLES = [
     'transform',
@@ -685,9 +886,9 @@
 
   /** Sends every window where it goes: onto the canvas, or home. */
   function aimAll() {
-    const hand = untrack(() => held?.id)
+    const hands = untrack(() => heldIds)
     for (const { slot, tab } of untrack(() => windows)) {
-      if (tab.id === hand) continue
+      if (hands.has(tab.id)) continue
       const flight = flights.get(tab.id)
       if (out) flight?.aim(lying(slot))
       else {
@@ -741,8 +942,8 @@
         slots.find((one) => one.id === workspace.activeTabId) ??
         cellBoxes.find((one) => one.key === spaceKey)?.box
       if (kept && (!front || isOnView(kept, front, screenRoom))) camera = kept
-      namedZoom = camera.zoom
       panesAsWindows.clear()
+      riders.clear()
       const asWindows: Record<string, true> = {}
       for (const pane of workspace.panes.all) {
         const tab = pane.activeTabId ? byId.get(pane.activeTabId) : undefined
@@ -767,11 +968,16 @@
       // Each tab as its strip draws it, which its window leaves the strip as.
       const inherited = new Map<Element, string>()
       const tabCopies: Record<string, HTMLElement> = {}
+      const riderCopies: Record<string, HTMLElement> = {}
       for (const tab of workspace.tabs) {
         const copy = tabCopyOf(tab.id, inherited)
         if (copy) tabCopies[tab.id] = copy
+        // And a second, for a tab whose window is its pane's to ride on it.
+        const rider = copy && tabCopyOf(tab.id, inherited)
+        if (rider) riderCopies[tab.id] = rider
       }
       tabsAsDrawn = tabCopies
+      ridersDrawn = riderCopies
       at = workspace.activeTabId
       started = false
       homes.clear()
@@ -803,6 +1009,7 @@
   function leave() {
     held = null
     pressed = null
+    chosen = []
     // A notch still on its way is where it was going.
     if (zoomGoal) camera = eased(camera, zoomGoal.zoom, zoomGoal.at, Number.POSITIVE_INFINITY)
     zoomGoal = null
@@ -823,6 +1030,10 @@
     panesAsWindows.clear()
     asPanes = {}
     tabsAsDrawn = {}
+    ridersDrawn = {}
+    riders.clear()
+    clearTimeout(stillLater)
+    stirring = false
     tabOverview.out = []
     tabOverview.lifted = []
     delete document.documentElement.dataset.overview
@@ -953,16 +1164,51 @@
     }
   }
 
-  /** Where the pointer went down on a window, until it is a drag or a press. */
-  let pressed: { id: string; x: number; y: number; pointer: number } | null = null
+  /** Where the pointer went down on a window, or on a space's name, until it is a drag or
+   *  a press. */
+  let pressed: { id: string; x: number; y: number; pointer: number; whole: string | null } | null =
+    null
   /** Whether the press that just ended was a drag, so its click opens nothing. */
   let dragged = false
 
   function down(event: PointerEvent, id: string) {
     if (event.button !== 0 || !out) return
-    pressed = { id, x: event.clientX, y: event.clientY, pointer: event.pointerId }
+    pressed = { id, x: event.clientX, y: event.clientY, pointer: event.pointerId, whole: null }
     dragged = false
     event.stopPropagation()
+  }
+
+  /** A click on a window: with Ctrl, or Cmd on a Mac, it is chosen or no longer chosen,
+   *  as a file is among files; without, its tab opens. */
+  function clicked(event: MouseEvent, tab: Tab) {
+    if (dragged) {
+      dragged = false
+      return
+    }
+    if (event.ctrlKey || event.metaKey) {
+      chosen = chosen.includes(tab.id)
+        ? chosen.filter((one) => one !== tab.id)
+        : [...chosen, tab.id]
+      return
+    }
+    open(tab)
+  }
+
+  /** What a hand that took hold of window `id` carries: the windows chosen, where it is
+   *  one of them; its space's every window, where it took the space by its name; else it
+   *  alone. The first is the one under the hand. */
+  function carriedWith(id: string, whole: string | null): string[] {
+    const lying = (one: string) => flights.has(one) && resting.some((slot) => slot.id === one)
+    if (whole)
+      return [
+        id,
+        ...resting
+          .filter((one) => cellOf.get(one.id) === whole && one.id !== id)
+          .map((one) => one.id),
+      ].filter(lying)
+    if (chosen.includes(id)) return [id, ...chosen.filter((one) => one !== id)].filter(lying)
+    chosen = []
+    return [id]
   }
 
   function moved(event: PointerEvent) {
@@ -973,21 +1219,34 @@
       const flight = flights.get(id)
       if (!flight) return
       const pose = flight.pose
-      const target = event.currentTarget as HTMLElement
-      target.setPointerCapture(event.pointerId)
+      // A space's name took its pointer as it went down (`grounded`).
+      if (!pressed.whole) (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
       const grabbed = toCanvas(camera, pressed)
-      const tab = byId.get(id)
+      const ids = carriedWith(id, pressed.whole)
+      const first = resting.find((one) => one.id === id)
+      const tabs = ids.flatMap((one) => byId.get(one) ?? [])
+      const from = cellOf.get(id) ?? spaceKey
+      const together = ids.every((one) => cellOf.get(one) === from)
       held = {
         id,
         fx: (grabbed.x - pose.x) / Math.max(pose.w, 1),
         fy: (grabbed.y - pose.y) / Math.max(pose.h, 1),
         box: null,
         landing: null,
-        from: cellOf.get(id) ?? spaceKey,
-        // The spaces Move to space would offer it, which are the cells it may plop into.
-        goes: tab
-          ? spacesFor([movingOf(tab)], workspace, canWriteAt, mayCarry).map((one) => one.id)
-          : [],
+        from,
+        // The spaces Move to space would offer them, which are the cells they may plop
+        // into; none for windows of several spaces, or a space carried whole.
+        goes:
+          together && !pressed.whole && tabs.length
+            ? spacesFor(tabs.map(movingOf), workspace, canWriteAt, mayCarry).map((one) => one.id)
+            : [],
+        with: ids.slice(1).flatMap((one) => {
+          const slot = resting.find((lying) => lying.id === one)
+          return slot && first
+            ? [{ id: one, dx: slot.x - first.x, dy: slot.y - first.y, w: slot.w, h: slot.h }]
+            : []
+        }),
+        whole: pressed.whole,
       }
       at = id
     }
@@ -998,14 +1257,15 @@
     const h = own?.h ?? 1
     const box = { x: hand.x - held.fx * w, y: hand.y - held.fy * h, w, h }
     held = { ...held, box, landing: landingFor(hand) }
-    follow()
+    for (const one of heldIds) follow(one)
     fly()
   }
 
-  /** Whether the held window, with the pointer at `point`, is over another space's cell:
-   *  once the pointer is nearer that cell's windows than its own's (cells.ts). */
+  /** Whether the held windows, with the pointer at `point`, are over another space's
+   *  cell: once the pointer is nearer that cell's windows than its own's (cells.ts). A
+   *  space carried whole plops into none. */
   function landingFor(point: Point): (Landing & { kind: 'space' }) | null {
-    if (!held) return null
+    if (!held || held.whole) return null
     const from = held.from
     const goes = held.goes
     const now = held.landing?.key ?? from
@@ -1014,34 +1274,37 @@
     return cell === from ? null : { kind: 'space', key: cell }
   }
 
-  /** The held window and the cell it is in now, for the bubbles. */
-  function pushedNow(): { key: string; box: Box } | null {
+  /** The held windows and the cell they are in now, for the bubbles. */
+  function pushedNow(): { key: string; boxes: Box[] } | null {
     if (!held) return null
-    const pose = flights.get(held.id)?.pose
-    if (!pose) return null
-    const key = held.landing?.key ?? held.from
-    // Its name under it, which its bubble holds as well.
-    return { key, box: captioned({ x: pose.x, y: pose.y, w: pose.w, h: pose.h }) }
+    const boxes = [...heldIds].flatMap((id) => {
+      const pose = flights.get(id)?.pose
+      // Its name under it, which its bubble holds as well.
+      return pose ? [captioned({ x: pose.x, y: pose.y, w: pose.w, h: pose.h })] : []
+    })
+    return { key: held.landing?.key ?? held.from, boxes }
   }
 
   /** Where the pointer is, while a window is held. */
   let hand: Point = { x: 0, y: 0 }
 
-  /** The held window under the pointer, the point it was taken by under the pointer
-   *  exactly. */
-  function follow() {
-    const box = held?.box
-    const flight = held && flights.get(held.id)
-    if (!box || !flight || !held) return
+  /** A held window under the pointer, the one taken hold of by the point it was taken by
+   *  exactly, the others carried with it where they lay against it. */
+  function follow(id: string) {
+    const box = heldBoxes.get(id)
+    const flight = flights.get(id)
+    if (!box || !flight) return
     flight.hold(box.x, box.y, box.w, box.h)
-    paint(held.id)
+    paint(id)
   }
 
-  /** Let go: the window stays exactly where it was let go, and every window keeps where
-   *  it lies now, the ones it pushed aside too (places.svelte.ts). Over another space's
-   *  cell, its tab moves to that space; in its own, the space worked in, it takes its
-   *  place in the strip of the pane it was let go among, where it reads among that
-   *  pane's windows (free.ts). */
+  /** Let go: the windows stay exactly where they were let go, and every window keeps
+   *  where it lies now, the ones they pushed aside too (places.svelte.ts). Over another
+   *  space's cell, their tabs move to that space; in their own, the space worked in, they
+   *  take their place in the strip of the pane they were let go among, where they read
+   *  among that pane's windows, in the order they lie (free.ts). A space carried whole
+   *  stays where it was let go, its place with it, or in the free place nearest that,
+   *  where it would lie on another (pack.ts). */
   function up(event: PointerEvent) {
     if (pressed?.pointer !== event.pointerId) return
     pressed = null
@@ -1050,17 +1313,75 @@
     dragged = true
     const lying = laid.slots
     const box = hand.box
+    const was = resting.find((one) => one.id === hand.id)
+    const ids = [hand.id, ...hand.with.map((one) => one.id)]
     held = null
     if (box) {
       places.keepWindows(Object.fromEntries(lying.map((one) => [one.id, one])), workspace.tabs)
     }
-    if (hand.landing) drop(hand.id, hand.landing)
-    else if (box && hand.from === spaceKey) {
+    if (hand.whole) {
+      const place = places.at(hand.whole)
+      if (box && was && place)
+        places.arrange({
+          [hand.whole]: { ...place, x: place.x + box.x - was.x, y: place.y + box.y - was.y },
+        })
+      void settleApart(hand.whole, true)
+    } else if (hand.landing) drop(ids, hand.landing)
+    else if (box) {
+      void settleApart(hand.from, false)
       const own = lying.filter((one) => cellOf.get(one.id) === spaceKey)
-      const strip = stripLanding(own, hand.id, box)
-      if (strip) drop(hand.id, { kind: 'strip', ...strip })
+      const strip = ids.every((one) => cellOf.get(one) === spaceKey)
+        ? stripLanding(own, hand.id, box)
+        : null
+      // In the order they lie, each before the same tab: the order is theirs.
+      const order = own
+        .filter((one) => ids.includes(one.id))
+        .sort(readsBefore)
+        .map((one) => one.id)
+      if (strip)
+        for (const id of order)
+          drop([id], { kind: 'strip', paneId: strip.paneId, before: strip.before })
     }
     aimAll()
+  }
+
+  /** No two cells on each other once a hand lets go: a space let go of on another is
+   *  moved, windows and place, to the free place nearest where it was let go (`itself`);
+   *  windows let go of in a space that now reaches over others move those others to the
+   *  free place nearest each, as one bubble pushes another aside (pack.ts). */
+  async function settleApart(key: string, itself: boolean) {
+    await laidOut()
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read here and thrown away
+    const extents = new Map(cellBoxes.map((one) => [one.key, extentOf(one.box)]))
+    const mine = extents.get(key)
+    if (!mine) return
+    const movers = itself
+      ? [key]
+      : [...extents]
+          .filter(([other, box]) => other !== key && meets(box, mine, CELLS_APART))
+          .map(([other]) => other)
+    for (const mover of movers) {
+      const box = extents.get(mover)
+      if (!box) continue
+      const others = [...extents].filter(([other]) => other !== mover).map(([, one]) => one)
+      if (!others.some((one) => meets(one, box, CELLS_APART))) continue
+      const middle = { x: box.x + box.w / 2, y: box.y + box.h / 2 }
+      const spot = packed([{ key: mover, w: box.w, h: box.h }], CELLS_APART, others, middle)[mover]
+      if (!spot) continue
+      shiftSpace(mover, spot.x - box.x, spot.y - box.y)
+      extents.set(mover, spot)
+    }
+  }
+
+  /** A space moved on the canvas, its windows and its place. */
+  function shiftSpace(key: string, dx: number, dy: number) {
+    const own = resting.filter((one) => cellOf.get(one.id) === key)
+    places.keepWindows(
+      Object.fromEntries(own.map((one) => [one.id, { ...one, x: one.x + dx, y: one.y + dy }])),
+      workspace.tabs,
+    )
+    const place = places.at(key)
+    if (place) places.arrange({ [key]: { ...place, x: place.x + dx, y: place.y + dy } })
   }
 
   function cancelled() {
@@ -1069,20 +1390,22 @@
     aimAll()
   }
 
-  /** The tab moved along its strip or into another pane's, before the tab it landed in
-   *  front of. */
-  function drop(id: string, landing: Landing) {
+  /** The tabs moved into another space, or one along its strip or into another pane's,
+   *  before the tab it landed in front of. */
+  function drop(ids: readonly string[], landing: Landing) {
     if (landing.kind === 'space') {
-      // Move to space, the tab menu's own: the tab, its file where it has one, into the
-      // other space's set (workspace/moving-space.ts).
-      // Refused, the toast says so, and the window does not stay parked among that space's.
+      // Move to space, the tab menu's own: the tabs, their files where they have them,
+      // into the other space's set (workspace/moving-space.ts). Refused, the toast says so,
+      // and the windows do not stay parked among that space's.
       void import('../workspace/moving-space')
-        .then((one) => one.moveToSpace([id], landing.key))
+        .then((one) => one.moveToSpace(ids, landing.key))
         .then((went) => {
-          if (!went) places.forgetWindow(id, workspace.tabs)
+          if (!went) for (const one of ids) places.forgetWindow(one, workspace.tabs)
         })
       return
     }
+    const id = ids[0]
+    if (!id) return
     const strip = tabsOf(landing.paneId)
     const back = strip.filter((one) => one !== id)
     const into = landing.before === null ? back.length : back.indexOf(landing.before)
@@ -1093,7 +1416,17 @@
     // its Essentials too.
     const held = workspace.heldIn(landing.paneId).filter((one) => one.id !== id)
     const before = landing.before === null ? -1 : held.findIndex((one) => one.id === landing.before)
+    // Moved, not opened: every pane keeps the tab in front it had where that is still
+    // its own, and the one worked in stays the one worked in, so the window that is a
+    // pane stays that pane's and the overview goes home to what it came from; the one
+    // worked in, moved into another pane, is in front there.
+    const fronts = workspace.panes.all.map((one) => [one.id, one.activeTabId] as const)
+    const working = workspace.activeTabId
     workspace.moveTab(id, landing.paneId, before < 0 ? held.length : before)
+    const paneOf = (tab: string | null) => workspace.tabs.find((one) => one.id === tab)?.paneId
+    for (const [pane, front] of fronts)
+      if (front && paneOf(front) === pane) workspace.panes.activate(pane, front)
+    if (working && paneOf(working)) workspace.activate(working)
   }
 
   function keyed(event: KeyboardEvent) {
@@ -1129,9 +1462,9 @@
 
   const spaces = $derived(workspace.shownSpaces)
 
-  /** Where a notch of the wheel is taking the zoom, and about which point of
-   *  the screen; eased there a frame at a time (camera.ts). */
-  let zoomGoal: { zoom: number; at: Point } | null = null
+  /** Where the wheel or the fingers are taking the zoom, about which point of the
+   *  screen, and how quickly; eased there a frame at a time (camera.ts). */
+  let zoomGoal: { zoom: number; at: Point; ease: number } | null = null
   let zoomFrame = 0
   let zoomLast = 0
 
@@ -1144,6 +1477,7 @@
       goal.zoom,
       goal.at,
       Math.min(1 / 30, Math.max(0, (now - zoomLast) / 1000)),
+      goal.ease,
     )
     zoomLast = now
     if (camera.zoom === goal.zoom) {
@@ -1154,31 +1488,28 @@
 
   /** Every scroll zooms, Ctrl held or not, and none moves the canvas, which only a drag
    *  on it does: a notch of the wheel eases nearer or further, as a page's zoom does,
-   *  never in steps, and fingers on a touchpad, scrolling or pinching, are followed under
-   *  the fingers. Listened for by hand, since a passive listener cannot keep the page
-   *  from zooming. */
+   *  never in steps, and fingers on a touchpad, scrolling or pinching, are followed a
+   *  few frames behind. Each turn only aims the zoom, and the camera is eased there on
+   *  the screen's clock, so an engine that says the wheel in few, large turns - WebView2's
+   *  - zooms as smoothly as one that says it every frame (Emil, round 4: smooth in
+   *  Firefox, in steps in the app). Listened for by hand, since a passive listener cannot
+   *  keep the page from zooming. */
   function wheeled(node: HTMLElement) {
     const turn = (event: WheelEvent) => {
       event.preventDefault()
       const { deltaX, deltaY, deltaMode, ctrlKey, metaKey, clientX, clientY } = event
       const said = { deltaX, deltaY, deltaMode, ctrlKey, metaKey, x: clientX, y: clientY }
       handTakes()
-      if (isNotch(said)) {
-        const zoom = notched(zoomGoal?.zoom ?? camera.zoom, said)
-        if (stillness()) {
-          camera = eased(camera, zoom, said, Number.POSITIVE_INFINITY)
-          return
-        }
-        zoomGoal = { zoom, at: { x: clientX, y: clientY } }
-        if (!zoomFrame) {
-          zoomLast = performance.now()
-          zoomFrame = requestAnimationFrame(zooming)
-        }
+      const goal = aimed(zoomGoal?.zoom ?? camera.zoom, said)
+      if (stillness()) {
+        camera = zoomedAt(camera, said, goal.zoom / camera.zoom)
         return
       }
-      // Fingers on a touchpad take over from a notch on its way.
-      zoomGoal = null
-      camera = turned(camera, said)
+      zoomGoal = { ...goal, at: { x: clientX, y: clientY } }
+      if (!zoomFrame) {
+        zoomLast = performance.now()
+        zoomFrame = requestAnimationFrame(zooming)
+      }
     }
     node.addEventListener('wheel', turn, { passive: false })
     return {
@@ -1196,13 +1527,47 @@
 
   function grounded(event: PointerEvent) {
     if (!(event.target instanceof Element) || !event.target.closest('.floor')) return
+    // A space's name carries the space, windows and all (Emil, round 4).
+    const space = out && event.button === 0 && !touching.size ? nameAt(event) : null
+    const first = space ? laid.slots.find((slot) => cellOf.get(slot.id) === space) : null
+    if (first) {
+      handTakes()
+      pressed = {
+        id: first.id,
+        x: event.clientX,
+        y: event.clientY,
+        pointer: event.pointerId,
+        whole: space,
+      }
+      dragged = false
+      event.target.setPointerCapture(event.pointerId)
+      return
+    }
     handTakes()
     touching.set(event.pointerId, { x: event.clientX, y: event.clientY })
     event.target.setPointerCapture(event.pointerId)
     panning = touching.size > 1
   }
 
+  /** The space whose name is under the pointer, which is drawn under the canvas and
+   *  takes no press of its own. */
+  function nameAt(point: { clientX: number; clientY: number }): string | null {
+    for (const name of document.querySelectorAll<HTMLElement>('[data-space-name]')) {
+      const box = name.getBoundingClientRect()
+      const { clientX: x, clientY: y } = point
+      if (x >= box.left && x <= box.right && y >= box.top && y <= box.bottom)
+        return name.dataset.spaceName ?? null
+    }
+    return null
+  }
+
   function dragging(event: PointerEvent) {
+    // A space carried by its name; a window's own press is the window's (`moved`).
+    if (pressed?.whole && pressed.pointer === event.pointerId) return moved(event)
+    if (!touching.size && event.buttons === 0 && event.target instanceof HTMLElement) {
+      const floor = event.target.closest<HTMLElement>('.floor')
+      if (floor) floor.style.cursor = all && nameAt(event) ? 'grab' : ''
+    }
     const was = touching.get(event.pointerId)
     if (!was) return
     const now = { x: event.clientX, y: event.clientY }
@@ -1237,6 +1602,11 @@
   }
 
   function letGo(event: PointerEvent) {
+    if (pressed?.whole && pressed.pointer === event.pointerId) {
+      if (event.type === 'pointerup') up(event)
+      else cancelled()
+      return
+    }
     if (!touching.delete(event.pointerId)) return
     if (!touching.size && !panning && event.type === 'pointerup') close()
     if (!touching.size) panning = false
@@ -1266,13 +1636,16 @@
       class="under"
       style:--overview-top="{barBottom}px"
       aria-hidden="true"
+      bind:this={under}
       onselectstart={(event) => event.preventDefault()}
       ondragstart={(event) => event.preventDefault()}
     >
       <div
         class="world"
         style:transform="translate({camera.x}px, {camera.y}px) scale({camera.zoom})"
-        style:--overview-unzoom={Math.max(1, 1 / camera.zoom)}
+        style:--overview-line={1 / camera.zoom}
+        style:--overview-names={Math.min(unzoom, NAMES_MOST)}
+        style:--overview-space-names={Math.min(unzoom, SPACE_NAMES_MOST)}
       >
         {#if cellsShown.length}
           <Cells cells={cellsShown} pushed={pushedNow} holding={held !== null} inside={insideOf} />
@@ -1286,7 +1659,7 @@
           <span
             class="caption"
             style:translate="{slot.x}px {slot.y + slot.h + 8}px"
-            style:width="calc({slot.w}px / var(--overview-unzoom))"
+            style:width="calc({slot.w}px / var(--overview-names))"
             use:named={tab.id}
           >
             <TabMark {tab} /><span class="caption-name">{tab.shown}</span>
@@ -1353,7 +1726,8 @@
     <div
       class="world"
       style:transform="translate({camera.x}px, {camera.y}px) scale({camera.zoom})"
-      style:--overview-unzoom={Math.max(1, 1 / camera.zoom)}
+      style:--overview-unzoom={unzoom}
+      style:--overview-line={1 / camera.zoom}
     >
       {#each windows as { slot, tab } (tab.id)}
         {@const face = faceOf(slot)}
@@ -1365,12 +1739,11 @@
           style:height="{slot.h}px"
           aria-label={tab.shown}
           aria-current={tab.id === workspace.activeTabId ? 'page' : undefined}
-          class:is-held={held?.id === tab.id}
+          class:is-held={heldIds.has(tab.id)}
+          class:is-chosen={chosen.includes(tab.id)}
+          aria-pressed={chosen.length ? chosen.includes(tab.id) : undefined}
           onfocus={() => (at = tab.id)}
-          onclick={() => {
-            if (dragged) dragged = false
-            else open(tab)
-          }}
+          onclick={(event) => clicked(event, tab)}
           onpointerdown={(event) => down(event, tab.id)}
           onpointermove={moved}
           onpointerup={up}
@@ -1378,8 +1751,9 @@
           use:placed={tab.id}
         >
           <span class="face-box" style:scale={slot.w / face.w}>
-            <!-- A pane that is its window is under it, and the window only its ring. -->
-            {#if !asPanes[tab.id]}
+            <!-- A pane that is its window is under it, and the window only its ring; one whose
+                 pane shows another tab now is its picture again. -->
+            {#if !asPanes[tab.id] || workspace.panes.at(tab.paneId)?.activeTabId !== tab.id}
               <WindowFace {tab} face={faces.of(tab.id)} width={face.w} height={face.h} />
             {/if}
           </span>
@@ -1398,7 +1772,7 @@
              in it, a button in a button being no button at all. -->
         <button
           class="closer"
-          class:is-held={held?.id === tab.id}
+          class:is-held={heldIds.has(tab.id)}
           type="button"
           tabindex="-1"
           title={t('Close')}
@@ -1412,6 +1786,14 @@
         </button>
       {/each}
     </div>
+
+    <!-- The tabs riding on the windows that are their panes', on the screen and not on the
+         canvas: each where its tab is in its strip, against its window (`paintRider`). -->
+    {#each windows as { tab } (tab.id)}
+      {#if ridersDrawn[tab.id]}
+        <span class="rider" aria-hidden="true" use:riding={tab.id}></span>
+      {/if}
+    {/each}
   </div>
 {/if}
 
@@ -1428,6 +1810,26 @@
     translate: calc(var(--dir, 1) * 100% * var(--overview-open, 0)) 0;
   }
 
+  /* The bar while the overview is up: what is the window's own and the overview's stays -
+     the search, the overview's own button, the window's buttons, the word that this is
+     the unstable build (each `data-overview-keeps`, Titlebar.svelte), and the stretch the
+     window is dragged by. Everything else in it is about the panes and the sides under
+     the canvas - a side's button, a pane's way back and forward, a new tab, a note's
+     menu - and fades as the overview comes out, taking no press until it is put away
+     (Emil, round 4). A tab is its window's, out of the strip for as long. So is a side's
+     button wherever it is drawn. */
+  :global(
+    html[data-overview]
+      :is(header[data-chrome='top'] :is(button, [role='button']), [data-side-toggle]):not(
+        [data-overview-keeps],
+        [data-overview-keeps] *,
+        [data-box] *
+      )
+  ) {
+    opacity: calc(1 - var(--overview-open, 0));
+    pointer-events: none;
+  }
+
   /* Asked for under Appearance: the app under the bar, blurred far enough to be a surface
      and not a page, as the overview was drawn first - over the sidebars, which stay, and
      under the panes and what lies under them, which stand on it. */
@@ -1440,17 +1842,20 @@
   }
 
   /* The sizes of what the overview says in words, in one place: a window's name and a
-     space's, never smaller on the screen than these, however far out the camera is
-     (`--overview-unzoom` scales them back by as much as the camera makes them small). */
+     space's, these on the screen as far out as each still fits the room the canvas keeps
+     for it, and from there as small as the canvas is drawn (`--overview-names` and
+     `--overview-space-names` scale them back by as much as that). */
   .canvas {
     --overview-caption: var(--text-base);
     --overview-cell-name: calc(var(--text-base) * 1.6);
     position: fixed;
     inset: 0;
-    /* Over the panes, and just under a sheet: what the overview asks - a terminal still
-       running, words with no file, closed by a window's cross - comes up over it, and is
-       answered there. */
-    z-index: calc(var(--z-sheet) - 1);
+    /* Over the panes and what floats over them, and under every surface that comes up
+       over the app: a drawer, the palette Shift Shift brings up (Emil, round 4: it was
+       drawn in among the windows), a notice, the settings, and a sheet - what the
+       overview asks, a terminal still running, words with no file, closed by a window's
+       cross, comes up over it and is answered there. */
+    z-index: calc(var(--z-drawer) - 1);
     overflow: hidden;
     background: none;
     -webkit-backdrop-filter: none;
@@ -1532,10 +1937,11 @@
     opacity: var(--overview-open, 0);
   }
 
+  /* The same weight on the screen at every zoom (`--overview-line`). */
   .seams path {
     fill: none;
     stroke: color-mix(in srgb, var(--accent) 55%, var(--muted));
-    stroke-width: 2;
+    stroke-width: calc(2.5px * var(--overview-line, 1));
     stroke-linecap: round;
     stroke-dasharray: none;
   }
@@ -1560,11 +1966,19 @@
        frame and the last, where a window is its pane. */
     box-shadow: 0 calc(24px * var(--overview-open, 1)) calc(64px * var(--overview-open, 1))
       calc(-12px * var(--overview-open, 1)) rgb(0 0 0 / 0.26);
-    will-change: transform;
     cursor: pointer;
     outline: none;
     touch-action: none;
     pointer-events: auto;
+  }
+
+  /* Layers of their own only while something moves (`stirred`): at rest each is drawn at
+     the size it is shown at, so a picture is smoothly scaled once and words are drawn
+     at their size, never a layer of another size scaled every frame. */
+  .canvas:global(.is-moving) .window,
+  .canvas:global(.is-moving) .world,
+  .under:global(.is-moving) .world {
+    will-change: transform;
   }
 
   /* Under the hand, over the others, a little higher off the canvas. */
@@ -1623,28 +2037,55 @@
     text-overflow: ellipsis;
   }
 
-  /* A hairline round a window whose tab is somewhere in the file list, a dashed one round
-     one that is nowhere yet; the accent round the keyboard's. */
+  /* A line round a window whose tab is somewhere in the file list, a dashed one round one
+     that is nowhere yet; the accent round the keyboard's, and round those chosen. Each
+     `--ring` wide on the screen however far out the camera is and however small the
+     window flies (`--overview-line`, and `--flight-x` and `--flight-y` from `paint`). */
   .ring {
+    --ring: 1.5px;
     position: absolute;
     inset: 0;
     /* None on the first frame and the last, where the window is its pane or its tab. */
     opacity: var(--overview-open, 1);
-    border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+    border-style: solid;
+    border-color: color-mix(in srgb, var(--line) 80%, transparent);
+    border-width: calc(var(--ring) * var(--overview-line, 1) * var(--flight-y, 1))
+      calc(var(--ring) * var(--overview-line, 1) * var(--flight-x, 1));
     border-radius: inherit;
     pointer-events: none;
   }
 
   .window.unsaved .ring {
-    border: 1.5px dashed color-mix(in srgb, var(--muted) 75%, transparent);
+    --ring: 2px;
+    border-style: dashed;
+    border-color: color-mix(in srgb, var(--muted) 75%, transparent);
   }
 
   .window:hover .ring {
     border-color: var(--line-strong);
   }
 
+  .window.is-chosen .ring {
+    --ring: 3px;
+    border-style: solid;
+    border-color: var(--accent);
+  }
+
   .window.is-at:focus-visible .ring {
-    border: 2px solid var(--accent);
+    --ring: 2.5px;
+    border-style: solid;
+    border-color: var(--accent);
+  }
+
+  /* A tab riding on its window, on the screen (`paintRider`): its copy, at its own size,
+     scaled from its corner. */
+  .rider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    transform-origin: 0 0;
+    pointer-events: none;
   }
 
   /* A window's cross: the app's quiet grey button with the cross in it red, small, on
@@ -1728,6 +2169,6 @@
     pointer-events: none;
     opacity: 0;
     transform-origin: 0 0;
-    scale: var(--overview-unzoom);
+    scale: var(--overview-names);
   }
 </style>

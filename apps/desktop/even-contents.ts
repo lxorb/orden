@@ -610,11 +610,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  what covers a page, measured 6,037,507. Catalogues 992,135 and styles 291,272 as they
  *  were. Then to 6,037,800 for #1125 and #1063 and the device store's one rule, measured
  *  6,037,649.
+ *
+ *  Raised on 2026-11-05 as #331's packed overview and #1068's mounted rows came to
+ *  claude/hunt-round-1 on top of the hunt's: the code to 6,050,500, measured 6,050,283;
+ *  the styles to #331's 292,200, measured 292,180. Catalogues 992,135 as they were.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_037_800,
+  code: 6_050_500,
   catalogues: 992_400,
-  styles: 291_500,
+  styles: 292_200,
   fonts: 260_000,
   pages: 40_000,
 }

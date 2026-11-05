@@ -87,6 +87,58 @@ test('round one window it is that window grown a little, and nowhere further', (
   expect(sharpest).toBeLessThan((8 * Math.PI) / 180)
 })
 
+/** How tight the drawn curve bends at its tightest: the radius of the circle through
+ *  three points of it ten pixels apart along it, the least such radius round it. A hard
+ *  corner is a bend of a few pixels, whatever the resolution it is drawn at. */
+function tightestOf(one: Bubble): number {
+  const curve = outline(one)
+  const even: [number, number][] = []
+  for (let i = 0; i < curve.length; i++) {
+    const [ax, ay] = curve[i] ?? [0, 0]
+    const [bx, by] = curve[(i + 1) % curve.length] ?? [0, 0]
+    const steps = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / 2))
+    for (let k = 0; k < steps; k++)
+      even.push([ax + ((bx - ax) * k) / steps, ay + ((by - ay) * k) / steps])
+  }
+  let least = Number.POSITIVE_INFINITY
+  const n = even.length
+  for (let i = 0; i < n; i++) {
+    const [ax, ay] = even[(i - 5 + n) % n] ?? [0, 0]
+    const [bx, by] = even[i] ?? [0, 0]
+    const [cx, cy] = even[(i + 5) % n] ?? [0, 0]
+    const area = Math.abs((bx - ax) * (cy - ay) - (cx - ax) * (by - ay)) / 2
+    if (area < 1e-9) continue
+    const r =
+      (Math.hypot(bx - ax, by - ay) * Math.hypot(cx - bx, cy - by) * Math.hypot(cx - ax, cy - ay)) /
+      (4 * area)
+    least = Math.min(least, r)
+  }
+  return least
+}
+
+test('a window pushed against its bubble from inside swells it round, never into a corner', () => {
+  // Emil, round 4: a window dragged against a bubble's edge, quicker than the bubble
+  // follows, pressed a hard corner into it where the window's own corner was.
+  for (const [dx, dy] of [
+    [1, 0],
+    [0, 1],
+    [1, 1],
+    [-1, 0.4],
+  ] as const) {
+    const still = { x: 0, y: 0, w: 640, h: 400 }
+    const one = new Bubble([still, { x: 700, y: 0, w: 640, h: 400 }])
+    const held = { x: 700, y: 0, w: 640, h: 400 }
+    for (let frame = 0; frame < 40; frame++) {
+      held.x += dx * 30
+      held.y += dy * 30
+      one.step(1 / 60, frame / 60, [still, held])
+      expect(encloses(one, [still, held])).toBe(true)
+      // As round as a window's own bubble is at its corners, give or take.
+      expect(tightestOf(one)).toBeGreaterThan(40)
+    }
+  }
+})
+
 test('round two windows far apart it is their hull, never wider where there are none', () => {
   const left = { x: 0, y: 0, w: 300, h: 200 }
   const right = { x: 900, y: 0, w: 300, h: 200 }

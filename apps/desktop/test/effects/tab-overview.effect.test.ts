@@ -391,3 +391,63 @@ test('every scroll zooms about the pointer, Ctrl or not, and none moves the canv
     expect(pointUnder().y).toBeCloseTo(under.y)
   }
 })
+
+test('a zoom only moves the camera: where the windows lie, and how big, is the same at every zoom', async () => {
+  // Emil, round 4: scrolling changed the bubbles - the room kept under each window for
+  // its name grew as the camera drew back, and the windows were laid out again.
+  await opened()
+  const laidOut = () =>
+    windows().map((one) => [one.style.width, one.style.height, one.style.transform].join(' '))
+  const before = laidOut()
+  for (const deltaY of [400, 400, 400]) {
+    layer()?.dispatchEvent(
+      new WheelEvent('wheel', {
+        deltaY,
+        clientX: 400,
+        clientY: 300,
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
+    flushSync()
+  }
+  expect(document.querySelector<HTMLElement>('.world')?.style.transform).toMatch(/scale\(0\.[0-5]/)
+  // Once the zoom has come to rest, and a while after.
+  await new Promise((go) => setTimeout(go, 400))
+  flushSync()
+  expect(laidOut()).toEqual(before)
+})
+
+test('Ctrl+Click chooses windows, and again lets one go; a plain click opens its tab', async () => {
+  await opened()
+  const [first, second] = windows()
+  const click = (one: HTMLElement | undefined, init: MouseEventInit = {}) => {
+    one?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, ...init }))
+    flushSync()
+  }
+  click(first, { ctrlKey: true })
+  click(second, { metaKey: true })
+  expect(windows().filter((one) => one.classList.contains('is-chosen'))).toEqual([first, second])
+  expect(tabOverview.open).toBe(true)
+  click(first, { ctrlKey: true })
+  expect(windows().filter((one) => one.classList.contains('is-chosen'))).toEqual([second])
+  click(first)
+  expect(tabOverview.open).toBe(false)
+  expect(workspace.active?.shown).toBe(first?.getAttribute('aria-label'))
+})
+
+test('the sides are not opened or shut while it is up, by their buttons, keys or menu', async () => {
+  // Emil, round 4: the sidebar buttons did strange things in the overview.
+  const panel = workspace.panel
+  const right = workspace.rightShows
+  await opened()
+  workspace.toggleSidebar()
+  workspace.toggleSidebar('right')
+  expect(workspace.panel).toBe(panel)
+  expect(workspace.rightShows).toBe(right)
+  tabOverview.open = false
+  flushSync()
+  workspace.toggleSidebar()
+  expect(workspace.panel).not.toBe(panel)
+  workspace.toggleSidebar()
+})

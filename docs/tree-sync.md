@@ -130,6 +130,15 @@ made signed out goes up under its own. A note the account still will not make un
 even at the top of the space - one another space once made, or this space's own gone for
 good - is made again under a new id with what its file says, never left unsent.
 
+## Storage of its own
+
+A space whose files Orden keeps itself, by id, is to answer the same file commands a
+folder does (#1068, step 4c), through the browser build's own: its commands
+(apps/desktop/src/lib/web/commands.ts) read and write rows keyed by path, and a store of
+rows can be mounted at a folder (`mountRows` in web/store.ts), so what is at or under it
+is that store's and not the browser's. A read of every row is every store's, in path
+order. Nothing is mounted yet: every row is the browser's, as it always was.
+
 ## What is kept about an entry
 
 A folder's icon and its colour are kept on the account by the folder's id, and a
