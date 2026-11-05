@@ -1,18 +1,25 @@
-"""Every `?` sits on the words it explains, the same way after every label (#1052).
+"""Every mark after words sits on them, the same way everywhere (#1052, #1061).
 
 The `?` after a setting's name was centred on the name's line box, which is not where
 the letters are: a line box is the font's ascent and descent and the line gap around
 them, so the glyph stood a little off the words, by an amount that changed with the
-face, the size and the platform. Here it is measured against the letters themselves.
+face, the size and the platform. The arrow after a link that leaves the app was the
+same fault (#1061): set beside the link's words in a flex row, it was centred on all
+of their lines at once when they wrapped. Both are `.nib-mark` now, and here each is
+measured against the letters themselves.
 
-For every `?` in the Settings panes a person reaches, the centre of the drawn circle
-has to be within a pixel of the middle of the label's x-height - the font's own `x`,
-measured on a canvas in the label's font, independently of how the page placed the
-glyph - on the line of the label's last word, and the same distance after that word
-on every row. That is checked at four text sizes, at one and two device pixels per
-CSS pixel, on a touch screen, in the light and the dark theme, in Arabic (right to
-left), and on a name squeezed until it wraps, where the `?` has to stay with the last
-word rather than drop onto a line of its own.
+For every mark in the Settings panes a person reaches - the `?` after a name, the
+arrow after a caption that links out, the arrow after the link to Claude's connectors
+- the centre of the drawn glyph has to be within a pixel of the middle of the words'
+x-height - the font's own `x`, measured on a canvas in the words' font, independently
+of how the page placed the glyph - on the line of the last word, inside the box the
+words are in, and the same distance after that word wherever that kind of mark is.
+That is checked at four text sizes and in several faces, at one and two device
+pixels per CSS pixel, on a touch screen, in the light and the dark theme, in Arabic
+(right to left) and Spanish (whose catalogues say they were machine-translated, in a
+caption that links to them), and on names and captions squeezed until they wrap,
+where the mark has to stay with the last word rather than drop onto a line of its
+own or stand in the middle of all the lines.
 
 Run it from the repository root:
 
@@ -28,23 +35,29 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-#: The panes with a `?` on them that need no account.
+#: The panes with a mark on them that need no account.
 PANES = ("general", "editor", "markdown", "appearance", "ai", "spelling")
 
-#: And the ones only somebody signed in is shown.
-SIGNED_IN = ("sync", "account")
+#: And the ones only somebody signed in is shown, with the steps to Claude's
+#: connectors on the AI pane.
+SIGNED_IN = ("sync", "account", "ai")
 
-#: How far the glyph's centre may stand from the middle of the x-height, and how far
-#: one row's gap may differ from another's, in CSS pixels.
+#: How far the glyph's centre may stand from the middle of the x-height, how far one
+#: row's gap may differ from another's, and how far a glyph may stand out of the box
+#: of the words it follows, in CSS pixels.
 OFF_CENTRE = 0.75
 GAP_SPREAD = 0.5
+OUTSIDE = 0.5
 
-#: Where every visible `?` stands against the letters before it.
+#: The marks there are, by the class that says which one it is.
+KINDS = {"nib-hint": "?", "nib-outward": "arrow"}
+
+#: Where every visible mark stands against the letters before it.
 MEASURE = """
-() => {
+(kinds) => {
   const canvas = document.createElement('canvas').getContext('2d')
   const rows = []
-  for (const mark of document.querySelectorAll('[role="dialog"] .explain')) {
+  for (const mark of document.querySelectorAll('[role="dialog"] .nib-mark')) {
     const svg = mark.querySelector('svg')
     const drawn = svg?.getBoundingClientRect()
     if (!drawn || !drawn.width) continue
@@ -79,12 +92,24 @@ MEASURE = """
       : rtl
         ? Math.min(...line.map((one) => one.left)) - drawn.right
         : drawn.left - Math.max(...line.map((one) => one.right))
+    // Inside the box the words are in, which keeps the end of the line for the glyph.
+    const box = mark.parentElement.getBoundingClientRect()
+    const outside = rtl ? box.left - drawn.left : drawn.right - box.right
+    // Glued to the last word: a word joiner straight after it, and not even a space
+    // between, which would widen the gap. Svelte's anchors are comments, and no text.
+    let before = mark.previousSibling
+    while (before?.nodeType === Node.COMMENT_NODE) before = before.previousSibling
+    const glued = mark.firstChild?.nodeType === Node.TEXT_NODE && mark.firstChild.textContent === '\\u2060'
+      && before === words && !/\\s$/.test(words.textContent)
     rows.push({
+      kind: Object.entries(kinds).find(([name]) => mark.classList.contains(name))?.[1] ?? mark.className,
       label: words.textContent.trim().slice(-24),
       size: parseFloat(style.fontSize),
       off: centre - middle,
       gap,
       sameLine: centre > last.top && centre < last.bottom,
+      outside,
+      glued,
     })
   }
   return rows
@@ -116,7 +141,8 @@ def styled(page: Page, size: int | None, face: str | None) -> None:
             style.id = 'help-mark-look'
             document.head.append(style)
           }
-          style.textContent = '.nib-setting, .nib-setting * {' +
+          // Every row, and whatever else holds a mark: a caption, a link.
+          style.textContent = '.nib-setting, .nib-setting *, :has(> .nib-mark), :has(> .nib-mark) * {' +
             (size ? `font-size: ${size}px !important;` : '') +
             (face ? `font-family: '${face}' !important;` : '') + '}'
         }""",
@@ -124,70 +150,91 @@ def styled(page: Page, size: int | None, face: str | None) -> None:
     )
 
 
-def check(page: Page, where: str) -> int:
-    rows = page.evaluate(MEASURE)
+def check(page: Page, where: str, kinds: tuple[str, ...] = ("?",)) -> int:
+    rows = page.evaluate(MEASURE, KINDS)
+    for kind in kinds:
+        if not any(one["kind"] == kind for one in rows):
+            wrong(f"{where}: no {kind} to measure")
     if not rows:
-        wrong(f"{where}: no ? to measure")
         return 0
     worst = max(rows, key=lambda one: abs(one["off"]))
-    gaps = [one["gap"] for one in rows if one["sameLine"]] or [0.0]
     say(
-        f"{where}: {len(rows)} ?, worst {worst['off']:+.2f}px off the x-height on "
-        f"{worst['label']!r} at {worst['size']}px, gaps {min(gaps):.2f}-{max(gaps):.2f}px"
+        f"{where}: {len(rows)} marks, worst {worst['off']:+.2f}px off the x-height on "
+        f"the {worst['kind']} after {worst['label']!r} at {worst['size']}px"
     )
     for one in rows:
+        mark = f"the {one['kind']} after {one['label']!r}"
         if abs(one["off"]) > OFF_CENTRE:
-            wrong(f"{where}: the ? after {one['label']!r} stands {one['off']:+.2f}px off the middle of the x-height")
+            wrong(f"{where}: {mark} stands {one['off']:+.2f}px off the middle of the x-height")
         if not one["sameLine"]:
-            wrong(f"{where}: the ? after {one['label']!r} is not on the line of the last word")
-    if max(gaps) - min(gaps) > GAP_SPREAD:
-        wrong(f"{where}: the gap before the ? runs from {min(gaps):.2f} to {max(gaps):.2f}px")
+            wrong(f"{where}: {mark} is not on the line of the last word")
+        if one["outside"] > OUTSIDE:
+            wrong(f"{where}: {mark} stands {one['outside']:.2f}px out of the box of its words")
+        if not one["glued"]:
+            wrong(f"{where}: {mark} is not joined to the last word")
+    for kind in sorted({one["kind"] for one in rows}):
+        gaps = [one["gap"] for one in rows if one["kind"] == kind and one["sameLine"]] or [0.0]
+        say(f"{where}: {kind} gaps {min(gaps):.2f}-{max(gaps):.2f}px")
+        if max(gaps) - min(gaps) > GAP_SPREAD:
+            wrong(f"{where}: the gap before the {kind} runs from {min(gaps):.2f} to {max(gaps):.2f}px")
     return len(rows)
 
 
-def panes(page: Page, tag: str, sections: tuple[str, ...]) -> None:
+def panes(page: Page, tag: str, sections: tuple[str, ...], arrows: tuple[str, ...] = ()) -> None:
+    """Every pane at every look; `arrows` names the panes that have to show an arrow."""
     counted = 0
     for section in sections:
         page.evaluate("(id) => window.nibApp.settings.show(id)", section)
         page.wait_for_timeout(500)
+        kinds = ("?", "arrow") if section in arrows else ("?",)
         for size, face in LOOKS:
             styled(page, size, face)
             page.wait_for_timeout(50)
-            counted += check(page, f"[{tag}] {section} @{size or 'own'} {face or 'own face'}")
+            counted += check(page, f"[{tag}] {section} @{size or 'own'} {face or 'own face'}", kinds)
         styled(page, None, None)
-        if section == "general":
+        if section in ("general", *arrows):
             shot(page, f"{tag}-{section}")
     if counted < 6 * len(sections):
-        wrong(f"[{tag}] only {counted} ? were measured")
+        wrong(f"[{tag}] only {counted} marks were measured")
 
 
-def wrapped(page: Page, tag: str) -> None:
-    """A name squeezed until it wraps: the `?` stays with its last word, on that line."""
-    page.evaluate("() => window.nibApp.settings.show('general')")
+#: How narrow the words are squeezed: the names, and the captions and the links, which
+#: break only between words, never below a width that holds the longest one.
+WIDTHS = (60, 80, 110, 144, 177, 210, 250, 300)
+
+
+def wrapped(page: Page, tag: str, section: str, kinds: tuple[str, ...]) -> None:
+    """Names, captions and links squeezed until they wrap: the mark stays with the last
+    word, on that line, and inside the box the words are in."""
+    page.evaluate("(id) => window.nibApp.settings.show(id)", section)
     page.wait_for_timeout(500)
-    for width in (60, 80, 110, 144):
+    for width in WIDTHS:
         tall = page.evaluate(
             """(width) => {
               const style = document.getElementById('help-mark-wrap') ?? document.createElement('style')
               style.id = 'help-mark-wrap'
               style.textContent = `[role="dialog"] .nib-setting .name { flex: none !important;
-                inline-size: ${width}px !important; min-inline-size: 0 !important }`
+                inline-size: ${width}px !important; min-inline-size: 0 !important }
+                [role="dialog"] :is(.hint.caption, .steps .link) {
+                  max-inline-size: ${Math.max(width, 110)}px !important }`
               document.head.append(style)
-              const label = document.querySelector('[role="dialog"] .explain').parentElement
-              return label.getBoundingClientRect().height
+              return Math.max(...[...document.querySelectorAll('[role="dialog"] .nib-mark')]
+                .map((mark) => mark.parentElement.getBoundingClientRect().height))
             }""",
             width,
         )
-        say(f"[{tag}] names {width}px wide, the first one {tall:.0f}px tall")
-        check(page, f"[{tag}] wrapped at {width}px")
-        shot(page, f"{tag}-wrapped-{width}")
+        say(f"[{tag}] {section} squeezed to {width}px, the tallest words {tall:.0f}px tall")
+        check(page, f"[{tag}] {section} wrapped at {width}px", kinds)
+        shot(page, f"{tag}-{section}-wrapped-{width}")
     page.evaluate("() => document.getElementById('help-mark-wrap')?.remove()")
 
 
 def look(browser: Browser, tag: str, language: str = "en", scale: int = 1, touch: bool = False,
          scheme: str = "light") -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860}, device_scale_factor=scale)
-    page.context.add_init_script(f"localStorage.setItem('nib:language', {language!r})")
+    page.context.add_init_script(
+        f"localStorage.setItem('nib:language', {language!r}); localStorage.setItem('nib:access-choice', 'claude')"
+    )
     DRIVE.open(page)
     page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
     if touch:
@@ -198,10 +245,13 @@ def look(browser: Browser, tag: str, language: str = "en", scale: int = 1, touch
     say(f"[{tag}] direction {direction}")
     if language == "ar" and direction != "rtl":
         wrong(f"[{tag}] Arabic is drawn {direction}")
-    panes(page, tag, PANES)
-    wrapped(page, tag)
+    # A language nobody has read yet says so under its row, in a caption linking out.
+    machine = language in ("ar", "es")
+    panes(page, tag, PANES, ("general",) if machine else ())
+    wrapped(page, tag, "general", ("?", "arrow") if machine else ("?",))
     page.evaluate("() => { window.nibApp.account.user = { id: 'u1', email: 'wren@example.com', name: 'Wren' } }")
-    panes(page, tag, SIGNED_IN)
+    panes(page, tag, SIGNED_IN, ("ai",))
+    wrapped(page, tag, "ai", ("?", "arrow"))
     page.context.close()
 
 
@@ -212,7 +262,8 @@ def drive(browser: Browser) -> None:
     look(browser, "touch", touch=True)
     look(browser, "rtl", language="ar")
     look(browser, "german", language="de")
+    look(browser, "spanish", language="es")
 
 
 if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "every ? sits on the middle of its label's letters"))
+    raise SystemExit(DRIVE.run(drive, "every mark sits on the middle of the letters of the words it follows"))

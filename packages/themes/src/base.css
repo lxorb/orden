@@ -523,9 +523,13 @@ select option {
 /* A name with the `?` that explains it (#768), in a pane of its own component: the
    glyph in the same slot after the words as on every declared row, which the panel
    draws with its own `.what`. One run of text, not a flex row: the glyph places
-   itself on the letters and wraps with the last word (#1052, Hint.svelte). */
+   itself on the letters and wraps with the last word (#1052, Hint.svelte). And it
+   wraps even in a pane whose names keep to one line and are cut short: cut, the
+   words would take their `?` with them, and the reader would never learn there was
+   anything to ask (#1061). */
 .nib-setting .name .nib-named {
   display: block;
+  white-space: normal;
 }
 
 /* But never below a width a name can be read at, whatever sits beside it.
@@ -1192,6 +1196,54 @@ select option {
    apps/desktop/src/lib/direction.ts. */
 :root[dir='rtl'] .nib-mirror {
   transform: scaleX(-1);
+}
+
+/* ── A mark after the words ────────────────── */
+
+/* A glyph that belongs to the words before it: the `?` after a setting's name
+   (Hint.svelte), the arrow after a link that leaves the app (Outward.svelte).
+   Written as `<span class="nib-mark">&#8288;<glyph/></span>` straight after the
+   last word, with no space between, and drawn as one more word of the text rather
+   than a box beside it (#1052, #1061).
+
+   A flex row that set the words and the glyph side by side centred the glyph on
+   the words' line box - the font's ascent, descent and leading - which is not
+   where the letters are, and is somewhere else again in every face, size and
+   platform; on words that wrapped it centred the glyph on all of their lines at
+   once and left a gap after the last word as wide as the longest line, and a
+   space before the glyph let a line break there and leave it alone on the next.
+   Here the glyph is centred the way CSS centres a thing on letters,
+   `vertical-align: middle`, on the middle of the words' own x-height; the word
+   joiner keeps it on the last word's line; and the gap before it is `--mark-gap`
+   in every place and in either direction.
+
+   And it takes no room of its own on the line: the glyph is pulled back over its
+   own width and drawn where it would have stood, and the element the words are in
+   keeps the gap and the glyph free at its end instead. A word joiner keeps the
+   glyph with the last word only while the two fit on a line together; a word as
+   wide as the line - German has them - is broken by `overflow-wrap: anywhere`,
+   and the glyph would be broken off with it onto a line by itself.
+
+   The first element in the mark is what is drawn. Its size and gap are said on
+   the element the words are in, `--mark-size` and `--mark-gap`, by whatever
+   draws the mark; that element keeps its end padding for them, so it must not set
+   `padding-inline-end` itself. */
+.nib-mark {
+  white-space: nowrap;
+}
+
+.nib-mark > :first-child {
+  position: relative;
+  inset-inline-start: calc(var(--mark-size, 16px) + var(--mark-gap, 5px));
+  vertical-align: middle;
+  width: var(--mark-size, 16px);
+  height: var(--mark-size, 16px);
+  margin: 0;
+  margin-inline-start: calc(-1 * var(--mark-size, 16px));
+}
+
+:has(> .nib-mark) {
+  padding-inline-end: calc(var(--mark-gap, 5px) + var(--mark-size, 16px));
 }
 
 /* ── Section labels ────────────────────────── */
