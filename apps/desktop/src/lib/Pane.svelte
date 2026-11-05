@@ -810,6 +810,20 @@
     opacity: 0;
   }
 
+  /* An empty pane has no tab, so no window on the canvas to stand back for: its kinds
+     would stay in among the other spaces' windows. They fade as the overview comes out
+     and take no press while it is up, and the pane drops its ground as a lifted one does. */
+  :global(html[data-overview]) .pane:has(> :global(.here)),
+  :global(html[data-overview]) .pane:has(> .head):has(> :global(.here)) {
+    background: none;
+    box-shadow: none;
+  }
+
+  :global(html[data-overview]) .pane > :global(.here) {
+    opacity: calc(1 - var(--overview-open, 0));
+    pointer-events: none;
+  }
+
   /* A pane beside another one carries its own strip. The window's single pane
      has none: its tabs are in the titlebar, where a browser puts them.
 
