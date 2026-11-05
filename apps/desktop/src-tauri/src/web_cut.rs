@@ -48,6 +48,9 @@ use std::sync::{LazyLock, Mutex, PoisonError};
 use serde::Deserialize;
 use tauri::Webview;
 
+#[cfg(target_os = "macos")]
+pub mod under;
+
 /// One of the app's layers over a page, in the page's own coordinates.
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
 pub struct Hollow {
@@ -139,17 +142,17 @@ pub const CUTS: bool = cfg!(any(
 
 /// How a page is layered with the app's own page, as the window is answered: `"under"` for
 /// a page drawn under the app's page, which draws every layer over it and whose cut only
-/// says where it takes no input (`web_visual.rs`); otherwise whether layers are cut out of
-/// it (`CUTS`). See `layering` in lib/web-tab/pages.svelte.ts.
+/// says where it takes no input (`web_visual.rs`, and `under.rs` on a Mac); otherwise whether
+/// layers are cut out of it (`CUTS`). See `layering` in lib/web-tab/pages.svelte.ts.
 #[derive(Clone, Copy, Debug, serde::Serialize, PartialEq)]
 #[serde(untagged)]
 pub enum Layering {
     Cuts(bool),
     #[cfg_attr(
-        not(all(windows, not(feature = "cef"))),
+        not(any(all(windows, not(feature = "cef")), target_os = "macos")),
         allow(
             dead_code,
-            reason = "only the system's engine on Windows draws a page under the app yet"
+            reason = "only the system's engines on Windows and a Mac draw a page under the app yet"
         )
     )]
     Under(&'static str),
@@ -159,6 +162,10 @@ pub enum Layering {
 pub fn layering(label: &str) -> Layering {
     #[cfg(all(windows, not(feature = "cef")))]
     if crate::web_visual::is_drawn_under(label) {
+        return Layering::Under("under");
+    }
+    #[cfg(target_os = "macos")]
+    if under::under(label) {
         return Layering::Under("under");
     }
     let _ = label;
@@ -183,6 +190,8 @@ fn given<T>(look: impl FnOnce(&mut Given) -> T) -> T {
 /// Where nothing is cut, only the corner.
 pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64, corner: f64) {
     if !CUTS {
+        #[cfg(target_os = "macos")]
+        under::cut(view, cut.as_ref());
         engine::round(view, corner);
         return;
     }
@@ -214,6 +223,8 @@ pub fn refit(view: &Webview, wide: u32, tall: u32, scale: f64) {
 /// A page closed: what shape it had is forgotten with it.
 pub fn uncut(label: &str) {
     given(|all| all.remove(label));
+    #[cfg(target_os = "macos")]
+    under::forget(label);
 }
 
 #[cfg(all(windows, not(feature = "cef")))]

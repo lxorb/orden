@@ -1,0 +1,53 @@
+name: web-under-mac
+
+# A web tab's page drawn under the app's own page on WKWebView, driven on the runner's
+# screen with the system's own input; see scripts/web-under-mac-drive.py (#1138).
+on:
+  push:
+    branches: ['tmp/ci-1138*']
+  workflow_dispatch:
+
+concurrency:
+  group: web-under-mac-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  drive:
+    runs-on: macos-latest
+    timeout-minutes: 75
+    defaults:
+      run:
+        shell: bash
+    env:
+      IDENTIFIER: ch.emilvinu.nib.probe.under
+      ROLLING: 'true'
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: ./.github/actions/desktop-setup
+        with:
+          target: aarch64-apple-darwin
+
+      - name: The probe
+        run: |
+          source scripts/edge-profile.sh
+          config='{"identifier":"'"$IDENTIFIER"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
+          pnpm --filter @orden/desktop exec tauri build --target aarch64-apple-darwin --bundles app --config "$config"
+          app=$(ls -d apps/desktop/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/*.app | head -1)
+          echo "EXE=$PWD/$app/Contents/MacOS/$(ls "$app/Contents/MacOS" | head -1)" >>"$GITHUB_ENV"
+
+      - name: Driven
+        run: |
+          python3 -m venv "$RUNNER_TEMP/drive"
+          "$RUNNER_TEMP/drive/bin/pip" install --quiet pillow pyobjc-framework-Quartz pyobjc-framework-Cocoa pyobjc-framework-ApplicationServices
+          "$RUNNER_TEMP/drive/bin/python" scripts/web-under-mac-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out drive
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: web-under-mac
+          path: drive
+          retention-days: 5

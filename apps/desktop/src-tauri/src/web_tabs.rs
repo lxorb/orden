@@ -1261,6 +1261,9 @@ fn page_built(
         PhysicalSize::new(width, height),
     )
     .map_err(|error| format!("that page could not be opened: {error}"))?;
+    // Under the app's own page, where this build draws it there; see web_cut/under.rs.
+    #[cfg(target_os = "macos")]
+    crate::web_cut::under::lower(window, &view);
     crate::page_style::worn(&view);
     // In the app's scheme from the start, not the system's; see page_scheme.rs.
     crate::page_scheme::wear(&view);
@@ -2006,7 +2009,8 @@ fn say(
 /// told no hides the page under a layer, with its still picture, as it always has.
 /// `corner` is the corner of the card the page fills, in the window's own units, which
 /// the page's two bottom corners take (#1088); nothing for a square one. `opacity` is how
-/// much of a page drawn under the app shows, the hole's own (`web_visual.rs`).
+/// much of a page drawn under the app shows, the hole's own (`web_visual.rs`, and
+/// `web_cut/under.rs` on a Mac).
 #[tauri::command]
 #[allow(
     clippy::too_many_arguments,
@@ -2075,13 +2079,16 @@ pub fn web_place(
     // What of the page the app's own layers are over, cut out of it rather than the page
     // hidden; see web_cut.rs. Asked before the page is shown, so a page coming back under
     // a layer never draws a frame over it.
-    // Drawn under the app, its corner and how much of it shows; see web_visual.rs.
+    // Drawn under the app, its corner and how much of it shows; see web_visual.rs, and
+    // web_cut/under.rs on a Mac.
     #[cfg(all(windows, not(feature = "cef")))]
     if crate::web_visual::is_drawn_under(view.label()) {
         crate::web_visual::visual_corner(&view, corner.unwrap_or(0.0), scale);
         crate::web_visual::visual_opacity(&view, opacity.unwrap_or(1.0));
     }
-    #[cfg(not(all(windows, not(feature = "cef"))))]
+    #[cfg(target_os = "macos")]
+    crate::web_cut::under::opacity(&view, opacity.unwrap_or(1.0));
+    #[cfg(not(any(all(windows, not(feature = "cef")), target_os = "macos")))]
     let _ = opacity;
     if visible {
         let _doing = crate::stall::doing("web_place: cut");
