@@ -2187,6 +2187,7 @@ export const es: Dictionary = {
     'Enviar solicitudes a cualquier sitio, fuera de tus pestañas',
   'Read and change the clipboard': 'Leer y cambiar el portapapeles',
   'Ask you a question or tell you something': 'Hacerte una pregunta o decirte algo',
+  'Select, mark and fold in your notes': 'Seleccionar, marcar y plegar en tus notas',
   Paying: 'Pagar',
   'Sending messages': 'Enviar mensajes',
   'Publishing and sharing': 'Publicar y compartir',

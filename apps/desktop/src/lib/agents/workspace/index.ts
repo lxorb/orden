@@ -20,6 +20,7 @@ import { askReader } from './ask'
 import { bookmarks } from './bookmarks'
 import { type Call, done } from './call'
 import { readCanvas, editCanvas } from './canvas'
+import { noteEditor } from './editor'
 import { clipboard } from './clipboard'
 import { captureToNote } from './capture'
 import { draftMessage, listChats, postMessage, react, readChat, searchChats } from './chats'
@@ -102,6 +103,7 @@ const VERBS: Record<string, (call: Call) => AgentAnswer | Promise<AgentAnswer>> 
   type_terminal: typeTerminal,
   system_clipboard: clipboard,
   ask_reader: askReader,
+  note_editor: noteEditor,
   recently_deleted: recentlyDeleted,
   list_chats: listChats,
   read_chat: readChat,

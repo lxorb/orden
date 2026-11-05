@@ -499,6 +499,7 @@ the AI sidebar, with the chat attached, and the answer comes back as a draft (de
 | `run_command` | `id`, `path`? | one row of the palette's registry, as `orden commands run` does; never the rows only somebody at the keyboard may press (`byHand`: recording, the camera, dictation, signing out), and the rows that publish, share or change settings ask (9.3); a file dialog the row opens is answered by `path` under `files`' rules (8.14) |
 | `system_clipboard` | `op`: `read`, `write`; `text`? | the system clipboard's text, with `clipboard` (8.14) |
 | `ask_reader` | `kind`: `notice`, `choice`, `text`; `message`, `choices`?, `placeholder`?, `id`?, `wait_ms`? | a question in the agent's session in the Ask panel, with `ask` (8.14) |
+| `note_editor` | `tab`, `op`: `selection`, `select`, `mark`, `clear_marks`, `fold`, `unfold`, `reveal`; `selections`?, `marks`?, `line`? | a note's editor on screen, with `editor` (8.15) |
 | `attach_agent_log` | `note`, `session`? | this session's log, written into a note (9.5) |
 | `approval_status` | `id` | what the reader answered (9.3) |
 
@@ -1105,6 +1106,27 @@ change to the reader's screen keeps (`reader-view.ts`, #1070):
 Registering commands, views or status items is left out: an agent is a session, not code
 loaded into the window, so what it registered would outlive the agent that answers it.
 
+### 8.15 A note's editor
+
+`note_editor` is a note's editor as a VS Code extension's `TextEditor` (#1078), under its
+own scope, `editor`, on a note's tab shown in its pane - an editor exists only there.
+Places are a line from 1 and a character from 0, clamped to the note
+(`packages/editor/src/agent-hands.ts`).
+
+- `selection` reads every selection, the main one first, with its words; `select` sets
+  them, several carets where there are several. That moves the reader's caret, so it
+  needs `workspace.focus`, as `reveal` (a line brought to the top) does (#1070).
+- `mark` draws the agent's marks - a wavy underline with a message and a severity,
+  `error`, `warning` or `info`, as an extension's diagnostics are - in place of the ones
+  it had in the note, and `clear_marks` takes them away. They are the agent's alone, kept
+  for the note and drawn again in every editor that shows it, moved with the words as
+  the note is edited, and they go when the agent does: stopped, or connected no longer.
+  Nothing of them is written into the note.
+- `fold` and `unfold` a line's block, as its arrow does.
+
+The other kinds of note keep their own tools: `read_canvas` and `edit_canvas`, the pages
+tools, `read_pdf` and `pdf_highlights`, the tables' and the tasks'.
+
 ---
 
 ## 9. Safety and permissions
@@ -1122,7 +1144,7 @@ Each agent holds:
 
 | part | what it is | Emil's default |
 | --- | --- | --- |
-| scopes | `context`, `notes.read`, `notes.write`, `chats.read`, `chats.write`, `tree`, `workspace`, `workspace.focus`, `browser`, `browser.reader`, `browser.script`, `browser.network`, `browser.storage`, `settings`, `terminal`, `files`, `processes`, `network`, `clipboard`, `ask`, `agents` | all but `browser.script`, `browser.storage`, `settings` |
+| scopes | `context`, `notes.read`, `notes.write`, `chats.read`, `chats.write`, `tree`, `workspace`, `workspace.focus`, `browser`, `browser.reader`, `browser.script`, `browser.network`, `browser.storage`, `settings`, `terminal`, `files`, `processes`, `network`, `clipboard`, `ask`, `editor`, `agents` | all but `browser.script`, `browser.storage`, `settings` |
 | spaces | which spaces it may reach; another space's tabs and notes do not exist to it | every space |
 | sites | allow, deny, and "agent store only", by site (registrable domain, as `siteOf`) | none set |
 | mode | `unsupervised` or `confirm` | unsupervised |
@@ -1131,9 +1153,9 @@ Each agent holds:
 
 A third-party agent starts with `context` off, `browser.reader` off, both chats scopes off
 (a chat is other people's words), the terminal, helpers, files anywhere, programs,
-requests, the clipboard and questions off, and `confirm` mode. A grant kept from before
-#1078 has none of `files`, `processes`, `network`, `clipboard` or `ask` until the reader
-turns them on. A grant kept from before chats were
+requests, the clipboard, questions and the editor off, and `confirm` mode. A grant kept
+from before #1078 has none of `files`, `processes`, `network`, `clipboard`, `ask` or
+`editor` until the reader turns them on. A grant kept from before chats were
 is given `chats.read` and `chats.write` where it holds `notes.read` and `notes.write` and is
 the reader's own (it holds `context`); once the file has been written with them, a scope
 taken away stays away. "Always in this chat" is kept the way "Always on this site" is, under

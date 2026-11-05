@@ -2129,6 +2129,7 @@ export const ur: Dictionary = {
     'اپنے ٹیبز سے باہر کسی بھی سائٹ کو درخواستیں بھیجیں',
   'Read and change the clipboard': 'کلپ بورڈ پڑھیں اور بدلیں',
   'Ask you a question or tell you something': 'آپ سے سوال پوچھیں یا کچھ بتائیں',
+  'Select, mark and fold in your notes': 'اپنے نوٹس میں منتخب کریں، نشان لگائیں اور سمیٹیں',
   Paying: 'ادائیگی',
   'Sending messages': 'پیغامات بھیجنا',
   'Publishing and sharing': 'شائع کرنا اور شیئر کرنا',

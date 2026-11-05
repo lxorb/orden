@@ -2102,6 +2102,7 @@ export const am: Dictionary = {
   'Send requests to any site, outside your tabs': 'ከትሮችዎ ውጭ ወደ ማንኛውም ጣቢያ ጥያቄዎችን መላክ',
   'Read and change the clipboard': 'ቅንጥብ ሰሌዳን ማንበብና መቀየር',
   'Ask you a question or tell you something': 'ጥያቄ መጠየቅ ወይም አንድ ነገር መንገር',
+  'Select, mark and fold in your notes': 'በማስታወሻዎችዎ ውስጥ መምረጥ፣ ምልክት ማድረግና መሰብሰብ',
   Paying: 'መክፈል',
   'Sending messages': 'መልዕክቶችን መላክ',
   'Publishing and sharing': 'ማተም እና ማጋራት',

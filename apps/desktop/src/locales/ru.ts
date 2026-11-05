@@ -2216,6 +2216,7 @@ export const ru: Dictionary = {
     'Отправлять запросы на любой сайт вне ваших вкладок',
   'Read and change the clipboard': 'Читать и изменять буфер обмена',
   'Ask you a question or tell you something': 'Задавать вам вопросы или сообщать что-то',
+  'Select, mark and fold in your notes': 'Выделять, отмечать и сворачивать в ваших заметках',
   Paying: 'Оплата',
   'Sending messages': 'Отправка сообщений',
   'Publishing and sharing': 'Публикация и доступ',

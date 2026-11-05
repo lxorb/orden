@@ -23,6 +23,7 @@ export const GROUP_WORDS: Record<ScopeGroup, () => string> = {
   network: () => t('Web requests'),
   clipboard: () => t('Clipboard'),
   questions: () => t('Questions'),
+  editor: () => t('Editor'),
   helpers: () => t('Helpers'),
 }
 
@@ -47,6 +48,7 @@ export const SCOPE_WORDS: Record<Scope, () => string> = {
   network: () => t('Send requests to any site, outside your tabs'),
   clipboard: () => t('Read and change the clipboard'),
   ask: () => t('Ask you a question or tell you something'),
+  editor: () => t('Select, mark and fold in your notes'),
   agents: () => t('Start helpers on your AI accounts'),
 }
 

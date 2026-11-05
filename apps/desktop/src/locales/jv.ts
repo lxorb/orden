@@ -2116,6 +2116,7 @@ export const jv: Dictionary = {
     'Ngirim panjaluk menyang situs apa wae, ing njaba tab sampeyan',
   'Read and change the clipboard': 'Maca lan ngganti papan klip',
   'Ask you a question or tell you something': 'Takon utawa ngandhani sampeyan bab',
+  'Select, mark and fold in your notes': 'Milih, menehi tandha lan nglempit ing cathetan sampeyan',
   Paying: 'Mbayar',
   'Sending messages': 'Ngirim pesen',
   'Publishing and sharing': 'Nerbitake lan nuduhake',

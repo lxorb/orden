@@ -2135,6 +2135,7 @@ export const pa: Dictionary = {
     'ਆਪਣੀਆਂ ਟੈਬਾਂ ਤੋਂ ਬਾਹਰ ਕਿਸੇ ਵੀ ਸਾਈਟ ਨੂੰ ਬੇਨਤੀਆਂ ਭੇਜੋ',
   'Read and change the clipboard': 'ਕਲਿੱਪਬੋਰਡ ਪੜ੍ਹੋ ਅਤੇ ਬਦਲੋ',
   'Ask you a question or tell you something': 'ਤੁਹਾਨੂੰ ਸਵਾਲ ਪੁੱਛੋ ਜਾਂ ਕੁਝ ਦੱਸੋ',
+  'Select, mark and fold in your notes': 'ਆਪਣੇ ਨੋਟਾਂ ਵਿੱਚ ਚੁਣੋ, ਨਿਸ਼ਾਨ ਲਗਾਓ ਅਤੇ ਸਮੇਟੋ',
   Paying: 'ਭੁਗਤਾਨ',
   'Sending messages': 'ਸੁਨੇਹੇ ਭੇਜਣਾ',
   'Publishing and sharing': 'ਪ੍ਰਕਾਸ਼ਿਤ ਅਤੇ ਸਾਂਝਾ ਕਰਨਾ',

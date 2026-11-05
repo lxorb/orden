@@ -92,6 +92,7 @@ export const AGENT_WINDOW_VERBS: Readonly<Record<string, Scope | null>> = {
   type_terminal: 'terminal',
   system_clipboard: 'clipboard',
   ask_reader: 'ask',
+  note_editor: 'editor',
   recently_deleted: 'tree',
   list_chats: 'chats.read',
   read_chat: 'chats.read',
@@ -144,6 +145,7 @@ export type Scope =
   | 'network'
   | 'clipboard'
   | 'ask'
+  | 'editor'
 
 /** What a question is about (9.3), and the questions Orden asks for itself. */
 export type Category =

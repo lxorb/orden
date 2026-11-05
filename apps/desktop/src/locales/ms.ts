@@ -2125,6 +2125,7 @@ export const ms: Dictionary = {
     'Hantar permintaan ke mana-mana tapak, di luar tab anda',
   'Read and change the clipboard': 'Baca dan ubah papan keratan',
   'Ask you a question or tell you something': 'Tanya anda soalan atau beritahu anda sesuatu',
+  'Select, mark and fold in your notes': 'Pilih, tanda dan lipat dalam nota anda',
   Paying: 'Membayar',
   'Sending messages': 'Menghantar mesej',
   'Publishing and sharing': 'Menerbitkan dan berkongsi',

@@ -2161,6 +2161,7 @@ export const sw: Dictionary = {
     'Kutuma maombi kwa tovuti yoyote, nje ya vichupo vyako',
   'Read and change the clipboard': 'Kusoma na kubadilisha ubao klipu',
   'Ask you a question or tell you something': 'Kukuuliza swali au kukuambia jambo',
+  'Select, mark and fold in your notes': 'Kuchagua, kuweka alama na kukunja katika madokezo yako',
   Paying: 'Kulipa',
   'Sending messages': 'Kutuma ujumbe',
   'Publishing and sharing': 'Kuchapisha na kushiriki',

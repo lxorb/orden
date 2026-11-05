@@ -2142,6 +2142,7 @@ export const gsw: Dictionary = {
     'Aafrooge a jedi Websiite schicke, usserhalb vo dine Tabs',
   'Read and change the clipboard': 'D Zwüscheablaag läse und ändere',
   'Ask you a question or tell you something': 'Dir e Frag stelle oder dir öppis säge',
+  'Select, mark and fold in your notes': 'I dine Notize uswähle, markiere und zämeklappe',
   Paying: 'Zahle',
   'Sending messages': 'Nachrichte schicke',
   'Publishing and sharing': 'Veröffentliche und Teile',

@@ -2129,6 +2129,7 @@ export const bn: Dictionary = {
   'Send requests to any site, outside your tabs': 'আপনার ট্যাবের বাইরে যেকোনো সাইটে অনুরোধ পাঠানো',
   'Read and change the clipboard': 'ক্লিপবোর্ড পড়া ও বদলানো',
   'Ask you a question or tell you something': 'আপনাকে প্রশ্ন করা বা কিছু জানানো',
+  'Select, mark and fold in your notes': 'আপনার নোটে নির্বাচন, চিহ্নিত ও ভাঁজ করা',
   Paying: 'অর্থ প্রদান',
   'Sending messages': 'বার্তা পাঠানো',
   'Publishing and sharing': 'প্রকাশ ও শেয়ার করা',

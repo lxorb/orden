@@ -2209,6 +2209,7 @@ export const uk: Dictionary = {
     'Надсилати запити на будь-який сайт поза вашими вкладками',
   'Read and change the clipboard': 'Читати й змінювати буфер обміну',
   'Ask you a question or tell you something': 'Ставити вам запитання або щось повідомляти',
+  'Select, mark and fold in your notes': 'Виділяти, позначати й згортати у ваших нотатках',
   Paying: 'Оплата',
   'Sending messages': 'Надсилання повідомлень',
   'Publishing and sharing': 'Публікація й поширення',

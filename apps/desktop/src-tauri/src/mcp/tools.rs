@@ -484,7 +484,9 @@ mod tests {
     /// `system_clipboard` 238 and `ask_reader` 471 characters, each listed only to a grant
     /// holding its scope, and the words `workspace_tabs`, `run_command` and `read_setting`
     /// need for moving and arranging tabs, a dialog's path and every setting by its key,
-    /// from a table at 37 438.
+    /// from a table at 37 438. Raised to 39 600 the same day for a note's editor (#1078,
+    /// step 5): one tool, `note_editor`, 822 characters, listed only to a grant holding
+    /// editor, from a table at 38 677.
     #[test]
     fn the_table_stays_small() {
         let mut sizes = BTreeMap::new();
@@ -493,7 +495,7 @@ mod tests {
         }
         let total: usize = sizes.values().sum();
         assert!(
-            total < 38_800,
+            total < 39_600,
             "the tools are {total} characters: {sizes:?}"
         );
         for (name, size) in &sizes {

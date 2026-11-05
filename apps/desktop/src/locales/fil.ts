@@ -2175,6 +2175,7 @@ export const fil: Dictionary = {
     'Magpadala ng mga request sa anumang site, labas sa iyong mga tab',
   'Read and change the clipboard': 'Basahin at baguhin ang clipboard',
   'Ask you a question or tell you something': 'Magtanong sa iyo o may sabihin sa iyo',
+  'Select, mark and fold in your notes': 'Pumili, mamarkahan at magtiklop sa iyong mga tala',
   Paying: 'Pagbabayad',
   'Sending messages': 'Pagpapadala ng mensahe',
   'Publishing and sharing': 'Pag-publish at pagbabahagi',

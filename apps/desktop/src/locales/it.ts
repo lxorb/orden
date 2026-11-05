@@ -2194,6 +2194,7 @@ export const it: Dictionary = {
     'Inviare richieste a qualsiasi sito, fuori dalle tue schede',
   'Read and change the clipboard': 'Leggere e modificare gli appunti',
   'Ask you a question or tell you something': 'Farti una domanda o dirti qualcosa',
+  'Select, mark and fold in your notes': 'Selezionare, segnare e comprimere nelle tue note',
   Paying: 'Pagare',
   'Sending messages': 'Inviare messaggi',
   'Publishing and sharing': 'Pubblicare e condividere',

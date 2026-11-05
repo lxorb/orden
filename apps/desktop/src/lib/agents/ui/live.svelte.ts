@@ -102,12 +102,16 @@ export function started(source: Source = crate): Activity {
       untrack(() => void source.shell(system, words).catch(() => undefined))
     })
 
-    // What an agent asked the reader goes with it (#1078): it is the one being talked to
-    // only while it is connected and not stopped.
+    // What an agent asked the reader, and the marks it drew in notes, go with it (#1078):
+    // it is the one being talked to only while it is connected and not stopped.
     $effect(() => {
       // eslint-disable-next-line svelte/prefer-svelte-reactivity -- handed on at once, never drawn
       const here = new Set(activity.seen.connected.filter((one) => !activity.stopped(one)))
-      untrack(() => asking.keepOnly(here))
+      untrack(() => {
+        asking.keepOnly(here)
+        // The marks' module fetched only now, where there may be some.
+        void import('../workspace/editor').then(({ keepMarksOf }) => keepMarksOf(here))
+      })
     })
 
     // A client asking to become an agent: the bubble, for as long as it asks.

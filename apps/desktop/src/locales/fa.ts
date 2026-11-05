@@ -2133,6 +2133,7 @@ export const fa: Dictionary = {
     'ارسال درخواست به هر سایتی، بیرون از زبانه‌های شما',
   'Read and change the clipboard': 'خواندن و تغییر کلیپ‌بورد',
   'Ask you a question or tell you something': 'از شما سؤالی بپرسد یا چیزی بگوید',
+  'Select, mark and fold in your notes': 'انتخاب، علامت‌گذاری و جمع کردن در یادداشت‌های شما',
   Paying: 'پرداخت',
   'Sending messages': 'فرستادن پیام',
   'Publishing and sharing': 'انتشار و اشتراک‌گذاری',

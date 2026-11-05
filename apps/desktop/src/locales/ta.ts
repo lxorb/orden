@@ -2164,6 +2164,7 @@ export const ta: Dictionary = {
     'உங்கள் தாவல்களுக்கு வெளியே எந்தத் தளத்திற்கும் கோரிக்கைகளை அனுப்பு',
   'Read and change the clipboard': 'கிளிப்போர்டைப் படித்து மாற்று',
   'Ask you a question or tell you something': 'உங்களிடம் கேள்வி கேள் அல்லது ஏதாவது சொல்',
+  'Select, mark and fold in your notes': 'உங்கள் குறிப்புகளில் தேர்ந்தெடு, குறியிடு, மடி',
   Paying: 'பணம் செலுத்துதல்',
   'Sending messages': 'செய்திகளை அனுப்புதல்',
   'Publishing and sharing': 'வெளியிடுதல், பகிர்தல்',

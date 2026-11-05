@@ -88,6 +88,7 @@ const WORDS: Readonly<Record<string, string>> = {
   http: key('Web requests'),
   system_clipboard: key('Clipboard'),
   ask_reader: key('Questions'),
+  note_editor: key('Editor'),
   recently_deleted: WRITING,
   list_chats: READING,
   read_chat: READING,

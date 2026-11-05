@@ -2132,6 +2132,7 @@ export const ps: Dictionary = {
   'Send requests to any site, outside your tabs': 'ستاسو له ټبونو بهر هر سایټ ته غوښتنې لېږل',
   'Read and change the clipboard': 'کلیپ بورډ لوستل او بدلول',
   'Ask you a question or tell you something': 'تاسو ته پوښتنه کول یا څه ویل',
+  'Select, mark and fold in your notes': 'په خپلو یادښتونو کې ټاکل، نښه کول او قاتول',
   Paying: 'تادیه',
   'Sending messages': 'پیغامونه لېږل',
   'Publishing and sharing': 'خپرول او شریکول',

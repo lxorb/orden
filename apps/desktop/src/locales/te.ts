@@ -2142,6 +2142,7 @@ export const te: Dictionary = {
   'Send requests to any site, outside your tabs': 'మీ ట్యాబ్‌ల బయట ఏ సైట్‌కైనా అభ్యర్థనలు పంపండి',
   'Read and change the clipboard': 'క్లిప్‌బోర్డ్‌ను చదవండి, మార్చండి',
   'Ask you a question or tell you something': 'మిమ్మల్ని ప్రశ్న అడగండి లేదా ఏదైనా చెప్పండి',
+  'Select, mark and fold in your notes': 'మీ నోట్స్‌లో ఎంచుకోండి, గుర్తించండి, మడవండి',
   Paying: 'చెల్లింపు',
   'Sending messages': 'సందేశాలు పంపడం',
   'Publishing and sharing': 'ప్రచురించడం, షేర్ చేయడం',

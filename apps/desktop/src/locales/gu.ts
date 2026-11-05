@@ -2121,6 +2121,7 @@ export const gu: Dictionary = {
   'Send requests to any site, outside your tabs': 'તમારા ટૅબની બહાર કોઈપણ સાઇટ પર વિનંતીઓ મોકલો',
   'Read and change the clipboard': 'ક્લિપબોર્ડ વાંચો અને બદલો',
   'Ask you a question or tell you something': 'તમને પ્રશ્ન પૂછો અથવા કંઈક કહો',
+  'Select, mark and fold in your notes': 'તમારી નોંધોમાં પસંદ કરો, ચિહ્નિત કરો અને સંકેલો',
   Paying: 'ચુકવણી',
   'Sending messages': 'સંદેશા મોકલવા',
   'Publishing and sharing': 'પ્રકાશિત અને શેર કરવું',

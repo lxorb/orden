@@ -2197,6 +2197,7 @@ export const fr: Dictionary = {
     'Envoyer des requêtes à n’importe quel site, hors de vos onglets',
   'Read and change the clipboard': 'Lire et modifier le presse-papiers',
   'Ask you a question or tell you something': 'Vous poser une question ou vous dire quelque chose',
+  'Select, mark and fold in your notes': 'Sélectionner, marquer et replier dans vos notes',
   Paying: 'Payer',
   'Sending messages': 'Envoyer des messages',
   'Publishing and sharing': 'Publier et partager',

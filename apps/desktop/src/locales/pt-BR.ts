@@ -2171,6 +2171,7 @@ export const ptBR: Dictionary = {
     'Enviar requisições a qualquer site, fora das suas abas',
   'Read and change the clipboard': 'Ler e alterar a área de transferência',
   'Ask you a question or tell you something': 'Fazer uma pergunta ou dizer algo a você',
+  'Select, mark and fold in your notes': 'Selecionar, marcar e recolher nas suas notas',
   Paying: 'Pagar',
   'Sending messages': 'Enviar mensagens',
   'Publishing and sharing': 'Publicar e compartilhar',

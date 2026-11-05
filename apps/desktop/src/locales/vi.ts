@@ -2108,6 +2108,7 @@ export const vi: Dictionary = {
     'Gửi yêu cầu đến bất kỳ trang nào, bên ngoài các thẻ của bạn',
   'Read and change the clipboard': 'Đọc và thay đổi bộ nhớ tạm',
   'Ask you a question or tell you something': 'Hỏi bạn một câu hoặc báo bạn điều gì đó',
+  'Select, mark and fold in your notes': 'Chọn, đánh dấu và thu gọn trong ghi chú của bạn',
   Paying: 'Thanh toán',
   'Sending messages': 'Gửi tin nhắn',
   'Publishing and sharing': 'Xuất bản và chia sẻ',

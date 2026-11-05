@@ -2075,6 +2075,7 @@ export const zhHans: Dictionary = {
   'Send requests to any site, outside your tabs': '在你的标签页之外向任意网站发送请求',
   'Read and change the clipboard': '读取和更改剪贴板',
   'Ask you a question or tell you something': '向你提问或告诉你一些事',
+  'Select, mark and fold in your notes': '在你的笔记中选择、标记和折叠',
   Paying: '付款',
   'Sending messages': '发送消息',
   'Publishing and sharing': '发布与共享',

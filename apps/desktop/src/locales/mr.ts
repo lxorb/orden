@@ -2132,6 +2132,7 @@ export const mr: Dictionary = {
     'तुमच्या टॅबबाहेर कोणत्याही साइटला विनंत्या पाठवा',
   'Read and change the clipboard': 'क्लिपबोर्ड वाचा आणि बदला',
   'Ask you a question or tell you something': 'तुम्हाला प्रश्न विचारा किंवा काहीतरी सांगा',
+  'Select, mark and fold in your notes': 'तुमच्या नोंदींमध्ये निवडा, खूण करा आणि घडी करा',
   Paying: 'पैसे भरणे',
   'Sending messages': 'संदेश पाठवणे',
   'Publishing and sharing': 'प्रकाशित करणे आणि शेअर करणे',

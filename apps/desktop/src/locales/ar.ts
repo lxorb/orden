@@ -2244,6 +2244,7 @@ export const ar: Dictionary = {
   'Send requests to any site, outside your tabs': 'إرسال طلبات إلى أي موقع خارج علاماتك',
   'Read and change the clipboard': 'قراءة الحافظة وتغييرها',
   'Ask you a question or tell you something': 'طرح سؤال عليك أو إخبارك بشيء',
+  'Select, mark and fold in your notes': 'التحديد والتعليم والطي في ملاحظاتك',
   Paying: 'الدفع',
   'Sending messages': 'إرسال الرسائل',
   'Publishing and sharing': 'النشر والمشاركة',

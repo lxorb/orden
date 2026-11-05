@@ -2090,6 +2090,7 @@ export const th: Dictionary = {
   'Send requests to any site, outside your tabs': 'ส่งคำขอไปยังเว็บไซต์ใดก็ได้ นอกแท็บของคุณ',
   'Read and change the clipboard': 'อ่านและเปลี่ยนคลิปบอร์ด',
   'Ask you a question or tell you something': 'ถามคำถามหรือบอกบางอย่างกับคุณ',
+  'Select, mark and fold in your notes': 'เลือก ทำเครื่องหมาย และพับในโน้ตของคุณ',
   Paying: 'การชำระเงิน',
   'Sending messages': 'การส่งข้อความ',
   'Publishing and sharing': 'การเผยแพร่และแชร์',

@@ -2115,6 +2115,8 @@ export const my: Dictionary = {
     'သင့်တက်ဘ်များ အပြင်ဘက်မှ မည်သည့်ဆိုက်သို့မဆို တောင်းဆိုမှုများ ပို့ရန်',
   'Read and change the clipboard': 'ကလစ်ဘုတ်ကို ဖတ်ရန်နှင့် ပြောင်းရန်',
   'Ask you a question or tell you something': 'သင့်ကို မေးခွန်းမေးရန် သို့မဟုတ် တစ်ခုခု ပြောရန်',
+  'Select, mark and fold in your notes':
+    'သင့်မှတ်စုများတွင် ရွေးရန်၊ အမှတ်အသားပြုရန်နှင့် ခေါက်ရန်',
   Paying: 'ငွေပေးချေခြင်း',
   'Sending messages': 'မက်ဆေ့ချ် ပို့ခြင်း',
   'Publishing and sharing': 'ထုတ်ဝေခြင်းနှင့် မျှဝေခြင်း',
