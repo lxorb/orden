@@ -1300,8 +1300,12 @@ function holds(tail: string): boolean {
  *  398.
  *
  *  Raised on 2026-11-05, to 3,667,400, for #1146: every sidebar over the note stands on
- *  an opaque ground (App.svelte, Sidebar.svelte). Measured 3,667,161 in 398. */
-const BUDGET = 3_667_400
+ *  an opaque ground (App.svelte, Sidebar.svelte). Measured 3,667,161 in 398.
+ *
+ *  Raised on 2026-11-05, to 3,669,800, for #1137: how a page is layered with the window's
+ *  HTML, `'under'` among them, said by the crate with every placement (`layering` in
+ *  web-tab/pages.svelte.ts). Measured 3,669,495 in 398. */
+const BUDGET = 3_669_800
 const MOST_FILES = 399
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

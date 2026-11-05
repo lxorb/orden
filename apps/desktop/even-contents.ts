@@ -631,11 +631,14 @@ export function partOf(file: string, catalogue: boolean): Part {
  *
  *  Raised on 2026-11-05 for #1146: every sidebar over the note stands on an opaque ground
  *  (App.svelte, Sidebar.svelte): the styles to 291,400, measured 291,179.
+ *
+ *  Raised on 2026-11-05 for #1137, the grounds that leave a hole for a page drawn under the
+ *  window's HTML (web-tab/underlay.ts): the styles to 291,700, measured 291,441.
  */
 export const BUDGETS: Record<Part, number> = {
   code: 6_127_800,
   catalogues: 1_010_800,
-  styles: 291_400,
+  styles: 291_700,
   fonts: 260_000,
   pages: 40_000,
 }
