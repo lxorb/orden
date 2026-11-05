@@ -551,9 +551,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  once, a space carried by its name, the tab in front riding on its window, the zoom
  *  eased in time and the bar quiet while it is up (overview/pack.ts,
  *  overview/Overview.svelte). Measured 5,928,010 and 292,112.
+ *
+ *  The code raised on 2026-11-05, to 5,932,100, for #1068: the browser's rows can be
+ *  mounted at a folder, every table asked by path (`mountRows` in web/store.ts).
+ *  Measured 5,931,783.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_928_600,
+  code: 5_932_100,
   catalogues: 977_400,
   styles: 292_200,
   fonts: 260_000,
