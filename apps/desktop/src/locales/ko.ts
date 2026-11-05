@@ -2325,7 +2325,10 @@ export const ko: Dictionary = {
   'Running on {device}': '{device}에서 실행 중',
   'Starting on {device}…': '{device}에서 시작하는 중…',
   'Not running on {device}': '{device}에서 실행되고 있지 않음',
-  'Its picture is not shown here yet.': '화면은 아직 여기에 표시되지 않습니다.',
+  'The picture cannot reach this device.': '화면이 이 기기에 닿지 못합니다.',
+  '{device} needs ffmpeg to send its picture.': '화면을 보내려면 {device}에 ffmpeg가 필요합니다.',
+  'The picture could not be sent.': '화면을 보내지 못했습니다.',
+  'This device cannot show the picture.': '이 기기는 화면을 표시할 수 없습니다.',
   'None of your devices can run an application yet':
     '아직 애플리케이션을 실행할 수 있는 기기가 없습니다',
   'Where does it run?': '어디에서 실행하나요?',

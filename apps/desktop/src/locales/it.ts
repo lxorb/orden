@@ -2428,7 +2428,12 @@ export const it: Dictionary = {
   'Running on {device}': 'In esecuzione su {device}',
   'Starting on {device}…': 'Avvio su {device}…',
   'Not running on {device}': 'Non in esecuzione su {device}',
-  'Its picture is not shown here yet.': 'La sua immagine qui non è ancora mostrata.',
+  'The picture cannot reach this device.':
+    'L’immagine non riesce a raggiungere questo dispositivo.',
+  '{device} needs ffmpeg to send its picture.':
+    '{device} ha bisogno di ffmpeg per inviare la sua immagine.',
+  'The picture could not be sent.': 'Non è stato possibile inviare l’immagine.',
+  'This device cannot show the picture.': 'Questo dispositivo non può mostrare l’immagine.',
   'None of your devices can run an application yet':
     'Nessuno dei tuoi dispositivi può ancora eseguire un’applicazione',
   'Where does it run?': 'Dove viene eseguita?',

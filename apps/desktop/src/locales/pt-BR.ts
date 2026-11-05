@@ -2405,7 +2405,11 @@ export const ptBR: Dictionary = {
   'Running on {device}': 'Executando em {device}',
   'Starting on {device}…': 'Iniciando em {device}…',
   'Not running on {device}': 'Não está executando em {device}',
-  'Its picture is not shown here yet.': 'A imagem dele ainda não aparece aqui.',
+  'The picture cannot reach this device.': 'A imagem não consegue chegar a este dispositivo.',
+  '{device} needs ffmpeg to send its picture.':
+    '{device} precisa do ffmpeg para enviar sua imagem.',
+  'The picture could not be sent.': 'Não foi possível enviar a imagem.',
+  'This device cannot show the picture.': 'Este dispositivo não consegue mostrar a imagem.',
   'None of your devices can run an application yet':
     'Nenhum dos seus dispositivos consegue executar um aplicativo ainda',
   'Where does it run?': 'Onde ele roda?',

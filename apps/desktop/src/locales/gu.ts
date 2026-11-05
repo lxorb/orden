@@ -2353,7 +2353,10 @@ export const gu: Dictionary = {
   'Running on {device}': '{device} પર ચાલે છે',
   'Starting on {device}…': '{device} પર શરૂ થઈ રહી છે…',
   'Not running on {device}': '{device} પર ચાલતી નથી',
-  'Its picture is not shown here yet.': 'તેનું ચિત્ર હજુ અહીં બતાવાતું નથી.',
+  'The picture cannot reach this device.': 'ચિત્ર આ ઉપકરણ સુધી પહોંચી શકતું નથી.',
+  '{device} needs ffmpeg to send its picture.': 'ચિત્ર મોકલવા માટે {device}ને ffmpeg જોઈએ.',
+  'The picture could not be sent.': 'ચિત્ર મોકલી શકાયું નહીં.',
+  'This device cannot show the picture.': 'આ ઉપકરણ ચિત્ર બતાવી શકતું નથી.',
   'None of your devices can run an application yet':
     'તમારું કોઈ ઉપકરણ હજુ એપ્લિકેશન ચલાવી શકતું નથી',
   'Where does it run?': 'તે ક્યાં ચાલે?',

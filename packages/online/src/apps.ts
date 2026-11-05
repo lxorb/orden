@@ -357,3 +357,103 @@ export function catalogueOf(value: unknown): Installed[] | null {
 /** Where a host's catalogue is kept on the account: `PUT` by the host for itself, `GET`
  *  by any of the reader's devices for a host by its id. */
 export const CATALOGUE_PATH = '/v2/apps/catalogue'
+
+// ---------------------------------------------------------------------------
+// The picture's signalling (step 4)
+
+/** Why a host has no picture to offer: ffmpeg is not installed there, the offer was not
+ *  one it could answer, it has no address to be reached on, or the application is not
+ *  running. */
+export type NoPicture = 'encoder' | 'offer' | 'network' | 'stopped'
+
+const NO_PICTURE: readonly NoPicture[] = ['encoder', 'offer', 'network', 'stopped']
+
+/** A candidate as the viewer's engine gives it, `RTCIceCandidate.toJSON()`. */
+export interface CandidateLine {
+  candidate: string
+  sdpMid?: string | null
+  sdpMLineIndex?: number | null
+}
+
+/** What the holder says to the host, as `data` of a `signal` frame: its offer (a
+ *  receive-only video and the data channel), one of its candidates, or that it is done
+ *  with the picture. */
+export type ToHost = { offer: string } | { candidate: CandidateLine } | { bye: true }
+
+/** A message to the host as the `signal` frame's `data`. */
+export function toHostText(said: ToHost): string {
+  return JSON.stringify(said)
+}
+
+/** What the host says back: its answer, with every candidate of its own in it, or why
+ *  there is no picture - null for a reason this side does not know yet. */
+export type FromHost = { answer: string } | { cannot: NoPicture | null }
+
+/** The host's message, read off a `signal` frame's `data`; null for one that does not
+ *  check, which is dropped as a frame is. */
+export function fromHostOf(data: string): FromHost | null {
+  const value = parsed(data)
+  if (!isRecord(value)) return null
+  if (typeof value.answer === 'string') return { answer: value.answer }
+  if (typeof value.cannot === 'string')
+    return { cannot: NO_PICTURE.find((one) => one === value.cannot) ?? null }
+  return null
+}
+
+/** One thing the holder does to the application, as its tab sends it over the
+ *  picture's data channel, `input` (the host's `apps_host/input.rs` plays it into the
+ *  application's display): the pointer at a point of the display in its own pixels, a
+ *  button (a `PointerEvent`'s `button`) pressed or let go, the wheel turned by clicks
+ *  (down and right positive), and a key pressed or let go, by the character it gave or
+ *  its name (`KeyboardEvent.key`) and the key it was (`KeyboardEvent.code`). */
+export type InputEvent =
+  | { t: 'move'; x: number; y: number }
+  | { t: 'button'; button: number; down: boolean }
+  | { t: 'wheel'; x: number; y: number }
+  | { t: 'key'; key: string; code: string; down: boolean }
+
+/** An input event as the channel's message. */
+export function inputText(event: InputEvent): string {
+  return JSON.stringify(event)
+}
+
+// ---------------------------------------------------------------------------
+// The servers a viewer's connection is offered (step 4)
+
+/** Where the account hands a viewer the servers its connection may use: STUN, and TURN
+ *  with short-lived credentials where the service has them. */
+export const ICE_PATH = '/v2/apps/ice'
+
+/** One server, as `RTCIceServer` takes it. */
+export interface IceServer {
+  urls: string[]
+  username?: string
+  credential?: string
+}
+
+/** What a viewer uses when the account says nothing, as an older one does: Cloudflare's
+ *  STUN, which needs no account. */
+export const FALLBACK_ICE: readonly IceServer[] = [{ urls: ['stun:stun.cloudflare.com:3478'] }]
+
+const ICE_URL = /^(stun|stuns|turn|turns):[^\s]{1,250}$/
+
+/** The servers that check, at most eight of them: `urls` a STUN or TURN address or a
+ *  list of them, and a TURN server's username and credential as text. A list or a
+ *  single server is read, as Cloudflare answers either. */
+export function iceServersOf(value: unknown): IceServer[] {
+  const list = Array.isArray(value) ? value : isRecord(value) ? [value] : []
+  const servers: IceServer[] = []
+  for (const one of list.slice(0, 8)) {
+    if (!isRecord(one)) continue
+    const raw = Array.isArray(one.urls) ? one.urls : [one.urls]
+    const urls = raw.filter((url): url is string => typeof url === 'string' && ICE_URL.test(url))
+    if (urls.length === 0) continue
+    const { username, credential } = one
+    servers.push({
+      urls: urls.slice(0, 8),
+      ...(typeof username === 'string' && username.length <= 512 ? { username } : {}),
+      ...(typeof credential === 'string' && credential.length <= 512 ? { credential } : {}),
+    })
+  }
+  return servers
+}

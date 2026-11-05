@@ -2444,7 +2444,11 @@ export const uk: Dictionary = {
   'Running on {device}': 'Працює на {device}',
   'Starting on {device}…': 'Запускається на {device}…',
   'Not running on {device}': 'Не працює на {device}',
-  'Its picture is not shown here yet.': 'Її зображення тут ще не показується.',
+  'The picture cannot reach this device.': 'Зображення не може дістатися до цього пристрою.',
+  '{device} needs ffmpeg to send its picture.':
+    '{device} потрібен ffmpeg, щоб надсилати зображення.',
+  'The picture could not be sent.': 'Не вдалося надіслати зображення.',
+  'This device cannot show the picture.': 'Цей пристрій не може показати зображення.',
   'None of your devices can run an application yet':
     'Жоден із ваших пристроїв поки не може запускати програми',
   'Where does it run?': 'Де вона працює?',

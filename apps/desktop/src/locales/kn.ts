@@ -2383,7 +2383,10 @@ export const kn: Dictionary = {
   'Running on {device}': '{device} ನಲ್ಲಿ ಚಾಲನೆಯಲ್ಲಿದೆ',
   'Starting on {device}…': '{device} ನಲ್ಲಿ ಪ್ರಾರಂಭವಾಗುತ್ತಿದೆ…',
   'Not running on {device}': '{device} ನಲ್ಲಿ ಚಾಲನೆಯಲ್ಲಿಲ್ಲ',
-  'Its picture is not shown here yet.': 'ಇದರ ಚಿತ್ರ ಇನ್ನೂ ಇಲ್ಲಿ ತೋರಿಸಲಾಗಿಲ್ಲ.',
+  'The picture cannot reach this device.': 'ಚಿತ್ರವು ಈ ಸಾಧನವನ್ನು ತಲುಪಲು ಸಾಧ್ಯವಿಲ್ಲ.',
+  '{device} needs ffmpeg to send its picture.': 'ಚಿತ್ರವನ್ನು ಕಳುಹಿಸಲು {device}ಗೆ ffmpeg ಬೇಕು.',
+  'The picture could not be sent.': 'ಚಿತ್ರವನ್ನು ಕಳುಹಿಸಲಾಗಲಿಲ್ಲ.',
+  'This device cannot show the picture.': 'ಈ ಸಾಧನವು ಚಿತ್ರವನ್ನು ತೋರಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.',
   'None of your devices can run an application yet':
     'ನಿಮ್ಮ ಯಾವುದೇ ಸಾಧನ ಇನ್ನೂ ಅಪ್ಲಿಕೇಶನ್ ಚಲಾಯಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ',
   'Where does it run?': 'ಇದು ಎಲ್ಲಿ ಚಲಿಸುತ್ತದೆ?',

@@ -2451,7 +2451,11 @@ export const ru: Dictionary = {
   'Running on {device}': 'Работает на {device}',
   'Starting on {device}…': 'Запускается на {device}…',
   'Not running on {device}': 'Не работает на {device}',
-  'Its picture is not shown here yet.': 'Его изображение здесь пока не показывается.',
+  'The picture cannot reach this device.': 'Изображение не может дойти до этого устройства.',
+  '{device} needs ffmpeg to send its picture.':
+    '{device} нужен ffmpeg, чтобы отправлять изображение.',
+  'The picture could not be sent.': 'Не удалось отправить изображение.',
+  'This device cannot show the picture.': 'Это устройство не может показать изображение.',
   'None of your devices can run an application yet':
     'Ни одно из ваших устройств пока не может запускать приложения',
   'Where does it run?': 'Где оно работает?',

@@ -61,7 +61,7 @@ import { type Left, pastesItself, promptEnd, reporting, tidied } from './modes'
 import { Front, terminalName } from './naming'
 import { AddressLinks, chosenText } from './links'
 import { asksFirst, imageIn, imageKindAt, linesIn, pasted, spokenPath } from './paste'
-import { setPty } from './running'
+import { setLive, setPty } from './running'
 import { clipboardWrite, type Notice, osc777Notice, osc9Notice } from './signals'
 import { shellName, shells, SIZES } from './shells.svelte'
 import { type Machine, PtySource, type Said, type Source } from './source'
@@ -372,6 +372,11 @@ class Session {
     // A rename, a folder the shell said, a host given another name or colour in
     // Settings: the name follows.
     this.unwatch = $effect.root(() => {
+      // An online session on screen as it is now is a running shell to an agent (#1125).
+      $effect(() => {
+        const on = this.online && this.live
+        untrack(() => setLive(this.tab.id, on))
+      })
       $effect(() => {
         const spec = this.spec()
         const shell = this.tab.name
@@ -661,6 +666,80 @@ class Session {
     return { modes: this.term.modes, alternate: this.term.buffer.active.type === 'alternate' }
   }
 
+  /** For an agent's tools (#1125, docs/agent-native.md 8.9): what stands between an
+   *  agent and typing into this shell, or null where nothing does. An online terminal is
+   *  typed into through its own socket, under the rules somebody at this window keeps:
+   *  a session another device holds is never taken over, one whose machine's owner keeps
+   *  it to themselves is never typed in, and one not connected waits for its machine. */
+  agentBlocked(): { why: string; lasting: boolean } | null {
+    if (!this.online) {
+      return this.pty === null ? { why: 'its shell is not running', lasting: false } : null
+    }
+    const holder = this.arrival.holder
+    if (holder !== null) {
+      const by = holder.by || 'another device'
+      return {
+        why: `${by} holds this session: the reader takes it back with Take over`,
+        lasting: true,
+      }
+    }
+    if (this.arrival.failure !== null) return { why: this.arrival.failure, lasting: true }
+    if (this.offline || !this.live || this.relinking) {
+      return { why: 'it is not connected to its machine', lasting: false }
+    }
+    if (this.exited !== null) return { why: 'its shell ended', lasting: false }
+    if (!this.mayType) {
+      return { why: "its machine's owner keeps typing in it to themselves", lasting: true }
+    }
+    return null
+  }
+
+  /** Whether the screen an agent reads is the session as it is now, rather than the one
+   *  it had last, put back. */
+  get current(): boolean {
+    return this.online ? this.live : this.pty !== null
+  }
+
+  /** Whether another device holds this online session. */
+  get agentHeld(): boolean {
+    return this.arrival.holder !== null
+  }
+
+  /** Whether the shell ended, and Enter would start another. */
+  get ended(): boolean {
+    return this.exited !== null && !this.offline
+  }
+
+  /** What an agent typed, on its way to the shell as a person's keys go - but never as one
+   *  of the app's own keys, Reconnect, Take over, Try again or Resume, which are the
+   *  reader's to press. Answers why it could not go, or null. */
+  agentTyped(data: string): string | null {
+    const blocked = this.agentBlocked()
+    if (blocked !== null) return blocked.why
+    if (!this.online) {
+      this.typed(data, false)
+      return null
+    }
+    this.resumable = null
+    this.echo?.typed(data)
+    this.outgoing.push({ data, binary: false })
+    void this.send()
+    return null
+  }
+
+  /** A shell that ended started again, the way Enter starts one: a new shell in the same
+   *  session for an online terminal, the tab's shell for a local one. */
+  startAgain(): void {
+    if (this.exited === null || this.offline) return
+    if (this.online) {
+      this.exited = null
+      this.term.write('\r\n')
+      this.source?.again?.()
+      return
+    }
+    this.typed('\r', false)
+  }
+
   /** Out of the pane, and still running. */
   detach() {
     this.remember()
@@ -722,6 +801,7 @@ class Session {
     this.pty = null
     this.arrival.stop()
     setPty(this.tab.id, null)
+    setLive(this.tab.id, false)
     marks.delete(this.tab.id)
     clearTimeout(this.resting)
     this.watching.disconnect()

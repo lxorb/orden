@@ -1162,10 +1162,14 @@
   },
   {
     "name": "run_terminal",
-    "description": "Run a command in nib's terminal. A program not on your allowed list asks the reader first.",
+    "description": "Run a command in a shell of its own, or with tab in that terminal, online ones too. A program not on your allowed list asks the reader first.",
     "inputSchema": {
       "type": "object",
-      "properties": { "command": { "type": "string" }, "cwd": { "type": "string" } },
+      "properties": {
+        "command": { "type": "string" },
+        "cwd": { "type": "string" },
+        "tab": { "type": "string" }
+      },
       "required": ["command"]
     }
   },

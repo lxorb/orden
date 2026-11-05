@@ -19,7 +19,7 @@ import { documentOf } from '@orden/editor'
 import type { AgentAnswer } from '../../automation/caller'
 import { folderOf, nameOf, relativeTo, within } from '../../space-paths'
 import type { Section } from '../../settings.svelte'
-import { ptyOf } from '../../terminal/running'
+import { shellRunning } from '../../terminal/running'
 import { views } from '../../views.svelte'
 import { isWebAddress } from '../../web-tab/address'
 import { hostOf } from '../../web-tab/web-data'
@@ -95,7 +95,7 @@ function tabOf(tab: Tab) {
     ...(isDraft(tab.note) ? { unsaved: true } : {}),
     ...(workspace.previewTabId === tab.id ? { preview: true } : {}),
     ...(tab.note.shared !== null ? { shared: true } : {}),
-    ...(tab.kind === 'terminal' ? { running: ptyOf(tab.id) !== undefined } : {}),
+    ...(tab.kind === 'terminal' ? { running: shellRunning(tab.id) } : {}),
   }
 }
 

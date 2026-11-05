@@ -79,3 +79,55 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
   display of its own yet (step 8).
 - **Not yet**: a host serves the applications of the space it has open; a program that speaks
   only Wayland needs a headless compositor (weston), which comes with the capture in step 4.
+
+## The picture (step 4)
+
+- **The host sends it** (`apps_host/stream.rs`): the holder offers a receive-only video and a
+  data channel, and the host answers, peer to peer. The signalling is the relay's `signal`
+  frames, whose `data` is JSON: `{"offer": sdp}` and `{"candidate": {...}}` from the holder,
+  `{"bye": true}` when it is done; `{"answer": sdp}` with every host candidate in it, or
+  `{"cannot": "encoder" | "offer" | "network" | "stopped"}`, from the host. The window hands
+  them to the crate (`apps_signal`) and says its answer back; a new holder, or none, ends the
+  picture the last one had. No server change: the relay already passes `signal` between the
+  holder and the host only.
+- **`str0m`**, WebRTC with no threads or sockets of its own, its DTLS and SRTP in RustCrypto (its certificate made with aws-lc-rs, built from source):
+  one UDP socket for each address the host has (and the loopback), a thread for each, one for
+  its timers. It gathers nothing and has no TURN client; the host needs none, since the
+  viewer's engine does TURN.
+- **ffmpeg**, a program the host runs as it runs Xvfb: `x11grab` reads the display, libvpx
+  encodes VP8 in its realtime mode with no frame held back, and each frame is written to a
+  pipe as IVF the moment it is made. VP8 because every viewer's engine decodes it (Orden's
+  CEF has no H.264). It starts once the viewer is connected, so the first frame is a key
+  frame; another comes every two seconds. Not installed: the viewer is told `encoder`.
+- **The tab shows it** (`apps/desktop/src/lib/apps/picture.svelte.ts`): while this device holds
+  the application and it runs on a host that is there, the engine's own `RTCPeerConnection`
+  offers a receive-only video and the data channel `input`, trickles its candidates, and shows
+  the host's track in a `<video>` over the pane, with Restart and Stop at its corner. A
+  connection that fails, or is not answered within 20 seconds, is tried again after 4 while it
+  is wanted; a host that says why it has none is not asked again until the picture is wanted
+  afresh. The tab says the picture cannot reach this device, that the host needs ffmpeg, or
+  that this engine has no WebRTC. Another device taking it over ends the picture here, and the
+  host is told (`bye`).
+- **Input goes back** over the data channel (`apps/desktop/src/lib/apps/input.ts` in the tab,
+  `apps_host/input.rs` on the host): the pointer at a point of the display in its own pixels
+  (through the scale and the bands the picture is drawn with), buttons, the wheel in clicks (a
+  notch, or three lines, a click), and keys by the character they gave and the key they were.
+  The host plays them with XTEST into the application's Xvfb and nowhere else: a key on the
+  key of the display's keymap that gives its keysym with Shift as held, or on a spare key lent
+  it, so the holder's layout decides what is typed; what was pressed is what is let go, and
+  everything held is let go when the picture ends. `AltGraph` is not passed on, since the
+  character it chose is. Input methods, touch, pen and precise scrolling are step 5.
+- **Across networks**: the host asks Cloudflare's STUN, once for each of its sockets, what
+  address the internet sees it at (`apps_host/stun.rs`), and puts that in the answer beside its
+  own; the viewer asks the account for its servers, `GET /v2/apps/ice`
+  (`services/sync/src/apps/ice.ts`, behind the door's switch): Cloudflare's STUN, and TURN with
+  credentials that last a day where the Worker has a TURN key (the secrets `TURN_KEY_ID` and
+  `TURN_KEY_TOKEN`). Only the viewer relays; the host answers a relayed candidate from its own
+  address. An older account answers 404, and the viewer makes do with the STUN.
+- **Encoders** (`apps_host/encoder.rs`): each of ffmpeg's hardware encoders that could serve
+  (`h264_nvenc`, `h264_vaapi`, `h264_qsv`, `vp9_vaapi`, `vp9_qsv`, `vp8_vaapi`) is tried on one
+  frame of a test picture once, as the first application starts, and only those that make it
+  are kept. A viewer is sent the best kept one whose codec it decodes - hardware H.264 to
+  WebView2 and WKWebView, hardware VP9 or VP8 to Orden's CEF - and libvpx's VP8 otherwise. Each
+  holds nothing back (no B-frames, no look-ahead, its lowest-latency mode); H.264 goes out as
+  constrained baseline, cut into frames at the access unit delimiters ffmpeg is told to write.

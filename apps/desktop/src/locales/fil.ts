@@ -2405,7 +2405,11 @@ export const fil: Dictionary = {
   'Running on {device}': 'Tumatakbo sa {device}',
   'Starting on {device}…': 'Nagsisimula sa {device}…',
   'Not running on {device}': 'Hindi tumatakbo sa {device}',
-  'Its picture is not shown here yet.': 'Hindi pa ipinapakita rito ang larawan nito.',
+  'The picture cannot reach this device.': 'Hindi maabot ng larawan ang device na ito.',
+  '{device} needs ffmpeg to send its picture.':
+    'Kailangan ng {device} ang ffmpeg para maipadala ang larawan nito.',
+  'The picture could not be sent.': 'Hindi naipadala ang larawan.',
+  'This device cannot show the picture.': 'Hindi maipakita ng device na ito ang larawan.',
   'None of your devices can run an application yet':
     'Wala pa sa mga device mo ang makakapagpatakbo ng application',
   'Where does it run?': 'Saan ito tatakbo?',

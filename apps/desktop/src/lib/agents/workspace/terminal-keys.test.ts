@@ -3,7 +3,7 @@
  *  the lines a person reads. */
 
 import { describe, expect, test } from 'vitest'
-import { keyBytes, linesOf, type Row, typesFreely } from './terminal-keys'
+import { keyBytes, linesOf, type Row, shellOs, typesFreely } from './terminal-keys'
 
 describe('keys', () => {
   test('by name, the arrows as the program in front asked for them', () => {
@@ -41,6 +41,16 @@ describe('what goes without asking', () => {
     expect(typesFreely('git.sh status', true, [], programs, 'windows')).toBe(false)
     expect(typesFreely('git.exe status', true, [], programs, 'unix')).toBe(false)
     expect(typesFreely('GIT status', true, [], programs, 'unix')).toBe(false)
+  })
+
+  test("an online terminal keeps its Linux machine's rule, from a Windows computer too", () => {
+    expect(shellOs(true, 'windows')).toBe('unix')
+    expect(shellOs(false, 'windows')).toBe('windows')
+    expect(shellOs(false, 'linux')).toBe('unix')
+    const online = shellOs(true, 'windows')
+    expect(typesFreely('git.exe status', true, [], programs, online)).toBe(false)
+    expect(typesFreely('GIT status', true, [], programs, online)).toBe(false)
+    expect(typesFreely('git status', true, [], programs, online)).toBe(true)
   })
 
   test('nothing else: another program, a second command, no Enter, keys after it', () => {

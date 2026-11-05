@@ -39,6 +39,13 @@ export async function runTerminal(call: Call): Promise<AgentAnswer> {
   const command = need(call, 'command')
   if (/[\r\n]/.test(command)) throw new Refused('bad_arguments', 'one command line at a time')
 
+  // One of the reader's terminals, local or online, is typed into as `type_terminal`
+  // types (#1125): one way for every kind of terminal.
+  if (maybe(call, 'tab') !== null) {
+    const { runInTab } = await import('./terminal-tab')
+    return runInTab(call)
+  }
+
   const place = placeOf(call)
   const cwd = maybe(call, 'cwd')
   const folder = cwd === null ? place.space.root : onDisk(place, judged(cwd))

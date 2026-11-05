@@ -1,0 +1,870 @@
+//! The picture of an application this computer hosts, sent to the device holding it
+//! (issue 1063, step 4; docs/apps.md).
+//!
+//! **Signalling** comes through the window: the relay passes the holder's `signal`
+//! frames to it, and it hands their `data` here (`apps_signal`). The holder offers a
+//! receive-only video and a data channel, `{"offer": sdp}`, and trickles its candidates,
+//! `{"candidate": {"candidate": ...}}`; this answers with every candidate of its own
+//! already in the answer, or says why it cannot, `{"cannot": ...}`.
+//!
+//! **The connection** is `str0m`'s, a `WebRTC` library with no threads or clock of its
+//! own: one lock round it, fed by a thread for each socket and one for its timers, and
+//! written to by the encoder's. One socket for each address this computer has, since
+//! `str0m` has to be told which address a datagram came in on. It gathers nothing, so
+//! the addresses are found here, each also as the internet sees it (`stun.rs`), and it
+//! has no TURN client, which a host does not need: the viewer's engine does TURN, and a
+//! relayed candidate is answered from here.
+//!
+//! **The picture** is ffmpeg's: it reads the application's display (`x11grab`, over
+//! `XShm`), encodes it with nothing held back - on this computer's GPU where it can and
+//! the viewer decodes what that makes, else VP8 in libvpx's realtime mode, which every
+//! viewer decodes (`encoder.rs`) - and writes each frame to a pipe the moment it is
+//! made. A program the host runs, as Xvfb is, rather than a codec linked into every
+//! build. It starts once the viewer is connected, so the first frame is a key frame,
+//! and another comes every two seconds.
+//!
+//! **Input** comes back over the data channel and is played into the application's
+//! display, and only there (`input.rs`).
+
+use std::io::{self, Read};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
+use std::process::{Child, Command, Stdio};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
+use std::time::{Duration, Instant};
+
+use serde::Deserialize;
+use str0m::change::SdpOffer;
+use str0m::crypto::CryptoProvider;
+use str0m::format::Codec;
+use str0m::media::{MediaKind, MediaTime, Mid, Pt};
+use str0m::net::{Protocol, Receive};
+use str0m::{Candidate, Event, IceConnectionState, Input, Output, Rtc, RtcConfig};
+
+use super::encoder::{self, AccessUnits, Encoder, Made};
+use super::input::Input as HolderInput;
+use super::{stun, Screen};
+
+/// How long a viewer has to connect once it has the answer.
+const CONNECT_WITHIN: Duration = Duration::from_secs(30);
+/// The longest the timers wait between two looks, so an end is seen soon.
+const LONGEST_WAIT: Duration = Duration::from_millis(20);
+/// How long a socket waits for a datagram before it looks whether the peer ended.
+const LISTEN_FOR: Duration = Duration::from_millis(250);
+/// The largest frame read off the encoder: a key frame of a 16K screen fits.
+const LARGEST_FRAME: usize = 16 * 1024 * 1024;
+
+/// What the holder says, as `data` of its `signal` frames.
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum FromViewer {
+    /// Its offer: a receive-only video and the data channel.
+    Offer { offer: String },
+    /// One of its candidates, as its engine's `RTCIceCandidate` says it.
+    Candidate { candidate: ViewerCandidate },
+    /// It is done with the picture.
+    Bye {
+        #[allow(
+            dead_code,
+            reason = "the field is the frame's name and says nothing more"
+        )]
+        bye: bool,
+    },
+}
+
+/// A candidate as `RTCIceCandidate.toJSON()` gives it; only the line is read.
+#[derive(Debug, Deserialize)]
+pub struct ViewerCandidate {
+    pub candidate: String,
+}
+
+/// Why there is no picture to offer.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Cannot {
+    /// ffmpeg is not installed.
+    Encoder,
+    /// The offer is not one this can answer: no video, no codec this can encode, or not
+    /// SDP.
+    Offer,
+    /// This computer has no address to be reached on.
+    Network,
+}
+
+impl Cannot {
+    /// The word the viewer reads (`cannot` in `@orden/online/apps`).
+    pub fn word(self) -> &'static str {
+        match self {
+            Cannot::Encoder => "encoder",
+            Cannot::Offer => "offer",
+            Cannot::Network => "network",
+        }
+    }
+}
+
+/// The answer the viewer is sent, as `data` of a `signal` frame.
+pub fn answer_text(sdp: &str) -> String {
+    serde_json::json!({ "answer": sdp }).to_string()
+}
+
+/// Why it cannot, as `data` of a `signal` frame.
+pub fn cannot_text(why: &str) -> String {
+    serde_json::json!({ "cannot": why }).to_string()
+}
+
+/// One crypto provider for every connection: `RustCrypto`'s (`rust-crypto`), so no build
+/// links a system library for DTLS or SRTP.
+fn provider() -> Arc<CryptoProvider> {
+    static ONE: OnceLock<Arc<CryptoProvider>> = OnceLock::new();
+    ONE.get_or_init(|| Arc::new(str0m::crypto::from_feature_flags()))
+        .clone()
+}
+
+/// What the threads of one connection share.
+struct Shared {
+    rtc: Rtc,
+    /// The sockets, to send each datagram from the address `str0m` chose.
+    sockets: Vec<UdpSocket>,
+    /// The video's media, its payload type and the encoder that makes it, once the
+    /// answer has made them.
+    video: Option<(Mid, Pt, Encoder)>,
+    /// When the timers are next due.
+    next: Instant,
+    /// When the viewer connected, which is when the picture starts.
+    connected: Option<Instant>,
+    /// Whether the encoder is to be started: set once the viewer is connected and the
+    /// video's media is known, which `str0m` says only after the connection is made.
+    start_encoder: bool,
+    /// Whether it was.
+    encoding: bool,
+    /// The display, for the input played into it.
+    display: String,
+    /// The holder's input, played into the display: opened as the first arrives.
+    input: Option<HolderInput>,
+}
+
+/// One connection and what its threads read.
+struct Inner {
+    shared: Mutex<Shared>,
+    ended: AtomicBool,
+    screen: Screen,
+    began: Instant,
+}
+
+impl Inner {
+    fn lock(&self) -> MutexGuard<'_, Shared> {
+        self.shared
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+
+    fn over(&self) -> bool {
+        self.ended.load(Ordering::SeqCst)
+    }
+
+    fn end(&self) {
+        self.ended.store(true, Ordering::SeqCst);
+        self.lock().rtc.disconnect();
+    }
+}
+
+/// The picture of one application, sent to the device holding it. Dropped, it ends:
+/// its sockets close and the encoder is stopped.
+pub struct Peer {
+    inner: Arc<Inner>,
+}
+
+impl Peer {
+    /// Answers the holder's offer for the application on `screen`, and starts listening
+    /// for it: the peer, and the answer's SDP.
+    pub fn answer(screen: Screen, offer: &str) -> Result<(Peer, String), Cannot> {
+        if !super::installed::on_path("ffmpeg") {
+            return Err(Cannot::Encoder);
+        }
+        let offer = SdpOffer::from_sdp_string(offer).map_err(|_| Cannot::Offer)?;
+        let now = Instant::now();
+        // The codecs this computer's encoders make; which of them is sent is chosen once
+        // the offer says what the viewer decodes.
+        let working = encoder::working();
+        let makes = |made: Made| working.iter().any(|one| one.made == made);
+        let mut rtc = RtcConfig::new()
+            .clear_codecs()
+            .enable_vp8(true)
+            .enable_vp9(makes(Made::Vp9))
+            .enable_h264(makes(Made::H264))
+            .set_crypto_provider(provider())
+            .build(now);
+
+        let mut sockets = Vec::new();
+        for ip in addresses() {
+            let Ok(socket) = UdpSocket::bind(SocketAddr::new(ip, 0)) else {
+                continue;
+            };
+            let Ok(local) = socket.local_addr() else {
+                continue;
+            };
+            let Ok(candidate) = Candidate::host(local, "udp") else {
+                continue;
+            };
+            let _ = rtc.add_local_candidate(candidate);
+            sockets.push(socket);
+        }
+        if sockets.is_empty() {
+            return Err(Cannot::Network);
+        }
+        // And each address as the internet sees it, asked for all at once, for a viewer
+        // outside this network.
+        let seen: Vec<(SocketAddr, SocketAddr)> = std::thread::scope(|scope| {
+            let asking: Vec<_> = sockets
+                .iter()
+                .filter_map(|socket| socket.local_addr().ok().map(|local| (socket, local)))
+                .filter(|(_, local)| !local.ip().is_loopback())
+                .map(|(socket, local)| {
+                    scope.spawn(move || Some((stun::reflexive(socket, stun::SERVER)?, local)))
+                })
+                .collect();
+            asking
+                .into_iter()
+                .filter_map(|one| one.join().ok().flatten())
+                .collect()
+        });
+        for (outside, local) in seen {
+            if let Ok(candidate) = Candidate::server_reflexive(outside, local, "udp") {
+                let _ = rtc.add_local_candidate(candidate);
+            }
+        }
+        let answer = rtc
+            .sdp_api()
+            .accept_offer(offer)
+            .map_err(|_| Cannot::Offer)?
+            .to_sdp_string();
+        if !answers_video(&answer) {
+            return Err(Cannot::Offer);
+        }
+
+        let listening: Vec<UdpSocket> = sockets
+            .iter()
+            .filter_map(|socket| socket.try_clone().ok())
+            .collect();
+        let inner = Arc::new(Inner {
+            shared: Mutex::new(Shared {
+                rtc,
+                sockets,
+                video: None,
+                next: now,
+                connected: None,
+                start_encoder: false,
+                encoding: false,
+                display: screen.display.clone(),
+                input: None,
+            }),
+            ended: AtomicBool::new(false),
+            screen,
+            began: now,
+        });
+        for socket in listening {
+            let inner = inner.clone();
+            std::thread::spawn(move || listen(&inner, &socket));
+        }
+        let timers = inner.clone();
+        std::thread::spawn(move || keep_time(&timers));
+        Ok((Peer { inner }, answer))
+    }
+
+    /// One of the viewer's candidates. A line that does not read - an address hidden
+    /// behind an `mDNS` name, as Chromium hides its own - is let go: the viewer's checks
+    /// reach this end anyway, and its address is learnt from them.
+    pub fn candidate(&self, line: &str) {
+        let line = line.trim();
+        if line.is_empty() {
+            return;
+        }
+        let Ok(candidate) = Candidate::from_sdp_string(line) else {
+            return;
+        };
+        let mut shared = self.inner.lock();
+        shared.rtc.add_remote_candidate(candidate);
+        drive(&mut shared);
+    }
+
+    /// Whether it has ended: the viewer went, or never came.
+    #[cfg(test)]
+    pub fn ended(&self) -> bool {
+        self.inner.over()
+    }
+}
+
+impl Drop for Peer {
+    fn drop(&mut self) {
+        self.inner.end();
+    }
+}
+
+/// Every address this computer could be reached on, found by asking the system which
+/// of its addresses it would send from towards the internet, the private ranges and
+/// Tailscale's, without a datagram sent; and the loopback, for a viewer on this same
+/// computer.
+fn addresses() -> Vec<IpAddr> {
+    const TOWARDS: [&str; 6] = [
+        "8.8.8.8:9",
+        "10.255.255.254:9",
+        "172.31.255.254:9",
+        "192.168.255.254:9",
+        "100.127.255.254:9",
+        "[2001:4860:4860::8888]:9",
+    ];
+    let mut found: Vec<IpAddr> = Vec::new();
+    for towards in TOWARDS {
+        let Ok(towards) = towards.parse::<SocketAddr>() else {
+            continue;
+        };
+        let from: SocketAddr = if towards.is_ipv4() {
+            (Ipv4Addr::UNSPECIFIED, 0).into()
+        } else {
+            (std::net::Ipv6Addr::UNSPECIFIED, 0).into()
+        };
+        let Ok(socket) = UdpSocket::bind(from) else {
+            continue;
+        };
+        if socket.connect(towards).is_err() {
+            continue;
+        }
+        let Ok(local) = socket.local_addr() else {
+            continue;
+        };
+        let ip = local.ip();
+        if usable_address(ip) && !found.contains(&ip) {
+            found.push(ip);
+        }
+    }
+    found.push(IpAddr::V4(Ipv4Addr::LOCALHOST));
+    found
+}
+
+/// An address a host candidate may name: not unspecified, not the loopback (added on its
+/// own), and not an IPv6 link-local one, which needs a scope a candidate cannot carry.
+fn usable_address(ip: IpAddr) -> bool {
+    if ip.is_unspecified() || ip.is_loopback() {
+        return false;
+    }
+    match ip {
+        IpAddr::V4(_) => true,
+        IpAddr::V6(v6) => (v6.segments()[0] & 0xffc0) != 0xfe80,
+    }
+}
+
+/// Drains what `str0m` has to say: datagrams sent, events heard, and when it is next
+/// due. Answers whether the connection goes on.
+fn drive(shared: &mut Shared) -> bool {
+    loop {
+        match shared.rtc.poll_output() {
+            Ok(Output::Timeout(at)) => {
+                shared.next = at;
+                return shared.rtc.is_alive();
+            }
+            Ok(Output::Transmit(datagram)) => {
+                let socket = shared
+                    .sockets
+                    .iter()
+                    .find(|one| one.local_addr().ok() == Some(datagram.source))
+                    .or_else(|| shared.sockets.first());
+                if let Some(socket) = socket {
+                    let _ = socket.send_to(&datagram.contents, datagram.destination);
+                }
+            }
+            Ok(Output::Event(event)) => {
+                if !heard(shared, event) {
+                    shared.rtc.disconnect();
+                    return false;
+                }
+            }
+            Err(_) => {
+                shared.rtc.disconnect();
+                return false;
+            }
+        }
+    }
+}
+
+/// One event of the connection; answers whether it goes on.
+fn heard(shared: &mut Shared, event: Event) -> bool {
+    match event {
+        Event::MediaAdded(added) if added.kind == MediaKind::Video => {
+            let offered: Vec<(Made, Pt)> = shared
+                .rtc
+                .writer(added.mid)
+                .map(|writer| {
+                    writer
+                        .payload_params()
+                        .filter_map(|params| Some((made_of(params.spec().codec)?, params.pt())))
+                        .collect()
+                })
+                .unwrap_or_default();
+            let decodes: Vec<Made> = offered.iter().map(|&(made, _)| made).collect();
+            let chosen = encoder::chosen(encoder::working(), &decodes);
+            let pt = chosen.and_then(|one| {
+                offered
+                    .iter()
+                    .find(|&&(made, _)| made == one.made)
+                    .map(|&(_, pt)| pt)
+            });
+            if let (Some(chosen), Some(pt)) = (chosen, pt) {
+                shared.video = Some((added.mid, pt, chosen));
+            }
+            due(shared);
+            true
+        }
+        Event::Connected => {
+            if shared.connected.is_none() {
+                shared.connected = Some(Instant::now());
+            }
+            due(shared);
+            true
+        }
+        Event::IceConnectionStateChange(IceConnectionState::Disconnected) => false,
+        Event::ChannelData(data) => {
+            if shared.input.is_none() {
+                shared.input = HolderInput::open(&shared.display).ok();
+            }
+            if let Some(input) = shared.input.as_mut() {
+                input.play(&data.data);
+            }
+            true
+        }
+        _ => true,
+    }
+}
+
+/// The encoder is due once the viewer is connected and the video known, and only once.
+fn due(shared: &mut Shared) {
+    if shared.connected.is_some() && shared.video.is_some() && !shared.encoding {
+        shared.encoding = true;
+        shared.start_encoder = true;
+    }
+}
+
+/// The codecs, as an `rtpmap` names them, that this can encode.
+const ENCODED: [&str; 3] = ["VP8/", "VP9/", "H264/"];
+
+/// Whether an answer sends a video, in a codec this can encode: a `m=video` section that
+/// is not refused (port 0) and maps a payload type to VP8, VP9 or H.264.
+fn answers_video(sdp: &str) -> bool {
+    let mut in_video = false;
+    for line in sdp.lines() {
+        if let Some(media) = line.strip_prefix("m=") {
+            if in_video {
+                return false;
+            }
+            in_video = media.starts_with("video ") && !media.starts_with("video 0 ");
+        } else if in_video && line.starts_with("a=rtpmap:") {
+            let codec = line.split_whitespace().nth(1).unwrap_or_default();
+            if ENCODED.iter().any(|one| codec.starts_with(one)) {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+/// The codec an encoder here makes, for a codec the viewer negotiated.
+fn made_of(codec: Codec) -> Option<Made> {
+    match codec {
+        Codec::Vp8 => Some(Made::Vp8),
+        Codec::Vp9 => Some(Made::Vp9),
+        Codec::H264 => Some(Made::H264),
+        _ => None,
+    }
+}
+
+/// After a turn of the connection: the encoder started once it is due.
+fn after(inner: &Arc<Inner>, shared: &mut Shared) {
+    if std::mem::take(&mut shared.start_encoder) {
+        let encoding = inner.clone();
+        std::thread::spawn(move || encode(&encoding));
+    }
+}
+
+/// One socket's datagrams, handed to the connection until it ends.
+fn listen(inner: &Arc<Inner>, socket: &UdpSocket) {
+    let Ok(local) = socket.local_addr() else {
+        return;
+    };
+    let _ = socket.set_read_timeout(Some(LISTEN_FOR));
+    let mut buffer = vec![0_u8; 2000];
+    while !inner.over() {
+        let Ok((length, from)) = socket.recv_from(&mut buffer) else {
+            continue;
+        };
+        let Ok(datagram) = Receive::new(Protocol::Udp, from, local, &buffer[..length]) else {
+            continue;
+        };
+        let mut shared = inner.lock();
+        let input = Input::Receive(Instant::now(), datagram);
+        // A datagram it cannot take, which anybody may send, is no reason to end.
+        let _ = shared.rtc.handle_input(input);
+        let goes_on = drive(&mut shared);
+        after(inner, &mut shared);
+        drop(shared);
+        if !goes_on {
+            inner.end();
+        }
+    }
+}
+
+/// The connection's timers, and its end: the viewer gone, or never connected.
+fn keep_time(inner: &Arc<Inner>) {
+    while !inner.over() {
+        let now = Instant::now();
+        let mut shared = inner.lock();
+        let mut goes_on = shared.rtc.is_alive();
+        if goes_on && now >= shared.next {
+            goes_on = shared.rtc.handle_input(Input::Timeout(now)).is_ok() && drive(&mut shared);
+            after(inner, &mut shared);
+        }
+        if shared.connected.is_none() && now.duration_since(inner.began) > CONNECT_WITHIN {
+            goes_on = false;
+        }
+        let wait = shared.next.saturating_duration_since(now);
+        drop(shared);
+        if !goes_on {
+            inner.end();
+            return;
+        }
+        std::thread::sleep(wait.clamp(Duration::from_millis(1), LONGEST_WAIT));
+    }
+}
+
+/// The encoder for one connection: frames read off ffmpeg and written to the video
+/// until the connection ends or ffmpeg does.
+fn encode(inner: &Arc<Inner>) {
+    let Some((_, _, chosen)) = inner.lock().video else {
+        inner.end();
+        return;
+    };
+    let Ok(mut child) = Command::new("ffmpeg")
+        .args(encoder::encoder_args(chosen, &inner.screen))
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+    else {
+        inner.end();
+        return;
+    };
+    if let Some(mut frames) = child.stdout.take() {
+        match chosen.made {
+            Made::Vp8 | Made::Vp9 => {
+                if ivf_header(&mut frames).is_ok() {
+                    while !inner.over() {
+                        let Ok(frame) = ivf_frame(&mut frames) else {
+                            break;
+                        };
+                        send_frame(inner, frame);
+                    }
+                }
+            }
+            Made::H264 => {
+                let mut units = AccessUnits::default();
+                let mut buffer = vec![0_u8; 64 * 1024];
+                while !inner.over() {
+                    let Ok(length) = frames.read(&mut buffer) else {
+                        break;
+                    };
+                    if length == 0 {
+                        break;
+                    }
+                    for frame in units.take(&buffer[..length]) {
+                        send_frame(inner, frame);
+                    }
+                }
+            }
+        }
+    }
+    stop(&mut child);
+    inner.end();
+}
+
+/// One frame written to the video, at the time it came, on the 90 kHz clock.
+fn send_frame(inner: &Arc<Inner>, frame: Vec<u8>) {
+    let mut shared = inner.lock();
+    let (Some((mid, pt, _)), Some(_)) = (shared.video, shared.connected) else {
+        return;
+    };
+    let now = Instant::now();
+    let ticks = now.duration_since(inner.began).as_micros() * 9 / 100;
+    let time = MediaTime::from_90khz(u64::try_from(ticks).unwrap_or(u64::MAX));
+    let written = shared
+        .rtc
+        .writer(mid)
+        .is_some_and(|writer| writer.write(pt, now, time, frame).is_ok());
+    if written {
+        drive(&mut shared);
+    }
+}
+
+/// Ends ffmpeg, which may be in the middle of a frame.
+fn stop(child: &mut Child) {
+    let _ = child.kill();
+    let _ = child.wait();
+}
+
+/// IVF's file header: 32 bytes, `DKIF`, and its own length.
+fn ivf_header(from: &mut impl Read) -> io::Result<()> {
+    let mut header = [0_u8; 32];
+    from.read_exact(&mut header)?;
+    if &header[..4] != b"DKIF" {
+        return Err(io::Error::new(io::ErrorKind::InvalidData, "not IVF"));
+    }
+    let length = usize::from(u16::from_le_bytes([header[6], header[7]]));
+    if length > 32 {
+        io::copy(
+            &mut from.take(u64::try_from(length - 32).unwrap_or(0)),
+            &mut io::sink(),
+        )?;
+    }
+    Ok(())
+}
+
+/// One IVF frame: its length, its time (not read), and its bytes.
+fn ivf_frame(from: &mut impl Read) -> io::Result<Vec<u8>> {
+    let mut header = [0_u8; 12];
+    from.read_exact(&mut header)?;
+    let length = u32::from_le_bytes([header[0], header[1], header[2], header[3]]);
+    let length = usize::try_from(length).unwrap_or(usize::MAX);
+    if length > LARGEST_FRAME {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "frame too large",
+        ));
+    }
+    let mut frame = vec![0_u8; length];
+    from.read_exact(&mut frame)?;
+    Ok(frame)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn ivf(frames: &[&[u8]]) -> Vec<u8> {
+        let mut out = Vec::new();
+        out.extend_from_slice(b"DKIF");
+        out.extend_from_slice(&0_u16.to_le_bytes());
+        out.extend_from_slice(&32_u16.to_le_bytes());
+        out.extend_from_slice(b"VP80");
+        out.extend_from_slice(&[0_u8; 20]);
+        for (at, frame) in frames.iter().enumerate() {
+            out.extend_from_slice(&u32::try_from(frame.len()).unwrap().to_le_bytes());
+            out.extend_from_slice(&u64::try_from(at).unwrap().to_le_bytes());
+            out.extend_from_slice(frame);
+        }
+        out
+    }
+
+    #[test]
+    fn reads_the_encoders_frames_one_by_one() {
+        let bytes = ivf(&[b"one", b"", b"three"]);
+        let mut from = bytes.as_slice();
+        ivf_header(&mut from).unwrap();
+        assert_eq!(ivf_frame(&mut from).unwrap(), b"one");
+        assert_eq!(ivf_frame(&mut from).unwrap(), b"");
+        assert_eq!(ivf_frame(&mut from).unwrap(), b"three");
+        assert!(ivf_frame(&mut from).is_err());
+    }
+
+    #[test]
+    fn refuses_what_is_not_ivf_and_a_frame_too_large() {
+        let mut other = &b"RIFF0000000000000000000000000000"[..];
+        assert!(ivf_header(&mut other).is_err());
+        let mut huge = Vec::new();
+        huge.extend_from_slice(&u32::MAX.to_le_bytes());
+        huge.extend_from_slice(&[0_u8; 8]);
+        assert!(ivf_frame(&mut huge.as_slice()).is_err());
+    }
+
+    #[test]
+    fn reads_what_the_viewer_says() {
+        let offer: FromViewer = serde_json::from_str(r#"{"offer":"v=0"}"#).unwrap();
+        assert!(matches!(offer, FromViewer::Offer { offer } if offer == "v=0"));
+        let candidate: FromViewer = serde_json::from_str(
+            r#"{"candidate":{"candidate":"candidate:1 1 udp 1 1.2.3.4 5 typ host","sdpMid":"0","sdpMLineIndex":0}}"#,
+        )
+        .unwrap();
+        assert!(
+            matches!(candidate, FromViewer::Candidate { candidate } if candidate.candidate.starts_with("candidate:1"))
+        );
+        assert!(matches!(
+            serde_json::from_str::<FromViewer>(r#"{"bye":true}"#).unwrap(),
+            FromViewer::Bye { .. }
+        ));
+        assert!(serde_json::from_str::<FromViewer>(r#"{"run":"rm -rf ~"}"#).is_err());
+    }
+
+    #[test]
+    fn says_its_answer_and_why_it_cannot() {
+        assert_eq!(answer_text("v=0\r\n"), r#"{"answer":"v=0\r\n"}"#);
+        assert_eq!(
+            cannot_text(Cannot::Encoder.word()),
+            r#"{"cannot":"encoder"}"#
+        );
+    }
+
+    #[test]
+    fn names_no_address_a_candidate_cannot_carry() {
+        assert!(usable_address("192.168.1.2".parse().unwrap()));
+        assert!(usable_address("2001:db8::1".parse().unwrap()));
+        assert!(!usable_address("fe80::1".parse().unwrap()));
+        assert!(!usable_address("0.0.0.0".parse().unwrap()));
+        assert!(!usable_address("127.0.0.1".parse().unwrap()));
+        assert_eq!(addresses().last(), Some(&IpAddr::V4(Ipv4Addr::LOCALHOST)));
+    }
+
+    #[test]
+    fn answers_no_offer_it_cannot_read() {
+        if !super::super::installed::on_path("ffmpeg") {
+            return;
+        }
+        let screen = Screen {
+            display: ":1".to_owned(),
+            width: 64,
+            height: 64,
+            hz: 60.0,
+        };
+        assert_eq!(Peer::answer(screen, "not sdp").err(), Some(Cannot::Offer));
+    }
+
+    /// What the answer to a viewer's offer says: a video it sends in a codec it encodes,
+    /// or no video, which `Peer::answer` refuses.
+    #[test]
+    fn reads_whether_the_answer_sends_a_video() {
+        use str0m::media::Direction;
+
+        let answer_to = |video: bool| {
+            let mut viewer = RtcConfig::new()
+                .set_crypto_provider(provider())
+                .build(Instant::now());
+            let mut change = viewer.sdp_api();
+            if video {
+                change.add_media(MediaKind::Video, Direction::RecvOnly, None, None, None);
+            }
+            change.add_channel("input".to_owned());
+            let (offer, _) = change.apply().unwrap();
+            let mut host = RtcConfig::new()
+                .clear_codecs()
+                .enable_vp8(true)
+                .set_crypto_provider(provider())
+                .build(Instant::now());
+            host.sdp_api().accept_offer(offer).unwrap().to_sdp_string()
+        };
+        assert!(answers_video(&answer_to(true)));
+        assert!(!answers_video(&answer_to(false)));
+        assert!(!answers_video(
+            "m=video 0 UDP/TLS/RTP/SAVPF 96\r\na=rtpmap:96 VP8/90000\r\n"
+        ));
+        assert!(!answers_video(
+            "m=video 9 UDP/TLS/RTP/SAVPF 96\r\na=rtpmap:96 AV1/90000\r\n"
+        ));
+    }
+
+    /// A viewer of `str0m`'s own, on the loopback, against a real Xvfb and ffmpeg: it
+    /// connects with the answer, gets the display's picture as VP8, key frame first, and
+    /// moves the display's pointer over the data channel. CI installs both; elsewhere
+    /// the test says nothing without them.
+    #[test]
+    fn a_viewer_gets_the_picture_of_the_display() {
+        use str0m::change::SdpAnswer;
+        use str0m::media::Direction;
+
+        let ready =
+            super::super::display::available() && super::super::installed::on_path("ffmpeg");
+        if !ready {
+            assert!(
+                std::env::var_os("CI").is_none() || !cfg!(target_os = "linux"),
+                "CI installs xvfb and ffmpeg for this test"
+            );
+            return;
+        }
+        let display = super::super::display::Display::start(320, 240, 1.0).unwrap();
+        let screen = Screen {
+            display: display.name(),
+            width: 320,
+            height: 240,
+            hz: 30.0,
+        };
+
+        let mut viewer = RtcConfig::new()
+            .set_crypto_provider(provider())
+            .build(Instant::now());
+        let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
+        let local = socket.local_addr().unwrap();
+        let mine = Candidate::host(local, "udp").unwrap();
+        let _ = viewer.add_local_candidate(mine.clone());
+        let mut change = viewer.sdp_api();
+        change.add_media(MediaKind::Video, Direction::RecvOnly, None, None, None);
+        change.add_channel("input".to_owned());
+        let (offer, pending) = change.apply().unwrap();
+
+        let (peer, answer) = Peer::answer(screen, &offer.to_sdp_string()).unwrap();
+        assert!(answer.contains("VP8"));
+        viewer
+            .sdp_api()
+            .accept_answer(pending, SdpAnswer::from_sdp_string(&answer).unwrap())
+            .unwrap();
+        peer.candidate(&mine.to_sdp_string());
+
+        socket
+            .set_read_timeout(Some(Duration::from_millis(10)))
+            .unwrap();
+        let until = Instant::now() + Duration::from_secs(30);
+        let mut buffer = vec![0_u8; 2000];
+        let mut frames = 0;
+        let mut first_key = None;
+        let mut moved = false;
+        let pointer = || {
+            use x11rb::connection::Connection as _;
+            use x11rb::protocol::xproto::ConnectionExt as _;
+            let (x, screen) = x11rb::connect(Some(display.name().as_str())).ok()?;
+            let root = x.setup().roots.get(screen)?.root;
+            let at = x.query_pointer(root).ok()?.reply().ok()?;
+            Some((at.root_x, at.root_y))
+        };
+        while Instant::now() < until && (frames < 10 || !moved) {
+            moved = moved || pointer() == Some((100, 50));
+            loop {
+                match viewer.poll_output().unwrap() {
+                    Output::Timeout(_) => break,
+                    Output::Transmit(datagram) => {
+                        // The host's other addresses are not reachable from the loopback.
+                        let _ = socket.send_to(&datagram.contents, datagram.destination);
+                    }
+                    Output::Event(Event::ChannelOpen(id, _)) => {
+                        if let Some(mut channel) = viewer.channel(id) {
+                            channel
+                                .write(false, br#"{"t":"move","x":100,"y":50}"#)
+                                .unwrap();
+                        }
+                    }
+                    Output::Event(Event::MediaData(data)) => {
+                        // VP8's frame tag: a clear lowest bit is a key frame.
+                        let key = data.data.first().is_some_and(|tag| (tag & 1) == 0);
+                        first_key.get_or_insert(key);
+                        frames += 1;
+                    }
+                    Output::Event(_) => {}
+                }
+            }
+            let input = match socket.recv_from(&mut buffer) {
+                Ok((length, from)) => Input::Receive(
+                    Instant::now(),
+                    Receive::new(Protocol::Udp, from, local, &buffer[..length]).unwrap(),
+                ),
+                Err(_) => Input::Timeout(Instant::now()),
+            };
+            viewer.handle_input(input).unwrap();
+        }
+        assert!(frames >= 10, "{frames} frames came");
+        assert!(moved, "the pointer moved to where the viewer put it");
+        assert_eq!(first_key, Some(true), "the first frame is a key frame");
+        assert!(!peer.ended());
+        drop(peer);
+    }
+}

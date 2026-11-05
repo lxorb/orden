@@ -23,18 +23,19 @@
  *  asked about: nothing of xterm.js is loaded for an agent that never names a terminal. */
 
 import type { AgentAnswer } from '../../automation/caller'
-import { osOf, plainOf } from './shell-text'
+import { plainOf } from './shell-text'
 import { historyOf } from '../../terminal/history'
-import { ptyOf } from '../../terminal/running'
+import { isOnlineTab } from '../../online/path'
+import { shellRunning } from '../../terminal/running'
 import { readSpec } from '../../terminal/spec'
 import type { Session } from '../../terminal/sessions.svelte'
 import { platform } from '../../tauri'
 import type { Tab } from '../../workspace.svelte'
 import { asked } from './asks'
-import { type Call, count, done, flag, maybe } from './call'
+import { type Call, count, done, flag, maybe, need } from './call'
 import { Refused } from './problem'
 import { namedTab } from './tab-target'
-import { KEY_NAMES, keyBytes, linesOf, typesFreely } from './terminal-keys'
+import { KEY_NAMES, keyBytes, linesOf, shellOs, typesFreely } from './terminal-keys'
 
 /** How many lines come back when the agent does not say, and at the most. */
 const LINES = 200
@@ -68,9 +69,37 @@ async function sessionFor(tab: Tab): Promise<Session> {
   return sessionOf(tab)
 }
 
-/** Whether the tab's shell is running now. */
+/** Whether the tab's shell is running now: its own, or an online terminal's session,
+ *  live (#1125). */
 function running(tab: Tab): boolean {
-  return ptyOf(tab.id) !== undefined
+  return shellRunning(tab.id)
+}
+
+/** How long an online terminal is given to reach its machine, which may have to wake:
+ *  inside the time `nib mcp` waits for an answer. */
+const CONNECTING = 60_000
+
+/** Until nothing stands between an agent and the shell, something that will not pass by
+ *  waiting does, or `patience` is over. */
+async function readyOf(session: Session, patience: number): Promise<void> {
+  const until = Date.now() + patience
+  for (;;) {
+    const blocked = session.agentBlocked()
+    if (blocked === null || blocked.lasting || Date.now() >= until) return
+    await new Promise((go) => setTimeout(go, 50))
+  }
+}
+
+/** The refusal for a terminal an agent may not type into now: held by another device
+ *  is the reader's to take back, kept to its owner is not this agent's, and the rest is
+ *  a shell that is not there. */
+function refusedFor(tab: Tab, session: Session): Refused {
+  const blocked = session.agentBlocked()
+  const why = `${tab.shown}: ${blocked?.why ?? 'the shell would not start'}`
+  if (session.online && blocked?.lasting) {
+    return new Refused(session.agentHeld ? 'by_hand' : 'not_granted', why)
+  }
+  return new Refused('failed', why)
 }
 
 /** Until the tab's shell is running, or the time to start one is over. */
@@ -83,13 +112,19 @@ async function startingOf(tab: Tab): Promise<void> {
  *  screen whose shell ended is started again the way the reader would, with Enter. */
 async function started(tab: Tab): Promise<Session> {
   const session = await sessionFor(tab)
-  if (running(tab)) return session
+  if (session.agentBlocked() === null) return session
 
-  if (session.host.isConnected) session.term.input('\r', false)
+  // An online terminal is reached through its own socket, and never by a key of the
+  // app's: Enter under its card is Take over or Try again, which are the reader's.
+  if (session.online) {
+    if (session.ended) session.startAgain()
+    else if (!session.host.isConnected) await startedOffScreen(session)
+  } else if (session.host.isConnected) session.term.input('\r', false)
   else await startedOffScreen(session)
 
   await startingOf(tab)
-  if (!running(tab)) throw new Refused('failed', 'the shell would not start')
+  await readyOf(session, session.online ? CONNECTING : 0)
+  if (session.agentBlocked() !== null) throw refusedFor(tab, session)
   await atPrompt(session.term)
   return session
 }
@@ -129,6 +164,16 @@ export async function readTerminal(call: Call): Promise<AgentAnswer> {
   const { tab } = namedTab(call, ['terminal'], 'a terminal')
   const most = count(call, 'lines', LINES, MOST_LINES)
 
+  if (isOnlineTab(tab) && !running(tab)) {
+    // An online terminal is read through its own socket, as it is now (#1125), reached
+    // the way its tab reaches it; where it cannot be - another device holds it - its
+    // last screen, said to be that.
+    const session = await sessionFor(tab)
+    if (!session.host.isConnected) await startedOffScreen(session)
+    await readyOf(session, CONNECTING)
+    return screenOf(tab, session, most)
+  }
+
   if (!running(tab)) {
     // Never drawn this run: the lines it came back with, if any were kept.
     const spec = readSpec(tab.doc)
@@ -146,8 +191,12 @@ export async function readTerminal(call: Call): Promise<AgentAnswer> {
     )
   }
 
-  const { term } = await sessionFor(tab)
-  const buffer = term.buffer.active
+  return screenOf(tab, await sessionFor(tab), most)
+}
+
+/** A terminal's screen as words, at most `most` lines of it. */
+function screenOf(tab: Tab, session: Session, most: number): AgentAnswer {
+  const buffer = session.term.buffer.active
   const read = linesOf(buffer, 0, most)
   return done(
     {
@@ -155,6 +204,7 @@ export async function readTerminal(call: Call): Promise<AgentAnswer> {
       output: read.text,
       ...(read.truncated ? { truncated: true } : {}),
       ...(buffer.type === 'alternate' ? { full_screen: true } : {}),
+      ...(session.current ? {} : { last_screen: true }),
     },
     SOURCE,
   )
@@ -170,12 +220,39 @@ export async function terminalSelection(tab: Tab) {
   return { running: true, ...(selected ? { selected } : {}) }
 }
 
-export async function typeTerminal(call: Call): Promise<AgentAnswer> {
+export function typeTerminal(call: Call): Promise<AgentAnswer> {
+  return typed(call, maybe(call, 'text') ?? '', count(call, 'wait_ms', WAIT, MOST_WAIT), QUIET)
+}
+
+/** How long `run_terminal` in a tab waits for a command when the agent does not say, and
+ *  at the most; and how long the shell is quiet before the command is taken to be done. */
+const RUN_WAIT = 60_000
+const MOST_RUN_WAIT = 120_000
+const RUN_QUIET = 1500
+
+/** `run_terminal` with a `tab`: the command typed into one of the reader's terminals -
+ *  a local one or an online one, alike (#1125) - with Enter, under the rules typing keeps,
+ *  and what it printed until it went quiet. */
+export function runInTab(call: Call): Promise<AgentAnswer> {
+  const wait = count(call, 'timeout_ms', RUN_WAIT, MOST_RUN_WAIT)
+  return typed(
+    { ...call, args: { ...call.args, enter: true } },
+    need(call, 'command'),
+    wait,
+    RUN_QUIET,
+  )
+}
+
+async function typed(
+  call: Call,
+  text: string,
+  patience: number,
+  rest: number,
+): Promise<AgentAnswer> {
   const agent = call.caller.agent
   if (agent === null) throw new Refused('by_hand', 'the command line does not type into a shell')
 
   const { tab } = namedTab(call, ['terminal'], 'a terminal')
-  const text = maybe(call, 'text') ?? ''
   if (/[\r\n]/.test(text)) throw new Refused('bad_arguments', 'one line at a time')
 
   const keys = Array.isArray(call.args.keys) ? call.args.keys.map(String) : []
@@ -189,7 +266,7 @@ export async function typeTerminal(call: Call): Promise<AgentAnswer> {
     throw new Refused('bad_arguments', `${judged.unknown} is not a key: ${KEY_NAMES.join(', ')}`)
   }
 
-  const free = typesFreely(text, enter, keys, agent.programs, osOf(platform()))
+  const free = typesFreely(text, enter, keys, agent.programs, shellOs(isOnlineTab(tab), platform()))
   const shown = [text, enter ? 'Enter' : '', ...keys].filter(Boolean).join(' + ')
   const question = await asked(call, free ? null : 'terminal', `${tab.shown}: ${shown}`)
   if (question) return question
@@ -201,9 +278,9 @@ export async function typeTerminal(call: Call): Promise<AgentAnswer> {
 
   const sent = keyBytes(keys, term.modes.applicationCursorKeysMode)
   const bytes = text + (enter ? '\r' : '') + ('bytes' in sent ? sent.bytes : '')
-  term.input(bytes, false)
+  if (session.agentTyped(bytes) !== null) throw refusedFor(tab, session)
 
-  await quiet(term, count(call, 'wait_ms', WAIT, MOST_WAIT))
+  await quiet(term, patience, rest * 2, rest)
   const read = linesOf(term.buffer.active, from, MOST_LINES)
   return done(
     {

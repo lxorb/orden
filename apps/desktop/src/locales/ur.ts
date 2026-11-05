@@ -2359,7 +2359,10 @@ export const ur: Dictionary = {
   'Running on {device}': '{device} پر چل رہی ہے',
   'Starting on {device}…': '{device} پر شروع ہو رہی ہے…',
   'Not running on {device}': '{device} پر نہیں چل رہی',
-  'Its picture is not shown here yet.': 'اس کی تصویر ابھی یہاں نہیں دکھائی جاتی۔',
+  'The picture cannot reach this device.': 'تصویر اس آلے تک نہیں پہنچ سکتی۔',
+  '{device} needs ffmpeg to send its picture.': 'تصویر بھیجنے کے لیے {device} کو ffmpeg درکار ہے۔',
+  'The picture could not be sent.': 'تصویر بھیجی نہ جا سکی۔',
+  'This device cannot show the picture.': 'یہ آلہ تصویر نہیں دکھا سکتا۔',
   'None of your devices can run an application yet':
     'آپ کا کوئی بھی آلہ ابھی ایپلیکیشن نہیں چلا سکتا',
   'Where does it run?': 'یہ کہاں چلے؟',

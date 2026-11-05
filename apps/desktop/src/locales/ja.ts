@@ -2343,7 +2343,10 @@ export const ja: Dictionary = {
   'Running on {device}': '{device} で実行中',
   'Starting on {device}…': '{device} で起動しています…',
   'Not running on {device}': '{device} で実行されていません',
-  'Its picture is not shown here yet.': '画面はまだここに表示されません。',
+  'The picture cannot reach this device.': '画面がこのデバイスに届きません。',
+  '{device} needs ffmpeg to send its picture.': '画面を送るには {device} に ffmpeg が必要です。',
+  'The picture could not be sent.': '画面を送信できませんでした。',
+  'This device cannot show the picture.': 'このデバイスでは画面を表示できません。',
   'None of your devices can run an application yet':
     'アプリケーションを実行できるデバイスはまだありません',
   'Where does it run?': 'どこで実行しますか？',

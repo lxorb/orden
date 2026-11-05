@@ -463,3 +463,78 @@ describe('a host’s catalogue', () => {
     expect((await write(token, [GIMP])).status).toBe(409)
   })
 })
+
+/** The servers a viewer's connection may use (step 4; apps/ice.ts): STUN always, TURN
+ *  with the owner's key, behind the door's switch. */
+describe('an application’s ICE servers', () => {
+  const APPS = {} as unknown as DurableObjectNamespace
+  const on = () =>
+    env.db.prepare("insert into online_service (key, value) values ('apps', 'on')").run()
+  const ask = (token: string) => call<{ iceServers?: unknown }>(env, '/v2/apps/ice', { token })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  test('answers 404 while switched off', async () => {
+    env = testEnv({ APPS })
+    opened = true
+    const token = await signIn(env, 'owner@example.com')
+    expect((await ask(token)).status).toBe(404)
+  })
+
+  test('hands out STUN alone where there is no TURN key, and asks nobody', async () => {
+    env = testEnv({ APPS })
+    opened = true
+    on()
+    const asked = vi.spyOn(globalThis, 'fetch')
+    const token = await signIn(env, 'owner@example.com')
+    const answered = await ask(token)
+    expect(answered.json.iceServers).toEqual([{ urls: ['stun:stun.cloudflare.com:3478'] }])
+    expect(asked).not.toHaveBeenCalled()
+  })
+
+  test('with a key, Cloudflare’s TURN credentials for a day', async () => {
+    env = testEnv({ APPS, TURN_KEY_ID: 'key-1', TURN_KEY_TOKEN: 'secret' })
+    opened = true
+    on()
+    const servers = [
+      { urls: ['stun:stun.cloudflare.com:3478'] },
+      {
+        urls: ['turn:turn.cloudflare.com:3478?transport=udp', 'javascript:alert(1)'],
+        username: 'user',
+        credential: 'pass',
+      },
+    ]
+    const asked = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify({ iceServers: servers })))
+    const token = await signIn(env, 'owner@example.com')
+    const answered = await ask(token)
+    expect(answered.json.iceServers).toEqual([
+      { urls: ['stun:stun.cloudflare.com:3478'] },
+      {
+        urls: ['turn:turn.cloudflare.com:3478?transport=udp'],
+        username: 'user',
+        credential: 'pass',
+      },
+    ])
+    const [url, init] = asked.mock.calls[0] ?? []
+    expect(url).toBe(
+      'https://rtc.live.cloudflare.com/v1/turn/keys/key-1/credentials/generate-ice-servers',
+    )
+    expect(init?.headers).toMatchObject({ authorization: 'Bearer secret' })
+    expect(init?.body).toBe(JSON.stringify({ ttl: 86_400 }))
+  })
+
+  test('Cloudflare not answering leaves STUN', async () => {
+    env = testEnv({ APPS, TURN_KEY_ID: 'key-1', TURN_KEY_TOKEN: 'secret' })
+    opened = true
+    on()
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('no', { status: 500 }))
+    const token = await signIn(env, 'owner@example.com')
+    expect((await ask(token)).json.iceServers).toEqual([
+      { urls: ['stun:stun.cloudflare.com:3478'] },
+    ])
+  })
+})

@@ -5,7 +5,13 @@
  *  that an arrow is two different sequences depending on what the program in front
  *  asked for (application cursor keys, which vim and less switch on). */
 
-import { type Os, onTheList, startsOnlyOne } from './shell-text'
+import { type Os, onTheList, osOf, startsOnlyOne } from './shell-text'
+
+/** The system a terminal's shell runs on: an online terminal's is its machine's, which is
+ *  Linux (docs/online-terminal.md), whatever this computer is; any other is this one's. */
+export function shellOs(online: boolean, platform: string): Os {
+  return online ? 'unix' : osOf(platform)
+}
 
 /** The keys an agent may press, and what each sends. Nothing that opens a picker,
  *  nothing the app itself is bound to: these reach the shell and nothing else. */

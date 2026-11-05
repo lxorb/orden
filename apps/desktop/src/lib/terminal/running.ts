@@ -26,3 +26,21 @@ export function setPty(tabId: string, pty: string | null): void {
   if (pty === null) running.delete(tabId)
   else running.set(tabId, pty)
 }
+
+/** The online terminals whose session is on screen as it is now, by the tab's id: a
+ *  registry apart from the shells', since an online session is never this window's to
+ *  end and nothing asks before it goes. */
+// eslint-disable-next-line svelte/prefer-svelte-reactivity -- a registry; nothing renders from it
+const live = new Set<string>()
+
+export function setLive(tabId: string, on: boolean): void {
+  if (on) live.add(tabId)
+  else live.delete(tabId)
+}
+
+/** Whether a terminal tab has a shell to read and type into now: its own shell, or an
+ *  online terminal's session, live. What every agent's tool asks (#1125), so a terminal
+ *  is one thing to them wherever its shell runs. */
+export function shellRunning(tabId: string): boolean {
+  return running.has(tabId) || live.has(tabId)
+}

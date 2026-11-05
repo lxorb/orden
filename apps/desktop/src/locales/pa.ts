@@ -2366,7 +2366,10 @@ export const pa: Dictionary = {
   'Running on {device}': '{device} ’ਤੇ ਚੱਲ ਰਹੀ ਹੈ',
   'Starting on {device}…': '{device} ’ਤੇ ਸ਼ੁਰੂ ਹੋ ਰਹੀ ਹੈ…',
   'Not running on {device}': '{device} ’ਤੇ ਨਹੀਂ ਚੱਲ ਰਹੀ',
-  'Its picture is not shown here yet.': 'ਇਸਦੀ ਤਸਵੀਰ ਅਜੇ ਇੱਥੇ ਨਹੀਂ ਦਿਖਦੀ।',
+  'The picture cannot reach this device.': 'ਤਸਵੀਰ ਇਸ ਡਿਵਾਈਸ ਤੱਕ ਨਹੀਂ ਪਹੁੰਚ ਸਕਦੀ।',
+  '{device} needs ffmpeg to send its picture.': 'ਤਸਵੀਰ ਭੇਜਣ ਲਈ {device} ਨੂੰ ffmpeg ਚਾਹੀਦਾ ਹੈ।',
+  'The picture could not be sent.': 'ਤਸਵੀਰ ਭੇਜੀ ਨਹੀਂ ਜਾ ਸਕੀ।',
+  'This device cannot show the picture.': 'ਇਹ ਡਿਵਾਈਸ ਤਸਵੀਰ ਨਹੀਂ ਦਿਖਾ ਸਕਦੀ।',
   'None of your devices can run an application yet':
     'ਤੁਹਾਡਾ ਕੋਈ ਵੀ ਡਿਵਾਈਸ ਅਜੇ ਐਪਲੀਕੇਸ਼ਨ ਨਹੀਂ ਚਲਾ ਸਕਦਾ',
   'Where does it run?': 'ਇਹ ਕਿੱਥੇ ਚੱਲੇ?',

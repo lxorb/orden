@@ -486,8 +486,14 @@ conversations in the home, so nothing of Orden's holds them.
 and the owner's devices are told through the push module `docs/chats.md` lane 6 builds, once it
 exists: _Build is waiting._ Until then the tab's mark shows it.
 
-**Later**: Orden's own agent verbs (`run_terminal`, `docs/agent-native.md`) reaching an online
-terminal under the same grant and questions as a local one.
+**Orden's own agents** (#1125; `docs/agent-native.md` 8.9): `read_terminal` and
+`type_terminal` reach an online terminal's tab as they reach a local one's, through its own
+socket, under the same grant and questions. They keep the rules somebody at the window
+keeps: a session another device holds is read as its last screen and never taken over -
+Take over is the reader's - one whose machine's owner keeps typing to themselves is read
+and never typed in, and a key of the app's own (Reconnect, Try again, Resume) is never
+pressed for them. A session not connected yet is connected as its tab would be, which
+wakes its machine, and waited for a minute at most.
 
 ### 4.8 Security
 

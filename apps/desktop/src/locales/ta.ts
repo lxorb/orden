@@ -2395,7 +2395,10 @@ export const ta: Dictionary = {
   'Running on {device}': '{device} இல் இயங்குகிறது',
   'Starting on {device}…': '{device} இல் தொடங்குகிறது…',
   'Not running on {device}': '{device} இல் இயங்கவில்லை',
-  'Its picture is not shown here yet.': 'அதன் படம் இன்னும் இங்கே காட்டப்படவில்லை.',
+  'The picture cannot reach this device.': 'படம் இந்தச் சாதனத்தை அடைய முடியவில்லை.',
+  '{device} needs ffmpeg to send its picture.': 'படத்தை அனுப்ப {device}க்கு ffmpeg தேவை.',
+  'The picture could not be sent.': 'படத்தை அனுப்ப முடியவில்லை.',
+  'This device cannot show the picture.': 'இந்தச் சாதனத்தால் படத்தைக் காட்ட முடியாது.',
   'None of your devices can run an application yet':
     'உங்கள் எந்தச் சாதனமும் இன்னும் பயன்பாட்டை இயக்க முடியாது',
   'Where does it run?': 'இது எங்கே இயங்கும்?',

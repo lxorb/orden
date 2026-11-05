@@ -474,6 +474,8 @@ mod tests {
     /// what its model needs and nothing twice, so the room is the new tool's own. Raised
     /// to 36 800 on 2026-11-04 for programs (#1078, step 2): one tool, `process`, 943
     /// characters, listed only to a grant holding processes, from a table at 35 789.
+    /// Raised to 36 900 the next day for a terminal of the reader's, online ones too, to run
+    /// a command in (#1125): `run_terminal`'s `tab`, 75 characters, from a table at 36 732.
     #[test]
     fn the_table_stays_small() {
         let mut sizes = BTreeMap::new();
@@ -482,7 +484,7 @@ mod tests {
         }
         let total: usize = sizes.values().sum();
         assert!(
-            total < 36_800,
+            total < 36_900,
             "the tools are {total} characters: {sizes:?}"
         );
         for (name, size) in &sizes {

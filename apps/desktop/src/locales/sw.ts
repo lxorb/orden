@@ -2392,7 +2392,10 @@ export const sw: Dictionary = {
   'Running on {device}': 'Inaendesha kwenye {device}',
   'Starting on {device}…': 'Inaanza kwenye {device}…',
   'Not running on {device}': 'Haiendeshi kwenye {device}',
-  'Its picture is not shown here yet.': 'Picha yake bado haionyeshwi hapa.',
+  'The picture cannot reach this device.': 'Picha haiwezi kufika kwenye kifaa hiki.',
+  '{device} needs ffmpeg to send its picture.': '{device} kinahitaji ffmpeg ili kutuma picha yake.',
+  'The picture could not be sent.': 'Picha haikuweza kutumwa.',
+  'This device cannot show the picture.': 'Kifaa hiki hakiwezi kuonyesha picha.',
   'None of your devices can run an application yet':
     'Hakuna kifaa chako kinachoweza kuendesha programu bado',
   'Where does it run?': 'Inaendesha wapi?',
