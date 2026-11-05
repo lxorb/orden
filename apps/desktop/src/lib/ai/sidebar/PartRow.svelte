@@ -115,7 +115,7 @@
     max-height: 16rem;
     overflow: auto;
     border-radius: var(--radius-sm);
-    background: var(--surface-2);
+    background: var(--ink-wash);
     color: var(--muted-strong);
     font-family: var(--font-mono);
     font-size: var(--text-xs);

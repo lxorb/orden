@@ -80,7 +80,7 @@
     min-width: 0;
     padding-inline-start: 2px;
     border-radius: var(--radius-sm);
-    background: var(--surface-2);
+    background: var(--ink-wash);
     transition: opacity var(--dur-fast) var(--ease-out);
   }
 

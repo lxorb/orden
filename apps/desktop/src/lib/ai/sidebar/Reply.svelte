@@ -447,7 +447,7 @@
     padding: 1px var(--space-2);
     border: 1px solid var(--line);
     border-radius: 999px;
-    background: var(--surface-2);
+    background: var(--ink-wash);
     color: var(--muted-strong);
     font-family: var(--font-ui);
     font-size: var(--text-xs);

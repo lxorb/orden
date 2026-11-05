@@ -281,3 +281,32 @@ describe('what runs out under something', () => {
     expect(offenders, `these fade to a guessed ground: ${offenders.join(', ')}`).toEqual([])
   })
 })
+
+describe('what the AI chat is filled with', () => {
+  const chat = components.filter((one) =>
+    /^lib\/(?:ai\/(?:sidebar|review)\/|QuickQuestion\.svelte$)/.test(one.name),
+  )
+  const style = (name: string) => chat.find((one) => one.name === name)?.text ?? ''
+
+  test('finds the chat', () => {
+    expect(chat.length).toBeGreaterThan(10)
+  })
+
+  test('the reader’s message is a wash of the ink over whatever it stands on', () => {
+    expect(style('lib/ai/sidebar/Conversation.svelte')).toMatch(
+      /\n\s*\.bubble\s*\{[^}]*background:\s*var\(--ink-wash\)/,
+    )
+    expect(style('lib/QuickQuestion.svelte')).toMatch(
+      /\n\s*\.said\s*\{[^}]*background:\s*var\(--ink-wash\)/,
+    )
+  })
+
+  test('and nothing in it is filled with the ground the side stands on', () => {
+    const offenders = chat
+      .filter((one) =>
+        /background(?:-color)?:\s*var\(--(?:surface-2|tab-frame|chrome-ground)\)/.test(one.text),
+      )
+      .map((one) => one.name)
+    expect(offenders, `these vanish into the chrome's ground: ${offenders.join(', ')}`).toEqual([])
+  })
+})

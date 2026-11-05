@@ -520,7 +520,7 @@
     margin: 0;
     padding: var(--space-2) var(--space-3);
     border-radius: var(--radius-lg);
-    background: var(--surface-2);
+    background: var(--ink-wash);
     color: var(--text-strong);
     font-family: var(--font-ui);
     font-size: var(--text-row);

@@ -249,7 +249,7 @@
     height: 6px;
     overflow: hidden;
     border-radius: 3px;
-    background: var(--surface-2);
+    background: var(--ink-wash);
   }
 
   .fill {

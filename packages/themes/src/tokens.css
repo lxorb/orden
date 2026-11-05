@@ -584,6 +584,7 @@
   --select-arrow: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' fill='none' stroke='%23878f9d' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 4l3 3 3-3'/%3E%3C/svg%3E");
 
   --tab-edge: color-mix(in srgb, var(--text) 20%, transparent);
+  --ink-wash: color-mix(in srgb, var(--text) 7%, transparent);
 
   --scrollbar: #39404d;
   --scrollbar-hover: #4d5665;
@@ -650,6 +651,7 @@
   --select-arrow: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' fill='none' stroke='%235c6574' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 4l3 3 3-3'/%3E%3C/svg%3E");
 
   --tab-edge: color-mix(in srgb, var(--text) 24%, transparent);
+  --ink-wash: color-mix(in srgb, var(--text) 7%, transparent);
 
   --scrollbar: #c3cbd6;
   --scrollbar-hover: #a7b1bf;

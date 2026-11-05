@@ -72,7 +72,7 @@
     align-items: center;
     gap: 2px;
     padding: 2px;
-    background: var(--surface-2);
+    background: var(--ink-wash);
   }
 
   .what {

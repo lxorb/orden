@@ -114,7 +114,7 @@
     margin-bottom: var(--space-1);
     padding: 1px var(--space-2);
     border-radius: var(--radius-sm);
-    background: var(--surface-2);
+    background: var(--ink-wash);
     color: var(--muted-strong);
     font-family: var(--font-mono);
   }

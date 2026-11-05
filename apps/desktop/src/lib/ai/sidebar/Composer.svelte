@@ -784,7 +784,7 @@
 
   .goal.paused {
     border-color: var(--line);
-    background: var(--surface-2);
+    background: var(--ink-wash);
   }
 
   .goal .what {
