@@ -185,3 +185,94 @@ describe('the search', () => {
     expect(answer.status).toBe(400)
   })
 })
+
+/** Who may ask: exactly who may read the space's feed. A person in the space, by an
+ *  invitation or its link, at either role; nobody else - not somebody handed one note
+ *  of it, not somebody let go of, and nothing of another space through this one. */
+describe('who may ask', () => {
+  const SECRET = 'the code is 4711'
+
+  /** The space's link, or one note's, set to hand out this role, followed by nobody:
+   *  a guest. Answers the guest's session and id. */
+  async function linkGuest(item?: string): Promise<{ token: string; id: string }> {
+    const at = `/v1/spaces/${space}/share/link${item ? `?item=${item}` : ''}`
+    const { json } = await call(env, at, {
+      method: 'PUT',
+      token,
+      body: { role: 'read', mode: 'open' },
+    })
+    const found = /\/join\/([a-f0-9]+)/.exec((json as { link?: { url?: string } }).link?.url ?? '')
+    if (!found?.[1]) throw new Error('no link was made')
+    const joined = await call(env, `/v1/join/${found[1]}`, { method: 'POST', body: {} })
+    return { token: joined.json.token, id: joined.json.guest.id }
+  }
+
+  async function reaches(as: string, id: string): Promise<{ index: number; search: number }> {
+    const asked = await index([id], as)
+    const found = await search({ q: '4711', limit: 10 }, as)
+    // Refused, never a word of the note with it.
+    if (asked.status !== 200) expect(asked.text).not.toContain('4711')
+    if (found.status !== 200) expect(found.text).not.toContain('4711')
+    return { index: asked.status, search: found.status }
+  }
+
+  test('a member and a guest of the space read both, at the read role', async () => {
+    const id = await made('Plans.md', `# Plans\n\n${SECRET}\n`)
+    const reader = await invited(env, token, space, 'reader@example.com', 'read')
+    const guest = await linkGuest()
+    for (const as of [reader, guest.token]) {
+      expect(indexAnswerOf((await index([id], as)).json)?.[0]).toMatchObject({ id })
+      expect(searchAnswerOf((await search({ q: '4711', limit: 10 }, as)).json)?.hits).toEqual([
+        expect.objectContaining({ id, text: SECRET }),
+      ])
+    }
+  })
+
+  test("somebody handed one note reaches neither, not even that note's", async () => {
+    const shared = await made('Shared.md', `# Shared\n\n${SECRET}\n`)
+    await made('Private.md', `# Private\n\n${SECRET}\n`)
+    const member = await invited(env, token, space, 'one@example.com', 'read', shared)
+    const guest = await linkGuest(shared)
+    for (const as of [member, guest.token]) {
+      expect(await reaches(as, shared)).toEqual({ index: 404, search: 404 })
+    }
+  })
+
+  test('a member or a guest let go of reaches nothing from then on', async () => {
+    const id = await made('Plans.md', `# Plans\n\n${SECRET}\n`)
+    const member = await invited(env, token, space, 'gone@example.com', 'read')
+    const guest = await linkGuest()
+    expect(await reaches(member, id)).toEqual({ index: 200, search: 200 })
+    expect(await reaches(guest.token, id)).toEqual({ index: 200, search: 200 })
+
+    await call(env, `/v1/spaces/${space}/share/members/gone@example.com`, {
+      method: 'DELETE',
+      token,
+    })
+    await call(env, `/v1/spaces/${space}/share/guests/${guest.id}`, { method: 'DELETE', token })
+    expect(await reaches(member, id)).toEqual({ index: 404, search: 404 })
+    // A guest let go of, with nothing else left, has no session any more either.
+    expect(await reaches(guest.token, id)).toEqual({ index: 401, search: 401 })
+  })
+
+  test("another person's space is nobody else's, and none of it answers through this one", async () => {
+    const id = await made('Plans.md', `# Plans\n\n${SECRET}\n`)
+    const stranger = await signIn(env, 'stranger@example.com')
+    expect(await reaches(stranger, id)).toEqual({ index: 404, search: 404 })
+
+    // The stranger's own space, asked about the note by its id and searched for its words.
+    const theirs = (await call(env, '/v1/spaces', { token: stranger, body: { name: 'Theirs' } }))
+      .json.space.id
+    const asked = await call(env, `/v2/spaces/${theirs}/index`, {
+      token: stranger,
+      body: { ids: [id] },
+    })
+    expect(indexAnswerOf(asked.json)).toEqual([{ id, refused: 'gone' }])
+    const found = await call(env, `/v2/spaces/${theirs}/search`, {
+      token: stranger,
+      body: { query: parseQuery('4711'), terms: [], limit: 10 },
+    })
+    expect(searchAnswerOf(found.json)?.hits).toEqual([])
+    expect(asked.text + found.text).not.toContain('4711')
+  })
+})
