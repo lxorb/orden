@@ -85,7 +85,7 @@ test('a held window pushes only the windows of the cell it is in, so a cell of o
   const windows = [at('a1', 0, 0), at('a2', 240, 0), at('b1', 900, 0), at('held', 0, 0)]
   const cell = (id: string) => (id.startsWith('b') ? 'b' : 'a')
   const over = { x: 880, y: 10, w: 200, h: 120 }
-  const inA = roomFor(windows, 'held', over, (id) => cell(id) === 'a')
+  const inA = roomFor(windows, new Map([['held', over]]), (id) => cell(id) === 'a')
   // b's one window stays where it lies under the hand, and the pointer on it is in b.
   expect(inA.find((one) => one.id === 'b1')).toEqual(windows[2])
   const box = (key: string) =>
@@ -93,10 +93,23 @@ test('a held window pushes only the windows of the cell it is in, so a cell of o
   const cells = ['a', 'b'].map((key) => ({ key, box: box(key) }))
   expect(cellAt(cells, 'a', 980, 60)).toBe('b')
   // Once it is in b, b's window makes room for it, and a's are left alone.
-  const inB = roomFor(windows, 'held', over, (id) => cell(id) === 'b')
+  const inB = roomFor(windows, new Map([['held', over]]), (id) => cell(id) === 'b')
   expect(inB.find((one) => one.id === 'b1')).not.toEqual(windows[2])
   expect(inB.filter((one) => cell(one.id) === 'a' && one.id !== 'held')).toEqual(
     windows.slice(0, 2),
   )
   expect(clear(inB.filter((one) => one.id !== 'a1' && one.id !== 'a2'))).toBe(true)
+})
+
+test('several windows held at once each stay under the hand, and the cell makes room for all', () => {
+  // Emil, round 4: Ctrl+Click chooses several windows, and they move and drop together.
+  const windows = [at('a1', 0, 0), at('a2', 228, 0), at('a3', 456, 0), at('x', 0, 300)]
+  const held = new Map([
+    ['x', { x: 200, y: 10, w: 200, h: 120 }],
+    ['a3', { x: 428, y: 10, w: 200, h: 120 }],
+  ])
+  const out = roomFor(windows, held, () => true)
+  expect(out.find((one) => one.id === 'x')).toMatchObject(held.get('x') ?? {})
+  expect(out.find((one) => one.id === 'a3')).toMatchObject(held.get('a3') ?? {})
+  expect(clear(out)).toBe(true)
 })
