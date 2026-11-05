@@ -2198,6 +2198,8 @@ export const fr: Dictionary = {
   'Read and change the clipboard': 'Lire et modifier le presse-papiers',
   'Ask you a question or tell you something': 'Vous poser une question ou vous dire quelque chose',
   'Select, mark and fold in your notes': 'Sélectionner, marquer et replier dans vos notes',
+  Applications: 'Applications',
+  'Start, see and use your applications': 'Démarrer, voir et utiliser vos applications',
   Paying: 'Payer',
   'Sending messages': 'Envoyer des messages',
   'Publishing and sharing': 'Publier et partager',

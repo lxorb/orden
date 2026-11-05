@@ -92,6 +92,10 @@ pub enum Scope {
     /// A note's editor: its selections, the marks an agent draws, its folds (#1078).
     #[serde(rename = "editor")]
     Editor,
+    /// The reader's applications, run on a computer of theirs and shown in a tab: started,
+    /// stopped, seen and used through the tab, only while this device holds them (#1063).
+    #[serde(rename = "applications")]
+    Applications,
     /// Helpers on the reader's AI accounts: another model, Claude's or `OpenAI`'s, started
     /// on a task, whose answer comes back (`run_agent`; docs/ai.md, "Helpers").
     #[serde(rename = "agents")]
@@ -100,7 +104,7 @@ pub enum Scope {
 
 impl Scope {
     /// Every scope, in the settings pane's order.
-    pub const ALL: [Scope; 22] = [
+    pub const ALL: [Scope; 23] = [
         Scope::Context,
         Scope::NotesRead,
         Scope::NotesWrite,
@@ -122,6 +126,7 @@ impl Scope {
         Scope::Clipboard,
         Scope::Ask,
         Scope::Editor,
+        Scope::Applications,
         Scope::Agents,
     ];
 }
@@ -300,6 +305,7 @@ impl Grant {
                     | Scope::Clipboard
                     | Scope::Ask
                     | Scope::Editor
+                    | Scope::Applications
             )
         });
         grant.mode = Mode::Confirm;
@@ -890,6 +896,7 @@ mod tests {
         assert!(own.holds(Scope::Network));
         assert!(own.holds(Scope::Clipboard) && own.holds(Scope::Ask));
         assert!(own.holds(Scope::Editor));
+        assert!(own.holds(Scope::Applications));
         assert!(own.asks(Category::Terminal));
         assert_eq!(own.mode, Mode::Unsupervised);
         assert!(own.asks(Category::Paying));
@@ -913,6 +920,7 @@ mod tests {
         assert!(!other.holds(Scope::Network));
         assert!(!other.holds(Scope::Clipboard) && !other.holds(Scope::Ask));
         assert!(!other.holds(Scope::Editor));
+        assert!(!other.holds(Scope::Applications));
         assert_eq!(other.mode, Mode::Confirm);
     }
 

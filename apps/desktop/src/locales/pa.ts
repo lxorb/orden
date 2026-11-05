@@ -2136,6 +2136,8 @@ export const pa: Dictionary = {
   'Read and change the clipboard': 'ਕਲਿੱਪਬੋਰਡ ਪੜ੍ਹੋ ਅਤੇ ਬਦਲੋ',
   'Ask you a question or tell you something': 'ਤੁਹਾਨੂੰ ਸਵਾਲ ਪੁੱਛੋ ਜਾਂ ਕੁਝ ਦੱਸੋ',
   'Select, mark and fold in your notes': 'ਆਪਣੇ ਨੋਟਾਂ ਵਿੱਚ ਚੁਣੋ, ਨਿਸ਼ਾਨ ਲਗਾਓ ਅਤੇ ਸਮੇਟੋ',
+  Applications: 'ਐਪਲੀਕੇਸ਼ਨਾਂ',
+  'Start, see and use your applications': 'ਆਪਣੀਆਂ ਐਪਲੀਕੇਸ਼ਨਾਂ ਸ਼ੁਰੂ ਕਰਨਾ, ਵੇਖਣਾ ਅਤੇ ਵਰਤਣਾ',
   Paying: 'ਭੁਗਤਾਨ',
   'Sending messages': 'ਸੁਨੇਹੇ ਭੇਜਣਾ',
   'Publishing and sharing': 'ਪ੍ਰਕਾਸ਼ਿਤ ਅਤੇ ਸਾਂਝਾ ਕਰਨਾ',

@@ -2072,6 +2072,8 @@ export const yue: Dictionary = {
   'Read and change the clipboard': '讀取同改變剪貼簿',
   'Ask you a question or tell you something': '問你問題或者話你知啲嘢',
   'Select, mark and fold in your notes': '喺你嘅筆記度選取、標記同摺埋',
+  Applications: '應用程式',
+  'Start, see and use your applications': '啟動、睇同使用你嘅應用程式',
   Paying: '俾錢',
   'Sending messages': '發訊息',
   'Publishing and sharing': '發佈同分享',

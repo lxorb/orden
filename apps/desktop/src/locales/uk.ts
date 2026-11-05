@@ -2210,6 +2210,8 @@ export const uk: Dictionary = {
   'Read and change the clipboard': 'Читати й змінювати буфер обміну',
   'Ask you a question or tell you something': 'Ставити вам запитання або щось повідомляти',
   'Select, mark and fold in your notes': 'Виділяти, позначати й згортати у ваших нотатках',
+  Applications: 'Програми',
+  'Start, see and use your applications': 'Запускати, бачити й використовувати ваші програми',
   Paying: 'Оплата',
   'Sending messages': 'Надсилання повідомлень',
   'Publishing and sharing': 'Публікація й поширення',

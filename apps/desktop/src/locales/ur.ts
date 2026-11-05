@@ -2130,6 +2130,8 @@ export const ur: Dictionary = {
   'Read and change the clipboard': 'کلپ بورڈ پڑھیں اور بدلیں',
   'Ask you a question or tell you something': 'آپ سے سوال پوچھیں یا کچھ بتائیں',
   'Select, mark and fold in your notes': 'اپنے نوٹس میں منتخب کریں، نشان لگائیں اور سمیٹیں',
+  Applications: 'ایپلیکیشنز',
+  'Start, see and use your applications': 'اپنی ایپلیکیشنز شروع کرنا، دیکھنا اور استعمال کرنا',
   Paying: 'ادائیگی',
   'Sending messages': 'پیغامات بھیجنا',
   'Publishing and sharing': 'شائع کرنا اور شیئر کرنا',

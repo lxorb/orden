@@ -2129,6 +2129,8 @@ export const hi: Dictionary = {
   'Read and change the clipboard': 'क्लिपबोर्ड पढ़ें और बदलें',
   'Ask you a question or tell you something': 'आपसे प्रश्न पूछें या कुछ बताएँ',
   'Select, mark and fold in your notes': 'अपने नोट्स में चुनें, चिह्नित करें और समेटें',
+  Applications: 'एप्लिकेशन',
+  'Start, see and use your applications': 'आपके एप्लिकेशन शुरू करना, देखना और इस्तेमाल करना',
   Paying: 'भुगतान',
   'Sending messages': 'संदेश भेजना',
   'Publishing and sharing': 'प्रकाशित और साझा करना',

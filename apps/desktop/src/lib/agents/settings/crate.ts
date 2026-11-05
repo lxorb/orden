@@ -95,6 +95,7 @@ const SCOPES: readonly Scope[] = [
   'clipboard',
   'ask',
   'editor',
+  'applications',
   'agents',
 ]
 

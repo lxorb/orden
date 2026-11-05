@@ -2125,6 +2125,8 @@ export const id: Dictionary = {
   'Ask you a question or tell you something':
     'Mengajukan pertanyaan atau memberi tahu Anda sesuatu',
   'Select, mark and fold in your notes': 'Memilih, menandai, dan melipat di catatan Anda',
+  Applications: 'Aplikasi',
+  'Start, see and use your applications': 'Memulai, melihat, dan memakai aplikasi Anda',
   Paying: 'Membayar',
   'Sending messages': 'Mengirim pesan',
   'Publishing and sharing': 'Menerbitkan dan berbagi',

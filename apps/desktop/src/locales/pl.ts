@@ -2217,6 +2217,8 @@ export const pl: Dictionary = {
   'Read and change the clipboard': 'Odczyt i zmiana schowka',
   'Ask you a question or tell you something': 'Zadawanie Ci pytań lub przekazywanie informacji',
   'Select, mark and fold in your notes': 'Zaznaczanie, oznaczanie i zwijanie w notatkach',
+  Applications: 'Aplikacje',
+  'Start, see and use your applications': 'Uruchamianie, oglądanie i używanie twoich aplikacji',
   Paying: 'Płacenie',
   'Sending messages': 'Wysyłanie wiadomości',
   'Publishing and sharing': 'Publikowanie i udostępnianie',

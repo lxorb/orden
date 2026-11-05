@@ -2154,6 +2154,9 @@ export const kn: Dictionary = {
   'Read and change the clipboard': 'ಕ್ಲಿಪ್‌ಬೋರ್ಡ್ ಓದಿ ಮತ್ತು ಬದಲಿಸಿ',
   'Ask you a question or tell you something': 'ನಿಮಗೆ ಪ್ರಶ್ನೆ ಕೇಳಿ ಅಥವಾ ಏನನ್ನಾದರೂ ತಿಳಿಸಿ',
   'Select, mark and fold in your notes': 'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳಲ್ಲಿ ಆಯ್ಕೆ, ಗುರುತು ಮತ್ತು ಮಡಚುವಿಕೆ',
+  Applications: 'ಅಪ್ಲಿಕೇಶನ್‌ಗಳು',
+  'Start, see and use your applications':
+    'ನಿಮ್ಮ ಅಪ್ಲಿಕೇಶನ್‌ಗಳನ್ನು ಪ್ರಾರಂಭಿಸುವುದು, ನೋಡುವುದು ಮತ್ತು ಬಳಸುವುದು',
   Paying: 'ಪಾವತಿ',
   'Sending messages': 'ಸಂದೇಶಗಳನ್ನು ಕಳುಹಿಸುವುದು',
   'Publishing and sharing': 'ಪ್ರಕಟಿಸುವುದು ಮತ್ತು ಹಂಚಿಕೊಳ್ಳುವುದು',

@@ -2119,6 +2119,8 @@ export const ja: Dictionary = {
   'Read and change the clipboard': 'クリップボードの読み取りと変更',
   'Ask you a question or tell you something': 'あなたに質問する、または何かを伝える',
   'Select, mark and fold in your notes': 'ノートで選択・マーク・折りたたみ',
+  Applications: 'アプリケーション',
+  'Start, see and use your applications': 'アプリケーションの起動、表示、操作',
   Paying: '支払い',
   'Sending messages': 'メッセージの送信',
   'Publishing and sharing': '公開と共有',

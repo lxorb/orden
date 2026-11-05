@@ -2122,6 +2122,8 @@ export const gu: Dictionary = {
   'Read and change the clipboard': 'ક્લિપબોર્ડ વાંચો અને બદલો',
   'Ask you a question or tell you something': 'તમને પ્રશ્ન પૂછો અથવા કંઈક કહો',
   'Select, mark and fold in your notes': 'તમારી નોંધોમાં પસંદ કરો, ચિહ્નિત કરો અને સંકેલો',
+  Applications: 'એપ્લિકેશનો',
+  'Start, see and use your applications': 'તમારી એપ્લિકેશનો શરૂ કરવી, જોવી અને વાપરવી',
   Paying: 'ચુકવણી',
   'Sending messages': 'સંદેશા મોકલવા',
   'Publishing and sharing': 'પ્રકાશિત અને શેર કરવું',

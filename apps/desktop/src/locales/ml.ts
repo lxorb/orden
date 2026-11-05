@@ -2162,6 +2162,8 @@ export const ml: Dictionary = {
     'നിങ്ങളോട് ചോദ്യം ചോദിക്കുക അല്ലെങ്കിൽ എന്തെങ്കിലും പറയുക',
   'Select, mark and fold in your notes':
     'നിങ്ങളുടെ കുറിപ്പുകളിൽ തിരഞ്ഞെടുക്കുക, അടയാളപ്പെടുത്തുക, മടക്കുക',
+  Applications: 'ആപ്ലിക്കേഷനുകൾ',
+  'Start, see and use your applications': 'നിങ്ങളുടെ ആപ്ലിക്കേഷനുകൾ തുടങ്ങുക, കാണുക, ഉപയോഗിക്കുക',
   Paying: 'പണമടയ്ക്കൽ',
   'Sending messages': 'സന്ദേശങ്ങൾ അയയ്ക്കൽ',
   'Publishing and sharing': 'പ്രസിദ്ധീകരിക്കലും പങ്കിടലും',

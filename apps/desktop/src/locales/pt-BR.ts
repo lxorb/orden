@@ -2172,6 +2172,8 @@ export const ptBR: Dictionary = {
   'Read and change the clipboard': 'Ler e alterar a área de transferência',
   'Ask you a question or tell you something': 'Fazer uma pergunta ou dizer algo a você',
   'Select, mark and fold in your notes': 'Selecionar, marcar e recolher nas suas notas',
+  Applications: 'Aplicativos',
+  'Start, see and use your applications': 'Iniciar, ver e usar seus aplicativos',
   Paying: 'Pagar',
   'Sending messages': 'Enviar mensagens',
   'Publishing and sharing': 'Publicar e compartilhar',

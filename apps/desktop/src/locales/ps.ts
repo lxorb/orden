@@ -2133,6 +2133,8 @@ export const ps: Dictionary = {
   'Read and change the clipboard': 'کلیپ بورډ لوستل او بدلول',
   'Ask you a question or tell you something': 'تاسو ته پوښتنه کول یا څه ویل',
   'Select, mark and fold in your notes': 'په خپلو یادښتونو کې ټاکل، نښه کول او قاتول',
+  Applications: 'اپلیکیشنونه',
+  'Start, see and use your applications': 'ستاسو اپلیکیشنونه پیلول، لیدل او کارول',
   Paying: 'تادیه',
   'Sending messages': 'پیغامونه لېږل',
   'Publishing and sharing': 'خپرول او شریکول',

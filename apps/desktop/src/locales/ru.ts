@@ -2217,6 +2217,8 @@ export const ru: Dictionary = {
   'Read and change the clipboard': 'Читать и изменять буфер обмена',
   'Ask you a question or tell you something': 'Задавать вам вопросы или сообщать что-то',
   'Select, mark and fold in your notes': 'Выделять, отмечать и сворачивать в ваших заметках',
+  Applications: 'Приложения',
+  'Start, see and use your applications': 'Запускать, видеть и использовать ваши приложения',
   Paying: 'Оплата',
   'Sending messages': 'Отправка сообщений',
   'Publishing and sharing': 'Публикация и доступ',

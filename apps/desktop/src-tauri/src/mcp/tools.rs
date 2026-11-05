@@ -489,7 +489,9 @@ mod tests {
     /// step 5): one tool, `note_editor`, 822 characters, listed only to a grant holding
     /// editor, from a table at 38 677. Raised to 40 100 the same day for the system around
     /// the app (#1078, step 6): one tool, `system`, 487 characters, listed only to a grant
-    /// holding processes, from a table at 39 499.
+    /// holding processes, from a table at 39 499. Raised to 40 700 on 2026-11-05 for the
+    /// reader's applications (#1063, step 7): one tool, `application_tabs`, 563 characters,
+    /// listed only to a grant holding applications, from a table at 39 986.
     #[test]
     fn the_table_stays_small() {
         let mut sizes = BTreeMap::new();
@@ -498,7 +500,7 @@ mod tests {
         }
         let total: usize = sizes.values().sum();
         assert!(
-            total < 40_100,
+            total < 40_700,
             "the tools are {total} characters: {sizes:?}"
         );
         for (name, size) in &sizes {

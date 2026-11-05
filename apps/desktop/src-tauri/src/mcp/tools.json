@@ -1270,6 +1270,22 @@
     }
   },
   {
+    "name": "application_tabs",
+    "description": "The reader's application tabs (op list), run on a computer of theirs. Only while this device holds one (never take it over): start, stop, restart; picture, a PNG; input, events in its pixels: {type: move|click|down|up|scroll|key|text, x, y, button, count, dx, dy, key like Enter or Ctrl+S, text}.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "type": "string",
+          "enum": ["list", "start", "stop", "restart", "picture", "input"]
+        },
+        "tab": { "type": "string" },
+        "events": { "type": "array", "items": { "type": "object" } }
+      },
+      "required": ["op"]
+    }
+  },
+  {
     "name": "run_terminal",
     "description": "Run a command in a shell of its own, or with tab in that terminal, online ones too. A program not on your allowed list asks the reader first.",
     "inputSchema": {

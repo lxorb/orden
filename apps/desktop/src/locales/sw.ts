@@ -2162,6 +2162,8 @@ export const sw: Dictionary = {
   'Read and change the clipboard': 'Kusoma na kubadilisha ubao klipu',
   'Ask you a question or tell you something': 'Kukuuliza swali au kukuambia jambo',
   'Select, mark and fold in your notes': 'Kuchagua, kuweka alama na kukunja katika madokezo yako',
+  Applications: 'Programu',
+  'Start, see and use your applications': 'Kuanzisha, kuona na kutumia programu zako',
   Paying: 'Kulipa',
   'Sending messages': 'Kutuma ujumbe',
   'Publishing and sharing': 'Kuchapisha na kushiriki',

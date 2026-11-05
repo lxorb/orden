@@ -2103,6 +2103,8 @@ export const am: Dictionary = {
   'Read and change the clipboard': 'ቅንጥብ ሰሌዳን ማንበብና መቀየር',
   'Ask you a question or tell you something': 'ጥያቄ መጠየቅ ወይም አንድ ነገር መንገር',
   'Select, mark and fold in your notes': 'በማስታወሻዎችዎ ውስጥ መምረጥ፣ ምልክት ማድረግና መሰብሰብ',
+  Applications: 'መተግበሪያዎች',
+  'Start, see and use your applications': 'መተግበሪያዎችዎን ማስጀመር፣ ማየት እና መጠቀም',
   Paying: 'መክፈል',
   'Sending messages': 'መልዕክቶችን መላክ',
   'Publishing and sharing': 'ማተም እና ማጋራት',

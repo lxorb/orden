@@ -2165,6 +2165,9 @@ export const ta: Dictionary = {
   'Read and change the clipboard': 'கிளிப்போர்டைப் படித்து மாற்று',
   'Ask you a question or tell you something': 'உங்களிடம் கேள்வி கேள் அல்லது ஏதாவது சொல்',
   'Select, mark and fold in your notes': 'உங்கள் குறிப்புகளில் தேர்ந்தெடு, குறியிடு, மடி',
+  Applications: 'பயன்பாடுகள்',
+  'Start, see and use your applications':
+    'உங்கள் பயன்பாடுகளைத் தொடங்குதல், பார்த்தல், பயன்படுத்துதல்',
   Paying: 'பணம் செலுத்துதல்',
   'Sending messages': 'செய்திகளை அனுப்புதல்',
   'Publishing and sharing': 'வெளியிடுதல், பகிர்தல்',

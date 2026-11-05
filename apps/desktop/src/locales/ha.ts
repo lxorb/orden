@@ -2163,6 +2163,8 @@ export const ha: Dictionary = {
   'Read and change the clipboard': 'Karanta da canza allon kwafi',
   'Ask you a question or tell you something': 'Yi maka tambaya ko gaya maka wani abu',
   'Select, mark and fold in your notes': 'Zaɓi, yi alama da naɗe a cikin bayananka',
+  Applications: 'Manhajoji',
+  'Start, see and use your applications': 'Fara, gani da amfani da manhajojinka',
   Paying: 'Biyan kuɗi',
   'Sending messages': 'Aika saƙonni',
   'Publishing and sharing': 'Wallafa da rabawa',

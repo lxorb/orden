@@ -2143,6 +2143,8 @@ export const te: Dictionary = {
   'Read and change the clipboard': 'క్లిప్‌బోర్డ్‌ను చదవండి, మార్చండి',
   'Ask you a question or tell you something': 'మిమ్మల్ని ప్రశ్న అడగండి లేదా ఏదైనా చెప్పండి',
   'Select, mark and fold in your notes': 'మీ నోట్స్‌లో ఎంచుకోండి, గుర్తించండి, మడవండి',
+  Applications: 'అప్లికేషన్లు',
+  'Start, see and use your applications': 'మీ అప్లికేషన్లను ప్రారంభించడం, చూడడం, వాడడం',
   Paying: 'చెల్లింపు',
   'Sending messages': 'సందేశాలు పంపడం',
   'Publishing and sharing': 'ప్రచురించడం, షేర్ చేయడం',

@@ -219,6 +219,7 @@ const VERBS: Record<string, Verb> = {
   system_clipboard: needs('clipboard'),
   ask_reader: needs('ask'),
   note_editor: needs('editor'),
+  application_tabs: needs('applications'),
   recently_deleted: needs('tree'),
   list_chats: needs('chats.read'),
   read_chat: needs('chats.read'),

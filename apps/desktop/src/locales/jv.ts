@@ -2117,6 +2117,8 @@ export const jv: Dictionary = {
   'Read and change the clipboard': 'Maca lan ngganti papan klip',
   'Ask you a question or tell you something': 'Takon utawa ngandhani sampeyan bab',
   'Select, mark and fold in your notes': 'Milih, menehi tandha lan nglempit ing cathetan sampeyan',
+  Applications: 'Aplikasi',
+  'Start, see and use your applications': 'Miwiti, ndeleng lan nggunakake aplikasi sampeyan',
   Paying: 'Mbayar',
   'Sending messages': 'Ngirim pesen',
   'Publishing and sharing': 'Nerbitake lan nuduhake',

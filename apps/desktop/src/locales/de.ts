@@ -2174,6 +2174,8 @@ export const de: Dictionary = {
   'Read and change the clipboard': 'Die Zwischenablage lesen und ändern',
   'Ask you a question or tell you something': 'Dir eine Frage stellen oder dir etwas mitteilen',
   'Select, mark and fold in your notes': 'In deinen Notizen auswählen, markieren und falten',
+  Applications: 'Anwendungen',
+  'Start, see and use your applications': 'Deine Anwendungen starten, sehen und bedienen',
   Paying: 'Bezahlen',
   'Sending messages': 'Nachrichten senden',
   'Publishing and sharing': 'Veröffentlichen und Teilen',

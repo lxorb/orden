@@ -2091,6 +2091,8 @@ export const th: Dictionary = {
   'Read and change the clipboard': 'อ่านและเปลี่ยนคลิปบอร์ด',
   'Ask you a question or tell you something': 'ถามคำถามหรือบอกบางอย่างกับคุณ',
   'Select, mark and fold in your notes': 'เลือก ทำเครื่องหมาย และพับในโน้ตของคุณ',
+  Applications: 'แอปพลิเคชัน',
+  'Start, see and use your applications': 'เริ่ม ดู และใช้แอปพลิเคชันของคุณ',
   Paying: 'การชำระเงิน',
   'Sending messages': 'การส่งข้อความ',
   'Publishing and sharing': 'การเผยแพร่และแชร์',

@@ -2133,6 +2133,8 @@ export const mr: Dictionary = {
   'Read and change the clipboard': 'क्लिपबोर्ड वाचा आणि बदला',
   'Ask you a question or tell you something': 'तुम्हाला प्रश्न विचारा किंवा काहीतरी सांगा',
   'Select, mark and fold in your notes': 'तुमच्या नोंदींमध्ये निवडा, खूण करा आणि घडी करा',
+  Applications: 'ॲप्लिकेशन्स',
+  'Start, see and use your applications': 'तुमची ॲप्लिकेशन्स सुरू करणे, पाहणे आणि वापरणे',
   Paying: 'पैसे भरणे',
   'Sending messages': 'संदेश पाठवणे',
   'Publishing and sharing': 'प्रकाशित करणे आणि शेअर करणे',

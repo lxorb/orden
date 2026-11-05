@@ -2130,6 +2130,8 @@ export const bn: Dictionary = {
   'Read and change the clipboard': 'ক্লিপবোর্ড পড়া ও বদলানো',
   'Ask you a question or tell you something': 'আপনাকে প্রশ্ন করা বা কিছু জানানো',
   'Select, mark and fold in your notes': 'আপনার নোটে নির্বাচন, চিহ্নিত ও ভাঁজ করা',
+  Applications: 'অ্যাপ্লিকেশন',
+  'Start, see and use your applications': 'আপনার অ্যাপ্লিকেশন চালু করা, দেখা ও ব্যবহার করা',
   Paying: 'অর্থ প্রদান',
   'Sending messages': 'বার্তা পাঠানো',
   'Publishing and sharing': 'প্রকাশ ও শেয়ার করা',

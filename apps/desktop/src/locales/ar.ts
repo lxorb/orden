@@ -2245,6 +2245,8 @@ export const ar: Dictionary = {
   'Read and change the clipboard': 'قراءة الحافظة وتغييرها',
   'Ask you a question or tell you something': 'طرح سؤال عليك أو إخبارك بشيء',
   'Select, mark and fold in your notes': 'التحديد والتعليم والطي في ملاحظاتك',
+  Applications: 'التطبيقات',
+  'Start, see and use your applications': 'تشغيل تطبيقاتك ورؤيتها واستخدامها',
   Paying: 'الدفع',
   'Sending messages': 'إرسال الرسائل',
   'Publishing and sharing': 'النشر والمشاركة',

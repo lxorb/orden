@@ -2109,6 +2109,8 @@ export const vi: Dictionary = {
   'Read and change the clipboard': 'Đọc và thay đổi bộ nhớ tạm',
   'Ask you a question or tell you something': 'Hỏi bạn một câu hoặc báo bạn điều gì đó',
   'Select, mark and fold in your notes': 'Chọn, đánh dấu và thu gọn trong ghi chú của bạn',
+  Applications: 'Ứng dụng',
+  'Start, see and use your applications': 'Khởi động, xem và dùng các ứng dụng của bạn',
   Paying: 'Thanh toán',
   'Sending messages': 'Gửi tin nhắn',
   'Publishing and sharing': 'Xuất bản và chia sẻ',

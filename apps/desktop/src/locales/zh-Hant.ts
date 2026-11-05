@@ -2076,6 +2076,8 @@ export const zhHant: Dictionary = {
   'Read and change the clipboard': '讀取和變更剪貼簿',
   'Ask you a question or tell you something': '向你提問或告訴你一些事',
   'Select, mark and fold in your notes': '在你的筆記中選取、標記和摺疊',
+  Applications: '應用程式',
+  'Start, see and use your applications': '啟動、檢視和使用你的應用程式',
   Paying: '付款',
   'Sending messages': '傳送訊息',
   'Publishing and sharing': '發佈與共用',

@@ -2176,6 +2176,8 @@ export const fil: Dictionary = {
   'Read and change the clipboard': 'Basahin at baguhin ang clipboard',
   'Ask you a question or tell you something': 'Magtanong sa iyo o may sabihin sa iyo',
   'Select, mark and fold in your notes': 'Pumili, mamarkahan at magtiklop sa iyong mga tala',
+  Applications: 'Mga application',
+  'Start, see and use your applications': 'Simulan, tingnan at gamitin ang iyong mga application',
   Paying: 'Pagbabayad',
   'Sending messages': 'Pagpapadala ng mensahe',
   'Publishing and sharing': 'Pag-publish at pagbabahagi',

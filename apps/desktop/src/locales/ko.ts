@@ -2100,6 +2100,8 @@ export const ko: Dictionary = {
   'Read and change the clipboard': '클립보드 읽기 및 변경',
   'Ask you a question or tell you something': '질문하거나 무언가를 알려 주기',
   'Select, mark and fold in your notes': '노트에서 선택, 표시, 접기',
+  Applications: '애플리케이션',
+  'Start, see and use your applications': '애플리케이션 시작, 보기, 사용',
   Paying: '결제',
   'Sending messages': '메시지 보내기',
   'Publishing and sharing': '게시 및 공유',

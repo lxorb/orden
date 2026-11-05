@@ -501,6 +501,7 @@ the AI sidebar, with the chat attached, and the answer comes back as a draft (de
 | `system_clipboard` | `op`: `read`, `write`; `text`? | the system clipboard's text, with `clipboard` (8.14) |
 | `ask_reader` | `kind`: `notice`, `choice`, `text`; `message`, `choices`?, `placeholder`?, `id`?, `wait_ms`? | a question in the agent's session in the Ask panel, with `ask` (8.14) |
 | `note_editor` | `tab`, `op`: `selection`, `select`, `mark`, `clear_marks`, `fold`, `unfold`, `reveal`; `selections`?, `marks`?, `line`? | a note's editor on screen, with `editor` (8.15) |
+| `application_tabs` | `op`: `list`, `start`, `stop`, `restart`, `picture`, `input`; `tab`?, `events`? | the reader's applications (docs/apps.md), only while this device holds one: run on its host, its frame as a PNG, input in its pixels; with `applications` (8.18) |
 | `attach_agent_log` | `note`, `session`? | this session's log, written into a note (9.5) |
 | `approval_status` | `id` | what the reader answered (9.3) |
 
@@ -1187,6 +1188,35 @@ API against what an agent has, or why it is left out:
 | `debug`, `tests`, `scm`, `notebooks`, `authentication` | left out | Orden has no debugger, test runner, source control view or notebook kernel for them to drive, and the reader's accounts are never handed to an agent (9.2) |
 | `extensions`, `ExtensionContext.secrets`, `globalState` | left out | an agent keeps its own state where it runs; the app's secrets are behind a fence (8.11) |
 
+### 8.18 Applications
+
+`application_tabs` is the reader's applications (#1063, step 7; docs/apps.md): a program run
+on a computer of theirs, on a display of its own, and shown in an Application tab. It is
+the `applications` scope, which the reader's own agents hold and a third party is granted
+(`agents/workspace/applications.ts`).
+
+- `list` names the application tabs: the computer each runs on, how it stands (`here`
+  with `running` or not and why, `held` by another device, `away`, `connecting`), whether
+  this device holds it, and its picture. A tab connects once it has been shown;
+  `workspace_tabs` opens one.
+- `start`, `stop` and `restart` it on its host; `picture` answers the frame the tab
+  receives now as a PNG, in the display's own pixels, marked as the application's words
+  (9.6); `input` sends `events` in those pixels: `move`, `click` (a `button`, a `count`),
+  `down`, `up`, `scroll` (`dx`, `dy` in wheel clicks), `key` (a name or a chord, `Enter`,
+  `Ctrl+S`) and `text`, at most 200 a call.
+- **The lock is the reader's.** Everything but `list` goes only while this device holds
+  the application: its host takes input, Start, Stop and Restart from the holder alone,
+  so an agent drives an application on another computer only while the device it talks
+  to holds it. Held elsewhere, the call is refused as `by_hand`: Take over is the
+  reader's to press, in the tab, and no agent presses it. Input goes over the picture's
+  own channel into the application's display, never to a real mouse or keyboard.
+- **Asked as #1072 decided.** In `confirm` mode a start, stop or restart and any input
+  ask first, under *writing*, with "Always" for that application
+  (`application:<path>`); `picture` and `list` ask nothing; Full permissions asks
+  nothing.
+- Left out for now: the accessibility tree (AT-SPI) the plan names, and the clipboard,
+  which `text` stands in for.
+
 ---
 
 ## 9. Safety and permissions
@@ -1204,7 +1234,7 @@ Each agent holds:
 
 | part | what it is | Emil's default |
 | --- | --- | --- |
-| scopes | `context`, `notes.read`, `notes.write`, `chats.read`, `chats.write`, `tree`, `workspace`, `workspace.focus`, `browser`, `browser.reader`, `browser.script`, `browser.network`, `browser.storage`, `settings`, `terminal`, `files`, `processes`, `network`, `clipboard`, `ask`, `editor`, `agents` | all but `browser.script`, `browser.storage`, `settings` |
+| scopes | `context`, `notes.read`, `notes.write`, `chats.read`, `chats.write`, `tree`, `workspace`, `workspace.focus`, `browser`, `browser.reader`, `browser.script`, `browser.network`, `browser.storage`, `settings`, `terminal`, `files`, `processes`, `network`, `clipboard`, `ask`, `editor`, `applications`, `agents` | all but `browser.script`, `browser.storage`, `settings` |
 | spaces | which spaces it may reach; another space's tabs and notes do not exist to it | every space |
 | sites | allow, deny, and "agent store only", by site (registrable domain, as `siteOf`) | none set |
 | mode | `unsupervised` or `confirm` | unsupervised |
@@ -1213,9 +1243,9 @@ Each agent holds:
 
 A third-party agent starts with `context` off, `browser.reader` off, both chats scopes off
 (a chat is other people's words), the terminal, helpers, files anywhere, programs,
-requests, the clipboard, questions and the editor off, and `confirm` mode. A grant kept
-from before #1078 has none of `files`, `processes`, `network`, `clipboard`, `ask` or
-`editor` until the reader turns them on. A grant kept from before chats were
+requests, the clipboard, questions, the editor and applications off, and `confirm` mode. A grant kept
+from before #1078 has none of `files`, `processes`, `network`, `clipboard`, `ask`,
+`editor` or `applications` until the reader turns them on. A grant kept from before chats were
 is given `chats.read` and `chats.write` where it holds `notes.read` and `notes.write` and is
 the reader's own (it holds `context`); once the file has been written with them, a scope
 taken away stays away. "Always in this chat" is kept the way "Always on this site" is, under

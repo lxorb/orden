@@ -2117,6 +2117,9 @@ export const my: Dictionary = {
   'Ask you a question or tell you something': 'သင့်ကို မေးခွန်းမေးရန် သို့မဟုတ် တစ်ခုခု ပြောရန်',
   'Select, mark and fold in your notes':
     'သင့်မှတ်စုများတွင် ရွေးရန်၊ အမှတ်အသားပြုရန်နှင့် ခေါက်ရန်',
+  Applications: 'အပလီကေးရှင်းများ',
+  'Start, see and use your applications':
+    'သင့်အပလီကေးရှင်းများကို စတင်ခြင်း၊ ကြည့်ခြင်းနှင့် အသုံးပြုခြင်း',
   Paying: 'ငွေပေးချေခြင်း',
   'Sending messages': 'မက်ဆေ့ချ် ပို့ခြင်း',
   'Publishing and sharing': 'ထုတ်ဝေခြင်းနှင့် မျှဝေခြင်း',
