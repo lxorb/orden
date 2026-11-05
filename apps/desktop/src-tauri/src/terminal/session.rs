@@ -205,6 +205,11 @@ impl Session {
         process::folder(self.pid)
     }
 
+    /// The shell's process, once it has one.
+    pub fn shell(&self) -> Option<u32> {
+        self.pid
+    }
+
     /// The end of it: nothing more is sent, the shell is killed and the terminal closed -
     /// which on Windows sends every console program still attached to it the same close a
     /// console window's cross does. Slow on Windows, where closing waits for the console

@@ -12,6 +12,7 @@
  *  The pty's source is here; the socket's is lib/online/source.ts, fetched with the
  *  first online terminal and never before. */
 
+import { type Usage, usageOf } from '@orden/online/apps'
 import type { DownReason, ImageKind } from '@orden/online/wire'
 import { toBase64 } from '../bytes'
 import { Channel } from '../native'
@@ -81,6 +82,10 @@ export interface Source {
    *  there; rejects where it could not be. Only for a source on another machine: a shell
    *  on this one reads this computer's clipboard itself. See images.ts. */
   image?(bytes: Uint8Array, kind: ImageKind): Promise<string>
+  /** What the shell and everything under it use of this computer, for the tab's hover
+   *  card in developer mode (issue 1063, step 10); null where it cannot be read. Only a
+   *  pty's: an online session's machine does not say yet. */
+  usage?(): Promise<Usage | null>
 }
 
 /** A shell in a pty on this machine, under the id given. */
@@ -94,6 +99,10 @@ export class PtySource implements Source {
     remote: boolean,
   ) {
     this.remote = remote
+  }
+
+  async usage(): Promise<Usage | null> {
+    return usageOf(await invoke<unknown>('pty_usage', { id: this.id }).catch(() => null))
   }
 
   async start(cols: number, rows: number, said: (what: Said) => void): Promise<void> {

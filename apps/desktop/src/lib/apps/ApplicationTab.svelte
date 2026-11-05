@@ -306,7 +306,7 @@
   /** The developer overlay (step 9): the stream's numbers and glass to glass. */
   let overlay = $state(false)
   $effect(() => {
-    session.picture.measure(overlay && showing)
+    if (overlay && showing) return session.picture.hold()
   })
   // Each frame the engine shows, by its RTP time, while the overlay is open: what glass
   // to glass is measured from (stats.ts).

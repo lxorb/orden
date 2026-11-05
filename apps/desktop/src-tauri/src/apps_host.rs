@@ -497,6 +497,7 @@ fn signal_here(hosted: &Hosted, key: &str, data: &str) -> Option<String> {
                 screen: running.screen.clone(),
                 clipboard,
                 sound,
+                group: Some(running.pid),
             };
             match stream::Peer::answer(source, &offer) {
                 Ok((peer, answer)) => {

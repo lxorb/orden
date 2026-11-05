@@ -238,3 +238,24 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
 - **H.264 frames are not held back**: a frame of H.264 is cut where the next one begins, so
   the last frame before a still screen used to wait for the next. It is now handed on once
   the encoder's output pauses for 2 ms.
+
+## What a tab uses (step 10)
+
+- **In developer mode, a tab's hover card says what it uses**, read once a second while the
+  card is up and never otherwise (`apps/desktop/src/lib/tab-strip/facts.ts`):
+  - **an application**: the computer it runs on, what it uses there - the processor, the
+    memory, the GPU - and its stream: size, frame rate, bit rate, round trip, encoder. The
+    host reads its process group's use and sends it with each pong (`usage`), so the card
+    holds the picture's measuring (the overlay's, step 9) while it is up. Only the holder has
+    the picture's connection, so a device that does not hold the application is told none.
+  - **a terminal on this computer**: what its shell and everything under it use
+    (`pty_usage`).
+- **Read from the kernel** (`src-tauri/src/usage.rs`), on Linux: `/proc/<pid>/stat` for the
+  processor's time, `VmRSS` for the memory, and the DRM clients' `fdinfo` for the GPU's
+  engines, where the driver says (Intel, AMD and most others since Linux 5.19; not NVIDIA's
+  own). The processor is a share of one core, 100 one core whole; the GPU its busiest
+  engine. A number that cannot be read is left out, never shown as 0: the GPU of most
+  machines, and anything on Windows and macOS yet.
+- **Not yet**: online terminals (the machine does not say), agent tabs and web tabs, whose
+  processes are the web engine's (CEF, WebView2, WebKit each count them their own way) and
+  are sequenced with the owners of that code.

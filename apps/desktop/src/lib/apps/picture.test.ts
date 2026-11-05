@@ -303,7 +303,8 @@ describe('an application’s picture', () => {
     const channel = here.peers[0]?.channel
     if (channel) channel.readyState = 'open'
     channel?.onopen?.()
-    here.picture.measure(true)
+    const release = here.picture.hold()
+    const other = here.picture.hold()
     await tick()
     expect(channel?.sent.at(-1)).toBe('{"t":"ping","at":1000}')
     expect(here.picture.stats?.width).toBe(640)
@@ -311,8 +312,9 @@ describe('an application’s picture', () => {
     // The host is 4000 ahead, and began at 4000 there; the answer came 20 later.
     here.clock.now = 1020
     channel?.onmessage?.({
-      data: '{"t":"pong","at":1000,"began":4000,"now":5010,"encoder":"libvpx","hardware":false}',
+      data: '{"t":"pong","at":1000,"began":4000,"now":5010,"encoder":"libvpx","hardware":false,"usage":{"cpu":5,"memory":2048}}',
     })
+    expect(here.picture.usage).toEqual({ cpu: 5, memory: 2048 })
     expect(here.picture.encoder).toEqual({ name: 'libvpx', hardware: false })
     // A frame read 2 s in (at 2000 here), shown at 2035 here.
     here.clock.now = 2040
@@ -320,7 +322,11 @@ describe('an application’s picture', () => {
     here.wait(1000)
     expect(here.picture.latency).toBeCloseTo(35)
 
-    here.picture.measure(false)
+    // Still wanted by the other: going on.
+    release()
+    release()
+    expect(here.picture.stats).not.toBeNull()
+    other()
     expect(here.picture.stats).toBeNull()
     expect(here.picture.latency).toBeNull()
   })

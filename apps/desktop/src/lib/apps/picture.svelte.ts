@@ -21,6 +21,7 @@ import {
   MOST_CLIPBOARD,
   type NoPicture,
   type PointerShape,
+  type Usage,
   toHostText,
   type ToHost,
 } from '@orden/online/apps'
@@ -109,7 +110,11 @@ export class Picture {
   latency = $state<number | null>(null)
   /** The encoder the host makes the picture with, as its pong said. */
   encoder = $state<{ name: string | null; hardware: boolean } | null>(null)
+  /** What the application uses of its host, as its last pong said (step 10). */
+  usage = $state<Usage | null>(null)
   private measuring: (() => void) | null = null
+  /** How many want the numbers: the overlay, and a tab's hover card. */
+  private holders = 0
   private counts: Counts | null = null
   private clock: Clock | null = null
   private began: number | null = null
@@ -177,19 +182,34 @@ export class Picture {
 
   /** The tab has gone. */
   end(): void {
+    this.holders = 0
     this.measure(false)
     this.want(false)
   }
 
-  /** Whether the overlay is open: while it is, the clocks are set side by side and the
-   *  engine's numbers read, once a second. */
-  measure(on: boolean): void {
+  /** The numbers wanted - by the overlay, or a hover card - until what this answers is
+   *  called: while anybody wants them, the clocks are set side by side and the engine's
+   *  numbers and the host's usage read, once a second. */
+  hold(): () => void {
+    this.holders += 1
+    this.measure(true)
+    let held = true
+    return () => {
+      if (!held) return
+      held = false
+      this.holders = Math.max(0, this.holders - 1)
+      if (this.holders === 0) this.measure(false)
+    }
+  }
+
+  private measure(on: boolean): void {
     if (on === (this.measuring !== null)) return
     if (!on) {
       this.measuring?.()
       this.measuring = null
       this.stats = null
       this.latency = null
+      this.usage = null
       return
     }
     let cancel: () => void = () => undefined
@@ -261,6 +281,7 @@ export class Picture {
         this.clock = clockOf(said, this.world.now())
         this.began = said.began
         this.encoder = { name: said.encoder, hardware: said.hardware }
+        this.usage = said.usage
       }
     }
     peer.ontrack = (event) => {

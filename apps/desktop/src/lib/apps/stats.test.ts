@@ -11,6 +11,7 @@ const pong = (at: number, now: number) => ({
   now,
   encoder: null,
   hardware: false,
+  usage: null,
 })
 
 describe('the clocks', () => {

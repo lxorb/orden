@@ -451,6 +451,25 @@ export interface Pong {
   now: number
   encoder: string | null
   hardware: boolean
+  /** What the application uses of its host (step 10), where the host can read it. */
+  usage: Usage | null
+}
+
+/** What a tab's processes use of the computer they run on (step 10): the processor as a
+ *  share of one core (100 is one core whole), the memory resident in bytes, and the
+ *  GPU's busiest engine, where it can be read - left out, never 0, where it cannot. */
+export interface Usage {
+  cpu: number
+  memory: number
+  gpu?: number
+}
+
+/** A usage that checks, or null. */
+export function usageOf(value: unknown): Usage | null {
+  if (!isRecord(value)) return null
+  const { cpu, memory, gpu } = value
+  if (!isTime(cpu) || !isTime(memory)) return null
+  return { cpu, memory, ...(isTime(gpu) ? { gpu } : {}) }
 }
 
 function isTime(value: unknown): value is number {
@@ -483,7 +502,15 @@ export function fromPictureOf(data: unknown): FromPicture | null {
     const { at, began, now, encoder, hardware } = value
     if (!isTime(at) || !isTime(began) || !isTime(now)) return null
     const named = typeof encoder === 'string' && encoder.length <= 64 ? encoder : null
-    return { t: 'pong', at, began, now, encoder: named, hardware: hardware === true }
+    return {
+      t: 'pong',
+      at,
+      began,
+      now,
+      encoder: named,
+      hardware: hardware === true,
+      usage: usageOf(value.usage),
+    }
   }
   if (value.t !== 'pointer') return null
   if (value.hidden === true) return { t: 'pointer', hidden: true }

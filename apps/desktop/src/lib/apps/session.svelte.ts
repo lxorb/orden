@@ -190,6 +190,11 @@ export async function idOf(path: string, until: number): Promise<string | null> 
 const sessions = new Map<string, AppSession>()
 let watching = false
 
+/** The tab's session if it has one yet, which a hover card asks without making one. */
+export function appSessionIfAny(tab: Tab): AppSession | null {
+  return sessions.get(tab.id) ?? null
+}
+
 /** The tab's session, made once; a tab that has gone takes its socket with it. */
 export function appSessionOf(tab: Tab): AppSession {
   if (!watching) {

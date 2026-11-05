@@ -166,6 +166,8 @@ struct Shared {
     pointer: Option<String>,
     /// Whoever reads the picture, told when the viewer asks for a whole one.
     news: Option<Sender<News>>,
+    /// The application's process group.
+    group: Option<u32>,
     /// When the connection began on this computer's clock, in milliseconds since 1970:
     /// what a frame's time counts from, as the tab reads it (step 9).
     began_wall: f64,
@@ -194,6 +196,9 @@ pub struct Source {
     pub screen: Arc<Mutex<Screen>>,
     pub clipboard: Option<Arc<Clipboard>>,
     pub sound: Option<String>,
+    /// The application's process group, whose use of this computer each pong says
+    /// (step 10).
+    pub group: Option<u32>,
 }
 
 /// One connection and what its threads read.
@@ -245,6 +250,7 @@ impl Peer {
             screen,
             clipboard,
             sound,
+            group,
         } = source;
         if !super::installed::on_path("ffmpeg") {
             return Err(Cannot::Encoder);
@@ -296,6 +302,7 @@ impl Peer {
                 channel: None,
                 pointer: None,
                 news: None,
+                group,
                 began_wall: wall_now(),
                 clipboard: clipboard.clone(),
                 sharing: false,
@@ -367,8 +374,15 @@ fn wall_now() -> f64 {
 /// The answer to the tab's ping (step 9): its own time back, when the connection began
 /// and what time it is here, on this computer's clock, which together set the two
 /// clocks side by side and a frame's time on the tab's; and the encoder the picture is
-/// made with.
-fn pong_text(at: f64, began: f64, now: f64, video: Option<(Mid, Pt, Encoder)>) -> String {
+/// made with; and what the application uses of this computer, where it can be read
+/// (step 10).
+fn pong_text(
+    at: f64,
+    began: f64,
+    now: f64,
+    video: Option<(Mid, Pt, Encoder)>,
+    usage: Option<crate::usage::Usage>,
+) -> String {
     let encoder = video.map(|(_, _, one)| one);
     serde_json::json!({
         "t": "pong",
@@ -377,6 +391,7 @@ fn pong_text(at: f64, began: f64, now: f64, video: Option<(Mid, Pt, Encoder)>) -
         "now": now,
         "encoder": encoder.map(|one| one.name),
         "hardware": encoder.is_some_and(|one| one.hardware != encoder::Hardware::None),
+        "usage": usage,
     })
     .to_string()
 }
@@ -595,7 +610,13 @@ fn heard(shared: &mut Shared, event: Event) -> bool {
             match event {
                 InputEvent::Share { clipboard } => shared.sharing = clipboard,
                 InputEvent::Ping { at } => {
-                    let pong = pong_text(at, shared.began_wall, wall_now(), shared.video);
+                    let usage = shared.group.and_then(|group| {
+                        crate::usage::sample(
+                            &format!("app:{group}"),
+                            crate::usage::Whose::Group(group),
+                        )
+                    });
+                    let pong = pong_text(at, shared.began_wall, wall_now(), shared.video, usage);
                     write_channel(shared, &pong);
                 }
                 InputEvent::Clipboard { text } => {
@@ -1128,14 +1149,27 @@ mod tests {
 
     #[test]
     fn answers_a_ping_with_both_clocks_and_its_encoder() {
-        let said: serde_json::Value =
-            serde_json::from_str(&pong_text(5.0, 1000.0, 1250.5, None)).unwrap();
+        let said: serde_json::Value = serde_json::from_str(&pong_text(
+            5.0,
+            1000.0,
+            1250.5,
+            None,
+            Some(crate::usage::Usage {
+                cpu: 12.5,
+                memory: 1024,
+                gpu: None,
+            }),
+        ))
+        .unwrap();
         assert_eq!(said["t"], "pong");
         assert_eq!(said["at"], 5.0);
         assert_eq!(said["began"], 1000.0);
         assert_eq!(said["now"], 1250.5);
         assert!(said["encoder"].is_null());
         assert_eq!(said["hardware"], false);
+        assert_eq!(said["usage"]["cpu"], 12.5);
+        assert_eq!(said["usage"]["memory"], 1024);
+        assert!(said["usage"].get("gpu").is_none());
     }
 
     #[test]
@@ -1172,6 +1206,7 @@ mod tests {
                     screen,
                     clipboard: None,
                     sound: None,
+                    group: None,
                 },
                 "not sdp"
             )
@@ -1264,6 +1299,7 @@ mod tests {
                     screen,
                     clipboard: display.clipboard(),
                     sound,
+                    group: None,
                 },
                 &offer.to_sdp_string(),
             )
