@@ -3350,6 +3350,7 @@ impl<T: UserEvent> CefRuntime<T> {
       // processes the app spawns later, which is intended for CEF's own subprocesses.
       unsafe { std::env::set_var("GDK_BACKEND", "x11") };
       gtk::gdk::set_allowed_backends("x11");
+      crate::platform::linux::name_windows();
       event_loop_builder.with_gtk4();
 
       // the GTK pointers this runtime hands out are GTK 4 objects, whichever bindings the `tauri`
@@ -3465,6 +3466,9 @@ impl<T: UserEvent> CefRuntime<T> {
       log_severity,
       persist_session_cookies: persist_session_cookies as std::os::raw::c_int,
       external_message_pump: 1,
+      // A popup a Chrome style browser lets CEF make is otherwise Chrome's own window, tab
+      // strip, address bar and "Sign in to Chromium?" and all (lxorb/orden#1148).
+      use_views_default_popup: 1,
       ..Default::default()
     };
 

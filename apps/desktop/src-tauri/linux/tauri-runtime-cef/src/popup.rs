@@ -155,6 +155,14 @@ impl PopupFamily {
       _observer: observer,
       dialogs,
     });
+    #[cfg(any(
+      target_os = "linux",
+      target_os = "dragonfly",
+      target_os = "freebsd",
+      target_os = "netbsd",
+      target_os = "openbsd"
+    ))]
+    crate::platform::linux::name_popup(host.window_handle());
     if let Ok(mut popups) = self.popups.lock() {
       popups.push(popup);
     } else {

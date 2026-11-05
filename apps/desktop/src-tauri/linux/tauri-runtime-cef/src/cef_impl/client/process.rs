@@ -45,6 +45,10 @@ wrap_browser_process_handler! {
       }
     }
 
+    fn default_client(&self) -> Option<Client> {
+      Some(super::unhosted::client())
+    }
+
     fn on_already_running_app_relaunch(
       &self,
       command_line: Option<&mut CommandLine>,

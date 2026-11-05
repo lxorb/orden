@@ -517,6 +517,8 @@ jobs:
         env:
           OUT: wayland-out/418-webkitgtk
           CHECK: '1'
+          # A release, not this commit: what its windows are named is not this run's to check.
+          CLASS: ''
         run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

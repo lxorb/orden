@@ -24,6 +24,7 @@ mod life_span;
 mod load;
 mod permission;
 mod process;
+mod unhosted;
 
 use command::{TauriCefCommandHandler, TauriCefCommandHandlerArgs};
 use context_menu::TauriCefContextMenuHandler;

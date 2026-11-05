@@ -6,6 +6,11 @@
 # DISPLAY is Xwayland's. Then the checks a reader would make by looking:
 #
 #   - the window maps, as a window sway can see;
+#   - every window of the app's carries the name its desktop entry's StartupWMClass
+#     says, CLASS (nib unless said; empty, not checked), and none is Chromium's own
+#     (#1148);
+#   - nothing the run does hands anything to the system's browser: an `xdg-open` of the
+#     run's own goes first on the path and says what it was asked (#1148);
 #   - nothing the graphics stack says is a failure: no EGL display that could not be
 #     made, no protocol error, no GTK criticals;
 #   - a key from any app reaches the app the way this desktop allows: through the
@@ -179,6 +184,23 @@ if [ "${PORTAL:-0}" = 1 ]; then
   done
   grep -q '"owned"' "$out/portal.log" || { echo "::error::the stand-in portal did not start"; exit 1; }
 fi
+
+# Each X11 window sway has whose WM_CLASS is not the app's, or whose title is Chromium's.
+# Every window of Orden's own Chromium is an X11 one.
+strangers() {
+  [ -n "${CLASS-nib}" ] || return 0
+  swaymsg -t get_tree | python3 -c '
+import json, sys
+def walk(node):
+    if node.get("pid") and node.get("type") in ("con", "floating_con") and node.get("shell") == "xwayland":
+        name = (node.get("window_properties") or {}).get("instance")
+        if name != sys.argv[1] or (node.get("name") or "").endswith("Chromium"):
+            print(repr(name), "|", node.get("name"))
+    for child in node.get("nodes", []) + node.get("floating_nodes", []):
+        walk(child)
+walk(json.load(sys.stdin))
+' "${CLASS-nib}"
+}
 
 # The windows sway has, one line each: app id, title, floating or tiled, focused.
 views() {
@@ -440,6 +462,14 @@ if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "
   sleep 0.5
 fi
 
+mkdir -p "$out/handed"
+cat > "$out/handed/xdg-open" <<SHIM
+#!/bin/sh
+echo "\$*" >> "$out/handed.txt"
+SHIM
+chmod +x "$out/handed/xdg-open"
+export PATH="$out/handed:$PATH"
+
 started=$(date +%s%N)
 "$@" > "$out/orden.log" 2>&1 &
 app_pid=$!
@@ -448,6 +478,11 @@ status=0
 if wait_for_views 1; then
   echo "the window mapped after $(( ($(date +%s%N) - started) / 1000000 )) ms:"
   views
+  if [ -n "$(strangers)" ]; then
+    echo "::error::a window not under the desktop entry's name, ${CLASS-nib}, or Chromium's own:"
+    strangers
+    status=1
+  fi
 else
   echo "::error::no window mapped in 60 s"
   status=1
@@ -858,6 +893,11 @@ if ! kill -0 "$app_pid" 2>/dev/null; then
   echo "::error::Orden ended before the run did"
   status=1
 fi
+if [ -n "$(strangers)" ]; then
+  echo "::error::as the run ends, a window not under ${CLASS-nib}, or Chromium's own:"
+  strangers
+  status=1
+fi
 views > "$out/views.txt" || true
 # A picture of every screen as the run leaves it, whatever it checked.
 for screen in $(swaymsg -t get_outputs | python3 -c 'import json,sys; print(" ".join(o["name"] for o in json.load(sys.stdin)))'); do
@@ -884,6 +924,12 @@ if [ -f "$out/nib.log" ]; then
   if [ -n "${KEYS:-}" ]; then
     grep -q "global keys: $KEYS" "$out/nib.log" || { echo "::error::nib.log does not say 'global keys: $KEYS'"; status=1; }
   fi
+fi
+
+if [ -s "$out/handed.txt" ]; then
+  echo "::error::the system's browser was handed what nobody asked it to open:"
+  cat "$out/handed.txt"
+  status=1
 fi
 
 # What a Wayland session must never print: the EGL display the friend's NixOS box could

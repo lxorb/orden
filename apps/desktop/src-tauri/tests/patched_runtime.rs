@@ -102,3 +102,32 @@ fn linux_builds_the_patched_copy_at_the_pinned_version() {
         "the copy is not tauri-runtime-cef {pinned}: move it with the pin"
     );
 }
+
+/// #1148: a sign-in's popup, and an extension's tab, were Chromium's whole window, tab
+/// strip, address bar and "Sign in to Chromium?" and all, which a desktop showed as
+/// Chromium; and every window GTK made carried no `WM_CLASS`, so no desktop could put it
+/// under Orden's name and icon.
+#[test]
+fn every_window_is_orden_s_and_none_chromium_s() {
+    let runtime = read(&root().join("src/runtime.rs"));
+    assert!(runtime.contains("use_views_default_popup: 1,"));
+    let named = runtime
+        .find("crate::platform::linux::name_windows();")
+        .expect("the runtime names its windows");
+    let built = runtime
+        .find("event_loop_builder\n      .build()")
+        .expect("the runtime builds its event loop");
+    assert!(named < built, "the windows are named after GTK starts");
+
+    let class = read(&root().join("src/platform/linux/class.rs"));
+    assert!(class.contains("gtk::glib::set_prgname("));
+    assert!(class.contains("\"CHROME_DESKTOP\""));
+    assert!(class.contains("(xlib.XSetClassHint)("));
+    let popup = read(&root().join("src/popup.rs"));
+    assert!(popup.contains("crate::platform::linux::name_popup(host.window_handle());"));
+    // And a window Chrome's own UI opens - an extension's tab - is closed, never shown.
+    let process = read(&root().join("src/cef_impl/client/process.rs"));
+    assert!(process.contains("fn default_client(&self) -> Option<Client>"));
+    let unhosted = read(&root().join("src/cef_impl/client/unhosted.rs"));
+    assert!(unhosted.contains("host.close_browser(1);"));
+}

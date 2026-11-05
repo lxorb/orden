@@ -13,6 +13,9 @@
 #
 #   dbus-run-session -- scripts/x11-launch.sh /path/to/AppRun
 #
+# Every window with a title has to be under the name the desktop entry's StartupWMClass
+# says, CLASS (nib unless said), and none Chromium's own (#1148).
+#
 # Everything it saw is left in $OUT (default ./x11-out).
 set -euo pipefail
 
@@ -91,6 +94,18 @@ if [ "$status" = 0 ]; then
   xwininfo -root -tree 2>/dev/null | grep -iE 'orden|nib|read me' | head || true
   # Up for a while, and still up after it.
   sleep 10
+  strangers=$(xwininfo -root -children 2>/dev/null | python3 -c '
+import re, subprocess, sys
+for one in re.finditer(r"^\s+(0x[0-9a-f]+) \"(.*)\": \(\"([^\"]*)\"", sys.stdin.read(), re.M):
+    shown = subprocess.run(["xwininfo", "-id", one.group(1)], capture_output=True, text=True).stdout
+    if "IsViewable" in shown and (one.group(3) != sys.argv[1] or one.group(2).endswith("Chromium")):
+        print(one.group(0).strip())
+' "${CLASS:-nib}" || true)
+  if [ -n "$strangers" ]; then
+    echo "::error::a window not under the desktop entry's name, ${CLASS:-nib}, or Chromium's own:"
+    echo "$strangers"
+    status=1
+  fi
   kill -0 "$app" 2>/dev/null || { echo "::error::Orden ended after its window mapped"; status=1; }
 fi
 # Idle, before anything is done with it: what it costs the CPU (#427, scripts/idle-cpu.py).

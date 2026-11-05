@@ -19,7 +19,11 @@ A page of this run's own, in a web tab, with one wide button or link for each wa
   - `window.open` of a file the server hands over as a download: the server is asked.
 
 Each case is pressed, and the server this drive runs says what the page and whatever it
-opened asked for; a case whose requests are not all heard in time is a failure. Before
+opened asked for; a case whose requests are not all heard in time is a failure. And while
+each is waited on, every window on the screen has to be under the app's own name
+(CLASS, nib unless said) and none of them Chromium's own: before #1148 a sign-in's popup
+was a whole Chromium window, tab strip, address bar and "Sign in to Chromium?" and all,
+which a desktop showed as Chromium. Before
 #1074 the popup lost its opener, and the blank windows and the POST opened nothing, or
 the wrong thing: the page was answered `null` and a tab was built afresh at the address.
 
@@ -35,6 +39,7 @@ import ctypes
 import http.server
 import json
 import os
+import re
 import socketserver
 import subprocess
 import sys
@@ -221,6 +226,17 @@ if DESK == "sway":
         with open(POINTER, "w") as pointer:
             pointer.write(f"move {x} {y}\nclick\n")
 
+    def shown():
+        """Each window on the screen: its WM_CLASS instance and its title."""
+
+        def walk(node):
+            if node.get("pid") and node.get("type") in ("con", "floating_con"):
+                yield (node.get("window_properties") or {}).get("instance"), node.get("name") or ""
+            for child in node.get("nodes", []) + node.get("floating_nodes", []):
+                yield from walk(child)
+
+        return list(walk(json.loads(subprocess.check_output(["swaymsg", "-r", "-t", "get_tree"]))))
+
     # On the wide screen at scale 1, as popup-drive.py puts it.
     subprocess.run(["swaymsg", f"[pid={APP}] move container to output HEADLESS-2, focus"], check=False)
     time.sleep(2)
@@ -243,6 +259,24 @@ else:
         TEST.XTestFakeButtonEvent(SHOWN, 1, 1, 0)
         TEST.XTestFakeButtonEvent(SHOWN, 1, 0, 0)
         X.XFlush(SHOWN)
+
+    def shown():
+        """Each window on the screen with a title: its WM_CLASS instance and the title."""
+        listed = subprocess.run(["xwininfo", "-root", "-children"], capture_output=True, text=True).stdout
+        return [
+            (one.group(3), one.group(2))
+            for one in re.finditer(r'^\s+(0x[0-9a-f]+) "(.*)": \("([^"]*)"', listed, re.M)
+            if "IsViewable"
+            in subprocess.run(["xwininfo", "-id", one.group(1)], capture_output=True, text=True).stdout
+        ]
+
+
+CLASS = os.environ.get("CLASS", "nib")
+
+
+def strangers():
+    """The windows on the screen not under the app's name, or Chromium's own."""
+    return [(name, title) for name, title in shown() if name != CLASS or title.endswith("Chromium")]
 
 
 def where():
@@ -312,8 +346,10 @@ for case, wanted in CASES.items():
             ".find((one) => one.textContent.trim() === 'Open'); open && open.click(); return !!open })()"
         )
     missing = wanted
+    strange = set()
     for _ in range(25):
         time.sleep(0.2)
+        strange.update(strangers())
         missing = [one for one in wanted if one not in heard[began:]]
         if not missing:
             break
@@ -323,6 +359,9 @@ for case, wanted in CASES.items():
         print(f"::error::{case}: never heard {missing}; heard {asked}")
     else:
         print(f"{case}: {asked}")
+    if strange:
+        failures.append(f"{case}: windows not under {CLASS}, or Chromium's: {sorted(strange)}")
+        print(f"::error::{case}: windows not under {CLASS}, or Chromium's: {sorted(strange)}")
     run(OTHERS)
     time.sleep(2)
 
