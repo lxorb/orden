@@ -634,11 +634,14 @@ export function partOf(file: string, catalogue: boolean): Part {
  *
  *  Raised on 2026-11-05 for #1137, the grounds that leave a hole for a page drawn under the
  *  window's HTML (web-tab/underlay.ts): the styles to 291,700, measured 291,441.
+ *
+ *  Raised on 2026-11-05 for #1150, a card of its own for each AI account and vault device
+ *  (AiPane.svelte): the styles to 292,400, measured 292,070.
  */
 export const BUDGETS: Record<Part, number> = {
   code: 6_127_800,
   catalogues: 1_010_800,
-  styles: 291_700,
+  styles: 292_400,
   fonts: 260_000,
   pages: 40_000,
 }
