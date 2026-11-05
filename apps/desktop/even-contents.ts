@@ -348,6 +348,12 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  logos and their names stay out (vite.even.config.ts, brand-names.even.ts). Measured
  *  5,801,561.
  *
+ *  The code raised on 2026-11-03, to 5,852,500, for the bug hunt's rounds one and two merged
+ *  into claude/hunt-round-1, measured together: the views' and the desktop's writing fixes,
+ *  what a base may cost, a thread written down while it runs, the sync's scans, an undo that
+ *  waits for every gesture landing, one definition of front matter and one device's windows
+ *  being one. Measured 5,852,262.
+ *
  *  The code raised on 2026-11-04, to 5,813,700, for #331: All spaces, every space's
  *  windows in a living membrane on the overview's canvas (overview/membrane.ts,
  *  Cells.svelte), and a window plopped from one cell into another moved to that space
@@ -391,6 +397,18 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,848,600, for #1077: signing in gives the untouched
  *  default space way to the account's own, decided in one place (seed-space.ts, and the
  *  plan's `discard` in space-plan.ts). Measured 5,848,312.
+ *
+ *  The code raised on 2026-11-04, to 5,912,000, for one note across windows (a file's turn
+ *  and a note's one line ending; the plugin carries no merge). Before it, to 5,899,500, for
+ *  the bug hunt's two rounds and the above being in one build at last, on
+ *  claude/hunt-round-1: nothing new, the two sums together. Measured 5,899,267.
+ *
+ *  The code raised on 2026-11-04, to 5,855,000, for the sync hunt's round three: a note the
+ *  disk refuses staying wanted, a space's trouble being that space's. Measured 5,854,964.
+ *
+ *  The code raised on 2026-11-04, to 5,915,000, for the bug hunt's third round on the
+ *  views: what walking a value costs a guarded base, words of raw HTML in an export, a
+ *  fence found by what is drawn, and the head offering what can be kept. Measured 5,914,633.
  *
  *  The code raised on 2026-11-04, to 5,848,800, for #1067: a popup fetched through a
  *  door plays its way out and turns round where it is when pressed again (Door.svelte,
@@ -492,11 +510,42 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  tab but the one in front as its icon, with its hint, in every catalogue
  *  (general-pane.ts). Measured 967,294.
  *
+ *  The code raised on 2026-11-04, to 5,965,400, for the bug hunt's third round, the sums above
+ *  and what came to unstable meanwhile in one build at last, on claude/hunt-round-1: nothing
+ *  new beyond one guard fewer for a launch's first write. Measured 5,965,187.
+ *
+ *  Raised on 2026-11-04 for the bug hunt's fourth round, whose four branches came together on
+ *  claude/hunt-round-1. The code to 5,997,200: a file the account refuses on sync v1, and what
+ *  such a pass may still delete (sync/pass.ts); a row under several labels, a space's views
+ *  following its name, a block's name by its line, text escaped whatever marked says; a
+ *  report's log with the reader's paths out of it (feedback-log.ts), a closed tab's way back
+ *  (moving-space.ts); a session written in a launch, words meeting an open document. Measured
+ *  5,996,978. The catalogues to 975,800, the sheet's new words and two messages in every
+ *  catalogue, measured 975,705.
+ *
+ *  Raised on 2026-11-04 as #1068, #1097, #331 and #1111 came to claude/hunt-round-1, none of
+ *  which raised these on unstable, where they fit under what the hunt has since spent. The code
+ *  to 6,001,800: a delete put back as its entries, each row's own place, an emoji's tint, the
+ *  overview's bubbles. Measured 6,001,579. The catalogues to 979,600: the overview's blur setting
+ *  and One colour in every catalogue, measured 979,469. The agents' branch moved neither past
+ *  the budgets before them.
+ *
+ *  The code raised on 2026-11-04, to 6,002,200, as #1068's move and delete said to sync first
+ *  and #1115's quick question started as a chat came to claude/hunt-round-1, net of what the
+ *  latter took out. Measured 6,002,001.
+ *
+ *  Raised on 2026-11-04 for the leftovers of the bug round: the code to 6,003,000, one tab per
+ *  document on a reopen and a refused write saying why, measured 6,002,821. The catalogues to
+ *  982,500: that reason in every catalogue, measured 982,425.
+ *
  *  The code raised on 2026-11-04, to 5,892,500, and the catalogues to 969,500, for #1054
  *  and #1116: the icon picker's Web icons - the account's sites, held on the device and
  *  drawn as pictures, in every catalogue - and a cell's marks on its own box
  *  (web-tab/site-icons.svelte.ts, IconPicker.svelte, Icon.svelte). Measured 5,891,756
  *  and 968,905.
+ *
+ *  Raised on 2026-11-04 as #1054 and #1116 came to claude/hunt-round-1: the code to 6,011,300,
+ *  measured 6,011,091, and the catalogues to 984,100, measured 983,998.
  *
  *  The code raised on 2026-11-04, to 5,894,100, for #1063: an application as a kind of
  *  file and tab in developer mode, which the plugin never opens. Its words fit in the
@@ -505,6 +554,9 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-04, to 5,894,600, for #1068: a bookmark keeps the id of
  *  what it points at, and is found by it (workspace/bookmarks.svelte.ts,
  *  workspace/entry-ids.ts). Measured 5,894,413.
+ *
+ *  The code raised on 2026-11-04, to 6,013,800, as #1063 and #1068 came to claude/hunt-round-1.
+ *  Measured 6,013,571.
  *
  *  The code raised on 2026-11-04, to 5,897,400, and the catalogues to 973,000, for #1033:
  *  Alt+H, J, K and L between the panes (pane-moves.ts, `paneToward` in
@@ -544,80 +596,56 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  (Tabs.svelte, tab-strip/, Bookmarks.svelte, base.css). Measured 5,916,205, 976,970 and
  *  291,204.
  *
- *  The code raised on 2026-11-05, to 5,919,400, for #1122: an `ai` block's answer has
- *  LaTeX's `\(…\)` and `\[…\]` spelled the way the note draws formulas as it arrives
- *  (`TexDelimiters` in @orden/markdown/streamed, ai/answering.ts). Measured 5,918,818.
+ *  Raised on 2026-11-04 as #1033, #1120, #1106 and #331 came to claude/hunt-round-1, on
+ *  the hunt's own 6,013,571 and 983,998: the code to 6,022,500, the panes' Alt+H/J/K/L,
+ *  the properties strip and a footnote's card, measured 6,022,254; the catalogues to
+ *  988,100, the panes' names in every language, measured 988,012. The styles keep
+ *  #331's 290,700, measured 290,524.
  *
- *  The code raised on 2026-11-05, to 5,928,600, and the styles to 292,200, for #331: the
- *  tab overview's spaces packed round a middle, several windows chosen and carried at
- *  once, a space carried by its name, the tab in front riding on its window, the zoom
- *  eased in time and the bar quiet while it is up (overview/pack.ts,
- *  overview/Overview.svelte). Measured 5,928,010 and 292,112.
+ *  Raised on 2026-11-05 as #1110, #1114, #1063 and #331 came to claude/hunt-round-1 on
+ *  top of the hunt's: the code to 6,035,500, measured 6,035,357; the catalogues to
+ *  992,400, measured 992,135. The styles keep #1114's 291,500, measured 291,272.
  *
- *  The code raised on 2026-11-05, to 5,932,100, for #1068: the browser's rows can be
- *  mounted at a folder, every table asked by path (`mountRows` in web/store.ts).
- *  Measured 5,931,783.
+ *  The code raised on 2026-11-05, to 6,037,600, as #1122, #1078, #1124 and #1068 came to
+ *  claude/hunt-round-1 on top of the hunt's: an `ai` block's answer drawn as the note is
+ *  (`TexDelimiters` in @orden/markdown/streamed), the agents' programs, the registry of
+ *  what covers a page, measured 6,037,507. Catalogues 992,135 and styles 291,272 as they
+ *  were. Then to 6,037,800 for #1125 and #1063 and the device store's one rule, measured
+ *  6,037,649.
  *
- *  The code raised on 2026-11-05, to 5,935,100, for #1061: the arrow after a link that
- *  leaves the app as one mark with the `?`, on the letters and kept with the last word
- *  (Outward.svelte, Hint.svelte, base.css). Measured 5,934,516.
+ *  Raised on 2026-11-05 as #331's packed overview and #1068's mounted rows came to
+ *  claude/hunt-round-1 on top of the hunt's: the code to 6,050,500, measured 6,050,283;
+ *  the styles to #331's 292,200, measured 292,180. Catalogues 992,135 as they were.
+ *  Then the code to 6,051,000 for the device id read beside the web store (`deviceWeb`
+ *  in web/sync-store.ts), measured 6,050,842. Then to 6,054,000 as #1061's arrow after a
+ *  link out came, measured 6,053,809; styles 292,188 inside #331's 292,200.
  *
- *  The code raised on 2026-11-05, to 5,935,600, and the styles to 292,300, for #1063: a
- *  tab's hover card saying what the tab uses in developer mode (tab-strip/facts.ts,
- *  fetched apart and never in the plugin; the card's lines for it). Measured 5,935,326
- *  and 292,272.
+ *  Lowered on 2026-11-05 as #1120 came to claude/hunt-round-1, the agents' activity in the
+ *  Ask panel in place of their own: the code to 6,046,300, measured 6,046,126; the
+ *  catalogues to 989,200, measured 989,126; the styles to 288,400, measured 288,383.
+ *  Then the code to 6,046,900 and the styles to 288,600 for #1063's hover card saying
+ *  what a tab uses, measured 6,046,692 and 288,535.
  *
- *  The catalogues raised on 2026-11-05, to 985,000, for #1127: a tab unloaded from its
- *  menu, its three rows, the question before a page with something typed into it goes
- *  and the switch under General > Tabs, in every language (tab-strip/unloading.svelte.ts,
- *  general-pane.ts). Its code and its faded marks fit in the room. Measured 984,540.
+ *  Raised on 2026-11-05 as #1127's unloaded tabs and #1092's agent tab on a Mac came to
+ *  claude/hunt-round-1: the code to 6,051,600, measured 6,051,343; the catalogues to
+ *  1,000,000, the menu's and the setting's words in every language, measured 999,745; the
+ *  styles to 288,800, measured 288,696. Then the code to 6,053,400 and the catalogues to
+ *  1,003,400 for dictation's engines and keys, measured 6,053,129 and 1,003,220.
  *
- *  The code raised on 2026-11-05, to 5,937,700, and the catalogues to 988,600, for
- *  #1128: dictation into a field, the microphone, its chooser and the keys that Settings
- *  > AI draws in the plugin too, and their words in every language (dictation/,
- *  AiPane.svelte). Measured 5,937,052 and 987,975.
+ *  Raised on 2026-11-05 as #1068's kept spaces came to claude/hunt-round-1, as unstable
+ *  raised its own: the code to 6,111,000, measured 6,110,700; the catalogues to 1,004,400,
+ *  measured 1,004,236; the styles to 289,500, measured 289,408.
  *
- *  The code raised on 2026-11-05, to 5,940,500, for #1129: a bubble hung over the window
- *  from what it is about (`hang` in portal.ts, Hint.svelte, NameField.svelte).
- *  Measured 5,939,852.
- *
- *  The code raised on 2026-11-05, to 5,992,800, and the catalogues to 989,500, for
- *  #1068: a space Orden keeps itself, a folder of its own with its bytes under keys and
- *  one index of where each is, the commands that answer for it on a desktop, its folder
- *  heard and its rows searched, new spaces kept so where a device says, each folder made
- *  into one once and back, and a space exported as Markdown and folders (internal/; the
- *  two commands' words in every catalogue). Measured 5,992,233 and 988,983.
- *
- *  The code raised on 2026-11-05, to 5,994,700, for #1037: a split window's strips in its
- *  one top row, over their panes on the panes' own grid (TopStrips.svelte,
- *  workspace/pane-tree.ts, Titlebar.svelte). Measured 5,993,910.
- *
- *  The code raised on 2026-11-05, to 5,996,000, for #1038: each sidebar's button in the
- *  sidebar, the right side out of the window's end edge, and the hint about the edge
- *  (edge-peek.svelte.ts, Sidebar.svelte, SidebarToggle.svelte, Titlebar.svelte). Measured
- *  5,995,265.
- *
- *  The code raised on 2026-11-05, to 6,002,700, for #1126: a note's scan and the search
- *  matcher moved into a package of their own (@orden/scan), so the account runs the same
- *  code over its copy of the notes. Nothing new is in the plugin; the moved modules make
- *  chunks of their own and every chunk that reads them imports them by a new name.
- *  Measured 6,001,972.
- *
- *  The code raised on 2026-11-05, to 6,008,000, and the catalogues to 991,500, for #1126:
- *  a browser keeping only the words it uses - the engine's keeping (sync2/keeping.ts),
- *  the files kept away listed and fetched by the browser's commands (web/away.svelte.ts),
- *  the cloud on their rows and the two sentences for them in every language. Measured
- *  6,007,286 and 990,827.
- *
- *  The code raised on 2026-11-05, to 6,009,700, for #1126: what that browser knows of
- *  the notes it keeps no words of - their scans asked of the account and kept by id
- *  (sync2/indexing.ts, web/index-store.ts), read into the link index and the rows, and a
- *  search of them asked of the account a page at a time. Measured 6,008,937.
+ *  Raised on 2026-11-05 as #1126's browser keeping only the words it uses and #1092's
+ *  agent rows came to claude/hunt-round-1, as unstable raised its own: the code to
+ *  6,126,300, measured 6,125,997; the catalogues to 1,006,300, measured 1,006,088; the
+ *  styles to 289,800, measured 289,721. Then the styles to 290,000 for #1126's away
+ *  mark in a pane, measured 289,913.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_009_700,
-  catalogues: 991_500,
-  styles: 292_300,
+  code: 6_126_300,
+  catalogues: 1_006_300,
+  styles: 290_000,
   fonts: 260_000,
   pages: 40_000,
 }

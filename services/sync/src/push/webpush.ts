@@ -153,5 +153,6 @@ export async function sendWebPush(
 
   const answer = await (options.fetch ?? fetch)(endpoint, { method: 'POST', headers, body })
   if (answer.status === 404 || answer.status === 410) return 'gone'
+  if (answer.status === 429 || answer.status === 503) return 'busy'
   return answer.ok ? 'sent' : 'failed'
 }

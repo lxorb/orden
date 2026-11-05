@@ -754,6 +754,8 @@ export const gsw: Dictionary = {
   '{done} of {total}': '{done} vo {total}',
   'Sync failed': 'Synchronisierig het nod klappt',
   '{name} could not be written.': '{name} het sich nöd schriibe laa.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} het sich nöd schriibe laa: D Datei laat sich nöd läse. Si isch vilicht grösser als 64 MB oder kän UTF-8-Täxt.',
   '{name} could not be read.': '{name} het sich nöd läse laa.',
   'Text size': 'Textgrössi',
   'Line spacing': 'Ziilenabstand',
@@ -1544,6 +1546,8 @@ export const gsw: Dictionary = {
   'The provider answered {status}.': 'De Aabieter hät mit {status} gantwortet.',
   'Add an AI provider in Settings first.': 'Zerscht i de Iistellige en KI-Aabieter dezuetue.',
   'The model did not answer.': 'S Modäll hät nöd gantwortet.',
+  'The connection closed before the answer was finished.':
+    'D Verbindig isch abbroche, bevor d Antwort fertig gsi isch.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'Dis {plan}-Abo isch bis {time} am Limit.',
   'Your {plan} plan is at its limit for now.': 'Dis {plan}-Abo isch für de Momänt am Limit.',
@@ -2023,8 +2027,10 @@ export const gsw: Dictionary = {
   'Send feedback': 'Feedback schicke',
   'Describe the issue': 'Beschrieb s Problem',
   Sent: 'Gschickt',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'De Bricht enthaltet dini Beschriibig, d Version vo Orden, dini Plattform und s aktuelle App-Protokoll. Dini Notize enthaltet er nie.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Dä Bricht enthaltet dini Beschribig, d Version vo Orden, dini Plattform und s aktuelle App-Protokoll, ohni Dateipfäd.',
+  'Its space is archived': 'Sin Space isch archiviert',
+  'Back as {name}': 'Zrugg als {name}',
   'Send into the running answer': 'I die laufend Antwort schicke',
   'Stop the answer': 'Antwort aahalte',
   'Open every step': 'Alli Schritt uftue',
@@ -2109,6 +2115,8 @@ export const gsw: Dictionary = {
     'Er list dini Notize und surft aagmäldet als du, also chönnt e Siite probiere, ihn dezue z bringe, dass er sie wiiterschickt.',
   Activity: 'Aktivität',
   'Add a site': 'Websiite dezuefüege',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Es Programm uf dere Lischte lauft ohni Nachfrag und cha alles, was das Programm cha.',
   'Add a program': 'Programm dezuefüege',
   'Every space': 'All Ablage',
   Sites: 'Websiite',
@@ -2538,6 +2546,7 @@ export const gsw: Dictionary = {
   'No {property}': 'Ohni {property}',
   '{card} moved to {group}': '{card} nach {group} verschobe',
   'Not moved': 'Nöd verschobe',
+  'Not undone': 'Nöd rückgängig gmacht',
   Retry: 'Nomol probiere',
   Calculate: 'Berächne',
   'Remove sort': 'Sortierig entferne',
@@ -2820,6 +2829,8 @@ export const gsw: Dictionary = {
   '{title}, running': '{title}, lauft',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden speicheret KI-Schlüssel nümm im Schlüsselbund vom Mac, wo immer wieder nach em Passwort gfrogt het. Gib dini Schlüssel no einisch ii und meld di wieder bi ChatGPT aa.',
+  'This PDF is locked by its owner': 'Das PDF isch vo sim Bsitzer gsperrt',
+  'Part of this could not be undone': 'En Teil devo het nöd chöne rückgängig gmacht werde',
   'Add images': 'Bilder dezuefüege',
   'Remove image': 'Bild entferne',
   'That is more than 4 images.': 'Das sind meh als 4 Bilder.',

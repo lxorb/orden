@@ -748,6 +748,8 @@ export const ms: Dictionary = {
   '{done} of {total}': '{done} daripada {total}',
   'Sync failed': 'Penyegerakan gagal',
   '{name} could not be written.': '{name} tidak dapat ditulis.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} tidak dapat ditulis: failnya tidak dapat dibaca. Mungkin melebihi 64 MB atau bukan teks UTF-8.',
   '{name} could not be read.': '{name} tidak dapat dibaca.',
   'Text size': 'Saiz teks',
   'Line spacing': 'Jarak baris',
@@ -1523,6 +1525,8 @@ export const ms: Dictionary = {
   'The provider answered {status}.': 'Pembekal menjawab {status}.',
   'Add an AI provider in Settings first.': 'Tambah pembekal AI dalam Tetapan dahulu.',
   'The model did not answer.': 'Model tidak menjawab.',
+  'The connection closed before the answer was finished.':
+    'Sambungan ditutup sebelum jawapan selesai.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'Pelan {plan} anda mencapai had sehingga {time}.',
@@ -2005,8 +2009,10 @@ export const ms: Dictionary = {
   'Send feedback': 'Hantar maklum balas',
   'Describe the issue': 'Terangkan masalahnya',
   Sent: 'Dihantar',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Laporan ini mengandungi penerangan anda, versi Orden, platform anda dan log aplikasi terkini. Nota anda tidak pernah disertakan.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Laporan ini mengandungi penerangan anda, versi Orden, platform anda dan log aplikasi terkini, tanpa laluan fail.',
+  'Its space is archived': 'Ruangnya diarkibkan',
+  'Back as {name}': 'Kembali sebagai {name}',
   'Send into the running answer': 'Hantar ke jawapan yang sedang berjalan',
   'Stop the answer': 'Hentikan jawapan',
   'Open every step': 'Buka semua langkah',
@@ -2092,6 +2098,8 @@ export const ms: Dictionary = {
     'Ia membaca nota anda dan melayari web dengan log masuk anda, jadi halaman boleh cuba membuatnya menghantar nota itu keluar.',
   Activity: 'Aktiviti',
   'Add a site': 'Tambah laman',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Program dalam senarai ini berjalan tanpa bertanya, dan boleh melakukan apa sahaja yang boleh dilakukan oleh program itu.',
   'Add a program': 'Tambah program',
   'Every space': 'Setiap ruang',
   Sites: 'Laman',
@@ -2517,6 +2525,7 @@ export const ms: Dictionary = {
   'No {property}': 'Tiada {property}',
   '{card} moved to {group}': '{card} dialihkan ke {group}',
   'Not moved': 'Tidak dialihkan',
+  'Not undone': 'Tidak dibuat asal',
   Retry: 'Cuba lagi',
   Calculate: 'Kira',
   'Remove sort': 'Buang susunan',
@@ -2797,6 +2806,8 @@ export const ms: Dictionary = {
   '{title}, running': '{title}, sedang berjalan',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden tidak lagi menyimpan kunci AI dalam rantai kunci Mac, yang asyik meminta kata laluannya. Masukkan kunci anda dan log masuk ke ChatGPT sekali lagi.',
+  'This PDF is locked by its owner': 'PDF ini dikunci oleh pemiliknya',
+  'Part of this could not be undone': 'Sebahagian daripada ini tidak dapat dibuat asal',
   'Add images': 'Tambah imej',
   'Remove image': 'Alih keluar imej',
   'That is more than 4 images.': 'Itu lebih daripada 4 imej.',

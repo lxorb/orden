@@ -28,6 +28,7 @@
  *  left exactly as it was found. A card is never replaced by an empty box. */
 
 import type { FileDrawing } from '@orden/editor'
+import { decodeTarget } from '@orden/markdown/links'
 import { nameOf } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 
@@ -145,11 +146,7 @@ function askedBy(card: HTMLElement, root: string): Drawn | null {
  *  `attributeUrl` is what put it through `encodeURI` on the way in. The same
  *  reading the page's own click does; see `written` in Reading.svelte. */
 function written(target: string): string {
-  try {
-    return decodeURI(target)
-  } catch {
-    return target
-  }
+  return decodeTarget(target)
 }
 
 /** Draws the thing and puts it in the card, or leaves the card alone.

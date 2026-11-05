@@ -1365,8 +1365,8 @@ the history alone.
 (docs/backlog.md, Q3), a new tab's New private tab card (I), the dots and the palette. Its
 page runs in the engine's own private mode - `WebView2`'s InPrivate profile, a data store
 of the page's own on a Mac and on Linux - so nothing it stores reaches the disk. And Orden writes nothing of it either: no history, no
-favicon, no place on the page, no session that would bring it back after a restart, no
-closed tab for Ctrl+Shift+T, no web note - Save is refused for it. Memory saver never
+favicon, no place on the page, no picture or name in the overview, no session that would
+bring it back after a restart, no closed tab for Ctrl+Shift+T, no web note - Save is refused for it. Memory saver never
 parks it, because a page built again would have forgotten everything. A link out of it
 opens privately too. It wears Chrome's own mark, the hat and the glasses, on the tab and
 at the left of its address field.
@@ -2113,7 +2113,21 @@ that descriptor, which the bisection above shows is enough. wry 0.57 injects `ip
 when an IPC handler is set, and Tauri always sets one, so an upgrade alone would not have
 helped.
 
-**Measured on Windows only.** The probes drive `WebView2`. The same clearing is built on
+**Orden's own Chromium: the same `ipc`, from the runtime's renderer.** `tauri-runtime-cef`
+writes a read only, non-configurable `window.ipc` into every context of every frame, so
+the same script was the same `SyntaxError` on Linux, and no script of Orden's could take it
+back. There every process CEF starts beside the app is the app's own executable, so the
+handler is the app's to choose: `cef_helper` runs the renderer in
+`src-tauri/src/engine/renderer.rs`, which writes `ipc` where the frame's address is the
+app's own, `http://tauri.localhost`, and nowhere else: by address, since a renderer cannot be
+told which browser it is drawing for. Nothing else needed it on a page: the app's own commands
+are out of a page's reach without the key, and what nib's world says goes through `DevTools`
+bindings. Measured 2026-11-03 under Xvfb on the same public sheet, on the build before and
+after: "Loading issue" and `RITZ_initializeModules` undefined; the editor up, no dialog, and
+`window.ipc` Google's own. `scripts/globals-drive.py` asks it on every Linux run of
+wayland.yml (`GLOBALS=1`).
+
+**Measured on Windows only, the rest.** The probes drive `WebView2`. The same clearing is built on
 `WKWebView` and `WebKitGTK` against their own documented calls - the user content
 controller's `removeAllUserScripts` and `WKContentWorld`, WebKitGTK's
 `remove_all_scripts` and a script world - and is checked there by the compiler and the
@@ -2364,6 +2378,7 @@ versions and goes to the trash like every other document.
 | `scripts/web-open-probe.py`                           | the drive for the open: whether a tab covered when it mounted shows a page at all, and how long each kind of open takes - the clock behind `NIB_PERF=1`                                                                                                |
 | `scripts/web-session-probe.py`                        | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, quits the app by closing its window and starts it over - a session cookie, a lasting one, a `localStorage` token and a partitioned cookie a widget from another site set, read back out of the page, all four kept; the widget's own site never sees its cookie, and a planted copy without the partition is gone after the next page; and an `IndexedDB` record, a service worker, a notification permission granted in Orden's bubble and the site's zoom, all still there after the restart |
 | `scripts/web-downloads-probe.py`                      | the drive for downloads: an attachment, `<a download>`, an inline PDF, `blob:` and `data:`, a file behind a cookie, a `_blank` link, a name taken, progress, Cancel and a tab closed halfway                                                           |
+| `scripts/globals-drive.py`                             | the same question on Linux, on every run of wayland.yml: a page and a frame may declare `ipc` and hold nothing of the app's, the app's page keeps the channel and a command goes down it, and quick add and the presenter's window are heard from the app's profile |
 | `scripts/web-globals-probe.py`                        | the drive for what a page is handed: whether a site's own script may declare `ipc`, what of the app's is on its `window`, whether Orden's listeners are in nib's world in every frame, what a page's dialogs give back, and with `--real` Google's editors and the regression sites, read over the `DevTools` protocol. See "What a page is given: nothing" |
 | `scripts/devtools.py` | the `DevTools` protocol with the standard library, for a drive to read a page's own console without pressing anything in it |
 | `scripts/web-bar-probe.py` | the drive for the bar and its keys: F6 and F5 inside the page, F5 and the reload keys in the app with the request's cache header, the cross and Stop, the history under Back, Alt+Enter, the middle button on reload and Ctrl+1 |

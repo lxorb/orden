@@ -9,9 +9,11 @@
 import { untrusted } from '@orden/chats/agent'
 import { findLinks } from '@orden/markdown'
 import { byteLength } from '../crypto'
+import { pokeNow } from '../hub/poke'
 import {
   addNote,
   cleanPath,
+  readablePath,
   MAX_NOTE_BYTES,
   MOVED,
   NoteTaken,
@@ -19,7 +21,9 @@ import {
   UNREADABLE,
   writeWords,
 } from '../notes'
+import { noteKind, readsAs } from '../rooms/kind'
 import { fits } from '../storage'
+import { hashOfBytes } from '../sync2/files'
 import type { Env, Note } from '../types'
 import type { TokenRow } from './tokens'
 
@@ -264,7 +268,7 @@ async function listNotes(env: Env, space: Space): Promise<string> {
 }
 
 async function readNote(env: Env, space: Space, args: Record<string, unknown>): Promise<string> {
-  const path = cleanPath(text(args, 'path') ?? '')
+  const path = readablePath(text(args, 'path') ?? '')
   if (!path) return 'That is not a note path.'
 
   const note = await env.DB.prepare(
@@ -338,7 +342,7 @@ async function listBacklinks(
   space: Space,
   args: Record<string, unknown>,
 ): Promise<string> {
-  const path = cleanPath(text(args, 'path') ?? '')
+  const path = readablePath(text(args, 'path') ?? '')
   if (!path) return 'That is not a note path.'
 
   const names = new Set<string>()
@@ -385,18 +389,59 @@ async function writeNote(
 
   const asked = text(args, 'content')
   if (asked === null) return 'The content has to be text.'
-  return (await putNote(env, space, path, asked ?? '', device)) ?? `Saved ${path}.`
+  const put = await putNote(env, space, path, asked ?? '', device)
+  if (put === MOVED) return changedWhileWriting(path)
+  return typeof put === 'string' ? put : `Saved ${put.path}.`
 }
 
-/** A note's words written, made where there is none: null when it was, else the
- *  sentence to answer with. The to-dos' tools write through here too (tasks.ts). */
+/** The sentence for a note that moved under a write. */
+export function changedWhileWriting(path: string): string {
+  return `${path} changed while I was writing it. Read it again first.`
+}
+
+/** How many times a note's row and bytes are asked for before they are given up on. */
+const READS = 3
+
+/** A note's row and the words that row says it holds, or null where there is no note
+ *  at that path: what a write on top of those words names as what it read (`putNote`).
+ *  A save claims the row before it writes the bytes (`saveNote`), so the two can
+ *  disagree for a moment, and the bytes of the version before read as the row's are
+ *  words that version's writer has lost. MOVED where they will not agree. */
+export async function noteRead(
+  env: Env,
+  spaceId: string,
+  path: string,
+): Promise<{ note: Note; words: string } | null | typeof MOVED> {
+  for (let tries = 0; tries < READS; tries++) {
+    const note = await env.DB.prepare(
+      "select * from notes where space_id = ? and path = ? and deleted = 0 and kind != 'file'",
+    )
+      .bind(spaceId, path)
+      .first<Note>()
+    if (!note) return null
+    const object = await env.NOTES.get(noteKey(spaceId, note.id))
+    const bytes = object ? await object.arrayBuffer() : new ArrayBuffer(0)
+    // The bytes, because that is what the hash covers: read as text, a byte order mark
+    // comes off, and a note that starts with one would never agree with its row.
+    if ((await hashOfBytes(bytes)) === note.hash) {
+      return { note, words: new TextDecoder().decode(bytes) }
+    }
+  }
+  return MOVED
+}
+
+/** A note's words written, made where there is none: where it now is when it was, else
+ *  MOVED or the sentence to answer with. The to-dos' tools write through here too
+ *  (tasks.ts), naming what they read as `read`: the note as `noteRead` gave it, or null
+ *  for none there. Anything else there by now is MOVED, and nothing is written. */
 export async function putNote(
   env: Env,
   space: Pick<Space, 'id' | 'user_id'>,
   path: string,
   content: string,
   device?: string,
-): Promise<string | null> {
+  read?: Note | null,
+): Promise<{ path: string } | string> {
   const size = byteLength(content)
   if (size > MAX_NOTE_BYTES) return 'That note is too large.'
 
@@ -405,6 +450,16 @@ export async function putNote(
   )
     .bind(space.id, path)
     .first<Note>()
+
+  if (read !== undefined && (existing?.id !== read?.id || existing?.version !== read?.version)) {
+    return MOVED
+  }
+
+  // A plane holds JSON Canvas and nothing else, here as in a note that is there: see
+  // `readsAs`. Prose taken at a new path reads back until the first settle, and then
+  // every device has an empty canvas.
+  const named = noteKind({ path })
+  if (!existing && !readsAs(named, content)) return notACanvas(path)
 
   // Against whoever owns the space rather than whoever is writing: the bytes
   // land in their storage, so it is their quota the note has to fit inside.
@@ -423,24 +478,40 @@ export async function putNote(
     const saved = await writeWords(env, existing, content, path, {
       name: '',
       ...(device === undefined ? {} : { device }),
+      ...(read ? { base: read.version } : {}),
     })
     if (saved === null) return `${path} could not be written just now. Try again.`
-    if (saved === MOVED) return `${path} changed while I was writing it. Read it again first.`
-    if (saved === UNREADABLE) {
-      return `${path} is a canvas. Write JSON Canvas into it, or leave it as it is.`
-    }
-  } else {
-    try {
-      await addNote(env, space.id, path, content, '', device)
-    } catch (error) {
-      // A space whose tree is rows holds one name per folder as Windows and a Mac
-      // compare names, so another spelling of a note that is there is that note.
-      if (!(error instanceof NoteTaken)) throw error
-      return `${path} is another spelling of a note that is already there. Read it first.`
-    }
+    if (saved === MOVED) return read === undefined ? changedWhileWriting(path) : MOVED
+    if (saved === UNREADABLE) return notACanvas(path)
+    // A room says its own settles; a note with no room has nobody else to.
+    if ((saved.epoch ?? 0) < 1) await pokeNow(env, space.id, saved.seq, device)
+    return { path: saved.path }
   }
 
-  return null
+  try {
+    const made = await addNote(env, space.id, path, content, '', device)
+    await pokeNow(env, space.id, made.seq, device)
+    // A tree has one name per folder, as Windows and a Mac compare them, so a folder
+    // that a note's name or another spelling holds lands elsewhere; see sync2/ops.ts.
+    return { path: made.path }
+  } catch (error) {
+    // Somebody made it in the moment since it was looked for: the path's unique index,
+    // or the tree's. Moved, like any other note that arrived under a write.
+    const arrived = await env.DB.prepare(
+      "select 1 as one from notes where space_id = ? and path = ? and deleted = 0 and kind != 'file'",
+    )
+      .bind(space.id, path)
+      .first()
+    if (arrived) return read === undefined ? changedWhileWriting(path) : MOVED
+    // A space whose tree is rows holds one name per folder as Windows and a Mac
+    // compare names, so another spelling of a note that is there is that note.
+    if (!(error instanceof NoteTaken)) throw error
+    return `${path} is another spelling of a note that is already there. Read it first.`
+  }
+}
+
+function notACanvas(path: string): string {
+  return `${path} is a canvas. Write JSON Canvas into it, or leave it as it is.`
 }
 
 /** Runs one tool for one caller. Everything reachable is reached through the

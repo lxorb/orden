@@ -20,8 +20,10 @@ import {
 } from '@orden/markdown'
 import { calloutOf } from '@orden/markdown/callouts'
 import { coverOf } from '@orden/markdown/cover'
+import { stripFrontMatter } from '@orden/markdown/front-matter'
 import { embedKind, embedSize, shownText, withoutBlockIds } from '@orden/markdown/links'
 import type { Token, Tokens } from 'marked'
+import { stemOf } from './naming'
 
 /** A run of text, and everything that can be true of it at once. Absent means
  *  no: a span carries only the marks it actually has, which keeps the shape a
@@ -119,7 +121,25 @@ interface Marks {
  *  around them already folded in. */
 function spansOf(tokens: readonly Token[] | undefined, marks: Marks = {}): Span[] {
   const out: Span[] = []
-  for (const token of tokens ?? []) out.push(...spansOfToken(token, marks))
+  /** The element in the line being passed over: its words are not shown. */
+  let passing: string | null = null
+  for (const token of tokens ?? []) {
+    if (token.type === 'html') {
+      const [, closing, written] = /^<(\/?)([a-z][\w-]*)/i.exec(token.raw.trim()) ?? []
+      const name = written?.toLowerCase()
+      if (passing !== null) {
+        if (closing && name === passing) passing = null
+        continue
+      }
+      if (name && !closing && !VOID.test(name) && !token.raw.trimEnd().endsWith('/>')) {
+        if (NOT_SHOWN.test(name) || HIDDEN.test(token.raw)) {
+          passing = name
+          continue
+        }
+      }
+    }
+    if (passing === null) out.push(...spansOfToken(token, marks))
+  }
 
   // An empty run says nothing, so it goes - but a picture and a footnote mark
   // both carry what they mean somewhere other than in their text.
@@ -187,9 +207,9 @@ function spansOfToken(token: Token, marks: Marks): Span[] {
       return [{ ...marks, text: '\n' }]
 
     case 'html':
-      // Raw HTML is markup, not words. A page break is the one piece of it that
-      // means something to a writer, and it is picked up as a block.
-      return []
+      // A tag in a line is markup, and the words around it are tokens of their own. A
+      // line break is the one that says something, and in a table cell the only way to.
+      return /^<br\s*\/?>$/i.test(token.raw.trim()) ? [{ ...marks, text: '\n' }] : []
 
     case 'text':
     case 'escape':
@@ -400,11 +420,20 @@ function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {
         out.push({ kind: 'rule' })
         break
 
-      case 'html':
-        if (PAGE_BREAK.test(String((token as Tokens.Generic).text ?? ''))) {
-          out.push({ kind: 'break' })
+      case 'html': {
+        // A page break is the one piece of markup that means something to a writer, and
+        // the words a block holds are words here too: every other surface shows them.
+        const html = String((token as Tokens.Generic).text ?? '')
+        if (PAGE_BREAK.test(html)) out.push({ kind: 'break' })
+        for (const words of wordsOfHtml(html)) {
+          // A break is a span of its own, as `br` is above.
+          const spans = words
+            .split('\n')
+            .flatMap((text, at) => (at ? [{ text: '\n' }, { text }] : [{ text }]))
+          out.push({ kind: 'paragraph', spans })
         }
         break
+      }
 
       default: {
         const spans = spansOf((token as Tokens.Generic).tokens)
@@ -417,12 +446,128 @@ function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {
   return out
 }
 
+/** Elements whose words are no words of the page: never drawn, or what a browser draws
+ *  only where it cannot draw them. */
+const NOT_SHOWN =
+  /^(?:script|style|template|head|title|noscript|textarea|select|svg|canvas|object|video|audio|iframe|embed|dialog)$/i
+
+/** What keeps an element off the page wherever it is. An open dialog is drawn. */
+const HIDDEN =
+  /\shidden(?:[\s=/>])|\sstyle\s*=\s*(?:"[^"]*display\s*:\s*none[^"]*"|'[^']*display\s*:\s*none[^']*')/i
+
+/** Elements that have no end of their own. */
+const VOID = /^(?:area|base|br|col|embed|hr|img|input|link|meta|source|track|wbr)$/i
+
+/** Elements that start a line of their own. A cell does not: a row is the line. */
+const STARTS_LINE =
+  /^(?:address|article|aside|blockquote|center|dd|details|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hr|li|main|menu|nav|ol|p|pre|section|summary|table|tbody|tfoot|thead|tr|ul)$/i
+
+/** Latin-1 from 160 on, in order, which is most of what a note names by name. */
+const LATIN =
+  'nbsp iexcl cent pound curren yen brvbar sect uml copy ordf laquo not shy reg macr deg plusmn sup2 sup3 acute micro para middot cedil sup1 ordm raquo frac14 frac12 frac34 iquest Agrave Aacute Acirc Atilde Auml Aring AElig Ccedil Egrave Eacute Ecirc Euml Igrave Iacute Icirc Iuml ETH Ntilde Ograve Oacute Ocirc Otilde Ouml times Oslash Ugrave Uacute Ucirc Uuml Yacute THORN szlig agrave aacute acirc atilde auml aring aelig ccedil egrave eacute ecirc euml igrave iacute icirc iuml eth ntilde ograve oacute ocirc otilde ouml divide oslash ugrave uacute ucirc uuml yacute thorn yuml'
+
+const ENTITIES = new Map<string, string>([
+  ...LATIN.split(' ').map((name, at): [string, string] => [name, String.fromCodePoint(160 + at)]),
+  ['nbsp', ' '],
+  ['amp', '&'],
+  ['lt', '<'],
+  ['gt', '>'],
+  ['quot', '"'],
+  ['apos', "'"],
+  ['ndash', '–'],
+  ['mdash', '\u2014'],
+  ['lsquo', '‘'],
+  ['rsquo', '’'],
+  ['sbquo', '‚'],
+  ['ldquo', '“'],
+  ['rdquo', '”'],
+  ['bdquo', '„'],
+  ['hellip', '…'],
+  ['bull', '•'],
+  ['euro', '€'],
+  ['trade', '™'],
+  ['larr', '←'],
+  ['rarr', '→'],
+  ['uarr', '↑'],
+  ['darr', '↓'],
+  ['minus', '−'],
+  ['ne', '≠'],
+  ['le', '≤'],
+  ['ge', '≥'],
+  ['dagger', '†'],
+])
+
+function entitiesRead(text: string): string {
+  return text.replace(/&(?:#(\d+)|#x([\da-f]+)|(\w+));/gi, (whole, ten, hex, name: string) => {
+    if (name) return ENTITIES.get(name) ?? whole
+    const code = ten ? Number(ten) : Number.parseInt(String(hex), 16)
+    return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole
+  })
+}
+
+/** The words of a block of raw HTML, a paragraph for each block element in it. No DOM,
+ *  since this reading of a note is pure, and no more of HTML than where words are. */
+function wordsOfHtml(source: string): string[] {
+  const out: string[] = []
+  let line = ''
+  /** The element being passed over, and how many of its name are open inside it. */
+  let skipping: { name: string; depth: number } | null = null
+  let pre = 0
+  let at = 0
+
+  const read = (raw: string) => {
+    if (skipping !== null) return
+    line += entitiesRead(pre ? raw : raw.replace(/\s+/g, ' '))
+  }
+  const end = () => {
+    const said = line.replace(/[ \t]*\n[ \t]*/g, '\n').trim()
+    if (said) out.push(said)
+    line = ''
+  }
+
+  // A comment never closed takes the rest, and no tag closes past the last `>`, which is
+  // what keeps `<a ` thirty thousand times from being read to its end from each of them.
+  const comment = source.lastIndexOf('<!--')
+  const html =
+    comment !== -1 && !source.includes('-->', comment) ? source.slice(0, comment) : source
+  for (const found of html
+    .slice(0, html.lastIndexOf('>') + 1)
+    .matchAll(
+      /<!--[\s\S]*?(?:-->|$)|<[!?][^>]*>|<(\/?)([a-z][\w-]*)(?:"[^"]*"|'[^']*'|[^'">])*>/gi,
+    )) {
+    read(html.slice(at, found.index))
+    at = found.index + found[0].length
+
+    const [tag, closing, written = ''] = found
+    if (!written) continue
+    const name = written.toLowerCase()
+    const alone = VOID.test(name) || tag.endsWith('/>')
+    if (skipping !== null) {
+      if (name === skipping.name && !alone) skipping.depth += closing ? -1 : 1
+      if (skipping.depth === 0) skipping = null
+      continue
+    }
+    const drawn = name === 'dialog' && /\sopen[\s=/>]/i.test(tag)
+    if (!closing && (HIDDEN.test(tag) || (NOT_SHOWN.test(name) && !drawn))) {
+      if (!alone) skipping = { name, depth: 1 }
+    } else if (name === 'br') line += '\n'
+    else if (STARTS_LINE.test(name)) {
+      end()
+      if (name === 'pre') pre += closing ? -1 : 1
+    } else if (/^t[dh]$/.test(name) && !closing && line.trim()) line += ' '
+  }
+  read(html.slice(at))
+  end()
+
+  return out
+}
+
 /** What a document is called: the front matter's title, else the first heading,
  *  else the file's own name. Every export reads it from here - the running text
  *  on paper, the `<title>` of a page, the Word property, the ePub metadata - so
  *  one note cannot come out under two names. */
 export function titleOf(source: string, name: string): string {
-  return frontMatterValue(source, 'title') ?? documentTitle(source) ?? name.replace(/\.[^.]+$/, '')
+  return frontMatterValue(source, 'title') ?? documentTitle(source) ?? stemOf(name)
 }
 
 export interface DocumentOptions {
@@ -440,9 +585,7 @@ export function documentOf(source: string, name: string, options: DocumentOption
   const hard = options.hardBreaks ?? hardBreaks()
   // Front matter is metadata, a block's name is a marker and a comment is a note
   // to the writer, exactly as the HTML renderer treats all three.
-  const body = withoutComments(
-    withoutBlockIds(source.startsWith('---') ? stripFront(source) : source),
-  )
+  const body = withoutComments(withoutBlockIds(stripFrontMatter(source)))
 
   // The note's cover, where it names one, as the document's first picture: the
   // banner is the top of the note, so a note whose cover is a photograph opens on
@@ -546,13 +689,6 @@ function flowed(blocks: Block[], hard: boolean): Block[] {
         return block
     }
   })
-}
-
-/** Front matter off, keeping the rest character for character. Not imported
- *  from the renderer because that one also has to answer for a note that has
- *  none, and here the caller has already asked. */
-function stripFront(source: string): string {
-  return source.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '')
 }
 
 /** Every picture the document names, in the order it names them, each once. */

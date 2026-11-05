@@ -20,6 +20,7 @@
  *  heading itself, in Reading.svelte, where the elements are. */
 
 import { CodeBlocks, WORDS } from '@orden/markdown/fences'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 
 /** A place in the note as the two faces both understand it: which heading it is
  *  under, and how far from that heading to the next.
@@ -78,10 +79,7 @@ export function positionOf(section: Section, offsets: readonly number[], end: nu
 
 /** Just past a note's front matter, or the start of the note when it has none. */
 function frontMatterEnd(text: string): number {
-  if (!text.startsWith('---')) return 0
-
-  const closing = /^---[ \t]*$/m.exec(text.slice(4))
-  return closing ? 4 + closing.index + closing[0].length : 0
+  return frontMatterBlock(text)?.to ?? 0
 }
 
 /** A heading line, its hashes, and the underline the other spelling uses. Up to

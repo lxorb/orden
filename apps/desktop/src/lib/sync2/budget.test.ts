@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { aloneHere, forgetWindow, keptBudget } from './budget'
+import { aloneHere, forgetWindow, holdThisWindow, keptBudget } from './budget'
 
 /** How much a browser keeps of the words it uses, and when it may let any go
  *  (budget.ts, #1126). */
@@ -35,6 +35,15 @@ describe('letting words go', () => {
 
     forgetWindow()
     vi.stubGlobal('navigator', {})
+    expect(await aloneHere()).toBe(false)
+  })
+
+  test('a window without the engine is counted the moment it opens', async () => {
+    // One lock manager for two windows: the one that only holds, and the engine's.
+    const shared = locks(0)
+    vi.stubGlobal('navigator', { locks: shared })
+    holdThisWindow()
+    forgetWindow()
     expect(await aloneHere()).toBe(false)
   })
 

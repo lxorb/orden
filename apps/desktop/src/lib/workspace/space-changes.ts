@@ -6,7 +6,9 @@
 import { account } from '../account.svelte'
 import { identifier } from '../identifier'
 import { samePath } from '../space-paths'
+import { forgetSpaceViews } from '../views/kept-views'
 import { invoke } from '../tauri'
+import { windows } from '../windows'
 import type { Space } from '../workspace.svelte'
 import { type HoldsSpaces, selectSpace, tabSets } from './spaces'
 
@@ -39,6 +41,7 @@ export async function adoptSpace(
   if (!ws.spaces.some((space) => samePath(space.root, created.path))) {
     const space: Space = { id: identifier(), name: created.name, root: created.path }
     ws.spaces = [...ws.spaces, space]
+    windows.say('spaces-again')
 
     if (ws.activeSpaceId) ws.persist()
     else await selectSpace(ws, space.id)
@@ -56,8 +59,11 @@ export async function addSpace(ws: HoldsSpaces, name: string) {
 
   if (!created) return
 
-  const space: Space = { id: identifier(), name: created.name, root: created.path }
-  ws.spaces = [...ws.spaces, space]
+  // A listing heard meanwhile may have found the folder already, and given it an id.
+  const listed = ws.spaces.find((one) => samePath(one.root, created.path))
+  const space: Space = listed ?? { id: identifier(), name: created.name, root: created.path }
+  if (!listed) ws.spaces = [...ws.spaces, space]
+  windows.say('spaces-again')
   await selectSpace(ws, space.id)
   return space
 }
@@ -74,6 +80,8 @@ export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
   // for their writes and holds them until they have been told; see `move` in
   // workspace.svelte.ts.
   const done = { moved: false }
+  // Fetched before the folder moves: from then on there is no moment to wait in.
+  const { followSpaceName } = await import('../views/space-follow')
   await ws.holdingUnder(space.root, async () => {
     const renamed = await invoke<{ name: string; path: string }>('rename_space', {
       from: space.root,
@@ -89,8 +97,16 @@ export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
     // note is never for a moment at a path the account has no id for. See
     // workspace/file-ops.ts, and the space-rename drive for what that moment cost.
     const from = space.root
+    const was = space.name
     space.name = renamed.name
     space.root = renamed.path
+    // A view asks about a space by its name, which only this knows has changed.
+    followSpaceName(
+      was,
+      renamed.name,
+      ws.tabs,
+      ws.spaces.filter((one) => one !== space),
+    )
     await ws.fileMoved(from, renamed.path, 'space')
     done.moved = true
   })
@@ -130,6 +146,8 @@ export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
   // workspace/file-ops.ts.
   await ws.fileGone(space.root, 'space')
   ws.spaces = ws.spaces.filter((entry) => entry.id !== id)
+  // Kept by its name, which nothing else may inherit; of two of a name, it may be the other's.
+  if (!ws.spaces.some((entry) => entry.name === space.name)) forgetSpaceViews(space.name)
   // The sets, fetched after the list so the shared set of older builds is not given to
   // this space, and before the space on screen changes, since by the switch below they
   // would take what is left of its tabs for the next space's. See `selectSpace`.

@@ -37,6 +37,11 @@ pub fn watch(app: &AppHandle) {
         let _ = app.deep_link().register_all();
     }
 
+    // By a name of its own, as `hand_over` can open a window: `watch` is a name half the
+    // crate calls, and the rule in lib.rs that a command opening one says async reads by name.
+    #[cfg(desktop)]
+    let handing: fn(&AppHandle, Vec<String>) = hand_over;
+
     let opened = app.clone();
     app.deep_link().on_open_url(move |event| {
         let urls = said(event.urls());
@@ -51,16 +56,11 @@ pub fn watch(app: &AppHandle) {
             return;
         }
 
-        // A link is somebody asking for this app, so the window comes forward.
-        // A phone has one window and the system has already brought it up.
         #[cfg(desktop)]
-        // The window, not the webview window, which a window with a page in a tab
-        // is not; see web_tabs.rs.
-        if let Some(window) = opened.get_window("main") {
-            crate::placement::raised(&window);
-        }
-
-        let _ = opened.emit(OPENED, urls);
+        handing(&opened, urls);
+        // A phone has one window and the system has already brought it up.
+        #[cfg(not(desktop))]
+        let _ = opened.emit_to("main", OPENED, urls);
     });
 
     // The link that started the app, which no handler above can have heard: it
@@ -88,6 +88,65 @@ pub fn watch(app: &AppHandle) {
     }
 }
 
+/// A link, to one window: followed by every window open it made its note or its task once
+/// in each. A link is somebody asking for this app, so that window comes forward, from the
+/// tray too, and is the one they see it land in. With none that listens it waits for the
+/// next to ask, which is opened if there is none at all.
+#[cfg(desktop)]
+fn hand_over(app: &AppHandle, urls: Vec<String>) {
+    let waiting = app.state::<crate::endpoint::Waiting>();
+    // The window, not the webview window, which a window with a page in a tab is not; see
+    // web_tabs.rs.
+    let windows: Vec<LinkWindow> = crate::launch::document_windows(app)
+        .iter()
+        .map(|one| LinkWindow {
+            label: one.label().to_owned(),
+            focused: one.is_focused().unwrap_or(false),
+            visible: one.is_visible().unwrap_or(false),
+            listening: waiting.hears(one.label()),
+        })
+        .collect();
+    let chosen = link_window(&windows).and_then(|label| app.get_window(&label));
+    if let Some(window) = chosen {
+        crate::launch::brought_up(&window);
+        let _ = app.emit_to(window.label(), OPENED, urls);
+        return;
+    }
+    if let Some(pending) = app.try_state::<Pending>() {
+        if let Ok(mut held) = pending.0.lock() {
+            held.extend(urls);
+        }
+    }
+    crate::launch::open_for_what_waits(app);
+}
+
+/// One window as a link weighs it.
+#[cfg(desktop)]
+struct LinkWindow {
+    label: String,
+    focused: bool,
+    visible: bool,
+    listening: bool,
+}
+
+/// The window a link goes to, of those that listen: the one in front, or else one on
+/// screen, the first window before another, and only then one hidden in the tray.
+#[cfg(desktop)]
+fn link_window(windows: &[LinkWindow]) -> Option<String> {
+    windows
+        .iter()
+        .filter(|one| one.listening)
+        .min_by_key(|one| {
+            (
+                !one.focused,
+                !one.visible,
+                one.label != "main",
+                one.label.clone(),
+            )
+        })
+        .map(|one| one.label.clone())
+}
+
 /// Whether the app was started by nothing but a reminder's Done, which is answered
 /// without the window coming up (see reminders.rs), or by an agent's `nib mcp`, which never
 /// brings it up (`launch::BACKGROUND_FLAG`, #1091).
@@ -103,7 +162,11 @@ pub fn launched_quietly(app: &AppHandle) -> bool {
             .flatten()
             .unwrap_or_default(),
     );
-    crate::reminders::quiet_launch(&launched)
+    let quiet = crate::reminders::quiet_launch(&launched);
+    if quiet {
+        crate::reminders::came_up_quietly();
+    }
+    quiet
 }
 
 /// Handed to the window once it is ready; clearing them stops a reload from
@@ -148,6 +211,62 @@ fn is_ours(url: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::said;
+    #[cfg(desktop)]
+    use super::{link_window, LinkWindow};
+
+    #[cfg(desktop)]
+    fn window(label: &str, focused: bool, visible: bool, listening: bool) -> LinkWindow {
+        LinkWindow {
+            label: label.to_owned(),
+            focused,
+            visible,
+            listening,
+        }
+    }
+
+    #[cfg(desktop)]
+    #[test]
+    fn a_link_goes_to_the_window_in_front_and_never_to_one_hidden_while_another_shows() {
+        // `main` hidden in the tray, the work in `nib-2`.
+        let windows = [
+            window("main", false, false, true),
+            window("nib-2", false, true, true),
+        ];
+        assert_eq!(link_window(&windows).as_deref(), Some("nib-2"));
+
+        let windows = [
+            window("main", false, true, true),
+            window("nib-2", true, true, true),
+        ];
+        assert_eq!(link_window(&windows).as_deref(), Some("nib-2"));
+
+        let windows = [
+            window("nib-3", false, true, true),
+            window("main", false, true, true),
+        ];
+        assert_eq!(link_window(&windows).as_deref(), Some("main"));
+
+        // All in the tray: the first window, which `brought_up` shows.
+        let windows = [
+            window("nib-2", false, false, true),
+            window("main", false, false, true),
+        ];
+        assert_eq!(link_window(&windows).as_deref(), Some("main"));
+    }
+
+    #[cfg(desktop)]
+    #[test]
+    fn a_link_waits_when_nothing_listens() {
+        assert_eq!(link_window(&[]), None);
+        let windows = [window("main", true, true, false)];
+        assert_eq!(link_window(&windows), None);
+        // In front and still loading, with another listening: the one that hears it.
+        let windows = [
+            window("nib-3", true, true, false),
+            window("main", false, true, true),
+        ];
+        assert_eq!(link_window(&windows).as_deref(), Some("main"));
+    }
 
     #[test]
     fn says_every_link_it_is_given() {

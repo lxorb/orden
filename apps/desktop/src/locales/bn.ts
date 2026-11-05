@@ -753,6 +753,8 @@ export const bn: Dictionary = {
   '{done} of {total}': '{total}-এর {done}',
   'Sync failed': 'সিংক ব্যর্থ',
   '{name} could not be written.': '{name} লেখা গেল না।',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} লেখা গেল না: এর ফাইল পড়া যাচ্ছে না। এটি 64 MB-এর বেশি বা UTF-8 লেখা নয় হতে পারে।',
   '{name} could not be read.': '{name} পড়া গেল না।',
   'Text size': 'টেক্সটের আকার',
   'Line spacing': 'লাইন ফাঁক',
@@ -1535,6 +1537,8 @@ export const bn: Dictionary = {
   'The provider answered {status}.': 'প্রদানকারী {status} উত্তর দিয়েছে।',
   'Add an AI provider in Settings first.': 'আগে সেটিংসে একটি AI প্রদানকারী যোগ করুন।',
   'The model did not answer.': 'মডেল উত্তর দেয়নি।',
+  'The connection closed before the answer was finished.':
+    'উত্তর শেষ হওয়ার আগেই সংযোগ বন্ধ হয়ে গেছে।',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'আপনার {plan} প্ল্যান {time} পর্যন্ত সীমায় পৌঁছেছে।',
@@ -2011,8 +2015,10 @@ export const bn: Dictionary = {
   'Send feedback': 'মতামত পাঠান',
   'Describe the issue': 'সমস্যাটি বর্ণনা করুন',
   Sent: 'পাঠানো হয়েছে',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'এই রিপোর্টে আপনার বর্ণনা, Orden-এর সংস্করণ, আপনার প্ল্যাটফর্ম আর অ্যাপের সাম্প্রতিক লগ থাকে। আপনার নোট কখনো থাকে না।',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'এই রিপোর্টে আপনার বিবরণ, Orden-এর সংস্করণ, আপনার প্ল্যাটফর্ম এবং সাম্প্রতিক অ্যাপ লগ থাকে, ফাইল পাথ বাদ দিয়ে।',
+  'Its space is archived': 'এর স্পেস আর্কাইভ করা আছে',
+  'Back as {name}': '{name} নামে ফিরে এসেছে',
   'Send into the running answer': 'চলমান উত্তরে পাঠান',
   'Stop the answer': 'উত্তর থামান',
   'Open every step': 'প্রতিটি ধাপ খুলুন',
@@ -2097,6 +2103,8 @@ export const bn: Dictionary = {
     'এটি আপনার নোট পড়ে এবং আপনার লগইনে ব্রাউজ করে, তাই কোনো পেজ এটিকে দিয়ে নোট বাইরে পাঠানোর চেষ্টা করতে পারে।',
   Activity: 'কার্যকলাপ',
   'Add a site': 'সাইট যোগ করুন',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'এই তালিকার কোনো প্রোগ্রাম জিজ্ঞাসা ছাড়াই চলে, এবং সেই প্রোগ্রাম যা পারে সবই করতে পারে।',
   'Add a program': 'প্রোগ্রাম যোগ করুন',
   'Every space': 'প্রতিটি স্পেস',
   Sites: 'সাইট',
@@ -2525,6 +2533,7 @@ export const bn: Dictionary = {
   'No {property}': '{property} নেই',
   '{card} moved to {group}': '{card} {group}-এ সরানো হয়েছে',
   'Not moved': 'সরানো হয়নি',
+  'Not undone': 'পূর্বাবস্থায় ফেরানো হয়নি',
   Retry: 'আবার চেষ্টা করুন',
   Calculate: 'হিসাব করুন',
   'Remove sort': 'সাজানো সরান',
@@ -2795,6 +2804,8 @@ export const bn: Dictionary = {
   '{title}, running': '{title}, চলছে',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden আর Mac-এর কিচেইনে AI কী রাখে না, কারণ সেটি বারবার পাসওয়ার্ড চাইত। আপনার কী আবার দিন এবং ChatGPT-তে আরেকবার সাইন ইন করুন।',
+  'This PDF is locked by its owner': 'এই PDF এর মালিক এটি লক করেছেন',
+  'Part of this could not be undone': 'এর একটি অংশ পূর্বাবস্থায় ফেরানো যায়নি',
   'Add images': 'ছবি যোগ করুন',
   'Remove image': 'ছবি সরান',
   'That is more than 4 images.': 'এগুলো 4টির বেশি ছবি।',

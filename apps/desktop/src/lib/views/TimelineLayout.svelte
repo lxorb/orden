@@ -13,6 +13,8 @@
   import { dateAt } from './days'
   import { plain } from './inline'
   import type { Kit } from './kit'
+  import { everyRow } from './list-items'
+  import { carryThumb, HOLD, holdsThumb, THUMB_SLOP } from './drag.svelte'
   import {
     arrowsOf,
     type Bar,
@@ -20,6 +22,7 @@
     DAY_WIDTH,
     daysBetween,
     dragged,
+    drawnOf,
     type Scale,
     SCALES,
     spanOf,
@@ -38,7 +41,7 @@
     quarter: t('Quarters'),
   }
 
-  const rows = $derived((live.answer?.groups ?? []).flatMap((group) => group.rows))
+  const rows = $derived(everyRow(live.answer?.groups ?? []))
   const bars = $derived.by((): Bar[] => {
     const base = live.base
     if (!base) return []
@@ -49,6 +52,8 @@
     })
   })
   const span = $derived(spanOf(bars, live.today))
+  /** A base of only old dates is drawn around them, and today is nowhere on its track. */
+  const todayShown = $derived(live.today >= span.first && live.today <= span.last)
   const width = $derived(DAY_WIDTH[scale])
   const total = $derived((daysBetween(span.first, span.last) + 1) * width)
   const ROW = 32
@@ -78,8 +83,8 @@
   /** Where each task with an id ends, for the arrows from it. */
   const arrows = $derived(
     arrowsOf(bars).map((one) => ({
-      from: { x: x(one.from.bar.end) + width, y: one.from.at * ROW + ROW / 2 },
-      to: { x: x(one.to.bar.start), y: one.to.at * ROW + ROW / 2 },
+      from: { x: x(drawnOf(one.from.bar, span).end) + width, y: one.from.at * ROW + ROW / 2 },
+      to: { x: x(drawnOf(one.to.bar, span).start), y: one.to.at * ROW + ROW / 2 },
     })),
   )
 
@@ -92,24 +97,47 @@
     const element = (
       part === 'move' ? event.currentTarget : (event.currentTarget as HTMLElement).parentElement
     ) as HTMLElement
+    const startY = event.clientY
     let moved = false
+    // Under a thumb a bar is held first, as a board's card is: a swipe across it is the
+    // track's. See `holdsThumb`.
+    const thumb = event.pointerType === 'touch'
+    const hold = thumb
+      ? setTimeout(() => {
+          carrying = true
+          carryThumb(true)
+        }, HOLD)
+      : undefined
     const days = (to: number) => Math.round((to - start) / width)
+    const done = () => {
+      clearTimeout(hold)
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', done)
+      element.style.translate = ''
+      element.style.marginInlineStart = ''
+      element.style.marginInlineEnd = ''
+      carrying = false
+      carryThumb(false)
+    }
     const move = (next: PointerEvent) => {
+      if (thumb && !carrying) {
+        if (Math.hypot(next.clientX - start, next.clientY - startY) > THUMB_SLOP) done()
+        return
+      }
       const by = days(next.clientX)
-      if (Math.abs(next.clientX - start) > 3) moved = true
+      if (Math.abs(next.clientX - start) > (thumb ? THUMB_SLOP : 3)) moved = true
       if (part === 'move') element.style.translate = `${by * width}px 0`
       else if (part === 'start') {
         element.style.marginInlineStart = `${by * width}px`
       } else element.style.marginInlineEnd = `${-by * width}px`
     }
     const up = (next: PointerEvent) => {
-      window.removeEventListener('pointermove', move)
-      window.removeEventListener('pointerup', up)
-      element.style.translate = ''
-      element.style.marginInlineStart = ''
-      element.style.marginInlineEnd = ''
+      const held = carrying
+      done()
       if (!moved) {
-        if (part === 'move') kit.choose(bar.row, linkModifier(next))
+        // A bar held and let go where it was has been asked for nothing.
+        if (part === 'move' && !(thumb && held)) kit.choose(bar.row, linkModifier(next))
         return
       }
       const written = dragged(bar, part, days(next.clientX))
@@ -123,7 +151,11 @@
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', done)
   }
+
+  /** Whether a thumb has held a bar long enough to carry it. */
+  let carrying = false
 </script>
 
 <div class="timeline">
@@ -164,7 +196,9 @@
           {#each ticks as tick (tick.day)}
             <span class="rule" style:inset-inline-start={`${x(tick.day)}px`}></span>
           {/each}
-          <span class="today" style:inset-inline-start={`${x(live.today) + width / 2}px`}></span>
+          {#if todayShown}
+            <span class="today" style:inset-inline-start={`${x(live.today) + width / 2}px`}></span>
+          {/if}
           <svg class="arrows" width={total} height={bars.length * ROW} aria-hidden="true">
             {#each arrows as arrow, at (at)}
               <path
@@ -173,17 +207,20 @@
             {/each}
           </svg>
           {#each bars as bar, at (`${bar.row.space}:${rowId(bar.row)}`)}
-            {@const long = (daysBetween(bar.start, bar.end) + 1) * width}
+            {@const drawn = drawnOf(bar, span)}
+            {@const long = (daysBetween(drawn.start, drawn.end) + 1) * width}
             {@const words = bar.row.task ? plain(bar.row.task.text) : bar.row.file.basename}
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
               class="span"
               class:done={bar.row.task?.done}
+              class:far={drawn.far}
               style:--tone={bar.row.task ? priorityTone(bar.row.task.priority) : null}
               style:top={`${at * ROW + 5}px`}
-              style:inset-inline-start={`${x(bar.start)}px`}
+              style:inset-inline-start={`${x(drawn.start)}px`}
               style:width={`${long}px`}
               onpointerdown={(event) => drag(event, bar, 'move')}
+              use:holdsThumb
             >
               <span class="edge start" onpointerdown={(event) => drag(event, bar, 'start')}></span>
               <span class="words">{long >= NAMED ? words : ''}</span>
@@ -194,7 +231,7 @@
               <span
                 class="beside"
                 style:top={`${at * ROW + 5}px`}
-                style:inset-inline-start={`${x(bar.start) + long + 6}px`}>{words}</span
+                style:inset-inline-start={`${x(drawn.start) + long + 6}px`}>{words}</span
               >
             {/if}
           {/each}
@@ -333,8 +370,11 @@
     color: var(--text-strong);
     font-size: var(--text-xs);
     cursor: grab;
-    touch-action: none;
     transition: background var(--dur-fast) var(--ease-out);
+  }
+
+  .span.far {
+    border-style: dashed;
   }
 
   .span.done {

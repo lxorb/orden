@@ -4,7 +4,8 @@ report the real Worker keeps.
 On a desktop's screen and a phone's: the bug is beside the account and the settings;
 it opens Send feedback, whose Send is off until something is written; Cancel puts it
 away. Written and sent, signed out, the Worker keeps the words with the version, the
-platform and the app's recent log, and the sheet goes. Shift Shift and "feedback" finds
+platform and the app's recent log, and the sheet says the report was received, until Done
+puts it away. Shift Shift and "feedback" finds
 the same sheet.
 
     python apps/desktop/test/e2e/feedback.py
@@ -93,7 +94,14 @@ def drive(browser: Browser, worker: harness.Worker) -> None:
             wrong("Send is still off with something written")
         shot(page, f"{label}-written")
         page.locator(SEND).click()
-        wait_for(page, f"!document.querySelector({SHEET!r})", "the sheet gone once sent")
+        wait_for(
+            page,
+            f"document.querySelector({SHEET!r})?.textContent.includes('Report received')",
+            "the sheet to say the report was received",
+        )
+        shot(page, f"{label}-received")
+        page.locator(f"{SHEET} button", has_text="Done").click()
+        wait_for(page, f"!document.querySelector({SHEET!r})", "the sheet put away by Done")
 
         kept = reports(worker)
         say(f"the Worker keeps {[{**one, 'log': f'{len(one['log'])} chars'} for one in kept]}")

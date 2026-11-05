@@ -130,6 +130,20 @@ describe('a browser that keeps only the words it uses', () => {
     ).toEqual([`${ROOT}/Ideas.md`, `${ROOT}/Plan.md`])
   })
 
+  test('with a second window of the app open keeps every word, those it kept away too', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const browser = await fresh(account, 'b')
+    await browser.engine.pass(SPACE)
+    expect(browser.engine.awayFiles()).toHaveLength(2)
+
+    // Another window opens: its listing reads the disk, which holds only what is kept.
+    browser.engine.core.crowded = true
+    await browser.engine.pass(SPACE)
+    expect(browser.engine.awayFiles()).toEqual([])
+    expect(browser.disk.files.get(`${ROOT}/Plan.md`)).toBe(SEEDED[0]?.text)
+    expect(browser.disk.files.has(`${ROOT}/Ideas.md`)).toBe(true)
+  })
+
   test("fetches a note's words when it is asked for, and keeps them in step from then on", async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')

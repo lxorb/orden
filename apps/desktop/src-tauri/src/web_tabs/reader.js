@@ -52,6 +52,7 @@
       body = document.body ? document.body.cloneNode(true) : document.createElement('body')
     }
 
+    /* __HIDE__ */
     for (const one of head.querySelectorAll('base')) one.remove()
     const base = document.createElement('base')
     base.setAttribute('href', document.baseURI)

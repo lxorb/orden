@@ -14,7 +14,7 @@
    *
    *  As tall as its lines, exactly (`lines`, worked out by the list from task-meta.ts),
    *  so the list places every row by arithmetic and measures none. */
-  import type { Row } from '@orden/bases'
+  import type { Row, Value } from '@orden/bases'
   import { linkModifier } from '@orden/editor'
   import Calendar from 'lucide/dist/esm/icons/calendar-days.mjs'
   import Check from 'lucide/dist/esm/icons/check.mjs'
@@ -60,6 +60,7 @@
     picked = false,
     picking = false,
     onpick,
+    from,
   }: {
     row: Row
     kit: Kit
@@ -85,6 +86,8 @@
     picking?: boolean
     /** Selects it or lets it go; `range` every row from the last one selected. */
     onpick?: (range: boolean) => void
+    /** The group of the view it stands under, which a carry takes it out of. */
+    from?: Value
   } = $props()
 
   const task = $derived(row.task)
@@ -180,7 +183,7 @@
       aria-selected={selected}
       tabindex={selected ? 0 : -1}
       data-row={row.anchor ? `${row.path}#${row.anchor.line}` : row.path}
-      use:draggable={{ row, label }}
+      use:draggable={{ row, label, from }}
       use:swipeRow={{
         on: viewport.touch && !editing,
         right: () => void kit.tick(row),

@@ -21,12 +21,18 @@ export type FileAction =
       /** Caused by the step before (an unnesting), or made its folder (a nesting). */
       follows?: boolean
       nests?: boolean
+      /** A move to another space, whose tabs went with it (moving-space.ts) and go back
+       *  with it. */
+      carries?: boolean
     }
   | {
       kind: 'delete'
       path: string
       content: string
       trashId?: string
+      /** Where the trash will put it back, where that is no longer `path`: the whole of
+       *  what moved since has gone from under it (`root`). */
+      trashedAt?: { path: string; root: string }
       /** The word sync was told the delete with, to bring back the entries it was
        *  (#1068); see `back` in workspace/file-ops.ts. */
       back?: string
@@ -115,10 +121,15 @@ export interface Copied {
 
 import { shownName } from '../note-name'
 import { nameOf, samePath } from '../space-paths'
+import type { FileOp } from './file-ops'
 
 /** Twenty is far more than anyone reaches back through, and stops a long
  *  session from holding the text of every note it ever deleted. */
 const KEPT = 20
+
+/** How long an undo waits for a gesture under way, in milliseconds: as long as a move of
+ *  sync's waits for a write in the air (`IN_THE_AIR_AT_MOST` in saving.svelte.ts). */
+export const LANDS_WITHIN = 10_000
 
 export class FileActions {
   /** Newest last. Read by the tree's menu and by the trash, which drops an
@@ -150,15 +161,75 @@ export class FileActions {
   #held: FileAction[] | null = null
 
   async batch<T>(work: () => Promise<T>): Promise<T> {
-    if (this.#held) return work()
-    const held: FileAction[] = (this.#held = [])
+    this.#under += 1
     try {
-      return await work()
+      if (this.#held) return await work()
+      const held: FileAction[] = (this.#held = [])
+      try {
+        return await work()
+      } finally {
+        this.#held = null
+        const [only, ...more] = held
+        if (only) this.record(more.length ? { kind: 'many', steps: held } : only)
+      }
     } finally {
-      this.#held = null
-      const [only, ...more] = held
-      if (only) this.record(more.length ? { kind: 'many', steps: held } : only)
+      this.#under -= 1
+      if (!this.#under) {
+        this.#overdue = false
+        for (const go of this.#waiting.splice(0)) go()
+      }
     }
+  }
+
+  /** The gestures under way, one that joined another's step among them: each records only
+   *  as it ends, so an undo asked for until then would take back the step before. */
+  #under = 0
+  #waiting: (() => void)[] = []
+  /** One of them has been waited for and has not answered. */
+  #overdue = false
+
+  /** Whether every gesture under way has ended, or false once one has not within
+   *  `LANDS_WITHIN`: a rename on a share that has stalled may never answer, and every later
+   *  undo stands in line behind this one. False at once from then until it does answer. */
+  landed(): Promise<boolean> {
+    if (!this.#under) return Promise.resolve(true)
+    if (this.#overdue) return Promise.resolve(false)
+    return new Promise((go) => {
+      const late = setTimeout(() => {
+        this.#overdue = true
+        go(false)
+      }, LANDS_WITHIN)
+      this.#waiting.push(() => {
+        clearTimeout(late)
+        go(true)
+      })
+    })
+  }
+
+  /** An operation said to everything kept by path. The stack holds paths, and a move
+   *  nobody here will undo in its turn changes every step under it: a space renamed, which
+   *  is no step of its own, or a file moved in another window or by another program. */
+  async follow(op: FileOp) {
+    if (op.op !== 'moved' || (!op.heard && op.kind !== 'space')) return
+    const { heardMove } = await import('./undo-moved')
+    heardMove(this.steps, op)
+  }
+
+  /** A move no step here records: the steps' paths follow it. */
+  async moved(from: string, to: string) {
+    const { rewritten } = await import('./undo-moved')
+    for (const action of this.steps) rewritten(action, from, to)
+  }
+
+  /** Every step there is, whichever way it is facing. */
+  private get steps(): FileAction[] {
+    return [...this.stack, ...this.ahead, ...(this.#held ?? [])]
+  }
+
+  /** A step that will not go back, let go of at the reader's word: everything under it
+   *  waits behind it otherwise. */
+  giveUp(action: FileAction) {
+    this.stack = this.stack.filter((one) => one !== action)
   }
 
   /** Drops the newest one, once it has actually been put back, and keeps it to do

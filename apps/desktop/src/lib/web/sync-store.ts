@@ -11,9 +11,9 @@
  *  again makes a new one.
  *
  *  A browser can have the app open in several tabs, and one engine per browser is the
- *  rule, not one per tab: `leadSync` is the election, over the Web Locks API, the same
- *  thing that keeps two tabs of one site from both being the one that syncs. Every tab
- *  may read the store; only the leader writes it. See `web/store.ts` for the pattern
+ *  rule, not one per tab: `leadSync` (sync2/lead.ts) is the election, over the Web Locks
+ *  API, the same thing that keeps two tabs of one site from both being the one that syncs.
+ *  Every tab may read the store; only the leader writes it. See `web/store.ts` for the pattern
  *  every write here follows: one transaction per batch, resolved on the transaction
  *  rather than on any one request. */
 
@@ -50,13 +50,13 @@ const BY_AGE = 'age'
 const nameOf = (account: string) => `nib-sync:${account}`
 
 /** Opens an account's store, making it the first time. */
-export async function openWeb(account: string): Promise<SyncStore> {
+export async function openWeb(account: string, made?: string): Promise<SyncStore> {
   const db = await database(account)
   // A second tab signing out deletes the database; this tab lets go of it rather than
   // holding the delete up until it is closed.
   db.onversionchange = () => db.close()
 
-  const opened = await started(db)
+  const opened = await started(db, made)
   return {
     opened,
     read: <const Q extends readonly Query[]>(queries: Q) => answered(db, queries),
@@ -70,6 +70,37 @@ export async function openWeb(account: string): Promise<SyncStore> {
       return Promise.resolve()
     },
   }
+}
+
+/** The device id an account's store keeps, read in a connection of its own that only
+ *  looks: no version asked, so a store another tab has open is not upgraded or blocked,
+ *  and none made where there is none (the upgrade that would make one is called off). */
+export function deviceWeb(account: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const request = indexedDB.open(nameOf(account))
+    request.onupgradeneeded = () => request.transaction?.abort()
+    request.onerror = () => resolve(null)
+    request.onblocked = () => resolve(null)
+    request.onsuccess = () => {
+      const db = request.result
+      try {
+        const tx = db.transaction('meta', 'readonly')
+        const asked = tx.objectStore('meta').get('device')
+        asked.onsuccess = () => {
+          const value = (asked.result as { value?: unknown } | undefined)?.value
+          resolve(typeof value === 'string' ? value : null)
+        }
+        tx.oncomplete = () => db.close()
+        tx.onabort = () => {
+          db.close()
+          resolve(null)
+        }
+      } catch {
+        db.close()
+        resolve(null)
+      }
+    }
+  })
 }
 
 /** Deletes an account's store. */
@@ -113,7 +144,7 @@ function made(db: IDBDatabase): void {
 
 /** Reads the device id and the last session's word on how it ended, and marks this one
  *  as not ended yet, in one transaction. */
-function started(db: IDBDatabase): Promise<Opened> {
+function started(db: IDBDatabase, made?: string): Promise<Opened> {
   const found: { device?: unknown; clean?: unknown } = {}
   let device = ''
 
@@ -122,7 +153,7 @@ function started(db: IDBDatabase): Promise<Opened> {
     const asked = meta.get('device')
     asked.onsuccess = () => {
       found.device = (asked.result as { value?: unknown } | undefined)?.value
-      device = typeof found.device === 'string' ? found.device : crypto.randomUUID()
+      device = typeof found.device === 'string' ? found.device : (made ?? crypto.randomUUID())
       if (device !== found.device) meta.put({ key: 'device', value: device })
     }
     const clean = meta.get('clean_exit')
@@ -285,49 +316,5 @@ function settled(
       tx.abort()
       reject(error instanceof Error ? error : new StoreError(String(error)))
     }
-  })
-}
-
-// ---------------------------------------------------------------------------
-// One engine per browser
-
-/** The lock every tab of the app asks for; the one holding it runs the engine. */
-const LEADER = 'nib-sync'
-
-/** Being the tab that syncs, and the way to stop being it. */
-export interface Leadership {
-  release(): void
-}
-
-/** Waits until this tab is the one that syncs, and answers how to stop being it; null
- *  when `signal` gave up first.
- *
- *  A Web Lock is held until the tab closes, crashes or lets go, and the browser hands it
- *  to the next tab waiting at once, so the engine moves to another tab the moment the
- *  leader's goes and never runs in two. A browser without Web Locks (they need a secure
- *  context, and every browser Orden supports has had them since 2022) leads at once: a
- *  second tab there is a second engine, the rows are the same rows, and every write is a
- *  transaction, so it costs work rather than words. */
-export function leadSync(signal?: AbortSignal): Promise<Leadership | null> {
-  const locks = (globalThis.navigator as Navigator | undefined)?.locks
-  if (!locks) return Promise.resolve({ release: () => undefined })
-
-  return new Promise((resolve) => {
-    let release: () => void = () => undefined
-    const held = new Promise<void>((done) => {
-      release = done
-    })
-
-    const options: LockOptions = signal ? { signal } : {}
-    locks
-      .request(LEADER, options, () => {
-        resolve({ release })
-        return held
-      })
-      .catch(() => {
-        // The only way the request rejects is the signal giving up before the lock was
-        // granted, which is the null this answers.
-        resolve(null)
-      })
   })
 }

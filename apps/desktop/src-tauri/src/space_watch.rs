@@ -23,6 +23,8 @@ mod known;
 mod walk;
 mod watching;
 
+pub use walk::says_gone;
+
 use serde::Serialize;
 use std::path::Path;
 use std::sync::{Mutex, MutexGuard};
@@ -33,7 +35,7 @@ use crate::paths::{a_space, cannot, in_spaces};
 use crate::tree::MAX_ENTRIES;
 use known::Seen;
 use walk::Found;
-use watching::{watch, Heard, Root, Watch, MOST_CHANGES};
+use watching::{armed, Heard, Root, Watch, MOST_CHANGES};
 
 /// The watch that is running, if one is.
 #[derive(Default)]
@@ -61,6 +63,9 @@ pub struct Listed {
     mtime: u64,
     /// What it is apart from where it is, or null where the file system would not say.
     id: Option<String>,
+    /// A folder whose children were not read; see `walk`. What is known under it is not gone.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    unlisted: bool,
 }
 
 /// One answer about one path.
@@ -126,6 +131,7 @@ fn listed(root: &Path, one: Found) -> Listed {
         size: one.size,
         mtime: one.mtime,
         id: one.id,
+        unlisted: one.unlisted,
     }
 }
 
@@ -196,10 +202,11 @@ pub fn space_watch(app: AppHandle, roots: Vec<String>, news: Channel<News>) -> R
     // watched by nothing at all (#481). The old one stops the moment the new one is
     // there, before the new one has said anything.
     let spelled = judged.clone();
-    let made = watch(
-        judged,
-        Box::new(move |heard| news.send(self::news(&spelled, heard)).is_ok()),
-    )?;
+    let made = armed(judged)?
+        .replacing(&mut running)
+        .start(Box::new(move |heard| {
+            news.send(self::news(&spelled, heard)).is_ok()
+        }))?;
     *running = Some(made);
     Ok(())
 }
@@ -265,6 +272,7 @@ mod tests {
             size: 5,
             mtime: 1_700_000_000_000,
             stamp: 1_700_000_000_000_000_000,
+            unlisted: false,
             id: Some("2a:1f".into()),
         };
 
@@ -301,6 +309,7 @@ mod tests {
             size: 0,
             mtime: 0,
             id: None,
+            unlisted: false,
         });
         assert_eq!(
             serde_json::to_value(&created).expect("json")["kind"],

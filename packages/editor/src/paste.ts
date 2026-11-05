@@ -7,6 +7,7 @@ import {
 import { type Command, EditorView } from '@codemirror/view'
 import { rangeInCode } from './code'
 import { ourOwn } from './copy'
+import { wordsBesidePicture } from './images'
 import { loadLineCommands } from './line-door'
 import { documentOf } from './shared'
 
@@ -57,6 +58,15 @@ export function delimitedToTable(text: string): string | null {
   const [header = [], ...body] = rows
   const columns = header.length
   if (columns < 2 || rows.some((row) => row.length !== columns)) return null
+  // Commas written the way prose writes them, and not a number in sight: `Hello, world,
+  // again` over `Goodbye, moon, soon` are two sentences.
+  if (
+    separator === ',' &&
+    lines.some((line) => /,\s/.test(line)) &&
+    !rows.flat().some((cell) => /^[\d$€£%.,+-]+$/.test(cell))
+  ) {
+    return null
+  }
 
   const escape = (cell: string) => cell.replace(/\|/g, '\\|')
   const render = (row: string[]) => `| ${row.map(escape).join(' | ')} |`
@@ -87,7 +97,7 @@ function copiedHere(html: string, text: string): string | null {
 }
 
 /** Words put in over the selection, with the caret after them. */
-function inserted(state: EditorState, text: string): TransactionSpec {
+export function inserted(state: EditorState, text: string): TransactionSpec {
   const range = state.selection.main
   return {
     changes: { from: range.from, to: range.to, insert: text },
@@ -100,6 +110,11 @@ function inserted(state: EditorState, text: string): TransactionSpec {
 function insert(view: EditorView, text: string) {
   view.dispatch(inserted(view.state, text))
 }
+
+/** A list's first line, and a line holding an item with nothing in it yet: what decides
+ *  that a plain paste is not CodeMirror's to put in. See `intoEmptyItem`. */
+const AN_ITEM = /^(?:[-*+]|\d+[.)])[ \t]/
+const EMPTY_ITEM = /^[ \t>]*(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?$/
 
 /** Where a paste goes that is written a moment after it was made, because what writes
  *  it - the link rule, the page converter - is fetched with the first one: the note it
@@ -171,10 +186,11 @@ export function richPaste(): Extension {
       if (view.state.readOnly) return false
 
       const data = event.clipboardData
-      if (!data || data.files.length) return false
+      if (!data) return false
 
       const html = data.getData('text/html')
       const text = data.getData('text/plain')
+      if (data.files.length && !wordsBesidePicture(html, text)) return false
 
       // An address over selected words, which makes a link of them. Before anything
       // reads the HTML: a browser puts a link's markup beside the address it copies.
@@ -190,21 +206,36 @@ export function richPaste(): Extension {
         return true
       }
 
+      // Code takes the words as they are, and CodeMirror puts the plain text in: no
+      // table made of a CSV, and no markdown made of the HTML an editor copies too.
+      if (view.state.selection.ranges.some((range) => rangeInCode(view.state, range))) return false
+
+      // A list on an empty item, from this app or as plain text. Whatever else those
+      // two come to, CodeMirror's plain paste below would nest its first line alone.
+      if (
+        view.state.selection.ranges.length === 1 &&
+        (copiedHere(html, text) || !html.trim()) &&
+        AN_ITEM.test(text) &&
+        EMPTY_ITEM.test(view.state.doc.lineAt(view.state.selection.main.head).text)
+      ) {
+        event.preventDefault()
+        const land = later(view)
+        void loadLineCommands().then(({ plainly }) => land((state) => plainly(state, text)))
+        return true
+      }
+
       // A note this app copied: handed back to CodeMirror, which puts the plain
       // text in as it stands - and the plain text is the note's own markdown. See
       // `copiedHere`.
       if (copiedHere(html, text)) return false
-
-      // Code takes the words as they are, and CodeMirror puts the plain text in: no
-      // table made of a CSV, and no markdown made of the HTML an editor copies too.
-      if (view.state.selection.ranges.some((range) => rangeInCode(view.state, range))) return false
 
       // A spreadsheet puts both flavours on the clipboard and the plain text is the
       // table, so that paste is worked out here and lands in the frame it happened in.
       const table = delimitedToTable(text)
       if (table) {
         event.preventDefault()
-        insert(view, table)
+        const land = later(view)
+        void loadLineCommands().then(({ placed }) => land((state) => placed(state, table)))
         return true
       }
 
@@ -217,13 +248,13 @@ export function richPaste(): Extension {
       // first page pasted in a run of the app and on no other.
       event.preventDefault()
       const land = later(view)
-      void converter()
-        .then((htmlToMarkdown) => {
+      void Promise.all([converter(), loadLineCommands()])
+        .then(([htmlToMarkdown, { placed }]) => {
           // A page that comes to nothing - all chrome and no prose - is pasted as the
           // plain text beside it, which is what handing the paste back would have
           // done with it.
           const words = htmlToMarkdown(html) || text
-          if (words) land((state) => inserted(state, words))
+          if (words) land((state) => placed(state, words))
         })
         .catch(() => {
           if (text) land((state) => inserted(state, text))
@@ -251,12 +282,12 @@ export const pasteHere: Command = (view) => {
   void readClipboard()
     .then(async (clipboard) => {
       if (!clipboard) return
-      const { linkedPaste } = await loadLineCommands()
+      const { linkedPaste, placed, plainly } = await loadLineCommands()
       if (land((state) => linkedPaste(state, clipboard.text))) return
 
       const markdown = await pastedMarkdown(clipboard.html, clipboard.text)
-      const text = markdown ?? clipboard.text
-      if (text) land((state) => inserted(state, text))
+      if (markdown) land((state) => placed(state, markdown))
+      else if (clipboard.text) land((state) => plainly(state, clipboard.text))
     })
     .catch(() => undefined)
 

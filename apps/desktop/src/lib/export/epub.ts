@@ -17,6 +17,7 @@
 import { mapSources } from '@orden/markdown/sources'
 import { claimName } from './naming'
 import { type Picture, suffixFor } from './pictures'
+import { legalCode, legalXml } from './xml-legal'
 import { type Entry, zipOf } from './zip'
 
 export interface EpubOptions {
@@ -123,11 +124,19 @@ function referenceOf(name: string): string {
   return `&amp;${name};`
 }
 
+/** Whether `&#65;` or `&#x41;` names a character XML can carry. */
+function legalReference(reference: string): boolean {
+  const hex = /x/i.test(reference.charAt(2))
+  return legalCode(Number.parseInt(reference.slice(hex ? 3 : 2), hex ? 16 : 10))
+}
+
 /** One run of text, or one attribute value, as XML can carry it. `quotes` is on
  *  for an attribute, where a double quote would end the value. */
 function escaped(text: string, quotes: boolean): string {
-  return text.replace(CHARACTER, (whole: string, name: string | undefined) => {
+  return legalXml(text).replace(CHARACTER, (whole: string, name: string | undefined) => {
     if (name !== undefined) return referenceOf(name)
+    // XML reads only a small x, where HTML takes either.
+    if (whole.startsWith('&#')) return legalReference(whole) ? whole.replace('&#X', '&#x') : ''
     if (whole === '&') return '&amp;'
     if (whole === '<') return '&lt;'
     if (whole === '>') return '&gt;'
@@ -286,6 +295,23 @@ function closing(open: string[], name: string | null): string {
   return out
 }
 
+/** The namespaces an HTML parser gives these two by itself and an XML one does not:
+ *  there a bare `<svg>` is an XHTML element nobody has heard of, so a chart comes out
+ *  as its labels run together, with no height and no lines. */
+const XHTML = 'http://www.w3.org/1999/xhtml'
+const FOREIGN_ROOTS: Record<string, string> = {
+  svg: 'http://www.w3.org/2000/svg',
+  math: 'http://www.w3.org/1998/Math/MathML',
+}
+
+function namespaceOf(name: string, attributes: string, parent: string | undefined): string {
+  // And what a `foreignObject` holds is XHTML again, which it would not otherwise be: it
+  // would inherit the drawing's namespace and draw as nothing.
+  const inForeign = parent?.toLowerCase() === 'foreignobject'
+  const space = inForeign ? XHTML : FOREIGN_ROOTS[name.toLowerCase()]
+  return space && !/\sxmlns=/.test(attributes) ? ` xmlns="${space}"` : ''
+}
+
 /** The renderer's HTML as XML a parser will take. Nothing is lower-cased and
  *  nothing is reordered: the note's markup comes through as it was written,
  *  with only what XML insists on changed.
@@ -304,7 +330,8 @@ export function toXhtml(html: string): string {
 
   const renamed = (name: string) => (foreign > 0 && name.toLowerCase() === 'p' ? 'span' : name)
 
-  for (const piece of piecesOf(html)) {
+  // The whole of it rather than each piece: a comment and a name are written as they were.
+  for (const piece of piecesOf(legalXml(html))) {
     switch (piece.kind) {
       case 'text':
         out += escaped(piece.text, false)
@@ -322,12 +349,13 @@ export function toXhtml(html: string): string {
       case 'open': {
         const attributes = attributesOf(piece.attributes)
         const name = renamed(piece.name)
+        const space = namespaceOf(name, attributes, open.at(-1))
 
         if (piece.empty || VOID_ELEMENTS.has(name.toLowerCase())) {
-          out += `<${name}${attributes} />`
+          out += `<${name}${space}${attributes} />`
         } else {
           if (name.toLowerCase() === 'foreignobject') foreign++
-          out += `<${name}${attributes}>`
+          out += `<${name}${space}${attributes}>`
           open.push(name)
         }
         break

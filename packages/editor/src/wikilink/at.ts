@@ -3,6 +3,7 @@ import type { EditorState } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
 import {
   decodeFragment,
+  decodeTarget,
   isNoteTarget,
   type LinkKind,
   parseWikilink,
@@ -46,7 +47,7 @@ export function noteLinkOfNode(state: EditorState, node: SyntaxNode): LinkSpan |
   if (!isNoteTarget(written)) return null
 
   const hash = written.indexOf('#')
-  const target = decode(hash === -1 ? written : written.slice(0, hash))
+  const target = decodeTarget(hash === -1 ? written : written.slice(0, hash))
   const fragment = hash === -1 ? '' : decodeFragment(written.slice(hash + 1))
   if (!target && !fragment) return null
 
@@ -73,15 +74,6 @@ export function noteLinkOfNode(state: EditorState, node: SyntaxNode): LinkSpan |
     kind: 'markdown',
     from: node.from,
     to: node.to,
-  }
-}
-
-function decode(target: string): string {
-  try {
-    return decodeURI(target)
-  } catch {
-    // Not valid encoding, so the characters are the name.
-    return target
   }
 }
 

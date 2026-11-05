@@ -6,7 +6,9 @@
  *  runs before the change reaches the page. A web page's picture is the one the engine
  *  already takes as anything is drawn over it (`shot` in web-tab/pages.svelte.ts). A tab
  *  closed takes its picture with it. What is kept is read back the first time the
- *  overview asks.
+ *  overview asks. A private tab has no picture kept, here or on disk: nothing is written
+ *  about it (web-tab/private.ts), and its window draws the page's own photograph while
+ *  the tab is open.
  *
  *  Started at the launch's last turn on the desktop (start.ts), and fetched by the
  *  overview too. */
@@ -15,8 +17,18 @@ import { untrack } from 'svelte'
 import { pages } from '../web-tab/pages.svelte'
 import { type Tab, workspace } from '../workspace.svelte'
 import { TAB_KINDS } from '../workspace/tab-kinds'
-import { evicted, type Face, forgetFaces, LARGEST, readFaces, sizeOf, writeFace } from './faces'
+import {
+  evicted,
+  type Face,
+  forgetFaces,
+  LARGEST,
+  readFaces,
+  sizeOf,
+  upgradeFaces,
+  writeFace,
+} from './faces'
 import { shownBox, snapshotOf } from './mirror'
+import { upgradeWindows } from './places.svelte'
 import { lastingKeys } from './tab-keys'
 
 /** How long after it was copied a picture is made into markup: after the switch that took
@@ -26,6 +38,9 @@ const TAKE_LATER = 700
 class Faces {
   /** The pictures of this run's tabs, by tab id. */
   private byId = $state.raw<Record<string, Face>>({})
+  /** The name each tab's picture was last written or read under, which a tab whose title
+   *  or file has changed since no longer goes by. */
+  private written = new Map<string, string>()
   private reading: Promise<void> | null = null
 
   /** The picture of tab `id`, or null where there is none. */
@@ -43,7 +58,10 @@ class Faces {
       const next = { ...this.byId }
       for (const [name, face] of kept) {
         const id = idOf.get(name)
-        if (id && !going.has(name) && !next[id]) next[id] = face
+        if (id && !going.has(name) && !next[id]) {
+          next[id] = face
+          this.written.set(id, name)
+        }
       }
       this.byId = next
       void forgetFaces([...going])
@@ -55,7 +73,7 @@ class Faces {
    *  markup once the moment has passed. */
   take(paneId: string, tab: Tab) {
     // Only what is drawn from a picture keeps one; the rest is drawn from what it holds.
-    if (TAB_KINDS[tab.kind].preview !== 'picture') return
+    if (tab.inPrivate || TAB_KINDS[tab.kind].preview !== 'picture') return
     const later = snapshotOf(paneId)
     if (!later) return
     setTimeout(() => {
@@ -68,7 +86,7 @@ class Faces {
 
   /** A web page's photograph, kept as its tab's. */
   photographed(tab: Tab, shot: string) {
-    if (this.byId[tab.id]?.shot === shot || shot.length > LARGEST) return
+    if (tab.inPrivate || this.byId[tab.id]?.shot === shot || shot.length > LARGEST) return
     const box = shownBox(tab.paneId)
     const w = box && box.width > 0 ? box.width : 1280
     const h = box && box.height > 0 ? box.height : 800
@@ -77,8 +95,16 @@ class Faces {
 
   private keep(tab: Tab, face: Face) {
     this.byId = { ...this.byId, [tab.id]: face }
-    const name = lastingKeys(workspace.tabs).get(tab.id)
-    if (name && sizeOf(face) > 0) void writeFace(name, face)
+    const names = lastingKeys(workspace.tabs)
+    const name = names.get(tab.id)
+    if (!name || sizeOf(face) <= 0) return
+    void writeFace(name, face)
+    // The same tab under another name now: what it wrote before is nobody's.
+    const before = this.written.get(tab.id)
+    this.written.set(tab.id, name)
+    if (before && before !== name && ![...names.values()].includes(before)) {
+      void forgetFaces([before])
+    }
   }
 
   /** The pictures of tabs that closed, let go: `names` is each tab's lasting name before,
@@ -86,15 +112,21 @@ class Faces {
   closed(names: ReadonlyMap<string, string>, open: readonly Tab[]) {
     const now = lastingKeys(open)
     const still = new Set(now.values())
-    const gone = [...names].filter(([id]) => !now.has(id))
+    // By the name the picture was written under as well: a title or a file changed since
+    // the tabs last changed is another name than `names` has.
+    const gone = [...names, ...this.written].filter(([id]) => !now.has(id))
     if (!gone.length) return
     const leaving = new Set(gone.map(([id]) => id))
     this.byId = Object.fromEntries(Object.entries(this.byId).filter(([id]) => !leaving.has(id)))
-    void forgetFaces(gone.map(([, name]) => name).filter((name) => !still.has(name)))
+    for (const id of leaving) this.written.delete(id)
+    void forgetFaces([...new Set(gone.map(([, name]) => name))].filter((name) => !still.has(name)))
   }
 }
 
 export const faces = new Faces()
+
+void upgradeFaces()
+upgradeWindows()
 
 $effect.root(() => {
   /** The tab in front of each pane as last seen, which is photographed as it goes. */

@@ -18,6 +18,10 @@ import type { NoteDoc } from '../../workspace/documents.svelte'
 import type { Replacement } from './edits'
 import { Steps } from './steps'
 
+/** The last edit named, across every track: an agent has a track per note, and the review
+ *  tells its edits apart by these alone. */
+let minted = 0
+
 /** How an agent's edit is named in the reader's history. */
 const AGENT_EVENT = 'agent'
 
@@ -74,7 +78,6 @@ export class Track {
   private seen: string | null = null
   /** True while this track is making a change itself, which it does not hear. */
   private making = false
-  private made = 0
   /** How many steps were last said; see `told`. */
   private said = 0
   /** Where each edit still there to take back is now, by id. */
@@ -98,8 +101,8 @@ export class Track {
   /** A name for the next edit's mark: unique in this session. `thread` is the AI panel
    *  thread it is made for, where the call said one. */
   nextId(thread?: string): string {
-    this.made++
-    const id = `${this.prefix}:${String(this.made)}`
+    minted++
+    const id = `${this.prefix}:${String(minted)}`
     if (thread) this.whose.set(id, thread)
     return id
   }
@@ -358,6 +361,16 @@ export class Track {
     })
     this.held = { note, stop }
     this.seen = null
+  }
+
+  /** Its note was deleted: what it says stays as it last was. */
+  setAside() {
+    this.letGo()
+  }
+
+  /** What its note said when last heard of, in the editor's line endings. */
+  get says(): string | null {
+    return this.held ? this.held.note.live.text.toString() : this.seen
   }
 
   private letGo() {

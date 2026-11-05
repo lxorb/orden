@@ -81,7 +81,7 @@ import { accessOf } from './access'
 const SETTLE_DELAY = 1_200
 
 /** How long a socket let into a room waits for the database to settle its join. Longer
- *  than a slow answer, and shorter than somebody typing into nothing for long. */
+ *  than a slow answer, and shorter than a device is left waiting on its handshake. */
 const SETTLES_WITHIN = 15_000
 
 /** How many awareness entries one socket is remembered as having announced. A
@@ -405,12 +405,6 @@ export class NoteRoom implements DurableObject {
    *  where nothing said - a room the runtime woke to fire an alarm has forgotten, and
    *  no name is better than another device's. */
   private settling = ''
-  /** Sockets let in whose join is not yet settled, and whether each stays. Held in memory,
-   *  on what the runtime documents rather than anything a test here can show: an object
-   *  does not hibernate while a request is being processed or a timer is set, pending I/O
-   *  holds off eviction for up to fifteen minutes, and an object that shuts down anyway
-   *  terminates its sockets with it, so none is left to speak without this. */
-  private readonly letting = new Map<WebSocket, Promise<boolean>>()
   /** And which device that was, by id rather than by name, for the tree; see
    *  `Attached`. */
   private settlingDevice: string | undefined = undefined
@@ -532,19 +526,9 @@ export class NoteRoom implements DurableObject {
       ...(joining.login ? { login: joining.login } : {}),
     } satisfies Attached)
 
-    // What the socket says from here until this is settled waits for it: the object
-    // takes messages while it waits on the database, and a socket let in on what the
-    // door read must not be heard on it once that may no longer be so.
-    const settling = this.settleInTime(server, held, joining)
-    this.letting.set(
-      server,
-      settling.catch(() => false),
-    )
-    try {
-      if (!(await settling)) return
-    } finally {
-      this.letting.delete(server)
-    }
+    // Nothing the device says can reach this wait: `fetch` hands it the socket's other end
+    // in its 101, after this. What the wait can do is never end; see `settleInTime`.
+    if (!(await this.settleInTime(server, held, joining))) return
 
     // Rows nothing will take away are cleared after the join rather than before it:
     // the join waits on none of the rooms that asks, and fails for none of them.
@@ -563,9 +547,9 @@ export class NoteRoom implements DurableObject {
   }
 
   /** The rest of a join, within a bound: the database neither answering nor failing would
-   *  otherwise leave the socket in the room with whatever it says waiting for ever. Closed
-   *  as any join this side could not finish is, so the device comes back and says it
-   *  again. Its row, if it has one, is one nothing needs waiting on: the next join's sweep
+   *  otherwise leave the handshake unanswered for ever, with a socket in the room that no
+   *  device is on. Closed as any join this side could not finish is, so the device comes
+   *  back. Its row, if it has one, is one nothing needs waiting on: the next join's sweep
    *  takes it (opened.ts). */
   private async settleInTime(server: WebSocket, held: Held, joining: Joining): Promise<boolean> {
     let timer: ReturnType<typeof setTimeout> | null = null
@@ -864,8 +848,10 @@ export class NoteRoom implements DurableObject {
    *  out the way a revocation closes one person, the settle that may be on the clock
    *  is taken off it, and the storage goes. What is held in memory is let go of too:
    *  without `held` a settle has nothing to write into, so nothing this object still
-   *  remembers can put a row or a byte back. An object that never existed answers the
-   *  same, with nothing to take away. */
+   *  remembers can put a row or a byte back, and without `opened` and the document a
+   *  socket joining this object next opens the room afresh rather than one still holding
+   *  the words. An object that never existed answers the same, with nothing to take
+   *  away. */
   private async erase(): Promise<Response> {
     for (const socket of this.ctx.getWebSockets()) {
       forget(this.awareness, announcedBy(socket), socket)
@@ -873,21 +859,27 @@ export class NoteRoom implements DurableObject {
     }
 
     this.held = null
+    this.opened = null
     this.settleAt = null
+    this.startEmpty()
     await this.ctx.storage.deleteAlarm()
     await this.ctx.storage.deleteAll()
 
     return new Response(null, { status: 204 })
   }
 
+  /** A new document in place of the one held, since a Yjs document cannot be emptied. */
+  private startEmpty() {
+    this.state.doc.destroy()
+    this.awareness.destroy()
+    this.state = new RoomState(this.ctx.storage)
+    this.awareness = new Awareness(this.state.doc)
+    this.listen()
+  }
+
   async webSocketMessage(socket: WebSocket, message: ArrayBuffer | string) {
     // Everything a room says is bytes. A string is not this protocol.
     if (typeof message === 'string') return
-
-    // A socket still being settled in is heard once that is done, as what it turned out
-    // to be; see `enter`.
-    const letting = this.letting.get(socket)
-    if (letting && !(await letting)) return
 
     const said = new Uint8Array(message)
 
@@ -1439,11 +1431,7 @@ export class NoteRoom implements DurableObject {
 
     await this.closeForEpoch(epoch, base)
     await this.state.clear()
-    this.state.doc.destroy()
-    this.awareness.destroy()
-    this.state = new RoomState(this.ctx.storage)
-    this.awareness = new Awareness(this.state.doc)
-    this.listen()
+    this.startEmpty()
 
     Y.applyUpdateV2(this.state.doc, seedOf(held.kind, held.noteId, epoch, seed), PUSHED)
     const seeded = fileOf(held.kind, this.state.doc)
@@ -1708,8 +1696,10 @@ export class NoteRoom implements DurableObject {
     const held = this.held
     if (!asked || !held || (held.epoch ?? 0) < 1) return { refused: 'gone' }
 
-    if ((await sha256(fileOf(held.kind, this.state.doc))) !== held.hash) await this.settle()
+    const unsettled = (await sha256(fileOf(held.kind, this.state.doc))) !== held.hash
+    const settled = !unsettled || (await this.settle())
 
+    const level = held.hash
     const row = await this.env.DB.prepare('select * from notes where id = ?')
       .bind(held.noteId)
       .first<Note>()
@@ -1720,6 +1710,22 @@ export class NoteRoom implements DurableObject {
     if (!readsAs(held.kind, asked.text)) return { refused: UNREADABLE }
 
     const current = fileOf(held.kind, this.state.doc)
+    // A writer naming a version wrote on that version's words, so the document has to
+    // be holding them, or the difference between the two takes out what it holds besides.
+    // Text that says what the document says takes nothing out: a v1 rename. Words the
+    // settle would not write are no conflict of the writer's, so it is asked again
+    // rather than made to keep a second copy; a keystroke that arrived while the row was
+    // read or this was hashed is one. Nothing is awaited below.
+    if (asked.base !== undefined && asked.text !== current) {
+      if (!settled) return { refused: 'unsaved' }
+      if (
+        (await sha256(current)) !== level ||
+        held.hash !== level ||
+        fileOf(held.kind, this.state.doc) !== current
+      ) {
+        return { conflict: true }
+      }
+    }
     const update = ingested(held.kind, this.state.doc, held.noteId, current, asked.text)
     if (!update) return { note: row }
 

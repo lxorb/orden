@@ -27,6 +27,7 @@ const trees = new Map<string, unknown>()
 
 vi.mock('../tauri', () => ({
   isNative: true,
+  platform: () => 'linux',
   invoke: (command: string, args?: Record<string, unknown>) => {
     const path = typeof args?.path === 'string' ? args.path : ''
     const content = typeof args?.content === 'string' ? args.content : ''
@@ -893,5 +894,49 @@ describe('what the account holds of a folder', () => {
       ['/s/Work/b.md', 0],
     ])
     expect(asked[0]?.budget).toBe(asked[1]?.budget)
+  })
+})
+
+describe('a replacement put back with another window here', () => {
+  const NOTE = {
+    content: 'alpha line\n',
+    after: 'gamma line\n',
+    edits: [{ from: 0, to: 5, insert: 'alpha' }],
+  }
+
+  test("a closed note is read again in the file's turn", async () => {
+    disk.set('/s/a.md', NOTE.after)
+    const turns: (() => unknown)[] = []
+    let inTurn = false
+    vi.stubGlobal('navigator', {
+      locks: {
+        request: async (name: string, ...rest: unknown[]) => {
+          const run = rest.at(-1) as (lock: unknown) => unknown
+          if (!name.startsWith('nib:file:')) return run({ name })
+          await new Promise((go) => turns.push(() => go(undefined)))
+          inTurn = true
+          try {
+            return await run({ name })
+          } finally {
+            inTurn = false
+          }
+        },
+      },
+    })
+    try {
+      const ws = store({ kind: 'replace', notes: [{ path: '/s/a.md', ...NOTE }] })
+      const undoing = undoLastFileAction(ws)
+      await vi.waitFor(() => expect(turns.length).toBe(1))
+      expect(inTurn).toBe(false)
+      // Another window's write, ahead in line.
+      disk.set('/s/a.md', 'gamma line\nWORDS-IN-B\n')
+      turns[0]?.()
+      await undoing
+    } finally {
+      vi.unstubAllGlobals()
+    }
+    expect(sent.filter((one) => one.command === 'write_note').at(-1)?.content).toBe(
+      'alpha line\nWORDS-IN-B\n',
+    )
   })
 })

@@ -170,6 +170,13 @@ async function window2() {
   const [left] = workspace.panes.all
   if (!left) throw new Error('no pane')
   workspace.focusPane(left.id)
+  // A draft with words is written where it goes a moment later, and takes the name that is
+  // free there: wait for it, or a name changes under what the test compares.
+  await vi.waitFor(() =>
+    expect(workspace.tabs.every((tab) => tab.note.kind !== 'note' || tab.note.path !== null)).toBe(
+      true,
+    ),
+  )
   shown = mount(App, { target })
   await settle()
   return left.id

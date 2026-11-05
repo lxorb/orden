@@ -293,3 +293,17 @@ function readTaskOf(line: string) {
   if (!found) throw new Error('not a task')
   return found
 }
+
+describe('a field arriving in front of one glued to the words', () => {
+  test('stands apart from them, so a tag is a tag', () => {
+    expect(changedTask('- [ ] x⏫ 📅 2026-01-02', { tags: ['new'] })).toBe(
+      '- [ ] x #new ⏫ 📅 2026-01-02',
+    )
+  })
+
+  test('and adds no second blank where there is one', () => {
+    expect(changedTask('- [ ] x ⏫ 📅 2026-01-02', { tags: ['new'] })).toBe(
+      '- [ ] x #new ⏫ 📅 2026-01-02',
+    )
+  })
+})

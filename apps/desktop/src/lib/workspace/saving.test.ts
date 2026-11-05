@@ -53,7 +53,7 @@ vi.mock('../sync.svelte', () => ({
 }))
 
 const { IN_THE_AIR_AT_MOST, Saving } = await import('./saving.svelte')
-const { settleUp } = await import('../parting')
+const { owesAtTheEnd, settleUp } = await import('../parting')
 const { NoteDoc, Tab, UNTITLED } = await import('./documents.svelte')
 type Writes = import('./saving.svelte').Writes
 type Doc = import('./documents.svelte').NoteDoc
@@ -108,12 +108,10 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
     documents: [],
     active: null,
     previewTabId: null,
-    get tree() {
-      return tree
-    },
     persisted: 0,
     lists: 0,
     keep: () => undefined,
+    wroteAll: () => undefined,
     scheduleSession: () => undefined,
     loadTree() {
       this.lists += 1
@@ -156,10 +154,11 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
   ws.documents.push(note)
   Object.defineProperty(ws, 'active', { get: () => tab })
 
-  /** The note deleted, as the store deletes one: the row leaves the listing and
-   *  the tab it was open in is closed, both before the file itself goes. */
+  /** The note deleted, as the store deletes one: the row leaves the listing, the delete
+   *  is said, and the tab it was open in is closed. */
   const deleted = () => {
     tree = listing([])
+    saving.follow({ op: 'removed', path: note.path ?? '', kind: 'file', root: SPACE })
     ws.tabs.length = 0
     ws.documents.length = 0
   }
@@ -389,6 +388,19 @@ describe('the window going while the typing is still warm', () => {
 })
 
 describe('Ctrl+S', () => {
+  /** The session goes on after a save, so it must not say it ended. */
+  test('runs nothing that only the end of the session may', async () => {
+    const { saving } = open(`${SPACE}/ended.md`)
+    const ended = vi.fn()
+    owesAtTheEnd(ended)
+
+    await saving.writeNow()
+    expect(ended).not.toHaveBeenCalled()
+
+    settleUp()
+    expect(ended).toHaveBeenCalledOnce()
+  })
+
   test('writes what is waiting now, keeps the note in front as a version, and asks nothing', async () => {
     const PATH = `${SPACE}/pressed.md`
     const { note, saving } = open(PATH)
@@ -455,6 +467,36 @@ describe('what is worth keeping a version of', () => {
 describe('a write the disk refuses', () => {
   const A = `${SPACE}/a.md`
   const B = `${SPACE}/b.md`
+
+  test('told on the light, and the light goes back when the write lands', async () => {
+    vi.useFakeTimers()
+    const { note, saving } = open(A)
+    refusing.set(A, 3)
+    note.replace('# a\n\nrefused')
+    await vi.advanceTimersByTimeAsync(400 + 2000 + 4000)
+    expect(light.status).toBe('error')
+
+    await vi.advanceTimersByTimeAsync(60_000)
+    await saving.settled()
+    expect(written(A).at(-1)?.content).toBe('# a\n\nrefused')
+    expect(light.status).toBe('off')
+    expect(light.lastError).toBe(null)
+  })
+
+  test('says why where the file has gone past reading: nothing in the tab mends that', async () => {
+    vi.useFakeTimers()
+    const { note, saving } = open(A)
+    saving.across = {
+      writing: () =>
+        Promise.reject(Object.assign(new Error(`${A} would not read`), { name: 'WillNotRead' })),
+    } as never
+    note.replace('# a\n\nrefused')
+    await vi.advanceTimersByTimeAsync(400 + 2000 + 4000)
+
+    expect(light.status).toBe('error')
+    expect(light.lastError).toContain('64 MB')
+    saving.across = null
+  })
 
   test('is tried again a moment later without another keystroke', async () => {
     vi.useFakeTimers()

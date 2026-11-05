@@ -67,18 +67,22 @@ interface Matched {
 }
 
 /** The first v2 pass of a space. Answers whether it got through; a pass that met no
- *  account is asked again next time, from the top.
+ *  account, or read no listing of the folder, is asked again next time, from the top.
  *
  *  `carried` is the ids what is in the folder had while it was used signed out, by its
  *  path as this disk compares paths (`carriedIds` in local.ts; #1068, step 4b): what
  *  the account has never heard of is made there under the id it had here, as the
  *  account takes the id a device chooses for what it makes. What the account already
- *  has stays the account's, under its own id. */
+ *  has stays the account's, under its own id.
+ *
+ *  `done` is what says it got through, written with its last commit: whatever a crash
+ *  left short of that is a pass that never finished, and the next one starts over. */
 export async function firstPass(
   core: Core,
   space: SpaceState,
   v1: V1Space | null,
   carried: ReadonlyMap<string, string> = new Map(),
+  done: readonly Change[] = [],
 ): Promise<boolean> {
   const life = core.life
   const alive = () => core.life === life
@@ -87,12 +91,36 @@ export async function firstPass(
 
   if ((await world.account.ask('prepare', {}, space.id)) === null || !alive()) return false
 
+  // From the top, always. The feed is what files are matched against, and its cursor
+  // is written as it is read: one left by a pass that died meanwhile reads as an empty
+  // feed, which matches nothing, and then the file v1 wrote offline is taken for the
+  // words Orden last wrote there and the next pull writes over it.
+  space.row.cursor = 0
   const items = new Map<string, FeedItem>()
   if (!(await readFeed(core, space, alive, (item) => items.set(item.id, item)))) return false
 
   // The paper a page note holds is part of the note and no entry of its own (#551; see
   // `heldPaper` in engine.ts), so it is left out of what the folder is read as.
-  const everything = (await world.list?.(space.row.root)) ?? []
+  // A listing that failed is not an empty folder: read as one, every note v1 tracked
+  // would be a delete sent to the account.
+  const listed = world.list ? await world.list(space.row.root) : []
+  if (listed === null || !alive()) return false
+  // A note v1 knew that the listing does not show is gone only if the disk says so: a folder
+  // that would not list, or would not say what is in it, past the depth a listing goes, a
+  // link a listing leaves alone. One that reads is here. One nobody can look at waits, the
+  // pass with it: let through, its pairing with v1 is lost, and later it reads as a new note
+  // (or now, as a delete on every device).
+  const everything = [...listed]
+  const shown = new Set(listed.map((one) => space.key(one.path)))
+  for (const path of Object.keys(v1?.notes ?? {})) {
+    if (shown.has(space.key(path))) continue
+    if ((await world.disk.read(full(path))) !== null) {
+      everything.push({ path, dir: false })
+      shown.add(space.key(path))
+    } else if (await world.disk.exists(full(path))) {
+      return false
+    }
+  }
   const notes = new Set(everything.filter((one) => !one.dir).map((one) => space.key(one.path)))
   const listing = everything.filter((one) => {
     const holder = one.dir ? null : holderOf(one.path)
@@ -274,9 +302,12 @@ export async function firstPass(
     changes.push(...madeHere.changes)
   }
 
-  changes.push(core.wantChange(space.id))
+  changes.push(core.wantChange(space.id), ...done)
+  if (!alive()) return false
+  // The commit is the pass: once it is in, so are the caller's `done` rows, and an engine
+  // stopped meanwhile must not have the space forgotten, its carried ids gone with it.
   await core.commit(changes)
-  return alive()
+  return true
 }
 
 /** A note v1 renamed or moved, found under its new name. */

@@ -1729,79 +1729,8 @@ describe('somebody who stops being in the space while the file is open', () => {
     expect((socket.deserializeAttachment() as { mayWrite: boolean }).mayWrite).toBe(false)
   })
 
-  /** The object takes a socket's messages while it waits on D1, so a keystroke can
-   *  arrive between the socket being let in and the door's word being checked. */
-  describe('a keystroke sent while the handshake is still asking', () => {
-    /** The moment access is asked again: `change` lands, the socket says something, and
-     *  everything that can run runs before the database answers. Somebody typed a moment
-     *  ago, so the once-a-minute question (`askSignIns`) is not what catches it. */
-    async function typedDuring(change: () => void): Promise<FakeSocket> {
-      const ownerId = (await call(env, '/v1/me', { token: owner })).json.user.id
-      await typeInto(await signedIn(owner, ownerId))
-
-      const socket = new FakeSocket()
-      const { room: made, state } = live.of(noteId)
-      const doc = new Y.Doc()
-      const mark = Y.encodeStateVector(doc)
-      doc.getText(TEXT).insert(0, 'early ')
-      const update = syncUpdate(Y.encodeStateAsUpdate(doc, mark))
-
-      let said: Promise<void> = Promise.resolve()
-      const prepare = env.DB.prepare.bind(env.DB)
-      env.DB.prepare = (sql: string) => {
-        const statement = prepare(sql)
-        if (!sql.includes('case when sp.user_id = me.user_id')) return statement
-        const first = statement.first.bind(statement)
-        statement.first = async () => {
-          change()
-          said = say(made, state, socket, update)
-          await new Promise((settled) => setImmediate(settled))
-          return await first()
-        }
-        return statement
-      }
-
-      await made.enter(
-        socket as unknown as WebSocket,
-        { noteId, spaceId, kind: 'words' },
-        { writes: true, who: writerId, login: await sha256(writer) },
-      )
-      env.DB.prepare = prepare
-      await said
-      await made.alarm()
-      return socket
-    }
-
-    const content = async (): Promise<string> =>
-      (await call(env, `/v1/notes/${noteId}`, { token: owner })).json.content
-
-    test('is dropped from somebody just made a reader', async () => {
-      await typedDuring(() => {
-        env.db
-          .prepare("update space_members set role = 'read' where space_id = ? and email = ?")
-          .run(spaceId, WRITER)
-      })
-      expect(await content()).not.toContain('early ')
-    })
-
-    test('is dropped from somebody just taken out', async () => {
-      const socket = await typedDuring(() => {
-        env.db
-          .prepare('delete from space_members where space_id = ? and email = ?')
-          .run(spaceId, WRITER)
-      })
-      expect(socket.closedWith?.code).toBe(1008)
-      expect(await content()).not.toContain('early ')
-    })
-
-    test('is kept from somebody who may still write', async () => {
-      await typedDuring(() => undefined)
-      expect(await content()).toContain('early ')
-    })
-  })
-
-  /** A database that neither answers nor fails leaves a socket in the room with what it
-   *  says waiting on nothing: closed with a reason, so the device comes back. */
+  /** A database that neither answers nor fails leaves a handshake unanswered and a socket
+   *  in the room that no device is on: closed with a reason, so the device comes back. */
   describe('a handshake the database never answers', () => {
     const LONGER_THAN_ANY_WAIT = 60 * 60 * 1000
 
@@ -1809,19 +1738,13 @@ describe('somebody who stops being in the space while the file is open', () => {
       vi.useRealTimers()
     })
 
-    /** A join whose statement matching `sql`, past the first `skip` of them, never answers,
-     *  and something said while it waits, which is what must not wait for ever. */
+    /** A join whose statement matching `sql`, past the first `skip` of them, never answers. */
     async function hungAt(sql: RegExp, method: 'first' | 'run', skip = 0) {
       vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
       const login = await sha256(writer)
       const socket = new FakeSocket()
       const { room: made } = live.of(noteId)
-      const doc = new Y.Doc()
-      const mark = Y.encodeStateVector(doc)
-      doc.getText(TEXT).insert(0, 'early ')
-      const update = syncUpdate(Y.encodeStateAsUpdate(doc, mark)).slice().buffer
 
-      let heard = false
       let asked = false
       const wasAsked = () => asked
       const prepare = env.DB.prepare.bind(env.DB)
@@ -1831,12 +1754,6 @@ describe('somebody who stops being in the space while the file is open', () => {
         if (sql.test(text) && met++ >= skip) {
           ;(statement as unknown as Record<string, unknown>)[method] = () => {
             asked = true
-            // On a later turn, as an event of its own is.
-            setImmediate(() => {
-              void made.webSocketMessage(socket as unknown as WebSocket, update).then(() => {
-                heard = true
-              })
-            })
             return new Promise(() => undefined)
           }
         }
@@ -1861,30 +1778,27 @@ describe('somebody who stops being in the space while the file is open', () => {
       await new Promise((next) => setImmediate(next))
       expect(wasAsked()).toBe(true)
       expect(socket.closed).toBe(false)
-      expect(heard).toBe(false)
 
       await vi.advanceTimersByTimeAsync(LONGER_THAN_ANY_WAIT)
-      return { socket, entered: () => entered, heard: () => heard, prepare }
+      return { socket, entered: () => entered, prepare }
     }
 
     test('at the access asked again', async () => {
-      const { socket, entered, heard, prepare } = await hungAt(
+      const { socket, entered, prepare } = await hungAt(
         /case when sp.user_id = me.user_id/,
         'first',
       )
       expect(socket.closedWith?.code).toBe(1011)
       expect(entered()).toBe(true)
-      expect(heard()).toBe(true)
       env.DB.prepare = prepare
       const read = await call(env, `/v1/notes/${noteId}`, { token: owner })
       expect(read.json.content).toBe(OPENING)
     })
 
     test('at the row written again', async () => {
-      const { socket, entered, heard } = await hungAt(/insert into room_sockets/, 'run', 1)
+      const { socket, entered } = await hungAt(/insert into room_sockets/, 'run', 1)
       expect(socket.closedWith?.code).toBe(1011)
       expect(entered()).toBe(true)
-      expect(heard()).toBe(true)
     })
 
     test('and a join that is answered leaves nothing on the clock', async () => {

@@ -418,3 +418,5 @@ jobs:
               exit $LASTEXITCODE
             }
           }
+          # The wrapper ends on the last native exit code, which a skipped 409 leaves set.
+          exit 0

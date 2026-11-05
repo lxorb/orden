@@ -15,7 +15,7 @@
    *  are folded is kept on this device (kept-views.ts). A row carried onto
    *  another group is written into it; onto another task of its own note, it moves its
    *  lines there. */
-  import { groupName, type Row, rowId, type Value } from '@orden/bases'
+  import { groupName, type Row, type Value } from '@orden/bases'
   import { untrack } from 'svelte'
   import { Heights } from '../chats/view/window'
   import { without } from '../records'
@@ -33,6 +33,7 @@
   import {
     EMPTY,
     listItems,
+    foldKey,
     toggled,
     withEveryDay,
     withEverySection,
@@ -137,6 +138,8 @@
   const rows = $derived(items.flatMap((item) => (item.kind === 'row' ? [item] : [])))
   /** The rows selected that are still in the list: a task completed out of it goes. */
   const pickedRows = $derived(picked.size ? rows.filter((one) => picked.has(one.id)) : [])
+  /** The same as tasks, once each: selected under two of its labels, one is still ticked once. */
+  const pickedTasks = $derived([...new Set(pickedRows.map((one) => one.row))])
 
   /** A row selected or let go; `range` selects every row from the last one pressed. */
   function pick(id: string, range: boolean) {
@@ -254,19 +257,27 @@
 
   /** A row let go over another row: within its own note, its lines move beside that
    *  one's; anywhere else, it joins that row's group. */
-  function landOnRow(target: Row, key: Value, carried: Row, at: Point, box: HTMLElement) {
-    if (carried === target) return
+  function landOnRow(
+    target: Row,
+    key: Value,
+    carried: Row,
+    at: Point,
+    box: HTMLElement,
+    from: Value | undefined,
+  ) {
+    // The group it left: a row stands under each of its labels.
+    const sameGroup = (from === undefined ? groupOf(carried) : groupName(from)) === groupName(key)
+    if (carried === target && sameGroup) return
     const rect = box.getBoundingClientRect()
     const after = at.y > rect.top + rect.height / 2
     const sameNote = carried.space === target.space && samePath(carried.path, target.path)
     if (carried.task && target.task && sameNote && property !== 'formula.overdue') {
-      const sameGroup = groupOf(carried) === groupName(key)
       if (sameGroup || property === undefined || property === 'task.section') {
         void moveBeside(carried, target, after)
         return
       }
     }
-    if (property !== undefined) kit.drop(carried, key)
+    if (property !== undefined) kit.drop(carried, key, undefined, from)
   }
 
   function groupOf(row: Row): string | null {
@@ -289,7 +300,7 @@
       if (!here) return
       event.preventDefault()
       if (key.kind === 'pick') pick(here.id, false)
-      else if (here.twist) shut = toggled(shut, rowId(here.row))
+      else if (here.twist) shut = toggled(shut, foldKey(here.row))
       return
     }
     if (key.kind === 'add') {
@@ -320,7 +331,7 @@
       return
     }
     if (!here) return
-    const many = pickedRows.length ? pickedRows.map((one) => one.row) : [here.row]
+    const many = pickedTasks.length ? pickedTasks : [here.row]
     const box = list?.querySelector(`[data-item="${CSS.escape(here.id)}"]`)?.getBoundingClientRect()
     if (!box || !runKey(kit, many, key, box)) return
     event.preventDefault()
@@ -406,7 +417,10 @@
       {#if item.kind === 'head'}
         {@const name = groupName(item.group.key)}
         {@const section = project && typeof item.group.key === 'string' ? item.group.key : null}
-        <div class="nib-section head" use:droppable={(row) => kit.drop(row, item.group.key)}>
+        <div
+          class="nib-section head"
+          use:droppable={(row, _at, _box, from) => kit.drop(row, item.group.key, undefined, from)}
+        >
           {#if section !== null && renaming === section}
             <input
               class="nib-field naming"
@@ -464,7 +478,7 @@
         {@const key = item.group.key}
         <div
           class="drop"
-          use:droppable={(carried, at, box) => landOnRow(row, key, carried, at, box)}
+          use:droppable={(carried, at, box, from) => landOnRow(row, key, carried, at, box, from)}
         >
           {#if row.task}
             <TaskRow
@@ -472,6 +486,7 @@
               {kit}
               {dated}
               {where}
+              from={key}
               lines={lines[shown.first + index] ?? 1}
               card
               editing={editing === item.id}
@@ -484,7 +499,7 @@
               subtasks={countsOf(row)}
               depth={item.depth}
               twist={item.twist}
-              ontwist={() => (shut = toggled(shut, rowId(row)))}
+              ontwist={() => (shut = toggled(shut, foldKey(row)))}
               selected={selected === item.id}
               onselect={() => (selected = item.id)}
               picked={picked.has(item.id)}
@@ -495,11 +510,12 @@
             <RowLine
               {row}
               {kit}
+              from={key}
               {dated}
               {where}
               depth={item.depth}
               twist={item.twist}
-              ontwist={() => (shut = toggled(shut, rowId(row)))}
+              ontwist={() => (shut = toggled(shut, foldKey(row)))}
               selected={selected === item.id}
               onselect={() => (selected = item.id)}
             />
@@ -540,7 +556,7 @@
 </div>
 {#if pickedRows.length}
   <div class="bulk" bind:this={bulk}>
-    <BulkBar rows={pickedRows.map((one) => one.row)} {kit} onclear={unpick} />
+    <BulkBar rows={pickedTasks} {kit} onclear={unpick} />
   </div>
 {/if}
 

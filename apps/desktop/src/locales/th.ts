@@ -746,6 +746,8 @@ export const th: Dictionary = {
   '{done} of {total}': '{done} จาก {total}',
   'Sync failed': 'ซิงก์ไม่สำเร็จ',
   '{name} could not be written.': 'เขียน {name} ไม่ได้',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    'เขียน {name} ไม่ได้: อ่านไฟล์ไม่ได้ ไฟล์อาจใหญ่เกิน 64 MB หรือไม่ใช่ข้อความ UTF-8',
   '{name} could not be read.': 'อ่าน {name} ไม่ได้',
   'Text size': 'ขนาดตัวอักษร',
   'Line spacing': 'ระยะบรรทัด',
@@ -1504,6 +1506,7 @@ export const th: Dictionary = {
   'The provider answered {status}.': 'ผู้ให้บริการตอบ {status}',
   'Add an AI provider in Settings first.': 'เพิ่มผู้ให้บริการ AI ในการตั้งค่าก่อน',
   'The model did not answer.': 'โมเดลไม่ตอบ',
+  'The connection closed before the answer was finished.': 'การเชื่อมต่อปิดลงก่อนที่คำตอบจะเสร็จ',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'แพ็กเกจ {plan} ของคุณถึงขีดจำกัดจนถึง {time}',
   'Your {plan} plan is at its limit for now.': 'แพ็กเกจ {plan} ของคุณถึงขีดจำกัดแล้วในตอนนี้',
@@ -1972,8 +1975,10 @@ export const th: Dictionary = {
   'Send feedback': 'ส่งความคิดเห็น',
   'Describe the issue': 'อธิบายปัญหา',
   Sent: 'ส่งแล้ว',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'รายงานนี้มีคำอธิบายของคุณ เวอร์ชันของ Orden แพลตฟอร์มของคุณ และบันทึกล่าสุดของแอป ไม่มีโน้ตของคุณเลย',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'รายงานนี้มีคำอธิบายของคุณ เวอร์ชันของ Orden แพลตฟอร์มของคุณ และบันทึกล่าสุดของแอป โดยนำเส้นทางไฟล์ออกแล้ว',
+  'Its space is archived': 'พื้นที่ของรายการนี้ถูกเก็บถาวร',
+  'Back as {name}': 'กลับมาเป็น {name}',
   'Send into the running answer': 'ส่งเข้าไปในคำตอบที่กำลังทำ',
   'Stop the answer': 'หยุดคำตอบ',
   'Open every step': 'เปิดทุกขั้นตอน',
@@ -2058,6 +2063,8 @@ export const th: Dictionary = {
     'มันอ่านโน้ตของคุณและท่องเว็บโดยลงชื่อเข้าใช้ในนามคุณ หน้าเว็บจึงอาจพยายามให้มันส่งโน้ตออกไป',
   Activity: 'กิจกรรม',
   'Add a site': 'เพิ่มเว็บไซต์',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'โปรแกรมในรายการนี้ทำงานโดยไม่ถาม และทำได้ทุกอย่างที่โปรแกรมนั้นทำได้',
   'Add a program': 'เพิ่มโปรแกรม',
   'Every space': 'ทุกพื้นที่',
   Sites: 'เว็บไซต์',
@@ -2480,6 +2487,7 @@ export const th: Dictionary = {
   'No {property}': 'ไม่มี{property}',
   '{card} moved to {group}': 'ย้าย {card} ไปที่ {group} แล้ว',
   'Not moved': 'ไม่ได้ย้าย',
+  'Not undone': 'ไม่ได้เลิกทำ',
   Retry: 'ลองอีกครั้ง',
   Calculate: 'คำนวณ',
   'Remove sort': 'เอาการเรียงออก',
@@ -2743,6 +2751,8 @@ export const th: Dictionary = {
   '{title}, running': '{title}, กำลังทำงาน',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ไม่เก็บคีย์ AI ไว้ในพวงกุญแจของ Mac อีกต่อไป ซึ่งคอยถามรหัสผ่านซ้ำแล้วซ้ำอีก ใส่คีย์ของคุณและลงชื่อเข้าใช้ ChatGPT อีกครั้ง',
+  'This PDF is locked by its owner': 'PDF นี้ถูกล็อกโดยเจ้าของ',
+  'Part of this could not be undone': 'ไม่สามารถเลิกทำบางส่วนได้',
   'Add images': 'เพิ่มรูปภาพ',
   'Remove image': 'นำรูปภาพออก',
   'That is more than 4 images.': 'เกิน 4 รูปแล้ว',

@@ -27,7 +27,7 @@
 
 import { idle } from '../breathe'
 import { type Camera, clampScale, framingBox, turnOf } from '../camera'
-import { owes } from '../parting'
+import { owesWords } from '../parting'
 import {
   type Canvas,
   canvasRuns,
@@ -499,6 +499,7 @@ export class CanvasStore implements PlaneSurface {
     const together: Canvas = {
       ...merged(ours, arrived),
       icon: arrived.icon ?? null,
+      iconColor: arrived.iconColor ?? null,
       ...(arrived.extras ? { extras: arrived.extras } : {}),
     }
     if (!arrived.extras) delete together.extras
@@ -724,4 +725,4 @@ function flushCanvases(): void {
   }
 }
 
-owes(flushCanvases)
+owesWords(flushCanvases)

@@ -20,6 +20,7 @@ const insideOf = (root: string, path: string) => path === root || path.startsWit
 
 vi.mock('../sharing.svelte', () => ({
   canWriteAt: (path: string) => ![...readOnly].some((root) => insideOf(root, path)),
+  trustsHtmlAt: () => true,
 }))
 
 /** Every address a press opened. */
@@ -562,5 +563,41 @@ describe('copy to a base, in a space shared to be read', () => {
     expect(copiesToBase()).toBe(false)
     expect(await copyToBase('views: []\n', 'Today')).toBeNull()
     expect(written).toEqual([])
+  })
+})
+
+describe('a row dropped into a list property of a view', () => {
+  const saved = async () => {
+    await new Promise((done) => setTimeout(done, 10))
+    return disk.get(`${MINE.root}/${PLAN}`)
+  }
+
+  beforeEach(() => {
+    disk.set(`${MINE.root}/${PLAN}`, '- [ ] two #a #b\n')
+  })
+
+  const carried = () => taskRow(PLAN, '- [ ] two #a #b', 1, { space: 'Mine' })
+  const grouped = async () => {
+    const { kit, live } = viewOver(null)
+    live.view = { ...live.view, groupBy: { property: 'task.tags', direction: 'ASC' } } as never
+    return kit
+  }
+
+  test('from a group it was in swaps only that one', async () => {
+    const kit = await grouped()
+    kit.drop(carried(), 'c', undefined, 'a')
+    const text = await saved()
+    expect(text).toContain('#b')
+    expect(text).toContain('#c')
+    expect(text).not.toContain('#a')
+  })
+
+  test('from nowhere this view knows takes nothing off', async () => {
+    const kit = await grouped()
+    kit.drop(carried(), 'c')
+    const text = await saved()
+    expect(text).toContain('#a')
+    expect(text).toContain('#b')
+    expect(text).toContain('#c')
   })
 })

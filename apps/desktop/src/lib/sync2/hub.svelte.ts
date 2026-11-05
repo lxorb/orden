@@ -21,7 +21,8 @@ import { account } from '../account.svelte'
 import { BASE } from '../api'
 import { BEAT_EVERY, roomDelay } from '../backoff'
 import { t } from '../i18n.svelte'
-import { keep, storedText } from '../stored'
+import { heldForLife } from '../locks'
+import { madeDeviceId } from './made-device'
 import { invoke, isDesktop, platform } from '../tauri'
 import {
   BEAT,
@@ -328,34 +329,21 @@ export class Hub {
   }
 }
 
-/** A device id this device made for itself, for a session the sync store is not open
- *  for: a guest's, or a build with no store. Kept, so the hub sees one device. */
-const MADE_ID = 'nib:hub-device'
-
-function madeId(): string {
-  const held = storedText(MADE_ID)
-  if (held && DEVICE.test(held)) return held
-
-  const bytes = crypto.getRandomValues(new Uint8Array(16))
-  const made = [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('')
-  keep(MADE_ID, made)
-  return made
-}
-
 /** This device's id: the one the account's sync store keeps (section 9.2), which is
- *  the id the engine's documents are written under too, else one of its own. */
+ *  the id the engine's documents are written under too, else the one made for the account,
+ *  which a store made later takes (made-device.ts). Read the way the runner may
+ *  (`deviceOf`): never by opening a store another window's engine runs on. */
 export async function deviceId(): Promise<string> {
   const user = account.user
-  if (user) {
-    try {
-      const { openSyncStore } = await import('./store')
-      const { device } = (await openSyncStore(user.id)).opened
-      if (DEVICE.test(device)) return device
-    } catch {
-      // No store to be had here; the device's own id stands in.
-    }
+  // The glasses' plugin runs no engine and keeps no store: its own id, and none of the
+  // runner in its bundle.
+  if (user && !__EVEN_PLUGIN__) {
+    const { runner } = await import('./runner.svelte')
+    const device = await runner.deviceOf(user.id).catch(() => null)
+    if (device && DEVICE.test(device)) return device
+    return madeDeviceId(user.id)
   }
-  return madeId()
+  return madeDeviceId(null)
 }
 
 /** What this device calls itself: the name a person gave the computer where the system
@@ -435,19 +423,13 @@ const nativeWorld: HubWorld = {
     }
     return { post: (message) => channel.postMessage(message) }
   },
-  elect: (lead) => {
-    const locks = typeof navigator === 'undefined' ? undefined : navigator.locks
-    if (!locks) {
-      lead()
-      return
-    }
-    // Held for the window's life: the promise never settles, and the lock goes with
-    // the window, which is when the next one in line takes it.
-    void locks.request('nib:hub', () => {
+  // Held for the window's life: the promise never settles, and the lock goes with
+  // the window, which is when the next one in line takes it.
+  elect: (lead) =>
+    heldForLife('nib:hub', () => {
       lead()
       return new Promise<never>(() => undefined)
-    })
-  },
+    }),
   every: ticking,
 }
 

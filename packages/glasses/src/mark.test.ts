@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { draws, fold, width } from './firmware'
 import { markLines, MARKS, workDone } from './mark'
 import { BODY_INNER } from './panel'
+import fenceTable from '../../markdown/src/fence-table.json'
 
 const lines = (source: string, inner = BODY_INNER) =>
   markLines(source, { inner }).map((one) => one.text)
@@ -643,5 +644,114 @@ describe('what it costs', () => {
 
     expect(marked.length).toBeGreaterThan(800)
     expect(took).toBeLessThan(1_000)
+  })
+})
+
+describe('where a fence ends', () => {
+  test('its closing line says its own line of the note', () => {
+    const lines = markLines('```\na\nb\n```\n\nafter', { inner: 576 })
+    expect(lines.map((line) => line.at)).toEqual([1, 2, 3, 4, 6])
+  })
+
+  test('with a longer fence and nothing after it', () => {
+    const lines = markLines('````\na\n````', { inner: 576 })
+    expect(lines.map((line) => line.at)).toEqual([1, 2, 3])
+  })
+})
+
+describe('a fence, as every parser of a note reads it', () => {
+  test.each(fenceTable as [string, string, string[]][])('%j', (note, shape, ids) => {
+    const said = lines(note).join('\n')
+    for (const id of ids) expect(said).not.toContain(id)
+    // The words under it are words: nothing of the fence comes after them.
+    const last = shape.lastIndexOf('c')
+    if (shape.endsWith('w') && last !== -1) expect(said.trimEnd().endsWith('words')).toBe(true)
+  })
+
+  test('a block name on a list item is no word of it', () => {
+    expect(lines('- a ^xyz')).toEqual(lines('- a'))
+  })
+})
+
+describe('a quote of several lines', () => {
+  test('draws one bar on each', () => {
+    expect(lines('> a\n> b\n')).toEqual(['│ a', '│ b'])
+    expect(lines('> > a\n> > b\n')).toEqual(['│ │ a', '│ │ b'])
+  })
+})
+
+describe('a word the front matter says as well', () => {
+  test('is found where the page has it', () => {
+    const note = '---\ntitle: Same\n---\n\nSame\n\n> q\n> r\n'
+    const marked = markLines(note, { inner: BODY_INNER })
+    expect(marked[0]?.at).toBe(5)
+    expect(marked[0]?.from).toBe(note.indexOf('Same\n\n'))
+    expect(marked.map((line) => line.at)).toEqual([5, 7, 8])
+  })
+})
+
+describe('a block name', () => {
+  test('is no words of the note', () => {
+    expect(lines('words ^abc123\n\nmore')).toEqual(['words', 'more'])
+    expect(lines('| a |\n| - |\n\n^abc123\n\nmore').at(-1)).toBe('more')
+    expect(lines('a\n\n^abc123\n\nb')).toEqual(['a', 'b'])
+  })
+
+  test('in code it is code', () => {
+    expect(lines('```\nx ^abc123\n```').join('\n')).toContain('x ^abc123')
+  })
+})
+
+/** The phone's caret follows a line by its offset in the file. */
+describe('a block name', () => {
+  test('moves no line, however many there are', () => {
+    const note = Array.from({ length: 60 }, (_, at) => `Paragraph ${at} ^blk${at}\n`).join('\n')
+    const marked = markLines(note, { inner: BODY_INNER })
+    for (const line of marked.filter((one) => one.text.startsWith('Paragraph'))) {
+      expect(note.slice(line.from).startsWith(line.text.trimEnd())).toBe(true)
+    }
+    expect(marked.map((one) => one.text).join('\n')).not.toContain('^blk')
+  })
+
+  test('moves no line in a list, or in a paragraph that goes on under it', () => {
+    const list = Array.from({ length: 6 }, (_, at) => `- item ${at} ^blk00${at}\n`).join('')
+    const items = markLines(list, { inner: BODY_INNER })
+    expect(items.map((one) => one.from)).toEqual([0, 17, 34, 51, 68, 85])
+    const paragraph = 'one ^abc\ntwo\n'
+    for (const compaction of ['aggressive', undefined] as const) {
+      const marked = markLines(paragraph, {
+        inner: BODY_INNER,
+        ...(compaction ? { compaction } : {}),
+      })
+      expect(marked.map((one) => one.text).join(' ')).toBe('one two')
+    }
+    expect(markLines(paragraph, { inner: BODY_INNER }).at(-1)?.from).toBe(paragraph.indexOf('two'))
+  })
+
+  test('is set the same as with it cut, and in every kind of block', () => {
+    const shown = (source: string) =>
+      markLines(source, { inner: BODY_INNER }).map((one) => one.text.trimEnd())
+    for (const [named, plain] of [
+      ['# Title ^abc\n\nWords\n', '# Title\n\nWords\n'],
+      ['- one ^abc\n- two\n', '- one\n- two\n'],
+      ['> quoted ^abc\n\nWords\n', '> quoted\n\nWords\n'],
+      ['one ^abc\ntwo\n', 'one\ntwo\n'],
+      ['```ts\ncode\n``` ^abc\n', '```ts\ncode\n```\n'],
+    ] as const) {
+      expect(shown(named)).toEqual(shown(plain))
+    }
+  })
+})
+
+describe('a front matter value with a comment sign in it', () => {
+  test('leaves the note under it', () => {
+    for (const value of ['50%% off', '<!-- x', 'a %% b %% c']) {
+      const texts = markLines(`---\nnote: ${value}\n---\nWords here\n\nMore\n`, {
+        inner: BODY_INNER,
+      }).map((one) => one.text)
+      expect(texts).toContain('Words here')
+      expect(texts).toContain('More')
+      expect(texts.join('\n')).not.toContain('note:')
+    }
   })
 })

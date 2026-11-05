@@ -212,7 +212,7 @@
       onChange: (doc: Text) => {
         typed = doc.toString()
       },
-      notes: links.index(canvasPath),
+      notes: links.index(canvasPath, canvasPath === null && !trusted),
       // A `[[` picked in a card is spelled the way one picked in a note is; see
       // composer.ts.
       writeLink: pickedLink,

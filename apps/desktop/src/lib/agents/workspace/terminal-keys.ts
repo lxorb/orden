@@ -5,7 +5,13 @@
  *  that an arrow is two different sequences depending on what the program in front
  *  asked for (application cursor keys, which vim and less switch on). */
 
-import { onTheList, startsOnlyOne } from './shell-text'
+import { type Os, onTheList, osOf, startsOnlyOne } from './shell-text'
+
+/** The system a terminal's shell runs on: an online terminal's is its machine's, which is
+ *  Linux (docs/online-terminal.md), whatever this computer is; any other is this one's. */
+export function shellOs(online: boolean, platform: string): Os {
+  return online ? 'unix' : osOf(platform)
+}
 
 /** The keys an agent may press, and what each sends. Nothing that opens a picker,
  *  nothing the app itself is bound to: these reach the shell and nothing else. */
@@ -59,11 +65,12 @@ export function typesFreely(
   enter: boolean,
   keys: readonly string[],
   programs: readonly string[],
+  os: Os,
 ): boolean {
   if (!text && !enter) return keys.length > 0 && keys.every((name) => FREE.has(name))
   if (keys.length || !enter || !text.trim() || !startsOnlyOne(text)) return false
 
-  return onTheList(programs, text)
+  return onTheList(text, programs, os)
 }
 
 /** One row of a terminal's buffer, as xterm.js hands it over. */

@@ -4,6 +4,7 @@ import { now } from './crypto'
 import { note as noted } from './failed'
 import { wordsLeftover } from './leftovers'
 import { noteKey, presentNote, restoreNote, takeSeq } from './notes'
+import { eraseRooms } from './rooms'
 import { snapshotKey } from './rooms/epoch'
 import { deviceOf } from './sync2/device'
 import { presentSpace } from './spaces/space'
@@ -12,7 +13,7 @@ import { forgetWords } from './blog/words'
 import { forgetReminders } from './push/reminders'
 import { forgetPictures, htmlIsLive, picturesOf } from './pictures'
 import { forgetBodies, forgetVersions } from './versions'
-import { noteUnused, RIGHT_AFTER, NIGHTLY, sweepUnused } from './unused'
+import { noteChatFiles, noteUnused, RIGHT_AFTER, NIGHTLY, sweepUnused } from './unused'
 import { readSpaceFiles } from './spaces/files'
 import { readSite } from './blog/site'
 import { FRONT_REV } from './blog/front'
@@ -283,6 +284,9 @@ async function purgeNote(
     answerOf<{ hash: string }>(versions).map((one) => one.hash),
   ).catch(later)
   await tellEnded(env, answerOf<Ended>(terms), who).catch(later)
+  // Its room now rather than at the sweep: until then it holds the words, and whoever is
+  // still in it goes on hearing whoever else is. The list stays the guarantee.
+  await eraseRooms(env, [note.id]).catch(later)
   await env.DB.batch([
     forgetWords(env, note.id),
     env.DB.prepare('delete from leftovers where what = ?').bind(wordsLeftover(note.id)),
@@ -402,6 +406,10 @@ async function purgeSpace(
     const theme = readSite(marker?.site ?? null).theme?.hash
     await env.DB.batch([
       ...noteUnused(env, space.id, theme ? [...listed, theme] : listed, at),
+      // And what its chats' members posted in them, while the rows that say who the members
+      // are still stand. Nobody reaches those chats now, and a month from now only the
+      // owner could be asked about (chats/sweep.ts).
+      noteChatFiles(env, 'c.space_id = ?2', at, space.id),
       env.DB.prepare('delete from folders where space_id = ?').bind(space.id),
       env.DB.prepare('delete from tree_ops where space_id = ?').bind(space.id),
       env.DB.prepare('delete from space_entries where space_id = ?').bind(space.id),

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { withoutComments } from './comments'
+import { noteWithoutComments, withoutComments } from './comments'
 import { htmlToMarkdown } from './from-html'
 import { renderMarkdown } from './index'
 import { asWords } from './words'
@@ -219,5 +219,39 @@ describe('a comment marker in code a fence does not open', () => {
 
   test('still opens one on an indented line that carries on a paragraph', () => {
     expect(withoutComments('words\n    %%gone%% kept')).toBe('words\n     kept')
+  })
+})
+
+describe('a whole note, its front matter included', () => {
+  test('a comment closed in a value goes', () => {
+    expect(noteWithoutComments('---\ntitle: Launch %% secret %%\nz: 1\n---\nWords\n')).toBe(
+      '---\ntitle: Launch \nz: 1\n---\nWords\n',
+    )
+    expect(noteWithoutComments('---\nt: a <!-- b --> c\n---\nWords\n')).toBe(
+      '---\nt: a  c\n---\nWords\n',
+    )
+  })
+
+  test('a comment of whole lines goes', () => {
+    expect(noteWithoutComments('---\nt: a\n%%\nsecret: 5\n%%\nz: 1\n---\nWords\n')).toBe(
+      '---\nt: a\n\n\n\nz: 1\n---\nWords\n',
+    )
+    expect(noteWithoutComments('---\nt: a\n<!-- secret: 5 -->\n---\nWords\n')).toBe(
+      '---\nt: a\n\n---\nWords\n',
+    )
+  })
+
+  test('an opener nothing closes on its line is the value own, and stops at the block', () => {
+    for (const note of [
+      '---\nnote: 50%% off\n---\nWords\n',
+      '---\nnote: 50%% off\nother: 60%% more\n---\nWords\n',
+      '---\nnote: a <!-- b\nz: 1\n---\nWords\n',
+      '---\nt: a\n%%\nz: 1\n---\nWords\n',
+    ]) {
+      expect(noteWithoutComments(note)).toBe(note)
+    }
+    expect(noteWithoutComments('---\nnote: 50%% off\n---\nWords %% mine %% here\n')).toBe(
+      '---\nnote: 50%% off\n---\nWords  here\n',
+    )
   })
 })

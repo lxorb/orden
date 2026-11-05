@@ -407,7 +407,7 @@ describe('what hides a web page', () => {
     const app = read('App.svelte')
     // Written once, as a snippet: the row is drawn over the panes, or over the drawer
     // as well where the panels are one.
-    const row = app.slice(app.indexOf('<div class="notices" data-notices'))
+    const row = app.slice(app.indexOf('class="notices"'))
     const end = row.indexOf('{/snippet}')
 
     expect(end).toBeGreaterThan(0)

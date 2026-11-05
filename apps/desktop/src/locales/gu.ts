@@ -753,6 +753,8 @@ export const gu: Dictionary = {
   '{done} of {total}': '{total}માંથી {done}',
   'Sync failed': 'સમન્વય નિષ્ફળ',
   '{name} could not be written.': '{name} લખાઈ નહીં.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} લખાઈ નહીં: તેની ફાઇલ વાંચી શકાતી નથી. તે 64 MB કરતાં મોટી હોઈ શકે અથવા UTF-8 લખાણ ન હોઈ શકે.',
   '{name} could not be read.': '{name} વાંચી શકાઈ નહીં.',
   'Text size': 'લખાણનું માપ',
   'Line spacing': 'લીટી અંતર',
@@ -1530,6 +1532,8 @@ export const gu: Dictionary = {
   'The provider answered {status}.': 'પ્રદાતાએ {status} જવાબ આપ્યો.',
   'Add an AI provider in Settings first.': 'પહેલાં ગોઠવણમાં AI પ્રદાતા ઉમેરો.',
   'The model did not answer.': 'મોડેલે જવાબ આપ્યો નહીં.',
+  'The connection closed before the answer was finished.':
+    'જવાબ પૂરો થાય તે પહેલાં કનેક્શન બંધ થઈ ગયું.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'તમારો {plan} પ્લાન {time} સુધી મર્યાદા પર છે.',
   'Your {plan} plan is at its limit for now.': 'તમારો {plan} પ્લાન હાલ મર્યાદા પર છે.',
@@ -2003,8 +2007,10 @@ export const gu: Dictionary = {
   'Send feedback': 'પ્રતિસાદ મોકલો',
   'Describe the issue': 'સમસ્યાનું વર્ણન કરો',
   Sent: 'મોકલ્યું',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'આ અહેવાલમાં તમારું વર્ણન, Orden ની આવૃત્તિ, તમારું પ્લેટફોર્મ અને એપનો તાજેતરનો લોગ હોય છે. તમારી નોંધો ક્યારેય નહીં.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'આ રિપોર્ટમાં તમારું વર્ણન, Orden નું વર્ઝન, તમારું પ્લેટફોર્મ અને તાજેતરનો ઍપ લૉગ શામેલ છે, ફાઇલ પાથ વિના.',
+  'Its space is archived': 'તેની સ્પેસ આર્કાઇવ કરેલી છે',
+  'Back as {name}': '{name} તરીકે પાછું આવ્યું',
   'Send into the running answer': 'ચાલુ જવાબમાં મોકલો',
   'Stop the answer': 'જવાબ રોકો',
   'Open every step': 'દરેક પગલું ખોલો',
@@ -2089,6 +2095,8 @@ export const gu: Dictionary = {
     'તે તમારી નોંધો વાંચે છે અને તમારા લૉગ-ઇનથી બ્રાઉઝ કરે છે, તેથી કોઈ પેજ તેની પાસે નોંધો બહાર મોકલાવવાનો પ્રયાસ કરી શકે છે.',
   Activity: 'પ્રવૃત્તિ',
   'Add a site': 'સાઇટ ઉમેરો',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'આ યાદીનો પ્રોગ્રામ પૂછ્યા વિના ચાલે છે, અને તે પ્રોગ્રામ જે કરી શકે તે બધું કરી શકે છે.',
   'Add a program': 'પ્રોગ્રામ ઉમેરો',
   'Every space': 'દરેક જગ્યા',
   Sites: 'સાઇટ્સ',
@@ -2517,6 +2525,7 @@ export const gu: Dictionary = {
   'No {property}': '{property} વગર',
   '{card} moved to {group}': '{card} ને {group} માં ખસેડ્યું',
   'Not moved': 'ખસેડ્યું નહીં',
+  'Not undone': 'પૂર્વવત્ થયું નહીં',
   Retry: 'ફરી પ્રયાસ કરો',
   Calculate: 'ગણતરી કરો',
   'Remove sort': 'ગોઠવણી દૂર કરો',
@@ -2785,6 +2794,8 @@ export const gu: Dictionary = {
   '{title}, running': '{title}, ચાલુ છે',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden હવે AI કી Mac ના કીચેનમાં રાખતું નથી, જે વારંવાર તેનો પાસવર્ડ માંગતું હતું. તમારી કી ફરી દાખલ કરો અને ChatGPT માં ફરી સાઇન ઇન કરો.',
+  'This PDF is locked by its owner': 'આ PDF તેના માલિકે લૉક કરેલી છે',
+  'Part of this could not be undone': 'આનો એક ભાગ પૂર્વવત્ થઈ શક્યો નહીં',
   'Add images': 'છબીઓ ઉમેરો',
   'Remove image': 'છબી દૂર કરો',
   'That is more than 4 images.': 'આ 4 કરતાં વધુ છબીઓ છે.',

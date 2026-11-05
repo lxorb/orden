@@ -18,6 +18,7 @@
  *  otherwise. */
 
 import { oneEdit, type TextEdit } from './edits'
+import { frontMatterLines, isKeyLine, valueClosesAt } from './front-matter-lines'
 import { flowItem, flowItems, listItem, scalar, uncommented, unquoted } from './yaml'
 
 /** Named here as well because the block is this module's business and yaml.ts is
@@ -26,6 +27,7 @@ import { flowItem, flowItems, listItem, scalar, uncommented, unquoted } from './
  *  and used as the note's heading - asks the same rule that the block was built
  *  with rather than a rule of its own. */
 export { oneLine } from './yaml'
+export { valueClosesAt }
 
 /** Where a note's front matter sits.
  *
@@ -58,7 +60,7 @@ interface KeyLine {
  *  its first colon with a blank or nothing after it, so `due date`, `日期` and `a.b`
  *  are keys as YAML has them. Indented lines are somebody else's key, a `#` line is
  *  a comment and a `- ` line is part of a list. */
-const KEY = /^([^\s#-].*?)[ \t]*:(?=\s|$)/
+const KEY = /^("(?:[^"\\]|\\.)*"|'(?:[^']|'')*'|[^\s#-].*?)[ \t]*:(?=\s|$)/
 
 /** A name `KEY` reads back as that same key, and YAML as a plain word: the one rule
  *  every writer of a key asks and the rows read by, so a key one of them writes is a
@@ -76,7 +78,13 @@ const NAME = /^(?![\s#\-?:,[\]{}&*!|>'"%@`])(?!.*:(?:\s|$))(?!.*\s#)[^\p{Cc}\p{Z
 
 /** Whether a key may be written under this name; see `NAME`. */
 export function isPropertyName(name: string): boolean {
-  return NAME.test(name)
+  return NAME.test(name) && isKeyLine(`${name}: x`)
+}
+
+/** A key as a line of a block says it: as it is, or in quotes where it would not read as
+ *  a key, a column another app called something long, so the block is still a block. */
+function keyWritten(key: string): string {
+  return isKeyLine(`${key}: x`) ? key : JSON.stringify(key)
 }
 
 /** Where the front matter block sits, or null when the note opens with anything
@@ -84,33 +92,26 @@ export function isPropertyName(name: string): boolean {
  *
  *  The opening fence has to be the note's first line and the closing one a line
  *  that says nothing but `---`, so a horizontal rule in the middle of a note
- *  cannot be read as the end of a block that never started. */
+ *  cannot be read as the end of a block that never started. And what is between
+ *  them has to read as YAML's keys, so an essay under a rule, or a deck's first
+ *  slide, is the note's words rather than its metadata. See front-matter-lines.ts. */
 export function frontMatterBlock(source: string): FrontMatterBlock | null {
-  const from = source.startsWith('\uFEFF') ? 1 : 0
-  if (!source.startsWith('---', from)) return null
+  const lines = frontMatterLines(source)
+  if (!lines) return null
 
-  const first = source.indexOf('\n')
-  if (first === -1 || source.slice(from, first).trim() !== '---') return null
-
-  let at = first + 1
-  while (at <= source.length) {
-    const end = source.indexOf('\n', at)
-    const stop = end === -1 ? source.length : end
-
-    if (source.slice(at, stop).trim() === '---') {
-      return {
-        from,
-        to: end === -1 ? source.length : end + 1,
-        body: { from: first + 1, to: at },
-        close: at,
-      }
-    }
-
-    if (end === -1) break
-    at = end + 1
+  const end = source.indexOf('\n', lines.close)
+  return {
+    from: lines.from,
+    to: end === -1 ? source.length : end + 1,
+    body: { from: lines.body, to: lines.close },
+    close: lines.close,
   }
+}
 
-  return null
+/** Whether a note's opening `---` is front matter, rather than a rule with words below
+ *  it. The same question as `frontMatterBlock`, for a caller with no use for where. */
+export function opensFrontMatter(source: string): boolean {
+  return frontMatterLines(source) !== null
 }
 
 /** What a written row holds: one key, and either a value or a list of them. A
@@ -136,7 +137,7 @@ export type FrontMatterRow = readonly [
 export function writeFrontMatter(rows: readonly FrontMatterRow[]): string {
   if (!rows.length) return ''
 
-  const said = rows.map(([key, value]) => `${key}: ${valueOf(value)}`)
+  const said = rows.map(([key, value]) => `${keyWritten(key)}: ${valueOf(value)}`)
 
   return `---\n${said.join('\n')}\n---`
 }
@@ -185,6 +186,14 @@ export function frontMatterList(source: string, key: string): string[] {
   if (!line) return []
 
   const value = source.slice(line.value.from, line.value.to).trim()
+
+  // A flow sequence across lines, as Prettier breaks a long one, is one value.
+  const closes = valueClosesAt(source, line.value.from, block.body.to)
+  if (closes !== -1) {
+    const lines = source.slice(line.value.from, closes).split('\n')
+    const joined = lines.map((one) => uncommented(one.trim())).join(' ')
+    return (flowItems(joined) ?? [unquoted(joined)]).filter(Boolean)
+  }
 
   // On the line: a flow sequence, or a single value standing for a list of one.
   if (value) return (flowItems(value) ?? [unquoted(value)]).filter(Boolean)
@@ -236,6 +245,7 @@ export function frontMatterKeys(source: string): string[] {
     .split('\n')
     .map((line) => KEY.exec(line.replace(/\r$/, ''))?.[1])
     .filter((key): key is string => key !== undefined)
+    .map(unquoted)
 }
 
 /** The line a key is written on, or null when the block has no such key. The
@@ -253,13 +263,21 @@ function keyLine(source: string, block: FrontMatterBlock, key: string): KeyLine 
     const text = source.slice(at, stop)
     const found = KEY.exec(text)
 
-    if (found?.[1]?.toLowerCase() === wanted) {
+    const name = found?.[1] === undefined ? undefined : unquoted(found[1])
+    if (found && name?.toLowerCase() === wanted) {
       // The value ends where a comment starts, so a value set leaves the comment.
       const value = at + found[0].length
       const to = value + uncommented(text.slice(found[0].length)).length
       const line = { from: at, to: stop, value: { from: value, to } }
-      if (found[1] === key) return line
+      if (name === key) return line
       other ??= line
+    }
+
+    // What a value holds open across lines says no key, whatever it looks like.
+    const closes = found ? valueClosesAt(source, at + found[0].length, block.body.to) : -1
+    if (closes !== -1) {
+      at = closes + 1
+      continue
     }
 
     if (end === -1) break
@@ -309,7 +327,8 @@ export function frontMatterEdits(
  *    every reader of a markdown file looks for it.
  *  - taking the key away: its line goes. A block that held nothing else goes
  *    with it, along with the blank lines it was standing on, because an empty
- *    pair of fences at the top of a note is litter rather than metadata.
+ *    pair of fences at the top of a note is litter rather than metadata. Where what
+ *    would be left is no block but holds something, the key stays with no value.
  *
  *  The line ending is whatever the note already uses, so a file written on
  *  Windows does not come back with one line in the other convention.
@@ -326,7 +345,7 @@ export function frontMatterEdit(
 
   if (!block) {
     if (value === null) return null
-    return { from: 0, to: 0, insert: `---${nl}${key}: ${value}${nl}---${nl}` }
+    return { from: 0, to: 0, insert: `---${nl}${keyWritten(key)}: ${value}${nl}---${nl}` }
   }
 
   const found = keyLine(source, block, key)
@@ -341,7 +360,19 @@ export function frontMatterEdit(
       source.slice(block.body.from, line.from) + source.slice(cutTo(source, line), block.body.to)
     if (!rest.trim()) return { from: block.from, to: blankAfter(source, block.to), insert: '' }
 
-    return { from: line.from, to: cutTo(source, line), insert: '' }
+    // What is left has to still be a block, the same one: a comment or a line of words
+    // alone is not, and the page would show them and two rules. So there the key stays
+    // and says nothing: a reader of it finds no value, and they are where they were.
+    const to = cutTo(source, line)
+    const left = frontMatterBlock(source.slice(0, line.from) + source.slice(to))
+    if (left?.close !== block.close - (to - line.from)) {
+      const end = source[line.value.to - 1] === '\r' ? line.value.to - 1 : line.value.to
+      return source.slice(line.value.from, end).trim()
+        ? { from: line.value.from, to: end, insert: '' }
+        : null
+    }
+
+    return { from: line.from, to, insert: '' }
   }
 
   if (line) {
@@ -352,7 +383,7 @@ export function frontMatterEdit(
     return { from: line.value.from, to, insert: ` ${value}` }
   }
 
-  return { from: block.close, to: block.close, insert: `${key}: ${value}${nl}` }
+  return { from: block.close, to: block.close, insert: `${keyWritten(key)}: ${value}${nl}` }
 }
 
 /** What a value on a line reads as, so two spellings of it can be compared: the
@@ -373,8 +404,10 @@ function readAs(value: string): string {
  *  it only where more of it follows: inside a `|` or `>` value it is one of the value's
  *  own lines, and what is indented after it is still the value. */
 function withUnder(source: string, block: FrontMatterBlock, line: KeyLine): KeyLine {
-  let to = line.to
-  let at = line.to
+  // A quote or a bracket open across lines holds them at the margin too.
+  const closes = valueClosesAt(source, line.value.from, block.body.to)
+  let to = closes === -1 ? line.to : closes
+  let at = to
   while (at + 1 < block.body.to) {
     const stop = source.indexOf('\n', at + 1)
     const text = source.slice(at + 1, stop).trimEnd()

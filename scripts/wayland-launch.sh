@@ -56,6 +56,10 @@
 #     seen in the web bar and in Settings, removed through the engine and gone from both,
 #     and still gone once Orden is started again without it (#789,
 #     scripts/extensions-drive.py);
+#   - with GLOBALS=1, a page and a frame in a web tab: a classic script's `let ipc` has to
+#     run and nothing of the app's be on `window`, while the app's page keeps the channel
+#     and quick add and the presenter's window are heard from the app's profile
+#     (scripts/globals-drive.py);
 #   - with GRANTS=1, a site in a private tab asking for the camera and allowed, the
 #     private tab closed, and the same site asking from a normal tab: the private answer
 #     has to be written nowhere and the normal tab has to be asked (#787,
@@ -220,7 +224,7 @@ if [ "${DRIVE:-0}" = 1 ] || [ "${SESSION:-0}" = 1 ]; then
   NIB_CEF_DEBUG_PORT=${NIB_CEF_DEBUG_PORT:-9339}
   export NIB_CEF_DEBUG_PORT
 fi
-if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ] || [ "${WORKER:-0}" = 1 ] || [ "${SESSION:-0}" = 1 ] || [ "${EXTENSIONS:-0}" = 1 ] || [ "${GRANTS:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ] || [ "${WORKER:-0}" = 1 ] || [ "${SESSION:-0}" = 1 ] || [ "${EXTENSIONS:-0}" = 1 ] || [ "${GRANTS:-0}" = 1 ] || [ "${GLOBALS:-0}" = 1 ]; then
   mkdir -p "$out/site"
   video=""
   [ "${MEDIA:-0}" = 1 ] && video='<video src="none.webm" autoplay muted></video>'
@@ -231,6 +235,13 @@ if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ 
   [ "${FLASH:-0}" = 1 ] && printf '<!doctype html><title>dark</title><meta name="color-scheme" content="dark"><style>html,body{margin:0;height:100%%;background:#1e1e1e}</style>' > "$out/site/index.html"
   # With SCHEME=1, a page whose colour says the scheme it is asked for (#427).
   [ "${SCHEME:-0}" = 1 ] && printf '<!doctype html><title>scheme</title><style>html,body{margin:0;height:100%%;background:#0000ff}@media (prefers-color-scheme: dark){html,body{background:#00ff00}}</style>' > "$out/site/index.html"
+  # With GLOBALS=1, a page and a frame from another address, each declaring `ipc` in a
+  # script of its own as Google's editor does, and saying what that left.
+  if [ "${GLOBALS:-0}" = 1 ]; then
+    said='<script>let ipc = 1</script><script>fetch("/said?" + new URLSearchParams({ who: "WHO", declared: String(ipc), ipc: typeof window.ipc, internals: typeof window.__TAURI_INTERNALS__ }))</script>'
+    printf '<!doctype html><title>asked</title>%s<iframe src="http://localhost:8765/frame.html"></iframe>' "${said/WHO/page}" > "$out/site/index.html"
+    printf '<!doctype html><title>frame</title>%s' "${said/WHO/frame}" > "$out/site/frame.html"
+  fi
   # With WORKER=1, a page that starts a worker from a blob, as Anubis does, and takes
   # its answer into its title with the moment the page was loaded (#777).
   if [ "${WORKER:-0}" = 1 ]; then
@@ -530,6 +541,11 @@ fi
 if [ "$status" = 0 ] && [ "${DOWNLOAD:-0}" = 1 ]; then
   sleep 3
   python3 "$here/download-drive.py" "$out" "$NIB_DOWNLOADS_DIR" "$out/served.txt" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${GLOBALS:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/globals-drive.py" "$out" "${command[0]}" || status=1
 fi
 
 if [ "$status" = 0 ] && [ "${GRANTS:-0}" = 1 ]; then

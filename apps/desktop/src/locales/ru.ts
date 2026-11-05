@@ -788,6 +788,8 @@ export const ru: Dictionary = {
   '{done} of {total}': '{done} из {total}',
   'Sync failed': 'Сбой синхронизации',
   '{name} could not be written.': 'Не удалось записать {name}.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    'Не удалось записать {name}: файл не читается. Возможно, он больше 64 МБ или это не текст в UTF-8.',
   '{name} could not be read.': 'Не удалось прочитать {name}.',
   'Text size': 'Размер текста',
   'Line spacing': 'Межстрочный интервал',
@@ -1615,6 +1617,8 @@ export const ru: Dictionary = {
   'The provider answered {status}.': 'Поставщик ответил {status}.',
   'Add an AI provider in Settings first.': 'Сначала добавьте поставщика ИИ в настройках.',
   'The model did not answer.': 'Модель не ответила.',
+  'The connection closed before the answer was finished.':
+    'Соединение закрылось до завершения ответа.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'Ваш план {plan} исчерпан до {time}.',
   'Your {plan} plan is at its limit for now.': 'Ваш план {plan} пока исчерпан.',
@@ -2097,8 +2101,10 @@ export const ru: Dictionary = {
   'Send feedback': 'Отправить отзыв',
   'Describe the issue': 'Опишите проблему',
   Sent: 'Отправлено',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Этот отчёт содержит ваше описание, версию Orden, вашу платформу и недавний журнал приложения. Ваших заметок в нём никогда нет.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Этот отчёт содержит ваше описание, версию Orden, вашу платформу и недавний журнал приложения, без путей к файлам.',
+  'Its space is archived': 'Его пространство в архиве',
+  'Back as {name}': 'Вернулась как {name}',
   'Send into the running answer': 'Отправить в текущий ответ',
   'Stop the answer': 'Остановить ответ',
   'Open every step': 'Раскрыть все шаги',
@@ -2183,6 +2189,8 @@ export const ru: Dictionary = {
     'Он читает ваши заметки и ходит по сайтам под вашими входами, поэтому страница может попытаться заставить его отправить их наружу.',
   Activity: 'Активность',
   'Add a site': 'Добавить сайт',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Программа из этого списка запускается без вопросов и может делать всё, что умеет эта программа.',
   'Add a program': 'Добавить программу',
   'Every space': 'Все пространства',
   Sites: 'Сайты',
@@ -2617,6 +2625,7 @@ export const ru: Dictionary = {
   'No {property}': 'Без {property}',
   '{card} moved to {group}': 'Карточка {card} перемещена в {group}',
   'Not moved': 'Не перемещено',
+  'Not undone': 'Не отменено',
   Retry: 'Повторить',
   Calculate: 'Вычислить',
   'Remove sort': 'Убрать сортировку',
@@ -2895,6 +2904,8 @@ export const ru: Dictionary = {
   '{title}, running': '{title}, выполняется',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden больше не хранит ключи ИИ в связке ключей Mac, которая снова и снова спрашивала пароль. Введите ключи заново и ещё раз войдите в ChatGPT.',
+  'This PDF is locked by its owner': 'Этот PDF заблокирован владельцем',
+  'Part of this could not be undone': 'Часть этого не удалось отменить',
   'Add images': 'Добавить изображения',
   'Remove image': 'Убрать изображение',
   'That is more than 4 images.': 'Это больше 4 изображений.',

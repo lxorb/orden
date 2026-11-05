@@ -5,7 +5,10 @@
  *  step is dropped so it cannot write the note a second time. Both are fetched with the
  *  first Undo: the move's machinery carries the app's menus with it. */
 
-import { insideSpace, samePath } from '../../space-paths'
+import { busy } from '../../busy.svelte'
+import { t } from '../../i18n.svelte'
+import { shownName } from '../../note-name'
+import { insideSpace, nameOf, samePath } from '../../space-paths'
 import { workspace } from '../../workspace.svelte'
 import type { FileAction } from '../../workspace/undo.svelte'
 import type { Thread } from '../chat/types'
@@ -28,14 +31,25 @@ function rootOf(change: FileChange, thread: Pick<Thread, 'space'>): string | nul
   return space?.root ?? null
 }
 
+/** The steps a rewind's own sending of a made note to Recently deleted left on the tree's
+ *  Undo. Not the thread's deletes: a note it deleted and then made again at that name has
+ *  two, and it is the older that comes back. */
+const unmade = new WeakSet()
+
 /** The step that deleted `path`, newest first, if it is still on the stack: on its own,
  *  or the first of a delete and the unnesting it caused. */
 function deletion(path: string): Extract<FileAction, { kind: 'delete' }> | null {
   for (const action of [...workspace.undone.stack].reverse()) {
     const step = action.kind === 'many' ? action.steps[0] : action
-    if (step?.kind === 'delete' && samePath(step.path, path)) return step
+    if (step?.kind === 'delete' && !unmade.has(step) && samePath(step.path, path)) return step
   }
   return null
+}
+
+/** The delete of `path` just made was a rewind's, of a note the thread made. */
+export function markUnmade(path: string): void {
+  const step = deletion(path)
+  if (step) unmade.add(step)
 }
 
 /** Takes one change back. Answers whether it was. */
@@ -63,8 +77,14 @@ export async function undoFile(
           ? [{ ...one, steps: one.steps.filter((x) => x !== step) }]
           : [one],
     )
-    await workspace.fileCame(back, 'file')
+    cameBackAt.set(change, back)
+    await workspace.fileCame(back, 'file', undefined, undefined, true)
     await workspace.loadTree()
+    // Something else took the name since, so it came back beside that, and its track with
+    // it (`tracksCame`): where it is now is worth saying.
+    if (!samePath(back, insideSpace(root, change.path))) {
+      busy.failed(t('Back as {name}', { name: shownName(nameOf(back)) }))
+    }
     return true
   } catch {
     // Something has since taken the name, or the copy is gone: left as it is, and the
@@ -73,10 +93,15 @@ export async function undoFile(
   }
 }
 
-/** Does a change taken back again: the move made again, the note deleted again. */
+/** Where a delete taken back landed, for a Redo: beside whatever took its name, which is the
+ *  reader's and is not what the agent deleted. */
+const cameBackAt = new WeakMap<FileChange, string>()
+
+/** Does a change taken back again: the move made again, the note deleted again. Throws
+ *  where it could not, for the Redo to stop and say. */
 export async function redoFile(change: FileChange, thread: Pick<Thread, 'space'>): Promise<void> {
   const root = rootOf(change, thread)
-  if (!root) return
-  if (change.kind === 'moved') await moved(root, change.from, change.path).catch(() => undefined)
-  else await workspace.remove(insideSpace(root, change.path), false).catch(() => undefined)
+  if (!root) throw new Error(`the space of ${change.path} is not here`)
+  if (change.kind === 'moved') await moved(root, change.from, change.path)
+  else await workspace.remove(cameBackAt.get(change) ?? insideSpace(root, change.path), false)
 }

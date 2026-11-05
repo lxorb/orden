@@ -32,6 +32,7 @@ import type { Folded } from './sync/web-copies'
 import { workspace } from './workspace.svelte'
 import { sayEntryIds } from './workspace/entry-ids'
 import type { FileOp } from './workspace/file-ops'
+import { unixLines } from './workspace/documents.svelte'
 import { samePath } from './space-paths'
 
 export const STORAGE_KEY = MIRRORS_KEY
@@ -307,6 +308,8 @@ class Sync {
   /** Moves a pull is making on this disk because the account already has them, by
    *  `from` and `to`, while everything kept by path is hearing of them. */
   private readonly pulling = new Set<string>()
+  /** The notes the reader has been told will not land; see `notWritten`. */
+  private readonly toldUnwritten = new Set<string>()
 
   /** A file operation, heard the way everything kept by path hears one; see
    *  workspace/file-ops.ts. A space's folder moving re-keys the table in the same
@@ -700,6 +703,7 @@ class Sync {
 
     return {
       listed: (paths) => arriving.listing(paths),
+      notWritten: (path) => this.notWritten(joinPath(mirror.root, path)),
       wrote: (path) => {
         arriving.arrived()
         void workspace.arrived(path)
@@ -718,6 +722,7 @@ class Sync {
         this.pulling.add(key)
         try {
           await workspace.fileMoved(from, to, 'file')
+          await workspace.undone.moved(from, to)
         } finally {
           this.pulling.delete(key)
         }
@@ -761,7 +766,7 @@ class Sync {
     if (!note || note.dirty) return
 
     const content = await invoke<string>('read_note', { path }).catch(() => null)
-    if (content === null || content === note.text) return
+    if (content === null || unixLines(content) === note.text) return
     // A room joined to the note but out of reach takes no file: the words would go to
     // it as this device's own typing once it is reached again (#541).
     if (id !== undefined) rooms.letGoUnreached(id)
@@ -777,6 +782,15 @@ class Sync {
 
   /** One line in the log for one space, unless there is nothing to say about it.
    *  See sync/record.svelte.ts, which decides that. */
+  /** Tells the reader, once a session, that a note will not land, here or on the account. */
+  private notWritten(path: string) {
+    if (this.toldUnwritten.has(path)) return
+    this.toldUnwritten.add(path)
+    void import('./sync2/unsynced.svelte').then(({ unsynced }) =>
+      unsynced.show(path.split(/[\\/]/).pop() ?? path),
+    )
+  }
+
   private noted(mirror: Mirror, began: number, failed: string | null) {
     record.wrote({
       at: began,
@@ -806,59 +820,69 @@ class Sync {
     this.running = true
     this.status = 'syncing'
     this.lastError = null
-    let moved = false
+    let moved = false as boolean
     /** Whether something landed in the space on screen. */
-    let shown = false
+    let shown = false as boolean
 
     try {
       // Fetched with the first pass rather than carried by the launch: nothing in
       // it is needed to draw a note.
       const { pull, push } = await import('./sync/pass')
+      const { eachDue } = await import('./sync2/rounds')
+      const mirrors = new Map(Object.values(this.mirrors).map((one) => [one.root, one]))
 
-      for (const mirror of Object.values(this.mirrors)) {
-        // A folder the workspace no longer lists is left alone until the next
-        // reconcile decides what becomes of its mirror. Syncing it would read
-        // every note as deleted here, and delete them from the account.
-        if (!workspace.spaces.some((space) => space.root === mirror.root)) continue
+      // One space's trouble is that space's: the others have their turn, and it is said after.
+      await eachDue(
+        new Set(mirrors.keys()),
+        () => true,
+        async (root) => {
+          const mirror = mirrors.get(root)
+          if (!mirror) return
+          // A folder the workspace no longer lists is left alone until the next
+          // reconcile decides what becomes of its mirror. Syncing it would read
+          // every note as deleted here, and delete them from the account.
+          if (!workspace.spaces.some((space) => space.root === mirror.root)) return
 
-        this.pulled = 0
-        this.pushed = 0
-        this.clashed = 0
-        const began = Date.now()
+          this.pulled = 0
+          this.pushed = 0
+          this.clashed = 0
+          const began = Date.now()
 
-        if (await pull(mirror, token, joined, this.waiting(mirror, joined))) {
-          moved = true
-          if (mirror.root === workspace.activeSpace?.root) shown = true
-        }
-
-        // A space shared to read only comes down. Offering what is here would
-        // be refused by the account, and a folder somebody is reading is not a
-        // statement about what the space should hold.
-        if (this.reads(mirror.spaceId)) {
-          this.noted(mirror, began, null)
-          continue
-        }
-
-        const sending = {
-          held: record.held,
-          asked: new Set(record.clashes.map((one) => one.id)),
-          sent: () => (this.pushed += 1),
-          // An old copy of a web note folded into it: the note open in a tab takes
-          // what it now says, the copy leaves the list. See sync/web-copies.ts.
-          folded: ({ kept, gone }: Folded) => {
-            void this.refresh(kept, joined)
-            void workspace.fileGone(gone, 'file')
+          if (await pull(mirror, token, joined, this.waiting(mirror, joined))) {
+            moved = true
             if (mirror.root === workspace.activeSpace?.root) shown = true
-          },
-        }
-        if (await push(mirror, token, joined, sending)) moved = true
+          }
 
-        // A whole pass has been through this space, so every note in the folder has
-        // an entry again and the table is a record rather than a hole. Said here
-        // because reaching this line is what makes it true; see `dropped`.
-        mirror.dropped = false
-        this.noted(mirror, began, null)
-      }
+          // A space shared to read only comes down. Offering what is here would
+          // be refused by the account, and a folder somebody is reading is not a
+          // statement about what the space should hold.
+          if (this.reads(mirror.spaceId)) {
+            this.noted(mirror, began, null)
+            return
+          }
+
+          const sending = {
+            held: record.held,
+            asked: new Set(record.clashes.map((one) => one.id)),
+            sent: () => (this.pushed += 1),
+            refused: (path: string) => this.notWritten(joinPath(mirror.root, path)),
+            // An old copy of a web note folded into it: the note open in a tab takes
+            // what it now says, the copy leaves the list. See sync/web-copies.ts.
+            folded: ({ kept, gone }: Folded) => {
+              void this.refresh(kept, joined)
+              void workspace.fileGone(gone, 'file')
+              if (mirror.root === workspace.activeSpace?.root) shown = true
+            },
+          }
+          if (await push(mirror, token, joined, sending)) moved = true
+
+          // A whole pass has been through this space, so every note in the folder has
+          // an entry again and the table is a record rather than a hole. Said here
+          // because reaching this line is what makes it true; see `dropped`.
+          mirror.dropped = false
+          this.noted(mirror, began, null)
+        },
+      )
 
       // Each page note's paper goes where the note goes (#551); not waited for.
       void import('./pages/carrying').then(({ carryNow, mirroredPages }) =>
@@ -1115,10 +1139,11 @@ function known(): Promise<void> {
 
 export const sync = new Sync()
 
-workspace.fileOps.follow((op) => sync.follow(op))
+// What another window did, it tells the account of; see workspace/across.ts.
+workspace.fileOps.follow((op) => (op.heard ? undefined : sync.follow(op)))
 // The notes waiting on a question follow their files, and are found by id when one is
 // answered; see sync/record.svelte.ts.
-workspace.fileOps.follow((op) => record.follow(op))
+workspace.fileOps.follow((op) => (op.heard ? undefined : record.follow(op)))
 record.notes = {
   at: (id) => sync.pathOf(id),
   of: (path) => sync.tracked(path)?.id ?? null,

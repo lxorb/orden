@@ -15,6 +15,7 @@ import type { Camera } from '../camera'
 import { identifier } from '../identifier'
 import { t } from '../i18n.svelte'
 import { draftName, shownName, TITLE_CHARS } from '../note-name'
+import { oneEdit } from '@orden/markdown/edits'
 import { applied, appliedToFile, type Edit, flatEdits } from '../search/replace'
 import { samePath } from '../space-paths'
 import { type TabKind, TAB_KINDS } from './tab-kinds'
@@ -61,6 +62,24 @@ export type { TabKind }
  *  needs no switch to say so. See `workspace.openNotes`. */
 export function holdsWords(kind: TabKind): boolean {
   return TAB_KINDS[kind].words
+}
+
+/** The editor's line endings, whatever a file has. The rope holds these and only these, and
+ *  every offset into a note is an offset into them. */
+export function unixLines(text: string): string {
+  return text.includes('\r') ? text.replace(/\r\n?/g, '\n') : text
+}
+
+/** Edits worked out on `before`, in the editor's count of its line endings and with its
+ *  line endings in what they put in. Words held in the editor's endings (`unixLines`)
+ *  meeting edits that put in a file's `\r\n` - a file's whole text worked out against
+ *  them - are taken as the one change from those words to the result's. */
+function inEditorCount(before: string, edits: readonly Edit[]): { words: string; edits: Edit[] } {
+  if (before.includes('\r') || !edits.some((one) => one.insert.includes('\r'))) {
+    return flatEdits(before, edits)
+  }
+  const one = oneEdit(before, unixLines(applied(before, edits)))
+  return { words: before, edits: one ? [one] : [] }
 }
 
 export interface DocumentStart {
@@ -135,6 +154,20 @@ export class NoteDoc {
    *  no file or came back holding words the file never had; see `firstVersion`. */
   private before: string | null
 
+  /** The words this window last knew the file to hold, in the editor's line endings:
+   *  what a write and another window's write are each merged against, null for a document
+   *  with no file or one that came back holding words the file never had. See
+   *  workspace/across.ts. */
+  get onDisk(): string | null {
+    return this.knownOnDisk
+  }
+
+  set onDisk(to: string | null) {
+    this.knownOnDisk = to === null ? null : unixLines(to)
+  }
+
+  private knownOnDisk: string | null = null
+
   /** `edited` hears about every change to the words, wherever it came from: a
    *  keystroke in any pane, an undo, a picture dropped in. */
   constructor(start: DocumentStart, edited: (doc: NoteDoc) => void) {
@@ -144,8 +177,12 @@ export class NoteDoc {
     this.path = start.path
     this.name = start.name
     this.dirty = start.dirty
-    this.words = start.text
+    // In the rope's line endings like every other word of it: `words` stands for the rope
+    // wherever it is not behind, so a note whose file has CRLF endings read offsets into
+    // the one that did not fit the other. `before` is the file as it was, for a version.
+    this.words = unixLines(start.text)
     this.before = start.path !== null && !start.dirty ? start.text : null
+    this.onDisk = this.before === null ? null : this.words
     this.live = new SharedDoc(start.text)
     this.retitle()
 
@@ -262,6 +299,18 @@ export class NoteDoc {
     if (this.words !== text) this.words = text
   }
 
+  /** Changes to the rope that leave the note in step with its file. A throw out of one
+   *  leaves it listening: a note that had stopped would take everything typed afterwards
+   *  for nothing owed, and never write again. */
+  private quietly(change: () => void) {
+    this.quiet = true
+    try {
+      change()
+    } finally {
+      this.quiet = false
+    }
+  }
+
   /** Text put into the note from somewhere other than the editor: a version
    *  restored, a note a sync brought over, a rename that rewrote the title. It
    *  reaches every pane showing this note.
@@ -273,34 +322,38 @@ export class NoteDoc {
    *  `changed` is what turns the words `from` into `text`, from a writer that knows:
    *  a plane; see canvas/written.ts. Taken only while these are still those words. */
   replace(
-    text: string,
+    written: string,
     dirty = true,
     changed?: { from: string; changes: readonly { from: number; to: number; insert: string }[] },
   ) {
-    this.quiet = !dirty
+    const text = unixLines(written)
     const known = changed && !this.behind && this.words === changed.from
     // Whether this is a step for undo to stop at is the same question as whether it
     // leaves the note out of step with its file. A version put back is somebody
     // asking for it and has to be undoable; a note re-read from disk is not, and a
     // Ctrl+Z that put the old file back would be an edit the app invented.
-    this.live.replace(text, dirty, known ? changed.changes : undefined)
-    this.quiet = false
+    const put = () => this.live.replace(text, dirty, known ? changed.changes : undefined)
+    if (dirty) put()
+    else this.quietly(put)
 
     this.words = text
     this.behind = false
     this.dirty = dirty
+    if (!dirty) this.onDisk = text
     // A note re-read from its file: that is what the file holds now, where the
     // version the first write keeps has not been taken yet.
-    if (!dirty && this.before !== null) this.before = text
+    if (!dirty && this.before !== null) this.before = written
   }
 
   /** The file written with these words by someone other than the document's own
    *  write: a link rewrite through a canvas's surface (`relinked`). Clean again, as
    *  `edited` leaves it, so the same words are not written and sent a second time. */
-  wroteAs(text: string) {
+  wroteAs(written: string) {
+    const text = unixLines(written)
     if (this.behind || this.words !== text) return
     this.dirty = false
-    if (this.before !== null) this.before = text
+    this.onDisk = text
+    if (this.before !== null) this.before = written
   }
 
   /** Words changed under the note by something other than an editor, as the
@@ -308,14 +361,15 @@ export class NoteDoc {
    *  back. The file is written in the same breath, so this leaves the note
    *  clean, and every pane showing it keeps its caret.
    *
-   *  The ranges are in the words this document holds (`text`), which are the file's
-   *  until the first keystroke - `\r\n` and all, for a file written on Windows and for
-   *  every web note's `.url` - while the editor holds each line ending as one
-   *  character. So they are carried into the editor's own count first; taken as they
-   *  were, an icon chosen for an open web note landed two characters early on its
-   *  fourth line, inside the date (#1110). */
+   *  The ranges are in the words they were worked out on, which `text` comes after: the
+   *  file's - `\r\n` and all, for a file written on Windows and for every web note's
+   *  `.url` - wherever `text` is in those, while the editor and `words` hold each line
+   *  ending as one character. So they are carried into the editor's own count first;
+   *  taken as they were, an icon chosen for an open web note landed two characters early
+   *  on its fourth line, inside the date (#1110). */
   edited(changes: readonly { from: number; to: number; insert: string }[], text: string) {
-    this.applyLive(flatEdits(this.words, changes).edits, text)
+    const from = text.includes('\r') ? this.asFile() : this.words
+    this.applyLive(inEditorCount(from, changes).edits, text)
   }
 
   /** Edits worked out on `before` - these words as somebody read them a moment ago,
@@ -325,24 +379,52 @@ export class NoteDoc {
    *  to as the editor counts them, for what undoes them. */
   take(edits: readonly Edit[], before: string): { text: string; edits: Edit[]; flat: string } {
     this.flush()
-    const held = this.words
-    const worked = flatEdits(before, edits)
-    const flat = held.replace(/\r\n?/g, '\n')
+    const flat = this.words
+    const worked = inEditorCount(before, edits)
+    const file = this.asFile(before)
     const carried = this.live.carried(worked.edits, worked.words, true) ?? worked.edits
-    const text = held === flat ? applied(flat, carried) : appliedToFile(held, carried)
+    const text = file === flat ? applied(flat, carried) : appliedToFile(file, carried)
     this.applyLive(carried, text)
     return { text, edits: carried, flat }
   }
 
-  private applyLive(changes: readonly Edit[], text: string) {
-    this.quiet = true
-    this.live.edit(changes)
-    this.quiet = false
+  /** These words in the file's own line endings, as far as they are known: the file as
+   *  this document last knew it, or `read` from it, while either is still these words;
+   *  otherwise the words as they are. */
+  private asFile(read?: string): string {
+    for (const file of [this.before, read]) {
+      if (file?.includes('\r') && unixLines(file) === this.words) return file
+    }
+    return this.words
+  }
 
-    this.words = text
+  private applyLive(changes: readonly Edit[], text: string) {
+    this.quietly(() => this.live.edit(changes))
+
+    this.words = unixLines(text)
     this.behind = false
     this.dirty = false
+    this.onDisk = text
     if (this.before !== null) this.before = text
+  }
+
+  /** Words of another window's, brought into this note as they arrive from a room: every
+   *  caret stays, no step of undo is made, and nothing is written for it here. `to` is
+   *  what the words are afterwards. */
+  took(change: { from: number; to: number; insert: string } | null, to: string) {
+    if (!change) return
+    this.quietly(() => this.live.arrived([change]))
+    // A composition holds what arrives until it ends, and the rope says when it has.
+    this.behind = this.live.text.toString() !== to
+    if (!this.behind) this.words = to
+  }
+
+  /** The same where the one span would not go in: the words whole, and the carets with them.
+   *  Nothing about the file changes by it. */
+  tookWhole(to: string) {
+    this.quietly(() => this.live.replace(to, false))
+    this.words = to
+    this.behind = false
   }
 
   /** The one tab that previews a note, moving on to another one.
@@ -357,19 +439,19 @@ export class NoteDoc {
    *  nobody asked it for. A tab reaching a note another pane already has open is
    *  pointed at that document instead; see `walk`. */
   adopt(note: { path: string; name: string; text: string }) {
+    const text = unixLines(note.text)
     this.path = note.path
     this.name = note.name
     this.before = note.text
+    this.onDisk = text
     this.arrivals++
 
     // Not `replace`: this document is not being edited, it is being pointed at
     // another note, and the note it came from must not be one step behind the one
     // it is on. `takeOn` gives it a history of its own, empty. See shared.ts.
-    this.quiet = true
-    this.live.takeOn(note.text)
-    this.quiet = false
+    this.quietly(() => this.live.takeOn(text))
 
-    this.words = note.text
+    this.words = text
     this.behind = false
     this.dirty = false
   }

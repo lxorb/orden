@@ -1,6 +1,6 @@
 /** The space folders as the crate watches and lists them (src-tauri/src/space_watch.rs),
  *  typed and checked: what the sync engine reads foreign edits, renames and deletes out
- *  of. Inside the app only; a browser has no folders to watch.
+ *  of, and with no engine workspace/outside.svelte.ts. Inside the app only; a browser has no folders to watch.
  *
  *  Every path is spelled the way the root was handed over, so it joins and compares with
  *  the paths the rest of the app holds. `id` is a file's identity: the same through a
@@ -18,6 +18,9 @@ export interface Listed {
   /** Milliseconds since the epoch. */
   mtime: number
   id: string | null
+  /** A folder whose children were not read: it would not list, or is too deep. It may not be
+   *  empty, and what is known under it is not therefore gone; see `walk` in the crate. */
+  unlisted?: true
 }
 
 /** One answer about one path. A folder that arrives brings a `created` for everything
@@ -60,7 +63,19 @@ export function watchSpaces(
 }
 
 export function unwatchSpaces(): Promise<void> {
-  return invoke('space_unwatch')
+  return invoke('space_unwatch').then(() => {
+    for (const listener of letGo) listener()
+  })
+}
+
+/** Whoever would watch once nobody does: there is one watch, and the sync engine letting
+ *  go of it may come well after signing out, while it writes down what it was holding. */
+const letGo = new Set<() => void>()
+
+/** Listens; answers the way to stop. */
+export function onUnwatched(listener: () => void): () => void {
+  letGo.add(listener)
+  return () => letGo.delete(listener)
 }
 
 /** Everything in a space, each folder before what is in it. `each` hears the listing a
@@ -109,7 +124,7 @@ function listedOf(value: unknown): Listed | null {
     return null
   }
   if (!identity(id)) return null
-  return { path, dir, size, mtime, id }
+  return { path, dir, size, mtime, id, ...(value.unlisted === true ? { unlisted: true } : {}) }
 }
 
 function changeOf(value: unknown): SpaceChange | null {

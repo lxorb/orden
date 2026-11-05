@@ -10,7 +10,7 @@
 
 import { addDays, dayNumber, type Row, type Value } from '@orden/bases'
 import { deadlineOf, startOf } from '@orden/markdown/task-dates'
-import { dayIn } from './values'
+import { dayIn, isDateValue } from './values'
 
 export type Scale = 'day' | 'week' | 'month' | 'quarter'
 export const SCALES: readonly Scale[] = ['day', 'week', 'month', 'quarter']
@@ -25,6 +25,16 @@ export interface Bar {
   /** The properties the two edges were read from, which a drag writes. */
   from: string
   to: string
+  /** The time of day each says after its day, as it is written, which a drag leaves. */
+  fromTime?: string
+  toTime?: string
+}
+
+/** What a value says after its day: `T09:30`, or nothing where it is a day alone. */
+function timeIn(value: Value): string {
+  if (typeof value === 'string') return value.slice(10)
+  if (!isDateValue(value) || !value.time) return ''
+  return `T${value.time.replace(/:00$/, '')}${value.zone ?? ''}`
 }
 
 /** The bar of one row, or null for a row with no date at all. `read` gives a note
@@ -56,24 +66,57 @@ export function barOf(
   }
 
   const fromProperty = dates.start ?? 'file.ctime'
-  const start = dayIn(read(row, fromProperty))
+  const startValue = read(row, fromProperty)
+  const start = dayIn(startValue)
   if (start === null) return null
   const toProperty = dates.end ?? fromProperty
-  const endRead = dayIn(read(row, toProperty))
+  const endValue = read(row, toProperty)
+  const endRead = dayIn(endValue)
   const end = endRead !== null && endRead >= start ? endRead : start
-  return { row, start, end, from: fromProperty, to: toProperty }
+  return {
+    row,
+    start,
+    end,
+    from: fromProperty,
+    to: toProperty,
+    fromTime: timeIn(startValue),
+    toTime: endRead === null ? '' : timeIn(endValue),
+  }
 }
 
+/** How far from the middle of a base's dates a date can stretch the track, in days each
+ *  way. One further off is most often a year mistyped: `1026-11-03` drew a track of five
+ *  million pixels and a hundred thousand marks, with every other bar far away to the right. */
+const FURTHEST = 3650
+
 /** The days the timeline spans: from a little before the first bar to a little after
- *  the last, and never less than a month around today. */
+ *  the last, and a month around today where today is anywhere near them, or around the
+ *  bars where they are all long ago. A bar past `FURTHEST` from the median of them does
+ *  not stretch it, and is drawn at its edge (`drawnOf`). */
 export function spanOf(bars: readonly Bar[], today: string): { first: string; last: string } {
-  let first = addDays(today, -7)
-  let last = addDays(today, 28)
+  const starts = bars.map((bar) => bar.start).sort()
+  const middle = starts[Math.floor(starts.length / 2)] ?? today
+  const earliest = addDays(middle, -FURTHEST)
+  const latest = addDays(middle, FURTHEST)
+  const around = today >= earliest && today <= latest ? today : middle
+  let first = addDays(around, -7)
+  let last = addDays(around, 28)
   for (const bar of bars) {
-    if (bar.start < first) first = addDays(bar.start, -3)
-    if (bar.end > last) last = addDays(bar.end, 7)
+    if (bar.start < first && bar.start >= earliest) first = addDays(bar.start, -3)
+    if (bar.end > last && bar.end <= latest) last = addDays(bar.end, 7)
   }
   return { first, last }
+}
+
+/** The days a bar is drawn over on this span, and whether it runs past it: a drag still
+ *  moves the dates it says. */
+export function drawnOf(
+  bar: Bar,
+  span: { first: string; last: string },
+): { start: string; end: string; far: boolean } {
+  const start = bar.start < span.first ? span.first : bar.start > span.last ? span.last : bar.start
+  const end = bar.end > span.last ? span.last : bar.end < span.first ? span.first : bar.end
+  return { start, end, far: start !== bar.start || end !== bar.end }
 }
 
 /** How many days lie from one day to another. */
@@ -87,9 +130,10 @@ export function dragged(
   days: number,
 ): Record<string, string> {
   if (!days) return {}
+  const { fromTime = '', toTime = '' } = bar
   if (part === 'move') {
-    const out: Record<string, string> = { [bar.from]: addDays(bar.start, days) }
-    if (bar.to !== bar.from) out[bar.to] = addDays(bar.end, days)
+    const out: Record<string, string> = { [bar.from]: `${addDays(bar.start, days)}${fromTime}` }
+    if (bar.to !== bar.from) out[bar.to] = `${addDays(bar.end, days)}${toTime}`
     return out
   }
   if (part === 'start') {
@@ -97,10 +141,10 @@ export function dragged(
     // A task of one date pulled wider gets a start of its own rather than moving.
     const field =
       bar.from === bar.to && bar.row.task && bar.from === 'task.deadline' ? 'task.start' : bar.from
-    return { [field]: start > bar.end ? bar.end : start }
+    return { [field]: `${start > bar.end ? bar.end : start}${fromTime}` }
   }
   const end = addDays(bar.end, days)
-  return { [bar.to]: end < bar.start ? bar.start : end }
+  return { [bar.to]: `${end < bar.start ? bar.start : end}${toTime}` }
 }
 
 export interface Arrow {

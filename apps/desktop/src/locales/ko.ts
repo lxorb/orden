@@ -746,6 +746,8 @@ export const ko: Dictionary = {
   '{done} of {total}': '{total} 중 {done}',
   'Sync failed': '동기화 실패',
   '{name} could not be written.': '{name}을(를) 쓸 수 없었습니다.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name}을(를) 쓸 수 없었습니다: 파일을 읽을 수 없습니다. 64 MB를 넘었거나 UTF-8 텍스트가 아닐 수 있습니다.',
   '{name} could not be read.': '{name}을(를) 읽을 수 없었습니다.',
   'Text size': '글자 크기',
   'Line spacing': '줄 간격',
@@ -1511,6 +1513,8 @@ export const ko: Dictionary = {
   'The provider answered {status}.': '공급자가 {status}로 답했습니다.',
   'Add an AI provider in Settings first.': '먼저 설정에서 AI 공급자를 추가하세요.',
   'The model did not answer.': '모델이 답하지 않았습니다.',
+  'The connection closed before the answer was finished.':
+    '답변이 끝나기 전에 연결이 끊어졌습니다.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     '{plan} 요금제가 {time}까지 한도에 도달했습니다.',
@@ -1982,8 +1986,10 @@ export const ko: Dictionary = {
   'Send feedback': '피드백 보내기',
   'Describe the issue': '문제를 설명해 주세요',
   Sent: '보냄',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    '이 보고서에는 설명, Orden 버전, 플랫폼, 최근 앱 로그가 포함됩니다. 노트는 절대 포함되지 않습니다.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    '이 보고서에는 설명, Orden 버전, 플랫폼, 최근 앱 로그가 포함되며 파일 경로는 제거됩니다.',
+  'Its space is archived': '이 스페이스는 보관되었습니다',
+  'Back as {name}': '{name}(으)로 돌아왔습니다',
   'Send into the running answer': '진행 중인 답변에 보내기',
   'Stop the answer': '답변 중지',
   'Open every step': '모든 단계 펼치기',
@@ -2068,6 +2074,8 @@ export const ko: Dictionary = {
     '노트를 읽고 내 로그인으로 탐색하므로, 페이지가 노트를 밖으로 보내도록 유도할 수 있습니다.',
   Activity: '활동',
   'Add a site': '사이트 추가',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    '이 목록의 프로그램은 묻지 않고 실행되며, 그 프로그램이 할 수 있는 모든 일을 할 수 있습니다.',
   'Add a program': '프로그램 추가',
   'Every space': '모든 공간',
   Sites: '사이트',
@@ -2490,6 +2498,7 @@ export const ko: Dictionary = {
   'No {property}': '{property} 없음',
   '{card} moved to {group}': '{card}을(를) {group}(으)로 이동함',
   'Not moved': '이동하지 못함',
+  'Not undone': '실행 취소하지 못함',
   Retry: '다시 시도',
   Calculate: '계산',
   'Remove sort': '정렬 제거',
@@ -2761,6 +2770,8 @@ export const ko: Dictionary = {
   '{title}, running': '{title}, 실행 중',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden은 더 이상 AI 키를 Mac 키체인에 보관하지 않습니다. 키체인이 암호를 계속 물었기 때문입니다. 키를 다시 입력하고 ChatGPT에 한 번 더 로그인하세요.',
+  'This PDF is locked by its owner': '이 PDF는 소유자가 잠갔습니다',
+  'Part of this could not be undone': '일부를 되돌리지 못했습니다',
   'Add images': '이미지 추가',
   'Remove image': '이미지 제거',
   'That is more than 4 images.': '이미지가 4개를 넘습니다.',

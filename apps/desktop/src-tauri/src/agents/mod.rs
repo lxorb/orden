@@ -137,6 +137,13 @@ mod quiet;
 mod reader;
 // What every engine runs in a page, and makes of what it answers (#1092).
 #[cfg(any(windows, feature = "cef", target_os = "macos"))]
+#[cfg_attr(
+    any(windows, feature = "cef"),
+    allow(
+        dead_code,
+        reason = "the DevTools page runs its own copies of the reads the hunt hardened (page.rs); WKWebView runs these"
+    )
+)]
 mod scripts;
 #[cfg(any(windows, feature = "cef", target_os = "macos"))]
 #[cfg_attr(
@@ -610,6 +617,11 @@ pub fn agents_answer(
         }
     }
     Ok(approval)
+}
+
+/// What a question is about, by its id, and the site where a page is.
+pub fn question_category(id: &str) -> Option<(verbs::Category, Option<String>)> {
+    approvals::any(id).map(|one| (one.category, one.site))
 }
 
 /// A question the window raises for one of its own verbs on an agent's behalf (writing

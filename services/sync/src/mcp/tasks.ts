@@ -6,9 +6,11 @@
  *  over rows read off the account's notes with Orden closed: each note's words through
  *  `rowsOfText`, the one reader of a task line there is. A change is the note written
  *  whole through `putNote`, the connector's `write_note`, so it is a version like any
- *  other and a room merges it with whoever is typing. The answers are the same JSON
- *  the app answers with, because a model reads both. Writing needs a token that may
- *  write and a space that was not shared to read. */
+ *  other and a room merges it with whoever is typing, naming the version it read: a
+ *  note that moved since is read and changed again, and no word typed in between is
+ *  written over (`edits`). The answers are the same JSON the app answers with, because
+ *  a model reads both. Writing needs a token that may write and a space that was not
+ *  shared to read. */
 
 import type { Context, Row } from '@orden/bases'
 import {
@@ -34,12 +36,23 @@ import { rowsOfText } from '@orden/bases/rows'
 import { INBOX_PATH, taskHash } from '@orden/bases'
 import { meansInbox } from '@orden/bases/inbox'
 import { appliedEdits } from '@orden/markdown/edits'
+import { isCanvasTarget, isPagesTarget } from '@orden/markdown/links'
 import { taskLine } from '@orden/markdown/task-edits'
 import { objectIn } from '../body'
-import { cleanPath } from '../notes'
+import { cleanPath, MOVED } from '../notes'
 import { blobKey } from '../sync2/files'
-import type { Env } from '../types'
-import { askedSpace, marked, noteBody, putNote, type Space, spaceSource, spacesFor } from './tools'
+import type { Env, Note } from '../types'
+import {
+  askedSpace,
+  changedWhileWriting,
+  marked,
+  noteBody,
+  noteRead,
+  putNote,
+  type Space,
+  spaceSource,
+  spacesFor,
+} from './tools'
 import type { TokenRow } from './tokens'
 
 /** How many notes one call reads the words of, across every space it looks in. A list
@@ -204,17 +217,64 @@ async function wordsAt(env: Env, space: Writable, path: string): Promise<string 
   return note ? noteBody(env, space.id, note.id) : null
 }
 
+/** A note's row and words, for a change to be written on top of. */
+async function readOf(
+  env: Env,
+  space: Writable,
+  path: string,
+): Promise<{ note: Note; words: string } | null> {
+  const read = await noteRead(env, space.id, path)
+  if (read === MOVED) throw new Moved(path)
+  return read
+}
+
 /** A note path an argument names, `.md` added where it has no ending. */
 function notePath(asked: string): string {
   const named = asked.trim()
+  // A canvas or a page note holds no task lines, and `.md` added to one is a new note.
+  if (isCanvasTarget(named) || isPagesTarget(named)) throw new Said(`${asked} is not a note.`)
   const path = cleanPath(MARKDOWN.test(named) ? named : `${named}.md`)
   if (!path) throw new Said(`${asked} is not a note path.`)
   return path
 }
 
-async function written(env: Env, space: Writable, path: string, words: string): Promise<void> {
-  const refused = await putNote(env, space, path, words)
-  if (refused !== null) throw new Said(refused)
+/** The note at `path` moved past what was read of it. */
+class Moved extends Error {
+  constructor(readonly path: string) {
+    super(`${path} moved`)
+  }
+}
+
+/** How many times one change is read and made again on a note that keeps moving. */
+const TRIES = 5
+
+/** A change to a note, made again from a fresh read where the note moved under it, and
+ *  answered in a sentence where it will not hold still. Nothing was written for a try
+ *  that moved. */
+async function edits<T>(change: () => Promise<T>): Promise<T> {
+  for (let tries = 1; ; tries++) {
+    try {
+      return await change()
+    } catch (error) {
+      if (!(error instanceof Moved)) throw error
+      if (tries >= TRIES) throw new Said(changedWhileWriting(error.path))
+    }
+  }
+}
+
+/** Words written over `read`: what `readOf` answered for that path. Answers where the
+ *  note now is, which a tree may have put elsewhere than it was asked (`putNote`). */
+async function written(
+  env: Env,
+  space: Writable,
+  path: string,
+  words: string,
+  read: Note | null,
+): Promise<string> {
+  const put = await putNote(env, space, path, words, undefined, read)
+  if (put === MOVED) throw new Moved(path)
+  if (typeof put === 'string') throw new Said(put)
+  return put.path
 }
 
 /** What the engine is asked against. The account keeps no zone, so the day is UTC's;
@@ -275,6 +335,11 @@ async function list(env: Env, token: TokenRow, args: Args, seen: Space[]): Promi
   const names = new Set(
     rows.filter((row) => row.kind === 'note').map((row) => row.file.basename.toLowerCase()),
   )
+  // A number of tasks, from a caller a schema does not bind: below one answered none with
+  // a total saying otherwise, and a fraction cut where nobody asked.
+  if (args.limit !== undefined && !(Number.isInteger(args.limit) && Number(args.limit) > 0)) {
+    throw new Said('limit is a whole number of tasks, one or more.')
+  }
   const answer = listTasks(
     rows,
     {
@@ -332,34 +397,58 @@ async function addTaskTo(
   const read = newTask(args, quickWords(['en', 'de'], new Date()))
   const { fields } = read
   const path = await placeNamed(env, space, words(args, 'note') ?? read.note)
-  const before = (await wordsAt(env, space, path)) ?? ''
-  const placed = placeIn(before, [taskLine(fields)], words(args, 'under') ?? read.heading)
-  await written(env, space, path, appliedEdits(before, [placedEdit(placed)]))
-  return { at: `${path}#${placed.line}:${taskHash(fields.text)}`, space: space.name, path }
+  return await edits(async () => {
+    const held = await readOf(env, space, path)
+    const before = held?.words ?? ''
+    const placed = placeIn(before, [taskLine(fields)], words(args, 'under') ?? read.heading)
+    const landed = await written(
+      env,
+      space,
+      path,
+      appliedEdits(before, [placedEdit(placed)]),
+      held?.note ?? null,
+    )
+    return {
+      at: `${landed}#${placed.line}:${taskHash(fields.text)}`,
+      space: space.name,
+      path: landed,
+    }
+  })
 }
 
 async function update(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {
   const space = await writableSpace(env, token, args, seen)
   const anchor = readAt(args.at)
   const path = notePath(anchor.path)
-  const text = await wordsAt(env, space, path)
-  if (text === null) throw new Said(`No note at ${path}.`)
-
   const done = typeof args.done === 'boolean' ? args.done : undefined
-  const edited = editedTask(
-    text,
-    space.name,
-    path,
-    anchor,
-    taskChange(args),
-    done,
-    contextNow().today,
-  )
-  const said = { at: edited.at, ...(edited.next ? { next: edited.next } : {}), space: space.name }
+  const change = taskChange(args)
+  const today = contextNow().today
+  const editing = async () => {
+    const held = await readOf(env, space, path)
+    if (held === null) throw new Said(`No note at ${path}.`)
+    const edited = editedTask(held.words, space.name, path, anchor, change, done, today)
+    return { held, edited, said: answerOf(edited) }
+  }
+  const answerOf = (edited: { at: string; next?: string }) => ({
+    at: edited.at,
+    ...(edited.next ? { next: edited.next } : {}),
+    space: space.name,
+  })
+  // The task's lines and the note without them.
+  const taken = (edited: { text: string; at: string }) => {
+    const block = taskBlock(
+      edited.text,
+      taskIn(edited.text, space.name, path, readAt(edited.at)).anchor?.line ?? 0,
+    )
+    return { block, source: edited.text.slice(0, block.from) + edited.text.slice(block.to) }
+  }
   const moveTo = args.move_to
   if (moveTo === undefined || moveTo === null) {
-    if (edited.text !== text) await written(env, space, path, edited.text)
-    return said
+    return await edits(async () => {
+      const { held, edited, said } = await editing()
+      if (edited.text !== held.words) await written(env, space, path, edited.text, held.note)
+      return said
+    })
   }
 
   // Moved: the new note written first, so the task is never in neither.
@@ -369,16 +458,47 @@ async function update(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
       ? await placeNamed(env, space, target.note)
       : path
   const under = words(target, 'under')
-  const block = taskBlock(
-    edited.text,
-    taskIn(edited.text, space.name, path, readAt(edited.at)).anchor?.line ?? 0,
-  )
-  const source = edited.text.slice(0, block.from) + edited.text.slice(block.to)
-  const before = into === path ? source : ((await wordsAt(env, space, into)) ?? '')
-  const placed = placeIn(before, block.lines, under)
-  await written(env, space, into, appliedEdits(before, [placedEdit(placed)]))
-  if (into !== path) await written(env, space, path, source)
-  return { ...said, at: `${into}#${placed.line}:${readAt(edited.at).hash}` }
+  const placedIn = await edits(async () => {
+    const { held, edited, said } = await editing()
+    const { block, source } = taken(edited)
+    const there =
+      into === path ? { words: source, note: held.note } : await readOf(env, space, into)
+    const before = there?.words ?? ''
+    const placed = placeIn(before, block.lines, under)
+    const landed = await written(
+      env,
+      space,
+      into,
+      appliedEdits(before, [placedEdit(placed)]),
+      there?.note ?? null,
+    )
+    return { said, at: `${landed}#${placed.line}:${readAt(edited.at).hash}` }
+  })
+  if (into === path) return { ...placedIn.said, at: placedIn.at }
+
+  // Read again, and only the task taken out of what it says now: what the other note
+  // was given is already written, and must not be given twice. From here a model told
+  // only that something failed moves it again, so it is told where the task is.
+  const left = await edits(async () => {
+    let read
+    try {
+      read = await editing()
+    } catch (error) {
+      // Not there as it was: taken out, which is all this was going to do, or edited.
+      if (error instanceof AgentError) {
+        return `The task is no longer in ${path} as it was. If it was edited there, it is in both: check ${path}.`
+      }
+      throw error
+    }
+    await written(env, space, path, taken(read.edited).source, read.held.note)
+    return null
+  }).catch((error: unknown) => {
+    if (!(error instanceof Said)) throw error
+    throw new Said(
+      `The task is in ${into} now and still in ${path}: ${error.message} Take it out of ${path}, and do not move it again.`,
+    )
+  })
+  return { ...placedIn.said, at: placedIn.at, ...(left ? { left } : {}) }
 }
 
 async function query(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {
@@ -420,15 +540,26 @@ async function addRow(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
   const name = noteName(words(args, 'title') ?? 'Untitled')
   for (let counter = 1; counter < 100; counter++) {
     const file = counter === 1 ? `${name}.md` : `${name} ${counter}.md`
-    const path = folder ? `${folder}/${file}` : file
+    // A base's filter names the folder, and whoever can write a base can write that.
+    const asked = folder ? `${folder}/${file}` : file
+    const path = cleanPath(asked)
+    if (!path) throw new Said(`${asked} is not a note path.`)
     if ((await wordsAt(env, space, path)) !== null) continue
-    await written(
-      env,
-      space,
-      path,
-      withProperties(template, { ...where.properties, ...(properties as Args) }),
-    )
-    return { path, created: true, space: space.name }
+    let landed
+    try {
+      landed = await written(
+        env,
+        space,
+        path,
+        withProperties(template, { ...where.properties, ...(properties as Args) }),
+        null,
+      )
+    } catch (error) {
+      // A note took the name in between: the next name, and never over it.
+      if (error instanceof Moved) continue
+      throw error
+    }
+    return { path: landed, created: true, space: space.name }
   }
   throw new Said(`${name} is taken a hundred times over.`)
 }

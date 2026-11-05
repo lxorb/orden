@@ -1,11 +1,21 @@
 /** Codex's app-server notifications, in the shapes `codex app-server generate-ts` gives
  *  them (0.160.0), as the crate hands them on for one thread. */
 
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 import { againAt, codexReader } from './codex'
 
 const said = (method: string, params: object) => JSON.stringify({ method, params })
 const turn = { threadId: 't', turnId: 'u' }
+
+/** The name the crate gives the server in a session's Codex config. */
+const crateServer = /pub const SERVER: &str = "([^"]+)";/.exec(
+  readFileSync(
+    fileURLToPath(new URL('../../../../src-tauri/src/ai_cli/args.rs', import.meta.url)),
+    'utf8',
+  ),
+)?.[1]
 
 describe('an answer', () => {
   test('streams as deltas and is not said again when its item completes', () => {
@@ -46,12 +56,20 @@ describe('an answer', () => {
     ).toBe('Hmm.')
   })
 
-  test('calls nib’s tools and hears their answers', () => {
+  test('knows its server by the name the crate gives it, and by the old one', () => {
+    expect(crateServer).toBeTruthy()
+    for (const server of [crateServer, 'nib']) {
+      const item = { type: 'mcpToolCall', id: 'c', server, tool: 'move_file', arguments: {} }
+      expect(codexReader()(said('item/started', { ...turn, item })).tool?.name).toBe('move_file')
+    }
+  })
+
+  test('calls Orden’s tools and hears their answers', () => {
     const read = codexReader()
     const item = {
       type: 'mcpToolCall',
       id: 'c',
-      server: 'nib',
+      server: crateServer,
       tool: 'read_note',
       arguments: { path: 'Herons.md' },
     }

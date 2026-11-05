@@ -34,7 +34,7 @@ interface Device {
 }
 
 /** One device holding the simulator's two seeded notes, Plan.md and Ideas.md. */
-async function device(): Promise<Device> {
+async function device(foldsCase = true): Promise<Device> {
   const account = new ReferenceAccount(new Clock(), SEEDED)
   const store = new MemoryStore('d0')
   const disk = new MemoryDisk()
@@ -114,7 +114,7 @@ async function device(): Promise<Device> {
         digest: (text) =>
           Promise.resolve(`${String(hash32('a', text))}.${String(hash32('b', text))}`),
         join: (root, path) => `${root}/${path}`,
-        foldsCase: true,
+        foldsCase,
         platform: 'other',
       }
       made.engine = await Engine.start(world, store.open(), { freshens: false })
@@ -146,6 +146,17 @@ describe('places', () => {
     const again = await one.launch()
     expect(again.placedIn(ROOT)).toEqual(['Ideas.md', 'Plan.md'])
     expect(again.placedFolders(ROOT)).toEqual(new Map([['', ['Ideas.md', 'Plan.md']]]))
+  })
+
+  test('another spelling of the space is the space only on a disk where it is one folder', async () => {
+    const folding = await device()
+    await folding.engine.pass(SPACE)
+    expect(folding.engine.keepsPlaces(ROOT.toUpperCase())).toBe(true)
+
+    const apart = await device(false)
+    await apart.engine.pass(SPACE)
+    expect(apart.engine.keepsPlaces(ROOT)).toBe(true)
+    expect(apart.engine.keepsPlaces(ROOT.toUpperCase())).toBe(false)
   })
 
   test('one row dragged sends one place', async () => {

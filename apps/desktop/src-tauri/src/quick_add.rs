@@ -71,7 +71,10 @@ pub fn quick_add_key(app: AppHandle, webview: Webview, key: Option<String>) -> O
     *HOST.lock().unwrap_or_else(PoisonError::into_inner) = Some(webview.label().to_owned());
     let held = crate::hotkeys::hold(&app, crate::hotkeys::Which::QuickAdd, wanted);
     if ASKED_AT_LAUNCH.swap(false, Ordering::Relaxed) {
-        bring_up(&app, None);
+        // Posted to the loop: on `WebView2` a webview built inside the callback a sync
+        // command runs in is a deadlock of the whole app (see `web_open`).
+        let building = app.clone();
+        let _ = app.run_on_main_thread(move || bring_up(&building, None));
     }
     held
 }
@@ -136,6 +139,12 @@ fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<crate::En
     let builder = builder
         .min_inner_size(WIDTH, HEIGHT)
         .max_inner_size(WIDTH, HEIGHT);
+
+    // In the interface's profile on CEF: a broadcast channel reaches only its own profile,
+    // so anywhere else nobody hears the task; and this page holds the app's commands, which
+    // the profile the web's extensions run in must not see. See `engine::own_profile`.
+    #[cfg(feature = "cef")]
+    let builder = crate::engine::own_profile(builder);
 
     // Off the screen with every other window where a drive sent them there.
     crate::placement::built(builder)

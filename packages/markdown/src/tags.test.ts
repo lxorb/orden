@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { lexMarkdown, renderMarkdown } from './index'
-import { opensTag, tagNameAt } from './tags'
+import { isTagName, opensTag, tagNameAt } from './tags'
 
 /** The tags a render drew, by the name each carries. */
 function drawn(source: string, options: Parameters<typeof renderMarkdown>[1] = {}): string[] {
@@ -135,4 +135,20 @@ describe('a tag on a page', () => {
       ['hashtag', '#work'],
     ])
   })
+})
+
+describe('a name a tag can be renamed to', () => {
+  test.each(['work', 'work/nib', 'a-b', 'a_b', 'Größe', '2024/q1', 'x2024'])(
+    '%s is one',
+    (name) => {
+      expect(isTagName(name)).toBe(true)
+    },
+  )
+
+  test.each(['2024', 'a.b', 'a,b', 'a!', 'a b', '', '#a', '/a', 'foo/', 'a//b'])(
+    '%j is none',
+    (name) => {
+      expect(isTagName(name)).toBe(false)
+    },
+  )
 })

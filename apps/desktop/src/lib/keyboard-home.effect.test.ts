@@ -32,8 +32,8 @@ vi.mock('./tauri', () => ({
     return crate.inPage
   },
 }))
-vi.mock('@tauri-apps/api/event', () => ({
-  listen: (name: string, then: () => void) => {
+vi.mock('./own-window', () => ({
+  hearHere: (name: string, then: () => void) => {
     crate.heard.set(name, then)
     return Promise.resolve(() => undefined)
   },

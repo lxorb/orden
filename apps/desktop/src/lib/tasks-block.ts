@@ -13,6 +13,7 @@
 import type { Answer, Row } from '@orden/bases'
 import { escapeAll } from '@orden/markdown/html'
 import { shownName } from './note-name'
+import { trustsHtmlAt } from './sharing.svelte'
 import { insideSpace } from './space-paths'
 
 /** How many rows a fence in a note is worth; see query-block.ts. */
@@ -52,7 +53,7 @@ async function rowsOfSpace(
 function row(task: Row, root: string): string {
   const fields = task.task
   if (!fields || !task.anchor) return ''
-  const where = `data-path="${escapeAll(insideSpace(root, task.path))}" data-line="${task.anchor.line}"`
+  const where = `data-path="${escapeAll(insideSpace(root, task.path))}" data-line="${task.anchor.line}" data-hash="${escapeAll(task.anchor.hash)}"`
   const box =
     `<input type="checkbox" class="nib-checkbox" data-task ${where}` +
     `${fields.done ? ' checked' : ''} aria-label="${escapeAll(fields.text)}">`
@@ -93,15 +94,24 @@ export async function tasksRowsHtml(
   code: string,
   nothing: string,
   root: string | null = null,
+  stranger = false,
 ): Promise<string | null> {
-  const [{ answer, groupName }, { readTasksQuery }, { todayOf }, space] = await Promise.all([
-    import('@orden/bases/answer'),
-    import('@orden/bases/tasks-query'),
-    import('@orden/bases'),
-    rowsOfSpace(root),
-  ])
+  const [{ answer, groupName }, { readTasksQuery }, { refusedPattern, todayOf }, space] =
+    await Promise.all([
+      import('@orden/bases/answer'),
+      import('@orden/bases/tasks-query'),
+      import('@orden/bases'),
+      rowsOfSpace(root),
+    ])
   if (!space) return null
-  const { base, unsupported } = readTasksQuery(code)
+  const { base: read, unsupported } = readTasksQuery(code)
+  // A fence in a shared note runs what somebody else wrote; see expr/pattern.ts. Where
+  // the note says so itself: a space's root cannot tell for a note shared on its own,
+  // or a caller with no root for any note.
+  const guarded = stranger || !trustsHtmlAt(root)
+  const refused = guarded ? refusedPattern(read) : null
+  if (refused !== null) return `<p class="nib-query-none">${escapeAll(refused)}</p>`
+  const base = { ...read, guarded }
   const now = new Date()
   const stamp = new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString()
   const result = answer(base, 0, space.rows, { today: todayOf(now), now: stamp.slice(0, 19) })

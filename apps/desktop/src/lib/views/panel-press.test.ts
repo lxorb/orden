@@ -8,7 +8,7 @@ vi.mock('./open', () => ({
   openBaseFile: (...args: unknown[]) => opened.push(['base', ...args]),
 }))
 
-const { choose, openInTab, sameRow, specOf } = await import('./panel-press')
+const { choose, chosenIn, openInTab, sameRow, specOf } = await import('./panel-press')
 
 // #374: a row of the Tasks panel is chosen there; a tab is only ever asked for.
 describe('a press on a row of the Tasks panel', () => {
@@ -32,6 +32,40 @@ describe('a press on a row of the Tasks panel', () => {
     })
     expect(specOf({ kind: 'label', tag: 'home' })).toEqual({ builtin: 'label', tag: 'home' })
     expect(specOf({ kind: 'base', path: '/s/Bugs.base' })).toBeNull()
+  })
+
+  test('a label of the open space shows that space alone, in the panel and in a tab', () => {
+    const row = { kind: 'label', tag: 'home', space: 'Notes' } as const
+    expect(specOf(row)).toEqual({ builtin: 'label', tag: 'home', space: 'Notes' })
+    opened.length = 0
+    openInTab(row)
+    expect(opened).toEqual([['label', 'home', { preview: false }, 'Notes']])
+  })
+
+  test('what was chosen in one space goes back to Todos in another', () => {
+    const row = { kind: 'project', space: 'Notes', path: 'Home.md' } as const
+    const here = { id: 'n', name: 'Notes', root: '/s/Notes' }
+    expect(chosenIn({ row, in: here }, here)).toBe(row)
+    expect(chosenIn({ row, in: here }, { id: 'w', name: 'Work', root: '/s/Work' })).toEqual({
+      kind: 'todos',
+    })
+  })
+
+  test('and one of a space renamed stays chosen, under its new name', () => {
+    const was = { id: 'n', name: 'Notes', root: '/s/Notes' }
+    const now = { id: 'n', name: 'Field', root: '/s/Field' }
+    expect(chosenIn({ row: { kind: 'label', tag: 'a', space: 'Notes' }, in: was }, now)).toEqual({
+      kind: 'label',
+      tag: 'a',
+      space: 'Field',
+    })
+    expect(
+      chosenIn({ row: { kind: 'project', space: 'Notes', path: 'H.md' }, in: was }, now),
+    ).toEqual({ kind: 'project', space: 'Field', path: 'H.md' })
+    // A base is a path on this disk, and that has moved.
+    expect(chosenIn({ row: { kind: 'base', path: '/s/Notes/B.base' }, in: was }, now)).toEqual({
+      kind: 'todos',
+    })
   })
 
   test('asked for a tab, opens one that is kept, never a preview a press replaces', () => {

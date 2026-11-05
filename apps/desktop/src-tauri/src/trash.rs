@@ -226,6 +226,49 @@ fn recorded(dir: &Path, entry: TrashEntry, undo: impl FnOnce()) -> Result<TrashE
     Ok(entry)
 }
 
+/// A space's folder took a new name: what was deleted out of it goes back to where the space
+/// is now. Left saying the old name, a restore would make that folder again for the one note,
+/// and the next listing would take it for a second space. Said after the rename, which stands
+/// either way, so nothing here refuses it.
+pub fn space_renamed(app: &AppHandle, from: &Path, to: &Path) {
+    let (Some(from), Some(to)) = (from.file_name(), to.file_name()) else {
+        return;
+    };
+    let _guard = locked();
+    let moved = trash_dir(app)
+        .and_then(|dir| follows(&dir, &from.to_string_lossy(), &to.to_string_lossy()));
+    if let Err(error) = moved {
+        eprintln!("nib: the trash did not follow a space's new name: {error}");
+    }
+}
+
+/// `space_renamed` past its lock, on the trash at `dir`. A deleted space of the old name is its
+/// own thing, and stays, and so does what was deleted before it went: that was out of that
+/// space, and this one only has its name.
+fn follows(dir: &Path, from: &str, to: &str) -> Result<(), String> {
+    let inside = format!("{from}/");
+    let mut entries = read_manifest(dir);
+    let mut moved = false;
+    let gone = entries
+        .iter()
+        .filter(|entry| entry.kind == "space" && entry.from == from)
+        .map(|entry| entry.trashed_at)
+        .max();
+    for entry in &mut entries {
+        if gone.is_some_and(|gone| entry.trashed_at <= gone) {
+            continue;
+        }
+        if let Some(rest) = entry.from.strip_prefix(&inside) {
+            entry.from = format!("{to}/{rest}");
+            moved = true;
+        }
+    }
+    if moved {
+        write_manifest(dir, &entries)?;
+    }
+    Ok(())
+}
+
 /// Everything in the trash, newest first.
 #[tauri::command(async)]
 pub fn list_trash(app: AppHandle) -> Result<Vec<TrashEntry>, String> {
@@ -508,7 +551,7 @@ fn is_name(name: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        is_name, is_slot, manifest_place, purge, read_manifest, recorded, restore_target,
+        follows, is_name, is_slot, manifest_place, purge, read_manifest, recorded, restore_target,
         write_manifest, TrashEntry, MANIFEST,
     };
     use std::path::{Path, PathBuf};
@@ -528,6 +571,58 @@ mod tests {
     /// on a runner as they do on a laptop.
     fn path(parts: &[&str]) -> PathBuf {
         parts.iter().collect()
+    }
+
+    /// Recently deleted's restore after a space's rename: back into the space as it is now.
+    #[test]
+    fn what_was_deleted_out_of_a_space_follows_its_new_name() {
+        let dir = tempfile::tempdir().expect("a folder");
+        write_manifest(
+            dir.path(),
+            &[
+                entry("a", "a.md", "Work/a.md"),
+                entry("b", "b.md", "Work/deep/b.md"),
+                entry("c", "c.md", "Workshop/c.md"),
+            ],
+        )
+        .expect("written");
+
+        follows(dir.path(), "Work", "Job").expect("followed");
+
+        let from: Vec<String> = read_manifest(dir.path())
+            .into_iter()
+            .map(|one| one.from)
+            .collect();
+        assert_eq!(from, ["Job/a.md", "Job/deep/b.md", "Workshop/c.md"]);
+    }
+
+    /// `Work/old.md` deleted, then the space Work, then a new Work renamed: the note was never
+    /// in this one, and what was deleted out of it since was.
+    #[test]
+    fn what_was_deleted_before_its_space_stays_with_that_space() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let at = |one: TrashEntry, when: u64, kind: &str| TrashEntry {
+            trashed_at: when,
+            kind: kind.into(),
+            ..one
+        };
+        write_manifest(
+            dir.path(),
+            &[
+                at(entry("a", "old.md", "Work/old.md"), 1, "note"),
+                at(entry("b", "Work", "Work"), 2, "space"),
+                at(entry("c", "new.md", "Work/new.md"), 3, "note"),
+            ],
+        )
+        .expect("written");
+
+        follows(dir.path(), "Work", "Job").expect("followed");
+
+        let from: Vec<String> = read_manifest(dir.path())
+            .into_iter()
+            .map(|one| one.from)
+            .collect();
+        assert_eq!(from, ["Work/old.md", "Work", "Job/new.md"]);
     }
 
     #[test]

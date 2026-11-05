@@ -770,6 +770,29 @@ describe('a note that is open in its room while a pass runs', () => {
 /** Another device deleted a whole space. What this machine holds of it may be more
  *  than the account ever saw - words typed offline, a picture that never travels -
  *  so the folder goes where it can be had back from rather than off the disk. */
+describe('a space a pass cannot get through', () => {
+  test('leaves the others their turn, and is said', async () => {
+    fake.remote.spaces.push({ id: 's-Broken', name: 'Broken' }, { id: 's-Fine', name: 'Fine' })
+    fake.addRemoteNote('s-Broken', 'One.md', 'one')
+    fake.addRemoteNote('s-Fine', 'Two.md', 'two')
+    const changes = fake.api.changes
+    fake.api.changes = (token: string, spaceId: string, since: number) =>
+      spaceId === 's-Broken'
+        ? Promise.reject(new Error('it stopped'))
+        : changes(token, spaceId, since)
+    try {
+      await signIn()
+      account.settled()
+      await sync.pass()
+      expect(fake.disk.get('/Fine/Two.md')).toBe('two')
+      expect(sync.status).toBe('error')
+      expect(sync.lastError).toBe('it stopped')
+    } finally {
+      fake.api.changes = changes
+    }
+  })
+})
+
 describe('a space deleted on another device', () => {
   test('leaves its folder in this device’s trash, with the words typed here', async () => {
     accountWithNotes()
@@ -944,6 +967,36 @@ describe('a space somebody shared', () => {
     await sync.pass()
 
     expect(fake.remote.calls).toEqual(['createNote Mine.md'])
+  })
+
+  test('a note the account refuses is said, and the notes after it go up', async () => {
+    sharedWithMe('write')
+    await signIn()
+    account.settled()
+    await sync.pass()
+    fake.remote.calls = []
+
+    fake.disk.set('/Theirs/A too big.md', '# refused')
+    fake.disk.set('/Theirs/Z.md', '# after it')
+    await workspace.loadTree()
+    const real = fake.api.createNote
+    fake.api.createNote = (token, spaceId, path, content) =>
+      path === 'A too big.md'
+        ? Promise.reject(
+            new ApiError(400, 'that note is too large', { error: 'that note is too large' }),
+          )
+        : real(token, spaceId, path, content)
+    try {
+      await sync.pass()
+    } finally {
+      fake.api.createNote = real
+    }
+
+    expect(fake.remote.calls).toEqual(['createNote Z.md'])
+    expect(sync.status).not.toBe('error')
+    const { unsynced } = await import('./sync2/unsynced.svelte')
+    await vi.waitFor(() => expect(unsynced.said).toBe('A too big.md'))
+    unsynced.dismiss()
   })
 
   test('is let go of rather than deleted when the folder goes', async () => {
@@ -2059,6 +2112,20 @@ describe('what the account holds of a file', () => {
     await mirrored({}, { 'a.md': '# a\nb' })
 
     expect(await sync.holds('/Notes/a.md')).toBe(true)
+  })
+
+  test('a clean note whose file differs only by its line endings is not reloaded', async () => {
+    fake.disk.set('/Notes/a.md', '# a\r\nb\r\n')
+    await mirrored({}, { 'a.md': '# a\nb\n' })
+    await workspace.open('/Notes/a.md')
+    const reload = vi.spyOn(workspace, 'reload')
+    await (
+      sync as unknown as {
+        refresh(path: string, joined: { has(id: string): boolean }): Promise<void>
+      }
+    ).refresh('/Notes/a.md', { has: () => false })
+    expect(reload).not.toHaveBeenCalled()
+    reload.mockRestore()
   })
 
   test('a folder whose paper was replaced since the last push goes to the trash', async () => {

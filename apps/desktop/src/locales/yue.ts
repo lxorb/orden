@@ -743,6 +743,8 @@ export const yue: Dictionary = {
   '{done} of {total}': '{done}/{total}',
   'Sync failed': '同步失敗',
   '{name} could not be written.': '冇辦法寫入 {name}。',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '冇辦法寫入 {name}:讀唔到個檔案。可能超過 64 MB,或者唔係 UTF-8 文字。',
   '{name} could not be read.': '冇辦法讀取 {name}。',
   'Text size': '字體大小',
   'Line spacing': '行距',
@@ -1492,6 +1494,7 @@ export const yue: Dictionary = {
   'The provider answered {status}.': '服務商回應{status}。',
   'Add an AI provider in Settings first.': '請先喺設定中新增AI服務商。',
   'The model did not answer.': '模型冇回答。',
+  'The connection closed before the answer was finished.': '答案未完連線就斷咗。',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': '你嘅 {plan} 計劃已經用到上限，{time} 恢復。',
   'Your {plan} plan is at its limit for now.': '你嘅 {plan} 計劃暫時用到上限。',
@@ -1957,8 +1960,10 @@ export const yue: Dictionary = {
   'Send feedback': '傳送意見',
   'Describe the issue': '描述問題',
   Sent: '已傳送',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    '呢份報告包括你嘅描述、Orden 嘅版本、你嘅平台同埋 app 最近嘅記錄，從來唔包括你嘅筆記。',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    '呢份報告包括你嘅描述、Orden 版本、你嘅平台同最近嘅 App 記錄,檔案路徑已經移除。',
+  'Its space is archived': '佢嘅空間已經封存',
+  'Back as {name}': '以 {name} 返嚟',
   'Send into the running answer': '傳入去進行緊嘅回答',
   'Stop the answer': '停咗個回答',
   'Open every step': '打開晒所有步驟',
@@ -2040,6 +2045,8 @@ export const yue: Dictionary = {
     '佢會讀你嘅筆記，同埋用你嘅登入身份瀏覽，所以網頁可能會想令佢將筆記傳出去。',
   Activity: '活動',
   'Add a site': '加網站',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    '呢個清單上面嘅程式唔使問就會執行，嗰個程式做到嘅嘢佢都做得到。',
   'Add a program': '加程式',
   'Every space': '所有空間',
   Sites: '網站',
@@ -2458,6 +2465,7 @@ export const yue: Dictionary = {
   'No {property}': '冇{property}',
   '{card} moved to {group}': '已將{card}搬去{group}',
   'Not moved': '搬唔到',
+  'Not undone': '還原唔到',
   Retry: '再試一次',
   Calculate: '計算',
   'Remove sort': '移除排序',
@@ -2709,6 +2717,8 @@ export const yue: Dictionary = {
   '{title}, running': '{title}，運行緊',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden 唔再將 AI 鎖匙放喺 Mac 嘅鑰匙圈，佢成日問密碼。請再輸入一次你嘅鎖匙，再登入多次 ChatGPT。',
+  'This PDF is locked by its owner': '呢個 PDF 俾擁有者鎖咗',
+  'Part of this could not be undone': '有部分冇辦法復原',
   'Add images': '加圖片',
   'Remove image': '移除圖片',
   'That is more than 4 images.': '超過咗 4 張圖片。',

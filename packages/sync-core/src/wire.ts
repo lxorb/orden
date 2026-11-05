@@ -395,6 +395,13 @@ function isId(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value.length <= LONGEST_ID
 }
 
+/** An id a new entry may be made under: what a device or the account mints, hex digits
+ *  or a UUID, and nothing that reads as a path. An id comes from whoever wrote the op
+ *  and reaches every other member's device, so it never says where a file goes. */
+export function isEntryId(value: unknown): value is string {
+  return isId(value) && !/[/\\\p{Cc}]/u.test(value) && !value.includes('..')
+}
+
 function isCount(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 }
@@ -441,6 +448,9 @@ function listOf<T>(value: unknown, each: Checked<T>, most = Number.MAX_SAFE_INTE
 export function opOf(value: unknown): Op | null {
   if (!isRecord(value) || !isId(value.op) || !isCount(value.seen) || !isId(value.id)) return null
   const { op, seen, id } = value
+  // Only what makes an entry: one the account already holds can still be moved off, or
+  // deleted, by whoever has it, and an old device's outbox is not stopped by it.
+  if ((value.t === 'mkdir' || value.t === 'create') && !isEntryId(id)) return null
 
   switch (value.t) {
     case 'mkdir': {
@@ -560,10 +570,52 @@ function feedItemOf(value: unknown): FeedItem | null {
   return item
 }
 
-/** One page of a space's feed, as a device reads it. */
+/** Whether a feed item is one a writer made under an id that reads as a path, or put
+ *  in a folder that has one, before the account refused them. Its delete is not: a device
+ *  that took it in before hears it, and it goes to the trash from where it is. */
+function namedAsPath(value: unknown): boolean {
+  if (!isRecord(value) || value.deleted === true) return false
+  const { id, parent } = value
+  if (typeof id === 'string' && !isEntryId(id)) return true
+  return typeof parent === 'string' && !isEntryId(parent)
+}
+
+/** A name with `by` code units less, off the end of its stem. */
+export function shortened(name: string, by: number, kind: EntryKind): string {
+  const dot = kind === 'folder' ? -1 : name.lastIndexOf('.')
+  // An ending too long to leave a stem goes with it.
+  const stemEnd = dot > by ? dot : name.length
+  let cut = stemEnd - by
+  // Not between the two halves of one character.
+  if (/[\uD800-\uDBFF]/.test(name.charAt(cut - 1)) && cut > 1) cut -= 1
+  return name.slice(0, cut) + name.slice(stemEnd)
+}
+
+/** What a device is told a name is, for an entry written before the account held names to
+ *  `isName`: the nearest that is one. On the account it stays as it was until somebody
+ *  renames it. Left out instead, the note was on no device, and neither was what its folder
+ *  holds. */
+export function heldName(name: string): string {
+  const given: unknown = name
+  if (isName(given)) return name
+  if (name === '') return '_'
+  if (name === '.' || name === '..') return '_'.repeat(name.length)
+  const plain = name.split('/').join('_').split('\u0000').join('_')
+  return plain.length > LONGEST_NAME ? shortened(plain, plain.length - LONGEST_NAME, 'note') : plain
+}
+
+function withHeldName(value: unknown): unknown {
+  return isRecord(value) && typeof value.name === 'string'
+    ? { ...value, name: heldName(value.name) }
+    : value
+}
+
+/** One page of a space's feed, as a device reads it. Such an item is left out, and the
+ *  rest of the page read: refused whole, one writer's entry stopped the space's feed. */
 export function feedPageOf(value: unknown): FeedPage | null {
   if (!isRecord(value) || !isCount(value.cursor) || typeof value.more !== 'boolean') return null
-  const items = listOf(value.items, feedItemOf, FEED_PAGE)
+  if (!Array.isArray(value.items) || value.items.length > FEED_PAGE) return null
+  const items = listOf(value.items.filter((one) => !namedAsPath(one)).map(withHeldName), feedItemOf)
   if (!items) return null
   const page: FeedPage = { items, cursor: value.cursor, more: value.more }
   if (value.order === true) page.order = true

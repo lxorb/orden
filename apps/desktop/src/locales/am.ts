@@ -748,6 +748,8 @@ export const am: Dictionary = {
   '{done} of {total}': 'ከ{total} {done}',
   'Sync failed': 'ማመሳሰል አልተሳካም',
   '{name} could not be written.': '{name} መጻፍ አልተቻለም።',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} መጻፍ አልተቻለም፦ ፋይሉን ማንበብ አይቻልም። ከ64 MB በላይ ወይም UTF-8 ያልሆነ ጽሑፍ ሊሆን ይችላል።',
   '{name} could not be read.': '{name} ማንበብ አልተቻለም።',
   'Text size': 'የጽሑፍ መጠን',
   'Line spacing': 'የመስመር ክፍተት',
@@ -1516,6 +1518,7 @@ export const am: Dictionary = {
   'The provider answered {status}.': 'አቅራቢው {status} መለሰ።',
   'Add an AI provider in Settings first.': 'መጀመሪያ በማስተካከያ የAI አቅራቢ ጨምር።',
   'The model did not answer.': 'ሞዴሉ አልመለሰም።',
+  'The connection closed before the answer was finished.': 'መልሱ ከማለቁ በፊት ግንኙነቱ ተዘጋ።',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'የእርስዎ {plan} ዕቅድ እስከ {time} ድረስ ገደቡ ላይ ደርሷል።',
   'Your {plan} plan is at its limit for now.': 'የእርስዎ {plan} ዕቅድ ለጊዜው ገደቡ ላይ ደርሷል።',
@@ -1987,8 +1990,10 @@ export const am: Dictionary = {
   'Send feedback': 'አስተያየት ላክ',
   'Describe the issue': 'ችግሩን ይግለጹ',
   Sent: 'ተልኳል',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'ይህ ሪፖርት መግለጫዎን፣ የOrden ዕትምን፣ መድረክዎን እና የቅርብ ጊዜውን የመተግበሪያ ምዝግብ ያካትታል። ማስታወሻዎችዎን ፈጽሞ አያካትትም።',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'ይህ ሪፖርት መግለጫዎን፣ የOrden ስሪትን፣ መድረክዎን እና የቅርብ ጊዜውን የመተግበሪያ ምዝግብ ያካትታል፤ የፋይል መንገዶች ተወግደዋል።',
+  'Its space is archived': 'ቦታው በማህደር ተቀምጧል',
+  'Back as {name}': 'እንደ {name} ተመልሷል',
   'Send into the running answer': 'ወደ ሚሄደው መልስ ላክ',
   'Stop the answer': 'መልሱን አቁም',
   'Open every step': 'እያንዳንዱን ደረጃ ክፈት',
@@ -2071,6 +2076,8 @@ export const am: Dictionary = {
     'ማስታወሻዎችዎን ያነባል እና በእርስዎ መግቢያ ያስሳል፤ ስለዚህ አንድ ገጽ ማስታወሻዎቹን ወደ ውጭ እንዲልክ ለማድረግ ሊሞክር ይችላል።',
   Activity: 'እንቅስቃሴ',
   'Add a site': 'ጣቢያ ያክሉ',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'በዚህ ዝርዝር ያለ ፕሮግራም ሳይጠይቅ ይሄዳል፣ ያ ፕሮግራም የሚችለውንም ሁሉ ማድረግ ይችላል።',
   'Add a program': 'ፕሮግራም ያክሉ',
   'Every space': 'ሁሉም ቦታዎች',
   Sites: 'ጣቢያዎች',
@@ -2495,6 +2502,7 @@ export const am: Dictionary = {
   'No {property}': '{property} የሌለው',
   '{card} moved to {group}': '{card} ወደ {group} ተንቀሳቅሷል',
   'Not moved': 'አልተንቀሳቀሰም',
+  'Not undone': 'አልተመለሰም',
   Retry: 'እንደገና ይሞክሩ',
   Calculate: 'አስላ',
   'Remove sort': 'ቅደም ተከተሉን አስወግድ',
@@ -2748,6 +2756,8 @@ export const am: Dictionary = {
   '{title}, running': '{title}፣ በመሥራት ላይ',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden የAI ቁልፎችን ከእንግዲህ በMac ቁልፍ ሰንሰለት ውስጥ አያስቀምጥም፤ የይለፍ ቃሉን ደጋግሞ ይጠይቅ ነበርና። ቁልፎችዎን ያስገቡ እና ወደ ChatGPT እንደገና ይግቡ።',
+  'This PDF is locked by its owner': 'ይህ PDF በባለቤቱ ተቆልፏል',
+  'Part of this could not be undone': 'የዚህ ክፍል ሊቀለበስ አልቻለም',
   'Add images': 'ምስሎችን አክል',
   'Remove image': 'ምስሉን አስወግድ',
   'That is more than 4 images.': 'ይህ ከ4 ምስሎች በላይ ነው።',

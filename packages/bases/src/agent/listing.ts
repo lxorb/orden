@@ -116,7 +116,7 @@ export function listTasks(
       }
     }
   }
-  const limit = Math.min(Math.max(1, Math.floor(ask.limit ?? 50)), 500)
+  const limit = Math.min(Math.max(0, Math.floor(ask.limit ?? 50)), 500)
   return { total: out.length, tasks: out.slice(0, limit).map(taskOut) }
 }
 

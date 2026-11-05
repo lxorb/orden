@@ -36,6 +36,7 @@ import {
   StateField,
 } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { CHEVRON } from '@orden/markdown/icons'
 import { type Property, propertiesTable, readProperties } from '@orden/markdown/properties'
 import {
@@ -485,16 +486,11 @@ function adder(view: EditorView): HTMLElement {
 }
 
 /** Which line the block's closing `---` is on, or null when the note has no
- *  block. Read from the text: the closing fence is the one place a new key is
- *  certainly still inside the block, since a block may hold blank lines the rows do
- *  not. */
+ *  block. Read from the text, by the same reading of front matter every reader of a
+ *  note shares: the closing fence is the one place a new key is certainly still inside
+ *  the block, since a block may hold blank lines the rows do not. */
 function closingFence(state: EditorState): number | null {
   const doc = state.doc
-  if (doc.line(1).text.trim() !== '---') return null
-
-  for (let number = 2; number <= doc.lines; number++) {
-    if (doc.line(number).text.trim() === '---') return number
-  }
-
-  return null
+  const block = frontMatterBlock(doc.toString())
+  return block && doc.lineAt(block.close).number
 }

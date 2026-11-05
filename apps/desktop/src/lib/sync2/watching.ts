@@ -61,8 +61,13 @@ function foreign(path: string): boolean {
 
 /** Whether a path is something the engine keeps: a folder, a document, or - where the
  *  world carries bytes - any other file (files.ts). */
-function kept(engine: Engine, path: string, dir: boolean): boolean {
-  if (hidden(path) || foreign(path)) return false
+export function kept(engine: Engine, path: string, dir: boolean): boolean {
+  // Inside its space: the folder a space lives in may be under a dotted one of its own,
+  // `~/.local/share` on Linux, and everything heard there read as the app's.
+  const inside = [...engine.core.spaces.values()]
+    .map((space) => relative(space.row.root, path, engine.core.world.foldsCase))
+    .find((one) => one !== null)
+  if (hidden(inside ?? path) || foreign(path)) return false
   return dir || holdsDocument(kindOfName(path)) || !!engine.core.world.blobs
 }
 
@@ -105,7 +110,14 @@ export interface Watched {
    *  a space paired after the watch began - every space, on a device's first v2 launch -
    *  or one whose folder moved. */
   follow(): void
+  /** A space's first pass is over: its folder is read now if anything was heard of it
+   *  that the pass may have read past, so that waits for no next launch. */
+  caughtUp(spaceId: string): void
   stop(): void
+}
+
+function spaceAt(engine: Engine, root: string) {
+  return [...engine.core.spaces.values()].find((one) => one.row.root === root)
 }
 
 /** Watches every space the engine keeps. */
@@ -129,11 +141,31 @@ export function watchFolders(how: Watching): Watched {
     }
   }
 
+  // The spaces something was heard of before their first pass was over, and the roots whose
+  // watch has said it started: that first word is no news, the pass lists the folder after it.
+  const missed = new Set<string>()
+  const started = new Set<string>()
+  const behind = (id: string | undefined) => {
+    if (id !== undefined && !how.ready(id)) missed.add(id)
+  }
+
   const heard = (news: SpaceNews) => {
     if (news.unwatched === 'limit') limitReached()
     if (news.gone) return
-    if (news.scan) queue.push(() => scanned(how, news.root))
-    for (const change of news.changes) queue.push(() => changed(how, change))
+    if (news.scan) {
+      const again = started.has(news.root)
+      started.add(news.root)
+      queue.push(() => {
+        if (again) behind(spaceAt(how.engine, news.root)?.id)
+        return scanned(how, news.root)
+      })
+    }
+    for (const change of news.changes) {
+      queue.push(() => {
+        behind(how.engine.placed(change.path)?.space.id)
+        return changed(how, change)
+      })
+    }
     void drain()
   }
 
@@ -180,6 +212,12 @@ export function watchFolders(how: Watching): Watched {
   follow()
   return {
     follow,
+    caughtUp: (spaceId) => {
+      const root = how.engine.core.spaces.get(spaceId)?.row.root
+      if (!missed.delete(spaceId) || root === undefined) return
+      queue.push(() => scanned(how, root))
+      void drain()
+    },
     stop: () => {
       stopped = true
       for (const stop of inside.values()) stop()
@@ -191,6 +229,11 @@ export function watchFolders(how: Watching): Watched {
 
 async function changed(how: Watching, change: SpaceChange): Promise<void> {
   const engine = how.engine
+  // A space's first pass is what matches its files to their entries, and reads the whole
+  // folder when it does. Before that a note v1 tracks has no entry, and a create queued
+  // for it here is the same note twice (as `scanned` waits, for the same reason).
+  const placed = engine.placed(change.path)
+  if (placed && !how.ready(placed.space.id)) return
   const disk = engine.core.world.disk
   if (change.kind === 'renamed') {
     if (!kept(engine, change.path, change.dir)) return
@@ -220,7 +263,10 @@ async function changed(how: Watching, change: SpaceChange): Promise<void> {
     if (!change.dir) await engine.foreign(change.path)
     return
   }
-  if (change.kind === 'created') await came(engine, change.path, change.dir)
+  // A file with no entry that changed is a file with no entry: its `created` may have
+  // met it locked (a picture half copied on Windows), and nothing else would ask again
+  // before the next launch. A folder's change says nothing about the folder.
+  if (change.kind === 'created' || !change.dir) await came(engine, change.path, change.dir)
 }
 
 /** A path heard to have gone: a delete, where it is gone and was nobody's doing here. */
@@ -264,19 +310,23 @@ async function made(engine: Engine, path: string, dir: boolean) {
 
 /** A space's folder read whole against its tree: what changed while Orden was not
  *  watching - closed, or the watcher having lost events. */
-async function scanned(how: Watching, root: string): Promise<void> {
+export async function scanned(how: Watching, root: string): Promise<void> {
   const engine = how.engine
-  const space = [...engine.core.spaces.values()].find((one) => one.row.root === root)
+  const space = spaceAt(engine, root)
   if (!space || !how.ready(space.id)) return
   // A kept space not mounted is no folder to list: a listing of nothing there would
   // read as everything in it deleted.
   const listed = (await listInternal(root)) ?? (keptShaped(root) ? null : await scanSpace(root))
   if (!listed) return
   const seen = new Set<string>()
+  /** The folders the listing could not read into: nothing under them is known to be gone. */
+  const unread: string[] = []
 
   for (const one of listed) {
-    const inside = relative(root, one.path)
-    if (inside === null || !kept(engine, inside, one.dir)) continue
+    const inside = relative(root, one.path, engine.core.world.foldsCase)
+    if (inside === null) continue
+    if (one.unlisted) unread.push(`${space.key(inside)}/`)
+    if (!kept(engine, inside, one.dir)) continue
     seen.add(space.key(inside))
     const entry = space.at(inside)
     if (!entry) {
@@ -293,6 +343,7 @@ async function scanned(how: Watching, root: string): Promise<void> {
   for (const entry of [...space.entries.values()]) {
     if (!entry.local_path || entry.deleted || seen.has(space.key(entry.local_path))) continue
     if (hidden(entry.local_path) || inForeignCopy(entry.local_path)) continue
+    if (unread.some((folder) => space.key(entry.local_path).startsWith(folder))) continue
     const full = engine.core.world.join(root, entry.local_path)
     if (engine.ownWork(full) || (await engine.core.world.disk.exists(full))) continue
     await engine.removed(full)

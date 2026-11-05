@@ -25,6 +25,9 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
 }))
 
 // And no events to hear: the window's listeners start with the first page anyone asks for.
+vi.mock('../../src/lib/own-window', () => ({
+  hearHere: () => Promise.resolve(() => undefined),
+}))
 vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))
 
 const SITE = 'https://web.whatsapp.com/'

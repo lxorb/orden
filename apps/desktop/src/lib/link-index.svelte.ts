@@ -75,6 +75,7 @@ import { invoke } from './tauri'
 import { coveredBy } from './workspace/archive.svelte'
 import type { NoteDoc } from './workspace/documents.svelte'
 import type { FileOp } from './workspace/file-ops'
+import { inFileTurn, writeEdited, writeInTurn } from './workspace/in-turn'
 import { log } from './log'
 
 /** One place a link was found, as a row in the panel. */
@@ -1083,7 +1084,7 @@ class Links {
   /** What the editor is handed: the notes, which one is open, and a way to read
    *  one. A fresh object each time the index changes and the same one otherwise,
    *  which is what decides whether every link on screen is redrawn. */
-  index(openPath: string | null): NoteIndex {
+  index(openPath: string | null, stranger = false): NoteIndex {
     const other = openPath === null ? null : this.otherHolding(openPath)
     if (openPath !== null && other !== null) return this.otherIndex(other, openPath)
 
@@ -1098,7 +1099,9 @@ class Links {
       this.handed.clear()
     }
 
-    const key = path ?? ''
+    // A file somebody shared on its own has no path either, and what runs in it is held
+    // to a line a note of the reader's with no file is not.
+    const key = stranger ? 'stranger\n' : (path ?? '')
     const known = this.handed.get(key)
     if (known) return known
 
@@ -1129,7 +1132,9 @@ class Links {
         queryBlock ??= await import('./query-block')
         if (language === 'tasks' && !__EVEN_PLUGIN__) {
           const { tasksRowsHtml } = await import('./tasks-block')
-          return tasksRowsHtml(code, t('Nothing found'))
+          const { trustsHtmlAt } = await import('./sharing.svelte')
+          const here = path === null || this.root === null ? null : insideSpace(this.root, path)
+          return tasksRowsHtml(code, t('Nothing found'), null, stranger || !trustsHtmlAt(here))
         }
         return queryBlock.queryRowsHtml(code, t('Nothing found'))
       },
@@ -1148,7 +1153,7 @@ class Links {
       // replaced on disk or a plane saved in the tab beside this one is a drawing
       // that has to be made again, and this object being remade is what says so.
       drawFile: (card, file) => this.drawnFile(card, file),
-      mountBase: (host, ask) => this.mountedBase(host, ask, path),
+      mountBase: (host, ask) => this.mountedBase(host, ask, path, stranger),
     }
     this.handed.set(key, made)
     return made
@@ -1233,6 +1238,7 @@ class Links {
     host: HTMLElement,
     ask: { code: string } | { target: string; view: string | null },
     path: string | null,
+    stranger: boolean,
   ): () => void {
     if (__EVEN_PLUGIN__) return () => undefined
     const root = this.root
@@ -1240,7 +1246,7 @@ class Links {
     let stop: (() => void) | null = null
     let stopped = false
     void import('./views/mount').then(({ mountBase }) => {
-      if (!stopped) stop = mountBase(host, ask, from)
+      if (!stopped) stop = mountBase(host, ask, from, stranger)
     })
     return () => {
       stopped = true
@@ -1857,45 +1863,66 @@ class Links {
       const doc = open(absolute)
       const drawn =
         doc && rewrite && !isPagesTarget(note.path) ? await rewrite.drawnPlane(doc) : null
-      const before = await this.wordsOf(absolute, target, open)
-      if (before === null) continue
       // In the same tick as the words: the entry that describes them.
-      const read = listed?.(note.path) ?? note
+      let read = listed?.(note.path) ?? note
+      const drawing = { relinked: false }
 
       // A plane is JSON, and is rewritten as JSON; see canvas-rewrite.ts.
       const file = card ?? moving
-      let after = rewrite
-        ? rewrite.retargetCanvas(before, source, file, to)
-        : retargetLinks(before, source, to)
-      if (after === null || after === before) continue
-
-      // Taken by the document in the same breath as its words were read, so no
-      // keystroke falls between the two; one landing while the write is in the air
-      // is the document's own, and marks it for its next write.
-      const relinked =
-        drawn !== null &&
-        rewrite !== null &&
-        drawn.relinked((canvas) => rewrite.retargetPlane(canvas, source, file, to))
-      if (relinked && doc) after = doc.text
-      else {
-        const edit = oneEdit(before, after)
-        if (doc && edit) doc.edited([edit], after)
-      }
-
-      await invoke('snapshot_note', { path: target, content: before }).catch(() => undefined)
+      const worked = (before: string) =>
+        rewrite
+          ? rewrite.retargetCanvas(before, source, file, to)
+          : retargetLinks(before, source, to)
+      const keepIt = (before: string) =>
+        invoke('snapshot_note', { path: target, content: before }).catch(() => undefined)
       // A note that cannot be written - read-only, held by another program, a full
       // disk - keeps its old link and is said in the log; the others are rewritten
       // all the same. Thrown, it undid the move that asked for this: opening a PDF
       // discarded the page note made for it, and with it the PDF, for good (#537).
-      const wrote = await invoke('write_note', { path: target, content: after }).then(
-        () => true,
-        (error: unknown) => {
-          log('warn', `a link in ${target} could not be rewritten: ${String(error)}`)
-          return false
-        },
-      )
-      if (!wrote) continue
-      if (relinked) doc?.wroteAs(after)
+      const refused = (error: unknown) => {
+        log('warn', `a link in ${target} could not be rewritten: ${String(error)}`)
+        return null
+      }
+
+      const after = doc
+        ? await (async () => {
+            const before = await this.wordsOf(absolute, target, open)
+            if (before === null) return null
+            read = listed?.(note.path) ?? note
+            let words = worked(before)
+            if (words === null || words === before) return null
+
+            // Taken by the document in the same breath as its words were read, so no
+            // keystroke falls between the two; one landing while the write is in the air
+            // is the document's own, and marks it for its next write.
+            const knew = doc.onDisk
+            drawing.relinked =
+              drawn !== null &&
+              rewrite !== null &&
+              drawn.relinked((canvas) => rewrite.retargetPlane(canvas, source, file, to))
+            if (drawing.relinked) words = doc.text
+            else {
+              const edit = oneEdit(before, words)
+              if (edit) doc.edited([edit], words)
+            }
+            return writeEdited(doc, target, words, knew, () => keepIt(before))
+          })().catch(refused)
+        : // Worked out in the file's turn: another window's write that came first is in it.
+          await inFileTurn(target, async () => {
+            const before = await this.wordsOf(absolute, target, open)
+            if (before === null) return null
+            read = listed?.(note.path) ?? note
+            const words = worked(before)
+            if (words === null || words === before) return null
+            const late = open(absolute)
+            const edit = oneEdit(before, words)
+            if (late && edit) late.edited([edit], words)
+            await keepIt(before)
+            await writeInTurn(target, words)
+            return words
+          }).catch(refused)
+      if (after === null) continue
+      if (drawing.relinked) doc?.wroteAs(after)
       for (const hear of hearing) hear(target, after)
       told?.push(target)
 
@@ -2007,38 +2034,41 @@ class Links {
     if (!canWriteAt(absolute)) return null
 
     const open = await this.openDocument()
-    const before = await this.wordsOf(absolute, absolute, open)
-    if (before === null) return null
-
-    const lines = before.split('\n')
-    // The name goes at the end of the block, which is the last line of the run
-    // that starts at `line`.
-    let end = line
-    while (end + 1 < lines.length && (lines[end + 1] ?? '').trim()) end++
-
-    const existing = blockIdOf(lines[end] ?? '')
-    if (existing) return existing
-
-    const taken = new Set(blockIds(before).map((one) => one.id))
-    const id = freeBlockId(taken)
-
-    // A CRLF note's `\r` stays on the line named, as on every other.
-    const named = lines[end] ?? ''
-    const ending = named.endsWith('\r') ? '\r' : ''
-    lines[end] = `${named.trimEnd()} ^${id}${ending}`
-    const after = lines.join('\n')
-
-    // Taken by the document in the same breath as its words were read, for the
-    // reason `retarget` gives.
+    const { namedBlock } = await import('@orden/markdown/block-names')
     const doc = open(absolute)
-    const edit = oneEdit(before, after)
-    if (doc && edit) doc.edited([edit], after)
 
-    await invoke('snapshot_note', { path: absolute, content: before }).catch(() => undefined)
-    await invoke('write_note', { path: absolute, content: after })
+    const name = async (): Promise<string | null> => {
+      const before = await this.wordsOf(absolute, absolute, open)
+      if (before === null) return null
 
-    this.noteSaved(absolute, after)
-    return id
+      const named = namedBlock(before, line, () =>
+        freeBlockId(new Set(blockIds(before).map((one) => one.id))),
+      )
+      if (!named) return null
+      if (named.source === before) return named.id
+
+      const id = named.id
+      const after = named.source
+      const keepIt = () =>
+        invoke('snapshot_note', { path: absolute, content: before }).catch(() => undefined)
+
+      // Taken by the document in the same breath as its words were read, for the
+      // reason `retarget` gives.
+      const edit = oneEdit(before, after)
+      if (doc) {
+        const knew = doc.onDisk
+        if (edit) doc.edited([edit], after)
+        await writeEdited(doc, absolute, after, knew, keepIt)
+      } else {
+        await keepIt()
+        await writeInTurn(absolute, after)
+      }
+
+      this.noteSaved(absolute, after)
+      return id
+    }
+    // Worked out in the file's turn; see `retarget`.
+    return doc ? name() : inFileTurn(absolute, name)
   }
 
   /** The note an embed names, for an export: the renderer cannot wait on a disk,

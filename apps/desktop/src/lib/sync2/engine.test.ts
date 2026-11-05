@@ -4,10 +4,13 @@ import { TEXT } from '@orden/rooms'
 import { hash32 } from '@orden/sync-core/seed'
 import { Clock, ReferenceAccount, SEEDED, type Seeded } from '@orden/sync-core/sim'
 import { type DocRefusal, frame, type PushRequest, unframe } from '@orden/sync-core/wire'
+import { Across } from '../workspace/across'
+import { NoteDoc } from '../workspace/documents.svelte'
+import { Windows } from '../windows'
 import { attach } from './binding'
 import { inline } from './classify'
 import { HERE } from './docs'
-import { Engine } from './engine'
+import { Engine, relative } from './engine'
 import { MemoryDisk } from './memory-disk'
 import { MemoryStore } from './memory-store'
 import { put, scan, StoreError, type Change } from './store'
@@ -181,6 +184,50 @@ describe('a keystroke', () => {
   })
 })
 
+/** A session that said it ended and then did not: the window hid, the close was called
+ *  off, the page came back. Whatever it writes after that was not ended by that word,
+ *  and a client id reused after a crash is two histories under one name, which a device
+ *  and its room never reconcile. */
+describe('a clean exit said too early', () => {
+  async function typedAfter(say: (engine: Engine) => Promise<void>) {
+    const one = await device()
+    const doc = await one.engine.hold(PLAN)
+    const before = doc?.client
+    await say(one.engine)
+    doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'after '), HERE)
+    await one.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')
+
+    // Gone at once.
+    one.engine.stop()
+    const again = await one.launch()
+    return { before, after: (await again.hold(PLAN))?.client }
+  }
+
+  test('is taken back by the next write: the client turns over after a crash', async () => {
+    const { before, after } = await typedAfter((engine) => engine.quit())
+    expect(after).not.toBe(before)
+  })
+
+  test('a save writes everything down and says no such thing', async () => {
+    const one = await device()
+    const doc = await one.engine.hold(PLAN)
+    const before = doc?.client
+    doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'kept '), HERE)
+    await one.engine.flush()
+
+    one.engine.stop()
+    const again = await one.launch()
+    const read = await again.hold(PLAN)
+    expect(read?.text().startsWith('kept We ship')).toBe(true)
+    expect(read?.client).not.toBe(before)
+  })
+
+  test('a save, then typing, then a crash turns the client over too', async () => {
+    const { before, after } = await typedAfter((engine) => engine.flush())
+    expect(after).not.toBe(before)
+  })
+})
+
 describe('a crash', () => {
   test('loses only what was typed since the last pause, and the next launch turns the client over', async () => {
     const one = await device()
@@ -238,6 +285,68 @@ describe('a full store (road 7)', () => {
 })
 
 describe('an open note', () => {
+  test('another window\u2019s write is news it has yet to take in, not words it knows', async () => {
+    const one = await device()
+    const path = `${ROOT}/Plan.md`
+    const before = one.disk.files.get(path) ?? ''
+    const note = new NoteDoc(
+      { kind: 'note', path, name: 'Plan.md', text: before, dirty: false },
+      () => undefined,
+    )
+    const part = await attach(one.engine, PLAN, note, () => true)
+    const theirs = `${before}\nFROM THE OTHER WINDOW\n`
+    one.disk.files.set(path, theirs)
+    await one.engine.saved(path, theirs)
+    expect(note.onDisk).toBe(before)
+    part?.()
+  })
+
+  test('a foreign edit it took in is not merged in again by the note\u2019s next write', async () => {
+    const one = await device()
+    const path = `${ROOT}/Plan.md`
+    const before = one.disk.files.get(path) ?? ''
+    const note = new NoteDoc(
+      { kind: 'note', path, name: 'Plan.md', text: before, dirty: false },
+      () => undefined,
+    )
+    const part = await attach(one.engine, PLAN, note, () => true)
+
+    const appended = `${before}\nAPPENDED BY GIT\n`
+    one.disk.files.set(path, appended)
+    await one.engine.foreign(path)
+    expect(note.latest).toBe(appended)
+
+    const end = note.live.text.length
+    note.live.edit([{ from: end, to: end, insert: 'typed on\n' }], { userEvent: 'input' })
+    note.flush()
+
+    const across = new Across(
+      {
+        documents: [note],
+        tell: () => Promise.resolve(),
+        follow: () => undefined,
+        loadTree: () => Promise.resolve(),
+        loadSpaces: () => Promise.resolve(),
+        owed: () => undefined,
+        draftOf: () => undefined,
+        joined: () => null,
+        noteSaved: () => undefined,
+        read: (at) => Promise.resolve(one.disk.files.get(at) ?? null),
+        exists: (at) => Promise.resolve(one.disk.files.has(at)),
+        reachable: () => Promise.resolve(true),
+        keepVersion: () => Promise.resolve(),
+        pause: () => Promise.resolve(),
+      },
+      new Windows(() => null),
+    )
+    await across.writing(note, path, (words) => {
+      one.disk.files.set(path, words)
+      return Promise.resolve()
+    })
+    expect(one.disk.files.get(path)?.split('APPENDED BY GIT').length).toBe(2)
+    part?.()
+  })
+
   test('opens with its file’s words, and the document joins without changing them', async () => {
     const one = await device()
     const note = new SharedDoc(one.disk.files.get(`${ROOT}/Plan.md`) ?? '')
@@ -317,6 +426,118 @@ describe('an open note', () => {
       record.t === 'keep' ? [record.keep.text] : [],
     )
     expect(kept).toEqual([theirs])
+    part?.()
+  })
+})
+
+describe('a key typed while a note and its document are brought together', () => {
+  test('goes into the document, so what follows lands in the right place', async () => {
+    const one = await device()
+    one.online = false
+    const seeded = SEEDED[0]?.text ?? ''
+    const theirs = seeded.replace('Monday', 'Friday')
+    const doc = await one.engine.hold(PLAN)
+    const live = doc?.live
+    live?.transact(() => {
+      const text = live.getText(TEXT)
+      text.delete(0, text.length)
+      text.insert(0, theirs)
+    }, HERE)
+    await one.engine.letGo(PLAN)
+
+    const mine = seeded.replace('Monday', 'Tuesday')
+    const note = new SharedDoc(mine)
+    const keepLost = one.engine.keepLost.bind(one.engine)
+    one.engine.keepLost = async (...args) => {
+      note.arrived([{ from: 0, to: 0, insert: 'X' }])
+      await keepLost(...args)
+    }
+    const part = await attach(
+      one.engine,
+      PLAN,
+      {
+        live: note,
+        get latest() {
+          return note.text.toString()
+        },
+      },
+      () => true,
+    )
+
+    const held = await one.engine.hold(PLAN)
+    expect(one.engine.core.isHeld(PLAN)).toBe(false)
+    expect(held?.text()).toBe(note.text.toString())
+    expect(note.text.toString().startsWith('X')).toBe(true)
+    await one.engine.letGo(PLAN)
+    part?.()
+  })
+})
+
+describe('words that reach the document while a note and its document are brought together', () => {
+  async function meeting() {
+    const one = await device()
+    one.online = false
+    const seeded = SEEDED[0]?.text ?? ''
+    const theirs = seeded.replace('Monday', 'Friday')
+    const doc = await one.engine.hold(PLAN)
+    const live = doc?.live
+    live?.transact(() => {
+      const text = live.getText(TEXT)
+      text.delete(0, text.length)
+      text.insert(0, theirs)
+    }, HERE)
+    await one.engine.letGo(PLAN)
+    const note = new SharedDoc(seeded.replace('Monday', 'Tuesday'))
+    const keepLost = one.engine.keepLost.bind(one.engine)
+    return { one, note, keepLost }
+  }
+  const held = (note: SharedDoc) => ({
+    live: note,
+    get latest() {
+      return note.text.toString()
+    },
+  })
+
+  test('a pull is kept, in the document and in the note', async () => {
+    const { one, note, keepLost } = await meeting()
+    let arriving = true
+    one.engine.keepLost = async (...args) => {
+      const doc = one.engine.core.docs.get(PLAN)
+      if (arriving) doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'PULLED '))
+      arriving = false
+      await keepLost(...args)
+    }
+
+    const part = await attach(one.engine, PLAN, held(note), () => true)
+
+    const doc = await one.engine.hold(PLAN)
+    expect(doc?.text()).toContain('PULLED ')
+    expect(note.text.toString()).toBe(doc?.text())
+    await one.engine.letGo(PLAN)
+    part?.()
+  })
+
+  test('a pull and a key both stay, or the two are held apart and nothing is lost', async () => {
+    const { one, note, keepLost } = await meeting()
+    let arriving = true
+    one.engine.keepLost = async (...args) => {
+      const doc = one.engine.core.docs.get(PLAN)
+      if (arriving) {
+        doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'PULLED '))
+        note.arrived([{ from: note.text.length, to: note.text.length, insert: 'KEY' }])
+      }
+      arriving = false
+      await keepLost(...args)
+    }
+
+    const part = await attach(one.engine, PLAN, held(note), () => true)
+
+    const doc = await one.engine.hold(PLAN)
+    const both = `${doc?.text() ?? ''}\n${note.text.toString()}`
+    expect(both).toContain('PULLED ')
+    expect(both).toContain('KEY')
+    if (!one.engine.core.isHeld(PLAN)) expect(note.text.toString()).toBe(doc?.text())
+    await one.engine.letGo(PLAN)
     part?.()
   })
 })
@@ -597,6 +818,28 @@ test('a line said from beside the passes reaches the log and whoever has it open
 })
 
 describe('an outbox folded while offline', () => {
+  test('a note iCloud took off this Mac is no delete, by the watcher or a scan', async () => {
+    // macOS 13: `Plan.md` becomes `.Plan.md.icloud`, which no list holds. Taken for gone,
+    // the note left the account and every other device with it.
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const here = await device(account)
+    await here.disk.remove(`${ROOT}/Plan.md`)
+    await here.disk.write(`${ROOT}/.Plan.md.icloud`, 'bplist')
+
+    await here.engine.removed(`${ROOT}/Plan.md`)
+    await here.engine.pass(SPACE)
+
+    const names = (await account.view()).entries.map((entry) => entry.name)
+    expect(names).toContain('Plan.md')
+    expect(here.store.rows('outbox')).toEqual([])
+
+    // And the placeholder gone with no file back is a delete after all.
+    await here.disk.remove(`${ROOT}/.Plan.md.icloud`)
+    await here.engine.removed(`${ROOT}/Plan.md`)
+    await here.engine.pass(SPACE)
+    expect((await account.view()).entries.map((entry) => entry.name)).toEqual(['Ideas.md'])
+  })
+
   test('a note moved into a folder made and deleted here is deleted on the account too', async () => {
     // The folder and its delete cancel before the account hears of either, and what was
     // only moved into it is deleted instead - a delete the fold makes, under an op id of
@@ -836,6 +1079,22 @@ describe('a move to another space', () => {
       .sort()
   }
 
+  test('a note that will not read is made in no other space as an empty note', async () => {
+    const here = await twoSpaces()
+    await here.disk.mkdir(`${ROOT}/Trip`)
+    await here.engine.created(`${ROOT}/Trip`, true)
+    await here.disk.write(`${ROOT}/Trip/Map.md`, '# Map\n')
+    await here.engine.created(`${ROOT}/Trip/Map.md`, false, '# Map\n')
+
+    await here.disk.move(`${ROOT}/Trip`, `${WORK_ROOT}/Trip`)
+    const read = here.disk.read.bind(here.disk)
+    here.disk.read = (path: string) =>
+      path === `${WORK_ROOT}/Trip/Map.md` ? Promise.resolve(null) : read(path)
+    await here.engine.moved(`${ROOT}/Trip`, `${WORK_ROOT}/Trip`)
+
+    expect(held(here, WORK)).toEqual(['Trip folder'])
+  })
+
   test('takes a folder with everything in it, each as the kind it was (#413)', async () => {
     // The other space's tree had never heard of anything in the folder, and only the
     // folder was made there: the account, and every other device, had it empty.
@@ -921,6 +1180,73 @@ describe('the folder watcher', () => {
     expect(folders.map((folder) => folder.local_path)).toEqual(['Work'])
     expect(await here.disk.exists(`${ROOT}/Work/Plan.md`)).toBe(true)
   })
+
+  test('makes a file it was told changed and has no entry for', async () => {
+    // A note that would not read at its `created`, as a Windows lock leaves one, is on
+    // no entry, and its next change is the next time anything says it is there.
+    const here = await device()
+    const heard: ((news: SpaceNews) => void)[] = []
+    watch.mockImplementation((_roots: readonly string[], hear: (news: SpaceNews) => void) => {
+      heard.push(hear)
+      return Promise.resolve()
+    })
+    const watched = watchFolders({
+      engine: here.engine,
+      ready: () => true,
+      changed: () => undefined,
+    })
+    await here.disk.write(`${ROOT}/Late.md`, 'late\n')
+    await here.disk.mkdir(`${ROOT}/Quiet`)
+    const told = (path: string, dir: boolean) =>
+      ({ kind: 'modified', path, dir, size: 1, mtime: 1, id: null }) as const
+    for (const hear of heard) {
+      hear({
+        root: ROOT,
+        changes: [told(`${ROOT}/Late.md`, false), told(`${ROOT}/Quiet`, true)],
+        scan: false,
+        gone: false,
+      })
+    }
+    await vi.waitFor(() => {
+      expect(here.engine.entryAt(`${ROOT}/Late.md`)).not.toBeNull()
+    })
+    watched.stop()
+
+    expect(here.engine.entryAt(`${ROOT}/Quiet`)).toBeFalsy()
+  })
+
+  test.each(['modified', 'created'])(
+    'leaves a space alone until its first pass is done: a %s event makes nothing',
+    async (kind) => {
+      // A note v1 tracks has no entry yet. The first pass matches it to its entry, and a
+      // create queued here as well was `Plan.md` and `Plan 2.md`.
+      const here = await device()
+      const heard: ((news: SpaceNews) => void)[] = []
+      watch.mockImplementation((_roots: readonly string[], hear: (news: SpaceNews) => void) => {
+        heard.push(hear)
+        return Promise.resolve()
+      })
+      const watched = watchFolders({
+        engine: here.engine,
+        ready: () => false,
+        changed: () => undefined,
+      })
+      await here.disk.write(`${ROOT}/Late.md`, 'late\n')
+      const change = {
+        kind,
+        path: `${ROOT}/Late.md`,
+        dir: false,
+        size: 1,
+        mtime: 1,
+        id: null,
+      } as SpaceNews['changes'][number]
+      for (const hear of heard) hear({ root: ROOT, changes: [change], scan: false, gone: false })
+      await settled()
+      watched.stop()
+
+      expect(here.engine.entryAt(`${ROOT}/Late.md`)).toBeFalsy()
+    },
+  )
 
   /** A watch whose messages the test says, and a way to wait for them to be read. */
   function listening(engine: Engine) {
@@ -1058,6 +1384,36 @@ describe('the folder watcher', () => {
     const words = await textOn(account, days[0]?.id ?? '')
     expect(words).toContain('mk1z')
     expect(words).toContain('mk2z')
+  })
+
+  test('a move said first keeps the name the account has where this disk spells it its own way', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const here = await device(account, 'd0')
+    const space = here.engine.core.spaces.get(SPACE)
+    const entry = here.engine.entryAt(`${ROOT}/Plan.md`)
+    if (!space || !entry) throw new Error('no entry')
+    await here.disk.move(`${ROOT}/Plan.md`, `${ROOT}/_Plan.md`)
+    entry.local_path = '_Plan.md'
+    space.changed()
+
+    await here.engine.moving(`${ROOT}/_Plan.md`, `${ROOT}/Work/_Plan.md`, () =>
+      here.disk.move(`${ROOT}/_Plan.md`, `${ROOT}/Work/_Plan.md`),
+    )
+    await here.engine.pass(SPACE)
+    const names = (await account.view()).entries.map((one) => one.name)
+    expect(names).toContain('Plan.md')
+    expect(names).not.toContain('_Plan.md')
+
+    // And back from a rename the disk would not make, under the account's name too.
+    await expect(
+      here.engine.moving(`${ROOT}/Work/_Plan.md`, `${ROOT}/Work/Goals.md`, () =>
+        Promise.reject(new Error('in use')),
+      ),
+    ).rejects.toThrow('in use')
+    await here.engine.pass(SPACE)
+    const after = (await account.view()).entries.map((one) => one.name)
+    expect(after).toContain('Plan.md')
+    expect(after).not.toContain('Goals.md')
   })
 
   test('puts a rename back where the disk would not make it (#1068)', async () => {
@@ -1333,5 +1689,128 @@ describe('another program’s unreadable canvas', () => {
     await one.engine.foreign(path)
 
     expect((await one.engine.core.doc(id))?.text()).toContain('keep me')
+  })
+})
+
+describe('two spaces whose folders differ only in case', () => {
+  test('a path belongs to the folder spelled like it where the disk tells case apart', () => {
+    expect(relative('/s/Notes', '/s/notes/a.md', false)).toBeNull()
+    expect(relative('/s/notes', '/s/notes/a.md', false)).toBe('a.md')
+    expect(relative('/s/Notes', '/s/notes/a.md', true)).toBe('a.md')
+    // A backslash is a separator on Windows and a character of a name anywhere else.
+    expect(relative('/s/notes', '/s/notes/a\\b.md', false)).toBe('a\\b.md')
+    expect(relative('C:\\s\\notes', 'C:\\s\\notes\\a\\b.md', true)).toBe('a/b.md')
+  })
+
+  // On Linux both can be there: a private note went up in the shared space, and a delete
+  // in the private one took the shared one's entry away on every device.
+  test.each([true, false])('and goes to its own, where foldsCase is %s', async (foldsCase) => {
+    const one = await device()
+    const core = one.engine.core
+    ;(core.world as { foldsCase: boolean }).foldsCase = foldsCase
+    await core.commit(core.addSpace('shared', '/s/Notes', 'write'))
+    await core.commit(core.addSpace('private', '/s/notes', 'owner'))
+    const [shared, kept] = [core.spaces.get('shared'), core.spaces.get('private')]
+
+    await one.disk.write('/s/notes/secret.md', 'private words')
+    await one.engine.created('/s/notes/secret.md', false, 'private words')
+    expect(one.engine.placed('/s/notes/secret.md')?.space.id).toBe('private')
+    expect([...(shared?.entries.values() ?? [])].map((entry) => entry.name)).toEqual([])
+    expect(shared?.outbox).toHaveLength(0)
+    expect(kept?.outbox).toHaveLength(1)
+
+    await one.disk.write('/s/Notes/same.md', 'shared words')
+    const id = await one.engine.created('/s/Notes/same.md', false, 'shared words')
+    await one.engine.removed('/s/notes/same.md')
+    expect(shared?.isLive(id ?? '')).toBe(true)
+  })
+})
+
+describe('a note the disk will not read', () => {
+  async function refusing() {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const one = await device(account, 'd0')
+    const desk = await device(account, 'd1')
+    const note = SEEDED[0]!
+    const path = `${ROOT}/${note.name}`
+    const told: string[] = []
+    one.engine.on('unsynced', (event) => told.push(event.name))
+    const read = one.disk.read.bind(one.disk)
+    const state = { refused: true }
+    one.disk.read = (at) => (state.refused && at === path ? Promise.resolve(null) : read(at))
+    return { one, desk, note, path, told, state }
+  }
+
+  test('is not written over by the account, and is said to be not syncing if it lasts', async () => {
+    const { one, desk, note, path, told, state } = await refusing()
+    const theirs = `caf\u00e9, saved by another program\n${note.text}`
+    one.disk.files.set(path, theirs)
+
+    await desk.disk.write(path, `${note.text}and the desk wrote this\n`)
+    await desk.engine.foreign(path)
+    await desk.engine.pass(SPACE)
+    await one.engine.pass(SPACE)
+
+    expect(one.disk.files.get(path)).toBe(theirs)
+    expect(one.disk.kept).toEqual([])
+    expect(told).toEqual([])
+    await one.engine.pass(SPACE)
+    await one.engine.pass(SPACE)
+    await one.engine.pass(SPACE)
+    expect(told).toEqual([note.name])
+
+    // Readable again, what the other program saved is folded in like any other edit, with
+    // nothing to say so but the next pass.
+    state.refused = false
+    await one.engine.pass(SPACE)
+    const words = (await one.engine.core.doc(note.id))?.text() ?? ''
+    expect(words).toContain('saved by another program')
+    expect(words).toContain('and the desk wrote this')
+    expect(one.disk.files.get(path)).toContain('and the desk wrote this')
+
+    // Recovered, a later spell of it is said again.
+    state.refused = true
+    for (let pass = 0; pass < 3; pass += 1) await one.engine.foreign(path)
+    await one.engine.pass(SPACE)
+    expect(told).toEqual([note.name, note.name])
+  })
+
+  test('for a moment, the next pass writes what it missed, and nothing is said', async () => {
+    const { one, desk, note, path, told, state } = await refusing()
+    await desk.disk.write(path, `${note.text}and the desk wrote this\n`)
+    await desk.engine.foreign(path)
+    await desk.engine.pass(SPACE)
+    await one.engine.pass(SPACE)
+    expect(one.disk.files.get(path)).toBe(note.text)
+
+    state.refused = false
+    await one.engine.pass(SPACE)
+    expect(one.disk.files.get(path)).toContain('and the desk wrote this')
+    expect(told).toEqual([])
+  })
+
+  test('changed by another program with nothing from the account, it is not "no change"', async () => {
+    const { one, note, path, told, state } = await refusing()
+    await one.disk.write(path, `caf\u00e9\n${note.text}`)
+    await one.engine.foreign(path)
+    for (let pass = 0; pass < 3; pass += 1) await one.engine.pass(SPACE)
+    expect(told).toEqual([note.name])
+    state.refused = false
+    await one.engine.pass(SPACE)
+    expect((await one.engine.core.doc(note.id))?.text()).toContain('caf\u00e9')
+  })
+
+  test('nor is one that is simply not there taken for one that will not read', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const one = await device(account, 'd0')
+    const desk = await device(account, 'd1')
+    const note = SEEDED[0]!
+    const path = `${ROOT}/${note.name}`
+    one.disk.files.delete(path)
+    await desk.disk.write(path, `${note.text}and the desk wrote this\n`)
+    await desk.engine.foreign(path)
+    await desk.engine.pass(SPACE)
+    await one.engine.pass(SPACE)
+    expect(one.disk.files.get(path)).toContain('and the desk wrote this')
   })
 })

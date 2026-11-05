@@ -836,6 +836,77 @@ describe('rubbing out', () => {
     ])
   })
 
+  /** A quick swipe is a few events far apart, and a line it crossed between two of
+   *  them was crossed all the same. */
+  test('answers along the way it went between two events, not only at each', () => {
+    const { effects } = play(
+      [
+        down(),
+        {
+          kind: 'move',
+          id: 1,
+          at: { x: 25, y: 0 },
+          screen: { x: 25, y: 0 },
+          samples: [],
+          hit: NOTHING,
+        },
+      ],
+      context({ tool: 'erase', eraser: { whole: false, size: 10, stroke: STROKE_RUB }, scale: 1 }),
+    )
+
+    expect(effects).toEqual([
+      { do: 'cut', at: HERE, reach: 10 },
+      { do: 'cut', at: { x: 5, y: 0 }, reach: 10 },
+      { do: 'cut', at: { x: 10, y: 0 }, reach: 10 },
+      { do: 'cut', at: { x: 15, y: 0 }, reach: 10 },
+      { do: 'cut', at: { x: 20, y: 0 }, reach: 10 },
+      { do: 'cut', at: { x: 25, y: 0 }, reach: 10 },
+    ])
+  })
+
+  /** Hold the eraser still, scroll a page, move a pixel: the plane went past under it,
+   *  and the eraser did not go across the ink that went by. */
+  test('walks no way the plane moved by itself under a still hand', () => {
+    const { effects } = play(
+      [
+        down(),
+        {
+          kind: 'move',
+          id: 1,
+          at: { x: 900, y: 0 },
+          screen: { x: 1, y: 0 },
+          samples: [],
+          hit: NOTHING,
+        },
+      ],
+      context({ tool: 'erase', eraser: { whole: false, size: 10, stroke: STROKE_RUB }, scale: 1 }),
+    )
+
+    expect(effects).toEqual([
+      { do: 'cut', at: HERE, reach: 10 },
+      { do: 'cut', at: { x: 900, y: 0 }, reach: 10 },
+    ])
+  })
+
+  test('walks the way a hand went at any zoom', () => {
+    const { effects } = play(
+      [
+        down(),
+        {
+          kind: 'move',
+          id: 1,
+          at: { x: 10, y: 0 },
+          screen: { x: 20, y: 0 },
+          samples: [],
+          hit: NOTHING,
+        },
+      ],
+      context({ tool: 'erase', eraser: { whole: false, size: 10, stroke: STROKE_RUB }, scale: 2 }),
+    )
+
+    expect(effects).toHaveLength(5)
+  })
+
   /** A finger has the room to miss a line by that a tap on one has, on top of the
    *  stroke eraser's width; a pen and a mouse are precise. */
   test('takes a whole line 8 px off under a finger, and not under a pen', () => {

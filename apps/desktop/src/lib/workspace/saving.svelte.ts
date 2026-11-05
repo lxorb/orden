@@ -22,15 +22,15 @@ import { t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
 import { log } from '../log'
 import { onDisk } from '../on-disk'
-import { owesLast, settleUp } from '../parting'
+import { owesLast, surfacesToWords, writeOwed } from '../parting'
 import { movedTo, nameOf, samePath, within } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { afterQuiet } from '../timing'
-import { entryAt } from '../tree-edits'
-import type { Entry } from '../workspace.svelte'
 import { holdsWords, type NoteDoc, type Tab } from './documents.svelte'
 import type { FileOp } from './file-ops'
 import { isDraft } from './drafts'
+import type { Across } from './across'
+import type { Status } from '../sync.svelte'
 
 /** Pauses in a row that ended in a refused write before the light says so. One is
  *  a virus scanner holding the file for a moment; three is a file that will not be
@@ -43,12 +43,12 @@ export interface Writes {
   readonly documents: NoteDoc[]
   readonly active: Tab | null
   readonly previewTabId: string | null
-  /** The space on screen as the file list holds it: what says whether a note that
-   *  nobody is showing still has a file; see `gone`. */
-  readonly tree: Entry | null
   keep(id: string): void
   scheduleSession(): void
   persist(): void
+  /** A note's file now says all its document does: whatever a closed tab kept of it is
+   *  on the disk, and the file is what to come back from. */
+  wroteAll(path: string, key: string, words: string): void
   loadTree(): Promise<void>
   /** The name a folder will take: the wanted one, or the next number after it where
    *  the folder already holds that name - `except` left out of what it holds. The
@@ -70,11 +70,24 @@ export interface Writes {
 export const IN_THE_AIR_AT_MOST = 10_000
 
 export class Saving {
+  /** What keeps writes in step with the disk and the other windows, once it is fetched.
+   *  Alone as well: a file has more writers than this app's windows, and a write that did
+   *  not look first put the old words over whatever a terminal, `git` or an editor wrote,
+   *  with no version holding them. One read a write; see across.ts. */
+  across: Across | null = null
+
+  /** The way to fetch it, for a write before the launch's turn for it: a tab a crash left
+   *  dirty is written in the first second, and its file is the likeliest to have changed.
+   *  Not set in a store with no app around it. */
+  acrossSoon: (() => Promise<Across>) | null = null
+
   /** The write that waits for a pause in the changes; see timing.ts. */
   private readonly soon = afterQuiet(() => void this.saveWaiting(), SAVE_DELAY, SAVE_AT_MOST)
 
   /** Pauses in a row that ended in a refused write. */
   private failures = 0
+  /** What the light in the corner said about them, and what it said before; see `tell`. */
+  private said: { error: string; was: Status } | null = null
   private readonly retry = afterQuiet(
     () => void this.saveWaiting(),
     () => saveRetryDelay(this.failures),
@@ -96,9 +109,8 @@ export class Saving {
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
   private readonly held = new Map<NoteDoc, number>()
 
-  /** Moved with no tab to show it, and the listing as it stood then, which has not heard
-   *  of the move and so cannot say its file is gone. Any listing since can; see `gone`. */
-  private readonly followed = new WeakMap<NoteDoc, Entry | null>()
+  /** Documents whose file a delete has named; see `gone`. */
+  private readonly deleted = new WeakSet<NoteDoc>()
 
   /** The `write_note` of each document not answered yet, which `holdingWrites` waits for. */
   private readonly inTheAir = new WeakMap<NoteDoc, Promise<void>>()
@@ -186,6 +198,17 @@ export class Saving {
     for (const note of this.ws.documents) note.flush()
   }
 
+  /** Everything that holds words of its own on the way to a document, handed over: a
+   *  table cell, the card being written in, a plane that commits after a pause. For
+   *  whatever is about to read a document and show it to somebody: an export read
+   *  before the plane's pause was over came out without the last strokes. */
+  wordsNow() {
+    flushTableEdits()
+    flushCardEdits()
+    surfacesToWords()
+    this.flush()
+  }
+
   /** Text put into a note from somewhere other than the editor: a version
    *  restored from the history, a note pulled in by a sync. It reaches every pane
    *  showing that note, since they are all views of the one document. */
@@ -233,7 +256,7 @@ export class Saving {
     // make sure they landed. Then everything else that writes on a timer.
     flushTableEdits()
     flushCardEdits()
-    settleUp()
+    writeOwed()
 
     const tab = this.ws.active
     if (tab) this.ws.keep(tab.id)
@@ -271,35 +294,61 @@ export class Saving {
     this.waiting.clear()
 
     const refused: NoteDoc[] = []
+    const unread: NoteDoc[] = []
     await Promise.all(
       notes.map((note) =>
         this.write(note).catch((error: unknown) => {
           refused.push(note)
           this.waiting.add(note)
-          log('error', `save: ${note.path ?? note.name} - ${String(error)}`)
+          if (error instanceof Error && error.name === 'WillNotRead') unread.push(note)
+          log('error', `save: ${note.path ?? 'a draft'} - ${String(error)}`)
         }),
       ),
     )
 
     this.failures = refused.length ? this.failures + 1 : 0
-    if (!refused.length) return
+    if (!refused.length) {
+      if (this.said) await this.untell()
+      return
+    }
 
     this.retry()
-    if (this.failures === REFUSALS_TOLD) await this.tell(refused)
+    if (this.failures === REFUSALS_TOLD) await this.tell(refused, unread)
   }
 
   /** A note the disk keeps refusing, on the light in the corner: the same place a
    *  sync that failed is told, and the same kind of news. The words stay in the
-   *  note and in the session, and the writes go on being tried. */
-  private async tell(refused: readonly NoteDoc[]) {
+   *  note and in the session, and the writes go on being tried. One whose file has gone
+   *  past reading says that, since nothing the reader does in the tab mends it. */
+  private async tell(refused: readonly NoteDoc[], unread: readonly NoteDoc[]) {
     const first = refused[0]
     if (!first) return
 
     // Imported here rather than at the top: syncing reads the workspace, and the
     // two would import each other.
     const { sync } = await import('../sync.svelte')
+    const error = unread.includes(first)
+      ? t(
+          '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.',
+          { name: first.shown },
+        )
+      : t('{name} could not be written.', { name: first.shown })
+    this.said = { error, was: sync.status === 'error' ? 'off' : sync.status }
     sync.status = 'error'
-    sync.lastError = t('{name} could not be written.', { name: first.shown })
+    sync.lastError = error
+  }
+
+  /** The note is written after all. Signed out no pass of sync's ever clears the light,
+   *  so it stayed red until a restart. Anything sync has said since is its own. */
+  private async untell() {
+    const said = this.said
+    this.said = null
+    if (!said) return
+
+    const { sync } = await import('../sync.svelte')
+    if (sync.status !== 'error' || sync.lastError !== said.error) return
+    sync.status = said.was
+    sync.lastError = null
   }
 
   /** One file operation on a document, after the one before it has finished.
@@ -362,6 +411,12 @@ export class Saving {
    *  workspace/open.ts); one whose tab has closed with a write still owed follows here,
    *  or the words would land at the old path and make a second file. */
   follow(op: FileOp) {
+    if (op.op === 'removed') {
+      for (const note of [...this.held.keys(), ...this.waiting, ...this.ws.documents]) {
+        if (note.path !== null && within(op.path, note.path) !== null) this.deleted.add(note)
+      }
+      return
+    }
     if (op.op !== 'moved') return
     for (const note of [...this.held.keys(), ...this.waiting]) {
       if (note.path === null || this.ws.documents.includes(note)) continue
@@ -369,7 +424,6 @@ export class Saving {
       if (to === null) continue
       note.path = to
       note.name = nameOf(to)
-      this.followed.set(note, this.ws.tree)
     }
   }
 
@@ -440,6 +494,22 @@ export class Saving {
     void done.then(() => this.running.delete(done))
   }
 
+  /** The paths drafts have taken and not landed at yet. Neither the listing nor the open
+   *  documents answer for them: a draft put away has no tab, and a space nobody has
+   *  listed has no tree for `born` to put a row in. */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
+  private readonly claimed = new Set<string>()
+
+  /** The same across the windows, which each have their own `claimed`: the lock of each path
+   *  claimed here, held until it has landed. Two windows placing one name in one moment
+   *  would otherwise both find it free, and the second's write take the first's note. */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
+  private readonly claimHeld = new Map<string, () => void>()
+
+  private isClaimed(path: string): boolean {
+    return [...this.claimed].some((one) => samePath(one, path))
+  }
+
   /** A draft given a place: a file in `folder` called `file`, or the next number after
    *  it, written at once; the path it landed at, or null for one with a file already.
    *  Claimed as it is chosen, so two drafts saved together never land on one file; see
@@ -464,7 +534,13 @@ export class Saving {
     // again rather than lost; see `saveWaiting`.
     this.waiting.add(note)
     this.soon.cancel()
-    await this.saveWaiting()
+    try {
+      await this.saveWaiting()
+    } finally {
+      this.claimed.delete(path)
+      this.claimHeld.get(path)?.()
+      this.claimHeld.delete(path)
+    }
     return path
   }
 
@@ -483,26 +559,40 @@ export class Saving {
     // Fetched here rather than imported at the top: saving is in the first paint, and a
     // draft given a place is not.
     const { pairOf } = await import('../pages/held')
+    const { holdIfFree } = await import('../locks')
     const found: string[] = []
     for (;;) {
       const name = freePath(
         file,
         (candidate) =>
-          found.includes(candidate) || this.ws.freeName(folder, candidate) !== candidate,
+          found.includes(candidate) ||
+          this.isClaimed(joinPath(folder, candidate)) ||
+          this.ws.freeName(folder, candidate) !== candidate,
       )
       const path = joinPath(folder, name)
+      const release = await holdIfFree(`nib:claim:${path}`)
+      if (release === null) {
+        found.push(name)
+        continue
+      }
       // The other half of a page note's pair as well: a page note landing beside a PDF
       // named as its paper takes that PDF for its own, and the listing that would have
       // said so is not this space's either.
       const other = pairOf(name)
       const taken =
         (await onDisk(path)) || (other !== null && (await onDisk(joinPath(folder, other))))
-      if (note.path !== null) return null
+      if (note.path !== null) {
+        release()
+        return null
+      }
       if (taken) found.push(name)
-      else if (this.ws.freeName(folder, name) === name) {
+      else if (!this.isClaimed(path) && this.ws.freeName(folder, name) === name) {
         note.path = path
+        this.claimed.add(path)
+        this.claimHeld.set(path, release)
         return path
       }
+      release()
     }
   }
 
@@ -517,19 +607,12 @@ export class Saving {
    *  Two things have to be true, and both are read rather than asked of the disk. No
    *  tab is holding the note, so nobody can still be typing in it: a tab closed on a
    *  note that is still there is the ordinary case, and the last thing typed before
-   *  it was shut has to go down. And the listing no longer holds the path, which is
-   *  what a delete does to the tree before it touches the file; see `hideEntry` in
-   *  workspace.svelte.ts. A note belonging to some other space is nothing this
-   *  listing can answer for, so it is left alone. */
+   *  it was shut has to go down. And a delete named it. The listing cannot say so: a
+   *  folder's note nobody has written yet, a note in a dot-folder reached by a link and
+   *  one behind a link out of the space have no row, and what was typed in those had no
+   *  write at all and was in no file and no version. */
   private gone(note: NoteDoc): boolean {
-    const path = note.path
-    const tree = this.ws.tree
-    if (path === null || !tree || this.making.has(note) || this.followed.get(note) === tree)
-      return false
-    if (this.ws.tabs.some((tab) => tab.note === note)) return false
-    if (!within(tree.path, path)) return false
-
-    return !entryAt(tree, path)
+    return this.deleted.has(note) && !this.ws.tabs.some((tab) => tab.note === note)
   }
 
   /** The open notes a version could be kept of: each one's file, its words as
@@ -572,7 +655,7 @@ export class Saving {
     // The words going down, and which revision of the note they are, both read
     // once. A keystroke landing inside the round trip belongs to the next write,
     // and the note has to be told which one it just had.
-    const content = note.text
+    let content = note.text
     const revision = note.revision
 
     // The words the file held when this sitting began, kept as a version before the
@@ -598,7 +681,18 @@ export class Saving {
     // Moved while the write was being got ready: the words follow the file.
     if (note.path !== null) path = note.path
 
-    const landing = invoke('write_note', { path, content })
+    // What is on the disk is taken in first, whoever put it there, and the words going down
+    // are read inside that turn; see across.ts. A file that went from under it writes
+    // nothing, which is what stops a delete being undone.
+    const across = this.across ?? (await this.acrossSoon?.().catch(() => null)) ?? null
+    const writing = path
+    const down = (words: string) => invoke('write_note', { path: writing, content: words })
+    const landing: Promise<{ words: string; revision: number } | null> = across
+      ? across.writing(note, path, down)
+      : down(content).then(() => {
+          note.onDisk = content
+          return { words: content, revision }
+        })
     const air: Promise<void> = landing.then(
       () => undefined,
       () => undefined,
@@ -607,8 +701,11 @@ export class Saving {
     void air.then(() => {
       if (this.inTheAir.get(note) === air) this.inTheAir.delete(note)
     })
-    await landing
-    note.written(path, nameOf(path), revision)
+    const landed = await landing
+    if (landed === null) return
+    content = landed.words
+    note.written(path, nameOf(path), landed.revision)
+    if (!note.dirty) this.ws.wroteAll(path, note.key, content)
     // Moved under the write by something that did not wait for it: the words are
     // owed again at the path the note is at now; see `written`.
     if (!samePath(note.path, path)) this.owed(note)

@@ -769,6 +769,8 @@ export const it: Dictionary = {
   '{done} of {total}': '{done} di {total}',
   'Sync failed': 'Sincronizzazione fallita',
   '{name} could not be written.': 'Impossibile scrivere {name}.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    'Impossibile scrivere {name}: il suo file non si può leggere. Forse supera i 64 MB o non è testo UTF-8.',
   '{name} could not be read.': 'Impossibile leggere {name}.',
   'Text size': 'Dimensione del testo',
   'Line spacing': 'Interlinea',
@@ -1584,6 +1586,8 @@ export const it: Dictionary = {
   'Add an AI provider in Settings first.':
     'Aggiungere prima un fornitore di IA nelle impostazioni.',
   'The model did not answer.': 'Il modello non ha risposto.',
+  'The connection closed before the answer was finished.':
+    'La connessione si è chiusa prima della fine della risposta.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'Il tuo piano {plan} ha raggiunto il limite fino alle {time}.',
@@ -2075,8 +2079,10 @@ export const it: Dictionary = {
   'Send feedback': 'Invia feedback',
   'Describe the issue': 'Descrivi il problema',
   Sent: 'Inviato',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Questo rapporto contiene la tua descrizione, la versione di Orden, la tua piattaforma e il registro recente dell’app. Non contiene mai le tue note.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Questa segnalazione include la tua descrizione, la versione di Orden, la tua piattaforma e il log recente dell’app, senza i percorsi dei file.',
+  'Its space is archived': 'Il suo spazio è archiviato',
+  'Back as {name}': 'Di nuovo come {name}',
   'Send into the running answer': 'Invia nella risposta in corso',
   'Stop the answer': 'Ferma la risposta',
   'Open every step': 'Apri tutti i passaggi',
@@ -2161,6 +2167,8 @@ export const it: Dictionary = {
     'Legge le tue note e naviga con i tuoi accessi, quindi una pagina potrebbe provare a fargliele inviare altrove.',
   Activity: 'Attività',
   'Add a site': 'Aggiungi un sito',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Un programma in questo elenco viene eseguito senza chiedere e può fare tutto ciò che quel programma sa fare.',
   'Add a program': 'Aggiungi un programma',
   'Every space': 'Tutti gli spazi',
   Sites: 'Siti',
@@ -2596,6 +2604,7 @@ export const it: Dictionary = {
   'No {property}': 'Senza {property}',
   '{card} moved to {group}': '{card} spostato in {group}',
   'Not moved': 'Non spostato',
+  'Not undone': 'Non annullato',
   Retry: 'Riprova',
   Calculate: 'Calcola',
   'Remove sort': 'Rimuovi ordinamento',
@@ -2881,6 +2890,8 @@ export const it: Dictionary = {
   '{title}, running': '{title}, in corso',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden non conserva più le chiavi IA nel portachiavi del Mac, che continuava a chiederne la password. Inserisci di nuovo le chiavi e accedi ancora una volta a ChatGPT.',
+  'This PDF is locked by its owner': 'Questo PDF è bloccato dal proprietario',
+  'Part of this could not be undone': 'Non è stato possibile annullare una parte',
   'Add images': 'Aggiungi immagini',
   'Remove image': 'Rimuovi immagine',
   'That is more than 4 images.': 'Sono più di 4 immagini.',

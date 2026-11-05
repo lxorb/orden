@@ -19,10 +19,11 @@
 import { untrack } from 'svelte'
 import { answerThreadSpaces } from '../../automation/caller'
 import { i18n, message, t } from '../../i18n.svelte'
+import { owes, writing } from '../../parting'
 import { prompt } from '../../prompt.svelte'
 import { without } from '../../records'
 import { forget, keep, keepJson, stored, storedText } from '../../stored'
-import { onceAFrame } from '../../timing'
+import { afterQuiet, onceAFrame } from '../../timing'
 import { workspace } from '../../workspace.svelte'
 import { unlisted } from '../chat/catalogue'
 import { nextEffort, within } from '../chat/effort'
@@ -40,6 +41,7 @@ import {
   listEveryThread,
   type Listed,
   newThread,
+  otherWindowWrote,
   readThread,
 } from '../chat/threads'
 import type {
@@ -49,6 +51,7 @@ import type {
   Goal,
   Mode,
   ModelInfo,
+  Part,
   Stop,
   Thread,
   Turn,
@@ -93,6 +96,16 @@ import { agentOpen } from './agent-open.svelte'
 /** How long after a plan resets a message waiting for it goes again: the window ends by
  *  the provider's clock, not this one. */
 const AFTER_RESET = 30_000
+
+/** How long words on their way wait to be written, and how long they wait at most while
+ *  more keep coming. */
+const KEEP_QUIET = 1_000
+const KEEP_AT_MOST = 3_000
+
+/** How often an answer with nothing new is written anyway: a long call is silent, and
+ *  another window tells an answer alive from a window gone by the time in the file
+ *  (`GONE_AFTER` in chat/threads.ts). */
+const ANSWER_BEAT = 30_000
 
 /** A message waiting behind a running turn. */
 export interface Queued {
@@ -290,6 +303,7 @@ class Chat implements Panel {
       return
     }
     this.started = true
+    otherWindowWrote((id) => this.heardWritten(id))
     this.listing = false
     this.popover = null
     // A quick question carried on before the panel was ever drawn is already open.
@@ -380,7 +394,11 @@ class Chat implements Panel {
       if (isDeleted(thread.id)) continue
       const listed = thread.turns.length > 0 || this.running.includes(thread.id)
       if (listed && this.spaces.includes(thread.space)) {
-        lines.set(thread.id, { ...listedHeadOf(thread, this.wordsIn(thread)), space: thread.space })
+        lines.set(thread.id, {
+          ...listedHeadOf(thread, this.wordsIn(thread)),
+          space: thread.space,
+          ...(thread.elsewhere ? { elsewhere: true } : {}),
+        })
       } else lines.delete(thread.id)
     }
     return [...lines.values()].sort((a, b) => b.updated - a.updated).map((one) => this.settled(one))
@@ -389,12 +407,28 @@ class Chat implements Panel {
   /** A head as this run knows it: a chat written down as at work that nothing in this
    *  run is working on was at work when the app last closed, and is interrupted
    *  (`relaunch`). Written down the next time the thread itself is. */
-  private settled<T extends Listed>(head: T): T {
+  private settled<T extends Pick<Listed, 'id' | 'state' | 'elsewhere'>>(head: T): T {
     const state = head.state ?? FIRST_STATE
-    if (this.running.includes(head.id) || tasks.of(head.id).length || this.resets[head.id]?.waiting)
+    if (
+      this.running.includes(head.id) ||
+      head.elsewhere ||
+      tasks.of(head.id).length ||
+      this.resets[head.id]?.waiting
+    )
       return head
     const now = nextState(state, { type: 'relaunch' })
     return now === state ? head : { ...head, state: now }
+  }
+
+  /** A thread read from its file, settled as its head is: a chat at work when the app last
+   *  closed is interrupted on the thread as well, or a send, which moves it to at work
+   *  from at work, would tell the list nothing. */
+  private settledRead(thread: Thread | null): Thread | null {
+    if (thread) {
+      const { state } = this.settled(thread)
+      if (state !== undefined) thread.state = state
+    }
+    return thread
   }
 
   /** The one door every change of a chat's state goes through (#1089): the machine in
@@ -681,20 +715,134 @@ class Chat implements Panel {
       if (event.turn.role === 'you') {
         if (event.turn.steered) this.tookSteered(thread, event.turn.draft?.text ?? '')
         else this.pending = without(this.pending, thread.id)
+      } else {
+        this.answeringIn(thread, event.turn)
       }
     } else if (event.type === 'part') {
       this.changed.add(event.turn)
       // A question for the reader is an answer they have not seen, until they do, and
-      // the chat waits on them; anything after it is the agent going on.
+      // the chat waits on them; anything after it is the agent going on, unless a call
+      // beside it is still asking (`runCalls` runs a round's calls side by side).
       if (event.part.kind === 'tool' && event.part.state === 'asking') {
         this.answered(thread)
         this.move(thread, { type: 'ask' })
-      } else this.move(thread, { type: 'answered' })
+      } else if (!stillAsking(thread, event.turn)) this.move(thread, { type: 'answered' })
+      this.grew(thread, event.part)
     } else if (event.type === 'done') {
       this.everything = true
     }
     if (thread === this.open) this.draw()
     if (thread === this.watching) this.drawWatched()
+  }
+
+  // ── An answer on its way, written down ─────────────────
+
+  /** Whether another window is still answering in the chat in front, which Ask again
+   *  would answer a second time. */
+  get answeredElsewhere(): boolean {
+    return !!this.open?.elsewhere
+  }
+
+  /** The threads whose answers have grown since they were last written. */
+  private readonly unkept = new Set<Thread>()
+
+  /** Words arrive many times a second, and a write is the whole thread. */
+  private readonly keepSoon = afterQuiet(() => this.keepAnswers(), KEEP_QUIET, KEEP_AT_MOST)
+
+  /** An answer begins: the message that asked it is written now, with the mark that
+   *  says it is still answering, so a window going from here on leaves the message, and
+   *  a chat that has only just started is one the next launch can find. */
+  private answeringIn(thread: Thread, turn: Turn): void {
+    thread.answering = turn.id
+    delete thread.elsewhere
+    this.beat ??= setInterval(() => this.answersAlive(), ANSWER_BEAT)
+    this.unkept.delete(thread)
+    const listed = this.every.some((one) => one.id === thread.id)
+    const kept = keepThread(thread).catch(() => undefined)
+    if (thread === this.open) rememberOpen(thread.id)
+    if (!listed) void kept.then(() => this.refreshHeads())
+  }
+
+  /** A thread another window has written, read again here, so what this window shows
+   *  and what it writes next is what the file holds. Nothing of one answering here,
+   *  which is the one writing it. What was queued behind that answer goes once it is over,
+   *  and while it is not, whether that window is still there is asked again at every
+   *  beat: a window that crashed says nothing. */
+  private async readAgain(id: string): Promise<void> {
+    const held = this.live.get(id)
+    if (!held || this.running.includes(id)) return
+    const fresh = await readThread(held.space, id).catch(() => null)
+    if (this.live.get(id) !== held || this.running.includes(id)) return
+    if (!fresh) {
+      // Not read this time: what waits on it waits for the next.
+      if (this.queued[id]?.length)
+        this.askingAgain ??= setTimeout(() => this.askAgain(), ANSWER_BEAT)
+      return
+    }
+    this.live.set(id, fresh)
+    if (this.open === held) this.show(fresh)
+    if (fresh.elsewhere) {
+      if (this.queued[id]?.length)
+        this.askingAgain ??= setTimeout(() => this.askAgain(), ANSWER_BEAT)
+    } else if (this.queued[id]?.length) {
+      this.next(fresh)
+    }
+  }
+
+  /** Another window wrote a thread down. */
+  heardWritten(id: string): void {
+    void this.readAgain(id)
+    this.headsSoon()
+  }
+
+  /** The list told what another window's answers have come to, as often as they are written. */
+  private readonly headsSoon = afterQuiet(() => void this.refreshHeads(), KEEP_QUIET, KEEP_AT_MOST)
+
+  private askingAgain: ReturnType<typeof setTimeout> | null = null
+
+  private askAgain(): void {
+    this.askingAgain = null
+    for (const id of Object.keys(this.queued)) {
+      if (this.live.get(id)?.elsewhere) void this.readAgain(id)
+    }
+  }
+
+  /** What says the answers here are alive, while there are any. */
+  private beat: ReturnType<typeof setInterval> | null = null
+
+  private answersAlive(): void {
+    const answering = this.running.flatMap((id) => {
+      const thread = this.live.get(id)
+      return thread?.answering ? [thread] : []
+    })
+    if (answering.length) {
+      for (const thread of answering) void keepThread(thread).catch(() => undefined)
+      return
+    }
+    if (this.beat !== null) clearInterval(this.beat)
+    this.beat = null
+  }
+
+  /** A part of an answer arrived or changed. A call that has finished is written now:
+   *  what it did to the notes is done, and its row is the record of that for the
+   *  changes card and the rewind. Words can wait a moment. */
+  private grew(thread: Thread, part: Part): void {
+    if (part.kind === 'tool' && part.state !== 'running' && part.state !== 'asking') {
+      this.unkept.delete(thread)
+      void keepThread(thread).catch(() => undefined)
+      return
+    }
+    this.unkept.add(thread)
+    this.keepSoon()
+  }
+
+  /** Every answer that has grown, written now: the pause is over, or the window is
+   *  going, which nothing else here would hear of; see parting.ts. */
+  keepAnswers(): void {
+    this.keepSoon.cancel()
+    // Said to parting.ts as well, so a window closing waits for these.
+    for (const thread of this.unkept) writing(keepThread(thread))
+    this.unkept.clear()
   }
 
   // ── Sending ────────────────────────────────────────────
@@ -846,8 +994,11 @@ class Chat implements Panel {
   /** A send in a thread: run at once, or queued behind the one running there. */
   private enqueue(thread: Thread, send: Queued): void {
     this.live.set(thread.id, thread)
-    if (this.running.includes(thread.id)) {
+    // Behind an answer another window is giving too: sent now, this copy's turns would go
+    // over that answer in the file. It goes when that one has ended; see `readAgain`.
+    if (this.running.includes(thread.id) || thread.elsewhere) {
       this.queued = { ...this.queued, [thread.id]: [...(this.queued[thread.id] ?? []), send] }
+      if (thread.elsewhere) void this.readAgain(thread.id)
       return
     }
     void this.run(thread, send)
@@ -902,6 +1053,7 @@ class Chat implements Panel {
     once?.signal?.addEventListener('abort', stop)
     // A send's own mode, model and effort are the thread's for that send alone.
     const before = { mode: thread.mode, model: thread.model, effort: thread.effort }
+    if (once) thread.own = before
     Object.assign(thread, {
       ...(once?.mode ? { mode: once.mode } : {}),
       ...(once?.model ? { model: once.model } : {}),
@@ -930,6 +1082,7 @@ class Chat implements Panel {
     } finally {
       once?.signal?.removeEventListener('abort', stop)
       if (once) Object.assign(thread, before)
+      if (once) delete thread.own
       await this.finish(
         thread,
         !stopper.signal.aborted,
@@ -971,6 +1124,8 @@ class Chat implements Panel {
    *  answer the reader did not stop is one for them to see (`replied`). */
   private async finish(thread: Thread, replied = false, stop: Stop = 'end'): Promise<void> {
     if (replied && thread.turns.at(-1)?.role === 'model') thread.answered = Date.now()
+    delete thread.answering
+    this.unkept.delete(thread)
     this.stoppers.delete(thread.id)
     this.running = this.running.filter((one) => one !== thread.id)
     this.relist()
@@ -1200,7 +1355,7 @@ class Chat implements Panel {
    *  switch has been asked about like any other (`chooseModel`), and not at all where the
    *  reader said no. */
   retry(model?: { provider: string; id: string }, thread = this.open): void {
-    if (!thread || this.running.includes(thread.id)) return
+    if (!thread || this.running.includes(thread.id) || thread.elsewhere) return
     if (model) {
       void this.chooseModel(model.provider, model.id).then((switched) => {
         if (switched) this.retry(undefined, thread)
@@ -1482,7 +1637,7 @@ class Chat implements Panel {
   private async held(id: string): Promise<Thread | null> {
     const live = this.live.get(id)
     if (live) return live
-    const read = await readThread(this.spaceOf(id), id).catch(() => null)
+    const read = this.settledRead(await readThread(this.spaceOf(id), id).catch(() => null))
     // In hand from now on, so what changes it is the list's at once (`merged`); one
     // taken meanwhile is the one changed.
     if (read && !isDeleted(id)) {
@@ -1587,6 +1742,8 @@ class Chat implements Panel {
 
 export const chat = new Chat()
 
+owes(() => chat.keepAnswers())
+
 // Work starting and ending out of sight moves its thread (#1089).
 tasks.watch((id) => chat.worked(id))
 
@@ -1624,6 +1781,12 @@ $effect.root(() => {
 answerThreadSpaces(
   (id) => chat.threadOf(id)?.space ?? chat.every.find((one) => one.id === id)?.space ?? null,
 )
+
+/** Whether a call of a model turn is still waiting on the reader. */
+function stillAsking(thread: Thread, turn: string): boolean {
+  const parts = thread.turns.find((one) => one.id === turn)?.parts ?? []
+  return parts.some((part) => part.kind === 'tool' && part.state === 'asking')
+}
 
 /** The space a thread works in: its own, and the one in front where it names none this
  *  device has. What its message is gathered in and its sources are paths in. */

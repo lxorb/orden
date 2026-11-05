@@ -756,6 +756,8 @@ export const pa: Dictionary = {
   '{done} of {total}': '{total} ਵਿੱਚੋਂ {done}',
   'Sync failed': 'ਸਮਕਾਲ ਨਾਕਾਮ',
   '{name} could not be written.': '{name} ਨਹੀਂ ਲਿਖੀ ਜਾ ਸਕੀ।',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} ਨਹੀਂ ਲਿਖੀ ਜਾ ਸਕੀ: ਇਸ ਦੀ ਫ਼ਾਈਲ ਪੜ੍ਹੀ ਨਹੀਂ ਜਾ ਸਕਦੀ। ਇਹ 64 MB ਤੋਂ ਵੱਡੀ ਜਾਂ UTF-8 ਤੋਂ ਬਿਨਾਂ ਲਿਖਤ ਹੋ ਸਕਦੀ ਹੈ।',
   '{name} could not be read.': '{name} ਨਹੀਂ ਪੜ੍ਹੀ ਜਾ ਸਕੀ।',
   'Text size': 'ਲਿਖਤ ਦਾ ਆਕਾਰ',
   'Line spacing': 'ਲਾਈਨ ਵਿੱਥ',
@@ -1541,6 +1543,8 @@ export const pa: Dictionary = {
   'The provider answered {status}.': 'ਪ੍ਰਦਾਤਾ ਨੇ {status} ਜਵਾਬ ਦਿੱਤਾ।',
   'Add an AI provider in Settings first.': 'ਪਹਿਲਾਂ ਸੈਟਿੰਗਾਂ ਵਿੱਚ AI ਪ੍ਰਦਾਤਾ ਜੋੜੋ।',
   'The model did not answer.': 'ਮਾਡਲ ਨੇ ਜਵਾਬ ਨਹੀਂ ਦਿੱਤਾ।',
+  'The connection closed before the answer was finished.':
+    'ਜਵਾਬ ਪੂਰਾ ਹੋਣ ਤੋਂ ਪਹਿਲਾਂ ਕਨੈਕਸ਼ਨ ਬੰਦ ਹੋ ਗਿਆ।',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'ਤੁਹਾਡਾ {plan} ਪਲਾਨ {time} ਤੱਕ ਸੀਮਾ ’ਤੇ ਹੈ।',
   'Your {plan} plan is at its limit for now.': 'ਤੁਹਾਡਾ {plan} ਪਲਾਨ ਹਾਲੇ ਸੀਮਾ ’ਤੇ ਹੈ।',
@@ -2016,8 +2020,10 @@ export const pa: Dictionary = {
   'Send feedback': 'ਫੀਡਬੈਕ ਭੇਜੋ',
   'Describe the issue': 'ਸਮੱਸਿਆ ਦੱਸੋ',
   Sent: 'ਭੇਜ ਦਿੱਤਾ',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'ਇਸ ਰਿਪੋਰਟ ਵਿੱਚ ਤੁਹਾਡਾ ਵੇਰਵਾ, Orden ਦਾ ਰੂਪ, ਤੁਹਾਡਾ ਪਲੇਟਫਾਰਮ ਅਤੇ ਐਪ ਦਾ ਹਾਲੀਆ ਲੌਗ ਹੁੰਦਾ ਹੈ। ਤੁਹਾਡੇ ਨੋਟ ਕਦੇ ਨਹੀਂ।',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'ਇਸ ਰਿਪੋਰਟ ਵਿੱਚ ਤੁਹਾਡਾ ਵੇਰਵਾ, Orden ਦਾ ਸੰਸਕਰਣ, ਤੁਹਾਡਾ ਪਲੇਟਫਾਰਮ ਅਤੇ ਹਾਲੀਆ ਐਪ ਲੌਗ ਸ਼ਾਮਲ ਹੈ, ਫਾਈਲ ਪਾਥ ਹਟਾ ਕੇ।',
+  'Its space is archived': 'ਇਸਦੀ ਸਪੇਸ ਪੁਰਾਲੇਖ ਕੀਤੀ ਗਈ ਹੈ',
+  'Back as {name}': '{name} ਵਜੋਂ ਵਾਪਸ',
   'Send into the running answer': 'ਚੱਲ ਰਹੇ ਜਵਾਬ ਵਿੱਚ ਭੇਜੋ',
   'Stop the answer': 'ਜਵਾਬ ਰੋਕੋ',
   'Open every step': 'ਹਰ ਕਦਮ ਖੋਲ੍ਹੋ',
@@ -2102,6 +2108,8 @@ export const pa: Dictionary = {
     'ਇਹ ਤੁਹਾਡੇ ਨੋਟ ਪੜ੍ਹਦਾ ਹੈ ਅਤੇ ਤੁਹਾਡੇ ਲੌਗ-ਇਨ ਨਾਲ ਬ੍ਰਾਊਜ਼ ਕਰਦਾ ਹੈ, ਇਸ ਲਈ ਕੋਈ ਪੰਨਾ ਇਸ ਤੋਂ ਨੋਟ ਬਾਹਰ ਭਿਜਵਾਉਣ ਦੀ ਕੋਸ਼ਿਸ਼ ਕਰ ਸਕਦਾ ਹੈ।',
   Activity: 'ਗਤੀਵਿਧੀ',
   'Add a site': 'ਸਾਈਟ ਜੋੜੋ',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'ਇਸ ਸੂਚੀ ਦਾ ਪ੍ਰੋਗਰਾਮ ਬਿਨਾਂ ਪੁੱਛੇ ਚੱਲਦਾ ਹੈ, ਅਤੇ ਉਹ ਪ੍ਰੋਗਰਾਮ ਜੋ ਕਰ ਸਕਦਾ ਹੈ ਉਹ ਸਭ ਕਰ ਸਕਦਾ ਹੈ।',
   'Add a program': 'ਪ੍ਰੋਗਰਾਮ ਜੋੜੋ',
   'Every space': 'ਹਰ ਥਾਂ',
   Sites: 'ਸਾਈਟਾਂ',
@@ -2531,6 +2539,7 @@ export const pa: Dictionary = {
   'No {property}': '{property} ਤੋਂ ਬਿਨਾਂ',
   '{card} moved to {group}': '{card} ਨੂੰ {group} ਵਿੱਚ ਭੇਜਿਆ',
   'Not moved': 'ਨਹੀਂ ਭੇਜਿਆ',
+  'Not undone': 'ਵਾਪਸ ਨਹੀਂ ਹੋਇਆ',
   Retry: 'ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ',
   Calculate: 'ਗਿਣਤੀ ਕਰੋ',
   'Remove sort': 'ਲੜੀ ਹਟਾਓ',
@@ -2808,6 +2817,8 @@ export const pa: Dictionary = {
   '{title}, running': '{title}, ਚੱਲ ਰਿਹਾ ਹੈ',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ਹੁਣ AI ਕੁੰਜੀਆਂ Mac ਦੀ ਕੀਚੇਨ ਵਿੱਚ ਨਹੀਂ ਰੱਖਦਾ, ਜੋ ਵਾਰ-ਵਾਰ ਉਸਦਾ ਪਾਸਵਰਡ ਮੰਗਦੀ ਸੀ। ਆਪਣੀਆਂ ਕੁੰਜੀਆਂ ਮੁੜ ਦਿਓ ਅਤੇ ChatGPT ਵਿੱਚ ਇੱਕ ਵਾਰ ਹੋਰ ਸਾਈਨ ਇਨ ਕਰੋ।',
+  'This PDF is locked by its owner': 'ਇਹ PDF ਇਸਦੇ ਮਾਲਕ ਨੇ ਲੌਕ ਕੀਤੀ ਹੈ',
+  'Part of this could not be undone': 'ਇਸਦਾ ਕੁਝ ਹਿੱਸਾ ਵਾਪਸ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ',
   'Add images': 'ਤਸਵੀਰਾਂ ਜੋੜੋ',
   'Remove image': 'ਤਸਵੀਰ ਹਟਾਓ',
   'That is more than 4 images.': 'ਇਹ 4 ਤੋਂ ਵੱਧ ਤਸਵੀਰਾਂ ਹਨ।',

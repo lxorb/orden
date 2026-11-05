@@ -191,6 +191,7 @@ class AnthropicReader implements Reader {
   private readonly open = new Map<number, Open>()
   private usage: Usage
   private stop = ''
+  private over = false
   private category = ''
 
   constructor(private readonly window: number | null) {
@@ -205,6 +206,9 @@ class AnthropicReader implements Reader {
         this.usage = anthropicUsage(message.usage, this.window)
         return { changed: [], model: text(message.model), usage: this.usage }
       }
+      case 'message_stop':
+        this.over = true
+        return { changed: [] }
       case 'content_block_start':
         return this.started(Number(said.index), record(said.content_block))
       case 'content_block_delta':
@@ -313,6 +317,10 @@ class AnthropicReader implements Reader {
   private add(part: Part): number {
     this.parts.push(part)
     return this.parts.length - 1
+  }
+
+  finished(saidDone: boolean): boolean {
+    return saidDone || this.over || this.stop !== ''
   }
 
   answer(): Answer {

@@ -57,7 +57,16 @@
   import { freshId, type InkPoint, type InkStroke } from './canvas/format'
   import { Contacts, hovering, penKind, Stylus } from './canvas/contacts'
   import { hand } from './canvas/hand.svelte'
-  import { cardsInLasso, erased, leadPoint, penFelt, strokesInLasso, tidied } from './canvas/ink'
+  import {
+    cardsInLasso,
+    erased,
+    leadPoint,
+    nearStroke,
+    penFelt,
+    rubbedBetween,
+    strokesInLasso,
+    tidied,
+  } from './canvas/ink'
   import { DEFAULT_INK, readPalette } from './canvas/palette'
   import { pens } from './canvas/pens.svelte'
   import { inks, type Tool } from './canvas/pointer'
@@ -351,7 +360,7 @@
    *  itself and run away down the column. */
   type Gesture =
     | { kind: 'draw'; id: number; page: string; stroke: InkStroke; began: number }
-    | { kind: 'erase'; id: number; run: string }
+    | { kind: 'erase'; id: number; run: string; last: Point; lastScreen: Point }
     | { kind: 'lasso'; id: number; points: Point[]; cards?: boolean }
     /** A finger held still on the paper: the menu is up, and moving on from here draws
      *  a lasso instead (#349). */
@@ -566,7 +575,13 @@
     }
 
     if (tool === 'erase') {
-      gesture = { kind: 'erase', id: event.pointerId, run: freshId() }
+      gesture = {
+        kind: 'erase',
+        id: event.pointerId,
+        run: freshId(),
+        last: point,
+        lastScreen: screenAt(event),
+      }
       rub(point, gesture.run)
       return
     }
@@ -873,7 +888,10 @@
     }
 
     if (one.kind === 'erase') {
-      rub(point, one.run)
+      const now = { at: point, screen: screenAt(event) }
+      const before = { at: one.last, screen: one.lastScreen }
+      for (const at of rubbedBetween(before, now, camera.scale, pens.rub * unit)) rub(at, one.run)
+      gesture = { ...one, last: now.at, lastScreen: now.screen }
       return
     }
 
@@ -989,7 +1007,7 @@
     const ink: InkStroke[] = []
 
     for (const stroke of canvas.ink) {
-      const left = erased(stroke, at, reach)
+      const left = nearStroke(stroke, at, reach) ? erased(stroke, at, reach) : [stroke]
       if (left.length === 1 && left[0] === stroke) {
         ink.push(stroke)
         continue

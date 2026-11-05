@@ -754,6 +754,8 @@ export const te: Dictionary = {
   '{done} of {total}': '{total}లో {done}',
   'Sync failed': 'సింక్ విఫలమైంది',
   '{name} could not be written.': '{name} రాయలేకపోయింది.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} రాయలేకపోయింది: దాని ఫైల్‌ను చదవలేకపోతోంది. అది 64 MB కంటే పెద్దది కావచ్చు లేదా UTF-8 పాఠ్యం కాకపోవచ్చు.',
   '{name} could not be read.': '{name} చదవలేకపోయింది.',
   'Text size': 'టెక్స్ట్ పరిమాణం',
   'Line spacing': 'పంక్తి అంతరం',
@@ -1544,6 +1546,8 @@ export const te: Dictionary = {
   'The provider answered {status}.': 'ప్రొవైడర్ {status} అని బదులిచ్చింది.',
   'Add an AI provider in Settings first.': 'ముందు సెట్టింగ్‌లలో AI ప్రొవైడర్ జోడించండి.',
   'The model did not answer.': 'మోడల్ బదులివ్వలేదు.',
+  'The connection closed before the answer was finished.':
+    'సమాధానం పూర్తికాకముందే కనెక్షన్ మూసుకుపోయింది.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'మీ {plan} ప్లాన్ {time} వరకు పరిమితికి చేరింది.',
@@ -2024,8 +2028,10 @@ export const te: Dictionary = {
   'Send feedback': 'అభిప్రాయం పంపండి',
   'Describe the issue': 'సమస్యను వివరించండి',
   Sent: 'పంపబడింది',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'ఈ నివేదికలో మీ వివరణ, Orden వెర్షన్, మీ ప్లాట్‌ఫామ్, యాప్ ఇటీవలి లాగ్ ఉంటాయి. మీ నోట్‌లు ఎప్పుడూ ఉండవు.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'ఈ నివేదికలో మీ వివరణ, Orden వెర్షన్, మీ ప్లాట్‌ఫామ్ మరియు ఇటీవలి యాప్ లాగ్ ఉంటాయి, ఫైల్ పాత్‌లు తీసివేసి.',
+  'Its space is archived': 'దాని స్పేస్ ఆర్కైవ్ చేయబడింది',
+  'Back as {name}': '{name}గా తిరిగి వచ్చింది',
   'Send into the running answer': 'నడుస్తున్న సమాధానంలోకి పంపండి',
   'Stop the answer': 'సమాధానాన్ని ఆపండి',
   'Open every step': 'ప్రతి దశను తెరవండి',
@@ -2110,6 +2116,8 @@ export const te: Dictionary = {
     'ఇది మీ నోట్‌లను చదువుతుంది, మీ లాగిన్‌తో బ్రౌజ్ చేస్తుంది, కాబట్టి ఏదైనా పేజీ వాటిని బయటకు పంపేలా చేయడానికి ప్రయత్నించవచ్చు.',
   Activity: 'కార్యకలాపం',
   'Add a site': 'సైట్‌ను జోడించు',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'ఈ జాబితాలోని ప్రోగ్రామ్ అడగకుండానే నడుస్తుంది, ఆ ప్రోగ్రామ్ చేయగలిగినదంతా చేయగలదు.',
   'Add a program': 'ప్రోగ్రామ్‌ను జోడించు',
   'Every space': 'ప్రతి స్పేస్',
   Sites: 'సైట్‌లు',
@@ -2537,6 +2545,7 @@ export const te: Dictionary = {
   'No {property}': '{property} లేదు',
   '{card} moved to {group}': '{card} {group}కి తరలించబడింది',
   'Not moved': 'తరలించబడలేదు',
+  'Not undone': 'రద్దు చేయబడలేదు',
   Retry: 'మళ్లీ ప్రయత్నించండి',
   Calculate: 'లెక్కించు',
   'Remove sort': 'క్రమాన్ని తీసివేయి',
@@ -2814,6 +2823,8 @@ export const te: Dictionary = {
   '{title}, running': '{title}, నడుస్తోంది',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ఇకపై AI కీలను Mac కీచెయిన్‌లో ఉంచదు, అది మళ్లీ మళ్లీ పాస్‌వర్డ్ అడిగేది. మీ కీలను మళ్లీ నమోదు చేసి ChatGPT లోకి మరోసారి సైన్ ఇన్ చేయండి.',
+  'This PDF is locked by its owner': 'ఈ PDF దాని యజమాని లాక్ చేశారు',
+  'Part of this could not be undone': 'దీనిలో కొంత భాగాన్ని రద్దు చేయలేకపోయాము',
   'Add images': 'చిత్రాలను జోడించు',
   'Remove image': 'చిత్రాన్ని తీసివేయి',
   'That is more than 4 images.': 'ఇవి 4 చిత్రాల కంటే ఎక్కువ.',

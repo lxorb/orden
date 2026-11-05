@@ -47,6 +47,7 @@ import {
   placeOf,
   reachable,
   sharedSource,
+  tabsInReach,
   writableAt,
 } from './spaces'
 import * as view from './reader-view'
@@ -170,13 +171,13 @@ export async function getContext(call: Call): Promise<AgentAnswer> {
   const rowOf = (one: Tab) => (away ? { ...tabOf(one), space: front.space.name } : tabOf(one))
   const tab = workspace.active
   const last = tab?.note.live.readerAt ?? null
-  const named = namedOutside()
+  const named = namedOutside(call)
 
   const context = {
     space: place.space.name,
     selected: tab ? rowOf(tab) : null,
     selection: tab ? await selectionIn(tab) : null,
-    tabs: workspace.tabs.map(rowOf),
+    tabs: tabsInReach(call).map(rowOf),
     typing: last !== null && Date.now() - last < TYPING,
   }
 
@@ -192,13 +193,13 @@ export async function getContext(call: Call): Promise<AgentAnswer> {
 
 /** Whether a tab's title is somebody else's words: a page's, or the program a terminal
  *  is running. */
-function namedOutside(): boolean {
-  return workspace.tabs.some((one) => TAB_KINDS[one.kind].outsideTitle)
+function namedOutside(call: Call): boolean {
+  return tabsInReach(call).some((one) => TAB_KINDS[one.kind].outsideTitle)
 }
 
 /** The tab a call names by id. */
 function tabNamed(call: Call): Tab {
-  return tabWithId(need(call, 'tab'))
+  return tabWithId(call, need(call, 'tab'))
 }
 
 /** A tab made or opened, answered as its row; null where nothing came of it. */
@@ -214,23 +215,24 @@ function sourceOfTab(tab: Tab): string | null {
   return docSource({ path: tab.path, shared: tab.note.shared })
 }
 
-/** The site rule that denies an address to this agent, as the crate matches one: the
- *  host, or a host under it (`covers` in policy.rs), by every spelling of either - a
- *  capital, the dot a fully qualified name ends on, letters typed or as an address
- *  writes them (#1078). */
-function deniedSite(call: Call, url: string): string | null {
+/** The site rule that keeps an address out of the reader's tabs for this agent, as the
+ *  crate reads one (`site_allowed` in policy.rs): the longest site that covers the host,
+ *  denied anywhere or kept to the agent's own store, by every spelling of either - a
+ *  capital, the dot a fully qualified name ends on, letters typed or as an address writes
+ *  them (#1078). */
+function keptSite(call: Call, url: string): string | null {
   const host = hostOf(url)?.replace(/\.+$/, '')
   const sites = call.caller.agent?.sites ?? {}
   if (!host) return null
 
-  return (
-    Object.keys(sites).find((site) => {
-      const named = siteNamed(site)
-      return (
-        sites[site] === 'deny' && named !== '' && (host === named || host.endsWith(`.${named}`))
-      )
-    }) ?? null
-  )
+  const covering = Object.keys(sites)
+    .map((site) => ({ site, bare: siteNamed(site) }))
+    .filter(({ bare }) => bare !== '' && (host === bare || host.endsWith(`.${bare}`)))
+    .sort((one, other) => other.bare.length - one.bare.length)[0]
+  if (!covering) return null
+
+  const rule = sites[covering.site]
+  return rule === 'deny' || rule === 'agent-store' ? covering.bare : null
 }
 
 /** A site as an address names it, as `named` in policy.rs does. */
@@ -242,8 +244,8 @@ function siteNamed(site: string): string {
 /** An address an agent may open in one of the reader's tabs. */
 function webOf(call: Call, url: string): string {
   if (!isWebAddress(url)) throw new Refused('bad_arguments', `${url} is not a web address`)
-  const denied = deniedSite(call, url)
-  if (denied) throw new Refused('site_denied', `${denied} is a site this agent may not open`)
+  const kept = keptSite(call, url)
+  if (kept) throw new Refused('site_denied', `${kept} is a site this agent may not open here`)
 
   return url
 }
@@ -442,7 +444,7 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
 
   switch (op) {
     case 'list':
-      return done(workspace.tabs.map(tabOf), namedOutside() ? 'tab titles' : null)
+      return done(tabsInReach(call).map(tabOf), namedOutside(call) ? 'tab titles' : null)
 
     case 'open':
       return openSomething(call)
@@ -466,7 +468,7 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
 
     case 'split': {
       view.splitBeside(call, tabNamed(call))
-      return done(workspace.tabs.map(tabOf))
+      return done(tabsInReach(call).map(tabOf))
     }
 
     case 'focus': {

@@ -8,6 +8,7 @@ import { presenceOf } from '../src/people/presence'
 import { profileChanges, statusIn } from '../src/people/profile'
 import { call, mail, signIn, testEnv, type TestEnv } from './harness'
 import { connect, hangUp, hub, send } from './hub-fakes'
+import { invited } from './sync2'
 
 const OWNER = 'owner@example.com'
 const MEMBER = 'member@example.com'
@@ -433,6 +434,38 @@ describe('the routes', () => {
     expect(
       (await call(env, '/v2/me/profile', { method: 'PUT', token: guest, body: {} })).status,
     ).toBe(403)
+  })
+})
+
+describe('two people each given one note of a space', () => {
+  test('are not shown to each other; somebody in the whole space is', async () => {
+    const env = testEnv()
+    const owner = await signIn(env, OWNER)
+    const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Shared' } })).json
+      .space.id
+    const note = async (name: string) =>
+      (
+        await call(env, `/v1/spaces/${space}/notes`, {
+          token: owner,
+          body: { path: name, content: 'words' },
+        })
+      ).json.note.id
+    const [a, b] = [await note('a.md'), await note('b.md')]
+    const holder = await invited(env, owner, space, 'holder-a@example.com', 'read', a)
+    const sameNote = await invited(env, owner, space, 'holder-a2@example.com', 'read', a)
+    const elsewhere = await invited(env, owner, space, 'holder-b@example.com', 'read', b)
+    const whole = await invited(env, owner, space, MEMBER, 'read')
+    const sees = async (token: string, about: string) => {
+      const id = (await call(env, '/v1/me', { token: about })).json.user.id
+      return (await call<PeopleReply>(env, `/v2/people?ids=${id}`, { token })).json.people.length
+    }
+
+    expect(await sees(holder, elsewhere)).toBe(0)
+    expect(await sees(elsewhere, holder)).toBe(0)
+    expect(await sees(holder, sameNote)).toBe(1)
+    expect(await sees(holder, whole)).toBe(1)
+    expect(await sees(whole, holder)).toBe(1)
+    env.close()
   })
 })
 

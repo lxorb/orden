@@ -215,11 +215,10 @@ export async function letGo(
     .first<{ email: string; type: string }>()
   const picture = mine?.type.startsWith('image/') ?? false
 
-  // Counting its own uses, the two of its own that hold a blob without a note - its
-  // face and a site's theme - keep the row too, and a picture that one of its own notes
-  // written before their pictures were might show cannot be decided yet.
+  // Counting its own uses, what holds a blob without a note keeps the row too, and what
+  // cannot be asked yet cannot be decided yet; see `ownOtherwise`.
   if (own) {
-    const otherwise = await ownOtherwise(env, userId, hash, picture)
+    const otherwise = await ownOtherwise(env, userId, hash, picture, done)
     if (otherwise === 'used') return true
     if (otherwise === 'unknown') return false
   }

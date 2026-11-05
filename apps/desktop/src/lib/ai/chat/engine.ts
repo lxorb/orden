@@ -257,6 +257,9 @@ export function createApiEngine(setup: Setup): Engine {
     let stop: Stop = 'end'
     steering.set(thread.id, [])
 
+    /** Where the round in hand's parts begin in the turn. */
+    let start = turn.parts.length
+
     const adjusted = (change: Adjusted) => {
       if (change.effort) {
         thread.effort = change.effort
@@ -276,6 +279,8 @@ export function createApiEngine(setup: Setup): Engine {
       if (change.toolsRefused) {
         listing = { ...listing, tools: [] }
         say({ kind: 'notice', code: 'no_tools', text: '' })
+        // Said before the round's first part, which goes after it rather than over it.
+        start = turn.parts.length
       }
     }
 
@@ -293,7 +298,7 @@ export function createApiEngine(setup: Setup): Engine {
           stop = 'steps'
           break
         }
-        const start = turn.parts.length
+        start = turn.parts.length
         const result = await round(
           wire,
           {
@@ -337,6 +342,13 @@ export function createApiEngine(setup: Setup): Engine {
         addedNow = [...addedNow, ...result.answer.messages]
 
         const { ending, calls } = result.answer
+        // A message with nothing under it reads as if the panel had hung.
+        if (
+          ending === 'end' &&
+          !turn.parts.some((part) => part.kind === 'text' || part.kind === 'tool')
+        ) {
+          throw new Error(t('The model did not answer.'))
+        }
         if (ending === 'pause') continue
         if (ending === 'tool') {
           const outputs = await runCalls(thread, provider, calls, turn, on, signal)
@@ -424,6 +436,7 @@ export function createApiEngine(setup: Setup): Engine {
         args: call.args,
         state: output.approval ? 'asking' : output.error ? 'error' : 'ok',
         result: output,
+        at: Date.now(),
       }
       turn.parts[index] = done
       on({ type: 'part', turn: turn.id, index, part: done })
@@ -439,7 +452,8 @@ export function createApiEngine(setup: Setup): Engine {
         // question the first one stood in front of), it waits again, a few times at most.
         for (let asked = 0; output.approval && asked < MOST_ASKS; asked++) {
           const approval = output.approval
-          if (always(thread, call.name)) await answers.answer(approval, true)
+          if (always(thread, call.name, output.category, output.site))
+            await answers.answer(approval, true)
           else {
             written(call, output)
             if (!(await answers.answered(approval, signal))) {

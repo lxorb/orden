@@ -803,6 +803,8 @@ export const ar: Dictionary = {
   '{done} of {total}': '{done} من {total}',
   'Sync failed': 'فشلت المزامنة',
   '{name} could not be written.': 'تعذّرت كتابة {name}.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    'تعذّرت كتابة {name}: تتعذّر قراءة ملفها. قد يتجاوز حجمه 64 MB أو لا يكون نصًا بترميز UTF-8.',
   '{name} could not be read.': 'تعذّرت قراءة {name}.',
   'Text size': 'حجم النص',
   'Line spacing': 'تباعد الأسطر',
@@ -1643,6 +1645,7 @@ export const ar: Dictionary = {
   'The provider answered {status}.': 'أجاب المزوّد بـ {status}.',
   'Add an AI provider in Settings first.': 'أضف مزوّد ذكاء اصطناعي في الإعدادات أولاً.',
   'The model did not answer.': 'لم يجب الطراز.',
+  'The connection closed before the answer was finished.': 'انقطع الاتصال قبل اكتمال الإجابة.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'بلغت خطة {plan} لديك حدها حتى {time}.',
   'Your {plan} plan is at its limit for now.': 'بلغت خطة {plan} لديك حدها في الوقت الحالي.',
@@ -2128,8 +2131,10 @@ export const ar: Dictionary = {
   'Send feedback': 'إرسال ملاحظات',
   'Describe the issue': 'صف المشكلة',
   Sent: 'أُرسلت',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'يتضمن هذا التقرير وصفك وإصدار Orden ومنصتك وسجل التطبيق الأخير، ولا يتضمن ملاحظاتك أبدًا.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'يتضمن هذا التقرير وصفك وإصدار Orden ومنصتك وسجل التطبيق الأخير، بعد إزالة مسارات الملفات.',
+  'Its space is archived': 'مساحتها مؤرشفة',
+  'Back as {name}': 'عادت باسم {name}',
   'Send into the running answer': 'إرسال إلى الإجابة الجارية',
   'Stop the answer': 'إيقاف الإجابة',
   'Open every step': 'فتح كل الخطوات',
@@ -2212,6 +2217,8 @@ export const ar: Dictionary = {
     'يقرأ ملاحظاتك ويتصفح مسجَّل الدخول باسمك، لذا قد تحاول صفحة أن تجعله يرسلها إلى الخارج.',
   Activity: 'النشاط',
   'Add a site': 'إضافة موقع',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'يعمل البرنامج المدرج في هذه القائمة دون سؤال، ويستطيع فعل كل ما يقدر عليه ذلك البرنامج.',
   'Add a program': 'إضافة برنامج',
   'Every space': 'كل المساحات',
   Sites: 'المواقع',
@@ -2645,6 +2652,7 @@ export const ar: Dictionary = {
   'No {property}': 'بلا {property}',
   '{card} moved to {group}': 'تم نقل {card} إلى {group}',
   'Not moved': 'لم يتم النقل',
+  'Not undone': 'لم يتم التراجع',
   Retry: 'إعادة المحاولة',
   Calculate: 'حساب',
   'Remove sort': 'إزالة الترتيب',
@@ -2911,6 +2919,8 @@ export const ar: Dictionary = {
   '{title}, running': '{title}، قيد التشغيل',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'لم يعد Orden يحفظ مفاتيح الذكاء الاصطناعي في سلسلة مفاتيح Mac، التي ظلت تطلب كلمة مرورها. أدخل مفاتيحك وسجّل الدخول إلى ChatGPT مرة أخرى.',
+  'This PDF is locked by its owner': 'ملف PDF هذا مقفل من قبل مالكه',
+  'Part of this could not be undone': 'تعذّر التراجع عن جزء من هذا',
   'Add images': 'إضافة صور',
   'Remove image': 'إزالة الصورة',
   'That is more than 4 images.': 'هذه أكثر من 4 صور.',

@@ -22,7 +22,7 @@ export interface BuiltinParams {
   note?: { space: string; path: string }
   /** The tag, without `#`: a label. */
   tag?: string
-  /** The space, by its name: Todos. */
+  /** The space, by its name: Todos, and a label of the open space alone. */
   space?: string
   /** Today: a task with no day of its own, neither a start date nor a scheduled one, is
    *  in it, as one whose start date has come. The reader's setting; off, as Todoist's
@@ -42,6 +42,13 @@ const quote = (text: string) => JSON.stringify(text)
  *  (#371); a start date only says when it shows. */
 export const WHEN =
   'if(!task.deadline, null, if(task.deadline < today(), "overdue", if(task.deadline == today(), "today", if(task.deadline == today() + "1d", "tomorrow", "later"))))'
+
+/** The name WHEN goes by in a base whose own formula is called `when`, and whether a view
+ *  grouped by a property is grouped by it. */
+export const WHEN_ASIDE = 'ordenWhen'
+export function isWhen(property: string | undefined): boolean {
+  return property === 'formula.when' || property === `formula.${WHEN_ASIDE}`
+}
 
 /** The order of WHEN's groups; the group of no value comes after them. */
 export const WHEN_GROUPS = ['overdue', 'today', 'tomorrow', 'later']
@@ -172,10 +179,14 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
     }
     case 'label': {
       const tag = quote(params.tag ?? '')
+      const tagged = `if(task, task.started && task.hasTag(${tag}), file.hasTag(${tag}))`
       return base({
         type: 'list',
         name: `#${params.tag ?? ''}`,
-        filters: `if(task, task.started && task.hasTag(${tag}), file.hasTag(${tag}))`,
+        filters:
+          params.space === undefined
+            ? tagged
+            : { and: [`file.space == ${quote(params.space)}`, tagged] },
         sort: [],
         groupBy: { property: 'file.path', direction: 'ASC' },
         nib: { rows: 'both', kept: {} },

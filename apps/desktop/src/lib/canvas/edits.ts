@@ -52,7 +52,7 @@ function nodeById(canvas: Canvas, id: string): CanvasNode | undefined {
 /** Everything an edit acts on: what was picked, whatever a picked group holds,
  *  and the ink that lies inside a picked group. A frame is a thing with room in
  *  it, and dragging one that left the writing behind would be a surprise. */
-function reach(canvas: Canvas, picked: readonly string[]): Set<string> {
+export function reach(canvas: Canvas, picked: readonly string[]): Set<string> {
   const going = new Set(dragged(canvas, picked))
   const groups = canvas.nodes.filter((node) => node.type === 'group' && going.has(node.id))
 

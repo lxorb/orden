@@ -30,6 +30,7 @@ function box(overflowX: string, scrollWidth: number, clientWidth = 320, touchAct
     clientWidth,
     touchAction,
     parentElement: null,
+    hasAttribute: () => false,
   } as unknown as Element
 }
 
@@ -77,6 +78,18 @@ describe('what owns the gesture under the finger', () => {
 
   test('and the ink layer inside one, wherever the stroke landed', () => {
     expect(ownsGesture(nest(host, drawing(), box('visible', 320)), host)).toBe(true)
+  })
+
+  test("a phone's board, which turns its columns on a sideways swipe", () => {
+    const board = Object.assign(box('visible', 320), { hasAttribute: () => true })
+    expect(ownsGesture(nest(host, board, box('visible', 320)), host)).toBe(true)
+  })
+
+  test('but not in a drawer’s edge strip, where the drawer goes first, as Google Docs’ does', () => {
+    const board = Object.assign(box('visible', 320), { hasAttribute: () => true })
+    expect(ownsGesture(nest(host, board, box('visible', 320)), host, true)).toBe(false)
+    // A table that scrolls is still the table's: only a page turn gives way.
+    expect(ownsGesture(nest(host, box('auto', 900)), host, true)).toBe(true)
   })
 
   test('not the note, which leaves the sideways drag to whoever wants it', () => {

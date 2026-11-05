@@ -148,13 +148,14 @@ jobs:
 
       # Nix refuses to run a flake from GitHub whose lock file it would have to
       # change, so the committed flake.lock has to be the one these commands
-      # settle on.
+      # settle on. Which of the two it writes follows the flake it ran: the root's where
+      # there is one, and the cmp above only says the two are equal, so both are read.
       - name: flake.lock is committed and current
         if: startsWith(steps.flake.outputs.flake, 'path:')
         run: |
-          git status --porcelain packaging/nix
-          if [ -n "$(git status --porcelain packaging/nix/flake.lock)" ] && [ -z "${{ inputs.artifact }}" ]; then
-            echo "::error::packaging/nix/flake.lock is missing or stale"
+          git status --porcelain flake.lock packaging/nix
+          if [ -n "$(git status --porcelain flake.lock packaging/nix/flake.lock)" ] && [ -z "${{ inputs.artifact }}" ]; then
+            echo "::error::flake.lock or packaging/nix/flake.lock is missing or stale"
             exit 1
           fi
 

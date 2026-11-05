@@ -7,7 +7,7 @@
  *  agent's verb did and - the core of it - what it did not: switch the reader's space,
  *  or touch the tabs in front of them (docs/agent-native.md 8.6). */
 
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { answerThreadSpaces, callerOf, type Caller, READER } from '../../automation/caller'
 import { AGENT_WINDOW_VERBS } from '../verbs'
 import { type FileOp, FileOps, type Kind } from '../../workspace/file-ops'
@@ -137,6 +137,7 @@ const workspace = {
   moveMany: vi.fn(() => Promise.resolve()),
   loadTree: vi.fn(() => Promise.resolve()),
   openEntry: vi.fn(() => Promise.resolve()),
+  openPage: vi.fn(() => 't1'),
   close: vi.fn(),
   activate: vi.fn(),
   split: vi.fn(),
@@ -158,6 +159,7 @@ const workspace = {
   // follows it; see workspace/file-ops.ts.
   fileOps: new FileOps(),
   holdingUnder: vi.fn((_path: string, run: () => Promise<void>) => run()),
+  undone: { moved: () => undefined },
   // The disk's part of a move, which the store says to sync first.
   renameOnDisk: vi.fn(async (from: string, to: string) => {
     const { invoke } = await import('../../tauri')
@@ -233,6 +235,7 @@ vi.mock('../../tauri', async (original) => ({
 }))
 
 vi.mock('../../sharing.svelte', () => ({
+  trustsHtmlAt: () => true,
   isShared: (root: string) => root === '/s/Home',
   reachedByOthers: (path: string | null) =>
     path !== null && (path.startsWith('/s/Home/') || othersWrite.has(path)),
@@ -372,6 +375,18 @@ vi.mock('../../commands', () => ({
     { id: 'close-window', label: 'Close window', run: () => ran.push('close-window') },
     { id: 'publish', label: 'Publish this space as a blog', run: () => ran.push('publish') },
     { id: 'space:home', label: 'Space: Home', run: () => ran.push('space:home') },
+    { id: 'close-all', label: 'Close all', run: () => ran.push('close-all') },
+    { id: 'settings', label: 'Settings', run: () => ran.push('settings') },
+    { id: 'graph', label: 'Graph', run: () => ran.push('graph') },
+    { id: 'reformat', label: 'Tidy up', run: () => ran.push('reformat') },
+    { id: 'edit.delete-line', label: 'Delete the line', run: () => ran.push('delete-line') },
+    { id: 'undo-file', label: 'Undo', run: () => ran.push('undo-file') },
+    { id: 'theme:night', label: 'Theme: Night', run: () => ran.push('theme') },
+    { id: 'row-from-next-year', label: 'Something new', run: () => ran.push('new') },
+    { id: 'new-unique', label: 'New note', run: () => ran.push('new-unique') },
+    { id: 'new-canvas', label: 'New canvas', run: () => ran.push('new-canvas') },
+    { id: 'new-database', label: 'New base', run: () => ran.push('new-database') },
+    { id: 'copy-uri', label: 'Copy link', run: () => ran.push('copy') },
     {
       id: 'export-pdf',
       label: 'Export as PDF',
@@ -788,6 +803,81 @@ describe('the reader tabs', () => {
     expect(workspace.activate).not.toHaveBeenCalled()
   })
 
+  describe('of a space the grant does not reach', () => {
+    const away = {
+      id: 'x1',
+      kind: 'web',
+      path: null,
+      paneId: 'p3',
+      pinned: false,
+      shown: 'Beta bank',
+      note: { live: { readerAt: null }, shared: null, home: 'secret' },
+    }
+    const onlyWork = () => agent({ spaces: ['Work'] })
+    beforeEach(() => {
+      tabs.push(away as unknown as (typeof tabs)[number])
+    })
+    afterEach(() => {
+      tabs.splice(tabs.indexOf(away as unknown as (typeof tabs)[number]), 1)
+    })
+
+    test('are not listed, in either list', async () => {
+      const list = (await call('workspace_tabs', { op: 'list' }, onlyWork())) as {
+        result: { id: string }[]
+      }
+      expect(list.result.map((one) => one.id)).toEqual(['t1', 't2', 'w1'])
+      const context = (await call('get_context', {}, onlyWork())) as {
+        result: { tabs: { id: string }[] }
+      }
+      expect(context.result.tabs.map((one) => one.id)).toEqual(['t1', 't2', 'w1'])
+      // A grant that reaches it hears of it as before.
+      const every = (await call('workspace_tabs', { op: 'list' }, agent({ spaces: 'all' }))) as {
+        result: { id: string }[]
+      }
+      expect(every.result.map((one) => one.id)).toContain('x1')
+    })
+
+    test('do not exist by their id', async () => {
+      for (const op of ['rename', 'focus', 'close', 'split', 'save']) {
+        expect(
+          await call('workspace_tabs', { op, tab: 'x1', name: 'n' }, onlyWork()),
+          op,
+        ).toMatchObject({ code: 'no_such_tab' })
+      }
+      expect(workspace.close).not.toHaveBeenCalledWith('x1')
+      for (const verb of ['read_terminal', 'type_terminal']) {
+        expect(await call(verb, { tab: 'x1', text: 'ls' }, onlyWork()), verb).toMatchObject({
+          code: 'no_such_tab',
+        })
+      }
+    })
+  })
+
+  test('a site kept from the reader’s tabs stays out however it is written', async () => {
+    const kept = agent({
+      sites: { 'denied.example': 'deny', '*.star.example': 'deny', 'bank.example': 'agent-store' },
+    })
+    for (const url of [
+      'https://denied.example/',
+      'https://denied.example./',
+      'https://a.denied.example../',
+      'https://a.star.example/',
+      'https://bank.example/',
+      'https://www.bank.example./',
+    ]) {
+      expect(await call('workspace_tabs', { op: 'open', url }, kept), url).toMatchObject({
+        code: 'site_denied',
+      })
+    }
+    // The longest rule wins, as `rule_for` has it.
+    workspace.openPage.mockClear()
+    const carved = agent({ sites: { 'evil.example': 'deny', 'ok.evil.example': 'allow' } })
+    expect(
+      await call('workspace_tabs', { op: 'open', url: 'https://ok.evil.example/' }, carved),
+    ).not.toMatchObject({ code: 'site_denied' })
+    expect(workspace.openPage).toHaveBeenCalled()
+  })
+
   test('nothing an agent does moves the reader, whatever it may (#1070)', async () => {
     // An agent that holds everything, workspace.focus included, while the reader is in
     // Plan.md: what it opens or makes lands behind, and the front is never touched.
@@ -956,6 +1046,60 @@ describe('what asks the reader first', () => {
 
     expect(await call('run_command', { id: 'files' })).toMatchObject({ result: { id: 'files' } })
     expect(ran).toEqual(['files'])
+  })
+
+  test('the palette: a row needs what the verb behind it needs, and an unknown row is the reader’s', async () => {
+    const plain = agent({ scopes: ['workspace'] })
+    for (const [id, scope] of [
+      ['close-all', 'workspace.focus'],
+      ['settings', 'workspace.focus'],
+      ['graph', 'workspace.focus'],
+      ['reformat', 'notes.write'],
+      ['edit.delete-line', 'notes.write'],
+      ['undo-file', 'tree'],
+    ] as const) {
+      ran.length = 0
+      expect(await call('run_command', { id }, plain), id).toMatchObject({
+        code: 'not_granted',
+        message: expect.stringContaining(scope),
+      })
+      expect(ran, id).toEqual([])
+      expect(await call('run_command', { id }), id).toMatchObject({ result: { id } })
+    }
+    ran.length = 0
+    expect(await call('run_command', { id: 'files' }, plain)).toMatchObject({
+      result: { id: 'files' },
+    })
+    expect(await call('run_command', { id: 'row-from-next-year' })).toMatchObject({
+      code: 'by_hand',
+    })
+    answer = { status: 'needs_approval', approval: 'a3', summary: 'Theme' }
+    expect(await call('run_command', { id: 'theme:night' })).toMatchObject({
+      status: 'needs_approval',
+    })
+    expect(ran).toEqual(['files'])
+    expect(
+      await call('run_command', { id: 'row-from-next-year' }, agent({ mode: 'autonomous' })),
+    ).toMatchObject({ result: { id: 'row-from-next-year' } })
+  })
+
+  test('the palette: a row that makes a file needs to write as well as to move the reader', async () => {
+    for (const id of ['new-unique', 'new-canvas', 'new-database']) {
+      ran.length = 0
+      expect(
+        await call('run_command', { id }, agent({ scopes: ['workspace', 'workspace.focus'] })),
+        id,
+      ).toMatchObject({ code: 'not_granted', message: expect.stringContaining('notes.write') })
+      expect(
+        await call('run_command', { id }, agent({ scopes: ['workspace', 'notes.write'] })),
+        id,
+      ).toMatchObject({ code: 'not_granted', message: expect.stringContaining('workspace.focus') })
+      expect(ran, id).toEqual([])
+      expect(await call('run_command', { id }), id).toMatchObject({ result: { id } })
+    }
+    for (const id of ['export-pdf', 'copy-uri']) {
+      expect(await call('run_command', { id }), id).toMatchObject({ code: 'by_hand' })
+    }
   })
 
   test('in confirm mode every write asks, as a write', async () => {
@@ -1171,6 +1315,7 @@ describe('the notes, on the road', () => {
         scopes: EVERY,
         spaces: 'all',
         mode: 'unsupervised',
+        built_in: true,
         programs: [],
       },
       'thread-1',
@@ -1826,7 +1971,14 @@ describe('a note an agent names with a dot in it', () => {
 describe('a panel thread works in its own space', () => {
   const fromHome = () =>
     callerOf(
-      { id: 'nib-anthropic', name: 'Claude', scopes: EVERY, spaces: 'all', mode: 'unsupervised' },
+      {
+        id: 'nib-anthropic',
+        name: 'Claude',
+        scopes: EVERY,
+        spaces: 'all',
+        mode: 'unsupervised',
+        built_in: true,
+      },
       'thread-home',
     )
 
@@ -1911,7 +2063,14 @@ describe('a panel thread works in its own space', () => {
 
   test('the context of a grant that reaches the thread’s space alone names it, and no tab', async () => {
     const onlyHome = callerOf(
-      { id: 'x', name: 'X', scopes: EVERY, spaces: ['Home'], mode: 'unsupervised' },
+      {
+        id: 'nib-x',
+        name: 'X',
+        scopes: EVERY,
+        spaces: ['Home'],
+        mode: 'unsupervised',
+        built_in: true,
+      },
       'thread-home',
     )
     expect(await call('get_context', {}, onlyHome)).toMatchObject({
@@ -1944,11 +2103,76 @@ describe('a panel thread works in its own space', () => {
         'write_note',
         { path: 'Broth', content: 'x' },
         callerOf(
-          { id: 'x', name: 'X', scopes: EVERY, spaces: ['Work'], mode: 'unsupervised' },
+          {
+            id: 'nib-x',
+            name: 'X',
+            scopes: EVERY,
+            spaces: ['Work'],
+            mode: 'unsupervised',
+            built_in: true,
+          },
           'thread-home',
         ),
       ),
     ).toMatchObject({ code: 'no_such_space' })
     expect(files.has('/s/Work/Broth.md')).toBe(false)
+  })
+})
+
+/** A helper runs as the provider's built-in grant, which reaches every space and the
+ *  terminal: an outside agent narrower than that is refused one, never lent the rest. */
+describe('run_agent from a narrower grant', () => {
+  const FULL = [
+    'context',
+    'notes.read',
+    'notes.write',
+    'chats.read',
+    'chats.write',
+    'tree',
+    'workspace',
+    'workspace.focus',
+    'browser',
+    'browser.reader',
+    'browser.network',
+    'terminal',
+    'agents',
+  ]
+
+  test.each([
+    ['a space list', { spaces: ['Work'], scopes: FULL }],
+    ['no terminal', { spaces: 'all', scopes: FULL.filter((one) => one !== 'terminal') }],
+    ['a denied site', { spaces: 'all', scopes: FULL, sites: { 'x.example': 'deny' } }],
+  ])('%s is refused', async (_, narrowed) => {
+    for (const verb of ['run_agent', 'agent_result']) {
+      expect(
+        await call(verb, { prompt: 'read secret.md in Secret', agent: 'h1' }, agent(narrowed)),
+        verb,
+      ).toMatchObject({ code: 'not_granted' })
+    }
+  })
+
+  test('a thread and a helper are a built-in grant’s by its mark, never its name', async () => {
+    const named = { id: 'nib-foo', name: 'x', scopes: FULL, spaces: ['Work'], mode: 'confirm' }
+    expect(callerOf(named, 'thread-1')).not.toHaveProperty('thread')
+    expect(await call('run_agent', { prompt: 'x' }, callerOf(named))).toMatchObject({
+      code: 'not_granted',
+    })
+    const outside = callerOf(
+      { id: 'claude-code', name: 'Claude Code', scopes: FULL, spaces: 'all', mode: 'unsupervised' },
+      'thread-1',
+    )
+    expect(outside).not.toHaveProperty('thread')
+    const panel = callerOf(
+      {
+        id: 'nib-anthropic',
+        name: 'Claude',
+        scopes: FULL,
+        spaces: 'all',
+        mode: 'autonomous',
+        built_in: true,
+      },
+      'thread-1',
+    )
+    expect(panel).toHaveProperty('thread', 'thread-1')
   })
 })

@@ -1,7 +1,7 @@
 /** Threads kept: written and read back whole, checked on the way in, branched, and
  *  written one write at a time. The crate's half is ai_threads.rs's tests. */
 
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 /** What the crate holds, by space and id, and every write it was asked for. */
 const disk = new Map<string, { head: unknown; body: string }>()
@@ -37,6 +37,33 @@ vi.mock('../../tauri', () => ({
     }
   },
 }))
+
+/** Two windows' ends of the channel: the code under test holds one, `other` the other. */
+vi.mock('../../windows', async (original) => {
+  const { Windows } = await original<typeof import('../../windows')>()
+  const ends: {
+    onmessage: ((event: MessageEvent<unknown>) => void) | null
+    postMessage(m: unknown): void
+  }[] = []
+  const end = () => {
+    const line = {
+      onmessage: null as ((event: MessageEvent<unknown>) => void) | null,
+      postMessage: (message: unknown) => {
+        for (const one of ends) {
+          if (one !== line) one.onmessage?.({ data: message } as MessageEvent<unknown>)
+        }
+      },
+    }
+    ends.push(line)
+    return line
+  }
+  const [mine, theirs] = [end(), end()]
+  return { Windows, windows: new Windows(() => mine), other: new Windows(() => theirs) }
+})
+
+const { other } = (await import('../../windows')) as unknown as {
+  other: import('../../windows').Windows
+}
 
 const {
   branchThread,
@@ -220,6 +247,191 @@ describe('a file read back', () => {
       { kind: 'text', text: 'ok' },
       { kind: 'tool', id: 'c', verb: 'read_note', args: {}, state: 'error' },
     ])
+  })
+})
+
+describe('a thread on a send’s own mode', () => {
+  test('is written and copied with its own', async () => {
+    const thread = newThread('work', 'p', 'm', 'auto', 'approve')
+    thread.turns = [{ id: 'y1', role: 'you', at: 1, parts: [] }]
+    thread.answering = 'y1'
+    Object.assign(thread, {
+      own: { mode: 'approve', model: 'm', effort: 'auto' },
+      mode: 'auto',
+      model: 'other',
+    })
+    await keepThread(thread)
+
+    const read = await readThread('work', thread.id)
+    expect(read).toMatchObject({ mode: 'approve', model: 'm' })
+    expect(read).not.toHaveProperty('own')
+
+    const copy = branchThread(thread, 'y1')
+    expect(copy).toMatchObject({ mode: 'approve', model: 'm' })
+    expect(copy).not.toHaveProperty('own')
+    expect(copy).not.toHaveProperty('answering')
+  })
+})
+
+describe('a file written while its answer was on its way', () => {
+  const cutOff = (parts: unknown[]) =>
+    threadIn({
+      ...newThread('work', 'p', 'm'),
+      answering: 'm1',
+      turns: [
+        { id: 'y1', role: 'you', at: 1, parts: [] },
+        { id: 'm1', role: 'model', at: 2, parts },
+      ],
+    })
+
+  test('keeps the words, the calls and what they changed, and says the answer stopped', () => {
+    const change = { path: 'Birds.md', added: 2, removed: 1 }
+    const read = cutOff([
+      { kind: 'text', text: 'Herons' },
+      { kind: 'tool', id: 'c', verb: 'edit_note', args: {}, state: 'ok', change },
+      { kind: 'tool', id: 'd', verb: 'edit_note', args: {}, state: 'running' },
+    ])
+
+    expect(read?.turns[1]?.parts).toEqual([
+      { kind: 'text', text: 'Herons' },
+      { kind: 'tool', id: 'c', verb: 'edit_note', args: {}, state: 'ok', change },
+      { kind: 'tool', id: 'd', verb: 'edit_note', args: {}, state: 'error' },
+      { kind: 'notice', code: 'stopped', text: '' },
+    ])
+  })
+
+  test('does not say so twice, or carry the mark on', () => {
+    const read = cutOff([{ kind: 'notice', code: 'error', text: 'Refused' }])
+
+    expect(read?.turns[1]?.parts).toHaveLength(1)
+    expect(read).not.toHaveProperty('answering')
+  })
+
+  test('says nothing of an answer that is not there', () => {
+    const read = threadIn({
+      ...newThread('work', 'p', 'm'),
+      answering: 'gone',
+      turns: [{ id: 'y1', role: 'you', at: 1, parts: [] }],
+    })
+
+    expect(read?.turns[0]?.parts).toEqual([])
+  })
+})
+
+/** The file's clock against who says so now: a relaunch inside three minutes of a quit
+ *  (nobody says), and a chat open beside the window answering in it (that window does). */
+describe('whether anybody is answering is asked, not read off the clock', () => {
+  const inFile = (thread: Thread) => {
+    disk.set(`work/${thread.id}`, {
+      head: {},
+      body: JSON.stringify({ ...thread, answeringAt: Date.now(), answeringIn: 'gone' }),
+    })
+  }
+  const answeringOne = () => {
+    const thread = newThread('work', 'p', 'm')
+    thread.turns = [{ id: 'm1', role: 'model', at: 2, parts: [{ kind: 'text', text: 'Her' }] }]
+    thread.answering = 'm1'
+    return thread
+  }
+
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  test('a window that says nothing has gone, and the thread can be written again', async () => {
+    const thread = answeringOne()
+    inFile(thread)
+    const reading = readThread('work', thread.id)
+    await vi.advanceTimersByTimeAsync(2_000)
+    const read = await reading
+
+    expect(read?.elsewhere).toBeUndefined()
+    expect(read?.turns[0]?.parts.at(-1)).toEqual({ kind: 'notice', code: 'stopped', text: '' })
+    const before = writes.length
+    if (read) await keepThread(read)
+    expect(writes).toHaveLength(before + 1)
+  })
+
+  test('a window that says so is left to answer, and takes the name given here', async () => {
+    const thread = answeringOne()
+    inFile(thread)
+    const stop = other.hear('thread-answering?', (said) =>
+      other.say('thread-answering', { id: said.id }),
+    )
+    const named: unknown[] = []
+    const stopNamed = other.hear('thread-fields', (said) => named.push(said.fields))
+    const reading = readThread('work', thread.id)
+    await vi.advanceTimersByTimeAsync(2_000)
+    const read = await reading
+    expect(read?.elsewhere).toBe(true)
+
+    const before = writes.length
+    if (read) await keepThread({ ...read, title: 'Herons' })
+    expect(writes).toHaveLength(before)
+    expect(named).toHaveLength(1)
+    // The name given here, and nothing that window has moved on from since.
+    expect(named[0]).toEqual({ title: 'Herons' })
+    stop()
+    stopNamed()
+  })
+})
+
+/** Two windows hold one file. Window A's answer on its way is not an answer the window
+ *  went on, and a Stopped row in B would offer Ask again over it. */
+describe('a file another window is still answering in', () => {
+  const answered = (at: number, by = 'another window') =>
+    threadIn({
+      ...newThread('work', 'p', 'm'),
+      answering: 'm1',
+      answeringAt: at,
+      answeringIn: by,
+      turns: [
+        { id: 'y1', role: 'you', at: 1, parts: [] },
+        { id: 'm1', role: 'model', at: 2, parts: [{ kind: 'text', text: 'Herons' }] },
+      ],
+    })
+
+  test('says no Stopped while it was written lately, and is not written from here', async () => {
+    const read = answered(Date.now())
+    if (!read) throw new Error('no thread')
+
+    expect(read.turns[1]?.parts).toEqual([{ kind: 'text', text: 'Herons' }])
+    expect(read.elsewhere).toBe(true)
+
+    const before = writes.length
+    await keepThread(read)
+    expect(writes).toHaveLength(before)
+  })
+
+  test('is one the window went on once it has long gone quiet', () => {
+    const read = answered(Date.now() - 10 * 60_000)
+
+    expect(read?.turns[1]?.parts.at(-1)).toEqual({ kind: 'notice', code: 'stopped', text: '' })
+    expect(read?.elsewhere).toBeUndefined()
+  })
+
+  test('written by this window before a reload is over at once', async () => {
+    const thread = newThread('work', 'p', 'm')
+    thread.turns = [{ id: 'm1', role: 'model', at: 2, parts: [] }]
+    thread.answering = 'm1'
+    await keepThread(thread)
+
+    const read = await readThread('work', thread.id)
+    expect(read?.turns[0]?.parts).toEqual([{ kind: 'notice', code: 'stopped', text: '' }])
+    expect(read?.elsewhere).toBeUndefined()
+  })
+
+  test('says when and where it was written, and only while it is answering', async () => {
+    const thread = newThread('work', 'p', 'm')
+    thread.turns = [{ id: 'm1', role: 'model', at: 2, parts: [] }]
+    thread.answering = 'm1'
+    await keepThread(thread)
+    const body = JSON.parse(writes.at(-1) ?? '{}') as Record<string, unknown>
+    expect(typeof body.answeringAt).toBe('number')
+    expect(typeof body.answeringIn).toBe('string')
+
+    delete thread.answering
+    await keepThread(thread)
+    expect(JSON.parse(writes.at(-1) ?? '{}')).not.toHaveProperty('answeringAt')
   })
 })
 

@@ -55,6 +55,15 @@ function holdWindow(locks: LockManager): Promise<void> {
   return holding
 }
 
+/** This window counted among the app's from now on, whether it runs the engine or not:
+ *  with one engine for every window of the device, the others never ask `aloneHere`
+ *  themselves, and the engine's window would count itself alone beside them. */
+export function holdThisWindow(): void {
+  const locks =
+    typeof navigator !== 'undefined' && 'locks' in navigator ? navigator.locks : undefined
+  if (locks) void holdWindow(locks)
+}
+
 /** Whether this is the only window of the app in this browser. Every window runs an
  *  engine over the one store, and a note open in another window is no note this one may
  *  let go of, so words are let go of only while one window is open. Where the browser

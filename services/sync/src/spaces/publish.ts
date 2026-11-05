@@ -11,7 +11,7 @@ import { NOT_A_PATH, NO_ADDRESS } from '../refused'
 import { readBody } from '../body'
 import { now } from '../crypto'
 import { domainStatus, releaseDomain } from '../hostnames'
-import { cleanPath, PATH_LIMIT } from '../notes'
+import { PATH_LIMIT, readablePath } from '../notes'
 import type { Env, Space, Variables } from '../types'
 import {
   cleanDomain,
@@ -146,7 +146,7 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
   // rather than quietly read as "publish everything".
   let note = space.blog_note
   if (asked !== undefined) {
-    note = asked ? cleanPath(asked) : null
+    note = asked ? readablePath(asked) : null
     if (asked && note === null) return context.json({ error: NOT_A_PATH }, 400)
   }
 

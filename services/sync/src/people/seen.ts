@@ -28,7 +28,8 @@ const SHARES_WITH = `(
       join space_members b on b.space_id = a.space_id
       join spaces s on s.id = a.space_id and s.deleted = 0
      where a.email = ?2 and a.joined_at is not null
-       and b.email = u.email and b.joined_at is not null))`
+       and b.email = u.email and b.joined_at is not null
+       and (a.item = '' or b.item = '' or a.item = b.item)))`
 
 /** The profiles of the people among `ids` this account may see, with whether each is
  *  here as their hub last wrote it. */

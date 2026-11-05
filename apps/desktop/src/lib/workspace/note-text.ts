@@ -14,6 +14,7 @@
  *  open document over the disk and that is the whole of its dealings with them. */
 
 import { oneEdit } from '@orden/markdown/edits'
+import { isTagName } from '@orden/markdown/tags'
 import { taskAt } from '@orden/markdown/tasks'
 import type { SpaceTag } from '@orden/editor'
 import { links } from '../link-index.svelte'
@@ -32,7 +33,7 @@ import { invoke } from '../tauri'
 import type { Entry, Space } from '../workspace.svelte'
 import type { NoteDoc } from './documents.svelte'
 import type { FileAction, FileActions } from './undo.svelte'
-import { writeFile } from './write-file'
+import { inFileTurn, writeEdited, writeInTurn } from './in-turn'
 
 /** What writing across a space needs of the store it belongs to. */
 export interface HoldsNotes {
@@ -45,7 +46,7 @@ export interface HoldsNotes {
   documentAt(path: string): NoteDoc | null
   flush(): void
   loadTree(): Promise<void>
-  persist(): void
+  persist(): unknown
 }
 
 /** The tags of the open space, for the panel that draws them as a tree.
@@ -81,6 +82,9 @@ export async function loadTags(ws: HoldsNotes): Promise<void> {
  *
  *  `to` is the path the node becomes, or null to take the tag away. */
 export async function retagNotes(ws: HoldsNotes, from: string, to: string | null): Promise<number> {
+  // Every note would be written with something that is no tag, and have lost this one.
+  if (to !== null && !isTagName(to)) return 0
+
   const { tagChanges } = await import('../tag-edits')
 
   const changes = await tagChanges(
@@ -118,12 +122,66 @@ export async function noteText(ws: HoldsNotes, path: string): Promise<string | n
  *
  *  Answers whether there was a box: the line is read again here rather than
  *  trusted from the row, so a note edited since the list was drawn is ticked
- *  where it says a task is now, or not at all. */
-export async function toggleTaskAt(ws: HoldsNotes, path: string, line: number): Promise<boolean> {
+ *  where it says a task is now, or not at all. With `hash`, the `taskHash` of the words
+ *  a row was drawn from, that task wherever it stands now: one ticked a moment ago may
+ *  have put its next occurrence above the row, before the row could be drawn again.
+ *
+ *  One at a time for a note: a second box pressed while the first is being written reads
+ *  the note the first has written, or the later write puts the first box back. Not for
+ *  good, though: a write that never answers holds the ticks after it up for `TICK_WAITS`,
+ *  and a late one is read against the file again (`replaceInNotes`) before it is written. */
+export function toggleTaskAt(
+  ws: HoldsNotes,
+  path: string,
+  asked: number,
+  hash?: string,
+): Promise<boolean> {
+  const toggle = () => toggled(ws, path, asked, hash)
+  const before = toggling.get(path)
+  const running = (before ? waitedFor(before) : Promise.resolve()).then(toggle)
+  const done = () => {
+    if (toggling.get(path) === running) toggling.delete(path)
+  }
+  toggling.set(path, running)
+  running.then(done, done)
+  return running
+}
+
+/** The tick being written in each note, the last asked for. */
+const toggling = new Map<string, Promise<boolean>>()
+
+/** How long a tick waits for the one before it, far past a slow disk. */
+const TICK_WAITS = 10_000
+
+/** When a tick may go on after this one: it has answered, either way, or it never will. */
+function waitedFor(tick: Promise<boolean>): Promise<void> {
+  return new Promise((go) => {
+    const timer = setTimeout(go, TICK_WAITS)
+    const done = () => {
+      clearTimeout(timer)
+      go()
+    }
+    tick.then(done, done)
+  })
+}
+
+async function toggled(
+  ws: HoldsNotes,
+  path: string,
+  asked: number,
+  hash?: string,
+): Promise<boolean> {
   const before = await noteText(ws, path)
   if (before === null) return false
 
   const starts = lineStarts(before)
+  let line = asked
+  if (hash !== undefined) {
+    const { taskLine } = await import('../rows/write')
+    const found = taskLine(before, { line, hash })
+    if (!found) return false
+    line = starts.lastIndexOf(found.from)
+  }
   const from = starts[line]
   if (from === undefined) return false
 
@@ -263,14 +321,17 @@ export async function replaceInNotes(
 async function writeOpen(open: NoteDoc, change: Change, keeping: Keeping): Promise<Undone> {
   open.flush()
   const before = open.text
+  const onDisk = open.onDisk
   // In the editor's count of the line endings, and written in the file's; see `take`.
   const took = open.take(change.edits, change.before)
   const after = applied(took.flat, took.edits)
 
   // Keeping the version about to be replaced, the same way saving does: the words
   // the reader had, unsaved ones and all.
-  await keep(change.path, before, keeping)
-  await writeFile(change.path, took.text)
+  const written = await writeEdited(open, change.path, took.text, onDisk, () =>
+    keep(change.path, before, keeping),
+  )
+  if (written !== null) links.noteSaved(change.path, written)
 
   return { path: change.path, content: before, after, edits: reverse(took.flat, took.edits) }
 }
@@ -291,19 +352,28 @@ async function writeClosed(
   change: Change,
   keeping: Keeping,
 ): Promise<Undone | null> {
-  const read = await invoke<string>('read_note', { path: change.path }).catch(() => null)
-  if (read === null) return null
+  // One turn of the file, from the read to the write: what another window writes between
+  // the two would otherwise be replaced by words worked out without it.
+  const turn = await inFileTurn(change.path, async () => {
+    const read = await invoke<string>('read_note', { path: change.path }).catch(() => null)
+    if (read === null) return null
 
-  const now = endingsLike(read, change.before)
-  // Worked out on one line ending, written into a file of others; see `appliedToFile`.
-  const foreign = now !== read
-  const same = now === change.before
-  const edits = same ? change.edits : carriedPast(change.before, now, change.edits)
-  if (!edits) return null
-  const after = same ? change.after : applied(now, edits)
+    const now = endingsLike(read, change.before)
+    // Worked out on one line ending, written into a file of others; see `appliedToFile`.
+    const foreign = now !== read
+    const same = now === change.before
+    const edits = same ? change.edits : carriedPast(change.before, now, change.edits)
+    if (!edits) return null
+    const after = same ? change.after : applied(now, edits)
+    const down = foreign ? appliedToFile(read, edits) : after
 
-  await keep(change.path, read, keeping)
-  await writeFile(change.path, foreign ? appliedToFile(read, edits) : after)
+    await keep(change.path, read, keeping)
+    await writeInTurn(change.path, down)
+    return { read, now, same, edits, after, down }
+  })
+  if (turn === null) return null
+  const { read, now, same, edits, after, down } = turn
+  links.noteSaved(change.path, down)
 
   const late = ws.documentAt(change.path)
   // Only a document that remembers holding the words the write was worked out on.

@@ -31,9 +31,11 @@ pub fn tags_in(body: &str) -> Vec<String> {
     // How many bytes of the note the block takes, fences included, or zero where
     // the note opens with anything else: the tags under its key are read first,
     // and the pass over the note's own words starts after it.
-    let front = front_matter::block(body).map_or(0, |block| block.end);
+    let block = front_matter::block(body);
+    let front = block.as_ref().map_or(0, |one| one.end);
+    let close = block.as_ref().map_or(0, |one| one.close);
 
-    read_front(body, front, &mut found);
+    read_front(body, front, close, &mut found);
     read_inline(body, front, &mut found);
 
     found
@@ -41,7 +43,7 @@ pub fn tags_in(body: &str) -> Vec<String> {
 
 /// The tags under a `tags:` key, whether they are on its line or in items
 /// beneath it.
-fn read_front(body: &str, front: usize, found: &mut Vec<String>) {
+fn read_front(body: &str, front: usize, close: usize, found: &mut Vec<String>) {
     if front == 0 {
         return;
     }
@@ -56,6 +58,16 @@ fn read_front(body: &str, front: usize, found: &mut Vec<String>) {
         let line = &body[at..end];
 
         if let Some(rest) = key_value(line) {
+            // A flow list across lines, as Prettier breaks a long one, is one value. A
+            // `# ` is YAML's comment; a hash on a name is the name's.
+            let value = at + line.len() - rest.len();
+            if let Some(closes) = front_matter::value_closes_at(body, value, close) {
+                for one in body[value..closes].lines() {
+                    read_values(without_comment(one), found);
+                }
+                at = closes + 1;
+                continue;
+            }
             read_values(rest, found);
             at = read_items(body, end + 1, front, found);
             continue;
@@ -66,6 +78,17 @@ fn read_front(body: &str, front: usize, found: &mut Vec<String>) {
         }
         at = end + 1;
     }
+}
+
+/// A line of a flow list up to a `# ` that opens at its start or after a blank.
+fn without_comment(line: &str) -> &str {
+    let opens = line.match_indices("# ").map(|(at, _)| at).find(|&at| {
+        line[..at]
+            .chars()
+            .next_back()
+            .is_none_or(char::is_whitespace)
+    });
+    opens.map_or(line, |at| &line[..at])
 }
 
 /// What follows `tags:` or `tag:` at the left margin, or nothing when the line
@@ -496,6 +519,17 @@ mod tests {
             tags_in("---\ntags:\n  - work/nib\n  - other\n---\n\nwords\n"),
             vec!["#work/nib", "#other"]
         );
+    }
+
+    #[test]
+    fn reads_a_flow_list_across_lines_as_the_list_it_is() {
+        let note = "---\ntags: [\n  work, # mine\n  # a comment\n  \"b\",\n]\nz: 1\n---\nrest\n";
+        assert_eq!(tags_in(note), vec!["#work", "#b"]);
+        // Nothing closes this one, so it is the one line's.
+        assert_eq!(tags_in("---\ntags: [a\nz: b\n---\n"), vec!["#a"]);
+        // A hash in a word opens no comment, and is no name of a tag either.
+        assert_eq!(tags_in("---\ntags: [\n  a# b,\n]\n---\n"), vec!["#b"]);
+        assert_eq!(tags_in("---\ntags: [a, b]\nz: 1\n---\n"), vec!["#a", "#b"]);
     }
 
     #[test]

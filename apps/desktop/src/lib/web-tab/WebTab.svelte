@@ -38,7 +38,7 @@
   import type { Tab } from '../workspace.svelte'
   import { workspace } from '../workspace.svelte'
   import { favicon, plainOrigin } from './address'
-  import { isLocalFile, webAddress } from './typed'
+  import { isLocalFile, mayBeSecret, webAddress } from './typed'
   import { upgradeOf } from './upgrade'
   import type { ZoomStep } from './bar-keys'
   import { clipPage } from './clip'
@@ -815,6 +815,7 @@
           // Not sent anywhere, by DNS or to the search engine; and said, since Chrome would
           // have opened it (#790).
           if (isLocalFile(said)) page.notice = t('That file could not be read')
+          else if (mayBeSecret(said)) page.notice = t('that link could not be followed')
           return
         }
 

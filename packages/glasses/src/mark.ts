@@ -22,13 +22,13 @@
  *  `firmware.ts`, which is also why a fence is written with `‘‘‘` rather than
  *  ``` - the font has no backtick, and three of them drew nothing at all. */
 
-import { lexMarkdown, stripFrontMatter, withoutComments } from '@orden/markdown'
+import { lexMarkdown, noteWithoutComments, stripFrontMatter } from '@orden/markdown'
 import * as emoji from 'node-emoji'
 import { useEmoji } from '@orden/markdown/engines'
 import { calloutOf, opensCallout } from '@orden/markdown/callouts'
 import { readChart } from '@orden/markdown/chart'
 import { captionIn, languageIn } from '@orden/markdown/code'
-import { embedKind, type Wikilink } from '@orden/markdown/links'
+import { blockIdsBlanked, embedKind, type Wikilink } from '@orden/markdown/links'
 import type { Token, Tokens } from 'marked'
 import {
   type Compaction,
@@ -220,9 +220,10 @@ export function workDone(): Work {
  *  and there is nothing left to search for; those fall back to the start of the
  *  quote, which is where a reader sent there would want to be anyway. */
 class Locator {
-  private at = 0
-
-  constructor(private readonly source: string) {}
+  constructor(
+    private readonly source: string,
+    private at = 0,
+  ) {}
 
   /** The offset of `raw`, with the cursor moved past it. */
   take(raw: string): number {
@@ -586,7 +587,9 @@ class Sheet {
     for (const [at, part] of text.split('\n').entries()) {
       // Folded here, at the one place a line is made, so that every line of a
       // note is a line the firmware can actually draw. See `firmware.ts`.
-      const whole = fold(`${lead}${at === 0 ? part : hang + part.trimStart()}`)
+      // The hang is what a line starts with, the bars and the indent of `lead` included.
+      // Blanks at its end are what a block's name left, and no firmware needs them.
+      const whole = fold(at === 0 ? `${lead}${part.trimEnd()}` : `${hang}${part.trim()}`)
       if (at === 0) hang = hangOf(whole)
 
       // Each part is a line of the file in its own right, so it carries that line's
@@ -626,6 +629,11 @@ class Sheet {
   /** Which line of the file an offset is on. */
   lineAt(from: number): number {
     return this.where.at(from)
+  }
+
+  /** Where a line of the file begins, if the file has that line. */
+  startOf(line: number): number | undefined {
+    return this.where.startOf(line)
   }
 
   /** A run of lines that belong together: the first may start a page, the rest
@@ -702,8 +710,12 @@ function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
     case 'paragraph': {
       const from = where.take(raw)
       const picture = onlyPicture(kids)
-      if (picture) sheet.add(`${PICTURE} ${picture}`, from, nest)
-      else sheet.add(inlineWords(kids, sheet.marks, sheet.flow), from, nest)
+      if (picture) {
+        sheet.add(`${PICTURE} ${picture}`, from, nest)
+        break
+      }
+      const words = inlineWords(kids, sheet.marks, sheet.flow)
+      if (words) sheet.add(words, from, nest)
       break
     }
 
@@ -815,7 +827,9 @@ function fence(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
     inside += line.length + 1
   }
   if (marked) {
-    sheet.add(FENCE, from + Math.max(0, raw.length - FENCE.length - 1), nest, { glued: true })
+    // Where its own line begins: `raw` may or may not end in a newline, and the
+    // closing fence may be longer than three.
+    sheet.add(FENCE, from + raw.trimEnd().lastIndexOf('\n') + 1, nest, { glued: true })
   }
 }
 
@@ -929,16 +943,19 @@ function table(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
   const cells = (row: readonly Tokens.TableCell[]) =>
     row.map((cell) => inlineWords(cell.tokens, sheet.marks, sheet.flow))
 
-  sheet.addAll(
-    tableLines(
-      cells(one.header),
-      one.rows.map((row) => cells(row)),
-      one.align.map((given) => (given !== null && ALIGNS.has(given) ? given : 'left')),
-      sheet.width - width(QUOTE.repeat(nest.quote) + STEP.repeat(nest.depth)),
-    ),
-    where.take(rawOf(token)),
-    nest,
+  const lines = tableLines(
+    cells(one.header),
+    one.rows.map((row) => cells(row)),
+    one.align.map((given) => (given !== null && ALIGNS.has(given) ? given : 'left')),
+    sheet.width - width(QUOTE.repeat(nest.quote) + STEP.repeat(nest.depth)),
   )
+  // Each row is a line of the file, and carries that line's place and number: a page
+  // cut inside a long table has to know which rows it holds.
+  const from = where.take(rawOf(token))
+  const first = sheet.lineAt(from)
+  for (const [at, line] of lines.entries()) {
+    sheet.add(line, at === 0 ? from : (sheet.startOf(first + at) ?? from), nest, { glued: at > 0 })
+  }
 }
 
 interface Definition {
@@ -985,12 +1002,18 @@ export function markLines(source: string, options: MarkOptions): Line[] {
   // keep those offsets exact and leave a run of spaces mid-sentence, or an
   // indent deep enough to read as code: a gap on a 27 pixel line is worse than
   // a tap landing a few characters early.
-  const kept = withoutComments(source)
+  // A block's name is no word of the note either, and one on a closing fence is what
+  // an older build wrote: read as the page reads it, with the name gone. Blanked rather
+  // than cut: at the end of a line that shows nothing, and there is one on every line of
+  // some notes, which would move each line under it by all the names above.
+  const kept = noteWithoutComments(blockIdsBlanked(source))
   const body = stripFrontMatter(kept)
   // The locator searches the whole of what was kept, so an offset it finds is
-  // an offset into that.
+  // an offset into that. From past the front matter, which holds no line of the page:
+  // a word under `title: Words` is found where it is written, not in there.
   const sheet = new Sheet(new Lines(kept), options.inner, options)
-  walk(lexMarkdown(body), new Locator(kept), { depth: 0, quote: 0 }, sheet)
+  const where = new Locator(kept, kept.length - body.length)
+  walk(lexMarkdown(body), where, { depth: 0, quote: 0 }, sheet)
 
   return sheet.lines
 }

@@ -14,9 +14,10 @@ const LUCILE: Who = 'user:lucile'
 
 const team = { id: 'team', name: 'Team', root: '/spaces/Team' }
 const secret = { id: 'secret', name: 'Secret', root: '/spaces/Secret' }
+const third = { id: 'third', name: 'Third', root: '/spaces/Third' }
 
 vi.mock('../../workspace.svelte', () => ({
-  workspace: { spaces: [team, secret], activeSpace: team, activeSpaceId: 'team' },
+  workspace: { spaces: [team, secret, third], activeSpace: team, activeSpaceId: 'team' },
 }))
 
 /** What `agents_ask` was asked, and what it answers next. */
@@ -125,7 +126,8 @@ describe('the chats an agent sees', () => {
     const { answerThreadSpaces } = await import('../../automation/caller')
     answerThreadSpaces((thread) => (thread === 'in-secret' ? 'secret' : null))
     const grant = {
-      id: 'claude',
+      id: 'nib-claude',
+      built_in: true,
       name: 'Claude Code',
       scopes: ['chats.read'],
       spaces: 'all',
@@ -138,6 +140,69 @@ describe('the chats an agent sees', () => {
       expect(said(await call('read_chat', { chat: 'thesis' }, callerOf(grant)))).toContain(
         'Draft of chapter 3',
       )
+    } finally {
+      answerThreadSpaces(() => null)
+    }
+  })
+
+  test('by name, are asked about where neither the thread nor the front settles it', async () => {
+    const twin = store.add('thesis', [{ who: ME, name: 'Emil', role: 'owner' }], {
+      root: '/spaces/Secret',
+      path: '/spaces/Secret/thesis.chat',
+    })
+    const third = store.add('thesis', [{ who: ME, name: 'Emil', role: 'owner' }], {
+      root: '/spaces/Secret',
+      path: '/spaces/Secret/old/thesis.chat',
+    })
+    store.speak(twin, ME, 'the other thesis')
+    const { answerThreadSpaces } = await import('../../automation/caller')
+    answerThreadSpaces((thread) => (thread === 'in-secret' ? 'secret' : null))
+    const grant = {
+      id: 'nib-claude',
+      built_in: true,
+      name: 'Claude Code',
+      scopes: ['chats.read'],
+      spaces: 'all',
+      mode: 'confirm',
+    }
+    try {
+      const asked = await call('read_chat', { chat: 'thesis' }, callerOf(grant, 'in-secret'))
+      expect(JSON.stringify(asked)).toContain('"ok":false')
+      expect(JSON.stringify(asked)).toContain('ambiguous')
+      expect(JSON.stringify(asked)).toContain(twin)
+      expect(JSON.stringify(asked)).toContain(third)
+      expect(JSON.stringify(asked)).not.toContain('the other thesis')
+      expect(said(await call('read_chat', { chat: twin }, callerOf(grant, 'in-secret')))).toContain(
+        'the other thesis',
+      )
+    } finally {
+      answerThreadSpaces(() => null)
+    }
+  })
+
+  test('by name from a thread whose space has none, are not settled by the tab in front', async () => {
+    const twin = store.add('thesis', [{ who: ME, name: 'Emil', role: 'owner' }], {
+      root: '/spaces/Secret',
+      path: '/spaces/Secret/thesis.chat',
+    })
+    const { answerThreadSpaces } = await import('../../automation/caller')
+    // A thread that works in a space holding no chat of that name; `Team` is in front.
+    answerThreadSpaces((thread) => (thread === 'in-third' ? 'third' : null))
+    const grant = {
+      id: 'nib-claude',
+      built_in: true,
+      name: 'Claude Code',
+      scopes: ['chats.read'],
+      spaces: 'all',
+      mode: 'confirm',
+    }
+    try {
+      const asked = JSON.stringify(
+        await call('read_chat', { chat: 'thesis' }, callerOf(grant, 'in-third')),
+      )
+      expect(asked).toContain('ambiguous')
+      expect(asked).toContain(twin)
+      expect(asked).not.toContain('Draft of chapter 3')
     } finally {
       answerThreadSpaces(() => null)
     }

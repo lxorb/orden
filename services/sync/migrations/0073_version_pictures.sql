@@ -1,0 +1,15 @@
+-- The pictures each version of a note shows, so that what its history uses can be asked
+-- of a row.
+--
+-- Restoring a version shows its pictures, so a picture a version shows keeps its bytes
+-- (`ownOtherwise` in src/used.ts). The bodies are in R2, and reading every one of them
+-- for each sweep was bounded: an account with more versions than one request reads was
+-- never told anything, and a picture it had let go of stayed on its quota for good. So
+-- each version says what it shows, as a JSON list, from when it is kept (src/versions.ts).
+--
+-- Null is a version nobody has read yet, which is every version written before this:
+-- the sweep reads them as far as one run goes and writes down what it read, and nothing
+-- that account holds as a picture is let go of until none are left. The rows go with the
+-- version. Should what counts as a picture ever grow, setting this back to null reads
+-- them all again.
+alter table note_versions add column pictures text;

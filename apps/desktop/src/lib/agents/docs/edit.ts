@@ -27,9 +27,10 @@ import type { Selected } from './anchors'
 import { type Desk, type Located, located, type NoteAt, openNote, wordsOf } from './desk'
 import { type Planned, plan, readEdits, type Replacement } from './edits'
 import { type Agent, showAgent } from './presence'
+import { folderOf, movedTo, nameOf, samePath, within } from '../../space-paths'
 import { DocError } from './problem'
 import { revOf } from './rev'
-import { touch } from './touched'
+import { touch, touchedBy, touchedMoved, type Touched } from './touched'
 import { Track } from './track'
 
 /** How far back the reader's own writing keeps an edit away: two seconds. */
@@ -82,20 +83,162 @@ function trackOf(agent: Agent, path: string): Track {
   const found = tracks.get(key)
   if (found) return found
 
-  const made = new Track(agent.id, (edits) => {
-    touch(path, agent, edits)
-    for (const listener of listeners) listener(agent.id, path)
+  const made: Track = new Track(agent.id, (edits) => {
+    const now = placed.get(made) ?? path
+    touch(now, agent, edits)
+    for (const listener of listeners) listener(agent.id, now)
   })
+  placed.set(made, path)
   tracks.set(key, made)
   return made
 }
 
+/** Where each track's note is now, which a move changes. */
+const placed = new WeakMap<Track, string>()
+
+/** Tracks whose name a moved note took: the note they are of was moved off or deleted,
+ *  and may come back. By the key they had, oldest first; each has it again when the note
+ *  on it moves away. */
+const waiting = new Map<string, { track: Track; row: Touched | null }[]>()
+
+/** A note moved or renamed, or a folder or a space with it: its tracks go with it, so
+ *  what an agent did stays the agent's to take back, under the name the note has now. */
+export function tracksMoved(from: string, to: string, root?: string): void {
+  for (const [key, held] of [...aside]) {
+    const [agent, path] = partsOf(key)
+    const now = movedTo(path, from, to, root)
+    // One aside at this very name stays: it is the note on it now that moved.
+    if (now === null || now === path || now === to) continue
+    aside.delete(key)
+    aside.set(keyOf(agent, now), [...(aside.get(keyOf(agent, now)) ?? []), ...held])
+  }
+  for (const [key, held] of [...waiting]) {
+    const [agent, path] = partsOf(key)
+    const now = movedTo(path, from, to, root)
+    // One waiting for this very name stays: it is the note on it that moved.
+    if (now === null || now === path || now === to) continue
+    waiting.delete(key)
+    waiting.set(keyOf(agent, now), held)
+  }
+  for (const [key, track] of [...tracks]) {
+    const [agent, path] = partsOf(key)
+    const now = movedTo(path, from, to, root)
+    if (now === null || now === path) continue
+
+    tracks.delete(key)
+    const there = tracks.get(keyOf(agent, now))
+    const row = touchedMoved(path, now, agent)
+    if (there) {
+      const held = waiting.get(keyOf(agent, now)) ?? []
+      held.push({ track: there, row })
+      waiting.set(keyOf(agent, now), held)
+    }
+    tracks.set(keyOf(agent, now), track)
+    placed.set(track, now)
+    if (kept.delete(key)) kept.add(keyOf(agent, now))
+
+    const back = waiting.get(key)?.pop()
+    if (back) {
+      tracks.set(key, back.track)
+      if (back.row) touch(path, back.row, back.row.edits)
+    }
+    for (const listener of listeners) listener(agent, now, path)
+  }
+}
+
+/** Tracks of notes that were deleted, by the key they had, oldest first. Words made at the
+ *  name since are another note's, with a track of its own: going through this one they
+ *  were folded into its steps, and a rewind wrote the old note's edit into the wrong words.
+ *  Each has its key again when a file comes back there saying what it last said. */
+const aside = new Map<string, { track: Track; row: Touched | null }[]>()
+
+/** A note deleted, or a folder or a space with it: its tracks are put aside. */
+export function tracksRemoved(path: string): void {
+  for (const [key, track] of [...tracks]) {
+    const [agent, at] = partsOf(key)
+    if (within(path, at) === null) continue
+
+    track.setAside()
+    tracks.delete(key)
+    kept.delete(key)
+    const row = touchedBy(at).find((one) => one.id === agent) ?? null
+    touch(at, { id: agent, name: row?.name ?? agent }, 0)
+    aside.set(key, [...(aside.get(key) ?? []), { track, row }])
+    for (const listener of listeners) listener(agent, at)
+  }
+}
+
+/** Whether `path` is a name a note at `at` is put back under where something holds `at`:
+ *  `A 2.md` beside `A.md`. */
+function besideName(at: string, path: string): boolean {
+  if (!samePath(folderOf(at), folderOf(path))) return false
+  const name = nameOf(at)
+  const dot = name.lastIndexOf('.')
+  const [stem, end] = dot > 0 ? [name.slice(0, dot), name.slice(dot)] : [name, '']
+  const there = nameOf(path)
+  return (
+    there.startsWith(`${stem} `) &&
+    there.endsWith(end) &&
+    /^[1-9]\d*$/.test(there.slice(stem.length + 1, there.length - end.length))
+  )
+}
+
+/** A file came to be: a note deleted and put back has its track again, there or, said to be
+ *  a put back (`putBack`), beside its name; a reader's own copy there saying the same words
+ *  is not the note. Any other is a new note, whatever its name was before. Asked of its words
+ *  only where one is waiting. */
+export async function tracksCame(
+  path: string,
+  read: (path: string) => Promise<string | null>,
+  putBack = false,
+): Promise<void> {
+  for (const [key, held] of [...aside]) {
+    const [agent, was] = partsOf(key)
+    const at = putBack && within(path, was) === null && besideName(was, path) ? path : was
+    const now = keyOf(agent, at)
+    if (within(path, at) === null || tracks.has(now)) continue
+
+    const words = await read(at)
+    if (words === null || tracks.has(now)) continue
+    const says = words.replace(/\r\n?/g, '\n')
+    const back = [...held].reverse().find((one) => one.track.says === says)
+    if (!back) continue
+
+    held.splice(held.indexOf(back), 1)
+    if (!held.length) aside.delete(key)
+    tracks.set(now, back.track)
+    placed.set(back.track, at)
+    if (back.row) touch(at, back.row, back.row.edits)
+    for (const listener of listeners) listener(agent, at)
+  }
+}
+
+/** One agent's tracks put aside, with the path of the note each was of: what a rewind
+ *  reads besides `tracksOf`, for the edits it has to take back once the note is back. */
+export function tracksAside(agent: string): [string, Track][] {
+  const prefix = keyOf(agent, '')
+  return [...aside].flatMap(([key, held]) =>
+    key.startsWith(prefix)
+      ? held.map(({ track }): [string, Track] => [key.slice(prefix.length), track])
+      : [],
+  )
+}
+
+function partsOf(key: string): [string, string] {
+  const split = key.indexOf('\n')
+  return [key.slice(0, split), key.slice(split + 1)]
+}
+
 /** Whoever wants to know when an agent's edits of a note change: one made, some taken
  *  back, the reader's Ctrl+Z of one. The review (lib/ai/review) is. */
-const listeners = new Set<(agent: string, path: string) => void>()
+const listeners = new Set<Listener>()
+
+/** Told of a note an agent's edits of have changed; `was` where nothing changed but
+ *  the note's name, and this is the name it had. */
+type Listener = (agent: string, path: string, was?: string) => void
 
 /** Listens; answers the way to stop. */
-export function onTracks(listener: (agent: string, path: string) => void): () => void {
+export function onTracks(listener: Listener): () => void {
   listeners.add(listener)
   return () => listeners.delete(listener)
 }

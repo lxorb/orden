@@ -5,7 +5,6 @@
 import { msOf } from './dates'
 import { compile, scopeFor } from './expr/compile'
 import { asDate, equal, settled, type Scope, sortCompare, type Val } from './expr/runtime'
-import { BasesError } from './errors'
 import type { Context, DateValue, Value } from './types'
 
 /** The names Bases ships, which a view's `summaries` refers to by name. */
@@ -109,12 +108,12 @@ export function summarize(
   const known = defaultSummary(name, values, scope)
   if (known !== undefined) return known
 
-  const source = custom[name]
+  const source = Object.hasOwn(custom, name) ? custom[name] : undefined
   if (source === undefined) return null
   try {
     return settled(compile(source).run({ ...scope, locals: { values: [...values] as Value[] } }))
-  } catch (error) {
-    if (error instanceof BasesError) return null
-    throw error
+  } catch {
+    // Whatever the column made of it is that summary's; the view still answers.
+    return null
   }
 }

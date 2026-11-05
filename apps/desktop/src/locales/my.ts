@@ -749,6 +749,8 @@ export const my: Dictionary = {
   '{done} of {total}': '{total} အထဲ {done}',
   'Sync failed': 'ချိန်ကိုက်မှုမအောင်',
   '{name} could not be written.': '{name} ကို ရေးမရပါ။',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} ကို ရေးမရပါ- ၎င်း၏ ဖိုင်ကို ဖတ်မရပါ။ 64 MB ထက်ကျော်နေခြင်း သို့မဟုတ် UTF-8 စာသား မဟုတ်ခြင်း ဖြစ်နိုင်သည်။',
   '{name} could not be read.': '{name} ကို ဖတ်မရပါ။',
   'Text size': 'စာလုံးအရွယ်',
   'Line spacing': 'လိုင်းအကွာ',
@@ -1518,6 +1520,7 @@ export const my: Dictionary = {
   'The provider answered {status}.': 'ပေးသူသည် {status} ဖြေသည်။',
   'Add an AI provider in Settings first.': 'ဦးစွာ ဆက်တင်တွင် AI ပေးသူ ထည့်ပါ။',
   'The model did not answer.': 'မော်ဒယ် မဖြေပါ။',
+  'The connection closed before the answer was finished.': 'အဖြေ မပြီးမီ ချိတ်ဆက်မှု ပိတ်သွားသည်။',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'သင်၏ {plan} အစီအစဉ်သည် {time} အထိ ကန့်သတ်ချက်ပြည့်နေသည်။',
@@ -1995,8 +1998,10 @@ export const my: Dictionary = {
   'Send feedback': 'အကြံပြုချက် ပို့ရန်',
   'Describe the issue': 'ပြဿနာကို ဖော်ပြပါ',
   Sent: 'ပို့ပြီး',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'ဤအစီရင်ခံစာတွင် သင့်ဖော်ပြချက်၊ Orden ဗားရှင်း၊ သင့်ပလက်ဖောင်းနှင့် အက်ပ်၏ မကြာသေးမီ log ပါဝင်သည်။ သင့်မှတ်စုများ ဘယ်တော့မှ မပါဝင်ပါ။',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'ဤအစီရင်ခံစာတွင် သင့်ဖော်ပြချက်၊ Orden ဗားရှင်း၊ သင့်ပလက်ဖောင်းနှင့် မကြာသေးမီက အက်ပ်မှတ်တမ်းတို့ ပါဝင်ပြီး ဖိုင်လမ်းကြောင်းများကို ဖယ်ရှားထားသည်။',
+  'Its space is archived': '၎င်း၏ space ကို သိမ်းဆည်းထားသည်',
+  'Back as {name}': '{name} အဖြစ် ပြန်လာပြီ',
   'Send into the running answer': 'လုပ်ဆောင်နေသော အဖြေထဲ ပို့ရန်',
   'Stop the answer': 'အဖြေကို ရပ်ရန်',
   'Open every step': 'အဆင့်တိုင်း ဖွင့်ရန်',
@@ -2082,6 +2087,8 @@ export const my: Dictionary = {
     '၎င်းသည် သင့်မှတ်စုများကိုဖတ်ပြီး သင့်အဖြစ် ဝင်ရောက်ထားလျက် ကြည့်ရှုသဖြင့် စာမျက်နှာတစ်ခုက ၎င်းတို့ကို အပြင်သို့ ပို့ခိုင်းရန် ကြိုးစားနိုင်သည်။',
   Activity: 'လုပ်ဆောင်ချက်',
   'Add a site': 'ဆိုက် ထည့်ရန်',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'ဤစာရင်းရှိ ပရိုဂရမ်သည် မမေးဘဲ လုပ်ဆောင်ပြီး ထိုပရိုဂရမ် လုပ်နိုင်သမျှ အားလုံးကို လုပ်နိုင်သည်။',
   'Add a program': 'ပရိုဂရမ် ထည့်ရန်',
   'Every space': 'အလုပ်ခွင်တိုင်း',
   Sites: 'ဆိုက်များ',
@@ -2509,6 +2516,7 @@ export const my: Dictionary = {
   'No {property}': '{property} မရှိ',
   '{card} moved to {group}': '{card} ကို {group} သို့ ရွှေ့ပြီး',
   'Not moved': 'မရွှေ့ရပါ',
+  'Not undone': 'ပြန်မဖျက်ရပါ',
   Retry: 'ထပ်စမ်းကြည့်ပါ',
   Calculate: 'တွက်ချက်',
   'Remove sort': 'စီခြင်းကို ဖယ်ရှား',
@@ -2790,6 +2798,8 @@ export const my: Dictionary = {
   '{title}, running': '{title}၊ လုပ်ဆောင်နေဆဲ',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden သည် AI သော့များကို Mac ၏ keychain တွင် မသိမ်းတော့ပါ၊ ၎င်းက စကားဝှက်ကို ထပ်ခါထပ်ခါ မေးနေခဲ့၍ဖြစ်သည်။ သင့်သော့များကို ထပ်ထည့်ပြီး ChatGPT သို့ နောက်တစ်ကြိမ် ဝင်ပါ။',
+  'This PDF is locked by its owner': 'ဤ PDF ကို ပိုင်ရှင်က လော့ခ်ချထားသည်',
+  'Part of this could not be undone': 'ဤအရာ၏ တစ်စိတ်တစ်ပိုင်းကို ပြန်ဖျက်၍ မရပါ',
   'Add images': 'ပုံများ ထည့်ရန်',
   'Remove image': 'ပုံကို ဖယ်ရန်',
   'That is more than 4 images.': 'ပုံ 4 ပုံထက် ပိုနေသည်။',

@@ -7,7 +7,7 @@ import { subprotocol } from '@orden/rooms'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sha256 } from '../src/crypto'
 import { askMachine } from '../src/machines/ask'
-import { HOLD_GRACE, HOLD_QUIET, PING_EVERY, QUIET_FOR } from '@orden/online/wire'
+import { HOLD_GRACE, HOLD_QUIET, MOST_SOCKETS, PING_EVERY, QUIET_FOR } from '@orden/online/wire'
 import { Machine, resumeOf } from '../src/machines/machine'
 import { reachAgain } from '../src/machines/reach'
 import { eraseAccount } from '../src/erase'
@@ -1109,6 +1109,65 @@ describe('a machine', () => {
     expect((running.host.link_?.take() ?? []).filter((frame) => frame.t === 'open')).toEqual([
       { t: 'open', session: 'session-1', cols: 80, rows: 24 },
     ])
+  })
+
+  // The word of it is in memory, which a deploy empties: the reader's `open` then went
+  // down as anybody's, and `nibd` started the owner's program at a reader's hand.
+  test('a watcher’s open says it only watches, and its owner’s still goes after it', async () => {
+    const running = await machine(env, ID, user)
+    const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
+    await nibd(running, { t: 'ended', session: 'session-1', code: 0 })
+    running.host.link_?.take()
+    running.state.drop(owner as never)
+
+    const again = { ...running, machine: new Machine(running.state as never, env, running.host) }
+    const opens = () => (running.host.link_?.take() ?? []).filter((frame) => frame.t === 'open')
+    const reader = await join(again, { who: 'reader', role: 'read' })
+    await say(again, reader, { t: 'hello', cols: 80, rows: 24 })
+    await vi.waitFor(() => {
+      expect(opens()).toEqual([
+        { t: 'open', session: 'session-1', cols: 80, rows: 24, watching: true },
+      ])
+    })
+
+    const back = await join(again, { who: user, owns: true, role: 'owner' })
+    await say(again, back, { t: 'hello', cols: 80, rows: 24 })
+    expect(opens()).toEqual([{ t: 'open', session: 'session-1', cols: 80, rows: 24 }])
+  })
+
+  // Anybody who may watch, a link's guest among them, could fill the bound and shut the
+  // owner out of their own terminal.
+  test('watchers cannot take every socket on a terminal from its owner', async () => {
+    const running = await machine(env, ID, user)
+    const fill = async (who: string, role: 'read' | 'write', typing: 'owner' | 'writers') => {
+      let joined = 0
+      for (let at = 0; at <= MOST_SOCKETS; at += 1) {
+        const one = await join(running, { who: `${who}-${String(at)}`, role, typing })
+        if (one.of('refused').length) return joined
+        joined += 1
+      }
+      return joined
+    }
+    // Refused ones are said so and closed, and hold nothing while that lands.
+    const readers = await fill('reader', 'read', 'owner')
+    expect(await fill('reader-again', 'read', 'owner')).toBe(0)
+    expect(readers).toBeLessThan(MOST_SOCKETS)
+    expect(running.state.getWebSockets('session-1')).toHaveLength(readers)
+
+    // Whoever was let in to type still gets in, past everybody who only watches.
+    const writers = await fill('writer', 'write', 'writers')
+    expect(writers).toBeGreaterThan(0)
+    expect(readers + writers).toBeLessThan(MOST_SOCKETS)
+
+    // And the owner past them all, up to the bound and no further.
+    let owners = 0
+    for (; owners <= MOST_SOCKETS; owners += 1) {
+      const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+      if (owner.of('refused').length) break
+    }
+    expect(owners).toBeGreaterThan(0)
+    expect(readers + writers + owners).toBe(MOST_SOCKETS)
   })
 
   test('a key and its echo pass through with no storage, no query and no wait', async () => {

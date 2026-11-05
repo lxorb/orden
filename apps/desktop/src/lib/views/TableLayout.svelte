@@ -12,7 +12,7 @@
    *  wrapping within (`nib.lines`), so every row is still one height and nothing is
    *  measured; the first columns frozen while the rest scroll across (`nib.freeze`);
    *  each row in its conditional colour; and the header's menu (column-menu.ts). */
-  import { type Group, groupName, type Row, rowId } from '@orden/bases'
+  import { type Group, groupName, type Row } from '@orden/bases'
   import { untrack } from 'svelte'
   import { menu } from '../menu.svelte'
   import { windowFor } from '../row-window'
@@ -26,6 +26,7 @@
   import { setColumns, setSort, setViewOption } from './edit'
   import { plain } from './inline'
   import type { Kit } from './kit'
+  import { distinctKeys } from './list-items'
   import { groupLabel, noteNames, propertyName, summaryName } from './words'
 
   const { kit }: { kit: Kit } = $props()
@@ -47,6 +48,7 @@
     const out: Line[] = []
     const groups = live.answer?.groups ?? []
     const names = noteNames(groups.map((group) => group.key))
+    const keyOf = distinctKeys()
     for (const group of groups) {
       const key = groupName(group.key)
       if (property !== undefined) {
@@ -57,7 +59,7 @@
           count: group.rows.length,
         })
       }
-      for (const row of group.rows) out.push({ kind: 'row', id: `${row.space}:${rowId(row)}`, row })
+      for (const row of group.rows) out.push({ kind: 'row', id: keyOf(row, key), row })
       if (property !== undefined && summed && group.rows.length)
         out.push({ kind: 'sums', id: `sums:${key}`, group })
     }
@@ -258,7 +260,7 @@
         onpointerdown={(event) => reorder(event, column)}
         oncontextmenu={(event) => headMenu(event, column)}
       >
-        <button type="button" class="name" onclick={() => sortBy(column)}>
+        <button type="button" class="name" disabled={!kit.writable} onclick={() => sortBy(column)}>
           {propertyName(column, live.base ? displayName(live.base, column) : undefined)}
           {#if sort}<span class="arrow" aria-hidden="true"
               >{sort.direction === 'ASC' ? '↑' : '↓'}</span
@@ -397,6 +399,12 @@
     .name:hover {
       color: var(--text-strong);
     }
+  }
+
+  /* Nothing to press on a fixed fence, and still the column's name to read. */
+  .name:disabled {
+    opacity: 1;
+    cursor: default;
   }
 
   .arrow {

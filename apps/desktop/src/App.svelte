@@ -8,6 +8,7 @@
   import { keyboardStays, takesCaret } from './lib/caret'
   import { EditorView, landed, setVimCommands, showLine, topLine } from '@orden/editor'
   import { iconChoice } from './lib/icon-choice.svelte'
+  import { currentPlatform } from './lib/keys'
   import { menu, textFieldOf } from './lib/menu.svelte'
   import { overlays } from './lib/overlays'
   import PaneTree from './lib/PaneTree.svelte'
@@ -53,6 +54,7 @@
     feedbackSheet,
     importSheet,
     spacePickerDialog,
+    tabOverview,
     tabOverviewLayer,
     hostPickerDialog,
     paletteDoor,
@@ -144,8 +146,12 @@
 
   // Where a right click keeps the Mac's own menu; see system-menu.ts.
   let keepsSystemMenu: typeof import('./lib/system-menu').keepsSystemMenu = () => false
-  if (platform() === 'macos') {
-    void import('./lib/system-menu').then((one) => (keepsSystemMenu = one.keepsSystemMenu))
+  let macMenuKey: typeof import('./lib/system-menu').macMenuKey = () => false
+  if (currentPlatform() === 'mac') {
+    void import('./lib/system-menu').then((one) => {
+      keepsSystemMenu = one.keepsSystemMenu
+      macMenuKey = one.macMenuKey
+    })
   }
   /** The tab whose note is on the stage, while one is. The deck goes over the
    *  whole window, and the note stays open behind it. */
@@ -869,7 +875,8 @@
   // at a line, so this lands on top.
   $effect(() => {
     const asked = workspace.goto
-    if (!asked || !view || workspace.active?.path !== asked.path) return
+    // A note in its reading view goes there itself; see Reading.svelte.
+    if (!asked || !view || workspace.active?.path !== asked.path || workspace.active.reading) return
 
     // Taking the ask down runs this effect again, so nothing is returned to
     // undo the frame: a teardown here would cancel the very jump just asked
@@ -935,6 +942,8 @@
    *  keyboard, the menus and the palette at once. The one thing it cannot reach
    *  on its own is here: the palette is this component's own state. */
   function onKeydown(event: KeyboardEvent) {
+    if (macMenuKey(event)) return
+
     // Escape closes whatever is over the note, newest first: the settings, a
     // sheet, the palette, a menu, a dropdown inside one of them. Only when
     // there is one, so Escape in the file list still clears the selection and
@@ -1037,8 +1046,8 @@
   oncontextmenucapture={(event: MouseEvent) => {
     // A Mac's text field keeps the system's own menu, which has Look Up and the
     // spelling in it as well as the four; see system-menu.ts. Every other field gets
-    // Orden's.
-    if (!keepsSystemMenu(event.target, platform())) onFieldMenu(event)
+    // Orden's, and so does a Mac's where a key asked, which that menu cannot answer.
+    if (!event.isTrusted || !keepsSystemMenu(event.target, platform())) onFieldMenu(event)
   }}
   oncontextmenu={(event: MouseEvent) => {
     if (!keepsSystemMenu(event.target, platform())) event.preventDefault()
@@ -1291,7 +1300,13 @@
 {/snippet}
 
 {#snippet notices()}
-  <div class="notices" data-notices data-region="notices" class:over={viewport.drawer}>
+  <div
+    class="notices"
+    data-notices
+    data-region="notices"
+    class:over={viewport.drawer}
+    class:above={tabOverview.open}
+  >
     <StorageWarning />
     {#if undoToastNotice.asked}
       {#await undoToastNotice.asked then UndoToast}
@@ -1576,6 +1591,12 @@
   /* Over the drawer, which is fixed over the whole height of the window. */
   .notices.over {
     position: fixed;
+  }
+
+  /* Over the overview, which covers the whole app: what a drop there did is said here. */
+  .notices.above {
+    position: fixed;
+    z-index: var(--z-sheet);
   }
 
   /* Room only around something. `:global`, or the compiler drops a rule about

@@ -6,7 +6,9 @@
 //! store open between commands.
 
 use rusqlite::types::Value as Sql;
-use rusqlite::{params_from_iter, Connection, ErrorCode, OptionalExtension, TransactionBehavior};
+use rusqlite::{
+    params_from_iter, Connection, ErrorCode, OpenFlags, OptionalExtension, TransactionBehavior,
+};
 use serde::Serialize;
 use serde_json::{Map, Value as Json};
 use std::fmt::Write as _;
@@ -139,21 +141,31 @@ impl Store {
     /// and an app that will not start because of a cache is worse than one that
     /// rebuilds it. VS Code does the same with its state database. A store a newer Orden
     /// wrote is refused instead, because nothing about it is wrong.
-    pub fn open(path: &Path) -> Result<Self, Refused> {
+    ///
+    /// `device` is the id a store made now takes: the one this device already said to the
+    /// hub before there was a store (`madeDeviceId` in the window), so a device has one id
+    /// from the start. A store that has one keeps its own.
+    pub fn open_as(path: &Path, device: Option<&str>) -> Result<Self, Refused> {
         if let Some(folder) = path.parent() {
             made(folder).map_err(Refused::Other)?;
         }
 
-        match Self::opened(path, false) {
+        match Self::opened(path, false, device) {
             Err(Refused::Damaged(_)) => {
                 set_aside(path)?;
-                Self::opened(path, true)
+                Self::opened(path, true, device)
             }
             other => other,
         }
     }
 
-    fn opened(path: &Path, recovered: bool) -> Result<Self, Refused> {
+    /// `open_as` with no id given: what the tests open.
+    #[cfg(test)]
+    pub fn open(path: &Path) -> Result<Self, Refused> {
+        Self::open_as(path, None)
+    }
+
+    fn opened(path: &Path, recovered: bool, preferred: Option<&str>) -> Result<Self, Refused> {
         let conn = Connection::open(path)?;
         conn.busy_timeout(PATIENCE)?;
         // The write-ahead log: a write is an append to one file and a crash at any
@@ -174,7 +186,7 @@ impl Store {
         conn.pragma_update(None, "synchronous", "normal")?;
 
         let schema = migrated_with(&conn, &MIGRATIONS)?;
-        let device = device(&conn)?;
+        let device = device(&conn, preferred)?;
         let was_clean = mark_clean(&conn, false)?;
 
         Ok(Self {
@@ -457,8 +469,32 @@ pub fn migrated(conn: &Connection) -> Result<usize, Refused> {
     migrated_with(conn, &MIGRATIONS)
 }
 
-/// This device's id: the one the store already has, or a new one kept from now on.
-fn device(conn: &Connection) -> Result<String, Refused> {
+/// The device id a store at `path` keeps, read without opening it as a store: a
+/// connection of its own that only reads, so no migration, no device made, and no word on
+/// how the session ends (`mark_clean`) is written, and the engine's own connection may have
+/// it open meanwhile (the write-ahead log lets a reader in beside a writer). None where
+/// there is no store yet, or it has no device id.
+pub fn device_of(path: &Path) -> Option<String> {
+    if !path.is_file() {
+        return None;
+    }
+    let conn = Connection::open_with_flags(
+        path,
+        OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
+    )
+    .ok()?;
+    conn.busy_timeout(PATIENCE).ok()?;
+    conn.query_row("select value from meta where key = 'device'", [], |row| {
+        row.get(0)
+    })
+    .optional()
+    .ok()
+    .flatten()
+}
+
+/// This device's id: the one the store already has, or else `preferred` where it reads as
+/// a device id, or a new one, kept from now on.
+fn device(conn: &Connection, preferred: Option<&str>) -> Result<String, Refused> {
     let kept: Option<String> = conn
         .query_row("select value from meta where key = 'device'", [], |row| {
             row.get(0)
@@ -468,12 +504,23 @@ fn device(conn: &Connection) -> Result<String, Refused> {
         return Ok(kept);
     }
 
-    let made = new_id()?;
+    let made = match preferred.filter(|one| is_device_id(one)) {
+        Some(one) => one.to_owned(),
+        None => new_id()?,
+    };
     conn.execute(
         "insert into meta (key, value) values ('device', ?1)",
         [&made],
     )?;
     Ok(made)
+}
+
+/// Whether a word reads as a device id, as the hub takes one (`DEVICE` in hub-frames.ts).
+fn is_device_id(word: &str) -> bool {
+    (8..=64).contains(&word.len())
+        && word
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_')
 }
 
 /// A random id in the shape the account makes its own in (`crypto.randomUUID()`), so
@@ -551,7 +598,7 @@ fn with_suffix(path: &Path, suffix: &str) -> PathBuf {
 
 #[cfg(test)]
 mod tests {
-    use super::{files_of, migrated_with, Refused, Store, MIGRATIONS, MOST_PARTS};
+    use super::{device_of, files_of, migrated_with, Refused, Store, MIGRATIONS, MOST_PARTS};
     use crate::sync_store::wire::{frame, unframe, Change, Parts, Query};
     use rusqlite::Connection;
     use serde_json::{json, Value as Json};
@@ -587,6 +634,46 @@ mod tests {
 
     fn file(hash: &str) -> Json {
         json!({ "t": "put", "table": "files", "row": { "hash": hash, "state": "here" } })
+    }
+
+    /// A store made now takes the id the device already gave the hub; one that has an id
+    /// keeps it, and a word that is no device id is not taken.
+    #[test]
+    fn a_new_store_takes_the_device_id_it_is_given() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let path = dir.path().join("sync.db");
+        let made = "0123456789abcdef0123456789abcdef";
+        let store = Store::open_as(&path, Some(made)).expect("a store");
+        assert_eq!(store.opened.device, made);
+        store.close().expect("closed");
+        let again = Store::open_as(&path, Some("ffffffffffffffffffffffffffffffff")).expect("again");
+        assert_eq!(again.opened.device, made, "a store keeps its own");
+        again.close().expect("closed");
+
+        let other = dir.path().join("other.db");
+        let odd = Store::open_as(&other, Some("../not an id")).expect("a store");
+        assert_eq!(odd.opened.device.len(), 36);
+    }
+
+    /// The device id read beside the store: none before there is one, the store's own
+    /// after, while it is open and after it closed, and nothing written by the read, so a
+    /// clean quit stays clean.
+    #[test]
+    fn the_device_id_is_read_without_opening_the_store() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let path = dir.path().join("sync.db");
+        assert_eq!(device_of(&path), None);
+        assert!(!path.exists(), "a look makes no store");
+
+        let store = Store::open(&path).expect("a store");
+        let device = store.opened.device.clone();
+        assert_eq!(device_of(&path).as_deref(), Some(device.as_str()));
+        store.mark_clean(true).expect("said");
+        store.close().expect("closed");
+
+        assert_eq!(device_of(&path).as_deref(), Some(device.as_str()));
+        let again = Store::open(&path).expect("again");
+        assert!(again.opened.was_clean, "the look left the quit clean");
     }
 
     #[test]

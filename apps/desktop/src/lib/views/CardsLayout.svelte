@@ -65,14 +65,17 @@
 <div class="cards" style:--card={`${size}px`}>
   {#each live.answer?.groups ?? [] as group (groupName(group.key))}
     {#if property !== undefined}
-      <p class="nib-section" use:droppable={(row) => kit.drop(row, group.key)}>
+      <p
+        class="nib-section"
+        use:droppable={(row, _at, _box, from) => kit.drop(row, group.key, undefined, from)}
+      >
         {groupLabel(property, group.key, live.today, names)}<span>{group.rows.length}</span>
       </p>
     {/if}
     <div
       class="grid"
-      use:droppable={(row) => {
-        if (property !== undefined) kit.drop(row, group.key)
+      use:droppable={(row, _at, _box, from) => {
+        if (property !== undefined) kit.drop(row, group.key, undefined, from)
       }}
     >
       {#each group.rows as row (`${row.space}:${rowId(row)}`)}
@@ -85,7 +88,7 @@
           style:--row-tone={tone}
           role="button"
           tabindex="0"
-          use:draggable={{ row, label: title }}
+          use:draggable={{ row, label: title, from: group.key }}
           onclick={(event) => kit.open(row, linkModifier(event) ? 'tab' : 'aside')}
           onkeydown={(event) => {
             if (event.key === 'Enter') kit.open(row, 'aside')

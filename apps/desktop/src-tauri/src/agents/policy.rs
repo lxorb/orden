@@ -44,7 +44,8 @@ use serde::Deserialize;
 use super::grants::{Grant, Mode, SiteRule};
 use super::verbs::{Category, DialogKind, Store};
 
-/// The host of an address, lower case.
+/// The host of an address, lower case, and without the root's dot that names the same
+/// host (`bank.example.`), which every rule below would otherwise read as another one.
 pub fn host_of(url: &str) -> Option<String> {
     let parsed: tauri::Url = url.parse().ok()?;
     // `bank.example.` is `bank.example` to every resolver: a rule is not got round by the
@@ -54,6 +55,55 @@ pub fn host_of(url: &str) -> Option<String> {
         .map(|host| host.trim_end_matches('.').to_lowercase())
 }
 
+/// Whether a page an agent acts in may be at an address: the web. Beyond it, only what a
+/// page makes of its own and which reads nothing of the machine: `about:blank`, where a
+/// tab or a window starts (and the empty address the engine says for one), and a `blob:`
+/// the page wrote itself, how a site shows or hands over a file it built. Never `file:`,
+/// `chrome:`, `view-source:`, `javascript:`, an extension's page or a scheme somebody
+/// else registered, whichever road asks: an agent's own call, or the page it is on.
+pub fn on_the_web(url: &str) -> bool {
+    if url.is_empty() {
+        return true;
+    }
+    let Ok(parsed) = url.parse::<tauri::Url>() else {
+        return false;
+    };
+    match parsed.scheme() {
+        "http" | "https" => !parsed.host_str().is_some_and(crate::web_tabs::app_host),
+        "blob" => true,
+        "about" => parsed.as_str() == "about:blank",
+        _ => false,
+    }
+}
+
+/// The suffixes of the public suffix list's private section that an Always on one site
+/// would most hand to a stranger: `shop.github.io` is no reason to trust `evil.github.io`.
+const SHARED_HOSTS: &[&str] = &[
+    "github.io",
+    "gitlab.io",
+    "pages.dev",
+    "workers.dev",
+    "vercel.app",
+    "netlify.app",
+    "web.app",
+    "firebaseapp.com",
+    "herokuapp.com",
+    "onrender.com",
+    "fly.dev",
+    "azurewebsites.net",
+    "cloudfront.net",
+    "s3.amazonaws.com",
+    "blogspot.com",
+    "wordpress.com",
+    "notion.site",
+    "glitch.me",
+    "surge.sh",
+    "ngrok.io",
+    "ngrok.app",
+    "ngrok-free.app",
+    "repl.co",
+];
+
 /// The site a host is on: its registrable domain, as far as it can be told without the
 /// public suffix list.
 pub fn site_of(host: &str) -> String {
@@ -62,6 +112,13 @@ pub fn site_of(host: &str) -> String {
         return host;
     }
     let labels: Vec<&str> = host.split('.').collect();
+    // Under a host where anybody may have a name, the name is the site.
+    if let Some(shared) = SHARED_HOSTS
+        .iter()
+        .find(|one| host.ends_with(&format!(".{one}")))
+    {
+        return labels[labels.len() - shared.split('.').count() - 1..].join(".");
+    }
     let keep = match labels.as_slice() {
         [.., second, top]
             if top.len() == 2
@@ -122,9 +179,17 @@ fn named(site: &str) -> String {
         .to_lowercase()
 }
 
-/// Whether an agent may be at an address in a tab of this store: a denied site nowhere,
-/// a site kept to the agent's own store only there.
+/// Whether an agent may be at an address in a tab of this store: nowhere off the web, a
+/// denied site nowhere, a site kept to the agent's own store only there. The page the
+/// engine shows for a load that failed is no address anybody asked for, and the tab has
+/// to stay the agent's to send elsewhere.
 pub fn site_allowed(grant: &Grant, url: &str, store: Store) -> Result<(), String> {
+    if url.starts_with("chrome-error:") {
+        return Ok(());
+    }
+    if !on_the_web(url) {
+        return Err(format!("an agent stays on the web, and {url} is not on it"));
+    }
     let Some(host) = host_of(url) else {
         return Ok(());
     };
@@ -132,6 +197,28 @@ pub fn site_allowed(grant: &Grant, url: &str, store: Store) -> Result<(), String
         Some(SiteRule::Deny) => Err(format!("{} is denied to this agent", site_of(&host))),
         Some(SiteRule::AgentStore) if store != Store::Agent => Err(format!(
             "{} is only for this agent's own store: open it with store \"agent\"",
+            site_of(&host)
+        )),
+        _ => Ok(()),
+    }
+}
+
+/// Whether a frame may be read and acted in: its address or, for a frame with none of its
+/// own (`about:blank`, a `srcdoc`), the origin round it, by the same rules a tab is. `at` is
+/// `Facts::at`. A denied site in a frame of an allowed page is still denied (9.2).
+pub fn frame_allowed(grant: &Grant, at: &[String], store: Store) -> Result<(), String> {
+    let Some(host) = at.iter().find_map(|one| {
+        tauri::Url::parse(one)
+            .ok()
+            .filter(|url| matches!(url.scheme(), "http" | "https"))
+            .and_then(|_| host_of(one))
+    }) else {
+        return Ok(());
+    };
+    match rule_for(grant, &host) {
+        Some(SiteRule::Deny) => Err(format!("{} is denied to this agent", site_of(&host))),
+        Some(SiteRule::AgentStore) if store != Store::Agent => Err(format!(
+            "{} is only for this agent's own store",
             site_of(&host)
         )),
         _ => Ok(()),
@@ -181,8 +268,26 @@ pub struct Facts {
     pub in_form: bool,
     /// The form's fields, or the page's when it is in none.
     pub fields: Vec<Field>,
+    /// Whether it is, or is in, a control: a button, a link, a role that says so. What is
+    /// not has only its own short words for a name.
+    pub control: bool,
+    /// What the dialog a press is in says: its label and its own lines.
+    pub dialog: String,
+    /// Where it is no control: the short lines of what acts for the press, each of which
+    /// `leads` may find says what it does.
+    pub held: Vec<String>,
+    /// Whether the page was too big to read all its fields, so its form cannot be judged.
+    pub cut: bool,
+    /// The address of the document it is in, then the origin of each frame round that:
+    /// which frame it is in, for what the grant denies (`frame_allowed`).
+    pub at: Vec<String>,
     /// The element itself, read the way each of `fields` is.
     pub field: Field,
+    /// The name of the button Enter in its form presses: the form's default button.
+    pub default_button: String,
+    /// Whether it has the keyboard and shows nothing that can be read: the host of a closed
+    /// shadow root, whose button no script can name.
+    pub opaque: bool,
 }
 
 /// One field of the form the element is in.
@@ -233,6 +338,12 @@ impl Facts {
             })
     }
 
+    /// Whether a key that presses lands on it: no box words go into, and no page with
+    /// nothing in focus.
+    pub fn pressable(&self) -> bool {
+        !self.editable && !matches!(self.tag.as_str(), "" | "body" | "html")
+    }
+
     /// Whether it opens one of the engine's own pickers when pressed (6.5).
     pub fn picker(&self) -> bool {
         self.tag == "select"
@@ -256,7 +367,63 @@ fn card_field(field: &Field) -> bool {
     }
     let said = field.said.to_lowercase();
     CARD.iter().any(|one| said.contains(one))
+        || (says(&plain_said(&field.said), CARD_WORDS) && !says(&said, NO_PAYMENT_CARD))
 }
+
+/// What a field says with the marks between its words read as spaces, and a name's humps,
+/// as a person reads `SMS-Code`, `card_no` and `userPin`.
+fn plain_said(said: &str) -> String {
+    let mut plain = String::with_capacity(said.len() + 4);
+    let mut lower = false;
+    for one in said.chars() {
+        if lower && one.is_uppercase() {
+            plain.push(' ');
+        }
+        lower = one.is_lowercase();
+        plain.push(if matches!(one, '-' | '_') { ' ' } else { one });
+    }
+    plain
+}
+
+/// Whether a field asks for a one-time code or a PIN, by what it is called (9.4).
+fn one_time(field: &Field) -> bool {
+    if field
+        .autocomplete
+        .split_whitespace()
+        .any(|one| one == "postal-code")
+    {
+        return false;
+    }
+    let said = plain_said(&field.said);
+    if says(&said, ONE_TIME)
+        || alone(&plain_said(&field.label), ONE_TIME_ALONE)
+        || alone(&said, ONE_TIME_ALONE)
+    {
+        return true;
+    }
+    // Word by word, with a number after it as `pin1` has: a PIN in any case but `Pin to top`,
+    // and a TAN only in its capitals, as Tan is a colour.
+    said.trim() == "tan"
+        || said
+            .split(|one: char| !one.is_alphanumeric())
+            .map(|word| word.trim_end_matches(|one: char| one.is_ascii_digit()))
+            .any(|word| {
+                word.ends_with("TAN")
+                    || word.eq_ignore_ascii_case("otp")
+                    || (word.eq_ignore_ascii_case("pin") && !body(field) && !says(&said, NOT_A_PIN))
+            })
+}
+
+/// What has a pin in it and no secret.
+const NOT_A_PIN: &[&str] = &[
+    "pin to",
+    "pin notes",
+    "pin note",
+    "pin this",
+    "pin it",
+    "pin on",
+    "pin board",
+];
 
 /// Whether a field holds a credential: a password by its type or its `autocomplete`, or
 /// a field the page masks the way it would one. A show-password toggle turns the type to
@@ -280,6 +447,7 @@ pub fn secret(field: &Field) -> bool {
             .split_whitespace()
             .any(|one| one.starts_with("cc-") || one == "one-time-code")
         || card_field(field)
+        || one_time(field)
 }
 
 /// Whether a field is a box words are written in: a `<textarea>` or an editable region,
@@ -429,8 +597,9 @@ pub fn judge(
 ) -> Option<Question> {
     let host = host_of(url).unwrap_or_default();
     let site = site_of(&host);
-    // Enter's element is the field, whose label is no name for what the key does.
-    let label = if act == Act::Enter {
+    // Enter's element is the field, whose label is no name for what the key does. A secret with
+    // no label is named by what it holds, and what is said here goes to the agent.
+    let label = if act == Act::Enter || (secret(&facts.field) && facts.name != facts.field.label) {
         String::new()
     } else {
         short(&facts.name)
@@ -444,6 +613,23 @@ pub fn judge(
     // no more, and nothing at all under Full permissions.
     if credential_act(facts, act) {
         if let Some(question) = ask(Category::SigningIn, on(&label, "Sign in", &site)) {
+            return Some(question);
+        }
+    }
+
+    // Enter that submits presses the form's default button, which is judged as a press of
+    // it, by its name: Enter in a field is no way round the Delete account beside it. In a dialog
+    // that talks of paying or deleting it is a press of what the dialog says, a button or none.
+    let is_a_press = (facts.submit && !facts.default_button.is_empty()) || !facts.dialog.is_empty();
+    if act == Act::Enter && is_a_press && !body(&facts.field) {
+        let pressed = Facts {
+            name: facts.default_button.clone(),
+            editable: false,
+            link: false,
+            default_button: String::new(),
+            ..facts.clone()
+        };
+        if let Some(question) = judge(grant, &pressed, Act::Press, url, hosts) {
             return Some(question);
         }
     }
@@ -468,8 +654,39 @@ pub fn judge(
             }
         }
     }
-    if act == Act::Press && says(&facts.name, DELETING) {
+    // Not a link, which goes somewhere: a guide called How to delete is a page, and it is
+    // the press on that page that deletes.
+    if act == Act::Press && !facts.link && says(&facts.name, DELETING) {
         if let Some(question) = ask(Category::Deleting, on(&label, "Delete", &site)) {
+            return Some(question);
+        }
+    }
+
+    // A press in a dialog that talks of paying or deleting does what the dialog says, whatever
+    // it is called, unless it is the way out. Not by reading what the dialog means: that lets
+    // honest second steps by, and a press too many asked about costs one question.
+    if act == Act::Press && !facts.link && !facts.editable {
+        for (words, inflected, category, fallback) in [
+            (PAYING, DIALOG_PAYING, Category::Paying, "Pay"),
+            (DELETING, DIALOG_DELETING, Category::Deleting, "Delete"),
+        ] {
+            let Some(said) = mention(&facts.dialog, words, inflected) else {
+                continue;
+            };
+            let way_out = dismisses(&facts.name)
+                || (category == Category::Deleting && alone(&facts.name, KEEPING));
+            if way_out {
+                continue;
+            }
+            if let Some(question) = ask(category, on(&short(said), fallback, &site)) {
+                return Some(question);
+            }
+        }
+    }
+
+    // What a press lands on cannot be read, so it can be anything on the list above.
+    if act == Act::Press && (facts.opaque || (facts.cut && facts.submit)) {
+        if let Some(question) = ask(Category::Unread, on("", "A press", &site)) {
             return Some(question);
         }
     }
@@ -487,22 +704,94 @@ pub fn judge(
         .flatten()
 }
 
+/// What a key does to the element that has the keyboard, as `judge` reads it; `None` when
+/// it presses nothing. Space or Enter on what is no box is a press of it, the same as a
+/// click on it, whatever it is pressed by. In a box, Enter is the box's: its form's submit
+/// and a message's send.
+pub fn key_act(mut facts: Facts, key: &super::keys::Key) -> Option<(Facts, Act)> {
+    if key.presses() && facts.pressable() {
+        // Enter on an input that is no box and no button (a checkbox) submits its form,
+        // the same as Enter in a box of one.
+        let its_own_submit = matches!(facts.kind.as_str(), "submit" | "image" | "button" | "reset");
+        if key.submits() && facts.tag == "input" && !its_own_submit {
+            facts.submit = facts.in_form;
+            return Some((facts, Act::Enter));
+        }
+        return Some((facts, Act::Press));
+    }
+    if !(key.sends() || key.submits()) {
+        return None;
+    }
+    facts.submit = facts.in_form && key.submits();
+    // Shift+Enter is a new line in a box, and in a field the same submit as Enter.
+    let enter = key.sends() || (key.submits() && !body(&facts.field));
+    Some((facts, if enter { Act::Enter } else { Act::Press }))
+}
+
+/// Which of a drag's two ends the one question for it is about: the graver, and a drop
+/// target only where it is a control, as dropping on a column is no press of what it holds.
+pub fn of_a_drag<'a>(
+    grant: &Grant,
+    from: &'a Facts,
+    to: &'a Facts,
+    url: &str,
+    hosts: &[String],
+) -> &'a Facts {
+    if !to.control {
+        return from;
+    }
+    let category = |facts| judge(grant, facts, Act::Press, url, hosts).map(|one| one.category);
+    match (category(from), category(to)) {
+        (None, Some(_)) => to,
+        (Some(Category::Writing), Some(other)) if other != Category::Writing => to,
+        _ => from,
+    }
+}
+
 /// A one-line summary: the press's own words, or a word for the category, and the site.
 /// What answering a dialog the page holds asks first, for an agent with this grant: a
 /// site's own sign-in box or its request for a client certificate answered yes signs in,
 /// and asks under `SigningIn` as the mode says - nothing at all under Full permissions
-/// (#1072). Every other answer, and any no, goes ahead.
-pub fn answering(grant: &Grant, kind: DialogKind, accept: bool, url: &str) -> Option<Question> {
-    if !accept || !kind.signs_in() {
+/// (#1072). A `confirm` or a `prompt` that says it pays, sends or deletes is that press:
+/// the button before it may have been called anything. Every other answer, and any no,
+/// goes ahead.
+pub fn answering(
+    grant: &Grant,
+    kind: DialogKind,
+    accept: bool,
+    url: &str,
+    message: &str,
+) -> Option<Question> {
+    if !accept {
         return None;
     }
     let site = site_of(&host_of(url).unwrap_or_default());
-    (grant.asks(Category::SigningIn) && !grant.always(&site, Category::SigningIn)).then(|| {
-        Question {
-            category: Category::SigningIn,
-            summary: on("", "Sign in", &site),
+    let ask = |category: Category, summary: String| {
+        (grant.asks(category) && !grant.always(&site, category))
+            .then_some(Question { category, summary })
+    };
+    if kind.signs_in() {
+        return ask(Category::SigningIn, on("", "Sign in", &site));
+    }
+    if !matches!(kind, DialogKind::Confirm | DialogKind::Prompt) {
+        return None;
+    }
+    // The page's own words, said to be: they are not Orden's account of what will happen.
+    let said = format!("The page says \u{201c}{}\u{201d}", short(message));
+    if says(message, PAYING) {
+        if let Some(question) = ask(Category::Paying, on(&said, "Pay", &site)) {
+            return Some(question);
         }
-    })
+    }
+    if says_sending(message) {
+        if let Some(question) = ask(Category::Sending, on(&said, "Send", &site)) {
+            return Some(question);
+        }
+    }
+    if says(message, DELETING) {
+        return ask(Category::Deleting, on(&said, "Delete", &site));
+    }
+    None
 }
 
 fn on(label: &str, fallback: &str, site: &str) -> String {
@@ -560,6 +849,311 @@ pub fn payment_host(host: &str) -> bool {
 /// Whether a host is a mail, messaging or social site, where a send is a send.
 pub fn social(host: &str) -> bool {
     SOCIAL.iter().any(|one| covers(one, host))
+}
+
+/// What a one-time code and a PIN are called, in names, ids and labels, with their marks
+/// read as spaces: whole words, since `otp` is in `hotpot`. Only a secret by this, which hides
+/// a value from an agent and asks nothing: over-careful about a postal PIN code, and never
+/// a leak. No bare `one-time` or `authenticator`: a one-time donation and an app's name.
+const ONE_TIME: &[&str] = &[
+    "otp",
+    "otpcode",
+    "totp",
+    "one time code",
+    "one time password",
+    "one time passcode",
+    "one time pin",
+    "onetime code",
+    "onetime password",
+    "onetimecode",
+    "onetimepassword",
+    "verification code",
+    "verificationcode",
+    "verify code",
+    "digit code",
+    "digit 1",
+    "digit 2",
+    "digit 3",
+    "digit 4",
+    "digit 5",
+    "digit 6",
+    "2fa",
+    "two factor",
+    "mfa",
+    "authenticator code",
+    "auth code",
+    "authentication code",
+    "sms code",
+    "login code",
+    "sign in code",
+    "recovery code",
+    "backup code",
+    "enter code",
+    "your code",
+    "einmal code",
+    "two step code",
+    "security key",
+    "code we sent",
+    "code you received",
+    "pincode",
+    "pin code",
+    "pin number",
+    "passcode",
+    "best\u{e4}tigungs code",
+    "best\u{e4}tigungscode",
+    "einmalcode",
+    "einmalpasswort",
+    "sicherheitscode",
+    "zugangscode",
+    "anmeldecode",
+    "authentifizierungscode",
+    "geheimzahl",
+    "code de v\u{e9}rification",
+    "c\u{f3}digo de verificaci\u{f3}n",
+    "codice di verifica",
+];
+
+/// What is a one-time code only as a field's whole label.
+const ONE_TIME_ALONE: &[&str] = &["code", "otp", "pin", "one time", "authenticator"];
+
+/// More of what card fields are called, as whole words with their marks read as spaces:
+/// `card no` is in `card notes`.
+const CARD_WORDS: &[&str] = &[
+    "card no",
+    "cardno",
+    "card num",
+    "credit card",
+    "mm/yy",
+    "mm / yy",
+    "mm/jj",
+    "mm/aa",
+];
+
+/// What calls itself a card and pays for nothing.
+const NO_PAYMENT_CARD: &[&str] = &[
+    "library",
+    "loyalty",
+    "member",
+    "membership",
+    "student",
+    "health",
+    "insurance",
+    "id card",
+    "gift",
+];
+
+/// What in a dialog is the way out of it, as its whole name or the first clause of it: `Close`
+/// and `No, keep it`, and not `Close account` or `Keep going`. A closed list: all else in a
+/// dialog that talks of paying or deleting asks, an icon with no name included.
+const DISMISSING: &[&str] = &[
+    "cancel",
+    "close",
+    "close dialog",
+    "close modal",
+    "close window",
+    "close popup",
+    "dismiss",
+    "no",
+    "stay",
+    "stay here",
+    "continue shopping",
+    "not now",
+    "back",
+    "go back",
+    "never mind",
+    "got it",
+    "accept cookies",
+    "accept all cookies",
+    "allow cookies",
+    "allow all cookies",
+    "reject",
+    "reject all",
+    "decline",
+    "learn more",
+    "more info",
+    "details",
+    "next page",
+    "previous page",
+    "skip",
+    "later",
+    "maybe later",
+    "x",
+    "\u{d7}",
+    "\u{2715}",
+    "abbrechen",
+    "schlie\u{df}en",
+    "nein",
+    "zur\u{fc}ck",
+    "sp\u{e4}ter",
+    "verstanden",
+    "alle cookies akzeptieren",
+    "annuler",
+    "fermer",
+    "non",
+    "cancelar",
+    "cerrar",
+    "annulla",
+    "chiudi",
+    "annuleren",
+    "sluiten",
+    "fechar",
+    "\u{30ad}\u{30e3}\u{30f3}\u{30bb}\u{30eb}",
+    "\u{9589}\u{3058}\u{308b}",
+    "\u{53d6}\u{6d88}",
+    "\u{5173}\u{95ed}",
+    "\u{43e}\u{442}\u{43c}\u{435}\u{43d}\u{430}",
+    "\u{437}\u{430}\u{43a}\u{440}\u{44b}\u{442}\u{44c}",
+];
+
+/// The way out of a dialog about deleting, and of none about paying, where `Keep your plan and
+/// be billed` is a yes.
+const KEEPING: &[&str] = &["keep", "behalten", "garder"];
+
+/// Whether a press is the way out of a dialog. An arrow or a tick round it is no word.
+fn dismisses(name: &str) -> bool {
+    if alone(name, DISMISSING) {
+        return true;
+    }
+    let name = name.trim_matches(|one: char| !one.is_alphanumeric());
+    // `Close Close`: a titled picture beside the word, or a title on the word's own svg.
+    let words: Vec<&str> = name.split_whitespace().collect();
+    let (half, other) = words.split_at(words.len() / 2);
+    if half.join(" ").eq_ignore_ascii_case(&other.join(" ")) && alone(&half.join(" "), DISMISSING) {
+        return true;
+    }
+    // `No, keep it`, and not `No, thanks and charge me`.
+    let (first, rest) = name.split_once(',').unwrap_or((name, ""));
+    alone(first, DISMISSING)
+        && !talks_of(rest, PAYING, DIALOG_PAYING)
+        && !talks_of(rest, DELETING, DIALOG_DELETING)
+}
+
+/// What a dialog's words may be in, past the commands the press lists have: `Your files get
+/// deleted`, `Your card is charged`.
+const DIALOG_DELETING: &[&str] = &[
+    "deletion",
+    "terminated",
+    "terminates",
+    "terminating",
+    "wipes",
+    "wiped",
+    "wiping",
+    "destroyed",
+    "destroys",
+    "destroying",
+    "discard",
+    "discards",
+    "discarded",
+    "discarding",
+    "eliminada",
+    "eliminados",
+    "eliminadas",
+    "borrada",
+    "supprim\u{e9}s",
+    "supprim\u{e9}es",
+    "deleted",
+    "deletes",
+    "deleting",
+    "removed",
+    "removes",
+    "removing",
+    "erased",
+    "erases",
+    "erasing",
+    "gel\u{f6}scht",
+    "entfernt",
+    "supprim\u{e9}",
+    "supprim\u{e9}e",
+    "eliminado",
+    "borrado",
+    "eliminato",
+    "cancellato",
+    "rimosso",
+];
+const DIALOG_PAYING: &[&str] = &[
+    "debited",
+    "debits",
+    "charged",
+    "charge",
+    "billed",
+    "paid",
+    "paying",
+    "payment",
+    "purchased",
+    "bezahlt",
+    "zahlung",
+];
+
+/// What says none of these words in the sense meant: the phrase is taken out, and the same word
+/// elsewhere in the dialog still counts.
+const IN_ANOTHER_SENSE: &[&str] = &[
+    "free of charge",
+    "no charge",
+    "without charge",
+    "in charge",
+    "pay attention",
+];
+
+/// A word on the paying list that says something else in a sentence: Hausa's `saya`, buy, as a
+/// button's whole name, is Indonesian's I.
+const ONLY_AS_A_NAME: &[&str] = &["saya"];
+
+/// Whether what a dialog says has one of these words in it, as `mention` means it.
+fn talks_of(said: &str, words: &[&str], inflected: &[&str]) -> bool {
+    let mut said = said.to_lowercase();
+    for phrase in IN_ANOTHER_SENSE {
+        said = said.replace(phrase, " ");
+    }
+    words
+        .iter()
+        .chain(inflected)
+        .filter(|word| !ONLY_AS_A_NAME.contains(word))
+        .any(|word| says(&said, &[word]))
+}
+
+/// Where a dialog's sentences end: at a stop with a space after it or at its end, so
+/// `Pay 1.299,00 EUR` stays whole.
+fn stops(dialog: &str) -> impl Iterator<Item = usize> + '_ {
+    dialog.char_indices().filter_map(|(at, one)| {
+        let end = at + one.len_utf8();
+        (matches!(one, '.' | '!' | '?' | '\u{ff1f}')
+            && dialog[end..].chars().next().is_none_or(char::is_whitespace))
+        .then_some(end)
+    })
+}
+
+/// The first sentence of a dialog with one of these words in it, to quote to the reader: to a
+/// stop with a space after it or the end. Whether it asks is whether there is one; nothing is
+/// read from which sentence or how it is put.
+fn mention<'d>(dialog: &'d str, words: &[&str], inflected: &[&str]) -> Option<&'d str> {
+    if !talks_of(dialog, words, inflected) {
+        return None;
+    }
+    let mut start = 0;
+    for end in stops(dialog) {
+        let sentence = dialog[start..end].trim();
+        if talks_of(sentence, words, inflected) {
+            return Some(sentence);
+        }
+        start = end;
+    }
+    Some(dialog[start..].trim())
+}
+
+fn starts_with_any(line: &str, words: &[&str]) -> bool {
+    let line = line.trim().to_lowercase();
+    words.iter().any(|word| {
+        line.strip_prefix(word)
+            .is_some_and(|rest| !rest.chars().next().is_some_and(char::is_alphanumeric))
+    })
+}
+
+/// Whether a line opens by saying it pays or deletes and is short enough to be a button's:
+/// `Pay now`, `Delete 3 files`, and not `How to delete your account`, `Payment details` or
+/// `Pay gap widens in Europe`, which a tile may hold in its other lines and do neither.
+pub fn leads(line: &str) -> bool {
+    line.split_whitespace().count() <= 4
+        && (starts_with_any(line, PAYING) || starts_with_any(line, DELETING))
 }
 
 /// What card fields are called, in names, ids and labels.
@@ -1325,12 +1919,513 @@ mod tests {
     }
 
     #[test]
+    fn a_dialog_that_talks_of_paying_or_deleting_asks_of_all_but_its_way_out() {
+        let url = "https://app.example/";
+        let in_dialog = |name: &str, dialog: &str| Facts {
+            dialog: dialog.into(),
+            ..press(name)
+        };
+        for (name, dialog, asked) in [
+            (
+                "Confirm",
+                "You are about to delete your account.",
+                Category::Deleting,
+            ),
+            (
+                "Confirm",
+                "Warning. Delete your account.",
+                Category::Deleting,
+            ),
+            (
+                "Yes",
+                "Confirmation Delete your account.",
+                Category::Deleting,
+            ),
+            ("OK", "Please confirm: delete account", Category::Deleting),
+            ("OK", "Your account will be terminated.", Category::Deleting),
+            ("Continue", "This wipes your phone.", Category::Deleting),
+            ("OK", "All your data is destroyed.", Category::Deleting),
+            ("Yes", "Discard this draft?", Category::Deleting),
+            (
+                "Agree",
+                "We start the deletion of your data.",
+                Category::Deleting,
+            ),
+            ("Confirm", "20 EUR is debited today.", Category::Paying),
+            (
+                "OK",
+                "Are you sure? All your files get deleted.",
+                Category::Deleting,
+            ),
+            (
+                "Confirm",
+                "Order summary. Total 99 EUR. Pay with Visa ending 4242.",
+                Category::Paying,
+            ),
+            (
+                "OK",
+                "Your card is charged 99 EUR. Purchase details below.",
+                Category::Paying,
+            ),
+            (
+                "Continue \u{2192}",
+                "Delete your account?",
+                Category::Deleting,
+            ),
+            (
+                "Confirm and close",
+                "Delete your account?",
+                Category::Deleting,
+            ),
+            ("Keep going", "Delete your account?", Category::Deleting),
+            ("Close account", "Delete your account?", Category::Deleting),
+            (
+                "Yes, no going back",
+                "Delete your account?",
+                Category::Deleting,
+            ),
+            (
+                "Done",
+                "You can remove your data at any time.",
+                Category::Deleting,
+            ),
+            ("", "Remove item from cart?", Category::Deleting),
+        ] {
+            assert_eq!(
+                category(&in_dialog(name, dialog), url),
+                Some(asked),
+                "{name}: {dialog}"
+            );
+        }
+        for (name, dialog) in [
+            ("Got it", "How to delete your data"),
+            ("Learn more", "Delete account?"),
+            ("Next page", "Recently deleted items"),
+            ("Cancel", "Delete your account?"),
+            ("No, keep it", "Delete your account?"),
+            ("Close", "Pay 20.00 EUR"),
+            ("x", "Delete your account?"),
+            ("Abbrechen", "Konto l\u{f6}schen?"),
+            ("Confirm", "Change your name?"),
+        ] {
+            assert_eq!(
+                category(&in_dialog(name, dialog), url),
+                None,
+                "{name}: {dialog}"
+            );
+        }
+    }
+
+    #[test]
+    fn the_way_out_of_a_dialog_and_what_reads_as_paying_by_mistake() {
+        let url = "https://app.example/";
+        let in_dialog = |name: &str, dialog: &str| Facts {
+            dialog: dialog.into(),
+            ..press(name)
+        };
+        // Each of these goes: an everyday dialog, or a way out said another way.
+        for (name, dialog) in [
+            (
+                "Accept all cookies",
+                "We use cookies. You can remove them at any time.",
+            ),
+            (
+                "Allow all cookies",
+                "Our partners use cookies to process payment and measure ads.",
+            ),
+            ("Next", "Tip: drag a widget to move it."),
+            ("Continue", "This upgrade is free of charge."),
+            ("Assign", "Who is in charge of this project?"),
+            ("Lanjut", "Saya setuju dengan ketentuan ini"),
+            ("Close dialog", "Delete your account?"),
+            ("Close modal", "Pay 20 EUR"),
+            ("Close Close", "Delete your account?"),
+            ("Continue shopping", "Item removed"),
+            ("Stay", "Delete your account?"),
+            ("Sluiten", "Delete your account?"),
+            (
+                "\u{30ad}\u{30e3}\u{30f3}\u{30bb}\u{30eb}",
+                "Delete your account?",
+            ),
+            ("Keep", "Delete this item?"),
+            ("No, keep it", "Delete your account?"),
+        ] {
+            assert_eq!(
+                category(&in_dialog(name, dialog), url),
+                None,
+                "{name}: {dialog}"
+            );
+        }
+    }
+
+    #[test]
+    fn only_what_is_plainly_the_way_out_goes_free() {
+        let url = "https://app.example/";
+        let in_dialog = |name: &str, dialog: &str| Facts {
+            dialog: dialog.into(),
+            ..press(name)
+        };
+        for (name, dialog, asked) in [
+            (
+                "Accept",
+                "Accept a charge of 99 EUR to your card?",
+                Category::Paying,
+            ),
+            (
+                "Keep",
+                "Keep your plan and be billed 99 EUR?",
+                Category::Paying,
+            ),
+            (
+                "Accept",
+                "Delete transfer request from Bob",
+                Category::Deleting,
+            ),
+            ("Accept all", "Delete your account?", Category::Deleting),
+            ("OK", "Delete your account?", Category::Deleting),
+            ("No, thanks and charge me", "Pay 99 EUR?", Category::Paying),
+            // Cookies in the same dialog are no way past what it asks.
+            (
+                "OK",
+                "Delete your account? We use cookies.",
+                Category::Deleting,
+            ),
+            (
+                "OK",
+                "Your card is charged 99 EUR. We use cookies.",
+                Category::Paying,
+            ),
+            (
+                "Continue",
+                "Free of charge for a month, then you are charged 9 EUR.",
+                Category::Paying,
+            ),
+            (
+                "Continue",
+                "This upgrade is 20 EUR. Pay now?",
+                Category::Paying,
+            ),
+            // Only a name that says cookies is about cookies: the dialog's words are no way past.
+            (
+                "OK",
+                "We use cookies. You can delete them in your browser.",
+                Category::Deleting,
+            ),
+            ("OK", "Consent to payment of 99 EUR.", Category::Paying),
+            (
+                "Agree",
+                "By clicking Agree you consent to be charged 99 EUR every month.",
+                Category::Paying,
+            ),
+            (
+                "Allow",
+                "Payment consent. Allow shop.example to take 500 EUR from your account.",
+                Category::Paying,
+            ),
+            (
+                "OK",
+                "We use cookies. Your account will be deleted permanently.",
+                Category::Deleting,
+            ),
+            (
+                "Accept all",
+                "We use cookies. You can delete them in your browser.",
+                Category::Deleting,
+            ),
+            // Next goes on to what the dialog says.
+            (
+                "Next",
+                "Your card will be charged 99 EUR.",
+                Category::Paying,
+            ),
+            ("Next", "Your account will be deleted.", Category::Deleting),
+        ] {
+            assert_eq!(
+                category(&in_dialog(name, dialog), url),
+                Some(asked),
+                "{name}: {dialog}"
+            );
+        }
+    }
+
+    #[test]
+    fn enter_in_a_dialog_is_judged_like_its_confirm() {
+        let url = "https://app.example/";
+        let field = |submit: bool, default_button: &str, dialog: &str| Facts {
+            tag: "input".into(),
+            editable: true,
+            in_form: submit,
+            submit,
+            default_button: default_button.into(),
+            dialog: dialog.into(),
+            ..Facts::default()
+        };
+        let enter = |facts: &Facts| {
+            judge(&grant(), facts, Act::Enter, url, &[]).map(|question| question.category)
+        };
+        for facts in [
+            field(true, "Confirm", "Delete your account?"),
+            field(true, "", "Delete your account?"),
+            field(false, "", "Delete your account?"),
+        ] {
+            assert_eq!(
+                enter(&facts),
+                Some(Category::Deleting),
+                "{}",
+                facts.default_button
+            );
+        }
+        assert_eq!(
+            enter(&field(true, "Next", "Your account will be deleted.")),
+            Some(Category::Deleting)
+        );
+        assert_eq!(enter(&field(true, "Cancel", "Delete your account?")), None);
+        assert_eq!(enter(&field(true, "", "Change your name?")), None);
+    }
+
+    #[test]
+    fn shift_enter_in_a_field_submits_like_enter_and_in_a_box_writes_a_line() {
+        let key = crate::agents::keys::chord("Shift+Enter").expect("a key");
+        let field = |kind: &str| Facts {
+            tag: "input".into(),
+            editable: true,
+            in_form: true,
+            field: Field {
+                kind: kind.into(),
+                ..Field::default()
+            },
+            ..Facts::default()
+        };
+        let (facts, act) = key_act(field("text"), &key).expect("it does something");
+        assert_eq!(act, Act::Enter);
+        assert!(facts.submit);
+        let (_, act) = key_act(field("textarea"), &key).expect("as before");
+        assert_eq!(act, Act::Press);
+    }
+
+    #[test]
+    fn a_question_does_not_quote_a_secret_it_is_asked_on() {
+        let url = "https://app.example/";
+        let facts = Facts {
+            tag: "input".into(),
+            name: "4111111111111111".into(),
+            field: Field {
+                autocomplete: "cc-number".into(),
+                ..Field::default()
+            },
+            ..Facts::default()
+        };
+        let confirm = Grant {
+            mode: Mode::Confirm,
+            ..grant()
+        };
+        let question = judge(&confirm, &facts, Act::Press, url, &[]);
+        let summary = question.map(|one| one.summary).unwrap_or_default();
+        assert!(!summary.is_empty());
+        assert!(!summary.contains("4111"), "{summary}");
+    }
+
+    #[test]
+    fn a_dialog_is_read_in_its_inflections() {
+        let url = "https://app.example/";
+        let in_dialog = |dialog: &str| Facts {
+            dialog: dialog.into(),
+            ..press("OK")
+        };
+        for (dialog, asked) in [
+            ("Tu cuenta sera eliminada", Category::Deleting),
+            ("Paying 20 EUR", Category::Paying),
+            ("Purchased", Category::Paying),
+        ] {
+            assert_eq!(category(&in_dialog(dialog), url), Some(asked), "{dialog}");
+        }
+    }
+
+    #[test]
+    fn a_dialog_is_quoted_whole_and_amounts_stay_whole() {
+        let quoted = |dialog: &str| mention(dialog, PAYING, DIALOG_PAYING).map(str::to_string);
+        assert_eq!(
+            quoted("Pay 1.299,00 EUR to Mallory").as_deref(),
+            Some("Pay 1.299,00 EUR to Mallory")
+        );
+        assert_eq!(quoted("Pay 20.00 EUR").as_deref(), Some("Pay 20.00 EUR"));
+        assert_eq!(
+            quoted("This will charge 1,299.00 EUR to your card. Pay now?").as_deref(),
+            Some("This will charge 1,299.00 EUR to your card.")
+        );
+        assert_eq!(quoted("Nothing about it."), None);
+    }
+
+    #[test]
+    fn a_line_leads_by_how_it_opens() {
+        for line in [
+            "Pay now",
+            "Pay 20.00 EUR",
+            "Delete 3 files",
+            "Remove item",
+            "Kaufen",
+            "pay",
+        ] {
+            assert!(leads(line), "{line}");
+        }
+        for line in [
+            "Pay gap widens in Europe",
+            "Remove stains from a shirt",
+            "Buy one get one free",
+            "How to delete your account",
+            "Payment details",
+            "Help center",
+            "Order summary",
+            "Display",
+        ] {
+            assert!(!leads(line), "{line}");
+        }
+    }
+
+    #[test]
+    fn what_says_nothing_of_itself_asks() {
+        let unread = Facts {
+            opaque: true,
+            ..Facts::default()
+        };
+        assert_eq!(
+            category(&unread, "https://app.example/"),
+            Some(Category::Unread)
+        );
+    }
+
+    #[test]
+    fn what_is_no_code_and_no_payment_card_stays_readable() {
+        let called = |said: &str, kind: &str| Field {
+            kind: kind.into(),
+            said: said.into(),
+            ..Field::default()
+        };
+        for said in [
+            "One-time donation",
+            "Authenticator app name",
+            "Tan",
+            "Library card no",
+            "Discount code",
+            "Pin to top",
+        ] {
+            assert!(!secret(&called(said, "text")), "{said}");
+        }
+        assert!(!secret(&called("Pin notes", "textarea")));
+        assert!(!card_field(&called("Library card no", "text")));
+        let postal = Field {
+            autocomplete: "postal-code".into(),
+            ..called("PIN code", "text")
+        };
+        assert!(!secret(&postal));
+    }
+
+    #[test]
+    fn a_name_in_any_case_or_with_a_number_is_a_code() {
+        for said in [
+            "Your Pin",
+            "Enter your Pin",
+            "pin1",
+            "otp1",
+            "userPin",
+            "tan",
+            "code",
+            "Authenticator",
+            "One-time",
+            "Enter code",
+            "Your code",
+            "Einmal-Code",
+            "Two-step code",
+            "Security key",
+        ] {
+            let field = Field {
+                kind: "text".into(),
+                said: said.into(),
+                ..Field::default()
+            };
+            assert!(secret(&field), "{said}");
+        }
+    }
+
+    #[test]
+    fn a_code_under_a_name_with_marks_or_as_a_whole_label_is_secret() {
+        let called = |said: &str| Field {
+            kind: "text".into(),
+            said: said.into(),
+            ..Field::default()
+        };
+        for said in [
+            "SMS-Code",
+            "Best\u{e4}tigungs-Code",
+            "Login code",
+            "Enter the code we sent you",
+            "Recovery code",
+            "Zugangscode",
+            "Authentifizierungscode",
+            "Digit 1",
+            "MM/YY",
+            "photoTAN",
+            "TAN",
+        ] {
+            assert!(secret(&called(said)), "{said}");
+        }
+        let code = Field {
+            label: "Code".into(),
+            ..called("Code")
+        };
+        assert!(secret(&code));
+    }
+
+    #[test]
+    fn a_code_a_pin_and_a_card_are_secret_by_what_they_are_called() {
+        let called = |said: &str| Field {
+            kind: "text".into(),
+            said: said.into(),
+            ..Field::default()
+        };
+        for said in [
+            "otp 6-digit code",
+            "verification_code Verification code",
+            "verificationCode",
+            "pin PIN",
+            "user_pin",
+            "card_no Card no",
+            "cardno",
+            "credit_card",
+            "Best\u{e4}tigungscode",
+            "One-time password",
+        ] {
+            assert!(secret(&called(said)), "{said}");
+        }
+        for said in [
+            "shipping",
+            "spinner",
+            "hotpot",
+            "Search",
+            "Card notes",
+            "tangent",
+            "Discount code",
+        ] {
+            assert!(!secret(&called(said)), "{said}");
+        }
+    }
+
+    #[test]
     fn a_site_is_its_registrable_domain() {
         assert_eq!(site_of("www.shop.example"), "shop.example");
         assert_eq!(site_of("news.bbc.co.uk"), "bbc.co.uk");
         assert_eq!(site_of("moodle-app2.let.ethz.ch"), "ethz.ch");
         assert_eq!(site_of("127.0.0.1"), "127.0.0.1");
         assert_eq!(site_of("localhost"), "localhost");
+    }
+
+    #[test]
+    fn a_name_on_a_shared_host_is_a_site_of_its_own() {
+        assert_eq!(site_of("shop.github.io"), "shop.github.io");
+        assert_eq!(site_of("a.shop.github.io"), "shop.github.io");
+        assert_eq!(site_of("x.pages.dev"), "x.pages.dev");
+        assert_eq!(site_of("github.io"), "github.io");
+        assert_eq!(site_of("www.github.com"), "github.com");
     }
 
     #[test]
@@ -1894,7 +2989,7 @@ mod tests {
         let mut full = grant();
         full.mode = Mode::Autonomous;
         for kind in [DialogKind::SignIn, DialogKind::Certificate] {
-            assert!(answering(&full, kind, true, url).is_none(), "{kind:?}");
+            assert!(answering(&full, kind, true, url, "").is_none(), "{kind:?}");
         }
 
         let mut approve = grant();
@@ -1902,23 +2997,142 @@ mod tests {
         let unsupervised = grant();
         for asking in [&approve, &unsupervised] {
             for kind in [DialogKind::SignIn, DialogKind::Certificate] {
-                let question = answering(asking, kind, true, url).expect("asked");
+                let question = answering(asking, kind, true, url, "").expect("asked");
                 assert_eq!(question.category, Category::SigningIn);
                 assert_eq!(question.summary, "Sign in on intranet.example");
                 // Saying no to the site never asks.
-                assert!(answering(asking, kind, false, url).is_none());
+                assert!(answering(asking, kind, false, url, "").is_none());
             }
         }
 
         // Turned off, or always allowed on the site, it goes ahead.
         let mut off = grant();
         off.asks.insert(Category::SigningIn, false);
-        assert!(answering(&off, DialogKind::SignIn, true, url).is_none());
+        assert!(answering(&off, DialogKind::SignIn, true, url, "").is_none());
 
-        // A page's own alert, confirm or prompt is never a question.
+        // A page's own alert, confirm or prompt about nothing much is never a question.
         for kind in [DialogKind::Alert, DialogKind::Confirm, DialogKind::Prompt] {
-            assert!(answering(&approve, kind, true, url).is_none(), "{kind:?}");
+            assert!(
+                answering(&approve, kind, true, url, "Leave this page?").is_none(),
+                "{kind:?}"
+            );
         }
+    }
+
+    #[test]
+    fn a_confirm_that_says_it_pays_or_deletes_asks() {
+        let url = "https://shop.example/";
+        let unsupervised = grant();
+        let question = answering(
+            &unsupervised,
+            DialogKind::Confirm,
+            true,
+            url,
+            "Pay 500 EUR now?",
+        )
+        .expect("asked");
+        assert_eq!(question.category, Category::Paying);
+        assert_eq!(
+            question.summary,
+            "The page says \u{201c}Pay 500 EUR now?\u{201d} on shop.example"
+        );
+
+        let question = answering(
+            &unsupervised,
+            DialogKind::Confirm,
+            true,
+            url,
+            "Delete this repository?",
+        )
+        .expect("asked");
+        assert_eq!(question.category, Category::Deleting);
+
+        // Cancel is never a question, an alert says and does nothing, and Full permissions
+        // asks nothing.
+        assert!(answering(&unsupervised, DialogKind::Confirm, false, url, "Pay now?").is_none());
+        assert!(answering(&unsupervised, DialogKind::Alert, true, url, "Pay now?").is_none());
+        let mut full = grant();
+        full.mode = Mode::Autonomous;
+        assert!(answering(&full, DialogKind::Confirm, true, url, "Pay now?").is_none());
+    }
+
+    #[test]
+    fn a_link_is_no_delete_and_a_button_still_is() {
+        let url = "https://a.example/";
+        let mut link = press("How to delete your account");
+        link.link = true;
+        assert_eq!(category(&link, url), None);
+        assert_eq!(
+            category(&press("Delete account"), url),
+            Some(Category::Deleting)
+        );
+    }
+
+    #[test]
+    fn a_drag_is_one_question_about_its_graver_end() {
+        let url = "https://a.example/";
+        let unsupervised = grant();
+        let mut confirm = grant();
+        confirm.mode = Mode::Confirm;
+        let card = press("Card");
+        let mut column = press("Pay rent");
+        column.control = false;
+        let mut pay = press("Pay now");
+        pay.control = true;
+
+        // A column is no press, whatever it holds.
+        let of = |grant: &Grant, from: &Facts, to: &Facts| {
+            of_a_drag(grant, from, to, url, &[]).name.clone()
+        };
+        assert_eq!(of(&unsupervised, &card, &column), "Card");
+        // A real Pay is, under either mode, ahead of Confirm's every-change question.
+        assert_eq!(of(&unsupervised, &card, &pay), "Pay now");
+        assert_eq!(of(&confirm, &card, &pay), "Pay now");
+        assert_eq!(of(&confirm, &pay, &card), "Pay now");
+    }
+
+    #[test]
+    fn a_page_too_big_to_read_asks_before_a_submit() {
+        let url = "https://a.example/";
+        let mut big = press("Go");
+        big.cut = true;
+        big.submit = true;
+        assert_eq!(category(&big, url), Some(Category::Unread));
+        big.submit = false;
+        assert_eq!(category(&big, url), None);
+    }
+
+    #[test]
+    fn a_denied_site_in_a_frame_is_denied() {
+        let mut owner = grant();
+        owner.sites.insert("denied.example".into(), SiteRule::Deny);
+        owner
+            .sites
+            .insert("mine.example".into(), SiteRule::AgentStore);
+        let at = |urls: &[&str]| urls.iter().map(ToString::to_string).collect::<Vec<_>>();
+
+        assert!(frame_allowed(&owner, &at(&["https://a.example/"]), Store::Reader).is_ok());
+        assert!(frame_allowed(&owner, &at(&["https://denied.example/x"]), Store::Agent).is_err());
+        // With no address of its own, a frame is where it sits.
+        assert!(frame_allowed(
+            &owner,
+            &at(&[
+                "about:srcdoc",
+                "https://denied.example",
+                "https://a.example"
+            ]),
+            Store::Agent
+        )
+        .is_err());
+        assert!(frame_allowed(
+            &owner,
+            &at(&["about:blank", "https://a.example"]),
+            Store::Agent
+        )
+        .is_ok());
+        // A site for the agent's own store is not read through the reader's.
+        assert!(frame_allowed(&owner, &at(&["https://mine.example/"]), Store::Reader).is_err());
+        assert!(frame_allowed(&owner, &at(&["https://mine.example/"]), Store::Agent).is_ok());
     }
 
     #[test]
@@ -2003,6 +3217,257 @@ mod tests {
             ..Facts::default()
         }
         .picker());
+    }
+
+    #[test]
+    fn an_agent_stays_on_the_web() {
+        let grant = grant();
+        for address in [
+            "file:///etc/hostname",
+            "file://localhost/etc/hostname",
+            "file://server/share/secret.md",
+            "chrome://version",
+            "chrome-extension://abc/options.html",
+            "devtools://devtools/bundled/inspector.html",
+            "view-source:https://example.com/",
+            "javascript:alert(1)",
+            "JaVaScRiPt:alert(1)",
+            "java\nscript:alert(1)",
+            "data:text/html,<h1>x</h1>",
+            "about:version",
+            "tauri://localhost",
+            "nib://open",
+        ] {
+            assert!(
+                site_allowed(&grant, address, Store::Agent).is_err(),
+                "{address}"
+            );
+        }
+        for address in [
+            "https://example.com/",
+            "http://127.0.0.1:9/x",
+            "about:blank",
+            "blob:https://example.com/5d2f",
+            "",
+        ] {
+            assert!(
+                site_allowed(&grant, address, Store::Agent).is_ok(),
+                "{address}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_failed_load_leaves_the_tab_to_its_agent() {
+        assert!(site_allowed(&grant(), "chrome-error://chromewebdata/", Store::Agent).is_ok());
+    }
+
+    #[test]
+    fn a_trailing_dot_is_the_same_host() {
+        let mut grant = grant();
+        grant.sites.insert("denied.example".into(), SiteRule::Deny);
+        grant
+            .sites
+            .insert("bank.example.".into(), SiteRule::AgentStore);
+        assert_eq!(
+            host_of("http://Denied.Example.:8/").as_deref(),
+            Some("denied.example")
+        );
+        assert!(site_allowed(&grant, "http://denied.example./", Store::Agent).is_err());
+        assert!(site_allowed(&grant, "http://a.denied.example../", Store::Agent).is_err());
+        assert!(site_allowed(&grant, "https://bank.example./", Store::Reader).is_err());
+        assert!(site_allowed(&grant, "https://bank.example/", Store::Reader).is_err());
+        assert!(payment_host(
+            host_of("https://js.stripe.com./").as_deref().unwrap_or("")
+        ));
+        assert!(social(
+            host_of("https://mail.google.com./")
+                .as_deref()
+                .unwrap_or("")
+        ));
+    }
+
+    /// What a key does to what has the keyboard, judged: `keys` names the key.
+    fn keyed(grant: &Grant, facts: Facts, keys: &str) -> Option<Category> {
+        let key = crate::agents::keys::chord(keys).expect("key");
+        let (facts, act) = key_act(facts, &key)?;
+        judge(grant, &facts, act, "https://shop.example/", &[]).map(|one| one.category)
+    }
+
+    #[test]
+    fn a_key_on_a_button_is_a_press_of_it() {
+        let grant = grant();
+        for key in ["Space", "Enter", "Shift+Enter", "Control+Enter"] {
+            assert_eq!(
+                keyed(&grant, press("Pay now"), key),
+                Some(Category::Paying),
+                "{key}"
+            );
+            assert_eq!(
+                keyed(&grant, press("Delete account"), key),
+                Some(Category::Deleting),
+                "{key}"
+            );
+        }
+        let send = Facts {
+            fields: vec![field("textarea", "Type a message"), field("email", "To")],
+            ..press("Send")
+        };
+        assert_eq!(
+            keyed(&grant, send.clone(), "Space"),
+            Some(Category::Sending)
+        );
+        assert_eq!(keyed(&grant, send, "Enter"), Some(Category::Sending));
+        // Nothing to say about a key that presses nothing, or a harmless button.
+        assert_eq!(keyed(&grant, press("Pay now"), "Tab"), None);
+        assert_eq!(keyed(&grant, press("Open menu"), "Space"), None);
+    }
+
+    #[test]
+    fn a_key_on_a_sign_in_button_signs_in_as_the_mode_says() {
+        let log_in = || Facts {
+            submit: true,
+            in_form: true,
+            fields: vec![field("password", "Password")],
+            ..press("Log in")
+        };
+        let grant = grant();
+        assert_eq!(keyed(&grant, log_in(), "Space"), Some(Category::SigningIn));
+        assert_eq!(keyed(&grant, log_in(), "Enter"), Some(Category::SigningIn));
+        let mut full = grant.clone();
+        full.mode = Mode::Autonomous;
+        assert_eq!(keyed(&full, log_in(), "Space"), None);
+    }
+
+    #[test]
+    fn enter_in_a_field_presses_its_forms_default_button() {
+        let grant = grant();
+        let field_of = |button: &str| Facts {
+            tag: "input".into(),
+            kind: "text".into(),
+            editable: true,
+            in_form: true,
+            default_button: button.into(),
+            field: field("text", "Name"),
+            ..Facts::default()
+        };
+        assert_eq!(
+            keyed(&grant, field_of("Delete account"), "Enter"),
+            Some(Category::Deleting)
+        );
+        assert_eq!(
+            keyed(&grant, field_of("Pay now"), "Enter"),
+            Some(Category::Paying)
+        );
+        assert_eq!(keyed(&grant, field_of("Search"), "Enter"), None);
+        // `browser_type` with submit is judged the same way, from the same facts.
+        let submitted = Facts {
+            submit: true,
+            ..field_of("Delete account")
+        };
+        let question = judge(&grant, &submitted, Act::Enter, "https://shop.example/", &[]);
+        assert_eq!(
+            question.as_ref().map(|one| one.category),
+            Some(Category::Deleting)
+        );
+        assert_eq!(
+            question.map(|one| one.summary).as_deref(),
+            Some("Delete account on shop.example")
+        );
+        // A checkbox's Enter is the same submit.
+        let tick = Facts {
+            kind: "checkbox".into(),
+            editable: false,
+            field: field("checkbox", "Sure"),
+            ..field_of("Delete account")
+        };
+        assert_eq!(keyed(&grant, tick, "Enter"), Some(Category::Deleting));
+        // In a box Enter is a new line, and nothing is pressed.
+        let boxed = Facts {
+            tag: "textarea".into(),
+            kind: String::new(),
+            field: field("textarea", "Notes"),
+            ..field_of("Delete account")
+        };
+        assert_eq!(keyed(&grant, boxed, "Enter"), None);
+        // And a press of another button is about that button.
+        let other = Facts {
+            default_button: "Delete account".into(),
+            in_form: true,
+            ..press("Open menu")
+        };
+        assert_eq!(keyed(&grant, other, "Space"), None);
+        let mut full = grant.clone();
+        full.mode = Mode::Autonomous;
+        assert_eq!(keyed(&full, field_of("Delete account"), "Enter"), None);
+    }
+
+    #[test]
+    fn a_press_on_what_cannot_be_read_asks() {
+        let grant = grant();
+        let host = || Facts {
+            tag: "x-pay".into(),
+            opaque: true,
+            ..Facts::default()
+        };
+        assert_eq!(keyed(&grant, host(), "Space"), Some(Category::Unread));
+        assert_eq!(keyed(&grant, host(), "Enter"), Some(Category::Unread));
+        let mut full = grant.clone();
+        full.mode = Mode::Autonomous;
+        assert_eq!(keyed(&full, host(), "Space"), None);
+    }
+
+    #[test]
+    fn the_apps_own_hosts_are_off_the_web_with_a_trailing_dot_too() {
+        for address in [
+            "http://tauri.localhost/",
+            "http://tauri.localhost./",
+            "https://IPC.localhost../x",
+            "http://asset.localhost./",
+            "http://nib.localhost./",
+        ] {
+            assert!(!on_the_web(address), "{address}");
+        }
+    }
+
+    #[test]
+    fn a_key_in_a_box_is_not_a_press() {
+        let grant = grant();
+        let boxed = Facts {
+            tag: "textarea".into(),
+            name: "Pay this month's rent".into(),
+            editable: true,
+            ..Facts::default()
+        };
+        // Space types in it, and Enter is its form's or its message's to say.
+        assert!(key_act(
+            boxed.clone(),
+            &crate::agents::keys::chord("Space").expect("key")
+        )
+        .is_none());
+        let enter = key_act(boxed, &crate::agents::keys::chord("Enter").expect("key"));
+        assert_eq!(enter.map(|(_, act)| act), Some(Act::Enter));
+        // A page with nothing in focus has no button to press.
+        let page = Facts {
+            tag: "body".into(),
+            name: "Delete old notes in this list".into(),
+            ..Facts::default()
+        };
+        assert_eq!(keyed(&grant, page.clone(), "Space"), None);
+        assert!(key_act(page, &crate::agents::keys::chord("Space").expect("key")).is_none());
+        // Enter on a checkbox submits its form the way a press of its submit does.
+        let tick = Facts {
+            tag: "input".into(),
+            kind: "checkbox".into(),
+            in_form: true,
+            fields: vec![field("password", "Password")],
+            ..Facts::default()
+        };
+        assert_eq!(
+            keyed(&grant, tick.clone(), "Enter"),
+            Some(Category::SigningIn)
+        );
+        assert_eq!(keyed(&grant, tick, "Space"), None);
     }
 
     #[test]

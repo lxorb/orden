@@ -15,10 +15,10 @@ import { oneEdit } from '@orden/markdown/edits'
 import { freePath } from '@orden/markdown/paths'
 import { sha256 } from '../bytes'
 import { applied, appliedToFile, type Edit, endingsLike } from '../search/replace'
-import type { Retargeting } from '../link-index.svelte'
+import { links, type Retargeting } from '../link-index.svelte'
 import type { Holding } from '../sync/holding'
 import { onDisk } from '../on-disk'
-import { folderOf, isMarkdownPath, samePath } from '../space-paths'
+import { folderOf, isMarkdownPath, samePath, within } from '../space-paths'
 import { invoke } from '../tauri'
 import type { Entry } from '../workspace.svelte'
 import type { Archive } from './archive.svelte'
@@ -26,6 +26,7 @@ import type { NoteDoc } from './documents.svelte'
 import type { Kind } from './file-ops'
 import type { Binning, FileAction, FileActions, Kept } from './undo.svelte'
 import type { Bookmark } from './bookmarks.svelte'
+import { inFileTurn, writeEdited, writeInTurn } from './in-turn'
 import { writeFile } from './write-file'
 
 /** What putting a file operation back needs of the store holding it. */
@@ -43,7 +44,15 @@ export interface PutsBack {
    *  come back, and an import or a copy taken back is files gone. */
   fileMoved(from: string, to: string, kind: Kind): Promise<void>
   fileGone(path: string, kind: 'file' | 'folder', back?: string): Promise<void>
-  fileCame(path: string, kind: 'file' | 'folder', key?: string, back?: string): Promise<void>
+  fileCame(
+    path: string,
+    kind: 'file' | 'folder',
+    key?: string,
+    back?: string,
+    putBack?: boolean,
+  ): Promise<void>
+  /** Asks for the same undo again. */
+  undoFileAction(): Promise<void>
   /** A move on the disk, said to sync first; see `renameOnDisk` in workspace.svelte.ts. */
   renameOnDisk(from: string, to: string, kind: Kind): Promise<void>
   /** One file operation on everything open at or under a path, after whatever write
@@ -69,15 +78,31 @@ export async function undoLastFileAction(ws: PutsBack): Promise<void> {
       if (!(await undoOne(ws, step))) {
         if (steps.length < action.steps.length) action.steps = steps
         await ws.loadTree()
+        await refused(ws, action)
         return
       }
       steps.pop()
     }
-  } else if (!(await undoOne(ws, action))) return
+  } else if (!(await undoOne(ws, action))) {
+    await refused(ws, action)
+    return
+  }
 
   ws.undone.drop()
   await ws.loadTree()
   ws.persist()
+}
+
+/** A step that would not go back says so, with the way to ask again and the way to let
+ *  it go: it stays on top, and every later undo was the same silent nothing until twenty
+ *  new steps had pushed it off. */
+async function refused(ws: PutsBack, action: FileAction) {
+  const { failed } = await import('../views/failed.svelte')
+  failed.tell(
+    () => void ws.undoFileAction(),
+    true,
+    () => ws.undone.giveUp(action),
+  )
 }
 
 /** Puts one operation back; false where it would not go. */
@@ -95,6 +120,7 @@ async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
           action.folder ? 'folder' : 'file',
           undefined,
           action.back ?? action.trashId,
+          true,
         )
         break
       case 'create': {
@@ -225,18 +251,44 @@ export async function putBack(action: Extract<FileAction, { kind: 'delete' }>): 
   if (!action.trashId) {
     // Nothing kept and nothing in the trash, which is what a PDF deleted while
     // signed in looks like. Writing nothing would leave an empty file where the
-    // paper was, so this says so instead.
-    if (!action.content) throw new Error('there is nothing to put back')
+    // paper was, so this says so instead. A note that was empty is an empty note: an
+    // empty note the account held has nothing else to come back from.
+    if (!action.content && !(isMarkdownPath(action.path) && !action.folder)) {
+      throw new Error('there is nothing to put back')
+    }
 
     return writeBeside(action.path, action.content)
   }
 
   const restored = await invoke<string>('restore_trash', { id: action.trashId }).catch(() => null)
 
-  if (restored !== null) return restored || action.path
+  if (restored !== null)
+    return action.trashedAt ? cameOver(action, restored) : restored || action.path
   if (!action.content) throw new Error('the deleted note is no longer in the trash')
 
   return writeBeside(action.path, action.content)
+}
+
+/** What the trash put back where it went from, carried to where that is now. The trash
+ *  knows the path it was given: with its space renamed since, it made the old folder again
+ *  for this one note, which the next listing took for a second space. */
+async function cameOver(action: Extract<FileAction, { kind: 'delete' }>, restored: string) {
+  const left = action.trashedAt
+  const from = restored || left?.path
+  if (!left || !from) return action.path
+  // Moved away and back: the trash has it right.
+  if (samePath(from, action.path)) {
+    delete action.trashedAt
+    return from
+  }
+  const to = await freeBeside(action.path)
+  await invoke('create_folder', { path: folderOf(to) }).catch(() => undefined)
+  await invoke('rename_note', { from, to })
+  for (let up = folderOf(from); within(left.root, up) !== null; up = folderOf(up)) {
+    await invoke('remove_empty_folder', { path: up }).catch(() => undefined)
+  }
+  delete action.trashedAt
+  return to
 }
 
 /** Words written back at `path`, or beside it where something is there now, answering
@@ -391,25 +443,35 @@ async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'r
   // note is unchanged, and taking it for one wrote the old words over that file or
   // brought a deleted note back. So it leaves the whole replacement where it is, on
   // the stack, rather than half of it put back.
-  const read = new Map<string, string>()
   for (const note of action.notes) {
     if (ws.documentAt(note.path)) continue
     const now = await invoke<string>('read_note', { path: note.path }).catch(() => null)
     if (now === null) throw new Error(`${note.path} will not read, so nothing is written over it`)
-    read.set(note.path, now)
   }
 
   for (const note of action.notes) {
     const open = ws.documentAt(note.path)
     if (open) {
+      open.flush()
+      const knew = open.onDisk
       const back = open.take(note.edits, note.after).text
-      await writeFile(note.path, back)
+      const written = await writeEdited(open, note.path, back, knew)
+      if (written !== null) links.noteSaved(note.path, written)
       continue
     }
 
-    const file = read.get(note.path) ?? note.after
-    const now = endingsLike(file, note.after)
-    await writeFile(note.path, now === note.after ? note.content : carriedPast(note, file, now))
+    // Read again in the file's turn, for what the look above only said could be written:
+    // another window's write that came between would go under words worked out without it.
+    const down = await inFileTurn(note.path, async () => {
+      const file = await invoke<string>('read_note', { path: note.path }).catch(() => null)
+      if (file === null)
+        throw new Error(`${note.path} will not read, so nothing is written over it`)
+      const now = endingsLike(file, note.after)
+      const words = now === note.after ? note.content : carriedPast(note, file, now)
+      await writeInTurn(note.path, words)
+      return words
+    })
+    links.noteSaved(note.path, down)
   }
 }
 
@@ -438,6 +500,9 @@ function carriedPast(
 /** Puts a rename or a move back: the file where it was, and the links that
  *  followed it pointed at the old name again. */
 async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' | 'rename' }>) {
+  if (action.kind === 'move' && action.carries) {
+    ;(await import('./moving-space')).followsTo(action.from)
+  }
   const kind = ws.entryAt(action.to)?.is_dir === true ? 'folder' : 'file'
   // A move back into another space takes its chats back first, as the move did, and
   // the account refusing keeps the step to be asked for again; see chat-leaving.ts.
@@ -469,6 +534,10 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
   // A nesting made the folder; refused where something else is in it now.
   if (action.nests) {
     await invoke('remove_empty_folder', { path: folderOf(action.to) }).catch(() => undefined)
+  }
+  // Its tabs went to the other space with it, and come back with it.
+  if (action.kind === 'move' && action.carries) {
+    await (await import('./moving-space')).tabsFollow(action.from)
   }
 }
 

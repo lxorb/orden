@@ -13,9 +13,17 @@ export type Choice = 'both' | 'conversation' | 'notes' | 'summarize-from' | 'sum
 
 /** A file a tool call made: where the call said, relative to its space. */
 export interface Made {
+  /** The call that made it. */
+  id: string
   path: string
   space?: string
 }
+
+/** One thing a rewind takes back. */
+export type Step =
+  | { kind: 'edits'; changes: Change[] }
+  | { kind: 'file'; file: FileChange }
+  | { kind: 'made'; made: Made }
 
 export interface Plan {
   turn: Turn
@@ -23,6 +31,9 @@ export interface Plan {
   made: Made[]
   /** Notes moved or deleted since, oldest first. */
   files: FileChange[]
+  /** All of the above in the order to take it back, the thread's last act first. A note
+   *  moved aside and another made at its name only come back in this order. */
+  steps: Step[]
   /** Whether something since cannot be taken back. */
   lasting: boolean
   choices: Choice[]
@@ -50,7 +61,7 @@ function madeBy(part: Extract<Part, { kind: 'tool' }>): Made | null {
   const path = said.path
   if (typeof path !== 'string' || !path) return null
   const space = spaceOfCall(part)
-  return space ? { path, space } : { path }
+  return space ? { id: part.id, path, space } : { id: part.id, path }
 }
 
 /** The calls the thread made in answer to `turn` and every message after it. */
@@ -81,15 +92,25 @@ export function planFor(
   const since = changesSince(changes, thread.turns, turn)
   const made: Made[] = []
   const files: FileChange[] = []
+  /** Oldest first, with when each call was answered. */
+  const acts: { at: number; step: Step }[] = []
   let lasting = false
   for (const part of callsSince(thread.turns, turn)) {
     const verb = verbOf(part.verb)
     if (LOOKS.test(verb) || EDITS.has(verb)) continue
     const file = madeBy(part)
     const moved = fileChangeOf(part)
-    if (file) made.push(file)
-    else if (moved) {
-      if (!done.has(moved.id)) files.push(moved)
+    const at = part.at ?? 0
+    if (file) {
+      if (!done.has(file.id)) {
+        made.push(file)
+        acts.push({ at, step: { kind: 'made', made: file } })
+      }
+    } else if (moved) {
+      if (!done.has(moved.id)) {
+        files.push(moved)
+        acts.push({ at, step: { kind: 'file', file: moved } })
+      }
     } else if (!MOVES.has(verb)) lasting = true
   }
 
@@ -101,5 +122,35 @@ export function planFor(
     'summarize-from',
     ...(at > 0 ? (['summarize-to'] as const) : []),
   ]
-  return { turn: found, changes: since, made, files, lasting, choices }
+  return {
+    turn: found,
+    changes: since,
+    made,
+    files,
+    steps: stepsBack(acts, since),
+    lasting,
+    choices,
+  }
+}
+
+/** The acts and the edits between them, newest first. An edit is made while its call
+ *  runs, so one made by the time an act's call was answered came before that act; two
+ *  calls at once are as near as the clock can say. A call of a session before this one has
+ *  no time, and comes before every edit there is: edits last the session. */
+function stepsBack(
+  acts: readonly { at: number; step: Step }[],
+  changes: readonly Change[],
+): Step[] {
+  const steps: Step[] = []
+  let left = [...changes]
+  const edits = (these: Change[]) => {
+    if (these.length) steps.push({ kind: 'edits', changes: these })
+  }
+  for (const { at, step } of [...acts].reverse()) {
+    edits(left.filter((one) => one.at > at))
+    left = left.filter((one) => one.at <= at)
+    steps.push(step)
+  }
+  edits(left)
+  return steps
 }

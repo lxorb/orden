@@ -335,6 +335,28 @@ describe('choosing a key', () => {
     expect(shortcuts.refuse('Mod-k')).toBeNull()
   })
 
+  /** Enter taken as an app key made no new line in any note until it was reset. */
+  test('is refused for an app key where the key is one typing needs', () => {
+    const { shortcuts } = registry
+    for (const key of ['Enter', 'Tab', 'Backspace', 'Delete', 'ArrowLeft', 'Home', 'Shift-Enter']) {
+      expect(shortcuts.refuse(key, 'app.scratchpad'), key).not.toBeNull()
+    }
+    expect(shortcuts.refuse('Mod-Enter', 'app.scratchpad')).toBeNull()
+  })
+
+  test('but a list’s own row may have it, where nobody is typing', () => {
+    const { shortcuts } = registry
+    expect(shortcuts.refuse('Enter', 'tree.rename')).toBeNull()
+  })
+
+  /** Where such a key is a row's own, setting it back to that is no harm. */
+  test('and so may a row whose own key it is', () => {
+    const { shortcuts } = registry
+    expect(shortcuts.refuse('Delete', 'table.delete')).toBeNull()
+    expect(shortcuts.refuse('Enter', 'image.edit')).toBeNull()
+    expect(shortcuts.refuse('Enter', 'table.delete')).not.toBeNull()
+  })
+
   /** It said Ctrl, Alt or Cmd everywhere: a Cmd key on Windows, and on a Mac names
    *  for keys that every other place on a Mac shows as signs. */
   test('and the refusal names the keys the way the platform does', () => {

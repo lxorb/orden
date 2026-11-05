@@ -95,6 +95,7 @@ pub fn rename_space(app: AppHandle, from: String, name: String) -> Result<Space,
     let target = source.with_file_name(&wanted);
 
     rename_folder(&source, &target, same_entry)?;
+    crate::trash::space_renamed(&app, &source, &target);
     Ok(space_at(&target))
 }
 

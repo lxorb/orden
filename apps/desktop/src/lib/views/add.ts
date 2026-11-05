@@ -8,7 +8,15 @@
  *  status is more than quick add can carry, and there the view's own add row writes
  *  the words as they were typed, with the prefill's fields, through `addTask`. */
 
-import { addDays, type Base, inBase, nextId, type Priority, type Value } from '@orden/bases'
+import {
+  addDays,
+  type Base,
+  isWhen,
+  nextId,
+  type Priority,
+  rowsInBase,
+  type Value,
+} from '@orden/bases'
 import { noteName, plainValue, rowPlace, withProperties } from '@orden/bases/agent'
 import { joinPath } from '../tauri'
 import { insideOnly } from '../automation/inside'
@@ -31,6 +39,9 @@ import { dayIn } from './values'
 export interface Prefill {
   /** The note it is written in, on this disk; the open space's inbox where absent. */
   path?: string
+  /** The space whose inbox it goes to where that is not the open one, by its root: a
+   *  tab of another's Todos or label, still showing after a switch. */
+  root?: string
   heading?: string
   due?: string
   deadline?: string
@@ -43,6 +54,7 @@ export interface Prefill {
  *  carry: its note in the open space, its tags, its day. Answers whether it opened. */
 export function openQuickAdd(prefill: Prefill = {}): boolean {
   if (
+    prefill.root !== undefined ||
     prefill.heading !== undefined ||
     prefill.priority !== undefined ||
     prefill.status !== undefined ||
@@ -72,6 +84,14 @@ export function prefillOf(
   const out: Prefill = {}
   if (spec.builtin === 'today') out.due = today
   if (spec.builtin === 'label' && spec.tag) out.tags = [spec.tag]
+  if (
+    (spec.builtin === 'todos' || spec.builtin === 'label') &&
+    spec.space !== workspace.activeSpace?.name
+  ) {
+    // Of two of a name, nothing says which: the open space, as ever.
+    const [space, other] = workspace.spaces.filter((one) => one.name === spec.space)
+    if (space && !other) out.root = space.root
+  }
   if (spec.builtin === 'project' && spec.space !== undefined && spec.path !== undefined) {
     const space = workspace.spaces.find((one) => one.name === spec.space)
     if (space) out.path = insideSpace(space.root, spec.path)
@@ -83,7 +103,7 @@ export function prefillOf(
   else if (property === 'task.priority' && isPriority(key)) out.priority = key
   else if (property === 'task.status' && typeof key === 'string') out.status = key
   else if (property === 'task.tags' && typeof key === 'string' && key) out.tags = [key]
-  else if (property === 'formula.when' && (key === 'today' || key === 'tomorrow')) {
+  else if (isWhen(property) && (key === 'today' || key === 'tomorrow')) {
     // Todos' due today, due tomorrow (#1046).
     out.deadline = key === 'today' ? today : addDays(today, 1)
   } else if (property === 'file.path' && typeof key === 'string' && key && spec.space) {
@@ -102,7 +122,7 @@ export function prefillOf(
 export async function addTyped(words: string, prefill: Prefill): Promise<boolean> {
   const text = words.trim()
   if (!text) return false
-  const path = prefill.path ?? (await rows.inbox())
+  const path = prefill.path ?? (await rows.inbox(prefill.root))
   if (path === null || !canWriteAt(path)) return false
   return addTask(
     path,
@@ -135,8 +155,10 @@ function idFor(base: Base): Record<string, string> {
   if (!id || !space) return {}
   const mine = rows.of(space.name)
   const context = contextFor({ rows: mine, today: todayHere(), now: nowHere() })
-  const own = mine.filter((row) => inBase(base, row, context))
-  return { [id.property]: nextId(own, id.property, id.prefix) }
+  // An id counted from rows left out is one somebody has: this note goes without, and
+  // takes one when the base can be read again.
+  const own = rowsInBase(base, mine, context)
+  return own.partial ? {} : { [id.property]: nextId(own.rows, id.property, id.prefix) }
 }
 
 /** A new note for a view of notes: in the folder its filter names, with the

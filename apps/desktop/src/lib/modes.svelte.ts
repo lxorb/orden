@@ -711,7 +711,30 @@ class Modes {
     }
 
     // Written back without whatever this version has not got; see `stale` above.
+    // From here on `persist` writes what changes, so the fields left as they are stay
+    // whatever another window has made them; see `persist`.
+    this.written = isRecord(saved) ? saved : fieldsOf(this.state())
     if (stale) this.persist()
+    this.hearOthers()
+    for (const view of this.views) this.apply(view)
+  }
+
+  /** The fields as this window last read or wrote them, which is how `persist` tells
+   *  what this window changed from what another did. */
+  private written: Record<string, unknown> | null = null
+
+  /** Another window's setting, from the moment it is made (the `storage` event reaches
+   *  every other page of the origin). Without this it took effect only where it was
+   *  made, and this window's next write put its own stale value back. */
+  private hearing = false
+  private hearOthers() {
+    if (this.hearing || typeof window === 'undefined') return
+    this.hearing = true
+    window.addEventListener('storage', (event) => {
+      if (event.key !== STORAGE_KEY) return
+      this.restore()
+      this.applyAlwaysOnTop()
+    })
   }
 
   toggleAlwaysOnTop() {
@@ -1616,7 +1639,13 @@ class Modes {
   /** The sliders in preferences set a value outright; the keyboard steps
    *  through the same range. Both land in the same place. */
   setZoom(value: number) {
-    this.zoom = clamp(value, ZOOM_STEPS)
+    // Asked for past where it is and nearest to where it is: an arrow key on the slider,
+    // whose own step is smaller than a rung. That is the next rung, or it could not move.
+    const nearest = clamp(value, ZOOM_STEPS)
+    this.zoom =
+      nearest === this.zoom && value !== nearest
+        ? step(ZOOM_STEPS, nearest, value > nearest ? 1 : -1, DEFAULTS.zoom)
+        : nearest
     this.applyZoom()
     this.persist()
   }
@@ -1668,6 +1697,31 @@ class Modes {
   }
 
   private persist() {
+    const fields = fieldsOf(this.state())
+    const seen = this.written
+    this.written = fields
+    const now = stored(STORAGE_KEY)
+    if (!seen || !isRecord(now)) {
+      keepJson(STORAGE_KEY, fields)
+      return
+    }
+    // Only what this window changed, onto what is there now: two windows writing in one
+    // moment, before either has heard the other, keep both of what they set.
+    const merged = Object.fromEntries(
+      Object.entries(fields).map(([name, value]) => [
+        name,
+        JSON.stringify(value) === JSON.stringify(seen[name]) && name in now ? now[name] : value,
+      ]),
+    )
+    // A field this window has no value for and another just set (`developer`, say), which
+    // this window did not take away: it never had it.
+    for (const [name, value] of Object.entries(now)) {
+      if (!(name in fields) && !(name in seen)) merged[name] = value
+    }
+    keepJson(STORAGE_KEY, merged)
+  }
+
+  private state(): Saved {
     const state: Saved = {
       source: this.opensInSource,
       readOnly: this.readOnly,
@@ -1720,8 +1774,13 @@ class Modes {
       frontMatterDrawn: this.properties,
       linkFormat: this.linkFormat,
     }
-    keepJson(STORAGE_KEY, state)
+    return state
   }
+}
+
+/** The fields as they go into storage: what `undefined` leaves out is not one. */
+function fieldsOf(state: Saved): Record<string, unknown> {
+  return JSON.parse(JSON.stringify(state)) as Record<string, unknown>
 }
 
 export const modes = new Modes()

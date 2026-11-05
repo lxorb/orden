@@ -99,7 +99,11 @@
   let certificate = $state<Certificate | null>(null)
   let asked = $state(false)
   $effect(() => {
-    if (!https || !url) return
+    if (!https || !url) {
+      // The page has gone from https to http: what the last one said is not about this one.
+      certificate = null
+      return
+    }
     let gone = false
     void invoke<Certificate | null>('web_certificate', { tab, address: url })
       .then((said) => {

@@ -41,19 +41,26 @@ import {
 } from '../canvas/format'
 import { INK_STYLES, inkOpacity, outlineOf } from '../canvas/ink'
 import { inkColour, type Palette } from '../canvas/paint'
-import { DEFAULT_INK, readPalette } from '../canvas/palette'
+import { DEFAULT_INK, paletteOf } from '../canvas/palette'
 import { drawnNode, inlinedSvg, styles } from '../canvas/picture'
 import { inkSvg } from '../canvas/svg'
 import { type Box } from '../canvas/geometry'
+import { busy } from '../busy.svelte'
 import { fileBytes } from '../bytes'
 import { chooseTarget, download, writeFile } from '../export/save'
 import { zipOf } from '../export/zip'
 import { PDF_TO_CSS } from '../pdf/pages'
+import { t } from '../i18n.svelte'
 import { isDesktop } from '../tauri'
 import { paperPlaces } from './held'
 import { laidOut, localFaces, type Run, type TextCard } from './laid'
-import { cssColour, svgToPng } from './raster'
+import { cssColour, paperIsLocked, paperPicture, svgToPng } from './raster'
 import { escapeAll } from '@orden/markdown/html'
+
+/** Says why a paper with an owner's password is left out: opened and shown, not copied out. */
+function saidLocked(): void {
+  busy.failed(t('This PDF is locked by its owner'))
+}
 
 /** What an export of a page note is about. */
 export interface PagesOut {
@@ -62,6 +69,9 @@ export interface PagesOut {
   /** The note's own path, so the PDF its pages name can be found beside it. */
   path: string | null
   root: string | null
+  /** The note's id on the account, for a note shared on its own: no path here, and its
+   *  paper the account's to hand over, as on screen; see `PaperAt`. */
+  shared?: string | null
   name: string
   /** Whether the cards' HTML is markup rather than the characters it is made of,
    *  asked the way the page on screen asks it; see trust.ts. */
@@ -100,6 +110,7 @@ export function pagesOutOf(open: {
   name: string
   path: string | null
   root: string | null
+  shared?: string | null
   trusted?: boolean
 }): PagesOut {
   return {
@@ -108,26 +119,12 @@ export function pagesOutOf(open: {
     // stylesheet, so nothing in it can look `var(--canvas-1)` up any more. Its light
     // side whatever side is on, because the sheet is white (B571): a dark theme's pen
     // with no colour of its own writes near white, invisible on paper.
-    palette: lightPalette(),
+    palette: paletteOf('light'),
     path: open.path,
     root: open.root,
+    shared: open.shared ?? null,
     name: open.name,
     trusted: open.trusted ?? false,
-  }
-}
-
-/** The theme's colours as its light side has them, read off an element that asks for
- *  that side, as every theme answers `data-theme` on any element. */
-function lightPalette(): Palette {
-  const probe = document.createElement('div')
-  probe.dataset.theme = 'light'
-  probe.hidden = true
-  document.body.append(probe)
-
-  try {
-    return readPalette(probe)
-  } finally {
-    probe.remove()
   }
 }
 
@@ -163,7 +160,7 @@ function cardsOn(canvas: Canvas, page: PageNode): CanvasNode[] {
 }
 
 /** The palette a sheet that has left the app is drawn in: the light theme's (see
- *  `lightPalette`), on white, with the light theme's own values under it for whatever
+ *  `pagesOutOf`), on white, with the light theme's own values under it for whatever
  *  the palette does not say. */
 function paperPalette(palette: Palette): Palette {
   return {
@@ -220,8 +217,16 @@ function rulingSvg(pattern: Pattern, width: number, rule: string): string {
  *
  *  `plain` is the picture a PNG is rasterised from: a browser will not hand over the
  *  pixels of an SVG with a `foreignObject` in it, so the cards are set as plain lines
- *  there, which is what the plane's own PNG does too. Exported for its tests. */
-export function pageSvg(out: PagesOut, page: PageNode, index: number, plain = false): string {
+ *  there, which is what the plane's own PNG does too. Exported for its tests.
+ *
+ *  `paper` is the page of the paper this sheet shows, as `paperBehind` draws it. */
+export function pageSvg(
+  out: PagesOut,
+  page: PageNode,
+  index: number,
+  plain = false,
+  paper: string | null = null,
+): string {
   const strokes = inkOn(out.canvas, page).map((stroke) => moved(stroke, -page.x, -page.y))
   const palette = paperPalette(out.palette)
   const ink = inkSvg(strokes, palette)
@@ -244,6 +249,9 @@ export function pageSvg(out: PagesOut, page: PageNode, index: number, plain = fa
     cards ? `<style>${plain ? localFaces() : ''}${styles(palette)}</style>` : '',
     `<defs><clipPath id="sheet"><rect width="${page.width}" height="${page.height}"/></clipPath>${ruling}</defs>`,
     `<rect width="${page.width}" height="${page.height}" fill="#ffffff"/>`,
+    paper
+      ? `<image href="${paper}" width="${page.width}" height="${page.height}" preserveAspectRatio="none"/>`
+      : '',
     ruling ? `<rect width="${page.width}" height="${page.height}" fill="url(#ruling)"/>` : '',
     cards
       ? `<g clip-path="url(#sheet)"><g transform="translate(${-page.x} ${-page.y})">${cards}</g></g>`
@@ -251,6 +259,19 @@ export function pageSvg(out: PagesOut, page: PageNode, index: number, plain = fa
     ink,
     '</svg>',
   ].join('')
+}
+
+/** The page of a paper a sheet shows, as a picture, or null for a sheet with none. The
+ *  sheet comes out without it where the paper has gone, as it shows on screen, and where
+ *  the paper's owner locked it, which is ink on white as it ever was and says why. */
+async function paperBehind(out: PagesOut, page: PageNode): Promise<string | null> {
+  if (!page.file || page.page === undefined) return null
+  const at = { file: page.file, note: out.path, root: out.root, shared: out.shared ?? null }
+  if (await paperIsLocked(at)) {
+    saidLocked()
+    return null
+  }
+  return paperPicture(at, page.page)
 }
 
 /** A stroke shifted, which is what putting a page's ink in the page's own
@@ -293,14 +314,16 @@ export async function exportPagesSvg(out: PagesOut): Promise<string | undefined>
   if (!pages.length) return
 
   const name = stem(out.name)
-  const zip = await zipOf(
-    await Promise.all(
-      pages.map(async (page, at) => ({
-        path: `${name}/${name} ${numbered(at + 1, pages.length)}.svg`,
-        body: await inlinedSvg(pageSvg(out, page, at + 1)),
-      })),
-    ),
-  )
+  // One at a time: a page of a paper is drawn to be asked for, and a note of four hundred
+  // of them all at once would have paper.ts letting go of the ones not yet read.
+  const entries: { path: string; body: string }[] = []
+  for (const [at, page] of pages.entries()) {
+    entries.push({
+      path: `${name}/${name} ${numbered(at + 1, pages.length)}.svg`,
+      body: await inlinedSvg(pageSvg(out, page, at + 1, false, await paperBehind(out, page))),
+    })
+  }
+  const zip = await zipOf(entries)
 
   return handOver(`${name} pages`, 'zip', 'ZIP', zip, 'application/zip')
 }
@@ -315,7 +338,7 @@ export async function exportPagesPng(given: PagesOut): Promise<string | undefine
   const entries: { path: string; body: Uint8Array }[] = []
 
   for (const [at, page] of pages.entries()) {
-    const svg = await inlinedSvg(pageSvg(out, page, at + 1, true))
+    const svg = await inlinedSvg(pageSvg(out, page, at + 1, true, await paperBehind(out, page)))
     const bytes = await svgToPng(svg, page.width, page.height)
     if (!bytes) continue
 
@@ -344,7 +367,7 @@ export async function exportPagesPdf(out: PagesOut): Promise<string | undefined>
 }
 
 /** The note's PDF, as bytes: what the export above writes and what printing puts on
- *  paper, so the two cannot differ. Null for a note with no pages. */
+ *  paper, so the two cannot differ. Null for a note with no pages, or on a locked paper. */
 export async function pagesPdf(given: PagesOut): Promise<Uint8Array | null> {
   const pages = pagesOf(given.canvas)
   if (!pages.length) return null
@@ -361,8 +384,18 @@ export async function pagesPdf(given: PagesOut): Promise<Uint8Array | null> {
   const source = papers.size === 1 ? [...papers][0] : null
   const bytes = source ? await paperBytes(paperPlaces(source, out.path, out.root)) : null
 
-  const doc = bytes ? await PDFDocument.load(bytes) : await PDFDocument.create()
-  const kept = bytes ? await doc.copyPages(doc, doc.getPageIndices()) : []
+  // A paper locked by its owner opens and draws, and what is in it does not go out of the
+  // app; pdf-lib could not copy from it either. No file, and the reason.
+  const opened = bytes ? await PDFDocument.load(bytes, { ignoreEncryption: true }) : null
+  if (opened?.isEncrypted) {
+    saidLocked()
+    return null
+  }
+  const doc = opened ?? (await PDFDocument.create())
+  const kept = opened ? await doc.copyPages(doc, doc.getPageIndices()) : []
+  // Which pages of the paper a sheet already is. A page can be only one sheet: inserted
+  // twice, one page is both, with the ink of both on it.
+  const used = new Set<number>()
   const carried = doc.getPageCount()
   // Helvetica and Courier, which every reader has: the words stay text without a font
   // file in the export. Each embedded the first time a run asks for it.
@@ -378,10 +411,16 @@ export async function pagesPdf(given: PagesOut): Promise<Uint8Array | null> {
     // ink on it is never lost to a paper that changed under the note.
     const from =
       page.page !== undefined && page.page >= 1 && page.page <= carried ? page.page : null
-    const sheet =
-      from !== null && kept[from - 1]
-        ? doc.insertPage(carried + at, kept[from - 1])
-        : doc.insertPage(carried + at, [page.width / PDF_TO_CSS, page.height / PDF_TO_CSS])
+    const copy =
+      from === null
+        ? undefined
+        : used.has(from)
+          ? (await doc.copyPages(doc, [from - 1]))[0]
+          : kept[from - 1]
+    if (from !== null && copy) used.add(from)
+    const sheet = copy
+      ? doc.insertPage(carried + at, copy)
+      : doc.insertPage(carried + at, [page.width / PDF_TO_CSS, page.height / PDF_TO_CSS])
 
     // The page is the sheet as pdf.js shows it, which is how its size was read: the
     // crop box turned by /Rotate. So the ink is scaled from pixels to that box's points,

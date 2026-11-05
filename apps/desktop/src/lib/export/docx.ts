@@ -49,6 +49,7 @@ import { type PaperTwips, TWIPS_PER_INCH } from '../page-setup'
 import type { Align, Block, Doc, Entry, Item, Span } from './document'
 import { ommlFor } from './omml'
 import type { Picture } from './pictures'
+import { legalXml } from './xml-legal'
 
 /** Consolas is on every Windows and Word substitutes something monospaced for it
  *  everywhere else, which is more than a bare `monospace` would get. */
@@ -350,7 +351,7 @@ function pictureRun(span: Span, drawn: Drawn | null): ParagraphChild {
     data: drawn.picture.bytes,
     transformation: drawn.size,
     altText: {
-      name: drawn.picture.name,
+      name: legalXml(drawn.picture.name),
       ...(span.text ? { description: span.text } : {}),
     },
   })
@@ -725,6 +726,18 @@ function runningOf(paper: PaperTwips) {
   }
 }
 
+/** A note or a sheet with every string in it as XML can carry it: the library writes what
+ *  it is handed. All but `picture`, which is never written and is what finds a picture by
+ *  the `src` the note spelled. */
+function legalStrings<T>(value: T): T {
+  if (typeof value === 'string') return legalXml(value) as T
+  if (Array.isArray(value)) return value.map(legalStrings) as T
+  if (typeof value !== 'object' || value === null) return value
+  return Object.fromEntries(
+    Object.entries(value).map(([key, one]) => [key, key === 'picture' ? one : legalStrings(one)]),
+  ) as T
+}
+
 /** The whole note as the bytes of a `.docx`.
  *
  *  `paper` is the page the note is going on, resolved once by the caller: the settings,
@@ -732,10 +745,12 @@ function runningOf(paper: PaperTwips) {
  *  placeholders filled. Required rather than defaulted, because the whole of this bug
  *  was a silent default - a writer that can fall back to Letter is a writer that will. */
 export async function toDocx(
-  doc: Doc,
+  written: Doc,
   pictures: readonly Picture[],
-  paper: PaperTwips,
+  sheet: PaperTwips,
 ): Promise<Uint8Array> {
+  const doc = legalStrings(written)
+  const paper = legalStrings(sheet)
   const writer: Writer = {
     pictures: new Map(pictures.map((picture) => [picture.src, picture])),
     notes: new Map(doc.notes.map((note, at) => [note.label, at + 1])),

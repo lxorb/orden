@@ -118,7 +118,7 @@ STATE = """
     // How many rows the tree has, as against how many of them are drawn: the list
     // draws the ones that fit. See Tree.svelte.
     onTree: Number(
-      document.querySelector('aside li[aria-setsize]')?.getAttribute('aria-setsize') ?? 0,
+      document.querySelector('aside [aria-setsize]')?.getAttribute('aria-setsize') ?? 0,
     ),
     waiting: !!document.querySelector('.arriving'),
     sync: window.nibApp.sync.status,
@@ -189,9 +189,10 @@ def drive(browser, token: str) -> dict[str, float]:
         page,
         # The list draws the rows that fit and no others, so counting the rows in the
         # page counts the window rather than the names: two hundred names are thirty
-        # or so rows. `aria-setsize` is the tree's own word for how many rows it has,
-        # which is the number this is about, and it is on every row. See Tree.svelte.
-        "() => Number(document.querySelector('aside li[aria-setsize]')"
+        # or so rows. `aria-setsize` is the tree's own word for how many rows stand beside
+        # a row, which with every note at the top of the space is the number this is
+        # about, and it is on every row. See Tree.svelte.
+        "() => Number(document.querySelector('aside [aria-setsize]')"
         f"?.getAttribute('aria-setsize') ?? 0) >= {NOTES}",
         "every name on the tree",
     )

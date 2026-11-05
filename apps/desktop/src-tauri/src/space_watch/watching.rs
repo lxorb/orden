@@ -118,6 +118,8 @@ pub type Sink = Box<dyn FnMut(Heard) -> bool + Send>;
 /// A running watch. Dropping it stops it.
 pub struct Watch {
     shared: Arc<Shared>,
+    roots: Arc<Vec<Root>>,
+    watcher: Arc<Mutex<RecommendedWatcher>>,
 }
 
 impl Drop for Watch {
@@ -126,8 +128,34 @@ impl Drop for Watch {
     }
 }
 
+impl Watch {
+    /// Stops it and gives its watches back to the system before it answers. Dropping the
+    /// watcher does that only some time later, on notify's own thread.
+    fn let_go(self) {
+        self.shared.stop();
+        let mut watcher = lock_watcher(&self.watcher);
+        for root in self.roots.iter() {
+            let _ = watcher.unwatch(&root.real);
+        }
+    }
+}
+
+/// A watcher on the roots that says nothing yet, and what it could not watch.
+pub struct Armed {
+    shared: Arc<Shared>,
+    roots: Arc<Vec<Root>>,
+    watcher: RecommendedWatcher,
+    unwatched: Vec<Option<Unwatched>>,
+}
+
 /// Starts watching `roots`, answering into `sink`.
+#[cfg(test)]
 pub fn watch(roots: Vec<Root>, sink: Sink) -> Result<Watch, String> {
+    armed(roots)?.start(sink)
+}
+
+/// Puts a watcher on `roots`.
+pub fn armed(roots: Vec<Root>) -> Result<Armed, String> {
     let roots = Arc::new(roots);
     let shared = Arc::new(Shared::new(roots.len()));
 
@@ -138,13 +166,60 @@ pub fn watch(roots: Vec<Root>, sink: Sink) -> Result<Watch, String> {
     let unwatched: Vec<Option<Unwatched>> =
         roots.iter().map(|root| arm(&mut watcher, root)).collect();
 
-    let working = Arc::clone(&shared);
-    std::thread::Builder::new()
-        .name("nib space watch".into())
-        .spawn(move || work(&roots, &working, watcher, sink, unwatched))
-        .map_err(|error| format!("could not start watching the spaces: {error}"))?;
+    Ok(Armed {
+        shared,
+        roots,
+        watcher,
+        unwatched,
+    })
+}
 
-    Ok(Watch { shared })
+impl Armed {
+    /// Starts it answering into `sink`.
+    pub fn start(self, sink: Sink) -> Result<Watch, String> {
+        let Self {
+            shared,
+            roots,
+            watcher,
+            unwatched,
+        } = self;
+        let watcher = Arc::new(Mutex::new(watcher));
+        let (working, settling, using) = (
+            Arc::clone(&shared),
+            Arc::clone(&roots),
+            Arc::clone(&watcher),
+        );
+        std::thread::Builder::new()
+            .name("nib space watch".into())
+            .spawn(move || work(&settling, &working, &using, sink, unwatched))
+            .map_err(|error| format!("could not start watching the spaces: {error}"))?;
+
+        Ok(Watch {
+            shared,
+            roots,
+            watcher,
+        })
+    }
+
+    /// About to take the place of `old`, which stays with the caller to replace once this
+    /// one has started, so a watch that cannot start leaves the spaces watched as they were.
+    /// Past the limit of watched folders it is `old` holding the folders this one was
+    /// refused, and they are the same folders: `old` is let go here and this one armed again
+    /// once they are free, or it would watch next to nothing for the whole of the run (#481).
+    pub fn replacing(mut self, old: &mut Option<Watch>) -> Self {
+        if !self.unwatched.contains(&Some(Unwatched::Limit)) {
+            return self;
+        }
+        let Some(old) = old.take() else {
+            return self;
+        };
+        old.let_go();
+        for (at, root) in self.roots.iter().enumerate() {
+            let _ = self.watcher.unwatch(&root.real);
+            self.unwatched[at] = arm(&mut self.watcher, root);
+        }
+        self
+    }
 }
 
 /// Watches a root and every folder in it that can be watched, and says in the log what
@@ -202,7 +277,7 @@ fn watch_tree(watcher: &mut RecommendedWatcher, dir: &Path) -> notify::Result<()
 fn work(
     roots: &[Root],
     shared: &Shared,
-    mut watcher: RecommendedWatcher,
+    watcher: &Mutex<RecommendedWatcher>,
     mut sink: Sink,
     unwatched: Vec<Option<Unwatched>>,
 ) {
@@ -237,7 +312,7 @@ fn work(
 
             let mut heard = Vec::new();
             if !root.real.is_dir() {
-                let _ = watcher.unwatch(&root.real);
+                let _ = lock_watcher(watcher).unwatch(&root.real);
                 spaces[at] = None;
                 heard.push(Heard::gone(at));
             } else if touched.is_empty() && !batch.rescan[at] && !failing {
@@ -245,8 +320,15 @@ fn work(
             } else if batch.rescan[at] || failing || batch.raw[at] >= OVERFLOWING {
                 // Watched again before it is read again, so nothing that happens in
                 // between is missed: it is either in the reading or heard after it.
-                let _ = watcher.unwatch(&root.real);
-                let unwatched = arm(&mut watcher, root);
+                let unwatched = {
+                    let mut watcher = lock_watcher(watcher);
+                    // Let go meanwhile: the folders are the next watch's now.
+                    if shared.stopped() {
+                        return;
+                    }
+                    let _ = watcher.unwatch(&root.real);
+                    arm(&mut watcher, root)
+                };
                 *space = Space::read(&root.real).unwrap_or_default();
                 released[at].clear();
                 heard.push(Heard {
@@ -310,6 +392,12 @@ fn named(roots: &[Root], paths: &[PathBuf]) -> Vec<usize> {
     } else {
         named
     }
+}
+
+fn lock_watcher(watcher: &Mutex<RecommendedWatcher>) -> MutexGuard<'_, RecommendedWatcher> {
+    watcher
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
 /// What the watcher's callback and the settling thread share.
@@ -543,6 +631,92 @@ mod tests {
         let watch =
             watch(vec![root], Box::new(move |one| tell.send(one).is_ok())).expect("watching");
         (watch, heard)
+    }
+
+    /// How many of this process's inotify instances hold a watch on `dir`.
+    #[cfg(target_os = "linux")]
+    fn holders(dir: &Path) -> usize {
+        use std::os::unix::fs::MetadataExt;
+        let ino = format!("ino:{:x} ", fs::metadata(dir).expect("a folder").ino());
+        fs::read_dir("/proc/self/fdinfo")
+            .expect("fdinfo")
+            .flatten()
+            .filter(|one| {
+                fs::read_to_string(one.path()).is_ok_and(|info| {
+                    info.lines()
+                        .any(|line| line.starts_with("inotify") && line.contains(&ino))
+                })
+            })
+            .count()
+    }
+
+    /// #481: a watch replaced past the limit of watched folders. The old one holds what
+    /// the new one was refused, so it is let go, there and then, and the new one armed
+    /// again; said after that, nothing is left out.
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn a_watch_refused_past_the_limit_is_armed_again_once_the_old_lets_go() {
+        use super::{armed, Unwatched};
+
+        let dir = tempfile::tempdir().expect("a folder");
+        let root = fs::canonicalize(dir.path()).expect("a real path");
+        fs::create_dir(root.join("Deep")).expect("a folder");
+        let spelled = || {
+            vec![Root {
+                given: root.clone(),
+                real: root.clone(),
+            }]
+        };
+
+        let mut old = Some(
+            armed(spelled())
+                .expect("armed")
+                .start(Box::new(|_| true))
+                .expect("started"),
+        );
+        let mut made = armed(spelled()).expect("armed");
+        assert_eq!(holders(&root.join("Deep")), 2);
+        // What the system's limit would have said. Nothing here can lower it.
+        made.unwatched[0] = Some(Unwatched::Limit);
+
+        let (tell, heard) = channel();
+        let _watch = made
+            .replacing(&mut old)
+            .start(Box::new(move |one| tell.send(one).is_ok()))
+            .expect("started");
+
+        assert!(old.is_none());
+        assert_eq!(holders(&root.join("Deep")), 1, "the old one's are free");
+        let first = until_quiet(&heard);
+        assert!(first[0].scan);
+        assert_eq!(first[0].unwatched, None);
+    }
+
+    /// One that was not refused leaves `old` to the caller, and running, so a start that
+    /// fails has not cost the spaces their watch.
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn a_watch_not_refused_has_nothing_armed_twice() {
+        use super::armed;
+
+        let dir = tempfile::tempdir().expect("a folder");
+        let root = fs::canonicalize(dir.path()).expect("a real path");
+        let spelled = || {
+            vec![Root {
+                given: root.clone(),
+                real: root.clone(),
+            }]
+        };
+        let mut old = Some(
+            armed(spelled())
+                .expect("armed")
+                .start(Box::new(|_| true))
+                .expect("started"),
+        );
+        let made = armed(spelled()).expect("armed").replacing(&mut old);
+        assert!(old.is_some());
+        assert_eq!(made.unwatched, vec![None]);
+        assert_eq!(holders(&root), 2);
     }
 
     /// The whole life of a note as another program lives it, one step at a time, each

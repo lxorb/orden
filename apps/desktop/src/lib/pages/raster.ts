@@ -3,6 +3,8 @@
  *  here and nowhere else. Used for the PNG export and for what a page note's PDF cannot
  *  set as text; see out.ts. */
 
+import type { PaperAt } from './paper'
+
 /** One SVG rasterised by the browser, which is how the canvas's PNG is made too.
  *  Null where the browser refused the picture, which is a page nothing could be
  *  drawn from rather than an error worth a dialog. */
@@ -35,6 +37,34 @@ export async function svgToPng(
   } finally {
     URL.revokeObjectURL(url)
   }
+}
+
+/** A page of a paper as an address an `<image>` can hold and a PDF can embed, drawn as
+ *  the sheet on screen draws it (see paper.ts). Null where the sheet on screen would
+ *  show no paper either. */
+export async function paperPicture(at: PaperAt, number: number): Promise<string | null> {
+  const { paperOf } = await import('./paper')
+  // A bitmap let go of by now - the tab closed, or paper.ts's cap reached - has no size,
+  // and the one asked for next is drawn again.
+  let paper = await paperOf(at, number)
+  if (paper && !paper.image.width) paper = await paperOf(at, number)
+  if (!paper?.image.width) return null
+
+  const sheet = document.createElement('canvas')
+  sheet.width = paper.image.width
+  sheet.height = paper.image.height
+
+  const ctx = sheet.getContext('2d')
+  if (!ctx) return null
+
+  ctx.drawImage(paper.image, 0, 0)
+  return sheet.toDataURL('image/png')
+}
+
+/** See `paperIsLocked` in paper.ts; here so a test has one module to stand in for. */
+export async function paperIsLocked(at: PaperAt): Promise<boolean> {
+  const { paperIsLocked: asked } = await import('./paper')
+  return asked(at)
 }
 
 let measuring: CanvasRenderingContext2D | null | undefined

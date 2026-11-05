@@ -28,7 +28,7 @@ export type Kind = 'file' | 'folder' | 'space'
  *  itself: its old root and its new. A file
  *  made for a document that was already open without one - a new tab given its place
  *  - names that document by its `key` (see documents.svelte.ts). */
-export type FileOp =
+export type FileOp = (
   | {
       op: 'created'
       path: string
@@ -38,6 +38,9 @@ export type FileOp =
       /** A delete put back - out of the trash, or undone - by the word it was said
        *  with, so sync brings back the entries it was rather than new ones (#1068). */
       back?: string
+      /** Came as a delete put back, whatever word it has, so what kept the note follows it
+       *  to a name beside its own. */
+      putBack?: true
     }
   | {
       op: 'moved'
@@ -55,6 +58,12 @@ export type FileOp =
       /** The word the trash or the undo keeps to put it back by; see `created`. */
       back?: string
     }
+) & {
+  /** Done by another window and heard here (workspace/across.ts): everything kept in this
+   *  window follows it, and whatever tells the disk or the account leaves that to the
+   *  window that did it. */
+  heard?: true
+}
 
 /** Whatever keeps files by path. What it has left to do - telling the account - it
  *  answers as a promise, which the operation waits for before it goes on, so two

@@ -6,9 +6,11 @@ import {
   deviceRowsOf,
   epochFrame,
   feedPageOf,
+  heldName,
   frame,
   type Framed,
   hubFrameOf,
+  isEntryId,
   isName,
   keepRequestOf,
   opOf,
@@ -120,6 +122,103 @@ describe("the room's v2 messages", () => {
     expect(roomNews(bytes(0, 0, 1, 0))).toBeNull()
     expect(roomNews(bytes(1, 5))).toBeNull()
     expect(roomNews(bytes(101, 123))).toBeNull()
+  })
+})
+
+describe('entry ids', () => {
+  const UNSAFE = ['../../Private/AGENTS.md', '..', 'a..b', 'a/b', 'a\\b', 'a\u0000b', 'a\nb']
+
+  test('what devices and the account make are ids; a path is not', () => {
+    const made = ['0f3a9c11aa22bb33cc44dd55ee66ff00', 'c81e728d-9d4c-4f6b-a1b2-3c4d5e6f7a8b', 'E']
+    for (const id of made) expect(isEntryId(id)).toBe(true)
+    for (const id of UNSAFE) expect(isEntryId(id)).toBe(false)
+  })
+
+  test('nothing new may be made under one', () => {
+    for (const id of UNSAFE) {
+      expect(opOf({ op: 'o', seen: 0, t: 'mkdir', id, parent: null, name: 'a' })).toBeNull()
+      const create = { op: 'o', seen: 0, t: 'create', id, kind: 'note', parent: null, name: 'a.md' }
+      expect(opOf(create)).toBeNull()
+    }
+  })
+
+  test('one the account already holds can still be moved off and deleted', () => {
+    const id = '../../Private/AGENTS.md'
+    expect(opOf({ op: 'o', seen: 0, t: 'delete', id })).toMatchObject({ t: 'delete', id })
+    expect(opOf({ op: 'o', seen: 0, t: 'rename', id, name: 'b.md' })).toMatchObject({ id })
+  })
+
+  test('the feed leaves one out and reads the rest of its page', () => {
+    const item = (id: string, parent: string | null = null) => ({
+      id,
+      kind: 'note',
+      parent,
+      name: 'a.md',
+      deleted: false,
+      seq: 1,
+      hash: '',
+      size: 0,
+      by: '',
+      at: 0,
+    })
+    const page = feedPageOf({
+      items: [item('../../x'), item('kept'), item('under', '../../x')],
+      cursor: 3,
+      more: false,
+    })
+    expect(page?.items.map((one) => one.id)).toEqual(['kept'])
+    expect(page?.cursor).toBe(3)
+  })
+
+  test('its delete still reaches a device that took it in before', () => {
+    const gone = {
+      id: '../../x',
+      kind: 'note',
+      parent: null,
+      name: 'a.md',
+      deleted: true,
+      seq: 1,
+      hash: '',
+      size: 0,
+      by: '',
+      at: 0,
+    }
+    const page = feedPageOf({ items: [gone], cursor: 1, more: false })
+    expect(page?.items.map((one) => one.id)).toEqual(['../../x'])
+  })
+
+  test('a name no disk holds is read under one it can, and the page still reads', () => {
+    const item = (id: string, name: string, deleted = false) => ({
+      id,
+      kind: 'note',
+      parent: null,
+      name,
+      deleted,
+      seq: 1,
+      hash: '',
+      size: 0,
+      by: '',
+      at: 0,
+    })
+    const page = feedPageOf({
+      items: [item('a', `${'x'.repeat(300)}.md`), item('b', '..'), item('c', 'kept.md')],
+      cursor: 3,
+      more: false,
+    })
+    expect(page?.items.map((one) => one.id)).toEqual(['a', 'b', 'c'])
+    expect(page?.items[0]?.name).toBe(`${'x'.repeat(252)}.md`)
+    expect(page?.items[1]?.name).toBe('__')
+    expect(page?.cursor).toBe(3)
+
+    const gone = feedPageOf({ items: [item('a', '..', true)], cursor: 1, more: false })
+    expect(gone?.items[0]).toMatchObject({ id: 'a', name: '__', deleted: true })
+  })
+
+  test('a name that is one stays as it is', () => {
+    for (const name of ['Plan.md', 'x'.repeat(255), '...', 'a b']) expect(heldName(name)).toBe(name)
+    expect(heldName('')).toBe('_')
+    expect(heldName('.')).toBe('_')
+    expect(heldName('a/b\u0000c')).toBe('a_b_c')
   })
 })
 

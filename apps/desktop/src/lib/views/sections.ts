@@ -9,6 +9,7 @@
  *
  *  Pure: a note's words in, its words after out, or null where the section is not there. */
 
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { lines as rowsOf } from '@orden/markdown/links'
 
 interface Section {
@@ -22,6 +23,12 @@ interface Section {
 
 const HEADING = /^(#{1,6})[ \t]+(.*?)[ \t]*#*[ \t]*$/
 const FENCE = /^[ \t]*(`{3,}|~{3,})/
+
+/** The first line past the note's front matter. */
+function wordsLine(text: string): number {
+  const block = frontMatterBlock(text)
+  return block ? text.slice(0, block.close).split('\n').length : 0
+}
 
 /** Every heading of a note with what it holds, in order. Code and the front matter
  *  hold none: which lines are code is `lines` in @orden/markdown/links, the reading the
@@ -155,11 +162,7 @@ export function withBlock(text: string, block: readonly string[]): string {
  *  section. Null where it says nothing. */
 export function aboutOf(text: string, note: string): string | null {
   const lines = text.split('\n')
-  let at = 0
-  if (lines[0]?.trim() === '---') {
-    const end = lines.findIndex((line, index) => index > 0 && line.trim() === '---')
-    at = end === -1 ? lines.length : end + 1
-  }
+  let at = wordsLine(text)
   const words: string[] = []
   for (; at < lines.length; at++) {
     const line = lines[at]?.trim() ?? ''
@@ -179,11 +182,7 @@ export function aboutOf(text: string, note: string): string | null {
  *  old name says the new one. Null where it has no such title. */
 export function retitled(text: string, from: string, to: string): string | null {
   const lines = text.split('\n')
-  let at = 0
-  if (lines[0]?.trim() === '---') {
-    const end = lines.findIndex((line, index) => index > 0 && line.trim() === '---')
-    at = end === -1 ? lines.length : end + 1
-  }
+  let at = wordsLine(text)
   while (at < lines.length && lines[at]?.trim() === '') at++
   const found = HEADING.exec(lines[at] ?? '')
   if (found?.[1] !== '#' || !isTitle(found[2] ?? '', from)) return null

@@ -754,6 +754,8 @@ export const ta: Dictionary = {
   '{done} of {total}': '{total} இல் {done}',
   'Sync failed': 'ஒத்திசைவு தோல்வி',
   '{name} could not be written.': '{name} ஐ எழுத முடியவில்லை.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} ஐ எழுத முடியவில்லை: அதன் கோப்பைப் படிக்க முடியவில்லை. அது 64 MB-ஐ விடப் பெரியதாகவோ UTF-8 உரை அல்லாததாகவோ இருக்கலாம்.',
   '{name} could not be read.': '{name} ஐப் படிக்க முடியவில்லை.',
   'Text size': 'உரை அளவு',
   'Line spacing': 'வரி இடைவெளி',
@@ -1560,6 +1562,8 @@ export const ta: Dictionary = {
   'The provider answered {status}.': 'வழங்குநர் {status} என்று பதிலளித்தது.',
   'Add an AI provider in Settings first.': 'முதலில் அமைப்புகளில் AI வழங்குநரைச் சேர்க்கவும்.',
   'The model did not answer.': 'மாடல் பதிலளிக்கவில்லை.',
+  'The connection closed before the answer was finished.':
+    'பதில் முடிவதற்கு முன் இணைப்பு மூடப்பட்டது.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'உங்கள் {plan} திட்டம் {time} வரை வரம்பை எட்டியுள்ளது.',
@@ -2044,8 +2048,10 @@ export const ta: Dictionary = {
   'Send feedback': 'கருத்தை அனுப்பு',
   'Describe the issue': 'சிக்கலை விவரிக்கவும்',
   Sent: 'அனுப்பப்பட்டது',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'இந்த அறிக்கையில் உங்கள் விவரம், Orden பதிப்பு, உங்கள் தளம், ஆப்பின் சமீபத்திய பதிவு ஆகியவை இருக்கும். உங்கள் குறிப்புகள் ஒருபோதும் இருக்காது.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'இந்த அறிக்கையில் உங்கள் விளக்கம், Orden பதிப்பு, உங்கள் தளம் மற்றும் சமீபத்திய செயலி பதிவு அடங்கும், கோப்புப் பாதைகள் நீக்கப்பட்டு.',
+  'Its space is archived': 'அதன் இடம் காப்பகப்படுத்தப்பட்டுள்ளது',
+  'Back as {name}': '{name} என மீண்டது',
   'Send into the running answer': 'நடக்கும் பதிலுக்குள் அனுப்பு',
   'Stop the answer': 'பதிலை நிறுத்து',
   'Open every step': 'எல்லா படிகளையும் திற',
@@ -2131,6 +2137,8 @@ export const ta: Dictionary = {
     'இது உங்கள் குறிப்புகளைப் படித்து, உங்கள் உள்நுழைவுடன் உலாவுகிறது; எனவே ஒரு பக்கம் அவற்றை வெளியே அனுப்ப வைக்க முயலலாம்.',
   Activity: 'செயல்பாடு',
   'Add a site': 'தளத்தைச் சேர்',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'இந்தப் பட்டியலில் உள்ள நிரல் கேட்காமல் இயங்கும், அந்த நிரலால் செய்யக்கூடிய அனைத்தையும் செய்யும்.',
   'Add a program': 'நிரலைச் சேர்',
   'Every space': 'ஒவ்வொரு இடமும்',
   Sites: 'தளங்கள்',
@@ -2562,6 +2570,7 @@ export const ta: Dictionary = {
   'No {property}': '{property} இல்லை',
   '{card} moved to {group}': '{card} {group}-க்கு நகர்த்தப்பட்டது',
   'Not moved': 'நகர்த்தப்படவில்லை',
+  'Not undone': 'செயல்தவிர்க்கப்படவில்லை',
   Retry: 'மீண்டும் முயலவும்',
   Calculate: 'கணக்கிடு',
   'Remove sort': 'வரிசையை நீக்கு',
@@ -2850,6 +2859,8 @@ export const ta: Dictionary = {
   '{title}, running': '{title}, இயங்குகிறது',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden இனி AI விசைகளை Mac இன் கீசெயினில் வைப்பதில்லை, அது திரும்பத் திரும்ப அதன் கடவுச்சொல்லைக் கேட்டது. உங்கள் விசைகளை மீண்டும் உள்ளிட்டு ChatGPT இல் மீண்டும் ஒருமுறை உள்நுழையுங்கள்.',
+  'This PDF is locked by its owner': 'இந்த PDF அதன் உரிமையாளரால் பூட்டப்பட்டுள்ளது',
+  'Part of this could not be undone': 'இதன் ஒரு பகுதியைச் செயல்தவிர்க்க முடியவில்லை',
   'Add images': 'படங்களைச் சேர்',
   'Remove image': 'படத்தை அகற்று',
   'That is more than 4 images.': 'இவை 4 படங்களுக்கு மேல்.',

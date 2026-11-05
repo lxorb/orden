@@ -11,6 +11,7 @@
 
 import { addMonths, dateAt, dayNumber, msOf, readDate } from '../dates'
 import { BasesError } from '../errors'
+import { spend, stepsOfText } from './pattern'
 import type {
   Context,
   DateValue,
@@ -144,6 +145,7 @@ function pathOf(value: Val): string | null {
 export function equal(a: Val, b: Val, scope: Scope): boolean {
   if (a === b) return true
   if (a === null || b === null) return false
+  if (typeof a === 'string' && typeof b === 'string') spend(stepsOfText(a.length))
 
   const pathA = pathOf(a)
   const pathB = pathOf(b)
@@ -170,10 +172,13 @@ export function equal(a: Val, b: Val, scope: Scope): boolean {
   if (dateA && dateB && (isDate(a) || isDate(b))) return msOf(dateA) === msOf(dateB)
   if (isDuration(a) && isDuration(b)) return a.ms === b.ms && a.months === b.months
   if (Array.isArray(a) && Array.isArray(b)) {
-    return a.length === b.length && a.every((one, at) => equal(one, b[at] ?? null, scope))
+    if (a.length !== b.length) return false
+    spend(a.length)
+    return a.every((one, at) => equal(one, b[at] ?? null, scope))
   }
   if (isObject(a) && isObject(b)) {
     const keys = Object.keys(a)
+    spend(keys.length)
     return (
       keys.length === Object.keys(b).length &&
       keys.every((key) => equal(fieldOf(a, key), fieldOf(b, key), scope))
@@ -209,7 +214,10 @@ export function compare(a: Val, b: Val): number | null {
     const msB = durationMs(b)
     return msA === null || msB === null ? null : msA - msB
   }
-  if (typeof a === 'string' && typeof b === 'string') return a < b ? -1 : a > b ? 1 : 0
+  if (typeof a === 'string' && typeof b === 'string') {
+    spend(stepsOfText(a.length))
+    return a < b ? -1 : a > b ? 1 : 0
+  }
   if (typeof a === 'boolean' && typeof b === 'boolean') return Number(a) - Number(b)
   if (isLink(a) && isLink(b)) return compare(text(a), text(b))
   return null
@@ -243,9 +251,45 @@ export function sortCompare(a: Val, b: Val): number {
   const rankA = sortRank(a)
   const rankB = sortRank(b)
   if (rankA !== rankB) return rankA - rankB
-  if (rankA === 4) return collator.compare(text(a), text(b))
-  if (rankA === 5) return collator.compare(text(a), text(b))
+  if (rankA === 4 || rankA === 5) {
+    const [left, right] = [text(a), text(b)]
+    spend(stepsOfText(left.length + right.length))
+    return collator.compare(left, right)
+  }
   return compare(a, b) ?? 0
+}
+
+/** How deep a value of a guarded base may be, far past what anybody writes and far short
+ *  of what a walk of it can take without running out of stack. */
+const DEEPEST_VALUE = 64
+
+/** Counts what walking a value will cost, and refuses a value too deep to walk. A list
+ *  can hold itself twice for two steps, so what it costs to make says nothing of what it
+ *  costs to read: this is what an evaluation of a guarded base owes for what it hands
+ *  out, to a sort, a cell or a search that is no longer counting. */
+export function weigh(value: Val, depth = 0): void {
+  if (typeof value === 'string') spend(stepsOfText(value.length))
+  if (value === null || typeof value !== 'object') return
+  if (depth > DEEPEST_VALUE) spend(Number.POSITIVE_INFINITY)
+  if (Array.isArray(value)) {
+    spend(value.length)
+    for (const one of value) weigh(one, depth + 1)
+  } else if (isRecordLike(value)) {
+    const inside = Object.values(value)
+    spend(inside.length)
+    for (const one of inside) weigh(one, depth + 1)
+  }
+}
+
+/** The words of each item of a list, counted as they come rather than after, since the
+ *  same long string can stand in a list any number of times. */
+export function textsOf(list: readonly Val[]): string[] {
+  spend(list.length)
+  return list.map((one) => {
+    const words = text(one)
+    spend(stepsOfText(words.length))
+    return words
+  })
 }
 
 /** A value as words: what a cell shows, what `+` joins to a string, `toString()`. */
@@ -255,7 +299,7 @@ export function text(value: Val): string {
   if (typeof value === 'number')
     return Number.isInteger(value) ? String(value) : String(Math.round(value * 1e10) / 1e10)
   if (typeof value === 'boolean') return value ? 'true' : 'false'
-  if (Array.isArray(value)) return value.map(text).join(', ')
+  if (Array.isArray(value)) return textsOf(value).join(', ')
   if (value instanceof RegExp) return `/${value.source}/${value.flags}`
   if (value instanceof FileRef || value instanceof ThisRef) return value.row.file.path
   if (value instanceof NoteRef || value instanceof TaskRef) return ''
@@ -266,6 +310,7 @@ export function text(value: Val): string {
   if (isDate(value)) return value.time ? `${value.iso} ${value.time}` : value.iso
   if (isDuration(value)) return durationText(value)
   if (isLink(value)) return value.display ?? value.target
+  weigh(value)
   return JSON.stringify(value)
 }
 
@@ -378,8 +423,15 @@ export function add(a: Val, b: Val): Val {
   if (isDate(b) && isDuration(a)) return shifted(b, a, 1)
   if (isDuration(a) && isDuration(b))
     return { kind: 'duration', ms: a.ms + b.ms, months: a.months + b.months }
-  if (typeof a === 'string' || typeof b === 'string') return text(a) + text(b)
-  if (Array.isArray(a) && Array.isArray(b)) return [...a, ...b] as Value[]
+  if (typeof a === 'string' || typeof b === 'string') {
+    const [left, right] = [text(a), text(b)]
+    spend(stepsOfText(left.length + right.length))
+    return left + right
+  }
+  if (Array.isArray(a) && Array.isArray(b)) {
+    spend(a.length + b.length)
+    return [...a, ...b] as Value[]
+  }
   if (a === null || b === null) return null
   throw new BasesError(`Cannot add ${kindName(b)} to ${kindName(a)}`)
 }
@@ -439,7 +491,10 @@ export function kindName(value: Val): string {
  *  themselves, the drawn ones their own kind, a note's properties an object. */
 export function settled(value: Val): Value {
   if (value === null || typeof value !== 'object') return value
-  if (Array.isArray(value)) return value.map(settled)
+  if (Array.isArray(value)) {
+    spend(value.length)
+    return value.map(settled)
+  }
   if (value instanceof RegExp) return `/${value.source}/${value.flags}`
   if (value instanceof FileRef || value instanceof ThisRef)
     return { kind: 'link', target: value.row.path }

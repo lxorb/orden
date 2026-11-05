@@ -392,6 +392,27 @@ describe('what a reader that checks the book insists on', () => {
     )
   })
 
+  test('a drawing the page wrote with no namespace is still a drawing', () => {
+    // An HTML parser gives a bare `<svg>` its namespace by itself. An XML one reads
+    // it as an XHTML element nobody has heard of: a chart comes out as its labels
+    // run together, with no height and no lines.
+    expect(toXhtml('<svg viewBox="0 0 2 2"><path d="M0 0" /></svg>')).toContain(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2">',
+    )
+    expect(toXhtml('<math><mi>x</mi></math>')).toContain(
+      '<math xmlns="http://www.w3.org/1998/Math/MathML">',
+    )
+    expect(toXhtml('<svg xmlns="http://www.w3.org/2000/svg"></svg>')).toBe(
+      '<svg xmlns="http://www.w3.org/2000/svg"></svg>',
+    )
+  })
+
+  test('what a foreignObject holds is XHTML again, not more of the drawing', () => {
+    expect(
+      toXhtml('<svg><foreignObject><div><span>A</span></div></foreignObject></svg>'),
+    ).toContain('<foreignObject><div xmlns="http://www.w3.org/1999/xhtml"><span>A</span></div>')
+  })
+
   test('a part that draws an SVG says so in the manifest', async () => {
     const drawn = await bookOf({
       body: '<h1>Drawn</h1>\n<figure class="diagram"><svg viewBox="0 0 2 2"></svg></figure>',
@@ -643,5 +664,39 @@ describe('splitting', () => {
     expect(parts).toHaveLength(2)
     expect(parts[0]).toContain('<blockquote>')
     expect(parts[1]).toBe('<h1>c</h1>\n')
+  })
+})
+
+/** Text pasted from Word, PowerPoint or a PDF carries what XML 1.0 has no way to say,
+ *  and a reader refuses the whole book over one. */
+describe('characters XML cannot carry', () => {
+  const FORBIDDEN = /[^\t\n\r\u{20}-\u{D7FF}\u{E000}-\u{FFFD}\u{10000}-\u{10FFFF}]/u
+
+  test('leave no part of the book', async () => {
+    const one = await bookOf({
+      title: 'T\u0001itle',
+      author: 'A\ufffeuthor',
+      body: renderMarkdown(
+        '# He\u000bad\n\nword\u0001 <!-- no\u0001te --> <span da\u0001ta="v\u0001">x</span>\n',
+      ),
+    })
+    const parts = one.names.filter((name) => /\.(xhtml|opf|ncx|xml)$/.test(name))
+    expect(parts.length).toBeGreaterThan(3)
+    for (const path of parts) {
+      expect(FORBIDDEN.test(await bookText(one, path)), path).toBe(false)
+    }
+  })
+
+  test('nor a reference to one, while the rest stay', () => {
+    expect(toXhtml('<p>a&#1;b&#xFFFE;c&#0;d&#55296;e</p>')).toBe('<p>abcde</p>')
+    expect(toXhtml('<p>&#65;&#9;&#x1F600;</p>')).toBe('<p>&#65;&#9;&#x1F600;</p>')
+  })
+
+  test('a capital X in a reference is one XML cannot read either', () => {
+    expect(toXhtml('<p>&#X41;&#X1;</p>')).toBe('<p>&#x41;</p>')
+  })
+
+  test('and the words either side of a soft break stay words', () => {
+    expect(toXhtml('<p>one\u000btwo\u000cthree\u0001four</p>')).toBe('<p>one two threefour</p>')
   })
 })

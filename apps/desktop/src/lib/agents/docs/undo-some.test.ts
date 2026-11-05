@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { located } from './desk'
-import { editNote, putBackAt, tracksOf, undoAgent, undoSomeAt } from './edit'
+import { editNote, putBackAt, tracksMoved, tracksOf, undoAgent, undoSomeAt } from './edit'
+import { touchedBy } from './touched'
 import { deskWith } from './test-desk'
 
 /** Taking back some of an agent's edits and leaving the rest: the review's Undo of
@@ -185,5 +186,70 @@ describe('where an agent’s edits are', () => {
 
     await undoAgent(desk, agent, { path: 'a.md' })
     expect(track?.spansOf(id ?? '')).toEqual([])
+  })
+})
+
+describe('a note an agent edited, moved', () => {
+  test('is still the agent’s to take back, at its new name', async () => {
+    const { desk, disk, fileOf } = deskWith({ 'Heron.md': 'A heron strikes' })
+    const agent = anAgent()
+    await editNote(desk, agent, { path: 'Heron.md' }, [
+      { at: { quote: 'strikes' }, replace: 'STRIKES' },
+    ])
+
+    disk.set('/space/Bird.md', disk.get('/space/Heron.md') ?? '')
+    disk.delete('/space/Heron.md')
+    tracksMoved('/space/Heron.md', '/space/Bird.md')
+
+    expect(idsOf(agent, 'Heron.md')).toEqual([])
+    expect(idsOf(agent, 'Bird.md')).toHaveLength(1)
+    expect(touchedBy('/space/Heron.md')).toEqual([])
+    expect(touchedBy('/space/Bird.md').map((one) => one.id)).toEqual([agent.id])
+
+    expect(await undoAgent(desk, agent, { path: 'Bird.md' })).toEqual({ undone: 1 })
+    expect(fileOf('Bird.md')).toBe('A heron strikes')
+    expect(touchedBy('/space/Bird.md')).toEqual([])
+  })
+
+  test('goes with the folder it is in, and its version from before is not kept twice', async () => {
+    const { desk, disk, written } = deskWith({ 'Old/a.md': 'one two' })
+    const agent = anAgent()
+    await editNote(desk, agent, { path: 'Old/a.md' }, [{ at: { quote: 'one' }, replace: 'ONE' }])
+
+    disk.set('/space/New/a.md', disk.get('/space/Old/a.md') ?? '')
+    disk.delete('/space/Old/a.md')
+    tracksMoved('/space/Old', '/space/New')
+    expect(idsOf(agent, 'New/a.md')).toHaveLength(1)
+
+    await editNote(desk, agent, { path: 'New/a.md' }, [{ at: { quote: 'two' }, replace: 'TWO' }])
+    expect(idsOf(agent, 'New/a.md')).toHaveLength(2)
+    expect(written.map((one) => one.keeping?.snapshot)).toEqual([true, false])
+  })
+
+  test('onto a name with a track of its own keeps both, each back when the way is clear', async () => {
+    const { desk, disk, fileOf } = deskWith({ 'A.md': 'aaa', 'B.md': 'bbb' })
+    const agent = anAgent()
+    await editNote(desk, agent, { path: 'B.md' }, [{ at: { quote: 'bbb' }, replace: 'BBB' }])
+    await editNote(desk, agent, { path: 'A.md' }, [{ at: { quote: 'aaa' }, replace: 'AAA' }])
+
+    // B has been moved out of the way by something no track hears, a delete; A takes its name.
+    const heldBack = disk.get('/space/B.md') ?? ''
+    disk.set('/space/B.md', disk.get('/space/A.md') ?? '')
+    disk.delete('/space/A.md')
+    tracksMoved('/space/A.md', '/space/B.md')
+    expect(idsOf(agent, 'B.md')).toHaveLength(1)
+    expect(touchedBy('/space/B.md').map((one) => one.edits)).toEqual([1])
+
+    expect(await undoAgent(desk, agent, { path: 'B.md' })).toEqual({ undone: 1 })
+    expect(fileOf('B.md')).toBe('aaa')
+
+    // And A goes home, and what B's name had before is there again to take back.
+    disk.set('/space/A.md', 'aaa')
+    disk.set('/space/B.md', heldBack)
+    tracksMoved('/space/B.md', '/space/A.md')
+    expect(idsOf(agent, 'B.md')).toHaveLength(1)
+    expect(touchedBy('/space/B.md').map((one) => one.edits)).toEqual([1])
+    expect(await undoAgent(desk, agent, { path: 'B.md' })).toEqual({ undone: 1 })
+    expect(fileOf('B.md')).toBe('bbb')
   })
 })

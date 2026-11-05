@@ -6,18 +6,25 @@
  *  are kept as a version on this device (`unsynced` in ingest.ts), and the reader is
  *  told once, in the undo toast's shape and for its lifetime; see UndoToast.svelte.
  *
- *  One at a time: a second file is the newer news, and takes its place. */
+ *  One line: a second file is the newer news, and takes its place, the line then saying
+ *  how many there are. */
 
 import { UNDO_LINGER } from '../undo-toast.svelte'
 
 class Unsynced {
   /** The name of the file the toast is about, or null when it is not up. */
   said = $state<string | null>(null)
+  /** How many files the line is about. */
+  many = $state(0)
+
+  private readonly names = new Set<string>()
 
   private timer: ReturnType<typeof setTimeout> | undefined
 
   show(name: string) {
     this.said = name
+    this.names.add(name)
+    this.many = this.names.size
     this.linger()
   }
 
@@ -33,6 +40,8 @@ class Unsynced {
 
   dismiss() {
     this.said = null
+    this.names.clear()
+    this.many = 0
     clearTimeout(this.timer)
   }
 }

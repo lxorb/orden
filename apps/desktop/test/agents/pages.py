@@ -100,6 +100,27 @@ FRAME = page(
     '<iframe id="inner" title="Inner" src="http://{other}:{port}/inner" width="600" height="240"></iframe>',
 )
 
+LANDS = page(
+    "Lands",
+    """<section aria-label="Bill"><button id="pay" style="width:100%;height:40px">Pay now</button></section>
+<div id="built" onclick="record({kind: 'built'})"><div>Pay now</div><div>20.00 EUR</div></div>
+<p>The weather is fine today</p>
+<a href="/lands#guide">How to delete your account</a>""",
+    "document.getElementById('pay').addEventListener('click', () => record({kind: 'paid'}))",
+)
+
+MOVES = page(
+    "Moves",
+    """<style>#over{position:fixed;left:0;top:0;width:300px;height:80px;z-index:9}
+#pay{position:fixed;left:0;top:0;width:300px;height:80px}
+#ripple{position:fixed;left:0;top:100px;width:300px;height:80px}
+#ripple::after{content:'';position:absolute;inset:0}</style>
+<button id="pay">Pay now</button><button id="over">OK</button><button id="ripple">Place order</button>""",
+    """document.getElementById('pay').addEventListener('click', () => record({kind: 'paid'}))
+document.getElementById('ripple').addEventListener('click', () => record({kind: 'ordered'}))
+document.getElementById('over').addEventListener('mousemove', (event) => { event.target.style.display = 'none' })""",
+)
+
 INNER = page(
     "Inner",
     """<label>Inner field <input id="field"></label><button id="press">Inner button</button>""",
@@ -288,6 +309,8 @@ class Site:
             "/signin": SIGN_IN,
             "/mail": MAIL,
             "/frame": FRAME.replace("{other}", OTHER).replace("{port}", str(self.port)),
+            "/lands": LANDS,
+            "/moves": MOVES,
             "/inner": INNER,
             "/dialogs": DIALOGS,
             "/leave": LEAVE,

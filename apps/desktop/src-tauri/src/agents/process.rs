@@ -429,7 +429,7 @@ fn untrusted(done: ProcessDone, program: &str) -> Answer {
 
 /// The question a `run` or a `start` raises, or nothing where it may go ahead.
 fn question(app: &AppHandle, grant: &Grant, asked: &Process, program: &str) -> Option<Answer> {
-    if !grant.asks(Category::Terminal) || listed(&grant.programs, program, asked) {
+    if !grant.asks(Category::Terminal) || listed(&grant.programs, program, asked, cfg!(windows)) {
         return None;
     }
     let key = approvals::key(
@@ -461,19 +461,27 @@ fn question(app: &AppHandle, grant: &Grant, asked: &Process, program: &str) -> O
 }
 
 /// Whether a call starts a program on the agent's list, and nothing else: a bare name,
-/// as the list names it, with no variables set.
-fn listed(programs: &[String], program: &str, asked: &Process) -> bool {
+/// as the list names it, with no variables set. `windows` is the system it runs on, said
+/// so that both are tested on any machine; the call passes `cfg!(windows)`.
+fn listed(programs: &[String], program: &str, asked: &Process, windows: bool) -> bool {
     if !asked.env.is_empty() || program.contains(['/', '\\']) || program.starts_with('~') {
         return false;
     }
-    let name = bare(program);
-    programs.iter().any(|one| bare(one) == name)
+    let name = bare(program, windows);
+    programs.iter().any(|one| bare(one, windows) == name)
 }
 
-/// A program's name as a list holds it: lower case, without the ending Windows gives it.
-fn bare(program: &str) -> String {
-    let name = program.trim().to_lowercase();
-    for ending in [".exe", ".cmd", ".bat", ".com", ".ps1", ".sh"] {
+/// A program's name as a list holds it. On Windows, which runs `git.exe` for `git` and
+/// does not tell `GIT` from `git`, in lower case and without an ending it runs a bare name
+/// with (`PATHEXT`'s `.exe`, `.com`, `.bat`, `.cmd`); a `.sh` or `.ps1` is another file.
+/// On a Mac and Linux a name with any ending is another file, and the case counts.
+fn bare(program: &str, windows: bool) -> String {
+    let name = program.trim();
+    if !windows {
+        return name.to_owned();
+    }
+    let name = name.to_lowercase();
+    for ending in [".exe", ".com", ".bat", ".cmd"] {
         if let Some(stem) = name.strip_suffix(ending) {
             return stem.to_owned();
         }
@@ -755,28 +763,51 @@ mod tests {
     fn only_a_bare_name_with_nothing_set_is_on_the_list() {
         let programs = vec!["git".to_owned(), "Node.exe".to_owned()];
         let run = |program: &str| process(ProcessOp::Run, program);
-        assert!(listed(&programs, "git", &run("git")));
-        assert!(listed(&programs, "GIT.EXE", &run("GIT.EXE")));
-        assert!(listed(&programs, "node", &run("node")));
-        assert!(!listed(&programs, "npm", &run("npm")));
-        for path in [
-            "/tmp/x/git",
-            "./git",
-            "bin/git",
-            "~/bin/git",
-            "C:\\Tools\\git.exe",
-            "..\\git",
-        ] {
-            assert!(!listed(&programs, path, &run(path)), "{path}");
+        for windows in [true, false] {
+            assert!(listed(&programs, "git", &run("git"), windows));
+            assert!(!listed(&programs, "npm", &run("npm"), windows));
+            for path in [
+                "/tmp/x/git",
+                "./git",
+                "bin/git",
+                "~/bin/git",
+                "C:\\Tools\\git.exe",
+                "..\\git",
+            ] {
+                assert!(!listed(&programs, path, &run(path), windows), "{path}");
+            }
+            let mut hooked = run("git");
+            hooked
+                .env
+                .insert("GIT_SSH_COMMAND".into(), "sh -c evil".into());
+            assert!(!listed(&programs, "git", &hooked, windows));
+            let mut pathed = run("git");
+            pathed.env.insert("PATH".into(), "/tmp/x".into());
+            assert!(!listed(&programs, "git", &pathed, windows));
         }
-        let mut hooked = run("git");
-        hooked
-            .env
-            .insert("GIT_SSH_COMMAND".into(), "sh -c evil".into());
-        assert!(!listed(&programs, "git", &hooked));
-        let mut pathed = run("git");
-        pathed.env.insert("PATH".into(), "/tmp/x".into());
-        assert!(!listed(&programs, "git", &pathed));
+    }
+
+    /// Windows runs `git.exe` for `git` and does not tell `GIT` from `git`: an ending it
+    /// runs a bare name with is the bare name there, and only those. On a Mac and Linux a
+    /// name with an ending is another file, and the case counts.
+    #[test]
+    fn an_ending_is_the_bare_name_only_where_windows_runs_it_so() {
+        let programs = vec!["git".to_owned(), "Node.exe".to_owned()];
+        let run = |program: &str| process(ProcessOp::Run, program);
+        for name in [
+            "GIT.EXE", "git.exe", "git.com", "Git.Bat", "git.cmd", "node", "NODE.exe",
+        ] {
+            assert!(listed(&programs, name, &run(name), true), "{name}");
+        }
+        for name in ["git.sh", "git.ps1", "GIT.PS1"] {
+            assert!(!listed(&programs, name, &run(name), true), "{name}");
+        }
+        for name in [
+            "git.exe", "GIT", "git.cmd", "git.sh", "git.ps1", "node", "node.exe",
+        ] {
+            assert!(!listed(&programs, name, &run(name), false), "{name}");
+        }
+        assert!(listed(&programs, "Node.exe", &run("Node.exe"), false));
     }
 
     /// A path has to say where it is; a bare name is looked for on the app's own `PATH`.

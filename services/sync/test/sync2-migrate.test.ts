@@ -35,11 +35,13 @@ interface Entry {
 interface SpaceState {
   id: string
   entries: Map<string, Entry>
+  outbox: unknown[]
 }
 
 interface Core {
   spaces: Map<string, SpaceState>
   held: Map<string, unknown>
+  world: { list?: (root: string) => Promise<unknown> } & object
   addSpace(id: string, root: string, role: string): unknown[]
   commit(changes: unknown[]): Promise<void>
 }
@@ -54,8 +56,10 @@ interface Device {
     move(from: string, to: string): Promise<void>
     remove(path: string): Promise<void>
   }
+  store: { open(): unknown }
   engine: {
     core: Core
+    stop(): void
     pass(space: string): Promise<{ finished: boolean } | null>
     waiting(space: string): boolean
     moved(from: string, to: string): Promise<void>
@@ -94,7 +98,11 @@ interface Engine {
     space: SpaceState,
     v1: V1Space | null,
     carried?: ReadonlyMap<string, string>,
+    done?: never[],
   ): Promise<boolean>
+  Engine: {
+    start(world: unknown, store: unknown, how: { freshens: boolean }): Promise<Device['engine']>
+  }
   mirrorsFrom(
     core: Core,
     listings: ReadonlyMap<string, Listing> | null,
@@ -104,11 +112,12 @@ interface Engine {
 async function engine(): Promise<Engine> {
   const at = (file: string) =>
     new URL(`../../../apps/desktop/src/lib/sync2/${file}`, import.meta.url).href
-  const [device, migrate] = await Promise.all([
+  const [device, migrate, running] = await Promise.all([
     import(/* @vite-ignore */ at('test-device.ts')),
     import(/* @vite-ignore */ at('migrate.ts')),
+    import(/* @vite-ignore */ at('engine.ts')),
   ])
-  return { ...(device as object), ...(migrate as object) } as Engine
+  return { ...(device as object), ...(migrate as object), ...(running as object) } as Engine
 }
 
 let env: TestEnv
@@ -370,6 +379,123 @@ describe('a device moving to v2', () => {
 
     expect(await liveNames()).toEqual(['Kept.md'])
     expect(file('Kept.md')).toBe('Keep me, I was written in.\n')
+  })
+})
+
+describe('a first pass that does not get through', () => {
+  const offline = 'We ship on Monday.\n\n- written offline under v1\n'
+
+  test('a window that dies after the feed: the next launch still sends the offline words', async () => {
+    const note = await v1Note('Plan.md', 'We ship on Monday.\n')
+    const kit = await engine()
+    let reachable = true
+    const device = await kit.testDevice({
+      fetch: async (request) => {
+        if (!reachable && new URL(request.url).pathname.endsWith('/v2/docs/pull')) {
+          throw new TypeError('network')
+        }
+        return await app.fetch(request, env)
+      },
+      token,
+      files: { 'Plan.md': offline },
+    })
+    const v1 = {
+      cursor: 0,
+      notes: { 'Plan.md': { ...note, hash: await sha256('We ship on Monday.\n') } },
+    }
+    const before = device.engine.core
+    await before.commit(before.addSpace(space, device.root, 'owner'))
+    const state = before.spaces.get(space)
+    if (!state) throw new Error('the space was not added')
+
+    reachable = false
+    expect(await kit.firstPass(before, state, v1)).toBe(false)
+
+    // No reset from the runner: the window is gone, and the store holds what it held.
+    reachable = true
+    device.engine.stop()
+    const again = await kit.Engine.start(before.world, device.store.open(), { freshens: false })
+    const after = again.core.spaces.get(space)
+    if (!after) throw new Error('the space was not kept')
+    expect(await kit.firstPass(again.core, after, v1)).toBe(true)
+    await rooms.settle()
+    await again.pass(space)
+    await rooms.settle()
+    await again.pass(space)
+    await rooms.settle()
+
+    expect(device.disk.files.get(`${device.root}/Plan.md`)).toBe(offline)
+    expect(await textOnAccount(note.id)).toBe(offline)
+  })
+
+  test('what the caller writes when it is done is written with its last commit', async () => {
+    const kit = await engine()
+    const device = await kit.testDevice({
+      fetch: async (request) => await app.fetch(request, env),
+      token,
+    })
+    const core = device.engine.core
+    await core.commit(core.addSpace(space, device.root, 'owner'))
+    const state = core.spaces.get(space)
+    if (!state) throw new Error('the space was not added')
+    const commit = core.commit.bind(core)
+    const commits: unknown[][] = []
+    core.commit = async (changes) => {
+      commits.push(changes)
+      await commit(changes)
+    }
+    const done = { t: 'put', table: 'meta', row: { key: 'first:done', value: 1 } }
+
+    expect(await kit.firstPass(core, state, null, undefined, [done as never])).toBe(true)
+
+    expect(commits.at(-1)).toContain(done)
+    expect(commits.slice(0, -1).flat()).not.toContain(done)
+  })
+
+  test('an engine stopped while its last commit lands still passed: the commit is the pass', async () => {
+    const kit = await engine()
+    const device = await kit.testDevice({
+      fetch: async (request) => await app.fetch(request, env),
+      token,
+    })
+    const core = device.engine.core
+    await core.commit(core.addSpace(space, device.root, 'owner'))
+    const state = core.spaces.get(space)
+    if (!state) throw new Error('the space was not added')
+    const done = { t: 'put', table: 'meta', row: { key: 'first:done', value: 1 } }
+    const commit = core.commit.bind(core)
+    core.commit = async (changes) => {
+      await commit(changes)
+      // The window lets go as the last one lands: `engine.stop()` bumps the core's life.
+      if ((changes as readonly unknown[]).includes(done))
+        (core as unknown as { life: number }).life += 1
+    }
+
+    expect(await kit.firstPass(core, state, null, undefined, [done as never])).toBe(true)
+  })
+
+  test('a listing that failed sends no deletes', async () => {
+    const note = await v1Note('Plan.md', 'We ship on Monday.\n')
+    const kit = await engine()
+    const device = await kit.testDevice({
+      fetch: async (request) => await app.fetch(request, env),
+      token,
+      files: { 'Plan.md': 'We ship on Monday.\n' },
+    })
+    const core = device.engine.core
+    core.world.list = () => Promise.resolve(null)
+    await core.commit(core.addSpace(space, device.root, 'owner'))
+    const state = core.spaces.get(space)
+    if (!state) throw new Error('the space was not added')
+
+    const passed = await kit.firstPass(core, state, {
+      cursor: 0,
+      notes: { 'Plan.md': { ...note, hash: await sha256('We ship on Monday.\n') } },
+    })
+
+    expect(passed).toBe(false)
+    expect(state.outbox).toEqual([])
+    expect(await liveNames()).toEqual(['Plan.md'])
   })
 })
 

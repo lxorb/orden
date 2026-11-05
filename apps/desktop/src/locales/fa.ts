@@ -753,6 +753,8 @@ export const fa: Dictionary = {
   '{done} of {total}': '{done} از {total}',
   'Sync failed': 'همگام‌سازی نشد',
   '{name} could not be written.': '{name} نوشته نشد.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} نوشته نشد: فایل آن خوانده نمی‌شود. شاید بیش از 64 MB باشد یا متن UTF-8 نباشد.',
   '{name} could not be read.': '{name} خوانده نشد.',
   'Text size': 'اندازه نوشته',
   'Line spacing': 'فاصله خط',
@@ -1539,6 +1541,7 @@ export const fa: Dictionary = {
   'The provider answered {status}.': 'فراهم‌کننده {status} پاسخ داد.',
   'Add an AI provider in Settings first.': 'نخست در تنظیم یک فراهم‌کننده هوش مصنوعی بیفزایید.',
   'The model did not answer.': 'مدل پاسخ نداد.',
+  'The connection closed before the answer was finished.': 'اتصال پیش از پایان پاسخ قطع شد.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'طرح {plan} شما تا {time} به سقف رسیده است.',
   'Your {plan} plan is at its limit for now.': 'طرح {plan} شما فعلاً به سقف رسیده است.',
@@ -2015,8 +2018,10 @@ export const fa: Dictionary = {
   'Send feedback': 'ارسال بازخورد',
   'Describe the issue': 'مشکل را شرح دهید',
   Sent: 'ارسال شد',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'این گزارش شامل توضیح شما، نسخهٔ Orden، پلتفرم شما و گزارش اخیر برنامه است و هرگز یادداشت‌های شما را در بر نمی‌گیرد.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'این گزارش شامل توضیح شما، نسخهٔ Orden، سکوی شما و گزارش اخیر برنامه است، بدون مسیر فایل‌ها.',
+  'Its space is archived': 'فضای آن بایگانی شده است',
+  'Back as {name}': 'با نام {name} برگشت',
   'Send into the running answer': 'ارسال به پاسخ در حال اجرا',
   'Stop the answer': 'توقف پاسخ',
   'Open every step': 'باز کردن همه مراحل',
@@ -2101,6 +2106,8 @@ export const fa: Dictionary = {
     'یادداشت‌های شما را می‌خواند و با ورودهای شما مرور می‌کند، پس صفحه‌ای ممکن است بکوشد آن را به فرستادن یادداشت‌ها به بیرون وادارد.',
   Activity: 'فعالیت',
   'Add a site': 'افزودن سایت',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'برنامه‌ای که در این فهرست باشد بدون پرسش اجرا می‌شود و هر کاری آن برنامه بتواند انجام می‌دهد.',
   'Add a program': 'افزودن برنامه',
   'Every space': 'همه فضاها',
   Sites: 'سایت‌ها',
@@ -2529,6 +2536,7 @@ export const fa: Dictionary = {
   'No {property}': 'بدون {property}',
   '{card} moved to {group}': '{card} به {group} منتقل شد',
   'Not moved': 'منتقل نشد',
+  'Not undone': 'واگرد نشد',
   Retry: 'تلاش دوباره',
   Calculate: 'محاسبه',
   'Remove sort': 'حذف مرتب‌سازی',
@@ -2804,6 +2812,8 @@ export const fa: Dictionary = {
   '{title}, running': '{title}، در حال اجرا',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden دیگر کلیدهای هوش مصنوعی را در کلیدزنجیر Mac نگه نمی‌دارد، که مدام رمزش را می‌خواست. کلیدهایتان را دوباره وارد کنید و یک بار دیگر به ChatGPT وارد شوید.',
+  'This PDF is locked by its owner': 'این PDF توسط مالک آن قفل شده است',
+  'Part of this could not be undone': 'بخشی از این را نشد برگرداند',
   'Add images': 'افزودن تصویر',
   'Remove image': 'حذف تصویر',
   'That is more than 4 images.': 'بیش از 4 تصویر است.',

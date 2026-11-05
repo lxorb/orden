@@ -754,6 +754,8 @@ export const hi: Dictionary = {
   '{done} of {total}': '{total} में {done}',
   'Sync failed': 'सिंक विफल',
   '{name} could not be written.': '{name} लिखा नहीं जा सका।',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} लिखा नहीं जा सका: इसकी फ़ाइल पढ़ी नहीं जा सकती। यह 64 MB से बड़ी या UTF-8 से अलग टेक्स्ट हो सकती है।',
   '{name} could not be read.': '{name} पढ़ा नहीं जा सका।',
   'Text size': 'टेक्स्ट आकार',
   'Line spacing': 'पंक्ति दूरी',
@@ -1536,6 +1538,8 @@ export const hi: Dictionary = {
   'The provider answered {status}.': 'प्रदाता ने {status} उत्तर दिया।',
   'Add an AI provider in Settings first.': 'पहले सेटिंग्स में एक AI प्रदाता जोड़ें।',
   'The model did not answer.': 'मॉडल ने उत्तर नहीं दिया।',
+  'The connection closed before the answer was finished.':
+    'उत्तर पूरा होने से पहले कनेक्शन बंद हो गया.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'आपका {plan} प्लान {time} तक अपनी सीमा पर है।',
   'Your {plan} plan is at its limit for now.': 'आपका {plan} प्लान अभी अपनी सीमा पर है।',
@@ -2010,8 +2014,10 @@ export const hi: Dictionary = {
   'Send feedback': 'प्रतिक्रिया भेजें',
   'Describe the issue': 'समस्या बताएँ',
   Sent: 'भेज दिया',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'इस रिपोर्ट में आपका विवरण, Orden का संस्करण, आपका प्लेटफ़ॉर्म और ऐप का हाल का लॉग होता है। आपके नोट कभी नहीं।',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'इस रिपोर्ट में आपका विवरण, Orden का संस्करण, आपका प्लेटफ़ॉर्म और हाल का ऐप लॉग शामिल है, फ़ाइल पाथ हटाकर।',
+  'Its space is archived': 'इसका स्पेस संग्रहित है',
+  'Back as {name}': '{name} के रूप में वापस',
   'Send into the running answer': 'चल रहे उत्तर में भेजें',
   'Stop the answer': 'उत्तर रोकें',
   'Open every step': 'हर चरण खोलें',
@@ -2096,6 +2102,8 @@ export const hi: Dictionary = {
     'यह आपके नोट पढ़ता है और आपके लॉग-इन से ब्राउज़ करता है, इसलिए कोई पेज इससे नोट बाहर भिजवाने की कोशिश कर सकता है।',
   Activity: 'गतिविधि',
   'Add a site': 'साइट जोड़ें',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'इस सूची का प्रोग्राम बिना पूछे चलता है, और वह प्रोग्राम जो कुछ कर सकता है वह सब कर सकता है।',
   'Add a program': 'प्रोग्राम जोड़ें',
   'Every space': 'हर स्पेस',
   Sites: 'साइटें',
@@ -2524,6 +2532,7 @@ export const hi: Dictionary = {
   'No {property}': '{property} के बिना',
   '{card} moved to {group}': '{card} को {group} में ले जाया गया',
   'Not moved': 'नहीं ले जाया गया',
+  'Not undone': 'पूर्ववत नहीं हुआ',
   Retry: 'फिर से कोशिश करें',
   Calculate: 'गणना करें',
   'Remove sort': 'क्रम हटाएँ',
@@ -2798,6 +2807,8 @@ export const hi: Dictionary = {
   '{title}, running': '{title}, चल रहा है',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden अब AI कुंजियाँ Mac की कीचेन में नहीं रखता, जो बार-बार उसका पासवर्ड माँगती थी। अपनी कुंजियाँ फिर से डालें और ChatGPT में एक बार और साइन इन करें।',
+  'This PDF is locked by its owner': 'यह PDF इसके स्वामी ने लॉक की है',
+  'Part of this could not be undone': 'इसका एक हिस्सा पहले जैसा नहीं किया जा सका',
   'Add images': 'चित्र जोड़ें',
   'Remove image': 'चित्र हटाएँ',
   'That is more than 4 images.': 'ये 4 से ज़्यादा चित्र हैं।',

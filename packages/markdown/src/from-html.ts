@@ -50,7 +50,6 @@ export const NEVER = [
   'iframe',
   'object',
   'embed',
-  'form',
   'button',
   'select',
   'textarea',
@@ -59,6 +58,40 @@ export const NEVER = [
   'video',
   'audio',
 ]
+
+/** What only a form's own controls say. */
+const CONTROL_WORDS = new Set(['label', 'legend', 'option', 'button', 'select', 'textarea'])
+
+/** What asks somebody to type or pick something. */
+const NOT_A_FIELD = new Set(['hidden', 'submit', 'button', 'image', 'reset'])
+
+/** How many words of its own a form holds for each field and still is the page. */
+const WORDS_A_FIELD = 20
+
+/** Whether a form is words of the page rather than something the page asks. ASP.NET wraps
+ *  a whole page in one and a search page its results, a search box above them or not: words
+ *  and few fields. A sign-in, a newsletter's box, a comment form are a sentence and fields.
+ *  What a control and its label say counts for neither. */
+export function formSays(form: Node): boolean {
+  let words = 0
+  let fields = 0
+  const walk = (node: Node) => {
+    for (const one of node.childNodes) {
+      if (one.nodeType === 3) words += (one.textContent ?? '').split(/\s+/).filter(Boolean).length
+      if (one.nodeType !== 1) continue
+      const name = one.nodeName.toLowerCase()
+      if (name === 'img' || name === 'picture') words += WORDS_A_FIELD
+      if (name === 'textarea' || name === 'select') fields++
+      if (name === 'input') {
+        const type = (one as Element).getAttribute('type')?.toLowerCase() ?? 'text'
+        if (!NOT_A_FIELD.has(type)) fields++
+      }
+      if (!CONTROL_WORDS.has(name) && !NEVER.includes(name)) walk(one)
+    }
+  }
+  walk(form)
+  return fields === 0 ? words > 0 : words >= fields * WORDS_A_FIELD
+}
 
 export interface FromHtmlOptions {
   /** What a picture becomes. The default writes the address the page gave it. */
@@ -279,10 +312,74 @@ function headed(table: HTMLTableElement): boolean {
   )
 }
 
+/** How many columns a cell covers. Markdown has no way to say so, so the row is padded
+ *  with empty cells: a renderer drops the cells of a row past those of the heading. */
+function spanOf(cell: Element): number {
+  const said = Number(cell.getAttribute('colspan'))
+  return Number.isInteger(said) && said > 1 ? Math.min(said, MOST_COLUMNS) : 1
+}
+
+const MOST_COLUMNS = 100
+
+const MOST_ROWS_SPANNED = 1000
+
+/** How many rows a cell covers below its own. */
+function rowsBelow(cell: Element): number {
+  const said = Number(cell.getAttribute('rowspan'))
+  return Number.isInteger(said) && said > 1 ? Math.min(said, MOST_ROWS_SPANNED) - 1 : 0
+}
+
+/** How many empty cells to write in front of each cell of a row, and after its last, for
+ *  the columns a cell of a row above still covers. Markdown has no way to say so either,
+ *  and a cell written where that one stands has moved to another column. */
+interface Gaps {
+  before: Map<Element, number>
+  after: Map<Element, number>
+}
+
+const gapsOfTable = new WeakMap<Element, Gaps>()
+
+function gapsOf(table: HTMLTableElement): Gaps {
+  const known = gapsOfTable.get(table)
+  if (known) return known
+
+  const gaps: Gaps = { before: new Map(), after: new Map() }
+  /** By column, how many more rows a cell above covers. */
+  const covered: number[] = []
+  for (const row of Array.from(table.rows)) {
+    let column = 0
+    for (const cell of Array.from(row.cells)) {
+      let skipped = 0
+      while ((covered[column] ?? 0) > 0) {
+        covered[column] = (covered[column] ?? 0) - 1
+        column++
+        skipped++
+      }
+      if (skipped) gaps.before.set(cell, skipped)
+      const across = spanOf(cell)
+      for (let over = 0; over < across; over++) covered[column + over] = rowsBelow(cell)
+      column += across
+    }
+    let after = 0
+    for (let at = column; at < covered.length; at++) {
+      if ((covered[at] ?? 0) > 0) {
+        covered[at] = (covered[at] ?? 0) - 1
+        after = at + 1 - column
+      }
+    }
+    if (after) gaps.after.set(row, after)
+  }
+  gapsOfTable.set(table, gaps)
+  return gaps
+}
+
+/** The line of dashes under a heading cell, by the way the cell is aligned. */
+const ALIGNED: Readonly<Record<string, string>> = { left: ':--', right: '--:', center: ':-:' }
+
 /** The heading row markdown writes for a table that has none: as many empty cells
  *  as the table has columns, and the line of dashes under them. */
 function emptyHeading(table: HTMLTableElement): string {
-  const across = table.rows[0]?.cells.length ?? 0
+  const across = [...(table.rows[0]?.cells ?? [])].reduce((sum, one) => sum + spanOf(one), 0)
 
   return `|${'  |'.repeat(across)}\n|${' --- |'.repeat(across)}`
 }
@@ -470,10 +567,14 @@ function indexer(): (parent: Element | null, node: Node) => number {
  *  ending in `\` had its escaped bracket escaped instead, the words closed early
  *  and the address after them was the page's rather than the picture's. */
 function altOf(image: Element): string {
-  return (image.getAttribute('alt') ?? '')
-    .replace(/\s+/g, ' ')
-    .replace(/([\\[\]])/g, '\\$1')
-    .trim()
+  const words = (image.getAttribute('alt') ?? '').replace(/\s+/g, ' ').trim()
+  // A picture inside a link: marked does not read an escaped bracket there, and the
+  // whole of it comes out as words. Round brackets say the same thing.
+  if (image.closest('a')) {
+    return words.replace(/\\/g, '/').replace(/\[/g, '(').replace(/\]/g, ')')
+  }
+
+  return words.replace(/([\\[\]])/g, '\\$1')
 }
 
 /** Everything markdown reads inside a destination: the brackets that end one,
@@ -508,6 +609,105 @@ export function destination(address: string): string {
   return address.replace(IN_DESTINATION, (character) => {
     return KEPT[character] ?? encodeURIComponent(character)
   })
+}
+
+/** What a `pre` holds. A `<br>` is a line of code there, which is how JetBrains IDEs
+ *  and some highlighters write one, and `textContent` does not know that. */
+function preformattedText(node: Node): string {
+  if (node.nodeName === 'BR') return '\n'
+  if (node.nodeType === 3) return node.nodeValue ?? ''
+  if (node.nodeType !== 1) return ''
+
+  return [...node.childNodes].map((one) => preformattedText(one)).join('')
+}
+
+/** What markdown's emphasis cannot be written around: a line of its own ends the run. */
+const BLOCKS =
+  'address,article,aside,blockquote,div,dl,figure,footer,form,h1,h2,h3,h4,h5,h6,header,hr,li,main,nav,ol,p,pre,section,table,ul'
+
+const HEAVY = /(?:^|;)\s*font-weight\s*:\s*(?:bold|bolder|[6-9]00)\b/iu
+const LIGHT = /(?:^|;)\s*font-weight\s*:\s*(?:normal|lighter|[1-5]00)\b/iu
+const SLANTED = /(?:^|;)\s*font-style\s*:\s*(?:italic|oblique)\b/iu
+const UPRIGHT = /(?:^|;)\s*font-style\s*:\s*normal\b/iu
+
+/** The marks an element's own tag and style ask for, or null where it is no emphasis
+ *  at all. A style beats a tag: Google Docs wraps every paste in a `<b>` that says
+ *  `font-weight:normal`, and writes what is bold in the `span`s inside it. */
+function marksFor(node: Element): string | null {
+  const style = node.getAttribute('style') ?? ''
+  const name = node.nodeName
+
+  if (name === 'SPAN') {
+    if (!HEAVY.test(style) && !SLANTED.test(style)) return null
+  } else if (!['B', 'STRONG', 'I', 'EM'].includes(name)) return null
+
+  const heavy = name === 'B' || name === 'STRONG' ? !LIGHT.test(style) : HEAVY.test(style)
+  const slanted = name === 'I' || name === 'EM' ? !UPRIGHT.test(style) : SLANTED.test(style)
+  return `${heavy ? '**' : ''}${slanted ? '*' : ''}`
+}
+
+/** The element beside this one when it asks for the same marks and nothing stands
+ *  between them, so the two are one run: `**foo****bar**` is literal stars. */
+function sameRun(node: Element, next: Node | null): Element | null {
+  if (next?.nodeType !== 1) return null
+
+  const other = next as Element
+  const touching = !/\s$/u.test(node.textContent) && !/^\s/u.test(other.textContent)
+  return touching && other.textContent !== '' && marksFor(other) === marksFor(node) ? other : null
+}
+
+/** Whether marks can sit around a run of these elements where it is. A run closes only
+ *  where the character in front of it is no punctuation or the one after it is none of
+ *  a word, so `**"x"**y` is two pairs of literal stars; opening is the same way round. */
+function marksHold(node: Element): boolean {
+  let first = node
+  let last = node
+  for (
+    let one = sameRun(first, first.previousSibling);
+    one;
+    one = sameRun(first, one.previousSibling)
+  ) {
+    first = one
+  }
+  for (let one = sameRun(last, last.nextSibling); one; one = sameRun(last, one.nextSibling)) {
+    last = one
+  }
+
+  const opening = first.textContent
+  const closing = last.textContent
+  const after = /\s$/u.test(closing) ? '' : (last.nextSibling?.textContent ?? '')
+  const before = /^\s/u.test(opening) ? '' : (first.previousSibling?.textContent ?? '')
+  const closes = /[\p{P}\p{S}]$/u.test(closing.trimEnd()) && /^[\p{L}\p{N}]/u.test(after)
+  const opens = /^[\p{P}\p{S}]/u.test(opening.trimStart()) && /[\p{L}\p{N}]$/u.test(before)
+  return !closes && !opens
+}
+
+/** Words that went around blocks, each block linked on its own: a link cannot hold a
+ *  blank line, so `[` and `](u)` would be words on lines of their own. What a link
+ *  cannot be written inside (a fence, a table, a list of several items) stays as it
+ *  is and only loses the link. */
+function linkedBlocks(content: string, target: string): string {
+  let fenced = false
+  const blocks = content
+    .trim()
+    .split(/\n{2,}/u)
+    .map((block) => {
+      const closes = /(?:^|\n)`{3,}\s*$/u.test(block)
+      if (fenced) {
+        fenced = !closes
+        return block
+      }
+      if (/^`{3,}/u.test(block)) {
+        fenced = !/\n`{3,}\s*$/u.test(block)
+        return block
+      }
+      if (block.includes('\n') || /^(?:-{3,}|\*{3,}|_{3,})$/u.test(block)) return block
+
+      const found = /^(#{1,6} |> |(?:[-+*] |\d+[.)] )(?:\[[ x]\] )?)?(.*)$/u.exec(block.trim())
+      return `${found?.[1] ?? ''}[${found?.[2] ?? ''}](${target})`
+    })
+
+  return `\n\n${blocks.join('\n\n')}\n\n`
 }
 
 /** What a link says about itself, in the quotes markdown gives a title, or
@@ -583,7 +783,10 @@ function converter(options: FromHtmlOptions): TurndownService {
   // the list is one. For a clip this is a second line of defence behind the
   // extractor's own DOM cleaning; for a paste it is the only one, since a clipboard's HTML
   // arrives as a whole document with a head on it.
-  service.remove((node) => NEVER.includes(node.nodeName.toLowerCase()))
+  service.remove((node) => {
+    const name = node.nodeName.toLowerCase()
+    return NEVER.includes(name) || (name === 'form' && !formSays(node))
+  })
 
   // Turndown asks its rules before what it removes, so the elements of the list
   // that point at a file are links instead for the caller that keeps the files.
@@ -601,6 +804,58 @@ function converter(options: FromHtmlOptions): TurndownService {
   // Kept for the one conversion, because the tree it counts lives for one
   // conversion.
   const indexIn = indexer()
+
+  // Bold and italic, as tags and as the styles word processors write them in. No marks
+  // around blocks, since a run of marks ends with its line, and none on a wrapper
+  // Google Docs puts around every paste. A style inside code or a heading says nothing
+  // the code or the heading does not already.
+  service.addRule('emphasis', {
+    filter: (node) => marksFor(node) !== null,
+    replacement: (content, node) => {
+      const element: Element = node
+      const marks = marksFor(element) ?? ''
+      if (!content.trim() || !marks) return content
+      if (element.id.startsWith('docs-internal-guid')) return content
+      if (element.querySelector(BLOCKS)) return content
+      if (element.nodeName === 'SPAN' && element.closest('code,pre,h1,h2,h3,h4,h5,h6')) {
+        return content
+      }
+      if (!marksHold(element)) return content
+
+      // A line break at either end stays outside: `**a  \n**b` closes nothing.
+      const words = /^(\s*)([\s\S]*?)(\s*)$/u.exec(content)
+      const opening = sameRun(element, element.previousSibling) ? '' : marks
+      const closing = sameRun(element, element.nextSibling)
+        ? ''
+        : marks.split('').reverse().join('')
+      return `${words?.[1] ?? ''}${opening}${words?.[2] ?? ''}${closing}${words?.[3] ?? ''}`
+    },
+  })
+
+  // A heading is one line: turndown's own writes a `<br>` in it as a hard break, and
+  // what follows drops out of the heading.
+  service.addRule('heading', {
+    filter: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+    replacement: (content, node) => {
+      const words = content.replace(/\s*\n\s*/gu, ' ').trim()
+      return `\n\n${'#'.repeat(Number(node.nodeName.charAt(1)))} ${words}\n\n`
+    },
+  })
+
+  // GitHub's loose task list holds the box in the item's first paragraph.
+  service.addRule('looseTask', {
+    filter: (node) => {
+      if ((node as HTMLInputElement).type !== 'checkbox') return false
+      const words = node.parentElement
+      return (
+        words?.nodeName === 'P' &&
+        words.parentElement?.nodeName === 'LI' &&
+        words.parentElement.firstElementChild === words &&
+        words.firstChild === node
+      )
+    },
+    replacement: (_content, node) => ((node as HTMLInputElement).checked ? '[x] ' : '[ ] '),
+  })
 
   // A list item, with one space after its marker rather than turndown's three.
   // Orden writes `- item`, and a note full of `-   item` is a note that looks like
@@ -698,8 +953,31 @@ function converter(options: FromHtmlOptions): TurndownService {
         .replace(/\|/g, '\\|')
         .trim()
       const first = (node as Element).previousElementSibling === null
+      const table = (node as Element).closest('table')
+      const held = table ? (gapsOf(table).before.get(node) ?? 0) : 0
 
-      return `${first ? '| ' : ' '}${said} |`
+      return `${first ? '|' : ''}${'  |'.repeat(held)} ${said} |${'  |'.repeat(spanOf(node) - 1)}`
+    },
+  })
+
+  // A row, and the line of dashes under a heading row, one for every column a cell
+  // of it covers: turndown's plugin counts one for each cell.
+  service.addRule('row', {
+    filter: 'tr',
+    replacement: (content, node) => {
+      const row = node as HTMLTableRowElement
+      const table = row.closest('table')
+      // The first row only: a second line of dashes is a row of dashes.
+      const heading = table !== null && table.rows[0] === row && headed(table)
+      const after = table ? (gapsOf(table).after.get(row) ?? 0) : 0
+      if (!heading) return `\n${content}${'  |'.repeat(after)}`
+
+      const borders = [...row.cells].flatMap((one) => {
+        const align = (one.getAttribute('align') ?? '').toLowerCase()
+        const border = ALIGNED[align] ?? '---'
+        return Array.from({ length: spanOf(one) }, () => border)
+      })
+      return `\n${content}\n| ${borders.join(' | ')} |`
     },
   })
 
@@ -727,7 +1005,7 @@ function converter(options: FromHtmlOptions): TurndownService {
   service.addRule('preformatted', {
     filter: 'pre',
     replacement: (_content, node) => {
-      const code = node.textContent.replace(/\n+$/, '')
+      const code = preformattedText(node).replace(/\n+$/, '')
       if (!code.trim()) return ''
 
       const fence = fenceFor(code)
@@ -790,7 +1068,12 @@ function converter(options: FromHtmlOptions): TurndownService {
       // unresolvable link is anywhere; see `mayPointAt`.
       if (!mayPointAt(href, options)) return content
 
-      return `[${content}](${destination(href)}${titleOf(node)})`
+      const target = `${destination(href)}${titleOf(node)}`
+      if (content.includes('\n\n') || node.querySelector(BLOCKS)) {
+        return linkedBlocks(content, target)
+      }
+
+      return `[${content}](${target})`
     },
   })
 

@@ -106,8 +106,8 @@ const heard = new Map<string, (event: { payload: unknown }) => void>()
 
 // The window hears about pages through one listener, which under node has nothing
 // to listen to.
-vi.mock('@tauri-apps/api/event', () => ({
-  listen: (name: string, tell: (event: { payload: unknown }) => void) => {
+vi.mock('../own-window', () => ({
+  hearHere: (name: string, tell: (event: { payload: unknown }) => void) => {
     heard.set(name, tell)
     return Promise.resolve(() => undefined)
   },

@@ -125,7 +125,7 @@ describe("Apple Notes off the Mac's own database", () => {
     })
 
     const note = noteAt(plan, 'Links.md')
-    expect(note).toContain('[[Re lunch #2|Re: lunch #2]]')
+    expect(note).toContain('[Re: lunch #2](Re%20lunch%20%232.md)')
   })
 
   test('says what Notes keeps to itself, with the counts', async () => {

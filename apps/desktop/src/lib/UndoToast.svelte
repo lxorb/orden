@@ -2,7 +2,7 @@
   import { untrack } from 'svelte'
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
-  import { t } from './i18n.svelte'
+  import { plural, t } from './i18n.svelte'
   import { focusEditor } from './focus'
   import { dur } from './motion'
   import { told } from './said.svelte'
@@ -174,15 +174,19 @@
     <button class="undo" onclick={() => reservedName.open()}>{t('Open')}</button>
   </div>
 {:else if failed.retry}
-  <!-- A card carried to a column whose note would not be written: it went back. -->
+  <!-- A card carried to a column whose note would not be written: it went back. Or an
+       undo that could not go ahead. -->
   <div
     class="toast"
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-    {@attach told(`${t('Not moved')}. ${t('Retry')}`)}
+    {@attach told(`${failed.undoing ? t('Not undone') : t('Not moved')}. ${t('Retry')}`)}
     {@attach kept('failed')}
   >
-    <p>{t('Not moved')}</p>
+    <p>{failed.undoing ? t('Not undone') : t('Not moved')}</p>
     <button class="undo" onclick={() => failed.again()}>{t('Retry')}</button>
+    {#if failed.skip}
+      <button class="undo" onclick={() => failed.giveUp()}>{t('Skip')}</button>
+    {/if}
   </div>
 {:else if undoToast.kind}
   <div
@@ -225,7 +229,11 @@
 {/if}{#if unsynced.said}
   <!-- A file whose edits here do not sync: its name and its kind disagree since a
        rename. See sync2/unsynced.svelte.ts. -->
-  {@const words = t('Changes to {name} are not syncing', { name: unsynced.said })}
+  {@const about =
+    unsynced.many > 1
+      ? plural(unsynced.many, { one: '{count} file', other: '{count} files' })
+      : unsynced.said}
+  {@const words = t('Changes to {name} are not syncing', { name: about })}
   <div
     class="toast"
     transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}

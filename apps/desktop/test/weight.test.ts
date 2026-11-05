@@ -1091,6 +1091,45 @@ function holds(tail: string): boolean {
  *  and pane the ones worked in, said by the crate (`chooseTab` in pages.svelte.ts).
  *  Measured 3,505,980.
  *
+ *  Raised 2026-11-03, to 3,551,100, and to 387 modules, for the bug hunt's rounds one and
+ *  two merged into claude/hunt-round-1, measured together: the views' and the desktop's
+ *  writing fixes (a phone's draft kept until it lands, charts, paste, block commands,
+ *  links, a thread written down while it runs), what a base may cost, a tile's move, the
+ *  sync's scans, an undo that waits for every gesture landing, one definition of front
+ *  matter (front-matter-lines.ts) and one device's windows being one. What could wait went
+ *  behind a door on the branches. Measured 3,550,937, 386 modules.
+ *
+ *  Raised 2026-11-04, to 3,566,700, and to 388 modules, for the bug hunt's two rounds and
+ *  the raises above being in one build at last, on claude/hunt-round-1: nothing new, the
+ *  two sums together. Measured 3,566,575, 387 modules.
+ *
+ *  Raised 2026-11-04, to 3,567,200, for a name field that leaves the focus alone once the
+ *  reader has pressed something inside its first frame (select-all.ts). Measured 3,567,070.
+ *
+ *  Raised on 2026-11-04, to 3,552,000, for the sync hunt's round three: v1 going past a space
+ *  that throws and telling of a note the disk refuses. Measured 3,551,945.
+ *
+ *  Raised 2026-11-04, to 3,574,900, for the bug hunt's third round on the views: a value
+ *  across lines read by the block's own rule, the id a named block gets on the page, what
+ *  a file shared on its own is held to, and a tick written one at a time, all in modules
+ *  the first paint already has. Measured 3,574,630, 387 modules.
+ *
+ *  Raised 2026-11-04, to 3,559,000, for the bug hunt's third round on the desktop: a closed
+ *  tab that comes back from its file once its words have landed, every write looking at the
+ *  disk first, a write's words not lost to a file gone, undo over a space renamed and one
+ *  that says when it will not go, a layout that asks before ending a terminal. The watch of
+ *  the spaces with no engine, what a move does to the steps of undo and across itself are
+ *  behind doors. Measured 3,558,622.
+ *
+ *  Raised 2026-11-04, to 3,574,900, and to 389 modules, for one note across windows: a file's
+ *  turn taken by every whole-file write (workspace/in-turn.ts), a note's words in one line
+ *  ending, and a dirty tab saying what it was typed on. What could wait is behind doors: the
+ *  windows' bus, the locks, the merge on restore. Measured 3,574,813, 388 modules.
+ *
+ *  Raised 2026-11-04, to 3,581,100, for words worked out inside a file's turn (rename, undo,
+ *  a block named), an open note's write through the other windows, and restored words
+ *  waiting to have met them. Measured 3,580,965, 388 modules.
+ *
  *  Raised 2026-11-04, to 3,509,500, and to 388 modules, for #1067: a popup fetched through
  *  a door plays its way out and turns round where it is when pressed again (Door.svelte,
  *  `letGo` in slide.ts, SpaceSwitcher.svelte, Pane.svelte, Tabs.svelte). Measured
@@ -1187,6 +1226,19 @@ function holds(tail: string): boolean {
  *  icon, opening out to its name under the pointer, with a letter on look-alikes
  *  (tab-strip/icon-tabs.svelte.ts, tab-strip/twins.ts). Measured 3,556,835, 393 modules.
  *
+ *  Raised on 2026-11-04, to 3,645,200, and to 395 modules, for the bug hunt's third round, the
+ *  sums above and what came to unstable meanwhile in one build at last, on
+ *  claude/hunt-round-1: nothing new beyond one guard fewer for a launch's first write.
+ *  Measured 3,645,071, 394 modules.
+ *
+ *  Raised on 2026-11-04, to 3,655,400, for the bug hunt's fourth round, whose four branches came
+ *  together on claude/hunt-round-1: a block's name found by where its line is (`anchored`), a
+ *  chat's state told apart from other windows' (`heard`, `settled`), text escaped whatever marked
+ *  says of it; a move's step that knows its tabs went with it, a closed tab that goes back to its
+ *  space, a board's page turn giving way to a drawer's edge; a session written in a launch
+ *  meeting an open document merge or stay beside it. No new module. Measured 3,655,190, 394
+ *  modules.
+ *
  *  Raised 2026-11-04, to 3,562,000, for #1068: the file list reads a hand-arranged
  *  folder from each row's own place where the account keeps them, and turns a drop into
  *  them (workspace/arranged.svelte.ts). Measured 3,561,350.
@@ -1199,15 +1251,31 @@ function holds(tail: string): boolean {
  *  undone is said to sync by the word it went with, so it comes back as the entries it
  *  was (workspace/undoing.ts, trash.svelte.ts). Measured 3,563,824.
  *
+ *  Raised on 2026-11-04, to 3,663,900, as those three came to claude/hunt-round-1: the same
+ *  growth on the hunt's own 3,655,190, with a chat in hand telling the list another window is
+ *  answering in it (`merged`), a folder's top by its disk's own rules (`sameFolder`). The
+ *  hunt's third tauri branch adds nothing here. No new module. Measured 3,663,693, 394 modules.
+ *
  *  Raised 2026-11-04, to 3,567,000, for #1068: a move or a delete in the file list is
  *  said to sync before the disk has it, through the one hook every operation goes
  *  through (`doing` in workspace/file-ops.ts, `renameOnDisk` and `bin` in
  *  workspace.svelte.ts). Measured 3,565,800.
  *
+ *  Raised on 2026-11-04, to 3,666,000, as that came to claude/hunt-round-1, on the hunt's own
+ *  3,663,693: the same hook, with a move and a delete made in the file's turn inside it. No new
+ *  module. Measured 3,665,764, 394 modules.
+ *
+ *  Raised on 2026-11-04, to 3,666,900, for the leftovers of the bug round: one tab per
+ *  document on a reopen, a refused write saying why, and a put back said as one. No new
+ *  module. Measured 3,666,714.
+ *
  *  Raised 2026-11-04, to 3,568,500, for #1054 and #1116: the icon picker's Web icons, the
  *  account's sites first in the grid and a site's mark drawn as a picture, and a cell's
  *  marks on its own box (IconPicker.svelte, Icon.svelte). The list and its pictures are a
  *  chunk of their own. Measured 3,567,023.
+ *
+ *  Raised on 2026-11-04, to 3,669,000, as those came to claude/hunt-round-1, on the 3,666,714
+ *  above. Measured 3,668,789.
  *
  *  Raised 2026-11-04, to 3,572,000, for #1063: an application is a kind of file and tab
  *  in developer mode - its row's mark, its opener, its tab's traits, its name shown
@@ -1217,6 +1285,9 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-04, to 3,577,000, for #1068: a bookmark keeps the id of what it points
  *  at, and is found by it where its path names nothing (workspace/bookmarks.svelte.ts,
  *  workspace/entry-ids.ts). Measured 3,576,390.
+ *
+ *  Raised on 2026-11-04, to 3,677,500, as #1063 and #1068 (a bookmark by id) came to
+ *  claude/hunt-round-1, on the 3,668,789 above. One module more, 395. Measured 3,677,304.
  *
  *  Raised 2026-11-04, to 3,581,600, for #1033: Alt+H, J, K and L between the panes and
  *  the pane under the pointer the active one (pane-moves.ts, `paneToward` in
@@ -1231,6 +1302,11 @@ function holds(tail: string): boolean {
  *  going to its definition and back (live-preview/properties.ts and the new
  *  live-preview/footnotes.ts in @orden/editor). Both are the note's own drawing, which
  *  arrives with the note. Measured 3,598,326.
+ *
+ *  Raised on 2026-11-04, to 3,699,500 and 397 modules, as #1033, #1106 and #1120 came to
+ *  claude/hunt-round-1, on the 3,677,304 above: the panes' Alt+H/J/K/L, an icon tab's
+ *  cross, the properties strip and the new live-preview/footnotes.ts. Measured 3,699,300,
+ *  396 modules.
  *
  *  Raised 2026-11-04, to 3,602,000, for #1123: the sidebars are the window's across
  *  spaces, and the space switcher walks with the key that opened it still held
@@ -1251,39 +1327,29 @@ function holds(tail: string): boolean {
  *  window (Tabs.svelte, tab-strip/, drag-paths.ts, Bookmarks.svelte, essentials.svelte.ts).
  *  Measured 3,616,365.
  *
- *  Raised 2026-11-05, to 3,622,000 and 397 modules, for #1120: a side offers only the
- *  panels the tab in front can fill, asked of the one table of panels, which the
- *  workspace now reads at once rather than with a press (panel-tab.ts), and a PDF's
- *  own contents for the Outline (pdf/outline.svelte.ts). Measured 3,620,924.
+ *  Raised on 2026-11-04, to 3,702,000, as #1123 came to claude/hunt-round-1, on the
+ *  3,699,300 above: the sidebars the window's across spaces and the switcher walking with
+ *  its key held, net of the hunt's per-set panels (#332) it makes unneeded. Measured
+ *  3,701,761, 396 modules.
  *
- *  Raised 2026-11-05, to 3,625,000, for #1127: a tab unloaded from its menu, faded in the
- *  strip and in the Essentials, its editor state let go of by its pane and its page parked
- *  out of sight (Tabs.svelte, Bookmarks.svelte, BookmarkTile.svelte, Pane.svelte,
- *  workspace/documents.svelte.ts, web-tab/pages.svelte.ts). Measured 3,624,357.
+ *  Raised on 2026-11-05, to 3,717,700, as #1110, #1114, #1063 and #331 came to
+ *  claude/hunt-round-1 on top of the hunt's 3,702,000. Measured 3,717,496, 396 modules.
  *
- *  Raised 2026-11-05, to 3,634,800 and 398 modules, for #1129: the sentence behind a
- *  `?`, a name's reason and a hint's card hung over the window from what they are
- *  about rather than cut by what holds it (`hang` in portal.ts, which the first paint
- *  now reads for the file list's field). Measured 3,633,983 in 397.
+ *  Raised on 2026-11-05, to 3,722,200 and 398 modules, as #1120's panels a tab can fill
+ *  came to claude/hunt-round-1. Measured 3,721,952, 398 modules.
  *
- *  Raised 2026-11-05, to 3,638,200, for #1068: the spaces a desktop keeps itself, listed
- *  beside the folders and asked of by `invoke` once one is mounted, the tree read ahead
- *  left to them, their folders written down on the way out and the folders made into
- *  them at the launch's last turn (tauri.ts, workspace/spaces.ts, workspace/ahead.ts,
- *  start.ts). Measured 3,637,630.
+ *  Raised on 2026-11-05, to 3,725,700, as #1127's unloaded tabs came to
+ *  claude/hunt-round-1. Measured 3,725,488, 398 modules. Then to 3,726,200 for
+ *  dictation's keys, measured 3,725,927.
  *
- *  Raised 2026-11-05, to 3,645,400 and 399 modules, for #1037: a split window keeps one top
- *  row, the strips of the panes along the top laid out in the bar over their panes on the
- *  panes' own grid (TopStrips.svelte, `topRow` and `tracks` in workspace/pane-tree.ts,
- *  Titlebar.svelte). Measured 3,644,325 in 398.
+ *  Raised on 2026-11-05, to 3,745,700 and 400 modules, as #1068's kept spaces came to
+ *  claude/hunt-round-1, as unstable raised its own. Measured 3,745,458, 400 modules.
  *
- *  Raised 2026-11-05, to 3,650,800, for #1038: each sidebar's button in the sidebar and the
- *  right side out of the window's end edge as the file list comes out of the start one
- *  (edge-peek.svelte.ts, Sidebar.svelte, SidebarToggle.svelte), the bar keeping the shut
- *  side's button said and not shown, and the one hint about the edge (Titlebar.svelte).
- *  Measured 3,649,797. */
-const BUDGET = 3_650_800
-const MOST_FILES = 399
+ *  Lowered on 2026-11-05, to 3,703,700 and 396 modules, as #1126 moved a note's scan and
+ *  the search into @orden/scan. Measured 3,703,478, 396 modules. Then to 3,704,000 for
+ *  every window counted among the app's (`holdThisWindow`), measured 3,703,723. */
+const BUDGET = 3_704_000
+const MOST_FILES = 397
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

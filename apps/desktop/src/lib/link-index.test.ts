@@ -1632,3 +1632,65 @@ describe('a space’s AGENTS.md, which is a setting', () => {
     expect(links.targetOf(at('Plan.md'), { kind: 'wikilink', target: 'AGENTS' })).toBe('AGENTS.md')
   })
 })
+
+/** One holder per name in the order asked, the way a browser's are. */
+function lineOfLocks() {
+  const tails = new Map<string, Promise<unknown>>()
+  return {
+    request(name: string, ...rest: unknown[]) {
+      const run = rest.at(-1) as (lock: unknown) => unknown
+      const { ifAvailable } = (rest.length > 1 ? rest[0] : {}) as { ifAvailable?: boolean }
+      if (ifAvailable) return Promise.resolve(run({ name }))
+      const done = (tails.get(name) ?? Promise.resolve()).then(() => run({ name }))
+      tails.set(
+        name,
+        done.catch(() => undefined),
+      )
+      return done
+    },
+  } as unknown as LockManager
+}
+
+describe('another window writing the file as a link is rewritten', () => {
+  /** Another window's write in the file's turn while `work` asks for the same turn. */
+  async function whileAnotherWrites(path: string, work: () => Promise<unknown>, write: () => void) {
+    const locks = lineOfLocks()
+    vi.stubGlobal('navigator', { locks })
+    try {
+      let letGo = (): unknown => undefined
+      const held = locks.request(
+        `nib:file:${path}`,
+        () => new Promise((go) => (letGo = () => go(undefined))),
+      )
+      const working = work()
+      await new Promise((resolve) => setTimeout(resolve, 5))
+      write()
+      letGo()
+      await held
+      await working
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  }
+
+  test('the rewrite is worked out from what it wrote, in the turn', async () => {
+    await space({ 'Hub.md': '# Hub\n\nsee [[Target]] here\n', 'Target.md': '# Target' })
+    await whileAnotherWrites(
+      at('Hub.md'),
+      () => links.retarget(at('Target.md'), at('Renamed.md'), ROOT),
+      () => (notes['Hub.md'] = '# Hub\n\nsee [[Target]] here\nWORDS-IN-B\n'),
+    )
+    expect(notes['Hub.md']).toBe('# Hub\n\nsee [[Renamed]] here\nWORDS-IN-B\n')
+  })
+
+  test('a block named the same way', async () => {
+    await space({ 'Plan.md': '# Plan\n\nA line.\n', 'Note.md': '# Note' })
+    await whileAnotherWrites(
+      at('Plan.md'),
+      () => links.nameBlock('Plan.md', 2, at('Note.md')),
+      () => (notes['Plan.md'] = '# Plan\n\nA line.\n\nWORDS-IN-B\n'),
+    )
+    expect(notes['Plan.md']).toContain('WORDS-IN-B')
+    expect(notes['Plan.md']).toContain('^')
+  })
+})

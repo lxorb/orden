@@ -26,8 +26,12 @@ import {
 } from './sync2/store'
 
 /** Opens an account's store in the crate. */
-export async function openNative(account: string): Promise<SyncStore> {
-  const opened = openedOf(await invoke('sync_store_open', { account }))
+export async function openNative(
+  account: string,
+  lead = false,
+  device?: string,
+): Promise<SyncStore> {
+  const opened = openedOf(await invoke('sync_store_open', { account, lead, device }))
 
   return {
     opened,
@@ -48,6 +52,13 @@ export async function openNative(account: string): Promise<SyncStore> {
     cleanExit: (clean) => invoke('sync_store_clean_exit', { clean }),
     close: () => invoke('sync_store_close'),
   }
+}
+
+/** The device id an account's store in the crate keeps, read beside it; see
+ *  `deviceOfSyncStore`. */
+export async function deviceNative(account: string): Promise<string | null> {
+  const device = await invoke<unknown>('sync_store_device', { account })
+  return typeof device === 'string' ? device : null
 }
 
 /** Deletes an account's store in the crate. */

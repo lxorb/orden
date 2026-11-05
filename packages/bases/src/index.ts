@@ -10,13 +10,16 @@ export { listAsWritten, noteValues, scalarValue, taskHash } from './note-values'
 export { finish, nextOccurrence, type OccurrenceOptions, skip, tick } from './occurrence'
 export { answer, cellValue, groupName, orderId, rowId } from './answer'
 export { readBase, writeBase } from './base-file'
+export { refusedPattern } from './expr/pattern'
 export {
   type BuiltinName,
   type BuiltinParams,
   builtinView,
   SMART_SORT,
   todayAs,
+  isWhen,
   WHEN,
+  WHEN_ASIDE,
   WHEN_GROUPS,
 } from './builtins'
 export { INBOX_PATH } from './inbox'
@@ -52,11 +55,12 @@ export {
   type Effect,
   fired,
   inBase,
+  rowsInBase,
   readAutomations,
   type Trigger,
   withAutomations,
 } from './automations'
-export { csvText, csvValue } from './csv'
+export { csvText, csvValue, sheetSafe } from './csv'
 // What the formula field asks: whether words compile, and which functions there are.
 export { compile } from './expr/compile'
 export { GLOBALS } from './expr/globals'

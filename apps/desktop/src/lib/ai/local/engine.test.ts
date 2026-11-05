@@ -172,7 +172,8 @@ beforeEach(() => {
 describe('a call that asks the reader, in a program’s session', () => {
   /** The crate's questions, raised by hand; the answers given, written down. */
   function questions() {
-    let hear: ((asked: { id: string; agent: string; verb: string }) => void) | null = null
+    let hear:
+      ((asked: { id: string; agent: string; verb: string; category: string }) => void) | null = null
     const given: { id: string; allow: boolean }[] = []
     const answers = {
       answer: (id: string, allow: boolean) => {
@@ -192,7 +193,8 @@ describe('a call that asks the reader, in a program’s session', () => {
     return {
       built,
       given,
-      raise: (verb: string, agent = 'nib-cc') => hear?.({ id: 'q1', agent, verb }),
+      raise: (verb: string, agent = 'nib-cc', category = 'writing') =>
+        hear?.({ id: 'q1', agent, verb, category }),
     }
   }
 
@@ -236,6 +238,24 @@ describe('a call that asks the reader, in a program’s session', () => {
     go()
     await sent
     expect(on.turns.at(-1)?.parts[1]).toMatchObject({ state: 'ok' })
+  })
+
+  test('Always in the thread does not answer a question about the terminal', async () => {
+    const go = held()
+    const { built, given, raise } = questions()
+    const on = thread(CLAUDE, { always: ['run_terminal'] })
+    const sent = built.send(on, draft('run it'), () => undefined, new AbortController().signal)
+    await vi.waitFor(() => expect(on.turns.at(-1)?.parts[1]).toMatchObject({ state: 'running' }))
+    const verb = (on.turns.at(-1)?.parts[1] as { verb: string }).verb
+    on.always = [verb]
+    raise(verb, 'nib-cc', 'terminal')
+    expect(given).toEqual([])
+    expect(on.turns.at(-1)?.parts[1]).toMatchObject({
+      state: 'asking',
+      result: { approval: 'q1', category: 'terminal' },
+    })
+    go()
+    await sent
   })
 
   test('Always in the thread answers yes at once, and a question left open is answered no', async () => {

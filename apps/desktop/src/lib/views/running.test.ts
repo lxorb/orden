@@ -7,7 +7,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
  *  written, `../Private` moved a note into another space, or made the day's note
  *  there over whatever was there. */
 
-const { written, template, moved, plan, before } = vi.hoisted(() => ({
+const { written, template, moved, plan, before, writing, trusted, ran } = vi.hoisted(() => ({
+  trusted: { yes: true },
+  ran: [] as { base: { guarded?: boolean } }[][],
+  writing: { pairs: [] as unknown[], changed: true },
   before: [] as unknown[][],
   written: new Map<string, string>(),
   template: { folder: '' },
@@ -23,14 +26,21 @@ vi.mock('@orden/bases', async (importOriginal) => ({
   readAutomations: () => [],
 }))
 vi.mock('./automate', () => ({
-  planned: (_bases: unknown, removed: unknown[]) => {
+  planned: (bases: { base: { guarded?: boolean } }[], removed: unknown[]) => {
     before.push(removed)
+    ran.push(bases)
     return {
-      writes: [],
-      moves: [{ row: { space: 'Shared', path: 'Inbox/a.md' }, folder: plan.folder }],
+      writes: writing.pairs,
+      moves: plan.folder
+        ? [{ row: { space: 'Shared', path: 'Inbox/a.md' }, folder: plan.folder }]
+        : [],
       notices: [],
     }
   },
+}))
+vi.mock('./act', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./act')>()),
+  writeEach: async () => writing.changed,
 }))
 vi.mock('../workspace.svelte', () => ({
   workspace: {
@@ -71,7 +81,7 @@ vi.mock('../workspace/write-file', () => ({
 }))
 vi.mock('../reminders/platform', () => ({ show: () => undefined }))
 // Every space here may be written in; one that may not is read-only.test.ts's.
-vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
+vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true, trustsHtmlAt: () => trusted.yes }))
 
 const { heard, heardChange, readHeld, repeatTemplates } = await import('./running')
 const { moving } = await import('./moving')
@@ -80,6 +90,22 @@ beforeEach(() => {
   before.length = 0
   written.clear()
   moved.length = 0
+})
+
+describe('a base somebody else could have written', () => {
+  test('runs under the guard any other reader of it runs under', async () => {
+    plan.folder = ''
+    trusted.yes = false
+    ran.length = 0
+    try {
+      await readHeld('/s/Shared/Tasks.base')
+      heard('Shared', 'Inbox/a.md', [])
+      await new Promise((done) => setTimeout(done, 150))
+    } finally {
+      trusted.yes = true
+    }
+    expect(ran.at(-1)?.map((one) => one.base.guarded)).toEqual([true])
+  })
 })
 
 describe("a base's automation that moves a note", () => {
@@ -102,6 +128,38 @@ describe("a base's automation that moves a note", () => {
     await changed()
 
     expect(moved).toEqual([])
+  })
+})
+
+describe("a base's automation that writes a note", () => {
+  async function changed(path: string) {
+    await readHeld('/s/Shared/Tasks.base')
+    writing.pairs = [{ row: { space: 'Shared', path }, change: {} }]
+    heard('Shared', path, [])
+    await new Promise((done) => setTimeout(done, 150))
+    writing.pairs = []
+  }
+
+  test('takes the next change for its own, when its write changed the note', async () => {
+    plan.folder = ''
+    writing.changed = true
+    await changed('Inbox/one.md')
+    expect(before).toHaveLength(1)
+
+    await changed('Inbox/one.md')
+    expect(before).toHaveLength(1)
+
+    await changed('Inbox/one.md')
+    expect(before).toHaveLength(2)
+  })
+
+  test('and not when its write changed nothing, since none is coming', async () => {
+    plan.folder = ''
+    writing.changed = false
+    await changed('Inbox/two.md')
+    await changed('Inbox/two.md')
+
+    expect(before).toHaveLength(2)
   })
 })
 

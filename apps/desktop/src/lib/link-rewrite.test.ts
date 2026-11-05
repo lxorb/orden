@@ -141,3 +141,68 @@ describe('code the page draws is never rewritten', () => {
     )
   })
 })
+
+describe('renaming a note to a name a wikilink cannot say', () => {
+  const to = { from: 'Plan.md', to: 'f/C# basics.md' }
+
+  test('turns the links to it into markdown links, keeping what they said', () => {
+    expect(rewriteLinks('a [[Plan]] b', 'Note.md', to, pointsAt('plan'))).toBe(
+      'a [C# basics](f/C%23%20basics.md) b',
+    )
+    expect(rewriteLinks('[[Plan|the plan]]', 'g/Note.md', to, pointsAt('plan'))).toBe(
+      '[the plan](../f/C%23%20basics.md)',
+    )
+    expect(rewriteLinks('[[Plan#Some Part]]', 'Note.md', to, pointsAt('plan'))).toBe(
+      '[C# basics](f/C%23%20basics.md#some-part)',
+    )
+    expect(rewriteLinks('[[Plan#^a1]]', 'Note.md', to, pointsAt('plan'))).toBe(
+      '[C# basics](f/C%23%20basics.md#^a1)',
+    )
+    expect(rewriteLinks('![[Plan]]', 'Note.md', to, pointsAt('plan'))).toBe(
+      '![C# basics](f/C%23%20basics.md)',
+    )
+  })
+
+  test('leaves every other link and word alone', () => {
+    expect(
+      rewriteLinks('[[Other]] [[Plan]] [x](Other.md) `[[Plan]]`', 'Note.md', to, pointsAt('plan')),
+    ).toBe('[[Other]] [C# basics](f/C%23%20basics.md) [x](Other.md) `[[Plan]]`')
+  })
+
+  test('a link the app wrote to such a name is found and renamed again', () => {
+    const first = rewriteLinks('[[Plan]]', 'Note.md', to, pointsAt('plan')) ?? ''
+    expect(
+      rewriteLinks(
+        first,
+        'Note.md',
+        { from: to.to, to: 'Road.md' },
+        (link) => link.target === 'f/C# basics.md',
+      ),
+    ).toBe('[C# basics](Road.md)')
+  })
+})
+
+describe('a link that changes spelling keeps what it could say', () => {
+  const to = (name: string) => ({ from: 'Old.md', to: name })
+
+  test('a bar in the name does not cut a table row', () => {
+    expect(rewriteLinks('| [[Old]] | b |', 'N.md', to('a|b.md'), pointsAt('old'))).toBe(
+      '| [a\\|b](a%7Cb.md) | b |',
+    )
+  })
+
+  test('a table wikilink keeps its words without its backslash', () => {
+    expect(rewriteLinks('| [[Old\\|see]] |', 'N.md', to('C#.md'), pointsAt('old'))).toBe(
+      '| [see](C%23.md) |',
+    )
+  })
+
+  test('a picture keeps its size, in the spelling Obsidian reads', () => {
+    const png = { from: 'Old.png', to: 'C#.png' }
+    const points = (link: FoundLink) => link.target === 'Old.png'
+    expect(rewriteLinks('![[Old.png|100x200]]', 'N.md', png, points)).toBe(
+      '![\\|100x200](C%23.png)',
+    )
+    expect(rewriteLinks('![[Old.png|300]]', 'N.md', png, points)).toBe('![\\|300](C%23.png)')
+  })
+})

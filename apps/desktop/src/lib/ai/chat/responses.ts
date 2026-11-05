@@ -182,6 +182,7 @@ class ResponsesReader implements Reader {
   private readonly items = new Map<number, Item>()
   private usage: Usage | undefined
   private incomplete = ''
+  private over = false
 
   constructor(private readonly window: number | null) {}
 
@@ -203,7 +204,9 @@ class ResponsesReader implements Reader {
       case 'response.output_item.done':
         return this.done(index, record(said.item))
       case 'response.completed':
+      case 'response.done':
       case 'response.incomplete': {
+        this.over = true
         const response = record(said.response)
         this.usage = responsesUsage(response.usage, this.window)
         this.incomplete = text(record(response.incomplete_details).reason)
@@ -272,6 +275,10 @@ class ResponsesReader implements Reader {
       }
     }
     return { changed: [at] }
+  }
+
+  finished(saidDone: boolean): boolean {
+    return saidDone || this.over
   }
 
   answer(): Answer {

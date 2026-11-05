@@ -314,6 +314,32 @@ describe('bytes down', () => {
 })
 
 describe('a file replaced', () => {
+  test('is refused once it was purged from Recently deleted, and stays gone', async () => {
+    const first = bytes(100, 1)
+    const second = bytes(100, 2)
+    for (const one of [first, second]) await upload(one)
+    const placed = await place('gone.bin', await hashOf(first))
+    const id = (placed.results[0] as { id: string }).id
+    await call(env, `/v2/spaces/${space}/ops`, {
+      token,
+      body: { ops: [{ op: 'op-gone', t: 'delete', id, seen: 0 }] },
+    })
+    await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
+    const row = () =>
+      env.db.prepare('select hash, deleted, deleted_at from notes where id = ?').get(id) as {
+        hash: string
+      }
+    const purged = row()
+
+    const answer = await call(env, `/v2/files/${space}/${id}`, {
+      method: 'PUT',
+      token,
+      body: { hash: await hashOf(second), base: purged.hash },
+    })
+    expect(answer.status).toBe(404)
+    expect(row()).toEqual(purged)
+  })
+
   test('by the later arrival, and a device that replaced it too is told what it is now', async () => {
     const first = bytes(100, 1)
     const second = bytes(100, 2)

@@ -746,6 +746,8 @@ export const vi: Dictionary = {
   '{done} of {total}': '{done} trên {total}',
   'Sync failed': 'Đồng bộ thất bại',
   '{name} could not be written.': 'Không ghi được {name}.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    'Không ghi được {name}: không đọc được tệp của nó. Tệp có thể lớn hơn 64 MB hoặc không phải văn bản UTF-8.',
   '{name} could not be read.': 'Không đọc được {name}.',
   'Text size': 'Cỡ chữ',
   'Line spacing': 'Giãn dòng',
@@ -1514,6 +1516,8 @@ export const vi: Dictionary = {
   'The provider answered {status}.': 'Nhà cung cấp trả về {status}.',
   'Add an AI provider in Settings first.': 'Hãy thêm một nhà cung cấp AI trong Cài đặt trước.',
   'The model did not answer.': 'Mô hình không trả lời.',
+  'The connection closed before the answer was finished.':
+    'Kết nối đã đóng trước khi câu trả lời hoàn tất.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'Gói {plan} của bạn đã chạm giới hạn đến {time}.',
@@ -1989,8 +1993,10 @@ export const vi: Dictionary = {
   'Send feedback': 'Gửi phản hồi',
   'Describe the issue': 'Mô tả sự cố',
   Sent: 'Đã gửi',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Báo cáo này gồm mô tả của bạn, phiên bản Orden, nền tảng của bạn và nhật ký gần đây của ứng dụng. Không bao giờ gồm ghi chú của bạn.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Báo cáo này gồm mô tả của bạn, phiên bản Orden, nền tảng của bạn và nhật ký ứng dụng gần đây, đã bỏ đường dẫn tệp.',
+  'Its space is archived': 'Không gian của nó đã được lưu trữ',
+  'Back as {name}': 'Đã trở lại với tên {name}',
   'Send into the running answer': 'Gửi vào câu trả lời đang chạy',
   'Stop the answer': 'Dừng câu trả lời',
   'Open every step': 'Mở mọi bước',
@@ -2075,6 +2081,8 @@ export const vi: Dictionary = {
     'Nó đọc ghi chú của bạn và duyệt web khi đăng nhập như bạn, nên một trang có thể tìm cách khiến nó gửi ghi chú ra ngoài.',
   Activity: 'Hoạt động',
   'Add a site': 'Thêm trang web',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Chương trình trong danh sách này chạy mà không hỏi, và có thể làm mọi điều chương trình đó làm được.',
   'Add a program': 'Thêm chương trình',
   'Every space': 'Mọi không gian',
   Sites: 'Trang web',
@@ -2498,6 +2506,7 @@ export const vi: Dictionary = {
   'No {property}': 'Không có {property}',
   '{card} moved to {group}': 'Đã chuyển {card} sang {group}',
   'Not moved': 'Chưa chuyển được',
+  'Not undone': 'Chưa hoàn tác được',
   Retry: 'Thử lại',
   Calculate: 'Tính toán',
   'Remove sort': 'Bỏ sắp xếp',
@@ -2770,6 +2779,8 @@ export const vi: Dictionary = {
   '{title}, running': '{title}, đang chạy',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden không còn giữ khóa AI trong Chuỗi khóa của Mac, vốn cứ hỏi mật khẩu mãi. Hãy nhập lại khóa và đăng nhập ChatGPT thêm một lần nữa.',
+  'This PDF is locked by its owner': 'PDF này bị chủ sở hữu khóa',
+  'Part of this could not be undone': 'Không thể hoàn tác một phần của việc này',
   'Add images': 'Thêm hình ảnh',
   'Remove image': 'Gỡ hình ảnh',
   'That is more than 4 images.': 'Đã quá 4 hình ảnh.',

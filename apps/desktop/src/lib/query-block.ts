@@ -149,9 +149,9 @@ async function openQueryRow(path: string, line: number): Promise<void> {
 
 /** A box in a fence's row, ticked. The note is written where it stands, without
  *  being opened: what a list of everything still to do is for. */
-async function tickQueryRow(path: string, line: number): Promise<void> {
+async function tickQueryRow(path: string, line: number, hash?: string): Promise<void> {
   const { workspace } = await import('./workspace.svelte')
-  await workspace.toggleTaskAt(path, line)
+  await workspace.toggleTaskAt(path, line, hash)
 }
 
 /** A press inside a fence, acted on: the box if it landed on one, the row
@@ -170,7 +170,7 @@ export function pressRow(target: EventTarget | null): boolean {
 
   const line = Number(found.dataset.line ?? 0)
   if (found.dataset.task === undefined) void openQueryRow(path, line)
-  else void tickQueryRow(path, line)
+  else void tickQueryRow(path, line, found.dataset.hash)
 
   return true
 }

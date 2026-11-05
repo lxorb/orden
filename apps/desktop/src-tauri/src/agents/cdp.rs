@@ -331,11 +331,15 @@ pub struct Frame {
     pub id: String,
     /// Where it is.
     pub url: String,
+    /// The session of the frame it was attached under; empty for the page's own.
+    pub parent: String,
 }
 
 /// What the engine has said about one page, kept as it says it.
 #[derive(Default)]
 pub struct Heard {
+    /// The frames' sessions already asked to say what frames they hold in turn.
+    nested: HashSet<String>,
     /// The console, oldest first.
     console: VecDeque<ConsoleLine>,
     /// The next console line's number.
@@ -528,7 +532,7 @@ impl Heard {
             .map(|(seq, _)| *seq)
     }
 
-    fn attached(&mut self, event: &Value) {
+    fn attached(&mut self, parent: &str, event: &Value) {
         if event.pointer("/targetInfo/type").and_then(Value::as_str) != Some("iframe") {
             return;
         }
@@ -549,12 +553,14 @@ impl Heard {
         if let Some(held) = self.frames.iter_mut().flatten().find(|one| one.id == frame) {
             held.session = session.to_string();
             held.url = url;
+            held.parent = parent.to_string();
             return;
         }
         self.frames.push(Some(Frame {
             session: session.to_string(),
             id: frame.to_string(),
             url,
+            parent: parent.to_string(),
         }));
     }
 
@@ -568,6 +574,16 @@ impl Heard {
             }
         }
         self.in_flight.retain(|(owner, _)| owner != session);
+        self.nested.remove(session);
+    }
+
+    /// The frames' sessions not yet asked to say what frames they hold in turn.
+    fn not_nested(&self) -> Vec<String> {
+        self.frames()
+            .into_iter()
+            .map(|(_, frame)| frame.session)
+            .filter(|session| !self.nested.contains(session))
+            .collect()
     }
 }
 
@@ -732,7 +748,7 @@ fn heard_event(held: &mut Heard, method: &str, session: &str, event: Value) {
         "Page.fileChooserOpened" => {
             held.chooser = event.get("backendNodeId").and_then(Value::as_u64);
         }
-        "Target.attachedToTarget" => held.attached(&event),
+        "Target.attachedToTarget" => held.attached(session, &event),
         "Target.detachedFromTarget" => held.detached(&event),
         "Page.frameStartedNavigating" => {
             let main = held.main_frame.as_deref();
@@ -825,11 +841,7 @@ pub fn awake(view: &View, label: &str, own: bool) {
         let _ = call(view, method, &json!({}));
     }
     if own {
-        let _ = call(
-            view,
-            "Target.setAutoAttach",
-            &json!({ "autoAttach": true, "waitForDebuggerOnStart": false, "flatten": true, "filter": [{ "type": "iframe" }] }),
-        );
+        let _ = call(view, "Target.setAutoAttach", &auto_attach());
     } else {
         attach_existing(view);
     }
@@ -840,9 +852,54 @@ pub fn awake(view: &View, label: &str, own: bool) {
             Some(&frame.session),
             "Network.enable",
             &json!({}),
-            PATIENCE,
+            super::page::FRAME_PATIENCE,
         );
     }
+}
+
+/// What has a session say which frames in it run in processes of their own.
+fn auto_attach() -> Value {
+    json!({ "autoAttach": true, "waitForDebuggerOnStart": false, "flatten": true, "filter": [{ "type": "iframe" }] })
+}
+
+/// How many frames in processes of their own, each inside the last, are followed down. Past
+/// it is an error, like a frame that does not answer.
+const DEEPEST_FRAMES: usize = 32;
+
+/// Has every frame in a process of its own say what frames it holds in turn: the engine tells
+/// a session only of the frames directly in its own process, so a card frame on a third site
+/// inside a payment provider's would be on no list. Each session is asked once, and they are
+/// told before the answer comes. An error is a frame still there that could not be asked.
+pub fn follow_nested(view: &View, label: &str, patience: Duration) -> Result<(), String> {
+    let page = heard(label);
+    for _ in 0..DEEPEST_FRAMES {
+        let sessions = page
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .not_nested();
+        if sessions.is_empty() {
+            return Ok(());
+        }
+        for session in sessions {
+            let asked = call_in(
+                view,
+                Some(&session),
+                "Target.setAutoAttach",
+                &auto_attach(),
+                patience,
+            );
+            let mut held = page.lock().unwrap_or_else(PoisonError::into_inner);
+            match asked {
+                Ok(_) => {
+                    held.nested.insert(session);
+                }
+                // A frame gone in the meantime has nothing to say.
+                Err(why) if held.not_nested().contains(&session) => return Err(why),
+                Err(_) => {}
+            }
+        }
+    }
+    Err("frames too deep to follow".to_string())
 }
 
 /// Attaches to a reader's page's frames that run in processes of their own, with
@@ -1012,7 +1069,7 @@ mod tests {
     fn a_frame_keeps_its_number_when_another_goes() {
         let mut heard = Heard::default();
         let attach = |heard: &mut Heard, session: &str, frame: &str| {
-            heard.attached(&json!({ "sessionId": session, "targetInfo": { "type": "iframe", "targetId": frame, "url": "https://b.example/" } }));
+            heard.attached("", &json!({ "sessionId": session, "targetInfo": { "type": "iframe", "targetId": frame, "url": "https://b.example/" } }));
         };
         attach(&mut heard, "s1", "F1");
         attach(&mut heard, "s2", "F2");
@@ -1023,9 +1080,31 @@ mod tests {
         assert_eq!(heard.frame(2).map(|one| one.session).as_deref(), Some("s3"));
         // A worker is not a frame.
         heard.attached(
+            "",
             &json!({ "sessionId": "w", "targetInfo": { "type": "worker", "targetId": "W" } }),
         );
         assert_eq!(heard.frames().len(), 1);
+    }
+
+    #[test]
+    fn a_frame_inside_a_frame_is_told_apart_and_asked_once() {
+        let mut heard = Heard::default();
+        let attach = |heard: &mut Heard, parent: &str, session: &str, frame: &str| {
+            heard_event(
+                heard,
+                "Target.attachedToTarget",
+                parent,
+                json!({ "sessionId": session, "targetInfo": { "type": "iframe", "targetId": frame, "url": "https://b.example/" } }),
+            );
+        };
+        attach(&mut heard, "", "s1", "F1");
+        assert_eq!(heard.not_nested(), ["s1"]);
+        heard.nested.insert("s1".to_string());
+        attach(&mut heard, "s1", "s2", "F2");
+        assert_eq!(heard.not_nested(), ["s2"]);
+        assert_eq!(heard.frame(2).map(|one| one.parent).as_deref(), Some("s1"));
+        heard.detached(&json!({ "sessionId": "s1" }));
+        assert!(!heard.nested.contains("s1"));
     }
 
     #[test]

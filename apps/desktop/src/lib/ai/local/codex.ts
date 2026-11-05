@@ -125,10 +125,14 @@ function text(value: unknown): string {
   return typeof value === 'string' ? value : ''
 }
 
+/** The name Codex knows the app's own server by: `orden` (`SERVER` in the crate's
+ *  ai_cli/args.rs), or `nib` in a session started before the rename. */
+const OWN = new Set<unknown>(['orden', 'nib'])
+
 /** One of Orden's tools, called: started, or answered. A tool of another server is not
- *  Orden's and has no row; with `nib` the only server there is none. */
+ *  Orden's and has no row; with Orden's the only server there is none. */
 function toolIn(item: Record<string, unknown>, done: boolean): Heard {
-  if (item.server !== 'nib' || typeof item.id !== 'string' || typeof item.tool !== 'string')
+  if (!OWN.has(item.server) || typeof item.id !== 'string' || typeof item.tool !== 'string')
     return {}
   const tool = { id: item.id, name: item.tool, args: item.arguments ?? {} }
   if (!done) return { tool }

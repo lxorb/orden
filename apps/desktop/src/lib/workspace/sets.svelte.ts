@@ -24,6 +24,7 @@
 import { tick } from 'svelte'
 import { focusEditor } from '../focus'
 import { identifier } from '../identifier'
+import { log } from '../log'
 import { without } from '../records'
 import { forget, isRecord, stored } from '../stored'
 import { spaceSound } from '../surfaces.svelte'
@@ -119,7 +120,12 @@ class Sets {
   /** The sets the session named, built in the background, and the shared set no space
    *  could take put into the set on screen, so none of its tabs is lost. */
   async wake(): Promise<void> {
-    for (const key of Object.keys(this.drafted)) await this.built(key)
+    for (const key of Object.keys(this.drafted)) {
+      // One that fails stays as it was read, and the next asking builds it.
+      await this.built(key).catch((error: unknown) => {
+        log('warn', `sets: ${key} was not built - ${String(error)}`)
+      })
+    }
     if (this.on !== GLOBAL && this.aside[GLOBAL]) {
       this.carry(this.tabsOf(GLOBAL), workspace.panes.focusedId)
       this.aside = without(this.aside, GLOBAL)
@@ -365,28 +371,37 @@ class Sets {
   /** A set the session named, built back through the session's own restore - the same
    *  drafts, documents and frame a launch puts on screen - into a frame put aside. One
    *  build per set, however many ask. The sides an older build wrote with it are passed
-   *  over: the window's are the ones it had on screen (#1123). */
+   *  over: the window's are the ones it had on screen (#1123).
+   *
+   *  It stays in `drafted` until `aside` holds it, in one breath: `written` writes the set
+   *  from one or the other, and a session written while a set is being read keeps it as it
+   *  was read (`arriving` in workspace.svelte.ts). */
   private built(key: string): Promise<void> {
+    const under = this.building.get(key)
+    if (under) return under
     const draft = this.drafted[key]
-    if (!draft || key === this.on) return this.building.get(key) ?? Promise.resolve()
+    if (!draft || key === this.on) return Promise.resolve()
 
-    this.drafted = without(this.drafted, key)
-    const building = workspace.opened.arranging(async () => {
-      const { frame, made } = await workspace.built(draft.layout)
-      if (!made.length || key === this.on) return
-      workspace.tabs = [...workspace.tabs, ...made]
-      this.aside = {
-        ...this.aside,
-        [key]: {
-          frame,
-          focused: focusIn(frame, draft.layout.focused),
-          fills: null,
-          preview: null,
-          held: null,
-          inPage: false,
-        },
-      }
-    })
+    const building = workspace.opened
+      .arranging(async () => {
+        const { frame, made } = await workspace.built(draft.layout)
+        if (key === this.on) return
+        this.drafted = without(this.drafted, key)
+        if (!made.length) return
+        workspace.tabs = [...workspace.tabs, ...made]
+        this.aside = {
+          ...this.aside,
+          [key]: {
+            frame,
+            focused: focusIn(frame, draft.layout.focused),
+            fills: null,
+            preview: null,
+            held: null,
+            inPage: false,
+          },
+        }
+      })
+      .finally(() => this.building.delete(key))
     this.building.set(key, building)
     return building
   }
@@ -429,7 +444,7 @@ class Sets {
    *  what it showed becomes the window's own, for the next space made (`swap`). */
   async gone(space: string): Promise<void> {
     this.drafted = without(this.drafted, space)
-    await this.building.get(space)
+    await this.building.get(space)?.catch(() => undefined)
     if (space === this.on) {
       this.on = GLOBAL
       return

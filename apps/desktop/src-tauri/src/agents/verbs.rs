@@ -1553,6 +1553,11 @@ pub enum Category {
     Files,
     /// Any write, in `confirm` mode.
     Writing,
+    /// A file moved to Recently deleted, in `confirm` mode: a write with a thread's Always
+    /// never standing in for it.
+    Trashing,
+    /// A press on what cannot be read, which may be anything on this list.
+    Unread,
     /// An agent tab made a tab of the reader's (6.7).
     Showing,
     /// The reader asked to do one step (7.3).

@@ -217,3 +217,14 @@ describe('a repeat counted from a deadline alone', () => {
     )
   })
 })
+
+describe('a repeating task with a block id', () => {
+  test('keeps the id on the line it is on, and the next one has none', () => {
+    const note = '- [ ] Gym 🔁 every day 📅 2026-10-04 ^abc\n'
+    expect(ticked(note, 0, '2026-10-04', false).split('\n')).toEqual([
+      '- [ ] Gym 🔁 every day 📅 2026-10-05',
+      '- [x] Gym 🔁 every day 📅 2026-10-04 ✅ 2026-10-04 ^abc',
+      '',
+    ])
+  })
+})

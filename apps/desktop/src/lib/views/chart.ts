@@ -8,6 +8,7 @@
  *  the layout draws them as SVG in the six tones. */
 
 import { type Answer, type Base, cellValue, type Context, dayNumber, type View } from '@orden/bases'
+import { everyRow } from './list-items'
 import { dayIn } from './values'
 
 export type ChartKind = 'bar' | 'hbar' | 'line' | 'donut' | 'number'
@@ -91,7 +92,7 @@ export function totalOf(
   base: Base,
   context: Context,
 ): Point {
-  const rows = answer.groups.flatMap((group) => group.rows)
+  const rows = everyRow(answer.groups)
   const one = measured(rows, settings, base, context)
   return { key: null, value: one.value, ...(one.day === undefined ? {} : { day: one.day }) }
 }

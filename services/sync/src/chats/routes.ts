@@ -116,7 +116,7 @@ select ch.id as id, ch.space_id as space,
    and not exists (select 1 from notes n where n.id = ch.file_id and n.deleted = 1)
  group by ch.id
  order by coalesce(ch.last_at, ch.created_at) desc
- limit 2000`
+ limit ?5`
 
 interface ListedRow {
   id: string
@@ -159,9 +159,15 @@ function rowOf(row: ListedRow) {
   }
 }
 
-export async function listed(env: Env, who: Whoever, space: string | null) {
+/** The chats somebody reaches, the latest first; `most` of them, or null for them all. */
+export async function listed(
+  env: Env,
+  who: Whoever,
+  space: string | null,
+  most: number | null = 2000,
+) {
   const { results } = await env.DB.prepare(LISTED)
-    .bind(...askingOf(who), space)
+    .bind(...askingOf(who), space, most ?? -1)
     .all<ListedRow>()
   return results.map(rowOf)
 }

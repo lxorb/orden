@@ -16,11 +16,13 @@ import { callGlobal, GLOBALS } from './globals'
 import { fileField, indexed, member, taskField } from './members'
 import { type Arg, callMethod } from './methods'
 import { type Node, parseExpression } from './parse'
+import { evaluation, spend } from './pattern'
 import {
   add,
   arithmetic,
   compare,
   equal,
+  fieldOf,
   FileRef,
   isDuration,
   NoteRef,
@@ -31,6 +33,7 @@ import {
   ThisRef,
   truthy,
   type Val,
+  weigh,
 } from './runtime'
 
 type Fn = (scope: Scope) => Val
@@ -88,10 +91,10 @@ function compileName(name: string): Fn {
         return (scope) => {
           const locals = scope.locals
           if (locals && name in locals) return locals[name] ?? null
-          return scope.row?.note[name] ?? null
+          return scope.row ? fieldOf(scope.row.note, name) : null
         }
       }
-      return (scope) => scope.row?.note[name] ?? null
+      return (scope) => (scope.row ? fieldOf(scope.row.note, name) : null)
   }
 }
 
@@ -104,7 +107,7 @@ function compileMember(node: Extract<Node, { type: 'member' }>, facts: Facts): F
         facts.formulas.add(name)
         return (scope) => (scope.row ? scope.formula(name, scope.row) : null)
       case 'note':
-        return (scope) => scope.row?.note[name] ?? null
+        return (scope) => (scope.row ? fieldOf(scope.row.note, name) : null)
       case 'file':
         return (scope) => (scope.row ? fileField(scope.row, name, scope) : null)
       case 'task':
@@ -122,6 +125,15 @@ function thunks(args: readonly Fn[], scope: Scope): Arg[] {
       (locals) =>
         locals ? arg({ ...scope, locals: { ...scope.locals, ...locals } }) : arg(scope),
   )
+}
+
+/** How many closures of an expression cost one step. */
+const NODES_A_STEP = 32
+
+/** How many nodes a part of the tree has. */
+function sizeOf(part: unknown): number {
+  if (typeof part !== 'object' || part === null) return 0
+  return Object.values(part).reduce<number>((sum, one) => sum + sizeOf(one), 1)
 }
 
 function compileCall(node: Extract<Node, { type: 'call' }>, facts: Facts): Fn {
@@ -144,7 +156,14 @@ function compileCall(node: Extract<Node, { type: 'call' }>, facts: Facts): Fn {
     if (READS_OTHERS.has(callee.name)) facts.local = false
     const receiver = compileNode(callee.object, facts)
     const name = callee.name
-    return (scope) => callMethod(receiver(scope), name, thunks(args, scope), scope)
+    // A list method runs its words once per item, and an item is counted as one step
+    // however long they are.
+    const each = Math.floor(sizeOf(node.args) / NODES_A_STEP)
+    return (scope) => {
+      const on = receiver(scope)
+      if (each > 0 && Array.isArray(on)) spend(on.length * each)
+      return callMethod(on, name, thunks(args, scope), scope)
+    }
   }
 
   throw new BasesError('Only a function or a method can be called', node.at)
@@ -165,7 +184,10 @@ function compileNode(node: Node, facts: Facts): Fn {
     }
     case 'list': {
       const items = node.items.map((item) => compileNode(item, facts))
-      return (scope) => items.map((item) => item(scope)) as Value[]
+      return (scope) => {
+        spend(items.length)
+        return items.map((item) => item(scope)) as Value[]
+      }
     }
     case 'object': {
       const entries = node.entries.map(([key, value]) => [key, compileNode(value, facts)] as const)
@@ -266,7 +288,7 @@ export function formulaReader(
   return (name, row, scope) => {
     const kept = cache.get(row)?.get(name)
     if (kept !== undefined) return kept
-    const source = formulas[name]
+    const source = Object.hasOwn(formulas, name) ? formulas[name] : undefined
     if (source === undefined) return null
     if (running.has(name)) throw new BasesError(`formula.${name} refers to itself`)
 
@@ -314,7 +336,8 @@ export function compile(source: string): Compiled {
   if (known) return known
 
   const facts: Facts = { local: true, clock: false, formulas: new Set() }
-  const run = compileNode(parseExpression(source), facts)
+  const node = compileNode(parseExpression(source), facts)
+  const run: Fn = (scope) => evaluation(node, scope, weigh)
   const compiled: Compiled = {
     source,
     local: facts.local,

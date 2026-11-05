@@ -60,11 +60,12 @@ describe('breaking a note into slides', () => {
     expect(deckOf(note)).toHaveLength(2)
   })
 
-  test('a rule on the very first line is front matter, as it is everywhere else', () => {
-    // Obsidian, Marp and Slidev all read the first two rules of a file as the
-    // fence around its metadata, whatever is between them. A deck that opened
-    // with a rule would present differently here than there, so it does not.
-    expect(shown('---\n\n# One\n\n---\n\n# Two')).toEqual(['# Two'])
+  test('a rule on the very first line is front matter only over what reads as keys', () => {
+    // Marp and Slidev read the first two rules of a file as the fence around its
+    // metadata, but a first slide of words under a rule is no metadata: the block
+    // would take it off the stage and out of every reader, with no sign.
+    expect(shown('---\ntheme: dark\n---\n\n# Two')).toEqual(['# Two'])
+    expect(shown('---\n\n# One\n\n---\n\n# Two')).toEqual(['# One', '# Two'])
   })
 
   test('a rule right after the front matter opens the first slide', () => {
@@ -306,5 +307,11 @@ describe('the grammar the fragments are counted with', () => {
 
       expect([note, slide?.fragments], note).toEqual([note, stepped])
     }
+  })
+})
+
+describe('a note that opens with a byte order mark', () => {
+  test('keeps its front matter off the first slide', () => {
+    expect(shown('﻿---\nk: v\n---\n# One\n\n---\n\n# Two\n')).toEqual(['# One', '# Two'])
   })
 })

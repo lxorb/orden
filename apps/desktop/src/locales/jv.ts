@@ -748,6 +748,8 @@ export const jv: Dictionary = {
   '{done} of {total}': '{done} saka {total}',
   'Sync failed': 'Panyelarasan gagal',
   '{name} could not be written.': '{name} ora bisa ditulis.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} ora bisa ditulis: berkasé ora bisa diwaca. Bisa uga luwih saka 64 MB utawa dudu teks UTF-8.',
   '{name} could not be read.': '{name} ora bisa diwaca.',
   'Text size': 'Ukuran teks',
   'Line spacing': 'Jarak larik',
@@ -1519,6 +1521,8 @@ export const jv: Dictionary = {
   'The provider answered {status}.': 'Panyedhiya mangsuli {status}.',
   'Add an AI provider in Settings first.': 'Tambah panyedhiya AI ing Setelan dhisik.',
   'The model did not answer.': 'Modele ora mangsuli.',
+  'The connection closed before the answer was finished.':
+    'Sambungan ketutup sadurunge wangsulan rampung.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'Paket {plan} sampeyan wis tekan wates nganti {time}.',
@@ -1997,8 +2001,10 @@ export const jv: Dictionary = {
   'Send feedback': 'Kirim masukan',
   'Describe the issue': 'Jlentrehna masalahe',
   Sent: 'Wis dikirim',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Laporan iki isine katrangan sampeyan, versi Orden, platform sampeyan lan log aplikasi anyar. Cathetan sampeyan ora tau melu.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Laporan iki ngemot katrangan panjenengan, versi Orden, platform panjenengan lan log aplikasi pungkasan, tanpa path berkas.',
+  'Its space is archived': 'Papané diarsipaké',
+  'Back as {name}': 'Bali dadi {name}',
   'Send into the running answer': 'Kirim menyang wangsulan sing lagi mlaku',
   'Stop the answer': 'Mandhegake wangsulan',
   'Open every step': 'Bukak kabeh langkah',
@@ -2083,6 +2089,8 @@ export const jv: Dictionary = {
     'Dheweke maca cathetanmu lan njelajah nganggo login-mu, dadi sawijining kaca bisa nyoba nggawe dheweke ngirim cathetan kuwi metu.',
   Activity: 'Aktivitas',
   'Add a site': 'Tambah situs',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Program ing dhaptar iki mlaku tanpa takon, lan bisa nindakake kabeh sing bisa ditindakake program kuwi.',
   'Add a program': 'Tambah program',
   'Every space': 'Saben papan',
   Sites: 'Situs',
@@ -2506,6 +2514,7 @@ export const jv: Dictionary = {
   'No {property}': 'Tanpa {property}',
   '{card} moved to {group}': '{card} dipindhah menyang {group}',
   'Not moved': 'Ora dipindhah',
+  'Not undone': 'Ora dibatalake',
   Retry: 'Coba maneh',
   Calculate: 'Etung',
   'Remove sort': 'Busak urutan',
@@ -2784,6 +2793,8 @@ export const jv: Dictionary = {
   '{title}, running': '{title}, lagi mlaku',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ora nyimpen kunci AI ing keychain Mac maneh, sing terus njaluk sandine. Lebokna kunci sampeyan lan mlebu ChatGPT sepisan maneh.',
+  'This PDF is locked by its owner': 'PDF iki dikunci déning sing nduwèni',
+  'Part of this could not be undone': 'Sapérangan iki ora bisa dibatalaké',
   'Add images': 'Tambah gambar',
   'Remove image': 'Busak gambar',
   'That is more than 4 images.': 'Kuwi luwih saka 4 gambar.',

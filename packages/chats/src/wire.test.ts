@@ -449,3 +449,30 @@ describe('who', () => {
     expect(isWho(value)).toBe(false)
   })
 })
+
+describe('a reaction named after what every object holds', () => {
+  it('reads back as that reaction', () => {
+    const state = chatState()
+    apply(state, {
+      kind: 'post',
+      id: 'p',
+      message: 'm',
+      body: 'hi',
+      seq: 1,
+      at: 1,
+      author: 'user:a',
+    })
+    apply(state, {
+      kind: 'react',
+      id: 'r',
+      target: 'm',
+      emoji: '__proto__',
+      on: true,
+      seq: 2,
+      at: 2,
+      author: 'user:a',
+    })
+    const read = messageOf(JSON.parse(JSON.stringify(state.messages.get('m'))))
+    expect(Object.keys(read?.reactions ?? {})).toEqual(['__proto__'])
+  })
+})

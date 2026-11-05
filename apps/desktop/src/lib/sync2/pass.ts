@@ -38,12 +38,12 @@ import * as Y from 'yjs'
 import { Core, type Holding } from './core'
 import type { Doc } from './docs'
 import { MINE } from './docs'
-import { foldIn } from './ingest'
+import { foldIn, readAgain } from './ingest'
 import { fileOfUpdates, holdsDocument, judge, shapeOf, turn, unixLines } from './kinds'
 import { made } from './create'
 import { type Outboxed, settle, type SpaceState } from './places'
 import { keepingChange, keptHere } from './keeping'
-import { project } from './project'
+import { notWritten, project } from './project'
 import { againstBytes, type Merging, type Outgoing, outgoingBytes } from './records'
 import { carriedOwn, withTasksOf } from '@orden/bases/inbox'
 import { keepLosers, rejoin } from './rejoin'
@@ -83,6 +83,8 @@ export async function pass(core: Core, space: SpaceState): Promise<Passed> {
   if (!alive()) return passed
   if (!(await settleFiles(core, space, alive, passed))) return passed
   if (!(await recoverLost(core, space, alive, passed))) return passed
+  await core.commit(await readAgain(core, space))
+  if (!alive()) return passed
   for (let round = 0; round < ROUNDS; round += 1) {
     const pulled = await pullDocs(core, space, alive)
     if (pulled === null) return passed
@@ -597,8 +599,15 @@ async function pullDocs(
       doc.pulled = Math.max(doc.pulled, wanted.get(one.id)?.docSeq ?? 0)
       wanted.delete(one.id)
       changes.push(...core.docChanges(doc))
-      changes.push(...(await foldedThenProjected(core, space, entry, doc)))
-      brought += 1
+      // One note's file is that note's: thrown, this left before the commit below, and every
+      // file the batch had written read on the next launch as a new note (`notWritten`).
+      try {
+        changes.push(...(await foldedThenProjected(core, space, entry, doc)))
+      } catch (error) {
+        changes.push(...notWritten(core, space, entry, doc, error))
+      }
+      // Not written is not brought: it comes round again, and nothing here moved.
+      if (!wanted.has(one.id)) brought += 1
     }
     changes.push(core.wantChange(space.id))
     await core.commit(changes)

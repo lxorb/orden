@@ -787,6 +787,8 @@ export const uk: Dictionary = {
   '{done} of {total}': '{done} з {total}',
   'Sync failed': 'Збій синхронізації',
   '{name} could not be written.': 'Не вдалося записати {name}.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    'Не вдалося записати {name}: файл не читається. Можливо, він більший за 64 МБ або це не текст в UTF-8.',
   '{name} could not be read.': 'Не вдалося прочитати {name}.',
   'Text size': 'Розмір тексту',
   'Line spacing': 'Міжрядковий інтервал',
@@ -1610,6 +1612,8 @@ export const uk: Dictionary = {
   'The provider answered {status}.': 'Постачальник відповів {status}.',
   'Add an AI provider in Settings first.': 'Спершу додайте постачальника ШІ в налаштуваннях.',
   'The model did not answer.': 'Модель не відповіла.',
+  'The connection closed before the answer was finished.':
+    'З’єднання закрилося до завершення відповіді.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'Ваш план {plan} вичерпано до {time}.',
   'Your {plan} plan is at its limit for now.': 'Ваш план {plan} поки що вичерпано.',
@@ -2091,8 +2095,10 @@ export const uk: Dictionary = {
   'Send feedback': 'Надіслати відгук',
   'Describe the issue': 'Опишіть проблему',
   Sent: 'Надіслано',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Цей звіт містить ваш опис, версію Orden, вашу платформу та недавній журнал застосунку. Ваших нотаток у ньому ніколи немає.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Цей звіт містить ваш опис, версію Orden, вашу платформу й недавній журнал застосунку, без шляхів до файлів.',
+  'Its space is archived': 'Його простір в архіві',
+  'Back as {name}': 'Повернулася як {name}',
   'Send into the running answer': 'Надіслати в поточну відповідь',
   'Stop the answer': 'Зупинити відповідь',
   'Open every step': 'Розгорнути всі кроки',
@@ -2176,6 +2182,8 @@ export const uk: Dictionary = {
     'Він читає ваші нотатки й переглядає сайти під вашими входами, тож сторінка може спробувати змусити його надіслати їх назовні.',
   Activity: 'Активність',
   'Add a site': 'Додати сайт',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Програма з цього списку запускається без запитань і може робити все, що вміє ця програма.',
   'Add a program': 'Додати програму',
   'Every space': 'Усі простори',
   Sites: 'Сайти',
@@ -2610,6 +2618,7 @@ export const uk: Dictionary = {
   'No {property}': 'Без {property}',
   '{card} moved to {group}': 'Картку {card} переміщено до {group}',
   'Not moved': 'Не переміщено',
+  'Not undone': 'Не скасовано',
   Retry: 'Повторити',
   Calculate: 'Обчислити',
   'Remove sort': 'Прибрати сортування',
@@ -2888,6 +2897,8 @@ export const uk: Dictionary = {
   '{title}, running': '{title}, виконується',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden більше не зберігає ключі ШІ у в’язці ключів Mac, яка знову й знову питала пароль. Введіть ключі ще раз і знову увійдіть у ChatGPT.',
+  'This PDF is locked by its owner': 'Цей PDF заблоковано власником',
+  'Part of this could not be undone': 'Частину цього не вдалося скасувати',
   'Add images': 'Додати зображення',
   'Remove image': 'Прибрати зображення',
   'That is more than 4 images.': 'Це більше ніж 4 зображення.',

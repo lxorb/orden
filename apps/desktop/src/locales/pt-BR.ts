@@ -764,6 +764,8 @@ export const ptBR: Dictionary = {
   '{done} of {total}': '{done} de {total}',
   'Sync failed': 'Falha na sincronização',
   '{name} could not be written.': 'Não foi possível gravar {name}.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    'Não foi possível gravar {name}: o arquivo não pode ser lido. Talvez tenha mais de 64 MB ou não seja texto UTF-8.',
   '{name} could not be read.': 'Não foi possível ler {name}.',
   'Text size': 'Tamanho do texto',
   'Line spacing': 'Entrelinha',
@@ -1567,6 +1569,8 @@ export const ptBR: Dictionary = {
   'The provider answered {status}.': 'O provedor respondeu {status}.',
   'Add an AI provider in Settings first.': 'Primeiro adicione um provedor de IA nas configurações.',
   'The model did not answer.': 'O modelo não respondeu.',
+  'The connection closed before the answer was finished.':
+    'A conexão foi encerrada antes de a resposta terminar.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'Seu plano {plan} atingiu o limite até {time}.',
   'Your {plan} plan is at its limit for now.': 'Seu plano {plan} atingiu o limite por enquanto.',
@@ -2052,8 +2056,10 @@ export const ptBR: Dictionary = {
   'Send feedback': 'Enviar feedback',
   'Describe the issue': 'Descreva o problema',
   Sent: 'Enviado',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Este relatório inclui sua descrição, a versão do Orden, sua plataforma e o registro recente do app. Nunca inclui suas notas.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Este relatório inclui sua descrição, a versão do Orden, sua plataforma e o registro recente do app, sem os caminhos de arquivos.',
+  'Its space is archived': 'O espaço dela está arquivado',
+  'Back as {name}': 'De volta como {name}',
   'Send into the running answer': 'Enviar para a resposta em andamento',
   'Stop the answer': 'Parar a resposta',
   'Open every step': 'Abrir todas as etapas',
@@ -2138,6 +2144,8 @@ export const ptBR: Dictionary = {
     'Ele lê suas notas e navega conectado como você, então uma página poderia tentar fazê-lo enviá-las para fora.',
   Activity: 'Atividade',
   'Add a site': 'Adicionar um site',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Um programa desta lista é executado sem perguntar e pode fazer tudo o que esse programa consegue fazer.',
   'Add a program': 'Adicionar um programa',
   'Every space': 'Todos os espaços',
   Sites: 'Sites',
@@ -2572,6 +2580,7 @@ export const ptBR: Dictionary = {
   'No {property}': 'Sem {property}',
   '{card} moved to {group}': '{card} movido para {group}',
   'Not moved': 'Não movido',
+  'Not undone': 'Não desfeito',
   Retry: 'Tentar novamente',
   Calculate: 'Calcular',
   'Remove sort': 'Remover ordenação',
@@ -2853,6 +2862,8 @@ export const ptBR: Dictionary = {
   '{title}, running': '{title}, em andamento',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'O Orden não guarda mais as chaves de IA nas Chaves do Mac, que pediam a senha repetidamente. Digite suas chaves e entre no ChatGPT mais uma vez.',
+  'This PDF is locked by its owner': 'Este PDF está bloqueado pelo proprietário',
+  'Part of this could not be undone': 'Parte disso não pôde ser desfeita',
   'Add images': 'Adicionar imagens',
   'Remove image': 'Remover imagem',
   'That is more than 4 images.': 'São mais de 4 imagens.',

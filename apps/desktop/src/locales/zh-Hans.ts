@@ -743,6 +743,8 @@ export const zhHans: Dictionary = {
   '{done} of {total}': '{done}/{total}',
   'Sync failed': '同步失败',
   '{name} could not be written.': '无法写入 {name}。',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '无法写入 {name}:无法读取其文件。文件可能超过 64 MB,或不是 UTF-8 文本。',
   '{name} could not be read.': '无法读取 {name}。',
   'Text size': '字号',
   'Line spacing': '行距',
@@ -1494,6 +1496,7 @@ export const zhHans: Dictionary = {
   'The provider answered {status}.': '服务商返回{status}。',
   'Add an AI provider in Settings first.': '请先在设置中添加AI服务商。',
   'The model did not answer.': '模型没有回答。',
+  'The connection closed before the answer was finished.': '回答结束前连接已关闭。',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': '你的 {plan} 套餐已达上限，{time} 恢复。',
   'Your {plan} plan is at its limit for now.': '你的 {plan} 套餐目前已达上限。',
@@ -1961,8 +1964,10 @@ export const zhHans: Dictionary = {
   'Send feedback': '发送反馈',
   'Describe the issue': '描述问题',
   Sent: '已发送',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    '此报告包括你的描述、Orden 的版本、你的平台和应用最近的日志，绝不包括你的笔记。',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    '此报告包含你的描述、Orden 版本、你的平台和最近的应用日志,文件路径已移除。',
+  'Its space is archived': '它的空间已归档',
+  'Back as {name}': '已恢复为 {name}',
   'Send into the running answer': '发送到正在进行的回答',
   'Stop the answer': '停止回答',
   'Open every step': '展开所有步骤',
@@ -2044,6 +2049,8 @@ export const zhHans: Dictionary = {
     '它会读取你的笔记，并以你的登录身份浏览，因此网页可能试图让它把笔记发送出去。',
   Activity: '活动',
   'Add a site': '添加网站',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    '此列表中的程序无需询问即可运行，并能执行该程序能做的一切。',
   'Add a program': '添加程序',
   'Every space': '所有空间',
   Sites: '网站',
@@ -2462,6 +2469,7 @@ export const zhHans: Dictionary = {
   'No {property}': '无{property}',
   '{card} moved to {group}': '已将{card}移至{group}',
   'Not moved': '未移动',
+  'Not undone': '未撤销',
   Retry: '重试',
   Calculate: '计算',
   'Remove sort': '移除排序',
@@ -2716,6 +2724,8 @@ export const zhHans: Dictionary = {
   '{title}, running': '{title}，运行中',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden 不再把 AI 密钥存放在 Mac 的钥匙串中，它总是一再要求输入密码。请重新输入密钥，并再次登录 ChatGPT。',
+  'This PDF is locked by its owner': '此 PDF 已被所有者锁定',
+  'Part of this could not be undone': '部分内容无法撤销',
   'Add images': '添加图片',
   'Remove image': '移除图片',
   'That is more than 4 images.': '超过了 4 张图片。',

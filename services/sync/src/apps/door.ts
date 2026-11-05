@@ -24,9 +24,10 @@ const AWAY = 'the application is not answering - try again'
 
 export const appsDoor = new Hono<{ Bindings: Env }>()
 
-/** Whether the file is the person's own: in a space they own, and not deleted. */
-const OWNED = `select 1 as yes from notes n join spaces s on s.id = n.space_id
-  where n.id = ?1 and s.user_id = ?2 and coalesce(n.deleted, 0) = 0`
+/** Whether the file is the person's own: in a space they own, and not deleted, nor is
+ *  the space. Asked again each minute of every socket (`alarm` in ./relay.ts). */
+export const OWNED = `select 1 as yes from notes n join spaces s on s.id = n.space_id
+  where n.id = ?1 and s.user_id = ?2 and coalesce(n.deleted, 0) = 0 and s.deleted = 0`
 
 appsDoor.get('/:app/socket', async (context) => {
   const env = context.env
@@ -70,6 +71,8 @@ appsDoor.get('/:app/socket', async (context) => {
         'x-nib-app': 'join',
         'x-nib-app-id': app,
         'x-nib-who': who,
+        // Which sign-in brought it, so the end of that sign-in ends the socket (`alarm`).
+        'x-nib-login': hash,
         'x-nib-device': device,
         'x-nib-device-name': name,
         'x-nib-role': host ? 'host' : 'viewer',

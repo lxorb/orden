@@ -26,8 +26,10 @@
   import { LiveView } from './live.svelte'
   import { ADD_MARK, LABEL_MARK, PROJECT_MARK, TODAY_MARK, VIEW_MARK } from './marks'
   import { openByPath, panelCounts } from './panel'
-  import { choose, openInTab, type PanelRow, sameRow, specOf } from './panel-press'
+  import { choose, chosenIn, openInTab, type PanelRow, sameRow, specOf } from './panel-press'
   import { fileSource, panelSource } from './source'
+  import { refusedAsTag } from '../tag-actions'
+  import { guardedAt } from './guard'
   import { prompt } from '../prompt.svelte'
   import { canWriteAt } from '../sharing.svelte'
   import { builtinName } from './words'
@@ -106,27 +108,40 @@
     }
   }
   function baseCount(path: string): number | null {
-    const base = read[path]
+    const written = read[path]
     const name = workspace.activeSpace?.name
+    const base = written && guardedAt(written, path)
     if (!base || name === undefined) return null
     try {
       const mine = all.filter((one) => one.space === name)
-      return answer(base, 0, mine, contextFor({ rows: mine, today, now: `${today}T00:00:00` }))
-        .total
+      const said = answer(
+        base,
+        0,
+        mine,
+        contextFor({ rows: mine, today, now: `${today}T00:00:00` }),
+      )
+      // A count of what was read in time is no count of the base.
+      return said.partial ? null : said.total
     } catch {
       return null
     }
   }
 
   /** The row chosen, whose list is drawn under the rows: Todos until another is. */
-  let chosen = $state<PanelRow>({ kind: 'todos' })
+  const here = $derived(space ? { id: space.id, name: space.name, root: space.root } : null)
+  let pressed = $state.raw<Parameters<typeof chosenIn>[0]>({ row: { kind: 'todos' }, in: null })
+  const chosen = $derived(chosenIn(pressed, here))
+
+  /** A label's row: the open space's, as the panel lists its labels. */
+  const labelRow = (tag: string): PanelRow =>
+    space ? { kind: 'label', tag, space: space.name } : { kind: 'label', tag }
 
   /** A row pressed: chosen here, or opened in a tab where that was asked for. */
   function press(event: MouseEvent, row: PanelRow) {
     if (choose(event) === 'tab') {
       event.preventDefault()
       openInTab(row)
-    } else chosen = row
+    } else pressed = { row, in: here }
   }
 
   /** The middle button, which a browser gives no click for. */
@@ -164,7 +179,7 @@
   function labelMenu(event: MouseEvent, tag: string) {
     // Opened only, in a space shared to be read: renaming or taking a label away writes
     // its notes, which that space refuses (`replaceInNotes` in workspace/note-text.ts).
-    const open = { label: t('Open in new tab'), run: () => openInTab({ kind: 'label', tag }) }
+    const open = { label: t('Open in new tab'), run: () => openInTab(labelRow(tag)) }
     if (root !== null && !canWriteAt(root)) {
       menu.show(event, [open])
       return
@@ -179,7 +194,7 @@
             .ask({ title: t('Rename'), value: tag, confirmLabel: t('Rename') })
             .then((words) => {
               const next = words?.trim().replace(/^#+/, '')
-              if (next && next !== tag && !/\s/.test(next)) void workspace.retagNotes(tag, next)
+              if (next && next !== tag && !refusedAsTag(next)) void workspace.retagNotes(tag, next)
             }),
       },
       DIVIDER,
@@ -298,7 +313,7 @@
   {#if counts.labels.length}
     <p class="nib-section">{t('Labels')}</p>
     {#each counts.labels as one (one.tag)}
-      {@render row(LABEL_MARK, one.tag, one.count, { kind: 'label', tag: one.tag })}
+      {@render row(LABEL_MARK, one.tag, one.count, labelRow(one.tag))}
     {/each}
   {/if}
 

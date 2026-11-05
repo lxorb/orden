@@ -5,6 +5,7 @@
  *  deck - nearly every window - reads this and none of that. */
 
 import { closesFence, fenceMark } from './fences'
+import { frontMatterLines } from './front-matter-lines'
 
 /** A line of three or more hyphens, and nothing else on it. */
 export const HORIZONTAL = /^-{3,}[ \t]*$/
@@ -15,10 +16,11 @@ export const BLANK = /^[ \t]*$/
 /** Front matter is metadata rather than a slide, and its two rules are not
  *  breaks. Answers where the note's body starts. */
 export function bodyStart(source: string): number {
-  if (!source.startsWith('---')) return 0
+  const matter = frontMatterLines(source)
+  if (!matter) return 0
 
-  const matter = /^---\r?\n(?:[\s\S]*?\r?\n)??---[ \t]*(?:\r?\n|$)/.exec(source)
-  return matter ? matter[0].length : 0
+  const end = source.indexOf('\n', matter.close)
+  return end === -1 ? source.length : end + 1
 }
 
 interface Line {

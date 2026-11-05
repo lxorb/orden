@@ -182,6 +182,7 @@ async function movedAway(place: Place, from: string, to: string, folder: boolean
         .retarget(from, to, place.space.root, undefined, { moved: true })
         .catch(() => undefined)
       await workspace.fileMoved(from, to, folder ? 'folder' : 'file')
+      await workspace.undone.moved(from, to)
     }),
   )
 }
@@ -216,7 +217,13 @@ export async function trashFile(call: Call): Promise<AgentAnswer> {
   )
   if (shown) needScope(call, 'workspace.focus', 'a file open in front of the reader')
 
-  const question = await asked(call, null, `Move ${relative} to Recently deleted`)
+  const question = await asked(
+    call,
+    null,
+    `Move ${relative} to Recently deleted`,
+    undefined,
+    'trashing',
+  )
   if (question) return question
 
   await workspace.remove(path, entry.is_dir, sourceOf(call))

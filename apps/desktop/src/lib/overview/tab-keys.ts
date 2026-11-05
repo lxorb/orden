@@ -13,13 +13,16 @@ export interface Keyed {
   kind: string
   path: string | null
   shown: string
+  inPrivate?: boolean
 }
 
-/** Each tab's name that lasts, by its id this run. */
+/** Each tab's name that lasts, by its id this run. A private tab has none: nothing lasts
+ *  of it, its title least of all (web-tab/private.ts), and it counts for nobody else's. */
 export function lastingKeys(tabs: readonly Keyed[]): Map<string, string> {
   const seen = new Map<string, number>()
   const out = new Map<string, string>()
   for (const tab of tabs) {
+    if (tab.inPrivate) continue
     const base = `${tab.kind}:${tab.path ?? `~${tab.shown}`}`
     const nth = seen.get(base) ?? 0
     seen.set(base, nth + 1)

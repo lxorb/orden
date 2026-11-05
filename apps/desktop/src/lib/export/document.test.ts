@@ -12,6 +12,102 @@ function kind<K extends Block['kind']>(k: K): Extract<Block, { kind: K }>[] {
 
 const words = (spans: readonly Span[]) => spans.map((span) => span.text).join('')
 
+describe('a block of raw HTML', () => {
+  const said = (source: string) =>
+    documentOf(source, 'Note.md').blocks.flatMap((block) =>
+      block.kind === 'paragraph' ? [block.spans.map((one) => one.text).join('')] : [],
+    )
+
+  test('says its words, a paragraph for each block', () => {
+    expect(said('<div>w1</div>\n')).toEqual(['w1'])
+    expect(said('<p align="center">w1</p>\n')).toEqual(['w1'])
+    expect(said('<details><summary>w1</summary>w2</details>\n')).toEqual(['w1', 'w2'])
+    expect(said('<table><tr><td>w1</td><td>w2</td></tr><tr><td>w3</td></tr></table>\n')).toEqual([
+      'w1 w2',
+      'w3',
+    ])
+    expect(said('<ul><li>w1</li><li>w2</li></ul>\n')).toEqual(['w1', 'w2'])
+    expect(said('<center>w1</center>\n')).toEqual(['w1'])
+    expect(said('<h2>w1</h2>\n')).toEqual(['w1'])
+    expect(said('<blockquote>w1 &amp; w2</blockquote>\n')).toEqual(['w1 & w2'])
+    expect(said('<pre>a\n  b</pre>\n')).toEqual(['a\nb'])
+    expect(said('<div>a<br>b <span class="x">c</span></div>\n')).toEqual(['a\nb c'])
+  })
+
+  test('says nothing of what a reader is not shown', () => {
+    expect(said('<!DOCTYPE html>\n<div>w1</div>\n')).toEqual(['w1'])
+    expect(said('<?xml version="1.0"?>\n\n<div>w1</div>\n')).toEqual(['w1'])
+    expect(said('<video src="a"><p>No video</p></video>\n')).toEqual([])
+    expect(said('<audio src="a">No audio</audio>\n')).toEqual([])
+    expect(said('<iframe src="a">No frame</iframe>\n')).toEqual([])
+    expect(said('<dialog>secret</dialog>\n')).toEqual([])
+    expect(said('w1 <span hidden>secret</span> w2\n')).toEqual(['w1  w2'])
+    expect(said('<div hidden>secret</div>\n')).toEqual([])
+    expect(said('<div hidden><div>secret</div>more</div><p>w1</p>\n')).toEqual(['w1'])
+    expect(said('<div style="color: red; display:none">secret</div>\n')).toEqual([])
+    expect(said('<div style="display: none"><br>secret</div>\n')).toEqual([])
+    expect(said('<div title="hidden">w1</div>\n')).toEqual(['w1'])
+    expect(said('<dialog open>w1</dialog>\n')).toEqual(['w1'])
+  })
+
+  test('an element with no end passes over nothing after it, in a line', () => {
+    const line = (source: string) => {
+      const [first] = documentOf(source, 'n').blocks
+      return first?.kind === 'paragraph' ? words(first.spans) : null
+    }
+    expect(line('see <embed src="x.pdf"> these words stay\n')).toBe('see  these words stay')
+    expect(line('pic <img hidden src="x.png"> words after\n')).toBe('pic  words after')
+    expect(line('w1 <span hidden>secret</span> w2\n')).toBe('w1  w2')
+  })
+
+  test('a tag is read to its end as a browser reads it, a stray < in it or not', () => {
+    for (const hidden of [
+      '<div hidden title=a<b>secret</div>',
+      '<div style="display:none" a<b>secret</div>',
+      '<script x<y>alert(1)</script>',
+      '<style a<b>.x{}</style>',
+      '<dialog x<y>closed</dialog>',
+    ]) {
+      expect(said(`${hidden}\n`), hidden).toEqual([])
+    }
+    expect(said('<div <p>w1</p>\n')).toEqual(['w1'])
+  })
+
+  test('words after the last tag stay, and a comment that never closes goes', () => {
+    expect(said('<div>w1</div>w2 <a b\n')).toEqual(['w1', 'w2 <a b'])
+    expect(said('<div>w1</div><!-- w2 > w3\n')).toEqual(['w1'])
+  })
+
+  test('reads the entities a note holds', () => {
+    expect(said('<p>f&uuml;r &mdash; &euro; &copy; &hellip; &#252; &#xfc; &nope;</p>\n')).toEqual([
+      'für \u2014 € © … ü ü &nope;',
+    ])
+  })
+
+  test('says nothing of what never shows', () => {
+    expect(said('<script>let a = 1</script>\n')).toEqual([])
+    expect(said('<style>p { color: red }</style>\n')).toEqual([])
+    expect(said('<!-- a note -->\n')).toEqual([])
+    expect(said('<div title="a > b"></div>\n')).toEqual([])
+    expect(said('<div><style>x</style>w1</div>\n')).toEqual(['w1'])
+    expect(said('<img src="a.png">\n')).toEqual([])
+  })
+
+  test('a page break is still one, and adds no words', () => {
+    const { blocks } = documentOf('<div style="page-break-after: always"></div>\n', 'Note.md')
+    expect(blocks).toEqual([{ kind: 'break' }])
+  })
+
+  test('a line break in a line is one, in a table cell too', () => {
+    expect(said('w1<br>w2\n')).toEqual(['w1\nw2'])
+    expect(said('w1<br/>w2 <b>w3</b>\n')).toEqual(['w1\nw2 w3'])
+    const table = documentOf('| a |\n| --- |\n| w1<br>w2 |\n', 'Note.md').blocks[0]
+    expect(table?.kind === 'table' && table.rows[0]?.[0]?.map((one) => one.text).join('')).toBe(
+      'w1\nw2',
+    )
+  })
+})
+
 describe('the document a note comes to', () => {
   test('takes its title, author, language and date from the front matter', () => {
     expect(doc.title).toBe('Export corpus')
@@ -361,5 +457,12 @@ describe('naming the document', () => {
     expect(documentOf('# Head\n', 'File.md').named).toBe(true)
     expect(documentOf('just words\n', 'File.md').named).toBe(false)
     expect(documentOf('just words\n', 'File.md').title).toBe('File')
+  })
+})
+
+describe('a title from the file’s name', () => {
+  test('keeps a dot that is no ending', () => {
+    expect(titleOf('words\n', 'v1.2 plan')).toBe('v1.2 plan')
+    expect(titleOf('words\n', 'v1.2 plan.md')).toBe('v1.2 plan')
   })
 })

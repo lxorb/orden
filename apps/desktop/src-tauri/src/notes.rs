@@ -58,7 +58,23 @@ pub fn read_note(app: AppHandle, path: String) -> Result<String, String> {
 /// opened anything. See `MOST_NOTE_BYTES`.
 pub fn words_of(target: &Path) -> Result<String, String> {
     let bytes = at_most(target, MOST_NOTE_BYTES)?.ok_or(TOO_LARGE)?;
-    String::from_utf8(bytes).map_err(|error| cannot("read", target, &error))
+    String::from_utf8(bytes)
+        .map(unmarked)
+        .map_err(|error| cannot("read", target, &error))
+}
+
+/// The byte order mark a file saved "UTF-8 with BOM" opens with: Notepad's, `PowerShell`'s.
+const MARK: char = '\u{feff}';
+
+/// A file's words without its mark, which is no character of the note's. This is the one
+/// place it goes, where a note's text comes off the disk, so the renderer, the editor's
+/// grammar and every walk of a note read `# Title` on the first line as the heading it
+/// is; `as_written` puts it back, as it does the line endings.
+fn unmarked(words: String) -> String {
+    match words.strip_prefix(MARK) {
+        Some(rest) => rest.to_owned(),
+        None => words,
+    }
 }
 
 /// The words of a note and what its file says about itself, its size and times, off
@@ -67,7 +83,7 @@ pub fn words_of(target: &Path) -> Result<String, String> {
 pub fn words_stamped(target: &Path) -> Result<(String, fs::Metadata), String> {
     let (bytes, meta) = at_most_stamped(target, MOST_NOTE_BYTES)?.ok_or(TOO_LARGE)?;
     let words = String::from_utf8(bytes).map_err(|error| cannot("read", target, &error))?;
-    Ok((words, meta))
+    Ok((unmarked(words), meta))
 }
 
 /// Writes a note whole into the file that is there, so a crash mid-write can never
@@ -79,11 +95,17 @@ pub fn words_stamped(target: &Path) -> Result<(String, fs::Metadata), String> {
 ///
 /// The line endings the file already had are kept; see `as_written`.
 #[tauri::command(async)]
-pub fn write_note(app: AppHandle, path: String, content: String) -> Result<(), String> {
+pub fn write_note(
+    app: AppHandle,
+    path: String,
+    content: String,
+    arrived: Option<bool>,
+) -> Result<(), String> {
     let target = chosen(&app, &path)?;
     // A note made in a space is held to a name every machine can hold (#477); one already
-    // there, and a file outside the spaces, are written as they are.
-    if !target.exists() && target.starts_with(spaces_dir(&app)?) {
+    // there, and a file outside the spaces, are written as they are. So is one sync brings
+    // under the name it has on the account, where this platform can hold it.
+    if !may_arrive(arrived) && !target.exists() && target.starts_with(spaces_dir(&app)?) {
         named_for_every_machine(&target)?;
     }
     note_written(&target, &path, &content)
@@ -111,13 +133,29 @@ fn note_written(target: &Path, shown: &str, content: &str) -> Result<(), String>
 /// No setting. There is no answer here anybody could want other than "the way it
 /// already was".
 fn as_written(target: &Path, content: &str) -> String {
-    if !crlf(target) {
-        return content.to_owned();
-    }
+    let body = if crlf(target) {
+        // Only the newlines that stand alone: text that already carries `\r\n`, which
+        // a paste can, must not become `\r\r\n`.
+        content.replace("\r\n", "\n").replace('\n', "\r\n")
+    } else {
+        content.to_owned()
+    };
 
-    // Only the newlines that stand alone: text that already carries `\r\n`, which
-    // a paste can, must not become `\r\r\n`.
-    content.replace("\r\n", "\n").replace('\n', "\r\n")
+    // The mark the file opened with, which was taken off when it was read; see `unmarked`.
+    if marked(target) && !body.starts_with(MARK) {
+        format!("{MARK}{body}")
+    } else {
+        body
+    }
+}
+
+/// Whether the file at `target` opens with a byte order mark.
+fn marked(target: &Path) -> bool {
+    let Ok(mut file) = fs::File::open(target) else {
+        return false;
+    };
+    let mut head = [0_u8; 3];
+    file.read_exact(&mut head).is_ok() && head == [0xEF, 0xBB, 0xBF]
 }
 
 /// Whether the file at `target` uses `\r\n`, judged by its first line ending. A
@@ -221,18 +259,37 @@ pub fn rename_note(
     to: String,
     hold: Option<bool>,
     alone: Option<bool>,
+    arrived: Option<bool>,
 ) -> Result<(), String> {
     let source = in_spaces(&app, &from)?;
     let target = in_spaces(&app, &to)?;
-    renamed(&source, &target, hold == Some(true), alone == Some(true))
+    renamed_as(
+        &source,
+        &target,
+        hold == Some(true),
+        alone == Some(true),
+        may_arrive(arrived),
+    )
 }
 
 /// `rename_note` past its gate, which wants an app around it.
+#[cfg(test)]
 fn renamed(source: &Path, target: &Path, hold: bool, alone: bool) -> Result<(), String> {
+    renamed_as(source, target, hold, alone, false)
+}
+
+/// `renamed`, `arrived` saying the new name is the account's rather than the reader's.
+fn renamed_as(
+    source: &Path,
+    target: &Path,
+    hold: bool,
+    alone: bool,
+    arrived: bool,
+) -> Result<(), String> {
     let respelling = respelled(source, target, same_entry);
     // A new name is held to what every machine can hold (#477); a move that keeps the
-    // name is not a new name.
-    if source.file_name() != target.file_name() {
+    // name is not a new name, and nor is the name a note arrived under.
+    if !arrived && source.file_name() != target.file_name() {
         named_for_every_machine(target)?;
     }
 
@@ -410,8 +467,11 @@ fn copied(source: &Path, target: &Path) -> Result<(), String> {
 
 /// Makes a folder inside a space, and every folder above it.
 #[tauri::command(async)]
-pub fn create_folder(app: AppHandle, path: String) -> Result<(), String> {
+pub fn create_folder(app: AppHandle, path: String, arrived: Option<bool>) -> Result<(), String> {
     let target = in_spaces(&app, &path)?;
+    if may_arrive(arrived) {
+        return made(&target);
+    }
     folder_made(&target)
 }
 
@@ -473,6 +533,43 @@ pub struct Stamp {
 #[tauri::command(async)]
 pub fn file_stamp(app: AppHandle, path: String) -> Result<Option<Stamp>, String> {
     Ok(stamp_of(&openable(&app, &path)?))
+}
+
+/// Whether a name's only fault is that Windows keeps it, for a note sync brings: "a note that
+/// arrived under one is still written and moved" (`named_for_every_machine`), and nothing
+/// anybody wrote is lost for the name it came with. Not on Windows, which cannot hold it and
+/// where the engine spells it otherwise first.
+fn may_arrive(arrived: Option<bool>) -> bool {
+    arrived == Some(true) && !cfg!(windows)
+}
+
+/// Whether anything is at a path in a space, or nobody could look: sync's question before it
+/// reads a file's going as a delete. No permission, or a network drive away, says nothing is
+/// known to be gone. `file_stamp` answers null for those, for callers who only want a stamp.
+#[tauri::command(async)]
+pub fn file_there(app: AppHandle, path: String) -> Result<bool, String> {
+    Ok(there_or_unsure(&openable(&app, &path)?))
+}
+
+fn there_or_unsure(target: &Path) -> bool {
+    match fs::symlink_metadata(target) {
+        Ok(_) => true,
+        Err(error) => !crate::space_watch::says_gone(&error),
+    }
+}
+
+/// Whether a note that is not there is in iCloud all the same; see `icloud::evicted`.
+#[tauri::command(async)]
+pub fn note_evicted(app: AppHandle, path: String) -> Result<bool, String> {
+    let target = openable(&app, &path)?;
+    #[cfg(target_os = "macos")]
+    return Ok(icloud::evicted(&target));
+    #[cfg(not(target_os = "macos"))]
+    {
+        // Only a Mac leaves these.
+        let _ = target;
+        Ok(false)
+    }
 }
 
 /// Whether anything at all - a file, a folder, a link - is at a path the reader
@@ -540,6 +637,54 @@ mod tests {
 
     fn write_note(path: String, content: String) -> Result<(), String> {
         super::note_written(Path::new(&path), &path, &content)
+    }
+
+    #[test]
+    fn a_name_windows_keeps_lands_when_it_arrived_and_not_when_it_is_new() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let from = dir.path().join("plain.md");
+        fs::write(&from, "words").expect("the file");
+        let to = dir.path().join("Con.md");
+
+        assert!(super::renamed(&from, &to, false, false).is_err());
+        assert!(!super::may_arrive(None));
+        if cfg!(windows) {
+            assert!(!super::may_arrive(Some(true)));
+        } else {
+            assert!(super::may_arrive(Some(true)));
+            super::renamed_as(&from, &to, false, false, true).expect("it arrived under that name");
+            assert!(to.exists());
+        }
+    }
+
+    #[test]
+    fn a_path_nobody_could_look_at_is_not_gone() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let file = dir.path().join("note.md");
+        assert!(!super::there_or_unsure(&file));
+        fs::write(&file, b"words").expect("the file");
+        assert!(super::there_or_unsure(&file));
+        assert!(
+            !super::there_or_unsure(&file.join("under.md")),
+            "a file where a folder was is gone too"
+        );
+        assert!(
+            !super::there_or_unsure(&dir.path().join("x".repeat(300))),
+            "a name no disk holds is nothing there"
+        );
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let shut = dir.path().join("shut");
+            fs::create_dir(&shut).expect("a folder");
+            fs::set_permissions(&shut, fs::Permissions::from_mode(0o000)).expect("locked");
+            // Root reads through permissions, and then this says nothing.
+            if fs::read_dir(&shut).is_err() {
+                assert!(super::there_or_unsure(&shut.join("note.md")));
+            }
+            fs::set_permissions(&shut, fs::Permissions::from_mode(0o755)).expect("opened");
+        }
     }
 
     fn file_stamp(path: &str) -> Option<Stamp> {
@@ -825,6 +970,43 @@ mod tests {
             fs::read(&target).expect("the file back"),
             b"one\r\ntwo!\r\n"
         );
+    }
+
+    /// A file saved "UTF-8 with BOM": the note's words start past the mark, and a save
+    /// changes the file by what was typed and nothing else.
+    #[test]
+    fn reads_a_note_past_its_mark_and_writes_the_mark_back() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let target = path(&dir, "notepad.md");
+
+        fs::write(&target, b"\xEF\xBB\xBF# Title\r\nwords\r\n").expect("a marked file");
+        let read = super::words_of(std::path::Path::new(&target)).expect("the words");
+        assert_eq!(read, "# Title\r\nwords\r\n");
+        assert_eq!(
+            super::words_stamped(std::path::Path::new(&target))
+                .expect("the words")
+                .0,
+            "# Title\r\nwords\r\n"
+        );
+
+        write_note(target.clone(), "# Title\nwords!\n".to_string()).expect("the write to land");
+        assert_eq!(
+            fs::read(&target).expect("the file back"),
+            b"\xEF\xBB\xBF# Title\r\nwords!\r\n"
+        );
+    }
+
+    #[test]
+    fn gives_a_file_with_no_mark_none() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let target = path(&dir, "plain.md");
+
+        write_note(target.clone(), "one\n".to_string()).expect("a new note");
+        write_note(target.clone(), "two\n".to_string()).expect("a second write");
+        assert_eq!(fs::read(&target).expect("the file back"), b"two\n");
+        fs::write(&target, b"\xEF\xBB").expect("a file too short for one");
+        write_note(target.clone(), "three\n".to_string()).expect("a third write");
+        assert_eq!(fs::read(&target).expect("the file back"), b"three\n");
     }
 
     #[test]

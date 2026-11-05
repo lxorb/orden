@@ -1,5 +1,5 @@
 /** Reminders pushed from here, so a phone that has not opened Orden since a task was
- *  written elsewhere still rings (docs/tasks.md 5.10 and decision 5).
+ *  written elsewhere can ring (docs/tasks.md 5.10 and decision 5).
  *
  *  **Kept from the notes as they arrive.** Every note is written through one place
  *  (`saveNote` and the two that make a note, notes.ts), and each hands its words here:
@@ -9,13 +9,17 @@
  *  account with a device to push to, so a save costs nothing for everybody else.
  *
  *  **Sent at the minute** by the cron each minute (`sendDue`): each reminder due is
- *  claimed once, pushed to every target of its account, and let go a day later. A
+ *  claimed once, pushed to every target of its account, and let go a day later. One no
+ *  service took is tried again after a wait, a few times (`MOST_TRIES`). A
  *  reminder in a note deleted since, or of a space deleted since, is not sent.
  *
- *  The id is the one every device makes for the same reminder, so a phone that set the
- *  alarm itself knows this push and stays quiet; see Reminders.kt. */
+ *  The id is the one every device makes for the same reminder, so a phone could tell this
+ *  push from an alarm it set itself. None does yet: the Android app has no FCM receiver and
+ *  nothing calls `Reminders.known`, so a push there rings nothing and nothing is kept quiet
+ *  by it. See fcm.ts, Reminders.kt. */
 
 import { taskHash } from '@orden/bases'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { readTask } from '@orden/markdown/task-line'
 import { momentOf, plainWords, reminderId, remindTimes } from '@orden/markdown/task-reminders'
 import type { Env } from '../types'
@@ -34,6 +38,14 @@ const AT_ONCE = 200
 
 /** How long a reminder is kept after its minute, sent or not. */
 const KEPT_FOR = 86_400_000
+
+/** How long after a push no service took it is tried again, twice as long each time. */
+export const TRY_AGAIN_AFTER = 300_000
+
+/** How many times one reminder is pushed before it is given up on: at its minute and five,
+ *  fifteen and thirty-five minutes after, which is long enough for a service to come back
+ *  and short of a ring nobody can use. */
+export const MOST_TRIES = 4
 
 /** A note as this reads it. */
 interface Saved {
@@ -57,11 +69,8 @@ interface Kept {
 function taskLines(content: string): { line: number; text: string }[] {
   const lines = content.split(/\r?\n/)
   const found: { line: number; text: string }[] = []
-  let at = 0
-  if (lines[0] === '---') {
-    const close = lines.findIndex((one, index) => index > 0 && (one === '---' || one === '...'))
-    if (close > 0) at = close + 1
-  }
+  const block = frontMatterBlock(content)
+  let at = block ? content.slice(0, block.close).split('\n').length : 0
   let fence: string | null = null
   for (; at < lines.length; at++) {
     const line = lines[at] ?? ''
@@ -149,13 +158,17 @@ export async function keepReminders(env: Env, note: Saved, content: string, now 
   // between the minute and the cron took the reminder away unsent (#458). Only one the
   // note had already kept, and only while its task still asks for it: a reminder
   // written for a time already past is not rung late.
-  const before = await env.DB.prepare('select id, sent_at from push_reminders where note_id = ?')
+  const before = await env.DB.prepare(
+    'select id, sent_at, tries, retry_at from push_reminders where note_id = ?',
+  )
     .bind(note.id)
-    .all<{ id: string; sent_at: number | null }>()
+    .all<{ id: string; sent_at: number | null; tries: number; retry_at: number | null }>()
   const sentAt = new Map(
     before.results.flatMap((one) => (one.sent_at === null ? [] : [[one.id, one.sent_at] as const])),
   )
   const waiting = new Set(before.results.filter((one) => one.sent_at === null).map((one) => one.id))
+  // And one waiting to be tried again keeps its wait: typing does not push it sooner.
+  const tried = new Map(before.results.map((one) => [one.id, one]))
 
   const kept = remindersIn(
     content,
@@ -172,8 +185,9 @@ export async function keepReminders(env: Env, note: Saved, content: string, now 
     ...kept.map((one) =>
       env.DB.prepare(
         `insert into push_reminders
-           (note_id, id, user_id, space_id, at, title, body, path, hash, line, sent_at)
-         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           (note_id, id, user_id, space_id, at, title, body, path, hash, line, sent_at,
+            tries, retry_at)
+         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).bind(
         note.id,
         one.id,
@@ -186,6 +200,8 @@ export async function keepReminders(env: Env, note: Saved, content: string, now 
         one.hash,
         one.line,
         sentAt.get(one.id) ?? null,
+        tried.get(one.id)?.tries ?? 0,
+        tried.get(one.id)?.retry_at ?? null,
       ),
     ),
   ])
@@ -203,6 +219,7 @@ interface Due {
   path: string
   hash: string
   line: number
+  tries: number
 }
 
 /** And takes them away again, for a note whose words have gone for good: a reminder
@@ -222,14 +239,16 @@ export async function sendDue(
     .bind(now - KEPT_FOR)
     .run()
 
+  // One not tried yet goes before one being tried again, so a service that is down for
+  // some holds up nobody else's.
   const { results: due } = await env.DB.prepare(
-    `select r.note_id, r.id, r.user_id, r.at, r.title, r.body, r.path, r.hash, r.line,
+    `select r.note_id, r.id, r.user_id, r.at, r.title, r.body, r.path, r.hash, r.line, r.tries,
             s.name as space
        from push_reminders r
        join notes n on n.id = r.note_id and n.deleted = 0
        join spaces s on s.id = r.space_id and s.deleted = 0
-      where r.sent_at is null and r.at <= ?
-      order by r.at limit ?`,
+      where r.sent_at is null and r.at <= ?1 and coalesce(r.retry_at, 0) <= ?1
+      order by r.retry_at is not null, r.at limit ?2`,
   )
     .bind(now, AT_ONCE)
     .all<Due>()
@@ -276,7 +295,26 @@ export async function sendDue(
     const delivered = await Promise.all(
       theirs.map((target) => push(env, target, message, now, send)),
     )
-    if (delivered.includes('sent')) sent++
+    if (delivered.includes('sent')) {
+      sent++
+    } else if (
+      delivered.includes('busy') &&
+      !delivered.includes('failed') &&
+      one.tries + 1 < MOST_TRIES
+    ) {
+      // This run's claim let go of for a later one, only where every device that was asked
+      // answered that it did not take it, so no phone that rang rings again: one that
+      // failed beside one that rang stays without. Nothing on a device tells a repeat
+      // apart yet: `topic` replaces only a push still waiting, `apns-collapse-id` replaces
+      // the one shown, FCM has neither, and nothing calls `Reminders.known` for a push. So
+      // a connection lost after a service took the push can ring twice.
+      await env.DB.prepare(
+        `update push_reminders set sent_at = null, tries = ?, retry_at = ?
+          where note_id = ? and id = ? and sent_at = ?`,
+      )
+        .bind(one.tries + 1, now + TRY_AGAIN_AFTER * 2 ** one.tries, one.note_id, one.id, now)
+        .run()
+    }
   }
   return sent
 }

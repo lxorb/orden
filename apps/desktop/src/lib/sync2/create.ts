@@ -213,19 +213,33 @@ export function moved(core: Core, space: SpaceState, from: string, to: string): 
   const parent = folderFor(core, space, folderOf(to), changes)
   // Everything under it is where it is now, before the op is shown.
   changes.push(...carried(space, from, to))
-  changes.push(...placing(core, space, entry, parent, nameOf(to)))
+  changes.push(...placing(core, space, entry, parent, keptName(space, entry, from, to)))
   space.changed()
   return changes
+}
+
+/** The name a move to `to` leaves an entry: moved and not renamed keeps the account's, which
+ *  a name this platform spells its own way here is not: `CON` on Windows would become `_CON`
+ *  on every device. */
+function keptName(space: SpaceState, entry: EntryRow, from: string, to: string): string {
+  const had = space.shown().entries.get(entry.id)?.name
+  return had !== undefined && nameOf(from) === nameOf(to) ? had : nameOf(to)
 }
 
 /** The op that puts an entry at `to`, shown at once, before its file is there: what
  *  the file list does is said before the disk has it (`moving` in engine.ts), so
  *  nothing the folder's watcher hears meanwhile is a guess. Where the file is stays as
- *  it was until `carried`. */
-export function intended(core: Core, space: SpaceState, entry: EntryRow, to: string): Change[] {
+ *  it was until `carried`. `name`: what it was called, for a move put back. */
+export function intended(
+  core: Core,
+  space: SpaceState,
+  entry: EntryRow,
+  to: string,
+  name = keptName(space, entry, entry.local_path, to),
+): Change[] {
   const changes: Change[] = []
   const parent = folderFor(core, space, folderOf(to), changes)
-  changes.push(...placing(core, space, entry, parent, nameOf(to)))
+  changes.push(...placing(core, space, entry, parent, name))
   space.changed()
   return changes
 }

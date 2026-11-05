@@ -755,6 +755,8 @@ export const tr: Dictionary = {
   '{done} of {total}': '{total} içinde {done}',
   'Sync failed': 'Eşitleme başarısız',
   '{name} could not be written.': '{name} yazılamadı.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} yazılamadı: dosyası okunamıyor. 64 MB’tan büyük ya da UTF-8 metin olmayabilir.',
   '{name} could not be read.': '{name} okunamadı.',
   'Text size': 'Metin boyutu',
   'Line spacing': 'Satır aralığı',
@@ -1541,6 +1543,7 @@ export const tr: Dictionary = {
   'The provider answered {status}.': 'Sağlayıcı {status} yanıtı verdi.',
   'Add an AI provider in Settings first.': 'Önce Ayarlar’da bir YZ sağlayıcısı ekleyin.',
   'The model did not answer.': 'Model yanıt vermedi.',
+  'The connection closed before the answer was finished.': 'Yanıt bitmeden bağlantı kapandı.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     '{plan} planınız {time} saatine kadar sınırında.',
@@ -2024,8 +2027,10 @@ export const tr: Dictionary = {
   'Send feedback': 'Geri bildirim gönder',
   'Describe the issue': 'Sorunu açıklayın',
   Sent: 'Gönderildi',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Bu rapor açıklamanızı, Orden sürümünü, platformunuzu ve uygulamanın son günlüğünü içerir. Notlarınızı asla içermez.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Bu rapor açıklamanızı, Orden sürümünü, platformunuzu ve son uygulama günlüğünü dosya yolları çıkarılmış olarak içerir.',
+  'Its space is archived': 'Alanı arşivlendi',
+  'Back as {name}': '{name} olarak geri döndü',
   'Send into the running answer': 'Süren yanıta gönder',
   'Stop the answer': 'Yanıtı durdur',
   'Open every step': 'Tüm adımları aç',
@@ -2109,6 +2114,8 @@ export const tr: Dictionary = {
     'Notlarını okuyor ve senin oturumunla geziniyor, bu yüzden bir sayfa onu notlarını dışarı göndermeye ikna etmeye çalışabilir.',
   Activity: 'Etkinlik',
   'Add a site': 'Site ekle',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Bu listedeki bir program sormadan çalışır ve o programın yapabildiği her şeyi yapabilir.',
   'Add a program': 'Program ekle',
   'Every space': 'Her alan',
   Sites: 'Siteler',
@@ -2540,6 +2547,7 @@ export const tr: Dictionary = {
   'No {property}': '{property} yok',
   '{card} moved to {group}': '{card}, {group} grubuna taşındı',
   'Not moved': 'Taşınmadı',
+  'Not undone': 'Geri alınmadı',
   Retry: 'Tekrar dene',
   Calculate: 'Hesapla',
   'Remove sort': 'Sıralamayı kaldır',
@@ -2818,6 +2826,8 @@ export const tr: Dictionary = {
   '{title}, running': '{title}, çalışıyor',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden artık yapay zekâ anahtarlarını Mac’in anahtar zincirinde tutmuyor; anahtar zinciri parolasını tekrar tekrar soruyordu. Anahtarlarınızı yeniden girin ve ChatGPT’ye bir kez daha oturum açın.',
+  'This PDF is locked by its owner': 'Bu PDF sahibi tarafından kilitlendi',
+  'Part of this could not be undone': 'Bunun bir kısmı geri alınamadı',
   'Add images': 'Görsel ekle',
   'Remove image': 'Görseli kaldır',
   'That is more than 4 images.': 'Bu, 4 görselden fazla.',

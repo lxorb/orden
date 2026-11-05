@@ -7,7 +7,9 @@
  *  forward is moving it down the array and nothing else. */
 
 import type { Canvas, CanvasNode } from './format'
-import { bounds, type Box, boxOf, dragged } from './geometry'
+import { reach } from './edits'
+import { bounds, type Box, boxOf } from './geometry'
+import { transformed } from './ink'
 
 /** The six ways a row of things can be lined up. Two axes, three places on
  *  each, which is every alignment anybody has ever wanted. */
@@ -48,9 +50,14 @@ function shifted(canvas: Canvas, moves: ReadonlyMap<string, { dx: number; dy: nu
 
   for (const [id, move] of moves) {
     if (!move.dx && !move.dy) continue
-    for (const carried of dragged(canvas, [id])) {
+    // What rounds is where the node lands, so its handwriting moves as far as it did.
+    const node = canvas.nodes.find((one) => one.id === id)
+    const whole = node
+      ? { dx: Math.round(node.x + move.dx) - node.x, dy: Math.round(node.y + move.dy) - node.y }
+      : move
+    for (const carried of reach(canvas, [id])) {
       // A card inside two frames that both moved would otherwise be moved twice.
-      if (!byId.has(carried)) byId.set(carried, move)
+      if (!byId.has(carried)) byId.set(carried, whole)
     }
   }
 
@@ -63,6 +70,12 @@ function shifted(canvas: Canvas, moves: ReadonlyMap<string, { dx: number; dy: nu
       return move
         ? { ...node, x: Math.round(node.x + move.dx), y: Math.round(node.y + move.dy) }
         : node
+    }),
+    ink: canvas.ink.map((stroke) => {
+      const move = byId.get(stroke.id)
+      return move
+        ? transformed(stroke, { ...move, sx: 1, sy: 1, turn: 0, about: { x: 0, y: 0 } })
+        : stroke
     }),
   }
 }

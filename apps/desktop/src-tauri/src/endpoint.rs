@@ -33,7 +33,7 @@
 //! command line, so neither build compiles this and the CLI says so rather than
 //! failing to connect; see docs/automation.md.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Write as _;
 use std::fs;
 use std::io::{Read, Write as _};
@@ -47,12 +47,13 @@ use tauri::{AppHandle, Emitter, Manager};
 
 use crate::paths::{config_dir, made, write_privately};
 
+/// How long a window has to take a request before another is asked. A page's listener
+/// answers in a moment unless its thread is held, and one held that long is not the one to
+/// wait for while another could answer.
+const TAKES: Duration = Duration::from_millis(1500);
+
 /// What the window hears a request on.
 const ASKED: &str = "nib://automation";
-
-/// The window that answers. A second window is a second view of the same notes,
-/// so the one the CLI drives is the one the app started with.
-const WINDOW: &str = "main";
 
 /// How much of a request is read. A note is the longest thing anybody sends, and
 /// this is the same ceiling a note has everywhere else.
@@ -128,30 +129,116 @@ struct Kept {
 #[derive(Default)]
 pub struct Waiting(
     Mutex<HashMap<u64, SyncSender<String>>>,
-    Mutex<bool>,
+    Mutex<HashSet<String>>,
     Condvar,
+    // Which window each request not yet taken was asked of.
+    Mutex<HashMap<u64, String>>,
+    // How many pages each window has started, for a request taken by one that has gone.
+    Mutex<HashMap<String, u64>>,
 );
 
 impl Waiting {
-    /// The window hears requests from now on.
-    fn listens(&self) {
+    /// This window hears requests from now on.
+    fn listens(&self, label: &str) {
         if let Ok(mut heard) = self.1.lock() {
-            *heard = true;
+            heard.insert(label.to_owned());
         }
         self.2.notify_all();
     }
 
-    /// Whether the window hears requests, waiting at most `patience` for it to start.
-    fn heard_within(&self, patience: Duration) -> bool {
-        self.1
+    /// A page of this window has started and hears requests.
+    fn page_started(&self, label: &str) {
+        if let Ok(mut pages) = self.4.lock() {
+            *pages.entry(label.to_owned()).or_default() += 1;
+        }
+        self.listens(label);
+    }
+
+    /// Which page of this window is up.
+    fn page_of(&self, label: &str) -> u64 {
+        self.4
             .lock()
-            .ok()
-            .and_then(|heard| {
-                self.2
-                    .wait_timeout_while(heard, patience, |heard| !*heard)
-                    .ok()
-            })
-            .is_some_and(|(heard, _)| *heard)
+            .map_or(0, |pages| pages.get(label).copied().unwrap_or_default())
+    }
+
+    /// A request is on its way to this window.
+    fn ask_of(&self, id: u64, label: &str) {
+        if let Ok(mut asked) = self.3.lock() {
+            asked.insert(id, label.to_owned());
+        }
+    }
+
+    /// The window takes a request, which only the one asked may, once: whatever it answers
+    /// is the answer. Whichever way that goes the window has shown it hears.
+    fn claim(&self, id: u64, label: &str) -> bool {
+        self.listens(label);
+        let Ok(mut asked) = self.3.lock() else {
+            return false;
+        };
+        if asked.get(&id).is_some_and(|one| one == label) {
+            asked.remove(&id);
+            self.2.notify_all();
+            return true;
+        }
+        false
+    }
+
+    /// Stops waiting for a window to take a request: true where it already had.
+    fn gave_up(&self, id: u64) -> bool {
+        self.3
+            .lock()
+            .map_or(true, |mut asked| asked.remove(&id).is_none())
+    }
+
+    /// Whether a request was taken within `patience`.
+    fn taken_within(&self, id: u64, patience: Duration) -> bool {
+        let deadline = Instant::now() + patience;
+        loop {
+            let Some(left) = deadline.checked_duration_since(Instant::now()) else {
+                return self.gave_up(id);
+            };
+            if self.3.lock().map_or(true, |asked| !asked.contains_key(&id)) {
+                return true;
+            }
+            std::thread::sleep(left.min(Duration::from_millis(5)));
+        }
+    }
+
+    /// This window hears nothing until it says so again: it has gone, or its page is
+    /// loading afresh, and an event sent to it now reaches nobody.
+    pub fn forget(&self, label: &str) {
+        if let Ok(mut heard) = self.1.lock() {
+            heard.remove(label);
+        }
+    }
+
+    /// Whether this window hears requests.
+    pub fn hears(&self, label: &str) -> bool {
+        self.1.lock().is_ok_and(|heard| heard.contains(label))
+    }
+
+    /// The window to ask, of those `windows` says are open, the first that listens;
+    /// waiting at most `patience` for one to start. A window still loading, or reloading,
+    /// is no reason to keep a caller waiting while another could answer.
+    fn listener_within(
+        &self,
+        patience: Duration,
+        windows: impl Fn() -> Vec<String>,
+    ) -> Option<String> {
+        let deadline = Instant::now() + patience;
+        let mut heard = self.1.lock().ok()?;
+        loop {
+            if let Some(found) = windows().into_iter().find(|one| heard.contains(one)) {
+                return Some(found);
+            }
+            let left = deadline.checked_duration_since(Instant::now())?;
+            // In short steps, as a window closing here says nothing to this wait.
+            heard = self
+                .2
+                .wait_timeout(heard, left.min(Duration::from_millis(250)))
+                .ok()?
+                .0;
+        }
     }
 }
 
@@ -204,8 +291,18 @@ pub fn start(app: &AppHandle) {
 
 /// The window saying it listens for requests; see `Waiting`.
 #[tauri::command]
-pub fn automation_listening(waiting: tauri::State<'_, Waiting>) {
-    waiting.listens();
+pub fn automation_listening(window: tauri::Window, waiting: tauri::State<'_, Waiting>) {
+    waiting.page_started(window.label());
+}
+
+/// The window taking a request, before it runs it; see `Waiting::claim`.
+#[tauri::command]
+pub fn automation_claim(
+    window: tauri::Window,
+    waiting: tauri::State<'_, Waiting>,
+    id: u64,
+) -> bool {
+    waiting.claim(id, window.label())
 }
 
 /// The window's answer to one request, handed back to whoever asked.
@@ -454,6 +551,18 @@ pub(crate) fn ask(
     }
 }
 
+/// The windows open, in the order they are asked in: the first window, then the rest by
+/// name, so a caller meets the same window from one call to the next.
+fn answering_order(app: &AppHandle) -> Vec<String> {
+    let mut labels: Vec<String> = crate::launch::document_windows(app)
+        .iter()
+        .map(|one| one.label().to_owned())
+        .filter(|one| !crate::stall::page_gone(one))
+        .collect();
+    labels.sort_by_key(|one| (one != "main", one.clone()));
+    labels
+}
+
 /// Hands the request to the window and waits for its answer.
 fn ask_the_window(app: &AppHandle, asked: &mut serde_json::Value) -> Result<String, String> {
     ask_the_window_within(app, asked, PATIENCE)
@@ -468,7 +577,7 @@ fn ask_the_window_within(
     // The window, not the webview window: a window with a page in a tab is not one
     // of those, and every request would be refused for as long as a website was
     // open. See web_tabs.rs.
-    if app.get_window(WINDOW).is_none() {
+    if crate::launch::document_windows(app).is_empty() {
         return Err("the app has no window open to ask".to_owned());
     }
 
@@ -482,9 +591,13 @@ fn ask_the_window_within(
     let (send, answered) = sync_channel::<String>(1);
     let waiting = app.state::<Waiting>();
     let deadline = Instant::now() + patience;
-    if !waiting.heard_within(patience) {
+    // The window that answers. A second window is a second view of the same notes, so the
+    // one the CLI drives is the one the app started with, or failing that one that listens.
+    // One by label, and start.ts hears on that window alone: a verb every window heard ran
+    // once in each.
+    let Some(window) = waiting.listener_within(patience, || answering_order(app)) else {
         return Err("the window is not listening yet".to_owned());
-    }
+    };
 
     {
         let Ok(mut held) = waiting.0.lock() else {
@@ -493,14 +606,12 @@ fn ask_the_window_within(
         held.insert(id, send);
     }
 
-    let outcome = app
-        .emit_to(WINDOW, ASKED, &*asked)
-        .map_err(|error| format!("the window could not be asked: {error}"))
-        .and_then(|()| {
-            answered
-                .recv_timeout(deadline.saturating_duration_since(Instant::now()))
-                .map_err(|_| "the window did not answer".to_owned())
-        });
+    let outcome = asked_of_one(app, &waiting, id, window, asked, deadline).and_then(|window| {
+        let page = waiting.page_of(&window);
+        awaited(&answered, deadline, || {
+            waiting.hears(&window) && waiting.page_of(&window) == page
+        })
+    });
 
     // However that went, nothing is left waiting: an entry per request that timed
     // out would be a map that only grows.
@@ -509,6 +620,63 @@ fn ask_the_window_within(
     }
 
     outcome
+}
+
+/// Sends a request to the windows in turn until one takes it, and answers which. A page that
+/// says nothing soon has no listener, whatever it last said, as a reload on some engines
+/// reports nothing: it is passed over and hears nothing more until it says so. A window only
+/// busy claims too late, finds the request gone, and runs nothing, so a verb runs once.
+fn asked_of_one(
+    app: &AppHandle,
+    waiting: &Waiting,
+    id: u64,
+    first: String,
+    asked: &serde_json::Value,
+    deadline: Instant,
+) -> Result<String, String> {
+    let mut window = first;
+    loop {
+        waiting.ask_of(id, &window);
+        app.emit_to(window.as_str(), ASKED, asked)
+            .map_err(|error| format!("the window could not be asked: {error}"))?;
+        let left = deadline.saturating_duration_since(Instant::now());
+        if waiting.taken_within(id, left.min(TAKES)) {
+            return Ok(window);
+        }
+        waiting.forget(&window);
+        let left = deadline.saturating_duration_since(Instant::now());
+        window = waiting
+            .listener_within(left, || answering_order(app))
+            .ok_or_else(|| "the window did not answer".to_owned())?;
+    }
+}
+
+/// The window's answer, or why there will be none: its page started loading afresh after
+/// it was asked, and whatever it had begun is gone with it. Said at once, since nothing
+/// more will come, and not asked of another window: a verb the page may already have run
+/// would run twice.
+fn awaited(
+    answered: &std::sync::mpsc::Receiver<String>,
+    deadline: Instant,
+    still_there: impl Fn() -> bool,
+) -> Result<String, String> {
+    use std::sync::mpsc::RecvTimeoutError;
+
+    loop {
+        let left = deadline.saturating_duration_since(Instant::now());
+        match answered.recv_timeout(left.min(Duration::from_millis(100))) {
+            Ok(said) => return Ok(said),
+            Err(RecvTimeoutError::Timeout) if left.is_zero() => {
+                return Err("the window did not answer".to_owned());
+            }
+            Err(RecvTimeoutError::Timeout) if still_there() => {}
+            Err(_) => {
+                return Err(
+                    "the window reloaded before it answered: look before asking again".to_owned(),
+                );
+            }
+        }
+    }
 }
 
 /// One answer, written and done with. The connection closes, which is what a
@@ -708,9 +876,11 @@ fn same_secret(said: Option<&str>, secret: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        as_hex, find, is_json, is_local, parse_head, read_request, reason, refused, same_secret,
-        Kept, Request, Waiting, MOST_BYTES, SECRET_BYTES,
+        as_hex, awaited, find, is_json, is_local, parse_head, read_request, reason, refused,
+        same_secret, Kept, Request, Waiting, MOST_BYTES, SECRET_BYTES,
     };
+    use std::sync::mpsc::sync_channel;
+    use std::time::{Duration, Instant};
 
     /// What the file says about who is answering on that port.
     ///
@@ -912,16 +1082,102 @@ mod tests {
     /// never listens for is refused once the patience is spent.
     #[test]
     fn a_request_before_the_window_listens_waits_for_it() {
+        let open = || vec!["main".to_owned()];
         let waiting = std::sync::Arc::new(Waiting::default());
-        assert!(!waiting.heard_within(std::time::Duration::from_millis(10)));
+        assert!(waiting
+            .listener_within(std::time::Duration::from_millis(10), open)
+            .is_none());
 
-        let asking = std::sync::Arc::clone(&waiting);
-        let asked =
-            std::thread::spawn(move || asking.heard_within(std::time::Duration::from_secs(30)));
-        std::thread::sleep(std::time::Duration::from_millis(50));
-        waiting.listens();
+        let asking = waiting.clone();
+        let asked = std::thread::spawn(move || {
+            asking.listener_within(std::time::Duration::from_secs(30), open)
+        });
+        waiting.listens("main");
 
-        assert!(asked.join().expect("the asking thread ends"));
-        assert!(waiting.heard_within(std::time::Duration::ZERO));
+        assert_eq!(asked.join().expect("asked").as_deref(), Some("main"));
+        assert_eq!(
+            waiting
+                .listener_within(std::time::Duration::ZERO, open)
+                .as_deref(),
+            Some("main")
+        );
+    }
+
+    /// A verb runs once: only the window asked may take it, once, and not after it was
+    /// given up on and asked of another. A window that claims anything is plainly alive.
+    #[test]
+    fn a_request_is_taken_once_by_the_window_it_is_asked_of() {
+        let waiting = Waiting::default();
+        waiting.ask_of(7, "main");
+        assert!(!waiting.claim(7, "nib-2"));
+        assert!(waiting.claim(7, "main"));
+        assert!(!waiting.claim(7, "main"));
+
+        waiting.ask_of(8, "main");
+        assert!(!waiting.gave_up(8), "still asked");
+        waiting.claim(8, "main");
+        assert!(waiting.gave_up(8), "taken in time");
+
+        waiting.ask_of(9, "main");
+        assert!(!waiting.gave_up(9));
+        waiting.forget("main");
+        assert!(!waiting.claim(9, "main"), "too late");
+        assert!(waiting.hears("main"), "but alive");
+    }
+
+    /// A page that says it has started is not the page that took the request.
+    #[test]
+    fn a_new_page_is_a_new_page() {
+        let waiting = Waiting::default();
+        waiting.page_started("main");
+        let page = waiting.page_of("main");
+        assert_eq!(waiting.page_of("main"), page);
+        waiting.claim(1, "main");
+        assert_eq!(waiting.page_of("main"), page, "a claim is no new page");
+        waiting.page_started("main");
+        assert_ne!(waiting.page_of("main"), page);
+    }
+
+    /// A page gone while it was asked is said at once, and an answer comes first.
+    #[test]
+    fn a_window_that_reloads_while_asked_is_not_waited_out() {
+        let later = Instant::now() + Duration::from_secs(30);
+        let (send, answered) = sync_channel::<String>(1);
+        let started = Instant::now();
+        assert!(awaited(&answered, later, || false)
+            .expect_err("no answer")
+            .contains("reloaded"));
+        assert!(started.elapsed() < Duration::from_secs(5));
+
+        send.send("said".to_owned()).expect("sent");
+        assert_eq!(awaited(&answered, later, || false).as_deref(), Ok("said"));
+        drop(send);
+    }
+
+    /// Per window: `main` reloading, or a new window still loading, sends nothing into a
+    /// page with no listener while another could answer.
+    #[test]
+    fn a_window_that_does_not_listen_is_passed_over_for_one_that_does() {
+        let open = || vec!["main".to_owned(), "nib-2".to_owned(), "nib-3".to_owned()];
+        let waiting = Waiting::default();
+        let now = std::time::Duration::ZERO;
+        waiting.listens("nib-2");
+        assert_eq!(waiting.listener_within(now, open).as_deref(), Some("nib-2"));
+
+        waiting.listens("main");
+        assert_eq!(waiting.listener_within(now, open).as_deref(), Some("main"));
+
+        // `main` loads its page afresh.
+        waiting.forget("main");
+        assert!(!waiting.hears("main"));
+        assert_eq!(waiting.listener_within(now, open).as_deref(), Some("nib-2"));
+
+        // A window that listened and has closed is not asked, whatever was left behind.
+        assert_eq!(
+            waiting
+                .listener_within(now, || vec!["main".to_owned()])
+                .as_deref(),
+            None
+        );
     }
 }

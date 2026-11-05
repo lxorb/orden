@@ -759,6 +759,8 @@ export const fil: Dictionary = {
   '{done} of {total}': '{done} ng {total}',
   'Sync failed': 'Nabigo ang sync',
   '{name} could not be written.': 'Hindi naisulat ang {name}.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    'Hindi naisulat ang {name}: hindi mabasa ang file nito. Maaaring lampas ito sa 64 MB o hindi UTF-8 na teksto.',
   '{name} could not be read.': 'Hindi nabasa ang {name}.',
   'Text size': 'Laki ng teksto',
   'Line spacing': 'Espasyo ng linya',
@@ -1564,6 +1566,8 @@ export const fil: Dictionary = {
   'The provider answered {status}.': 'Sumagot ang provider ng {status}.',
   'Add an AI provider in Settings first.': 'Magdagdag muna ng AI provider sa Mga setting.',
   'The model did not answer.': 'Hindi sumagot ang modelo.',
+  'The connection closed before the answer was finished.':
+    'Nagsara ang koneksyon bago natapos ang sagot.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'Naabot na ng iyong {plan} plan ang limitasyon hanggang {time}.',
@@ -2055,8 +2059,10 @@ export const fil: Dictionary = {
   'Send feedback': 'Magpadala ng feedback',
   'Describe the issue': 'Ilarawan ang problema',
   Sent: 'Naipadala',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Kasama sa ulat na ito ang iyong paglalarawan, ang bersyon ng Orden, ang iyong platform at ang kamakailang log ng app. Hindi kailanman kasama ang iyong mga tala.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Kasama sa ulat na ito ang iyong paglalarawan, bersyon ng Orden, iyong platform at ang kamakailang log ng app, nang wala ang mga path ng file.',
+  'Its space is archived': 'Naka-archive ang space nito',
+  'Back as {name}': 'Bumalik bilang {name}',
   'Send into the running answer': 'Ipadala sa tumatakbong sagot',
   'Stop the answer': 'Ihinto ang sagot',
   'Open every step': 'Buksan ang bawat hakbang',
@@ -2142,6 +2148,8 @@ export const fil: Dictionary = {
     'Binabasa nito ang iyong mga tala at nagba-browse na naka-sign in bilang ikaw, kaya maaaring subukan ng isang page na ipadala nito ang mga iyon palabas.',
   Activity: 'Aktibidad',
   'Add a site': 'Magdagdag ng site',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Tumatakbo nang hindi nagtatanong ang programa sa listahang ito, at magagawa nito ang lahat ng kaya ng programang iyon.',
   'Add a program': 'Magdagdag ng program',
   'Every space': 'Bawat espasyo',
   Sites: 'Mga site',
@@ -2573,6 +2581,7 @@ export const fil: Dictionary = {
   'No {property}': 'Walang {property}',
   '{card} moved to {group}': 'Nailipat ang {card} sa {group}',
   'Not moved': 'Hindi nailipat',
+  'Not undone': 'Hindi na-undo',
   Retry: 'Subukang muli',
   Calculate: 'Kalkulahin',
   'Remove sort': 'Alisin ang pagsunod-sunod',
@@ -2859,6 +2868,8 @@ export const fil: Dictionary = {
   '{title}, running': '{title}, tumatakbo',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Hindi na itinatago ng Orden ang mga AI key sa keychain ng Mac, na paulit-ulit na humihingi ng password nito. Ilagay muli ang iyong mga key at mag-sign in muli sa ChatGPT.',
+  'This PDF is locked by its owner': 'Naka-lock ng may-ari ang PDF na ito',
+  'Part of this could not be undone': 'Hindi na-undo ang bahagi nito',
   'Add images': 'Magdagdag ng mga larawan',
   'Remove image': 'Alisin ang larawan',
   'That is more than 4 images.': 'Lampas na iyan sa 4 na larawan.',

@@ -753,6 +753,8 @@ export const ps: Dictionary = {
   '{done} of {total}': '{done} له {total}',
   'Sync failed': 'همغږي پاتې راغله',
   '{name} could not be written.': '{name} ونه ليکل شو.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} ونه ليکل شو: د هغې فايل نه لوستل کېږي. کېدای شي له 64 MB لوی وي يا UTF-8 متن نه وي.',
   '{name} could not be read.': '{name} ونه لوستل شو.',
   'Text size': 'د متن کچه',
   'Line spacing': 'د کرښو واټن',
@@ -1539,6 +1541,8 @@ export const ps: Dictionary = {
   'Add an AI provider in Settings first.':
     'لومړی په امستنو کې د مصنوعي ځيرکتيا برابرونکی ورزيات کړئ.',
   'The model did not answer.': 'ماډل ځواب ونه ورکړ.',
+  'The connection closed before the answer was finished.':
+    'اتصال د ځواب له پای ته رسېدو مخکې بند شو.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'ستاسو {plan} پلان تر {time} پورې خپل حد ته رسېدلی.',
@@ -2014,8 +2018,10 @@ export const ps: Dictionary = {
   'Send feedback': 'نظر ولېږئ',
   'Describe the issue': 'ستونزه بیان کړئ',
   Sent: 'ولېږل شو',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'په دې راپور کې ستاسو تشریح، د Orden نسخه، ستاسو پلاتفورم او د اپ وروستی لاګ شامل دي. ستاسو یادښتونه هېڅکله نه.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'دا راپور ستاسو تشریح، د Orden نسخه، ستاسو پلیټفارم او د اپ وروستی لاګ لري، د فایل لارو پرته.',
+  'Its space is archived': 'د هغې ځای آرشیف شوی',
+  'Back as {name}': 'د {name} په نوم راستون شو',
   'Send into the running answer': 'روان ځواب ته لېږل',
   'Stop the answer': 'ځواب ودرول',
   'Open every step': 'ټول پړاوونه پرانیستل',
@@ -2100,6 +2106,8 @@ export const ps: Dictionary = {
     'ستاسو یادښتونه لولي او ستاسو په ننوتلو لټون کوي، نو یوه پاڼه کېدای شي هڅه وکړي چې یادښتونه بهر ولېږي.',
   Activity: 'فعالیت',
   'Add a site': 'سایټ زیات کړئ',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'په دې لیست کې پروګرام له پوښتنې پرته چلېږي، او هغه څه ټول کولی شي چې هغه پروګرام یې کولی شي.',
   'Add a program': 'پروګرام زیات کړئ',
   'Every space': 'هر ځای',
   Sites: 'سایټونه',
@@ -2529,6 +2537,7 @@ export const ps: Dictionary = {
   'No {property}': 'بې {property}',
   '{card} moved to {group}': '{card} {group} ته وخوځېد',
   'Not moved': 'ونه خوځېد',
+  'Not undone': 'بېرته نه شو',
   Retry: 'بیا هڅه وکړئ',
   Calculate: 'محاسبه',
   'Remove sort': 'ترتيب لرې کړئ',
@@ -2800,6 +2809,8 @@ export const ps: Dictionary = {
   '{title}, running': '{title}، روان دی',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden نور د AI کیلي د Mac په کیچین کې نه ساتي، چې تل یې پټنوم غوښته. خپلې کیلي بیا ولیکئ او یو ځل بیا ChatGPT ته ننوځئ.',
+  'This PDF is locked by its owner': 'دا PDF د خپل مالک لخوا قلف شوی دی',
+  'Part of this could not be undone': 'د دې یوه برخه بېرته نه شوه راګرځول',
   'Add images': 'انځورونه زیات کړئ',
   'Remove image': 'انځور لرې کړئ',
   'That is more than 4 images.': 'دا له 4 انځورونو زیات دي.',

@@ -3,6 +3,16 @@ import { favicon, isWebAddress, originKey, plainOrigin } from './address'
 import { meantBy, shownSite, shownUrl } from './idn'
 import { webAddress } from './typed'
 
+test('the app’s own origins are refused with a trailing dot too', () => {
+  for (const url of [
+    'http://tauri.localhost./',
+    'https://nib.localhost../',
+    'http://IPC.localhost./',
+  ]) {
+    expect(isWebAddress(url), url).toBe(false)
+  }
+})
+
 describe('what a web tab may open', () => {
   test('takes http and https', () => {
     expect(isWebAddress('https://example.com/a')).toBe(true)

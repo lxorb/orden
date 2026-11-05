@@ -31,6 +31,9 @@ export interface Disk {
   remove(path: string, kind: FileKind): Promise<void>
   mkdir(path: string): Promise<void>
   exists(path: string): Promise<boolean>
+  /** Whether a file that is not there is on a cloud's side all the same: its placeholder
+   *  is where it was (notes/icloud.rs). Never a delete. */
+  evicted(path: string): Promise<boolean>
 }
 
 /** The account: one request, answered with the envelope read back (still unknown until a
@@ -60,8 +63,9 @@ export interface World {
   /** Which platform's rules a name has to keep to on this disk. */
   platform: 'windows' | 'mac' | 'other'
   /** Everything in a space's folder, relative to its root with `/` between folders:
-   *  what a first v2 pass of a space matches against the account. */
-  list?(root: string): Promise<{ path: string; dir: boolean }[]>
+   *  what a first v2 pass of a space matches against the account. Null where it could
+   *  not be read, which says nothing about what is there. */
+  list?(root: string): Promise<{ path: string; dir: boolean }[] | null>
   /** The words a note had when they hashed to `hash`, from the account's versions, or
    *  null: the ancestor a v1 device's offline edits are merged against (section 11). */
   ancestor?(id: string, hash: string): Promise<string | null>

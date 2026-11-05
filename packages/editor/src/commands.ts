@@ -4,17 +4,21 @@ import {
   type EditorState,
   EditorSelection,
   type Line,
+  type SelectionRange,
   type StateCommand,
 } from '@codemirror/state'
+import { opensFrontMatter } from '@orden/markdown/front-matter'
 import { type Callout, calloutOf } from '@orden/markdown/callouts'
 import { closesFence } from '@orden/markdown/fences'
+import { blockIdOf } from '@orden/markdown/links'
 import { taskAt } from '@orden/markdown/tasks'
 import { EditorView } from '@codemirror/view'
 import { inCode } from './code'
+import { marksAcross } from './line-door'
 import { noteIndex } from './wikilink/notes'
 import { headingLevel } from './headings'
 import { showFrontMatter } from './live-preview/hidden-front-matter'
-import { enclosing } from './nodes'
+import { enclosing, enclosingNamed } from './nodes'
 
 /** Wraps the selection, or unwraps it when the markers are already there -
  *  so the same shortcut turns emphasis on and off.
@@ -23,7 +27,16 @@ import { enclosing } from './nodes'
  *  markers, as they do in Obsidian and Typora: Select All takes the break at the
  *  end of a note, and `**word` on one line with `**` on the next is nothing bold. */
 export function toggleWrap(before: string, after = before): StateCommand {
-  return ({ state, dispatch }) => {
+  const italic = before === '*' && after === '*'
+  const across = before === after ? marksAcross(before) : null
+
+  return (target) => {
+    const { state, dispatch } = target
+    // More than one line is a question of what those lines are; see marks.ts.
+    if (across && state.selection.ranges.some((range) => spansLines(state, range))) {
+      return across(target)
+    }
+
     const update = state.changeByRange((range) => {
       const { from, to } = inside(state, range.from, range.to)
       const doc = state.doc
@@ -31,8 +44,15 @@ export function toggleWrap(before: string, after = before): StateCommand {
       const leading = doc.sliceString(Math.max(0, from - before.length), from)
       const trailing = doc.sliceString(to, Math.min(doc.length, to + after.length))
 
+      // The star of `**word**` is half of bold's marker and not italic's: three stars
+      // are the ones that hold an italic.
+      const line = doc.lineAt(from)
+      const stars = italic
+        ? (/\*+$/u.exec(line.text.slice(0, from - line.from))?.[0].length ?? 0)
+        : 1
+
       // Markers sit just outside the selection.
-      if (leading === before && trailing === after) {
+      if (leading === before && trailing === after && stars % 2 === 1) {
         return {
           changes: [
             { from: from - before.length, to: from },
@@ -45,10 +65,12 @@ export function toggleWrap(before: string, after = before): StateCommand {
       const text = doc.sliceString(from, to)
 
       // Markers are part of the selection.
+      const held = italic ? (/^\*+/u.exec(text)?.[0].length ?? 0) : 1
       if (
         text.length >= before.length + after.length &&
         text.startsWith(before) &&
-        text.endsWith(after)
+        text.endsWith(after) &&
+        held % 2 === 1
       ) {
         return {
           changes: { from, to, insert: text.slice(before.length, text.length - after.length) },
@@ -67,15 +89,27 @@ export function toggleWrap(before: string, after = before): StateCommand {
   }
 }
 
+/** Whether a selection's words stand on more than one line. */
+function spansLines(state: EditorState, range: SelectionRange): boolean {
+  const { from, to } = inside(state, range.from, range.to)
+  return state.doc.lineAt(from).number !== state.doc.lineAt(to).number
+}
+
 /** A selection without the space at its edges, or as it is where that is all it
- *  holds. */
-function inside(state: EditorState, from: number, to: number): { from: number; to: number } {
+ *  holds, and without a block name at its end: `**a ^abc123**` names nothing. */
+export function inside(state: EditorState, from: number, to: number): { from: number; to: number } {
   const text = state.doc.sliceString(from, to)
   const kept = text.trim()
   if (!kept) return { from, to }
 
   const start = from + text.indexOf(kept)
-  return { from: start, to: start + kept.length }
+  const end = start + kept.length
+  const line = state.doc.lineAt(end)
+  const id = blockIdOf(line.text)
+  if (!id || end !== line.from + line.text.trimEnd().length) return { from: start, to: end }
+
+  const words = state.doc.sliceString(start, end - id.length - 1).trimEnd()
+  return words ? { from: start, to: start + words.length } : { from: start, to: end }
 }
 
 /** A run of whole lines, by number. */
@@ -94,7 +128,7 @@ export function linesOf(state: EditorState, from: number, to: number): Lines {
   return { first, last }
 }
 
-function selectedLines(state: Parameters<StateCommand>[0]['state']) {
+export function selectedLines(state: Parameters<StateCommand>[0]['state']) {
   const numbers = new Set<number>()
 
   for (const range of state.selection.ranges) {
@@ -132,16 +166,20 @@ export function setHeading(level: number): StateCommand {
     const already = level > 0 && lines.every((line) => headingOf(line.text).level === level)
     const insert = level && !already ? `${'#'.repeat(level)} ` : ''
 
-    const changes: ChangeSpec[] = lines.map((line) => ({
-      from: line.from,
-      to: line.from + headingOf(line.text).length,
-      insert,
-    }))
+    const changes: ChangeSpec[] = lines.map((line) => {
+      // A heading takes the place of a list marker: `## - item` is a heading with a
+      // dash in its words.
+      const item = insert ? (ITEM_MARKER.exec(line.text)?.[0].length ?? 0) : 0
+      return { from: line.from, to: line.from + (item || headingOf(line.text).length), insert }
+    })
 
     dispatch(state.update({ changes, userEvent: 'input' }))
     return true
   }
 }
+
+/** A list marker at the head of a line, and the box after it. */
+const ITEM_MARKER = /^\s*(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?/
 
 export function shiftHeading(delta: number): StateCommand {
   return ({ state, dispatch }) => {
@@ -341,21 +379,98 @@ export const toggleOrderedList: StateCommand = ({ state, dispatch }) => {
   return true
 }
 
-/** Inserts a block on its own lines, leaving the caret where you type next. */
-function insertBlock(build: () => { text: string; caret: number }): StateCommand {
+/** What a block comes to, and where in it the caret goes. */
+interface Block {
+  text: string
+  caret: number
+}
+
+/** What a block needs round it besides its own lines. */
+interface Room {
+  /** Wraps what is selected, rather than going below it. */
+  wrap?: (selected: string) => Block
+  /** A blank line above where words are: dashes under a line are its heading's underline,
+   *  and a line above a table is taken for its head. */
+  above?: boolean
+  /** A blank line below where words are: a line under a callout is more of it, and a line
+   *  under a table is a row of it. */
+  below?: boolean
+}
+
+/** A line whose words sit inside something: a list item, a quote, a heading, a row. */
+const STRUCTURED = /^\s*(?:[-*+]\s|\d+[.)]\s|>|#{1,6}\s|\|)/
+
+/** Whether the range takes a line of structure apart, leaving its marker behind empty. */
+function splitsStructure(state: EditorState, from: number, to: number): boolean {
+  const first = state.doc.lineAt(from)
+  const last = state.doc.lineAt(to)
+  if (from === to && from === first.from) return false
+
+  return (
+    (from > first.from && STRUCTURED.test(first.text)) ||
+    (to < last.to && STRUCTURED.test(last.text))
+  )
+}
+
+/** What a block's top needs to stand apart from what is above it at `at`. */
+function roomAbove(state: EditorState, at: number, blank: boolean): string {
+  const line = state.doc.lineAt(at)
+  if (at > line.from) return blank ? '\n\n' : '\n'
+  if (!blank || line.number === 1) return ''
+
+  return state.doc.line(line.number - 1).text.trim() ? '\n' : ''
+}
+
+/** What a block's foot needs to stand apart from what is below it at `at`. */
+function roomBelow(state: EditorState, at: number, text: string, blank: boolean): string {
+  const line = state.doc.lineAt(at)
+  if (state.sliceDoc(at, line.to) !== '') {
+    if (blank) return '\n\n'
+    return text.endsWith('\n') ? '' : '\n'
+  }
+  if (!blank || line.number === state.doc.lines) return ''
+
+  return state.doc.line(line.number + 1).text.trim() ? '\n' : ''
+}
+
+/** Blocks whose lines mean nothing apart. */
+const HOLDS_ITS_LINES: ReadonlySet<string> = new Set(['Table', 'FencedCode', 'BlockMath'])
+
+/** Inserts a block on its own lines, leaving the caret where you type next.
+ *
+ *  Words after the caret stay on a line of their own: on the closing line of a fence
+ *  they would close nothing, and every line below would read as code.
+ *
+ *  A selection is never written over. Whatever can hold words wraps them, as Quote does;
+ *  anything else goes below them. And a line of structure is never split: the block goes
+ *  below the whole of it. */
+function insertBlock(build: () => Block, room: Room = {}): StateCommand {
   return ({ state, dispatch }) => {
     const range = state.selection.main
-    const line = state.doc.lineAt(range.from)
-    const atLineStart = range.from === line.from && range.empty
+    // What holds its lines together goes on being one thing: a block never lands inside
+    // it, and a selection in it is not wrapped out of it.
+    const inTree = syntaxTree(state).resolveInner(range.to, -1)
+    const holder = enclosingNamed(inTree, HOLDS_ITS_LINES)
+    const quote = !holder && !room.wrap ? enclosingNamed(inTree, 'Blockquote') : null
+    const around = holder ?? quote
+    // A selection of the whole of it has nothing to take apart.
+    const whole = around && (around.from < range.from || around.to > range.to) ? around : null
+    const splits = !!whole || splitsStructure(state, range.from, range.to)
+    const wrap = splits ? undefined : room.wrap
+    const below = whole ? whole.to : splits ? state.doc.lineAt(range.to).to : range.to
 
-    const { text, caret } = build()
-    const prefix = atLineStart || !line.text ? '' : '\n'
-    const insert = prefix + text
+    const from = wrap ? range.from : below
+    // The line break ending a selection of whole lines is not a word to wrap.
+    const to = wrap && state.sliceDoc(from, below).endsWith('\n') ? below - 1 : below
+
+    const { text, caret } = wrap && from < to ? wrap(state.sliceDoc(from, to)) : build()
+    const prefix = roomAbove(state, from, !!room.above)
+    const insert = prefix + text + roomBelow(state, to, text, !!room.below)
 
     dispatch(
       state.update({
-        changes: { from: range.from, to: range.to, insert },
-        selection: { anchor: range.from + prefix.length + caret },
+        changes: { from, to, insert },
+        selection: { anchor: from + prefix.length + caret },
         scrollIntoView: true,
         userEvent: 'input',
       }),
@@ -364,7 +479,21 @@ function insertBlock(build: () => { text: string; caret: number }): StateCommand
   }
 }
 
-export const insertCodeFence = insertBlock(() => ({ text: '```\n\n```', caret: 3 }))
+/** A run of backticks that no line of `words` could close. */
+function fenceFor(words: string): string {
+  const longest = Math.max(
+    2,
+    ...words.split('\n').map((line) => /^ {0,3}(`+)/.exec(line)?.[1]?.length ?? 0),
+  )
+  return '`'.repeat(longest + 1)
+}
+
+export const insertCodeFence = insertBlock(() => ({ text: '```\n\n```', caret: 3 }), {
+  wrap: (selected) => {
+    const fence = fenceFor(selected)
+    return { text: `${fence}\n${selected}\n${fence}`, caret: fence.length }
+  },
+})
 
 /** A fence line: up to three spaces, then three or more backticks or tildes,
  *  then whatever names the language. A backtick fence may not have backticks
@@ -465,7 +594,9 @@ export const closeFence: StateCommand = ({ state, dispatch }) => {
   )
   return true
 }
-export const insertMathBlock = insertBlock(() => ({ text: '$$\n\n$$', caret: 3 }))
+export const insertMathBlock = insertBlock(() => ({ text: '$$\n\n$$', caret: 3 }), {
+  wrap: (selected) => ({ text: `$$\n${selected}\n$$`, caret: selected.length + 3 }),
+})
 
 /** A ` ```chart ` fence with a chart already in it.
  *
@@ -484,9 +615,11 @@ export const insertChart = insertBlock(() => ({
  *  Empty, unlike a chart: what goes in is a question in somebody's own words, and
  *  a question written for them would be a question to delete. The answer goes
  *  under the fence when it is asked; see ai/block.ts. */
-export const insertAiBlock = insertBlock(() => ({ text: '```ai\n\n```\n', caret: 7 }))
+export const insertAiBlock = insertBlock(() => ({ text: '```ai\n\n```\n', caret: 6 }))
 
-export const insertHorizontalRule = insertBlock(() => ({ text: '---\n', caret: 4 }))
+export const insertHorizontalRule = insertBlock(() => ({ text: '---\n', caret: 4 }), {
+  above: true,
+})
 
 /** A GitHub alert, which is the callout the renderer draws and the editor marks.
  *  `NOTE` because it is the one that says nothing beyond "read this"; the other
@@ -494,7 +627,16 @@ export const insertHorizontalRule = insertBlock(() => ({ text: '---\n', caret: 4
  *  sign written into every one of them would be a note full of punctuation nobody
  *  asked for; the two rows below are how one gets its sign without being typed by
  *  hand. See `callouts` in @orden/markdown. */
-export const insertCallout = insertBlock(() => ({ text: '> [!NOTE]\n> ', caret: 12 }))
+export const insertCallout = insertBlock(() => ({ text: '> [!NOTE]\n> ', caret: 12 }), {
+  below: true,
+  wrap: (selected) => {
+    const text = `> [!NOTE]\n${selected
+      .split('\n')
+      .map((line) => `> ${line}`)
+      .join('\n')}`
+    return { text, caret: text.length }
+  },
+})
 
 /** The callout the caret is in: its marker line, where in that line the brackets
  *  start, and what the line says.
@@ -573,7 +715,7 @@ export const insertToc = insertBlock(() => ({ text: '[toc]\n', caret: 6 }))
  *  somewhere invisible, would look like a command that did nothing. See
  *  hidden-front-matter.ts. */
 export const insertFrontMatter: StateCommand = ({ state, dispatch }) => {
-  if (state.doc.line(1).text.trim() === '---') {
+  if (opensFrontMatter(state.doc.toString())) {
     const inside = state.doc.line(Math.min(2, state.doc.lines))
     dispatch(
       state.update({
@@ -655,9 +797,10 @@ export const insertComment = toggleWrap('<!-- ', ' -->')
  *  the writer's last line into a heading and break nothing. See
  *  packages/markdown/src/slides.ts. */
 export const insertSlideBreak: StateCommand = ({ state, dispatch }) => {
-  const range = state.selection.main
-  const line = state.doc.lineAt(range.from)
-  const emptyHere = line.text.slice(0, range.from - line.from).trim() === ''
+  // Past a selection, which stays: no other block written from a menu takes words away.
+  const at = state.selection.main.to
+  const line = state.doc.lineAt(at)
+  const emptyHere = line.text.slice(0, at - line.from).trim() === ''
   const above = line.number > 1 ? state.doc.line(line.number - 1) : null
   const emptyAbove = above === null || above.text.trim() === ''
 
@@ -668,8 +811,8 @@ export const insertSlideBreak: StateCommand = ({ state, dispatch }) => {
 
   dispatch(
     state.update({
-      changes: { from: range.from, to: range.to, insert },
-      selection: { anchor: range.from + insert.length },
+      changes: { from: at, insert },
+      selection: { anchor: at + insert.length },
       scrollIntoView: true,
       userEvent: 'input',
     }),
@@ -691,25 +834,16 @@ export function insertTable(rows = 2, columns = 2): StateCommand {
     () => `| ${Array.from({ length: columns }, () => '   ').join(' | ')} |`,
   )
 
-  return insertBlock(() => ({ text: [header, divider, ...body].join('\n'), caret: 2 }))
-}
-
-const INLINE_MARKERS = /(\*\*|\*|~~|==|`|(?<![\p{L}\p{N}])__?|__?(?![\p{L}\p{N}]))/gu
-
-/** Strips inline markers from the selection - Typora's Clear Format. */
-export const clearFormatting: StateCommand = ({ state, dispatch }) => {
-  const update = state.changeByRange((range) => {
-    if (range.empty) return { range }
-
-    const text = state.doc.sliceString(range.from, range.to).replace(INLINE_MARKERS, '')
-    return {
-      changes: { from: range.from, to: range.to, insert: text },
-      range: EditorSelection.range(range.from, range.from + text.length),
-    }
+  const block = insertBlock(() => ({ text: [header, divider, ...body].join('\n'), caret: 2 }), {
+    above: true,
+    below: true,
   })
 
-  dispatch(state.update(update, { userEvent: 'input' }))
-  return true
+  // No table in a table: its rows would only break the one around it.
+  return (target) => {
+    const line = target.state.doc.lineAt(target.state.selection.main.head)
+    return /^\s*\|/.test(line.text) ? false : block(target)
+  }
 }
 
 /** Wraps the selection as a link, or with `!` as a picture, putting the caret in

@@ -69,6 +69,12 @@ const { appWorld } = await import('./app-world')
 describe("the browser's disk, as the v2 engine sees it", () => {
   const telling = {} as Parameters<typeof appWorld>[1]
 
+  test('says a listing it could not read, rather than an empty folder', async () => {
+    const world = appWorld(() => null, telling)
+
+    expect(await world.list?.('/s')).toBeNull()
+  })
+
   test('has a note that is there, and not one that is not', async () => {
     const { disk } = appWorld(() => null, telling)
 
@@ -138,6 +144,7 @@ describe('a PDF another device turned into its page note', () => {
     await disk.move('/s/X.pdf', '/s/X.pages.pdf', 'file')
 
     expect(renames.at(-1)).toEqual({
+      arrived: true,
       from: '/s/X.pdf',
       to: '/s/X.pages.pdf',
       alone: true,
@@ -154,7 +161,12 @@ describe('a PDF another device turned into its page note', () => {
 
     await disk.move('/s/Plan.md', '/s/Done.md', 'file')
 
-    expect(renames.at(-1)).toEqual({ from: '/s/Plan.md', to: '/s/Done.md', alone: true })
+    expect(renames.at(-1)).toEqual({
+      from: '/s/Plan.md',
+      to: '/s/Done.md',
+      alone: true,
+      arrived: true,
+    })
   })
 })
 
@@ -177,7 +189,7 @@ describe('a PDF another device renamed, with its highlights', () => {
     await disk.move('/s/A.pdf', '/s/B.pdf', 'file')
 
     expect(notes.get('/s/B.pdf.highlights.json')).toBe('{"version":1}')
-    expect(renames.at(-1)).toEqual({ from: '/s/A.pdf', to: '/s/B.pdf', alone: true })
+    expect(renames.at(-1)).toEqual({ from: '/s/A.pdf', to: '/s/B.pdf', alone: true, arrived: true })
   })
 })
 

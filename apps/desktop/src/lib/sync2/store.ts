@@ -388,14 +388,33 @@ export interface SyncStore {
   close(): Promise<void>
 }
 
-/** Opens an account's store in whichever build this is. */
-export async function openSyncStore(account: string): Promise<SyncStore> {
+/** Opens an account's store in whichever build this is. `leads` says this is for the one
+ *  engine of the device rather than a look at the device id: on a desktop the store stays
+ *  open between windows, so a window taking the engine over asks how the last one ended. */
+export async function openSyncStore(
+  account: string,
+  leads = false,
+  device?: string,
+): Promise<SyncStore> {
   if (isNative) {
     const { openNative } = await import('../native-sync-store')
-    return openNative(account)
+    return openNative(account, leads, device)
   }
   const { openWeb } = await import('../web/sync-store')
-  return openWeb(account)
+  return openWeb(account, device)
+}
+
+/** The device id an account's store keeps, read beside it: nothing is opened, closed or
+ *  marked, so it is safe whichever window's engine holds the store and leaves how the last
+ *  session ended as it was (`sync_store_device`; on the web, a look into its database).
+ *  Null before the account has a store here. */
+export async function deviceOfSyncStore(account: string): Promise<string | null> {
+  if (isNative) {
+    const { deviceNative } = await import('../native-sync-store')
+    return deviceNative(account)
+  }
+  const { deviceWeb } = await import('../web/sync-store')
+  return deviceWeb(account)
 }
 
 /** Deletes an account's store, as signing out does. */

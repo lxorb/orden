@@ -14,7 +14,15 @@ import { coverFigure, coverOf } from './cover'
 import { stripFrontMatter } from './front-matter'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
 import { htmlBlockCard, ownMarkup } from './html-block'
-import { isNoteTarget, slugify, withoutBlockIds } from './links'
+import {
+  blockAnchorsDrawn,
+  blockMarksOff,
+  blockIdsAnchored,
+  isNoteTarget,
+  sizedAlt,
+  slugify,
+  withoutBlockIds,
+} from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
 import { hashtags, type TagHref } from './tags'
 import { iframeCard, isIframeTag, splitIframe, webCard } from './web-embed'
@@ -64,6 +72,9 @@ export interface RenderOptions {
    *  leave it to the default. An export uses this to draw diagrams and to
    *  colour code, which need more than a renderer has. */
   code?: (code: string, language: string) => string | null
+  /** Whether a named block gets an id of `^` and its name, for a page a `[[#^name]]` link
+   *  is followed on. */
+  blockAnchors?: boolean
   /** Where a `[[wikilink]]` points on this page. Without it a wikilink renders
    *  as the words it showed, which is what an export wants: a document has no
    *  space around it to point into. */
@@ -321,11 +332,15 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
 
         // Through the text renderer, so markdown in the alt text comes out as
         // the words it stands for rather than as tags inside an attribute.
-        const alt = this.parser.parseInline(token.tokens, this.parser.textRenderer)
+        const { alt, size } = sizedAlt(
+          this.parser.parseInline(token.tokens, this.parser.textRenderer),
+        )
         const src = safeSrc(token.href) ? attributeUrl(token.href) : ''
         if (!src) return escape(alt)
 
         const attributes = [` src="${src}"`, ` alt="${escape(alt)}"`]
+        if (size) attributes.push(` width="${String(size.width)}"`)
+        if (size?.height) attributes.push(` height="${String(size.height)}"`)
         if (token.title) attributes.push(` title="${escape(token.title)}"`)
         return `<img${attributes.join('')}>`
       },
@@ -361,6 +376,14 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         return captioned(custom ?? defaults.code.call(this, token), captionIn(info))
       },
 
+      /** Words are escaped, whatever marked says of them. After an inline `<kbd>`, `<pre>`,
+       *  `<code>` or `<script>` it calls the text escaped already (`inRawBlock`), and that
+       *  text holds every tag marked turned away and a browser takes: it reached the page
+       *  past `html` below, and so past `escapeHtml` and `ownMarkup` both. */
+      text(token: Tokens.Text | Tokens.Escape) {
+        return defaults.text.call(this, 'escaped' in token ? { ...token, escaped: false } : token)
+      },
+
       /** Raw HTML, which is three different questions.
        *
        *  An `<iframe>` is a page somewhere else, and that answer is the same on
@@ -387,14 +410,17 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
        *  block in a frame of its own when pressed - never in the app - and in one
        *  that is not it was already escaped by the line above. See html-block.ts. */
       html(token: Tokens.HTML | Tokens.Tag) {
-        let text = token.text
+        // What is asked of a tag is asked of it as the page will have it, with no mark
+        // inside to split a word the checks look for.
+        const written = options.escapeHtml ? token.text : blockMarksOff(token.text)
+        let text = written
         let cards = ''
         while (isIframeTag(text)) {
           const { tag, rest } = splitIframe(text)
           cards += iframeCard(tag) ?? ''
           text = rest
         }
-        if (text !== token.text && !text.trim()) return cards
+        if (text !== written && !text.trim()) return cards
         if (options.escapeHtml) return cards + escape(text)
 
         return cards + (htmlBlockCard(text) ?? ownMarkup(text))
@@ -503,7 +529,97 @@ function inside(options: RenderOptions): RenderOptions {
   // And no banner: a cover is the top of the note it belongs to, not a picture
   // pushed into the middle of whichever note quotes it.
   delete rest.cover
+  delete rest.blockAnchors
   return rest
+}
+
+/** The page, or the words as they are for a note nested past what the parser's stack
+ *  can follow: `> ` four thousand times is eight kilobytes, and a note arrives from a
+ *  share. The stack is the only limit on that depth, so it is the overflow that says so. */
+/** A note with its block names left as marks where a page can hold one: the words of a
+ *  paragraph or a list item, a table's row, or a name on its own line under one of those.
+ *  Asked of the note as the parser reads it with the names gone, since a name is what
+ *  makes `--- ^x` a paragraph and `---` a rule. Anything else is a heading, whose words are
+ *  its id, a formula, a rule, a definition, raw HTML: drawn as if there were no name. */
+function anchored(words: string): string {
+  const cut = withoutComments(withoutBlockIds(words))
+  let tokens: Token[]
+  try {
+    tokens = lexMarkdown(cut)
+  } catch (error) {
+    if (!(error instanceof RangeError)) throw error
+    return withoutBlockIds(words)
+  }
+
+  /** What stands on each line: true where a mark can, the words of its leaves in a list or
+   *  a quote, where a formula or a fence may stand beside them. */
+  const lines: (boolean | Set<string>)[] = []
+  let above: boolean | Set<string> = false
+  const newlines = (text: string) => text.split('\n').length - 1
+  const read = cut.replace(/\r\n|\r/g, '\n')
+  let at = 0
+  let line = 0
+  for (const token of tokens) {
+    // By where its words are: the parser reads a CRLF as a newline, and a line it keeps no
+    // token for, a second definition of one name, can hold no mark, with the lines after
+    // it still the ones they are. A paragraph it joined across one is found by its first
+    // line, and what cannot be found says nothing rather than say it of the wrong line.
+    const whole = read.indexOf(token.raw, at)
+    const raw = whole === -1 ? (token.raw.split('\n')[0] ?? '') : token.raw
+    const from = whole === -1 ? read.indexOf(raw, at) : whole
+    if (from === -1) continue
+    line += newlines(read.slice(at, from))
+    while (lines.length < line) lines.push(false)
+    const here: boolean | Set<string> =
+      token.type === 'space'
+        ? above
+        : token.type === 'paragraph' || token.type === 'table'
+          ? true
+          : token.type === 'list' || token.type === 'blockquote'
+            ? leafLines(token)
+            : false
+    if (token.type !== 'space') above = here
+    // A token's last newline ends its line; a line the one before ended on is that one's.
+    const last = line + newlines(raw) - (raw.endsWith('\n') ? 1 : 0)
+    for (let one = lines.length; one <= last; one++) lines.push(here)
+    line += newlines(raw)
+    at = from + raw.length
+  }
+
+  return blockIdsAnchored(words, (line, kept) => {
+    const here = lines[line] ?? above
+    if (NO_ANCHOR.test(kept)) return false
+    if (typeof here === 'boolean') return here
+    const said = kept.trim()
+    return said === '' || [...here].some((one) => said.endsWith(one))
+  })
+}
+
+/** A callout's first line, whose words would be its title, and an abbreviation's. */
+const NO_ANCHOR = /^\s*(?:>\s*)*(?:\[!|\*\[)/
+
+/** The lines of words a list or a quote holds, however deep. */
+function leafLines(token: Token): Set<string> {
+  const out = new Set<string>()
+  const walk = (one: Token) => {
+    if (one.type === 'paragraph' || one.type === 'text') {
+      for (const line of one.raw.split('\n')) if (line.trim()) out.add(line.trim())
+      return
+    }
+    const inside = one as { tokens?: Token[]; items?: Token[] }
+    for (const child of inside.tokens ?? inside.items ?? []) walk(child)
+  }
+  walk(token)
+  return out
+}
+
+function parsedOrPlain(marked: Marked, body: string, breaks: boolean): string {
+  try {
+    return marked.parse(body, { async: false, breaks })
+  } catch (error) {
+    if (!(error instanceof RangeError)) throw error
+    return `<p>${escape(body)}</p>\n`
+  }
 }
 
 export function renderMarkdown(source: string, options: RenderOptions = {}): string {
@@ -521,12 +637,14 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
   // Front matter is metadata, a block's name is a marker and a comment is a note
   // to the writer; none of the three is a word of the note, so none of them
   // reaches the page. See comments.ts for why the comment goes before the parse.
-  const body = withoutComments(withoutBlockIds(stripFrontMatter(source)))
+  const words = stripFrontMatter(source)
+  const body = withoutComments(options.blockAnchors ? anchored(words) : withoutBlockIds(words))
   // `breaks` is asked for per parse rather than built into the renderer, so the
   // two shared ones above serve a deck as well as a document: marked merges a
   // call's options over the instance's and leaves the instance alone. A caller
   // that says nothing gets the reader's own answer; see `setHardBreaks`.
-  let html = marked.parse(body, { async: false, breaks: options.breaks ?? hardBreaks() })
+  let html = parsedOrPlain(marked, body, options.breaks ?? hardBreaks())
+  if (options.blockAnchors) html = blockAnchorsDrawn(html)
 
   html = markAbbreviations(html, collectAbbreviations(body))
 
@@ -653,7 +771,7 @@ function markAbbreviations(html: string, terms: Map<string, string>): string {
   }
 }
 
-export { withoutComments } from './comments'
+export { noteWithoutComments, withoutComments } from './comments'
 
 /** The ceiling a formula's own sizes are held to, which the editor's renderer
  *  needs as well: one number, so a note that will not fit the panel in the app

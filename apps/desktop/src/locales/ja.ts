@@ -747,6 +747,8 @@ export const ja: Dictionary = {
   '{done} of {total}': '{total} 件中 {done} 件',
   'Sync failed': '同期に失敗しました',
   '{name} could not be written.': '{name} を書き込めませんでした。',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} を書き込めませんでした: ファイルを読み取れません。64 MB を超えているか、UTF-8 のテキストではない可能性があります。',
   '{name} could not be read.': '{name} を読み込めませんでした。',
   'Text size': '文字サイズ',
   'Line spacing': '行間',
@@ -1519,6 +1521,7 @@ export const ja: Dictionary = {
   'The provider answered {status}.': 'プロバイダは {status} を返しました。',
   'Add an AI provider in Settings first.': 'まず設定で AI プロバイダを追加してください。',
   'The model did not answer.': 'モデルは応答しませんでした。',
+  'The connection closed before the answer was finished.': '回答が終わる前に接続が切れました。',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     '{plan} プランは {time} まで上限に達しています。',
@@ -2000,8 +2003,10 @@ export const ja: Dictionary = {
   'Send feedback': 'フィードバックを送信',
   'Describe the issue': '問題を説明してください',
   Sent: '送信しました',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'このレポートには、説明、Orden のバージョン、プラットフォーム、最近のアプリのログが含まれます。ノートの内容は含まれません。',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'このレポートには、説明、Orden のバージョン、プラットフォーム、最近のアプリのログが含まれます。ファイルのパスは取り除かれます。',
+  'Its space is archived': 'そのスペースはアーカイブされています',
+  'Back as {name}': '{name} として戻りました',
   'Send into the running answer': '実行中の回答に送る',
   'Stop the answer': '回答を停止',
   'Open every step': 'すべてのステップを開く',
@@ -2086,6 +2091,8 @@ export const ja: Dictionary = {
     'ノートを読み、あなたとしてログインしたまま閲覧するため、ページがノートを外部に送らせようとする可能性があります。',
   Activity: 'アクティビティ',
   'Add a site': 'サイトを追加',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'このリストのプログラムは確認なしで実行され、そのプログラムにできることはすべて行えます。',
   'Add a program': 'プログラムを追加',
   'Every space': 'すべてのスペース',
   Sites: 'サイト',
@@ -2509,6 +2516,7 @@ export const ja: Dictionary = {
   'No {property}': '{property} なし',
   '{card} moved to {group}': '{card} を {group} に移動しました',
   'Not moved': '移動できませんでした',
+  'Not undone': '元に戻せませんでした',
   Retry: '再試行',
   Calculate: '計算',
   'Remove sort': '並べ替えを解除',
@@ -2773,6 +2781,8 @@ export const ja: Dictionary = {
   '{title}, running': '{title}、実行中',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden は AI キーを Mac のキーチェーンに保存しなくなりました。キーチェーンがパスワードを何度も求めていたためです。キーをもう一度入力し、ChatGPT にもう一度サインインしてください。',
+  'This PDF is locked by its owner': 'このPDFは所有者によってロックされています',
+  'Part of this could not be undone': '一部を元に戻せませんでした',
   'Add images': '画像を追加',
   'Remove image': '画像を削除',
   'That is more than 4 images.': '4枚を超えています。',

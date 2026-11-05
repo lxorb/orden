@@ -13,6 +13,7 @@
 import { untrack } from 'svelte'
 import { accelerator } from '../accelerator'
 import { i18n } from '../i18n.svelte'
+import { heldForLife } from '../locks'
 import { log } from '../log'
 import { shortcuts } from '../shortcuts.svelte'
 import { invoke } from '../tauri'
@@ -75,13 +76,9 @@ export function listen(): () => void {
     )
   }
 
-  // A page that is not a secure context has no locks, and is the one window there is.
-  const locks = typeof navigator === 'undefined' ? undefined : navigator.locks
-  if (locks)
-    void locks.request(ANSWERING, { signal: stopping.signal }, answering).catch(() => {
-      // Stopped before the lock came: another window answers, and still does.
-    })
-  else void answering()
+  // A page that is not a secure context has no locks, and is the one window there is. Stopped
+  // before the lock came: another window answers, and still does.
+  heldForLife(ANSWERING, answering, stopping.signal)
 
   return () => {
     stopping.abort()

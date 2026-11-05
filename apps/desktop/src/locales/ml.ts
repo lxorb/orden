@@ -760,6 +760,8 @@ export const ml: Dictionary = {
   '{done} of {total}': '{total}ൽ {done}',
   'Sync failed': 'സിങ്ക് പരാജയപ്പെട്ടു',
   '{name} could not be written.': '{name} എഴുതാനായില്ല.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} എഴുതാനായില്ല: അതിന്റെ ഫയൽ വായിക്കാനാകുന്നില്ല. അത് 64 MB-യിൽ കൂടുതലോ UTF-8 അല്ലാത്ത എഴുത്തോ ആകാം.',
   '{name} could not be read.': '{name} വായിക്കാനായില്ല.',
   'Text size': 'ടെക്സ്റ്റ് വലുപ്പം',
   'Line spacing': 'വരി അന്തരം',
@@ -1556,6 +1558,8 @@ export const ml: Dictionary = {
   'The provider answered {status}.': 'പ്രൊവൈഡർ {status} എന്ന് മറുപടി നൽകി.',
   'Add an AI provider in Settings first.': 'ആദ്യം സെറ്റിംഗ്സിൽ ഒരു AI പ്രൊവൈഡർ ചേർക്കുക.',
   'The model did not answer.': 'മോഡൽ മറുപടി നൽകിയില്ല.',
+  'The connection closed before the answer was finished.':
+    'ഉത്തരം പൂർത്തിയാകുന്നതിന് മുമ്പ് കണക്ഷൻ അടഞ്ഞു.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'നിങ്ങളുടെ {plan} പ്ലാൻ {time} വരെ പരിധിയിലാണ്.',
@@ -2038,8 +2042,10 @@ export const ml: Dictionary = {
   'Send feedback': 'ഫീഡ്‌ബാക്ക് അയയ്ക്കുക',
   'Describe the issue': 'പ്രശ്നം വിവരിക്കുക',
   Sent: 'അയച്ചു',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'ഈ റിപ്പോർട്ടിൽ നിങ്ങളുടെ വിവരണം, Orden-ന്റെ പതിപ്പ്, നിങ്ങളുടെ പ്ലാറ്റ്ഫോം, ആപ്പിന്റെ സമീപകാല ലോഗ് എന്നിവയുണ്ട്. നിങ്ങളുടെ കുറിപ്പുകൾ ഒരിക്കലും ഇല്ല.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'ഈ റിപ്പോർട്ടിൽ നിങ്ങളുടെ വിവരണം, Orden പതിപ്പ്, നിങ്ങളുടെ പ്ലാറ്റ്ഫോം, സമീപകാല ആപ്പ് ലോഗ് എന്നിവ ഉൾപ്പെടുന്നു, ഫയൽ പാത്തുകൾ നീക്കം ചെയ്ത്.',
+  'Its space is archived': 'അതിന്റെ സ്പേസ് ആർക്കൈവ് ചെയ്തു',
+  'Back as {name}': '{name} ആയി തിരിച്ചെത്തി',
   'Send into the running answer': 'നടക്കുന്ന ഉത്തരത്തിലേക്ക് അയയ്ക്കുക',
   'Stop the answer': 'ഉത്തരം നിർത്തുക',
   'Open every step': 'എല്ലാ ഘട്ടവും തുറക്കുക',
@@ -2126,6 +2132,8 @@ export const ml: Dictionary = {
     'ഇത് നിങ്ങളുടെ കുറിപ്പുകൾ വായിക്കുകയും നിങ്ങളുടെ ലോഗിനോടെ ബ്രൗസ് ചെയ്യുകയും ചെയ്യുന്നു, അതിനാൽ ഒരു പേജ് അവ പുറത്തേക്ക് അയപ്പിക്കാൻ ശ്രമിച്ചേക്കാം.',
   Activity: 'പ്രവർത്തനം',
   'Add a site': 'സൈറ്റ് ചേർക്കുക',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'ഈ പട്ടികയിലെ പ്രോഗ്രാം ചോദിക്കാതെ പ്രവർത്തിക്കും, ആ പ്രോഗ്രാമിന് ചെയ്യാവുന്നതെല്ലാം ചെയ്യാനുമാകും.',
   'Add a program': 'പ്രോഗ്രാം ചേർക്കുക',
   'Every space': 'എല്ലാ സ്പേസും',
   Sites: 'സൈറ്റുകൾ',
@@ -2558,6 +2566,7 @@ export const ml: Dictionary = {
   'No {property}': '{property} ഇല്ല',
   '{card} moved to {group}': '{card} {group}-ലേക്ക് നീക്കി',
   'Not moved': 'നീക്കിയില്ല',
+  'Not undone': 'പഴയപടിയാക്കിയില്ല',
   Retry: 'വീണ്ടും ശ്രമിക്കുക',
   Calculate: 'കണക്കാക്കുക',
   'Remove sort': 'ക്രമം നീക്കുക',
@@ -2842,6 +2851,8 @@ export const ml: Dictionary = {
   '{title}, running': '{title}, പ്രവർത്തിക്കുന്നു',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ഇനി AI കീകൾ Mac-ന്റെ കീചെയിനിൽ സൂക്ഷിക്കുന്നില്ല, അത് വീണ്ടും വീണ്ടും പാസ്‌വേഡ് ചോദിച്ചിരുന്നു. നിങ്ങളുടെ കീകൾ വീണ്ടും നൽകി ChatGPT-ൽ ഒരിക്കൽ കൂടി സൈൻ ഇൻ ചെയ്യുക.',
+  'This PDF is locked by its owner': 'ഈ PDF അതിന്റെ ഉടമ ലോക്ക് ചെയ്തതാണ്',
+  'Part of this could not be undone': 'ഇതിന്റെ ഒരു ഭാഗം പഴയപടിയാക്കാനായില്ല',
   'Add images': 'ചിത്രങ്ങൾ ചേർക്കുക',
   'Remove image': 'ചിത്രം നീക്കുക',
   'That is more than 4 images.': 'ഇത് 4 ചിത്രങ്ങളിൽ കൂടുതലാണ്.',

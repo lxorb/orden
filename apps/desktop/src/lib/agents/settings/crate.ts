@@ -109,6 +109,8 @@ const CATEGORIES: readonly Category[] = [
   'terminal',
   'files',
   'writing',
+  'trashing',
+  'unread',
   'showing',
   'takeover',
   'pairing',

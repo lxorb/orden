@@ -23,7 +23,8 @@ import {
   type WebRow,
   type WrittenRow,
 } from '../sync2/store'
-import { forgetWeb, leadSync, openWeb } from './sync-store'
+import { leadSync } from '../sync2/lead'
+import { forgetWeb, openWeb } from './sync-store'
 
 /** The browser's sync store against the same behaviour the crate's is held to in
  *  src-tauri/src/sync_store/store.rs, row for row: a new store, the clean-exit flag, a

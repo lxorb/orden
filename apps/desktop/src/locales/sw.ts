@@ -758,6 +758,8 @@ export const sw: Dictionary = {
   '{done} of {total}': '{done} ya {total}',
   'Sync failed': 'Usawazishaji umeshindikana',
   '{name} could not be written.': '{name} haikuandikwa.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} haikuandikwa: faili yake haisomeki. Huenda inazidi MB 64 au si maandishi ya UTF-8.',
   '{name} could not be read.': '{name} haikusomeka.',
   'Text size': 'Ukubwa wa maandishi',
   'Line spacing': 'Nafasi kati ya mistari',
@@ -1555,6 +1557,8 @@ export const sw: Dictionary = {
   'The provider answered {status}.': 'Mtoa huduma alijibu {status}.',
   'Add an AI provider in Settings first.': 'Ongeza mtoa huduma wa AI kwenye Mipangilio kwanza.',
   'The model did not answer.': 'Modeli haikujibu.',
+  'The connection closed before the answer was finished.':
+    'Muunganisho ulifungwa kabla jibu halijakamilika.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'Mpango wako wa {plan} umefika kikomo hadi {time}.',
@@ -2041,8 +2045,10 @@ export const sw: Dictionary = {
   'Send feedback': 'Tuma maoni',
   'Describe the issue': 'Eleza tatizo',
   Sent: 'Imetumwa',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Ripoti hii ina maelezo yako, toleo la Orden, jukwaa lako na kumbukumbu za karibuni za programu. Haina madokezo yako kamwe.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Ripoti hii inajumuisha maelezo yako, toleo la Orden, jukwaa lako na kumbukumbu ya hivi karibuni ya programu, bila njia za faili.',
+  'Its space is archived': 'Nafasi yake imehifadhiwa kwenye kumbukumbu',
+  'Back as {name}': 'Imerudi kama {name}',
   'Send into the running answer': 'Tuma ndani ya jibu linaloendelea',
   'Stop the answer': 'Simamisha jibu',
   'Open every step': 'Fungua kila hatua',
@@ -2128,6 +2134,8 @@ export const sw: Dictionary = {
     'Husoma madokezo yako na kuvinjari ukiwa umeingia kama wewe, kwa hivyo ukurasa unaweza kujaribu kuifanya iyatume nje.',
   Activity: 'Shughuli',
   'Add a site': 'Ongeza tovuti',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Programu iliyo kwenye orodha hii huendeshwa bila kuuliza, na inaweza kufanya chochote ambacho programu hiyo inaweza kufanya.',
   'Add a program': 'Ongeza programu',
   'Every space': 'Kila nafasi',
   Sites: 'Tovuti',
@@ -2557,6 +2565,7 @@ export const sw: Dictionary = {
   'No {property}': 'Bila {property}',
   '{card} moved to {group}': '{card} imehamishwa hadi {group}',
   'Not moved': 'Haijahamishwa',
+  'Not undone': 'Haijatenduliwa',
   Retry: 'Jaribu tena',
   Calculate: 'Kokotoa',
   'Remove sort': 'Ondoa mpangilio',
@@ -2839,6 +2848,8 @@ export const sw: Dictionary = {
   '{title}, running': '{title}, inaendelea',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden haihifadhi tena funguo za AI kwenye keychain ya Mac, iliyokuwa ikiuliza nenosiri lake mara kwa mara. Weka funguo zako na uingie ChatGPT tena.',
+  'This PDF is locked by its owner': 'PDF hii imefungwa na mmiliki wake',
+  'Part of this could not be undone': 'Sehemu ya hili haikuweza kutenduliwa',
   'Add images': 'Ongeza picha',
   'Remove image': 'Ondoa picha',
   'That is more than 4 images.': 'Hizo ni zaidi ya picha 4.',

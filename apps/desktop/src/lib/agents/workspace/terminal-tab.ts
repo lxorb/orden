@@ -29,12 +29,13 @@ import { isOnlineTab } from '../../online/path'
 import { shellRunning } from '../../terminal/running'
 import { readSpec } from '../../terminal/spec'
 import type { Session } from '../../terminal/sessions.svelte'
+import { platform } from '../../tauri'
 import type { Tab } from '../../workspace.svelte'
 import { asked } from './asks'
 import { type Call, count, done, flag, maybe, need } from './call'
 import { Refused } from './problem'
 import { namedTab } from './tab-target'
-import { KEY_NAMES, keyBytes, linesOf, typesFreely } from './terminal-keys'
+import { KEY_NAMES, keyBytes, linesOf, shellOs, typesFreely } from './terminal-keys'
 
 /** How many lines come back when the agent does not say, and at the most. */
 const LINES = 200
@@ -265,7 +266,7 @@ async function typed(
     throw new Refused('bad_arguments', `${judged.unknown} is not a key: ${KEY_NAMES.join(', ')}`)
   }
 
-  const free = typesFreely(text, enter, keys, agent.programs)
+  const free = typesFreely(text, enter, keys, agent.programs, shellOs(isOnlineTab(tab), platform()))
   const shown = [text, enter ? 'Enter' : '', ...keys].filter(Boolean).join(' + ')
   const question = await asked(call, free ? null : 'terminal', `${tab.shown}: ${shown}`)
   if (question) return question

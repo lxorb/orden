@@ -1,5 +1,7 @@
 import { TreeFragment, type Input, type PartialParse, type Tree } from '@lezer/common'
 import type { BlockContext, Element, Line, MarkdownConfig, MarkdownParser } from '@lezer/markdown'
+import { fenceName } from '@orden/markdown/fences'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { enclosing } from '../nodes'
 import { BACKTICK, isSpace, TILDE } from './syntax'
 
@@ -28,13 +30,16 @@ function fenceEnd(line: Line): number {
 }
 
 /** Where a line's closing fence ends, or -1: the opener's character, at least
- *  as many of them, at most three spaces in, and nothing else on the line. */
+ *  as many of them, at most three spaces in, and nothing else on the line but the
+ *  name an older build wrote there, which is part of the mark: see `fenceName`. */
 function closerEnd(line: Line, mark: number, length: number): number {
   let pos = line.pos
   if (line.indent - line.baseIndent < 4) {
     while (pos < line.text.length && line.text.charCodeAt(pos) === mark) pos++
   }
-  return pos - line.pos >= length && line.skipSpace(pos) === line.text.length ? pos : -1
+  if (pos - line.pos < length) return -1
+  if (line.skipSpace(pos) === line.text.length) return pos
+  return fenceName(line.text.slice(line.pos)) === null ? -1 : line.text.trimEnd().length
 }
 
 /** Whether the current line is still inside every block the fence opened in.
@@ -237,6 +242,33 @@ function withoutUnclosedFences(
   return changed ? out : fragments
 }
 
+/** The fragments with the top of the note taken out, down to where its front matter
+ *  ends. Whether a `---` on the first line opens a block depends on lines far below it, so
+ *  a parse that reused the top of the last tree, a rule at the first line and a paragraph
+ *  under it, drew a block as a rule and a heading for as long as the note stayed open. */
+function withoutFrontMatter(
+  fragments: readonly TreeFragment[],
+  input: Input,
+): readonly TreeFragment[] {
+  const opening = input.read(0, Math.min(4, input.length))
+  if (!opening.startsWith('---') && !opening.startsWith('\uFEFF---')) return fragments
+
+  const text = input.read(0, input.length)
+  const line = text.indexOf('\n')
+  const to = frontMatterBlock(text)?.to ?? (line === -1 ? text.length : line + 1)
+
+  const out: TreeFragment[] = []
+  for (const fragment of fragments) {
+    if (fragment.from >= to) out.push(fragment)
+    else if (fragment.to > to) {
+      out.push(
+        new TreeFragment(to, fragment.to, fragment.tree, fragment.offset, true, fragment.openEnd),
+      )
+    }
+  }
+  return out
+}
+
 /** The block parser behind a parse. `wrap` is handed the parse after
  *  lang-markdown's nested-language wrapper has been put around it, and that
  *  wrapper keeps the block parser as its `baseParse`; a parse without either
@@ -278,7 +310,7 @@ const FencedCode: MarkdownConfig = {
     if (alreadyCut.has(fragments)) return inner
     if (fragments.length === 0) return watchDeclines(inner)
 
-    const cut = withoutUnclosedFences(fragments, input)
+    const cut = withoutUnclosedFences(withoutFrontMatter(fragments, input), input)
     if (cut === fragments) return watchDeclines(inner)
 
     const parser = parserOf(inner)

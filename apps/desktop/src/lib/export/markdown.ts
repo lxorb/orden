@@ -9,7 +9,16 @@
  *  Pure. What a wikilink resolves to and where the pictures went are the
  *  caller's answers; this only writes them down. */
 
-import { findLinks, type FoundLink, lines, shownText } from '@orden/markdown/links'
+import {
+  embedKind,
+  embedSize,
+  findLinks,
+  type FoundLink,
+  lines,
+  shownText,
+} from '@orden/markdown/links'
+import { stripFrontMatter } from '@orden/markdown/front-matter'
+import { codeSpans, inCode } from '@orden/markdown/tags'
 import { encodeTarget } from '../link-rewrite'
 
 /** A stretch of the source, and what goes in its place. */
@@ -29,8 +38,24 @@ export interface MarkdownOptions {
   picture?: (src: string) => string | null
 }
 
+/** A source written bare: anything without a space, with its parentheses balanced, to the
+ *  two levels deep anyone writes, as CommonMark reads one. */
+const BARE = String.raw`(?:[^\s()\\]|\\.|\((?:[^\s()\\]|\\.|\([^\s()]*\))*\))*`
+
+/** What may follow a source: a title in any of markdown's three spellings. */
+const TITLE = String.raw`(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?`
+
 /** `![alt](src "title")`, with the parts kept apart so only the source moves. */
-const PICTURE = /!\[([^\]]*)\]\(\s*(<[^>]*>|[^\s)]*)((?:\s+"[^"]*")?)\s*\)/g
+const PICTURE = new RegExp(String.raw`!\[([^\]]*)\]\(\s*(<[^>]*>|${BARE})(${TITLE})\s*\)`, 'g')
+
+/** `[name]: src "title"`, which is where `![alt][name]` and `![name]` keep their source: on
+ *  its own line, in a quote or not, and not a footnote's. */
+const DEFINITION = new RegExp(
+  String.raw`^([ >]*\[(?!\^)[^\]]+\]:[ \t]*)(<[^>]*>|[^\s<]\S*)(${TITLE})[ \t]*$`,
+)
+
+/** A line that ends whatever came before it: a heading or a rule. */
+const STANDS_ALONE = /^(?:#{1,6}(?:\s|$)|(?:-[ \t]*){3,}$|(?:\*[ \t]*){3,}$|(?:_[ \t]*){3,}$)/
 
 /** The link as markdown: the words it showed, pointing where it now points. */
 function asLink(link: FoundLink, target: string): string {
@@ -46,30 +71,116 @@ function asLink(link: FoundLink, target: string): string {
  *  was written that way, and when it holds a space, since a bare space would end
  *  the source and turn the rest of the path into a title. */
 function asSource(path: string, written: string): string {
-  return written.startsWith('<') || path.includes(' ') ? `<${path}>` : path
+  return written.startsWith('<') || path.includes(' ') || !balanced(path) ? `<${path}>` : path
+}
+
+/** Whether a path's parentheses pair up, which is what lets one stand bare. */
+function balanced(path: string): boolean {
+  let open = 0
+  for (const one of path) {
+    if (one === '(') open++
+    if (one === ')' && --open < 0) return false
+  }
+  return open === 0
+}
+
+/** A source as it means once its backslashes are read, which is how the document names it. */
+function unescaped(written: string): string {
+  return written.replace(/\\([!-/:-@[-`{-~])/g, '$1')
+}
+
+/** The edit that moves the source `written` at `from`, or null where it stays. */
+function sourceEdit(
+  written: string,
+  from: number,
+  rename: (src: string) => string | null,
+): Edit | null {
+  const bare = unescaped(written.startsWith('<') ? written.slice(1, -1) : written)
+  const wanted = rename(bare)
+  if (wanted === null || wanted === bare) return null
+  return { from, to: from + written.length, text: asSource(wanted, written) }
+}
+
+/** The inline code spans of `source`. A span may go over lines but not past a blank one or a
+ *  code block, so each run of lines is read alone, and a lone backtick reaches no further. */
+function spansByBlock(
+  source: string,
+  all: readonly { text: string; from: number; code: boolean }[],
+): [number, number][] {
+  const spans: [number, number][] = []
+  let start = -1
+  let stop = -1
+  const end = () => {
+    if (start < 0) return
+    for (const [a, b] of codeSpans(source.slice(start, stop))) {
+      spans.push([start + a, start + b])
+    }
+    start = -1
+  }
+  for (const { text, from, code } of all) {
+    if (code || !text.trim()) {
+      end()
+    } else {
+      if (start < 0) start = from
+      stop = from + text.length
+    }
+  }
+  end()
+  return spans
 }
 
 /** Where every picture's source sits in the text, outside code: code as the links
  *  are read (`lines` in links.ts), so a block closes on its own mark only and a fence
- *  in a quote or a list item is code too. */
+ *  in a quote or a list item is code too. And outside front matter, which is the note's
+ *  own. A definition cannot interrupt a paragraph, so a line right under one is words. */
 function pictureEdits(source: string, rename: (src: string) => string | null): Edit[] {
   const edits: Edit[] = []
+  const body = source.length - stripFrontMatter(source).length
+  let paragraph = false
+  const all = [...lines(source)]
+  const spans = spansByBlock(source, all)
 
-  for (const { text: line, from: at, code } of lines(source)) {
-    if (code) continue
+  for (const { text: line, from: at, code } of all) {
+    if (code || at < body) {
+      paragraph = false
+      continue
+    }
 
     for (const match of line.matchAll(PICTURE)) {
+      if (inCode(spans, at + match.index)) continue
       const written = match[2] ?? ''
-      const bare = written.startsWith('<') ? written.slice(1, -1) : written
-      const wanted = rename(bare)
-      if (wanted === null || wanted === bare) continue
-
-      const from = at + match.index + match[0].indexOf(written, match[1]?.length ?? 0)
-      edits.push({ from, to: from + written.length, text: asSource(wanted, written) })
+      // Past `![`, the alt and `](`: an alt may hold the same characters.
+      const past = (match[1]?.length ?? 0) + 4
+      const from = at + match.index + match[0].indexOf(written, past)
+      const edit = sourceEdit(written, from, rename)
+      if (edit) edits.push(edit)
     }
+
+    const definition: RegExpExecArray | null = paragraph ? null : DEFINITION.exec(line)
+    if (definition) {
+      const from = at + (definition[1]?.length ?? 0)
+      const edit = sourceEdit(definition[2] ?? '', from, rename)
+      if (edit) edits.push(edit)
+    }
+
+    const words = line.replace(/^[ >]*/, '')
+    paragraph = !definition && words !== '' && !STANDS_ALONE.test(words)
   }
 
   return edits
+}
+
+/** `![[pic.png]]` as a plain markdown reader can draw it, where the picture has a place to
+ *  be drawn from: a picture still, with the words the document reads under it. Null for
+ *  anything else, which is an embed of a note and only ever a link. */
+function pictureEmbed(link: FoundLink, rename: (src: string) => string | null): string | null {
+  if (!link.embed || embedKind(link.target) !== 'image') return null
+
+  const wanted = rename(link.target)
+  if (wanted === null) return null
+
+  const words = embedSize(link.alias) === null ? (link.alias ?? '') : ''
+  return `![${words}](${asSource(wanted, '')})`
 }
 
 /** The note, rewritten. Edits are applied back to front so that each one's
@@ -77,9 +188,17 @@ function pictureEdits(source: string, rename: (src: string) => string | null): E
 export function toMarkdown(source: string, options: MarkdownOptions = {}): string {
   const edits: Edit[] = []
 
-  if (options.link) {
+  if (options.link || options.picture) {
     for (const found of findLinks(source)) {
       if (found.kind !== 'wikilink') continue
+
+      const inBody = found.from >= source.length - stripFrontMatter(source).length
+      const picture = options.picture && inBody ? pictureEmbed(found, options.picture) : null
+      if (picture !== null) {
+        edits.push({ from: found.from, to: found.to, text: picture })
+        continue
+      }
+      if (!options.link) continue
 
       const target = options.link(found)
       edits.push({

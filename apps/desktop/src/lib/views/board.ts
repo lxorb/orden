@@ -10,6 +10,7 @@ import {
   type Row,
   rowId,
   type Value,
+  isWhen,
 } from '@orden/bases'
 import { bare, isNoteProperty } from './columns'
 
@@ -115,8 +116,7 @@ export function droppableBy(
     )
   )
     return true
-  if (property === 'formula.overdue' || property === 'formula.day' || property === 'formula.when')
-    return true
+  if (property === 'formula.overdue' || property === 'formula.day' || isWhen(property)) return true
   if (property === 'file.path' || property === 'file.basename') return rows !== 'notes'
   return isNoteProperty(property)
 }

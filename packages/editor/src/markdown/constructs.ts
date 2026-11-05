@@ -1,5 +1,7 @@
+import type { Input } from '@lezer/common'
 import { tags } from '@lezer/highlight'
 import type { BlockContext, Line, MarkdownConfig } from '@lezer/markdown'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { parseWikilink, shownSpan } from '@orden/markdown/links'
 import { tagAt } from '@orden/markdown/tags'
 import { markTags } from './tags'
@@ -219,6 +221,10 @@ function opensBlockMath(rest: string): boolean {
   return ONE_LINE.test(rest) || rest.trim() === '$$'
 }
 
+/** The `$$` that closes a block on its own line, with the block's name where it has one,
+ *  which the page takes off before it looks. */
+const CLOSES_MATH = /^\$\$(?:[ \t]+\^[A-Za-z0-9-]+)?\s*$/
+
 /** A `$$` fence on its own line closed by another, or a whole line of `$$…$$`. */
 const BlockMath: MarkdownConfig = {
   defineNodes: [{ name: 'BlockMath', block: true, style: markTags.math }],
@@ -273,7 +279,7 @@ const BlockMath: MarkdownConfig = {
         let to = from + 2
 
         while (cx.nextLine()) {
-          if (line.text.slice(line.pos).trim() === '$$') {
+          if (CLOSES_MATH.test(line.text.slice(line.pos))) {
             const close = cx.lineStart + line.pos
             marks.push(cx.elt('MathMark', close, close + 2))
             to = close + 2
@@ -361,15 +367,22 @@ const FrontMatter: MarkdownConfig = {
       parse(cx: BlockContext, line: Line) {
         if (cx.lineStart !== 0 || line.text.trim() !== '---') return false
         // A document may legitimately open with a horizontal rule. Require the
-        // next line to look like YAML before committing, since a block parser
-        // cannot rewind once it has consumed lines.
-        if (!/^\s*[\w.$-]+\s*:/.test(cx.peekLine())) return false
+        // block to be one the readers of a note take for front matter before
+        // committing, since a block parser cannot rewind once it has consumed lines.
+        // `frontMatterBlock` rather than a look for a word and a colon: `Priorität: hoch`
+        // is a key, and read as a rule and a heading it was drawn as one and rewritten by
+        // Format.
+        // The context holds its input but does not type it, and offers no other way to
+        // look further than the next line; the tests of this construct would catch it going.
+        const { input } = cx as unknown as { input: Input }
+        const block = frontMatterBlock(input.read(0, input.length))
+        if (!block) return false
 
-        const marks = [cx.elt('FrontMatterMark', 0, 3)]
-        let to = 3
+        const marks = [cx.elt('FrontMatterMark', block.from, block.from + 3)]
+        let to = block.from + 3
 
         while (cx.nextLine()) {
-          if (line.text.trim() === '---') {
+          if (cx.lineStart === block.close) {
             marks.push(cx.elt('FrontMatterMark', cx.lineStart, cx.lineStart + 3))
             to = cx.lineStart + 3
             cx.nextLine()

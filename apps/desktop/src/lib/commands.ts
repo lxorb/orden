@@ -143,7 +143,7 @@ export function exportCommands(): Command[] {
   // something asks for them as text, and an export is asking. Only ever from a
   // row's `run`, never while the rows are built; see `kind` below.
   const source = () => {
-    workspace.flush()
+    workspace.wordsNow()
     return note()?.doc ?? ''
   }
   const name = () => note()?.name ?? 'Untitled.md'
@@ -219,6 +219,7 @@ export function exportCommands(): Command[] {
       name: name(),
       path: note()?.path ?? null,
       root: workspace.rootHolding(note()?.path ?? null),
+      shared: note()?.note.shared ?? null,
       trusted: target().trusted,
     })
 
@@ -515,7 +516,8 @@ function tabCommands(): Command[] {
     {
       id: 'rename',
       label: t('Rename'),
-      hint: shortcuts.hint('tabs.rename'),
+      // No key beside it: F2 is a focused tab's or row's, and here the caret is in the
+      // note, where the press goes to the editor.
       // Not a file in a space shared to be read, whose name is the space's to keep.
       disabled:
         !tab || !workspace.canRenameFromTab(tab) || (tab.path !== null && !canWriteAt(tab.path)),
@@ -1021,12 +1023,12 @@ function moveCommand(): Command | null {
 
   // Into another space the tab goes with the note, as Move to space takes it; see
   // workspace/space-move.ts.
-  const moved = (into: string) => {
+  const moved = async (into: string) => {
     const space = workspace.spaces.find((one) => samePath(one.root, into))
     if (space && space.id !== workspace.activeSpaceId) {
       return toSpace().then((one) => one.toSpace([note.id], space.id))
     }
-    return workspace.moveMany([path], into)
+    await workspace.moveMany([path], into)
   }
 
   return {

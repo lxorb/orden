@@ -85,15 +85,61 @@ function schemeFor(typed: string): 'http' | 'https' {
   return parsed.port && parsed.port !== '443' ? 'http' : 'https'
 }
 
+/** A time of day, which `URL` would read as the address 0.0.0.10 and a port. Only a real
+ *  one: a number with a port is a server somebody started, `8080:80` and `10:30/path`. */
+const CLOCK = /^(?:[01]?\d|2[0-3]):[0-5]\d$/
+
+/** What no name on the web is: an empty label (`foo..bar`), a number at the end that is no
+ *  whole address and has no port (`3.14`), which `URL` would read as 3.0.0.14, or a web scheme and its address
+ *  with no slashes (`http:example.com`). */
+function noName(typed: string): boolean {
+  if (typed.startsWith('[')) return false
+  if (/^https?:\D/i.test(typed)) return true
+  const name = typed.split(/[/?#:]/, 1)[0] ?? ''
+  if (name.includes('..')) return true
+  // With a port it is a server somebody started: `127.1:3000`.
+  if (typed[name.length] === ':') return false
+  return /\.\d+$/.test(name) && !/^\d{1,3}(?:\.\d{1,3}){3}$/.test(name)
+}
+
 /** Whether something typed is a host, and not a scheme of its own with digits after it. */
 function isHost(typed: string): boolean {
-  if (!HOST.test(typed)) return false
+  if (!HOST.test(typed) || CLOCK.test(typed) || noName(typed)) return false
   const word = /^([a-z\d-]+):\d/i.exec(typed)?.[1]
   return !word || !NOT_HOSTS.has(word.toLowerCase())
 }
 
-/** A scheme written at the front, whatever it is. */
+/** A word and a colon at the front, which may be a scheme. */
 const SCHEME = /^([a-z][a-z\d+.-]*):/i
+
+/** The schemes a word and a colon is taken for without `//`: the web's, and what a browser
+ *  hands to the system or opens itself. */
+const KNOWN_SCHEMES = new Set([
+  ...NOT_HOSTS,
+  'http',
+  'https',
+  'file',
+  'ftp',
+  'ws',
+  'wss',
+  'javascript',
+  'vbscript',
+  'blob',
+  'filesystem',
+  'view-source',
+  'nib',
+])
+
+/** Whether something typed opens with a scheme and is not a few words with a colon in them,
+ *  by Chrome's rule: one it knows with nothing but the address after it, or any word with
+ *  `//` after it. So `site:github.com orden` and `note: buy milk` are a search. */
+function hasScheme(said: string): boolean {
+  const word = SCHEME.exec(said)?.[1]
+  if (word === undefined) return false
+
+  const rest = said.slice(word.length + 1)
+  return rest.startsWith('//') || (KNOWN_SCHEMES.has(word.toLowerCase()) && !/^\s/.test(rest))
+}
 
 /** An address half typed into a tab's field and left there: what the field held, what of
  *  it the reader typed, where the caret was, and the address it was typed over, so it
@@ -106,16 +152,47 @@ export interface HalfTyped {
   over: string
 }
 
-/** A Windows path: a drive letter, or a share. To `URL` it is a host called `c` or `nas`
- *  over http, and with a space in it words for the search engine, either of which tells
- *  the network what is on this machine. It means `file:`, which a tab does not open. */
-const WINDOWS_PATH = /^(?:[a-z]:[\\/]|\\\\)/i
+/** A Windows path: a drive letter, relative to that drive or not, a share, the top of this
+ *  drive, home or from here. To `URL` it is a host called `c` or `nas` over http, and with a
+ *  space in it words for the search engine, either of which tells the network what is on this
+ *  machine. It means `file:`, which a tab does not open. A letter with a port is a host, and
+ *  one with a space after it is words. */
+const WINDOWS_PATH = /^(?:[a-z]:(?!\s)(?!\d{1,5}(?:[/?#]|$))|(?:~|\.{1,2})?\\)/i
 
-/** Whether something typed is a file on this machine, which a tab does not open, so the bar
- *  can say so rather than do nothing where a browser would have opened it. */
+/** A file, or a share on the network, by its scheme, whatever follows it. */
+const FILE_SCHEME = /^(?:file|smb|afp|nfs|cifs):/i
+
+/** A path as a Mac or Linux writes one: from the top, from home, or from here. Two slashes
+ *  are a host. */
+const UNIX_PATH = /^(?:~|\.{1,2})?\/(?!\/)/
+
+/** Whether something typed is a file on this machine or its network, which a tab does not
+ *  open, so the bar can say so rather than do nothing where a browser would have opened it. */
 export function isLocalFile(typed: string): boolean {
   const said = typed.trim()
-  return WINDOWS_PATH.test(said) || /^file:/i.test(said)
+  return WINDOWS_PATH.test(said) || FILE_SCHEME.test(said) || UNIX_PATH.test(said)
+}
+
+/** One word, a colon and more with no space anywhere: `root:hunter2`, `admin:pa/ss@router.lan`,
+ *  `otpauth:totp/x?secret=ABC`. `std::vector` is two colons and a name. */
+const WORD_AND_WORD = /^[^\s:/?#@]+:(?!:)\S+$/
+
+/** A name, a colon and at least two words with an `@` further on: `admin:pass word@router.lan`. */
+const NAME_AT_HOST = /^[^\s:/?#@]+:\S.*@/
+
+/** A word that says what comes after its colon is secret, in the languages most typed in. */
+const NAMES_A_SECRET =
+  /^(?:password|passwd|passcode|passphrase|pwd|secret|token|api[-_]?key|passwort|kennwort|mot de passe|contrase\u00f1a|contrasena|senha|wachtwoord|l\u00f6senord|losenord|has\u0142o|\u043f\u0430\u0440\u043e\u043b\u044c|\u5bc6\u7801|\u5bc6\u78bc|\u30d1\u30b9\u30ef\u30fc\u30c9|\ube44\ubc00\ubc88\ud638)\s*[:\uff1a]/iu
+
+/** Whether something typed could be a credential, and so goes to no search engine, which
+ *  would keep it. Chrome would search for `root:hunter2`, and for a search operator with
+ *  nothing after it; this bar does nothing and says so. A phrase is words: a word with a
+ *  space after its colon, or `site:github.com orden`, unless the word names a secret or an
+ *  `@` follows. */
+export function mayBeSecret(typed: string): boolean {
+  const said = typed.trim()
+  if (CLOCK.test(said)) return false
+  return WORD_AND_WORD.test(said) || NAME_AT_HOST.test(said) || NAMES_A_SECRET.test(said)
 }
 
 /** An address with a name that is not ASCII in it, spelled as the page will say it is on,
@@ -136,7 +213,11 @@ export function typedAddress(typed: string): string | null {
     return isWebAddress(guessed) ? asTheEngineSays(guessed) : null
   }
 
-  if (SCHEME.test(said)) return isWebAddress(said) ? asTheEngineSays(said) : null
+  if (hasScheme(said)) {
+    // `http:example.com`, which a browser reads as the address it plainly is.
+    const whole = said.replace(/^https?:(?!\/\/)/i, '$&//')
+    return isWebAddress(whole) ? asTheEngineSays(whole) : null
+  }
 
   return null
 }
@@ -152,7 +233,8 @@ export function typedAddress(typed: string): string | null {
  *  tries https"* - and a dev server, which serves plain http, answered nothing.
  *
  *  Then a scheme, taken as written, so `http://` pages still open and a
- *  `javascript:` one never does. A Windows path is nothing too. Anything left is words, and words are a search on
+ *  `javascript:` one never does. A local path and what could be a secret are nothing too.
+ *  Anything left is words, and words are a search on
  *  `engine`, the reader's choice of search engine. */
 export function webAddress(typed: string, engine = SEARCH): string | null {
   const said = typed.trim()
@@ -161,8 +243,8 @@ export function webAddress(typed: string, engine = SEARCH): string | null {
   const address = typedAddress(said)
   if (address !== null) return address
   // An address this app refuses is nothing rather than something to search for.
-  if (said.startsWith('//') || isHost(said) || SCHEME.test(said)) return null
-  if (WINDOWS_PATH.test(said)) return null
+  if (said.startsWith('//') || isHost(said) || hasScheme(said)) return null
+  if (isLocalFile(said) || mayBeSecret(said)) return null
 
   return searchOn(engine, said)
 }

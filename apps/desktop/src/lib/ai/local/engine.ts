@@ -415,6 +415,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
               ...part,
               state: tool.done.error ? 'error' : 'ok',
               result: { text: tool.done.text, images: [], error: tool.done.error },
+              at: Date.now(),
             })
           } else if (at < 0) {
             say({
@@ -424,7 +425,10 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
               args: tool.args ?? {},
               state: tool.done ? (tool.done.error ? 'error' : 'ok') : 'running',
               ...(tool.done
-                ? { result: { text: tool.done.text, images: [], error: tool.done.error } }
+                ? {
+                    result: { text: tool.done.text, images: [], error: tool.done.error },
+                    at: Date.now(),
+                  }
                 : {}),
             })
           }
@@ -508,14 +512,21 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
         )
         const part = turn.parts[at]
         if (part?.kind !== 'tool') return
-        if (always(thread, asked.verb)) {
+        if (always(thread, asked.verb, asked.category, asked.site)) {
           void answers.answer(asked.id, true)
           return
         }
         grow(at, {
           ...part,
           state: 'asking',
-          result: { text: '', images: [], error: false, approval: asked.id },
+          result: {
+            text: '',
+            images: [],
+            error: false,
+            approval: asked.id,
+            category: asked.category,
+            ...(asked.site ? { site: asked.site } : {}),
+          },
         })
       })
       .catch(() => () => undefined)

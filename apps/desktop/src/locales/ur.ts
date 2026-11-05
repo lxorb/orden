@@ -753,6 +753,8 @@ export const ur: Dictionary = {
   '{done} of {total}': '{total} میں سے {done}',
   'Sync failed': 'سنک ناکام',
   '{name} could not be written.': '{name} لکھا نہیں جا سکا۔',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} لکھا نہیں جا سکا: اس کی فائل پڑھی نہیں جا سکتی۔ ہو سکتا ہے یہ 64 MB سے بڑی ہو یا UTF-8 متن نہ ہو۔',
   '{name} could not be read.': '{name} پڑھا نہیں جا سکا۔',
   'Text size': 'متن کا سائز',
   'Line spacing': 'سطری فاصلہ',
@@ -1537,6 +1539,8 @@ export const ur: Dictionary = {
   'The provider answered {status}.': 'فراہم کنندہ نے {status} جواب دیا۔',
   'Add an AI provider in Settings first.': 'پہلے ترتیبات میں AI فراہم کنندہ شامل کریں۔',
   'The model did not answer.': 'ماڈل نے جواب نہیں دیا۔',
+  'The connection closed before the answer was finished.':
+    'جواب مکمل ہونے سے پہلے کنکشن بند ہو گیا۔',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'آپ کا {plan} پلان {time} تک حد پر ہے۔',
   'Your {plan} plan is at its limit for now.': 'آپ کا {plan} پلان فی الحال حد پر ہے۔',
@@ -2010,8 +2014,10 @@ export const ur: Dictionary = {
   'Send feedback': 'رائے بھیجیں',
   'Describe the issue': 'مسئلہ بیان کریں',
   Sent: 'بھیج دیا',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'اس رپورٹ میں آپ کی تفصیل، Orden کا ورژن، آپ کا پلیٹ فارم اور ایپ کا حالیہ لاگ شامل ہوتا ہے۔ آپ کے نوٹس کبھی شامل نہیں ہوتے۔',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'اس رپورٹ میں آپ کی تفصیل، Orden کا ورژن، آپ کا پلیٹ فارم اور حالیہ ایپ لاگ شامل ہے، فائل پاتھ ہٹا کر۔',
+  'Its space is archived': 'اس کی اسپیس محفوظ شدہ ہے',
+  'Back as {name}': '{name} کے طور پر واپس',
   'Send into the running answer': 'جاری جواب میں بھیجیں',
   'Stop the answer': 'جواب روکیں',
   'Open every step': 'ہر قدم کھولیں',
@@ -2096,6 +2102,8 @@ export const ur: Dictionary = {
     'یہ آپ کے نوٹس پڑھتا ہے اور آپ کے لاگ اِن کے ساتھ براؤز کرتا ہے، اس لیے کوئی صفحہ اسے نوٹس باہر بھیجنے پر آمادہ کرنے کی کوشش کر سکتا ہے۔',
   Activity: 'سرگرمی',
   'Add a site': 'سائٹ شامل کریں',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'اس فہرست کا پروگرام پوچھے بغیر چلتا ہے، اور وہ سب کچھ کر سکتا ہے جو وہ پروگرام کر سکتا ہے۔',
   'Add a program': 'پروگرام شامل کریں',
   'Every space': 'ہر اسپیس',
   Sites: 'سائٹس',
@@ -2525,6 +2533,7 @@ export const ur: Dictionary = {
   'No {property}': '{property} کے بغیر',
   '{card} moved to {group}': '{card} کو {group} میں منتقل کر دیا گیا',
   'Not moved': 'منتقل نہیں ہوا',
+  'Not undone': 'واپس نہیں ہوا',
   Retry: 'دوبارہ کوشش کریں',
   Calculate: 'حساب لگائیں',
   'Remove sort': 'ترتیب ہٹائیں',
@@ -2795,6 +2804,8 @@ export const ur: Dictionary = {
   '{title}, running': '{title}، جاری ہے',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden اب AI کیز Mac کی کی چین میں نہیں رکھتا، جو بار بار اس کا پاس ورڈ مانگتی تھی۔ اپنی کیز دوبارہ درج کریں اور ChatGPT میں ایک بار پھر سائن ان کریں۔',
+  'This PDF is locked by its owner': 'یہ PDF اس کے مالک نے مقفل کی ہے',
+  'Part of this could not be undone': 'اس کا کچھ حصہ واپس نہیں ہو سکا',
   'Add images': 'تصاویر شامل کریں',
   'Remove image': 'تصویر ہٹائیں',
   'That is more than 4 images.': 'یہ 4 تصاویر سے زیادہ ہیں۔',

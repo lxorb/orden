@@ -12,16 +12,29 @@
  *  the menu entry that starts a rename still has it while the menu fades out -
  *  so the field never got focus, and selecting on focus never ran. These take
  *  it: once as the field appears, and once more a frame later, for a value that
- *  is filled in after that. */
+ *  is filled in after that. The second is off once the reader has done anything: a
+ *  Tab pressed inside that frame has moved them on, and a word typed in it is theirs
+ *  to keep, neither of which the field gets to take back. */
 function takes(node: HTMLInputElement, place: (node: HTMLInputElement) => void) {
   const take = () => {
     node.focus()
     place(node)
   }
 
+  const settled = () => {
+    cancelAnimationFrame(again)
+    window.removeEventListener('keydown', settled, true)
+    window.removeEventListener('pointerdown', settled, true)
+  }
+
   take()
-  const again = requestAnimationFrame(take)
-  return { destroy: () => cancelAnimationFrame(again) }
+  const again = requestAnimationFrame(() => {
+    settled()
+    take()
+  })
+  window.addEventListener('keydown', settled, true)
+  window.addEventListener('pointerdown', settled, true)
+  return { destroy: settled }
 }
 
 export function selectAll(node: HTMLInputElement) {

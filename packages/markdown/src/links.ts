@@ -65,20 +65,148 @@ export interface FoundLink extends Wikilink {
  *  brackets" would be two grammars. */
 export const WIKILINK_INNER = '[^[\\]\\n]+'
 
-/** `[[…]]`, or `![[…]]`. The lookbehind is what makes `\[[Note]]` text: a
- *  backslash escapes the bracket in markdown, and a link nobody wrote must not
- *  be rewritten when a note is renamed. */
-const WIKILINK = new RegExp(`(?<!\\\\)(!?)\\[\\[(${WIKILINK_INNER})\\]\\]`, 'g')
+/** `[[…]]`, or `![[…]]`, read from just past its `[[`. A `[` after a backslash is passed
+ *  over by the walk in `collect`, which is what makes `\\[[Note]]` text: a backslash
+ *  escapes the bracket in markdown, and a link nobody wrote must not be rewritten when a
+ *  note is renamed. */
+const WIKILINK = new RegExp(`(${WIKILINK_INNER})\\]\\]`, 'y')
 
-/** `[label](target)`, with an optional `"title"` and an optional `<>` around a
- *  target that has spaces in it. Only the shape is matched here; whether the
- *  target names a note rather than the web is decided by `isNoteTarget`.
+/** How far a `[label](target)` may run before it is not one. A label is a phrase and
+ *  a target is a path, so this is room and then some, and it is what keeps the walk
+ *  over a line linear: a `[` that opens nothing moves the walk on by one character,
+ *  so a scan to the end of the line is one per `[` on it. The same number as
+ *  `LONGEST_LINK` in apps/desktop/src-tauri/src/links.rs. */
+const LONGEST_LINK = 1000
+
+/** How deep a target's parentheses may go, which is cmark's own limit. */
+const DEEPEST_PARENS = 32
+
+const BLANK = /\s/
+
+/** Whether a character is one `\s` matches, without asking it about the printable ones:
+ *  this is asked of every character of a target, of every bracket that opens one. */
+function endsTarget(one: string): boolean {
+  return (one <= ' ' || one >= '\u0080') && BLANK.test(one)
+}
+
+/** One `[label](target)` on a line, and where its parts are. */
+interface MarkdownLink {
+  label: string
+  /** The target as written, its `<>` left off. */
+  written: string
+  writtenFrom: number
+  /** Just past the closing parenthesis. */
+  to: number
+}
+
+/** The `]` that closes the label each `[` of a line opens, for those that open one. A
+ *  label holds balanced brackets and escaped ones, as in CommonMark. A bracket pair that
+ *  opens a link of its own means the brackets around it open none, since links do not
+ *  nest; `[[` is a wikilink's.
  *
- *  The blanks before a title belong to the title: with a `\s*` either side of an
- *  optional one, a link nothing closed shared its blanks out every way there is,
- *  and a hundred thousand of them took thirteen seconds (#494). */
-const MARKDOWN_LINK =
-  /(?<!\\)(!?)\[((?:[^[\]\\]|\\.)*)\]\(\s*(?:<([^<>\n]*)>|([^\s()]+))(?:\s*(?:"[^"\n]*"|'[^'\n]*'))?\s*\)/g
+ *  One pass over the line rather than a scan from each `[`: `a[` over a megabyte, which
+ *  is one line of a note somebody shared, was a thousand characters read per bracket.
+ *  Exported to say so in a test; the twin is `label_ends` in links.rs. */
+export function labelEnds(line: string): Map<number, number> {
+  const ends = new Map<number, number>()
+  const open: number[] = []
+
+  for (let at = 0; at < line.length; at++) {
+    const one = line[at]
+    if (one === '\\') {
+      at++
+    } else if (one === '[') {
+      if (line[at - 1] === '[' || line[at + 1] === '[') open.length = 0
+      if (line[at + 1] !== '[') open.push(at)
+    } else if (one === ']') {
+      const from = open.pop()
+      if (from === undefined) continue
+      ends.set(from, at)
+      if (line[at + 1] === '(') open.length = 0
+    }
+  }
+
+  return ends
+}
+
+/** Just past a bare target starting at `from`, which ends at a blank or at a `)` it did
+ *  not open. -1 when its parentheses do not balance. */
+function bareTargetEnd(line: string, from: number, stop: number): number {
+  let depth = 0
+  let at = from
+
+  while (at < stop) {
+    const one = line[at] ?? ''
+    if (endsTarget(one)) break
+    if (one === '\\') {
+      at += 2
+      continue
+    }
+    if (one === '(' && ++depth > DEEPEST_PARENS) return -1
+    if (one === ')') {
+      if (depth === 0) break
+      depth--
+    }
+    at++
+  }
+
+  return at < stop && depth === 0 ? at : -1
+}
+
+/** The `[label](target)` opened by the `[` at `open`, with an optional `"title"` and an
+ *  optional `<>` around a target that has spaces in it. Only the shape is read here;
+ *  whether the target names a note rather than the web is decided by `isNoteTarget`.
+ *
+ *  The twin of `markdown_link` in apps/desktop/src-tauri/src/links.rs. By hand rather
+ *  than a pattern, because a target's parentheses and a label's brackets balance. */
+function markdownLinkAt(
+  line: string,
+  open: number,
+  ends: ReadonlyMap<number, number>,
+): MarkdownLink | null {
+  const stop = Math.min(line.length, open + LONGEST_LINK)
+  const skipBlanks = (from: number) => {
+    let at = from
+    while (at < stop && endsTarget(line[at] ?? '')) at++
+    return at
+  }
+
+  const close = ends.get(open)
+  if (close === undefined || close >= stop || line[close + 1] !== '(') return null
+
+  let at = skipBlanks(close + 2)
+  let writtenFrom = at
+  let writtenTo: number
+
+  if (line[at] === '<') {
+    writtenFrom = at + 1
+    writtenTo = writtenFrom
+    while (writtenTo < stop && line[writtenTo] !== '>' && line[writtenTo] !== '<') writtenTo++
+    if (writtenTo >= stop || line[writtenTo] !== '>') return null
+    at = writtenTo + 1
+  } else {
+    writtenTo = bareTargetEnd(line, at, stop)
+    if (writtenTo <= at) return null
+    at = writtenTo
+  }
+
+  at = skipBlanks(at)
+  const quote = line[at]
+  if (quote === '"' || quote === "'") {
+    at = line.indexOf(quote, at + 1) + 1
+    if (at === 0 || at >= stop) return null
+    at = skipBlanks(at)
+  }
+
+  if (at >= stop || line[at] !== ')') return null
+
+  return {
+    label: line.slice(open + 1, close),
+    written: line.slice(writtenFrom, writtenTo),
+    writtenFrom,
+    to: at + 1,
+  }
+}
 
 /** How many links one note is read for. Far past any note anybody writes - a map of
  *  content points at a few hundred things - and a bound on what one file can cost
@@ -265,10 +393,23 @@ const SIZE = /^(\d+)(?:x(\d+))?$/
  *  which of the two `300x200` means. */
 export function embedSize(alias: string | null): { width: number; height: number | null } | null {
   const found = alias === null ? null : SIZE.exec(alias)
+  // A width of nothing is a picture nobody would see, which is no thing to ask for.
+  if (found && Number(found[1]) === 0) return null
   if (!found) return null
 
   const height = found[2]
   return { width: Number(found[1]), height: height === undefined ? null : Number(height) }
+}
+
+/** The size at the end of a markdown picture's words, where Obsidian writes it:
+ *  `![a cat|300](a.png)`, or `![|100x200](a.png)`, its bar escaped in a table. */
+export function sizedAlt(alt: string): {
+  alt: string
+  size: { width: number; height: number | null } | null
+} {
+  const found = /^(.*?)\\?\|(\d+(?:x\d+)?)$/su.exec(alt)
+  const size = found ? embedSize(found[2] ?? '') : null
+  return found && size ? { alt: found[1] ?? '', size } : { alt, size: null }
 }
 
 /** The page a fragment names, or null when it names none.
@@ -306,6 +447,17 @@ export function parseWikilink(inner: string, embed = false): Wikilink | null {
   // An empty alias is not an alias: `[[Note|]]` shows the target, so that
   // deleting the words after the bar reads as taking the alias away.
   return { target, heading, block, alias: alias === '' ? null : alias, embed }
+}
+
+/** The characters a wikilink cannot hold in a name: `#` and `^` open a fragment, `|` an
+ *  alias, and a bracket ends the link. Obsidian refuses all five in a link for the same
+ *  reason, though a file may be named with them, so a link to such a file is a markdown
+ *  link, which both apps read; see link-format.ts in the app. */
+const NOT_IN_WIKILINK = /[#^[\]|]/
+
+/** Whether `[[name]]` would read as something other than a link to `name`. */
+export function wikilinkCannotName(name: string): boolean {
+  return NOT_IN_WIKILINK.test(name)
 }
 
 /** The link back as source, which is what a rename writes. */
@@ -410,7 +562,7 @@ export function findLinks(text: string): FoundLink[] {
 }
 
 /** One line of some markdown, and whether it is code. */
-interface Row {
+export interface Row {
   text: string
   /** Where the line starts in the whole text. */
   from: number
@@ -421,6 +573,8 @@ interface Row {
   code: boolean
   /** True on the front matter's lines: YAML, where `#` opens no heading. */
   matter: boolean
+  /** The name on a closing fence, as an older build wrote it: see `fenceName`. */
+  fenceName: string | null
 }
 
 /** Every line of some markdown, so the walks here do not each carry their own
@@ -453,7 +607,15 @@ export function* lines(text: string): Generator<Row> {
     const row = text.slice(at, end === -1 ? text.length : end)
 
     const matters = at < wordsAt
-    yield { text: row, from: at, line, code: !matters && code.line(row) !== WORDS, matter: matters }
+    const isCode = !matters && code.line(row) !== WORDS
+    yield {
+      text: row,
+      from: at,
+      line,
+      code: isCode,
+      matter: matters,
+      fenceName: isCode ? code.closedName : null,
+    }
 
     if (end === -1) break
     at = end + 1
@@ -461,35 +623,55 @@ export function* lines(text: string): Generator<Row> {
   }
 }
 
-/** The links on one line of prose, added in the order they were written. */
-function collect(line: string, offset: number, at: number, found: FoundLink[]) {
-  const here: FoundLink[] = []
+export function rowsOf(text: string): Row[] {
+  return [...lines(text)]
+}
 
-  for (const match of line.matchAll(WIKILINK)) {
-    const [whole, bang = '', inner = ''] = match
-    const link = parseWikilink(inner, bang === '!')
+/** The links on one line of prose, added in the order they were written. One walk over
+ *  its brackets, as `links_on` in links.rs walks them: whichever link opens first has the
+ *  line up to its end, so `[x]([[a]])` is a link to `[[a]]` and `[[\\]](x)` a wikilink. */
+function collect(line: string, offset: number, at: number, found: FoundLink[]) {
+  if (!line.includes('[')) return
+  // No `](`, no markdown link, and that is nearly every line with a bracket on it.
+  const ends = line.includes('](') ? labelEnds(line) : new Map<number, number>()
+
+  for (let open = line.indexOf('['); open !== -1; open = line.indexOf('[', open + 1)) {
+    if (line[open - 1] === '\\') continue
+
+    // A backslash in front of the bang escapes the bang and leaves the link.
+    const embed = line[open - 1] === '!' && line[open - 2] !== '\\'
+    const from = offset + (embed ? open - 1 : open)
+
+    if (line[open + 1] === '[') {
+      WIKILINK.lastIndex = open + 2
+      const inner = WIKILINK.exec(line)?.[1]
+      if (inner === undefined) continue
+
+      const link = parseWikilink(inner, embed)
+      const closed = open + 2 + inner.length + 2
+      if (link) {
+        // Where the target sits: past the `!`, the `[[`, and any space trimmed off
+        // the front of it.
+        const targetFrom = offset + open + 2 + (inner.length - inner.trimStart().length)
+        found.push({
+          ...link,
+          kind: 'wikilink',
+          from,
+          to: offset + closed,
+          targetFrom,
+          targetTo: targetFrom + link.target.length,
+          line: at,
+        })
+      }
+      open = closed - 1
+      continue
+    }
+
+    const link = markdownLinkAt(line, open, ends)
     if (!link) continue
 
-    const from = offset + match.index
-    // Where the target sits: past the `!`, the `[[`, and any space trimmed off
-    // the front of it.
-    const openTo = from + bang.length + 2
-    const targetFrom = openTo + (inner.length - inner.trimStart().length)
-
-    here.push({
-      ...link,
-      kind: 'wikilink',
-      from,
-      to: from + whole.length,
-      targetFrom,
-      targetTo: targetFrom + link.target.length,
-      line: at,
-    })
-  }
-
-  for (const match of line.matchAll(MARKDOWN_LINK)) {
-    const [whole, bang = '', label = '', angled, bare] = match
-    const written = angled ?? bare ?? ''
+    const { written, writtenFrom, label } = link
+    open = link.to - 1
     if (!isNoteTarget(written)) continue
 
     const hash = written.indexOf('#')
@@ -497,40 +679,25 @@ function collect(line: string, offset: number, at: number, found: FoundLink[]) {
     const fragment = hash === -1 ? '' : decodeFragment(written.slice(hash + 1))
     if (!target && !fragment) continue
 
-    const from = offset + match.index
-    const targetFrom = from + whole.indexOf(written, label.length + bang.length + 2)
+    const targetFrom = offset + writtenFrom
     // `#^a1b2c3` names a block in a markdown link exactly as in a wikilink, which
     // is how Obsidian writes one and how Orden writes one when the Links setting
     // asks for markdown links; see link-format.ts in the app.
     const block = fragment.startsWith('^') ? fragment.slice(1) : null
 
-    here.push({
+    found.push({
       target: decodeTarget(target),
       heading: block === null ? fragment || null : null,
       block,
       alias: label,
-      embed: bang === '!',
+      embed,
       kind: 'markdown',
       from,
-      to: from + whole.length,
+      to: offset + link.to,
       targetFrom,
       targetTo: targetFrom + target.length,
       line: at,
     })
-  }
-
-  here.sort((one, other) => one.from - other.from)
-  found.push(...here)
-}
-
-/** A markdown target as the name it stands for: `My%20Note.md` is a link to
- *  `My Note.md`, and a rename has to recognise it as one. A target that is not
- *  valid encoding is taken as written. */
-function decodeTarget(target: string): string {
-  try {
-    return decodeURI(target)
-  } catch {
-    return target
   }
 }
 
@@ -542,14 +709,46 @@ const ESCAPES = /(?:%[0-9A-Fa-f]{2})+/g
  *  encoding comes out as replacement characters rather than as an error. */
 const UTF8 = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true })
 
+/** A backslash and the punctuation it escapes, or a run of percent escapes. */
+const WRITTEN = /\\([!-/:-@[-`{-~])|(?:%[0-9A-Fa-f]{2})+/g
+
+/** The same UTF-8, for a name: a run that is not valid encoding is no name at all. */
+const STRICT_UTF8 = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true })
+
+function bytesOf(run: string): Uint8Array {
+  return Uint8Array.from(run.slice(1).split('%'), (hex) => Number.parseInt(hex, 16))
+}
+
+/** A markdown target as the name it stands for: `My%20Note.md` is a link to
+ *  `My Note.md` and `C%23.md` a link to `C#.md`, and a rename has to recognise each as
+ *  one. Every escape is undone, which `decodeURI` does not do for the characters a URL
+ *  reserves, so the link the app writes to `C#.md` reads back as that note. A `%` that
+ *  begins no escape is a `%`; a target that is not valid encoding is taken as written.
+ *  The twin of `decode` in apps/desktop/src-tauri/src/links.rs.
+ *
+ *  Split a target from its `#fragment` before reading it: what comes out may hold a
+ *  `#` of its own. */
+export function decodeTarget(target: string): string {
+  try {
+    return target.replace(WRITTEN, (run, mark?: string) => mark ?? STRICT_UTF8.decode(bytesOf(run)))
+  } catch {
+    return target
+  }
+}
+
+/** A path as a markdown target: the characters a browser or an editor would
+ *  otherwise read as something else. `#` opens a fragment and a space ends the
+ *  target, and a `)` (`1) Intro.pdf`) ends the link, so those are written out. */
+export function encodeTarget(path: string): string {
+  return encodeURI(path).replace(/[#?()]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)
+}
+
 /** The `#fragment` of a link as the words it names. What a note writes in a link is
  *  a URL, so `Some%20Heading` is `Some Heading` and `Why%3F` is `Why?`: every escape
  *  is undone, which `decodeURI` does not do for the characters a URL reserves. A `%`
  *  that does not begin an escape is taken as written. */
 export function decodeFragment(fragment: string): string {
-  return fragment.replace(ESCAPES, (run) =>
-    UTF8.decode(Uint8Array.from(run.slice(1).split('%'), (hex) => Number.parseInt(hex, 16))),
-  )
+  return fragment.replace(ESCAPES, (run) => UTF8.decode(bytesOf(run)))
 }
 
 /** The name a block link points at, when a line ends by naming one.
@@ -676,6 +875,10 @@ function blockSection(source: string, wanted: string): string | null {
   if (!found) return null
 
   const lines = source.split('\n')
+  if (ownLine(lines[found.line] ?? '') && !(lines[found.line - 1] ?? '').trim()) {
+    return blockAbove(source, lines, found.line)
+  }
+
   let start = found.line
   let end = found.line
   while (start > 0 && (lines[start - 1] ?? '').trim()) start--
@@ -685,6 +888,27 @@ function blockSection(source: string, wanted: string): string | null {
   block[found.line - start] = (lines[found.line] ?? '').replace(BLOCK_ID, '')
 
   return block.join('\n').trimEnd()
+}
+
+/** Whether a line holds a block's name and nothing else. */
+export function ownLine(line: string): boolean {
+  return line.trim().startsWith('^') && blockIdOf(line.trim()) === line.trim().slice(1)
+}
+
+/** The block a name on a line of its own stands under, past the blank lines between
+ *  them and whatever blank lines a fence holds. */
+function blockAbove(source: string, lines: readonly string[], under: number): string {
+  const rows = rowsOf(source)
+  let end = under - 1
+  while (end > 0 && !(lines[end] ?? '').trim()) end--
+
+  let start = end
+  while (start > 0 && ((lines[start - 1] ?? '').trim() || rows[start - 1]?.code)) start--
+
+  return lines
+    .slice(start, end + 1)
+    .join('\n')
+    .trimEnd()
 }
 
 /** A name no block in the note has yet. Six characters of base 36, which is two
@@ -708,8 +932,7 @@ export function blockIds(text: string): { id: string; line: number }[] {
   const found: { id: string; line: number }[] = []
 
   for (const row of lines(text)) {
-    if (row.code) continue
-    const id = blockIdOf(row.text)
+    const id = row.code ? row.fenceName : blockIdOf(row.text)
     if (id) found.push({ id, line: row.line })
   }
 
@@ -743,6 +966,13 @@ export function blocksOf(text: string): NoteBlock[] {
       continue
     }
 
+    // A name on a line of its own is the block above's.
+    const above = current ? null : found.at(-1)
+    if (above && !row.code && ownLine(row.text)) {
+      above.id = blockIdOf(row.text)
+      continue
+    }
+
     if (!current) {
       current = { line: row.line, text: firstWords(row.text), id: null }
       found.push(current)
@@ -763,13 +993,84 @@ export function blocksOf(text: string): NoteBlock[] {
  *  published page, not an embed. The editor hides it the way it hides any other
  *  syntax mark, and brings it back when the caret is on its line. */
 export function withoutBlockIds(text: string): string {
+  return replacingBlockIds(text, (kept) => kept)
+}
+
+/** The same with each name written over, so every offset in the note stays what it was.
+ *  In tabs, since two blanks at the end of a line of words break the line; in blanks on a
+ *  closing fence, the one thing a fence closes with. */
+export function blockIdsBlanked(text: string): string {
+  return replacingBlockIds(
+    text,
+    (kept, length, row) => kept + (row.code ? ' ' : '\t').repeat(length),
+  )
+}
+
+/** Around a block's name while a page is rendered. */
+const ANCHOR_OPEN = '\uE0F0'
+const ANCHOR_CLOSE = '\uE0F1'
+
+/** A table's own line under its head. */
+const TABLE_RULE = /^\s*\|?[\s:|-]+\|?\s*$/
+
+/** The same with each name left as a mark `blockAnchorsDrawn` makes an id of, on the lines
+ *  `holds` says a mark can stand on: `line` is the line's number, the words what is left
+ *  of it. After a blank, so what closes an emphasis is still at the end of a word, and
+ *  inside a table row's last cell, since another cell would be dropped. A name on its own
+ *  line is a blank line once it is gone, so it goes at the end of the words above and
+ *  leaves that blank, or where there are none, stands alone above it. */
+export function blockIdsAnchored(
+  text: string,
+  holds: (line: number, words: string) => boolean,
+): string {
+  return replacingBlockIds(text, (kept, _length, row, id) => {
+    const words = kept.slice(kept.lastIndexOf('\n') + 1)
+    if (row.code || !holds(row.line, words) || TABLE_RULE.test(words)) return kept
+    const mark = `${ANCHOR_OPEN}${id}${ANCHOR_CLOSE}`
+    const after = (held: string) =>
+      /\|\s*$/.test(held) ? held.replace(/\|\s*$/, `${mark} |`) : `${held} ${mark}`
+    if (words.trim() !== '') return after(kept)
+    const start = kept.length - words.length - 1
+    const above = start < 0 ? '' : kept.slice(kept.lastIndexOf('\n', start - 1) + 1, start)
+    if (above.trim() === '') return `${kept}${mark}\n${words}`
+    if (!holds(row.line - 1, above) || TABLE_RULE.test(above)) return kept
+    const carriage = kept[start - 1] === '\r' ? 1 : 0
+    return `${after(kept.slice(0, start - carriage))}${kept.slice(start - carriage)}`
+  })
+}
+
+/** Text with the marks of `blockIdsAnchored` gone, as they will be from any tag. */
+export function blockMarksOff(text: string): string {
+  if (!text.includes(ANCHOR_OPEN)) return text
+  return text.replace(new RegExp(`\\s?${ANCHOR_OPEN}[\\w-]+${ANCHOR_CLOSE}`, 'g'), '')
+}
+
+/** The marks of `blockIdsAnchored` as the empty elements a page scrolls to. A mark inside a
+ *  tag, in an attribute, goes as the name would have: nothing a tag says is a place. */
+export function blockAnchorsDrawn(html: string): string {
+  if (!html.includes(ANCHOR_OPEN)) return html
+  const mark = `${ANCHOR_OPEN}([\\w-]+)${ANCHOR_CLOSE}`
+  const anywhere = new RegExp(`\\s?${mark}`, 'g')
+  const anchor = (id: string) => `<span id="^${id}"></span>`
+  return (
+    html
+      // No further than the next tag opening, or `<a ` thirty thousand times is read to its
+      // end from each one of them. A mark past a stray `<` in a tag is in the one it opens.
+      .replace(/<[a-z/](?:"[^"]*"|'[^']*'|[^'"<>])*>/gi, (tag) => tag.replace(anywhere, ''))
+      .replace(new RegExp(`<p>\\s*${mark}\\s*</p>`, 'g'), (_, id: string) => anchor(id))
+      .replace(new RegExp(mark, 'g'), (_, id: string) => anchor(id))
+  )
+}
+
+function replacingBlockIds(
+  text: string,
+  by: (kept: string, length: number, row: Row, id: string) => string,
+): string {
   let out = ''
   let at = 0
 
   for (const row of lines(text)) {
-    if (row.code) continue
-
-    const id = blockIdOf(row.text)
+    const id = row.code ? row.fenceName : blockIdOf(row.text)
     if (!id) continue
 
     const end = row.from + row.text.trimEnd().length
@@ -778,7 +1079,7 @@ export function withoutBlockIds(text: string): string {
     const before = text[caret - 1]
     const from = before === ' ' || before === '\t' ? caret - 1 : caret
 
-    out += text.slice(at, from)
+    out += by(text.slice(at, from), end - from, row, id)
     at = end
   }
 

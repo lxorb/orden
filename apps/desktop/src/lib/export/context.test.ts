@@ -7,11 +7,14 @@ import { describe, expect, test, vi } from 'vitest'
 const world = vi.hoisted(() => ({
   active: null as { doc: string; name: string; path: string | null; note: object } | null,
   trusts: true,
+  asked: 0,
 }))
 
 vi.mock('../workspace.svelte', () => ({
   workspace: {
-    flush: () => undefined,
+    wordsNow: () => {
+      world.asked += 1
+    },
     get active() {
       return world.active
     },
@@ -34,6 +37,17 @@ vi.mock('../tauri', () => ({ invoke: () => Promise.resolve(''), isNative: false 
 const { openTarget, renderOptions } = await import('./context')
 
 const open = (path: string | null) => ({ doc: '# Plan', name: 'Plan.md', path, note: {} })
+
+describe('the open note', () => {
+  test('is read after everything holding words of its own has handed them over', () => {
+    world.active = open('Notes/plan.canvas')
+    const before = world.asked
+
+    openTarget()
+
+    expect(world.asked).toBe(before + 1)
+  })
+})
 
 describe('the render options for the open note', () => {
   test('show its HTML as characters when it is somebody else’s', async () => {

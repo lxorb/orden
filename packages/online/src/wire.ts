@@ -264,7 +264,7 @@ export function outOf(bytes: Uint8Array): { seq: number; data: Uint8Array } | nu
  *  an offset (or the screen, if that is no longer kept); end it; and save every
  *  screen because the machine is going to sleep. */
 export type MachineFrame =
-  | { t: 'open'; session: string; cols: number; rows: number }
+  | { t: 'open'; session: string; cols: number; rows: number; watching?: true }
   | { t: 'in'; session: string; data: Uint8Array }
   | { t: 'size'; session: string; cols: number; rows: number }
   | { t: 'want'; session: string; since: number }
@@ -599,9 +599,17 @@ export function machineFrameOf(bytes: Uint8Array): MachineFrame | null {
   if (!isId(session)) return null
   switch (value.t) {
     case 'open':
+      if (!isCells(value.cols) || !isCells(value.rows)) return null
+      return {
+        t: 'open',
+        session,
+        cols: value.cols,
+        rows: value.rows,
+        ...(value.watching === true ? { watching: true as const } : {}),
+      }
     case 'size':
       return isCells(value.cols) && isCells(value.rows)
-        ? { t: value.t, session, cols: value.cols, rows: value.rows }
+        ? { t: 'size', session, cols: value.cols, rows: value.rows }
         : null
     case 'in':
       return value.data instanceof Uint8Array && value.data.length <= MOST_INPUT

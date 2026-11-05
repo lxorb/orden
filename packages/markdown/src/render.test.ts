@@ -1102,3 +1102,178 @@ describe('the whole sweep', () => {
     }
   })
 })
+
+describe('nesting deeper than the parser can follow', () => {
+  test.each([
+    ['> ', 20000],
+    ['- ', 5000],
+  ])(
+    '%j %i times is still drawn',
+    (mark, times) => {
+      const html = renderMarkdown(`${mark.repeat(times)}the words <b>`)
+      expect(html).toContain('the words')
+      expect(html).not.toContain('<b>')
+    },
+    30000,
+  )
+
+  test('nesting anybody writes is still read', () => {
+    expect(renderMarkdown('> > a')).toContain('<blockquote>')
+  })
+})
+
+describe('a markdown picture with a size after a bar', () => {
+  test('is drawn at that size, as Obsidian does', () => {
+    expect(renderMarkdown('![\\|100x200](a.png)')).toContain(
+      '<img src="a.png" alt="" width="100" height="200">',
+    )
+    expect(renderMarkdown('![a cat|300](a.png)')).toContain(
+      '<img src="a.png" alt="a cat" width="300">',
+    )
+  })
+
+  test('and words after a bar are words', () => {
+    expect(renderMarkdown('![a|b](a.png)')).toContain('alt="a|b"')
+  })
+})
+
+describe('a named block on a page a link to it is followed on', () => {
+  const anchored = (source: string) => renderMarkdown(source, { blockAnchors: true })
+
+  test('has an id of its name, at the end of its words', () => {
+    expect(anchored('Words ^abc\n')).toBe('<p>Words <span id="^abc"></span></p>\n')
+    expect(anchored('- one ^abc\n- two\n')).toContain('one <span id="^abc"></span>')
+    expect(anchored('> said ^abc\n')).toContain('said <span id="^abc"></span>')
+    expect(anchored('_said_ ^abc\n')).toContain('<em>said</em>')
+    expect(anchored('Words\n\n^abc\n')).toContain('<p>Words</p>\n<span id="^abc"></span>')
+  })
+
+  test('is drawn as without one, where a line cannot hold it', () => {
+    for (const [named, plain] of [
+      ['# Title ^abc\n', '# Title\n'],
+      ['Title ^abc\n===\n', 'Title\n===\n'],
+      ['> [!note] ^abc\n> said\n', '> [!note]\n> said\n'],
+      ['```ts\ncode\n``` ^abc\n', '```ts\ncode\n```\n'],
+      ['<div title="a ^abc\n"></div>\n', '<div title="a\n"></div>\n'],
+    ] as const) {
+      expect(anchored(named)).toBe(renderMarkdown(plain))
+    }
+  })
+
+  test('nobody else asked for one', () => {
+    expect(renderMarkdown('Words ^abc\n')).toBe('<p>Words</p>\n')
+  })
+})
+
+describe('a link to a block', () => {
+  const page = (source: string) =>
+    renderMarkdown(source, { resolveLink: (link) => ({ href: link.target, text: 'words' }) })
+
+  test('says the block', () => {
+    expect(page('[[Note#^x]]\n')).toContain('href="Note#%5Ex"')
+    expect(page('[[#^abc]]\n')).toContain('href="#%5Eabc"')
+    expect(page('[[Note#Part]]\n')).toContain('href="Note#part"')
+  })
+})
+
+describe('a named block on a line that is no words of a paragraph or an item', () => {
+  const anchored = (source: string) => renderMarkdown(source, { blockAnchors: true })
+
+  test('is drawn as without one', () => {
+    for (const [named, plain] of [
+      ['$$\na ^2\n$$\n', '$$\na\n$$\n'],
+      ['- item\n\n  $$\n  a ^2\n  $$\n', '- item\n\n  $$\n  a\n  $$\n'],
+      ['--- ^id\n', '---\n'],
+      ['*** ^id\n', '***\n'],
+      ['___ ^id\n', '___\n'],
+      ['$$x$$ ^id\n', '$$x$$\n'],
+      ['[ref]: http://x ^id\n\n[ref]\n', '[ref]: http://x\n\n[ref]\n'],
+      ['*[HTML]: Hyper Text ^id\n\nHTML here\n', '*[HTML]: Hyper Text\n\nHTML here\n'],
+      ['<div>\nwords ^id\n</div>\n', '<div>\nwords\n</div>\n'],
+    ] as const) {
+      expect(anchored(named)).toBe(renderMarkdown(plain))
+    }
+  })
+
+  test('never leaves a mark in an attribute', () => {
+    const html = anchored('text <b title="a ^id\nb">x</b>\n')
+    expect(html).not.toContain('')
+    expect(html).not.toContain('<span id="^id"')
+  })
+
+  test('a table row holds one in its last cell', () => {
+    const html = anchored('| a | b |\n| --- | --- |\n| 1 | 2 | ^t1\n| 3 | 4 |\n')
+    expect(html).toContain('<span id="^t1"></span>')
+    expect(html.match(/<td/g)).toHaveLength(4)
+  })
+})
+
+describe('a named block, as a page holds it', () => {
+  const anchored = (source: string) => renderMarkdown(source, { blockAnchors: true })
+  /** What a page draws with its anchors taken off, and the name-free words beside it. */
+  const without = (html: string) => html.replace(/\s?<span id="\^[\w-]+"><\/span>/g, '')
+  const tight = (html: string) => html.replace(/>\s+</g, '><').trim()
+
+  test('on its own line under words is a break between them, as everywhere else', () => {
+    expect(anchored('word\n^own\nmore\n')).toBe(
+      '<p>word <span id="^own"></span></p>\n<p>more</p>\n',
+    )
+    expect(without(anchored('- a\n^own\n- b\n'))).toBe(renderMarkdown('- a\n\n- b\n'))
+    expect(anchored('- a\n^own\n- b\n')).toContain('<span id="^own">')
+    expect(anchored('Words\n\n^abc\nmore\n')).toContain('<p>more</p>')
+  })
+
+  test('under a definition it cannot name goes, and what is under it stays one', () => {
+    expect(without(anchored('word\n^own\n[ref]: http://x ^d\n\n[ref]\n'))).toBe(
+      renderMarkdown('word\n\n[ref]: http://x\n\n[ref]\n'),
+    )
+  })
+
+  test('is read by where the words are, whatever the parser keeps no token for', () => {
+    expect(anchored('[ref]: http://x\n[ref]: http://y ^d\n\n> quote\n\n[ref]\n')).toBe(
+      renderMarkdown('[ref]: http://x\n[ref]: http://y\n\n> quote\n\n[ref]\n'),
+    )
+    expect(without(anchored('[r]: http://x\n[r]: http://y\n\n$$x$$ ^d\n'))).toBe(
+      renderMarkdown('[r]: http://x\n[r]: http://y\n\n$$x$$\n'),
+    )
+  })
+
+  test('draws the same page with its anchors off, in every order of these lines', () => {
+    const lines = ['word', '- a', '> q', '[r]: http://x ^d', '$$x$$ ^e', '^own', '', 'more ^w']
+    const named = lines.flatMap((one) =>
+      lines.flatMap((two) => lines.map((three) => [one, two, three].join('\n') + '\n')),
+    )
+    const plain = (text: string) => text.replace(/[ \t]*\^\w+$/gm, '')
+    const differ = named.filter(
+      (text) => tight(without(anchored(text))) !== tight(renderMarkdown(plain(text))),
+    )
+    expect(differ).toEqual([])
+  })
+
+  test('is found in a note of CRLF lines as in any other', () => {
+    const html = renderMarkdown('one ^a\r\n\r\ntwo ^b\r\n\r\nthree ^c', { blockAnchors: true })
+    for (const id of ['a', 'b', 'c']) expect(html).toContain(`id="^${id}"`)
+    expect(
+      renderMarkdown('one\r\n\r\n<div>\r\nz ^z\r\n</div>\r\n', { blockAnchors: true }),
+    ).not.toContain('id="^z"')
+  })
+
+  test('hides no script target from what holds them back', () => {
+    for (const source of [
+      'word <a href="java ^a\nscript:alert(1)">x</a>\n',
+      'word <a href="java\uE0F0a\uE0F1script:alert(1)">x</a>\n',
+      '<a href="java\uE0F0a\uE0F1script:alert(1)">x</a>\n',
+    ]) {
+      const html = renderMarkdown(source, { blockAnchors: true })
+      expect(html, source).not.toMatch(/<a [^>]*href="java/)
+    }
+    expect(
+      renderMarkdown('word <a href="https://x.dev/ ^a\nb">x</a>\n', { blockAnchors: true }),
+    ).toContain('<a href="https://x.dev/')
+  })
+
+  test('takes a tag no further than the next one that opens', async () => {
+    const { blockAnchorsDrawn } = await import('./links')
+    expect(blockAnchorsDrawn('<div <a title="x">y</a>\n')).toBe('<div <a title="">y</a>\n')
+  })
+})

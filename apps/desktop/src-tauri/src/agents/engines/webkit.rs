@@ -69,7 +69,7 @@ use serde_json::{json, Map, Value};
 use tauri::webview::PlatformWebview;
 use tauri::{AppHandle, LogicalPosition, LogicalSize, Url, WebviewBuilder, WebviewUrl};
 
-use super::{refused, Engine, Page, Tree, View, SETTLED};
+use super::{refused, Engine, Gate, Page, Tree, View, SETTLED};
 use crate::agents::keys::{self, Key};
 use crate::agents::policy::{self, Facts, Field};
 use crate::agents::quiet::{self, Owner, Said};
@@ -1327,6 +1327,11 @@ fn box_of(page: &Page<'_>, element: &Element, scroll: bool) -> Result<[f64; 4], 
     Ok([at("x"), at("y"), at("width"), at("height")])
 }
 
+/// Whether a secret field on the page holds anything (`secrets`).
+fn holds_a_secret(page: &Page<'_>) -> Result<bool, Answer> {
+    Ok(secrets(page)?.iter().any(|(_, filled, _)| *filled))
+}
+
 /// Every field on the page words are typed into that is secret (`policy::secret`): its
 /// ref, whether it holds anything, and where it is in the viewport.
 fn secrets(page: &Page<'_>) -> Result<Vec<(u64, bool, [f64; 4])>, Answer> {
@@ -2082,6 +2087,33 @@ impl Engine for Page<'_> {
         Ok(serde_json::from_value(said).ok())
     }
 
+    fn facts_of_press(&self, element: &Element) -> Result<Facts, Answer> {
+        self.facts(&self.aimed(element)?)
+    }
+
+    fn at_first_point(&self, element: &Element) -> Result<Element, Answer> {
+        let first = points(self, element)?[0];
+        self.element_at(first)
+    }
+
+    fn aimed(&self, element: &Element) -> Result<Element, Answer> {
+        let point = landing(self, element)?;
+        self.element_at(point)
+    }
+
+    fn may_act_in(&self, facts: &Facts) -> Result<(), Answer> {
+        self.frame_may_be_acted_in(facts)
+    }
+
+    fn limits_sites(&self) -> bool {
+        self.grant_limits_sites()
+    }
+
+    fn tick_changes(&self, element: &Element, wanted: bool) -> Result<bool, Answer> {
+        let now = on(self, element, "function () { return this.checked }", &[])?;
+        Ok(now.as_bool() != Some(wanted))
+    }
+
     fn navigate(&self, url: &str) -> Result<(), Answer> {
         let loads = heard(&self.label, |one| one.loads);
         let address = url.to_string();
@@ -2102,6 +2134,15 @@ impl Engine for Page<'_> {
     }
 
     fn step(&self, by: i64) -> Result<(), Answer> {
+        // The tab's history is the reader's too, and goes through sites they may reach and
+        // the agent may not: the DevTools page asks the grant of the entry before it steps.
+        // Here that entry's address is not read yet, so an agent does not step at all.
+        if self.limits.is_some() {
+            return Err(Answer::error(
+                Code::UnsupportedOnThisEngine,
+                "browser_back and browser_forward are not available to an agent on WKWebView yet: where history goes cannot be put to the grant first",
+            ));
+        }
         let loads = heard(&self.label, |one| one.loads);
         let went = on_main(self, PATIENCE, move |view, said| {
             let _ = said.send(stepped(view, by));
@@ -2134,6 +2175,16 @@ impl Engine for Page<'_> {
                         _ => {}
                     }
                     loaded && fetched.is_some_and(|(_, since)| since.elapsed() >= QUIET)
+                }
+                // The DevTools page asks again with the secret regions out (9.4), which is not
+                // built here: an agent cannot wait for words on WKWebView yet.
+                // The DevTools page asks again with the secret regions out (9.4); here a
+                // filled secret field on the page is no answer either way.
+                Until::Text { .. } if self.limits.is_some() && holds_a_secret(self)? => {
+                    return Err(Answer::error(
+                        Code::PasswordField,
+                        "a filled secret field is on the page, and its words cannot be left out of the look here: wait for something else",
+                    ))
                 }
                 Until::Text { text } => isolated(
                     self,
@@ -2258,6 +2309,14 @@ impl Engine for Page<'_> {
     }
 
     fn read(&self, app: &AppHandle, shape: ReadAs) -> Result<(String, String, String), Answer> {
+        // The DevTools page leaves a secret region's words out of a read (9.4); here an
+        // agent's read is refused while one is filled.
+        if self.limits.is_some() && holds_a_secret(self)? {
+            return Err(Answer::error(
+                Code::PasswordField,
+                "a filled secret field is on the page, and its words cannot be left out of a read here: take a snapshot, which leaves them out",
+            ));
+        }
         let said = match shape {
             ReadAs::Text => isolated(self, TEXT)?,
             ReadAs::Markdown => isolated(self, &WHOLE)?,
@@ -2267,6 +2326,12 @@ impl Engine for Page<'_> {
     }
 
     fn clip(&self) -> Result<(String, String, String), Answer> {
+        if self.limits.is_some() && holds_a_secret(self)? {
+            return Err(Answer::error(
+                Code::PasswordField,
+                "a filled secret field is on the page, and its words cannot be left out of a clip here",
+            ));
+        }
         let said = isolated(self, &CLIPPED)?;
         let text = |key: &str| {
             said.get(key)
@@ -2309,6 +2374,7 @@ impl Engine for Page<'_> {
         button: &str,
         count: u8,
         modifiers: u8,
+        gate: Gate<'_>,
     ) -> Result<(), Answer> {
         let facts = self.facts(element)?;
         if facts.picker() {
@@ -2318,15 +2384,23 @@ impl Engine for Page<'_> {
             ));
         }
         let point = landing(self, element)?;
+        // What the press lands on there, a child or a frame of the element, is put to the
+        // question as the element was (the DevTools page's `press_judged`).
+        let hit = self.element_at(point)?;
+        if hit.backend != element.backend {
+            gate(&hit)?;
+        }
         press_at(self, point, button, count, modifiers)
     }
 
     fn click_at(
         &self,
         point: (f64, f64),
+        judged: &Element,
         button: &str,
         count: u8,
         modifiers: u8,
+        gate: Gate<'_>,
     ) -> Result<(), Answer> {
         let size = isolated(self, "[innerWidth, innerHeight]")?;
         let width = size.get(0).and_then(Value::as_f64).unwrap_or_default();
@@ -2346,6 +2420,9 @@ impl Engine for Page<'_> {
                     Code::BadArguments,
                     "that opens a list of the engine's own: set it with browser_select or browser_fill_form",
                 ));
+            }
+            if element.backend != judged.backend {
+                gate(&element)?;
             }
         }
         press_at(self, point, button, count, modifiers)
@@ -2517,7 +2594,7 @@ impl Engine for Page<'_> {
             .unwrap_or_default())
     }
 
-    fn fill(&self, element: &Element, value: &FieldValue) -> Result<(), Answer> {
+    fn fill(&self, element: &Element, value: &FieldValue, gate: Gate<'_>) -> Result<(), Answer> {
         let facts = self.facts(element)?;
         self.refuse_secret(&facts)?;
         if facts.sensitive() {
@@ -2533,7 +2610,7 @@ impl Engine for Page<'_> {
                 }
                 let now = on(self, element, "function () { return this.checked }", &[])?;
                 if now.as_bool() != Some(*wanted) {
-                    self.click(element, "left", 1, 0)?;
+                    self.click(element, "left", 1, 0, gate)?;
                 }
                 Ok(())
             }
@@ -2545,11 +2622,16 @@ impl Engine for Page<'_> {
         }
     }
 
-    fn drag(&self, _from: &Element, _to: &Element) -> Result<(), Answer> {
+    fn drag(
+        &self,
+        _from: (&Element, &Element),
+        _to: (&Element, &Element),
+        _gates: (Gate<'_>, Gate<'_>),
+    ) -> Result<(), Answer> {
         Err(refused("browser_drag"))
     }
 
-    fn upload(&self, _element: &Element, _files: &[String]) -> Result<(), Answer> {
+    fn upload(&self, _element: &Element, _files: &[String], _gate: Gate<'_>) -> Result<(), Answer> {
         Err(refused("browser_upload"))
     }
 

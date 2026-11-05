@@ -206,12 +206,16 @@
             DIVIDER,
           ]
         : []),
-      ...(!project && (kit.spec.builtin === undefined || views.length > 1)
+      ...(kit.writable && !project && (kit.spec.builtin === undefined || views.length > 1)
         ? [{ label: t('Rename'), run: () => (renaming = true) }]
         : []),
-      { label: t('New view'), run: () => kit.change((one, at) => addView(one, at, 'table')) },
-      { label: t('Duplicate view'), run: () => kit.change((one, at) => addView(one, at)) },
-      ...(views.length > 1
+      ...(kit.writable
+        ? [
+            { label: t('New view'), run: () => kit.change((one, at) => addView(one, at, 'table')) },
+            { label: t('Duplicate view'), run: () => kit.change((one, at) => addView(one, at)) },
+          ]
+        : []),
+      ...(kit.writable && views.length > 1
         ? [
             {
               label: t('Delete view'),
@@ -237,6 +241,8 @@
    *  built-in view and in the settings of a base's. */
   function moreRows(event?: MouseEvent): MenuEntry[] {
     if (!base) return []
+    // Where a change has nowhere to go, what is left is what takes nothing away from it.
+    if (!kit.writable) return csvRows()
     return [
       {
         label: t('Colour'),
@@ -278,8 +284,7 @@
           ]
         : []),
       DIVIDER,
-      { label: t('Copy as CSV'), run: () => void copyCsv(live) },
-      { label: t('Save as CSV'), run: () => void saveCsv(live, named) },
+      ...csvRows(),
       DIVIDER,
       {
         label: view?.nib.locked ? t('Unlock view') : t('Lock view'),
@@ -301,6 +306,13 @@
             },
           ]
         : []),
+    ]
+  }
+
+  function csvRows(): MenuEntry[] {
+    return [
+      { label: t('Copy as CSV'), run: () => void copyCsv(live) },
+      { label: t('Save as CSV'), run: () => void saveCsv(live, named) },
     ]
   }
 
@@ -360,11 +372,15 @@
     menu.show(
       event,
       [
-        { label: t('Rename'), run: () => (naming = at) },
-        {
-          label: t('Duplicate view'),
-          run: () => void kit.changed((b) => addView(b, at), at + 1).catch(() => undefined),
-        },
+        ...(kit.writable
+          ? [
+              { label: t('Rename'), run: () => (naming = at) },
+              {
+                label: t('Duplicate view'),
+                run: () => void kit.changed((b) => addView(b, at), at + 1).catch(() => undefined),
+              },
+            ]
+          : csvRows()),
         ...(file !== null && one?.name
           ? [
               {
@@ -376,7 +392,7 @@
               },
             ]
           : []),
-        ...(base.views.length > 1
+        ...(kit.writable && base.views.length > 1
           ? [
               DIVIDER,
               {
@@ -442,6 +458,7 @@
         type="button"
         class="nib-glyph lock"
         class:shake={live.refused > 0}
+        disabled={!kit.writable}
         title={t('Unlock view')}
         aria-label={t('Unlock view')}
         onclick={() =>
@@ -556,6 +573,7 @@
       type="button"
       class="nib-chip is-on"
       data-opens-popover
+      disabled={!kit.writable}
       aria-expanded={open === which}
       onclick={() => toggle(which)}>{label}</button
     >
@@ -609,7 +627,9 @@
                 live.builder = null
                 live.at = at
               }}
-              ondblclick={() => (naming = at)}
+              ondblclick={() => {
+                if (kit.writable) naming = at
+              }}
               oncontextmenu={(event) => tabMenu(event, at)}
             >
               <svg viewBox="0 0 13 13" aria-hidden="true"
@@ -619,53 +639,57 @@
             </button>
           {/if}
         {/each}
-        <button
-          type="button"
-          class="nib-glyph"
-          title={t('New view')}
-          aria-label={t('New view')}
-          onclick={addTab}
-        >
-          <svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg>
-        </button>
+        {#if kit.writable}
+          <button
+            type="button"
+            class="nib-glyph"
+            title={t('New view')}
+            aria-label={t('New view')}
+            onclick={addTab}
+          >
+            <svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg>
+          </button>
+        {/if}
       </div>
       {@render lock()}
       <span class="spring"></span>
-      {@render tools(['filter', 'sort'])}
+      <!-- What cannot be kept is not offered: a fence that cannot be found to write into,
+           a base in a space shared to be read. Its tabs and its search change nothing. -->
+      {#if kit.writable}{@render tools(['filter', 'sort'])}{/if}
       <!-- A base of tasks keeps what Todoist's Display narrows a view of tasks by. -->
-      {#if tasky}{@render display()}{/if}
+      {#if tasky && kit.writable}{@render display()}{/if}
       {@render searchField()}
-      <div class="tool">
-        <button
-          type="button"
-          class="nib-glyph"
-          class:open={open === 'settings'}
-          data-opens-popover
-          title={t('Settings')}
-          aria-label={t('Settings')}
-          aria-expanded={open === 'settings'}
-          onclick={() => toggle('settings')}
-        >
-          <svg viewBox="0 0 13 13" aria-hidden="true" class="dots"
-            ><circle cx="3" cy="6.5" r="0.9" /><circle cx="6.5" cy="6.5" r="0.9" /><circle
-              cx="10"
-              cy="6.5"
-              r="0.9"
-            /></svg
+      {#if kit.writable}<div class="tool">
+          <button
+            type="button"
+            class="nib-glyph"
+            class:open={open === 'settings'}
+            data-opens-popover
+            title={t('Settings')}
+            aria-label={t('Settings')}
+            aria-expanded={open === 'settings'}
+            onclick={() => toggle('settings')}
           >
-        </button>
-        <Popover open={open === 'settings'} label={t('Settings')} onclose={() => (open = null)}>
-          <ViewSettings
-            {kit}
-            more={(event?: MouseEvent) => {
-              const rows = moreRows(event)
-              return rows.map((row) =>
-                row ? { ...row, run: () => ((open = null), row.run()) } : row,
-              )
-            }}
-          />
-        </Popover>
-      </div>
+            <svg viewBox="0 0 13 13" aria-hidden="true" class="dots"
+              ><circle cx="3" cy="6.5" r="0.9" /><circle cx="6.5" cy="6.5" r="0.9" /><circle
+                cx="10"
+                cy="6.5"
+                r="0.9"
+              /></svg
+            >
+          </button>
+          <Popover open={open === 'settings'} label={t('Settings')} onclose={() => (open = null)}>
+            <ViewSettings
+              {kit}
+              more={(event?: MouseEvent) => {
+                const rows = moreRows(event)
+                return rows.map((row) =>
+                  row ? { ...row, run: () => ((open = null), row.run()) } : row,
+                )
+              }}
+            />
+          </Popover>
+        </div>{/if}
       <div class="tool">{@render layer(false)}</div>
       {#if !kit.compact || notes || tasky}{@render plusButton()}{/if}
     </div>
@@ -713,7 +737,7 @@
 
     {@render lock()}
 
-    {#if !tasky}
+    {#if !tasky && kit.writable}
       <div class="nib-segmented layouts" role="tablist" aria-label={t('Layout')} use:segmented>
         {#each offered as one (one)}
           <button
@@ -733,11 +757,11 @@
 
     <span class="spring"></span>
 
-    {#if !tasky}{@render tools(['filter', 'sort', 'group'])}{/if}
+    {#if !tasky && kit.writable}{@render tools(['filter', 'sort', 'group'])}{/if}
 
     {@render searchField()}
 
-    {#if tasky}{@render display()}{/if}
+    {#if tasky && kit.writable}{@render display()}{/if}
 
     {@render plusButton()}
   </div>

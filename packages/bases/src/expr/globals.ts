@@ -6,6 +6,7 @@ import { msOf, readDate } from '../dates'
 import { BasesError } from '../errors'
 import type { Value } from '../types'
 import type { Arg } from './methods'
+import { spend, stepsOfText } from './pattern'
 import {
   FileRef,
   fileOf,
@@ -61,10 +62,14 @@ export const GLOBALS = new Set([
 ])
 
 export function callGlobal(name: string, args: readonly Arg[], scope: Scope): Val {
-  const first = () => args[0]?.() ?? null
+  const first = () => {
+    const value = args[0]?.() ?? null
+    if (typeof value === 'string') spend(stepsOfText(value.length))
+    return value
+  }
   switch (name) {
     case 'if':
-      return truthy(first()) ? (args[1]?.() ?? null) : (args[2]?.() ?? null)
+      return truthy(args[0]?.() ?? null) ? (args[1]?.() ?? null) : (args[2]?.() ?? null)
     case 'now':
       return readDate(scope.context.now) ?? { kind: 'date', iso: scope.context.today }
     case 'today':

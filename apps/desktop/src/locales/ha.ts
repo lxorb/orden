@@ -757,6 +757,8 @@ export const ha: Dictionary = {
   '{done} of {total}': '{done} daga {total}',
   'Sync failed': 'Daidaitawa ta gaza',
   '{name} could not be written.': 'Ba a iya rubuta {name} ba.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    'Ba a iya rubuta {name} ba: ba a iya karanta fayil ɗinsa. Wataƙila ya wuce 64 MB ko ba rubutun UTF-8 ba ne.',
   '{name} could not be read.': 'Ba a iya karanta {name} ba.',
   'Text size': 'Girman rubutu',
   'Line spacing': 'Tazarar layi',
@@ -1559,6 +1561,7 @@ export const ha: Dictionary = {
   'The provider answered {status}.': 'Mai bayarwa ya amsa {status}.',
   'Add an AI provider in Settings first.': 'Ƙara mai bayar da AI a Saituna da farko.',
   'The model did not answer.': 'Samfurin bai amsa ba.',
+  'The connection closed before the answer was finished.': 'Haɗin ya rufe kafin amsar ta ƙare.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'Tsarin {plan} naka ya kai iyakarsa har zuwa {time}.',
@@ -2043,8 +2046,10 @@ export const ha: Dictionary = {
   'Send feedback': 'Aika ra’ayi',
   'Describe the issue': 'Bayyana matsalar',
   Sent: 'An aika',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'Wannan rahoton ya ƙunshi bayaninka, sigar Orden, dandalinka da sabon log na manhaja. Ba ya taɓa ƙunsar bayanan ka.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'Wannan rahoton ya ƙunshi bayaninka, sigar Orden, dandalinka da rajistar manhaja ta kwanan nan, ba tare da hanyoyin fayiloli ba.',
+  'Its space is archived': 'An adana sararinsa a ma’ajiya',
+  'Back as {name}': 'Ya dawo a matsayin {name}',
   'Send into the running answer': 'Aika cikin amsar da ke gudana',
   'Stop the answer': 'Dakatar da amsar',
   'Open every step': 'Buɗe kowane mataki',
@@ -2129,6 +2134,8 @@ export const ha: Dictionary = {
     'Yana karanta bayanan kula naka kuma yana bincike da shigarka, don haka shafi zai iya ƙoƙarin sa shi ya aika su waje.',
   Activity: 'Ayyuka',
   'Add a site': 'Ƙara shafi',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'Shirin da ke cikin wannan jeri yana gudana ba tare da tambaya ba, kuma yana iya yin duk abin da shirin zai iya yi.',
   'Add a program': 'Ƙara shiri',
   'Every space': 'Kowane wuri',
   Sites: 'Shafuka',
@@ -2558,6 +2565,7 @@ export const ha: Dictionary = {
   'No {property}': 'Babu {property}',
   '{card} moved to {group}': 'An matsar da {card} zuwa {group}',
   'Not moved': 'Ba a matsar ba',
+  'Not undone': 'Ba a soke ba',
   Retry: 'Sake gwadawa',
   Calculate: 'Ƙididdige',
   'Remove sort': 'Cire tsari',
@@ -2840,6 +2848,8 @@ export const ha: Dictionary = {
   '{title}, running': '{title}, yana gudana',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ba ya ajiye maɓallan AI a cikin keychain na Mac kuma, wanda ke ta neman kalmar sirrinsa. Shigar da maɓallanka kuma ka sake shiga ChatGPT.',
+  'This PDF is locked by its owner': 'Mai shi ya kulle wannan PDF',
+  'Part of this could not be undone': 'Ba a iya soke wani ɓangare na wannan ba',
   'Add images': 'Ƙara hotuna',
   'Remove image': 'Cire hoton',
   'That is more than 4 images.': 'Hotunan sun wuce 4.',

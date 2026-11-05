@@ -209,8 +209,10 @@ export async function fold(event: Logged, lookup: Lookup): Promise<Kept[]> {
       if (kept.message.deleted) return [touched(kept, event)]
       const r = kept.marks.r.filter(([emoji, who]) => emoji !== event.emoji || who !== event.author)
       if (event.on) r.push([event.emoji, event.author, event.seq])
-      const reactions: Record<string, Who[]> = {}
-      for (const [emoji, who] of r) (reactions[emoji] ??= []).push(who)
+      // By a map, because an emoji is whatever somebody sent; `reactionsOf` in the reducer.
+      const byEmoji = new Map<string, Who[]>()
+      for (const [emoji, who] of r) byEmoji.set(emoji, [...(byEmoji.get(emoji) ?? []), who])
+      const reactions = Object.fromEntries(byEmoji)
       return [
         {
           upto: event.seq,

@@ -227,6 +227,9 @@
       <Words
         words={grant.programs}
         placeholder={t('Add a program')}
+        hint={t(
+          'A program on this list runs without asking, and can do anything that program can do.',
+        )}
         parse={programTyped}
         onadd={listing('programs', true)}
         onremove={listing('programs', false)}

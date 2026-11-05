@@ -42,7 +42,7 @@ import { waitsForBytes } from './files'
 import { foldIn } from './ingest'
 import { away, keepingChange, type LettingGo, trim, usedChanges } from './keeping'
 import { isLocal, localPass } from './local'
-import { settle, type SpaceState } from './places'
+import { settle, type SpaceState, windowsPath } from './places'
 import { pass, type Passed, pullNow, resting } from './pass'
 import { project, wrote } from './project'
 import { keepLosers, rejoin } from './rejoin'
@@ -86,6 +86,7 @@ export class Engine implements AskedEngine {
     resurrected: new Set(),
     pass: new Set(),
     unsynced: new Set(),
+    file: new Set(),
   }
 
   private constructor(
@@ -95,6 +96,7 @@ export class Engine implements AskedEngine {
     this.held = new HeldList(core, names)
     core.events.resurrected = (event) => this.emit('resurrected', event)
     core.events.unsynced = (event) => this.emit('unsynced', event)
+    core.events.file = (event) => this.emit('file', event)
     core.events.held = () => {
       void this.held.refresh()
       for (const [id, told] of [...this.unheld]) {
@@ -213,9 +215,14 @@ export class Engine implements AskedEngine {
 
   /** The space a path on this disk is in, and where in it, with `/` between folders. */
   placed(path: string): Placed | null {
-    for (const space of this.core.spaces.values()) {
-      const inside = relative(space.row.root, path)
-      if (inside !== null) return { space, path: inside }
+    // The folder spelled like the path first; another spelling only on a disk where it
+    // is the same folder. On Linux `Notes` and `notes` are two spaces.
+    const spaces = [...this.core.spaces.values()]
+    for (const foldsCase of this.core.world.foldsCase ? [false, true] : [false]) {
+      for (const space of spaces) {
+        const inside = relative(space.row.root, path, foldsCase)
+        if (inside !== null) return { space, path: inside }
+      }
     }
     return null
   }
@@ -256,8 +263,10 @@ export class Engine implements AskedEngine {
 
   /** The space a folder on this disk is in, or is the top of, and where in it. */
   private folderPlaced(folder: string): Placed | null {
-    for (const space of this.core.spaces.values()) {
-      if (sameFolder(space.row.root, folder)) return { space, path: '' }
+    for (const foldsCase of this.core.world.foldsCase ? [false, true] : [false]) {
+      for (const space of this.core.spaces.values()) {
+        if (sameFolder(space.row.root, folder, foldsCase)) return { space, path: '' }
+      }
     }
     return this.placed(folder)
   }
@@ -480,7 +489,12 @@ export class Engine implements AskedEngine {
         const path = this.core.world.join(now.space.row.root, `${now.path}${one.rest}`)
         if (one.kind === 'folder') await this.make(path, true)
         else if (!holdsDocument(one.kind)) await this.make(path, false)
-        else await this.make(path, false, (await this.core.world.disk.read(path)) ?? '')
+        else {
+          // One that will not read is no empty note to anybody: the folder's watcher makes
+          // it once it reads, as it does any file that came.
+          const text = await this.core.world.disk.read(path)
+          if (text !== null) await this.make(path, false, text)
+        }
       }
       return
     }
@@ -513,12 +527,15 @@ export class Engine implements AskedEngine {
     }
     const { space } = was
     const release = this.handle(atOrUnder(space, was.path), [from, to])
+    const name = space.shown().entries.get(entry.id)?.name
     try {
       await this.core.use(() => this.core.commit(intended(this.core, space, entry, now.path)))
       try {
         await run()
       } catch (error) {
-        await this.core.use(() => this.core.commit(intended(this.core, space, entry, was.path)))
+        await this.core.use(() =>
+          this.core.commit(intended(this.core, space, entry, was.path, name)),
+        )
         throw error
       }
       await this.core.use(() => this.core.commit(carried(space, was.path, now.path)))
@@ -546,7 +563,7 @@ export class Engine implements AskedEngine {
   private handle(entries: readonly EntryRow[], paths: readonly string[]): () => void {
     const { inHand, handPaths } = this.core
     for (const entry of entries) inHand.set(entry.id, (inHand.get(entry.id) ?? 0) + 1)
-    const held = paths.map(norm)
+    const held = paths.map((one) => this.normed(one))
     handPaths.push(...held)
     return () => {
       for (const entry of entries) {
@@ -561,6 +578,11 @@ export class Engine implements AskedEngine {
     }
   }
 
+  /** A path as `relative` reads it, by the disk of the space it is in. */
+  private normed(path: string): string {
+    return norm(this.placed(path)?.space.row.root ?? path, path)
+  }
+
   /** Whether what is at a path on this disk, or comes or goes there, is the engine's
    *  own doing still under way, which the folder's watcher has nothing to read in
    *  (#1068): a path the app is moving or deleting a file at this moment (`moving`),
@@ -569,7 +591,7 @@ export class Engine implements AskedEngine {
    *  one and the other. Read off the tree and the disk as they are, never off how long
    *  ago anything happened. */
   ownWork(path: string): boolean {
-    const at = norm(path)
+    const at = this.normed(path)
     const folded = (one: string) => (this.core.world.foldsCase ? one.toLowerCase() : one)
     for (const one of this.core.handPaths) {
       if (folded(at) === folded(one) || folded(at).startsWith(`${folded(one)}/`)) return true
@@ -629,6 +651,9 @@ export class Engine implements AskedEngine {
   private async remove(path: string, back?: string): Promise<void> {
     const placed = this.placed(path)
     if (!placed) return
+    // Every road to here reads a file not found as gone. On macOS 13 a note iCloud took
+    // off this Mac is exactly that, and it would leave the account and every other device.
+    if (await this.core.world.disk.evicted(path)) return
     await this.core.commit(removed(this.core, placed.space, placed.path, back))
     await this.settle(placed.space)
     await this.held.refresh()
@@ -745,6 +770,10 @@ export class Engine implements AskedEngine {
       const placed = this.placed(path)
       const entry = placed?.space.at(placed.path)
       if (!entry) return
+      if (entry.kind === 'file' && this.core.touched.has(entry.id)) {
+        this.core.stampWaiting.set(entry.id, { mtime, size })
+        return
+      }
       entry.mtime = mtime
       entry.size = size
       await this.core.commit(this.core.entryChanges([entry]))
@@ -809,11 +838,22 @@ export class Engine implements AskedEngine {
   // -------------------------------------------------------------------------
   // Life
 
+  /** Everything written down, with the session going on: a save. */
+  flush(): Promise<void> {
+    return this.core.use(() => this.writtenDown())
+  }
+
   /** Everything written down, and the session marked as ended cleanly. */
-  async quit(): Promise<void> {
+  quit(): Promise<void> {
+    return this.core.use(async () => {
+      await this.writtenDown()
+      await this.core.endedCleanly()
+    })
+  }
+
+  private async writtenDown(): Promise<void> {
     for (const doc of this.core.docs.values()) doc.flush()
     await this.core.commit(this.core.dirtyChanges())
-    await this.core.store.cleanExit(true)
   }
 
   /** Stops at once: anything still in the air finds it is too late. */
@@ -823,19 +863,26 @@ export class Engine implements AskedEngine {
   }
 }
 
-const norm = (value: string) => value.replace(/\\/g, '/').replace(/\/+$/, '')
+/** A path with `/` between folders, as the disk `root` is on writes them: `\\` is a
+ *  separator on Windows and a character of a name anywhere else. */
+function norm(root: string, value: string): string {
+  return (windowsPath(root) ? value.replace(/\\/g, '/') : value).replace(/\/+$/, '')
+}
 
-/** Whether two paths are one folder, as `relative` compares them. */
-function sameFolder(one: string, other: string): boolean {
-  return norm(one).toLowerCase() === norm(other).toLowerCase()
+/** Whether a folder is the top of a space, as `relative` compares them. */
+function sameFolder(root: string, folder: string, foldsCase: boolean): boolean {
+  const base = norm(root, root)
+  const full = norm(root, folder)
+  return foldsCase ? full.toLowerCase() === base.toLowerCase() : full === base
 }
 
 /** A path relative to a root, with `/` between folders, or null outside it. */
-export function relative(root: string, path: string): string | null {
-  const base = norm(root)
-  const full = norm(path)
+export function relative(root: string, path: string, foldsCase: boolean): string | null {
+  const base = norm(root, root)
+  const full = norm(root, path)
   if (full.length <= base.length) return null
   const head = full.slice(0, base.length)
-  if (head.toLowerCase() !== base.toLowerCase() || full.charAt(base.length) !== '/') return null
+  const same = foldsCase ? head.toLowerCase() === base.toLowerCase() : head === base
+  if (!same || full.charAt(base.length) !== '/') return null
   return full.slice(base.length + 1)
 }

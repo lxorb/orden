@@ -123,6 +123,9 @@
   {#if live.failed}
     <p class="empty">{t('This base cannot be read')}</p>
   {:else}
+    {#if live.answer?.partial}
+      <p class="partial" role="status">{t('{name} took too long to answer.', { name: title })}</p>
+    {/if}
     {#key layout}
       <div
         class="body"
@@ -190,6 +193,13 @@
 
   .compact .body.fills {
     height: 420px;
+  }
+
+  .partial {
+    margin: 0;
+    padding: var(--space-1) var(--space-3);
+    color: var(--muted-strong);
+    font-size: var(--text-xs);
   }
 
   .empty {

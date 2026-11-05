@@ -10,6 +10,7 @@ import {
   sweepVersions,
   versionKey,
 } from '../src/versions'
+import { MOST_BOUND } from '../src/bound'
 import { sha256 } from '../src/crypto'
 
 interface VersionView {
@@ -1299,6 +1300,18 @@ describe('more history than an account may hold', () => {
     const left = rows(env, note)
     expect(left).toHaveLength(1)
     expect(left[0]?.hash).toBe('big-0')
+  })
+
+  test('and more versions going than one statement may bind all go', async () => {
+    // Three hundred of sixteen megabytes against a ceiling of two gigabytes: over 170 go.
+    heavy(16 * 1024 * 1024, 300)
+
+    await sweepVersions(env, Date.now())
+
+    expect(held()).toBeLessThanOrEqual(MOST_VERSION_BYTES)
+    expect(rows(env, note).length).toBeLessThan(130)
+    const { count, sql } = env.widest()
+    expect(count, sql.replace(/\s+/g, ' ').trim()).toBeLessThanOrEqual(MOST_BOUND)
   })
 
   test('and an account under it loses nothing', async () => {

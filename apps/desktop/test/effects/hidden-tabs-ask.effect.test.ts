@@ -14,6 +14,9 @@ vi.mock('../../src/lib/tauri', async (actual) => ({
   invoke: () => Promise.resolve(undefined),
 }))
 
+vi.mock('../../src/lib/own-window', () => ({
+  hearHere: () => Promise.resolve(() => undefined),
+}))
 vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))
 
 /** The sheet rises through the Web Animations API, which jsdom does not implement. */

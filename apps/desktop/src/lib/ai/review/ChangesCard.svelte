@@ -44,20 +44,10 @@
         >
         <Tally {added} {removed} />
       </button>
-      <button
-        class="nib-chip is-quiet"
-        onclick={() => {
-          void review.undo(all)
-          void review.undoFiles(thread, files)
-        }}>{t('Undo')}</button
+      <button class="nib-chip is-quiet" onclick={() => void review.undoAll(thread, files)}
+        >{t('Undo')}</button
       >
-      <button
-        class="nib-chip"
-        onclick={() => {
-          review.keep(all)
-          review.keepFiles(files)
-        }}>{t('Keep')}</button
-      >
+      <button class="nib-chip" onclick={() => review.keepAll(thread, files)}>{t('Keep')}</button>
     </div>
     <Changes {notes} {files} {thread} open={listing} />
   </div>

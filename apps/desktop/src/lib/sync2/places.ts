@@ -15,6 +15,7 @@
 
 import { type OpResult, type Op } from '@orden/sync-core/wire'
 import { inForeignCopy } from '@orden/sync-core/foreign'
+import { hash32 } from '@orden/sync-core/seed'
 import { byPosition } from '@orden/sync-core/order'
 import { applyOp, nameKey, type TreeEntry, type TreeState, treeState } from '@orden/sync-core/tree'
 import { isReserved } from '../naming'
@@ -62,6 +63,12 @@ function localName(name: string, platform: World['platform']): string {
   }
   if (platform === 'mac') return name.replace(/:/g, '_')
   return name
+}
+
+/** Whether a root is a Windows path, the one place `\\` is a separator. Anywhere else it is
+ *  a character of a name. */
+export function windowsPath(root: string): boolean {
+  return /^[a-zA-Z]:/.test(root) || root.includes('\\')
 }
 
 export class SpaceState {
@@ -359,9 +366,11 @@ export interface Settling {
 }
 
 /** A path nothing here uses yet, beside `path`: where a file waits while another takes
- *  its place. */
+ *  its place. Named by a hash of the id, which is whatever the entry's maker sent: spelled
+ *  as it came, `../../Private/AGENTS.md` waited in another space. Should two ever meet,
+ *  the second move is refused and tried again next pass. */
 function aside(path: string, id: string): string {
-  return joined(folderOf(path), `.nib-moving-${id}`)
+  return joined(folderOf(path), `.nib-moving-${hash32(id).toString(36)}`)
 }
 
 /** Makes the disk agree with what is shown. Answers the entries whose `local_path`

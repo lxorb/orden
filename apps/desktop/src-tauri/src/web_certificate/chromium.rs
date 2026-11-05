@@ -34,12 +34,17 @@ const WRONG: u32 = 1 // the name does not match
 
 /// The chain, read on the engine's thread, where a browser may be spoken to.
 pub async fn read(view: Webview, _address: &str) -> Option<Served> {
+    use tauri::Manager as _;
+
     let (sending, said) = channel();
-    view.with_webview(move |platform| {
-        let read = platform
-            .downcast_ref::<tauri_runtime_cef::Webview>()
-            .and_then(|page| of(&page.browser()));
-        let _ = sending.send(read);
+    // A command's thread; see `on_the_page`.
+    crate::web_tabs::on_the_page(view.app_handle(), view.label(), move |view| {
+        let _ = view.with_webview(move |platform| {
+            let read = platform
+                .downcast_ref::<tauri_runtime_cef::Webview>()
+                .and_then(|page| of(&page.browser()));
+            let _ = sending.send(read);
+        });
     })
     .ok()?;
     tauri::async_runtime::spawn_blocking(move || said.recv_timeout(PATIENCE).ok().flatten())

@@ -103,6 +103,21 @@ describe('a call says its thread', () => {
 })
 
 describe('an answer, as nib mcp writes it', () => {
+  test('a question says what it is about, for the thread’s Always', () => {
+    expect(
+      outputIn({
+        content: [],
+        _meta: {
+          'ch.emilvinu.nib/answer': {
+            status: 'needs_approval',
+            approval: 'q1',
+            category: 'paying',
+          },
+        },
+      }),
+    ).toMatchObject({ approval: 'q1', category: 'paying' })
+  })
+
   test('is its words, its pictures and whether it failed', () => {
     expect(
       outputIn({

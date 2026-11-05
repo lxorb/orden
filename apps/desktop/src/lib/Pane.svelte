@@ -669,7 +669,7 @@
               onimage={saveImage}
               resolveimage={resolveImage}
               openlink={followHref}
-              notes={(which: Tab) => links.index(which.path)}
+              notes={(which: Tab) => links.index(which.path, which.note.shared !== null)}
               opennote={followNote}
               nameblock={nameBlock}
               onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}
@@ -703,7 +703,7 @@
         onimage={saveImage}
         resolveimage={resolveImage}
         openlink={followHref}
-        notes={(one: Tab) => links.index(one.path)}
+        notes={(one: Tab) => links.index(one.path, one.note.shared !== null)}
         opennote={followNote}
         nameblock={nameBlock}
         onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}

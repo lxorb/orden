@@ -45,7 +45,7 @@ class FakeEngine implements Engine {
   log: LogRow[] = []
   spaces: SpaceRow[] = []
 
-  private readonly listeners: Listeners = { resurrected: [], pass: [], unsynced: [] }
+  private readonly listeners: Listeners = { resurrected: [], pass: [], unsynced: [], file: [] }
 
   readonly store = {
     // Only the two tables the Sync pane reads; any other question finds nothing.

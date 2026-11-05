@@ -1038,3 +1038,223 @@ describe('a rendered task list pasted back', () => {
     expect(lines[2]).toContain('\\[a:: b\\](see)')
   })
 })
+
+describe('a paste from Google Docs', () => {
+  const docs = (inner: string) =>
+    `<meta charset="utf-8"><b style="font-weight:normal" id="docs-internal-guid-1">${inner}</b>`
+
+  test('writes no marks for the wrapper around the whole of it', () => {
+    const said = htmlToMarkdown(docs('<p dir="ltr"><span>one</span></p><p><span>two</span></p>'))
+    expect(said).toBe('one\n\ntwo')
+    expect(htmlToMarkdown(docs('<span>just words</span>'))).toBe('just words')
+  })
+
+  test('reads bold and italic off the spans', () => {
+    const said = htmlToMarkdown(
+      docs(
+        '<p><span style="font-weight:700">B</span> <span style="font-style:italic">I</span> <span style="font-weight:400">n</span> <span style="font-weight:700;font-style:italic">both </span>x</p>',
+      ),
+    )
+    expect(said).toBe('**B** *I* n ***both*** x')
+  })
+
+  test('a heading is not bold on top of being a heading, and code keeps its characters', () => {
+    expect(htmlToMarkdown('<h2><span style="font-weight:700">t</span></h2>')).toBe('## t')
+    expect(htmlToMarkdown('<code><span style="font-weight:700">t</span></code>')).toBe('`t`')
+  })
+
+  test('strong or em around blocks write no marks', () => {
+    expect(htmlToMarkdown('<strong><p>a</p><p>b</p></strong>')).toBe('a\n\nb')
+    expect(htmlToMarkdown('<em><div>a</div></em>')).toBe('a')
+  })
+})
+
+describe('a link around blocks', () => {
+  test('goes inside the heading', () => {
+    expect(htmlToMarkdown('<a href="https://u.co"><h2>t</h2></a>')).toBe('## [t](https://u.co)')
+  })
+
+  test('links each block rather than writing brackets around blank lines', () => {
+    const said = htmlToMarkdown('<a href="https://u.co"><div>x</div><div>y</div></a>')
+    expect(said).toBe('[x](https://u.co)\n\n[y](https://u.co)')
+    expect(renderMarkdown(said)).not.toContain('](')
+  })
+
+  test('leaves what a link cannot hold unlinked', () => {
+    const said = htmlToMarkdown('<a href="https://u.co"><pre>code</pre><p>y</p></a>')
+    expect(said).toBe('```\ncode\n```\n\n[y](https://u.co)')
+  })
+
+  test('a link in a line stays one', () => {
+    expect(htmlToMarkdown('<p>a <a href="https://u.co">b <b>c</b></a> d</p>')).toBe(
+      'a [b **c**](https://u.co) d',
+    )
+  })
+})
+
+describe('preformatted text with line breaks in tags', () => {
+  test('a br is a new line, as JetBrains IDEs copy code', () => {
+    expect(htmlToMarkdown('<pre><span>a</span><br><span>  b</span><br></pre>')).toBe(
+      '```\na\n  b\n```',
+    )
+  })
+
+  test('holds beside real newlines and comments', () => {
+    expect(htmlToMarkdown('<pre>a\nb<!-- c --><br>d</pre>')).toBe('```\na\nb\nd\n```')
+  })
+})
+
+describe('a heading cell across two columns', () => {
+  test('pads the row, so the rows under it keep their cells', () => {
+    const said = htmlToMarkdown(
+      '<table><thead><tr><th colspan="2">a</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr></tbody></table>',
+    )
+    expect(said).toBe('| a |  |\n| --- | --- |\n| 1 | 2 |')
+    expect(renderMarkdown(said)).toContain('2')
+  })
+
+  test('in a row of a table that has no heading row', () => {
+    const said = htmlToMarkdown(
+      '<table><tr><td colspan="2">a</td></tr><tr><td>1</td><td>2</td></tr></table>',
+    )
+    expect(said).toBe('|  |  |\n| --- | --- |\n| a |  |\n| 1 | 2 |')
+  })
+
+  test('a colspan nothing could mean is one', () => {
+    const said = htmlToMarkdown('<table><tr><th colspan="0">a</th></tr></table>')
+    expect(said).toBe('| a |\n| --- |')
+  })
+})
+
+describe('a loose task list', () => {
+  test('keeps the box of an item whose words sit in a paragraph', () => {
+    expect(
+      htmlToMarkdown(
+        '<ul><li><p><input type="checkbox"> x</p></li><li><p><input type="checkbox" checked> y</p></li></ul>',
+      ),
+    ).toMatch(/^- \[ \] x\n+- \[x\] y$/u)
+  })
+})
+
+describe('marks and what stands beside them', () => {
+  test('a heading holds its line break as a space', () => {
+    expect(htmlToMarkdown('<h1>a<br>b</h1>')).toBe('# a b')
+  })
+
+  test('marks that could not close write no stars', () => {
+    expect(renderMarkdown(htmlToMarkdown('<p><b>"x"</b>y</p>'))).not.toContain('*')
+    expect(renderMarkdown(htmlToMarkdown('<p>y<i>"x"</i></p>'))).not.toContain('*')
+    expect(htmlToMarkdown('<p><b>"x"</b> y</p>')).toBe('**"x"** y')
+    expect(htmlToMarkdown('<p><b>x</b>y</p>')).toBe('**x**y')
+  })
+
+  test('a linked picture with a bracket in its words stays a linked picture', () => {
+    const html = renderMarkdown(
+      htmlToMarkdown('<a href="https://u.co"><img src="https://u.co/a.png" alt="p]q"></a>'),
+    )
+    expect(html).toContain('<img')
+    expect(html).not.toContain('](')
+  })
+})
+
+describe('marks beside marks', () => {
+  test('bold beside bold is one run', () => {
+    expect(htmlToMarkdown('<p><b>foo</b><b>bar</b></p>')).toBe('**foobar**')
+    expect(
+      htmlToMarkdown(
+        '<p><span style="font-weight:700">foo</span><span style="font-weight:700">bar</span> x</p>',
+      ),
+    ).toBe('**foobar** x')
+    expect(htmlToMarkdown('<p><b>foo</b> <b>bar</b></p>')).toBe('**foo** **bar**')
+    expect(htmlToMarkdown('<p><i>a</i><i>b</i><b>c</b></p>')).toContain('*ab*')
+  })
+
+  test('a line break stays outside them', () => {
+    expect(htmlToMarkdown('<p><b>a<br></b>b</p>')).toBe('**a**  \nb')
+    expect(renderMarkdown(htmlToMarkdown('<p><b>a<br></b>b</p>'))).not.toContain('*')
+  })
+})
+
+describe('a table with two heading rows', () => {
+  test('has one line of dashes', () => {
+    const said = htmlToMarkdown(
+      '<table><thead><tr><th>a</th></tr><tr><th>b</th></tr></thead><tbody><tr><td>c</td></tr></tbody></table>',
+    )
+    expect(said).toBe('| a |\n| --- |\n| b |\n| c |')
+  })
+})
+
+describe('a link around a task list', () => {
+  test('goes inside the item, past its box', () => {
+    const said = htmlToMarkdown(
+      '<a href="https://u.co"><ul><li><input type="checkbox"> x</li></ul></a>',
+    )
+    expect(said).toBe('- [ ] [x](https://u.co)')
+  })
+})
+
+describe('alt ending in a backslash, in a link', () => {
+  test('stays a picture', () => {
+    const html = renderMarkdown(
+      htmlToMarkdown('<a href="https://u.co"><img src="https://u.co/a.png" alt="p\\"></a>'),
+    )
+    expect(html).toContain('<img')
+    expect(html).not.toContain('](')
+  })
+})
+
+describe('a table with a cell over several rows', () => {
+  test('a cell that spans rows leaves its column empty below, so no cell shifts', () => {
+    const markdown = htmlToMarkdown(
+      '<table><tr><th>a</th><th>b</th><th>c</th></tr>' +
+        '<tr><td rowspan="2">1</td><td>2</td><td>3</td></tr>' +
+        '<tr><td>4</td><td>5</td></tr>' +
+        '<tr><td>6</td><td rowspan="2">7</td><td>8</td></tr>' +
+        '<tr><td>9</td><td>10</td></tr></table>',
+    )
+    expect(markdown).toBe(
+      '| a | b | c |\n| --- | --- | --- |\n| 1 | 2 | 3 |\n|  | 4 | 5 |\n| 6 | 7 | 8 |\n| 9 |  | 10 |',
+    )
+  })
+})
+
+describe('a form', () => {
+  test('its words are kept and its controls are not', () => {
+    const said = htmlToMarkdown('<p>intro</p><form><p>body</p><button>Send</button></form>')
+    expect(said).toContain('intro')
+    expect(said).toContain('body')
+    expect(said).not.toContain('Send')
+  })
+
+  test('with nothing but controls and what names them is nothing', () => {
+    expect(
+      htmlToMarkdown(
+        '<p>intro</p><form><label>Mail</label><input><select><option>a</option></select></form>',
+      ),
+    ).toBe('intro')
+  })
+})
+
+describe('a form that asks for something', () => {
+  const said = (form: string) => htmlToMarkdown(`<p>intro</p>${form}`)
+
+  test('is no words of the page', () => {
+    for (const form of [
+      '<form><p>Sign in to read more</p><label>Email</label><input type="email"><a href="/x">Forgot your password?</a></form>',
+      '<form><p>Search this site</p><input type="search"></form>',
+      '<form><p>Subscribe to our newsletter for the latest news and offers every week.</p><input type="email"><button>Go</button></form>',
+      '<form><h3>Leave a Reply</h3><p>Your email address will not be published. Required fields are marked.</p><label>Comment</label><textarea></textarea><label>Name</label><input><label>Email</label><input><input type="checkbox"><label>Save my name, email, and website in this browser for the next time I comment.</label><input type="submit" value="Post"></form>',
+    ]) {
+      expect(said(form)).toBe('intro')
+    }
+  })
+
+  test('a page in one is the page, a field or not', () => {
+    const results = Array.from({ length: 12 }, (_, at) => `<li>Result ${at} about something</li>`)
+    const page = said(
+      `<form><input type="hidden"><input type="search"><ul>${results.join('')}</ul></form>`,
+    )
+    expect(page).toContain('Result 11')
+    expect(said('<form><input type="hidden"><p>body</p></form>')).toContain('body')
+  })
+})

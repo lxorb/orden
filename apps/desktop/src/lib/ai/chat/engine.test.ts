@@ -12,7 +12,7 @@ const { forgetLearnt, learnt } = await import('./learned')
 const { newThread } = await import('./threads')
 const { body } = await import('./recorded/read')
 const { watching } = await import('./sends')
-const { sayAlways } = await import('./approvals')
+const { always: alwaysCovers, alwaysOffered, sayAlways } = await import('./approvals')
 
 import type { Provider } from '../providers'
 import type { EngineEvent, Mode, Thread, ToolOutput } from './types'
@@ -241,41 +241,49 @@ describe('a tool the thread is not given', () => {
   })
 })
 
-describe('a call that asks the reader first', () => {
-  /** A crate that asks once for every call, and a reader who answers as each test says. */
-  function asking(answer: (id: string) => boolean | null) {
-    const given: { id: string; allow: boolean }[] = []
-    const waited: string[] = []
-    let asked = 0
-    const engine = createApiEngine({
-      provider: (id) => Object.values(PROVIDERS).find((one) => one.id === id) ?? null,
-      tools: {
-        ...tools,
-        call: async (provider, mode, name, args) => {
-          const allowed = given.some((one) => one.id === `q${asked}` && one.allow)
-          if (!allowed) {
-            asked += 1
-            return { text: 'Read Birds.md', images: [], error: false, approval: `q${asked}` }
+/** A crate that asks once for every call, and a reader who answers as each test says. */
+function askingOf(answer: (id: string) => boolean | null, category = 'writing') {
+  const given: { id: string; allow: boolean }[] = []
+  const waited: string[] = []
+  let asked = 0
+  const engine = createApiEngine({
+    provider: (id) => Object.values(PROVIDERS).find((one) => one.id === id) ?? null,
+    tools: {
+      ...tools,
+      call: async (provider, mode, name, args) => {
+        const allowed = given.some((one) => one.id === `q${asked}` && one.allow)
+        if (!allowed) {
+          asked += 1
+          return {
+            text: 'Read Birds.md',
+            images: [],
+            error: false,
+            approval: `q${asked}`,
+            category,
           }
-          return tools.call(provider, mode, name, args)
-        },
+        }
+        return tools.call(provider, mode, name, args)
       },
-      answers: {
-        answer: (id, allow) => {
-          given.push({ id, allow })
-          return Promise.resolve()
-        },
-        answered: (id) => {
-          waited.push(id)
-          const said = answer(id)
-          if (said !== null) given.push({ id, allow: said })
-          return Promise.resolve(said === true)
-        },
-        asked: () => Promise.resolve(() => undefined),
+    },
+    answers: {
+      answer: (id, allow) => {
+        given.push({ id, allow })
+        return Promise.resolve()
       },
-    })
-    return { engine, given, waited }
-  }
+      answered: (id) => {
+        waited.push(id)
+        const said = answer(id)
+        if (said !== null) given.push({ id, allow: said })
+        return Promise.resolve(said === true)
+      },
+      asked: () => Promise.resolve(() => undefined),
+    },
+  })
+  return { engine, given, waited }
+}
+
+describe('a call that asks the reader first', () => {
+  const asking = askingOf
 
   async function sent(engine: ReturnType<typeof asking>['engine'], thread: Thread) {
     const heard: EngineEvent[] = []
@@ -333,6 +341,57 @@ describe('a call that asks the reader first', () => {
   })
 })
 
+describe('Always in a thread', () => {
+  test.each(['paying', 'sending', 'deleting', 'signing_in', 'terminal', 'publishing', 'files'])(
+    'never answers a question about %s',
+    async (category) => {
+      answers = [stream('anthropic-1'), stream('anthropic-2')]
+      const { engine, given, waited } = askingOf(() => false, category)
+      const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
+      sayAlways(thread, 'read_note')
+      await engine.send(
+        thread,
+        { text: 'What is in Birds.md?', attachments: [] },
+        () => undefined,
+        new AbortController().signal,
+      )
+
+      expect(waited).toEqual(['q1'])
+      expect(given).toEqual([{ id: 'q1', allow: false }])
+      expect(calls).toEqual([])
+    },
+  )
+
+  test('nor a question that says nothing of what it is about', () => {
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
+    sayAlways(thread, 'read_note')
+    expect(alwaysCovers(thread, 'read_note', undefined)).toBe(false)
+    expect(alwaysCovers(thread, 'read_note', 'writing')).toBe(true)
+  })
+
+  test.each(['trashing', 'unread'])('nor one about %s', (category) => {
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
+    sayAlways(thread, 'trash_file')
+    expect(alwaysCovers(thread, 'trash_file', category)).toBe(false)
+    expect(alwaysOffered(category)).toBe(false)
+  })
+
+  test('said on one site, it is about that site', () => {
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
+    sayAlways(thread, 'browser_click', 'shop.example')
+    expect(alwaysCovers(thread, 'browser_click', 'writing', 'shop.example')).toBe(true)
+    expect(alwaysCovers(thread, 'browser_click', 'writing', 'evil.example')).toBe(false)
+    // A question on a site is no question for one said with none, as a thread kept from
+    // before says.
+    const before = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
+    sayAlways(before, 'browser_click')
+    expect(alwaysCovers(before, 'browser_click', 'writing', 'shop.example')).toBe(false)
+    expect(alwaysCovers(before, 'browser_click', 'writing')).toBe(true)
+    expect(alwaysOffered('terminal')).toBe(false)
+    expect(alwaysOffered('writing')).toBe(true)
+  })
+})
+
 describe('where the reader is', () => {
   test('goes with every message, as nib’s own verbs said it, and stays with it', async () => {
     answers = [stream('anthropic-2'), stream('anthropic-2')]
@@ -362,6 +421,26 @@ describe('where the reader is', () => {
     contextFor.length = 0
     await send(thread, 'What is this note about?')
     expect(contextFor).toEqual([thread.id])
+  })
+})
+
+describe('tools a model refuses', () => {
+  test('leave their notice in the turn, above the answer that came without them', async () => {
+    answers = [
+      json(400, { error: { message: 'this model does not support tools' } }),
+      lines(
+        { choices: [{ delta: { content: 'Herons wade.' } }] },
+        { choices: [{ delta: {}, finish_reason: 'stop' }] },
+      ),
+    ]
+    const thread = newThread('space', 'compatible-1', 'llama', 'auto', 'full')
+
+    await send(thread, 'Tell me about herons')
+
+    expect(learnt('compatible-1', 'llama').tools).toBe(false)
+    const parts = thread.turns.at(-1)?.parts ?? []
+    expect(parts.map((part) => part.kind)).toEqual(['notice', 'text'])
+    expect(parts[0]).toMatchObject({ code: 'no_tools' })
   })
 })
 
@@ -556,5 +635,110 @@ describe('the registry', () => {
     expect(await engineFor('codex', setup)).toBe(watching(engine))
     expect(await engineFor('codex', setup)).toBe(watching(engine))
     expect(asked).toEqual([setup])
+  })
+})
+
+describe('a stream that stops before it says it is done', () => {
+  /** The bytes of a connection that closed, with no `[DONE]` after them. */
+  const cut =
+    (...events: unknown[]) =>
+    () =>
+      new Response(events.map((one) => `data: ${JSON.stringify(one)}\n\n`).join(''))
+  const words = (content: string) => ({ choices: [{ delta: { content } }] })
+
+  const thread = () => newThread('space', 'compatible-1', 'llama', 'auto', 'approve')
+
+  test('is an error, with the words that arrived kept', async () => {
+    answers = [cut(words('Hello '), words('world'))]
+    const one = thread()
+    const heard = await send(one, 'Say it')
+
+    expect(heard.at(-1)).toMatchObject({ type: 'done', stop: 'error' })
+    expect(one.turns.at(-1)?.parts).toEqual([
+      { kind: 'text', text: 'Hello world' },
+      { kind: 'notice', code: 'error', text: expect.stringContaining('connection') as string },
+    ])
+  })
+
+  test('is a whole answer where a finish was said, with or without `[DONE]`', async () => {
+    answers = [cut(words('Hello'), { choices: [{ delta: {}, finish_reason: 'stop' }] })]
+    expect((await send(thread(), 'Say it')).at(-1)).toEqual({ type: 'done', stop: 'end' })
+  })
+
+  test('is a whole answer where only `[DONE]` was said, which some servers keep to', async () => {
+    answers = [lines(words('Hello'))]
+    expect((await send(thread(), 'Say it')).at(-1)).toEqual({ type: 'done', stop: 'end' })
+  })
+
+  test('is whole where an end marker of the wire’s own was said, or `[DONE]`', async () => {
+    const started = [
+      { type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } },
+      { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: 'Hello' } },
+    ]
+    answers = [cut(...started, { type: 'message_stop' })]
+    const claude = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
+    expect((await send(claude, 'Say it')).at(-1)).toEqual({ type: 'done', stop: 'end' })
+
+    const words = { type: 'response.output_text.delta', output_index: 0, delta: 'Hello' }
+    for (const said of [lines(words), cut(words, { type: 'response.done', response: {} })]) {
+      answers = [said]
+      const gpt = newThread('space', 'openai', 'gpt-5.4-mini', 'auto', 'full')
+      expect((await send(gpt, 'Say it')).at(-1)).toEqual({ type: 'done', stop: 'end' })
+    }
+  })
+
+  test('runs no call it only heard half of', async () => {
+    answers = [
+      cut({
+        choices: [
+          { delta: { tool_calls: [{ index: 0, id: 'c', function: { name: 'read_note' } }] } },
+        ],
+      }),
+    ]
+    const heard = await send(thread(), 'Read it')
+
+    expect(calls).toEqual([])
+    expect(heard.at(-1)).toMatchObject({ type: 'done', stop: 'error' })
+  })
+
+  test('of the other two wires is told the same', async () => {
+    answers = [
+      cut(
+        { type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } },
+        { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: 'Hello' } },
+      ),
+    ]
+    const claude = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
+    expect((await send(claude, 'Say it')).at(-1)).toMatchObject({ type: 'done', stop: 'error' })
+    expect(claude.turns.at(-1)?.parts[0]).toEqual({ kind: 'text', text: 'Hello' })
+
+    answers = [cut({ type: 'response.output_text.delta', output_index: 0, delta: 'Hello' })]
+    const gpt = newThread('space', 'openai', 'gpt-5.4-mini', 'auto', 'full')
+    expect((await send(gpt, 'Say it')).at(-1)).toMatchObject({ type: 'done', stop: 'error' })
+  })
+})
+
+describe('an answer of nothing at all', () => {
+  test('says so rather than leaving the message with nothing under it', async () => {
+    answers = [lines({ choices: [{ delta: {}, finish_reason: 'stop' }] })]
+    const one = newThread('space', 'compatible-1', 'llama', 'auto', 'approve')
+    const heard = await send(one, 'Say it')
+
+    expect(heard.at(-1)).toMatchObject({ type: 'done', stop: 'error' })
+    expect(one.turns.at(-1)?.parts).toEqual([
+      { kind: 'notice', code: 'error', text: expect.stringContaining('did not answer') as string },
+    ])
+  })
+
+  test('is fine after a call, which may be all there was to do', async () => {
+    answers = [
+      stream('anthropic-1'),
+      lines(
+        { type: 'message_start', message: { model: 'claude-opus-5-5' } },
+        { type: 'message_delta', delta: { stop_reason: 'end_turn' } },
+      ),
+    ]
+    const one = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
+    expect((await send(one, 'What is in Birds.md?')).at(-1)).toEqual({ type: 'done', stop: 'end' })
   })
 })

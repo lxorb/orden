@@ -20,7 +20,7 @@
  *  marked as the page's: the note is named after what the page calls itself. */
 
 import { freePath } from '@orden/markdown/paths'
-import { writeFrontMatter } from '@orden/markdown/front-matter'
+import { stripFrontMatter, writeFrontMatter } from '@orden/markdown/front-matter'
 import { asWords } from '@orden/markdown/words'
 import type { AgentAnswer } from '../../automation/caller'
 import { attachmentFolder } from '../../attachments'
@@ -38,7 +38,15 @@ import { asked } from './asks'
 import { type Call, done, flag, maybe, need, needScope, writerOf } from './call'
 import { made } from './notes'
 import { Refused } from './problem'
-import { judgedForWriting, onDisk, type Place, placeFor, placeOf, writableAt } from './spaces'
+import {
+  judgedForWriting,
+  onDisk,
+  type Place,
+  placeFor,
+  placeOf,
+  tabsInReach,
+  writableAt,
+} from './spaces'
 import { treeOf } from './tree'
 
 const SHAPES = [...CAPTURE_AS, 'link'] as const
@@ -73,6 +81,9 @@ async function pageIn(call: Call, tab: string, shape: Shape): Promise<Page> {
     // The reader's tabs belong to the space they are in; an agent that may not reach
     // it has no business with them.
     placeFor(call, null)
+    if (!tabsInReach(call).includes(reader)) {
+      throw new Refused('no_such_tab', `there is no tab ${tab}: browser_tabs lists them`)
+    }
     const known: Page = {
       url: pages.addressOf(tab) ?? workspace.webAddressOf(reader) ?? '',
       title: reader.shown,
@@ -183,7 +194,7 @@ function frontMatter(page: Page, title: string): string {
 /** The body of a capture without its front matter: what goes under a heading of a note
  *  that is already there, where a second block of front matter would be words. */
 function body(words: string): string {
-  return words.replace(/^---\n[\s\S]*?\n---\n+/, '').trim()
+  return stripFrontMatter(words).trim()
 }
 
 /** A note path nobody has in a place, from a page's title. */

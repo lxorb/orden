@@ -11,6 +11,8 @@
  *  Each answers a `Source` (live.svelte.ts), so the view on screen never knows which. */
 
 import { type Base, builtinView, readBase, type Row, todayAs, writeBase } from '@orden/bases'
+import { CodeBlocks, OPENS } from '@orden/markdown/fences'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { links } from '../link-index.svelte'
 import { modes } from '../modes.svelte'
 import { rows } from '../rows/rows.svelte'
@@ -18,8 +20,9 @@ import { insideSpace, samePath, within } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import type { Tab } from '../workspace/documents.svelte'
 import { noteText, writeNoteText } from '../workspace/note-text'
-import { keepProjectView, keepTodosView, projectView, todosView } from './kept-views'
+import { keepProjectView, keepTodosView, projectView, renamedTo, todosView } from './kept-views'
 import type { Shown, Source } from './live.svelte'
+import { followSpaceTabs } from './space-follow'
 import { asShipped, readSpec, type ViewSpec, writeSpec } from './spec'
 
 /** Today as Settings has it: with the tasks that have no start date in it, or not (#408). */
@@ -53,7 +56,10 @@ export function builtinBase(spec: ViewSpec): Base {
         note: { space: spec.space ?? '', path: spec.path ?? '' },
       })
     case 'label':
-      return builtinView('label', { tag: spec.tag ?? '' })
+      return builtinView('label', {
+        tag: spec.tag ?? '',
+        ...(spec.space === undefined ? {} : { space: spec.space }),
+      })
     case 'inbox':
       return builtinView('inbox', { inboxes: rows.inboxes() })
     case 'upcoming':
@@ -126,13 +132,35 @@ function keepChange(spec: ViewSpec, yaml: string): void {
   }
 }
 
+/** A tab about a space no space here is called. Renamed, by the record of it, the tab
+ *  comes along; what was kept already has. Anything else - a space deleted, a rename from
+ *  before there was a record - cannot be told apart, so the tab says it cannot be read,
+ *  rather than taking the open space for that one or drawing an empty list for good. */
+function followLost(tab: Tab): void {
+  const name = readSpec(tab.doc)?.space
+  const spaces = workspace.spaces
+  if (name === undefined || !spaces.length || spaces.some((one) => one.name === name)) return
+  const now = renamedTo(name)
+  if (now === undefined || !spaces.some((one) => one.name === now))
+    throw new Error(`no space ${name}`)
+  followSpaceTabs(name, now, workspace.tabs)
+  workspace.scheduleSession()
+}
+
 /** A built-in view in a tab: what it changes is kept in the tab's words, and is the
  *  tab's own until "Copy to a base" writes it to a file. */
 export function tabSource(tab: Tab): Source {
   const spec = () => readSpec(tab.doc) ?? {}
   return {
     scope: null,
-    load: () => Promise.resolve(builtinBase(spec())),
+    load: () => {
+      try {
+        followLost(tab)
+        return Promise.resolve(builtinBase(spec()))
+      } catch (error) {
+        return Promise.reject(error instanceof Error ? error : new Error(String(error)))
+      }
+    },
     save(next) {
       const now = spec()
       const yaml = writeBase(next)
@@ -162,18 +190,76 @@ export function panelSource(spec: ViewSpec): Source {
   }
 }
 
-/** The fence a base came from, found again in its note: the first ` ```base ` fence
- *  holding exactly these words. */
-function fenceAt(text: string, code: string): { from: number; to: number } | null {
-  const fences = /^(`{3,}|~{3,})base[ \t]*\r?\n([\s\S]*?)^\1[ \t]*$/gm
-  for (let found = fences.exec(text); found; found = fences.exec(text)) {
-    const body = found[2] ?? ''
-    if (body.replace(/\r?\n$/, '') === code.replace(/\r?\n$/, '')) {
-      const from = found.index + found[0].indexOf(body)
-      return { from, to: from + body.length }
+/** A base fence as the page draws it: every one, in a quote or a list item too, and none
+ *  shown inside a code block or a front matter value. The one reading of where a fence is,
+ *  which is `CodeBlocks`, the renderer's. */
+interface DrawnFence {
+  /** Its words with what its container puts on each line off. */
+  words: string
+  /** Where its lines are in the note, the closing fence's left out. */
+  from: number
+  to: number
+  /** Whether it stands at the margin, where its lines are its words and can be written. */
+  margin: boolean
+}
+
+function drawnFences(text: string): DrawnFence[] {
+  const out: DrawnFence[] = []
+  const code = new CodeBlocks()
+  const matter = frontMatterBlock(text)
+  let at = matter ? matter.to : 0
+  let open: { from: number; prefix: number; lines: string[] } | null = null
+
+  const close = (to: number) => {
+    if (open) {
+      out.push({
+        words: open.lines.join('\n'),
+        from: open.from,
+        to,
+        margin: open.prefix === 0,
+      })
     }
+    open = null
   }
-  return null
+
+  while (at < text.length) {
+    const end = text.indexOf('\n', at)
+    const next = end === -1 ? text.length : end + 1
+    const raw = text.slice(at, end === -1 ? text.length : end)
+    const kind = code.line(raw)
+
+    if (open && code.fence === null) close(at)
+    else if (open) {
+      const { prefix }: { prefix: number } = open
+      // A quote's marks and an item's indent, up to as far in as the opening fence stood.
+      const inner = prefix ? raw.replace(new RegExp(`^[ \\t>]{0,${prefix}}`), '') : raw
+      ;(open as { lines: string[] }).lines.push(inner)
+    }
+
+    if (kind === OPENS && code.fence !== null) {
+      const prefix = raw.indexOf(code.fence)
+      const info = raw.slice(prefix + code.fence.length).trim()
+      if (info.split(/\s+/)[0] === 'base') open = { from: next, prefix, lines: [] }
+    }
+    at = next
+  }
+  close(text.length)
+  return out
+}
+
+/** A fence's words as they are compared: however its lines end and however many blank
+ *  ones it ends on, none of which the view reads. */
+const fenceWords = (words: string) => words.replace(/\r/g, '').trimEnd()
+
+/** The fence a base came from, found again in its note, where a change to the base can be
+ *  written into it: the only drawn fence with these words, at the margin. Null otherwise,
+ *  since a fence in a container has lines that are not its words, and with two nothing says
+ *  which one the view is. */
+export function fenceAt(text: string, code: string): { from: number; to: number } | null {
+  const wanted = fenceWords(code)
+  const same = drawnFences(text).filter((one) => fenceWords(one.words) === wanted)
+  const [only] = same
+  return only?.margin && same.length === 1 ? { from: only.from, to: only.to } : null
 }
 
 /** Where the reader was in each fence, by its note and its words. The editor draws a
@@ -201,21 +287,31 @@ function remember(key: string, place: Shown) {
 const fenceKey = (path: string, words: string) => `${path}\n${words.replace(/\s+$/, '')}`
 
 /** A ` ```base ` fence in a note at `path` (on this disk; null for a note with no
- *  file). Its changes are written into the fence, so the note is the base. */
-export function fenceSource(code: string, path: string | null): Source {
+ *  file, `stranger` where that is a file somebody shared on its own). Its changes are
+ *  written into the fence, so the note is the base. */
+export function fenceSource(code: string, path: string | null, stranger = false): Source {
   let words = code
   let shown = path === null ? undefined : fenceViews.get(fenceKey(path, code))
   const space = path === null ? workspace.activeSpace : spaceOf(path)
+  let fixed = true
   return {
     scope: space?.name ?? null,
     path,
+    stranger,
+    fixed: () => fixed,
     self: () => rowAt(path),
     shown: () => shown,
     keep(now) {
       shown = now
       if (path !== null) remember(fenceKey(path, words), now)
     },
-    load: () => Promise.resolve(readBase(words)),
+    async load() {
+      // A change to a view this could not write back would show, and be gone at the
+      // next draw, so the view is not offered as one to change.
+      const text = path === null ? null : await noteText(workspace, path).catch(() => null)
+      fixed = text === null || fenceAt(text, words) === null
+      return readBase(words)
+    },
     async save(next, now) {
       if (path === null) return
       const text = await noteText(workspace, path)

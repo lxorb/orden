@@ -758,6 +758,8 @@ export const kn: Dictionary = {
   '{done} of {total}': '{total}ರಲ್ಲಿ {done}',
   'Sync failed': 'ಸಿಂಕ್ ವಿಫಲವಾಯಿತು',
   '{name} could not be written.': '{name} ಬರೆಯಲಾಗಲಿಲ್ಲ.',
+  '{name} could not be written: its file can’t be read. It may be over 64 MB or not UTF-8 text.':
+    '{name} ಬರೆಯಲಾಗಲಿಲ್ಲ: ಅದರ ಫೈಲ್ ಓದಲಾಗುತ್ತಿಲ್ಲ. ಅದು 64 MB ಗಿಂತ ದೊಡ್ಡದಾಗಿರಬಹುದು ಅಥವಾ UTF-8 ಪಠ್ಯವಲ್ಲದಿರಬಹುದು.',
   '{name} could not be read.': '{name} ಓದಲಾಗಲಿಲ್ಲ.',
   'Text size': 'ಪಠ್ಯ ಗಾತ್ರ',
   'Line spacing': 'ಸಾಲಿನ ಅಂತರ',
@@ -1550,6 +1552,7 @@ export const kn: Dictionary = {
   'The provider answered {status}.': 'ಪೂರೈಕೆದಾರ {status} ಎಂದು ಉತ್ತರಿಸಿದೆ.',
   'Add an AI provider in Settings first.': 'ಮೊದಲು ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ AI ಪೂರೈಕೆದಾರ ಸೇರಿಸಿ.',
   'The model did not answer.': 'ಮಾದರಿ ಉತ್ತರಿಸಲಿಲ್ಲ.',
+  'The connection closed before the answer was finished.': 'ಉತ್ತರ ಮುಗಿಯುವ ಮೊದಲೇ ಸಂಪರ್ಕ ಮುಚ್ಚಿತು.',
   // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'ನಿಮ್ಮ {plan} ಪ್ಲಾನ್ {time} ವರೆಗೆ ಮಿತಿ ತಲುಪಿದೆ.',
@@ -2033,8 +2036,10 @@ export const kn: Dictionary = {
   'Send feedback': 'ಪ್ರತಿಕ್ರಿಯೆ ಕಳುಹಿಸಿ',
   'Describe the issue': 'ಸಮಸ್ಯೆಯನ್ನು ವಿವರಿಸಿ',
   Sent: 'ಕಳುಹಿಸಲಾಗಿದೆ',
-  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
-    'ಈ ವರದಿಯಲ್ಲಿ ನಿಮ್ಮ ವಿವರಣೆ, Orden ಆವೃತ್ತಿ, ನಿಮ್ಮ ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ಮತ್ತು ಆ್ಯಪ್‌ನ ಇತ್ತೀಚಿನ ಲಾಗ್ ಇರುತ್ತದೆ. ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳು ಎಂದಿಗೂ ಇರುವುದಿಲ್ಲ.',
+  'This report includes your description, Orden’s version, your platform and the recent app log, with file paths removed.':
+    'ಈ ವರದಿಯಲ್ಲಿ ನಿಮ್ಮ ವಿವರಣೆ, Orden ಆವೃತ್ತಿ, ನಿಮ್ಮ ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ಮತ್ತು ಇತ್ತೀಚಿನ ಆ್ಯಪ್ ಲಾಗ್ ಇರುತ್ತದೆ, ಫೈಲ್ ಪಾತ್‌ಗಳನ್ನು ತೆಗೆದು.',
+  'Its space is archived': 'ಇದರ ಸ್ಪೇಸ್ ಆರ್ಕೈವ್ ಆಗಿದೆ',
+  'Back as {name}': '{name} ಆಗಿ ಮರಳಿದೆ',
   'Send into the running answer': 'ನಡೆಯುತ್ತಿರುವ ಉತ್ತರಕ್ಕೆ ಕಳುಹಿಸಿ',
   'Stop the answer': 'ಉತ್ತರ ನಿಲ್ಲಿಸಿ',
   'Open every step': 'ಪ್ರತಿ ಹಂತ ತೆರೆಯಿರಿ',
@@ -2120,6 +2125,8 @@ export const kn: Dictionary = {
     'ಇದು ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ಓದುತ್ತದೆ ಮತ್ತು ನಿಮ್ಮ ಲಾಗಿನ್‌ನೊಂದಿಗೆ ಬ್ರೌಸ್ ಮಾಡುತ್ತದೆ, ಆದ್ದರಿಂದ ಒಂದು ಪುಟ ಅವುಗಳನ್ನು ಹೊರಗೆ ಕಳುಹಿಸುವಂತೆ ಮಾಡಲು ಪ್ರಯತ್ನಿಸಬಹುದು.',
   Activity: 'ಚಟುವಟಿಕೆ',
   'Add a site': 'ಸೈಟ್ ಸೇರಿಸಿ',
+  'A program on this list runs without asking, and can do anything that program can do.':
+    'ಈ ಪಟ್ಟಿಯಲ್ಲಿರುವ ಪ್ರೋಗ್ರಾಂ ಕೇಳದೆ ಚಲಿಸುತ್ತದೆ, ಮತ್ತು ಆ ಪ್ರೋಗ್ರಾಂ ಮಾಡಬಹುದಾದ ಎಲ್ಲವನ್ನೂ ಮಾಡಬಹುದು.',
   'Add a program': 'ಪ್ರೋಗ್ರಾಂ ಸೇರಿಸಿ',
   'Every space': 'ಪ್ರತಿ ಸ್ಪೇಸ್',
   Sites: 'ಸೈಟ್‌ಗಳು',
@@ -2551,6 +2558,7 @@ export const kn: Dictionary = {
   'No {property}': '{property} ಇಲ್ಲ',
   '{card} moved to {group}': '{card} ಅನ್ನು {group} ಗೆ ಸರಿಸಲಾಗಿದೆ',
   'Not moved': 'ಸರಿಸಲಾಗಿಲ್ಲ',
+  'Not undone': 'ರದ್ದುಗೊಳಿಸಲಾಗಿಲ್ಲ',
   Retry: 'ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
   Calculate: 'ಲೆಕ್ಕಹಾಕಿ',
   'Remove sort': 'ಕ್ರಮವನ್ನು ತೆಗೆದುಹಾಕಿ',
@@ -2833,6 +2841,8 @@ export const kn: Dictionary = {
   '{title}, running': '{title}, ಚಾಲನೆಯಲ್ಲಿದೆ',
   'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.':
     'Orden ಇನ್ನು AI ಕೀಗಳನ್ನು Mac ನ ಕೀಚೈನ್‌ನಲ್ಲಿ ಇಡುವುದಿಲ್ಲ, ಅದು ಪದೇಪದೇ ಅದರ ಪಾಸ್‌ವರ್ಡ್ ಕೇಳುತ್ತಿತ್ತು. ನಿಮ್ಮ ಕೀಗಳನ್ನು ಮತ್ತೆ ನಮೂದಿಸಿ ಮತ್ತು ChatGPT ಗೆ ಮತ್ತೊಮ್ಮೆ ಸೈನ್ ಇನ್ ಮಾಡಿ.',
+  'This PDF is locked by its owner': 'ಈ PDF ಅನ್ನು ಅದರ ಮಾಲೀಕರು ಲಾಕ್ ಮಾಡಿದ್ದಾರೆ',
+  'Part of this could not be undone': 'ಇದರ ಒಂದು ಭಾಗವನ್ನು ರದ್ದುಗೊಳಿಸಲಾಗಲಿಲ್ಲ',
   'Add images': 'ಚಿತ್ರಗಳನ್ನು ಸೇರಿಸಿ',
   'Remove image': 'ಚಿತ್ರವನ್ನು ತೆಗೆದುಹಾಕಿ',
   'That is more than 4 images.': 'ಇವು 4 ಚಿತ್ರಗಳಿಗಿಂತ ಹೆಚ್ಚು.',

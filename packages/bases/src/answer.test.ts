@@ -424,3 +424,35 @@ describe('a board', () => {
     expect(names(answer(old, 'B', tasks, context).groups[0]?.rows ?? [])).toEqual(['two', 'one'])
   })
 })
+
+describe('a formula that throws on one row', () => {
+  const failing = readBase(`formulas:
+  fixed: note.x.toFixed(note.places)
+views:
+  - type: table
+    name: All
+    order:
+      - file.name
+      - formula.fixed
+    sort:
+      - property: formula.fixed
+        direction: ASC
+`)
+  const some = [noteRow('Bad.md', 'x: 1\nplaces: 200'), noteRow('Good.md', 'x: 1\nplaces: 2')]
+
+  test('answers nothing on that row and the view still answers', () => {
+    const shown = answer(failing, 0, some, context)
+    expect(names(shown.groups[0]?.rows ?? []).sort()).toEqual(['Bad', 'Good'])
+    expect(cellValue(failing, 'formula.fixed', some[0]!, context)).toBeNull()
+    expect(cellValue(failing, 'formula.fixed', some[1]!, context)).toBe('1.00')
+  })
+
+  test('and a filter that throws on a row only leaves that row out', () => {
+    const filtered = readBase(`filters: note.x.toFixed(note.places) == "1.00"
+views:
+  - type: table
+    name: All
+`)
+    expect(names(answer(filtered, 0, some, context).groups[0]?.rows ?? [])).toEqual(['Good'])
+  })
+})

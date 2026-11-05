@@ -284,6 +284,11 @@
   // a note, and only when nothing newer is on top of it; see overlays.ts.
   $effect(() => overlays.show(leave))
 
+  // The notes sheet is on top of the deck, so Escape puts it away first.
+  $effect(() => {
+    if (notesOpen && current?.notes) return overlays.show(() => (notesOpen = false))
+  })
+
   function onKeydown(event: KeyboardEvent) {
     // A key held with a modifier is one of the app's own, and the app reads it
     // off the same window: Ctrl+P is the palette, not the presenter's window.

@@ -52,7 +52,7 @@ jobs:
   # What this build is called; see scripts/build-version.sh.
   version:
     runs-on: ubuntu-latest
-    # All but one of the jobs below may only read; the one that writes says so.
+    # All but two of the jobs below may only read; the ones that write say so.
     permissions:
       contents: read
     outputs:
@@ -68,6 +68,30 @@ jobs:
       - id: decide
         shell: bash
         run: bash scripts/build-version.sh edge
+
+  # A tag's release, as a draft until its manifest is up: `releases/latest/download/latest.json`
+  # is the address every install on the stable stream asks, and a published release is the
+  # latest at once, whose manifest would answer 404 until the upload ended, and for good if
+  # the job died first. A draft is nobody's latest; the last release goes on answering.
+  #
+  # Here and nowhere else, before anything is built: GitHub takes any number of drafts of
+  # one tag, so two workflows each asking whether it is there can make two. The phones
+  # (publish-mobile.yml) wait for this one. Looked for first, so a run again finds its own, and
+  # one published already stays so.
+  draft:
+    needs: version
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ needs.version.outputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Make the draft
+        run: |
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --title "$TAG" --notes ""
 
   # A push to `unstable` is built only once the branch has been still for a few
   # minutes (`NIB_CI_SETTLE_S`, five by default): pushes come in bursts, and a build that
@@ -362,12 +386,12 @@ jobs:
   # src-tauri/src/updates.rs), and the one manifest serves them all. A build of
   # `unstable` puts both on `edge`.
   publish:
-    needs: [version, build, macos]
+    needs: [version, draft, build, macos]
     # Only `unstable` and tags: a dispatch on any other branch is a trial and
     # publishes nothing (it would otherwise replace edge).
-    if: ${{ !cancelled() && needs.build.result == 'success' && needs.macos.result == 'success' && (github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v')) }}
+    if: ${{ !cancelled() && needs.draft.result != 'failure' && needs.build.result == 'success' && needs.macos.result == 'success' && (github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v')) }}
     runs-on: ubuntu-latest
-    # The one job that writes: the release and its files are the point of it.
+    # The release's files are the point of it, and the release itself once they are up.
     permissions:
       contents: write
       # To dispatch publish.yml, publish-linux.yml and packaging-bump.yml at the
@@ -421,10 +445,6 @@ jobs:
             exit 1
           fi
 
-      - name: Publish the release
-        if: needs.version.outputs.rolling != 'true'
-        run: gh release create "$TAG" --title "$TAG" --notes "" || true
-
       # Made by the first release that needs it, and a pre-release, so it is never the
       # latest one.
       - name: The release the app downloads from
@@ -438,8 +458,10 @@ jobs:
           # Every file before the manifest that names it: the updater is never offered
           # a version whose installer is still on its way.
           # What latest.json names: the setups, the AppImages and the Mac's .app.tar.gz.
-          find artifacts -type f \( -name '*-setup.exe' -o -name '*.AppImage' -o -name '*.app.tar.gz' \) \
-            -exec gh release upload "$FILES" {} --clobber \;
+          # Through xargs, which fails when one does; find's own -exec answers 0 whatever
+          # the command said.
+          find artifacts -type f \( -name '*-setup.exe' -o -name '*.AppImage' -o -name '*.app.tar.gz' \) -print0 |
+            xargs -0 -I{} gh release upload "$FILES" {} --clobber
           # And the installers, under the product's name, on the release's own page.
           mkdir installers
           find artifacts -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' \) |
@@ -449,7 +471,31 @@ jobs:
             done
           ls -l installers
           gh release upload "$TAG" installers/* --clobber
+          # And only over a release that holds every file it names: the updater's 404 is
+          # swallowed where it lands, so nobody else would ever hear of it.
+          held=$(gh release view "$FILES" --json assets --jq '.assets[].name')
+          jq -r '.platforms[].url | split("/") | last' latest.json | sort -u | while read -r name; do
+            grep -qxF "$name" <<<"$held" || {
+              echo "::error::latest.json names $name, which $FILES does not hold"
+              exit 1
+            }
+          done
           gh release upload "$TAG" latest.json --clobber
+
+      # The release out, the moment its manifest is there; one a run before put out stays
+      # as it is. The latest only if no newer version is out: a publish is the latest unless
+      # told otherwise, and an old tag's draft run again must not take the address back.
+      - name: Publish the release
+        if: needs.version.outputs.rolling != 'true'
+        run: |
+          if [ "$(gh release view "$TAG" --json isDraft --jq .isDraft)" = true ]; then
+            out=$(gh release view --json tagName --jq .tagName 2>/dev/null || true)
+            if [ "$(printf '%s\n%s\n' "$out" "$TAG" | sort -V | tail -1)" = "$TAG" ]; then
+              gh release edit "$TAG" --draft=false --latest
+            else
+              gh release edit "$TAG" --draft=false --latest=false
+            fi
+          fi
 
       # And off edge, everything this build did not put there: the last build's files,
       # whose names carry its version. After the manifest, so the updater is never pointed

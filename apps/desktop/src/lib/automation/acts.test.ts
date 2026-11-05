@@ -71,7 +71,7 @@ vi.mock('../link-index.svelte', () => ({
 
 const moves = vi.hoisted(() => ({
   rename: vi.fn(() => Promise.resolve()),
-  moveMany: vi.fn(() => Promise.resolve()),
+  moveMany: vi.fn(() => Promise.resolve(true)),
 }))
 
 vi.mock('../workspace.svelte', () => ({

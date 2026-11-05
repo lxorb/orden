@@ -19,7 +19,8 @@
  *  whole, which is still a loop over closures. */
 
 import { compile, formulaReader } from './expr/compile'
-import { type Scope, settled, sortCompare, text, type Val } from './expr/runtime'
+import { refusing, underGuard } from './expr/pattern'
+import { fieldOf, type Scope, settled, sortCompare, text, type Val } from './expr/runtime'
 import { compileFilters } from './filter'
 import { summarize } from './summaries'
 import type { Answer, Base, Context, Group, Row, Sort, Value, View } from './types'
@@ -51,9 +52,9 @@ function getter(property: string): Getter {
       run: (scope) => {
         try {
           return compiled.run(scope)
-        } catch (error) {
-          if (error instanceof BasesError) return null
-          throw error
+        } catch {
+          // Whatever one row made of it, `toFixed(200)` included, is that row's.
+          return null
         }
       },
     }
@@ -70,15 +71,18 @@ function getter(property: string): Getter {
         run: (scope) => {
           try {
             return scope.row ? scope.formula(formula, scope.row) : null
-          } catch (error) {
-            if (error instanceof BasesError) return null
-            throw error
+          } catch {
+            return null
           }
         },
       }
     }
     const name = property.replace(/^note\./, '')
-    return { local: true, clock: false, run: (scope) => scope.row?.note[name] ?? null }
+    return {
+      local: true,
+      clock: false,
+      run: (scope) => (scope.row ? fieldOf(scope.row.note, name) : null),
+    }
   }
 }
 
@@ -371,6 +375,18 @@ export function answer(
   rows: readonly Row[],
   context: Context,
 ): Answer {
+  const { value, partial } = refusing(() =>
+    underGuard(base.guarded, () => answerOf(base, view, rows, context)),
+  )
+  return partial ? { ...value, partial } : value
+}
+
+function answerOf(
+  base: Base,
+  view: string | number | undefined,
+  rows: readonly Row[],
+  context: Context,
+): Answer {
   const views = compiledViews.get(base) ?? new Map<string | number, CompiledView>()
   compiledViews.set(base, views)
   const key = view ?? 0
@@ -386,5 +402,5 @@ export function answer(
 export function cellValue(base: Base, property: string, row: Row, context: Context): Value {
   const read = formulaReader(base.formulas)
   const scope: Scope = { row, context, locals: null, formula: (name, at) => read(name, at, scope) }
-  return settled(getter(property).run(scope))
+  return underGuard(base.guarded, () => settled(getter(property).run(scope)))
 }

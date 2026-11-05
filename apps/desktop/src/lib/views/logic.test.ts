@@ -1,4 +1,4 @@
-import { answer, builtinView, readBase, writeBase } from '@orden/bases'
+import { addDays, answer, builtinView, readBase, writeBase } from '@orden/bases'
 import { changedTask } from '@orden/markdown/task-edits'
 import { describe, expect, test } from 'vitest'
 import { daysShown, occurrences, place, placedByDay, stepped, timeOf } from './calendar'
@@ -25,14 +25,14 @@ import { expressionOf, filterOf, literal, rowOf, rowsOf } from './filter-rows'
 import { noteRow, taskRow } from './fixture'
 import { pieces, plain } from './inline'
 import { switched } from './layout'
-import { listItems, withEveryDay, withinDays, withPicked } from './list-items'
+import { foldKey, listItems, withEveryDay, withinDays, withPicked } from './list-items'
 import { panelCounts } from './panel'
 import { shortcuts } from '../shortcuts.svelte'
 import { rowKey } from './row-keys'
 import './task-keys'
 import { readSpec, sameView, writeSpec } from './spec'
 import { swiped } from './swipe-row'
-import { barOf, dragged, spanOf } from './timeline'
+import { barOf, dragged, drawnOf, spanOf } from './timeline'
 
 const TODAY = '2026-10-04'
 const context = (rows: Parameters<typeof contextFor>[0]['rows']) =>
@@ -595,6 +595,20 @@ describe('the calendar', () => {
     expect(ghosts.every((one) => one.ghost)).toBe(true)
   })
 
+  test('a daily task still has ghosts months after its day', () => {
+    const gym = taskRow('Health.md', '- [ ] Gym 🔁 every day 📅 2026-01-01')
+    const days = ['2026-10-04', '2026-10-05', '2026-10-06']
+    const placed = placedByDay([gym], days, (row) => row.task?.due ?? null)
+    expect(days.map((day) => placed.byDay.get(day)?.length)).toEqual([1, 1, 1])
+    expect(placed.byDay.get('2026-10-04')?.[0]?.ghost).toBe(true)
+  })
+
+  test('an occurrence counts from the first day shown, and its rule from its own day', () => {
+    const every = taskRow('Health.md', '- [ ] Gym 🔁 every 3 days 📅 2026-01-01')
+    const ghosts = occurrences(place(every, '2026-01-01'), '2026-01-12', 62, '2026-01-06')
+    expect(ghosts.map((one) => one.day)).toEqual(['2026-01-07', '2026-01-10'])
+  })
+
   test('keeps what has no day for the tray', () => {
     const rows = [taskRow('A.md', '- [ ] Dated 📅 2026-10-05'), taskRow('A.md', '- [ ] Not', 1)]
     const placed = placedByDay(rows, ['2026-10-04', '2026-10-05'], (row) => row.task?.due ?? null)
@@ -604,6 +618,59 @@ describe('the calendar', () => {
 })
 
 describe('the timeline', () => {
+  test('a base of only old dates is drawn around them, and not stacked at an edge', () => {
+    const bars = ['2005-03-01', '2005-06-01', '2006-01-01'].map((start) => ({
+      row: taskRow('T.md', '- [ ] a'),
+      start,
+      end: start,
+      from: 'a',
+      to: 'a',
+    }))
+    const span = spanOf(bars, TODAY)
+    expect(span.first <= '2005-03-01').toBe(true)
+    expect(span.last >= '2006-01-01').toBe(true)
+    expect(span.last < '2016-01-01').toBe(true)
+    for (const bar of bars) expect(drawnOf(bar, span).far).toBe(false)
+  })
+
+  test('a date years off, a year mistyped, does not stretch the track', () => {
+    const bar = (start: string) => ({
+      row: taskRow('T.md', '- [ ] a'),
+      start,
+      end: start,
+      from: 'a',
+      to: 'a',
+    })
+    const near = [bar(addDays(TODAY, 2)), bar(addDays(TODAY, 5))]
+    const span = spanOf([bar('1026-11-03'), ...near], TODAY)
+    expect(span.first > addDays(TODAY, -30)).toBe(true)
+    expect(span.last < addDays(TODAY, 60)).toBe(true)
+    expect(drawnOf(bar('1026-11-03'), span)).toMatchObject({ start: span.first, far: true })
+    // A real plan some years off is what the track is for.
+    expect(spanOf([bar('2029-03-01'), ...near], TODAY).last > '2029-03-01').toBe(true)
+    expect(spanOf([bar('2024-03-01'), ...near], TODAY).first < '2024-03-01').toBe(true)
+  })
+
+  test('a bar dragged keeps the times of day it says', () => {
+    const row = noteRow('A.md', 'start: 2026-11-05T09:30\nend: 2026-11-09T17:45')
+    const bar = barOf(row, { start: 'note.start', end: 'note.end' }, (one, key) => {
+      return one.note[key.replace('note.', '')] ?? null
+    })
+    if (!bar) throw new Error('no bar')
+    expect(dragged(bar, 'move', 3)).toEqual({
+      'note.start': '2026-11-08T09:30',
+      'note.end': '2026-11-12T17:45',
+    })
+    expect(dragged(bar, 'start', 1)).toEqual({ 'note.start': '2026-11-06T09:30' })
+    expect(dragged(bar, 'end', -1)).toEqual({ 'note.end': '2026-11-08T17:45' })
+
+    const words = barOf(row, { start: 'a', end: 'b' }, (_, key) =>
+      key === 'a' ? '2026-11-05 10:15' : '2026-11-06',
+    )
+    if (!words) throw new Error('no bar')
+    expect(dragged(words, 'move', 1)).toEqual({ a: '2026-11-06 10:15', b: '2026-11-07' })
+  })
+
   const read = () => null
   test('runs a task from its start to its deadline and writes what a drag moved', () => {
     // Beside a `🛫`, a `📅` is the deadline (#371).
@@ -688,7 +755,7 @@ describe('the list', () => {
     const shut = listItems(groups, {
       grouped: false,
       folded: new Set(),
-      shut: new Set(['E.md#1']),
+      shut: new Set([foldKey(parent)]),
       adding: false,
     })
     expect(shut.map((one) => one.kind)).toEqual(['row'])
@@ -799,6 +866,29 @@ describe('the panel', () => {
       'Thesis 1',
     ])
     expect(counts.labels).toEqual([{ tag: 'admin', count: 2 }])
+  })
+
+  test('lists the labels of the open space alone, with its count', () => {
+    const rows = [
+      taskRow('Mine.md', '- [ ] Here #both #mine', 1, { space: 'Mine' }),
+      taskRow('Theirs.md', '- [ ] There #both #theirs', 1, { space: 'Other' }),
+    ]
+    expect(panelCounts(rows, TODAY, 'Mine').labels.map((one) => one.tag)).toEqual(['both', 'mine'])
+    expect(panelCounts(rows, TODAY, 'Mine').labels[0]?.count).toBe(1)
+    // The list of notes still knows every space: a favourite asks for its own.
+    expect(panelCounts(rows, TODAY, 'Mine').notes).toHaveLength(2)
+  })
+
+  test('a label of one space shows that space’s rows', () => {
+    const rows = [
+      taskRow('Mine.md', '- [ ] Here #both', 1, { space: 'Mine' }),
+      taskRow('Theirs.md', '- [ ] There #both', 1, { space: 'Other' }),
+    ]
+    const context = contextFor({ rows, today: TODAY, now: `${TODAY}T00:00:00` })
+    const said = answer(builtinView('label', { tag: 'both', space: 'Mine' }), 0, rows, context)
+    expect(said.groups.flatMap((one) => one.rows).map((one) => one.task?.text)).toEqual(['Here'])
+    const every = answer(builtinView('label', { tag: 'both' }), 0, rows, context)
+    expect(every.total).toBe(2)
   })
 })
 

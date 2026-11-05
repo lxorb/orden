@@ -15,8 +15,17 @@ import { joining } from './joining.svelte'
 import { collectErrors, log } from './log'
 import { onTheActivity } from './mobile/bridge'
 import { modes } from './modes.svelte'
-import { anythingRuns, GIVE_UP, settleUp, stillWriting, trayKeeper, written } from './parting'
+import {
+  anythingRuns,
+  GIVE_UP,
+  settleUp,
+  stillWriting,
+  trayKeeper,
+  writeOwed,
+  written,
+} from './parting'
 import { warmDoors } from './surfaces.svelte'
+import type { Across } from './workspace/across'
 import { recovery } from './recovery.svelte'
 import { reloading } from './reloading.svelte'
 import { record } from './sync/record.svelte'
@@ -238,6 +247,26 @@ export function start(): () => void {
     void startup.turn('rooms').then(() => import('./web-tab/one-window.svelte'))
   }
 
+  // The other windows' writes and file operations, and what is on the disk before a write
+  // goes over it; see workspace/across.ts. Sooner for a write that comes first.
+  if (!__EVEN_PLUGIN__) {
+    let fetched: Promise<Across> | null = null
+    const across = () =>
+      (fetched ??= import('./workspace/across').then(({ startAcross }) => startAcross()))
+    workspace.acrossWhenWriting(across)
+    void startup.turn('rooms').then(across)
+  }
+
+  // Changes other programs make in the spaces, where no sync engine hears them; see
+  // workspace/outside.svelte.ts.
+  if (!__EVEN_PLUGIN__ && isDesktop) {
+    void startup.turn('rooms').then(() =>
+      import('./workspace/outside.svelte').then(({ hearOutside }) => {
+        hearOutside()
+      }),
+    )
+  }
+
   // Quick add's key over every other app, a desktop's alone and after the launch
   // order: the window it opens is made the first time the key is pressed. See
   // quick-add/anywhere.svelte.ts.
@@ -281,7 +310,12 @@ async function guardClose() {
   // owed. A browser tab sent to the back, which a browser may also discard, gets
   // the same.
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') settle()
+    // A phone takes an app away from here without another word, so there this is the
+    // end as far as anything will hear. A desktop window hidden is only hidden.
+    if (document.visibilityState === 'hidden') {
+      if (isMobile) settle()
+      else save()
+    }
     // And a phone's notes are in its Files app as well, where somebody can put a file
     // into a space while the app is away; the list is read again as it comes back.
     else if (isMobile) void workspace.loadTree()
@@ -328,7 +362,7 @@ interface Closable {
 let going = false
 
 async function onClose(event: Closing, window: Closable) {
-  settle()
+  save()
 
   // An agent's pages live in this window, or the reminders keep Orden in the tray: it
   // hides instead, and the tray has Quit (docs/agent-native.md, open question 6, and
@@ -352,6 +386,9 @@ async function onClose(event: Closing, window: Closable) {
   // Nothing being written or running and no update to put in place: the window just
   // goes. What runs is asked about first; see lib/quitting.
   const runs = anythingRuns()
+  // Nothing to ask about, so the window is going: said before the question below, whose
+  // answer includes the writes this starts. With something running it may yet stay.
+  if (!runs) settle()
   if (!runs && !workspace.writing && !stillWriting() && !ready() && !going) return
 
   event.preventDefault()
@@ -366,7 +403,6 @@ async function onClose(event: Closing, window: Closable) {
 async function onQuit(window: Closable) {
   if (going) return
 
-  settle()
   await go()
   await window.destroy()
 }
@@ -383,6 +419,13 @@ function settle() {
   workspace.graphSettings.flush()
 }
 
+/** The same with the session going on: a window hidden, a close that may be called off.
+ *  See `writeOwed` in parting.ts. */
+function save() {
+  writeOwed()
+  workspace.graphSettings.flush()
+}
+
 /** The writes on their way to the disk, landed. */
 function owed() {
   // And when the files of a space Orden keeps itself were last written, which its
@@ -392,6 +435,7 @@ function owed() {
 
 /** The writes that are owed, waited for; and a waiting update put in place. */
 async function go(): Promise<void> {
+  settle()
   going = true
   try {
     await Promise.race([owed(), waited(GIVE_UP)])

@@ -14,6 +14,7 @@ import { without } from '../../records'
 import { isNumber, isRecord, isString } from '../../stored'
 import { isNative, invoke } from '../../tauri'
 import { FIRST_MODE, modeIn } from '../modes'
+import { windows } from '../../windows'
 import { isSessionState, type SessionState } from '../session-state'
 import { isEffort } from './effort'
 import type {
@@ -121,6 +122,11 @@ export function branchThread(thread: Thread, upTo: string, title?: string): Thre
   // A copy is the reader's own chat, even of a helper; a command that makes a helper of
   // it says so itself.
   delete copy.parent
+  // A copy is of what is written, and nothing is answering in it.
+  Object.assign(copy, copy.own)
+  delete copy.own
+  delete copy.answering
+  delete copy.elsewhere
   const now = Date.now()
   return {
     ...copy,
@@ -172,6 +178,8 @@ function outputIn(value: unknown): ToolOutput | undefined {
     images,
     error: value.error === true,
     ...(isString(value.approval) ? { approval: value.approval } : {}),
+    ...(isString(value.category) ? { category: value.category } : {}),
+    ...(isString(value.site) ? { site: value.site } : {}),
     ...(isString(value.agent) ? { agent: value.agent } : {}),
   }
 }
@@ -201,6 +209,7 @@ function partIn(value: unknown): Part | null {
     verb: value.verb,
     args: value.args ?? {},
     state,
+    ...(typeof value.at === 'number' ? { at: value.at } : {}),
     ...(result ? { result } : {}),
     ...(change
       ? {
@@ -229,14 +238,151 @@ function turnIn(value: unknown): Turn | null {
   return turn
 }
 
-/** A thread read from a file, or null for one that is not a thread. */
-export function threadIn(value: unknown): Thread | null {
+/** How long a file an answer is being written to may go unwritten before the window
+ *  answering in it is taken to be gone. Well over the panel's beat, `ANSWER_BEAT` in
+ *  chat.svelte.ts, since a browser slows the timers of a window nobody is looking at. */
+const GONE_AFTER = 3 * 60_000
+
+/** This window's name for itself. A reload keeps it, so a file this window wrote and is
+ *  not answering in any more is over at once; another window has its own. */
+function thisWindow(): string {
+  try {
+    const held = sessionStorage.getItem(WINDOW_KEY)
+    if (held) return held
+    const made = crypto.randomUUID()
+    sessionStorage.setItem(WINDOW_KEY, made)
+    return made
+  } catch {
+    return THIS_PAGE
+  }
+}
+
+const WINDOW_KEY = 'nib:ai-window'
+const THIS_PAGE = crypto.randomUUID()
+
+/** Whether another window is still answering in this file, as far as anybody can tell
+ *  from here. */
+function answeredElsewhere(value: Record<string, unknown>): boolean {
+  const { answeringAt, answeringIn } = value
+  return (
+    isString(answeringIn) &&
+    answeringIn !== thisWindow() &&
+    isNumber(answeringAt) &&
+    Date.now() - answeringAt < GONE_AFTER
+  )
+}
+
+/** An answer the window went on, as the reader will find it: all that arrived, and
+ *  the row a stop leaves, whose Ask again is the way on. */
+function cutOff(turns: Turn[], answering: string): void {
+  const turn = turns.find((one) => one.id === answering)
+  if (!turn || turn.parts.some((one) => one.kind === 'notice' && ENDED.has(one.code))) return
+  turn.parts.push({ kind: 'notice', code: 'stopped', text: '' })
+}
+
+/** The notices an answer ends on. */
+const ENDED: ReadonlySet<NoticeCode> = new Set<NoticeCode>([
+  'stopped',
+  'error',
+  'steps',
+  'max_tokens',
+  'refusal',
+])
+
+/** How long a window waits for another to say it is answering. A live window hears as soon
+ *  as it has a moment, and one writing out a long answer may not have one at once; a window that is gone says nothing however long it is
+ *  given, and a thread read from one must not wait for long. */
+const SAYS_WITHIN = 1_500
+
+/** The threads this window is answering in, as the channel asks after them. */
+const answeringHere = new Map<string, Thread>()
+
+/** Whether some window of this app says it is answering in this thread now. The clock in
+ *  the file can only say a window was alive lately: a quit, a crash or an update's restart
+ *  within `GONE_AFTER` read the same as an answer on its way. */
+function saidAnswering(id: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const stop = windows.hear('thread-answering', (said) => {
+      if (said.id !== id) return
+      clearTimeout(timer)
+      stop()
+      resolve(true)
+    })
+    const timer = setTimeout(() => {
+      stop()
+      resolve(false)
+    }, SAYS_WITHIN)
+    windows.say('thread-answering?', { id })
+  })
+}
+
+/** What this window answers the others about the threads it is answering in, from the
+ *  first thread it reads or writes. */
+let answersOthers = false
+function answerOthers(): void {
+  if (answersOthers) return
+  answersOthers = true
+  windows.hear('thread-answering?', (said) => {
+    if (typeof said.id === 'string' && answeringHere.has(said.id)) {
+      windows.say('thread-answering', { id: said.id })
+    }
+  })
+  // What another window holds of a thread this one is answering in, changed there while
+  // its copy could not be written: a name, a mode, a model, Archive. Only this window can
+  // write the file while it answers, so these go into the thread it is writing.
+  windows.hear('thread-fields', (said) => {
+    const thread = typeof said.id === 'string' ? answeringHere.get(said.id) : undefined
+    if (!thread || !isRecord(said.fields)) return
+    Object.assign(thread, said.fields)
+    void keepThread(thread).catch(() => undefined)
+  })
+}
+
+/** Hears that another window wrote a thread: an answer has grown or ended there. Answers
+ *  the way to stop. */
+export function otherWindowWrote(listener: (id: string) => void): () => void {
+  return windows.hear('thread-written', (said) => {
+    if (typeof said.id === 'string') listener(said.id)
+  })
+}
+
+/** What goes across for `thread-fields`: a thread's own fields, never its turns or what
+ *  says who is answering. */
+function ownFields(thread: Thread): Record<string, unknown> {
+  const fields = { ...thread, ...thread.own, turns: undefined, own: undefined }
+  // As a file says it: what `undefined` was given is not a field.
+  return JSON.parse(
+    JSON.stringify({ ...fields, elsewhere: undefined, answering: undefined }),
+  ) as Record<string, unknown>
+}
+
+/** A thread another window is answering in, as it read here: what tells the fields somebody
+ *  changed here from the ones that window has moved on since, which are not to go back. */
+const readHere = new Map<string, Record<string, unknown>>()
+
+/** The fields changed here since it was read, which are all that may go across. */
+function changedHere(thread: Thread): Record<string, unknown> {
+  const fields = ownFields(thread)
+  const read = readHere.get(thread.id) ?? {}
+  readHere.set(thread.id, fields)
+  return Object.fromEntries(
+    Object.entries(fields).filter(
+      ([name, value]) => JSON.stringify(value) !== JSON.stringify(read[name]),
+    ),
+  )
+}
+
+/** A thread read from a file, or null for one that is not a thread. `gone` says the
+ *  window that was answering in it has gone, whatever the file's clock says. */
+export function threadIn(value: unknown, gone = false): Thread | null {
   if (!isRecord(value)) return null
   const { id, space, title, provider, model, effort, mode } = value
   if (!isString(id) || !isString(space) || !isString(provider) || !isString(model)) return null
   const turns = Array.isArray(value.turns)
     ? value.turns.map(turnIn).filter((one): one is Turn => one !== null)
     : []
+  const elsewhere = !gone && isString(value.answering) && answeredElsewhere(value)
+  if (isString(value.answering) && !elsewhere) cutOff(turns, value.answering)
   // A compaction's block is the provider's and goes back as it came, so only where it
   // starts is checked.
   const compaction =
@@ -247,10 +393,19 @@ export function threadIn(value: unknown): Thread | null {
   const kept = Array.isArray(value.without) ? value.without.filter(isString) : []
   // Every field the engine reads is checked below; the rest (a goal, what was spent) is
   // kept as written.
-  const rest = ['always', 'without', 'parent', 'answered', 'seen', 'state', 'pinned'].reduce(
-    without,
-    value,
-  )
+  const rest = [
+    'always',
+    'without',
+    'parent',
+    'answered',
+    'seen',
+    'answering',
+    'answeringAt',
+    'answeringIn',
+    'elsewhere',
+    'state',
+    'pinned',
+  ].reduce(without, value)
   return {
     ...(rest as unknown as Thread),
     id,
@@ -270,6 +425,7 @@ export function threadIn(value: unknown): Thread | null {
     created: isNumber(value.created) ? value.created : 0,
     updated: isNumber(value.updated) ? value.updated : 0,
     ...(compaction ? { compaction } : {}),
+    ...(elsewhere ? { elsewhere } : {}),
   }
 }
 
@@ -301,6 +457,7 @@ function headIn(value: unknown): ThreadHead | null {
     updated: isNumber(value.updated) ? value.updated : 0,
     ...(value.archived === true ? { archived: true } : {}),
     ...placeIn(value),
+    ...(answeredElsewhere(value) ? { elsewhere: true } : {}),
     words: isString(value.words) ? value.words : '',
   }
 }
@@ -416,18 +573,39 @@ export async function readThread(space: string, id: string): Promise<Thread | nu
     text = (await store.meta.get(store.threadKey(space, id))) ?? null
   }
   if (!text) return null
+  let value: unknown
   try {
-    return threadIn(JSON.parse(text))
+    value = JSON.parse(text)
   } catch {
     // A file cut short by a crash mid-write cannot be a thread; the list still names it,
     // and deleting it is the way out.
     return null
   }
+  const thread = threadIn(value)
+  if (!thread?.elsewhere) return thread
+  if (await saidAnswering(id)) {
+    readHere.set(id, ownFields(thread))
+    return thread
+  }
+  readHere.delete(id)
+  return threadIn(value, true)
+}
+
+/** When and where a thread is being answered, for the window that reads it meanwhile; see
+ *  `answeredElsewhere`. */
+function aliveIn(thread: Thread): { answeringAt?: number; answeringIn?: string } {
+  return thread.answering ? { answeringAt: Date.now(), answeringIn: thisWindow() } : {}
+}
+
+/** A thread as a file says it: its own mode and model, whatever one send is running on. */
+function asWritten({ own, ...thread }: Thread): Thread {
+  return { ...thread, ...own, ...aliveIn(thread) }
 }
 
 /** Writes a thread down, and its line in the space's list. */
-export async function writeThread(thread: Thread): Promise<void> {
-  const head = headOf(thread)
+export async function writeThread(given: Thread): Promise<void> {
+  const thread = asWritten(given)
+  const head = { ...headOf(thread), ...aliveIn(thread) }
   const body = JSON.stringify(thread)
   if (isNative) {
     await invoke<null>('ai_thread_write', { space: thread.space, id: thread.id, head, body })
@@ -515,6 +693,16 @@ function again(entry: { next: boolean }): boolean {
 
 export function keepThread(thread: Thread): Promise<void> {
   if (removed.has(thread.id)) return Promise.resolve()
+  answerOthers()
+  if (thread.elsewhere) {
+    const fields = changedHere(thread)
+    if (Object.keys(fields).length) windows.say('thread-fields', { id: thread.id, fields })
+    return Promise.resolve()
+  }
+  const answered = answeringHere.has(thread.id)
+  if (thread.answering) answeringHere.set(thread.id, thread)
+  else answeringHere.delete(thread.id)
+  const tell = answered || !!thread.answering
   const held = writing.get(thread.id)
   if (held) {
     held.next = true
@@ -526,6 +714,8 @@ export function keepThread(thread: Thread): Promise<void> {
       do {
         entry.next = false
         await writeThread(thread)
+        // Only once it is in the file, which is what the other window reads.
+        if (tell || thread.answering) windows.say('thread-written', { id: thread.id })
       } while (again(entry) && !removed.has(thread.id))
     } finally {
       writing.delete(thread.id)

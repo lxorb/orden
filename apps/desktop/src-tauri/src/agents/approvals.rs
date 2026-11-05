@@ -9,8 +9,8 @@
 //! says so, and `approval_status` tells the agent.
 //!
 //! **An allowed question lets the same call through once.** The agent calls again, the
-//! call finds its question allowed by what it is about (the verb, the tab, the element),
-//! and goes ahead; the question is then spent. "Always on this site" writes the category
+//! call finds its question allowed by what it is about (the verb, the tab, the element,
+//! and on a page its host and the element's name, `on_page`), and goes ahead; the question is then spent. "Always on this site" writes the category
 //! into the grant for that site, so the next one is not asked at all. A question nobody
 //! answered for a day expires.
 
@@ -56,6 +56,25 @@ pub fn key(verb: &str, tab: Option<&str>, element: Option<&str>) -> String {
         tab.unwrap_or_default(),
         element.unwrap_or_default()
     )
+}
+
+/// What a call is about on the page it would land on: an allowance is for one press on
+/// one site, so the same key or ref after the tab has moved on is another question.
+pub fn on_page(key: &str, url: &str, element: &str) -> String {
+    let host = super::policy::host_of(url).unwrap_or_default();
+    let element = element.split_whitespace().collect::<Vec<_>>().join(" ");
+    format!("{key}:{host}:{element}")
+}
+
+/// Whether the reader allowed this call, leaving the allowance for `allowed` to spend.
+pub fn is_allowed(agent: &str, key: &str) -> bool {
+    held().iter().any(|one| {
+        one.approval.agent == agent
+            && one.key == key
+            && one.approval.answer == ApprovalAnswer::Allowed
+            && !one.spent
+            && one.at.elapsed() < SPEND_WITHIN
+    })
 }
 
 /// Whether the reader allowed this call: spends the allowance if so.
@@ -323,6 +342,40 @@ mod tests {
         assert_eq!(verb_of("browser_click:a1:e7"), "browser_click");
         assert_eq!(verb_of(r#"edit_note:{"path":"a.md"}"#), "edit_note");
         assert_eq!(verb_of(""), "");
+    }
+
+    #[test]
+    fn an_allowance_is_for_the_site_and_the_element_it_was_asked_about() {
+        let asked = on_page(
+            "browser_press:a1:Enter",
+            "http://localhost:9/pay",
+            "Pay now",
+        );
+        assert_ne!(
+            asked,
+            on_page(
+                "browser_press:a1:Enter",
+                "http://127.0.0.1:9/pay",
+                "Pay now"
+            )
+        );
+        assert_ne!(
+            asked,
+            on_page(
+                "browser_press:a1:Enter",
+                "http://localhost:9/pay",
+                "Delete account"
+            )
+        );
+        assert_eq!(
+            asked,
+            on_page(
+                "browser_press:a1:Enter",
+                "http://localhost:9/other",
+                "Pay  now"
+            )
+        );
+        assert_eq!(verb_of(&asked), "browser_press");
     }
 
     #[test]
