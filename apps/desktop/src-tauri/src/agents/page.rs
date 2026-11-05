@@ -2261,9 +2261,26 @@ impl Page<'_> {
             return Ok(());
         }
         let (width, height, x, y) = self.viewport()?;
+        // The wheel scrolls what is under it, which may be a frame of a site the agent may
+        // not act in (9.2); what cannot be told is scrolled as a whole page, below.
+        let middle = (width / 2.0, height / 2.0);
+        let under = if self.limits_sites() {
+            self.element_at(middle)
+                .ok()
+                .map(|one| self.facts(&one))
+                .transpose()?
+        } else {
+            None
+        };
+        if !wheels(self.limits.as_ref(), under.as_ref())? {
+            self.isolated(&format!(
+                "window.scrollBy({{ left: {dx}, top: {dy}, behavior: 'instant' }})"
+            ))?;
+            return Ok(());
+        }
         self.call(
             "Input.dispatchMouseEvent",
-            &json!({ "type": "mouseWheel", "x": width / 2.0, "y": height / 2.0, "deltaX": dx, "deltaY": dy }),
+            &json!({ "type": "mouseWheel", "x": middle.0, "y": middle.1, "deltaX": dx, "deltaY": dy }),
         )?;
         // The wheel is what a person's scroll is, and what a page's own scrolling listens
         // to; a page it did not move is scrolled as a whole instead.
@@ -4046,6 +4063,19 @@ fn area(at: &[f64]) -> f64 {
     (twice / 2.0).abs()
 }
 
+/// Whether a scroll of the page may wheel at the viewport's middle under a call's
+/// `limits`, by what is there (`None` when that cannot be told): not into a frame of a site
+/// the agent may not act in (9.2), and `false` where that cannot be told, which scrolls
+/// the page as a whole instead.
+fn wheels(limits: Option<&(Grant, Store)>, under: Option<&Facts>) -> Result<bool, Answer> {
+    if !engines::limits_sites(limits) {
+        return Ok(true);
+    }
+    under.map_or(Ok(false), |facts| {
+        engines::acts_in(limits, facts).map(|()| true)
+    })
+}
+
 /// Whether a console line is the agent's to read under a call's `limits`: one a frame of a
 /// site it may not reach printed is that site's, whichever site its script came from, as is
 /// one a script of such a site printed; one the engine did not place is nobody's.
@@ -4170,6 +4200,33 @@ mod tests {
             &api,
             &frame(&["https://bank.example/"])
         ));
+    }
+
+    /// RE-4: a scroll by no ref wheels into a denied frame at the middle not at all, and
+    /// scrolls the page as a whole where what is there cannot be told.
+    #[test]
+    fn a_scroll_by_no_ref_does_not_wheel_a_denied_frame() {
+        let limits = denying();
+        let facts = |at: &[&str]| Facts {
+            at: at.iter().map(|one| (*one).to_string()).collect(),
+            ..Facts::default()
+        };
+        assert!(matches!(
+            wheels(Some(&limits), Some(&facts(&["https://bank.example/"]))),
+            Err(Answer::Error {
+                code: Code::SiteDenied,
+                ..
+            })
+        ));
+        assert!(matches!(
+            wheels(Some(&limits), Some(&facts(&["https://shop.example/"]))),
+            Ok(true)
+        ));
+        assert!(matches!(wheels(Some(&limits), None), Ok(false)));
+        // No rule for any site: the wheel, as before.
+        let open = (Grant::own("a".into(), "A"), Store::Reader);
+        assert!(matches!(wheels(Some(&open), None), Ok(true)));
+        assert!(matches!(wheels(None, None), Ok(true)));
     }
 
     #[test]
