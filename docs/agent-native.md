@@ -1150,6 +1150,39 @@ since opening a file starts a program.
 - `info` answers the system's name, version and architecture, the reader's language,
   Orden's version, the engine the window runs on, and the screens, the primary one first.
 
+### 8.17 Beside a VS Code extension
+
+#1078 asked that an agent do everything a VS Code extension can. Each part of the extension
+API against what an agent has, or why it is left out:
+
+| VS Code | Orden | |
+| --- | --- | --- |
+| `workspace.fs` (`readFile`, `writeFile`, `stat`, `readDirectory`, `createDirectory`, `rename`, `copy`, `delete`) | `files` (8.11); a space's own files through the note tools | covered |
+| `workspace.findFiles`, `workspace.findTextInFiles` | `files` `search` (a glob and words), `search_notes` in the spaces | covered |
+| `workspace.createFileSystemWatcher` | `files` `changes`, a cursor rather than a held connection | covered |
+| `workspace.getConfiguration`, `update` | `read_setting`, `write_setting`, every setting by its key (8.8) | covered |
+| `workspace.openTextDocument`, `applyEdit`, `TextDocument` | `read_note`, `edit_note`, `write_note`, `append_note` | covered |
+| `tasks`, `ShellExecution`, `ProcessExecution`, `child_process` | `process` `run` and `start`, `read`, `write`, `kill` (8.12); `run_terminal` | covered |
+| `window.createTerminal`, `Terminal.sendText`, shell integration's output | `workspace_tabs` `new` a terminal, `type_terminal`, `read_terminal`, `run_terminal` with `tab`, online terminals alike (8.9) | covered |
+| `fetch` in the extension host | `http` (8.13) | covered |
+| `env.clipboard` | `system_clipboard` (8.14) | covered |
+| `env.openExternal`, `env.appName`, `env.language`, `env.uiKind`, `process.env`, `os` | `system` `open`, `reveal`, `env`, `info` (8.16) | covered; secrets in the environment left out unless Full permissions |
+| `window.showInformationMessage`, `showWarningMessage`, `showErrorMessage` | `ask_reader` `notice` | covered |
+| `window.showQuickPick`, `showInputBox` | `ask_reader` `choice`, `text` | covered |
+| `window.showOpenDialog`, `showSaveDialog` | `run_command`'s `path` for the dialog a command opens; `files` for any other file | covered |
+| `commands.executeCommand` | `run_command`, every row of the palette | covered; the rows only a person at the keyboard presses stay theirs |
+| `window.activeTextEditor`, `TextEditor.selections`, `revealRange` | `note_editor` `selection`, `select`, `reveal` (8.15) | covered; moving the reader's caret needs `workspace.focus` |
+| `languages.createDiagnosticCollection`, `TextEditor.setDecorations` | `note_editor` `mark`, `clear_marks` | covered; an agent's own, gone with it |
+| folding (`editor.fold`, `editor.unfold`) | `note_editor` `fold`, `unfold` | covered |
+| `window.tabGroups`, `ViewColumn`, moving editors between groups | `workspace_tabs` `list`, `move`, `arrange`, `split`, `focus`, `close` | covered |
+| `window.activeColorTheme`, `workbench.colorTheme` | `read_setting` / `write_setting` `theme`, with every theme to choose from | covered |
+| the browser preview, `vscode.env.asExternalUri` | the agent's own tabs (`browser_*`), the reader's with `browser.reader` | covered |
+| `commands.registerCommand` | left out | an agent is a session, not code loaded into the window: a command it registered would outlive the agent that answers it |
+| `window.createStatusBarItem`, `createTreeView`, `registerWebviewViewProvider`, `createWebviewPanel` | left out | the same: a view or a status item drawn for an agent stays on screen after it goes. What an agent is doing is shown in its session in the Ask panel instead (9.5) |
+| `languages.register*Provider` (completion, hover, code actions) | left out | a provider is asked by the editor at every keystroke, which a session that answers over MCP cannot do in time; `mark` covers what a diagnostic says |
+| `debug`, `tests`, `scm`, `notebooks`, `authentication` | left out | Orden has no debugger, test runner, source control view or notebook kernel for them to drive, and the reader's accounts are never handed to an agent (9.2) |
+| `extensions`, `ExtensionContext.secrets`, `globalState` | left out | an agent keeps its own state where it runs; the app's secrets are behind a fence (8.11) |
+
 ---
 
 ## 9. Safety and permissions
