@@ -2,10 +2,10 @@
  *
  *  Where it lands: the note `>` named, made where the space has none by that name, the
  *  way a link makes the note it names; else the note the add button belongs to; else
- *  the inbox of the space in front, made the first time. The line goes in through the
- *  one road every write across a space takes (`replaceInNotes`), so a note open in a
- *  pane takes the line as an edit of its own, nothing typed there is lost, and the add
- *  is one thing to undo. Ctrl+Enter opens the note at the line. */
+ *  the reader's one inbox, whatever space is in front (rows/home.svelte.ts), made the first
+ *  time. The line goes in through the one road every write across a space takes
+ *  (`replaceInNotes`), so a note open in a pane takes the line as an edit of its own,
+ *  nothing typed there is lost, and the add is one thing to undo. Ctrl+Enter opens the note at the line. */
 
 import { meansInbox } from '@orden/bases/inbox'
 import { insideOnly } from '../automation/inside'
@@ -65,12 +65,8 @@ function named(root: string, said: string): string | null {
 /** The path a task goes to, the note made where it is not there yet. Null where the
  *  words name somewhere outside the space, or no space is open. */
 async function targetOf(entry: Entry, root: string): Promise<string | null> {
-  const existing = entry.note === undefined ? null : named(root, entry.note)
-  // `>Inbox`, where no note of the reader's has that name, is the inbox (#1044).
-  if (entry.note === undefined || (existing === null && meansInbox(entry.note))) {
-    const { inboxNote } = await import('../rows/inbox-note')
-    return inboxNote(root)
-  }
+  if (entry.note === undefined) return null
+  const existing = named(root, entry.note)
   if (existing) return existing
 
   const relative = insideOnly(`${entry.note.replace(/\.md$/i, '')}.md`)
@@ -90,20 +86,20 @@ async function targetOf(entry: Entry, root: string): Promise<string | null> {
   return path
 }
 
-/** The space a task goes to. A space shared to be read takes nothing, not even the
- *  inbox the add would make: the copy here would stop being the space's, and the sync
- *  refuses it on every pass. So a task that names no note, typed while such a space is
- *  in front, goes to the inbox of the first space that takes it, the rule a task from
- *  Shortcuts follows; one that names a note, or was handed its space by an add button,
- *  meant that space and no other, and goes nowhere. */
-async function spaceFor(entry: Entry, given: string | undefined): Promise<string | null> {
+/** A space shared to be read takes nothing, not even the inbox the add would make: the
+ *  copy here would stop being the space's, and the sync refuses it on every pass. */
+async function pathFor(entry: Entry, given: string | undefined): Promise<string | null> {
   const root = given ?? workspace.activeSpace?.root
-  if (root === undefined) return null
-  if (canWriteAt(root)) return root
-  if (given !== undefined || entry.note !== undefined) return null
-  const { inboxSpace } = await import('../rows/inbox')
-  const roots = workspace.spaces.map((one) => one.root)
-  return inboxSpace(root, roots, canWriteAt)
+  // `>Inbox`, where no note of the reader's has that name, is the inbox (#1044).
+  const inbox =
+    entry.note === undefined ||
+    (meansInbox(entry.note) && (root === undefined || named(root, entry.note) === null))
+  const into =
+    inbox && given === undefined ? (await import('../rows/home.svelte')).homeRoot() : root
+  if (into === null || into === undefined || !canWriteAt(into)) return null
+  if (!inbox) return targetOf(entry, into)
+  const { inboxNote } = await import('../rows/inbox-note')
+  return inboxNote(into)
 }
 
 /** Writes the task; answers where it went, or null where it went nowhere, which is
@@ -112,10 +108,7 @@ export async function addTask(
   entry: Entry,
   options: { open?: boolean; root?: string } = {},
 ): Promise<{ path: string; line: number } | null> {
-  const root = await spaceFor(entry, options.root)
-  if (root === null) return null
-
-  const path = await targetOf(entry, root)
+  const path = await pathFor(entry, options.root)
   if (path === null) return null
 
   // A note that would not read is not an empty one: the read is asked again of the

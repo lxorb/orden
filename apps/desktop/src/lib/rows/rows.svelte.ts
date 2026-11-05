@@ -23,6 +23,7 @@ import { keeping } from '../workspace/file-ops'
 import { INBOX, inboxes, inboxOf } from './inbox'
 import { projectFolders } from './projects'
 import { inboxNote } from './inbox-note'
+import { homeRoot } from './home.svelte'
 import { type RowsListener, RowsStore } from './store'
 import { isVault } from './vault'
 import { type RowChange, writeRow } from './write'
@@ -86,10 +87,10 @@ export const rows = {
     return writeRow(workspace, insideSpace(root, row.path), row, change)
   },
 
-  /** The inbox of a space (the open one where none is named) as a path on this disk,
-   *  made the first time it is needed; null where no space is open. */
-  async inbox(root = workspace.activeSpace?.root): Promise<string | null> {
-    if (root === undefined) return null
+  /** The inbox of a space (the reader's one inbox where none is named, rows/home.svelte.ts) as
+   *  a path on this disk, made the first time it is needed; null where there is none. */
+  async inbox(root: string | null = homeRoot()): Promise<string | null> {
+    if (root === null) return null
     return inboxNote(root)
   },
 

@@ -171,17 +171,22 @@ describe('a task added in a group of Todos', () => {
 
   test('is due today or tomorrow, wears the label, or goes into the project', () => {
     on.root = '/s/Private'
+    const root = '/s/Private'
     expect(prefillOf(todos, today, { property: 'formula.when', key: 'today' })).toEqual({
+      root,
       deadline: today,
     })
     expect(prefillOf(todos, today, { property: 'formula.when', key: 'tomorrow' })).toEqual({
+      root,
       deadline: '2026-10-14',
     })
-    expect(prefillOf(todos, today, { property: 'formula.when', key: null })).toEqual({})
+    expect(prefillOf(todos, today, { property: 'formula.when', key: null })).toEqual({ root })
     expect(prefillOf(todos, today, { property: 'task.tags', key: 'home' })).toEqual({
+      root,
       tags: ['home'],
     })
     expect(prefillOf(todos, today, { property: 'file.path', key: 'Errands.md' })).toEqual({
+      root,
       path: '/s/Private/Errands.md',
     })
   })
@@ -194,14 +199,24 @@ describe('a task added in a group of Todos', () => {
     expect(added).toEqual(['/s/Private/Inbox.md'])
   })
 
-  test('in the open space’s own tab, to its inbox by quick add', async () => {
+  test('of one space goes to its inbox though it is the open one (#1153)', async () => {
     on.root = '/s/Private'
     added.length = 0
     const prefill = prefillOf(todos, today)
-    expect(prefill).toEqual({})
-    expect(openQuickAdd(prefill)).toBe(true)
+    expect(openQuickAdd(prefill)).toBe(false)
     await addTyped('Pay', prefill)
     expect(added).toEqual(['/s/Private/Inbox.md'])
+  })
+
+  test('of every space names no space, so quick add takes it to the one inbox (#1153)', () => {
+    expect(prefillOf({ builtin: 'todos' }, today)).toEqual({})
+    expect(openQuickAdd({})).toBe(true)
+  })
+
+  test('of every space narrowed to one goes to that space’s inbox (#1153)', () => {
+    expect(prefillOf({ builtin: 'todos' }, today, undefined, 'Mine')).toEqual({
+      root: '/s/Private',
+    })
   })
 
   test('a label of another space too, and with two of that name, nowhere it could not know', async () => {

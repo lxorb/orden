@@ -9,6 +9,7 @@ import { describe, expect, test, vi } from 'vitest'
  *  (test/e2e/tasks.py) drags and ticks in a browser. */
 
 vi.mock('../rooms.svelte', () => ({ rooms: { present: {}, following: null } }))
+vi.mock('../rows/home.svelte', () => ({ homeRoot: () => '/s/Home' }))
 vi.mock('../rows/rows.svelte', () => ({
   rows: {
     of: () => [],

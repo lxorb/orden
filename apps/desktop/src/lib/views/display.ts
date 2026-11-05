@@ -114,6 +114,7 @@ export interface Only {
   created?: 'today' | 'week' | 'month'
   /** Who it is assigned to: a name, `ASSIGNED_TO_ME` or `UNASSIGNED`. */
   assignee?: string
+  space?: string
 }
 
 /** The assignee filter's two answers that are no one's name: a name never starts with
@@ -126,6 +127,16 @@ export function assigneesOf(rows: readonly Row[]): string[] {
   const seen = new Set<string>()
   for (const row of rows) if (row.task?.assignee) seen.add(row.task.assignee)
   return [...seen].sort((a, b) => a.localeCompare(b))
+}
+
+export function spacesIn(rows: readonly Row[], order: readonly string[]): string[] {
+  const seen = new Set<string>()
+  for (const row of rows) if (row.task) seen.add(row.space)
+  const at = (name: string) => {
+    const index = order.indexOf(name)
+    return index === -1 ? order.length : index
+  }
+  return [...seen].sort((a, b) => at(a) - at(b) || a.localeCompare(b))
 }
 
 /** The notes a view's rows are in, by name, for the project it can be narrowed to. */
@@ -300,7 +311,9 @@ export function onlyOf(view: View): Only {
   const project: unknown = Reflect.get(kept, 'project')
   const created: unknown = Reflect.get(kept, 'created')
   const assignee: unknown = Reflect.get(kept, 'assignee')
+  const space: unknown = Reflect.get(kept, 'space')
   return {
+    ...(typeof space === 'string' && space ? { space } : {}),
     ...(created === 'today' || created === 'week' || created === 'month' ? { created } : {}),
     ...(typeof assignee === 'string' && assignee ? { assignee } : {}),
     ...(typeof project === 'string' && project ? { project } : {}),
@@ -323,6 +336,7 @@ export function withOnly(base: Base, at: number, only: Only): Base {
 /** The narrowing as the engine's expression, or null for none. */
 export function onlyFilter(only: Only): string | null {
   const parts: string[] = []
+  if (only.space !== undefined) parts.push(`file.space == ${JSON.stringify(only.space)}`)
   if (only.priority !== undefined) parts.push(`task.priority == ${only.priority}`)
   if (only.label !== undefined) parts.push(`task.hasTag(${JSON.stringify(only.label)})`)
   // Only a deadline makes a task late (#371).
@@ -339,6 +353,10 @@ export function onlyFilter(only: Only): string | null {
   else if (only.assignee !== undefined)
     parts.push(`task.assignee == ${JSON.stringify(only.assignee)}`)
   return parts.length ? parts.join(' && ') : null
+}
+
+export function narrowedSpace(view: View | null | undefined): string | undefined {
+  return view ? onlyOf(view).space : undefined
 }
 
 /** Each base asked about once per view, so the engine, which keeps what it compiled with

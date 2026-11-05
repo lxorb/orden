@@ -167,9 +167,9 @@ def renamed(page: Page) -> None:
     )
     name = page.evaluate("window.nibApp.workspace.activeSpace.name")
     after = len(texts(page, ".view-tab .task .words"))
-    say(f"[renamed] {spec['space']} {before} -> {after}")
-    if spec["space"] != name or name not in spec["yaml"]:
-        wrong(f"the tab still asks about {spec['space']!r}: {spec['yaml'][:160]}")
+    say(f"[renamed] {spec.get('space')} {before} -> {after}")
+    if "space" in spec or "file.space" in spec["yaml"]:
+        wrong(f"Todos asks about one space, not every one (#1153): {spec}")
     if after != before:
         wrong(f"the tab shows {after} rows after the rename, not {before}")
     if "task.tags" not in spec["yaml"]:
@@ -179,8 +179,8 @@ def renamed(page: Page) -> None:
         name,
     )
     say(f"[kept] {kept}")
-    if name not in kept or len(kept) != 1:
-        wrong(f"what was kept for the space is under {kept}, not {name!r}")
+    if kept != [""]:
+        wrong(f"what was kept for Todos is under {kept}, not every space's")
     DRIVE.shot(page, "04-renamed")
 
 

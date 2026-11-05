@@ -46,8 +46,9 @@ Nothing here loosens any of them.
 5. **Views are `.base` files**, Obsidian's format, with Orden's additions under one key, `nib:`,
    that Obsidian leaves alone. Table, list, cards, board, calendar, timeline and chart; the
    built-in Inbox, Today and Upcoming are bases Orden ships and a reader can copy and change.
-6. **A Tasks panel on the left** beside the files and the search: the space's one Todos
-   view (#1046), then the favourites and labels, each with its count. A press chooses a
+6. **A Tasks panel on the left** beside the files and the search: the one Todos view of
+   every space (#1046, #1153), the same whatever space is open, then the open space's
+   favourites and labels, each with its count. A press chooses a
    row and draws its list in the panel under the rows; Ctrl or Cmd and a press, the middle
    button or the row's menu opens it in a tab of its own (#374). Todos' Display menu is
    where Inbox, Today, Upcoming, Completed and the filters went.
@@ -722,7 +723,7 @@ navigation, never a list of tasks itself, the way Todoist's sidebar is:
 │ [Files] [Search] [Tasks]       │
 ├────────────────────────────────┤
 │  ⊕  Add task          Ctrl+…  │   the quick add row, a field on press
-│  ◷  Tasks                  7   │   the space's Todos; 7 in the danger tone if any are overdue
+│  ◷  Tasks                  7   │   every space's Todos; 7 in the danger tone if any are overdue
 │ FAVORITES                      │
 │  ▤  Reading list           31  │   a bookmarked .base file or note with tasks
 │ LABELS                         │
@@ -731,8 +732,9 @@ navigation, never a list of tasks itself, the way Todoist's sidebar is:
 └────────────────────────────────┘
 ```
 
-- **One view, Todos** (#1046): every task of the open space that can be worked on now
-  (`builtinView('todos')`), grouped by when it is due - Overdue, Today, Tomorrow, Later, No
+- **One view, Todos** (#1046): every task of every space that can be worked on now
+  (`builtinView('todos')`, #1153), each from another space than the open one marked with
+  its space, and narrowed to one space by Display's Filter, grouped by when it is due - Overdue, Today, Tomorrow, Later, No
   date, by its deadline (#371) - and sorted the smart way (priority, deadline, time). Inbox,
   Upcoming, Completed, the Filters, Projects and Notes sections are gone from the panel; the
   engine still answers those built-in views for the agent and the glasses. Todoist's G then
@@ -844,8 +846,9 @@ day); the phone's plus held down, its tile, its widget and its share sheet.
 - **Enter** writes the line, the field stays open for the next (Todoist's habit); **Escape**
   closes; **Shift+Enter** a second line for the description; **Ctrl+Enter** writes and opens
   the note at the line. No toast: the new row slides into whatever view is open.
-- **Where it lands**: the `>` note if named, else the note the add button belongs to, else
-  the inbox of the space in front. A `>` with a name no note has makes the note, as a link
+- **Where it lands**: the `>` note if named, else the note or space the add button belongs
+  to, else the reader's one inbox, whatever space is in front (#1153): the first space of
+  their own nobody else is in (`rows/home.svelte.ts`). A `>` with a name no note has makes the note, as a link
   does.
 - **The global key** opens a small window of its own, the quick add and nothing else, over
   whatever app is in front, through `tauri-plugin-global-shortcut` (already a dependency,

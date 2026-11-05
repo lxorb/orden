@@ -38,7 +38,7 @@ import {
 import { appliedEdits } from '@orden/markdown/edits'
 import { taskLine } from '@orden/markdown/task-edits'
 import { taskHash } from '@orden/bases'
-import type { AgentAnswer } from '../../automation/caller'
+import { type AgentAnswer, threadSpaceOf } from '../../automation/caller'
 import { modes } from '../../modes.svelte'
 import { onDisk as there } from '../../on-disk'
 import { reachedByOthersIn } from '../../sharing.svelte'
@@ -184,14 +184,22 @@ function writableNote(call: Call, path: string) {
   return noteOf({ ...call, args: { ...call.args, tab: null, path } }, true)
 }
 
+async function inboxPlace(call: Call, place: Place): Promise<Place> {
+  if (maybe(call, 'space') !== null || threadSpaceOf(call.caller)) return place
+  const { homeRoot } = await import('../../rows/home.svelte')
+  const root = homeRoot()
+  const home = reachable(call).find((one) => one.root === root)
+  return home ? { space: home, open: home.id === workspace.activeSpace?.id } : place
+}
+
 export async function addTask(call: Call): Promise<AgentAnswer> {
-  const place = placeOf(call)
+  const front = placeOf(call)
   const { rows } = await import('../../rows/rows.svelte')
   // Quick add's grammar over the words, in the reader's language and then every other it
   // reads (`quickWords`), knowing the space's notes for `>Note`.
   const { i18n } = await import('../../i18n.svelte')
   const names = rows
-    .of(place.space.name)
+    .of(front.space.name)
     .filter((row) => row.kind === 'note')
     .map((row) => row.path.replace(/.md$/i, ''))
   const read = (() => {
@@ -202,9 +210,10 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
     }
   })()
   const { fields } = read
+  const named = maybe(call, 'note') ?? read.note ?? null
+  const place = named === null ? await inboxPlace(call, front) : front
   // The space's inbox where no note is named, made by the write below if it is not there.
   const inbox = rows.inboxes().find((one) => one.space === place.space.name)?.path ?? INBOX_PATH
-  const named = maybe(call, 'note') ?? read.note ?? null
   const path = named === null ? inbox : await namedOrInbox(place, named)
   const note = writableNote({ ...call, args: { ...call.args, space: place.space.id } }, path)
   const under = maybe(call, 'under') ?? read.heading

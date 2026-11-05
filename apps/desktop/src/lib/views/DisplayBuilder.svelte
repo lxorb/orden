@@ -5,7 +5,7 @@
    *  down, who it is assigned to - each folded away with a count of what differs from
    *  the view as it came, a dot beside each such row, and Reset all at the foot
    *  (display.ts). Every choice is a change of the view, kept where the view keeps its
-   *  changes: a space's Todos in that space, a project here, a base in its file. */
+   *  changes: Todos and a project here, a base in its file. */
   import Hint from '../Hint.svelte'
   import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'
@@ -25,6 +25,7 @@
     shippedGrouping,
     shippedSorting,
     type Sorting,
+    spacesIn,
     sortingOf,
     SORTINGS,
     SORTS_OFFERED,
@@ -35,6 +36,7 @@
     withSorting,
   } from './display'
   import type { Kit } from './kit'
+  import { workspace } from '../workspace.svelte'
   import { switched } from './layout'
   import { LAYOUT_MARKS } from './marks'
   import { shippedBase } from './source'
@@ -62,6 +64,14 @@
   /** The projects a view of more than one can be narrowed to: not a project's own. */
   const notes = $derived(project ? [] : notesIn(live.rows))
   const assignees = $derived(assigneesOf(live.rows))
+  const spaces = $derived(
+    kit.spec.space === undefined && kit.spec.builtin !== 'project'
+      ? spacesIn(
+          live.rows,
+          workspace.shownSpaces.map((one) => one.name),
+        )
+      : [],
+  )
   /** Who a task is assigned to is a question in a space shared with others. */
   const shared = $derived(assignees.length > 0 || live.rows.some((one) => one.file.shared))
   const changed = $derived(view ? changedFrom(view, original) : { sort: 0, filter: 0, total: 0 })
@@ -161,6 +171,10 @@
     if (change.assignee !== undefined) {
       if (change.assignee === ANY) delete next.assignee
       else next.assignee = change.assignee
+    }
+    if (change.space !== undefined) {
+      if (change.space === ANY) delete next.space
+      else next.space = change.space
     }
     kit.change((base, at) => withOnly(base, at, next))
   }
@@ -264,6 +278,20 @@
 
   {@render fold(t('Filter'), changed.filter, filterOpen, () => (filterOpen = !filterOpen))}
   {#if filterOpen}
+    {#if spaces.length > 1 || only.space !== undefined}
+      <div class="pair">
+        <span class="name">{t('Space')}{@render dot(only.space !== undefined)}</span>
+        <Select
+          label={t('Space')}
+          value={only.space ?? ANY}
+          options={[
+            { value: ANY, label: t('All') },
+            ...spaces.map((name) => ({ value: name, label: name })),
+          ]}
+          onchange={(next: string) => narrow({ space: next })}
+        />
+      </div>
+    {/if}
     {#if notes.length > 1 || only.project !== undefined}
       <div class="pair">
         <span class="name">{t('Project')}{@render dot(only.project !== undefined)}</span>

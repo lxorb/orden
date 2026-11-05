@@ -27,6 +27,7 @@
     kit,
     row = null,
     prefill = {},
+    root: into,
     onclose,
     onsize,
   }: {
@@ -34,6 +35,7 @@
     /** The task being changed; a new one is added where absent. */
     row?: Row | null
     prefill?: Prefill
+    root?: string | undefined
     onclose: () => void
     /** How tall it is drawn, as that changes, so the list can make room under it. */
     onsize?: ((tall: number) => void) | undefined
@@ -75,7 +77,7 @@
 
   async function submit(entry: Entry, open: boolean) {
     if (!row?.task) {
-      await addTask(entry, { open })
+      await addTask(entry, into === undefined ? { open } : { open, root: into })
       if (open) onclose()
       return
     }

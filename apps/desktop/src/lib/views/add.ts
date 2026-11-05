@@ -37,7 +37,7 @@ import { dayIn } from './values'
 
 /** What a new task starts with, from the view and the group it was added in. */
 export interface Prefill {
-  /** The note it is written in, on this disk; the open space's inbox where absent. */
+  /** The note it is written in, on this disk; the reader's one inbox where absent. */
   path?: string
   root?: string
   heading?: string
@@ -78,15 +78,14 @@ export function prefillOf(
   spec: ViewSpec,
   today: string,
   group?: { property: string; key: Value },
+  narrowed?: string,
 ): Prefill {
   const out: Prefill = {}
   if (spec.builtin === 'today') out.due = today
   if (spec.builtin === 'label' && spec.tag) out.tags = [spec.tag]
-  if (
-    (spec.builtin === 'todos' || spec.builtin === 'label') &&
-    spec.space !== workspace.activeSpace?.name
-  ) {
-    const [space, other] = workspace.spaces.filter((one) => one.name === spec.space)
+  const named = spec.space ?? narrowed
+  if ((spec.builtin === 'todos' || spec.builtin === 'label') && named !== undefined) {
+    const [space, other] = workspace.spaces.filter((one) => one.name === named)
     if (space && !other) out.root = space.root
   }
   if (spec.builtin === 'project' && spec.space !== undefined && spec.path !== undefined) {

@@ -38,9 +38,9 @@ function openSpec(spec: ViewSpec, name: string, path: string | null = null, how:
   return workspace.openView(writeSpec(spec), name, path, how)
 }
 
-/** A space's tasks in one view (#1046), as it was left in that space; the open space's
- *  where none is named. */
-export function openTodos(space = workspace.activeSpace?.name, how: OpenHow = {}) {
+/** Every space's tasks in one view (#1046, #1153), as it was left; one space's where one
+ *  is named. */
+export function openTodos(space?: string, how: OpenHow = {}) {
   return openSpec(
     space === undefined ? { builtin: 'todos' } : { builtin: 'todos', space },
     builtinName('todos'),

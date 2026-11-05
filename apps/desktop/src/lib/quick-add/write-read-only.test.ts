@@ -1,32 +1,45 @@
 /** Where quick add may write.
  *
- *  A task goes into the space in front, or the one it was handed, and a space shared
- *  with this account to be read is one nothing may be written in: the copy here would
- *  stop being the space's, and the sync would refuse the change on every pass. So the
- *  add writes nothing there, the way the file list's menu offers nothing to make there.
- *  A task that names no note goes to the inbox of the first space that takes it
- *  instead, the way one from Shortcuts does; one that names a note, or was handed a
- *  space, is refused, and the field keeps it. */
+ *  A task goes into the reader's one inbox, a note of the space in front, or the space
+ *  it was handed (#1153), and a space shared with this account to be read is one nothing
+ *  may be written in: the copy here would stop being the space's, and the sync would
+ *  refuse the change on every pass. So the add writes nothing there, the way the file
+ *  list's menu offers nothing to make there. A task that names no note goes to the inbox
+ *  of the first space that takes it instead, the way one from Shortcuts does; one that
+ *  names a note, or was handed a space, is refused, and the field keeps it. */
 
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const SPACE = '/Theirs'
 const MINE = '/Mine'
 
-/** The spaces shared with this account to be read, by root. */
+/** The spaces shared with this account to be read, by root, and those shared by it. */
 const readOnly = new Set<string>()
+const shared = new Set<string>()
 vi.mock('../sharing.svelte', () => ({
   canWriteAt: (path: string) =>
     ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+  roleOf: (root: string) => (readOnly.has(root) ? 'read' : 'owner'),
+  isShared: (root: string) => shared.has(root),
 }))
+
+const front = { root: SPACE }
 
 const written: string[] = []
 const made: string[] = []
 
 vi.mock('../workspace.svelte', () => ({
   workspace: {
-    activeSpace: { id: 'theirs', name: 'Theirs', root: SPACE },
+    get activeSpace() {
+      return front.root === SPACE
+        ? { id: 'theirs', name: 'Theirs', root: SPACE }
+        : { id: 'mine', name: 'Mine', root: MINE }
+    },
     spaces: [
+      { id: 'theirs', name: 'Theirs', root: SPACE },
+      { id: 'mine', name: 'Mine', root: MINE },
+    ],
+    shownSpaces: [
       { id: 'theirs', name: 'Theirs', root: SPACE },
       { id: 'mine', name: 'Mine', root: MINE },
     ],
@@ -65,6 +78,8 @@ function entry(note?: string) {
 }
 
 beforeEach(() => {
+  front.root = SPACE
+  shared.clear()
   readOnly.clear()
   written.length = 0
   made.length = 0
@@ -116,5 +131,38 @@ describe('a task added', () => {
 
     expect(await addTask(entry(), { root: SPACE })).toBeNull()
     expect(written).toEqual([])
+  })
+})
+
+describe('a task that names no note (#1153)', () => {
+  test('goes into the reader’s one inbox, whatever space is in front', async () => {
+    shared.add(SPACE)
+    expect(await addTask(entry())).toEqual({ path: `${MINE}/.Inbox.md`, line: expect.any(Number) })
+    front.root = MINE
+    expect(await addTask(entry())).toEqual({ path: `${MINE}/.Inbox.md`, line: expect.any(Number) })
+    expect(written).toEqual([`${MINE}/.Inbox.md`, `${MINE}/.Inbox.md`])
+  })
+
+  test('the first space of the reader’s own where none is theirs alone', async () => {
+    shared.add(SPACE)
+    shared.add(MINE)
+    front.root = MINE
+    expect(await addTask(entry())).toEqual({ path: `${SPACE}/.Inbox.md`, line: expect.any(Number) })
+  })
+
+  test('but one handed a space by its add button goes into that space’s', async () => {
+    shared.add(SPACE)
+    expect(await addTask(entry(), { root: SPACE })).toEqual({
+      path: `${SPACE}/.Inbox.md`,
+      line: expect.any(Number),
+    })
+  })
+
+  test('and one sent to a note goes into the note of the space in front', async () => {
+    shared.add(SPACE)
+    expect(await addTask(entry('Plan'))).toEqual({
+      path: `${SPACE}/Plan.md`,
+      line: expect.any(Number),
+    })
   })
 })

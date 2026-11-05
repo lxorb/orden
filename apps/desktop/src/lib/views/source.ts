@@ -20,9 +20,16 @@ import { insideSpace, samePath, within } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import type { Tab } from '../workspace/documents.svelte'
 import { noteText, writeNoteText } from '../workspace/note-text'
-import { keepProjectView, keepTodosView, projectView, renamedTo, todosView } from './kept-views'
+import {
+  EVERY_SPACE,
+  keepProjectView,
+  keepTodosView,
+  projectView,
+  renamedTo,
+  todosView,
+} from './kept-views'
 import type { Shown, Source } from './live.svelte'
-import { followSpaceTabs } from './space-follow'
+import { followSpaceTabs, unscoped } from './space-follow'
 import { asShipped, readSpec, type ViewSpec, writeSpec } from './spec'
 
 /** Today as Settings has it: with the tasks that have no start date in it, or not (#408). */
@@ -48,7 +55,7 @@ export function builtinBase(spec: ViewSpec): Base {
   switch (spec.builtin) {
     case 'todos': {
       // As it was left in this space, else as Orden ships it (#1046).
-      const kept = spec.space === undefined ? undefined : todosView(spec.space)
+      const kept = spec.space === undefined ? everyTodosView() : todosView(spec.space)
       return kept === undefined ? shippedBase(spec) : readBase(kept)
     }
     case 'project':
@@ -126,10 +133,28 @@ export function fileSource(path: string, view?: string, self?: () => Row | undef
  *  that space, wherever it was changed (a tab, the Tasks panel). */
 function keepChange(spec: ViewSpec, yaml: string): void {
   if (spec.builtin === 'project') keepProjectView(spec.space ?? '', spec.path ?? '', yaml)
-  if (spec.builtin === 'todos' && spec.space !== undefined) {
-    const shipped = writeBase(builtinView('todos', { space: spec.space }))
-    keepTodosView(spec.space, yaml === shipped ? undefined : yaml)
+  if (spec.builtin === 'todos') {
+    const shipped = writeBase(shippedBase(spec))
+    keepTodosView(spec.space ?? EVERY_SPACE, yaml === shipped ? undefined : yaml)
   }
+}
+
+function everyTodosView(): string | undefined {
+  const kept = todosView(EVERY_SPACE)
+  if (kept !== undefined) return kept
+  const space = workspace.activeSpace?.name
+  const was = space === undefined ? undefined : todosView(space)
+  if (space === undefined || was === undefined) return undefined
+  const now = unscoped(was, space)
+  keepTodosView(EVERY_SPACE, now)
+  return now
+}
+
+function everySpace(tab: Tab): void {
+  const spec = readSpec(tab.doc)
+  if (spec?.builtin !== 'todos' || spec.space === undefined) return
+  tab.note.replace(writeSpec({ builtin: 'todos' }), false)
+  workspace.scheduleSession()
 }
 
 function followLost(tab: Tab): void {
@@ -151,6 +176,7 @@ export function tabSource(tab: Tab): Source {
     scope: null,
     load: () => {
       try {
+        everySpace(tab)
         followLost(tab)
         return Promise.resolve(builtinBase(spec()))
       } catch (error) {

@@ -15,6 +15,7 @@
   import { relativeTo, withoutExtension } from '../space-paths'
   import { workspace } from '../workspace.svelte'
   import { addTyped, type Prefill, prefillOf } from './add'
+  import { narrowedSpace } from './display'
   import type { Kit } from './kit'
   import TaskEditor from './TaskEditor.svelte'
 
@@ -40,6 +41,7 @@
   let plain = $state<Prefill | null>(null)
   /** The inline editor's, for every other task. */
   let editing = $state<QuickPrefill | null>(null)
+  let into = $state<string | undefined>()
   let words = $state('')
   let field = $state<HTMLInputElement>()
 
@@ -71,12 +73,13 @@
       onclose?.()
       return
     }
-    const prefill = prefillOf(kit.spec, kit.live.today, at)
+    const prefill = prefillOf(kit.spec, kit.live.today, at, narrowedSpace(kit.live.view))
     if (prefill.status !== undefined) {
       plain = prefill
       queueMicrotask(() => field?.focus())
       return
     }
+    into = prefill.root
     editing = quick(prefill)
   }
 
@@ -141,7 +144,7 @@
       </button>
     {/if}
     {#if editing}
-      <TaskEditor {kit} prefill={editing} {onsize} onclose={close} />
+      <TaskEditor {kit} prefill={editing} root={into} {onsize} onclose={close} />
     {/if}
   </div>
 {/if}

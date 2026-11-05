@@ -1,10 +1,10 @@
-/** What the Tasks panel lists, with its counts: the open space's Todos as its view
- *  answers it (#1046), then the notes (every note with open tasks, the most recently
+/** What the Tasks panel lists, with its counts: every space's Todos as its view answers
+ *  it (#1046, #1153), then the notes (every note with open tasks, the most recently
  *  written first, which the favourites are counted by) and the labels (every tag on an
  *  open task of the open space, which is where renaming one writes).
  *
  *  Todos is counted by the engine answering the base as Orden ships it (`builtinView`):
- *  every task of the space that can be worked on, as Todoist's sidebar counts a project,
+ *  every task of every space that can be worked on, as Todoist's sidebar counts a project,
  *  whatever its view is narrowed to or shows just now. The notes and labels are one pass
  *  over the open tasks. Pure: the panel hands in the rows and the day, and draws the
  *  answer. */
@@ -28,7 +28,7 @@ interface Label {
 }
 
 export interface PanelCounts {
-  /** The open tasks of the space's Todos. */
+  /** The open tasks of Todos, in every space. */
   todos: number
   /** Whether any of them are overdue, which turns the count to the danger tone. */
   overdue: boolean
@@ -37,18 +37,13 @@ export interface PanelCounts {
   labels: Label[]
 }
 
-/** Each space's Todos, made once, so the engine compiles it once and keeps what it knows
- *  about every row between two counts. */
-const made = new Map<string, Base>()
+/** Todos, made once, so the engine compiles it once and keeps what it knows about every
+ *  row between two counts. */
+let made: Base | null = null
 
-function todosOf(space: string | undefined): Base {
-  const key = space ?? ''
-  let base = made.get(key)
-  if (!base) {
-    base = builtinView('todos', space === undefined ? {} : { space })
-    made.set(key, base)
-  }
-  return base
+function todos(): Base {
+  made ??= builtinView('todos')
+  return made
 }
 
 const isOpen = (row: Row) =>
@@ -61,7 +56,7 @@ export function panelCounts(
   space: string | undefined,
 ): PanelCounts {
   const context = contextFor({ rows, today, now: `${today}T00:00:00` })
-  const todos = answer(todosOf(space), 0, rows, context)
+  const every = answer(todos(), 0, rows, context)
 
   const projects = new Map<string, Project>()
   const labels = new Map<string, number>()
@@ -84,8 +79,8 @@ export function panelCounts(
   }
 
   return {
-    todos: todos.total,
-    overdue: todos.groups.some((group) => group.key === 'overdue' && group.rows.length > 0),
+    todos: every.total,
+    overdue: every.groups.some((group) => group.key === 'overdue' && group.rows.length > 0),
     notes: [...projects.values()].sort((a, b) => b.mtime - a.mtime || a.name.localeCompare(b.name)),
     labels: [...labels.entries()]
       .map(([tag, count]) => ({ tag, count }))

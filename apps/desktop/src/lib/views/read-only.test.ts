@@ -20,6 +20,8 @@ const insideOf = (root: string, path: string) => path === root || path.startsWit
 
 vi.mock('../sharing.svelte', () => ({
   canWriteAt: (path: string) => ![...readOnly].some((root) => insideOf(root, path)),
+  roleOf: (root: string) => (readOnly.has(root) ? 'read' : 'owner'),
+  isShared: () => false,
   trustsHtmlAt: () => true,
 }))
 
@@ -80,6 +82,7 @@ const MINE = { id: 'mine', name: 'Mine', root: '/mine' }
 vi.mock('../workspace.svelte', () => ({
   workspace: {
     spaces: [THEIRS, MINE],
+    shownSpaces: [THEIRS, MINE],
     activeSpace: THEIRS,
     notes: [],
     freeName: (_dir: string, name: string) => name,
@@ -284,9 +287,9 @@ describe('a board of a base in a space shared to be read', () => {
   })
 })
 
-/** A board of tasks shown in a view of no file, as Today can be, while the open space is
- *  shared to be read: the view may be changed, but a task added lands in that space's
- *  inbox, where nothing is kept (B293). */
+/** A board of tasks shown in a view of no file, as Today can be: a task added lands in
+ *  the reader's one inbox (#1153), whatever space is open, and where no space takes it
+ *  nothing is kept (B293). */
 function taskBoard() {
   const base = readBase(`views:
   - type: kanban
@@ -315,21 +318,18 @@ function taskBoard() {
 }
 
 describe('a board of tasks whose adds would land in a space shared to be read', () => {
-  test('offers no add at a column head or under it', async () => {
+  test('offers no add at a column head or under it', () => {
+    readOnly.add(MINE.root)
     const html = render(BoardLayout, { props: { kit: taskBoard() } }).body
     expect(html).toContain('To do')
     expect(html).not.toContain('aria-label="New page"')
     expect(html).not.toMatch(/class="add[ "]/)
+  })
 
-    const workspace = (await import('../workspace.svelte')).workspace as { activeSpace: unknown }
-    workspace.activeSpace = MINE
-    try {
-      const mine = render(BoardLayout, { props: { kit: taskBoard() } }).body
-      expect(mine).toContain('aria-label="New page"')
-      expect(mine).toMatch(/class="add[ "]/)
-    } finally {
-      workspace.activeSpace = THEIRS
-    }
+  test('but does where the reader has a space of their own, with the read one open', () => {
+    const mine = render(BoardLayout, { props: { kit: taskBoard() } }).body
+    expect(mine).toContain('aria-label="New page"')
+    expect(mine).toMatch(/class="add[ "]/)
   })
 })
 

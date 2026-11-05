@@ -107,6 +107,9 @@ const marks: Record<string, { kind: string; path: string; text: string }[]> = {}
 
 const workspace = {
   spaces: [work, home, secret],
+  get shownSpaces() {
+    return this.spaces
+  },
   activeSpaceId: 'work',
   get activeSpace() {
     return this.spaces.find((one) => one.id === this.activeSpaceId) ?? null
@@ -250,6 +253,7 @@ vi.mock('../../sharing.svelte', () => ({
   reachedByOthersIn: (root: string) =>
     root === '/s/Home' || [...othersWrite].some((path) => path.startsWith(`${root}/`)),
   canWriteAt: (path: string) => ![...readOnly].some((root) => path.startsWith(`${root}/`)),
+  roleOf: (root: string) => (readOnly.has(root) ? 'read' : 'owner'),
 }))
 
 /** Notes of a space nobody else is in that somebody else can write all the same: one
@@ -1671,6 +1675,28 @@ describe('to-dos and bases', () => {
       // The day said is the day it starts: `🛫` (#371).
       /^- \[ \] Zahnarzt anrufen \[time:: 15:00\] 🛫 \d{4}-\d{2}-\d{2}\n$/u,
     )
+  })
+
+  test('with no space and no note goes to the reader’s one inbox, whatever space is open (#1153)', async () => {
+    workspace.activeSpaceId = 'home'
+    try {
+      const added = await call('add_task', { text: 'Call Ada' })
+      expect(added).toMatchObject({ result: { space: 'Work' } })
+      expect(files.get('/s/Work/.Inbox.md')).toBe('- [ ] Call Ada\n')
+      expect(files.has('/s/Home/.Inbox.md')).toBe(false)
+    } finally {
+      workspace.activeSpaceId = 'work'
+    }
+  })
+
+  test('Todos is every space’s one list, as the panel has it (#1153)', async () => {
+    const todos = await call('list_tasks', { view: 'todos' })
+    const tasks = (todos as { result: { tasks: { text: string; space: string }[] } }).result.tasks
+    expect(tasks.map((one) => `${one.space} ${one.text}`).sort()).toEqual([
+      'Home Buy milk',
+      'Work Read',
+      'Work Write the intro',
+    ])
   })
 
   test('a task added under a heading of a note, as the agent writes any edit', async () => {

@@ -1,6 +1,6 @@
 <script lang="ts">
-  /** The Tasks panel: the add row, then the open space's Todos - every task of the
-   *  space in one view (#1046), its count in the danger tone while something is overdue
+  /** The Tasks panel: the add row, then Todos - every task of every space in one view
+   *  (#1046, #1153), its count in the danger tone while something is overdue
    *  - then the favourites (bookmarked notes with tasks and views) and the labels. What
    *  were Inbox, Today, Upcoming, Completed, the filters, the projects and the notes are
    *  the one view's Display menu now.
@@ -32,6 +32,7 @@
   import { guardedAt } from './guard'
   import { prompt } from '../prompt.svelte'
   import { canWriteAt } from '../sharing.svelte'
+  import { homeRoot } from '../rows/home.svelte'
   import { builtinName } from './words'
 
   /** Which side of the window the panel is on; the same on both, said for its styles. */
@@ -52,8 +53,8 @@
 
   const space = $derived(workspace.activeSpace)
   const root = $derived(space?.root ?? null)
-  /** Whether a task can be added here: not in a space shared to be read. */
-  const writes = $derived(root !== null && canWriteAt(root))
+  /** Whether a task can be added: into the reader's one inbox (rows/home.svelte.ts). */
+  const writes = $derived(homeRoot() !== null)
   /** Open tasks per note of the open space, by its path in the space. */
   const openIn = $derived(openByPath(counts.notes, space?.name))
 
@@ -212,16 +213,12 @@
     ])
   }
 
-  /** The chosen row's list, drawn under the rows: Todos of the open space, as it follows
-   *  the space; a view's changes are kept on this device as a tab's would be. */
+  /** The chosen row's list, drawn under the rows: Todos of every space, the same whatever
+   *  space is open (#1153); a view's changes are kept on this device as a tab's would be. */
+  const chosenKey = $derived(JSON.stringify(chosen))
   const shown = $derived.by(() => {
-    const row = chosen
-    const name = workspace.activeSpace?.name
+    const here = JSON.parse(chosenKey) as PanelRow
     return untrack(() => {
-      const here: PanelRow =
-        row.kind === 'todos' && row.space === undefined && name !== undefined
-          ? { kind: 'todos', space: name }
-          : row
       const spec = specOf(here)
       const file = here.kind === 'base' ? here.path : null
       const live = new LiveView(file === null ? panelSource(spec ?? {}) : fileSource(file))

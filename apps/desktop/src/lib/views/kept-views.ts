@@ -13,6 +13,8 @@ const PROJECTS = 'nib:project-views'
 const TODOS = 'nib:todos-views'
 const RENAMES = 'nib:space-renames'
 
+export const EVERY_SPACE = ''
+
 /** How many views keep their folds: the ones folded most lately. */
 const MOST = 200
 
@@ -86,8 +88,12 @@ export function followSpaceViews(
 ): void {
   const todos = read(TODOS)
   const words = todos[from]
-  if (typeof words === 'string') {
-    keepJson(TODOS, { ...without(todos, (one) => one === from), [to]: follow(words) })
+  const every = todos[EVERY_SPACE]
+  if (typeof words === 'string' || typeof every === 'string') {
+    const next = without(todos, (one) => one === from)
+    if (typeof words === 'string') next[to] = follow(words)
+    if (typeof every === 'string') next[EVERY_SPACE] = follow(every)
+    keepJson(TODOS, next)
   }
   followProjectViews(from, (path) => path, follow, to)
   const folds = read(FOLDS)

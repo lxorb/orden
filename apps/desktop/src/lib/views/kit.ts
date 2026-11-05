@@ -9,7 +9,9 @@ import { canWriteAt } from '../sharing.svelte'
 import { insideSpace } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import { dropRow, tickRow, writeRow } from './act'
+import { homeRoot } from '../rows/home.svelte'
 import { addNote, openQuickAdd, type Prefill, prefillOf } from './add'
+import { narrowedSpace } from './display'
 import { dropInto } from './drop'
 import { everyRow } from './list-items'
 import { pressButton } from './press'
@@ -111,19 +113,29 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
     },
     get adds() {
       if (!reachable()) return false
-      const root = workspace.activeSpace?.root
       const notes = (live.view?.nib.rows ?? 'notes') === 'notes'
-      const to = notes ? (file ?? root) : (prefillOf(spec, live.today).path ?? root)
-      return to === undefined || canWriteAt(to)
+      if (notes) {
+        const to = file ?? workspace.activeSpace?.root
+        return to === undefined || canWriteAt(to)
+      }
+      const prefill = prefillOf(spec, live.today, undefined, narrowedSpace(live.view))
+      const to = prefill.path ?? prefill.root ?? homeRoot()
+      return to !== null && canWriteAt(to)
     },
     open(row, how = 'aside') {
       const path = notePath(row)
       if (path === null) return
       const line = row.anchor?.line ?? 0
-      const opening =
+      const away = compact ? workspace.spaces.find((one) => one.name === row.space) : undefined
+      const there =
+        away && away.id !== workspace.activeSpaceId
+          ? workspace.selectSpace(away.id)
+          : Promise.resolve()
+      const opening = there.then(() =>
         how === 'aside'
           ? import('./peek').then((one) => one.peek(path, walkOf(live)))
-          : workspace.open(path)
+          : workspace.open(path),
+      )
       void opening.then(() => {
         workspace.goto = { path, line }
       })
@@ -161,7 +173,7 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
         }
         return null
       }
-      const prefill = prefillOf(spec, live.today, group)
+      const prefill = prefillOf(spec, live.today, group, narrowedSpace(live.view))
       return openQuickAdd(prefill) ? null : prefill
     },
     change(edit, unlocking = false) {

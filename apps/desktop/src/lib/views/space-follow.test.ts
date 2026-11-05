@@ -151,30 +151,35 @@ describe('a space renamed', () => {
 })
 
 describe('a tab about a space no space is called', () => {
-  const lost = () => tabOf(writeSpec({ builtin: 'todos', space: 'Work', yaml: todosIn('Work') }))
+  const lost = () =>
+    tabOf(
+      writeSpec({ builtin: 'project', space: 'Work', path: 'Plan.md', yaml: projectIn('Work') }),
+    )
+  const planIn = (space: string) =>
+    builtinView('project', { note: { space, path: 'Plan.md' } }).views[0]?.filters
 
   test('with a record of the rename, comes to the name it has now', async () => {
-    keepTodosView('Work', todosIn('Work'))
+    keepProjectView('Work', 'Plan.md', projectIn('Work'))
     spaceRenamed('Work', 'Mid')
     spaceRenamed('Mid', 'Job')
     const tab = lost()
     tabs.push(tab)
     const base = await tabSource(tab as never).load()
     expect(readSpec(tab.doc)?.space).toBe('Job')
-    expect(base.views[0]?.filters).toEqual(builtinView('todos', { space: 'Job' }).views[0]?.filters)
-    expect(todosView('Job')).toBeUndefined()
+    expect(base.views[0]?.filters).toEqual(planIn('Job'))
+    expect(projectView('Job', 'Plan.md')).toBeUndefined()
   })
 
   test('with none, says it cannot be read, and touches nothing of the open space', async () => {
-    keepTodosView('Work', todosIn('Work'))
-    keepTodosView('Job', todosIn('Job'))
+    keepProjectView('Work', 'Plan.md', projectIn('Work'))
+    keepProjectView('Job', 'Plan.md', projectIn('Job'))
     const tab = lost()
     const words = tab.doc
     tabs.push(tab)
     await expect(tabSource(tab as never).load()).rejects.toThrow()
     expect(tab.doc).toBe(words)
-    expect(todosView('Job')).toBe(todosIn('Job'))
-    expect(todosView('Work')).toBe(todosIn('Work'))
+    expect(projectView('Job', 'Plan.md')).toBe(projectIn('Job'))
+    expect(projectView('Work', 'Plan.md')).toBe(projectIn('Work'))
   })
 
   test('with a record of a space since gone, likewise', async () => {
@@ -185,22 +190,65 @@ describe('a tab about a space no space is called', () => {
   })
 
   test('of a space that is there is left alone', async () => {
-    const words = writeSpec({ builtin: 'todos', space: 'Job' })
+    const words = writeSpec({ builtin: 'project', space: 'Job', path: 'Plan.md' })
     const tab = tabOf(words)
     await tabSource(tab as never).load()
     expect(tab.doc).toBe(words)
-    expect(builtinBase(readSpec(words) ?? {}).views[0]?.filters).toEqual(
-      builtinView('todos', { space: 'Job' }).views[0]?.filters,
-    )
+    expect(builtinBase(readSpec(words) ?? {}).views[0]?.filters).toEqual(planIn('Job'))
   })
 
   test('with no list of spaces yet, waits', async () => {
     place.spaces = []
-    const words = writeSpec({ builtin: 'todos', space: 'Work' })
+    const words = writeSpec({ builtin: 'project', space: 'Work', path: 'Plan.md' })
     const tab = tabOf(words)
     await tabSource(tab as never).load()
     expect(tab.doc).toBe(words)
     place.spaces = [{ id: 'j', name: 'Job', root: '/s/Job' }]
+  })
+})
+
+describe('Todos, one list of every space (#1153)', () => {
+  const every = builtinView('todos').views[0]?.filters
+
+  test('a tab an older build kept for one space becomes every space’s', async () => {
+    const tab = tabOf(writeSpec({ builtin: 'todos', space: 'Work', yaml: todosIn('Work') }))
+    tabs.push(tab)
+    const base = await tabSource(tab as never).load()
+    expect(readSpec(tab.doc)).toEqual({ builtin: 'todos' })
+    expect(base.views[0]?.filters).toEqual(every)
+  })
+
+  test('starts as the open space’s was left, with that space taken out of it, kept once', () => {
+    keepTodosView('Job', todosIn('Job'))
+    const base = builtinBase({ builtin: 'todos' })
+    expect(base.views[0]?.type).toBe('kanban')
+    expect(base.views[0]?.filters).toEqual(every)
+    place.active = null
+    expect(builtinBase({ builtin: 'todos' }).views[0]?.type).toBe('kanban')
+  })
+
+  test('is the same list whatever space is open', async () => {
+    const tab = tabOf(writeSpec({ builtin: 'todos' }))
+    await tabSource(tab as never).save(readBase(narrowed(builtinView('todos'))))
+    place.active = null
+    expect(builtinBase({ builtin: 'todos' }).views[0]?.type).toBe('kanban')
+    expect(todosView('Job')).toBeUndefined()
+  })
+
+  test('narrowed to a space, follows it when it is renamed', () => {
+    const base = builtinView('todos')
+    const [view] = base.views
+    const yaml = writeBase({
+      ...base,
+      views: view ? [{ ...view, nib: { ...view.nib, kept: { only: { space: 'Work' } } } }] : [],
+    })
+    const tab = tabOf(writeSpec({ builtin: 'todos', yaml }))
+    keepTodosView('', yaml)
+    followSpaceName('Work', 'Job', [tab], [])
+    const only = (words: string | undefined) =>
+      readBase(words ?? '').views[0]?.nib.kept.only as { space?: string } | undefined
+    expect(only(readSpec(tab.doc)?.yaml)?.space).toBe('Job')
+    expect(only(todosView(''))?.space).toBe('Job')
   })
 })
 

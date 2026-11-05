@@ -1,4 +1,5 @@
-import { type Base, type Filter, readBase, writeBase } from '@orden/bases'
+import { type Base, type Filter, readBase, type View, writeBase } from '@orden/bases'
+import { isRecord } from '../stored'
 import { followSpaceViews, forgetSpaceViews, spaceRenamed } from './kept-views'
 import { readSpec, writeSpec } from './spec'
 
@@ -18,6 +19,12 @@ function refiltered(filter: Filter, from: string, to: string): Filter {
   return { not: filter.not.map((one) => refiltered(one, from, to)) }
 }
 
+function narrowedTo(view: View, from: string, to: string): View {
+  const only = view.nib.kept.only
+  if (!isRecord(only) || only.space !== from) return view
+  return { ...view, nib: { ...view.nib, kept: { ...view.nib.kept, only: { ...only, space: to } } } }
+}
+
 function followed(words: string, from: string, to: string): string {
   let base: Base
   try {
@@ -28,10 +35,46 @@ function followed(words: string, from: string, to: string): string {
   return writeBase({
     ...base,
     ...(base.filters ? { filters: refiltered(base.filters, from, to) } : {}),
-    views: base.views.map((one) => ({
-      ...one,
-      ...(one.filters ? { filters: refiltered(one.filters, from, to) } : {}),
-    })),
+    views: base.views.map((one) =>
+      narrowedTo(
+        {
+          ...one,
+          ...(one.filters ? { filters: refiltered(one.filters, from, to) } : {}),
+        },
+        from,
+        to,
+      ),
+    ),
+  })
+}
+
+function unscopedFilter(filter: Filter, space: string): Filter | null {
+  if (typeof filter === 'string') return filter === namesSpace(space) ? null : filter
+  if (!('and' in filter)) return filter
+  const rest = filter.and.flatMap((one) => {
+    const kept = unscopedFilter(one, space)
+    return kept === null ? [] : [kept]
+  })
+  if (rest.length > 1) return { and: rest }
+  return rest[0] ?? null
+}
+
+export function unscoped(words: string, space: string): string {
+  let base: Base
+  try {
+    base = readBase(words)
+  } catch {
+    return words
+  }
+  return writeBase({
+    ...base,
+    views: base.views.map((one) => {
+      const filters = one.filters === undefined ? null : unscopedFilter(one.filters, space)
+      const next: View = { ...one }
+      if (filters === null) delete next.filters
+      else next.filters = filters
+      return next
+    }),
   })
 }
 
@@ -39,6 +82,11 @@ export function followSpaceTabs(from: string, to: string, tabs: readonly ViewHol
   for (const tab of tabs) {
     if (tab.kind !== 'view' || tab.path !== null) continue
     const spec = readSpec(tab.doc)
+    if (spec?.space === undefined && spec?.yaml !== undefined) {
+      const yaml = followed(spec.yaml, from, to)
+      if (yaml !== spec.yaml) tab.note.replace(writeSpec({ ...spec, yaml }), false)
+      continue
+    }
     if (spec?.space !== from) continue
     const yaml = spec.yaml === undefined ? {} : { yaml: followed(spec.yaml, from, to) }
     tab.note.replace(writeSpec({ ...spec, space: to, ...yaml }), false)

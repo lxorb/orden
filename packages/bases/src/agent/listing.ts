@@ -14,7 +14,7 @@ import type { Answer, Base, Context, Filter, Row, Value } from '../types'
 import { AgentError, type TaskOut, taskOut } from './tasks'
 
 /** The views an agent names by a word. */
-export const VIEWS = ['inbox', 'today', 'upcoming', 'logbook'] as const
+export const VIEWS = ['todos', 'inbox', 'today', 'upcoming', 'logbook'] as const
 
 /** Every open task, the order they are written in: a list with nothing chosen. */
 function everything(filters?: Filter): Base {
