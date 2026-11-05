@@ -196,13 +196,17 @@ class Runner {
     if (this.local) await this.inLane(() => this.carryLocal())
     const user = account.user
     if (!user || this.current || this.giving) return
+    // This start's own attempt: a stop or a later start makes it stale, and nothing a stale
+    // one does afterwards touches the newer one's lead, store or account.
+    const mine = ++this.attempt
+    const live = () => this.attempt === mine
     this.accountId = user.id
     this.hearLeader()
     const giving = new AbortController()
     this.giving = giving
     const held = await this.holdStore()
     const lead = held && !giving.signal.aborted ? await leadSync(giving.signal, user.id) : null
-    if (!lead || this.giving !== giving || account.user?.id !== user.id) {
+    if (!lead || this.giving !== giving || account.user?.id !== user.id || !live()) {
       lead?.release()
       if (this.giving === giving) this.giving = null
       this.settleStore()
@@ -210,12 +214,20 @@ class Runner {
     }
     this.giving = null
     this.lead = lead
+    this.leadOf = mine
+    // Said again, held: a stop's letting go meanwhile may have cleared it.
+    this.accountId = user.id
     try {
       const engine = await this.inLane(async () => {
+        if (!live()) return null
         await this.carryLocal()
-        return this.running(user)
+        return this.running(user, live)
       })
       if (engine) await this.tookOver(engine)
+      else if (this.lead === lead) {
+        // No engine after all: nothing stands on the lead, nor on the store.
+        this.letGoLead()
+      }
     } catch (error) {
       // No engine, here: whoever waits next may fare better, and nothing is owed to nobody.
       this.letGoLead()
@@ -226,6 +238,10 @@ class Runner {
 
   /** How the wait for the engine is given up. */
   private giving: AbortController | null = null
+  /** Which start is the live one: each start and each stop counts one on. */
+  private attempt = 0
+  /** The start whose lead `lead` is. */
+  private leadOf = 0
   /** This window's being the one that runs the engine. */
   private lead: Leadership | null = null
 
@@ -356,7 +372,7 @@ class Runner {
 
   /** Opens the account's store and starts its engine, in the lane: answers it, or null
    *  once this session has moved on meanwhile. */
-  private async running(user: { id: string }): Promise<Engine | null> {
+  private async running(user: { id: string }, live: () => boolean): Promise<Engine | null> {
     const store = await openSyncStore(user.id, true)
     const engine = await Engine.start(
       appWorld(() => account.token, this.telling),
@@ -365,7 +381,7 @@ class Runner {
         names: (device) => this.nameOf(device),
       },
     )
-    if (this.accountId !== user.id) {
+    if (!live() || this.accountId !== user.id) {
       await store.close()
       return null
     }
@@ -537,6 +553,7 @@ class Runner {
   private leaving: Promise<void> | null = null
 
   private halt(keepLead = false): Promise<void> {
+    const at = ++this.attempt
     this.giving?.abort()
     this.giving = null
     this.stopHolding()
@@ -545,10 +562,12 @@ class Runner {
     this.seenAt.clear()
     this.noLeader()
     for (const stop of this.hearings.splice(0)) stop()
-    return this.inLane(() => this.letGo(keepLead))
+    return this.inLane(() => this.letGo(keepLead, () => this.attempt !== at))
   }
 
-  private async letGo(keepLead = false): Promise<void> {
+  /** `overtaken`: a start came after the stop this is for, and what it holds or says is its
+   *  own: only the engine before it goes, and a lead from before it. */
+  private async letGo(keepLead = false, overtaken: () => boolean = () => false): Promise<void> {
     for (const stop of this.stops.splice(0)) stop()
     for (const key of this.carried) uncarry(key)
     this.carried.clear()
@@ -558,8 +577,9 @@ class Runner {
     this.bound.clear()
     clearTimeout(this.timer)
     const engine = this.current
+    const newer = overtaken()
     this.current = null
-    this.accountId = null
+    if (!newer) this.accountId = null
     this.local = false
     this.status = 'off'
     if (engine) {
@@ -567,7 +587,14 @@ class Runner {
       engine.stop()
       await engine.core.store.close().catch(() => undefined)
     }
-    if (!keepLead) this.letGoLead()
+    if (keepLead) return
+    if (!newer) this.letGoLead()
+    else if (this.lead && this.leadOf !== this.attempt) {
+      // The lead of the start this stop was for: the newer one waits for it.
+      this.lead.release()
+      this.lead = null
+      this.settleStore()
+    }
   }
 
   /** No longer the window that runs the engine, nor the one that may open a store: said

@@ -430,3 +430,29 @@ describe('the device id read beside the store', () => {
     expect(asked).toEqual([deviceOfStore('u1'), deviceOfStore('u1')])
   })
 })
+
+describe('a start that a stop and a start overtake', () => {
+  for (const gap of [0, 1, 3, 6, 12, 30]) {
+    test(`leaves one engine, and a stop lets go of everything (S-1, ${gap} ms)`, async () => {
+      vi.stubGlobal('fetch', () => new Promise(() => undefined))
+      const a = await aWindow()
+      Object.assign(a.account, { user: { id: 'u1', syncVersion: 2 }, token: 't' })
+      void a.runner.start()
+      if (gap) await settle(gap)
+      void a.runner.stop()
+      void a.runner.start()
+      await settle(300)
+      const b = await aWindow()
+      Object.assign(b.account, { user: { id: 'u1', syncVersion: 2 }, token: 't' })
+      void b.runner.start()
+      await settle(300)
+      expect(a.runner.engine ?? b.runner.engine).not.toBeNull()
+      await a.runner.stop()
+      await settle(50)
+      const held = a.runner as unknown as { storeLead: unknown; lead: unknown }
+      expect(held.storeLead).toBeNull()
+      expect(held.lead).toBeNull()
+      expect(wrong()).toEqual([])
+    })
+  }
+})
