@@ -1,7 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { agentMarks } from '../../src/lib/agent-marks.svelte'
-import ActivityPanel from '../../src/lib/agents/ui/ActivityPanel.svelte'
+import AgentSession from '../../src/lib/agents/ui/AgentSession.svelte'
 import { FakeCrate } from '../../src/lib/agents/ui/fake'
 import { ended, start, started } from '../../src/lib/agents/ui/index'
 
@@ -130,7 +130,7 @@ describe('the shell while an agent is connected', () => {
   })
 })
 
-describe('the activity panel', () => {
+describe("an agent's session", () => {
   let panel: ReturnType<typeof mount> | null = null
 
   afterEach(() => {
@@ -141,11 +141,11 @@ describe('the activity panel', () => {
   function open(): HTMLElement {
     const target = document.createElement('div')
     document.body.append(target)
-    panel = mount(ActivityPanel, { target })
+    panel = mount(AgentSession, { target, props: { agent: 'claude' } })
     return target
   }
 
-  test('shows each agent, what it is doing, and its tabs as pictures while open', async () => {
+  test('shows the agent, what it is doing, and its own tabs by name', async () => {
     fake.connect('claude', 'Claude Code')
     const tab = fake.open('claude', 'https://shop.example/', 'Shop')
     fake.act('claude', tab.id, 'browser_click')
@@ -154,24 +154,10 @@ describe('the activity panel', () => {
 
     expect(target.querySelector('.name')?.textContent).toBe('Claude Code')
     expect(target.querySelector('.doing')?.textContent.trim()).toBe('Pressing · Shop')
-    expect(fake.watching).toEqual([tab.id])
-
-    fake.frame(tab.id, 'AAAA')
-    await settled()
-    const picture = target.querySelector<HTMLElement>('.thumb .picture')
-    expect(picture?.style.backgroundImage).toContain('data:image/jpeg;base64,AAAA')
-  })
-
-  test('stops watching as it closes', async () => {
-    fake.connect('claude', 'Claude Code')
-    fake.open('claude', 'https://shop.example/', 'Shop')
-    open()
-    await settled()
-    if (panel) void unmount(panel, { outro: false })
-    panel = null
-    await settled()
-
-    expect(fake.watching).toEqual([])
+    const pages = [...target.querySelectorAll('.tabs .nib-row-label')].map((one) => one.textContent)
+    expect(pages).toEqual(['Shop'])
+    // Nothing of the page is asked for to draw it: no pictures, only its name (#1120).
+    expect(target.querySelector('img, .picture')).toBeNull()
   })
 
   test('asks a question and sends the answer, and the question goes', async () => {
@@ -242,7 +228,7 @@ describe('Full permissions', () => {
   })
 })
 
-describe('questions outside the panel', () => {
+describe('questions outside the session', () => {
   test('a pairing is asked in a bubble of its own, and allowing it answers', async () => {
     const asked = fake.pair('Codex')
     await settled()

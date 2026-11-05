@@ -55,6 +55,7 @@
   import { shortcuts } from './shortcuts.svelte'
   import { viewport } from './viewport.svelte'
   import { workspace, type Tab } from './workspace.svelte'
+  import { pdfOutlines, readOutline } from './pdf/outline.svelte'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 
@@ -136,6 +137,7 @@
 
   $effect(() => {
     const path = tab.path
+    const id = tab.id
     if (path === null) return
 
     const mine = ++opening
@@ -169,6 +171,10 @@
         index === 0 ? { width: view.width, height: view.height } : undefined,
       )
       doc = held.doc
+      // The file's own contents, for the Outline beside it; see pdf/outline.svelte.ts.
+      void readOutline(held.doc).then((rows) => {
+        if (current()) pdfOutlines.set(id, rows)
+      })
 
       // Opening is what stands between the tab appearing and the first page, so
       // it is worth being able to ask how long it took. The same measurement the
@@ -182,6 +188,7 @@
 
     return () => {
       opening++
+      pdfOutlines.delete(id)
       doc = null
       matrices.clear()
       runs.clear()

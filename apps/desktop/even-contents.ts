@@ -145,7 +145,6 @@ export const APP_FOLDERS = [
   'pages',
   'palette',
   'pdf',
-  'properties',
   'quick-add',
   'reading',
   'recorder',
@@ -617,11 +616,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  Then the code to 6,051,000 for the device id read beside the web store (`deviceWeb`
  *  in web/sync-store.ts), measured 6,050,842. Then to 6,054,000 as #1061's arrow after a
  *  link out came, measured 6,053,809; styles 292,188 inside #331's 292,200.
+ *
+ *  Lowered on 2026-11-05 as #1120 came to claude/hunt-round-1, the agents' activity in the
+ *  Ask panel in place of their own: the code to 6,046,300, measured 6,046,126; the
+ *  catalogues to 989,200, measured 989,126; the styles to 288,400, measured 288,383.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_054_000,
-  catalogues: 992_400,
-  styles: 292_200,
+  code: 6_046_300,
+  catalogues: 989_200,
+  styles: 288_400,
   fonts: 260_000,
   pages: 40_000,
 }

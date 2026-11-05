@@ -91,6 +91,7 @@ import { snapshot } from './snapshot'
 import { tokens } from './numbers'
 import { switchCost } from '../switch-cost'
 import { editMessage, lastMessage, openRewind } from '../review'
+import { agentOpen } from './agent-open.svelte'
 
 /** How long after a plan resets a message waiting for it goes again: the window ends by
  *  the provider's clock, not this one. */
@@ -540,6 +541,8 @@ class Chat implements Panel {
     const held = await this.held(id)
     if (!held) return
     this.listing = false
+    // A chat opened is the conversation in the panel, in an agent's session's place.
+    agentOpen.id = null
     this.show(held)
     if (focus) this.focus()
   }
@@ -547,6 +550,7 @@ class Chat implements Panel {
   newThread(): void {
     this.listing = false
     this.popover = null
+    agentOpen.id = null
     if (this.open && !this.open.turns.length) {
       this.focus()
       return

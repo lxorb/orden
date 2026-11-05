@@ -725,8 +725,7 @@ wrap_render_handler! {
             _width: ::std::os::raw::c_int,
             _height: ::std::os::raw::c_int,
         ) {
-            // Nobody looks: a picture is the protocol's (`Page.captureScreenshot`), and
-            // the activity panel's is its screencast.
+            // Nobody looks: a picture is the protocol's (`Page.captureScreenshot`).
         }
     }
 }

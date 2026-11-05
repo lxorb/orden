@@ -30,7 +30,7 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { join } from 'node:path'
-import { sessionProcesses } from './proc'
+import { sessionStates } from './proc'
 
 export const PIDS_MAX = 4096
 
@@ -205,20 +205,45 @@ function enable(root: string, controller: string): void {
   appendFileSync(join(root, 'cgroup.subtree_control'), controller)
 }
 
-/** Every process in the shell's kernel session, killed until none is left: the end of a
- *  session where there is no cgroup. A fork bomb forks while it is being killed, so
- *  this goes round until a pass finds nothing, for a few seconds at most. */
+/** Every process in the shell's kernel session, ended: the end of a session where there
+ *  is no cgroup. A fork bomb forks while it is being killed, and every one killed gives
+ *  its place under the process limit to another fork, so killing alone can fall behind
+ *  it on a busy machine and leave it running (#446). A stopped process forks no more and
+ *  keeps its place, so they are all stopped first, pass after pass, until two passes in
+ *  a row find nothing that is not stopped - the second one sees any child made between
+ *  the first one's listing and its parent's stop - and only then killed, none of them
+ *  able to fork again. Bounded, so one the kernel cannot stop, waiting in a driver, does
+ *  not hold `nibd` here: what is still up then is killed as before. */
 export function killSession(shell: number): void {
   const until = Date.now() + 5000
-  while (Date.now() < until) {
-    const pids = sessionProcesses(shell)
-    if (pids.length === 0) return
-    for (const pid of pids) {
-      try {
-        process.kill(pid, 'SIGKILL')
-      } catch {
-        // Already gone.
-      }
+  let still = 0
+  while (still < 2 && Date.now() < until) {
+    const moving = sessionStates(shell).filter(([, state]) => !SETTLED.has(state))
+    still = moving.length === 0 ? still + 1 : 0
+    signal(moving, 'SIGSTOP')
+  }
+  const alive = () => sessionStates(shell).filter(([, state]) => !DEAD.has(state))
+  if (still === 2) {
+    signal(alive(), 'SIGKILL')
+    return
+  }
+  const later = Date.now() + 5000
+  for (let left = alive(); left.length > 0 && Date.now() < later; left = alive()) {
+    signal(left, 'SIGKILL')
+  }
+}
+
+/** States a process forks no more in: stopped, stopped by a tracer, dead. */
+const SETTLED = new Set(['T', 't', 'Z', 'X'])
+/** Dead, waiting only to be reaped. */
+const DEAD = new Set(['Z', 'X'])
+
+function signal(processes: [pid: number, state: string][], name: NodeJS.Signals): void {
+  for (const [pid] of processes) {
+    try {
+      process.kill(pid, name)
+    } catch {
+      // Already gone.
     }
   }
 }

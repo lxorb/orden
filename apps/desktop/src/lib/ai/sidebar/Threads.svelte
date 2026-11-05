@@ -13,9 +13,11 @@
    *  Typing searches titles and words; arrows walk it, Enter opens, Delete archives (and
    *  an archived one comes back with Delete again), Shift+Delete deletes for good,
    *  Escape goes back to the open thread. */
+  import { door } from '@orden/markdown/door'
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
+  import { agentMarks } from '../../agent-marks.svelte'
   import { t } from '../../i18n.svelte'
   import { menu } from '../../menu.svelte'
   import { dur } from '../../motion'
@@ -27,6 +29,9 @@
   import ChatRow from './ChatRow.svelte'
 
   const { rail = false }: { rail?: boolean } = $props()
+
+  /** The outside agents' rows, fetched once one has been heard in this run (#1120). */
+  const agentRows = door(() => import('../../agents/ui/AgentRows.svelte'))
 
   let field = $state<HTMLInputElement>()
   let lit = $state(0)
@@ -140,6 +145,14 @@
   </div>
 
   <ul class="list" role="listbox" use:scrollbar>
+    <!-- The agents connected from outside, Claude Code and the like, over the chats:
+         each is a session rather than a chat, and the one that is asking something is
+         what wants the reader first. -->
+    {#if agentMarks.heard && !chat.listQuery}
+      {#await agentRows() then { default: AgentRows }}
+        <AgentRows />
+      {/await}
+    {/if}
     {#each rows as one, index (one.id)}
       {#if index === archivedFrom}
         <li class="group archived" role="presentation">{t('Archived')}</li>

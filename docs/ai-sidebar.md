@@ -25,8 +25,9 @@ Read with `docs/ai.md` (the providers, the plan rules, the seam) and `docs/agent
 
 1. **One panel replaces Ask**, in the same slot on the right and on the same key
    (**Ctrl+Shift+A**). Ask - answers from the notes with numbered citations - becomes the
-   panel's first mode, Approve, rather than a panel of its own. Properties and the Activity panel stay
-   where they are.
+   panel's first mode, Approve, rather than a panel of its own. A note's properties are the
+   strip in the note, and an outside agent's session is a row of this panel's chat list
+   (#1120).
 2. **Three modes on one chip: Approve, Agent, Plan** (**Shift+Tab** cycles them, as in
    Claude Code and Cursor). Approve does what Agent does, and each change waits in its row
    for **Approve**, **Deny** or **Always**; reads never ask, and answers cite. Agent acts on
@@ -420,10 +421,10 @@ the note in front as a chip - is Approve mode's, which is the mode the first thr
 A thread keeps its mode; a new thread starts in the last one picked. A thread written in Ask
 reads as Approve.
 
-- **Properties stays its own tab**: front matter is not a conversation.
-- **The Activity panel stays its own tab**: it is about agents from outside (Claude Desktop,
-  a script). The sidebar's agent appears there too, because it is a grant like theirs, so
-  the one stop and the one log still cover everything.
+- **Outside agents are rows of the chat list** (#1120): an agent from outside (Claude
+  Desktop, a script) is a row over the chats, and opened, its session takes the
+  conversation's place with Stop, Add to note and Undo; the one stop and the one log
+  still cover everything.
 - **The quick question stays** on **Ctrl Ctrl**, as `/btw` here, drawn as a small
   composer. Under its answer, **Continue in the panel** carries the conversation on as a
   thread of its own (Raycast's and Arc's way from a quick answer to a conversation).

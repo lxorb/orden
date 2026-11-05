@@ -41,7 +41,15 @@ export interface TabKindTraits {
    *  drew, kept (overview/faces.ts), until it has a way of its own to be drawn from
    *  what it holds. */
   readonly preview: 'reading' | 'scrollback' | 'photograph' | 'picture'
+  /** The panels about the tab in front it can fill (#1120; see panel-tab.ts): the
+   *  Outline, where what it holds has parts - a note's headings, a page note's pages, a
+   *  PDF's own contents - and the Links, where it is something in the space a note can
+   *  link to. The rest of the panels are about the space and fill beside anything. */
+  readonly panels: readonly TabPanel[]
 }
+
+/** The panels that are about the tab in front rather than about the space. */
+export type TabPanel = 'outline' | 'links'
 
 /** The kinds, in the order a written session has always listed them. */
 export const TAB_KINDS = {
@@ -61,6 +69,7 @@ export const TAB_KINDS = {
     selection: 'words',
     outsideTitle: false,
     preview: 'reading',
+    panels: ['outline', 'links'],
   },
   graph: {
     words: false,
@@ -78,6 +87,7 @@ export const TAB_KINDS = {
     selection: null,
     outsideTitle: false,
     preview: 'picture',
+    panels: [],
   },
   pdf: {
     words: false,
@@ -95,6 +105,7 @@ export const TAB_KINDS = {
     selection: 'page',
     outsideTitle: false,
     preview: 'picture',
+    panels: ['outline', 'links'],
   },
   canvas: {
     words: true,
@@ -112,6 +123,7 @@ export const TAB_KINDS = {
     selection: 'drawing',
     outsideTitle: false,
     preview: 'picture',
+    panels: ['links'],
   },
   pages: {
     words: true,
@@ -129,6 +141,7 @@ export const TAB_KINDS = {
     selection: 'drawing',
     outsideTitle: false,
     preview: 'picture',
+    panels: ['outline', 'links'],
   },
   web: {
     words: false,
@@ -146,6 +159,7 @@ export const TAB_KINDS = {
     selection: null,
     outsideTitle: true,
     preview: 'photograph',
+    panels: [],
   },
   terminal: {
     words: false,
@@ -163,6 +177,7 @@ export const TAB_KINDS = {
     selection: 'terminal',
     outsideTitle: true,
     preview: 'scrollback',
+    panels: [],
   },
   view: {
     words: false,
@@ -180,6 +195,7 @@ export const TAB_KINDS = {
     selection: null,
     outsideTitle: false,
     preview: 'picture',
+    panels: [],
   },
   chat: {
     words: false,
@@ -197,6 +213,7 @@ export const TAB_KINDS = {
     selection: null,
     outsideTitle: false,
     preview: 'picture',
+    panels: [],
   },
   channel: {
     words: false,
@@ -214,6 +231,7 @@ export const TAB_KINDS = {
     selection: null,
     outsideTitle: false,
     preview: 'picture',
+    panels: [],
   },
   /** An application running on one of the reader's devices, by its `.application` file
    *  (docs/apps.md). */
@@ -235,6 +253,7 @@ export const TAB_KINDS = {
     // What it last drew, kept: the application's state and who holds it. The picture
     // the host streams (step 4) is a video frame nothing here can draw again.
     preview: 'picture',
+    panels: [],
   },
 } as const satisfies Record<string, TabKindTraits>
 

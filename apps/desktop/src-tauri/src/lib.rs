@@ -439,7 +439,6 @@ macro_rules! desktop_commands {
             agents::agents_log_clear,
             agents::agents_adopt,
             agents::agents_capture,
-            agents::watch::agents_watch,
             agents::shell::agents_shell,
             agents::shell::agents_hold,
             quick_add::quick_add_key,

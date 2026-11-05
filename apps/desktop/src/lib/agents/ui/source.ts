@@ -7,13 +7,7 @@
  *  and are handed to `start`, or are handed there by the fake. */
 
 import { invoke } from '../../tauri'
-import {
-  AGENT_FRAME_EVENT,
-  type Approval,
-  type Frame,
-  type Overview,
-  type ShellWords,
-} from '../verbs'
+import type { Approval, Overview, ShellWords } from '../verbs'
 
 export interface Source {
   /** Everything at once: `agents_state`. */
@@ -28,10 +22,6 @@ export interface Source {
   log(day: string): Promise<unknown[]>
   /** An agent's tab made the reader's tab `tab`, without loading it again. */
   adopt(agentTab: string, tab: string): Promise<void>
-  /** Which agent tabs to send pictures of; none stops them. */
-  watch(tabs: string[]): Promise<void>
-  /** The pictures, as they come. Answers how to stop hearing them. */
-  frames(on: (frame: Frame) => void): Promise<() => void>
   /** The stop's key from any app, or none, and the words the crate says. */
   shell(key: string | null, words: ShellWords): Promise<void>
   /** Whether closing this window would end the agents' pages: they live in it. */
@@ -49,11 +39,6 @@ export const crate: Source = {
   answer: (id, allow, always) => invoke<Approval>('agents_answer', { id, allow, always }),
   log: (day) => invoke<unknown[]>('agents_log', { day }),
   adopt: (agentTab, tab) => invoke('agents_adopt', { agentTab, tab }),
-  watch: (tabs) => invoke('agents_watch', { tabs }),
-  async frames(on) {
-    const { listen } = await import('@tauri-apps/api/event')
-    return listen<Frame>(AGENT_FRAME_EVENT, ({ payload }) => on(payload))
-  },
   shell: (key, words) => invoke('agents_shell', { key, words }),
   holds: () => invoke<boolean>('agents_hold', { hide: false }),
   hide: () => invoke<boolean>('agents_hold', { hide: true }),

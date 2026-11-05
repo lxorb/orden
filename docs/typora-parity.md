@@ -775,9 +775,8 @@ Features Typora does not have, which are the reason this exists.
       Backspace at the top joins nothing, Ctrl+A selects what is on the page, find
       does not stop in it, and the counts in the foot row leave it out. Inserting
       front matter shows the block while the caret is in it; see
-      `hidden-front-matter.ts`. Hidden is not gone: the Properties panel on the right
-      side is Obsidian's File properties view, the same rows and controls beside the
-      note, with a key renamed or removed from its menu; see docs/design.md
+      `hidden-front-matter.ts`. The strip at the top of the note is the default and
+      draws the same rows and controls in the note (#1120); see docs/design.md
       One rule for everything else: if any line of the block is a shape Orden cannot
       read - a Dataview query, a comment - the **whole** block stays source, because
       half a table is a table that lies about the file. Nowhere outside the app,
@@ -810,15 +809,10 @@ Features Typora does not have, which are the reason this exists.
       to the definition at the bottom. In the order the words reach them, with the
       ones nothing points at after and drawn quiet - worth seeing precisely
       because nothing points at them
-- [x] A Footnotes panel: the same rows on a tab of their own, which is the fifth the
-      sidebar has. A footnote is two things in two places - the mark in the middle of a
-      sentence and what it says at the bottom - and this is the one screen that reaches
-      both: the row goes to the mark, the sign at the end of it goes to the definition,
-      and the count is in the heading. The section under the Outline's headings stays
-      where it is, because it costs nothing and it is where somebody reading the shape
-      of a note would look. The panel moves to either side and can be held on one note
-      while another is written beside it, exactly as the Outline and the Links panel
-      can; see section 17
+- [x] A footnote read where it is used (#1120): resting on its mark shows what it
+      says, pressing the mark goes to the definition and pressing the definition's
+      number comes back to the mark left. The Outline ends on a Footnotes group. The
+      Footnotes panel this replaced is gone
 - [x] Recently deleted: notes and spaces wait 14 days before they are gone
 - [x] Selecting several notes with Alt and Shift, moved or deleted together;
       Ctrl+click opens a row in a tab of its own

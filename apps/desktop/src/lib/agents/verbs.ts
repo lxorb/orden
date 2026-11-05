@@ -8,9 +8,6 @@
 /** The event the crate's news arrives on. */
 export const AGENT_EVENT = 'nib://agent'
 
-/** The event an agent tab's pictures arrive on, while the activity panel watches. */
-export const AGENT_FRAME_EVENT = 'nib://agent-frame'
-
 /** Every verb the crate answers, in the crate's order. */
 export const BROWSER_VERBS = [
   'browser_tabs',
@@ -288,7 +285,7 @@ export interface Opened {
 // ---- the window's commands ------------------------------------------------------------
 
 /** The commands the window calls the crate with: the settings pane (`agents_read`,
- *  `agents_write`, `agents_mint`, the log's days and its Clear), the activity panel,
+ *  `agents_write`, `agents_mint`, the log's days and its Clear), the agents' sessions,
  *  and `capture_to_note`'s reading of a page (`agents_capture`). Each answers only Orden's
  *  own window. */
 export const AGENT_COMMANDS = [
@@ -305,12 +302,11 @@ export const AGENT_COMMANDS = [
   'agents_log_clear',
   'agents_adopt',
   'agents_capture',
-  'agents_watch',
   'agents_shell',
   'agents_hold',
 ] as const
 
-/** `agents_state`: everything the activity panel draws from at once; the events keep it
+/** `agents_state`: everything the agents' rows and sessions draw from at once; the events keep it
  *  current after. `tabs` are `[agent, tab]` pairs. */
 export interface Overview {
   agents: Grant[]
@@ -321,12 +317,6 @@ export interface Overview {
   halted: string[]
   /** The agents that called in the last ten minutes and did not say goodbye. */
   connected: string[]
-}
-
-/** One picture of an agent tab, from the engine's screencast: a JPEG, base64. */
-export interface Frame {
-  tab: string
-  jpeg: string
 }
 
 /** The words the crate says in the reader's language: the tray's rows and the

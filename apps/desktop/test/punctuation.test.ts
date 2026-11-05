@@ -10,6 +10,9 @@ const ROOT = fileURLToPath(new URL('../../..', import.meta.url))
 // whole copies of this repository checked out for an agent to work in, which
 // would otherwise be read as second copies of every file here.
 const SKIP = '.claude/'
+/** And the copy of `tauri-runtime-cef` Linux builds from, which is Tauri's words, kept as
+ *  crates.io ships it but for Orden's patch (#1085; scripts/linux-manifest.mjs). */
+const NOT_OURS = 'apps/desktop/src-tauri/linux/tauri-runtime-cef/'
 const EXTENSIONS = ['.ts', '.svelte', '.rs', '.css', '.json', '.jsonc', '.md', '.mjs', '.yml']
 
 /** Smart punctuation turns what someone types into an em dash. That is their
@@ -40,7 +43,7 @@ function sources(): string[] {
   return (
     listed
       .split('\0')
-      .filter((path) => path && !path.startsWith(SKIP))
+      .filter((path) => path && !path.startsWith(SKIP) && !path.startsWith(NOT_OURS))
       .filter((path) => EXTENSIONS.some((extension) => path.endsWith(extension)))
       // A file git tracks that somebody has deleted without saying so yet is still
       // listed, and is no longer anybody's words.

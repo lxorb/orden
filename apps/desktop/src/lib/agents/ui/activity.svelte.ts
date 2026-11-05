@@ -9,7 +9,6 @@
 
 import { accentFor } from '../../accents'
 import type { TabAct } from '../../agent-marks.svelte'
-import { without } from '../../records'
 import { theme } from '../../theme.svelte'
 import { pages } from '../../web-tab/pages.svelte'
 import { workspace } from '../../workspace.svelte'
@@ -28,9 +27,6 @@ export class Activity {
   /** The moment the marks are read at. Moved on by every event and by the timer that
    *  lets an acting tab go; see `ACTIVE_FOR` in marks.ts. */
   now = $state(Date.now())
-
-  /** The last picture of each agent tab, as an address an `<img>` can show. */
-  frames = $state<Record<string, string>>({})
 
   /** Today's audit log, as the crate wrote it. */
   lines = $state<readonly unknown[]>([])
@@ -87,7 +83,6 @@ export class Activity {
     ) {
       void this.show(said.tab, false)
     }
-    if (event.kind === 'closed') this.frames = without(this.frames, event.id)
     this.now = now
 
     // An agent this window has not met - paired since it arrived - is read, so it has

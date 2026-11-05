@@ -89,6 +89,8 @@ import { Positions } from './workspace/positions'
 import { FileOps, keeping, type Kind } from './workspace/file-ops'
 import * as composing from './workspace/composing'
 import * as panels from './workspace/panels'
+import { type Filling, fills } from './panel-tab'
+import { pdfOutlines } from './pdf/outline.svelte'
 import type { Sides } from './workspace/panels'
 import * as spaces from './workspace/spaces'
 import * as ahead from './workspace/ahead'
@@ -169,17 +171,7 @@ export interface Space {
  *  the workspace for a tab. */
 export type { NoteDoc, Tab, TabKind } from './workspace/documents.svelte'
 
-export type Panel =
-  | 'tree'
-  | 'outline'
-  | 'search'
-  | 'tasks'
-  | 'chats'
-  | 'links'
-  | 'footnotes'
-  | 'properties'
-  | 'ask'
-  | 'agents'
+export type Panel = 'tree' | 'outline' | 'search' | 'tasks' | 'chats' | 'links' | 'ask'
 
 /** Which side of the window a panel sits on; where each starts is
  *  workspace/panels.ts. Its own name because `Side` is already a pane's drop zone, which has four of them; see
@@ -692,10 +684,7 @@ class Workspace {
    *  Here rather than in the panel that draws the button, because the palette asks the
    *  same question and two copies of one rule is one of them going stale. */
   holdable(panel: Panel | null): boolean {
-    return (
-      !viewport.touch &&
-      (panel === 'outline' || panel === 'links' || panel === 'footnotes' || panel === 'properties')
-    )
+    return !viewport.touch && (panel === 'outline' || panel === 'links')
   }
 
   /** The panel a hold would be about: whichever side has one that can be held, the left
@@ -711,8 +700,8 @@ class Workspace {
 
   /** Reading it walks the whole note, so it deliberately follows `tab.doc` and
    *  not the editor: that one only catches up when the typing pauses, which is
-   *  as often as an outline needs to move. Lazy as every derived is, so a
-   *  closed outline panel costs nothing at all. */
+   *  as often as an outline needs to move. Lazy as every derived is, so it is read
+   *  only while a side with the Outline in its row of tabs is out (`panelFilling`). */
   readonly headings = $derived.by(() => scanHeadings(this.markdownOfPanel))
 
   /** The note's footnotes, under its headings in the outline panel: both are the
@@ -720,6 +709,25 @@ class Workspace {
    *  and both jump within it. Lazy for the same reason the headings are, and it
    *  gives up on the first pass over a note with no `[^` in it at all. */
   readonly footnotes = $derived.by(() => scanFootnotes(this.markdownOfPanel))
+
+  /** What the tab the panels are about holds, as far as they ask, which is which of
+   *  them it fills (#1120); see panel-tab.ts. */
+  readonly panelFilling = $derived.by((): Filling | null => {
+    const tab = this.panelTab
+    if (!tab) return null
+    return {
+      kind: tab.kind,
+      markdown: tab.kind === 'note' && (tab.path === null || isMarkdownPath(tab.path)),
+      headings: this.headings.length,
+      footnotes: this.footnotes.length,
+      contents: pdfOutlines.get(tab.id)?.length ?? 0,
+    }
+  })
+
+  /** Whether a panel has anything to show beside the tab the panels are about. */
+  fills(panel: Panel): boolean {
+    return fills(panel, this.panelFilling)
+  }
 
   /** The text of the panel's note where it is markdown, which is all the outline reads.
    *  A canvas or a page note is JSON, whose every edit had its whole file walked for

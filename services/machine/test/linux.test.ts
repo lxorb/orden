@@ -251,7 +251,10 @@ describe.runIf(linux)('a session', () => {
     const one = session(on, 's_bomb')
     const shell = await running(one)
     one.input(bytes('b() { b | b & }; b\r'))
-    await new Promise((resolve) => setTimeout(resolve, 4000))
+    // Held, and pressing on the limit: bash has said again and again that a fork was
+    // refused. Counted, not given a few seconds, which a busy machine may spend before
+    // the bomb has even reached the limit (#446).
+    await until(() => said(on.frames).split('Resource temporarily unavailable').length > 30, 50_000)
     expect(sessionProcesses(shell).length).toBeLessThanOrEqual(limit)
 
     // nibd, outside the limit, still answers and still starts programs; the sessions'
@@ -262,11 +265,20 @@ describe.runIf(linux)('a session', () => {
     expect(spawnSync('true').status).toBe(0)
 
     one.end()
+    // Ended means none of it forks again: every process there is now is one that was
+    // there when the session ended, on its way out. A new one is the bomb going on
+    // where killing fell behind it (#446).
+    const ending = new Set(sessionProcesses(shell))
     // What is left if it is not all gone, said rather than a bare "timed out": the bomb's
     // own processes still forking, zombies nobody has reaped, or one stuck in the kernel
     // are three different faults, and which it was is what the next failure has to say
     // (#446).
-    await until(() => sessionProcesses(shell).length === 0).catch((error: unknown) => {
+    await until(() => {
+      const left = sessionProcesses(shell)
+      const born = left.filter((pid) => !ending.has(pid))
+      if (born.length > 0) throw new Error(`forked after the end: ${described(born)}`)
+      return left.length === 0
+    }).catch((error: unknown) => {
       throw new Error(`${String(error)}; left: ${described(sessionProcesses(shell))}`)
     })
 
@@ -280,6 +292,11 @@ describe.runIf(linux)('a session', () => {
     })
   })
 })
+
+/** Everything a session's output frames hold, as text. */
+function said(frames: NibdFrame[]): string {
+  return Buffer.from(collected(frames, 0, Infinity)).toString('utf8')
+}
 
 /** The output frames' bytes between two offsets, joined. */
 function collected(frames: NibdFrame[], from: number, to: number): Uint8Array {

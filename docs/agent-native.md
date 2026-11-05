@@ -664,17 +664,15 @@ keep doing so (section 12).
 
 ### 6.6 Watching
 
-**The agent's page is never on screen unless the reader asks, and then it is a picture.**
-The activity panel (9.5) shows each agent tab as a live thumbnail: the engine's screencast
-(`Page.startScreencast`, JPEG, a frame at most every 200 ms, 480 pixels wide) drawn into an
-`<img>` while the panel is open and not at all when it is closed. A picture, because a
-picture takes no input: watching can never be interacting by accident, and the reader's
-pointer over it is the reader's pointer over Orden. The page keeps rendering out of sight, so
-the frames are real; a hidden page would have none (section 3).
+**The agent's page is never on screen unless the reader asks.** The agent's session (9.5)
+lists its own tabs by name and site; nothing of the page is drawn there. The live pictures
+the activity panel once showed of each tab, the engine's screencast, went with that panel
+(#1120): the frame (7.1) and the session's log say what the agent is doing, and Show (6.7)
+puts the page itself in front of the reader when they want to see it.
 
 ### 6.7 Showing
 
-**Show** on a thumbnail, or the agent's `browser_show`, makes an agent tab a tab of the
+**Show** on a tab's row in the session, or the agent's `browser_show`, makes an agent tab a tab of the
 reader's, beside the one in front, **without loading it again**: it is already a child of
 the window, so showing it is placing it where the pane is. What changes is whose strip it
 is in: the listeners of a reader's tab are attached (keys, page-first, full screen,
@@ -700,7 +698,7 @@ While an agent is acting in a tab the reader can see:
 - **The element about to be pressed is lit** by the engine's own inspector highlight
   (`Overlay.highlightNode`) for 300 ms before the press. It is drawn by the renderer, not
   put into the page, so the site's scripts cannot see or move it.
-- **Nothing else.** No bar, no banner, no toast. The activity panel has the detail.
+- **Nothing else.** No bar, no banner, no toast. The agent's session in Ask has the detail.
 
 A reader's tab that is not on screen is acted in the same way and wears only the mark.
 
@@ -759,7 +757,7 @@ and re-read the page every step; Atlas's "take control" is the mode switch peopl
   frozen again. The reader showing the tab meanwhile shows it as ever.
 - **The stop is the reader's one control**: the key from any app, the tray, every
   indicator, and **Stop** in the tab's menu, which stops that agent the way its row in
-  the activity panel does (9.5); a press on a stopped agent's mark resumes it.
+  the agent's session does (9.5); a press on a stopped agent's mark resumes it.
 - **`browser_takeover`** is the agent asking for a step only the reader may do - a sign-in,
   a captcha, a payment: the reason is one line under the tab's bar, with **Done**, and a
   notification. The agent is not paused and gets nothing handed back: it carries on, waits
@@ -861,7 +859,7 @@ at wears the agent's mark on its tab while the agent writes in it.
   Ctrl+Z after an agent's paragraph takes the paragraph away and not also the sentence the
   reader typed before it. It is Ctrl+Z like anything else; there is no second undo stack to
   learn.
-- **Undo the agent's edits** in the activity panel and the palette takes back everything
+- **Undo the agent's edits** in the agent's session and the palette takes back everything
   one agent did to one note in this session, **mapped through what the reader did
   since** (each transaction's inverse, mapped through the later changes), so the reader's
   own words stay.
@@ -1145,7 +1143,7 @@ sidebar's Full permissions, `autonomous`, nothing at all):
 A call that needs asking answers at once, `{"status": "needs_approval", "approval": "a17",
 "summary": "Place order on shop.example"}`, so an unsupervised agent can carry on with
 something else rather than hold a connection open for an hour. The reader sees one system
-notification and the question in the activity panel (the site's mark, the summary,
+notification and the question in the agent's session (the site's mark, the summary,
 **Don't allow**, **Allow**, and **Always on this site**); `approval_status` tells the
 agent. Unanswered questions expire after a day. In `confirm` mode every write asks the
 same way, batched: an agent's ten form fields are one question.
@@ -1246,9 +1244,11 @@ not filled in behind the agent's back either.
 
 ### 9.5 Seeing what it did, and stopping it
 
-- **The activity panel** (the right sidebar, where the outline and the links are): each
-  connected agent, what it is doing now, its tabs as thumbnails (6.6), its questions, and
-  the session as a list of calls. **Stop** per agent.
+- **The agent's session**, in the Ask panel (#1120): each connected agent is a row at the
+  top of its chat list, with a mark while it is connected and the question it is asking,
+  if any; opened, the session takes the conversation's place: what it is doing now, its
+  questions, its own tabs by name (6.6), and the session as a list of calls, with **Stop**,
+  **Add to note** and **Undo**. Each question is a notification too, which opens it.
 - **The audit log**: every call, with the agent, the time, the tool, the tab or the note,
   the arguments (typed text into a password field never appears, because there is none),
   the result's status and its duration, as one JSON line, in
@@ -1510,16 +1510,16 @@ Eight lanes on disjoint files, in three waves. Briefs are in the manager's scrat
 and keeps the reader's window out of every probe (the family watch, every process under
 the app, is in `scripts/probe_app.py`'s `run_probe`).
 
-| lane                    | owns                                                                                                                                                                                                                                                                                                                                                                          | depends on                                                                                                                                                                                 | wave                                |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- |
-| `agent-core`            | `src-tauri/src/agents/` (the grant store, tokens, policy, audit log, limits, the stop; agent tabs: build, quiet, park, close, dialogs, popups, downloads, file chooser, permissions; the DevTools bridge with events; snapshot, refs, click, type, wait, screenshot, console, network), the endpoint's token check and crate-answered verbs, `web_tabs.rs`'s tab-to-label map | the spike                                                                                                                                                                                  | 1                                   |
-| `agent-live-docs`       | `lib/agents/docs/` (anchors, the transaction, typing wins, presence peer, undo of an agent's edits), the fix to `replaceInNotes`, `snapshot_note`'s source, `packages/editor` where a caret needs it                                                                                                                                                                          | nothing for the editor path; the Yjs peer waits on sync v2's `sync-core` (`@orden/sync-core`, for `textops` and the relative positions) and `sync-client-engine` (the persisted documents) | 1, and again after sync v2's wave 3 |
-| `agent-harness`         | a fake agent (a scripted MCP client), scenario pages (injection, a shop, a sign-in, dialogs, popups, pickers), the family watch in `probe_app.py`, the weight guard for `lib/agents`, a nightly drive                                                                                                                                                                         | the spike; each lane's verbs as they land                                                                                                                                                  | 1, running through 3                |
-| `agent-mcp`             | `main.rs`'s `mcp` mode, the tool schemas and descriptions, the untrusted marking, the pairing, `needs_approval`                                                                                                                                                                                                                                                               | `agent-core`'s verb contract (13.1), which it can build against a fake                                                                                                                     | 2                                   |
-| `agent-workspace-tools` | `lib/automation/` agent verbs: tree, tabs, bookmarks, spaces without switching, search, versions, canvases, PDFs and highlights, settings allowlist, `capture_to_note`; `run_terminal` when the terminal lands                                                                                                                                                                | `agent-core`'s token and scope check                                                                                                                                                       | 2                                   |
-| `agent-activity-ui`     | `lib/agents/` UI, lazy: the frame, the tab mark, the tab's Stop, the activity panel with thumbnails, the questions, Show, the stop key in the registry and globally                                                                                                                                                                                                           | `agent-core`'s events (13.1); starts on a fake                                                                                                                                             | 2                                   |
-| `agent-settings-ui`     | Settings > Agents: the grants, the pairing bubble, sites, asks, mode, limits, the log viewer and Add to note, the copy line for `nib mcp`, locales                                                                                                                                                                                                                            | `agent-core`'s grant shape                                                                                                                                                                 | 2                                   |
-| `agent-engines`         | `WKWebView` and `WebKitGTK` subsets behind the same verbs, measured first                                                                                                                                                                                                                                                                                                     | `agent-core`                                                                                                                                                                               | 3                                   |
+| lane | owns | depends on | wave |
+| --- | --- | --- | --- |
+| `agent-core` | `src-tauri/src/agents/` (the grant store, tokens, policy, audit log, limits, the stop; agent tabs: build, quiet, park, close, dialogs, popups, downloads, file chooser, permissions; the DevTools bridge with events; snapshot, refs, click, type, wait, screenshot, console, network), the endpoint's token check and crate-answered verbs, `web_tabs.rs`'s tab-to-label map | the spike | 1 |
+| `agent-live-docs` | `lib/agents/docs/` (anchors, the transaction, typing wins, presence peer, undo of an agent's edits), the fix to `replaceInNotes`, `snapshot_note`'s source, `packages/editor` where a caret needs it | nothing for the editor path; the Yjs peer waits on sync v2's `sync-core` (`@orden/sync-core`, for `textops` and the relative positions) and `sync-client-engine` (the persisted documents) | 1, and again after sync v2's wave 3 |
+| `agent-harness` | a fake agent (a scripted MCP client), scenario pages (injection, a shop, a sign-in, dialogs, popups, pickers), the family watch in `probe_app.py`, the weight guard for `lib/agents`, a nightly drive | the spike; each lane's verbs as they land | 1, running through 3 |
+| `agent-mcp` | `main.rs`'s `mcp` mode, the tool schemas and descriptions, the untrusted marking, the pairing, `needs_approval` | `agent-core`'s verb contract (13.1), which it can build against a fake | 2 |
+| `agent-workspace-tools` | `lib/automation/` agent verbs: tree, tabs, bookmarks, spaces without switching, search, versions, canvases, PDFs and highlights, settings allowlist, `capture_to_note`; `run_terminal` when the terminal lands | `agent-core`'s token and scope check | 2 |
+| `agent-activity-ui` | `lib/agents/` UI, lazy: the frame, the tab mark, the tab's Stop, the agent's row and session in the Ask panel, the questions, Show, the stop key in the registry and globally | `agent-core`'s events (13.1); starts on a fake | 2 |
+| `agent-settings-ui` | Settings > Agents: the grants, the pairing bubble, sites, asks, mode, limits, the log viewer and Add to note, the copy line for `nib mcp`, locales | `agent-core`'s grant shape | 2 |
+| `agent-engines` | `WKWebView` and `WebKitGTK` subsets behind the same verbs, measured first | `agent-core` | 3 |
 
 At most eight agents run at once and no wave needs more than five. Wave 1 can start now.
 
@@ -1544,14 +1544,12 @@ title}`, `closed {agent, id}`, `stopped {closed}`, `connected {agents}` (the age
   and answers its token once.
 - **The window's commands**, each answering only Orden's own window: `agents_stop`,
   `agents_resume {agent?}`, `agents_answer {id, allow, always}`, `agents_ask {agent, category, summary, key}` for a window verb
-  that asks first, `agents_state` for everything the activity panel draws at once,
+  that asks first, `agents_state` for everything the agents' rows and sessions draw at once,
   `agents_log {day}` with `agents_log_days` (the days there are, newest first) and
   `agents_log_clear {agent?}` (Settings > Agents' Clear), and `agents_adopt {agent_tab,
-tab}` for Show (6.7). The activity
-  UI adds four: `agents_stop {agent?}` stops one agent where one is named (the panel's
-  row and a tab's Stop), `agents_watch {tabs}`
-  starts the screencast of those agent tabs (and stops the rest) with its frames on
-  `nib://agent-frame`, `agents_shell {key, words}` hands the crate the stop's key in the
+  tab}` for Show (6.7). The activity
+  UI adds three: `agents_stop {agent?}` stops one agent where one is named (the panel's
+  row and a tab's Stop), `agents_shell {key, words}` hands the crate the stop's key in the
   system's notation and the words the tray and the notifications say, and `agents_hold
 {hide}` answers whether the asking window holds the agents' pages and, with `hide`,
   hides it instead of closing it (open question 6).
@@ -1583,7 +1581,7 @@ Each has a recommendation, and the design above assumes it.
    sharing, deleting for good, signing in (always a takeover), settings and the terminal**;
    everything else runs. Each can be turned off per agent.
 3. **How you are asked while away.** Recommendation: **the call answers "needs approval" at
-   once, you get one notification, the question waits in the activity panel for a day.**
+   once, you get one notification, the question waits in the agent's session for a day.**
    The agent carries on with whatever else it can.
 4. **The stop key.** Recommendation: **Ctrl+Alt+Shift+K (Ctrl+Option+Cmd+K), from any
    app**, first press pauses everything, second closes the agents' tabs.

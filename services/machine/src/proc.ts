@@ -70,11 +70,22 @@ export function folderOf(shell: number): string | null {
  *  terminal started, background jobs and a fork bomb's children included, unless one
  *  of them left with `setsid`. */
 export function sessionProcesses(shell: number): number[] {
+  return sessionStates(shell).map(([pid]) => pid)
+}
+
+/** The same processes, each with its state as the kernel has it: `R`unning, `S`leeping,
+ *  `T` stopped, `Z` a zombie its parent has not reaped, and so on. */
+export function sessionStates(shell: number): [pid: number, state: string][] {
   let pids: string[]
   try {
     pids = readdirSync('/proc').filter((name) => /^\d+$/.test(name))
   } catch {
     return []
   }
-  return pids.map(Number).filter((pid) => field(pid, 3) === shell)
+  const found: [number, string][] = []
+  for (const pid of pids.map(Number)) {
+    const stat = statOf(pid)
+    if (stat && Number(stat[3]) === shell) found.push([pid, stat[0] ?? '?'])
+  }
+  return found
 }

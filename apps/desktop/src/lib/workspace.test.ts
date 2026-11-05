@@ -614,8 +614,8 @@ describe('the right side’s button', () => {
   })
 
   test('and to its first panel once that one has moved to the other side', () => {
-    workspace.showPanel('properties')
-    workspace.movePanel('properties', 'left')
+    workspace.showPanel('links')
+    workspace.movePanel('links', 'left')
     workspace.closePanel('right')
 
     workspace.toggleSidebar('right')

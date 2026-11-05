@@ -1333,9 +1333,12 @@ function holds(tail: string): boolean {
  *  3,701,761, 396 modules.
  *
  *  Raised on 2026-11-05, to 3,717,700, as #1110, #1114, #1063 and #331 came to
- *  claude/hunt-round-1 on top of the hunt's 3,702,000. Measured 3,717,496, 396 modules. */
-const BUDGET = 3_717_700
-const MOST_FILES = 397
+ *  claude/hunt-round-1 on top of the hunt's 3,702,000. Measured 3,717,496, 396 modules.
+ *
+ *  Raised on 2026-11-05, to 3,722,200 and 398 modules, as #1120's panels a tab can fill
+ *  came to claude/hunt-round-1. Measured 3,721,952, 398 modules. */
+const BUDGET = 3_722_200
+const MOST_FILES = 399
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
@@ -1563,7 +1566,6 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/ai/chat/engine.ts', 'the thread engine'],
     ['/lib/ai/chat/threads.ts', 'where threads are kept'],
     ['/lib/ai/retrieve.ts', 'what a question is sent with'],
-    ['/lib/PropertiesPanel.svelte', 'the Properties panel'],
     // And the Links panel with the rows it draws, which moved to the right side with
     // them: a side that is shut when the window opens. Warmed at the launch's last turn
     // with the Search panel, so the tab is never a wait.

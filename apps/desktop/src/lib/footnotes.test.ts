@@ -67,7 +67,7 @@ describe('the footnotes of a note', () => {
   })
 })
 
-/** A footnote is two things in two places, and the Footnotes panel is the one screen
+/** A footnote is two things in two places, and the Outline's Footnotes group is a screen
  *  that offers both: the mark in the words, and the definition at the bottom. So a row
  *  carries both lines rather than one of them with the other as a fallback. */
 describe('where the definition is', () => {

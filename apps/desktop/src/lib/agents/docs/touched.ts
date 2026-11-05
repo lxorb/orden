@@ -1,6 +1,6 @@
 /** Which agents have edits of their own to take back in which notes, this session.
  *
- *  What the palette's "Undo edits by" rows and the activity panel read: a note in
+ *  What the palette's "Undo edits by" rows and the agent's session read: a note in
  *  front with an agent's edits in it offers taking them back, one row per agent.
  *  Its own small module, apart from everything that does the editing, so the palette
  *  can ask without bringing that in; see `agentUndoRows` in commands.ts. Kept by

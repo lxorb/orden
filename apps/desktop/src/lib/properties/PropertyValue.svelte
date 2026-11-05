@@ -2,7 +2,7 @@
   /** One property's value as the control its kind asks for: chips and an add field
    *  for a list, a box for a yes or no, a menu where the answers are fixed, and a field
    *  for words, a number or a date. The one control for a property wherever one is
-   *  edited - the Properties panel's row and a table's cell - so a date is picked the
+   *  edited - a table's cell, and any row that edits one - so a date is picked the
    *  same way everywhere (docs/tasks.md 5.12).
    *
    *  It writes nothing itself: it says what the value became, and whoever holds the

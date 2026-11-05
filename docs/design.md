@@ -1127,24 +1127,24 @@ Which side each panel is on, which of them is open over there, and which it show
 last is part of what the window remembers - beside which notes are open, and per
 window rather than per account, the way the sidebar's width already is.
 
-### Properties beside the note
+### Properties in the note
 
-Front matter starts hidden in the note, because the metadata at the top of a file is
-what the app reads rather than what a reader reads on the way in. Hidden is not gone,
-so the Properties panel on the right is Obsidian's File properties view: the note's
-keys as rows, each with the control its value asks for - a field, a number, a date, a
-checkbox, chips for a list, a menu where the app has fixed answers - and a row to add
-one. A key is renamed by a double click on it or from its menu, and removed from its
-menu. Every change is one edit of exactly the characters that change, through
-`property-edits.ts` in @orden/markdown, into the note's own document: the note's own
-undo takes it back, and every pane showing the note has it at once. A block Orden cannot
-read without guessing - a comment, a nested shape - is shown as the YAML it is and not
-turned into rows. A tag in a `tags` list asks the space about itself, as a tag does
-everywhere else.
+A note's front matter is a strip at the top of the note (#1120), as Obsidian and Notion
+draw it, and only where the note has front matter. Folded, which is where every note
+starts, it is one quiet line: the word, the count, and each key with what it says, ending
+where the column does. Open, it is the keys as rows, each with the control its value
+asks for - a field, a number, a date, a checkbox, chips for a list, a menu where the app
+has fixed answers - and a row to add one. A key is renamed or removed in the YAML, which
+a click on the key goes to. Every change is one edit of exactly the characters that
+change, through `property-edits.ts` in @orden/markdown, into the note's own document:
+the note's own undo takes it back, and every pane showing the note has it at once. A
+block Orden cannot read without guessing - a comment, a nested shape - is shown as the
+YAML it is and not turned into rows. **Properties** in the palette opens the strip and
+puts the keyboard on it; **Add a property** writes the first key, or another, with its
+name selected. Settings > Markdown > Front matter still offers the YAML or nothing.
 
-The value controls are one component, `lib/properties/PropertyValue.svelte`, which a
-table's cell draws too (docs/tasks.md 5.12): a date is picked the same way in the panel
-and in a view.
+The value controls in a view's table cell are `lib/properties/PropertyValue.svelte`
+(docs/tasks.md 5.12).
 
 ### The Tasks panel and the views
 

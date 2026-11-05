@@ -4,7 +4,7 @@
    *
    *  A few sessions and a way to see earlier ones, because this sits above the agent's
    *  permissions and a month of an unsupervised agent is not a list anybody scrolls
-   *  past. A call reads as it does in the activity panel - a word, what it was about,
+   *  past. A call reads as it does in the agent's session - a word, what it was about,
    *  and when - and a session is kept the way the panel keeps one: into the note in
    *  front, or into a note of its own. Clear takes the agent's calls out of the log on
    *  this machine, and asks first. */
@@ -131,8 +131,8 @@
     list-style: none;
   }
 
-  /* A call as the activity panel lists one: the word, what it was about, and when, at
-     the far end where the times make a column. See AgentCard.svelte. */
+  /* A call as the agent's session lists one: the word, what it was about, and when, at
+     the far end where the times make a column. See AgentSession.svelte in lib/agents/ui. */
   li {
     display: flex;
     align-items: baseline;

@@ -8,7 +8,6 @@ reads is where a key leaves the keyboard and what a screen reader is told about 
   - the undo toast is said through the region that was on the page first, F6 reaches its
     Undo from the note, Tab reaches it before the note, and pressing it hands the keyboard
     back to where it came from;
-  - a property with words for a value is renamed and removed from the keyboard;
   - the tab in front says it is;
   - the two sidebars have a name each, and axe has nothing to say about these parts;
   - the divider between two panes is a named separator the arrows move;

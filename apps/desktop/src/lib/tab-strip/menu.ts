@@ -51,7 +51,7 @@ function movedToSpace(tabs: readonly Tab[]): MenuEntry[] {
 }
 
 /** An agent acting in the tab (docs/agent-native.md 7.3, 9.5): Stop stops that agent,
- *  as its row in the activity panel does, and Resume lets it go on. Nothing hands the
+ *  as its session in Ask does, and Resume lets it go on. Nothing hands the
  *  tab to anybody: it is the reader's and the agent's at once. First, because while an
  *  agent is in a tab it is the thing about the tab most worth reaching. */
 function agentEntries(tab: Tab): MenuEntry[] {

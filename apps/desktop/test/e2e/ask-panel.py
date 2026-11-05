@@ -1,5 +1,6 @@
-"""The right side: where its panels live, the Ask panel against a provider of our own,
-and the Properties panel writing a note's front matter.
+"""The right side: where its panels live, and the Ask panel against a provider of our
+own. A note's front matter is the strip in the note now (#1120); test/e2e/properties.py
+drives it.
 
 What it proves, in order:
 
@@ -14,9 +15,6 @@ What it proves, in order:
   and nothing of an archived one; a citation opens its note at its passage, and the
   sources row names it; Stop keeps what arrived; Insert puts the answer at the caret
   with the citation written as a wikilink; the pen starts the conversation again;
-- the Properties panel draws a note's front matter as rows, and a changed value, a
-  ticked box, a chip taken off, a key renamed, a key added and a key removed are each
-  one edit of exactly those characters, and Ctrl+Z in the note takes the last back;
 - on a phone the right side is a drawer with no Ask in it, and asking for the panel opens
   nothing (#403).
 
@@ -213,7 +211,7 @@ def fresh(browser: Browser) -> Page:
 def the_sides(page: Page) -> None:
     sides = page.evaluate(SIDES)
     say(f"the sides as the window opens: {sides}")
-    if sides["right"] != ["outline", "links", "properties", "footnotes", "ask", "agents"] or sides["open"]:
+    if sides["right"] != ["outline", "links", "ask", "tasks"] or sides["open"]:
         wrong(f"the right side does not start homed and shut: {sides}")
     if page.locator("button.toggle.right").count() != 1:
         wrong("the right side's button is not in the bar")
@@ -354,71 +352,6 @@ def asked(page: Page) -> None:
     shot(page, "05-new-chat")
 
 
-def properties(page: Page) -> None:
-    page.evaluate(OPEN, "Card")
-    page.wait_for_timeout(300)
-    page.evaluate("() => window.nibApp.workspace.showPanel('properties')")
-    wait_for(page, "document.querySelector('.props .prop')", "the property rows")
-    page.wait_for_timeout(300)
-    keys = page.evaluate("() => [...document.querySelectorAll('.props .prop')].map((one) => one.dataset.key)")
-    say(f"the rows: {keys}")
-    shot(page, "06-properties")
-    if keys != ["status", "tags", "done"]:
-        wrong(f"the rows are not the note's front matter: {keys}")
-
-    def expect(text: str, what: str) -> None:
-        page.wait_for_timeout(250)
-        got = page.evaluate(TEXT)
-        if got != text:
-            wrong(f"{what}: {got!r}")
-
-    field = page.locator('.prop[data-key="status"] .value input')
-    field.fill("final")
-    field.press("Enter")
-    expect(CARD.replace("draft", "final"), "a value typed into a row")
-
-    page.locator('.prop[data-key="done"] input[type="checkbox"]').check()
-    expect(CARD.replace("draft", "final").replace("false", "true"), "a box ticked")
-
-    page.locator('.prop[data-key="tags"] .chip', has_text="notes").hover()
-    page.locator('.prop[data-key="tags"] .chip', has_text="notes").locator(".chip-off").click()
-    after_chip = CARD.replace("draft", "final").replace("false", "true").replace("[birds, notes]", "[birds]")
-    expect(after_chip, "a chip taken off")
-
-    page.locator('.prop[data-key="status"] .key').dblclick()
-    page.wait_for_timeout(200)
-    page.locator(".prop .rename").fill("state")
-    page.locator(".prop .rename").press("Enter")
-    renamed = after_chip.replace("status:", "state:")
-    expect(renamed, "a key renamed")
-
-    page.locator(".props .adder").click()
-    page.locator(".props .new").fill("due")
-    page.locator(".props .new").press("Enter")
-    page.wait_for_timeout(300)
-    added = page.evaluate(TEXT)
-    if not re.search(r"\ndue: ?(''|\"\")?\n---\n", added):
-        wrong(f"a key added is not the last line of the block: {added!r}")
-
-    page.locator('.prop[data-key="tags"]').click(button="right")
-    wait_for(page, "document.querySelector('.rows .nib-row')", "the row's menu")
-    page.locator(".rows .nib-row", has_text="Remove").first.click()
-    page.wait_for_timeout(300)
-    removed = page.evaluate(TEXT)
-    if "tags:" in removed or "birds" in removed:
-        wrong(f"the row's Remove did not take the key away: {removed!r}")
-    shot(page, "07-properties-edited")
-
-    # Pressed into, as a hand goes back to the note: since #399 Ctrl+Z after a press in a
-    # side panel is that panel's file actions', wherever the keyboard was put since, and
-    # a note given the keyboard by a script was pressed into by nobody (#384).
-    page.locator(".cm-content").first.click()
-    page.keyboard.press("Control+z")
-    page.wait_for_timeout(300)
-    if "tags: [birds]" not in page.evaluate(TEXT):
-        wrong(f"Ctrl+Z in the note did not take the removal back: {page.evaluate(TEXT)!r}")
-
-
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
@@ -471,12 +404,10 @@ def main() -> int:
         nothing_set_up(page)
         say("--- asked ---")
         asked(page)
-        say("--- properties ---")
-        properties(page)
         say("--- on a phone ---")
         on_a_phone(browser)
 
-    return DRIVE.verdict("the right side opens where it should; Ask cites and opens; Properties writes")
+    return DRIVE.verdict("the right side opens where it should; Ask cites and opens")
 
 
 if __name__ == "__main__":

@@ -20,6 +20,7 @@
    *  Fetched the first time the panel is shown, and the engine with it; none of it is in
    *  the first paint or in the glasses' plugin. See surfaces.svelte.ts and
    *  test/weight.test.ts. */
+  import { door } from '@orden/markdown/door'
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
@@ -31,6 +32,7 @@
   import { isTreeDrag } from '../../drag-paths'
   import { ai } from '../store.svelte'
   import { following, toggleFollow } from '../review'
+  import { agentOpen } from './agent-open.svelte'
   import { chat } from './chat.svelte'
   import Composer from './Composer.svelte'
   import Conversation from './Conversation.svelte'
@@ -57,6 +59,14 @@
   /** The threads in the conversation's place: the side's drawer, never a tab's. */
   const listing = $derived(chat.listing && !wide)
   const empty = $derived(!chat.turns.length && !chat.busy && !chat.pending[head?.id ?? ''])
+  /** An outside agent's session in the conversation's place, chosen in the list (#1120). */
+  const session = $derived(listing ? null : agentOpen.id)
+  const agentSession = door(() => import('../../agents/ui/AgentSession.svelte'))
+  // A session asked for from outside the list - its question's notification - is shown
+  // rather than the list the panel was left on.
+  $effect(() => {
+    if (agentOpen.id !== null) untrack(() => (chat.listing = false))
+  })
 
   // Which spaces there are, the one in front and the provider Ask uses are the store's
   // to follow, drawn or not (#1115); see the end of chat.svelte.ts.
@@ -125,7 +135,7 @@
 <div
   class="ask"
   class:wide
-  class:is-empty={empty && !listing}
+  class:is-empty={empty && !listing && session === null}
   bind:this={root}
   onfocusin={claim}
   onpointerdown={claim}
@@ -146,7 +156,7 @@
          over it holding New chat and Chats, as Codex's view title holds them; in a tab,
          the whole bar - the rail's button, the title, and New chat while the rail that
          has it is put away. -->
-    {#if wide || (head?.kept && !listing)}
+    {#if wide || (head?.kept && !listing && session === null)}
       <header class="top">
         {#if wide}
           <button
@@ -176,7 +186,7 @@
             >
           </button>
         {/if}
-        {#if head?.kept && !listing}
+        {#if head?.kept && !listing && session === null}
           <button class="title" onclick={titleMenu} aria-haspopup="menu">
             <span>{head.title || t('Untitled')}</span>
             <svg viewBox="0 0 13 13"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
@@ -202,6 +212,27 @@
 
     {#if listing}
       <Threads />
+    {:else if session !== null}
+      {#if !wide}
+        <header class="top">
+          <!-- Back to the list the session was chosen in. -->
+          <button
+            class="nib-glyph"
+            title={t('Back')}
+            aria-label={t('Back')}
+            onclick={() => chat.showThreads()}
+          >
+            <svg class="nib-mirror" viewBox="0 0 13 13" aria-hidden="true"
+              ><path d="M8 3.2L4.7 6.5 8 9.8" /></svg
+            >
+          </button>
+        </header>
+      {/if}
+      {#await agentSession() then { default: AgentSession }}
+        {#key session}
+          <AgentSession agent={session} />
+        {/key}
+      {/await}
     {:else}
       <Conversation {ongoto} {ready} />
       {#if ready}

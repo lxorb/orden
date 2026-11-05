@@ -121,6 +121,17 @@ const DROPPED = new Set([
   '[target.\'cfg(any(target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))\'.dependencies]',
 ])
 
+/** The crates Linux builds from a patched copy in the tree rather than from crates.io, and
+ *  why. Cargo has no patch files, so each is the crate itself, its version the pin's, kept
+ *  under linux/ with Orden's changes marked "Orden's patch" in it; the `[patch.crates-io]`
+ *  table points the build there. The path is from src-tauri/, where scripts/linux-cef.sh
+ *  puts this manifest.
+ *
+ *  `tauri-runtime-cef` (#1085): its Linux webviews asserted the browser's X window was
+ *  there, and a web tab's browser being closed has none - a placement, a show or a hide
+ *  that reached it as it closed stopped the app. */
+const PATCHED = [['tauri-runtime-cef', 'linux/tauri-runtime-cef']]
+
 /** Linux's manifest from the app's manifest `app`. */
 export function linuxManifest(app) {
   app = app.replace(/\r\n/g, '\n')
@@ -162,6 +173,11 @@ export function linuxManifest(app) {
     const inDependencies = /dependencies\]$/.test(table)
     out.push(...(inDependencies ? moved(line, pins, table) : [line]))
   }
+  out.push(
+    '',
+    '[patch.crates-io]',
+    ...PATCHED.map(([name, path]) => `${name} = { path = "${path}" }`),
+  )
   return `${HEADER}${out.join('\n')}\n`
 }
 

@@ -1,28 +1,36 @@
 <script lang="ts">
-  /** One agent in the activity panel (docs/agent-native.md 9.5): who it is and what it
-   *  is doing now, its questions, its tabs as pictures, and the session as a list of
-   *  what it did, with the three things to do about it - Stop, Add to note, Undo.
+  /** An outside agent's session, in the Ask panel where a conversation would be (#1120,
+   *  docs/agent-native.md 9.5): who it is and what it is doing now, the questions it is
+   *  waiting on, its own tabs, and the session as a list of what it did, with the three
+   *  things to do about it - Stop, Add to note, Undo.
    *
-   *  No headings: the mark and the name say whose it is, the pictures say they are
-   *  pages, and the list reads as a list of what happened because every row is a time,
-   *  a word and a name. */
+   *  The log costs a read, so it is read when the session opens and again while the
+   *  agent is at work - after the last of a burst of calls, at most once a second -
+   *  rather than on a clock.
+   *
+   *  No headings: the mark and the name say whose it is, and the list reads as a list of
+   *  what happened because every row is a time, a word and a name. */
+  import { onMount } from 'svelte'
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { i18n, t } from '../../i18n.svelte'
   import { dur } from '../../motion'
   import { workspace } from '../../workspace.svelte'
-  import type { Activity } from './activity.svelte'
   import { ACTIVE_FOR } from './marks'
   import Question from './Question.svelte'
-  import { aboutOf } from './session'
+  import { aboutOf, hostOf } from './session'
   import Spark from './Spark.svelte'
-  import Thumb from './Thumb.svelte'
+  import { started } from './live.svelte'
   import { wordFor } from './words'
 
-  const { activity, agent }: { activity: Activity; agent: string } = $props()
+  const { agent }: { agent: string } = $props()
+
+  const activity = started()
 
   /** How many calls of the session are drawn until the reader asks for the rest. */
   const FIRST = 12
+  /** How often the log is read again at most, while calls keep coming. */
+  const LOG_EVERY = 1000
 
   const name = $derived(activity.nameOf(agent))
   const colour = $derived(activity.colourOf(agent))
@@ -46,6 +54,21 @@
 
     const about = last.tab === null ? null : titleOf(last.tab)
     return about ? `${word} · ${about}` : word
+  })
+
+  /** When this agent's last call was, which is when the log has a line more. */
+  const latest = $derived(activity.seen.doing[agent]?.at ?? 0)
+
+  let reading: ReturnType<typeof setTimeout> | undefined
+  $effect(() => {
+    if (latest === 0) return
+    clearTimeout(reading)
+    reading = setTimeout(() => void activity.readLog().catch(() => undefined), LOG_EVERY)
+  })
+
+  onMount(() => {
+    void activity.readLog().catch(() => undefined)
+    return () => clearTimeout(reading)
   })
 
   /** A tab's name, whichever kind: an agent's own, or one of the reader's. */
@@ -89,12 +112,23 @@
     <Question {activity} {approval} />
   {/each}
 
+  <!-- Its own pages, by name: a press makes one a tab of the reader's, beside the one in
+       front, without loading it again (6.7). -->
   {#if tabs.length}
-    <div class="tabs">
+    <ul class="tabs">
       {#each tabs as tab (tab.id)}
-        <Thumb {activity} {tab} />
+        <li>
+          <button
+            class="nib-row is-short"
+            disabled={!activity.holds || tab.parked}
+            onclick={() => void activity.show(tab.id)}
+          >
+            <span class="nib-row-label">{tab.title || hostOf(tab.url)}</span>
+            <span class="nib-row-meta">{hostOf(tab.url)}</span>
+          </button>
+        </li>
       {/each}
-    </div>
+    </ul>
   {/if}
 
   {#if calls.length}
@@ -130,16 +164,14 @@
 
 <style>
   .agent {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
-    padding: var(--space-2) 0 var(--space-3);
+    padding: var(--space-2) var(--space-1) var(--space-3);
     font-family: var(--font-ui);
-  }
-
-  .agent + :global(.agent) {
-    border-top: 1px solid var(--line);
-    padding-top: var(--space-3);
   }
 
   .head {
@@ -180,14 +212,7 @@
     stroke: none;
   }
 
-  /* Two pictures a row, as a browser's tab overview lays them out at this width. */
-  .tabs {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
-    gap: var(--space-2);
-    padding: 0 var(--row-pad);
-  }
-
+  .tabs,
   .calls {
     margin: 0;
     padding: 0;

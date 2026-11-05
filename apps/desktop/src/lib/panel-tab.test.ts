@@ -30,7 +30,7 @@ describe('a panel as a tab', () => {
   })
 
   test('a panel about the note in front has none, and a double press on it does nothing', async () => {
-    for (const id of ['outline', 'links', 'tree', 'properties'] as const) {
+    for (const id of ['outline', 'links', 'tree', 'search'] as const) {
       expect(hasTab(id)).toBe(false)
       openAsTab(id)
     }

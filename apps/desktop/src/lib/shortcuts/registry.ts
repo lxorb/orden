@@ -1021,14 +1021,15 @@ const APP_ENTRIES: Shortcut[] = [
     alias: true,
     run: () => toggleScratchpad(),
   },
-  // No key of its own, as Footnotes has none; a row to put one on.
+  // The strip at the top of the note, opened and with the keyboard on it (#1120). No
+  // key of its own; a row to put one on.
   {
     id: 'app.properties',
     label: () => t('Properties'),
     category: 'view',
     scope: 'app',
     key: null,
-    run: () => revealPanel('properties'),
+    run: () => void import('../show-properties').then((one) => one.showNoteProperties()),
   },
   {
     // The stop for every agent (docs/agent-native.md 9.5), from any app while one is

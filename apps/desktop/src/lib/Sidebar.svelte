@@ -14,17 +14,14 @@
   import UnreadDot from './ai/UnreadDot.svelte'
   import { account } from './account.svelte'
   import {
-    AGENTS_MARK,
     ASK_MARK,
     CHATS_MARK,
     FILES_MARK,
     FOLD_MARK,
-    FOOTNOTES_MARK,
     GRAPH_MARK,
     LINKS_MARK,
     ORDER_MARK,
     OUTLINE_MARK,
-    PROPERTIES_MARK,
     SCRATCHPAD_MARK,
     TASKS_MARK,
   } from './panel-marks'
@@ -34,15 +31,14 @@
   import { arrive, leave, segmented } from './slide'
   import { splitTabs, tabsShown } from './workspace/panels'
   import { headingAt, lineOf } from './outline'
+  import { pdfOutlines } from './pdf/outline.svelte'
   import { pages } from './pages/showing.svelte'
   import {
-    agentsPanel,
     archiveSection,
     askPanel,
     chatsPanel,
     linksPanel,
     pagesNavigator,
-    propertiesPanel,
     scratchpadCard,
     searchPanel,
     tasksPanel,
@@ -126,10 +122,6 @@
    *  note at the top of that file. */
   const HOLD_MARK = 'M4.6 2h4M6.6 2v3.2M4 5.2h5.2M6.6 5.2v5.6'
 
-  /** An arrow down to a line: what a footnote's definition is, which is at the foot
-   *  of the note. Here for the reason the tack above is: one surface draws it. */
-  const DOWN_MARK = 'M6.5 2.4v5.2M4.3 5.6l2.2 2.2 2.2-2.2M3.4 10.6h6.2'
-
   /** A square and a pen: a conversation begun again. */
   const FRESH_MARK =
     'M6 2.5H3.5a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7M9.2 2.3l1.5 1.5-4.2 4.2-2 .5.5-2z'
@@ -164,8 +156,13 @@
     // The scratchpad's card is the right side's while it is up (#1032).
     if (side === 'right' && padHere && pad.on) return 'scratchpad'
     const open = workspace.openOn(side)
-    if (open) return (lastShown = open)
-    return side === 'right' ? (workspace.nextRight ?? lastShown) : lastShown
+    const chosen = open ?? (side === 'right' ? (workspace.nextRight ?? lastShown) : lastShown)
+    if (open) lastShown = open
+    // A panel with nothing to show beside the tab in front - the Outline beside a
+    // terminal - gives its place to the side's first tab that has, and is back as soon
+    // as a tab it fills is (#1120). The side stays out, and what was chosen is kept.
+    if (workspace.fills(chosen)) return chosen
+    return mine.find((one) => one.id !== 'scratchpad')?.id ?? chosen
   })
 
   /** Whether the column has come in. A panel built by the launch is already there;
@@ -298,10 +295,7 @@
           { id: 'chats' as const, label: t('Chats'), path: CHATS_MARK },
         ]),
     { id: 'links', label: t('Links'), path: LINKS_MARK },
-    { id: 'footnotes', label: t('Footnotes'), path: FOOTNOTES_MARK },
-    { id: 'properties', label: t('Properties'), path: PROPERTIES_MARK },
     { id: 'ask', label: t('Ask'), path: ASK_MARK },
-    { id: 'agents', label: t('Agents'), path: AGENTS_MARK },
   ]
 
   // The ✦ tab's dot is right from launch, the panel opened or not (#1064).
@@ -317,8 +311,9 @@
       PANELS.map((one) => one.id),
     )
 
-    // The agents' tab only once one has spoken; see agent-marks.svelte.ts. The
-    // scratchpad last on the right, the one tab that is no panel (#1032).
+    // Only the panels with something to show beside the tab in front (#1120; see
+    // panel-tab.ts). The scratchpad last on the right, the one tab that is no panel
+    // (#1032).
     const pads: { id: Panel | 'scratchpad'; label: string; path: string }[] = padHere
       ? [{ id: 'scratchpad', label: t('Scratchpad'), path: SCRATCHPAD_MARK }]
       : []
@@ -327,7 +322,7 @@
         PANELS.filter(
           (one) =>
             one.id === id &&
-            (id !== 'agents' || agentMarks.heard) &&
+            workspace.fills(id) &&
             (id !== 'chats' || !!account.accountToken) &&
             // The AI panel is the desktop's and the browser's; the glasses' plugin has none.
             (id !== 'ask' || !__EVEN_PLUGIN__),
@@ -481,6 +476,21 @@
     const tab = workspace.panelTab
     if (tab && tab.id !== workspace.activeTabId) workspace.activate(tab.id)
     ongoto?.(line)
+  }
+
+  /** A PDF's own contents, where the tab the panels are about is one that wrote them;
+   *  see pdf/outline.svelte.ts. */
+  const contents = $derived.by(() => {
+    const tab = workspace.panelTab
+    return tab?.kind === 'pdf' ? (pdfOutlines.get(tab.id) ?? []) : []
+  })
+
+  /** Takes the reader to a page of the PDF the panel is about, in its own pane. */
+  function toPage(page: number) {
+    const tab = workspace.panelTab
+    if (!tab?.path) return
+    if (tab.id !== workspace.activeTabId) workspace.activate(tab.id)
+    workspace.gotoPage = { path: tab.path, page }
   }
 
   /** The outline steps in and fades from the shallowest heading the note
@@ -821,8 +831,9 @@
             }}
           >
             <svg viewBox="0 0 13 13"><path d={item.path} /></svg>
-            <!-- The questions agents are waiting on. -->
-            {#if item.id === 'agents' && agentMarks.waiting}
+            <!-- The questions agents are waiting on, which are answered in Ask's chat
+                 list (#1120). -->
+            {#if item.id === 'ask' && agentMarks.waiting}
               <span class="waiting" transition:fade={{ duration: dur(140) }}>
                 {agentMarks.waiting}
               </span>
@@ -1132,8 +1143,23 @@
                   </li>
                 {/each}
               </ul>
-            {:else}
-              <p class="empty-text">{t('No headings in this note')}</p>
+            {:else if contents.length}
+              <!-- A PDF's own contents, as the file wrote them (#1120): a row goes to
+                   the page the part starts on, in the viewer it is open in. -->
+              <ul use:roving={{ rows: '.row', open: (row) => row.click() }}>
+                {#each contents as part, index (index)}
+                  <li>
+                    <button
+                      class="nib-row is-short row heading"
+                      style:--level={part.level}
+                      onclick={() => toPage(part.page)}
+                    >
+                      <span class="nib-row-label">{part.title}</span>
+                      <span class="nib-row-meta">{part.page}</span>
+                    </button>
+                  </li>
+                {/each}
+              </ul>
             {/if}
 
             <!-- Under the headings, because they are the same kind of thing: the
@@ -1156,49 +1182,6 @@
                 {/each}
               </ul>
             {/if}
-          {:else if showing === 'footnotes'}
-            <!-- The note's footnotes, on a panel of their own. The same rows the
-                 Outline draws under its headings, plus the one thing a section inside
-                 another panel had no room to offer: the definition. A footnote is two
-                 things in two places, and this is the panel that reaches both - the row
-                 goes to the mark in the words, the sign at its end to what it says at
-                 the bottom. The count is in the heading, as it is in the Outline. -->
-            <p class="nib-section">
-              {t('Footnotes')}<span>{workspace.footnotes.length}</span>
-            </p>
-            {#if workspace.footnotes.length}
-              <ul use:roving={{ rows: '.row', open: (row) => row.click() }}>
-                {#each workspace.footnotes as note (note.id)}
-                  <li class="footnote">
-                    <button
-                      class="nib-row is-short row note"
-                      class:is-quiet={!note.used}
-                      onclick={() => jump(note.line)}
-                      title={note.used ? t('Go to the mark') : t('Nothing points at this one')}
-                    >
-                      <span class="nib-row-mark note-id">{note.id}</span>
-                      <span class="nib-row-label">{note.text}</span>
-                    </button>
-                    {#if note.defined !== null}
-                      <button
-                        class="nib-glyph to-definition"
-                        title={t('Go to the definition')}
-                        aria-label={t('Go to the definition')}
-                        onclick={() => jump(note.defined ?? 0)}
-                      >
-                        <svg viewBox="0 0 13 13"><path d={DOWN_MARK} /></svg>
-                      </button>
-                    {/if}
-                  </li>
-                {/each}
-              </ul>
-            {:else}
-              <p class="empty-text">{t('No footnotes in this note')}</p>
-            {/if}
-          {:else if showing === 'properties'}
-            {#await propertiesPanel() then PropertiesPanel}
-              <PropertiesPanel onsearch={runBookmarked} />
-            {/await}
           {:else if showing === 'tasks'}
             <!-- Inbox, Today, Upcoming, the saved views, projects and labels; fetched,
                  with the rows behind them, the first time the tab is chosen. See
@@ -1209,10 +1192,6 @@
           {:else if showing === 'chats'}
             {#await chatsPanel() then ChatsPanel}
               <ChatsPanel />
-            {/await}
-          {:else if showing === 'agents'}
-            {#await agentsPanel() then AgentsPanel}
-              <AgentsPanel />
             {/await}
           {:else if showing === 'ask'}
             {#await askPanel() then AskPanel}
@@ -1471,7 +1450,7 @@
      five of those do not fit beside a panel's tools, so the control shrank and its
      tabs stayed the size they were - out of its box, over the tools, and with a
      z-index that made them win the press. Pressing the Links panel's depth stepper
-     opened the Footnotes panel instead.
+     opened the panel beside it instead.
      How wide a shared shape is in the row it sits in is this file's to say; how it
      is drawn is not. See test/one-of-each.test.ts. */
   .switch .nib-segmented button {
@@ -1612,39 +1591,6 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* A footnote's row on its own panel: the words, and the sign that goes to what it
-     says at the bottom. The sign sits at the end of the row rather than in it, quiet
-     until the row is pointed at, because the row's own press is the one somebody came
-     for - the mark in the words is where they were reading. */
-  .footnote {
-    display: flex;
-    align-items: center;
-  }
-
-  .footnote .row {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .to-definition {
-    flex: none;
-    color: var(--muted);
-    opacity: 0;
-    transition: opacity var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .footnote:hover .to-definition {
-      opacity: 1;
-    }
-  }
-
-  /* A finger has no hover, and a keyboard says where it is. */
-  :global([data-touch]) .to-definition,
-  .to-definition:focus-visible {
-    opacity: 1;
-  }
-
   /* Where a section being dragged would land: along the edge it arrives at,
      rather than a box around the row it is passing. The same line the bookmarks
      draw for a row on its way somewhere. */
@@ -1683,12 +1629,6 @@
   .rest {
     flex: 1;
     min-height: var(--space-6);
-  }
-
-  .empty-text {
-    margin: var(--space-3) var(--row-pad) 0;
-    font-size: var(--text-row);
-    color: var(--muted);
   }
 
   /* Says the drop will land, without pretending to be a row. */
@@ -1809,7 +1749,6 @@
     display: none;
   }
 
-  :global([data-touch]) .empty-text,
   :global([data-touch]) .empty {
     font-size: var(--touch-text);
   }
