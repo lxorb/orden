@@ -287,6 +287,17 @@ windows-core = "0.61"
 windows_com = { package = "windows", version = "0.61", features = [
   "Win32_System_Com",
   "Win32_System_Com_StructuredStorage",
+  "Win32_Graphics_DirectComposition",
+  "Win32_Graphics_Direct2D_Common",
+  "Win32_Graphics_Dxgi_Common",
+  "Win32_Graphics_Gdi",
+  "Win32_System_Ole",
+  "Win32_System_SystemServices",
+  "Win32_UI_Accessibility",
+  "Win32_UI_Input_KeyboardAndMouse",
+  "Win32_UI_Input_Pointer",
+  "Win32_UI_Shell",
+  "Win32_UI_WindowsAndMessaging",
 ] }
 
 [dev-dependencies]

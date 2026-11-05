@@ -116,10 +116,14 @@ function moved(line, pins, table) {
 const LINUX_DESKTOP =
   '[target.\'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))\'.dependencies]'
 
-/** Tables Linux's build leaves out: the BSDs' WebKitGTK. */
+/** Tables Linux's build leaves out: the BSDs' WebKitGTK, and the app's own patches, which
+ *  are of wry, which a Linux build has none of; its own are `PATCHED` below. And wry
+ *  itself, which only Tauri 2 builds with. */
 const DROPPED = new Set([
   '[target.\'cfg(any(target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))\'.dependencies]',
+  '[patch.crates-io]',
 ])
+const NOT_LINUX = ['wry']
 
 /** The crates Linux builds from a patched copy in the tree rather than from crates.io, and
  *  why. Cargo has no patch files, so each is the crate itself, its version the pin's, kept
@@ -171,6 +175,7 @@ export function linuxManifest(app) {
       continue
     }
     const inDependencies = /dependencies\]$/.test(table)
+    if (inDependencies && NOT_LINUX.some((name) => line.startsWith(`${name} = `))) continue
     out.push(...(inDependencies ? moved(line, pins, table) : [line]))
   }
   out.push(

@@ -672,6 +672,28 @@ pub fn keyboard_to<R: Runtime>(webview: &Webview<R>) {
     let _ = webview.set_focus();
 }
 
+/// The keyboard into a web tab's page drawn under the app, on a press in it
+/// (`web_visual.rs`), unless this run's windows were sent off the screen: the engine takes
+/// it itself for a windowed page, and is told to for one drawn as a visual.
+#[cfg(all(windows, not(feature = "cef")))]
+#[allow(
+    unsafe_code,
+    reason = "the page is given the keyboard through WebView2's COM interface"
+)]
+pub fn keyboard_into(
+    page: &webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Controller,
+) {
+    if away().is_some() {
+        return;
+    }
+    // Safe: a live controller of this thread's own page.
+    let _ = unsafe {
+        page.MoveFocus(
+            webview2_com::Microsoft::Web::WebView2::Win32::COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC,
+        )
+    };
+}
+
 /// The keyboard back to the page that asks, from a web tab's page holding it: a site's
 /// question, a pairing request, a row of a Mac's menu bar. The page's one way to it, so
 /// it is `keyboard_to`'s answer as well.

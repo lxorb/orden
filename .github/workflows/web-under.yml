@@ -1,0 +1,74 @@
+name: web-under
+
+# A web tab's page drawn under the app's own page on WebView2 (#1137), driven on the
+# runner's desktop with the system's own input: drawn under the app's layers, clicked,
+# typed into, scrolled, dragged in, read by UI Automation, and filmed under the tab
+# overview. See scripts/web-under-drive.py.
+on:
+  pull_request:
+    branches: [main]
+    # `ready_for_review` too: a draft runs nothing, and the full run starts the moment
+    # it is marked ready (see docs/conventions.md, "CI").
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - apps/desktop/src-tauri/src/web_visual.rs
+      - apps/desktop/src-tauri/src/web_tabs.rs
+      - apps/desktop/src-tauri/windows/wry/**
+      - apps/desktop/src/lib/web-tab/**
+      - scripts/web-under-drive.py
+      - .github/workflows/web-under.yml
+  workflow_dispatch:
+
+concurrency:
+  group: web-under-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  drive:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    runs-on: windows-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    env:
+      IDENTIFIER: ch.emilvinu.nib.probe.under
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: ./.github/actions/desktop-setup
+        with:
+          target: x86_64-pc-windows-msvc
+
+      - name: The probe
+        run: |
+          source scripts/edge-profile.sh
+          config='{"identifier":"'"$IDENTIFIER"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
+          pnpm --filter @orden/desktop exec tauri build --target x86_64-pc-windows-msvc --no-bundle --config "$config"
+
+      - name: Driven
+        run: |
+          python -m pip install --quiet pillow
+          python scripts/web-under-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/nib.exe" --identifier "$IDENTIFIER" --out drive
+
+      # The same tree asked of a windowed page, so a tree the drive cannot read is told
+      # apart from one the page does not hand over.
+      - name: Windowed, for UI Automation
+        if: always()
+        run: |
+          python scripts/web-under-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/nib.exe" --identifier "$IDENTIFIER" --out windowed --windowed
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: web-under
+          path: |
+            drive
+            windowed
+          retention-days: 5

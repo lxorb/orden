@@ -137,6 +137,34 @@ pub const CUTS: bool = cfg!(any(
     all(target_os = "linux", feature = "cef")
 ));
 
+/// How a page is layered with the app's own page, as the window is answered: `"under"` for
+/// a page drawn under the app's page, which draws every layer over it and whose cut only
+/// says where it takes no input (`web_visual.rs`); otherwise whether layers are cut out of
+/// it (`CUTS`). See `layering` in lib/web-tab/pages.svelte.ts.
+#[derive(Clone, Copy, Debug, serde::Serialize, PartialEq)]
+#[serde(untagged)]
+pub enum Layering {
+    Cuts(bool),
+    #[cfg_attr(
+        not(all(windows, not(feature = "cef"))),
+        allow(
+            dead_code,
+            reason = "only the system's engine on Windows draws a page under the app yet"
+        )
+    )]
+    Under(&'static str),
+}
+
+/// How the page under `label` is layered.
+pub fn layering(label: &str) -> Layering {
+    #[cfg(all(windows, not(feature = "cef")))]
+    if crate::web_visual::is_drawn_under(label) {
+        return Layering::Under("under");
+    }
+    let _ = label;
+    Layering::Cuts(CUTS)
+}
+
 /// The cut each page was last given, and the shape that made of it, so the same shape is
 /// not given twice - a region set again is a page drawn again - and a page resized under
 /// a cut is given the cut again at its new size.

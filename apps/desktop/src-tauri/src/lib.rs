@@ -270,6 +270,9 @@ mod web_tint;
 // engine on Windows.
 #[cfg(all(windows, not(feature = "cef")))]
 mod web_wheel;
+// A web tab's page drawn under the app's own page, as a DirectComposition visual (#1137).
+#[cfg(all(windows, not(feature = "cef")))]
+mod web_visual;
 #[cfg(desktop)]
 mod web_worlds;
 // The window moved and resized by the page's own presses on Linux; see window_drag.rs.
@@ -690,6 +693,9 @@ pub fn run() {
     // Before GTK and any thread, both of which read what it sets; see linux.rs.
     #[cfg(target_os = "linux")]
     linux::prepare();
+    // Before any page is built; see web_visual.rs.
+    #[cfg(all(windows, not(feature = "cef")))]
+    web_visual::arm_visuals();
     #[cfg(not(feature = "cef"))]
     run_on(tauri::Builder::default());
     #[cfg(feature = "cef")]

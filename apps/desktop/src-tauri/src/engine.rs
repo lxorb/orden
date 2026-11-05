@@ -401,13 +401,16 @@ pub(crate) fn add_child<R: Runtime>(
     size: impl Into<tauri::Size>,
 ) -> tauri::Result<tauri::Webview<R>> {
     #[cfg(not(feature = "cef"))]
-    {
-        window.add_child(builder, position, size)
-    }
+    let built = window.add_child(builder, position, size);
     #[cfg(feature = "cef")]
-    {
-        window.add_child(builder.position(position).size(size))
+    let built = window.add_child(builder.position(position).size(size));
+    // A page wry built as a visual is drawn into its window's tree and handed its input;
+    // see web_visual.rs.
+    #[cfg(all(windows, not(feature = "cef")))]
+    if let Ok(view) = &built {
+        crate::web_visual::host_page(view);
     }
+    built
 }
 
 #[cfg(desktop)]

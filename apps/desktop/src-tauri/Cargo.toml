@@ -46,7 +46,9 @@ missing_docs = "warn"
 # program started on it in a job, its windows placed, drawn and sent messages
 # (src/apps_host/desk.rs and desk/), and what the Start menu lists with its icons
 # (src/apps_host/installed/windows.rs). And a test's count of the steps SQLite took
-# over a chat's window (src/sync_store/chats.rs). None of
+# over a chat's window (src/sync_store/chats.rs). And a web tab's page drawn under the app
+# as a DirectComposition visual on Windows: its tree, and the input, cursor, accessibility
+# and drops its window hands it (src/web_visual.rs). None of
 # them has a safe wrapper to use instead, and anything new that wants unsafe has to
 # say so at the function and say why.
 unsafe_code = "deny"
@@ -541,13 +543,27 @@ windows-core = "0.61"
 # web_tabs.rs. It has to be the same `windows` crate webview2-com's own signature
 # names, which is 0.61 and not the 0.58 above - two versions of it are already in
 # the lock file for that reason - so it comes in under a name of its own rather
-# than as a second `windows`. Nothing else in the crate uses it: the five calls
-# that reach Windows directly are all on 0.58, and moving them is a change to
-# five unsafe functions for no gain.
+# than as a second `windows`. And a page drawn under the app as a DirectComposition
+# visual, whose input, cursor, accessibility and drops are handed to it through those
+# same signatures; see web_visual.rs (#1137).
 windows_com = { package = "windows", version = "0.61", features = [
   "Win32_System_Com",
   "Win32_System_Com_StructuredStorage",
+  "Win32_Graphics_DirectComposition",
+  "Win32_Graphics_Direct2D_Common",
+  "Win32_Graphics_Dxgi_Common",
+  "Win32_Graphics_Gdi",
+  "Win32_System_Ole",
+  "Win32_System_SystemServices",
+  "Win32_UI_Accessibility",
+  "Win32_UI_Input_KeyboardAndMouse",
+  "Win32_UI_Input_Pointer",
+  "Win32_UI_Shell",
+  "Win32_UI_WindowsAndMessaging",
 ] }
+# Which of a window's pages wry builds as visuals, said once (web_visual.rs): the copy in
+# windows/wry below, the release tauri-runtime-wry is built against otherwise.
+wry = { version = "0.55", default-features = false }
 
 # WebKitGTK as the webview wry hands out on the BSDs, at the version and the features wry
 # builds it with, so the types line up and the lock file gains no crate: a web tab's user
@@ -577,3 +593,10 @@ lto = true
 opt-level = "s"
 panic = "abort"
 strip = true
+
+# wry from a copy in the tree, its version the lock file's, with Orden's changes marked
+# "Orden's patch" in it: a web tab's page built as a `WebView2` composition controller,
+# which wry has no way to ask for (src/web_visual.rs, #1137). Linux's manifest builds no
+# wry and leaves this out (scripts/linux-manifest.mjs).
+[patch.crates-io]
+wry = { path = "windows/wry" }

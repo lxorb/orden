@@ -1393,7 +1393,7 @@ pub async fn web_open(
     pane: Pane,
     revived: Revived,
     profile: Profile,
-) -> Result<bool, String> {
+) -> Result<crate::web_cut::Layering, String> {
     let address = address(&url)?;
     let (store, private) = profile.checked()?;
     let label = label_of(&tab);
@@ -1404,7 +1404,7 @@ pub async fn web_open(
         // the file is in; a tab opened again in the meantime has its page already. And an
         // agent's page the reader was shown is already this tab's page, loaded.
         if crate::downloads::revive(&app, &tab) || adopted_label(&label) {
-            return Ok(crate::web_cut::CUTS);
+            return Ok(crate::web_cut::layering(&label));
         }
         return Err("that tab already has a page".into());
     }
@@ -1509,7 +1509,7 @@ pub async fn web_open(
 
     listening(&app, &tab, store, onward);
     tabs.walked(&tab, &url);
-    Ok(crate::web_cut::CUTS)
+    Ok(crate::web_cut::layering(&label_of(&tab)))
 }
 
 /// A tab's builder, with every window its page asks for answered by `becomes` (#1074).
@@ -2005,8 +2005,13 @@ fn say(
 /// the page hidden (`web_cut.rs`). The answer says whether this build cuts at all; a window
 /// told no hides the page under a layer, with its still picture, as it always has.
 /// `corner` is the corner of the card the page fills, in the window's own units, which
-/// the page's two bottom corners take (#1088); nothing for a square one.
+/// the page's two bottom corners take (#1088); nothing for a square one. `opacity` is how
+/// much of a page drawn under the app shows, the hole's own (`web_visual.rs`).
 #[tauri::command]
+#[allow(
+    clippy::too_many_arguments,
+    reason = "a command's arguments are what the window sends, one by one"
+)]
 pub fn web_place(
     app: AppHandle,
     tab: String,
@@ -2015,7 +2020,8 @@ pub fn web_place(
     frame: Option<crate::web_follow::Frame>,
     cut: Option<crate::web_cut::Cut>,
     corner: Option<f64>,
-) -> Result<bool, String> {
+    opacity: Option<f64>,
+) -> Result<crate::web_cut::Layering, String> {
     let view = found(&app, &tab)?;
 
     // A page whose browser does not answer is neither shown nor told it is hidden: either
@@ -2033,7 +2039,7 @@ pub fn web_place(
         }
         let _doing = crate::stall::doing("web_place: put away");
         crate::web_answers::put_away(&view);
-        return Ok(crate::web_cut::CUTS);
+        return Ok(crate::web_cut::layering(view.label()));
     }
 
     // Where the layout the window measured puts the page at the window's size now, which
@@ -2069,6 +2075,14 @@ pub fn web_place(
     // What of the page the app's own layers are over, cut out of it rather than the page
     // hidden; see web_cut.rs. Asked before the page is shown, so a page coming back under
     // a layer never draws a frame over it.
+    // Drawn under the app, its corner and how much of it shows; see web_visual.rs.
+    #[cfg(all(windows, not(feature = "cef")))]
+    if crate::web_visual::is_drawn_under(view.label()) {
+        crate::web_visual::visual_corner(&view, corner.unwrap_or(0.0), scale);
+        crate::web_visual::visual_opacity(&view, opacity.unwrap_or(1.0));
+    }
+    #[cfg(not(all(windows, not(feature = "cef"))))]
+    let _ = opacity;
     if visible {
         let _doing = crate::stall::doing("web_place: cut");
         crate::web_cut::apply(
@@ -2097,7 +2111,7 @@ pub fn web_place(
         crate::keyboard::hold_for_layer(&app, window.label());
     }
     crate::keyboard::placed(&app, &view, visible && cut.is_none());
-    Ok(crate::web_cut::CUTS)
+    Ok(crate::web_cut::layering(view.label()))
 }
 
 impl From<&Pane> for crate::web_follow::Bounds {
