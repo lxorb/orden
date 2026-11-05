@@ -162,7 +162,7 @@ jobs:
       # missing half the shared libraries it needs to start.
       - name: The browser the drive holds
         run: |
-          python3 -m pip install --quiet --break-system-packages playwright
+          python3 -m pip install --quiet --break-system-packages playwright pillow
           python3 -m playwright install --with-deps chromium
 
       # The drive builds its own, `--mode drive`: a release build in every respect
@@ -255,7 +255,7 @@ jobs:
 
       - name: The browser the drives hold
         run: |
-          python3 -m pip install --quiet --break-system-packages playwright
+          python3 -m pip install --quiet --break-system-packages playwright pillow
           python3 -m playwright install --with-deps webkit
 
       - name: The core drives, as a Mac
@@ -292,7 +292,7 @@ jobs:
 
       - name: The browser the drives hold
         run: |
-          python3 -m pip install --quiet --break-system-packages playwright
+          python3 -m pip install --quiet --break-system-packages playwright pillow
           python3 -m playwright install webkit
 
       - name: The floor, on a Mac
