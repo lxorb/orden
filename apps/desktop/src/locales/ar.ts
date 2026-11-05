@@ -2913,4 +2913,17 @@ export const ar: Dictionary = {
   'One colour': 'بلون واحد',
   'Web icons': 'أيقونات الويب',
   'Sites you visit will appear here': 'ستظهر هنا المواقع التي تزورها',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'الإملاء',
+  'Dictate with': 'الإملاء عبر',
+  'Where your voice goes to be turned into words.': 'إلى أين يذهب صوتك ليتحول إلى كلمات.',
+  'Ask on first use': 'اسأل عند أول استخدام',
+  'Orden account': 'حساب Orden',
+  'Your AI provider': 'مزوّد الذكاء الاصطناعي الخاص بك',
+  'Stays on this computer': 'يبقى على هذا الحاسوب',
+  'Audio goes to {host}': 'يذهب الصوت إلى {host}',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'يذهب الصوت إلى Orden وCloudflare، ولا يُحفظ',
+  'Stop dictating': 'إيقاف الإملاء',
+  'Writing down what you said': 'جارٍ كتابة ما قلته',
 }

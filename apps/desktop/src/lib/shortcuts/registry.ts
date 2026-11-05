@@ -1653,6 +1653,20 @@ const AI_ENTRIES: Shortcut[] = (
   contextual: true,
 }))
 
+/** Dictation into the field that has the keyboard (#1128): the chat composer, quick add
+ *  and the quick question. Read by the field itself, so it is contextual; a tap toggles
+ *  and a hold is push-to-talk (dictation/keys.ts). */
+const FIELD_ENTRIES: Shortcut[] = [
+  {
+    id: 'field.dictate',
+    label: () => t('Dictate'),
+    category: 'edit',
+    scope: 'panel',
+    key: 'Alt-v',
+    contextual: true,
+  },
+]
+
 CANVAS_ENTRIES.push({
   id: 'canvas.delete.alt',
   label: () => t('Delete what is picked'),
@@ -1811,6 +1825,7 @@ export const SHORTCUTS: Shortcut[] = [
   ...PAGES_ENTRIES,
   ...WEB_ENTRIES,
   ...AI_ENTRIES,
+  ...FIELD_ENTRIES,
   ...FIXED_ENTRIES,
 ]
 

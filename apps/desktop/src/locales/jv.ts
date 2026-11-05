@@ -2786,4 +2786,18 @@ export const jv: Dictionary = {
   'One colour': 'Siji werna',
   'Web icons': 'Lambang web',
   'Sites you visit will appear here': 'Situs sing sampeyan bukak bakal katon ing kene',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'Dikte',
+  'Dictate with': 'Dikte nganggo',
+  'Where your voice goes to be turned into words.':
+    'Menyang ngendi swaramu dikirim supaya diowahi dadi tembung.',
+  'Ask on first use': 'Takon nalika pisanan dienggo',
+  'Orden account': 'Akun Orden',
+  'Your AI provider': 'Panyedhiya AI sampeyan',
+  'Stays on this computer': 'Tetep ing komputer iki',
+  'Audio goes to {host}': 'Audio dikirim menyang {host}',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'Audio dikirim menyang Orden lan Cloudflare, lan ora disimpen',
+  'Stop dictating': 'Mandhegake dikte',
+  'Writing down what you said': 'Lagi nulis apa sing sampeyan omongake',
 }

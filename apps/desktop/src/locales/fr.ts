@@ -2887,4 +2887,18 @@ export const fr: Dictionary = {
   'One colour': 'Une couleur',
   'Web icons': 'Icônes web',
   'Sites you visit will appear here': 'Les sites que vous visitez apparaîtront ici',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'Dictée',
+  'Dictate with': 'Dicter avec',
+  'Where your voice goes to be turned into words.':
+    'Où va votre voix pour être transformée en texte.',
+  'Ask on first use': 'Demander à la première utilisation',
+  'Orden account': 'Compte Orden',
+  'Your AI provider': 'Votre fournisseur d’IA',
+  'Stays on this computer': 'Reste sur cet ordinateur',
+  'Audio goes to {host}': 'L’audio va à {host}',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'L’audio va à Orden et Cloudflare, et n’est pas conservé',
+  'Stop dictating': 'Arrêter la dictée',
+  'Writing down what you said': 'Transcription de ce que vous avez dit',
 }

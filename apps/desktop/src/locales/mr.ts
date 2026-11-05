@@ -2802,4 +2802,17 @@ export const mr: Dictionary = {
   'One colour': 'एक रंग',
   'Web icons': 'वेब आयकॉन',
   'Sites you visit will appear here': 'तुम्ही भेट दिलेल्या साइट्स इथे दिसतील',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'श्रुतलेखन',
+  'Dictate with': 'याद्वारे श्रुतलेखन',
+  'Where your voice goes to be turned into words.': 'तुमचा आवाज शब्दांत बदलण्यासाठी कुठे जातो.',
+  'Ask on first use': 'पहिल्या वापराला विचारा',
+  'Orden account': 'Orden खाते',
+  'Your AI provider': 'तुमचा AI प्रदाता',
+  'Stays on this computer': 'याच संगणकावर राहतो',
+  'Audio goes to {host}': 'ऑडिओ {host} कडे जातो',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'ऑडिओ Orden आणि Cloudflare कडे जातो, आणि ठेवला जात नाही',
+  'Stop dictating': 'श्रुतलेखन थांबवा',
+  'Writing down what you said': 'तुम्ही जे बोललात ते लिहिले जात आहे',
 }

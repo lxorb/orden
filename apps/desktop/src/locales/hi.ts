@@ -2801,4 +2801,18 @@ export const hi: Dictionary = {
   'One colour': 'एक रंग',
   'Web icons': 'वेब आइकन',
   'Sites you visit will appear here': 'आप जिन साइटों पर जाते हैं, वे यहाँ दिखेंगी',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'श्रुतलेख',
+  'Dictate with': 'इससे बोलकर लिखें',
+  'Where your voice goes to be turned into words.':
+    'आपकी आवाज़ शब्दों में बदलने के लिए कहाँ जाती है।',
+  'Ask on first use': 'पहली बार इस्तेमाल पर पूछें',
+  'Orden account': 'Orden खाता',
+  'Your AI provider': 'आपका AI प्रदाता',
+  'Stays on this computer': 'इसी कंप्यूटर पर रहता है',
+  'Audio goes to {host}': 'ऑडियो {host} पर जाता है',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'ऑडियो Orden और Cloudflare पर जाता है, और रखा नहीं जाता',
+  'Stop dictating': 'बोलकर लिखना बंद करें',
+  'Writing down what you said': 'आपने जो कहा वह लिखा जा रहा है',
 }

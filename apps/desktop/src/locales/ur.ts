@@ -2796,4 +2796,18 @@ export const ur: Dictionary = {
   'One colour': 'ایک رنگ',
   'Web icons': 'ویب آئیکنز',
   'Sites you visit will appear here': 'آپ جن سائٹس پر جاتے ہیں وہ یہاں دکھائی دیں گی',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'املا',
+  'Dictate with': 'اس سے املا کریں',
+  'Where your voice goes to be turned into words.':
+    'آپ کی آواز الفاظ میں بدلنے کے لیے کہاں جاتی ہے۔',
+  'Ask on first use': 'پہلی بار استعمال پر پوچھیں',
+  'Orden account': 'Orden اکاؤنٹ',
+  'Your AI provider': 'آپ کا AI فراہم کنندہ',
+  'Stays on this computer': 'اسی کمپیوٹر پر رہتا ہے',
+  'Audio goes to {host}': 'آڈیو {host} پر جاتا ہے',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'آڈیو Orden اور Cloudflare پر جاتا ہے، اور رکھا نہیں جاتا',
+  'Stop dictating': 'املا روکیں',
+  'Writing down what you said': 'آپ نے جو کہا وہ لکھا جا رہا ہے',
 }

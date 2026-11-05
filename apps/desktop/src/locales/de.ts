@@ -2861,4 +2861,18 @@ export const de: Dictionary = {
   'One colour': 'Einfarbig',
   'Web icons': 'Web-Symbole',
   'Sites you visit will appear here': 'Websites, die du besuchst, erscheinen hier',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'Diktieren',
+  'Dictate with': 'Diktieren mit',
+  'Where your voice goes to be turned into words.':
+    'Wohin deine Stimme geht, um in Text umgewandelt zu werden.',
+  'Ask on first use': 'Beim ersten Mal fragen',
+  'Orden account': 'Orden-Konto',
+  'Your AI provider': 'Dein KI-Anbieter',
+  'Stays on this computer': 'Bleibt auf diesem Computer',
+  'Audio goes to {host}': 'Audio geht an {host}',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'Audio geht an Orden und Cloudflare und wird nicht gespeichert',
+  'Stop dictating': 'Diktieren beenden',
+  'Writing down what you said': 'Schreibe auf, was du gesagt hast',
 }

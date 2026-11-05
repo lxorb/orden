@@ -2751,4 +2751,16 @@ export const am: Dictionary = {
   'One colour': 'ባለ አንድ ቀለም',
   'Web icons': 'የድር አዶዎች',
   'Sites you visit will appear here': 'የሚጎበኟቸው ድረ ገጾች እዚህ ይታያሉ',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'ቃል መጻፍ',
+  'Dictate with': 'በዚህ ይጻፍ',
+  'Where your voice goes to be turned into words.': 'ድምጽዎ ወደ ቃላት ለመቀየር የሚሄድበት።',
+  'Ask on first use': 'በመጀመሪያ ጥቅም ላይ ጠይቅ',
+  'Orden account': 'የOrden መለያ',
+  'Your AI provider': 'የእርስዎ AI አቅራቢ',
+  'Stays on this computer': 'በዚህ ኮምፒውተር ላይ ይቆያል',
+  'Audio goes to {host}': 'ድምጹ ወደ {host} ይሄዳል',
+  'Audio goes to Orden and Cloudflare, and is not kept': 'ድምጹ ወደ Orden እና Cloudflare ይሄዳል፣ አይቀመጥም',
+  'Stop dictating': 'መጻፍ አቁም',
+  'Writing down what you said': 'የተናገሩትን በመጻፍ ላይ',
 }

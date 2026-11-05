@@ -2776,4 +2776,18 @@ export const ja: Dictionary = {
   'One colour': '単色',
   'Web icons': 'ウェブのアイコン',
   'Sites you visit will appear here': '訪れたサイトがここに表示されます',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: '音声入力',
+  'Dictate with': '音声入力の方法',
+  'Where your voice goes to be turned into words.':
+    '声を文字に変換するために音声が送られる先です。',
+  'Ask on first use': '最初に使うときに確認',
+  'Orden account': 'Orden アカウント',
+  'Your AI provider': 'あなたの AI プロバイダ',
+  'Stays on this computer': 'このコンピュータから出ません',
+  'Audio goes to {host}': '音声は {host} に送られます',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    '音声は Orden と Cloudflare に送られ、保存されません',
+  'Stop dictating': '音声入力を停止',
+  'Writing down what you said': '話した内容を書き起こしています',
 }

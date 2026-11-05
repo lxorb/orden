@@ -2798,4 +2798,18 @@ export const bn: Dictionary = {
   'One colour': 'এক রঙে',
   'Web icons': 'ওয়েব আইকন',
   'Sites you visit will appear here': 'আপনি যে সাইটগুলিতে যান সেগুলি এখানে দেখা যাবে',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'শ্রুতলিপি',
+  'Dictate with': 'যা দিয়ে শ্রুতলিপি',
+  'Where your voice goes to be turned into words.':
+    'আপনার কণ্ঠস্বর শব্দে রূপান্তরের জন্য কোথায় যায়।',
+  'Ask on first use': 'প্রথমবার ব্যবহারের সময় জিজ্ঞেস করুন',
+  'Orden account': 'Orden অ্যাকাউন্ট',
+  'Your AI provider': 'আপনার AI প্রদানকারী',
+  'Stays on this computer': 'এই কম্পিউটারেই থাকে',
+  'Audio goes to {host}': 'অডিও {host}-এ যায়',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'অডিও Orden ও Cloudflare-এ যায়, এবং রাখা হয় না',
+  'Stop dictating': 'শ্রুতলিপি থামান',
+  'Writing down what you said': 'আপনি যা বলেছেন তা লেখা হচ্ছে',
 }

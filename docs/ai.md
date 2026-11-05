@@ -694,8 +694,10 @@ transcriber serves under the same name - whisper.cpp's server, faster-whisper, L
 so a transcriber on this machine is the same two fields in the same pane as a model on it,
 and nothing leaves the machine at all. That is the whole reason somebody runs one.
 
-The model is not the chat model. OpenAI is asked for `gpt-4o-mini-transcribe` and then
-`whisper-1`; a server on this machine is asked for `whisper-1` and then for whatever model
+The model is not the chat model. OpenAI is asked for `gpt-transcribe`, then
+`gpt-4o-mini-transcribe`, then `whisper-1`, the sync Worker's order; `gpt-4o-transcribe`
+is left out because, measured on dictation (#1128), it answered requests it heard instead
+of writing them down and handed its prompt back as the transcript. A server on this machine is asked for `whisper-1` and then for whatever model
 the provider itself names, so somebody whose server wants
 `Systran/faster-whisper-small` has a way to say so. A name the server has never heard of
 is the one refusal worth trying the next name for - the list is a guess about somebody
@@ -719,6 +721,30 @@ rather than a reason to send the recording somewhere else - the reader chose tha
 The note says which of them wrote it: the model's own name, or `whisper` for the account's
 road. See `apps/desktop/src/lib/recorder/transcribe.ts`, and `docs/mobile.md` for what
 this means with no signal.
+
+### Dictation
+
+Dictation (#1128) is the same two roads into a field rather than a note: the chat
+composer, quick add and the new-todo editor, and the quick question. **The road is
+chosen, not guessed**: Settings > AI > Dictation, or the chooser the first press opens,
+which says where each road sends a voice - the provider's server, this machine for a
+local one, or Orden's Worker and Cloudflare's Workers AI. Nothing is recorded before a
+road is chosen, and the choice is this device's.
+
+The page records 16 kHz samples itself (`dictation/capture.ts`) and never writes a file.
+While the voice goes on, the stretch since the last pause is heard again and drawn in the
+field as live words, under an accent wash; at the end the whole utterance is heard once
+and replaces them (`dictation/listening.ts`). Every request carries a prompt of the words
+around the field - the thread's title, the note in front, the chips, the text before the
+caret - which is what spells names right (`dictation/heard.ts`). No stretch without
+speech is sent, because Whisper writes subtitle credits for silence, and an answer that
+is a credit or the prompt again is dropped (`dictation/speech.ts`, `heard.ts`).
+
+The one control is `dictation/DictateButton.svelte`, with the keys in `dictation/keys.ts`:
+Alt+V or the button, a tap toggles and a hold is push-to-talk, Escape cancels and puts the
+field back, Enter finishes and then is the field's own Enter. The words land at the caret,
+spaced from their neighbours (`dictation/spot.ts`). The measurements behind the choices -
+the model order, the prompt, the final pass - are on #1128.
 
 ## Costs
 

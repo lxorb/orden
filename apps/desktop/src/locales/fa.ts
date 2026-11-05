@@ -2806,4 +2806,17 @@ export const fa: Dictionary = {
   'One colour': 'تک‌رنگ',
   'Web icons': 'نمادهای وب',
   'Sites you visit will appear here': 'سایت‌هایی که بازدید می‌کنید اینجا نشان داده می‌شوند',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'دیکته',
+  'Dictate with': 'دیکته با',
+  'Where your voice goes to be turned into words.': 'صدای شما برای تبدیل به متن به کجا می‌رود.',
+  'Ask on first use': 'در اولین استفاده بپرس',
+  'Orden account': 'حساب Orden',
+  'Your AI provider': 'ارائه‌دهندهٔ هوش مصنوعی شما',
+  'Stays on this computer': 'روی همین رایانه می‌ماند',
+  'Audio goes to {host}': 'صدا به {host} می‌رود',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'صدا به Orden و Cloudflare می‌رود و نگه داشته نمی‌شود',
+  'Stop dictating': 'توقف دیکته',
+  'Writing down what you said': 'در حال نوشتن آنچه گفتید',
 }

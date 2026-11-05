@@ -2764,4 +2764,18 @@ export const ko: Dictionary = {
   'One colour': '단색',
   'Web icons': '웹 아이콘',
   'Sites you visit will appear here': '방문한 사이트가 여기에 표시됩니다',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: '받아쓰기',
+  'Dictate with': '받아쓰기 방법',
+  'Where your voice goes to be turned into words.':
+    '목소리를 글자로 바꾸기 위해 음성이 가는 곳입니다.',
+  'Ask on first use': '처음 사용할 때 묻기',
+  'Orden account': 'Orden 계정',
+  'Your AI provider': '내 AI 제공업체',
+  'Stays on this computer': '이 컴퓨터에만 남습니다',
+  'Audio goes to {host}': '오디오가 {host}(으)로 전송됩니다',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    '오디오가 Orden과 Cloudflare로 전송되며, 보관되지 않습니다',
+  'Stop dictating': '받아쓰기 중지',
+  'Writing down what you said': '말한 내용을 적는 중',
 }

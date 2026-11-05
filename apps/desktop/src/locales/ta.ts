@@ -2850,4 +2850,18 @@ export const ta: Dictionary = {
   'One colour': 'ஒற்றை நிறம்',
   'Web icons': 'இணைய ஐகான்கள்',
   'Sites you visit will appear here': 'நீங்கள் பார்வையிடும் தளங்கள் இங்கே தோன்றும்',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'சொல்வதை எழுதுதல்',
+  'Dictate with': 'இதன் மூலம் சொல்லி எழுது',
+  'Where your voice goes to be turned into words.':
+    'உங்கள் குரல் சொற்களாக மாற்றப்பட எங்கே செல்கிறது.',
+  'Ask on first use': 'முதல் முறை பயன்படுத்தும்போது கேள்',
+  'Orden account': 'Orden கணக்கு',
+  'Your AI provider': 'உங்கள் AI வழங்குநர்',
+  'Stays on this computer': 'இந்தக் கணினியிலேயே இருக்கும்',
+  'Audio goes to {host}': 'ஒலி {host}-க்குச் செல்கிறது',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'ஒலி Orden மற்றும் Cloudflare-க்குச் செல்கிறது, சேமிக்கப்படுவதில்லை',
+  'Stop dictating': 'சொல்லி எழுதுவதை நிறுத்து',
+  'Writing down what you said': 'நீங்கள் சொன்னதை எழுதுகிறது',
 }

@@ -2816,4 +2816,18 @@ export const te: Dictionary = {
   'One colour': 'ఒకే రంగు',
   'Web icons': 'వెబ్ చిహ్నాలు',
   'Sites you visit will appear here': 'మీరు సందర్శించే సైట్‌లు ఇక్కడ కనిపిస్తాయి',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'డిక్టేషన్',
+  'Dictate with': 'దీనితో డిక్టేట్ చేయండి',
+  'Where your voice goes to be turned into words.':
+    'మీ స్వరం పదాలుగా మారడానికి ఎక్కడికి వెళ్తుంది.',
+  'Ask on first use': 'మొదటిసారి వాడినప్పుడు అడుగు',
+  'Orden account': 'Orden ఖాతా',
+  'Your AI provider': 'మీ AI ప్రదాత',
+  'Stays on this computer': 'ఈ కంప్యూటర్‌లోనే ఉంటుంది',
+  'Audio goes to {host}': 'ఆడియో {host}కి వెళ్తుంది',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'ఆడియో Orden మరియు Cloudflareకి వెళ్తుంది, దాచి ఉంచబడదు',
+  'Stop dictating': 'డిక్టేషన్ ఆపు',
+  'Writing down what you said': 'మీరు చెప్పింది రాస్తోంది',
 }
