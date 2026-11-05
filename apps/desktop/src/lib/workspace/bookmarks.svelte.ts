@@ -212,10 +212,21 @@ export function mergeBookmarks(theirs: Bookmark[], mine: Bookmark[]): Bookmark[]
 /** One space's list, and which account it has already been reconciled with. */
 interface Kept extends Folded {
   list: Bookmark[]
+  /** Whether the account has heard the list as it is here. False from a change until
+   *  its push lands, and while it is the next pass keeps this machine's list and sends
+   *  it again rather than taking the account's word for a list it never heard: a pass
+   *  that read the account before an import's Essentials reached it handed back the
+   *  list without them (#1149). Written down, as folder-icons.svelte.ts's is. */
+  sent: boolean
 }
 
 function read(): Record<string, Kept> {
-  return readSpaces(STORAGE_KEY, (one) => ({ list: bookmarkList(one.list) }))
+  return readSpaces(STORAGE_KEY, (one) => ({
+    list: bookmarkList(one.list),
+    // Anything but a false written by this build reads as said: a record an older one
+    // wrote has no such field, and what it holds did reach the account.
+    sent: one.sent !== false,
+  }))
 }
 
 /** This machine's bookmarks after the account's; see `mergeBookmarks`. */
@@ -520,17 +531,34 @@ export class Bookmarks {
       return null
     }
 
-    this.spaces = { ...this.spaces, [root]: { list: met.value, account: accountId } }
+    this.spaces = {
+      ...this.spaces,
+      [root]: { list: met.value, account: accountId, sent: !met.tell },
+    }
     this.write()
 
     return met.tell ? met.value : null
+  }
+
+  /** Whether the account took `list`, the space's list as it was sent: heard only while
+   *  the list is still that one, since a change made while it was on its way is one the
+   *  account has not heard. See `sent`. */
+  said(root: string, landed: boolean, list: readonly Bookmark[]) {
+    const held = this.spaces[root]
+    if (!held || held.sent === landed || (landed && !sameList(held.list, list))) return
+
+    this.spaces = { ...this.spaces, [root]: { ...held, sent: landed } }
+    this.write()
   }
 
   put(root: string, given: Bookmark[]) {
     // Ids only: a list written here says where its bookmarks are, and a move made here
     // reaches it while sync may still have the file where it was.
     const list = this.ids ? located(root, given, this.ids, { moves: false }) : given
-    this.spaces = { ...this.spaces, [root]: { list, account: this.spaces[root]?.account ?? null } }
+    this.spaces = {
+      ...this.spaces,
+      [root]: { list, account: this.spaces[root]?.account ?? null, sent: false },
+    }
     this.write()
 
     // Imported here rather than at the top: syncing reads the workspace this

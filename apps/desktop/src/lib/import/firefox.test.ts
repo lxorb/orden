@@ -174,3 +174,33 @@ describe("Firefox's tabs and bookmarks as nib's", () => {
     expect(planned('nonsense', 7).spaces[0]?.files).toEqual([])
   })
 })
+
+describe('a Firefox tab', () => {
+  test('wears the mark a page process drew, out of the address Firefox wraps it in', () => {
+    const wrapped = {
+      windows: [
+        {
+          tabs: [
+            {
+              ...page('https://mail.example.com/', 'Mail'),
+              image:
+                'moz-remote-image://?url=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgo%3D&width=16&height=16',
+            },
+          ],
+        },
+      ],
+    }
+    const mail = planned(wrapped, null).spaces[0]?.files[0]
+    expect(mail?.kind === 'note' && readShortcut(mail.text)?.icon).toBe(
+      'data:image/png;base64,iVBORw0KGgo=',
+    )
+  })
+
+  test('pinned in two windows is one Essential, one web note', () => {
+    const pinned = { ...page('https://mail.example.com/', 'Mail'), pinned: true }
+    const twice = { windows: [{ tabs: [pinned] }, { tabs: [pinned] }] }
+    const [space] = planned(twice, null).spaces
+    expect(space?.files.map((one) => one.path)).toEqual(['Mail.url'])
+    expect(space?.bookmarks).toEqual(['Mail.url'])
+  })
+})

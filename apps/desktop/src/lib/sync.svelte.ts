@@ -442,7 +442,12 @@ class Sync {
     const spaceId = this.remoteIdFor(root)
     if (!token || spaceId === null || this.reads(spaceId)) return
 
-    await api.saveBookmarks(token, spaceId, workspace.bookmarks.of(root)).catch(() => undefined)
+    const list = workspace.bookmarks.of(root)
+    const landed = await api.saveBookmarks(token, spaceId, list).then(
+      () => true,
+      () => false,
+    )
+    workspace.bookmarks.said(root, landed, list)
   }
 
   /** Autosave wrote a note. Under v2 that write is also the moment what was typed

@@ -28,7 +28,16 @@
  *  `places.sqlite` (firefox_profiles.rs). Anything not recognised is stepped over. */
 
 import type { Sidebar } from './sidebar'
-import { type FolderWords, isObject, list, Made, type Said, text } from './sidebar-made'
+import {
+  type FolderWords,
+  isObject,
+  list,
+  Made,
+  type Said,
+  siteMark,
+  type Step,
+  text,
+} from './sidebar-made'
 
 /** Firefox's roots, by their fixed ids, in the order its library shows them. */
 const ROOTS: [string, keyof FolderWords][] = [
@@ -125,7 +134,7 @@ function pageOf(tab: Said): { title: string; url: string; icon: string | null } 
   const entry = entries[index - 1]
   const url = text(entry?.url) ?? text(tab.userTypedValue)
   if (!url) return null
-  return { title: text(entry?.title) ?? url, url, icon: text(tab.image) }
+  return { title: text(entry?.title) ?? url, url, icon: siteMark(tab.image) }
 }
 
 /** A container's number, which Firefox calls a user context: nought is none. */
@@ -149,8 +158,19 @@ function rootOf(node: Said): string | null {
   return named ?? text(node.guid)
 }
 
-/** The bookmark tree, each of Firefox's roots a folder in Bookmarks. */
-function readBookmarks(root: Said, made: Made, words: FolderWords) {
+/** Which space a bookmark or a folder of them goes to, by its guid, given the space
+ *  of the folder it is in. Firefox has one space; Zen shows a bookmark in the spaces
+ *  it is assigned to (zen.ts). */
+export type Spacing = (guid: string | null, around: string) => string
+
+/** The bookmark tree, each of Firefox's roots a folder in Bookmarks. Zen's is the
+ *  same tree. */
+export function readBookmarks(
+  root: Said,
+  made: Made,
+  words: FolderWords,
+  spacing: Spacing = (_, around) => around,
+) {
   const roots = list(root.children).filter((one) => rootOf(one) !== TAGS)
   const known = ROOTS.flatMap(([guid, word]) => {
     const found = roots.find((one) => rootOf(one) === guid)
@@ -160,21 +180,29 @@ function readBookmarks(root: Said, made: Made, words: FolderWords) {
     .filter((one) => !ROOTS.some(([guid]) => guid === rootOf(one)))
     .map((node) => ({ node, name: text(node.title) ?? words.other }))
 
+  const top: Step = { key: 'bookmarks', name: words.bookmarks }
   for (const { node, name } of [...known, ...others]) {
-    made.folder('bookmarks', words.bookmarks, null)
-    const id = `bookmark:${rootOf(node) ?? name}`
-    made.folder(id, name, 'bookmarks')
-    walk(node, id, made, words, 0)
+    const steps = [top, { key: `bookmark:${rootOf(node) ?? name}`, name }]
+    walk(node, steps, made, words, spacing, spacing(text(node.guid), made.space), 0)
   }
 }
 
 /** Deeper than anybody nests, and a stop for a tree that goes round. */
 const DEEPEST = 64
 
-function walk(folder: Said, id: string, made: Made, words: FolderWords, depth: number) {
+function walk(
+  folder: Said,
+  steps: readonly Step[],
+  made: Made,
+  words: FolderWords,
+  spacing: Spacing,
+  space: string,
+  depth: number,
+) {
   if (depth > DEEPEST) return
   list(folder.children).forEach((node, at) => {
     const kind = kindOf(node)
+    const here = spacing(text(node.guid), space)
     if (kind === BOOKMARK) {
       const url = text(node.uri)
       if (!url) return
@@ -183,14 +211,15 @@ function walk(folder: Said, id: string, made: Made, words: FolderWords, depth: n
         url,
         icon: null,
         pinned: false,
-        folder: id,
+        folder: made.within(steps, here),
         container: 0,
+        space: here,
         ...addedOf(node.dateAdded),
       })
     } else if (kind === FOLDER) {
-      const inner = `bookmark:${text(node.guid) ?? `${id}/${String(at)}`}`
-      made.folder(inner, text(node.title) ?? words.other, id)
-      walk(node, inner, made, words, depth + 1)
+      const key = `bookmark:${text(node.guid) ?? `${steps.at(-1)?.key ?? ''}/${String(at)}`}`
+      const inner = [...steps, { key, name: text(node.title) ?? words.other }]
+      walk(node, inner, made, words, spacing, here, depth + 1)
     }
   })
 }

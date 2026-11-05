@@ -167,7 +167,13 @@ async function pairOnce(token: string, pairing: Pairing): Promise<void> {
     // on every pass.
     if (accountId === null || remote.role === 'read') continue
     const merged = workspace.bookmarks.adopt(pair.root, remote.bookmarks, accountId)
-    if (merged) await api.saveBookmarks(token, remote.id, merged).catch(() => undefined)
+    if (merged) {
+      const landed = await api.saveBookmarks(token, remote.id, merged).then(
+        () => true,
+        () => false,
+      )
+      workspace.bookmarks.said(pair.root, landed, merged)
+    }
   }
 
   // The account already lists spaces in the order it holds them, so adopting that order

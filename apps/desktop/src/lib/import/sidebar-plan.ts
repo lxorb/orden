@@ -100,7 +100,7 @@ function spacePlan(
 /** The space's rows as the sidebar nests them. Essentials first, which is where
  *  they are drawn, then everything else in the session's order: a folder sits where
  *  its first tab does, and a folder of nothing at the end of the folder it is in,
- *  in the order the folders are listed. */
+ *  in the order the folders are listed. A page is in one place once. */
 function rowsOf(
   space: SidebarSpace,
   folders: readonly SidebarFolder[],
@@ -127,9 +127,19 @@ function rowsOf(
     return rows
   }
 
-  const essentials = tabs.filter((tab) => tab.essential)
-  for (const tab of essentials) top.push({ tab })
-  for (const tab of tabs) if (!tab.essential) rowsIn(tab.folder).push({ tab })
+  // A page twice in one place is one web note: the same tab open in two windows of a
+  // browser that keeps no id for it, a pinned tab that is an Essential too.
+  const pages = new WeakMap<Row[], Set<string>>()
+  const add = (rows: Row[], tab: SidebarTab) => {
+    const held = pages.get(rows) ?? new Set<string>()
+    pages.set(rows, held)
+    if (held.has(tab.url)) return
+    held.add(tab.url)
+    rows.push({ tab })
+  }
+
+  for (const tab of tabs) if (tab.essential) add(top, tab)
+  for (const tab of tabs) if (!tab.essential) add(rowsIn(tab.folder), tab)
   for (const folder of folders) if (folder.space === space.id) rowsIn(folder.id)
 
   return top

@@ -385,3 +385,49 @@ describe('a bookmark found by the id of what it points at (#1068)', () => {
     expect(store.of(ROOT)).toEqual([{ ...note('Notes/Plan.md'), id: 'p' }])
   })
 })
+
+describe("the account's list meeting one it has not heard yet", () => {
+  test('keeps what was kept here while its push is on its way, and asks to send it', () => {
+    const kept = store()
+    expect(kept.adopt('/Notes', [], 'acct')).toBeNull()
+    kept.toggleAll([note('Mail.url'), note('News.url')])
+
+    // A pass that read the account before the list reached it.
+    expect(kept.adopt('/Notes', [], 'acct')).toEqual([note('Mail.url'), note('News.url')])
+    expect(kept.list).toEqual([note('Mail.url'), note('News.url')])
+  })
+
+  test("takes the account's word once it has heard the list as it is", () => {
+    const kept = store()
+    kept.adopt('/Notes', [], 'acct')
+    kept.toggle(note('Mail.url'))
+    kept.said('/Notes', true, [note('Mail.url')])
+
+    // Taken away on another machine.
+    expect(kept.adopt('/Notes', [], 'acct')).toBeNull()
+    expect(kept.list).toEqual([])
+  })
+
+  test('has not heard a list that changed while the last one was on its way', () => {
+    const kept = store()
+    kept.adopt('/Notes', [], 'acct')
+    kept.toggle(note('Mail.url'))
+    const sent = [...kept.list]
+    kept.toggle(note('News.url'))
+    kept.said('/Notes', true, sent)
+
+    expect(kept.adopt('/Notes', [note('Mail.url')], 'acct')).toEqual([
+      note('Mail.url'),
+      note('News.url'),
+    ])
+  })
+
+  test('remembers across runs that the account has not heard it', () => {
+    const kept = store()
+    kept.adopt('/Notes', [], 'acct')
+    kept.toggle(note('Mail.url'))
+    kept.said('/Notes', false, [note('Mail.url')])
+
+    expect(store().adopt('/Notes', [], 'acct')).toEqual([note('Mail.url')])
+  })
+})

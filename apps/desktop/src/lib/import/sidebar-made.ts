@@ -37,6 +37,16 @@ export function text(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value.trim() : null
 }
 
+/** A site's mark as a session kept it. Firefox writes one a page process drew as
+ *  `moz-remote-image://?url=…`, the picture it wraps in the address, which is the
+ *  mark itself; see Zen's ZenSpacesSyncModel.sys.mjs. */
+export function siteMark(value: unknown): string | null {
+  const said = text(value)
+  if (!said?.startsWith('moz-remote-image:')) return said
+  const query = said.slice(said.indexOf('?') + 1)
+  return said.includes('?') ? text(new URLSearchParams(query).get('url')) : null
+}
+
 /** What a page with no title of its own is called: where it is, without the scheme,
  *  which a session written before the page drew its title often says. */
 function untitled(url: string): string {
@@ -51,6 +61,12 @@ function untitled(url: string): string {
 /** The one space a profile is. */
 const SPACE = 'browser'
 
+/** A folder as a walk down a tree finds it: what it is told apart by, and its name. */
+export interface Step {
+  key: string
+  name: string
+}
+
 /** The folders and tabs as they are read, and which folders end up holding a page. */
 export class Made {
   readonly folders: SidebarFolder[] = []
@@ -58,12 +74,29 @@ export class Made {
   /** Pages left behind for not being on the web: a browser's own, a file, a bookmarklet. */
   dropped = 0
 
-  folder(id: string, name: string, parent: string | null) {
+  /** `space` is the space everything goes to that is not said to go elsewhere. */
+  constructor(readonly space = SPACE) {}
+
+  folder(id: string, name: string, parent: string | null, space = this.space) {
     if (this.folders.some((one) => one.id === id)) return
-    this.folders.push({ id, name, icon: null, parent, space: SPACE, split: false })
+    this.folders.push({ id, name, icon: null, parent, space, split: false })
   }
 
-  tab(tab: Omit<SidebarTab, 'home' | 'space' | 'essential'> & { essential?: boolean }) {
+  /** The folders of a walk, outermost first, made in `space`; answers the innermost.
+   *  Another space's are folders of their own, of the same names. */
+  within(steps: readonly Step[], space = this.space): string | null {
+    let parent: string | null = null
+    for (const step of steps) {
+      const id = space === this.space ? step.key : `${step.key}@${space}`
+      this.folder(id, step.name, parent, space)
+      parent = id
+    }
+    return parent
+  }
+
+  tab(
+    tab: Omit<SidebarTab, 'home' | 'space' | 'essential'> & { essential?: boolean; space?: string },
+  ) {
     if (!isWebAddress(tab.url)) {
       this.dropped++
       return
@@ -73,7 +106,7 @@ export class Made {
       ...tab,
       title,
       home: null,
-      space: SPACE,
+      space: tab.space ?? this.space,
       essential: tab.essential ?? false,
     })
   }
@@ -94,7 +127,7 @@ export class Made {
   /** All of it as the one space named `name`. */
   sidebar(name: string): Sidebar {
     return {
-      spaces: [{ id: SPACE, name, icon: null, colour: null, container: 0 }],
+      spaces: [{ id: this.space, name, icon: null, colour: null, container: 0 }],
       folders: this.kept(),
       tabs: this.tabs,
       dropped: this.dropped,
