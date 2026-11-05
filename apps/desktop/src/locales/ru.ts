@@ -1326,6 +1326,7 @@ export const ru: Dictionary = {
   Share: 'Поделиться',
   'Share {name}': 'Поделиться {name}',
   'Share this space': 'Поделиться пространством',
+  'Export this space as Markdown and folders': 'Экспортировать пространство в Markdown и папки',
   'Share this note': 'Поделиться заметкой',
   'Everyone in the space already has it.': 'У всех в пространстве она уже есть.',
   'Remove from your list': 'Убрать из своего списка',

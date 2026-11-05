@@ -1303,6 +1303,7 @@ export const es: Dictionary = {
   Share: 'Compartir',
   'Share {name}': 'Compartir {name}',
   'Share this space': 'Compartir este espacio',
+  'Export this space as Markdown and folders': 'Exportar este espacio como Markdown y carpetas',
   'Share this note': 'Compartir esta nota',
   'Everyone in the space already has it.': 'Todos los del espacio ya la tienen.',
   'Remove from your list': 'Quitar de la lista',

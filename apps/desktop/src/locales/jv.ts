@@ -1279,6 +1279,7 @@ export const jv: Dictionary = {
   Share: 'Bagi',
   'Share {name}': 'Bagi {name}',
   'Share this space': 'Bagi papan iki',
+  'Export this space as Markdown and folders': 'Ekspor papan iki dadi Markdown lan folder',
   'Share this note': 'Bagi cathetan iki',
   'Everyone in the space already has it.': 'Kabeh wong ing papan iki wis duwe.',
   'Remove from your list': 'Busak saka dhaptar sampeyan',

@@ -92,6 +92,8 @@ const disk = vi.hoisted(() => {
         if (held === undefined) throw new Error('no such file')
         return (typeof held === 'string' ? new TextEncoder().encode(held) : held).slice().buffer
       }
+      case 'path_taken':
+        return files.has(path) || dirs.has(path)
       case 'file_stamp': {
         const held = files.get(path)
         return held === undefined ? null : { modified: 1, len: held.length }
@@ -398,5 +400,37 @@ describe('a space that is a folder, where this device keeps new spaces itself', 
     const { ws, said } = workspace(['/spaces/Notes'])
     await convertAll(ws)
     expect(said).toEqual([])
+  })
+})
+
+describe('a space written out as Markdown and folders', () => {
+  test('is every file of it where it is, its inbox too, into a folder of its own', async () => {
+    const { exportSpaceTo } = await import('./export')
+    const made = await call<{ path: string }>('create_space', { name: 'Plans' })
+    await call('write_note', { path: `${made.path}/Work/Plan.md`, content: 'ship it' })
+    await call('write_note', { path: `${made.path}/.Inbox.md`, content: '- [ ] eggs' })
+    await call('write_bytes', { path: `${made.path}/cat.png`, base64: 'AQI=' })
+    disk.dirs.add('/picked/Plans')
+
+    expect(await exportSpaceTo(made.path, 'Plans', '/picked')).toBe('/picked/Plans 2')
+    expect(disk.files.get('/picked/Plans 2/Work/Plan.md')).toEqual(
+      new TextEncoder().encode('ship it'),
+    )
+    expect(disk.files.get('/picked/Plans 2/.Inbox.md')).toEqual(
+      new TextEncoder().encode('- [ ] eggs'),
+    )
+    expect(disk.files.get('/picked/Plans 2/cat.png')).toEqual(new Uint8Array([1, 2]))
+  })
+
+  test('is the same from a space that is a folder', async () => {
+    const { exportSpaceTo } = await import('./export')
+    disk.dirs.add('/spaces/Disk')
+    disk.dirs.add('/spaces/Disk/Work')
+    disk.files.set('/spaces/Disk/Work/Plan.md', 'ship it')
+    disk.files.set('/spaces/Disk/.Inbox.md', '- [ ] eggs')
+
+    await exportSpaceTo('/spaces/Disk', 'Disk', '/picked')
+    expect(disk.files.get('/picked/Disk/Work/Plan.md')).toEqual(new TextEncoder().encode('ship it'))
+    expect(disk.files.get('/picked/Disk/.Inbox.md')).toEqual(new TextEncoder().encode('- [ ] eggs'))
   })
 })

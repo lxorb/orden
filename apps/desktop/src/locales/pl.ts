@@ -1323,6 +1323,7 @@ export const pl: Dictionary = {
   Share: 'Udostępnij',
   'Share {name}': 'Udostępnij {name}',
   'Share this space': 'Udostępnij tę przestrzeń',
+  'Export this space as Markdown and folders': 'Eksportuj tę przestrzeń jako Markdown i foldery',
   'Share this note': 'Udostępnij tę notatkę',
   'Everyone in the space already has it.': 'Wszyscy w przestrzeni już ją mają.',
   'Remove from your list': 'Usuń z listy',

@@ -1262,6 +1262,7 @@ export const yue: Dictionary = {
   Share: '分享',
   'Share {name}': '分享{name}',
   'Share this space': '分享呢個空間',
+  'Export this space as Markdown and folders': '將呢個空間匯出做 Markdown 同資料夾',
   'Share this note': '分享呢篇筆記',
   'Everyone in the space already has it.': '呢個空間入面嘅每個人都已經有喇。',
   'Remove from your list': '從你嘅列表移除',

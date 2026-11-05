@@ -1281,6 +1281,7 @@ export const ja: Dictionary = {
   Share: '共有',
   'Share {name}': '{name} を共有',
   'Share this space': 'このスペースを共有',
+  'Export this space as Markdown and folders': 'このスペースを Markdown とフォルダとして書き出す',
   'Share this note': 'このノートを共有',
   'Everyone in the space already has it.': 'スペースの全員がすでに見られます。',
   'Remove from your list': 'リストから外す',

@@ -1296,6 +1296,8 @@ export const ha: Dictionary = {
   Share: 'Raba',
   'Share {name}': 'Raba {name}',
   'Share this space': 'Raba wannan wurin',
+  'Export this space as Markdown and folders':
+    'Fitar da wannan wurin a matsayin Markdown da manyan fayiloli',
   'Share this note': 'Raba wannan bayanin kula',
   'Everyone in the space already has it.': 'Kowa a wurin yana da shi riga.',
   'Remove from your list': 'Cire daga jerinka',

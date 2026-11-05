@@ -1300,6 +1300,8 @@ export const ml: Dictionary = {
   Share: 'പങ്കിടുക',
   'Share {name}': '{name} പങ്കിടുക',
   'Share this space': 'ഈ സ്പേസ് പങ്കിടുക',
+  'Export this space as Markdown and folders':
+    'ഈ സ്പേസ് Markdown-ഉം ഫോൾഡറുകളുമായി എക്സ്പോർട്ട് ചെയ്യുക',
   'Share this note': 'ഈ കുറിപ്പ് പങ്കിടുക',
   'Everyone in the space already has it.': 'സ്പേസിലുള്ള എല്ലാവർക്കും ഇപ്പോൾ തന്നെ ഉണ്ട്.',
   'Remove from your list': 'നിങ്ങളുടെ ലിസ്റ്റിൽ നിന്ന് നീക്കുക',

@@ -1275,6 +1275,7 @@ export const vi: Dictionary = {
   Share: 'Chia sẻ',
   'Share {name}': 'Chia sẻ {name}',
   'Share this space': 'Chia sẻ không gian này',
+  'Export this space as Markdown and folders': 'Xuất không gian này dưới dạng Markdown và thư mục',
   'Share this note': 'Chia sẻ ghi chú này',
   'Everyone in the space already has it.': 'Mọi người trong không gian đã có.',
   'Remove from your list': 'Bỏ khỏi danh sách của bạn',

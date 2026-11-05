@@ -1284,6 +1284,7 @@ export const bn: Dictionary = {
   Share: 'শেয়ার',
   'Share {name}': '{name} শেয়ার',
   'Share this space': 'এই স্পেস শেয়ার',
+  'Export this space as Markdown and folders': 'এই স্পেস Markdown ও ফোল্ডার হিসেবে এক্সপোর্ট',
   'Share this note': 'এই নোট শেয়ার',
   'Everyone in the space already has it.': 'স্পেসের সবার কাছে এটি আগেই আছে।',
   'Remove from your list': 'আপনার তালিকা থেকে সরান',

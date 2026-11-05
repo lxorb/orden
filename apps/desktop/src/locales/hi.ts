@@ -1288,6 +1288,8 @@ export const hi: Dictionary = {
   Share: 'साझा करें',
   'Share {name}': '{name} साझा करें',
   'Share this space': 'यह स्पेस साझा करें',
+  'Export this space as Markdown and folders':
+    'यह स्पेस Markdown और फ़ोल्डरों के रूप में एक्सपोर्ट करें',
   'Share this note': 'यह नोट साझा करें',
   'Everyone in the space already has it.': 'स्पेस के सभी लोगों के पास यह पहले से है।',
   'Remove from your list': 'अपनी सूची से निकालें',

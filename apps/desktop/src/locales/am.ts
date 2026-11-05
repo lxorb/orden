@@ -1272,6 +1272,7 @@ export const am: Dictionary = {
   Share: 'አጋራ',
   'Share {name}': '{name} አጋራ',
   'Share this space': 'ይህን ቦታ አጋራ',
+  'Export this space as Markdown and folders': 'ይህን ቦታ እንደ Markdown እና አቃፊዎች ላክ',
   'Share this note': 'ይህን ማስታወሻ አጋራ',
   'Everyone in the space already has it.': 'በቦታው ያለ ሁሉ አስቀድሞ አለው።',
   'Remove from your list': 'ከዝርዝርህ አስወግድ',

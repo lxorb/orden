@@ -1294,6 +1294,8 @@ export const kn: Dictionary = {
   Share: 'ಹಂಚಿ',
   'Share {name}': '{name} ಹಂಚಿ',
   'Share this space': 'ಈ ಸ್ಪೇಸ್ ಹಂಚಿ',
+  'Export this space as Markdown and folders':
+    'ಈ ಸ್ಪೇಸ್ ಅನ್ನು Markdown ಮತ್ತು ಫೋಲ್ಡರ್‌ಗಳಾಗಿ ರಫ್ತು ಮಾಡಿ',
   'Share this note': 'ಈ ಟಿಪ್ಪಣಿ ಹಂಚಿ',
   'Everyone in the space already has it.': 'ಸ್ಪೇಸ್‌ನಲ್ಲಿರುವ ಎಲ್ಲರಿಗೂ ಈಗಾಗಲೇ ಇದೆ.',
   'Remove from your list': 'ನಿಮ್ಮ ಪಟ್ಟಿಯಿಂದ ತೆಗೆಯಿರಿ',

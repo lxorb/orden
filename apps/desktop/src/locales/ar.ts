@@ -1335,6 +1335,7 @@ export const ar: Dictionary = {
   Share: 'مشاركة',
   'Share {name}': 'مشاركة {name}',
   'Share this space': 'مشاركة هذه المساحة',
+  'Export this space as Markdown and folders': 'تصدير هذه المساحة بصيغة Markdown ومجلدات',
   'Share this note': 'مشاركة هذه الملاحظة',
   'Everyone in the space already has it.': 'كل من في المساحة لديه ذلك بالفعل.',
   'Remove from your list': 'إزالة من قائمتك',

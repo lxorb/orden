@@ -205,6 +205,13 @@ and written no more - the kept space says which folder it was (`.from`), and one
 afterwards leaves a line in `.orden/.retired` - so a build from before reads that folder
 as it always did, and going back costs only what was written since.
 
+A space is files anybody else can read only when somebody asks for them (step 4f,
+internal/export.ts): Export this space as Markdown and folders writes every file of it,
+the inbox too, where it is in the space and under its own name, into a folder of its own
+inside a folder picked for it, numbered where the name is taken, so nothing there is
+written over. It is made once, when asked, and never kept in step after; a space that is
+a folder is written out the same way.
+
 ## What is kept about an entry
 
 A folder's icon and its colour are kept on the account by the folder's id, and a

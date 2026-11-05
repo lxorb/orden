@@ -1299,6 +1299,7 @@ export const de: Dictionary = {
   Share: 'Teilen',
   'Share {name}': '{name} teilen',
   'Share this space': 'Diesen Bereich teilen',
+  'Export this space as Markdown and folders': 'Diesen Bereich als Markdown und Ordner exportieren',
   'Share this note': 'Diese Notiz teilen',
   'Everyone in the space already has it.': 'Alle im Bereich haben sie schon.',
   'Remove from your list': 'Aus deiner Liste entfernen',

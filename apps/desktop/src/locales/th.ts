@@ -1269,6 +1269,7 @@ export const th: Dictionary = {
   Share: 'แชร์',
   'Share {name}': 'แชร์ {name}',
   'Share this space': 'แชร์พื้นที่นี้',
+  'Export this space as Markdown and folders': 'ส่งออกพื้นที่นี้เป็น Markdown และโฟลเดอร์',
   'Share this note': 'แชร์โน้ตนี้',
   'Everyone in the space already has it.': 'ทุกคนในพื้นที่นี้มีอยู่แล้ว',
   'Remove from your list': 'เอาออกจากรายการของคุณ',

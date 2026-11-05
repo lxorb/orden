@@ -1299,6 +1299,8 @@ export const ta: Dictionary = {
   Share: 'பகிர்',
   'Share {name}': '{name} பகிர்',
   'Share this space': 'இந்த இடத்தைப் பகிர்',
+  'Export this space as Markdown and folders':
+    'இந்த இடத்தை Markdown மற்றும் கோப்புறைகளாக ஏற்றுமதி செய்',
   'Share this note': 'இந்தக் குறிப்பைப் பகிர்',
   'Everyone in the space already has it.': 'இடத்தில் உள்ள அனைவருக்கும் ஏற்கெனவே உள்ளது.',
   'Remove from your list': 'உங்கள் பட்டியலிலிருந்து அகற்று',

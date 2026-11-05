@@ -1283,6 +1283,7 @@ export const mr: Dictionary = {
   Share: 'शेअर करा',
   'Share {name}': '{name} शेअर करा',
   'Share this space': 'हा स्पेस शेअर करा',
+  'Export this space as Markdown and folders': 'हा स्पेस Markdown आणि फोल्डर म्हणून निर्यात करा',
   'Share this note': 'ही नोंद शेअर करा',
   'Everyone in the space already has it.': 'स्पेसमधील सर्वांकडे ते आधीच आहे.',
   'Remove from your list': 'तुमच्या यादीतून काढा',

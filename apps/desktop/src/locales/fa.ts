@@ -1288,6 +1288,7 @@ export const fa: Dictionary = {
   Share: 'هم‌رسانی',
   'Share {name}': 'هم‌رسانی {name}',
   'Share this space': 'هم‌رسانی این فضا',
+  'Export this space as Markdown and folders': 'برون‌بری این فضا به‌صورت Markdown و پوشه‌ها',
   'Share this note': 'هم‌رسانی این یادداشت',
   'Everyone in the space already has it.': 'همه در این فضا از پیش آن را دارند.',
   'Remove from your list': 'برداشتن از فهرست شما',

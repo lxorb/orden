@@ -1299,6 +1299,7 @@ export const ptBR: Dictionary = {
   Share: 'Compartilhar',
   'Share {name}': 'Compartilhar {name}',
   'Share this space': 'Compartilhar este espaço',
+  'Export this space as Markdown and folders': 'Exportar este espaço como Markdown e pastas',
   'Share this note': 'Compartilhar esta nota',
   'Everyone in the space already has it.': 'Todo mundo no espaço já tem.',
   'Remove from your list': 'Remover da lista',
