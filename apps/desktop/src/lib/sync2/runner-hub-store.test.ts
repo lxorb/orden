@@ -245,3 +245,26 @@ describe('the hub asking the device id', () => {
   })
 })
 
+describe('the way back to v1', () => {
+  test('waits for the window keeping the engine signed out, and opens no store under it (M3-2)', async () => {
+    const a = await aWindow()
+    await a.runner.startLocal()
+    const b = await aWindow()
+    void b.runner.startLocal()
+    await settle()
+
+    // Signed in to an account back on v1: every window drops the local engine and walks.
+    Object.assign(b.account, { user: { id: 'u1', syncVersion: 1 }, token: 't' })
+    const walked = b.runner.walkBack(() => true)
+    await settle(200)
+    expect(crate.log).not.toContain('open u1')
+    expect(crate.held?.account).toBe('local')
+
+    Object.assign(a.account, { user: { id: 'u1', syncVersion: 1 }, token: 't' })
+    await a.runner.dropLocal()
+    expect(await a.runner.walkBack(() => true)).toBe(true)
+    expect(await walked).toBe(true)
+    expect(wrong()).toEqual([])
+  })
+})
+

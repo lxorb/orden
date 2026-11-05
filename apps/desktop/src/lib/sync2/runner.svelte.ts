@@ -657,7 +657,10 @@ class Runner {
   /** The way back, tried until it is walked, at v1's cadence while the account cannot be
    *  reached. Answers whether v1 may start, false once `alive` says this session ended. */
   async walkBack(alive: () => boolean): Promise<boolean> {
-    // One window walks it: an engine for this is an engine like any other.
+    // One window walks it: an engine for this is an engine like any other, so it opens the
+    // account's store only holding the device's (`holdStore`), as `start` does. Let go of
+    // after: v1 runs no engine, and every other window walks too.
+    if (!(await this.holdStore())) return false
     const lead = await leadSync(undefined, account.user?.id)
     try {
       for (let tries = 0; alive(); tries += 1) {
@@ -667,6 +670,10 @@ class Runner {
       return false
     } finally {
       lead?.release()
+      if (!this.current && !this.lead) {
+        this.storeLead?.release()
+        this.storeLead = null
+      }
     }
   }
 
