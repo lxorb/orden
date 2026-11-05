@@ -860,6 +860,87 @@ pub struct HttpDone {
     pub size: u64,
 }
 
+/// `system`: the system around the app (#1078), as a VS Code extension's `env` and
+/// `env.openExternal` reach it. See system.rs.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct System {
+    /// What to do.
+    pub op: SystemOp,
+    /// For `open`: an address, `http`, `https`, `mailto` or `tel`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
+    /// For `open` and `reveal`: a file or folder, absolute or under `~/`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub path: Option<String>,
+}
+
+/// What `system` does.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SystemOp {
+    /// An address or a file opened with the system's own app for it.
+    Open,
+    /// A file or folder shown in the file manager.
+    Reveal,
+    /// The app's environment variables.
+    Env,
+    /// The system: its name, version, architecture, displays and language.
+    Info,
+}
+
+/// What `system` answers.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct SystemDone {
+    /// What `open` or `reveal` handed the system.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub opened: Option<String>,
+    /// The environment, names to values, those that look like secrets left out.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub env: std::collections::BTreeMap<String, String>,
+    /// The names whose values were left out.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub withheld: Vec<String>,
+    /// What `info` found.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub info: Option<SystemInfo>,
+}
+
+/// The system, as `info` says it.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct SystemInfo {
+    /// `windows`, `macos`, `linux`.
+    pub os: String,
+    /// Its version.
+    pub os_version: String,
+    /// `x86_64`, `aarch64`.
+    pub arch: String,
+    /// The reader's language, as the system says it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub locale: Option<String>,
+    /// Orden's own version.
+    pub app_version: String,
+    /// The engine the window runs on.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub webview: Option<String>,
+    /// The screens, the primary one first.
+    pub displays: Vec<Display>,
+}
+
+/// One screen.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct Display {
+    /// What the system calls it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    /// Its size in physical pixels.
+    pub width: u32,
+    /// Its size in physical pixels.
+    pub height: u32,
+    /// How many physical pixels a logical one is.
+    pub scale: f64,
+}
+
 /// `approval_status`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -989,6 +1070,8 @@ verbs! {
     "process" => Process(Process) -> ProcessDone,
     /// One request to any site (#1078).
     "http" => Http(Http) -> HttpDone,
+    /// The system around the app: open, reveal, its environment, what it is (#1078).
+    "system" => System(System) -> SystemDone,
     /// This agent's grant, tabs, questions and pauses.
     "agent_status" => Status(Nothing) -> Status,
     /// What the reader answered.

@@ -39,6 +39,7 @@ export const BROWSER_VERBS = [
   'files',
   'process',
   'http',
+  'system',
   'agent_status',
   'approval_status',
   'agent_pair',

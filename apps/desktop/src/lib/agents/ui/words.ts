@@ -86,6 +86,7 @@ const WORDS: Readonly<Record<string, string>> = {
   files: key('Files'),
   process: RUNNING,
   http: key('Web requests'),
+  system: OPENING,
   system_clipboard: key('Clipboard'),
   ask_reader: key('Questions'),
   note_editor: key('Editor'),

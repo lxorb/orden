@@ -134,6 +134,38 @@ pub(super) fn reachable(
     Ok(path)
 }
 
+/// A path as an agent gave it, made absolute: `~/` is the home folder (system.rs).
+pub(super) fn absolute(app: &AppHandle, asked: &str) -> Result<PathBuf, String> {
+    resolved(app, asked)
+}
+
+/// Why no agent may hand this path to the system: it is in Orden's own folders, by its
+/// name or by where its links lead. Nothing where it is not; the spaces are the reader's,
+/// and theirs to open, and a folder that holds Orden's is only shown.
+pub(super) fn fenced_out(app: &AppHandle, path: &Path) -> Option<Answer> {
+    behind(&own_folders(app), path)
+}
+
+/// `fenced_out`, against the folders given.
+fn behind(fenced: &[PathBuf], path: &Path) -> Option<Answer> {
+    let real_path = real(path);
+    fenced
+        .iter()
+        .any(|fence| {
+            let real_fence = real(fence);
+            crate::paths::inside(fence, path) || crate::paths::inside(&real_fence, &real_path)
+        })
+        .then(|| {
+            Answer::error(
+                Code::NotGranted,
+                format!(
+                    "{} is in Orden's own folder, with the agents' grants and the sites' cookies: no agent reaches it",
+                    path.display()
+                ),
+            )
+        })
+}
+
 /// Whether an op answers what files say, which is the files' words and not the reader's.
 fn reads(op: FilesOp) -> bool {
     matches!(
@@ -185,8 +217,17 @@ fn resolved(app: &AppHandle, asked: &str) -> Result<PathBuf, String> {
 /// The folders no agent reaches, whatever it holds: the spaces, which have tools of
 /// their own, and the app's own folders.
 fn fences(app: &AppHandle) -> Vec<PathBuf> {
+    crate::paths::spaces_dir(app)
+        .ok()
+        .into_iter()
+        .chain(own_folders(app))
+        .collect()
+}
+
+/// Orden's own folders: its config and its data, with the grants, the endpoint's secret
+/// and the web tabs' cookies in them.
+fn own_folders(app: &AppHandle) -> Vec<PathBuf> {
     [
-        crate::paths::spaces_dir(app).ok(),
         crate::paths::config_dir(app).ok(),
         app.path().app_config_dir().ok(),
         app.path().app_data_dir().ok(),
@@ -880,6 +921,32 @@ mod tests {
             .file_type()
             .is_symlink());
         assert_eq!(fs::read_link(copy.join("door")).expect("where"), fence);
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    /// A path handed to the system (system.rs) is never in Orden's own folders, by its
+    /// name or through a link; the folder holding them is only shown, and every other
+    /// path is the reader's.
+    #[cfg(unix)]
+    #[test]
+    fn a_path_handed_to_the_system_is_never_behind_orden_s_fence() {
+        let root = temp();
+        let fence = root.join("Orden");
+        fs::create_dir_all(&fence).expect("fence");
+        fs::write(fence.join("agents.json"), "secret plan").expect("grants");
+        let mine = root.join("mine");
+        fs::create_dir_all(&mine).expect("mine");
+        std::os::unix::fs::symlink(&fence, mine.join("door")).expect("link");
+        std::os::unix::fs::symlink(fence.join("agents.json"), mine.join("grants")).expect("link");
+        let fenced = [fence.clone()];
+
+        assert!(behind(&fenced, &fence).is_some());
+        assert!(behind(&fenced, &fence.join("agents.json")).is_some());
+        assert!(behind(&fenced, &mine.join("door")).is_some());
+        assert!(behind(&fenced, &mine.join("door/agents.json")).is_some());
+        assert!(behind(&fenced, &mine.join("grants")).is_some());
+        assert!(behind(&fenced, &root).is_none());
+        assert!(behind(&fenced, &mine).is_none());
         let _ = fs::remove_dir_all(&root);
     }
 

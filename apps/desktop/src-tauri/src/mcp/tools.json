@@ -80,6 +80,20 @@
     "annotations": { "openWorldHint": true }
   },
   {
+    "name": "system",
+    "description": "The system around Orden. open: a url (http, https, mailto, tel) or a path with its default app; reveal: a path in the file manager; both ask as process does. env: environment variables, secrets left out; info: OS, versions, displays, locale.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "op": { "type": "string", "enum": ["open", "reveal", "env", "info"] },
+        "url": { "type": "string" },
+        "path": { "type": "string" }
+      },
+      "required": ["op"]
+    },
+    "annotations": { "openWorldHint": true }
+  },
+  {
     "name": "agent_status",
     "description": "Your grant (what you may reach), your tabs, the questions waiting for the reader, and whether you are stopped.",
     "inputSchema": { "type": "object", "properties": {} },

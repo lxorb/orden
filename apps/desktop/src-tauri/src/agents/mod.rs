@@ -108,6 +108,7 @@ mod snapshot;
     )
 )]
 pub(crate) mod stop;
+mod system;
 
 #[cfg(any(windows, feature = "cef", target_os = "macos"))]
 pub mod engines;
@@ -345,6 +346,10 @@ fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
             // And requests to any site (#1078).
             if let Verb::Http(asked) = &browsing {
                 return http::answer(app, caller, asked, since);
+            }
+            // And the system around the app (#1078).
+            if let Verb::System(asked) = &browsing {
+                return system::answer(app, caller, asked);
             }
             browse(app, caller, browsing, since)
         }

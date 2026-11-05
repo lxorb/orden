@@ -493,6 +493,7 @@ the AI sidebar, with the chat attached, and the answer comes back as a draft (de
 | `files` | `op`: `read`, `write`, `append`, `list`, `stat`, `mkdir`, `move`, `copy`, `delete`, `search`, `changes`; `path`, `to`?, `content`?, `base64`?, `glob`?, `text`?, `since`? | files and folders anywhere the user account reaches, outside the spaces, with `files` (8.11) |
 | `process` | `op`: `run`, `start`, `list`, `read`, `write`, `kill`; `program`?, `args`?, `env`?, `cwd`?, `stdin`?, `timeout_ms`?, `id`?, `since`?, `wait_ms`?, `close`? | a program on this computer, never through a shell: run to its end, or started and read, written to and ended, with `processes` (8.12) |
 | `http` | `url`, `method`?, `headers`?, `body`?, `base64`?, `save_to`?, `timeout_ms`? | one request to any site, outside every tab and with none of the reader's cookies; the body answered, or written to a file under `files`' rules, with `network` (8.13) |
+| `system` | `op`: `open`, `reveal`, `env`, `info`; `url`?, `path`? | the system around Orden: an address or a file opened with its default app, a path shown in the file manager, the environment with its secrets left out, and what the system is; with `processes` (8.16) |
 | `run_terminal` | `command`, `cwd`?, `tab`? | only when the terminal tab exists, and only with `terminal` (8.9); with `tab`, typed into that terminal of the reader's, local or online, and what it printed until it went quiet |
 | `read_terminal` | `tab`, `lines`? | one of the reader's terminal tabs as words: scrollback and screen, wrapped lines joined, marked as the terminal's; one not shown since a restart answers the lines it came back with. `context` (8.9) |
 | `type_terminal` | `tab`, `text`?, `enter`?, `keys`?, `wait_ms`? | one line typed into the reader's own shell, Enter unless told otherwise, then named keys (`Ctrl+C`, the arrows, `Tab`...); answers what it printed until it went quiet. `terminal`, and it asks like `run_terminal` (8.9) |
@@ -1126,6 +1127,28 @@ Places are a line from 1 and a character from 0, clamped to the note
 
 The other kinds of note keep their own tools: `read_canvas` and `edit_canvas`, the pages
 tools, `read_pdf` and `pdf_highlights`, the tables' and the tasks'.
+
+### 8.16 The system
+
+`system` is the system around Orden, as a VS Code extension's `env`, `env.openExternal`
+and the file manager's Reveal reach it (#1078; `system.rs`). It is under `processes`,
+since opening a file starts a program.
+
+- `open` hands an address or a file to the system's own app for it, and `reveal` shows
+  a file or folder in the file manager. Both ask as `process` does, under *the terminal*
+  (Full permissions asks nothing). An address is the web's, mail's or a telephone's -
+  `http`, `https`, `mailto`, `tel` - never `file:`, which a path says, and never Orden's
+  own `nib:` and `orden:` links, which run the app's commands as the reader. The system's
+  browser is the reader's, cookies and all, so a site the grant denies or keeps to the
+  agent's own store is not opened there, by any spelling of its name (8.13), in any
+  mode. A path is never in Orden's own folders, by its name or by where its links lead
+  (8.11).
+- `env` answers the app's environment variables, every one whose name says it is a
+  secret (`*_TOKEN`, `*_KEY`, `*SECRET*`, `*PASSWORD*`, `*CREDENTIAL*` and their kin), or
+  whose value is an address carrying a password (`postgres://me:pw@db/x`), left out and
+  named under `withheld`, unless the grant is Full permissions.
+- `info` answers the system's name, version and architecture, the reader's language,
+  Orden's version, the engine the window runs on, and the screens, the primary one first.
 
 ---
 
