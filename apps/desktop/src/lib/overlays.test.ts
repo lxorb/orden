@@ -300,6 +300,23 @@ describe('a press past a popup', () => {
     expect(overlays.depth).toBe(1)
     offSheet()
   })
+
+  test('the window losing the focus leaves a popup that keeps the focus, and what is under it', () => {
+    const under = popup()
+    let open = true
+    const off = overlays.show(
+      () => (open = false),
+      () => [new Box()],
+      null,
+      true,
+    )
+
+    overlays.away()
+    expect([under.it.open, open]).toEqual([true, true])
+    overlays.pressed(press(new Box()))
+    expect([under.it.open, open]).toEqual([false, false])
+    off()
+  })
 })
 
 /** The second question the stack answers: whether a web page has to be out of sight.

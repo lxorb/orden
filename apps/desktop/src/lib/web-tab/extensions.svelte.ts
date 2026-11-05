@@ -174,34 +174,44 @@ class Extensions {
 
   /** Opens one's popup over `tab`. */
   open(id: string, tab: string, store: string | null | undefined): void {
-    this.popped = this.popped?.id === id && this.popped.tab === tab ? null : { id, tab, store }
+    this.pop(this.popped?.id === id && this.popped.tab === tab ? null : { id, tab, store })
   }
 
-  close(): void {
-    this.popped = null
+  close(which?: Popped): void {
+    if (!which || this.popped === which) this.pop(null)
+  }
+
+  private pop(next: Popped | null) {
+    if (this.popped) void invoke('extension_popup_close').catch(() => undefined)
+    this.popped = next
   }
 
   /** Builds the open popup's page where `at` says, while it is still the one open: asked
    *  again every second while the tab's browser is too busy to answer, as a browser's
    *  popup waits on a busy browser, and a popup that cannot be opened at all closes and
    *  says why on its extension's button. Nothing a popup does takes the app with it. */
-  async build(popped: Popped, at: () => PopupRect | null): Promise<void> {
+  async build(popped: Popped, at: () => PopupRect | null): Promise<string | null> {
     for (;;) {
       const rect = at()
-      if (this.popped !== popped || !rect) return
+      if (this.popped !== popped || !rect) return null
       try {
-        await invoke('extension_popup_open', {
-          id: popped.id,
-          tab: popped.tab,
-          store: popped.store ?? null,
-          rect,
-        })
+        const label =
+          (await invoke<string | null>('extension_popup_open', {
+            id: popped.id,
+            tab: popped.tab,
+            store: popped.store ?? null,
+            rect,
+          })) ?? null
+        if (this.popped !== popped) return null
         // Closed while it was being built: its bubble has gone, and so does the page.
-        if (this.popped !== popped) await invoke('extension_popup_close').catch(() => undefined)
-        else if (this.problems.delete(popped.id)) this.change(popped.id, { problem: null })
-        return
+        if (!at()) {
+          if (label) await invoke('extension_popup_close', { label }).catch(() => undefined)
+          return null
+        }
+        if (this.problems.delete(popped.id)) this.change(popped.id, { problem: null })
+        return label
       } catch (error) {
-        if (this.popped !== popped) return
+        if (this.popped !== popped) return null
         if (error === NOT_ANSWERING) {
           await new Promise((done) => setTimeout(done, ASK_AGAIN))
           continue
@@ -209,8 +219,8 @@ class Extensions {
         const why = typeof error === 'string' && error ? error : 'that popup could not be opened'
         this.problems.add(popped.id)
         this.change(popped.id, { problem: why })
-        this.close()
-        return
+        this.close(popped)
+        return null
       }
     }
   }

@@ -15,7 +15,7 @@
    *  again until it does, and a popup that cannot be opened says why on its button; see
    *  `build` in extensions.svelte.ts. */
 
-  import { onMount } from 'svelte'
+  import { onMount, untrack } from 'svelte'
   import { fade } from 'svelte/transition'
   import { dur } from '../motion'
   import { overlays } from '../overlays'
@@ -26,13 +26,23 @@
     popped,
     /** Where the bubble hangs from, measured against the bar. */
     right,
-  }: { popped: Popped; right: number } = $props()
+    from,
+  }: { popped: Popped; right: number; from?: HTMLElement | null } = $props()
 
   /** The size the page wants, once the crate has said. */
   let size = $state<{ width: number; height: number } | null>(null)
   let inside = $state<HTMLElement>()
+  let bubble = $state<HTMLElement>()
+  let label: string | null = null
 
-  $effect(() => overlays.show(() => extensions.close()))
+  $effect(() =>
+    overlays.show(
+      () => extensions.close(popped),
+      () => [bubble],
+      untrack(() => from) ?? undefined,
+      true,
+    ),
+  )
 
   /** Puts the popup's webview over the bubble's inside, as the window measures it. */
   function place() {
@@ -52,7 +62,7 @@
         listen<{ kind: string; width?: number; height?: number }>(
           'nib://extension-popup',
           ({ payload }) => {
-            if (payload.kind === 'closed') extensions.close()
+            if (payload.kind === 'closed') extensions.close(popped)
             else if (payload.width && payload.height)
               size = { width: payload.width, height: payload.height }
           },
@@ -64,26 +74,19 @@
       })
       .catch(() => undefined)
 
-    void extensions.build(popped, () => {
-      const box = gone ? null : inside?.getBoundingClientRect()
-      return box ? { x: box.x, y: box.y, width: box.width, height: box.height } : null
-    })
-
-    // A press anywhere else closes it; a press inside the popup is the popup's own page,
-    // which the window never hears.
-    const pressed = (event: PointerEvent) => {
-      if (inside && event.target instanceof Node && !inside.contains(event.target))
-        extensions.close()
-    }
-    window.addEventListener('pointerdown', pressed, true)
+    void extensions
+      .build(popped, () => {
+        const box = gone ? null : inside?.getBoundingClientRect()
+        return box ? { x: box.x, y: box.y, width: box.width, height: box.height } : null
+      })
+      .then((built) => (label = built))
     window.addEventListener('resize', place)
 
     return () => {
       gone = true
       unlisten?.()
-      window.removeEventListener('pointerdown', pressed, true)
       window.removeEventListener('resize', place)
-      void invoke('extension_popup_close').catch(() => undefined)
+      if (label) void invoke('extension_popup_close', { label }).catch(() => undefined)
     }
   })
 
@@ -94,6 +97,7 @@
 </script>
 
 <div
+  bind:this={bubble}
   class="popup nib-bubble"
   class:sized={size !== null}
   style:right="{right}px"

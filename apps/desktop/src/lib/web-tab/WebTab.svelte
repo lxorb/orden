@@ -685,6 +685,7 @@
 
   /** How far from the bar's right edge a bubble under an extension's button hangs. */
   let hangs = $state(0)
+  let opener = $state<HTMLElement | null>(null)
 
   let head = $state<HTMLElement>()
 
@@ -727,6 +728,10 @@
     showingExtensions = false
     if (one.popup) {
       if (anchor) hangs = under(anchor)
+      opener =
+        anchor ??
+        head?.querySelector<HTMLElement>(`[data-extension="${CSS.escape(one.id)}"]`) ??
+        null
       extensions.open(one.id, tab.id, page.store)
       return
     }
@@ -999,7 +1004,7 @@
       <WebDownloads onclose={() => (showingDownloads = false)} />
     {:else if extensions.popped?.tab === tab.id}
       {#key extensions.popped.id}
-        <WebExtensionPopup popped={extensions.popped} right={hangs} />
+        <WebExtensionPopup popped={extensions.popped} right={hangs} from={opener} />
       {/key}
     {:else if showingExtensions}
       <WebExtensions

@@ -50,6 +50,20 @@ static NUMBERED: AtomicU64 = AtomicU64::new(0);
 /// The label of the popup that is open, if one is.
 static SHOWN: Mutex<Option<String>> = Mutex::new(None);
 
+static WANTED: Mutex<Option<String>> = Mutex::new(None);
+
+fn want(label: Option<String>) {
+    *WANTED.lock().unwrap_or_else(PoisonError::into_inner) = label;
+}
+
+fn is_wanted(label: &str) -> bool {
+    WANTED
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .as_deref()
+        == Some(label)
+}
+
 /// A label no popup of this run has had.
 fn fresh_label() -> String {
     format!("{LABEL}{}", NUMBERED.fetch_add(1, Ordering::SeqCst))
@@ -165,7 +179,9 @@ pub async fn extension_popup_open(
     tab: String,
     store: Option<String>,
     rect: Rect,
-) -> Result<(), String> {
+) -> Result<Option<String>, String> {
+    let label = fresh_label();
+    want(Some(label.clone()));
     let app = webview.app_handle().clone();
     let finding = app.clone();
     let address: Url =
@@ -176,7 +192,6 @@ pub async fn extension_popup_open(
             .map_err(|_| "that extension's popup has no address".to_string())?;
     let store = crate::web_stores::named(store.as_deref())?.map(str::to_owned);
 
-    let label = fresh_label();
     let builder = WebviewBuilder::new(label.clone(), WebviewUrl::External(blank()?))
         .focused(crate::placement::away().is_none())
         .disable_drag_drop_handler()
@@ -206,10 +221,14 @@ pub async fn extension_popup_open(
     });
 
     let window = webview.window();
-    let (sending, mut waiting) = tauri::async_runtime::channel::<Result<(), String>>(1);
+    let (sending, mut waiting) = tauri::async_runtime::channel::<Result<Option<String>, String>>(1);
     let building = app.clone();
     app.run_on_main_thread(move || {
         let _doing = crate::stall::doing("extension_popup_open: building the popup");
+        if !is_wanted(&label) {
+            let _ = sending.try_send(Ok(None));
+            return;
+        }
         closed(&building);
         // The popup is drawn by the tab's own browser: one that does not answer would
         // hold this thread for as long as it does not.
@@ -234,8 +253,9 @@ pub async fn extension_popup_open(
         )
         .map_err(|error| format!("that popup could not be opened: {error}"));
         let made = made.map(|view| {
-            *SHOWN.lock().unwrap_or_else(PoisonError::into_inner) = Some(label);
+            *SHOWN.lock().unwrap_or_else(PoisonError::into_inner) = Some(label.clone());
             sent(&building, &view, &address);
+            Some(label)
         });
         let _ = sending.try_send(made);
     })
@@ -265,9 +285,16 @@ pub fn extension_popup_place(app: AppHandle, rect: Rect) {
 /// Closes the popup, if one is open. From the window's own turn rather than inside the
 /// engine's event the command arrives in: closing a webview there waits on it.
 #[tauri::command]
-pub async fn extension_popup_close(app: AppHandle) {
+pub async fn extension_popup_close(app: AppHandle, label: Option<String>) {
+    if label.is_none() {
+        want(None);
+    }
     let closing = app.clone();
-    let _ = app.run_on_main_thread(move || closed(&closing));
+    let _ = app.run_on_main_thread(move || {
+        if label.as_deref().is_none_or(is_shown) {
+            closed(&closing);
+        }
+    });
 }
 
 /// Closes the popup that is open, if one is: at once if its browser answers, else out of
@@ -574,6 +601,18 @@ mod tests {
             checked >= 4,
             "the scan found the calls it is about ({checked})"
         );
+    }
+
+    #[test]
+    fn a_popup_closed_or_opened_again_before_it_was_built_is_never_built() {
+        let first = fresh_label();
+        want(Some(first.clone()));
+        assert!(is_wanted(&first));
+        let second = fresh_label();
+        want(Some(second.clone()));
+        assert!(!is_wanted(&first) && is_wanted(&second));
+        want(None);
+        assert!(!is_wanted(&second));
     }
 
     #[test]

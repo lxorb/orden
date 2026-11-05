@@ -40,6 +40,7 @@ interface Open {
   from: Opener | null
   /** What the opener's `aria-expanded` said before, to say again once it closes. */
   said: string | null
+  keepsFocus: boolean
 }
 
 /** A control, as much of one as this reads and writes. */
@@ -93,8 +94,13 @@ class Overlays {
    *  out, it is the control the click going by landed on: the layers open from an
    *  effect, which runs before that click's task is over. A layer opened later than
    *  that, after something was fetched, names it; see `menu.show`. */
-  show(close: () => void, holds?: Holds, from: Opener | null = this.clicking): () => void {
-    const entry: Open = { close, holds: holds ?? null, from, said: null }
+  show(
+    close: () => void,
+    holds?: Holds,
+    from: Opener | null = this.clicking,
+    keepsFocus = false,
+  ): () => void {
+    const entry: Open = { close, holds: holds ?? null, from, said: null, keepsFocus }
     this.stack.push(entry)
     if (from?.setAttribute) {
       entry.said = from.getAttribute?.('aria-expanded') ?? null
@@ -194,7 +200,8 @@ class Overlays {
   /** The window lost the focus: to another window, or to a web page, which is the one
    *  word a press into a page sends. Every popup on top closes. */
   away() {
-    for (let top = this.stack.at(-1); top?.holds; top = this.stack.at(-1)) this.shut(top)
+    for (let top = this.stack.at(-1); top?.holds && !top.keepsFocus; top = this.stack.at(-1))
+      this.shut(top)
   }
 
   private shut(one: Open) {

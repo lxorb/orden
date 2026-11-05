@@ -37,6 +37,7 @@
 {#each pinned as one (one.id)}
   <button
     class="nib-glyph extension"
+    data-extension={one.id}
     class:is-on={open === one.id}
     class:is-wrong={one.problem !== null}
     title={one.problem ? `${one.name}: ${one.problem}` : one.name}
