@@ -2387,6 +2387,9 @@ export const kn: Dictionary = {
   '{device} needs ffmpeg to send its picture.': 'ಚಿತ್ರವನ್ನು ಕಳುಹಿಸಲು {device}ಗೆ ffmpeg ಬೇಕು.',
   'The picture could not be sent.': 'ಚಿತ್ರವನ್ನು ಕಳುಹಿಸಲಾಗಲಿಲ್ಲ.',
   'This device cannot show the picture.': 'ಈ ಸಾಧನವು ಚಿತ್ರವನ್ನು ತೋರಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.',
+  'Share the clipboard with applications': 'ಅಪ್ಲಿಕೇಶನ್‌ಗಳೊಂದಿಗೆ ಕ್ಲಿಪ್‌ಬೋರ್ಡ್ ಹಂಚಿಕೊಳ್ಳಿ',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'ನಿಮ್ಮ ಇನ್ನೊಂದು ಕಂಪ್ಯೂಟರ್‌ನ ಅಪ್ಲಿಕೇಶನ್ ಇಲ್ಲಿ ನೀವು ನಕಲಿಸಿದ್ದನ್ನು ಅಂಟಿಸುತ್ತದೆ, ಅದು ನಕಲಿಸಿದ್ದು ಇಲ್ಲಿಗೆ ಬರುತ್ತದೆ.',
   'None of your devices can run an application yet':
     'ನಿಮ್ಮ ಯಾವುದೇ ಸಾಧನ ಇನ್ನೂ ಅಪ್ಲಿಕೇಶನ್ ಚಲಾಯಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ',
   'Where does it run?': 'ಇದು ಎಲ್ಲಿ ಚಲಿಸುತ್ತದೆ?',

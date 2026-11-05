@@ -2369,6 +2369,9 @@ export const ps: Dictionary = {
     '{device} د خپل انځور د لېږلو لپاره ffmpeg ته اړتیا لري.',
   'The picture could not be sent.': 'انځور ونه لېږل شو.',
   'This device cannot show the picture.': 'دا وسیله انځور نه شي ښودلای.',
+  'Share the clipboard with applications': 'کلیپ بورډ له اپلیکیشنونو سره شریک کړئ',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'ستاسو په بل کمپیوټر کې اپلیکیشن هغه څه چسپوي چې تاسو دلته کاپي کړي، او هغه څه چې دا کاپي کوي دلته راځي.',
   'None of your devices can run an application yet': 'ستاسو هېڅ وسیله لا اپلیکیشن نشي چلولی',
   'Where does it run?': 'چېرته چلېږي؟',
   'What does it run?': 'څه چلوي؟',

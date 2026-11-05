@@ -2,6 +2,7 @@ import { panelDrawable } from '../even/panel-words'
 import { CATALOGUES_URL, i18n, plural, t } from '../i18n.svelte'
 import { languageOptions, machineSaid } from '../language-options'
 import { method } from '../mobile/bridge'
+import { clipboardSharing } from './apps-clipboard.svelte'
 import { DEFAULTS, modes, REMIND_BEFORE } from '../modes.svelte'
 import { isPlugin } from '../plugin'
 import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from '../recovery'
@@ -599,6 +600,23 @@ export function generalPane(): Pane {
                   get: () => modes.coder,
                   set: (on: boolean) => modes.setDeveloper(on),
                 },
+                // An application on another of the reader's computers, and this one's
+                // clipboard (issue 1063, step 6); see apps-clipboard.svelte.ts.
+                ...(modes.coder
+                  ? [
+                      {
+                        kind: 'switch' as const,
+                        label: t('Share the clipboard with applications'),
+                        hint: t(
+                          'An application on another of your computers pastes what you copied here, and what it copies comes here.',
+                        ),
+                        words: ['clipboard', 'copy', 'paste', 'application', 'remote'],
+                        initial: true,
+                        get: () => clipboardSharing.on,
+                        set: (on: boolean) => clipboardSharing.set(on),
+                      },
+                    ]
+                  : []),
               ],
             },
           ]),

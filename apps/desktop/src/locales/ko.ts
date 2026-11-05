@@ -2329,6 +2329,9 @@ export const ko: Dictionary = {
   '{device} needs ffmpeg to send its picture.': '화면을 보내려면 {device}에 ffmpeg가 필요합니다.',
   'The picture could not be sent.': '화면을 보내지 못했습니다.',
   'This device cannot show the picture.': '이 기기는 화면을 표시할 수 없습니다.',
+  'Share the clipboard with applications': '애플리케이션과 클립보드 공유',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    '다른 컴퓨터의 애플리케이션이 여기서 복사한 내용을 붙여 넣고, 그 애플리케이션이 복사한 내용은 여기로 옵니다.',
   'None of your devices can run an application yet':
     '아직 애플리케이션을 실행할 수 있는 기기가 없습니다',
   'Where does it run?': '어디에서 실행하나요?',

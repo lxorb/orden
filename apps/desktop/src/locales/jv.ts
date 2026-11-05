@@ -2345,6 +2345,9 @@ export const jv: Dictionary = {
   '{device} needs ffmpeg to send its picture.': '{device} butuh ffmpeg kanggo ngirim gambaré.',
   'The picture could not be sent.': 'Gambar ora bisa dikirim.',
   'This device cannot show the picture.': 'Piranti iki ora bisa nuduhaké gambar.',
+  'Share the clipboard with applications': 'Bagi papan klip karo aplikasi',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'Aplikasi ing komputer liyané nempelaké apa sing kok salin ing kéné, lan apa sing disalin teka ing kéné.',
   'None of your devices can run an application yet':
     'Durung ana piranti sampeyan sing bisa mlakokake aplikasi',
   'Where does it run?': 'Mlaku ing ngendi?',

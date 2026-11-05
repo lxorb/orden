@@ -21,7 +21,6 @@
 //! has each filled one painted over (9.4).
 
 use std::collections::{HashMap, HashSet};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, LazyLock, Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
@@ -29,12 +28,13 @@ use base64::Engine as _;
 use serde_json::{json, Value};
 
 use super::cdp::{self, Heard};
-use super::engines::View;
-use super::grants::Grant;
+use super::engines::{Engine, Gate, Page, Tree, View};
 use super::keys::{self, Key};
 use super::policy::{self, Facts, Field};
 use super::snapshot::{self, Part};
-use super::verbs::{Answer, Code, Cookie, FieldValue, Match, Moment, Picture, Store, Until};
+use super::verbs::{
+    Answer, Code, ConsoleLines, Cookie, FieldValue, Match, Moment, Picture, ReadAs, Requests, Until,
+};
 use crate::pdf::{printing, PdfPage};
 
 /// What an agent's refs are resolved and scripts run under, in the page.
@@ -602,41 +602,11 @@ const SETTLED: &str = r"(still, most) => new Promise((done) => {
   setTimeout(end, most)
 })";
 
-/// A page's trees, and the secret fields among their nodes.
-pub type Tree = (Vec<Part>, HashSet<(String, u64)>);
-
 /// Where a press goes and what it lands on there; see `Page::aim`.
 pub struct Aim {
     point: (f64, f64),
     /// The element the press lands on.
     pub on: Element,
-}
-
-/// A page an agent is acting on.
-pub struct Page<'a> {
-    /// Its page, on whichever engine.
-    pub view: &'a View,
-    /// Its label.
-    pub label: String,
-    /// Whether it is an agent's own tab rather than the reader's.
-    pub own: bool,
-    /// The stop the call started under.
-    pub since: u64,
-    /// What the agent may reach and the store the tab is in; none for the reader's own
-    /// command line.
-    pub limits: Option<(Grant, Store)>,
-    /// Whether this call may touch a credential: type into a sign-in form, photograph a
-    /// focused password field, print a page with a filled one. Set by the one decision
-    /// (`judged` in browser.rs, from the grant's mode, #1072), never by the page.
-    pub credentials: AtomicBool,
-    /// nib's own world in each session the call has been in, where everything the gate goes
-    /// by is read: the page has no reach into it, however it dresses its own objects.
-    pub worlds: Mutex<HashMap<(Option<String>, String), i64>>,
-    /// The frames of each session, once for the call, with the one that last read a node
-    /// first: a page of many frames or fields asks once, and not for each of them.
-    pub frame_lists: Mutex<HashMap<Option<String>, Vec<String>>>,
-    /// Whether the call has looked again with new worlds, which it does once.
-    pub worlds_renewed: AtomicBool,
 }
 
 /// How a frame's own points sit in the page: its top left, and where a step along each of
@@ -725,10 +695,6 @@ impl FrameMap {
     }
 }
 
-/// What a press is put to the question by, for each element it finds under the pointer
-/// other than the one already judged; see `Page::press_judged`.
-pub type Gate<'g> = &'g dyn Fn(&Element) -> Result<(), Answer>;
-
 /// An element, resolved from a ref.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Element {
@@ -769,12 +735,12 @@ impl Page<'_> {
     }
 
     /// Where the page is.
-    pub fn url(&self) -> String {
+    fn url(&self) -> String {
         self.view.url()
     }
 
     /// An element from a ref the agent passed.
-    pub fn element(&self, reference: &str) -> Result<Element, Answer> {
+    fn element(&self, reference: &str) -> Result<Element, Answer> {
         let Some((frame, backend)) = snapshot::parse_ref(reference) else {
             return Err(Answer::error(
                 Code::NoSuchRef,
@@ -1030,7 +996,7 @@ impl Page<'_> {
     }
 
     /// What an element says about itself and its form.
-    pub fn facts(&self, element: &Element) -> Result<Facts, Answer> {
+    fn facts(&self, element: &Element) -> Result<Facts, Answer> {
         let said = self.run_on(element, &FACTS, &[])?;
         Ok(self.facts_from(element, &said))
     }
@@ -1475,7 +1441,7 @@ impl Page<'_> {
     }
 
     /// Waits for an act to settle; see the top of this file.
-    pub fn settle(&self, navigations_before: u64) {
+    fn settle(&self, navigations_before: u64) {
         let started = Instant::now();
         let navigated = loop {
             let navigations = self
@@ -1538,7 +1504,7 @@ impl Page<'_> {
     }
 
     /// How many navigations of the page's own frame have started, for `settle`.
-    pub fn navigations(&self) -> u64 {
+    fn navigations(&self) -> u64 {
         self.heard()
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
@@ -1965,7 +1931,7 @@ impl Page<'_> {
 
     /// Presses an element: into view, lit for a beat in a reader's tab, then the
     /// engine's own press at its middle. Refused on a field whose list is a window.
-    pub fn click(
+    fn click(
         &self,
         element: &Element,
         button: &str,
@@ -1996,7 +1962,7 @@ impl Page<'_> {
     /// pixel of `browser_screenshot` at its own scale: what an agent falls back on where a
     /// press by ref cannot say what it lands on. Refused where it lands on a field whose
     /// list is a window, as a press by ref is.
-    pub fn click_at(
+    fn click_at(
         &self,
         point: (f64, f64),
         judged: &Element,
@@ -2116,7 +2082,7 @@ impl Page<'_> {
     }
 
     /// Words into a field, as text rather than keys; replacing what is there when asked.
-    pub fn type_text(&self, element: &Element, text: &str, replace: bool) -> Result<(), Answer> {
+    fn type_text(&self, element: &Element, text: &str, replace: bool) -> Result<(), Answer> {
         let facts = self.facts(element)?;
         self.refuse_secret(&facts)?;
         if facts.sensitive() {
@@ -2273,20 +2239,12 @@ impl Page<'_> {
     }
 
     /// One key or chord pressed inside the page.
-    pub fn press(&self, key: &Key) -> Result<(), Answer> {
+    fn press(&self, key: &Key) -> Result<(), Answer> {
         self.may_press(key)?;
         let before = self.navigations();
         self.press_key(key)?;
         self.settle(before);
         Ok(())
-    }
-
-    /// Whether a key may go to the field that has the page's keyboard: never one that
-    /// would open a picker, and never a character into a password field - which in a
-    /// reader's tab may be the field the reader is typing their own password into.
-    /// Whether this call was cleared to touch a credential (`credentials`).
-    pub fn may_touch_credentials(&self) -> bool {
-        self.credentials.load(Ordering::Relaxed)
     }
 
     /// A password field, or any field of a sign-in form, refused unless this call was
@@ -2301,6 +2259,9 @@ impl Page<'_> {
         Ok(())
     }
 
+    /// Whether a key may go to the field that has the page's keyboard: never one that
+    /// would open a picker, and never a character into a password field - which in a
+    /// reader's tab may be the field the reader is typing their own password into.
     fn may_press(&self, key: &Key) -> Result<(), Answer> {
         if let Some(facts) = self.active_facts()? {
             if facts.picker() && key.opens_a_picker() {
@@ -2324,7 +2285,7 @@ impl Page<'_> {
     /// the keyboard (see reader.rs). The key's default is done the page's way - Enter
     /// submits the field's form, Tab moves along, Backspace and Delete delete - and its
     /// text is inserted as text.
-    pub fn press_in_page(&self, key: &Key) -> Result<(), Answer> {
+    fn press_in_page(&self, key: &Key) -> Result<(), Answer> {
         self.may_press(key)?;
         let found = self.call(
             "Runtime.evaluate",
@@ -2368,7 +2329,7 @@ impl Page<'_> {
     }
 
     /// An element into view, or the page moved by an amount with the wheel at its middle.
-    pub fn scroll(&self, element: Option<&Element>, dx: f64, dy: f64) -> Result<(), Answer> {
+    fn scroll(&self, element: Option<&Element>, dx: f64, dy: f64) -> Result<(), Answer> {
         if let Some(element) = element {
             self.call_on(
                 element,
@@ -2545,7 +2506,7 @@ impl Page<'_> {
     /// A PNG of the page: what fits in the tab, the whole page, or one element; scaled to
     /// one image pixel per CSS pixel unless asked. Refused while a password field has the
     /// keyboard (9.4).
-    pub fn screenshot(
+    fn screenshot(
         &self,
         element: Option<&Element>,
         full: bool,
@@ -3086,7 +3047,7 @@ impl Page<'_> {
 
     /// The page as text, as markdown, or its article as markdown. Markdown is the
     /// clipper's own converter's, asked of the window; without a window it is the text.
-    pub fn read(
+    fn read(
         &self,
         app: &tauri::AppHandle,
         shape: super::verbs::ReadAs,
@@ -3132,7 +3093,7 @@ impl Page<'_> {
     }
 
     /// What the page calls itself, read in nib's own world.
-    pub fn title(&self) -> String {
+    fn title(&self) -> String {
         self.isolated("document.title")
             .ok()
             .and_then(|one| one.as_str().map(str::to_string))
@@ -3197,7 +3158,7 @@ impl Page<'_> {
     }
 
     /// Waits for what the agent asked, stop and dialogs ending it early.
-    pub fn wait(&self, until: &Until, most: Duration) -> Result<u64, Answer> {
+    fn wait(&self, until: &Until, most: Duration) -> Result<u64, Answer> {
         let started = Instant::now();
         loop {
             let done = match until {
@@ -3273,7 +3234,7 @@ impl Page<'_> {
     }
 
     /// A script run in the page, in nib's world or the page's own, answering its value.
-    pub fn evaluate(&self, expression: &str, page_world: bool) -> Result<Value, Answer> {
+    fn evaluate(&self, expression: &str, page_world: bool) -> Result<Value, Answer> {
         if !page_world {
             return self.isolated(expression);
         }
@@ -3289,7 +3250,7 @@ impl Page<'_> {
     }
 
     /// Goes to an address, and waits for it to load, up to ten seconds.
-    pub fn navigate(&self, url: &str) -> Result<(), Answer> {
+    fn navigate(&self, url: &str) -> Result<(), Answer> {
         let loads = self
             .heard()
             .lock()
@@ -3311,7 +3272,7 @@ impl Page<'_> {
     }
 
     /// One step along the tab's history, or the same page again.
-    pub fn step(&self, by: i64) -> Result<(), Answer> {
+    fn step(&self, by: i64) -> Result<(), Answer> {
         let loads = self
             .heard()
             .lock()
@@ -3366,7 +3327,7 @@ impl Page<'_> {
     }
 
     /// The cookies the page's address would be sent.
-    pub fn cookies(&self) -> Result<Vec<Cookie>, Answer> {
+    fn cookies(&self) -> Result<Vec<Cookie>, Answer> {
         let said = self.call("Network.getCookies", &json!({ "urls": [self.url()] }))?;
         Ok(said
             .get("cookies")
@@ -3427,7 +3388,7 @@ impl Page<'_> {
     }
 
     /// Every cookie and bit of storage of the page's origin, gone.
-    pub fn clear(&self) -> Result<(), Answer> {
+    fn clear(&self) -> Result<(), Answer> {
         for cookie in self.cookies()? {
             let _ = self.call(
                 "Network.deleteCookies",
@@ -3445,15 +3406,296 @@ impl Page<'_> {
     }
 
     /// The page's `localStorage`.
-    pub fn local(&self) -> Result<serde_json::Map<String, Value>, Answer> {
+    fn local(&self) -> Result<serde_json::Map<String, Value>, Answer> {
         let said = self.isolated("(() => { const out = {}; for (let at = 0; at < localStorage.length; at++) { const key = localStorage.key(at); out[key] = localStorage.getItem(key) } return out })()")?;
         Ok(said.as_object().cloned().unwrap_or_default())
     }
 
     /// The elements that match, over every frame.
-    pub fn find(&self, wanted: &snapshot::Wanted<'_>) -> Result<Vec<Match>, Answer> {
+    fn find(&self, wanted: &snapshot::Wanted<'_>) -> Result<Vec<Match>, Answer> {
         let (parts, secret) = self.parts()?;
         Ok(snapshot::find(&parts, &secret, wanted))
+    }
+}
+
+/// How many response bodies one `browser_network` reads, and how long each may be.
+const BODIES: usize = 20;
+const LONGEST_BODY: usize = 100_000;
+
+/// The `DevTools` Protocol's road to every act (#1092): `WebView2`'s and Orden's own
+/// Chromium's. Each act is the page's own method above.
+impl Engine for Page<'_> {
+    fn wake(&self) {
+        cdp::awake(self.view, &self.label, self.own);
+    }
+
+    fn url(&self) -> String {
+        Page::url(self)
+    }
+
+    fn title(&self) -> String {
+        Page::title(self)
+    }
+
+    fn element(&self, reference: &str) -> Result<Element, Answer> {
+        Page::element(self, reference)
+    }
+
+    fn element_at(&self, point: (f64, f64)) -> Result<Element, Answer> {
+        Page::element_at(self, point)
+    }
+
+    fn facts(&self, element: &Element) -> Result<Facts, Answer> {
+        Page::facts(self, element)
+    }
+
+    fn facts_of_press(&self, element: &Element) -> Result<Facts, Answer> {
+        Page::facts_of_press(self, element)
+    }
+
+    fn at_first_point(&self, element: &Element) -> Result<Element, Answer> {
+        Page::at_first_point(self, element)
+    }
+
+    fn aimed(&self, element: &Element) -> Result<Element, Answer> {
+        Ok(Page::aim(self, element)?.on)
+    }
+
+    fn may_act_in(&self, facts: &Facts) -> Result<(), Answer> {
+        Page::may_act_in(self, facts)
+    }
+
+    fn limits_sites(&self) -> bool {
+        Page::limits_sites(self)
+    }
+
+    fn tick_changes(&self, element: &Element, wanted: bool) -> Result<bool, Answer> {
+        Page::tick_changes(self, element, wanted)
+    }
+
+    fn active_facts(&self) -> Result<Option<Facts>, Answer> {
+        Page::active_facts(self)
+    }
+
+    fn navigate(&self, url: &str) -> Result<(), Answer> {
+        Page::navigate(self, url)
+    }
+
+    fn step(&self, by: i64) -> Result<(), Answer> {
+        Page::step(self, by)
+    }
+
+    fn wait(&self, until: &Until, most: Duration) -> Result<u64, Answer> {
+        Page::wait(self, until, most)
+    }
+
+    fn settle(&self, navigations_before: u64) {
+        Page::settle(self, navigations_before);
+    }
+
+    fn navigations(&self) -> u64 {
+        Page::navigations(self)
+    }
+
+    fn opened(&self) -> Vec<String> {
+        std::mem::take(
+            &mut self
+                .heard()
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+                .opened,
+        )
+    }
+
+    fn hosts(&self) -> Vec<String> {
+        let heard = self.heard();
+        let held = heard.lock().unwrap_or_else(PoisonError::into_inner);
+        let (requests, _) = held.requests(None, None);
+        let mut hosts: HashSet<String> = requests
+            .iter()
+            .filter_map(|one| policy::host_of(&one.url))
+            .collect();
+        for (_, frame) in held.frames() {
+            if let Some(host) = policy::host_of(&frame.url) {
+                hosts.insert(host);
+            }
+        }
+        hosts.into_iter().collect()
+    }
+
+    fn parts(&self) -> Result<Tree, Answer> {
+        Page::parts(self)
+    }
+
+    fn find(&self, wanted: &snapshot::Wanted<'_>) -> Result<Vec<Match>, Answer> {
+        Page::find(self, wanted)
+    }
+
+    fn read(
+        &self,
+        app: &tauri::AppHandle,
+        shape: ReadAs,
+    ) -> Result<(String, String, String), Answer> {
+        Page::read(self, app, shape)
+    }
+
+    fn clip(&self) -> Result<(String, String, String), Answer> {
+        Page::clip(self)
+    }
+
+    fn pdf(&self, paper: &PdfPage) -> Result<String, Answer> {
+        Page::pdf(self, paper)
+    }
+
+    fn click(
+        &self,
+        element: &Element,
+        button: &str,
+        count: u8,
+        modifiers: u8,
+        gate: Gate<'_>,
+    ) -> Result<(), Answer> {
+        Page::click(self, element, button, count, modifiers, gate)
+    }
+
+    fn click_at(
+        &self,
+        point: (f64, f64),
+        judged: &Element,
+        button: &str,
+        count: u8,
+        modifiers: u8,
+        gate: Gate<'_>,
+    ) -> Result<(), Answer> {
+        Page::click_at(self, point, judged, button, count, modifiers, gate)
+    }
+
+    fn hover(&self, element: &Element) -> Result<(), Answer> {
+        Page::hover(self, element)
+    }
+
+    fn type_text(&self, element: &Element, text: &str, replace: bool) -> Result<(), Answer> {
+        Page::type_text(self, element, text, replace)
+    }
+
+    fn press(&self, key: &Key) -> Result<(), Answer> {
+        Page::press(self, key)
+    }
+
+    fn press_in_page(&self, key: &Key) -> Result<(), Answer> {
+        Page::press_in_page(self, key)
+    }
+
+    fn scroll(&self, element: Option<&Element>, dx: f64, dy: f64) -> Result<(), Answer> {
+        Page::scroll(self, element, dx, dy)
+    }
+
+    fn select(&self, element: &Element, values: &[String]) -> Result<Vec<String>, Answer> {
+        Page::select(self, element, values)
+    }
+
+    fn fill(&self, element: &Element, value: &FieldValue, gate: Gate<'_>) -> Result<(), Answer> {
+        Page::fill(self, element, value, gate)
+    }
+
+    fn drag(
+        &self,
+        from: (&Element, &Element),
+        to: (&Element, &Element),
+        gates: (Gate<'_>, Gate<'_>),
+    ) -> Result<(), Answer> {
+        Page::drag(self, from, to, gates)
+    }
+
+    fn upload(&self, element: &Element, files: &[String], gate: Gate<'_>) -> Result<(), Answer> {
+        Page::upload(self, element, files, gate)
+    }
+
+    fn screenshot(
+        &self,
+        element: Option<&Element>,
+        full: bool,
+        scale: Option<f64>,
+    ) -> Result<Picture, Answer> {
+        Page::screenshot(self, element, full, scale)
+    }
+
+    fn console(&self, since: Option<u64>, level: Option<&str>) -> Result<ConsoleLines, Answer> {
+        cdp::listen_to_console(self.view, &self.label);
+        let (lines, next) = self
+            .heard()
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .console(since, level);
+        // A line a frame of a site the agent may not reach printed is that site's.
+        let lines = lines
+            .into_iter()
+            .filter(|one| {
+                one.source
+                    .as_deref()
+                    .is_none_or(|url| self.may_read_row(url))
+            })
+            .collect();
+        Ok(ConsoleLines { lines, next })
+    }
+
+    fn network(
+        &self,
+        since: Option<u64>,
+        matching: Option<&str>,
+        bodies: bool,
+    ) -> Result<Requests, Answer> {
+        let heard = self.heard();
+        let (mut requests, next) = heard
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .requests(since, matching);
+        // A request to or from a site the agent may not reach is that site's.
+        requests.retain(|one| self.may_read_row(&one.url));
+        if bodies {
+            for row in requests.iter_mut().rev().take(BODIES) {
+                let found = heard
+                    .lock()
+                    .unwrap_or_else(PoisonError::into_inner)
+                    .request_id(row.seq);
+                if let Some((session, id)) = found {
+                    let session = (!session.is_empty()).then_some(session);
+                    if let Ok(body) = cdp::call_in(
+                        self.view,
+                        session.as_deref(),
+                        "Network.getResponseBody",
+                        &json!({ "requestId": id }),
+                        Duration::from_secs(5),
+                    ) {
+                        row.body = body
+                            .get("body")
+                            .and_then(Value::as_str)
+                            .map(|text| cdp::cut(text.to_string(), LONGEST_BODY));
+                    }
+                }
+            }
+        }
+        Ok(Requests { requests, next })
+    }
+
+    fn evaluate(&self, expression: &str, page_world: bool) -> Result<Value, Answer> {
+        Page::evaluate(self, expression, page_world)
+    }
+
+    fn cookies(&self) -> Result<Vec<Cookie>, Answer> {
+        Page::cookies(self)
+    }
+
+    fn set_cookie(&self, cookie: &Cookie) -> Result<(), Answer> {
+        Page::set_cookie(self, cookie)
+    }
+
+    fn clear(&self) -> Result<(), Answer> {
+        Page::clear(self)
+    }
+
+    fn local(&self) -> Result<serde_json::Map<String, Value>, Answer> {
+        Page::local(self)
     }
 }
 

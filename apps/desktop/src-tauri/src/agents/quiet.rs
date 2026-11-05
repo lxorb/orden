@@ -54,6 +54,7 @@ use webview2_com::{
 #[cfg(all(windows, not(feature = "cef")))]
 use windows_core::{Interface as _, HSTRING, PWSTR};
 
+#[cfg(any(windows, feature = "cef"))]
 use super::cdp;
 #[cfg(all(windows, not(feature = "cef")))]
 use super::verbs::DialogKind;
@@ -381,6 +382,8 @@ pub fn answer_dialog(app: &AppHandle, label: &str, said: Said) -> Result<(), Str
     }
     #[cfg(feature = "cef")]
     return super::engines::cef::answer_dialog(app, label, said);
+    #[cfg(all(target_os = "macos", not(feature = "cef")))]
+    return super::engines::webkit::answer_dialog(app, label, said);
     #[cfg(all(windows, not(feature = "cef")))]
     {
         let named = label.to_string();
@@ -899,6 +902,7 @@ pub(super) fn certificates<'a>(offered: impl IntoIterator<Item = &'a str>) -> St
 
 /// A line of Orden's own in the page's console, which is where the agent reads what the
 /// page tried.
+#[cfg(any(windows, feature = "cef"))]
 pub(super) fn say(label: &str, level: &str, text: String) {
     cdp::heard(label)
         .lock()
@@ -916,7 +920,7 @@ pub fn forget(app: &AppHandle, label: &str) {
             WAITING.with_borrow_mut(|held| held.remove(&named));
         });
     }
-    #[cfg(feature = "cef")]
+    #[cfg(not(all(windows, not(feature = "cef"))))]
     let _ = app;
 }
 

@@ -2396,6 +2396,9 @@ export const sw: Dictionary = {
   '{device} needs ffmpeg to send its picture.': '{device} kinahitaji ffmpeg ili kutuma picha yake.',
   'The picture could not be sent.': 'Picha haikuweza kutumwa.',
   'This device cannot show the picture.': 'Kifaa hiki hakiwezi kuonyesha picha.',
+  'Share the clipboard with applications': 'Shiriki ubao wa kunakili na programu',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'Programu kwenye kompyuta yako nyingine hubandika ulichonakili hapa, na inachonakili huja hapa.',
   'None of your devices can run an application yet':
     'Hakuna kifaa chako kinachoweza kuendesha programu bado',
   'Where does it run?': 'Inaendesha wapi?',

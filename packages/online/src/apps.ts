@@ -413,6 +413,12 @@ export type InputEvent =
   | { t: 'wheel'; x: number; y: number }
   | { t: 'key'; key: string; code: string; down: boolean }
   | { t: 'text'; text: string }
+  /** The holder's clipboard, for the application's next paste (step 6). */
+  | { t: 'clipboard'; text: string }
+  /** Whether the holder shares its clipboard with the application (step 6): said as
+   *  the channel opens and whenever it changes; the host gives and takes nothing until
+   *  it has been told yes. */
+  | { t: 'share'; clipboard: boolean }
 
 /** An input event as the channel's message. */
 export function inputText(event: InputEvent): string {
@@ -422,10 +428,18 @@ export function inputText(event: InputEvent): string {
 /** The largest picture of the application's pointer the tab takes, as its data URL. */
 export const MOST_POINTER = 256 * 1024
 
+/** The most text of a clipboard either side sends: what one message on a data channel
+ *  carries in every engine (256 KiB), with room for its envelope. */
+export const MOST_CLIPBOARD = 200 * 1024
+
 /** What the host says on the picture's data channel (step 5): the application's pointer,
  *  drawn so over the picture - its shape as a PNG with its hot spot in the display's
- *  pixels, or hidden, as an application hides it to draw its own. */
-export type FromPicture =
+ *  pixels, or hidden, as an application hides it to draw its own - and what the
+ *  application copied, while the holder shares its clipboard (step 6). */
+export type FromPicture = PointerShape | { t: 'clipboard'; text: string }
+
+/** The application's pointer: its shape and hot spot, or hidden. */
+export type PointerShape =
   { t: 'pointer'; png: string; x: number; y: number } | { t: 'pointer'; hidden: true }
 
 const POINTER_PNG = /^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/
@@ -439,7 +453,14 @@ function isSpot(value: unknown): value is number {
 export function fromPictureOf(data: unknown): FromPicture | null {
   if (typeof data !== 'string' || data.length > MOST_POINTER + 1024) return null
   const value = parsed(data)
-  if (!isRecord(value) || value.t !== 'pointer') return null
+  if (!isRecord(value)) return null
+  if (value.t === 'clipboard') {
+    const { text } = value
+    return typeof text === 'string' && text.length <= MOST_CLIPBOARD
+      ? { t: 'clipboard', text }
+      : null
+  }
+  if (value.t !== 'pointer') return null
   if (value.hidden === true) return { t: 'pointer', hidden: true }
   const { png, x, y } = value
   if (typeof png !== 'string' || png.length > MOST_POINTER || !POINTER_PNG.test(png)) return null

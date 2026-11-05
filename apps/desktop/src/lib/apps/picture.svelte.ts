@@ -1,7 +1,8 @@
 /** An application's picture in its tab (issue 1063, step 4; docs/apps.md): the
- *  engine's own `RTCPeerConnection`, receive-only, offering a video and the data channel
- *  that input will take, to the host the relay passes its signalling to. The picture
- *  itself comes from the host directly, never through the relay.
+ *  engine's own `RTCPeerConnection`, receive-only, offering a video, its sound (step 6)
+ *  and the data channel that input takes, to the host the relay passes its signalling
+ *  to. The picture itself comes from the host directly, never through the relay; so do
+ *  the application's pointer and, while this device shares it, its clipboard.
  *
  *  Wanted while this device holds the application and it runs on a host that is there;
  *  not wanted, the connection ends and the host is told. A connection that fails is
@@ -10,7 +11,6 @@
 
 import {
   FALLBACK_ICE,
-  type FromPicture,
   fromHostOf,
   fromPictureOf,
   ICE_PATH,
@@ -18,7 +18,9 @@ import {
   iceServersOf,
   type InputEvent,
   inputText,
+  MOST_CLIPBOARD,
   type NoPicture,
+  type PointerShape,
   toHostText,
   type ToHost,
 } from '@orden/online/apps'
@@ -47,6 +49,8 @@ export interface PeerWorld {
   /** A new connection through them, or null where the engine has none. */
   make(servers: IceServer[]): RTCPeerConnection | null
   after(ms: number, run: () => void): () => void
+  /** Puts what the application copied on this device's clipboard. */
+  copy(text: string): void
 }
 
 const pageWorld: PeerWorld = {
@@ -72,6 +76,9 @@ const pageWorld: PeerWorld = {
       clearTimeout(timer)
     }
   },
+  copy: (text) => {
+    void import('../clipboard').then(({ copyText }) => copyText(text)).catch(() => undefined)
+  },
 }
 
 export class Picture {
@@ -79,7 +86,11 @@ export class Picture {
   /** What the video element shows, once the host's track has come. */
   stream = $state<MediaStream | null>(null)
   /** The application's pointer, as its host last said it on the channel. */
-  pointer = $state<FromPicture | null>(null)
+  pointer = $state<PointerShape | null>(null)
+  /** What the audio element plays, once the host's sound has come (step 6). */
+  sound = $state<MediaStream | null>(null)
+  /** Whether this device shares its clipboard with the application. */
+  private sharing = false
   /** The channel input goes over, once it is open. */
   channel: RTCDataChannel | null = null
   private peer: RTCPeerConnection | null = null
@@ -93,6 +104,18 @@ export class Picture {
     private readonly say: (data: string) => void,
     private readonly world: PeerWorld = pageWorld,
   ) {}
+
+  /** Whether this device shares its clipboard with the application: the host is told
+   *  now, and as the channel opens. */
+  share(on: boolean): void {
+    this.sharing = on
+    this.input({ t: 'share', clipboard: on })
+  }
+
+  /** This device's clipboard, for the application's next paste, while it is shared. */
+  paste(text: string): void {
+    if (this.sharing && text) this.input({ t: 'clipboard', text: text.slice(0, MOST_CLIPBOARD) })
+  }
 
   /** Whether the picture is wanted now: starts it, or ends it and tells the host. */
   want(on: boolean): void {
@@ -152,18 +175,24 @@ export class Picture {
       if (this.peer === peer && this.status.is !== 'showing') this.lost()
     })
     peer.addTransceiver('video', { direction: 'recvonly' })
+    peer.addTransceiver('audio', { direction: 'recvonly' })
     const channel = peer.createDataChannel('input', { ordered: true })
     channel.onopen = () => {
-      if (this.peer === peer) this.channel = channel
+      if (this.peer !== peer) return
+      this.channel = channel
+      this.input({ t: 'share', clipboard: this.sharing })
     }
     channel.onmessage = (event: MessageEvent) => {
       if (this.peer !== peer) return
       const said = fromPictureOf(event.data)
       if (said?.t === 'pointer') this.pointer = said
+      else if (said?.t === 'clipboard' && this.sharing) this.world.copy(said.text)
     }
     peer.ontrack = (event) => {
       if (this.peer !== peer) return
-      this.stream = event.streams[0] ?? new MediaStream([event.track])
+      const stream = event.streams[0] ?? new MediaStream([event.track])
+      if (event.track.kind === 'audio') this.sound = stream
+      else this.stream = stream
     }
     peer.onicecandidate = (event) => {
       const found = event.candidate
@@ -208,6 +237,7 @@ export class Picture {
     this.peer = null
     this.channel = null
     this.stream = null
+    this.sound = null
     this.pointer = null
     peer?.close()
   }

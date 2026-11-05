@@ -2344,6 +2344,9 @@ export const my: Dictionary = {
   '{device} needs ffmpeg to send its picture.': 'ပုံကို ပို့ရန် {device} တွင် ffmpeg လိုအပ်သည်။',
   'The picture could not be sent.': 'ပုံကို ပို့၍ မရပါ။',
   'This device cannot show the picture.': 'ဤစက်ပစ္စည်းသည် ပုံကို မပြနိုင်ပါ။',
+  'Share the clipboard with applications': 'ကလစ်ဘုတ်ကို အပလီကေးရှင်းများနှင့် မျှဝေရန်',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'သင့်အခြားကွန်ပျူတာရှိ အပလီကေးရှင်းသည် ဤနေရာတွင် ကူးထားသည်ကို ကူးထည့်ပြီး ၎င်းကူးသည့်အရာ ဤနေရာသို့ ရောက်လာသည်။',
   'None of your devices can run an application yet':
     'သင့်စက်များထဲမှ မည်သည့်စက်မျှ အပလီကေးရှင်း မလည်ပတ်နိုင်သေးပါ',
   'Where does it run?': 'ဘယ်မှာ လည်ပတ်မလဲ?',

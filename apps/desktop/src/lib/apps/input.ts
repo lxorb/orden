@@ -3,7 +3,7 @@
  *  is on the application's display, how far the wheel turned, which key, and the text an
  *  input method made. And the application's pointer, as the tab draws it. */
 
-import type { FromPicture, InputEvent } from '@orden/online/apps'
+import type { InputEvent, PointerShape } from '@orden/online/apps'
 
 /** Where the picture is drawn in its element, which shows all of it at the largest size
  *  that fits (`object-fit: contain`): its left and top edge and its scale, in CSS pixels
@@ -74,6 +74,16 @@ export function keyEvent(
   return { t: 'key', key: event.key, code: event.code, down }
 }
 
+/** Whether a key is a paste: Ctrl or Command with V, or Shift with Insert. Its press is
+ *  held back until the page has read the clipboard for it, which goes to the host
+ *  first, so the application pastes what this device copied. */
+export function isPaste(
+  event: Pick<KeyboardEvent, 'key' | 'ctrlKey' | 'metaKey' | 'shiftKey'>,
+): boolean {
+  const v = event.key === 'v' || event.key === 'V'
+  return ((event.ctrlKey || event.metaKey) && v) || (event.shiftKey && event.key === 'Insert')
+}
+
 /** The text an input method made, as the host types it; null for none. */
 export function textEvent(text: string | null | undefined): InputEvent | null {
   return text ? { t: 'text', text } : null
@@ -109,7 +119,7 @@ export class HeldKeys {
 /** The CSS for the pointer over the picture: the application's shape at the tab's
  *  ratio, its hot spot in CSS pixels, or none when the application hid it; the
  *  engine's own until the host has said. */
-export function pointerStyle(pointer: FromPicture | null, dpr: number): string {
+export function pointerStyle(pointer: PointerShape | null, dpr: number): string {
   if (!pointer) return ''
   if ('hidden' in pointer) return 'none'
   const ratio = dpr > 0 ? dpr : 1

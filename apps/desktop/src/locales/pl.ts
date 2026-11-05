@@ -2456,6 +2456,9 @@ export const pl: Dictionary = {
     '{device} potrzebuje ffmpeg, aby wysłać swój obraz.',
   'The picture could not be sent.': 'Nie udało się wysłać obrazu.',
   'This device cannot show the picture.': 'To urządzenie nie może wyświetlić obrazu.',
+  'Share the clipboard with applications': 'Udostępniaj schowek aplikacjom',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'Aplikacja na innym z Twoich komputerów wkleja to, co skopiowano tutaj, a to, co ona kopiuje, trafia tutaj.',
   'None of your devices can run an application yet':
     'Żadne z twoich urządzeń nie może jeszcze uruchomić aplikacji',
   'Where does it run?': 'Gdzie działa?',

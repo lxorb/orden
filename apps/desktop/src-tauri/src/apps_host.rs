@@ -35,11 +35,20 @@
 //! whenever it changes - the tab resized, moved to another monitor, taken over by
 //! another device - and the display is made that size and ratio (`apps_view`), its
 //! windows fitted to it (`wm.rs`), and its picture read at that refresh rate.
+//!
+//! **Its sound and its clipboard** (step 6): it plays into a sink of its own, never out
+//! of this computer's speakers, which goes to the holder with its picture (`audio.rs`);
+//! and text goes between its clipboard and the holder's while the holder shares it
+//! (`clipboard.rs`).
 
 #![cfg_attr(not(target_os = "linux"), allow(dead_code))]
 
 #[cfg(target_os = "linux")]
+mod audio;
+#[cfg(target_os = "linux")]
 mod capture;
+#[cfg(target_os = "linux")]
+mod clipboard;
 #[cfg(target_os = "linux")]
 mod display;
 #[cfg(target_os = "linux")]
@@ -127,6 +136,9 @@ struct Running {
     /// The display itself, made the holder's size; gone once the application is.
     #[cfg(target_os = "linux")]
     display: Mutex<Option<display::Display>>,
+    /// Its sink on the sound server, where there is one; gone with it too.
+    #[cfg(target_os = "linux")]
+    sink: Mutex<Option<audio::Sink>>,
 }
 
 impl Running {
@@ -288,6 +300,7 @@ fn run_on_its_display(
     let (width, height) = display::screen(view.width, view.height, view.dpr);
     let display = display::Display::start(width, height, view.dpr).map_err(|_| "failed")?;
     let name = display.name();
+    let sink = audio::Sink::make(display.number);
     let folder = cwd
         .map(PathBuf::from)
         .filter(|one| one.is_dir())
@@ -307,6 +320,8 @@ fn run_on_its_display(
         .env("SDL_VIDEODRIVER", "x11")
         .env("MOZ_ENABLE_WAYLAND", "0")
         .env("ELECTRON_OZONE_PLATFORM_HINT", "x11")
+        // Its sound into a sink of its own, or nowhere: never this computer's speakers.
+        .envs(audio::environment(sink.as_ref()))
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
@@ -323,6 +338,7 @@ fn run_on_its_display(
             hz: view.hz,
         })),
         display: Mutex::new(Some(display)),
+        sink: Mutex::new(sink),
     });
     app.state::<Hosted>()
         .apps()
@@ -342,6 +358,12 @@ fn run_on_its_display(
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .take();
         drop(display);
+        let sink = running
+            .sink
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .take();
+        drop(sink);
         let hosted = app.state::<Hosted>();
         let mut apps = hosted.apps();
         let ours = apps.get(&key).is_some_and(|one| Arc::ptr_eq(one, &running));
@@ -459,7 +481,24 @@ fn signal_here(hosted: &Hosted, key: &str, data: &str) -> Option<String> {
             let Some(running) = hosted.apps().get(key).cloned() else {
                 return Some(stream::cannot_text("stopped"));
             };
-            match stream::Peer::answer(running.screen.clone(), &offer) {
+            let clipboard = running
+                .display
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .as_ref()
+                .and_then(display::Display::clipboard);
+            let sound = running
+                .sink
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .as_ref()
+                .map(audio::Sink::monitor);
+            let source = stream::Source {
+                screen: running.screen.clone(),
+                clipboard,
+                sound,
+            };
+            match stream::Peer::answer(source, &offer) {
                 Ok((peer, answer)) => {
                     hosted.peers().insert(key.to_owned(), peer);
                     Some(stream::answer_text(&answer))

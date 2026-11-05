@@ -2449,6 +2449,9 @@ export const uk: Dictionary = {
     '{device} потрібен ffmpeg, щоб надсилати зображення.',
   'The picture could not be sent.': 'Не вдалося надіслати зображення.',
   'This device cannot show the picture.': 'Цей пристрій не може показати зображення.',
+  'Share the clipboard with applications': 'Спільний буфер обміну з застосунками',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'Застосунок на іншому вашому комп’ютері вставляє те, що ви скопіювали тут, а те, що копіює він, надходить сюди.',
   'None of your devices can run an application yet':
     'Жоден із ваших пристроїв поки не може запускати програми',
   'Where does it run?': 'Де вона працює?',

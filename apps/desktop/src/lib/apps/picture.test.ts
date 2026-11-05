@@ -58,6 +58,7 @@ function world(engine = true) {
   const timers: { at: number; run: () => void; gone: boolean }[] = []
   const said: string[] = []
   const offered: unknown[] = []
+  const copied: string[] = []
   const made: PeerWorld = {
     servers: () => Promise.resolve([{ urls: ['stun:stun.example:3478'] }]),
     make: (servers) => {
@@ -74,6 +75,7 @@ function world(engine = true) {
         timer.gone = true
       }
     },
+    copy: (text) => copied.push(text),
   }
   const picture = new Picture((data) => said.push(data), made)
   /** Runs the timers due after `ms`, as the clock would. */
@@ -84,7 +86,7 @@ function world(engine = true) {
       else timers.push(timer)
     }
   }
-  return { picture, peers, said, wait, offered }
+  return { picture, peers, said, wait, offered, copied }
 }
 
 describe('an application’s picture', () => {
@@ -92,7 +94,7 @@ describe('an application’s picture', () => {
     const here = world()
     here.picture.want(true)
     await tick()
-    expect(here.peers[0]?.wants).toEqual(['video recvonly', 'channel input'])
+    expect(here.peers[0]?.wants).toEqual(['video recvonly', 'audio recvonly', 'channel input'])
     expect(here.said).toEqual(['{"offer":"v=0 offer"}'])
     expect(here.picture.status).toEqual({ is: 'connecting' })
 
@@ -186,11 +188,11 @@ describe('an application’s picture', () => {
     if (channel) channel.readyState = 'open'
     channel?.onopen?.()
     here.picture.input({ t: 'move', x: 3, y: 4 })
-    expect(channel?.sent).toEqual(['{"t":"move","x":3,"y":4}'])
+    expect(channel?.sent).toEqual(['{"t":"share","clipboard":false}', '{"t":"move","x":3,"y":4}'])
 
     here.picture.want(false)
     here.picture.input({ t: 'move', x: 5, y: 6 })
-    expect(channel?.sent).toHaveLength(1)
+    expect(channel?.sent).toHaveLength(2)
   })
 
   test('an engine without WebRTC says so', async () => {
@@ -237,5 +239,53 @@ describe('an application’s picture', () => {
     // What the old connection says after is not heard.
     channel?.onmessage?.({ data: JSON.stringify({ t: 'pointer', png, x: 1, y: 2 }) })
     expect(here.picture.pointer).toBeNull()
+  })
+
+  test('plays the host’s sound apart from its picture', async () => {
+    const here = world()
+    here.picture.want(true)
+    await tick()
+    const picture = { id: 'picture' }
+    const sound = { id: 'sound' }
+    here.peers[0]?.ontrack?.({ streams: [picture], track: { kind: 'video' } })
+    here.peers[0]?.ontrack?.({ streams: [sound], track: { kind: 'audio' } })
+    expect(here.picture.stream).toBe(picture)
+    expect(here.picture.sound).toBe(sound)
+    here.picture.want(false)
+    expect(here.picture.sound).toBeNull()
+  })
+
+  test('the clipboard goes both ways only while it is shared, and the host is told', async () => {
+    const here = world()
+    here.picture.want(true)
+    await tick()
+    const channel = here.peers[0]?.channel
+    if (channel) channel.readyState = 'open'
+    channel?.onopen?.()
+    expect(channel?.sent).toEqual(['{"t":"share","clipboard":false}'])
+
+    // Not shared: nothing goes, and nothing comes.
+    here.picture.paste('secret')
+    channel?.onmessage?.({ data: '{"t":"clipboard","text":"from it"}' })
+    expect(here.copied).toEqual([])
+    expect(channel?.sent).toHaveLength(1)
+
+    here.picture.share(true)
+    here.picture.paste('mine')
+    channel?.onmessage?.({ data: '{"t":"clipboard","text":"from it"}' })
+    expect(channel?.sent.slice(1)).toEqual([
+      '{"t":"share","clipboard":true}',
+      '{"t":"clipboard","text":"mine"}',
+    ])
+    expect(here.copied).toEqual(['from it'])
+
+    // A connection made again says so again as it opens.
+    here.picture.want(false)
+    here.picture.want(true)
+    await tick()
+    const again = here.peers[1]?.channel
+    if (again) again.readyState = 'open'
+    again?.onopen?.()
+    expect(again?.sent).toEqual(['{"t":"share","clipboard":true}'])
   })
 })

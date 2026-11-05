@@ -2395,6 +2395,9 @@ export const ha: Dictionary = {
   '{device} needs ffmpeg to send its picture.': '{device} yana buƙatar ffmpeg don aika hotonsa.',
   'The picture could not be sent.': 'Ba a iya aika hoton ba.',
   'This device cannot show the picture.': 'Wannan na’urar ba za ta iya nuna hoton ba.',
+  'Share the clipboard with applications': 'Raba allon kwafi da manhajoji',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'Manhaja a wata kwamfutarka tana manna abin da ka kwafa a nan, kuma abin da ta kwafa yana zuwa nan.',
   'None of your devices can run an application yet':
     'Babu ɗaya daga cikin na’urorinka da zai iya gudanar da manhaja tukuna',
   'Where does it run?': 'Ina zai gudana?',

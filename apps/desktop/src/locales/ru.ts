@@ -2456,6 +2456,9 @@ export const ru: Dictionary = {
     '{device} нужен ffmpeg, чтобы отправлять изображение.',
   'The picture could not be sent.': 'Не удалось отправить изображение.',
   'This device cannot show the picture.': 'Это устройство не может показать изображение.',
+  'Share the clipboard with applications': 'Общий буфер обмена с приложениями',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'Приложение на другом вашем компьютере вставляет то, что вы скопировали здесь, а то, что копирует оно, приходит сюда.',
   'None of your devices can run an application yet':
     'Ни одно из ваших устройств пока не может запускать приложения',
   'Where does it run?': 'Где оно работает?',

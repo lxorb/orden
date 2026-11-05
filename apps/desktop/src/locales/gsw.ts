@@ -2378,6 +2378,9 @@ export const gsw: Dictionary = {
   '{device} needs ffmpeg to send its picture.': '{device} bruucht ffmpeg, zum sis Bild schicke.',
   'The picture could not be sent.': 'S Bild hät nöd chönne gschickt werde.',
   'This device cannot show the picture.': 'Das Grät cha s Bild nöd zeige.',
+  'Share the clipboard with applications': 'Zwüscheablag mit Aawändige teile',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'E Aawändig uf eme andere vo dine Computer füegt ii, was du da kopiert häsch, und was sie kopiert, chunnt da äne.',
   'None of your devices can run an application yet': 'No keis vo dine Grät cha e Aawändig usfüere',
   'Where does it run?': 'Wo lauft si?',
   'What does it run?': 'Was füert si us?',

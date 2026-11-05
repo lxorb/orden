@@ -14,11 +14,13 @@
     displayPoint,
     drivesPointer,
     HeldKeys,
+    isPaste,
     keyEvent,
     pointerStyle,
     textEvent,
     wheelClicks,
   } from './input'
+  import { clipboardSharing } from '../settings/apps-clipboard.svelte'
   import type { PictureStatus } from './picture.svelte'
   import { refreshRate, Settling } from './view'
   import { onMount, untrack } from 'svelte'
@@ -34,6 +36,7 @@
 
   let place = $state<HTMLElement>()
   let video = $state<HTMLVideoElement>()
+  let audio = $state<HTMLAudioElement>()
   /** Where the keyboard goes while the picture shows: a text field of the page's own, so
    *  that an input method composes in it, put where the pointer last pressed so that its
    *  window opens there. */
@@ -44,6 +47,16 @@
   $effect(() => {
     const stream = session.picture.stream
     if (video && video.srcObject !== stream) video.srcObject = stream
+  })
+  // The application's sound, in an element of its own: the picture's stays muted, so
+  // the engine plays it as soon as it comes.
+  $effect(() => {
+    const sound = session.picture.sound
+    if (audio && audio.srcObject !== sound) audio.srcObject = sound
+  })
+  // Whether the clipboard goes between this device and the application (step 6).
+  $effect(() => {
+    session.picture.share(clipboardSharing.on)
   })
 
   /** The refresh rate of the screen the tab is on, once measured. */
@@ -244,12 +257,30 @@
       over.removeEventListener('wheel', wheel)
     }
   })
+  /** A paste's press, held back for the page's paste, which reads the clipboard. */
+  let pasting: InputEvent | null = null
   function key(event: KeyboardEvent, down: boolean) {
     if (!showing) return
     const said = keyEvent(event, down)
     if (!said) return
+    if (down && clipboardSharing.on && isPaste(event)) {
+      // Not prevented, so the page pastes into the keyboard's field (`pasted`), which
+      // is how its clipboard is read without asking; the press goes after it.
+      pasting = said
+      return
+    }
+    if (!down && pasting) pasted(null)
     event.preventDefault()
     send(said)
+  }
+  /** The page's paste: this device's clipboard to the host, then the press that asked. */
+  function pasted(event: ClipboardEvent | null) {
+    event?.preventDefault()
+    const text = event?.clipboardData?.getData('text/plain') ?? ''
+    if (text) session.picture.paste(text)
+    const press = pasting
+    pasting = null
+    if (press) send(press)
   }
   /** What an input method made, once chosen: typed as text, and the field emptied. */
   function composed(event: CompositionEvent) {
@@ -293,6 +324,7 @@
     onpointerup={(event) => pointer(event, false)}
     oncontextmenu={(event) => event.preventDefault()}
   ></video>
+  <audio bind:this={audio} autoplay></audio>
   <textarea
     bind:this={typing}
     class="typing"
@@ -307,6 +339,7 @@
     onkeyup={(event) => key(event, false)}
     oncompositionend={composed}
     oninput={typed}
+    onpaste={pasted}
     onblur={letGo}></textarea>
   {#if showing}
     <div class="bar">

@@ -2367,6 +2367,9 @@ export const fa: Dictionary = {
   '{device} needs ffmpeg to send its picture.': '{device} برای فرستادن تصویرش به ffmpeg نیاز دارد.',
   'The picture could not be sent.': 'تصویر فرستاده نشد.',
   'This device cannot show the picture.': 'این دستگاه نمی‌تواند تصویر را نشان دهد.',
+  'Share the clipboard with applications': 'هم‌رسانی کلیپ‌بورد با برنامه‌ها',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'برنامه‌ای روی رایانهٔ دیگرتان آنچه را اینجا کپی کرده‌اید جای‌گذاری می‌کند، و آنچه آن کپی می‌کند به اینجا می‌آید.',
   'None of your devices can run an application yet':
     'هنوز هیچ‌یک از دستگاه‌هایتان نمی‌تواند برنامه‌ای اجرا کند',
   'Where does it run?': 'کجا اجرا شود؟',

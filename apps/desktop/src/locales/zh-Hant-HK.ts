@@ -2303,6 +2303,9 @@ export const zhHantHK: Dictionary = {
   '{device} needs ffmpeg to send its picture.': '{device} 需要 ffmpeg 才能傳送畫面。',
   'The picture could not be sent.': '畫面無法傳送。',
   'This device cannot show the picture.': '此裝置無法顯示畫面。',
+  'Share the clipboard with applications': '與應用程式共用剪貼簿',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    '你另一部電腦上的應用程式可以貼上你在這裡複製的內容，它複製的內容也會來到這裡。',
   'None of your devices can run an application yet': '你仍未有可以執行應用程式的裝置',
   'Where does it run?': '在哪裏執行？',
   'What does it run?': '執行甚麼？',

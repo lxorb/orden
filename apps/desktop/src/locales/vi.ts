@@ -2338,6 +2338,9 @@ export const vi: Dictionary = {
   '{device} needs ffmpeg to send its picture.': '{device} cần ffmpeg để gửi hình ảnh của nó.',
   'The picture could not be sent.': 'Không thể gửi hình ảnh.',
   'This device cannot show the picture.': 'Thiết bị này không thể hiển thị hình ảnh.',
+  'Share the clipboard with applications': 'Chia sẻ bộ nhớ tạm với ứng dụng',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'Ứng dụng trên máy tính khác của bạn dán những gì bạn đã sao chép ở đây, và những gì nó sao chép sẽ đến đây.',
   'None of your devices can run an application yet': 'Chưa thiết bị nào của bạn chạy được ứng dụng',
   'Where does it run?': 'Chạy ở đâu?',
   'What does it run?': 'Chạy cái gì?',

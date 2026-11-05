@@ -31,6 +31,11 @@
 //!
 //! **Input** comes back over the data channel and is played into the application's
 //! display, and only there (`input.rs`); the pointer's shape goes the other way on it.
+//! So does the clipboard, both ways, while the holder shares it (step 6;
+//! `clipboard.rs`).
+//!
+//! **Sound** (step 6): a viewer that offers to take audio too is sent the application's
+//! sink as Opus, once connected (`audio.rs`).
 
 use std::io::{self, Read, Write as _};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
@@ -45,13 +50,15 @@ use str0m::change::SdpOffer;
 use str0m::channel::ChannelId;
 use str0m::crypto::CryptoProvider;
 use str0m::format::Codec;
-use str0m::media::{MediaKind, MediaTime, Mid, Pt};
+use str0m::media::{Frequency, MediaKind, MediaTime, Mid, Pt};
 use str0m::net::{Protocol, Receive};
 use str0m::{Candidate, Event, IceConnectionState, Input, Output, Rtc, RtcConfig};
 
+use super::audio;
 use super::capture::{Capture, News};
+use super::clipboard::Clipboard;
 use super::encoder::{self, AccessUnits, Encoder, Made};
-use super::input::Input as HolderInput;
+use super::input::{Input as HolderInput, InputEvent};
 use super::{stun, Screen};
 
 /// How long a viewer has to connect once it has the answer.
@@ -143,11 +150,9 @@ struct Shared {
     next: Instant,
     /// When the viewer connected, which is when the picture starts.
     connected: Option<Instant>,
-    /// Whether the encoder is to be started: set once the viewer is connected and the
-    /// video's media is known, which `str0m` says only after the connection is made.
-    start_encoder: bool,
-    /// Whether it was.
-    encoding: bool,
+    /// Where the picture's encoder is: due once the viewer is connected and the video's
+    /// media is known, which `str0m` says only after the connection is made.
+    pictures: Stage,
     /// The display, for the input played into it.
     display: String,
     /// The holder's input, played into the display: opened as the first arrives.
@@ -158,6 +163,31 @@ struct Shared {
     pointer: Option<String>,
     /// Whoever reads the picture, told when the viewer asks for a whole one.
     news: Option<Sender<News>>,
+    /// The display's clipboard, and whether the holder shares its own with it.
+    clipboard: Option<Arc<Clipboard>>,
+    sharing: bool,
+    /// The audio's media and its payload type, once the answer has made them, the
+    /// application's sink's monitor, and where its sound is.
+    audio: Option<(Mid, Pt)>,
+    sound: Option<String>,
+    sounds: Stage,
+}
+
+/// Where the picture, or the sound, of a connection is.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Stage {
+    Waiting,
+    /// To be started after this turn of the connection.
+    Due,
+    Started,
+}
+
+/// What a peer sends: the application's display (and the holder's refresh rate), its
+/// clipboard, and its sink's monitor, where it has them.
+pub struct Source {
+    pub screen: Arc<Mutex<Screen>>,
+    pub clipboard: Option<Arc<Clipboard>>,
+    pub sound: Option<String>,
 }
 
 /// One connection and what its threads read.
@@ -204,7 +234,12 @@ pub struct Peer {
 impl Peer {
     /// Answers the holder's offer for the application on `screen`, and starts listening
     /// for it: the peer, and the answer's SDP.
-    pub fn answer(screen: Arc<Mutex<Screen>>, offer: &str) -> Result<(Peer, String), Cannot> {
+    pub fn answer(source: Source, offer: &str) -> Result<(Peer, String), Cannot> {
+        let Source {
+            screen,
+            clipboard,
+            sound,
+        } = source;
         if !super::installed::on_path("ffmpeg") {
             return Err(Cannot::Encoder);
         }
@@ -219,47 +254,11 @@ impl Peer {
             .enable_vp8(true)
             .enable_vp9(makes(Made::Vp9))
             .enable_h264(makes(Made::H264))
+            .enable_opus(true, false)
             .set_crypto_provider(provider())
             .build(now);
 
-        let mut sockets = Vec::new();
-        for ip in addresses() {
-            let Ok(socket) = UdpSocket::bind(SocketAddr::new(ip, 0)) else {
-                continue;
-            };
-            let Ok(local) = socket.local_addr() else {
-                continue;
-            };
-            let Ok(candidate) = Candidate::host(local, "udp") else {
-                continue;
-            };
-            let _ = rtc.add_local_candidate(candidate);
-            sockets.push(socket);
-        }
-        if sockets.is_empty() {
-            return Err(Cannot::Network);
-        }
-        // And each address as the internet sees it, asked for all at once, for a viewer
-        // outside this network.
-        let seen: Vec<(SocketAddr, SocketAddr)> = std::thread::scope(|scope| {
-            let asking: Vec<_> = sockets
-                .iter()
-                .filter_map(|socket| socket.local_addr().ok().map(|local| (socket, local)))
-                .filter(|(_, local)| !local.ip().is_loopback())
-                .map(|(socket, local)| {
-                    scope.spawn(move || Some((stun::reflexive(socket, stun::SERVER)?, local)))
-                })
-                .collect();
-            asking
-                .into_iter()
-                .filter_map(|one| one.join().ok().flatten())
-                .collect()
-        });
-        for (outside, local) in seen {
-            if let Ok(candidate) = Candidate::server_reflexive(outside, local, "udp") {
-                let _ = rtc.add_local_candidate(candidate);
-            }
-        }
+        let sockets = gather(&mut rtc)?;
         let answer = rtc
             .sdp_api()
             .accept_offer(offer)
@@ -285,13 +284,17 @@ impl Peer {
                 video: None,
                 next: now,
                 connected: None,
-                start_encoder: false,
-                encoding: false,
+                pictures: Stage::Waiting,
                 display,
                 input: None,
                 channel: None,
                 pointer: None,
                 news: None,
+                clipboard: clipboard.clone(),
+                sharing: false,
+                audio: None,
+                sound,
+                sounds: Stage::Waiting,
             }),
             ended: AtomicBool::new(false),
             screen,
@@ -304,6 +307,14 @@ impl Peer {
         }
         let timers = inner.clone();
         std::thread::spawn(move || keep_time(&timers));
+        if let Some(clipboard) = &clipboard {
+            let copying = Arc::downgrade(&inner);
+            clipboard.listen(Some(Arc::new(move |text| {
+                if let Some(inner) = copying.upgrade() {
+                    copied(&inner, &text);
+                }
+            })));
+        }
         Ok((Peer { inner }, answer))
     }
 
@@ -333,7 +344,66 @@ impl Peer {
 impl Drop for Peer {
     fn drop(&mut self) {
         self.inner.end();
+        if let Some(clipboard) = &self.inner.lock().clipboard {
+            clipboard.listen(None);
+        }
     }
+}
+
+/// What the application copied, sent to the holder's tab while it shares its clipboard.
+fn copied(inner: &Inner, text: &str) {
+    let mut shared = inner.lock();
+    if !shared.sharing {
+        return;
+    }
+    let said = serde_json::json!({ "t": "clipboard", "text": text }).to_string();
+    write_channel(&mut shared, &said);
+    drive(&mut shared);
+}
+
+/// One socket for each address this computer has, each a host candidate of the
+/// connection's, and each also as the internet sees it, asked for all at once, for a
+/// viewer outside this network.
+fn gather(rtc: &mut Rtc) -> Result<Vec<UdpSocket>, Cannot> {
+    let mut sockets = Vec::new();
+    for ip in addresses() {
+        let Ok(socket) = UdpSocket::bind(SocketAddr::new(ip, 0)) else {
+            continue;
+        };
+        let Ok(local) = socket.local_addr() else {
+            continue;
+        };
+        let Ok(candidate) = Candidate::host(local, "udp") else {
+            continue;
+        };
+        let _ = rtc.add_local_candidate(candidate);
+        sockets.push(socket);
+    }
+    if sockets.is_empty() {
+        return Err(Cannot::Network);
+    }
+    // And each address as the internet sees it, asked for all at once, for a viewer
+    // outside this network.
+    let seen: Vec<(SocketAddr, SocketAddr)> = std::thread::scope(|scope| {
+        let asking: Vec<_> = sockets
+            .iter()
+            .filter_map(|socket| socket.local_addr().ok().map(|local| (socket, local)))
+            .filter(|(_, local)| !local.ip().is_loopback())
+            .map(|(socket, local)| {
+                scope.spawn(move || Some((stun::reflexive(socket, stun::SERVER)?, local)))
+            })
+            .collect();
+        asking
+            .into_iter()
+            .filter_map(|one| one.join().ok().flatten())
+            .collect()
+    });
+    for (outside, local) in seen {
+        if let Ok(candidate) = Candidate::server_reflexive(outside, local, "udp") {
+            let _ = rtc.add_local_candidate(candidate);
+        }
+    }
+    Ok(sockets)
 }
 
 /// Every address this computer could be reached on, found by asking the system which
@@ -425,6 +495,19 @@ fn drive(shared: &mut Shared) -> bool {
 /// One event of the connection; answers whether it goes on.
 fn heard(shared: &mut Shared, event: Event) -> bool {
     match event {
+        Event::MediaAdded(added) if added.kind == MediaKind::Audio => {
+            let opus = shared.rtc.writer(added.mid).and_then(|writer| {
+                writer
+                    .payload_params()
+                    .find(|params| params.spec().codec == Codec::Opus)
+                    .map(str0m::format::PayloadParams::pt)
+            });
+            if let Some(pt) = opus {
+                shared.audio = Some((added.mid, pt));
+            }
+            due(shared);
+            true
+        }
         Event::MediaAdded(added) if added.kind == MediaKind::Video => {
             let offered: Vec<(Made, Pt)> = shared
                 .rtc
@@ -474,11 +557,25 @@ fn heard(shared: &mut Shared, event: Event) -> bool {
             true
         }
         Event::ChannelData(data) => {
-            if shared.input.is_none() {
-                shared.input = HolderInput::open(&shared.display).ok();
-            }
-            if let Some(input) = shared.input.as_mut() {
-                input.play(&data.data);
+            // A message that does not read is let go.
+            let Ok(event) = serde_json::from_slice::<InputEvent>(&data.data) else {
+                return true;
+            };
+            match event {
+                InputEvent::Share { clipboard } => shared.sharing = clipboard,
+                InputEvent::Clipboard { text } => {
+                    if let (true, Some(clipboard)) = (shared.sharing, shared.clipboard.as_ref()) {
+                        clipboard.give(&text);
+                    }
+                }
+                played => {
+                    if shared.input.is_none() {
+                        shared.input = HolderInput::open(&shared.display).ok();
+                    }
+                    if let Some(input) = shared.input.as_mut() {
+                        input.play(played);
+                    }
+                }
             }
             true
         }
@@ -486,11 +583,16 @@ fn heard(shared: &mut Shared, event: Event) -> bool {
     }
 }
 
-/// The encoder is due once the viewer is connected and the video known, and only once.
+/// The encoder is due once the viewer is connected and the video known, and only once;
+/// the sound once the viewer is connected and the audio known, where there is a sink.
 fn due(shared: &mut Shared) {
-    if shared.connected.is_some() && shared.video.is_some() && !shared.encoding {
-        shared.encoding = true;
-        shared.start_encoder = true;
+    let connected = shared.connected.is_some();
+    if connected && shared.video.is_some() && shared.pictures == Stage::Waiting {
+        shared.pictures = Stage::Due;
+    }
+    let sounds = shared.audio.is_some() && shared.sound.is_some();
+    if connected && sounds && shared.sounds == Stage::Waiting {
+        shared.sounds = Stage::Due;
     }
 }
 
@@ -529,9 +631,43 @@ fn made_of(codec: Codec) -> Option<Made> {
 
 /// After a turn of the connection: the encoder started once it is due.
 fn after(inner: &Arc<Inner>, shared: &mut Shared) {
-    if std::mem::take(&mut shared.start_encoder) {
+    if shared.pictures == Stage::Due {
+        shared.pictures = Stage::Started;
         let encoding = inner.clone();
         std::thread::spawn(move || pictures(&encoding));
+    }
+    if shared.sounds == Stage::Due {
+        shared.sounds = Stage::Started;
+        if let Some(monitor) = shared.sound.clone() {
+            let sounding = inner.clone();
+            std::thread::spawn(move || sound(&sounding, &monitor));
+        }
+    }
+}
+
+/// The application's sound for one connection, until the connection ends or the sound
+/// server does. Its end does not end the picture.
+fn sound(inner: &Arc<Inner>, monitor: &str) {
+    let Some(mut sound) = audio::Sound::start(monitor) else {
+        return;
+    };
+    let mut at: u64 = 0;
+    while !inner.over() {
+        let Some((packet, samples)) = sound.next() else {
+            break;
+        };
+        let mut shared = inner.lock();
+        if let Some((mid, pt)) = shared.audio {
+            let time = MediaTime::new(at, Frequency::FORTY_EIGHT_KHZ);
+            let written = shared
+                .rtc
+                .writer(mid)
+                .is_some_and(|writer| writer.write(pt, Instant::now(), time, packet).is_ok());
+            if written {
+                drive(&mut shared);
+            }
+        }
+        at += u64::from(samples);
     }
 }
 
@@ -947,7 +1083,18 @@ mod tests {
             display: ":1".to_owned(),
             hz: 60.0,
         }));
-        assert_eq!(Peer::answer(screen, "not sdp").err(), Some(Cannot::Offer));
+        assert_eq!(
+            Peer::answer(
+                Source {
+                    screen,
+                    clipboard: None,
+                    sound: None,
+                },
+                "not sdp"
+            )
+            .err(),
+            Some(Cannot::Offer)
+        );
     }
 
     /// What the answer to a viewer's offer says: a video it sends in a codec it encodes,
@@ -1003,6 +1150,52 @@ mod tests {
     }
 
     impl Viewer {
+        /// A viewer that offers to take the display's picture and its sound, the
+        /// host's peer that answered it, and the video's media and the audio's.
+        fn connect(
+            display: &super::super::display::Display,
+            sound: Option<String>,
+        ) -> (Peer, Viewer, Mid, Mid) {
+            use str0m::change::SdpAnswer;
+            use str0m::media::Direction;
+
+            let screen = Arc::new(Mutex::new(Screen {
+                display: display.name(),
+                hz: 30.0,
+            }));
+            let mut rtc = RtcConfig::new()
+                .set_crypto_provider(provider())
+                .build(Instant::now());
+            let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
+            let local = socket.local_addr().unwrap();
+            let mine = Candidate::host(local, "udp").unwrap();
+            let _ = rtc.add_local_candidate(mine.clone());
+            let mut change = rtc.sdp_api();
+            let mid = change.add_media(MediaKind::Video, Direction::RecvOnly, None, None, None);
+            let heard = change.add_media(MediaKind::Audio, Direction::RecvOnly, None, None, None);
+            change.add_channel("input".to_owned());
+            let (offer, pending) = change.apply().unwrap();
+
+            let (peer, answer) = Peer::answer(
+                Source {
+                    screen,
+                    clipboard: display.clipboard(),
+                    sound,
+                },
+                &offer.to_sdp_string(),
+            )
+            .unwrap();
+            assert!(answer.contains("VP8"));
+            rtc.sdp_api()
+                .accept_answer(pending, SdpAnswer::from_sdp_string(&answer).unwrap())
+                .unwrap();
+            peer.candidate(&mine.to_sdp_string());
+            socket
+                .set_read_timeout(Some(Duration::from_millis(10)))
+                .unwrap();
+            (peer, Viewer { rtc, socket, local }, mid, heard)
+        }
+
         /// Runs it for at most `within`, each event handed to `heard`, until `done`.
         fn run(
             &mut self,
@@ -1053,8 +1246,7 @@ mod tests {
         reason = "one viewer's picture, told in the order it changes"
     )]
     fn a_viewer_gets_the_picture_of_the_display_as_it_changes() {
-        use str0m::change::SdpAnswer;
-        use str0m::media::{Direction, KeyframeRequestKind};
+        use str0m::media::KeyframeRequestKind;
         use x11rb::connection::Connection as _;
         use x11rb::protocol::xproto::{ConnectionExt as _, CreateGCAux, Rectangle};
 
@@ -1068,34 +1260,7 @@ mod tests {
             return;
         }
         let display = super::super::display::Display::start(320, 240, 1.0).unwrap();
-        let screen = Arc::new(Mutex::new(Screen {
-            display: display.name(),
-            hz: 30.0,
-        }));
-
-        let mut rtc = RtcConfig::new()
-            .set_crypto_provider(provider())
-            .build(Instant::now());
-        let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
-        let local = socket.local_addr().unwrap();
-        let mine = Candidate::host(local, "udp").unwrap();
-        let _ = rtc.add_local_candidate(mine.clone());
-        let mut change = rtc.sdp_api();
-        let mid = change.add_media(MediaKind::Video, Direction::RecvOnly, None, None, None);
-        change.add_channel("input".to_owned());
-        let (offer, pending) = change.apply().unwrap();
-
-        let (peer, answer) = Peer::answer(screen, &offer.to_sdp_string()).unwrap();
-        assert!(answer.contains("VP8"));
-        rtc.sdp_api()
-            .accept_answer(pending, SdpAnswer::from_sdp_string(&answer).unwrap())
-            .unwrap();
-        peer.candidate(&mine.to_sdp_string());
-        socket
-            .set_read_timeout(Some(Duration::from_millis(10)))
-            .unwrap();
-        let mut viewer = Viewer { rtc, socket, local };
-
+        let (peer, mut viewer, mid, _) = Viewer::connect(&display, None);
         let (x, number) = x11rb::connect(Some(display.name().as_str())).unwrap();
         let root = x.setup().roots[number].root;
         let pointer = || {
@@ -1203,5 +1368,263 @@ mod tests {
         assert!(resized, "a key frame of the new size came");
         assert!(!peer.ended());
         drop(peer);
+    }
+
+    /// The clipboard over the picture's channel: nothing while the holder does not
+    /// share it; shared, what the holder gives is what the application's paste gets, and
+    /// what the application copies comes to the holder. CI installs Xvfb and ffmpeg;
+    /// elsewhere the test says nothing without them.
+    #[test]
+    #[allow(
+        clippy::too_many_lines,
+        reason = "one paste and one copy, told in the order they happen"
+    )]
+    fn the_clipboard_goes_both_ways_while_the_holder_shares_it() {
+        use x11rb::connection::Connection as _;
+        use x11rb::protocol::xproto::{
+            AtomEnum, ConnectionExt as _, CreateWindowAux, EventMask, PropMode,
+            SelectionNotifyEvent, WindowClass, SELECTION_NOTIFY_EVENT,
+        };
+        use x11rb::wrapper::ConnectionExt as _;
+        use x11rb::NONE;
+
+        let ready =
+            super::super::display::available() && super::super::installed::on_path("ffmpeg");
+        if !ready {
+            assert!(
+                std::env::var_os("CI").is_none() || !cfg!(target_os = "linux"),
+                "CI installs xvfb and ffmpeg for this test"
+            );
+            return;
+        }
+        let display = super::super::display::Display::start(320, 240, 1.0).unwrap();
+        let (peer, mut viewer, _, _) = Viewer::connect(&display, None);
+        let (x, number) = x11rb::connect(Some(display.name().as_str())).unwrap();
+        let root = x.setup().roots[number].root;
+        let atoms = super::super::clipboard::Atoms::new(&x)
+            .unwrap()
+            .reply()
+            .unwrap();
+        let window = x.generate_id().unwrap();
+        x.create_window(
+            0,
+            window,
+            root,
+            0,
+            0,
+            1,
+            1,
+            0,
+            WindowClass::INPUT_ONLY,
+            0,
+            &CreateWindowAux::new(),
+        )
+        .unwrap();
+        x.flush().unwrap();
+        let owner = || {
+            x.get_selection_owner(atoms.CLIPBOARD)
+                .unwrap()
+                .reply()
+                .unwrap()
+                .owner
+        };
+
+        let channel = std::cell::Cell::new(None);
+        let copied = std::cell::RefCell::new(Vec::<String>::new());
+        let heard = |_: &mut Rtc, event: Event| match event {
+            Event::ChannelOpen(id, _) => channel.set(Some(id)),
+            Event::ChannelData(data) => {
+                let text = String::from_utf8_lossy(&data.data).into_owned();
+                if text.contains(r#""t":"clipboard""#) {
+                    copied.borrow_mut().push(text);
+                }
+            }
+            _ => {}
+        };
+        assert!(viewer.run(Duration::from_secs(30), heard, || channel.get().is_some()));
+        let say = |viewer: &mut Viewer, text: &[u8]| {
+            let id = channel.get().unwrap();
+            viewer.rtc.channel(id).unwrap().write(false, text).unwrap();
+        };
+
+        // Not shared: the holder's clipboard goes nowhere.
+        say(&mut viewer, br#"{"t":"clipboard","text":"secret"}"#);
+        viewer.run(Duration::from_millis(500), heard, || false);
+        assert_eq!(owner(), NONE);
+
+        // Shared: the application's paste gets it.
+        say(&mut viewer, br#"{"t":"share","clipboard":true}"#);
+        say(
+            &mut viewer,
+            br#"{"t":"clipboard","text":"from the holder"}"#,
+        );
+        assert!(viewer.run(Duration::from_secs(5), heard, || owner() != NONE));
+        x.convert_selection(
+            window,
+            atoms.CLIPBOARD,
+            atoms.UTF8_STRING,
+            atoms.ORDEN_CLIPBOARD,
+            x11rb::CURRENT_TIME,
+        )
+        .unwrap();
+        x.flush().unwrap();
+        let mut pasted = None;
+        viewer.run(Duration::from_secs(5), heard, || {
+            if let Ok(Some(x11rb::protocol::Event::SelectionNotify(answer))) = x.poll_for_event() {
+                pasted = x
+                    .get_property(true, window, answer.property, AtomEnum::ANY, 0, 1024)
+                    .ok()
+                    .and_then(|cookie| cookie.reply().ok())
+                    .map(|reply| String::from_utf8_lossy(&reply.value).into_owned());
+            }
+            pasted.is_some()
+        });
+        assert_eq!(pasted.as_deref(), Some("from the holder"));
+
+        // The application copies: the holder hears it.
+        x.set_selection_owner(window, atoms.CLIPBOARD, x11rb::CURRENT_TIME)
+            .unwrap();
+        x.flush().unwrap();
+        let came = viewer.run(Duration::from_secs(5), heard, || {
+            if let Ok(Some(x11rb::protocol::Event::SelectionRequest(asked))) = x.poll_for_event() {
+                let _ = x.change_property8(
+                    PropMode::REPLACE,
+                    asked.requestor,
+                    asked.property,
+                    atoms.UTF8_STRING,
+                    b"from the application",
+                );
+                let _ = x.send_event(
+                    false,
+                    asked.requestor,
+                    EventMask::NO_EVENT,
+                    SelectionNotifyEvent {
+                        response_type: SELECTION_NOTIFY_EVENT,
+                        sequence: 0,
+                        time: asked.time,
+                        requestor: asked.requestor,
+                        selection: asked.selection,
+                        target: asked.target,
+                        property: asked.property,
+                    },
+                );
+                let _ = x.flush();
+            }
+            !copied.borrow().is_empty()
+        });
+        assert!(came, "what the application copied came");
+        assert_eq!(
+            copied.borrow()[0],
+            r#"{"t":"clipboard","text":"from the application"}"#
+        );
+        drop(peer);
+    }
+
+    /// A sound server for the test: the one there is, or one started for it where
+    /// `pulseaudio` is installed (CI installs it), in a folder of its own.
+    fn sound_server() -> Option<std::process::Child> {
+        let up = || {
+            Command::new("pactl")
+                .arg("info")
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .status()
+                .is_ok_and(|status| status.success())
+        };
+        if up() || !super::super::installed::on_path("pulseaudio") {
+            return None;
+        }
+        let folder = std::env::temp_dir().join(format!("orden-pulse-{}", std::process::id()));
+        std::fs::create_dir_all(&folder).ok()?;
+        // The `pactl` and `parec` this process starts find the server by it; no other
+        // test asks for a sound server.
+        std::env::set_var("PULSE_RUNTIME_PATH", &folder);
+        let server = Command::new("pulseaudio")
+            .args([
+                "-n",
+                "--daemonize=no",
+                "--exit-idle-time=-1",
+                "--disallow-exit",
+                "-L",
+                "module-native-protocol-unix",
+                "-L",
+                "module-null-sink sink_name=orden_test_default",
+            ])
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .ok()?;
+        let until = Instant::now() + Duration::from_secs(10);
+        while !up() && Instant::now() < until {
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        Some(server)
+    }
+
+    /// The application's sound reaches a viewer that offers to take it, as Opus. CI
+    /// installs Xvfb, ffmpeg and `PulseAudio`; elsewhere the test says nothing without
+    /// them.
+    #[test]
+    fn a_viewer_hears_the_applications_sound() {
+        let ready = super::super::display::available()
+            && super::super::installed::on_path("ffmpeg")
+            && audio::available();
+        if !ready {
+            assert!(
+                std::env::var_os("CI").is_none() || !cfg!(target_os = "linux"),
+                "CI installs xvfb, ffmpeg and pulseaudio for this test"
+            );
+            return;
+        }
+        let server = sound_server();
+        let sink = audio::Sink::make(std::process::id() % 100_000 + 400_000);
+        assert!(
+            sink.is_some() || std::env::var_os("CI").is_none(),
+            "a sink of the application's own"
+        );
+        let Some(sink) = sink else {
+            return;
+        };
+        // The application playing: noise into its sink.
+        let monitor = sink.monitor();
+        let mut playing = Command::new("pacat")
+            .args([
+                "--playback",
+                &format!("--device={}", monitor.trim_end_matches(".monitor")),
+                "--format=s16le",
+                "--rate=48000",
+                "--channels=2",
+                "--raw",
+            ])
+            .stdin(std::fs::File::open("/dev/urandom").unwrap())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .unwrap();
+
+        let display = super::super::display::Display::start(320, 240, 1.0).unwrap();
+        let (peer, mut viewer, _, heard) = Viewer::connect(&display, Some(monitor));
+        let packets = std::cell::Cell::new(0);
+        let came = viewer.run(
+            Duration::from_secs(30),
+            |_, event| {
+                if let Event::MediaData(data) = event {
+                    if data.mid == heard {
+                        packets.set(packets.get() + 1);
+                    }
+                }
+            },
+            || packets.get() >= 20,
+        );
+        assert!(came, "{} packets of sound came", packets.get());
+        drop(peer);
+        let _ = playing.kill();
+        let _ = playing.wait();
+        drop(sink);
+        if let Some(mut server) = server {
+            let _ = server.kill();
+            let _ = server.wait();
+        }
     }
 }

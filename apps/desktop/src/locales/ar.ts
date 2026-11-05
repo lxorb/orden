@@ -2486,6 +2486,9 @@ export const ar: Dictionary = {
   '{device} needs ffmpeg to send its picture.': 'يحتاج {device} إلى ffmpeg لإرسال صورته.',
   'The picture could not be sent.': 'تعذّر إرسال الصورة.',
   'This device cannot show the picture.': 'لا يستطيع هذا الجهاز عرض الصورة.',
+  'Share the clipboard with applications': 'مشاركة الحافظة مع التطبيقات',
+  'An application on another of your computers pastes what you copied here, and what it copies comes here.':
+    'يلصق تطبيق على حاسوب آخر من حواسيبك ما نسخته هنا، وما ينسخه يأتي إلى هنا.',
   'None of your devices can run an application yet': 'لا يستطيع أي من أجهزتك تشغيل تطبيق بعد',
   'Where does it run?': 'أين يعمل؟',
   'What does it run?': 'ماذا يشغّل؟',
