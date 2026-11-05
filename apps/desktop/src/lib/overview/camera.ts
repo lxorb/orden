@@ -101,30 +101,55 @@ export function notched(goal: number, turn: Turn): number {
   return Math.min(NEAREST, Math.max(FARTHEST, goal * Math.exp(-turn.deltaY * unit * NOTCH)))
 }
 
-/** How quickly an eased zoom closes on its goal: most of the way in a sixth of a second. */
+/** How quickly an eased zoom closes on its goal: a notch of the wheel most of the way in
+ *  a sixth of a second, fingers on a touchpad in a few frames. */
 const EASE = 0.08
+const FOLLOW = 0.035
 
 /** The camera `seconds` further on its way to `zoom` about `at` on the screen, which
  *  stays where it is: the same share of the way, in the zoom's own scale, every moment,
- *  so it starts at once and settles softly. There once it is within three thousandths. */
-export function eased(camera: Camera, zoom: number, at: Point, seconds: number): Camera {
+ *  so it starts at once and settles softly. There once it is within three thousandths.
+ *  `ease` is how long it takes, as a time constant. */
+export function eased(
+  camera: Camera,
+  zoom: number,
+  at: Point,
+  seconds: number,
+  ease = EASE,
+): Camera {
   const gap = Math.log(zoom / camera.zoom)
   const next =
-    Math.abs(gap) < 0.003 ? zoom : camera.zoom * Math.exp(gap * (1 - Math.exp(-seconds / EASE)))
+    Math.abs(gap) < 0.003 ? zoom : camera.zoom * Math.exp(gap * (1 - Math.exp(-seconds / ease)))
   return zoomedAt(camera, at, next / camera.zoom)
 }
 
-/** The camera after fingers on a touchpad, followed as they go: zoomed about the
- *  pointer, never moved (Emil, 2026-11-04: in the overview every scroll zooms, and the
- *  canvas is moved only by dragging it). A pinch, which Chromium says as Ctrl and the
- *  wheel, zooms as sharply as the fingers spread; two fingers scrolling zoom as a notch
- *  of the wheel does, pixel for pixel. */
-export function turned(camera: Camera, turn: Turn): Camera {
+/** The zoom fingers on a touchpad aim at, from the one aimed at before: never moved
+ *  (Emil, 2026-11-04: in the overview every scroll zooms, and the canvas is moved only
+ *  by dragging it). A pinch, which Chromium says as Ctrl and the wheel, zooms as sharply
+ *  as the fingers spread; two fingers scrolling zoom as a notch of the wheel does, pixel
+ *  for pixel. Aimed at rather than jumped to, and eased there in time (`eased` with
+ *  `FOLLOW`): an engine that hands the fingers over in few, large events - WebView2's -
+ *  zooms as smoothly as one that hands them over every frame (Emil, round 4). */
+function fingered(goal: number, turn: Turn): number {
   const unit = turn.deltaMode === 1 ? LINE : turn.deltaMode === 2 ? PAGE : 1
   const dy = turn.deltaY * unit
   const step = Math.max(-MOST, Math.min(MOST, dy))
   const rate = turn.ctrlKey || turn.metaKey ? PINCH : NOTCH
-  return zoomedAt(camera, turn, Math.exp(-step * rate))
+  return Math.min(NEAREST, Math.max(FARTHEST, goal * Math.exp(-step * rate)))
+}
+
+/** Where a turn of the wheel or of fingers aims the zoom, from where it was aimed
+ *  before, and how quickly the camera is eased there: every turn is aimed at and eased
+ *  to in time, never jumped to, whatever the engine says it in. */
+export function aimed(goal: number, turn: Turn): { zoom: number; ease: number } {
+  return isNotch(turn)
+    ? { zoom: notched(goal, turn), ease: EASE }
+    : { zoom: fingered(goal, turn), ease: FOLLOW }
+}
+
+/** The camera after fingers on a touchpad, all at once: zoomed about the pointer. */
+export function turned(camera: Camera, turn: Turn): Camera {
+  return zoomedAt(camera, turn, fingered(camera.zoom, turn) / camera.zoom)
 }
 
 /** Two fingers on the glass, then and now: moved by where their middle went, and nearer
