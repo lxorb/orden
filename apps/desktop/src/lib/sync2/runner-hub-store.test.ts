@@ -170,6 +170,18 @@ vi.mock('./watching', () => ({
   }),
 }))
 
+// The way back's wait between tries, short: what a test of a start in that wait needs.
+vi.mock('../backoff', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../backoff')>()),
+  pollDelay: () => 400,
+}))
+
+/** The device id the crate's store of an account keeps, as this harness makes it. */
+const deviceOfStore = (id: string) =>
+  Array.from(new TextEncoder().encode(id), (byte) => byte.toString(16))
+    .join('')
+    .padEnd(32, '0')
+
 beforeEach(() => {
   crate.held = null
   crate.mems.clear()
@@ -290,5 +302,63 @@ describe('a drop left waiting from a v1 sign-in', () => {
     expect(kept.current).not.toBeNull()
     expect(kept.local).toBe(true)
     expect(crate.log).not.toContain('forget local')
+  })
+})
+
+describe('who holds the device store, and for how long', () => {
+  test('a start in the wait of the way back keeps the store the way back lets go of (M3F-1)', async () => {
+    // No account to reach: a pass that asked would be signed out by its answer.
+    vi.stubGlobal('fetch', () => new Promise(() => undefined))
+    const a = await aWindow()
+    let alive = true
+    // The account back on v1 with no token: the way back cannot be walked, and waits.
+    Object.assign(a.account, { user: { id: 'u1', syncVersion: 1 }, token: null })
+    const walked = a.runner.walkBack(() => alive)
+    await settle(100)
+    // The account on v2 again: the session that walked is over, and the engine starts.
+    alive = false
+    Object.assign(a.account, { user: { id: 'u1', syncVersion: 2 }, token: 't' })
+    void a.runner.start()
+    expect(await walked).toBe(false)
+    await settle(300)
+    expect(a.runner.engine).not.toBeNull()
+    expect((a.runner as unknown as { storeLead: unknown }).storeLead).not.toBeNull()
+
+    // Another window asks the device id: answered, and the engine's store stays open.
+    const b = await aWindow()
+    const bHub = await import('./hub.svelte')
+    Object.assign(b.account, { user: { id: 'u1', syncVersion: 2 }, token: 't' })
+    void b.runner.start()
+    expect(await bHub.deviceId()).toBe(deviceOfStore('u1'))
+    expect(crate.held?.account).toBe('u1')
+    expect(wrong()).toEqual([])
+  }, 20_000)
+
+  test('a v1 session has the device id of the store at once, in the window that dropped the local engine and in another (M3F-2)', async () => {
+    vi.useFakeTimers()
+    try {
+      const a = await aWindow()
+      const aHub = await import('./hub.svelte')
+      Object.assign(a.account, { user: { id: 'u1', syncVersion: 1 } })
+      // sync.start() leaves the local engine on every launch: `leaveLocal` -> `dropLocal`.
+      const dropped = a.runner.dropLocal()
+      await vi.advanceTimersByTimeAsync(100)
+      await dropped
+
+      const asked: (string | undefined)[] = [undefined, undefined]
+      void aHub.deviceId().then((id) => (asked[0] = id))
+      await vi.advanceTimersByTimeAsync(100)
+      expect(asked[0]).toBe(deviceOfStore('u1'))
+
+      const b = await aWindow()
+      const bHub = await import('./hub.svelte')
+      Object.assign(b.account, { user: { id: 'u1', syncVersion: 1 } })
+      void bHub.deviceId().then((id) => (asked[1] = id))
+      await vi.advanceTimersByTimeAsync(100)
+      expect(asked[1]).toBe(deviceOfStore('u1'))
+      expect(wrong()).toEqual([])
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

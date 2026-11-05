@@ -134,6 +134,21 @@ async function wholeV1(root: string, v1: V1Space | null): Promise<V1Space | null
   }
 }
 
+/** The device id the account's store keeps, the store opened for it and closed after: only
+ *  by a window holding the device's store (`deviceOf`). Null where there is no store. */
+async function deviceIn(accountId: string): Promise<string | null> {
+  try {
+    const store = await openSyncStore(accountId)
+    try {
+      return store.opened.device
+    } finally {
+      await store.close().catch(() => undefined)
+    }
+  } catch {
+    return null
+  }
+}
+
 class Runner {
   status = $state<Light>('off')
   lastError = $state<string | null>(null)
@@ -209,6 +224,8 @@ class Runner {
     const lead = held && !giving.signal.aborted ? await leadSync(giving.signal, user.id) : null
     if (!lead || this.giving !== giving || account.user?.id !== user.id) {
       lead?.release()
+      if (this.giving === giving) this.giving = null
+      this.settleStore()
       return
     }
     this.giving = null
@@ -270,6 +287,34 @@ class Runner {
     this.storeGiving?.abort()
     this.storeGiving = null
     this.storeWait = null
+  }
+
+  /** What is under way here on the device's store without an engine of its own: a drop,
+   *  a walk back, a local start, a device id read. */
+  private storeUses = 0
+
+  /** `work`, holding the device's store for it; undefined once the wait is given up. The
+   *  store is let go of after, by the one rule (`settleStore`). */
+  private async usingStore<T>(work: () => Promise<T>): Promise<T | undefined> {
+    this.storeUses += 1
+    try {
+      if (!(await this.holdStore())) return undefined
+      return await work()
+    } finally {
+      this.storeUses -= 1
+      this.settleStore()
+    }
+  }
+
+  /** The one rule for letting go of the device's store: when nothing in this window is on
+   *  it or on its way to it - no engine, no account lead, no start waiting for one, no
+   *  other use under way. Kept otherwise, so nothing that stands on it has it go from
+   *  under it; let go of then, so another window can read the device id out of it or
+   *  start the next engine. */
+  private settleStore() {
+    if (this.current || this.lead || this.giving || this.storeWait || this.storeUses) return
+    this.storeLead?.release()
+    this.storeLead = null
   }
 
   /** The ids the spaces kept signed out had, by each space's root, on their way to the
@@ -421,8 +466,7 @@ class Runner {
   async startLocal(): Promise<void> {
     if (account.user) return
     // One window keeps it for all of them: the others wait, and take it when that one goes.
-    if (!(await this.holdStore())) return
-    return this.inLane(() => this.startLocalNow())
+    await this.usingStore(() => this.inLane(() => this.startLocalNow()))
   }
 
   private async startLocalNow(): Promise<void> {
@@ -470,10 +514,11 @@ class Runner {
   async dropLocal(): Promise<void> {
     // Only the window holding the device's store forgets it: another window may still be
     // keeping it, and lets go of it first when it hears the same.
-    if (!(await this.holdStore())) return
     // Asked for a sign-in that may be over by the time the store is this window's: signed
     // out since, the store it takes over is the one to keep, not to carry and forget.
-    return this.inLane(() => (account.user ? this.carryLocal() : Promise.resolve()))
+    await this.usingStore(() =>
+      this.inLane(() => (account.user ? this.carryLocal() : Promise.resolve())),
+    )
   }
 
   /** This device's id in the account's store (the hub's `deviceId`), read only where this
@@ -491,18 +536,16 @@ class Runner {
         const said = await this.ask('device', {})
         if (typeof said === 'string') return said
       }
-      const read = await whileFree(LOCAL_STORE, async () => {
-        try {
-          const store = await openSyncStore(accountId)
-          try {
-            return store.opened.device
-          } finally {
-            await store.close().catch(() => undefined)
-          }
-        } catch {
-          return null
-        }
-      }).catch(() => undefined)
+      if (this.storeLead && !this.current) {
+        // Held here with no engine on it: read here, in the lane, since no lock is taken
+        // twice and another window's ask would wait for it.
+        const here = await this.usingStore(() =>
+          this.inLane(async () => (this.current ? undefined : await deviceIn(accountId))),
+        )
+        if (here !== undefined) return here
+        continue
+      }
+      const read = await whileFree(LOCAL_STORE, () => deviceIn(accountId)).catch(() => undefined)
       if (read) return read.value
       if (Date.now() >= until || account.user?.id !== accountId) return null
       await waited(DEVICE_AGAIN)
@@ -573,8 +616,7 @@ class Runner {
   private letGoLead() {
     this.lead?.release()
     this.lead = null
-    this.storeLead?.release()
-    this.storeLead = null
+    this.settleStore()
   }
 
   /** A save: everything typed written down, after autosave's own last writes. */
@@ -660,23 +702,20 @@ class Runner {
    *  reached. Answers whether v1 may start, false once `alive` says this session ended. */
   async walkBack(alive: () => boolean): Promise<boolean> {
     // One window walks it: an engine for this is an engine like any other, so it opens the
-    // account's store only holding the device's (`holdStore`), as `start` does. Let go of
-    // after: v1 runs no engine, and every other window walks too.
-    if (!(await this.holdStore())) return false
-    const lead = await leadSync(undefined, account.user?.id)
-    try {
-      for (let tries = 0; alive(); tries += 1) {
-        if (await this.rollBack().catch(() => false)) return alive()
-        await waited(pollDelay(tries, document.hidden))
+    // account's store only holding the device's, as `start` does (`usingStore`).
+    const walked = await this.usingStore(async () => {
+      const lead = await leadSync(undefined, account.user?.id)
+      try {
+        for (let tries = 0; alive(); tries += 1) {
+          if (await this.rollBack().catch(() => false)) return alive()
+          await waited(pollDelay(tries, document.hidden))
+        }
+        return false
+      } finally {
+        lead?.release()
       }
-      return false
-    } finally {
-      lead?.release()
-      if (!this.current && !this.lead) {
-        this.storeLead?.release()
-        this.storeLead = null
-      }
-    }
+    })
+    return walked ?? false
   }
 
   /** The spaces v2 kept here: the ones whose first pass is done. */
