@@ -86,17 +86,19 @@ const DUAL = ROUND / (ROUND - 1)
 const SWELL = 2 ** (1 / ROUND)
 
 /** Where a bubble round `boxes` rests: the hull of a round shape round each window - the
- *  superellipse through its corners grown by `PAD` - so one window's bubble is that
+ *  superellipse through its corners grown by `by` - so one window's bubble is that
  *  window's own round shape and nowhere else, and several windows' is the least round
- *  thing round all of them. Null for no boxes. */
-function roundOf(boxes: readonly Box[]): Float64Array | null {
+ *  thing round all of them. Null for no boxes. Grown by `CLEAR` it is how near in the
+ *  bubble may be: round too, so a window pushing at its bubble quicker than the bubble
+ *  follows swells it round, and never presses its own corner into it (Emil, round 4). */
+function roundOf(boxes: readonly Box[], by = PAD): Float64Array | null {
   if (!boxes.length) return null
   const out = new Float64Array(N).fill(Number.NEGATIVE_INFINITY)
   for (const box of boxes) {
     const cx = box.x + box.w / 2
     const cy = box.y + box.h / 2
-    const a = (box.w / 2 + PAD) * SWELL
-    const b = (box.h / 2 + PAD) * SWELL
+    const a = (box.w / 2 + by) * SWELL
+    const b = (box.h / 2 + by) * SWELL
     for (let i = 0; i < N; i++) {
       const c = COS[i] ?? 0
       const s = SIN[i] ?? 0
@@ -192,8 +194,8 @@ export class Bubble {
   /** How far out it reaches along each direction, and how fast that is changing. */
   private readonly h = new Float64Array(N)
   private readonly speed = new Float64Array(N)
-  /** Where its windows reach, grown by `PAD`: where it goes; and by `CLEAR`: how near
-   *  in it may be. */
+  /** Its windows' round shapes, grown by `PAD`: where it goes; and by `CLEAR`: how
+   *  near in it may be. */
   private goal: Float64Array = new Float64Array(N)
   private floor: Float64Array = new Float64Array(N)
   /** The lines it is cut along where it meets another bubble, this frame. */
@@ -210,7 +212,7 @@ export class Bubble {
   /** Where its windows are now; none leaves it a small round bubble where it was. */
   private aim(boxes: readonly Box[]) {
     const goal = roundOf(boxes)
-    const floor = reachOf(boxes, CLEAR)
+    const floor = roundOf(boxes, CLEAR)
     if (goal && floor) {
       this.goal = goal
       this.floor = floor
