@@ -26,8 +26,12 @@ import {
 } from './sync2/store'
 
 /** Opens an account's store in the crate. */
-export async function openNative(account: string, lead = false): Promise<SyncStore> {
-  const opened = openedOf(await invoke('sync_store_open', { account, lead }))
+export async function openNative(
+  account: string,
+  lead = false,
+  device?: string,
+): Promise<SyncStore> {
+  const opened = openedOf(await invoke('sync_store_open', { account, lead, device }))
 
   return {
     opened,

@@ -108,13 +108,14 @@ fn account_name(account: &str) -> Result<&str, String> {
 /// `lead` is the window running the device's one engine asking. The store outlives any
 /// window, so the first such window hears how the last launch ended, and each one after it
 /// is taking over: it hears how the one before it ended, which a crashed window never said
-/// was clean, and the session is marked not ended again. Anyone else asking (the hub, for
-/// the device id) changes nothing.
+/// was clean, and the session is marked not ended again. Anyone else asking changes
+/// nothing. `device` is the id a store made now takes (`Store::open_as`).
 #[tauri::command(async)]
 pub fn sync_store_open(
     app: AppHandle,
     account: String,
     lead: Option<bool>,
+    device: Option<String>,
 ) -> Result<Opened, String> {
     let lead = lead.unwrap_or(false);
     let path = store_path(&app, &account)?;
@@ -130,7 +131,7 @@ pub fn sync_store_open(
         other.store.close()?;
     }
 
-    let store = Store::open(&path).map_err(|refused| refused.said())?;
+    let store = Store::open_as(&path, device.as_deref()).map_err(|refused| refused.said())?;
     // On the launch trace, so it can be seen to come after the first paint; see trace.rs.
     crate::trace::mark("sync store opened");
     let opened = store.opened.clone();

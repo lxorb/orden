@@ -391,13 +391,17 @@ export interface SyncStore {
 /** Opens an account's store in whichever build this is. `leads` says this is for the one
  *  engine of the device rather than a look at the device id: on a desktop the store stays
  *  open between windows, so a window taking the engine over asks how the last one ended. */
-export async function openSyncStore(account: string, leads = false): Promise<SyncStore> {
+export async function openSyncStore(
+  account: string,
+  leads = false,
+  device?: string,
+): Promise<SyncStore> {
   if (isNative) {
     const { openNative } = await import('../native-sync-store')
-    return openNative(account, leads)
+    return openNative(account, leads, device)
   }
   const { openWeb } = await import('../web/sync-store')
-  return openWeb(account)
+  return openWeb(account, device)
 }
 
 /** The device id an account's store keeps, read beside it: nothing is opened, closed or

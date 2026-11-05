@@ -20,7 +20,7 @@ vi.mock('./store', async (importOriginal) => {
   const original = await importOriginal<typeof import('./store')>()
   return {
     ...original,
-    openSyncStore: async (id: string) => {
+    openSyncStore: async (id: string, _leads?: boolean, made?: string) => {
       const { MemoryStore } = await import('./memory-store')
       await new Promise((settle) => setTimeout(settle, 5))
       crate.log.push(`open ${id}`)
@@ -32,7 +32,8 @@ vi.mock('./store', async (importOriginal) => {
           const device = Array.from(new TextEncoder().encode(id), (byte) => byte.toString(16)).join(
             '',
           )
-          mem = new MemoryStore(device.padEnd(32, '0'))
+          // A store made now takes the id it is given, as the crate's `open_as` does.
+          mem = new MemoryStore(made ?? device.padEnd(32, '0'))
           crate.mems.set(id, mem)
         }
         crate.held = { account: id, session: mem.open() }
@@ -353,7 +354,7 @@ describe('who holds the device store, and for how long', () => {
     const bHub = await import('./hub.svelte')
     Object.assign(b.account, { user: { id: 'u1', syncVersion: 2 }, token: 't' })
     void b.runner.start()
-    expect(await bHub.deviceId()).toBe(deviceOfStore('u1'))
+    expect(await bHub.deviceId()).toBe(a.runner.engine?.core.store.opened.device)
     expect(crate.held?.account).toBe('u1')
     expect(wrong()).toEqual([])
   }, 20_000)
@@ -455,4 +456,34 @@ describe('a start that a stop and a start overtake', () => {
       expect(wrong()).toEqual([])
     })
   }
+})
+
+describe('one id for a device and an account', () => {
+  test('signed in with no store yet, the hub has the id the store then takes (DEV-1)', async () => {
+    vi.stubGlobal('fetch', () => new Promise(() => undefined))
+    const a = await aWindow()
+    const hub = await import('./hub.svelte')
+    Object.assign(a.account, { user: { id: 'u1', syncVersion: 2 }, token: 't' })
+    const before = await hub.deviceId()
+    signIn(a)
+    await settle(300)
+    expect(a.runner.engine?.core.store.opened.device).toBe(before)
+    expect(await hub.deviceId()).toBe(before)
+  })
+
+  test('a store that has an id keeps it, and another account is another device', async () => {
+    vi.stubGlobal('fetch', () => new Promise(() => undefined))
+    await storeHere('u1')
+    const a = await aWindow()
+    const hub = await import('./hub.svelte')
+    Object.assign(a.account, { user: { id: 'u1', syncVersion: 2 }, token: 't' })
+    signIn(a)
+    await settle(300)
+    expect(a.runner.engine?.core.store.opened.device).toBe(deviceOfStore('u1'))
+    expect(await hub.deviceId()).toBe(deviceOfStore('u1'))
+    Object.assign(a.account, { user: { id: 'u2', syncVersion: 1 } })
+    const other = await hub.deviceId()
+    Object.assign(a.account, { user: { id: 'u3', syncVersion: 1 } })
+    expect(await hub.deviceId()).not.toBe(other)
+  })
 })

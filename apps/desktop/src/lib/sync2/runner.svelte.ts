@@ -45,6 +45,7 @@ import { kindOfName } from './create'
 import { MINE } from './docs'
 import { Engine } from './engine'
 import { type Leadership, leadSync } from './lead'
+import { forgetMadeDeviceId, madeDeviceId } from './made-device'
 import { Owed, type Owing, takeOwed } from './owed'
 import { placesOf } from './placing'
 import { type Holding, spend } from '../sync/holding'
@@ -373,7 +374,7 @@ class Runner {
   /** Opens the account's store and starts its engine, in the lane: answers it, or null
    *  once this session has moved on meanwhile. */
   private async running(user: { id: string }, live: () => boolean): Promise<Engine | null> {
-    const store = await openSyncStore(user.id, true)
+    const store = await openSyncStore(user.id, true, madeDeviceId(user.id))
     const engine = await Engine.start(
       appWorld(() => account.token, this.telling),
       store,
@@ -650,7 +651,7 @@ class Runner {
     const user = account.user
     const token = account.token
     if (!user || !token) return false
-    const store = await openSyncStore(user.id, true)
+    const store = await openSyncStore(user.id, true, madeDeviceId(user.id))
     const engine = await Engine.start(
       appWorld(() => account.token, this.telling),
       store,
@@ -772,6 +773,7 @@ class Runner {
     this.firsts.clear()
     if (led) {
       // Held until the store is gone, so no window that has not heard yet opens it meanwhile.
+      forgetMadeDeviceId(accountId)
       await forgetSyncStore(accountId).finally(() => this.letGoLead())
       return
     }
@@ -781,6 +783,7 @@ class Runner {
     const late = setTimeout(() => giving.abort(), SIGN_OUT_WAITS)
     const lead = await leadSync(giving.signal, accountId)
     clearTimeout(late)
+    forgetMadeDeviceId(accountId)
     await forgetSyncStore(accountId)
       .catch(() => undefined)
       .finally(() => lead?.release())

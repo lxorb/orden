@@ -22,7 +22,7 @@ import { BASE } from '../api'
 import { BEAT_EVERY, roomDelay } from '../backoff'
 import { t } from '../i18n.svelte'
 import { heldForLife } from '../locks'
-import { keep, storedText } from '../stored'
+import { madeDeviceId } from './made-device'
 import { invoke, isDesktop, platform } from '../tauri'
 import {
   BEAT,
@@ -329,23 +329,10 @@ export class Hub {
   }
 }
 
-/** A device id this device made for itself, for a session the sync store is not open
- *  for: a guest's, or a build with no store. Kept, so the hub sees one device. */
-const MADE_ID = 'nib:hub-device'
-
-function madeId(): string {
-  const held = storedText(MADE_ID)
-  if (held && DEVICE.test(held)) return held
-
-  const bytes = crypto.getRandomValues(new Uint8Array(16))
-  const made = [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('')
-  keep(MADE_ID, made)
-  return made
-}
-
 /** This device's id: the one the account's sync store keeps (section 9.2), which is
- *  the id the engine's documents are written under too, else one of its own. Read the way
- *  the runner may (`deviceOf`): never by opening a store another window's engine runs on. */
+ *  the id the engine's documents are written under too, else the one made for the account,
+ *  which a store made later takes (made-device.ts). Read the way the runner may
+ *  (`deviceOf`): never by opening a store another window's engine runs on. */
 export async function deviceId(): Promise<string> {
   const user = account.user
   // The glasses' plugin runs no engine and keeps no store: its own id, and none of the
@@ -354,8 +341,9 @@ export async function deviceId(): Promise<string> {
     const { runner } = await import('./runner.svelte')
     const device = await runner.deviceOf(user.id).catch(() => null)
     if (device && DEVICE.test(device)) return device
+    return madeDeviceId(user.id)
   }
-  return madeId()
+  return madeDeviceId(null)
 }
 
 /** What this device calls itself: the name a person gave the computer where the system

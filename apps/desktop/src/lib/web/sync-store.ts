@@ -50,13 +50,13 @@ const BY_AGE = 'age'
 const nameOf = (account: string) => `nib-sync:${account}`
 
 /** Opens an account's store, making it the first time. */
-export async function openWeb(account: string): Promise<SyncStore> {
+export async function openWeb(account: string, made?: string): Promise<SyncStore> {
   const db = await database(account)
   // A second tab signing out deletes the database; this tab lets go of it rather than
   // holding the delete up until it is closed.
   db.onversionchange = () => db.close()
 
-  const opened = await started(db)
+  const opened = await started(db, made)
   return {
     opened,
     read: <const Q extends readonly Query[]>(queries: Q) => answered(db, queries),
@@ -144,7 +144,7 @@ function made(db: IDBDatabase): void {
 
 /** Reads the device id and the last session's word on how it ended, and marks this one
  *  as not ended yet, in one transaction. */
-function started(db: IDBDatabase): Promise<Opened> {
+function started(db: IDBDatabase, made?: string): Promise<Opened> {
   const found: { device?: unknown; clean?: unknown } = {}
   let device = ''
 
@@ -153,7 +153,7 @@ function started(db: IDBDatabase): Promise<Opened> {
     const asked = meta.get('device')
     asked.onsuccess = () => {
       found.device = (asked.result as { value?: unknown } | undefined)?.value
-      device = typeof found.device === 'string' ? found.device : crypto.randomUUID()
+      device = typeof found.device === 'string' ? found.device : (made ?? crypto.randomUUID())
       if (device !== found.device) meta.put({ key: 'device', value: device })
     }
     const clean = meta.get('clean_exit')
