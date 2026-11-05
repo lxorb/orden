@@ -369,6 +369,12 @@ pub struct Heard {
     /// The origin of each script context, by its session and id: the frame a console
     /// line was printed in, whichever site its script came from.
     contexts: HashMap<(String, i64), String>,
+    /// The origin of each frame, by its session and id, as the engine said where it went:
+    /// an `about:blank` or `srcdoc` frame has the origin of the one that made it.
+    origins: HashMap<(String, String), String>,
+    /// The origin of the page's own frame, once known: where whatever the page's own
+    /// session says and names no frame of is placed.
+    page_origin: Option<String>,
     /// Frames in processes of their own, by the number their refs carry (`f2e17` is
     /// the second); a frame that went is `None`, so the numbers of the rest hold.
     frames: Vec<Option<Frame>>,
@@ -442,9 +448,9 @@ impl Heard {
         self.in_flight.is_empty() && self.network_moved.is_none_or(|at| at.elapsed() >= quiet)
     }
 
-    /// The addresses of the requests still in flight, for an agent told the page never
-    /// went quiet.
-    pub fn in_flight(&self) -> Vec<String> {
+    /// The requests still in flight, for an agent told the page never went quiet, each
+    /// with the frame that sent it.
+    pub fn in_flight(&self) -> Vec<(Request, Whence)> {
         let seqs: Vec<u64> = self
             .in_flight
             .iter()
@@ -453,7 +459,7 @@ impl Heard {
         self.requests
             .iter()
             .filter(|(one, _)| seqs.contains(&one.seq))
-            .map(|(one, _)| one.url.clone())
+            .cloned()
             .collect()
     }
 
@@ -506,15 +512,25 @@ impl Heard {
         self.started.insert(key, (seq, Instant::now()));
         self.network_moved = Some(Instant::now());
         let request = event.get("request").cloned().unwrap_or_default();
-        // The document that sent it, then the frame its session is: a frame of one site
-        // fetches from any other.
-        let mut from: Vec<String> = event
-            .get("documentURL")
-            .and_then(Value::as_str)
-            .map(str::to_string)
-            .into_iter()
-            .collect();
-        from.extend(self.session_address(session));
+        // The document that sent it, then its frame's origin, then where its session is: a
+        // frame of one site fetches from any other.
+        let from = placed(
+            event
+                .get("documentURL")
+                .and_then(Value::as_str)
+                .map(|url| url.strip_prefix("blob:").unwrap_or(url).to_string())
+                .into_iter()
+                .chain(
+                    event
+                        .get("frameId")
+                        .and_then(Value::as_str)
+                        .and_then(|frame| {
+                            self.origins.get(&(session.to_string(), frame.to_string()))
+                        })
+                        .cloned(),
+                )
+                .chain(self.session_place(session)),
+        );
         self.requests.push_back((
             Request {
                 seq,
@@ -526,7 +542,7 @@ impl Heard {
                 failed: None,
                 body: None,
             },
-            Whence::Frame(from),
+            from,
         ));
         while self.requests.len() > RING {
             if let Some((gone, _)) = self.requests.pop_front() {
@@ -575,6 +591,107 @@ impl Heard {
             .flatten()
             .find(|frame| frame.session == session)
             .map(|frame| frame.url.clone())
+    }
+
+    /// Where whatever a session says is placed when it names no frame: the frame a frame's
+    /// own session is, and the page's own origin for the page's.
+    fn session_place(&self, session: &str) -> Option<String> {
+        if session.is_empty() {
+            self.page_origin.clone()
+        } else {
+            self.session_address(session)
+        }
+    }
+
+    /// Where a request was sent from, by its number.
+    fn sent_from(&self, session: &str, request: &str) -> Option<Whence> {
+        let (seq, _) = self
+            .started
+            .get(&(session.to_string(), request.to_string()))?;
+        self.requests
+            .iter()
+            .find(|(one, _)| one.seq == *seq)
+            .map(|(_, from)| from.clone())
+    }
+
+    /// A frame gone somewhere, as `Page.frameNavigated` or `Page.getFrameTree` says it: its
+    /// origin kept, and a frame in a process of its own that went to another site in the
+    /// same process is where it went now, not where it was attached.
+    fn navigated(&mut self, session: &str, frame: &Value) {
+        let Some(id) = frame.get("id").and_then(Value::as_str) else {
+            return;
+        };
+        let url = text_at(frame, "url");
+        let origin = frame
+            .get("securityOrigin")
+            .and_then(Value::as_str)
+            .filter(|one| !one.is_empty())
+            .map_or_else(|| url.clone(), str::to_string);
+        if session.is_empty() && frame.get("parentId").is_none() {
+            // A new page: the frames of the one before are gone.
+            self.origins.retain(|(owner, _), _| !owner.is_empty());
+            self.page_origin = Some(origin.clone());
+        }
+        if let Some(held) = self
+            .frames
+            .iter_mut()
+            .flatten()
+            .find(|one| one.session == session && one.id == id)
+        {
+            held.url.clone_from(&url);
+        }
+        self.origins
+            .insert((session.to_string(), id.to_string()), origin);
+    }
+
+    /// A line the engine's own log added.
+    fn logged(&mut self, session: &str, event: &Value) {
+        let entry = event.get("entry").cloned().unwrap_or_default();
+        let level = match entry.get("level").and_then(Value::as_str) {
+            Some("error") => "error",
+            Some("warning") => "warning",
+            Some("verbose") => "debug",
+            _ => "info",
+        };
+        let source = entry.get("url").and_then(Value::as_str).map(str::to_string);
+        // An entry names no frame: one about a request is where the request was sent
+        // from, and any other where its session is.
+        let whence = entry
+            .get("networkRequestId")
+            .and_then(Value::as_str)
+            .and_then(|request| self.sent_from(session, request))
+            .unwrap_or_else(|| Whence::Frame(self.session_place(session).into_iter().collect()));
+        self.line(level, text_at(&entry, "text"), source, whence);
+    }
+
+    /// A frame's target gone elsewhere without being attached again.
+    fn target_changed(&mut self, event: &Value) {
+        let (Some(id), Some(url)) = (
+            event
+                .pointer("/targetInfo/targetId")
+                .and_then(Value::as_str),
+            event.pointer("/targetInfo/url").and_then(Value::as_str),
+        ) else {
+            return;
+        };
+        if let Some(frame) = self.frames.iter_mut().flatten().find(|one| one.id == id) {
+            frame.url = url.to_string();
+        }
+    }
+
+    /// Every frame of a session's tree, as `Page.getFrameTree` answers it.
+    pub fn frame_tree(&mut self, session: &str, tree: &Value) {
+        if let Some(frame) = tree.get("frame") {
+            self.navigated(session, frame);
+        }
+        for child in tree
+            .get("childFrames")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+        {
+            self.frame_tree(session, child);
+        }
     }
 
     /// Where a line printed in a script context was printed: the context's origin, then
@@ -649,6 +766,7 @@ impl Heard {
         }
         self.in_flight.retain(|(owner, _)| owner != session);
         self.contexts.retain(|(owner, _), _| owner != session);
+        self.origins.retain(|(owner, _), _| owner != session);
         self.nested.remove(session);
     }
 
@@ -694,7 +812,7 @@ pub fn labels() -> Vec<String> {
 }
 
 /// The events a page is followed for: what `heard_event` keeps.
-const EVENTS: [&str; 16] = [
+const EVENTS: [&str; 18] = [
     "Network.requestWillBeSent",
     "Network.responseReceived",
     "Network.loadingFinished",
@@ -707,6 +825,8 @@ const EVENTS: [&str; 16] = [
     "Log.entryAdded",
     "Page.fileChooserOpened",
     "Target.attachedToTarget",
+    "Target.targetInfoChanged",
+    "Page.frameNavigated",
     "Page.frameStartedNavigating",
     "Page.loadEventFired",
     "Input.dragIntercepted",
@@ -829,23 +949,17 @@ fn heard_event(held: &mut Heard, method: &str, session: &str, event: Value) {
         "Runtime.executionContextsCleared" => {
             held.contexts.retain(|(owner, _), _| owner != session);
         }
-        "Log.entryAdded" => {
-            let entry = event.get("entry").cloned().unwrap_or_default();
-            let level = match entry.get("level").and_then(Value::as_str) {
-                Some("error") => "error",
-                Some("warning") => "warning",
-                Some("verbose") => "debug",
-                _ => "info",
-            };
-            let source = entry.get("url").and_then(Value::as_str).map(str::to_string);
-            // An entry names no frame: the address it is about is all there is of where.
-            let whence = Whence::Frame(source.iter().cloned().collect());
-            held.line(level, text_at(&entry, "text"), source, whence);
-        }
+        "Log.entryAdded" => held.logged(session, &event),
         "Page.fileChooserOpened" => {
             held.chooser = event.get("backendNodeId").and_then(Value::as_u64);
         }
         "Target.attachedToTarget" => held.attached(session, &event),
+        "Target.targetInfoChanged" => held.target_changed(&event),
+        "Page.frameNavigated" => {
+            if let Some(frame) = event.get("frame") {
+                held.navigated(session, frame);
+            }
+        }
         "Target.detachedFromTarget" => held.detached(&event),
         "Page.frameStartedNavigating" => {
             let main = held.main_frame.as_deref();
@@ -872,6 +986,17 @@ fn heard_event(held: &mut Heard, method: &str, session: &str, event: Value) {
         "Input.dragIntercepted" => held.dragged = event.get("data").cloned(),
         _ => {}
     }
+}
+
+/// Where something came from, each address once, in the order given.
+fn placed(at: impl Iterator<Item = String>) -> Whence {
+    let mut kept: Vec<String> = Vec::new();
+    for one in at {
+        if !kept.contains(&one) {
+            kept.push(one);
+        }
+    }
+    Whence::Frame(kept)
 }
 
 /// What a console call printed: each argument as the console would show it.
@@ -942,15 +1067,39 @@ pub fn awake(view: &View, label: &str, own: bool) {
     } else {
         attach_existing(view);
     }
+    // Where each frame is now, which its requests and the engine's lines are placed by;
+    // the engine tells of each navigation after.
+    if let Ok(tree) = call(view, "Page.getFrameTree", &json!({})) {
+        if let Some(tree) = tree.get("frameTree") {
+            page.lock()
+                .unwrap_or_else(PoisonError::into_inner)
+                .frame_tree("", tree);
+        }
+    }
     let frames = page.lock().unwrap_or_else(PoisonError::into_inner).frames();
     for (_, frame) in frames {
-        let _ = call_in(
+        for method in ["Network.enable", "Page.enable"] {
+            let _ = call_in(
+                view,
+                Some(&frame.session),
+                method,
+                &json!({}),
+                super::page::FRAME_PATIENCE,
+            );
+        }
+        if let Ok(tree) = call_in(
             view,
             Some(&frame.session),
-            "Network.enable",
+            "Page.getFrameTree",
             &json!({}),
             super::page::FRAME_PATIENCE,
-        );
+        ) {
+            if let Some(tree) = tree.get("frameTree") {
+                page.lock()
+                    .unwrap_or_else(PoisonError::into_inner)
+                    .frame_tree(&frame.session, tree);
+            }
+        }
     }
 }
 
@@ -1235,14 +1384,167 @@ mod tests {
         let (rows, _) = heard.requests(None, None);
         assert_eq!(
             rows[0].1,
-            Whence::Frame(vec![
-                "https://bank.example/app".into(),
-                "https://bank.example/app".into()
-            ])
+            Whence::Frame(vec!["https://bank.example/app".into()])
         );
         assert_eq!(
             rows[1].1,
             Whence::Frame(vec!["https://shop.example/".into()])
+        );
+    }
+
+    fn went(heard: &mut Heard, session: &str, frame: Value) {
+        heard_event(
+            heard,
+            "Page.frameNavigated",
+            session,
+            json!({ "frame": frame }),
+        );
+    }
+
+    fn sent(heard: &mut Heard, session: &str, id: &str, frame: &str, document: &str, url: &str) {
+        heard.request_started(
+            session,
+            &json!({ "requestId": id, "frameId": frame, "documentURL": document, "type": "Fetch", "request": { "method": "GET", "url": url } }),
+        );
+    }
+
+    fn at(all: &[&str]) -> Whence {
+        Whence::Frame(all.iter().map(|one| (*one).to_string()).collect())
+    }
+
+    /// RF-4, RF-2: a request is placed by its frame's origin where its document has no
+    /// address of its own, and a log line about a request where the request was sent from.
+    #[test]
+    fn a_request_and_a_log_line_are_placed_by_the_frame_they_came_from() {
+        let mut heard = Heard::default();
+        went(
+            &mut heard,
+            "",
+            json!({ "id": "M", "url": "https://shop.example/", "securityOrigin": "https://shop.example" }),
+        );
+        went(
+            &mut heard,
+            "",
+            json!({ "id": "B", "parentId": "M", "url": "about:blank", "securityOrigin": "https://shop.example" }),
+        );
+        went(
+            &mut heard,
+            "",
+            json!({ "id": "P", "parentId": "M", "url": "https://pay.example.com/", "securityOrigin": "https://pay.example.com" }),
+        );
+        sent(
+            &mut heard,
+            "",
+            "1",
+            "B",
+            "about:blank",
+            "https://shop.example/api/x",
+        );
+        sent(
+            &mut heard,
+            "",
+            "2",
+            "Q",
+            "blob:https://shop.example/u",
+            "https://shop.example/api/y",
+        );
+        sent(
+            &mut heard,
+            "",
+            "3",
+            "P",
+            "https://pay.example.com/",
+            "https://api.example.com/accounts",
+        );
+        let (rows, _) = heard.requests(None, None);
+        assert_eq!(rows[0].1, at(&["about:blank", "https://shop.example"]));
+        assert_eq!(
+            rows[1].1,
+            at(&["https://shop.example/u", "https://shop.example"])
+        );
+        assert_eq!(
+            rows[2].1,
+            at(&[
+                "https://pay.example.com/",
+                "https://pay.example.com",
+                "https://shop.example"
+            ])
+        );
+        heard_event(
+            &mut heard,
+            "Log.entryAdded",
+            "",
+            json!({ "entry": { "level": "error", "text": "Failed to load resource: 404", "url": "https://api.example.com/accounts", "networkRequestId": "3" } }),
+        );
+        heard_event(
+            &mut heard,
+            "Log.entryAdded",
+            "",
+            json!({ "entry": { "level": "warning", "text": "an intervention" } }),
+        );
+        let (lines, _) = heard.console(None, None);
+        assert_eq!(lines[0].1, rows[2].1);
+        assert_eq!(lines[1].1, at(&["https://shop.example"]));
+    }
+
+    /// RF-5: a frame in a process of its own is placed by where it went since it was
+    /// attached, and a new page leaves the frames of the one before.
+    #[test]
+    fn a_frame_of_its_own_is_placed_where_it_went_since_it_was_attached() {
+        let mut heard = Heard::default();
+        heard.attached(
+            "",
+            &json!({ "sessionId": "s1", "targetInfo": { "type": "iframe", "targetId": "F", "url": "https://a.example.com/" } }),
+        );
+        went(
+            &mut heard,
+            "s1",
+            json!({ "id": "F", "url": "https://pay.example.com/x", "securityOrigin": "https://pay.example.com" }),
+        );
+        heard.request_started(
+            "s1",
+            &json!({ "requestId": "4", "documentURL": "about:blank", "type": "Fetch", "request": { "method": "GET", "url": "https://api.example.com/z" } }),
+        );
+        assert_eq!(
+            heard.requests(None, None).0[0].1,
+            at(&["about:blank", "https://pay.example.com/x"])
+        );
+        heard_event(
+            &mut heard,
+            "Target.targetInfoChanged",
+            "",
+            json!({ "targetInfo": { "targetId": "F", "type": "iframe", "url": "https://b.example/" } }),
+        );
+        assert_eq!(
+            heard.session_address("s1").as_deref(),
+            Some("https://b.example/")
+        );
+        went(
+            &mut heard,
+            "",
+            json!({ "id": "M", "url": "https://shop.example/", "securityOrigin": "https://shop.example" }),
+        );
+        went(
+            &mut heard,
+            "",
+            json!({ "id": "B", "parentId": "M", "url": "about:blank", "securityOrigin": "https://shop.example" }),
+        );
+        went(
+            &mut heard,
+            "",
+            json!({ "id": "M", "url": "https://other.example/", "securityOrigin": "https://other.example" }),
+        );
+        sent(
+            &mut heard,
+            "",
+            "5",
+            "B",
+            "about:blank",
+            "https://other.example/q",
+        );
+        assert_eq!(
+            heard.requests(None, None).0[1].1,
+            at(&["about:blank", "https://other.example"])
         );
     }
 

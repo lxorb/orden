@@ -3118,6 +3118,7 @@ impl Page<'_> {
                             .lock()
                             .unwrap_or_else(PoisonError::into_inner)
                             .in_flight();
+                        let open = still_in_flight(self.limits.as_ref(), open);
                         format!(": still in flight, {}", open.join(", "))
                     }
                     _ => String::new(),
@@ -4072,6 +4073,15 @@ fn wheels(limits: Option<&(Grant, Store)>, under: Option<&Facts>) -> bool {
         || under.is_some_and(|facts| engines::acts_in(limits, facts).is_ok())
 }
 
+/// The addresses of the requests still in flight that the agent may read, for a wait
+/// that timed out on the network: the same rows `browser_network` shows.
+fn still_in_flight(limits: Option<&(Grant, Store)>, rows: Vec<(Request, Whence)>) -> Vec<String> {
+    rows.into_iter()
+        .filter(|(one, from)| request_readable(limits, one, from))
+        .map(|(one, _)| one.url)
+        .collect()
+}
+
 /// Whether a console line is the agent's to read under a call's `limits`: one a frame of a
 /// site it may not reach printed is that site's, whichever site its script came from, as is
 /// one a script of such a site printed; one the engine did not place is nobody's.
@@ -4221,6 +4231,42 @@ mod tests {
         let open = (Grant::own("a".into(), "A"), Store::Reader);
         assert!(wheels(Some(&open), None));
         assert!(wheels(None, None));
+    }
+
+    /// RF-1: a wait that timed out on the network names only the requests the agent may
+    /// read, not a denied frame's or one to a denied site.
+    #[test]
+    fn a_network_wait_names_only_the_requests_the_agent_may_read() {
+        let limits = denying();
+        let row = |url: &str| Request {
+            seq: 1,
+            method: "GET".into(),
+            url: url.into(),
+            status: None,
+            kind: "Fetch".into(),
+            ms: None,
+            failed: None,
+            body: None,
+        };
+        let rows = vec![
+            (
+                row("https://bank.example/stream?session=abc"),
+                frame(&["https://shop.example/"]),
+            ),
+            (
+                row("https://api.backend.example/accounts?acct=123"),
+                frame(&["https://bank.example/app"]),
+            ),
+            (
+                row("https://shop.example/poll"),
+                frame(&["https://shop.example/"]),
+            ),
+        ];
+        assert_eq!(
+            still_in_flight(Some(&limits), rows.clone()),
+            ["https://shop.example/poll"]
+        );
+        assert_eq!(still_in_flight(None, rows).len(), 3);
     }
 
     #[test]
