@@ -1352,9 +1352,13 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-05, to 3,705,600 and 398 modules, for #1139: a strip with nothing ahead
  *  of its tabs starts them at its pane's edge, and the first one in front runs straight
  *  down into the page with no foot ahead of it (the new tab-strip/flush.ts, Tabs.svelte,
- *  Pane.svelte). Measured 3,705,341 in 397. */
-const BUDGET = 3_705_600
-const MOST_FILES = 398
+ *  Pane.svelte). Measured 3,705,341 in 397.
+ *
+ *  Raised on 2026-11-05, to 3,706,700 and 399 modules, for #1038's setting that puts the
+ *  sidebars' toggles in them, off by default (side-toggles.svelte.ts, Sidebar.svelte,
+ *  Titlebar.svelte). Measured 3,706,433 in 398. */
+const BUDGET = 3_706_700
+const MOST_FILES = 399
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

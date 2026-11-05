@@ -646,10 +646,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  its pane's edge, and the first one in front runs straight down into the page with no
  *  foot ahead of it (tab-strip/flush.ts, Tabs.svelte, Pane.svelte). The code to
  *  6,126,700, measured 6,126,404; the styles to 291,000, measured 290,785.
+ *
+ *  Raised on 2026-11-05 for #1038's setting that puts the sidebars' toggles in them, off
+ *  by default (side-toggles.svelte.ts, Appearance > Sidebars): the code to 6,127,800,
+ *  measured 6,127,556; the catalogues to 1,010,800, its words in every language, measured
+ *  1,010,519.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_126_700,
-  catalogues: 1_006_300,
+  code: 6_127_800,
+  catalogues: 1_010_800,
   styles: 291_000,
   fonts: 260_000,
   pages: 40_000,
