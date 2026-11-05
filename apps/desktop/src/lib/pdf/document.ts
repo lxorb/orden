@@ -56,6 +56,24 @@ export const pdfjs: () => Promise<Library> = door(() =>
   }),
 )
 
+/** Whether pdf.js may hand a PDF's JPEG images to the engine's own `ImageDecoder`
+ *  rather than decode them itself. Not on WebKit: its decoder takes the content process
+ *  down on some ordinary scans (a Word script printed through Distiller, eight pages of
+ *  twenty-seven), and the worker every page of that paper shares goes with it, so the
+ *  whole note stays a stack of empty sheets. pdf.js's own decoder reads them all.
+ *  Asked of the user agent, because a decoder that is there and crashes looks, to any
+ *  feature test, exactly like one that works. */
+export function decodesImages(agent: string = navigator.userAgent): boolean {
+  const webkit = agent.includes('AppleWebKit/') && !/(Chrome|Chromium|CriOS|Edg)\//.test(agent)
+  return !webkit
+}
+
+/** Starts reading a PDF's bytes, with what this engine can be trusted with. Every
+ *  document the app opens goes through here; see `decodesImages`. */
+export function loading(library: Library, data: Uint8Array) {
+  return library.getDocument({ data, isImageDecoderSupported: decodesImages() })
+}
+
 /** A PDF that is open, and the one way to close it. */
 export interface OpenPdf {
   doc: PDFDocumentProxy
@@ -91,7 +109,7 @@ async function opening(library: Library, data: Uint8Array): Promise<OpenPdf> {
 
   // The bytes are handed to the worker, which takes ownership of them: after
   // this the copy on this side is empty, and one document costs one copy.
-  const task = library.getDocument({ data })
+  const task = loading(library, data)
 
   return { doc: await task.promise, hash, close: () => task.destroy() }
 }
@@ -110,7 +128,7 @@ export async function pageSizes(
       : await pdfjs().then((library) => {
           // A copy, because the worker takes the bytes and the import still needs
           // them to write the file with.
-          const task = library.getDocument({ data: from.slice() })
+          const task = loading(library, from.slice())
           return task.promise.then((doc) => ({ doc, close: () => task.destroy() }))
         })
 

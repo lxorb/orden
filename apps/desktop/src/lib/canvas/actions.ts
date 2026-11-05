@@ -64,7 +64,7 @@ import { folderOf, insideSpace, relativeTo, withinSpace } from '../space-paths'
 import { spaceRelative } from '../recorder/paths'
 import { openHref } from '../open-link'
 import { workspace } from '../workspace.svelte'
-import { pdfjs } from '../pdf/document'
+import { loading, pdfjs } from '../pdf/document'
 import { PDF_TO_CSS } from '../pdf/pages'
 
 /** How far a nudge moves a card: one pixel with a bare arrow key, one grid step
@@ -348,7 +348,7 @@ export const run = {
 
     const bytes = new Uint8Array(await file.arrayBuffer())
     const library = await pdfjs()
-    const task = library.getDocument({ data: bytes })
+    const task = loading(library, bytes)
     const doc = await task.promise
     let pages: number[]
     if (mode === 'single') {
