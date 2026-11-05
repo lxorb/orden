@@ -305,8 +305,8 @@ const online = {
   again: 0,
 }
 vi.mock('../../terminal/sessions.svelte', () => ({
-  sessionOf: (tab: { id: string; path: string | null }) => {
-    const isOnline = tab.path?.endsWith('.term') === true
+  sessionOf: (tab: { id: string; path: string | null; doc: string }) => {
+    const isOnline = tab.path?.endsWith('.term') === true || tab.doc.startsWith('{"v":1')
     return {
       term: {
         ...term,
@@ -341,6 +341,44 @@ vi.mock('../../terminal/sessions.svelte', () => ({
     }
   },
 }))
+
+/** The reader's account and online machine (#1125): signed in, allowed, a machine
+ *  awake with one session saved as Build.term and one not saved, set by a test. */
+const account = { accountToken: 'token' as string | null }
+vi.mock('../../account.svelte', async (original) => {
+  const real = await original<typeof import('../../account.svelte')>()
+  Object.defineProperty(real.account, 'accountToken', { get: () => account.accountToken })
+  return real
+})
+const machine = {
+  known: null as unknown,
+  refused: null as string | null,
+  refresh: vi.fn(() => Promise.resolve()),
+}
+vi.mock('../../online/machine.svelte', () => ({ machine }))
+const session = { createdAt: 1, space: 'work', trashed: false, title: null, alive: null, at: 2 }
+const listed = vi.fn(() =>
+  Promise.resolve([
+    { ...session, term: 'f1', session: 's_build', path: 'Build.term', program: 'node' },
+    { ...session, term: null, session: 's_new', path: null, program: null, alive: true },
+  ]),
+)
+vi.mock('../../online/calls', () => ({ listed }))
+vi.mock('../../sync2/runner.svelte', () => ({
+  runner: { fileOf: (id: string) => (id === 'f1' ? '/s/Work/Build.term' : null) },
+}))
+/** What the account answers a new online terminal: a tab on a new session, or why not. */
+let making: string | null = null
+const madeOnline = vi.fn((_beside: string | null, _activate: boolean) => {
+  if (making) return Promise.resolve(making)
+  const made = tab('online-new', 'terminal', null, {
+    shown: 'Terminal',
+    doc: '{"v":1,"machine":"m_1","session":"s_new"}\n',
+  })
+  tabs.push(made)
+  return Promise.resolve(made)
+})
+vi.mock('../../online/open', () => ({ madeOnline }))
 
 const { runAgentVerb } = await import('./index')
 
@@ -383,6 +421,10 @@ beforeEach(() => {
   online.taken = 0
   online.ended = false
   online.again = 0
+  account.accountToken = 'token'
+  machine.known = { allowed: true, machine: { id: 'm_1', state: 'awake', held: false } }
+  machine.refused = null
+  making = null
   showing.p1 = 'n1'
   showing.p2 = 'c1'
   workspace.activeTabId = 'n1'
@@ -942,6 +984,116 @@ describe('the reader terminals', () => {
     const listed = await call('workspace_tabs', { op: 'list' })
     expect(listed).toMatchObject({
       result: expect.arrayContaining([expect.objectContaining({ id: 'o1', running: true })]),
+    })
+  })
+
+  test('an agent opens an online terminal, behind, and types into and reads it (#1125)', async () => {
+    expect(await call('workspace_tabs', { op: 'new', kind: 'online' })).toMatchObject({
+      result: { id: 'online-new', kind: 'terminal', online: true, running: false },
+    })
+    expect(madeOnline).toHaveBeenCalledWith('n1', false)
+
+    // The same tab every terminal tool takes, reached through its session's own socket.
+    expect(
+      await call('type_terminal', { tab: 'online-new', text: 'git log', wait_ms: 1 }),
+    ).toMatchObject({ result: { tab: 'online-new', typed: 'git log + Enter' } })
+    expect(screen.typed).toEqual(['git log\r'])
+    expect(await call('read_terminal', { tab: 'online-new' })).toMatchObject({
+      result: { tab: 'online-new', output: expect.stringContaining('git log') },
+      untrusted: 'terminal output',
+    })
+    expect(online.taken).toBe(0)
+  })
+
+  test('opening an online terminal asks as opening any tab does, and in front only with focus', async () => {
+    answer = { status: 'needs_approval', approval: 'a5', summary: 'A new online tab' }
+    expect(
+      await call(
+        'workspace_tabs',
+        { op: 'new', kind: 'online' },
+        agent(EVERY, { mode: 'confirm' }),
+      ),
+    ).toMatchObject({ status: 'needs_approval' })
+    expect(madeOnline).not.toHaveBeenCalled()
+
+    answer = { status: 'ok', result: {} }
+    expect(
+      await call('workspace_tabs', { op: 'new', kind: 'online', background: false }),
+    ).toMatchObject({ code: 'not_granted' })
+    await call('workspace_tabs', { op: 'new', kind: 'online', background: false }, agent(focusing))
+    expect(madeOnline).toHaveBeenCalledWith(null, true)
+  })
+
+  test('an online terminal the account will not make is refused with why', async () => {
+    for (const [why, code] of [
+      ['signed-out', 'not_granted'],
+      ['list', 'not_granted'],
+      ['sessions', 'failed'],
+      ['other', 'failed'],
+    ] as const) {
+      making = why
+      expect(await call('workspace_tabs', { op: 'new', kind: 'online' }), why).toMatchObject({
+        code,
+        message: expect.stringContaining(`${why}:`),
+      })
+    }
+    expect(tabs.some((one) => one.id === 'online-new')).toBe(false)
+  })
+
+  test('the online machine is listed with its sessions, and the tab or file each opens in', async () => {
+    tabs.push(
+      tab('o1', 'terminal', null, {
+        shown: 'Shell',
+        doc: '{"v":1,"machine":"m_1","session":"s_new"}\n',
+      }),
+    )
+    expect(await call('workspace_tabs', { op: 'list', kind: 'online' })).toMatchObject({
+      result: {
+        allowed: true,
+        machine: { id: 'm_1', state: 'awake', held: false },
+        sessions: [
+          { session: 's_build', name: 'node', space: 'work', path: 'Build.term' },
+          { session: 's_new', name: 'Terminal', alive: true, tab: 'o1' },
+        ],
+      },
+      untrusted: 'tab titles and terminal output',
+    })
+
+    // A session whose file is in a space beyond the grant does not exist to the agent.
+    const elsewhere = agent(EVERY, { spaces: ['Other'] })
+    workspace.activeSpace = { id: 'other', name: 'Other', root: '/s/Other' }
+    workspace.spaces.push(workspace.activeSpace)
+    try {
+      const said = await call('workspace_tabs', { op: 'list', kind: 'online' }, elsewhere)
+      expect(said).toMatchObject({ result: { sessions: [{ session: 's_new' }] } })
+      expect((said as { result: { sessions: unknown[] } }).result.sessions).toHaveLength(1)
+    } finally {
+      workspace.spaces.pop()
+      workspace.activeSpace = work
+    }
+  })
+
+  test('no machine yet, not allowed, signed out: the list says so or refuses with why', async () => {
+    machine.known = { allowed: true, machine: null }
+    expect(await call('workspace_tabs', { op: 'list', kind: 'online' })).toMatchObject({
+      result: { allowed: true, machine: null, sessions: [] },
+    })
+    expect(listed).not.toHaveBeenCalled()
+
+    machine.known = { allowed: false, machine: null }
+    expect(await call('workspace_tabs', { op: 'list', kind: 'online' })).toMatchObject({
+      result: { allowed: false, machine: null, sessions: [] },
+    })
+
+    machine.refused = 'off'
+    expect(await call('workspace_tabs', { op: 'list', kind: 'online' })).toMatchObject({
+      code: 'failed',
+      message: expect.stringContaining('off:'),
+    })
+
+    account.accountToken = null
+    expect(await call('workspace_tabs', { op: 'list', kind: 'online' })).toMatchObject({
+      code: 'not_granted',
     })
   })
 

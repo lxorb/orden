@@ -23,6 +23,7 @@ const TAKES = [
   /scrollIntoView/,
   /\.focus\(\)/,
   /import\('\.\.\/\.\.\/terminal\/open'\)/,
+  /import\('\.\.\/\.\.\/online\/open'\)/,
   /import\('\.\.\/\.\.\/chats\/view\/open'\)/,
 ]
 

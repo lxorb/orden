@@ -19,6 +19,7 @@ import { documentOf } from '@orden/editor'
 import type { AgentAnswer } from '../../automation/caller'
 import { folderOf, nameOf, relativeTo, within } from '../../space-paths'
 import type { Section } from '../../settings.svelte'
+import { isOnlineTab } from '../../online/path'
 import { shellRunning } from '../../terminal/running'
 import { views } from '../../views.svelte'
 import { isWebAddress } from '../../web-tab/address'
@@ -58,7 +59,7 @@ import { entryIn, moveFile } from './tree'
 const LONGEST_SELECTION = 20_000
 
 /** What a new tab can be, as `workspace_tabs` `new` names them. */
-const NEW_KINDS = ['note', 'canvas', 'pages', 'web', 'terminal'] as const
+const NEW_KINDS = ['note', 'canvas', 'pages', 'web', 'terminal', 'online'] as const
 type NewKind = (typeof NEW_KINDS)[number]
 
 /** Whether a tab is the one in front of its pane. */
@@ -96,6 +97,7 @@ function tabOf(tab: Tab) {
     ...(workspace.previewTabId === tab.id ? { preview: true } : {}),
     ...(tab.note.shared !== null ? { shared: true } : {}),
     ...(tab.kind === 'terminal' ? { running: shellRunning(tab.id) } : {}),
+    ...(isOnlineTab(tab) ? { online: true } : {}),
   }
 }
 
@@ -357,6 +359,12 @@ async function newTab(call: Call): Promise<AgentAnswer> {
       return answered(await view.openTerminal(call, shell.id, folder))
     }
 
+    // A session on the reader's own machine, as Ctrl+T's Online terminal makes one.
+    case 'online': {
+      const { newOnline } = await import('./online')
+      return answered(await newOnline(call))
+    }
+
     case 'canvas': {
       const { blankCanvas } = await import('../../canvas/format')
       return answered(view.openUnsaved(call, 'canvas', blankCanvas()))
@@ -444,6 +452,10 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
 
   switch (op) {
     case 'list':
+      if (maybe(call, 'kind') === 'online') {
+        const { listOnline } = await import('./online')
+        return listOnline(call)
+      }
       return done(tabsInReach(call).map(tabOf), namedOutside(call) ? 'tab titles' : null)
 
     case 'open':

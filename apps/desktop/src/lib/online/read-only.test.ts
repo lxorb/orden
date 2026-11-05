@@ -37,7 +37,7 @@ vi.mock('./calls', async (importOriginal) => ({
 
 const { workspace } = await import('../workspace.svelte')
 const { isUnsaved } = await import('../workspace/drafts')
-const { openOnline } = await import('./open')
+const { madeOnline, openOnline } = await import('./open')
 const { isOnlineTab } = await import('./path')
 
 const WORDS = '{"v":1,"machine":"m_1","session":"s_1"}\n'
@@ -109,4 +109,13 @@ test('renamed before it is saved, is saved under that name', async () => {
   expect(tab.name).toBe('Claude Code')
   expect(written).toEqual([])
   expect(await workspace.save(tab, '/mine')).toBe('/mine/Claude Code.term')
+})
+
+test('made for an agent, lands where it is told, behind, the same tab a person gets', async () => {
+  inFront('/mine')
+  const opened = vi.spyOn(workspace, 'openUnsaved')
+
+  const tab = await madeOnline('n1', false)
+  expect(opened).toHaveBeenCalledWith('terminal', WORDS, 'Terminal', 'n1', false)
+  expect(tab !== null && typeof tab !== 'string' && isOnlineTab(tab)).toBe(true)
 })

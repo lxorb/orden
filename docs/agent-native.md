@@ -484,7 +484,7 @@ the AI sidebar, with the chat attached, and the answer comes back as a draft (de
 | `recently_deleted` | `op`: `list`, `restore`; `id` | Recently deleted as the panel lists it, as far as the grant reaches, and one thing put back where it was, as the panel's Restore does. Nothing is deleted for good |
 | `trash_file` | `path` | to Recently deleted, which is undoable, so it is not "deleting for good"; a file in front of the reader needs `workspace.focus`, since its tab closes, and one in a tab behind it does not |
 | `create_folder` | `path` | |
-| `workspace_tabs` | `op`: `list`, `open`, `new`, `rename`, `save`, `close`, `split`, `focus`, `move`, `arrange`; `tab`, `path`, `url`, `view`, `kind`, `content`, `shell`, `cwd`, `name`, `background`?, `pane`, `toward`, `at`, `layout` | `open` a file, a page (`url`), the graph, the scratchpad or Settings at a `section` (`view`; Settings is a sheet, always in front; the scratchpad is its card, never a tab, and takes the keyboard only with `background` false); `new` a tab with no file of any kind - a note with its words, a canvas, a page note, a web tab on `url`, a terminal in `shell` and `cwd` - the plus pressed for the reader; `rename` a tab, which for a file is the tree's own rename (links rewritten, one step to undo, every store kept by path told through `file-ops.ts`) and for an unsaved tab the name it will be saved under; `save` an unsaved tab at a path, as Save does; `move` a tab to a `pane` or `toward` a side, at a place `at` in its strip, as a drag does; `arrange` the panes into `columns` or `rows`, make every split `even`, or gather every tab into a `single` pane (8.14). Everything lands behind the tab in front, beside the selected one, unless `background` is false; that, `focus`, `split`, `move`, `arrange`, the graph, closing the tab in front and another space need `workspace.focus`, because they change what the reader is looking at. A denied site opens in no tab |
+| `workspace_tabs` | `op`: `list`, `open`, `new`, `rename`, `save`, `close`, `split`, `focus`, `move`, `arrange`; `tab`, `path`, `url`, `view`, `kind`, `content`, `shell`, `cwd`, `name`, `background`?, `pane`, `toward`, `at`, `layout` | `list` the tabs, or with `kind` `online` the reader's online machine and its sessions (8.9); `open` a file, a page (`url`), the graph, the scratchpad or Settings at a `section` (`view`; Settings is a sheet, always in front; the scratchpad is its card, never a tab, and takes the keyboard only with `background` false); `new` a tab with no file of any kind - a note with its words, a canvas, a page note, a web tab on `url`, a terminal in `shell` and `cwd`, an online terminal (8.9) - the plus pressed for the reader; `rename` a tab, which for a file is the tree's own rename (links rewritten, one step to undo, every store kept by path told through `file-ops.ts`) and for an unsaved tab the name it will be saved under; `save` an unsaved tab at a path, as Save does; `move` a tab to a `pane` or `toward` a side, at a place `at` in its strip, as a drag does; `arrange` the panes into `columns` or `rows`, make every split `even`, or gather every tab into a `single` pane (8.14). Everything lands behind the tab in front, beside the selected one, unless `background` is false; that, `focus`, `split`, `move`, `arrange`, the graph, closing the tab in front and another space need `workspace.focus`, because they change what the reader is looking at. A denied site opens in no tab |
 | `bookmarks` | `op`: `list`, `add`, `remove` | |
 | `list_spaces` | - | the spaces this agent may reach |
 | `read_canvas`, `edit_canvas` | `path` or `tab`; `ops`: `add_card`, `edit_text`, `move`, `connect`, `remove`, and in a page note `add_page`, `remove_page`, `move_page` | a canvas or a page note as JSON Canvas, edited object by object, a tab drawn and never saved included; a page note read as its pages and each card's page (8.7) |
@@ -980,6 +980,19 @@ themselves, refuses typing with why (`by_hand`, `not_granted`) and leaves readin
 screen (`last_screen`); an agent never presses Take over, Reconnect or Resume. See
 `online-terminal.md` 4.7.
 
+**An agent opens one** as the reader does (`lib/agents/workspace/online.ts`):
+`workspace_tabs` `new` of `kind` `online` is Ctrl+T's Online terminal, a new session on the
+reader's own machine - the machine made, or woken, if need be - in a tab behind the one in
+front, asked as any new tab is; its id is the tab the terminal tools take, and it connects
+the first time one of them reaches it. `list` of `kind` `online` is Settings' list: whether
+the account may have a machine, the machine's id, state and whether a flag stops it, and
+its sessions, each with the tab open on it or the `.term` that `open` opens, where that is in
+a space the agent reaches; a session in a space beyond its grant is not listed. A terminal on
+somebody else's machine is their `.term`, which `open` opens. What the account refuses comes
+back with its reason in front of the message: signed out or not on the list yet is
+`not_granted`, the reader's to change; hours used, the service paused, the machine stopped
+or its eight sessions taken is `failed`. Nobody is shown a sheet for an agent.
+
 ### 8.10 Under sync v2
 
 Sync v2 makes every note a Yjs document on every device (`sync-v2.md` 5.1), and the
@@ -1187,7 +1200,7 @@ API against what an agent has, or why it is left out:
 | `workspace.getConfiguration`, `update` | `read_setting`, `write_setting`, every setting by its key (8.8) | covered |
 | `workspace.openTextDocument`, `applyEdit`, `TextDocument` | `read_note`, `edit_note`, `write_note`, `append_note` | covered |
 | `tasks`, `ShellExecution`, `ProcessExecution`, `child_process` | `process` `run` and `start`, `read`, `write`, `kill` (8.12); `run_terminal` | covered |
-| `window.createTerminal`, `Terminal.sendText`, shell integration's output | `workspace_tabs` `new` a terminal, `type_terminal`, `read_terminal`, `run_terminal` with `tab`, online terminals alike (8.9) | covered |
+| `window.createTerminal`, `Terminal.sendText`, shell integration's output | `workspace_tabs` `new` a terminal or an online one, `type_terminal`, `read_terminal`, `run_terminal` with `tab`, online terminals alike (8.9) | covered |
 | `fetch` in the extension host | `http` (8.13) | covered |
 | `env.clipboard` | `system_clipboard` (8.14) | covered |
 | `env.openExternal`, `env.appName`, `env.language`, `env.uiKind`, `process.env`, `os` | `system` `open`, `reveal`, `env`, `info` (8.16) | covered; secrets in the environment left out unless Full permissions |

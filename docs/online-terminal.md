@@ -493,7 +493,9 @@ keeps: a session another device holds is read as its last screen and never taken
 Take over is the reader's - one whose machine's owner keeps typing to themselves is read
 and never typed in, and a key of the app's own (Reconnect, Try again, Resume) is never
 pressed for them. A session not connected yet is connected as its tab would be, which
-wakes its machine, and waited for a minute at most.
+wakes its machine, and waited for a minute at most. An agent opens a new one as the card
+does, behind the reader's tab, and reads the machine and its sessions as Settings lists
+them; the account's refusals come back to it with their reason, never as a sheet.
 
 ### 4.8 Security
 

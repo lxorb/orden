@@ -19,6 +19,7 @@
 
 import type { AgentAnswer } from '../../automation/caller'
 import { agentMarks } from '../../agent-marks.svelte'
+import type { Refused as Why } from '../../online/calls'
 import { settings, type Section } from '../../settings.svelte'
 import { type Tab, workspace } from '../../workspace.svelte'
 import { panesIn, paneToward, type Toward } from '../../workspace/pane-tree'
@@ -99,6 +100,15 @@ export async function openTerminal(
     activate: front,
   })
   return openedBy(call, tab, front)
+}
+
+/** A new online terminal in a new tab, as Ctrl+T's Online terminal makes one; or why the
+ *  account made none. Only made: it connects when it is first shown or typed into. */
+export async function openOnline(call: Call): Promise<Tab | Why | null> {
+  const front = asksFront(call, 'a new tab in front')
+  const { madeOnline } = await import('../../online/open')
+  const made = await madeOnline(front ? null : workspace.activeTabId, front)
+  return typeof made === 'string' ? made : openedBy(call, made, front)
 }
 
 /** A chat's own tab, opened behind for a draft the reader sends. */

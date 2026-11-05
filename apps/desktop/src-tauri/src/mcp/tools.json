@@ -1124,7 +1124,7 @@
   },
   {
     "name": "workspace_tabs",
-    "description": "The reader's tabs. open: a `path`, a `url` or a `view` (graph, scratchpad, settings at `section`). new: a tab of `kind` with no file (a note with `content`, a web tab with `url`, a terminal with `shell` and `cwd`). rename: a tab's `name`, a file's renamed with its links. save: an unsaved tab written at `path`. close, split, focus. move: a tab to `pane` (an id from list) or `toward` a side, at `at`. arrange: `layout` columns, rows, even or single. Tabs open behind the reader's and never move their screen, keyboard or scroll; `background` false, focus, split, move, arrange and closing the tab in front need workspace.focus, only when the reader asked to be shown it.",
+    "description": "The reader's tabs. list, with `kind` online their online machine and its sessions. open: a `path`, a `url` or a `view` (graph, scratchpad, settings at `section`). new: a tab of `kind` with no file (a note with `content`, a web tab with `url`, a terminal with `shell` and `cwd`, an online one). rename: a tab's `name`, a file's renamed with its links. save: an unsaved tab written at `path`. close, split, focus. move: a tab to `pane` (an id from list) or `toward` a side, at `at`. arrange: `layout` columns, rows, even or single. Tabs open behind the reader's and never move their screen, keyboard or scroll; `background` false, focus, split, move, arrange and closing the tab in front need workspace.focus, only when the reader asked to be shown it.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1149,7 +1149,10 @@
         "url": { "type": "string" },
         "view": { "type": "string", "enum": ["graph", "scratchpad", "settings"] },
         "section": { "type": "string" },
-        "kind": { "type": "string", "enum": ["note", "canvas", "pages", "web", "terminal"] },
+        "kind": {
+          "type": "string",
+          "enum": ["note", "canvas", "pages", "web", "terminal", "online"]
+        },
         "content": { "type": "string" },
         "shell": { "type": "string" },
         "cwd": { "type": "string" },

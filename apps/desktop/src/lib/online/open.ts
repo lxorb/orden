@@ -26,20 +26,27 @@ import { MADE_NAME, termName } from './path'
  *  `beside` (Open another, a split), at the end of the strip otherwise. Null where none
  *  was made. */
 export async function openOnline(beside = false): Promise<Tab | null> {
-  if (!account.accountToken) {
-    account.ask()
-    return null
-  }
+  const made = await madeOnline(beside ? workspace.activeTabId : null)
+  if (typeof made !== 'string') return made
+  await refused(made)
+  return null
+}
+
+/** A new online terminal's tab, `beside` a tab and in front unless `activate` is false,
+ *  or why the account made none, unsaid: `openOnline` says it to the reader, and an agent
+ *  is answered it (docs/agent-native.md 8.9). */
+export async function madeOnline(
+  beside: string | null,
+  activate = true,
+): Promise<Tab | Refused | null> {
+  if (!account.accountToken) return 'signed-out'
   // Not on the list yet, or the service off: said before any session is made. Asked again
   // every time, but waited for only when this window has not heard yes already: the
   // socket says a refusal that came since, and the terminal is on its way meanwhile.
   const asking = machine.refresh()
   if (machine.known?.allowed !== true || machine.refused !== null) await asking
   const why = machine.known?.allowed === false ? 'list' : machine.refused
-  if (why) {
-    await refused(why)
-    return null
-  }
+  if (why) return why
 
   // The session first, keyed by its own id: the tab's words name it, and nothing is
   // written into the space until the reader saves it.
@@ -47,16 +54,10 @@ export async function openOnline(beside = false): Promise<Tab | null> {
   try {
     words = termText(await termSession(null))
   } catch (error) {
-    await refused(refusedOf(error))
-    return null
+    return refusedOf(error)
   }
   if (__EVEN_PLUGIN__) return null
-  const tab = workspace.openUnsaved(
-    'terminal',
-    words,
-    MADE_NAME,
-    beside ? workspace.activeTabId : null,
-  )
+  const tab = workspace.openUnsaved('terminal', words, MADE_NAME, beside, activate)
   workspace.persist()
   return tab
 }
