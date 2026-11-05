@@ -133,6 +133,7 @@ export const APP_FOLDERS = [
   'automation',
   'back-swipe',
   'canvas',
+  'dictation',
   'downloads',
   'even',
   'export',
@@ -626,11 +627,12 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  Raised on 2026-11-05 as #1127's unloaded tabs and #1092's agent tab on a Mac came to
  *  claude/hunt-round-1: the code to 6,051,600, measured 6,051,343; the catalogues to
  *  1,000,000, the menu's and the setting's words in every language, measured 999,745; the
- *  styles to 288,800, measured 288,696.
+ *  styles to 288,800, measured 288,696. Then the code to 6,053,400 and the catalogues to
+ *  1,003,400 for dictation's engines and keys, measured 6,053,129 and 1,003,220.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_051_600,
-  catalogues: 1_000_000,
+  code: 6_053_400,
+  catalogues: 1_003_400,
   styles: 288_800,
   fonts: 260_000,
   pages: 40_000,

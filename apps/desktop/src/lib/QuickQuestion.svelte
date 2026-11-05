@@ -32,10 +32,21 @@
   import { settings } from './settings.svelte'
   import { trap } from './trap'
   import { grow } from './grow'
+  import DictateButton from './dictation/DictateButton.svelte'
+  import { canDictate } from './dictation/engines.svelte'
+  import { dictating } from './dictation/keys'
+  import type { Dictates } from './dictation/voice.svelte'
   import { workspace } from './workspace.svelte'
 
   let talk = $state<HTMLElement>()
   let field = $state<HTMLTextAreaElement>()
+
+  /** The question as dictation sees it (#1128): the note or page that goes along is the
+   *  name it is most likely to say. */
+  const voiceField: Dictates = {
+    field: () => field,
+    words: () => (quick.context ? [quick.context.name] : []),
+  }
 
   const turns = $derived(quick.turns)
   const last = $derived(turns.at(-1))
@@ -124,12 +135,17 @@
           bind:this={field}
           bind:value={quick.question}
           use:grow={quick.question}
+          use:dictating={voiceField}
           data-lands
           rows="1"
           placeholder={t('Ask')}
           aria-label={t('Quick question')}
           spellcheck="false"
           onkeydown={onKey}></textarea>
+
+        {#if canDictate()}
+          <span class="voice"><DictateButton owner={voiceField} below /></span>
+        {/if}
 
         {#if quick.running}
           <button class="go" title={t('Stop')} aria-label={t('Stop')} onclick={() => quick.stop()}>
@@ -341,6 +357,13 @@
 
   textarea::placeholder {
     color: var(--muted);
+  }
+
+  /* The microphone beside it, on the same line as the round button. */
+  .voice {
+    flex: none;
+    display: grid;
+    margin: 0 2px calc(var(--go-inset) + 2px) 0;
   }
 
   /* The one round button: filled while there is something to send, the stop while an

@@ -36,8 +36,9 @@ const PATIENCE = 20_000
 /** The microphone, or a refusal, but never neither.
  *
  *  Races the platform's own promise against a clock. The timer is cleared either way, so
- *  a recording that started does not carry a pending timeout for twenty seconds. */
-async function opened(): Promise<MediaStream> {
+ *  a recording that started does not carry a pending timeout for twenty seconds. Dictation
+ *  opens it the same way (dictation/capture.ts): one microphone, asked for one way. */
+export async function openMicrophone(): Promise<MediaStream> {
   let ran = 0
 
   try {
@@ -95,7 +96,7 @@ export async function record(listening: Listening = {}): Promise<Recording> {
   const type = bestContainer()
   if (type === null) throw new Error('this build cannot record')
 
-  const stream = await opened()
+  const stream = await openMicrophone()
 
   const recorder = new MediaRecorder(stream, type ? { mimeType: type } : {})
   const chunks: Blob[] = []

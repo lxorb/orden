@@ -1220,6 +1220,10 @@
     "type": "string",
     "description": "The key that runs Export as Plain text, as the keys file writes it; empty for none."
   },
+  "shortcuts.field-dictate": {
+    "type": "string",
+    "description": "The key that runs Dictate, as the keys file writes it; empty for none."
+  },
   "shortcuts.format-bold": {
     "type": "string",
     "description": "The key that runs Bold, as the keys file writes it; empty for none."

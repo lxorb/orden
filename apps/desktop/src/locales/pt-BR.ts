@@ -2866,4 +2866,17 @@ export const ptBR: Dictionary = {
   'One colour': 'Uma cor',
   'Web icons': 'Ícones da web',
   'Sites you visit will appear here': 'Os sites que você visitar aparecerão aqui',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'Ditado',
+  'Dictate with': 'Ditar com',
+  'Where your voice goes to be turned into words.': 'Para onde vai sua voz para virar texto.',
+  'Ask on first use': 'Perguntar no primeiro uso',
+  'Orden account': 'Conta Orden',
+  'Your AI provider': 'Seu provedor de IA',
+  'Stays on this computer': 'Fica neste computador',
+  'Audio goes to {host}': 'O áudio vai para {host}',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'O áudio vai para a Orden e a Cloudflare, e não é guardado',
+  'Stop dictating': 'Parar de ditar',
+  'Writing down what you said': 'Escrevendo o que você disse',
 }

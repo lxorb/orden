@@ -2821,4 +2821,18 @@ export const pa: Dictionary = {
   'One colour': 'ਇੱਕ ਰੰਗ',
   'Web icons': 'ਵੈੱਬ ਆਈਕਨ',
   'Sites you visit will appear here': 'ਜਿਹੜੀਆਂ ਸਾਈਟਾਂ ਤੁਸੀਂ ਵੇਖਦੇ ਹੋ, ਉਹ ਇੱਥੇ ਦਿਖਾਈ ਦੇਣਗੀਆਂ',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'ਬੋਲ ਕੇ ਲਿਖਣਾ',
+  'Dictate with': 'ਇਸ ਨਾਲ ਬੋਲ ਕੇ ਲਿਖੋ',
+  'Where your voice goes to be turned into words.':
+    'ਤੁਹਾਡੀ ਆਵਾਜ਼ ਸ਼ਬਦਾਂ ਵਿੱਚ ਬਦਲਣ ਲਈ ਕਿੱਥੇ ਜਾਂਦੀ ਹੈ।',
+  'Ask on first use': 'ਪਹਿਲੀ ਵਰਤੋਂ ਤੇ ਪੁੱਛੋ',
+  'Orden account': 'Orden ਖਾਤਾ',
+  'Your AI provider': 'ਤੁਹਾਡਾ AI ਪ੍ਰਦਾਤਾ',
+  'Stays on this computer': 'ਇਸੇ ਕੰਪਿਊਟਰ ਤੇ ਰਹਿੰਦਾ ਹੈ',
+  'Audio goes to {host}': 'ਆਡੀਓ {host} ਤੇ ਜਾਂਦਾ ਹੈ',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'ਆਡੀਓ Orden ਅਤੇ Cloudflare ਤੇ ਜਾਂਦਾ ਹੈ, ਅਤੇ ਰੱਖਿਆ ਨਹੀਂ ਜਾਂਦਾ',
+  'Stop dictating': 'ਬੋਲ ਕੇ ਲਿਖਣਾ ਬੰਦ ਕਰੋ',
+  'Writing down what you said': 'ਤੁਸੀਂ ਜੋ ਕਿਹਾ ਉਹ ਲਿਖਿਆ ਜਾ ਰਿਹਾ ਹੈ',
 }

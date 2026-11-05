@@ -2783,4 +2783,18 @@ export const vi: Dictionary = {
   'One colour': 'Một màu',
   'Web icons': 'Biểu tượng web',
   'Sites you visit will appear here': 'Các trang bạn truy cập sẽ hiện ở đây',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'Đọc chính tả',
+  'Dictate with': 'Đọc chính tả bằng',
+  'Where your voice goes to be turned into words.':
+    'Nơi giọng nói của bạn được gửi đến để chuyển thành chữ.',
+  'Ask on first use': 'Hỏi khi dùng lần đầu',
+  'Orden account': 'Tài khoản Orden',
+  'Your AI provider': 'Nhà cung cấp AI của bạn',
+  'Stays on this computer': 'Ở lại trên máy tính này',
+  'Audio goes to {host}': 'Âm thanh được gửi đến {host}',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'Âm thanh được gửi đến Orden và Cloudflare, và không được lưu lại',
+  'Stop dictating': 'Dừng đọc chính tả',
+  'Writing down what you said': 'Đang ghi lại những gì bạn nói',
 }

@@ -2799,4 +2799,18 @@ export const gu: Dictionary = {
   'One colour': 'એક રંગ',
   'Web icons': 'વેબ આઇકન',
   'Sites you visit will appear here': 'તમે મુલાકાત લો છો તે સાઇટ અહીં દેખાશે',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'શ્રુતલેખન',
+  'Dictate with': 'આના વડે શ્રુતલેખન',
+  'Where your voice goes to be turned into words.':
+    'તમારો અવાજ શબ્દોમાં ફેરવાવા માટે ક્યાં જાય છે.',
+  'Ask on first use': 'પહેલી વાર વાપરતી વખતે પૂછો',
+  'Orden account': 'Orden એકાઉન્ટ',
+  'Your AI provider': 'તમારો AI પ્રદાતા',
+  'Stays on this computer': 'આ કમ્પ્યુટર પર જ રહે છે',
+  'Audio goes to {host}': 'ઑડિયો {host} પર જાય છે',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'ઑડિયો Orden અને Cloudflare પર જાય છે, અને રાખવામાં આવતો નથી',
+  'Stop dictating': 'શ્રુતલેખન બંધ કરો',
+  'Writing down what you said': 'તમે જે કહ્યું તે લખાઈ રહ્યું છે',
 }

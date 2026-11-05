@@ -71,9 +71,12 @@ export const WHISPER = 'whisper'
 
 /** The transcription models, in the order they are tried.
  *
- *  OpenAI has two that listen and they are not the same model: the newer one is better
- *  and cheaper and answers plain JSON, and `whisper-1` is the one that also says which
- *  language it heard. A server on this machine is asked for `whisper-1`, which is what
+ *  OpenAI's newest first, then the mini, then `whisper-1`, which is the one that also says
+ *  which language it heard: the order the sync Worker walks too (services/sync/src/ask/
+ *  heard.ts). `gpt-4o-transcribe` is left out on purpose. Measured on dictation for #1128,
+ *  with a prompt it answered the request it heard ("summarize this note") instead of
+ *  writing it down, translated an English sentence into German, and handed the prompt
+ *  back as the transcript. A server on this machine is asked for `whisper-1`, which is what
  *  whisper.cpp, faster-whisper and LM Studio all call theirs, and then for whatever
  *  model the provider itself names - so somebody whose server wants another name has a
  *  way to say it.
@@ -81,7 +84,7 @@ export const WHISPER = 'whisper'
  *  Walked once per provider and then remembered: every piece of a long file must not
  *  spend a request finding out what the first one already learned. */
 const MODELS: Record<'openai' | 'compatible', readonly string[]> = {
-  openai: ['gpt-4o-mini-transcribe', 'whisper-1'],
+  openai: ['gpt-transcribe', 'gpt-4o-mini-transcribe', 'whisper-1'],
   compatible: ['whisper-1'],
 }
 
@@ -123,7 +126,11 @@ export function transcribedBy(): string {
  *  A model the server has never heard of is the one failure worth walking past, because
  *  the list above is a guess about somebody else's server. Anything else - a key
  *  refused, a server that is not running - is said out loud. */
-async function heardByProvider(provider: Provider, wav: Uint8Array<ArrayBuffer>): Promise<Words> {
+async function heardByProvider(
+  provider: Provider,
+  wav: Uint8Array<ArrayBuffer>,
+  prompt: string,
+): Promise<Words> {
   // Fetched here rather than imported: what a provider is, where its key lives and the
   // request itself are some fifteen kilobytes, fetched by the press that needs them
   // rather than with this module. See test/weight.test.ts.
@@ -140,6 +147,7 @@ async function heardByProvider(provider: Provider, wav: Uint8Array<ArrayBuffer>)
     form.append('file', new Blob([wav], { type: 'audio/wav' }), 'said.wav')
     form.append('model', model)
     form.append('response_format', model === 'whisper-1' ? 'verbose_json' : 'json')
+    if (prompt) form.append('prompt', prompt)
 
     const response = await fetch(heardUrl(provider), {
       method: 'POST',
@@ -217,28 +225,47 @@ function parsed(body: string): unknown {
   }
 }
 
+/** How a piece is to be heard, where the caller has more to say than the piece.
+ *
+ *  Dictation says all three (dictation/listening.ts): the words it expects, which is
+ *  what spells a name right; the road the reader chose for it, which is not always the
+ *  one a recording would take; and one try for a live pass that the next pass replaces
+ *  anyway. A recording says none of them. */
+export interface Hearing {
+  /** Words the model leans towards: names, and what was written just before. */
+  prompt?: string
+  /** `account` asks the account even where a provider of the reader's own is set up. */
+  road?: 'provider' | 'account'
+  tries?: number
+}
+
 /** One piece, as words, tried again where the network was the problem.
  *
  *  Throws when it will not go: a piece that silently became nothing is a hole in a
  *  transcript that nothing on screen accounts for. */
-export async function heardPiece(wav: Uint8Array<ArrayBuffer>): Promise<Words> {
-  const provider = transcriberNow()
+export async function heardPiece(
+  wav: Uint8Array<ArrayBuffer>,
+  hearing: Hearing = {},
+): Promise<Words> {
+  const provider = hearing.road === 'account' ? null : transcriberNow()
   const token = account.accountToken
-  if (!provider && !token) {
+  if (!provider && (!token || hearing.road === 'provider')) {
     throw new Error(key('Add an AI provider or sign in to turn speech into words.'))
   }
 
+  const prompt = hearing.prompt ?? ''
+  const tries = hearing.tries ?? TRIES
   let trouble: unknown = null
 
-  for (let round = 1; round <= TRIES; round++) {
+  for (let round = 1; round <= tries; round++) {
     try {
-      if (provider) return await heardByProvider(provider, wav)
+      if (provider) return await heardByProvider(provider, wav, prompt)
 
-      const said = await api.askPiece(token ?? '', wav)
+      const said = await api.askPiece(token ?? '', wav, prompt)
       return { text: said.said ?? '', language: said.language }
     } catch (error) {
       trouble = error
-      if (round < TRIES) await waited(roomDelay(round))
+      if (round < tries) await waited(roomDelay(round))
     }
   }
 

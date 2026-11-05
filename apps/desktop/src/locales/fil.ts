@@ -2871,4 +2871,18 @@ export const fil: Dictionary = {
   'One colour': 'Isang kulay',
   'Web icons': 'Mga web icon',
   'Sites you visit will appear here': 'Lalabas dito ang mga site na binibisita mo',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'Pagdidikta',
+  'Dictate with': 'Magdikta gamit ang',
+  'Where your voice goes to be turned into words.':
+    'Kung saan napupunta ang boses mo para gawing mga salita.',
+  'Ask on first use': 'Magtanong sa unang paggamit',
+  'Orden account': 'Orden account',
+  'Your AI provider': 'Ang AI provider mo',
+  'Stays on this computer': 'Nananatili sa computer na ito',
+  'Audio goes to {host}': 'Napupunta ang audio sa {host}',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'Napupunta ang audio sa Orden at Cloudflare, at hindi ito itinatago',
+  'Stop dictating': 'Ihinto ang pagdidikta',
+  'Writing down what you said': 'Isinusulat ang sinabi mo',
 }

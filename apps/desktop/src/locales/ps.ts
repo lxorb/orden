@@ -2814,4 +2814,17 @@ export const ps: Dictionary = {
   'One colour': 'یو رنګ',
   'Web icons': 'د وېب نښې',
   'Sites you visit will appear here': 'هغه سایټونه چې تاسو یې ګورئ دلته به ښکاره شي',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'املا',
+  'Dictate with': 'املا په',
+  'Where your voice goes to be turned into words.': 'ستاسو غږ د کلمو د جوړولو لپاره چېرته ځي.',
+  'Ask on first use': 'په لومړي کارولو کې پوښتنه وکړه',
+  'Orden account': 'د Orden حساب',
+  'Your AI provider': 'ستاسو د AI وړاندې کوونکی',
+  'Stays on this computer': 'په همدې کمپیوټر پاتې کېږي',
+  'Audio goes to {host}': 'غږ {host} ته ځي',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'غږ Orden او Cloudflare ته ځي، او نه ساتل کېږي',
+  'Stop dictating': 'املا ودروه',
+  'Writing down what you said': 'هغه څه لیکل کېږي چې تاسو وویل',
 }

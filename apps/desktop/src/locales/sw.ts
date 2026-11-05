@@ -2852,4 +2852,18 @@ export const sw: Dictionary = {
   'One colour': 'Rangi moja',
   'Web icons': 'Aikoni za wavuti',
   'Sites you visit will appear here': 'Tovuti unazotembelea zitaonekana hapa',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'Kuandika kwa sauti',
+  'Dictate with': 'Andika kwa sauti kupitia',
+  'Where your voice goes to be turned into words.':
+    'Mahali sauti yako inakokwenda ili kugeuzwa kuwa maneno.',
+  'Ask on first use': 'Uliza mara ya kwanza',
+  'Orden account': 'Akaunti ya Orden',
+  'Your AI provider': 'Mtoa huduma wako wa AI',
+  'Stays on this computer': 'Inabaki kwenye kompyuta hii',
+  'Audio goes to {host}': 'Sauti inakwenda {host}',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'Sauti inakwenda Orden na Cloudflare, na haihifadhiwi',
+  'Stop dictating': 'Acha kuandika kwa sauti',
+  'Writing down what you said': 'Inaandika ulichosema',
 }

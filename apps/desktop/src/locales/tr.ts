@@ -2830,4 +2830,18 @@ export const tr: Dictionary = {
   'One colour': 'Tek renk',
   'Web icons': 'Web simgeleri',
   'Sites you visit will appear here': 'Ziyaret ettiğiniz siteler burada görünür',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'Dikte',
+  'Dictate with': 'Şununla dikte et',
+  'Where your voice goes to be turned into words.':
+    'Sesinizin yazıya dönüştürülmek için gittiği yer.',
+  'Ask on first use': 'İlk kullanımda sor',
+  'Orden account': 'Orden hesabı',
+  'Your AI provider': 'AI sağlayıcınız',
+  'Stays on this computer': 'Bu bilgisayarda kalır',
+  'Audio goes to {host}': 'Ses {host} adresine gider',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'Ses Orden ve Cloudflare’e gider ve saklanmaz',
+  'Stop dictating': 'Dikteyi durdur',
+  'Writing down what you said': 'Söyledikleriniz yazılıyor',
 }

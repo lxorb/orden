@@ -2852,4 +2852,18 @@ export const ml: Dictionary = {
   'One colour': 'ഒറ്റ നിറം',
   'Web icons': 'വെബ് ഐക്കണുകൾ',
   'Sites you visit will appear here': 'നിങ്ങൾ സന്ദർശിക്കുന്ന സൈറ്റുകൾ ഇവിടെ കാണാം',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'ഡിക്റ്റേഷൻ',
+  'Dictate with': 'ഇതുപയോഗിച്ച് ഡിക്റ്റേറ്റ് ചെയ്യുക',
+  'Where your voice goes to be turned into words.':
+    'നിങ്ങളുടെ ശബ്ദം വാക്കുകളാക്കി മാറ്റാൻ എവിടേക്ക് പോകുന്നു.',
+  'Ask on first use': 'ആദ്യ ഉപയോഗത്തിൽ ചോദിക്കുക',
+  'Orden account': 'Orden അക്കൗണ്ട്',
+  'Your AI provider': 'നിങ്ങളുടെ AI ദാതാവ്',
+  'Stays on this computer': 'ഈ കമ്പ്യൂട്ടറിൽ തന്നെ തുടരും',
+  'Audio goes to {host}': 'ഓഡിയോ {host}-ലേക്ക് പോകുന്നു',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'ഓഡിയോ Orden-ലേക്കും Cloudflare-ലേക്കും പോകുന്നു, സൂക്ഷിക്കുന്നില്ല',
+  'Stop dictating': 'ഡിക്റ്റേഷൻ നിർത്തുക',
+  'Writing down what you said': 'നിങ്ങൾ പറഞ്ഞത് എഴുതുന്നു',
 }

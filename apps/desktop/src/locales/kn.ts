@@ -2843,4 +2843,18 @@ export const kn: Dictionary = {
   'One colour': 'ಒಂದೇ ಬಣ್ಣ',
   'Web icons': 'ವೆಬ್ ಐಕಾನ್‌ಗಳು',
   'Sites you visit will appear here': 'ನೀವು ಭೇಟಿ ನೀಡುವ ಸೈಟ್‌ಗಳು ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತವೆ',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'ಉಕ್ತಲೇಖನ',
+  'Dictate with': 'ಇದರಿಂದ ಉಕ್ತಲೇಖನ',
+  'Where your voice goes to be turned into words.':
+    'ನಿಮ್ಮ ಧ್ವನಿಯನ್ನು ಪದಗಳಾಗಿ ಬದಲಿಸಲು ಅದು ಎಲ್ಲಿಗೆ ಹೋಗುತ್ತದೆ.',
+  'Ask on first use': 'ಮೊದಲ ಬಳಕೆಯಲ್ಲಿ ಕೇಳಿ',
+  'Orden account': 'Orden ಖಾತೆ',
+  'Your AI provider': 'ನಿಮ್ಮ AI ಪೂರೈಕೆದಾರ',
+  'Stays on this computer': 'ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲೇ ಉಳಿಯುತ್ತದೆ',
+  'Audio goes to {host}': 'ಆಡಿಯೊ {host} ಗೆ ಹೋಗುತ್ತದೆ',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'ಆಡಿಯೊ Orden ಮತ್ತು Cloudflare ಗೆ ಹೋಗುತ್ತದೆ, ಮತ್ತು ಇಟ್ಟುಕೊಳ್ಳಲಾಗುವುದಿಲ್ಲ',
+  'Stop dictating': 'ಉಕ್ತಲೇಖನ ನಿಲ್ಲಿಸಿ',
+  'Writing down what you said': 'ನೀವು ಹೇಳಿದ್ದನ್ನು ಬರೆಯಲಾಗುತ್ತಿದೆ',
 }

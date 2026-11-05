@@ -2721,4 +2721,17 @@ export const yue: Dictionary = {
   'One colour': '單色',
   'Web icons': '網站圖示',
   'Sites you visit will appear here': '你去過嘅網站會喺度出現',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: '語音輸入',
+  'Dictate with': '用呢個語音輸入',
+  'Where your voice goes to be turned into words.': '你把聲轉做文字時會傳去邊度。',
+  'Ask on first use': '第一次用嗰陣問',
+  'Orden account': 'Orden 帳戶',
+  'Your AI provider': '你嘅 AI 供應商',
+  'Stays on this computer': '留喺呢部電腦',
+  'Audio goes to {host}': '聲音會傳去 {host}',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    '聲音會傳去 Orden 同 Cloudflare，而且唔會保留',
+  'Stop dictating': '停止語音輸入',
+  'Writing down what you said': '寫緊你講嘅嘢',
 }

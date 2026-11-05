@@ -2901,4 +2901,18 @@ export const uk: Dictionary = {
   'One colour': 'Одноколірні',
   'Web icons': 'Значки сайтів',
   'Sites you visit will appear here': 'Тут з’являться сайти, які ви відвідуєте',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'Диктування',
+  'Dictate with': 'Диктувати через',
+  'Where your voice goes to be turned into words.':
+    'Куди надсилається ваш голос, щоб стати текстом.',
+  'Ask on first use': 'Запитати під час першого використання',
+  'Orden account': 'Обліковий запис Orden',
+  'Your AI provider': 'Ваш постачальник ШІ',
+  'Stays on this computer': 'Залишається на цьому комп’ютері',
+  'Audio goes to {host}': 'Звук надсилається до {host}',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'Звук надсилається до Orden і Cloudflare і не зберігається',
+  'Stop dictating': 'Зупинити диктування',
+  'Writing down what you said': 'Записую сказане',
 }

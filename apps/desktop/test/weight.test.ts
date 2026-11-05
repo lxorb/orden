@@ -1339,8 +1339,9 @@ function holds(tail: string): boolean {
  *  came to claude/hunt-round-1. Measured 3,721,952, 398 modules.
  *
  *  Raised on 2026-11-05, to 3,725,700, as #1127's unloaded tabs came to
- *  claude/hunt-round-1. Measured 3,725,488, 398 modules. */
-const BUDGET = 3_725_700
+ *  claude/hunt-round-1. Measured 3,725,488, 398 modules. Then to 3,726,200 for
+ *  dictation's keys, measured 3,725,927. */
+const BUDGET = 3_726_200
 const MOST_FILES = 399
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

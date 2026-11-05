@@ -450,7 +450,7 @@ in October 2026 (openai.chatgpt 26.5930, its docs and its issues: [codex-ide], [
 | the home: "Chats", three recent chats, View all (N), no greeting | the same: the three latest threads with their age, a ring on one still at work, Show all and the count to the list |
 | the task history: search, newest first, how long ago | the list in the conversation's place (a tab's rail down its left): search, newest first with the age at the end, "..." for Rename, Archive, Delete, Archived last |
 | the composer at the foot from the start, a rounded card the conversation fades under | the same |
-| its row: "+", permissions, the context donut, model and effort, send / stop / queue | "+" (files, web search, dictation, `@`, `/`), the mode (its mark and name; the mark alone on a narrow side), the context ring, the model and effort, one round button: the arrow, the stop while an answer arrives with an empty field, dictation's stop while it listens |
+| its row: "+", permissions, the context donut, model and effort, send / stop / queue | "+" (files, web search, dictation, `@`, `/`), the mode (its mark and name; the mark alone on a narrow side), the context ring, the model and effort, the microphone (dictation, `docs/ai.md`), one round button: the arrow, and the stop while an answer arrives with an empty field |
 | Ask for approval / Approve for me / Full access | Approve / Auto / Full permissions, and Plan (4.4), from the mode's own menu; Shift+Tab steps through Approve, Auto and Plan, never into Full permissions |
 | the IDE context toggle | the note in front and its selection as chips over the field (4.2) |
 | queued messages with Steer | the same (4.12) |
@@ -1238,8 +1238,9 @@ Built on lane 1's engine, in `apps/desktop/src/lib/ai/sidebar/`, one file a job:
   `ensure`, `text` and `approve` (not `voice`, below), `instructionsFor(thread)` in the
   setup, the goal chip from `thread.goal` and the running dot from `tasks.of(thread.id)`.
 
-Added with the ChatGPT layout and kept in the Codex one (4.1): dictation
-(`dictate.svelte.ts`, the recorder's road into the field, behind "+" and `/voice`), the
+Added with the ChatGPT layout and kept in the Codex one (4.1): dictation (the
+microphone beside the round button, and "+" and `/voice` pressing it through
+`dictate.svelte.ts`; the control is every field's, `docs/ai.md` "Dictation"), the
 panel as a tab of its own (the `chat` tab kind; `host.ts` says which of the two places is
 in use, `reveal.ts` which one to bring forward), and Continue in the panel from the quick
 question (`continueFrom`). Added with the Codex layout: the steps and their fold

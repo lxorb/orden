@@ -2728,4 +2728,17 @@ export const zhHantHK: Dictionary = {
   'One colour': '單色',
   'Web icons': '網站圖示',
   'Sites you visit will appear here': '你瀏覽過的網站會在這裡顯示',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: '聽寫',
+  'Dictate with': '聽寫方式',
+  'Where your voice goes to be turned into words.': '你的聲音會被送往何處以轉換成文字。',
+  'Ask on first use': '首次使用時詢問',
+  'Orden account': 'Orden 帳戶',
+  'Your AI provider': '你的 AI 供應商',
+  'Stays on this computer': '留在這部電腦上',
+  'Audio goes to {host}': '音訊傳送到 {host}',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    '音訊傳送到 Orden 和 Cloudflare，且不會保留',
+  'Stop dictating': '停止聽寫',
+  'Writing down what you said': '正在寫下你說的話',
 }

@@ -2755,4 +2755,17 @@ export const th: Dictionary = {
   'One colour': 'สีเดียว',
   'Web icons': 'ไอคอนเว็บ',
   'Sites you visit will appear here': 'เว็บไซต์ที่คุณเข้าชมจะแสดงที่นี่',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'การพิมพ์ด้วยเสียง',
+  'Dictate with': 'พิมพ์ด้วยเสียงผ่าน',
+  'Where your voice goes to be turned into words.': 'เสียงของคุณถูกส่งไปที่ใดเพื่อแปลงเป็นข้อความ',
+  'Ask on first use': 'ถามเมื่อใช้ครั้งแรก',
+  'Orden account': 'บัญชี Orden',
+  'Your AI provider': 'ผู้ให้บริการ AI ของคุณ',
+  'Stays on this computer': 'อยู่บนคอมพิวเตอร์เครื่องนี้เท่านั้น',
+  'Audio goes to {host}': 'เสียงถูกส่งไปที่ {host}',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'เสียงถูกส่งไปที่ Orden และ Cloudflare และไม่ถูกเก็บไว้',
+  'Stop dictating': 'หยุดพิมพ์ด้วยเสียง',
+  'Writing down what you said': 'กำลังเขียนสิ่งที่คุณพูด',
 }

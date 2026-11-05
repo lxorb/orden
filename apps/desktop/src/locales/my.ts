@@ -2800,4 +2800,18 @@ export const my: Dictionary = {
   'One colour': 'အရောင်တစ်ရောင်',
   'Web icons': 'ဝဘ် အိုင်ကွန်များ',
   'Sites you visit will appear here': 'သင်ဝင်ကြည့်သော ဆိုက်များ ဤနေရာတွင် ပေါ်လာပါမည်',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'အသံဖြင့်စာရိုက်ခြင်း',
+  'Dictate with': 'ဤဖြင့် အသံဖြင့်စာရိုက်ရန်',
+  'Where your voice goes to be turned into words.':
+    'သင့်အသံကို စကားလုံးအဖြစ် ပြောင်းရန် ဘယ်ကို ပို့သည်။',
+  'Ask on first use': 'ပထမဆုံးအသုံးပြုချိန်တွင် မေးပါ',
+  'Orden account': 'Orden အကောင့်',
+  'Your AI provider': 'သင့် AI ဝန်ဆောင်မှုပေးသူ',
+  'Stays on this computer': 'ဤကွန်ပျူတာပေါ်တွင်သာ ရှိနေသည်',
+  'Audio goes to {host}': 'အသံကို {host} သို့ ပို့သည်',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'အသံကို Orden နှင့် Cloudflare သို့ ပို့ပြီး သိမ်းမထားပါ',
+  'Stop dictating': 'အသံဖြင့်စာရိုက်ခြင်း ရပ်ရန်',
+  'Writing down what you said': 'သင်ပြောသည်ကို ရေးနေသည်',
 }

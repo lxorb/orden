@@ -52,6 +52,7 @@
   import { invoke, isDesktop } from './tauri'
   import { viewport } from './viewport.svelte'
   import Hint from './Hint.svelte'
+  import { canDictate, engines } from './dictation/engines.svelte'
 
   /** Which providers have a key on this device, by id. Asked once per provider and
    *  again whenever one is typed: the store itself never holds a key, so "set" is a
@@ -506,6 +507,39 @@
         </div>
       </div>
     {/each}
+  </div>
+{/if}
+
+<!-- Where dictation's sound goes (#1128): chosen on this device, and until it is, asked
+     on the first press. -->
+{#if canDictate()}
+  <h3>{t('Dictation')}</h3>
+  <div class="card">
+    <div class="nib-setting setting">
+      <span class="name"
+        ><span class="nib-named"
+          >{t('Dictate with')}<Hint
+            text={t('Where your voice goes to be turned into words.')}
+          /></span
+        ></span
+      >
+      <div class="nib-setting-value">
+        <Select
+          value={engines.chosen ?? ''}
+          options={[
+            { value: '', label: t('Ask on first use') },
+            ...engines.offered().map((one) => ({
+              value: one,
+              label: one === 'account' ? t('Orden account') : (ai.transcriber?.name ?? ''),
+            })),
+          ]}
+          onchange={(value: string) =>
+            engines.choose(value === 'provider' || value === 'account' ? value : null)}
+          label={t('Dictate with')}
+          plain={viewport.touch}
+        />
+      </div>
+    </div>
   </div>
 {/if}
 

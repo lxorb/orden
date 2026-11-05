@@ -2908,4 +2908,18 @@ export const ru: Dictionary = {
   'One colour': 'Одноцветные',
   'Web icons': 'Значки сайтов',
   'Sites you visit will appear here': 'Здесь появятся сайты, которые вы посещаете',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'Диктовка',
+  'Dictate with': 'Диктовать через',
+  'Where your voice goes to be turned into words.':
+    'Куда отправляется ваш голос, чтобы стать текстом.',
+  'Ask on first use': 'Спросить при первом использовании',
+  'Orden account': 'Аккаунт Orden',
+  'Your AI provider': 'Ваш поставщик ИИ',
+  'Stays on this computer': 'Остаётся на этом компьютере',
+  'Audio goes to {host}': 'Звук отправляется в {host}',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'Звук отправляется в Orden и Cloudflare и не хранится',
+  'Stop dictating': 'Остановить диктовку',
+  'Writing down what you said': 'Записываю сказанное',
 }

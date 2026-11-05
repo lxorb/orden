@@ -2833,4 +2833,18 @@ export const gsw: Dictionary = {
   'One colour': 'Eifarbig',
   'Web icons': 'Web-Symbol',
   'Sites you visit will appear here': 'Websites, wo du bsuechsch, erschiined da',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'Diktiere',
+  'Dictate with': 'Diktiere mit',
+  'Where your voice goes to be turned into words.':
+    'Wohäre dini Stimm gaht, zum in Text umgwandlet z wärde.',
+  'Ask on first use': 'Bim erschte Mal frage',
+  'Orden account': 'Orden-Konto',
+  'Your AI provider': 'Din KI-Aabieter',
+  'Stays on this computer': 'Blibt uf däm Computer',
+  'Audio goes to {host}': 'Audio gaht a {host}',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'Audio gaht a Orden und Cloudflare und wird nöd gspeicheret',
+  'Stop dictating': 'Diktiere beände',
+  'Writing down what you said': 'Schriibe uf, was du gseit häsch',
 }

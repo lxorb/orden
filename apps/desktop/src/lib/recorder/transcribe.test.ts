@@ -40,10 +40,12 @@ vi.mock('../ai/keys', async (importOriginal) => ({
 /** The account's own road, stubbed at the API rather than at `fetch`: what is under
  *  test is which road was taken. */
 const askedAccount: number[] = []
+const likedAccount: string[] = []
 vi.mock('../api', () => ({
   api: {
-    askPiece: (_token: string, wav: Uint8Array) => {
+    askPiece: (_token: string, wav: Uint8Array, like = '') => {
       askedAccount.push(wav.byteLength)
+      likedAccount.push(like)
       return Promise.resolve({ said: 'the account heard this', language: 'en' })
     },
   },
@@ -55,6 +57,7 @@ interface Sent {
   headers: Record<string, string>
   model: string
   format: string
+  prompt: string
   file: { size: number; type: string; name: string } | null
 }
 
@@ -77,6 +80,7 @@ vi.stubGlobal('fetch', async (url: string, init: RequestInit) => {
     headers: (init.headers ?? {}) as Record<string, string>,
     model: said(form, 'model'),
     format: said(form, 'response_format'),
+    prompt: said(form, 'prompt'),
     file:
       file instanceof Blob
         ? {
@@ -124,6 +128,7 @@ beforeEach(() => {
   for (const one of [...ai.accounts]) ai.remove(one.id)
   sent.length = 0
   askedAccount.length = 0
+  likedAccount.length = 0
   answers = []
   apiKey = ''
   account.token = null
@@ -172,7 +177,7 @@ describe('what the note says wrote it', () => {
 
   test('and the model’s own name where the reader chose one', () => {
     hosted()
-    expect(transcribedBy()).toBe('gpt-4o-mini-transcribe')
+    expect(transcribedBy()).toBe('gpt-transcribe')
 
     for (const one of [...ai.accounts]) ai.remove(one.id)
     local()
@@ -224,7 +229,7 @@ describe('a recording with a provider set up', () => {
     await heardPiece(wav)
 
     expect(sent[0]?.url).toBe('https://api.openai.com/v1/audio/transcriptions')
-    expect(sent[0]?.model).toBe('gpt-4o-mini-transcribe')
+    expect(sent[0]?.model).toBe('gpt-transcribe')
     expect(sent[0]?.format).toBe('json')
     expect(sent[0]?.headers.authorization).toBe('Bearer sk-test')
   })
@@ -241,13 +246,13 @@ describe('a recording with a provider set up', () => {
     ]
 
     expect((await heardPiece(wav)).text).toBe('heard')
-    expect(sent.map((one) => one.model)).toEqual(['gpt-4o-mini-transcribe', 'whisper-1'])
+    expect(sent.map((one) => one.model)).toEqual(['gpt-transcribe', 'gpt-4o-mini-transcribe'])
 
     // And the next piece asks for the one that answered, once: a long file sends many
     // pieces and must not spend a request finding this out again.
     sent.length = 0
     await heardPiece(wav)
-    expect(sent.map((one) => one.model)).toEqual(['whisper-1'])
+    expect(sent.map((one) => one.model)).toEqual(['gpt-4o-mini-transcribe'])
   })
 
   test('says a refused key out loud rather than trying another name', async () => {
@@ -290,5 +295,49 @@ describe('a recording with no provider at all', () => {
     await expect(heardPiece(wav)).rejects.toThrow(/Add an AI provider or sign in/)
     expect(sent).toEqual([])
     expect(askedAccount).toEqual([])
+  })
+})
+
+/** Dictation's three asks (#1128): the words it expects, the road the reader chose for
+ *  it, and how often a live pass that the next one replaces is worth trying. */
+describe('a piece heard for dictation', () => {
+  test('carries the expected words as the prompt, to a provider', async () => {
+    local()
+    await heardPiece(wav, { prompt: 'Jürgen Weißmüller, Tauri' })
+    expect(sent[0]?.prompt).toBe('Jürgen Weißmüller, Tauri')
+  })
+
+  test('and to the account', async () => {
+    signedIn()
+    await heardPiece(wav, { prompt: 'Sync Worker' })
+    expect(likedAccount).toEqual(['Sync Worker'])
+  })
+
+  test('sends no prompt field where nothing is expected', async () => {
+    local()
+    await heardPiece(wav)
+    expect(sent[0]?.prompt).toBe('')
+  })
+
+  test('goes to the account when that is the road chosen, past a provider', async () => {
+    local()
+    signedIn()
+    await heardPiece(wav, { road: 'account' })
+    expect(sent).toEqual([])
+    expect(askedAccount).toEqual([wav.byteLength])
+  })
+
+  test('and never to the account when the provider is the road chosen', async () => {
+    signedIn()
+    await expect(heardPiece(wav, { road: 'provider' })).rejects.toThrow(/Add an AI provider/)
+    expect(askedAccount).toEqual([])
+  })
+
+  test('is tried as often as it is asked to be', async () => {
+    hosted()
+    apiKey = 'sk-wrong'
+    answers = Array.from({ length: 3 }, () => ({ status: 500, body: '{}' }))
+    await expect(heardPiece(wav, { tries: 1 })).rejects.toThrow()
+    expect(sent).toHaveLength(1)
   })
 })

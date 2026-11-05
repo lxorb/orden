@@ -25,7 +25,10 @@
   import { views } from '../../views.svelte'
   import { workspace, type Entry } from '../../workspace.svelte'
   import { estimateText } from '../chat/usage'
-  import { canTranscribe } from '../hears'
+  import DictateButton from '../../dictation/DictateButton.svelte'
+  import { canDictate } from '../../dictation/engines.svelte'
+  import { dictating } from '../../dictation/keys'
+  import type { Dictates } from '../../dictation/voice.svelte'
   import { noteInFront, SELECTION_CHIP, selectionHere } from './around'
   import { chat } from './chat.svelte'
   import { dictation } from './dictate.svelte'
@@ -53,6 +56,19 @@
   let commands = $state<readonly PanelCommand[]>([])
   let picker = $state<HTMLInputElement>()
   const here = hostHere()
+
+  /** The field as dictation sees it (#1128): the names a message here is likely to say -
+   *  the thread's title, the note in front, what is going along - and the panel's own
+   *  line for a failure. */
+  const voiceField: Dictates = {
+    field: () => field,
+    words: () => [
+      ...(head?.title ? [head.title] : []),
+      ...(front ? [front.name] : []),
+      ...chat.chips.map((one) => one.label),
+    ],
+    trouble: (said) => (chat.trouble = said),
+  }
 
   const head = $derived(chat.head)
   const busy = $derived(chat.busy)
@@ -437,7 +453,7 @@
       { label: t('Add photos and files'), asks: true, run: () => picker?.click() },
       DIVIDER,
       { label: t('Web search'), checked: searching, run: toggleWeb },
-      ...(canTranscribe() ? [{ label: t('Dictate'), run: () => void dictation.toggle(true) }] : []),
+      ...(canDictate() ? [{ label: t('Dictate'), run: () => void dictation.toggle(true) }] : []),
       { label: t('Mention'), run: () => typeAt('@') },
       { label: t('Commands'), disabled: !!chat.text.trim(), run: () => typeAt('/') },
     ])
@@ -462,11 +478,18 @@
   // ── The round button ──────────────────────────────────
 
   /** What the one round button is now, Codex's: the stop while an answer arrives and
-   *  the field is empty, dictation's stop while it listens, and the arrow otherwise. */
-  const button = $derived.by((): 'stop' | 'listening' | 'hearing' | 'send' => {
-    if (busy && !chat.text.trim()) return 'stop'
-    if (dictation.state !== 'idle') return dictation.state
-    return 'send'
+   *  the field is empty, and the arrow otherwise. Dictation has a button of its own
+   *  beside it. */
+  const button = $derived.by((): 'stop' | 'send' => (busy && !chat.text.trim() ? 'stop' : 'send'))
+
+  // `/voice` and "+ > Dictate" press this composer's microphone while it is the one in
+  // use (host.ts).
+  $effect(() => {
+    if (chat.host !== here) return
+    dictation.field = voiceField
+    return () => {
+      if (dictation.field === voiceField) dictation.field = null
+    }
   })
 
   // ── Focus ─────────────────────────────────────────────
@@ -642,6 +665,7 @@
         bind:this={field}
         bind:value={chat.text}
         use:grow={chat.text}
+        use:dictating={voiceField}
         data-entry
         rows="1"
         placeholder={t('Ask anything, @ to add, / for more')}
@@ -683,6 +707,9 @@
         <span class="gap"></span>
         <Ring {next} />
         <ModelPicker />
+        {#if canDictate()}
+          <DictateButton owner={voiceField} />
+        {/if}
         {#if button === 'stop'}
           <button class="go" title={t('Stop')} aria-label={t('Stop')} onclick={() => chat.stop()}>
             <svg viewBox="0 0 13 13"
@@ -698,23 +725,6 @@
             onclick={() => void submit()}
           >
             <svg viewBox="0 0 13 13"><path d="M6.5 10.6V2.6M3.2 5.9l3.3-3.3 3.3 3.3" /></svg>
-          </button>
-        {:else}
-          <!-- Dictating: its stop while it listens, and a breath while what was said is
-               turned into words. -->
-          <button
-            class="go"
-            class:listening={button === 'listening'}
-            class:hearing={button === 'hearing'}
-            title={t('Listening')}
-            aria-label={t('Listening')}
-            aria-pressed="true"
-            disabled={button === 'hearing'}
-            onclick={() => void dictation.toggle()}
-          >
-            <svg viewBox="0 0 13 13"
-              ><rect class="square" x="4" y="4" width="5" height="5" rx="0.8" /></svg
-            >
           </button>
         {/if}
       </div>
@@ -1059,39 +1069,6 @@
   .go .square {
     fill: currentColor;
     stroke: none;
-  }
-
-  /* Listening: the accent, and a ring breathing out of it. */
-  .go.listening {
-    background: var(--accent);
-    color: var(--accent-ink);
-    animation: listen calc(var(--dur-slow) * 4) var(--ease-out) infinite;
-  }
-
-  .go.hearing {
-    animation: breathe calc(var(--dur-slow) * 3) var(--ease-in-out) infinite;
-  }
-
-  @keyframes listen {
-    0% {
-      box-shadow: 0 0 0 0 var(--accent-line);
-    }
-    100% {
-      box-shadow: 0 0 0 7px transparent;
-    }
-  }
-
-  @keyframes breathe {
-    50% {
-      opacity: 0.45;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .go.listening,
-    .go.hearing {
-      animation: none;
-    }
   }
 
   .files {

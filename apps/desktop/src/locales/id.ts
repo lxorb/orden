@@ -2810,4 +2810,18 @@ export const id: Dictionary = {
   'One colour': 'Satu warna',
   'Web icons': 'Ikon web',
   'Sites you visit will appear here': 'Situs yang Anda kunjungi akan muncul di sini',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'Dikte',
+  'Dictate with': 'Dikte dengan',
+  'Where your voice goes to be turned into words.':
+    'Ke mana suara Anda dikirim untuk diubah menjadi kata-kata.',
+  'Ask on first use': 'Tanya saat pertama dipakai',
+  'Orden account': 'Akun Orden',
+  'Your AI provider': 'Penyedia AI Anda',
+  'Stays on this computer': 'Tetap di komputer ini',
+  'Audio goes to {host}': 'Audio dikirim ke {host}',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'Audio dikirim ke Orden dan Cloudflare, dan tidak disimpan',
+  'Stop dictating': 'Hentikan dikte',
+  'Writing down what you said': 'Menuliskan yang Anda ucapkan',
 }

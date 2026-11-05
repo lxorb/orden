@@ -708,8 +708,12 @@ export const routes = {
    *  The same route and the same models; `piece` says only that this is part of
    *  something somebody recorded rather than a phrase said into a pair of glasses, so
    *  the twelve-second ceiling a spoken command is held to does not apply. See
-   *  recorder/transcribe.ts, which cuts the pieces, and services/sync/src/ask. */
-  askPiece: (token: string, wav: Uint8Array<ArrayBuffer>) => listen(token, wav, '?piece=1'),
+   *  recorder/transcribe.ts, which cuts the pieces, and services/sync/src/ask.
+   *
+   *  `like` is what dictation expects to hear, the same prompt `askHeard` sends: the
+   *  names around the field and the words before the caret. */
+  askPiece: (token: string, wav: Uint8Array<ArrayBuffer>, like = '') =>
+    listen(token, wav, `?piece=1${like ? `&like=${encodeURIComponent(like.slice(0, 300))}` : ''}`),
 
   /** Named by its own hash, so a repeat costs one request and no storage. */
   putBlob: async (

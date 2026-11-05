@@ -2852,4 +2852,18 @@ export const ha: Dictionary = {
   'One colour': 'Launi ɗaya',
   'Web icons': 'Gumakan yanar gizo',
   'Sites you visit will appear here': 'Shafukan da ka ziyarta za su bayyana a nan',
+  // Dictation into a field, and where a voice goes (#1128)
+  Dictation: 'Rubutun murya',
+  'Dictate with': 'Rubuta murya da',
+  'Where your voice goes to be turned into words.':
+    'Inda muryarka ke zuwa don a mayar da ita kalmomi.',
+  'Ask on first use': 'Tambaya a farkon amfani',
+  'Orden account': 'Asusun Orden',
+  'Your AI provider': 'Mai samar maka da AI',
+  'Stays on this computer': 'Tana zama a wannan kwamfutar',
+  'Audio goes to {host}': 'Sautin yana zuwa {host}',
+  'Audio goes to Orden and Cloudflare, and is not kept':
+    'Sautin yana zuwa Orden da Cloudflare, kuma ba a ajiye shi',
+  'Stop dictating': 'Daina rubutun murya',
+  'Writing down what you said': 'Ana rubuta abin da ka faɗa',
 }
