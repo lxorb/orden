@@ -547,7 +547,7 @@
       aria-expanded={offered.length > 0}
     />
     {#if offered.length}
-      <div class="suggest" role="listbox" aria-label={t('Add task')}>
+      <div class="suggest" data-covers role="listbox" aria-label={t('Add task')}>
         {#each offered as one, index (one)}
           <button
             type="button"

@@ -18,33 +18,54 @@ describe('what goes without asking', () => {
   const programs = ['git', 'NPM']
 
   test('one command line of a program on the list, with Enter', () => {
-    expect(typesFreely('git status', true, [], programs)).toBe(true)
-    expect(typesFreely('npm test', true, [], programs)).toBe(true)
+    expect(typesFreely('git status', true, [], programs, 'unix')).toBe(true)
+    expect(typesFreely('npm test', true, [], programs, 'windows')).toBe(true)
+    expect(typesFreely('NPM test', true, [], programs, 'unix')).toBe(true)
+    expect(typesFreely('npm test', true, [], programs, 'unix')).toBe(false)
+  })
+
+  test('a listed name given as a path is any file called that, and asks (#1078)', () => {
+    for (const os of ['windows', 'unix'] as const) {
+      expect(
+        typesFreely('"C:\\Program Files\\Git\\bin\\git.exe" log', true, [], programs, os),
+      ).toBe(false)
+    }
+    expect(typesFreely('/tmp/x/git log', true, [], programs, 'unix')).toBe(false)
+    expect(typesFreely('./npm test', true, [], programs, 'unix')).toBe(false)
+  })
+
+  test('a name with an ending is the bare name only where Windows runs it so', () => {
+    expect(typesFreely('git.exe status', true, [], programs, 'windows')).toBe(true)
+    expect(typesFreely('GIT status', true, [], programs, 'windows')).toBe(true)
+    expect(typesFreely('git.ps1 status', true, [], programs, 'windows')).toBe(false)
+    expect(typesFreely('git.sh status', true, [], programs, 'windows')).toBe(false)
+    expect(typesFreely('git.exe status', true, [], programs, 'unix')).toBe(false)
+    expect(typesFreely('GIT status', true, [], programs, 'unix')).toBe(false)
   })
 
   test('nothing else: another program, a second command, no Enter, keys after it', () => {
-    expect(typesFreely('rm -rf build', true, [], programs)).toBe(false)
+    expect(typesFreely('rm -rf build', true, [], programs, 'unix')).toBe(false)
     // What a line edits before Enter is run is not what it says: the shell clears, runs
     // or rubs out by a control character, so the first word proves nothing.
-    expect(typesFreely('git \u0015touch pwned', true, [], programs)).toBe(false)
-    expect(typesFreely('git status \u000ftouch pwned', true, [], programs)).toBe(false)
-    expect(typesFreely('git\u007f\u007f\u007ftouch pwned', true, [], programs)).toBe(false)
-    expect(typesFreely('/tmp/x/git.sh', true, [], programs)).toBe(false)
-    expect(typesFreely('./git status', true, [], programs)).toBe(false)
-    expect(typesFreely('git status; rm -rf ~', true, [], programs)).toBe(false)
-    expect(typesFreely('git log | sh', true, [], programs)).toBe(false)
-    expect(typesFreely('git status', false, [], programs)).toBe(false)
-    expect(typesFreely('git status', true, ['Enter'], programs)).toBe(false)
+    expect(typesFreely('git \u0015touch pwned', true, [], programs, 'unix')).toBe(false)
+    expect(typesFreely('git status \u000ftouch pwned', true, [], programs, 'unix')).toBe(false)
+    expect(typesFreely('git\u007f\u007f\u007ftouch pwned', true, [], programs, 'unix')).toBe(false)
+    expect(typesFreely('/tmp/x/git.sh', true, [], programs, 'unix')).toBe(false)
+    expect(typesFreely('./git status', true, [], programs, 'unix')).toBe(false)
+    expect(typesFreely('git status; rm -rf ~', true, [], programs, 'unix')).toBe(false)
+    expect(typesFreely('git log | sh', true, [], programs, 'unix')).toBe(false)
+    expect(typesFreely('git status', false, [], programs, 'unix')).toBe(false)
+    expect(typesFreely('git status', true, ['Enter'], programs, 'unix')).toBe(false)
     // An Enter alone runs whatever was typed before it, which is not here to judge.
-    expect(typesFreely('', true, [], programs)).toBe(false)
-    expect(typesFreely('', false, ['Enter'], programs)).toBe(false)
-    expect(typesFreely('', false, ['Up'], programs)).toBe(false)
+    expect(typesFreely('', true, [], programs, 'unix')).toBe(false)
+    expect(typesFreely('', false, ['Enter'], programs, 'unix')).toBe(false)
+    expect(typesFreely('', false, ['Up'], programs, 'unix')).toBe(false)
   })
 
   test('an interrupt alone', () => {
-    expect(typesFreely('', false, ['Ctrl+C'], [])).toBe(true)
-    expect(typesFreely('', false, ['Ctrl+C', 'Ctrl+C'], [])).toBe(true)
-    expect(typesFreely('', false, [], [])).toBe(false)
+    expect(typesFreely('', false, ['Ctrl+C'], [], 'unix')).toBe(true)
+    expect(typesFreely('', false, ['Ctrl+C', 'Ctrl+C'], [], 'unix')).toBe(true)
+    expect(typesFreely('', false, [], [], 'unix')).toBe(false)
   })
 })
 

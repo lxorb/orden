@@ -2020,6 +2020,9 @@ export const ru: Dictionary = {
   'Restored {time}': 'Восстановлено {time}',
   'Stop what is running in {name}?': 'Остановить то, что выполняется в {name}?',
   'Stop what is running in these terminals?': 'Остановить то, что выполняется в этих терминалах?',
+  'End these online terminals?': 'Завершить эти онлайн-терминалы?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Нигде не сохранён: оставленный работать сеанс снова найдётся в Настройках, {pane}.',
   'Paste {count} lines?': {
     one: 'Вставить {count} строку?',
     few: 'Вставить {count} строки?',
@@ -2198,6 +2201,8 @@ export const ru: Dictionary = {
   'Run commands': 'Выполнять команды',
   'Read and change files anywhere on this computer':
     'Читать и изменять файлы в любом месте этого компьютера',
+  Programs: 'Программы',
+  'Run programs on this computer': 'Запускать программы на этом компьютере',
   Paying: 'Оплата',
   'Sending messages': 'Отправка сообщений',
   'Publishing and sharing': 'Публикация и доступ',

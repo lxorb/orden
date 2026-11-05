@@ -44,6 +44,7 @@ describe('the defaults', () => {
       'browser.network',
       'terminal',
       'files',
+      'processes',
       'agents',
     ])
     expect(grant.spaces).toBe('all')

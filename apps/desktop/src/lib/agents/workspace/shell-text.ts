@@ -1,12 +1,28 @@
 /** A command line and what a terminal printed, as words. Pure; see terminal.ts. */
 
+/** The system a command line runs on, said so that both are tested on any machine: the
+ *  callers pass the one the app runs on. */
+export type Os = 'windows' | 'unix'
+
+/** The `Os` of a name `platform()` gives. */
+export function osOf(platform: string): Os {
+  return platform === 'windows' ? 'windows' : 'unix'
+}
+
 /** The program a command line starts, as a list of allowed programs names it: the first
- *  word in lower case, and only where it is a bare name the shell looks up on its path.
- *  A word with a folder, an ending or a quote is whatever file that names - `./git`,
- *  `/tmp/x/git.sh`, `"git"/../../bin/sh` - and no program on any list: the empty name. */
-export function programOf(command: string): string {
+ *  word, and only where it is a bare name the shell looks up on its path. A word with a
+ *  folder or a quote is whatever file that names - `./git`, `/tmp/x/git.sh`,
+ *  `"git"/../../bin/sh` - and no program on any list: the empty name.
+ *
+ *  On Windows, which runs `git.exe` for `git` and does not tell `GIT` from `git`, it is in
+ *  lower case and without an ending Windows runs a bare name with (`PATHEXT`'s `.exe`,
+ *  `.com`, `.bat`, `.cmd`); a `.sh` or a `.ps1` is another file. On a Mac and Linux a name
+ *  with any ending is another file, and the case counts: `git.exe` is not `git` there. */
+export function programOf(command: string, os: Os): string {
   const word = /^\s*(\S+)/.exec(command)?.[1] ?? ''
-  return /^[\w.+-]+$/.test(word) ? word.toLowerCase() : ''
+  if (!/^[\w.+-]+$/.test(word)) return ''
+
+  return os === 'windows' ? word.toLowerCase().replace(/\.(exe|com|bat|cmd)$/, '') : word
 }
 
 /** What a package manager is known to do freely, as git below: any other command asks, and
@@ -595,17 +611,19 @@ function argumentsStay(program: string, plain: readonly string[]): boolean {
   })
 }
 
-/** Whether a line goes for being on a list: its first program is on it, and its arguments
- *  do not tell that program to run or write something else. */
-export function onTheList(command: string, programs: readonly string[]): boolean {
-  const program = programOf(command)
-  if (program === '' || !programs.some((one) => one.toLowerCase() === program)) return false
+/** Whether a line goes for being on a list: its first program is on it, named the way
+ *  `programOf` reads a name on `os`, and its arguments do not tell that program to run or
+ *  write something else. */
+export function onTheList(command: string, programs: readonly string[], os: Os): boolean {
+  const program = programOf(command, os)
+  if (program === '' || !programs.some((one) => programOf(one, os) === program)) return false
 
   // A space of another kind is part of a word to the shell, and no way to read a line by eye.
   if (/(?! )\p{Zs}/u.test(command)) return false
 
+  // Held to what the lower-case name may do: `Git` on a list is git's rules all the same.
   const words = wordsOf(command.trim())
-  return words !== null && argumentsStay(program, words.slice(1))
+  return words !== null && argumentsStay(program.toLowerCase(), words.slice(1))
 }
 
 /** Whether a line starts only its first program: no second command after a `;`, an

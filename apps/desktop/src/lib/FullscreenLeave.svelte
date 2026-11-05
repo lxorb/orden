@@ -14,6 +14,7 @@
 
 <button
   class="leave"
+  data-covers
   class:idle={fullscreen.idle}
   title={t('Leave fullscreen')}
   aria-label={t('Leave fullscreen')}

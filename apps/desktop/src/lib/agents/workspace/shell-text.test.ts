@@ -1,14 +1,63 @@
 import { describe, expect, test } from 'vitest'
 import { onTheList, plainOf, programOf, startsOnlyOne } from './shell-text'
 
+/** What a line gets on both systems, where they agree; where they do not, the test fails
+ *  on a word saying so. */
+function onBoth(command: string, programs: readonly string[]): boolean | string {
+  const windows = onTheList(command, programs, 'windows')
+  const unix = onTheList(command, programs, 'unix')
+  return windows === unix ? windows : `windows ${windows}, unix ${unix}`
+}
+
 const ESC = String.fromCharCode(27)
 const BELL = String.fromCharCode(7)
 
 describe('the program a command starts', () => {
-  test('is the first word, in lower case', () => {
-    expect(programOf('git status --short')).toBe('git')
-    expect(programOf('  Git status')).toBe('git')
-    expect(programOf('node build.mjs')).toBe('node')
+  test('is the first word: on Windows in lower case, elsewhere as it is', () => {
+    for (const os of ['windows', 'unix'] as const) {
+      expect(programOf('git status --short', os)).toBe('git')
+      expect(programOf('node build.mjs', os)).toBe('node')
+    }
+    expect(programOf('  Git status', 'windows')).toBe('git')
+    expect(programOf('  Git status', 'unix')).toBe('Git')
+  })
+
+  test('is on the list only named bare, never by a path that happens to end in it', () => {
+    const programs = ['git', 'Node']
+    expect(onBoth('git status', programs)).toBe(true)
+    expect(onBoth('npm test', programs)).toBe(false)
+    expect(onTheList('GIT.exe log', programs, 'windows')).toBe(true)
+    expect(onTheList('node build.mjs', programs, 'windows')).toBe(true)
+    expect(onTheList('GIT.exe log', programs, 'unix')).toBe(false)
+    expect(onTheList('node build.mjs', programs, 'unix')).toBe(false)
+    expect(onTheList('Node build.mjs', programs, 'unix')).toBe(true)
+    for (const line of [
+      '/tmp/x/git status',
+      './git status',
+      'bin/git status',
+      '~/bin/git status',
+      '"C:\\Users\\me\\Downloads\\git.exe" status',
+      '..\\git status',
+      'PATH=/tmp/x git status',
+      'GIT_SSH_COMMAND=evil git fetch',
+    ]) {
+      expect(onBoth(line, programs), line).toBe(false)
+    }
+  })
+
+  test('an ending is the bare name only where Windows runs a bare name with it', () => {
+    for (const name of ['git.exe', 'GIT.EXE', 'git.com', 'Git.Bat', 'git.cmd']) {
+      expect(programOf(`${name} status`, 'windows'), name).toBe('git')
+      expect(programOf(`${name} status`, 'unix'), name).toBe(name)
+    }
+    for (const name of ['git.sh', 'git.ps1', 'GIT.PS1']) {
+      expect(programOf(`${name} status`, 'windows'), name).toBe(name.toLowerCase())
+      expect(onBoth(`${name} status`, ['git']), name).toBe(false)
+    }
+    expect(onTheList('git.exe status', ['git'], 'windows')).toBe(true)
+    expect(onTheList('git.exe status', ['git'], 'unix')).toBe(false)
+    expect(onTheList('git status', ['Git.exe'], 'windows')).toBe(true)
+    expect(onTheList('git status', ['Git.exe'], 'unix')).toBe(false)
   })
 
   test('is the only one a line starts, or the line is not let through for it', () => {
@@ -48,12 +97,15 @@ describe('what actually runs', () => {
       '"git"/../../bin/sh',
       '\\git status',
       'git.sh',
-      'git.exe status',
       'git$IFS-x',
       'FOO=1 git status',
     ]) {
-      expect(['git'], line).not.toContain(programOf(line))
+      for (const os of ['windows', 'unix'] as const) {
+        expect(['git'], `${os}: ${line}`).not.toContain(programOf(line, os))
+      }
     }
+    // Windows runs `git.exe` for `git`; elsewhere it is another file.
+    expect(programOf('git.exe status', 'unix')).toBe('git.exe')
   })
 
   test('a line with a control character starts more than it says', () => {
@@ -106,7 +158,7 @@ describe('what a listed program is told to run', () => {
       'git --out""put=x log',
       'git -\\c core.pager=touch log',
     ]) {
-      expect(onTheList(line, ['git']), line).toBe(false)
+      expect(onBoth(line, ['git']), line).toBe(false)
     }
   })
 
@@ -123,7 +175,7 @@ describe('what a listed program is told to run', () => {
       ['yarn dlx touch', 'yarn'],
       ['bunx touch', 'bunx'],
     ] as const) {
-      expect(onTheList(line, [program]), line).toBe(false)
+      expect(onBoth(line, [program]), line).toBe(false)
     }
   })
 
@@ -136,7 +188,7 @@ describe('what a listed program is told to run', () => {
       ['npm test', 'npm'],
       ['pnpm run build', 'pnpm'],
     ] as const) {
-      expect(onTheList(line, [program]), line).toBe(true)
+      expect(onBoth(line, [program]), line).toBe(true)
     }
   })
 
@@ -168,7 +220,7 @@ describe('an option in front of the command', () => {
     'bun --cwd . x cowsay',
     'git -- config core.sshCommand x',
   ])('hides nothing: %s goes to the question', (line) => {
-    expect(onTheList(line, listed)).toBe(false)
+    expect(onBoth(line, listed)).toBe(false)
   })
 
   test.each([
@@ -182,7 +234,7 @@ describe('an option in front of the command', () => {
     'npm --silent ci',
     'pnpm test',
   ])('one that takes no value stays out of the way: %s', (line) => {
-    expect(onTheList(line, listed)).toBe(true)
+    expect(onBoth(line, listed)).toBe(true)
   })
 
   test.each([
@@ -197,13 +249,13 @@ describe('an option in front of the command', () => {
     'bun --print 1',
     'bun run -e 1',
   ])('a short name for what is on the list goes too: %s', (line) => {
-    expect(onTheList(line, listed)).toBe(false)
+    expect(onBoth(line, listed)).toBe(false)
   })
 
   test.each(['git push -u origin main', 'git add -u', 'git status'])(
     "another command's own letter is that command's: %s",
     (line) => {
-      expect(onTheList(line, listed)).toBe(true)
+      expect(onBoth(line, listed)).toBe(true)
     },
   )
 })
@@ -224,7 +276,7 @@ describe('git, by what is known to be free', () => {
     'git somethingnew',
     'git commit -vF ./x',
   ])('asks: %s', (line) => {
-    expect(onTheList(line, ['git'])).toBe(false)
+    expect(onBoth(line, ['git'])).toBe(false)
   })
 
   test.each([
@@ -259,7 +311,7 @@ describe('git, by what is known to be free', () => {
     'git rev-parse --abbrev-ref HEAD',
     'git log -- -x',
   ])('goes: %s', (line) => {
-    expect(onTheList(line, ['git'])).toBe(true)
+    expect(onBoth(line, ['git'])).toBe(true)
   })
 })
 
@@ -280,7 +332,7 @@ describe('the options a package manager takes in front of its command', () => {
     'yarn workspace web build',
     'bun --cwd x test',
   ])('walks past them: %s', (line) => {
-    expect(onTheList(line, listed)).toBe(true)
+    expect(onBoth(line, listed)).toBe(true)
   })
 
   test.each([
@@ -293,7 +345,7 @@ describe('the options a package manager takes in front of its command', () => {
     'bun -e1',
     'bun -pe1',
   ])('sees the command behind them: %s', (line) => {
-    expect(onTheList(line, listed)).toBe(false)
+    expect(onBoth(line, listed)).toBe(false)
   })
 })
 
@@ -338,7 +390,7 @@ describe('a package manager, by what is known to be free', () => {
     'yarn workspace web exec touch',
     'yarn workspace',
   ])('asks: %s', (line) => {
-    expect(onTheList(line, listed)).toBe(false)
+    expect(onBoth(line, listed)).toBe(false)
   })
 
   test.each([
@@ -385,7 +437,7 @@ describe('a package manager, by what is known to be free', () => {
     'bun run dev',
     'bun build ./a.ts',
   ])('goes: %s', (line) => {
-    expect(onTheList(line, listed)).toBe(true)
+    expect(onBoth(line, listed)).toBe(true)
   })
 })
 
@@ -415,7 +467,7 @@ describe('a line as the shell hands it over', () => {
     'git log --"output"=x',
     'npm t --"shell"=x',
   ])('asks: %s', (line) => {
-    expect(onTheList(line, listed)).toBe(false)
+    expect(onBoth(line, listed)).toBe(false)
   })
 
   test.each([
@@ -428,7 +480,7 @@ describe('a line as the shell hands it over', () => {
     'pnpm --filter web test -- -t "a name with words"',
     'npm install "lodash"',
   ])('goes: %s', (line) => {
-    expect(onTheList(line, listed)).toBe(true)
+    expect(onBoth(line, listed)).toBe(true)
   })
 })
 
@@ -450,7 +502,7 @@ describe('a bare name that may be on the path', () => {
     'npm --prefix "a b" run t',
     'pnpm eslint --rulesdir=./x .',
   ])('asks: %s', (line) => {
-    expect(onTheList(line, listed)).toBe(false)
+    expect(onBoth(line, listed)).toBe(false)
   })
 
   test.each([
@@ -479,7 +531,7 @@ describe('a bare name that may be on the path', () => {
     'pnpm install --ignore-scripts',
     'bun install --ignore-scripts',
   ])('goes: %s', (line) => {
-    expect(onTheList(line, listed)).toBe(true)
+    expect(onBoth(line, listed)).toBe(true)
   })
 })
 
@@ -495,11 +547,11 @@ describe('a space the shell does not split on', () => {
     'npm\u00a0exec touch',
     'git log\u00a0-c',
   ])('is no space, and asks: %j', (line) => {
-    expect(onTheList(line, listed) && startsOnlyOne(line)).toBe(false)
+    expect(onBoth(line, listed) && startsOnlyOne(line)).toBe(false)
   })
 
   test('a tab and a space still part words', () => {
-    expect(onTheList('git  status', listed)).toBe(true)
+    expect(onBoth('git  status', listed)).toBe(true)
   })
 })
 
@@ -507,10 +559,10 @@ describe('a colon name that is a file', () => {
   const listed = ['pnpm', 'yarn', 'bun']
 
   test.each(['bun a:b.js', 'bun run a:b.js', 'pnpm a:b.js', 'yarn a:b.js'])('asks: %s', (line) => {
-    expect(onTheList(line, listed)).toBe(false)
+    expect(onBoth(line, listed)).toBe(false)
   })
 
   test.each(['bun run test:unit', 'bun db:migrate', 'pnpm build:web'])('goes: %s', (line) => {
-    expect(onTheList(line, listed)).toBe(true)
+    expect(onBoth(line, listed)).toBe(true)
   })
 })

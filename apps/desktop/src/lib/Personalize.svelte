@@ -103,6 +103,7 @@
   {@const question = QUESTIONS[settings.setup] ?? null}
   <div
     class="card"
+    data-covers
     role="dialog"
     aria-label={t('Personalize')}
     transition:fly={{ y: 8, duration: dur(180), easing: cubicOut }}

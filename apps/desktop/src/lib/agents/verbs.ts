@@ -40,6 +40,7 @@ export const BROWSER_VERBS = [
   'browser_show',
   'browser_takeover',
   'files',
+  'process',
   'agent_status',
   'approval_status',
   'agent_pair',
@@ -139,6 +140,7 @@ export type Scope =
   | 'agents'
   | 'terminal'
   | 'files'
+  | 'processes'
 
 /** What a question is about (9.3), and the questions Orden asks for itself. */
 export type Category =

@@ -1950,6 +1950,9 @@ export const te: Dictionary = {
   'Restored {time}': 'పునరుద్ధరించబడింది {time}',
   'Stop what is running in {name}?': '{name}లో నడుస్తున్నదాన్ని ఆపాలా?',
   'Stop what is running in these terminals?': 'ఈ టెర్మినల్స్‌లో నడుస్తున్నదాన్ని ఆపాలా?',
+  'End these online terminals?': 'ఈ ఆన్‌లైన్ టెర్మినల్‌లను ముగించాలా?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'ఎక్కడా సేవ్ చేయలేదు; నడుస్తూ ఉంచిన సెషన్ మళ్లీ సెట్టింగ్‌లు, {pane}లో దొరుకుతుంది.',
   'Paste {count} lines?': {
     one: '{count} పంక్తిని అతికించాలా?',
     other: '{count} పంక్తులను అతికించాలా?',
@@ -2124,6 +2127,8 @@ export const te: Dictionary = {
   'Run commands': 'ఆదేశాలు నడపడం',
   'Read and change files anywhere on this computer':
     'ఈ కంప్యూటర్‌లో ఎక్కడైనా ఫైళ్లను చదవడం మరియు మార్చడం',
+  Programs: 'ప్రోగ్రామ్‌లు',
+  'Run programs on this computer': 'ఈ కంప్యూటర్‌లో ప్రోగ్రామ్‌లను అమలు చేయండి',
   Paying: 'చెల్లింపు',
   'Sending messages': 'సందేశాలు పంపడం',
   'Publishing and sharing': 'ప్రచురించడం, షేర్ చేయడం',

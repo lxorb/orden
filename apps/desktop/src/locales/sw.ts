@@ -1971,6 +1971,9 @@ export const sw: Dictionary = {
   'Restored {time}': 'Imerejeshwa {time}',
   'Stop what is running in {name}?': 'Simamisha kinachoendeshwa katika {name}?',
   'Stop what is running in these terminals?': 'Simamisha kinachoendeshwa katika terminali hizi?',
+  'End these online terminals?': 'Kumaliza vituo hivi vya mtandaoni?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Haijahifadhiwa popote; kipindi kinachoachwa kiendelee kinapatikana tena katika Mipangilio, {pane}.',
   'Paste {count} lines?': { one: 'Bandika mstari {count}?', other: 'Bandika mistari {count}?' },
   // Orden as the default browser
   'Default browser': 'Kivinjari chaguomsingi',
@@ -2143,6 +2146,8 @@ export const sw: Dictionary = {
   'Run commands': 'Kuendesha amri',
   'Read and change files anywhere on this computer':
     'Kusoma na kubadilisha faili popote kwenye kompyuta hii',
+  Programs: 'Programu',
+  'Run programs on this computer': 'Kuendesha programu kwenye kompyuta hii',
   Paying: 'Kulipa',
   'Sending messages': 'Kutuma ujumbe',
   'Publishing and sharing': 'Kuchapisha na kushiriki',

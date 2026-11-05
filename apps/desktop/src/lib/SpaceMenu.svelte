@@ -97,7 +97,7 @@
      list leaves it lets presses through, so a tap on the switcher then opens the list
      again from where it had got to (#1067; see `letGo` in slide.ts). -->
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-<div class="catch" onclick={close} onpointerdown={spendClick} out:letGo></div>
+<div class="catch" data-covers="all" onclick={close} onpointerdown={spendClick} out:letGo></div>
 
 <!-- The same walk and the same one tab stop every list in the app has, and the
      same trap every layer has: the arrows move, a digit or a name typed finds a

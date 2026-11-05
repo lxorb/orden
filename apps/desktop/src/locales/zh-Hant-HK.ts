@@ -1893,6 +1893,9 @@ export const zhHantHK: Dictionary = {
   'Restored {time}': '已還原 {time}',
   'Stop what is running in {name}?': '要停止 {name} 中正在執行的內容嗎？',
   'Stop what is running in these terminals?': '要停止這些終端機中正在執行的內容嗎？',
+  'End these online terminals?': '結束這些網上終端機？',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    '未儲存在任何地方；保持運行的工作階段可在「設定」的「{pane}」中再次找到。',
   'Paste {count} lines?': '要貼上 {count} 行嗎？',
   // Orden as the default browser
   'Default browser': '預設瀏覽器',
@@ -2057,6 +2060,8 @@ export const zhHantHK: Dictionary = {
   'Change settings': '更改設定',
   'Run commands': '執行指令',
   'Read and change files anywhere on this computer': '讀取及更改此電腦上任何位置的檔案',
+  Programs: '程式',
+  'Run programs on this computer': '在這部電腦上執行程式',
   Paying: '付款',
   'Sending messages': '傳送訊息',
   'Publishing and sharing': '發佈及共享',

@@ -23,11 +23,12 @@
  *  asked about: nothing of xterm.js is loaded for an agent that never names a terminal. */
 
 import type { AgentAnswer } from '../../automation/caller'
-import { plainOf } from './shell-text'
+import { osOf, plainOf } from './shell-text'
 import { historyOf } from '../../terminal/history'
 import { ptyOf } from '../../terminal/running'
 import { readSpec } from '../../terminal/spec'
 import type { Session } from '../../terminal/sessions.svelte'
+import { platform } from '../../tauri'
 import type { Tab } from '../../workspace.svelte'
 import { asked } from './asks'
 import { type Call, count, done, flag, maybe } from './call'
@@ -188,7 +189,7 @@ export async function typeTerminal(call: Call): Promise<AgentAnswer> {
     throw new Refused('bad_arguments', `${judged.unknown} is not a key: ${KEY_NAMES.join(', ')}`)
   }
 
-  const free = typesFreely(text, enter, keys, agent.programs)
+  const free = typesFreely(text, enter, keys, agent.programs, osOf(platform()))
   const shown = [text, enter ? 'Enter' : '', ...keys].filter(Boolean).join(' + ')
   const question = await asked(call, free ? null : 'terminal', `${tab.shown}: ${shown}`)
   if (question) return question

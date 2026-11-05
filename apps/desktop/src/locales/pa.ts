@@ -1946,6 +1946,9 @@ export const pa: Dictionary = {
   'Restored {time}': 'ਬਹਾਲ ਕੀਤਾ {time}',
   'Stop what is running in {name}?': '{name} ਵਿੱਚ ਜੋ ਚੱਲ ਰਿਹਾ ਹੈ ਉਸਨੂੰ ਰੋਕੀਏ?',
   'Stop what is running in these terminals?': 'ਇਹਨਾਂ ਟਰਮੀਨਲਾਂ ਵਿੱਚ ਜੋ ਚੱਲ ਰਿਹਾ ਹੈ ਉਸਨੂੰ ਰੋਕੀਏ?',
+  'End these online terminals?': 'ਕੀ ਇਹ ਔਨਲਾਈਨ ਟਰਮੀਨਲ ਖਤਮ ਕਰਨੇ ਹਨ?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'ਕਿਤੇ ਵੀ ਸੰਭਾਲਿਆ ਨਹੀਂ; ਚੱਲਦਾ ਛੱਡਿਆ ਸੈਸ਼ਨ ਮੁੜ ਸੈਟਿੰਗਾਂ, {pane} ਵਿੱਚ ਮਿਲਦਾ ਹੈ।',
   'Paste {count} lines?': { one: '{count} ਲਾਈਨ ਪੇਸਟ ਕਰੀਏ?', other: '{count} ਲਾਈਨਾਂ ਪੇਸਟ ਕਰੀਏ?' },
   // Orden as the default browser
   'Default browser': 'ਮੂਲ ਬ੍ਰਾਊਜ਼ਰ',
@@ -2117,6 +2120,8 @@ export const pa: Dictionary = {
   'Run commands': 'ਕਮਾਂਡਾਂ ਚਲਾਉਣਾ',
   'Read and change files anywhere on this computer':
     'ਇਸ ਕੰਪਿਊਟਰ ਉੱਤੇ ਕਿਤੇ ਵੀ ਫ਼ਾਈਲਾਂ ਪੜ੍ਹੋ ਅਤੇ ਬਦਲੋ',
+  Programs: 'ਪ੍ਰੋਗਰਾਮ',
+  'Run programs on this computer': 'ਇਸ ਕੰਪਿਊਟਰ ਉੱਤੇ ਪ੍ਰੋਗਰਾਮ ਚਲਾਓ',
   Paying: 'ਭੁਗਤਾਨ',
   'Sending messages': 'ਸੁਨੇਹੇ ਭੇਜਣਾ',
   'Publishing and sharing': 'ਪ੍ਰਕਾਸ਼ਿਤ ਅਤੇ ਸਾਂਝਾ ਕਰਨਾ',

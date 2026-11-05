@@ -1973,6 +1973,9 @@ export const ta: Dictionary = {
   'Restored {time}': 'மீட்டமைக்கப்பட்டது {time}',
   'Stop what is running in {name}?': '{name} இல் இயங்குவதை நிறுத்தவா?',
   'Stop what is running in these terminals?': 'இந்த முனையங்களில் இயங்குவதை நிறுத்தவா?',
+  'End these online terminals?': 'இந்த ஆன்லைன் டெர்மினல்களை முடிக்கவா?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'எங்கும் சேமிக்கப்படவில்லை; இயங்க விடப்பட்ட அமர்வை மீண்டும் அமைப்புகள், {pane} இல் காணலாம்.',
   'Paste {count} lines?': { one: '{count} வரியை ஒட்டவா?', other: '{count} வரிகளை ஒட்டவா?' },
   // Orden as the default browser
   'Default browser': 'இயல்புநிலை உலாவி',
@@ -2145,6 +2148,8 @@ export const ta: Dictionary = {
   'Run commands': 'கட்டளைகளை இயக்குதல்',
   'Read and change files anywhere on this computer':
     'இந்தக் கணினியில் எங்கும் உள்ள கோப்புகளைப் படித்து மாற்றுதல்',
+  Programs: 'நிரல்கள்',
+  'Run programs on this computer': 'இந்தக் கணினியில் நிரல்களை இயக்கு',
   Paying: 'பணம் செலுத்துதல்',
   'Sending messages': 'செய்திகளை அனுப்புதல்',
   'Publishing and sharing': 'வெளியிடுதல், பகிர்தல்',

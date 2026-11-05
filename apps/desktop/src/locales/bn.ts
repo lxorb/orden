@@ -1938,6 +1938,9 @@ export const bn: Dictionary = {
   'Restored {time}': 'পুনরুদ্ধার করা হয়েছে {time}',
   'Stop what is running in {name}?': '{name}-এ যা চলছে তা বন্ধ করবেন?',
   'Stop what is running in these terminals?': 'এই টার্মিনালগুলিতে যা চলছে তা বন্ধ করবেন?',
+  'End these online terminals?': 'এই অনলাইন টার্মিনালগুলো শেষ করবেন?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'কোথাও সংরক্ষিত নয়; চালু রাখা সেশন আবার পাবেন সেটিংস, {pane}-এ।',
   'Paste {count} lines?': {
     one: '{count}টি লাইন পেস্ট করবেন?',
     other: '{count}টি লাইন পেস্ট করবেন?',
@@ -2112,6 +2115,8 @@ export const bn: Dictionary = {
   'Run commands': 'কমান্ড চালানো',
   'Read and change files anywhere on this computer':
     'এই কম্পিউটারের যেকোনো জায়গার ফাইল পড়া ও বদলানো',
+  Programs: 'প্রোগ্রাম',
+  'Run programs on this computer': 'এই কম্পিউটারে প্রোগ্রাম চালানো',
   Paying: 'অর্থ প্রদান',
   'Sending messages': 'বার্তা পাঠানো',
   'Publishing and sharing': 'প্রকাশ ও শেয়ার করা',

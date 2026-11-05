@@ -12,11 +12,13 @@
    *  outside or the key again put it away, and a follow-up is the field again.
    *
    *  The store is ai/quick.svelte.ts, a shortcut to the AI panel's own chat (#1115). */
+  import { SvelteSet } from 'svelte/reactivity'
   import { cubicOut } from 'svelte/easing'
   import { fade, fly, scale } from 'svelte/transition'
   import Answer from './ai/Answer.svelte'
   import { answerHtml } from './ai/drawn'
   import type { ContextKind } from './ai/quick'
+  import { dollarMaths } from '@orden/markdown/streamed'
   import { quick } from './ai/quick.svelte'
   import Thinking from './ai/Thinking.svelte'
   import { closeOnBack } from './backstack.svelte'
@@ -76,6 +78,10 @@
     quick.close()
     followHref(href, event)
   }
+
+  /** The pictures from elsewhere the reader asked to see; see ai/drawn.ts. */
+  const pictures = new SvelteSet<string>()
+  const show = (src: string) => pictures.add(src)
 
   /** Which answer's words were copied a moment ago, for the tick that says so. */
   let copied = $state(false)
@@ -188,9 +194,14 @@
             <p class="said" in:fly={{ y: 6, duration: dur(150), easing: cubicOut }}>{turn.text}</p>
           {:else}
             <Answer
-              html={answerHtml(turn.text, undefined, t('Copy code'))}
+              html={answerHtml(turn.text, {
+                copy: t('Copy code'),
+                live: quick.running && at === turns.length - 1,
+                shown: pictures,
+              })}
               live={quick.running && at === turns.length - 1}
               onfollow={follow}
+              onpicture={show}
             />
           {/if}
         {/each}
@@ -228,7 +239,7 @@
               class="nib-glyph act"
               title={t('Add to note')}
               aria-label={t('Add to note')}
-              onclick={() => void quick.addToNote(done.text)}
+              onclick={() => void quick.addToNote(dollarMaths(done.text))}
             >
               <svg viewBox="0 0 13 13"><path d="M6.5 2v6.5M3.8 5.8l2.7 2.7 2.7-2.7M2.5 11h8" /></svg
               >
@@ -237,7 +248,7 @@
               class="nib-glyph act"
               title={t('Copy')}
               aria-label={t('Copy')}
-              onclick={() => void copy(done.text)}
+              onclick={() => void copy(dollarMaths(done.text))}
             >
               <svg viewBox="0 0 13 13">
                 {#if copied}

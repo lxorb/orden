@@ -1938,6 +1938,9 @@ export const ms: Dictionary = {
   'Restored {time}': 'Dipulihkan {time}',
   'Stop what is running in {name}?': 'Hentikan yang sedang berjalan dalam {name}?',
   'Stop what is running in these terminals?': 'Hentikan yang sedang berjalan dalam terminal ini?',
+  'End these online terminals?': 'Tamatkan terminal dalam talian ini?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Tidak disimpan di mana-mana; sesi yang terus berjalan boleh ditemui semula dalam Tetapan, {pane}.',
   'Paste {count} lines?': 'Tampal {count} baris?',
   // Orden as the default browser
   'Default browser': 'Pelayar lalai',
@@ -2107,6 +2110,8 @@ export const ms: Dictionary = {
   'Run commands': 'Menjalankan arahan',
   'Read and change files anywhere on this computer':
     'Baca dan ubah fail di mana-mana pada komputer ini',
+  Programs: 'Program',
+  'Run programs on this computer': 'Jalankan program pada komputer ini',
   Paying: 'Membayar',
   'Sending messages': 'Menghantar mesej',
   'Publishing and sharing': 'Menerbitkan dan berkongsi',

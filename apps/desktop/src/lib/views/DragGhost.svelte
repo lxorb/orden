@@ -10,6 +10,7 @@
 {#if dragging.row}
   <div
     class="ghost"
+    data-covers
     style:translate={`${dragging.x + 12}px ${dragging.y + 8}px`}
     transition:scale={{ start: 0.94, duration: dur(130) }}
     aria-hidden="true"

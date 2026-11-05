@@ -2000,6 +2000,9 @@ export const it: Dictionary = {
   'Stop what is running in {name}?': 'Interrompere ciò che è in esecuzione in {name}?',
   'Stop what is running in these terminals?':
     'Interrompere ciò che è in esecuzione in questi terminali?',
+  'End these online terminals?': 'Terminare questi terminali online?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Non salvata da nessuna parte: una sessione lasciata in esecuzione si ritrova in Impostazioni, {pane}.',
   'Paste {count} lines?': {
     one: 'Incollare {count} riga?',
     many: 'Incollare {count} di righe?',
@@ -2176,6 +2179,8 @@ export const it: Dictionary = {
   'Run commands': 'Eseguire comandi',
   'Read and change files anywhere on this computer':
     'Leggere e modificare file ovunque su questo computer',
+  Programs: 'Programmi',
+  'Run programs on this computer': 'Eseguire programmi su questo computer',
   Paying: 'Pagare',
   'Sending messages': 'Inviare messaggi',
   'Publishing and sharing': 'Pubblicare e condividere',

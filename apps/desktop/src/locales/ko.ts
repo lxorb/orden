@@ -1915,6 +1915,9 @@ export const ko: Dictionary = {
   'Restored {time}': '{time} 복원됨',
   'Stop what is running in {name}?': '{name}에서 실행 중인 것을 중지할까요?',
   'Stop what is running in these terminals?': '이 터미널들에서 실행 중인 것을 중지할까요?',
+  'End these online terminals?': '이 온라인 터미널을 종료할까요?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    '어디에도 저장되지 않았습니다. 계속 실행된 세션은 설정의 {pane}에서 다시 찾을 수 있습니다.',
   'Paste {count} lines?': '{count}줄을 붙여넣을까요?',
   // Orden as the default browser
   'Default browser': '기본 브라우저',
@@ -2082,6 +2085,8 @@ export const ko: Dictionary = {
   'Change settings': '설정 변경',
   'Run commands': '명령 실행',
   'Read and change files anywhere on this computer': '이 컴퓨터 어디서나 파일 읽기 및 변경',
+  Programs: '프로그램',
+  'Run programs on this computer': '이 컴퓨터에서 프로그램 실행',
   Paying: '결제',
   'Sending messages': '메시지 보내기',
   'Publishing and sharing': '게시 및 공유',

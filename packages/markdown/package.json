@@ -45,6 +45,7 @@
     "./slides": "./src/slides.ts",
     "./snapshot": "./src/snapshot.ts",
     "./sources": "./src/sources.ts",
+    "./streamed": "./src/streamed.ts",
     "./tags": "./src/tags.ts",
     "./task-dates": "./src/task-dates.ts",
     "./task-edits": "./src/task-edits.ts",

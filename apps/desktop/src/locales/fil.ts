@@ -1980,6 +1980,9 @@ export const fil: Dictionary = {
   'Restored {time}': 'Naibalik {time}',
   'Stop what is running in {name}?': 'Ihinto ang tumatakbo sa {name}?',
   'Stop what is running in these terminals?': 'Ihinto ang tumatakbo sa mga terminal na ito?',
+  'End these online terminals?': 'Tapusin ang mga online terminal na ito?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Hindi naka-save kahit saan; ang session na pinatakbo pa ay makikita muli sa Settings, {pane}.',
   'Paste {count} lines?': {
     one: 'I-paste ang {count} linya?',
     other: 'I-paste ang {count} na linya?',
@@ -2156,6 +2159,8 @@ export const fil: Dictionary = {
   'Run commands': 'Magpatakbo ng mga command',
   'Read and change files anywhere on this computer':
     'Basahin at baguhin ang mga file saanman sa computer na ito',
+  Programs: 'Mga program',
+  'Run programs on this computer': 'Magpatakbo ng mga program sa computer na ito',
   Paying: 'Pagbabayad',
   'Sending messages': 'Pagpapadala ng mensahe',
   'Publishing and sharing': 'Pag-publish at pagbabahagi',

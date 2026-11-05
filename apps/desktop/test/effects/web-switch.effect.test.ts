@@ -13,7 +13,8 @@
  *  of the site. That is what "it loads for an eternity" was. */
 
 import { flushSync, mount, unmount } from 'svelte'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import type { Cut } from '../../src/lib/web-tab/covers'
 
 /** Every call the pane made to the crate, in order. */
 const asked: { command: string; args: Record<string, unknown> }[] = []
@@ -248,6 +249,13 @@ afterEach(() => {
  *  in the order they are due whatever the machine is doing, and nothing waits. */
 async function frames(): Promise<void> {
   await vi.advanceTimersByTimeAsync(300)
+}
+
+/** Whatever the document changing set going and needs no frame: the observers' answers
+ *  and every promise behind them, on a clock that does not move. What has been told the
+ *  crate by then was told before the window drew the change. */
+async function settle(): Promise<void> {
+  for (let turn = 0; turn < 20; turn += 1) await vi.advanceTimersByTimeAsync(0)
 }
 
 /** The launch, over: every stage has had its turn, so a pane asks for its page in the
@@ -531,9 +539,11 @@ test('a hover card never hides a page there is no picture of', async () => {
 })
 
 /** A sheet over its scrim covers all of the page, and the page's picture is what the scrim
- *  dims. A page with none yet has the sheet cut out of it first - never the sheet behind
- *  the page, never an empty pane - and all of it once the picture is in. */
-test('a sheet over the page covers all of it once its picture is in', async () => {
+ *  dims. A page with none yet used to have only the sheet cut out of it until the picture
+ *  was in, and all the while the page was drawn over the scrim - over the tab overview for
+ *  the whole of its way out, on Windows (#1124). All of it goes at once now, and the
+ *  picture is asked for alongside, to land under the scrim. */
+test('a sheet over the page covers all of it at once, picture or none', async () => {
   cuts = true
   const { tab, app } = await opened('https://example.com/sheet')
   pages.of(tab.id).shot = null
@@ -541,21 +551,146 @@ test('a sheet over the page covers all of it once its picture is in', async () =
   asked.length = 0
   const scrim = layer('nib-scrim', { x: 0, y: 0, width: 800, height: 600 })
   const sheet = layer('nib-screen', { x: 200, y: 100, width: 400, height: 300 })
-  const off = overlays.show(() => undefined)
-  await frames()
+  await settle()
 
   const placed = asked.filter((one) => one.command === 'web_place')
+  expect(placed.length).toBeGreaterThan(0)
   expect(placed.every((one) => one.args.visible === true)).toBe(true)
-  // The sheet alone first, then all of it: the photograph was asked for in between.
-  const first = placed.findIndex((one) => (one.args.cut as { all: boolean } | null)?.all === false)
-  expect(first).toBeGreaterThanOrEqual(0)
+  // Never the sheet alone: the page is not left over the scrim while a picture comes.
+  expect(placed.every((one) => (one.args.cut as { all: boolean } | null)?.all === true)).toBe(true)
   expect(asked.map((one) => one.command)).toContain('web_shot')
 
-  off()
   scrim.remove()
   sheet.remove()
   await frames()
   void unmount(app)
+})
+
+/** #1124, reported on Windows: a menu opened from somewhere else, a popover, a sheet, the
+ *  tab overview drawn behind the page, or right only a second later. A page heard of a
+ *  layer on the next frame at best, and of one shown by a class or a style - a bar slid
+ *  down over a tab that fills the window, the overview's ground fading in from hidden - on
+ *  the next press or a fifth of a second after it, and the cut itself waited two frames
+ *  more. Now every kind is told the crate before the window has drawn a frame of it, and
+ *  the page is whole again before it has drawn a frame without it. */
+describe('a layer is answered in the frame it is first drawn in, however it came', () => {
+  /** A kind of layer: made ready out of sight where it is shown rather than put in, then
+   *  shown, and the way it goes. */
+  interface Kind {
+    name: string
+    all: boolean
+    ready: () => HTMLElement | null
+    show: (ready: HTMLElement | null) => HTMLElement
+    take: (shown: HTMLElement) => void
+  }
+  const box = { x: 100, y: 140, width: 240, height: 200 }
+  const whole = { x: 0, y: 0, width: 800, height: 600 }
+  const kinds: Kind[] = [
+    {
+      name: 'put in, in a shape of the theme',
+      all: false,
+      ready: () => null,
+      show: () => layer('nib-layer', box),
+      take: (shown) => shown.remove(),
+    },
+    {
+      name: 'put in, marked',
+      all: false,
+      ready: () => null,
+      show: () => {
+        const made = layer('ghost', box)
+        made.dataset.covers = ''
+        return made
+      },
+      take: (shown) => shown.remove(),
+    },
+    {
+      name: 'a clear scrim put in, as a menu’s and the overview’s canvas are',
+      all: true,
+      ready: () => null,
+      show: () => layer('nib-scrim is-clear', whole),
+      take: (shown) => shown.remove(),
+    },
+    {
+      name: 'shown and hidden in place, as the bar over a filling tab is',
+      all: false,
+      ready: () => {
+        const made = layer('bar', box)
+        made.dataset.covers = ''
+        made.hidden = true
+        return made
+      },
+      show: (ready) => {
+        if (!ready) throw new Error('nothing made ready')
+        ready.hidden = false
+        return ready
+      },
+      take: (shown) => {
+        shown.hidden = true
+      },
+    },
+    {
+      name: 'shown and hidden by its style, as the overview’s ground is',
+      all: true,
+      ready: () => {
+        const made = layer('nib-scrim', whole)
+        made.style.visibility = 'hidden'
+        return made
+      },
+      show: (ready) => {
+        if (!ready) throw new Error('nothing made ready')
+        ready.style.visibility = ''
+        return ready
+      },
+      take: (shown) => {
+        shown.style.visibility = 'hidden'
+      },
+    },
+  ]
+
+  const visible = Object.getOwnPropertyDescriptor(Element.prototype, 'checkVisibility')
+  beforeEach(() => {
+    // jsdom draws nothing, so whether a layer is drawn is read off `hidden` and its style.
+    Element.prototype.checkVisibility = function seen(this: Element) {
+      const one = this as HTMLElement
+      return !one.hidden && one.style.visibility !== 'hidden'
+    }
+  })
+  afterEach(() => {
+    if (visible) Object.defineProperty(Element.prototype, 'checkVisibility', visible)
+    else delete (Element.prototype as Partial<Element>).checkVisibility
+    for (const one of document.querySelectorAll('body > [data-box]')) one.remove()
+  })
+
+  const cut = () =>
+    asked.filter((one) => one.command === 'web_place').at(-1)?.args.cut as Cut | null | undefined
+
+  for (const kind of kinds) {
+    test(kind.name, async () => {
+      cuts = true
+      const { tab, app } = await opened('https://example.com/kinds')
+      pages.of(tab.id).shot = null
+      const ready = kind.ready()
+      await frames()
+
+      asked.length = 0
+      const shown = kind.show(ready)
+      await settle()
+      expect(cut()?.all).toBe(kind.all)
+      if (!kind.all) expect(cut()?.hollows).toHaveLength(1)
+
+      asked.length = 0
+      kind.take(shown)
+      await settle()
+      expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args).toMatchObject({
+        visible: true,
+        cut: null,
+      })
+
+      await frames()
+      void unmount(app)
+    })
+  }
 })
 
 /** A tab carried out of its strip hangs under the pointer over the panes, and every

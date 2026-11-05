@@ -1953,6 +1953,9 @@ export const gsw: Dictionary = {
   'Restored {time}': 'Widerhergstellt {time}',
   'Stop what is running in {name}?': 'Beände, was i {name} lauft?',
   'Stop what is running in these terminals?': 'Beände, was i dene Terminals lauft?',
+  'End these online terminals?': 'Die Online-Terminals beände?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Niene gspeicheret: E Sitzig, wo witerlauft, findsch wider under Iistellige, {pane}.',
   'Paste {count} lines?': { one: '{count} Ziile iifüege?', other: '{count} Ziile iifüege?' },
   // Orden as the default browser
   'Default browser': 'Standardbrowser',
@@ -2124,6 +2127,8 @@ export const gsw: Dictionary = {
   'Run commands': 'Befehl uusfüere',
   'Read and change files anywhere on this computer':
     'Dateie überall uf däm Computer läse und ändere',
+  Programs: 'Programm',
+  'Run programs on this computer': 'Programm uf däm Computer usfüere',
   Paying: 'Zahle',
   'Sending messages': 'Nachrichte schicke',
   'Publishing and sharing': 'Veröffentliche und Teile',

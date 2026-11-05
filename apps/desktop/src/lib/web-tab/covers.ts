@@ -16,13 +16,22 @@
  *  covers all of the page, and so does a clear one: it is there to catch the press
  *  outside the menu, and a page left over it would take that press.
  *
- *  The layers are found by the shapes the theme package gives them, `.nib-layer`,
- *  `.nib-bubble`, `.nib-screen` and `.nib-scrim`, so a layer written tomorrow in one of
- *  them is covered on the day it is written - and by the row the app's own notices float
- *  in over the foot of the panes, whatever each card in it wears (see `.notices` in
- *  App.svelte). Anything else over the page - a drawer, a deck being presented - is found
- *  by the hit test the pane has always done, and covers all of it, which is the safe
- *  answer for a thing nothing here knows the shape of. */
+ *  The layers are found by one registry, `COVERS` below: the shapes the theme package
+ *  gives them, `.nib-layer`, `.nib-bubble`, `.nib-screen` and `.nib-scrim`, so a layer
+ *  written tomorrow in one of them is covered on the day it is written; the row the app's
+ *  own notices float in over the foot of the panes, whatever each card in it wears (see
+ *  `.notices` in App.svelte); and `data-covers` on a layer that wears none of the
+ *  shapes - a drag's ghost, a lightbox, a catch under a picker. test/covers.test.ts
+ *  reads every component and fails for a layer of the window that is in none of them
+ *  (#1124). Anything else over the page is found by the hit test the pane has always
+ *  done, and covers all of it, which is the safe answer for a thing nothing here knows
+ *  the shape of.
+ *
+ *  **Heard in the breath it changes** (#1124). A layer is answered from the moment it is
+ *  in the document, shown, hidden or moved, rather than on the next press or a timer
+ *  after it. Reported on Windows, 2026-11-04: a menu opened from somewhere else, a
+ *  popover, a sheet, the tab overview drawn behind the page, or right only a second later.
+ *  See `watchArrivals`. */
 
 import type { Rect } from './pages.svelte'
 
@@ -55,14 +64,30 @@ const NOTICES = '[data-notices]'
 /** And each card in it, whatever it wears. */
 const CARDS = `${NOTICES} > *`
 
-/** The shapes the theme package gives every layer that floats (see base.css), the
- *  arrow a swipe brings in over a page, which is round and moves with the fingers (see
- *  back-swipe/SwipeArrow.svelte), a file flying to the downloads glyph, which moves by
- *  itself (see downloads/flight.ts), and each card in the notices row. */
-const FLOATING = `.nib-layer, .nib-bubble, .nib-screen, .nib-swipe, .nib-flight, ${CARDS}`
-/** And what covers all of a page without dimming it: the room a swipe's arrow comes in
- *  over, while the fingers are on (back-swipe/SwipeArrow.svelte). */
-const SCRIMS = '.nib-scrim, .nib-swipe-room'
+/** What of a page each kind of the app's layers covers: the one list of them.
+ *
+ *  `floating` is cut out of the page in its own shape: the shapes the theme package
+ *  gives every layer that floats (see base.css), the arrow a swipe brings in over a page,
+ *  which is round and moves with the fingers (see back-swipe/SwipeArrow.svelte), and a
+ *  file flying to the downloads glyph, which moves by itself (see downloads/flight.ts).
+ *  `whole` covers all of a page, dimming it or not: a scrim, and the room a swipe's arrow
+ *  comes in over while the fingers are on.
+ *
+ *  A layer that wears none of the shapes says which it is with `data-covers`: bare for
+ *  its own shape, `all` for all of the page. */
+export const COVERS = {
+  floating: ['nib-layer', 'nib-bubble', 'nib-screen', 'nib-swipe', 'nib-flight'],
+  whole: ['nib-scrim', 'nib-swipe-room'],
+} as const
+
+const FLOATING = [
+  ...COVERS.floating.map((one) => `.${one}`),
+  '[data-covers]:not([data-covers="all"])',
+  CARDS,
+].join(', ')
+const SCRIMS = [...COVERS.whole.map((one) => `.${one}`), '[data-covers="all"]'].join(', ')
+/** Any of them. */
+const ANY = `${FLOATING}, ${SCRIMS}`
 
 function meets(one: Rect, other: Rect): boolean {
   return (
@@ -156,7 +181,7 @@ function seen(node: Element): boolean {
  *  a card the pane draws in its own room is under the page by design. */
 export function layersOver(hole: HTMLElement): Layer[] {
   const found: Layer[] = []
-  for (const node of document.querySelectorAll(`${FLOATING}, ${SCRIMS}`)) {
+  for (const node of document.querySelectorAll(ANY)) {
     if (hole.contains(node) || !seen(node)) continue
     const scrim = node.matches(SCRIMS)
     found.push({
@@ -173,7 +198,7 @@ export function layersOver(hole: HTMLElement): Layer[] {
 /** Whether any layer is still moving in or out: its shape has not settled, so the page
  *  is asked again next frame. */
 export function moving(hole: HTMLElement): boolean {
-  for (const node of document.querySelectorAll(`${FLOATING}, ${SCRIMS}`)) {
+  for (const node of document.querySelectorAll(ANY)) {
     if (hole.contains(node)) continue
     if (node.getAnimations().some((one) => one.playState === 'running')) return true
   }
@@ -188,7 +213,7 @@ export function strangerOver(hole: HTMLElement): boolean {
     for (const y of [0.08, 0.5, 0.92]) {
       const on = document.elementFromPoint(box.x + box.width * x, box.y + box.height * y)
       if (on === null || on === hole || hole.contains(on)) continue
-      if (on.closest(`${FLOATING}, ${SCRIMS}`)) continue
+      if (on.closest(ANY)) continue
       return true
     }
   }
@@ -202,34 +227,54 @@ export function noticeRows(): Element[] {
   return [...document.querySelectorAll(NOTICES)]
 }
 
-/** Whether a change to the document brought a layer or took one away: a node that is
- *  one or holds one, or any card put in or taken out of the notices row - which, once
- *  out of the row, no longer matches the selector that found it. Pure but for the
- *  nodes it is handed. */
+/** Whether a change to the document brought a layer or took one away, or showed, hid or
+ *  moved one: a node that is one or holds one put in or taken out, any card put in or
+ *  taken out of the notices row - which, once out of the row, no longer matches the
+ *  selector that found it - and a change to the class, the style or the `hidden` of a
+ *  layer or of something holding one.
+ *
+ *  The last is what was missing (#1124). A layer shown by a class or a style rather than
+ *  by being put in - the window's bar sliding down over a tab that fills it, the tab
+ *  overview's ground fading in from hidden, a swipe's room, a ghost following a drag - is
+ *  no node put in or taken out, and the page heard of it on the next press or a fifth
+ *  of a second after it, if at all. Pure but for the nodes it is handed. */
 export function bringsLayer(
-  record: Pick<MutationRecord, 'target' | 'addedNodes' | 'removedNodes'>,
+  record: Pick<MutationRecord, 'target' | 'addedNodes' | 'removedNodes'> & {
+    type?: MutationRecordType
+  },
 ): boolean {
+  if (record.type === 'attributes') {
+    const on = record.target
+    return on instanceof Element && (on.matches(ANY) || on.querySelector(ANY) !== null)
+  }
   if (record.target instanceof Element && record.target.matches(NOTICES)) return true
-  const any = `${FLOATING}, ${SCRIMS}`
   for (const nodes of [record.addedNodes, record.removedNodes]) {
     for (const node of nodes) {
       if (!(node instanceof Element)) continue
-      if (node.matches(any) || node.querySelector(any) !== null) return true
+      if (node.matches(ANY) || node.querySelector(ANY) !== null) return true
     }
   }
   return false
 }
 
+/** What of an element can show, hide or move a layer without putting one in. */
+const SHOWN_BY = ['class', 'style', 'hidden', 'data-covers']
+
 const told = new Set<() => void>()
 let arriving: MutationObserver | null = null
 
-/** Says to `tell` whenever a layer comes into the window or leaves it, whatever brought
- *  it. Most layers arrive by a press or on the overlay stack, which every page already
- *  hears; these do not - a hint, a card a row puts up under the pointer, the second
- *  toast in a row that did not change size, a layer written tomorrow by somebody who
- *  never heard of the stack - and a page that never heard of one left it drawn behind
- *  the page. One observer for the window, however many pages listen; the answer is
- *  only "look again", which is coalesced onto a frame by whoever is told. */
+/** Says to `tell` whenever a layer comes into the window or leaves it, or is shown,
+ *  hidden or moved, whatever did it. Most layers arrive by a press or on the overlay
+ *  stack, which every page already hears; these do not - a hint, a card a row puts up
+ *  under the pointer, the second toast in a row that did not change size, a bar slid down
+ *  by a class, a layer written tomorrow by somebody who never heard of the stack - and a
+ *  page that never heard of one left it drawn behind the page.
+ *
+ *  Said as the document changes, before the frame that draws the change: an observer's
+ *  answer comes once whatever changed the document has finished, ahead of the next
+ *  paint, so a pane that looks again at once is cut or hidden for the layer in the frame
+ *  the layer is first drawn in, and whole again in the frame it goes. One observer for
+ *  the window, however many pages listen. */
 export function watchArrivals(tell: () => void): () => void {
   if (typeof MutationObserver !== 'function') return () => undefined
   told.add(tell)
@@ -237,7 +282,14 @@ export function watchArrivals(tell: () => void): () => void {
     if (!records.some(bringsLayer)) return
     for (const one of told) one()
   })
-  if (told.size === 1) arriving.observe(document.body, { childList: true, subtree: true })
+  if (told.size === 1) {
+    arriving.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: SHOWN_BY,
+    })
+  }
   return () => {
     told.delete(tell)
     if (told.size === 0) arriving?.disconnect()

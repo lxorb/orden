@@ -152,4 +152,44 @@ describe('the engine kept signed out', () => {
     await runner.stop()
     Object.assign(account, { user: null })
   })
+
+  test('is handed the ids of what the account kept, signing out, and which account they came from', async () => {
+    said.length = 0
+    const { MemoryStore } = await import('./memory-store')
+    const { put, get } = await import('./store')
+    const kept = new MemoryStore('u3')
+    stores.set('u3', kept)
+    const id = '5f0c1d7e-2b8a-4c1e-9d3f-0a1b2c3d4e5f'
+    await kept.open().write([
+      put('spaces', { space_id: 's3', root: '/Notes', cursor: 1, role: 'owner', store: null }),
+      put('entries', {
+        id,
+        space_id: 's3',
+        kind: 'note',
+        parent: null,
+        name: 'Plan.md',
+        local_path: 'Plan.md',
+        file_key: null,
+        written_hash: null,
+        mtime: null,
+        size: null,
+        seq: 1,
+        deleted: false,
+      }),
+    ])
+    Object.assign(account, { user: { id: 'u3', syncVersion: 2 } })
+    await runner.start()
+
+    await runner.signedOut('u3')
+    Object.assign(account, { user: null })
+    await runner.startLocal()
+
+    const local = stores.get('local') as InstanceType<typeof MemoryStore>
+    const [ids, from] = await local
+      .open()
+      .read([get('meta', 'carried:/Notes'), get('meta', 'from:/Notes')])
+    expect(JSON.parse(String(ids?.value))).toEqual({ 'Plan.md': id })
+    expect(JSON.parse(String(from?.value))).toEqual({ account: 'u3', ids: [id] })
+    await runner.stop()
+  })
 })

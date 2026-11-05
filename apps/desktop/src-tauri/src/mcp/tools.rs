@@ -98,6 +98,8 @@ pub fn reaches(grant: &Grant, name: &str) -> bool {
         name if name.starts_with("browser_") => browsing,
         // Files anywhere outside the spaces (#1078).
         "files" => grant.holds(Scope::Files),
+        // Programs on this computer (#1078).
+        "process" => grant.holds(Scope::Processes),
         name => AGENT_VERBS
             .iter()
             .find(|(verb, _)| *verb == name)
@@ -469,7 +471,9 @@ mod tests {
     /// anywhere (#1078: an agent does everything a VS Code extension can): one tool,
     /// `files`, 829 characters, listed only to a grant holding files, from a table at
     /// 34 968. The other rows were read for what they could give back first: each says
-    /// what its model needs and nothing twice, so the room is the new tool's own.
+    /// what its model needs and nothing twice, so the room is the new tool's own. Raised
+    /// to 36 800 on 2026-11-04 for programs (#1078, step 2): one tool, `process`, 943
+    /// characters, listed only to a grant holding processes, from a table at 35 789.
     #[test]
     fn the_table_stays_small() {
         let mut sizes = BTreeMap::new();
@@ -478,7 +482,7 @@ mod tests {
         }
         let total: usize = sizes.values().sum();
         assert!(
-            total < 35_900,
+            total < 36_800,
             "the tools are {total} characters: {sizes:?}"
         );
         for (name, size) in &sizes {

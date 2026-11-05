@@ -60,6 +60,7 @@
      chip under the finger again (#411; see spent-click.ts). -->
 <div
   class="catch"
+  data-covers="all"
   role="presentation"
   onpointerdown={(event) => {
     spendClick(event)

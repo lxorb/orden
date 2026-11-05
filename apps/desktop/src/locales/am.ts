@@ -1917,6 +1917,9 @@ export const am: Dictionary = {
   'Restored {time}': 'ተመልሷል {time}',
   'Stop what is running in {name}?': 'በ{name} ውስጥ የሚሰራው ይቁም?',
   'Stop what is running in these terminals?': 'በእነዚህ ተርሚናሎች ውስጥ የሚሰራው ይቁም?',
+  'End these online terminals?': 'እነዚህን የመስመር ላይ ተርሚናሎች ይጨርሱ?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'የትም አልተቀመጠም፤ እንዲሠራ የተተወ ክፍለ ጊዜ በቅንብሮች፣ {pane} ውስጥ እንደገና ይገኛል።',
   'Paste {count} lines?': { one: '{count} መስመር ይለጠፍ?', other: '{count} መስመሮች ይለጠፉ?' },
   // Orden as the default browser
   'Default browser': 'ነባር አሳሽ',
@@ -2085,6 +2088,8 @@ export const am: Dictionary = {
   'Change settings': 'ቅንብሮችን መቀየር',
   'Run commands': 'ትዕዛዞችን ማስኬድ',
   'Read and change files anywhere on this computer': 'በዚህ ኮምፒውተር ላይ የትም ያሉ ፋይሎችን ማንበብና መቀየር',
+  Programs: 'ፕሮግራሞች',
+  'Run programs on this computer': 'በዚህ ኮምፒውተር ላይ ፕሮግራሞችን ማስኬድ',
   Paying: 'መክፈል',
   'Sending messages': 'መልዕክቶችን መላክ',
   'Publishing and sharing': 'ማተም እና ማጋራት',

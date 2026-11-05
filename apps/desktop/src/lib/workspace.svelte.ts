@@ -3574,8 +3574,9 @@ class Workspace {
   }
 
   /** Whether a set of tabs may all go. A note with a file writes itself; unsaved words
-   *  ask (workspace/closing-unsaved.ts) and a terminal running something asks, each once
-   *  for all of them. The window going asks its own; see lib/quitting. */
+   *  ask (workspace/closing-unsaved.ts), and a terminal running something or an online
+   *  terminal saved nowhere asks (terminal/closing.ts), each once for all of them. The
+   *  window going asks its own; see lib/quitting. */
   private async mayClose(closing: readonly Tab[]): Promise<boolean> {
     if (__EVEN_PLUGIN__) return true
     if (closing.some(unsaved)) {
@@ -3584,7 +3585,7 @@ class Workspace {
     }
     if (!closing.some((tab) => tab.kind === 'terminal')) return true
     const { mayEnd } = await import('./terminal/closing')
-    return mayEnd(closing)
+    return mayEnd(closing, this.tabs)
   }
 
   /** Every write that is owed, done and waited for: what the window waits on before

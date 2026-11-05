@@ -90,6 +90,7 @@ const SCOPES: readonly Scope[] = [
   'settings',
   'terminal',
   'files',
+  'processes',
   'agents',
 ]
 

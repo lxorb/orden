@@ -1944,6 +1944,9 @@ export const ps: Dictionary = {
   'Restored {time}': 'بېرته راوړل شو {time}',
   'Stop what is running in {name}?': 'په {name} کې روان کار ودرول شي؟',
   'Stop what is running in these terminals?': 'په دې ټرمینلونو کې روان کار ودرول شي؟',
+  'End these online terminals?': 'دا آنلاین ټرمینلونه پای ته ورسول شي؟',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'هېڅ ځای نه دی خوندي شوی؛ هغه ناسته چې روانه پاتې شي بیا په امستنو، {pane} کې موندل کېږي.',
   'Paste {count} lines?': { one: '{count} کرښه ولګول شي؟', other: '{count} کرښې ولګول شي؟' },
   // Orden as the default browser
   'Default browser': 'اصلي کوټګر',
@@ -2115,6 +2118,8 @@ export const ps: Dictionary = {
   'Run commands': 'امرونه چلول',
   'Read and change files anywhere on this computer':
     'په دې کمپیوټر کې هر چېرته فایلونه لوستل او بدلول',
+  Programs: 'پروګرامونه',
+  'Run programs on this computer': 'په دې کمپیوټر کې پروګرامونه چلول',
   Paying: 'تادیه',
   'Sending messages': 'پیغامونه لېږل',
   'Publishing and sharing': 'خپرول او شریکول',

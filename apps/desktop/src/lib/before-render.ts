@@ -132,8 +132,27 @@ ${block.code}`,
     ...answering,
   ])
 
+  return fenceFrom({ parsers, diagrams, answers, base: options.base === true })
+}
+
+/** What is known of a document's fences, ready: the parsers loaded, the diagrams
+ *  drawn and the queries answered, each kept by the fence's language and its code.
+ *  `base` keeps a ` ```base ` fence as the box a view is drawn into. */
+export interface FencesFound {
+  parsers: ReadonlyMap<string, Parser>
+  diagrams: ReadonlyMap<string, string>
+  answers?: ReadonlyMap<string, string>
+  base?: boolean
+}
+
+/** A fence drawn from what is already in hand, which is the one answer every surface
+ *  gives: the reading view, an export and a slide from what `prepareFences` waited for,
+ *  and the AI panel and a chat from what has landed so far (see markdown-view.svelte.ts),
+ *  so a diagram or a coloured block in an answer is the very figure it is in a note. */
+export function fenceFrom(found: FencesFound): Fence {
+  const { parsers, diagrams, answers } = found
   return (code, language) => {
-    if (language === 'base' && options.base) {
+    if (language === 'base' && found.base) {
       // The words go with the box, which is all the view needs; until it is drawn the
       // box holds them as the code they are.
       const words = escapeAll(code)
@@ -141,7 +160,7 @@ ${block.code}`,
     }
 
     if (ANSWERED.has(language)) {
-      const rows = answers.get(`${language}
+      const rows = answers?.get(`${language}
 ${code}`)
       return rows === undefined ? null : `<figure class="query">${rows}</figure>\n`
     }

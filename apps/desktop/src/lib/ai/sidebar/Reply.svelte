@@ -12,8 +12,11 @@
    *  asks another model) and "..." for the rest.
    *
    *  The words are the model's, which are nobody's markup: drawn through ai/drawn.ts
-   *  with raw HTML escaped and nothing to load. */
+   *  the way a note is read, with raw HTML escaped and nothing loaded the reader did not
+   *  ask for. */
+  import { SvelteSet } from 'svelte/reactivity'
   import type { EditorView } from '@orden/editor'
+  import { dollarMaths } from '@orden/markdown/streamed'
   import { fly, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import Answer from '../Answer.svelte'
@@ -73,23 +76,27 @@
     turn.took ? t('Worked for {time}', { time: lasted(turn.took, i18n.language) }) : t('Worked'),
   )
 
-  function drawn(text: string): string {
+  /** The pictures from elsewhere the reader asked to see; see ai/drawn.ts. */
+  const pictures = new SvelteSet<string>()
+  const show = (src: string) => pictures.add(src)
+
+  function drawn(text: string, still: boolean): string {
     const source = citationLinks(text, sources.length)
-    return answerHtml(
-      source,
-      (link) => {
+    // The panel's note as the path a tab holds, which is what `targetOf` reads: a note
+    // of another space resolves in its own space, where following goes.
+    const from = workspace.panelTab?.path ?? null
+    return answerHtml(source, {
+      resolveLink: (link) => {
         const found = link.target
-          ? // The panel's note as the path a tab holds, which is what `targetOf` reads:
-            // a note of another space resolves in its own space, where following goes.
-            links.targetOf(workspace.panelTab?.path ?? null, {
-              kind: 'wikilink',
-              target: link.target,
-            })
+          ? links.targetOf(from, { kind: 'wikilink', target: link.target })
           : null
         return found === null ? null : { href: found }
       },
-      t('Copy code'),
-    )
+      copy: t('Copy code'),
+      live: still,
+      from,
+      shown: pictures,
+    })
   }
 
   /** The notes the answer cited, each once, with the first passage cited of each. */
@@ -138,7 +145,10 @@
     )
   }
 
-  const asNote = $derived(linkedAnswer(words, sources))
+  /** The answer as a note writes it: its formulas spelled a note's way, so what is
+   *  copied, inserted or saved draws in the note as it drew here. */
+  const spelled = $derived(dollarMaths(words))
+  const asNote = $derived(linkedAnswer(spelled, sources))
   const view = $derived<EditorView | undefined>(views.of(workspace.panes.focusedId))
 
   /** What Insert writes in the focused note: `asNote`, whose wikilinks find the notes
@@ -148,7 +158,7 @@
     const root = chat.root
     const into = workspace.active?.path ?? null
     const here = root !== null && into !== null && withinSpace(root, into) !== null
-    return here ? asNote : linkedAnswer(words, sources, (one) => one.name)
+    return here ? asNote : linkedAnswer(spelled, sources, (one) => one.name)
   }
 
   function insert() {
@@ -237,11 +247,8 @@
 
 {#snippet one(block: Block)}
   {#if block.kind === 'words'}
-    <Answer
-      html={drawn(block.text)}
-      live={live && block.at === blocks.at(-1)?.at}
-      onfollow={follow}
-    />
+    {@const still = live && block.at === blocks.at(-1)?.at}
+    <Answer html={drawn(block.text, still)} live={still} onfollow={follow} onpicture={show} />
   {:else if block.kind === 'notice' && block.notice.code === 'tasks'}
     <TaskRows said={block.notice.text} />
   {:else if block.kind === 'notice'}

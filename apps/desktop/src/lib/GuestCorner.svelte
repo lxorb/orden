@@ -74,7 +74,7 @@
   }
 </script>
 
-<div class="guest-corner" bind:this={corner}>
+<div class="guest-corner" data-covers bind:this={corner}>
   <button
     class="who"
     title={name}

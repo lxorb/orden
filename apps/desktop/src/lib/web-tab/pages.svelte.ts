@@ -97,14 +97,15 @@ const SHOT_KEEPS = 400
  *  has not answered in that long is a page busy with something of its own. */
 const LOOK_WAITS = 500
 
-/** How long the engine is given to photograph itself, for the one caller that has to
- *  wait for it.
+/** How long the engine is given to photograph itself, for a caller that waits for it.
  *
  *  A page is normally photographed on the press that is about to open something over it
  *  and again as it finishes loading, which costs the overlay nothing at all: the picture
- *  is already there. This is the cap for the one case that has to wait - the first thing
- *  ever drawn over a page nothing has photographed - and it is set from what the engine
- *  actually takes, which is about 105 ms for a pane-sized PNG on this machine. */
+ *  is already there. No layer waits for one any more (#1124) - the page goes the frame the
+ *  layer comes, and a picture still on its way lands under it - so this is the cap for
+ *  the callers that do want the picture before going on, a tab's hover card on an engine
+ *  that cannot cut among them. Set from what the engine actually takes, which is about
+ *  105 ms for a pane-sized PNG on this machine. */
 const SHOT_WAITS = 300
 
 /** How long after a page has loaded its mark still counts as the one it arrived with,
@@ -150,31 +151,6 @@ interface Placement {
   frame: Frame | null
   cut: Cut | null
   away?: boolean
-}
-
-/** Whether a still picture is on screen yet: decoded, and two frames gone by, the one
- *  the hole is drawn with it in and the one that puts it on the glass. A page that steps
- *  behind a picture before then shows the empty pane under the sheet: a pane-sized PNG is
- *  decoded after it arrives, not as it does, and scripts/web-smooth-probe.py photographed
- *  that pane empty under the settings without this. */
-async function drawn(picture: string): Promise<boolean> {
-  try {
-    const image = new Image()
-    image.src = picture
-    await image.decode()
-  } catch {
-    // Nothing to decode it with, or not a picture after all: the frames still go by.
-  }
-  await painted()
-  return true
-}
-
-/** Two frames gone by: the one the window draws a change in, and the one that has it on
- *  the glass. */
-function painted(): Promise<void> {
-  return new Promise<void>((go) => {
-    requestAnimationFrame(() => requestAnimationFrame(() => go()))
-  })
 }
 
 /** Whether the crate cuts the app's layers out of a page rather than hiding it, which
@@ -391,10 +367,6 @@ export class Page {
   /** The placement sent last, so one asked again after its browser did not answer is
    *  dropped once the pane has said something newer. Not drawn. */
   sent: Placement | null = null
-
-  /** Where the page was last placed and what was over it, while it is under one of the
-   *  app's layers. Not drawn. */
-  under: { pane: Rect; over: Over } | null = null
 
   /** The https address the bar chose for a host typed with no scheme, while the page has
    *  not yet arrived there: plain http is tried when nothing answers. Not drawn; see
@@ -817,8 +789,8 @@ class Pages {
    *
    *  A page is hidden for two quite different reasons and closed for neither. The tab
    *  is not the one showing, which is `hide`; or something of the app's is over it,
-   *  which is `covering` - and that one takes a picture of the page first, so what the
-   *  pane holds under the menu is the page rather than nothing.
+   *  which is `covering` - and that one asks for a picture of the page as it goes, so
+   *  what the pane holds under the menu is the page rather than nothing.
    *
    *  **`live` gates showing a page and never hiding one.** It is only the window's
    *  belief, and a page wrongly believed gone was left drawn over the whole app; see
@@ -852,18 +824,14 @@ class Pages {
       await this.cover(tabId, page, pane, over)
       return
     }
-    page.under = null
 
-    // Something is about to be drawn over the page, so the page is photographed first -
-    // and how long that may hold the overlay up depends on whether there is already a
-    // picture. A page with none pays for one, because a menu over an empty pane is what
-    // this is here to stop; a page with one from a moment ago is hidden at once and the
-    // new picture lands under the menu. The engine takes about a tenth of a second over
-    // it, measured; see `SHOT_WAITS`.
-    if (covering) {
-      if (page.shot === null) await this.shoot(tabId)
-      else void this.shoot(tabId)
-    }
+    // Something is over the page, so it goes now, in the frame the layer is drawn in
+    // (#1124), and its picture is asked for on the way: the engine is handed the frame it
+    // has before it is told to hide it, and the picture lands under the layer. It used to
+    // wait for the picture first, up to `SHOT_WAITS`, with the page drawn over the menu or
+    // the sheet all that time. Most of the time the press that opened the layer has
+    // already asked for one; see `pressed` in WebTab.svelte.
+    if (covering) void this.shoot(tabId)
 
     await this.put(tabId, page, { pane, visible, frame: over.frame, cut: null })
   }
@@ -872,53 +840,23 @@ class Pages {
    *  src-tauri/src/web_cut.rs.
    *
    *  A menu, a card or a popover is cut out in its own shape and nothing else of the page
-   *  changes: no picture is needed, so nothing waits for one and nothing goes blank. A
-   *  sheet over its scrim covers all of the page, and the page's still picture is what
-   *  the scrim dims - so until the page has one, only the layers themselves are cut out,
-   *  and the rest follows the moment the picture is in. Never a frame of the sheet
-   *  behind the page, and never a frame of an empty pane under it.
+   *  changes. A sheet over its scrim covers all of the page, and the page's still picture
+   *  is what the scrim dims.
    *
-   *  The cut waits for the frame that draws the layer. The window is reshaped at once and
-   *  the app draws a layer that has just arrived a frame or two later, so a cut made at
-   *  once showed the empty pane in the layer's shape for those frames - a dark box where
-   *  the menu was about to be. Taking the cut away again does not wait: the page coming
-   *  back over a layer that is leaving is what a layer leaving looks like. */
+   *  **Told at once, in the frame the layer is first drawn in** (#1124). The cut used to
+   *  wait two frames for the layer to be drawn, and a sheet over a page with no picture
+   *  yet cut only the sheet out until the picture was in - a third of a second and more
+   *  of the page drawn over the scrim, over the tab overview, over everything a sheet
+   *  dims. On Windows that was the page in front of the overview for the whole of its way
+   *  out. Now the page is cut in the same breath as the layer arrives, and the picture is
+   *  asked for alongside: it lands under the scrim a moment later, and until then the
+   *  scrim is over the pane's own ground, which is never the page in front of it. */
   private async cover(tabId: string, page: Page, pane: Rect, over: Over): Promise<void> {
     if (__EVEN_PLUGIN__ || !over.cut) return
-    const waiting = page.under === null
-    page.under = { pane, over }
-    // Behind a layer that fades in, the pane's own ground shows through the layer for as
-    // long as it is fading; the page's picture is a better thing to show there.
-    if (page.shot === null) void this.shoot(tabId)
-    if (waiting) await painted()
-
-    // Whatever the pane said last while this waited, unless the layers have gone since -
-    // or the tab has.
-    const under = this.held.get(tabId)?.under ?? null
-    if (under === null) return
-    const cut = under.over.cut
-    if (!cut) return
-    const placed = (given: Cut) =>
-      this.put(tabId, page, {
-        pane: under.pane,
-        visible: true,
-        frame: under.over.frame,
-        cut: given,
-      })
-
-    if (cut.all && page.shot === null) {
-      void this.shoot(tabId)
-        .then(() => (page.under === under && page.shot !== null ? drawn(page.shot) : false))
-        .then((shown) => {
-          if (shown && page.under === under) void placed(cut)
-        })
-      await placed({ all: false, hollows: cut.hollows })
-      return
-    }
-
-    // A picture from a while ago stands in at once, and a fresh one lands under the scrim.
-    if (cut.all) void this.shoot(tabId)
-    await placed(cut)
+    // A picture for the hole to hold under the layer: where none is there yet behind a
+    // layer that fades in, and a fresh one under a scrim, which stands for all of it.
+    if (page.shot === null || over.cut.all) void this.shoot(tabId)
+    await this.put(tabId, page, { pane, visible: true, frame: over.frame, cut: over.cut })
   }
 
   /** One placement, behind whatever is in the air; see latest.ts. A refused one is the

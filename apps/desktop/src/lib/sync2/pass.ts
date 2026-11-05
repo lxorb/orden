@@ -337,7 +337,37 @@ export async function refused(
   // Something back from this device's trash that the account no longer has at all:
   // made again under its id, with what its file says (#1068).
   if (op.t === 'restore' && why === 'gone') return await remade(core, space, op.id)
+  // A note the account will not make under its id even at the top of the space - an id
+  // another space once made, or one of this space's own gone for good - is made again
+  // under a new id, with what its file says, rather than left here unsent with nothing
+  // to say so (#1068). A file waiting for its bytes is refused the same way, and sent
+  // again once they are up (files.ts), so it is not one of these.
+  if (op.t === 'create' && why === 'gone' && op.parent === null && op.kind !== 'file') {
+    return await madeAnew(core, space, op.id)
+  }
   return []
+}
+
+/** An entry this device made that the account would not make under its id, made again
+ *  where its file is under a new one, with what its file says. Nothing for one the
+ *  account has (`seq`), or whose file is not here to say anything. */
+export async function madeAnew(core: Core, space: SpaceState, id: string): Promise<Change[]> {
+  const entry = space.entries.get(id)
+  if (!entry?.local_path || entry.seq !== null) return []
+  const path = entry.local_path
+  const full = core.world.join(space.row.root, path)
+  const text = holdsDocument(entry.kind) ? await core.world.disk.read(full) : undefined
+  if (text === null) return []
+  space.entries.delete(id)
+  space.changed()
+  const changes: Change[] = [remove('entries', id), ...core.forgetChanges(id)]
+  const again = await made(core, space, {
+    path,
+    folder: entry.kind === 'folder',
+    ...(entry.kind === 'folder' ? {} : { kind: entry.kind as Exclude<EntryKind, 'folder'> }),
+    ...(text === undefined ? {} : { text: unixLines(text) }),
+  })
+  return [...changes, ...again.changes]
 }
 
 /** An entry made again on the account under its id, where its file is on this disk. */

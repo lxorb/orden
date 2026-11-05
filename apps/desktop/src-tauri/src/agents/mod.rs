@@ -86,6 +86,7 @@ mod log;
     )
 )]
 mod policy;
+mod process;
 #[cfg_attr(
     not(any(windows, feature = "cef")),
     allow(
@@ -291,6 +292,7 @@ fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
             #[cfg(any(windows, feature = "cef"))]
             tabs::bye(caller.id());
             shell::bye(app, caller.id());
+            process::end_all(Some(caller.id()));
             Answer::ok(verbs::Nothing {})
         }
         browsing => {
@@ -314,6 +316,10 @@ fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
             // Files anywhere need no engine: answered here, on every desktop (#1078).
             if let Verb::Files(asked) = &browsing {
                 return files::answer(app, caller, asked);
+            }
+            // So do programs (#1078).
+            if let Verb::Process(asked) = &browsing {
+                return process::answer(app, caller, asked, since);
             }
             browse(app, caller, browsing, since)
         }

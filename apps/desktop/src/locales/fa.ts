@@ -1944,6 +1944,9 @@ export const fa: Dictionary = {
   'Restored {time}': 'بازیابی‌شده {time}',
   'Stop what is running in {name}?': 'آنچه در {name} اجرا می‌شود متوقف شود؟',
   'Stop what is running in these terminals?': 'آنچه در این ترمینال‌ها اجرا می‌شود متوقف شود؟',
+  'End these online terminals?': 'این ترمینال‌های آنلاین پایان یابند؟',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'جایی ذخیره نشده؛ نشستی که در حال اجرا بماند را دوباره در تنظیمات، {pane} پیدا می‌کنید.',
   'Paste {count} lines?': { one: '{count} خط چسبانده شود؟', other: '{count} خط چسبانده شود؟' },
   // Orden as the default browser
   'Default browser': 'مرورگر پیش‌فرض',
@@ -2114,6 +2117,8 @@ export const fa: Dictionary = {
   'Change settings': 'تغییر تنظیمات',
   'Run commands': 'اجرای فرمان‌ها',
   'Read and change files anywhere on this computer': 'خواندن و تغییر فایل‌ها در هر جای این رایانه',
+  Programs: 'برنامه‌ها',
+  'Run programs on this computer': 'اجرای برنامه‌ها روی این رایانه',
   Paying: 'پرداخت',
   'Sending messages': 'فرستادن پیام',
   'Publishing and sharing': 'انتشار و اشتراک‌گذاری',

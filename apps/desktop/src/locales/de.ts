@@ -1984,6 +1984,9 @@ export const de: Dictionary = {
   'Restored {time}': 'Wiederhergestellt {time}',
   'Stop what is running in {name}?': 'Beenden, was in {name} läuft?',
   'Stop what is running in these terminals?': 'Beenden, was in diesen Terminals läuft?',
+  'End these online terminals?': 'Diese Online-Terminals beenden?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Nirgends gespeichert: Eine weiterlaufende Sitzung findest du wieder unter Einstellungen, {pane}.',
   'Paste {count} lines?': { one: '{count} Zeile einfügen?', other: '{count} Zeilen einfügen?' },
   // Orden as the default browser
   'Default browser': 'Standardbrowser',
@@ -2155,6 +2158,8 @@ export const de: Dictionary = {
   'Run commands': 'Befehle ausführen',
   'Read and change files anywhere on this computer':
     'Dateien überall auf diesem Computer lesen und ändern',
+  Programs: 'Programme',
+  'Run programs on this computer': 'Programme auf diesem Computer ausführen',
   Paying: 'Bezahlen',
   'Sending messages': 'Nachrichten senden',
   'Publishing and sharing': 'Veröffentlichen und Teilen',

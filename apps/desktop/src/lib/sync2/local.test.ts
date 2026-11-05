@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { hash32 } from '@orden/sync-core/seed'
 import { Engine } from './engine'
-import { isLocal, localFirst, localSpaceId } from './local'
+import { carriedIds, carriedRows, isLocal, localFirst, localSpaceId } from './local'
 import { MemoryDisk } from './memory-disk'
 import { MemoryStore } from './memory-store'
 import type { World } from './world'
@@ -21,7 +21,10 @@ interface Here {
   launch(): Promise<Engine>
 }
 
-async function signedOut(files: Record<string, string> = {}): Promise<Here> {
+async function signedOut(
+  files: Record<string, string> = {},
+  carried: ReadonlyMap<string, string> = new Map(),
+): Promise<Here> {
   const disk = new MemoryDisk()
   disk.folders.add(ROOT)
   for (const [path, text] of Object.entries(files)) await disk.write(`${ROOT}/${path}`, text)
@@ -69,7 +72,7 @@ async function signedOut(files: Record<string, string> = {}): Promise<Here> {
   await engine.core.commit(engine.core.addSpace(here.space, ROOT, 'owner'))
   const space = engine.core.spaces.get(here.space)
   if (!space) throw new Error('no space')
-  expect(await localFirst(engine.core, space)).toBe(true)
+  expect(await localFirst(engine.core, space, carried)).toBe(true)
   return here
 }
 
@@ -201,5 +204,37 @@ describe('a space used signed out', () => {
     expect((await here.engine.core.doc(idea?.id ?? ''))?.text()).toBe('words')
     expect(here.disk.files.get(`${ROOT}/Work/Idea.md`)).toBe('words')
     expect(spaceOf(here).outbox).toEqual([])
+  })
+
+  test('keeps the ids an account gave, signing out, and leaves them behind signing in to another', async () => {
+    const plan = '5f0c1d7e-2b8a-4c1e-9d3f-0a1b2c3d4e5f'
+    const work = '6a1d2e8f-3c9b-4d2f-8e4a-1b2c3d4e5f60'
+    const here = await signedOut(
+      { 'Plan.md': 'ship it', 'Work/Notes.md': 'eggs' },
+      new Map([
+        ['plan.md', plan],
+        ['work', work],
+      ]),
+    )
+    await here.engine.core.commit(
+      carriedRows(new Map([[ROOT, JSON.stringify({ 'Plan.md': plan, Work: work })]]), 'u1'),
+    )
+    await here.engine.pass(here.space)
+    const space = spaceOf(here)
+    expect(space.at('Plan.md')?.id).toBe(plan)
+    expect(space.at('Work')?.id).toBe(work)
+    const notes = space.at('Work/Notes.md')?.id ?? ''
+    expect(space.at('Work/Notes.md')?.parent).toBe(work)
+
+    // Back to the account they came from, every id goes; to another, only what was made
+    // here, since a space there may not make anything under an id another space made.
+    const same = JSON.parse(
+      (await carriedIds(here.engine.core.store, isLocal, 'u1')).get(ROOT) ?? '{}',
+    )
+    expect(same).toEqual({ 'Plan.md': plan, Work: work, 'Work/Notes.md': notes })
+    const other = JSON.parse(
+      (await carriedIds(here.engine.core.store, isLocal, 'u2')).get(ROOT) ?? '{}',
+    )
+    expect(other).toEqual({ 'Work/Notes.md': notes })
   })
 })

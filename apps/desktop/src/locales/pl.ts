@@ -2021,6 +2021,9 @@ export const pl: Dictionary = {
   'Restored {time}': 'Przywrócono {time}',
   'Stop what is running in {name}?': 'Zatrzymać to, co działa w {name}?',
   'Stop what is running in these terminals?': 'Zatrzymać to, co działa w tych terminalach?',
+  'End these online terminals?': 'Zakończyć te terminale online?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Nigdzie niezapisana: sesję, która dalej działa, znajdziesz znów w Ustawieniach, {pane}.',
   'Paste {count} lines?': {
     one: 'Wkleić {count} wiersz?',
     few: 'Wkleić {count} wiersze?',
@@ -2198,6 +2201,8 @@ export const pl: Dictionary = {
   'Run commands': 'Uruchamiać polecenia',
   'Read and change files anywhere on this computer':
     'Odczyt i zmiana plików w dowolnym miejscu na tym komputerze',
+  Programs: 'Programy',
+  'Run programs on this computer': 'Uruchamianie programów na tym komputerze',
   Paying: 'Płacenie',
   'Sending messages': 'Wysyłanie wiadomości',
   'Publishing and sharing': 'Publikowanie i udostępnianie',

@@ -1922,6 +1922,9 @@ export const vi: Dictionary = {
   'Restored {time}': 'Đã khôi phục {time}',
   'Stop what is running in {name}?': 'Dừng những gì đang chạy trong {name}?',
   'Stop what is running in these terminals?': 'Dừng những gì đang chạy trong các terminal này?',
+  'End these online terminals?': 'Kết thúc các terminal trực tuyến này?',
+  'Saved nowhere, a session kept running is found again in Settings, {pane}.':
+    'Không được lưu ở đâu; phiên vẫn chạy có thể tìm lại trong Cài đặt, {pane}.',
   'Paste {count} lines?': 'Dán {count} dòng?',
   // Orden as the default browser
   'Default browser': 'Trình duyệt mặc định',
@@ -2090,6 +2093,8 @@ export const vi: Dictionary = {
   'Run commands': 'Chạy lệnh',
   'Read and change files anywhere on this computer':
     'Đọc và thay đổi tệp ở bất kỳ đâu trên máy tính này',
+  Programs: 'Chương trình',
+  'Run programs on this computer': 'Chạy chương trình trên máy tính này',
   Paying: 'Thanh toán',
   'Sending messages': 'Gửi tin nhắn',
   'Publishing and sharing': 'Xuất bản và chia sẻ',
