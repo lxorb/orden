@@ -41,21 +41,23 @@ MEASURE = """
 () => {
   const bar = document.querySelector('header[data-chrome="top"]')
   const shown = (one) => one && one.getClientRects().length > 0
+  const strips = [...bar.querySelectorAll('[data-top-strip]')]
+  const last = strips.at(-1)
   const group = [
-    ...bar.querySelectorAll(':scope > .strip > button'),
-    bar.querySelector(':scope > [data-side-toggle="right"]'),
-    ...bar.querySelectorAll(':scope > .controls > button'),
+    ...(last ? last.querySelectorAll(':scope > .strip > button') : []),
+    bar.querySelector('.end > [data-side-toggle="right"]'),
+    ...bar.querySelectorAll('.end > .controls > button'),
   ].filter(shown)
   const boxes = group.map((one) => {
     const box = one.getBoundingClientRect()
     return { what: one.getAttribute('aria-label') || one.className, left: box.left, right: box.right }
   })
   const first = boxes[0]?.left ?? bar.getBoundingClientRect().right
-  const drags = [...bar.querySelectorAll('[data-tauri-drag-region]:not([data-region="tabs"])')]
+  const drags = [...(last ? last.querySelectorAll('.strip > [data-tauri-drag-region]') : [])]
     .map((one) => one.getBoundingClientRect())
     .filter((box) => box.right <= first + 0.5)
     .map((box) => box.width)
-  const right = bar.querySelector(':scope > [data-side-toggle="right"]')?.getBoundingClientRect()
+  const right = bar.querySelector('.end > [data-side-toggle="right"]')?.getBoundingClientRect()
   return { boxes, drag: Math.max(0, ...drags), right: right ? right.left : null }
 }
 """
@@ -116,7 +118,7 @@ def drive(browser: Any) -> None:
     row(page, "06-narrow-many-tabs")
 
     page.set_viewport_size({"width": 1180, "height": 760})
-    page.evaluate("() => window.nibApp.workspace.split('right')")
+    page.evaluate("() => window.nibApp.workspace.split('row')")
     row(page, "07-split")
 
     # The same note in both panes, and one of them filling the window: the strip is up

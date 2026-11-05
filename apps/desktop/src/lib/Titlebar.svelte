@@ -12,7 +12,7 @@
   import { askPlace } from './save-place/door'
   import { shown as pad } from './scratchpad/is.svelte'
   import { isDraft } from './workspace/drafts'
-  import Tabs from './Tabs.svelte'
+  import TopStrips from './TopStrips.svelte'
   import { closeWindow, currentWindow, isDesktop, platform } from './tauri'
   import { settings } from './settings.svelte'
   import { tabOverview, toggleTabOverview } from './surfaces.svelte'
@@ -21,9 +21,19 @@
   import { webChannel } from './updater'
   import { viewport } from './viewport.svelte'
   import { WindowState } from './window-state.svelte'
+  import { topRow } from './workspace/pane-tree'
   import { workspace } from './workspace.svelte'
 
-  const { onpalette }: { onpalette: () => void } = $props()
+  const {
+    onpalette,
+    panes = 0,
+  }: {
+    onpalette: () => void
+    /** How wide the panes are drawn, which the strips in this row line up with: the bar
+     *  is as wide as the panes and the right side under it together (App.svelte). None
+     *  before it has been measured, when the strips take the bar's width. */
+    panes?: number
+  } = $props()
 
   /** Whether the file list is a drawer a swipe from the edge pulls out, which is what makes
    *  its button redundant to an eye (#1066). */
@@ -73,10 +83,20 @@
   $effect(() => (isDesktop ? shape.follow(currentWindow) : undefined))
 
   /** The one pane, while there is only one or one fills the window. Null once
-   *  something is split, and then the strips live in the panes. */
+   *  something is split, and then the strips are those of the panes along the top. */
   const only = $derived(
     workspace.panes.count === 1 || workspace.panes.fills ? workspace.panes.focused : null,
   )
+  /** The panes whose strips are this row's, laid out as they are under it (#1037). */
+  const strips = $derived(only ?? topRow(workspace.panes.frame))
+
+  /** How wide the bar is, and its two ends: the window's own buttons and what is the
+   *  window's at its start, which the strips at either end leave room for. */
+  let wide = $state(0)
+  let leadWide = $state(0)
+  let endWide = $state(0)
+  /** How far the end of the row reaches over the panes, past the right side under it. */
+  const overPanes = $derived(endWide - wide + (panes || wide))
 
   /** A phone and a tablet show one document, so the bar says which one. The mark in
    *  front of the name is the same one the desktop's tab wears, because this bar is
@@ -159,77 +179,18 @@
   </button>
 {/snippet}
 
-<!-- One row: the palette, the button that opens the file list, the open notes, and
-     the window's own buttons. On a desktop the note's name lives in its tab, so there
-     is no separate title; a phone and a tablet hold one document, so the name is the
-     middle of the row and the palette is at the end of it. No menu of the whole app:
-     what it held is the palette's, a note's dots and the strip's (#304). -->
-<header class:lights={cornered} data-chrome="top" data-theme={chrome.theme}>
-  {#if !viewport.touch}
-    {@render searchGlyph()}
-    {@render overviewGlyph()}
-  {/if}
-
-  <!-- Not while there is no space and no tab: a list of nothing, in the moment before a
-       fresh start's space is made (fresh-start.ts). Where a swipe from the edge pulls the
-       list out as a drawer - a phone, a tablet held upright - the button is said and not
-       shown (#1066): a screen reader and a keyboard still have it, and so does its key,
-       and somebody new is told about the swipe once (hints.svelte.ts). -->
-  {#if !listless}
-    <SidebarToggle unseen={swiped} />
-    {#if swiped && startup.settled && !__EVEN_PLUGIN__}
-      <span class="swipe-hint">
-        {#await import('./HintCard.svelte') then card}
-          <card.default
-            hint="drawer"
-            side="below"
-            text={t('Swipe in from the edge to see your notes.')}
-            onpress={() => workspace.toggleSidebar()}
-          />
-        {/await}
-      </span>
-    {/if}
-  {/if}
-
-  {#if viewport.touch}
-    <!-- One document at a time: its mark and name instead of a strip of tabs. -->
-    <h1 class="title" data-save-anchor>
-      {#if showing}<TabMark tab={showing} />{:else if pad.on}<FileMark mark="note" />{/if}
-      <span class="name">{title}</span>
-      {#if showing && isDraft(showing.note)}
-        <button class="nib-glyph" aria-label={t('Save')} onclick={() => askPlace(showing.id)}
-          ><UnsavedDot pressable /></button
-        >
-      {/if}
-    </h1>
-
-    {@render edgeMark()}
-    {@render searchGlyph()}
-  {:else}
-    <!-- One pane keeps its tabs up here; split, each pane has its own (Pane.svelte). -->
-    {#if only}
-      <Tabs paneId={only.id} caption />
-    {/if}
-
-    <!-- What the window is dragged by, while the panes have the strips. A strip up here
-         is the caption itself, and keeps the sliver it can always be dragged by ahead of
-         its own buttons (Tabs.svelte), so they and the switches after them are one row
-         (#1060). -->
-    {#if !only}
-      <div class="drag" data-tauri-drag-region></div>
-    {/if}
-    {@render edgeMark()}
-  {/if}
-
-  <!-- The right side's one button, whatever it shows: the scratchpad is one of its tabs
-       on a desktop, so this opens it on what it showed last and shuts it whole (#1032).
-       A phone's scratchpad is in the drawer's foot (#1030). -->
+<!-- The right side's one button, whatever it shows: the scratchpad is one of its tabs
+     on a desktop, so this opens it on what it showed last and shuts it whole (#1032).
+     A phone's scratchpad is in the drawer's foot (#1030). -->
+{#snippet rightToggle()}
   {#if workspace.right.length || (!viewport.touch && !__EVEN_PLUGIN__)}
     <SidebarToggle side="right" />
   {/if}
+{/snippet}
 
-  <!-- Left out, not hidden, in a browser (no window of its own) and under the
-       system's own frame (which has these three already); see modes.svelte.ts. -->
+<!-- Left out, not hidden, in a browser (no window of its own) and under the
+     system's own frame (which has these three already); see modes.svelte.ts. -->
+{#snippet windowButtons()}
   {#if isDesktop && !mac}
     {#if modes.frame === 'nib'}
       <div class="controls" data-overview-keeps>
@@ -254,6 +215,93 @@
       </div>
     {/if}
   {/if}
+{/snippet}
+
+<!-- Not while there is no space and no tab: a list of nothing, in the moment before a
+     fresh start's space is made (fresh-start.ts). Where a swipe from the edge pulls the
+     list out as a drawer - a phone, a tablet held upright - the button is said and not
+     shown (#1066): a screen reader and a keyboard still have it, and so does its key,
+     and somebody new is told about the swipe once (hints.svelte.ts). -->
+{#snippet leftToggle()}
+  {#if !listless}
+    <SidebarToggle unseen={swiped} />
+    {#if swiped && startup.settled && !__EVEN_PLUGIN__}
+      <span class="swipe-hint">
+        {#await import('./HintCard.svelte') then card}
+          <card.default
+            hint="drawer"
+            side="below"
+            text={t('Swipe in from the edge to see your notes.')}
+            onpress={() => workspace.toggleSidebar()}
+          />
+        {/await}
+      </span>
+    {/if}
+  {/if}
+{/snippet}
+
+<!-- One row: the palette, the button that opens the file list, the open notes, and
+     the window's own buttons. On a desktop the note's name lives in its tab, so there
+     is no separate title; a phone and a tablet hold one document, so the name is the
+     middle of the row and the palette is at the end of it. No menu of the whole app:
+     what it held is the palette's, a note's dots and the strip's (#304). -->
+<header
+  class:lights={cornered}
+  data-chrome="top"
+  data-theme={chrome.theme}
+  bind:clientWidth={wide}
+  style:--panes-wide={panes ? `${panes}px` : undefined}
+  style:--strip-lead={viewport.touch
+    ? undefined
+    : `max(0px, calc(var(--space-1) + var(--lights-start, 0px) + ${leadWide}px - var(--card-inset)))`}
+  style:--strip-end={viewport.touch
+    ? undefined
+    : `max(0px, calc(${overPanes}px + var(--lights-end, 0px) - var(--card-inset)))`}
+>
+  {#if viewport.touch}
+    {@render leftToggle()}
+
+    <!-- One document at a time: its mark and name instead of a strip of tabs. -->
+    <h1 class="title" data-save-anchor>
+      {#if showing}<TabMark tab={showing} />{:else if pad.on}<FileMark mark="note" />{/if}
+      <span class="name">{title}</span>
+      {#if showing && isDraft(showing.note)}
+        <button class="nib-glyph" aria-label={t('Save')} onclick={() => askPlace(showing.id)}
+          ><UnsavedDot pressable /></button
+        >
+      {/if}
+    </h1>
+
+    {@render edgeMark()}
+    {@render searchGlyph()}
+    {@render rightToggle()}
+    {@render windowButtons()}
+  {:else}
+    <!-- What is the window's at the row's start, and what it is dragged by between the
+         two ends: under the strips, which let the pointer through everywhere but on
+         themselves, so the room beside and between them moves the window and a double
+         click there maximises it. -->
+    <div class="lead" bind:clientWidth={leadWide}>
+      {@render searchGlyph()}
+      {@render overviewGlyph()}
+      {@render leftToggle()}
+    </div>
+    <div class="drag" data-tauri-drag-region></div>
+
+    <!-- The strips, over the panes they belong to: the one pane's, or one over each pane
+         along the top of a split, each lined up with its pane (TopStrips.svelte). Each
+         keeps the sliver it can always be dragged by ahead of its own buttons
+         (Tabs.svelte), so they and the switches after them are one row (#1060). -->
+    <div class="heads">
+      <TopStrips frame={strips} />
+    </div>
+
+    <div class="end" bind:clientWidth={endWide}>
+      {@render edgeMark()}
+      {@render rightToggle()}
+      {@render windowButtons()}
+    </div>
+  {/if}
 </header>
 
 <style>
@@ -262,6 +310,7 @@
      flush. Only the leading edge: the other end is the window's own buttons,
      which go right to the corner the way every window's do. */
   header {
+    position: relative;
     height: var(--header-height);
     display: flex;
     align-items: stretch;
@@ -288,6 +337,36 @@
      rather than about reading, and AppKit keeps them at the window's left edge. */
   header.lights {
     padding-left: var(--traffic-lights);
+    --lights-start: var(--traffic-lights);
+  }
+
+  :global([dir='rtl']) header.lights {
+    --lights-start: 0px;
+    --lights-end: var(--traffic-lights);
+  }
+
+  /* The two ends, each as wide as what is in it: the strips at either end of the row
+     leave that much room (TopStrips.svelte). */
+  .lead,
+  .end {
+    flex: none;
+    display: flex;
+    align-items: stretch;
+  }
+
+  /* The strips, over the panes: from the card's edge, as wide as the panes less theirs.
+     The pointer goes through to the bar everywhere but on a strip. */
+  .heads {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: var(--card-inset);
+    width: calc(var(--panes-wide, 100%) - 2 * var(--card-inset));
+    display: flex;
+    pointer-events: none;
+  }
+
+  .heads > :global(*) {
+    flex: 1;
   }
 
   /* Where the hint about the swipe hangs from: the bar's start, as tall as the bar, so the

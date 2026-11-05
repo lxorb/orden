@@ -10,6 +10,8 @@ import {
   paneIn,
   panesIn,
   splitIn,
+  topRow,
+  tracks,
   withoutPane,
   withSplit,
 } from './pane-tree'
@@ -180,5 +182,57 @@ describe('the share of the room', () => {
 
   test('splits a window too small for two down the middle', () => {
     expect(clamped(0.1, 300, 200)).toBe(EQUAL)
+  })
+})
+
+/** The ids of the panes along the top of a frame, left to right. */
+const topIds = (frame: Frame) => panesIn(topRow(frame)).map((one) => one.id)
+
+describe('the top row', () => {
+  test('is the one pane there is', () => {
+    expect(topIds(pane('a'))).toEqual(['a'])
+  })
+
+  test('holds both panes side by side, with the share the split gives them', () => {
+    const frame = split(pane('a'), 'a', 'row', 'b')
+    expect(topIds(frame)).toEqual(['a', 'b'])
+    const row = topRow(frame)
+    expect(row.kind === 'split' && row.fraction).toBe(EQUAL)
+  })
+
+  test('holds only the upper of two panes one above the other', () => {
+    expect(topIds(split(pane('a'), 'a', 'column', 'b'))).toEqual(['a'])
+  })
+
+  test('holds the top two of a 2x2 split either way first', () => {
+    const across = split(
+      split(split(pane('a'), 'a', 'row', 'b'), 'a', 'column', 'c'),
+      'b',
+      'column',
+      'd',
+    )
+    expect(topIds(across)).toEqual(['a', 'b'])
+    const down = split(
+      split(split(pane('a'), 'a', 'column', 'c'), 'a', 'row', 'b'),
+      'c',
+      'row',
+      'd',
+    )
+    expect(topIds(down)).toEqual(['a', 'b'])
+  })
+
+  test("keeps the panes themselves, so a strip over one is that pane's", () => {
+    const frame = split(pane('a'), 'a', 'column', 'b')
+    expect(topRow(frame)).toBe(panesIn(frame)[0])
+  })
+})
+
+describe('the tracks of a split', () => {
+  test('share what is left once the room between the cards is taken', () => {
+    const frame = split(pane('a'), 'a', 'row', 'b')
+    if (frame.kind !== 'split') throw new Error('no split')
+    expect(tracks({ ...frame, fraction: 0.25 })).toBe(
+      'minmax(0, 0.25000fr) var(--card-gap) minmax(0, 0.75000fr)',
+    )
   })
 })

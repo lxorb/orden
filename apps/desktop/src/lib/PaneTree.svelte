@@ -12,7 +12,7 @@
   import { t } from './i18n.svelte'
   import Pane from './Pane.svelte'
   import PaneTree from './PaneTree.svelte'
-  import { clamped, type Frame, paneIn, type Split } from './workspace/pane-tree'
+  import { clamped, type Frame, paneIn, type Split, tracks } from './workspace/pane-tree'
   import { workspace } from './workspace.svelte'
 
   const { frame }: { frame: Frame } = $props()
@@ -118,12 +118,6 @@
     }
     event.preventDefault()
   }
-
-  /** The two sides' shares of what is left once the divider has its pixel: shares of
-   *  the whole and the pixel besides made the split a pixel wider than its room, under
-   *  the right side by that much (#1076). */
-  const share = (split: Split) =>
-    `minmax(0, ${split.fraction.toFixed(5)}fr) var(--card-gap) minmax(0, ${(1 - split.fraction).toFixed(5)}fr)`
 </script>
 
 {#if split}
@@ -134,8 +128,8 @@
     bind:this={host}
     bind:clientWidth={wide}
     bind:clientHeight={tall}
-    style:grid-template-columns={split.along === 'row' && kept < 0 ? share(split) : undefined}
-    style:grid-template-rows={split.along === 'column' && kept < 0 ? share(split) : undefined}
+    style:grid-template-columns={split.along === 'row' && kept < 0 ? tracks(split) : undefined}
+    style:grid-template-rows={split.along === 'column' && kept < 0 ? tracks(split) : undefined}
   >
     <!-- A side as an item, not `split.sides[i]`: a pane's teardown reads it once a
          collapsing split is null, and an item keeps the last side. -->

@@ -50,8 +50,11 @@ describe('the note’s corners', () => {
   })
 
   test('a split is as wide as its room: the divider’s room comes out of the shares', () => {
-    const tree = read('lib/PaneTree.svelte')
-    const share = /const share = \(split: Split\) =>\s*`([^`]*)`/.exec(tree)?.[1] ?? ''
+    // One rule for the panes and the strips over them in the bar (#1037).
+    expect(read('lib/PaneTree.svelte')).toContain('tracks(split)')
+    const tree = read('lib/workspace/pane-tree.ts')
+    const share =
+      /export function tracks\(split: Split\): string \{\s*return `([^`]*)`/.exec(tree)?.[1] ?? ''
     // A line's pixel, or the gap between two cards (#1088; --card-gap in tokens.css).
     expect(share).toContain('var(--card-gap)')
     expect(share).not.toContain('%')

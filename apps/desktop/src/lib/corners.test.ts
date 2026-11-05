@@ -33,7 +33,10 @@ test('nothing offers another frame: no setting, no file of its choices', () => {
 test('every surface on the frame reads its tokens rather than a corner of its own', () => {
   const readers: Record<string, string[]> = {
     'Pane.svelte': ['--card-radius', '--card-shadow', '--card-edge'],
-    'PaneTree.svelte': ['--card-gap', '--chrome-seam'],
+    'PaneTree.svelte': ['--chrome-seam'],
+    // The room between a split's cards, one rule for the panes and the strips over them
+    // in the bar (#1037).
+    'workspace/pane-tree.ts': ['--card-gap'],
     '../App.svelte': ['--card-inset', '--chrome-ground'],
     'Sidebar.svelte': ['--side-ground', '--chrome-seam'],
     // The line over the sidebar's foot, which Rounded leaves out (#1105).
