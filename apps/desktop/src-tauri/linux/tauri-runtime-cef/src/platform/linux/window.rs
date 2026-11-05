@@ -70,7 +70,7 @@ impl CefX11Host {
     default_vbox.append(&webview_area);
     gtk_window.set_child(Some(&default_vbox));
 
-    let parent_xid = window_xid(window);
+    let parent_xid = window_xid(window)?;
     let initial_size = window.surface_size();
     let (xid, colormap) = create_cef_container(parent_xid, initial_size)?;
 
@@ -171,12 +171,15 @@ impl AppWindow {
     self.cef_host.xid as cef::sys::cef_window_handle_t
   }
 
-  pub(crate) fn xid(&self) -> c_ulong {
+  /// The window's own X window, or `None` where winit has none to give: see `window_xid`.
+  pub(crate) fn xid(&self) -> Option<c_ulong> {
     window_xid(self.window.as_ref())
   }
 
   pub(crate) fn raise_native(&self) {
-    super::utils::activate_window(self.xid());
+    if let Some(xid) = self.xid() {
+      super::utils::activate_window(xid);
+    }
   }
 
   /// Applies the transient parent recorded by the window builder, if any.
@@ -251,11 +254,15 @@ impl AppWindow {
   }
 
   pub(crate) fn set_skip_taskbar(&self, skip: bool) {
-    set_wm_state(self.xid(), skip, "_NET_WM_STATE_SKIP_TASKBAR", None);
+    if let Some(xid) = self.xid() {
+      set_wm_state(xid, skip, "_NET_WM_STATE_SKIP_TASKBAR", None);
+    }
   }
 
   pub(crate) fn set_visible_on_all_workspaces(&self, visible: bool) {
-    set_wm_state(self.xid(), visible, "_NET_WM_STATE_STICKY", None);
+    if let Some(xid) = self.xid() {
+      set_wm_state(xid, visible, "_NET_WM_STATE_STICKY", None);
+    }
   }
 
   pub(crate) fn set_progress_bar(&self, state: ProgressBarState) {
@@ -263,13 +270,18 @@ impl AppWindow {
   }
 }
 
-fn window_xid(window: &dyn winit::window::Window) -> c_ulong {
-  let handle = window.window_handle().expect("failed to get window handle");
-  match handle.as_raw() {
+/// A window's X window, or `None` where winit gives none: a window on its way out, or
+/// one that is not on X11. Orden's patch (lxorb/orden#1085): both used to stop the app,
+/// the first by `expect` and the second by `panic!`; a window with no X window has nothing
+/// to raise or mark, and a host that cannot be made under one is no host.
+fn window_xid(window: &dyn winit::window::Window) -> Option<c_ulong> {
+  let handle = window.window_handle().ok()?;
+  let xid = match handle.as_raw() {
     RawWindowHandle::Xlib(handle) => handle.window as c_ulong,
     RawWindowHandle::Xcb(handle) => handle.window.get() as c_ulong,
-    other => panic!("expected X11 window handle, got {other:?}"),
-  }
+    _ => return None,
+  };
+  super::webview::known(xid)
 }
 
 fn create_cef_container(

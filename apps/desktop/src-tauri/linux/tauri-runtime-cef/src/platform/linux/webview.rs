@@ -14,10 +14,7 @@ use super::utils::{atom, with_cef_display};
 
 impl AppWebview {
   pub(crate) fn native_parent_matches(&self, parent: &AppWindow) -> Option<bool> {
-    let xid = self.host.window_handle();
-    if xid == 0 {
-      return None;
-    }
+    let xid = self.xid()?;
     with_cef_display(None, |xlib, display| unsafe {
       let mut root = 0;
       let mut native_parent = 0;
@@ -25,7 +22,7 @@ impl AppWebview {
       let mut count = 0;
       let status = (xlib.XQueryTree)(
         display,
-        xid as xlib::Window,
+        xid,
         &mut root,
         &mut native_parent,
         &mut children,
@@ -40,13 +37,10 @@ impl AppWebview {
   }
 
   pub(crate) fn native_visible(&self) -> Option<bool> {
-    let xid = self.host.window_handle();
-    if xid == 0 {
-      return None;
-    }
+    let xid = self.xid()?;
     with_cef_display(None, |xlib, display| unsafe {
       let mut attributes = std::mem::MaybeUninit::<xlib::XWindowAttributes>::uninit();
-      if (xlib.XGetWindowAttributes)(display, xid as xlib::Window, attributes.as_mut_ptr()) == 0 {
+      if (xlib.XGetWindowAttributes)(display, xid, attributes.as_mut_ptr()) == 0 {
         return None;
       }
       // XGetWindowAttributes initializes the complete structure on success.
@@ -54,10 +48,16 @@ impl AppWebview {
     })
   }
 
-  fn xid(&self) -> xlib::Window {
-    let xid = self.host.window_handle();
-    assert_ne!(xid, 0, "failed to get XID");
-    xid as xlib::Window
+  /// The browser's own X window, or `None` while it has none.
+  ///
+  /// Orden's patch (lxorb/orden#1085): this asserted the window was there, and a browser
+  /// being closed has none - CEF destroys it before the browser is gone - so a placement,
+  /// a show or a hide that reached a web tab's browser as it closed stopped the app. A
+  /// browser is built by `browser_host_create_browser_sync`, which hands it back with its
+  /// window made, so no window means one that is going: there is nothing left to place,
+  /// show or hide, and each caller does nothing.
+  fn xid(&self) -> Option<xlib::Window> {
+    known(self.host.window_handle())
   }
 
   pub(crate) fn set_background_color(&self, color: Option<Color>) {
@@ -70,7 +70,7 @@ impl AppWebview {
     if let Some(view) = &self.offscreen {
       return Some(view.bounds());
     }
-    let xid = self.xid();
+    let xid = self.xid()?;
 
     with_cef_display(None, |xlib, display| unsafe {
       let mut root: xlib::Window = 0;
@@ -104,7 +104,9 @@ impl AppWebview {
   }
 
   pub(crate) fn reparent(&self, parent: &AppWindow) {
-    let xid = self.xid();
+    let Some(xid) = self.xid() else {
+      return;
+    };
     // Linux reparents into the GTK content-area X11 host, unlike Windows/macOS
     // where the CEF host handle is the native window/view.
     let parent_xid = parent.cef_host_handle();
@@ -116,7 +118,9 @@ impl AppWebview {
   }
 
   pub(crate) fn apply_visible(&self, visible: bool) {
-    let xid = self.xid();
+    let Some(xid) = self.xid() else {
+      return;
+    };
 
     with_cef_display((), |xlib, display| unsafe {
       let net_wm_state = atom(xlib, display, "_NET_WM_STATE");
@@ -152,7 +156,9 @@ impl AppWebview {
   }
 
   pub(crate) fn apply_physical_bounds(&self, _scale: f64, x: i32, y: i32, width: i32, height: i32) {
-    let xid = self.xid();
+    let Some(xid) = self.xid() else {
+      return;
+    };
 
     with_cef_display((), |xlib, display| unsafe {
       (xlib.XMoveResizeWindow)(
@@ -166,5 +172,22 @@ impl AppWebview {
       // `with_cef_display` issues an `XFlush` once the closure returns, so a
       // blocking `XSync` round-trip here just stalls every resize frame.
     });
+  }
+}
+
+/// An X window handle as CEF or winit hands it over: none at all is `0`. Orden's patch
+/// (lxorb/orden#1085), the one place every X window this module asks for is read through.
+pub(super) fn known(handle: c_ulong) -> Option<xlib::Window> {
+  (handle != 0).then_some(handle as xlib::Window)
+}
+
+#[cfg(test)]
+mod tests {
+  use super::known;
+
+  #[test]
+  fn no_window_is_none_rather_than_a_crash() {
+    assert_eq!(known(0), None);
+    assert_eq!(known(0x2a0_0007), Some(0x2a0_0007));
   }
 }

@@ -270,3 +270,6 @@ lto = true
 opt-level = "s"
 panic = "abort"
 strip = true
+
+[patch.crates-io]
+tauri-runtime-cef = { path = "linux/tauri-runtime-cef" }

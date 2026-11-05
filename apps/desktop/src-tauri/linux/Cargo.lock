@@ -6440,8 +6440,6 @@ dependencies = [
 [[package]]
 name = "tauri-runtime-cef"
 version = "3.0.0-alpha.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1fc02ef8f4295b0036b1d6cbe99111e263b587c870f0d54d9bc386602f10b947"
 dependencies = [
  "base64 0.22.1",
  "cef",
