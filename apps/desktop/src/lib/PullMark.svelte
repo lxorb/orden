@@ -34,6 +34,7 @@
 {#if at > 0}
   <div
     class="pull"
+    data-covers
     role="status"
     aria-label={said}
     style:--at="{Math.round(at)}px"

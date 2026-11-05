@@ -209,7 +209,6 @@
   }
 
   let scheduled = 0
-  let late: ReturnType<typeof setTimeout> | undefined
   /** The last thing the crate was told, so nothing is told to it twice. A press
    *  anywhere in the window asks this question, and most presses have not moved
    *  anything. */
@@ -284,6 +283,18 @@
 
     cancelAnimationFrame(scheduled)
     scheduled = requestAnimationFrame(look)
+  }
+
+  /** Puts the page where the hole is now rather than on the next frame: for a layer that
+   *  came, went, showed, hid or moved, which the window is about to draw. Asked between the
+   *  change and the paint, so the page is cut or hidden for a layer in the frame the layer
+   *  is first drawn in and whole again in the frame it goes (#1124); a frame later was a
+   *  frame of the menu behind the page, and every frame of a layer that moved by itself.
+   *  Never from inside an effect, whose reads it would become: an observer's answer. */
+  function now() {
+    if (!isDesktop || !ready) return
+    cancelAnimationFrame(scheduled)
+    look()
   }
 
   /** Where the hole is now, said to the crate: the page is opened if it is not there,
@@ -418,8 +429,8 @@
     window.addEventListener('resize', follow)
     // A screen of another scale: the same box is another page window; see shifts.ts.
     const unscale = watchScale(follow)
-    // Anything the app opens over the page is opened by a press: after one, look
-    // again at what is on top. Twice, because a sheet arrives over a transition.
+    // Most of what the app opens over the page is opened by a press: after one, look
+    // again at what is on top.
     const pressed = () => {
       // The press is also the last moment the page is both current and on screen, and
       // whatever it opens is about to hide it - so this is where the page is
@@ -427,11 +438,10 @@
       // overlay is, and the pane keeps the one from a moment ago either way. See
       // `shoot` in pages.svelte.ts.
       void pages.shoot(tab.id)
+      // What the press opens is heard as it arrives, by `watchArrivals`; it used to be
+      // looked for again a fifth of a second later, and a layer that came in that time
+      // was drawn behind the page until then (#1124).
       follow()
-      // Again after the transition an overlay arrives on, and only once however
-      // many keys were pressed while it was on its way.
-      clearTimeout(late)
-      late = setTimeout(follow, 220)
     }
     window.addEventListener('pointerdown', pressed, true)
     window.addEventListener('keydown', pressed, true)
@@ -440,13 +450,13 @@
     // press - a command from the palette opens the next overlay, and Escape closes one
     // - so the page cannot wait for a press to find out; see `coverOf`.
     const unwatch = overlays.watch(follow)
-    // And a layer that arrives by neither, or leaves by neither: a hint, a second toast,
-    // a card a row puts up under the pointer. See `watchArrivals`.
-    const unarrive = watchArrivals(follow)
+    // And every layer as it arrives, leaves, shows, hides or moves, whatever did it: a
+    // hint, a second toast, a card a row puts up under the pointer, a bar slid down by a
+    // class. Answered at once, before the frame that draws it. See `watchArrivals`.
+    const unarrive = watchArrivals(now)
 
     return () => {
       cancelAnimationFrame(scheduled)
-      clearTimeout(late)
       watching?.disconnect()
       unwatch()
       unarrive()

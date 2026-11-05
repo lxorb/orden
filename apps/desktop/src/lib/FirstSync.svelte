@@ -38,7 +38,13 @@
 </script>
 
 {#if holding}
-  <div class="arriving" transition:fade={{ duration: dur(190) }} role="status" aria-live="polite">
+  <div
+    class="arriving"
+    data-covers="all"
+    transition:fade={{ duration: dur(190) }}
+    role="status"
+    aria-live="polite"
+  >
     <div class="mark">{initial}</div>
 
     <!-- The same line the app draws along the top of a document for an export or

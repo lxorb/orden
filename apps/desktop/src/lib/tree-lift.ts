@@ -377,6 +377,8 @@ function lift(held: Held, row: HTMLElement, entry: Entry) {
   if (!(copy instanceof HTMLElement)) return
 
   copy.classList.add('carried')
+  // A layer over everything, a web page too; see web-tab/covers.ts.
+  copy.dataset.covers = ''
   copy.style.width = `${box.width}px`
   copy.style.left = `${box.left}px`
   copy.style.top = `${box.top}px`

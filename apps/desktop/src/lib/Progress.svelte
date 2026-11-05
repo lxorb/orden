@@ -22,12 +22,12 @@
 {#if busy.trouble}
   <!-- The same line, in the same place, saying what did not work. Held back by
        nothing: this is the answer, not a sign that one is coming. -->
-  <div class="track failed" role="status">
+  <div class="track failed" role="status" data-covers>
     <div class="line"></div>
     <p class="said">{busy.trouble}</p>
   </div>
 {:else if showing}
-  <div class="track" role="status" aria-label={busy.label ?? undefined}>
+  <div class="track" role="status" data-covers aria-label={busy.label ?? undefined}>
     <Sweep />
   </div>
 {/if}

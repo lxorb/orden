@@ -57,7 +57,13 @@
 
 <svelte:window onkeydown={onKey} />
 
-<div class="lightbox" role="dialog" aria-modal="true" aria-label={file?.name ?? ''}>
+<div
+  class="lightbox"
+  data-covers="all"
+  role="dialog"
+  aria-modal="true"
+  aria-label={file?.name ?? ''}
+>
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div class="scrim" transition:fade={{ duration: LAYER.fade }} onclick={onclose}></div>
   {#if file}

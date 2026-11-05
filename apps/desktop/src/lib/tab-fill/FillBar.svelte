@@ -154,6 +154,7 @@
 <div
   class="bar"
   class:shown
+  data-covers
   inert={!shown}
   bind:this={bar}
   onpointerleave={() => {

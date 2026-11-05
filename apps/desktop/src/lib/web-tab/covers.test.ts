@@ -201,6 +201,38 @@ describe('a layer arriving by itself', () => {
     expect(bringsLayer(record(document.querySelector('[data-notices]')!, [], [card]))).toBe(true)
   })
 
+  test('a layer marked rather than shaped is one, in its own shape or over all of the page', () => {
+    document.body.innerHTML =
+      '<div data-covers class="ghost"></div><div data-covers="all" class="catch"></div>'
+    const found = layersOver(document.createElement('div'))
+    expect(found.map((one) => one.scrim)).toEqual([false, true])
+  })
+
+  // #1124: a layer shown by a class or a style is no node put in, and the page heard of
+  // it on the next press, or a fifth of a second after one, or never.
+  test('and as one is shown, hidden or moved in place, or what holds one is', () => {
+    document.body.innerHTML =
+      '<div class="bar" data-covers></div><section><span class="nib-bubble"></span></section><p></p>'
+    const changed = (target: Node) => ({ ...record(target), type: 'attributes' as const })
+    expect(bringsLayer(changed(document.querySelector('.bar')!))).toBe(true)
+    expect(bringsLayer(changed(document.querySelector('section')!))).toBe(true)
+    expect(bringsLayer(changed(document.querySelector('p')!))).toBe(false)
+  })
+
+  test('a layer shown by its style is heard before the next frame', async () => {
+    document.body.innerHTML = '<div class="nib-scrim" style="visibility: hidden"></div><p></p>'
+    let heard = 0
+    const stop = watchArrivals(() => (heard += 1))
+    document.querySelector<HTMLElement>('.nib-scrim')!.style.visibility = ''
+    await Promise.resolve()
+    expect(heard).toBe(1)
+    // A style on something holding no layer says nothing.
+    document.querySelector('p')!.setAttribute('style', 'color: red')
+    await Promise.resolve()
+    expect(heard).toBe(1)
+    stop()
+  })
+
   test('every page is told, by one watch on the window', async () => {
     document.body.innerHTML = '<main></main>'
     let one = 0

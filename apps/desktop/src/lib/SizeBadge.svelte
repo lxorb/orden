@@ -53,6 +53,7 @@
 {#if shown}
   <div
     class="size nib-pill"
+    data-covers
     role="status"
     in:scale={{ duration: dur(140), start: 0.94, easing: cubicOut }}
     out:fade={{ duration: dur(180) }}
