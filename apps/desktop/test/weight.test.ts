@@ -1317,8 +1317,12 @@ function holds(tail: string): boolean {
  *  Raised on 2026-11-05, to 3,674,000, for #1152's Square bottom edge setting, off by
  *  default: the panes on the window's bottom square at their foot, and a web tab's page
  *  given its own pane's corner (Pane.svelte, App.svelte, pane-tree.ts, web-tab/). Measured
- *  3,673,742 in 398. */
-const BUDGET = 3_674_000
+ *  3,673,742 in 398.
+ *
+ *  Raised on 2026-11-05, to 3,676,200, for #1147: the update notice's Update through
+ *  PackageKit for a .deb or an .rpm (UpdateNotice.svelte, updates.svelte.ts, updater.ts).
+ *  Measured 3,675,918 in 398. */
+const BUDGET = 3_676_200
 const MOST_FILES = 399
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
