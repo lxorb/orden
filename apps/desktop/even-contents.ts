@@ -590,9 +590,14 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  The code raised on 2026-11-05, to 5,994,700, for #1037: a split window's strips in its
  *  one top row, over their panes on the panes' own grid (TopStrips.svelte,
  *  workspace/pane-tree.ts, Titlebar.svelte). Measured 5,993,910.
+ *
+ *  The code raised on 2026-11-05, to 5,996,000, for #1038: each sidebar's button in the
+ *  sidebar, the right side out of the window's end edge, and the hint about the edge
+ *  (edge-peek.svelte.ts, Sidebar.svelte, SidebarToggle.svelte, Titlebar.svelte). Measured
+ *  5,995,265.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_994_700,
+  code: 5_996_000,
   catalogues: 989_500,
   styles: 292_300,
   fonts: 260_000,

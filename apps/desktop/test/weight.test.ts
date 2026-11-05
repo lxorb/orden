@@ -1275,8 +1275,14 @@ function holds(tail: string): boolean {
  *  Raised 2026-11-05, to 3,645,400 and 399 modules, for #1037: a split window keeps one top
  *  row, the strips of the panes along the top laid out in the bar over their panes on the
  *  panes' own grid (TopStrips.svelte, `topRow` and `tracks` in workspace/pane-tree.ts,
- *  Titlebar.svelte). Measured 3,644,325 in 398. */
-const BUDGET = 3_645_400
+ *  Titlebar.svelte). Measured 3,644,325 in 398.
+ *
+ *  Raised 2026-11-05, to 3,650,800, for #1038: each sidebar's button in the sidebar and the
+ *  right side out of the window's end edge as the file list comes out of the start one
+ *  (edge-peek.svelte.ts, Sidebar.svelte, SidebarToggle.svelte), the bar keeping the shut
+ *  side's button said and not shown, and the one hint about the edge (Titlebar.svelte).
+ *  Measured 3,649,797. */
+const BUDGET = 3_650_800
 const MOST_FILES = 399
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
