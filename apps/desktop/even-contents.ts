@@ -641,9 +641,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  Raised on 2026-11-05 for #1063, a find sheet that lists every answer in a window of
  *  rows (PromptSheet.svelte) and the applications' new words: the code to 6,129,300,
  *  measured 6,129,039.
+ *
+ *  Raised on 2026-11-05 for #331, a space carried over another pushing it aside and an
+ *  empty space's bubble of its own (overview/pack.ts, Overview.svelte): the code to
+ *  6,131,300, measured 6,130,968.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_129_300,
+  code: 6_131_300,
   catalogues: 1_010_800,
   styles: 292_400,
   fonts: 260_000,
