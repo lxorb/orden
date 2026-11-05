@@ -43,3 +43,57 @@ test('is seen while the keyboard is on it, and said again once it leaves', () =>
   flushSync()
   expect(toggle.classList.contains('nib-said')).toBe(true)
 })
+
+test('the drawer head and the bar on a phone both say it and do not show it', async () => {
+  Element.prototype.scrollIntoView = () => undefined
+  globalThis.ResizeObserver = class {
+    observe() {
+      // Nothing to measure.
+    }
+
+    unobserve() {
+      // Nothing to measure.
+    }
+
+    disconnect() {
+      // Nothing to measure.
+    }
+  }
+  const { viewport } = await import('../../src/lib/viewport.svelte')
+  const { fullscreen } = await import('../../src/lib/fullscreen.svelte')
+  const { default: Sidebar } = await import('../../src/lib/Sidebar.svelte')
+  const { default: Titlebar } = await import('../../src/lib/Titlebar.svelte')
+  workspace.spaces = [{ id: 'work', name: 'Work', root: '/spaces/Work' }]
+  workspace.activeSpaceId = 'work'
+  workspace.tabs = []
+  viewport.device = 'phone'
+  const host = document.createElement('div')
+  document.body.append(host)
+  const side = mount(Sidebar, { target: host, props: { side: 'left' } })
+  const bar = mount(Titlebar, { target: host, props: { onpalette: () => undefined } })
+  try {
+    workspace.showPanel('tree')
+    flushSync()
+    const inHead = host.querySelector<HTMLButtonElement>('.head [data-side-toggle="left"]')!
+    const inBar = host.querySelector<HTMLButtonElement>('header [data-side-toggle="left"]')!
+    expect(inHead.classList.contains('nib-said')).toBe(true)
+    expect(inHead.getAttribute('aria-label')).toBe('Hide left sidebar')
+    expect(inBar.classList.contains('nib-said')).toBe(true)
+
+    inHead.click()
+    flushSync()
+    expect(workspace.openOn('left')).toBeFalsy()
+
+    fullscreen.on = true
+    workspace.showPanel('tree')
+    flushSync()
+    expect(
+      host.querySelector('.head [data-side-toggle="left"]')?.classList.contains('nib-said'),
+    ).toBe(false)
+  } finally {
+    fullscreen.on = false
+    viewport.device = 'desktop'
+    void unmount(bar, { outro: false })
+    void unmount(side, { outro: false })
+  }
+})

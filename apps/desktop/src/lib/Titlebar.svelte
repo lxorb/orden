@@ -552,6 +552,10 @@
     padding-inline-end: var(--inset-end);
     /* A phone's own inset already steps this row in, and it is the larger of the
        two; the desktop's hairline would only fight it. */
+    padding-inline-start: calc(var(--inset-start) + (var(--row-height) - var(--icon-lg)) / 2);
+  }
+
+  :global([data-touch]) header:has(> :global([data-side-toggle='left']:not(.nib-said))) {
     padding-inline-start: var(--inset-start);
   }
 </style>

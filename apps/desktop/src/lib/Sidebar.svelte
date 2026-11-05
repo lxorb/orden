@@ -64,6 +64,7 @@
   import Bookmarks from './Bookmarks.svelte'
   import SidebarFoot from './SidebarFoot.svelte'
   import SidebarToggle from './SidebarToggle.svelte'
+  import { swipeOpens } from './swipe-opens'
   import SpaceSwitcher from './SpaceSwitcher.svelte'
   import { dropTarget } from './drop-target.svelte'
   import Tree from './Tree.svelte'
@@ -776,7 +777,7 @@
          only what is the window's. A panel docked by a finger, which has no edge to
          hover, leaves the bar's own button where it is and has none of its own. -->
         {#if viewport.drawer || (!viewport.touch && sideToggles.inside)}
-          <SidebarToggle />
+          <SidebarToggle unseen={swipeOpens()} />
         {/if}
 
         <!-- It takes the rest of the head, so the whole row is the control that

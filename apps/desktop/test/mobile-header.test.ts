@@ -52,7 +52,7 @@ describe('the button that opens the file list', () => {
     ] as const) {
       expect(text, `${name} draws the glyph again`).not.toContain(PANEL)
       expect(text, `${name} uses the component`).toMatch(
-        /<SidebarToggle( unseen=\{swiped \|\| \(!viewport\.touch && sideToggles\.inside\)\})? \/>/,
+        /<SidebarToggle unseen=\{(swiped \|\| \(!viewport\.touch && sideToggles\.inside\)|swipeOpens\(\))\} \/>/,
       )
     }
   })
@@ -66,6 +66,21 @@ describe('the button that opens the file list', () => {
       /\{#if !listless && \(viewport\.touch \|\| !sideToggles\.inside \|\| !workspace\.openOn\('left'\)\)\}\s*<SidebarToggle unseen=\{swiped \|\| \(!viewport\.touch && sideToggles\.inside\)\} \/>/,
     )
     expect(titlebar).toContain('!workspace.spaces.length && !workspace.tabs.length')
+  })
+
+  test('is said and not shown in the drawer head on the same condition as the bar', () => {
+    expect(sidebar).toContain("import { swipeOpens } from './swipe-opens'")
+    expect(sidebar.replace(/\s+/g, ' ')).toContain('<SidebarToggle unseen={swipeOpens()} />')
+  })
+
+  test("the bar's start steps in by a glyph's margin while its button is not seen", () => {
+    const style = titlebar.slice(titlebar.indexOf('<style>')).replace(/\s+/g, ' ')
+    expect(style).toContain(
+      'padding-inline-start: calc(var(--inset-start) + (var(--row-height) - var(--icon-lg)) / 2);',
+    )
+    expect(style).toContain(
+      ":global([data-touch]) header:has(> :global([data-side-toggle='left']:not(.nib-said))) { padding-inline-start: var(--inset-start); }",
+    )
   })
 
   /** On a phone, and a tablet held upright, a swipe from the edge pulls the list out, so
@@ -127,7 +142,7 @@ describe('the button that opens the file list', () => {
     const squeezed = sidebar.replace(/\s+/g, ' ')
 
     expect(squeezed).toContain(
-      '{#if viewport.drawer || (!viewport.touch && sideToggles.inside)} <SidebarToggle /> {/if}',
+      '{#if viewport.drawer || (!viewport.touch && sideToggles.inside)} <SidebarToggle unseen={swipeOpens()} /> {/if}',
     )
     expect(squeezed).toContain('{#if side === \'left\'} <div class="head"')
   })
