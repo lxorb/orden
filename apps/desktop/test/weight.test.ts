@@ -1304,8 +1304,12 @@ function holds(tail: string): boolean {
  *
  *  Raised on 2026-11-05, to 3,669,800, for #1137: how a page is layered with the window's
  *  HTML, `'under'` among them, said by the crate with every placement (`layering` in
- *  web-tab/pages.svelte.ts). Measured 3,669,495 in 398. */
-const BUDGET = 3_669_800
+ *  web-tab/pages.svelte.ts). Measured 3,669,495 in 398.
+ *
+ *  Raised on 2026-11-05, to 3,671,300, for #552: a spaces folder outside Orden's own is
+ *  asked about before the app mounts (main.ts, early.ts), and the line that says it was
+ *  taken in is asked for by App.svelte. Measured 3,670,963 in 398. */
+const BUDGET = 3_671_300
 const MOST_FILES = 399
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
