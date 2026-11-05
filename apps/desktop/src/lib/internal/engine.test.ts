@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto'
-import { afterEach, describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { hash32, seedUpdate } from '@orden/sync-core/seed'
 import { Clock, ReferenceAccount, SEEDED } from '@orden/sync-core/sim'
 import { frame, unframe } from '@orden/sync-core/wire'
@@ -14,7 +14,23 @@ import { readsAsText, webInvoke } from '../web/commands'
 import { mountRows } from '../web/store'
 import { InternalFolder } from './folder'
 import { MemoryBytes } from './memory'
+import { mountRoot } from './roots'
 import { internalRows } from './rows'
+
+// The crate's watcher and its scan, which a kept space is never handed to.
+const watch = vi.hoisted(() => ({ roots: [] as string[][], scans: [] as string[] }))
+vi.mock('../space-watch', () => ({
+  watchSpaces: (roots: string[]) => {
+    watch.roots.push(roots)
+    return Promise.resolve()
+  },
+  unwatchSpaces: () => Promise.resolve(),
+  scanSpace: (root: string) => {
+    watch.scans.push(root)
+    return Promise.resolve([])
+  },
+}))
+vi.mock('../notify', () => ({ notify: () => undefined }))
 
 /** The sync engine over a space Orden keeps itself (#1068, step 4c): its disk is the
  *  space's folder, reached through the same file commands every other caller uses, so a
@@ -26,7 +42,26 @@ const undo: (() => void)[] = []
 
 afterEach(() => {
   for (const one of undo.splice(0)) one()
+  watch.roots.length = 0
+  watch.scans.length = 0
 })
+
+/** Long enough for what a change sets going to have landed. */
+const settled = () => new Promise((resolve) => setTimeout(resolve, 30))
+
+/** A kept space at `root`, mounted for the commands and for `invoke`. */
+async function kept(root: string) {
+  const bytes = new MemoryBytes()
+  let keys = 0
+  const folder = await InternalFolder.open(root, bytes, {
+    now: () => 2000,
+    key: () => `k${String((keys += 1))}`,
+    foldsCase: true,
+  })
+  undo.push(mountRows(root, internalRows(folder, root, readsAsText)))
+  undo.push(mountRoot({ root, web: root, folder }))
+  return { bytes, folder }
+}
 
 /** The engine's disk as the app's world makes it (`diskOf` in sync2/app-world.ts): the
  *  file commands, which for a kept space are its folder's. */
@@ -110,15 +145,8 @@ async function device(account: ReferenceAccount, id: string, root: string, disk:
 describe('the engine over a space Orden keeps', () => {
   test('moves nothing for a rename another device made: the index alone, the same key', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
-    const bytes = new MemoryBytes()
-    let keys = 0
-    const folder = await InternalFolder.open('one', bytes, {
-      now: () => 2000,
-      key: () => `k${String((keys += 1))}`,
-      foldsCase: true,
-    })
     const root = '/internal-e'
-    undo.push(mountRows(root, internalRows(folder, root, readsAsText)))
+    const { bytes, folder } = await kept(root)
     const here = await device(account, 'd0', root, commandsDisk())
     const plan = SEEDED[0]
     if (!plan) throw new Error('no seed')
@@ -140,5 +168,78 @@ describe('the engine over a space Orden keeps', () => {
     expect(bytes.writes).toBe(written)
     expect(here.entryAt(`${root}/Done/Goals.md`)?.id).toBe(plan.id)
     expect(await webInvoke('read_note', { path: `${root}/Done/Goals.md` })).toBe(plan.text)
+  })
+
+  test('hears its folder in place of the crate: a file made, words written, a folder renamed', async () => {
+    const { watchFolders } = await import('../sync2/watching')
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const root = '/internal-w'
+    await kept(root)
+    const here = await device(account, 'd0', root, commandsDisk())
+    const moves: string[] = []
+    const watched = watchFolders({
+      engine: here,
+      ready: () => true,
+      changed: () => undefined,
+      moved: (from, to, kind) => {
+        moves.push(`${kind} ${from} -> ${to}`)
+        return Promise.resolve()
+      },
+    })
+    await settled()
+    // Never the crate's to watch or to list.
+    expect(watch.roots.flat()).not.toContain(root)
+    expect(watch.scans).toEqual([])
+
+    // Made through the commands by something that told nobody, an agent say.
+    await webInvoke('write_note', { path: `${root}/Work/Ideas.md`, content: 'eggs' })
+    await settled()
+    const ideas = here.entryAt(`${root}/Work/Ideas.md`)
+    expect(ideas?.kind).toBe('note')
+    expect((await here.core.doc(ideas?.id ?? ''))?.text()).toBe('eggs')
+
+    await webInvoke('write_note', { path: `${root}/Work/Ideas.md`, content: 'eggs and ham' })
+    await settled()
+    expect((await here.core.doc(ideas?.id ?? ''))?.text()).toBe('eggs and ham')
+
+    await webInvoke('rename_note', { from: `${root}/Work`, to: `${root}/Done` })
+    await settled()
+    expect(here.entryAt(`${root}/Done/Ideas.md`)?.id).toBe(ideas?.id)
+    expect(moves).toEqual([`folder ${root}/Work -> ${root}/Done`])
+    watched.stop()
+  })
+
+  test('is searched over its rows, and the held words follow every change', async () => {
+    const { searchInternal } = await import('./search')
+    const { parseQuery } = await import('../search/query')
+    const root = 'C:\\Orden\\Plans'
+    const { folder } = await kept('/internal-s')
+    undo.push(mountRoot({ root, web: '/internal-s', folder }))
+    await webInvoke('write_note', { path: '/internal-s/Work/Plan.md', content: 'ship the eggs' })
+
+    const hits = async (words: string) => {
+      const found: string[] = []
+      const query = parseQuery(words)
+      await searchInternal(
+        root,
+        query,
+        [],
+        50,
+        ({ hits }) => found.push(...hits.map((hit) => hit.path)),
+        [],
+      )
+      return found
+    }
+    expect(await hits('eggs')).toEqual([`${root}\\Work\\Plan.md`])
+
+    await webInvoke('write_note', { path: '/internal-s/Work/Plan.md', content: 'ship the ham' })
+    await settled()
+    expect(await hits('eggs')).toEqual([])
+    await webInvoke('rename_note', { from: '/internal-s/Work/Plan.md', to: '/internal-s/Ham.md' })
+    await settled()
+    expect(await hits('ham')).toEqual([`${root}\\Ham.md`])
+    expect(
+      await searchInternal('C:\\Elsewhere', parseQuery('ham'), [], 5, () => undefined, []),
+    ).toBe(false)
   })
 })

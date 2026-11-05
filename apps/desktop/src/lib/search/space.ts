@@ -11,7 +11,7 @@
  *  showing in the order the scores put it, and the scores are not all in until
  *  the space has been read. Both sides send them last; see fuzzy.ts. */
 
-import { invoke, isNative } from '../tauri'
+import { internal, invoke, isNative } from '../tauri'
 import type { FuzzyHit } from './fuzzy'
 import type { Hit } from './match'
 import type { Query } from './query'
@@ -66,6 +66,12 @@ export async function searchSpace(
     const { searchInWorker } = await import('../web/search-client')
     await searchInWorker(root, query, terms, limit, onFound, excluded)
     return
+  }
+
+  // A space Orden keeps itself is searched over its rows, as the browser's is (#1068).
+  if (internal.routed) {
+    const { searchInternal } = await import('../internal/search')
+    if (await searchInternal(root, query, terms, limit, onFound, excluded)) return
   }
 
   // The space's own inbox, which the crate's walk leaves out as hidden (#1044).

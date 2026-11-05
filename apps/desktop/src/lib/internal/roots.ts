@@ -82,6 +82,16 @@ const TRASH_COMMANDS = new Set([
   'purge_trash_older_than',
 ])
 
+/** The crate's commands that would stand in a space's folder on the disk, by the
+ *  argument that names it: a shell's folder, a handed PDF's landing, the inbox the Mac's
+ *  Shortcuts write into from the crate alone. None of them has a folder to stand in
+ *  for a kept space; internal/route.ts says what each does instead. */
+const ON_DISK: Record<string, string> = {
+  pty_spawn: 'folder',
+  bring_in_pdf: 'space',
+  remember_inbox: 'path',
+}
+
 /** The arguments a file command names a path in. */
 export const PATH_ARGS = ['path', 'root', 'from', 'to', 'notePath'] as const
 
@@ -89,6 +99,9 @@ export const PATH_ARGS = ['path', 'root', 'from', 'to', 'notePath'] as const
 export function forInternal(command: string, args?: Record<string, unknown>): boolean {
   if (!mounted.size) return false
   if (TRASH_COMMANDS.has(command)) return true
+  // What the crate would do in a kept space's folder on the disk, where there is none.
+  const named = ON_DISK[command]
+  if (named) return typeof args?.[named] === 'string' && !!mountOf(args[named])
   if (!FILE_COMMANDS.has(command) || !args) return false
   return PATH_ARGS.some((key) => {
     const value = args[key]

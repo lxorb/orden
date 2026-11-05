@@ -104,6 +104,16 @@ export async function internalInvoke<T>(
   args: Record<string, unknown> = {},
   mounts: readonly Mounted[] = mounted(),
 ): Promise<T> {
+  // A shell in a kept space starts where a shell starts with no folder: there is none
+  // on the disk to stand in, and its files are not files a shell could read.
+  if (command === 'pty_spawn') return crate<T>(command, { ...args, folder: null })
+  // The Mac's Shortcuts add a task from the crate alone, straight into the file the
+  // inbox is; a kept space's inbox is no file there, so the crate is not told of it and
+  // keeps the one it had.
+  if (command === 'remember_inbox') return undefined as T
+  if (command === 'bring_in_pdf') {
+    throw new Error('a PDF handed to Orden cannot be brought into a space it keeps itself yet')
+  }
   if (
     command === 'list_trash' ||
     command === 'restore_trash' ||

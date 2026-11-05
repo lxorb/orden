@@ -14,7 +14,7 @@
  *  space switch needs nothing said to either of them beyond this: the space being
  *  asked about is part of the question. */
 
-import { invoke, isNative } from '../tauri'
+import { internal, invoke, isNative } from '../tauri'
 import { startup } from '../startup.svelte'
 import { mark } from '../trace'
 import { isWarmth, type PapersHeld, said, type Warmth } from './warmth'
@@ -61,7 +61,13 @@ class Warm {
     // anything on screen waiting for it. A space that cannot be read is not a
     // failure to report: the next search reads what it can.
     mark('warm_search asked')
-    const found = await invoke<unknown>('warm_search', { root }).catch(() => null)
+    // A space Orden keeps itself is held here, on its rows, as the browser's is (#1068).
+    const kept = internal.routed
+      ? await import('../internal/search')
+          .then(({ warmInternal }) => warmInternal(root))
+          .catch(() => null)
+      : null
+    const found = kept ?? (await invoke<unknown>('warm_search', { root }).catch(() => null))
     mark('warm_search answered')
     if (this.root === root && isWarmth(found)) this.held = found
   }

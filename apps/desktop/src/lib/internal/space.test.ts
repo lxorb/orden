@@ -231,4 +231,22 @@ describe('the call to the crate, on a desktop', () => {
     expect(crate.calls.map((one) => one.command)).toContain('restore_trash')
     expect(await internalInvoke('purge_trash_older_than', { age: 0 }, all())).toBe(2)
   })
+
+  test('what the crate would do in a folder on the disk, it is not asked to do in a kept space', async () => {
+    const { internalInvoke } = await import('./route')
+    const { forInternal } = await import('./roots')
+    const { folder, root } = await mounted()
+    const all = () => [{ root, web: WEB, folder }]
+
+    expect(forInternal('pty_spawn', { folder: `${root}\\Work` })).toBe(true)
+    expect(forInternal('pty_spawn', { folder: 'C:\\Users\\me' })).toBe(false)
+    await internalInvoke('pty_spawn', { id: 't1', folder: `${root}\\Work` }, all())
+    expect(crate.calls).toEqual([{ command: 'pty_spawn', args: { id: 't1', folder: null } }])
+
+    await internalInvoke('remember_inbox', { path: `${root}\\.Inbox.md` }, all())
+    await expect(
+      internalInvoke('bring_in_pdf', { from: '/tmp/Paper.pdf', space: root }, all()),
+    ).rejects.toThrow('cannot be brought')
+    expect(crate.calls).toHaveLength(1)
+  })
 })

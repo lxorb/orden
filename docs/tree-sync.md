@@ -157,7 +157,17 @@ that would go from one such space to somewhere else is refused rather than made 
 crate, and so is any path in no mounted store, so a call site that was missed fails
 loudly instead of writing where nothing of the space is. The engine's disk is the same
 commands, so its moves are index lines too, and the first pass of such a space lists the
-index. Nothing mounts one yet.
+index.
+
+Nothing of the crate walks such a space (step 4c2): the engine hears its folder's own
+word on every change in place of the crate's watcher, and reads its index in place of
+the crate's listing when the watch begins (`hearInternal`, `listInternal`); the file
+list, the link scan and a PDF's highlights are the commands above; a search and the
+search held warm between two questions are the browser build's walk over the rows, on
+the window's thread, following the folder's word on every change (internal/search.ts).
+A shell is started where one with no folder starts, the Mac's Shortcuts keep adding to
+the inbox they had, and a PDF handed to Orden is refused there rather than written onto
+the disk at the space's address. Nothing mounts one yet.
 
 ## What is kept about an entry
 
