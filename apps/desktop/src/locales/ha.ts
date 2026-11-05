@@ -2464,6 +2464,10 @@ export const ha: Dictionary = {
   '{device} does not have this application.': '{device} ba shi da wannan manhaja.',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} ba zai iya fara manhajar Store a na’urar kwamfutarsa ta daban ba.',
+  'It was already open on {device}, and opened there instead.':
+    'Ta riga ta buɗe a {device}, don haka ta buɗe a can maimakon haka.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'A Windows, wasu wasanni da manhajojin da GPU ke zana ba sa nuna hoto.',
   'It did not start on {device}.': 'Bai fara a kan {device} ba.',
   'Start online machine': 'Kunna na’urar kan layi',
   'Stop online machine': 'Dakatar da na’urar kan layi',

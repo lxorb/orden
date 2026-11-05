@@ -42,8 +42,10 @@ missing_docs = "warn"
 # `kill(2)` on the process group of an application this computer hosts, which is how it
 # and everything it started are ended (src/apps_host.rs), and the memory its display's
 # picture is read through, shared with that display's X server (`mmap(2)` and
-# `munmap(2)`, src/apps_host/capture.rs); and on Windows what the Start menu lists, with
-# its icons (src/apps_host/installed/windows.rs). And a test's count of the steps SQLite took
+# `munmap(2)`, src/apps_host/capture.rs); and on Windows its desktop of its own, the
+# program started on it in a job, its windows placed, drawn and sent messages
+# (src/apps_host/desk.rs and desk/), and what the Start menu lists with its icons
+# (src/apps_host/installed/windows.rs). And a test's count of the steps SQLite took
 # over a chat's window (src/sync_store/chats.rs). None of
 # them has a safe wrapper to use instead, and anything new that wants unsafe has to
 # say so at the function and say why.
@@ -450,12 +452,14 @@ libc = "0.2"
 # A window's own X11 window, for what only the window manager is told: quick add
 # floated (linux.rs). In the lock file already, through the runtime's windowing.
 raw-window-handle = "0.6"
+
 # The picture of an application this computer hosts, sent peer to peer to the device
 # holding it (apps_host/stream.rs, issue 1063): WebRTC with no threads or sockets of its
 # own, its DTLS and SRTP in RustCrypto (`rust-crypto`), so no build links the system's
 # OpenSSL. Its DTLS certificate is made by rcgen on aws-lc-rs, which that backend asks for
-# and which is built from source by its own crate. Linux only, the one platform that
-# hosts an application yet.
+# and which is built from source by its own crate. Linux and Windows, the platforms that
+# host an application.
+[target.'cfg(any(target_os = "linux", target_os = "windows"))'.dependencies]
 str0m = { version = "0.25", default-features = false, features = ["rust-crypto"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
@@ -510,6 +514,10 @@ windows = { version = "0.58", features = [
   # decided as they lift and not before; see touchpad.rs.
   "Win32_UI_Input",
   "Win32_Devices_HumanInterfaceDevice",
+  # A desktop of its own for each application this computer hosts, its windows drawn
+  # with PrintWindow; see apps_host/desk.rs.
+  "Win32_System_StationsAndDesktops",
+  "Win32_Storage_Xps",
   # What the Start menu lists, for New application: its shortcuts read with the shell's
   # IShellLink, the Store's applications from its Apps folder, and each one's icon as
   # Explorer draws it; see apps_host/installed/windows.rs.

@@ -2524,6 +2524,10 @@ export const pl: Dictionary = {
   '{device} does not have this application.': '{device} nie ma tej aplikacji.',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} nie może uruchomić aplikacji ze Store na osobnym pulpicie.',
+  'It was already open on {device}, and opened there instead.':
+    'Była już otwarta na {device}, więc otworzyła się tam.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'W systemie Windows niektóre gry i aplikacje rysowane przez GPU nie pokazują obrazu.',
   'It did not start on {device}.': 'Nie uruchomiła się na {device}.',
   'Start online machine': 'Uruchom maszynę online',
   'Stop online machine': 'Zatrzymaj maszynę online',

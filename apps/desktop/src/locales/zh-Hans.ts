@@ -2366,6 +2366,10 @@ export const zhHans: Dictionary = {
   '{device} does not have this application.': '{device} 上没有此应用程序。',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} 无法在自己的桌面上启动 Store 应用程序。',
+  'It was already open on {device}, and opened there instead.':
+    '它已在 {device} 上打开，因此改为在那里打开。',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    '在 Windows 上，部分游戏和由 GPU 绘制的应用程序不显示画面。',
   'It did not start on {device}.': '未能在 {device} 上启动。',
   'Start online machine': '启动在线机器',
   'Stop online machine': '停止在线机器',

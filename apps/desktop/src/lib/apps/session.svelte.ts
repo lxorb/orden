@@ -87,6 +87,7 @@ type Blocked = 'signed-out' | 'syncing' | 'unsynced' | 'unserved' | 'unreachable
 interface Device {
   id: string
   name: string
+  platform?: string
 }
 
 /** As much of the relay's socket as the tab uses. */
@@ -162,8 +163,9 @@ const sessionWorld: SessionWorld = {
 export class AppSession {
   /** What the file says, once read. */
   file = $state<AppFile | null>(null)
-  /** The name of the device it runs on, once the account said it. */
+  /** The name of the device it runs on, once the account said it, and its system. */
   hostName = $state('')
+  hostPlatform = $state('')
   private damaged = $state(false)
   private blocked = $state<Blocked | null>(null)
   /** Whether the socket was not open by its deadline. */
@@ -397,6 +399,7 @@ export class AppSession {
     if (!listed) return
     const found = listed.find((one) => one.id === host)
     this.hostName = found?.name ?? ''
+    this.hostPlatform = found?.platform ?? ''
     this.hostListed = found !== undefined
   }
 

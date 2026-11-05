@@ -2550,6 +2550,10 @@ export const ar: Dictionary = {
   '{device} does not have this application.': 'لا يوجد هذا التطبيق على {device}.',
   '{device} cannot start a Store application on a desktop of its own.':
     'لا يمكن لـ {device} تشغيل تطبيق من Store على سطح مكتب خاص به.',
+  'It was already open on {device}, and opened there instead.':
+    'كان مفتوحًا بالفعل على {device}، ففُتح هناك بدلًا من ذلك.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'في Windows، لا تعرض بعض الألعاب والتطبيقات المرسومة بوحدة معالجة الرسومات أي صورة.',
   'It did not start on {device}.': 'لم يبدأ على {device}.',
   'Start online machine': 'تشغيل الجهاز عبر الإنترنت',
   'Stop online machine': 'إيقاف الجهاز عبر الإنترنت',

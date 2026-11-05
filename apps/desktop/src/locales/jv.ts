@@ -2411,6 +2411,10 @@ export const jv: Dictionary = {
   '{device} does not have this application.': '{device} ora duwé aplikasi iki.',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} ora bisa miwiti aplikasi Store ing desktop dhewe.',
+  'It was already open on {device}, and opened there instead.':
+    'Wis kebukak ing {device}, mula dibukak ing kono.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'Ing Windows, sawetara game lan aplikasi sing digambar GPU ora nuduhake gambar.',
   'It did not start on {device}.': 'Ora mlaku ing {device}.',
   'Start online machine': 'Wiwiti mesin online',
   'Stop online machine': 'Mandhegake mesin online',

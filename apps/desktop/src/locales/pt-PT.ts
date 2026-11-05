@@ -2492,6 +2492,10 @@ export const ptPT: Dictionary = {
   '{device} does not have this application.': '{device} não tem esta aplicação.',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} não consegue iniciar uma aplicação da Store num ambiente de trabalho próprio.',
+  'It was already open on {device}, and opened there instead.':
+    'Já estava aberta em {device} e abriu-se lá.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'No Windows, alguns jogos e aplicações desenhadas pela GPU não mostram imagem.',
   'It did not start on {device}.': 'Não arrancou em {device}.',
   'Start online machine': 'Iniciar máquina online',
   'Stop online machine': 'Parar máquina online',

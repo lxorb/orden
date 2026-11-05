@@ -24,6 +24,9 @@ mod macos;
 #[cfg(target_os = "windows")]
 mod windows;
 
+#[cfg(all(target_os = "windows", test))]
+pub use windows::arguments;
+
 use std::path::Path;
 
 use serde::Serialize;

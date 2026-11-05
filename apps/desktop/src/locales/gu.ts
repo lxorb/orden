@@ -2424,6 +2424,10 @@ export const gu: Dictionary = {
   '{device} does not have this application.': '{device} પાસે આ એપ્લિકેશન નથી.',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} પોતાના અલગ ડેસ્કટોપ પર Store એપ્લિકેશન શરૂ કરી શકતું નથી.',
+  'It was already open on {device}, and opened there instead.':
+    'તે પહેલેથી {device} પર ખુલ્લી હતી, તેથી તેના બદલે ત્યાં જ ખુલી.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'Windows પર કેટલીક ગેમ અને GPU થી દોરાતી એપ્લિકેશનો કોઈ ચિત્ર બતાવતી નથી.',
   'It did not start on {device}.': 'તે {device} પર શરૂ ન થઈ.',
   'Start online machine': 'ઑનલાઇન મશીન શરૂ કરો',
   'Stop online machine': 'ઑનલાઇન મશીન બંધ કરો',

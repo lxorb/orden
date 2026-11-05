@@ -384,6 +384,12 @@ jobs:
           sudo apt-get install -y libgtk-4-dev libdbus-1-dev cmake ninja-build pandoc xvfb ffmpeg pulseaudio pulseaudio-utils
           bash scripts/linux-cef.sh cef
 
+      # And ffmpeg on Windows, so a viewer in apps_host/stream.rs's tests gets the picture
+      # of an application on a desktop of its own (issue 1063).
+      - name: ffmpeg, on Windows
+        if: runner.os == 'Windows'
+        run: choco install ffmpeg -y --no-progress
+
       # Tauri's build script embeds the built frontend, so it has to exist
       # before the crate will even compile.
       - name: Frontend
@@ -408,6 +414,54 @@ jobs:
         run: |
           export LD_LIBRARY_PATH="$PWD/apps/desktop/src-tauri/target/debug${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
           cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
+
+  # An application hosted on Windows and shown in WebView2 (issue 1063): a probe build
+  # lists what the runner has installed, starts Notepad on a desktop of its own, takes
+  # its picture with WebView2's own WebRTC and types into it; see scripts/apps-drive.py.
+  # The picture it saw is kept as an artifact.
+  apps-windows:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    runs-on: windows-latest
+    timeout-minutes: 75
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    env:
+      IDENTIFIER: ch.emilvinu.nib.probe.apps
+      ROLLING: 'true'
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: ./.github/actions/desktop-setup
+        with:
+          target: x86_64-pc-windows-msvc
+
+      - name: ffmpeg
+        run: choco install ffmpeg -y --no-progress
+
+      # A probe build, as web-tab.yml makes one: a version no release passes and an
+      # updater pointed at nothing; see scripts/probe_app.py.
+      - name: The probe
+        run: |
+          source scripts/edge-profile.sh
+          config='{"identifier":"'"$IDENTIFIER"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
+          pnpm --filter @orden/desktop exec tauri build --target x86_64-pc-windows-msvc --no-bundle --config "$config"
+
+      - name: Notepad, hosted and shown
+        run: |
+          python scripts/apps-drive.py \
+            --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/nib.exe" \
+            --identifier "$IDENTIFIER" --shot apps-windows.png
+
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: apps-windows
+          path: apps-windows.png
+          if-no-files-found: ignore
 
   # Whether the phone's own half of the app changed. Its own job so the answer is
   # one `if` on the job below rather than one on each of its steps, and because

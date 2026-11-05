@@ -2463,6 +2463,10 @@ export const sw: Dictionary = {
   '{device} does not have this application.': '{device} haina programu hii.',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} haiwezi kuanzisha programu ya Store kwenye eneo-kazi lake lenyewe.',
+  'It was already open on {device}, and opened there instead.':
+    'Ilikuwa tayari wazi kwenye {device}, kwa hiyo ilifunguka huko badala yake.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'Kwenye Windows, baadhi ya michezo na programu zinazochorwa na GPU hazionyeshi picha.',
   'It did not start on {device}.': 'Haikuanza kwenye {device}.',
   'Start online machine': 'Washa mashine ya mtandaoni',
   'Stop online machine': 'Zima mashine ya mtandaoni',

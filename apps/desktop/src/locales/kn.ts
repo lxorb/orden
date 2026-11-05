@@ -2456,6 +2456,10 @@ export const kn: Dictionary = {
   '{device} does not have this application.': '{device}ನಲ್ಲಿ ಈ ಅಪ್ಲಿಕೇಶನ್ ಇಲ್ಲ.',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} ತನ್ನದೇ ಆದ ಡೆಸ್ಕ್‌ಟಾಪ್‌ನಲ್ಲಿ Store ಅಪ್ಲಿಕೇಶನ್ ಅನ್ನು ಪ್ರಾರಂಭಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.',
+  'It was already open on {device}, and opened there instead.':
+    'ಇದು ಈಗಾಗಲೇ {device}ನಲ್ಲಿ ತೆರೆದಿತ್ತು, ಆದ್ದರಿಂದ ಅಲ್ಲೇ ತೆರೆಯಿತು.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'Windows ನಲ್ಲಿ ಕೆಲವು ಗೇಮ್‌ಗಳು ಮತ್ತು GPU ಚಿತ್ರಿಸುವ ಅಪ್ಲಿಕೇಶನ್‌ಗಳು ಯಾವುದೇ ಚಿತ್ರವನ್ನು ತೋರಿಸುವುದಿಲ್ಲ.',
   'It did not start on {device}.': 'ಇದು {device}ನಲ್ಲಿ ಪ್ರಾರಂಭವಾಗಲಿಲ್ಲ.',
   'Start online machine': 'ಆನ್‌ಲೈನ್ ಯಂತ್ರವನ್ನು ಪ್ರಾರಂಭಿಸಿ',
   'Stop online machine': 'ಆನ್‌ಲೈನ್ ಯಂತ್ರವನ್ನು ನಿಲ್ಲಿಸಿ',

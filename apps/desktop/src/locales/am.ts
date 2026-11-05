@@ -2399,6 +2399,10 @@ export const am: Dictionary = {
   '{device} does not have this application.': '{device} ይህ መተግበሪያ የለውም።',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} በራሱ ዴስክቶፕ ላይ የStore መተግበሪያ ማስጀመር አይችልም።',
+  'It was already open on {device}, and opened there instead.':
+    'አስቀድሞ በ{device} ላይ ክፍት ነበር፣ በምትኩ እዚያ ተከፈተ።',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'በWindows ላይ አንዳንድ ጨዋታዎች እና በጂፒዩ የሚሳሉ መተግበሪያዎች ምስል አያሳዩም።',
   'It did not start on {device}.': 'በ{device} ላይ አልጀመረም።',
   'Start online machine': 'የመስመር ላይ ማሽን አስጀምር',
   'Stop online machine': 'የመስመር ላይ ማሽን አቁም',

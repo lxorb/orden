@@ -2431,6 +2431,10 @@ export const ur: Dictionary = {
   '{device} does not have this application.': '{device} پر یہ ایپلیکیشن نہیں ہے۔',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} اپنے الگ ڈیسک ٹاپ پر Store ایپلیکیشن شروع نہیں کر سکتا۔',
+  'It was already open on {device}, and opened there instead.':
+    'یہ پہلے ہی {device} پر کھلی ہوئی تھی، اس لیے وہیں کھل گئی۔',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'Windows پر کچھ گیمز اور GPU سے بننے والی ایپلیکیشنز کوئی تصویر نہیں دکھاتیں۔',
   'It did not start on {device}.': 'یہ {device} پر شروع نہیں ہوئی۔',
   'Start online machine': 'آن لائن مشین شروع کریں',
   'Stop online machine': 'آن لائن مشین روکیں',

@@ -199,6 +199,8 @@
         return t('{device} did not allow this program.', { device })
       case 'missing':
         return t('{device} does not have this application.', { device })
+      case 'handed':
+        return t('It was already open on {device}, and opened there instead.', { device })
       case 'packaged':
         return t('{device} cannot start a Store application on a desktop of its own.', {
           device,
@@ -435,6 +437,9 @@
   {/if}
   <div class="status" role="status" hidden={showing}>
     <p>{line}</p>
+    {#if status.is === 'here' && session.hostPlatform === 'windows' && status.state !== 'running'}
+      <p class="quiet">{t('On Windows, some games and GPU-drawn applications show no picture.')}</p>
+    {/if}
     {#if status.is === 'away'}
       <p class="quiet">{t('Orden must be open there, signed in, with developer mode on.')}</p>
     {:else if status.is === 'here' && status.unanswered}

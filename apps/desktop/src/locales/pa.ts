@@ -2437,6 +2437,10 @@ export const pa: Dictionary = {
   '{device} does not have this application.': '{device} ’ਤੇ ਇਹ ਐਪਲੀਕੇਸ਼ਨ ਨਹੀਂ ਹੈ।',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} ਆਪਣੇ ਵੱਖਰੇ ਡੈਸਕਟਾਪ ’ਤੇ Store ਐਪਲੀਕੇਸ਼ਨ ਸ਼ੁਰੂ ਨਹੀਂ ਕਰ ਸਕਦਾ।',
+  'It was already open on {device}, and opened there instead.':
+    'ਇਹ ਪਹਿਲਾਂ ਹੀ {device} ’ਤੇ ਖੁੱਲ੍ਹੀ ਸੀ, ਇਸ ਲਈ ਉੱਥੇ ਹੀ ਖੁੱਲ੍ਹ ਗਈ।',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'Windows ’ਤੇ ਕੁਝ ਗੇਮਾਂ ਅਤੇ GPU ਨਾਲ ਬਣਨ ਵਾਲੀਆਂ ਐਪਲੀਕੇਸ਼ਨਾਂ ਕੋਈ ਤਸਵੀਰ ਨਹੀਂ ਦਿਖਾਉਂਦੀਆਂ।',
   'It did not start on {device}.': 'ਇਹ {device} ’ਤੇ ਸ਼ੁਰੂ ਨਹੀਂ ਹੋਈ।',
   'Start online machine': 'ਔਨਲਾਈਨ ਮਸ਼ੀਨ ਸ਼ੁਰੂ ਕਰੋ',
   'Stop online machine': 'ਔਨਲਾਈਨ ਮਸ਼ੀਨ ਰੋਕੋ',

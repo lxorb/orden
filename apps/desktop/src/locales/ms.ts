@@ -2423,6 +2423,10 @@ export const ms: Dictionary = {
   '{device} does not have this application.': '{device} tiada aplikasi ini.',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} tidak dapat memulakan aplikasi Store pada desktopnya sendiri.',
+  'It was already open on {device}, and opened there instead.':
+    'Ia sudah terbuka pada {device}, jadi ia dibuka di sana.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'Pada Windows, sesetengah permainan dan aplikasi yang dilukis GPU tidak menunjukkan gambar.',
   'It did not start on {device}.': 'Ia tidak bermula pada {device}.',
   'Start online machine': 'Mulakan mesin dalam talian',
   'Stop online machine': 'Hentikan mesin dalam talian',

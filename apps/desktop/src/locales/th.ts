@@ -2385,6 +2385,10 @@ export const th: Dictionary = {
   '{device} does not have this application.': '{device} ไม่มีแอปพลิเคชันนี้',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} เริ่มแอปพลิเคชัน Store บนเดสก์ท็อปของตัวเองไม่ได้',
+  'It was already open on {device}, and opened there instead.':
+    'เปิดอยู่บน {device} แล้ว จึงเปิดบนเครื่องนั้นแทน',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'บน Windows เกมและแอปพลิเคชันที่ใช้ GPU วาดภาพบางตัวจะไม่แสดงภาพ',
   'It did not start on {device}.': 'ไม่ได้เริ่มทำงานบน {device}',
   'Start online machine': 'เปิดเครื่องออนไลน์',
   'Stop online machine': 'หยุดเครื่องออนไลน์',

@@ -2415,6 +2415,10 @@ export const ja: Dictionary = {
   '{device} does not have this application.': '{device} にはこのアプリケーションがありません。',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} は Store アプリケーションを専用のデスクトップで起動できません。',
+  'It was already open on {device}, and opened there instead.':
+    'すでに {device} で開いていたため、代わりにそこで開きました。',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'Windows では、一部のゲームや GPU で描画されるアプリケーションは画像が表示されません。',
   'It did not start on {device}.': '{device} で起動しませんでした。',
   'Start online machine': 'オンラインマシンを起動',
   'Stop online machine': 'オンラインマシンを停止',

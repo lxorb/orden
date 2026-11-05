@@ -2465,6 +2465,10 @@ export const ml: Dictionary = {
   '{device} does not have this application.': '{device}-ൽ ഈ ആപ്ലിക്കേഷൻ ഇല്ല.',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device}-ന് സ്വന്തം ഡെസ്ക്ടോപ്പിൽ Store ആപ്ലിക്കേഷൻ ആരംഭിക്കാൻ കഴിയില്ല.',
+  'It was already open on {device}, and opened there instead.':
+    'ഇത് ഇതിനകം {device}-ൽ തുറന്നിരുന്നു, അതിനാൽ പകരം അവിടെ തുറന്നു.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'Windows-ൽ ചില ഗെയിമുകളും GPU വരയ്ക്കുന്ന ആപ്ലിക്കേഷനുകളും ചിത്രമൊന്നും കാണിക്കില്ല.',
   'It did not start on {device}.': '{device}-ൽ ഇത് ആരംഭിച്ചില്ല.',
   'Start online machine': 'ഓൺലൈൻ മെഷീൻ ആരംഭിക്കുക',
   'Stop online machine': 'ഓൺലൈൻ മെഷീൻ നിർത്തുക',

@@ -2404,6 +2404,10 @@ export const vi: Dictionary = {
   '{device} does not have this application.': '{device} không có ứng dụng này.',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} không thể khởi động ứng dụng Store trên một màn hình nền riêng.',
+  'It was already open on {device}, and opened there instead.':
+    'Ứng dụng đã mở sẵn trên {device} nên được mở ở đó.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'Trên Windows, một số trò chơi và ứng dụng do GPU vẽ không hiển thị hình ảnh.',
   'It did not start on {device}.': 'Ứng dụng không khởi động trên {device}.',
   'Start online machine': 'Khởi động máy trực tuyến',
   'Stop online machine': 'Dừng máy trực tuyến',

@@ -2435,6 +2435,10 @@ export const ps: Dictionary = {
   '{device} does not have this application.': '{device} دا اپلیکیشن نه لري.',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} نشي کولای په خپل جلا ډیسکټاپ کې د Store اپلیکیشن پیل کړي.',
+  'It was already open on {device}, and opened there instead.':
+    'دا لا دمخه په {device} کې پرانیستل شوې وه، نو پر ځای یې هلته پرانیستل شوه.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'په Windows کې ځینې لوبې او هغه اپلیکیشنونه چې GPU یې انځوروي هېڅ انځور نه ښيي.',
   'It did not start on {device}.': 'پر {device} پیل نه شو.',
   'Start online machine': 'آنلاین ماشین پیل کړئ',
   'Stop online machine': 'آنلاین ماشین ودروئ',

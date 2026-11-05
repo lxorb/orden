@@ -214,6 +214,8 @@ zbus = { version = "5", default-features = false, features = ["async-io", "block
 x11rb = { version = "0.13", default-features = false, features = ["cursor", "damage", "randr", "resource_manager", "shape", "shm", "xfixes", "xinput", "xtest"] }
 libc = "0.2"
 raw-window-handle = "0.6"
+
+[target.'cfg(any(target_os = "linux", target_os = "windows"))'.dependencies]
 str0m = { version = "0.25", default-features = false, features = ["rust-crypto"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
@@ -262,6 +264,10 @@ windows = { version = "0.58", features = [
   # decided as they lift and not before; see touchpad.rs.
   "Win32_UI_Input",
   "Win32_Devices_HumanInterfaceDevice",
+  # A desktop of its own for each application this computer hosts, its windows drawn
+  # with PrintWindow; see apps_host/desk.rs.
+  "Win32_System_StationsAndDesktops",
+  "Win32_Storage_Xps",
   # What the Start menu lists, for New application: its shortcuts read with the shell's
   # IShellLink, the Store's applications from its Apps folder, and each one's icon as
   # Explorer draws it; see apps_host/installed/windows.rs.

@@ -2445,6 +2445,10 @@ export const gsw: Dictionary = {
   '{device} does not have this application.': '{device} hät die Aawändig nöd.',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} cha kei Store-Aawändig uf emene eigete Desktop starte.',
+  'It was already open on {device}, and opened there instead.':
+    'Si isch scho uf {device} offe gsi und isch stattdesse det ufgange.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'Under Windows zeiged es paar Spiel und GPU-zeichneti Aawändige kei Bild.',
   'It did not start on {device}.': 'Si isch uf {device} nöd gstartet.',
   'Start online machine': 'Online-Maschine starte',
   'Stop online machine': 'Online-Maschine stoppe',

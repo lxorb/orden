@@ -2446,6 +2446,10 @@ export const tr: Dictionary = {
   '{device} does not have this application.': '{device} cihazında bu uygulama yok.',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} bir Store uygulamasını kendi masaüstünde başlatamaz.',
+  'It was already open on {device}, and opened there instead.':
+    'Zaten {device} üzerinde açıktı, bu yüzden orada açıldı.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'Windows’ta bazı oyunlar ve GPU ile çizilen uygulamalar görüntü göstermez.',
   'It did not start on {device}.': '{device} üzerinde başlamadı.',
   'Start online machine': 'Çevrimiçi makineyi başlat',
   'Stop online machine': 'Çevrimiçi makineyi durdur',

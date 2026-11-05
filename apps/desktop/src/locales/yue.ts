@@ -2362,6 +2362,10 @@ export const yue: Dictionary = {
   '{device} does not have this application.': '{device} 冇呢個應用程式。',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} 冇辦法喺自己嘅桌面開 Store 應用程式。',
+  'It was already open on {device}, and opened there instead.':
+    '佢喺 {device} 度已經開咗，所以改為喺嗰度開。',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    '喺 Windows 上，部分遊戲同由 GPU 繪製嘅應用程式會冇畫面。',
   'It did not start on {device}.': '喺 {device} 度開唔到。',
   'Start online machine': '開啟網上機器',
   'Stop online machine': '停止網上機器',

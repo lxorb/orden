@@ -72,6 +72,8 @@ export class HostLink extends Channel<RelayToHost, HostFrame> {
 export interface Said {
   state: 'running' | 'stopped' | 'exited'
   code: number | null
+  /** Why it ended as it did, where the crate can tell: `handed`. */
+  why?: string
 }
 
 /** What the host asks of the crate, so a test can hand in its own. */
@@ -214,9 +216,10 @@ class Hosting {
       this.tell({ t: 'state', state: 'running' })
       return
     }
+    const why = NOT_STARTED.find((one) => one === said.why)
     this.tell(
       said.state === 'exited'
-        ? { t: 'state', state: 'exited', code: said.code }
+        ? { t: 'state', state: 'exited', code: said.code, ...(why ? { why } : {}) }
         : { t: 'state', state: 'stopped' },
     )
     if (this.restarting) {
@@ -414,8 +417,9 @@ async function appWorld(): Promise<{
     world: {
       device: deviceId,
       serves,
-      // Windows and macOS have no display of an application's own yet (step 8).
-      cannot: platform() === 'linux' ? null : 'isolation',
+      // Linux runs one on an Xvfb of its own, Windows on a desktop of its own; macOS has
+      // no such place yet (step 8).
+      cannot: platform() === 'linux' || platform() === 'windows' ? null : 'isolation',
       files: () => applicationFiles(untrack(() => workspace.tree)),
       read: (path) => native.invoke<string>('read_note', { path }).catch(() => null),
       idOf: (path) => idOf(path, Date.now() + 20_000),

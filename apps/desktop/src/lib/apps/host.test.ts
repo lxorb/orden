@@ -108,7 +108,8 @@ function world(
     links,
     asked,
     stop,
-    exits: (code: number) => tell?.({ state: 'exited', code }),
+    exits: (code: number, why?: string) =>
+      tell?.(why === undefined ? { state: 'exited', code } : { state: 'exited', code, why }),
     refuses: (reason: NonNullable<typeof why>) => {
       why = reason
     },
@@ -171,6 +172,17 @@ describe('an application’s host', () => {
 
     here.exits(3)
     expect(here.said.at(-1)).toEqual({ t: 'state', state: 'exited', code: 3 })
+
+    // Handed at once to a copy already open on the host's own screen (Windows), which is
+    // said; a reason the wire does not know is not.
+    heard?.({ t: 'run', what: 'start' })
+    await tick()
+    here.exits(0, 'handed')
+    expect(here.said.at(-1)).toEqual({ t: 'state', state: 'exited', code: 0, why: 'handed' })
+    heard?.({ t: 'run', what: 'start' })
+    await tick()
+    here.exits(0, 'something new')
+    expect(here.said.at(-1)).toEqual({ t: 'state', state: 'exited', code: 0 })
   })
 
   test('a start the crate refused is said with its reason', async () => {

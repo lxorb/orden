@@ -2397,6 +2397,10 @@ export const ko: Dictionary = {
   '{device} does not have this application.': '{device}에 이 애플리케이션이 없습니다.',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device}은(는) Store 애플리케이션을 자체 데스크톱에서 시작할 수 없습니다.',
+  'It was already open on {device}, and opened there instead.':
+    '이미 {device}에서 열려 있어서 대신 그곳에서 열렸습니다.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'Windows에서는 일부 게임과 GPU로 그리는 애플리케이션에 화면이 표시되지 않습니다.',
   'It did not start on {device}.': '{device}에서 시작되지 않았습니다.',
   'Start online machine': '온라인 머신 시작',
   'Stop online machine': '온라인 머신 중지',

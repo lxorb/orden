@@ -2523,6 +2523,10 @@ export const ru: Dictionary = {
   '{device} does not have this application.': 'На {device} нет этого приложения.',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} не может запустить приложение из Store на отдельном рабочем столе.',
+  'It was already open on {device}, and opened there instead.':
+    'Оно уже было открыто на {device} и открылось там.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'В Windows некоторые игры и приложения, отрисовываемые GPU, не показывают изображение.',
   'It did not start on {device}.': 'Не запустилось на {device}.',
   'Start online machine': 'Запустить онлайн-машину',
   'Stop online machine': 'Остановить онлайн-машину',

@@ -40,7 +40,7 @@
 use std::collections::VecDeque;
 use std::io::{self, Read, Write as _};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
-use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
+use std::process::{Child, ChildStdin, ChildStdout, Stdio};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::mpsc::{self, RecvTimeoutError, Sender};
 use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
@@ -252,7 +252,7 @@ impl Peer {
             sound,
             group,
         } = source;
-        if !super::installed::on_path("ffmpeg") {
+        if encoder::ffmpeg().is_none() {
             return Err(Cannot::Encoder);
         }
         let offer = SdpOffer::from_sdp_string(offer).map_err(|_| Cannot::Offer)?;
@@ -929,7 +929,7 @@ fn start_encoder(
     fps: u32,
 ) -> Option<Encoding> {
     let generation = inner.generation.fetch_add(1, Ordering::SeqCst) + 1;
-    let mut child = Command::new("ffmpeg")
+    let mut child = encoder::command()
         .args(encoder::encoder_args(chosen, size.0, size.1, fps))
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -1092,6 +1092,8 @@ fn ivf_frame(from: &mut impl Read) -> io::Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(target_os = "linux")]
+    use std::process::Command;
 
     fn ivf(frames: &[&[u8]]) -> Vec<u8> {
         let mut out = Vec::new();
@@ -1193,7 +1195,7 @@ mod tests {
 
     #[test]
     fn answers_no_offer_it_cannot_read() {
-        if !super::super::installed::on_path("ffmpeg") {
+        if encoder::ffmpeg().is_none() {
             return;
         }
         let screen = Arc::new(Mutex::new(Screen {
@@ -1271,16 +1273,14 @@ mod tests {
         /// A viewer that offers to take the display's picture and its sound, the
         /// host's peer that answered it, and the video's media and the audio's.
         fn connect(
-            display: &super::super::display::Display,
+            display: String,
+            clipboard: Option<Arc<Clipboard>>,
             sound: Option<String>,
         ) -> (Peer, Viewer, Mid, Mid) {
             use str0m::change::SdpAnswer;
             use str0m::media::Direction;
 
-            let screen = Arc::new(Mutex::new(Screen {
-                display: display.name(),
-                hz: 30.0,
-            }));
+            let screen = Arc::new(Mutex::new(Screen { display, hz: 30.0 }));
             let mut rtc = RtcConfig::new()
                 .set_crypto_provider(provider())
                 .build(Instant::now());
@@ -1297,7 +1297,7 @@ mod tests {
             let (peer, answer) = Peer::answer(
                 Source {
                     screen,
-                    clipboard: display.clipboard(),
+                    clipboard,
                     sound,
                     group: None,
                 },
@@ -1353,6 +1353,7 @@ mod tests {
         }
     }
 
+    #[cfg(target_os = "linux")]
     /// A viewer of `str0m`'s own, on the loopback, against a real Xvfb and ffmpeg. It
     /// connects with the answer and gets the display's picture as VP8, key frame first,
     /// and the pointer's shape, and moves the display's pointer over the data channel.
@@ -1379,7 +1380,7 @@ mod tests {
             return;
         }
         let display = super::super::display::Display::start(320, 240, 1.0).unwrap();
-        let (peer, mut viewer, mid, _) = Viewer::connect(&display, None);
+        let (peer, mut viewer, mid, _) = Viewer::connect(display.name(), None, None);
         let (x, number) = x11rb::connect(Some(display.name().as_str())).unwrap();
         let root = x.setup().roots[number].root;
         let pointer = || {
@@ -1489,6 +1490,7 @@ mod tests {
         drop(peer);
     }
 
+    #[cfg(target_os = "linux")]
     /// The clipboard over the picture's channel: nothing while the holder does not
     /// share it; shared, what the holder gives is what the application's paste gets, and
     /// what the application copies comes to the holder. CI installs Xvfb and ffmpeg;
@@ -1517,7 +1519,7 @@ mod tests {
             return;
         }
         let display = super::super::display::Display::start(320, 240, 1.0).unwrap();
-        let (peer, mut viewer, _, _) = Viewer::connect(&display, None);
+        let (peer, mut viewer, _, _) = Viewer::connect(display.name(), display.clipboard(), None);
         let (x, number) = x11rb::connect(Some(display.name().as_str())).unwrap();
         let root = x.setup().roots[number].root;
         let atoms = super::super::clipboard::Atoms::new(&x)
@@ -1639,6 +1641,7 @@ mod tests {
         drop(peer);
     }
 
+    #[cfg(target_os = "linux")]
     /// A sound server for the test: the one there is, or one started for it where
     /// `pulseaudio` is installed (CI installs it), in a folder of its own.
     fn sound_server() -> Option<std::process::Child> {
@@ -1681,6 +1684,7 @@ mod tests {
         Some(server)
     }
 
+    #[cfg(target_os = "linux")]
     /// The application's sound reaches a viewer that offers to take it, as Opus. CI
     /// installs Xvfb, ffmpeg and `PulseAudio`; elsewhere the test says nothing without
     /// them.
@@ -1723,7 +1727,8 @@ mod tests {
             .unwrap();
 
         let display = super::super::display::Display::start(320, 240, 1.0).unwrap();
-        let (peer, mut viewer, _, heard) = Viewer::connect(&display, Some(monitor));
+        let (peer, mut viewer, _, heard) =
+            Viewer::connect(display.name(), display.clipboard(), Some(monitor));
         let packets = std::cell::Cell::new(0);
         let came = viewer.run(
             Duration::from_secs(30),
@@ -1747,6 +1752,7 @@ mod tests {
         }
     }
 
+    #[cfg(target_os = "linux")]
     /// The latency benchmark (step 9): from something drawn on the display to its frame
     /// arriving at a viewer on the loopback - reading, encoding, sending, receiving, the
     /// part of glass to glass that is the host's and the network's - and the frames of an
@@ -1773,7 +1779,7 @@ mod tests {
             return;
         }
         let display = super::super::display::Display::start(640, 400, 1.0).unwrap();
-        let (peer, mut viewer, _, _) = Viewer::connect(&display, None);
+        let (peer, mut viewer, _, _) = Viewer::connect(display.name(), display.clipboard(), None);
         let (x, number) = x11rb::connect(Some(display.name().as_str())).unwrap();
         let root = x.setup().roots[number].root;
         let pen = x.generate_id().unwrap();
@@ -1852,5 +1858,124 @@ mod tests {
         );
         drop(times);
         drop(peer);
+    }
+
+    /// Notepad on a desktop of its own, seen by a viewer of `str0m`'s own on the loopback
+    /// (step 8): its picture comes as VP8, key frame first; a click and text played over
+    /// the data channel type into it, and nothing of it is on the reader's desktop. CI
+    /// installs ffmpeg on Windows; elsewhere the test says nothing without it.
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn a_viewer_gets_the_picture_of_a_desktop_of_its_own_and_types_into_it() {
+        use super::super::desk;
+
+        let notepad = std::path::PathBuf::from(std::env::var("SystemRoot").unwrap())
+            .join("System32\\notepad.exe");
+        if encoder::ffmpeg().is_none() || !notepad.is_file() {
+            assert!(
+                std::env::var_os("CI").is_none(),
+                "CI installs ffmpeg for this test"
+            );
+            return;
+        }
+        let desktop = desk::Desktop::start(640, 480).unwrap();
+        let program = desktop
+            .run(
+                &[notepad.to_string_lossy().into_owned()],
+                &std::env::temp_dir(),
+            )
+            .unwrap();
+        let (peer, mut viewer, _, _) = Viewer::connect(desktop.name(), None, None);
+        let frames = std::cell::RefCell::new(Vec::<Vec<u8>>::new());
+        let channel = std::cell::Cell::new(None);
+        let connected = viewer.run(
+            Duration::from_secs(30),
+            |_, event| match event {
+                Event::ChannelOpen(id, _) => channel.set(Some(id)),
+                Event::MediaData(data) => frames.borrow_mut().push(data.data.to_vec()),
+                _ => {}
+            },
+            || channel.get().is_some() && frames.borrow().iter().any(|one| vp8(one).1.is_some()),
+        );
+        assert!(connected, "{} frames came", frames.borrow().len());
+        assert!(vp8(&frames.borrow()[0]).0, "the first frame is a key frame");
+
+        let id = channel.get().unwrap();
+        for said in [
+            r#"{"t":"move","x":320,"y":240}"#,
+            r#"{"t":"button","button":0,"down":true}"#,
+            r#"{"t":"button","button":0,"down":false}"#,
+            r#"{"t":"text","text":"hello from afar"}"#,
+        ] {
+            viewer
+                .rtc
+                .channel(id)
+                .unwrap()
+                .write(false, said.as_bytes())
+                .unwrap();
+            viewer.run(Duration::from_millis(200), |_, _| {}, || false);
+        }
+        let desk = desk::desk(&desktop.name()).unwrap();
+        let typed = std::thread::spawn(move || {
+            desk.enter().unwrap();
+            let until = Instant::now() + Duration::from_secs(10);
+            while Instant::now() < until {
+                if desk::shown()
+                    .into_iter()
+                    .any(|one| text_in(one).contains("hello from afar"))
+                {
+                    return true;
+                }
+                std::thread::sleep(Duration::from_millis(100));
+            }
+            false
+        })
+        .join()
+        .unwrap();
+        assert!(typed, "the text did not reach notepad");
+        assert!(!peer.ended());
+        drop(peer);
+        // Typed into, it would ask whether to save before it closed: ended instead.
+        desk::kill(program.pid());
+        let _ = program.wait();
+    }
+
+    /// The text of a window and of its children, as each answers `WM_GETTEXT`.
+    #[cfg(target_os = "windows")]
+    #[allow(unsafe_code, reason = "a window's text is asked with Win32 messages")]
+    fn text_in(window: windows::Win32::Foundation::HWND) -> String {
+        use windows::core::PCWSTR;
+        use windows::Win32::Foundation::{HWND, LPARAM, WPARAM};
+        use windows::Win32::UI::WindowsAndMessaging::{
+            FindWindowExW, SendMessageTimeoutW, SMTO_ABORTIFHUNG, WM_GETTEXT,
+        };
+
+        let mut all = String::new();
+        let mut child = HWND::default();
+        for _ in 0..64 {
+            // SAFETY: windows of a desktop this thread is on; a buffer of the size said.
+            unsafe {
+                child = FindWindowExW(window, child, PCWSTR::null(), PCWSTR::null())
+                    .unwrap_or_default();
+                if child.is_invalid() {
+                    break;
+                }
+                let mut buffer = [0_u16; 4096];
+                let mut length = 0_usize;
+                SendMessageTimeoutW(
+                    child,
+                    WM_GETTEXT,
+                    WPARAM(buffer.len()),
+                    LPARAM(buffer.as_mut_ptr() as isize),
+                    SMTO_ABORTIFHUNG,
+                    2000,
+                    Some(&raw mut length),
+                );
+                all.push_str(&String::from_utf16_lossy(
+                    &buffer[..length.min(buffer.len())],
+                ));
+            }
+        }
+        all
     }
 }

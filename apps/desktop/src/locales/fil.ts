@@ -2480,6 +2480,10 @@ export const fil: Dictionary = {
   '{device} does not have this application.': 'Wala sa {device} ang application na ito.',
   '{device} cannot start a Store application on a desktop of its own.':
     'Hindi makapagsimula ang {device} ng Store application sa sarili nitong desktop.',
+  'It was already open on {device}, and opened there instead.':
+    'Bukas na ito sa {device}, kaya doon na lang ito nabuksan.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'Sa Windows, may mga laro at application na iginuguhit ng GPU na walang ipinapakitang larawan.',
   'It did not start on {device}.': 'Hindi ito nagsimula sa {device}.',
   'Start online machine': 'Simulan ang online na makina',
   'Stop online machine': 'Ihinto ang online na makina',

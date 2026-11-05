@@ -2434,6 +2434,10 @@ export const fa: Dictionary = {
   '{device} does not have this application.': '{device} این برنامه را ندارد.',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} نمی‌تواند برنامه‌ای از Store را روی دسکتاپ جداگانهٔ خود اجرا کند.',
+  'It was already open on {device}, and opened there instead.':
+    'قبلاً روی {device} باز بود و به‌جای آن همان‌جا باز شد.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'در Windows، برخی بازی‌ها و برنامه‌هایی که با GPU رسم می‌شوند تصویری نشان نمی‌دهند.',
   'It did not start on {device}.': 'روی {device} شروع نشد.',
   'Start online machine': 'روشن کردن ماشین آنلاین',
   'Stop online machine': 'خاموش کردن ماشین آنلاین',

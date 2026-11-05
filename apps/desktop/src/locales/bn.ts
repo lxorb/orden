@@ -2431,6 +2431,10 @@ export const bn: Dictionary = {
   '{device} does not have this application.': '{device}-এ এই অ্যাপ্লিকেশনটি নেই।',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} নিজের ডেস্কটপে Store অ্যাপ্লিকেশন চালু করতে পারে না।',
+  'It was already open on {device}, and opened there instead.':
+    'এটি আগে থেকেই {device}-এ খোলা ছিল, তাই সেখানেই খুলেছে।',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'Windows-এ কিছু গেম ও জিপিইউ-আঁকা অ্যাপ্লিকেশন কোনো ছবি দেখায় না।',
   'It did not start on {device}.': '{device}-এ এটি চালু হয়নি।',
   'Start online machine': 'অনলাইন মেশিন চালু করুন',
   'Stop online machine': 'অনলাইন মেশিন বন্ধ করুন',

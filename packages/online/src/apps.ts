@@ -47,8 +47,10 @@ const APP_STATES: readonly AppState[] = ['stopped', 'starting', 'running', 'exit
  *  give an application a display of its own yet (macOS), the display server it needs is
  *  not installed (Xvfb), the reader at the host said no to a program by its path, what
  *  the file names is not on the host, it is a Store application that Windows starts only
- *  on the reader's own desktop (`packaged`), or it failed to start. */
-export type NotStarted = 'isolation' | 'display' | 'refused' | 'missing' | 'packaged' | 'failed'
+ *  on the reader's own desktop (`packaged`), it handed itself at once to a copy already
+ *  open on the host's own screen (`handed`, with `exited`), or it failed to start. */
+export type NotStarted =
+  'isolation' | 'display' | 'refused' | 'missing' | 'packaged' | 'handed' | 'failed'
 
 /** Every reason, as the wire reads them. */
 export const NOT_STARTED: readonly NotStarted[] = [
@@ -57,6 +59,7 @@ export const NOT_STARTED: readonly NotStarted[] = [
   'refused',
   'missing',
   'packaged',
+  'handed',
   'failed',
 ]
 

@@ -295,6 +295,36 @@ it. Developer mode only. The step plan is on the issue; this says what has lande
   processes are the web engine's (CEF, WebView2, WebKit each count them their own way) and
   are sequenced with the owners of that code.
 
+## Windows: a desktop of its own (step 8)
+
+- **Where it runs**: a desktop made with `CreateDesktopW` in the session's window station and
+  never switched to (`apps_host/desk.rs`). No screen shows it, nothing on it takes the reader's
+  focus, and the reader's mouse and keyboard never reach it. The program starts on it
+  (`STARTUPINFO.lpDesktop`) in a job object, so everything it starts is there too and ends
+  with it; Stop asks its windows to close and ends the job after 3 s.
+- **Its windows fill the view**: a thread on the desktop places each window as it comes, a
+  main window at the holder's size, a dialog centred, and again when the view changes.
+- **Its picture** (`desk/capture.rs`): each window drawn with `PrintWindow`
+  (`PW_RENDERFULLCONTENT`), the back one first, onto a canvas of the view, about 30 times a
+  second and compared with the last, so a still application sends nothing. The encoder and the
+  WebRTC path are Linux's (`stream.rs`, `encoder.rs`), with AMD's `h264_amf` among the hardware
+  encoders; ffmpeg is found on `PATH` or where winget links it, and started with no console.
+- **Its input** (`desk/input.rs`): posted to the window it is for by a thread on the desktop.
+  The pointer to the deepest window under it, a double click where the window asks for one,
+  the wheel at 120 a click; a character as `WM_CHAR`, so the holder's layout decides it; a
+  shortcut as a key press with the held modifiers set in the application's keyboard state.
+- **Its limits**, said in the tab: a Store application cannot be started on another desktop
+  (`packaged`); an application already open on the host often hands itself to that copy and
+  opens there (`handed`); some GPU-drawn applications give `PrintWindow` no picture, and those
+  that read raw input do not hear the holder's keys. The clipboard and sound are the session's,
+  the reader's own at the host, so neither goes to the holder there yet.
+- **Checked on CI**: the crate's tests start Notepad on a desktop of its own, see it fill the
+  view, draw it, and have a `str0m` viewer get its picture and type into it; and
+  `scripts/apps-drive.py`, in check.yml's `apps-windows`, does the same from a probe build's
+  WebView2 with its own `RTCPeerConnection`, and keeps the picture it saw.
+- **macOS** still says it cannot run an application on a display of its own yet; its way
+  (ScreenCaptureKit on a `CGVirtualDisplay`) is researched in the issue.
+
 ## Agents (step 7)
 
 An agent uses an application through its tab: `application_tabs` (docs/agent-native.md 8.18),

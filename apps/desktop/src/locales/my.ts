@@ -2414,6 +2414,10 @@ export const my: Dictionary = {
   '{device} does not have this application.': '{device} တွင် ဤအက်ပလီကေးရှင်း မရှိပါ။',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} သည် ကိုယ်ပိုင် ဒက်စ်တော့ပေါ်တွင် Store အက်ပလီကေးရှင်းကို မစတင်နိုင်ပါ။',
+  'It was already open on {device}, and opened there instead.':
+    '၎င်းသည် {device} တွင် ဖွင့်ထားပြီးဖြစ်သဖြင့် ထိုနေရာတွင်ပင် ပွင့်သွားသည်။',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'Windows တွင် ဂိမ်းအချို့နှင့် GPU ဖြင့်ဆွဲသော အပလီကေးရှင်းအချို့သည် ပုံမပြပါ။',
   'It did not start on {device}.': '{device} ပေါ်တွင် မစတင်ခဲ့ပါ။',
   'Start online machine': 'အွန်လိုင်း စက်ကို စတင်ရန်',
   'Stop online machine': 'အွန်လိုင်း စက်ကို ရပ်ရန်',

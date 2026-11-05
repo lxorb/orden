@@ -17,6 +17,7 @@
 //! when the viewer asks for one - its picture broken by a loss on the way - and, as a
 //! net under that, after ten seconds' worth of frames.
 
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::sync::OnceLock;
 use std::time::{Duration, Instant};
@@ -40,6 +41,8 @@ pub enum Hardware {
     Qsv,
     /// NVIDIA's.
     Nvenc,
+    /// AMD's, on Windows.
+    Amf,
 }
 
 /// One of ffmpeg's encoders.
@@ -52,10 +55,11 @@ pub struct Encoder {
 
 /// Every encoder tried, best first: hardware before software, and within the hardware
 /// H.264 first, which every GPU of the last ten years has.
-pub const ALL: [Encoder; 7] = [
+pub const ALL: [Encoder; 8] = [
     one("h264_nvenc", Made::H264, Hardware::Nvenc),
     one("h264_vaapi", Made::H264, Hardware::Vaapi),
     one("h264_qsv", Made::H264, Hardware::Qsv),
+    one("h264_amf", Made::H264, Hardware::Amf),
     one("vp9_vaapi", Made::Vp9, Hardware::Vaapi),
     one("vp9_qsv", Made::Vp9, Hardware::Qsv),
     one("vp8_vaapi", Made::Vp8, Hardware::Vaapi),
@@ -103,7 +107,38 @@ pub fn working() -> &'static [Encoder] {
     })
 }
 
-/// Whether an encoder makes one frame of a test picture.
+/// Where ffmpeg is: on `PATH`, or where winget puts the links to what it installs, which
+/// a window started before the install has no `PATH` for yet.
+pub fn ffmpeg() -> Option<PathBuf> {
+    static FOUND: OnceLock<Option<PathBuf>> = OnceLock::new();
+    FOUND
+        .get_or_init(|| {
+            super::installed::which("ffmpeg").or_else(|| {
+                let links = PathBuf::from(std::env::var_os("LOCALAPPDATA")?)
+                    .join("Microsoft\\WinGet\\Links\\ffmpeg.exe");
+                (cfg!(windows) && links.is_file()).then_some(links)
+            })
+        })
+        .clone()
+}
+
+/// ffmpeg, to be started: with no console window of its own on Windows.
+pub fn command() -> Command {
+    let command = Command::new(ffmpeg().unwrap_or_else(|| PathBuf::from("ffmpeg")));
+    #[cfg(windows)]
+    let command = {
+        use std::os::windows::process::CommandExt as _;
+        /// `CREATE_NO_WINDOW`.
+        const NO_WINDOW: u32 = 0x0800_0000;
+        let mut command = command;
+        command.creation_flags(NO_WINDOW);
+        command
+    };
+    command
+}
+
+/// Whether an encoder makes one frame of a test picture, told everything a picture's
+/// encoder is told: an option it does not take is an encoder that does not work.
 fn works(encoder: Encoder) -> bool {
     if encoder.hardware == Hardware::Vaapi && !std::path::Path::new(RENDER_NODE).exists() {
         return false;
@@ -111,8 +146,10 @@ fn works(encoder: Encoder) -> bool {
     let mut args = device_args(encoder.hardware);
     args.extend(words("-f lavfi -i testsrc=size=320x240:rate=1 -frames:v 1"));
     args.extend(upload_args(encoder.hardware));
-    args.extend(["-c:v", encoder.name, "-f", "null", "-"].map(str::to_owned));
-    let Ok(mut child) = Command::new("ffmpeg")
+    args.extend(["-c:v".to_owned(), encoder.name.to_owned()]);
+    args.extend(tuning_args(encoder, 1));
+    args.extend(["-f", "null", "-"].map(str::to_owned));
+    let Ok(mut child) = command()
         .args(["-hide_banner", "-loglevel", "quiet", "-nostdin"])
         .args(&args)
         .stdin(Stdio::null())
@@ -151,7 +188,7 @@ fn device_args(hardware: Hardware) -> Vec<String> {
             "va",
         ],
         Hardware::Qsv => &["-init_hw_device", "qsv=hw", "-filter_hw_device", "hw"],
-        Hardware::Nvenc | Hardware::None => &[],
+        Hardware::Nvenc | Hardware::Amf | Hardware::None => &[],
     };
     words.iter().map(|&one| one.to_owned()).collect()
 }
@@ -162,7 +199,7 @@ fn upload_args(hardware: Hardware) -> Vec<String> {
     let words: &[&str] = match hardware {
         Hardware::Vaapi => &["-vf", "format=nv12,hwupload"],
         Hardware::Qsv => &["-vf", "format=nv12,hwupload=extra_hw_frames=16"],
-        Hardware::Nvenc | Hardware::None => &["-pix_fmt", "yuv420p"],
+        Hardware::Nvenc | Hardware::Amf | Hardware::None => &["-pix_fmt", "yuv420p"],
     };
     words.iter().map(|&one| one.to_owned()).collect()
 }
@@ -217,6 +254,14 @@ fn tuning_args(encoder: Encoder, threads: usize) -> Vec<String> {
             "0",
             "-profile:v",
             "baseline",
+        ],
+        "h264_amf" => &[
+            "-usage",
+            "ultralowlatency",
+            "-quality",
+            "speed",
+            "-profile:v",
+            "constrained_baseline",
         ],
         "vp9_qsv" | "vp9_vaapi" | "vp8_vaapi" => &["-async_depth", "1"],
         _ => &[],
@@ -350,8 +395,9 @@ mod tests {
 
     #[test]
     fn takes_hardware_the_viewer_decodes_and_vp8_in_software_otherwise() {
-        let nvenc = ALL[0];
-        let vp9 = ALL[3];
+        let named = |name: &str| *ALL.iter().find(|one| one.name == name).unwrap();
+        let nvenc = named("h264_nvenc");
+        let vp9 = named("vp9_vaapi");
         // A Mac's viewer offers H.264; Orden's CEF does not.
         assert_eq!(
             chosen(&[nvenc, vp9, SOFTWARE], &[Made::Vp8, Made::H264]),

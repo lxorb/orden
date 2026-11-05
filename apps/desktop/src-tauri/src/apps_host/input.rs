@@ -23,7 +23,6 @@
 
 use std::collections::HashMap;
 
-use serde::Deserialize;
 use x11rb::connection::Connection as _;
 use x11rb::protocol::xproto::{
     ConnectionExt as _, Keycode, Keysym, Window, BUTTON_PRESS_EVENT, BUTTON_RELEASE_EVENT,
@@ -32,34 +31,7 @@ use x11rb::protocol::xproto::{
 use x11rb::protocol::xtest::ConnectionExt as _;
 use x11rb::rust_connection::RustConnection;
 
-/// One thing the holder did, as its tab sends it.
-#[derive(Debug, Deserialize, PartialEq)]
-#[serde(tag = "t", rename_all = "lowercase")]
-pub enum InputEvent {
-    /// The pointer, at a point of the display in its own pixels.
-    Move { x: f64, y: f64 },
-    /// A button pressed or let go: 0 the main one, 1 the middle, 2 the other, as a
-    /// `PointerEvent`'s `button` says.
-    Button { button: u8, down: bool },
-    /// The wheel, in clicks: down and right are positive.
-    Wheel { x: i32, y: i32 },
-    /// A key pressed or let go: the character it gave or its name (`KeyboardEvent.key`),
-    /// and the key it was (`KeyboardEvent.code`).
-    Key {
-        key: String,
-        code: String,
-        down: bool,
-    },
-    /// Text an input method made, typed character by character.
-    Text { text: String },
-    /// The holder's clipboard, given to the application's next paste (step 6;
-    /// `clipboard.rs`, not played here).
-    Clipboard { text: String },
-    /// Whether the holder shares its clipboard with the application (step 6).
-    Share { clipboard: bool },
-    /// The tab's ping, to set its clock beside the host's (step 9; `stream.rs`).
-    Ping { at: f64 },
-}
+pub use super::events::InputEvent;
 
 /// The most characters one message of text types.
 const MOST_TEXT: usize = 1000;

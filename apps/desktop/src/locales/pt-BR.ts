@@ -2479,6 +2479,10 @@ export const ptBR: Dictionary = {
   '{device} does not have this application.': '{device} não tem este aplicativo.',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} não consegue iniciar um aplicativo da Store em uma área de trabalho própria.',
+  'It was already open on {device}, and opened there instead.':
+    'Ele já estava aberto em {device} e foi aberto lá.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'No Windows, alguns jogos e aplicativos desenhados pela GPU não mostram imagem.',
   'It did not start on {device}.': 'Não iniciou em {device}.',
   'Start online machine': 'Iniciar máquina online',
   'Stop online machine': 'Parar máquina online',

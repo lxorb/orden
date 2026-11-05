@@ -41,7 +41,7 @@
 //! and text goes between its clipboard and the holder's while the holder shares it
 //! (`clipboard.rs`).
 
-#![cfg_attr(not(target_os = "linux"), allow(dead_code))]
+#![cfg_attr(not(any(target_os = "linux", target_os = "windows")), allow(dead_code))]
 
 #[cfg(target_os = "linux")]
 mod audio;
@@ -49,19 +49,27 @@ mod audio;
 mod capture;
 #[cfg(target_os = "linux")]
 mod clipboard;
+#[cfg(target_os = "windows")]
+mod desk;
 #[cfg(target_os = "linux")]
 mod display;
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 mod encoder;
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+mod events;
 #[cfg(target_os = "linux")]
 mod input;
 mod installed;
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 mod stream;
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 mod stun;
 #[cfg(target_os = "linux")]
 mod wm;
+
+// Windows' desktop of its own stands where Linux's display does, with the same faces.
+#[cfg(target_os = "windows")]
+use desk::{audio, capture, clipboard, input};
 
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -121,6 +129,27 @@ pub struct Screen {
 pub struct Said {
     pub state: &'static str,
     pub code: Option<i32>,
+    /// Why it ended as it did, where that can be told: `handed`, an application that
+    /// handed itself to a copy already running on the reader's desktop at once.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub why: Option<&'static str>,
+}
+
+impl Said {
+    const RUNNING: Said = Said {
+        state: "running",
+        code: None,
+        why: None,
+    };
+
+    /// It ended: stopped, or by itself with its code.
+    fn ended(stopped: bool, code: Option<i32>) -> Said {
+        Said {
+            state: if stopped { "stopped" } else { "exited" },
+            code: if stopped { None } else { code },
+            why: None,
+        }
+    }
 }
 
 /// One application running.
@@ -139,6 +168,9 @@ struct Running {
     /// Its sink on the sound server, where there is one; gone with it too.
     #[cfg(target_os = "linux")]
     sink: Mutex<Option<audio::Sink>>,
+    /// Its desktop of its own, made the holder's size; gone once the application is.
+    #[cfg(target_os = "windows")]
+    desktop: Mutex<Option<desk::Desktop>>,
 }
 
 impl Running {
@@ -160,7 +192,7 @@ impl Running {
 pub struct Hosted {
     apps: Mutex<HashMap<String, Arc<Running>>>,
     allowed: Mutex<Option<HashSet<String>>>,
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     peers: Mutex<HashMap<String, stream::Peer>>,
 }
 
@@ -171,7 +203,7 @@ impl Hosted {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     fn peers(&self) -> MutexGuard<'_, HashMap<String, stream::Peer>> {
         self.peers
             .lock()
@@ -179,7 +211,7 @@ impl Hosted {
     }
 
     /// Ends the picture of one application, if a device was taking it.
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     fn end_peer(&self, key: &str) {
         let gone = self.peers().remove(key);
         drop(gone);
@@ -236,10 +268,7 @@ pub fn apps_start(
             .events
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(events.clone());
-        running.tell(Said {
-            state: "running",
-            code: None,
-        });
+        running.tell(Said::RUNNING);
         return Ok(());
     }
 
@@ -262,7 +291,7 @@ pub fn apps_start(
             (argv, cwd.clone())
         }
     };
-    if !cfg!(target_os = "linux") {
+    if !cfg!(any(target_os = "linux", target_os = "windows")) {
         return Err("isolation".to_owned());
     }
     if let Run::Path { path, args, cwd } = &run {
@@ -273,7 +302,7 @@ pub fn apps_start(
     run_on_its_display(webview.app_handle().clone(), key, argv, cwd, view, events)
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(not(any(target_os = "linux", target_os = "windows")))]
 fn run_on_its_display(
     _app: AppHandle,
     _key: String,
@@ -283,6 +312,98 @@ fn run_on_its_display(
     _events: Channel<Said>,
 ) -> Result<(), String> {
     Err("isolation".to_owned())
+}
+
+/// The size a desktop of its own is made, for a view in CSS pixels at a ratio: device
+/// pixels, even, as encoders want them.
+#[cfg(target_os = "windows")]
+#[allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    reason = "clamped to a screen's size first"
+)]
+fn desk_size(view: View) -> (u32, u32) {
+    let side = |css: f64| ((css * view.dpr).round().clamp(64.0, 8192.0) as u32) & !1;
+    (side(view.width), side(view.height))
+}
+
+/// How soon an application that ended without a window is taken to have handed itself to
+/// a copy already running on the reader's desktop.
+#[cfg(target_os = "windows")]
+const HANDED_WITHIN: std::time::Duration = std::time::Duration::from_secs(10);
+
+#[cfg(target_os = "windows")]
+fn run_on_its_display(
+    app: AppHandle,
+    key: String,
+    argv: Vec<String>,
+    cwd: Option<String>,
+    view: View,
+    events: Channel<Said>,
+) -> Result<(), String> {
+    if encoder::ffmpeg().is_some() {
+        std::thread::spawn(|| encoder::working().len());
+    }
+    let (width, height) = desk_size(view);
+    let desktop = desk::Desktop::start(width, height).map_err(|_| "failed")?;
+    let folder = cwd
+        .map(PathBuf::from)
+        .filter(|one| one.is_dir())
+        .or_else(|| {
+            argv.first()
+                .and_then(|program| std::path::Path::new(program).parent())
+                .map(std::path::Path::to_path_buf)
+        })
+        .or_else(dirs::home_dir)
+        .unwrap_or_else(|| PathBuf::from("C:\\"));
+    let program = desktop.run(&argv, &folder).map_err(|_| "failed")?;
+    let began = std::time::Instant::now();
+    let desk = desktop.desk();
+    let running = Arc::new(Running {
+        pid: program.pid(),
+        events: Mutex::new(Some(events)),
+        stopping: AtomicBool::new(false),
+        screen: Arc::new(Mutex::new(Screen {
+            display: desktop.name(),
+            hz: view.hz,
+        })),
+        desktop: Mutex::new(Some(desktop)),
+    });
+    app.state::<Hosted>()
+        .apps()
+        .insert(key.clone(), running.clone());
+    running.tell(Said::RUNNING);
+
+    // As on Linux: when everything it started has ended, its desktop goes and the window
+    // is told how it ended.
+    std::thread::spawn(move || {
+        let code = program.wait();
+        let handed = began.elapsed() < HANDED_WITHIN && !desk.shown.load(Ordering::SeqCst);
+        drop(program);
+        let desktop = running
+            .desktop
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .take();
+        drop(desktop);
+        let hosted = app.state::<Hosted>();
+        let mut apps = hosted.apps();
+        let ours = apps.get(&key).is_some_and(|one| Arc::ptr_eq(one, &running));
+        if ours {
+            apps.remove(&key);
+        }
+        drop(apps);
+        if ours {
+            hosted.end_peer(&key);
+        }
+        let stopped = running.stopping.load(Ordering::SeqCst);
+        let mut said = Said::ended(stopped, code);
+        if handed && !stopped {
+            said.why = Some("handed");
+        }
+        running.tell(said);
+    });
+    Ok(())
 }
 
 #[cfg(target_os = "linux")]
@@ -302,7 +423,7 @@ fn run_on_its_display(
     }
     // Which encoders work here is found by trying each, which takes a moment: begun now,
     // it is known by the time a viewer asks for the picture.
-    if installed::on_path("ffmpeg") {
+    if encoder::ffmpeg().is_some() {
         std::thread::spawn(|| encoder::working().len());
     }
     let (width, height) = display::screen(view.width, view.height, view.dpr);
@@ -351,10 +472,7 @@ fn run_on_its_display(
     app.state::<Hosted>()
         .apps()
         .insert(key.clone(), running.clone());
-    running.tell(Said {
-        state: "running",
-        code: None,
-    });
+    running.tell(Said::RUNNING);
 
     // The one thing that waits for it: when it ends, its display goes and the window is
     // told whether it was stopped or ended by itself.
@@ -383,14 +501,7 @@ fn run_on_its_display(
             hosted.end_peer(&key);
         }
         let stopped = running.stopping.load(Ordering::SeqCst);
-        running.tell(Said {
-            state: if stopped { "stopped" } else { "exited" },
-            code: if stopped {
-                None
-            } else {
-                status.and_then(|one| one.code())
-            },
-        });
+        running.tell(Said::ended(stopped, status.and_then(|one| one.code())));
     });
     Ok(())
 }
@@ -408,10 +519,7 @@ pub fn apps_watch(webview: Webview, key: String, events: Channel<Said>) -> Resul
         .events
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(events);
-    running.tell(Said {
-        state: "running",
-        code: None,
-    });
+    running.tell(Said::RUNNING);
     Ok(true)
 }
 
@@ -441,8 +549,25 @@ pub fn apps_view(webview: Webview, key: String, view: View) -> Result<(), String
     Ok(())
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(not(any(target_os = "linux", target_os = "windows")))]
 fn view_here(_running: &Running, _view: View) {}
+
+#[cfg(target_os = "windows")]
+fn view_here(running: &Running, view: View) {
+    running
+        .screen
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .hz = view.hz;
+    let (width, height) = desk_size(view);
+    let desktop = running
+        .desktop
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    if let Some(desktop) = desktop.as_ref() {
+        desktop.fit(width, height);
+    }
+}
 
 #[cfg(target_os = "linux")]
 fn view_here(running: &Running, view: View) {
@@ -471,14 +596,14 @@ pub fn apps_signal(webview: Webview, key: String, data: String) -> Result<Option
     Ok(signal_here(&webview.state::<Hosted>(), &key, &data))
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(not(any(target_os = "linux", target_os = "windows")))]
 fn signal_here(_hosted: &Hosted, _key: &str, data: &str) -> Option<String> {
     // Nothing runs here yet (`isolation`), so there is no picture to offer.
     data.contains("\"offer\"")
         .then(|| serde_json::json!({ "cannot": "stopped" }).to_string())
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 fn signal_here(hosted: &Hosted, key: &str, data: &str) -> Option<String> {
     use stream::FromViewer;
 
@@ -489,18 +614,7 @@ fn signal_here(hosted: &Hosted, key: &str, data: &str) -> Option<String> {
             let Some(running) = hosted.apps().get(key).cloned() else {
                 return Some(stream::cannot_text("stopped"));
             };
-            let clipboard = running
-                .display
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .as_ref()
-                .and_then(display::Display::clipboard);
-            let sound = running
-                .sink
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .as_ref()
-                .map(audio::Sink::monitor);
+            let (clipboard, sound) = shared_of(&running);
             let source = stream::Source {
                 screen: running.screen.clone(),
                 clipboard,
@@ -526,6 +640,31 @@ fn signal_here(hosted: &Hosted, key: &str, data: &str) -> Option<String> {
             None
         }
     }
+}
+
+/// What of an application goes to the holder besides its picture: its clipboard and its
+/// sink's monitor, on Linux.
+#[cfg(target_os = "linux")]
+fn shared_of(running: &Running) -> (Option<Arc<clipboard::Clipboard>>, Option<String>) {
+    let clipboard = running
+        .display
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .as_ref()
+        .and_then(display::Display::clipboard);
+    let sound = running
+        .sink
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .as_ref()
+        .map(audio::Sink::monitor);
+    (clipboard, sound)
+}
+
+/// On Windows, neither: both are the reader's own at the host.
+#[cfg(target_os = "windows")]
+fn shared_of(_running: &Running) -> (Option<Arc<clipboard::Clipboard>>, Option<String>) {
+    (None, None)
 }
 
 /// Asks its group to end, and makes it after `grace`.
@@ -576,7 +715,20 @@ fn signal(pid: u32, what: Signal) -> bool {
     unsafe { libc::kill(-group, number) == 0 }
 }
 
-#[cfg(not(unix))]
+/// Says it to everything the application started on its desktop: whether any of it is
+/// still there, its windows asked to close, or its job ended.
+#[cfg(windows)]
+fn signal(pid: u32, what: Signal) -> bool {
+    let alive = desk::alive(pid);
+    match what {
+        Signal::Ask => {}
+        Signal::End => desk::close(pid),
+        Signal::Kill => desk::kill(pid),
+    }
+    alive
+}
+
+#[cfg(not(any(unix, windows)))]
 fn signal(_pid: u32, _what: Signal) -> bool {
     false
 }
@@ -587,7 +739,7 @@ pub fn end_all(app: &AppHandle) {
         return;
     };
     let all: Vec<Arc<Running>> = hosted.apps().drain().map(|(_, one)| one).collect();
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     hosted.peers().clear();
     if all.is_empty() {
         return;

@@ -2366,6 +2366,10 @@ export const zhHant: Dictionary = {
   '{device} does not have this application.': '{device} 上沒有此應用程式。',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} 無法在自己的桌面上啟動 Store 應用程式。',
+  'It was already open on {device}, and opened there instead.':
+    '它已在 {device} 上開啟，因此改為在那裡開啟。',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    '在 Windows 上，部分遊戲和由 GPU 繪製的應用程式不會顯示畫面。',
   'It did not start on {device}.': '無法在 {device} 上啟動。',
   'Start online machine': '啟動線上機器',
   'Stop online machine': '停止線上機器',

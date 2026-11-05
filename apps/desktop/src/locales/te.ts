@@ -2443,6 +2443,10 @@ export const te: Dictionary = {
   '{device} does not have this application.': '{device}లో ఈ అప్లికేషన్ లేదు.',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device} తన సొంత డెస్క్‌టాప్‌లో Store అప్లికేషన్‌ను ప్రారంభించలేదు.',
+  'It was already open on {device}, and opened there instead.':
+    'ఇది ఇప్పటికే {device}లో తెరిచి ఉంది, అందుకే అక్కడే తెరుచుకుంది.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'Windowsలో కొన్ని గేమ్‌లు మరియు GPU గీసే అప్లికేషన్‌లు ఏ చిత్రాన్నీ చూపవు.',
   'It did not start on {device}.': 'ఇది {device}లో ప్రారంభం కాలేదు.',
   'Start online machine': 'ఆన్‌లైన్ మెషీన్‌ను ప్రారంభించండి',
   'Stop online machine': 'ఆన్‌లైన్ మెషీన్‌ను ఆపండి',

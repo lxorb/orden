@@ -2469,6 +2469,10 @@ export const ta: Dictionary = {
   '{device} does not have this application.': '{device}-இல் இந்தப் பயன்பாடு இல்லை.',
   '{device} cannot start a Store application on a desktop of its own.':
     '{device}-ஆல் Store பயன்பாட்டைத் தனக்கென்று தனி டெஸ்க்டாப்பில் தொடங்க முடியாது.',
+  'It was already open on {device}, and opened there instead.':
+    'இது ஏற்கெனவே {device}-இல் திறந்திருந்தது, அதனால் அங்கேயே திறந்தது.',
+  'On Windows, some games and GPU-drawn applications show no picture.':
+    'Windows-இல் சில கேம்களும் GPU வரையும் பயன்பாடுகளும் எந்தப் படத்தையும் காட்டாது.',
   'It did not start on {device}.': 'இது {device}-இல் தொடங்கவில்லை.',
   'Start online machine': 'ஆன்லைன் இயந்திரத்தைத் தொடங்கு',
   'Stop online machine': 'ஆன்லைன் இயந்திரத்தை நிறுத்து',
