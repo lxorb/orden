@@ -1,22 +1,14 @@
-/** Path arithmetic for the browser's virtual disk. Everything uses `/`, and a
- *  space is a folder directly under the root. */
-
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 
 export function normalise(path: string): string {
   const parts = path
     .replace(/\\/g, '/')
-    // Interior runs collapse too, so joining a path that already ends in a
-    // slash to one that starts with one does not leave `//` behind.
     .replace(/\/+/g, '/')
     .replace(/^\/+|\/+$/g, '')
     .split('/')
 
   const out: string[] = []
   for (const part of parts) {
-    // Folded down to where the path points, so `a/../b` and `b` are one path
-    // rather than two. Climbing above the root names no place, so it stops
-    // there; there is nothing outside the virtual disk to reach.
     if (part === '.' || part === '') continue
     if (part === '..') out.pop()
     else out.push(part)
@@ -39,10 +31,6 @@ export function join(dir: string, name: string): string {
   return normalise(`${normalise(dir)}/${name}`)
 }
 
-/** Whether `path` is the app's own under `root`: it, or a folder it is in below
- *  `root`, has a name that starts with a dot. What the crate's walks leave out
- *  (`gather` in paths.rs), and so what the browser's do: the space's own inbox among
- *  them (#1044), which the search adds by itself and the link scan never reads. */
 export function hiddenUnder(root: string, path: string): boolean {
   const base = normalise(root)
   const at = normalise(path)
@@ -50,7 +38,6 @@ export function hiddenUnder(root: string, path: string): boolean {
   return inside.split('/').some((part) => part.startsWith('.'))
 }
 
-/** True when `path` sits anywhere under `root`. */
 export function within(root: string, path: string): boolean {
   const base = normalise(root)
   return base === '/' || normalise(path).startsWith(`${base}/`)
@@ -64,26 +51,19 @@ export function isPdf(path: string): boolean {
   return /\.pdf$/i.test(path)
 }
 
-/** A canvas is text like a note is, so it lives in the note store rather than
- *  beside the pictures: it is written, read and searched through the same rows. */
 export function isCanvas(path: string): boolean {
   return /\.canvas$/i.test(path)
 }
 
-/** And a page note is the same file under another name - JSON Canvas with pages
- *  among its nodes - so it lives in the same store and is listed the same way. */
 export function isPages(path: string): boolean {
   return /\.pages$/i.test(path)
 }
 
-/** The space a path belongs to: the first segment under the root. */
 export function spaceOf(path: string): string {
   const segment = normalise(path).split('/')[1]
   return segment ? `/${segment}` : '/'
 }
 
-/** Makes a name every platform would accept, so notes written in the browser
- *  keep working if the same space is later synced to a real disk. */
 export function safeName(input: string): string | null {
   const cleaned = input
     .split('')

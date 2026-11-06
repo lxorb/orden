@@ -2,12 +2,6 @@ import { IDBFactory } from 'fake-indexeddb'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { isEmpty, isHandoff, pack, unpack } from './handoff'
 
-/** The browser build's storage, carried from one origin to another.
- *
- *  Two origins are two factories and two `localStorage`s; which one the module sees
- *  is whichever is the global when it is called. The drive in test/e2e/handoff.py
- *  does the same between two real origins, popup and all. */
-
 interface Origin {
   indexedDB: IDBFactory
   local: Map<string, string>
@@ -39,7 +33,6 @@ function opened(name: string, version: number, make: (db: IDBDatabase) => void) 
   })
 }
 
-/** The notes database's shape, as web/store.ts makes it. */
 function notesShape(db: IDBDatabase) {
   db.createObjectStore('files', { keyPath: 'path' })
   db.createObjectStore('meta')
@@ -120,7 +113,6 @@ describe('the new address, given it', () => {
     const handoff = await pack()
 
     at(now)
-    // The app is up at the new address, its seed written and the database open.
     const fresh = await opened('nib', 2, notesShape)
     await write(fresh, 'files', { path: '/Notes/Read me.md', content: '# Welcome to Orden' })
     now.local.set('nib:language', 'de')
@@ -139,9 +131,6 @@ describe('the new address, given it', () => {
     expect(now.local.get('nib:language')).toBe('de')
   })
 
-  // An old address from before the listing: its notes came over and the new one's
-  // listing still held only its welcome note, so every one read as not there, to the
-  // file list and to whatever asked whether a name was free before writing.
   test('lists what came over, when the old address had no listing of its own', async () => {
     at(before)
     const old = await opened('nib', 1, notesShape)

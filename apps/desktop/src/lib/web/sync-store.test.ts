@@ -26,13 +26,7 @@ import {
 import { leadSync } from '../sync2/lead'
 import { forgetWeb, openWeb } from './sync-store'
 
-/** The browser's sync store against the same behaviour the crate's is held to in
- *  src-tauri/src/sync_store/store.rs, row for row: a new store, the clean-exit flag, a
- *  batch that fails, every operation, bytes, what Orden wrote, the log's ceiling and
- *  signing out. Then the election that keeps it to one engine per browser. */
-
 let accounts = 0
-/** A store of its own for every test: one database per account. */
 function account(): string {
   accounts += 1
   return `account-${accounts}`
@@ -57,9 +51,6 @@ const entry = (id: string, space: string, extra: Partial<EntryRow> = {}): Change
 
 const file = (hash: string): Change => put('files', { hash, state: 'here' })
 
-/** Whether two runs of bytes are the same bytes. `toEqual` walks a megabyte one element
- *  at a time through its general equality: ten seconds on its own, and past the test's
- *  thirty on a machine running three gates. */
 function sameBytes(one: Uint8Array | undefined, other: Uint8Array): boolean {
   return one?.length === other.length && one.every((byte, at) => byte === other[at])
 }
@@ -268,8 +259,6 @@ test('is what the engine opens in a browser, and every table takes its row', asy
 })
 
 describe('one engine per browser', () => {
-  /** Without the Web Locks API every tab leads, which is what leadSync answers on a
-   *  host that lacks it. Node has it from 24, which CI and package.json ask for. */
   const locked = () =>
     expect(
       (globalThis.navigator as Navigator | undefined)?.locks,

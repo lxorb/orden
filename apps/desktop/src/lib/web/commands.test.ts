@@ -5,24 +5,14 @@ import type { AssetRow, FileRow, SnapshotRow } from './store'
 import type { Opener } from '../openers'
 import type { SpaceLinks } from '@orden/scan/note'
 
-/** The browser's stand-in for the file commands, driven against a disk that
- *  lives in a Map rather than in IndexedDB. Node has no IndexedDB, and the
- *  point of these is the path arithmetic and the trash bookkeeping - not the
- *  database underneath, which `store.ts` is the only thing that touches. */
-
 const disk = vi.hoisted(() => {
   const files = new Map<string, FileRow>()
   const assets = new Map<string, AssetRow>()
   const meta = new Map<string, string>()
   const snapshots: SnapshotRow[] = []
-  /** Every stretch of the files read at once, as the rows it answered. */
   const reads: FileRow[][] = []
-  /** Whether the listing says how long each file is, as a listing written since it
-   *  kept sizes does, and the sizes a scan wrote back into it. */
   const sized = { yes: true }
   const learnt = new Map<string, number>()
-  /** What each plane's listing says the index wants of it, written with the plane or
-   *  learnt by a scan. */
   const planes = new Map<string, unknown>()
 
   return { files, assets, meta, snapshots, reads, sized, learnt, planes }
@@ -30,7 +20,6 @@ const disk = vi.hoisted(() => {
 
 vi.mock('./store', () => ({
   KEEP: '.keep',
-  // Nothing mounted with a tree of its own: every row is this browser's.
   treeAt: () => null,
   trees: () => [],
   keepsOwnRows: () => true,
@@ -39,7 +28,6 @@ vi.mock('./store', () => ({
     all: () => Promise.resolve([...disk.files.values()]),
     paths: () => Promise.resolve([...disk.files.keys()].sort()),
     each: (visit: (row: FileRow) => void) => {
-      // In key order, which is what a cursor over the real store gives.
       for (const path of [...disk.files.keys()].sort()) visit(disk.files.get(path)!)
       return Promise.resolve()
     },
@@ -59,8 +47,6 @@ vi.mock('./store', () => ({
       return Promise.resolve(void disk.files.set(path, { path, content, created, modified: at }))
     },
     remove: (path: string) => Promise.resolve(void disk.files.delete(path)),
-    // The real one is a single transaction; here it is a single statement,
-    // which is the same promise from the caller's side.
     move: (rows: FileRow[], gone: string[]) => {
       for (const row of rows) disk.files.set(row.path, row)
       for (const path of gone) {
@@ -76,9 +62,6 @@ vi.mock('./store', () => ({
     put: (row: AssetRow) => Promise.resolve(void disk.assets.set(row.path, row)),
     remove: (path: string) => Promise.resolve(void disk.assets.delete(path)),
   },
-  // Derived from the two maps rather than kept beside them, which is the
-  // invariant the real store pays a transaction to hold: a path's listing says
-  // what the file at that path says, always.
   stats: {
     holds: (path: string) =>
       Promise.resolve(
@@ -144,8 +127,6 @@ vi.mock('./store', () => ({
   },
 }))
 
-/** The page's own store, which is where "has this device been seeded" lives
- *  everywhere but inside a packed plugin. */
 function memoryStorage(): Storage {
   const held = new Map<string, string>()
 
@@ -206,7 +187,6 @@ describe('a note too large to be one', () => {
       disk.files.set('/Notes/Dump.md', { path: '/Notes/Dump.md', content, created: 1, modified: 1 })
       return read('/Notes/Dump.md')
     }
-    // Three bytes each, and a third of the ceiling and one more of them.
     const wide = '€'.repeat(Math.floor(MOST_NOTE_BYTES / 3) + 1)
 
     await expect(at('x'.repeat(MOST_NOTE_BYTES + 1))).rejects.toThrow(TOO_LARGE)
@@ -220,8 +200,6 @@ describe('versions of a note', () => {
   const keep = (content: string, source?: string) =>
     webInvoke('snapshot_note', { path: '/Notes/Plane.canvas', content, source })
 
-  /** A plane is megabytes, and a version is kept every few minutes somebody draws:
-   *  comparing it with every earlier one read forty planes to look at one. */
   test('are compared with the newest alone, and forty are kept', async () => {
     const { snapshots } = await import('./store')
     const every = vi.spyOn(snapshots, 'forNote')
@@ -282,9 +260,6 @@ describe('renaming', () => {
     expect(await read('/Notes/b.md')).toBe('b')
   })
 
-  /** A folder has no row of its own - it exists because something is in it -
-   *  so asking about the exact path finds nothing and the rename went ahead,
-   *  putting the note inside the folder under the folder's own name. */
   test('refuses a name a folder already has', async () => {
     await write('/Notes/a.md', 'a')
     await write('/Notes/Work/b.md', 'b')
@@ -375,8 +350,6 @@ describe('spaces', () => {
 })
 
 describe('whether anything is at a path', () => {
-  // What onDisk asks in the browser, which keeps no stamps; listing the tree to ask
-  // read every row in the store once for each file an import brought.
   test('answers for a note, a picture and a folder, and not for a name it only begins', async () => {
     await write('/Notes/Plan.md', '# Plan')
     await webInvoke('create_folder', { path: '/Notes/Empty' })
@@ -403,9 +376,6 @@ describe('whether anything is at a path', () => {
 })
 
 describe('a file the app reads as words, written as bytes', () => {
-  // What sync hands a file it carries as a blob - a PDF's highlights, a base, a plane
-  // dropped in - and what it reads back to send one: bytes on both sides, words in
-  // between, so the two stores have to agree on where those words are.
   const base64 = (text: string) => Buffer.from(text, 'utf8').toString('base64')
   const bytesOf = async (path: string) => {
     const uri = await webInvoke<string>('read_asset', { path })
@@ -494,8 +464,6 @@ describe('the trash', () => {
     expect(await webInvoke('list_trash')).toEqual([])
   })
 
-  // Sync v2 trashes a picture deleted on another device; the trash asked only of
-  // the notes, refused it, and the next pass asked again.
   test('holds a picture, which lives with the assets alone, and puts it back', async () => {
     disk.assets.set('/Notes/shot.png', {
       path: '/Notes/shot.png',
@@ -528,8 +496,6 @@ describe('the trash', () => {
     })
     disk.assets.set('/Notes/shot.png', picture('new'))
 
-    // The free name was asked of the notes alone, and the old picture went over
-    // the new one.
     expect(await webInvoke('restore_trash', { id: entry.id })).toBe('/Notes/shot 2.png')
     expect(disk.assets.get('/Notes/shot.png')?.data).toBe('new')
   })
@@ -565,16 +531,11 @@ describe('the trash', () => {
   })
 
   test('reads a manifest nothing can be made of as an empty one', async () => {
-    // The manifest is a string in the browser's own storage, written by some
-    // version of this app and possibly by one interrupted halfway. Read as the
-    // shape the code wants, a truncated entry is a crash on the way to Recently
-    // deleted - and Recently deleted is where somebody goes to get a note back.
     for (const held of ['', 'not json', '{"id":"1"}', '42', 'null']) {
       disk.meta.set('trash', held)
       expect(await webInvoke('list_trash'), held).toEqual([])
     }
 
-    // An entry that is not describable goes; the ones around it stay.
     disk.meta.set(
       'trash',
       JSON.stringify([
@@ -617,10 +578,6 @@ describe('the tree', () => {
     expect(tree.children.map((one) => one.name)).toEqual(['Work', 'a.md', 'b.md'])
   })
 
-  /** A page note is a file in a space like a canvas is, and the list of kinds the
-   *  tree shows left it out: a page note was drawn in a tab and in nothing else -
-   *  no row in the file list, nothing for a search to read, and nothing for the
-   *  mirror to send, since the mirror walks this tree. */
   test('shows a page note, which is a file in the space like any other', async () => {
     await write('/Notes/Journal.pages')
     await write('/Notes/Board.canvas')
@@ -631,9 +588,6 @@ describe('the tree', () => {
     expect(tree.children.map((one) => one.name)).toEqual(['a.md', 'Board.canvas', 'Journal.pages'])
   })
 
-  /** Every kind a tab opens is a row of the list, and so something the mirror sends:
-   *  an online terminal's file was neither (issue 1055). One name for each opener, so a
-   *  kind added to `Opener` fails here until it is listed. */
   test('lists a file of every kind a tab can hold', async () => {
     const one: Record<Exclude<Opener, 'pdf'>, string> = {
       note: 'a.md',
@@ -704,8 +658,6 @@ describe('the tree', () => {
     const tree = await webInvoke<{ children: { name: string }[] }>('read_tree', { root: '/Notes' })
     expect(tree.children.map((one) => one.name)).toEqual(['a.md', 'paper.pdf'])
 
-    // Asked for every file, as an undo of a folder deleted signed in asks, the
-    // picture and the highlights are there too, and the picture is not words.
     const every = await webInvoke<{ children: { name: string; path: string }[] }>('read_tree', {
       root: '/Notes',
       options: { every: true },
@@ -720,9 +672,6 @@ describe('the tree', () => {
   })
 })
 
-/** A PDF brought in is a page note, and its paper is part of the note: the list shows
- *  the note, and the paper goes wherever the note goes. The desktop's `held_paper` and
- *  `move_held` in paths.rs, said again over the browser's two stores. */
 describe("a page note's paper", () => {
   const note = '/Notes/Lecture.pages'
   const paper = '/Notes/Lecture.pages.pdf'
@@ -740,7 +689,6 @@ describe("a page note's paper", () => {
       ).children.map((one) => one.name)
 
     expect(await names()).toEqual(['Lecture.pages'])
-    // Sync, where it cannot scan a folder, asks for every file there is.
     expect(await names({ papers: true })).toEqual(['Lecture.pages', 'Lecture.pages.pdf'])
 
     disk.files.delete(note)
@@ -758,8 +706,6 @@ describe("a page note's paper", () => {
   })
 
   test('follows the note when sync moves it, and leaves its highlights', async () => {
-    // Sync carries the paper with the note and never as an entry of its own (#551), and
-    // the paper's highlights as one of their own, moved by their own move.
     await webInvoke('write_highlights', { path: paper, content: '{"version":1}' })
 
     await webInvoke('rename_note', { from: note, to: '/Notes/Week 1.pages', alone: true })
@@ -772,8 +718,6 @@ describe("a page note's paper", () => {
   })
 
   test('is never taken from somebody else, however the note moves', async () => {
-    // A PDF of a page note's paper name is somebody's own: sync never moves a paper on
-    // its own, so it is not this note's either when sync moves the note.
     disk.assets.set('/Notes/Report.pages.pdf', held('/Notes/Report.pages.pdf'))
     for (const alone of [false, true])
       await expect(
@@ -810,8 +754,6 @@ describe("a page note's paper", () => {
   })
 
   test('is where a PDF beside the note goes when sync holds it there', async () => {
-    // Another device turned the PDF into this note; sync carries the move with `hold`,
-    // and the browser takes it as the crate does.
     disk.assets.delete(paper)
     disk.assets.set('/Notes/Lecture.pdf', held('/Notes/Lecture.pdf'))
 
@@ -866,9 +808,6 @@ describe("a PDF's highlights", () => {
   })
 
   test('stay where they are when sync moves the PDF alone', async () => {
-    // Sync carries the highlights as a file of their own, moved by their own entry, and
-    // in whichever order the two arrive. The PDF's move takes nothing along, and leaves
-    // highlights already moved ahead of it where they landed.
     disk.assets.set(pdf, { path: pdf, type: 'application/pdf', data: '', modified: 1 })
     await webInvoke('write_highlights', { path: '/Notes/moved.pdf', content: '{"version":2}' })
     await webInvoke('write_highlights', { path: pdf, content: '{"version":1}' })
@@ -881,7 +820,6 @@ describe("a PDF's highlights", () => {
   })
 
   test('stay where they are when sync deletes the PDF', async () => {
-    // Sync carries the highlights as an entry of their own, which its delete leaves.
     disk.assets.set(pdf, { path: pdf, type: 'application/pdf', data: '', modified: 1 })
     await webInvoke('write_highlights', { path: pdf, content: '{"version":1}' })
 
@@ -892,8 +830,6 @@ describe("a PDF's highlights", () => {
   })
 
   test('are rejoined by their PDF when sync deleted the two apart and they came back first', async () => {
-    // Each is an entry of its own to sync, deleted and restored on its own. The PDF
-    // stepped aside from highlights at its name as another PDF's, and left them alone.
     disk.assets.set(pdf, { path: pdf, type: 'application/pdf', data: '', modified: 1 })
     await webInvoke('write_highlights', { path: pdf, content: '{"version":1}' })
     const paper = await webInvoke<{ id: string }>('trash_item', {
@@ -931,10 +867,6 @@ describe("a PDF's highlights", () => {
   })
 })
 
-/** A page note's paper is `<name>.pages.pdf` beside it, held out of the list, so a
- *  rename or a copy never puts a page note where its paper would go over somebody's
- *  PDF, nor a PDF where a page note would take it for its paper (#538), as the
- *  desktop's `paper_in_the_way` has it. */
 describe('a page note and a PDF of its paper’s name', () => {
   const pdf = (path: string) => webInvoke('write_bytes', { path, base64: btoa('%PDF mine') })
 
@@ -1007,8 +939,6 @@ describe('a pasted picture', () => {
     expect([...disk.assets.keys()]).toEqual([])
   })
 
-  /** A page note's paper is `<name>.pages.pdf` beside it: a PDF of that name dropped
-   *  beside a page note with no paper yet would become its paper, and be deleted with it. */
   test('steps aside from a name a page note would take for its paper', async () => {
     await webInvoke('write_note', { path: '/Notes/Report.pages', content: '{}' })
     const written = await webInvoke<string>('save_asset', {
@@ -1038,8 +968,6 @@ describe('a pasted picture', () => {
     expect(await drop('Report.pages.pdf')).toBe('Report.pages 2.pdf')
   })
 
-  /** Highlights a gone PDF left are still a PDF's, and `CON.png` is a device on
-   *  Windows; see `taken` in paths.rs and `safe_name` in assets.rs. */
   test('steps past leftover highlights and a device name', async () => {
     await webInvoke('write_note', { path: '/Notes/X.pdf.highlights.json', content: '[]' })
     expect(await drop('X.pdf')).toBe('X 2.pdf')
@@ -1062,9 +990,6 @@ describe('a pasted picture', () => {
   })
 })
 
-/** The store installs a theme by writing a file into a folder. In a browser the
- *  folder is a prefix in storage, which is what makes the gallery work in the web
- *  build as well as on a desktop. */
 describe('installed themes', () => {
   test('an empty store holds none', async () => {
     expect(await webInvoke('list_themes')).toEqual([])
@@ -1105,9 +1030,6 @@ describe('installed themes', () => {
     expect(await webInvoke('read_theme', { path: 'themes/nothing.css' })).toBe('')
   })
 
-  /** What the dropdown needs after the tab is closed and opened again: the theme
-   *  is still there, and it still knows the name and the version the store gave
-   *  it rather than one worked out from the key it lives under. */
   test('comes back with its stamp, which is what the dropdown reads its name from', async () => {
     const css = stamped({ id: 'rose', name: 'Rose', author: 'Nib', version: '2.0.0' }, ':root {}')
     await webInvoke('write_theme', { id: 'rose', css })
@@ -1132,12 +1054,6 @@ describe('what the browser cannot do', () => {
   })
 })
 
-/** The welcome note, once per device.
- *
- *  Emptiness is what is here now; it is not whether this device has been introduced,
- *  and reading it as though it were is how a reader who deleted every note gets the
- *  welcome note back - and, signed in, gets it in their account. See welcome.ts for
- *  what that did to Emil's. */
 describe('the welcome note', () => {
   test('is written on a first visit', async () => {
     await seed()
@@ -1157,12 +1073,9 @@ describe('the welcome note', () => {
 
     await seed()
     expect(paths()).toEqual(['/Notes/Mine.md'])
-    // And the space those notes are in is the reader's, not a default to give way (#1077).
     expect(seedSpaceRoot()).toBeNull()
   })
 
-  /** #1077: the space it went into is the default one signing in can give way, named by
-   *  the root the browser lists it at. */
   test('marks the space it went into as the default one', async () => {
     await seed()
     const listed = await webInvoke<{ name: string; path: string }[]>('list_spaces')
@@ -1178,9 +1091,6 @@ describe('the welcome note', () => {
     expect(paths()).toEqual([])
   })
 
-  /** A packed plugin's page storage belongs to a port that never comes back, so the
-   *  answer has to live somewhere that outlives a launch; the plugin hands one over.
-   *  See seeded.ts. */
   test('asks the store that survives a launch, where there is one', async () => {
     let kept = false
     rememberSeedIn({
@@ -1194,7 +1104,6 @@ describe('the welcome note', () => {
     await seed()
     expect(kept).toBe(true)
 
-    // A new launch: the page's own storage is somebody else's and the disk is empty.
     localStorage.clear()
     disk.files.clear()
 
@@ -1204,8 +1113,6 @@ describe('the welcome note', () => {
 })
 
 describe('reading a whole space for the link index', () => {
-  /** More notes than one chunk of the scan holds, so the pass is read in several
-   *  and the answer still has to be the whole space in one order. */
   const MANY = 150
 
   test('answers every note in the space, in path order, however many chunks it took', async () => {
@@ -1221,7 +1128,6 @@ describe('reading a whole space for the link index', () => {
     expect(found.notes).toHaveLength(MANY)
     expect(found.notes[0]?.path).toBe('note-000.md')
     expect(found.notes.at(-1)?.path).toBe(`note-${String(MANY - 1).padStart(3, '0')}.md`)
-    // The links were read, which is the whole point of having read the bodies.
     expect(found.notes[5]?.links).toHaveLength(1)
   })
 
@@ -1241,8 +1147,6 @@ describe('reading a whole space for the link index', () => {
     })
 
     expect(found.notes.map((one) => one.path)).toEqual(['Idea.md'])
-    // The picture, and neither the marker that keeps a folder nor the highlights
-    // that are part of a paper.
     expect(found.files).toEqual(['pictures/shot.png'])
   })
 
@@ -1260,9 +1164,6 @@ describe('reading a whole space for the link index', () => {
     expect(found.files).toEqual([])
   })
 
-  /** What a chunk read costs is what its notes are long, not how many there are:
-   *  128 notes a chunk put a canvas of seven megabytes in one task with the notes
-   *  beside it. So what is counted is the characters each read handed back. */
   test('reads a chunk of about the same length at a time, and a long file on its own', async () => {
     const page = 'the wind was steady and the ink took its time. '.repeat(90)
     for (let at = 0; at < 300; at++) {
@@ -1270,7 +1171,6 @@ describe('reading a whole space for the link index', () => {
     }
     const plane = JSON.stringify({ nodes: [], nib: { ink: [], padding: 'x'.repeat(3_000_000) } })
     await write('/Notes/note-150.canvas', plane)
-    // A plane written before its listing said what is in it; see the tests below.
     disk.planes.delete('/Notes/note-150.canvas')
 
     await webInvoke('scan_links', { root: '/Notes' })
@@ -1280,10 +1180,8 @@ describe('reading a whole space for the link index', () => {
       if (rows.length > 1) expect(lengths[at]).toBeLessThanOrEqual(SCANNED_AT_ONCE)
     }
 
-    // The plane, alone: nothing waits behind it and it waits behind nothing.
     const alone = disk.reads.find((rows) => rows.some((row) => row.path.endsWith('.canvas')))
     expect(alone?.map((row) => row.path)).toEqual(['/Notes/note-150.canvas'])
-    // And every file was read exactly once.
     expect(disk.reads.flat()).toHaveLength(301)
   })
 
@@ -1314,8 +1212,6 @@ describe('reading a whole space for the link index', () => {
     for (const length of lengths) expect(length).toBeLessThanOrEqual(SCANNED_AT_ONCE)
   })
 
-  /** A plane of ten thousand strokes is seven megabytes, and the scan read all of it
-   *  out of storage, one task of a quarter of a second, for its icon. */
   const drawn = (icon: string) =>
     JSON.stringify({
       nodes: [{ id: 'a', type: 'file', x: 0, y: 0, width: 1, height: 1, file: 'note-001.md' }],
@@ -1373,12 +1269,7 @@ describe('reading a whole space for the link index', () => {
   })
 })
 
-/** A note this browser keeps no words of (#1126; away.svelte.ts): listed, found and
- *  moved as any other, its words fetched when something reads it, and never counted by
- *  the engine's own reads, which say `raw`. */
 describe('a note kept away', () => {
-  /** Plan.md kept away, fetched by writing its row as the engine does, or not at all
-   *  while `offline`. */
   function away(offline = { yes: false }) {
     const asked: string[] = []
     keptAway.keep([{ id: 'n1', path: '/Notes/Plan.md', size: 12, modified: 5 }], (path) => {
@@ -1498,7 +1389,6 @@ describe('a note kept away', () => {
       () => Promise.resolve(false),
     )
     const stamp = { size: 12, mtime: 5, ctime: 5 }
-    // Read by the account at its old name, before it moved into Work.
     const said = indexed('Plan.md', '# Plan\n\n- [ ] ship #work\n', stamp)
     if (said) keptAway.answeredBy(new Map([['n1', said]]), () => Promise.resolve())
 

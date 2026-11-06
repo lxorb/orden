@@ -1,15 +1,5 @@
-/** What a browser keeps of the notes it keeps no words of (#1126): each one's scan - its
- *  links, headings, tags, front matter and task lines, what the link index and the rows
- *  of a space are made of - by the entry's id, with the `docSeq` of the words it was
- *  made from, so a scan older than the words the feed names is asked for again.
- *
- *  A database of its own per account, beside the sync store and gone with it on signing
- *  out, rather than a table of that store: the engine reads every `meta` row at start,
- *  and the scans of five thousand notes are no part of what it needs. */
-
 import type { IndexedNote } from '@orden/scan/wire'
 
-/** One note's scan, as kept. */
 export interface IndexRow {
   id: string
   space: string
@@ -42,7 +32,6 @@ function done(transaction: IDBTransaction): Promise<void> {
 }
 
 export interface IndexStore {
-  /** Every row of a space. */
   of(space: string): Promise<IndexRow[]>
   put(rows: readonly IndexRow[]): Promise<void>
   remove(ids: readonly string[]): Promise<void>
@@ -79,7 +68,6 @@ export async function openIndex(account: string): Promise<IndexStore> {
   }
 }
 
-/** An account's index gone, on signing out: quietly, where there is none to forget. */
 export function forgetIndex(account: string): Promise<void> {
   if (typeof indexedDB === 'undefined') return Promise.resolve()
   return new Promise((resolve) => {

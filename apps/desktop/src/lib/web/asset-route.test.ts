@@ -42,9 +42,7 @@ describe('the address a picture has in a browser', () => {
     expect(assetStorePath('/assets/index-a1b2.js')).toBeNull()
     expect(assetStorePath('https://example.com/pic.png')).toBeNull()
     expect(assetStorePath('data:image/png;base64,AA')).toBeNull()
-    // The words, but not at the start and not after a host.
     expect(assetStorePath('/Work/asset/pic.png')).toBeNull()
-    // The prefix and nothing after it names no row.
     expect(assetStorePath(ASSET_ROUTE)).toBeNull()
   })
 
@@ -84,9 +82,6 @@ describe('what a stored file says it is', () => {
   })
 })
 
-/** The service worker is a page of its own and cannot import any of the above, so
- *  it says the same three things a second time. This is what keeps the two copies
- *  the same; see the note at the top of asset-route.ts. */
 describe('the worker and the page agree', () => {
   const source = readFileSync(SW, 'utf8')
 
@@ -100,8 +95,6 @@ describe('the worker and the page agree', () => {
   })
 
   test('on every media type there is', () => {
-    // Walked out of the app's own table rather than listed again here, so a type
-    // added to one and not the other is what fails.
     for (const [extension, type] of Object.entries(MIME_TYPES)) {
       expect(source).toContain(`${extension}: '${type}'`)
     }
@@ -110,8 +103,6 @@ describe('the worker and the page agree', () => {
   })
 
   test('and it serves nothing else at all', () => {
-    // No app shell, no precache, no cache storage: a worker that answered for the
-    // page would answer with yesterday's page.
     expect(source).not.toContain('caches')
     expect(source).not.toContain('addAll')
   })

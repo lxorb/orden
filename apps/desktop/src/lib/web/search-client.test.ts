@@ -1,10 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { parseQuery } from '@orden/scan/search/query'
 
-/** A worker that cannot be started is a worker that fell over: the field has no
- *  answer to this word, and the next question tries again. Neither the warming nor
- *  a search may throw for it - the warming is not awaited by anybody, so a throw
- *  there is an unhandled rejection in whatever is running. */
 describe('a worker that cannot be started', () => {
   afterEach(() => {
     vi.unstubAllGlobals()

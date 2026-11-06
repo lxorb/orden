@@ -1,13 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { FileRow } from './store'
 
-/** The space the search worker holds, driven against a store that lives in a Map.
- *
- *  What is asserted is rows read, not milliseconds: the point of the cache is that
- *  a second search over an unchanged space reads nothing at all, and a count says
- *  that where a clock only says what the machine was doing at the time. See the
- *  note beside the counters in search/fuzzy.ts. */
-
 const disk = vi.hoisted(() => ({ files: new Map<string, FileRow>() }))
 
 const inOrder = () => [...disk.files.keys()].sort()
@@ -47,10 +40,6 @@ function write(name: string, content: string, root = ROOT) {
   return path
 }
 
-/** One search: which notes answered, in the order they did, and how many rows it
- *  read out of the store while doing it. The names are the notes rather than the rows, since a
- *  note answers once per line that matched and what is being asked here is which
- *  notes the walk reached. */
 async function searched(text: string, root = ROOT): Promise<{ names: string[]; reads: number }> {
   const names: string[] = []
   const before = space.warmth().read
@@ -109,7 +98,6 @@ describe('the space a search holds', () => {
     expect(found.names).toEqual(['Ink.md'])
     expect(found.reads).toBe(0)
 
-    // And a second pass over a space already held reads nothing either.
     await space.fill(ROOT)
     expect(space.warmth().read).toBe(3)
   })
@@ -162,8 +150,6 @@ describe('keeping up with the store', () => {
     found = await searched('kestrel')
     expect(found.names).toEqual(['Bird.md'])
     expect(found.reads).toBe(0)
-    // In path order, which is the order a space answers in: the new note sits
-    // where its name puts it rather than at the end.
     expect((await searched('a')).names[0]).toBe('Bird.md')
   })
 
@@ -184,8 +170,6 @@ describe('keeping up with the store', () => {
     expect(found.names).toEqual(['Other.md'])
     expect(space.warmth()).toMatchObject({ notes: 1, of: 1 })
 
-    // And the space that was held is read again when it is asked about again. The
-    // count starts again with the space, so it is what was read that says so.
     expect((await searched('wind')).names).toEqual(['Kestrel.md', 'Plan.md'])
     expect(space.warmth()).toMatchObject({ notes: 3, of: 3, read: 4 })
   })
@@ -198,7 +182,6 @@ describe('the cap', () => {
     const full = space.warmth()
     expect(full.notes).toBe(4)
 
-    // Small enough that the novel cannot stay and the three short notes can.
     holdAtMost(600)
     await searched('nothing at all')
     const held = space.warmth()
@@ -208,15 +191,12 @@ describe('the cap', () => {
     expect(held.dropped).toBe(1)
     expect(held.characters).toBeLessThanOrEqual(600)
 
-    // The note that was let go is one row read, not a space.
     const found = await searched('Novel')
     expect(found.names).toEqual(['Novel.md'])
     expect(found.reads).toBe(1)
   })
 
   test('and the notes after one the store has lost still answer', async () => {
-    // A long note the cap will not keep, sitting in the middle of the space: Ink
-    // comes after Deep and before Kestrel in path order.
     write('Deep.md', '# Deep\n\nThe first of them.')
     write('Ink.md', `# Ink\n\n${'ink '.repeat(400)}`)
     await space.fill(ROOT)
@@ -225,15 +205,10 @@ describe('the cap', () => {
     await searched('nothing at all')
     expect(space.warmth().dropped).toBe(1)
 
-    // And then it goes from the store as well, behind the cache's back, which is
-    // what a second tab of the same app writing these rows looks like from here. A
-    // walk that took the missing path out of the order as it went and then carried
-    // on from where it was would step over whatever followed it.
     disk.files.delete(`${ROOT}/Ink.md`)
 
     const found = await searched('the')
     expect(found.names).toEqual(['Deep.md', 'Kestrel.md', 'Plan.md'])
-    // And the note that has gone is out of the space: four notes, three of them.
     expect(space.warmth().of).toBe(3)
   })
 
@@ -248,14 +223,7 @@ describe('the cap', () => {
     expect(space.warmth().of).toBe(3)
   })
 
-  /** A space whose notes fit under the cap and whose folded copies do not, which is
-   *  every space of a few thousand ordinary notes: a query looks at a word, every
-   *  note is folded, and what is held doubles. What must not happen then is the
-   *  notes being thrown away, because a note that was let go is a row read on every
-   *  search after - two thousand one hundred and four of them per search, over five
-   *  thousand notes, which is what this stops. */
   describe('a space the folds alone put over it', () => {
-    /** The bodies, in characters, and a cap between that and twice it. */
     function tight() {
       const bodies = [...disk.files.values()].reduce((sum, row) => sum + row.content.length, 0)
       holdAtMost(Math.round(bodies * 1.5))
@@ -266,14 +234,11 @@ describe('the cap', () => {
       await space.fill(ROOT)
       const bodies = tight()
 
-      // A word, so every note is folded on the way past.
       await searched('wind')
       const held = space.warmth()
 
       expect(held.notes).toBe(3)
       expect(held.dropped).toBe(0)
-      // Under the cap, with every body still there: what went is folds, and only as
-      // many of them as it took.
       expect(held.characters).toBeLessThanOrEqual(held.cap)
       expect(held.characters).toBeGreaterThanOrEqual(bodies)
     })
@@ -284,7 +249,6 @@ describe('the cap', () => {
 
       expect((await searched('wind')).reads).toBe(0)
       expect((await searched('wind')).reads).toBe(0)
-      // And the search that has to read every note to answer: no hits, no rows.
       expect((await searched('zzzq')).reads).toBe(0)
       expect(space.warmth()).toMatchObject({ notes: 3, of: 3, dropped: 0 })
     })

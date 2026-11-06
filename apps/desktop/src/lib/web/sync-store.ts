@@ -1,22 +1,3 @@
-/** The sync store in a browser: the same tables as the SQLite store (section 9.2 of
- *  docs/sync-v2.md), one IndexedDB object store each, one database per account, and the
- *  same answers to the same questions. Fetched only by `openSyncStore` in sync2/store.ts,
- *  and only in the browser build.
- *
- *  Two things differ from the crate's store, and neither shows through the interface.
- *  What Orden last wrote is kept as text rather than compressed: the browser's own store
- *  already compresses what it keeps, and compressing here would be an await inside a
- *  transaction, which IndexedDB answers by committing it. And there is no damaged file
- *  to set aside: a browser that cannot open its store says so, and signing out and in
- *  again makes a new one.
- *
- *  A browser can have the app open in several tabs, and one engine per browser is the
- *  rule, not one per tab: `leadSync` (sync2/lead.ts) is the election, over the Web Locks
- *  API, the same thing that keeps two tabs of one site from both being the one that syncs.
- *  Every tab may read the store; only the leader writes it. See `web/store.ts` for the pattern
- *  every write here follows: one transaction per batch, resolved on the transaction
- *  rather than on any one request. */
-
 import {
   answerOf,
   changeOf,
@@ -34,26 +15,17 @@ import {
   type TableName,
 } from '../sync2/store'
 
-/** The schema this build makes, which is the SQLite store's schema number too. */
 const SCHEMA = 1
 
-/** Every table's name, in the order TABLES lists them. */
 const NAMES = Object.keys(TABLES) as TableName[]
 
-/** The index every table with spaces keeps them under, and the one the outbox keeps its
- *  age under, which is the order a scan of it answers in. */
 const BY_SPACE = 'space'
 const BY_AGE = 'age'
 
-/** One database per account, so signing out is one delete and two accounts on one
- *  browser never see each other's rows. */
 const nameOf = (account: string) => `nib-sync:${account}`
 
-/** Opens an account's store, making it the first time. */
 export async function openWeb(account: string, made?: string): Promise<SyncStore> {
   const db = await database(account)
-  // A second tab signing out deletes the database; this tab lets go of it rather than
-  // holding the delete up until it is closed.
   db.onversionchange = () => db.close()
 
   const opened = await started(db, made)
@@ -100,7 +72,6 @@ export function deviceWeb(account: string): Promise<string | null> {
   })
 }
 
-/** Deletes an account's store. */
 export function forgetWeb(account: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.deleteDatabase(nameOf(account))
@@ -119,9 +90,6 @@ function database(account: string): Promise<IDBDatabase> {
   })
 }
 
-/** Schema 1: every table an object store keyed as the SQL keys it. The log has no key
- *  of its own, so its rows are numbered in the order they arrive, which is SQLite's
- *  `rowid` order too. */
 function made(db: IDBDatabase): void {
   for (const name of NAMES) {
     const spec = TABLES[name]
@@ -130,7 +98,6 @@ function made(db: IDBDatabase): void {
         ? db.createObjectStore(name, { autoIncrement: true })
         : db.createObjectStore(name, { keyPath: spec.key })
     if (name === 'outbox') {
-      // Oldest first, and op id among equals: the SQL's `order by made_at, op_id`.
       store.createIndex(BY_SPACE, ['space_id', 'made_at'])
       store.createIndex(BY_AGE, 'made_at')
     } else if (spec.space !== null) {
@@ -139,8 +106,6 @@ function made(db: IDBDatabase): void {
   }
 }
 
-/** Reads the device id and the last session's word on how it ended, and marks this one
- *  as not ended yet, in one transaction. */
 function started(db: IDBDatabase, made?: string): Promise<Opened> {
   const found: { device?: unknown; clean?: unknown } = {}
   let device = ''
@@ -161,14 +126,12 @@ function started(db: IDBDatabase, made?: string): Promise<Opened> {
     meta.put({ key: 'schema', value: SCHEMA })
   }).then(() => ({
     device,
-    // A store that never said is a new one, with nothing a rotation could protect.
     wasClean: found.clean !== 0,
     schema: SCHEMA,
     recovered: false,
   }))
 }
 
-/** Every question answered from one read transaction, which is one snapshot. */
 async function answered<const Q extends readonly Query[]>(
   db: IDBDatabase,
   queries: Q,
@@ -200,20 +163,15 @@ async function answered<const Q extends readonly Query[]>(
     'readonly',
   )
 
-  // Checked answer by answer, against the question each answers.
   return queries.map((query, at) => answerOf(query, raw[at] ?? null)) as Answers<Q>
 }
 
-/** A space's rows, in the table's order. */
 function spaceIndexRead(store: IDBObjectStore, table: TableName, space: string): IDBRequest {
   const index = store.index(BY_SPACE)
   if (table !== 'outbox') return index.getAll(space)
   return index.getAll(IDBKeyRange.bound([space, -Infinity], [space, Infinity]))
 }
 
-/** Every change applied in one transaction. Every change is checked before the
- *  transaction starts, so a refusal writes nothing at all; a failure inside it aborts
- *  it, which writes nothing either. */
 async function written(db: IDBDatabase, changes: readonly Change[]): Promise<number[]> {
   const checked = changes.map((change) => changeOf(change))
   if (checked.length === 0) return []
@@ -277,7 +235,6 @@ function spaceKeys(
   return index.getAllKeys(IDBKeyRange.bound([space, -Infinity], [space, Infinity]))
 }
 
-/** The log down to its newest `LOG_ROWS`, in the transaction that grew it. */
 function trim(log: IDBObjectStore): void {
   const counted = log.count()
   counted.onsuccess = () => {
@@ -294,8 +251,6 @@ function trim(log: IDBObjectStore): void {
   }
 }
 
-/** Runs `queue` in one transaction over `tables` and resolves when the transaction
- *  commits, which is when all of it is written or, on an abort, none of it. */
 function settled(
   db: IDBDatabase,
   tables: readonly string[],

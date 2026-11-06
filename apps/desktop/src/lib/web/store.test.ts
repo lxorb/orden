@@ -2,17 +2,6 @@ import 'fake-indexeddb/auto'
 import { describe, expect, test, vi } from 'vitest'
 import { assets, files, inSlices, type RowChange, stats } from './store'
 
-/** Reading a whole store without stopping the thread.
- *
- *  `getAll` on the listing of five thousand notes is one task of several hundred
- *  milliseconds, and the browser blamed it for the longest task of every launch. The
- *  rows and the order have to be exactly what one read gave; what changes is how
- *  many tasks they arrive in. So what is counted here is reads and the largest of
- *  them, not milliseconds - a clock says what the machine was doing and a count says
- *  what the code did. */
-
-/** A store of `count` rows keyed by a path that sorts the way IndexedDB sorts one,
- *  answering a slice at a time and writing down what it was asked for. */
 function shelf(count: number) {
   const rows = Array.from({ length: count }, (_, at) => ({
     path: `/Big/note-${String(at).padStart(5, '0')}.md`,
@@ -46,8 +35,6 @@ describe('a whole store read in slices', () => {
     const store = shelf(5003)
     await inSlices(store.read, keyOf, 500)
 
-    // Eleven reads of at most five hundred rows, not one read of five thousand:
-    // this is the several hundred milliseconds with nothing else able to run.
     expect(store.asked).toHaveLength(11)
     expect(Math.max(...store.asked)).toBe(500)
     expect(store.asked.at(-1)).toBe(3)
@@ -70,7 +57,6 @@ describe('a whole store read in slices', () => {
     const store = shelf(500)
     const found = await inSlices(store.read, keyOf, 500)
 
-    // The first read is full, so there may be more; the second says there is not.
     expect(found).toHaveLength(500)
     expect(store.asked).toEqual([500, 0])
   })
@@ -113,7 +99,6 @@ describe('a file written over', () => {
 })
 
 describe('whether the listing holds a path', () => {
-  // By a key: what onDisk asks in the browser, once for every file an import brings.
   test('holds a note, a picture, a folder of either, and not a name they only begin', async () => {
     await files.write('/h/Plan.md', '# Plan', 1)
     await assets.put({ path: '/h/Pics/shot.png', type: 'image/png', data: 'AAAA', modified: 1 })

@@ -1,37 +1,12 @@
-/** The browser build's notes, taken from the old address to the new one.
- *
- *  A browser keeps a site's storage per origin. The web build at nibeditor.com
- *  keeps notes that were never synced in that origin's IndexedDB and the session in
- *  its `localStorage`, and orden.so cannot read either. Once nibeditor.com sends
- *  pages on to orden.so, somebody who only ever wrote in the browser would arrive at
- *  an empty app. So the new address asks the old one, the one way a browser allows:
- *
- *  1. orden.so opens `nibeditor.com/handoff` as a popup, on a press. A popup is a
- *     top-level page, so it reads the old origin's own storage; a frame would be
- *     handed a partitioned, empty one.
- *  2. That page reads every database and every key (`pack`) and posts them to its
- *     opener, addressed to orden.so and nothing else, then closes. A page that
- *     opened it from anywhere else is not delivered a thing.
- *  3. orden.so takes the message only from that popup and from the old origin, and
- *     only while it holds nothing of anybody's - a first visit, nobody signed in -
- *     writes it into its own storage (`unpack`) and starts again from it. The
- *     session comes with it, so the person is signed in as they were.
- *
- *  Both addresses are build settings so a drive can play both parts on two local
- *  origins; see test/e2e/handoff.py. */
-
 import { keep, storedText } from '../stored'
 
-/** Where the browser build lives now, and where it lived before the rename. */
 export const WEB: string = import.meta.env.VITE_NIB_WEB ?? 'https://orden.so'
 export const LEGACY_WEB: string = import.meta.env.VITE_NIB_LEGACY_WEB ?? 'https://nibeditor.com'
 
-/** The old address's page that hands its storage over: `handoff.html`. */
 export const HANDOFF_PATH = '/handoff'
 
 const KIND = 'nib-handoff'
 
-/** The databases worth asking for when a browser cannot list them: the notes. */
 const KNOWN = ['nib']
 
 interface IndexShape {
@@ -56,8 +31,6 @@ interface DatabaseDump {
   stores: StoreDump[]
 }
 
-/** Everything one origin held, as the message carries it. Structured-cloned, so a
- *  row holding a blob or a date arrives as one. */
 export interface Handoff {
   kind: typeof KIND
   databases: DatabaseDump[]
@@ -70,7 +43,6 @@ export function isHandoff(value: unknown): value is Handoff {
   return said.kind === KIND && Array.isArray(said.databases) && Array.isArray(said.local)
 }
 
-/** Whether there was nothing at the old address at all. */
 export function isEmpty(handoff: Handoff): boolean {
   return (
     handoff.local.length === 0 &&
@@ -93,8 +65,6 @@ function finished(transaction: IDBTransaction): Promise<void> {
   })
 }
 
-/** The databases this origin has, by name and version. None for a browser that
- *  cannot list them (Firefox before 126), which is asked for `KNOWN` instead. */
 async function listed(): Promise<{ name: string; version: number }[]> {
   if (!('databases' in indexedDB)) return []
   const listing = await indexedDB.databases().catch(() => null)
@@ -106,8 +76,6 @@ async function listed(): Promise<{ name: string; version: number }[]> {
   )
 }
 
-/** An existing database, opened as it is; null when there is none by that name.
- *  Opening one that is not there would make it, so the making is called off. */
 function existing(name: string): Promise<IDBDatabase | null> {
   return new Promise((resolve) => {
     const request = indexedDB.open(name)
@@ -138,7 +106,6 @@ async function dump(name: string): Promise<DatabaseDump | null> {
             multiEntry: index.multiEntry,
           }
         })
-        // Both in key order, so the nth key is the nth value's.
         const [keys, values] = await Promise.all([done(store.getAllKeys()), done(store.getAll())])
         return {
           name: storeName,
@@ -156,8 +123,6 @@ async function dump(name: string): Promise<DatabaseDump | null> {
   }
 }
 
-/** Everything this origin holds: every database, every store in it, every key in
- *  `localStorage`. */
 export async function pack(): Promise<Handoff> {
   const names = (await listed()).map((one) => one.name)
   const databases: DatabaseDump[] = []
@@ -176,8 +141,6 @@ export async function pack(): Promise<Handoff> {
   return { kind: KIND, databases, local }
 }
 
-/** The notes' listing (web/store.ts), and a row of it, made as `statOf` there makes
- *  one: said again here because this page loads nothing of the app. */
 const LISTING = 'stats'
 interface Listed {
   path: string
@@ -191,8 +154,6 @@ function listingOf(row: Listed) {
   return { path: row.path, modified: row.modified, created: row.created ?? row.modified, size }
 }
 
-/** One database, as it was at the old address: the stores it had, made if they
- *  are missing, and each emptied and filled with the rows the old one held. */
 function restore(database: DatabaseDump, version: number): Promise<void> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(database.name, version)
@@ -218,8 +179,6 @@ function restore(database: DatabaseDump, version: number): Promise<void> {
       }
     }
 
-    // A tab still holding the database at an older version keeps the upgrade from
-    // happening at all; better to say so than to wait for ever.
     request.onblocked = () => reject(new Error('another tab holds the notes open'))
     request.onerror = () => reject(request.error ?? new Error('the database refused'))
 
@@ -234,8 +193,6 @@ function restore(database: DatabaseDump, version: number): Promise<void> {
         return
       }
 
-      // An old address from before the notes had a listing brings none: it is made
-      // here from the rows that came, or every one of them reads as not there.
       const listing =
         database.name === 'nib' && db.objectStoreNames.contains(LISTING) && !names.includes(LISTING)
           ? LISTING
@@ -265,9 +222,6 @@ function restore(database: DatabaseDump, version: number): Promise<void> {
   })
 }
 
-/** What the old address held, written into this one's storage. Called only while
- *  this origin holds nothing of anybody's, which is what makes emptying a store
- *  before filling it safe: what it held was the welcome note of this visit. */
 export async function unpack(handoff: Handoff): Promise<void> {
   const versions = new Map((await listed()).map((one) => [one.name, one.version]))
   for (const database of handoff.databases) {

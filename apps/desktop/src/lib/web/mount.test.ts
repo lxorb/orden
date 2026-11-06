@@ -2,17 +2,12 @@ import 'fake-indexeddb/auto'
 import { describe, expect, test } from 'vitest'
 import { assets, type AssetRow, type FileRow, files, mountRows, type Rows, stats } from './store'
 
-/** Rows mounted at a folder (#1068, step 4c): what is at or under it is kept by the
- *  store mounted there and not by this browser's, through the same tables, so every
- *  command above them answers a space Orden keeps by id as it answers any other. */
-
 interface Kept {
   rows: Rows
   files: Map<string, FileRow>
   assets: Map<string, AssetRow>
 }
 
-/** A store of rows in memory, as a mounted one answers. */
 function kept(): Kept {
   const held = new Map<string, FileRow>()
   const pictures = new Map<string, AssetRow>()
@@ -78,11 +73,9 @@ describe('rows mounted at a folder', () => {
     expect(mounted.files.get('/Kept/Plan.md')?.content).toBe('ship it')
     expect(mounted.files.has('/Notes/Other.md')).toBe(false)
     expect(mounted.assets.has('/Kept/cat.png')).toBe(true)
-    // A folder whose name only starts the same is not under it.
     await files.write('/Kept two/Not.md', 'not kept', 1)
     expect(mounted.files.has('/Kept two/Not.md')).toBe(false)
 
-    // A whole-store read is every store's, in path order.
     expect(await files.paths()).toEqual(['/Kept two/Not.md', '/Kept/Plan.md', '/Notes/Other.md'])
     expect((await stats.all()).map((row) => row.path)).toContain('/Kept/cat.png')
 

@@ -1,15 +1,3 @@
-/** The asset worker, driven without a browser.
- *
- *  public/sw.js is a classic script rather than a module, so it is read and run
- *  here with a `self` and an `indexedDB` of our own and its `fetch` listener is
- *  asked the questions a page asks it. What is under test is the answer: whether
- *  it answers at all, what it says the bytes are, how long they may be kept, and
- *  what a picture that is not there gets.
- *
- *  The reading of real rows out of real storage is not something a fake can say
- *  anything true about; that is the drive's, in test/e2e/pictures.py, where a real
- *  browser installs the real worker over the real store. */
-
 import { readFileSync } from 'node:fs'
 import { beforeEach, describe, expect, test } from 'vitest'
 
@@ -18,7 +6,6 @@ const SOURCE = readFileSync(SW, 'utf8')
 
 const ORIGIN = 'http://127.0.0.1:18967'
 
-/** A one-pixel PNG, as the store keeps one: base64 in a row. */
 const PIXEL =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg=='
 
@@ -33,8 +20,6 @@ interface Worker {
   fetch(url: string, method?: string): Promise<Response | null>
 }
 
-/** The file, run over rows of our own. A fresh evaluation each time, because the
- *  worker holds its database open between requests. */
 function load(rows: readonly Row[], options: { store?: boolean; broken?: boolean } = {}): Worker {
   const { store = true, broken = false } = options
   const listeners = new Map<string, (event: unknown) => void>()
@@ -122,9 +107,6 @@ describe('the asset worker', () => {
 
   test('answers for the asset route and for nothing else', async () => {
     expect(await worker.fetch(`${ORIGIN}/asset/Work/notes/screenshot.png`)).not.toBeNull()
-    // The app's own chunks, the page itself, another origin's picture: left alone
-    // entirely rather than passed through, so nothing of the app is ever served
-    // from here.
     expect(await worker.fetch(`${ORIGIN}/assets/index-a1b2.js`)).toBeNull()
     expect(await worker.fetch(`${ORIGIN}/`)).toBeNull()
     expect(await worker.fetch('https://example.com/asset/Work/pic.png')).toBeNull()
@@ -152,7 +134,6 @@ describe('the asset worker', () => {
     const png = await worker.fetch(`${ORIGIN}/asset/Work/notes/screenshot.png`)
     expect(png?.headers.get('content-type')).toBe('image/png')
 
-    // The row says `image/svg`, which draws nothing at all.
     const svg = await worker.fetch(`${ORIGIN}/asset/Work/assets/diagram.svg`)
     expect(svg?.headers.get('content-type')).toBe('image/svg+xml')
   })
