@@ -953,8 +953,23 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
     case 'draw':
       return { machine: rest, effects: [{ do: 'stroke', stroke: one.stroke }] }
 
-    case 'erase':
-      return { machine: rest, effects: [] }
+    case 'erase': {
+      if (input.id !== one.id) return { machine: rest, effects: [] }
+      const touch = machine.driver?.kind === 'touch'
+      const rub = rubbing(context, one.whole, touch)
+      const moved = input.at.x !== one.last.x || input.at.y !== one.last.y
+      return {
+        machine: rest,
+        effects: moved
+          ? rubbedBetween(
+              { at: one.last, screen: one.lastScreen },
+              input,
+              context.scale,
+              rub.reach,
+            ).map((at) => rubbed(rub, at))
+          : [],
+      }
+    }
 
     case 'lasso':
       return {

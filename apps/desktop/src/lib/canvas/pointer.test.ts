@@ -745,6 +745,19 @@ describe('rubbing out', () => {
     expect(verbs(effects)).toEqual(['cut', 'cut', 'cut'])
   })
 
+  test('rubs out as far as the eraser is lifted, where it lifts past the last move', () => {
+    const { effects } = play(
+      [
+        down(),
+        { kind: 'move', id: 1, at: { x: 5, y: 0 }, screen: HERE, samples: [], hit: NOTHING },
+        { kind: 'up', id: 1, at: { x: 9, y: 0 }, screen: HERE, hit: NOTHING },
+      ],
+      context({ tool: 'erase' }),
+    )
+
+    expect(effects.at(-1)).toMatchObject({ do: 'cut', at: { x: 9, y: 0 } })
+  })
+
   test('with shift it takes whole strokes instead, as far as the stroke eraser reaches', () => {
     const { effects } = play([down({ shift: true })], context({ tool: 'erase', scale: 2 }))
 
