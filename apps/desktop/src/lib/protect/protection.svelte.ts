@@ -28,12 +28,15 @@ export interface Hashed extends Cost {
 
 const MOST_N = 1 << 20
 
+const MOST_WORK = 1 << 19
+
 export function hashedOf(value: unknown): Hashed | null {
   if (typeof value !== 'object' || value === null) return null
   const { n, r, p, salt, hash } = value as Record<string, unknown>
   const whole = (one: unknown, most: number): one is number =>
     Number.isInteger(one) && (one as number) > 0 && (one as number) <= most
   if (!whole(n, MOST_N) || (n & (n - 1)) !== 0 || !whole(r, 32) || !whole(p, 16)) return null
+  if (n * r * p > MOST_WORK) return null
   if (typeof salt !== 'string' || typeof hash !== 'string') return null
   if (!/^[A-Za-z0-9+/=]{4,64}$/.test(salt) || !/^[A-Za-z0-9+/=]{4,128}$/.test(hash)) return null
   const at = (value as Record<string, unknown>).at
