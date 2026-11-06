@@ -50,9 +50,9 @@ export function keptHere(core: Core, space: SpaceState, entry: EntryRow): boolea
 
 /** A document this device keeps no words of: listed from the tree, and fetched when it
  *  is asked for. */
-export function away(core: Core, space: SpaceState, entry: EntryRow): boolean {
+export function away(space: SpaceState, entry: EntryRow): boolean {
   if (!space.keepsFew || !holdsDocument(entry.kind) || entry.seq === null) return false
-  if (entry.local_path || core.hasDoc(entry.id) || !space.isLive(entry.id)) return false
+  if (entry.local_path || !space.isLive(entry.id)) return false
   return !space.foreign(entry.id)
 }
 

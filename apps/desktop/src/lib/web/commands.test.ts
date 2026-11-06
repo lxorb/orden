@@ -1417,6 +1417,39 @@ describe('a note kept away', () => {
     expect(asked).toEqual([])
   })
 
+  test("is not there for the engine's disk, which writes its words where it was listed", async () => {
+    const asked = away()
+    const { appWorld } = await import('../sync2/app-world')
+    const written: string[] = []
+    const world = appWorld(() => null, {
+      written: (path: string) => void written.push(path),
+    } as unknown as Parameters<typeof appWorld>[1])
+
+    expect(await world.disk.exists('/Notes/Plan.md')).toBe(false)
+    expect(await world.disk.exists('/Notes')).toBe(false)
+    expect(await world.disk.read('/Notes/Plan.md')).toBeNull()
+    expect(await world.list?.('/Notes')).toEqual([])
+    await world.disk.write('/Notes/Plan.md', 'Ship Monday')
+    expect(disk.files.get('/Notes/Plan.md')?.content).toBe('Ship Monday')
+    expect(written).toEqual(['/Notes/Plan.md'])
+    expect(asked).toEqual([])
+  })
+
+  test("is no name in the way of the engine's move, which another device's tree made", async () => {
+    const asked = away()
+    await write('/Notes/Other.md', 'other')
+    const { appWorld } = await import('../sync2/app-world')
+    const world = appWorld(() => null, {
+      holdingWrites: (_path: string, run: () => Promise<void>) => run(),
+      moved: () => Promise.resolve(),
+    } as unknown as Parameters<typeof appWorld>[1])
+
+    await world.disk.move('/Notes/Other.md', '/Notes/Plan.md', 'file')
+    expect(disk.files.get('/Notes/Plan.md')?.content).toBe('other')
+    expect(disk.files.has('/Notes/Other.md')).toBe(false)
+    expect(asked).toEqual([])
+  })
+
   test('is fetched when it is read, and read like any other from then on', async () => {
     const asked = away()
     expect(await read('/Notes/Plan.md')).toBe('Ship Monday')

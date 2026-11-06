@@ -149,6 +149,7 @@ describe('a PDF another device turned into its page note', () => {
       to: '/s/X.pages.pdf',
       alone: true,
       hold: true,
+      raw: true,
     })
   })
 
@@ -166,6 +167,7 @@ describe('a PDF another device turned into its page note', () => {
       to: '/s/Done.md',
       alone: true,
       arrived: true,
+      raw: true,
     })
   })
 })
@@ -189,7 +191,13 @@ describe('a PDF another device renamed, with its highlights', () => {
     await disk.move('/s/A.pdf', '/s/B.pdf', 'file')
 
     expect(notes.get('/s/B.pdf.highlights.json')).toBe('{"version":1}')
-    expect(renames.at(-1)).toEqual({ from: '/s/A.pdf', to: '/s/B.pdf', alone: true, arrived: true })
+    expect(renames.at(-1)).toEqual({
+      from: '/s/A.pdf',
+      to: '/s/B.pdf',
+      alone: true,
+      arrived: true,
+      raw: true,
+    })
   })
 })
 

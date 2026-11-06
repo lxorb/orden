@@ -192,6 +192,35 @@ describe('a browser that keeps only the words it uses', () => {
     expect(browser.disk.files.has(`${ROOT}/Ideas.md`)).toBe(false)
   })
 
+  test('a note whose words came and whose file would not be written stays listed', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const browser = await fresh(account, 'b')
+    await browser.engine.pass(SPACE)
+    const write = browser.disk.write.bind(browser.disk)
+    browser.disk.write = () => Promise.reject(new Error('the storage is full'))
+    const there = { exists: browser.disk.exists.bind(browser.disk) }
+    browser.disk.exists = (path) =>
+      path === `${ROOT}/Ideas.md` ? Promise.resolve(true) : there.exists(path)
+
+    expect(await browser.engine.fetch(`${ROOT}/Plan.md`)).toBe(false)
+    expect(await browser.engine.fetch(`${ROOT}/Ideas.md`)).toBe(false)
+    expect(browser.pulled).toEqual([PLAN, IDEAS])
+    expect(
+      browser.engine
+        .awayFiles()
+        .map((one) => one.path)
+        .sort(),
+    ).toEqual([`${ROOT}/Ideas.md`, `${ROOT}/Plan.md`])
+
+    browser.disk.write = write
+    browser.disk.exists = there.exists
+    expect(await browser.engine.fetch(`${ROOT}/Plan.md`)).toBe(true)
+    expect(await browser.engine.fetch(`${ROOT}/Ideas.md`)).toBe(true)
+    expect(browser.disk.files.get(`${ROOT}/Plan.md`)).toBe(SEEDED[0]?.text)
+    expect(browser.disk.files.has(`${ROOT}/Ideas.md`)).toBe(true)
+    expect(browser.engine.awayFiles()).toEqual([])
+  })
+
   test('lets go of the least recently used past the budget, and fetches it again whole', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')

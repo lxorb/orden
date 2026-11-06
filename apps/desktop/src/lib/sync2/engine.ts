@@ -333,7 +333,7 @@ export class Engine implements AskedEngine {
       const paths = space.paths()
       for (const entry of space.entries.values()) {
         const at = paths.get(entry.id)
-        if (at === undefined || !away(this.core, space, entry)) continue
+        if (at === undefined || !away(space, entry)) continue
         out.push({
           id: entry.id,
           space: space.id,
@@ -358,7 +358,7 @@ export class Engine implements AskedEngine {
       if (!placed || !entry) return false
       if (entry.local_path) return true
       const { space } = placed
-      if (!away(this.core, space, entry)) return false
+      if (!away(space, entry)) return false
       this.core.asked.add(entry.id)
       const life = this.core.life
       if (!(await pullNow(this.core, space, new Set([entry.id]), () => this.core.life === life)))

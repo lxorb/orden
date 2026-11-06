@@ -345,7 +345,7 @@ async function writeNote(path: string, content: string) {
 
 /** Everything under `from` moves, so renaming a folder takes its notes along -
  *  and the files beside them, which is how a PDF's own highlights follow it. */
-async function renameNote(from: string, to: string, hold = false, alone = false) {
+async function renameNote(from: string, to: string, hold = false, alone = false, raw = false) {
   const source = normalise(from)
   const target = normalise(to)
   if (source === target) return
@@ -367,7 +367,7 @@ async function renameNote(from: string, to: string, hold = false, alone = false)
   // `occupied` and not `files.get`: a folder has no row of its own, so asking
   // only about an exact path would let a note be renamed onto a folder and
   // land inside it, taking the folder's name and hiding what was in it.
-  if (await occupied(target)) throw new Error('something already lives there')
+  if (await occupied(target, raw)) throw new Error('something already lives there')
 
   const rows = (await files.all()).filter(
     (row) => row.path === source || row.path.startsWith(`${source}/`),
@@ -645,10 +645,10 @@ async function saveTrash(entries: TrashEntry[]) {
   await meta.put('trash', JSON.stringify(entries.filter((one) => !kept.has(one.id))))
 }
 
-async function occupied(path: string): Promise<boolean> {
+async function occupied(path: string, raw = false): Promise<boolean> {
   if (await files.get(path)) return true
   // A note this browser keeps no words of is there all the same (#1126).
-  if (keptAway.under(path).length) return true
+  if (!raw && keptAway.under(path).length) return true
   return (await files.paths()).some((one) => one.startsWith(`${path}/`))
 }
 
@@ -1223,6 +1223,7 @@ export async function webInvoke<T>(
         args.to as string,
         args.hold === true,
         args.alone === true,
+        args.raw === true,
       )
       return undefined as T
 

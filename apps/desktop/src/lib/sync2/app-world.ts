@@ -64,7 +64,7 @@ const stamped = (path: string) =>
       )
 
 const thereOrUnsure = (path: string): Promise<boolean> =>
-  isNative ? invoke<boolean>('file_there', { path }).catch(() => true) : onDisk(path)
+  isNative ? invoke<boolean>('file_there', { path }).catch(() => true) : stamped(path)
 
 function diskOf(telling: Telling): Disk {
   return {
@@ -104,6 +104,7 @@ function diskOf(telling: Telling): Disk {
             alone: true,
             arrived: true,
             ...(hold ? { hold } : {}),
+            ...RAW,
           })
           await telling.moved(from, to, kind)
         },
