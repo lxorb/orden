@@ -517,6 +517,15 @@ WATCH = (
     "return true"
 )
 
+LISTED_PDFS = (
+    "const found = [];"
+    "const walk = (one) => { if (!one) return;"
+    " if (!one.is_dir && /\\.pdf$/i.test(one.name)) found.push(one.name);"
+    " for (const child of one.children ?? []) walk(child) };"
+    "walk(nib.workspace.tree);"
+    "return found"
+)
+
 BOX = (
     "const one = document.querySelector({selector});"
     "if (!one) return null;"
@@ -562,7 +571,8 @@ def main() -> int:
         app.eval(WATCH)
 
         def pdfs_in_space() -> list[str]:
-            return sorted(one.name for one in root.rglob("*.pdf"))
+            said = app.eval(LISTED_PDFS)
+            return sorted(said) if isinstance(said, list) else [f"the space's list could not be read: {said}"]
 
         def pages_tabs() -> int:
             said = app.eval("return nib.workspace.tabs.filter((one) => one.kind === 'pages').length")
