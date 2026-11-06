@@ -1341,8 +1341,11 @@ function holds(tail: string): boolean {
  *  Raised on 2026-11-06, to 3,141,000 in 404 files, for #1165: what the reader protected
  *  and which of it is open, asked before a pane draws anything, and the rows that protect
  *  and lock (protect/protection.svelte.ts, protect/unlocked.svelte.ts, protect/entries.ts).
- *  Measured 3,140,501 in 403. */
-const BUDGET = 3_141_000
+ *  Measured 3,140,501 in 403.
+ *
+ *  Lowered on 2026-11-06, to 2,112,500, for #1045: the desktop app's own source carries
+ *  no comments. Measured 2,112,170 in 403. */
+const BUDGET = 2_112_500
 const MOST_FILES = 404
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
