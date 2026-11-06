@@ -75,7 +75,7 @@ def check(what: str, held: bool) -> None:
 def new_tab(page: Page) -> None:
     page.keyboard.press("Control+KeyT")
     wait_for(page, f"({STATE})().newTab", "a new tab")
-    page.wait_for_timeout(300)
+    wait_for(page, "document.activeElement instanceof HTMLInputElement", "the address field to take the keys")
 
 def typed(page: Page, letters: str) -> list[dict]:
     page.keyboard.type(letters, delay=20)
@@ -86,6 +86,7 @@ def drive(browser: Browser, scheme: str) -> None:
     page = DRIVE.page(browser, color_scheme=scheme, viewport={"width": 1180, "height": 760})
     DRIVE.open(page)
     say(f"[{scheme}] the space holds {page.evaluate(SEED, FILES)}")
+    page.wait_for_load_state("networkidle")
     page.reload(wait_until="domcontentloaded")
     DRIVE.ready(page)
     page.wait_for_timeout(800)
