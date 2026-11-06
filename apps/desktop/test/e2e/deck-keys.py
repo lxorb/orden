@@ -13,6 +13,7 @@ def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     refused: list[str] = []
     page.on("console", lambda said: refused.append(said.text) if "Content Security Policy" in said.text else None)
+    page.add_init_script("Element.prototype.requestFullscreen = () => Promise.resolve()")
     DRIVE.open(page)
     DRIVE.seed(page, DECK)
     DRIVE.open_note(page, "First")

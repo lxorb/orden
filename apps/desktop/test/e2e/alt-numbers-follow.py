@@ -7,6 +7,11 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong = DRIVE.say, DRIVE.wrong
 
+DESKTOP_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
+    " Chrome/140.0.0.0 Safari/537.36"
+)
+
 OFF = """() => {
   const strip = document.querySelector('[data-strip]')
   const marks = [...strip.querySelectorAll('.pick[data-tab]')].map((pick) => {
@@ -24,7 +29,7 @@ OFF = """() => {
 }"""
 
 def drive(browser: Browser) -> None:
-    page = DRIVE.page(browser, viewport={"width": 1400, "height": 800})
+    page = DRIVE.page(browser, viewport={"width": 1400, "height": 800}, user_agent=DESKTOP_AGENT)
     DRIVE.open(page)
     names = ("One", "Two", "Three", "Four")
     DRIVE.seed(page, *(f"# {name}\n\nWords.\n" for name in names))
