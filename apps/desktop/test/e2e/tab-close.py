@@ -125,7 +125,7 @@ def closing(page: Page, look: str, icons: bool) -> None:
 def drive(browser: Browser) -> None:
     for icons in (True, False):
         for scheme in ("light", "dark"):
-            page = DRIVE.page(browser, viewport={"width": 1280, "height": 700})
+            page = DRIVE.page(browser, viewport={"width": 1440, "height": 700})
             page.context.add_init_script(
                 f"localStorage.setItem('nib:icon-tabs', {'yes' if icons else 'no'!r})"
             )
