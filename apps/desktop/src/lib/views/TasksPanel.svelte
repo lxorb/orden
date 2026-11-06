@@ -39,16 +39,20 @@
   const { side = 'left' }: { side?: 'left' | 'right' } = $props()
 
   /** Every space's rows as the store last told of a change, which is what counts again. */
-  let all = $state.raw<readonly Row[]>(untrack(() => rows.of()))
+  let all = $state.raw<readonly Row[]>(untrack(() => rows.shown()))
   let today = $state(todayHere())
   $effect(() =>
     untrack(() =>
       rows.watch(() => {
-        all = rows.of()
+        all = rows.shown()
         today = todayHere()
       }),
     ),
   )
+  $effect(() => {
+    const next = rows.shown()
+    untrack(() => (all = next))
+  })
   const counts = $derived(panelCounts(all, today, workspace.activeSpace?.name))
 
   const space = $derived(workspace.activeSpace)

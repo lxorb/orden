@@ -92,6 +92,9 @@ let shown: Row[] = []
 
 vi.mock('../rows/rows.svelte', () => ({
   rows: {
+    get shown() {
+      return this.of
+    },
     ready: true,
     of: (space?: string) => shown.filter((row) => space === undefined || row.space === space),
     at: () => [],

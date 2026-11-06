@@ -46,7 +46,7 @@ async function rowsOfSpace(
       }, 1500)
     })
   }
-  return { rows: rows.of(space.name), root: space.root }
+  return { rows: rows.shown(space.name), root: space.root }
 }
 
 /** One row: the box and the words, carrying the note and the line it is. */

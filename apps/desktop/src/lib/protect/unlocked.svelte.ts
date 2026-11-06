@@ -19,7 +19,17 @@ function readRelock(): number {
 const keyOf = (lock: Pick<Lock, 'root' | 'key'>) => `${lock.root}\u0000${lock.key}`
 
 class Unlocks {
-  private open = $state<ReadonlySet<string>>(new Set())
+  private opened = $state<ReadonlySet<string>>(new Set())
+  revision = $state(0)
+
+  private get open(): ReadonlySet<string> {
+    return this.opened
+  }
+
+  private set open(next: ReadonlySet<string>) {
+    this.opened = next
+    this.revision++
+  }
   relock = $state(readRelock())
   private timer: ReturnType<typeof setTimeout> | null = null
   private watching = false

@@ -508,3 +508,20 @@ describe("a space's own notes, which no scan reads (#1044)", () => {
     ).toEqual(['Plan.md'])
   })
 })
+
+describe('the rows a view shows', () => {
+  test('leave out every note that is protected and shut, and only those', async () => {
+    const { store, answer, settled } = rig({
+      [`${WORK}/Plan.md`]: '- [ ] Ship it\n',
+      [`${WORK}/Diary/Mine.md`]: '- [ ] Call her\n',
+    })
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    await settled()
+    answer(WORK)
+    await settled()
+
+    const shut = (path: string) => path.startsWith(`${WORK}/Diary/`)
+    expect(tasks(store.openOf(undefined, shut))).toEqual(['Work:Plan.md:Ship it'])
+    expect(tasks(store.openOf('Work', () => false))).toHaveLength(2)
+  })
+})

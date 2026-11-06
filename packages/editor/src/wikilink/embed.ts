@@ -97,6 +97,12 @@ export class EmbedWidget extends NibWidget {
       return frame
     }
 
+    if (view.state.facet(noteIndex).locked?.(this.path)) {
+      frame.classList.add('nib-embed-missing')
+      body.textContent = label('protectedNote')
+      return frame
+    }
+
     frame.classList.add('nib-embed-loading')
 
     const showing = () => body.isConnected

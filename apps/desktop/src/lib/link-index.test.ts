@@ -1692,3 +1692,48 @@ describe('another window writing the file as a link is rewritten', () => {
     expect(notes['Plan.md']).toContain('^')
   })
 })
+
+describe('a note that is protected and shut', () => {
+  test('is read for no hover, embed or backlink, and shows none of its own links', async () => {
+    await space({
+      'Plan.md': '# Plan\n\n![[One]]',
+      'One.md': 'see [[Plan]] for more',
+      'Two.md': 'see [[Plan]] too',
+    })
+    expect(await links.index(at('Plan.md')).read('One.md')).toBe('see [[Plan]] for more')
+
+    const shut = new Set([at('One.md')])
+    let seen = 'shut'
+    links.lockedAt = (path) => shut.has(path)
+    links.locksSeen = () => seen
+    try {
+      expect(await links.index(at('Plan.md')).read('One.md')).toBeNull()
+      expect(await links.index(at('Plan.md')).read('Two.md')).toBe('see [[Plan]] too')
+      expect(await links.embedNote('One', at('Plan.md'))).toBeNull()
+      expect(links.backlinks(at('Plan.md')).map((one) => one.name)).toEqual(['Two.md'])
+      expect(links.outgoing(at('One.md'))).toEqual([])
+
+      shut.clear()
+      seen = 'open'
+      expect(await links.index(at('Plan.md')).read('One.md')).toBe('see [[Plan]] for more')
+      expect(links.backlinks(at('Plan.md')).map((one) => one.name)).toEqual(['One.md', 'Two.md'])
+    } finally {
+      links.lockedAt = () => false
+      links.locksSeen = () => ''
+    }
+  })
+
+  test('hands every open note a fresh index when a lock opens or shuts, so embeds draw again', async () => {
+    await space({ 'Plan.md': '# Plan' })
+    let seen = 'one'
+    links.locksSeen = () => seen
+    try {
+      const before = links.index(at('Plan.md'))
+      expect(links.index(at('Plan.md'))).toBe(before)
+      seen = 'two'
+      expect(links.index(at('Plan.md'))).not.toBe(before)
+    } finally {
+      links.locksSeen = () => ''
+    }
+  })
+})

@@ -38,6 +38,7 @@ const DEFAULTS = {
   searchTag: 'Ctrl+Click to search the tag',
   searchTagMac: '⌘-click to search the tag',
   noteNotFound: 'Note not found',
+  protectedNote: 'Protected',
   archived: 'Archived',
   loadingNote: 'Loading…',
   alignLeft: 'Align left',

@@ -25,7 +25,7 @@
   import TabMark from '../TabMark.svelte'
   import { theme } from '../theme.svelte'
   import { pages } from '../web-tab/pages.svelte'
-  import type { Tab } from '../workspace.svelte'
+  import { type Tab, workspace } from '../workspace.svelte'
   import { TAB_KINDS } from '../workspace/tab-kinds'
   import { drawInto, type Face } from './faces'
   import { scrolledBack } from './mirror'
@@ -52,6 +52,7 @@
 
   /** How its kind is drawn while it is not in front. */
   const how = $derived(TAB_KINDS[tab.kind].preview)
+  const locked = $derived(workspace.protection.locked(tab.path))
 
   /** As much of a note as a window can show at most: a screenful from where it was left.
    *  A note of a hundred thousand words is not rendered whole to show one screen. */
@@ -59,7 +60,7 @@
 
   /** What the note is read from, and how: the same again is drawn from what was drawn. */
   const reading = $derived.by(() => {
-    if (how !== 'reading') return null
+    if (how !== 'reading' || locked) return null
     const text = readingFrom(tab.doc, tab.anchor, START)
     const scheme = theme.current
     const trusted = trustsHtmlIn(tab.note)
@@ -118,7 +119,7 @@
   /** A terminal's last lines, as written down. */
   let readScreen = $state<{ text: string; cols: number } | null>(null)
   $effect(() => {
-    if (how !== 'scrollback') return
+    if (how !== 'scrollback' || locked) return
     let stale = false
     const done = scrollbackOf(tab).then((one) => {
       if (!stale) readScreen = one
@@ -186,7 +187,9 @@
 {/snippet}
 
 <div class="face" style:width="{width}px" style:height="{height}px">
-  {#if how === 'reading' && html}
+  {#if locked}
+    {@render mark()}
+  {:else if how === 'reading' && html}
     <div class="read" in:fade={arrive}>
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note's own words, rendered by the same renderer the reading view uses, under the same trust -->
       <article class="page nib-write">{@html html}</article>

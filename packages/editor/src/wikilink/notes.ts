@@ -47,6 +47,7 @@ export interface NoteIndex {
   tags?: readonly SpaceTag[] | undefined
   searchBlocks?: ((text: string, most: number) => Promise<readonly SpaceBlock[]>) | undefined
   read: (path: string) => Promise<string | null>
+  locked?: ((path: string) => boolean) | undefined
   query?: ((code: string, language?: string) => Promise<string | null>) | undefined
   pressRow?: ((target: EventTarget | null) => boolean) | undefined
   render?: ((source: string, path: string | null) => Promise<string>) | undefined

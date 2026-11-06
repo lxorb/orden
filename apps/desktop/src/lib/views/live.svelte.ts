@@ -20,6 +20,7 @@ import {
   type Row,
   type View,
 } from '@orden/bases'
+import { untrack } from 'svelte'
 import { rows as store } from '../rows/rows.svelte'
 import { afterQuiet } from '../timing'
 import { toneColour } from './chips'
@@ -130,10 +131,16 @@ export class LiveView {
   /** Starts listening and reads the base. Answers the way to stop. */
   start(): () => void {
     const scope = this.source.scope ?? undefined
-    this.rows = store.of(scope)
+    this.rows = store.shown(scope)
     this.stops.push(
       store.watch((change) => {
-        if (scope === undefined || change.space === scope) this.rows = store.of(scope)
+        if (scope === undefined || change.space === scope) this.rows = store.shown(scope)
+      }),
+      $effect.root(() => {
+        $effect(() => {
+          const next = store.shown(scope)
+          untrack(() => (this.rows = next))
+        })
       }),
     )
     if (this.source.watch) this.stops.push(this.source.watch(() => void this.reload()))

@@ -491,6 +491,9 @@ vi.mock('../../rows/rows.svelte', async () => {
   const spaces = [work, home, secret]
   return {
     rows: {
+      get shown() {
+        return this.of
+      },
       ready: true,
       of: (name: string) => {
         const space = spaces.find((one) => one.name === name)

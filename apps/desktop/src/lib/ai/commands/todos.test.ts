@@ -10,6 +10,9 @@ vi.mock('../../rows/rows.svelte', () => {
   const all = rowsOfText('Home', 'Week.md', NOTE)
   return {
     rows: {
+      get shown() {
+        return this.of
+      },
       of: () => all,
       inboxes: () => [{ space: 'Home', path: 'Inbox.md' }],
     },

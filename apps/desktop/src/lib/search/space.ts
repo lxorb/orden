@@ -45,6 +45,15 @@ export async function searchSpace(
    *  it a read and then a filter. See workspace/excluded.svelte.ts. */
   excluded: readonly string[] = [],
 ): Promise<void> {
+  const { workspace } = await import('../workspace.svelte')
+  const shut = workspace.protection.shutIn(root)
+  if (shut === null) return
+  if (shut.length) {
+    excluded = [...excluded, ...shut]
+    const told = onFound
+    const open = (one: { path: string }) => !workspace.protection.locked(one.path)
+    onFound = (found) => told({ hits: found.hits.filter(open), loose: found.loose.filter(open) })
+  }
   // The papers answer first, and from memory: their words are not on disk as text,
   // so neither walk below has anything to read. What was taken down in an earlier
   // sitting is read back once per space and per listing of it rather than per

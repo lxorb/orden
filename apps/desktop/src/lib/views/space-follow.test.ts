@@ -39,7 +39,15 @@ vi.mock('../workspace.svelte', () => ({
     fileOps: { follow: () => undefined },
   },
 }))
-vi.mock('../rows/rows.svelte', () => ({ rows: { inboxes: () => [], of: () => [] } }))
+vi.mock('../rows/rows.svelte', () => ({
+  rows: {
+    get shown() {
+      return this.of
+    },
+    inboxes: () => [],
+    of: () => [],
+  },
+}))
 vi.mock('../link-index.svelte', () => ({ links: {} }))
 
 const {

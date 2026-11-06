@@ -24,6 +24,9 @@ vi.mock('./search/space', () => ({
 const rowsOf: (string | undefined)[] = []
 vi.mock('./rows/rows.svelte', () => ({
   rows: {
+    get shown() {
+      return this.of
+    },
     ready: true,
     of: (space?: string) => {
       rowsOf.push(space)

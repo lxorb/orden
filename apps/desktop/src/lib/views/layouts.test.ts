@@ -7,6 +7,9 @@ vi.mock('../rooms.svelte', () => ({ rooms: { present: {}, following: null } }))
 vi.mock('../rows/home.svelte', () => ({ homeRoot: () => '/s/Home' }))
 vi.mock('../rows/rows.svelte', () => ({
   rows: {
+    get shown() {
+      return this.of
+    },
     of: () => [],
     at: () => [],
     watch: () => () => undefined,

@@ -52,6 +52,9 @@ const HOME = taskRow('Inbox.md', '- [ ] Buy milk', 0, { space: 'Home' })
 const store = vi.hoisted(() => ({ together: false }))
 vi.mock('../../rows/rows.svelte', () => ({
   rows: {
+    get shown() {
+      return this.of
+    },
     ready: true,
     of: (space?: string) => [WORK, HOME].filter((row) => store.together || row.space === space),
     at: () => [],

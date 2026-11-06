@@ -74,6 +74,10 @@ if (!__EVEN_PLUGIN__) void import('../views/runner.svelte')
 
 export const rows = {
   of: (space?: string): readonly Row[] => store.of(space),
+  shown: (space?: string): readonly Row[] =>
+    workspace.protection.any
+      ? store.openOf(space, (path) => workspace.protection.locked(path))
+      : store.of(space),
   at: (path: string): readonly Row[] => store.at(path),
   watch: (listener: RowsListener): (() => void) => store.watch(listener),
   get ready(): boolean {

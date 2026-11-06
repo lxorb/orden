@@ -97,7 +97,7 @@ export async function listed(filter?: string): Promise<{ total: number; tasks: T
   const { rows } = await import('./rows/rows.svelte')
   if (!filter) {
     const { clockOf, taskOut, todayTasks } = await import('@orden/bases/tasks')
-    const today = todayTasks(rows.of(), clockOf(new Date()).today, modes.undatedInToday)
+    const today = todayTasks(rows.shown(), clockOf(new Date()).today, modes.undatedInToday)
     return { total: today.length, tasks: today.slice(0, 50).map(taskOut) }
   }
 
@@ -109,7 +109,7 @@ export async function listed(filter?: string): Promise<{ total: number; tasks: T
       .map((row) => row.file.basename.toLowerCase()),
   )
   return listTasks(
-    rows.of(),
+    rows.shown(),
     { filter, inboxes: rows.inboxes(), isNote: (name) => names.has(name.toLowerCase()) },
     clockOf(new Date()),
   )

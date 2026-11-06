@@ -751,7 +751,7 @@ class Workspace {
    *  thousand cards (#535). */
   private get markdownOfPanel(): string {
     const tab = this.panelTab
-    return tab?.kind === 'note' ? tab.doc : ''
+    return tab?.kind === 'note' && !this.protection.locked(tab.path) ? tab.doc : ''
   }
 
   /** Every file in the space, flattened: the notes, and the PDFs and canvases
@@ -5701,3 +5701,5 @@ export const workspace = new Workspace()
 // Handed over rather than imported: the index and the workspace read each other.
 links.archivedIn = (root) => workspace.archive.keysOf(root)
 links.spaceOf = (path) => workspace.rootHolding(path)
+links.lockedAt = (path) => workspace.protection.locked(path)
+links.locksSeen = () => workspace.protection.seen

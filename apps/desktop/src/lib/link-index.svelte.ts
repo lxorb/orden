@@ -354,6 +354,8 @@ class Links {
 
   /** The root of the space holding a path; handed in at the foot of workspace.svelte.ts. */
   spaceOf: (path: string) => string | null = () => null
+  lockedAt: (path: string) => boolean = () => false
+  locksSeen: () => string = () => ''
 
   /** The notes of the other spaces a tab is still open from, by root, read the first
    *  time one of their notes asks. Tabs are shared across spaces, so a note of A stays
@@ -1093,9 +1095,16 @@ class Links {
     // One object per open note rather than one in all. A pane going back to a
     // note it was on a moment ago is handed the same object it had before, so
     // switching between two tabs does not redraw every link in either of them.
-    if (this.handedAt !== this.version || this.handedArchived !== this.archived) {
+    const locks = this.locksSeen()
+    if (
+      this.handedAt !== this.version ||
+      this.handedArchived !== this.archived ||
+      this.handedLocks !== locks
+    ) {
+      if (this.handedLocks !== locks) this.read.clear()
       this.handedAt = this.version
       this.handedArchived = this.archived
+      this.handedLocks = locks
       this.handed.clear()
     }
 
@@ -1108,6 +1117,7 @@ class Links {
       files: this.files,
       path,
       read: (wanted) => this.readNote(wanted),
+      locked: (wanted) => !!this.root && this.lockedAt(insideSpace(this.root, wanted)),
       ...(this.vault ? { dueReads: 'deadline' as const } : {}),
       // What the `#` popup offers, and what `[[^^` asks the space for. Both go
       // with the rest of what the space holds rather than through a facet of
@@ -1190,7 +1200,11 @@ class Links {
       notes: space.refs,
       files: space.files,
       path,
-      read: (wanted) => invoke<string>('read_note', { path: insideSpace(root, wanted) }),
+      locked: (wanted) => this.lockedAt(insideSpace(root, wanted)),
+      read: (wanted) =>
+        this.lockedAt(insideSpace(root, wanted))
+          ? Promise.resolve(null)
+          : invoke<string>('read_note', { path: insideSpace(root, wanted) }),
       searchBlocks: (text, most) => this.searchBlocks(text, most, root),
       render: (source, from) => this.shownHtml(source, from, root),
     }
@@ -1307,15 +1321,16 @@ class Links {
   private handedAt = -1
   /** And which archive: it changes how links are drawn without changing a word. */
   private handedArchived: ReadonlySet<string> = NOTHING
+  private handedLocks = ''
 
   /** One note's text, for an embed or a hover preview. Kept for a moment after
    *  it arrives, because a screen of embeds asks for the same few notes. */
   private async readNote(relative: string): Promise<string | null> {
+    const root = this.root
+    if (!root || this.lockedAt(insideSpace(root, relative))) return null
+
     const held = this.read.get(relative)
     if (held !== undefined) return held
-
-    const root = this.root
-    if (!root) return null
 
     const text = await invoke<string>('read_note', {
       path: insideSpace(root, relative),
@@ -1538,6 +1553,7 @@ class Links {
       for (const link of note.links) {
         if (!this.couldName(link, names)) continue
         if (this.resolveFrom(note.path, link) !== relative) continue
+        if (this.root && this.lockedAt(insideSpace(this.root, note.path))) continue
         out.push({ path: note.path, name: nameOf(note.path), line: link.line, text: link.text })
       }
     }
@@ -1550,6 +1566,7 @@ class Links {
     const relative = this.relative(path)
     const note = this.notes.find((one) => one.path === relative)
     if (!relative || !note) return []
+    if (this.root && this.lockedAt(insideSpace(this.root, relative))) return []
 
     return note.links
       .filter((link) => link.target)
@@ -2119,6 +2136,7 @@ class Links {
     if (found === null || root === null) return null
 
     const path = insideSpace(root, found)
+    if (this.lockedAt(path)) return null
     const text =
       root === other
         ? await invoke<string>('read_note', { path }).catch(() => null)

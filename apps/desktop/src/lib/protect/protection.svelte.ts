@@ -64,14 +64,26 @@ function covers(key: string, at: string, root: string): boolean {
 
 export class Protection {
   private spaces = $state<Record<string, Kept>>(read())
+  private revision = $state(0)
   private hashed = $state<Hashed | null>(hashedOf(stored(PASSWORD_KEY)))
 
   get any(): boolean {
     return Object.values(this.spaces).some((one) => Object.keys(one.ways).length > 0)
   }
 
+  get seen(): string {
+    return `${String(this.revision)}:${String(unlocks.revision)}`
+  }
+
   locked(path: string | null | undefined): boolean {
     return !!path && this.any && unlocks.shut(this.covering(path))
+  }
+
+  shutIn(root: string): string[] | null {
+    const shut = Object.entries(this.ways(root))
+      .filter(([key, way]) => unlocks.shut([{ root, key, way }]))
+      .map(([key]) => key)
+    return shut.includes(SPACE) ? null : shut
   }
 
   get password(): Hashed | null {
@@ -175,6 +187,7 @@ export class Protection {
   }
 
   private write(): void {
+    this.revision++
     keepJson(STORAGE_KEY, this.spaces)
   }
 }

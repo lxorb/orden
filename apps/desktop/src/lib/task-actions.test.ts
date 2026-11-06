@@ -46,6 +46,9 @@ vi.mock('./rows/inbox-note', () => ({
 
 vi.mock('./rows/rows.svelte', () => ({
   rows: {
+    get shown() {
+      return this.of
+    },
     of: () =>
       [...files].flatMap(([path, text]) => rowsOfText('Home', path.slice('/s/Home/'.length), text)),
     inboxes: () => [{ space: 'Home', path: 'Inbox.md' }],

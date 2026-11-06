@@ -104,6 +104,13 @@ export class RowsStore {
     return held ? this.flat(held) : []
   }
 
+  openOf(space: string | undefined, locked: (path: string) => boolean): readonly Row[] {
+    return this.of(space).filter((row) => {
+      const root = this.rootOf(row)
+      return root === null || !locked(insideSpace(root, row.path))
+    })
+  }
+
   /** The rows of one note, by its path as the app holds it. */
   at(path: string): readonly Row[] {
     const held = this.holding(path)

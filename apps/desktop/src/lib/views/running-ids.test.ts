@@ -20,7 +20,15 @@ nib:
   id: { property: id, prefix: "" }
 `,
 }))
-vi.mock('../rows/rows.svelte', () => ({ rows: { ready: true, of: () => [] } }))
+vi.mock('../rows/rows.svelte', () => ({
+  rows: {
+    get shown() {
+      return this.of
+    },
+    ready: true,
+    of: () => [],
+  },
+}))
 vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true, trustsHtmlAt: () => true }))
 vi.mock('../reminders/platform', () => ({ show: () => undefined }))
 vi.mock('../workspace/write-file', () => ({ writeFile: async () => undefined }))

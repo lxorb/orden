@@ -69,6 +69,9 @@ vi.mock('../workspace/write-file', () => ({
 vi.mock('../surfaces.svelte', () => ({ showQuickAdd: () => undefined }))
 vi.mock('../rows/rows.svelte', () => ({
   rows: {
+    get shown() {
+      return this.of
+    },
     ready: true,
     inbox: async (root = on.root) => `${root}/Inbox.md`,
     of: (space: string) =>

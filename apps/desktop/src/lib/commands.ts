@@ -149,6 +149,10 @@ export function exportCommands(): Command[] {
   }
   const name = () => note()?.name ?? 'Untitled.md'
   const target = openTarget
+  const shut = (rows: Command[]) =>
+    workspace.protection.locked(note()?.path)
+      ? rows.map((one) => ({ ...one, disabled: true }))
+      : rows
 
   /** What is open, which is what decides the rows. Read once: the list is built
    *  fresh every time the menu or the palette opens, and a document does not
@@ -284,7 +288,7 @@ export function exportCommands(): Command[] {
 
   // Pandoc converts markdown, so it has as little to say about a drawing as Word
   // has. A note's rows get pandoc's; the other kinds keep their own.
-  if (!asNote) return commands
+  if (!asNote) return shut(commands)
 
   for (const format of PANDOC_FORMATS) {
     commands.push({
@@ -299,7 +303,7 @@ export function exportCommands(): Command[] {
     })
   }
 
-  return commands
+  return shut(commands)
 }
 
 /** Notes from another app, and documents of every other kind: one row, which

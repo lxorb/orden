@@ -123,6 +123,11 @@ function cardFor(link: LinkSpan, path: string | null, side: -1 | 1) {
       return { dom }
     }
 
+    if (view.state.facet(noteIndex).locked?.(path)) {
+      body.textContent = label('protectedNote')
+      return { dom }
+    }
+
     const showing = () => body.isConnected
 
     void view.state

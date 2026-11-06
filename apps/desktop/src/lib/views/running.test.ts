@@ -49,6 +49,9 @@ vi.mock('../workspace.svelte', () => ({
 }))
 vi.mock('../rows/rows.svelte', () => ({
   rows: {
+    get shown() {
+      return this.of
+    },
     ready: true,
     of: () => [
       {
