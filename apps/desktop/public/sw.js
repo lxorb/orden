@@ -151,3 +151,18 @@ async function rowFor(path) {
     request.onerror = () => reject(request.error || new Error('the row would not be read'))
   })
 }
+
+self.addEventListener('notificationclick', (event) => {
+  const tag = event.notification.data?.nibNotice
+  event.notification.close()
+  event.waitUntil(cameBackTo(tag))
+})
+
+async function cameBackTo(tag) {
+  const open = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+  const client = open[0] ?? (await self.clients.openWindow('/'))
+  if (!client) return
+
+  await client.focus?.().catch(() => undefined)
+  if (typeof tag === 'string') client.postMessage({ nibNotice: tag })
+}
