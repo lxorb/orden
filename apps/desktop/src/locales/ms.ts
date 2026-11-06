@@ -2890,4 +2890,11 @@ export const ms: Dictionary = {
   'That could not be protected: {reason}': 'Tidak dapat dilindungi: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} tidak ditambah: sembang menerima gambar dan fail teks sehingga 2 MB.',
+  'Time tracker': 'Penjejak masa',
+  'Start timer': 'Mulakan pemasa',
+  'Stop timer': 'Hentikan pemasa',
+  'New activity': 'Aktiviti baharu',
+  'No activity': 'Tiada aktiviti',
+  'Start time': 'Masa mula',
+  'End time': 'Masa tamat',
 }

@@ -31,6 +31,7 @@
     OUTLINE_MARK,
     SCRATCHPAD_MARK,
     TASKS_MARK,
+    TIME_MARK,
   } from './panel-marks'
   import { newSpace } from './space-actions'
   import { startup } from './startup.svelte'
@@ -51,6 +52,7 @@
     scratchpadCard,
     searchPanel,
     tasksPanel,
+    timePanel,
   } from './surfaces.svelte'
   import { shown as pad } from './scratchpad/is.svelte'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
@@ -252,6 +254,7 @@
       : [
           { id: 'tasks' as const, label: t('Tasks'), path: TASKS_MARK },
           { id: 'chats' as const, label: t('Chats'), path: CHATS_MARK },
+          { id: 'time' as const, label: t('Time tracker'), path: TIME_MARK },
         ]),
     { id: 'links', label: t('Links'), path: LINKS_MARK },
     { id: 'ask', label: t('Ask'), path: ASK_MARK },
@@ -911,6 +914,10 @@
           {:else if showing === 'chats'}
             {#await chatsPanel() then ChatsPanel}
               <ChatsPanel />
+            {/await}
+          {:else if showing === 'time'}
+            {#await timePanel() then TimePanel}
+              <TimePanel />
             {/await}
           {:else if showing === 'ask'}
             {#await askPanel() then AskPanel}

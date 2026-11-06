@@ -872,6 +872,10 @@
     "type": "string",
     "description": "The key that runs Tasks, as the keys file writes it; empty for none."
   },
+  "shortcuts.app-time": {
+    "type": "string",
+    "description": "The key that runs Time tracker, as the keys file writes it; empty for none."
+  },
   "shortcuts.app-typewriter": {
     "type": "string",
     "description": "The key that runs Typewriter mode, as the keys file writes it; empty for none."
@@ -1551,6 +1555,14 @@
   "shortcuts.tabs-rename": {
     "type": "string",
     "description": "The key that runs Rename, as the keys file writes it; empty for none."
+  },
+  "shortcuts.time-start": {
+    "type": "string",
+    "description": "The key that runs Start timer, as the keys file writes it; empty for none."
+  },
+  "shortcuts.time-stop": {
+    "type": "string",
+    "description": "The key that runs Stop timer, as the keys file writes it; empty for none."
   },
   "shortcuts.tree-delete": {
     "type": "string",

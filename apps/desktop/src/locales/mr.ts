@@ -2913,4 +2913,11 @@ export const mr: Dictionary = {
   'That could not be protected: {reason}': 'संरक्षित करता आले नाही: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} जोडले नाही: चॅटमध्ये चित्रे आणि 2 MB पर्यंतच्या मजकूर फाइल्स जोडता येतात.',
+  'Time tracker': 'वेळ ट्रॅकर',
+  'Start timer': 'टायमर सुरू करा',
+  'Stop timer': 'टायमर थांबवा',
+  'New activity': 'नवीन क्रिया',
+  'No activity': 'कोणतीही क्रिया नाही',
+  'Start time': 'सुरुवातीची वेळ',
+  'End time': 'शेवटची वेळ',
 }

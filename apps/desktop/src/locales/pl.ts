@@ -3025,4 +3025,11 @@ export const pl: Dictionary = {
   'That could not be protected: {reason}': 'Nie udało się chronić: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     'Nie dodano {name}: czat przyjmuje obrazy i pliki tekstowe do 2 MB.',
+  'Time tracker': 'Śledzenie czasu',
+  'Start timer': 'Uruchom licznik',
+  'Stop timer': 'Zatrzymaj licznik',
+  'New activity': 'Nowa aktywność',
+  'No activity': 'Bez aktywności',
+  'Start time': 'Godzina rozpoczęcia',
+  'End time': 'Godzina zakończenia',
 }

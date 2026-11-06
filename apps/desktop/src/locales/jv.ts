@@ -2876,4 +2876,11 @@ export const jv: Dictionary = {
   'That could not be protected: {reason}': 'Ora bisa dilindhungi: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} ora ditambahake: obrolan nampa gambar lan berkas teks nganti 2 MB.',
+  'Time tracker': 'Pelacak wektu',
+  'Start timer': 'Wiwiti timer',
+  'Stop timer': 'Mandhegake timer',
+  'New activity': 'Kegiatan anyar',
+  'No activity': 'Ora ana kegiatan',
+  'Start time': 'Wektu wiwit',
+  'End time': 'Wektu rampung',
 }

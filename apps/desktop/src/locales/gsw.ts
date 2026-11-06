@@ -2936,4 +2936,11 @@ export const gsw: Dictionary = {
   'That could not be protected: {reason}': 'Das hät nöd chöne gschützt wärde: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} isch nöd dezuegfüegt worde: En Chat nimmt Bilder und Textdateie bis 2 MB.',
+  'Time tracker': 'Ziiterfassig',
+  'Start timer': 'Timer starte',
+  'Stop timer': 'Timer aahalte',
+  'New activity': 'Neui Aktivität',
+  'No activity': 'Kei Aktivität',
+  'Start time': 'Aafang',
+  'End time': 'Änd',
 }

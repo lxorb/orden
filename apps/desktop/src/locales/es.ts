@@ -2995,4 +2995,11 @@ export const es: Dictionary = {
   'That could not be protected: {reason}': 'No se pudo proteger: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} no se añadió: un chat admite imágenes y archivos de texto de hasta 2 MB.',
+  'Time tracker': 'Control de tiempo',
+  'Start timer': 'Iniciar temporizador',
+  'Stop timer': 'Detener temporizador',
+  'New activity': 'Nueva actividad',
+  'No activity': 'Sin actividad',
+  'Start time': 'Hora de inicio',
+  'End time': 'Hora de fin',
 }

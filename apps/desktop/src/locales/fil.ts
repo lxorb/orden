@@ -2977,4 +2977,11 @@ export const fil: Dictionary = {
   'That could not be protected: {reason}': 'Hindi ito maprotektahan: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     'Hindi naidagdag ang {name}: tumatanggap ang chat ng mga larawan at text file na hanggang 2 MB.',
+  'Time tracker': 'Pansubaybay ng oras',
+  'Start timer': 'Simulan ang timer',
+  'Stop timer': 'Ihinto ang timer',
+  'New activity': 'Bagong gawain',
+  'No activity': 'Walang gawain',
+  'Start time': 'Oras ng simula',
+  'End time': 'Oras ng tapos',
 }

@@ -2792,4 +2792,11 @@ export const yue: Dictionary = {
   'That could not be protected: {reason}': '保護唔到：{reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '冇加到 {name}：傾偈只收圖片同 2 MB 以內嘅文字檔。',
+  'Time tracker': '時間記錄',
+  'Start timer': '開始計時',
+  'Stop timer': '停止計時',
+  'New activity': '新活動',
+  'No activity': '冇活動',
+  'Start time': '開始時間',
+  'End time': '結束時間',
 }

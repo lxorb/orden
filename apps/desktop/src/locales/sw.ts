@@ -2954,4 +2954,11 @@ export const sw: Dictionary = {
   'That could not be protected: {reason}': 'Haikuweza kulindwa: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} haikuongezwa: gumzo hupokea picha na faili za maandishi hadi MB 2.',
+  'Time tracker': 'Kifuatiliaji cha muda',
+  'Start timer': 'Anzisha kipima muda',
+  'Stop timer': 'Simamisha kipima muda',
+  'New activity': 'Shughuli mpya',
+  'No activity': 'Hakuna shughuli',
+  'Start time': 'Muda wa kuanza',
+  'End time': 'Muda wa kumaliza',
 }
