@@ -4,16 +4,6 @@ import { EditorState, type EditorView } from '@orden/editor'
 import FormatBar from '../../src/lib/FormatBar.svelte'
 import { reactive } from './runes.svelte'
 
-/** The callout over a selection goes with the editor it was over.
- *
- *  A tab turned into its reading view takes its editor down, and an editor taken
- *  down reports no last selection - so the bar, which only ever heard from the
- *  editor, stayed where it was over the rendered page (batches #93, 2026-09-12). The
- *  pane forgets the view as it goes, which is what the bar is given, and a bar with
- *  no view has nothing to format.
- *
- *  In the jsdom project because it mounts a component. */
-
 class NoLayout {
   observe() {
     // jsdom does no layout; the bar's size is never asked for here.
@@ -33,7 +23,6 @@ globalThis.ResizeObserver = NoLayout
 let target: HTMLElement
 let shown: (ReturnType<typeof mount> & { follow(view: EditorView): void }) | undefined
 
-/** An editor with words selected and the keyboard, as much of one as the bar reads. */
 function writing(): EditorView {
   const note = document.createElement('div')
   document.body.append(note)
@@ -43,7 +32,6 @@ function writing(): EditorView {
     selection: { anchor: 0, head: 5 },
   })
 
-  // The fields the bar reads to place itself, which is all an editor is to it.
   return {
     contentDOM: note,
     hasFocus: true,
@@ -75,16 +63,11 @@ test('stands over a selection, and goes when the editor under it does', () => {
   flushSync()
   expect(callout()).toBe(true)
 
-  // The tab turned into its reading view: the pane forgets its editor.
   props.view = undefined
   flushSync()
   expect(callout()).toBe(false)
 })
 
-// And one the window's keyboard has left: the last tab of a pane closed with a line
-// selected puts the keyboard in the pane beside it, whose editor is another one. The
-// editor that went reports nothing on its way, so the bar has to see it is not the one
-// the window holds now.
 test('and when the window holds another editor than the one it stood over', () => {
   const view = writing()
   const props = reactive<{ view: EditorView | undefined }>({ view })

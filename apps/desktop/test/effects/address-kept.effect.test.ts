@@ -1,11 +1,3 @@
-/** A half-typed address, across a switch of windows.
- *
- *  Emil, 2026-09-30, of coming back to nib: the keyboard goes back where it was, and the
- *  address field is one of those places. The engine keeps the field focused while the
- *  window is away and says blur and focus to it all the same; the field used to take
- *  both for the reader leaving it, and came back with the whole address selected over
- *  what they had typed. Chrome's field keeps it, caret and all, while the page stays. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { HalfTyped } from '../../src/lib/web-tab/typed'
@@ -29,7 +21,6 @@ function field(): HTMLInputElement {
   return found
 }
 
-/** The field focused and a few letters typed over the address it offers. */
 function typed(letters: string) {
   const box = field()
   box.focus()
@@ -40,8 +31,6 @@ function typed(letters: string) {
   flushSync()
 }
 
-/** The window going away and coming back: the page is told blur and focus while the
- *  field stays the document's focused element throughout. */
 function awayAndBack() {
   const box = field()
   box.dispatchEvent(new FocusEvent('blur'))
@@ -103,14 +92,11 @@ test('nothing typed is the whole address again, selected', () => {
   expect(field().selectionEnd).toBe(ADDRESS.length)
 })
 
-/** #381: a new tab's address half typed, another tab, and back. The pane builds a new bar
- *  for the tab that comes back, so what the old field held waits on the tab's page. */
 describe('across a switch of tabs', () => {
   const page = { halfTyped: null as HalfTyped | null, keyboard: null as 'address' | null }
   let other: ReturnType<typeof mount> | null = null
   let gone = ''
 
-  /** The tab's bar, as the pane builds it each time the tab is in front. */
   function bar() {
     if (other) void unmount(other)
     target.replaceChildren()
@@ -128,7 +114,6 @@ describe('across a switch of tabs', () => {
     flushSync()
   }
 
-  /** Words typed into the new tab's empty field, the caret put back among them. */
   function into(words: string, caret: number) {
     const box = field()
     box.focus()
@@ -164,7 +149,6 @@ describe('across a switch of tabs', () => {
 
   test('another tab pressed: back on it, the words are there and so is the caret', () => {
     into('weather in zur', 8)
-    // The press on another tab takes the keyboard first, and then the tab goes.
     field().blur()
     flushSync()
     bar()
@@ -178,7 +162,6 @@ describe('across a switch of tabs', () => {
 
   test('pressed past the field: the words stay, there and back, and it is not given the keyboard', () => {
     into('weather in zur', 8)
-    // The window keeps the keyboard, which jsdom does not say once nothing is focused.
     vi.spyOn(document, 'hasFocus').mockReturnValue(true)
     document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
     document.body.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))

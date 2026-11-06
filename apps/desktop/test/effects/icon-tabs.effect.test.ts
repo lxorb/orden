@@ -1,9 +1,3 @@
-/** Every tab but the one in front drawn as its mark alone, opening out to its name under
- *  the pointer (#1041). The strip is mounted on the real workspace; jsdom lays nothing
- *  out, so what is read is what the strip says each tab is - its width, its class - and
- *  not how it moves, which test/e2e/icon-tabs.py drives. In the jsdom project because the
- *  strip is mounted. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
@@ -14,10 +8,8 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   invoke: () => Promise.resolve(undefined),
 }))
 
-/** How wide the strip is: room for every tab to open out. */
 const STRIP = 1200
 
-/** jsdom never measures anything; the strip's width is said the moment it is watched. */
 class Measured {
   constructor(private readonly told: ResizeObserverCallback) {}
 
@@ -42,8 +34,6 @@ Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
   },
 })
 
-/** A tab arrives and leaves through the Web Animations API, which jsdom has not got. One
- *  that never says it finished: a tab on its way out stays on the page to be looked at. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,

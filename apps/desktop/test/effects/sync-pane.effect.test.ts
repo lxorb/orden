@@ -1,12 +1,3 @@
-/** Settings > Sync, under either engine.
- *
- *  v1 keeps its conflict rule, its waiting list and its own log until it is retired.
- *  Under v2 the rule is gone (docs/sync-v2.md section 4, "What goes away"), what is
- *  waiting is the notes the engine holds - a press opens one, and the question with it
- *  - and the passes are the store's log, read again after every pass.
- *
- *  In the jsdom project because the pane follows the engine from inside an effect. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
@@ -15,7 +6,6 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   invoke: () => Promise.resolve(undefined),
 }))
 
-/** The waiting list fades in through the Web Animations API, which jsdom has not got. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -97,6 +87,5 @@ test('the passes are the store’s, and a new one is read as it is written', asy
   expect(pass).toContain('3 down')
   expect(pass).toContain('1 up')
   expect(pass).toContain('Work')
-  // The store keeps its own last thousand; there is nothing for the reader to clear.
   expect(target.textContent).not.toContain('Clear the list')
 })

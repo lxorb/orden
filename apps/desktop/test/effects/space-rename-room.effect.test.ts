@@ -1,24 +1,6 @@
 import { afterEach, beforeAll, expect, test, vi } from 'vitest'
 import { flushSync } from 'svelte'
 
-/** A note keeps its room while its space is renamed, and while it is renamed itself.
- *
- *  A space rename keeps every id: the same files in a folder with another name. What
- *  decides which room an open note is in is the app's own effect over the open notes,
- *  which asks the sync store what the account calls each of them by path (see
- *  App.svelte). The rename used to be two halves a round trip apart - the workspace
- *  moved the notes' paths, and the mirror was re-keyed onto the new folder afterwards -
- *  and an effect that ran in between asked about a path nothing answered to, so the
- *  note left its room and joined it again a moment later. space-rename.py met it as
- *  `rooms.carries` answering no straight after the rename (hunt-7, 8a6ef426).
- *
- *  A note renamed had the same moment, longer: the account's table is re-keyed only
- *  once the account has taken the new name (see `movedHere` in sync/pass.ts), and
- *  until it had, the note at its new name had no id and so no room.
- *
- *  In the effects project because the fault is an effect running at the wrong moment. */
-
-/** The account's answer to a rename, held until the test lets it go. */
 const answer = vi.hoisted(() => {
   let release: () => void = () => undefined
   const given = new Promise<void>((done) => {

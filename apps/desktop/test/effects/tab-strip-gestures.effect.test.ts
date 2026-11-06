@@ -1,17 +1,3 @@
-/** The strip under the hand: a pick of tabs made with Ctrl and Shift, and a tab closed
- *  with its cross.
- *
- *  Emil, 2026-10-03: *"multi-select of tabs no longer works properly"* and *"the tab close
- *  animation is a bit buggy"*. The strip is mounted on the real workspace and pressed the
- *  way a pointer presses it, and what is asked is what a reader sees: which tabs wear the
- *  pick, what their menu is about and what Ctrl+W closes; and, as a tab goes, that it goes
- *  as a tab no longer in front - one tab in front, never two - with the others holding
- *  their widths so the next cross is under the pointer.
- *
- *  In the jsdom project because the strip is mounted. jsdom lays nothing out, so the strip
- *  is told its width the way a ResizeObserver tells it; how the tabs move is paint, which
- *  test/e2e/tab-close.py drives frame by frame. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
@@ -22,11 +8,8 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   invoke: () => Promise.resolve(undefined),
 }))
 
-/** How wide the strip is: room for the tabs to be narrower than they would like, which
- *  is when a close holds the widths. */
 const STRIP = 600
 
-/** jsdom never measures anything; the strip's width is said the moment it is watched. */
 class Measured {
   constructor(private readonly told: ResizeObserverCallback) {}
 
@@ -51,8 +34,6 @@ Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
   },
 })
 
-/** A tab arrives and leaves through the Web Animations API, which jsdom has not got. One
- *  that never says it finished: a tab on its way out stays on the page to be looked at. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -72,14 +53,9 @@ const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
 const { picks } = await import('../../src/lib/tab-strip/drag.svelte')
 const { tabMenuTitle } = await import('../../src/lib/tab-strip/menu')
 const Tabs = (await import('../../src/lib/Tabs.svelte')).default
-// Fetched by the strip once it is up, and here first so no test waits on compiling them.
 await import('../../src/lib/tab-strip/closing.svelte')
 await import('../../src/lib/tab-strip/picking.svelte')
 
-/** Waits for what a press leads to. Generously: closing a tab asks about it first, through
- *  parts fetched and compiled on a run that may be loaded down, and a second was the
- *  wall one loaded run hit while the strip was doing nothing wrong. Nothing here is about
- *  how long it takes; see vitest.config.ts. */
 const settles = <T>(check: () => T) => vi.waitFor(check, { timeout: 10_000 })
 
 let target: HTMLElement
@@ -103,9 +79,6 @@ afterEach(() => {
 
 const NAMES = ['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
 
-/** Ten notes in the one pane, the strip on the page, measured, and the first in front,
- *  the second the one used before it: what a pane comes back to when the first goes
- *  (#1079). */
 async function strip() {
   for (const name of NAMES) workspace.openBlank(name, `# ${name}`)
   const paneId = workspace.panes.focusedId
@@ -127,7 +100,6 @@ const box = (id: string) => target.querySelector<HTMLElement>(`[data-box="${id}"
 const picked = () =>
   [...target.querySelectorAll<HTMLElement>('.tab.chosen')].map((one) => one.dataset.box)
 
-/** A press and its release on a tab, as a mouse makes them. */
 function press(id: string, held: { ctrlKey?: boolean; shiftKey?: boolean } = {}) {
   const node = pick(id)
   if (!node) throw new Error(`no tab ${id}`)
@@ -155,12 +127,10 @@ test('Ctrl and Shift pick tabs, their menu is about all of them, and Ctrl+W clos
   expect(picked()).toEqual([one, two])
   expect(workspace.activeTabId).toBe(two)
 
-  // Shift: a run from the last one clicked, in place of what was picked.
   press(four, { shiftKey: true })
   expect(picked()).toEqual([two, three, four])
   expect(workspace.activeTabId).toBe(four)
 
-  // Ctrl again takes one out, and the pick stays put through the release.
   press(three, { ctrlKey: true })
   expect(picked()).toEqual([two, four])
 
@@ -192,8 +162,6 @@ test('a plain click on a picked tab picks it alone; a Ctrl click on one keeps th
   press(three, { ctrlKey: true })
   expect(picked()).toEqual([one, two, three])
 
-  // Chrome: Ctrl on a tab that stays picked and comes to the front may go on to drag
-  // the pick, and its release leaves the pick as it is.
   press(three, { ctrlKey: true })
   press(three, { ctrlKey: true })
   expect(picked()).toEqual([one, two, three])
@@ -206,7 +174,6 @@ test('a plain click on a picked tab picks it alone; a Ctrl click on one keeps th
 test('a tab closed with its cross goes as no longer in front, and the rest hold their widths', async () => {
   const { ids } = await strip()
   const [one, two] = ids as [string, string]
-  // Tabs.svelte fetches the held widths as it mounts.
   await settles(() => expect(box(one)?.querySelector('.shut')).not.toBeNull())
   await new Promise((done) => setTimeout(done, 0))
 
@@ -216,26 +183,18 @@ test('a tab closed with its cross goes as no longer in front, and the rest hold 
   await settles(() => expect(workspace.tabs.map((tab) => tab.id)).not.toContain(one))
   flushSync()
 
-  // Still on the page, shrinking - and drawn as a tab that is not in front, nothing of
-  // it under the pointer.
   const going = box(one)
   expect(going).not.toBeNull()
   expect(going?.classList.contains('leaving')).toBe(true)
   expect(going?.classList.contains('active')).toBe(false)
 
-  // One tab in front, never two: the one used before it, from the same frame.
   expect(
     [...target.querySelectorAll('.tab.active')].map((node) => (node as HTMLElement).dataset.box),
   ).toEqual([two])
 
-  // Every other tab keeps the width it had, so the next cross is where this one was. The
-  // one now in front may only grow to an active tab's least width; at this room they are
-  // all wider than that already.
   for (const id of ids.slice(1)) expect(box(id)?.style.width, id).toBe(before.get(id))
 })
 
-/** #523: the keyboard went with the tab to the page's `body`, and the next arrow walked
- *  nothing. It goes on to the tab in front, the way a browser's strip does. */
 test('Delete on a tab leaves the keyboard on the tab in front after it, the one used before', async () => {
   const { ids } = await strip()
   const [one, two] = ids as [string, string]

@@ -1,24 +1,8 @@
-/** Glass following what is open, switched between, mounted.
- *
- *  Emil, 2026-10-01: *"glass theme is pretty ass right now, it should be based on what's
- *  currently open, e.g. the website."* The frame takes the colour of the tab in front, and
- *  a switch is a cross-fade: the one colour the shell is painted with moves from the last
- *  tab's to this one's, once, and `main` eases it (its `transition` in App.svelte). What
- *  is asked here is what makes that a cross-fade and not a flash: the colour moves in one
- *  step, never through the theme's own wash or nothing on the way; the words on the frame
- *  turn with it; and the open tab runs down into what it is the tab of - its page's colour
- *  for a web tab, the paper for a note - whatever scheme the strip is in. And the next
- *  launch opens on the colour it was left on.
- *
- *  In the jsdom project because the strip is mounted. */
-
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-// A browser build: no crate, and the page reads nothing here; the colour a page says is
-// handed to the store directly.
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
   isDesktop: false,
@@ -29,8 +13,6 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
     ),
 }))
 
-// This project hands a stylesheet imported as text over empty; glass's sides are read
-// out of the sheet itself, so it is handed the file.
 vi.mock('@orden/themes/glass', () => ({
   glassCss: readFileSync(resolve('../../packages/themes/src/glass.css'), 'utf8'),
 }))
@@ -51,7 +33,6 @@ class NoLayout {
 
 globalThis.ResizeObserver = NoLayout
 
-/** Tabs move through the Web Animations API, which jsdom does not have. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -66,7 +47,6 @@ Element.prototype.animate = () =>
 
 Element.prototype.scrollIntoView = () => undefined
 
-/** jsdom answers no media query; a system asking for nothing in particular. */
 window.matchMedia = (query: string) =>
   ({
     matches: false,
@@ -88,11 +68,9 @@ const WHITE = 'https://white.example/'
 let target: HTMLElement
 let shown: ReturnType<typeof mount> | null = null
 
-/** Every value the shell's colour took, in order. */
 let tints: string[] = []
 let watching: MutationObserver | null = null
 
-/** Lets the theme's door and the effect behind it run. */
 async function settle() {
   await vi.dynamicImportSettled()
   for (let turn = 0; turn < 4; turn++) {
@@ -105,7 +83,6 @@ function tint(): string {
   return document.documentElement.style.getPropertyValue('--glass-tint')
 }
 
-/** The frame's two colours where it is glass's own pair, and null where it is one. */
 function pair(): [string, string] | null {
   const root = document.documentElement
   if (!root.hasAttribute('data-paired')) return null
@@ -149,7 +126,6 @@ test('a switch moves the frame from one tab’s colour to the next in one step',
   grounds.said(black, BLACK, '#0f0f0f')
   const white = workspace.openPage(WHITE) ?? ''
   grounds.said(white, WHITE, '#ffffff')
-  // Last, because a page opened over a blank note puts the note away.
   workspace.openBlank('Notes', '# Notes')
   const note = workspace.active?.id ?? ''
   shown = mount(Tabs, { target, props: { paneId: workspace.panes.focusedId } })
@@ -157,11 +133,9 @@ test('a switch moves the frame from one tab’s colour to the next in one step',
   workspace.activate(black)
   await settle()
   expect(tint()).toBe('#0f0f0f')
-  // A black page under the light scheme: the frame wears the dark side's words.
   expect(chrome.theme).toBe('dark')
   const active = () => target.querySelector<HTMLElement>('.tab.active')
   expect(active()?.style.getPropertyValue('--web-ground')).toBe('#0f0f0f')
-  // The strip is in the page's scheme, so the tab on it says nothing of its own.
   expect(active()?.hasAttribute('data-theme')).toBe(false)
 
   tints = []
@@ -170,7 +144,6 @@ test('a switch moves the frame from one tab’s colour to the next in one step',
   expect(tints).toEqual(['#ffffff'])
   expect(chrome.theme).toBeUndefined()
 
-  // A note: glass's own pair in the reader's own scheme, and its tab is the paper.
   tints = []
   workspace.activate(note)
   await settle()
@@ -180,8 +153,6 @@ test('a switch moves the frame from one tab’s colour to the next in one step',
   expect(active()?.style.getPropertyValue('--web-ground')).toBe('')
 })
 
-// lxorb, 2026-10-13: "two colors with some sort of very very nice looking blur ... light
-// blue at the top left and at the opposite corner the other one".
 test('a note and an empty pane wear glass’s own pair, a page its own colour', async () => {
   const black = workspace.openPage(BLACK) ?? ''
   grounds.said(black, BLACK, '#0f0f0f')
@@ -196,7 +167,6 @@ test('a note and an empty pane wear glass’s own pair, a page its own colour', 
   expect(pair()).toBeNull()
   expect(tint()).toBe('#0f0f0f')
 
-  // A tab with no page in it yet is an empty pane.
   workspace.activate(workspace.openPage('') ?? note)
   await settle()
   expect(pair()).toEqual(['#d2e7fc', '#eed7f2'])
@@ -217,7 +187,6 @@ test('the pair is the reader’s to choose, and with the frame not following it 
   await settle()
   expect(pair()).toEqual(['#d1f0e7', '#d1dff9'])
 
-  // Two of the reader's own, worn as picked where the words read on them.
   theme.set('pair', '#dfe5ec #e9e4ec')
   await settle()
   expect(pair()).toEqual(['#dfe5ec', '#e9e4ec'])
@@ -231,7 +200,6 @@ test('the pair is the reader’s to choose, and with the frame not following it 
   await settle()
 })
 
-// lxorb, issue #238: no detour through the site's mark while a page loads somewhere new.
 test('a tab on its way to an address never read keeps its colour, then changes once', async () => {
   const { pages } = await import('../../src/lib/web-tab/pages.svelte')
   const tab = workspace.openPage(BLACK) ?? ''
@@ -259,7 +227,6 @@ test('a note’s tab inside a strip turned dark by a page keeps the paper’s wo
   workspace.activate(black)
   await settle()
 
-  // The strip is dark for the page in front; a note's tab, open in it, is the paper's.
   expect(chrome.theme).toBe('dark')
   expect(chrome.tabTheme('some-note')).toBe('light')
   expect(chrome.tabTheme(black)).toBeUndefined()
@@ -272,8 +239,6 @@ test('the wash is worked out again over whatever the root says the window stands
   await settle()
   const opaque = document.documentElement.style.getPropertyValue('--glass-tinted')
 
-  // Acrylic is the desk itself, so a white page over it needs more of its colour than
-  // over its own paper; said on the root, as material.ts says it.
   document.documentElement.dataset.translucent = 'acrylic'
   await settle()
   expect(chrome.material).toBe('acrylic')
@@ -305,7 +270,6 @@ test('the next launch opens on the colour it was left on, before anything is wor
   const kept = localStorage.getItem('nib:glass-chrome')
   expect(kept).toContain('#0f0f0f')
 
-  // A launch: the window's root as a new page has it, and the store read afresh.
   chrome.sleep()
   vi.resetModules()
   localStorage.setItem('nib:glass-chrome', kept ?? '')

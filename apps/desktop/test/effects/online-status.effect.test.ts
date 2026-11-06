@@ -1,9 +1,3 @@
-/** An online terminal before its session's screen is there.
- *
- *  Emil, 2026-10-05: a terminal whose machine never started stayed an empty pane, with
- *  nothing to say it was waiting or that it had stopped. The line over it follows the
- *  wait, and a wait that ended without the screen says why and offers Try again. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 import { Arrival } from '../../src/lib/online/arrival.svelte'
@@ -19,7 +13,6 @@ afterEach(() => {
   target.remove()
 })
 
-/** The card over the pane, driven by a wait. */
 function shown(arrival: Arrival, onretry: () => void = () => undefined) {
   target = document.body.appendChild(document.createElement('div'))
   app = mount(OnlineStatus, {
@@ -103,8 +96,6 @@ test('silence for too long is a failure too', () => {
   expect(line()).toBe('Could not reach your machine')
 })
 
-/** 2026-10-07: a tab whose session was gone - its machine replaced - retried silently
- *  forever. It says so in one line, and offers the one thing that helps. */
 test('a session that is gone offers a new online terminal', () => {
   const arrival = new Arrival({ after: () => () => undefined })
   arrival.begin()

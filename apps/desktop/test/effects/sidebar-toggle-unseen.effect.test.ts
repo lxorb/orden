@@ -1,8 +1,3 @@
-/** The file list's button where a swipe from the edge pulls the list out (#1066): said,
- *  not shown. Out of the bar to an eye, there to a screen reader, and seen again while
- *  the keyboard is on it - and pressed, it still opens the list. In the jsdom project
- *  because it mounts the component. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 

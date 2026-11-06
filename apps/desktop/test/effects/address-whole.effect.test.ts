@@ -1,10 +1,3 @@
-/** The address field over a page says where the tab is, whole, before anybody presses
- *  it (#774).
- *
- *  A reader on a NixOS laptop: *"Can I see proper link, instead the 'Nicified' version
- *  without clicking on it?"* It read as the site and the page's name after it, and the
- *  path, the query and the scheme were there only once the field had the keyboard. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 

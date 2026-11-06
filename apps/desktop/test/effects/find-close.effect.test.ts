@@ -1,19 +1,6 @@
 import { afterEach, expect, test, vi } from 'vitest'
 import { closeFind, createEditor, type EditorView, openFind } from '@orden/editor'
 
-/** The find bar closed, and then a selection.
- *
- *  tabs-hints found it on main af0de762: open the find bar, press Escape, select some
- *  words, and CodeMirror logged `update listener: RangeError: Maximum call stack size
- *  exceeded` and the format bar never came up. The pane answers the editor's word that
- *  the bar has gone by closing its bar, and closing its bar tells the editor the bar
- *  has gone: `closeFind` dispatched, the editor told the pane, the pane closed again,
- *  and so on until the stack ran out - inside Svelte's own flush as often as not,
- *  which is what left the page drawing nothing new.
- *
- *  The pane's wiring is Pane.svelte's, written out here: an ask opens the bar, and
- *  nothing (the bar gone) shuts it, which is `closeFind` and the focus back. */
-
 let view: EditorView | null = null
 
 afterEach(() => {
@@ -52,13 +39,11 @@ test('the bar closed by Escape closes once, and a selection after it is heard', 
   openFind(view)
   expect(finding).toBe(true)
 
-  // Escape in the bar: the pane shuts it.
   shut()
 
   expect(logged.mock.calls.map((one) => String(one[0]))).toEqual([])
   expect(asked).toEqual(['open', 'shut'])
 
-  // And the words selected afterwards reach whoever follows the selection.
   const before = selections
   view.dispatch({ selection: { anchor: 0, head: 8 } })
   expect(selections).toBe(before + 1)

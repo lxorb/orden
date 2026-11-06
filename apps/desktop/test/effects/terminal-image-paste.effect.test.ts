@@ -1,22 +1,7 @@
-/** A picture pasted into a coding agent in a terminal.
- *
- *  Emil, issue 228: _"inserting images into claude session with alt + v should also
- *  work"_. Claude Code reads the clipboard itself when Alt+V (Ctrl+V off Windows) is
- *  pressed. In a terminal on this computer the key only has to reach it, as ESC and the
- *  letter, the way Windows Terminal sends it. On another machine the clipboard is this
- *  computer's and not that one's, so the picture is carried over and its path there is
- *  what the terminal pastes. See terminal/images.ts.
- *
- *  xterm.js itself, with the crate and the clipboard stood in for: what the shell is
- *  given is what the window asked `pty_write` to write. */
-
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** Everything the window asked the crate to write to the shell, in order. */
 const typed: string[] = []
-/** Every picture the window asked the crate to carry to a host. */
 const carried: Record<string, unknown>[] = []
-/** Whether the host refuses the picture. */
 let refuse = false
 
 const PATH = '/home/emil/.cache/nib/images/nib-0011223344556677.png'
@@ -71,11 +56,9 @@ Object.defineProperty(document, 'fonts', {
   value: { load: () => Promise.resolve([]) },
 })
 
-/** What the clipboard holds: a picture, or text, or nothing. */
 let clipboard: { picture?: Uint8Array; text?: string } = {}
 const reads = { count: 0 }
 
-/** A picture as the clipboard and a paste hand one over. */
 const pictureFile = (bytes: Uint8Array) =>
   ({
     type: 'image/png',
@@ -110,7 +93,6 @@ const { written } = await import('../../src/lib/parting')
 
 type Opened = ReturnType<typeof sessionOf>
 
-/** The keys the window heard, as App.svelte's handler would have. */
 const heard: string[] = []
 const hear = (event: KeyboardEvent) => {
   heard.push(event.key)
@@ -118,7 +100,6 @@ const hear = (event: KeyboardEvent) => {
 
 let place: HTMLElement
 
-/** A local shell's terminal, drawn, with its shell started. */
 async function local(key: string): Promise<Opened> {
   const words = JSON.stringify({ shell: '/bin/bash', folder: null, key })
   const doc = new NoteDoc(
@@ -130,7 +111,6 @@ async function local(key: string): Promise<Opened> {
   return drawn(sessionOf(tab))
 }
 
-/** A terminal on `pi`, made by Remote in this run, drawn and connected. */
 async function remote(): Promise<Opened> {
   await openRemote('pi')
   const tab = workspace.tabs.at(-1)
@@ -141,12 +121,10 @@ async function remote(): Promise<Opened> {
 async function drawn(session: Opened): Promise<Opened> {
   await session.attach(place, false)
   await vi.waitFor(() => expect(session.term.textarea).toBeDefined())
-  // The shell started: a key typed now reaches it.
   await new Promise((settle) => setTimeout(settle, 10))
   return session
 }
 
-/** A letter with Alt, or Ctrl, pressed with the terminal's keyboard. */
 function press(session: Opened, letter: string, held: 'alt' | 'ctrl') {
   session.term.textarea?.dispatchEvent(
     new KeyboardEvent('keydown', {
@@ -162,7 +140,6 @@ function press(session: Opened, letter: string, held: 'alt' | 'ctrl') {
   flushSync()
 }
 
-/** A paste carrying `text`, or a picture and no text. */
 function paste(session: Opened, what: { text?: string; picture?: Uint8Array }) {
   const event = new Event('paste', { bubbles: true, cancelable: true })
   Object.defineProperty(event, 'clipboardData', {

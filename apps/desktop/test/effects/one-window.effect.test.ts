@@ -1,8 +1,3 @@
-/** A web note is open in one tab of one window, across the app's windows: another
- *  window holding it shows it instead of this one opening a second, and two windows
- *  that came to hold one anyway leave it to whoever had it first. The other window is
- *  played here by a channel of the test's own. See web-tab/one-window.svelte.ts. */
-
 import { afterAll, beforeEach, expect, test, vi } from 'vitest'
 
 const SITE = '/space/Site.url'
@@ -20,7 +15,6 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
     ),
 }))
 
-// The pages' own channel from the crate, which nothing here says anything on.
 vi.mock('../../src/lib/own-window', () => ({
   hearHere: () => Promise.resolve(() => undefined),
 }))
@@ -29,7 +23,6 @@ vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => un
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { heldElsewhere } = await import('../../src/lib/web-tab/one-window.svelte')
 
-/** The other window. */
 const other = new BroadcastChannel('nib:web-notes')
 const heard: Record<string, unknown>[] = []
 other.onmessage = (event: MessageEvent<Record<string, unknown>>) => {
@@ -67,7 +60,6 @@ test('one both windows came to hold stays with whoever had it first', async () =
     expect(heard).toContainEqual(expect.objectContaining({ held: [[SITE, expect.any(Number)]] })),
   )
 
-  // The other window has had it since the start of time.
   other.postMessage({ window: 'other', held: [[SITE, 0]] })
 
   await vi.waitFor(() => expect(tab.path).toBeNull())

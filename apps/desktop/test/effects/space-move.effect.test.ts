@@ -1,13 +1,6 @@
 import { flushSync } from 'svelte'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Move to space, on the real workspace: the same tab goes to the other space's own set
- *  and takes with it what makes it that space's: its file, or
- *  the space as its home. Nothing is closed and opened again, so nothing is lost.
- *
- *  In the effects project beside space-tabs.effect.test.ts, whose sets this moves tabs
- *  between. The disk is a map; see test/disk.ts. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
 const histories = vi.hoisted(() => [] as string[])
 
@@ -36,7 +29,6 @@ const { Disk } = await import('../disk')
 disk.current = new Disk()
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
-// The sets' store, fetched as the app fetches it with the first switch.
 await import('../../src/lib/workspace/sets.svelte')
 const { pane } = await import('../../src/lib/workspace/pane-tree')
 const { moveToSpace } = await import('../../src/lib/workspace/moving-space')
@@ -55,7 +47,6 @@ const tabAt = (path: string) => {
   return found
 }
 
-/** A new note with words in it and no file yet. */
 const blank = (words: string) => {
   workspace.openBlank()
   const draft = workspace.tabs.at(-1)
@@ -83,7 +74,6 @@ beforeEach(async () => {
     { id: 'home', name: 'Home', root: '/spaces/Home' },
     { id: 'uni', name: 'Uni', root: '/spaces/Uni' },
   ]
-  // Back in Work, then nothing open in any space; see space-tabs.effect.test.ts.
   await workspace.showSpace('work')
   for (const tab of [...workspace.tabs]) workspace.close(tab.id, false)
   const first = pane('first')

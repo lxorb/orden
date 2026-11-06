@@ -1,11 +1,6 @@
 import { flushSync } from 'svelte'
 import { expect, test, vi } from 'vitest'
 
-/** A restart brings back every space's own set: the one on screen as the session's own
- *  arrangement, the others built back through the same restore at the launch's last
- *  turn. Two runs of the store in one test, the second a fresh import of every module
- *  reading what the first wrote, the way a relaunch reads it. */
-
 vi.stubGlobal('requestAnimationFrame', (run: () => void) => setTimeout(run, 0))
 vi.stubGlobal('requestIdleCallback', (run: () => void) => setTimeout(run, 0))
 
@@ -30,7 +25,6 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
 const PLAN = '/spaces/Work/Plan.md'
 const FOOD = '/spaces/Home/Food.md'
 
-/** One run of the app's stores, freshly imported. */
 async function run() {
   const { workspace } = await import('../../src/lib/workspace.svelte')
   const onScreen = () =>
@@ -45,7 +39,6 @@ test('each space comes back with its own tabs', async () => {
   disk.current.files.set(FOOD, '# Food\n')
   localStorage.clear()
 
-  // The first run: Home's tabs, then Work's.
   let first: unknown
   {
     const { workspace } = await run()
@@ -63,9 +56,6 @@ test('each space comes back with its own tabs', async () => {
     workspace.persist()
   }
 
-  // The second: everything read back from what the first wrote.
-  // What the first run fetched lazily - the sets' store, and what it fetches in turn - is
-  // all in before the modules are dropped, or it lands in the second run's half-built ones.
   await vi.dynamicImportSettled()
   vi.resetModules()
   const { workspace, onScreen } = await run()
@@ -76,9 +66,7 @@ test('each space comes back with its own tabs', async () => {
   expect(workspace.activeSpaceId).toBe('work')
   expect(onScreen()).toEqual(['Plan.md'])
 
-  // Home's set, built back behind the window at the launch's last turn.
   const { tabSets } = await import('../../src/lib/workspace/spaces')
-  // The sets are fetched at the launch's last turn, which a loaded machine reaches late.
   await vi.waitFor(() => expect(tabSets.fetched).toBe(true), { timeout: 15_000 })
   await vi.waitFor(() => expect(workspace.tabs.map((tab) => tab.name)).toContain('Food.md'), {
     timeout: 15_000,

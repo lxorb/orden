@@ -1,12 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** The question a chat's pointer carried into another space puts (B542): the keyboard
- *  starts on "Only the file", on a Mac as anywhere else, so Enter, or a key held down
- *  from the move that asked it, keeps the chat's history where it is.
- *
- *  In the jsdom project because buttons need a document. */
-
 const mac = vi.hoisted(() => ({ on: false }))
 
 vi.mock('../../src/lib/tauri', async (actual) => ({
@@ -15,7 +9,6 @@ vi.mock('../../src/lib/tauri', async (actual) => ({
   platform: () => (mac.on ? 'macos' : 'windows'),
 }))
 
-/** The sheet rises through the Web Animations API, which jsdom does not implement. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -52,7 +45,6 @@ for (const on of [false, true]) {
 
     const focused = document.activeElement
     expect(focused?.textContent.trim()).toBe('Only the file')
-    // Enter on a focused button is its click.
     if (focused instanceof HTMLButtonElement) focused.click()
     expect(await answer).toBe('file')
   })

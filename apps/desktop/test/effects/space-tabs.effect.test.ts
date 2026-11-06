@@ -2,12 +2,6 @@ import { flushSync } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { root, watch } from './runes.svelte'
 
-/** A space's own tabs, on the real workspace: every space keeps its own (#674), a switch
- *  swaps them in one step, and a tab of a set out of sight comes forward with its space.
- *
- *  In the effects project because "the first frame is the new set" is a question about
- *  what a watcher sees. The disk is a map; see test/disk.ts. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
 
 const SPACES = [
@@ -31,7 +25,6 @@ const { Disk } = await import('../disk')
 disk.current = new Disk()
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
-// The sets' store, fetched as the app fetches it with the first switch.
 await import('../../src/lib/workspace/sets.svelte')
 const { deleteSpace } = await import('../../src/lib/workspace/space-changes')
 const { pane } = await import('../../src/lib/workspace/pane-tree')
@@ -42,7 +35,6 @@ const IDEAS = '/spaces/Work/Ideas.md'
 const FOOD = '/spaces/Home/Food.md'
 const NOTES = '/spaces/Work/Notes.md'
 
-/** The names of the tabs on screen, pane by pane, in strip order. */
 const onScreen = () =>
   workspace.panes.all.flatMap((one) => workspace.tabsIn(one.id).map((tab) => tab.name))
 
@@ -66,8 +58,6 @@ beforeEach(async () => {
     { id: 'home', name: 'Home', root: '/spaces/Home' },
     { id: 'uni', name: 'Uni', root: '/spaces/Uni' },
   ]
-  // Back in Work, then nothing open in any space: every tab of every set is in the one
-  // strip, and a set left with none comes back as one empty pane.
   await workspace.showSpace('work')
   for (const tab of [...workspace.tabs]) workspace.close(tab.id, false)
   const first = pane('first')
@@ -203,7 +193,6 @@ describe('every space', () => {
 
     expect(onScreen()).toEqual([])
     expect(workspace.panes.count).toBe(1)
-    // Nothing closed: Plan is in Work's set, out of sight.
     expect(workspace.tabs.map((tab) => tab.name)).toEqual(['Plan.md'])
   })
 
@@ -223,10 +212,6 @@ describe('every space', () => {
     expect(workspace.activeTabId).toBe(front)
   })
 
-  /** Emil, 2026-10-03: a space switched away from and back came back on another note.
-   *  Every pane's tab in front, the pane the keyboard was in and a pane put down with
-   *  Ctrl+D, each exactly as left - with several tabs to a pane, the one in front not
-   *  the last opened, and the focus in the first pane rather than the newest. */
   test('comes back exactly: each pane’s tab in front, the focused pane, a pane put down', async () => {
     for (const path of [PLAN, IDEAS, NOTES]) await workspace.openEntry(path)
     workspace.split('row', tabAt(NOTES).id)

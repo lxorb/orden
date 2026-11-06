@@ -1,15 +1,8 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { expect, test } from 'vitest'
 
-/** A part a component fetched lands after the component has gone: nothing runs, and a
- *  failure nobody is waiting for any more is no unhandled rejection - which is what failed
- *  a run when a test ended while a tab's carrying code was on its way (#331's strip,
- *  tab-strip-gestures.effect.test.ts). See src/lib/while-here.ts. In the jsdom project
- *  because it mounts a component. */
-
 const { default: Fetching } = await import('./Fetching.svelte')
 
-/** The component as the test holds it: what it exports. */
 interface Fetches {
   fetch<T>(asked: Promise<T>): Promise<T>
 }
@@ -49,8 +42,6 @@ test('once it is gone, what lands is dropped, success and failure alike', async 
   const broken = deferred<string>()
   let ran = false
   void shown.fetch(part.promise).then(() => (ran = true))
-  // Not awaited and not caught: a rejection that reached it would be unhandled, and
-  // Vitest fails the run on one.
   void shown.fetch(broken.promise)
   await unmount(shown)
 

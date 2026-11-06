@@ -1,12 +1,3 @@
-/** Zoomed in, the dot under the pointer is as wide as the line the pen writes (#644).
- *
- *  Past 100% a pen writes at its width divided by the zoom, so the line is as wide on
- *  the screen as the pen is set to (#369). The dot was still the pen's width times the
- *  zoom: at 200% it promised a line twice as fat as the one that came out, and the
- *  pen's width seemed to change with the zoom.
- *
- *  In the jsdom project because it mounts the canvas and reads what it wears. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import Canvas from '../../src/lib/Canvas.svelte'
@@ -15,7 +6,6 @@ import { pens } from '../../src/lib/canvas/pens.svelte'
 import { tools } from '../../src/lib/canvas/tools.svelte'
 import { NoteDoc, Tab } from '../../src/lib/workspace/documents.svelte'
 
-/** jsdom implements none of these, and a mounted canvas asks for all three. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -35,7 +25,6 @@ globalThis.ResizeObserver = class {
   }
 }
 
-/** A pen wide enough that the dot is not held to its smallest. */
 const WIDE = 20
 
 let host: HTMLElement
@@ -69,7 +58,6 @@ afterEach(() => {
   host.remove()
 })
 
-/** How wide the dot the cursor draws is, in pixels. */
 function dot(): number {
   const svg = decodeURIComponent(host.querySelector<HTMLElement>('.canvas')?.style.cursor ?? '')
   return Number(/r="([\d.]+)"/.exec(svg)?.[1]) * 2

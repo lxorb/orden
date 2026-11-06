@@ -1,23 +1,9 @@
-/** A terminal tab put back by a restart draws what it had on its screen before its new
- *  shell starts: Emil, 2026-09-30, *"Even if we fully close and restart nib, the terminal
- *  state should be restored like in VS Code."*
- *
- *  The screen is xterm.js and the shell is the crate, and neither is here: xterm.js is a
- *  stand-in that writes down what it was asked to do, and the crate answers the one read
- *  with a history written at another size. What is tested is the order - the history,
- *  at its own width, then the line saying when, then the fit that reflows it, then the
- *  shell - and what a closed tab leaves behind. */
-
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** Everything that happened, in order: the crate's commands and the screen's calls. */
 const done: string[] = []
-/** What the crate holds, by space and key. */
 const files = new Map<string, unknown>()
-/** Which system this is, and what its kernel says the shell's folder is. */
 let system = 'windows'
 const KERNEL_FOLDER = '/Users/me/work/nib'
-/** What the last screen made hands a keystroke to. */
 let typing: ((data: string) => void) | null = null
 
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
@@ -45,7 +31,6 @@ vi.mock('../../src/lib/native', () => ({
   invoke: () => Promise.resolve(null),
 }))
 
-/** xterm.js, as far as a session asks anything of it. */
 vi.mock('@xterm/xterm', () => ({
   Terminal: class {
     cols = 80
@@ -90,7 +75,6 @@ vi.mock('@xterm/xterm', () => ({
     }
     write(data: string | Uint8Array, then?: () => void) {
       done.push(`write ${typeof data === 'string' ? data : '<bytes>'}`)
-      // xterm.js parses on a later turn, which is why the callback exists at all.
       if (then) setTimeout(then, 0)
     }
     focus = () => undefined
@@ -148,7 +132,6 @@ const { shells } = await import('../../src/lib/terminal/shells.svelte')
 const { flushSync } = await import('svelte')
 const { written } = await import('../../src/lib/parting')
 
-/** The escape every sequence starts with. */
 const ESC = '\x1b'
 
 const HISTORY = {
@@ -161,7 +144,6 @@ const HISTORY = {
 const { i18n } = await import('../../src/lib/i18n.svelte')
 const when = i18n.when(HISTORY.at, { dateStyle: 'medium', timeStyle: 'short' })
 
-/** A terminal tab as a session brings one back: no file, its words, and its key. */
 function restored(key: string): InstanceType<typeof Tab> {
   const words = JSON.stringify({ shell: 'pwsh', folder: 'C:\\work', key })
   const doc = new NoteDoc(
@@ -204,17 +186,13 @@ test('a restored terminal draws its history, at its own size, before its shell s
   const writes = done.filter((one) => one.startsWith('write '))
   expect(writes).toHaveLength(2)
   expect(writes[0]).toBe(`write ${HISTORY.text}`)
-  // The line saying when, dim, under the history and above the new prompt.
   expect(writes[1]).toBe(`write ${ESC}[0m\r\n${ESC}[2mRestored ${when}${ESC}[22m\r\n`)
 
   expect(done).toEqual([
     'terminal_history_read',
     'open',
-    // Written back at the width it was written at...
     'resize 100x20',
     writes[0],
-    // ...and reflowed into the pane once it has been drawn, and only then the line and
-    // the shell, at the pane's size.
     'fit',
     'resize 132x40',
     writes[1],
@@ -222,9 +200,6 @@ test('a restored terminal draws its history, at its own size, before its shell s
   ])
 })
 
-/** Windows' pseudo console owns every row of the screen it starts on, so the history goes
- *  above it once it has been reflowed, a screen's worth of lines at the pane's own
- *  height, and the line saying when is the screen's first row. */
 test('on Windows the history goes above the screen before the shell starts', async () => {
   files.set('null/k7', HISTORY)
   await sessionOf(restored('k7')).attach(placeFor(), false)
@@ -240,11 +215,9 @@ test('on Windows the history goes above the screen before the shell starts', asy
     'open',
     'resize 100x20',
     writes[0],
-    // Reflowed first, so the lines pushed above are the pane's own height...
     'fit',
     'resize 132x40',
     writes[1],
-    // ...and the shell after them, its prompt under the line saying when.
     'pty_spawn 132x40',
   ])
 })
@@ -279,8 +252,6 @@ test('with Restore history off nothing is read, and nothing is written', async (
   expect(done.filter((one) => one.startsWith('write '))).toEqual([])
 })
 
-/** Duplicate copies a tab's words, key and all; two tabs writing one file would each put
- *  the other's screen back after a restart. */
 test('a duplicate running beside its original is given a key of its own', async () => {
   files.set('null/k4', HISTORY)
   const first = restored('k4')
@@ -308,7 +279,6 @@ test('a closed tab takes its file with it and comes back from memory', async () 
   expect(done).toContain('terminal_history_forget')
   expect(files.has('null/k5')).toBe(false)
 
-  // Reopen closed tab: the same words, a new tab, and the screen it had.
   done.length = 0
   const again = restored('k5')
   await sessionOf(again).attach(placeFor(), false)
@@ -318,8 +288,6 @@ test('a closed tab takes its file with it and comes back from memory', async () 
   expect(done.find((one) => one.startsWith('write '))).toContain('the screen as it stands')
 })
 
-/** zsh, a Mac's own shell, says nothing about where it is; the kernel is asked a moment
- *  after Enter, and the tab's words follow, which is where a restart puts it back. */
 test('a Mac asks the kernel where the shell went, and the tab remembers it', async () => {
   system = 'macos'
   const tab = restored('k6')

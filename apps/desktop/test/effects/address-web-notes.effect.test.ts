@@ -1,7 +1,3 @@
-/** Ctrl+T's address field offers the space's websites (#1059): found by a few letters of
- *  their name or address, marked as saved, opened as the note with the arrows and Enter
- *  or a press, and taken into the field with Tab. A private tab's field offers none. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 

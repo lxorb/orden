@@ -4,15 +4,6 @@ import Canvas from '../../src/lib/Canvas.svelte'
 import { emptyCanvas, readCanvas, writeCanvas } from '../../src/lib/canvas/format'
 import { NoteDoc, Tab } from '../../src/lib/workspace/documents.svelte'
 
-/** A cut in the find field, after Enter has picked the card it found (#535).
- *
- *  The plane hears the clipboard on its whole host, and the find field is inside
- *  it, so the cut bubbled up to the plane: the field kept its words and the card
- *  it had found went, edges and all. What is cut in a field is the field's.
- *
- *  In the jsdom project because it mounts a component and dispatches real events. */
-
-/** The plane measures its pane through a ResizeObserver, which jsdom has not got. */
 class NoLayout {
   observe() {
     // jsdom never moves anything.
@@ -70,7 +61,6 @@ test('a cut in the find field leaves the card it found on the plane', () => {
 
   field.dispatchEvent(new Event('cut', { bubbles: true, cancelable: true }))
   flushSync()
-  // The tab going is what writes the plane into its file at once.
   close()
   close = undefined
 

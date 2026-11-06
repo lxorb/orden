@@ -5,18 +5,6 @@ import AgentSession from '../../src/lib/agents/ui/AgentSession.svelte'
 import { FakeCrate } from '../../src/lib/agents/ui/fake'
 import { ended, start, started } from '../../src/lib/agents/ui/index'
 
-/** Everything the reader sees of agents, against a crate in memory that tells the
- *  window exactly the news the real one does (docs/agent-native.md 13.1).
- *
- *  In the jsdom project because what is under test is what the UI's effects write into
- *  the shell - the marks the strip and the web tabs read, the badge, the steps asked, the
- *  key handed to the system - and what the panel and the pairing bubble put on screen
- *  and do when they are pressed. Nothing here asks about layout or paint. */
-
-/** The panel's rows arrive and leave with a slide and a fly, which Svelte plays through
- *  the Web Animations API, and jsdom has none. Nothing here asks how they move, only
- *  that a row that leaves has gone once it has: so every animation is over as soon as
- *  somebody asks to hear when it is. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -34,7 +22,6 @@ Element.prototype.animate = () =>
 
 let fake: FakeCrate
 
-/** Every promise the UI's presses are waiting on, and then the effects they set off. */
 async function settled(): Promise<void> {
   for (let turn = 0; turn < 5; turn++) await Promise.resolve()
   flushSync()
@@ -70,8 +57,6 @@ describe('the frame and the mark', () => {
     fake.act('claude', 't1', 'browser_click')
     await settled()
 
-    // The reader presses and types in the page: the crate says nothing, and the agent's
-    // next call finds the tab as theirs as ever.
     fake.act('claude', 't1', 'browser_type')
     await settled()
     expect(agentMarks.on.t1?.stopped).toBe(false)
@@ -156,7 +141,6 @@ describe("an agent's session", () => {
     expect(target.querySelector('.doing')?.textContent.trim()).toBe('Pressing · Shop')
     const pages = [...target.querySelectorAll('.tabs .nib-row-label')].map((one) => one.textContent)
     expect(pages).toEqual(['Shop'])
-    // Nothing of the page is asked for to draw it: no pictures, only its name (#1120).
     expect(target.querySelector('img, .picture')).toBeNull()
   })
 
@@ -205,8 +189,6 @@ describe("an agent's session", () => {
 })
 
 describe('Full permissions', () => {
-  /** #372: an agent with Full permissions asks nothing, a Show included; the crate answers
-   *  its Show as it raises it, and the window that holds the pages puts the tab up. */
   test('an agent that asks nothing has its tab shown without a question, behind the reader', async () => {
     const { workspace } = await import('../../src/lib/workspace.svelte')
     workspace.openBlank('Reading', '# Reading')
@@ -222,7 +204,6 @@ describe('Full permissions', () => {
       expect(fake.asked.find((one) => one.command === 'adopt')?.args[0]).toBe(tab.id),
     )
     expect(fake.asked.some((one) => one.command === 'answer')).toBe(false)
-    // #1070: the reader is still where they were; the shown tab is beside it, behind.
     expect(workspace.activeTabId).toBe(reading)
     expect(workspace.tabs.some((one) => one.kind === 'web' && one.id !== reading)).toBe(true)
   })
@@ -235,7 +216,6 @@ describe('questions outside the session', () => {
 
     const bubble = document.body.querySelector('.pairing')
     expect(bubble?.textContent).toContain('Codex wants to connect')
-    // Not in the badge: the bubble is where it is answered.
     expect(agentMarks.waiting).toBe(0)
 
     ;[...(bubble?.querySelectorAll('button') ?? [])].at(-1)?.click()

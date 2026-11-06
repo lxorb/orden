@@ -1,18 +1,6 @@
-/** A site's question, mounted: the bubble under a web tab's bar, answered the three
- *  ways a person answers it.
- *
- *  Emil, 2026-09-28, of the bubble a mail site put up asking to show notifications:
- *  *"and this thing here is not clickable."* The buttons were drawn and every press fell
- *  through them, because the card they sit in lets the pointer through; bubble.test.ts
- *  holds every bubble to that. This holds the rest of the road: a press on either answer
- *  reaches the engine and is remembered for the site, Escape dismisses and remembers
- *  nothing, and the keyboard is the bubble's while it is up - taken back from the page
- *  that asked, which held it out of sight. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** jsdom has no animations, and the bubble arrives on one. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -45,7 +33,6 @@ const WebAsk = (await import('../../src/lib/web-tab/WebAsk.svelte')).default
 let target: HTMLElement
 let next = 1
 
-/** A site asking, the way the crate says it, with the bubble for it on screen. */
 function asked(site: string) {
   const asking = { id: next++, tab: 'tab-1', site, ask: 'notifications' as const, privately: false }
   grants.heard(asking)
@@ -111,15 +98,12 @@ test('Escape dismisses it, tells the site no, and decides nothing', () => {
 })
 
 test('the keyboard is the bubble’s, taken back from the page that asked', async () => {
-  // The page had it: the app's own document has no focus.
   vi.spyOn(document, 'hasFocus').mockReturnValue(false)
   const { app } = asked('keys.example')
 
   const card = target.querySelector('[role=dialog]')
   expect(document.activeElement).toBe(card)
-  // Asked of the crate, which is what says no to a probe.
   await vi.waitFor(() => expect(focused).toHaveBeenCalledTimes(1))
-  // Neither answer is the one a stray Enter gives: Tab reaches them, in order.
   expect(document.activeElement?.tagName).not.toBe('BUTTON')
   void unmount(app)
 })

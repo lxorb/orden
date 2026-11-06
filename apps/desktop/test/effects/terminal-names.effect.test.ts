@@ -1,21 +1,7 @@
-/** A terminal's tab says what runs in it, and takes a name of its own: Emil, 2026-10-03,
- *  *"I would like to be able to rename terminal tabs too. Usually, e.g. in VS Code, they
- *  infer their name intelligently, e.g. based on the Claude session."*
- *
- *  The strip is mounted on the real workspace and renamed the ways a person renames a
- *  tab - a double click, F2, the tab's menu - and a session is driven the way a shell
- *  drives one: Enter, the crate saying what is in front, a title, a prompt mark. xterm.js
- *  is a stand-in that hands over its listeners, and the crate answers from here. The
- *  rules themselves are naming.test.ts.
- *
- *  In the jsdom project because the strip is mounted. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** What the crate says is in front of the shell. */
 let front: string | null = null
-/** Every command the window sent. */
 const asked: string[] = []
 
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
@@ -37,7 +23,6 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   },
 }))
 
-/** The channels the shell's output arrives on, as the sessions made them. */
 const channels: { onmessage: ((message: unknown) => void) | null }[] = []
 
 vi.mock('../../src/lib/native', () => ({
@@ -50,7 +35,6 @@ vi.mock('../../src/lib/native', () => ({
   invoke: () => Promise.resolve(null),
 }))
 
-/** What the last screen hands a keystroke and a title to. */
 let typing: ((data: string) => void) | null = null
 let titling: ((title: string) => void) | null = null
 
@@ -118,7 +102,6 @@ vi.mock('@xterm/addon-unicode11', () => ({
   },
 }))
 
-/** How wide the strip is said to be: room for every name. */
 const STRIP = 900
 
 class Measured {
@@ -168,8 +151,6 @@ const { sessionOf } = await import('../../src/lib/terminal/sessions.svelte')
 const { tabMenu } = await import('../../src/lib/tab-strip/menu')
 const { renameTerminal } = await import('../../src/lib/terminal/rename')
 const Tabs = (await import('../../src/lib/Tabs.svelte')).default
-// Fetched by the strip and the first rename, and here first so no test waits on
-// compiling them.
 await import('../../src/lib/tab-strip/TabNameField.svelte')
 await import('../../src/lib/terminal/TerminalMark.svelte')
 await import('../../src/lib/tab-strip/ops')
@@ -196,7 +177,6 @@ afterEach(() => {
   target.remove()
 })
 
-/** A PowerShell terminal in the strip, in `C:\work`, nobody having named it. */
 function terminal() {
   const words = writeSpec({ shell: 'pwsh', folder: 'C:\\work', key: 'k', name: null })
   workspace.openUnsaved('terminal', words, 'PowerShell')
@@ -219,7 +199,6 @@ const pick = () => target.querySelector<HTMLElement>('.pick')
 const label = () => target.querySelector('.label')?.textContent
 const field = () => target.querySelector<HTMLInputElement>('input.field')
 
-/** The field, once it is up: the rename has fetched it. */
 async function fieldUp(): Promise<HTMLInputElement> {
   await vi.waitFor(() => {
     flushSync()
@@ -230,8 +209,6 @@ async function fieldUp(): Promise<HTMLInputElement> {
   return up
 }
 
-/** What a shell prints, as the channel delivers it: in this page's own ArrayBuffer,
- *  which the encoder's is not under jsdom. */
 function bytesOf(text: string): ArrayBuffer {
   const encoded = new TextEncoder().encode(text)
   const buffer = new ArrayBuffer(encoded.length)
@@ -261,7 +238,6 @@ test('a double click names a terminal in the strip, and an empty name gives it b
   expect(label()).toBe('api server')
   expect(readSpec(tab.doc)?.name).toBe('api server')
 
-  // F2, on the tab, and nothing typed: the shell's own name again.
   pick()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'F2', bubbles: true }))
   typeIn(await fieldUp(), '')
   await vi.waitFor(() => expect(tab.shown).toBe('PowerShell'))
@@ -283,8 +259,6 @@ test('Escape leaves the name as it was, and the menu offers the same field', asy
   expect(readSpec(tab.doc)?.name).toBeNull()
 })
 
-/** The name is the tab's words, which is what Reopen closed tab, a restart and Move to
- *  space carry a terminal by. */
 test('a name comes back with the tab', async () => {
   const tab = terminal()
   await renameTerminal(tab, 'builds')
@@ -305,10 +279,8 @@ test('the tab says what runs in it, the title its program set, and the shell aga
   await sessionOf(tab).attach(place, false)
   await vi.waitFor(() => expect(asked).toContain('pty_spawn'))
 
-  // At the prompt: the shell, and the folder.
   await vi.waitFor(() => expect(tab.shown).toBe('PowerShell · work'))
 
-  // The shell's own title as it starts is nobody's name.
   titling?.('C:\\Program Files\\PowerShell\\7\\pwsh.exe')
   flushSync()
   expect(tab.shown).toBe('PowerShell · work')
@@ -318,24 +290,20 @@ test('the tab says what runs in it, the title its program set, and the shell aga
   await vi.waitFor(() => expect(tab.shown).toBe('claude · work'))
   expect(tab.running?.program).toBe('claude')
 
-  // Claude Code's topic, with the glyph it turns in front of it while it works.
   titling?.('⠐ Fix the parser')
   await vi.waitFor(() => expect(tab.shown).toBe('Fix the parser'))
 
-  // A name the reader gives wins over it, and giving it back brings the title back.
   await renameTerminal(tab, 'mine')
   titling?.('✳ Fix the parser')
   await vi.waitFor(() => expect(tab.shown).toBe('mine'))
   await renameTerminal(tab, '')
   await vi.waitFor(() => expect(tab.shown).toBe('Fix the parser'))
 
-  // The program leaves: the shell marks its prompt, and the title goes with it.
   front = null
   channels.at(-1)?.onmessage?.(bytesOf('\x1b]133;A\x07PS C:\\work> '))
   await vi.waitFor(() => expect(tab.shown).toBe('PowerShell · work'))
   expect(tab.running?.program).toBeNull()
 
-  // Asked after Enter and after a title nobody owned, and never per keystroke.
   expect(asked.filter((one) => one === 'pty_program').length).toBeLessThanOrEqual(2)
   place.remove()
 })

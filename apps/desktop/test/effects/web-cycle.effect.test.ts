@@ -1,16 +1,6 @@
-/** Ctrl+Tab round ten web tabs, mounted the way a pane mounts them.
- *
- *  Emil, 2026-10-01: *"When I cycle with Ctrl+Tab through my tabs, some of them fully
- *  reload every time, but not when I just switch between specific ones."* A seventh
- *  running page parked the one looked at longest ago, and going round more than six tabs
- *  in order parks each one just before it comes round again: every step was a page built
- *  again. Counted here as the builds the crate is asked for, which is what a reload is.
- *  See web-tab/resting.ts. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** Every call the pane made to the crate, in order. */
 const asked: { command: string; args: Record<string, unknown> }[] = []
 
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
@@ -23,8 +13,6 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   },
 }))
 
-// The one listener the store starts for the window. Tauri's own needs the window's
-// internals, which a test has none of.
 vi.mock('../../src/lib/own-window', () => ({
   hearHere: () => Promise.resolve(() => undefined),
 }))
@@ -45,8 +33,6 @@ class NoLayout {
 
 globalThis.ResizeObserver = NoLayout
 
-/** A box for an element in the document, and a box of zeroes for one that is not, as a
- *  browser measures them; see web-switch.effect.test.ts. */
 Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
   const rect = this.isConnected
     ? { x: 0, y: 40, width: 800, height: 560 }
@@ -61,7 +47,6 @@ Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
   }
 }
 
-// Nothing of the app's is over the page.
 document.elementFromPoint = () => document.querySelector('.hole')
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
@@ -71,8 +56,6 @@ const { startup } = await import('../../src/lib/startup.svelte')
 const { cycleTab } = await import('../../src/lib/tab-cycle.svelte')
 const { default: Cycling } = await import('./Cycling.svelte')
 
-// What the pages store fetches the first time it is asked for something, loaded before
-// any clock is stopped; see web-switch.effect.test.ts.
 await Promise.all([
   import('../../src/lib/web-tab/visited'),
   import('../../src/lib/web-tab/web-data.svelte'),
@@ -108,12 +91,10 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-/** Every frame, turn and timer a switch sets going, on a clock the test moves. */
 async function frames(): Promise<void> {
   await vi.advanceTimersByTimeAsync(300)
 }
 
-/** Ten web tabs in one pane, each on a site of its own, the last in front. */
 async function tenTabs(): Promise<string[]> {
   startup.reset()
   const shown = startup.shown()
@@ -131,7 +112,6 @@ async function tenTabs(): Promise<string[]> {
   return ids
 }
 
-/** Ctrl+Tab, `times` over, a moment on each tab, as a hand going round does. */
 async function cycle(times: number): Promise<void> {
   for (let step = 0; step < times; step += 1) {
     cycleTab(1)
@@ -140,7 +120,6 @@ async function cycle(times: number): Promise<void> {
   }
 }
 
-/** How many times each tab's page was built. */
 function builds(ids: readonly string[]): number[] {
   return ids.map(
     (id) => asked.filter((one) => one.command === 'web_open' && one.args.tab === id).length,
@@ -168,7 +147,6 @@ test('and once more after a break long enough to freeze them: woken, not built',
   await frames()
   await cycle(10)
 
-  // Ten minutes away: every page out of sight is frozen.
   await vi.advanceTimersByTimeAsync(10 * 60_000)
   const frozen = asked.filter((one) => one.command === 'web_pause' && one.args.paused === true)
   expect(frozen).toHaveLength(9)

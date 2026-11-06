@@ -1,25 +1,6 @@
-/** The pane that draws a website asks the store for its page from a `$derived`, and
- *  that is the whole of this file.
- *
- *  `const page = $derived(pages.of(tab.id))` is what the component says, because the
- *  tab a pane shows can be swapped under it and the page has to follow. A derived is
- *  a reaction, and Svelte forbids a reaction from writing to state made outside it -
- *  so a method that makes something the first time it is asked for, out of a
- *  reactive collection, throws `state_unsafe_mutation` the first time a component
- *  reads it. Nothing about the method on its own shows it: every unit test of
- *  `pages.of` passes, and the app freezes.
- *
- *  Frozen is exactly what it looks like. The error is thrown while Svelte is
- *  flushing, the batch is abandoned, and the window is left drawn and no longer
- *  reactive: no menu opens, no button answers, and the only thing to do is quit.
- *  That is the report this file is here to keep from coming back - a window restored
- *  with a website in front of it, and an app that does nothing at all. */
-
 import { expect, test, vi } from 'vitest'
 import { computed, root } from './runes.svelte'
 
-// The store talks to the crate on a desktop and nothing here is about that: under
-// node there is no crate, and a page that is asked for is a page that is not built.
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
   isDesktop: false,
@@ -36,7 +17,6 @@ test('a pane can read its page out of a derived the first time it asks', () => {
 
   try {
     expect(() => read?.()).not.toThrow()
-    // And the same page every time, because the pane places what it read.
     expect(read?.()).toBe(read?.())
   } finally {
     stop()

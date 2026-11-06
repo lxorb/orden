@@ -1,23 +1,9 @@
-/** A text field's own menu: what it offers, and that the field keeps the keyboard
- *  while it is up.
- *
- *  The second half is the one that matters. Every other menu in the app takes the
- *  keyboard when it opens and hands it back when it closes, and three of the fields
- *  this menu is for act on losing it: a name being renamed commits, the address field
- *  puts the page's own address back, the find bar's matches go. So this menu is walked
- *  from the field instead - the arrows light a row, Enter chooses it, Escape closes -
- *  and a row pressed with the mouse does not take the focus either. See field-menu.ts
- *  and ContextMenu.svelte.
- *
- *  In the jsdom project because it mounts the menu and presses real keys. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import ContextMenu from '../../src/lib/ContextMenu.svelte'
 import { fieldEntries, showFieldMenu } from '../../src/lib/field-menu'
 import { menu, type MenuItem, textFieldOf } from '../../src/lib/menu.svelte'
 
-/** jsdom has no animations, and the menu grows out of its corner. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -34,7 +20,6 @@ let field: HTMLInputElement
 let host: HTMLElement
 let shown: ReturnType<typeof mount> | undefined
 
-/** What `document.execCommand` was asked for, since jsdom carries out none of it. */
 let commands: string[]
 
 beforeEach(() => {
@@ -149,8 +134,6 @@ describe('the rows', () => {
     expect(commands).toEqual(['cut', 'copy'])
   })
 
-  /** Written over the selection, and heard by the field as typing. jsdom refuses the
-   *  command, which is the path written by hand. */
   test('paste writes the clipboard over the selection', async () => {
     vi.stubGlobal('navigator', { clipboard: { readText: () => Promise.resolve('bye') } })
     let heard = 0

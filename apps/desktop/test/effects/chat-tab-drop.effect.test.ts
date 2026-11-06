@@ -1,8 +1,3 @@
-/** A tab let go of over a chat is handed to it as the drop of its file's row (#416), and
- *  a web tab as itself; the chat's own tab, let go of over it, is handed nothing. See tab-strip/chat-drop.ts;
- *  jsdom has no drag events and lays nothing out, so the test says what is under the
- *  pointer and gives the transfer its two calls. */
-
 import { expect, test, vi } from 'vitest'
 
 vi.mock('../../src/lib/workspace.svelte', () => ({

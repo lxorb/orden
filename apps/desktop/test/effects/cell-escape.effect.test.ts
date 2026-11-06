@@ -1,11 +1,3 @@
-/** Escape out of a table cell's editor, and where the keyboard is after it.
- *
- *  Found in the #419 bug hunt (#523): the control the cell was being written in went,
- *  and the keyboard went with it to the page's `body`, so the arrows that walk the
- *  table walked nothing. It goes back to the cell the control was in.
- *
- *  In the jsdom project because focus needs a document and the table is mounted. */
-
 import { answer, readBase, type Row } from '@orden/bases'
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
@@ -45,7 +37,6 @@ afterEach(() => {
   document.body.replaceChildren()
 })
 
-/** The table over these rows, as LiveView would hold it; see views/layouts.test.ts. */
 function table(rows: readonly Row[]) {
   const context = contextFor({ rows, today: TODAY, now: `${TODAY}T10:00:00` })
   const live = {

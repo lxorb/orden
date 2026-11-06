@@ -1,7 +1,3 @@
-/** The workspace and the pages online-opening.effect.test.ts opens tabs into: reactive,
- *  as the real stores are, so the watch over a tab's address runs as it does in the
- *  window. */
-
 interface World {
   tabs: { id: string }[]
   active: string | null
@@ -29,7 +25,6 @@ export function pagesOf() {
   return { of: pageOf }
 }
 
-/** The tab `id` arriving at `url`, as the engine says it. */
 export function land(id: string, url: string) {
   pageOf(id).url = url
 }
@@ -65,7 +60,6 @@ export function reactive(
   }
 }
 
-/** A clean world for the next test. */
 export function reset() {
   made = 0
   tabs.length = 0

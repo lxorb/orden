@@ -1,19 +1,8 @@
-/** A hint card on the page, with the store behind it watched the way the app watches it.
- *
- *  What hints.test.ts cannot ask: the card tells the store it wants a hint from inside
- *  an effect, and the store answers by putting that hint up. A store that read what it
- *  wrote made the effect depend on the hint on screen, so putting it up ran the effect
- *  again, whose teardown took the card straight back down, and the session's one hint
- *  was spent on a card nobody saw.
- *
- *  In the jsdom project because it mounts a component. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import HintCard from '../../src/lib/HintCard.svelte'
 import { hints } from '../../src/lib/hints.svelte'
 
-/** jsdom has no animations, and the card flies in. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -40,11 +29,9 @@ afterEach(() => {
   if (shown) void unmount(shown)
   shown = undefined
   host.remove()
-  // A card on its way out is left at the end of the page: jsdom never finishes the fly.
   for (const one of document.querySelectorAll('.nib-bubble')) one.remove()
 })
 
-/** The card, which hangs at the end of the page while it is up (portal.ts, #1129). */
 function card(): HTMLElement | null {
   return document.querySelector('.nib-bubble.hint')
 }
@@ -78,7 +65,6 @@ test('its cross puts it away', () => {
   card()?.querySelector<HTMLButtonElement>('.shut')?.click()
   flushSync()
 
-  // Gone, on its way out: jsdom never finishes the fly, so the store is what is asked.
   expect(hints.current).toBeNull()
   expect(hints.seen).toEqual(['graph'])
 })

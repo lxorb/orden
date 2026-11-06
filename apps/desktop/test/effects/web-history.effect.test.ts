@@ -1,18 +1,6 @@
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 
-/** The History page, searched from far down its list.
- *
- *  Two thousand pages are drawn a screenful at a time, at the rows the scroll has
- *  reached (history-list.ts). A search typed with the list scrolled far down kept that
- *  scroll: the found rows were drawn from the bottom of what was found, the oldest
- *  first on screen, and the newest - what a search is for - above it out of sight.
- *  Chrome's starts every search at its top, and so does this.
- *
- *  In the jsdom project because the page is a component; jsdom lays nothing out, so
- *  the list's scroll is a number the test holds. */
-
-/** `bind:clientHeight` listens through a ResizeObserver, which jsdom has not got. */
 class NoLayout {
   observe() {
     // jsdom never moves anything.

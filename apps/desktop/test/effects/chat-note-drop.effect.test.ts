@@ -1,12 +1,7 @@
-/** A row of the file list let go of anywhere on a chat is a link in its composer (#416),
- *  the words a drop on a note writes. Against the chats' store in memory; the transfer
- *  is the type a drag out of the list carries (drag-paths.ts), since jsdom has none. */
-
 import { EditorView } from '@orden/editor'
 import { mount, unmount } from 'svelte'
 import { expect, test, vi } from 'vitest'
 
-// jsdom lays nothing out, so nothing it watches ever moves.
 vi.stubGlobal(
   'ResizeObserver',
   class {
@@ -42,7 +37,6 @@ test('a note dropped on a chat is linked in the composer', async () => {
   const words = () => (field ? EditorView.findFromDOM(field)?.state.doc.toString() : null)
   await vi.waitFor(() => expect(words()).toBe('[[Plan]] '))
 
-  // And a web tab let go of on it, as its page's address (tab-strip/chat-drop.ts).
   workspace.tabs = [{ id: 'w', kind: 'web', address: 'https://svelte.dev/' }] as never
   const web = new Event('drop', { bubbles: true, cancelable: true })
   const getData = (one: string) => (one === 'text/nib-tab' ? 'w' : '')

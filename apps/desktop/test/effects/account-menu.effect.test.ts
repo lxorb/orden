@@ -1,8 +1,3 @@
-/** The account's row in the sidebar's foot opens a menu, as a sidebar's owner does in
- *  every app that has one, rather than going straight to the settings (#308).
- *
- *  In the jsdom project because it mounts a component into a document. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test } from 'vitest'
 import { account } from '../../src/lib/account.svelte'

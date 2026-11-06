@@ -1,13 +1,3 @@
-/** The sidebar opened from its toggle by a key, and where the keyboard goes.
- *
- *  Found in the #419 bug hunt (#523): the sidebar comes before the bar in the page, so
- *  Tab from the toggle that had just opened it went on into the tabs and the note, and
- *  the panel was behind it. After a key opens it the next Tab goes in; a click leaves
- *  the keyboard where it was. See sidebar-toggle-order.effect.test.ts for the rest of it.
- *
- *  In the jsdom project because the toggle is mounted and pressed. jsdom lays nothing
- *  out, so every box says it has one, and the panel is a stand-in for the real one. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import SidebarToggle from '../../src/lib/SidebarToggle.svelte'
@@ -28,7 +18,6 @@ beforeEach(() => {
   flushSync()
 })
 
-/** A few frames, which is as long as the keyboard is kept at a side being opened. */
 async function frames(count = 10) {
   for (let left = count; left > 0; left--) await new Promise((done) => requestAnimationFrame(done))
 }
@@ -44,7 +33,6 @@ const toggle = () => host.querySelector<HTMLButtonElement>('[data-side-toggle="l
 
 test('opened by a key, the toggle keeps the keyboard until Tab takes it in', async () => {
   toggle()?.focus()
-  // What Enter or Space on a button fires: a click with no clicks counted.
   toggle()?.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }))
   flushSync()
 

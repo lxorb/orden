@@ -1,6 +1,3 @@
-/** A face picked from the families installed, or typed, and said to be missing where it
- *  is not installed (#772). */
-
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
@@ -17,7 +14,6 @@ vi.mock('../../src/lib/font-families', async (original) => ({
   isInstalled: (name: string) => !name || installed.has(name),
 }))
 
-/** jsdom lays nothing out, so has nothing to scroll a row into view of. */
 Element.prototype.scrollIntoView = () => undefined
 
 const FontPicker = (await import('../../src/lib/settings/FontPicker.svelte')).default

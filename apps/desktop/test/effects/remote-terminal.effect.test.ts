@@ -1,19 +1,7 @@
-/** A terminal on another machine: the system's `ssh` in an ordinary terminal tab.
- *
- *  Emil, 2026-10-03: the tab wears the host's name and colour, a quiet Reconnect bar
- *  comes up when the connection drops, and a restart brings the lines back and connects
- *  again only when asked. A session is driven here the way `ssh` drives one - output,
- *  an exit code - with xterm.js a stand-in and the crate answering from here; the
- *  picker that makes one is host-picker.effect.test.ts.
- *
- *  In the jsdom project because the tab's surface is mounted. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** Every command the window sent, with what it said. */
 const asked: { command: string; args: Record<string, unknown> }[] = []
-/** Whether the crate refuses to start `ssh`: no ssh, or no such host. */
 let refuse = false
 
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
@@ -54,7 +42,6 @@ vi.mock('../../src/lib/native', () => ({
 
 let typing: ((data: string) => void) | null = null
 let titling: ((title: string) => void) | null = null
-/** What was written to the screen. */
 const written: string[] = []
 
 vi.mock('@xterm/xterm', () => ({
@@ -168,7 +155,6 @@ afterEach(() => {
   place.remove()
 })
 
-/** A terminal on `pi`, made by Remote in this run, drawn. */
 async function connected() {
   await openRemote('pi')
   const tab = workspace.tabs.at(-1)
@@ -178,7 +164,6 @@ async function connected() {
   return tab
 }
 
-/** What `ssh` says as it ends. */
 const exits = (code: number) => channels.at(-1)?.onmessage?.({ exit: code })
 
 test('it is the system ssh for the host, named and coloured for it, whatever runs there', async () => {
@@ -188,8 +173,6 @@ test('it is the system ssh for the host, named and coloured for it, whatever run
   await vi.waitFor(() => expect(tab.shown).toBe('pi'))
   expect(tab.running).toMatchObject({ name: 'pi', host: 'pi', colour: '4', program: null })
 
-  // What a remote shell calls itself is nobody's name for the tab, and nothing on this
-  // side is asked what runs there.
   titling?.('emil@pi: ~')
   typing?.('vim notes\r')
   flushSync()
@@ -220,7 +203,6 @@ test('a dropped connection puts up Reconnect, which connects again; never by its
   expect(session.offline).toBe(false)
   await vi.waitFor(() => expect(bar()).toBeNull())
 
-  // Enter does the same once it drops again.
   exits(255)
   typing?.('\r')
   await vi.waitFor(() => expect(spawns()).toHaveLength(3))

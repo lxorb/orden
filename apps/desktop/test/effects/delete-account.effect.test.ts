@@ -1,27 +1,11 @@
-/** Deleting the account, pressed through on the page.
- *
- *  The flow is a component with its own state and three requests, and what it must
- *  get right is the order: the code is mailed as the row is pressed, a wrong code
- *  is said and nothing is deleted, an account with a second factor is asked for it,
- *  the last question comes after the codes, and afterwards the app is signed out
- *  and asks the service nothing more about an account that is not there.
- *
- *  In the jsdom project because it mounts a component and its effects run. The
- *  service is a stand-in for `fetch` that answers the routes by name and writes
- *  down what it was asked; services/sync/test/account.test.ts is the other half. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import DeleteAccount from '../../src/lib/DeleteAccount.svelte'
 import { account } from '../../src/lib/account.svelte'
 import { type RemoteSpace, warmCalls } from '../../src/lib/api'
 
-// The table of the service's calls, which the app fetches at the launch's last turn
-// and a test fetches here, so the sign-out at the end is a request and not a module
-// load first; see api.ts.
 await warmCalls()
 
-/** jsdom has no animations, and the flow fades in. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -47,8 +31,6 @@ let shown: ReturnType<typeof mount> | null = null
 let asked: Asked[]
 let ended: number
 
-/** The service, as a table of routes. Anything not in it is a 404, which a test
- *  that did not expect the request will see in `asked` anyway. */
 function serve(routes: Record<string, Answer>) {
   vi.stubGlobal('fetch', (url: string, init: RequestInit = {}) => {
     const route = `${init.method ?? 'GET'} ${new URL(url).pathname}`
@@ -71,9 +53,6 @@ function open() {
   flushSync()
 }
 
-/** Everything in flight answered and drawn. A turn of the timers rather than a
- *  count of microtasks: how many of those reading a body takes is the runtime's
- *  business, and Node 22 takes more than five. */
 async function settled() {
   for (let round = 0; round < 3; round++) {
     await new Promise((resolve) => setTimeout(resolve, 0))
@@ -137,7 +116,6 @@ test('pressing it mails a code; a wrong one is said, and nothing is deleted', as
   expect(host.textContent).toContain(
     'Notes on this device stay; only the account and its synced copies go.',
   )
-  // No second field for an account without a second factor.
   expect(host.querySelector('input[aria-label="App code to delete"]')).toBeNull()
 
   type('Code', '111111')
@@ -175,7 +153,6 @@ test('the codes, the second one, the last question, and then signed out and quie
     body: { code: '123456', second: '654321' },
     token: 'Bearer session',
   })
-  // The codes alone delete nothing: the last question is asked first.
   expect(asked.map((one) => one.route)).not.toContain('DELETE /v1/account')
 
   press('Delete now')
@@ -193,7 +170,6 @@ test('the codes, the second one, the last question, and then signed out and quie
   expect(account.syncable).toBe(false)
   expect(ended).toBe(1)
 
-  // And nothing more is asked of an account that is not there.
   const before = asked.length
   await new Promise((resolve) => setTimeout(resolve, 50))
   await settled()

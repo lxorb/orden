@@ -2,16 +2,6 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 import { note } from './reading-find-redraw-world.svelte'
 
-/** The reading view's find bar, after the page is drawn again under it.
- *
- *  a26-desktop4 D4-2: a page drawn again while the bar was open - the note typed into
- *  in another pane, a sync edit, the theme changed - was counted as the page before
- *  it. The bar comes before the page in the markup, so its tally asked for the words
- *  in the flush that put the new page in, read the old page and kept what it read
- *  until the next redraw: `1 of 1` over a page with three, through a new query and
- *  through closing and opening the bar again. The renderer is a line per paragraph
- *  here; nothing about the find depends on what the page looks like. */
-
 vi.mock('../../src/lib/reading/render', () => ({
   readingHtml: async (source: { text: string }) =>
     source.text
@@ -22,7 +12,6 @@ vi.mock('../../src/lib/reading/render', () => ({
   tagAnchor: (tag: string) => `#${tag}`,
 }))
 vi.mock('../../src/lib/reading/drawn', () => ({ inlineFiles: () => () => undefined }))
-// A base drawn as its view, in place of the fence the renderer left.
 vi.mock('../../src/lib/views/mount', () => ({
   mountBases: (page: HTMLElement) => {
     for (const host of page.querySelectorAll('[data-base-code]')) host.replaceChildren('view')

@@ -1,19 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** nib opens nothing from outside its spaces.
- *
- *  Emil, 2026-09-30: *"for the user it shouldn't be possible to open local files on
- *  the computer. Only nib files should be possible to be opened. So there shouldn't
- *  be the linking to double click files to open them with nib anymore."*
- *
- *  The crate refuses such a path and the bundles claim no file type; this is the
- *  window's half, walked the way a person would try: the row that used to open a file
- *  is nowhere, Ctrl+O goes where a hand that learned it in Obsidian expects - the
- *  palette on the notes - and a file dragged in from Explorer and let go where nothing
- *  takes it is not opened in place of the app.
- *
- *  In the jsdom project because a keystroke and a drop are events on a document. */
-
 const opened: string[] = []
 
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
@@ -73,8 +59,6 @@ test('Ctrl+O opens the palette on the notes, and nothing else', () => {
   }
 })
 
-/** jsdom has no drag events of its own, so one is made the way a browser hands one
- *  over: a cancelable event on an element, carrying the transfer's types. */
 function drag(type: 'dragover' | 'drop', on: Element, types: string[]): DragEvent {
   const event = new Event(type, { bubbles: true, cancelable: true }) as DragEvent
   const transfer = { types, dropEffect: 'copy', files: [], items: [] }
@@ -107,8 +91,6 @@ test('a file let go where nothing takes it is not opened in place of the app', (
   expect(opened).toEqual([])
 })
 
-/** The file list copies a file in, and so does a note: a surface that takes the drag
- *  says so first, and what it said stands. */
 test('while a surface that takes files keeps them', () => {
   const list = document.createElement('div')
   list.addEventListener('dragover', (event) => {
@@ -120,8 +102,6 @@ test('while a surface that takes files keeps them', () => {
   expect(drag('dragover', list, ['Files']).dataTransfer?.dropEffect).toBe('copy')
 })
 
-/** Text and links dragged over a field are the field's, and a link dropped on the tab
- *  strip is a page; none of them is a file. */
 test('and a drag that carries no file is left alone', () => {
   const over = drag('dragover', somewhere, ['text/plain'])
   expect(over.defaultPrevented).toBe(false)

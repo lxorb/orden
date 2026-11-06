@@ -1,21 +1,11 @@
 import { EditorState, EditorView } from '@orden/editor'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 
-/** #1070: the reader typing in a note while an agent works, and nothing of theirs moves.
- *  Every verb an agent with every scope may run - opening, making and showing tabs,
- *  editing the very note the reader is in - and after each one the tab in front, the
- *  keyboard, the caret and selection over the same words, and the scroll are what the
- *  reader left them as.
- *
- *  In the jsdom project because a caret and a scroll are an editor's. */
-
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { callerOf } = await import('../../src/lib/automation/caller')
 const { runAgentVerb } = await import('../../src/lib/agents/workspace/index')
 const { agentMarks } = await import('../../src/lib/agent-marks.svelte')
 
-/** An agent that holds everything, Full permissions: what may move the reader, if
- *  anything may. */
 const agent = callerOf({
   id: 'claude',
   name: 'Claude',
@@ -47,8 +37,6 @@ afterEach(() => {
   document.body.replaceChildren()
 })
 
-/** The reader in a note of their own, typing: an editor on its words, the keyboard in
- *  it, a selection over "beta", and scrolled down a way. */
 function reading() {
   const words = `${'line\n'.repeat(80)}alpha beta gamma\n${'more\n'.repeat(80)}`
   const tab = workspace.openUnsaved('note', words, undefined, null, true)
@@ -68,8 +56,6 @@ function reading() {
   return tab
 }
 
-/** What the reader has: the tab in front, where the keyboard is, the words their
- *  selection is over, and the scroll. */
 function readerState() {
   const state = view?.state
   const main = state?.selection.main
@@ -94,8 +80,6 @@ test('nothing an agent does moves the reader’s tab, keyboard, selection or scr
     ['workspace_tabs', { op: 'open', url: 'https://docs.example/b' }],
     ['workspace_tabs', { op: 'list' }],
     ['get_context', {}],
-    // The very note the reader is in: before their selection, after it, and through
-    // the whole of it written again around their words.
     ['edit_note', { tab: tab.id, edits: [{ at: { start: true }, insert_before: 'AGENT\n' }] }],
     ['edit_note', { tab: tab.id, edits: [{ at: { end: true }, insert_after: '\nTHE END' }] }],
     ['read_note', { tab: tab.id }],
@@ -106,11 +90,9 @@ test('nothing an agent does moves the reader’s tab, keyboard, selection or scr
     expect(readerState(), `${verb} ${JSON.stringify(args)}`).toEqual(before)
   }
 
-  // The agent's edits are in the reader's words, around their selection.
   const words = view?.state.doc.toString() ?? ''
   expect(words.startsWith('AGENT\n')).toBe(true)
   expect(words.trimEnd().endsWith('THE END')).toBe(true)
-  // And what it opened is behind, wearing its mark.
   expect(Object.keys(agentMarks.opened).length).toBeGreaterThan(0)
   expect(Object.keys(agentMarks.opened)).not.toContain(tab.id)
 })

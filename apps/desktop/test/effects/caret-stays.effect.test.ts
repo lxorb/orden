@@ -1,9 +1,3 @@
-/** How long the caret stays out of a note a key's own close brought to the front (#523).
- *
- *  For that switch and no longer. A key pressed on what took the keyboard is somebody going
- *  on from there, and Enter there opens a note the caret has to go into, or typing goes
- *  nowhere. In the jsdom project because focus needs a document. */
-
 import { afterEach, expect, test } from 'vitest'
 import { keyboardStays, staysOn } from '../../src/lib/caret'
 

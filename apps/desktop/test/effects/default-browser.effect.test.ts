@@ -1,25 +1,10 @@
-/** The Default browser row, pressed through.
- *
- *  Three states and the moments between them: nothing until the system has answered,
- *  so a button never turns into a tick in front of somebody; the button while Orden is
- *  not the browser; the tick once it is. And the press itself answers nothing - the
- *  system asks in a page or a dialog of its own - so what has to be right is that the
- *  row asks again when the window has the keyboard back, and that a press the build
- *  refuses says so. See src/lib/settings/DefaultBrowser.svelte.
- *
- *  In the jsdom project because it mounts a component whose effects run. The crate is
- *  a stand-in that answers the two commands and writes down what it was asked. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const world = vi.hoisted(() => ({
-  /** What `default_browser` answers. */
   is: false,
-  /** What `make_default_browser` does: nothing, or refuse. */
   refuse: null as string | null,
   asked: [] as string[],
-  /** The window's focus listener, once the row has put it up. */
   focus: null as ((event: { payload: boolean }) => void) | null,
   stopped: 0,
 }))
@@ -50,7 +35,6 @@ vi.mock('@tauri-apps/api/window', () => ({
 const { default: DefaultBrowser } = await import('../../src/lib/settings/DefaultBrowser.svelte')
 const { settings } = await import('../../src/lib/settings.svelte')
 
-/** jsdom has no animations, and the control fades in. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -66,7 +50,6 @@ Element.prototype.animate = () =>
 let host: HTMLElement
 let shown: ReturnType<typeof mount> | null = null
 
-/** Everything in flight answered and drawn. */
 async function settled() {
   for (let round = 0; round < 5; round++) await Promise.resolve()
   await vi.waitFor(() => undefined)
@@ -78,8 +61,6 @@ function open() {
   flushSync()
 }
 
-/** The window's own events are fetched rather than carried, so the listener is up a
- *  module load after the row is. */
 async function listening() {
   await vi.waitFor(() => {
     if (!world.focus) throw new Error('not listening to the window yet')
@@ -132,17 +113,14 @@ test('the press asks the system, and the row asks again when the window comes ba
   button()?.click()
   await settled()
   expect(world.asked).toEqual(['default_browser', 'make_default_browser', 'default_browser'])
-  // The system's own page is up: nothing has changed yet, so the button stays.
   expect(button()).not.toBeNull()
 
-  // Somebody chose Orden there and came back.
   world.is = true
   world.focus?.({ payload: true })
   await settled()
   expect(tick()).not.toBeNull()
   expect(button()).toBeNull()
 
-  // Leaving the window again asks nothing.
   const asked = world.asked.length
   world.focus?.({ payload: false })
   await settled()

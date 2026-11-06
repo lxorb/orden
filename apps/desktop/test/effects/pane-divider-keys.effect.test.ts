@@ -1,12 +1,3 @@
-/** The divider between two panes, moved from the keyboard.
- *
- *  Found in the #419 bug hunt (#523): it had no role, no tab stop and no key, so only a
- *  hand could move it, where the sidebar's edge beside it is a separator the arrows move.
- *  What is asked is what a reader gets: a separator, how far along it is, and the keys.
- *
- *  In the jsdom project because the split is mounted. The panes in it are not what this
- *  is about, and jsdom lays nothing out, so the split is told its size. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 
@@ -37,7 +28,6 @@ test('the divider is a separator the arrows, Home, End and Enter move', () => {
   expect(divider?.tabIndex).toBe(0)
   expect(divider?.getAttribute('aria-orientation')).toBe('vertical')
   expect(divider?.getAttribute('aria-valuenow')).toBe('50')
-  // What the practices' window splitter says of itself besides.
   expect(divider?.getAttribute('aria-label')).toBe('Pane size')
   expect(divider?.getAttribute('aria-valuemin')).toBe('0')
   expect(divider?.getAttribute('aria-valuemax')).toBe('100')
@@ -50,7 +40,6 @@ test('the divider is a separator the arrows, Home, End and Enter move', () => {
 
   expect(press('ArrowRight')).toBe('55')
   expect(press('ArrowLeft')).toBe('50')
-  // As far as a pane may be pushed: 220 pixels of the 1,000 left on the other side.
   expect(press('End')).toBe('78')
   expect(press('Home')).toBe('22')
   expect(press('Enter')).toBe('50')

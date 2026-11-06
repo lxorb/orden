@@ -1,14 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** The keyboard after a row of the file list is deleted from it (#523).
- *
- *  Shift+F10 on a row, Delete, Enter: the row went, and the keyboard with it, to the
- *  page's body - the engine does not say so when the element that had it goes - so the
- *  next key landed nowhere. A file list hands it on to the row that comes up into the
- *  deleted one's place. The real list on the real workspace, the disk a map; see
- *  test/disk.ts. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
 
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
@@ -50,7 +42,6 @@ beforeEach(async () => {
   workspace.activeSpaceId = 's'
   workspace.clearSelection()
   await workspace.loadTree()
-  // Read through a getter, so the list follows the tree as a delete changes it.
   list = mount(Tree, {
     target: document.body,
     props: {
@@ -67,7 +58,6 @@ afterEach(() => {
   list = null
 })
 
-/** The row with the keyboard deleted, as its menu's Delete does it. */
 async function deleteRow(path: string) {
   await workspace.remove(path, false)
   flushSync()
@@ -89,7 +79,6 @@ test('the row a menu asked for with Shift+F10 deleted is the same, though the me
   rowOf(BETA)!.dispatchEvent(
     new KeyboardEvent('keydown', { key: 'F10', shiftKey: true, bubbles: true, cancelable: true }),
   )
-  // Where the menu has it, and then nowhere once the menu has gone.
   const inMenu = document.body.appendChild(document.createElement('button'))
   inMenu.focus()
   inMenu.remove()

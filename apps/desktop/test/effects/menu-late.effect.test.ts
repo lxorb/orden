@@ -1,6 +1,3 @@
-/** The first menu opens as its chunk lands, which may be after the press that opened it
- *  has been let go of (#442). That release never reached the menu, and the next one it
- *  heard was read as it: a press on a row's chevron chose the row. */
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import ContextMenu from '../../src/lib/ContextMenu.svelte'
@@ -39,7 +36,6 @@ describe('a menu that landed after the press that opened it was let go of', () =
     const run = vi.fn()
     const more = vi.fn(() => Promise.resolve([]))
 
-    // Pressed and let go of before there is a menu to hear it.
     const press = new MouseEvent('contextmenu', { clientX: 10, clientY: 10, buttons: 2 })
     menu.show(press, [{ label: 'Open', run, more }])
 
@@ -61,7 +57,6 @@ describe('a menu that landed after the press that opened it was let go of', () =
     expect(more).toHaveBeenCalledOnce()
   })
 
-  /** A second button pressed while the first is still held is that press going on. */
   test('and a press made while the one that opened it is held does not end it', () => {
     const run = vi.fn()
 

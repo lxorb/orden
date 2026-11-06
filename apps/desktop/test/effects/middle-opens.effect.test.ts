@@ -1,11 +1,3 @@
-/** The middle button on a row that opens something, on a real element.
- *
- *  Every list that opens a file - the file list, the bookmarks, a search hit, a line in
- *  the Links panel, the palette - answers the middle button through one action, so the
- *  two halves of it are held here once: the press itself does nothing of the
- *  platform's own (Windows scrolls on that button, X11 pastes), and the release that
- *  completes it is the open. See `middleOpens` in new-tab.ts. */
-
 import { afterEach, expect, test } from 'vitest'
 import { middleOpens, tabAsk } from '../../src/lib/new-tab'
 

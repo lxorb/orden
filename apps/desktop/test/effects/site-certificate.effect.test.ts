@@ -1,18 +1,6 @@
-/** A web tab's site popover, mounted: pressing "Connection is secure" shows the chain
- *  the page came with (#776).
- *
- *  What it was. The certificate hid behind a separate Certificate button, and showed
- *  one certificate - the site's - with nothing of who it was trusted through. Pressing
- *  the line that says the connection is secure, which is where a browser keeps it, did
- *  nothing, and on Windows and a Mac the crate answered nothing at all. Now every
- *  engine answers the chain (web_certificate.rs), and the line itself opens it: the
- *  site's certificate, each intermediate and the root, each with whom it was issued to
- *  and by, organisations included. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** What the crate answers, and what it was asked. */
 interface Answers {
   certificate: unknown
   asked: unknown[]
@@ -73,7 +61,6 @@ async function opened(url: string, certificate: unknown) {
     props: { url, site: new URL(url).host, tab: 'tab-1', onclose: () => undefined },
   })
   flushSync()
-  // The crate's answer, which the popover asked for as it opened.
   await Promise.resolve()
   await Promise.resolve()
   await Promise.resolve()
@@ -103,13 +90,11 @@ test('pressing the secure connection line shows the whole chain, site first, up 
     'ISRG Root X1 · Internet Security Research Group',
   ])
 
-  // The site's certificate first, its issuer with the issuer's organisation.
   expect(text('.details')).toContain('example.com')
   expect(text('.details')).toContain("R3 · Let's Encrypt")
   expect(text('.details')).toContain('example.com-fingerprint')
   expect(text('.details')).toContain('01:02')
 
-  // Another of the chain, chosen.
   steps[2]?.click()
   flushSync()
   expect(steps[2]?.getAttribute('aria-pressed')).toBe('true')
@@ -117,7 +102,6 @@ test('pressing the secure connection line shows the whole chain, site first, up 
   expect(text('.details')).toContain('ISRG Root X1-fingerprint')
   expect(text('.details')).toContain('Internet Security Research Group')
 
-  // And pressed again, closed.
   line?.click()
   flushSync()
   expect(target.querySelector('.chain')).toBeNull()

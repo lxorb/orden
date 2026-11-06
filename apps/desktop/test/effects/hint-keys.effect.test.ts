@@ -1,12 +1,8 @@
-/** Asking what a setting means is not asking to change it: Enter on the `i` reached
- *  the row it stood in, which was the switch, and turned the setting over (#522). */
-
 import { flushSync, mount } from 'svelte'
 import { expect, test } from 'vitest'
 import SettingsPanel from '../../src/lib/SettingsPanel.svelte'
 import { settings } from '../../src/lib/settings.svelte'
 
-/** jsdom lays nothing out, and has no animations for the sheet to fly in with. */
 Element.prototype.animate = () => ({ finished: Promise.resolve() }) as unknown as Animation
 globalThis.ResizeObserver = class {
   observe = () => undefined

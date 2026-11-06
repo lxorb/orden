@@ -1,17 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** A tab, or rows of the file list (#303), carried onto the space switcher: held over its
- *  button the list opens, a space's row lights and takes what is carried, and leaving the
- *  list - or Escape - closes what the hold opened, and nothing moves. See
- *  tab-strip/space-drop.ts. In the effects project for its document: the switcher here is
- *  its markup and nothing else, laid out along one line by the test, since jsdom lays out
- *  nothing - each element's box, and `elementsFromPoint`, are what the test says. */
-
 const moved = vi.hoisted(() => [] as string[])
 
 vi.mock('../../src/lib/tab-strip/to-space', () => ({
   spacesOf: () => [{ id: 'home' }, { id: 'uni' }],
-  // Rows of Work may go Home, and not to Work.
   spacesOfPaths: () => [{ id: 'home' }],
   toSpace: (ids: string[], space: string) => {
     moved.push(`${ids.join()} to ${space}`)
@@ -36,8 +28,6 @@ vi.mock('../../src/lib/workspace.svelte', () => ({
 const { droppedOnSpace, followTreeDrag, leftSpaces, overSpaces } =
   await import('../../src/lib/tab-strip/space-drop')
 
-/** Where each element is, along one line: the button, a gap, the list with its rows and
- *  the space between two of them, and the pane well off to the side. */
 const SPANS: Record<string, [number, number]> = {
   switcher: [0, 20],
   gap: [20, 36],
@@ -48,8 +38,6 @@ const SPANS: Record<string, [number, number]> = {
   pane: [400, 800],
 }
 
-/** The switcher's markup: its button, and once it is open, its list of rows and the
- *  catch an open list lays over the window (SpaceMenu.svelte). */
 function switcher() {
   document.body.innerHTML = `
     <button id="switcher" data-space-drop="switcher" aria-expanded="false"></button>
@@ -97,7 +85,6 @@ const ROWS = { paths: ['/work/Plan.md', '/work/Trip'] }
 beforeEach(() => {
   vi.useFakeTimers()
   moved.length = 0
-  // The catch is over everything while the list is open, the button among the rest.
   document.elementsFromPoint = () => {
     const open = byId('catch')?.hidden === false
     return [...(open ? [byId('catch')!] : []), ...(under ? [under] : [])]
@@ -198,7 +185,6 @@ describe('rows of the file list carried onto the switcher (#303)', () => {
   })
 })
 
-/** A drag the platform runs, as the window hears it. */
 function dragged(type: string, id: string | null = null): Event {
   under = id === null ? null : byId(id)
   const event = new Event(type, { bubbles: true, cancelable: true })
@@ -245,7 +231,6 @@ describe('a pointer’s drag out of the file list', () => {
     window.dispatchEvent(dragged('dragover', 'home'))
     expect(list.hidden).toBe(false)
 
-    // Escape cancels a drag the platform started; all the page hears is its end.
     window.dispatchEvent(dragged('dragend'))
     expect(list.hidden).toBe(true)
     expect(byId('home')?.classList.contains('is-drop')).toBe(false)
@@ -257,7 +242,6 @@ describe('a pointer’s drag out of the file list', () => {
   })
 
   test('of a row that moved is followed no more once the next drag starts', () => {
-    // The row is gone from the list, and its `dragend` never reaches the window.
     switcher()
     followTreeDrag(['/work/Gone.md'])
     followTreeDrag(ROWS.paths)

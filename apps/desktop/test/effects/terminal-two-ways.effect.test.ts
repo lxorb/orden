@@ -1,18 +1,5 @@
-/** A key that is both the app's and the shell's, pressed in a terminal.
- *
- *  Emil, issue #213: *"when pressing a shortcut in a terminal like interface or anywhere
- *  where it could have mulitple meanings then there should be a quick modal asking you
- *  which of the two should be used from now on (or you can tick always ask)"*. Ctrl+N is
- *  the scratchpad and the shell's next line, Ctrl+T a new tab and its swapped letters.
- *  The first press asks; the answer is the press, given where it was meant; and it is
- *  kept, unless "Always ask" was ticked. See terminal/two-ways.ts.
- *
- *  xterm.js itself and the real question sheet, with the crate stood in for: what the
- *  shell is given is what the window asked `pty_write` to write. */
-
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** Everything the window asked the crate to write to the shell, in order. */
 const typed: string[] = []
 
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
@@ -53,7 +40,6 @@ Object.defineProperty(document, 'fonts', {
   value: { load: () => Promise.resolve([]) },
 })
 
-/** The sheet rises through the Web Animations API, which jsdom does not implement. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -74,13 +60,11 @@ const { written } = await import('../../src/lib/parting')
 type Opened = ReturnType<typeof sessionOf>
 
 let sheet: ReturnType<typeof mount> | undefined
-/** The keys the window heard, as App.svelte's handler would have. */
 const heard: string[] = []
 const hear = (event: KeyboardEvent) => {
   heard.push(`${event.ctrlKey ? 'Ctrl+' : ''}${event.key}`)
 }
 
-/** A terminal tab, drawn, with its shell started. */
 async function opened(key: string): Promise<Opened> {
   const words = JSON.stringify({ shell: 'pwsh', folder: null, key })
   const doc = new NoteDoc(
@@ -98,7 +82,6 @@ async function opened(key: string): Promise<Opened> {
   return session
 }
 
-/** Ctrl and a letter, or Ctrl+Space, pressed with the terminal's keyboard. */
 function press(session: Opened, letter: string) {
   const space = letter === ' '
   session.term.textarea?.dispatchEvent(
@@ -114,7 +97,6 @@ function press(session: Opened, letter: string) {
   flushSync()
 }
 
-/** The answer on the sheet with these words. */
 function answer(words: string) {
   const button = [...document.querySelectorAll<HTMLButtonElement>('.row button')].find(
     (one) => one.textContent.trim() === words,
@@ -166,7 +148,6 @@ test('the shell, chosen, is given the character, and keeps it from then on', asy
   expect(shells.ways['app.scratchpad']).toBe('shell')
   expect(heard).toEqual([])
 
-  // Kept: the next press goes straight to the shell, asking nothing.
   press(session, 'n')
   await vi.waitFor(() => expect(typed).toEqual(['\x0e', '\x0e']))
   expect(prompt.open).toBe(false)
@@ -183,7 +164,6 @@ test('the app, chosen, is the press played on the window, as the key it was', as
   expect(typed).toEqual([])
   expect(shells.ways['app.new-kind']).toBe('app')
 
-  // And from then on the terminal lets the window have it, as any app key.
   press(session, 't')
   expect(heard).toEqual(['Ctrl+t', 'Ctrl+t'])
   expect(prompt.open).toBe(false)
@@ -220,9 +200,6 @@ test('put away, the question gives the press to nobody', async () => {
   expect(shells.ways['app.scratchpad']).toBeUndefined()
 })
 
-/** Every app command on a key the shell reads is both (#426): the space switcher's
- *  Ctrl+Space, which the shell reads as NUL, and Ctrl+W, which it deletes a word with and
- *  which went to the shell unasked before. */
 test('Ctrl+Space asks too, and the shell chosen is given NUL', async () => {
   const session = await opened('w6')
   press(session, ' ')
@@ -247,9 +224,6 @@ test('Ctrl+W asks too, and Ctrl+C never does', async () => {
   expect(prompt.title).toBe('Ctrl+W in a terminal')
 })
 
-/** A command put on a function key is on a key the program in the terminal reads too -
- *  htop and mc are worked with them - so it is asked about, and the program, chosen, is
- *  given the key as xterm would have sent it. */
 test('a command put on F9 asks, and the shell chosen is given F9', async () => {
   shortcuts.set('app.scratchpad', 'F9')
   try {

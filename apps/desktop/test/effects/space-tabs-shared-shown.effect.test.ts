@@ -1,10 +1,6 @@
 import { flushSync } from 'svelte'
 import { expect, test, vi } from 'vitest'
 
-/** The set every Global space shared, on screen in a window an older build wrote, becomes
- *  the space on screen's own (#674). A file of its own, as space-tabs-shared.effect.test.ts
- *  says why. */
-
 vi.stubGlobal('requestAnimationFrame', (run: () => void) => setTimeout(run, 0))
 vi.stubGlobal('requestIdleCallback', (run: () => void) => setTimeout(run, 0))
 
@@ -29,7 +25,6 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
 const PLAN = '/spaces/Work/Plan.md'
 const FOOD = '/spaces/Home/Food.md'
 
-/** One run of the app's stores, freshly imported. */
 async function run() {
   const { workspace } = await import('../../src/lib/workspace.svelte')
   const onScreen = () =>
@@ -37,7 +32,6 @@ async function run() {
   return { workspace, onScreen }
 }
 
-/** And where the shared set was the one on screen: it is the space's on screen now. */
 test('the shared set on screen becomes the space on screen’s own', async () => {
   const { Disk } = await import('../disk')
   disk.current = new Disk()
@@ -66,8 +60,6 @@ test('the shared set on screen becomes the space on screen’s own', async () =>
   localStorage.setItem('nib:workspace', JSON.stringify(session))
   localStorage.setItem('nib:space-tabs', JSON.stringify({ work: 'space' }))
 
-  // What the first run fetched lazily - the sets' store, and what it fetches in turn - is
-  // all in before the modules are dropped, or it lands in the second run's half-built ones.
   await vi.dynamicImportSettled()
   vi.resetModules()
   const { workspace, onScreen } = await run()
@@ -77,7 +69,6 @@ test('the shared set on screen becomes the space on screen’s own', async () =>
   expect(onScreen()).toEqual(['Food.md'])
 
   const { tabSets } = await import('../../src/lib/workspace/spaces')
-  // The sets are fetched at the launch's last turn, which a loaded machine reaches late.
   await vi.waitFor(() => expect(tabSets.fetched).toBe(true), { timeout: 15_000 })
   await vi.waitFor(() => expect(workspace.tabs.map((tab) => tab.name)).toContain('Plan.md'), {
     timeout: 15_000,

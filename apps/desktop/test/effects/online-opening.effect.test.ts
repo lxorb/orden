@@ -1,13 +1,3 @@
-/** An address a program on the machine asked a browser for (docs/online-terminal.md 4.13).
- *
- *  Emil, 2026-10-05: `claude` printed its sign-in address to be copied by hand. A program
- *  that asks for a browser now gets a tab beside its terminal, and a sign-in whose
- *  provider sends the browser back to the program's own `localhost` listener has that
- *  request made on the machine: the tab goes, and the terminal is in front again.
- *
- *  In the jsdom project because the tab is watched by an effect. The workspace and the
- *  pages are stand-ins that keep what they were asked. */
-
 import { flushSync } from 'svelte'
 import { beforeEach, expect, test, vi } from 'vitest'
 
@@ -80,12 +70,10 @@ test('a sign-in’s way back is made on the machine, then the tab goes and the t
   one.open(SIGN_IN, true, 0)
   expect(opened).toHaveLength(1)
 
-  // The provider's own pages first: nothing to do.
   land('tab-1', 'https://claude.ai/oauth/authorize?code=true')
   flushSync()
   expect(calledBack).toEqual([])
 
-  // A loopback page the opened address did not name is no way back of this sign-in.
   land('tab-1', 'http://localhost:9999/callback?code=c')
   flushSync()
   expect(calledBack).toEqual([])
@@ -95,7 +83,6 @@ test('a sign-in’s way back is made on the machine, then the tab goes and the t
   flushSync()
   expect(calledBack).toEqual(['http://localhost:54545/callback?code=c&state=s'])
 
-  // Landing there again (a reload) does not make the request twice.
   land('tab-1', 'http://localhost:54545/callback?code=c&state=s#again')
   flushSync()
   expect(calledBack).toHaveLength(1)

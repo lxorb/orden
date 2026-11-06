@@ -6,20 +6,8 @@ import { spacesMenu } from '../../src/lib/surfaces.svelte'
 import { viewport } from '../../src/lib/viewport.svelte'
 import { workspace } from '../../src/lib/workspace.svelte'
 
-/** The space switcher in the panel's header, and the title bar without one.
- *
- *  The header names the space and a press on it is the list of spaces. The title bar
- *  wore the space's mark too while the panel was shut, until Emil, 2026-10-13:
- *  *"remove this space switcher here"*. With the panel shut, Ctrl+Space and the
- *  palette reach every space. Where the list drops is paint, which the drive in a real
- *  browser looks at; this asks what a press does.
- *
- *  In the jsdom project because mounting a component needs a document. */
-
-/** The row the keyboard lands on is kept in view, and jsdom has no view. */
 Element.prototype.scrollIntoView = () => undefined
 
-/** The title bar's tab strip measures itself, and jsdom lays nothing out. */
 class NoLayout {
   observe() {
     // Nothing to measure.
@@ -81,11 +69,6 @@ function bar() {
 const mark = () => target.querySelector<HTMLButtonElement>('[data-space-drop="switcher"]')
 const list = () => target.querySelector('[role="menu"]')
 
-/** A press on the header, and the list it drops once it is here: fetched with the first
- *  press (see SpaceMenu.svelte), which the launch's last turn has usually done already.
- *  Waits for that fetch itself, not for a while: compiling the menu on a cold cache
- *  took longer than `waitFor`'s second on a loaded machine. The markup's `{#await}`
- *  holds the same promise and was handed it first, so a turn after it the list is in. */
 async function dropped() {
   mark()?.click()
   flushSync()
@@ -94,8 +77,6 @@ async function dropped() {
   expect(list()).not.toBe(null)
 }
 
-/** Long enough for a list on its way out to have gone: each animation it plays ends
- *  a turn after it starts, and leaving can be more than one; see the stand-in above. */
 async function settled() {
   for (let turn = 0; turn < 5; turn++) {
     await new Promise((done) => setTimeout(done, 0))
@@ -118,7 +99,6 @@ test('a press on the header opens the switcher, and a row in it changes space', 
   expect(list()).toBe(null)
   await dropped()
 
-  // The switcher's own list: every space, and the one you are in picked out.
   expect(list()?.getAttribute('aria-label')).toBe('Spaces')
   expect(mark()?.getAttribute('aria-expanded')).toBe('true')
   const rows = [...(list()?.querySelectorAll<HTMLButtonElement>('.nib-row') ?? [])]
@@ -141,8 +121,6 @@ test('the list wears no numbers, and a digit typed into it still goes there', as
   head()
 
   await dropped()
-  // Emil, 2026-10-04: a number by every space was noise. They come with a digit or Alt,
-  // as in the switcher in the middle of the window.
   expect(list()?.querySelector('.place')).toBe(null)
 
   document.activeElement?.dispatchEvent(

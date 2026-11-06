@@ -1,17 +1,6 @@
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The switcher in the middle of the window, Ctrl+Space and Ctrl+Shift+Space.
- *
- *  Emil, 2026-10-04: no number by every space until a digit is typed or Alt is held, and
- *  Ctrl+Space opens it. Emil, 2026-10-03: a digit switches as soon as only one space can be meant, without
- *  Enter; letters find a space by its name and need Enter; there is no field anywhere,
- *  the letters show as hits in the rows and Backspace edits them; the key again puts it
- *  away; a space shared only to be read is there, and marked. This mounts the dialog and
- *  presses keys on it the way a hand would; what the keys mean on their own is
- *  space-pick.test.ts. In the jsdom project because mounting a component needs a
- *  document. */
-
 vi.mock('../../src/lib/sharing.svelte', async (original) => ({
   ...(await original<typeof import('../../src/lib/sharing.svelte')>()),
   roleOf: (root: string) => (root === '/spaces/Lab' ? 'read' : 'owner'),
@@ -74,7 +63,6 @@ async function opened() {
   await tick()
 }
 
-/** A key, pressed wherever the keyboard is in the dialog. */
 async function press(key: string, code = '', held: KeyboardEventInit = {}) {
   const at = dialog()?.contains(document.activeElement) ? document.activeElement : dialog()
   at?.dispatchEvent(
@@ -85,7 +73,6 @@ async function press(key: string, code = '', held: KeyboardEventInit = {}) {
   flushSync()
 }
 
-/** Each row's number, where it wears one. */
 const numbers = () => rows().map((one) => one.querySelector('.place')?.textContent ?? null)
 
 async function type(text: string) {
@@ -100,10 +87,8 @@ test('it has no field and no numbers: every space is a row, and nothing can be t
   expect(dialog()?.querySelector('input, textarea, [contenteditable]')).toBe(null)
   expect(names()).toEqual(FOUR)
   expect(numbers()).toEqual([null, null, null, null])
-  // Only for switching: no New space and no space's own menu in it.
   expect(dialog()?.querySelector('.more')).toBe(null)
   expect(dialog()?.textContent).not.toContain('New space')
-  // The space you are in is where the keyboard starts.
   expect(document.activeElement).toBe(rows()[0])
 })
 
@@ -122,7 +107,6 @@ test('Alt held shows the numbers, its release takes them away, and Alt and a dig
   flushSync()
   await vi.waitFor(() => expect(numbers()).toEqual([null, null, null, null]))
 
-  // AltGr, which Windows says as Ctrl and Alt, is typing and shows nothing.
   await press('Alt', 'AltRight', { altKey: true, ctrlKey: true })
   expect(numbers()).toEqual([null, null, null, null])
 
@@ -148,7 +132,6 @@ test('a name is found, shown as hits, and waits for Enter', async () => {
   expect(rows()[0]?.querySelector('.nib-row-label b')?.textContent).toBe('Jo')
   expect(shown).not.toHaveBeenCalled()
   expect(spacePicker.open).toBe(true)
-  // Still no field: the letters live in the row.
   expect(dialog()?.querySelector('input, textarea, [contenteditable]')).toBe(null)
 
   await press('Enter')
@@ -178,7 +161,6 @@ test('with ten or more, a digit another could extend waits, and a second one goe
   vi.useFakeTimers()
   await press('1', 'Digit1')
   expect(shown).not.toHaveBeenCalled()
-  // The numbers come with the first digit, the typed part bold.
   expect(numbers()).toEqual(['1', '10', '11', '12'])
   expect(rows().map((one) => one.querySelector('.place b')?.textContent)).toEqual([
     '1',
@@ -202,8 +184,6 @@ test.each([
   await opened()
   expect(overlays.depth).toBe(1)
 
-  // Pressed on a row, the chord is neither the list's nor a letter: it goes on to the
-  // window, whose handler is the one that answers it.
   const chord = new KeyboardEvent('keydown', {
     key: ' ',
     code: 'Space',
@@ -227,8 +207,6 @@ test.each([
 })
 
 test("Escape is the layer's: the list does not send the keyboard to the note", async () => {
-  // Opened from the file list or a terminal, the keyboard goes back there as the layer
-  // closes (trap.ts); the list sending it to the note on the way took it from them.
   await opened()
   const escape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
   document.activeElement?.dispatchEvent(escape)

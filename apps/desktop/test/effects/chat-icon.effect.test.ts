@@ -1,23 +1,8 @@
-/** A chat's icon, drawn where a chat is shown: the Chats panel's row and the chat's head
- *  (ChatMark), and the file list, the tab and the palette (FileMark, handed the
- *  pointer's path). Issue #227: a chat could not wear an icon the way a note does.
- *
- *  In the jsdom project because the icon arrives after the mark is drawn: the pointer is
- *  read on its own the first time a mark asks (marks-elsewhere.svelte.ts), and the mark
- *  redraws because what it derived from has changed. A pointer written again redraws it
- *  the same way.
- *
- *  And the whole road once, the way the owner took it: a chat opens in its tab the moment
- *  it is made, so the chat somebody right-clicks in the file list is open, and its icon
- *  was measured against the tab's empty words and never written. Chosen, coloured, taken
- *  away and read again after a restart, with every mark looked at each time. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const CHAT = 'c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e'
 
-/** The pointers on the disk, by path. */
 const files: Record<string, string> = {}
 
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
@@ -43,8 +28,6 @@ const { iconEntries } = await import('../../src/lib/menu.svelte')
 const { iconLibrary } = await import('../../src/lib/icon-library.svelte')
 const { loadIcons } = await import('../../src/lib/icons')
 
-// The stroked set in place before anything is drawn, as TabMark.test.ts has it: in the
-// app it arrives a moment after the first paint.
 iconLibrary.set = await loadIcons()
 
 let target: HTMLElement
@@ -72,10 +55,8 @@ function drawRow(path: string) {
   flushSync()
 }
 
-/** The emoji each mark on screen wears, in order. */
 const emoji = () => [...target.querySelectorAll('.emoji')].map((one) => one.textContent)
 
-/** Whether a `#` is drawn, which is what a chat that chose nothing wears in the panel. */
 const hashes = () => target.querySelectorAll(`path[d="${GLYPHS.hash}"]`).length
 
 test('a chat that chose an icon wears it in the panel, the head and the file list', async () => {
@@ -83,7 +64,6 @@ test('a chat that chose an icon wears it in the panel, the head and the file lis
   drawChat('/space/Team.chat')
   drawRow('/space/Team.chat')
 
-  // Its kind's mark until the pointer has been read, and then the chosen one.
   expect(hashes()).toBe(1)
   await vi.waitFor(() => {
     flushSync()
@@ -124,15 +104,12 @@ test('a pointer written again is what the mark wears next', async () => {
   })
 })
 
-/** The strokes a rocket is drawn with, which tell it from a chat's own drawing. */
 const ROCKET = new Set(
   (iconLibrary.shape('rocket') ?? []).flatMap(([, attrs]) =>
     typeof attrs.d === 'string' ? [attrs.d] : [],
   ),
 )
 
-/** What one mark wears: an emoji by its character, the rocket with its colour or
- *  without, the `#`, or `kind` for the drawing every chat wears in the file list. */
 function wornBy(host: Element): string {
   const emoji = host.querySelector('.emoji')
   if (emoji) return emoji.textContent
@@ -152,9 +129,6 @@ test('an icon chosen for an open chat is written into its pointer and worn every
   const tab = workspace.tabs.find((one) => one.kind === 'channel')
   if (!tab) throw new Error('the chat did not open in a tab')
 
-  /** Every place a chat is shown, each in a box of its own: its row in the file list
-   *  (and a bookmark, the palette and the Links panel, which draw the same mark), its
-   *  tab, and the Chats panel's row and the chat's head. */
   const draw = () => {
     const box = () => target.appendChild(document.createElement('p'))
     const [row, inTab, chat] = [box(), box(), box()]
@@ -178,19 +152,16 @@ test('an icon chosen for an open chat is written into its pointer and worn every
   expect(files[path]).toBe(`{"v":1,"chat":"${CHAT}","icon":"🚀"}\n`)
   await wearing(['🚀', '🚀', '🚀'], marks)
 
-  // A stroked icon in a colour, which is what the picker writes with a dot chosen.
   await setFileIcon(path, 'rocket', 'orange')
   expect(files[path]).toBe(`{"v":1,"chat":"${CHAT}","icon":"rocket","iconColor":"orange"}\n`)
   await wearing(['rocket, coloured', 'rocket, coloured', 'rocket, coloured'], marks)
 
-  // Remove icon, pressed in the row's own menu.
   const remove = iconEntries(path).find((one) => one?.label === 'Remove icon')
   if (!remove) throw new Error('no Remove icon in the menu')
   remove.run()
   await vi.waitFor(() => expect(files[path]).toBe(bare))
   await wearing(['kind', 'kind', '#'], marks)
 
-  // A restart: nothing read yet, every mark drawn again from the file.
   await setFileIcon(path, 'rocket', 'orange')
   for (const one of mounted.splice(0)) void unmount(one)
   target.replaceChildren()

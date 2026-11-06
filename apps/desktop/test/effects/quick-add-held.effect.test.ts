@@ -1,15 +1,6 @@
 import { flushSync } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 
-/** Whether the system holds quick add's key for nib, as the crate answers it.
- *
- *  The key from any app keeps Orden in the tray (docs/tasks.md decision 6), and that was
- *  read off the switch in Settings rather than off the crate: where the key was not held
- *  after all - another app has it, or the build is a probe, which never takes the
- *  reader's key - Orden still stayed in the tray for a key it did not have, and a probe's
- *  window closed into a tray icon on somebody's taskbar instead of ending. In the jsdom
- *  project because the answer lands in an effect. */
-
 let answer: string | null = null
 
 vi.mock('../../src/lib/tauri', async (original) => ({

@@ -1,13 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 
-/** A plane with more cards in view than a page of elements carries is drawn from far
- *  away (#535): its cards boxes on one canvas, no card an element and none of their
- *  markdown made into HTML, which was seconds for eight thousand. And near, an undo
- *  gives back the cards it changed without making the others again.
- *
- *  In the jsdom project because it mounts the plane. */
-
 const made: string[] = []
 vi.mock('../../src/lib/canvas/render', async (actual) => {
   const real = await actual<typeof import('../../src/lib/canvas/render')>()
@@ -33,8 +26,6 @@ afterEach(() => {
   made.length = 0
 })
 
-/** The plane mounted on cards of `count`, laid out small and close so every one is in
- *  view, joined each to the next. */
 function opened(count: number) {
   const nodes = Array.from({ length: count }, (_, at) => ({
     id: `n${String(at)}`,
@@ -84,16 +75,12 @@ test('far away, draws its cards on one canvas: no card an element, no markdown m
   expect(target.querySelectorAll('.edge')).toHaveLength(0)
   expect(made).toEqual([])
 
-  // Picked and moved from there, still nothing to make.
   press(host, 'a', true)
   press(host, 'ArrowRight')
   expect(target.querySelectorAll('.node')).toHaveLength(0)
   expect(made).toEqual([])
 })
 
-/** #535: the layer comes up in the frame the cards go, zooming out past reading. Its
- *  first paint waited for the next frame, so the frame between showed neither cards nor
- *  boxes: a blink of an empty plane. It paints as it appears. */
 test('paints the boxes the moment it comes up, not a frame later', () => {
   const frames = vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 0)
   const painted = vi.spyOn(HTMLCanvasElement.prototype, 'getContext')
@@ -126,6 +113,5 @@ test('near, draws them as cards, and an undo makes none of them again', () => {
 
   const after = cards()
   expect(after).toHaveLength(6)
-  // The very same elements: given new places, not made again.
   for (const [at, card] of after.entries()) expect(card).toBe(before[at])
 })

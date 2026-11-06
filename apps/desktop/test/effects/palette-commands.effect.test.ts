@@ -2,8 +2,6 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { viewport } from '../../src/lib/viewport.svelte'
 
-/** The list wears the app's own scrollbar (#775), which watches the list's size; jsdom
- *  lays nothing out, so nothing is ever there to see. */
 class NoLayout {
   observe() {
     // jsdom never moves anything.
@@ -23,23 +21,6 @@ globalThis.ResizeObserver = NoLayout
 const { overlays } = await import('../../src/lib/overlays')
 const { default: Palette } = await import('../../src/lib/Palette.svelte')
 
-/** The palette opened on the commands, which is what Ctrl+Shift+P does.
- *
- *  Emil asked for the key: "Ctrl + P is very very handy, I really like it. There
- *  should be another shortcut that is for commands (so you don't have to type > all
- *  the time, maybe Ctrl + Shift + P?)". shortcuts.test.ts asks whether the chord
- *  reaches the palette; this asks what the reader is then looking at, which is the
- *  whole of the design: a `>` in the field with the caret after it, exactly as if it
- *  had been typed, so deleting it is the way back to the notes and there is nothing
- *  new to learn.
- *
- *  In the jsdom project because a field, a value and a caret need a document.
- *  Nothing here asks about layout or paint, which is the one thing jsdom cannot do. */
-
-/** The palette arrives with a transition, and Svelte plays one through the Web
- *  Animations API, which jsdom does not implement. Nothing here asks how it moves -
- *  that is paint, and a drive with a real browser is what looks at that - so the call
- *  answers something inert and the palette is simply there. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -52,7 +33,6 @@ Element.prototype.animate = () =>
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
 
-/** The row the arrows are on is kept in view, and jsdom has no view to keep it in. */
 Element.prototype.scrollIntoView = () => undefined
 
 let target: HTMLElement
@@ -69,7 +49,6 @@ afterEach(() => {
   target.remove()
 })
 
-/** The palette, mounted shut, and the one thing the app calls on it. */
 function palette(): { showCommands(): Promise<void> } {
   const made = mount(Palette, { target, props: { open: false } })
   flushSync()
@@ -80,8 +59,6 @@ function palette(): { showCommands(): Promise<void> } {
 
 const field = () => target.querySelector('input')
 
-/** What somebody typing into it does, which is the only road the field's value
- *  travels: `bind:value` reads the input event. */
 function type(text: string) {
   const input = field()
   if (!input) throw new Error('the palette has no field')
@@ -99,7 +76,6 @@ test('opens on the commands, with the caret after the mark', async () => {
   flushSync()
 
   expect(field()?.value).toBe('>')
-  // After the `>`, so the next keystroke is the search and not a second mark.
   expect(field()?.selectionStart).toBe(1)
   expect(field()?.selectionEnd).toBe(1)
 })
@@ -132,17 +108,12 @@ test('puts it there once, however often the key is pressed', async () => {
   expect(field()?.selectionStart).toBe(5)
 })
 
-/** A palette that was closed opens on an empty command search rather than on
- *  whatever was typed the time before, which is what dismissing it already
- *  promises. */
 test('starts empty after it has been closed', async () => {
   const made = palette()
   await made.showCommands()
   flushSync()
 
   type('>fold')
-  // Escape, the way the window hands one over: the palette closes through the overlay
-  // stack like everything else the app puts over a note. See overlays.ts.
   overlays.escape()
   flushSync()
 
@@ -151,9 +122,6 @@ test('starts empty after it has been closed', async () => {
   expect(field()?.value).toBe('>')
 })
 
-/** A phone has no Escape, and a list long enough to reach the keys leaves no dim
- *  edge above them to tap. So beside the box is the word a phone's search has, and
- *  it answers as Escape does, forgetting what was typed. */
 test('on a touch screen, is put away by the word beside the box', async () => {
   viewport.device = 'phone'
   try {
@@ -167,7 +135,6 @@ test('on a touch screen, is put away by the word beside the box', async () => {
     give?.click()
     flushSync()
 
-    // Its way out never finishes here, so what says it went is what it forgot.
     await made.showCommands()
     flushSync()
     expect(field()?.value).toBe('>')

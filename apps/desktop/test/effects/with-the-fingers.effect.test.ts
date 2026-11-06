@@ -1,11 +1,3 @@
-/** What follows a finger is drawn where the finger is, as it is (#1050): the swipe's
- *  arrow, the drawers a thumb drags (#1066) and the pull's mark. While the finger is on,
- *  nothing on them or round them eases its place, its size or how much of it shows -
- *  no transition, no animation - in any state a gesture can be in, one that begins
- *  while the last is still playing out included. What the engine is asked to do is read
- *  off the computed style, from the app's own stylesheets on the real markup, so a rule
- *  anywhere that matches counts. The overview's drag is #331's and not here. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import arrowSource from '../../src/lib/back-swipe/SwipeArrow.svelte?raw'
@@ -13,7 +5,6 @@ import appSource from '../../src/App.svelte?raw'
 import pullSource from '../../src/lib/PullMark.svelte?raw'
 import base from '../../../../packages/themes/src/base.css?raw'
 
-/** The tab the arrow is over, shown in its pane; see SwipeArrow.svelte. */
 vi.mock('../../src/lib/workspace.svelte', () => ({
   workspace: { showing: (pane: string) => (pane === 'p' ? { id: 't' } : null) },
 }))
@@ -21,7 +12,6 @@ vi.mock('../../src/lib/workspace.svelte', () => ({
 const SwipeArrow = (await import('../../src/lib/back-swipe/SwipeArrow.svelte')).default
 const { swiping } = await import('../../src/lib/back-swipe/shown.svelte')
 
-/** What a finger moves, and anything that would ease it there. */
 const MOVES = new Set([
   'all',
   'transform',
@@ -40,7 +30,6 @@ const MOVES = new Set([
 const TIMING =
   /^(?:[\d.]+m?s|ease|ease-in|ease-out|ease-in-out|linear|step-start|step-end|normal|allow-discrete|none|initial|inherit|unset)$/
 
-/** The properties a computed `transition` eases; one that names none eases `all`. */
 function eased(transition: string): string[] {
   if (!transition.trim()) return []
   const flat = transition.replace(/[a-z-]+\([^()]*(?:\([^()]*\)[^()]*)*\)/g, ' ')
@@ -52,14 +41,11 @@ function eased(transition: string): string[] {
   })
 }
 
-/** A component's stylesheet as the page has it, `:global(...)` unwrapped. */
 function sheetOf(source: string): string {
   const css = /<style>([\s\S]*?)<\/style>/.exec(source)?.[1] ?? ''
   return css.replace(/:global\(((?:[^()]|\([^()]*\))*)\)/g, '$1')
 }
 
-/** Wears these sheets for the tests in the block it is called in, and only those: a
- *  component's selectors are scoped to it in the app, and unscoped here. */
 function wear(...sheets: string[]) {
   const worn: HTMLStyleElement[] = []
   beforeAll(() => {
@@ -75,8 +61,6 @@ function wear(...sheets: string[]) {
   })
 }
 
-/** Everything about `element` and what holds it up to `top` that would move under the
- *  finger on its own: each one's eased properties and its animation. */
 function easing(element: Element, top: Element): string[] {
   const found: string[] = []
   const look = (at: Element) => {
@@ -110,9 +94,6 @@ describe("the swipe's arrow, while the fingers are on", () => {
   wear(base, sheetOf(arrowSource))
   const room = { x: 0, y: 40, width: 800, height: 560 }
 
-  /** Each state a stream with the fingers on passes through, after whatever came
-   *  before: a fresh one, one under way, one past where letting go goes, and one that
-   *  starts while the last is still going or staying. */
   const RUNS: { name: string; before: ('went' | 'stayed')[]; progress: number }[] = [
     { name: 'coming in', before: [], progress: 0.3 },
     { name: 'full', before: [], progress: 1 },

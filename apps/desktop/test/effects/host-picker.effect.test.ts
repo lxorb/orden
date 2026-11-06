@@ -1,18 +1,6 @@
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** Remote's host picker, in the middle of the window.
- *
- *  Emil, 2026-10-03: a Remote card beside Terminal opens a picker built like the space
- *  switcher - typed into with no visible field, numbered, the pinned and recent hosts
- *  first, the groups of the ssh config after - and choosing a host is a terminal tab on
- *  it. This mounts the dialog over the real workspace, with the crate answering from
- *  here, and presses keys on it the way a hand would. What the order and an address are
- *  on their own is remote/hosts.test.ts.
- *
- *  In the jsdom project because mounting a component needs a document. */
-
-/** What the crate holds: the config's hosts and what nib keeps. */
 let config: unknown[] = []
 let kept: Record<string, unknown> = { own: [], about: {}, order: [], groups: [] }
 const asked: { command: string; args: unknown }[] = []
@@ -32,10 +20,6 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   },
 }))
 
-/** jsdom has no Web Animations. This one finishes in the microtask after it is asked
- *  for - after Svelte has hung its `onfinish` on it, and before any timer: a machine
- *  busy enough to hold the timers back for a second would otherwise keep a number on
- *  its way out on screen past a wait for it to go. */
 Element.prototype.animate = () => {
   const animation = {
     cancel: () => undefined,
@@ -98,7 +82,6 @@ afterEach(() => {
 
 const dialog = () => target.querySelector<HTMLElement>('[role="menu"]')
 const rows = () => [...(dialog()?.querySelectorAll<HTMLButtonElement>('.nib-row') ?? [])]
-/** A row's host's name, without the address said after it. */
 const names = () =>
   rows().map((one) => {
     const label = one.querySelector('.nib-row-label')?.cloneNode(true) as HTMLElement | undefined
@@ -128,7 +111,6 @@ async function type(text: string) {
   for (const character of text) await press(character)
 }
 
-/** The terminal a choice made, once it has made one. */
 async function made() {
   await vi.waitFor(() => expect(workspace.tabs.length).toBe(1))
   const tab = workspace.tabs[0]
@@ -142,19 +124,16 @@ test('no field: the pinned host, the recent one, then the rest by group, numbere
   expect(dialog()?.classList.contains('is-centred')).toBe(true)
   expect(dialog()?.querySelector('input, textarea, [contenteditable]')).toBe(null)
   expect(names()).toEqual(['office', 'nas', 'build', 'pi'])
-  // No number by default, as in the space switcher: they come with Alt or a digit.
   const numbers = () => rows().map((one) => one.querySelector('.place')?.textContent ?? null)
   expect(numbers()).toEqual([null, null, null, null])
   await press('Alt', 'AltLeft', { altKey: true })
   expect(numbers()).toEqual(['1', '2', '3', '4'])
   dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt', code: 'AltLeft' }))
   await vi.waitFor(() => expect(numbers()).toEqual([null, null, null, null]))
-  // A group's name over its hosts, and a line where the pinned and recent ones end.
   expect([...(dialog()?.querySelectorAll('.head') ?? [])].map((one) => one.textContent)).toEqual([
     'Home',
   ])
   expect(dialog()?.querySelectorAll('hr').length).toBe(2)
-  // Where it is, quietly, and when it was last connected to.
   expect(rows()[3]?.querySelector('.detail')?.textContent).toBe('emil@10.0.0.5')
   expect(rows()[1]?.querySelector('.nib-row-meta')).not.toBe(null)
   expect(document.activeElement).toBe(rows()[0])

@@ -1,11 +1,5 @@
 import { expect, test, vi } from 'vitest'
 
-/** A tab left on a space's AGENTS.md by a version that still opened it as a note. Clean,
- *  it does not come back: the file is a field in the space's settings now. With words
- *  unsaved it does, as it was, and the words reach the file; losing them over a change of
- *  presentation is the one thing this must not do. Two runs of the store, the second a
- *  fresh import of every module, the way a relaunch reads what the first wrote. */
-
 vi.stubGlobal('requestAnimationFrame', (run: () => void) => setTimeout(run, 0))
 vi.stubGlobal('requestIdleCallback', (run: () => void) => setTimeout(run, 0))
 
@@ -26,8 +20,6 @@ const AGENTS = '/spaces/Work/AGENTS.md'
 const STAND_IN = '/spaces/Work/Stand-in.md'
 const PLAN = '/spaces/Work/Plan.md'
 
-/** The session an earlier version wrote: this one will not open the file as a tab, so a
- *  tab of another name is left open and the name changed on what was written down. */
 async function leftOpen(typed: string | null) {
   const { Disk } = await import('../disk')
   disk.current = new Disk()

@@ -1,16 +1,3 @@
-/** A task saved unchanged from the field that edits it (Ctrl+E) keeps its words.
- *
- *  The field reads its words the way it reads anything typed, so a task's own words
- *  were read again on every Save: `Prep Monday standup notes` lost `Monday` to a start
- *  date, `Fix p1 bug` gained a priority (B434). Only words typed into the field are
- *  read now; the task's own stay words, and an untouched Save writes the line as it was.
- *
- *  The field shows a task's words without their escapes, `Tip the waiter #tips` where
- *  the line says `Tip the waiter \#tips`, and reads what it shows the way it reads
- *  anything typed. So the `#tips` the line escaped to keep it a word was read as a
- *  label, and a Save that changed nothing turned it into one (B417). In the jsdom
- *  project because it mounts the field and presses real keys. */
-
 import { taskRowsOfText } from '@orden/bases/tasks'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test } from 'vitest'
@@ -27,7 +14,6 @@ afterEach(() => {
   document.body.replaceChildren()
 })
 
-/** What the field saves for the task the line holds, with `typed` added at its end. */
 async function saved(line: string, typed = '') {
   const task = taskRowsOfText('Notes', 'A.md', line)[0]?.task
   if (!task) throw new Error('no task')
@@ -59,7 +45,6 @@ async function saved(line: string, typed = '') {
   return { task, entry: got.entry }
 }
 
-/** What a Save with nothing touched changes in the task the line holds. */
 async function savedUnchanged(line: string) {
   const { task, entry } = await saved(line)
   return { task, change: changeOf(task, entry) }

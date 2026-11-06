@@ -1,12 +1,3 @@
-/** The bar over what is picked on a canvas, measured without making the page lay itself
- *  out (#535). It comes up the moment Ctrl+A has marked every card picked and follows
- *  every nudge of them; reading its own width or the plane's there and then made the
- *  browser lay out a plane of three thousand cards on the spot - half a second at
- *  Ctrl+A and a third of one per nudge, in Chromium. Its sizes come from an observer,
- *  once layout is done, so no width is read as it mounts or moves.
- *
- *  In the jsdom project because the bar is mounted. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 

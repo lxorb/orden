@@ -1,16 +1,3 @@
-/** Two panes becoming one while they are on screen.
- *
- *  A split drawn by PaneTree hands each side to a PaneTree of its own, and each of those
- *  reads its side out of the split it was given. When the split goes - the window
- *  narrows into a phone's, or a pane's last tab is closed - the side that is left used
- *  to read `split.sides[i]` once more, out of a split that was no longer there, and
- *  the window threw "Cannot read properties of null (reading 'sides')" and stopped
- *  drawing. What is asked is what a reader would see: no error, one pane, and the
- *  note that was kept still on screen.
- *
- *  In the jsdom project because what goes wrong is the order effects run in when a
- *  branch goes. */
-
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { warmWindow } from './warm-window'
@@ -22,8 +9,6 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   invoke: () => Promise.resolve(undefined),
 }))
 
-// The launch: the stores, the session and the doors, none of which is what this is
-// about. The window is mounted onto a workspace this test sets up itself.
 vi.mock('../../src/lib/start', () => ({ start: () => () => undefined }))
 
 class NoLayout {
@@ -56,7 +41,6 @@ Element.prototype.animate = function animate() {
 }
 Element.prototype.getAnimations = () => []
 Element.prototype.scrollIntoView = () => undefined
-// The note measures its lines on a frame of its own, and jsdom lays nothing out.
 Range.prototype.getClientRects = () => [] as unknown as DOMRectList
 Range.prototype.getBoundingClientRect = () => new DOMRect()
 
@@ -65,8 +49,6 @@ const { viewport } = await import('../../src/lib/viewport.svelte')
 const { views } = await import('../../src/lib/views.svelte')
 const App = (await import('../../src/App.svelte')).default
 
-// Everything the window fetches the first time it draws two notes side by side, fetched
-// before any test counts its time; see warm-window.ts.
 await warmWindow(
   () => {
     workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]
@@ -91,8 +73,6 @@ await warmWindow(
 
 let target: HTMLElement
 let shown: ReturnType<typeof mount> | null = null
-/** What went wrong out of the test's own sight: an effect's teardown throws inside
- *  Svelte's flush, which is a microtask of its own. */
 const thrown: unknown[] = []
 const heard = (error: unknown) => thrown.push(error)
 
@@ -125,7 +105,6 @@ async function settle() {
   }
 }
 
-/** Two notes side by side, the given pane being worked in. */
 async function sideBySide(focus: 'left' | 'right') {
   workspace.openBlank('Left', '# Left\n\nWords.')
   workspace.split('row')

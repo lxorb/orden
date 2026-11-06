@@ -1,13 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** The scratchpad's links, which answer from the space in front and stay up to date
- *  with it. The card is built once and kept, so the notes it was handed as it came
- *  were the notes for good: a note made since, or the notes of a space switched to,
- *  were not there, `[[Plan]]` was drawn and followed as a link to nothing, and
- *  following it made an empty `Plan.md` beside the real one. In the jsdom project
- *  because the editor in the card is a real one. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
 
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
@@ -68,7 +61,6 @@ afterEach(() => {
 })
 
 test('the card hears of a note made after it came', async () => {
-  // The index waits its turn behind the first frame; see startup.svelte.ts.
   void startup.shown()
   await links.build('/spaces/Work')
   const column = document.createElement('div')

@@ -1,8 +1,3 @@
-/** A space gone from a listing may be a drive not mounted or a folder renamed elsewhere,
- *  and nothing says it was deleted: the tabs of its set stay, unsaved words and running
- *  shells with them. The list changing used to close them, which only an effect can
- *  show. See `gone` in workspace/sets.svelte.ts and space-delete.store.test.ts. */
-
 import { flushSync } from 'svelte'
 import { expect, test, vi } from 'vitest'
 
@@ -30,7 +25,6 @@ test('a set out of sight stays when its space leaves the list', async () => {
     { id: 'food', name: 'Food', root: '/spaces/Food' },
   ]
   workspace.activeSpaceId = 'work'
-  // Fetched with a space on screen, which is the set it takes to be showing.
   await import('../../src/lib/workspace/sets.svelte')
   flushSync()
   workspace.openWebsite()

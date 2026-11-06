@@ -1,21 +1,8 @@
-/** Alt and a digit, from a press to the tab in front.
- *
- *  Emil, 2026-09-30: *"Add shortcuts alt + 1, alt + 2, ... where alt + x opens the tab
- *  at position x and alt + 0 opens the last tab."* The registry holds the keys and
- *  shortcuts.test.ts the matching; what only this can show is the whole road - a press
- *  in a real editor that CodeMirror lets by, App.svelte's rule about a spent press, the
- *  registry, and the strip of the pane being worked in.
- *
- *  In the jsdom project because the editor is a real one, and the press has to get past
- *  it the way it does in the window. */
-
 import { createEditor, type EditorView } from '@orden/editor'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const NAMES = ['One', 'Two', 'Three', 'Four', 'Five']
 
-// Windows, where AltGr is Ctrl and Alt: the one platform that question is asked on.
-// Before anything is imported, because the store asks once, as it is made.
 vi.hoisted(() => {
   Object.defineProperty(navigator, 'userAgent', {
     value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
@@ -38,13 +25,10 @@ const { workspace } = await import('../../src/lib/workspace.svelte')
 const { roving } = await import('../../src/lib/roving')
 const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
 
-/** What a thing this test does not care about does. */
 function nothing() {
   return undefined
 }
 
-/** App.svelte's window handler, as it is written there: a press a surface has
- *  already answered is spent, and everything else goes to the registry. */
 function windowHandler() {
   const handler = (event: KeyboardEvent) => {
     if (event.defaultPrevented) return
@@ -55,24 +39,20 @@ function windowHandler() {
   return () => window.removeEventListener('keydown', handler)
 }
 
-/** A key pressed where the keyboard is, as the window would hear it. */
 function pressOn(target: Element, key: string, held: Partial<KeyboardEventInit> = {}) {
   const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...held })
   target.dispatchEvent(event)
   return event
 }
 
-/** Alt and a digit on the top row. */
 const altDigit = (target: Element, digit: number) =>
   pressOn(target, String(digit), { altKey: true, code: `Digit${digit}` })
 
-/** Which note is in front, by its name. */
 const inFront = () => workspace.tabs.find((tab) => tab.id === workspace.activeTabId)?.shown
 
 let editor: EditorView | undefined
 let unhandle: () => void
 
-/** A note being written in, which is where a hand mostly is when it reaches for a tab. */
 function writing() {
   const parent = document.createElement('div')
   document.body.append(parent)
@@ -111,12 +91,9 @@ test('Alt+3 is the third tab and Alt+0 the last, from inside a note', () => {
   altDigit(note, 1)
   expect(inFront()).toBe('One')
 
-  // The note heard a chord, not a character.
   expect(editor?.state.doc.toString()).toBe('Words')
 })
 
-/** The file list walks on letters and answers Space, and a list that took a chord
- *  along with them made that chord dead there; see list-chords.effect.test.ts. */
 test('Alt+2 is the second tab from the file list too', () => {
   const list = document.createElement('ul')
   const row = document.createElement('button')
@@ -140,7 +117,6 @@ test('a place past the end is nothing, as it is in Chrome', () => {
 
   const ninth = altDigit(note, 9)
   expect(inFront()).toBe('Two')
-  // Still the app's key, so nothing else has it either.
   expect(ninth.defaultPrevented).toBe(true)
 })
 
@@ -159,7 +135,6 @@ test('AltGr typing a character is the character, not a tab', () => {
   const note = writing()
   altDigit(note, 1)
 
-  // A Swiss `@`, which Windows says as Ctrl, Alt and the 2.
   const at = pressOn(note, '@', { ctrlKey: true, altKey: true, code: 'Digit2' })
   expect(inFront()).toBe('One')
   expect(at.defaultPrevented).toBe(false)

@@ -1,11 +1,3 @@
-/** A task quick add could not put anywhere stays in the field.
- *
- *  The field used to empty itself before the task was written, and the global window
- *  to put itself away before the app had answered, so a task the app refused - every
- *  space shared to be read, or a `>` naming a note in one - was gone without a word.
- *  Now the field empties only once the task is in, and the window waits for the app
- *  to say so. In the jsdom project because it mounts the field and presses real keys. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { Entry } from '../../src/lib/quick-add/entry'
@@ -40,14 +32,12 @@ const settled = async () => {
   }
 }
 
-/** The field quick add types into. */
 function fieldOf(): HTMLInputElement {
   const field = document.querySelector<HTMLInputElement>('input.field')
   if (!field) throw new Error('no field')
   return field
 }
 
-/** Types the words into the field, as a reader would. */
 function type(words: string): HTMLInputElement {
   const field = fieldOf()
   field.value = words
@@ -59,7 +49,6 @@ function type(words: string): HTMLInputElement {
 const enter = () =>
   fieldOf().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
 
-/** Types the words into the field and presses Enter; answers the field. */
 async function typeAndAdd(words: string): Promise<HTMLInputElement> {
   const field = type(words)
   enter()
@@ -67,8 +56,6 @@ async function typeAndAdd(words: string): Promise<HTMLInputElement> {
   return field
 }
 
-/** A caller that holds every task until `let go` answers it, as the global window
- *  does while the app writes; counts what it was handed. */
 function slowCaller() {
   const handed: Entry[] = []
   let answer: ((ok: boolean) => void) | null = null
@@ -143,7 +130,6 @@ describe('the field, while a task is on its way', () => {
 })
 
 describe('the global window', () => {
-  /** The app's side of the channel: answers every task with `ok`. */
   function app(ok: boolean): BroadcastChannel {
     const channel = new BroadcastChannel(CHANNEL)
     channel.onmessage = (event: MessageEvent) => {
@@ -191,7 +177,6 @@ describe('the global window', () => {
     expect(invoked).not.toContain('quick_add_hide')
     expect(fieldOf().value).toBe('Call Ada')
 
-    // And Enter takes it again once the wait is over, rather than doing nothing.
     const sent: unknown[] = []
     const app = new BroadcastChannel(CHANNEL)
     app.onmessage = (event: MessageEvent) => sent.push(event.data)

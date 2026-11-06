@@ -1,12 +1,3 @@
-/** The toast on the page, following the real undo stack.
- *
- *  What undo-toast.test.ts cannot ask: the component reads the stack inside an effect
- *  and writes its own batch in the same breath, and an effect that depended on what it
- *  wrote would run itself for ever and stop the page. So the stack is changed here the
- *  way the workspace changes it, and the toast has to come and go with it.
- *
- *  In the jsdom project because it mounts a component. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import * as focusing from '../../src/lib/focus'
@@ -15,7 +6,6 @@ import UndoToast from '../../src/lib/UndoToast.svelte'
 import { UNDO_LINGER, undoToast } from '../../src/lib/undo-toast.svelte'
 import { workspace } from '../../src/lib/workspace.svelte'
 
-/** jsdom has no animations, and the toast flies in. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -65,7 +55,6 @@ test('a delete puts it up, and Undo takes it back and puts it away', async () =>
   await vi.waitFor(() => expect(undo).toHaveBeenCalledTimes(2))
   flushSync()
   expect(workspace.undone.stack).toHaveLength(1)
-  // Gone, on its way out: jsdom never finishes the fly, so the store is what is asked.
   expect(undoToast.kind).toBeNull()
 })
 
@@ -76,13 +65,9 @@ test('the Undo row in a menu takes it away too', () => {
 
   workspace.undone.drop()
   flushSync()
-  // Gone, on its way out: jsdom never finishes the fly, so the store is what is asked.
   expect(undoToast.kind).toBeNull()
 })
 
-/** #523: the toast arrived holding its words inside `role=status`, which most readers
- *  never announce; its clock did not stop for the keyboard; and the keyboard fell to
- *  `body` as it went. */
 describe('from the keyboard', () => {
   const card = () => host.querySelector<HTMLElement>('.toast')
   const undo = () => host.querySelector<HTMLElement>('.undo')
@@ -102,7 +87,6 @@ describe('from the keyboard', () => {
 
     workspace.undone.record({ kind: 'delete', path: 'B.md', content: 'b' })
     flushSync()
-    // Emptied and put back, the only way a live region repeats itself.
     expect(said.words).toBe('')
     await vi.waitFor(() => expect(said.words).toBe('Deleted. Undo'))
   })
@@ -142,7 +126,6 @@ describe('from the keyboard', () => {
     workspace.undone.record({ kind: 'delete', path: 'A.md', content: 'a' })
     flushSync()
     undo()?.focus()
-    // Connected and able to take nothing: a side shut while the keyboard was on the card.
     from.focus = () => undefined
     const note = vi.spyOn(focusing, 'focusEditor').mockReturnValue(true)
 

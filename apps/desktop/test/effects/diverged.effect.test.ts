@@ -1,14 +1,3 @@
-/** Sync v2's one question, from a held note to an answer.
- *
- *  The engine is the fake one (sync2/fake-engine.svelte.ts), which meets the interface
- *  the real engine hands over, and everything else is real: the workspace with notes
- *  open in tabs, the overlays stack, the sheet, the mark and the toast. What is asked
- *  is when the question comes up - only over the held note in front, only once the
- *  typing has paused and nothing else is over it, one at a time - and that each of its
- *  three answers, and closing it, does what docs/sync-v2.md section 4 says.
- *
- *  In the jsdom project because every one of those is an effect watching a store. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Held } from '../../src/lib/sync2/asking.svelte'
@@ -22,9 +11,6 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
     Promise.resolve(command === 'read_note' ? `# ${String(args?.path)}` : undefined),
 }))
 
-/** The sheet and the toast move through the Web Animations API, which jsdom has not got.
- *  Each movement ends at once, so a sheet that closes is gone before the next test: the
- *  sheet stays mounted from one note to the next, as it does in the app. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -40,7 +26,6 @@ Element.prototype.animate = () =>
     },
   }) as unknown as Animation
 
-/** The sheet's scrollbar follows its content's size, which jsdom never changes. */
 globalThis.ResizeObserver = class {
   observe = () => undefined
   unobserve = () => undefined
@@ -98,14 +83,11 @@ function inFront(path: string) {
   flushSync()
 }
 
-// The sheet mounts itself into the page with the first held note; see `sheet` in
-// asking.svelte.ts.
 const page = document.body
 const dialog = () => page.querySelector<HTMLElement>('[role="dialog"]')
 const keeps = () => [...page.querySelectorAll<HTMLButtonElement>('.keep')]
 const both = () => page.querySelector<HTMLButtonElement>('.both')
 
-/** A press with a pointer, which is never taken for a stray key. */
 function press(button: HTMLButtonElement | null | undefined) {
   button?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 }))
 }
@@ -115,7 +97,6 @@ beforeEach(async () => {
   inFront('/space/Other.md')
   fake = connectFake([PLAN, TRIP])
   flushSync()
-  // The same fetch the store made, so this waits for the sheet it mounted.
   await import('../../src/lib/sync2/Diverged.svelte')
   await Promise.resolve()
   flushSync()
@@ -226,7 +207,6 @@ describe('the answers', () => {
     expect(fake.engine.held.answered).toEqual([])
     expect(fake.engine.held.notes).toHaveLength(2)
 
-    // Still in front: closed stays closed, whatever else moves.
     const off = overlays.show(() => undefined)
     off()
     flushSync()
@@ -241,7 +221,6 @@ describe('the answers', () => {
 describe('the keyboard', () => {
   test('lands on the newer version, and Left and Right go between the two', () => {
     inFront('/space/Plan.md')
-    // The other device wrote last in Plan.
     expect(document.activeElement).toBe(keeps()[1])
 
     keeps()[1]?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }))
@@ -253,7 +232,6 @@ describe('the keyboard', () => {
   test('which is mirrored where the interface reads right to left', () => {
     document.documentElement.dir = 'rtl'
     inFront('/space/Trip.md')
-    // This device wrote last in Trip.
     expect(document.activeElement).toBe(keeps()[0])
 
     keeps()[0]?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }))
@@ -264,7 +242,6 @@ describe('the keyboard', () => {
     const now = vi.spyOn(performance, 'now').mockReturnValue(10_000)
     inFront('/space/Plan.md')
 
-    // Enter on a button is a click with no pointer behind it.
     const key = () => new MouseEvent('click', { bubbles: true, cancelable: true, detail: 0 })
     document.activeElement?.dispatchEvent(key())
     flushSync()

@@ -1,9 +1,3 @@
-/** The update notice, both ways it is shown.
- *
- *  Emil, 2026-10-14: where a package manager keeps the install, the notice only says a
- *  newer version is out - no restart, a cross to put it away, and gone on its own after
- *  a while. Everywhere else it is the offer to restart into the download it was. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
@@ -21,8 +15,6 @@ vi.mock('../../src/lib/app-place', () => ({
   moveToApplications: () => Promise.resolve(),
 }))
 
-/** The card flies in through the Web Animations API, which jsdom has none of; nothing
- *  here asks how it moves, so every animation is over at once. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -126,8 +118,6 @@ describe('where the app updates itself', () => {
   })
 })
 
-/** A `.deb` or an `.rpm`: Update installs through PackageKit and restarts (#1147), and
- *  where that cannot happen the notice says what to run instead. */
 describe('where the system updates the install', () => {
   test('offers the update, and waits for an answer', () => {
     show(true, true)

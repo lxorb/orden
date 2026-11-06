@@ -1,19 +1,12 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** A question with a few answers, as a Mac asks it: the default last, at the right
- *  edge of the row, where the eye and Return look for it. Elsewhere the row is the
- *  order it was asked in.
- *
- *  In the jsdom project because buttons need a document. */
-
 vi.mock('../../src/lib/tauri', async (actual) => ({
   ...(await actual<typeof import('../../src/lib/tauri')>()),
   isDesktop: true,
   platform: () => 'macos',
 }))
 
-/** The sheet rises through the Web Animations API, which jsdom does not implement. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,

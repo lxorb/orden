@@ -1,21 +1,10 @@
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { stepRegionFocus } from '../../src/lib/focus'
 
-/** F6 past a region that is there and cannot hold the keyboard.
- *
- *  access.py found the walk standing still on the status bar: the right side, shut,
- *  keeps its box for the slide back in and waits inert and hidden, and a focus put
- *  there went nowhere while the walk counted it as a step. The ring is regions.ts
- *  and has its own tests; this is the half that touches the page.
- *
- *  In the jsdom project because it is the page's focus. jsdom lays nothing out, so
- *  every box here says it has one. */
-
 Element.prototype.getClientRects = () => [new DOMRect(0, 0, 10, 10)] as unknown as DOMRectList
 
 let page: HTMLElement
 
-/** A region with one button in it, the way the sidebar's header is one. */
 function region(name: string, ...marks: string[]): HTMLElement {
   const box = document.createElement('div')
   box.dataset.region = name
@@ -74,9 +63,6 @@ test('an open right side is where F6 goes after the status bar', () => {
   expect(here()).toBe('right')
 })
 
-/** The cards over the foot of the note - an Undo above all - are where F6 goes between
- *  the strip and the note while one is up: Tab in the note indents, so nothing else
- *  reaches them (#523). The row is always on the page, and empty it is no stop at all. */
 test('the notices row is a stop ahead of the note while a card is up, and none while it is empty', () => {
   region('tabs')
   const notices = region('notices')

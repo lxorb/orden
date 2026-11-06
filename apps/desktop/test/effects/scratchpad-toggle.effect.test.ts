@@ -1,15 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** The scratchpad as one of the right side's tabs and a card in it, never a tab of the
- *  notes'.
- *
- *  Emil, 2026-10-05: *"The scratchpad should never open as a tab. It should be basically
- *  a thing in the top right that you can click, and then it is selected or it isn't."*
- *  This asks what the switch says, that nothing it does reaches the tabs, the key, and
- *  the card's own keyboard: in when asked for, Escape out, and back where it was. In the
- *  jsdom project because the editor in the card is a real one. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
 
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
@@ -26,7 +17,6 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
 
 const PAD = '/app/Scratchpad.md'
 
-// jsdom lays nothing out, and a focused editor measures where its caret is.
 Range.prototype.getClientRects = () => [] as unknown as DOMRectList
 Range.prototype.getBoundingClientRect = () => new DOMRect()
 Element.prototype.scrollIntoView = () => undefined
@@ -86,7 +76,6 @@ function bar() {
   undo.push(() => void unmount(made, { outro: false }))
 }
 
-/** The card in the column App.svelte keeps for it, with its editor built. */
 async function card() {
   const column = document.createElement('div')
   column.dataset.scratchpad = ''
@@ -98,14 +87,11 @@ async function card() {
   return column
 }
 
-/** The right side's one button where it can be pressed: on a desktop the bar's while the
- *  side is shut, and the side's own while it is open (#1038). */
 const rightButton = () =>
   [...target.querySelectorAll<HTMLButtonElement>('button[aria-label$="right sidebar"]')].find(
     (one) => one.closest('[inert]') === null,
   )
 
-/** The bar and the right side beside it, as App.svelte draws them. */
 function barAndSide() {
   bar()
   const made = mount(Sidebar, { target, props: { side: 'right' } })
@@ -113,17 +99,12 @@ function barAndSide() {
   undo.push(() => void unmount(made, { outro: false }))
 }
 
-/** #1032: the scratchpad's own switch and the right side's fought, each turning the edge
- *  into the other. A desktop's bar has one button for the right side now, and the
- *  scratchpad is one of the side's tabs. */
 test('the bar has one button for the right side and no switch of the scratchpad’s', () => {
   bar()
   expect(target.querySelector('header button.pad')).toBeNull()
   expect(target.querySelectorAll('header button[aria-label$="right sidebar"]')).toHaveLength(1)
 })
 
-/** #1038: on a desktop the button is the side's own while the side is open, and the bar
- *  keeps it, said and not shown, only while it is shut. */
 test('open, the right side has the button and the bar has none', () => {
   sideToggles.inside = true
   barAndSide()
@@ -157,7 +138,6 @@ test('with the toggles in the bar, open or shut the bar has the button and the s
   expect(target.querySelectorAll('aside button[aria-label$="right sidebar"]')).toHaveLength(1)
 })
 
-/** #1030: a phone's note bar has no scratchpad on it either: it is in the drawer's foot. */
 test('a phone’s bar has no switch of the scratchpad’s', async () => {
   const { viewport } = await import('../../src/lib/viewport.svelte')
   viewport.device = 'phone'
@@ -210,14 +190,12 @@ test('Ctrl+Shift+X: up, then the keyboard into it from elsewhere, then away from
   const column = await card()
   expect(column.contains(document.activeElement)).toBe(true)
 
-  // The keyboard taken elsewhere while the card stays up: the key brings it back.
   outside.focus()
   toggleScratchpad()
   flushSync()
   expect(shown.on).toBe(true)
   expect(column.contains(document.activeElement)).toBe(true)
 
-  // From inside the card, the key puts it away.
   toggleScratchpad()
   expect(shown.on).toBe(false)
   expect(document.activeElement).toBe(outside)
@@ -294,7 +272,6 @@ test("with the card away, an agent's edit is written to the file", async () => {
   expect(disk.current?.files.get(PAD)).toBe('First thought\nMore\n')
 })
 
-/** A tab's rows that would move, rename or put away the file, or point at a space. */
 const A_FILES_ROWS = ['Move to space', 'Rename', 'Show in the file list', 'Duplicate']
 
 const labels = (entries: readonly MenuEntry[]) => entries.flatMap((one) => (one ? [one.label] : []))
@@ -304,8 +281,6 @@ const TWO_SPACES = [
   { id: 'home', name: 'Home', root: '/spaces/Home' },
 ]
 
-// lxorb, issue #231: "when right clicking on the scratchpad there's 'move to space' which
-// doesn't make sense". It is in no space and no tab, so a tab's or a file's rows are not its.
 test('a right click on the scratchpad’s tab offers nothing, Move to space least of all', async () => {
   workspace.spaces = TWO_SPACES
   const made = mount(Sidebar, { target, props: { side: 'right' } })
@@ -331,8 +306,6 @@ test("a note in a space keeps the rows the scratchpad's switch leaves out", asyn
   if (!plan) throw new Error('no tab for the note')
   undo.push(() => workspace.close(plan.id, false))
 
-  // Every one of them but Move to space, which a pointer's menu leaves to carrying the
-  // tab onto the switcher and to the palette (#303); a held finger's menu still has it.
   const rows = labels(tabMenu(plan, plan.paneId))
   for (const row of A_FILES_ROWS.filter((one) => one !== 'Move to space')) {
     expect(rows).toContain(row)
@@ -340,10 +313,6 @@ test("a note in a space keeps the rows the scratchpad's switch leaves out", asyn
   expect(rows).not.toContain('Move to space')
 })
 
-/** A scratchpad that is there and will not read - another encoding, a lock - read as
- *  an empty card, and the first keystroke into it saved over everything the file held.
- *  So it opens nothing, the card goes, and the reader is told, as any note that will
- *  not read is; see unread.svelte.ts. */
 test('a scratchpad that will not read is never opened empty', async () => {
   disk.current?.files.set(PAD, 'a year of notes\n')
   disk.current?.unreadable.add(PAD)

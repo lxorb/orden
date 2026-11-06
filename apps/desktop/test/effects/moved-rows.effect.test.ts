@@ -1,12 +1,6 @@
 import { flushSync } from 'svelte'
 import { beforeAll, expect, test, vi } from 'vitest'
 
-/** A note moved on the real workspace, with the rows of every space following it: what
- *  Today, Upcoming and a base read a task's line from. In the effects project, because
- *  the rows are told the spaces by an effect. The disk is a map; see test/disk.ts. It
- *  answers a scan here as the crate does, so an index of a space not in front, which
- *  the agent's verbs build, reads what is there. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
 
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
@@ -32,7 +26,6 @@ const { startup } = await import('../../src/lib/startup.svelte')
 const { runAgentVerb } = await import('../../src/lib/agents/workspace/index')
 const { callerOf } = await import('../../src/lib/automation/caller')
 
-/** A space as `scan_links` reads one: its notes, rows' fields and all, and its files. */
 function scanned(root: string) {
   const inside = [...(disk.current?.files ?? [])].filter(([path]) => path.startsWith(`${root}/`))
   const relative = (path: string) => path.slice(root.length + 1)
@@ -79,7 +72,6 @@ beforeAll(async () => {
   await workspace.loadTree()
   void startup.shown()
   await links.build(WORK)
-  // The spaces reach the rows through an effect.
   flushSync()
   await vi.waitFor(() => {
     expect(tasks('Work')).toEqual(['A/Plan.md: Read [spec](Spec.md)'])
@@ -92,13 +84,9 @@ test('a note moved to another folder, its own relative link rewritten, keeps the
   await workspace.move(`${WORK}/A/Plan.md`, `${WORK}/B`)
   await workspace.writesSettled()
 
-  // The rewrite said its save at the new path before the move was told, and the move
-  // then carried the old words' rows over it: the task kept a line the note no longer
-  // has, and ticking it from Today found nothing to tick.
   expect(one?.files.get(`${WORK}/B/Plan.md`)).toBe('- [ ] Read [spec](../A/Spec.md)\n')
   expect(tasks('Work')).toEqual(['B/Plan.md: Read [spec](../A/Spec.md)'])
 
-  // Moved back, the rewritten link still reaches the note from there, so it stays.
   await workspace.undoFileAction()
   await workspace.writesSettled()
   expect(one?.files.get(`${WORK}/A/Plan.md`)).toBe('- [ ] Read [spec](../A/Spec.md)\n')
@@ -120,7 +108,6 @@ test('and the same when an agent moves it in a space not in front', async () => 
   )
   expect(answer).toMatchObject({ ok: true })
 
-  // The rewrite was made by the index of that space, whose saves nobody heard.
   expect(disk.current?.files.get(`${HOME}/B/Plan.md`)).toBe('- [ ] Read [spec](../A/Spec.md)\n')
   expect(tasks('Home')).toEqual(['B/Plan.md: Read [spec](../A/Spec.md)'])
 })

@@ -3,22 +3,6 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { held, latched } from '../../src/lib/surfaces.svelte'
 import { reactive, root, watch } from './runes.svelte'
 
-/** A door whose fetch failed.
- *
- *  hunt-7 found it: every door kept its promise, and a promise that had failed was the
- *  answer to every ask after it. One chunk lost to a flaky network, or to a deploy under
- *  a tab that stayed open, and the palette, the right-click menu, the prompt sheet,
- *  sign-in and the format bar were dead for the rest of the session without a word. A
- *  door tries twice now and forgets a fetch that failed both times; see door.ts in
- *  @orden/markdown for the helper and reloading.svelte.ts for what the page does about a
- *  module the browser will not fetch again.
- *
- *  In the jsdom project because a latched door is asked from an `$effect` in App.svelte,
- *  and what has to hold is that the failure does not wake that effect: a door that read
- *  the state it resets would ask again, fail again and reset again for as long as the
- *  page is open. */
-
-/** A simulated dynamic import that fails its first `failures` calls. */
 function flakyImport<T>(component: T, failures: number) {
   let calls = 0
   const load = vi.fn(() => {

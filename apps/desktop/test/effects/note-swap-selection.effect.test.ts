@@ -5,19 +5,6 @@ import Editor from '../../src/lib/Editor.svelte'
 import { type Tab, workspace } from '../../src/lib/workspace.svelte'
 import { reactive } from './runes.svelte'
 
-/** A note swapped into a pane's editor is a selection that moved.
- *
- *  The pane keeps one view and swaps each tab's state into it, and a state swapped in
- *  is not an update: CodeMirror calls no listener for `setState`. So whatever follows
- *  the selection - the bar over it, the count of selected words at the foot, the
- *  passage the Ask panel quotes - went on following the note that had left. Select a
- *  line and press Ctrl+W, and the bar stood over the next note's heading with nothing
- *  under it, and a press on it wrote marks into that note.
- *
- *  In the jsdom project because it mounts the pane's editor. Nothing here asks about
- *  layout. */
-
-// jsdom has no observer for a box changing size; the pane's scrollbar asks for one.
 class NoLayout {
   observe() {
     // Said above.
@@ -72,8 +59,6 @@ test('the pane says so when another note is swapped into its editor', async () =
   const shown = mount(Editor, { target, props })
   close = () => void unmount(shown, { outro: false })
   flushSync()
-  // Building an editor fetches its completion menus; see completion.ts in the editor.
-  // Waited for here, or the fetch lands after the file's environment has gone.
   await vi.dynamicImportSettled()
 
   heard.length = 0

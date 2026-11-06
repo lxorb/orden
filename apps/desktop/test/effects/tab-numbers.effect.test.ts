@@ -1,17 +1,3 @@
-/** The tabs' numbers while Alt is held, with the clock in the test's hands.
- *
- *  Emil, 2026-09-30: *"while holding alt it should (in a 'dezent' way) also show the
- *  numbers for the different tabs."* And 2026-10-01: *"It should always display, even if
- *  I press and hold Alt and then press a number. The only condition should be Alt
- *  held."* What is asked is what a hand would see: the numbers in the frame Alt goes down
- *  in, kept through the digits that move from tab to tab and through every other key and
- *  the pointer (#1053), and none of them once Alt is let go of, a key or the pointer says
- *  it is up, or the window goes.
- *  AltGr never shows them. A web page's Alt, which the crate tells the window, shows them
- *  too. See lib/tab-strip/numbers.svelte.ts.
- *
- *  In the jsdom project because the numbers are a component the store mounts. */
-
 import { flushSync } from 'svelte'
 import { afterEach, beforeAll, beforeEach, expect, test, vi } from 'vitest'
 
@@ -22,8 +8,6 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   invoke: () => Promise.resolve(undefined),
 }))
 
-/** The numbers fade in and out through the Web Animations API, which jsdom does not
- *  have. How they move is paint. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -31,7 +15,6 @@ Element.prototype.animate = () =>
     onfinish: null,
   }) as unknown as Animation
 
-// jsdom has no `CSS`; the ids here need no escaping.
 if (typeof globalThis.CSS === 'undefined') {
   vi.stubGlobal('CSS', { escape: (text: string) => text })
 }
@@ -43,17 +26,12 @@ type Tab = import('../../src/lib/workspace.svelte').Tab
 
 const NAMES = ['a', 'b', 'c']
 
-/** A frame at sixty a second. */
 const FRAME = 16
 
-/** How far the strip has scrolled: a tab brought to the front by a digit moves it, and
- *  the numbers have to be read off where the tabs are after that. jsdom lays nothing
- *  out, so each mark is a hundred pixels along, less the scroll. */
 let scrolled = 0
 
 beforeAll(() => {
   const pane = workspace.panes.focusedId
-  // Stand-ins, because a real tab is built round a document read off a disk.
   workspace.tabs = NAMES.map((id) => ({ id, paneId: pane }) as unknown as Tab)
   const strip = document.createElement('div')
   strip.dataset.strip = pane
@@ -84,8 +62,6 @@ beforeEach(() => {
 
 afterEach(() => {
   release()
-  // And the window let go of, so the next test's Alt is not the second tap of this
-  // one's: Alt Alt is the tab overview's, and shows no numbers (#331).
   window.dispatchEvent(new Event('blur'))
   vi.useRealTimers()
 })
@@ -120,10 +96,6 @@ test('come in the frame Alt goes down in, one on each tab, the last wearing 0', 
   expect(drawn()).toEqual(['1', '2', '0'])
 })
 
-/** Emil, 2026-10-01: *"currently it just feels a bit delayed till the numbers appear when
- *  holding alt."* Measured from the keydown, a millisecond at a time, with the keyboard
- *  repeating the held Alt the way Windows does and unflagged, the worst an engine can
- *  hand over. */
 test('are on screen within one frame of Alt going down, however it repeats', () => {
   const began = Date.now()
   let shown: number | null = null
@@ -141,8 +113,6 @@ test('are on screen within one frame of Alt going down, however it repeats', () 
 })
 
 test('stay through three digits, each put where the tabs are once its tab is in front', () => {
-  // What the app's own handler does after this one: brings the tab to the front, and the
-  // strip scrolls to it.
   const switching = (event: KeyboardEvent) => {
     if (event.altKey && /^Digit\d$/.test(event.code)) scrolled += 10
   }
@@ -164,7 +134,6 @@ test('stay through three digits, each put where the tabs are once its tab is in 
     expect(drawn(), digit).toEqual(['1', '2', '0'])
     expect(numbers.worn[0]?.x, digit).toBe(24 - 10 * (at + 1))
   }
-  // The same badges, moved, rather than new ones faded in at every digit.
   expect(document.querySelector('.numeral')).toBe(first)
 
   window.removeEventListener('keydown', switching)
@@ -181,8 +150,6 @@ test('and go the moment Alt is let go of', () => {
   expect(worn()).toEqual([])
 })
 
-/** The price of no wait, and the one Emil chose: a quick Alt+3 shows them for as long as
- *  Alt is down, which is the rule - Alt held is the only condition. */
 test('a quick Alt+3 shows them for as long as Alt is down', () => {
   press('Alt', { altKey: true })
   press('3', { altKey: true })
@@ -200,8 +167,6 @@ test('never come for AltGr, alone or with a digit', () => {
   expect(worn()).toEqual([])
 })
 
-/** #1053: Alt held is the only condition. A chord of its own, the pointer and the wheel
- *  keep them; only Alt let go of, or a word that it is up, puts them away. */
 test('stay through Alt+F4, Alt and an arrow, Alt and Shift, the pointer and the wheel', () => {
   press('Alt', { altKey: true })
   wait(FRAME)
@@ -245,22 +210,18 @@ test("come over a web page, stay through the page's keys, go at the release it t
   const said = (key: string, code: string, down = true) =>
     replay({ key, code, ctrl: false, shift: false, alt: true, repeat: false, down })
 
-  // Alt going down in the page, which the page keeps and the window is told of.
   said('Alt', 'AltLeft')
   wait(FRAME)
   expect(worn()).toEqual(['1', '2', '0'])
 
-  // Alt and a digit, which the crate takes from the page and says as itself.
   said('2', 'Digit2')
   wait(FRAME)
   expect(worn()).toEqual(['1', '2', '0'])
 
-  // Any other key the page had while Alt was held, which the crate names for nothing.
   said('Unidentified', '')
   wait(FRAME)
   expect(worn()).toEqual(['1', '2', '0'])
 
-  // And the release, told from the page as well.
   said('Alt', 'AltLeft', false)
   flushSync()
   expect(worn()).toEqual([])

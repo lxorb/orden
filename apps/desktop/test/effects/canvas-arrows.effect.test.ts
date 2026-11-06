@@ -1,20 +1,3 @@
-/** The bar's two arrows, following a plane that is in no room.
- *
- *  What src/lib/canvas/store.test.ts cannot ask: that test reads `canUndo` by hand
- *  and gets the right answer every time, because a getter answers whatever it is
- *  asked. The bar does not ask. It is handed `canundo={store.canUndo}` and redraws
- *  when something it read has changed, and the snapshot stack is plain arrays, so an
- *  edit changed nothing the bar could see: the Undo arrow stayed dark over a plane
- *  with a card on it while Ctrl+Z took the card away. In a room the arrows were
- *  always right, because what the room says is held as state; see `historyIs`.
- *
- *  So the bar is mounted here the way Canvas.svelte and Pages.svelte mount it, with
- *  its two props read through the store as the page reads them, and the store is
- *  driven the way a gesture drives it. Once for a canvas and once for a page note,
- *  which is the same store wearing pages and had the same dark arrows.
- *
- *  In the jsdom project because it mounts a component. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { blankPages } from '@orden/markdown/pages'
@@ -28,7 +11,6 @@ function card(id: string): CanvasNode {
   return { id, type: 'text', x: 0, y: 0, width: 250, height: 60, text: id }
 }
 
-/** The two surfaces the bar sits on, each opened on a blank file of its own kind. */
 const SURFACES = [
   {
     surface: 'canvas',
@@ -64,8 +46,6 @@ describe.each(SURFACES)('on a $surface', ({ kind, name, blank, Store }) => {
     const held = store
     shown = mount(CanvasBar, {
       target: host,
-      // Getters, which is what a parent's `canundo={store.canUndo}` compiles to: the
-      // bar reads through them, so whatever the store reads is what it follows.
       props: {
         get canundo() {
           return held.canUndo
@@ -89,14 +69,12 @@ describe.each(SURFACES)('on a $surface', ({ kind, name, blank, Store }) => {
     host.remove()
   })
 
-  /** Whether the arrow with this name can be pressed. */
   function lit(label: 'Undo' | 'Redo'): boolean {
     const button = host.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)
     if (!button) throw new Error(`no ${label} on the bar`)
     return !button.disabled
   }
 
-  /** A card put down beside whatever is there, so a page note keeps its page. */
   function put(id: string) {
     store.edit({ ...store.canvas, nodes: [...store.canvas.nodes, card(id)] })
   }
@@ -149,8 +127,6 @@ describe.each(SURFACES)('on a $surface', ({ kind, name, blank, Store }) => {
     expect(lit('Undo')).toBe(true)
     expect(lit('Redo')).toBe(true)
 
-    // A version restored, or a copy a sync brought over: what can be taken back is
-    // forgotten. See `follow`.
     note.replace(blank())
     store.follow()
     flushSync()

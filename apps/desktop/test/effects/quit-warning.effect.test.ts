@@ -1,14 +1,6 @@
 import { flushSync } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** The question before quitting, as the reader meets it: nothing asked while every shell
- *  waits at its prompt, the busy ones named in Orden's own sheet when one runs something,
- *  and each answer going back to the crate - Quit anyway, Cancel, Don't ask again, a row
- *  pressed. And a window's own close, and an AI turn in flight, which are rows too.
- *
- *  In the jsdom project because the sheet needs a document. */
-
-/** What the crate is asked, in order, and what each terminal's shell is doing. */
 const asked: string[] = []
 const busy = new Map<string, boolean>()
 let others: string[] = []
@@ -28,7 +20,6 @@ vi.mock('../../src/lib/tauri', async (actual) => ({
 vi.mock('@tauri-apps/api/window', () => ({ getCurrentWindow: () => ({ label: 'main' }) }))
 vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))
 
-/** The sheet rises through the Web Animations API, which jsdom does not implement. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -43,16 +34,12 @@ const { shells } = await import('../../src/lib/terminal/shells.svelte')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { anythingRuns } = await import('../../src/lib/parting')
 type Tab = import('../../src/lib/workspace.svelte').Tab
-// What the question reads the AI's turns from, and a row pressed goes to, fetched the
-// first time it is asked; fetched here first, since a busy machine took longer over them
-// than a wait for the sheet to rise.
 await Promise.all([
   import('../../src/lib/ai/chat/sends'),
   import('../../src/lib/ai/store.svelte'),
   import('../../src/lib/ai/sidebar/chat.svelte'),
 ])
 
-/** A terminal tab with its shell running, as much of one as the question reads. */
 function terminal(id: string, shown: string, program: string | null): Tab {
   setPty(id, `pty-${id}`)
   busy.set(`pty-${id}`, program !== null)
@@ -93,8 +80,6 @@ afterEach(() => {
   workspace.tabs = was
 })
 
-/** The crate's quit, as far as the question: what it answers, held in an object so the
- *  await here does not wait for it. */
 async function quitting(): Promise<{ answered: Promise<void> }> {
   const answered = quitAsked()
   await vi.waitFor(() => expect(quitAsk.open).toBe(true))

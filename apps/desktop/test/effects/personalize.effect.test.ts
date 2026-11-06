@@ -1,9 +1,3 @@
-/** The first run's optional questions, on the page: the card says the reader is all set,
- *  asks one question at a time when asked, applies each answer at once, and goes with
- *  Done at any of them. See Personalize.svelte.
- *
- *  In the jsdom project because it mounts a component. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import Personalize from '../../src/lib/Personalize.svelte'
@@ -51,7 +45,6 @@ test('says all set, and asks the questions one at a time when asked', async () =
   expect(modes.developer).toBe(true)
   press('Next')
   expect(settings.setup).toBe(2)
-  // A yes starts markdown the way Obsidian's live preview writes it.
   expect(host.querySelector('[aria-checked="true"]')?.textContent.trim()).toBe('Live preview')
 
   press('Clean')

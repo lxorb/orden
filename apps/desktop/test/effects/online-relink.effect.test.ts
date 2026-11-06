@@ -1,15 +1,3 @@
-/** An online terminal whose server makes its way to the machine again (issue 962).
- *
- *  Emil: *"it says "starting machine" here in orden all the time, that's super annoying"*.
- *  The server said `starting` for every link it made again under a machine that never
- *  stopped - the link going quiet, the object restarted by a deploy - and every live
- *  terminal on it gave its screen up to "Starting machine…" until the next output. Now a
- *  dropped link keeps the screen and holds what is typed, says nothing for the second a
- *  relink takes, and says Connecting where it lasts; Starting machine is for a machine
- *  that is starting.
- *
- *  In the jsdom project because the tab's surface is mounted. */
-
 import { flushSync } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { Said } from '../../src/lib/terminal/source'
@@ -29,7 +17,6 @@ vi.mock('../../src/lib/native', () => ({
   invoke: () => Promise.resolve(null),
 }))
 
-/** What the session's source says, and what was sent down it. */
 let said: ((what: Said) => void) | null = null
 const sent: string[] = []
 
@@ -52,7 +39,6 @@ vi.mock('../../src/lib/online/source', async (importOriginal) => ({
 }))
 
 let typing: ((data: string) => void) | null = null
-/** What was written to the screen. */
 const written: string[] = []
 
 vi.mock('@xterm/xterm', () => ({
@@ -172,7 +158,6 @@ afterEach(() => {
   place.remove()
 })
 
-/** An online terminal on its session's screen, live. */
 async function live() {
   const tab = openTerm('/home/emil/Terminal.term')
   if (!tab) throw new Error('no tab')

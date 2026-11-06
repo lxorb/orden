@@ -1,13 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** The grey a click leaves on a row of the file list, and when it goes (#420).
- *
- *  A plain click picks the row and opens its note. A note opened any other way - a
- *  tab, a link, the palette - left that row grey beside the one now open, so the list
- *  said two notes were chosen when one was. The real list on the real workspace, the
- *  disk a map; see test/disk.ts. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
 
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
@@ -34,11 +27,9 @@ let list: ReturnType<typeof mount> | null = null
 
 const rowOf = (path: string) => document.querySelector(`[data-path="${path}"]`)!
 
-/** The rows wearing the grey, by path. */
 const picked = () =>
   [...document.querySelectorAll<HTMLElement>('.row.is-picked')].map((row) => row.dataset.path)
 
-/** A plain click on a row, and the note it opens open. */
 async function click(path: string, held: MouseEventInit = {}) {
   rowOf(path).dispatchEvent(new MouseEvent('click', { bubbles: true, ...held }))
   if (!held.shiftKey) await vi.waitFor(() => expect(workspace.active?.path).toBe(path))
@@ -46,7 +37,6 @@ async function click(path: string, held: MouseEventInit = {}) {
 }
 
 beforeEach(async () => {
-  // A note opened is scrolled to, and jsdom lays nothing out to scroll.
   HTMLElement.prototype.scrollIntoView = () => undefined
   const one = disk.current!
   one.reset()

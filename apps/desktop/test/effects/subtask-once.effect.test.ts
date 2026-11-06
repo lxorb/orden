@@ -1,14 +1,6 @@
-/** A sub-task typed into a task's view is written once, however often Enter is pressed.
- *
- *  The field keeps its words until the sub-task is written, so one turned away is still
- *  there (B285). That leaves the words in the field for the whole write, and a second
- *  Enter in that time used to write the same sub-task again. In the jsdom project
- *  because it mounts the view and presses real keys. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 
-/** jsdom has no animations, and the view slides in. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -30,7 +22,6 @@ vi.mock('../../src/lib/rows/rows.svelte', () => ({
   rows: { of: () => [row], watch: () => () => undefined },
 }))
 
-/** Every sub-task written, and the answer each is waiting for. */
 const subtasks: string[] = []
 let answer: ((ok: boolean) => void) | null = null
 vi.mock('../../src/lib/views/act', async (original) => ({

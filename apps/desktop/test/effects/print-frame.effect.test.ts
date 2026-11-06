@@ -1,32 +1,13 @@
-/** Where the keyboard is once a print is over.
- *
- *  A print is shown in a frame of its own, and the frame is focused because an
- *  engine prints the window that has the keyboard. The frame then goes away, and
- *  whoever was typing has to get the keyboard back: a reader who printed a note
- *  from the palette and carried on typing was typing into nothing.
- *
- *  jsdom has no print dialog and no fonts, so the frame's own window is stood in
- *  for - its `focus` moves the real focus to the real frame element, which is what
- *  a browser does when focus goes inside one, and its `print` does nothing, which
- *  is what a headless engine does too. Everything else is the app's own code, the
- *  frame included: it is found in the page where `printInFrame` put it. */
-
 import { afterEach, expect, test } from 'vitest'
 
 import { printInFrame } from '../../src/lib/export'
 
 interface Shown {
   frame: HTMLIFrameElement
-  /** What the code asked to be told about the dialog closing. */
   closed: () => void
   printed: number
 }
 
-/** The frame a print is being shown in, with a window it can use.
- *
- *  Called straight after `printInFrame`, which appends the frame before it waits
- *  for anything, so the frame is already in the page and its load has not been
- *  heard yet. */
 function shown(): Shown {
   const frame = document.querySelector<HTMLIFrameElement>('iframe[aria-hidden="true"]')
   if (!frame) throw new Error('the print put no frame in the page')
@@ -56,14 +37,12 @@ function shown(): Shown {
   return held
 }
 
-/** The frame's load, and the two microtasks the fonts are awaited over. */
 async function loaded(held: Shown): Promise<void> {
   held.frame.dispatchEvent(new Event('load'))
   await Promise.resolve()
   await Promise.resolve()
 }
 
-/** A field somebody is typing in, holding the keyboard. */
 function typing(): HTMLInputElement {
   const field = document.createElement('input')
   document.body.append(field)
@@ -87,7 +66,6 @@ test('the keyboard goes back to whoever had it when the dialog closes', async ()
   expect(held.printed).toBe(1)
   expect(document.activeElement).toBe(held.frame)
 
-  // The reader closes the dialog.
   held.closed()
   await printing
 
@@ -102,8 +80,6 @@ test('a print does not take the keyboard off what the reader moved to', async ()
   const held = shown()
   await loaded(held)
 
-  // Somebody clicked into something else while the dialog was up, so the frame is
-  // not holding the keyboard any more and the print must not pull it back.
   const other = document.createElement('button')
   document.body.append(other)
   other.focus()

@@ -1,11 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { overlays } from '../../src/lib/overlays'
 
-/** A popup held by a box wider than what it draws: the canvas's pens and their panel, in
- *  a strip the width of the pane (#382). A press in the bare box beside them is past the
- *  popup, and closes it; a press on what it draws - a panel's own padding included -
- *  is not. In the effects project for its document and its styles. */
-
 let strip: HTMLDivElement
 let panel: HTMLDivElement
 let button: HTMLButtonElement

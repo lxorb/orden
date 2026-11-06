@@ -1,13 +1,3 @@
-/** A swipe over a pane, heard the way the window hears it and answered the way a reader
- *  sees it: the arrow comes in, and Back or Forward is pressed for the tab - or nothing
- *  is, when the swipe was short, the content took it, it was over the strip, or the
- *  setting is off.
- *
- *  In the jsdom project because the arrow is mounted and the window's listeners are
- *  real. The machine's numbers are gesture.test.ts's; what this holds is the wiring
- *  round it: the quiet that stands for fingers lifting, the step taken once, a page's
- *  swipe said by the crate, and the arrow played out and gone. See src/lib/back-swipe. */
-
 import { flushSync } from 'svelte'
 import { SvelteMap } from 'svelte/reactivity'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
@@ -21,12 +11,9 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   invoke: () => Promise.resolve(undefined),
 }))
 
-/** Two tabs: a note that has somewhere to go back to and nowhere forward, and a web tab
- *  whose page can go back. Pressed Back and Forward are written down. */
 const pressed: string[] = []
 const note = { id: 'n1', kind: 'note', paneId: 'p1', canGoBack: true, canGoForward: false }
 const site = { id: 'w1', kind: 'web', paneId: 'p2', canGoBack: false, canGoForward: false }
-/** What each pane shows: another tab chosen in it, or none, is written here. */
 const shownIn = new SvelteMap<string, unknown>()
 
 vi.mock('../../src/lib/workspace.svelte', () => ({
@@ -45,8 +32,6 @@ vi.mock('../../src/lib/web-tab/pages.svelte', () => ({
   pages: { of: () => ({ back: true, forward: false, zoom: 2 }) },
 }))
 
-/** A window of 1024 by 768 with every pane 800 wide, its strip 40 tall: jsdom does no
- *  layout, and the arrow and a finger from the side both measure the pane. */
 Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
   const strip = this.classList.contains('head')
   const rect = { x: 0, y: 0, width: 800, height: strip ? 40 : 600 }
@@ -89,22 +74,15 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-/** The clock the events are stamped on. A machine under load leaves a gap of its own
- *  between two events dispatched one after the other, and the gesture reads speed off
- *  the stamps: a steady sweep would then look like a pad coasting, and decide itself
- *  before the fingers lifted. So every event says when it was, a touchpad's 8 ms apart. */
 let clock = 1000
 const STEP = 8
 
-/** An event stamped at the next tick of `clock`. */
 function stamped<T extends Event>(event: T): T {
   clock += STEP
   Object.defineProperty(event, 'timeStamp', { value: clock })
   return event
 }
 
-/** Two fingers swept `steps` times by `dx` over `at`, as a touchpad reports them; or, with
- *  `notch`, a tilted wheel, which says its turn in whole notches as well. */
 function sweep(at: Element, steps: number, dx: number, init: WheelEventInit = {}, notch = 0) {
   for (let one = 0; one < steps; one++) {
     const event = stamped(
@@ -116,7 +94,6 @@ function sweep(at: Element, steps: number, dx: number, init: WheelEventInit = {}
   flushSync()
 }
 
-/** The fingers lifted: the touchpad goes quiet. */
 function letGo() {
   vi.advanceTimersByTime(QUIET + 1)
   flushSync()
@@ -124,7 +101,6 @@ function letGo() {
 
 const arrow = () => document.querySelector('.nib-swipe')
 
-/** The one element `selector` finds. */
 function found(selector: string): HTMLElement {
   const one = document.querySelector<HTMLElement>(selector)
   if (!one) throw new Error(`nothing is ${selector}`)
@@ -203,17 +179,12 @@ test('a scroll the content can take is the content s', () => {
   letGo()
   expect(pressed).toEqual([])
 
-  // At its left edge, the next stream is a swipe.
   wide.scrollLeft = 0
   sweep(cell, 40, -10)
   letGo()
   expect(pressed).toEqual(['back n1'])
 })
 
-/** #407: the window hears a wheel after the content has scrolled with it, so a scroller
- *  with a little way to go is at its edge by the time it is asked. The scroll it made says
- *  whose the stream is: it is the scroller's, to the end, with no arrow and no step - and
- *  a stream that moved nothing, at the same edge, is a swipe as before. */
 test('a stream that moved a scroller is the scroller s, though it is at its edge when asked', () => {
   const wide = document.createElement('div')
   wide.style.overflowX = 'auto'
@@ -225,11 +196,9 @@ test('a stream that moved a scroller is the scroller s, though it is at its edge
   const cell = document.createElement('span')
   wide.append(cell)
   words.append(wide)
-  // Where it stood, a while ago.
   wide.dispatchEvent(stamped(new Event('scroll')))
   clock += 1000
 
-  // The sweep's own first steps took it the last six pixels before the window heard them.
   wide.scrollLeft = 0
   wide.dispatchEvent(stamped(new Event('scroll')))
   sweep(cell, 40, -10)
@@ -237,7 +206,6 @@ test('a stream that moved a scroller is the scroller s, though it is at its edge
   letGo()
   expect(pressed).toEqual([])
 
-  // At the edge and moving nothing, the next stream is a swipe.
   clock += 1000
   sweep(cell, 40, -10)
   expect(arrow()).not.toBeNull()
@@ -261,7 +229,6 @@ test('switched off, a swipe is a scroll and nothing else', () => {
 })
 
 test('a page s swipe, said by the crate, steps its tab in the window s pixels', () => {
-  // Twenty steps of the page's 10 pixels at a zoom of two are 400 of the window's.
   for (let at = 0; at < 20; at++) {
     pageSaid({ tab: 'w1', kind: 'wheel', dx: -10, dy: 0, at: at * 8, left: false, right: false })
   }
@@ -280,14 +247,12 @@ test('a page that took the scroll says so, and keeps it', () => {
 })
 
 test('a scroll down that drifts sideways is a scroll down, to its end', () => {
-  // Straight down first, then a hand that wanders: no arrow, and nowhere to go.
   sweep(words, 10, 0, { deltaY: 10 })
   sweep(words, 40, -10, { deltaY: 1 })
   expect(arrow()).toBeNull()
   letGo()
   expect(pressed).toEqual([])
 
-  // Over a page, said with what went down before the first sideways step.
   pageSaid({ tab: 'w1', kind: 'wheel', dx: -1, dy: 120, at: 0, left: false, right: false })
   for (let at = 1; at < 20; at++) {
     pageSaid({ tab: 'w1', kind: 'wheel', dx: -10, dy: 0, at: at * 8, left: false, right: false })
@@ -304,12 +269,10 @@ test('one swipe is one step: the coast that carries on after it is nobody s', ()
   letGo()
   expect(pressed).toEqual(['back n1'])
 
-  // The pad coasting on over the note the step brought, after the gap the step left.
   sweep(words, 40, -10)
   letGo()
   expect(pressed).toEqual(['back n1'])
 
-  // A hand that lifts and sweeps again goes again.
   now.mockReturnValue(10_000 + SETTLE + 1)
   sweep(words, 40, -10)
   letGo()
@@ -333,7 +296,6 @@ test('a finger from the side of the pane goes back when it lifts far enough alon
   touch('touchend', 404)
   expect(pressed).toEqual(['back n1'])
 
-  // One that lands in the middle of the note is a pan.
   pressed.length = 0
   touch('touchstart', 300)
   for (let x = 310; x <= 700; x += 10) touch('touchmove', x)
@@ -350,8 +312,6 @@ test('over a web page the arrow comes in over the page s picture, and is a layer
     pageSaid({ tab: 'w1', kind: 'wheel', dx: -10, dy: 0, at: at * 8, left: false, right: false })
   }
   flushSync()
-  // The room the arrow comes in over covers the page while the fingers are on, and the
-  // circle is the layer it is cut round until the page's picture is in; see covers.ts.
   expect(layersOver(hole).map((one) => one.scrim)).toEqual([true, false])
 
   letGo()
@@ -360,7 +320,6 @@ test('over a web page the arrow comes in over the page s picture, and is a layer
   expect(layersOver(hole)).toEqual([])
 })
 
-/** A gesture as the replays write it down; see swipe-replays.json. */
 type Op =
   | ['fingers', number]
   | ['sweep' | 'flick' | 'coast', number, number]
@@ -370,8 +329,6 @@ type Op =
 
 const { replays } = recorded as unknown as { replays: { name: string; do: Op[] }[] }
 
-/** Plays a replay over the note, on one clock for the events and the window alike, and
- *  says what was stepped after each `expect`, for the test to hold up against it. */
 function replay(ops: readonly Op[]) {
   const now = vi.spyOn(performance, 'now').mockImplementation(() => clock)
   const seen: { wanted: string[]; got: string[] }[] = []
@@ -428,7 +385,6 @@ describe('gestures replayed on a precision touchpad, which says when the fingers
     expect(arrow()?.classList.contains('went')).toBe(true)
   })
 
-  /** From the side and from the fingers' first step (#1050), not from the start. */
   test('the arrow comes in with the fingers, pixel for pixel', () => {
     replay([
       ['fingers', 2],
@@ -462,10 +418,7 @@ describe('gestures replayed on a precision touchpad, which says when the fingers
   })
 })
 
-/** Every swipe ends (#1119): however its stream stops, the arrow plays out and goes, and
- *  nothing is left for the window to draw. */
 describe('every swipe ends', () => {
-  /** A finger on the screen, over the note. */
   const touch = (type: string, x: number) => {
     const event = stamped(new Event(type, { bubbles: true })) as Event & { touches: unknown[] }
     Object.defineProperty(event, 'touches', {
@@ -475,10 +428,8 @@ describe('every swipe ends', () => {
     flushSync()
   }
 
-  /** A moment later there is no arrow, and nothing says there is one. */
   function over() {
     flushSync()
-    // Played out, if it is there at all: never still with the fingers.
     const left = arrow()
     if (left) expect(['went', 'stayed'].some((one) => left.classList.contains(one))).toBe(true)
     vi.advanceTimersByTime(PLAYS + 1)

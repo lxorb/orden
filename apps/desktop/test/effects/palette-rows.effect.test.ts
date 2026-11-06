@@ -2,19 +2,6 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { computed, root } from './runes.svelte'
 
-/** Building the palette's rows writes nothing.
- *
- *  The palette works its list out in a `$derived`, and a derived may not write state
- *  made outside it: Svelte throws `state_unsafe_mutation` and the palette never
- *  opens. The export rows used to bring the note's words forward while they were
- *  being built, so opening the palette in the pause between a keystroke and the save
- *  that follows it failed, every time. A row reads; whatever it needs written first
- *  is written by its `run`.
- *
- *  Every list the palette and the `/` menu are built from is read here through a
- *  derived, the way a component reads it, with a note typed in and not yet brought
- *  forward - which is the state that found the bug. */
-
 const notes = new Map<string, string>()
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
@@ -48,7 +35,6 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   },
 }))
 
-/** Svelte plays a transition through the Web Animations API, which jsdom lacks. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -67,7 +53,6 @@ const { workspace } = await import('../../src/lib/workspace.svelte')
 const { appCommands, blockRows, exportCommands } = await import('../../src/lib/commands')
 const { default: Palette } = await import('../../src/lib/Palette.svelte')
 
-/** A note open and typed in, its words still a step behind what the editor holds. */
 async function typed() {
   await workspace.open('/space/One.md')
   const note = workspace.active?.note
@@ -76,7 +61,6 @@ async function typed() {
   note.live.edit([{ from: note.live.text.length, to: note.live.text.length, insert: ' more' }])
 }
 
-/** What `$derived(of())` answers inside a component, or what it throws. */
 function derived<T>(of: () => T): T {
   let read: (() => T) | undefined
   const stop = root(() => {
@@ -128,8 +112,6 @@ test('the export rows still answer what the note has just become', async () => {
   const note = workspace.active?.note
   if (!note) throw new Error('nothing opened')
 
-  // A rule between two written lines is what makes a note a deck; typed, and not yet
-  // brought forward, it is already one to the export rows.
   const end = note.live.text.length
   note.live.edit([{ from: end, to: end, insert: '\n\n---\n\nTwo' }])
 

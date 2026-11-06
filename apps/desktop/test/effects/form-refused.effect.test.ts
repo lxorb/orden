@@ -2,9 +2,6 @@ import { readBase } from '@orden/bases'
 import { flushSync, mount, unmount } from 'svelte'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** What the form keeps when Send makes nothing: a note refused, as one in a space
- *  shared to be read is, leaves what was typed where it was typed. */
-
 const made = vi.hoisted(() => ({ titles: [] as string[] }))
 vi.mock('../../src/lib/views/add', () => ({
   addNote: (

@@ -4,22 +4,6 @@ import { EditorView } from '@orden/editor'
 import CanvasNode from '../../src/lib/CanvasNode.svelte'
 import { flushCardEdits } from '../../src/lib/canvas/writing'
 
-/** What a press does while a canvas card is being written in.
- *
- *  The card's own handler runs in the capture phase, on the box the editor is
- *  mounted inside, which means it runs before anything else sees the press at all -
- *  including the editor in the card. It used to stop every press that was not
- *  Escape, and that one line took three things away at once: the editor never got
- *  Enter, so a card answered the key with the browser's own line break and put in two;
- *  it never got Ctrl+B or Ctrl+Z either; and no app shortcut worked while the caret
- *  was in a card, because the press never left it. See `onKey` in CanvasNode.svelte.
- *
- *  So this is about propagation and nothing else: a press that is not Escape reaches
- *  what is above the card, and Escape is the one the card answers itself.
- *
- *  In the jsdom project because it mounts a component and dispatches a real event. */
-
-/** jsdom implements neither, and a mounted editor asks for both. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -37,11 +21,8 @@ Element.prototype.scrollIntoView = () => undefined
 let target: HTMLElement
 let close: (() => void) | undefined
 
-/** Every press that got past the card, as whatever is above it would see them. */
 let heard: string[]
-/** Whether the card asked to be left. */
 let left: number
-/** Every set of words the card handed to the plane. */
 let given: string[]
 
 beforeEach(() => {
@@ -59,7 +40,6 @@ afterEach(() => {
   target.remove()
 })
 
-/** One text card, open and being written in. */
 function card() {
   const component = mount(CanvasNode, {
     target,
@@ -88,7 +68,6 @@ function card() {
   return box
 }
 
-/** A press on the editor inside the card, as a keyboard makes one. */
 function press(box: Element, key: string, held: { ctrlKey?: boolean } = {}) {
   const inside = box.querySelector('.cm-content') ?? box
   inside.dispatchEvent(
@@ -106,10 +85,6 @@ test('a press that is not Escape reaches what is above the card', () => {
   expect(heard).toEqual(['Enter', 'b', 'p'])
 })
 
-/** The other half of the same card. What is typed in one reaches the plane when the
- *  caret leaves, so everything that reads the plane in between reads a card that is
- *  still empty: saving on purpose wrote a blank card over the file, and a window shut
- *  mid-word wrote the plane without the word in it. See canvas/writing.ts. */
 test('the words in a card can be asked for before the caret has left it', () => {
   const box = card()
   const view = EditorView.findFromDOM(box as HTMLElement)
@@ -121,7 +96,6 @@ test('the words in a card can be asked for before the caret has left it', () => 
   flushCardEdits()
   expect(given).toEqual(['one and more'])
 
-  // Asked twice is one edit: the flush and the teardown that follows it both say it.
   flushCardEdits()
   expect(given).toEqual(['one and more'])
 })

@@ -1,17 +1,6 @@
-/** The keyboard back where it was: as the window comes back, and as a layer closes.
- *
- *  Emil, 2026-09-30: *"when I Alt+Tab out of nib and back in, I usually have to click
- *  again before I can type."* The crate hands the keyboard back to the webview that had
- *  it (src-tauri/src/keyboard.rs, where its record is tested); this is the app's own page
- *  keeping the element it was in - a real note's editor and a terminal's input - and
- *  asking the crate for a site's page before its own element when one of its layers
- *  closes. In the jsdom project because the editor is a real one. */
-
 import { createEditor, type EditorView } from '@orden/editor'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** What the crate was asked, in order, and whether a site in a web tab has the keyboard,
- *  which is what `keyboard_went` and `keyboard_back` answer. */
 const asked: string[] = []
 let pageTakesIt = false
 
@@ -25,8 +14,6 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   },
 }))
 
-// jsdom lays nothing out, and a focused editor measures where its caret is; an empty
-// list of boxes is what a range with no layout has.
 Range.prototype.getClientRects = () => [] as unknown as DOMRectList
 Range.prototype.getBoundingClientRect = () => new DOMRect()
 
@@ -37,16 +24,12 @@ let editor: EditorView
 let terminal: HTMLTextAreaElement
 let place: HTMLElement
 
-/** A few frames, which is how long a layer's way out is looked at for. */
 async function frames(count = 4) {
   for (let one = 0; one < count; one++) {
     await new Promise((done) => requestAnimationFrame(() => done(undefined)))
   }
 }
 
-/** The window let go of the keyboard and took it back. Where the engine kept the element
- *  focused this is nothing; `lost` is the case this is a net for, the page coming back
- *  with nothing focused. */
 async function awayAndBack(lost: boolean) {
   window.dispatchEvent(new FocusEvent('blur'))
   if (lost) (document.activeElement as HTMLElement | null)?.blur()
@@ -56,8 +39,6 @@ async function awayAndBack(lost: boolean) {
   having.mockRestore()
 }
 
-/** A layer on the stack with a field of its own that takes the keyboard, and the way to
- *  close it: taken off the stack and out of the document, as a sheet goes. */
 function layer(): () => void {
   const box = document.createElement('div')
   box.className = 'nib-layer'
@@ -80,7 +61,6 @@ beforeEach(() => {
   terminal = document.createElement('textarea')
   terminal.className = 'xterm-helper-textarea'
   place.append(terminal)
-  // Every test starts with the page having let go of the keyboard once, to nothing.
   pageTakesIt = false
   window.dispatchEvent(new FocusEvent('blur'))
   document.documentElement.removeAttribute('data-keyboard-in-page')

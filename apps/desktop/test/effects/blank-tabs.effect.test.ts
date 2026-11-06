@@ -1,7 +1,3 @@
-/** A new tab nothing was done with goes a turn after it is left, and not while the tab
- *  overview is up (#1040). Which tab goes is workspace.test.ts; this is when. See
- *  workspace/blank-tabs.svelte.ts. */
-
 import { beforeEach, expect, test, vi } from 'vitest'
 
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({

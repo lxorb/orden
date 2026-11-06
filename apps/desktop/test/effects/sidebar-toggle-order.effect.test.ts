@@ -1,13 +1,3 @@
-/** Tab after a sidebar opened from its toggle (#523).
- *
- *  The left side is ahead of the bar in the page and the right one past a note Tab cannot
- *  leave, so Tab from the toggle went on to the tabs and the note. It goes into the side
- *  it just opened, once: a toggle that always did would be a ring, the left side leading
- *  back to the bar.
- *
- *  In the jsdom project because it mounts a component. Tab is the engine's own to walk, so
- *  what is read here is whether the toggle took it. */
-
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
@@ -65,7 +55,6 @@ test('Tab after opening with a key goes into the side, and Shift+Tab back', () =
   expect(tab(inside, true)).toBe(true)
   expect(document.activeElement).toBe(toggle)
 
-  // Once: from here Tab goes on along the bar, or nothing gets past the toggle.
   expect(tab(toggle)).toBe(false)
 })
 

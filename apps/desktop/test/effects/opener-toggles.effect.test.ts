@@ -2,25 +2,10 @@ import { afterEach, beforeEach, expect, test } from 'vitest'
 import { menu } from '../../src/lib/menu.svelte'
 import { overlays } from '../../src/lib/overlays'
 
-/** A second press on the control that opened a menu, a popover or a picker closes it,
- *  and does not open it again (#1039).
- *
- *  The press past a popup closed it on its way down, and the click of the same press
- *  then reached the button that had opened it, which opened it again: the `⋯` on a web
- *  tab's bar, and every button of its kind. A popup that held its button stayed open on
- *  the way down, and then each button had to toggle by itself, and a key - which presses
- *  nothing down - went to the button's own answer either way. So the control is noticed
- *  by overlays.ts as its click goes by, whatever opens, and a click on it while what it
- *  opened is open closes that. Played here the way App.svelte wires it: the press and
- *  the click read on the way down, before the button hears them. */
-
 let host: HTMLElement
 let opened = 0
 let shut = 0
 
-/** A button that opens a popup, as every one in the app does: its click sets some
- *  state, and an effect puts the popup on the stack a moment later. `holdsButton` is the
- *  shape some popups took to stay open for a press on their button. */
 function trigger(holdsButton = false) {
   const button = host.appendChild(document.createElement('button'))
   const label = button.appendChild(document.createElement('span'))
@@ -49,7 +34,6 @@ function trigger(holdsButton = false) {
   return { button, label, surface, it }
 }
 
-/** A press: down, then the click, each read by the stack first. */
 async function press(target: Element, pointer = true) {
   if (pointer) target.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
   target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
@@ -88,7 +72,6 @@ test.each([false, true])(
     expect([opened, shut]).toEqual([1, 1])
     expect(overlays.depth).toBe(0)
 
-    // And the press after that opens it again.
     await press(button)
     expect(it.open).toBe(true)
     expect(opened).toBe(2)
@@ -148,7 +131,6 @@ test('a popup opened by no click has no button to be closed from', async () => {
     () => [],
   )
   await press(other, false)
-  // A click past it with nothing pressed down: not its button, and so not its to close.
   expect(open).toBe(true)
 })
 

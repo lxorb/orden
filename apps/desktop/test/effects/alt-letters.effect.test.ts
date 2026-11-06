@@ -1,10 +1,3 @@
-/** The Essentials' letters and the tabs' numbers are one sight (#1051): wherever the
- *  keyboard is - a note, a terminal, the top bar, a web page - holding Alt shows both,
- *  and Alt and a letter goes to its Essential from there as Alt and a digit goes to a
- *  tab. One hold and one test of whether to show; see lib/tab-strip/numbers.svelte.ts.
- *
- *  In the jsdom project because the numbers are a component the store mounts. */
-
 import { flushSync } from 'svelte'
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 
@@ -26,8 +19,6 @@ vi.mock('../../src/lib/essentials.svelte', () => ({
   openEssential: (path: string) => void opened.push(path),
 }))
 
-/** The numbers fade in and out through the Web Animations API, which jsdom does not
- *  have. How they move is paint. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -58,7 +49,6 @@ beforeAll(() => {
     )
   }
   document.body.append(strip)
-  // The Essential's tile, in the sidebar.
   strip.insertAdjacentHTML('afterend', '<button class="tile" data-essential-letter="N"></button>')
 
   vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
@@ -81,7 +71,6 @@ beforeEach(() => {
 
 afterEach(() => {
   window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt' }))
-  // A key between, so the next test's Alt is no second tap of this one's (#331).
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', code: 'KeyA' }))
   document.querySelector('.focus-place')?.remove()
   vi.useRealTimers()
@@ -99,7 +88,6 @@ const press = (target: EventTarget, init: KeyboardEventInit) => {
   return event
 }
 
-/** Where the keyboard can be in the app's own page, as each is made. */
 const PLACES = {
   note: () => {
     const editor = document.createElement('div')

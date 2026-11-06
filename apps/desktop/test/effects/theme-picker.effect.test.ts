@@ -7,11 +7,6 @@ import { theme } from '../../src/lib/theme.svelte'
 import { store } from '../../src/lib/themes/store.svelte'
 import { picking, pickTheme } from '../../src/lib/theme-picker/picking.svelte'
 
-// What the picker and a theme tried on fetch the first time they are wanted - the
-// wallpaper's sheet and its settings, glass's and the effect it follows what is open
-// with, the tokens a card is drawn from - fetched before any test: a machine running
-// three gates took longer over them than a poll waits, and an arrow that tried glass on
-// left its follower still loading once the file was torn down.
 await Promise.all([
   import('@orden/themes/glass'),
   import('../../src/lib/glass/settings'),
@@ -25,24 +20,8 @@ await Promise.all([
   import('@orden/themes/tokens.css?raw'),
 ])
 
-/** The theme picker, which Emil asked for in as many words: *"It should be openable
- *  either by right-clicking on the dark/light theme switch or by using the global
- *  search. And then, by just hovering on a theme, we already get a preview. And when
- *  we click it, it will be selected."*
- *
- *  So these ask exactly that of the real stores: that a right click on the switch
- *  and the palette's row both open it, that pointing at a theme puts it on the page
- *  without writing anything down, that every way of leaving without choosing puts
- *  back what was there, and that a click keeps. What it looks like is paint, which
- *  the drive in a real browser photographs.
- *
- *  In the jsdom project because it mounts components into a document. */
-
-/** The card the keys land on is kept in view, and jsdom has no view. */
 Element.prototype.scrollIntoView = () => undefined
 
-/** The grid's scrollbar and the scheme marks' groove measure themselves, and jsdom
- *  lays nothing out. */
 class NoLayout {
   observe() {
     // Nothing to measure.
@@ -59,7 +38,6 @@ class NoLayout {
 
 globalThis.ResizeObserver = NoLayout
 
-/** A theme with both sides, as `reload` would have read it out of the folder. */
 const ROSE = {
   id: 'file:rose',
   name: 'Rose',
@@ -72,7 +50,6 @@ const ROSE = {
 const root = document.documentElement
 const sheet = () => document.getElementById('nib-user-theme')?.textContent ?? ''
 
-/** Everything written down, as it stands. */
 const storage = () =>
   Object.fromEntries(
     Array.from({ length: localStorage.length }, (_, at) => localStorage.key(at) ?? '').map(
@@ -86,8 +63,6 @@ const card = (name: string) => cards().find((one) => one.textContent.includes(na
 const grid = () => document.querySelector<HTMLElement>('[role="listbox"]')
 const field = () => dialog()?.querySelector('input') ?? null
 
-/** What a pointer passing over something does; the picker reads movement rather
- *  than arrival, so a card that slides under a still pointer is not tried. */
 function pointAt(element: Element | undefined) {
   if (!element) throw new Error('nothing there to point at')
   element.dispatchEvent(new Event('pointermove', { bubbles: true }))
@@ -140,12 +115,10 @@ test('a right click on the light and dark switch opens it', async () => {
   button?.dispatchEvent(
     new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 200, clientY: 700 }),
   )
-  // The picker is fetched by the press, so it is there a module load later.
   await expect.poll(() => picking.open).toBe(true)
   flushSync()
 
   expect(dialog()).not.toBeNull()
-  // Beside the switch, where the press landed along it.
   expect(picking.at?.x).toBe(200)
 
   void unmount(foot, { outro: false })
@@ -265,11 +238,8 @@ test('the arrows try each theme in turn, and Enter keeps the one they are on', a
   expect(theme.id).toBe('wallpaper')
   press('ArrowRight')
   expect(theme.id).toBe('file:rose')
-  // Three across: down is a row, which from Rose is past the end, so the store -
-  // and the store is not a theme, so the kept one is back while the keys are on it.
   press('ArrowDown')
   expect(theme.id).toBe('default')
-  // Up from the store is a row back: the card above it, Glass.
   press('ArrowUp')
   expect(theme.id).toBe('glass')
   expect(localStorage.getItem('nib:theme')).toBeNull()
@@ -323,11 +293,8 @@ test('the scheme and the accent are tried the same way and kept with a click', a
   light?.click()
   flushSync()
   expect(localStorage.getItem('nib:theme-scheme')).toBe('light')
-  // Still open: the scheme is a part of the look, not the end of choosing one.
   expect(picking.open).toBe(true)
 
-  // The accent is a theme setting, kept in the app's own drawer of them; see
-  // themes/settings.ts.
   const keptAccent = () =>
     (
       JSON.parse(localStorage.getItem('nib:theme-settings') ?? '{}') as Record<
@@ -344,7 +311,6 @@ test('the scheme and the accent are tried the same way and kept with a click', a
   flushSync()
   expect(keptAccent()).toBe('teal')
 
-  // And leaving now gives back what was kept, which is what was just clicked.
   expect(overlays.escape()).toBe(true)
   flushSync()
   expect(theme.scheme).toBe('light')
@@ -365,7 +331,6 @@ test('draws the wallpaper with the picture the window would wear, and tries it o
   theme.rewear('wallpaper')
   await opened()
 
-  // The card is drawn from the theme's own sheet once it has arrived, picture and all.
   await expect
     .poll(() =>
       card('Wallpaper')

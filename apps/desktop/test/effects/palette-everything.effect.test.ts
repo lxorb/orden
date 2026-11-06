@@ -1,14 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 
-/** The palette as one search: typed into with no mark, it lists the commands, the
- *  settings and the notes together, draws the letters each row was found by, and a
- *  switch found there is flipped where it stands. What is found and in what order is
- *  palette/rank.ts and its tests; this is what the reader sees and presses.
- *
- *  In the jsdom project because a field, a list and a key need a document. */
-
-/** Svelte plays a transition through the Web Animations API, which jsdom lacks. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -23,8 +15,6 @@ Element.prototype.animate = () =>
 
 Element.prototype.scrollIntoView = () => undefined
 
-/** The list wears the app's own scrollbar (#775), which watches the list's size; jsdom
- *  lays nothing out, so nothing is ever there to see. */
 class NoLayout {
   observe() {
     // jsdom never moves anything.
@@ -114,8 +104,6 @@ test('flips a switch where it stands, and stays up to show it', () => {
   if (modes.closeBrackets !== before) modes.toggleCloseBrackets(undefined)
 })
 
-/** A mode under the arrows is tried on the whole app, as the theme picker tries one,
- *  and closing without choosing puts back what was kept. See palette/trying.ts. */
 test('tries a mode on while the arrows are on it, and takes it off on the way out', () => {
   const was = theme.scheme
   const other = was === 'dark' ? 'light' : 'dark'

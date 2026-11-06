@@ -1,12 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** The Hidden tabs question as the reader meets it: the app's own question sheet, its
- *  title and two answers, Escape taking it away with nothing decided, and an answer
- *  closing it and becoming the setting.
- *
- *  In the jsdom project because the sheet needs a document. */
-
 vi.mock('../../src/lib/tauri', async (actual) => ({
   ...(await actual<typeof import('../../src/lib/tauri')>()),
   isDesktop: true,
@@ -19,7 +13,6 @@ vi.mock('../../src/lib/own-window', () => ({
 }))
 vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))
 
-/** The sheet rises through the Web Animations API, which jsdom does not implement. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -37,7 +30,6 @@ type Tab = import('../../src/lib/workspace.svelte').Tab
 let target: HTMLElement
 let close: (() => void) | undefined
 
-/** A web tab out of sight with its page running: as much of a tab as the store reads. */
 function running(id: string): Tab {
   pages.of(id).live = true
   return { id, kind: 'web', paneId: 'aside' } as Tab

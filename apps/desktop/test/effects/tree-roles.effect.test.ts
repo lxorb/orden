@@ -1,13 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** The file list, as a screen reader hears it (#523).
- *
- *  It was a flat list of buttons, so "Ledger" inside "Field notes" was announced at the
- *  same level as "Field notes" itself. It is a tree now: each row a treeitem with its
- *  level, its place among the notes beside it, whether it is open, and whether it is
- *  picked. The real list on the real workspace, the disk a map; see test/disk.ts. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
 
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
@@ -74,7 +67,6 @@ test('the list is a tree, and every row in it a treeitem', () => {
   expect(tree?.getAttribute('aria-multiselectable')).toBe('true')
   expect(said(PLAN, 'role')).toBe('treeitem')
   expect(said(FIELD, 'role')).toBe('treeitem')
-  // What holds a row says nothing of its own, so the treeitems are the tree's own.
   for (const holder of document.querySelectorAll('[data-row]')) {
     expect(holder.getAttribute('role')).toBe('none')
   }
@@ -83,7 +75,6 @@ test('the list is a tree, and every row in it a treeitem', () => {
 test('a note inside another is one level deeper, and counted among its own', async () => {
   if (!workspace.isExpanded(FIELD)) workspace.toggleFolder(FIELD)
   flushSync()
-  // The rows a twist discloses slide in.
   await vi.waitFor(() => expect(rowOf(LEDGER)).not.toBeNull(), { timeout: 10_000 })
 
   expect(said(FIELD, 'aria-level')).toBe('1')
@@ -91,7 +82,6 @@ test('a note inside another is one level deeper, and counted among its own', asy
   expect(said(LEDGER, 'aria-level')).toBe('2')
   expect(said(ATLAS, 'aria-level')).toBe('2')
 
-  // Two in the folder, two at the top.
   expect([said(ATLAS, 'aria-posinset'), said(ATLAS, 'aria-setsize')]).toEqual(['1', '2'])
   expect([said(LEDGER, 'aria-posinset'), said(LEDGER, 'aria-setsize')]).toEqual(['2', '2'])
   expect([said(FIELD, 'aria-posinset'), said(FIELD, 'aria-setsize')]).toEqual(['1', '2'])
