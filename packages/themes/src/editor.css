@@ -2147,11 +2147,19 @@
 }
 
 .nib-properties {
+  position: relative;
   white-space: normal;
-  margin-bottom: 0.8em;
-  padding-bottom: 0.2em;
-  border-bottom: 1px solid var(--line);
+  padding-bottom: calc(0.2em + 1px + 0.8em);
   animation: settle-in var(--dur-base) var(--ease-out);
+}
+
+.nib-properties::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0.8em;
+  border-bottom: 1px solid var(--line);
+  pointer-events: none;
 }
 
 #write .nib-properties .properties {

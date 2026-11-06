@@ -115,6 +115,12 @@ describe("the cover's stylesheets", () => {
     expect(body(sheet('document.css'), '#write .nib-cover')).toMatch(/\bmargin\s*:/)
   })
 
+  test('give the blocks over a note no margin of their own, outside the box the editor measures', () => {
+    for (const selector of ['#write .nib-cover-block', '.nib-properties', '.nib-toc']) {
+      expect(body(sheet('editor.css'), selector), selector).not.toMatch(/\bmargin/)
+    }
+  })
+
   test('make the block hold its margins inside the box the editor measures', () => {
     const block = body(sheet('editor.css'), '#write .nib-cover-block')
     expect(block).toMatch(/\bdisplay\s*:\s*flow-root\b/)
