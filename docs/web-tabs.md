@@ -1446,20 +1446,21 @@ app's own links say where they go in its own code, and `scripts/web-click-probe.
 presses every kind of link every way.
 
 What a window the page asks for becomes is one rule, `becomes` in `src-tauri/src/web_tabs.rs`,
-which every engine's handler answers by (#1074). What a person pressed for is a tab in
-front, or behind for Ctrl and the middle button: every link, plain `target="_blank"`
+which every engine's handler answers by (#1074, #1235). What a person pressed for is a tab
+in front, or behind for Ctrl and the middle button: every link, plain `target="_blank"`
 included, which the script in Orden's own world answers itself, and `window.open` with
-`noopener` or `noreferrer`, which promises the page nothing back. Everything else the page
-opens itself - `window.open` with or without a size, on an address or on `about:blank`,
-a form sent to `target="_blank"` - is a window of its own that the engine builds, so the
-page gets what it asked for: the window back, `window.opener` in it, a sign-in that
-reports back through it (Google's and GitHub's open with nothing but their address), a
-blank window it sends somewhere or writes into, and a form's own POST. A tab built
-afresh at the address could give it none of that: the page was answered `null` and a
-form's address was asked for by GET. On Orden's own Chromium that window is CEF's own
-popup, opener and all; on `WebView2` and `WKWebView` a framed window on the opener's own
-store. `WKWebView` runs none of Orden's scripts, so there a web address with nothing more
-stays a tab.
+`noopener` or `noreferrer`, which promises the page nothing back. A page's own
+`window.open` of a web address with no size or place is a tab beside the one that opened
+it, in its container and as private as it, as a browser opens a new tab: Google Drive
+opening a document in Google Docs is one. A window of its own, that the engine builds,
+is kept for what needs one: a size or a place asked for, `about:blank` (a page sends it
+somewhere or writes into it, and a form sent to `target="_blank"` goes there with its
+own POST), and an address that signs in (OAuth, OpenID, SAML, a sign-in or log-in page, a
+card's 3-D Secure challenge, an `accounts.`, `login.` or `sso.` host, `signs_in` in
+`web_tabs.rs`). There the page gets what it asked for: the window back, `window.opener`
+in it, and a sign-in that reports back through it. On Orden's own Chromium that window
+is CEF's own popup, opener and all; on `WebView2` and `WKWebView` a framed window on the
+opener's own store.
 
 A window nobody pressed for is blocked, as Chrome blocks it, and said: the tab's bar says
 "Pop-up blocked" and its Open opens the address as a tab in front, until the page moves

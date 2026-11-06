@@ -41,6 +41,7 @@ ASKING = """<!doctype html>
   const how = new URLSearchParams(location.search).get('how')
   const to = location.origin + '/target-' + how
   if (how === 'plain') window.open(to)
+  if (how === 'blank') window.open(to, '_blank')
   if (how === 'behind') window.open(to, 'nib-behind')
   if (how === 'popup') window.open(location.origin + '/popup', 'signin', 'width=480,height=520,left=40,top=40')
 </script>
@@ -279,10 +280,14 @@ def main() -> int:
         if not settled(app, 1, seconds=60).get("strip"):
             raise SystemExit("the window never answered with its note open")
 
-        for how, front in (("plain", "target-plain"), ("behind", "asking")):
+        for how, front in (("plain", "target-plain"), ("blank", "target-blank"), ("behind", "asking")):
             asking = f"{base}/asking?how={how}"
+            before = len(windows_of(running.pid))
             app.ask(OPEN.replace("__URL__", json.dumps(asking)))
             said = settled(app, 3)
+            after = len(windows_of(running.pid))
+            if after > before:
+                wrong.append(f"{how}: a window of its own opened ({before} windows became {after})")
             strip = [str(one) for one in said.get("strip") or []]
             print(f"{how:8} strip  {strip}")
             print(f"{how:8} front  {said.get('front')}")

@@ -49,6 +49,19 @@ CASES = {
 
 LATE = {"blocked": 6.5}
 
+TABS = {
+    "link_blank",
+    "link_noopener",
+    "open_url",
+    "open_later",
+    "open_await",
+    "open_noopener",
+    "frame",
+    "sandboxed",
+}
+
+WEB_TABS = "nib.workspace.tabs.filter((tab) => tab.kind === 'web').length"
+
 BUTTON = "display:block;box-sizing:border-box;width:100%;height:30px;margin:0 0 2px;font:14px sans-serif"
 OPENER = f"""<!doctype html><title>opener</title>
 <style>body{{margin:0}} a,button,iframe{{{BUTTON};border:0;background:#cde}}</style>
@@ -221,6 +234,9 @@ else:
 
 CLASS = os.environ.get("CLASS", "nib")
 
+def ours():
+    return sum(1 for name, _title in shown() if name == CLASS)
+
 def strangers():
     return [(name, title) for name, title in shown() if name != CLASS or title.endswith("Chromium")]
 
@@ -274,6 +290,9 @@ for case, wanted in CASES.items():
     left, top = window()
     place = hole() or place
     began = len(heard)
+    tabs_before = run(WEB_TABS)
+    windows_before = ours()
+    windows_most = windows_before
     press(left + (place["x"] + at[0]) * RATIO, top + (place["y"] + at[1]) * RATIO)
     if case in LATE:
         time.sleep(LATE[case])
@@ -290,6 +309,7 @@ for case, wanted in CASES.items():
     for _ in range(25):
         time.sleep(0.2)
         strange.update(strangers())
+        windows_most = max(windows_most, ours())
         missing = [one for one in wanted if one not in heard[began:]]
         if not missing:
             break
@@ -299,6 +319,13 @@ for case, wanted in CASES.items():
         print(f"::error::{case}: never heard {missing}; heard {asked}")
     else:
         print(f"{case}: {asked}")
+    if case in TABS:
+        time.sleep(1)
+        tabs_after = run(WEB_TABS)
+        if tabs_after != tabs_before + 1 or windows_most > windows_before:
+            said = f"{case}: {tabs_before} web tabs became {tabs_after}, {windows_before} windows {windows_most}"
+            failures.append(said)
+            print(f"::error::{said}; it should be one more tab and no window")
     if strange:
         failures.append(f"{case}: windows not under {CLASS}, or Chromium's: {sorted(strange)}")
         print(f"::error::{case}: windows not under {CLASS}, or Chromium's: {sorted(strange)}")
