@@ -7,7 +7,11 @@ on:
     paths:
       - apps/desktop/src-tauri/src/**
       - apps/desktop/src-tauri/Cargo.toml
+      - apps/desktop/src/lib/drops.ts
+      - apps/desktop/src/lib/drag-paths.ts
+      - apps/desktop/src/lib/outside-drops.ts
       - scripts/web-tab-drive.py
+      - scripts/outside-drop-drive.py
       - .github/workflows/web-tab.yml
   workflow_dispatch:
 
@@ -86,4 +90,25 @@ jobs:
             Linux) xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session -- python3 "${drive[@]}" ;;
             Windows) python "${drive[@]}" ;;
             *) python3 "${drive[@]}" ;;
+          esac
+
+      - name: Files dropped from outside
+        if: ${{ !cancelled() && env.EXE != '' }}
+        timeout-minutes: 15
+        run: |
+          drive=(scripts/outside-drop-drive.py --exe "$EXE" --identifier "$IDENTIFIER")
+          case "$RUNNER_OS" in
+            Linux)
+              python3 -m pip install --quiet --break-system-packages python-xlib
+              xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session -- python3 "${drive[@]}"
+              ;;
+            Windows)
+              python -m pip install --quiet comtypes
+              python "${drive[@]}"
+              ;;
+            *)
+              python3 -m venv "$RUNNER_TEMP/drop"
+              "$RUNNER_TEMP/drop/bin/pip" install --quiet pyobjc-framework-Quartz pyobjc-framework-Cocoa
+              "$RUNNER_TEMP/drop/bin/python" "${drive[@]}"
+              ;;
           esac
