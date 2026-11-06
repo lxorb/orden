@@ -52,6 +52,18 @@ describe('when the browser import is offered', () => {
     expect(offer.tab).toBeNull()
   })
 
+  test('the tab that carries it keeps it when it is moved to another pane', async () => {
+    const offer = await fresh()
+    offer.claim('one', '2026-11-01')
+    offer.dropped('one')
+    offer.claim('one', '2026-11-01')
+    expect(offer.tab).toBe('one')
+
+    offer.answered()
+    offer.claim('one', '2026-11-01')
+    expect(offer.tab).toBeNull()
+  })
+
   test('a day counts only once it was shown', async () => {
     const offer = await fresh()
     offer.claim('one', '2026-11-01')
