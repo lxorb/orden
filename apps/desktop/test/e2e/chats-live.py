@@ -167,9 +167,10 @@ def everywhere(owner: Page, chat: dict[str, str]) -> None:
     )
     DRIVE.shot(owner, "emil-quick-add")
     owner.keyboard.press("Enter")
+    # Orden's own inbox, the hidden .Inbox.md at the space's root since #1044.
     inbox = wait(
         owner,
-        "async () => { const text = await window.nibApp.workspace.noteText('/Team/Inbox.md');"
+        "async () => { const text = await window.nibApp.workspace.noteText('/Team/.Inbox.md');"
         " return text && text.includes('nib://chat/') ? text : null }",
         "[Emil] the task in the inbox, with its link",
     )
