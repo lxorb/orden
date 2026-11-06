@@ -178,9 +178,12 @@ export type Layering = 'under' | 'cut' | 'hide'
 
 let layering = $state<Layering>('hide')
 
-/** The crate's answer, as a layering. */
-function heard(said: unknown): void {
+/** The crate's answer for `page`, as its layering and the engine's latest. Each page is
+ *  said for on its own: on Windows a page an agent built and a tab took over is a page of
+ *  the other kind until it is built again. */
+function heard(page: Page, said: unknown): void {
   layering = said === 'under' ? 'under' : said === true ? 'cut' : 'hide'
+  page.layering = layering
 }
 
 /** Where a page is, its trail, and whether a field in it is typed into; see `web_look`. */
@@ -416,6 +419,8 @@ export class Page {
    *  out of sight, which is also what stands in while a parked page is loading again,
    *  so nothing about an overlay or a revival flashes. */
   shot = $state<string | null>(null)
+  /** How the engine layers this page with the window's HTML; see `layering`. */
+  layering = $state<Layering>('hide')
   /** When that picture was taken, so two overlays in a row share one. */
   shotAt = 0
   /** The picture being taken at this moment, if one is.
@@ -749,7 +754,7 @@ class Pages {
       // Said with the page as well as with every placement, because the first page of a
       // window is built before anything has been placed, and a layer over it then would
       // be answered as though the engine could not cut.
-      heard(said)
+      heard(page, said)
       page.live = true
       page.openable = true
       page.frozen = false
@@ -828,7 +833,7 @@ class Pages {
         tabId,
         wanted.pane,
         false,
-        layering === 'under' || (layering === 'cut' && wanted.over.cut !== null),
+        page.layering === 'under' || (page.layering === 'cut' && wanted.over.cut !== null),
         wanted.over,
       )
     // Out of sight, and counting down to being frozen: the countdown that should have
@@ -871,7 +876,7 @@ class Pages {
 
     // Drawn under the app: a layer over the page is drawn over it, so a page covered is a
     // page still shown, with the layer's shape - or all of it - taken out of its input.
-    if (layering === 'under' && page.live) {
+    if (page.layering === 'under' && page.live) {
       const shown = visible || covering
       const cut = !shown ? null : covering ? (over.cut ?? WHOLE) : over.cut
       await this.put(tabId, page, {
@@ -887,7 +892,7 @@ class Pages {
 
     // Something of the app's is over the page, and the crate can cut it out of the page:
     // the page stays on screen round it. See `cover`.
-    if (covering && layering === 'cut' && page.live && over.cut) {
+    if (covering && page.layering === 'cut' && page.live && over.cut) {
       await this.cover(tabId, page, pane, over)
       return
     }
@@ -960,7 +965,7 @@ class Pages {
         corner: one.corner ?? cardCorner(),
         ...(one.opacity === undefined ? {} : { opacity: one.opacity }),
       })
-      heard(said)
+      heard(page, said)
     } catch (error) {
       // The page's browser did not answer, and the crate left the page where it was rather
       // than stop the app to wait for it. The page is alive: it is placed again in a

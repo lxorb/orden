@@ -76,6 +76,8 @@ let photo: string | null = null
 /** Whether the crate says it cuts the app's layers out of a page, as the system's engine
  *  on Windows does (see src-tauri/src/web_cut.rs), or draws pages under the app (#1137). */
 let cuts: boolean | 'under' = false
+/** And per tab, where a test has said so: a window with both kinds of page in it. */
+const cutsOf = new Map<string, boolean | 'under'>()
 
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
@@ -91,12 +93,12 @@ vi.mock('../tauri', async (importOriginal) => ({
       if (!looked) throw new Error('that page said nothing')
       return looked
     }
-    if (command === 'web_place') return cuts
+    if (command === 'web_place') return cutsOf.get(String(args?.tab)) ?? cuts
     if (command !== 'web_open') return undefined
 
     await new Promise<void>((go) => (building = go))
     if (refuse) throw new Error('no webview to be had here')
-    return cuts
+    return cutsOf.get(String(args?.tab)) ?? cuts
   },
 }))
 
@@ -197,6 +199,7 @@ beforeEach(async () => {
   holdingLooks = false
   heldLooks.length = 0
   cuts = false
+  cutsOf.clear()
   localStorage.clear()
 })
 
@@ -427,6 +430,33 @@ describe('a page drawn under the app', () => {
     pages.hide('a', PANE)
     await settle()
     expect(last('web_place')).toMatchObject({ visible: false, cut: null })
+  })
+
+  test('is said for each page on its own, beside a page that is cut', async () => {
+    cutsOf.set('a', 'under')
+    cutsOf.set('b', true)
+    for (const tab of ['a', 'b']) {
+      const shown = pages.show(tab, SITE, PANE)
+      const arrive = await asked()
+      building = null
+      arrive()
+      await shown
+      await settle()
+    }
+    expect(pages.of('a').layering).toBe('under')
+    expect(pages.of('b').layering).toBe('cut')
+    calls.length = 0
+
+    await pages.show('a', SITE, PANE, false, over)
+    await pages.show('b', SITE, PANE, false, over)
+    await settle()
+
+    const placed = (tab: string) =>
+      calls.filter((one) => one.command === 'web_place' && one.args.tab === tab).at(-1)?.args
+    expect(placed('a')).toMatchObject({ visible: true, cut: over.cut, opacity: 1 })
+    expect(placed('b')).toMatchObject({ visible: true, cut: over.cut })
+    expect(placed('b')).not.toHaveProperty('opacity')
+    pages.forget('b')
   })
 
   test('an engine that says nothing of it is told no opacity', async () => {

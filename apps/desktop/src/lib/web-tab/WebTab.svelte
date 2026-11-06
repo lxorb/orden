@@ -286,7 +286,7 @@
   // neither a change of size nor a layer, so each of them is watched for it.
   $effect(() => {
     const room = hole
-    if (!room || !pages.under || typeof MutationObserver !== 'function') return
+    if (!room || page.layering !== 'under' || typeof MutationObserver !== 'function') return
     const holding = new MutationObserver(now)
     for (let at = room.parentElement; at; at = at.parentElement) {
       holding.observe(at, {
@@ -355,7 +355,7 @@
     const at = covered.box
     // Drawn under the app, the page is drawn whatever is over it, at the hole's own
     // opacity, and what is over it only takes its input; see `layering` in pages.svelte.ts.
-    const under = pages.under
+    const under = page.layering === 'under'
     // Another tab's page holding the screen is drawn over this one by nothing: this one
     // is not drawn at all meanwhile.
     const opacity =
@@ -487,7 +487,7 @@
       // photographed. Nothing waits for the picture: it is there by the time the
       // overlay is, and the pane keeps the one from a moment ago either way. See
       // `shoot` in pages.svelte.ts.
-      if (!pages.under) void pages.shoot(tab.id)
+      if (page.layering !== 'under') void pages.shoot(tab.id)
       // What the press opens is heard as it arrives, by `watchArrivals`; it used to be
       // looked for again a fifth of a second later, and a layer that came in that time
       // was drawn behind the page until then (#1124).
@@ -1106,9 +1106,11 @@
       class:acted={worn !== null}
       class:resting={worn?.stopped}
       style:--agent={worn?.colour}
-      class:under={pages.under && page.live}
-      class:still={page.shot !== null && !pages.under}
-      style:background-image={page.shot === null || pages.under ? 'none' : `url(${page.shot})`}
+      class:under={page.layering === 'under' && page.live}
+      class:still={page.shot !== null && page.layering !== 'under'}
+      style:background-image={page.shot === null || page.layering === 'under'
+        ? 'none'
+        : `url(${page.shot})`}
       bind:this={hole}
     ></div>
   {:else if page.framing === 'frame' && address}
