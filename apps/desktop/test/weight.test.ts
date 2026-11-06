@@ -1353,8 +1353,14 @@ function holds(tail: string): boolean {
  *
  *  Raised on 2026-11-06, to 2,116,000, for #331: a web tab's page held still as its
  *  picture while the tab overview is up (web-tab/pages.svelte.ts, WebTab.svelte,
- *  underlay.ts). Measured 2,115,690 in 403. */
-const BUDGET = 2_116_000
+ *  underlay.ts). Measured 2,115,690 in 403.
+ *
+ *  Raised on 2026-11-06, to 2,119,600, for #1164: what a file explorer changes outside the
+ *  spaces is an action on the one undo stack, told by the toast and pasted by the file
+ *  list's own clipboard, its rows dragged into the file list, and its keys for finding and
+ *  seeing (workspace/undo.svelte.ts, undo-toast.svelte.ts, list-landing.svelte.ts,
+ *  drag-paths.ts, shortcuts/registry.ts). Measured 2,119,173 in 403. */
+const BUDGET = 2_119_600
 const MOST_FILES = 404
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

@@ -712,10 +712,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  keys the plugin carries and never takes (Pane.svelte, shortcuts/registry.ts,
  *  kind-words.ts): the code to 6,045,400, measured 6,044,979, and the catalogues to
  *  1,023,700, measured 1,023,246, for the names the registry and the kinds give it.
+ *
+ *  Raised on 2026-11-06 for #1164, a file explorer's changes on the undo stack and its
+ *  keys in the registry, which the plugin carries and never makes (workspace/undo.svelte.ts,
+ *  shortcuts/registry.ts): the code to 6,046,900, measured 6,046,492, and the catalogues
+ *  to 1,026,100, measured 1,025,652.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_045_400,
-  catalogues: 1_023_700,
+  code: 6_046_900,
+  catalogues: 1_026_100,
   styles: 293_500,
   fonts: 260_000,
   pages: 40_000,
