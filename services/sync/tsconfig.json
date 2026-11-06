@@ -4,7 +4,5 @@
     "lib": ["ES2022"],
     "types": ["@cloudflare/workers-types"]
   },
-  // The markdown package is read through its source here too; see the comment
-  // in packages/glasses/tsconfig.json.
   "include": ["src/**/*.ts", "test/**/*.ts", "../../packages/markdown/src/lucide.d.ts"]
 }

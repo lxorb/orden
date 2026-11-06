@@ -2,8 +2,6 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    // `node` is here for the tests under `test/`: they read the repo off disk to
-    // check what the source itself may say, and nothing in `src` uses it.
     "types": ["svelte", "vite/client", "node"],
     "resolveJsonModule": true,
     "allowJs": true
@@ -13,7 +11,6 @@
     "src/**/*.svelte",
     "../../packages/editor/src/env.d.ts",
     "test/**/*.ts",
-    // The components the effect tests mount; see test/effects.
     "test/**/*.svelte"
   ]
 }

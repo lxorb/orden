@@ -1,32 +1,16 @@
 node_modules/
 dist/
-# What a before-and-after measurement builds the other half into; see
-# apps/desktop/test/e2e/first-paint.py.
 dist-before/
-# And the build with the names left in it, which is what a profile is read from;
-# see apps/desktop/test/e2e/speed.py.
 dist-profile/
 dist-even/
-# The build the drives against the real Worker load, pointed at that Worker; see
-# apps/desktop/test/e2e/harness.py.
 dist-worker/
-# The build the handoff drive plays both web addresses with; see
-# apps/desktop/test/e2e/handoff.py.
 dist-handoff/
 target/
-# What Tauri generates for the mobile targets. The Android project is source:
-# its manifest, its theme and MainActivity are edited by hand, and the files
-# gradle writes inside it are ignored by its own .gitignore. The Xcode project is
-# not, because the CLI only writes it on a macOS machine and nothing in it is
-# edited; the iOS job runs `tauri ios init` before it builds. The schemas beside
-# them are written from the plugins on every build.
 **/src-tauri/gen/*
 !**/src-tauri/gen/android/
 .svelte-kit/
 .wrangler/
 *.log
-# What the end-to-end run photographs. Made fresh every time it runs; see
-# apps/desktop/test/e2e/collaborate.py.
 apps/desktop/test/e2e/shots/
 .env
 .env.*
@@ -34,27 +18,18 @@ apps/desktop/test/e2e/shots/
 .DS_Store
 Thumbs.db
 
-# What `evenhub pack` writes; see docs/even.md
 *.ehpk
 
-# Rust build output for the MCP connector
 services/mcp/target/
 
-# The MCP connector is staged here at build time
 apps/desktop/src-tauri/binaries/*
 !apps/desktop/src-tauri/binaries/.gitkeep
 
-# Claude Code worktrees of this repo
 .claude/worktrees/
 *.nupkg
 
-# What Python leaves behind when one drive imports another
 __pycache__/
 
-# What `wrangler dev` reads a secret out of. Never committed: a drive writes
-# one to exercise the second factor and takes it away again.
 .dev.vars
 
-
-# Local codebase graph built by graphify.
 graphify-out/

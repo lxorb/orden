@@ -1,8 +1,4 @@
 {
-  // Every package extends this. The flags beyond `strict` are the ones that
-  // turn silent assumptions into errors: an index that may miss, an optional
-  // that was set to undefined on purpose, an override that no longer matches,
-  // a switch that falls through, a parameter nothing reads.
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
