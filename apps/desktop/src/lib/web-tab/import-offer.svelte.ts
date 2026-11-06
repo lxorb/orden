@@ -32,11 +32,11 @@ export function dayOf(at: Date): string {
 class ImportOffer {
   tab = $state<string | null>(null)
 
-  private claimed = false
+  private by: string | null = null
 
   claim(tab: string, today = dayOf(new Date())) {
-    if (this.claimed || !offerDue(keptOffer(stored(KEY)), today)) return
-    this.claimed = true
+    if ((this.by !== null && this.by !== tab) || !offerDue(keptOffer(stored(KEY)), today)) return
+    this.by = tab
     this.tab = tab
   }
 
@@ -47,7 +47,7 @@ class ImportOffer {
 
   answered() {
     this.tab = null
-    this.claimed = true
+    this.by = ''
     keepJson(KEY, { ...keptOffer(stored(KEY)), done: true })
   }
 
