@@ -1627,6 +1627,26 @@ describe('closing what is in a pane', () => {
     expect(workspace.tabs.map((tab) => tab.path)).toEqual(['/space/a.md'])
   })
 
+  test('a closed pane comes back whole with one reopen, and is written once', async () => {
+    await workspace.open('/space/a.md')
+    await beside('/space/b.md')
+    await workspace.open('/space/c.md')
+    const paneId = workspace.panes.focusedId
+    expect(workspace.tabsIn(paneId).map((tab) => tab.path)).toEqual(['/space/b.md', '/space/c.md'])
+    const writes = vi.spyOn(workspace, 'persist')
+
+    await workspace.closePane(paneId)
+    expect(writes).toHaveBeenCalledTimes(1)
+    await workspace.reopenClosed()
+
+    expect(workspace.tabs.map((tab) => tab.path).sort()).toEqual([
+      '/space/a.md',
+      '/space/b.md',
+      '/space/c.md',
+    ])
+    writes.mockRestore()
+  })
+
   test('a tab dragged out of a pane closes the pane behind it', async () => {
     await workspace.open('/space/a.md')
     await beside('/space/b.md')
