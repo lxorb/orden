@@ -63,10 +63,6 @@ export const LANGUAGES: readonly Language[] = [
   { id: 'zh-Hant-HK', name: '繁體中文（香港）', machine: true },
 ]
 
-/** A catalogue is fetched when it is chosen, not at start: forty of them in the
- *  first chunk is two megabytes downloaded to read one. Written out one by one
- *  rather than built from the id, so the bundler can see every file and `knip`
- *  can see that each one is used. */
 const CATALOGUES: Record<string, () => Promise<Dictionary>> = {
   am: () => import('../locales/am').then((module) => module.am),
   ar: () => import('../locales/ar').then((module) => module.ar),
