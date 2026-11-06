@@ -32,6 +32,23 @@ async () => {
 }
 """
 
+PAINTED = """
+() => {
+  const canvas = document.createElement('canvas')
+  canvas.width = 1280
+  canvas.height = 800
+  const pen = canvas.getContext('2d')
+  pen.fillStyle = '#e8eef7'
+  pen.fillRect(0, 0, 1280, 800)
+  pen.fillStyle = '#1f5fbf'
+  pen.fillRect(0, 0, 1280, 64)
+  pen.font = '48px sans-serif'
+  pen.fillText('Flights to Lisbon', 80, 200)
+  const png = canvas.toDataURL('image/png').split(',')[1]
+  window.__fake.peek = () => Promise.resolve({ png, width: 1280, height: 800 })
+}
+"""
+
 def settle(page: Page) -> None:
     page.evaluate("() => document.fonts.ready")
     page.wait_for_timeout(250)
@@ -122,6 +139,32 @@ def drive(page: Page, scheme: str) -> None:
     if answers != ["Don’t allow", "Allow", "Always on this site"]:
         wrong(f"the question's answers are {answers}")
     shot(page, f"{scheme}-04-session")
+
+    page.evaluate(PAINTED)
+    page.click("section.agent .tabs button")
+    if wait_for(
+        page,
+        "document.querySelector('[role=dialog] img.page')?.complete && document.querySelector('[role=dialog] img.page').naturalWidth > 0",
+        "the agent's page, large",
+    ):
+        box = page.evaluate(
+            """() => {
+              const sheet = document.querySelector('[role=dialog]').getBoundingClientRect()
+              const picture = document.querySelector('[role=dialog] img.page').getBoundingClientRect()
+              return { sheet: [sheet.left, sheet.top, sheet.right, sheet.bottom], wide: picture.width, inside: picture.right <= sheet.right + 0.5, title: document.querySelector('[role=dialog]').getAttribute('aria-label') }
+            }"""
+        )
+        say(f"[watch] {box}")
+        left, top, right, bottom = box["sheet"]
+        if left < 0 or top < 0 or right > 1280 or bottom > 800:
+            wrong(f"the large view leaves the window: {box}")
+        if box["wide"] < 600 or not box["inside"]:
+            wrong(f"the page is not shown large inside its view: {box}")
+        if box["title"] != "Flights to Lisbon":
+            wrong(f"the large view is named {box['title']!r}")
+    shot(page, f"{scheme}-04b-watch")
+    page.keyboard.press("Escape")
+    wait_for(page, "!document.querySelector('[role=dialog]')", "the large view to close")
 
     page.click(".agent .question .rows .nib-button:not(.is-quiet)")
     wait_for(page, "!document.querySelector('.agent .question')", "the answered question to go")

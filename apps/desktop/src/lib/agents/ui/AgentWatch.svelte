@@ -80,8 +80,11 @@
 
   .page {
     display: block;
-    width: 100%;
+    width: auto;
+    max-width: 100%;
     height: auto;
+    max-height: calc(100dvh - 15rem);
+    margin-inline: auto;
     border: 1px solid var(--line);
     border-radius: var(--radius-sm);
     background: var(--surface);
