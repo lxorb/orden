@@ -18,6 +18,7 @@ import {
   i18n,
   LANGUAGES,
   message,
+  preferredCatalogue,
 } from './i18n.svelte'
 
 const fill = (template: string, values: Record<string, string | number>): string =>
@@ -239,6 +240,15 @@ describe('the folder, the list and the loader', () => {
 })
 
 describe('following the system', () => {
+  test('takes the first language the system asks for that it has, English among them', () => {
+    expect(preferredCatalogue(['en-US', 'de-DE'])).toBe('en')
+    expect(preferredCatalogue(['en-GB', 'fr'])).toBe('en')
+    expect(preferredCatalogue(['de-CH', 'en-US'])).toBe('de')
+    expect(preferredCatalogue(['tlh', 'gd', 'ja-JP', 'en'])).toBe('ja')
+    expect(preferredCatalogue(['tlh'])).toBe('en')
+    expect(preferredCatalogue([])).toBe('en')
+  })
+
   test('takes the catalogue a tag names', () => {
     expect(catalogueFor('de')).toBe('de')
     expect(catalogueFor('ja-JP')).toBe('ja')

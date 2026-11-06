@@ -136,8 +136,9 @@ function tidy(tag: string): string {
     .join('-')
 }
 
-export function catalogueFor(tag: string): string {
+function known(tag: string): string | null {
   let parts = tidy(tag).split('-')
+  if (parts[0] === 'en') return 'en'
 
   while (parts.length) {
     const candidate = parts.join('-')
@@ -151,19 +152,26 @@ export function catalogueFor(tag: string): string {
     parts = parts.slice(0, -1)
   }
 
+  return null
+}
+
+export function catalogueFor(tag: string): string {
+  return known(tag) ?? 'en'
+}
+
+export function preferredCatalogue(asked: readonly string[]): string {
+  for (const tag of asked) {
+    const found = known(tag)
+    if (found) return found
+  }
+
   return 'en'
 }
 
 function systemCatalogue(): string {
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   const asked = navigator.languages?.length ? navigator.languages : [navigator.language || 'en']
-
-  for (const tag of asked) {
-    const found = catalogueFor(tag)
-    if (found !== 'en') return found
-  }
-
-  return 'en'
+  return preferredCatalogue(asked)
 }
 
 const STORAGE_KEY = 'nib:language'
