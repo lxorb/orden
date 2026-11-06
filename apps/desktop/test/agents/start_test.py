@@ -1,10 +1,3 @@
-"""How scripts/probe_app.py starts a probe: from a thread that has never asked the window
-manager anything, so no right to take the foreground is handed on from a drive's own
-windowing threads. Decided without starting anything: `subprocess.Popen` is stood in for.
-
-    python -m unittest discover -s apps/desktop/test/agents -p "*_test.py"
-"""
-
 from __future__ import annotations
 
 import pathlib
@@ -16,7 +9,6 @@ from unittest import mock
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[4] / "scripts"))
 
 import probe_app  # noqa: E402 - the path above is what finds it
-
 
 class StartedBare(unittest.TestCase):
     def test_the_process_is_started_from_a_thread_of_its_own(self) -> None:
@@ -43,7 +35,6 @@ class StartedBare(unittest.TestCase):
         with mock.patch.object(probe_app.subprocess, "Popen", popen):
             with self.assertRaises(FileNotFoundError):
                 probe_app._started_bare(["nib.exe"])
-
 
 if __name__ == "__main__":
     unittest.main()

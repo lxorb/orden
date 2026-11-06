@@ -3,14 +3,6 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
-/** A Mac's keychain is never asked anything (#1090). Every read of an item there asks the
- *  reader for their login password whenever the app's signature and the item's access
- *  list disagree, and asked again the moment it was answered. So Orden's secrets are a
- *  file of its own on a Mac (src-tauri/src/secrets.rs), a Codex home of Orden's keeps
- *  its login in a file, and nothing that reaches the keychain is linked into a Mac build:
- *  this holds the manifest and the crate's code to that. The iPhone's keychain, which
- *  asks nothing, stays. */
-
 const TAURI = fileURLToPath(new URL('../src-tauri', import.meta.url))
 
 function rust(dir: string): string[] {
@@ -21,7 +13,6 @@ function rust(dir: string): string[] {
   })
 }
 
-/** The manifest's tables, each with the lines under it. */
 function tables(manifest: string): { header: string; body: string }[] {
   const out: { header: string; body: string }[] = []
   for (const line of manifest.split('\n')) {
@@ -32,7 +23,6 @@ function tables(manifest: string): { header: string; body: string }[] {
   return out
 }
 
-/** Whether a dependency table is one a Mac build reads. */
 function readOnMac(header: string): boolean {
   if (header === '[dependencies]' || header === '[build-dependencies]') return true
   const target = /^\[target\.'cfg\((.*)\)'\.(?:build-)?dependencies\]$/.exec(header)?.[1]

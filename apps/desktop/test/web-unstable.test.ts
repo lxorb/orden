@@ -5,16 +5,9 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
-/** #1112: web-unstable.yml deploys the edge beside the main that is live, which it reads
- *  off the live Worker's version message. The live version had been made by a secret
- *  change, which carries no message, and every push said so in a notice, deployed nothing
- *  and stayed green for a week. Its "Which main is live" step is run here as GitHub runs
- *  it, against a `wrangler` that answers from the deployments given. */
-
 const ROOT = fileURLToPath(new URL('../../..', import.meta.url))
 const WORKFLOW = readFileSync(join(ROOT, '.github/workflows/web-unstable.yml'), 'utf8')
 
-/** The step's script: the block under its `run: |`, out of its indentation. */
 function script(id: string): string {
   const lines = WORKFLOW.split('\n')
   const at = lines.findIndex((line) => line.trim() === `id: ${id}`)
@@ -46,7 +39,6 @@ const bare = (id: string): Version => ({ id, annotations: { 'workers/triggered_b
 
 const jq = spawnSync('jq', ['--version']).status === 0
 
-/** The step run over deployments, oldest first, each all of its traffic on one version. */
 function live(versions: Version[]): { status: number | null; out: string; main: string } {
   const dir = mkdtempSync(join(tmpdir(), 'web-unstable-'))
   const deployments = versions.map((one, index) => ({
@@ -55,7 +47,6 @@ function live(versions: Version[]): { status: number | null; out: string; main: 
   }))
   writeFileSync(join(dir, 'deployments.json'), JSON.stringify(deployments))
   for (const one of versions) writeFileSync(join(dir, `${one.id}.json`), JSON.stringify(one))
-  // `pnpm exec wrangler deployments list --json` and `... versions view <id> --json`.
   writeFileSync(
     join(dir, 'pnpm'),
     `#!/usr/bin/env bash
@@ -104,8 +95,6 @@ describe.skipIf(!jq)('which main is live, for the edge to deploy beside', () => 
   })
 })
 
-/** The class: a step here that finds nothing to deploy beside does not end the run with a
- *  notice and a success. */
 test('web-unstable.yml has no notice that says nothing was deployed', () => {
   expect(WORKFLOW).not.toMatch(/::notice::[^\n]*[Nn]othing deployed/)
 })

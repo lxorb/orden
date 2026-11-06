@@ -3,18 +3,6 @@ import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
-/** Every menu, popover and picker is closed by a second press on what opened it, and
- *  is not opened again by it (#1039).
- *
- *  Read out of the source, the way doors-play-out.test.ts reads its rule: the behaviour
- *  is overlays.ts's, which notices the control a click opened a layer from, and the
- *  behaviour itself is played in test/effects/opener-toggles.effect.test.ts. What can go
- *  wrong around it is a layer that closes on a press past it by listening to the window
- *  itself: that press closes it on the way down, and the click of the same press lands
- *  on the button that opened it, which opens it again - the `⋯` on a web tab's bar did
- *  exactly that before every layer was on one stack. So a layer goes on the stack
- *  (`overlays.show`), and nothing else listens to the window for presses. */
-
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 
 function sources(): string[] {
@@ -30,8 +18,6 @@ function sources(): string[] {
   return out
 }
 
-/** What listens to the window for a press and is not a layer closing itself: each says
- *  why. */
 const NOT_LAYERS: Record<string, string> = {
   'lib/spent-click.ts': 'spends the click a catch took the press of',
   'lib/tab-cycle.svelte.ts': 'a press ends Ctrl+Tab, which has no button',
@@ -44,8 +30,6 @@ const NOT_LAYERS: Record<string, string> = {
   'lib/views/pressed-away.ts': 'a press past the rows selected lets them go, no layer up',
 }
 
-/** Layers that still close themselves this way, in files other work has open at the
- *  moment. Each goes on the stack with its next change, and comes off this list with it. */
 const NOT_YET = new Set(['lib/web-tab/WebExtensionPopup.svelte'])
 
 const PRESS = /(?:window|document)\.addEventListener\(\s*'(?:pointerdown|mousedown|touchstart)'/

@@ -3,16 +3,9 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
-/** An agent at work never takes the reader's screen (#1070): no tab switched to, nothing
- *  jumped to, no focus, selection or scroll moved. Every verb that opens, makes, shows
- *  or moves to something comes through one door, agents/workspace/reader-view.ts, which
- *  lands it behind and marks it; this holds the rest of the folder to that, so a new
- *  tool cannot reach past it. tabs.test.ts and workspace.test.ts run the verbs. */
-
 const DIR = fileURLToPath(new URL('../src/lib/agents/workspace', import.meta.url))
 const DOOR = 'reader-view.ts'
 
-/** What changes the reader's screen, keyboard or scroll, called directly. */
 const TAKES = [
   /workspace\.activate\(/,
   /\.activeTabId\s*=[^=]/,

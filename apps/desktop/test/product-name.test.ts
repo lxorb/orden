@@ -3,36 +3,11 @@ import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
-/** The name a reader sees is Orden.
- *
- *  The product was Nib, then nibeditor (2026-09-08, docs/backlog.md Q18), and is
- *  Orden since 2026-10-12. After the first rename the old name stayed on in the
- *  welcome note, the Mac's menu, a window's title and a dozen sentences, because
- *  nothing said where it was. This does: every string in the app's source and in
- *  every catalogue is read, comments left out, and one that calls the app Nib or
- *  nibeditor fails.
- *
- *  What still says an old name on purpose is an identifier, and changing one breaks
- *  an install somebody already has: the folder the notes live in (`Documents/Nib`),
- *  the folder an install from before a rename keeps (`AppData\Local\Nib`, and
- *  `Nib.app` until it renames itself; see src-tauri/src/bundle_name.rs), the keys a
- *  `.url` shortcut carries (`Nib-Icon`), the address the service had (`nibeditor.com`,
- *  which goes on answering), and the welcome note an older version wrote, which has
- *  to be recognised word for word. Those are told apart below by where the word
- *  sits, or named one by one. And one sentence says both names, because saying the
- *  old one is its whole point: the notice that the name changed. */
-
 const APP = fileURLToPath(new URL('..', import.meta.url))
 const SOURCE = join(APP, 'src')
 
-/** Either old name, as a word of its own. Letters of another script may touch it -
- *  a Gujarati suffix, an Amharic prefix, a Korean particle - and it is still the
- *  name. `NibEditor` is how some people wrote the second one. */
 const OLD_NAME = /(?<![A-Za-z])(?:Nib|[Nn]ib[Ee]ditor)(?![A-Za-z])/g
 
-/** Where the word is an identifier rather than a name: a segment of a path, a file
- *  of the installed app, a host (`nibeditor.com`), or one of a `.url` shortcut's own
- *  keys. */
 function identifier(text: string, at: number, length: number): boolean {
   const before = text[at - 1] ?? ''
   const after = text.slice(at + length)
@@ -41,35 +16,21 @@ function identifier(text: string, at: number, length: number): boolean {
   )
 }
 
-/** Strings that say an old name because they have to, by the file that holds them. */
 const NAMED: Record<string, string[]> = {
-  // The seeds as the app wrote them under each earlier name, recognised so they
-  // never sync.
   'lib/welcome.ts': ['# Welcome to Nib', '# Welcome to nibeditor'],
-  // The browser's stand-in for the folder every desktop keeps its spaces in.
   'lib/web/commands.ts': ['Nib'],
 }
 
-/** Rows every catalogue holds under an old name, because a server that has not been
- *  renamed yet sends these words and they are looked up as sent. Their translations
- *  say Orden. */
 const SENT: string[] = ['set an OpenAI key in nibeditor’s settings first']
 
-/** The one sentence that says the old name and the new one together, in whatever
- *  language: the notice that the name changed. Nothing else names both. */
 const renaming = (text: string) => text.includes('Orden')
 
-/** The string literals in a script, its comments left out: everything in it a
- *  person could be shown. A template's `${}` is read as script again, so a string
- *  inside one is found as well. Escapes are kept as written. */
 function literals(code: string): string[] {
   const found: string[] = []
-  /** The brace depth each open `${` was entered at, innermost last. */
   const open: number[] = []
   let depth = 0
   let at = 0
 
-  /** A quote's contents, from the quote to its twin or the end of the line. */
   function quoted(quote: string): string {
     const start = ++at
     while (at < code.length && code[at] !== quote && code[at] !== '\n') {
@@ -78,7 +39,6 @@ function literals(code: string): string[] {
     return code.slice(start, at++)
   }
 
-  /** A template's text, from where `at` is to the backtick or the `${` that ends it. */
   function run(): string {
     const start = at
     while (at < code.length) {
@@ -123,8 +83,6 @@ function literals(code: string): string[] {
   return found
 }
 
-/** What a reader could be shown out of one file: a script's strings, and all of a
- *  component's markup but its comments. */
 function readable(path: string, source: string): string[] {
   if (!path.endsWith('.svelte')) return literals(source)
 
@@ -139,7 +97,6 @@ function readable(path: string, source: string): string[] {
   return [...scripts.flatMap(literals), markup]
 }
 
-/** Every script and component under `dir`, tests left out. */
 function sources(dir: string, found: string[] = []): string[] {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name)
@@ -152,7 +109,6 @@ function sources(dir: string, found: string[] = []): string[] {
   return found
 }
 
-/** Each place `text` calls the app by an old name, the identifiers left out. */
 function oldNames(text: string): number[] {
   return [...text.matchAll(OLD_NAME)]
     .filter((match) => !identifier(text, match.index, match[0].length))

@@ -4,11 +4,6 @@ import { join } from 'node:path'
 import { parse } from 'svelte/compiler'
 import { describe, expect, test } from 'vitest'
 
-/** Chrome and the app's theme are easy to drift apart quietly, because the
- *  browser has a default for everything and a default always looks like it
- *  works. These are the two that have bitten so far, so they are checked
- *  rather than remembered. */
-
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const THEMES = fileURLToPath(new URL('../../../packages/themes/src/', import.meta.url))
 
@@ -24,8 +19,6 @@ function componentFiles(dir: string): string[] {
   return out
 }
 
-/** Only the `<style>` block: markup carries `selected=` attributes, and a scan
- *  of the whole file reads those as CSS. */
 function styleOf(text: string): string {
   return [...text.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((one) => one[1]).join('\n')
 }
@@ -41,12 +34,6 @@ describe('the look of things the browser also has an opinion about', () => {
   })
 
   test('nothing opts out of the themed scrollbar', () => {
-    // `scrollbar-width` is the standard property, and setting it makes Chromium
-    // ignore `::-webkit-scrollbar` for that element - so a component asking for
-    // a thin scrollbar silently gets the operating system's instead of ours.
-    // `none` is fine: that is a deliberate hide, not a different scrollbar.
-    // Named outright rather than "not none": `\s*` can match nothing and let a
-    // lookahead slip past the space, which flagged every deliberate hide.
     const offenders = components
       .filter((one) => /scrollbar-width:\s*(thin|auto)/.test(one.text))
       .map((one) => one.name)
@@ -57,10 +44,6 @@ describe('the look of things the browser also has an opinion about', () => {
   })
 
   test('no component restyles a dropdown on its own', () => {
-    // One rule in the theme package draws every dropdown, arrow included. A
-    // second one in a component is how they drift apart.
-    // Only restyling counts. Sizing one in a layout is a component's business;
-    // giving it its own colours, border or arrow is not.
     const offenders = components
       .filter((one) =>
         [...one.text.matchAll(/(?<![\w-])select(?![\w-])[^{;]*\{([^}]*)\}/g)].some(
@@ -75,18 +58,6 @@ describe('the look of things the browser also has an opinion about', () => {
     ).toEqual([])
   })
 
-  /** A custom property stated in terms of itself is a cycle, and a cycle makes the
-   *  property invalid at computed-value time rather than resolving to what it
-   *  inherited. It is not "the same value, said again": it is the value gone, on that
-   *  element and on everything under it. Nothing is reported, `getComputedStyle`
-   *  answers the empty string, and every rule that reads it takes its fallback - so
-   *  it looks like it works, which is what this file is for.
-   *
-   *  `.menu` in ContextMenu.svelte restated all four `--inset-*` "for the script",
-   *  which is the one thing that never needs doing: a custom property inherits, so
-   *  the tokens' own values on the document reach every element on the page. The
-   *  script read four zeroes instead, and a phone's menu was placed clear of the
-   *  notch by nothing while the sheet's own padding fell back with it. */
   test('no component states a custom property in terms of itself', () => {
     const cycles = components.flatMap((one) =>
       [...one.text.matchAll(/--([\w-]+)\s*:\s*var\(\s*--([\w-]+)\s*[,)]/g)]
@@ -98,32 +69,22 @@ describe('the look of things the browser also has an opinion about', () => {
   })
 })
 
-/** Every file the app and the theme package are written from, whatever its kind:
- *  the scan below is looking for a line nobody should write again, and a rule in a
- *  stylesheet and a line of TypeScript are equally able to write it. */
 function sourceFiles(dir: string): string[] {
   const out: string[] = []
 
   for (const name of readdirSync(dir)) {
     const path = join(dir, name)
     if (statSync(path).isDirectory()) out.push(...sourceFiles(path))
-    // A test may name what the app may not write, and one below does.
     else if (/\.(ts|svelte|css)$/.test(name) && !name.endsWith('.test.ts')) out.push(path)
   }
 
   return out
 }
 
-/** Contrast is a theme. Two things follow, and both are a line away from being
- *  undone by somebody who does not know the history: the four colours inside a
- *  code fence are tokens a theme states per scheme, and nothing outside a theme
- *  paints contrast over the page any more. */
 describe('what a theme reaches, now that contrast is one', () => {
   const SYNTAX = ['--syntax-number', '--syntax-function', '--syntax-type', '--syntax-property']
   const tokens = readFileSync(join(THEMES, 'tokens.css'), 'utf8')
 
-  /** One scheme's block. Split rather than parsed: the four belong beside the
-   *  other colours of a scheme, not once at the top for both. */
   function blockFor(scheme: 'dark' | 'light'): string {
     const dark = tokens.slice(tokens.indexOf("[data-theme='dark']"))
     const [own = '', rest = ''] = dark.split("[data-theme='light']")
@@ -138,8 +99,6 @@ describe('what a theme reaches, now that contrast is one', () => {
   })
 
   test('and spells them apart from the gutter, which is a different colour entirely', () => {
-    // `--code-number` was the syntax colour and `--code-number-color` the digits
-    // in the margin: one hyphen apart, and nothing to do with each other.
     expect(tokens).toContain('--code-number-color:')
     expect(tokens).not.toMatch(/--code-(number|function|type|property):/)
   })
@@ -153,17 +112,9 @@ describe('what a theme reaches, now that contrast is one', () => {
   })
 })
 
-/** A note stands on the note's paper wherever it is written, and the scratchpad is a
- *  note. Its card stood on `--surface`, the colour a menu floats on: a step off the page
- *  in the plain themes. On the see-through paper then, as a pane is, it was a narrow, tall
- *  strip of whatever is behind the window - glass's pair turning to its second colour
- *  towards the bottom corner - which read as a second ground under its lower half
- *  (#1110). So it is the paper itself, whole, and a pane is the one surface that lays the
- *  see-through paper. */
 describe('the paper a note is written on', () => {
   const PAPER = 'background: var(--content-ground, var(--bg));'
 
-  /** What one component's top-level rule for a class says. */
   function ruleOf(name: string, selector: string): string {
     const text = components.find((one) => one.name === name)?.text ?? ''
     const opens = new RegExp(`(?:^|\\n)\\s*\\.${selector}\\s*\\{([^}]*)\\}`)
@@ -189,10 +140,6 @@ describe('the paper a note is written on', () => {
   })
 })
 
-/** A side's body is a place on the window, and what it shows stands in it: the
- *  scratchpad's card wore a menu's shape there, whose shadow fell below its foot and out
- *  past its corner as a darker band (#1110). So nothing a side shows wears a floating
- *  layer's shape, or casts a shadow, at its outermost element. */
 describe('what a side shows', () => {
   const FLOATING = ['nib-layer', 'nib-screen', 'nib-bubble']
   const sidebar = readFileSync(join(SOURCE, 'lib/Sidebar.svelte'), 'utf8')
@@ -258,11 +205,6 @@ describe('what a side shows', () => {
   })
 })
 
-/** A list or a thread that runs out under something fades out by a mask, so what shows
- *  through is whatever it stands on. A colour laid over its end is a token's guess at
- *  that ground: the AI panel's thread faded to the side's colour while the side stood
- *  on the chrome's, a darker strip and a band of the real ground above the field
- *  (#1110). */
 describe('what runs out under something', () => {
   const style = (name: string) => components.find((one) => one.name === name)?.text ?? ''
 

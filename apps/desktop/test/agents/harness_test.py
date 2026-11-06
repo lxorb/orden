@@ -1,9 +1,3 @@
-"""The harness's own logic: how a scenario reads an answer, and how the fake agent reads
-what nib says. Pure, so no app and no window.
-
-    python -m unittest discover -s apps/desktop/test/agents -p "*_test.py"
-"""
-
 from __future__ import annotations
 
 import json
@@ -20,10 +14,8 @@ sys.path.insert(0, str(HERE.parents[3] / "scripts"))
 from fake_agent import from_contract, marked_source  # noqa: E402
 from run import ROADS, SCENARIOS, dotted, filled, judged, needed, stand_in  # noqa: E402
 
-#: Every kind of step run.py knows; a scenario with any other is a typo.
 STEPS = {"call", "join", "record", "keyboard", "windows", "reader", "reader_call", "reader_eval", "pause", "observe"}
 
-#: Every verb of the contract (agents/verbs.rs `NAMES`) and the window's agent verbs.
 VERBS = {
     "browser_tabs", "browser_open", "browser_navigate", "browser_wait", "browser_snapshot",
     "browser_find", "browser_read", "browser_click", "browser_type", "browser_press",
@@ -33,7 +25,6 @@ VERBS = {
     "browser_close", "browser_show", "browser_takeover", "agent_status", "approval_status",
     "read_note", "edit_note", "run_agent", "agent_result",
 }  # fmt: skip
-
 
 class ReadingAnAnswer(unittest.TestCase):
     ASKED = {"status": "needs_approval", "approval": "a17", "summary": "Place order on shop.example", "ms": 4}
@@ -71,7 +62,6 @@ class ReadingAnAnswer(unittest.TestCase):
             {"args": {"url": "http://127.0.0.1:1/shop", "tab": "a3", "on": True, "left": "{unknown}"}},
         )
 
-
 class ReadingWhatNibSays(unittest.TestCase):
     def test_the_contracts_answer_is_kept(self) -> None:
         said = from_contract({"status": "error", "code": "site_denied", "message": "no"}, 3.14)
@@ -88,10 +78,7 @@ class ReadingWhatNibSays(unittest.TestCase):
         self.assertEqual(marked_source('<untrusted source="https://a.example/x">hi</untrusted>'), "https://a.example/x")
         self.assertIsNone(marked_source("nothing marked"))
 
-
 class EveryScenario(unittest.TestCase):
-    """Each file read the way run.py reads it, so a typo is found here rather than on a
-    probe build at night."""
 
     def test_is_steps_of_known_kinds_and_verbs_of_the_contract(self) -> None:
         files = sorted(SCENARIOS.glob("*.json"))
@@ -107,7 +94,6 @@ class EveryScenario(unittest.TestCase):
                 for road in scenario.get("via", []):
                     self.assertIn(road, ROADS)
 
-
 class AHelpersAccount(unittest.TestCase):
     def test_claude_code_is_the_stand_in_that_says_you_asked(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
@@ -115,7 +101,6 @@ class AHelpersAccount(unittest.TestCase):
             script = pathlib.Path(re.findall(r'"([^"]+)" claude ', shim.read_text(encoding="utf-8"))[0])
         self.assertEqual(shim.name, "claude.cmd")
         self.assertIn("You asked: ", script.read_text(encoding="utf-8"))
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -4,20 +4,6 @@ import { fileURLToPath } from 'node:url'
 import { parse } from 'svelte/compiler'
 import { expect, test } from 'vitest'
 
-/** What may stand at the end of a row of settings.
- *
- *  `.nib-setting` is a name on the left and a control on the right, and the name is
- *  what gives way. `.nib-action` is the other kind of action: a line of words across a
- *  card, as wide as the card. Put one at the end of a row and it takes the whole row,
- *  the name is left no width at all, and its words are drawn a letter to a line down
- *  the window - which is what Settings > Online terminal did with Restart (issue 245).
- *  The action at the end of a row is `.nib-chip`; see base.css.
- *
- *  And since Settings > Account drew Clear after the same way with a dropdown, the row
- *  itself holds the line whatever stands at its end: its `.name` has a floor, and a
- *  control that does not fit beside it goes under it. The tests below hold the rule and
- *  the markup it needs; the layout sweep (test/e2e/layout-sweep.py) holds what is drawn. */
-
 const SRC = fileURLToPath(new URL('../src/', import.meta.url))
 
 interface Node {
@@ -35,7 +21,6 @@ function components(dir: string): string[] {
   })
 }
 
-/** The static half of an element's `class`, plus every `class:name` it may wear. */
 function classesOf(node: Node): string[] {
   const words: string[] = []
   for (const one of node.attributes ?? []) {
@@ -47,8 +32,6 @@ function classesOf(node: Node): string[] {
   return words.filter(Boolean)
 }
 
-/** Every element under a node, through blocks as well as elements, each with whether a
- *  row of settings holds it. */
 function* elements(node: unknown, inRow = false): Generator<{ node: Node; inRow: boolean }> {
   if (!node || typeof node !== 'object') return
   if (Array.isArray(node)) {
@@ -81,8 +64,6 @@ test('no row of settings ends in an action that is as wide as a card', () => {
   expect(wide).toEqual([])
 })
 
-/** The children of an element that are elements, through blocks but not into other
- *  elements or components. */
 function* children(node: unknown): Generator<Node> {
   if (!node || typeof node !== 'object') return
   if (Array.isArray(node)) {
@@ -100,7 +81,6 @@ function* children(node: unknown): Generator<Node> {
   }
 }
 
-/** Whether an element says words of its own, written in the markup or put there. */
 function says(node: Node): boolean {
   const nodes = (node.fragment as { nodes?: Node[] } | undefined)?.nodes ?? []
   return nodes.some(
@@ -110,13 +90,8 @@ function says(node: Node): boolean {
   )
 }
 
-/** The words a row is named by are its `.name`, because that is what the floor in
- *  base.css holds - `.nib-setting > .name`, never below a readable width whatever sits
- *  beside it. A row whose name is a bare span is a row whose name can still be squeezed
- *  to nothing, which is the bug the floor exists for. */
 test('the words a row of settings is named by are its .name', () => {
   const WORDS = new Set(['span', 'div', 'p', 'strong', 'small'])
-  // What a row says that is not its name: a value, a key, a hint, a mark.
   const VALUES = new Set(['name', 'text', 'hint', 'value', 'is-value', 'key', 'mark'])
   const bare = components(SRC).flatMap((file) => {
     const tree = parse(readFileSync(file, 'utf8'), { modern: true })
@@ -134,7 +109,6 @@ test('the words a row of settings is named by are its .name', () => {
   expect(bare).toEqual([])
 })
 
-/** The rule of the row itself, in the themes package: one rule's body by its selector. */
 function ruleOf(sheet: string, selector: string): string {
   const at = sheet.indexOf(`\n${selector} {`)
   expect(at, `${selector.trim()} in its sheet`).toBeGreaterThan(-1)
@@ -147,20 +121,14 @@ test("a row's name keeps a readable width and what does not fit beside it wraps 
     'utf8',
   )
 
-  // The row breaks rather than the name: a control too wide goes to the next line.
   expect(ruleOf(sheet, '.nib-setting')).toMatch(/flex-wrap:\s*wrap/)
-  // A floor no pane's own `min-width: 0` can take away, and never wider than the row.
   expect(ruleOf(sheet, '.nib-setting > .name')).toMatch(
     /min-inline-size:\s*min\(\d+(\.\d+)?rem,\s*100%\)\s*!important/,
   )
-  // What wraps lands at the end, where a row's control always is.
   expect(ruleOf(sheet, '.nib-setting > .name + *')).toMatch(/margin-inline-start:\s*auto/)
   expect(ruleOf(sheet, '.nib-setting > .name ~ *')).toMatch(/max-inline-size:\s*100%/)
 })
 
-/** A dropdown at the end of a row was one width in every language, so in a dozen of
- *  them the chosen value was cut short of the words that tell the choices apart, and
- *  the list of panes cut a name its column could not hold (issue 516). */
 test('a dropdown in a row and a pane in the list are as long as their words', () => {
   const panel = readFileSync(join(SRC, 'lib/SettingsPanel.svelte'), 'utf8')
   const sheet = readFileSync(
@@ -168,8 +136,6 @@ test('a dropdown in a row and a pane in the list are as long as their words', ()
     'utf8',
   )
 
-  // A floor for the column the choices line up in, not a width: the column every
-  // pane's values share (#1056).
   expect(ruleOf(sheet, '.nib-setting-value')).toMatch(
     /min-inline-size:\s*min\(var\(--setting-value\),\s*100%\)/,
   )

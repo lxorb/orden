@@ -3,18 +3,6 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
-/** How big a layer in the middle of the window is, said once.
- *
- *  Emil, 2026-10-01, on a window of about 2000 by 1125: "settings have a strange size
- *  for this screen size". The sheet was 56rem across and 76vh down - a width that
- *  follows the reader's text size and a height that follows the window - so a big
- *  window made it a portrait slab. Six layers had a vh of their own for where they hung
- *  or how tall they got, and eight widths between them.
- *
- *  The scale is in tokens.css and the rule in `.nib-screen`; these hold every layer to
- *  them. What it comes to on a real window, at four sizes and three scales, is
- *  test/e2e/modal-size.py's question. See docs/design.md. */
-
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const THEMES = fileURLToPath(new URL('../../../packages/themes/src/', import.meta.url))
 
@@ -22,7 +10,6 @@ const uncommented = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, '')
 const tokens = uncommented(readFileSync(join(THEMES, 'tokens.css'), 'utf8'))
 const base = uncommented(readFileSync(join(THEMES, 'base.css'), 'utf8'))
 
-/** The scale, stated here as well so a step cannot move without somebody meaning it. */
 const SCALE = {
   '--screen-ask': '24rem',
   '--screen-sheet': '28rem',
@@ -43,7 +30,6 @@ function files(dir: string): string[] {
   return out
 }
 
-/** The body of the first rule whose selector is exactly this. */
 function rule(css: string, selector: string): string | null {
   for (const one of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
     if ((one[1] ?? '').trim() === selector) return one[2] ?? ''
@@ -51,9 +37,6 @@ function rule(css: string, selector: string): string | null {
   return null
 }
 
-/** Every component that stands a `.nib-screen` up, and the class its own rule for that
- *  element is written against: `sheet` beside `class="nib-screen is-centred sheet"`,
- *  or the pair a component that is a screen only sometimes writes. */
 const layers = files(SOURCE).flatMap((path) => {
   const text = readFileSync(path, 'utf8')
   const css = uncommented(

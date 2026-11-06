@@ -2,18 +2,12 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
-/** What floats in a note's corners is the note's pane's, never the window's (#1076): a
- *  page note's counter sat against the window's corner, under the right side once that
- *  was open. The layout itself is measured by test/e2e/pane-corners.py; this holds the
- *  rule where it is written, so nothing slips back out of the pane. */
-
 const read = (path: string) =>
   readFileSync(fileURLToPath(new URL(`../src/${path}`, import.meta.url)), 'utf8')
 
 const app = read('App.svelte')
 const markup = app.slice(app.indexOf('</script>'), app.indexOf('<style>'))
 
-/** The window's `corners` snippet, which the focused pane draws. */
 const corners = (() => {
   const from = markup.indexOf('{#snippet corners()}')
   return from < 0 ? '' : markup.slice(from, markup.indexOf('{/snippet}', from))
@@ -50,12 +44,10 @@ describe('the note’s corners', () => {
   })
 
   test('a split is as wide as its room: the divider’s room comes out of the shares', () => {
-    // One rule for the panes and the strips over them in the bar (#1037).
     expect(read('lib/PaneTree.svelte')).toContain('tracks(split)')
     const tree = read('lib/workspace/pane-tree.ts')
     const share =
       /export function tracks\(split: Split\): string \{\s*return `([^`]*)`/.exec(tree)?.[1] ?? ''
-    // A line's pixel, or the gap between two cards (#1088; --card-gap in tokens.css).
     expect(share).toContain('var(--card-gap)')
     expect(share).not.toContain('%')
     expect(share).toMatch(/fr\)/)

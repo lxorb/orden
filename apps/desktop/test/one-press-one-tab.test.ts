@@ -3,14 +3,6 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
-/** One press on a link is one tab (#1083). A press reaches two takers when the surface
- *  follows it and something else is let have it as well: the browser engine's own
- *  default for an `<a>` (a modifier or the middle button is "open in a new window"),
- *  or, in a terminal, the program that asked for the mouse. So every surface that
- *  follows a link out of a press spends the press first, and the terminal takes a link
- *  press before xterm.js does. test/effects/terminal-links.effect.test.ts presses one;
- *  this holds every other surface to the same rule where it is written. */
-
 const SRC = fileURLToPath(new URL('../src', import.meta.url))
 
 function files(dir: string): string[] {
@@ -21,7 +13,6 @@ function files(dir: string): string[] {
   })
 }
 
-/** Every call that follows a link out of the press it was handed. */
 const pressed = files(SRC).flatMap((path) => {
   const text = readFileSync(path, 'utf8')
   return [...text.matchAll(/followHref\([^)]*\bevent\)/g)].map((one) => ({
@@ -37,7 +28,6 @@ describe('one press, one tab', () => {
 
   test('every one spends the press before following it', () => {
     for (const one of pressed) {
-      // The nearest function above the call, and what it does before the call.
       const body = one.before.slice(one.before.lastIndexOf('function ') + 1)
       const inline = one.before.slice(one.before.lastIndexOf('=>'))
       expect(

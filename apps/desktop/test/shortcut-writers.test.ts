@@ -6,17 +6,6 @@ import { settleShortcuts } from '../src/lib/web-tab/settle'
 import { withOwn } from '../src/lib/web-tab/own-file'
 import { readShortcut, rewriteShortcut, writeShortcut } from '@orden/scan/shortcut'
 
-/** Every `.url` the app writes again keeps what it said (#1098).
- *
- *  A web note's file is rewritten all the time - the page moves on, the site's mark
- *  changes, its own web data is turned on, two copies are settled - and each of those
- *  used to build the file afresh from the fields it knew about. A key one writer had
- *  never heard of was dropped by the next, which for the icon the reader chose would be
- *  the icon quietly going back to the site's. So a file that is there is written again
- *  through `rewriteShortcut`, which starts from what it says, and `writeShortcut` is for
- *  a file that is not there yet. The second half holds the app to that: a new place
- *  that writes a shortcut from its parts is a decision, written down below. */
-
 const SOURCE = fileURLToPath(new URL('../src', import.meta.url))
 
 function files(dir: string, found: string[] = []): string[] {
@@ -28,7 +17,6 @@ function files(dir: string, found: string[] = []): string[] {
   return found
 }
 
-/** The modules that write a shortcut from its parts, and why each may. */
 const FRESH: Record<string, string> = {
   'lib/web-tab/new-site.ts': 'a website made from an address',
   'lib/web-tab/convert.ts': 'an old `url:` note made into a shortcut',
@@ -70,7 +58,6 @@ describe('a shortcut written again', () => {
   test('through every writer of a file that is there', () => {
     expect(readShortcut(withOwn('Svelte.url', chosen, '0123456789abcdef'))?.chosen).toBe('rocket')
 
-    // Two copies settled: the choice survives a newer copy written before it was heard of.
     const newer = writeShortcut('https://svelte.dev/blog', 'Svelte', new Date())
     const settled = readShortcut(settleShortcuts('Svelte.url', chosen, newer, true))!
     expect(settled.url).toBe('https://svelte.dev/blog')

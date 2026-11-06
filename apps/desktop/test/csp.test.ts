@@ -5,30 +5,14 @@ import { describe, expect, test } from 'vitest'
 import { DECK_LAYOUT_SCRIPT } from '@orden/markdown/deck'
 import { CSP, META_CSP } from '../src/csp'
 
-/** One policy, in files that cannot import from each other: `src/csp.ts` is the
- *  one the dev server reads, `src-tauri/tauri.conf.json` is what the installed app
- *  is served with, and the three pages - `index.html`, the presenter's window and
- *  the Even plugin's page - are what a browser and the PWA get. A copy
- *  that drifts is an app that is one thing while it is being written and another
- *  once it is installed, which is the failure this file exists to catch.
- *
- *  Each carrier is held to the form it can actually carry. The two that deliver a
- *  `<meta http-equiv>` must not name `frame-ancestors`: a browser cannot honour it
- *  there - who may frame a page is settled before the page is parsed - and it says
- *  so on the console on every page load, which is an error in a shipping build and
- *  the one every drive in `test/e2e` tripped over. The header form keeps it, since
- *  a header is sent before the document. See src/csp.ts. */
-
 const read = (path: string) => readFileSync(fileURLToPath(new URL(path, import.meta.url)), 'utf8')
 
-/** What each page declares. */
 const pagePolicies = () => Object.values(PAGES).map(metaPolicy)
 
 const TAURI = JSON.parse(read('../src-tauri/tauri.conf.json')) as {
   app: {
     security: {
       csp: string | null
-      /** The directives the bundler is told not to rewrite; see the last test. */
       dangerousDisableAssetCspModification?: string[]
     }
   }
@@ -36,9 +20,6 @@ const TAURI = JSON.parse(read('../src-tauri/tauri.conf.json')) as {
 
 const INDEX = read('../index.html')
 
-/** Every page the app is, by name. A page without the policy is a page where the
- *  whole of it is off: the presenter's window draws a deck, embeds and all, and
- *  the Even plugin's page is the editor. */
 const PAGES: Record<string, string> = {
   'index.html': INDEX,
   'presenter.html': read('../presenter.html'),
@@ -47,18 +28,12 @@ const PAGES: Record<string, string> = {
   'handoff.html': read('../handoff.html'),
 }
 
-/** The dev and preview servers, which are the carriers that send a header. Read as
- *  text: the config runs git and builds a stamp, and which constant it hands the
- *  servers is the whole of what matters here. */
 const VITE = read('../vite.config.ts')
 
-/** One directive of a policy, whole, or nothing when the policy does not say it. */
 function line(policy: string, directive: string): string {
   return policy.split('; ').find((one) => one.startsWith(`${directive} `)) ?? ''
 }
 
-/** The policy `index.html` declares, as the browser reads it: the attribute's
- *  value, with the newlines and indentation prettier put in taken back out. */
 function metaPolicy(html: string): string {
   const found = /http-equiv="Content-Security-Policy"\s*\n?\s*content="([^"]*)"/.exec(html)
   return (found?.[1] ?? '').replace(/\s+/g, ' ').trim()
@@ -68,14 +43,9 @@ describe('the content policy', () => {
   test('is the same string in every place, each in the form it can carry', () => {
     expect(TAURI.app.security.csp).toBe(META_CSP)
     for (const [name, page] of Object.entries(PAGES)) expect(metaPolicy(page), name).toBe(META_CSP)
-    // And the header form is the meta form plus what only a header may say, so the
-    // two can never be two policies.
     expect(CSP.startsWith(`${META_CSP}; `)).toBe(true)
   })
 
-  /** The console error this split exists to remove. A `<meta>` that names
-   *  `frame-ancestors` is a line the browser rejects out loud on every page load,
-   *  and every drive in `test/e2e` fails on any console error. */
   test('never names frame-ancestors where a browser cannot honour it', () => {
     expect(META_CSP).not.toContain('frame-ancestors')
     expect(TAURI.app.security.csp).not.toContain('frame-ancestors')
@@ -100,33 +70,15 @@ describe('the content policy', () => {
     }
   })
 
-  /** The line that took the longest to earn. `'unsafe-inline'` for scripts meant
-   *  markup that reached the page could run a script written into it on any engine
-   *  that reads only `script-src` - an `<iframe srcdoc>` put in by `innerHTML` is a
-   *  document of the app's own origin. It was there for the sandboxed frames, which
-   *  inherit the policy; they run through the frame script now, allowed by its
-   *  hash - see packages/editor/src/frame-script.js - and `test/e2e/frames.py`
-   *  proves Run and a block of HTML still work under this policy in Chrome and
-   *  WebKit. */
   test('runs no script written inline, on any engine', () => {
     for (const policy of [CSP, META_CSP, TAURI.app.security.csp ?? '']) {
       for (const directive of ['script-src', 'script-src-attr', 'default-src']) {
         expect(line(policy, directive), directive).not.toContain("'unsafe-inline'")
       }
-      // And no `script-src-elem` to say otherwise for elements: Tauri adds its nonce
-      // to `script-src`, and an element falls back to that. See src/csp.ts.
       expect(line(policy, 'script-src-elem')).toBe('')
     }
   })
 
-  /** The inline scripts there are: the theme before the first paint in
-   *  `index.html`, the frame script every sandboxed frame carries, and the lines that
-   *  fit a deck to its sheets in the print frame. Each is
-   *  allowed by the hash of its characters - so a change to those characters is a
-   *  change to the policy, and this says which. The hash is taken of the text as a
-   *  browser reads it, line endings folded to a newline the way the HTML parser
-   *  folds them. And the policy names no hash that is not one of them, so one taken
-   *  out does not leave its door behind. */
   test('names every inline script by its hash, and nothing else', () => {
     const hashOf = (text: string) =>
       `'sha256-${createHash('sha256').update(text.replace(/\r\n?/g, '\n')).digest('base64')}'`
@@ -145,19 +97,12 @@ describe('the content policy', () => {
     expect(named.sort()).toEqual([...new Set([...pages, frames, deck])].sort())
   })
 
-  /** The frame script is written into a `<script>` element as it is, so nothing in
-   *  it may end that element or open the comment that changes how it is read. */
   test('carries a frame script that stays one element', () => {
     const script = read('../../../packages/editor/src/frame-script.js')
     expect(script).not.toMatch(/<\/script|<!--/i)
   })
 
-  /** The lines that are the whole point. A policy is easy to widen by accident -
-   *  one keyword in the wrong directive and the thing it was written for is gone. */
   test('lets no element on any page carry an event handler', () => {
-    // The `onerror` in `<img src=x onerror=…>`, which is what a note somebody was
-    // handed would use: `<script>` inserted through innerHTML never runs, and a
-    // handler on an attribute does.
     expect(CSP).toContain("script-src-attr 'none'")
   })
 
@@ -172,8 +117,6 @@ describe('the content policy', () => {
   })
 
   test('and keeps the styles a running editor writes', () => {
-    // A nonce anywhere in `style-src` would make the browser ignore
-    // `'unsafe-inline'`, and every cursor CodeMirror places is a style attribute.
     expect(CSP).toContain("style-src 'self' 'unsafe-inline'")
     expect(CSP).not.toContain('nonce-')
   })
@@ -188,26 +131,17 @@ describe('the content policy', () => {
       expect(CSP).toContain(said)
     }
 
-    // Three of the four in a `<meta>` as well; the fourth is the one a parsed
-    // document is too late to say. See src/csp.ts.
     for (const said of ["object-src 'none'", "base-uri 'none'", "form-action 'none'"]) {
       expect(META_CSP).toContain(said)
     }
   })
 
   test('and lets Tauri talk to its own back end', () => {
-    // Without these the app cannot read a single file: the commands travel over a
-    // protocol of Tauri's, which is a scheme on some platforms and a host on others.
     const connect = CSP.split('; ').find((one) => one.startsWith('connect-src ')) ?? ''
     expect(connect).toContain('ipc:')
     expect(connect).toContain('http://ipc.localhost')
   })
 
-  /** This machine by name and by address, which a policy reads as two different
-   *  hosts: it matches what is written rather than what the name resolves to, so a
-   *  line that allows only `localhost` refuses a model served on 127.0.0.1 - the
-   *  address every local runner prints when it starts - and says nothing a reader
-   *  could act on, a blocked request being a failure with no reason attached. */
   test('and reaches this machine by address as well as by name', () => {
     const connect = CSP.split('; ').find((one) => one.startsWith('connect-src ')) ?? ''
 
@@ -216,19 +150,11 @@ describe('the content policy', () => {
       expect(connect, host).toContain(`ws://${host}:*`)
     }
 
-    // And the same line in the two carriers that take a `<meta>`, which is where an
-    // installed app and the PWA read it from.
     expect(META_CSP).toContain('http://127.0.0.1:*')
     expect(TAURI.app.security.csp).toContain('http://127.0.0.1:*')
     expect(metaPolicy(INDEX)).toContain('http://127.0.0.1:*')
   })
 
-  /** And never the IPv6 form of it, which cannot be said: a host source in CSP is a
-   *  name or a dotted quad, and Chromium answers a bracketed address with "contains
-   *  an invalid source ... it will be ignored" on every page load. That is a console
-   *  error in a shipping build and a failed drive, which is the same failure the
-   *  meta and header split above was made to remove. A server bound to `::1` alone
-   *  is still reached as `http://localhost:port`. */
   test('and says nothing a browser will reject out loud', () => {
     for (const policy of [CSP, META_CSP, TAURI.app.security.csp ?? '', ...pagePolicies()]) {
       expect(policy).not.toContain('[::1]')
@@ -236,8 +162,6 @@ describe('the content policy', () => {
     }
   })
 
-  /** Plain http is for this machine and nowhere else: a note that points at a
-   *  picture over http on somebody else's host is a note that leaks. */
   test('and lets plain http nowhere but this machine', () => {
     const connect = CSP.split('; ').find((one) => one.startsWith('connect-src ')) ?? ''
     const hosts = connect.split(' ').filter((one) => one.startsWith('http://'))
@@ -248,38 +172,10 @@ describe('the content policy', () => {
     }
   })
 
-  /** The one directive the bundler must not touch, and the most expensive line in
-   *  this file to have got wrong.
-   *
-   *  Tauri rewrites the policy in `tauri.conf.json` as it builds, and stamps every
-   *  inline `<style>` and `<script>` it finds in `index.html` with a nonce it puts
-   *  into the matching directive. That is the right thing for scripts. For styles it
-   *  is a trap, because CSP says a directive carrying a nonce IGNORES `'unsafe-inline'`
-   *  beside it - so the moment index.html gained its first inline style, every
-   *  stylesheet the app mounts at RUNTIME was silently blocked.
-   *
-   *  CodeMirror mounts its theme that way, and two of its rules exist nowhere else:
-   *  the editor is `height: 100%` and its scroller is `overflow-y: auto`. Without
-   *  them the editor grows to the whole note, the scroller has nothing left to
-   *  scroll, and a note cannot be scrolled at all - no bar, and a wheel that does
-   *  nothing, while the caret still moves the note because that is the app setting
-   *  `scrollTop` on the parent that clips. Reading mode was unaffected throughout,
-   *  because it is styled from a real stylesheet.
-   *
-   *  Measured in the shipped WebView2 app: the theme's `<style>` sat in the head with
-   *  its 14 kB of text and no `CSSStyleSheet` attached, five launches out of five.
-   *  With this line, 186 rules. Nothing caught it because the dev server sends its
-   *  own policy from src/csp.ts, which Tauri never sees, and every drive in the
-   *  repository runs against a server rather than against the packaged app.
-   *
-   *  The inline style that set it off arrived in 3a39445e, so the window could paint
-   *  its remembered colour before the webview existed. That is worth keeping; this is
-   *  what makes it safe to keep. */
   test('leaves style-src alone, or the editor loses the stylesheet it mounts', () => {
     const untouched = TAURI.app.security.dangerousDisableAssetCspModification
     expect(untouched, 'the bundler must not add a nonce to style-src').toContain('style-src')
 
-    // And the directive it is protecting still has to allow what it allows.
     expect(TAURI.app.security.csp ?? '').toContain("style-src 'self' 'unsafe-inline'")
   })
 })

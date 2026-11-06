@@ -3,23 +3,6 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
-/** The marks across the top of the app, and the one shape each of them has.
- *
- *  Four small things Emil saw in one screenshot, and every one of them is a rule
- *  that was said in more than one place or in no place at all:
- *
- *  - a space was named without the mark it wears everywhere else it is named;
- *  - a mark inside a badge sat a pixel low, because an `svg` is an inline element
- *    and inherits a line box it does not fit in;
- *  - "shared" was a dot in the accent, which is also the shape of the dot that
- *    means "not written down yet";
- *  - the sidebar button faded half its glyph away, so it was one drawing shut and
- *    a different one open.
- *
- *  Where the pixels themselves are checked is apps/desktop/test/e2e/shell-polish.py,
- *  which measures them in a real browser. What is here is the rule behind each of
- *  them, so a future component cannot restate it differently. */
-
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 
 function componentFiles(dir: string): string[] {
@@ -55,15 +38,11 @@ function named(name: string): Component {
   return found
 }
 
-/** A stylesheet without its comments: a note about a dot is not a dot. */
 function declarations(style: string): string {
   return style.replace(/\/\*[\s\S]*?\*\//g, '')
 }
 
 describe('a mark that fills the box it was given', () => {
-  /** The one that was wrong. An `svg` is inline by default, so it sits on the
-   *  text baseline of whatever wraps it, and a 16px mark inside a 21.6px line box
-   *  is pushed down by the descender under it. */
   test('is taken out of the line box it would otherwise sit in', () => {
     const style = declarations(named('lib/Icon.svelte').style)
     const glyph = /\.glyph\s*\{([^}]*)\}/.exec(style)?.[1] ?? ''
@@ -73,10 +52,6 @@ describe('a mark that fills the box it was given', () => {
     expect(glyph).toMatch(/height\s*:\s*100%/)
   })
 
-  /** Emil, 2026-10-13: "remove this space switcher here", of the space's mark the
-   *  title bar wore while the panel was shut. The bar names no space at all: the
-   *  panel's header does, and Ctrl+Space and the palette reach every space with
-   *  the panel shut. */
   test('and the title bar names no space of its own', () => {
     const bar = named('lib/Titlebar.svelte')
     expect(bar.text).not.toContain('<SpaceSwitcher')
@@ -84,10 +59,6 @@ describe('a mark that fills the box it was given', () => {
     expect(bar.text).not.toContain('{space.name}')
   })
 
-  /** And the header over the file list, which is the list of spaces shut. Both
-   *  places the switcher names a space render one badge written once, rather than
-   *  two that look alike: a mark the header drew for itself is a second design for
-   *  the same object, and it drifts. See docs/design.md. */
   test('and so does the space named over the file list, out of the one badge', () => {
     const switcher = named('lib/SpaceSwitcher.svelte')
     const badge = named('lib/SpaceBadge.svelte')
@@ -95,18 +66,12 @@ describe('a mark that fills the box it was given', () => {
 
     expect(badge.text.match(/<SpaceMark /g)).toHaveLength(1)
     expect(badge.text).toMatch(/class="nib-badge"[\s\S]{0,200}<SpaceMark/)
-    // Rendered by the row for each space in either list, and by the mark the header
-    // wears - which the header itself asks for in both of its states, the name read
-    // and the name being typed.
     expect(switcher.text).not.toContain('<SpaceMark ')
     expect(switcher.text.match(/<SpaceBadge /g)).toHaveLength(1)
     expect(row.text.match(/<SpaceBadge /g)).toHaveLength(1)
     expect(switcher.text.match(/\{@render mark\(\)/g)).toHaveLength(2)
   })
 
-  /** The chevron beside the space's name. An `svg` nobody paints is filled in black
-   *  and stroked in nothing, whatever `color` it is given: it was a black wedge,
-   *  which on a dark panel was barely there. */
   test('and the chevron beside it is stroked in its own ink, not filled in black', () => {
     const style = declarations(named('lib/SpaceSwitcher.svelte').style)
     const chevron = /\.chevron\s*\{([^}]*)\}/.exec(style)?.[1] ?? ''
@@ -138,13 +103,6 @@ describe('the mark that says shared', () => {
   })
 
   test('and nothing draws a dot for it any more', () => {
-    // A round few pixels filled with the accent is the shape it had. Two
-    // surfaces still draw one, and neither is about other people: the tab's
-    // saving dot, which is what a dot means from now on, and the pulse on a
-    // request waiting to be let in, in its sheet and in its pill. The foot's sync light went too (#206), and
-    // the switcher, which is where the shared dot was, is not among them. An AI chat with
-    // an answer not yet seen wears one too (#1064), drawn in its one component, and a
-    // row of the views' Display menu set otherwise than the view came, Todoist's (#1046).
     const dots = components
       .filter((one) => {
         const style = declarations(one.style)
@@ -172,11 +130,6 @@ describe('the mark that says shared', () => {
   test('and the file list says it on the note itself', () => {
     const tree = named('lib/Tree.svelte')
     expect(tree.text).toContain("import SharedMark from './SharedMark.svelte'")
-    // Twice, on the one row the list draws: every row is a note, and there are
-    // two things the one mark says about the note it opens - somebody is in it
-    // right now, or it is a file shared on its own. One shape for both, because it
-    // is the same fact about other people, and a second drawing of it is how one
-    // design becomes two. See docs/tree.md.
     expect(tree.text.match(/<SharedMark /g)).toHaveLength(2)
     expect(tree.text).toContain('othersIn(')
     expect(tree.text).toContain('isSharedItem(')
@@ -186,13 +139,9 @@ describe('the mark that says shared', () => {
     const switcher = named('lib/SpaceSwitcher.svelte')
     const row = named('lib/SpaceRow.svelte')
     expect(switcher.text).toContain("import SharedMark from './SharedMark.svelte'")
-    // Both places a space is named in the panel: the row in the list of them, and
-    // the header over the file list, which is that list shut. A space that is yours
-    // only to read wears the same mark with an eye in it.
     expect(switcher.text.match(/<SharedMark \/>/g)).toHaveLength(1)
     expect(row.text.match(/<SharedMark \/>/g)).toHaveLength(1)
     expect(row.text).toContain("<SharedMark icon={Eye} label={t('Read-only')} />")
-    // And the dot it used to draw is gone rather than merely unused.
     expect(declarations(switcher.style)).not.toMatch(/\.with\b/)
   })
 })
@@ -204,17 +153,12 @@ describe('the sidebar button', () => {
       .map((one) => one[1] ?? one[2] ?? '')
       .join(';')
 
-    // Nothing about the edge changes with the state. An opacity that went to
-    // nothing turned one drawing into two - a plain window shut, a split panel
-    // open - and so did sliding it into the frame's own border, which is what it
-    // was reported as the second time. The state is said in words instead.
     expect(edge).not.toMatch(/opacity/)
     expect(edge).not.toMatch(/transform/)
   })
 
   test('and nothing in the component picks a second drawing by state', () => {
     const text = named('lib/SidebarToggle.svelte').text
-    // One `svg`, one `rect`, one `path`: no branch that swaps the shapes.
     expect(text.match(/<svg/g)).toHaveLength(1)
     expect(text).not.toMatch(/\{#if[^}]*open[^}]*\}[\s\S]{0,200}<svg/)
   })
@@ -225,14 +169,8 @@ describe('the row across the top of the app', () => {
     const menu = named('lib/AppMenu.svelte')
     const trigger = /\.trigger\s*\{([^}]*)\}/.exec(declarations(menu.style))?.[1] ?? ''
 
-    // The bar stretches what is in it, and a button with a height of its own
-    // lands at the top of the row unless it says otherwise - which is where the
-    // three bars sat while everything beside them was centred.
     expect(trigger).toMatch(/align-self\s*:\s*center/)
 
-    // The height itself comes from `.nib-glyph` in the themes package, which is
-    // the one square every icon button in the app is. It used to be a 30px pill
-    // stated here, which made it the only button in the bar at that size.
     expect(menu.text).toMatch(/class="nib-glyph trigger"/)
     expect(trigger).not.toMatch(/height\s*:/)
   })

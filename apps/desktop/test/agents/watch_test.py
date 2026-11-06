@@ -1,12 +1,3 @@
-"""The family watch in scripts/probe_app.py, decided over numbers.
-
-Never by putting a real window on a screen to see whether it is caught: that would be the
-very thing the watch exists to stop. So every window and every screen here is a rectangle
-in a list, and the loop itself runs against a desktop that is only this file's.
-
-    python -m unittest discover -s apps/desktop/test/agents -p "*_test.py"
-"""
-
 from __future__ import annotations
 
 import pathlib
@@ -24,24 +15,17 @@ ENGINE = 200
 RENDERER = 300
 SOMEBODY = 900
 
-#: One screen at 200 %, 2944 by 1840 of its own pixels: this machine's.
 LAPTOP = (0, 0, 2944, 1840)
-#: A screen to its left, which puts it at negative coordinates.
 LEFT = (-2560, 0, 0, 1440)
-#: And one above the laptop.
 ABOVE = (0, -2160, 3840, 0)
-
 
 def window(hwnd: int, pid: int, box: tuple[int, int, int, int], kind: str = "Chrome_WidgetWin_1", visible: bool = True) -> Seen:
     return Seen(hwnd=hwnd, pid=pid, kind=kind, visible=visible, box=box)
 
-
 def desk(*windows: Seen, front: int = 0, screens: tuple[tuple[int, int, int, int], ...] = (LAPTOP,)) -> Look:
     return Look(windows=windows, front=front, screens=screens)
 
-
 FAMILY = {APP, ENGINE, RENDERER}
-
 
 class WhatIsInView(unittest.TestCase):
     def test_a_window_on_a_screen_is(self) -> None:
@@ -107,11 +91,7 @@ class WhatIsInView(unittest.TestCase):
         self.assertTrue(on_a_screen((2943, 1839, 3000, 1900), [LAPTOP]))
         self.assertFalse(on_a_screen((2944, 0, 3000, 20), [LAPTOP]))
 
-
 class TheAgentPageAtEveryScale(unittest.TestCase):
-    """docs/agent-native.md 3 and 6.5: an agent's page sits 10,000 CSS pixels up and left
-    of the window's corner. In the screen's own pixels that is 10,000 times the scale, so
-    the question is whether any desk anybody has reaches it at 100, 150 or 200 %."""
 
     DESKS = {
         "one laptop": (LAPTOP,),
@@ -132,12 +112,9 @@ class TheAgentPageAtEveryScale(unittest.TestCase):
                         self.assertFalse(on_a_screen(page, screens))
 
     def test_while_a_page_at_the_windows_own_corner_would_be(self) -> None:
-        # The control: the same page with no offset is on the laptop at every scale, so
-        # the test above is about the offset and not about a broken rectangle.
         for scale in (1.0, 1.5, 2.0):
             page = (120, 80, 120 + round(1280 * scale), 80 + round(800 * scale))
             self.assertTrue(on_a_screen(page, (LAPTOP,)))
-
 
 class TheFamily(unittest.TestCase):
     def test_every_process_under_the_app(self) -> None:
@@ -146,7 +123,6 @@ class TheFamily(unittest.TestCase):
         self.assertEqual(descendants(APP, parents, born), FAMILY)
 
     def test_not_one_whose_dead_parent_had_the_apps_number(self) -> None:
-        # Explorer's parent ended long ago; the app has been handed that number since.
         parents = {APP: 1, ENGINE: APP, SOMEBODY: APP}
         born = {APP: 10, ENGINE: 11, SOMEBODY: 2}.get
         self.assertEqual(descendants(APP, parents, born), {APP, ENGINE})
@@ -160,9 +136,7 @@ class TheFamily(unittest.TestCase):
         born = {APP: 10, ENGINE: 11, RENDERER: 12}.get
         self.assertEqual(descendants(APP, parents, born), FAMILY)
 
-
 class FakeApp:
-    """A process that runs for `lives` looks and then ends."""
 
     def __init__(self, lives: int) -> None:
         self.pid = APP
@@ -172,9 +146,7 @@ class FakeApp:
         self.lives -= 1
         return None if self.lives >= 0 else 0
 
-
 class TheLoop(unittest.TestCase):
-    """`_watch` against a desktop of this file's: what it ends, and how it leaves."""
 
     def run_watch(self, looks: list[Look], lives: int, living: dict[int, int]) -> tuple[list[list[int]], BaseException | None]:
         ended: list[list[int]] = []
@@ -216,7 +188,6 @@ class TheLoop(unittest.TestCase):
     def test_an_engine_that_outlives_the_app_is_still_watched(self) -> None:
         quiet = desk()
         late = desk(window(2, ENGINE, (40, 40, 400, 300)))
-        # The engine is found while the app runs, and its window arrives after the app ended.
         looks = [quiet] * 30 + [late]
         living = {ENGINE: APP}
         with mock.patch.object(probe_app, "descendants", lambda root, parents, born: {APP, ENGINE}):
@@ -224,11 +195,8 @@ class TheLoop(unittest.TestCase):
         self.assertEqual(ended, [[APP, ENGINE]])
         self.assertIsNotNone(leaving)
 
-
 @unittest.skipUnless(sys.platform == "win32", "the error mode is Windows'")
 class TheSystemsBoxes(unittest.TestCase):
-    """A probe and every process under it start with none of the system's own boxes,
-    which no hook inside the app can hold off a screen: the system raises them."""
 
     def test_the_drive_hands_its_probes_an_error_mode_without_them(self) -> None:
         assert probe_app.kernel32 is not None
@@ -246,7 +214,6 @@ class TheSystemsBoxes(unittest.TestCase):
         ):
             probe_app.run_probe(pathlib.Path("nib.exe"), env={"NIB_SPACES_DIR": "x"})
         self.assertEqual(said, ["mode", "start"])
-
 
 if __name__ == "__main__":
     unittest.main()

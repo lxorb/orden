@@ -2,17 +2,9 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
-/** An agent connecting never opens, raises or focuses the reader's window (#1091). Claude
- *  Code starting `nib mcp` is not the reader opening Orden: where the app is not running,
- *  `nib mcp` starts it with `--background` on every desktop, and the app then builds its
- *  window off the screen; where it is, a launch with that flag is answered by nothing. The
- *  rule is `launch::in_background`; this holds the three places to it, and the crate's own
- *  tests hold the rule. */
-
 const read = (path: string) =>
   readFileSync(fileURLToPath(new URL(`../src-tauri/src/${path}`, import.meta.url)), 'utf8')
 
-/** Each `fn launch()` of mcp/app.rs, one a platform. */
 function launchers(text: string): string[] {
   return text.split(/\nfn launch\(\) -> Result<\(\), String> \{/).slice(1)
 }

@@ -4,20 +4,6 @@ import { fileURLToPath } from 'node:url'
 import ts from 'typescript'
 import { describe, expect, test } from 'vitest'
 
-/** Every key in storage is read the way it was written (#1095).
- *
- *  A value is kept one of two ways: as the words themselves (`keep`) or as JSON
- *  (`keepJson`), and read back the matching way: `storedText` for words, `stored` for
- *  JSON. Read the other way, it reads as nothing - JSON.parse refuses a bare word - and
- *  nothing says so: the setting simply never comes back. That happened twice, the icon
- *  picker's last tab (#1071) and the AI panel's "Don't ask again" (#1089), each looking
- *  fine in the code that wrote it and in the code that read it.
- *
- *  So this reads the whole app, finds every key each of the four is called with -
- *  through the constants and templates the keys are named by - and holds each key to one
- *  way. A JSON.stringify handed to `keep` is not allowed at all, because then the way a
- *  value is written would be in the value and not in the call. */
-
 const SOURCE = fileURLToPath(new URL('../src', import.meta.url))
 
 type Way = 'text' | 'json'
@@ -36,23 +22,18 @@ function files(dir: string, found: string[] = []): string[] {
   return found
 }
 
-/** A file's script, as TypeScript reads it: a Svelte component's `<script>` blocks. */
 function scriptOf(path: string): string {
   const text = readFileSync(path, 'utf8')
   if (!path.endsWith('.svelte')) return text
   return [...text.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map((one) => one[1]).join('\n')
 }
 
-/** What is wrong with how the keys in `given` are written and read: a JSON.stringify
- *  handed to `keep`, and a key read another way than it is written. */
 function audit(given: readonly { name: string; text: string }[]) {
   const sources = given.map(({ name, text }) => ({
     name,
     file: ts.createSourceFile(name, text, ts.ScriptTarget.Latest, true),
   }))
 
-  /** Every module-level `const NAME = ...` in the app, by name, where the name is said once:
-   *  what a key's constant is resolved through, across the file that imports it. */
   const constants = new Map<string, ts.Expression[]>()
   const local = new Map<string, Map<string, ts.Expression>>()
   for (const { name, file } of sources) {
@@ -68,9 +49,6 @@ function audit(given: readonly { name: string; text: string }[]) {
     local.set(name, own)
   }
 
-  /** A key as it is in storage: a string, with `*` for any part made at run time. Null
-   *  where it cannot be told from the source, which is then named by its expression in
-   *  that file. */
   function keyOf(node: ts.Expression, file: string, depth = 0): string | null {
     if (depth > 6) return null
     if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text
@@ -109,8 +87,6 @@ function audit(given: readonly { name: string; text: string }[]) {
     ts.SyntaxKind.ExclamationEqualsEqualsToken,
   ]
 
-  /** Whether a read is held only to be compared later, as it is: `const held =
-   *  storedText(KEY)`, then `storedText(KEY) === held` after an await. */
   function onlyCompared(read: ts.CallExpression): boolean {
     const held = read.parent
     if (!ts.isVariableDeclaration(held) || !ts.isIdentifier(held.name)) return false
@@ -137,8 +113,6 @@ function audit(given: readonly { name: string; text: string }[]) {
     const add = (key: ts.Expression | undefined, way: Way, side: Use['side'], node: ts.Node) => {
       if (!key) return
       const at = `${name}:${file.getLineAndCharacterOfPosition(node.getStart()).line + 1}`
-      // A key that says nothing of its own - a parameter, `${prefix}${id}` with neither
-      // known - is the helper's, named by its expression in its file.
       const known = keyOf(key, name)
       const said =
         known !== null && /[\w.:-]{3,}/.test(known.replace(/\*/g, ''))
@@ -150,7 +124,6 @@ function audit(given: readonly { name: string; text: string }[]) {
       if (ts.isCallExpression(node) && name !== 'lib/stored.ts') {
         const [key, value] = node.arguments
         const parent = node.parent
-        // A read whose words are parsed straight away is a JSON read.
         const parsedAfter =
           ts.isCallExpression(parent) &&
           (parent.expression.getText() === 'parsed' || parent.expression.getText() === 'JSON.parse')
@@ -169,8 +142,6 @@ function audit(given: readonly { name: string; text: string }[]) {
         } else if (ts.isIdentifier(node.expression) && node.expression.text === 'stored') {
           add(key, 'json', 'read', node)
         } else if (ts.isIdentifier(node.expression) && node.expression.text === 'storedText') {
-          // Compared as it is, the text says nothing of how it is read: whether what this
-          // run wrote is still there.
           const compared =
             ts.isBinaryExpression(parent) &&
             [
@@ -187,7 +158,6 @@ function audit(given: readonly { name: string; text: string }[]) {
           add(key, json ? 'json' : 'text', 'write', node)
         }
       }
-      // `Shared` reads JSON and is written JSON; see stored.ts.
       if (ts.isNewExpression(node) && node.expression.getText() === 'Shared') {
         add(node.arguments?.[0], 'json', 'read', node)
         add(node.arguments?.[0], 'json', 'write', node)
@@ -197,7 +167,6 @@ function audit(given: readonly { name: string; text: string }[]) {
     visit(file)
   }
 
-  /** A key made at run time stands for every key it could be. */
   const matches = (pattern: string, key: string) =>
     pattern === key ||
     (pattern.includes('*') &&
@@ -248,8 +217,6 @@ describe('every key in storage', () => {
   })
 })
 
-/** And the check catches the two it was written for, so a change to it that stopped
- *  seeing them would say so. */
 describe('the check itself', () => {
   test('finds a word read as JSON, through the constant that names it', () => {
     const found = audit([

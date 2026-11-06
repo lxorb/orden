@@ -7,17 +7,6 @@ import { inText, oldNames } from '../../../scripts/old-name'
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 
-/** The old name, inside the repo (#367).
- *
- *  The product is Orden; product-name.test.ts holds what a reader sees to that. Inside,
- *  `nib` is still in packages, classes, keys, variables, files and comments, and it goes
- *  a kind at a time - a package at a time, to begin with. What has moved stays moved:
- *  writing it under the old name again fails here, at the line it is written on. What
- *  has not moved yet is not held to anything, since its old name is still the one to
- *  write; `node scripts/old-name.ts` counts what is left of each kind. */
-
-/** The workspace's packages already named `@orden/…`, by the name after the scope: read
- *  off their manifests, so the change that renames a package is all it takes. */
 const MOVED_PACKAGES: readonly string[] = execFileSync('git', ['ls-files', '*package.json'], {
   cwd: ROOT,
   encoding: 'utf8',
@@ -28,7 +17,6 @@ const MOVED_PACKAGES: readonly string[] = execFileSync('git', ['ls-files', '*pac
   .filter((name): name is string => typeof name === 'string' && name.startsWith('@orden/'))
   .map((name) => name.slice('@orden/'.length))
 
-/** This file, and the counter, which say the old names they look for. */
 const SAYING = ['apps/desktop/test/internal-name.test.ts', 'scripts/old-name.ts']
 
 describe('the old name inside the repo', () => {

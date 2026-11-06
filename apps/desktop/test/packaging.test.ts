@@ -13,19 +13,6 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
-/** What the packaging says about the bytes it ships.
- *
- *  Every path under `packaging/` takes the release's own files and hands them to
- *  somebody's package manager, so each of them is a place where "the bytes this
- *  release made" has to be more than a URL: a tampered asset, or a proxy on the
- *  runner that builds the package, otherwise goes out under the product's name.
- *
- *  Read off the files rather than written down here. What the digest *is* cannot be
- *  checked without the network; that is the `deb` job in
- *  `.github/workflows/validate-linux-packaging.yml`, which downloads both files and
- *  compares. What is checked here is that there is one at all, that it is the shape
- *  a digest is, and that it belongs to the version beside it. */
-
 const HERE = fileURLToPath(new URL('../../..', import.meta.url))
 const ROOT = join(HERE, 'packaging')
 const read = (...parts: string[]) => readFileSync(join(ROOT, ...parts), 'utf8')
@@ -34,10 +21,6 @@ const repo = (...parts: string[]) => readFileSync(join(HERE, ...parts), 'utf8')
 describe('the snap', () => {
   const snap = read('snap', 'snapcraft.yaml')
 
-  /** It unpacks the release `.deb` rather than rebuilding the app, so the `.deb` is
-   *  what it has to be sure of. This was the one packaging path with no digest at
-   *  all: scoop, chocolatey and homebrew pin a sha256, the AUR pins one in its
-   *  `.SRCINFO`, nix pins a hash, and Flathub pins a commit. */
   test('pins the bytes of the .deb it unpacks, per architecture', () => {
     const held = [...snap.matchAll(/on (amd64|arm64): sha256\/([0-9a-f]+)/g)]
 
@@ -45,10 +28,6 @@ describe('the snap', () => {
     for (const [, arch, digest] of held) expect(digest, arch).toHaveLength(64)
   })
 
-  /** snapcraft takes no `on <arch>:` list for the checksum, though it does for the source
-   *  (snapcraft 8.11.1: "Input should be a valid string"); the list kept every snap from
-   *  building. One line, then, which the workflow sets per architecture and which holds
-   *  amd64's as committed. */
   test("checks the .deb with one line snapcraft reads, amd64's as committed", () => {
     const line = /^ *source-checksum: (.*)$/m.exec(snap)?.[1]
     const amd64 = /on amd64: (sha256\/[0-9a-f]{64})/.exec(snap)?.[1]
@@ -69,10 +48,6 @@ describe('the snap', () => {
   })
 })
 
-/** The two digests and the version are rewritten per release rather than by hand;
- *  see packaging/linux.md. A step that rewrote the URL and left the digest behind
- *  would fail the build, which is the right failure - but it would fail every
- *  release, so the sed that keeps them together is worth holding to. */
 describe('the workflow that publishes it', () => {
   const workflow = readFileSync(
     join(fileURLToPath(new URL('../../..', import.meta.url)), '.github/workflows/snap.yml'),
@@ -90,13 +65,6 @@ describe('the workflow that publishes it', () => {
   })
 })
 
-/** Only `unstable`, which `edge` is built from, and a tag have a release to go on.
- *  scripts/build-version.sh names every other ref `edge` as well, because "not a tag"
- *  is all it asks - so a manual run of release.yml on a branch, which is somebody
- *  checking that the builds work, would
- *  otherwise delete the signed `edge` and put that branch's build in its place, and
- *  every install on the unstable channel (src-tauri/src/updates.rs) would update to
- *  it. The builds still run on a branch; the job that writes does not. */
 describe('the release', () => {
   const workflow = repo('.github', 'workflows', 'release.yml')
   const publishJob = () =>
@@ -182,10 +150,6 @@ esac
     })
   })
 
-  /** GitHub answers a delete with a 500 now and then, having deleted the file anyway:
-   *  that is the file gone, not the build failed (2026-11-05, #1147). And `edge` is one
-   *  release for every platform, filled by two workflows: each takes off only its own
-   *  last build's files, never the other's (#669). */
   describe.skipIf(process.platform === 'win32')("takes the last build's files off edge", () => {
     const mobile = repo('.github', 'workflows', 'publish-mobile.yml')
     const mobileRun = () => {
@@ -235,7 +199,6 @@ esac
 `,
       )
       chmodSync(join(at, 'bin', 'gh'), 0o755)
-      // The wait between tries is the step's, not the test's.
       writeFileSync(join(at, 'bin', 'sleep'), '#!/bin/sh\n')
       chmodSync(join(at, 'bin', 'sleep'), 0o755)
       const run = gh.phone ? mobileRun() : stepRun("Take the last build's files off edge")
@@ -311,8 +274,6 @@ esac
     })
   })
 
-  /** A `.deb` or an `.rpm` install is updated through PackageKit with its own package,
-   *  checked against the updater's key like any bundle (#1147; src-tauri/src/system_update.rs). */
   test('names every Linux package in the manifest, by its architecture and kind', () => {
     const at = mkdtempSync(join(tmpdir(), 'nib-manifest-'))
     for (const [arch, kinds] of [
@@ -365,8 +326,6 @@ esac
     },
   )
 
-  /** Edge holds the updater's `Nib-` copies of the .deb and the .rpm beside the page's
-   *  `Orden-` ones, and the managers built from it take the page's (2026-11-06, #1147). */
   test('the managers built from edge take its Orden- packages, one each', () => {
     const snap = repo('.github', 'workflows', 'snap.yml')
     expect(snap).toContain('select(.name | startswith("Orden-") and endswith($end))')
@@ -481,8 +440,6 @@ esac
     expect(guard).toContain("startsWith(github.ref, 'refs/tags/v')")
   })
 
-  // #491: edge was titled `main` and every file on it kept the updater's `Nib-`. Only
-  // the bundles latest.json names keep it now, for the builds before 0.14.
   test('titles edge by its branch and names its installers Orden', () => {
     const job = /\n {2}publish:\n([\s\S]*?)(?=\n {2}[a-z-]+:\n|$)/.exec(workflow)?.[1] ?? ''
     const upload = /- name: Upload the files\n([\s\S]*?)(?=\n {6}- )/.exec(job)?.[1] ?? ''
@@ -498,10 +455,6 @@ esac
       .filter((one) => /contents: write|gh release/.test(one[0]))
       .map((one) => one[1])
 
-    // The draft a tag's run makes first runs nothing out of the repository, so what it may
-    // write is out of reach of anything a build fetched. nix-edge (#1135) runs only the
-    // repository's own script, over the digests the release page reports, and takes
-    // nothing a build made.
     expect(writing).toEqual(['draft', 'publish', 'nix-edge'])
     expect(/\n {2}draft:\n([\s\S]*?)(?=\n {2}[a-z-]+:\n)/.exec(workflow)?.[1]).not.toContain(
       'uses:',
@@ -512,29 +465,16 @@ esac
   })
 })
 
-/** The supply the release is built out of: the tools a workflow runs, the pins that
- *  keep them still, and who has to have read a change to any of it.
- *
- *  A release is signed on a runner, out of whatever that runner fetched. Every pin in
- *  this repository is there because "the version we asked for" and "the bytes we ran"
- *  are two different things - and a pin nobody updates is its own problem, which is
- *  what the schedule is for. */
 describe('what a workflow is allowed to fetch', () => {
   const folder = join(HERE, '.github', 'workflows')
   const workflows = readdirSync(folder).filter((name) => name.endsWith('.yml'))
 
-  /** `npx --yes some-tool@1.2.3` names a version and runs whatever the registry
-   *  answers with at that moment. A devDependency is a hash in pnpm-lock.yaml, and
-   *  `pnpm install --frozen-lockfile` has already refused anything that is not it - so
-   *  a tool that decides what goes into a package comes from there. The packer for the
-   *  glasses plugin was the last one that did not; see `even:pack`. */
   test('is nothing it fetches while it runs', () => {
     const fetching: string[] = []
 
     for (const name of workflows) {
       const held = readFileSync(join(folder, name), 'utf8')
       for (const line of held.split(/\r?\n/)) {
-        // Comments are prose about this very rule in at least one of them.
         if (/^\s*#/.test(line)) continue
         if (/\b(?:npx|pnpm dlx|npm exec|yarn dlx|uvx|pipx run)\b/.test(line)) {
           fetching.push(`${name}: ${line.trim()}`)
@@ -559,11 +499,6 @@ describe('what a workflow is allowed to fetch', () => {
   })
 })
 
-/** check.yml gates main, and a job of it that hangs holds the gate for the six hours
- *  GitHub allows by default. The runner's apt mirror trickled for over an hour with
- *  nothing failing (issue 1160), so every job is given a limit of its own, and every
- *  package is fetched through scripts/ci-apt.sh, which bounds the fetch and falls back
- *  to the next mirror. */
 describe('a check that cannot hang', () => {
   const workflow = repo('.github', 'workflows', 'check.yml')
   const jobs = workflow
@@ -588,18 +523,10 @@ describe('a check that cannot hang', () => {
   })
 })
 
-/** nib opens no note from outside its spaces, so no bundle and no package manager
- *  offers it a note: no double click, no "Open with", no share of a file to open
- *  where it lies. Held here rather than trusted to memory, because a file type is
- *  one line of config away on every platform and each one quietly makes Orden a file
- *  opener again. The web's two schemes are the browser's, and stay. And a PDF, which
- *  every bundle offers nib for in "Open with" and none makes nib the default of; it
- *  is brought into a space before it is read (src-tauri/src/handed_pdfs.rs). */
 describe('what nib claims to open', () => {
   const tauri = (...parts: string[]) => repo('apps', 'desktop', 'src-tauri', ...parts)
 
   test('no file type in any bundle but a PDF, and that one only offered', () => {
-    // Tauri's own Windows installer makes an association the default.
     for (const config of ['tauri.conf.json', 'tauri.macos.conf.json']) {
       expect(tauri(config), config).not.toContain('fileAssociations')
     }
@@ -627,9 +554,6 @@ describe('what nib claims to open', () => {
     expect(tauri('wix', 'pdf.wxs')).not.toContain(String.raw`Key="Software\Classes\.pdf" `)
   })
 
-  /** The installer writes the browser and no file type, and an install over an
-   *  older Orden - the updater's included, which never runs the old uninstaller -
-   *  takes the older one's file types away. */
   test('an install claims no file type and forgets the ones it used to', () => {
     const script = tauri('installer.nsh')
     const [, install = '', uninstall = ''] = script.split(
@@ -661,15 +585,12 @@ describe('what nib claims to open', () => {
       expect(entry, name).toContain(
         'MimeType=x-scheme-handler/http;x-scheme-handler/https;application/pdf;\n',
       )
-      // The program is nib everywhere but Nix, whose package is called orden.
       expect(entry, name).toMatch(/^\s*Exec=(?:nib|orden) %U$/m)
       expect(entry, name).not.toContain('text/markdown')
       expect(entry, name).not.toContain('%F')
     }
   })
 
-  /** The AUR fetches the desktop entry beside the PKGBUILD and checks it against the
-   *  digest written there, so a change to the entry is a change to that digest. */
   test('and the AUR holds the digest of the entry it ships', () => {
     const digest = createHash('sha256').update(desktops['aur/nib-bin/nib.desktop']).digest('hex')
 
@@ -686,10 +607,6 @@ describe('what nib claims to open', () => {
   })
 })
 
-/** The package managers' names up to 0.15.0, kept as roads to the new ones. Chocolatey
- *  has a way to deprecate a package and Scoop a folder for it; what each asks for is
- *  held here, because a mistake in either is found by everybody who installed the old
- *  name, and only on their next upgrade. See packaging/windows.md. */
 describe('the old names', () => {
   const orden = read('chocolatey', 'orden.nuspec')
   const nib = read('chocolatey', 'nib.nuspec')
@@ -724,7 +641,6 @@ describe('the old names', () => {
     }
     const uninstall = scoop.uninstaller.script.join('\n')
     expect(uninstall).toContain("$appdata.LinkType -eq 'Junction') { $appdata.Delete() }")
-    // `-Recurse` only for a folder that is not a junction, never on one.
     expect(uninstall).not.toMatch(/Remove-Item "\$env:APPDATA[^"]*" [^\n]*-Recurse/)
     const install = scoop.installer.script.join('\n')
     expect(install).toContain("if ($item.LinkType -eq 'Junction') {\n        # The link alone")
@@ -736,7 +652,6 @@ describe('the old names', () => {
     const lines = scoop.installer.script
     const at = lines.findIndex((one) => one.startsWith('# Up to 0.15.0'))
     expect(at).toBeGreaterThan(-1)
-    // The five lines publish.yml cuts: the comment, where Orden kept it, and the move.
     expect(lines.slice(at, at + 5)).toEqual([
       expect.stringMatching(/^# Up to 0\.15\.0/),
       "$was = Join-Path (Split-Path $persist_dir) 'nib'",
@@ -750,9 +665,6 @@ describe('the old names', () => {
   })
 })
 
-/** Whether Scoop and Chocolatey move from `nib` to `orden` is the repository variable
- *  PACKAGE_RENAME, off until the rename has been tried on Windows; see
- *  packaging/windows.md, "Held back, and why". */
 describe('the rename, held back', () => {
   const publish = repo('.github', 'workflows', 'publish.yml')
   const job = (name: string) =>
@@ -781,15 +693,12 @@ describe('the rename, held back', () => {
       'echo "PACKAGES=orden:$VERSION nib:$VERSION.$day" >> "$GITHUB_ENV"',
     )
     expect(chocolatey).toMatch(/409 \\\(Conflict\\\)/)
-    // The paragraph the plain `nib` leaves out is there to be left out.
     expect(read('chocolatey', 'orden.nuspec')).toMatch(
       /\nThis package was called `nib` until 0\.15\.0\. `nib` is now an empty package that depends on\n[^\n]+\n\n/,
     )
   })
 })
 
-/** The apt repository, lxorb/apt: one key, said the same everywhere it is said, and both
- *  suites written by the one workflow. See packaging/linux.md, "apt". */
 describe('the apt repository', () => {
   const workflow = repo('.github', 'workflows', 'apt.yml')
   const fingerprint = /APT_KEY_FINGERPRINT: ([0-9A-F]{40})/.exec(workflow)?.[1] ?? ''
@@ -805,8 +714,6 @@ describe('the apt repository', () => {
     )
   })
 
-  /** Called, not dispatched: a dispatch finds only a workflow already on the default
-   *  branch, and apt.yml is written on `unstable` first. */
   test('is written for stable by publish.yml and for unstable by release.yml', () => {
     const publish = repo('.github', 'workflows', 'publish.yml')
     const release = repo('.github', 'workflows', 'release.yml')
@@ -832,9 +739,6 @@ describe('the apt repository', () => {
   })
 })
 
-/** The dnf and zypper repository: apt.orden.so's bucket and key, under `rpm/`, which
- *  rpm.orden.so serves (#1147). What
- *  it installs on Fedora and openSUSE is rpm.yml's `try`, through scripts/rpm-try.sh. */
 describe('the rpm repository', () => {
   const workflow = repo('.github', 'workflows', 'rpm.yml')
   const apt = repo('.github', 'workflows', 'apt.yml')
@@ -879,8 +783,6 @@ describe('the rpm repository', () => {
     expect(script).toMatch(/rpmkeys --dbpath "\$keys" --checksig/)
   })
 
-  /** `rpm.orden.so/<x>` is the bucket's `rpm/<x>`, so everything a reader is pointed at is
-   *  written under `rpm/`, the key beside the .repo files. */
   test('is given out as rpm.orden.so, and writes all it serves there under rpm/', () => {
     expect(field(workflow, 'RPM_BASE_URL')).toBe('https://rpm.orden.so')
     expect(repo('scripts', 'rpm-repo.sh')).toContain('base=${RPM_BASE_URL:-https://rpm.orden.so}')
@@ -904,8 +806,6 @@ describe('the rpm repository', () => {
     }
   })
 
-  /** Fedora's and openSUSE's packages have different names for the same libraries, so the
-   *  .rpm asks for the libraries themselves, which both provide by the same name. */
   test('asks for libraries by the names Fedora and openSUSE both give them', () => {
     const config = JSON.parse(repo('apps', 'desktop', 'src-tauri', 'tauri.conf.json')) as {
       bundle: { linux: { rpm: { depends: string[] } } }
@@ -917,9 +817,6 @@ describe('the rpm repository', () => {
   })
 })
 
-/** The snap: built and uploaded by snap.yml, called by publish-linux.yml for a release
- *  (`stable`) and by release.yml for edge (`edge`). Called, not dispatched: a dispatch
- *  finds only a workflow already on the default branch. See packaging/linux.md. */
 describe('the snap workflow', () => {
   const snapYml = repo('.github', 'workflows', 'snap.yml')
 
@@ -948,9 +845,6 @@ describe('the snap workflow', () => {
   })
 })
 
-/** The Linux managers for a stable release: called by release.yml, never dispatched and
- *  never started by `release: published`, which a release made on the workflow's own
- *  token does not raise. See packaging/linux.md. */
 describe('the Linux publishing workflow', () => {
   const linux = repo('.github', 'workflows', 'publish-linux.yml')
   const release = repo('.github', 'workflows', 'release.yml')
@@ -970,10 +864,6 @@ describe('the Linux publishing workflow', () => {
   })
 })
 
-/** #427: Linux runs Orden on CEF (Chromium), and WebKitGTK's Orden - whose web process
- *  aborted on Fedora 44 against libraries newer than the ones it was built with - is no
- *  package's any more. The AUR's orden-git built it from source the WebKitGTK way until
- *  then, with WebKitGTK as a dependency, long after every release had moved. */
 describe('the engine a Linux package runs', () => {
   const recipes = readdirSync(join(ROOT, 'aur')).filter((one) => !one.includes('.'))
 
@@ -994,9 +884,6 @@ describe('the engine a Linux package runs', () => {
   })
 })
 
-/** #1135: the flake's orden-unstable is the `edge` pre-release's .deb, pinned in
- *  packaging/nix/edge.json, which release.yml rewrites on `unstable` after every edge
- *  build. */
 describe('the Nix edge', () => {
   const release = repo('.github', 'workflows', 'release.yml')
   const job = /\n {2}nix-edge:\n([\s\S]*?)\n {2}\S/.exec(`${release}\n  .`)?.[1] ?? ''

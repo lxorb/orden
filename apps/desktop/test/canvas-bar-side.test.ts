@@ -2,11 +2,6 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
-/** A bar docked to a side keeps to its edge, and its panel opens on the inner side of
- *  it (#646). The panel comes before the bar in the markup, so the row has to run from
- *  the inner side: away from a left edge, and the other way round in a right-to-left
- *  language, where a row starts on the right. */
-
 describe('the canvas bar against a side', () => {
   const svelte = readFileSync(
     fileURLToPath(new URL('../src/lib/CanvasBar.svelte', import.meta.url)),

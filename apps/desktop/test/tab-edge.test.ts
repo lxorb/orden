@@ -9,18 +9,6 @@ import { frameFor, type Material, type Scheme, type Sides, spanUnder } from '../
 import { over, ratio, type Rgb, rgbOf, type Span } from '../src/lib/legibility'
 import { floorFor, paletteOf, sheetColour } from '../src/lib/wallpaper/floors'
 
-/** The open tab, told from the rest at a glance in every theme the app ships.
- *
- *  lxorb, issue #242: *"pretty hard to see which tab is visible for glass theme (color:
- *  gray, but the issue is more general)"*. The open tab was told only by its fill, the
- *  colour of what is under the strip, and under glass and a picture that can be the
- *  frame's own colour. Chrome strokes its open tab where the two are under 1.3 to one
- *  (`TabStrip::ShouldDrawStrokes`); here the stroke is always drawn, as `--tab-edge`, a
- *  lift of the ink, and it is held a step past Chrome's line on every frame a theme can
- *  put behind the tabs: each palette's own, a glass tint over every material and every
- *  accent and page colour, and a picture at its floor. An inactive tab is the frame
- *  itself, so the edge against the frame is the whole of what tells the two apart. */
-
 const FLOOR = 1.5
 
 const TOKENS = readFileSync(
@@ -37,7 +25,6 @@ function colour(said: string | undefined): Rgb {
   return found
 }
 
-/** One side's block of a sheet: the dark one is stated with `:root`. */
 function blockOf(css: string, scheme: Scheme): string {
   const head = new RegExp(String.raw`\[data-theme=['"]?${scheme}['"]?\]\s*\{`).exec(css)
   if (!head) return ''
@@ -49,8 +36,6 @@ function said(block: string, name: string): string | undefined {
   return new RegExp(String.raw`${name}\s*:\s*([^;]+);`).exec(block)?.[1]?.trim()
 }
 
-/** What the edge is over a frame, as a side's sheets state it: the ink at a share,
- *  or a colour of the theme's own. */
 type Edge = (frame: Rgb) => Rgb
 
 function edgeOf(text: Rgb, statement: string, own: (name: string) => Rgb): Edge {
@@ -64,15 +49,12 @@ function edgeOf(text: Rgb, statement: string, own: (name: string) => Rgb): Edge 
   throw new Error(`an edge this test cannot read: ${statement}`)
 }
 
-/** The edge the built-in states for one side, over that side's ink. */
 function builtInEdge(scheme: Scheme, text: Rgb): Edge {
   const statement = said(blockOf(TOKENS, scheme), '--tab-edge')
   if (!statement) throw new Error(`tokens.css states no --tab-edge on the ${scheme} side`)
   return edgeOf(text, statement, (name) => colour(said(blockOf(TOKENS, scheme), name)))
 }
 
-/** Colours through a box of them, corners and middles, so a frame laid over anything in
- *  a span is looked at everywhere it can be rather than at its two ends. */
 function through(span: Span): Rgb[] {
   const steps = [0, 0.5, 1]
   const out: Rgb[] = []
@@ -93,14 +75,12 @@ interface Seen {
   ratio: number
 }
 
-/** The weakest edge over a set of frames. */
 function weakest(where: string, frames: Rgb[], edge: Edge): Seen {
   return frames
     .map((frame) => ({ where, ratio: ratio(edge(frame), frame) }))
     .reduce((least, one) => (one.ratio < least.ratio ? one : least))
 }
 
-/** The palette a side of a theme writes in: its own block over the built-in's. */
 function palette(css: string | null, scheme: Scheme) {
   const own = css ? blockOf(css, scheme) : ''
   const base = blockOf(TOKENS, scheme)
@@ -125,8 +105,6 @@ const glassSides = (() => {
   return { dark, light } satisfies Sides
 })()
 
-/** What glass's frame can be: what is open - every accent as a note's mark and a page of
- *  every kind - over every material and none, at its dials' ends. */
 function glass(): Seen[] {
   const pages: Rgb[] = [
     [255, 255, 255],
@@ -169,9 +147,6 @@ function glass(): Seen[] {
   return seen
 }
 
-/** What wallpaper's frame can be: any picture at all, from under the least scrim its
- *  words allow - the floor the sheet holds every picture to - to under the Dim dial
- *  turned all the way, which is the scrim alone. */
 function wallpaper(): Seen[] {
   const anything: Span = { least: [0, 0, 0], most: [255, 255, 255] }
   return SCHEMES.map((scheme) => {
@@ -183,7 +158,6 @@ function wallpaper(): Seen[] {
   })
 }
 
-/** The declarations of the last rule `selector` opens in the strip's stylesheet. */
 function rule(selector: string): string {
   const at = TABS.lastIndexOf(`\n  ${selector} {`)
   expect(at, selector).toBeGreaterThan(-1)
@@ -195,7 +169,6 @@ describe('the open tab', () => {
     for (const scheme of SCHEMES) {
       expect(said(blockOf(TOKENS, scheme), '--tab-edge'), scheme).toBeDefined()
     }
-    // Glass and wallpaper write in inks of their own, which the edge is a lift of.
     for (const scheme of SCHEMES) {
       expect(sheetColour(glassCss, scheme, '--text'), scheme).not.toBeNull()
       expect(sheetColour(wallpaperCss, scheme, '--text'), scheme).not.toBeNull()
@@ -212,14 +185,11 @@ describe('the open tab', () => {
   })
 
   test("is edged in the strip's own words, and eased in with its fill", () => {
-    // Unless the window's corners leave the strip no line of its own (#1088).
     expect(rule('.strip')).toMatch(/--tab-line: var\(--strip-line, var\(--tab-edge\)\);/)
     expect(rule('.tab.active .edge')).toMatch(/border-color: var\(--tab-line\);/)
     expect(rule('.tab.active .edge')).toMatch(/transition: border-color var\(--dur-fast\)/)
     expect(rule('.tab.active .fill')).toMatch(/opacity var\(--dur-fast\) var\(--ease-out\)/)
-    // The curve up each foot is the fill's, so it eases in with it.
     expect(TABS).toMatch(/var\(--tab-line\) calc\(var\(--tab-foot\) - 1px\)/)
-    // The line either side of it is there at once, so the bar never blinks.
     expect(TABS).toMatch(/\.edge::after \{\s+content: '';[^}]*background: var\(--tab-line\);/)
   })
 

@@ -1,10 +1,3 @@
-/** A disk in memory, answering the crate's commands a store test needs: notes and
- *  folders, a listing, renames, deletes, a trash and a stamp.
- *
- *  `folds` makes it the disk Windows and a Mac have, which looks `plan.md` up as
- *  `Plan.md` and keeps a file under the spelling it was made with - the one thing a
- *  test about two spellings of one file needs a disk to do. */
-
 export interface Entry {
   name: string
   path: string
@@ -17,18 +10,14 @@ export interface Entry {
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
 
 export class Disk {
-  /** Every file, under the spelling it was made with. */
   readonly files = new Map<string, string>()
   readonly folders = new Set<string>()
-  /** Files that are there but are not words, as a picture is: `read_note` refuses them. */
   readonly unreadable = new Set<string>()
-  /** Every command asked, with the path it named. */
   readonly sent: string[] = []
   private readonly trash = new Map<string, { path: string; text: string }>()
 
   constructor(public folds = false) {}
 
-  /** The spelling a path is kept under, or null for a path nothing answers to. */
   spelled(path: string): string | null {
     if (this.files.has(path) || this.folders.has(path)) return path
     if (!this.folds) return null
@@ -77,7 +66,6 @@ export class Disk {
       case 'write_note':
         this.files.set(this.spelled(path) ?? path, text(args.content))
         return undefined
-      // Bytes kept as the words they decode to: what a test drops is words.
       case 'write_bytes':
         this.files.set(this.spelled(path) ?? path, atob(text(args.base64)))
         return undefined
@@ -123,7 +111,6 @@ export class Disk {
         return kept.path
       }
       case 'read_tree': {
-        // As the crate does: a root that is not a folder is refused.
         const root = text(args.root)
         const folder =
           this.folders.has(root) || [...this.files.keys()].some((one) => one.startsWith(`${root}/`))
@@ -138,7 +125,6 @@ export class Disk {
     }
   }
 
-  /** The listing of a space, folders first and names in order, as the crate reads one. */
   listing(root: string, hidden = true): Entry {
     const entry = (at: string, folder: boolean): Entry => ({
       name: at.slice(at.lastIndexOf('/') + 1),
@@ -160,8 +146,6 @@ export class Disk {
       return made
     }
 
-    // As the crate does, a name with a dot in front is left out with everything under
-    // it, a folder as well as a file, unless hidden files are shown.
     const shown = (path: string) =>
       hidden ||
       !path
@@ -186,7 +170,6 @@ export class Disk {
   }
 }
 
-/** A storage in memory, for a store that reads its own the moment it is made. */
 export function memoryStorage(): Storage {
   const store = new Map<string, string>()
   return {

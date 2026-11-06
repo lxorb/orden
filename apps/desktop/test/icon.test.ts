@@ -4,15 +4,6 @@ import { fileURLToPath } from 'node:url'
 import { inflateSync } from 'node:zlib'
 import { describe, expect, test } from 'vitest'
 
-/** What the shipped icons promise, read off the files `scripts/make-icon.mjs` and
- *  `scripts/even-icon.mjs` wrote.
- *
- *  The icons are binaries nobody reviews by eye in a diff, so the shape each
- *  platform needs is held here instead: the macOS tile on Apple's grid with its
- *  clear margin, Windows and Linux squircles with clear corners, iOS and the web
- *  edge to edge, an Android adaptive set whose bars stay inside the 66 dp circle
- *  every launcher mask leaves alone, and Even assets with no colour in them. */
-
 const ROOT = fileURLToPath(new URL('../../..', import.meta.url))
 const TAURI = join(ROOT, 'apps/desktop/src-tauri')
 const ICONS = join(TAURI, 'icons')
@@ -25,7 +16,6 @@ interface Picture {
   alpha: (x: number, y: number) => number
 }
 
-/** Enough of PNG to read the files above: 8-bit RGBA, grey-alpha or indexed, any filter. */
 function decode(bytes: Buffer): Picture {
   let at = 8
   let size = 0
@@ -71,7 +61,6 @@ function decode(bytes: Buffer): Picture {
 }
 const picture = (...parts: string[]) => decode(readFileSync(join(...parts)))
 
-/** The ICNS entry Apple calls ic10, the 1024 pixel PNG. */
 function icns1024(): Picture {
   const bytes = readFileSync(join(ICONS, 'icon.icns'))
   for (let at = 8; at < bytes.length;) {
@@ -91,7 +80,6 @@ describe('the desktop icons', () => {
     for (const icon of conf.bundle.icon) expect(existsSync(join(TAURI, icon)), icon).toBe(true)
   })
 
-  /** The master is the tile itself: clear in the corners, solid through the middle. */
   test('the master is a 1024 squircle with clear corners', () => {
     const master = picture(TAURI, 'icon-source.png')
 
@@ -101,8 +89,6 @@ describe('the desktop icons', () => {
     expect(master.alpha(512, 512)).toBe(255)
   })
 
-  /** Apple's grid puts an 824 tile in the 1024 canvas, so a Mac icon stands as tall
-   *  as its neighbours in the Dock rather than a size larger. */
   test('the Mac icon keeps the clear margin of Apple’s grid', () => {
     const mac = icns1024()
 
@@ -121,7 +107,6 @@ describe('the desktop icons', () => {
 })
 
 describe('the mobile icons', () => {
-  /** iOS cuts its own corners, and fills anything clear with black. */
   test('iOS is drawn to the edge', () => {
     for (const file of readdirSync(join(ICONS, 'ios'))) {
       const icon = picture(ICONS, 'ios', file)
@@ -144,8 +129,6 @@ describe('the mobile icons', () => {
     }
   })
 
-  /** Launchers cut the 108 dp layer to any shape that holds a 66 dp circle, so a bar
-   *  outside that circle would be clipped on some phone. */
   test('the Android bars stay inside the safe circle', () => {
     for (const layer of ['foreground', 'monochrome']) {
       const fg = picture(RES, 'mipmap-xxxhdpi', `ic_launcher_${layer}.png`)
@@ -166,7 +149,6 @@ describe('the other places the mark appears', () => {
       expect(picture(ROOT, 'apps/desktop/public', `icon-${size}.png`).size).toBe(size)
   })
 
-  /** The Even Hub portal refuses a colour asset, so these cannot carry one at all. */
   test('the Even icons are greyscale', () => {
     for (const file of [
       'icon-24.png',

@@ -9,7 +9,6 @@ import { expect, test } from 'vitest'
 
 const CLI = fileURLToPath(new URL('../../cli/nib.mjs', import.meta.url))
 
-/** What `nib` sends for these words, to an app that is only a socket. */
 async function sent(
   words: string[],
 ): Promise<{ verb: string; args: Record<string, unknown>; rest: string[] }> {
@@ -38,9 +37,6 @@ test('a note that opens with front matter is the content, not a flag', async () 
   expect(args).toEqual({ content, silent: '' })
 })
 
-/** Help is a word where a flag goes, not one a flag was given: a line of a log may be
- *  `-h`, and appending it printed the usage and wrote nothing. Asking for help, the
- *  CLI asks the app only for its verbs. */
 test('a flag whose value is -h or --help is that value, not a request for help', async () => {
   expect(await sent(['append', 'log.md', '--content', '-h', '--yes'])).toEqual({
     verb: 'append',

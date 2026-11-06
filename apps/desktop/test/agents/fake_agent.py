@@ -1,19 +1,3 @@
-"""A scripted agent: the tool calls a model would make, without the model.
-
-Every run is the same run, so what a scenario proves is about nib and not about what a
-model felt like that day. It speaks to nib the two ways an agent does, and a scenario is
-written once for both, in the verbs of the contract (src-tauri/src/agents/verbs.rs):
-
-    mcp        `nib mcp` over its own stdin and stdout, JSON-RPC as the Model Context
-               Protocol has it: what Claude Code does (agent-mcp)
-    endpoint   the verbs posted to the app's endpoint with an agent's token: what
-               `nib mcp` itself does underneath (agent-core)
-
-Every answer comes back as one shape (`answer`): `status` is the contract's `ok`,
-`needs_approval` or `error`, or `missing` where the verb is not there yet, which a
-scenario reports as waiting on the lane that owes it rather than as a failure.
-"""
-
 from __future__ import annotations
 
 import json
@@ -27,23 +11,15 @@ from typing import Any
 
 Answer = dict[str, Any]
 
-#: Where `nib mcp` puts the contract's answer in a tool call's result, beside the text a
-#: model reads: under `_meta`, which no model is shown (src-tauri/src/mcp/results.rs).
 ANSWER_META = "ch.emilvinu.nib/answer"
 
-#: What the window says for a verb it has not got, and what makes an answer `missing`.
 NO_VERB = "there is no verb called"
 
-
 def answer(status: str, ms: float, **rest: Any) -> Answer:
-    """The one shape every transport answers in."""
 
     return {"status": status, "ms": round(ms, 1), **rest}
 
-
 def from_contract(said: Any, ms: float) -> Answer:
-    """An answer as the endpoint gives it - the contract's own `Answer`, or the window's
-    `{ok, value}` for a verb the window answers - in the one shape."""
 
     if not isinstance(said, dict):
         return answer("error", ms, code="unreadable", message=str(said))
@@ -56,10 +32,7 @@ def from_contract(said: Any, ms: float) -> Answer:
         return answer("missing", ms, message=error)
     return answer("error", ms, code="window", message=error)
 
-
 class Endpoint:
-    """The app's endpoint, as an agent reaches it: a verb and its arguments, posted with
-    the agent's token."""
 
     name = "endpoint"
 
@@ -82,7 +55,6 @@ class Endpoint:
         except urllib.error.HTTPError as refused:
             ms = (time.perf_counter() - started) * 1000
             text = refused.read().decode("utf-8", "replace")
-            # Before agent-core, a token that is not the secret is nobody's.
             status = "missing" if refused.code == 401 else "error"
             return answer(status, ms, code=f"http {refused.code}", message=text)
         except Exception as error:  # noqa: BLE001 - a wedged app fails in its own ways
@@ -94,8 +66,6 @@ class Endpoint:
             return answer("error", ms, code="unreadable", message=text[:400])
 
     def has(self, verb: str) -> bool:
-        """Whether the endpoint answers the verb at all: asked once, with arguments no
-        verb takes, which a verb that is there refuses and one that is not never reads."""
 
         if verb not in self.known:
             self.known[verb] = self.call(verb, {"harness": "is this verb here"}, seconds=10)["status"] != "missing"
@@ -104,17 +74,12 @@ class Endpoint:
     def close(self) -> None:
         return
 
-
 class Mcp:
-    """`nib mcp`, spoken to over its own pipes as an MCP client does: newline-delimited
-    JSON-RPC, `initialize`, then `tools/list` and `tools/call`."""
 
     name = "mcp"
 
-    #: The protocol version this client asks for.
     PROTOCOL = "2025-06-18"
 
-    #: What this client calls itself, and so the name its token is kept under.
     CLIENT = "nib-agent-harness"
 
     def __init__(self, process: subprocess.Popen[bytes]) -> None:
@@ -132,7 +97,6 @@ class Mcp:
             },
         )
         self.instructions = str((opened.get("result") or {}).get("instructions", ""))
-        #: Why nib mcp is not there to be spoken to, where it is not.
         self.absent = str(opened["error"].get("message")) if "error" in opened else ""
         if not self.absent:
             self.notify("notifications/initialized", {})
@@ -145,7 +109,6 @@ class Mcp:
             try:
                 said = json.loads(raw.decode("utf-8", "replace"))
             except ValueError:
-                # Anything but JSON-RPC on stdout breaks every client; say so as an answer.
                 said = {"jsonrpc": "2.0", "id": None, "stray": raw[:200].decode("utf-8", "replace")}
             if isinstance(said, dict):
                 self.lines.put(said)
@@ -189,12 +152,10 @@ class Mcp:
         text = "\n".join(str(one.get("text", "")) for one in result.get("content", []) if one.get("type") == "text")
         pictures = [one for one in result.get("content", []) if one.get("type") == "image"]
         untrusted = marked_source(text)
-        # The contract's answer itself, which the text is only written from.
         said = (result.get("_meta") or {}).get(ANSWER_META)
         if isinstance(said, dict) and said.get("status") in ("ok", "needs_approval", "error"):
             return {**said, "ms": round(ms, 1), "text": text, "pictures": len(pictures),
                     "untrusted": said.get("untrusted") or untrusted}
-        # One of nib's own sentences - the pairing's state, a call it could not make.
         status = "error" if result.get("isError") else "ok"
         return answer(status, ms, text=text, message=text if status == "error" else None,
                       untrusted=untrusted, pictures=len(pictures), result=None)
@@ -210,10 +171,7 @@ class Mcp:
         except subprocess.TimeoutExpired:
             self.process.kill()
 
-
 def marked_source(text: str) -> str | None:
-    """Where the words inside an `<untrusted source="...">` mark came from, or None where
-    nothing in the text is marked."""
 
     at = text.find("<untrusted")
     if at < 0:
