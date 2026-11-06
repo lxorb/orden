@@ -1333,8 +1333,11 @@ function holds(tail: string): boolean {
  *
  *  Raised on 2026-11-06, to 3,684,800, for #321: a pane tells a tab of another chat
  *  service's conversation from an Orden chat and fetches its own surface for it
- *  (Pane.svelte, surfaces.svelte.ts). Measured 3,684,441 in 400. */
-const BUDGET = 3_684_800
+ *  (Pane.svelte, surfaces.svelte.ts). Measured 3,684,441 in 400.
+ *
+ *  Lowered on 2026-11-06, to 3,128,900, for #1045: the packages and services carry no
+ *  comments. Measured 3,128,559 in 400. */
+const BUDGET = 3_128_900
 const MOST_FILES = 401
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

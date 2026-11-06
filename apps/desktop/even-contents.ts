@@ -695,9 +695,12 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  Raised on 2026-11-06 for #321, the pane's branch for another chat service's
  *  conversation, which the plugin never takes (Pane.svelte, surfaces.svelte.ts): the code
  *  to 6,148,800, measured 6,148,448.
+ *
+ *  Lowered on 2026-11-06 for #1045, the packages without their comments: the code to
+ *  6,034,900, measured 6,034,520.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_148_800,
+  code: 6_034_900,
   catalogues: 1_020_700,
   styles: 293_500,
   fonts: 260_000,
