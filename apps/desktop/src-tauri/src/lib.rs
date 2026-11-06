@@ -360,6 +360,7 @@ macro_rules! desktop_commands {
             agents::agents_log_days,
             agents::agents_log_clear,
             agents::agents_adopt,
+            agents::agents_peek,
             agents::agents_capture,
             agents::shell::agents_shell,
             agents::shell::agents_hold,

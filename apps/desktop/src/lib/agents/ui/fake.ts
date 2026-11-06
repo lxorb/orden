@@ -5,6 +5,7 @@ import type {
   Category,
   Grant,
   Overview,
+  Picture,
   ShellWords,
 } from '../verbs'
 import type { Source } from './source'
@@ -191,6 +192,21 @@ export class FakeCrate implements Source {
     this.emit({ kind: 'closed', agent: held[0], id: agentTab })
     return Promise.resolve()
   }
+
+  peek(tab: string): Promise<Picture> {
+    this.asked.push({ command: 'peek', args: [tab] })
+    const held = this.overview.tabs.find(([, one]) => one.id === tab)?.[1]
+    if (!held) return Promise.reject(new Error('there is no such agent tab'))
+    if (held.parked) return Promise.reject(new Error('parked'))
+    this.peeks += 1
+    return Promise.resolve({
+      png: btoa(`${held.url}#${String(this.peeks)}`),
+      width: 1280,
+      height: 800,
+    })
+  }
+
+  peeks = 0
 
   shell(key: string | null, words: ShellWords): Promise<void> {
     this.asked.push({ command: 'shell', args: [key] })

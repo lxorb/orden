@@ -4,7 +4,7 @@ import { theme } from '../../theme.svelte'
 import { pages } from '../../web-tab/pages.svelte'
 import { workspace } from '../../workspace.svelte'
 import type { NoteDoc } from '../../workspace/documents.svelte'
-import type { AgentEvent, Approval, Grant } from '../verbs'
+import type { AgentEvent, Approval, Grant, Picture } from '../verbs'
 import { touchedBy } from '../docs/touched'
 import { keepInNote } from './keep'
 import { callsOf, sessionMarkdown, today, type Call } from './session'
@@ -145,17 +145,24 @@ export class Activity {
     const held = this.seen.tabs[agentTab]
     if (!held || this.shown.has(agentTab)) return
     this.shown.add(agentTab)
+    try {
+      const id = workspace.openPage(
+        held.url,
+        front ? 'front' : 'behind',
+        workspace.activeTabId ?? undefined,
+      )
+      if (id === null) return
 
-    const id = workspace.openPage(
-      held.url,
-      front ? 'front' : 'behind',
-      workspace.activeTabId ?? undefined,
-    )
-    if (id === null) return
+      const touch = this.seen.acting[agentTab]
+      if (touch) this.seen.acting[id] = touch
+      await pages.adopt(id, () => this.source.adopt(agentTab, id))
+    } finally {
+      this.shown.delete(agentTab)
+    }
+  }
 
-    const touch = this.seen.acting[agentTab]
-    if (touch) this.seen.acting[id] = touch
-    await pages.adopt(id, () => this.source.adopt(agentTab, id))
+  peek(agentTab: string): Promise<Picture> {
+    return this.source.peek(agentTab)
   }
 
   goTo(tab: string): void {
