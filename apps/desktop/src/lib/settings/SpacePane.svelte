@@ -97,6 +97,7 @@
         spellcheck="false"
         value={field.text}
         readonly={field.locked || !field.loaded}
+        class:read={field.loaded && field.locked && field.text !== ''}
         oninput={(event) => field?.type(event.currentTarget.value)}
         onblur={() => void field?.flush()}></textarea>
     </label>
@@ -141,7 +142,7 @@
     resize: vertical;
   }
 
-  textarea:read-only {
+  textarea.read {
     border-color: transparent;
     background: none;
   }
