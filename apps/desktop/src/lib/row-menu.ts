@@ -41,6 +41,7 @@ import { entryAt } from './tree-edits'
 import { viewport } from './viewport.svelte'
 import type { Entry } from './workspace.svelte'
 import { workspace } from './workspace.svelte'
+import { protectEntries } from './protect/entries'
 
 /** A `.url` web note's web data, shared or its own (#239); see web-tab/own-data.ts. */
 export function webDataEntry(entry: { path: string; is_dir: boolean }): MenuEntry[] {
@@ -111,6 +112,7 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     // Putting it away, on the row's own path for the same reason: a folder goes with
     // everything under it. See archiving.ts.
     ...archiveEntry(entry.path),
+    ...protectEntries(entry.path),
     // Who else may have this one file, in the same word the space uses. On the
     // note the row is drawn as, because a share names a file the account has a
     // copy of: a folder is not one, and a folder with no note has nothing to
@@ -140,6 +142,7 @@ function readOnlyMenu(entry: Entry, own: Entry | null, marked: Entry): MenuEntry
     ...wallpaperEntry(entry),
     ...webDataEntry(entry),
     ...searchAgainEntry(entry.path),
+    ...protectEntries(entry.path),
     ...shareEntry(marked.path),
     ...revealEntry(entry),
   ]

@@ -3047,4 +3047,22 @@ export const ar: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'يصوغ الذكاء الاصطناعي ردًا بأسلوبك ويقترح مهمة، ولا يُرسل شيء ولا يُضاف حتى تختاره.',
   'Use draft': 'استخدم المسودة',
+  Protected: 'محمي',
+  'Wrong password': 'كلمة مرور خاطئة',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'محمي وليس مشفّرًا: يمنع فتحه بالخطأ فقط.',
+  'New password': 'كلمة مرور جديدة',
+  'Repeat it': 'أعد كتابتها',
+  'The two don’t match': 'الكلمتان غير متطابقتين',
+  Protect: 'حماية',
+  'Choose a password': 'اختر كلمة مرور',
+  'Remove protection': 'إزالة الحماية',
+  'Protect space': 'حماية المساحة',
+  'Lock protected items': 'قفل العناصر المحمية',
+  Protection: 'الحماية',
+  'Lock again after': 'القفل مجددًا بعد',
+  'How long Orden may be in the background before what you protected locks again.':
+    'المدة التي يمكن أن يبقى فيها Orden في الخلفية قبل أن يُقفل ما حميته مجددًا.',
+  'Only when Orden closes': 'فقط عند إغلاق Orden',
+  'Right away': 'فورًا',
 }

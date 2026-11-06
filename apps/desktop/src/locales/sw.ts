@@ -2982,4 +2982,22 @@ export const sw: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'AI yako huandaa rasimu ya jibu kwa mtindo wako na kupendekeza kazi, na hakuna kinachotumwa wala kuongezwa hadi ukichague.',
   'Use draft': 'Tumia rasimu',
+  Protected: 'Imelindwa',
+  'Wrong password': 'Nenosiri si sahihi',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'Imelindwa, haijasimbwa: inazuia tu kufunguliwa kwa bahati mbaya.',
+  'New password': 'Nenosiri jipya',
+  'Repeat it': 'Liandike tena',
+  'The two don’t match': 'Mawili hayalingani',
+  Protect: 'Linda',
+  'Choose a password': 'Chagua nenosiri',
+  'Remove protection': 'Ondoa ulinzi',
+  'Protect space': 'Linda nafasi',
+  'Lock protected items': 'Funga vilivyolindwa',
+  Protection: 'Ulinzi',
+  'Lock again after': 'Funga tena baada ya',
+  'How long Orden may be in the background before what you protected locks again.':
+    'Muda ambao Orden inaweza kuwa nyuma kabla ya ulichokilinda kufungwa tena.',
+  'Only when Orden closes': 'Orden inapofungwa tu',
+  'Right away': 'Mara moja',
 }

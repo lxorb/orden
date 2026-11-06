@@ -2937,4 +2937,22 @@ export const bn: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'আপনার AI আপনার ধাঁচে একটি উত্তরের খসড়া লেখে ও একটি কাজের পরামর্শ দেয়, আর আপনি বেছে না নেওয়া পর্যন্ত কিছুই পাঠানো বা যোগ করা হয় না।',
   'Use draft': 'খসড়া ব্যবহার করুন',
+  Protected: 'সুরক্ষিত',
+  'Wrong password': 'ভুল পাসওয়ার্ড',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'সুরক্ষিত, এনক্রিপ্ট করা নয়: এটি কেবল ভুলবশত খোলা আটকায়।',
+  'New password': 'নতুন পাসওয়ার্ড',
+  'Repeat it': 'আবার লিখুন',
+  'The two don’t match': 'দুটি মেলেনি',
+  Protect: 'সুরক্ষিত করুন',
+  'Choose a password': 'একটি পাসওয়ার্ড বেছে নিন',
+  'Remove protection': 'সুরক্ষা সরান',
+  'Protect space': 'স্পেস সুরক্ষিত করুন',
+  'Lock protected items': 'সুরক্ষিত আইটেম লক করুন',
+  Protection: 'সুরক্ষা',
+  'Lock again after': 'আবার লক হবে',
+  'How long Orden may be in the background before what you protected locks again.':
+    'আপনার সুরক্ষিত জিনিস আবার লক হওয়ার আগে Orden কতক্ষণ পটভূমিতে থাকতে পারে।',
+  'Only when Orden closes': 'শুধু Orden বন্ধ হলে',
+  'Right away': 'সঙ্গে সঙ্গে',
 }

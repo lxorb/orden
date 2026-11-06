@@ -2913,4 +2913,22 @@ export const vi: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'AI của bạn soạn nháp câu trả lời theo phong cách của bạn và gợi ý một việc cần làm, và không có gì được gửi hay thêm cho đến khi bạn chọn.',
   'Use draft': 'Dùng bản nháp',
+  Protected: 'Đã bảo vệ',
+  'Wrong password': 'Sai mật khẩu',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'Được bảo vệ, không mã hóa: chỉ ngăn việc vô tình mở ra.',
+  'New password': 'Mật khẩu mới',
+  'Repeat it': 'Nhập lại',
+  'The two don’t match': 'Hai mật khẩu không khớp',
+  Protect: 'Bảo vệ',
+  'Choose a password': 'Chọn mật khẩu',
+  'Remove protection': 'Bỏ bảo vệ',
+  'Protect space': 'Bảo vệ không gian',
+  'Lock protected items': 'Khóa các mục được bảo vệ',
+  Protection: 'Bảo vệ',
+  'Lock again after': 'Khóa lại sau',
+  'How long Orden may be in the background before what you protected locks again.':
+    'Orden có thể ở chế độ nền bao lâu trước khi những gì bạn bảo vệ khóa lại.',
+  'Only when Orden closes': 'Chỉ khi đóng Orden',
+  'Right away': 'Ngay lập tức',
 }

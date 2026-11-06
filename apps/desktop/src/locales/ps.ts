@@ -2941,4 +2941,22 @@ export const ps: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'ستاسو AI ستاسو په سبک د ځواب مسوده لیکي او یو کار وړاندیز کوي، او تر هغو چې تاسو یې غوره نه کړئ هېڅ نه لېږل کېږي او نه ورزیاتېږي.',
   'Use draft': 'مسوده وکاروئ',
+  Protected: 'خوندي',
+  'Wrong password': 'ناسم پټنوم',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'خوندي، نه کوډ شوی: دا یوازې د ناڅاپي پرانیستلو مخه نیسي.',
+  'New password': 'نوی پټنوم',
+  'Repeat it': 'بیا یې ولیکئ',
+  'The two don’t match': 'دواړه سره سمون نه خوري',
+  Protect: 'خوندي کول',
+  'Choose a password': 'پټنوم وټاکئ',
+  'Remove protection': 'ساتنه لرې کړئ',
+  'Protect space': 'ځای خوندي کړئ',
+  'Lock protected items': 'خوندي توکي قلف کړئ',
+  Protection: 'ساتنه',
+  'Lock again after': 'بیا قلفېدل وروسته له',
+  'How long Orden may be in the background before what you protected locks again.':
+    'Orden څومره وخت په شالید کې پاتې کېدای شي مخکې له دې چې ستاسو خوندي شوي توکي بیا قلف شي.',
+  'Only when Orden closes': 'یوازې کله چې Orden وتړل شي',
+  'Right away': 'سمدلاسه',
 }

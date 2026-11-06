@@ -2951,4 +2951,22 @@ export const pa: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'ਤੁਹਾਡਾ AI ਤੁਹਾਡੇ ਅੰਦਾਜ਼ ਵਿੱਚ ਜਵਾਬ ਦਾ ਖਰੜਾ ਲਿਖਦਾ ਹੈ ਅਤੇ ਇੱਕ ਕੰਮ ਸੁਝਾਉਂਦਾ ਹੈ, ਅਤੇ ਤੁਹਾਡੇ ਚੁਣਨ ਤੱਕ ਕੁਝ ਵੀ ਭੇਜਿਆ ਜਾਂ ਜੋੜਿਆ ਨਹੀਂ ਜਾਂਦਾ।',
   'Use draft': 'ਖਰੜਾ ਵਰਤੋ',
+  Protected: 'ਸੁਰੱਖਿਅਤ',
+  'Wrong password': 'ਗਲਤ ਪਾਸਵਰਡ',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'ਸੁਰੱਖਿਅਤ, ਇਨਕ੍ਰਿਪਟ ਨਹੀਂ: ਇਹ ਸਿਰਫ਼ ਗਲਤੀ ਨਾਲ ਖੁੱਲ੍ਹਣ ਤੋਂ ਰੋਕਦਾ ਹੈ।',
+  'New password': 'ਨਵਾਂ ਪਾਸਵਰਡ',
+  'Repeat it': 'ਦੁਬਾਰਾ ਲਿਖੋ',
+  'The two don’t match': 'ਦੋਵੇਂ ਮੇਲ ਨਹੀਂ ਖਾਂਦੇ',
+  Protect: 'ਸੁਰੱਖਿਅਤ ਕਰੋ',
+  'Choose a password': 'ਪਾਸਵਰਡ ਚੁਣੋ',
+  'Remove protection': 'ਸੁਰੱਖਿਆ ਹਟਾਓ',
+  'Protect space': 'ਸਪੇਸ ਸੁਰੱਖਿਅਤ ਕਰੋ',
+  'Lock protected items': 'ਸੁਰੱਖਿਅਤ ਆਈਟਮਾਂ ਲਾਕ ਕਰੋ',
+  Protection: 'ਸੁਰੱਖਿਆ',
+  'Lock again after': 'ਦੁਬਾਰਾ ਲਾਕ ਹੋਣਾ',
+  'How long Orden may be in the background before what you protected locks again.':
+    'ਤੁਹਾਡੀਆਂ ਸੁਰੱਖਿਅਤ ਚੀਜ਼ਾਂ ਦੁਬਾਰਾ ਲਾਕ ਹੋਣ ਤੋਂ ਪਹਿਲਾਂ Orden ਕਿੰਨੀ ਦੇਰ ਪਿਛੋਕੜ ਵਿੱਚ ਰਹਿ ਸਕਦਾ ਹੈ।',
+  'Only when Orden closes': 'ਸਿਰਫ਼ Orden ਬੰਦ ਹੋਣ ’ਤੇ',
+  'Right away': 'ਤੁਰੰਤ',
 }

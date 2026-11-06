@@ -2848,4 +2848,22 @@ export const zhHans: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     '你的 AI 会用你的风格草拟回复并建议一项任务，在你选择之前不会发送或添加任何内容。',
   'Use draft': '使用草稿',
+  Protected: '已保护',
+  'Wrong password': '密码错误',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    '这是保护，不是加密：只防止被误打开。',
+  'New password': '新密码',
+  'Repeat it': '再输入一次',
+  'The two don’t match': '两次不一致',
+  Protect: '保护',
+  'Choose a password': '设置密码',
+  'Remove protection': '取消保护',
+  'Protect space': '保护空间',
+  'Lock protected items': '锁定受保护项目',
+  Protection: '保护',
+  'Lock again after': '多久后重新锁定',
+  'How long Orden may be in the background before what you protected locks again.':
+    'Orden 在后台多久后，你保护的内容会重新锁定。',
+  'Only when Orden closes': '仅在 Orden 关闭时',
+  'Right away': '立即',
 }

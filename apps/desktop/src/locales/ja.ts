@@ -2916,4 +2916,22 @@ export const ja: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'AI があなたの書き方で返信の下書きを作ってタスクを提案し、あなたが選ぶまで何も送信・追加されません。',
   'Use draft': '下書きを使う',
+  Protected: '保護中',
+  'Wrong password': 'パスワードが違います',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    '保護はされていますが暗号化ではありません。誤って開かれるのを防ぐだけです。',
+  'New password': '新しいパスワード',
+  'Repeat it': 'もう一度入力',
+  'The two don’t match': '2つが一致しません',
+  Protect: '保護',
+  'Choose a password': 'パスワードを選ぶ',
+  'Remove protection': '保護を解除',
+  'Protect space': 'スペースを保護',
+  'Lock protected items': '保護した項目をロック',
+  Protection: '保護',
+  'Lock again after': '再ロックまで',
+  'How long Orden may be in the background before what you protected locks again.':
+    '保護したものが再びロックされるまで、Orden がバックグラウンドにあってよい時間。',
+  'Only when Orden closes': 'Orden を閉じたときだけ',
+  'Right away': 'すぐに',
 }

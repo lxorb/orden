@@ -2987,4 +2987,22 @@ export const ml: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'നിങ്ങളുടെ AI നിങ്ങളുടെ ശൈലിയിൽ മറുപടിയുടെ കരട് എഴുതി ഒരു ജോലി നിർദ്ദേശിക്കുന്നു, നിങ്ങൾ തിരഞ്ഞെടുക്കുന്നതുവരെ ഒന്നും അയയ്ക്കുകയോ ചേർക്കുകയോ ഇല്ല.',
   'Use draft': 'കരട് ഉപയോഗിക്കുക',
+  Protected: 'സംരക്ഷിതം',
+  'Wrong password': 'തെറ്റായ പാസ്‌വേഡ്',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'സംരക്ഷിതം, എൻക്രിപ്റ്റ് ചെയ്തതല്ല: അബദ്ധത്തിൽ തുറക്കുന്നത് മാത്രമേ ഇത് തടയൂ.',
+  'New password': 'പുതിയ പാസ്‌വേഡ്',
+  'Repeat it': 'വീണ്ടും നൽകുക',
+  'The two don’t match': 'രണ്ടും പൊരുത്തപ്പെടുന്നില്ല',
+  Protect: 'സംരക്ഷിക്കുക',
+  'Choose a password': 'ഒരു പാസ്‌വേഡ് തിരഞ്ഞെടുക്കുക',
+  'Remove protection': 'സംരക്ഷണം നീക്കുക',
+  'Protect space': 'സ്പേസ് സംരക്ഷിക്കുക',
+  'Lock protected items': 'സംരക്ഷിത ഇനങ്ങൾ ലോക്ക് ചെയ്യുക',
+  Protection: 'സംരക്ഷണം',
+  'Lock again after': 'വീണ്ടും ലോക്ക് ആകുന്നത്',
+  'How long Orden may be in the background before what you protected locks again.':
+    'നിങ്ങൾ സംരക്ഷിച്ചത് വീണ്ടും ലോക്ക് ആകുന്നതിന് മുമ്പ് Orden പശ്ചാത്തലത്തിൽ എത്ര നേരം ആകാം.',
+  'Only when Orden closes': 'Orden അടയ്ക്കുമ്പോൾ മാത്രം',
+  'Right away': 'ഉടൻ',
 }

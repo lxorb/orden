@@ -2985,4 +2985,22 @@ export const ha: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'AI ɗinka yana rubuta daftarin amsa a salonka kuma yana ba da shawarar aiki, kuma babu abin da za a aika ko a ƙara har sai ka zaɓa.',
   'Use draft': 'Yi amfani da daftari',
+  Protected: 'An kare',
+  'Wrong password': 'Kalmar sirri ba daidai ba',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'An kare shi, ba a ɓoye shi ba: yana hana buɗe shi bisa kuskure kawai.',
+  'New password': 'Sabuwar kalmar sirri',
+  'Repeat it': 'Sake rubuta ta',
+  'The two don’t match': 'Biyun ba su yi daidai ba',
+  Protect: 'Kare',
+  'Choose a password': 'Zaɓi kalmar sirri',
+  'Remove protection': 'Cire kariya',
+  'Protect space': 'Kare sarari',
+  'Lock protected items': 'Kulle abubuwan da aka kare',
+  Protection: 'Kariya',
+  'Lock again after': 'Sake kullewa bayan',
+  'How long Orden may be in the background before what you protected locks again.':
+    'Tsawon lokacin da Orden zai iya kasancewa a bayan fage kafin abin da ka kare ya sake kullewa.',
+  'Only when Orden closes': 'Sai lokacin da Orden ya rufe',
+  'Right away': 'Nan take',
 }

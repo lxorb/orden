@@ -2937,4 +2937,22 @@ export const ur: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'آپ کا AI آپ کے انداز میں جواب کا مسودہ لکھتا ہے اور ایک کام تجویز کرتا ہے، اور آپ کے چننے تک کچھ نہیں بھیجا یا شامل کیا جاتا۔',
   'Use draft': 'مسودہ استعمال کریں',
+  Protected: 'محفوظ',
+  'Wrong password': 'غلط پاس ورڈ',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'محفوظ، خفیہ کردہ نہیں: یہ صرف غلطی سے کھلنے سے روکتا ہے۔',
+  'New password': 'نیا پاس ورڈ',
+  'Repeat it': 'دوبارہ لکھیں',
+  'The two don’t match': 'دونوں مماثل نہیں',
+  Protect: 'محفوظ کریں',
+  'Choose a password': 'پاس ورڈ چنیں',
+  'Remove protection': 'حفاظت ہٹائیں',
+  'Protect space': 'اسپیس محفوظ کریں',
+  'Lock protected items': 'محفوظ آئٹمز لاک کریں',
+  Protection: 'حفاظت',
+  'Lock again after': 'دوبارہ لاک ہونے کا وقت',
+  'How long Orden may be in the background before what you protected locks again.':
+    'آپ کی محفوظ کردہ چیزیں دوبارہ لاک ہونے سے پہلے Orden کتنی دیر پس منظر میں رہ سکتا ہے۔',
+  'Only when Orden closes': 'صرف Orden بند ہونے پر',
+  'Right away': 'فوراً',
 }

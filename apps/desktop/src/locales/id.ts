@@ -2940,4 +2940,22 @@ export const id: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'AI Anda membuat draf balasan dengan gaya Anda dan menyarankan tugas, dan tidak ada yang dikirim atau ditambahkan sampai Anda memilihnya.',
   'Use draft': 'Pakai draf',
+  Protected: 'Dilindungi',
+  'Wrong password': 'Kata sandi salah',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'Dilindungi, bukan dienkripsi: ini hanya mencegahnya terbuka tanpa sengaja.',
+  'New password': 'Kata sandi baru',
+  'Repeat it': 'Ulangi',
+  'The two don’t match': 'Keduanya tidak cocok',
+  Protect: 'Lindungi',
+  'Choose a password': 'Pilih kata sandi',
+  'Remove protection': 'Hapus perlindungan',
+  'Protect space': 'Lindungi ruang',
+  'Lock protected items': 'Kunci item yang dilindungi',
+  Protection: 'Perlindungan',
+  'Lock again after': 'Kunci lagi setelah',
+  'How long Orden may be in the background before what you protected locks again.':
+    'Berapa lama Orden boleh berada di latar belakang sebelum yang Anda lindungi terkunci lagi.',
+  'Only when Orden closes': 'Hanya saat Orden ditutup',
+  'Right away': 'Segera',
 }

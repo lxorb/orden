@@ -37,6 +37,7 @@ import { isOnlineTab } from '../online/path'
 import { pages } from '../web-tab/pages.svelte'
 import { viewport } from '../viewport.svelte'
 import { workspace, type Tab } from '../workspace.svelte'
+import { protectEntries } from '../protect/entries'
 import { closeAfterLabel } from '../workspace/closing-around'
 import { isUnsaved } from '../workspace/drafts'
 import { askPlace } from '../save-place/door'
@@ -407,6 +408,7 @@ export function tabMenu(tab: Tab, paneId: string): MenuEntry[] {
     ...movedToSpace([tab]),
     // Putting away what the tab shows, which closes it; see archiving.ts.
     ...archiveEntry(tab.path),
+    ...protectEntries(tab.path),
     DIVIDER,
     // What the tab holds let go of, the tab kept; see unloading.svelte.ts (#1127).
     ...unloadEntries(tab),

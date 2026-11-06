@@ -3038,4 +3038,22 @@ export const ru: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'Ваш ИИ пишет черновик ответа в вашем стиле и предлагает задачу, и ничего не отправляется и не добавляется, пока вы не выберете.',
   'Use draft': 'Взять черновик',
+  Protected: 'Защищено',
+  'Wrong password': 'Неверный пароль',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'Защищено, но не зашифровано: это лишь не даёт открыть случайно.',
+  'New password': 'Новый пароль',
+  'Repeat it': 'Повторите',
+  'The two don’t match': 'Пароли не совпадают',
+  Protect: 'Защитить',
+  'Choose a password': 'Выберите пароль',
+  'Remove protection': 'Снять защиту',
+  'Protect space': 'Защитить пространство',
+  'Lock protected items': 'Заблокировать защищённое',
+  Protection: 'Защита',
+  'Lock again after': 'Снова блокировать через',
+  'How long Orden may be in the background before what you protected locks again.':
+    'Сколько Orden может быть в фоне, прежде чем защищённое снова заблокируется.',
+  'Only when Orden closes': 'Только при закрытии Orden',
+  'Right away': 'Сразу',
 }

@@ -2882,4 +2882,22 @@ export const am: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'የእርስዎ AI በራስዎ ዘይቤ ምላሽ ያረቅቃል እና ተግባር ይጠቁማል፣ እርስዎ እስኪመርጡት ድረስም ምንም አይላክም ወይም አይታከልም።',
   'Use draft': 'ረቂቁን ተጠቀም',
+  Protected: 'የተጠበቀ',
+  'Wrong password': 'የተሳሳተ የይለፍ ቃል',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'የተጠበቀ እንጂ የተመሰጠረ አይደለም፦ በስህተት እንዳይከፈት ብቻ ይከለክላል።',
+  'New password': 'አዲስ የይለፍ ቃል',
+  'Repeat it': 'እንደገና ይጻፉት',
+  'The two don’t match': 'ሁለቱ አይዛመዱም',
+  Protect: 'ጠብቅ',
+  'Choose a password': 'የይለፍ ቃል ይምረጡ',
+  'Remove protection': 'ጥበቃውን አስወግድ',
+  'Protect space': 'ቦታውን ጠብቅ',
+  'Lock protected items': 'የተጠበቁትን ቆልፍ',
+  Protection: 'ጥበቃ',
+  'Lock again after': 'እንደገና ቆልፍ ከ',
+  'How long Orden may be in the background before what you protected locks again.':
+    'የጠበቁት እንደገና ከመቆለፉ በፊት Orden ከበስተጀርባ ምን ያህል ጊዜ መቆየት እንደሚችል።',
+  'Only when Orden closes': 'Orden ሲዘጋ ብቻ',
+  'Right away': 'ወዲያውኑ',
 }

@@ -2904,4 +2904,22 @@ export const ko: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'AI가 당신의 문체로 답장 초안을 쓰고 할 일을 제안하며, 직접 고르기 전에는 아무것도 보내거나 추가하지 않습니다.',
   'Use draft': '초안 사용',
+  Protected: '보호됨',
+  'Wrong password': '비밀번호가 틀렸습니다',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    '보호일 뿐 암호화가 아닙니다. 실수로 열리는 것만 막아 줍니다.',
+  'New password': '새 비밀번호',
+  'Repeat it': '다시 입력',
+  'The two don’t match': '두 비밀번호가 다릅니다',
+  Protect: '보호',
+  'Choose a password': '비밀번호 정하기',
+  'Remove protection': '보호 해제',
+  'Protect space': '스페이스 보호',
+  'Lock protected items': '보호한 항목 잠그기',
+  Protection: '보호',
+  'Lock again after': '다시 잠그기까지',
+  'How long Orden may be in the background before what you protected locks again.':
+    '보호한 항목이 다시 잠기기 전에 Orden이 백그라운드에 있을 수 있는 시간입니다.',
+  'Only when Orden closes': 'Orden을 닫을 때만',
+  'Right away': '바로',
 }

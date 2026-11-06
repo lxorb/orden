@@ -2942,4 +2942,22 @@ export const hi: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'आपका AI आपकी शैली में जवाब का मसौदा लिखता है और एक काम सुझाता है, और आपके चुनने तक कुछ भी भेजा या जोड़ा नहीं जाता।',
   'Use draft': 'मसौदा इस्तेमाल करें',
+  Protected: 'सुरक्षित',
+  'Wrong password': 'गलत पासवर्ड',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'सुरक्षित, एन्क्रिप्ट नहीं: यह केवल गलती से खुलने से रोकता है।',
+  'New password': 'नया पासवर्ड',
+  'Repeat it': 'फिर से लिखें',
+  'The two don’t match': 'दोनों मेल नहीं खाते',
+  Protect: 'सुरक्षित करें',
+  'Choose a password': 'पासवर्ड चुनें',
+  'Remove protection': 'सुरक्षा हटाएं',
+  'Protect space': 'स्पेस सुरक्षित करें',
+  'Lock protected items': 'सुरक्षित आइटम लॉक करें',
+  Protection: 'सुरक्षा',
+  'Lock again after': 'फिर से लॉक हो',
+  'How long Orden may be in the background before what you protected locks again.':
+    'आपकी सुरक्षित चीज़ें फिर से लॉक होने से पहले Orden कितनी देर पृष्ठभूमि में रह सकता है।',
+  'Only when Orden closes': 'केवल Orden बंद होने पर',
+  'Right away': 'तुरंत',
 }

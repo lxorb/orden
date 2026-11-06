@@ -3032,4 +3032,22 @@ export const uk: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'Ваш ШІ пише чернетку відповіді у вашому стилі й пропонує завдання, і нічого не надсилається й не додається, доки ви не оберете.',
   'Use draft': 'Узяти чернетку',
+  Protected: 'Захищено',
+  'Wrong password': 'Неправильний пароль',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'Захищено, але не зашифровано: це лише не дає відкрити випадково.',
+  'New password': 'Новий пароль',
+  'Repeat it': 'Повторіть',
+  'The two don’t match': 'Паролі не збігаються',
+  Protect: 'Захистити',
+  'Choose a password': 'Виберіть пароль',
+  'Remove protection': 'Зняти захист',
+  'Protect space': 'Захистити простір',
+  'Lock protected items': 'Заблокувати захищене',
+  Protection: 'Захист',
+  'Lock again after': 'Знову блокувати через',
+  'How long Orden may be in the background before what you protected locks again.':
+    'Скільки Orden може бути у фоні, перш ніж захищене знову заблокується.',
+  'Only when Orden closes': 'Лише під час закриття Orden',
+  'Right away': 'Одразу',
 }

@@ -2963,4 +2963,22 @@ export const gsw: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'Dini KI entwirft e Antwort i dim Stil und schlaat e Ufgab vor, und nüt wird gschickt oder dezuegfüegt, bevor du s uswählsch.',
   'Use draft': 'Entwurf bruuche',
+  Protected: 'Gschützt',
+  'Wrong password': 'Falsches Passwort',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'Gschützt, nöd verschlüsslet: Das verhindert nur, dass s us Versehe ufgaht.',
+  'New password': 'Neus Passwort',
+  'Repeat it': 'Wiederhole',
+  'The two don’t match': 'Di beide stimmed nöd überii',
+  Protect: 'Schütze',
+  'Choose a password': 'Passwort wähle',
+  'Remove protection': 'Schutz entferne',
+  'Protect space': 'Space schütze',
+  'Lock protected items': 'Gschützts sperre',
+  Protection: 'Schutz',
+  'Lock again after': 'Wieder sperre nach',
+  'How long Orden may be in the background before what you protected locks again.':
+    'Wie lang Orden im Hintergrund chan si, bevor Gschützts wieder gsperrt wird.',
+  'Only when Orden closes': 'Nur bim Schliesse vo Orden',
+  'Right away': 'Sofort',
 }

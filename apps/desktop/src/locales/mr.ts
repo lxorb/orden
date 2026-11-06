@@ -2941,4 +2941,22 @@ export const mr: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'तुमचे AI तुमच्या शैलीत उत्तराचा मसुदा लिहिते आणि एक काम सुचवते, आणि तुम्ही निवडेपर्यंत काहीही पाठवले किंवा जोडले जात नाही.',
   'Use draft': 'मसुदा वापरा',
+  Protected: 'संरक्षित',
+  'Wrong password': 'चुकीचा पासवर्ड',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'संरक्षित, एन्क्रिप्ट केलेले नाही: हे फक्त चुकून उघडणे रोखते.',
+  'New password': 'नवीन पासवर्ड',
+  'Repeat it': 'पुन्हा लिहा',
+  'The two don’t match': 'दोन्ही जुळत नाहीत',
+  Protect: 'संरक्षित करा',
+  'Choose a password': 'पासवर्ड निवडा',
+  'Remove protection': 'संरक्षण काढा',
+  'Protect space': 'स्पेस संरक्षित करा',
+  'Lock protected items': 'संरक्षित आयटम लॉक करा',
+  Protection: 'संरक्षण',
+  'Lock again after': 'पुन्हा लॉक होणे',
+  'How long Orden may be in the background before what you protected locks again.':
+    'तुम्ही संरक्षित केलेले पुन्हा लॉक होण्यापूर्वी Orden किती वेळ पार्श्वभूमीत राहू शकते.',
+  'Only when Orden closes': 'फक्त Orden बंद झाल्यावर',
+  'Right away': 'लगेच',
 }

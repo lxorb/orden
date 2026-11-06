@@ -2881,4 +2881,22 @@ export const th: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'AI ของคุณร่างคำตอบในสไตล์ของคุณและแนะนำงาน โดยไม่มีอะไรถูกส่งหรือเพิ่มจนกว่าคุณจะเลือก',
   'Use draft': 'ใช้ร่าง',
+  Protected: 'ป้องกันไว้',
+  'Wrong password': 'รหัสผ่านไม่ถูกต้อง',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'ป้องกันไว้ แต่ไม่ได้เข้ารหัส: แค่กันไม่ให้เปิดโดยไม่ตั้งใจ',
+  'New password': 'รหัสผ่านใหม่',
+  'Repeat it': 'พิมพ์อีกครั้ง',
+  'The two don’t match': 'ทั้งสองไม่ตรงกัน',
+  Protect: 'ป้องกัน',
+  'Choose a password': 'เลือกรหัสผ่าน',
+  'Remove protection': 'เอาการป้องกันออก',
+  'Protect space': 'ป้องกันพื้นที่',
+  'Lock protected items': 'ล็อกรายการที่ป้องกัน',
+  Protection: 'การป้องกัน',
+  'Lock again after': 'ล็อกอีกครั้งหลัง',
+  'How long Orden may be in the background before what you protected locks again.':
+    'Orden อยู่เบื้องหลังได้นานเท่าใดก่อนที่สิ่งที่คุณป้องกันจะล็อกอีกครั้ง',
+  'Only when Orden closes': 'เฉพาะเมื่อปิด Orden',
+  'Right away': 'ทันที',
 }

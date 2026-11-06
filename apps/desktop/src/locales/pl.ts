@@ -3038,4 +3038,22 @@ export const pl: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'Twoja SI pisze szkic odpowiedzi w twoim stylu i proponuje zadanie, a nic nie zostanie wysłane ani dodane, dopóki tego nie wybierzesz.',
   'Use draft': 'Użyj szkicu',
+  Protected: 'Chronione',
+  'Wrong password': 'Złe hasło',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'Chronione, nie zaszyfrowane: to tylko zapobiega przypadkowemu otwarciu.',
+  'New password': 'Nowe hasło',
+  'Repeat it': 'Powtórz je',
+  'The two don’t match': 'Hasła się różnią',
+  Protect: 'Chroń',
+  'Choose a password': 'Wybierz hasło',
+  'Remove protection': 'Usuń ochronę',
+  'Protect space': 'Chroń przestrzeń',
+  'Lock protected items': 'Zablokuj chronione',
+  Protection: 'Ochrona',
+  'Lock again after': 'Zablokuj ponownie po',
+  'How long Orden may be in the background before what you protected locks again.':
+    'Jak długo Orden może być w tle, zanim to, co chronisz, znów się zablokuje.',
+  'Only when Orden closes': 'Tylko przy zamknięciu Orden',
+  'Right away': 'Od razu',
 }

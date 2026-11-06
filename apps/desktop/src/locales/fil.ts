@@ -3004,4 +3004,22 @@ export const fil: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'Gumagawa ang iyong AI ng draft na sagot sa iyong istilo at nagmumungkahi ng gawain, at walang ipinapadala o idinadagdag hanggang piliin mo ito.',
   'Use draft': 'Gamitin ang draft',
+  Protected: 'Protektado',
+  'Wrong password': 'Maling password',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'Protektado, hindi naka-encrypt: pinipigilan lang nitong mabuksan ito nang hindi sinasadya.',
+  'New password': 'Bagong password',
+  'Repeat it': 'Ulitin ito',
+  'The two don’t match': 'Hindi magkatugma ang dalawa',
+  Protect: 'Protektahan',
+  'Choose a password': 'Pumili ng password',
+  'Remove protection': 'Alisin ang proteksyon',
+  'Protect space': 'Protektahan ang space',
+  'Lock protected items': 'I-lock ang mga protektado',
+  Protection: 'Proteksyon',
+  'Lock again after': 'I-lock muli pagkalipas ng',
+  'How long Orden may be in the background before what you protected locks again.':
+    'Gaano katagal maaaring nasa background ang Orden bago ma-lock muli ang mga pinrotektahan mo.',
+  'Only when Orden closes': 'Kapag isinara lang ang Orden',
+  'Right away': 'Agad-agad',
 }

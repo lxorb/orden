@@ -2945,4 +2945,22 @@ export const fa: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'هوش مصنوعی شما پاسخی به سبک شما پیش‌نویس می‌کند و کاری پیشنهاد می‌دهد، و تا شما انتخاب نکنید چیزی فرستاده یا افزوده نمی‌شود.',
   'Use draft': 'استفاده از پیش‌نویس',
+  Protected: 'محافظت‌شده',
+  'Wrong password': 'گذرواژهٔ نادرست',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'محافظت‌شده، نه رمزگذاری‌شده: فقط از باز شدن تصادفی آن جلوگیری می‌کند.',
+  'New password': 'گذرواژهٔ تازه',
+  'Repeat it': 'دوباره بنویسید',
+  'The two don’t match': 'این دو یکی نیستند',
+  Protect: 'محافظت',
+  'Choose a password': 'گذرواژه‌ای انتخاب کنید',
+  'Remove protection': 'برداشتن محافظت',
+  'Protect space': 'محافظت از فضا',
+  'Lock protected items': 'قفل کردن موارد محافظت‌شده',
+  Protection: 'محافظت',
+  'Lock again after': 'قفل دوباره پس از',
+  'How long Orden may be in the background before what you protected locks again.':
+    'Orden چه مدت می‌تواند در پس‌زمینه باشد تا آنچه محافظت کرده‌اید دوباره قفل شود.',
+  'Only when Orden closes': 'فقط وقتی Orden بسته شود',
+  'Right away': 'بی‌درنگ',
 }

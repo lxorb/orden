@@ -5,6 +5,7 @@ import { method } from '../mobile/bridge'
 import { clipboardSharing } from './apps-clipboard.svelte'
 import { DEFAULTS, modes, REMIND_BEFORE } from '../modes.svelte'
 import { isPlugin } from '../plugin'
+import { DEFAULT_RELOCK, NEVER, RELOCK_MINUTES, unlocks } from '../protect/unlocked.svelte'
 import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from '../recovery'
 import { recovery } from '../recovery.svelte'
 import { hasTray, residency } from '../reminders/residency.svelte'
@@ -371,6 +372,37 @@ export function generalPane(): Pane {
           },
         ],
       },
+      ...(__EVEN_PLUGIN__
+        ? []
+        : [
+            {
+              title: t('Protection'),
+              fields: [
+                {
+                  kind: 'select',
+                  key: 'general.relockAfter',
+                  store: { on: unlocks, name: 'relock' },
+                  label: t('Lock again after'),
+                  hint: t(
+                    'How long Orden may be in the background before what you protected locks again.',
+                  ),
+                  words: ['protect', 'lock', 'password', 'timeout'],
+                  options: RELOCK_MINUTES.map((minutes) => ({
+                    value: String(minutes),
+                    label:
+                      minutes === NEVER
+                        ? t('Only when Orden closes')
+                        : minutes === 0
+                          ? t('Right away')
+                          : t('{count} min', { count: minutes }),
+                  })),
+                  initial: String(DEFAULT_RELOCK),
+                  get: () => String(unlocks.relock),
+                  set: (value) => unlocks.setRelock(Number(value)),
+                },
+              ],
+            } satisfies Group,
+          ]),
       {
         // Chrome's order is the default, and VS Code's is the option: the tab
         // used last, and further back for each press while Ctrl is held. See

@@ -2993,4 +2993,22 @@ export const ta: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'உங்கள் AI உங்கள் நடையில் பதில் வரைவை எழுதி ஒரு பணியைப் பரிந்துரைக்கிறது, நீங்கள் தேர்ந்தெடுக்கும் வரை எதுவும் அனுப்பப்படாது, சேர்க்கப்படாது.',
   'Use draft': 'வரைவைப் பயன்படுத்து',
+  Protected: 'பாதுகாக்கப்பட்டது',
+  'Wrong password': 'தவறான கடவுச்சொல்',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'பாதுகாக்கப்பட்டது, மறையாக்கப்படவில்லை: தவறுதலாகத் திறப்பதை மட்டுமே இது தடுக்கும்.',
+  'New password': 'புதிய கடவுச்சொல்',
+  'Repeat it': 'மீண்டும் உள்ளிடவும்',
+  'The two don’t match': 'இரண்டும் பொருந்தவில்லை',
+  Protect: 'பாதுகா',
+  'Choose a password': 'கடவுச்சொல்லைத் தேர்வுசெய்க',
+  'Remove protection': 'பாதுகாப்பை அகற்று',
+  'Protect space': 'இடத்தைப் பாதுகா',
+  'Lock protected items': 'பாதுகாத்தவற்றைப் பூட்டு',
+  Protection: 'பாதுகாப்பு',
+  'Lock again after': 'மீண்டும் பூட்டும் நேரம்',
+  'How long Orden may be in the background before what you protected locks again.':
+    'நீங்கள் பாதுகாத்தவை மீண்டும் பூட்டப்படுவதற்கு முன் Orden பின்னணியில் எவ்வளவு நேரம் இருக்கலாம்.',
+  'Only when Orden closes': 'Orden மூடும்போது மட்டும்',
+  'Right away': 'உடனே',
 }

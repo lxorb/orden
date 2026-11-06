@@ -66,6 +66,8 @@ import type { Across } from './workspace/across'
 import { Bookmarks } from './workspace/bookmarks.svelte'
 import { FolderIcons } from './workspace/folder-icons.svelte'
 import { Excluded } from './workspace/excluded.svelte'
+import { Protection } from './protect/protection.svelte'
+import { unlocks } from './protect/unlocked.svelte'
 import { Archive } from './workspace/archive.svelte'
 import { ArchivedSpaces } from './workspace/archived-spaces.svelte'
 import { SpaceGraphSettings } from './workspace/graph-settings.svelte'
@@ -455,6 +457,7 @@ class Workspace {
   readonly excluded = new Excluded(() => this.activeSpace?.root ?? null)
   /** What the space has put away; see workspace/archive. */
   readonly archive = new Archive(() => this.activeSpace?.root ?? null)
+  readonly protection = new Protection()
 
   /** What the space's own lists leave out: what a reader excluded, and the archive. */
   leftOutOf(root: string): string[] {
@@ -534,6 +537,8 @@ class Workspace {
       this.archive,
       this.graphSettings,
       this.sorting,
+      this.protection,
+      unlocks,
     ]) {
       this.fileOps.follow(keeping(store))
     }

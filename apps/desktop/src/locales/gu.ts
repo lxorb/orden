@@ -2928,4 +2928,22 @@ export const gu: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'તમારું AI તમારી શૈલીમાં જવાબનો મુસદ્દો લખે છે અને એક કાર્ય સૂચવે છે, અને તમે પસંદ ન કરો ત્યાં સુધી કંઈ મોકલાતું કે ઉમેરાતું નથી.',
   'Use draft': 'મુસદ્દો વાપરો',
+  Protected: 'સુરક્ષિત',
+  'Wrong password': 'ખોટો પાસવર્ડ',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'સુરક્ષિત, એન્ક્રિપ્ટ કરેલું નથી: આ ફક્ત ભૂલથી ખૂલતું અટકાવે છે.',
+  'New password': 'નવો પાસવર્ડ',
+  'Repeat it': 'ફરીથી લખો',
+  'The two don’t match': 'બંને મેળ ખાતા નથી',
+  Protect: 'સુરક્ષિત કરો',
+  'Choose a password': 'પાસવર્ડ પસંદ કરો',
+  'Remove protection': 'સુરક્ષા દૂર કરો',
+  'Protect space': 'સ્પેસ સુરક્ષિત કરો',
+  'Lock protected items': 'સુરક્ષિત વસ્તુઓ લૉક કરો',
+  Protection: 'સુરક્ષા',
+  'Lock again after': 'ફરી લૉક થાય',
+  'How long Orden may be in the background before what you protected locks again.':
+    'તમે સુરક્ષિત કરેલું ફરી લૉક થાય તે પહેલાં Orden કેટલો સમય પૃષ્ઠભૂમિમાં રહી શકે.',
+  'Only when Orden closes': 'ફક્ત Orden બંધ થાય ત્યારે',
+  'Right away': 'તરત જ',
 }

@@ -160,6 +160,12 @@ export const emptySurface = held(() => import('./NewHere.svelte'))
  *  `reading` is the gate. */
 export const readingSurface = held(() => import('./Reading.svelte'))
 
+export const lockScreen = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('nothing is protected in the Even Realities plugin'))
+    : import('./protect/LockScreen.svelte'),
+)
+
 /** The bar over a note being searched through, with everything a replacement needs in
  *  it. Three panes draw it - the editor's, the reading view's and a PDF's - and none
  *  of them has one until a key asks; see FindBar.svelte. */

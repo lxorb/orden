@@ -14,6 +14,7 @@ import {
 } from './sharing.svelte'
 import { settings } from './settings.svelte'
 import { type Space, workspace } from './workspace.svelte'
+import { protectEntries } from './protect/entries'
 
 /** Putting a space away, fetched with the press; see space-archive.ts. */
 const archiving = () => import('./space-archive')
@@ -149,6 +150,7 @@ export function spaceMenu(space: Space): MenuEntry[] {
           },
         ]
       : []),
+    ...protectEntries(space.root),
     DIVIDER,
     // Where a space sits in the list. Left out at the ends rather than offered
     // as a row that does nothing.

@@ -61,6 +61,7 @@
     emptySurface,
     findBar,
     graphSurface,
+    lockScreen,
     pagesSurface,
     readingSurface,
     tabOverview,
@@ -88,6 +89,7 @@
   const here = whileHere()
 
   const tab = $derived(workspace.showing(pane.id))
+  const locked = $derived(workspace.protection.locked(tab?.path))
 
   /** Whether the card has asked for the files the notes embed. Read into a derived of
    *  its own, because the settings are one object behind one getter: reading a key off
@@ -130,7 +132,7 @@
   /** Whether the surface in this pane is the editor, which is the one that has
    *  no find bar of its own. The same question the branch chain below asks, asked
    *  once so the bar above it and the editor under it cannot disagree. */
-  const writing = $derived(!!tab && TAB_KINDS[tab.kind].editor && !tab.reading)
+  const writing = $derived(!!tab && TAB_KINDS[tab.kind].editor && !tab.reading && !locked)
 
   /** The notes this pane lays out as columns, or none where it lays out none.
    *
@@ -143,7 +145,11 @@
    *  `canStack` in workspace.svelte.ts, which the rows that offer this read too. */
   const columns = $derived(
     pane.stacked && !viewport.touch
-      ? workspace.tabsIn(pane.id).filter((one) => one.kind === 'note' && !one.reading)
+      ? workspace
+          .tabsIn(pane.id)
+          .filter(
+            (one) => one.kind === 'note' && !one.reading && !workspace.protection.locked(one.path),
+          )
       : [],
   )
 
@@ -522,7 +528,15 @@
        of a session waits, and switching back to one does not. Nothing is drawn while
        one is on its way: the pane keeps its own ground for a frame, which is what it
        looked like before the surface was asked for. -->
-  {#if tab?.kind === 'graph'}
+  {#if tab?.path && locked}
+    {#key tab.id}
+      {#await lockScreen() then LockScreen}
+        <LockScreen path={tab.path} focused={workspace.panes.focusedId === pane.id} />
+      {:catch}
+        {@render unreachable()}
+      {/await}
+    {/key}
+  {:else if tab?.kind === 'graph'}
     <!-- The graph of the space is a tab like a note is, so it takes the note's
          place in the pane rather than a surface of its own. -->
     {#await graphSurface() then Graph}

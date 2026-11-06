@@ -2955,4 +2955,22 @@ export const te: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'మీ AI మీ శైలిలో జవాబు ముసాయిదా రాసి ఒక పనిని సూచిస్తుంది, మరియు మీరు ఎంచుకునే వరకు ఏదీ పంపబడదు లేదా జోడించబడదు.',
   'Use draft': 'ముసాయిదా వాడండి',
+  Protected: 'రక్షించబడింది',
+  'Wrong password': 'తప్పు పాస్‌వర్డ్',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'రక్షించబడింది, ఎన్‌క్రిప్ట్ చేయలేదు: ఇది పొరపాటున తెరవడాన్ని మాత్రమే ఆపుతుంది.',
+  'New password': 'కొత్త పాస్‌వర్డ్',
+  'Repeat it': 'మళ్లీ టైప్ చేయండి',
+  'The two don’t match': 'రెండూ సరిపోలలేదు',
+  Protect: 'రక్షించు',
+  'Choose a password': 'పాస్‌వర్డ్ ఎంచుకోండి',
+  'Remove protection': 'రక్షణ తీసివేయి',
+  'Protect space': 'స్పేస్‌ను రక్షించు',
+  'Lock protected items': 'రక్షించిన అంశాలను లాక్ చేయి',
+  Protection: 'రక్షణ',
+  'Lock again after': 'మళ్లీ లాక్ అయ్యేది',
+  'How long Orden may be in the background before what you protected locks again.':
+    'మీరు రక్షించినవి మళ్లీ లాక్ అయ్యే ముందు Orden నేపథ్యంలో ఎంతసేపు ఉండవచ్చు.',
+  'Only when Orden closes': 'Orden మూసినప్పుడు మాత్రమే',
+  'Right away': 'వెంటనే',
 }

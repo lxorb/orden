@@ -2961,4 +2961,22 @@ export const tr: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'Yapay zekânız kendi tarzınızda bir yanıt taslağı yazıp bir görev önerir ve siz seçene kadar hiçbir şey gönderilmez ya da eklenmez.',
   'Use draft': 'Taslağı kullan',
+  Protected: 'Korumalı',
+  'Wrong password': 'Yanlış parola',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'Korumalı, şifrelenmiş değil: yalnızca yanlışlıkla açılmasını önler.',
+  'New password': 'Yeni parola',
+  'Repeat it': 'Tekrar yazın',
+  'The two don’t match': 'İkisi eşleşmiyor',
+  Protect: 'Koru',
+  'Choose a password': 'Parola seçin',
+  'Remove protection': 'Korumayı kaldır',
+  'Protect space': 'Alanı koru',
+  'Lock protected items': 'Korunanları kilitle',
+  Protection: 'Koruma',
+  'Lock again after': 'Yeniden kilitleme süresi',
+  'How long Orden may be in the background before what you protected locks again.':
+    'Koruduklarınız yeniden kilitlenmeden önce Orden’ın arka planda ne kadar kalabileceği.',
+  'Only when Orden closes': 'Yalnızca Orden kapanınca',
+  'Right away': 'Hemen',
 }

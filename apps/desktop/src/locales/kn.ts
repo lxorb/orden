@@ -2976,4 +2976,22 @@ export const kn: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'ನಿಮ್ಮ AI ನಿಮ್ಮ ಶೈಲಿಯಲ್ಲಿ ಉತ್ತರದ ಕರಡು ಬರೆದು ಒಂದು ಕಾರ್ಯವನ್ನು ಸೂಚಿಸುತ್ತದೆ, ಮತ್ತು ನೀವು ಆರಿಸುವವರೆಗೆ ಏನನ್ನೂ ಕಳುಹಿಸುವುದಿಲ್ಲ ಅಥವಾ ಸೇರಿಸುವುದಿಲ್ಲ.',
   'Use draft': 'ಕರಡು ಬಳಸಿ',
+  Protected: 'ರಕ್ಷಿತ',
+  'Wrong password': 'ತಪ್ಪು ಪಾಸ್‌ವರ್ಡ್',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'ರಕ್ಷಿತ, ಎನ್‌ಕ್ರಿಪ್ಟ್ ಮಾಡಿಲ್ಲ: ಇದು ತಪ್ಪಾಗಿ ತೆರೆಯುವುದನ್ನು ಮಾತ್ರ ತಡೆಯುತ್ತದೆ.',
+  'New password': 'ಹೊಸ ಪಾಸ್‌ವರ್ಡ್',
+  'Repeat it': 'ಮತ್ತೆ ಬರೆಯಿರಿ',
+  'The two don’t match': 'ಎರಡೂ ಹೊಂದುತ್ತಿಲ್ಲ',
+  Protect: 'ರಕ್ಷಿಸಿ',
+  'Choose a password': 'ಪಾಸ್‌ವರ್ಡ್ ಆಯ್ಕೆಮಾಡಿ',
+  'Remove protection': 'ರಕ್ಷಣೆ ತೆಗೆದುಹಾಕಿ',
+  'Protect space': 'ಸ್ಪೇಸ್ ರಕ್ಷಿಸಿ',
+  'Lock protected items': 'ರಕ್ಷಿತ ಐಟಂಗಳನ್ನು ಲಾಕ್ ಮಾಡಿ',
+  Protection: 'ರಕ್ಷಣೆ',
+  'Lock again after': 'ಮತ್ತೆ ಲಾಕ್ ಆಗುವುದು',
+  'How long Orden may be in the background before what you protected locks again.':
+    'ನೀವು ರಕ್ಷಿಸಿದುದು ಮತ್ತೆ ಲಾಕ್ ಆಗುವ ಮೊದಲು Orden ಹಿನ್ನೆಲೆಯಲ್ಲಿ ಎಷ್ಟು ಹೊತ್ತು ಇರಬಹುದು.',
+  'Only when Orden closes': 'Orden ಮುಚ್ಚಿದಾಗ ಮಾತ್ರ',
+  'Right away': 'ತಕ್ಷಣ',
 }

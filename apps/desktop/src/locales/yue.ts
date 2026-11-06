@@ -2841,4 +2841,22 @@ export const yue: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     '你嘅 AI 會用你嘅寫法草擬回覆同建議一項工作，你揀之前乜都唔會發出或者加入。',
   'Use draft': '用草稿',
+  Protected: '已保護',
+  'Wrong password': '密碼錯咗',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    '係保護，唔係加密：只係防止唔小心打開。',
+  'New password': '新密碼',
+  'Repeat it': '再輸入一次',
+  'The two don’t match': '兩個唔一樣',
+  Protect: '保護',
+  'Choose a password': '揀個密碼',
+  'Remove protection': '取消保護',
+  'Protect space': '保護空間',
+  'Lock protected items': '鎖住已保護嘅項目',
+  Protection: '保護',
+  'Lock again after': '幾耐之後再鎖',
+  'How long Orden may be in the background before what you protected locks again.':
+    'Orden 喺背景幾耐之後，你保護嘅嘢就會再鎖住。',
+  'Only when Orden closes': '淨係 Orden 關閉嗰陣',
+  'Right away': '即刻',
 }

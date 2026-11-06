@@ -2996,4 +2996,22 @@ export const ptBR: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'Sua IA escreve um rascunho de resposta no seu estilo e sugere uma tarefa, e nada é enviado ou adicionado até você escolher.',
   'Use draft': 'Usar rascunho',
+  Protected: 'Protegido',
+  'Wrong password': 'Senha incorreta',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'Protegido, não criptografado: só impede que seja aberto por engano.',
+  'New password': 'Nova senha',
+  'Repeat it': 'Repita',
+  'The two don’t match': 'As duas não coincidem',
+  Protect: 'Proteger',
+  'Choose a password': 'Escolha uma senha',
+  'Remove protection': 'Remover proteção',
+  'Protect space': 'Proteger espaço',
+  'Lock protected items': 'Bloquear itens protegidos',
+  Protection: 'Proteção',
+  'Lock again after': 'Bloquear de novo após',
+  'How long Orden may be in the background before what you protected locks again.':
+    'Quanto tempo o Orden pode ficar em segundo plano antes de o que você protegeu bloquear de novo.',
+  'Only when Orden closes': 'Só quando o Orden fechar',
+  'Right away': 'Na hora',
 }

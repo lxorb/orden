@@ -83,6 +83,7 @@ import { switchableAccounts, switchAccount } from './ai/switching'
 import { toggleScratchpad } from './scratchpad/is.svelte'
 import { canPublish, canShare, canShareItem, canWriteAt, shareThisFile } from './sharing.svelte'
 import { archiveEntry, DIVIDER } from './menu.svelte'
+import { lockAllEntry, protectEntries } from './protect/entries'
 import { updates } from './updates.svelte'
 import { modes } from './modes.svelte'
 import { PROPERTIES_MODES } from '@orden/markdown/properties'
@@ -461,6 +462,14 @@ function agentRows(): Command[] {
       run: () => void import('./agents/ui/index').then((ui) => ui.stopAgents()),
     },
   ]
+}
+
+function protectCommands(): Command[] {
+  return [...protectEntries(workspace.active?.path), ...lockAllEntry()].map((row) => ({
+    ...row,
+    id: `protect.${row.id}`,
+    ownWindow: true,
+  }))
 }
 
 /** Putting away what is open, or taking it back: one row saying which, the words
@@ -1341,6 +1350,7 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => void workspace.closeActive(),
     },
     ...archiveCommand(),
+    ...protectCommands(),
     ...tabCommands(),
     {
       id: 'back',

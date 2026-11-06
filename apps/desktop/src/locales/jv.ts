@@ -2924,4 +2924,22 @@ export const jv: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'AI sampeyan nggawe draf wangsulan nganggo gaya sampeyan lan ngusulaké tugas, lan ora ana sing dikirim utawa ditambahaké nganti sampeyan milih.',
   'Use draft': 'Nganggo draf',
+  Protected: 'Dilindhungi',
+  'Wrong password': 'Sandhi salah',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'Dilindhungi, ora dienkripsi: iki mung ngalangi supaya ora kabukak ora sengaja.',
+  'New password': 'Sandhi anyar',
+  'Repeat it': 'Baleni',
+  'The two don’t match': 'Loro-loroné ora cocog',
+  Protect: 'Lindhungi',
+  'Choose a password': 'Pilih sandhi',
+  'Remove protection': 'Busak pangreksan',
+  'Protect space': 'Lindhungi papan',
+  'Lock protected items': 'Kunci item sing dilindhungi',
+  Protection: 'Pangreksan',
+  'Lock again after': 'Kunci manèh sawisé',
+  'How long Orden may be in the background before what you protected locks again.':
+    'Suwéné Orden olèh ana ing latar mburi sadurungé sing koklindhungi kekunci manèh.',
+  'Only when Orden closes': 'Mung nalika Orden ditutup',
+  'Right away': 'Langsung',
 }

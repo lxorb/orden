@@ -2933,4 +2933,22 @@ export const my: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'သင့် AI က သင့်ပုံစံဖြင့် အကြောင်းပြန်ချက် မူကြမ်းရေးပြီး လုပ်ငန်းတစ်ခု အကြံပြုကာ သင် ရွေးချယ်သည်အထိ ဘာမှ မပို့ မထည့်ပါ။',
   'Use draft': 'မူကြမ်းကို သုံးရန်',
+  Protected: 'ကာကွယ်ထားသည်',
+  'Wrong password': 'စကားဝှက် မှားနေသည်',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'ကာကွယ်ထားခြင်းသာ ဖြစ်ပြီး ကုဒ်ဝှက်ထားခြင်း မဟုတ်ပါ - မတော်တဆ ဖွင့်မိခြင်းကိုသာ တားဆီးသည်။',
+  'New password': 'စကားဝှက်အသစ်',
+  'Repeat it': 'ထပ်ရိုက်ပါ',
+  'The two don’t match': 'နှစ်ခု မကိုက်ညီပါ',
+  Protect: 'ကာကွယ်ရန်',
+  'Choose a password': 'စကားဝှက် ရွေးပါ',
+  'Remove protection': 'ကာကွယ်မှု ဖယ်ရန်',
+  'Protect space': 'နေရာကို ကာကွယ်ရန်',
+  'Lock protected items': 'ကာကွယ်ထားသည်များကို လော့ခ်ချရန်',
+  Protection: 'ကာကွယ်မှု',
+  'Lock again after': 'ပြန်လော့ခ်ချမည့်အချိန်',
+  'How long Orden may be in the background before what you protected locks again.':
+    'သင်ကာကွယ်ထားသည်များ ပြန်လော့ခ်မကျမီ Orden နောက်ခံတွင် ရှိနိုင်သည့်ကြာချိန်။',
+  'Only when Orden closes': 'Orden ပိတ်သောအခါမှသာ',
+  'Right away': 'ချက်ချင်း',
 }

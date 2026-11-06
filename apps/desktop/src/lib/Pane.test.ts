@@ -77,3 +77,22 @@ describe('a kind with a surface of its own', () => {
     expect(SOURCE).toContain('<Door open={finding && writing} load={() => findBar()}>')
   })
 })
+
+describe('a protected tab', () => {
+  test('is drawn as its lock before any surface or the editor', () => {
+    const chain = SOURCE.slice(SOURCE.indexOf('{#if tab?.path && locked}'))
+    expect(chain.length).toBeLessThan(SOURCE.length)
+    for (const [, door] of SURFACES) {
+      expect(chain.indexOf(`${door}()`), door).toBeGreaterThan(0)
+    }
+    expect(chain.indexOf('<Editor')).toBeGreaterThan(0)
+    expect(SOURCE).toContain('const locked = $derived(workspace.protection.locked(tab?.path))')
+  })
+
+  test('is never a column beside an open one, and has no find bar', () => {
+    expect(SOURCE).toMatch(
+      /one\.kind === 'note' && !one\.reading && !workspace\.protection\.locked\(one\.path\)/,
+    )
+    expect(SOURCE).toMatch(/const writing = \$derived\([^)]*&& !locked\)/)
+  })
+})

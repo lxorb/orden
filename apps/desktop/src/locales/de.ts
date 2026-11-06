@@ -3004,4 +3004,22 @@ export const de: Dictionary = {
   'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
     'Deine KI entwirft eine Antwort in deinem Stil und schlägt eine Aufgabe vor, und nichts wird gesendet oder hinzugefügt, bevor du es wählst.',
   'Use draft': 'Entwurf verwenden',
+  Protected: 'Geschützt',
+  'Wrong password': 'Falsches Passwort',
+  'Protected, not encrypted: this only keeps it from being opened by accident.':
+    'Geschützt, nicht verschlüsselt: Das verhindert nur, dass es versehentlich geöffnet wird.',
+  'New password': 'Neues Passwort',
+  'Repeat it': 'Wiederholen',
+  'The two don’t match': 'Die beiden stimmen nicht überein',
+  Protect: 'Schützen',
+  'Choose a password': 'Passwort wählen',
+  'Remove protection': 'Schutz entfernen',
+  'Protect space': 'Space schützen',
+  'Lock protected items': 'Geschütztes sperren',
+  Protection: 'Schutz',
+  'Lock again after': 'Wieder sperren nach',
+  'How long Orden may be in the background before what you protected locks again.':
+    'Wie lange Orden im Hintergrund sein darf, bevor Geschütztes wieder gesperrt wird.',
+  'Only when Orden closes': 'Nur beim Schließen von Orden',
+  'Right away': 'Sofort',
 }
