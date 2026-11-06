@@ -1,6 +1,6 @@
 pkgbase = orden-bin
 	pkgdesc = Lightweight markdown editor with realtime inline preview
-	pkgver = 0.19.0
+	pkgver = 0.20.0
 	pkgrel = 1
 	url = https://orden.so
 	arch = x86_64
@@ -26,8 +26,8 @@ pkgbase = orden-bin
 	depends = hicolor-icon-theme
 	optdepends = pandoc: import and export DOCX, ODT, EPUB, LaTeX and friends
 	optdepends = xdg-utils: open links and attachments in the desktop default application
-	provides = orden=0.19.0
-	provides = nib=0.19.0
+	provides = orden=0.20.0
+	provides = nib=0.20.0
 	conflicts = nib
 	conflicts = nib-bin
 	conflicts = nibeditor
@@ -37,9 +37,9 @@ pkgbase = orden-bin
 	options = !emptydirs
 	source = nib.desktop
 	sha256sums = dbc30233704066e7d5479267db5d81532ca61a5b68f30eb0b7eccc9372532aff
-	source_x86_64 = nib.deb::https://github.com/lxorb/orden/releases/download/v0.19.0/Orden-0.19.0-linux-x64.deb
-	sha256sums_x86_64 = 85d650bce50369991389368f6cecb080e8bb08db050d765cb075a751af67055b
-	source_aarch64 = nib.deb::https://github.com/lxorb/orden/releases/download/v0.19.0/Orden-0.19.0-linux-arm64.deb
-	sha256sums_aarch64 = 58e43657f7b36a01864b595d740f143aca75f4f19d518846944c28820d675839
+	source_x86_64 = nib.deb::https://github.com/lxorb/orden/releases/download/v0.20.0/Orden-0.20.0-linux-x64.deb
+	sha256sums_x86_64 = 224c56b21c59f931b4d33d8e76f3df3211de9c9888ae935885bc9ddd37f2975d
+	source_aarch64 = nib.deb::https://github.com/lxorb/orden/releases/download/v0.20.0/Orden-0.20.0-linux-arm64.deb
+	sha256sums_aarch64 = 353880baa146b3adb121a2ce85307a6c4f48f93697ce3fb2f6396bf09d54665e
 
 pkgname = orden-bin
