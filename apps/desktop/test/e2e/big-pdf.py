@@ -150,6 +150,33 @@ def paper(count: int) -> bytes:
     out += b"trailer<</Root 1 0 R/Size %d>>\nstartxref\n%d\n%%%%EOF\n" % (size, table)
     return bytes(out)
 
+THUMBNAILS = """
+() => {
+  const list = [...document.querySelectorAll('.navigator')].find((one) => one.checkVisibility())
+  const rows = list ? [...list.querySelectorAll('.page')] : []
+  const last = rows.at(-1)
+  const canvas = last?.querySelector('canvas')
+  return {
+    count: rows.length,
+    last: last ? Number(last.querySelector('.number')?.textContent) : null,
+    drawn: !!canvas && canvas.width !== 300,
+  }
+}
+"""
+
+LIST_TO_END = """
+() => {
+  const list = [...document.querySelectorAll('.navigator')].find((one) => one.checkVisibility())
+  for (let box = list?.parentElement; box; box = box.parentElement) {
+    const flow = getComputedStyle(box).overflowY
+    if (flow === 'auto' || flow === 'scroll') {
+      box.scrollTop = box.scrollHeight
+      return
+    }
+  }
+}
+"""
+
 def long_in(tasks: list[dict[str, float]], start: float, end: float, line: float) -> list[dict[str, float]]:
     return [one for one in tasks if start <= one["start"] < end and one["duration"] > line]
 
@@ -204,6 +231,13 @@ def main() -> int:
         reopened = page.evaluate(OPEN, {"path": f"{root}/Thick.pages", "count": PAGES, "patience": 60000})
         page.wait_for_timeout(SETTLE)
         tasks = page.evaluate("() => window.__longTasks")
+
+        page.evaluate("() => { window.nibApp.workspace.panel = 'outline' }")
+        page.wait_for_timeout(SETTLE)
+        listed = page.evaluate(THUMBNAILS)
+        page.evaluate(LIST_TO_END)
+        page.wait_for_timeout(SETTLE)
+        bottom = page.evaluate(THUMBNAILS)
         context.close()
 
     failed = False
@@ -245,6 +279,14 @@ def main() -> int:
 
     timed("its page note opened again", reopened, again_in)
     held("while the page note opened again", reopened["started"], float("inf"))
+
+    say(f"the page list holds {listed['count']} thumbnails, and {bottom['count']} scrolled to its end, the last page {bottom['last']}")
+    if listed["count"] > 40 or bottom["count"] > 40:
+        say("FAILED: the page list holds thumbnails far out of sight")
+        failed = True
+    if bottom["last"] != PAGES or not bottom["drawn"]:
+        say("FAILED: the end of the page list does not show the last page drawn")
+        failed = True
 
     return 1 if failed else 0
 

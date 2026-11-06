@@ -9,7 +9,9 @@
   import { longPress } from './longpress'
   import { DIVIDER, type MenuEntry, menu } from './menu.svelte'
   import { densityFor, paperOf } from './pages/paper'
+  import { shelvesOf, shownOf } from './pages/thumbs'
   import { pages as showing } from './pages/showing.svelte'
+  import { ListView } from './row-window.svelte'
   import { workspace } from './workspace.svelte'
 
   const WIDE = 104
@@ -20,18 +22,42 @@
 
   const FIRST = 24
 
-  const STEP = 48
+  const LEAST = 88
 
   const store = $derived(showing.current?.store ?? null)
   const pages = $derived(store?.pages ?? [])
 
-  let listed = $state(FIRST)
-  const shown = $derived(pages.length > listed ? pages.slice(0, listed) : pages)
+  let list = $state<HTMLUListElement>()
+  let wide = $state(0)
+  let gap = $state(8)
+  const where = new ListView()
+
+  const shelves = $derived(shelvesOf(pages, wide, { least: LEAST, gap, edge: 1 }))
+  const view = $derived(
+    wide > 0
+      ? shownOf(shelves, pages.length, where.top, where.room || window.innerHeight)
+      : { from: 0, to: Math.min(FIRST, pages.length), above: 0, below: 0 },
+  )
+  const shown = $derived(pages.slice(view.from, view.to))
 
   $effect(() => {
-    if (listed >= pages.length) return
-    const timer = window.setTimeout(() => (listed += STEP), 0)
-    return () => window.clearTimeout(timer)
+    const ul = list
+    if (!ul) return
+
+    const measure = () => {
+      wide = ul.clientWidth
+      const said = Number.parseFloat(getComputedStyle(ul).rowGap)
+      gap = Number.isFinite(said) ? said : 8
+    }
+    measure()
+    const watch = new ResizeObserver(measure)
+    watch.observe(ul)
+    const unfollow = where.follow(ul, () => 0)
+
+    return () => {
+      watch.disconnect()
+      unfollow?.()
+    }
   })
   const spaceRoot = $derived(workspace.rootHolding(store?.path ?? null))
   const on = $derived(store?.showing ?? 0)
@@ -256,8 +282,9 @@
 
 {#if store}
   <div class="navigator" bind:this={host}>
-    <ul>
-      {#each shown as page, at (page.id)}
+    <ul bind:this={list} style:padding-block="{view.above}px {view.below}px">
+      {#each shown as page, index (page.id)}
+        {@const at = view.from + index}
         <li>
           <button
             class="page"
