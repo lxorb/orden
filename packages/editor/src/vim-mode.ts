@@ -2,6 +2,7 @@ import { type Extension, Prec } from '@codemirror/state'
 import { EditorView, ViewPlugin } from '@codemirror/view'
 import { CodeMirror, getCM, Vim, vim } from '@replit/codemirror-vim'
 import { tickTaskAtCaret } from './commands'
+import { cycleAllFolds, toggleFold } from './fold'
 import { once } from './once'
 import { redoEdit, undoEdit } from './shared'
 import { modeOf, vimCommands, vimReport } from './vim'
@@ -106,9 +107,8 @@ interface Moded {
   }
 }
 
-export function plainNormalEnter(event: Keyed, mode: Moded | null | undefined): boolean {
-  if (event.key !== 'Enter' || event.isComposing) return false
-  if (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) return false
+function idleNormal(event: Keyed, mode: Moded | null | undefined): boolean {
+  if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return false
   if (!mode || mode.insertMode || mode.visualMode) return false
 
   const input = mode.inputState
@@ -117,11 +117,33 @@ export function plainNormalEnter(event: Keyed, mode: Moded | null | undefined): 
   )
 }
 
-const enterTicks = Prec.highest(
+export function plainNormalEnter(event: Keyed, mode: Moded | null | undefined): boolean {
+  return event.key === 'Enter' && !event.shiftKey && idleNormal(event, mode)
+}
+
+export function normalTab(event: Keyed, mode: Moded | null | undefined): 'one' | 'all' | null {
+  if (event.key !== 'Tab' || !idleNormal(event, mode)) return null
+  return event.shiftKey ? 'all' : 'one'
+}
+
+function keepTabForFolds(view: EditorView) {
+  queueMicrotask(() => {
+    const mode = getCM(view)?.state.vim
+    if (mode && !mode.insertMode && !mode.visualMode) view.setTabFocusMode(false)
+  })
+}
+
+const normalKeys = Prec.highest(
   EditorView.domEventHandlers({
     keydown(event, view) {
-      if (!plainNormalEnter(event, getCM(view)?.state.vim)) return false
-      if (!tickTaskAtCaret(view)) return false
+      const mode = getCM(view)?.state.vim
+      if (event.key === 'Escape') keepTabForFolds(view)
+
+      const tab = normalTab(event, mode)
+      if (tab) {
+        if (tab === 'one') toggleFold(view)
+        else cycleAllFolds(view)
+      } else if (!plainNormalEnter(event, mode) || !tickTaskAtCaret(view)) return false
 
       event.preventDefault()
       return true
@@ -160,7 +182,7 @@ export const modalEditing = once((on: boolean): Extension =>
   on
     ? Prec.high([
         vim(),
-        enterTicks,
+        normalKeys,
         modeReporter,
         vimTheme,
         EditorView.editorAttributes.of({ class: 'nib-vim' }),

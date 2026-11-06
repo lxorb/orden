@@ -755,6 +755,7 @@ page note keep their own history and answer both.
 | Ctrl+Alt+[ | fold whatever the caret is in, and open it again (already there) |
 | Ctrl+Alt+] | open all of it (already there) |
 | no key | Fold everything, Fold more, Fold less |
+| Tab, Shift+Tab in Vim's normal mode | Tab folds whatever the caret is in, a heading or a list item and the items under it, and opens it again; Shift+Tab folds every heading, and opens everything when something is folded, as Tab and Shift+Tab cycle in Emacs's Org mode (#1023). Normal mode's Tab never indents, and an Escape in normal mode does not send the next Tab out of the note as it does elsewhere; insert mode's Tab still indents |
 
 The three without a key are three rows in View and three rows in the palette, and
 that is deliberate rather than unfinished. Obsidian ships all three unbound too.
