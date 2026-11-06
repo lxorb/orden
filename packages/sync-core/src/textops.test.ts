@@ -11,7 +11,6 @@ function docReading(text: string): Y.Doc {
   return doc
 }
 
-/** Whether a text holds U+FFFD, which is what Yjs leaves where a pair was cut. */
 function scarred(text: string): boolean {
   return text.includes(String.fromCharCode(0xfffd))
 }
@@ -136,7 +135,6 @@ describe('textops', () => {
         fc.array(changes, { minLength: 2, maxLength: 4 }),
         fc.array(fc.nat(), { minLength: 1, maxLength: 12 }),
         (before, edits, order) => {
-          // Several devices, one seed, each its own edits, each edit its own update.
           const seed = docReading(before)
           const updates = edits.map((mine, index) => {
             const doc = new Y.Doc()
@@ -155,7 +153,6 @@ describe('textops', () => {
           }
 
           const inOrder = reading(updates)
-          // Any order, with repeats, as long as every update arrives at least once.
           const shuffled = order.map((at) => updates[at % updates.length] ?? new Uint8Array())
           expect(reading([...shuffled, ...[...updates].reverse()])).toBe(inOrder)
           expect(reading([Y.mergeUpdatesV2([...updates].reverse())])).toBe(inOrder)

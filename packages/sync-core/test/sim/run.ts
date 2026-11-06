@@ -1,18 +1,3 @@
-/** One simulated run: some devices, one account, one network, one clock, all driven
- *  by one seed (docs/sync-v2.md section 12).
- *
- *  A run is a list of steps, scripted or drawn at random from the seed: people type,
- *  cut, drop paragraphs, make, rename, move and delete notes and folders, append to
- *  the day's note, edit a file with another program, save; devices go offline and come
- *  back, quit, crash and start again, run their passes, and answer the modal. Then the
- *  network is healed and the run goes quiet: every device passes until nothing
- *  changes, answering whatever it holds. And then the checks in checks.ts judge what
- *  everybody ended up with.
- *
- *  The account and the devices are the reference ones in this folder unless a caller
- *  hands in its own through `account` and `device`: that is how the Worker's and the
- *  engine's lanes run these same seeds against their code. */
-
 import { type Plant, ReferenceAccount, type Seeded } from './account'
 import type {
   AccountAdapter,
@@ -29,7 +14,6 @@ import { ReferenceDevice } from './device'
 import { CALM, Clock, type Faults, Network } from './network'
 import { Random } from './random'
 
-/** One thing that happens in a run. `device` is an index into the run's devices. */
 export type Step =
   | { t: 'act'; device: number; action: Action }
   | { t: 'pass'; device: number }
@@ -44,22 +28,14 @@ export type Step =
 export interface Options {
   seed: number
   devices?: number
-  /** Steps drawn at random, when there is no script. */
   steps?: number
   script?: readonly Step[]
   faults?: Faults
-  /** A rule the reference account breaks, to prove the checks notice. */
   plant?: Plant
-  /** The notes every side starts with. */
   seeded?: readonly Seeded[]
   account?: (clock: Clock, seeded: readonly Seeded[]) => AccountAdapter
   device?: (id: string, clock: Clock, random: Random, seeded: readonly Seeded[]) => DeviceAdapter
-  /** A marker to follow through the run, into the trace. */
   watch?: string
-  /** What the random steps are mostly about: the words (the default, the mix every
-   *  pinned seed was drawn from), or the tree - moves, renames, deletes and restores
-   *  crossing on many devices (#1068) - or the order: the tree's mix with rows dragged
-   *  among the rest of their folders as well. */
   mix?: 'words' | 'tree' | 'order'
 }
 
@@ -72,16 +48,12 @@ export function crowded(seed: number, mix: Crowd): Options {
 export interface Report {
   seed: number
   failures: string[]
-  /** What happened, one line a step, for reading a failing seed. */
   trace: string[]
-  /** What the account holds at the end. */
   account: AccountView
-  /** How many times a device classified a merge, and how many of those it held. */
   classified: number
   held: number
 }
 
-/** The network the random walks run on: unkind, but not so unkind nothing gets through. */
 export const ROUGH: Faults = { drop: 0.08, duplicate: 0.08, lostReply: 0.08, delay: [1, 25] }
 
 const NAMES = ['Untitled.md', 'untitled.md', 'Plan.md', 'Notes.md', 'Café.md', 'café.md']
@@ -94,7 +66,6 @@ export const SEEDED: readonly Seeded[] = [
   { id: 'n2', name: 'Ideas.md', text: '# Ideas\n\nA long paragraph about what comes next.\n' },
 ]
 
-/** Lets every continuation the network just woke run to its next wait. */
 async function drain() {
   for (let turn = 0; turn < 64; turn++) await Promise.resolve()
 }
@@ -109,7 +80,6 @@ class Run {
   readonly trace: string[] = []
   private readonly classifications: Classification[] = []
   private readonly passes = new Set<Promise<void>>()
-  /** What each crashed device held when it went down. */
   private readonly beforeCrash = new Map<number, Set<string>>()
   private counter = 0
 
@@ -137,7 +107,6 @@ class Run {
       this.network.request(device.id, () => this.account.handle(device.id, route, body))
   }
 
-  /** Words to type: a few common ones, so edits meet, and one marker to follow. */
   private words(): string {
     this.counter += 1
     const filler = Array.from(
@@ -149,10 +118,8 @@ class Run {
     return filler.join(' ')
   }
 
-  /** What a device deleted and may bring back from its trash, by device. */
   private readonly trash = new Map<number, string[]>()
 
-  /** The kinds of action the random steps draw, and how often. */
   private kinds(): [Action['t'], number][] {
     if (this.options.mix === 'order') {
       return [
@@ -246,7 +213,6 @@ class Run {
     }
   }
 
-  /** A step drawn from the seed. */
   private drawn(): Step {
     const r = this.random
     const device = r.int(this.devices.length)
@@ -269,7 +235,6 @@ class Run {
     ])
   }
 
-  /** Every marker a device shows or holds. */
   private async markersOf(device: DeviceAdapter): Promise<Set<string>> {
     const view = await device.view()
     const texts = [...Object.values(view.texts), ...device.held().map((held) => held.local)]
@@ -297,7 +262,6 @@ class Run {
         await device.act(step.action)
         const after = await this.markersOf(device)
         for (const marker of after) if (!before.has(marker)) this.book.typed.add(marker)
-        // Taken out by the person, who could see them.
         for (const marker of before) if (!after.has(marker)) this.book.retired.add(marker)
         const idsAfter = await this.idsOf(device)
         for (const id of idsAfter) if (!idsBefore.has(id)) this.book.made.add(id)
@@ -352,8 +316,6 @@ class Run {
     await this.tick()
   }
 
-  /** What a person's delete took away and a restore asked back, for the checks and for
-   *  the trash a later restore is drawn from. */
   private noteTree(
     device: number,
     action: Action,
@@ -384,8 +346,6 @@ class Run {
 
   private followed = ''
 
-  /** Where one marker is, written into the trace whenever that changes: the way to
-   *  read a failing seed. */
   private async follow(marker: string) {
     const where: string[] = []
     const account = await this.account.view()
@@ -409,9 +369,6 @@ class Run {
     }
   }
 
-  /** Heals the network and passes until nothing changes: every device online and
-   *  running, every held note answered, every pass finished, twice over with nothing
-   *  moving. */
   private async quiet(): Promise<boolean> {
     this.network.faults = CALM
     for (const [index, device] of this.devices.entries()) {
@@ -470,7 +427,6 @@ class Run {
   }
 }
 
-/** Runs one seed, or one script, and judges it. */
 export function simulate(options: Options): Promise<Report> {
   return new Run(options).run()
 }

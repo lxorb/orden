@@ -151,9 +151,6 @@ describe('tree', () => {
   })
 
   test('a folder delete keeps what another device moved in, even renamed since by one that never saw it there (#514)', () => {
-    // The phone moved a note into the laptop's folder. The laptop, offline, renamed the
-    // note where it last saw it and deleted the folder, empty as far as it knew. Its own
-    // rename took over who last changed the note, and the folder took it, words and all.
     const state = treeState()
     mkdir(state, 'f', 'Work')
     create(state, 'n', 'Plan.md')
@@ -211,9 +208,6 @@ describe('tree', () => {
     expect(live(state, 'gone-before')).toBe(false)
   })
 
-  /** #1068: a restore is a person asking for the note back, and a delete made on a device
-   *  that had not seen it does not undo that - for a note, a folder, and a restore made of
-   *  something already back. */
   test('a restore stands against a delete that had not seen it', () => {
     const state = treeState()
     create(state, 'n', 'Plan.md')
@@ -232,7 +226,6 @@ describe('tree', () => {
     })
     expect([live(state, 'n'), live(state, 'f')]).toEqual([true, true])
 
-    // Having seen the restore, the delete stands.
     applyOp(state, { op: opId(), t: 'delete', id: 'n', seen: state.cursor }, PHONE)
     expect(live(state, 'n')).toBe(false)
   })
@@ -244,19 +237,14 @@ describe('tree', () => {
     applyOp(state, { op: opId(), t: 'delete', id: 'n', seen }, OWNER)
     applyOp(state, { op: opId(), t: 'restore', id: 'n', seen: state.cursor }, OWNER)
     const restored = state.cursor
-    // Another device restores it too, without having heard of the first restore.
     applyOp(state, { op: opId(), t: 'restore', id: 'n', seen }, PHONE)
 
-    // The first device deletes it, having seen only its own restore.
     expect(
       applyOp(state, { op: opId(), t: 'delete', id: 'n', seen: restored }, OWNER),
     ).toMatchObject({ refused: 'edited' })
     expect(live(state, 'n')).toBe(true)
   })
 
-  /** #1068, the reference walks' seeds 3175 and 3900: a device that deleted a note,
-   *  restored it and deleted it again while away came back with its own restore as the
-   *  note's latest change, which hid another device's restore from its second delete. */
   test("a device's own restore since does not hide another's from its delete", () => {
     const state = treeState()
     create(state, 'n', 'Plan.md')
@@ -316,9 +304,6 @@ describe('tree', () => {
     expect(live(state, 'n')).toBe(true)
   })
 
-  /** #1068, the reference walk's seed 632: the folder delete of a device that wrote in a
-   *  note another device had moved into the folder, and renamed it, never having seen it
-   *  there, took the note and its words. Writing in it made that device its last changer. */
   test('a folder delete leaves a note its device wrote in but never saw there', () => {
     const state = treeState()
     mkdir(state, 'f', 'Work')
@@ -344,7 +329,6 @@ describe('tree', () => {
   })
 
   test('the account’s own bookkeeping is nobody’s word against a delete', () => {
-    // A folder made from paths when the space moved to v2 has no device behind it.
     const state = treeState([
       { id: 'f', kind: 'folder', parent: null, name: 'Before', deleted: false, seq: 5, docSeq: 0 },
     ])
@@ -386,9 +370,6 @@ describe('tree', () => {
     })
   })
 
-  /** #1068: a position is the entry's own. Two devices dragging different rows of one
-   *  folder each move only their row; the later of two drags of one row stands; a rename
-   *  keeps it; a move elsewhere leaves it behind unless it says where it was dropped. */
   test('positions: each drag moves only its row, and stays with it through a rename', () => {
     const state = treeState()
     create(state, 'a', 'A.md')
@@ -479,9 +460,6 @@ describe('tree', () => {
   })
 })
 
-// ---------------------------------------------------------------------------
-// Properties
-
 const IDS = ['f1', 'f2', 'f3', 'n1', 'n2', 'n3', 'n4']
 const NAMES = ['Plan.md', 'plan.md', 'PLAN.md', 'Café.md', 'café.md', 'Work', 'v1.2', 'Untitled.md']
 const DEVICES = ['laptop', 'phone', 'tablet']
@@ -537,17 +515,14 @@ const steps = fc
     ),
   )
 
-/** The invariants every state must hold, whatever arrived in whatever order. */
 function holdsTogether(state: TreeState) {
   const names = new Set<string>()
   for (const entry of state.entries.values()) {
     if (entry.deleted) continue
-    // Unique names per folder.
     const key = `${entry.parent ?? ''}/${nameKey(entry.name)}`
     expect(names.has(key)).toBe(false)
     names.add(key)
 
-    // A live entry's folder is live, and walking up ends at the top: no cycles.
     const seenIds = new Set<string>()
     for (let at = entry.parent; at !== null;) {
       expect(seenIds.has(at)).toBe(false)
@@ -579,7 +554,6 @@ function run(list: readonly Step[]): { state: TreeState; results: OpResult[] } {
     const result = applyOp(state, step.op, { role: 'owner', device: step.device })
     results.push(result)
 
-    // Never delete a note somebody else wrote in after the delete's `seen`.
     if (step.op.t === 'delete' && editedSince) {
       expect(state.entries.get(step.op.id)?.deleted).toBe(false)
     }

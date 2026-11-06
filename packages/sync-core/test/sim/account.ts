@@ -1,13 +1,3 @@
-/** An account built from nothing but this package's rules, for the simulator.
- *
- *  What the Worker will do, as small as it can be said: tree ops through `applyOp`, a
- *  Yjs document per note with a version that moves on with every change, pushes
- *  applied only onto the version they name and answered `moved` otherwise, pulls
- *  answered with a diff, and versions kept when a device says so. One space; no rooms,
- *  sockets or settles, which are the HTTP path's business to stand in for.
- *
- *  `plant` breaks one rule on purpose, so a test can prove the simulator catches it. */
-
 import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { seedUpdate } from '../../src/seed'
@@ -28,10 +18,8 @@ import {
 import type { AccountAdapter, AccountView, Route } from './adapters'
 import type { Clock } from './network'
 
-/** A rule the account can be told to break. */
 export type Plant = 'delete-without-seen'
 
-/** A note the run starts with, already on the account and on every device. */
 export interface Seeded {
   id: string
   name: string
@@ -56,7 +44,6 @@ export class ReferenceAccount implements AccountAdapter {
   private readonly changedAt = new Map<string, number>()
   private readonly changedBy = new Map<string, string>()
   private readonly versions: string[] = []
-  /** What each push was answered, by its id: a retry is answered the same way. */
   private readonly answered = new Map<string, PushAnswer>()
 
   constructor(
@@ -82,7 +69,6 @@ export class ReferenceAccount implements AccountAdapter {
     }
   }
 
-  /** Remembers when and by whom every entry changed since `cursor`, for the feed. */
   private stamp(since: number, device: string) {
     for (const entry of this.tree.entries.values()) {
       if (entry.seq <= since) continue
@@ -123,7 +109,6 @@ export class ReferenceAccount implements AccountAdapter {
     if (!request) throw new Error('ops: not a request')
 
     const results: OpResult[] = request.ops.map((op) => {
-      // The planted bug: a delete that never asks whether anybody wrote since.
       const judged =
         this.plant === 'delete-without-seen' && op.t === 'delete'
           ? { ...op, seen: Number.MAX_SAFE_INTEGER }

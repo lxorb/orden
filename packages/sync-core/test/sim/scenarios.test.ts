@@ -1,14 +1,8 @@
-/** One scripted run per road to a second file or lost work in docs/sync-v2.md section
- *  1, each pinned so it cannot come back, and the planted bug the simulator has to
- *  catch. Scripts run on a calm network so each says exactly what it means; the random
- *  walks in walks.test.ts are where the network is unkind. */
-
 import { describe, expect, test } from 'vitest'
 import { markersIn } from './checks'
 import { CALM } from './network'
 import { type Report, type Step, simulate } from './run'
 
-/** Waits long enough for everything in the air to land. */
 const settle: Step = { t: 'wait', ticks: 40 }
 
 function run(script: readonly Step[], plant?: 'delete-without-seen'): Promise<Report> {
@@ -20,7 +14,6 @@ function textOf(report: Report, name: string): string {
   return entry ? (report.account.texts[entry.id] ?? '') : ''
 }
 
-/** Plan.md is the first of the seeded notes by id, so a pick of 0 lands on it. */
 const PLAN = 0
 
 describe('scripted roads', () => {

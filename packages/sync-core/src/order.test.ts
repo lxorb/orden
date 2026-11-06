@@ -44,7 +44,6 @@ describe('a position', () => {
 })
 
 describe('positions for an order', () => {
-  /** The ids of rows drawn by their positions, the unplaced after in the given order. */
   const drawn = (rows: { id: string; pos?: string }[], moved: Map<string, string>) => {
     const now = rows.map((row) => {
       const pos = moved.get(row.id) ?? row.pos
@@ -80,7 +79,6 @@ describe('positions for an order', () => {
       { id: 'c', pos: 'V' },
       { id: 'd', pos: 'e' },
     ]
-    // d dragged to the top.
     const wanted = [rows[3], rows[0], rows[1], rows[2]].filter((row) => row !== undefined)
     const moved = repositioned(wanted, 4)
     expect([...moved.keys()]).toEqual(['d'])
@@ -89,7 +87,6 @@ describe('positions for an order', () => {
 
   test('a placed row trimmed off the end still stands where the order says', () => {
     const rows = [{ id: 'a', pos: 'V' }, { id: 'b' }, { id: 'c', pos: 'G' }]
-    // Only a is said to be placed, but c keeps a position and so stands after a and b.
     const moved = repositioned(rows, 1)
     expect(drawn(rows, moved)).toEqual(['a', 'b', 'c'])
   })
@@ -106,7 +103,6 @@ describe('positions for an order', () => {
           const rows = positions.map((pos, at) =>
             pos === undefined ? { id: `r${String(at)}` } : { id: `r${String(at)}`, pos },
           )
-          // A shuffle drawn from the seed, the unplaced keeping their order at the end.
           const wanted = [...rows].sort(
             (a, b) =>
               ((seed * (a.id.length + 7) + a.id.charCodeAt(1)) % 13) -
@@ -119,7 +115,6 @@ describe('positions for an order', () => {
           const standing = drawnNow.filter(
             (id) => moved.has(id) || wanted.find((row) => row.id === id)?.pos !== undefined,
           )
-          // The rows that stand placed are drawn in the wanted order, ahead of the rest.
           const ids = wanted.map((row) => row.id)
           expect(standing).toEqual(ids.slice(0, standing.length))
           expect(standing.length).toBeGreaterThanOrEqual(count)

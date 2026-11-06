@@ -1,10 +1,3 @@
-/** The one source of chance in a simulated run.
- *
- *  Everything the simulator decides - which device acts, what it types, which
- *  message the network drops - comes from here, so a run is a function of its seed:
- *  a failure is a seed, and a seed is a replay. Mulberry32, because it is four lines,
- *  fast, and good enough for choosing; nothing here needs a cryptographic stream. */
-
 export class Random {
   private state: number
 
@@ -12,7 +5,6 @@ export class Random {
     this.state = seed >>> 0
   }
 
-  /** A number in [0, 1). */
   next(): number {
     this.state = (this.state + 0x6d2b79f5) >>> 0
     let t = this.state
@@ -21,12 +13,10 @@ export class Random {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
 
-  /** A whole number in [0, below). */
   int(below: number): number {
     return Math.floor(this.next() * below)
   }
 
-  /** A whole number in [low, high]. */
   between(low: number, high: number): number {
     return low + this.int(high - low + 1)
   }
@@ -39,7 +29,6 @@ export class Random {
     return list.length ? list[this.int(list.length)] : undefined
   }
 
-  /** The list in an order of this stream's choosing. */
   shuffled<T>(list: readonly T[]): T[] {
     const out = [...list]
     for (let at = out.length - 1; at > 0; at--) {
@@ -53,7 +42,6 @@ export class Random {
     return out
   }
 
-  /** A choice weighted by the numbers beside each option. */
   weighted<T>(options: readonly (readonly [T, number])[]): T {
     const total = options.reduce((sum, [, weight]) => sum + weight, 0)
     let at = this.next() * total

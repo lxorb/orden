@@ -1,9 +1,3 @@
-/** A million seeds of the simulator, for the nightly run (docs/sync-v2.md section 12).
- *
- *  In chunks, so a run shows how far it got, and from a starting seed that is the day's
- *  number, so every night walks seeds no night walked before. A failure names its seed;
- *  `simulate({ seed, watch })` replays it and follows a marker through it. */
-
 import { describe, expect, test } from 'vitest'
 import { type Crowd, crowded, simulate } from './run'
 

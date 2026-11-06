@@ -4,29 +4,22 @@ import { foreignCopy, inForeignCopy } from './foreign'
 
 describe('foreignCopy', () => {
   test.each([
-    // Proton Drive, Windows: six random characters and the kind's letter.
     ['Hackathon List (# Name clash 2026-10-05 k3x9qaC #).md', 'Proton', 'Hackathon List.md'],
     ['Plan (# Edit conflict 2026-10-05 a1b2c3C #).md', 'Proton', 'Plan.md'],
     ['Plan (# Delete conflict 2026-10-05 a1b2c3C #).md', 'Proton', 'Plan.md'],
     ['Plan (# Temporary renamed 2026-10-05 a1b2c3R #).md', 'Proton', 'Plan.md'],
     ['Plan.md (# Deleted 2026-10-05 a1b2c3D #)', 'Proton', 'Plan.md'],
     ['Assets (# Name clash 2026-10-05 a1b2c3C #)', 'Proton', 'Assets'],
-    // Proton Drive, Mac: "Name Clash" and seven characters; and an early build.
     ['Plan (# Name Clash 2026-10-05 Ab3dE9x #).md', 'Proton', 'Plan.md'],
     ['Plan (# Name Clash 823da3ff #).md', 'Proton', 'Plan.md'],
-    // Dropbox, with and without the person, and the second one of a day.
     ["Plan (Emil's conflicted copy 2026-10-05).md", 'Dropbox', 'Plan.md'],
     ["Plan (Emil Vinu's conflicted copy 2026-10-05 (1)).md", 'Dropbox', 'Plan.md'],
     ['Plan (conflicted copy 2026-10-05).md', 'Dropbox', 'Plan.md'],
-    // Nextcloud and ownCloud.
     ['mydata (conflicted copy 2018-04-10 093612).txt', 'Nextcloud', 'mydata.txt'],
     ['mydata_conflict-20180410-093612.txt', 'ownCloud', 'mydata.txt'],
-    // Syncthing.
     ['notes.sync-conflict-20231012-143052-CEIVOCO.md', 'Syncthing', 'notes.md'],
     ['Makefile.sync-conflict-20231012-143052-ABCDEF7', 'Syncthing', 'Makefile'],
-    // Seafile.
     ['test.txt (SFConflict name@example.com 2015-03-07-11-30-28)', 'Seafile', 'test.txt'],
-    // OneDrive, on a computer with the name Windows gave it.
     ['Report-DESKTOP-4F2K9QX.md', 'OneDrive', 'Report.md'],
     ['Report-LAPTOP-487LQ0T.md', 'OneDrive', 'Report.md'],
     ['Report-LAPTOP-487LQ0TA', 'OneDrive', 'Report'],
@@ -35,7 +28,6 @@ describe('foreignCopy', () => {
   })
 
   test.each([
-    // What people call their own notes.
     'Plan.md',
     'Plan (1).md',
     'Plan 2.md',
@@ -57,14 +49,11 @@ describe('foreignCopy', () => {
     'conflict-20180410.md',
     '2026-10-05.md',
     'SFConflict.md',
-    // A computer somebody named: a word, and a note can end in one.
     'Report-JOHNS-SURFACE.txt',
     'Trip-DESKTOP.md',
     'Trip-desktop-4f2k9qx.md',
     'Report-DESKTOP-4F2K9QX-notes.md',
-    // Orden's own copy is a note.
     'Plan (from another device 2026-09-12).md',
-    // Close, but not the tool's spelling.
     'Plan (# Name clash 2026-10-05 #).md',
     'Plan (# Name clash 2026-10-05 a1b2 #).md',
     'notes.sync-conflict-2023-143052-CEIVOCO.md',

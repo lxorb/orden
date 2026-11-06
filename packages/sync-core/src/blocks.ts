@@ -1,20 +1,8 @@
-/** A note cut into the blocks a person thinks in, for the rule that asks when one side
- *  deleted what the other side rewrote.
- *
- *  Not a markdown parser. The classifier asks one question of a block - did one side
- *  take it out while the other wrote in it - and needs only where each one starts and
- *  ends: a paragraph, a list item with its continuation lines, a heading, a fenced
- *  block from fence to fence, one row of a table, a quote, and the front matter. A
- *  walk over lines answers that, reading fences and front matter the way
- *  `@orden/markdown` reads them, so the classifier and the renderer agree about where
- *  code starts and stops. */
-
 import { closesFence, fenceMark } from '@orden/markdown/fences'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 
 type BlockKind = 'front-matter' | 'heading' | 'paragraph' | 'item' | 'fence' | 'row' | 'quote'
 
-/** One block, as the offsets of its text without the line break that ends it. */
 export interface Block {
   from: number
   to: number
@@ -44,8 +32,6 @@ const ROW = /^\s*\|/
 const ITEM = /^\s*(?:[-*+]|\d+[.)])\s/
 const QUOTE = /^\s{0,3}>/
 
-/** What opens a block of each kind and is not its words: a list item's marker and
- *  box, a heading's hashes, a quote's angle, a table row's pipes. */
 const LEAD: Partial<Record<BlockKind, RegExp>> = {
   item: /^\s*(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?/,
   heading: /^ {0,3}#{1,6}\s*/,
@@ -53,16 +39,8 @@ const LEAD: Partial<Record<BlockKind, RegExp>> = {
   row: /^\s*\|\s*/,
 }
 
-/** What closes a table row and is not its words. */
 const ROW_END = /\s*\|?\s*$/
 
-/** Where a block's words are: without its opening marks, and for a table row without
- *  its closing pipe.
- *
- *  Asked because a deletion is not always reported where it was made. Taking out
- *  `- milk` and its line break between two items leaves the same text as taking out
- *  `milk`, the line break and the next item's `- `, and a diff is free to say either;
- *  both take out every word of the item, which is the question that matters. */
 export function contentOf(text: string, block: Block): Block {
   const written = text.slice(block.from, block.to)
   const lead = LEAD[block.kind]?.exec(written)?.[0].length ?? 0
@@ -71,7 +49,6 @@ export function contentOf(text: string, block: Block): Block {
   return { ...block, from, to: Math.max(from, block.to - trail) }
 }
 
-/** The blocks of a note, in order. */
 export function blocksOf(text: string): Block[] {
   const out: Block[] = []
   const front = frontMatterBlock(text)
@@ -131,8 +108,6 @@ export function blocksOf(text: string): Block[] {
     }
 
     const kind: BlockKind = QUOTE.test(line.text) ? 'quote' : 'paragraph'
-    // A line that is neither a new item nor a new kind of block continues the one it
-    // follows: a list item's wrapped line, a paragraph's next line, a quote's next.
     if (open && (open.kind === kind || open.kind === 'item' || kind === 'paragraph')) {
       open.to = line.to
       continue

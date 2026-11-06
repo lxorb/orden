@@ -18,8 +18,6 @@ describe('hash32', () => {
     expect(hash32('note', 1)).toBe(hash32('note', 1))
     expect(hash32('note', 1)).toBeGreaterThanOrEqual(0)
     expect(hash32('note', 1)).toBeLessThan(2 ** 32)
-    // Pinned, so a change to the spelling is a change somebody has to mean: every
-    // seed on every device and in every room hangs on it.
     expect(hash32()).toBe(0x811c9dc5)
     expect(hash32('n1', 1)).toBe(hash32('n1', 1))
   })
@@ -104,9 +102,6 @@ describe('seed property', () => {
   })
 })
 
-/** A canvas holding what the format does not read (#780): its seed is the seed a build
- *  before this one makes, and one operation more under a client id of its own, so the
- *  two builds' seeds are one document and two of this build's are the same bytes. */
 describe('the seed of a canvas with another app’s things in it', () => {
   const VAULT = readCanvas(
     JSON.stringify({
@@ -117,7 +112,6 @@ describe('the seed of a canvas with another app’s things in it', () => {
       edges: [{ id: 'e', fromNode: 'x', toNode: 'a' }],
     }),
   )
-  // The same canvas as a build before #780 reads it: nothing unread held.
   const bare: Canvas = { ...VAULT }
   delete bare.extras
 
@@ -128,7 +122,6 @@ describe('the seed of a canvas with another app’s things in it', () => {
   test('holds the older seed whole, and adds only the extras', () => {
     const older = seedPlane('n1', 1, bare)
     const newer = seedPlane('n1', 1, VAULT)
-    // The older seed tells the newer document nothing it does not already have.
     const doc = new Y.Doc()
     Y.applyUpdateV2(doc, newer)
     const before = Y.encodeStateVector(doc)

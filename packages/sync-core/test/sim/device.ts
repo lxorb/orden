@@ -1,17 +1,3 @@
-/** A device built from nothing but this package's rules, for the simulator.
- *
- *  The HTTP path of the engine sections 5.2 to 5.5 of docs/sync-v2.md describe, as
- *  small as it can be said. Per note: the confirmed document, its version, and the
- *  pending updates; a push that names the version and a `moved` answered by
- *  classifying (`diverge`), settling quietly or holding the note for its person; tree
- *  ops applied at once and queued, folded by `coalesce` before they go; the feed
- *  applied in the account's order; foreign edits to a file folded in three ways.
- *
- *  What survives a crash is `store`; what a crash loses is the typing since the last
- *  save, as with any autosave. After an unclean exit every document's client id is
- *  rotated, and it is rotated too whenever pending edits are thrown away, so one id
- *  never names two different operations. */
-
 import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { type Divergence, diverge, type Times } from '../../src/diverge'
@@ -49,7 +35,6 @@ import type {
 import type { Clock } from './network'
 import { Random } from './random'
 
-/** Transaction origins: what this device's person did, and what came from elsewhere. */
 const LOCAL = 'local'
 const REMOTE = 'remote'
 
@@ -57,22 +42,15 @@ const DOCUMENTS = new Set(['note', 'canvas', 'pages'])
 
 interface StoredDoc {
   confirmed: Uint8Array
-  /** The version `confirmed` is at on the account. */
   seq: number
   pending: Uint8Array[]
-  /** When the newest pending edit was made, on this device's clock. */
   at: number
-  /** The feed's `docSeq` the confirmed state is known to cover. */
   pulledTo: number
   client: number
-  /** For a mergeable create: the text it started from. */
   started?: string
-  /** A push sent and not yet answered: its id, and how many pending updates it held. */
   flight?: { push: string; count: number }
 }
 
-/** A note waiting for its person. With `update`, a push answered `moved`; without, a
- *  file another program changed, or a day's note merged into one that was there. */
 interface HeldNote extends Held {
   update: Uint8Array | null
   seq: number
@@ -87,20 +65,14 @@ interface Store {
   written: Map<string, string>
   held: Map<string, HeldNote>
   keeps: KeepRequest[]
-  /** Mergeable creates the account answered `merged`: whose words go into which note,
-   *  and the create itself, for when that note is gone before they get there. */
   merging: Map<string, { into: string; create: CreateOp }>
   made: number
   pushes: number
   clean: boolean
-  /** What the person deleted here, kept to bring back: where it was, and its words. */
   trash: Map<string, Trashed>
-  /** What a restore in the air may have to make again, should the account never have
-   *  had it. */
   restoring: Map<string, Trashed>
 }
 
-/** One thing in this device's trash. */
 interface Trashed {
   kind: TreeEntry['kind']
   parent: string | null
@@ -120,22 +92,18 @@ function vectorOf(update: Uint8Array): Uint8Array {
   return Y.encodeStateVectorFromUpdateV2(update)
 }
 
-/** The place `fraction` of the way into a text that falls on whitespace or the end, so
- *  words put there never join a word already there. */
 function spot(text: string, fraction: number): number {
   let at = Math.max(0, Math.min(text.length, Math.floor(fraction * text.length)))
   while (at < text.length && !/\s/.test(text.charAt(at))) at++
   return at
 }
 
-/** A text with words put in at a place on whitespace. */
 function withWords(text: string, fraction: number, words: string): string {
   if (!text) return words
   const at = spot(text, fraction)
   return `${text.slice(0, at)} ${words}${text.slice(at)}`
 }
 
-/** A text with whole words taken out, from a place on whitespace. */
 function withoutWords(text: string, fraction: number, length: number): string {
   const from = spot(text, fraction)
   const to = spot(text, Math.min(1, (from + length) / Math.max(1, text.length)))
@@ -210,10 +178,6 @@ export class ReferenceDevice implements DeviceAdapter {
     return this.random.int(2 ** 31) + 1
   }
 
-  // -------------------------------------------------------------------------
-  // Documents in memory
-
-  /** A live document from what the store holds, capturing this person's edits. */
   private open(id: string, stored: StoredDoc): Y.Doc {
     const doc = new Y.Doc()
     doc.clientID = stored.client
@@ -252,7 +216,6 @@ export class ReferenceDevice implements DeviceAdapter {
     return true
   }
 
-  /** Autosave's pause: everything typed goes into the store, and the files are written. */
   private save() {
     for (const [id, updates] of this.unsaved) {
       const stored = this.store.docs.get(id)
@@ -277,11 +240,6 @@ export class ReferenceDevice implements DeviceAdapter {
     this.store.written.delete(id)
   }
 
-  /** Back from the trash, under the id it had (#1068): a restore, which the account
-   *  answers by bringing it back with its folders, and the feed brings its words down
-   *  again (section 5.9). Where the account answers that it never had it - made and
-   *  deleted here before a pass - it is made again under the same id, where it was, with
-   *  the words it had; see `sendOps`. */
   private restore(id: string) {
     const kept = this.store.trash.get(id)
     this.store.trash.delete(id)
@@ -289,7 +247,6 @@ export class ReferenceDevice implements DeviceAdapter {
     this.queue({ op: this.nextOp(), t: 'restore', id, seen: this.store.cursor })
   }
 
-  /** Makes again what the account never had, from the trash. */
   private remade(id: string, kept: Trashed) {
     const shown = this.shown().entries
     const parent =
@@ -308,7 +265,6 @@ export class ReferenceDevice implements DeviceAdapter {
     this.made(parent, kept.name, kept.text, undefined, id)
   }
 
-  /** A new note of this device's own: its document, and the create in the outbox. */
   private made(
     parent: string | null,
     name: string,
@@ -345,9 +301,6 @@ export class ReferenceDevice implements DeviceAdapter {
     return id
   }
 
-  // -------------------------------------------------------------------------
-  // The tree as this device shows it
-
   private opCount = 0
 
   private queue(op: Op) {
@@ -359,7 +312,6 @@ export class ReferenceDevice implements DeviceAdapter {
     return `${this.id}.${String(this.life)}.${String(this.opCount)}.${String(this.store.made)}`
   }
 
-  /** The confirmed tree with every op still in the outbox applied, as the person sees it. */
   private shown(): TreeState {
     const state = treeState(structuredClone([...this.store.entries.values()]), this.store.cursor)
     for (const { op } of this.store.outbox) applyOp(state, op, { role: 'owner', device: this.id })
@@ -381,7 +333,6 @@ export class ReferenceDevice implements DeviceAdapter {
     return list[Math.min(list.length - 1, Math.floor(pick * list.length))]
   }
 
-  /** A note the person can type into: shown, with its words here, and not held. */
   private writable(pick: Pick): string | null {
     const notes = this.liveEntries('note').filter(
       (entry) => this.live.has(entry.id) && !this.store.held.has(entry.id),
@@ -393,9 +344,6 @@ export class ReferenceDevice implements DeviceAdapter {
     if (pick === null) return null
     return this.chosen(this.liveEntries('folder'), pick)?.id ?? null
   }
-
-  // -------------------------------------------------------------------------
-  // What the person does
 
   async act(action: Action): Promise<void> {
     if (!this.running) return
@@ -464,7 +412,6 @@ export class ReferenceDevice implements DeviceAdapter {
           parent,
           seen: this.store.cursor,
         }
-        // The person cannot drop a folder into itself; the file list refuses the drag.
         if ('refused' in applyOp(this.shown(), op, { role: 'owner', device: this.id })) return
         this.queue(op)
         return
@@ -479,8 +426,6 @@ export class ReferenceDevice implements DeviceAdapter {
           (entry) => !entry.deleted && inside(entry.id),
         )
 
-        // What this device has seen of the words it deletes: a note whose newest words
-        // it has not pulled yet was not seen, so the account must not take them.
         let seen = this.store.cursor
         for (const entry of gone) {
           const pulled = this.store.docs.get(entry.id)?.pulledTo ?? 0
@@ -489,8 +434,6 @@ export class ReferenceDevice implements DeviceAdapter {
         }
         this.queue({ op: this.nextOp(), t: 'delete', id: target.id, seen })
 
-        // The person threw these words away: nothing of them goes up any more. Kept in
-        // the trash, which is where a restore takes them from.
         for (const entry of gone) {
           this.store.trash.set(entry.id, {
             kind: entry.kind,
@@ -509,9 +452,6 @@ export class ReferenceDevice implements DeviceAdapter {
       case 'place': {
         const target = this.chosen(this.liveEntries('any'), action.target)
         if (!target) return
-        // The folder's rows as this device draws them, the target lifted out and put
-        // back where the drag let go of it; the positions that order needs are what is
-        // sent, as many as the drag moved (order.ts).
         const rows = this.liveEntries('any')
           .filter((entry) => entry.parent === target.parent && entry.id !== target.id)
           .sort(byPosition)
@@ -543,8 +483,6 @@ export class ReferenceDevice implements DeviceAdapter {
     }
   }
 
-  /** Another program changed a note's file: folded in three ways against what Orden last
-   *  wrote (section 5.5). */
   private foreign(action: Extract<Action, { t: 'edit-file' }>) {
     const id = this.writable(action.note)
     if (!id) return
@@ -585,9 +523,6 @@ export class ReferenceDevice implements DeviceAdapter {
     this.store.held.set(note.id, note)
   }
 
-  /** The losing side of every minor overlap, kept as a version: the words are in the
-   *  history, never gone. Where the overlaps were settled with both sides' edits, both
-   *  sides lost something. */
   private keepLosers(
     id: string,
     verdict: { overlaps: Divergence['overlaps']; settled: Divergence['settled'] },
@@ -602,9 +537,6 @@ export class ReferenceDevice implements DeviceAdapter {
       this.store.keeps.push({ id, text: remote, device: this.id })
     }
   }
-
-  // -------------------------------------------------------------------------
-  // A pass
 
   async pass(link: Link): Promise<void> {
     if (!this.running || this.passing) return
@@ -638,7 +570,6 @@ export class ReferenceDevice implements DeviceAdapter {
   private async sendOps(link: Link, alive: () => boolean): Promise<boolean> {
     if (!this.store.outbox.length) return true
 
-    // What has not gone yet is folded; what may have gone goes again as it was.
     const sent = this.store.outbox.filter((one) => one.sent)
     const waiting = coalesce(this.store.outbox.filter((one) => !one.sent).map((one) => one.op))
     this.store.outbox = [...sent, ...waiting.map((op) => ({ op, sent: false }))]
@@ -726,8 +657,6 @@ export class ReferenceDevice implements DeviceAdapter {
         })
         this.store.known.add(item.id)
 
-        // Gone elsewhere: the file goes, unless this device wrote in it since, and then
-        // the push brings it back (an edit beats a delete).
         if (item.deleted && !this.hasPending(item.id) && !this.store.held.has(item.id)) {
           this.drop(item.id)
         }
@@ -769,8 +698,6 @@ export class ReferenceDevice implements DeviceAdapter {
 
     for (const doc of answer.docs) {
       if (!('update' in doc)) continue
-      // Typed into, or held, while the pull was in the air: the push brings the
-      // account's words back through `moved`, where they are classified.
       if (this.hasPending(doc.id) || this.store.held.has(doc.id)) continue
       if (this.store.docs.get(doc.id) !== from.get(doc.id)) continue
 
@@ -798,8 +725,6 @@ export class ReferenceDevice implements DeviceAdapter {
     return true
   }
 
-  /** Day's notes the account merged into one that was already there: this device's
-   *  words go into that note, merged against the text both started from. */
   private mergeDays() {
     for (const [mine, { into, create }] of [...this.store.merging]) {
       const stored = this.store.docs.get(mine)
@@ -808,8 +733,6 @@ export class ReferenceDevice implements DeviceAdapter {
         this.store.merging.delete(mine)
         continue
       }
-      // The note it was to go into was deleted meanwhile: it is made after all, as a
-      // note of its own, rather than its words waiting for a note that will not come.
       if (this.store.entries.get(into)?.deleted) {
         const plain: CreateOp = { ...create, op: this.nextOp(), seen: this.store.cursor }
         delete plain.mergeable
@@ -850,8 +773,6 @@ export class ReferenceDevice implements DeviceAdapter {
     )
     if (!ready.length) return true
 
-    // A push whose answer never came goes again as it was, same id and same update;
-    // anything typed since waits for the next one.
     const batch = ready.slice(0, PUSH_BATCH).map(([id, stored]) => {
       if (!stored.flight) {
         this.store.pushes += 1
@@ -883,7 +804,6 @@ export class ReferenceDevice implements DeviceAdapter {
     for (const doc of answer.docs) {
       const sent = batch.find((one) => one.id === doc.id)
       const stored = this.store.docs.get(doc.id)
-      // Answered after the pending edits it was about were thrown away: nothing to do.
       if (!sent || !stored || stored.flight?.push !== sent.flight.push) continue
 
       if ('ok' in doc) {
@@ -893,7 +813,6 @@ export class ReferenceDevice implements DeviceAdapter {
         stored.seq = doc.seq
         delete stored.flight
       } else if ('moved' in doc) {
-        // Not applied: the account had moved on. Classified with everything pending.
         delete stored.flight
         if (!this.store.held.has(doc.id)) this.moved(doc.id, stored, doc.moved, doc.seq, doc.at)
       }
@@ -901,8 +820,6 @@ export class ReferenceDevice implements DeviceAdapter {
     return true
   }
 
-  /** The account moved on under this device's pending edits: classify, then settle
-   *  quietly or hold the note (section 5.4). */
   private moved(id: string, stored: StoredDoc, update: Uint8Array, seq: number, at: number) {
     const live = this.live.get(id)
     if (!live) return
@@ -926,9 +843,6 @@ export class ReferenceDevice implements DeviceAdapter {
     this.edit(id, verdict.resolution)
     this.save()
   }
-
-  // -------------------------------------------------------------------------
-  // The modal
 
   held(): readonly Held[] {
     return [...this.store.held.values()].map(({ id, base, local, remote, times }) => ({
@@ -955,8 +869,6 @@ export class ReferenceDevice implements DeviceAdapter {
         this.edit(id, note.local)
         this.store.keeps.push({ id, text: note.remote, device: this.id })
       } else {
-        // The account's text everywhere: this device's pending edits were never sent,
-        // so they are dropped, and the client id they were made under goes with them.
         this.store.keeps.push({ id, text: note.local, device: this.id })
         this.save()
         stored.pending = []
@@ -987,9 +899,6 @@ export class ReferenceDevice implements DeviceAdapter {
     return Promise.resolve()
   }
 
-  // -------------------------------------------------------------------------
-  // Life
-
   async quit(): Promise<void> {
     this.save()
     this.store.clean = true
@@ -1012,18 +921,13 @@ export class ReferenceDevice implements DeviceAdapter {
 
   async launch(): Promise<void> {
     if (this.running) return
-    // The account may hold operations under the old ids that the store never had.
     if (!this.store.clean)
       for (const stored of this.store.docs.values()) stored.client = this.freshClient()
-    // Op ids go on from where they were, but in a new life, so none is ever reused.
     this.store.clean = false
     this.running = true
     this.build()
     return Promise.resolve()
   }
-
-  // -------------------------------------------------------------------------
-  // What it holds
 
   async view(): Promise<View> {
     const entries = this.liveEntries('any').map(({ id, kind, parent, name, pos }) => ({
@@ -1037,8 +941,6 @@ export class ReferenceDevice implements DeviceAdapter {
     for (const entry of entries) {
       if (DOCUMENTS.has(entry.kind)) texts[entry.id] = this.textNow(entry.id) ?? ''
     }
-    // A note deleted elsewhere while this device still has words for it to send: not
-    // in the tree, but its words are here until the push brings it back.
     for (const id of this.live.keys()) {
       if (!(id in texts) && this.hasPending(id)) texts[id] = this.textNow(id) ?? ''
     }
@@ -1051,7 +953,6 @@ export class ReferenceDevice implements DeviceAdapter {
     return out
   }
 
-  /** Whether it has nothing left to send or to answer. */
   settled(): boolean {
     return (
       !this.store.outbox.length &&
@@ -1062,7 +963,6 @@ export class ReferenceDevice implements DeviceAdapter {
     )
   }
 
-  /** How far the feed has been read. */
   get cursor(): number {
     return this.store.cursor
   }

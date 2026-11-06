@@ -1,14 +1,3 @@
-/** The one clock and the one network of a simulated run.
- *
- *  Every device and the account share them, and neither reads the machine's own time:
- *  the clock moves only when the simulator moves it, and every message is an event on
- *  it. The network is the unkind one section 12 of docs/sync-v2.md asks for. It delays
- *  requests and replies by different amounts, so they overtake each other; it drops
- *  some, duplicates some, and delivers a request only to lose its reply (the case where
- *  the account did the work and the device never heard); and it can cut any device off
- *  entirely. A device learns that a request is lost the way a real one does: its
- *  answer never comes, and after a while it stops waiting. */
-
 import type { Random } from './random'
 
 export class Clock {
@@ -19,7 +8,6 @@ export class Clock {
   }
 }
 
-/** How unkind the network is. Probabilities per message; delays in clock units. */
 export interface Faults {
   drop: number
   duplicate: number
@@ -29,7 +17,6 @@ export interface Faults {
 
 export const CALM: Faults = { drop: 0, duplicate: 0, lostReply: 0, delay: [1, 3] }
 
-/** How long a device waits for an answer before it takes the request as lost. */
 export const PATIENCE = 60
 
 interface Event {
@@ -71,9 +58,6 @@ export class Network {
     this.events.push({ at: this.clock.now + after, order: this.counter, run })
   }
 
-  /** Sends a request from a device to `deliver`, and answers the reply, or null once
-   *  the device gives up waiting. A device that is offline learns so at once, as a
-   *  failed connection tells it. */
   request(device: string, deliver: () => Promise<Uint8Array>): Promise<Uint8Array | null> {
     if (this.cut.has(device)) return Promise.resolve(null)
 
@@ -98,7 +82,6 @@ export class Network {
       }
 
       this.schedule(this.delay(), arrive)
-      // The same request, arriving twice: the account must answer it the same way.
       if (this.random.chance(this.faults.duplicate)) this.schedule(this.delay(), arrive)
       this.schedule(PATIENCE, async () => {
         answer(null)
@@ -106,8 +89,6 @@ export class Network {
     })
   }
 
-  /** Runs everything due by now, in an order of the stream's choosing among what falls
-   *  due together, and answers how many events ran. */
   async deliver(): Promise<number> {
     let ran = 0
     for (;;) {
@@ -121,7 +102,6 @@ export class Network {
     }
   }
 
-  /** Whether nothing is in the air. */
   quiet(): boolean {
     return this.events.length === 0
   }

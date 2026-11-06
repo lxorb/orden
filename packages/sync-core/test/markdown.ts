@@ -1,19 +1,5 @@
-/** Notes the way people write them, for the properties to be tried on.
- *
- *  A string of random characters finds the bugs a string of random characters has.
- *  The ones that matter here live in markdown's shapes: a heading edited on one side
- *  and deleted on the other, a list both sides appended to, a fence one side closed,
- *  front matter, a table row, a line long enough to be a paragraph on its own, and
- *  characters outside the Basic Multilingual Plane, which JavaScript stores as two
- *  code units and which a careless offset cuts in half. So the generator writes
- *  blocks of those, and the edits are the ones a person makes: a word typed, a
- *  stretch deleted, a word replaced, a paragraph taken out, a line appended. */
-
 import fc from 'fast-check'
 
-/** Words from several scripts. The emoji and the rarer CJK ideograph are pairs of
- *  code units; the family emoji is several pairs joined; the accented word has a
- *  combining mark in one spelling. */
 const WORDS = [
   'the',
   'plan',
@@ -84,8 +70,6 @@ const frontMatter = fc
   .tuple(line, fc.array(word, { maxLength: 3 }))
   .map(([title, tags]) => `---\ntitle: ${title}\ntags: [${tags.join(', ')}]\n---\n`)
 
-/** A whole note: perhaps front matter, then blocks with a blank line between, and
- *  usually a line break at the end. */
 export const note = fc
   .tuple(
     fc.option(frontMatter, { nil: '' }),
@@ -94,22 +78,18 @@ export const note = fc
   )
   .map(([front, blocks, ends]) => `${front}${blocks.join('\n\n')}${ends ? '\n' : ''}`)
 
-/** Whether `at` falls between two whole characters of `text`. */
 function between(text: string, at: number): boolean {
   if (at <= 0 || at >= text.length) return true
   const code = text.charCodeAt(at - 1)
   return code < 0xd800 || code > 0xdbff
 }
 
-/** The nearest place at or before `at` that falls between whole characters. */
 function snapped(text: string, at: number): number {
   let place = Math.max(0, Math.min(text.length, at))
   while (!between(text, place)) place--
   return place
 }
 
-/** One edit a person makes, with where it lands given as a fraction of the text so
- *  that one edit means something in any text it is applied to. */
 export type Change =
   | { kind: 'type'; at: number; words: string }
   | { kind: 'delete'; at: number; length: number }
@@ -142,7 +122,6 @@ const change: fc.Arbitrary<Change> = fc.oneof(
   { weight: 1, arbitrary: fc.record({ kind: fc.constant('append'), words: line }) },
 )
 
-/** `text` with one change made to it. */
 function changed(text: string, one: Change): string {
   switch (one.kind) {
     case 'type': {
@@ -166,7 +145,6 @@ function changed(text: string, one: Change): string {
   }
 }
 
-/** `text` with every change made to it, in order. */
 export function edited(text: string, changes: readonly Change[]): string {
   return changes.reduce(changed, text)
 }

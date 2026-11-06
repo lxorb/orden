@@ -81,10 +81,6 @@ describe('merge3', () => {
   })
 
   test('one passage written twice at one point, settled both ways, keeps both', () => {
-    // The two lines share more than a line of words, so they meet as one passage
-    // written twice - a meeting that covers no ancestor at all, from === to. Both its
-    // insertions stand at `to`, the one point a walk over the covered ancestor never
-    // reaches, and the default settling must still lose nothing either side wrote.
     const base = 'Intro.\n\nEnd.'
     const line = 'The quick brown fox jumps over the lazy dog today'
     const local = `Intro.\n\n${line}.\nEnd.`

@@ -12,8 +12,6 @@ const LOCAL_NEWER = { local: 2, remote: 1 }
 
 const REMOTE_NEWER = { local: 1, remote: 2 }
 
-/** Two devices' documents grown from one seed, each edited to its text, and merged:
- *  the CRDT's M, which is what the engine hands `diverge`. */
 function crdtMerge(base: string, local: string, remote: string): string {
   const seed = seedUpdate('n', 1, base)
   const docs = [local, remote].map((text, index) => {
@@ -28,8 +26,6 @@ function crdtMerge(base: string, local: string, remote: string): string {
   return one.getText(TEXT).toJSON()
 }
 
-/** What a clean merge of whole lines owes: every line both sides kept and every line
- *  either side added, and no other line. */
 function cleanLinesAreWhole(base: string, local: string, remote: string, merge: string) {
   const linesOf = (text: string) => text.split('\n').filter(Boolean)
   const [before, mine, theirs, out] = [base, local, remote, merge].map(linesOf) as [
@@ -112,8 +108,6 @@ describe('diverge', () => {
 
   test('the boundary is CONTESTED characters, inclusive', () => {
     const word = (length: number) => 'x'.repeat(length)
-    // One replaced word each side: the ancestor word, and two replacements of the
-    // same length, so the size is three times it.
     const fits = Math.floor(CONTESTED / 3)
     const small = diverge(
       `a ${word(fits)} b`,
@@ -217,9 +211,6 @@ describe('diverge', () => {
   })
 
   test("a minor overlap keeps the newer side's words where the CRDT ordered them otherwise", () => {
-    // Found by the simulator (seed 45): the CRDT put the local words before the
-    // remote ones at the overlap, and laying the corrections onto its text as a merge
-    // of their own lost the local words the newer side had written.
     const base = 'We ship on Monday after the review.\n\n- milk\n- eggs\n'
     const local = 'We ship on Monday after mk8z after the review.\n\n- milk milk the mk3z'
     const remote = 'We mk15z on eggs the ship on Monday after the mk17z mk27z plan milk'
@@ -268,8 +259,6 @@ describe('diverge', () => {
 
         const result = diverge(base, local, remote, LOCAL_NEWER)
         expect(result.overlaps).toEqual([])
-        // A fence opened on one side of the separator and closed on the other is
-        // the one way two disjoint edits can still break something together.
         if (result.broken === null) {
           expect(result.verdict).toBe('clean')
           expect(result.resolution).toBe(
@@ -282,9 +271,6 @@ describe('diverge', () => {
   })
 
   test('a passage the older side moved out of an overlap is said once, not twice', () => {
-    // Found by the engine's simulated runs: the account's side moved "mk18z ship mk8z
-    // on" further along, and the newer side's version of the overlap still held it
-    // where it was. The newer side standing would have said it twice.
     const base =
       'We milk mk18z ship mk8z on review plan we review mk16z ship mk20z on mk9z milk review on Monday after the review.\n\n- milk\n'
     const local =
@@ -301,9 +287,6 @@ describe('diverge', () => {
   })
 
   test('a few words two devices each put back over a deletion are said once', () => {
-    // Also found by the engine's runs: both devices kept their own version over a
-    // deletion, so each typed "mk4z we mk2z the" back - one as an insertion, the other
-    // replacing the next word - and the CRDT holds two copies of one passage.
     const base = '# Ideas\n\nA long paragraph review monday about mk3z plan on\n'
     const local =
       '# Ideas\n mk25z monday\nA long paragraph review monday mk4z we mk2z the mk36z we about what comes\n'
@@ -316,9 +299,6 @@ describe('diverge', () => {
   })
 
   test('a passage two devices each moved, which the CRDT holds twice, is said once (#436)', () => {
-    // Walk seed 207384677: two devices each settled an earlier meeting by moving "eggs
-    // mk1z", so each typed it again as an insertion of its own and the CRDT's merge holds
-    // two copies side by side. Falling back to the CRDT's text kept both.
     const base = 'We mk5z ship on Monday after eggs mk1z mk13z monday ship\n\n- milk\n- eggs\n'
     const local =
       'We mk5z ship milk mk7z ship ship review plan mk16z we review on Monday review milk mk26z plan milk the mk18z mk8z on we after eggs mk1z mk13z monday ship mk11z\n'
@@ -336,8 +316,6 @@ describe('diverge', () => {
   })
 
   test("the CRDT's merge stands where the text merge would say more twice than it does", () => {
-    // Walk seed 7346, which the check above first broke: two words the CRDT set side by
-    // side read to it as a repeat, and the text merge it fell back to said mk13z twice.
     const base = 'We ship the monday after mk16z ship on Monday mk6z after mk13z the review.'
     const local = 'We ship the monday after mk16z ship on Monday mk6z after mk19z monday themk13z '
     const remote =
@@ -350,9 +328,6 @@ describe('diverge', () => {
   })
 
   test('a passage two devices each put back over a deletion, at one point, is said once (#530)', () => {
-    // Walk seed 611000297: one device kept a day's words over a deletion as the newer
-    // side of a meeting, the other answered Keep mine; each wrote the words again, and
-    // the one device's words there ended with them where the other's began with them.
     const base = ''
     const local = 'mk3z on\nmk17z plan milk mk25z the we after'
     const remote = 'we mk10zmk3z on'
@@ -364,8 +339,6 @@ describe('diverge', () => {
   })
 
   test('a word both sides moved, each to a place of its own, is said once, where the newer put it (#530)', () => {
-    // Walk seed 622002257: another program and the device each moved mk15z; the device's
-    // words were older, and its new place for it goes.
     const base = 'review on review mk15z review'
     const file = 'review mk31z we review milk ship on review mk15z'
     const ours = 'review on mk15z we review mk30z review mk27z ship review on'
@@ -379,9 +352,6 @@ describe('diverge', () => {
   })
 
   test('a task each side added, either side of one both deleted, leaves the rest alone', () => {
-    // One device added a task at the top and the other at the bottom, and both deleted
-    // the same one. Read letter by letter, the line added at the top shifts every task
-    // below it down by one, so both sides seemed to rewrite the deleted line.
     const base = '- [ ] alpha\n- [ ] gone item\n- [ ] beta\n- [ ] gamma\n'
     const local = '- [ ] call Ann\n- [ ] alpha\n- [ ] beta\n- [ ] gamma\n'
     const remote = '- [ ] alpha\n- [ ] beta\n- [ ] gamma\n- [ ] call Eve\n'
@@ -401,8 +371,6 @@ describe('diverge', () => {
   })
 
   test('a task one side added above the one the other side ticked leaves the tick where it was', () => {
-    // Read letter by letter, the added task's box lined up with the ticked one's, and
-    // the tick landed on the new task.
     const base = '- [ ] Call Ann\n- [ ] Pay rent\n'
     const local = '- [ ] Call Bob\n- [ ] Call Ann\n- [ ] Pay rent\n'
     const remote = '- [x] Call Ann\n- [ ] Pay rent\n'
@@ -442,8 +410,6 @@ describe('diverge', () => {
   ])(
     'a word put in before a word the other side replaced goes before its replacement (%j)',
     (base, local, remote, both) => {
-      // The replacement was written first and the words put in before it straight after,
-      // run into it: "breadfresh".
       const merged = crdtMerge(base, local, remote)
       for (const [one, other] of [
         [local, remote],
@@ -477,8 +443,6 @@ describe('diverge', () => {
   ])(
     'a task added above one both ticked leaves its own box alone (%j)',
     (base, local, remote, both) => {
-      // Read letter by letter, the ticked task's old box became the new task's box, and
-      // the other side's tick landed on the new task.
       const merged = crdtMerge(base, local, remote)
       for (const [one, other] of [
         [local, remote],
@@ -496,17 +460,14 @@ describe('diverge', () => {
   )
 
   test.each([
-    // A word typed where the other side took a space out.
     ['Pay rent, call mum.\n', 'Pay rent, now call mum.\n', 'Pay rent,call mum.\n'],
     ['Pay rent. Call mum.', 'Pay rent. Ann Call mum.', 'Pay rent.Call mum.'],
     ['- [ ] task \n', '- [ ] é task\n', '- [ ] task x\n'],
-    // A sentence each side moved into a paragraph of its own.
     [
       'Pay rent.\n\nCall mum.\n\nBuy milk.\n',
       'Pay rent. Call mum.\n\n\nBuy milk.\n',
       'Pay rent.\n\n\nCall mum. Buy milk.\n',
     ],
-    // A paragraph split on both sides, one of them also taking a blank line out.
     [
       'rain hard it on fell home so.\n\nmet the home. so fell so home cat dark.\n',
       ' met the home.\n\nso fell so home cat dark.\n',
@@ -545,7 +506,6 @@ describe('diverge', () => {
   )
 
   test.each([
-    // A line one side took out and the other added to, beside a line the other added.
     [
       '- cafe\n- now tag uber Z\n',
       '- cafe\n- now tag uber Z Z\neggs\n',
@@ -556,15 +516,12 @@ describe('diverge', () => {
       'top\n- cafe\n- now tag uber Z Z\neggs\n',
       'top\nsome long new line written here ending in cafe\n- cafe\n',
     ],
-    // A box ticked on one side where the other wrote over its bracket.
     [
       '- [ ] R\n- [x] rent noon\n- [x] to naïve note milk\n',
       '- [ 😀 R\n- [x] rent noon\n- [x] to naïve note milk\n',
       '- [x] R\n- [x] to naïve note milk\n',
     ],
   ])('a merge that keeps a version writes only lines someone wrote (%j)', (base, local, remote) => {
-    // Kept both, the one side's words ran into the line after the one the other took
-    // out (` Zeggs`), or two replacements ran into one token (`[x😀`).
     const lines = new Set([base, local, remote].flatMap((text) => text.split('\n')))
     for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
       const result = diverge(base, local, remote, times)
@@ -585,8 +542,6 @@ describe('diverge', () => {
   ])(
     'words added to a line the other side broke there stay on their own line (%j)',
     (base, local, remote) => {
-      // Both sides wrote at the end of one line, one of them a new line after it: the
-      // other side's words went onto the end of the new line (Pay rent today).
       const merged = crdtMerge(base, local, remote)
       for (const [one, other] of [
         [local, remote],
@@ -596,8 +551,6 @@ describe('diverge', () => {
           for (const crdt of [undefined, merged]) {
             const result = diverge(base, one, other, times, crdt)
             if (result.verdict !== 'clean') continue
-            // A line one side added, none of its words the ancestor's, stays as written:
-            // the other side's words do not run onto its end.
             const words = new Set(base.match(/[\p{L}\p{N}]+/gu) ?? [])
             const added = [...one.split('\n'), ...other.split('\n')].filter((line) =>
               (line.match(/[\p{L}\p{N}]+/gu) ?? []).every((word) => !words.has(word)),
@@ -611,10 +564,6 @@ describe('diverge', () => {
   )
 
   test('a merge never says a word twice to keep to lines someone wrote (seed 7808)', () => {
-    // Both put words in front of the same word on one line. Kept both, the one side's
-    // second line ran into the other's (`mk28zmk5z after monday`); the newer side's
-    // version, chosen for being made of lines someone wrote, said `mk12z` twice. Neither
-    // is the note, so it is asked.
     const base = 'mk12z\nreview mk23z\nmk33z review'
     const local = 'mk13z\nmk28zmk12z\nreview mk23z\nmk33z review'
     const remote = 'mk5z after mondaymk12z\nreview mk23z\nmk33z review'
@@ -629,7 +578,6 @@ describe('diverge', () => {
   })
 
   test('tasks each side added beside ones the other deleted stay tasks of their own', () => {
-    // Two added tasks ran together into one line and an emptied box was left behind.
     const base = '- [ ] alpha\n- [ ] beta\n- [ ] new item\n- [ ] gamma\n'
     const local = '- [ ] new item\n- [ ] read a book\n'
     const remote = '- [ ] alpha\n- [ ] beta\n- [ ] new item\n- [ ] fix gamma\n- [ ] gamma\n'
@@ -644,11 +592,8 @@ describe('diverge', () => {
   })
 
   test.each([
-    // A line added above a line the other side rewrote.
     ['- call Ann\n', '- L call Ann z\n- call Ann\n', '- R call Ann x\n'],
-    // A line rewritten on one side, lines added either side of it on the other.
     ['alpha\n', 'L Book dentist z\n', 'R beta y\nalpha\nR Pay rent z\n'],
-    // A line emptied on one side, rewritten and added to on the other.
     ['Renew passport\n', '\n', 'R Renew passport z\nR alpha z\n'],
   ])(
     'lines added or rewritten on both sides around one line come out whole (%j)',
@@ -683,7 +628,6 @@ describe('diverge', () => {
     const box = (ticked: boolean) => (ticked ? '- [x] ' : '- [ ] ')
     const sideOf = (count: number) =>
       fc.record({
-        // Each task kept as it was, ticked the other way, or taken out.
         does: fc.array(fc.constantFrom('keep', 'tick', 'drop'), {
           minLength: count,
           maxLength: count,
@@ -741,8 +685,6 @@ describe('diverge', () => {
   })
 
   test('property: tasks added and deleted on both sides, merged clean, are each whole', () => {
-    // Every line both sides kept, every line either side added, and nothing else: no
-    // line deleted on either side, and none run together or left half written.
     const items = ['Buy milk', 'Pay rent', 'Call mum', 'Book dentist', 'alpha', 'beta', 'gamma']
     const pool = [...items, 'new task', 'new item', 'call Ann', 'call Eve', 'read a book']
     const sideOf = (lines: readonly string[]) =>
@@ -786,9 +728,6 @@ describe('diverge', () => {
   })
 
   test('a task each side added, after one both deleted, keeps its box', () => {
-    // Both devices ticked off the same task and each added one of its own at the end.
-    // The task boxes the two new lines share are not a word moved twice, and the older
-    // side's line lost its own.
     const base = '- [ ] Buy milk\n- [ ] Pay rent\n- [ ] Call mum\n- [ ] Book dentist\n'
     const local = '- [ ] Buy milk\n- [ ] Call mum\n- [ ] Book dentist\n- [ ] Water plants\n'
     const remote = '- [ ] Buy milk\n- [ ] Call mum\n- [ ] Book dentist\n- [ ] Renew passport\n'
@@ -805,9 +744,6 @@ describe('diverge', () => {
   })
 
   test('two new tasks that start with the same word are not one passage said twice', () => {
-    // Each side wrote a task of its own starting "- [ ] new", which read to the repeat
-    // check as one passage written twice, and the CRDT's text it fell back to had the
-    // two sides' letters woven into a word neither of them wrote.
     const base = '- [ ] a task\n- [ ] gone task\n'
     const local = '- [ ] a task\n- [ ] new task\n'
     const remote = '- [ ] new item\n- [ ] a task\n'
@@ -833,9 +769,6 @@ describe('diverge', () => {
   })
 
   test('a line one side wrote that the other wrote too and went on from is not asked about', () => {
-    // Found by the conflict drive under v2: a note closed offline and opened again
-    // against a file Orden wrote before the line, so one side is the line and the other
-    // the line and what came after it.
     const base = '# Plan\n\nthe line both of them start from\n'
     const line = '\nMachine one, from the train: the platform moved to track nine.\n'
     const local = `${base}${line}`
@@ -876,8 +809,6 @@ describe('diverge', () => {
         if (result.verdict !== 'clean' || result.resolution === null) return
         clean += 1
 
-        // Clean: nothing overlapped, so everything either side wrote is in the note,
-        // whole, and in most runs the note is simply the CRDT's merge.
         const { alone } = analyse(base, local, remote)
         for (const edit of [...alone.local, ...alone.remote]) {
           expect(result.resolution).toContain(edit.insert)
@@ -891,13 +822,10 @@ describe('diverge', () => {
       }),
       { numRuns: 1000 },
     )
-    // The CRDT's own order is kept wherever it is only a matter of order.
     expect(same).toBeGreaterThan(clean * 0.9)
   })
 
   test('a line replaced by a paste of long lines on each side is read in about the time of one diff', () => {
-    // Each pasted line was compared letter by letter with the line it replaced, two
-    // unrelated stretches at a time: 25 seconds for this one.
     const words = ['the', 'cat', 'sat', 'on', 'mat', 'we', 'met', 'at', 'noon', 'it', 'was', 'late']
     let seed = 1
     const next = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648
@@ -931,11 +859,6 @@ describe('diverge', () => {
   })
 })
 
-/** Seed 1111002428 (#779): one side wrote around a word - in front of `after` and behind
- *  it - and the other typed in front of the same word. The diff read the first side as
- *  `after` rewritten, so the other's words could only go before all of it or after all of
- *  it; after it put them behind `after`, glued to the word there, and the next merge
- *  said that word twice. */
 describe('words typed in front of a word the other side wrote around', () => {
   const base = 'We ship on Monday after the review.\n\n- milk\n- eggs\n'
   const local = 'We ship on Monday the mk22z on after the review.\n\n- milk'

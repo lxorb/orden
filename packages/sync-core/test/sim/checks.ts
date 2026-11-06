@@ -1,51 +1,20 @@
-/** What must be true once a simulated run has gone quiet (docs/sync-v2.md section 12).
- *
- *  - Every device holds the tree and the texts the account holds, each row where
- *    somebody put it among the rest of its folder too (#1068).
- *  - The tree is whole: names unique per folder as folders compare them, every live
- *    entry in a live folder.
- *  - Every word ever typed is in a note or in a version, unless the person it was
- *    typed by (or somebody who could see it) took it out, or a crash took it before
- *    it was saved. Words are followed by marker tokens the simulator puts in
- *    everything it types, each one unique to the run.
- *  - No marker appears twice in one note: nothing was merged in twice.
- *  - Nothing exists on the account that no person made: no conflict copies, no notes
- *    the sync invented.
- *  - No folder is inside itself, however many moves crossed (#1068).
- *  - No marker is live in two notes at once: nothing was copied beside itself, bar the
- *    copy a person asked for by keeping both (#1068).
- *  - What a person restored is there, under the id it had, unless somebody deleted it
- *    again afterwards (#1068).
- *  - The modal was asked exactly when `diverge` says so.
- *
- *  Each failure is one sentence, so a failing seed says what went wrong. */
-
 import { diverge } from '../../src/diverge'
 import { nameKey } from '../../src/tree'
 import type { AccountView, Classification, EntryView, View } from './adapters'
 
-/** A marker: `mk`, digits, `z`. Self-delimiting, so a merge that glues two words
- *  together (two insertions at one point with no space between) cannot hide one. */
 const MARKER = /mk\d+z/g
 
 export function markersIn(text: string): string[] {
   return text.match(MARKER) ?? []
 }
 
-/** What the run knows about the words and the entries it caused. */
 export interface Ledger {
   typed: Set<string>
-  /** Taken out by a person who could see them: a cut, a paragraph, a note deleted. */
   retired: Set<string>
-  /** Typed and never saved before a crash. */
   lost: Set<string>
-  /** Every id a person made, or the run started with. */
   made: Set<string>
-  /** Notes a person made by keeping both sides of a question: copies on purpose. */
   copies: Set<string>
-  /** Each id a person restored, and the step it was restored at. */
   restored: Map<string, number>
-  /** Each id a person deleted, and the last step it was deleted at. */
   deleted: Map<string, number>
 }
 
@@ -73,7 +42,6 @@ function sortedTexts(texts: Record<string, string>): string {
   return JSON.stringify(Object.entries(texts).sort(([a], [b]) => (a < b ? -1 : 1)))
 }
 
-/** Whether two sides hold the same tree and the same texts. */
 export function sameView(one: View, other: View): boolean {
   return (
     sortedEntries(one.entries) === sortedEntries(other.entries) &&
