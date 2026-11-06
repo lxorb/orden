@@ -1,22 +1,3 @@
-"""No two spaces' bubbles in the tab overview ever lie on each other (#331).
-
-Emil: a space carried by its name over another lay right on it, its windows on the
-other's bubble and the outlines crossing; and an empty space's bubble was a dot, two empty
-spaces drawn in the one place with their names over each other.
-
-What it checks, on the built web app in Chromium, in All spaces:
-
-    an empty space's bubble is about half the size of a one-window space's, and two empty
-      spaces each have a place of their own: no two bubbles, and no two names, on each
-      other
-    a space carried by its name through another pushes it aside: on no frame of the way
-      does a window of one lie on a window of the other, or a bubble's outline run inside
-      the other's
-    let go, the space pushed aside goes back where it was, and nothing lies on anything
-
-    python apps/desktop/test/e2e/overview-spaces-apart.py
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -46,7 +27,6 @@ async () => {
 }
 """
 
-#: Each space's bubble, by its name: its box on the canvas and points along its outline.
 BUBBLES = """
 () => {
   const names = [...document.querySelectorAll('[data-space-name]')]
@@ -62,7 +42,6 @@ BUBBLES = """
 }
 """
 
-#: Pairs of bubbles one of whose outlines runs inside the other, more than a pixel or two.
 CROSSING = """
 () => {
   const paths = [...document.querySelectorAll('.bubble')]
@@ -87,7 +66,6 @@ CROSSING = """
 }
 """
 
-#: Windows of two spaces that lie on each other, by their names.
 CROSSED = """
 () => {
   const space = (label) => ['Work', 'Ideas'].find((one) => label.startsWith(one)) ?? 'Here'
@@ -101,10 +79,8 @@ CROSSED = """
 }
 """
 
-
 def meet(a: list[float], b: list[float]) -> bool:
     return a[0] < b[0] + b[2] and b[0] < a[0] + a[2] and a[1] < b[1] + b[3] and b[1] < a[1] + a[3]
-
 
 def at_rest(page: Page, label: str) -> None:
     crossing = page.evaluate(CROSSING)
@@ -119,7 +95,6 @@ def at_rest(page: Page, label: str) -> None:
             if one["name"] < other["name"] and meet(one["label"], other["label"]):
                 wrong(f"[{label}] the names of {one['name']} and {other['name']} lie on each other")
 
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 860})
     DRIVE.open(page)
@@ -129,12 +104,10 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("Alt")
     wait_for(page, "document.querySelectorAll('[data-space-name]').length >= 5", "every space's bubble")
     page.wait_for_timeout(1400)
-    # Tidy up, so every space starts packed whatever the run before left.
     page.click(".tidy")
     page.wait_for_timeout(1400)
     shot(page, "packed")
 
-    # ── Empty spaces ─────────────────────────────────────────────────
     bubbles = {one["name"]: one for one in page.evaluate(BUBBLES)}
     one_window = bubbles.get("Ideas")
     empties = [bubbles.get("Empty A"), bubbles.get("Empty B")]
@@ -150,7 +123,6 @@ def drive(browser: Browser) -> None:
             wrong(f"[empty] {empty['name']}'s bubble is not about half a one-window bubble: {wide:.2f} x {tall:.2f}")
     at_rest(page, "empty")
 
-    # ── A space carried through another ──────────────────────────────
     ideas = bubbles["Ideas"]
     work = bubbles.get("Work")
     zoom = page.evaluate(
@@ -161,7 +133,6 @@ def drive(browser: Browser) -> None:
         page.close()
         return
     start = [work["label"][0] + work["label"][2] / 2, work["label"][1] + work["label"][3] / 2]
-    # Through the middle of Ideas' bubble and as far again past it, on the screen.
     ideas_middle = page.evaluate(
         "() => { const n = [...document.querySelectorAll('[data-space-name]')].findIndex((one) => one.textContent.trim() === 'Ideas');"
         " const b = document.querySelectorAll('.bubble')[n].getBoundingClientRect(); return [b.x + b.width / 2, b.y + b.height / 2] }"
@@ -201,7 +172,6 @@ def drive(browser: Browser) -> None:
             wrong(f"[let go] Ideas did not go back where it was: {off:.0f} away")
     at_rest(page, "let go")
     page.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "no two spaces' bubbles on each other"))

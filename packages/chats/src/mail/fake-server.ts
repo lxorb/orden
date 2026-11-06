@@ -1,6 +1,3 @@
-/** An IMAP and an SMTP server in memory, on local ports, for the mail provider's tests:
- *  as much of each protocol as the provider speaks, answered as Dovecot and Postfix do. */
-
 import { createServer, type Server, Socket as NodeSocket } from 'node:net'
 import type { Socket, SocketAsk } from '../provider'
 import { fromBase64, fromLatin, latin, Reader } from './bytes'
@@ -274,7 +271,6 @@ function envelope(raw: Uint8Array): string {
   return `(${q(one('date'))} ${q(one('subject'))} ${people('from')} ${people('from')} ${people('from')} ${people('to')} ${people('cc')} NIL ${q(one('in-reply-to'))} ${q(one('message-id'))})`
 }
 
-/** A provider `Socket` on Node's, plain only: what the tests reach the fake with. */
 export function nodeSocket(ask: SocketAsk): Promise<Socket> {
   return new Promise((resolve, reject) => {
     const socket = new NodeSocket()

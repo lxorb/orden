@@ -1,39 +1,4 @@
 <script lang="ts">
-  /** Every tab as a window on a canvas, Alt Alt (issue #331).
-   *
-   *  Not a layer over the app: a state of the window. Its bar stays, its sidebars slide
-   *  away, and the room the tabs are shown in becomes the canvas, on the ground the panes
-   *  always stood on. The tabs become the windows: each pane itself shrinks, where it is,
-   *  into the window of its tab in front (`paneDrawn` in flight.ts) - the pane and not a
-   *  copy of it - and the other tabs come down out of the strip from where each tab sits
-   *  as pictures of themselves (WindowFace.svelte). They land laid out the way the panes
-   *  are, a split's sides side by side with a curve between them (layout.ts). A web page,
-   *  which no style can move, stands still as its picture for the whole run, in its hole,
-   *  which shrinks with its pane (`holdStill`). The panes and the windows are stacked in
-   *  one order, the window's own, and nothing is ever made a layer of its own or let go
-   *  of as one: every frame is drawn at the size it is shown. While a window is away,
-   *  the tab it is is out of its strip, so nothing is seen twice. A press on one opens
-   *  it: it grows back into its pane while the rest go home to the strip. Alt Alt again,
-   *  Escape, or a press on the canvas send every window home.
-   *
-   *  Every window is one element on springs from the tab it was to the window it is
-   *  (flight.ts), so a change of mind mid-flight turns it round from where it is, at the
-   *  speed it had. The springs write the styles themselves, once a frame, and nothing is
-   *  laid out while anything flies. Asked for less movement, the windows are simply
-   *  where they go.
-   *
-   *  A window can be dragged: it stays under the hand exactly, the others make room for it
-   *  where it would land, and letting go moves the tab there - along its pane's strip, or
-   *  into another pane's (drag.ts). Ctrl+Click, Cmd on a Mac, chooses several, which move
-   *  and drop together, and a space's name carries its space, windows and all.
-   *
-   *  All spaces shows the other spaces too, each in its place on the one canvas inside a
-   *  bubble that is its windows (Cells.svelte); a window dragged out of its cell takes the
-   *  bubble with it, and pointed into another's plops across, which moves its tab to
-   *  that space when it is let go (cells.ts). Tidy up packs the bubbles round a middle,
-   *  each in the free place nearest it (pack.ts). A zoom only moves the camera: nothing
-   *  on the canvas is laid out by how near it is. */
-
   import { tick as laidOut, untrack } from 'svelte'
   import { closeOnBack } from '../backstack.svelte'
   import { t } from '../i18n.svelte'
@@ -93,22 +58,15 @@
   import { walk, wayOf } from './walk'
   import WindowFace from './WindowFace.svelte'
 
-  /** Whether the layer is on screen at all: from the first frame out until the last
-   *  window is home. */
   let shown = $state(false)
-  /** Whether the windows are out on the canvas, or on their way home. */
   let out = $state(false)
 
   let width = $state(window.innerWidth)
   let height = $state(window.innerHeight)
 
-  /** The room the windows are laid out in: the window under its bar, less a margin and
-   *  the row at the top. */
   const MARGIN = 56
   const ROW = 50
 
-  /** Where the window's bar ends, which the overview leaves where it is: the canvas is
-   *  everything under it (Titlebar.svelte's `header`). Read as the layer comes up. */
   let barBottom = $state(0)
 
   function barOf(): number {
@@ -118,24 +76,14 @@
 
   const roomTop = $derived(barBottom + ROW)
 
-  /** What each pane showed as the layer came up, which its windows take the shape of. */
   let panes = $state<Record<string, { w: number; h: number }>>({})
-  /** The panes that are their own windows, by their tab in front: each pane's element,
-   *  where it was laid out as the layer came up - the box it is moved from, and goes home
-   *  to, however it is drawn meanwhile - and how tall its strip is. Every pane but one
-   *  showing a web page, whose live view no style moves. */
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written as the layer comes up, read once a frame
   const panesAsWindows = new Map<string, { node: HTMLElement; box: DOMRect; head: number }>()
-  /** And which tabs those are, for what their windows draw: nothing but a ring, the pane
-   *  being under it. */
   let asPanes = $state<Record<string, true>>({})
-  /** The copy of each tab as its strip draws it, by tab (mirror.ts `tabCopyOf`), and a
-   *  second of each, which rides on its window where that is its pane (`paintRider`). */
   let tabsAsDrawn = $state<Record<string, HTMLElement>>({})
   let ridersDrawn = $state<Record<string, HTMLElement>>({})
 
   const frame = $derived(workspace.panes.frame)
-  /** The room the windows are laid out in on the screen, at one to one. */
   const screenRoom = $derived<Box>({
     x: MARGIN,
     y: roomTop,
@@ -143,48 +91,33 @@
     h: Math.max(height - roomTop - MARGIN, 160),
   })
 
-  /** Which space's place the canvas lays this set of tabs out in: the space's own, or the
-   *  window's while it is in none. */
   const spaceKey = $derived(workspace.activeSpaceId ?? 'global')
-  /** Where on the one canvas, kept from run to run (places.svelte.ts). */
   const room = $derived<Box>(
     places.at(spaceKey) ?? { x: 0, y: 0, w: screenRoom.w, h: screenRoom.h },
   )
 
-  /** Where the canvas is looked at from (camera.ts). */
   let camera = $state<Camera>({ x: 0, y: 0, zoom: 1 })
 
-  /** The camera on the space being worked in, its place given it if it has none yet. */
   function lookAtSpace() {
     placeNew([spaceKey])
     const place = places.place(spaceKey, { w: screenRoom.w, h: screenRoom.h })
     camera = lookingAt(place, screenRoom)
-    // Then all of its cell, bubble, name and all, where it is drawn as one, never
-    // nearer than one to one.
     const cell = cellBoxes.find((one) => one.key === spaceKey)
     if (!all || !cell) return
     camera = lookingAt(wholeOf([cell]), screenRoom)
   }
 
-  /** Where some cells are drawn, their bubbles and names and all. */
   function wholeOf(cells: readonly Cell[]): Box {
     return around(cells.map(({ box }) => extentOf(box))) ?? room
   }
 
-  /** Where a cell is drawn round its windows and their names (`box`): its bubble, and the
-   *  room over it for its name. Lengths of the canvas, the same at every zoom: nothing
-   *  is laid out by how near the camera is (Emil, round 4), and the names keep to this
-   *  room however far out it is (`NAMES_MOST`). */
   function extentOf(box: Box): Box {
     const grown = grownOf(box)
     return { ...grown, y: grown.y - NAME_ROOM, h: grown.h + NAME_ROOM }
   }
 
-  /** The room between two cells' bubbles, names and all, as they are packed. */
   const CELLS_APART = 56
 
-  /** Where a space's cell would be with its place at the canvas's corner: its windows
-   *  where its panes put them, nothing put by hand. Null for a space with no panes. */
   function cellAlone(key: string): Box | null {
     const panesOf = key === spaceKey ? frame : sets?.frameOf(key)
     if (!panesOf) return null
@@ -193,9 +126,6 @@
     return extentOf(inside ? captioned(inside) : standIn(corner))
   }
 
-  /** What an empty space's bubble is round, in the middle of its place: half of what one
-   *  window of its own would take, so it is a bubble of its own among the others and not
-   *  a dot (Emil). */
   function standIn(place: Box): Box {
     const w = (place.w * WIDEST) / 2
     const h = (w * place.h) / Math.max(place.w, 1)
@@ -206,9 +136,6 @@
     return key === spaceKey ? room : (places.at(key) ?? room)
   }
 
-  /** The places of `keys`, each where its cell lands packed among `taken` round
-   *  `middle`, nearest it first (pack.ts): what each place is, given where in it the
-   *  cell lies. A space with no panes is given none here. */
   function packedPlaces(keys: readonly string[], taken: readonly Box[], middle: Point) {
     const cells = keys.flatMap((key) => {
       const box = cellAlone(key)
@@ -230,8 +157,6 @@
     return out
   }
 
-  /** The spaces of `keys` with no place yet given one: in the free place nearest the
-   *  middle of those placed (Emil, round 4: round a middle, never in a row). */
   function placeNew(keys: readonly string[]) {
     const fresh = keys.filter((key) => !places.at(key))
     if (!fresh.length) return
@@ -247,9 +172,6 @@
     places.arrange(packedPlaces(fresh, taken, middle))
   }
 
-  /** Tidy up: every window of every space back where its panes put it, the spaces packed
-   *  round a middle afresh, the one worked in on it, and the camera brought round to all
-   *  of them (places.svelte.ts, pack.ts). */
   async function tidy() {
     const keys = [spaceKey, ...shownKeys.filter((key) => key !== spaceKey)]
     places.tidy(packedPlaces(keys, [], { x: 0, y: 0 }))
@@ -258,8 +180,6 @@
     flyTo(lookingAt(wholeOf(cellBoxes), screenRoom))
   }
 
-  /** Where the camera is flying to, as Tidy up moves it: a share of the way each frame,
-   *  the zoom in its own scale; a hand on the canvas takes over at once. */
   let flyGoal: Camera | null = null
   let flyFrame = 0
   let flyLast = 0
@@ -296,17 +216,12 @@
     } else flyFrame = requestAnimationFrame(flying)
   }
 
-  /** A hand on the canvas: whatever the camera was flying to, it is the hand's now. */
   function handTakes() {
     flyGoal = null
     cancelAnimationFrame(flyFrame)
     flyFrame = 0
   }
 
-  /** The room a cell's name takes over its bubble, on the canvas, and how much larger
-   *  than the canvas draws them a space's name and a window's are kept as the camera
-   *  draws back: as far as each still fits the room kept for it, and from there as small
-   *  as the canvas, so no name ever lies on another's room. */
   const NAME_ROOM = 72
   const SPACE_NAMES_MOST = 2
   const NAMES_MOST = 1.8
@@ -319,9 +234,6 @@
 
   const tabsOf = (paneId: string) => workspace.tabsIn(paneId).map((tab) => tab.id)
 
-  /** All spaces or This space: whether the other spaces' cells are shown as well. The
-   *  same view either way. All spaces unless This space was picked, remembered on this
-   *  device (Emil, 2026-11-04: All spaces is the default). */
   const ALL = 'nib:overview-spaces'
   let all = $state(storedText(ALL) !== 'this')
 
@@ -330,23 +242,17 @@
     keep(ALL, on ? 'all' : 'this')
   }
 
-  /** The other spaces' panes, which the store of every space's set holds; fetched the
-   *  first time All spaces is shown (workspace/sets.svelte.ts). */
   let sets = $state<{ frameOf: (key: string) => Frame | null } | null>(null)
   $effect(() => {
     if (all && !sets) void import('../workspace/sets.svelte').then((one) => (sets = one.sets))
   })
 
-  /** The spaces whose windows are on the canvas: the one worked in first, and in All
-   *  spaces every other that has panes. */
   const shownKeys = $derived.by((): string[] => {
     const others = all && sets && workspace.activeSpaceId ? workspace.shownSpaces : []
     const keys = others.map((one) => one.id).filter((key) => key !== spaceKey && sets?.frameOf(key))
     return [spaceKey, ...keys]
   })
 
-  /** Each space shown is given its place on the canvas, once, packed in among the others
-   *  (places.svelte.ts). */
   $effect(() => {
     const keys = shownKeys
     untrack(() => {
@@ -356,9 +262,6 @@
     })
   })
 
-  /** No two spaces' bubbles on each other at rest, wherever they were kept: each that
-   *  lies on one before it, the space worked in first, is moved to the free place
-   *  nearest where it lies (pack.ts). */
   function apartAll() {
     const taken: Box[] = []
     const order = [...cellBoxes].sort(
@@ -378,30 +281,20 @@
     }
   }
 
-  /** The window under the hand: which, where it was taken hold of (as a share of its
-   *  width and height), where it lies now, and whether it is over another space's cell;
-   *  and the others carried with it. */
   let held = $state<{
     id: string
     fx: number
     fy: number
-    /** Where it lies under the hand, on the canvas; null until the hand has moved. */
     box: Box | null
     landing: (Landing & { kind: 'space' }) | null
-    /** The space whose cell it was taken out of, and those it may go to. */
     from: string
     goes: readonly string[]
-    /** The others carried with it - the windows chosen with it, or the rest of a space
-     *  carried by its name - each where it lay against it. */
     with: readonly { id: string; dx: number; dy: number; w: number; h: number }[]
-    /** The space carried whole by its name, which plops into no other. */
     whole: string | null
   } | null>(null)
 
-  /** The windows chosen by Ctrl+Click (or Cmd on a Mac), which move and drop together. */
   let chosen = $state<readonly string[]>([])
 
-  /** Every window held, where it lies under the hand. */
   const heldBoxes = $derived.by(() => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- made afresh by the derived, never changed after
     const boxes = new Map<string, Box>()
@@ -413,13 +306,10 @@
     return boxes
   })
 
-  /** Which windows are held, moved or not yet. */
   const heldIds = $derived<ReadonlySet<string>>(
     new Set(held ? [held.id, ...held.with.map((one) => one.id)] : []),
   )
 
-  /** Each cell's windows where its panes would put them (layout.ts), with its panes,
-   *  which the lines between a split's sides are drawn from. */
   const gridCells = $derived(
     shownKeys.flatMap((key) => {
       const own = key === spaceKey
@@ -436,8 +326,6 @@
     }),
   )
 
-  /** Every window where it lies, with nothing held: where it was put by hand, or else
-   *  where its panes would put it, out of the way of the ones put by hand (free.ts). */
   const resting = $derived.by(() => {
     const put = places.windows
     const all = gridCells.flatMap((one) => one.slots)
@@ -448,8 +336,6 @@
     return settled(lying, new Set(all.filter((one) => put[one.id]).map((one) => one.id)))
   })
 
-  /** Which cell each window lies in, by tab: its space's, or the one the held window is
-   *  over. */
   const cellOf = $derived.by(() => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- made afresh by the derived, never changed after
     const map = new Map(
@@ -460,10 +346,6 @@
     return map
   })
 
-  /** And with one held: that one under the hand, where it stays when it is let go, and
-   *  every other of the cell it is in pushed out of its way - back where it was once the
-   *  hand moves on. Another cell's windows stay put, which the hand points into (free.ts
-   *  `roomFor`). */
   const slots = $derived.by((): Slot[] => {
     const id = held?.id
     if (!heldBoxes.size || !id) return resting
@@ -476,9 +358,6 @@
     })
   })
 
-  /** The spaces a space carried by its name has pushed out of its way, each where its
-   *  bubble, name and all, is pushed to (pack.ts `pushedAside`): back where it rests once
-   *  the space is let go. */
   let aside = $state<Record<string, Box>>({})
 
   function offsetOf(key: string): Point | null {
@@ -499,7 +378,6 @@
     aside = pushedAside(extentOf(captioned(carried)), others, CELLS_APART, aside)
   }
 
-  /** Every window, and the lines between each split's sides. */
   const laid = $derived({
     slots,
     seams: gridCells.flatMap((one) =>
@@ -510,16 +388,11 @@
     ),
   })
 
-  /** Each cell's windows, boxed, for which cell a window is over and for the camera: as
-   *  they lie at rest, not as the held one pushes them, so where a cell is pointed into
-   *  never moves under the hand; the held one left out, which never decides where the
-   *  cell it is leaving is. */
   const cellBoxes = $derived<Cell[]>(
     gridCells.map((one) => {
       const inside = resting.filter(
         (slot) => cellOf.get(slot.id) === one.key && !heldIds.has(slot.id),
       )
-      // A cell whose windows are all held is where they were taken from.
       const from = resting.filter(
         (slot) => heldIds.has(slot.id) && one.slots.some((own) => own.id === slot.id),
       )
@@ -540,7 +413,6 @@
   )
 
   const byId = $derived(new Map(workspace.tabs.map((tab) => [tab.id, tab])))
-  /** How much larger than the canvas draws them what keeps its size on the screen is. */
   const unzoom = $derived(Math.max(1, 1 / camera.zoom))
   const windows = $derived(
     laid.slots.flatMap((slot) => {
@@ -549,26 +421,18 @@
     }),
   )
 
-  /** The size a pane's tab is drawn at inside its window: the pane's own. */
   function faceOf(slot: Slot) {
     const pane = panes[slot.paneId]
     if (pane && pane.w > 0) return { w: pane.w, h: pane.w * (slot.h / slot.w) }
     return { w: slot.w * 3, h: slot.h * 3 }
   }
 
-  /** How much room a window's name takes under it on the canvas: the same at every zoom,
-   *  so where the windows lie and how big their bubbles are is the canvas's and never
-   *  the camera's (Emil, round 4: zooming changed the bubbles). The name stays its size
-   *  on the screen as the camera draws back for as long as it fits here (`NAMES_MOST`),
-   *  and from there is drawn as small as the canvas is. */
   const CAPTION_ROOM = 44
 
-  /** A window's box with its name under it, which its cell holds as well. */
   function captioned(box: Box): Box {
     return { ...box, h: box.h + CAPTION_ROOM }
   }
 
-  /** How far from its place, in pixels all told, a window's name starts to show. */
   const CAPTION_NEAR = 60
 
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
@@ -582,15 +446,9 @@
   const captions = new Map<string, HTMLElement>()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
   const closers = new Map<string, HTMLElement>()
-  /** The windows that have come to rest on the canvas since it came up, which are where
-   *  they are drawn from then on; one still on its way out of the strip is where it is
-   *  going, as far as its cell is concerned. */
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once a frame, never rendered
   const arrived = new Set<string>()
 
-  /** A cell's windows, each where it is drawn this frame - or, on its way out of the strip
-   *  or home to it, where it lies on the canvas - for the bubble round them, which
-   *  never leaves one out (bubble.ts). The window under the hand is `pushedNow`'s. */
   function insideOf(key: string): Box[] {
     const boxes: Box[] = []
     for (const slot of laid.slots) {
@@ -604,12 +462,8 @@
     return [by ? { ...empty, x: empty.x + by.x, y: empty.y + by.y } : empty]
   }
 
-  /** Where a window goes home to: its pane, for the tab the pane shows, else its tab in
-   *  the strip. A tab with no place on screen - scrolled out of its strip - fades where
-   *  it is. */
   function homeOf(tab: Tab, slot: Slot): Pose {
     if (workspace.panes.at(tab.paneId)?.activeTabId === tab.id) {
-      // A pane moving as its window is where it was laid out, not where it is drawn.
       const laidOut = panesAsWindows.get(tab.id)
       const box = laidOut
         ? new DOMRect(
@@ -625,16 +479,11 @@
       }
     }
     riders.delete(tab.id)
-    // The tab's own shape in the strip; see Tabs.svelte.
     const chip = marked('box', tab.id)?.getBoundingClientRect()
     if (chip && chip.width > 0 && chip.right > 0 && chip.left < width) return onCanvas(chip, 1)
     return { ...lifted(slot), alpha: 0 }
   }
 
-  /** Where the tab of a window that goes home to its pane (`box`, on the screen) is in
-   *  its strip, against the pane: what it rides on its window as (`paintRider`). Read off
-   *  the strip as the window leaves and as it goes home, where the tab is laid out though
-   *  out of sight. */
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once a frame, never rendered
   const riders = new Map<string, { dx: number; dy: number; width: number }>()
 
@@ -644,13 +493,11 @@
     riders.set(id, { dx: chip.x - box.x, dy: chip.y - box.y, width: box.width })
   }
 
-  /** Where a box of the screen is on the canvas, as a pose `tab` much a tab. */
   function onCanvas(box: DOMRect, tab: number): Pose {
     const { x, y, w, h } = boxToCanvas(camera, { x: box.x, y: box.y, w: box.width, h: box.height })
     return { x, y, w, h, tab, alpha: 1 }
   }
 
-  /** A slot as the pose of a window lying in it. */
   const lying = (slot: Slot): Pose => ({
     x: slot.x,
     y: slot.y,
@@ -660,7 +507,6 @@
     alpha: 1,
   })
 
-  /** A little smaller than its slot, where a window arrives from nowhere. */
   function lifted(slot: Slot): Pose {
     const less = 0.9
     return {
@@ -673,7 +519,6 @@
     }
   }
 
-  /** The keyboard's window, by tab. */
   let at = $state<string | null>(null)
 
   let frameAsked = 0
@@ -713,8 +558,6 @@
     }
     const seconds = started ? Math.min(Math.max(0, (now - last) / 1000), LONGEST_FRAME) : 0
     last = now
-    // The first frame that moves anything is the first the overview is seen in: until
-    // then the app is what is on screen, unchanged (`started`).
     if (!started) begin()
     opening.to = out ? 1 : 0
     step(opening, seconds)
@@ -734,8 +577,6 @@
     }
   }
 
-  /** Whether the windows are on their way out or home: the tab worked in is over every
-   *  other window meanwhile, and no window's picture changes (WindowFace.svelte). */
   let onTheWay = $state(false)
 
   function landed() {
@@ -754,10 +595,6 @@
     return id === workspace.activeTabId ? 'calc(var(--z-drawer) - 1)' : 'var(--z-bar)'
   }
 
-  /** How far out the overview is, 0 the app as it was and 1 all the way: what the
-   *  ground, the row at the top, the cells, the lines and the windows' shadows fade by,
-   *  on a spring like the windows, so a change of mind turns it round where it is, and on
-   *  the windows' clock, so the first frame and the last are the app's own. */
   const opening = spring(0, SHARE)
   let ground = $state<HTMLElement>()
   let canvasNode = $state<HTMLElement>()
@@ -781,36 +618,20 @@
   function opened(at: number) {
     const value = String(Math.round(at * 1000) / 1000)
     for (const one of [...opens, under, top]) one?.style.setProperty('--overview-open', value)
-    // The sidebars slide out as far as the overview is out (`html[data-overview]`).
     for (const one of slides) one.style.setProperty('--overview-slide', value)
     if (ground) {
       ground.style.opacity = value
-      // Not there at all at the ends: a ground over the app, however faint, has the app
-      // drawn through it, which is not quite how the app draws itself.
       ground.style.visibility = at < 0.01 ? 'hidden' : ''
     }
   }
 
-  /** Whether a frame of the overview has been drawn since it was asked for. Before the
-   *  first, every window lies exactly on what it was - its pane, its tab - and is not
-   *  drawn, and the strip keeps its tabs: what is on screen is the app itself, never a
-   *  copy of it that the eye could tell from it. The first frame takes the tabs out of
-   *  the strip and shows the windows, already on their way. */
   let started = true
 
-  /** Where each window came out from, or is going home to: its pane, or its tab in the
-   *  strip. */
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once a frame, never rendered
   const homes = new Map<string, Pose>()
 
-  /** How near its home a window is handed over: within this many pixels of it on the
-   *  screen, all told, it gives way to the pane or the tab it is, which is under it in
-   *  the same place - all the way at its home, only the app is drawn. A copy is drawn a
-   *  hair differently from what it copies, the text above all, and a handover spread
-   *  over the last frames of a movement is one the eye cannot find. */
   const NEAR = 14
 
-  /** How far a window is from its home on the screen, or null for one with none. */
   function fromHome(id: string): number | null {
     const home = homes.get(id)
     const pose = flights.get(id)?.pose
@@ -823,13 +644,6 @@
     return off * camera.zoom
   }
 
-  /** What a window is a copy of is out of sight while the window is away from it, so
-   *  the two are never seen at once: the strip leaves out every tab whose window is away,
-   *  the tab in front of a pane too - the bar is the window's own while the overview is
-   *  up, and a strip still holding the tab whose window is on the canvas would be that
-   *  tab twice - and a pane whose tab in front is a window away from the pane stands
-   *  back; but for a window near its home, which is handed over to what is under it
-   *  there. */
   function awayFromStrip() {
     if (!started) return
     const away: string[] = []
@@ -856,7 +670,6 @@
     for (const id of flights.keys()) paint(id)
   }
 
-  /** Writes a window's pose onto its element. */
   function paint(id: string) {
     const flight = flights.get(id)
     const parts = elements.get(id)
@@ -864,23 +677,18 @@
     if (!flight || !parts || !slot) return
     const pose = flight.pose
     const styles = drawn(pose, slot.w, slot.h, corner, camera)
-    // Out, the first frame that moves is already the window's: the movement hides the
-    // change. Home, the movement is slowest at its very end, so it is handed over there.
     const home = started ? (out ? null : fromHome(id)) : 0
     if (home !== null && home < NEAR)
       styles.window.opacity = String(Number(styles.window.opacity) * (home / NEAR))
     Object.assign(parts.window.style, styles.window)
     Object.assign(parts.face.style, styles.face)
     Object.assign(parts.chip.style, styles.chip)
-    // How far the window is scaled from its own size, which its ring is drawn back by,
-    // so the ring is the same weight on the screen however small it flies.
     parts.window.style.setProperty('--overview-lift', String(opening.at))
     parts.ring.style.setProperty('--overview-open', String(opening.at))
     parts.ring.style.setProperty('--flight-x', String(slot.w / Math.max(pose.w, 1)))
     parts.ring.style.setProperty('--flight-y', String(slot.h / Math.max(pose.h, 1)))
     paintRider(id, home)
     if (started) movePane(id, pose)
-    // The name under a window, and its cross, only once it is nearly in its place.
     const off =
       Math.abs(pose.x - slot.x) +
       Math.abs(pose.y - slot.y) +
@@ -895,13 +703,6 @@
     closer.style.translate = `${camera.x + (slot.x + slot.w) * camera.zoom}px ${camera.y + slot.y * camera.zoom}px`
   }
 
-  /** The tab of a window that is its pane's, riding on top of its window, as the window
-   *  leaves its pane or comes home to it (Emil, round 4: the tab in the bar vanished as
-   *  the overview began and ended, and to the eye it is part of its window). Where it is
-   *  in its strip against its pane, shrunk with the window and moved with it; and fading
-   *  into the window's head as the window comes down to its size on the canvas, coming
-   *  back out of it on the way home, where it is handed over to the tab itself just as
-   *  the window is to its pane (`near`, 0 to 1, or null for not near home at all). */
   function paintRider(id: string, near: number | null = null) {
     const node = riderNodes.get(id)
     if (!node) return
@@ -916,7 +717,6 @@
     const scale = (pose.w * camera.zoom) / Math.max(at.width, 1)
     const x = camera.x + pose.x * camera.zoom + at.dx * scale
     const y = camera.y + pose.y * camera.zoom + at.dy * scale
-    // How far down to its size on the canvas the window has come, 0 at home and 1 there.
     const span = home.w - slot.w
     const down = Math.abs(span) > 1 ? (home.w - pose.w) / span : opening.at
     let alpha = Math.min(1, Math.max(0, 1 - down / 0.6)) * pose.alpha
@@ -928,7 +728,6 @@
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
   const riderNodes = new Map<string, HTMLElement>()
 
-  /** A rider's element, its tab's copy in it. */
   function riding(node: HTMLElement, id: string) {
     const copy = ridersDrawn[id]
     if (copy) node.replaceChildren(copy)
@@ -941,8 +740,6 @@
     }
   }
 
-  /** Whether the pane of tab `id` is that tab's window: it was in front as the layer came
-   *  up, and still is. */
   function movesAsWindow(id: string): boolean {
     const pane = byId.get(id)?.paneId
     return panesAsWindows.has(id) && !!pane && workspace.panes.at(pane)?.activeTabId === id
@@ -977,12 +774,10 @@
     'pointer-events',
   ]
 
-  /** A pane where it is laid out, drawn as it always is. */
   function putBack(node: HTMLElement) {
     for (const name of PANE_STYLES) node.style.removeProperty(name)
   }
 
-  /** Sends every window where it goes: onto the canvas, or home. */
   function aimAll() {
     const hands = untrack(() => heldIds)
     for (const { slot, tab } of untrack(() => windows)) {
@@ -1013,7 +808,6 @@
     fly()
   }
 
-  /** A window's corner: the card's, read as the layer comes up (#1088). */
   let corner = 0
 
   function cardCorner(): number {
@@ -1022,8 +816,6 @@
     )
   }
 
-  /** The layer comes up: every pane measured and copied while it is still itself, the
-   *  windows put where their tabs are, and sent out. */
   function enter() {
     const again = shown
     if (!again) {
@@ -1036,9 +828,6 @@
       const holding = pages.holdStill()
       stood = holding === null
       void holding?.finally(() => (stood = true))
-      // Where it was left, once there is somewhere; the space worked in the first time, and
-      // whenever where it was left shows nothing of the tab in front, as after a switch to
-      // another space: the keyboard is on that window.
       measure()
       lookAtSpace()
       const kept = places.camera
@@ -1058,19 +847,15 @@
         const head = node.querySelector(':scope > .head')?.getBoundingClientRect().height ?? 0
         panesAsWindows.set(tab.id, { node, box, head })
         asWindows[tab.id] = true
-        // Kept, for the next time it is not in front: copied now, while it is drawn where
-        // it is laid out (faces.svelte.ts).
         faces.take(pane.id, tab)
       }
       asPanes = asWindows
-      // Each tab as its strip draws it, which its window leaves the strip as.
       const inherited = new Map<Element, string>()
       const tabCopies: Record<string, HTMLElement> = {}
       const riderCopies: Record<string, HTMLElement> = {}
       for (const tab of workspace.tabs) {
         const copy = tabCopyOf(tab.id, inherited)
         if (copy) tabCopies[tab.id] = copy
-        // And a second, for a tab whose window is its pane's to ride on it.
         const rider = copy && tabCopyOf(tab.id, inherited)
         if (rider) riderCopies[tab.id] = rider
       }
@@ -1087,7 +872,6 @@
     }
   }
 
-  /** What each pane shows, measured: its windows take that shape. */
   function measure() {
     const measured: Record<string, { w: number; h: number }> = {}
     for (const pane of workspace.panes.all) {
@@ -1097,19 +881,16 @@
     panes = measured
   }
 
-  /** Another space, picked while the view is up: the camera goes to its place. */
   $effect(() => arrivedIn(spaceKey))
 
   function arrivedIn(space: string) {
     if (space && untrack(() => shown && out)) untrack(lookAtSpace)
   }
 
-  /** Every window home. */
   function leave() {
     held = null
     pressed = null
     chosen = []
-    // A notch still on its way is where it was going.
     if (zoomGoal) camera = eased(camera, zoomGoal.zoom, zoomGoal.at, Number.POSITIVE_INFINITY)
     zoomGoal = null
     cancelAnimationFrame(zoomFrame)
@@ -1121,7 +902,6 @@
     aimAll()
   }
 
-  /** The last window is home: the layer goes and the strip has its tabs back. */
   function gone() {
     homes.clear()
     shown = false
@@ -1179,8 +959,6 @@
   }
   $effect(() => closeOnBack(shown && tabOverview.open, close))
 
-  /** A window gets its flight the first time it is drawn: from its home on the way out,
-   *  from nowhere for one that arrived while the layer was up. */
   function placed(node: HTMLElement, id: string) {
     const face = node.querySelector<HTMLElement>(':scope > .face-box')
     const chip = node.querySelector<HTMLElement>(':scope > .chip')
@@ -1213,7 +991,6 @@
     }
   }
 
-  /** A tab's copy, put in its window's chip. */
   function holdingTab(node: HTMLElement, copy: HTMLElement | undefined) {
     if (copy) node.replaceChildren(copy)
   }
@@ -1227,28 +1004,19 @@
     }
   }
 
-  /** The cross on a window: its tab closed the way the strip's cross closes one, asking
-   *  first where that asks - a note with words and no file, a terminal still running
-   *  something (workspace.closeAsking). Its window goes with it. */
   function shut(event: MouseEvent, tab: Tab) {
     event.stopPropagation()
     void workspace.closeAsking(tab.id)
   }
 
-  /** The layout changed under the windows - a resize, a space switched - so each goes to
-   *  its new place from where it is. */
   $effect(() => relaid(laid))
 
   function relaid(now: Laid) {
     if (now.slots.length && untrack(() => shown)) untrack(aimAll)
   }
 
-  /** A press on a window: the tab comes forward and its window grows back into the
-   *  pane, while the others go home. */
   function open(tab: Tab) {
     workspace.activate(tab.id)
-    // A tab of another space brings its space forward first, which takes a moment; the
-    // windows go home once its panes are the window's.
     if (workspace.panes.at(tab.paneId)) close()
     else void cameForward(tab).then(close)
   }
@@ -1259,11 +1027,8 @@
     }
   }
 
-  /** Where the pointer went down on a window, or on a space's name, until it is a drag or
-   *  a press. */
   let pressed: { id: string; x: number; y: number; pointer: number; whole: string | null } | null =
     null
-  /** Whether the press that just ended was a drag, so its click opens nothing. */
   let dragged = false
 
   function down(event: PointerEvent, id: string) {
@@ -1273,8 +1038,6 @@
     event.stopPropagation()
   }
 
-  /** A click on a window: with Ctrl, or Cmd on a Mac, it is chosen or no longer chosen,
-   *  as a file is among files; without, its tab opens. */
   function clicked(event: MouseEvent, tab: Tab) {
     if (dragged) {
       dragged = false
@@ -1289,9 +1052,6 @@
     open(tab)
   }
 
-  /** What a hand that took hold of window `id` carries: the windows chosen, where it is
-   *  one of them; its space's every window, where it took the space by its name; else it
-   *  alone. The first is the one under the hand. */
   function carriedWith(id: string, whole: string | null): string[] {
     const lying = (one: string) => flights.has(one) && resting.some((slot) => slot.id === one)
     if (whole)
@@ -1314,7 +1074,6 @@
       const flight = flights.get(id)
       if (!flight) return
       const pose = flight.pose
-      // A space's name took its pointer as it went down (`grounded`).
       if (!pressed.whole) (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
       const grabbed = toCanvas(camera, pressed)
       const ids = carriedWith(id, pressed.whole)
@@ -1329,8 +1088,6 @@
         box: null,
         landing: null,
         from,
-        // The spaces Move to space would offer them, which are the cells they may plop
-        // into; none for windows of several spaces, or a space carried whole.
         goes:
           together && !pressed.whole && tabs.length
             ? spacesFor(tabs.map(movingOf), workspace, canWriteAt, mayCarry).map((one) => one.id)
@@ -1346,7 +1103,6 @@
       at = id
     }
     hand = toCanvas(camera, { x: event.clientX, y: event.clientY })
-    // Its own size, the point it was taken by under the pointer.
     const own = resting.find((one) => one.id === id)
     const w = own?.w ?? 1
     const h = own?.h ?? 1
@@ -1357,9 +1113,6 @@
     fly()
   }
 
-  /** Whether the held windows, with the pointer at `point`, are over another space's
-   *  cell: once the pointer is nearer that cell's windows than its own's (cells.ts). A
-   *  space carried whole plops into none. */
   function landingFor(point: Point): (Landing & { kind: 'space' }) | null {
     if (!held || held.whole) return null
     const from = held.from
@@ -1370,22 +1123,17 @@
     return cell === from ? null : { kind: 'space', key: cell }
   }
 
-  /** The held windows and the cell they are in now, for the bubbles. */
   function pushedNow(): { key: string; boxes: Box[] } | null {
     if (!held) return null
     const boxes = [...heldIds].flatMap((id) => {
       const pose = flights.get(id)?.pose
-      // Its name under it, which its bubble holds as well.
       return pose ? [captioned({ x: pose.x, y: pose.y, w: pose.w, h: pose.h })] : []
     })
     return { key: held.landing?.key ?? held.from, boxes }
   }
 
-  /** Where the pointer is, while a window is held. */
   let hand: Point = { x: 0, y: 0 }
 
-  /** A held window under the pointer, the one taken hold of by the point it was taken by
-   *  exactly, the others carried with it where they lay against it. */
   function follow(id: string) {
     const box = heldBoxes.get(id)
     const flight = flights.get(id)
@@ -1394,13 +1142,6 @@
     paint(id)
   }
 
-  /** Let go: the windows stay exactly where they were let go, and every window keeps
-   *  where it lies now, the ones they pushed aside too (places.svelte.ts). Over another
-   *  space's cell, their tabs move to that space; in their own, the space worked in, they
-   *  take their place in the strip of the pane they were let go among, where they read
-   *  among that pane's windows, in the order they lie (free.ts). A space carried whole
-   *  stays where it was let go, its place with it, or in the free place nearest that,
-   *  where it would lie on another (pack.ts). */
   function up(event: PointerEvent) {
     if (pressed?.pointer !== event.pointerId) return
     pressed = null
@@ -1433,7 +1174,6 @@
       const strip = ids.every((one) => cellOf.get(one) === spaceKey)
         ? stripLanding(own, hand.id, box)
         : null
-      // In the order they lie, each before the same tab: the order is theirs.
       const order = own
         .filter((one) => ids.includes(one.id))
         .sort(readsBefore)
@@ -1445,10 +1185,6 @@
     aimAll()
   }
 
-  /** No two cells on each other once a hand lets go: a space let go of on another is
-   *  moved, windows and place, to the free place nearest where it was let go (`itself`);
-   *  windows let go of in a space that now reaches over others move those others to the
-   *  free place nearest each, as one bubble pushes another aside (pack.ts). */
   async function settleApart(key: string, itself: boolean) {
     await laidOut()
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read here and thrown away
@@ -1473,7 +1209,6 @@
     }
   }
 
-  /** A space moved on the canvas, its windows and its place. */
   function shiftSpace(key: string, dx: number, dy: number) {
     const own = resting.filter((one) => cellOf.get(one.id) === key)
     places.keepWindows(
@@ -1491,13 +1226,8 @@
     aimAll()
   }
 
-  /** The tabs moved into another space, or one along its strip or into another pane's,
-   *  before the tab it landed in front of. */
   function drop(ids: readonly string[], landing: Landing) {
     if (landing.kind === 'space') {
-      // Move to space, the tab menu's own: the tabs, their files where they have them,
-      // into the other space's set (workspace/moving-space.ts). Refused, the toast says so,
-      // and the windows do not stay parked among that space's.
       void import('../workspace/moving-space')
         .then((one) => one.moveToSpace(ids, landing.key))
         .then((went) => {
@@ -1510,17 +1240,10 @@
     const strip = tabsOf(landing.paneId)
     const back = strip.filter((one) => one !== id)
     const into = landing.before === null ? back.length : back.indexOf(landing.before)
-    // Let go where it was: nothing moved.
     if (strip.indexOf(id) === into && byId.get(id)?.paneId === landing.paneId) return
 
-    // Counted the way the workspace counts a strip: every tab of the pane but this one,
-    // its Essentials too.
     const held = workspace.heldIn(landing.paneId).filter((one) => one.id !== id)
     const before = landing.before === null ? -1 : held.findIndex((one) => one.id === landing.before)
-    // Moved, not opened: every pane keeps the tab in front it had where that is still
-    // its own, and the one worked in stays the one worked in, so the window that is a
-    // pane stays that pane's and the overview goes home to what it came from; the one
-    // worked in, moved into another pane, is in front there.
     const fronts = workspace.panes.all.map((one) => [one.id, one.activeTabId] as const)
     const working = workspace.activeTabId
     workspace.moveTab(id, landing.paneId, before < 0 ? held.length : before)
@@ -1562,8 +1285,6 @@
 
   const spaces = $derived(workspace.shownSpaces)
 
-  /** Where the wheel or the fingers are taking the zoom, about which point of the
-   *  screen, and how quickly; eased there a frame at a time (camera.ts). */
   let zoomGoal: { zoom: number; at: Point; ease: number } | null = null
   let zoomFrame = 0
   let zoomLast = 0
@@ -1571,7 +1292,6 @@
   function zooming(now: number) {
     const goal = zoomGoal
     if (!goal) return (zoomFrame = 0)
-    // A frame dropped is a frame's worth of the way, not a leap.
     camera = eased(
       camera,
       goal.zoom,
@@ -1586,14 +1306,6 @@
     } else zoomFrame = requestAnimationFrame(zooming)
   }
 
-  /** Every scroll zooms, Ctrl held or not, and none moves the canvas, which only a drag
-   *  on it does: a notch of the wheel eases nearer or further, as a page's zoom does,
-   *  never in steps, and fingers on a touchpad, scrolling or pinching, are followed a
-   *  few frames behind. Each turn only aims the zoom, and the camera is eased there on
-   *  the screen's clock, so an engine that says the wheel in few, large turns - WebView2's
-   *  - zooms as smoothly as one that says it every frame (Emil, round 4: smooth in
-   *  Firefox, in steps in the app). Listened for by hand, since a passive listener cannot
-   *  keep the page from zooming. */
   function wheeled(node: HTMLElement) {
     const turn = (event: WheelEvent) => {
       event.preventDefault()
@@ -1619,15 +1331,12 @@
     }
   }
 
-  /** The fingers or the mouse on the canvas itself, between the windows: one moves it,
-   *  two pinch it, and a press that moved neither puts the view away. */
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read by the handlers, never rendered
   const touching = new Map<number, Point>()
   let panning = false
 
   function grounded(event: PointerEvent) {
     if (!(event.target instanceof Element) || !event.target.closest('.floor')) return
-    // A space's name carries the space, windows and all (Emil, round 4).
     const space = out && event.button === 0 && !touching.size ? nameAt(event) : null
     const first = space ? laid.slots.find((slot) => cellOf.get(slot.id) === space) : null
     if (first) {
@@ -1649,8 +1358,6 @@
     panning = touching.size > 1
   }
 
-  /** The space whose name is under the pointer, which is drawn under the canvas and
-   *  takes no press of its own. */
   function nameAt(point: { clientX: number; clientY: number }): string | null {
     for (const name of document.querySelectorAll<HTMLElement>('[data-space-name]')) {
       const box = name.getBoundingClientRect()
@@ -1662,7 +1369,6 @@
   }
 
   function dragging(event: PointerEvent) {
-    // A space carried by its name; a window's own press is the window's (`moved`).
     if (pressed?.whole && pressed.pointer === event.pointerId) return moved(event)
     if (!touching.size && event.buttons === 0 && event.target instanceof HTMLElement) {
       const floor = event.target.closest<HTMLElement>('.floor')
@@ -1708,15 +1414,11 @@
   onfocusin={keptFromBehind}
   onfocusout={() => setTimeout(keysLost, 0)}
   onkeydown={(event: KeyboardEvent) => {
-    // The keyboard nowhere, as a window taking it away leaves it: the view's all the same.
     if (shown && tabOverview.open && event.target === document.body) keyed(event)
   }}
 />
 
 {#if shown}
-  <!-- Asked for under Appearance: the app behind the canvas, blurred, its sidebars where
-       they are. Otherwise there is nothing here at all: the sidebars slide away and the
-       canvas is the ground the panes stand on. -->
   {#if modes.overviewBlur}
     <div
       class="nib-scrim ground is-blurred"
@@ -1783,7 +1485,6 @@
 
     <div class="top" style:--overview-top="{barBottom}px" bind:this={top}>
       {#if spaces.length > 1}
-        <!-- All spaces or This space: whether the other spaces' cells are there too. -->
         <Select
           value={all ? 'all' : 'this'}
           options={[
@@ -1871,10 +1572,6 @@
 {/if}
 
 <style>
-  /* The window as it is, but for its sidebars: they slide away, the left one to the left
-     and the right one to the right, as if each were shut, as far as the overview is out -
-     moved and not shut, so nothing is laid out again and the panes stay where they are.
-     What they uncover is the ground they stood on, which is the canvas's. */
   @property --overview-slide {
     syntax: '<number>';
     inherits: false;
@@ -1895,14 +1592,6 @@
     translate: calc(var(--dir, 1) * 100% * var(--overview-slide, 0)) 0;
   }
 
-  /* The bar while the overview is up: what is the window's own and the overview's stays -
-     the search, the overview's own button, the window's buttons, the word that this is
-     the unstable build (each `data-overview-keeps`, Titlebar.svelte), and the stretch the
-     window is dragged by. Everything else in it is about the panes and the sides under
-     the canvas - a side's button, a pane's way back and forward, a new tab, a note's
-     menu - and fades as the overview comes out, taking no press until it is put away
-     (Emil, round 4). A tab is its window's, out of the strip for as long. So is a side's
-     button wherever it is drawn. */
   :global(
     html[data-overview]
       :is(header[data-chrome='top'] :is(button, [role='button']), [data-side-toggle]):not(
@@ -1915,9 +1604,6 @@
     pointer-events: none;
   }
 
-  /* Asked for under Appearance: the app under the bar, blurred far enough to be a surface
-     and not a page, as the overview was drawn first - over the sidebars, which stay, and
-     under the panes and what lies under them, which stand on it. */
   .ground.is-blurred {
     --scrim-z: var(--z-raised);
     opacity: 0;
@@ -1926,10 +1612,6 @@
     backdrop-filter: blur(28px);
   }
 
-  /* The sizes of what the overview says in words, in one place: a window's name and a
-     space's, these on the screen as far out as each still fits the room the canvas keeps
-     for it, and from there as small as the canvas is drawn (`--overview-names` and
-     `--overview-space-names` scale them back by as much as that). */
   .canvas {
     --overview-caption: var(--text-base);
     --overview-cell-name: calc(var(--text-base) * 1.6);
@@ -1938,14 +1620,10 @@
     height: 0;
     outline: none;
     touch-action: none;
-    /* Windows are pictures of their tabs, not their words: nothing here is chosen as
-       text, and a drag is the overview's own, never the browser's. */
     user-select: none;
     -webkit-user-select: none;
   }
 
-  /* The canvas between the windows, under the bar, which a press, a drag or a pinch on
-     the canvas lands on. */
   .floor {
     position: fixed;
     inset: 0;
@@ -1964,7 +1642,6 @@
     opacity: var(--overview-open, 0);
   }
 
-  /* Tidy up, the app's own button, beside the dropdown. */
   .tidy {
     white-space: nowrap;
   }
@@ -1982,7 +1659,6 @@
     -webkit-user-select: none;
   }
 
-  /* The one canvas, which the camera moves and scales; see camera.ts. */
   .world {
     position: absolute;
     top: 0;
@@ -2001,7 +1677,6 @@
     opacity: var(--overview-open, 0);
   }
 
-  /* The same weight on the screen at every zoom (`--overview-line`). */
   .seams path {
     fill: none;
     stroke: color-mix(in srgb, var(--accent) 55%, var(--muted));
@@ -2021,11 +1696,7 @@
     text-align: start;
     overflow: hidden;
     transform-origin: 0 0;
-    /* No ground of its own: its face has one, and as a tab it is the strip's, which
-       draws its tabs on the chrome. */
     background: none;
-    /* Lifted off the canvas as far as the overview is out: none at all on the first
-       frame and the last, where a window is its pane. */
     box-shadow: 0 calc(24px * var(--overview-lift, 1)) calc(64px * var(--overview-lift, 1))
       calc(-12px * var(--overview-lift, 1)) rgb(0 0 0 / 0.26);
     cursor: pointer;
@@ -2065,8 +1736,6 @@
     transform-origin: 0 0;
   }
 
-  /* The tab it was, at the tab's own size whatever the window's scale: the strip's own
-     tab copied where there is one, which draws its own ground. */
   .chip.is-copy {
     background: none;
   }
@@ -2105,15 +1774,10 @@
     text-overflow: ellipsis;
   }
 
-  /* A line round a window whose tab is somewhere in the file list, a dashed one round a
-     draft, words with no file, where the strip draws its dot; the accent round the keyboard's, and round those chosen. Each
-     `--ring` wide on the screen however far out the camera is and however small the
-     window flies (`--overview-line`, and `--flight-x` and `--flight-y` from `paint`). */
   .ring {
     --ring: 1.5px;
     position: absolute;
     inset: 0;
-    /* None on the first frame and the last, where the window is its pane or its tab. */
     opacity: var(--overview-open, 1);
     border-style: solid;
     border-color: color-mix(in srgb, var(--line) 80%, transparent);
@@ -2145,8 +1809,6 @@
     border-color: var(--accent);
   }
 
-  /* A tab riding on its window, on the screen (`paintRider`): its copy, at its own size,
-     scaled from its corner. */
   .rider {
     position: fixed;
     top: 0;
@@ -2156,12 +1818,6 @@
     pointer-events: none;
   }
 
-  /* A window's cross: the app's quiet grey button with the cross in it red, small, on
-     the window's top right corner itself, at the same size on the screen whatever the
-     zoom, there while the pointer is on the window or on the cross, and only once the
-     window is in its place. Under the pointer the button lights as a quiet one does, its
-     cross goes a step deeper and it grows a little, so it is plain that a press closes
-     the tab. */
   .closer {
     --closer-size: 22px;
     position: fixed;
@@ -2176,11 +1832,9 @@
     border: 1px solid var(--line);
     border-radius: 50%;
     color: var(--danger);
-    /* Solid, half of it being over the canvas and half over the window. */
     background: var(--surface-2);
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.22);
     transform-origin: 0 0;
-    /* Its middle on the corner: scaled about that point, so it grows in place. */
     transform: scale(1) translate(-50%, -50%);
     opacity: 0;
     pointer-events: none;
@@ -2208,8 +1862,6 @@
     visibility: hidden;
   }
 
-  /* The quiet button's hover and press, laid on its own grey so it stays solid; the
-     cross deeper towards the ink, as a button that deletes is (base.css). */
   .closer:hover,
   .closer:focus-visible {
     color: color-mix(in srgb, var(--danger) 86%, var(--text-strong));

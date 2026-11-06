@@ -1,29 +1,3 @@
-//! A web tab's page drawn under the app's own page, on Windows (#1137).
-//!
-//! A windowed `WebView2` page is a child window over the app's, and Windows draws a child
-//! window over every pixel of its parent: a menu, a sheet or the tab overview over a page
-//! had to be cut out of it or stand in front of a still picture of it. Here a page is
-//! hosted as a `DirectComposition` visual instead (`CreateCoreWebView2CompositionController`,
-//! chosen by label in the vendored wry, `windows/wry`). Every page of a window is a visual
-//! in one tree, the window's, whose target is made *under* the window's children
-//! (`CreateTargetForHwnd(.., topmost = false)`), and the app's own webview is the
-//! transparent child window drawn over that tree. So whatever of the app's page is not
-//! transparent is drawn over the live page, the way a browser draws its menus, and the
-//! page shows wherever the app leaves a hole for it (lib/web-tab/underlay.ts).
-//!
-//! The window wry made to hold the page stays where it always was, at the page's place
-//! and over the app's webview, and draws nothing: it is where the page's input arrives.
-//! Its subclass here hands the page its mouse and wheel (`SendMouseInput`), touch and pen
-//! (`SendPointerInput`), its cursor (`CursorChanged`), its accessibility tree
-//! (`AutomationProvider`) and what is dragged over it (`Drag*`), and puts the visual where
-//! the window is whenever the window moves, so every placement of a page is followed by
-//! its picture in the same commit. The cut the app's layers make in a page (`web_cut.rs`)
-//! is that window's region, which now only says where the page takes input. The keyboard,
-//! the IME and the page's own popups are the engine's, as they are for a windowed page.
-//!
-//! Every page of a tab is drawn so, unless `NIB_PAGES_WINDOWED=1`: the windowed page of
-//! before, kept for one release as the way back.
-
 use std::cell::RefCell;
 use std::collections::{BTreeSet, HashMap};
 use std::sync::{Mutex, PoisonError};
@@ -65,54 +39,43 @@ use windows_com::Win32::UI::WindowsAndMessaging::{
     WM_XBUTTONUP,
 };
 
-/// Whether pages are drawn under the app this run, read once.
 pub(crate) fn pages_drawn_under() -> bool {
     static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     *ON.get_or_init(|| std::env::var_os("NIB_PAGES_WINDOWED").is_none_or(|said| said != "1"))
 }
 
-/// Which webviews are drawn under the app: a tab's page, and nothing else - an extension's
-/// popup and the page that holds the session open stay windowed.
 fn drawn_under(label: &str) -> bool {
     label.starts_with(crate::web_tabs::LABEL)
 }
 
-/// Says to wry which pages it builds as visuals, before the first is built.
 pub(crate) fn arm_visuals() {
     if pages_drawn_under() {
         wry::host_as_visual(drawn_under);
     }
 }
 
-/// The pointer left a window, as the common controls name it.
 const WM_MOUSELEAVE: u32 = 0x02A3;
 
-/// This file's mark among the page window's subclasses.
 const OURS: usize = 0x7669_7375;
 
-/// One page drawn as a visual.
 struct Page {
     composition: ICoreWebView2CompositionController,
     controller: ICoreWebView2Controller,
     visual: IDCompositionVisual2,
     clip: IDCompositionRectangleClip,
-    /// The window whose tree it is in.
     top: isize,
     label: String,
     cursor: HCURSOR,
-    /// Whether the pointer's leaving is being listened for.
     tracking: bool,
     corner: f32,
     opacity: f32,
 }
 
-/// One window's tree: its target and the visual every page of it hangs under.
 struct Tree {
     _target: IDCompositionTarget,
     root: IDCompositionVisual2,
 }
 
-/// Everything here lives on the window's thread, which is the only one that touches it.
 #[derive(Default)]
 struct Composed {
     device: Option<IDCompositionDesktopDevice>,
@@ -128,22 +91,18 @@ fn composed<T>(with: impl FnOnce(&mut Composed) -> T) -> T {
     COMPOSED.with_borrow_mut(with)
 }
 
-/// The window wry made for a page, which holds its controller.
 #[allow(
     unsafe_code,
     reason = "the controller's window is asked through WebView2's COM interface"
 )]
 fn holder_window(controller: &ICoreWebView2Controller) -> Option<HWND> {
     let mut held = HWND::default();
-    // Safe: a live controller, asked for a window it owns.
     unsafe { controller.ParentWindow(&raw mut held) }.ok()?;
     (!held.is_invalid()).then_some(held)
 }
 
-/// The labels of the pages drawn under the app, for any thread to ask.
 static UNDER: Mutex<BTreeSet<String>> = Mutex::new(BTreeSet::new());
 
-/// Whether a page is drawn under the app; what the window is answered with for it.
 pub(crate) fn is_drawn_under(label: &str) -> bool {
     UNDER
         .lock()
@@ -151,9 +110,6 @@ pub(crate) fn is_drawn_under(label: &str) -> bool {
         .contains(label)
 }
 
-/// A page just built: drawn into its window's tree and handed its input, where wry built
-/// it as a visual. Every other webview is left as it is. On the window's own thread, where
-/// `with_webview` runs at once.
 pub(crate) fn host_page<R: Runtime>(view: &Webview<R>) {
     let label = view.label().to_string();
     let _ =
@@ -180,11 +136,6 @@ pub(crate) fn host_page<R: Runtime>(view: &Webview<R>) {
     }
 }
 
-/// The app's own webview with nothing of its own behind its page, and the window with no
-/// colour of its own: the page's HTML paints every ground it has, and where it leaves a
-/// hole the page drawn under it shows. A window opened before it had a material paints a
-/// remembered colour on both, to be on screen before its page (ground.rs), and that colour
-/// stood over the page.
 fn clear_grounds<R: Runtime>(view: &Webview<R>) {
     let window = view.window();
     let _ = window.set_background_color(None);
@@ -204,12 +155,10 @@ fn draw_page_under(
     label: &str,
 ) -> windows_com::core::Result<()> {
     let window = holder_window(controller).ok_or_else(windows_com::core::Error::empty)?;
-    // Safe: a live window of this thread, asked for its top-level window.
     let top = unsafe { GetAncestor(window, GA_ROOT) };
     let visual = composed(|all| -> windows_com::core::Result<IDCompositionVisual2> {
         let device = composition_device(all)?;
         let root = tree_of_window(all, &device, top)?;
-        // Safe: objects of the one device, made and joined on this thread.
         unsafe {
             let visual = device.CreateVisual()?;
             root.AddVisual(&visual, false, None)?;
@@ -218,14 +167,12 @@ fn draw_page_under(
     })?;
     let clip = composed(|all| {
         let device = composition_device(all)?;
-        // Safe: as above.
         unsafe {
             let clip = device.CreateRectangleClip()?;
             visual.SetClip(&clip)?;
             Ok::<_, windows_com::core::Error>(clip)
         }
     })?;
-    // Safe: the page's own controller, given the visual it draws into.
     unsafe { composition.SetRootVisualTarget(&visual)? };
 
     let key = window.0 as isize;
@@ -248,8 +195,6 @@ fn draw_page_under(
     });
     let _ = ENVIRONMENTS.with_borrow_mut(|all| all.insert(key, environment));
 
-    // Safe: the page's window, of this thread, given this file's subclass, which takes
-    // itself off as the window goes; and the engine's own cursor event, for the window.
     unsafe {
         let _ = SetWindowSubclass(window, Some(page_window_heard), OURS, 0);
         let mut token = 0_i64;
@@ -275,7 +220,6 @@ fn draw_page_under(
 }
 
 thread_local! {
-    /// The environment each page was built in, which makes its pointer events.
     static ENVIRONMENTS: RefCell<HashMap<isize, Option<ICoreWebView2Environment3>>> =
         RefCell::new(HashMap::new());
 }
@@ -288,8 +232,6 @@ fn composition_device(all: &mut Composed) -> windows_com::core::Result<IDComposi
     if let Some(device) = &all.device {
         return Ok(device.clone());
     }
-    // Safe: a device of our own with no rendering device, which a webview's visual needs
-    // none of: the engine draws into it with its own.
     let device: IDCompositionDesktopDevice = unsafe { DCompositionCreateDevice2(None)? };
     all.device = Some(device.clone());
     Ok(device)
@@ -308,8 +250,6 @@ fn tree_of_window(
     if let Some(tree) = all.trees.get(&key) {
         return Ok(tree.root.clone());
     }
-    // Safe: the window's own target, under its children, so the app's webview is drawn
-    // over every page; one per window, made on its thread.
     unsafe {
         let target = device.CreateTargetForHwnd(top, false)?;
         let root = device.CreateVisual()?;
@@ -325,15 +265,12 @@ fn tree_of_window(
     }
 }
 
-/// The page's corner, in the window's units at `scale`: the card's, at its two bottom
-/// corners.
 pub(crate) fn visual_corner(view: &Webview, corner: f64, scale: f64) {
     #[allow(clippy::cast_possible_truncation)]
     let corner = (corner.max(0.0) * scale) as f32;
     change_page(view, move |page| page.corner = corner);
 }
 
-/// How much of the page shows: the opacity of the hole the window draws it in.
 pub(crate) fn visual_opacity(view: &Webview, opacity: f64) {
     #[allow(clippy::cast_possible_truncation)]
     let opacity = opacity.clamp(0.0, 1.0) as f32;
@@ -357,7 +294,6 @@ fn change_page(view: &Webview, change: impl FnOnce(&mut Page) + Send + 'static) 
     });
 }
 
-/// The page's visual where its window is now, at its size, corner and opacity, committed.
 #[allow(
     unsafe_code,
     reason = "the window's place is read through Win32 and the visual moved through DirectComposition"
@@ -366,8 +302,6 @@ fn place_visual(window: HWND) {
     let key = window.0 as isize;
     let mut rect = RECT::default();
     let mut at = [POINT::default()];
-    // Safe: a live window of this thread, its place read in its top-level window's
-    // coordinates.
     let placed = unsafe {
         GetClientRect(window, &raw mut rect).is_ok() && {
             let top = GetAncestor(window, GA_ROOT);
@@ -390,7 +324,6 @@ fn place_visual(window: HWND) {
             rect.bottom as f32,
         );
         let round = page.corner.min(wide / 2.0).min(tall / 2.0);
-        // Safe: this page's own visual and clip, of the one device, on this thread.
         let done = unsafe {
             (|| -> windows_com::core::Result<()> {
                 page.visual.SetOffsetX2(x)?;
@@ -423,8 +356,6 @@ fn place_visual(window: HWND) {
     }
 }
 
-/// The device lost - the system's compositor restarted, the adapter reset: a new device,
-/// a new tree for every window, and every page given a new visual in it.
 #[allow(
     unsafe_code,
     reason = "each page is handed its new visual through WebView2's COM interface"
@@ -445,8 +376,6 @@ fn rebuild_visuals() {
             let Some(page) = all.pages.get_mut(&window) else {
                 return Ok(());
             };
-            // Safe: objects of the new device, on this thread, and the page's own
-            // controller handed the visual it draws into from now on.
             unsafe {
                 let visual = device.CreateVisual()?;
                 let clip = device.CreateRectangleClip()?;
@@ -481,10 +410,8 @@ fn point_of(lparam: LPARAM) -> POINT {
     }
 }
 
-/// Every button of the mouse a message says is down.
 const BUTTONS: u32 = 0x0001 | 0x0002 | 0x0010 | 0x0020 | 0x0040;
 
-/// What arrives at a page's window: handed to the page, or on to wry's own procedure.
 #[allow(
     unsafe_code,
     reason = "a subclass procedure is called by Windows with the window's own message, and the page is handed it through WebView2's COM interface"
@@ -503,7 +430,6 @@ unsafe extern "system" fn page_window_heard(
             .get(&key)
             .map(|page| (page.composition.clone(), page.controller.clone()))
     }) else {
-        // Safe: handing the message on is what a subclass owes the window.
         return unsafe { DefSubclassProc(window, message, wparam, lparam) };
     };
 
@@ -528,7 +454,6 @@ unsafe extern "system" fn page_window_heard(
                     page.tracking = false;
                 }
             });
-            // Safe: the page told the pointer has left it.
             let _ = unsafe {
                 composition.SendMouseInput(
                     COREWEBVIEW2_MOUSE_EVENT_KIND_LEAVE,
@@ -544,9 +469,6 @@ unsafe extern "system" fn page_window_heard(
             if pointer_to_page(key, window, message, wparam, &composition) {
                 LRESULT(0)
             } else {
-                // A mouse's pointer: on to the window, which makes the mouse's own
-                // messages of it, handed to the page above.
-                // Safe: as above.
                 unsafe { DefSubclassProc(window, message, wparam, lparam) }
             }
         }
@@ -554,50 +476,37 @@ unsafe extern "system" fn page_window_heard(
             let cursor = composed(|all| all.pages.get(&key).map(|page| page.cursor));
             match cursor {
                 Some(cursor) if !cursor.is_invalid() => {
-                    // Safe: the cursor the engine handed over for its page.
                     unsafe { SetCursor(Some(cursor)) };
                     LRESULT(1)
                 }
-                // Safe: as above.
                 _ => unsafe { DefSubclassProc(window, message, wparam, lparam) },
             }
         }
         #[allow(clippy::cast_possible_truncation)]
         #[allow(clippy::cast_possible_truncation)]
-        WM_GETOBJECT if lparam.0 as i32 == UiaRootObjectId => {
-            match reading::of(key, window) {
-                // Safe: this window's own provider, handed to UI Automation for it.
-                Some(provider) => unsafe {
-                    UiaReturnRawElementProvider(window, wparam, lparam, &provider)
-                },
-                // Safe: as above.
-                None => unsafe { DefSubclassProc(window, message, wparam, lparam) },
-            }
-        }
+        WM_GETOBJECT if lparam.0 as i32 == UiaRootObjectId => match reading::of(key, window) {
+            Some(provider) => unsafe {
+                UiaReturnRawElementProvider(window, wparam, lparam, &provider)
+            },
+            None => unsafe { DefSubclassProc(window, message, wparam, lparam) },
+        },
         WM_WINDOWPOSCHANGED => {
-            // Safe: as above.
             let answer = unsafe { DefSubclassProc(window, message, wparam, lparam) };
             place_visual(window);
             answer
         }
         WM_NCDESTROY => {
             visual_gone(key);
-            // Safe: this subclass taken off its own window as the window goes, and the
-            // window's drop target with it.
             unsafe {
                 let _ = RevokeDragDrop(window);
                 let _ = RemoveWindowSubclass(window, Some(page_window_heard), OURS);
                 DefSubclassProc(window, message, wparam, lparam)
             }
         }
-        // Safe: as above.
         _ => unsafe { DefSubclassProc(window, message, wparam, lparam) },
     }
 }
 
-/// A message of the mouse's handed to the page: where, which buttons and keys, how far a
-/// wheel turned. A press takes the keyboard into the page and holds the pointer until the
-/// last button is let go, as a windowed page does.
 #[allow(
     unsafe_code,
     reason = "the window is asked and changed through Win32, and the press handed on through WebView2's COM interface"
@@ -613,8 +522,6 @@ fn mouse_to_page(
 ) {
     let mut point = point_of(lparam);
     let keys = low_word(wparam.0);
-    // Safe: questions and changes about this thread's own window, and the press
-    // handed to its own page.
     unsafe {
         if matches!(message, WM_MOUSEWHEEL | WM_MOUSEHWHEEL) {
             let _ = ScreenToClient(window, &raw mut point);
@@ -640,8 +547,6 @@ fn mouse_to_page(
             WM_LBUTTONDOWN | WM_RBUTTONDOWN | WM_MBUTTONDOWN | WM_XBUTTONDOWN
         );
         if down {
-            // The keyboard follows a press into the page, as it does into a
-            // windowed one.
             crate::placement::keyboard_into(controller);
             SetCapture(window);
         }
@@ -651,8 +556,6 @@ fn mouse_to_page(
             }
             _ => 0,
         };
-        // The engine's kinds of mouse event are the messages' own numbers, and its
-        // keys the message's.
         #[allow(clippy::cast_possible_wrap)]
         let _ = composition.SendMouseInput(
             COREWEBVIEW2_MOUSE_EVENT_KIND(message as i32),
@@ -670,8 +573,6 @@ fn mouse_to_page(
     }
 }
 
-/// A page's window closed: its visual leaves the tree, and the tree goes with the window's
-/// last page.
 #[allow(
     unsafe_code,
     reason = "a visual is taken out of its tree through DirectComposition"
@@ -686,7 +587,6 @@ fn visual_gone(key: isize) {
             .unwrap_or_else(PoisonError::into_inner)
             .remove(&page.label);
         if let Some(tree) = all.trees.get(&page.top) {
-            // Safe: this page's visual, out of the tree it was put in, on this thread.
             unsafe {
                 let _ = tree.root.RemoveVisual(&page.visual);
             }
@@ -695,7 +595,6 @@ fn visual_gone(key: isize) {
             all.trees.remove(&page.top);
         }
         if let Some(device) = &all.device {
-            // Safe: as above.
             let _ = unsafe { device.Commit() };
         }
     });
@@ -703,15 +602,12 @@ fn visual_gone(key: isize) {
     reading::forget(key);
 }
 
-/// The engine changed the page's cursor: kept for the window's next `WM_SETCURSOR`, and
-/// shown at once where the pointer is over the page.
 #[allow(
     unsafe_code,
     reason = "the cursor is read through WebView2's COM interface and set through Win32"
 )]
 fn cursor_changed(key: isize, sender: &ICoreWebView2CompositionController) {
     let mut cursor = HCURSOR::default();
-    // Safe: the page's own controller, asked for the cursor it wants.
     if unsafe { sender.Cursor(&raw mut cursor) }.is_err() {
         return;
     }
@@ -721,7 +617,6 @@ fn cursor_changed(key: isize, sender: &ICoreWebView2CompositionController) {
         }
     });
     let mut at = POINT::default();
-    // Safe: where the pointer is, and which window is under it.
     unsafe {
         if GetCursorPos(&raw mut at).is_ok() && WindowFromPoint(at).0 as isize == key {
             SetCursor(Some(cursor));
@@ -729,8 +624,6 @@ fn cursor_changed(key: isize, sender: &ICoreWebView2CompositionController) {
     }
 }
 
-/// A touch or a pen on the page, handed to it whole: where, how hard, at what tilt. False
-/// for a mouse's pointer, which the window turns into mouse messages.
 #[allow(
     unsafe_code,
     reason = "the pointer is read through Win32 and handed to the page through WebView2's COM interface"
@@ -746,8 +639,6 @@ fn pointer_to_page(
     let Some(Some(environment)) = ENVIRONMENTS.with_borrow(|all| all.get(&key).cloned()) else {
         return false;
     };
-    // Safe: the pointer's own record, read for the message it came with, into structures
-    // of the size each call says, and handed to the page's own controller.
     unsafe {
         let mut kind = POINTER_INPUT_TYPE::default();
         if GetPointerType(id, &raw mut kind).is_err() || (kind != PT_TOUCH && kind != PT_PEN) {
@@ -780,8 +671,6 @@ fn pointer_to_page(
             let _ = ScreenToClient(window, &raw mut at);
             at
         };
-        // A himetric point in the page: the device's units per pixel of the display it maps
-        // onto, at the page's pixel.
         let himetric = |at: POINT| {
             let wide = f64::from((display.right - display.left).max(1));
             let tall = f64::from((display.bottom - display.top).max(1));
@@ -813,7 +702,6 @@ fn pointer_to_page(
             info.SetPerformanceCount(given.PerformanceCount)?;
             info.SetButtonChangeKind(given.ButtonChangeType.0)?;
             pointer_detail(&info, kind == PT_TOUCH, &touch, &pen, window)?;
-            // The engine's kinds of pointer event are the messages' own numbers.
             #[allow(clippy::cast_possible_wrap)]
             composition.SendPointerInput(COREWEBVIEW2_POINTER_EVENT_KIND(message as i32), &info)
         })();
@@ -821,8 +709,6 @@ fn pointer_to_page(
     }
 }
 
-/// What a touch or a pen says beyond where it is: a finger's contact and pressure, a pen's
-/// pressure, rotation and tilt.
 #[allow(
     unsafe_code,
     reason = "the pointer's record is handed to the page through WebView2's COM interface"
@@ -835,7 +721,6 @@ fn pointer_detail(
     window: HWND,
 ) -> windows_com::core::Result<()> {
     let local = |mut at: POINT| {
-        // Safe: a point made this thread's own window's.
         let _ = unsafe { ScreenToClient(window, &raw mut at) };
         at
     };
@@ -855,7 +740,6 @@ fn pointer_detail(
             bottom: to.y,
         }
     };
-    // Safe: the engine's own record of a pointer, filled in.
     unsafe {
         if touching {
             info.SetTouchFlags(touch.touchFlags)?;
@@ -875,11 +759,6 @@ fn pointer_detail(
     }
 }
 
-/// What UI Automation reads of a page's window (#1137). The engine keeps an input window of
-/// its own inside it, empty and of no size, and the page's tree belongs to that window:
-/// the page's window answers for itself as itself, and for the engine's window with the
-/// page's provider (`GetAutomationProviderForWindow`), which is how UI Automation is told
-/// whose tree a window inside another is.
 mod reading {
     #![allow(
         unsafe_code,
@@ -906,7 +785,6 @@ mod reading {
         static MADE: RefCell<HashMap<isize, IRawElementProviderSimple>> = RefCell::new(HashMap::new());
     }
 
-    /// The page's window's provider, made once.
     pub(super) fn of(key: isize, window: HWND) -> Option<IRawElementProviderSimple> {
         if let Some(made) = MADE.with_borrow(|all| all.get(&key).cloned()) {
             return Some(made);
@@ -924,7 +802,6 @@ mod reading {
         Some(made)
     }
 
-    /// The page's window gone, and its provider with it.
     pub(super) fn forget(key: isize) {
         let _ = MADE.with_borrow_mut(|all| all.remove(&key));
     }
@@ -951,7 +828,6 @@ mod reading {
         }
 
         fn HostRawElementProvider(&self) -> windows_com::core::Result<IRawElementProviderSimple> {
-            // Safe: this page's own window, described by the system's own provider.
             unsafe { UiaHostProviderFromHwnd(HWND(self.window as *mut core::ffi::c_void)) }
         }
     }
@@ -961,14 +837,11 @@ mod reading {
             &self,
             window: HWND,
         ) -> windows_com::core::Result<IRawElementProviderSimple> {
-            // Safe: the environment the page was built in, asked for the provider of a
-            // window inside the page's.
             unsafe { self.environment.GetAutomationProviderForWindow(window) }?.cast()
         }
     }
 }
 
-/// The drop target a page's window is given; see `Dropping`.
 mod dropping {
     #![allow(
         unsafe_code,
@@ -985,8 +858,6 @@ mod dropping {
     use windows_com::Win32::System::Ole::{IDropTarget, IDropTarget_Impl, DROPEFFECT};
     use windows_com::Win32::System::SystemServices::MODIFIERKEYS_FLAGS;
 
-    /// What is dragged over a page, handed to the page: a file from Explorer, a link, a tab's
-    /// own drag. Its points are the page's own, from the screen's.
     #[implement(IDropTarget)]
     pub(super) struct Dropping {
         pub(super) page: ICoreWebView2CompositionController3,
@@ -996,7 +867,6 @@ mod dropping {
     impl Dropping {
         fn local(&self, at: &POINTL) -> POINT {
             let mut point = POINT { x: at.x, y: at.y };
-            // Safe: this page's own window, on its thread.
             unsafe {
                 let _ = ScreenToClient(HWND(self.window as *mut core::ffi::c_void), &raw mut point);
             }
@@ -1012,7 +882,6 @@ mod dropping {
             at: &POINTL,
             effect: *mut DROPEFFECT,
         ) -> windows_com::core::Result<()> {
-            // Safe: the page's own controller, handed what the system handed this target.
             unsafe {
                 self.page
                     .DragEnter(data.as_ref(), keys.0, self.local(at), effect.cast())
@@ -1025,12 +894,10 @@ mod dropping {
             at: &POINTL,
             effect: *mut DROPEFFECT,
         ) -> windows_com::core::Result<()> {
-            // Safe: as above.
             unsafe { self.page.DragOver(keys.0, self.local(at), effect.cast()) }
         }
 
         fn DragLeave(&self) -> windows_com::core::Result<()> {
-            // Safe: as above.
             unsafe { self.page.DragLeave() }
         }
 
@@ -1041,7 +908,6 @@ mod dropping {
             at: &POINTL,
             effect: *mut DROPEFFECT,
         ) -> windows_com::core::Result<()> {
-            // Safe: as above.
             unsafe {
                 self.page
                     .Drop(data.as_ref(), keys.0, self.local(at), effect.cast())

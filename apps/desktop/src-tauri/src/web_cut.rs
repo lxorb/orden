@@ -1,47 +1,3 @@
-//! What of a web tab's page the app's own layers are drawn over, cut out of the page
-//! rather than the page hidden for them.
-//!
-//! A page is a native webview, and a native webview draws above every pixel of the
-//! window's own HTML: nothing of the app's can be drawn over it. So everything the app put
-//! over a page - a menu, a tab's hover card, a site's popover under the bar - used to hide
-//! the whole page and show a still picture of it in its place. Emil, 2026-10-03: *"While a
-//! toast shows or while hovering things, the website is sometimes invisible until he
-//! stops."* A page with no picture yet, or one whose picture had just been thrown away
-//! because the page changed size, went blank for as long as the card was up; and every
-//! page in the window stepped back for a card that was over one of them.
-//!
-//! Chrome draws its menus and hover cards over the page and the page goes on being the
-//! page. The nearest a window of webviews gets to that is a window region: the shape the
-//! page's window is allowed to draw in, which is the page less the rectangles of the
-//! app's layers over it - each with its own rounded corners. The layer is then the
-//! window's own HTML showing through the page where the layer is, and everywhere else the
-//! page is live, scrolling and playing, never hidden and so never blank when the layer
-//! goes. Measured with scripts/web-smooth-probe.py.
-//!
-//! A layer reaching past the page's edge keeps its own shape and the page's edge trims
-//! it. It used to be trimmed to the page first and rounded after, so its corners were
-//! drawn on the page's edge rather than its own, and the page showed in the corners of
-//! every menu that hung over the edge of a pane (#246): a sliver of the site in each of
-//! two corners of the menu, where the menu's own corners are square.
-//!
-//! A layer that dims the whole window - a sheet over its scrim - still covers all of the
-//! page, and that is a cut too: an empty region. The page is out of sight without being
-//! hidden, so the engine keeps its frame and the page is back the moment the sheet goes,
-//! with nothing to repaint.
-//!
-//! The system engine on Windows, and CEF on Linux, where the page is an X11 window of
-//! its own and the shape is the X server's (the Shape extension): before it, a page on
-//! Linux was never cut, and a toast took a band of the pane under the page rather than
-//! floating over it (#512). Elsewhere `CUTS` is false, and the window answers a layer
-//! over a page the way it always has: the still picture, and the page hidden.
-//!
-//! **The card's corners too** (#1088). What is open sits in a card with rounded corners,
-//! and a page fills its card to the bottom: drawn square, the page stood out of both of
-//! the card's lower corners. So the page's own shape has the card's corner at its two
-//! bottom corners, as wide as the window says the card's corner is (`--card-radius`, which
-//! Square and full screen make nothing). The same region on Windows and Linux, and on a
-//! Mac, which cuts nothing, the page's own layer rounded there (`engine::round`).
-
 use std::collections::HashMap;
 use std::sync::{LazyLock, Mutex, PoisonError};
 
@@ -51,19 +7,16 @@ use tauri::Webview;
 #[cfg(target_os = "macos")]
 pub mod under;
 
-/// One of the app's layers over a page, in the page's own coordinates.
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
 pub struct Hollow {
     pub x: f64,
     pub y: f64,
     pub width: f64,
     pub height: f64,
-    /// The layer's own corner, so what shows through is its shape and no more.
     #[serde(default)]
     pub radius: f64,
 }
 
-/// What of a page the app's layers are over: all of it, or these.
 #[derive(Clone, Debug, Default, Deserialize, PartialEq)]
 pub struct Cut {
     #[serde(default)]
@@ -72,15 +25,10 @@ pub struct Cut {
     pub hollows: Vec<Hollow>,
 }
 
-/// A rounded rectangle in the page's window, in whole pixels of the screen: left, top,
-/// right, bottom and the corner's diameter.
 pub type Piece = (i32, i32, i32, i32, i32);
 
-/// What the page's window may draw in: `None` for all of it, an empty list for none of
-/// it, or all of it less these.
 pub type Shape = Option<Vec<Piece>>;
 
-/// Rounds a length in the window's own units to the screen's pixels.
 #[allow(
     clippy::cast_possible_truncation,
     reason = "a page is never anywhere near two billion pixels across"
@@ -89,13 +37,6 @@ fn pixels(length: f64, scale: f64) -> i32 {
     (length * scale).round() as i32
 }
 
-/// The shape a cut leaves of a page `wide` by `tall` pixels of the screen, at `scale`,
-/// whose two bottom corners are the card's, `corner` in the window's own units across.
-/// The first piece is the page itself, its last field the diameter of those two corners
-/// and of no others; every piece after it a layer taken out of it. Layers that miss the
-/// page are left out; one that reaches past its edge is kept whole, corners and all, and
-/// what of it is outside the page is outside the page's window anyway. A page with
-/// nothing over it and square corners has no shape at all.
 #[must_use]
 pub fn shape_of(cut: Option<&Cut>, wide: u32, tall: u32, scale: f64, corner: f64) -> Shape {
     if cut.is_some_and(|one| one.all) {
@@ -125,7 +66,6 @@ pub fn shape_of(cut: Option<&Cut>, wide: u32, tall: u32, scale: f64, corner: f64
         })
         .collect();
 
-    // Nothing over the page after all: the whole of it, its corners as they are.
     if pieces.is_empty() && round == 0 {
         return None;
     }
@@ -134,16 +74,11 @@ pub fn shape_of(cut: Option<&Cut>, wide: u32, tall: u32, scale: f64, corner: f64
     Some(whole)
 }
 
-/// Whether this build cuts layers out of a page at all.
 pub const CUTS: bool = cfg!(any(
     all(windows, not(feature = "cef")),
     all(target_os = "linux", feature = "cef")
 ));
 
-/// How a page is layered with the app's own page, as the window is answered: `"under"` for
-/// a page drawn under the app's page, which draws every layer over it and whose cut only
-/// says where it takes no input (`web_visual.rs`, and `under.rs` on a Mac); otherwise whether
-/// layers are cut out of it (`CUTS`). See `layering` in lib/web-tab/pages.svelte.ts.
 #[derive(Clone, Copy, Debug, serde::Serialize, PartialEq)]
 #[serde(untagged)]
 pub enum Layering {
@@ -158,7 +93,6 @@ pub enum Layering {
     Under(&'static str),
 }
 
-/// How the page under `label` is layered.
 pub fn layering(label: &str) -> Layering {
     #[cfg(all(windows, not(feature = "cef")))]
     if crate::web_visual::is_drawn_under(label) {
@@ -172,22 +106,14 @@ pub fn layering(label: &str) -> Layering {
     Layering::Cuts(CUTS)
 }
 
-/// The cut each page was last given, and the shape that made of it, so the same shape is
-/// not given twice - a region set again is a page drawn again - and a page resized under
-/// a cut is given the cut again at its new size.
 static GIVEN: LazyLock<Mutex<Given>> = LazyLock::new(Mutex::default);
 
-/// Each page's last cut, the card's corner it was given, and the shape they made, by its
-/// label.
 type Given = HashMap<String, (Option<Cut>, f64, Shape)>;
 
 fn given<T>(look: impl FnOnce(&mut Given) -> T) -> T {
     look(&mut GIVEN.lock().unwrap_or_else(PoisonError::into_inner))
 }
 
-/// Gives a page the shape a cut leaves of it at `wide` by `tall` pixels of the screen,
-/// at `scale`, with the card's `corner` at its bottom, unless it already has that shape.
-/// Where nothing is cut, only the corner.
 pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64, corner: f64) {
     if !CUTS {
         #[cfg(target_os = "macos")]
@@ -198,7 +124,6 @@ pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64,
     let shape = shape_of(cut.as_ref(), wide, tall, scale, corner);
     let label = view.label().to_string();
     let changed = given(|all| {
-        // A page never given a shape has all of itself, which is `None`.
         let before = all.get(&label).and_then(|(_, _, one)| one.clone());
         all.insert(label, (cut, corner, shape.clone()));
         before != shape
@@ -208,8 +133,6 @@ pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64,
     }
 }
 
-/// A page with a shape has been given a new size: its cut and its corner again, at that
-/// size.
 pub fn refit(view: &Webview, wide: u32, tall: u32, scale: f64) {
     let kept = given(|all| {
         all.get(view.label())
@@ -220,7 +143,6 @@ pub fn refit(view: &Webview, wide: u32, tall: u32, scale: f64) {
     }
 }
 
-/// A page closed: what shape it had is forgotten with it.
 pub fn uncut(label: &str) {
     given(|all| all.remove(label));
     #[cfg(target_os = "macos")]
@@ -238,53 +160,44 @@ mod engine {
 
     use super::Shape;
 
-    /// Nothing: here the corner is the region's (`shape`).
     pub fn round(_view: &Webview, _corner: f64) {}
 
-    /// The window the engine draws the page in: the one wry made to hold the controller.
     #[allow(
         unsafe_code,
         reason = "the controller's window is asked through WebView2's COM interface, and the region set through GDI"
     )]
     pub fn shape(view: &Webview, shape: Shape) {
-        let _ = view.with_webview(move |platform| {
-            // Safe: the controller belongs to this live webview, the window it names is
-            // the one wry made for it on this thread, and every region made here is
-            // either handed to the system by `SetWindowRgn` - which owns it from then on
-            // - or deleted before the block ends.
-            unsafe {
-                let mut held = windows_com::Win32::Foundation::HWND::default();
-                if platform.controller().ParentWindow(&raw mut held).is_err() {
-                    return;
-                }
-                let window = HWND(held.0);
-                let Some(pieces) = shape else {
-                    SetWindowRgn(window, HRGN::default(), BOOL::from(true));
-                    return;
-                };
-                let region = match pieces.split_first() {
-                    None => CreateRectRgn(0, 0, 0, 0),
-                    Some((&(left, top, right, bottom, round), hollows)) => {
-                        let whole = CreateRectRgn(left, top, right, bottom - round / 2);
-                        // The card's two bottom corners, and square above them.
-                        if round > 0 {
-                            let corners =
-                                CreateRoundRectRgn(left, top, right + 1, bottom + 1, round, round);
-                            CombineRgn(whole, whole, corners, RGN_OR);
-                            let _ = DeleteObject(corners);
-                        }
-                        for &(left, top, right, bottom, round) in hollows {
-                            let hollow =
-                                CreateRoundRectRgn(left, top, right + 1, bottom + 1, round, round);
-                            CombineRgn(whole, whole, hollow, RGN_DIFF);
-                            let _ = DeleteObject(hollow);
-                        }
-                        whole
+        let _ = view.with_webview(move |platform| unsafe {
+            let mut held = windows_com::Win32::Foundation::HWND::default();
+            if platform.controller().ParentWindow(&raw mut held).is_err() {
+                return;
+            }
+            let window = HWND(held.0);
+            let Some(pieces) = shape else {
+                SetWindowRgn(window, HRGN::default(), BOOL::from(true));
+                return;
+            };
+            let region = match pieces.split_first() {
+                None => CreateRectRgn(0, 0, 0, 0),
+                Some((&(left, top, right, bottom, round), hollows)) => {
+                    let whole = CreateRectRgn(left, top, right, bottom - round / 2);
+                    if round > 0 {
+                        let corners =
+                            CreateRoundRectRgn(left, top, right + 1, bottom + 1, round, round);
+                        CombineRgn(whole, whole, corners, RGN_OR);
+                        let _ = DeleteObject(corners);
                     }
-                };
-                if SetWindowRgn(window, region, BOOL::from(true)) == 0 {
-                    let _ = DeleteObject(region);
+                    for &(left, top, right, bottom, round) in hollows {
+                        let hollow =
+                            CreateRoundRectRgn(left, top, right + 1, bottom + 1, round, round);
+                        CombineRgn(whole, whole, hollow, RGN_DIFF);
+                        let _ = DeleteObject(hollow);
+                    }
+                    whole
                 }
+            };
+            if SetWindowRgn(window, region, BOOL::from(true)) == 0 {
+                let _ = DeleteObject(region);
             }
         });
     }
@@ -302,21 +215,14 @@ mod engine {
 
     use super::{Piece, Shape};
 
-    /// Nothing: here the corner is the shape's (`shape`).
     pub fn round(_view: &Webview, _corner: f64) {}
 
-    /// The crate's own connection to the X server, for shapes alone: made the first time
-    /// a page is cut, and `None` where there is no X server or it has no Shape extension.
     static X: LazyLock<Option<RustConnection>> = LazyLock::new(|| {
         let (x, _) = x11rb::connect(None).ok()?;
         x.shape_query_version().ok()?.reply().ok()?;
         Some(x)
     });
 
-    /// The page's own window, the browser's, as the X server knows it - every window
-    /// Chromium draws the page in is inside it, and a shape on a window clips all inside
-    /// it - given `shape`: the region it may draw in and take presses in, the rest
-    /// showing the app's own page beneath, which is a window of its own under it.
     pub fn shape(view: &Webview, shape: Shape) {
         let _ = view.with_webview(move |platform| {
             let Some(window) = crate::web_keys::x11_window(&platform) else {
@@ -331,7 +237,6 @@ mod engine {
 
     fn give(x: &RustConnection, window: u32, shape: Option<&[Piece]>) -> Option<()> {
         match shape {
-            // All of it: no shape at all, which is the window's own rectangle.
             None => {
                 x.shape_mask(SO::SET, SK::BOUNDING, window, 0, 0, x11rb::NONE)
                     .ok()?;
@@ -376,10 +281,6 @@ mod engine {
         x.flush().ok()
     }
 
-    /// A rectangle from `left`, `top` to `right`, `bottom` with corners of diameter
-    /// `round`, as the rectangles the X server takes: one for the middle, and a row a
-    /// pixel tall for each line of the corners above and below it, each as wide as the
-    /// curve is there.
     pub fn rectangles(left: i32, top: i32, right: i32, bottom: i32, round: i32) -> Vec<Rectangle> {
         let wide = right - left;
         let tall = bottom - top;
@@ -402,8 +303,6 @@ mod engine {
         all
     }
 
-    /// The page itself, with corners of diameter `round` at its bottom and square ones at
-    /// its top: the card's.
     pub fn lower(left: i32, top: i32, right: i32, bottom: i32, round: i32) -> Vec<Rectangle> {
         let rows = rectangles(left, top, right, bottom, round);
         let Some(middle) = rows.first() else {
@@ -411,8 +310,6 @@ mod engine {
         };
         let wide = right - left;
         let radius = (round / 2).clamp(0, wide.min(bottom - top) / 2);
-        // The middle, stretched to the top, and the bottom rows of the curve; every second
-        // row from the first is a top row, which the square top leaves out.
         let mut all = vec![Rectangle {
             y: clamp16(top),
             height: u16::try_from((bottom - top - radius).max(0)).unwrap_or(u16::MAX),
@@ -422,8 +319,6 @@ mod engine {
         all
     }
 
-    /// How far in from the side a corner of `radius` is on its `line`th line from the
-    /// top: where a circle's edge crosses the middle of that line.
     #[allow(
         clippy::cast_possible_truncation,
         reason = "never more than the radius, which is a page's size at most"
@@ -442,8 +337,6 @@ mod engine {
     mod tests {
         use super::{lower, rectangles};
 
-        /// The card's corners at the page's bottom, and its top square: the first rows are
-        /// as wide as the page, the last ones narrower.
         #[test]
         fn a_page_is_rounded_at_the_bottom_alone() {
             let page = lower(0, 0, 100, 50, 16);
@@ -459,8 +352,6 @@ mod engine {
             assert_eq!(lower(0, 0, 100, 50, 0).len(), 1);
         }
 
-        /// A square corner is the one rectangle; a round one is narrower on its first
-        /// line than its last, and no line of it is wider than the whole.
         #[test]
         fn corners_are_rows_as_wide_as_the_curve() {
             let square = rectangles(10, 20, 110, 70, 0);
@@ -492,37 +383,28 @@ mod engine {
 
     use super::Shape;
 
-    /// Nothing to give: `CUTS` is false here, and nothing calls this.
     pub fn shape(_view: &Webview, _shape: Shape) {}
 
-    /// The page's own layer with the card's `corner` at its two bottom corners, and none
-    /// for nothing: a Mac cuts no region, and `WKWebView` draws in a layer that rounds.
     #[allow(
         unsafe_code,
         reason = "the page's layer is reached and rounded through the Objective-C runtime"
     )]
     pub fn round(view: &Webview, corner: f64) {
         let corner = corner.max(0.0);
-        let _ = view.with_webview(move |platform| {
-            // Safe: the runtime's own live web view, of the type it says, on the main
-            // thread, and a layer it backs itself with once asked to.
-            unsafe {
-                let Some(page) = Retained::retain(platform.inner().cast::<WKWebView>()) else {
-                    return;
-                };
-                page.setWantsLayer(true);
-                let layer: *mut AnyObject = msg_send![&*page, layer];
-                let Some(layer) = layer.as_ref() else {
-                    return;
-                };
-                // The bottom is the layer's larger y where its contents are flipped, as a
-                // web view's are, and its smaller one where they are not.
-                let flipped: bool = msg_send![layer, contentsAreFlipped];
-                let bottom: usize = if flipped { 4 | 8 } else { 1 | 2 };
-                let _: () = msg_send![layer, setCornerRadius: corner];
-                let _: () = msg_send![layer, setMaskedCorners: bottom];
-                let _: () = msg_send![layer, setMasksToBounds: corner > 0.0];
-            }
+        let _ = view.with_webview(move |platform| unsafe {
+            let Some(page) = Retained::retain(platform.inner().cast::<WKWebView>()) else {
+                return;
+            };
+            page.setWantsLayer(true);
+            let layer: *mut AnyObject = msg_send![&*page, layer];
+            let Some(layer) = layer.as_ref() else {
+                return;
+            };
+            let flipped: bool = msg_send![layer, contentsAreFlipped];
+            let bottom: usize = if flipped { 4 | 8 } else { 1 | 2 };
+            let _: () = msg_send![layer, setCornerRadius: corner];
+            let _: () = msg_send![layer, setMaskedCorners: bottom];
+            let _: () = msg_send![layer, setMasksToBounds: corner > 0.0];
         });
     }
 }
@@ -537,10 +419,8 @@ mod engine {
 
     use super::Shape;
 
-    /// Nothing to give: `CUTS` is false here, and nothing calls this.
     pub fn shape(_view: &Webview, _shape: Shape) {}
 
-    /// Nothing: the BSDs' engine has neither a region nor a layer to round.
     pub fn round(_view: &Webview, _corner: f64) {}
 }
 
@@ -558,8 +438,6 @@ mod tests {
         }
     }
 
-    /// #1088: the card's corner at the page's two bottom corners, in screen pixels, with
-    /// or without a layer over it; Square gives nothing; a sheet over it still takes it all.
     #[test]
     fn the_page_wears_the_card_s_corner_at_its_bottom() {
         assert_eq!(
@@ -580,7 +458,6 @@ mod tests {
             hollows: Vec::new(),
         };
         assert_eq!(shape_of(Some(&all), 800, 600, 1.0, 10.0), Some(Vec::new()));
-        // Never a corner wider than the page.
         assert_eq!(
             shape_of(None, 8, 600, 1.0, 10.0),
             Some(vec![(0, 0, 8, 600, 8)])
@@ -629,9 +506,6 @@ mod tests {
         );
     }
 
-    /// The menu of #246: two thirds of it over the file list, a third over the page, with
-    /// round corners. Trimmed to the page and rounded after, its corners were drawn on the
-    /// page's edge, and the page showed through the menu there.
     #[test]
     fn a_menu_over_the_page_s_edge_has_its_corners_where_the_menu_has_them() {
         let cut = Cut {

@@ -1,15 +1,8 @@
 name: web-tab
 
-# A probe build of each engine opens a web tab and still answers (#1145): from #1094 the
-# app froze on Windows the moment one opened, which no test built from the source saw.
-# scripts/web-tab-drive.py, on the runner's own desktop, where nobody is and the page
-# takes the focus as it does for a person.
-
 on:
   pull_request:
     branches: [main]
-    # `ready_for_review` too: a draft runs nothing, and the full run starts the moment
-    # it is marked ready (see docs/conventions.md, "CI").
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - apps/desktop/src-tauri/src/**
@@ -27,7 +20,6 @@ permissions:
 
 jobs:
   answers:
-    # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     strategy:
       fail-fast: false
@@ -48,17 +40,14 @@ jobs:
         shell: bash
     env:
       IDENTIFIER: ch.emilvinu.nib.probe.web-tab
-      # The edge build's profile, which is enough to see a window hang; see edge-profile.sh.
       ROLLING: 'true'
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
       - uses: ./.github/actions/desktop-setup
         with:
           target: ${{ matrix.target }}
 
-      # A probe build: a version no release passes and an updater pointed at nothing, so
-      # it can never install anything over anything; see scripts/probe_app.py.
       - name: The probe
         run: |
           source scripts/edge-profile.sh
@@ -80,8 +69,6 @@ jobs:
               ;;
           esac
 
-      # And Chromium's sandbox helper beside the binary, which it refuses to start
-      # without unless root owns it with its set-user bit, as the packages install it.
       - name: A screen, on Linux
         if: runner.os == 'Linux'
         run: |

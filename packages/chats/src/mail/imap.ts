@@ -1,10 +1,6 @@
-/** An IMAP4rev1 client (RFC 3501) over a provider `Socket`: what the mail provider reads
- *  mailboxes with. Literals in both directions, STARTTLS, SASL PLAIN, IDLE (RFC 2177). */
-
 import type { Socket, SocketAsk } from '../provider'
 import { ascii, concat, fromLatin, latin, Reader, toBase64 } from './bytes'
 
-/** A parsed value: an atom or a string (a literal's bytes as Latin-1), NIL, or a list. */
 export type Value = string | null | Value[]
 
 export interface Untagged {
@@ -14,7 +10,6 @@ export interface Untagged {
   line: string
 }
 
-/** Values out of the text of one response, literals already put in place. */
 export function parseValues(text: string): Value[] {
   let at = 0
   const list = (): Value[] => {
@@ -89,7 +84,6 @@ function safely(text: string): Value[] {
   }
 }
 
-/** A FETCH response's items by their names, upper case. */
 export function itemsOf(values: readonly Value[]): Map<string, Value> {
   const items = new Map<string, Value>()
   const list = values[0]
@@ -123,9 +117,7 @@ interface Pending {
 
 export class Imap {
   capabilities = new Set<string>()
-  /** Every untagged response, as it arrives: what IDLE listens to. */
   hear: (one: Untagged) => void = () => undefined
-  /** The connection ended. */
   ended: (reason?: string) => void = () => undefined
 
   private readonly reader = new Reader()
@@ -206,8 +198,6 @@ export class Imap {
     this.capabilities = new Set(found[1].trim().toUpperCase().split(/\s+/))
   }
 
-  /** One command, after the ones before it; answers its untagged responses. A literal
-   *  goes after the text, announced by its size. */
   command(text: string, literal?: Uint8Array): Promise<Untagged[]> {
     const run = this.queue.then(() => this.send(text, literal))
     this.queue = run.catch(() => undefined)
@@ -235,7 +225,6 @@ export class Imap {
     })
   }
 
-  /** IDLE until `done` is called; untagged responses meanwhile go to `hear`. */
   async idle(): Promise<() => Promise<void>> {
     let entered: () => void = () => undefined
     const ready = new Promise<void>((resolve) => (entered = resolve))
@@ -338,7 +327,6 @@ export class Imap {
   }
 }
 
-/** Bytes out of a value that holds a body or a literal. */
 export function bytesOf(value: Value | undefined): Uint8Array {
   return typeof value === 'string' ? fromLatin(value) : new Uint8Array(0)
 }

@@ -1,6 +1,3 @@
-/** Mails into conversations: every mail joined to those it answers or that answer it, by
- *  `Message-ID`, `In-Reply-To` and `References` (a simple form of JWZ threading). */
-
 export interface Threadable {
   key: string
   id: string
@@ -8,8 +5,6 @@ export interface Threadable {
   at: number
 }
 
-/** Each mail's conversation, by its key: the id of the earliest mail it is joined to, so a
- *  conversation keeps its id as replies arrive. */
 export function threadsOf(mails: readonly Threadable[]): Map<string, string> {
   const parent = new Map<string, string>()
   const root = (id: string): string => {
@@ -43,7 +38,6 @@ export function threadsOf(mails: readonly Threadable[]): Map<string, string> {
   return new Map(mails.map((mail) => [mail.key, earliest.get(root(mail.id))?.id ?? mail.id]))
 }
 
-/** A subject without the `Re:`, `Fwd:`, `AW:` and `WG:` in front of it. */
 export function bareSubject(subject: string): string {
   return subject.replace(/^\s*((re|fwd?|aw|wg|sv|vs|antw)(\[\d+\])?\s*:\s*)+/i, '').trim()
 }

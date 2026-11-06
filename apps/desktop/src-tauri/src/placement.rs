@@ -1,38 +1,3 @@
-//! Where the window was, so the next launch opens it there.
-//!
-//! Every desktop app does this and Orden did not: the window came up at 1180 by 760 in
-//! the middle of the primary screen however it had been left. So the window's place
-//! is written down as it closes, and `ready` in lib.rs puts it into the window's
-//! config before the window is built - built there, not moved there afterwards, so
-//! there is no frame in the old place and no jump. One small file read and one list
-//! of screens, which is well under a millisecond of a launch.
-//!
-//! **What is kept.** The bounds a window has when it is neither maximised, minimised
-//! nor full screen, and whether it was maximised. A maximised window's own bounds are
-//! the screen's and say nothing about where it goes back to, so they are never
-//! written down: the bounds before it was maximised are, which is what Windows itself
-//! calls the normal placement. Minimised and full screen are not kept at all - a
-//! window that reopened minimised would be an app that seemed not to start.
-//!
-//! **In the units the platform builds in.** Logical pixels, in the scale of the screen
-//! the window was on. That is what `tauri.conf.json` says a window's size in, and it
-//! is what tao turns back into pixels with the scale of the screen the position falls
-//! on - so a window on a 150% laptop screen beside a 100% monitor reopens the size it
-//! was on either. With that scale beside them, since two screens at two scales put
-//! logical pixels in two different spaces: the place is judged in the desk's own -
-//! physical pixels on Windows and X11, points on a Mac - and on Windows the window is put
-//! back to the pixel once built, where tao's turning a logical place into pixels landed it
-//! on the wrong one of the two (#479; see `onto` and `settled`).
-//!
-//! **Onto a screen that is still there.** A laptop that was docked last night is not
-//! this morning, and a window placed where the second monitor used to be is a window
-//! nobody can reach. So the place is judged against the screens there are before it
-//! is used; see `onto`, which is the rule Chrome keeps: the window is made to fit the
-//! screen it is mostly on, and at least a strip of it with the top edge stays on it.
-//!
-//! **The last window closed.** Several windows can be open; the one closed last is the
-//! place the next launch opens in, which is what a browser does.
-
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Mutex, OnceLock};
@@ -46,40 +11,20 @@ use tauri::{
 
 use crate::paths::{config_dir, made, write_atomically};
 
-/// What the file is called, beside the ground colour: something the app keeps about
-/// itself.
 const FILE: &str = "window.json";
 
-/// How much of a window has to stay on a screen, in logical pixels, for somebody to
-/// be able to take hold of it and pull the rest back. Chrome keeps a strip about
-/// this size on screen for the same reason.
 const STAYS: f64 = 64.0;
 
-/// Anything longer than this is not a placement and is not read.
 const MOST: u64 = 512;
 
-/// The variable a drive sets to have every window of the run opened off the screen,
-/// whatever the build's own config says; `scripts/probe_app.py` sets it on every
-/// probe it starts.
 const OFF_SCREEN: &str = "NIB_OFF_SCREEN";
 
-/// Where off the screen: the corner Windows parks a minimised window in, well past
-/// any desk of monitors.
 const OFF: f64 = -32000.0;
 
-/// Where this run's windows were sent, once the first of them was; see `away`.
 static AWAY: OnceLock<(f64, f64)> = OnceLock::new();
 
-/// Where the window was put back, in physical pixels, for `settle`.
 static PUT: OnceLock<(f64, f64)> = OnceLock::new();
 
-/// Where a window is: its top left corner and its inner size, in logical pixels, and
-/// whether it is maximised over them.
-///
-/// And the scale of the screen it was on, which is what those logical pixels were
-/// measured in: two screens at two scales put logical pixels in two different spaces, so
-/// without it a place cannot be told which screen it is on (#479). A file written before
-/// this has none, and is read as it always was.
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Placement {
     x: f64,
@@ -91,8 +36,6 @@ pub struct Placement {
     scale: Option<f64>,
 }
 
-/// A screen's working area, the part the taskbar and the dock leave, in logical
-/// pixels at that screen's own scale, and that scale.
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct Area {
     x: f64,
@@ -102,15 +45,9 @@ struct Area {
     scale: f64,
 }
 
-/// Whether the desktop's screens share one space of physical pixels, which is where two
-/// screens at two scales are compared: Windows' and X11's, where a screen's logical
-/// pixels are its physical ones over its own scale, so two of them overlap in logical
-/// pixels that are nowhere near each other on the desk (#479). A Mac's screens share
-/// one space of points, which its logical pixels already are.
 const DESK_IN_PIXELS: bool = cfg!(not(target_os = "macos"));
 
 impl Area {
-    /// How much of `placed` lies on this screen, as an area of the desk.
     fn overlap(&self, placed: &Placement) -> f64 {
         let (mine, its) = scales(self, placed);
         let (x, y, width, height) = (
@@ -131,10 +68,6 @@ impl Area {
     }
 }
 
-/// What a screen's logical pixels and a place's are each multiplied by to put both on
-/// the desk: their own scales where the desk is in physical pixels and the place says
-/// what it was measured in; one, both of them, otherwise - a Mac's points, and a place
-/// from before the scale was written down, which is compared as it always was.
 fn scales(screen: &Area, placed: &Placement) -> (f64, f64) {
     match placed.scale {
         Some(its) if DESK_IN_PIXELS && its > 0.0 && screen.scale > 0.0 => (screen.scale, its),
@@ -142,22 +75,12 @@ fn scales(screen: &Area, placed: &Placement) -> (f64, f64) {
     }
 }
 
-/// Every open window's place as it stands, by label, so the one that closes can be
-/// written down. Starts from what the file said, so a window that opened maximised
-/// and closed without ever being made smaller still knows where it goes back to.
 #[derive(Default)]
 struct Placements {
     windows: Mutex<HashMap<String, Followed>>,
     remembered: Mutex<Option<Placement>>,
 }
 
-/// One window, followed: the bounds it has now, the bounds it had one move before,
-/// and whether it is maximised.
-///
-/// The bounds before are what a maximise goes back to, because Windows says a window
-/// has moved before it says the window is maximised: the move that arrives first
-/// already carries the screen's bounds, and only the event after it says why. So
-/// when a maximise is seen, the latest bounds are dropped for the ones before them.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 struct Followed {
     latest: Option<Placement>,
@@ -178,7 +101,6 @@ impl Followed {
         }
     }
 
-    /// A move or a resize, with the bounds as they are now and whether it is maximised.
     fn saw(&mut self, bounds: Option<Placement>, maximized: bool) {
         if maximized {
             if !self.maximized {
@@ -195,7 +117,6 @@ impl Followed {
         }
     }
 
-    /// What to write down: the bounds and, where it is maximised, that it is.
     fn placement(&self) -> Option<Placement> {
         self.latest.map(|was| Placement {
             maximized: self.maximized,
@@ -204,7 +125,6 @@ impl Followed {
     }
 }
 
-/// The app's builder with what this keeps: every window's place, followed as it moves.
 pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::Engine> {
     builder.manage(Placements::default()).on_window_event(noted)
 }
@@ -213,8 +133,6 @@ fn file(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(config_dir(app)?.join(FILE))
 }
 
-/// The main window's config with the last place put into it, or the config as it was
-/// where there is no place yet, or where the config names a place of its own.
 pub fn restored(app: &AppHandle, config: &WindowConfig) -> WindowConfig {
     let mut config = named(config, asked_away());
     if let (Some(x), Some(y)) = (config.x, config.y) {
@@ -237,9 +155,6 @@ pub fn restored(app: &AppHandle, config: &WindowConfig) -> WindowConfig {
     put_into(config, placed)
 }
 
-/// A config with a kept place put into it: the bounds, and whether it is maximised over
-/// them. The one way a kept place becomes a window's config, so what the file says is
-/// what the window is built as, on every platform.
 fn put_into(mut config: WindowConfig, placed: Placement) -> WindowConfig {
     if positions() {
         config.x = Some(placed.x);
@@ -252,10 +167,6 @@ fn put_into(mut config: WindowConfig, placed: Placement) -> WindowConfig {
     config
 }
 
-/// The main window's builder with the last place put into it, as `restored` puts it
-/// into the config: for the main window built again after the last one closed, which
-/// is the Dock icon clicked on a Mac (see `reopen` in launch.rs). Built there, as at
-/// launch, so there is no frame in the default place first.
 pub fn reopened<'a, R: tauri::Runtime, M: Manager<R>>(
     app: &AppHandle,
     builder: tauri::WebviewWindowBuilder<'a, R, M>,
@@ -278,17 +189,9 @@ pub fn reopened<'a, R: tauri::Runtime, M: Manager<R>>(
         .maximized(placed.maximized)
 }
 
-/// The size `tauri.conf.json` gives the main window, which a window built again after
-/// the last one closed is built at too (see `window_builder` in launch.rs).
 const DEFAULT_WIDTH: f64 = 1180.0;
 const DEFAULT_HEIGHT: f64 = 760.0;
 
-/// Where a window opens on a Mac with no place kept for it: across the middle of the
-/// main screen and straight under the menu bar, the way a Mac's own apps open a window.
-/// Left to itself `AppKit` centres it (`NSWindow.center`, which tao calls for a window
-/// with no position), and that puts it "somewhat above centre" - a strip of desktop
-/// over the window that nothing on a Mac leaves there (#679, #343). Elsewhere the
-/// platform's own first place stands.
 fn first_place(app: &AppHandle, width: f64, height: f64) -> Option<Placement> {
     if !cfg!(target_os = "macos") {
         return None;
@@ -298,7 +201,6 @@ fn first_place(app: &AppHandle, width: f64, height: f64) -> Option<Placement> {
         .map(|screen| under_the_menu_bar(screen, width, height))
 }
 
-/// A window of this size at the top of `screen`, across its middle, made to fit it.
 fn under_the_menu_bar(screen: &Area, width: f64, height: f64) -> Placement {
     let width = width.min(screen.width);
     let height = height.min(screen.height);
@@ -312,14 +214,10 @@ fn under_the_menu_bar(screen: &Area, width: f64, height: f64) -> Placement {
     }
 }
 
-/// Whether a window may be put where it was: everywhere, Linux included, whose windows
-/// are X11 windows under CEF even in a Wayland session (see linux.rs).
 fn positions() -> bool {
     true
 }
 
-/// The place the file says, made to fit the screens there are, and noted as where a
-/// window that opens maximised goes back to. Nothing where there is no place yet.
 fn last_place(app: &AppHandle) -> Option<Placement> {
     let placed = read(app)?;
     if let Some(kept) = app.try_state::<Placements>() {
@@ -339,14 +237,6 @@ fn last_place(app: &AppHandle) -> Option<Placement> {
     })
 }
 
-/// The main window built where it was put back, and put there to the pixel where the
-/// system put it elsewhere (#479). On Windows a window is built at a place in logical pixels, which tao turns
-/// into pixels with the scale of the first screen that place falls on at that screen's
-/// scale - and beside a screen at another scale, that can be the wrong one: a place on a
-/// laptop panel at 200% is also a place on the monitor at 100% beside it, which comes
-/// first. Moved there in pixels, which mean one place on the desk; the system then sizes
-/// it for that screen's scale. A Mac's places are points, and Linux's screens share one
-/// scale, so there it is where it was asked to be already.
 pub fn settled<R: Runtime, M: Manager<R>>(
     building: WebviewWindowBuilder<'_, R, M>,
 ) -> tauri::Result<WebviewWindow<R>> {
@@ -355,13 +245,6 @@ pub fn settled<R: Runtime, M: Manager<R>>(
     Ok(window)
 }
 
-/// See `settled`.
-///
-/// A window that opens maximised is judged by its screen, not its corner: its corner is
-/// the screen's, never the place put back, and moving it - which on Windows tao does by
-/// taking the maximise off first - opened every maximised window as a normal one (#1086).
-/// So it is only moved where it was maximised over the wrong screen, and through
-/// `moved_as_it_is`, which keeps it maximised.
 fn settle<R: Runtime>(window: &WebviewWindow<R>) {
     #[cfg(windows)]
     {
@@ -389,10 +272,6 @@ fn settle<R: Runtime>(window: &WebviewWindow<R>) {
     let _ = window;
 }
 
-/// Whether a window built at `at`, in physical pixels, is moved to `put`: a normal window
-/// where it is more than a pixel off, a maximised one only where `screen`, the screen it
-/// is maximised over, is not the one `put` is on. A screen that cannot be said leaves a
-/// maximised window as it is, since moving it is what could cost it its state.
 #[cfg_attr(
     not(any(windows, test)),
     allow(dead_code, reason = "only Windows puts a window back to the pixel")
@@ -411,11 +290,6 @@ fn moves(
     })
 }
 
-/// Moves a window and keeps what it was: maximised stays maximised. The one way anything
-/// in the crate moves a window that may be maximised, because tao on Windows takes a
-/// window's maximise off before it moves or sizes it, and a window put back where it was
-/// then came back as a normal one (#1086). Full screen is never moved: it covers its
-/// screen, and nothing puts it back.
 pub fn moved_as_it_is<R: Runtime>(
     window: &WebviewWindow<R>,
     to: impl Into<tauri::Position>,
@@ -431,9 +305,6 @@ pub fn moved_as_it_is<R: Runtime>(
     Ok(())
 }
 
-/// Where the compositor places the window and never says on which screen - Wayland's
-/// way - its place says nothing, and the screen at its corner may be a portrait one
-/// beside the screen it opens on. So it is only kept no bigger than the biggest screen.
 fn sized_for_any(placed: Placement, screens: &[Area]) -> Placement {
     let widest = screens
         .iter()
@@ -453,19 +324,10 @@ fn sized_for_any(placed: Placement, screens: &[Area]) -> Placement {
     }
 }
 
-/// Whether the config says where the window goes, which the app's own config never
-/// does. A build that says so meant it: a probe or a drive opens its window off the
-/// screen on purpose, so that it never lands in front of somebody working, and a
-/// remembered place would pull it back on.
 pub fn names_its_place(config: &WindowConfig) -> bool {
     config.x.is_some() || config.y.is_some()
 }
 
-/// The config a window is built from, with what a drive asked for put into it: off the
-/// screen where `NIB_OFF_SCREEN` says so, and - wherever the place is named, by the
-/// switch or by the build's own config - never taking the keyboard. A window that
-/// opens somewhere nobody is looking has no business taking the typing from whoever
-/// is working in front of it.
 fn named(config: &WindowConfig, away: bool) -> WindowConfig {
     let mut config = config.clone();
     if away {
@@ -478,50 +340,18 @@ fn named(config: &WindowConfig, away: bool) -> WindowConfig {
     config
 }
 
-/// Whether the drive that started this run asked for every window off the screen.
-/// Any value but `0`, as with the launch trace's switch.
 pub(crate) fn asked_away() -> bool {
     std::env::var_os(OFF_SCREEN).is_some_and(|value| !value.is_empty() && value != "0")
 }
 
-/// Where this run's windows open, where a place was named for them: the first
-/// window's, which `restored` notes, so that a second window a probe opens goes where
-/// the first went rather than into the middle of the screen.
 pub fn away() -> Option<(f64, f64)> {
     AWAY.get().copied()
 }
 
-/// Builds a window at a named place without a frame of it anywhere else.
-///
-/// Hidden, put there, and only then shown, whatever the config says about being
-/// visible. Two reasons it cannot simply be built there: on Windows, tao keeps a
-/// starting place only when it falls on a screen and hands any other to the system,
-/// which cascades it onto the primary one - so a window built visible appeared there,
-/// in the middle of somebody's work, and only then went where it was sent. Moving a
-/// window that is still hidden is honoured wherever it goes. And it is shown without
-/// being brought forward: built unfocused, tao shows it the way `SW_SHOWNOACTIVATE`
-/// does, so the window that was in front stays in front.
-///
-/// And on Windows it is not even created in the cascade's place: see `created_away`,
-/// which hands the system the place tao would have dropped. Hidden is a state a window
-/// can leave by any road - one probe window in about twenty cold launches was once
-/// seen on a screen at the cascade's corner before the drive had asked it anything -
-/// and a window that has never had a pixel of itself on any screen has no frame there
-/// to show, whichever road it took.
-///
-/// And under every other window, for as long as it is open. The system hands the
-/// keyboard to the next window down when the one in front closes, and a probe that sat
-/// above the reader's other windows could be that next window - an off-screen probe the
-/// window in front, five seconds into a launch nothing had asked to come forward, was
-/// seen on 2026-09-30 - with the typing going somewhere nobody could see. tao holds a
-/// window that asks for the bottom there through every move.
 pub fn built_away<R: Runtime, M: Manager<R>>(
     building: WebviewWindowBuilder<'_, R, M>,
     (x, y): (f64, f64),
 ) -> tauri::Result<WebviewWindow<R>> {
-    // No taskbar button either, which tao and winit add to any window not asked to skip
-    // it, whatever its style: a button is a way to bring the window forward. See
-    // foreground.rs for the rest of what keeps a probe's window from ever being in front.
     let building = building
         .visible(false)
         .focused(false)
@@ -537,16 +367,6 @@ pub fn built_away<R: Runtime, M: Manager<R>>(
     Ok(window)
 }
 
-/// Every top-level window this thread creates while `during` runs is created off the
-/// screen, whatever place it asked for.
-///
-/// tao turns a starting place that is on no screen into `CW_USEDEFAULT`, so a window
-/// sent away is born at the system's cascade - on the primary screen - and only moved
-/// off it once the webview inside has been built, which on a cold profile is seconds.
-/// A computer-based-training hook is the system's own seam for exactly this: it is
-/// told of each window before it exists, with the structure the window will be
-/// created from, and may change it. Here it changes the place and nothing else, for
-/// the windows of this thread alone, and only while one build runs.
 #[cfg(windows)]
 mod created_away {
     use std::cell::Cell;
@@ -558,14 +378,9 @@ mod created_away {
         HHOOK, WH_CBT, WS_CHILD,
     };
 
-    /// Off every screen, in the pixels `CreateWindowEx` takes: the corner a minimised
-    /// window is parked in. The system clamps it nearer, and nearer is still far past
-    /// any desk of monitors.
     const PARKED: i32 = -32_000;
 
     thread_local! {
-        /// Whether a build on this thread is asking, so a window created by anything else
-        /// on the thread - later, or by a build that was not sent away - is left alone.
         static ASKING: Cell<bool> = const { Cell::new(false) };
     }
 
@@ -575,14 +390,9 @@ mod created_away {
     )]
     unsafe extern "system" fn creating(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
         if u32::try_from(code) == Ok(HCBT_CREATEWND) && ASKING.get() {
-            // Safe: for `HCBT_CREATEWND` the system passes a live `CBT_CREATEWND` whose
-            // `lpcs` is the structure the window is about to be created from, and it is
-            // ours to change until this returns.
             unsafe {
                 let told = lparam.0 as *const CBT_CREATEWNDW;
                 if let Some(creating) = told.as_ref().and_then(|told| told.lpcs.as_mut()) {
-                    // A child goes where its parent does; only a window of its own has a
-                    // place on the screen.
                     if u32::from_ne_bytes(creating.style.to_ne_bytes()) & WS_CHILD.0 == 0 {
                         creating.x = PARKED;
                         creating.y = PARKED;
@@ -590,20 +400,14 @@ mod created_away {
                 }
             }
         }
-        // Safe: handing the call on is what a hook owes the rest of the chain.
         unsafe { CallNextHookEx(HHOOK::default(), code, wparam, lparam) }
     }
 
-    /// Runs `making` with every top-level window it creates on this thread created off
-    /// the screen. Where the hook cannot be set, `making` runs as it always did, and the
-    /// window is moved away after it is built as it always was.
     #[allow(
         unsafe_code,
         reason = "setting and removing a window hook is a Win32 call"
     )]
     pub fn during<T>(making: impl FnOnce() -> T) -> T {
-        // Safe: a hook on this thread alone, with a procedure that lives for the whole
-        // process, removed below before this returns.
         let hook = unsafe {
             SetWindowsHookExW(
                 WH_CBT,
@@ -616,22 +420,12 @@ mod created_away {
         let made = making();
         ASKING.set(false);
         if let Ok(hook) = hook {
-            // Safe: the hook set above, removed once.
             let _ = unsafe { UnhookWindowsHookEx(hook) };
         }
         made
     }
 }
 
-/// Builds any window after the first where the first went: off the screen with it
-/// where a drive sent it there, and as the builder says otherwise.
-///
-/// The one road every later window takes - a second window, a page's sign-in popup -
-/// because each of them used to decide for itself, and the popup forgot: built as its
-/// page asked, it was handed to the system at a place on no screen, which cascaded it
-/// onto the primary one in front of whoever was working (2026-09-30, a probe's popup
-/// at 0,0). A window that does not come through here is a window that can do that
-/// again; the test below holds the crate to it.
 pub fn built<R: Runtime, M: Manager<R>>(
     building: WebviewWindowBuilder<'_, R, M>,
 ) -> tauri::Result<WebviewWindow<R>> {
@@ -643,14 +437,6 @@ pub fn built<R: Runtime, M: Manager<R>>(
     Ok(window)
 }
 
-/// Brings a window forward because somebody asked for the app - a second launch, a
-/// link - unless this run's windows were sent off the screen, where coming forward
-/// would take the keyboard from whoever is working and show them nothing.
-///
-/// On Windows tao's own way forward, where the system says no, presses Alt for the
-/// app - a key the window in front receives - and asks again, which no lock refuses: so
-/// under the switch this must never be reached at all, and nothing else in the crate
-/// asks a window for the keyboard; see the test below.
 pub fn raised<R: Runtime>(window: &Window<R>) {
     if away().is_some() {
         return;
@@ -659,12 +445,6 @@ pub fn raised<R: Runtime>(window: &Window<R>) {
     let _ = window.set_focus();
 }
 
-/// Gives the keyboard to one of the app's own webviews - the page taking it back from a
-/// web tab's, a chord the app answers - unless this run's windows were sent off the
-/// screen. A webview given the keyboard activates the window it is in, and in a process
-/// that may take the foreground an activated window is the window in front, off the
-/// screen or not: a key pressed inside a probe's page did exactly that on 2026-09-30,
-/// by way of `web_keys.rs`.
 pub fn keyboard_to<R: Runtime>(webview: &Webview<R>) {
     if away().is_some() {
         return;
@@ -672,9 +452,6 @@ pub fn keyboard_to<R: Runtime>(webview: &Webview<R>) {
     let _ = webview.set_focus();
 }
 
-/// The keyboard into a web tab's page drawn under the app, on a press in it
-/// (`web_visual.rs`), unless this run's windows were sent off the screen: the engine takes
-/// it itself for a windowed page, and is told to for one drawn as a visual.
 #[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
@@ -686,7 +463,6 @@ pub fn keyboard_into(
     if away().is_some() {
         return;
     }
-    // Safe: a live controller of this thread's own page.
     let _ = unsafe {
         page.MoveFocus(
             webview2_com::Microsoft::Web::WebView2::Win32::COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC,
@@ -694,16 +470,11 @@ pub fn keyboard_into(
     };
 }
 
-/// The keyboard back to the page that asks, from a web tab's page holding it: a site's
-/// question, a pairing request, a row of a Mac's menu bar. The page's one way to it, so
-/// it is `keyboard_to`'s answer as well.
 #[tauri::command]
 pub fn take_keyboard(webview: Webview) {
     keyboard_to(&webview);
 }
 
-/// One of the app's windows brought forward from the page - the presenter's, asked for
-/// again while it is open. The page's one way to it, so it is `raised`'s answer as well.
 #[tauri::command]
 pub fn raise_window(app: AppHandle, label: String) {
     if let Some(window) = app.get_window(&label) {
@@ -720,8 +491,6 @@ fn read(app: &AppHandle) -> Option<Placement> {
     sane(&placed).then_some(placed)
 }
 
-/// Whether what the file said is a window at all: numbers that are numbers, and a
-/// size with room in it. A disk keeps halves of things.
 fn sane(placed: &Placement) -> bool {
     [placed.x, placed.y, placed.width, placed.height]
         .iter()
@@ -730,8 +499,6 @@ fn sane(placed: &Placement) -> bool {
         && placed.height >= 1.0
 }
 
-/// The screens there are, the primary one first, as working areas in their own
-/// logical pixels.
 fn areas(app: &AppHandle) -> Vec<Area> {
     let mut screens = app.available_monitors().unwrap_or_default();
     if let Ok(Some(primary)) = app.primary_monitor() {
@@ -757,15 +524,6 @@ fn area_of(screen: &Monitor) -> Area {
     }
 }
 
-/// Where a window last placed at `placed` goes on these screens.
-///
-/// The screen it is mostly on, or - where it is on none of them any more - the first,
-/// which the caller makes the primary one. It is made to fit that screen, then kept on
-/// it: the top edge never above the screen's top, where the tab strip would be out of
-/// reach, and at least `STAYS` of it inside every other edge. A window that is on no
-/// screen at all is centred on the first rather than pushed against its edge.
-///
-/// No screens at all - a machine that could not say - leaves it where it was.
 fn onto(placed: Placement, screens: &[Area]) -> Placement {
     let best = screens
         .iter()
@@ -778,9 +536,6 @@ fn onto(placed: Placement, screens: &[Area]) -> Placement {
         return placed;
     };
 
-    // Into the logical pixels of the screen it goes onto, the ones the clamp below is in
-    // and the ones it is built in there; the size is what it was, as a screen of another
-    // scale keeps a window's logical size.
     let (mine, its) = scales(screen, &placed);
     let placed = Placement {
         x: placed.x * its / mine,
@@ -817,27 +572,14 @@ fn onto(placed: Placement, screens: &[Area]) -> Placement {
     }
 }
 
-/// Follows every window as it moves, and writes the place down as one closes.
-///
-/// Read on every move and every resize, which is a handful of calls into the window
-/// and no disk; written only on the way out.
 fn noted(window: &Window, event: &WindowEvent) {
     match event {
         WindowEvent::Moved(_) | WindowEvent::Resized(_) => follow(window),
-        // Both, because a close can be answered by the page destroying the window
-        // itself, and a window can go without being asked. Writing twice is writing the
-        // same few bytes twice.
         WindowEvent::CloseRequested { .. } | WindowEvent::Destroyed => keep(window),
         _ => {}
     }
 }
 
-/// Notes where every window is, now, while each of them still exists. What a quit does
-/// before it asks any window to go (see `quit` in lifecycle.rs), because a window that
-/// is being destroyed can no longer say where it is, and the last move it was heard
-/// of is not where it is: on a Mac the resize a drag ends on is not reported, so the
-/// place written was a step short of where the drag ended. The close that follows
-/// writes it down as ever.
 pub fn note_every_window(app: &AppHandle) {
     for window in app.windows().values() {
         follow(window);
@@ -845,8 +587,6 @@ pub fn note_every_window(app: &AppHandle) {
 }
 
 fn follow(window: &Window) {
-    // Neither minimised nor full screen is a place to come back to; see the top of
-    // this file. Nothing about the window is changed by either, so nothing is noted.
     if window.is_minimized().unwrap_or(true) || window.is_fullscreen().unwrap_or(true) {
         return;
     }
@@ -865,7 +605,6 @@ fn follow(window: &Window) {
         .saw(bounds, maximized);
 }
 
-/// The window's own bounds as it stands, in logical pixels at its screen's scale.
 fn bounds(window: &Window) -> Option<Placement> {
     let scale = window.scale_factor().ok()?;
     let at = window.outer_position().ok()?.to_logical::<f64>(scale);
@@ -905,8 +644,6 @@ fn keep(window: &Window) {
             return;
         }
     }
-    // A place that could not be written costs the next launch its place and nothing
-    // else, so there is nobody to tell.
     let _ = write_atomically(&path, text.as_bytes());
 }
 
@@ -937,7 +674,6 @@ mod tests {
         scale: 1.0,
     };
 
-    /// A monitor to the right of the laptop, the way a desk has one.
     const MONITOR: Area = Area {
         x: 1440.0,
         y: -200.0,
@@ -955,8 +691,6 @@ mod tests {
         assert_eq!(onto(there, &[LAPTOP, MONITOR]), there);
     }
 
-    /// The monitor it was on has gone: centred on the screen there is, and made to
-    /// fit it.
     #[test]
     fn a_window_on_a_screen_that_has_gone_comes_back_to_the_first() {
         let was = placed(1800.0, 0.0, 1600.0, 1000.0);
@@ -970,8 +704,6 @@ mod tests {
         assert_eq!(onto(small, &[LAPTOP]), placed(320.0, 130.0, 800.0, 600.0));
     }
 
-    /// Half off the edge is still reachable, and is left alone; almost all the way off
-    /// is pulled back until a strip of it is on the screen.
     #[test]
     fn a_window_hanging_off_an_edge_keeps_a_strip_on_screen() {
         let half = placed(-500.0, 100.0, 1000.0, 600.0);
@@ -990,16 +722,12 @@ mod tests {
         );
     }
 
-    /// The top edge carries the tabs and is how a frameless window is dragged, so it is
-    /// never left above the screen.
     #[test]
     fn the_top_edge_is_never_above_the_screen() {
         let high = placed(100.0, -300.0, 1000.0, 600.0);
         assert_eq!(onto(high, &[LAPTOP]), placed(100.0, 0.0, 1000.0, 600.0));
     }
 
-    /// Wayland's three screens, one of them portrait at its corner: the window keeps its
-    /// size for the screen it opens on, which the compositor picks.
     #[test]
     fn where_the_compositor_places_it_only_the_biggest_screen_bounds_it() {
         let portrait = Area {
@@ -1018,7 +746,6 @@ mod tests {
         assert_eq!(sized_for_any(was, &[]), was);
     }
 
-    /// A screen with a lower resolution than last time.
     #[test]
     fn a_window_bigger_than_its_screen_is_made_to_fit() {
         let big = placed(0.0, 0.0, 2000.0, 1200.0);
@@ -1027,7 +754,6 @@ mod tests {
 
     #[test]
     fn the_screen_it_is_mostly_on_is_the_one_it_is_kept_on() {
-        // Mostly on the monitor, hanging off its bottom.
         let was = placed(1400.0, 1180.0, 1200.0, 800.0);
         assert_eq!(
             onto(was, &[LAPTOP, MONITOR]),
@@ -1050,9 +776,6 @@ mod tests {
         assert_eq!(onto(was, &[]), was);
     }
 
-    /// What Windows says as a window is maximised: a move to the screen's corner at the
-    /// screen's size, and only then that it is maximised. The bounds it goes back to
-    /// are the ones before the move.
     #[test]
     fn a_maximise_goes_back_to_the_bounds_before_it() {
         let normal = placed(140.0, 120.0, 887.0, 612.0);
@@ -1071,13 +794,10 @@ mod tests {
             })
         );
 
-        // And back again.
         followed.saw(Some(normal), false);
         assert_eq!(followed.placement(), Some(normal));
     }
 
-    /// A window that opened maximised and closed maximised keeps the bounds the file
-    /// gave it, since it never had any of its own.
     #[test]
     fn opened_maximised_keeps_what_the_file_said() {
         let was = Placement {
@@ -1095,9 +815,6 @@ mod tests {
         );
     }
 
-    /// What a quit noted while the window was there is what its close writes, although
-    /// a window being destroyed can no longer be read: bounds that cannot be had leave
-    /// the last ones alone. See `note_every_window`.
     #[test]
     fn a_window_that_cannot_be_read_keeps_the_place_last_noted() {
         let dragged = placed(300.0, 140.0, 940.0, 640.0);
@@ -1109,8 +826,6 @@ mod tests {
         assert_eq!(followed.placement(), Some(dragged));
     }
 
-    /// The app's own config leaves the place to this file; a probe's puts the window
-    /// off the screen and must keep it there.
     #[test]
     fn a_config_that_names_a_place_keeps_it() {
         assert!(!names_its_place(&WindowConfig::default()));
@@ -1127,8 +842,6 @@ mod tests {
         assert!(window["x"].is_null() && window["y"].is_null());
     }
 
-    /// `NIB_OFF_SCREEN` sends the window off the screen whatever the build said, and a
-    /// window sent there never takes the keyboard.
     #[test]
     fn a_drive_that_asks_gets_its_window_off_the_screen_and_unfocused() {
         let away = named(&WindowConfig::default(), true);
@@ -1136,7 +849,6 @@ mod tests {
         assert!(!away.focus);
     }
 
-    /// A build whose config names a place keeps it, and loses the keyboard with it.
     #[test]
     fn a_named_place_is_kept_and_never_focused() {
         let built = WindowConfig {
@@ -1149,7 +861,6 @@ mod tests {
         assert!(!away.focus);
     }
 
-    /// Somebody who opened the app gets the window they opened, in front of them.
     #[test]
     fn nothing_named_and_nothing_asked_changes_nothing() {
         let plain = named(&WindowConfig::default(), false);
@@ -1166,14 +877,8 @@ mod tests {
         assert!(serde_json::from_str::<Placement>("{\"x\":1}").is_err());
     }
 
-    /// Every window the crate builds is built where this run's windows go, or says
-    /// why it need not be. Read off the source, because a window that forgets is only
-    /// ever found by somebody it landed in front of: a page's popup did, until `built`.
     #[test]
     fn every_window_is_built_where_the_run_sends_them() {
-        // Built hidden and never shown: a page printed and gone.
-        // The CEF build's own two, which only its gate runs, placing each window on the
-        // screen it photographs.
         let excused = ["pdf.rs", "engine.rs", "engine/gate.rs"];
 
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
@@ -1210,16 +915,6 @@ mod tests {
         );
     }
 
-    /// Nothing in the crate asks for the keyboard or the front but `raised` and
-    /// `keyboard_to`, which both do nothing where a drive sent the windows away; and
-    /// nothing asks Windows or an engine for either directly - `WebView2`'s `MoveFocus`,
-    /// wry's `focus_parent` and a Chromium host's `set_focus` all activate the window the
-    /// page is in. Read off the source for the same reason as the test above: a call that
-    /// forgets is only ever found by the person whose typing it took. foreground.rs, which
-    /// keeps a probe out of the front, is the one file that names the system's calls, and
-    /// its test the one that makes them. keyboard.rs hands a window's keyboard back to the
-    /// page that had it, each engine its own way, and only through `returned` and
-    /// `keyboard_back`, which both stop first where the windows were sent away.
     #[test]
     fn nothing_takes_the_keyboard_or_the_front_past_the_guard() {
         let asks_the_system = [
@@ -1288,7 +983,6 @@ mod tests {
 
     #[test]
     fn a_first_window_on_a_mac_opens_under_the_menu_bar_across_the_middle() {
-        // A 1440 by 900 screen with a 25 point menu bar and the Dock hidden.
         let screen = Area {
             x: 0.0,
             y: 25.0,
@@ -1300,7 +994,6 @@ mod tests {
             under_the_menu_bar(&screen, 1180.0, 760.0),
             placed(130.0, 25.0, 1180.0, 760.0)
         );
-        // A screen smaller than the window: it fits, from the top left of the area.
         let small = Area {
             x: 0.0,
             y: 25.0,
@@ -1314,13 +1007,6 @@ mod tests {
         );
     }
 
-    /// #479: an external display at 100% as the primary screen, and a laptop panel at
-    /// 200% to its right - 2880 by 1800 pixels, 1440 by 900 of its own logical pixels.
-    /// Where those start is the platform's to say. On Windows and X11 a screen's logical
-    /// pixels are its pixels over its own scale, so the panel's start at 960, 1920 pixels
-    /// over two, and in logical pixels the panel overlaps the primary screen though it is
-    /// beside it on the desk. A Mac lays every screen out in points, so there the panel
-    /// starts where the primary screen ends, at 1920.
     const PRIMARY: Area = Area {
         x: 0.0,
         y: 0.0,
@@ -1343,11 +1029,6 @@ mod tests {
         }
     }
 
-    /// A window left wholly on the laptop panel - on Windows at 1960 by 200 pixels, which
-    /// is 980 by 100 at the panel's scale - goes back onto the panel, where it was, and
-    /// nowhere on the primary screen. Where the desk is in pixels, its logical pixels lie
-    /// on the primary screen as much as on the panel: compared in logical pixels the two
-    /// tied, and the primary screen, first, was chosen.
     #[test]
     fn a_window_on_a_screen_of_another_scale_stays_on_it() {
         let was = at_scale(2.0, PANEL.x + 20.0, 100.0, 900.0, 600.0);
@@ -1363,15 +1044,12 @@ mod tests {
         }
     }
 
-    /// And one on the primary screen stays there, beside a panel of another scale.
     #[test]
     fn a_window_on_the_primary_screen_beside_a_panel_stays_on_it() {
         let was = at_scale(1.0, 100.0, 80.0, 1180.0, 760.0);
         assert_eq!(onto(was, &[PRIMARY, PANEL]), was);
     }
 
-    /// A window left on a panel that has gone comes back to the screen there is, in that
-    /// screen's logical pixels and at the logical size it had.
     #[test]
     fn a_window_from_a_panel_that_has_gone_comes_back_at_its_size() {
         let was = at_scale(2.0, PANEL.x + 140.0, 100.0, 1000.0, 600.0);
@@ -1382,7 +1060,6 @@ mod tests {
         assert!(back.x >= PRIMARY.x && back.x + back.width <= PRIMARY.x + PRIMARY.width);
     }
 
-    /// A place written before the scale was is read as it always was.
     #[test]
     fn a_place_from_before_the_scale_is_compared_as_it_was() {
         let was = placed(100.0, 80.0, 1180.0, 760.0);
@@ -1396,9 +1073,6 @@ mod tests {
             .contains("scale"));
     }
 
-    /// #1086: what a window was as it closed is what it is built as at the next launch, on
-    /// every platform - maximised over the bounds it goes back to, or those bounds alone -
-    /// through the file and the screens it is judged against.
     #[test]
     fn a_window_reopens_as_it_was_left() {
         let normal = at_scale(1.0, 140.0, 120.0, 887.0, 612.0);
@@ -1422,10 +1096,6 @@ mod tests {
         }
     }
 
-    /// #1086: a window built maximised has the screen's corner, never the place put back,
-    /// and putting it back to the pixel took its maximise away on Windows. It is moved
-    /// only where it was maximised over another screen; a normal window wherever it is
-    /// more than a pixel off.
     #[test]
     fn a_maximised_window_is_moved_only_off_the_wrong_screen() {
         let put = (1960.0, 200.0);
@@ -1441,14 +1111,8 @@ mod tests {
         assert!(moves(put, (980.0, 100.0), false, primary));
     }
 
-    /// Nothing moves or sizes one of the app's windows but `moved_as_it_is`, which keeps
-    /// it maximised: tao on Windows takes the maximise off a window it moves or sizes, and a
-    /// call that forgets is a window that comes back normal (#1086). Read off the source
-    /// for the same reason as the tests above.
     #[test]
     fn nothing_moves_a_window_but_moved_as_it_is() {
-        // The quick-add window is never maximised (`maximizable(false)`), and a popup's
-        // views are webviews inside a window, not windows.
         let excused = ["quick_add.rs", "extensions/popup.rs"];
         let calls = [".set_position(", ".set_size(", ".set_outer_position("];
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");

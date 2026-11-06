@@ -1,12 +1,6 @@
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, onTestFinished, test, vi } from 'vitest'
 
-/** Every tab as a window on a canvas (issue #331), opened by Alt Alt, the top bar's button
- *  or the palette's row: one window per tab of every pane, the arrows walk them, Enter
- *  or a press opens one, Escape and the key again send them home. In the jsdom project
- *  because the windows are mounted; asked for less movement, so every window is where it
- *  goes at once and nothing waits on a frame. How it moves is overview/spring.ts's test. */
-
 window.matchMedia = ((query: string) => ({
   matches: query.includes('reduce'),
   media: query,
@@ -29,7 +23,6 @@ beforeEach(() => {
   workspace.panes.collapse()
   workspace.tabs = []
   for (const name of ['One', 'Two', 'Three']) workspace.openBlank(name, `# ${name}`)
-  // A second pane, whose tab is a window too.
   workspace.split('row')
   const made = mount(Overview, { target: document.body })
   close = () => void unmount(made, { outro: false })
@@ -91,7 +84,6 @@ test('the arrows walk to another window, which opens as a press on it does', asy
   const walked = document.activeElement as HTMLButtonElement | null
   expect(walked).not.toBe(windows()[0])
   expect(windows()).toContain(walked)
-  // Enter on a button is its click, in a browser; jsdom has no default actions.
   const id = workspace.tabs.find((one) => one.shown === walked?.getAttribute('aria-label'))?.id
   walked?.click()
   flushSync()
@@ -129,8 +121,6 @@ test('a web tab’s window shows its page as it was left, and only a draft’s w
   await opened()
   const web = windows().find((one) => one.querySelector('img'))
   expect(web?.querySelector('img')?.getAttribute('src')).toBe(pages.of(page).shot)
-  // Dashed where the strip draws its dot: words with no file. A page nobody kept loses
-  // nothing, and wears neither (Emil: many windows were dashed).
   expect(web?.classList.contains('unsaved')).toBe(false)
   const drafts = windows().filter((one) => one !== web)
   expect(drafts.length).toBeGreaterThan(0)
@@ -180,7 +170,6 @@ test('a window put by hand is found again by the next run, whose tabs have new i
   const { places } = await import('../../src/lib/overview/places.svelte')
   const [first] = workspace.tabs
   places.keepWindows({ [first?.id ?? '']: { x: 3000, y: 10, w: 300, h: 200 } }, workspace.tabs)
-  // The next run: the same tabs, every id new.
   const again = workspace.tabs.map((one) => ({
     id: `${one.id}-again`,
     kind: one.kind,
@@ -203,14 +192,11 @@ test('a window’s cross closes its tab the strip’s way, which asks where that
   flushSync()
   await tick()
   expect(closing).toHaveBeenCalledWith(id)
-  // The press was the cross's: the window was not opened and the view is still up.
   expect(tabOverview.open).toBe(true)
   expect(layer()).not.toBe(null)
 })
 
 test('each pane is its own window, moved where it is and never copied, and every tab is out of its strip', async () => {
-  // Asked for less movement, every window is out at once. The panes, which their tabs in
-  // front are the windows of.
   const panes = workspace.panes.all.map((one) => one.id)
   const shown = panes.map((id, index) => {
     const pane = document.createElement('div')
@@ -221,8 +207,6 @@ test('each pane is its own window, moved where it is and never copied, and every
   })
   onTestFinished(() => shown.forEach((one) => one.remove()))
   await opened()
-  // The pane itself is drawn as its window - moved, made small, taking no press - and the
-  // window over it draws nothing of it: no copy of the pane anywhere.
   for (const pane of shown) {
     expect(pane.style.transform).toMatch(/translate\(.*\) scale\(/)
     expect(pane.style.pointerEvents).toBe('none')
@@ -233,13 +217,10 @@ test('each pane is its own window, moved where it is and never copied, and every
     if (id && fronts.has(id)) expect(window.querySelector('.face')).toBe(null)
   }
   expect(tabOverview.lifted).toEqual([])
-  // And every tab is out of its strip, the ones in front too: the bar is the window's,
-  // seen, and a strip that kept them would show each of them twice.
   expect([...tabOverview.out].sort()).toEqual(workspace.tabs.map((one) => one.id).sort())
   expect(overlays.escape()).toBe(true)
   flushSync()
   await tick()
-  // Home, each pane is drawn where it is laid out again, as it always is.
   for (const pane of shown) expect(pane.getAttribute('style') ?? '').toBe('')
   expect(tabOverview.out).toEqual([])
 })
@@ -254,8 +235,6 @@ test('a pane holding a web page moves as its window, its picture in its hole and
   document.body.append(pane)
   onTestFinished(() => pane.remove())
   await opened()
-  // A window drawn from the photograph alone was the page over its pane's bar as it left
-  // and as it came home (#1136); the pane itself moves now, as a note's does.
   expect(pane.style.transform).toContain('scale(')
   expect(tabOverview.lifted).not.toContain(paneId)
   const window = windows().find(
@@ -284,12 +263,10 @@ test('the canvas is the window’s own ground, its sidebars sliding away, and th
   })
   const button = bar.querySelector('button')
   await opened()
-  // Nothing laid over the app: no ground of its own, the sidebars slid all the way out.
   expect(document.querySelector('.ground')).toBe(null)
   expect(document.documentElement.dataset.overview).toBe('slide')
   expect(side.style.getPropertyValue('--overview-slide')).toBe('1')
   expect(button?.style.getPropertyValue('--overview-open')).toBe('1')
-  // On what fades and slides itself, never on the whole of the app under it.
   expect(document.documentElement.style.getPropertyValue('--overview-open')).toBe('')
   expect(overlays.escape()).toBe(true)
   flushSync()
@@ -330,7 +307,6 @@ test('a window’s cross sits on its corner, red, and answers the pointer', asyn
   await opened()
   const window = windows()[0]
   const cross = window?.nextElementSibling as HTMLElement | null
-  // On the window's top right corner itself, its middle on it (the transform below).
   const [x, y, zoom] = (
     /translate\(([-\d.]+)px, ([-\d.]+)px\) scale\(([-\d.]+)/.exec(window?.style.transform ?? '') ??
     []
@@ -341,11 +317,7 @@ test('a window’s cross sits on its corner, red, and answers the pointer', asyn
   const [cx, cy] = (cross?.style.translate ?? '').split(' ').map(parseFloat)
   expect(cx).toBeCloseTo((x ?? 0) + width, 3)
   expect(cy).toBeCloseTo(y ?? 0, 3)
-  // The app's quiet grey button, only its cross red, small, and under the pointer lit
-  // and a little larger: its own rules, as the component declares them (jsdom lays
-  // nothing out and hovers nothing).
   const { default: source } = await import('../../src/lib/overview/Overview.svelte?raw')
-  /** The body of the rule whose selectors start `head`, up to its brace. */
   const rule = (head: string) => {
     const at = source.indexOf(`\n  ${head}`)
     return at < 0 ? '' : source.slice(source.indexOf('{', at), source.indexOf('}', at))
@@ -376,7 +348,6 @@ test('every window’s name, and the bubbles, are drawn under the panes and ever
   expect(layer()?.querySelector('.caption')).toBe(null)
   expect(under?.compareDocumentPosition(layer() as Node)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   for (const one of windows()) expect(one.parentElement?.classList.contains('canvas')).toBe(true)
-  // And it goes with the overview.
   expect(overlays.escape()).toBe(true)
   flushSync()
   await tick()
@@ -400,7 +371,6 @@ test('every scroll zooms about the pointer, Ctrl or not, and none moves the canv
     const now = read()
     return { x: (at.clientX - now.x) / now.zoom, y: (at.clientY - now.y) / now.zoom }
   }
-  // Asked for less movement, a notch is where it goes at once.
   for (const [deltaY, ctrlKey] of [
     [-100, false],
     [-6, false],
@@ -422,15 +392,12 @@ test('every scroll zooms about the pointer, Ctrl or not, and none moves the canv
     flushSync()
     const after = read()
     expect(after.zoom, `${String(deltaY)} ${String(ctrlKey)}`).toBeGreaterThan(before.zoom)
-    // Zoomed about the pointer and nothing else: the point under it stays under it.
     expect(pointUnder().x).toBeCloseTo(under.x)
     expect(pointUnder().y).toBeCloseTo(under.y)
   }
 })
 
 test('a zoom only moves the camera: where the windows lie, and how big, is the same at every zoom', async () => {
-  // Emil, round 4: scrolling changed the bubbles - the room kept under each window for
-  // its name grew as the camera drew back, and the windows were laid out again.
   await opened()
   const laidOut = () => {
     const [cx, cy, zoom] = (
@@ -462,7 +429,6 @@ test('a zoom only moves the camera: where the windows lie, and how big, is the s
     flushSync()
   }
   expect(document.querySelector<HTMLElement>('.world')?.style.transform).toMatch(/scale\(0\.[0-5]/)
-  // Once the zoom has come to rest, and a while after.
   await new Promise((go) => setTimeout(go, 400))
   flushSync()
   expect(laidOut()).toEqual(before)
@@ -487,7 +453,6 @@ test('Ctrl+Click chooses windows, and again lets one go; a plain click opens its
 })
 
 test('the sides are not opened or shut while it is up, by their buttons, keys or menu', async () => {
-  // Emil, round 4: the sidebar buttons did strange things in the overview.
   const panel = workspace.panel
   const right = workspace.rightShows
   await opened()

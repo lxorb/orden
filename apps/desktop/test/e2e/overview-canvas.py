@@ -1,20 +1,3 @@
-"""The tab overview's canvas, as Emil's fourth round asked for it (#331).
-
-What it checks, on the built web app in Chromium, with four spaces in All spaces:
-
-    the tab in front leaves the bar riding on its window, never vanishing as it begins
-    the bar keeps only what is the window's own and the overview's: no side's button, no
-      new tab, nothing about the panes under the canvas takes a press or is seen
-    the palette Shift Shift brings up is drawn over the overview, not in among it
-    zooming only moves the camera: the windows lie where they lay, the bubbles keep
-      their shape, and their lines keep their weight on the screen
-    Tidy up packs the spaces round a middle, not in a row
-    Ctrl+Click chooses two windows, and a drag of one moves both
-    a space's name carries the space, windows and all
-
-    python apps/desktop/test/e2e/overview-canvas.py
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
@@ -42,7 +25,6 @@ async () => {
 }
 """
 
-#: Every frame until `stop()`: the tab in front in the strip, and the tab riding on its window.
 SAMPLE = """
 () => {
   const frames = []
@@ -72,7 +54,6 @@ SAMPLE = """
 }
 """
 
-#: Every button in the bar seen or taking a press, that is not the window's or the overview's.
 BAR = """
 () => [...document.querySelectorAll('header[data-chrome="top"] button')]
   .filter((one) => !one.closest('[data-overview-keeps]') && !one.closest('[data-box]'))
@@ -85,7 +66,6 @@ BAR = """
   .map((one) => one.getAttribute('aria-label') || one.className)
 """
 
-#: Where each window lies on the canvas, and each bubble's box on the canvas.
 LAID = """
 () => ({
   windows: (() => {
@@ -101,14 +81,10 @@ LAID = """
 
 ZOOM = "() => Number(/scale\\(([-\\d.]+)\\)/.exec(document.querySelector('.under .world').style.transform)?.[1] ?? 1)"
 
-#: The bubbles on the screen.
 CELLS = "() => [...document.querySelectorAll('.bubble')].map((one) => { const b = one.getBoundingClientRect(); return [b.x, b.y, b.width, b.height] })"
 
-
-#: The tab worked in, and the tab in front of each pane.
 FRONTS = "() => { const ws = window.nibApp.workspace; return [ws.activeTabId, ...ws.panes.all.map((one) => one.activeTabId)] }"
 
-#: Windows of two spaces that lie on each other, by their names.
 CROSSED = """
 () => {
   const space = (label) => ['Work', 'Ideas', 'Lab'].find((one) => label.startsWith(one)) ?? 'Notes'
@@ -122,7 +98,6 @@ CROSSED = """
 }
 """
 
-
 def boxes_of(page: Page, label: str) -> list[float] | None:
     return page.evaluate(
         "(label) => { const one = [...document.querySelectorAll('.window')].find((w) => w.getAttribute('aria-label') === label);"
@@ -130,17 +105,14 @@ def boxes_of(page: Page, label: str) -> list[float] | None:
         label,
     )
 
-
 def settle(page: Page) -> None:
     page.wait_for_timeout(1300)
-
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 860})
     DRIVE.open(page)
     page.evaluate(SEED)
     DRIVE.settled(page)
-    # Once to fetch the overview, so the run looked at is not waiting on a download.
     page.keyboard.press("Alt")
     page.keyboard.press("Alt")
     wait_for(page, "document.querySelectorAll('.window').length >= 4", "the windows")
@@ -148,7 +120,6 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('.canvas')", "the overview gone")
 
-    # ── The tab in front rides its window out ───────────────────────
     page.evaluate(SAMPLE)
     page.keyboard.press("Alt")
     page.keyboard.press("Alt")
@@ -169,13 +140,11 @@ def drive(browser: Browser) -> None:
             wrong(f"[ride] the tab riding its window did not start where the tab was: {rider} vs {before}")
     say(f"[ride] {len(seen)} of {len(frames)} frames show the tab in front somewhere")
 
-    # ── The bar ─────────────────────────────────────────────────────
     left = page.evaluate(BAR)
     if left:
         wrong(f"[bar] still there in the overview: {left}")
     shot(page, "out")
 
-    # ── Shift Shift over it ─────────────────────────────────────────
     page.keyboard.press("Shift")
     page.keyboard.press("Shift")
     wait_for(page, "!!document.querySelector('.palette')", "the palette")
@@ -191,7 +160,6 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("Escape")
     page.wait_for_timeout(400)
 
-    # ── A zoom only moves the camera ────────────────────────────────
     before = page.evaluate(LAID)
     page.mouse.move(700, 500)
     for _ in range(6):
@@ -218,7 +186,6 @@ def drive(browser: Browser) -> None:
     if abs(ring[0] * ring[1] - 1.5) > 0.3 and abs(ring[0] * ring[1] - 2) > 0.3:
         wrong(f"[zoom] a window's ring is {ring[0] * ring[1]:.2f}px on the screen")
 
-    # ── Tidy up packs round a middle ────────────────────────────────
     page.click("button.tidy")
     settle(page)
     cells = page.evaluate(CELLS)
@@ -240,7 +207,6 @@ def drive(browser: Browser) -> None:
                 ):
                     wrong(f"[tidy] two spaces overlap: {one} {other}")
 
-    # ── Ctrl+Click chooses, and both move ───────────────────────────
     one, two = "One", "Two"
     a = boxes_of(page, one)
     b = boxes_of(page, two)
@@ -276,7 +242,6 @@ def drive(browser: Browser) -> None:
         if crossed:
             wrong(f"[choose] windows of two spaces lie on each other once let go: {crossed}")
 
-    # ── A space carried by its name ─────────────────────────────────
     name = page.evaluate(
         "() => { const n = [...document.querySelectorAll('[data-space-name]')].find((one) => one.textContent.trim() === 'Work');"
         " if (!n) return null; const b = n.getBoundingClientRect(); return [b.x + b.width / 2, b.y + b.height / 2] }"
@@ -303,7 +268,6 @@ def drive(browser: Browser) -> None:
         if crossed:
             wrong(f"[carry] windows of two spaces lie on each other once let go: {crossed}")
     page.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the overview's canvas: riding tabs, a quiet bar, zoom, tidy, choosing, carrying"))

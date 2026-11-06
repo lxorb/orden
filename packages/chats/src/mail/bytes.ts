@@ -1,5 +1,3 @@
-/** Bytes and words for the mail protocols, which are ASCII lines around 8-bit bodies. */
-
 const encoder = new TextEncoder()
 
 export function ascii(text: string): Uint8Array {
@@ -72,7 +70,6 @@ export function fromBase64(text: string): Uint8Array {
   return out.subarray(0, at)
 }
 
-/** Lines out of a stream of chunks, CRLF or LF, and runs of raw bytes when asked. */
 export class Reader {
   private held: Uint8Array = new Uint8Array(0)
 
@@ -80,7 +77,6 @@ export class Reader {
     this.held = this.held.length ? concat([this.held, bytes]) : bytes
   }
 
-  /** A line without its ending, or null until one has arrived whole. */
   line(): string | null {
     const end = this.held.indexOf(10)
     if (end < 0) return null

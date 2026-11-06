@@ -1,6 +1,3 @@
-/** Mail messages read (RFC 5322, 2045 to 2047, 2231) and written, as far as a chat needs:
- *  the words, the files, and the headers that say who and in reply to what. */
-
 import { ascii, decode, fromBase64, fromLatin, latin, toBase64 } from './bytes'
 
 export interface Address {
@@ -9,7 +6,6 @@ export interface Address {
 }
 
 interface Part {
-  /** Where it is in the message, `1.2`; what an attachment is asked for by. */
   path: string
   type: string
   params: Record<string, string>
@@ -25,7 +21,6 @@ export interface Parsed {
   attachments: Part[]
 }
 
-/** Words in a header, encoded words (`=?utf-8?Q?...?=`) decoded. */
 export function decodeWords(text: string): string {
   return text
     .replace(/(=\?[^?]+\?[BbQq]\?[^?]*\?=)\s+(?==\?)/g, '$1')
@@ -47,7 +42,6 @@ export function decodeWords(text: string): string {
     )
 }
 
-/** Header lines, unfolded, by lower-case name; values as Latin-1 of their bytes. */
 export function headersOf(block: string): Map<string, string[]> {
   const headers = new Map<string, string[]>()
   for (const line of block.replace(/\r?\n[ \t]+/g, ' ').split(/\r?\n/)) {
@@ -62,7 +56,6 @@ export function headersOf(block: string): Map<string, string[]> {
   return headers
 }
 
-/** A header's value with its parameters: `text/plain; charset=utf-8`. */
 export function valueWithParams(text: string): { value: string; params: Record<string, string> } {
   const parts: string[] = []
   let current = ''
@@ -107,7 +100,6 @@ export function valueWithParams(text: string): { value: string; params: Record<s
   return { value: (parts[0] ?? '').trim().toLowerCase(), params: { ...params, ...decoded } }
 }
 
-/** People out of an address header: `"Emil V." <emil@example.org>, lucile@example.org`. */
 export function addressesOf(text: string): Address[] {
   const out: Address[] = []
   for (const piece of splitOutside(decodeWords(text), ',')) {
@@ -138,7 +130,6 @@ function splitOutside(text: string, by: string): string[] {
   return out
 }
 
-/** Message ids out of `References` or `In-Reply-To`, without their angles. */
 export function idsOf(text: string | undefined): string[] {
   return [...(text ?? '').matchAll(/<([^<>\s]+)>/g)].map((one) => one[1] ?? '').filter(Boolean)
 }
@@ -231,8 +222,6 @@ export function parseMessage(bytes: Uint8Array): Parsed {
   }
 }
 
-/** The words of a reply without what it quotes at its end: the `On ... wrote:` line and
- *  the `>` lines under it. */
 export function withoutQuote(text: string): string {
   const lines = text.replace(/\s+$/, '').split('\n')
   let end = lines.length
@@ -306,7 +295,6 @@ function rfcDate(date: Date): string {
   return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()} ${two(date.getHours())}:${two(date.getMinutes())}:${two(date.getSeconds())} ${zone}`
 }
 
-/** A message as it goes to SMTP and into the Sent folder, CRLF throughout. */
 export function buildMessage(
   mail: Outgoing,
   boundary = `=_orden_${mail.messageId.split('@')[0]}`,

@@ -1,26 +1,3 @@
-"""A web tab's page drawn under the app's own page on WKWebView, driven by a real hand (#1138).
-
-A probe build is started on the runner's screen with `NIB_PAGES_UNDER=1`, a page of one
-colour is opened in a web tab, and everything a page under the app has to get right is done
-to it with the system's own input (Quartz events), not the page's scripts:
-
-    drawn       the page's colour in its hole; a layer of the app's drawn over it there,
-                and the page beside it
-    the layer   a click on the layer is the app's, one beside it the page's
-    the press   a click, a right click, and the field it lands in has the keyboard
-    typing      keys typed into the field arrive in it
-    the wheel   a scroll over the page scrolls it
-    a drag      an element dragged onto another inside the page is dropped there
-    the cursor  an I-beam over the field
-    reading     the accessibility hit test finds the page's own button at its place
-    overview    the tab overview opened and closed, filmed: no frame flashes, and the page
-                is never drawn over the overview
-
-What the page heard it posts to this drive's own server.
-
-    python3 scripts/web-under-mac-drive.py --exe <probe build> --identifier <probe id> --out <folder>
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -78,7 +55,6 @@ setInterval(say, 400)
 
 HEARD: dict[str, Any] = {}
 
-
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_: Any) -> None:
         pass
@@ -99,15 +75,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_response(204)
         self.end_headers()
 
-
 def heard(seconds: float = 1.2) -> dict[str, Any]:
     time.sleep(seconds)
     return dict(HEARD)
 
-
 def config_dir(identifier: str) -> pathlib.Path:
     return pathlib.Path.home() / "Library" / "Application Support" / identifier
-
 
 class App:
     def __init__(self, at: int, secret: str) -> None:
@@ -127,7 +100,6 @@ class App:
             return {"error": str(error)}
         return answer.get("value") if answer.get("ok", answer.get("status") == "ok") else answer
 
-
 def endpoint(identifier: str, pid: int, secret: str) -> App:
     path = config_dir(identifier) / "automation.json"
     until = time.monotonic() + 120
@@ -141,16 +113,13 @@ def endpoint(identifier: str, pid: int, secret: str) -> App:
         time.sleep(0.25)
     raise SystemExit(f"the app never wrote {path}")
 
-
 def post(kind: int, at: tuple[float, float], button: int = Quartz.kCGMouseButtonLeft) -> None:
     event = Quartz.CGEventCreateMouseEvent(None, kind, at, button)
     Quartz.CGEventPost(Quartz.kCGHIDEventTap, event)
 
-
 def point(at: tuple[float, float]) -> None:
     post(Quartz.kCGEventMouseMoved, at)
     time.sleep(0.15)
-
 
 def press(at: tuple[float, float], right: bool = False) -> None:
     point(at)
@@ -165,7 +134,6 @@ def press(at: tuple[float, float], right: bool = False) -> None:
     post(up, at, button)
     time.sleep(0.4)
 
-
 def typed(text: str) -> None:
     for letter in text:
         for down in (True, False):
@@ -176,7 +144,6 @@ def typed(text: str) -> None:
         time.sleep(0.05)
     time.sleep(0.4)
 
-
 def scrolled_down(at: tuple[float, float]) -> None:
     point(at)
     for _ in range(4):
@@ -184,7 +151,6 @@ def scrolled_down(at: tuple[float, float]) -> None:
         Quartz.CGEventSetLocation(event, at)
         Quartz.CGEventPost(Quartz.kCGHIDEventTap, event)
         time.sleep(0.05)
-
 
 def dragged(start: tuple[float, float], end: tuple[float, float]) -> None:
     point(start)
@@ -199,9 +165,7 @@ def dragged(start: tuple[float, float], end: tuple[float, float]) -> None:
     post(Quartz.kCGEventLeftMouseUp, end)
     time.sleep(0.6)
 
-
 def beam_now() -> bool | None:
-    """Whether the system's cursor is the I-beam; None where it cannot be read."""
 
     NSApplication.sharedApplication()
     now, beam = NSCursor.currentSystemCursor(), NSCursor.IBeamCursor()
@@ -211,10 +175,7 @@ def beam_now() -> bool | None:
         now.hotSpot() == beam.hotSpot() and now.image().size() == beam.image().size()
     )
 
-
 def named_at(at: tuple[float, float]) -> str | None:
-    """What the accessibility hit test finds at a point of the screen: its role and its
-    title or description. None where this process may not ask."""
 
     error, element = AXUIElementCopyElementAtPosition(AXUIElementCreateSystemWide(), at[0], at[1], None)
     if error != 0 or element is None:
@@ -227,20 +188,16 @@ def named_at(at: tuple[float, float]) -> str | None:
             said.append(str(value))
     return "|".join(said)
 
-
 def shot() -> Image.Image:
     return ImageGrab.grab().convert("RGB")
-
 
 def colour_at(image: Image.Image, at: tuple[float, float], ratio: float) -> tuple[int, int, int]:
     x, y = round(at[0] * ratio), round(at[1] * ratio)
     patch = ImageStat.Stat(image.crop((x - 3, y - 3, x + 3, y + 3))).mean
     return (round(patch[0]), round(patch[1]), round(patch[2]))
 
-
 def near(one: tuple[int, int, int], other: tuple[int, int, int], by: int = 40) -> bool:
     return all(abs(one[k] - other[k]) < by for k in range(3))
-
 
 class Film:
     def __init__(self) -> None:
@@ -257,7 +214,6 @@ class Film:
         self.going = False
         self.thread.join()
         return self.frames
-
 
 OPENING = """
 (() => {
@@ -276,7 +232,6 @@ OPENING = """
 """
 OPENED = "(() => { const got = window.__ov; window.__ov = null; return got })()"
 
-
 def opened_at(log: list[list[Any]], at: float) -> float | None:
     best = None
     for when, open in log:
@@ -285,7 +240,6 @@ def opened_at(log: list[list[Any]], at: float) -> float | None:
         else:
             break
     return best
-
 
 def overview(app: App, hole: tuple[float, float, float, float], ratio: float, out: pathlib.Path) -> list[str]:
     wrong: list[str] = []
@@ -316,12 +270,10 @@ def overview(app: App, hole: tuple[float, float, float, float], ratio: float, ou
     for index, ((_, one), open) in enumerate(zip(frames, opens)):
         if open is None or open < 0.25:
             continue
-        # Three of the four: a notice may stand over the fourth.
         if sum(near(colour_at(one, at, ratio), COLOUR) for at in corners) >= 3:
             wrong.append(f"[overview] frame {index}: the page is drawn over the overview, {open:.2f} out")
     print(f"[overview] {len(frames)} frames, open {[None if o is None else round(o, 2) for o in opens]}", flush=True)
     return wrong
-
 
 INNER = (
     "const i = window.__TAURI_INTERNALS__;"
@@ -330,10 +282,7 @@ INNER = (
     "return { x: at.x / scale, y: at.y / scale }"
 )
 
-
 def moves_as_before(exe: pathlib.Path, identifier: str, secret: str, env: dict[str, str]) -> Any:
-    """How many pointer moves the app's own page hears from this drive's hand with no page under
-    it, as a reading of whether this machine hands posted moves to a page at all."""
 
     process = subprocess.Popen([str(exe)], env=env, cwd=str(exe.parent), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
@@ -357,7 +306,6 @@ def moves_as_before(exe: pathlib.Path, identifier: str, secret: str, env: dict[s
             process.wait(20)
         except subprocess.TimeoutExpired:
             process.kill()
-
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -431,7 +379,6 @@ def main() -> int:
         )
         print(f"hole on the screen, in points: {hole}; {ratio} pixels a point", flush=True)
         at = lambda x, y: (hole[0] + x, hole[1] + y)  # noqa: E731
-        # Clear of the page's own elements, and of a notice in the corner.
         middle = (hole[0] + pane["width"] * 0.75, hole[1] + pane["height"] * 0.45)
 
         app.eval("document.documentElement.style.opacity = '0'; return true")
@@ -442,7 +389,6 @@ def main() -> int:
         app.eval("document.documentElement.style.opacity = ''; return true")
         time.sleep(1)
 
-        # Drawn: the page in its hole, and a layer of the app's over it.
         image = shot()
         image.save(args.out / "page.png")
         if not near(colour_at(image, middle, ratio), COLOUR):
@@ -465,8 +411,6 @@ def main() -> int:
         if app.eval("!!document.querySelector('.hole.still')") is True:
             wrong.append("the page's hole shows a still under the app's layer")
 
-        # The layer's press is the app's, and one beside it the page's, once a press on the
-        # page has made the window the key one.
         press(at(500, 120))
         before = len(heard(0.6).get("log", []))
         press(middle)
@@ -482,7 +426,6 @@ def main() -> int:
         app.eval("document.getElementById('drive-layer')?.remove(); return true")
         time.sleep(1)
 
-        # The press, the keyboard and typing.
         press(at(120, 60))
         typed("under")
         now = heard()
@@ -492,7 +435,6 @@ def main() -> int:
         if not any(one[0] == "click" and one[1] == "field" for one in now.get("log", [])):
             wrong.append("a click on the page's field was not heard")
 
-        # Hover and the cursor over the field, where this machine hands a page its moves at all.
         moves = heard(0.5).get("moves") or 0
         for step in range(6):
             point(at(200 + step * 4, 60))
@@ -509,29 +451,24 @@ def main() -> int:
         elif not beam:
             wrong.append("the cursor over the page's field is not the I-beam")
 
-        # A right click.
         press(at(150, 150), right=True)
         if not any(one[0] == "contextmenu" for one in heard().get("log", [])):
             wrong.append("a right click on the page was not heard")
-        # The page's own menu, if one came up, goes.
         post(Quartz.kCGEventLeftMouseDown, at(600, 500))
         post(Quartz.kCGEventLeftMouseUp, at(600, 500))
         time.sleep(0.4)
 
-        # The wheel.
         scrolled_down(at(600, 500))
         scrolled = heard(1.5).get("scrolled")
         print(f"scrolled: {scrolled}", flush=True)
         if not isinstance(scrolled, (int, float)) or scrolled <= 0:
             wrong.append(f"the wheel over the page did not scroll it: {scrolled}")
 
-        # A drag inside the page.
         dragged(at(80, 260), at(400, 300))
         log = heard().get("log", [])
         if not any(one[0] == "drop" and one[1] == "drop" for one in log):
             wrong.append(f"a drag inside the page was not dropped: {log[-8:]}")
 
-        # Reading the page.
         named = named_at(at(150, 150))
         print(f"accessibility at the button: {named!r}; at the app's own sidebar: {named_at((inner['x'] + 60, inner['y'] + 150))!r}", flush=True)
         if named is None:
@@ -539,7 +476,6 @@ def main() -> int:
         elif "Pressable" not in named:
             wrong.append(f"the accessibility hit test does not find the page's button: {named!r}")
 
-        # The overview, opened and closed.
         wrong += overview(app, hole, ratio, args.out)
     finally:
         process.terminate()
@@ -557,7 +493,6 @@ def main() -> int:
     (args.out / "wrong.json").write_text(json.dumps({"wrong": wrong, "unverified": unverified}, indent=1), encoding="utf-8")
     print(f"{len(wrong)} wrong", flush=True)
     return 1 if wrong else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

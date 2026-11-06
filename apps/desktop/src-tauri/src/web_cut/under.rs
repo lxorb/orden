@@ -1,22 +1,3 @@
-//! A Mac's web tab drawn under the app's own page (#1138), the way #1137 draws one on
-//! Windows.
-//!
-//! The page's `WKWebView` is ordered below the app's in the view that holds both, and the
-//! app's draws no ground of its own, so the live page shows wherever the app's HTML is
-//! transparent and every layer of the app is drawn over it: no still, nothing hidden.
-//!
-//! Input is not forwarded. The app's view answers `AppKit`'s `hitTest:` with nothing over a
-//! page less its cut (the layers over it, which the window sends), so the window hands the
-//! page its presses, wheel, gestures and right button itself, and the keyboard, the IME and
-//! the cursor follow as they do for any view. What `AppKit` sends by other routes gets the
-//! same answer: mouse moves, whose tracking areas overlap, the accessibility hit test, and
-//! a drag from another app, which picks its view by the types it takes.
-//!
-//! The methods are `WryWebView`'s, the class wry makes every webview of, replaced once for
-//! all of them; each does its own thing only for a view this file holds.
-//!
-//! Under `NIB_PAGES_UNDER=1` for now; without it a page is over the app, as before.
-
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::sync::{LazyLock, Mutex, OnceLock, PoisonError};
@@ -32,21 +13,18 @@ use tauri::{Manager, Webview, Window};
 
 use super::{Cut, Hollow};
 
-/// A function as the bare implementation the runtime takes.
 macro_rules! as_imp {
     ($name:ident, $argument:ty => $answer:ty) => {
         std::mem::transmute::<extern "C-unwind" fn(&NSView, Sel, $argument) -> $answer, Imp>($name)
     };
 }
 
-/// Calls what a method did before, with the signature it has.
 macro_rules! call {
     ($imp:expr, $this:expr, $name:expr, $argument:expr, $type:ty => $answer:ty) => {{
         #[allow(
             unsafe_code,
             reason = "the method replaced is called with the signature it has"
         )]
-        // Safe: `$imp` is the implementation this signature was replaced from.
         let answer = unsafe {
             std::mem::transmute::<Imp, extern "C-unwind" fn(&NSView, Sel, $type) -> $answer>($imp)(
                 $this, $name, $argument,
@@ -56,24 +34,19 @@ macro_rules! call {
     }};
 }
 
-/// Below this a page is not drawn, and takes nothing.
 const UNSEEN: f64 = 0.01;
 
-/// The switch, read once.
 pub fn on() -> bool {
     static ON: OnceLock<bool> = OnceLock::new();
     *ON.get_or_init(|| std::env::var_os("NIB_PAGES_UNDER").is_some_and(|said| said == "1"))
 }
 
-/// A page drawn under its window's own page: its label, that page's view, and its cut.
 struct Held {
     label: String,
     host: usize,
     cut: Option<Cut>,
 }
 
-/// Every page drawn under, by the address of its view. Only addresses: a view is only
-/// ever reached again as one of its holder's subviews, which are alive.
 static HELD: LazyLock<Mutex<HashMap<usize, Held>>> = LazyLock::new(Mutex::default);
 
 fn held<T>(look: impl FnOnce(&mut HashMap<usize, Held>) -> T) -> T {
@@ -81,9 +54,7 @@ fn held<T>(look: impl FnOnce(&mut HashMap<usize, Held>) -> T) -> T {
 }
 
 thread_local! {
-    /// The views the pointer has been taken from: the next move over them is theirs again.
     static AWAY: RefCell<HashSet<usize>> = RefCell::new(HashSet::new());
-    /// The page a drag over the app's own view is over, by that view.
     static DRAGGED: RefCell<HashMap<usize, Option<Retained<NSView>>>> = RefCell::new(HashMap::new());
 }
 
@@ -91,22 +62,18 @@ fn address(view: &NSView) -> usize {
     std::ptr::from_ref(view) as usize
 }
 
-/// The view `view` is in.
 #[allow(
     unsafe_code,
     reason = "AppKit's binding marks a view's superview unsafe, as a view it does not retain"
 )]
 fn holder_of(view: &NSView) -> Option<Retained<NSView>> {
-    // Safe: asked on the main thread, of a view in a window, and retained as it is handed.
     unsafe { view.superview() }
 }
 
-/// Whether the page under `label` is drawn under the app.
 pub fn under(label: &str) -> bool {
     held(|all| all.values().any(|one| one.label == label))
 }
 
-/// What of the page the app's layers are over, which it takes no input in.
 pub fn cut(view: &Webview, cut: Option<&Cut>) {
     let label = view.label();
     held(|all| {
@@ -116,14 +83,10 @@ pub fn cut(view: &Webview, cut: Option<&Cut>) {
     });
 }
 
-/// A page closed.
 pub fn forget(label: &str) {
     held(|all| all.retain(|_, one| one.label != label));
 }
 
-/// A tab's page just built in `window`, ordered under the window's own page, which stops
-/// drawing a ground of its own. Nothing where the switch is off, or wry's classes are not
-/// what this file knows.
 #[allow(
     unsafe_code,
     reason = "the runtime hands both views over as bare pointers, and the app's view is made transparent by its own key"
@@ -135,7 +98,6 @@ pub fn lower(window: &Window, view: &Webview) {
     let Some(own) = window.app_handle().get_webview(window.label()) else {
         return;
     };
-    // On the window's own thread, so this runs inline.
     let (sending, heard) = std::sync::mpsc::channel();
     let _ = own.with_webview(move |platform| {
         let _ = sending.send(platform.inner() as usize);
@@ -144,46 +106,36 @@ pub fn lower(window: &Window, view: &Webview) {
         return;
     };
     let label = view.label().to_string();
-    let _ = view.with_webview(move |platform| {
-        // Safe: the runtime's own live views, on the main thread.
-        unsafe {
-            let (Some(page), Some(host)) = (
-                Retained::retain(platform.inner().cast::<NSView>()),
-                Retained::retain(host as *mut NSView),
-            ) else {
-                return;
-            };
-            let (Some(holder), Some(theirs)) = (page.superview(), host.superview()) else {
-                return;
-            };
-            if address(&holder) != address(&theirs) || !installed(&host) {
-                return;
-            }
-            // The key wry's `transparent` sets, on this view alone.
-            let no = NSNumber::new_bool(false);
-            let key = NSString::from_str("drawsBackground");
-            let () = msg_send![&*host, setValue: &*no, forKey: &*key];
-            holder.addSubview_positioned_relativeTo(
-                &page,
-                NSWindowOrderingMode::Below,
-                Some(&host),
-            );
-            held(|all| {
-                all.insert(
-                    address(&page),
-                    Held {
-                        label,
-                        host: address(&host),
-                        cut: None,
-                    },
-                )
-            });
+    let _ = view.with_webview(move |platform| unsafe {
+        let (Some(page), Some(host)) = (
+            Retained::retain(platform.inner().cast::<NSView>()),
+            Retained::retain(host as *mut NSView),
+        ) else {
+            return;
+        };
+        let (Some(holder), Some(theirs)) = (page.superview(), host.superview()) else {
+            return;
+        };
+        if address(&holder) != address(&theirs) || !installed(&host) {
+            return;
         }
+        let no = NSNumber::new_bool(false);
+        let key = NSString::from_str("drawsBackground");
+        let () = msg_send![&*host, setValue: &*no, forKey: &*key];
+        holder.addSubview_positioned_relativeTo(&page, NSWindowOrderingMode::Below, Some(&host));
+        held(|all| {
+            all.insert(
+                address(&page),
+                Held {
+                    label,
+                    host: address(&host),
+                    cut: None,
+                },
+            )
+        });
     });
 }
 
-/// How much of the page shows: its hole's own opacity, in the same transaction as
-/// everything else this turn moves, with no animation of its own.
 #[allow(
     unsafe_code,
     reason = "the runtime hands the page's view over as a bare pointer, and Core Animation's transaction is reached through the Objective-C runtime"
@@ -193,36 +145,29 @@ pub fn opacity(view: &Webview, opacity: f64) {
         return;
     }
     let to = opacity.clamp(0.0, 1.0);
-    let _ = view.with_webview(move |platform| {
-        // Safe: the runtime's own live view, on the main thread; `CATransaction`'s class
-        // methods take and answer nothing but a flag.
-        unsafe {
-            let Some(page) = Retained::retain(platform.inner().cast::<NSView>()) else {
-                return;
-            };
-            if (page.alphaValue() - to).abs() < 0.001 {
-                return;
-            }
-            let transaction = AnyClass::get(c"CATransaction");
-            if let Some(one) = transaction {
-                let () = msg_send![one, begin];
-                let () = msg_send![one, setDisableActions: Bool::YES];
-            }
-            page.setAlphaValue(to);
-            if let Some(one) = transaction {
-                let () = msg_send![one, commit];
-            }
+    let _ = view.with_webview(move |platform| unsafe {
+        let Some(page) = Retained::retain(platform.inner().cast::<NSView>()) else {
+            return;
+        };
+        if (page.alphaValue() - to).abs() < 0.001 {
+            return;
+        }
+        let transaction = AnyClass::get(c"CATransaction");
+        if let Some(one) = transaction {
+            let () = msg_send![one, begin];
+            let () = msg_send![one, setDisableActions: Bool::YES];
+        }
+        page.setAlphaValue(to);
+        if let Some(one) = transaction {
+            let () = msg_send![one, commit];
         }
     });
 }
 
-/// Whether a point of a page's own, from its top left, is the page's: not under one of
-/// the app's layers.
 fn takes(cut: Option<&Cut>, x: f64, y: f64) -> bool {
     cut.is_none_or(|cut| !cut.all && !cut.hollows.iter().any(|one| holds(one, x, y)))
 }
 
-/// Whether a layer's rounded rectangle holds a point.
 fn holds(layer: &Hollow, x: f64, y: f64) -> bool {
     let (right, bottom) = (layer.x + layer.width, layer.y + layer.height);
     if x < layer.x || y < layer.y || x >= right || y >= bottom {
@@ -240,8 +185,6 @@ fn holds(layer: &Hollow, x: f64, y: f64) -> bool {
     (x - nearest_x).powi(2) + (y - nearest_y).powi(2) <= round * round
 }
 
-/// The page under the app's own view `host` that takes `point`, in the coordinates of the
-/// view that holds both: the frontmost shown page there whose cut does not hold it.
 fn page_at(host: &NSView, point: NSPoint) -> Option<Retained<NSView>> {
     let me = address(host);
     let pages: Vec<(usize, Option<Cut>)> = held(|all| {
@@ -278,19 +221,16 @@ fn page_at(host: &NSView, point: NSPoint) -> Option<Retained<NSView>> {
     None
 }
 
-/// Whether `view` is the app's own view of a window with a page under it.
 fn hosts(view: &NSView) -> bool {
     let me = address(view);
     held(|all| all.values().any(|one| one.host == me))
 }
 
-/// Whether `view` is one this file answers for: a page under the app, or the app's view.
 fn minds(view: &NSView) -> bool {
     let me = address(view);
     held(|all| all.contains_key(&me) || all.values().any(|one| one.host == me))
 }
 
-/// Whether the pointer of `event` is over `view` as the window's own hit test has it.
 fn over(view: &NSView, event: &NSEvent) -> bool {
     let Some(content) = view.window().and_then(|window| window.contentView()) else {
         return true;
@@ -302,7 +242,6 @@ fn over(view: &NSView, event: &NSEvent) -> bool {
         .is_some_and(|hit| hit.isDescendantOf(view))
 }
 
-/// What each method replaced did, called for every view this file does not answer for.
 struct Before {
     hit: Imp,
     reach: Imp,
@@ -324,7 +263,6 @@ fn before() -> Option<&'static Before> {
     BEFORE.get().and_then(Option::as_ref)
 }
 
-/// The methods replaced on wry's class of `host`, once; whether they are.
 #[allow(
     unsafe_code,
     reason = "a class's methods are replaced through the Objective-C runtime"
@@ -332,8 +270,6 @@ fn before() -> Option<&'static Before> {
 fn installed(host: &NSView) -> bool {
     BEFORE
         .get_or_init(|| {
-            // The class between WKWebView and the view's own, which is wry's: what the
-            // view is now may be an observer's subclass of it.
             let web = WKWebView::class();
             let mut class = host.class();
             let wry = loop {
@@ -343,8 +279,6 @@ fn installed(host: &NSView) -> bool {
                 }
                 class = up;
             };
-            // Safe: each function has the signature of the method it replaces, and each
-            // takes the type encoding of the method it replaces.
             unsafe {
                 Some(Before {
                     hit: swap(wry, sel!(hitTest:), as_imp!(hit, NSPoint => *mut NSView))?,
@@ -393,14 +327,11 @@ fn installed(host: &NSView) -> bool {
         .is_some()
 }
 
-/// What `class` did for `name`, its own or inherited, and `new` in its place.
 #[allow(
     unsafe_code,
     reason = "a class's method is replaced through the Objective-C runtime"
 )]
 unsafe fn swap(class: &AnyClass, name: Sel, new: Imp) -> Option<Imp> {
-    // Safe, as the caller says of `new`: the class is a live one, and the encoding the
-    // method's own.
     unsafe {
         let method = ffi::class_getInstanceMethod(class, name);
         if method.is_null() {
@@ -427,8 +358,6 @@ extern "C-unwind" fn reach(this: &NSView, name: Sel, point: NSPoint) -> *mut Any
     let Some(was) = before() else {
         return std::ptr::null_mut();
     };
-    // The page's own answer where the app's view is over a page: what wry's class does,
-    // asked of the page, which is a view of that class.
     let page = hosts(this)
         .then(|| {
             let (window, holder) = (this.window()?, holder_of(this)?);
@@ -441,14 +370,11 @@ extern "C-unwind" fn reach(this: &NSView, name: Sel, point: NSPoint) -> *mut Any
     call!(was.reach, page.as_deref().unwrap_or(this), name, point, NSPoint => *mut AnyObject)
 }
 
-/// The pointer left `view` for another view over or under it: told as it would be at its
-/// edge, so nothing in it stays hovered.
 #[allow(
     unsafe_code,
     reason = "an event is made through AppKit's constructor for one"
 )]
 fn left(view: &NSView, event: &NSEvent, was: &Before) {
-    // Safe: every argument is the moving event's own, and the context is the nil it asks.
     let made = unsafe {
         NSEvent::enterExitEventWithType_location_modifierFlags_timestamp_windowNumber_context_eventNumber_trackingNumber_userData(
             NSEventType::MouseExited,
@@ -501,7 +427,6 @@ extern "C-unwind" fn exited(this: &NSView, name: Sel, event: &NSEvent) {
     call!(was.exited, this, name, event, &NSEvent => ());
 }
 
-/// The cursor is set by the view the pointer is over, and by no other under or over it.
 extern "C-unwind" fn cursor(this: &NSView, name: Sel, event: &NSEvent) {
     let Some(was) = before() else {
         return;
@@ -512,7 +437,6 @@ extern "C-unwind" fn cursor(this: &NSView, name: Sel, event: &NSEvent) {
     call!(was.cursor, this, name, event, &NSEvent => ());
 }
 
-/// The page a drag over the app's view `host` is over, if it is over one.
 #[allow(
     unsafe_code,
     reason = "the drag's place is asked of AppKit's dragging info through the Objective-C runtime"
@@ -521,7 +445,6 @@ fn dragged_to(host: &NSView, info: *mut AnyObject) -> Option<Retained<NSView>> {
     if info.is_null() {
         return None;
     }
-    // Safe: the live dragging info AppKit handed the method, asked a method it answers.
     let at: NSPoint = unsafe { msg_send![info, draggingLocation] };
     let holder = holder_of(host)?;
     page_at(host, holder.convertPoint_fromView(at, None))
@@ -530,9 +453,6 @@ fn dragged_to(host: &NSView, info: *mut AnyObject) -> Option<Retained<NSView>> {
 fn dragging(host: &NSView) -> Option<Retained<NSView>> {
     DRAGGED.with_borrow(|all| all.get(&address(host)).cloned().flatten())
 }
-
-// A drag over a page is handed to the page by calling, on it, what wry's class did: a page
-// is a view of that class, and none this file answers a drag for.
 
 extern "C-unwind" fn drag_entered(this: &NSView, name: Sel, info: *mut AnyObject) -> usize {
     let Some(was) = before() else {
@@ -635,7 +555,6 @@ mod tests {
         assert!(!holds(&card, 1.0, 1.0));
         assert!(!holds(&card, 99.0, 99.0));
         assert!(holds(&card, 10.0, 10.0));
-        // Never a corner wider than half the layer.
         assert!(holds(&layer(0.0, 0.0, 10.0, 100.0, 50.0), 5.0, 50.0));
     }
 }

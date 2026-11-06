@@ -1,42 +1,3 @@
-//! The picture of an application this computer hosts, sent to the device holding it
-//! (issue 1063, step 4; docs/apps.md).
-//!
-//! **Signalling** comes through the window: the relay passes the holder's `signal`
-//! frames to it, and it hands their `data` here (`apps_signal`). The holder offers a
-//! receive-only video and a data channel, `{"offer": sdp}`, and trickles its candidates,
-//! `{"candidate": {"candidate": ...}}`; this answers with every candidate of its own
-//! already in the answer, or says why it cannot, `{"cannot": ...}`.
-//!
-//! **The connection** is `str0m`'s, a `WebRTC` library with no threads or clock of its
-//! own: one lock round it, fed by a thread for each socket and one for its timers, and
-//! written to by the encoder's. One socket for each address this computer has, since
-//! `str0m` has to be told which address a datagram came in on. It gathers nothing, so
-//! the addresses are found here, each also as the internet sees it (`stun.rs`), and it
-//! has no TURN client, which a host does not need: the viewer's engine does TURN, and a
-//! relayed candidate is answered from here.
-//!
-//! **The picture** is read off the application's display when something is drawn on
-//! it, at most once a refresh of the holder's screen (`capture.rs`), and encoded by
-//! ffmpeg with nothing held back - on this computer's GPU where it can and the viewer
-//! decodes what that makes, else VP8 in libvpx's realtime mode, which every viewer
-//! decodes (`encoder.rs`) - each frame written to a pipe the moment it is made. A
-//! program the host runs, as Xvfb is, rather than a codec linked into every build. It
-//! starts once the viewer is connected, so the first frame is a key frame. A still
-//! screen sends nothing.
-//!
-//! **A whole picture when one was lost** (step 5): a viewer whose picture broke - a
-//! packet lost that a resend did not bring back - asks for a key frame (PLI or FIR),
-//! and gets one at once from an encoder started afresh, which begins with one; so does
-//! a screen made another size. Asked again while that one is on its way, it waits.
-//!
-//! **Input** comes back over the data channel and is played into the application's
-//! display, and only there (`input.rs`); the pointer's shape goes the other way on it.
-//! So does the clipboard, both ways, while the holder shares it (step 6;
-//! `clipboard.rs`).
-//!
-//! **Sound** (step 6): a viewer that offers to take audio too is sent the application's
-//! sink as Opus, once connected (`audio.rs`).
-
 use std::collections::VecDeque;
 use std::io::{self, Read, Write as _};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
@@ -62,31 +23,23 @@ use super::encoder::{self, AccessUnits, Encoder, Made};
 use super::input::{Input as HolderInput, InputEvent};
 use super::{stun, Screen};
 
-/// How long a viewer has to connect once it has the answer.
 const CONNECT_WITHIN: Duration = Duration::from_secs(30);
-/// The longest the timers wait between two looks, so an end is seen soon.
 const LONGEST_WAIT: Duration = Duration::from_millis(20);
-/// How long a socket waits for a datagram before it looks whether the peer ended.
 const LISTEN_FOR: Duration = Duration::from_millis(250);
-/// The largest frame read off the encoder: a key frame of a 16K screen fits.
 const LARGEST_FRAME: usize = 16 * 1024 * 1024;
-/// How long the H.264 stream pauses before the frame read so far counts as whole.
 const FRAME_PAUSE: Duration = Duration::from_millis(2);
-/// The least time between two whole pictures the viewer asks for: it asks again while the
-/// first is on its way.
 const WHOLE_AT_MOST: Duration = Duration::from_millis(500);
-/// The most timeouts already due that are handled in a row before `str0m` is asked again.
 const DUE_AT_ONCE: usize = 4;
 
-/// What the holder says, as `data` of its `signal` frames.
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub enum FromViewer {
-    /// Its offer: a receive-only video and the data channel.
-    Offer { offer: String },
-    /// One of its candidates, as its engine's `RTCIceCandidate` says it.
-    Candidate { candidate: ViewerCandidate },
-    /// It is done with the picture.
+    Offer {
+        offer: String,
+    },
+    Candidate {
+        candidate: ViewerCandidate,
+    },
     Bye {
         #[allow(
             dead_code,
@@ -96,26 +49,19 @@ pub enum FromViewer {
     },
 }
 
-/// A candidate as `RTCIceCandidate.toJSON()` gives it; only the line is read.
 #[derive(Debug, Deserialize)]
 pub struct ViewerCandidate {
     pub candidate: String,
 }
 
-/// Why there is no picture to offer.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Cannot {
-    /// ffmpeg is not installed.
     Encoder,
-    /// The offer is not one this can answer: no video, no codec this can encode, or not
-    /// SDP.
     Offer,
-    /// This computer has no address to be reached on.
     Network,
 }
 
 impl Cannot {
-    /// The word the viewer reads (`cannot` in `@orden/online/apps`).
     pub fn word(self) -> &'static str {
         match self {
             Cannot::Encoder => "encoder",
@@ -125,92 +71,60 @@ impl Cannot {
     }
 }
 
-/// The answer the viewer is sent, as `data` of a `signal` frame.
 pub fn answer_text(sdp: &str) -> String {
     serde_json::json!({ "answer": sdp }).to_string()
 }
 
-/// Why it cannot, as `data` of a `signal` frame.
 pub fn cannot_text(why: &str) -> String {
     serde_json::json!({ "cannot": why }).to_string()
 }
 
-/// One crypto provider for every connection: `RustCrypto`'s (`rust-crypto`), so no build
-/// links a system library for DTLS or SRTP.
 fn provider() -> Arc<CryptoProvider> {
     static ONE: OnceLock<Arc<CryptoProvider>> = OnceLock::new();
     ONE.get_or_init(|| Arc::new(str0m::crypto::from_feature_flags()))
         .clone()
 }
 
-/// What the threads of one connection share.
 struct Shared {
     rtc: Rtc,
-    /// The sockets, to send each datagram from the address `str0m` chose.
     sockets: Vec<UdpSocket>,
-    /// The video's media, its payload type and the encoder that makes it, once the
-    /// answer has made them.
     video: Option<(Mid, Pt, Encoder)>,
-    /// When the timers are next due.
     next: Instant,
-    /// When the viewer connected, which is when the picture starts.
     connected: Option<Instant>,
-    /// Where the picture's encoder is: due once the viewer is connected and the video's
-    /// media is known, which `str0m` says only after the connection is made.
     pictures: Stage,
-    /// The display, for the input played into it.
     display: String,
-    /// The holder's input, played into the display: opened as the first arrives.
     input: Option<HolderInput>,
-    /// The data channel, once the viewer has opened it.
     channel: Option<ChannelId>,
-    /// The pointer's shape as last said, for a channel that opens after.
     pointer: Option<String>,
-    /// Whoever reads the picture, told when the viewer asks for a whole one.
     news: Option<Sender<News>>,
-    /// The application's process group.
     group: Option<u32>,
-    /// When the connection began on this computer's clock, in milliseconds since 1970:
-    /// what a frame's time counts from, as the tab reads it (step 9).
     began_wall: f64,
-    /// The display's clipboard, and whether the holder shares its own with it.
     clipboard: Option<Arc<Clipboard>>,
     sharing: bool,
-    /// The audio's media and its payload type, once the answer has made them, the
-    /// application's sink's monitor, and where its sound is.
     audio: Option<(Mid, Pt)>,
     sound: Option<String>,
     sounds: Stage,
 }
 
-/// Where the picture, or the sound, of a connection is.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Stage {
     Waiting,
-    /// To be started after this turn of the connection.
     Due,
     Started,
 }
 
-/// What a peer sends: the application's display (and the holder's refresh rate), its
-/// clipboard, and its sink's monitor, where it has them.
 pub struct Source {
     pub screen: Arc<Mutex<Screen>>,
     pub clipboard: Option<Arc<Clipboard>>,
     pub sound: Option<String>,
-    /// The application's process group, whose use of this computer each pong says
-    /// (step 10).
     pub group: Option<u32>,
 }
 
-/// One connection and what its threads read.
 struct Inner {
     shared: Mutex<Shared>,
     ended: AtomicBool,
-    /// The application's display, and the holder's refresh rate as it is now.
     screen: Arc<Mutex<Screen>>,
     began: Instant,
-    /// Counted up by every encoder started, so the frames of one ended are let go.
     generation: AtomicU64,
 }
 
@@ -238,15 +152,11 @@ impl Inner {
     }
 }
 
-/// The picture of one application, sent to the device holding it. Dropped, it ends:
-/// its sockets close and the encoder is stopped.
 pub struct Peer {
     inner: Arc<Inner>,
 }
 
 impl Peer {
-    /// Answers the holder's offer for the application on `screen`, and starts listening
-    /// for it: the peer, and the answer's SDP.
     pub fn answer(source: Source, offer: &str) -> Result<(Peer, String), Cannot> {
         let Source {
             screen,
@@ -259,8 +169,6 @@ impl Peer {
         }
         let offer = SdpOffer::from_sdp_string(offer).map_err(|_| Cannot::Offer)?;
         let now = Instant::now();
-        // The codecs this computer's encoders make; which of them is sent is chosen once
-        // the offer says what the viewer decodes.
         let working = encoder::working();
         let makes = |made: Made| working.iter().any(|one| one.made == made);
         let mut rtc = RtcConfig::new()
@@ -334,9 +242,6 @@ impl Peer {
         Ok((Peer { inner }, answer))
     }
 
-    /// One of the viewer's candidates. A line that does not read - an address hidden
-    /// behind an `mDNS` name, as Chromium hides its own - is let go: the viewer's checks
-    /// reach this end anyway, and its address is learnt from them.
     pub fn candidate(&self, line: &str) {
         let line = line.trim();
         if line.is_empty() {
@@ -350,7 +255,6 @@ impl Peer {
         drive(&mut shared);
     }
 
-    /// Whether it has ended: the viewer went, or never came.
     #[cfg(test)]
     pub fn ended(&self) -> bool {
         self.inner.over()
@@ -366,18 +270,12 @@ impl Drop for Peer {
     }
 }
 
-/// This computer's clock, in milliseconds since 1970.
 fn wall_now() -> f64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0.0, |since| since.as_secs_f64() * 1000.0)
 }
 
-/// The answer to the tab's ping (step 9): its own time back, when the connection began
-/// and what time it is here, on this computer's clock, which together set the two
-/// clocks side by side and a frame's time on the tab's; and the encoder the picture is
-/// made with; and what the application uses of this computer, where it can be read
-/// (step 10).
 fn pong_text(
     at: f64,
     began: f64,
@@ -398,7 +296,6 @@ fn pong_text(
     .to_string()
 }
 
-/// What the application copied, sent to the holder's tab while it shares its clipboard.
 fn copied(inner: &Inner, text: &str) {
     let mut shared = inner.lock();
     if !shared.sharing {
@@ -409,9 +306,6 @@ fn copied(inner: &Inner, text: &str) {
     drive(&mut shared);
 }
 
-/// One socket for each address this computer has, each a host candidate of the
-/// connection's, and each also as the internet sees it, asked for all at once, for a
-/// viewer outside this network.
 fn gather(rtc: &mut Rtc) -> Result<Vec<UdpSocket>, Cannot> {
     let mut sockets = Vec::new();
     for ip in addresses() {
@@ -430,8 +324,6 @@ fn gather(rtc: &mut Rtc) -> Result<Vec<UdpSocket>, Cannot> {
     if sockets.is_empty() {
         return Err(Cannot::Network);
     }
-    // And each address as the internet sees it, asked for all at once, for a viewer
-    // outside this network.
     let seen: Vec<(SocketAddr, SocketAddr)> = std::thread::scope(|scope| {
         let asking: Vec<_> = sockets
             .iter()
@@ -454,10 +346,6 @@ fn gather(rtc: &mut Rtc) -> Result<Vec<UdpSocket>, Cannot> {
     Ok(sockets)
 }
 
-/// Every address this computer could be reached on, found by asking the system which
-/// of its addresses it would send from towards the internet, the private ranges and
-/// Tailscale's, without a datagram sent; and the loopback, for a viewer on this same
-/// computer.
 fn addresses() -> Vec<IpAddr> {
     const TOWARDS: [&str; 6] = [
         "8.8.8.8:9",
@@ -495,8 +383,6 @@ fn addresses() -> Vec<IpAddr> {
     found
 }
 
-/// An address a host candidate may name: not unspecified, not the loopback (added on its
-/// own), and not an IPv6 link-local one, which needs a scope a candidate cannot carry.
 fn usable_address(ip: IpAddr) -> bool {
     if ip.is_unspecified() || ip.is_loopback() {
         return false;
@@ -507,8 +393,6 @@ fn usable_address(ip: IpAddr) -> bool {
     }
 }
 
-/// Drains what `str0m` has to say: datagrams sent, events heard, and when it is next
-/// due. Answers whether the connection goes on.
 fn drive(shared: &mut Shared) -> bool {
     loop {
         match next_output(&mut shared.rtc) {
@@ -540,9 +424,6 @@ fn drive(shared: &mut Shared) -> bool {
     }
 }
 
-/// What `str0m` has to say next, a timeout already due handled first: media written is
-/// only made into packets at a timeout, which is due at once, so a frame goes out as it
-/// is written rather than at the timers' next look, up to `LONGEST_WAIT` later.
 fn next_output(rtc: &mut Rtc) -> Result<Output, str0m::RtcError> {
     for _ in 0..DUE_AT_ONCE {
         match rtc.poll_output()? {
@@ -555,7 +436,6 @@ fn next_output(rtc: &mut Rtc) -> Result<Output, str0m::RtcError> {
     rtc.poll_output()
 }
 
-/// One event of the connection; answers whether it goes on.
 fn heard(shared: &mut Shared, event: Event) -> bool {
     match event {
         Event::MediaAdded(added) if added.kind == MediaKind::Audio => {
@@ -620,7 +500,6 @@ fn heard(shared: &mut Shared, event: Event) -> bool {
             true
         }
         Event::ChannelData(data) => {
-            // A message that does not read is let go.
             let Ok(event) = serde_json::from_slice::<InputEvent>(&data.data) else {
                 return true;
             };
@@ -656,8 +535,6 @@ fn heard(shared: &mut Shared, event: Event) -> bool {
     }
 }
 
-/// The encoder is due once the viewer is connected and the video known, and only once;
-/// the sound once the viewer is connected and the audio known, where there is a sink.
 fn due(shared: &mut Shared) {
     let connected = shared.connected.is_some();
     if connected && shared.video.is_some() && shared.pictures == Stage::Waiting {
@@ -669,11 +546,8 @@ fn due(shared: &mut Shared) {
     }
 }
 
-/// The codecs, as an `rtpmap` names them, that this can encode.
 const ENCODED: [&str; 3] = ["VP8/", "VP9/", "H264/"];
 
-/// Whether an answer sends a video, in a codec this can encode: a `m=video` section that
-/// is not refused (port 0) and maps a payload type to VP8, VP9 or H.264.
 fn answers_video(sdp: &str) -> bool {
     let mut in_video = false;
     for line in sdp.lines() {
@@ -692,7 +566,6 @@ fn answers_video(sdp: &str) -> bool {
     false
 }
 
-/// The codec an encoder here makes, for a codec the viewer negotiated.
 fn made_of(codec: Codec) -> Option<Made> {
     match codec {
         Codec::Vp8 => Some(Made::Vp8),
@@ -702,7 +575,6 @@ fn made_of(codec: Codec) -> Option<Made> {
     }
 }
 
-/// After a turn of the connection: the encoder started once it is due.
 fn after(inner: &Arc<Inner>, shared: &mut Shared) {
     if shared.pictures == Stage::Due {
         shared.pictures = Stage::Started;
@@ -718,8 +590,6 @@ fn after(inner: &Arc<Inner>, shared: &mut Shared) {
     }
 }
 
-/// The application's sound for one connection, until the connection ends or the sound
-/// server does. Its end does not end the picture.
 fn sound(inner: &Arc<Inner>, monitor: &str) {
     let Some(mut sound) = audio::Sound::start(monitor) else {
         return;
@@ -744,7 +614,6 @@ fn sound(inner: &Arc<Inner>, monitor: &str) {
     }
 }
 
-/// One socket's datagrams, handed to the connection until it ends.
 fn listen(inner: &Arc<Inner>, socket: &UdpSocket) {
     let Ok(local) = socket.local_addr() else {
         return;
@@ -760,7 +629,6 @@ fn listen(inner: &Arc<Inner>, socket: &UdpSocket) {
         };
         let mut shared = inner.lock();
         let input = Input::Receive(Instant::now(), datagram);
-        // A datagram it cannot take, which anybody may send, is no reason to end.
         let _ = shared.rtc.handle_input(input);
         let goes_on = drive(&mut shared);
         after(inner, &mut shared);
@@ -771,7 +639,6 @@ fn listen(inner: &Arc<Inner>, socket: &UdpSocket) {
     }
 }
 
-/// The connection's timers, and its end: the viewer gone, or never connected.
 fn keep_time(inner: &Arc<Inner>) {
     while !inner.over() {
         let now = Instant::now();
@@ -794,14 +661,11 @@ fn keep_time(inner: &Arc<Inner>) {
     }
 }
 
-/// One encoder, for frames of one size. Dropped, it is ended.
 struct Encoding {
     child: Child,
     frames: ChildStdin,
     size: (u16, u16),
     began: Instant,
-    /// When each frame written and not yet made was read off the display: what the
-    /// frame is timed by, so its time is when it was seen (step 9).
     seen: Arc<Mutex<VecDeque<Instant>>>,
 }
 
@@ -811,8 +675,6 @@ impl Drop for Encoding {
     }
 }
 
-/// What the picture is waiting to send: the screen drawn on since it was last read, and
-/// a whole picture the viewer asked for.
 #[derive(Debug, Default)]
 struct Owed {
     drawn: bool,
@@ -820,7 +682,6 @@ struct Owed {
 }
 
 impl Owed {
-    /// Takes one piece of news; answers whether the picture goes on.
     fn hear(&mut self, inner: &Inner, news: News) -> bool {
         match news {
             News::Drawn | News::Resized => self.drawn = true,
@@ -836,8 +697,6 @@ impl Owed {
         true
     }
 
-    /// When the next frame is due, if one is owed: a refresh after the last one, and a
-    /// whole picture not sooner than `WHOLE_AT_MOST` after the encoder last began.
     fn due(
         &self,
         now: Instant,
@@ -858,8 +717,6 @@ impl Owed {
     }
 }
 
-/// The picture of one connection: read off the display as it changes, encoded, and
-/// written to the video, until the connection ends, the display does, or the encoder.
 fn pictures(inner: &Arc<Inner>) {
     let Some((_, _, chosen)) = inner.lock().video else {
         inner.end();
@@ -872,7 +729,6 @@ fn pictures(inner: &Arc<Inner>) {
     };
     inner.lock().news = Some(tell);
     let mut encoding: Option<Encoding> = None;
-    // The first frame is owed already: the screen as it is.
     let mut owed = Owed {
         drawn: true,
         whole: false,
@@ -899,7 +755,6 @@ fn pictures(inner: &Arc<Inner>) {
             continue;
         }
 
-        // What was drawn up to now is in this frame, so news of it is not owed again.
         for one in news.try_iter() {
             if !owed.hear(inner, one) {
                 break 'reading;
@@ -914,8 +769,6 @@ fn pictures(inner: &Arc<Inner>) {
                 .is_none_or(|one| now >= one.began + WHOLE_AT_MOST);
         let fresh = whole_now || encoding.as_ref().is_none_or(|one| one.size != size);
         if fresh {
-            // The one before is ended once this has begun, and what it still makes is let
-            // go: a new encoder begins with a key frame.
             let Some(started) = start_encoder(inner, chosen, size, fps) else {
                 break;
             };
@@ -938,7 +791,6 @@ fn pictures(inner: &Arc<Inner>) {
     inner.end();
 }
 
-/// An encoder for frames of this size, and the thread that sends what it makes.
 fn start_encoder(
     inner: &Arc<Inner>,
     chosen: Encoder,
@@ -970,9 +822,6 @@ fn start_encoder(
     })
 }
 
-/// The frames one encoder makes, written to the video while it is the one in use, each
-/// at the time its picture was read off the display. The one in use ending by itself
-/// ends the picture.
 fn send_frames(
     inner: &Arc<Inner>,
     made: ChildStdout,
@@ -982,7 +831,6 @@ fn send_frames(
 ) {
     let current = || inner.generation.load(Ordering::SeqCst) == generation;
     let send = |frame: Vec<u8>| {
-        // One frame out for each written: ffmpeg is told to make one of each, no more.
         let at = lock(seen).pop_front().unwrap_or_else(Instant::now);
         if current() {
             send_frame(inner, frame, at);
@@ -1001,8 +849,6 @@ fn send_frames(
             }
         }
         Made::H264 => {
-            // Read on a thread of its own, so that a pause in the stream - the end of a
-            // frame, with no next one to say so - is seen.
             let (bytes, came) = mpsc::channel::<Vec<u8>>();
             std::thread::spawn(move || {
                 let mut made = made;
@@ -1038,7 +884,6 @@ fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
         .unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
-/// A message to the tab on the data channel, once it is open.
 fn write_channel(shared: &mut Shared, text: &str) {
     if let Some(id) = shared.channel {
         if let Some(mut channel) = shared.rtc.channel(id) {
@@ -1047,8 +892,6 @@ fn write_channel(shared: &mut Shared, text: &str) {
     }
 }
 
-/// One frame written to the video at the time its picture was read off the display, on
-/// the 90 kHz clock from when the connection began.
 fn send_frame(inner: &Arc<Inner>, frame: Vec<u8>, seen: Instant) {
     let mut shared = inner.lock();
     let (Some((mid, pt, _)), Some(_)) = (shared.video, shared.connected) else {
@@ -1066,13 +909,11 @@ fn send_frame(inner: &Arc<Inner>, frame: Vec<u8>, seen: Instant) {
     }
 }
 
-/// Ends ffmpeg, which may be in the middle of a frame.
 fn stop(child: &mut Child) {
     let _ = child.kill();
     let _ = child.wait();
 }
 
-/// IVF's file header: 32 bytes, `DKIF`, and its own length.
 fn ivf_header(from: &mut impl Read) -> io::Result<()> {
     let mut header = [0_u8; 32];
     from.read_exact(&mut header)?;
@@ -1089,7 +930,6 @@ fn ivf_header(from: &mut impl Read) -> io::Result<()> {
     Ok(())
 }
 
-/// One IVF frame: its length, its time (not read), and its bytes.
 fn ivf_frame(from: &mut impl Read) -> io::Result<Vec<u8>> {
     let mut header = [0_u8; 12];
     from.read_exact(&mut header)?;
@@ -1234,9 +1074,6 @@ mod tests {
         );
     }
 
-    /// A frame written goes out at once, on the thread that wrote it, and not at the
-    /// timers' next look (issue 1163): two connections of `str0m`'s own, the datagrams
-    /// between them handed over here.
     #[test]
     fn a_frame_written_goes_out_at_once() {
         use str0m::change::SdpAnswer;
@@ -1268,7 +1105,6 @@ mod tests {
         host.add_remote_candidate(Candidate::host(viewer_at, "udp").unwrap());
         viewer.add_remote_candidate(Candidate::host(host_at, "udp").unwrap());
 
-        // Both run until the host is connected and its video can be written to.
         let (mut video, mut connected) = (None, false);
         let until = Instant::now() + Duration::from_secs(10);
         while !(connected && video.is_some()) && Instant::now() < until {
@@ -1298,7 +1134,6 @@ mod tests {
         }
         let mid = video.expect("the host's video");
         assert!(connected);
-        // Nothing of the host's is due now, so whatever it sends next is the frame.
         loop {
             if let Output::Timeout(at) = next_output(&mut host).unwrap() {
                 if at > Instant::now() {
@@ -1337,7 +1172,6 @@ mod tests {
         assert!(arrived, "the frame did not arrive");
     }
 
-    /// A datagram one connection sent, handed to the other as come in on `to`.
     fn hand_over(other: &mut Rtc, sent: &str0m::net::Transmit, to: SocketAddr) {
         let came = Receive::new(Protocol::Udp, sent.source, to, &sent.contents).unwrap();
         other
@@ -1345,8 +1179,6 @@ mod tests {
             .unwrap();
     }
 
-    /// What the answer to a viewer's offer says: a video it sends in a codec it encodes,
-    /// or no video, which `Peer::answer` refuses.
     #[test]
     fn reads_whether_the_answer_sends_a_video() {
         use str0m::media::Direction;
@@ -1378,7 +1210,6 @@ mod tests {
         ));
     }
 
-    /// Whether a VP8 frame is a key frame, and the size a key frame says.
     fn vp8(frame: &[u8]) -> (bool, Option<(u16, u16)>) {
         let key = frame.first().is_some_and(|tag| (tag & 1) == 0);
         let size = (key && frame.len() >= 10 && frame[3..6] == [0x9d, 0x01, 0x2a]).then(|| {
@@ -1390,7 +1221,6 @@ mod tests {
         (key, size)
     }
 
-    /// A viewer of `str0m`'s own on the loopback, as a tab's engine is one.
     struct Viewer {
         rtc: Rtc,
         socket: UdpSocket,
@@ -1398,8 +1228,6 @@ mod tests {
     }
 
     impl Viewer {
-        /// A viewer that offers to take the display's picture and its sound, the
-        /// host's peer that answered it, and the video's media and the audio's.
         fn connect(
             display: String,
             clipboard: Option<Arc<Clipboard>>,
@@ -1443,7 +1271,6 @@ mod tests {
             (peer, Viewer { rtc, socket, local }, mid, heard)
         }
 
-        /// Runs it for at most `within`, each event handed to `heard`, until `done`.
         fn run(
             &mut self,
             within: Duration,
@@ -1457,7 +1284,6 @@ mod tests {
                     match self.rtc.poll_output().unwrap() {
                         Output::Timeout(_) => break,
                         Output::Transmit(datagram) => {
-                            // The host's other addresses are not reachable from the loopback.
                             let _ = self
                                 .socket
                                 .send_to(&datagram.contents, datagram.destination);
@@ -1465,7 +1291,6 @@ mod tests {
                         Output::Event(event) => heard(&mut self.rtc, event),
                     }
                 }
-                // Before the socket is waited on, so what was just heard is not held back.
                 if done() {
                     return true;
                 }
@@ -1483,12 +1308,6 @@ mod tests {
     }
 
     #[cfg(target_os = "linux")]
-    /// A viewer of `str0m`'s own, on the loopback, against a real Xvfb and ffmpeg. It
-    /// connects with the answer and gets the display's picture as VP8, key frame first,
-    /// and the pointer's shape, and moves the display's pointer over the data channel.
-    /// Then: nothing drawn, nothing is sent; something drawn is; a whole picture asked
-    /// for comes as a key frame; and the screen made another size comes as a key frame
-    /// of that size. CI installs both; elsewhere the test says nothing without them.
     #[test]
     #[allow(
         clippy::too_many_lines,
@@ -1551,7 +1370,6 @@ mod tests {
             );
             assert!(shape || shaped, "the pointer's shape came");
 
-            // Nothing drawn: nothing sent.
             frames.borrow_mut().clear();
             viewer.run(
                 Duration::from_millis(800),
@@ -1564,7 +1382,6 @@ mod tests {
                 frames.borrow().len()
             );
 
-            // Something drawn: sent.
             let pen = x.generate_id().unwrap();
             x.create_gc(pen, root, &CreateGCAux::new().foreground(0x00ff_0000))
                 .unwrap();
@@ -1587,7 +1404,6 @@ mod tests {
             );
             assert!(drawn, "what was drawn came");
 
-            // A whole picture asked for: a key frame.
             frames.borrow_mut().clear();
             viewer
                 .rtc
@@ -1602,7 +1418,6 @@ mod tests {
             );
             assert!(whole, "a key frame came when one was asked for");
 
-            // Another size: a key frame of it.
             frames.borrow_mut().clear();
             display.fit(400, 300, 1.0).unwrap();
             let resized = viewer.run(
@@ -1622,10 +1437,6 @@ mod tests {
     }
 
     #[cfg(target_os = "linux")]
-    /// The clipboard over the picture's channel: nothing while the holder does not
-    /// share it; shared, what the holder gives is what the application's paste gets, and
-    /// what the application copies comes to the holder. CI installs Xvfb and ffmpeg;
-    /// elsewhere the test says nothing without them.
     #[test]
     #[allow(
         clippy::too_many_lines,
@@ -1701,12 +1512,10 @@ mod tests {
                 viewer.rtc.channel(id).unwrap().write(false, text).unwrap();
             };
 
-            // Not shared: the holder's clipboard goes nowhere.
             say(&mut viewer, br#"{"t":"clipboard","text":"secret"}"#);
             viewer.run(Duration::from_millis(500), heard, || false);
             assert_eq!(owner(), NONE);
 
-            // Shared: the application's paste gets it.
             say(&mut viewer, br#"{"t":"share","clipboard":true}"#);
             say(
                 &mut viewer,
@@ -1737,7 +1546,6 @@ mod tests {
             });
             assert_eq!(pasted.as_deref(), Some("from the holder"));
 
-            // The application copies: the holder hears it.
             x.set_selection_owner(window, atoms.CLIPBOARD, x11rb::CURRENT_TIME)
                 .unwrap();
             x.flush().unwrap();
@@ -1780,9 +1588,6 @@ mod tests {
     }
 
     #[cfg(target_os = "linux")]
-    /// A sound server started for a test, in a folder of its own: ended when dropped,
-    /// and by the kernel once the thread that started it ends, as every thread does
-    /// when the test process is killed, so none is left behind.
     struct SoundServer {
         server: std::process::Child,
         folder: std::path::PathBuf,
@@ -1798,8 +1603,6 @@ mod tests {
     }
 
     #[cfg(target_os = "linux")]
-    /// A sound server for the test: the one there is, or one started for it where
-    /// `pulseaudio` is installed (CI installs it).
     #[allow(
         unsafe_code,
         reason = "the server is tied to this thread with prctl(2) before it runs"
@@ -1820,8 +1623,6 @@ mod tests {
         }
         let folder = std::env::temp_dir().join(format!("orden-pulse-{}", std::process::id()));
         std::fs::create_dir_all(&folder).ok()?;
-        // The `pactl` and `parec` this process starts find the server by it; no other
-        // test asks for a sound server.
         std::env::set_var("PULSE_RUNTIME_PATH", &folder);
         let parent = libc::pid_t::try_from(std::process::id()).ok()?;
         let mut command = Command::new("pulseaudio");
@@ -1836,8 +1637,6 @@ mod tests {
                 "-L",
                 "module-null-sink sink_name=orden_test_default",
             ])
-            // Off the session bus: a server that holds its name there, as one left over
-            // does, makes another exit as it starts.
             .env(
                 "DBUS_SESSION_BUS_ADDRESS",
                 "unix:path=/nonexistent/orden-no-bus",
@@ -1845,8 +1644,6 @@ mod tests {
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null());
-        // SAFETY: only prctl(2) and getppid(2) run between fork and exec, both
-        // async-signal-safe; a parent already gone is an error, not a server left over.
         unsafe {
             command.pre_exec(move || {
                 if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL) == -1 {
@@ -1870,9 +1667,6 @@ mod tests {
     }
 
     #[cfg(target_os = "linux")]
-    /// The application's sound reaches a viewer that offers to take it, as Opus. CI
-    /// installs Xvfb, ffmpeg and `PulseAudio`; elsewhere the test says nothing without
-    /// them.
     #[test]
     fn a_viewer_hears_the_applications_sound() {
         super::super::in_time(|| {
@@ -1895,7 +1689,6 @@ mod tests {
             let Some(sink) = sink else {
                 return;
             };
-            // The application playing: noise into its sink.
             let monitor = sink.monitor();
             let mut playing = Command::new("pacat")
                 .args([
@@ -1936,13 +1729,6 @@ mod tests {
     }
 
     #[cfg(target_os = "linux")]
-    /// The latency benchmark (step 9): from something drawn on the display to its frame
-    /// arriving at a viewer on the loopback - reading, encoding, sending, receiving, the
-    /// part of glass to glass that is the host's and the network's - and the frames of an
-    /// application drawing at the refresh rate arriving at it, evenly. The bounds are
-    /// far above what CI's runners measure (a few milliseconds), so that only a real
-    /// regression - a frame held back, a refresh missed - fails them. CI installs Xvfb
-    /// and ffmpeg; elsewhere the test says nothing without them.
     #[test]
     #[allow(
         clippy::too_many_lines,
@@ -2000,7 +1786,6 @@ mod tests {
             assert!(viewer.run(Duration::from_secs(30), heard, || frames.get() > 0));
             viewer.run(Duration::from_millis(300), heard, || false);
 
-            // Drawn to arrived, one frame at a time.
             let mut latencies = Vec::new();
             for _ in 0..20 {
                 let before = frames.get();
@@ -2017,7 +1802,6 @@ mod tests {
             assert!(median < Duration::from_millis(50), "median {median:?}");
             assert!(worst < Duration::from_millis(120), "90th {worst:?}");
 
-            // Drawing at the holder's refresh rate, 30 here: as many frames, evenly.
             arrived.borrow_mut().clear();
             let began = Instant::now();
             let mut next = began;
@@ -2048,10 +1832,6 @@ mod tests {
         });
     }
 
-    /// Notepad on a desktop of its own, seen by a viewer of `str0m`'s own on the loopback
-    /// (step 8): its picture comes as VP8, key frame first; a click and text played over
-    /// the data channel type into it, and nothing of it is on the reader's desktop. CI
-    /// installs ffmpeg on Windows; elsewhere the test says nothing without it.
     #[cfg(target_os = "windows")]
     #[test]
     fn a_viewer_gets_the_picture_of_a_desktop_of_its_own_and_types_into_it() {
@@ -2127,13 +1907,11 @@ mod tests {
             assert!(typed, "the text did not reach notepad");
             assert!(!peer.ended());
             drop(peer);
-            // Typed into, it would ask whether to save before it closed: ended instead.
             desk::kill(program.pid());
             let _ = program.wait();
         });
     }
 
-    /// The text of a window and of its children, as each answers `WM_GETTEXT`.
     #[cfg(target_os = "windows")]
     #[allow(unsafe_code, reason = "a window's text is asked with Win32 messages")]
     fn text_in(window: windows::Win32::Foundation::HWND) -> String {
@@ -2146,7 +1924,6 @@ mod tests {
         let mut all = String::new();
         let mut child = HWND::default();
         for _ in 0..64 {
-            // SAFETY: windows of a desktop this thread is on; a buffer of the size said.
             unsafe {
                 child = FindWindowExW(window, child, PCWSTR::null(), PCWSTR::null())
                     .unwrap_or_default();

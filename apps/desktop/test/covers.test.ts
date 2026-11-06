@@ -5,30 +5,11 @@ import { parse } from 'svelte/compiler'
 import { expect, test } from 'vitest'
 import { COVERS } from '../src/lib/web-tab/covers'
 
-/** Every layer of the window is one a web page knows it is under (#1124).
- *
- *  A page is a native webview, drawn above every pixel of the window's own HTML, so a
- *  layer of the app's over it is answered by the page - cut out of it, or the page hidden
- *  behind its picture - and only a layer the page can find is answered at all. They are
- *  found by one registry, `COVERS` in web-tab/covers.ts: the theme's shapes, and
- *  `data-covers` on a layer that wears none of them. A layer in neither was drawn behind
- *  the page, or right only once something else made the page look again: on Windows, a
- *  menu opened from somewhere else, a popover, a sheet, the tab overview.
- *
- *  So this reads every component for what draws as a layer of the window - fixed to it,
- *  or stood on one of the rungs a layer stands on, from `--z-popover` up - and fails for
- *  one that is in no shape of the registry and carries no `data-covers`, and is not in
- *  `NEVER_OVER_A_PAGE` with the reason why. A layer written tomorrow joins or is named
- *  here; it is never drawn behind a page by default. */
-
 const SRC = fileURLToPath(new URL('../src/', import.meta.url))
 
-/** The rungs a layer of the window stands on (tokens.css), from a popover's up. */
 const RUNG =
   /z-index:[^;]*var\(--z-(?:popover|float|bar|drawer|screen|notice|cover|settings|store|sheet|menu|lightbox|stage|carried)\)/
 
-/** Layers of the window that are not in the registry, each with why no web page can be
- *  under it. Keyed by the component and the rule's class. */
 const NEVER_OVER_A_PAGE: Record<string, string> = {
   'App.svelte .fab': 'a touch screen only, which builds no native page',
   'App.svelte .notices': 'the row itself; each card in it is a layer of the registry',
@@ -69,8 +50,6 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
   'lib/tab-strip/TabNumbers.svelte .numeral': 'on the tabs of a strip, which no page is under',
 }
 
-/** Layers made by a script rather than by a component's own markup: the rule is in the
- *  component, and the script that makes the element has to register it. */
 const MADE_BY: Record<string, string> = {
   'lib/Tree.svelte .row.carried': 'lib/tree-lift.ts',
 }
@@ -90,7 +69,6 @@ function components(dir: string): string[] {
   })
 }
 
-/** The static half of an element's `class`, plus every `class:name` it may wear. */
 function classesOf(node: Node): string[] {
   const words: string[] = []
   for (const one of node.attributes ?? []) {
@@ -104,14 +82,11 @@ function classesOf(node: Node): string[] {
 
 const SHAPES: readonly string[] = [...COVERS.floating, ...COVERS.whole]
 
-/** Whether an element is a layer of the registry: in one of its shapes, or marked. */
 function registered(node: Node): boolean {
   if (classesOf(node).some((one) => SHAPES.includes(one))) return true
   return (node.attributes ?? []).some((one) => one.name === 'data-covers')
 }
 
-/** Every element under a node, through blocks as well as elements, each with whether it
- *  is inside a layer of the registry - which covers what it holds. */
 function* elements(node: unknown, inside = false): Generator<{ node: Node; inside: boolean }> {
   if (!node || typeof node !== 'object') return
   if (Array.isArray(node)) {
@@ -148,7 +123,6 @@ function* rules(node: unknown): Generator<Rule> {
   }
 }
 
-/** The classes of the element each selector of a rule is about: its last compound. */
 function subjects(prelude: string): string[][] {
   return prelude.split(',').map((selector) => {
     const last =
@@ -229,16 +203,6 @@ test('nothing is excused that is in the registry after all, or is no layer any m
   }
 })
 
-/** And a bubble is drawn over the window, never inside what holds it (#1129).
- *
- *  A bubble placed `position: absolute` against the element it is about is drawn inside
- *  every box that holds that element and cut by the first that clips: the sentence
- *  behind the `?` after a name in Settings > AI was a strip the height of the name, cut
- *  by a row that keeps its names to one line. So every element in the bubble's shape is
- *  placed in the window's own coordinates, `position: fixed` - hung from what it is
- *  about by `use:hang` (lib/portal.ts), which also takes it out of every holder, or placed
- *  by its own sums - and nothing places one `absolute`. */
-/** Bubbles still placed against what they are about, each with why nothing cuts it. */
 const PLACED_INSIDE: Record<string, string> = {
   'lib/web-tab/WebAsk.svelte .ask':
     'under a web tab’s bar, inside the tab it is about, which it never leaves',

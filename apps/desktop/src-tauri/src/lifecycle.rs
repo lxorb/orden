@@ -1,14 +1,3 @@
-//! What the app does when the system, rather than a window, asks something of it:
-//! a link to open, the Dock icon clicked, the app asked to quit.
-//!
-//! A Mac is a document app's platform in a way the other two are not, and every
-//! answer here follows the Mac apps a reader already knows. The app stays in the
-//! Dock with every window closed (`TextEdit`, VS Code, Obsidian), a click on the icon
-//! brings a window back, and quitting asks each window about its unsaved notes the
-//! way closing that window would (`TextEdit` reviews each document before it goes).
-//! Windows and Linux end the app with its last window, as they always did, and
-//! nothing here changes that.
-
 use std::collections::HashSet;
 use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 use std::sync::{Condvar, Mutex, PoisonError};
@@ -17,37 +6,20 @@ use tauri::{AppHandle, Emitter, ExitRequestApi, Manager, RunEvent, WindowEvent};
 
 use crate::launch;
 
-/// What a window is told when the app is quitting: run the same question closing
-/// it would ask, and close if the answer is yes.
 const QUIT: &str = "nib://quit";
 
-/// What one window is told before any of them is: ask whether what is running may
-/// stop - a terminal's program, an AI turn - and answer `quit_confirmed` or
-/// `keep_running`. See `lib/quitting` in the app.
 const QUIT_ASK: &str = "nib://quit-ask";
 
-/// What every other window is told just before a window's installer ends the process:
-/// write what is owed and answer `update_settled`. See `before_installer`.
 const UPDATE_SETTLE: &str = "nib://update-settle";
 
-/// How long the installer is held for the other windows' answers. A window waits
-/// `GIVE_UP` for its own writes (lib/parting.ts, three seconds) and then answers, so this
-/// is that and a moment for the answer. What did not land by then is in the window's
-/// session, which the next launch writes.
 const SETTLE_WAIT: Duration = Duration::from_secs(4);
 
-/// Where the app is on its way out, as one of the four values below.
 #[derive(Default)]
 pub struct Quitting(AtomicU8);
 
-/// Running as usual.
 const RUNNING: u8 = 0;
-/// Asked to quit: every window is asking about its own unsaved notes.
 const ASKING: u8 = 1;
-/// Every window has gone and the app is ending. Nothing stops it now.
 const LEAVING: u8 = 2;
-/// Asked to quit, and one window is asking whether what runs may stop. No window
-/// has been asked to go yet.
 const CONFIRMING: u8 = 3;
 
 impl Quitting {
@@ -60,32 +32,23 @@ impl Quitting {
     }
 }
 
-/// The installer on Windows, which ends the process as soon as it has started: who may
-/// start it, and which windows it is still waiting to hear from.
 #[derive(Default)]
 pub struct Installer {
-    /// A window has been told it may. There is only ever the one: a second would start a
-    /// second installer over the first.
     taken: AtomicBool,
-    /// The windows that have asked on their way out, and are going whatever the answer.
     closing: Mutex<HashSet<String>>,
     unanswered: Mutex<HashSet<String>>,
     answered: Condvar,
 }
 
 impl Installer {
-    /// Whether this is the first to ask.
     fn take(&self) -> bool {
         !self.taken.swap(true, Ordering::SeqCst)
     }
 
-    /// The installer did not start, and the process is still here: another may try.
     fn release(&self) {
         self.taken.store(false, Ordering::SeqCst);
     }
 
-    /// This window is on its way out, and says how many of `others` are not. Two windows
-    /// closing together each see the other, and the second to ask is the last.
     fn closing(&self, label: &str, others: impl IntoIterator<Item = String>) -> usize {
         let mut closing = self.closing.lock().unwrap_or_else(PoisonError::into_inner);
         closing.insert(label.to_owned());
@@ -95,19 +58,16 @@ impl Installer {
             .count()
     }
 
-    /// These windows are about to be asked, and no others are waited on.
     fn expect(&self, labels: impl IntoIterator<Item = String>) {
         *self.lock() = labels.into_iter().collect();
     }
 
-    /// This window has answered.
     fn heard(&self, label: &str) {
         if self.lock().remove(label) {
             self.answered.notify_all();
         }
     }
 
-    /// This window has gone, which is as good as an answer. Its label is free again.
     fn gone(&self, label: &str) {
         self.closing
             .lock()
@@ -116,8 +76,6 @@ impl Installer {
         self.heard(label);
     }
 
-    /// Waits for every answer, `within` at most, and answers with the windows still not
-    /// heard from.
     fn wait(&self, within: Duration) -> Vec<String> {
         let (left, _) = self
             .answered
@@ -133,22 +91,14 @@ impl Installer {
     }
 }
 
-/// The state this module keeps, added to the builder.
 pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::Engine> {
     builder
         .manage(Quitting::default())
         .manage(Installer::default())
 }
 
-/// The app's own answer to everything the event loop reports; handed to
-/// `App::run` in lib.rs.
 pub fn on_event(app: &AppHandle, event: RunEvent) {
     match event {
-        // A link clicked in another program, once nib is the browser, and a PDF opened
-        // with nib: a Mac never puts either on the command line. `nib://` links arrive
-        // here too, and are the deep-link plugin's; see uris.rs. Any other document the
-        // Finder hands over was forced on Orden - no other file type is declared - and it
-        // is nothing to open; see launch.rs.
         #[cfg(target_os = "macos")]
         RunEvent::Opened { urls } => {
             launch::hand_over(
@@ -164,8 +114,6 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             );
         }
 
-        // Once there is an application delegate to teach: tao sets it as the loop
-        // is built, and this is the loop's first event.
         #[cfg(target_os = "macos")]
         RunEvent::Ready => asked_to_quit::listen(app),
 
@@ -175,10 +123,6 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             ..
         } => launch::reopen(app),
 
-        // An iPad asked for a second window: New Window in the icon's menu, or a note
-        // dragged out to the side. tao takes scenes only with multiple scenes on (see
-        // Info.ios.plist), and the phone build is one window, so the scene is given
-        // back rather than shown blank.
         #[cfg(target_os = "ios")]
         RunEvent::SceneRequested { scene, .. } => {
             if let Some(main) = objc2::MainThreadMarker::new() {
@@ -193,15 +137,10 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
 
         RunEvent::ExitRequested { code, api, .. } => exit_requested(app, code, &api),
 
-        // And nothing a terminal started is left running once the app has gone.
         RunEvent::Exit => {
             crate::terminal::end_all(app);
-            // Nor any application it hosted, nor the display it drew on; see apps_host.rs.
             crate::apps_host::end_all(app);
-            // Nor any Claude Code or Codex a question started; see ai_cli.rs.
             crate::ai_cli::end_all(app);
-            // And no notice left on the screen to answer into an Orden that has gone; see
-            // notices.rs.
             crate::notices::clear_all(app);
         }
 
@@ -214,17 +153,12 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
                 pending.forget(&label);
             }
             app.state::<crate::endpoint::Waiting>().forget(&label);
-            // Nothing is left of it for an installer to wait on.
             app.state::<Installer>().gone(&label);
-            // Its terminals go with it; see terminal.rs.
             crate::terminal::window_gone(app, &label);
             if let Some(sockets) = app.try_state::<crate::mail_socket::MailSockets>() {
                 sockets.end_where(&label);
             }
             crate::ai_cli::window_gone(app, &label);
-            // The last window has answered yes. With the presenter's window still
-            // open the loop would not end by itself, so it is ended here. A window
-            // closed while it was asking whether to quit is that question answered.
             let now = state(app).now();
             if (now == ASKING || now == CONFIRMING) && launch::document_windows(app).is_empty() {
                 leave(app);
@@ -235,20 +169,10 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
     }
 }
 
-/// Whether a window may start the installer, which on Windows ends the process with every
-/// window in it (`Update::install_inner` in tauri-plugin-updater: `ShellExecuteW`, then
-/// `std::process::exit(0)`).
-///
-/// A restart (`closing` false) has asked about every window, and a quit is ending them all
-/// anyway. A window closing by itself has only asked about what runs in it, so it leaves
-/// the update to the last one; the install is only later, and a last window with no
-/// update ready of its own only leaves it for the next run.
 fn installer_may_start(closing: bool, now: u8, others: usize) -> bool {
     !closing || now == ASKING || others == 0
 }
 
-/// A window asks whether it may start the installer. Elsewhere the installer ends nothing,
-/// and the answer is always yes.
 #[tauri::command]
 pub fn update_may_install(webview: tauri::Webview, closing: bool) -> bool {
     if !cfg!(windows) {
@@ -268,13 +192,11 @@ pub fn update_may_install(webview: tauri::Webview, closing: bool) -> bool {
     installer_may_start(closing, state(app).now(), others) && installer.take()
 }
 
-/// The installer did not start: see `Installer::release`.
 #[tauri::command]
 pub fn update_install_failed(app: AppHandle) {
     app.state::<Installer>().release();
 }
 
-/// A window has written what it owed before the installer; see `before_installer`.
 #[tauri::command]
 pub fn update_settled(webview: tauri::Webview) {
     webview
@@ -283,21 +205,6 @@ pub fn update_settled(webview: tauri::Webview) {
         .heard(webview.label());
 }
 
-/// What the app does on Windows between the installer being ready and it being started,
-/// handed to the updater by `check_update`, in place of the plugin's own hook.
-///
-/// `from` is the window starting the installer, which has waited for its own writes. Every
-/// other window is told to write what it owes, and is waited for up to `SETTLE_WAIT`. This
-/// runs on a thread of the runtime's, as the plugin's `install` command does, so the event
-/// loop goes on delivering the windows' events and commands meanwhile.
-///
-/// Nothing is taken down here. The plugin runs this before `ShellExecuteW`, and has no
-/// hook after it, so an installer that does not start comes back to an app that has to
-/// go on working: `terminal::end_all` and the plugin's `cleanup_before_exit`, which hides
-/// the windows and takes the tray away, would have ended that. The process going takes
-/// what they would: a shell with its pseudoconsole, an AI program with its job object
-/// (`ai_cli/family.rs`). A tray icon and a notice may stay on the screen until the system
-/// next looks, and the installer starts the new version straight after.
 pub fn before_installer(app: &AppHandle, from: &str) {
     crate::placement::note_every_window(app);
 
@@ -316,11 +223,6 @@ pub fn before_installer(app: &AppHandle, from: &str) {
     }
 }
 
-/// Quits the app the careful way, asking first whether what is running may stop: one
-/// window - the one in front, else one in sight, else the first - is told to ask, and
-/// answers `quit_confirmed` or `keep_running`. With no window able to ask, the quit
-/// goes on at once. What Quit in the tray, a Mac's Cmd+Q and the engine's relaunch
-/// all come to; see `asked_to_quit` for a Mac.
 pub fn quit(app: &AppHandle) {
     let quitting = state(app);
     if quitting.now() == ASKING || quitting.now() == LEAVING {
@@ -346,7 +248,6 @@ pub fn quit(app: &AppHandle) {
     let _ = app.emit_to(asker.label(), QUIT_ASK, ());
 }
 
-/// The document windows whose page has come up far enough to answer, but `except`.
 fn listening_windows(app: &AppHandle, except: Option<&str>) -> Vec<tauri::Window> {
     let pending = app.try_state::<launch::Pending>();
     launch::document_windows(app)
@@ -360,8 +261,6 @@ fn listening_windows(app: &AppHandle, except: Option<&str>) -> Vec<tauri::Window
         .collect()
 }
 
-/// The asking window's yes: every window goes, as `quit_now` has them. On a thread of
-/// the runtime's, as a quit writes down where each window was.
 #[tauri::command(async)]
 pub fn quit_confirmed(webview: tauri::Webview) {
     let app = webview.app_handle();
@@ -370,7 +269,6 @@ pub fn quit_confirmed(webview: tauri::Webview) {
     }
 }
 
-/// The other windows a question about quitting waits on, by label.
 #[tauri::command]
 pub fn quit_others(webview: tauri::Webview) -> Vec<String> {
     listening_windows(webview.app_handle(), Some(webview.label()))
@@ -379,8 +277,6 @@ pub fn quit_others(webview: tauri::Webview) -> Vec<String> {
         .collect()
 }
 
-/// The asking window put where its question can be read: back from the tray when Quit
-/// there is what asked, and forward otherwise. Never a probe's; see placement.rs.
 #[tauri::command(async)]
 pub fn quit_show(webview: tauri::Webview) {
     let window = webview.window();
@@ -395,14 +291,10 @@ pub fn quit_show(webview: tauri::Webview) {
     crate::placement::raised(&window);
 }
 
-/// Quits without asking whether anything may stop: every window is asked to close as
-/// if its close button had been pressed, which is where the writes owed are waited
-/// for, and the app ends once all of them have.
 pub fn quit_now(app: &AppHandle) {
     let quitting = state(app);
     quitting.set(ASKING);
 
-    // Before any window is asked, and so before any has gone.
     crate::placement::note_every_window(app);
 
     let windows = launch::document_windows(app);
@@ -418,8 +310,6 @@ pub fn quit_now(app: &AppHandle) {
             .as_ref()
             .is_some_and(|pending| pending.is_listening(&label));
 
-        // A page that has not come up yet has nothing unsaved and nothing to ask
-        // with, and waiting for it would be a quit that never ends.
         let (app, going) = (app.clone(), window.clone());
         let ask = move || {
             if listening {
@@ -429,12 +319,6 @@ pub fn quit_now(app: &AppHandle) {
             }
         };
 
-        // The window's web tab logins first, as its close button would keep them: a
-        // window that answers yes is destroyed rather than closed, so the close
-        // request that keeps them on the way out never comes. Kept before asking, so
-        // there is still only the one question, and a Cancel after it leaves nothing
-        // but a login that lasts, which every page load does anyway. See
-        // web_cookies.rs.
         #[cfg(any(windows, target_os = "macos", feature = "cef"))]
         crate::web_cookies::kept(&window, ask);
         #[cfg(not(any(windows, target_os = "macos", feature = "cef")))]
@@ -442,37 +326,16 @@ pub fn quit_now(app: &AppHandle) {
     }
 }
 
-/// A window said no: somebody chose Cancel over what was still running. The app carries
-/// on as it was, so closing the last window later keeps it in the Dock rather
-/// than finishing a quit nobody still wants.
 #[tauri::command]
 pub fn keep_running(app: AppHandle) {
     let quitting = state(&app);
     if quitting.now() == ASKING || quitting.now() == CONFIRMING {
         quitting.set(RUNNING);
     }
-    // And whatever asked for the quit is told it is off: a logout or a restart
-    // stops, where the system's own wording says Orden stopped it.
     #[cfg(target_os = "macos")]
     asked_to_quit::answer(&app, false);
 }
 
-/// A Mac's Quit, whichever way it is asked for.
-///
-/// Quit in the app's menu, Cmd+Q, Quit in the Dock's menu and logging out all
-/// reach an app the same way: `AppKit` asks its application delegate whether it
-/// may terminate, and ends the process at once if the delegate does not say. The
-/// delegate is tao's, and it does not say - so without this a Cmd+Q never becomes
-/// the `ExitRequested` the rest of this module answers, and no window is asked
-/// anything. So the one method is added to it: the windows are asked (`quit`), and
-/// `AppKit` is told to wait for their answer, which it is given once they have all
-/// gone or one of them has said no.
-///
-/// Wait, not no. The answer goes back to whatever asked, and a logout, a restart
-/// or a shutdown hears "no" as the app stopping it: it was, every time, with
-/// nothing unsaved anywhere, and the reader had to start it again once Orden had quit
-/// by itself a moment later. Only a Cancel over an unsaved note calls one off now,
-/// which is what every Mac document app does.
 #[cfg(target_os = "macos")]
 mod asked_to_quit {
     use objc2::runtime::{AnyObject, Imp, Sel};
@@ -482,22 +345,15 @@ mod asked_to_quit {
     use std::sync::OnceLock;
     use tauri::AppHandle;
 
-    /// The app the method answers for. `AppKit` calls it with no way to hand
-    /// anything along, so it is kept here, once.
     static APP: OnceLock<AppHandle> = OnceLock::new();
 
-    /// `NSTerminateNow` and `NSTerminateLater`.
     const NOW: usize = 1;
     const LATER: usize = 2;
 
-    /// `AppKit` is waiting on the windows: set when a quit is held, and cleared by
-    /// the one answer it is given.
     static WAITING: AtomicBool = AtomicBool::new(false);
 
-    /// The method's shape: `- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender`.
     type ShouldTerminate = extern "C-unwind" fn(&AnyObject, Sel, *mut AnyObject) -> usize;
 
-    /// Teaches the application delegate to answer a quit.
     #[allow(
         unsafe_code,
         reason = "adding a method to a class AppKit owns is the Objective-C runtime's own call, which has no safe wrapper"
@@ -515,11 +371,6 @@ mod asked_to_quit {
         let object: &AnyObject = delegate.as_ref();
         let answer: ShouldTerminate = should_terminate;
 
-        // SAFETY: the class is the live delegate's own, read off the object on the
-        // main thread; the function has exactly the signature the type encoding
-        // says (an unsigned integer back, the receiver, the selector and one object
-        // in), which is the signature `AppKit` calls it with; and `class_addMethod`
-        // leaves a class that already answers the selector as it was.
         unsafe {
             let class = ffi::object_getClass(std::ptr::from_ref(object)).cast_mut();
             let imp = std::mem::transmute::<ShouldTerminate, Imp>(answer);
@@ -532,8 +383,6 @@ mod asked_to_quit {
         }
     }
 
-    /// Now, when every window has already gone and this is the app ending;
-    /// otherwise later, once the windows have been asked.
     extern "C-unwind" fn should_terminate(_: &AnyObject, _: Sel, _: *mut AnyObject) -> usize {
         let Some(app) = APP.get() else {
             return NOW;
@@ -543,7 +392,6 @@ mod asked_to_quit {
         }
 
         super::quit(app);
-        // With no window to ask, the quit is already over.
         if super::state(app).now() == super::LEAVING {
             return NOW;
         }
@@ -552,10 +400,6 @@ mod asked_to_quit {
         LATER
     }
 
-    /// What the windows decided about a quit `AppKit` is waiting on: yes, and it
-    /// ends the app; no, and whatever asked is told the quit is off. False when
-    /// nothing was waiting - a quit from the app's own menu, or the last window
-    /// going - which the caller ends the ordinary way.
     pub fn answer(app: &AppHandle, yes: bool) -> bool {
         if !WAITING.swap(false, Ordering::SeqCst) {
             return false;
@@ -575,11 +419,8 @@ mod asked_to_quit {
     }
 }
 
-/// The one exit that is let through, once every window has gone.
 fn leave(app: &AppHandle) {
     state(app).set(LEAVING);
-    // A quit `AppKit` asked about is ended by `AppKit`, which is also what tells a
-    // logout that Orden is out of its way.
     #[cfg(target_os = "macos")]
     if asked_to_quit::answer(app, true) {
         return;
@@ -590,7 +431,6 @@ fn leave(app: &AppHandle) {
 fn exit_requested(app: &AppHandle, code: Option<i32>, api: &ExitRequestApi) {
     let quitting = state(app);
     match on_exit(code, quitting.now(), cfg!(target_os = "macos")) {
-        // Ending: nothing asks again on the way out, whichever way the loop goes.
         Exit::Pass => quitting.set(LEAVING),
         Exit::Stay => api.prevent_exit(),
         Exit::Ask => {
@@ -604,38 +444,21 @@ fn state(app: &AppHandle) -> tauri::State<'_, Quitting> {
     app.state::<Quitting>()
 }
 
-/// What to do with a request to end the app.
 #[derive(Debug, PartialEq, Eq)]
 enum Exit {
-    /// Let it end.
     Pass,
-    /// Keep running with no window, in the Dock.
     Stay,
-    /// Keep running, and ask every window first.
     Ask,
 }
 
-/// The decision behind `exit_requested`, apart from anything it acts on.
-///
-/// `code` is `None` when the request is the last window having closed and a
-/// number when something asked for the app to end. A restart is never held: the
-/// update that asked for it has already put its files in place, and Tauri would
-/// not let it be held anyway. Nor is the exit that follows every window saying
-/// yes, which is what stops the question going round for ever.
 fn on_exit(code: Option<i32>, now: u8, mac: bool) -> Exit {
     if code == Some(tauri::RESTART_EXIT_CODE) || now == LEAVING {
         return Exit::Pass;
     }
 
     match code {
-        // The last window has closed. On the way out of a quit that is the quit
-        // done; otherwise a Mac app stays in the Dock, and elsewhere the app ends
-        // with its last window as it always has.
         None if now == ASKING || now == CONFIRMING || !mac => Exit::Pass,
         None => Exit::Stay,
-        // Asked to end. Asked again while the windows are still answering - Cmd+Q
-        // pressed a second time - the question is put again, and a window already
-        // asking ignores it.
         Some(_) if mac => Exit::Ask,
         Some(_) => Exit::Pass,
     }
@@ -649,7 +472,6 @@ mod tests {
     use std::sync::Arc;
     use std::time::Duration;
 
-    /// A window closing by itself does not end the others for an installer.
     #[test]
     fn only_the_last_window_closing_starts_the_installer() {
         assert!(!installer_may_start(true, RUNNING, 1));
@@ -657,14 +479,12 @@ mod tests {
         assert!(!installer_may_start(true, CONFIRMING, 2));
     }
 
-    /// A quit and a restart end every window whichever goes first.
     #[test]
     fn a_quit_or_a_restart_starts_the_installer_with_windows_open() {
         assert!(installer_may_start(true, ASKING, 2));
         assert!(installer_may_start(false, RUNNING, 2));
     }
 
-    /// A second installer started over the first is what `take` is there to stop.
     #[test]
     fn the_installer_is_started_once() {
         let installer = Installer::default();
@@ -672,7 +492,6 @@ mod tests {
         assert!(!installer.take());
     }
 
-    /// One that did not start leaves the app able to try again.
     #[test]
     fn an_installer_that_did_not_start_may_be_tried_again() {
         let installer = Installer::default();
@@ -681,8 +500,6 @@ mod tests {
         assert!(installer.take());
     }
 
-    /// The first of two closing together still has the other to leave it to; the second
-    /// is the last.
     #[test]
     fn of_two_windows_closing_together_the_second_is_the_last() {
         let installer = Installer::default();
@@ -690,7 +507,6 @@ mod tests {
         assert_eq!(installer.closing("b", ["a".to_owned()]), 0);
     }
 
-    /// A new window under a label that has gone is a window staying.
     #[test]
     fn a_window_gone_is_no_longer_closing() {
         let installer = Installer::default();
@@ -699,7 +515,6 @@ mod tests {
         assert_eq!(installer.closing("b", ["a".to_owned()]), 1);
     }
 
-    /// A window gone needs no answer.
     #[test]
     fn a_window_gone_ends_the_wait_for_it() {
         let installer = Installer::default();
@@ -726,8 +541,6 @@ mod tests {
         answer.join().expect("the answer");
     }
 
-    /// A window that never answers holds the installer no longer than the bound, and is
-    /// named.
     #[test]
     fn a_window_that_does_not_answer_is_given_up_on() {
         let installer = Installer::default();
@@ -736,7 +549,6 @@ mod tests {
         assert_eq!(installer.wait(Duration::ZERO), vec!["a".to_owned()]);
     }
 
-    /// A word from a window nobody is waiting on changes nothing.
     #[test]
     fn a_window_not_waited_for_is_ignored() {
         let installer = Installer::default();
@@ -759,21 +571,16 @@ mod tests {
     #[test]
     fn quitting_on_a_mac_asks_every_window_first() {
         assert_eq!(on_exit(Some(0), RUNNING, true), Exit::Ask);
-        // And again, for a second Cmd+Q while the first is still being answered.
         assert_eq!(on_exit(Some(0), ASKING, true), Exit::Ask);
     }
 
     #[test]
     fn the_exit_after_every_window_said_yes_goes_through() {
-        // The last window closing during a quit is the quit finished.
         assert_eq!(on_exit(None, ASKING, true), Exit::Pass);
-        // And the exit the app asks for itself once they have all gone.
         assert_eq!(on_exit(Some(0), LEAVING, true), Exit::Pass);
         assert_eq!(on_exit(None, LEAVING, true), Exit::Pass);
     }
 
-    /// The last window closed while one was asking whether to quit is the quit
-    /// answered; a second Cmd+Q puts the question again.
     #[test]
     fn a_quit_being_confirmed_ends_with_its_last_window() {
         assert_eq!(on_exit(None, CONFIRMING, true), Exit::Pass);

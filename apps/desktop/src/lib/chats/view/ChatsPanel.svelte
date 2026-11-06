@@ -1,10 +1,4 @@
 <script lang="ts">
-  /** The Chats panel (docs/chats.md 4.15): navigation, as the Tasks panel is. A field
-   *  that narrows the list, Activity (mentions of the reader, newest first) and Saved,
-   *  then every chat the account reaches in Discord's three states: read is quiet,
-   *  unread is bright with a count, a mention is a badge in the accent; a muted one is
-   *  quieter still. The plus makes a chat in the space in front. A press opens the chat
-   *  in a tab. */
   import { onMount } from 'svelte'
   import { amount, t } from '../../i18n.svelte'
   import { workspace } from '../../workspace.svelte'
@@ -166,7 +160,6 @@
   const mentions = $derived(store().list.reduce((sum, one) => sum + one.mentions, 0))
   const now = Date.now()
 
-  /** Mentions of the reader, newest first: what Activity lists (4.11). */
   async function lookActive() {
     activity = await store().search('mentions:me')
   }
@@ -327,8 +320,6 @@
         onclick={() => open(chat)}
       >
         <span class="nib-row-mark"><ChatMark path={chat.path} /></span>
-        <!-- A chat whose pointer is still on its way here has no name yet: the kind's
-             word stands in rather than a blank row (#375). -->
         <span class="nib-row-label">{chat.name ?? t('Chat')}</span>
         {#if chat.mentions && !muted}
           <span class="badge">{amount(chat.mentions)}</span>

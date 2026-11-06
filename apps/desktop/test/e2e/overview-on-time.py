@@ -1,23 +1,3 @@
-"""Every frame of the tab overview's way in and way home is on time (#331).
-
-Emil, on Windows: the Alt Alt animation is not quite smooth, a short spike in the middle
-of it. Two things made frames late while the windows flew, and this drive measures both
-on the built web app in Chromium, the engine WebView2 is, through a DevTools trace:
-
-    no frame of the way in or the way home has the engine work out the style of the
-      whole window again: each frame restyles a few hundred elements at most, never the
-      panes and every window's picture under a value they all inherit
-    no window's picture is drawn into after the windows have begun to move: what each
-      shows is there before the first frame of the way in, and none is filled in
-      half-way, which was a long frame in the middle of the way in
-    no window flies as a blank box: each shows its picture, or its mark until that is
-      drawn
-    the tab worked in is over every other window on every frame that moves (Emil: the
-      others flew over it as it shrank)
-
-    python apps/desktop/test/e2e/overview-on-time.py
-"""
-
 from __future__ import annotations
 
 import json
@@ -44,8 +24,6 @@ async () => {
 }
 """
 
-#: Every frame until `stop()`: when it was, whether any window moved since the frame
-#: before, and how many changes were made inside the windows' pictures since then.
 SAMPLE = """
 () => {
   const frames = []
@@ -92,9 +70,7 @@ SAMPLE = """
 
 CATEGORIES = ["devtools.timeline", "disabled-by-default-devtools.timeline"]
 
-
 def restyled(trace: Path) -> list[int]:
-    """How many elements each style recalculation on the page's main thread touched."""
     data = json.loads(trace.read_text())
     events = data["traceEvents"] if isinstance(data, dict) else data
     main = next(
@@ -111,7 +87,6 @@ def restyled(trace: Path) -> list[int]:
         if count:
             counts.append(int(count))
     return counts
-
 
 def run(browser: Browser, page: Page, label: str, keys: list[str], folder: Path) -> None:
     trace = folder / f"{label}.json"
@@ -138,27 +113,21 @@ def run(browser: Browser, page: Page, label: str, keys: list[str], folder: Path)
     blank = [index for index in moving if frames[index]["blank"]]
     if blank:
         wrong(f"[{label}] a window flew as a blank box, its picture not drawn, on frames {blank[:5]}")
-    # The last frame that moves is the one they land in, all of them where they go.
     under = [index for index in moving[:-1] if frames[index]["over"] is False]
     if under:
         wrong(f"[{label}] the tab worked in was under the other windows on frames {under[:5]}")
     counts = restyled(trace)
-    # The frame the overview begins in and the one it ends in restyle what they change -
-    # the strip, the bar, the sidebars - once; every frame between restyles only what
-    # moves in it.
     between = sorted(counts)[:-3] if len(counts) > 3 else counts
     most = max(between, default=0)
     say(f"[{label}] at most {most} elements restyled in a frame, of {seen['elements']}")
     if most > seen["elements"] / 4:
         wrong(f"[{label}] a frame restyled {most} of the window's {seen['elements']} elements")
 
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1600, "height": 960})
     DRIVE.open(page)
     page.evaluate(SEED)
     DRIVE.settled(page)
-    # Once to fetch the overview, so the run looked at is not waiting on a download.
     page.keyboard.press("Alt")
     page.keyboard.press("Alt")
     wait_for(page, "document.querySelectorAll('.window').length >= 10", "the windows")
@@ -170,7 +139,6 @@ def drive(browser: Browser) -> None:
         run(browser, page, "in", ["Alt", "Alt"], Path(folder))
         run(browser, page, "home", ["Escape"], Path(folder))
     page.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "every frame of the overview's way in and home is on time"))

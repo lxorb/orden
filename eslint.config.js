@@ -1,6 +1,3 @@
-// Type-aware linting across the workspace. The rule sets are the strict ones
-// on purpose: a rule that only fires on real mistakes earns its place, and the
-// few that fight the code's style are turned down below, each with its reason.
 import js from '@eslint/js'
 import svelte from 'eslint-plugin-svelte'
 import globals from 'globals'
@@ -11,33 +8,18 @@ export default tseslint.config(
     ignores: [
       '**/node_modules/**',
       '**/dist/**',
-      // The other half of a before-and-after measurement, built beside the first;
-      // see apps/desktop/test/e2e/first-paint.py.
       '**/dist-before/**',
-      // And the build with the names left in it, which is what a profile is read
-      // from; see apps/desktop/test/e2e/speed.py.
       '**/dist-profile/**',
       '**/dist-even/**',
-      // The build the drives against the real Worker load; see
-      // apps/desktop/test/e2e/harness.py.
       '**/dist-worker/**',
       '**/dist-handoff/**',
       '**/target/**',
-      // What the drives photograph, and the builds some of them make beside the
-      // pictures: `layers.py` leaves a whole `main-dist` in there. Git ignores the
-      // folder already, and nothing in it is anybody's source - but a run of the set
-      // would otherwise leave `pnpm lint` unable to parse a few hundred files that
-      // are output. See docs/conventions.md.
       'apps/desktop/test/e2e/shots/**',
-      // What running the Worker locally leaves behind: a bundle it made, and the
-      // state of the databases it ran against. Neither is anybody's source.
       '**/.wrangler/**',
       '.claude/**',
       'packaging/**',
       'apps/desktop/src-tauri/gen/**',
       'docs/**',
-      // The WebExtension polyfill, as Mozilla publishes it; see
-      // apps/desktop/src-tauri/src/extensions/firefox.rs.
       'apps/desktop/src-tauri/src/extensions/firefox/browser-polyfill.js',
     ],
   },
@@ -47,11 +29,6 @@ export default tseslint.config(
   ...svelte.configs.recommended,
   {
     languageOptions: {
-      // The constants the bundler substitutes, declared in
-      // apps/desktop/src/env.d.ts. TypeScript files take them from there because
-      // typescript-eslint leaves `no-undef` to the compiler; a `.svelte` file is
-      // parsed by the Svelte parser, which still asks this list. So a constant used
-      // in a component has to be here or it reads as a typo.
       globals: {
         ...globals.browser,
         ...globals.node,
@@ -77,26 +54,19 @@ export default tseslint.config(
   },
   {
     rules: {
-      // A promise that nobody awaits or catches is a bug that surfaces as a
-      // silent failure; `void promise` says the drop is meant.
       '@typescript-eslint/no-floating-promises': ['error', { ignoreVoid: true }],
       '@typescript-eslint/no-misused-promises': [
         'error',
         { checksVoidReturn: { attributes: false } },
       ],
-      // Every case of a union handled, or the compiler says which is missing.
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
-      // Numbers in template strings read fine; objects and arrays do not.
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
       '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
       '@typescript-eslint/consistent-type-definitions': ['error', 'interface'],
-      // `catch (error) { ... }` with an unused binding is fine; `_` marks intent.
       '@typescript-eslint/no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', caughtErrors: 'none' },
       ],
-      // The codebase explains itself in prose; a non-null assertion is allowed
-      // where the line before makes it obvious, and reviewed by eye.
       '@typescript-eslint/no-non-null-assertion': 'warn',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       eqeqeq: ['error', 'always', { null: 'ignore' }],
@@ -108,46 +78,18 @@ export default tseslint.config(
   {
     files: ['**/*.svelte'],
     rules: {
-      // `{@render snippet()}` is a statement in the markup, but the parser hands
-      // it over as an expression, so the rule reads every one of them as a void
-      // call in the wrong place. Nothing a component can be written differently
-      // to avoid, and the rule still holds for every `.ts` file.
       '@typescript-eslint/no-confusing-void-expression': 'off',
     },
   },
   {
-    // Build and tool configuration sits outside every tsconfig, so the rules
-    // that need type information cannot see it; the plain rules still apply.
-    // `apps/cli` is there for the same reason: it is a Node script rather than a
-    // package that is compiled, and nothing imports it.
     files: ['**/*.config.{js,ts,mjs}', 'scripts/**/*.{js,mjs,ts}', 'apps/cli/**/*.mjs'],
     ...tseslint.configs.disableTypeChecked,
   },
   {
-    // Command-line scripts talk through the console; that is their output.
     files: ['scripts/**/*.{js,mjs,ts}', 'apps/cli/**/*.mjs'],
     rules: { 'no-console': 'off' },
   },
   {
-    // The asset worker is a page of its own: a classic script served from the
-    // root of the site rather than a module in the app's graph, so no tsconfig
-    // covers it and the rules that need types cannot see it. The plain rules
-    // still apply. See apps/desktop/public/sw.js for why it is written that way. The web
-    // state scripts are the same kind of thing: page scripts the crate runs in a site's
-    // own page, never modules of the app; see src-tauri/src/web_state.rs. So is the clip's
-    // reader, src-tauri/src/web_tabs/reader.js, the swipe's, src-tauri/src/web_swipe.js, and
-    // the window's own frame's on Linux, src-tauri/src/window_drag.js, and the drag in its page,
-    // src-tauri/src/page_drag.js, and the one that
-    // says what draws the window's page, src-tauri/src/gpu.js, and the one that says its
-    // pixel ratio, src-tauri/src/page_scale.js, and the one that says a press landed,
-    // src-tauri/src/keyboard_press.js, and the one that says its scheme,
-    // src-tauri/src/page_scheme.js, and the one that keeps what it stores,
-    // src-tauri/src/kept.js, and the one that says what will not play,
-    // src-tauri/src/web_media.js, and an agent's reach into a page on a Mac,
-    // src-tauri/src/agents/engines/snapshot.js, and the Firefox layer an add-on runs,
-    // src-tauri/src/extensions/firefox/*.js.
-    // And the frame script, a classic script every sandboxed frame carries inline; see
-    // packages/editor/src/frame-script.js.
     files: [
       'apps/desktop/public/*.js',
       'apps/desktop/src-tauri/src/web_state/scripts/*.js',
@@ -168,17 +110,10 @@ export default tseslint.config(
     ...tseslint.configs.disableTypeChecked,
   },
   {
-    // The Firefox layer runs inside an add-on, where `chrome` is the extension API and its
-    // service worker has `importScripts`; see src-tauri/src/extensions/firefox.rs.
     files: ['apps/desktop/src-tauri/src/extensions/firefox/*.js'],
     languageOptions: { globals: { ...globals.serviceworker, ...globals.webextensions } },
   },
   {
-    // The Worker's `fetch` throws "Illegal invocation" when it is called as a method of
-    // anything but the global scope: kept as a default or a property and called as
-    // `this.fetcher(...)`, it took every Hetzner start down in production (2026-10-06,
-    // 7b62c5477). Stored, it is wrapped, `(input, init) => fetch(input, init)`, which
-    // calls it plainly wherever it is called from.
     files: ['services/sync/src/**/*.ts'],
     ignores: ['**/*.test.ts'],
     rules: {
@@ -199,8 +134,6 @@ export default tseslint.config(
   {
     files: ['**/*.test.ts', '**/test/**/*.ts'],
     rules: {
-      // A stub standing in for a promise-returning API is written `async`
-      // because that is what it answers, not because it waits for anything.
       '@typescript-eslint/require-await': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',

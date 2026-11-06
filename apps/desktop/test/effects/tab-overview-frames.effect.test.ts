@@ -1,11 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** The tab overview's frames, moving (issue #331). Emil, on Windows: a short spike in the
- *  middle of the Alt Alt animation. A window's picture filled in half-way through the way
- *  in, and every frame had the whole app work out its style again, under a value set
- *  on the document that every element inherits. Here the frames are run by hand. */
-
 window.matchMedia = ((query: string) => ({
   matches: false,
   media: query,
@@ -30,7 +25,6 @@ let now = 0
 let waiting = new Map<number, FrameRequestCallback>()
 let next = 1
 
-/** Runs the frame `ms` after the one before. */
 function frame(ms = 1000 / 60) {
   now += ms
   const due = waiting
@@ -54,7 +48,6 @@ beforeEach(() => {
   workspace.panes.collapse()
   workspace.tabs = []
   for (const name of ['One', 'Two', 'Three']) workspace.openBlank(name, `# ${name}`)
-  // The app round the panes: a bar with its buttons, a sidebar, and a pane with a lot in it.
   const bar = document.createElement('header')
   bar.dataset.chrome = 'top'
   bar.innerHTML = '<button>Back</button><button data-overview-keeps>Search</button>'
@@ -94,7 +87,6 @@ test('the windows set off only once what each of them shows is drawn', async () 
   flushSync()
   expect(drawn.length).toBeGreaterThan(0)
   for (let i = 0; i < 5; i++) frame()
-  // Not begun: the strip keeps its tabs, and the app is what is on screen.
   expect(tabOverview.out).toEqual([])
   await drawnNow()
   frame()
@@ -121,8 +113,6 @@ test('the first frame that moves moves by one frame, however long the frame befo
   expect(open).toBeLessThan(0.3)
 })
 
-/** Custom properties that are registered as not inherited (Overview.svelte's `@property`):
- *  a change to one restyles only the element it is set on. */
 const OWN = new Set(['--overview-slide', '--overview-lift'])
 
 test('no frame sets a value that the panes, the sidebars or the windows’ pictures inherit', async () => {
@@ -152,7 +142,6 @@ test('no frame sets a value that the panes, the sidebars or the windows’ pictu
   }
 })
 
-/** The tab worked in: its pane, which is its window, and how it is stacked. */
 function front() {
   const pane = document.querySelector<HTMLElement>(`[data-pane="${workspace.panes.all[0]?.id}"]`)
   return pane?.style.zIndex ?? ''
@@ -197,7 +186,6 @@ test('a picture that comes in while the windows fly is drawn once they are there
   tabOverview.open = true
   flushSync()
   await faces.read()
-  // Too long: the windows set off without it.
   for (let i = 0; i < 20; i++) frame()
   expect(tabOverview.out.length).toBeGreaterThan(0)
   const faceOf = () => document.querySelector('.window .face')
@@ -207,7 +195,6 @@ test('a picture that comes in while the windows fly is drawn once they are there
   await Promise.resolve()
   flushSync()
   frame()
-  // Not half-way: a window's picture filled in mid-flight was a long frame.
   expect(faceOf()?.querySelector('.read')).toBe(null)
   expect(faceOf()?.querySelector('.mark')).not.toBe(null)
   for (let i = 0; i < 200 && waiting.size; i++) frame()

@@ -1,14 +1,3 @@
-"""Which version this is, in Settings and in the Shift Shift search, and copied (#490).
-
-Emil: "can I somehow see the current version of orden currently?" In the web app, on a
-desktop's screen and on a phone's: Settings > General > Updates ends with Version, the
-build and the commit it was made from (#1112) beside the channel it was served; a press copies the version alone and says so.
-Shift Shift and "about" or "version" finds the same row, saying the version, and Enter
-copies it with the list still up.
-
-    python apps/desktop/test/e2e/version.py
-"""
-
 from __future__ import annotations
 
 import json
@@ -35,7 +24,6 @@ COMMIT = subprocess.run(
 ).stdout.strip()
 VERSION = f"{RELEASE} ({COMMIT})" if COMMIT else RELEASE
 
-
 def fresh(browser: Browser, finger: bool) -> Page:
     page = DRIVE.page(
         browser,
@@ -48,10 +36,8 @@ def fresh(browser: Browser, finger: bool) -> Page:
     DRIVE.open(page)
     return page
 
-
 def clipboard(page: Page) -> str:
     return str(page.evaluate("() => navigator.clipboard.readText()"))
-
 
 def settings(page: Page, label: str, version: str) -> None:
     page.evaluate("() => window.nibApp.settings.show('general')")
@@ -73,9 +59,7 @@ def settings(page: Page, label: str, version: str) -> None:
         wrong(f"[{label}] the row does not say it copied")
     shot(page, f"{label}-copied")
     page.evaluate("() => (window.nibApp.settings.open = false)")
-    # Past the moment the row says it copied, so the search after reads the version.
     page.wait_for_timeout(1800)
-
 
 def searched(page: Page, label: str, version: str) -> None:
     for word in ("about", "version"):
@@ -101,9 +85,7 @@ def searched(page: Page, label: str, version: str) -> None:
         if not page.evaluate("() => !!document.querySelector('.palette input')"):
             wrong(f"[{label}] the palette went away after copying")
         page.keyboard.press("Escape")
-        # Past the moment the row says it copied, so the next search reads the version.
         page.wait_for_timeout(1800)
-
 
 def drive(browser: Browser) -> None:
     for label, finger in (("desktop", False), ("phone", True)):
@@ -112,7 +94,6 @@ def drive(browser: Browser) -> None:
         if not finger:
             searched(page, label, VERSION)
         page.context.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the version is in Settings and the search, and copies"))

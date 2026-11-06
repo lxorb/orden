@@ -1,29 +1,3 @@
-"""A web tab's page drawn under the app's own page on WebView2, driven by a real hand (#1137).
-
-A probe build is started on the runner's desktop - in view, which no probe on somebody's
-machine ever is - a page of one colour is opened in a web tab, and everything a page drawn as a DirectComposition visual has to get right is done to it
-with the system's own input (`SendInput`, `InjectTouchInput`), not the page's devtools:
-
-    drawn       the page's colour in its hole; a layer of the app's drawn over it there
-    the press   a click, a right click, and the field it lands in has the keyboard
-    typing      keys typed into the field arrive in it
-    the wheel   a notch over the page scrolls it
-    a drag      an element dragged onto another inside the page is dropped there
-    a finger    a touch on the page's button is heard as a touch
-    the cursor  an I-beam over the field, where the machine shows a cursor at all
-    reading     UI Automation (IUIAutomation, a screen reader's client) finds the page's
-                own button in the window's tree
-    overview    the tab overview opened and closed, filmed: no frame flashes, and the page
-                is never drawn over the overview
-
-What the page heard it says in its title, which the window reads as any page's.
-
-    python scripts/web-under-drive.py --exe <probe nib.exe> --identifier <probe id> --out <folder>
-
-`--windowed` starts the same build with `NIB_PAGES_WINDOWED=1` and only reads the page's
-tree, the same question asked of a windowed page.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -86,7 +60,6 @@ KEYEVENTF_KEYUP = 0x2
 VK_MENU = 0x12
 IDC_IBEAM = 32513
 
-
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_: Any) -> None:
         pass
@@ -98,10 +71,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(PAGE)
 
-
 def config_dir(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["APPDATA"]) / identifier
-
 
 class App:
     def __init__(self, at: int, secret: str) -> None:
@@ -121,7 +92,6 @@ class App:
             return {"error": str(error)}
         return answer.get("value") if answer.get("ok", answer.get("status") == "ok") else answer
 
-
 def endpoint(identifier: str, pid: int, secret: str) -> App:
     path = config_dir(identifier) / "automation.json"
     until = time.monotonic() + 120
@@ -135,14 +105,12 @@ def endpoint(identifier: str, pid: int, secret: str) -> App:
         time.sleep(0.25)
     raise SystemExit(f"the app never wrote {path}")
 
-
 def client_box(hwnd: int) -> tuple[int, int, int, int]:
     rect = wintypes.RECT()
     user32.GetClientRect(hwnd, ctypes.byref(rect))
     origin = wintypes.POINT(0, 0)
     user32.ClientToScreen(hwnd, ctypes.byref(origin))
     return origin.x, origin.y, origin.x + rect.right, origin.y + rect.bottom
-
 
 def forward(hwnd: int) -> None:
     front = user32.GetForegroundWindow()
@@ -153,7 +121,6 @@ def forward(hwnd: int) -> None:
     user32.BringWindowToTop(hwnd)
     user32.AttachThreadInput(ours, theirs, False)
 
-
 def press(x: int, y: int, down: int = MOUSEEVENTF_LEFTDOWN, up: int = MOUSEEVENTF_LEFTUP) -> None:
     user32.SetCursorPos(x, y)
     time.sleep(0.15)
@@ -161,7 +128,6 @@ def press(x: int, y: int, down: int = MOUSEEVENTF_LEFTDOWN, up: int = MOUSEEVENT
     time.sleep(0.06)
     user32.mouse_event(up, 0, 0, 0, 0)
     time.sleep(0.4)
-
 
 def typed(text: str) -> None:
     for letter in text:
@@ -171,7 +137,6 @@ def typed(text: str) -> None:
         user32.keybd_event(key, 0, KEYEVENTF_KEYUP, 0)
         time.sleep(0.05)
     time.sleep(0.4)
-
 
 def dragged(start: tuple[int, int], end: tuple[int, int]) -> None:
     user32.SetCursorPos(*start)
@@ -188,14 +153,12 @@ def dragged(start: tuple[int, int], end: tuple[int, int]) -> None:
     user32.mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
     time.sleep(0.6)
 
-
 def alt_twice() -> None:
     for _ in range(2):
         user32.keybd_event(VK_MENU, 0, 0, 0)
         time.sleep(0.03)
         user32.keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0)
         time.sleep(0.06)
-
 
 class POINTER_INFO(ctypes.Structure):  # noqa: N801 - the system's name
     _fields_ = [
@@ -207,16 +170,13 @@ class POINTER_INFO(ctypes.Structure):  # noqa: N801 - the system's name
         ("dwKeyStates", wintypes.DWORD), ("PerformanceCount", ctypes.c_uint64), ("ButtonChangeType", ctypes.c_int),
     ]
 
-
 class POINTER_TOUCH_INFO(ctypes.Structure):  # noqa: N801 - the system's name
     _fields_ = [
         ("pointerInfo", POINTER_INFO), ("touchFlags", wintypes.DWORD), ("touchMask", wintypes.DWORD),
         ("rcContact", wintypes.RECT), ("rcContactRaw", wintypes.RECT), ("orientation", wintypes.UINT), ("pressure", wintypes.UINT),
     ]
 
-
 def tapped(x: int, y: int) -> bool:
-    """A finger put down and lifted at a point of the screen, as a touch screen would."""
 
     if not user32.InitializeTouchInjection(1, 3):
         print(f"no touch to inject here: {ctypes.get_last_error()}", flush=True)
@@ -239,10 +199,8 @@ def tapped(x: int, y: int) -> bool:
     time.sleep(0.6)
     return True
 
-
 class CURSORINFO(ctypes.Structure):
     _fields_ = [("cbSize", wintypes.DWORD), ("flags", wintypes.DWORD), ("hCursor", wintypes.HANDLE), ("ptScreenPos", wintypes.POINT)]
-
 
 def cursor_now() -> int:
     info = CURSORINFO()
@@ -250,9 +208,7 @@ def cursor_now() -> int:
     user32.GetCursorInfo(ctypes.byref(info))
     return int(info.hCursor or 0)
 
-
 def window_at(x: int, y: int) -> str:
-    """The window under a point of the screen: its class, its process and its parent's class."""
 
     hwnd = user32.WindowFromPoint(wintypes.POINT(x, y))
     name = ctypes.create_unicode_buffer(256)
@@ -264,28 +220,20 @@ def window_at(x: int, y: int) -> str:
     user32.GetClassNameW(parent, above, 256)
     return f"{name.value} of {owner.value} in {above.value}"
 
-
 def cursor_shown() -> bool:
     info = CURSORINFO()
     info.cbSize = ctypes.sizeof(CURSORINFO)
     user32.GetCursorInfo(ctypes.byref(info))
     return bool(info.flags & 1)
 
-
 def colour_at(image: Image.Image, x: int, y: int) -> tuple[int, int, int]:
     patch = ImageStat.Stat(image.convert("RGB").crop((x - 3, y - 3, x + 3, y + 3))).mean
     return (round(patch[0]), round(patch[1]), round(patch[2]))
 
-
 def near(one: tuple[int, int, int], other: tuple[int, int, int], by: int = 40) -> bool:
     return all(abs(one[k] - other[k]) < by for k in range(3))
 
-
 def named_at(x: int, y: int) -> str:
-    """What UI Automation finds at a point of the screen, and the page's button under the
-    window there by name: through the system's own client (IUIAutomation), which is what a
-    screen reader asks. Asked a few times, since Chromium builds a page's tree once
-    something asks for it."""
 
     import comtypes.client  # noqa: PLC0415 - the drive's own, on Windows
 
@@ -307,7 +255,6 @@ def named_at(x: int, y: int) -> str:
         time.sleep(2)
     return found
 
-
 class Film:
     def __init__(self, box: tuple[int, int, int, int]) -> None:
         self.box, self.frames, self.going = box, [], True
@@ -322,7 +269,6 @@ class Film:
         self.going = False
         self.thread.join()
         return self.frames
-
 
 OPENING = """
 (() => {
@@ -340,7 +286,6 @@ OPENING = """
 """
 OPENED = "(() => { const got = window.__ov; window.__ov = null; return got })()"
 
-
 def opened_at(log: list[list[Any]], at: float) -> float | None:
     best = None
     for when, open in log:
@@ -349,7 +294,6 @@ def opened_at(log: list[list[Any]], at: float) -> float | None:
         else:
             break
     return best
-
 
 def overview(app: App, hwnd: int, hole: tuple[int, int, int, int], out: pathlib.Path, by_keys: bool) -> list[str]:
     name = "keys" if by_keys else "button"
@@ -391,10 +335,7 @@ def overview(app: App, hwnd: int, hole: tuple[int, int, int, int], out: pathlib.
     print(f"[overview {name}] {len(frames)} frames, open {[None if o is None else round(o, 2) for o in opens]}", flush=True)
     return wrong
 
-
 def stacks(pid: int, out: pathlib.Path) -> None:
-    """Every thread's stack of a process that stopped answering, where a debugger is on the
-    machine: a runner's Windows SDK has one."""
 
     for root in (r"C:\Program Files (x86)\Windows Kits\10\Debuggers\x64", r"C:\Program Files\Windows Kits\10\Debuggers\x64"):
         cdb = pathlib.Path(root) / "cdb.exe"
@@ -404,7 +345,6 @@ def stacks(pid: int, out: pathlib.Path) -> None:
             print(said.stdout[-20000:], flush=True)
             return
     print("no debugger on this machine", flush=True)
-
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -428,7 +368,6 @@ def main() -> int:
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-under-spaces-"))
-    # Animations on, which a server's desktop has off.
     user32.SystemParametersInfoW(0x1043, 0, ctypes.c_void_p(1), 0x3)
 
     env = {**os.environ, "NIB_SPACES_DIR": str(spaces), **({"NIB_PAGES_WINDOWED": "1"} if args.windowed else {})}
@@ -514,10 +453,8 @@ def main() -> int:
 
         heard = lambda: told()["log"]  # noqa: E731
 
-        # Drawn: the page in its hole, and a layer of the app's over it.
         shot = ImageGrab.grab()
         shot.save(args.out / "page.png")
-        # Clear of every box the page draws: its own colour there.
         middle = at(600, 470)
         if not near(colour_at(shot, *middle), COLOUR):
             wrong.append(f"the page is not drawn in its hole: {colour_at(shot, *middle)} at {middle}")
@@ -538,7 +475,6 @@ def main() -> int:
         app.eval("document.getElementById('drive-layer')?.remove(); return true")
         time.sleep(1)
 
-        # The cursor over the field, before the keys hide it.
         user32.SetCursorPos(*at(200, 60))
         time.sleep(0.5)
         user32.SetCursorPos(*at(210, 62))
@@ -550,7 +486,6 @@ def main() -> int:
         elif cursor_now() != beam:
             wrong.append(f"the cursor over the page's field is not the I-beam: {cursor_now():#x}, {beam:#x}")
 
-        # The press, the keyboard and typing.
         press(*at(120, 60))
         typed("under")
         value = told()["v"]
@@ -561,12 +496,10 @@ def main() -> int:
         if not any(one[0] == "click" and one[1] == "field" for one in log):
             wrong.append("a click on the page's field was not heard")
 
-        # A right click.
         press(*at(150, 150), MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP)
         if not any(one[0] == "contextmenu" for one in heard()):
             wrong.append("a right click on the page was not heard")
 
-        # The wheel.
         user32.SetCursorPos(*at(600, 500))
         time.sleep(0.3)
         user32.mouse_event(MOUSEEVENTF_WHEEL, 0, 0, ctypes.c_uint32(-360 & 0xFFFFFFFF).value, 0)
@@ -576,26 +509,22 @@ def main() -> int:
         if not isinstance(scrolled, (int, float)) or scrolled <= 0:
             wrong.append(f"the wheel over the page did not scroll it: {scrolled}")
 
-        # A drag inside the page.
         dragged(at(80, 260), at(400, 300))
         log = heard()
         if not any(one[0] == "drop" and one[1] == "drop" for one in log):
             wrong.append(f"a drag inside the page was not dropped: {log[-8:]}")
 
-        # Reading the page.
         named = named_at(*at(150, 150))
         print(f"UI Automation at the button: {named!r}", flush=True)
         if "Pressable" not in named:
             wrong.append(f"UI Automation does not find the page's button: {named!r}")
 
-        # A finger on the page's button.
         if tapped(*at(150, 150)):
             log = heard()
             print(f"after a tap: {log[-4:]}", flush=True)
             if not any(one[0] == "pointerdown" and one[2] == "touch" for one in log):
                 wrong.append(f"a touch on the page was not heard as one: {log[-6:]}")
 
-        # The overview, opened and closed, by the button and by the keys.
         user32.SetCursorPos(*at(600, 500))
         user32.mouse_event(MOUSEEVENTF_WHEEL, 0, 0, 2000, 0)
         time.sleep(1)
@@ -615,7 +544,6 @@ def main() -> int:
     (args.out / "wrong.json").write_text(json.dumps(wrong, indent=1), encoding="utf-8")
     print(f"{len(wrong)} wrong", flush=True)
     return 1 if wrong else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,6 +1,3 @@
-/** An SMTP submission client (RFC 5321, 6409, 3207, 4954) over a provider `Socket`:
- *  one message per connection, as a mail client sends a reply. */
-
 import type { Socket, SocketAsk } from '../provider'
 import { ascii, concat, fromLatin, latin, Reader, toBase64 } from './bytes'
 
@@ -77,7 +74,6 @@ class Talk {
   }
 }
 
-/** Dots at a line's start doubled, every line ending CRLF, and the end mark. */
 export function dotStuffed(message: Uint8Array): Uint8Array {
   const text = latin(message).replace(/\r?\n/g, '\r\n')
   const body = text.replace(/^\./gm, '..')

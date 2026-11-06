@@ -1,52 +1,33 @@
 name: check
 
-# On a pull request into main once it is ready for review, and on main itself, which
-# is what the deploy below is gated on. Not on `unstable`: its pushes are built by
-# release.yml, and checked here when they come to main as a pull request.
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
-    # `ready_for_review` too: a draft runs nothing, and the full run starts the moment
-    # it is marked ready (see docs/conventions.md, "CI").
     types: [opened, synchronize, reopened, ready_for_review]
-  # By hand, on a branch whose work is not headed for main yet (`gh workflow run
-  # check.yml --ref <branch>`).
   workflow_dispatch:
 
 concurrency:
   group: check-${{ github.ref }}
-  # Superseding a branch run saves wasted minutes. Superseding a main run can
-  # cancel it between the migration and the Worker deploy, leaving the database
-  # ahead of the code that reads it - so main queues instead of cancelling.
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
-# The floor, so a job added below without a block of its own still only reads.
-# Every job states its own as well, because what a job may do is part of what the
-# job is.
 permissions:
   contents: read
 
 jobs:
   test:
-    # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # Every job in this file says what its token may do, and every one of them
-    # only reads: nothing here writes a release, opens a pull request or touches
-    # a package. A job with no block of its own inherits whatever the
-    # repository's default is, which is a permission nobody chose for it.
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      # No version here: it comes from the root package.json's packageManager.
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
 
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
           cache: pnpm
@@ -59,22 +40,18 @@ jobs:
       - name: Tests
         run: pnpm test
 
-  # The static half of the gate, beside the tests rather than in front of them: the
-  # three read the source and nothing else, and one after the other they were a
-  # minute and a half of the test job's wall time.
   lint:
-    # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
 
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
           cache: pnpm
@@ -90,8 +67,6 @@ jobs:
       - name: Dead code and unused dependencies
         run: pnpm knip
 
-      # The rename's notice is the README's first line, word for word, for as long as
-      # people still arrive looking for nibeditor (docs/backlog.md, Q19).
       - name: The README opens with the rename
         run: |
           expected='> Important: NibEditor is now Orden. We decided to change the name but everything else is still the same :)'
@@ -100,25 +75,18 @@ jobs:
             exit 1
           fi
 
-  # Sync v2's engine as every device of the simulator, ten thousand seeds of the unkind
-  # network against the reference account (docs/sync-v2.md section 12): the same seeds
-  # every run, so a change that breaks one is caught on its own push. Beside the tests
-  # rather than in them, because it takes four cores a few minutes; the nightly
-  # run walks new seeds (walks.yml). Not in front of the deploy: v2 is behind
-  # `sync_version`.
   walks:
-    # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
 
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
           cache: pnpm
@@ -128,91 +96,42 @@ jobs:
       - name: Ten thousand seeds
         run: pnpm --filter @orden/desktop sim:long
 
-  # Whether a person could write in it at all.
-  #
-  # Every gate above this one is blind to layout and paint by construction: the
-  # desktop app's vitest.config.ts says so itself, because jsdom has no layout. So
-  # a note that will not scroll and a `**bold**` that comes out plain pass types,
-  # lint, prettier, knip and the whole unit suite, and are found by the person
-  # using the app. Both of those shipped, in the same week, on top of forty
-  # end-to-end drives that nothing ran.
-  #
-  # This job runs the shallowest of those drives - the four facts whose failure
-  # means the app is not usable - in a real browser on every change. Depth stays in
-  # the drive written beside each feature, and the whole set of them runs every
-  # night in drives.yml, which is far too long for a pull request; the floor is what
-  # a pull request can afford. See apps/desktop/test/e2e/smoke.py.
   smoke:
-    # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
 
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
 
-      # The runner's own Python: one package, and the
-      # browser it drives, and the system's libraries it needs, which a bare Chromium on
-      # a runner is missing half of (scripts/ci-apt.sh, Playwright's `--with-deps` in a
-      # bounded time).
       - name: The browser the drive holds
         run: |
           python3 -m pip install --quiet --break-system-packages playwright pillow
           bash scripts/ci-apt.sh --playwright chromium
           python3 -m playwright install chromium
 
-      # The drive builds its own, `--mode drive`: a release build in every respect
-      # but one, with `__DRIVEABLE__` keeping the two handles it steers by. That
-      # matters more than it sounds. Those handles used to be behind
-      # `import.meta.env.DEV`, so the only build anything could drive was the one
-      # nobody ships, and three reported bugs turned out to be unreproducible in
-      # every build a drive could reach. This is the first gate in the repository
-      # that exercises the shape that ships. Every other drive builds the same shape,
-      # through the harness they share (apps/desktop/test/e2e/harness.py), and
-      # apps/desktop/test/drives.test.ts in the job above holds them to it without a
-      # browser.
-      # Every drive in the folder, parsed. Nothing else in the repository reads
-      # these ninety files - eslint does not, prettier cannot - so a syntax error
-      # in one of them is invisible until somebody runs it, which for most of them
-      # is months. It costs about a second and it caught this job's own first
-      # version.
       - name: The drives parse
         run: python3 -m compileall -q apps/desktop/test/e2e
 
       - name: Smoke
         run: python3 apps/desktop/test/e2e/smoke.py
 
-      # And the launch's second half, on the build smoke.py just made: once the window
-      # is whole, nothing the launch order starts holds the thread for a frame a key
-      # would wait through. Counted against a line scaled to this runner, so it asks
-      # the same question here as on the machine the one-second table was measured on.
-      # See apps/desktop/test/e2e/long-tasks.py.
       - name: The launch hands the thread back
         run: NIB_SKIP_BUILD=1 python3 apps/desktop/test/e2e/long-tasks.py
 
-      # And whether anything on screen is laid out so it cannot be read: every pane of
-      # the settings and the big surfaces, at three desktop widths and a phone, light and
-      # dark, signed out and with an account, on the same build. A name drawn a letter
-      # to a line beside a control too wide for its row passed every gate above three
-      # times and was found by Emil each time. See apps/desktop/test/e2e/layout-sweep.py.
       - name: Nothing is laid out so it cannot be read
         run: NIB_SKIP_BUILD=1 python3 apps/desktop/test/e2e/layout-sweep.py
 
-      # And the half of that rule a test over source text cannot prove: that a real
-      # release does not carry the handle. `window.nibApp` is the whole workspace,
-      # and the page it sits on renders other people's HTML, so "the bundler removed
-      # the branch" has to be checked on the bundle rather than asserted about the
-      # config that asks for it. A plain build, no mode, exactly what ships.
       - name: A release carries no handle
         run: |
           pnpm --filter @orden/desktop build
@@ -222,10 +141,8 @@ jobs:
           fi
           echo "no handle in the release bundle"
 
-      # What it saw, when it did not like it. A screenshot of the surface that
-      # failed is the difference between "bold is not bold" and knowing why.
       - if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: smoke-shots
           path: |
@@ -233,27 +150,18 @@ jobs:
             apps/desktop/test/e2e/shots/layout-sweep
           if-no-files-found: ignore
 
-  # The drives a Mac breaks first, in WebKit, which is what a Mac, an iPhone and Linux
-  # run the app in. Everything above is Chromium's, and Chromium is WebView2: the editor
-  # once stopped drawing after the first keystroke on every Mac (`cancelIdleCallback`,
-  # which WebKit does not have), with every gate here green. `NIB_ENGINE=webkit` presses
-  # every key the way a Mac does - Cmd for Ctrl, Option for a word, the registry's own
-  # Mac key where it has one - so these also say that each of those keys works there.
-  # On Linux, where WebKit is cheap; the same drives on a Mac's own WebKit are below.
-  # See apps/desktop/test/e2e/harness.py and test/webkit.test.ts for the static half.
   webkit:
-    # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
 
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
           cache: pnpm
@@ -272,27 +180,24 @@ jobs:
         run: python3 apps/desktop/test/e2e/run-all.py --jobs 2 --retries 1 --only smoke,keyboard,new-tabs,find-bar,hover-preview,frames,handed,callouts,highlights-links-breaks,task-rows
 
       - if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: webkit-shots
           path: apps/desktop/test/e2e/shots
           if-no-files-found: ignore
 
-  # The floor in a Mac's own WebKit, on a Mac: what WKWebView draws with, which the
-  # Linux port above is not - its fonts, its scrollbars, its keyboard events.
   webkit-mac:
-    # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: macos-latest
     timeout-minutes: 30
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
 
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
           cache: pnpm
@@ -310,20 +215,13 @@ jobs:
         run: python3 apps/desktop/test/e2e/run-all.py --jobs 2 --retries 1 --only smoke,keyboard,find-bar,hover-preview
 
       - if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: webkit-mac-shots
           path: apps/desktop/test/e2e/shots
           if-no-files-found: ignore
 
-  # All three platforms, because the crate is not one body of code. The taskbar's
-  # recent documents list, Explorer's New menu and the PDF printer are behind a
-  # Windows cfg gate, the Apple Notes reader is behind a macOS one - SQLite,
-  # gzipped protobufs and a group container no other system has - and code a
-  # runner does not compile is code no lint reads and no test runs. No row waits
-  # on another: a lint that only fires on one platform should say which.
   rust:
-    # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     permissions:
       contents: read
@@ -335,58 +233,36 @@ jobs:
     timeout-minutes: 60
     defaults:
       run:
-        # One spelling of every step below, whichever runner reads it.
         shell: bash
     env:
-      # File and line in a failing test's backtrace, and none of the rest of the
-      # debug information, which was most of what the target folder weighed and so
-      # most of what the cache carried and the linker wrote.
       CARGO_PROFILE_DEV_DEBUG: line-tables-only
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
 
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
           cache: pnpm
 
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
-          # Named, and not left to the `@stable` the ref used to carry: with the
-          # action pinned to a commit, the ref no longer says which toolchain to
-          # install, and this is the input that does.
           toolchain: stable
           components: clippy, rustfmt
 
-      # Linux builds on CEF, from a manifest of its own put in place of the app's, which
-      # has to be the one scripts/linux-manifest.mjs writes from the app's; and it goes
-      # in before the cache below is keyed by the lock file beside it. See
-      # scripts/linux-cef.sh.
       - name: Linux's manifest
         if: runner.os == 'Linux'
         run: |
           node scripts/linux-manifest.mjs --check
           bash scripts/linux-cef.sh
 
-      # The cache key this action builds already carries the runner's own OS, so
-      # the three rows keep three caches without being told to. Saved from main
-      # only: the repository has ten gigabytes of cache, the release and phone
-      # builds fill most of it, and a pull request's copy is one no other run can
-      # read - so every one of them pushed a cache main still needed out of it.
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
           workspaces: |
             apps/desktop/src-tauri
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
-      # Tauri needs a webview to compile against. Windows has WebView2 in the image
-      # already and macOS has WebKit in the system; Linux's is CEF, which its crate's
-      # build script downloads, on GTK 4 - 4.14 at least, so Ubuntu 24.04's. And
-      # pandoc, so the tests in pandoc.rs run it for real on one row at least. And Xvfb
-      # and ffmpeg, so a viewer in apps_host/stream.rs's tests connects to a real display
-      # and gets its picture; and PulseAudio and its tools, so it hears its sound.
       - name: System dependencies
         if: runner.os == 'Linux'
         timeout-minutes: 25
@@ -394,14 +270,10 @@ jobs:
           bash scripts/ci-apt.sh --no-install-recommends libgtk-4-dev libdbus-1-dev cmake ninja-build pandoc xvfb ffmpeg pulseaudio pulseaudio-utils
           bash scripts/linux-cef.sh cef
 
-      # And ffmpeg on Windows, so a viewer in apps_host/stream.rs's tests gets the picture
-      # of an application on a desktop of its own (issue 1063).
       - name: ffmpeg, on Windows
         if: runner.os == 'Windows'
         run: choco install ffmpeg -y --no-progress
 
-      # Tauri's build script embeds the built frontend, so it has to exist
-      # before the crate will even compile.
       - name: Frontend
         run: |
           pnpm install --frozen-lockfile
@@ -411,27 +283,17 @@ jobs:
         run: |
           cargo fmt --manifest-path apps/desktop/src-tauri/Cargo.toml --check
 
-      # `--all-targets` so the tests are linted and, more to the point, compiled:
-      # a test module that does not build is invisible to a plain clippy run, and
-      # the tests it holds then quietly stop running.
       - name: Clippy
         run: |
           cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml --all-targets -- -D warnings
 
-      # On Linux the tests link CEF, which its build script copies beside the binaries
-      # it builds, one folder above the tests'.
       - name: Tests
         timeout-minutes: 25
         run: |
           export LD_LIBRARY_PATH="$PWD/apps/desktop/src-tauri/target/debug${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
           cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 
-  # An application hosted on Windows and shown in WebView2 (issue 1063): a probe build
-  # lists what the runner has installed, starts Notepad on a desktop of its own, takes
-  # its picture with WebView2's own WebRTC and types into it; see scripts/apps-drive.py.
-  # The picture it saw is kept as an artifact.
   apps-windows:
-    # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: windows-latest
     timeout-minutes: 75
@@ -444,7 +306,7 @@ jobs:
       IDENTIFIER: ch.emilvinu.nib.probe.apps
       ROLLING: 'true'
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
       - uses: ./.github/actions/desktop-setup
         with:
@@ -453,8 +315,6 @@ jobs:
       - name: ffmpeg
         run: choco install ffmpeg -y --no-progress
 
-      # A probe build, as web-tab.yml makes one: a version no release passes and an
-      # updater pointed at nothing; see scripts/probe_app.py.
       - name: The probe
         run: |
           source scripts/edge-profile.sh
@@ -468,21 +328,13 @@ jobs:
             --identifier "$IDENTIFIER" --shot apps-windows.png
 
       - if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: apps-windows
           path: apps-windows.png
           if-no-files-found: ignore
 
-  # Whether the phone's own half of the app changed. Its own job so the answer is
-  # one `if` on the job below rather than one on each of its steps, and because
-  # `on.paths` would gate the whole workflow rather than one job of it.
-  #
-  # It answers yes when it cannot tell. A shallow clone, a force push and the
-  # first push to a branch all leave nothing to compare against, and spending ten
-  # minutes for nothing is cheaper than letting a broken manifest through.
   android-touched:
-    # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -491,7 +343,7 @@ jobs:
     outputs:
       touched: ${{ steps.look.outputs.touched }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           fetch-depth: 0
 
@@ -515,19 +367,6 @@ jobs:
             echo "touched=false" >>"$GITHUB_OUTPUT"
           fi
 
-  # The Kotlin, the manifest, the resources and R8. Nothing else in the project
-  # does: `check.yml`'s rust job builds the crate for the runner's own platform,
-  # and the Android project is only ever assembled by publish-mobile.yml, which
-  # does not run on a pull request - so until this job existed, a manifest that
-  # would not build or a Kotlin file that would not compile reached main and was
-  # found by a release.
-  #
-  # The release APK, and not the debug one. A debug assembly does not run R8, and
-  # the first version of this job built one: it went green, and publish-mobile
-  # failed one step further on with a keep rule R8 wanted. The variant is what has
-  # to match, so this runs the same command with the same two targets and only the
-  # signing left out - a runner with no keystore.properties produces an unsigned
-  # APK, which is the last step of all. See docs/mobile.md.
   android-check:
     needs: android-touched
     if: needs.android-touched.outputs.touched == 'true'
@@ -536,45 +375,33 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
 
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
           cache: pnpm
 
-      # The Android Gradle plugin runs on 17; the runner's default is newer.
-      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
         with:
           distribution: temurin
           java-version: 17
 
-      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
         with:
           packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
 
       - name: The NDK the crate is cross-compiled with
         run: echo "NDK_HOME=$ANDROID_NDK_LATEST_HOME" >>"$GITHUB_ENV"
 
-      # The same two targets publish-mobile passes, because that is what decides
-      # the variant: two or more of them and the CLI builds the `universal`
-      # flavour, which is the one R8 runs over there.
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
-          # Named, and not left to the `@stable` the ref used to carry: with the
-          # action pinned to a commit, the ref no longer says which toolchain to
-          # install, and this is the input that does.
           toolchain: stable
           targets: aarch64-linux-android,x86_64-linux-android
 
-      # publish-mobile's cache, read and never written: the same command on the same
-      # two targets, and that job runs on every push to main, so its copy is always
-      # warm. A cache of this job's own went cold between the pushes that touch the
-      # crate - it was the first thing the full cache pushed out - and every run
-      # here compiled the crate for both phones from nothing.
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
           workspaces: apps/desktop/src-tauri
           shared-key: android
@@ -582,12 +409,6 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # The same command publish-mobile runs, without the signing: a runner that
-      # was given no keystore.properties simply produces an unsigned release APK,
-      # and every step before that - the Kotlin, the manifest merge, the resources
-      # and R8 - is the same work on the same variant.
-      #
-      # This builds the frontend itself, through the config's beforeBuildCommand.
       - name: Assemble the release APK, R8 and all
         run: |
           pnpm --filter @orden/desktop exec tauri android build --apk \
@@ -597,16 +418,10 @@ jobs:
         run: |
           find apps/desktop/src-tauri/gen/android/app/build/outputs/apk -name '*.apk' -print
 
-      # The Kotlin's own tests, on the JVM: the reminders' alarm list (AlarmListTest.kt).
-      # After the assembly, because the Gradle files they run in are the ones the CLI
-      # writes for it.
       - name: The Kotlin's unit tests
         working-directory: apps/desktop/src-tauri/gen/android
         run: ./gradlew :app:testUniversalReleaseUnitTest --console=plain
 
-      # R8 writes what it could not resolve here whether or not it goes on to fail,
-      # so this is worth reading on a green run too: a rule that is no longer
-      # needed and a new dependency's dangling reference both show up in it.
       - name: What R8 could not resolve
         if: always()
         run: |
@@ -617,52 +432,34 @@ jobs:
             echo "R8 wrote no mapping folder"
           fi
 
-  # Whatever is on main is what orden.so and nibeditor.com serve. Gated on the tests above,
-  # so a red build never reaches anyone. The web carries the edge of `unstable` beside it
-  # for whoever asks for it (services/sync/src/channel.ts), and web-unstable.yml refreshes
-  # that half on every push there; this one builds it too, so neither deploy drops the
-  # other's.
   deploy:
-    # The types, the tests and the static checks. Clippy guards the desktop app,
-    # which is not what this deploys, and coupling the two would let a lint stop a fix.
     needs: [test, lint]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
-    # The Worker and the database are reached with a Cloudflare token, not with
-    # this one, so even the deploy only reads the repository.
     permissions:
       contents: read
 
-    # Deploys queue rather than race. Cancelling one halfway is how a database
-    # ends up migrated for a Worker that never arrived.
     concurrency:
       group: deploy
       cancel-in-progress: false
 
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
 
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
 
-      # The Worker serves the built app from its assets binding, so the build
-      # has to exist before the deploy reads it.
       - name: Build the web app
         run: pnpm --filter @orden/desktop build
 
-      # The edge of `unstable`, as it stands, beside it: in a worktree of its own, outside
-      # this one, so that nothing either build looks up on the way - a lockfile, a
-      # config - is the other's. A broken edge is no reason to hold a release back, so a
-      # failure here deploys the release alone, and the Worker serves the release to the
-      # browsers that asked for the edge until the next push to `unstable` mends it.
       - name: Build the unstable web app
         id: unstable
         continue-on-error: true
@@ -672,22 +469,14 @@ jobs:
           cd "$RUNNER_TEMP/unstable"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           pnpm install --frozen-lockfile
-          # By its folder, not its name: this runs in unstable's tree with main's workflow,
-          # and the two may name the package differently while a rename is between them (#367).
           VITE_ORDEN_CHANNEL=unstable pnpm --filter ./apps/desktop build
 
-      # Refused only before the unstable pages are in place, so the release is whole either way.
       - name: Put the two builds together
         id: together
         if: steps.unstable.outcome == 'success'
         continue-on-error: true
         run: bash scripts/web-channels.sh apps/desktop/dist "$RUNNER_TEMP/unstable/apps/desktop/dist"
 
-      # Schema first. A new Worker may read a column the old schema lacks, and
-      # the reverse - an unused new column - breaks nothing.
-      #
-      # `run` is spelled out in both steps below because `pnpm deploy` is a
-      # pnpm command of its own, and swallows the package script otherwise.
       - name: Migrate the database
         run: pnpm --filter @orden/sync run migrate:remote
         env:
@@ -696,9 +485,6 @@ jobs:
       - name: Build nibd for the machine image
         run: pnpm --filter @orden/machine build
 
-      # The version says which main it is, in full, because a push to `unstable` deploys
-      # the Worker again with the edge's new pages and has to deploy this same main to do
-      # it: the one whose migrations ran. See web-unstable.yml.
       - name: Deploy the Worker
         run: |
           pnpm --filter @orden/sync run deploy \

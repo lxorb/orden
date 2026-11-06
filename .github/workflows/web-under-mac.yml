@@ -1,7 +1,5 @@
 name: web-under-mac
 
-# A web tab's page drawn under the app's own page on WKWebView, driven on the runner's
-# screen with the system's own input; see scripts/web-under-mac-drive.py (#1138).
 on:
   push:
     branches: ['tmp/ci-1138*']
@@ -25,7 +23,7 @@ jobs:
       IDENTIFIER: ch.emilvinu.nib.probe.under
       ROLLING: 'true'
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
       - uses: ./.github/actions/desktop-setup
         with:
@@ -45,7 +43,7 @@ jobs:
           "$RUNNER_TEMP/drive/bin/pip" install --quiet pillow pyobjc-framework-Quartz pyobjc-framework-Cocoa pyobjc-framework-ApplicationServices
           "$RUNNER_TEMP/drive/bin/python" scripts/web-under-mac-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out drive
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: web-under-mac

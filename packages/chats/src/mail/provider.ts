@@ -1,7 +1,3 @@
-/** Mail as a chat service (#321): a mailbox over IMAP, replies over SMTP, a conversation
- *  per thread. Live through IDLE on a second connection, or a look once a minute where
- *  the server has no IDLE. */
-
 import type {
   ChatProvider,
   Connection,
@@ -29,7 +25,6 @@ import {
 import { sendMail } from './smtp'
 import { bareSubject, threadsOf } from './threads'
 
-/** How many of a mailbox's newest mails are read when it connects. */
 const NEWEST = 300
 const LOOK_EVERY = 60_000
 const IDLE_FOR = 25 * 60_000
@@ -83,7 +78,6 @@ const PRESETS: Record<string, { imap: string; smtp: string; smtpPort?: number }>
   'yahoo.com': { imap: 'imap.mail.yahoo.com', smtp: 'smtp.mail.yahoo.com' },
 }
 
-/** The servers an address most likely uses, for the fields connecting fills in. */
 export function guessServers(address: string): {
   imapHost: string
   imapPort: string
@@ -105,7 +99,6 @@ function securityOf(value: string | undefined, port: number): Security {
   return port === 993 || port === 465 ? 'tls' : 'starttls'
 }
 
-/** `host` or `host:port`, as the server fields take it. */
 function hostAndPort(value: string | undefined): { host?: string; port?: string } {
   const found = /^\s*([^\s:]+)(?::(\d+))?\s*$/.exec(value ?? '')
   if (!found?.[1]) return {}
@@ -196,8 +189,6 @@ class MailConnection {
     return this.opening
   }
 
-  /** A command reads whichever mailbox is selected when it runs, so choosing one and
-   *  reading from it are one turn of the main connection. */
   private held<T>(run: (imap: Imap) => Promise<T>): Promise<T> {
     const turn = this.turn.then(async () => run(await this.connect()))
     this.turn = turn.catch(() => undefined)
@@ -219,7 +210,6 @@ class MailConnection {
     return { imap: held, exists }
   }
 
-  /** Reads the boxes once: the inbox and the sent mail, newest first. */
   begin(): Promise<void> {
     return this.held(async (imap) => {
       const boxes = await imap.command('LIST "" "*"')
@@ -474,8 +464,6 @@ class MailConnection {
     for (const hear of this.hearers) hear(event)
   }
 
-  /** New mail in the inbox since the newest one held: told as messages and the
-   *  conversations they are in. */
   private async look(): Promise<void> {
     const after = (this.last.get('INBOX') ?? 0) + 1
     const found = (
@@ -528,7 +516,6 @@ class MailConnection {
     }
   }
 
-  /** Until the connection ends: IDLE where it can, a look every minute where not. */
   private async follow(imap: Imap): Promise<void> {
     while (!this.stopped && imap.alive()) {
       if (!imap.capabilities.has('IDLE')) {
@@ -577,7 +564,6 @@ class MailConnection {
   }
 }
 
-/** The mailbox sent mail is kept in: the one marked `\Sent`, or one named so. */
 export function sentBox(lines: readonly Untagged[]): string | null {
   const boxes = lines
     .filter((one) => one.kind === 'LIST')

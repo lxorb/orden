@@ -1,17 +1,8 @@
-//! Explorer's "New ▸" menu. Windows builds it from a `ShellNew` key under the
-//! extension, named by the file type the extension says it is: an extension that names
-//! none, as `.md` on a machine with no Markdown program, is left out of the menu (#483).
-//! So where `.md` names no type, it is given Orden's, which only names it. Everything
-//! here writes to `HKEY_CURRENT_USER`, so it needs no administrator and affects only the
-//! person who asked for it.
-
-/// Whether the "New ▸ Markdown Document" entry is currently registered.
 #[tauri::command]
 pub fn new_menu_registered() -> bool {
     platform::read()
 }
 
-/// Adds or removes the entry. Nothing here runs unless the reader asks for it.
 #[tauri::command]
 pub fn set_new_menu(enabled: bool) -> Result<(), String> {
     platform::write(enabled)
@@ -34,7 +25,6 @@ mod platform {
     const TYPE: &str = "Orden.Markdown";
     const TYPE_KEY: PCWSTR = w!("Software\\Classes\\Orden.Markdown");
 
-    /// A key's default value, as text.
     #[allow(
         unsafe_code,
         reason = "the registry has no safe wrapper in the windows crate"
@@ -42,7 +32,6 @@ mod platform {
     fn default_of(root: HKEY, key: PCWSTR) -> Option<String> {
         let mut buffer = [0u16; 260];
         let mut size = u32::try_from(std::mem::size_of_val(&buffer)).unwrap_or(0);
-        // Safe: the buffer and its size outlive the call, which writes no more than `size`.
         let status = unsafe {
             RegGetValueW(
                 root,
@@ -61,7 +50,6 @@ mod platform {
         Some(String::from_utf16_lossy(&buffer[..length])).filter(|text| !text.is_empty())
     }
 
-    /// Whether `.md` names a file type that is there, which Explorer names the entry by.
     #[allow(
         unsafe_code,
         reason = "the registry has no safe wrapper in the windows crate"
@@ -72,7 +60,6 @@ mod platform {
         };
         let name: Vec<u16> = name.encode_utf16().chain(std::iter::once(0)).collect();
         let mut key = HKEY::default();
-        // Safe: a name that ends in a nought, and a handle closed if it opened.
         unsafe {
             if RegOpenKeyExW(
                 HKEY_CLASSES_ROOT,
@@ -89,7 +76,6 @@ mod platform {
         true
     }
 
-    /// Sets a key's default value, making the key where it is not there.
     #[allow(
         unsafe_code,
         reason = "the registry has no safe wrapper in the windows crate"
@@ -101,7 +87,6 @@ mod platform {
             .flat_map(u16::to_le_bytes)
             .collect();
         let mut opened = HKEY::default();
-        // Safe: valid names and bytes, and the one handle opened is closed below.
         unsafe {
             let status = RegCreateKeyW(HKEY_CURRENT_USER, key, ptr::from_mut(&mut opened));
             if status != ERROR_SUCCESS {
@@ -117,14 +102,11 @@ mod platform {
         }
     }
 
-    /// Tells Explorer the file types changed, so its menu is read again.
     #[allow(unsafe_code, reason = "a shell notification, which only Win32 sends")]
     fn told() {
-        // Safe: an event that carries nothing.
         unsafe { SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, None, None) };
     }
 
-    /// Whether the key is there, which is the whole of the state.
     #[allow(
         unsafe_code,
         reason = "the registry has no safe wrapper in the windows crate"
@@ -132,8 +114,6 @@ mod platform {
     pub fn read() -> bool {
         let mut key = HKEY::default();
 
-        // Safe: both pointers are valid for the call, and the handle is closed on
-        // every path that opened one.
         unsafe {
             let opened =
                 RegOpenKeyExW(HKEY_CURRENT_USER, KEY, 0, KEY_READ, ptr::from_mut(&mut key));
@@ -146,15 +126,11 @@ mod platform {
         true
     }
 
-    /// Adds the key or takes it away, and says so in a sentence rather than in a
-    /// status code.
     #[allow(
         unsafe_code,
         reason = "the registry has no safe wrapper in the windows crate"
     )]
     pub fn write(enabled: bool) -> Result<(), String> {
-        // Safe: every call is given a valid key handle and a null-terminated
-        // constant name, and the one handle opened here is closed below.
         unsafe {
             if !enabled {
                 let status = RegDeleteTreeW(HKEY_CURRENT_USER, KEY);
@@ -163,7 +139,6 @@ mod platform {
                 }
                 let _ = RegDeleteTreeW(HKEY_CURRENT_USER, TYPE_KEY);
                 told();
-                // Already gone is the state that was asked for, not a failure.
                 return if status == ERROR_SUCCESS || !read() {
                     Ok(())
                 } else {
@@ -184,8 +159,6 @@ mod platform {
                 return Err(format!("could not add the entry ({})", status.0));
             }
 
-            // `NullFile` tells Explorer to create an empty file, which is exactly
-            // what a new note is.
             let result = RegSetValueExW(key, w!("NullFile"), 0, REG_SZ, Some(&[0, 0]));
             let _ = RegCloseKey(key);
 
@@ -201,14 +174,10 @@ mod platform {
 
 #[cfg(not(target_os = "windows"))]
 mod platform {
-    /// No other desktop builds a "new file" menu from the registry, so there is
-    /// never an entry to report.
     pub fn read() -> bool {
         false
     }
 
-    /// Asked for anyway, this says why it cannot happen rather than pretending it
-    /// did.
     pub fn write(_enabled: bool) -> Result<(), String> {
         Err("only Windows has this menu".into())
     }
@@ -233,15 +202,12 @@ mod tests {
         WM_INITMENUPOPUP,
     };
 
-    /// What Explorer's New menu lists in `folder`, as a right click there builds it.
     #[allow(
         unsafe_code,
         reason = "Explorer's New menu is a shell object, reached through COM"
     )]
     fn new_menu(folder: &std::path::Path) -> Vec<String> {
         let mut out = Vec::new();
-        // Safe: COM objects of this thread, a menu this frame makes and destroys, and an
-        // item list freed once the menu is read.
         unsafe {
             let _ = CoInitializeEx(None, COINIT_APARTMENTTHREADED);
             let menu: IContextMenu =
@@ -283,9 +249,6 @@ mod tests {
         out
     }
 
-    /// The entry is in Explorer's menu once it is turned on, and gone once it is off, on a
-    /// machine whose `.md` names no program. Run on CI's runners only: it writes the
-    /// registry of whoever runs it.
     #[test]
     fn the_entry_is_in_explorers_new_menu() {
         if std::env::var_os("CI").is_none() || typed() {

@@ -1,23 +1,3 @@
-"""The tab overview happens in the window, and nothing in it is ever seen twice (#331).
-
-Emil: the overview is not a layer over Orden but a state of the window. Its bar stays, its
-sidebars slide away as if shut, and the panes themselves shrink where they are into their
-windows - so the window of a pane's tab and the pane are one thing, and no frame of the
-way in or out shows a tab twice.
-
-What it checks, on the built web app in Chromium, sampling every frame of the way in and
-the way home:
-
-    no frame has a pane and a copy of it: a pane's tab in front has no picture in its
-      window, the pane itself is what moves, and it is where it is laid out again at the
-      end
-    no frame has a tab both in its strip and as a window somewhere else
-    the left sidebar is off the window while the overview is out, and back where it was
-      after; the bar takes presses all the while
-
-    python apps/desktop/test/e2e/overview-in-window.py
-"""
-
 from __future__ import annotations
 
 from playwright.sync_api import Browser
@@ -36,7 +16,6 @@ async () => {
 }
 """
 
-#: Every frame until `stop()`: for each tab, whether its strip tab and its window are seen
 SAMPLE = """
 () => {
   const frames = []
@@ -82,16 +61,13 @@ SAMPLE = """
 
 SIDE = "() => { const box = document.querySelector('[data-chrome=\"start\"]')?.getBoundingClientRect(); return box ? [box.x, box.width] : null }"
 
-
 def apart(one: list[float], other: list[float]) -> bool:
-    """Whether two boxes on the screen do not meet at all."""
     return (
         one[0] + one[2] <= other[0]
         or other[0] + other[2] <= one[0]
         or one[1] + one[3] <= other[1]
         or other[1] + other[3] <= one[1]
     )
-
 
 def judged(frames: list[dict], label: str) -> None:
     say(f"[{label}] {len(frames)} frames")
@@ -102,19 +78,16 @@ def judged(frames: list[dict], label: str) -> None:
             if tab["front"] and tab["picture"]:
                 wrong(f"[{label}] frame {index}: the window of {tab['name']} draws a picture of its pane")
                 return
-            # Both all there, and not on each other: a window being handed over to what
             both = tab["strip"] and tab["window"] and tab["strip"][4] > 0.9 and tab["window"][4] > 0.999
             if both and apart(tab["strip"], tab["window"]):
                 wrong(f"[{label}] frame {index}: {tab['name']} is in its strip and a window elsewhere at once: {tab}")
                 return
-
 
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 860})
     DRIVE.open(page)
     page.evaluate(SEED)
     DRIVE.settled(page)
-    # Once to fetch the overview, so the run looked at is not waiting on a download.
     page.keyboard.press("Alt")
     page.keyboard.press("Alt")
     wait_for(page, "document.querySelectorAll('.window').length >= 4", "the windows")
@@ -123,7 +96,6 @@ def drive(browser: Browser) -> None:
     wait_for(page, "!document.querySelector('.canvas')", "the overview gone")
     before = page.evaluate(SIDE)
 
-    # ── The way in ───────────────────────────────────────────────────
     page.evaluate(SAMPLE)
     page.keyboard.press("Alt")
     page.keyboard.press("Alt")
@@ -144,7 +116,6 @@ def drive(browser: Browser) -> None:
     if not bar:
         wrong("[in] the bar is under something while the overview is up")
 
-    # ── The way home ─────────────────────────────────────────────────
     page.evaluate(SAMPLE)
     page.keyboard.press("Escape")
     page.wait_for_timeout(1400)
@@ -157,7 +128,6 @@ def drive(browser: Browser) -> None:
     if page.evaluate(SIDE) != before:
         wrong("[home] the sidebar is not back where it was")
     page.close()
-
 
 if __name__ == "__main__":
     raise SystemExit(DRIVE.run(drive, "the overview happens in the window, nothing seen twice"))

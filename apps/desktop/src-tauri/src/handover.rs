@@ -1,59 +1,21 @@
-//! A second launch, when the Orden already running does not answer.
-//!
-//! A second launch belongs to the window already open: the single instance plugin finds
-//! the first instance's hidden window and hands it the launch's arguments with
-//! `SendMessage`, which waits until the first instance's window thread takes the message,
-//! for ever if that thread is stuck. So an Orden that froze took every launch after it down
-//! with it: each one sat invisible, waiting, and the reader clicked again. Emil's log of
-//! 2026-10-03 has five launches in twenty-five seconds.
-//!
-//! So the hand-over is made here first, before the plugin, the same message in the same
-//! shape, but with `SendMessageTimeout`: answered within two seconds, it is the plugin's
-//! hand-over exactly and this launch ends. Not answered, this launch asks the one
-//! question Firefox asks in the same place (the running one is not responding; end it?)
-//! and, told yes, ends that process, found through the plugin's own window so it can
-//! only ever be Orden under this identifier, waits for it to go, and carries on as the
-//! first launch. Told no, it leaves the frozen one alone and goes. If the frozen one
-//! comes back while the question is up, the question goes and the launch is handed over
-//! as it would have been.
-//!
-//! Starting fresh beside the frozen one is not an option: two instances would write the
-//! same notes, and the new one's webview would join the frozen one's browser process,
-//! which is what froze the launches before.
-//!
-//! A probe never shows the question - nobody is there to answer it - and takes its
-//! answer from `NIB_PROBE_NOT_RESPONDING` instead: `end`, `leave`, or `wait`, which waits
-//! as the open question does for the frozen one to answer.
-
-/// What the first instance answered, when there was one.
 #[cfg(windows)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Found {
-    /// No Orden is running under this identifier: this is the first launch.
     Nothing,
-    /// It took the launch's arguments.
     Handed,
-    /// It did not answer in time.
     Silent,
 }
 
-/// What to do about an Orden that does not answer.
 #[cfg(windows)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Asked {
-    /// End it, and carry on as the first launch.
     End,
-    /// Leave it and go.
     Leave,
-    /// It answered after all: hand over as usual.
     Answered,
 }
 
-/// The process this launch ended, so the log can say so once the log is there.
 static ENDED: std::sync::OnceLock<u32> = std::sync::OnceLock::new();
 
-/// Hands this launch to the Orden already running, and answers whether this process
-/// should now go. Called before anything of the app is built.
 #[cfg(windows)]
 pub fn handed_over(identifier: &str) -> bool {
     let names = Names::of(identifier);
@@ -75,16 +37,8 @@ pub fn handed_over(identifier: &str) -> bool {
     }
 }
 
-/// On Linux the plugin hands a launch over on the session bus, which waits on no window
-/// thread, so a frozen Orden never holds a launch up there. Every launch makes that call
-/// itself, before anything of the app is built, for two reasons. The plugin's own call
-/// comes as the app is set up, and on CEF that is after the engine has started: CEF
-/// keeps one browser process to a profile, so a second one meets the first's and ends
-/// there, with the address it was started on lost. And the plugin's call lacks the
-/// launcher's token, which goes beside the arguments where there is one (see linux.rs).
 #[cfg(target_os = "linux")]
 pub fn handed_over(identifier: &str) -> bool {
-    // As the plugin's own call reads them: the bus carries Unicode only.
     let mut launch: Vec<String> = std::env::args_os()
         .map(|arg| arg.to_string_lossy().into_owned())
         .collect();
@@ -94,8 +48,6 @@ pub fn handed_over(identifier: &str) -> bool {
     on_the_bus(identifier, &launch).unwrap_or(false)
 }
 
-/// The plugin's own call, under the plugin's own names (tauri-plugin-single-instance's
-/// `platform_impl/linux.rs`): answers whether a running Orden took the launch.
 #[cfg(target_os = "linux")]
 fn on_the_bus(identifier: &str, launch: &[String]) -> zbus::Result<bool> {
     let name = format!("{identifier}.SingleInstance");
@@ -128,13 +80,11 @@ fn on_the_bus(identifier: &str, launch: &[String]) -> zbus::Result<bool> {
     Ok(true)
 }
 
-/// A Mac's plugin talks over a socket that does not wait on a window thread.
 #[cfg(not(any(windows, target_os = "linux")))]
 pub fn handed_over(_identifier: &str) -> bool {
     false
 }
 
-/// Says in the log what the launch did about a frozen Orden, now that there is a log.
 pub fn said(app: &tauri::AppHandle) {
     if let Some(pid) = ENDED.get() {
         crate::logs::say(
@@ -147,16 +97,12 @@ pub fn said(app: &tauri::AppHandle) {
     }
 }
 
-/// How long the running Orden has to take the launch before it is asked about.
 #[cfg(windows)]
 const ANSWER: std::time::Duration = std::time::Duration::from_secs(2);
 
-/// What the plugin calls its window and the mark its message carries; see
-/// tauri-plugin-single-instance's `platform_impl/windows.rs`, whose message this is.
 #[cfg(windows)]
 const MARK: usize = 1542;
 
-/// The single instance plugin's names for this identifier.
 #[cfg(windows)]
 struct Names {
     class: Vec<u16>,
@@ -173,18 +119,15 @@ impl Names {
         }
     }
 
-    /// The running nib's hand-over window, if one is open.
     #[allow(unsafe_code, reason = "a window is found through FindWindowW")]
     fn find(&self) -> Option<windows::Win32::Foundation::HWND> {
         use windows::core::PCWSTR;
         use windows::Win32::UI::WindowsAndMessaging::FindWindowW;
-        // Safe: two strings that end in a nought and outlive the call.
         unsafe { FindWindowW(PCWSTR(self.class.as_ptr()), PCWSTR(self.window.as_ptr())) }
             .ok()
             .filter(|window| !window.is_invalid())
     }
 
-    /// The process that window belongs to: nib, under this identifier, and nothing else.
     #[allow(
         unsafe_code,
         reason = "a window's process is asked through GetWindowThreadProcessId"
@@ -193,14 +136,11 @@ impl Names {
         use windows::Win32::UI::WindowsAndMessaging::GetWindowThreadProcessId;
         let window = self.find()?;
         let mut pid = 0u32;
-        // Safe: a number this frame owns.
         unsafe { GetWindowThreadProcessId(window, Some(&raw mut pid)) };
         (pid != 0 && pid != std::process::id()).then_some(pid)
     }
 }
 
-/// The launch as the plugin hands it over: the folder it was started in, then every
-/// argument, joined by `|` and ended with a nought.
 #[cfg(windows)]
 fn arguments() -> Vec<u8> {
     let folder = std::env::current_dir().unwrap_or_default();
@@ -211,7 +151,6 @@ fn arguments() -> Vec<u8> {
     format!("{}|{args}\0", folder.to_str().unwrap_or_default()).into_bytes()
 }
 
-/// Sends the launch to the running Orden, waiting `within` at most.
 #[cfg(windows)]
 #[allow(
     unsafe_code,
@@ -233,8 +172,6 @@ fn handed(names: &Names, launch: &[u8], within: std::time::Duration) -> Found {
         lpData: launch.as_ptr().cast_mut().cast(),
     };
     let mut result = 0usize;
-    // Safe: the structure and the bytes it points at outlive the call, which copies them
-    // into the other process before it returns.
     let sent = unsafe {
         SendMessageTimeoutW(
             window,
@@ -253,8 +190,6 @@ fn handed(names: &Names, launch: &[u8], within: std::time::Duration) -> Found {
     }
 }
 
-/// Asks whether to end the Orden that does not answer, and goes on trying it while the
-/// question is up: an answer from it closes the question and the launch is handed over.
 #[cfg(windows)]
 #[allow(unsafe_code, reason = "the question is a Win32 message box")]
 fn asked(names: &Names, launch: &[u8]) -> Asked {
@@ -268,7 +203,6 @@ fn asked(names: &Names, launch: &[u8]) -> Asked {
         MB_SETFOREGROUND, WM_QUIT,
     };
 
-    // Safe: no arguments.
     let asking = Arc::new(AtomicU32::new(unsafe { GetCurrentThreadId() }));
     let answered = Arc::new(AtomicBool::new(false));
     let done = Arc::new(AtomicBool::new(false));
@@ -283,9 +217,6 @@ fn asked(names: &Names, launch: &[u8]) -> Asked {
             while !done.load(Ordering::SeqCst) {
                 if handed(&names, &launch, std::time::Duration::from_millis(500)) != Found::Silent {
                     answered.store(true, Ordering::SeqCst);
-                    // The message box runs its own loop on the asking thread, and a quit
-                    // posted there ends it as if it were closed.
-                    // Safe: a message with no arguments to a thread of this process.
                     let _ = unsafe {
                         PostThreadMessageW(
                             asking.load(Ordering::SeqCst),
@@ -301,8 +232,6 @@ fn asked(names: &Names, launch: &[u8]) -> Asked {
         })
     };
 
-    // A probe is answered from its environment, and nobody is shown anything; `wait`
-    // waits as the question would for the frozen one to answer. See the top of the file.
     let chosen = if crate::placement::asked_away() {
         match std::env::var("NIB_PROBE_NOT_RESPONDING").as_deref() {
             Ok("end") => IDOK,
@@ -316,8 +245,6 @@ fn asked(names: &Names, launch: &[u8]) -> Asked {
             _ => IDCANCEL,
         }
     } else {
-        // Safe: two strings the macro ends with a nought, and no owner. A quit posted to
-        // this thread by the watch above ends it as a close would.
         unsafe {
             MessageBoxW(
                 None,
@@ -339,9 +266,6 @@ fn asked(names: &Names, launch: &[u8]) -> Asked {
     }
 }
 
-/// Ends the frozen Orden and waits for it to have gone, with everything it held: the
-/// single instance lock, the engine lock and the webview's profile. Answers whether it
-/// went.
 #[cfg(windows)]
 #[allow(unsafe_code, reason = "a process is ended through TerminateProcess")]
 fn ended(pid: u32) -> bool {
@@ -350,10 +274,8 @@ fn ended(pid: u32) -> bool {
         OpenProcess, TerminateProcess, WaitForSingleObject, PROCESS_SYNCHRONIZE, PROCESS_TERMINATE,
     };
 
-    /// How long it is given to go.
     const GOING: u32 = 10_000;
 
-    // Safe: a handle of this function's own, closed before it returns.
     unsafe {
         let Ok(process) = OpenProcess(PROCESS_TERMINATE | PROCESS_SYNCHRONIZE, false, pid) else {
             return false;
@@ -370,7 +292,6 @@ mod tests {
     use super::{arguments, handed, Found, Names};
     use std::time::Duration;
 
-    /// No Orden under an identifier nobody uses: this launch is the first.
     #[test]
     fn nothing_running_is_nothing_to_hand_to() {
         let names = Names::of("ch.emilvinu.nib.test.nobody-runs-this");
@@ -381,7 +302,6 @@ mod tests {
         assert_eq!(names.owner(), None);
     }
 
-    /// The bytes are the plugin's own shape, which its window reads by splitting on `|`.
     #[test]
     fn the_launch_is_the_folder_then_the_arguments() {
         let launch = String::from_utf8(arguments()).expect("text");
