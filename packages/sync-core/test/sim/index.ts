@@ -24,4 +24,13 @@ export { judge, type Ledger, ledger, markersIn, sameView } from './checks'
 export { ReferenceDevice } from './device'
 export { CALM, Clock, type Faults, Network, PATIENCE } from './network'
 export { Random } from './random'
-export { type Options, type Report, ROUGH, SEEDED, simulate, type Step } from './run'
+export {
+  type Crowd,
+  crowded,
+  type Options,
+  type Report,
+  ROUGH,
+  SEEDED,
+  simulate,
+  type Step,
+} from './run'

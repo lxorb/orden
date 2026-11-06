@@ -26,6 +26,7 @@ import {
   type CreateOp,
   type KeepRequest,
   type Op,
+  type OpResult,
   OPS_BATCH,
   opsResponseOf,
   PULL_BATCH,
@@ -660,6 +661,7 @@ export class ReferenceDevice implements DeviceAdapter {
       } else if ('ok' in result && (one.op.t === 'create' || one.op.t === 'mkdir')) {
         this.store.known.add(one.op.id)
       }
+      if ('ok' in result) this.answered(one.op, result)
       if (one.op.t === 'restore') {
         const kept = this.store.restoring.get(one.op.id)
         this.store.restoring.delete(one.op.id)
@@ -669,6 +671,37 @@ export class ReferenceDevice implements DeviceAdapter {
       }
     }
     return true
+  }
+
+  private answered(op: Op, result: OpResult) {
+    if (!('ok' in result)) return
+    const had = this.store.entries.get(op.id)
+    if (op.t === 'delete') {
+      if (had) had.deleted = true
+      return
+    }
+    if (!('parent' in result)) return
+    const pos =
+      op.t === 'place' || ((op.t === 'move' || op.t === 'mkdir' || op.t === 'create') && op.pos)
+        ? op.pos
+        : op.t === 'move' && had?.parent !== result.parent
+          ? undefined
+          : had?.pos
+    const entry: TreeEntry = had ?? {
+      id: op.id,
+      kind: op.t === 'create' ? op.kind : 'folder',
+      parent: result.parent,
+      name: result.name,
+      deleted: false,
+      seq: 0,
+      docSeq: 0,
+    }
+    entry.parent = result.parent
+    entry.name = result.name
+    entry.deleted = false
+    if (pos === undefined) delete entry.pos
+    else entry.pos = pos
+    this.store.entries.set(op.id, entry)
   }
 
   private async readFeed(link: Link, alive: () => boolean): Promise<boolean> {
@@ -716,6 +749,7 @@ export class ReferenceDevice implements DeviceAdapter {
 
     const batch = wanted.slice(0, PULL_BATCH)
     const asked = new Map(batch.map((entry) => [entry.id, entry.docSeq]))
+    const from = new Map(batch.map((entry) => [entry.id, this.store.docs.get(entry.id)]))
     const reply = await link(
       'pull',
       frame({
@@ -738,6 +772,7 @@ export class ReferenceDevice implements DeviceAdapter {
       // Typed into, or held, while the pull was in the air: the push brings the
       // account's words back through `moved`, where they are classified.
       if (this.hasPending(doc.id) || this.store.held.has(doc.id)) continue
+      if (this.store.docs.get(doc.id) !== from.get(doc.id)) continue
 
       let stored = this.store.docs.get(doc.id)
       if (!stored) {

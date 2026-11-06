@@ -63,6 +63,12 @@ export interface Options {
   mix?: 'words' | 'tree' | 'order'
 }
 
+export type Crowd = 'tree' | 'order'
+
+export function crowded(seed: number, mix: Crowd): Options {
+  return { seed, mix, devices: 3 + (seed % 6), steps: 80 }
+}
+
 export interface Report {
   seed: number
   failures: string[]

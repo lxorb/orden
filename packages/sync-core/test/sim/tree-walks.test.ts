@@ -4,7 +4,7 @@
  *  folder inside itself and every restore standing (checks.ts). */
 
 import { describe, expect, test } from 'vitest'
-import { simulate } from './run'
+import { crowded, simulate } from './run'
 
 const SEEDS = 200
 
@@ -46,4 +46,30 @@ describe('the tree, walked at random on five devices', () => {
     }
     expect(failed).toEqual([])
   })
+
+  test.each([
+    [528, 'order'],
+    [558, 'order'],
+    [226, 'tree'],
+    [1402, 'tree'],
+  ] as const)(
+    'seed %i of the %s on many devices reads every note as the account does',
+    async (seed, mix) => {
+      expect((await simulate(crowded(seed, mix))).failures).toEqual([])
+    },
+  )
+
+  test.each([4561, 5244, 5352])(
+    'seed %i of the tree on many devices keeps every word a person did not take out',
+    async (seed) => {
+      expect((await simulate(crowded(seed, 'tree'))).failures).toEqual([])
+    },
+  )
+
+  test.fails.each([3175, 3900])(
+    'seed %i of the tree on many devices keeps what another device restored',
+    async (seed) => {
+      expect((await simulate(crowded(seed, 'tree'))).failures).toEqual([])
+    },
+  )
 })

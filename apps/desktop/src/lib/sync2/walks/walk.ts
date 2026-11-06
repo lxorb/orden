@@ -9,15 +9,15 @@
  *  its seed, and `SIM_FROM=<seed> SIM_SEEDS=1` replays it. */
 
 import { describe, expect, test } from 'vitest'
-import { simulate } from '@orden/sync-core/sim'
+import { type Crowd, crowded, simulate } from '@orden/sync-core/sim'
 import { EngineDevice } from '../sim-device'
 
 /** The seeds from `from`, `count` of them, and what failed, at most five. */
-export async function walked(from: number, count: number): Promise<string[]> {
+export async function walked(from: number, count: number, mix?: Crowd): Promise<string[]> {
   const failed: string[] = []
   for (let seed = from; seed < from + count && failed.length < 5; seed++) {
     const report = await simulate({
-      seed,
+      ...(mix ? crowded(seed, mix) : { seed }),
       device: (id, clock, random, seeded) => new EngineDevice(id, clock, random, seeded),
     })
     if (report.failures.length) failed.push(`seed ${String(seed)}: ${report.failures.join('; ')}`)
@@ -28,16 +28,23 @@ export async function walked(from: number, count: number): Promise<string[]> {
 const QUARTERS = 4
 
 /** One quarter of the long run, as one test file. */
+function crowdOf(said: string | undefined): Crowd | undefined {
+  if (said === undefined || said === '' || said === 'words') return undefined
+  if (said === 'tree' || said === 'order') return said
+  throw new Error(`SIM_MIX=${said}: words, tree or order`)
+}
+
 export function quarter(index: number) {
+  const mix = crowdOf(process.env.SIM_MIX)
   const seeds = Number(process.env.SIM_SEEDS ?? 10_000)
   const from = Number(process.env.SIM_FROM ?? 1)
   const size = Math.ceil(seeds / QUARTERS)
   const start = from + index * size
   const count = Math.max(0, Math.min(size, from + seeds - start))
 
-  describe('the engine walks', () => {
+  describe(`the engine walks${mix ? ` the ${mix}` : ''}`, () => {
     test(`seeds ${String(start)} to ${String(start + count - 1)}`, async () => {
-      expect(await walked(start, count)).toEqual([])
+      expect(await walked(start, count, mix)).toEqual([])
     }, 0)
   })
 }
