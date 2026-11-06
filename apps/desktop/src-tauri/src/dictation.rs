@@ -54,10 +54,10 @@ pub struct Fetched {
     total: u64,
 }
 
-/// The open model, and when it last heard.
+/// The open model, when it last heard, and how fast it heard as it opened.
 #[derive(Default)]
 pub struct Loaded {
-    engine: Mutex<Option<(sherpa::Engine, Instant)>>,
+    engine: Mutex<Option<(sherpa::Engine, Instant, f32)>>,
 }
 
 /// One download at a time.
@@ -311,7 +311,7 @@ pub fn dictation_local_remove(app: AppHandle) -> Result<(), String> {
     }
 }
 
-fn lock(loaded: &Loaded) -> std::sync::MutexGuard<'_, Option<(sherpa::Engine, Instant)>> {
+fn lock(loaded: &Loaded) -> std::sync::MutexGuard<'_, Option<(sherpa::Engine, Instant, f32)>> {
     loaded
         .engine
         .lock()
@@ -329,26 +329,45 @@ pub struct Opened {
 pub fn dictation_local_open(app: AppHandle) -> Result<Opened, String> {
     let loaded = Arc::clone(&app.state::<Arc<Loaded>>());
     let mut held = lock(&loaded);
-    if held.is_none() {
-        let engine = open_engine(&folder(&app)?)?;
-        *held = Some((engine, Instant::now()));
-        drop(held);
-        watch_idle(Arc::clone(&loaded));
-        held = lock(&loaded);
+    let (pace, fresh) = opened(
+        &mut held,
+        || open_engine(&folder(&app)?),
+        |engine| {
+            // Two seconds of a quiet room, twice: the first pass's own start-up paid here
+            // rather than in the reader's first words, and the second is what a live pass
+            // costs.
+            let quiet: Vec<f32> = (0..32_000u16)
+                .map(|i| f32::from(i.wrapping_mul(7919) % 200) / 100_000.0 - 0.001)
+                .collect();
+            engine.hear(&quiet, "")?;
+            let started = Instant::now();
+            engine.hear(&quiet, "")?;
+            Ok(started.elapsed().as_secs_f32() / 2.0)
+        },
+    )?;
+    drop(held);
+    if fresh {
+        watch_idle(loaded);
     }
-    let (engine, used) = held.as_mut().ok_or("The speech model closed.")?;
-    // Two seconds of a quiet room, twice: the first pass's own start-up paid here rather
-    // than in the reader's first words, and the second is what a live pass costs.
-    let quiet: Vec<f32> = (0..32_000u16)
-        .map(|i| f32::from(i.wrapping_mul(7919) % 200) / 100_000.0 - 0.001)
-        .collect();
-    engine.hear(&quiet, "")?;
-    let started = Instant::now();
-    engine.hear(&quiet, "")?;
-    *used = Instant::now();
-    Ok(Opened {
-        pace: started.elapsed().as_secs_f32() / 2.0,
-    })
+    Ok(Opened { pace })
+}
+
+/// The engine `held` has open, opened and timed where it has none: answers its pace, and
+/// whether it was opened just now. A dictation starts with this, and the microphone only
+/// after it, so the two passes that time a model are its opening's alone.
+fn opened<E>(
+    held: &mut Option<(E, Instant, f32)>,
+    open: impl FnOnce() -> Result<E, String>,
+    timed: impl FnOnce(&mut E) -> Result<f32, String>,
+) -> Result<(f32, bool), String> {
+    if let Some((_, used, pace)) = held.as_mut() {
+        *used = Instant::now();
+        return Ok((*pace, false));
+    }
+    let mut engine = open()?;
+    let pace = timed(&mut engine)?;
+    *held = Some((engine, Instant::now(), pace));
+    Ok((pace, true))
 }
 
 /// The model in `root`, opened, with the runtime's libraries checked against their
@@ -407,7 +426,7 @@ fn watch_idle(loaded: Arc<Loaded>) {
         let mut held = lock(&loaded);
         match held.as_ref() {
             None => return,
-            Some((_, used)) if used.elapsed() > IDLE => {
+            Some((_, used, _)) if used.elapsed() > IDLE => {
                 *held = None;
                 return;
             }
@@ -427,7 +446,7 @@ pub fn dictation_local_hear(app: AppHandle, request: Request<'_>) -> Result<Stri
     let (context, samples) = framed(body)?;
     let loaded = app.state::<Arc<Loaded>>();
     let mut held = lock(&loaded);
-    let (engine, used) = held.as_mut().ok_or("The speech model is not open.")?;
+    let (engine, used, _) = held.as_mut().ok_or("The speech model is not open.")?;
     let words = engine.hear(&samples, &context);
     *used = Instant::now();
     words
@@ -492,6 +511,40 @@ mod tests {
             vocabulary("<unk> 0\n\u{2581}the 1\nü 2\n"),
             "<unk>\t-0\n\u{2581}the\t-1\nü\t-2\n"
         );
+    }
+
+    /// A model already open is handed to the next dictation as it is: the passes that warm
+    /// and time it ran when it opened, and the microphone waits on nothing more.
+    #[test]
+    fn a_model_is_timed_once_as_it_opens() {
+        let mut held: Option<(u32, Instant, f32)> = None;
+        let mut opens = 0;
+        let mut timings = 0;
+        for _ in 0..3 {
+            let answer = opened(
+                &mut held,
+                || {
+                    opens += 1;
+                    Ok(7)
+                },
+                |_| {
+                    timings += 1;
+                    Ok(0.25)
+                },
+            );
+            assert_eq!(answer.map(|(pace, _)| pace), Ok(0.25));
+        }
+        assert_eq!((opens, timings), (1, 1));
+
+        held = None;
+        assert_eq!(opened(&mut held, || Ok(8), |_| Ok(0.5)), Ok((0.5, true)));
+        assert_eq!(opened(&mut held, || Ok(9), |_| Ok(0.9)), Ok((0.5, false)));
+        assert!(opened(
+            &mut None::<(u32, Instant, f32)>,
+            || Err("gone".into()),
+            |_| Ok(1.0)
+        )
+        .is_err());
     }
 
     #[test]
