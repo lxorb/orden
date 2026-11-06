@@ -1230,7 +1230,6 @@ export const zhHantHK: Dictionary = {
     'Orden 不再在原處開啟 {folder}。其中的空間現在保存在 Orden 中，資料夾保持原狀。如要從中匯入更多內容，請使用「匯入」。',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     '尚未複製，因此仍只在該資料夾中：{names}。Orden 下次啟動時會再試一次。',
-  'Turn this space back into a folder': '將此空間變回資料夾',
   'Share this note': '分享此筆記',
   'Everyone in the space already has it.': '此空間裏的每個人都已經有了。',
   'Remove from your list': '從你的列表移除',

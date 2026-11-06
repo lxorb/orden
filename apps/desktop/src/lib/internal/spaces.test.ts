@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => {
   const files = new Map<string, string | Uint8Array>()
@@ -184,14 +184,9 @@ vi.stubGlobal('localStorage', {
 })
 
 const { internalInvoke } = await import('./route')
-const { KEEP_SPACES } = await import('./spaces')
 
 const call = <T>(command: string, args: Record<string, unknown> = {}) =>
   internalInvoke<T>(command, args)
-
-beforeEach(() => {
-  localStorage.setItem(KEEP_SPACES, 'on')
-})
 
 afterEach(async () => {
   for (const space of await call<{ path: string }[]>('list_spaces')) {
@@ -201,10 +196,10 @@ afterEach(async () => {
   for (const one of [...disk.dirs]) if (one !== '/spaces') disk.dirs.delete(one)
   disk.rehomed.length = 0
   disk.trash.length = 0
-  localStorage.removeItem(KEEP_SPACES)
+  said.clear()
 })
 
-describe('a new space, where this device keeps new spaces itself', () => {
+describe('a new space', () => {
   test("is a folder of Orden's own, listed beside the crate's, its root a file nothing goes under", async () => {
     disk.dirs.add('/spaces/Disk')
     const made = await call<{ name: string; path: string }>('create_space', { name: 'Plans' })
@@ -228,12 +223,28 @@ describe('a new space, where this device keeps new spaces itself', () => {
     })
   })
 
-  test("is a folder of the crate's, as ever, where this device does not say otherwise", async () => {
-    localStorage.removeItem(KEEP_SPACES)
-    expect(await call('create_space', { name: 'Plain' })).toEqual({
-      name: 'Plain',
-      path: '/spaces/Plain',
-    })
+  test('is kept by Orden whatever this device has stored, and never a folder of the crate', async () => {
+    const write = disk.crate
+    const asked: string[] = []
+    disk.crate = (command, args) => {
+      asked.push(command)
+      return write(command, args)
+    }
+    try {
+      for (const stored of [null, 'off', 'on', 'no']) {
+        if (stored === null) localStorage.removeItem('nib:keep-spaces')
+        else localStorage.setItem('nib:keep-spaces', stored)
+        const name = `Plain ${String(stored)}`
+        expect(await call('create_space', { name })).toEqual({
+          name,
+          path: `/spaces/.orden/${name}/${name}`,
+        })
+      }
+    } finally {
+      disk.crate = write
+    }
+    expect(asked).not.toContain('create_space')
+    expect([...disk.dirs].filter((one) => one.split('/').length === 3)).toEqual(['/spaces/.orden'])
   })
 
   test('is found where an earlier session left it, and renamed with nothing in it moving', async () => {
@@ -309,7 +320,7 @@ describe('a new space, where this device keeps new spaces itself', () => {
   })
 })
 
-describe('a space that is a folder, where this device keeps new spaces itself', () => {
+describe('a space that is a folder', () => {
   function workspace(roots: string[]) {
     const said: string[] = []
     const ws = {
@@ -412,13 +423,27 @@ describe('a space that is a folder, where this device keeps new spaces itself', 
     expect(await call('list_spaces')).toEqual([{ name: 'Notes', path: '/spaces/Notes' }])
   })
 
-  test('is left as it is where this device does not say otherwise', async () => {
+  test('is converted whatever this device has stored, one an older build turned back too', async () => {
     const { convertAll } = await import('./convert')
-    localStorage.removeItem(KEEP_SPACES)
-    disk.dirs.add('/spaces/Notes')
-    const { ws, said } = workspace(['/spaces/Notes'])
-    await convertAll(ws)
-    expect(said).toEqual([])
+    for (const stored of [null, 'off', 'on']) {
+      if (stored === null) localStorage.removeItem('nib:keep-spaces')
+      else localStorage.setItem('nib:keep-spaces', stored)
+      const name = `Notes ${String(stored)}`
+      disk.dirs.add(`/spaces/${name}`)
+      disk.files.set(`/spaces/${name}/Plan.md`, 'ship it')
+      disk.dirs.add('/spaces/.orden')
+      disk.files.set('/spaces/.orden/.folders', `/spaces/${name}\n`)
+      const { ws, said } = workspace([`/spaces/${name}`])
+      await convertAll(ws)
+      const root = `/spaces/.orden/${name}/${name}`
+      expect(said).toEqual([`space /spaces/${name} -> ${root}`])
+      expect(await call('read_note', { path: `${root}/Plan.md` })).toBe('ship it')
+    }
+    expect((await call<{ path: string }[]>('list_spaces')).map((one) => one.path)).toEqual([
+      '/spaces/.orden/Notes null/Notes null',
+      '/spaces/.orden/Notes off/Notes off',
+      '/spaces/.orden/Notes on/Notes on',
+    ])
   })
 })
 
@@ -732,37 +757,5 @@ describe('making a folder a kept space, whatever happens on the way', () => {
     expect(await convertSpace(twice.ws, 's0')).toBe(false)
     expect(disk.files.get('/spaces/Twice/plan.md')).toBe('one')
     expect(disk.files.get('/spaces/Twice/Plan.md')).toBe('two')
-  })
-
-  test('is turned back into the folder, with what was written since, and stays one', async () => {
-    const { convertAll, revertSpace } = await import('./convert')
-    notes()
-    const { ws, said } = workspace('/spaces/Notes')
-    await convertAll(ws)
-    const root = '/spaces/.orden/Notes/Notes'
-    await call('write_note', { path: `${root}/Plan.md`, content: 'ship it today' })
-    await call('write_note', { path: `${root}/New.md`, content: 'new' })
-    await call('delete_note', { path: `${root}/Work/Old.md` })
-
-    expect(await revertSpace(ws, 's0')).toBe(true)
-
-    expect(said).toEqual([`/spaces/Notes -> ${root}`, `${root} -> /spaces/Notes`])
-    expect(ws.spaces[0]?.root).toBe('/spaces/Notes')
-    expect(disk.files.get('/spaces/Notes/Plan.md')).toEqual(
-      new TextEncoder().encode('ship it today'),
-    )
-    expect(disk.files.get('/spaces/Notes/New.md')).toEqual(new TextEncoder().encode('new'))
-    expect(disk.files.has('/spaces/Notes/Work/Old.md')).toBe(false)
-    expect(disk.trash.map((one) => one.from)).toEqual([
-      '/spaces/Notes/Work/Old.md',
-      '/spaces/.orden/Notes',
-    ])
-    const backups = [...disk.dirs].filter((one) =>
-      /^\/spaces\/\.orden\/\.backups\/[^/]+$/.test(one),
-    )
-    expect(backups).toHaveLength(2)
-    expect(await call('list_spaces')).toEqual([{ name: 'Notes', path: '/spaces/Notes' }])
-    await convertAll(ws)
-    expect(said).toHaveLength(2)
   })
 })

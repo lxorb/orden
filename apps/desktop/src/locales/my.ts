@@ -1251,7 +1251,6 @@ export const my: Dictionary = {
     'Orden သည် {folder} ကို ၎င်းရှိရာနေရာတွင် မဖွင့်တော့ပါ။ ၎င်း၏နေရာများကို ယခု Orden ထဲတွင် သိမ်းထားပြီး ဖိုင်တွဲကို မူလအတိုင်း ထားခဲ့ပါသည်။ ၎င်းမှ ထပ်ယူလိုပါက သွင်းပါ ကို သုံးပါ။',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'မကူးရသေးသဖြင့် ထိုဖိုင်တွဲထဲတွင်သာ ရှိနေဆဲဖြစ်သည်- {names}။ Orden သည် နောက်တစ်ကြိမ် စဖွင့်သည့်အခါ ထပ်ကြိုးစားပါမည်။',
-  'Turn this space back into a folder': 'ဤနေရာကို ဖိုင်တွဲအဖြစ် ပြန်ပြောင်းပါ',
   'Share this note': 'ဤမှတ်စုကို မျှဝေပါ',
   'Everyone in the space already has it.': 'နေရာအတွင်းရှိ အားလုံး ရပြီးဖြစ်သည်။',
   'Remove from your list': 'သင့်စာရင်းမှ ဖယ်ပါ',

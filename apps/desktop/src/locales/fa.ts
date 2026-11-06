@@ -1258,7 +1258,6 @@ export const fa: Dictionary = {
     'Orden دیگر {folder} را در جای خودش باز نمی‌کند. فضاهای آن اکنون در Orden نگه داشته می‌شوند و پوشه همان‌طور که بود مانده است. برای آوردن چیزهای بیشتر از آن، از درون‌آوری استفاده کنید.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'هنوز کپی نشده‌اند و هنوز فقط در آن پوشه‌اند: {names}. Orden دفعهٔ بعد که باز شود دوباره تلاش می‌کند.',
-  'Turn this space back into a folder': 'برگرداندن این فضا به پوشه',
   'Share this note': 'هم‌رسانی این یادداشت',
   'Everyone in the space already has it.': 'همه در این فضا از پیش آن را دارند.',
   'Remove from your list': 'برداشتن از فهرست شما',

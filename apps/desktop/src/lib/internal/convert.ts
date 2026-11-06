@@ -1,6 +1,5 @@
 import { nameKey } from '@orden/sync-core/tree'
 import { busy } from '../busy.svelte'
-import { toBase64 } from '../bytes'
 import { t } from '../i18n.svelte'
 import { log } from '../log'
 import { invoke as crate } from '../native'
@@ -9,18 +8,7 @@ import type { HoldsSpaces } from '../workspace/spaces'
 import { folderBytes } from './bytes'
 import { InternalFolder } from './folder'
 import { mountOf } from './roots'
-import {
-  CONVERTING,
-  freeName,
-  HOME,
-  keepAsFolder,
-  keepsNewSpaces,
-  keptAsFolders,
-  keptFrom,
-  madeFrom,
-  mountKept,
-  unkeep,
-} from './spaces'
+import { CONVERTING, freeName, HOME, keptFrom, mountKept } from './spaces'
 
 interface Listed {
   name: string
@@ -279,8 +267,7 @@ async function converting(ws: HoldsSpaces, id: string, told: Told): Promise<bool
 }
 
 export async function convertAll(ws: HoldsSpaces): Promise<void> {
-  if (!keepsNewSpaces()) return
-  const done = new Set([...(await keptFrom()), ...(await keptAsFolders())])
+  const done = new Set(await keptFrom())
   const failed: string[] = []
   for (const space of [...ws.spaces]) {
     if (mountOf(space.root) || done.has(space.root)) continue
@@ -302,51 +289,4 @@ export async function convertAll(ws: HoldsSpaces): Promise<void> {
       FAILED_SHOWN,
     )
   }
-}
-
-export function revertSpace(ws: HoldsSpaces, id: string): Promise<boolean> {
-  return oneAtATime(() => reverting(ws, id))
-}
-
-async function reverting(ws: HoldsSpaces, id: string): Promise<boolean> {
-  const space = ws.spaces.find((one) => one.id === id)
-  const found = space ? mountOf(space.root) : null
-  const to = space ? madeFrom(space.root) : undefined
-  if (!space || !found || found.inside || !to) return false
-  const root = space.root
-  const there = await crate<unknown>('read_tree', { root: to }).then(Boolean, () => false)
-  if (there) await backedUp(to, space.name)
-
-  const done = { reverted: false }
-  await ws.holdingUnder(root, async () => {
-    const folder = found.mount.folder
-    const kept = await folder.list()
-    for (const { path, entry } of kept) {
-      const at = joinPath(to, path)
-      if (!entry.key) {
-        await crate('create_folder', { path: at })
-        continue
-      }
-      const bytes = await folder.read(path)
-      if (!bytes) throw new Error(`${path} could not be read`)
-      await crate('write_bytes', { path: at, base64: toBase64(bytes) })
-    }
-    const has = new Set(kept.map((one) => one.path))
-    for (const one of there ? await contents(to) : []) {
-      if (one.dir || has.has(one.path)) continue
-      await crate('trash_item', { path: joinPath(to, one.path), kind: 'note' }).catch(
-        () => undefined,
-      )
-    }
-    await keepAsFolder(to)
-    await unkeep(root)
-    space.root = to
-    await ws.fileMoved(root, to, 'space')
-    await crate('rehome_snapshots', { from: root, to }).catch(() => 0)
-    done.reverted = true
-  })
-  if (!done.reverted) return false
-  ws.persist()
-  await ws.loadTree()
-  return true
 }

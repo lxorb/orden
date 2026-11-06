@@ -1260,7 +1260,6 @@ export const te: Dictionary = {
     'Orden ఇకపై {folder} ను దాని స్థానంలోనే తెరవదు. దానిలోని స్పేస్‌లు ఇప్పుడు Orden లో ఉన్నాయి, ఫోల్డర్ అలాగే ఉంచబడింది. దాని నుంచి ఇంకా తెచ్చేందుకు ఇంపోర్ట్ వాడండి.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'ఇంకా కాపీ కాలేదు, కాబట్టి ఇంకా ఆ ఫోల్డర్‌లో మాత్రమే ఉన్నాయి: {names}. తదుపరి సారి ప్రారంభమైనప్పుడు Orden మళ్లీ ప్రయత్నిస్తుంది.',
-  'Turn this space back into a folder': 'ఈ స్పేస్‌ను మళ్లీ ఫోల్డర్‌గా మార్చు',
   'Share this note': 'ఈ నోట్ షేర్ చేయి',
   'Everyone in the space already has it.': 'స్పేస్‌లోని అందరికీ ఇప్పటికే ఉంది.',
   'Remove from your list': 'మీ జాబితా నుండి తీసివేయి',

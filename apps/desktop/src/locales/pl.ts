@@ -1293,7 +1293,6 @@ export const pl: Dictionary = {
     'Orden nie otwiera już {folder} na miejscu. Jego przestrzenie są teraz przechowywane w Orden, a folder pozostał taki, jaki był. Aby przenieść z niego więcej, użyj Importuj.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'Jeszcze nieskopiowane, więc nadal tylko w tym folderze: {names}. Orden spróbuje ponownie przy następnym uruchomieniu.',
-  'Turn this space back into a folder': 'Zamień tę przestrzeń z powrotem w folder',
   'Share this note': 'Udostępnij tę notatkę',
   'Everyone in the space already has it.': 'Wszyscy w przestrzeni już ją mają.',
   'Remove from your list': 'Usuń z listy',

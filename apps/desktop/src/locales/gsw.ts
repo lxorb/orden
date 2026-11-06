@@ -1259,7 +1259,6 @@ export const gsw: Dictionary = {
     'Orden macht {folder} nümm dört uf, wo er isch. Sini Ablage sind jetzt in Orden, und de Ordner bliibt, wie er gsi isch. Zum meh drus hole, nimm Importiere.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'No nöd kopiert und drum nur i dem Ordner: {names}. Orden probierts bim nöchschte Start nomol.',
-  'Turn this space back into a folder': 'Die Ablag wider zum Ordner mache',
   'Share this note': 'Die Notiz teile',
   'Everyone in the space already has it.': 'Alli i de Ablag hend si scho.',
   'Remove from your list': 'Us dinere Liste nä',

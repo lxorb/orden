@@ -1274,7 +1274,6 @@ export const es: Dictionary = {
     'Orden ya no abre {folder} en su sitio. Sus espacios se guardan ahora en Orden y la carpeta se queda como estaba. Para traer más de ella, usa Importar.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'Aún sin copiar, así que siguen solo en esa carpeta: {names}. Orden lo intentará de nuevo la próxima vez que se inicie.',
-  'Turn this space back into a folder': 'Volver a convertir este espacio en una carpeta',
   'Share this note': 'Compartir esta nota',
   'Everyone in the space already has it.': 'Todos los del espacio ya la tienen.',
   'Remove from your list': 'Quitar de la lista',

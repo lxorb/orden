@@ -1273,7 +1273,6 @@ export const fil: Dictionary = {
     'Hindi na binubuksan ng Orden ang {folder} sa kinalalagyan nito. Nasa Orden na ang mga espasyo nito, at iniwan ang folder gaya ng dati. Para magdala pa mula rito, gamitin ang I-import.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'Hindi pa nakokopya, kaya nasa folder na iyon pa lang: {names}. Susubukan ulit ng Orden sa susunod na pagbukas nito.',
-  'Turn this space back into a folder': 'Ibalik ang espasyong ito bilang folder',
   'Share this note': 'Ibahagi ang talang ito',
   'Everyone in the space already has it.': 'Nasa lahat na sa espasyo.',
   'Remove from your list': 'Alisin sa listahan mo',

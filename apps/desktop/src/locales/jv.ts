@@ -1248,7 +1248,6 @@ export const jv: Dictionary = {
     'Orden ora mbukak {folder} ing panggonane maneh. Papan-papane saiki disimpen ing Orden, lan folder kasebut ditinggal kaya sakdurunge. Kanggo nggawa luwih akeh saka kono, gunakake Impor.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'Durung disalin, dadi isih mung ana ing folder kasebut: {names}. Orden bakal nyoba maneh nalika diwiwiti sabanjure.',
-  'Turn this space back into a folder': 'Balekake papan iki dadi folder',
   'Share this note': 'Bagi cathetan iki',
   'Everyone in the space already has it.': 'Kabeh wong ing papan iki wis duwe.',
   'Remove from your list': 'Busak saka dhaptar sampeyan',

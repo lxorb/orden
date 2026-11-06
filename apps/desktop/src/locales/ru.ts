@@ -1296,7 +1296,6 @@ export const ru: Dictionary = {
     'Orden больше не открывает {folder} на месте. Его пространства теперь хранятся в Orden, а папка осталась как была. Чтобы перенести из неё что-то ещё, используйте Импорт.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'Ещё не скопированы и пока есть только в той папке: {names}. Orden попробует снова при следующем запуске.',
-  'Turn this space back into a folder': 'Снова сделать пространство папкой',
   'Share this note': 'Поделиться заметкой',
   'Everyone in the space already has it.': 'У всех в пространстве она уже есть.',
   'Remove from your list': 'Убрать из своего списка',

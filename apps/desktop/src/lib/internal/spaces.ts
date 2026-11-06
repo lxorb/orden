@@ -1,16 +1,9 @@
 import { invoke as crate } from '../native'
-import { storedText } from '../stored'
-import { internal, joinPath, platform } from '../tauri'
+import { joinPath, platform } from '../tauri'
 import { safeName } from '../web/paths'
 import { mountOf } from './roots'
 
 export const HOME = '.orden'
-
-export const KEEP_SPACES = 'nib:keep-spaces'
-
-export function keepsNewSpaces(): boolean {
-  return storedText(KEEP_SPACES) === 'on'
-}
 
 interface Space {
   name: string
@@ -52,8 +45,6 @@ const RETIRED = '.retired'
 
 export const CONVERTING = '.converting'
 
-const FOLDERS = '.folders'
-
 async function lines(name: string): Promise<string[]> {
   const said = await crate<string>('read_note', { path: joinPath(await home(), name) }).catch(
     () => '',
@@ -69,29 +60,6 @@ async function addLine(name: string, line: string): Promise<void> {
     content: `${[...had, line].join('\n')}\n`,
   })
 }
-
-async function dropLine(name: string, line: string): Promise<void> {
-  const had = await lines(name)
-  if (!had.includes(line)) return
-  const left = had.filter((one) => one !== line)
-  await crate('write_note', {
-    path: joinPath(await home(), name),
-    content: left.length ? `${left.join('\n')}\n` : '',
-  })
-}
-
-export function keptAsFolders(): Promise<string[]> {
-  return lines(FOLDERS)
-}
-
-export function keepAsFolder(path: string): Promise<void> {
-  return addLine(FOLDERS, path)
-}
-
-export function madeFrom(root: string): string | undefined {
-  return mountOf(root)?.inside === '' ? fromOf.get(root) : undefined
-}
-internal.madeOf = madeFrom
 
 async function find(): Promise<Space[]> {
   const at = await home()
@@ -126,18 +94,6 @@ export async function listedWith(folders: readonly Space[]): Promise<Space[]> {
   return [...folders.filter((one) => !gone.has(one.path)), ...kept].sort((a, b) =>
     a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
   )
-}
-
-export async function unkeep(root: string): Promise<void> {
-  const found = mountOf(root)
-  if (!found || found.inside) throw new Error(`${root} is not a space kept here`)
-  const folder = found.mount.folder.name
-  const was = fromOf.get(root)
-  await found.mount.folder.flush()
-  unmount(root)
-  fromOf.delete(root)
-  if (was) await dropLine(RETIRED, was)
-  await crate('trash_item', { path: folder, kind: 'space' })
 }
 
 const letGo = new Map<string, () => void>()

@@ -1230,7 +1230,6 @@ export const yue: Dictionary = {
     'Orden 唔會再喺原位打開 {folder}。入面嘅空間而家放咗喺 Orden，個資料夾就保持原狀。想再匯入多啲，就用「匯入」。',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     '仲未複製到，所以仲係只喺嗰個資料夾度：{names}。Orden 下次開嘅時候會再試。',
-  'Turn this space back into a folder': '將呢個空間變返做資料夾',
   'Share this note': '分享呢篇筆記',
   'Everyone in the space already has it.': '呢個空間入面嘅每個人都已經有喇。',
   'Remove from your list': '從你嘅列表移除',

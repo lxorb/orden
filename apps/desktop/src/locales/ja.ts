@@ -1251,7 +1251,6 @@ export const ja: Dictionary = {
     'Orden は {folder} をその場所で開かなくなりました。そのスペースは今は Orden の中に保存され、フォルダは元のまま残されています。ほかのものを取り込むには、インポートを使ってください。',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'まだコピーされていないため、そのフォルダにだけあります：{names}。Orden は次回の起動時にもう一度試します。',
-  'Turn this space back into a folder': 'このスペースをフォルダに戻す',
   'Share this note': 'このノートを共有',
   'Everyone in the space already has it.': 'スペースの全員がすでに見られます。',
   'Remove from your list': 'リストから外す',

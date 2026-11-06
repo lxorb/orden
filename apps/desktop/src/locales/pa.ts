@@ -1259,7 +1259,6 @@ export const pa: Dictionary = {
     'Orden ਹੁਣ {folder} ਨੂੰ ਉਸਦੀ ਥਾਂ ’ਤੇ ਨਹੀਂ ਖੋਲ੍ਹਦਾ। ਇਸਦੀਆਂ ਥਾਵਾਂ ਹੁਣ Orden ਵਿੱਚ ਰੱਖੀਆਂ ਹਨ, ਅਤੇ ਫੋਲਡਰ ਜਿਵੇਂ ਸੀ ਉਵੇਂ ਹੀ ਛੱਡਿਆ ਗਿਆ ਹੈ। ਇਸ ਵਿੱਚੋਂ ਹੋਰ ਲਿਆਉਣ ਲਈ ਅੰਦਰ ਲਿਆਓ ਵਰਤੋ।',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
     'ਅਜੇ ਕਾਪੀ ਨਹੀਂ ਹੋਈਆਂ, ਇਸ ਲਈ ਅਜੇ ਵੀ ਸਿਰਫ਼ ਉਸ ਫੋਲਡਰ ਵਿੱਚ ਹਨ: {names}। ਅਗਲੀ ਵਾਰ ਸ਼ੁਰੂ ਹੋਣ ’ਤੇ Orden ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੇਗਾ।',
-  'Turn this space back into a folder': 'ਇਸ ਥਾਂ ਨੂੰ ਮੁੜ ਫੋਲਡਰ ਬਣਾਓ',
   'Share this note': 'ਇਹ ਨੋਟ ਸਾਂਝੀ ਕਰੋ',
   'Everyone in the space already has it.': 'ਥਾਂ ਵਿੱਚ ਸਭ ਕੋਲ ਪਹਿਲਾਂ ਹੀ ਹੈ।',
   'Remove from your list': 'ਆਪਣੀ ਸੂਚੀ ਤੋਂ ਹਟਾਓ',
