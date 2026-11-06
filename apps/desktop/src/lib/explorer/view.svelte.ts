@@ -147,12 +147,7 @@ export class ExplorerView {
   }
 
   get chosen(): string[] {
-    const names = this.picked.names.size
-      ? this.names.filter((one) => this.picked.names.has(one))
-      : this.picked.cursor === null
-        ? []
-        : [this.picked.cursor]
-    return names.map((one) => this.pathOf(one))
+    return this.names.filter((one) => this.picked.names.has(one)).map((one) => this.pathOf(one))
   }
 
   searchBelow(query: string) {
