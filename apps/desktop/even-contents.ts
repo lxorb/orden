@@ -671,10 +671,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  Raised on 2026-11-05 for #1153, Todos one list of every space and the reader's one
  *  inbox (rows/home.svelte.ts, views/source.ts, views/display.ts): the code to 6,138,100,
  *  measured 6,137,776.
+ *
+ *  Raised on 2026-11-06 for #1151, dictation on this computer: whether it can, its model's
+ *  download and the two roads it adds to the choice (dictation/local.svelte.ts,
+ *  engines.svelte.ts), and their words in every language. The code to 6,141,200, measured
+ *  6,140,904; the catalogues to 1,020,700, measured 1,020,337.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_138_100,
-  catalogues: 1_015_600,
+  code: 6_141_200,
+  catalogues: 1_020_700,
   styles: 293_100,
   fonts: 260_000,
   pages: 40_000,
