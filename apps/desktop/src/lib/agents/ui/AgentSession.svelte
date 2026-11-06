@@ -11,6 +11,7 @@
   import ReaderAsk from './ReaderAsk.svelte'
   import { aboutOf, hostOf } from './session'
   import Spark from './Spark.svelte'
+  import AgentWatch from './AgentWatch.svelte'
   import { started } from './live.svelte'
   import { wordFor } from './words'
 
@@ -31,6 +32,7 @@
   const undoable = $derived(activity.undoable(agent) !== null)
   const front = $derived(workspace.active?.kind === 'note' ? workspace.active.shown : null)
   let all = $state(false)
+  let watched = $state<string | null>(null)
 
   const doing = $derived.by(() => {
     const last = activity.seen.doing[agent]
@@ -107,8 +109,9 @@
         <li>
           <button
             class="nib-row is-short"
-            disabled={!activity.holds || tab.parked}
-            onclick={() => void activity.show(tab.id)}
+            class:is-on={watched === tab.id}
+            data-agent-tab={tab.id}
+            onclick={() => (watched = tab.id)}
           >
             <span class="nib-row-label">{tab.title || hostOf(tab.url)}</span>
             <span class="nib-row-meta">{hostOf(tab.url)}</span>
@@ -116,6 +119,10 @@
         </li>
       {/each}
     </ul>
+  {/if}
+
+  {#if watched !== null}
+    <AgentWatch {activity} tab={watched} onclose={() => (watched = null)} />
   {/if}
 
   {#if calls.length}

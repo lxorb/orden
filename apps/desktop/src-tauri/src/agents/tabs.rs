@@ -22,6 +22,9 @@ const AWAY: f64 = -10_000.0;
 pub const WIDTH: u32 = 1280;
 pub const HEIGHT: u32 = 800;
 
+pub const PARKED: &str =
+    "that tab's page was parked to save memory: it opens again with the agent's next call";
+
 const ALL_TABS: usize = 8;
 
 const IDLE: Duration = Duration::from_secs(600);
@@ -86,6 +89,10 @@ pub fn of(agent: &str) -> Vec<Tab> {
         .filter(|one| one.agent == agent)
         .cloned()
         .collect()
+}
+
+pub fn held(id: &str) -> Option<Tab> {
+    tabs().iter().find(|one| one.id == id).cloned()
 }
 
 pub fn find(agent: &str, id: &str) -> Option<Tab> {
@@ -620,9 +627,7 @@ pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
         .cloned()
         .ok_or("there is no such agent tab")?;
     let label = tab.label();
-    let view = app.get_webview(&label).ok_or(
-        "that tab's page was parked to save memory: it opens again with the agent's next call",
-    )?;
+    let view = app.get_webview(&label).ok_or(PARKED)?;
     tabs().retain(|one| one.id != id);
     SHOWN
         .lock()
@@ -667,7 +672,7 @@ pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
 
 #[cfg(feature = "cef")]
 pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
-    if find_any(id).is_none() {
+    if held(id).is_none() {
         return Err("there is no such agent tab".into());
     }
     SHOWN
@@ -689,11 +694,6 @@ pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
         .push((id.to_string(), reader.to_string()));
     close(app, id);
     Err("an agent's page on WKWebView is shown as a reader's tab of its own: the tab loads its address".into())
-}
-
-#[cfg(feature = "cef")]
-fn find_any(id: &str) -> Option<Tab> {
-    tabs().iter().find(|one| one.id == id).cloned()
 }
 
 fn start_ticking(app: &AppHandle) {

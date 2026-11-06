@@ -633,11 +633,33 @@ pub fn agents_adopt(
     tab: String,
 ) -> Result<(), String> {
     from_the_app(&webview)?;
+    #[cfg(all(windows, not(feature = "cef")))]
+    if !shell::hosts(&app, &webview.window()) {
+        return Err(
+            "an agent's page lives in Orden's first window: this one loads its address".into(),
+        );
+    }
     #[cfg(any(windows, feature = "cef", target_os = "macos"))]
     return tabs::adopt(&app, &agent_tab, &tab);
     #[cfg(not(any(windows, feature = "cef", target_os = "macos")))]
     {
         let _ = (app, agent_tab, tab);
+        Err("agent tabs are not available on this engine yet".into())
+    }
+}
+
+#[tauri::command(async)]
+pub fn agents_peek(
+    webview: tauri::Webview,
+    app: AppHandle,
+    tab: String,
+) -> Result<verbs::Picture, String> {
+    from_the_app(&webview)?;
+    #[cfg(any(windows, feature = "cef", target_os = "macos"))]
+    return browser::peek(&app, &tab);
+    #[cfg(not(any(windows, feature = "cef", target_os = "macos")))]
+    {
+        let _ = (app, tab);
         Err("agent tabs are not available on this engine yet".into())
     }
 }

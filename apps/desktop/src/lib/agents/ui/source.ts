@@ -1,5 +1,5 @@
 import { invoke } from '../../tauri'
-import type { Approval, Overview, ShellWords } from '../verbs'
+import type { Approval, Overview, Picture, ShellWords } from '../verbs'
 
 export interface Source {
   state(): Promise<Overview>
@@ -8,6 +8,7 @@ export interface Source {
   answer(id: string, allow: boolean, always: boolean): Promise<Approval>
   log(day: string): Promise<unknown[]>
   adopt(agentTab: string, tab: string): Promise<void>
+  peek(tab: string): Promise<Picture>
   shell(key: string | null, words: ShellWords): Promise<void>
   holds(): Promise<boolean>
   hide(): Promise<boolean>
@@ -20,6 +21,7 @@ export const crate: Source = {
   answer: (id, allow, always) => invoke<Approval>('agents_answer', { id, allow, always }),
   log: (day) => invoke<unknown[]>('agents_log', { day }),
   adopt: (agentTab, tab) => invoke('agents_adopt', { agentTab, tab }),
+  peek: (tab) => invoke<Picture>('agents_peek', { tab }),
   shell: (key, words) => invoke('agents_shell', { key, words }),
   holds: () => invoke<boolean>('agents_hold', { hide: false }),
   hide: () => invoke<boolean>('agents_hold', { hide: true }),

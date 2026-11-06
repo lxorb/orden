@@ -257,6 +257,7 @@ export const AGENT_COMMANDS = [
   'agents_log_days',
   'agents_log_clear',
   'agents_adopt',
+  'agents_peek',
   'agents_capture',
   'agents_shell',
   'agents_hold',
@@ -283,6 +284,12 @@ export interface ShellWords {
 
 export const CAPTURE_AS = ['clip', 'screenshot', 'pdf'] as const
 export type CaptureAs = (typeof CAPTURE_AS)[number]
+
+export interface Picture {
+  png: string
+  width: number
+  height: number
+}
 
 export interface Captured {
   url: string

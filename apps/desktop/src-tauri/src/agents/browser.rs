@@ -12,8 +12,8 @@ use super::snapshot::{self, Asked, Wanted};
 use super::tabs::{self, Tab};
 use super::verbs::{
     Acted, Answer, Category, Closed, Code, Dialog, DownloadList, Evaluated, Event, FieldValue,
-    Found, Opened, PageText, Snapped, StorageOp, Store, Stored, TabList, Verb, Waited, World,
-    EVENT,
+    Found, Opened, PageText, Picture, Snapped, StorageOp, Store, Stored, TabList, Verb, Waited,
+    World, EVENT,
 };
 use super::Caller;
 
@@ -232,20 +232,11 @@ fn gate<'a>(
         Caller::Agent(grant) => !grant.asks(Category::SigningIn),
         Caller::Reader => true,
     };
-    let page = Page {
-        view,
-        label,
-        own,
-        since,
-        limits: match caller {
-            Caller::Agent(grant) => Some((Grant::clone(grant), place.store())),
-            Caller::Reader => None,
-        },
-        credentials: std::sync::atomic::AtomicBool::new(cleared),
-        worlds: std::sync::Mutex::new(std::collections::HashMap::new()),
-        frame_lists: std::sync::Mutex::new(std::collections::HashMap::new()),
-        worlds_renewed: std::sync::atomic::AtomicBool::new(false),
+    let limits = match caller {
+        Caller::Agent(grant) => Some((Grant::clone(grant), place.store())),
+        Caller::Reader => None,
     };
+    let page = page_on(view, label, own, since, limits, cleared);
     page.wake();
     if let Caller::Agent(grant) = caller {
         if let Err(why) = policy::site_allowed(grant, &page.url(), place.store()) {
@@ -253,6 +244,48 @@ fn gate<'a>(
         }
     }
     Ok(page)
+}
+
+fn page_on(
+    view: &View,
+    label: String,
+    own: bool,
+    since: u64,
+    limits: Option<(Grant, Store)>,
+    cleared: bool,
+) -> Page<'_> {
+    Page {
+        view,
+        label,
+        own,
+        since,
+        limits,
+        credentials: std::sync::atomic::AtomicBool::new(cleared),
+        worlds: std::sync::Mutex::new(std::collections::HashMap::new()),
+        frame_lists: std::sync::Mutex::new(std::collections::HashMap::new()),
+        worlds_renewed: std::sync::atomic::AtomicBool::new(false),
+    }
+}
+
+pub(super) fn peek(app: &AppHandle, tab: &str) -> Result<Picture, String> {
+    let held = tabs::held(tab).ok_or("there is no such agent tab")?;
+    let view = engines::view(app, &held.label())
+        .filter(|_| !held.parked)
+        .ok_or(tabs::PARKED)?;
+    let page = page_on(
+        &view,
+        view.label(),
+        true,
+        super::stop::generation(),
+        None,
+        true,
+    );
+    page.wake();
+    page.screenshot(None, false, None)
+        .map_err(|refused| match refused {
+            Answer::Error { message, .. } => message,
+            _ => "the page could not be photographed".into(),
+        })
 }
 
 fn on_a_tab(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer {

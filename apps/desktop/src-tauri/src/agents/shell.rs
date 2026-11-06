@@ -77,6 +77,10 @@ pub fn host(app: &AppHandle) -> Option<tauri::Window> {
         .or_else(|| crate::launch::document_windows(app).into_iter().next())
 }
 
+pub fn hosts(app: &AppHandle, window: &tauri::Window) -> bool {
+    host(app).is_some_and(|host| host.label() == window.label())
+}
+
 pub fn start(app: &AppHandle) {
     STARTED.call_once(|| {
         let notifying = app.clone();
@@ -211,8 +215,7 @@ pub fn agents_shell(
 pub fn agents_hold(webview: tauri::Webview, app: AppHandle, hide: bool) -> Result<bool, String> {
     super::from_the_app(&webview)?;
     let window = webview.window();
-    let holds = cfg!(any(windows, target_os = "macos"))
-        && host(&app).is_some_and(|host| host.label() == window.label());
+    let holds = cfg!(any(windows, target_os = "macos")) && hosts(&app, &window);
     if !hide {
         return Ok(holds);
     }
