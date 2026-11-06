@@ -1,6 +1,3 @@
-// The space's AGENTS.md and CLAUDE.md in a thread's instructions: as they are in a
-// space only the reader is in, inside the untrusted mark in one somebody else can reach.
-
 import { expect, test, vi } from 'vitest'
 import { newThread } from '../chat/threads'
 

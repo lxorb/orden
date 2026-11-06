@@ -1,8 +1,4 @@
 <script lang="ts">
-  /** Said once to a Mac that had AI keys in the keychain (#1090): Orden keeps them in a
-   *  file of its own now and stopped asking for the keychain's password, so they are typed
-   *  once more. The update notice's card, at the foot of the window, with the way to
-   *  Settings › AI. See keys-moved.svelte.ts. */
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from '../i18n.svelte'
@@ -41,8 +37,6 @@
 {/if}
 
 <style>
-  /* The middle track of the notices row, the rename notice's place, so it sits on neither
-     end's card; App.svelte places it. */
   .toast {
     grid-column: 2;
     justify-self: center;

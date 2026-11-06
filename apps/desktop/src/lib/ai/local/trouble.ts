@@ -1,15 +1,7 @@
-/** How a run of Claude Code or Codex that did not answer is said, in Orden's words.
- *
- *  The plan is the reader's own, so its limit is said as theirs, with when it resets
- *  where the program said; a program that is not signed in is told apart from one that
- *  failed, because the one thing to do about it is different; and anything else is the
- *  program's own sentence, the way a provider's refusal is the provider's. */
-
 import { t } from '../../i18n.svelte'
 import { when } from '../../when'
 import type { Heard, Limit } from './heard'
 
-/** How the crate says a run ended; see `Ended` in src-tauri/src/ai_cli/run.rs. */
 export interface Ending {
   code: number | null
   timedOut: boolean
@@ -17,7 +9,6 @@ export interface Ending {
   err: string
 }
 
-/** What a plan at its limit is called: "Your Claude plan is at its limit until 15:05." */
 export function limitSentence(plan: string, limit: Limit): string {
   if (limit.until !== null) {
     return t('Your {plan} plan is at its limit until {time}.', {
@@ -31,8 +22,6 @@ export function limitSentence(plan: string, limit: Limit): string {
   return t('Your {plan} plan is at its limit for now.', { plan })
 }
 
-/** The sentence a run ends on, or null for one that answered. `name` is the program's
- *  name and `plan` the plan's: Claude Code spends a Claude plan, Codex a ChatGPT one. */
 export function troubleOf(
   name: string,
   plan: string,

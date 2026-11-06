@@ -1,5 +1,3 @@
-/** Ask's passages, carried as attachments and found again by the answer. */
-
 import { describe, expect, test } from 'vitest'
 import type { Attachment, Turn } from '../chat/types'
 import { cites, passageAttachments, sourcesFor, sourcesIn } from './citations'

@@ -1,26 +1,12 @@
-/** What a press of Do with AI shows (#325): the chat starts out of sight, so the press
- *  has to say where it went. A spark leaves the button and flies on an arc to wherever
- *  the AI panel is on screen - its list of chats where it is open, its tab where another
- *  panel holds its side, the side's toggle where the side is shut - and that place
- *  answers with a ring as it lands. A line under the button says it in words, and to a
- *  screen reader.
- *
- *  Drawn straight into the document rather than by the row: the flight crosses the
- *  window, and a row that scrolls away or unmounts mid-flight takes nothing with it.
- *  With the system asking for less movement, only the words show. */
-
 import { t } from '../i18n.svelte'
 import { dur, stillness } from '../motion'
 import { workspace } from '../workspace.svelte'
 
-/** How long the spark takes to arrive, and how far its trail lags behind it. */
 const FLIGHT = 720
 const TRAIL = 70
 
-/** How long the words are there, coming and going included. */
 const SAID = 1800
 
-/** A four-pointed spark, the one the button wears, drawn on a 16 unit box. */
 const SPARK =
   'M8 0.5c.5 3.6 1.9 5 5.5 5.5-3.6.5-5 1.9-5.5 5.5-.5-3.6-1.9-5-5.5-5.5 3.6-.5 5-1.9 5.5-5.5z'
 
@@ -29,8 +15,6 @@ interface Point {
   y: number
 }
 
-/** Where a thing is on screen to fly to: `y` from its top, or its middle. Nothing where
- *  it is not what shows there - a shut side keeps its panel laid out, out of sight. */
 function seen(element: Element | null, y?: number): Point | null {
   if (!(element instanceof HTMLElement)) return null
   const box = element.getBoundingClientRect()
@@ -43,7 +27,6 @@ function seen(element: Element | null, y?: number): Point | null {
   return top && element.contains(top) ? at : null
 }
 
-/** Where the AI panel is on screen, and the thing there to answer the landing. */
 function landing(): { at: Point; mark: HTMLElement | null } {
   const side = workspace.sideOf('ask')
   const list = seen(document.querySelector('[data-sidebar] .body[data-panel="ask"]'), 28)
@@ -58,18 +41,14 @@ function landing(): { at: Point; mark: HTMLElement | null } {
   return { at: { x: side === 'right' ? window.innerWidth - 24 : 24, y: 24 }, mark: null }
 }
 
-/** How far from the window's edges the flight and the words keep. */
 const EDGE = 12
 
 function within(value: number, least: number, most: number): number {
   return Math.min(Math.max(value, least), most)
 }
 
-/** The spark's path: a curve that bows out to one side of the straight line from the
- *  button to the panel, kept inside the window, as the keyframes of a flight. */
 function arc(from: Point, to: Point, steps = 18): Keyframe[] {
   const far = Math.hypot(to.x - from.x, to.y - from.y) || 1
-  // Bowed to the left of the way it goes, which is up and over for a panel to the right.
   const bow = Math.min(140, far * 0.35)
   const bend = {
     x: within((from.x + to.x) / 2 + ((to.y - from.y) / far) * bow, EDGE, window.innerWidth - EDGE),
@@ -111,7 +90,6 @@ function spark(size: number, glow: boolean): SVGSVGElement {
   return svg
 }
 
-/** The words under the button: where the chat went. */
 function say(from: DOMRect): void {
   const line = document.createElement('div')
   line.setAttribute('role', 'status')
@@ -131,17 +109,13 @@ function say(from: DOMRect): void {
     boxShadow: '0 4px 14px rgb(0 0 0 / 0.18)',
   })
   document.body.append(line)
-  // Under the button, as near its middle as the window's edges let it be.
   const wide = line.getBoundingClientRect().width
   const left = within(from.left + from.width / 2 - wide / 2, EDGE, window.innerWidth - wide - EDGE)
   line.style.left = `${left}px`
-  // Words are not movement: with less movement asked for they still stay their time,
-  // only without coming and going.
   if (stillness()) {
     setTimeout(() => line.remove(), SAID)
     return
   }
-  // In and out in a tenth of the time each.
   const shows = line.animate(
     [
       { opacity: 0, transform: 'translateY(-4px)' },
@@ -154,7 +128,6 @@ function say(from: DOMRect): void {
   void shows.finished.finally(() => line.remove())
 }
 
-/** The button's own answer: it swells, turns a little, and settles. */
 function press(button: HTMLElement): void {
   if (stillness()) return
   button.animate(
@@ -167,7 +140,6 @@ function press(button: HTMLElement): void {
   )
 }
 
-/** Where the spark lands: a ring that opens out of it, and the mark there nods. */
 function land(at: Point, mark: HTMLElement | null): void {
   const ring = document.createElement('div')
   Object.assign(ring.style, {
@@ -200,7 +172,6 @@ function land(at: Point, mark: HTMLElement | null): void {
   )
 }
 
-/** Shows that the task at `button` went to a chat in the AI panel. */
 export function sentOff(button: HTMLElement): void {
   const from = button.getBoundingClientRect()
   say(from)

@@ -1,10 +1,5 @@
 import { expect, test, vi } from 'vitest'
 
-/** A key written, forgotten or read on the phone before the activity has said its
- *  word (B456). The activity drops a call with no word and says nothing, so a key
- *  would look saved that never was, or missing when it is there. Each says it could
- *  not instead, and the store is not asked with no word. */
-
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
   isMobile: true,

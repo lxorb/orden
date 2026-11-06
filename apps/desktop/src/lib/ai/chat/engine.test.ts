@@ -1,8 +1,3 @@
-/** The loop, end to end against recorded streams and a fake crate: a call made and
- *  answered, the provider's own record sent back, an effort refused and stepped, words
- *  steered into a running turn, a stop, a refusal, the step limit, and compaction on
- *  each road. */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('../keys', () => ({ readKey: () => Promise.resolve('sk-test') }))
@@ -30,7 +25,6 @@ const PROVIDERS: Record<string, Provider> = {
   },
 }
 
-/** Every request made, read back. */
 interface Sent {
   url: string
   body: Record<string, unknown>
@@ -84,7 +78,6 @@ vi.stubGlobal('fetch', (url: string, init: RequestInit = {}) => {
   return Promise.resolve(next())
 })
 
-/** The fake crate: one read-only tool, and whatever each test makes a call do. */
 const calls: { name: string; args: unknown; mode: Mode }[] = []
 let onCall: () => unknown = () => undefined
 let where = ''
@@ -222,8 +215,6 @@ describe('a call made and answered', () => {
   })
 })
 
-/** A task done with AI with a switch off in Settings (#325): the tools it stands for are
- *  not offered, and a model that calls one anyway is told so without it running. */
 describe('a tool the thread is not given', () => {
   test('is not listed, and a call to it never reaches the crate', async () => {
     answers = [stream('anthropic-1'), stream('anthropic-2')]
@@ -241,7 +232,6 @@ describe('a tool the thread is not given', () => {
   })
 })
 
-/** A crate that asks once for every call, and a reader who answers as each test says. */
 function askingOf(answer: (id: string) => boolean | null, category = 'writing') {
   const given: { id: string; allow: boolean }[] = []
   const waited: string[] = []
@@ -303,7 +293,6 @@ describe('a call that asks the reader first', () => {
     const heard = await sent(engine, thread)
 
     expect(waited).toEqual(['q1'])
-    // The row was the question while it waited, and the answer once allowed.
     const states = heard.flatMap((one) =>
       one.type === 'part' && one.part.kind === 'tool' ? [one.part.state] : [],
     )
@@ -629,7 +618,6 @@ describe('the registry', () => {
       asked.push(given)
       return Promise.resolve(engine)
     })
-    // The program's own engine, its sends written down for the review (sends.ts).
     expect(await engineFor('codex', setup)).toBe(watching(engine))
     expect(await engineFor('codex', setup)).toBe(watching(engine))
     expect(asked).toEqual([setup])

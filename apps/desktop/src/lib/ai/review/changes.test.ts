@@ -30,7 +30,6 @@ const thread = {
   turns: [you('m1', 10), model('a1', 11), you('m2', 20), you('s', 25, true), model('a2', 21)],
 }
 
-/** Thread t1 answered for provider p from 10 to 30; t2 from 40 on. */
 const answering = (provider: string, at: number) =>
   provider === 'p' ? (at >= 10 && at <= 30 ? 't1' : at >= 40 ? 't2' : null) : null
 
@@ -159,7 +158,6 @@ describe('the rewind plan', () => {
           { path: 'Herons', space: 'Work' },
           '{"path":"Herons.md","trashed":true}',
         ),
-        // A move to where it already was moved nothing.
         tool('move_file', { path: 'A', to: 'A' }, '{"from":"A.md","to":"A.md"}'),
       ]),
     ]

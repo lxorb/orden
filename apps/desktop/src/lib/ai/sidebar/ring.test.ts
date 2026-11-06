@@ -1,5 +1,3 @@
-/** The ring's bands. */
-
 import { describe, expect, test } from 'vitest'
 import type { Turn } from '../chat/types'
 import { noUsage } from '../chat/usage'

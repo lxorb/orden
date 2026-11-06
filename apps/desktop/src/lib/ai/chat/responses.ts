@@ -1,19 +1,3 @@
-/** OpenAI's Responses API, as a conversation with tools: an OpenAI key, and a ChatGPT
- *  plan through Sign in with ChatGPT.
- *
- *  - Stored nowhere (`store: false`) and streamed, which a plan requires and a key is
- *    asked the same way: nothing about a thread is kept on OpenAI's side, so the whole
- *    of it is sent each time, with the reasoning of earlier turns as the encrypted items
- *    the model wrote (`include: ["reasoning.encrypted_content"]`).
- *  - The system prompt as `instructions`; a plan refuses a system message.
- *  - Tools as functions; for a plan, inside one namespace, as its preview requires
- *    (https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations).
- *  - Effort as `reasoning.effort`, with `summary: "auto"` for the thinking row. A model
- *    that does not reason is sent no `reasoning` at all once it has refused one.
- *  - Fast as `service_tier: "priority"`, on a key only.
- *
- *  Pure, as anthropic.ts is. */
-
 import { conversationUrl } from '../providers'
 import { wireEffort } from './effort'
 import { learnt } from './learned'
@@ -33,7 +17,6 @@ import {
 } from './wire'
 import type { Part, ToolOutput, Usage } from './types'
 
-/** The namespace a plan's tools are listed under. */
 const NAMESPACE = 'nib'
 
 type Item = Record<string, unknown>
@@ -51,7 +34,6 @@ function userItem(step: Extract<Step, { role: 'user' }>): Item {
   }
 }
 
-/** A tool's answer: words, or words and pictures. */
 function outputItem(id: string, output: ToolOutput): Item {
   const words = output.text || ' '
   return {
@@ -78,7 +60,6 @@ function callItem(call: Call): Item {
   }
 }
 
-/** The steps as input items. */
 export function itemsOf(steps: readonly Step[]): unknown[] {
   const out: unknown[] = []
   for (const step of steps) {
@@ -99,7 +80,6 @@ export function itemsOf(steps: readonly Step[]): unknown[] {
         out.push(...step.messages)
         break
       case 'compacted':
-        // `/responses/compact` answers a list of items, sent back whole.
         {
           const items: unknown[] = Array.isArray(step.block) ? step.block : [step.block]
           out.push(...items)
@@ -112,12 +92,6 @@ export function itemsOf(steps: readonly Step[]): unknown[] {
   return out
 }
 
-/** The tools, as functions, inside a namespace for a plan.
- *
- *  Never strict. The Responses API makes a function strict unless told otherwise, and
- *  strict holds every property required: Orden's verbs take most arguments as optional,
- *  so a model made to fill each one sent `tab: "scratchpad"` beside the path it meant
- *  and empty strings for the rest, and read the scratchpad for the note (#325). */
 function toolsOf(tools: readonly ToolDef[], plan: boolean, web: boolean): unknown[] {
   const functions = tools.map((one) => ({
     type: 'function',
@@ -173,10 +147,8 @@ export const responses: Wire = {
   },
 }
 
-/** Reads one streamed response. */
 class ResponsesReader implements Reader {
   readonly parts: Part[] = []
-  /** Where each output item is drawn, by its index in the output. */
   private readonly drawn = new Map<number, number>()
   private readonly started = new Map<number, number>()
   private readonly items = new Map<number, Item>()
@@ -199,7 +171,6 @@ class ResponsesReader implements Reader {
       case 'response.reasoning_summary_text.delta':
         return this.grew(index, 'thinking', text(said.delta))
       case 'response.reasoning_summary_part.added':
-        // A new paragraph of the summary.
         return this.grew(index, 'thinking', this.drawn.has(index) ? '\n\n' : '')
       case 'response.output_item.done':
         return this.done(index, record(said.item))
@@ -210,8 +181,6 @@ class ResponsesReader implements Reader {
         const response = record(said.response)
         this.usage = responsesUsage(response.usage, this.window)
         this.incomplete = text(record(response.incomplete_details).reason)
-        // The completed output is the record of what was said; where an item's own
-        // `done` was missed, it is taken from here.
         const output = Array.isArray(response.output) ? response.output : []
         output.forEach((one, at) => {
           if (!this.items.has(at)) this.items.set(at, record(one))
@@ -299,8 +268,6 @@ class ResponsesReader implements Reader {
         : this.incomplete === 'content_filter'
           ? 'refusal'
           : 'end'
-    // A message's words that streamed but whose item never finished are kept as the
-    // words they were.
     if (!items.some((one) => one.type === 'message')) {
       const words = this.parts.flatMap((one) => (one.kind === 'text' ? [one.text] : [])).join('')
       if (words) items.push({ role: 'assistant', content: [{ type: 'output_text', text: words }] })
@@ -309,10 +276,6 @@ class ResponsesReader implements Reader {
   }
 }
 
-/** An output item as it is sent back. Nothing is stored on OpenAI's side, so an item's
- *  `id` names nothing there and is refused as a reference to a stored item; Codex sends
- *  its own back the same way, without `id` and `status`. The encrypted reasoning is
- *  what carries the thinking across. */
 function sentBack(item: Item): Item {
   const kept = { ...item }
   delete kept.id

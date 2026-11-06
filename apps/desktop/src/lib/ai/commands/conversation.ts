@@ -1,6 +1,3 @@
-/** The commands about the thread itself (docs/ai-sidebar.md 3.1) that are more than one
- *  of the panel's controls: `/recap`, `/copy`, `/export`, `/autocompact` and `/jobs`. */
-
 import { copyText } from '../../clipboard'
 import { t } from '../../i18n.svelte'
 import { workspace } from '../../workspace.svelte'
@@ -11,11 +8,9 @@ import { shown } from './evaluate'
 import type { Host } from './host'
 import { tasks, type TaskKind } from './tasks.svelte'
 
-/** What `/recap` asks. Not translated: the model's to read. */
 const RECAP =
   'Say in one line of at most eight words what this conversation is about. Answer with the line alone, in the language of the conversation, without quotation marks.'
 
-/** One line about the thread, which is also the name it is given. */
 export async function recap(host: Host, thread: Thread): Promise<string> {
   const said = await host.ask(thread, [
     { role: 'system', content: RECAP },
@@ -30,12 +25,10 @@ export async function recap(host: Host, thread: Thread): Promise<string> {
   )
 }
 
-/** The words of a model turn. */
 function wordsOf(turn: Turn): string {
   return turn.parts.flatMap((part) => (part.kind === 'text' ? [part.text] : [])).join('')
 }
 
-/** The nth latest answer's words (`/copy [n]`), or '' where there is none. */
 export function nthAnswer(thread: Pick<Thread, 'turns'>, n: number): string {
   const answers = thread.turns.filter((turn) => turn.role === 'model' && wordsOf(turn).trim())
   const turn = answers[answers.length - Math.max(1, n)]
@@ -48,7 +41,6 @@ export async function copy(thread: Thread, args: string): Promise<boolean> {
   return !!words
 }
 
-/** The thread as markdown: the reader's messages quoted, the answers as they are. */
 export function markdownOf(thread: Pick<Thread, 'title' | 'turns'>, title = thread.title): string {
   const body = thread.turns.flatMap((turn) => {
     if (turn.role === 'you') {
@@ -61,9 +53,6 @@ export function markdownOf(thread: Pick<Thread, 'title' | 'turns'>, title = thre
   return [title ? `# ${title}` : '', ...body].filter(Boolean).join('\n\n') + '\n'
 }
 
-/** `/export [note]`: a note in the thread's space with the name given, else the
- *  clipboard. Never in the space in front: where the thread's is not on this device or
- *  may only be read, a line that says why instead. */
 export async function exportThread(host: Host, thread: Thread, name: string): Promise<void> {
   const named = name.trim()
   if (!named) {
@@ -79,8 +68,6 @@ export async function exportThread(host: Host, thread: Thread, name: string): Pr
   }
 }
 
-/** What follows `/autocompact`: `auto`, `off`, or a count such as `500k`; null for
- *  nothing, which asks where it stands. */
 export function autocompactIn(args: string): AutoCompact | null {
   const word = args.trim().toLowerCase()
   if (word === 'auto' || word === 'off') return word
@@ -109,7 +96,6 @@ const GLYPH: Record<TaskKind, string> = {
   fork: '⑂',
 }
 
-/** `/jobs`: the thread's background work, a row each. */
 export function listJobs(host: Host, thread: Thread): void {
   const now = Date.now()
   const rows = tasks.of(thread.id).map((one) => {

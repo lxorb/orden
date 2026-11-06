@@ -1,13 +1,5 @@
-/** The seam every AI surface goes through: which provider a feature asks, and the three
- *  roads `complete()` takes - a key, a ChatGPT plan's token, a program on this machine -
- *  with the same streaming, stop and sentences on all three.
- *
- *  The crate is stood in for: `invoke` answers the commands a question makes, and a
- *  program's lines arrive on the channel the way `ai_cli_ask` sends them. */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** What the crate is asked, in order, and how each test has it answer. */
 const asked: { command: string; args: Record<string, unknown> }[] = []
 let lines: string[] = []
 let ending = { kind: 'end', code: 0, timedOut: false, stopped: false, err: '' }
@@ -27,11 +19,9 @@ async function fakeInvoke(command: string, args: Record<string, unknown> = {}): 
     return null
   }
   if (command !== 'ai_cli_ask') return null
-  // The crate's own word for a program it could not find.
   if (missing) throw new Error('missing')
 
   const channel = args.output as FakeChannel
-  // Lines arrive after the command has answered, as the crate's do.
   setTimeout(() => {
     if (hold) held = channel
     for (const line of lines) channel.onmessage({ kind: 'line', line })
@@ -46,14 +36,11 @@ vi.mock('../tauri', async (original) => ({
   invoke: fakeInvoke,
   isDesktop: true,
 }))
-// The rest of the module as it is: the AI vault starts with the AI store and listens
-// for keys moving, whatever this test asks of the key.
 vi.mock('./keys', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./keys')>()),
   readKey: () => Promise.resolve('sk-key'),
 }))
 
-/** Every request the page made itself, and what the provider streams back. */
 const fetched: { url: string; init: RequestInit }[] = []
 let reply: () => Response = () => new Response('')
 
@@ -116,7 +103,6 @@ describe('which provider a feature asks', () => {
     ai.add('codex')
     ai.use('rewrite', 'codex')
 
-    // Codex is OpenAI's second account, so OpenAI's active one answers until it is chosen.
     expect(ai.providerFor('rewrite')?.id).toBe('openai')
     ai.activate('codex')
     expect(ai.providerFor('rewrite')?.id).toBe('codex')

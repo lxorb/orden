@@ -1,18 +1,3 @@
-/** `/goal`: keep working until a condition holds (docs/ai-sidebar.md 4.8), the same on
- *  every provider.
- *
- *  Claude Code's words and Codex's budget. Setting a goal starts a turn with the
- *  condition as the message; after each turn the evaluator says met, not yet or
- *  impossible; not yet starts the next turn with its reason as guidance, and the other two
- *  end the goal with a line. Three turns in a row with no tool call is no progress, and
- *  pauses it with the goal kept. An error the reader has to fix (signed out, a plan at its
- *  limit, a model gone, a key refused) clears it and says why; any other is tried again,
- *  three times, and then pauses it. The budget is turns, time and tokens: thirty turns,
- *  and as many fresh tokens as the thread's window holds before it compacts.
- *
- *  The loop is written against `GoalRoad`, so the test drives it with a fake turn and a
- *  fake evaluator; index.ts hands it the panel's turn and the provider's evaluator. */
-
 import { untrusted } from '../chat/transcript'
 import type { Goal, GoalState, Thread, Usage } from '../chat/types'
 import { compactsAt } from '../chat/usage'
@@ -20,18 +5,14 @@ import { GOAL_CLEAR } from './table'
 import type { Verdict } from './evaluate'
 import type { Ended } from './types'
 
-/** Claude Code's longest condition. */
 const LONGEST = 4_000
 const TURNS = 30
-/** Turns in a row with no tool call before the goal pauses. */
 export const IDLE = 3
-/** Errors in a row tried again before the goal pauses. */
 export const RETRIES = 3
 
 export type GoalAsk =
   { do: 'status' } | { do: 'pause' | 'resume' | 'clear' } | { do: 'set'; condition: string }
 
-/** What follows `/goal`. */
 export function goalAsk(args: string): GoalAsk {
   const said = args.trim()
   const word = said.toLowerCase()
@@ -41,19 +22,15 @@ export function goalAsk(args: string): GoalAsk {
   return { do: 'set', condition: said.slice(0, LONGEST) }
 }
 
-/** What the road the loop runs on can do. */
 export interface GoalRoad {
   turn(text: string, signal: AbortSignal): Promise<Ended>
   evaluate(condition: string, since: number, signal: AbortSignal): Promise<Verdict>
-  /** The goal changed: draw the chip again and write the thread down. */
   changed(): void
-  /** A line in the thread when the goal ends or pauses. */
   ended(goal: Goal, why: string): void
   wait(ms: number, signal: AbortSignal): Promise<void>
   now(): number
 }
 
-/** A new goal, with the budget the thread's window allows. */
 export function newGoal(
   thread: Pick<Thread, 'usage' | 'autocompact'>,
   condition: string,
@@ -70,12 +47,10 @@ export function newGoal(
   }
 }
 
-/** The tokens a send spent fresh: what it wrote, and what it read that was not cached. */
 export function spent(usage: Usage | null): number {
   return usage ? usage.output + Math.max(0, usage.input - usage.cached) : 0
 }
 
-/** Failures that will not go away by asking again. */
 const FATAL =
   /\b(401|403|404)\b|sign(ed)? ?(in|out)|log ?in|not logged|unauthori[sz]ed|forbidden|invalid.{0,12}key|key was refused|not set up|add an ai provider|credit|billing|insufficient_quota|not found|does not exist|no such model|context.{0,20}(overflow|too long|exceed)/i
 
@@ -83,12 +58,8 @@ export function fatal(ended: Pick<Ended, 'error' | 'limit'>): boolean {
   return ended.limit?.state === 'reached' || FATAL.test(ended.error ?? '')
 }
 
-/** What the next turn is told after a verdict of not yet. Not translated: it is the
- *  model's to read. */
 export function guidance(condition: string, reason: string, outside = false): string {
   if (!reason) return `Keep working toward the goal: ${condition}`
-  // The evaluator read the thread, words from outside included, so its reason may be
-  // somebody else's: data, never what to do (docs/agent-native.md 9.6).
   const said = outside ? untrusted('goal evaluator', reason) : reason
   return `Keep working toward the goal: ${condition}\nNot met yet: ${said}`
 }
@@ -100,9 +71,6 @@ function finish(goal: Goal, state: GoalState, road: GoalRoad, why: string): Goal
   return state
 }
 
-/** Runs a thread's goal until it ends, pauses or is stopped. `first` is the message the
- *  first turn is sent with: the condition itself for a new goal, the guidance for a goal
- *  resumed. */
 export async function pursue(
   goal: Goal,
   road: GoalRoad,
@@ -115,7 +83,6 @@ export async function pursue(
   let idle = 0
   let failed = 0
   let outside = false
-  // Asked through a call: the signal changes while a turn is awaited.
   const stopped = () => signal.aborted
   for (;;) {
     if (stopped()) return goal.state

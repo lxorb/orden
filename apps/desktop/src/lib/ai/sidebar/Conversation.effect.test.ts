@@ -1,13 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { expect, test, vi } from 'vitest'
 
-/** A message says by name what went with it, and two of one name are two (B505): two
- *  pasted screenshots both called image.png, or the note in front also @-mentioned.
- *  The message is kept with its thread, so a thread that has one draws it each time it
- *  opens, at launch too.
- *
- *  In the jsdom project because a conversation is drawn. */
-
 const panel = vi.hoisted(() => ({
   turns: [] as unknown[],
   head: null,
@@ -33,7 +26,6 @@ const panel = vi.hoisted(() => ({
 }))
 vi.mock('./chat.svelte', () => ({ chat: panel }))
 
-/** jsdom has no ResizeObserver, and the conversation watches its own height. */
 vi.stubGlobal(
   'ResizeObserver',
   class {
@@ -97,8 +89,6 @@ test('the note in front, also @-mentioned, is drawn', () => {
   drawn?.close()
 })
 
-/** Read (#1064) once the chat is in front of the reader with its end in view, and not
- *  while the window is elsewhere. */
 test('an unread chat open in the window in focus is read; with the window away, not', () => {
   panel.turns = []
   ;(panel as { head: unknown }).head = { id: 'c1', parent: null, kept: true }
@@ -136,8 +126,6 @@ test('the home’s rows say unread and their state to a screen reader', () => {
   panel.running = []
 })
 
-/** #1089: Show all grows the list where it is, rather than opening another view, and an
- *  archived chat is in neither. */
 test('Show all shows the rest in place, and no archived chat', () => {
   panel.turns = []
   panel.heads = [

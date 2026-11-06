@@ -1,17 +1,3 @@
-/** The thread engine for the providers nib asks itself: a Claude or OpenAI key, a
- *  ChatGPT plan, an OpenAI-compatible server (5.1). One loop for all four, an adapter
- *  per API under it, and Orden's own tools on top.
- *
- *  A send is: compact first if the window would overflow, the reader's message as a
- *  turn, then rounds - a request, its stream, the tools it asked for, their answers -
- *  until the model answers without asking for a tool, the reader stops it, or the step
- *  limit is reached. Words the reader sends into a running turn (Ctrl+Enter) go in after
- *  the call in flight, as a message of their own.
- *
- *  The engine writes into the thread it is handed, in place, and says each change
- *  through `on`; the thread store writes the thread down once a send is over. Claude
- *  Code and Codex are engines of their own (lib/ai/local), joined through `localEngines`. */
-
 import { t } from '../../i18n.svelte'
 import { type LocalKind, isLocal, type Provider, type ProviderKind } from '../providers'
 import { anthropic } from './anthropic'
@@ -43,7 +29,6 @@ import type {
 import { added, estimate, shouldCompact } from './usage'
 import type { ToolDef, Wire } from './wire'
 
-/** The API a kind is asked through, or null for a program on this machine. */
 function apiOf(kind: ProviderKind): Api | null {
   if (kind === 'anthropic') return 'anthropic'
   if (kind === 'openai' || kind === 'chatgpt') return 'responses'
@@ -53,16 +38,10 @@ function apiOf(kind: ProviderKind): Api | null {
 
 const WIRES: Record<Api, Wire> = { anthropic, responses, completions }
 
-/** How many rounds of tool calls one message may take before the loop stops and says
- *  so: Windsurf's forty. The reader says "go on" to carry on. */
 export const MOST_ROUNDS = 40
 
-/** How many questions one call may raise one after the other before it is told no. */
 const MOST_ASKS = 3
 
-/** What the model is told, by mode. Not translated: nobody reads it, and the answer is
- *  asked for in the reader's own language. Every mode names its sources, so an answer
- *  from the notes cites them whatever the mode. */
 const CITE = 'Name the note or page each claim comes from as a [[wikilink]] or its address.'
 const PARTLY =
   'Change part of a note with edit_note rather than write_note: they may be typing in it.'
@@ -91,7 +70,6 @@ const SYSTEM: Record<Thread['mode'], string> = {
   full: [
     'You are the reader’s agent inside nib, their notes app and web browser, in a panel beside what they are reading.',
     'Do what they ask with the tools you have, without asking first; every change you make is shown to them to keep or undo.',
-    // #1072: Full permissions means full permissions.
     'Nothing is asked of them or handed back: sign in with what their password manager filled, and pay, send, delete or change a setting yourself where the task needs it, never browser_takeover.',
     CITE,
     PARTLY,
@@ -99,14 +77,10 @@ const SYSTEM: Record<Thread['mode'], string> = {
   ].join(' '),
 }
 
-/** What the engine needs from the app around it. */
 export interface Setup {
-  /** A provider by its id in Settings > AI. */
   provider(id: string): Provider | null
   tools?: Tools
-  /** The questions a call raises and the reader's answers; the crate's by default. */
   answers?: Answers
-  /** The space's instructions (`AGENTS.md`) and the reader's own, for the system prompt. */
   instructions?(thread: Thread): Promise<string>
 }
 
@@ -114,7 +88,6 @@ function fresh(): string {
   return crypto.randomUUID()
 }
 
-/** A model turn, empty. */
 function modelTurn(thread: Thread): Turn {
   return {
     id: fresh(),
@@ -127,7 +100,6 @@ function modelTurn(thread: Thread): Turn {
   }
 }
 
-/** The provider and model that answered last, where one has. */
 function lastModel(thread: Thread): string {
   for (let at = thread.turns.length - 1; at >= 0; at--) {
     const turn = thread.turns[at]
@@ -136,7 +108,6 @@ function lastModel(thread: Thread): string {
   return ''
 }
 
-/** A thread's listing without the tools it is not given (#325). */
 function given<T extends { tools: ToolDef[] }>(thread: Thread, listing: T): T {
   const out = thread.without
   return out?.length
@@ -144,13 +115,10 @@ function given<T extends { tools: ToolDef[] }>(thread: Thread, listing: T): T {
     : listing
 }
 
-/** What a model that calls a tool its thread is not given is told: it was never listed,
- *  so this is a model that guessed one. In English, for the model. */
 function keptOut(name: string): ToolOutput {
   return { text: `${name} is not available in this chat.`, images: [], error: true }
 }
 
-/** Builds the API engine. */
 export function createApiEngine(setup: Setup): Engine {
   const tools = setup.tools ?? crateTools
   const answers = setup.answers ?? crateAnswers
@@ -163,8 +131,6 @@ export function createApiEngine(setup: Setup): Engine {
     return provider
   }
 
-  /** A model as its provider listed it, the list asked for once a session. A list that
-   *  cannot be had leaves the model known by its name and what was learnt. */
   async function modelOf(provider: Provider, id: string): Promise<ModelInfo> {
     let models = listed.get(provider.id)
     if (!models) {
@@ -203,15 +169,10 @@ export function createApiEngine(setup: Setup): Engine {
     thread.effort = within(thread.effort, model.efforts)
 
     if (shouldCompact(thread.usage, estimate(message), thread.autocompact)) {
-      // Compacting first is what keeps the send from being refused for its length; a
-      // compaction that fails leaves the send to try as it is.
       await compact(thread).catch(() => undefined)
     }
 
     const switched = lastModel(thread)
-    // Where the reader is, said by Orden's own verbs for every message, so "this", "the
-    // tab I have open" and "this space" mean what they mean on screen; asked for the
-    // thread, whose own space is the one its calls work in.
     const context = await tools.context(provider, thread.id).catch(() => '')
     const you: Turn = {
       id: fresh(),
@@ -267,7 +228,6 @@ export function createApiEngine(setup: Setup): Engine {
       if (change.efforts) {
         const efforts = change.efforts
         model = { ...model, efforts }
-        // The next send asks the list again, with what was learnt in it.
         listed.set(
           provider.id,
           (listed.get(provider.id) ?? []).map((one) =>
@@ -282,7 +242,6 @@ export function createApiEngine(setup: Setup): Engine {
       }
     }
 
-    /** Ends the turn: what the provider said of it, kept for the next request. */
     const close = (whole: boolean) => {
       turn.model = model.id
       if (used) turn.usage = used
@@ -320,7 +279,6 @@ export function createApiEngine(setup: Setup): Engine {
             for (const index of changed) {
               const part = parts[index]
               if (!part) continue
-              // A copy, so the thread's own part is a new value each time it grows.
               const copy = { ...part }
               turn.parts[start + index] = copy
               on({ type: 'part', turn: turn.id, index: start + index, part: copy })
@@ -329,7 +287,6 @@ export function createApiEngine(setup: Setup): Engine {
           adjusted,
           signal,
         )
-        // The parts as the round ended them: a call's arguments are whole only now.
         result.parts.forEach((part, index) => (turn.parts[start + index] = { ...part }))
         if (result.usage) {
           used = used ? added(used, result.usage) : result.usage
@@ -357,8 +314,6 @@ export function createApiEngine(setup: Setup): Engine {
           break
         }
 
-        // Words the reader sent into the running turn: the turn so far is closed, their
-        // message is a turn of its own, and the loop goes on with the answer to it.
         const steered = steering.get(thread.id)?.splice(0) ?? []
         if (steered.length) {
           close(true)
@@ -390,9 +345,6 @@ export function createApiEngine(setup: Setup): Engine {
       close(stop === 'end' || stop === 'steps')
       on({ type: 'done', stop })
     } catch (error) {
-      // What arrived stays; nothing of a turn cut short is sent back as the provider's
-      // own record, since a half-written thinking block is refused. The turn is rebuilt
-      // from its parts instead.
       close(false)
       for (const part of turn.parts)
         if (part.kind === 'tool' && part.state === 'running') part.state = 'error'
@@ -414,8 +366,6 @@ export function createApiEngine(setup: Setup): Engine {
     }
   }
 
-  /** Runs a round's calls side by side, and writes each answer into its part. A call
-   *  that asked the reader waits in its row for the answer (approvals.ts). */
   async function runCalls(
     thread: Thread,
     provider: Provider,
@@ -445,8 +395,6 @@ export function createApiEngine(setup: Setup): Engine {
             ? Promise.resolve(keptOut(call.name))
             : tools.call(provider, thread.mode, call.name, call.args, thread.id)
         let output = await ask()
-        // Allowed, the same call goes through on the allowance; asked again (a second
-        // question the first one stood in front of), it waits again, a few times at most.
         for (let asked = 0; output.approval && asked < MOST_ASKS; asked++) {
           const approval = output.approval
           if (always(thread, call.name, output.category, output.site))
@@ -504,7 +452,6 @@ export function createApiEngine(setup: Setup): Engine {
   }
 }
 
-/** Adds a request's counts to what the thread spent. */
 function spend(thread: Thread, usage: Usage): void {
   const before = thread.spent ?? { input: 0, output: 0 }
   const cost = (before.cost ?? 0) + (usage.cost ?? 0)
@@ -515,8 +462,6 @@ function spend(thread: Thread, usage: Usage): void {
   }
 }
 
-/** Claude Code's and Codex's engines (lib/ai/local, lane 2), each fetched the first time
- *  a thread on that program sends, and built for the setup it is asked with. */
 const loadLocal = (kind: LocalKind) => async (setup: Setup) =>
   (await import('../local/engine')).createLocalEngine(kind, setup)
 
@@ -525,7 +470,6 @@ const localEngines: Partial<Record<LocalKind, (setup: Setup) => Promise<Engine>>
   codex: loadLocal('codex'),
 }
 
-/** Joins a program's engine to the registry, in place of the one it has. */
 export function registerLocalEngine(
   kind: LocalKind,
   load: (setup: Setup) => Promise<Engine>,
@@ -534,15 +478,10 @@ export function registerLocalEngine(
   localBuilt.delete(kind)
 }
 
-/** The program engines built for each setup: one a setup and program, since an engine
- *  holds its threads' sessions. */
 const localBuilt = new Map<LocalKind, WeakMap<Setup, Engine>>()
 
-/** The API engine built for each setup, so the panel and the commands that share a
- *  setup share an engine, and words steered into a running turn reach it. */
 const built = new WeakMap<Setup, Engine>()
 
-/** The engine for a kind of provider. */
 export async function engineFor(kind: ProviderKind, setup: Setup): Promise<Engine> {
   if (isLocal(kind)) {
     const load = localEngines[kind]
@@ -551,7 +490,6 @@ export async function engineFor(kind: ProviderKind, setup: Setup): Promise<Engin
     localBuilt.set(kind, mine)
     const kept = mine.get(setup)
     if (kept) return kept
-    // Every send written down as it starts and ends, for the review (sends.ts).
     const engine = watching(await load(setup))
     mine.set(setup, engine)
     return engine

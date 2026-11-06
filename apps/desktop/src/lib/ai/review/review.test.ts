@@ -4,18 +4,12 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { NoteDoc } from '../../workspace/documents.svelte'
 import type { Thread, Turn } from '../chat/types'
 
-/** The review over real notes: a stand-in desk with documents really open in it
- *  (lib/agents/docs/test-desk.ts), the agent's real steps, and the workspace and the
- *  sends standing in for the app around them. */
-
 const fake = vi.hoisted(() => ({
   desk: null as unknown as ReturnType<typeof import('../../agents/docs/test-desk').deskWith>,
   documents: [] as NoteDoc[],
   removed: [] as string[],
   opened: [] as string[],
-  /** Files that are there and will not read: another encoding, or a lock. */
   unreadable: new Set<string>(),
-  /** The moves made back: the space's folder, from, to. */
   moves: [] as string[][],
   undone: { stack: [] as { kind: string; path: string; content: string }[] },
   unwritable: new Set<string>(),
@@ -51,7 +45,6 @@ vi.mock('../../workspace.svelte', () => ({
     spaces: [
       { id: 's1', name: 'Space', root: '/space' },
       { id: 's2', name: 'Other', root: '/other' },
-      // On Linux a space can differ from another only by case.
       { id: 's3', name: 'space', root: '/space2' },
     ],
     noteText: (path: string) =>
@@ -117,7 +110,6 @@ vi.mock('../chat/sends', () => ({
   onSent: () => () => undefined,
 }))
 
-// An agent's caret, and the mark on the tabs showing the note: no tabs here.
 vi.mock('../../agents/docs/presence', () => ({ showAgent: () => undefined }))
 
 vi.mock('./summary', () => ({ summarized: () => Promise.resolve('summary') }))
@@ -135,7 +127,6 @@ const { editNote } = await import('../../agents/docs/edit')
 const { review } = await import('./review.svelte')
 const { busy } = await import('../../busy.svelte')
 
-/** A view of a note with the review's marks in it. */
 class Viewer {
   state: EditorState
   constructor(note: NoteDoc) {
@@ -150,7 +141,6 @@ class Viewer {
 let made = 0
 let clock = 1_000
 
-/** A provider of its own for every test: what an agent did is kept for the session. */
 function aThread(): Thread & { provider: string } {
   made++
   const provider = `p${String(made)}`
@@ -169,7 +159,6 @@ function aThread(): Thread & { provider: string } {
   }
 }
 
-/** The reader sends a message, which the agent answers by editing. */
 async function message(
   thread: Thread,
   words: string,
@@ -245,7 +234,6 @@ describe('a rewind', () => {
     expect(thread.turns.map((one) => one.id)).toEqual(['first', 'first-answer'])
     expect(panel.text).toBe('second')
     expect(panel.touched).toHaveBeenCalledWith(thread)
-    // A change in the field is let go before the rewound words take it.
     expect(panel.release).toHaveBeenCalledTimes(1)
 
     await review.putBack(thread, panel)
@@ -326,9 +314,6 @@ describe('a rewind', () => {
     expect(fake.desk.fileOf('Made.md')).toBe('new words')
   })
 
-  /** Something can arrive at the name between the rewind and the redo, and a file
-   *  there that will not read is not a gap to fill: writing the thread's words into it
-   *  wrote over whatever it holds. */
   test('and puts it back only where nothing is at its name', async () => {
     fake.desk = deskWith({ 'Made.md': 'new words' })
     fake.documents = []
@@ -361,8 +346,6 @@ describe('a rewind', () => {
     expect(fake.desk.fileOf('Made.md')).toBe('latin-1 bytes')
   })
 
-  /** A folder is not a note: rewinding past `create_folder` named the reader's own
-   *  note of the same name, `Projects.md`, and sent it to Recently deleted. */
   test('leaves alone a note named like a folder the thread made', async () => {
     fake.desk = deskWith({ 'Projects.md': 'my own words' })
     fake.documents = []
@@ -391,9 +374,6 @@ describe('a rewind', () => {
   })
 })
 
-/** A thread stays open across a switch of space, and a call that names none runs in
- *  the space in front: taking it back in the thread's own space deleted or moved the
- *  reader's note of that name there, on every device. */
 describe('a rewind over a thread that did things in any order', () => {
   const FILES = { 'A.md': 'original' }
   const panel = () => ({ send: vi.fn(), text: '', touched: vi.fn(), release: vi.fn() })
@@ -774,7 +754,6 @@ describe('a call made in the space in front, not the thread’s', () => {
     fake.documents = []
     fake.removed = []
     const thread = { ...aThread(), space: 's3' }
-    // By id, as the verbs answer now, and by its exact name, as a call that named it did.
     await message(
       thread,
       'by id',
@@ -814,8 +793,6 @@ describe('a call made in the space in front, not the thread’s', () => {
   })
 })
 
-/** Every thread of a provider writes as one agent: while two run at once, an edit put
- *  down to whichever started last went with that thread's rewind. */
 describe('two threads of one provider at once', () => {
   test('each has only the edits its own calls made', async () => {
     fake.desk = deskWith({ 'a.md': 'one', 'b.md': 'two' }, ['a.md', 'b.md'])
@@ -852,8 +829,6 @@ describe('a change', () => {
       { id: expect.any(String) as string, from: 4, to: 7, removed: 'two' },
     ])
 
-    // On a clock of the test's own: the fade's timer hands its last drawing to another,
-    // and a machine that held both back past a real wait of 250 ms ran the wait first.
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     try {
       review.keep(review.changes(thread))
@@ -885,7 +860,6 @@ describe('a change', () => {
 })
 
 describe('a helper on another provider', () => {
-  /** `run_agent` routes a helper to any provider in use: its edits are its parent's. */
   test('is in the review of the thread that started it', async () => {
     fake.desk = deskWith({ 'x.md': 'one two' })
     fake.documents = Object.values(fake.desk.panes).map((pane) => pane.note)
@@ -915,7 +889,6 @@ describe('Follow', () => {
     review.toggleFollow(thread)
   })
 
-  /** A step taken back is heard like one made: only an edit landing brings its note up. */
   test('does not bring a note up when one of its edits is taken back', async () => {
     fake.desk = deskWith({ 'h.md': 'one two' })
     fake.documents = []

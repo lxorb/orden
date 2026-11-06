@@ -1,8 +1,5 @@
 import { expect, test, vi } from 'vitest'
 
-/** An `ai` block's answer is note text: a model that writes LaTeX's `\(…\)` and
- *  `\[…\]` is spelled the way the note draws formulas, as the pieces arrive (#1122). */
-
 const pieces = ['So \\', '( x^2 \\', ') and\n\\[', '\n\\frac{1}{2}\n\\', ']\n']
 vi.mock('./complete', () => ({
   complete: async (ask: { stream: (piece: string) => void }) => {

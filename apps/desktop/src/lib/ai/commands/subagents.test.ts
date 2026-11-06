@@ -1,6 +1,3 @@
-// The helpers a command starts are their parent's, opened from the line their answer
-// comes back as, and in no list of chats; a fork is a chat of its own (#1062).
-
 import { expect, test, vi } from 'vitest'
 import { newThread } from '../chat/threads'
 import type { Thread } from '../chat/types'

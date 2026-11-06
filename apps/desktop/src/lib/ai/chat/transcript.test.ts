@@ -1,6 +1,3 @@
-/** A thread as steps: the provider's own record where it may be sent back, the turn
- *  rebuilt from its parts where not, the summary in place of what it summarised. */
-
 import { describe, expect, test } from 'vitest'
 import { baseEffort, partsAsSteps, stepsOf, userStep } from './transcript'
 import type { Thread, Turn } from './types'

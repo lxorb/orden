@@ -1,6 +1,3 @@
-/** Claude's adapter against its streaming shapes: the parts as they arrive, the blocks
- *  sent back byte for byte, and the request each thread setting makes. */
-
 import { describe, expect, test } from 'vitest'
 import { anthropic, messagesOf, PER_MESSAGE_BETA } from './anthropic'
 import { events } from './recorded/read'

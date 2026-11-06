@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { commitment, digits as pairing, newNonce } from '../../pairing'
 
-/** The vault's six digits, as vault.svelte.ts asks for them. */
 const digits = (...parts: [string, string, string, string]) =>
   pairing('nib ai vault digits', ...parts)
 import {
@@ -37,9 +36,6 @@ describe('the vault’s keys', () => {
     expect(await digits(asking.pub, mine, theirs, answering.pub)).toBe(shown)
   })
 
-  /** What makes the digits worth comparing: they turn on a nonce the answering device
-   *  picks only after the asking one is bound to its key, so a key cannot be ground
-   *  beforehand to show the digits somebody else's would. */
   test('the digits turn on every part, and a key is bound before the answer is picked', async () => {
     const asking = await newDeviceKey()
     const swapped = await newDeviceKey()
@@ -50,8 +46,6 @@ describe('the vault’s keys', () => {
     expect(await commitment(swapped.pub, mine)).not.toBe(bound)
     expect(await commitment(asking.pub, newNonce())).not.toBe(bound)
 
-    // The same key under two answers shows two different codes: nothing computed before
-    // the answer says what the digits will be.
     const codes = new Set<string>()
     for (let tries = 0; tries < 20; tries++) {
       codes.add(await digits(asking.pub, mine, newNonce(), answering.pub))

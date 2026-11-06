@@ -1,12 +1,3 @@
-/** The change a write would make, shown with the question it asked (docs/ai-sidebar.md
- *  4.4): in Approve every write answers `needs_approval` instead of landing, and the
- *  reader is asked about a diff rather than about a sentence.
- *
- *  Worked out the way the write itself would work it out - the same anchors, the same
- *  smallest edit - against the note as it stands, so what is shown is what Approve
- *  does. Calls it cannot work out (a property, a task, a call that names a tab) show
- *  no diff and keep the question's own line. */
-
 import { oneEdit } from '@orden/markdown/edits'
 import { plan, readEdits, type Replacement } from '../../agents/docs/edits'
 import { type Row, lineDiff, trimmed } from '../../diff'
@@ -14,10 +5,8 @@ import { applied } from '../../search/replace'
 import { insideSpace, notePath } from '../../space-paths'
 import { spaceNamed, verbOf } from './files'
 
-/** A note's words as they stand, by its path on this disk; null for none. */
 export type Words = (path: string) => Promise<string | null>
 
-/** What a call would do: the note, and its lines before and after. */
 export interface Preview {
   path: string
   rows: Row[]
@@ -37,12 +26,10 @@ function said(value: unknown): string | null {
   return typeof value === 'string' ? value : null
 }
 
-/** The words a call writes, under either name the two servers use. */
 function sent(args: Record<string, unknown>): string | null {
   return said(args.content) ?? said(args.text)
 }
 
-/** The edits a call makes to `words`, or null for one this cannot work out. */
 function editsOf(verb: string, args: Record<string, unknown>, words: string): Replacement[] | null {
   try {
     if (verb === 'edit_note') return plan(readEdits(args.edits), words, null).edits
@@ -65,7 +52,6 @@ function editsOf(verb: string, args: Record<string, unknown>, words: string): Re
   return null
 }
 
-/** What a tool call that asked would change, or null. */
 export async function previewOf(
   name: string,
   args: unknown,
@@ -79,7 +65,6 @@ export async function previewOf(
   if (!path || said(given.tab)) return null
 
   const named = said(given.space)
-  // A space it names that is not there is a call refused, never the one in front.
   const space = named ? spaceNamed(spaces, named) : spaces.find((one) => one.id === open)
   if (!space) return null
 

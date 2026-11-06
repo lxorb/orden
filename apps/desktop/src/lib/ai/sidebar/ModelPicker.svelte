@@ -1,16 +1,4 @@
 <script lang="ts">
-  /** The model chip under the field and the one popover it opens (Alt+P), Claude Code's
-   *  and Codex's: which provider, which of its models (from the provider's own list,
-   *  with each one's window), how hard it thinks (only the levels that model has), and
-   *  Fast where the provider has a faster tier. The chip says the model and the level,
-   *  `Opus 5.5 · High`, so neither is ever a guess.
-   *
-   *  The popover is the app's menu in shape (#248): over the field's end where its chip is
-   *  rather than across the field, as wide as its words, every model a `.nib-row` with the one in use
-   *  ticked at its end, as the mode's menu beside it ticks its mode.
-   *
-   *  A choice applies to the open thread from its next message, and the level picked is
-   *  remembered for that model (prefs.ts). */
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
@@ -28,7 +16,6 @@
   import { effortWord } from './words'
 
   const here = hostHere()
-  /** Up only in the place used last, where the panel is in two (host.ts). */
   const open = $derived(chat.popover === 'model' && chat.host === here)
   const head = $derived(chat.head)
   const provider = $derived(chat.provider)
@@ -36,8 +23,6 @@
   const providers = $derived(ai.providers.filter((one) => usable(one)))
   const list = $derived(provider ? (chat.models[provider.id] ?? []) : [])
   const levels = $derived<Effort[]>(model ? ordered(model.efforts) : ['auto'])
-  /** One row of up to five levels, two even rows of more: eight in one row of a panel
-   *  this narrow would be words cut in half. */
   const columns = $derived(levels.length <= 5 ? levels.length : Math.ceil(levels.length / 2))
 
   let query = $state('')
@@ -54,14 +39,12 @@
       : all
   })
 
-  /** The chip's words: the model, and the level where one is chosen. */
   const label = $derived.by(() => {
     if (!head) return ''
     const name = [model?.name, head.model, provider?.name].find(Boolean) ?? ''
     return head.effort === 'auto' ? name : `${name} · ${t(effortWord(head.effort))}`
   })
 
-  // Each time it opens: the filter empty, the model in use lit, the list asked for.
   $effect(() => {
     if (!open) return
     untrack(() => {
@@ -84,8 +67,6 @@
     void chat.chooseModel(provider.id, id)
   }
 
-  /** The list's keys: arrows walk it, Enter takes the lit row and closes, Escape closes
-   *  and gives the field the keyboard back. */
   function onKey(event: KeyboardEvent) {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault()
@@ -155,7 +136,6 @@
           oninput={() => (lit = 0)}
         />
       {:else}
-        <!-- The keyboard's place while there is nothing to type into. -->
         <span class="catch" tabindex="-1" bind:this={field}></span>
       {/if}
 
@@ -212,8 +192,6 @@
 </div>
 
 <style>
-  /* The popover stands over the field's end, where the chip is, and never past the
-     field's edges: the field is the box it is placed in. */
   .picker {
     position: static;
     min-width: 0;
@@ -268,8 +246,6 @@
     color: var(--text-strong);
   }
 
-  /* `.nib-layer` draws it, as it draws the menu: the corner, the hairline, the surface
-     and the shadow. As wide as its longest row, within what the panel has. */
   .pop {
     position: absolute;
     inset-inline-end: var(--space-1);
@@ -279,7 +255,6 @@
     flex-direction: column;
     gap: var(--space-1);
     width: max-content;
-    /* Wide enough for a model's levels in one row where the panel has the room. */
     min-width: min(17rem, calc(100cqw - 2 * var(--space-1)));
     max-width: min(22rem, calc(100cqw - 2 * var(--space-1)));
     padding: var(--space-1);
@@ -312,8 +287,6 @@
     overflow-y: auto;
   }
 
-  /* The rows are `.nib-row`, the menu's own; what a model's row adds is its window and
-     the tick, in the places the menu's rows keep a shortcut and a tick. */
   .model {
     color: var(--text);
     white-space: nowrap;
@@ -366,8 +339,6 @@
     justify-content: space-between;
   }
 
-  /* The levels under their name, wrapping where a model has eight of them: the panel
-     is a third of a laptop's width at most. */
   .effort {
     flex-direction: column;
     align-items: stretch;

@@ -1,7 +1,4 @@
 <script lang="ts">
-  /** A mode's mark beside its name under the composer, Codex's: a hand raised for
-   *  Approve (it stops and asks), a bolt for Auto (it goes on its own), an open lock for
-   *  Full permissions (nothing is asked), a list for Plan (it writes one). */
   import type { Mode } from '../modes'
 
   const { mode }: { mode: Mode } = $props()

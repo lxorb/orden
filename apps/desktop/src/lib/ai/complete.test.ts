@@ -1,18 +1,9 @@
-/** What leaves this machine, and what does not.
- *
- *  A request carries the prompt and, where the fence asked for it, the whole note.
- *  So the one thing worth a test here is the gate in front of it: a hosted provider
- *  with no key on the device can only answer 401, and by the time it does the note
- *  has already left. */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** What the device's store answers for a key, which each test sets. */
 let key = ''
 
 vi.mock('./keys', () => ({ readKey: () => Promise.resolve(key) }))
 
-/** Every request the module made, and what a provider answers when it does. */
 const sent: string[] = []
 
 vi.stubGlobal('fetch', (url: string) => {

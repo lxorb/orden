@@ -1,5 +1,3 @@
-/** Each provider's own list, read: nothing about a model is written down in Orden. */
-
 import { beforeEach, describe, expect, test } from 'vitest'
 import {
   anthropicModels,

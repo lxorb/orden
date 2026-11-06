@@ -1,11 +1,4 @@
 <script lang="ts">
-  /** Rewind (`/rewind`, Esc Esc on an empty field, the clock on a message): Claude
-   *  Code's sheet. First the reader's messages, the latest lit; then, for the one
-   *  picked, what to restore - the notes and the conversation, the conversation, the
-   *  notes, or a summary from there or up to there. The rows about notes are there
-   *  only where something changed since; one line says what a rewind cannot take
-   *  back where the thread did any of it. Escape is Never mind: a step back, then
-   *  away. Digits pick a row. */
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
@@ -48,7 +41,6 @@
     root?.focus()
   })
 
-  /** What the message said, on one line. */
   function wordsOf(index: number): string {
     return (messages[index]?.draft?.text ?? '').replace(/\s+/g, ' ').trim() || '…'
   }

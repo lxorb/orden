@@ -1,6 +1,3 @@
-// /batch over a folder takes the notes in that folder and nothing else: a folder named
-// like it somewhere else, or one whose name only ends the same, is not it.
-
 import { expect, test, vi } from 'vitest'
 import { Matcher } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
@@ -18,8 +15,6 @@ const NOTES: Record<string, string> = {
   'Projects/Inbox/c.md': 'c',
   'MyInbox/d.md': 'd',
   'Elsewhere/g.md': '#todo',
-  // More notes whose path has `Data/` in it than a search answers with, ahead of the
-  // folder itself in the walk.
   ...Object.fromEntries(Array.from({ length: 1_200 }, (_, at) => [`Big Data/${at}.md`, 'x'])),
   'Data/real.md': 'real',
 }
@@ -32,7 +27,6 @@ vi.mock('../../workspace.svelte', () => ({
   },
 }))
 
-// The space's own search, answered by the matcher both sides share.
 vi.mock('../../search/space', () => ({
   searchSpace: (
     _root: string,

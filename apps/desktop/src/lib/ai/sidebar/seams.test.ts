@@ -1,5 +1,3 @@
-/** The `/` menu's matching, and a command typed whole. */
-
 import { describe, expect, test } from 'vitest'
 import type { PanelCommand } from '../commands/types'
 import { commandIn, matching, rowNamed } from './seams'

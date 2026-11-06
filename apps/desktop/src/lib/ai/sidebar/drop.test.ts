@@ -1,8 +1,5 @@
 import { expect, test, vi } from 'vitest'
 
-/** Rows of the file list dropped on the AI panel are chips (#416), each once, and a drop
- *  of anything else is left alone. */
-
 const chat = vi.hoisted(() => ({ chips: [] as unknown[], focus: () => undefined }))
 vi.mock('./chat.svelte', () => ({ chat }))
 

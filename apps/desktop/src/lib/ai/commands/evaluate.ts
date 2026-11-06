@@ -1,12 +1,3 @@
-/** The goal's evaluator (docs/ai-sidebar.md 4.8): after each turn, a model is asked
- *  whether the condition holds yet, from what the conversation shows, and answers
- *  met, not yet, or impossible, with a reason.
- *
- *  Claude Code's design: the evaluator runs no tools and reads no files, so it can only
- *  judge what the thread surfaced, which is what makes a goal's condition worth writing
- *  as something the agent's own output can show. The question and the reading of its
- *  answer are here; who it is asked of is the runner's. Pure. */
-
 import type { Message } from '../providers'
 import type { Part, Thread, Turn } from '../chat/types'
 
@@ -15,10 +6,8 @@ export interface Verdict {
   reason: string
 }
 
-/** The most of the conversation the evaluator is shown, from its end. */
 const SHOWN = 16_000
 
-/** How much of one tool answer is shown. */
 const RESULT = 400
 
 const SYSTEM = [
@@ -46,8 +35,6 @@ function turnLines(turn: Turn): string {
   return said ? `Assistant:\n${said}` : ''
 }
 
-/** What the evaluator is shown: the thread's turns since `since`, its last words kept
- *  where the whole is too long. */
 export function shown(thread: Pick<Thread, 'turns'>, since = 0): string {
   const text = thread.turns
     .filter((turn) => turn.at >= since)
@@ -67,8 +54,6 @@ export function evaluatorMessages(condition: string, conversation: string): Mess
   ]
 }
 
-/** The evaluator's answer, read rather than trusted: the first JSON object in it, or the
- *  first word that is a verdict, or not yet. */
 export function verdictIn(answer: string): Verdict {
   const json = /\{[\s\S]*\}/.exec(answer)?.[0]
   let said: Record<string, unknown> = {}

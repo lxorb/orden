@@ -1,5 +1,3 @@
-/** Orden's one scale, what each API is sent for it, and what a refusal teaches. */
-
 import { describe, expect, test } from 'vitest'
 import {
   nearest,

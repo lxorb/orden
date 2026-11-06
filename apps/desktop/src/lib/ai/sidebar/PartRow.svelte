@@ -1,14 +1,4 @@
 <script lang="ts">
-  /** A thinking block or a tool call, as one folded step (docs/ai-sidebar.md 4.3): a
-   *  verb and an object, "Thought 6s", "Read Herons", "Ran pnpm test", "Edited Birds
-   *  +3 −2". Open, it shows what the provider summarised of the thinking, a command's
-   *  output, or the call's arguments and what it answered. A call still going breathes;
-   *  one waiting for the reader is the question with its answers in place
-   *  (review/Approval.svelte). A helper's row (`run_agent`) opens to the helper's own
-   *  thread as well, which is where what it did is: it is in no list of chats (#1062).
-   *
-   *  Folded by default because the answer is what was asked for; Ctrl+O opens them all
-   *  (Claude Code's Focus view, the other way round). */
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { i18n, t } from '../../i18n.svelte'
@@ -45,14 +35,10 @@
 
   const going = $derived(live && (part.kind === 'thinking' ? !part.ms : part.state === 'running'))
 
-  /** The helper's thread a `run_agent` row started, which it opens to. */
   const helper = $derived(part.kind === 'tool' ? helperOf(part) : null)
 
-  /** A command run: its words in the code face, and its row opens to what it said. */
   const command = $derived(part.kind === 'tool' && verbOf(part.verb) === 'Ran')
 
-  /** What the row opens to: the summary of the thinking; a command's output after it,
-   *  as a terminal shows it; any other call's arguments and what it answered. */
   const detail = $derived.by(() => {
     if (part.kind === 'thinking') return part.text.trim()
     const said = part.result?.text.trim() ?? ''
@@ -61,10 +47,8 @@
     return said ? `${args}\n\n${said}` : args
   })
 
-  /** An edit's row opens the note it changed instead: the change is in the note. */
   async function press() {
     const change = part.kind === 'tool' ? part.change : undefined
-    // A change is a path in the thread's own space; see `root` in chat.svelte.ts.
     const root = chat.root
     if (change && root) {
       await workspace.open(insideSpace(root, change.path))
@@ -124,7 +108,6 @@
     overflow-wrap: anywhere;
   }
 
-  /* A command's output, Codex's: the terminal's own words, under a hairline. */
   .detail.said {
     border: 1px solid var(--line);
     background: var(--surface);

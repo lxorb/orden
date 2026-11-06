@@ -1,17 +1,3 @@
-/** Claude's Messages API, as a conversation with tools.
- *
- *  - Thinking is adaptive and summarised where the model has it, and its blocks come
- *    back exactly as they came: Claude checks each against what came before it.
- *  - Effort is `output_config.effort`. A change mid-thread is a per-message effort
- *    where the model takes one (`mid-conversation-output-config-2026-07-01`), so the
- *    cached prefix survives it; elsewhere the top level changes.
- *  - The prefix is cached: one breakpoint on the request, the tools and system first.
- *  - Fast mode, the web search tool and pictures where the model has them.
- *  - Compaction on demand (`compact-2026-09-04`) is compact.ts's; a request that carries
- *    the block it returned says the beta too.
- *
- *  Pure: the request is built and the stream read, and engine.ts does the rest. */
-
 import { conversationUrl } from '../providers'
 import { ANTHROPIC_COMPACT_BETA } from './catalogue'
 import { wireEffort } from './effort'
@@ -33,7 +19,6 @@ import type { Part, ToolOutput, Usage } from './types'
 export const PER_MESSAGE_BETA = 'mid-conversation-output-config-2026-07-01'
 const FAST_BETA = 'fast-mode-2026-02-01'
 
-/** The most an answer may be, thinking included, where the model does not say less. */
 const MOST_TOKENS = 32_000
 
 type Block = Record<string, unknown>
@@ -43,7 +28,6 @@ interface Message {
   output_config?: unknown
 }
 
-/** One user message's blocks: pictures first, as Claude asks, then the words. */
 function userBlocks(step: Extract<Step, { role: 'user' }>): Block[] {
   return [
     ...step.images.map((one) => ({
@@ -54,7 +38,6 @@ function userBlocks(step: Extract<Step, { role: 'user' }>): Block[] {
   ]
 }
 
-/** A tool's answer as a `tool_result`, pictures included. */
 function resultBlock(id: string, output: ToolOutput): Block {
   return {
     type: 'tool_result',
@@ -70,7 +53,6 @@ function resultBlock(id: string, output: ToolOutput): Block {
   }
 }
 
-/** The steps as Claude's messages. */
 export function messagesOf(steps: readonly Step[]): Message[] {
   const out: Message[] = []
   for (const step of steps) {
@@ -111,14 +93,11 @@ export function messagesOf(steps: readonly Step[]): Message[] {
       }
     }
   }
-  // An assistant message with nothing in it is a 400; a rebuilt turn that said nothing
-  // and called nothing has no place in the conversation.
   return out.filter(
     (one) => !Array.isArray(one.content) || one.content.length || one.role === 'system',
   )
 }
 
-/** Whether any message carries a compaction block. */
 function carriesCompaction(messages: readonly Message[]): boolean {
   return messages.some(
     (one) =>
@@ -149,8 +128,6 @@ export const anthropic: Wire = {
       model: ask.model.id,
       max_tokens: Math.min(MOST_TOKENS, ask.model.output ?? MOST_TOKENS),
       stream: true,
-      // One breakpoint, at the end of what was sent: the tools, the system and every
-      // earlier turn are read from the cache on the next request.
       cache_control: { type: 'ephemeral' },
       ...(ask.system ? { system: ask.system } : {}),
       messages,
@@ -175,16 +152,13 @@ export const anthropic: Wire = {
   },
 }
 
-/** One block as it arrives, with what it grew from. */
 interface Open {
   block: Block
-  /** Where it is drawn, if it is drawn. */
   part: number | null
   json: string
   started: number
 }
 
-/** Reads one streamed message. */
 class AnthropicReader implements Reader {
   readonly parts: Part[] = []
   private readonly blocks: Block[] = []
@@ -220,7 +194,6 @@ class AnthropicReader implements Reader {
         this.stop = text(delta.stop_reason) || this.stop
         this.category = text(record(delta.stop_details).category) || this.category
         const usage = record(said.usage)
-        // The final counts: output always, input again where the provider repeats it.
         this.usage = anthropicUsage(
           {
             input_tokens: usage.input_tokens ?? this.usage.input - this.usage.cached,
@@ -307,8 +280,6 @@ class AnthropicReader implements Reader {
     if (part?.kind === 'thinking') part.ms = Date.now() - open.started
     if (part?.kind === 'tool') {
       part.args = block.input
-      // A search the provider ran itself has answered by the time its result block
-      // arrives; Orden has nothing to run.
       if (block.type === 'server_tool_use') part.state = 'ok'
     }
     return { changed: [open.part] }
@@ -324,8 +295,6 @@ class AnthropicReader implements Reader {
   }
 
   answer(): Answer {
-    // Blocks that never stopped (a stream cut short) are kept as far as they came, so
-    // the words that arrived are not lost; an unfinished call is not.
     for (const open of this.open.values()) {
       if (open.block.type !== 'tool_use' && open.block.type !== 'server_tool_use') {
         this.blocks.push(open.block)

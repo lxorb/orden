@@ -1,7 +1,3 @@
-/** Alt+K: the selection in the note in front, into the AI panel's field as a chip named
- *  the way Claude Code names one, `Herons:12-14`. The words are taken as they are at the
- *  press, so the chip says the same thing whatever is selected by the time it is sent. */
-
 import { views } from '../../views.svelte'
 import { workspace } from '../../workspace.svelte'
 import { chat } from './chat.svelte'

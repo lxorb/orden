@@ -1,5 +1,3 @@
-/** The Ask panel's conversations, made threads. */
-
 import { describe, expect, test } from 'vitest'
 import { sourcesFor } from './citations'
 import { oldSpaces, threadFromAsk } from './migrate'

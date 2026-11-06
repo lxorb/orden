@@ -1,8 +1,4 @@
 <script lang="ts">
-  /** Over the field: the rewind sheet while it is open for the thread, and Redo after a
-   *  rewind until the next message (docs/ai-sidebar.md 4.5). The panel draws this with
-   *  the open thread, the live one the engine writes into, and itself
-   *  (lib/ai/sidebar/seams.ts). */
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
   import { t } from '../../i18n.svelte'

@@ -1,14 +1,5 @@
-/** The accounts as every window shares them: moved out of a window's own storage into the
- *  crate's file once, brought in once more from a second profile, and changed by two
- *  windows at once without either losing the other's change.
- *
- *  The crate's file is stood in for by a text and a stamp in memory, refusing a write
- *  over a stamp that is not the newest as `ai_accounts_write` does; each import of the
- *  store is one window, with a storage of its own. */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The crate's file. */
 const file = { text: null as string | null, stamp: 0 }
 let heard: (() => void)[] = []
 
@@ -29,14 +20,11 @@ vi.mock('./accounts-file', () => ({
   },
 }))
 
-/** What a provider's list of models answers, asked when an account is kept on one that
- *  cannot talk. */
 const listModels = vi.fn((_provider: unknown) =>
   Promise.resolve(['babbage-002', 'gpt-4.1', 'gpt-5.4-mini', 'gpt-5.5', 'tts-1']),
 )
 vi.mock('./complete', () => ({ listModels: (provider: unknown) => listModels(provider) }))
 
-/** One browsing profile's own storage. */
 function storage(entries: Record<string, string> = {}): Storage {
   const held = new Map(Object.entries(entries))
   return {
@@ -51,7 +39,6 @@ function storage(entries: Record<string, string> = {}): Storage {
   }
 }
 
-/** A window of the app on a profile, its accounts read from the file. */
 async function windowOn(profile: Storage) {
   vi.stubGlobal('localStorage', profile)
   vi.resetModules()
@@ -62,7 +49,6 @@ async function windowOn(profile: Storage) {
   return ai
 }
 
-/** Waits for every write in flight to land. */
 async function settled() {
   for (let round = 0; round < 10; round++) await Promise.resolve()
   await new Promise((done) => setTimeout(done, 0))
@@ -93,9 +79,7 @@ describe('moving the accounts out of one window', () => {
     expect(kept.accounts.map((one) => one.id)).toEqual(['claude-code', 'anthropic'])
     expect(kept.active).toEqual({ claude: 'anthropic' })
     expect(ai.providerFor('block')?.id).toBe('anthropic')
-    // Said once, so a removed account does not come back from the old rows.
     expect(profile.getItem('nib:ai-moved')).toBe('1')
-    // The earlier rows are left as they were, for a build from before this one.
     expect(profile.getItem('nib:ai')).toBe(EARLIER)
   })
 
@@ -127,7 +111,6 @@ describe('moving the accounts out of one window', () => {
     expect(other.accounts.map((one) => one.id)).toEqual(['claude-code', 'anthropic', 'openai'])
     expect(other.accounts[1]?.name).toBe('')
 
-    // Removed in that window, it stays removed the next time the profile starts.
     other.remove('openai')
     await settled()
     const again = await windowOn(theirs)
@@ -154,7 +137,6 @@ describe('two windows at once', () => {
     const second = await windowOn(storage())
     await settled()
 
-    // Neither has heard the other's write yet when it writes its own.
     heard = []
     first.update('anthropic', { name: 'Work' })
     second.add('openai')
@@ -166,8 +148,6 @@ describe('two windows at once', () => {
   })
 })
 
-/** #325: Settings once started an OpenAI key on babbage-002, the first name its list
- *  sorted to, which cannot call a tool and which Settings lists no more. */
 describe('an account kept on a model nobody can talk to', () => {
   const KEPT = (model: string) =>
     JSON.stringify({

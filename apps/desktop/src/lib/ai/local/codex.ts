@@ -1,34 +1,13 @@
-/** Codex's app-server, read notification by notification: a question's answer, and a
- *  session's turns.
- *
- *  The crate is the app-server's client (src-tauri/src/ai_cli/codex_app.rs) and hands on
- *  every notification about this thread, one per line, in the shapes
- *  `codex app-server generate-ts` gives (0.160.0): `turn/started`, then for each thing
- *  the turn makes `item/started` and `item/completed` - an `agentMessage` is the answer,
- *  streamed as `item/agentMessage/delta`; a `reasoning` streams its summary as
- *  `item/reasoning/summaryTextDelta`; an `mcpToolCall` is one of Orden's tools - then
- *  `thread/tokenUsage/updated` with the counts and the model's window, `thread/goal/updated`
- *  and `thread/goal/cleared` with where the thread's own goal stands,
- *  `account/rateLimits/updated` with where the plan stands, and `turn/completed` with
- *  how the turn ended. A bare `error` says what went wrong on the way.
- *
- *  Each message hands on only the part of its text not handed on before, whether it came
- *  as deltas or whole at its completion, so the answer never says a word twice. */
-
 import type { GoalState } from '../chat/types'
 import { type Counted, eventIn, type Heard, type Limit, saysLimit, saysSignedOut } from './heard'
 
-/** The share of a plan's window past which the plan counts as near its limit. */
 const NEAR = 80
 
-/** A reader for one thread, which remembers how much of each message it has handed on. */
 export function codexReader(): (line: string) => Heard {
   const said = new Map<string, number>()
 
-  /** The part of an agent message's text not handed on yet. */
   function more(id: string, text: string, whole: boolean): Heard {
     const before = said.get(id) ?? 0
-    // A new message after an earlier one is a new paragraph of the same answer.
     const gap = before === 0 && said.size > 0 && !said.has(id) ? '\n\n' : ''
     const next = whole ? text.slice(before) : text
     said.set(id, whole ? text.length : before + text.length)
@@ -98,8 +77,6 @@ export function codexReader(): (line: string) => Heard {
   }
 }
 
-/** Where Codex's own goal stands, in Orden's words: `complete` is met, a limit or a block
- *  holds it the way a pause does, and `budgetLimited` is its own end. */
 function goalIn(status: unknown): GoalState | null {
   switch (status) {
     case 'active':
@@ -127,8 +104,6 @@ function text(value: unknown): string {
 
 const OWN = new Set<unknown>(['orden', 'nib'])
 
-/** One of Orden's tools, called: started, or answered. A tool of another server is not
- *  Orden's and has no row; with Orden's the only server there is none. */
 function toolIn(item: Record<string, unknown>, done: boolean): Heard {
   if (!OWN.has(item.server) || typeof item.id !== 'string' || typeof item.tool !== 'string')
     return {}
@@ -147,7 +122,6 @@ function toolIn(item: Record<string, unknown>, done: boolean): Heard {
   }
 }
 
-/** The counts of the request that ended: OpenAI's input already holds the cached part. */
 function countsIn(last: Record<string, unknown> | null, window: unknown): Counted {
   const number = (key: string) => (typeof last?.[key] === 'number' ? last[key] : 0)
   return {
@@ -159,7 +133,6 @@ function countsIn(last: Record<string, unknown> | null, window: unknown): Counte
   }
 }
 
-/** Where the plan stands, out of a rate-limit snapshot: the fuller of its two windows. */
 function limitIn(limits: Record<string, unknown> | null): Limit | null {
   if (!limits) return null
   const windows = [record(limits.primary), record(limits.secondary)].filter(
@@ -174,7 +147,6 @@ function limitIn(limits: Record<string, unknown> | null): Limit | null {
   return { state, until, untilWords: null }
 }
 
-/** A turn's error, as Codex said it. */
 function trouble(error: Record<string, unknown> | null): Heard {
   const words = text(error?.message)
   if (!words) return {}
@@ -188,8 +160,6 @@ function trouble(error: Record<string, unknown> | null): Heard {
   }
 }
 
-/** When Codex says a plan may be used again, as it wrote it: "try again at 3:05 PM",
- *  "try again in 2 days 3 hours". */
 export function againAt(words: string): string | null {
   const found = /try again (?:at|in) ([^.]+?)\.?$/i.exec(words.trim())
   return found?.[1]?.trim() ?? null

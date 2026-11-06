@@ -1,12 +1,3 @@
-/** What the runners stand on: the panel's own roads where it has them (6.5), and the
- *  same roads built here where it has not yet.
- *
- *  A turn through the panel is drawn as it runs, queued behind one already running, and
- *  stopped by the panel's own stop; the road built here sends straight through the
- *  engine into the same thread and writes it down after, which is all a panel that has
- *  not grown `turn` can be given. Every runner asks this and never the engine, so the
- *  goal is the same goal on every provider and in every panel. */
-
 import { t } from '../../i18n.svelte'
 import { complete } from '../complete'
 import type { Message, Provider } from '../providers'
@@ -20,27 +11,18 @@ import type { Ended, Once, Panel } from './types'
 
 export interface Host {
   panel: Panel
-  /** The thread's provider, or null where it is gone from Settings. */
   provider(thread: Thread): Provider | null
-  /** Sends in a thread and waits for its turn to end. */
   turn(thread: Thread, text: string, once?: Once): Promise<Ended>
   adopt(thread: Thread, open?: boolean): void
   touched(thread: Thread): void
-  /** A command's own line at the end of a thread, never sent to the model: words, or
-   *  under another code what the thread draws its own way (`tasks`); `threads`, the
-   *  helpers' threads it reports on, each opened from the line. */
   line(thread: Thread, text: string, code?: NoticeCode, threads?: readonly string[]): void
-  /** One question to the thread's provider and model, outside the thread. */
   ask(thread: Thread, messages: readonly Message[], signal?: AbortSignal): Promise<string>
 }
 
 const providerOf = (id: string): Provider | null => ai.provider(id)
 
-/** The engine's setup where the panel's is not to hand: the providers in Settings, and
- *  the commands' own lines on top of nothing else. */
 const setup: Setup = { provider: providerOf, instructions: instructionsFor }
 
-/** Folds a send's events into how it ended. */
 function ending(): { on: (event: EngineEvent) => void; ended: () => Ended } {
   let stop: Ended['stop'] = 'end'
   let error: string | undefined
@@ -67,7 +49,6 @@ function ending(): { on: (event: EngineEvent) => void; ended: () => Ended } {
   }
 }
 
-/** A send straight through the engine, for a panel without `turn`. */
 async function directTurn(thread: Thread, text: string, once: Once = {}): Promise<Ended> {
   const provider = providerOf(thread.provider)
   if (!provider)
@@ -137,9 +118,6 @@ export function hostOf(panel: Panel): Host {
   }
 }
 
-/** Words sent from a command into the open thread, as if typed: through the field's
- *  own road where nothing differs for this send, and through `turn` where the mode or
- *  model does, which is what the field cannot say. */
 export function sendHere(host: Host, thread: Thread | null, text: string, once?: Once): void {
   const { panel } = host
   if (!once) {
@@ -155,7 +133,6 @@ export function sendHere(host: Host, thread: Thread | null, text: string, once?:
   panel.send(text)
 }
 
-/** Waits, or stops waiting the moment `signal` says so. */
 export function waitFor(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
     if (signal.aborted) {

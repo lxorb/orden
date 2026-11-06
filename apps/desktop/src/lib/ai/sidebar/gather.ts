@@ -1,20 +1,3 @@
-/** What a message is sent with: its chips made into the engine's attachments
- *  (docs/ai-sidebar.md 4.2).
- *
- *  Read at the moment of sending rather than when a chip is added, so a note edited
- *  after it was mentioned goes as it is on screen, unsaved words included. Nothing in
- *  the space goes that no chip names: the two the panel offers on its own (the note in
- *  front and its selection) are chips too, and one taken off stays off.
- *
- *  Approve mode, where questions are asked, keeps the Ask panel's behaviour: the space is searched for the passages the
- *  question is about, the note in front gives its own passages first, and the answer
- *  cites them by number (citations.ts, ai/retrieve.ts).
- *
- *  Whatever of it somebody else may have written goes inside the untrusted mark, by the
- *  rule AGENTS.md goes by (setup.ts, `fromOthers`): a note of a shared space, or one
- *  shared on its own, is data for the model and never what to do (docs/agent-native.md
- *  9.6). */
-
 import { searchSpace } from '../../search/space'
 import { parseQuery } from '@orden/scan/search/query'
 import { scratchpad } from '../../scratchpad/pad'
@@ -29,25 +12,17 @@ import { fitted, retrieve } from '../retrieve'
 import { passageAttachments } from './citations'
 import type { Mention } from './mentions'
 
-/** How much of each kind of thing goes, in tokens: a note whole as far as a long
- *  chapter, a page's article, a selection, another thread's gist. */
 const NOTE = 12_000
 const PAGE = 8_000
 const SELECTION = 4_000
 const THREAD = 3_000
-/** How many notes a folder or a tag lists by name. */
 const LISTED = 200
 
-/** The document the selection is in, as the panel saw it when the message was sent:
- *  its path, and its share where somebody shared it with the reader. */
 export interface Picked {
   path: string | null
   shared: string | null
 }
 
-/** Whether the selection's words may be somebody else's: judged by the document it is
- *  in, which a tab kept across a space switch makes another space's than the one in
- *  front. Not knowing which document, the one in front, and then the window's space. */
 async function pickedFromOthers(picked: Picked | null): Promise<boolean> {
   const active = workspace.active
   const from = picked ?? (active ? { path: active.path, shared: active.note.shared } : null)
@@ -57,15 +32,12 @@ async function pickedFromOthers(picked: Picked | null): Promise<boolean> {
   return !!open && (await fromOthersIn(open))
 }
 
-/** The note in front, as the panel offers it. */
 export interface Front {
   path: string
   name: string
   text: string
 }
 
-/** An attachment marked as from outside where any of the notes it holds words of
- *  could be somebody else's. */
 async function markedFrom(
   one: Attachment | null,
   paths: readonly string[],
@@ -85,7 +57,6 @@ function listed(root: string, paths: readonly string[]): string {
   return paths.map((one) => `- ${relativeTo(root, one)}`).join('\n')
 }
 
-/** The notes with a tag, through the same search the `tag:` operator is. */
 async function tagged(root: string, tag: string): Promise<string[]> {
   const found = new Set<string>()
   await searchSpace(
@@ -128,7 +99,6 @@ async function threadAttachment(
           : turn.parts.flatMap((part) => (part.kind === 'text' ? [part.text] : [])).join(''),
       )
       .join('\n\n')
-  // Its model's words may have been steered by what it read from outside.
   return {
     label,
     text: fitted(words, THREAD),
@@ -136,7 +106,6 @@ async function threadAttachment(
   }
 }
 
-/** One chip, read. */
 async function attachmentOf(
   chip: Mention,
   space: { id: string; root: string },
@@ -191,9 +160,6 @@ async function attachmentOf(
   }
 }
 
-/** The message, with everything its chips name read, in `space`: the thread's own,
- *  which is not the one in front once the reader has moved on. Its sources are paths
- *  in that space, which is where a citation opens them (`root` in chat.svelte.ts). */
 export async function draftOf(
   text: string,
   chips: readonly Mention[],
@@ -206,7 +172,6 @@ export async function draftOf(
   const attachments: Attachment[] = []
   if (space) {
     if (mode === 'approve') {
-      // The Ask panel's own reading: the note in front's passages first, then the space's.
       const root = space.root
       const passages = await retrieve(
         text,
@@ -235,8 +200,6 @@ export async function draftOf(
   return { text, attachments, ...(chips.some((one) => one.kind === 'web') ? { web: true } : {}) }
 }
 
-/** The note in front's own path, relative to the space, so a note whose chip was taken
- *  off is taken out of Approve's search as well: taking it off says not to send it. */
 function frontPath(root: string): string[] {
   const tab = workspace.panelTab
   const path = tab?.kind === 'note' && tab.path ? withinSpace(root, tab.path) : null

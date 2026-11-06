@@ -1,25 +1,11 @@
-/** The sidebar's agent's tools: nib's own `nib mcp` verbs, asked of the crate as the
- *  built-in agent of this provider (4.4).
- *
- *  The crate lists what the grant reaches in the thread's mode and answers each call the
- *  way the endpoint answers an outside agent's - the policy, the questions, the log, the
- *  marks round words from outside - and writes the result the way `nib mcp` writes it
- *  for a model. So there is no second policy here: this file only carries the calls
- *  across and reads the answers back. See src-tauri/src/ai_agent.rs.
- *
- *  Desktop only, like the endpoint; elsewhere a thread answers without tools. */
-
 import { isDesktop, invoke } from '../../tauri'
 import type { Provider } from '../providers'
 import { READER_TABS } from './choices'
 import type { Mode, ToolOutput } from './types'
 import { record, text, type ToolDef } from './wire'
 
-/** What the loop needs of the tools: a list, and a call. A fake stands in for the crate
- *  in the tests. */
 export interface Tools {
   list(provider: Provider, mode: Mode): Promise<Listed>
-  /** `thread` is the thread the loop runs for, which a helper it starts belongs to. */
   call(
     provider: Provider,
     mode: Mode,
@@ -27,25 +13,18 @@ export interface Tools {
     args: unknown,
     thread?: string,
   ): Promise<ToolOutput>
-  /** Where the reader is now: the space, the tab in front, every open tab. `thread` is
-   *  the thread the loop runs for, whose space is the one its calls work in. */
   context(provider: Provider, thread?: string): Promise<string>
 }
 
-/** What the crate lists: the tools, and the instructions `nib mcp` gives every outside
- *  agent's model - what the untrusted marks mean, what `needs_approval` asks of it. */
 interface Listed {
   instructions: string
   tools: ToolDef[]
 }
 
-/** Which built-in agent asks: the provider, and whether its grant reaches the reader's
- *  tabs. How much it asks is the thread's mode's, sent with every call. */
 function agentOf(provider: Provider) {
   return { id: provider.id, name: provider.name, readerTabs: READER_TABS }
 }
 
-/** One row of the crate's list. */
 function toolIn(value: unknown): ToolDef | null {
   const row = record(value)
   const name = text(row.name)
@@ -58,8 +37,6 @@ function toolIn(value: unknown): ToolDef | null {
   }
 }
 
-/** An MCP tool result, read: its words, its pictures, whether it failed, and the
- *  question it asked where it asked one. */
 export function outputIn(value: unknown): ToolOutput {
   const result = record(value)
   const content = Array.isArray(result.content) ? result.content.map(record) : []
@@ -80,7 +57,6 @@ export function outputIn(value: unknown): ToolOutput {
   }
 }
 
-/** The crate, as the sidebar's agent reaches it. */
 export const crateTools: Tools = {
   async list(provider, mode) {
     if (!isDesktop) return { instructions: '', tools: [] }
@@ -110,8 +86,6 @@ export const crateTools: Tools = {
   },
 
   async call(provider, mode, name, args, thread) {
-    // A helper is the window's own to start (lib/ai/helpers), and this loop is already in
-    // the window: answered here, waited for until the helper has ended.
     if (name === 'run_agent' || name === 'agent_result') {
       const { answerText, helperHere } = await import('../helpers/run')
       const answered = await helperHere(name, record(args), { thread: thread ?? null, mode })
@@ -119,7 +93,6 @@ export const crateTools: Tools = {
         text: answerText(answered),
         images: [],
         error: 'refused' in answered,
-        // The step the call is in the parent opens the helper's thread (#1062).
         ...('agent' in answered ? { agent: answered.agent } : {}),
       }
     }
@@ -129,13 +102,10 @@ export const crateTools: Tools = {
         mode,
         tool: name,
         args: typeof args === 'object' && args !== null ? args : {},
-        // Whose an edit it makes is: every thread of the provider is one grant.
         ...(thread ? { thread } : {}),
       })
       return outputIn(answered)
     } catch (error) {
-      // The crate could not ask at all (nib's window gone, a tool this mode does not
-      // list): the model is told so in the crate's words and carries on.
       return {
         text: error instanceof Error ? error.message : String(error),
         images: [],

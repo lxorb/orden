@@ -1,7 +1,3 @@
-/** A message is gathered in its thread's own space: a thread asked in Work keeps
- *  reading Work after the reader moves to Home, so its passages, its chips and the
- *  citations its answer opens are all Work's (#426). */
-
 import { describe, expect, test, vi } from 'vitest'
 import type { Found } from '../../search/space'
 
@@ -17,7 +13,6 @@ const disk = vi.hoisted(
     ]),
 )
 const searched = vi.hoisted(() => [] as string[])
-/** The notes somebody else can write, set by a test (sharing.svelte.ts reachedByOthers). */
 const othersWrite = vi.hoisted(() => new Set<string>())
 
 vi.mock('../../sharing.svelte', () => ({
@@ -48,7 +43,6 @@ vi.mock('../../search/space', () => ({
 vi.mock('../../workspace.svelte', () => ({
   workspace: {
     spaces: [WORK, HOME],
-    // The reader has moved to Home.
     activeSpace: HOME,
     activeSpaceId: HOME.id,
     notes: [{ path: '/notes/Home/Plan.md', name: 'Plan.md' }],
@@ -58,11 +52,9 @@ vi.mock('../../workspace.svelte', () => ({
   },
 }))
 
-// The commands' finding (found.ts, which `fromOthers` lives in) asks the index of nothing here.
 vi.mock('../../link-index.svelte', () => ({ links: {} }))
 vi.mock('../../web-tab/pages.svelte', () => ({ pages: { read: () => Promise.resolve(null) } }))
 vi.mock('../../scratchpad/pad', () => ({ scratchpad: { where: () => Promise.resolve('') } }))
-/** Chats kept by space, as the crate keeps them: Garden is Home's. */
 vi.mock('../chat/threads', () => ({
   readThread: (space: string, id: string) =>
     Promise.resolve(
@@ -105,7 +97,6 @@ const { draftOf } = await import('./gather')
 describe('a message in a thread of another space than the one in front', () => {
   test('asks the thread’s space for its passages, not the one in front', async () => {
     searched.length = 0
-    // The note in front is Home's, so the composer offers none (see Composer.svelte).
     const draft = await draftOf('when is the budget due', [], 'approve', null, '', WORK)
 
     expect(searched).toEqual([WORK.root])
@@ -129,7 +120,6 @@ describe('a message in a thread of another space than the one in front', () => {
 })
 
 test('a chat of another space goes along from the space it is kept in', async () => {
-  // The `@` list offers every space's chats, each with its own space (Composer.svelte).
   const draft = await draftOf(
     'what did I say there?',
     [{ kind: 'thread', id: 'garden', label: 'Garden', space: HOME.id }],
@@ -143,8 +133,6 @@ test('a chat of another space goes along from the space it is kept in', async ()
   ])
 })
 
-/** Somebody else can write in Work (docs/agent-native.md 9.6): whatever of theirs a
- *  message carries goes inside the untrusted mark, however it came along. */
 describe('words somebody else may have written', () => {
   const marked = (draft: { attachments: { label: string; untrusted?: boolean }[] }) =>
     draft.attachments.map((one) => [one.label, !!one.untrusted])
@@ -207,8 +195,6 @@ describe('words somebody else may have written', () => {
 })
 
 describe('words somebody else may have steered', () => {
-  /** Tabs outlive a space switch: a selection in a Work note, with Home in front, is
-   *  judged by the note it is in. */
   test('a selection is judged by the note it is in, not the space in front', async () => {
     othersWrite.add('/notes/Work/Team/Ana.md')
     try {

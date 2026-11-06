@@ -1,6 +1,3 @@
-/** The model lists Claude Code (`list_models`, measured on 2.1.280) and Codex
- *  (`model/list`, 0.160.0) answer, as the popover reads them. */
-
 import { describe, expect, test } from 'vitest'
 import { modelsIn } from './models'
 

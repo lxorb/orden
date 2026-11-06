@@ -1,18 +1,4 @@
 <script lang="ts">
-  /** The space's threads (docs/ai-sidebar.md 4.11), as Codex's task history: the search
-   *  at the top (and New chat over it in a tab's rail), then the chats in the order every
-   *  list of them has (#1089, `ordered` in session-state.ts): pinned first, then what
-   *  wants the reader, unread before read, the latest first. Each is a ChatRow: whose
-   *  model, the title, its state, how long ago; pointed at, Pin, Archive and a "..." for
-   *  Rename and Delete. The archived ones are out of the list, behind the row at its foot
-   *  that says how many there are.
-   *
-   *  In the panel it takes the conversation's place (the list glyph, or Ctrl+Shift+A
-   *  twice); in a tab of its own it is the rail down the left, always there.
-   *
-   *  Typing searches titles and words; arrows walk it, Enter opens, Delete archives (and
-   *  an archived one comes back with Delete again), Shift+Delete deletes for good,
-   *  Escape goes back to the open thread. */
   import { door } from '@orden/markdown/door'
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
@@ -30,7 +16,6 @@
 
   const { rail = false }: { rail?: boolean } = $props()
 
-  /** The outside agents' rows, fetched once one has been heard in this run (#1120). */
   const agentRows = door(() => import('../../agents/ui/AgentRows.svelte'))
 
   let field = $state<HTMLInputElement>()
@@ -41,7 +26,6 @@
     return words.every((word) => text.includes(word))
   }
 
-  /** Whether the archived chats are shown, under the rest: asked for at the list's foot. */
   let archivedShown = $state(false)
 
   const stateIn = (one: ThreadHead) => chat.states.get(one.id) ?? stateOf(one)
@@ -58,7 +42,6 @@
     ...(archivedShown ? archived : []),
   ])
 
-  /** The one heading in the list, over its first archived thread. */
   const archivedFrom = $derived(rows.findIndex((one) => stateIn(one) === 'archived'))
 
   $effect(() => {
@@ -66,7 +49,6 @@
     if (untrack(() => lit) > last) lit = last
   })
 
-  // The panel's list takes the keyboard as it comes; the rail of a tab waits to be asked.
   $effect(() => {
     if (!rail) requestAnimationFrame(() => field?.focus())
   })
@@ -113,8 +95,6 @@
 
 <div class="threads" in:fly={{ y: rail ? 0 : -6, duration: dur(150), easing: cubicOut }}>
   <div class="top">
-    <!-- New chat heads a tab's rail, as New chat heads Codex's header; at a side it is already in
-         the side's own row of tabs. -->
     {#if rail}
       <button
         class="new"
@@ -145,9 +125,6 @@
   </div>
 
   <ul class="list" role="listbox" use:scrollbar>
-    <!-- The agents connected from outside, Claude Code and the like, over the chats:
-         each is a session rather than a chat, and the one that is asking something is
-         what wants the reader first. -->
     {#if agentMarks.heard && !chat.listQuery}
       {#await agentRows() then { default: AgentRows }}
         <AgentRows />
@@ -176,7 +153,6 @@
       </li>
     {/each}
     {#if archived.length && !archivedShown}
-      <!-- The archived ones, out of the list and one press away (#1089). -->
       <li role="presentation">
         <button class="nib-row is-short shown-archived" onclick={() => (archivedShown = true)}>
           <span class="nib-row-label">{t('Archived')}</span>
@@ -203,8 +179,6 @@
     padding: 0 var(--space-1) var(--space-2);
   }
 
-  /* New chat, a row of the list's own shape, and the search under it: the first things
-     in it, as a rail of threads starts. */
   .new {
     display: flex;
     align-items: center;

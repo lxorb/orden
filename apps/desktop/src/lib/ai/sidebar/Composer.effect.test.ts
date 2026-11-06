@@ -1,12 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** The field's words leaving it as a command, typed out or picked from the `/` menu,
- *  end a change of a message there as a send does (B473): the field says so to the
- *  chat, rather than emptying itself and leaving the change open.
- *
- *  In the jsdom project because a field is typed into. */
-
 const panel = vi.hoisted(() => ({
   text: '',
   chips: [] as unknown[],
@@ -45,7 +39,6 @@ vi.mock('./seams', async (importOriginal) => ({
     ]),
 }))
 
-/** jsdom has no animations, and the menu flies in. */
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -113,8 +106,6 @@ test('a command picked from the menu ends the change in the field', async () => 
   expect(panel.taken).toHaveBeenCalled()
 })
 
-/** What goes with a message, as chips, may hold two of one name (B505): a command's
- *  words sent as two chips of one label, then the queued message changed. */
 test('two chips of one name are both drawn', () => {
   panel.text = ''
   panel.chips = [
@@ -125,8 +116,6 @@ test('two chips of one name are both drawn', () => {
   expect(target.querySelectorAll('.chip .name')).toHaveLength(2)
 })
 
-/** The `@` list offers every space's chats, so a chat picked there says which space it
- *  is kept in, and it is read there (gather.ts, B506). */
 test('a chat of another space picked with @ keeps its space', async () => {
   panel.heads = [{ id: 'garden', title: 'Garden', space: 'home', updated: 1, archived: false }]
   panel.text = '@Gar'

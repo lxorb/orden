@@ -1,6 +1,3 @@
-// Commands, agents and styles as notes: found by their front matter, argued in Claude
-// Code's syntax, and their overrides read.
-
 import { describe, expect, test } from 'vitest'
 import { commandName, expand, rolesOf, splitArgs } from './notes'
 

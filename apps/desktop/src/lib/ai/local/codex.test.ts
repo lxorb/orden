@@ -1,6 +1,3 @@
-/** Codex's app-server notifications, in the shapes `codex app-server generate-ts` gives
- *  them (0.160.0), as the crate hands them on for one thread. */
-
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'

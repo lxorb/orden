@@ -1,8 +1,3 @@
-/** Signing out, with the question #389 asks of a device that holds the AI vault's key
- *  beside others: whether it goes from the vault as well, which changes the key for the
- *  devices that stay. A device alone in the vault, or not in it, signs out unasked; a
- *  question put away signs nobody out. Fetched with the press, like the sign-out it is. */
-
 import { account } from '../../account.svelte'
 import { t } from '../../i18n.svelte'
 import { prompt } from '../../prompt.svelte'

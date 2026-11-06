@@ -1,5 +1,3 @@
-/** A tool row's verb and object. */
-
 import { describe, expect, test } from 'vitest'
 import { bareName, helperOf, objectOf, verbOf } from './verbs'
 

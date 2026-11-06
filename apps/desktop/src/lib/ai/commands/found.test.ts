@@ -1,7 +1,3 @@
-// Command, profile and style notes are found in the space asked about, and one in a
-// space somebody else can reach is known as theirs each time it is used: its words go
-// to the model inside the untrusted mark.
-
 import { beforeEach, expect, test, vi } from 'vitest'
 import { newThread } from '../chat/threads'
 
@@ -67,7 +63,6 @@ test('finds the notes of the space asked about, the one in front by default', as
 test('asks who can reach the space each time, not once when the note was found', async () => {
   const mine = await foundNamed('command', 'mine')
   expect(mine && (await fromOthers(mine.path))).toBe(false)
-  // The listing comes in and says somebody else is in the reader's space after all.
   others.reach = () => true
   expect(mine && (await fromOthers(mine.path))).toBe(true)
 })
@@ -83,7 +78,6 @@ test("marks a collaborator's words, and leaves the reader's own as they are", as
 
 test("tells a thread its profile and style from the thread's own space, marked where shared", async () => {
   const work = { ...newThread('own', 'p', 'm'), agent: 'researcher', mode: 'approve' as const }
-  // The space in front is Team, which has a profile of the same name.
   front.root = '/team'
   expect(await instructionsFor(work)).toBe('Cite your sources.')
 

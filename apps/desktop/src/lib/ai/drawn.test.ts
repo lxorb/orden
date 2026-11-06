@@ -30,9 +30,6 @@ describe('withCodeBars', () => {
   })
 })
 
-/** An answer is drawn the way a note is read (#1122): every construct a model writes,
- *  through the renderer the reading view stands on, whole and at every length it passes
- *  through while it arrives. */
 describe('an answer, drawn as a note is', () => {
   beforeAll(async () => {
     await loadMaths()
@@ -85,7 +82,6 @@ describe('an answer, drawn as a note is', () => {
     for (const one of markdown) {
       arrived += spelling.push(one)
       const html = answerHtml(arrived, { live: true })
-      // Never a formula's delimiters in the words, on its way or not.
       expect(html.replace(/<code[\s\S]*?<\/code>|data-tex="[^"]*"/g, '')).not.toMatch(
         /\$\$|\\\[|\\\(/,
       )

@@ -1,7 +1,4 @@
 <script lang="ts">
-  /** Settings › AI › Do with AI (#325): the mode a task done with AI works in, the tools it
-   *  may reach beside its own note, and the words it is asked in. Its own file so the
-   *  glasses' bundle, which has no AI panel, carries none of it; AiPane loads it. */
   import Hint from '../Hint.svelte'
   import { key, t } from '../i18n.svelte'
   import Select from '../Select.svelte'
@@ -20,11 +17,9 @@
   } from './sidebar/prefs'
 
   let tasked = $state(taskMode())
-  /** The switches of what a task done with AI may reach, and the words it is asked in. */
   const taskTools = $state(Object.fromEntries(TASK_TOOLS.map((one) => [one, taskUses(one)])))
   let taskWords = $state(taskAsk())
 
-  /** Each switch's name and its sentence, in the order the switches are drawn. */
   const TOOL_WORDS: Record<TaskTool, { label: string; hint: string }> = {
     browser: {
       label: key('Use the browser'),
@@ -71,7 +66,6 @@
   </div>
   {#each TASK_TOOLS as tool (tool)}
     {@const words = TOOL_WORDS[tool]}
-    <!-- The whole row turns it, as a switch in the other panes does. -->
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div class="nib-setting setting pressable" onclick={() => turnTaskTool(tool)}>
       <span class="name"
@@ -92,8 +86,6 @@
       ></span>
     </div>
   {/each}
-  <!-- The words the task is asked in. Orden's own are the placeholder, in the language
-       the model is asked in, so an empty field is Orden's words back. -->
   <label class="nib-setting setting asking">
     <span class="name"
       ><span class="nib-named"
@@ -117,7 +109,6 @@
 </div>
 
 <style>
-  /* AiPane's shapes, which a component of its own does not inherit: see AiPane.svelte. */
   .card {
     display: flex;
     flex-direction: column;
@@ -135,14 +126,12 @@
     cursor: pointer;
   }
 
-  /* The instructions take the row's width under their name. */
   .asking {
     flex-direction: column;
     align-items: stretch;
     gap: var(--space-1);
   }
 
-  /* The design system's box, tall enough for a few lines of words. */
   .ask {
     min-height: 4.5rem;
     padding: var(--space-1) var(--row-pad);

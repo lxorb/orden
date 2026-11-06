@@ -1,15 +1,4 @@
 <script lang="ts">
-  /** The open thread, scrolling over the composer, as the Codex sidebar draws one: the
-   *  reader's messages in bubbles at the end of the line, each answer across the whole
-   *  width under it (Reply.svelte), a message pressed a moment ago drawn at once, and a
-   *  dot breathing until the first words of an answer arrive. Beside a bubble, while it
-   *  is pointed at: copy, edit and rewind; under it the arrows between its branches once
-   *  it has been edited. What the thread changed is a card at the end, once the answer
-   *  is in (review/ChangesCard.svelte).
-   *
-   *  The end stays in view while an answer streams, as long as the reader has not
-   *  scrolled up to read something else; then a round arrow over the composer goes back
-   *  down. An empty thread is Codex's home: the latest chats, and the way to all. */
   import { tick } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { fade, fly } from 'svelte/transition'
@@ -36,7 +25,6 @@
   let atEnd = $state(true)
 
   const turns = $derived(chat.turns)
-  /** The open thread itself, the live one, for the review's arrows under a message. */
   const thread = $derived(chat.head ? chat.thread : null)
   const id = $derived(chat.head?.id ?? '')
   const running = $derived(chat.running.includes(id))
@@ -46,23 +34,16 @@
     for (let at = turns.length - 1; at >= 0; at--) if (turns[at]?.role === 'model') return at
     return -1
   })
-  /** Waiting for the first words: a message on its way, or an answer with nothing in it yet. */
   const waiting = $derived(
     running &&
       (pending !== undefined || !turns.at(-1)?.parts.length || turns.at(-1)?.role === 'you'),
   )
   const hello = $derived(ready && !turns.length && pending === undefined && !running)
-  /** The chats in the order every list has (#1089), Codex's three of them on its home,
-   *  and the rest under them once Show all is pressed: in place, the same list grown,
-   *  rather than another view of it. A tab has them all in its rail already. */
   const chats = $derived(ordered(chat.heads, chat.states, chat.unread))
   let all = $state(false)
-  /** The row pointed at, lit as the list of all of them lights it (Threads.svelte). */
   let pointed = $state(-1)
   const recent = $derived(all ? chats : chats.slice(0, 3))
 
-  /** The chats beside the open one, which a sideways slide goes to (#1089): the list's
-   *  own order, round from the last to the first. Only from a chat that is in it. */
   const sideways = $derived({
     can: (step: 1 | -1) => !!id && chats.some((one) => one.id === id) && !!beside(chats, id, step),
     go: (step: 1 | -1) => {
@@ -71,8 +52,6 @@
     },
   })
   const here = hostHere()
-  /** The thread a helper's is a step of, which its conversation goes back to: a helper
-   *  is in no list of chats (#1062). Nothing where that thread is gone. */
   const parent = $derived.by(() => {
     const above = chat.head?.parent
     if (!above) return null
@@ -80,8 +59,6 @@
     return title === undefined ? null : { id: above, title }
   })
 
-  /** What went with a message besides its passages, by name, so a message says what
-   *  it was sent with. */
   function attachedOf(index: number): string[] {
     const draft = turns[index]?.draft
     return (draft?.attachments ?? [])
@@ -89,7 +66,6 @@
       .map((one) => one.label.replace(/\.(?:md|markdown)$/i, ''))
   }
 
-  /** Which message's words were copied a moment ago, for the tick that says so. */
   let copied = $state<string | null>(null)
   let copying: ReturnType<typeof setTimeout> | undefined
   async function copy(turn: string, text: string) {
@@ -116,14 +92,11 @@
     if (box && atEnd) void tick().then(() => (box.scrollTop = box.scrollHeight))
   })
 
-  // A thread opened is read from its end.
   $effect(() => {
     follows(id)
     atEnd = true
   })
 
-  /** Bumped as the window comes back into focus or into view, which may be the reader
-   *  seeing what came while they were away. */
   let looked = $state(0)
   $effect(() => {
     const look = () => looked++
@@ -135,8 +108,6 @@
     }
   })
 
-  // Read (#1064) once the reader has the chat in front of them with its end in view: on
-  // screen, in the window they are using, scrolled down to what is new. Not on a hover.
   $effect(() => {
     follows(looked, turns)
     if (!id || !chat.unread.has(id) || !atEnd) return
@@ -149,7 +120,6 @@
 <div class="room">
   <div class="talk" bind:this={talk} use:scrollbar use:slides={sideways} onscroll={onScroll}>
     {#if !ready}
-      <!-- The one thing to say before a provider is set up, and where to do it. -->
       <p class="empty-text">
         {t('Add an AI provider in Settings first.')}
         <button class="link" onclick={() => settings.show('ai')}>{t('Settings › AI')}</button>
@@ -163,8 +133,6 @@
     {/if}
 
     {#if hello && recent.length}
-      <!-- Codex's home: no greeting, the latest chats under their heading and the way to
-           all of them, over a composer that is at the foot from the start. -->
       <div class="home" in:fade={{ duration: dur(150) }}>
         <h2 class="heading">{t('Chats')}</h2>
         <ul class="recent" onpointerleave={() => (pointed = -1)}>
@@ -207,9 +175,6 @@
               {/each}
             </div>
           {/if}
-          <!-- The message, and beside it while it is pointed at copy, edit and rewind,
-               over the room at its start rather than on a row of their own, so a
-               thread of messages stays as dense as Codex's. -->
           <div class="held">
             <p class="bubble">{words}</p>
             {#if thread && !turn.steered}
@@ -231,8 +196,6 @@
                   </svg>
                 </button>
                 {#if !running}
-                  <!-- Change it and send again, or go back to before it: Codex's
-                       pencil and Claude Code's checkpoint. -->
                   <button
                     class="nib-glyph tool"
                     title={t('Edit')}
@@ -272,7 +235,6 @@
       {/if}
     {/each}
 
-    <!-- What the thread changed, under the turn that changed it, once it is done. -->
     {#if thread && !running}
       <ChangesCard {thread} />
     {/if}
@@ -310,7 +272,6 @@
 </div>
 
 <style>
-  /* Clipped sideways, so a chat slid out of the way leaves by the panel's edge. */
   .room {
     position: relative;
     flex: 1;
@@ -320,10 +281,6 @@
     overflow-x: clip;
   }
 
-  /* The thread in a column: the panel's gutter at a side's width, and a reading measure
-     down the middle of a tab (`--column`, set by the panel). */
-  /* A finger across it is a slide to the chat beside (#1089, slide.ts); up and down is
-     still the scroll. */
   .talk {
     flex: 1;
     min-height: 0;
@@ -338,11 +295,6 @@
       calc(var(--space-1) + var(--row-pad)),
       calc((100% - var(--column, 100%)) / 2 + var(--space-4))
     );
-    /* The thread fades out over the composer, Codex's sticky composer, rather than being
-       cut off at a line: a mask, so what shows through is whatever the panel stands on.
-       A colour laid over the end was the side's colour as a token says it, and a side
-       under glass, the wallpaper or the chrome's own ground stands on something else -
-       a darker strip with a band of the real ground between it and the field (#1110). */
     mask-image: linear-gradient(to bottom, #000 calc(100% - var(--space-4)), transparent);
   }
 
@@ -377,8 +329,6 @@
     color: var(--muted);
   }
 
-  /* The reader's message: a bubble at the end of the line, Codex's, with what went
-     with it over it and its tools under it. */
   .said {
     display: flex;
     flex-direction: column;
@@ -408,8 +358,6 @@
     overflow-wrap: anywhere;
   }
 
-  /* Sent into a running turn: the same bubble, edged in the accent, as the arrow a steer
-     is in every app that has one. */
   .said.steered .bubble {
     box-shadow: inset 0 0 0 1px var(--accent-line);
   }
@@ -439,8 +387,6 @@
     white-space: nowrap;
   }
 
-  /* The tools beside a message while it is pointed at, over the room before it, so
-     nothing moves. */
   .tools {
     position: absolute;
     top: 50%;
@@ -467,7 +413,6 @@
     stroke-width: 1.3;
   }
 
-  /* Back to the end: a round arrow floating over the composer, centred. */
   .down {
     position: absolute;
     bottom: var(--space-2);

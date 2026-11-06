@@ -1,17 +1,3 @@
-/** Chat completions, as every OpenAI-compatible server copied them: Ollama, LM Studio,
- *  OpenRouter, vLLM, a gateway at work.
- *
- *  - Tools as functions, their calls streamed in pieces by index.
- *  - Effort as `reasoning_effort` where the model advertised reasoning; a server that
- *    refuses it is not sent it again (learned.ts).
- *  - Usage asked for at the end of the stream (`stream_options.include_usage`), with
- *    OpenRouter's `cost` where it reports one.
- *  - Thinking from whichever field the server writes it in: `reasoning_content`
- *    (DeepSeek, vLLM) or `reasoning` (OpenRouter, Ollama).
- *
- *  Nothing comes back that only the model can read, so every turn is rebuilt from its
- *  words and calls. Pure, as anthropic.ts is. */
-
 import { conversationUrl } from '../providers'
 import { wireEffort } from './effort'
 import { learnt } from './learned'
@@ -68,7 +54,6 @@ function toolMessage(id: string, output: ToolOutput): Message {
   return { role: 'tool', tool_call_id: id, content: outputText(output) }
 }
 
-/** The steps as chat messages, the system prompt first. */
 export function chatMessagesOf(system: string, steps: readonly Step[]): Message[] {
   const out: Message[] = system ? [{ role: 'system', content: system }] : []
   for (const step of steps) {
@@ -129,7 +114,6 @@ export const completions: Wire = {
   },
 }
 
-/** A call as it arrives, in pieces by index. */
 interface Arriving {
   id: string
   name: string

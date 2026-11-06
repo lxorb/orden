@@ -1,12 +1,3 @@
-/** The commands about the account and the program (docs/ai-sidebar.md 3.6): `/status`,
- *  `/usage`, `/doctor`, `/login` and `/logout`.
- *
- *  Each answers the way its provider can: Claude Code and Codex are asked themselves
- *  (`claude auth status`, `codex login status`) and signed in and out by their own
- *  commands in a terminal tab; the ChatGPT plan by its own sign-in; a key by Settings >
- *  AI, where keys are kept. What they report is a line in the thread, a word and a value
- *  a row, never a sentence. */
-
 import { t } from '../../i18n.svelte'
 import { invoke } from '../../tauri'
 import { isLocal, KIND_NAMES, type Provider } from '../providers'
@@ -14,7 +5,6 @@ import type { Thread } from '../chat/types'
 import { filled } from '../chat/usage'
 import { engineFor } from '../chat/engine'
 
-/** Rows of a report: a word, then what it says, dropped where there is nothing to say. */
 function rows(pairs: readonly (readonly [string, string | number | null | undefined])[]): string {
   return pairs
     .filter(([, value]) => value !== null && value !== undefined && value !== '')
@@ -22,7 +12,6 @@ function rows(pairs: readonly (readonly [string, string | number | null | undefi
     .join('\n')
 }
 
-/** A count of tokens as the ring says it: 412K, 1.2M. */
 export function tokens(count: number): string {
   if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(count >= 10_000_000 ? 0 : 1)}M`
   if (count >= 1_000) return `${Math.round(count / 1_000)}K`
@@ -83,7 +72,6 @@ export async function usage(thread: Thread | null, provider: Provider | null): P
   )
 }
 
-/** Where the program is, whether it is signed in, and whether the model list answers. */
 export async function doctor(provider: Provider | null): Promise<string> {
   if (!provider) return t('Add an AI provider in Settings first.')
   const out: [string, string | null][] = [[t('Provider'), KIND_NAMES[provider.kind]]]
@@ -104,7 +92,6 @@ export async function doctor(provider: Provider | null): Promise<string> {
   return rows(out)
 }
 
-/** `/login` and `/logout`: the provider's own road in or out. */
 export async function sign(provider: Provider | null, out: boolean): Promise<void> {
   const { settings } = await import('../../settings.svelte')
   if (!provider || (!isLocal(provider.kind) && provider.kind !== 'chatgpt')) {

@@ -1,11 +1,5 @@
-/** Whether Claude Code or Codex is installed and signed in, out of what the program
- *  itself said when asked: `claude auth status --json`, `codex login status`. Never out
- *  of its files, which nib does not open. Pure. */
-
 import type { LocalKind } from '../providers'
 
-/** What the crate answered; see `Status` in src-tauri/src/ai_cli.rs. `null` is a program
- *  that is not installed. */
 export interface Said {
   program: string
   out: string
@@ -15,18 +9,12 @@ export interface Said {
 }
 
 export interface Standing {
-  /** `missing`: not installed. `out`: installed, not signed in. `in`: signed in.
-   *  `unknown`: it did not say, which is shown as installed and left to the question. */
   state: 'missing' | 'out' | 'in' | 'unknown'
-  /** Where the program is, for the line a terminal signs in with. */
   program: string | null
-  /** The plan it is signed in with, as a word: Max, Pro, ChatGPT, API key. */
   plan: string | null
-  /** Whose it is, where the program says. */
   account: string | null
 }
 
-/** The crate's answer, read rather than trusted. */
 export function saidIn(value: unknown): Said | null {
   if (typeof value !== 'object' || value === null) return null
   const one = value as Record<string, unknown>
@@ -40,7 +28,6 @@ export function saidIn(value: unknown): Said | null {
   }
 }
 
-/** A word's first letter up: `max` is shown as Max. */
 function titled(word: string): string {
   return word.charAt(0).toUpperCase() + word.slice(1)
 }

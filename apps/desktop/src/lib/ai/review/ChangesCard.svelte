@@ -1,12 +1,4 @@
 <script lang="ts">
-  /** What the thread changed and the reader has not kept, as a card at the end of the
-   *  conversation (docs/ai-sidebar.md 4.1, 4.5): Codex's "files changed" under the turn
-   *  that made them. Its head says how many notes, by how many lines, with Undo and Keep
-   *  for all of it; under it each note with its own pair, and pressed (or `/diff`) every
-   *  change of every note, each with its pair too.
-   *
-   *  Drawn only once the answer is done, so nothing moves under a press while the agent
-   *  works (Cursor's readers' complaint): the edit rows say what is changing meanwhile. */
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
   import { plural, t } from '../../i18n.svelte'
@@ -54,10 +46,6 @@
 {/if}
 
 <style>
-  /* Codex's card: a hairline round the head and its notes, the head on the panel's
-     second ground. */
-  /* Its own height in the conversation's column: clipped round its corners, it would
-     otherwise be squeezed as the thread outgrows the room. */
   .card {
     flex: none;
     display: flex;

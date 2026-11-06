@@ -1,9 +1,4 @@
 <script lang="ts">
-  /** The list over the field that `@` and `/` open: the matches for what has been typed
-   *  since, the first one lit, arrows to move, Enter or Tab to take one. The keys are
-   *  the field's (Composer.svelte); this only draws and answers the pointer. A row that
-   *  cannot be taken here is dim, with the reason on hover, rather than missing, so the
-   *  list is the same whoever answers. */
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
   import { keepFocus } from '../../focus'

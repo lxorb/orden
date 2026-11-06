@@ -1,5 +1,3 @@
-/** The crate's tools, carried across: what is asked of it, and its answers read back. */
-
 import { describe, expect, test, vi } from 'vitest'
 
 const asked: { command: string; args: Record<string, unknown> }[] = []

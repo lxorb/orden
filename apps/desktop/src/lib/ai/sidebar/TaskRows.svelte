@@ -1,9 +1,4 @@
 <script lang="ts">
-  /** `/tasks`'s rows in a thread: a box, the words, the day. A box ticks the task in
-   *  its note through the one write path, as a box in any view does, and stays where it
-   *  is, dimmed, so a tick is undone by ticking again; the words open the note when it
-   *  is in the space on screen. The filter the rows answer is shown above them, so a
-   *  filter the model wrote is one the reader can learn. See commands/todos.ts. */
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from '../../i18n.svelte'
@@ -16,7 +11,6 @@
 
   type Task = Listed['tasks'][number]
 
-  /** The notice's words, read back: a thread is a file anybody could have written. */
   function read(text: string): Listed | null {
     try {
       const value: unknown = JSON.parse(text)
@@ -37,15 +31,12 @@
         ...(typeof filter === 'string' ? { filter } : {}),
       }
     } catch {
-      // Not ours, or cut short: nothing to draw.
       return null
     }
   }
 
   const listed = $derived(read(said))
 
-  /** What each box says now, where the reader changed it here, by space and place:
-   *  the rows are every space's, so one note and line can be two spaces' tasks. */
   let ticked = $state<Record<string, boolean>>({})
 
   const placeOf = (one: Task) => `${one.space}\n${one.at}`
@@ -65,7 +56,6 @@
     void workspace.open(insideSpace(space.root, one.at.replace(/#\d+:[0-9a-z]+$/, '')))
   }
 
-  /** The day and time a row is for, as written. */
   const when = (one: Task) => [one.due, one.time].filter(Boolean).join(' ')
 </script>
 

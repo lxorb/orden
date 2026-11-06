@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** The notes under the changes card (ChangesCard.svelte), Codex's files: each note
-   *  the thread changed with its count and its own Keep and Undo; then each note it
-   *  moved (old name, new name) or deleted (struck through), with the same pair. A note
-   *  pressed shows its first change.
-   *
-   *  Open (`/diff`, or the card's head pressed), every change of every note under it,
-   *  each with its pair, and the keyboard in the list, Claude Code's and Cursor's keys:
-   *  J and K (or the arrows) walk the changes, Y keeps the lit one, N undoes it, Enter
-   *  shows it, Escape folds the list again. */
   import { cubicOut } from 'svelte/easing'
   import { slide } from 'svelte/transition'
   import { t } from '../../i18n.svelte'
@@ -28,7 +19,6 @@
     open = false,
   }: { notes: NoteChanges[]; files: FileChange[]; thread: Thread; open?: boolean } = $props()
 
-  /** A moved note opened where it is now. */
   function openMoved(file: FileChange) {
     const root = workspace.spaces.find(
       (one) => one.id === file.space || one.name === file.space || one.id === thread.space,
@@ -44,8 +34,6 @@
     if (lit >= rows.length) lit = Math.max(0, rows.length - 1)
   })
 
-  // Opened, the keyboard goes to the list, for its keys, and the list into view once
-  // its rows have slid open: it is at the end of the conversation, under the fold.
   $effect(() => {
     if (!open) return
     list?.focus({ preventScroll: true })
@@ -157,10 +145,6 @@
     gap: 2px;
   }
 
-  /* A row's pair while it is pointed at, or the keyboard is in it, so a column of
-     notes is not a column of buttons. */
-  /* Over the end of the row rather than beside it, so a name in a narrow side is not
-     cut short for two buttons that are not there until it is pointed at. */
   .pair {
     position: absolute;
     inset-block: 0;

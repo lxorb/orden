@@ -1,7 +1,4 @@
 <script lang="ts">
-  /** Reads that followed one another, as one step (steps.ts): "Explored" and what was
-   *  looked at, Codex's row. Open, each read is a row of its own, which opens as any
-   *  other does. Ctrl+O opens it with the rest. */
   import { cubicOut } from 'svelte/easing'
   import { slide } from 'svelte/transition'
   import { t } from '../../i18n.svelte'
@@ -18,7 +15,6 @@
   let opened = $state(false)
   const open = $derived(opened || chat.unfolded)
   const going = $derived(live && rows.some((one) => one.state === 'running'))
-  /** What was looked at, each once, in the order it was. */
   const what = $derived([...new Set(rows.map((one) => objectOf(one.args)).filter(Boolean))])
 </script>
 
@@ -32,7 +28,6 @@
   />
   {#if open}
     <div class="inner" transition:slide={{ duration: dur(150), easing: cubicOut }}>
-      <!-- By place: a provider that sends no ids gets the same few in each answer. -->
       {#each rows as one, at (at)}
         <PartRow part={one} {live} />
       {/each}

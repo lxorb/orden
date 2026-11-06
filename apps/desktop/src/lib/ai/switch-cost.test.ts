@@ -5,7 +5,6 @@ import { ASK_FROM, switchCost } from './switch-cost'
 const used = (input: number, output = 0) => ({ ...noUsage(200_000), input, output })
 const claude = { provider: 'a', model: 'claude-sonnet' }
 
-/** #1089: a switch that sends the conversation again is asked about first. */
 describe('what a switch of model costs', () => {
   test('is the conversation sent again, where it is long enough to ask about', () => {
     expect(
@@ -29,7 +28,6 @@ describe('what a switch of model costs', () => {
     ).toBeNull()
   })
 
-  /** Past where the new model compacts, it does not fit: compacted first. */
   test('and says where the conversation is compacted first, to fit', () => {
     expect(
       switchCost(used(150_000), claude, { provider: 'b', model: 'small', window: 128_000 }),

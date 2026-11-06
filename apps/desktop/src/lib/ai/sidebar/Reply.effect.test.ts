@@ -1,13 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { expect, test, vi } from 'vitest'
 
-/** An answer already in the panel when the formula engine lands is drawn again then,
- *  and until then shows no TeX: its formulas keep their place unseen (#1122). The
- *  engine is fetched as the panel's answers are, so the first look is before it lands.
- *
- *  In the jsdom project because the answer is drawn and drawn again. */
-
-/** The engine, held back until the test lets it land: an engine that arrives late. */
 let land: () => void = () => undefined
 const landed = new Promise<void>((resolve) => (land = resolve))
 vi.mock('../../../../../../packages/markdown/src/maths.ts', async (actual) => {
@@ -38,14 +31,12 @@ test('a formula already drawn is drawn again once its engine lands, and never as
   flushSync()
 
   const words = () => target.querySelector('.words')
-  // The first frame: the words drawn, the formulas held out of sight rather than TeX.
   expect(words()?.querySelector('strong')?.textContent).toBe('bold')
   expect(words()?.textContent).not.toContain('\\(')
   expect(words()?.textContent).not.toContain('\\[')
   expect(words()?.classList.contains('waiting')).toBe(true)
   expect(words()?.querySelectorAll('.math-inline, .math-block')).toHaveLength(2)
 
-  // However long it takes, the formulas stay held rather than show their TeX.
   await new Promise((resolve) => setTimeout(resolve, 300))
   flushSync()
   expect(engines.mathsEngine()).toBeNull()

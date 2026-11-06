@@ -1,12 +1,3 @@
-/** The `/` menu's rows (docs/ai-sidebar.md 3, 6.5): every command of the table, run
- *  the way its row says for the thread's provider, and the reader's own commands found
- *  as notes after them.
- *
- *  The panel fetches this file through its seam (lib/ai/sidebar/seams.ts) the first time
- *  `/` is typed, so none of it is in the first paint, and calls `commands(panel)` each
- *  time the menu opens: the reader's commands are found in the background and are in the
- *  next menu once they are. A custom command never takes a built-in's name or synonym. */
-
 import { isEffort } from '../chat/effort'
 import type { Effort, Thread } from '../chat/types'
 import { sign, doctor, status, usage } from './account'
@@ -27,9 +18,6 @@ import { explain, review, rewrite, summarize } from './words'
 import { message, t } from '../../i18n.svelte'
 import { FIRST_MODE, noMoreThan } from '../modes'
 
-/** Lane 3's half of `/rewind` and `/diff`, once it is on main: `lib/ai/review/commands.ts`
- *  exporting both, each run with the command's context (6.5). Found by name, so this
- *  file needs nothing changed when it lands. */
 interface ReviewCommands {
   rewind(context: CommandContext): void | Promise<void>
   changes(context: CommandContext): void | Promise<void>
@@ -41,19 +29,16 @@ async function reviewCommand(which: keyof ReviewCommands, context: CommandContex
   if (loadReview) await (await loadReview())[which](context)
 }
 
-/** The open thread, or the one the panel makes for a command that needs one. */
 function threadOf(context: CommandContext): Thread | null {
   return context.thread ?? context.panel.ensure?.() ?? null
 }
 
-/** A line of words a command reports, in the thread it is about. */
 async function report(host: Host, context: CommandContext, said: Promise<string>): Promise<void> {
   const thread = threadOf(context)
   const words = await said
   if (thread) host.line(thread, words)
 }
 
-/** `/effort`'s word as a level: Claude Code's and Codex's spellings, or the next. */
 export function effortIn(args: string): Effort | 'next' {
   const word = args.trim().toLowerCase()
   if (word === 'extra' || word === 'x-high') return 'xhigh'
@@ -61,7 +46,6 @@ export function effortIn(args: string): Effort | 'next' {
   return isEffort(word) ? word : 'next'
 }
 
-/** `on`, `off`, or the other of the two. */
 function onOff(args: string): boolean | undefined {
   const word = args.trim().toLowerCase()
   return word === 'on' ? true : word === 'off' ? false : undefined
@@ -74,9 +58,7 @@ async function settingsAt(section: 'ai' | 'agents' | 'shortcuts'): Promise<void>
 
 type Run = (context: CommandContext, host: Host) => void | Promise<void>
 
-/** What each row does. Where one needs a thread and none can be had, it does nothing. */
 const RUNS: Record<string, Run> = {
-  // 3.1
   new: async ({ args, panel }) => {
     panel.newThread()
     if (args) await panel.rename(args)
@@ -131,7 +113,6 @@ const RUNS: Record<string, Run> = {
     panel.text = '/'
   },
 
-  // 3.2
   model: ({ args, panel }) => {
     if (!args || !panel.modelNamed(args)) panel.openModels()
   },
@@ -139,7 +120,6 @@ const RUNS: Record<string, Run> = {
   fast: ({ args, panel }) => panel.setFast(onOff(args)),
   'output-style': ({ args, thread }, host) => outputStyle(host, thread, args),
 
-  // 3.3
   approve: ({ args, panel }) => {
     panel.setMode('approve')
     if (args) panel.send(args)
@@ -183,7 +163,6 @@ const RUNS: Record<string, Run> = {
     if (thread && context.args) await research(host, thread, context.args)
   },
 
-  // 3.4
   mention: ({ args }, host) => mention(host, args),
   'add-space': ({ args }, host) => mention(host, args),
   memory: ({ args, thread }, host) => memory(host, thread, args),
@@ -191,7 +170,6 @@ const RUNS: Record<string, Run> = {
   skills: ({ args, thread }, host) => skills(host, thread, args),
   mcp: () => settingsAt('agents'),
 
-  // 3.5
   shorter: () => void rewrite('shorter'),
   longer: () => void rewrite('longer'),
   fix: () => void rewrite('grammar'),
@@ -201,7 +179,6 @@ const RUNS: Record<string, Run> = {
   review: ({ args, thread }, host) => review(host, thread, args),
   diff: (context) => reviewCommand('changes', context),
 
-  // 3.6
   tasks: async (context, host) => {
     const thread = threadOf(context)
     if (thread) await showTasks(host, thread, context.args)
@@ -232,8 +209,6 @@ const RUNS: Record<string, Run> = {
   voice: ({ args, panel }) => panel.voice?.(onOff(args)),
 }
 
-/** Runs a row, and puts what went wrong in the thread rather than nowhere: the menu runs
- *  a command and lets go of it. */
 async function guarded(host: Host, context: CommandContext, run: Run | undefined): Promise<void> {
   try {
     await run?.(context, host)
@@ -242,11 +217,7 @@ async function guarded(host: Host, context: CommandContext, run: Run | undefined
   }
 }
 
-/** The menu's row for a command written as a note. */
 function noteRow(note: NoteCommand, host: Host): PanelCommand {
-  // A mode from a note somebody else may have written is weighed against the thread it
-  // lands in, which is the one `sendHere` would open where none is; who can reach the
-  // space is asked now, not when the note was found.
   const onceIn = async (thread: Thread | null) => {
     const held = () => (thread ?? host.panel.ensure?.())?.mode ?? FIRST_MODE
     const theirs = note.mode ? await fromOthers(note.path) : false
@@ -271,7 +242,6 @@ function noteRow(note: NoteCommand, host: Host): PanelCommand {
   }
 }
 
-/** Every row of the menu, for this panel. */
 export function commands(panel: Panel): readonly PanelCommand[] {
   const host = hostOf(panel)
   const ready = { review: !!loadReview }

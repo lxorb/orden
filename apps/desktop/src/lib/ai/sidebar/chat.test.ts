@@ -1,17 +1,11 @@
-/** The AI panel's chats are one list, every space's (#332): a space changing keeps the
- *  open chat, its draft and its place, and the chats each space had are all in the list.
- *  The crate's per-space store is played here by a map, so what is kept where is seen. */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Draft, EngineEvent, Part, Thread, Turn } from '../chat/types'
 
 const { memoryStorage } = await import('../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
 
-/** The crate's threads, by space and id: the head the list shows and the body. */
 const kept = vi.hoisted(() => new Map<string, Map<string, { head: unknown; body: string }>>())
 const deleted = vi.hoisted(() => [] as string[])
-/** A delete the crate refuses, once. */
 const refusing = vi.hoisted(() => ({ delete: false, after: Promise.resolve() }))
 
 vi.mock('../../tauri', async (importOriginal) => ({
@@ -48,12 +42,9 @@ const place = vi.hoisted(() => ({
     { id: 'home', name: 'Home', root: '/notes/Home' },
   ],
   activeSpaceId: 'work',
-  // A message is gathered in its thread's space (gather.ts), which holds no notes here.
   notes: [],
   leftOutOf: () => [],
   noteText: () => Promise.resolve(null),
-  // A note made of the thread's words: the path it was written at, or null where the
-  // folder may not be written.
   noteFrom: vi.fn((_text: string, folder?: string) =>
     Promise.resolve<string | null>(folder ? `${folder}/Answer.md` : null),
   ),
@@ -62,7 +53,6 @@ const place = vi.hoisted(() => ({
 
 vi.mock('../../workspace.svelte', () => ({ workspace: place }))
 
-// Whose a note in front may be is the index's to say, which holds nothing here.
 vi.mock('../commands/found', () => ({
   fromOthers: () => Promise.resolve(false),
   fromOthersIn: () => Promise.resolve(false),
@@ -73,7 +63,6 @@ vi.mock('../store.svelte', () => {
   return { ai: { providerFor: () => provider, provider: () => provider } }
 })
 
-/** The engine, which answers every send at the plan's limit, until an hour from now. */
 const until = vi.hoisted(() => Date.now() + 3_600_000)
 const engine = vi.hoisted(() => ({
   models: () => Promise.resolve([]),
@@ -85,17 +74,12 @@ const engine = vi.hoisted(() => ({
     on({ type: 'done', stop: 'error', error: notice.text })
     return Promise.resolve()
   }),
-  // Takes nothing: words steered before the engine is ready for them.
   steer: vi.fn((_thread: Thread, _text: string) => Promise.resolve(false)),
 }))
 vi.mock('./setup', () => ({ engineOf: () => Promise.resolve(engine) }))
 
-// What a review of an agent's edits needs is a workspace of documents, which none of
-// this is about.
-/** The earlier messages changed, as `turn:words`. */
 const edits = vi.hoisted(() => [] as string[])
 vi.mock('../review', () => ({
-  // An edit sends its words, as the review does once the notes are back.
   editMessage: (
     _thread: unknown,
     turn: string,
@@ -109,7 +93,6 @@ vi.mock('../review', () => ({
   openRewind: () => null,
 }))
 
-/** A message's gathering, held until `gathering.gate` opens. */
 const gathering = vi.hoisted(() => ({ gate: Promise.resolve() }))
 vi.mock('./gather', async (importOriginal) => {
   const real = await importOriginal<typeof import('./gather')>()
@@ -122,7 +105,6 @@ vi.mock('./gather', async (importOriginal) => {
   }
 })
 
-/** The answer a question with a box to tick gets: a switch of model (#1089). */
 const ticking = vi.hoisted(() => ({
   answer: null as { id: string; ticked: boolean } | null,
   asked: [] as string[],
@@ -137,13 +119,11 @@ vi.mock('../../prompt.svelte', () => ({
   },
 }))
 
-/** The panel as a launch finds it: its store and what it remembers read afresh. */
 async function launched() {
   vi.resetModules()
   return (await import('./chat.svelte')).chat
 }
 
-/** A thread with one message in it, kept in `space`. */
 async function had(space: string, title: string, updated: number) {
   const { keepThread, newThread } = await import('../chat/threads')
   const thread = newThread(space, 'p', 'm')
@@ -165,7 +145,6 @@ describe('the panel’s chats', () => {
     await had('work', 'Quarterly plan', 1_000)
     await had('home', 'Garden', 3_000)
     await had('home', 'Recipes', 2_000)
-    // What a space kept the thread it had open as, before the list was one.
     localStorage.setItem('nib:ai-sidebar', JSON.stringify({ open: { home: 'none-left' } }))
 
     const chat = await launched()
@@ -341,7 +320,6 @@ describe('the field while a message is changed', () => {
     localStorage.clear()
   })
 
-  /** A thread with one message of the reader's in it, open. */
   async function asked() {
     const { keepThread, newThread } = await import('../chat/threads')
     const thread = newThread('work', 'p', 'm')
@@ -465,10 +443,8 @@ describe('the field while a message is changed', () => {
     expect(chat.text).toBe('second\n\ntyped since')
   })
 
-  /** What the answer running hears, for a steer the engine takes. */
   let hearing: ((event: EngineEvent) => void) | null = null
 
-  /** "first" answering until `answer`, or until stopped, and "second" queued behind it. */
   async function queuedBehind(chat: Awaited<ReturnType<typeof asked>>) {
     let answer: () => void = () => undefined
     engine.send.mockImplementationOnce(
@@ -532,7 +508,6 @@ describe('the field while a message is changed', () => {
 
   test('ends the change of a queued message steered into the running answer', async () => {
     const chat = await asked()
-    // The engine takes the words into the answer as a message of their own.
     const steer = vi.fn((thread: Thread, text: string) => {
       const turn = {
         id: crypto.randomUUID(),
@@ -614,7 +589,6 @@ describe('the field while a message is changed', () => {
     expect(chat.text).toBe('my draft')
     expect(chat.queue.map((one) => one.text)).toEqual(['q1 words'])
   })
-  /** "first" answered, "second" taken into the field from the queue meanwhile. */
   async function heldAfterAnswer(chat: Awaited<ReturnType<typeof asked>>) {
     const answer = await queuedBehind(chat)
     chat.text = 'my draft'
@@ -780,7 +754,6 @@ describe('a note made of a thread', () => {
     place.noteFrom.mockClear()
   })
 
-  /** A thread asked in `space`, open while `front` is the space in front. */
   async function openIn(space: string, front: string) {
     const thread = await had(space, 'Plan', 1_000)
     const chat = await launched()
@@ -834,7 +807,6 @@ describe('a chat while it answers', () => {
     deleted.length = 0
     localStorage.clear()
     engine.send.mockReset()
-    // An engine that takes no steered words, whatever an earlier test made it.
     engine.steer = vi.fn((_thread: Thread, _text: string) => Promise.resolve(false))
   })
 
@@ -856,8 +828,6 @@ describe('a chat while it answers', () => {
     return chat
   }
 
-  /** `/batch`, `/subtask`, `/fork`, a goal, a loop: everything a chat started ends with
-   *  it, and what its helpers started too, and the chat is not written again. */
   test('a deleted chat stops all the work it started', async () => {
     const chat = await asked()
     const id = String(chat.thread?.id)
@@ -885,9 +855,6 @@ describe('a chat while it answers', () => {
     tasks.stop('elsewhere')
   })
 
-  /** A `run_agent` helper on the road run.ts starts it on: the panel's own thread and
-   *  turn. Stop ends it, the chat is written down with it for its review, and a delete
-   *  ends one started after. */
   test('Stop and delete end a run_agent helper on the panel’s road', async () => {
     const chat = await asked()
     const id = String(chat.thread?.id)
@@ -1014,7 +981,6 @@ describe('a chat while it answers', () => {
     chat.text = 'what is in my work notes'
     chat.submit(around)
     const id = String(chat.thread?.id)
-    // The reader moves to another space while the message is gathered and first asked.
     chat.here('home')
     await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
     go()
@@ -1055,7 +1021,6 @@ describe('a chat while it answers', () => {
     const thread = chat.thread!
     thread.turns.push({ id: 'm1', role: 'model', at: 2, parts: [] })
     engine.send.mockImplementationOnce(() => Promise.reject(new Error('down')))
-    // The list read at launch is in before the reader asks again.
     await settled()
 
     chat.retry()
@@ -1063,7 +1028,6 @@ describe('a chat while it answers', () => {
     await vi.waitFor(() => expect(chat.trouble).toBe('down'))
     expect(thread.turns.map((one) => one.id)).toEqual(['u1', 'm1'])
   })
-  /** The next message held while it is gathered, until the returned call. */
   function held(): () => void {
     let go: () => void = () => undefined
     gathering.gate = new Promise<void>((resolve) => (go = resolve))
@@ -1073,7 +1037,6 @@ describe('a chat while it answers', () => {
     }
   }
 
-  /** An answer that pushes the reader's turn and ends as stopped where it was. */
   function stoppable() {
     engine.send.mockImplementationOnce(
       (thread: Thread, draft: Draft, on: (event: EngineEvent) => void, signal?: AbortSignal) =>
@@ -1209,7 +1172,6 @@ describe('a chat while it answers', () => {
           }
         }),
     )
-    // Takes words only once the answer is ready for them, as both engines do.
     engine.steer = vi.fn((thread: Thread, text: string) => {
       if (!ready) return Promise.resolve(false)
       const turn = {
@@ -1226,7 +1188,6 @@ describe('a chat while it answers', () => {
     })
     chat.text = 'first'
     chat.submit(around)
-    // While the message is gathered: the engine is not ready for these.
     chat.text = 'A'
     chat.steer()
     await settled()
@@ -1272,7 +1233,6 @@ describe('a chat while it answers', () => {
     chat.text = 'my new question'
     chat.submit(around)
 
-    // The message is gathered before the crate says the delete failed.
     const removing = chat.remove(id)
     await settled()
     go()
@@ -1346,7 +1306,6 @@ describe('the panel’s chats and their helpers (#1062)', () => {
     expect((await readThread('work', deeper.id))?.parent).toBe(helper.id)
     expect((await readThread('work', subtask.id))?.parent).toBe(parent.id)
     expect(localStorage.getItem('nib:ai-helpers-parented:work')).toBe('true')
-    // Nothing deleted: every one is still kept.
     expect(chat.every).toHaveLength(5)
   })
 })
@@ -1649,7 +1608,6 @@ describe('an answer on its way', () => {
   })
 })
 
-/** #1089: every chat is always in one state, which the runtime moves through one door. */
 describe('where a chat stands', () => {
   beforeEach(() => {
     kept.clear()
@@ -1771,7 +1729,6 @@ describe('where a chat stands', () => {
     await vi.waitFor(() => expect(chat.states.get(plan.id)).toBe('done'))
   })
 
-  /** Nothing that was at work when the app closed is at work after it opens. */
   test('interrupted, after a launch, where it was at work when the app closed', async () => {
     const { keepThread, newThread } = await import('../chat/threads')
     const thread = newThread('work', 'p', 'm')
@@ -1795,7 +1752,6 @@ describe('where a chat stands', () => {
   })
 })
 
-/** #1089: a switch that sends the conversation again is asked about first. */
 describe('switching a chat to another model', () => {
   beforeEach(() => {
     kept.clear()
@@ -1835,7 +1791,6 @@ describe('switching a chat to another model', () => {
     expect(ticking.asked).toHaveLength(1)
   })
 
-  /** Every way a model is asked for goes through the one door (#1089). */
   test('asks first by /model, and switches nothing on no', async () => {
     const { chat, thread } = await long()
     chat.models = { p: [{ id: 'other', name: 'Other' } as never] }
@@ -2023,7 +1978,6 @@ describe('a chat in the list the moment it changes (#1111)', () => {
     localStorage.clear()
   })
 
-  /** An engine that takes the message and holds its answer until `answer` is called. */
   function holding() {
     let answer: () => void = () => undefined
     engine.send.mockImplementationOnce((thread: Thread, draft: Draft, on) => {
@@ -2050,7 +2004,6 @@ describe('a chat in the list the moment it changes (#1111)', () => {
 
     chat.newThread()
     expect(chat.heads.map((one) => one.id)).toEqual([id])
-    // The list read again, before the chat is written down, still has it.
     chat.showThreads()
     await new Promise((done) => setTimeout(done, 0))
     expect(chat.heads.map((one) => one.id)).toEqual([id])
@@ -2097,7 +2050,6 @@ describe('a chat in the list the moment it changes (#1111)', () => {
     await chat.rename('Allotment', garden.id)
     expect(line(garden.id)?.title).toBe('Allotment')
 
-    // A list read before the pin, and back after it, does not take it off again.
     chat.showThreads()
     await chat.pin(plan.id)
     await new Promise((done) => setTimeout(done, 0))
@@ -2113,7 +2065,6 @@ describe('a chat in the list the moment it changes (#1111)', () => {
   })
 })
 
-/** The quick question, Ctrl Ctrl, is a chat of the panel's own (#1115). */
 describe('a chat started outside the panel', () => {
   beforeEach(() => {
     kept.clear()

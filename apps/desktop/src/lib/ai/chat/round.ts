@@ -1,11 +1,3 @@
-/** One request and its stream: the round every turn of the loop is made of, and the one
- *  a summary is written in.
- *
- *  A provider that refuses part of a request rather than all of it - an effort a model
- *  does not have, reasoning sent to a model that does not reason, a per-message effort,
- *  tools on a server that has none - is answered once: what it refused is written down
- *  (learned.ts), the request is made again without it, and nobody is told twice. */
-
 import { t } from '../../i18n.svelte'
 import { sseEvents } from '../stream'
 import {
@@ -22,7 +14,6 @@ import { Refused, refusalIn, request } from './request'
 import type { Effort, Part, Usage } from './types'
 import { type Answer, type Ask, record, type Wire } from './wire'
 
-/** What one round came to. */
 export interface Round {
   answer: Answer
   parts: Part[]
@@ -30,17 +21,12 @@ export interface Round {
   model: string
 }
 
-/** What the round may change about the request before it is made again, said back so
- *  the thread can show it: the level now used, and whether tools were dropped. */
 export interface Adjusted {
   effort?: Effort
-  /** The levels the model is now known to take. */
   efforts?: Effort[]
   toolsRefused?: boolean
 }
 
-/** Whether a refusal was about something the request can do without, and the request
- *  without it. Null where it was about the request as a whole. */
 function without(refused: Refused, ask: Ask): { ask: Ask; adjusted: Adjusted } | null {
   if (refused.status !== 400) return null
   const said = refused.message
@@ -61,8 +47,6 @@ function without(refused: Refused, ask: Ask): { ask: Ask; adjusted: Adjusted } |
     }
   }
   if (ask.effort !== 'auto' && aboutEffort) {
-    // Where the refusal lists what the model takes, every other level is refused at
-    // once; where not, this one.
     const listed = supportedIn(said)
     const offered = listed ?? ask.model.efforts.filter((one) => one !== ask.effort)
     const refusedNow = SCALE.filter((one) => one !== 'auto' && !offered.includes(one))
@@ -81,8 +65,6 @@ function without(refused: Refused, ask: Ask): { ask: Ask; adjusted: Adjusted } |
   return null
 }
 
-/** Makes the request, stepping round what the provider refused, and reads its stream,
- *  saying each part as it changes. */
 export async function round(
   wire: Wire,
   first: Ask,
@@ -92,7 +74,6 @@ export async function round(
 ): Promise<Round> {
   let ask = first
   let response: Response | null = null
-  // Each of the four can be refused once; a fifth refusal is about something else.
   for (let tries = 0; !response; tries++) {
     const { url, body, headers } = wire.request(ask)
     try {
@@ -116,7 +97,6 @@ export async function round(
   }
   for await (const event of sseEvents(response.body, done)) {
     const said = reader.heard(event)
-    // A failed response carries its complaint inside it, the way complete.ts reads one.
     if (said.trouble) {
       throw await refusalIn(record(said.trouble).response ?? said.trouble, 0, ask.provider)
     }

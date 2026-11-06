@@ -23,7 +23,6 @@ import {
 } from './accounts'
 import type { ProviderKind } from './providers'
 
-/** Accounts of these kinds, added in this order. */
 function made(...kinds: ProviderKind[]): Accounts {
   return kinds.reduce((state, kind) => added(state, kind).state, NONE)
 }
@@ -162,7 +161,6 @@ describe('kept and read back', () => {
       defaultVendor: 'nobody',
     })
     expect(read.accounts.map((one) => one.id)).toEqual(['anthropic', 'openai'])
-    // A home of Orden's is only ever a program's.
     expect(read.accounts[1]?.own).toBeUndefined()
     expect(read.active).toEqual({ [CLAUDE]: 'anthropic', [OPENAI]: 'openai' })
     expect(read.defaultVendor).toBe(CLAUDE)

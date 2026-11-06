@@ -1,5 +1,3 @@
-/** The ring's numbers: the providers' own counts, the ≈ estimate, where it compacts. */
-
 import { describe, expect, test } from 'vitest'
 import {
   anthropicUsage,

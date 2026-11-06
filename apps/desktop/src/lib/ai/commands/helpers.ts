@@ -1,16 +1,3 @@
-/** The commands that run a thread beside this one (docs/ai-sidebar.md 3.1, 3.3):
- *  `/fork`, `/subtask`, `/bg`, `/batch` and `/deep-research`.
- *
- *  Claude Code's three nearby words, kept apart by what comes back: `/branch` moves you
- *  into a copy (the panel's own), `/fork` leaves a copy running while you stay and sends
- *  nothing back, `/subtask` leaves a copy running and its answer comes back here as a
- *  line. `/batch` is many subtasks, one a note, three at a time, and `/deep-research` is
- *  one that reads the web and writes a note. Every one is on the thread's task list
- *  until it ends, and `/stop` ends it. A fork is a chat of its own in the list; every
- *  other helper is its parent's (`Thread.parent`), opened from the line its answer comes
- *  back as and in no list (#1062). The thread that started them keeps their ids for the
- *  review (lane 3), so one review covers every change they made. */
-
 import { TAG_NAME } from '@orden/markdown/tags'
 import { t } from '../../i18n.svelte'
 import type { Query } from '@orden/scan/search/query'
@@ -24,12 +11,8 @@ import { answerOf } from './loop'
 import { tasks, type TaskKind } from './tasks.svelte'
 import type { Ended } from './types'
 
-/** Subtasks of one batch that run at once. */
 const AT_ONCE = 3
 
-/** A copy of the thread to here, or a new thread on the same provider and model where
- *  there is nothing to copy or the helper should start clean; `own` for a fork, which
- *  is the reader's chat rather than its parent's helper. */
 function helperOf(parent: Thread, title: string, copy: boolean, mode?: Mode, own = false): Thread {
   const last = parent.turns.at(-1)
   const made =
@@ -51,7 +34,6 @@ function helperOf(parent: Thread, title: string, copy: boolean, mode?: Mode, own
   return made
 }
 
-/** Runs one helper, on the task list while it runs, and says how it ended. */
 async function run(
   host: Host,
   parent: Thread,
@@ -80,14 +62,12 @@ async function run(
   }
 }
 
-/** The line a helper's answer comes back as: what it was asked, then what it said. */
 function answered(task: string, ended: Ended | null): string {
   const words = ended ? answerOf(ended).trim() : ''
   const failed = !ended || ended.stop === 'error'
   return `↳ ${task}\n\n${failed ? (ended?.error ?? t('The model did not answer.')) : words}`
 }
 
-/** `/fork [prompt]`: a copy left running while you stay. */
 export function fork(host: Host, parent: Thread, prompt: string): void {
   const copy = helperOf(parent, parent.title, true, undefined, true)
   host.touched(parent)
@@ -95,7 +75,6 @@ export function fork(host: Host, parent: Thread, prompt: string): void {
   else host.adopt(copy)
 }
 
-/** `/subtask <task>`: a copy that works on the task, whose answer comes back here. */
 export async function subtask(host: Host, parent: Thread, task: string): Promise<void> {
   const copy = helperOf(parent, task.slice(0, 80), true)
   host.touched(parent)
@@ -106,7 +85,6 @@ export async function subtask(host: Host, parent: Thread, task: string): Promise
 
 const TAG_WORD = new RegExp(String.raw`^#${TAG_NAME}$`, 'u')
 
-/** The folders (`Inbox/`) and tags (`#todo`) an instruction names. */
 export function batchTargets(instruction: string): { folders: string[]; tags: string[] } {
   const words = instruction.split(/\s+/).map((one) => one.replace(/^@/, '').replace(/[.,;:]+$/, ''))
   return {
@@ -115,15 +93,10 @@ export function batchTargets(instruction: string): { folders: string[]; tags: st
   }
 }
 
-/** The most notes one `/batch` works through. */
 const MOST_NOTES = 1_000
 
-/** As many hits as a folder's search may answer with before they are held to the
- *  folder: every note of any space anybody keeps. */
 const EVERY_PATH = 1_000_000
 
-/** Whether a note, by its path in the space, sits in the folder `Inbox/` names: under
- *  it from the space's top, at any depth, and in any case, as the search folds it. */
 function inFolder(relative: string, folder: string): boolean {
   const wanted = folder
     .replace(/\\/g, '/')
@@ -132,14 +105,6 @@ function inFolder(relative: string, folder: string): boolean {
   return relative.replace(/\\/g, '/').toLowerCase().startsWith(wanted)
 }
 
-/** The notes of those folders and tags, by the space's own search.
- *
- *  The search's `path:` is words anywhere in the path, so `Inbox/` there is also
- *  `Old Inbox/`, `MyInbox/` and `Projects/Inbox/`. It still narrows the walk, and each
- *  hit is then held to the folder itself; a tag is asked apart, since an `any` of both
- *  cannot say which of them a hit answered. The folder's search is let answer with
- *  every path it matches, since the ones it then drops would otherwise fill the
- *  count and push the folder's own notes out; the count is what is kept. */
 async function batchNotes(
   root: string,
   targets: { folders: string[]; tags: string[] },
@@ -178,14 +143,11 @@ async function batchNotes(
   return [...paths].sort()
 }
 
-/** The path a note's link names it by. */
 function linkOf(path: string, root: string): string {
   const relative = path.startsWith(root) ? path.slice(root.length).replace(/^[\\/]+/, '') : path
   return relative.replace(/\\/g, '/').replace(/\.md$/i, '')
 }
 
-/** `/batch <instruction>`: the instruction over every note it names, each a subtask in
- *  its parent's mode, three at a time; one line when all are done. */
 export async function batch(host: Host, parent: Thread, instruction: string): Promise<void> {
   const root =
     workspace.spaces.find((one) => one.id === parent.space)?.root ?? workspace.activeSpace?.root
@@ -235,7 +197,6 @@ export async function batch(host: Host, parent: Thread, instruction: string): Pr
   host.line(parent, `↳ ${instruction}\n\n✓ ${done}/${notes.length}`, undefined, started)
 }
 
-/** What `/deep-research` asks its helper. Not translated: the model's to read. */
 export function researchPrompt(question: string): string {
   return [
     `Research this question: ${question}`,
@@ -246,9 +207,6 @@ export function researchPrompt(question: string): string {
   ].join(' ')
 }
 
-/** `/deep-research <question>`: a helper in its parent's mode that reads the web and writes
- *  a cited note; its answer comes back here. Reaching the web is the grant's browser
- *  scope: without it the helper's first browser call is refused and says so. */
 export async function research(host: Host, parent: Thread, question: string): Promise<void> {
   const helper = helperOf(parent, question.slice(0, 80), false, parent.mode)
   host.touched(parent)

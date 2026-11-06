@@ -1,8 +1,4 @@
 <script lang="ts">
-  /** The change a write that asked first would make (docs/ai-sidebar.md 4.4, Approve):
-   *  drawn in the question above Approve, Deny and Always, so the question is a diff
-   *  rather than a sentence. Nothing where the change cannot be
-   *  worked out; the question's own line says it then. */
   import type { Part } from '../chat/types'
   import { workspace } from '../../workspace.svelte'
   import { diffCount } from '../../diff'

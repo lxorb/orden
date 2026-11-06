@@ -1,7 +1,3 @@
-// The menu's rows against a fake panel: every row of the table is there and runs, the
-// panel's own controls are what the plain ones press, a note's command is sent with its
-// overrides, and a note never takes a built-in's name.
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { newThread } from '../chat/threads'
 import type { Thread } from '../chat/types'
@@ -14,7 +10,6 @@ vi.mock('./found', () => ({
   found: () => Promise.resolve(notes),
   foundNamed: (kind: string, name: string) =>
     Promise.resolve(notes.find((one) => one.kind === kind && one.name === name) ?? null),
-  // What a collaborator may have written, asked each time a note is used.
   fromOthers: (path: string) => Promise.resolve(path.startsWith('team/')),
   rootOfSpace: (space: string) => (space === 'space' ? '/space' : null),
   wordsOf: (note: NoteCommand | null) => Promise.resolve(note?.body ?? ''),
@@ -205,7 +200,6 @@ describe('the menu', () => {
     const base = { path: 'team/c.md', arguments: [], tools: [] }
     notes.push(
       { ...base, kind: 'command', name: 'weekly', body: 'Publish.', mode: 'full', effort: 'low' },
-      // Plan asks as the grant does and makes notes unasked, which Approve does not.
       { ...base, kind: 'command', name: 'look', body: 'Look.', mode: 'plan' },
       { ...base, kind: 'command', name: 'careful', body: 'Ask.', mode: 'approve' },
       { ...base, path: 'own/m.md', kind: 'command', name: 'mine', body: 'Mine.', mode: 'full' },
@@ -219,7 +213,6 @@ describe('the menu', () => {
     thread.mode = 'auto'
     await run(rows, 'look', '', panel)
     await run(rows, 'careful', '', panel)
-    // Plan and Approve are not one inside the other: Approve has the browser, unasked.
     thread.mode = 'plan'
     await run(rows, 'careful', '', panel)
     thread.mode = 'full'

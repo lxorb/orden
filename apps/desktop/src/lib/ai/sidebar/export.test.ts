@@ -1,5 +1,3 @@
-/** A thread as a note. */
-
 import { describe, expect, test } from 'vitest'
 import { newThread } from '../chat/threads'
 import { passageAttachments } from './citations'

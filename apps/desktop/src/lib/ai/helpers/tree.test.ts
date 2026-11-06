@@ -1,7 +1,3 @@
-/** The work a thread started, of every kind, as one tree: a command's helper (`/subtask`,
- *  `/fork`, `/batch`) and a `run_agent` helper under it, or the other way round, are
- *  all the top thread's to review and to stop, and the thread lists are written down. */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ModelInfo, Thread } from '../chat/types'
 import type { Host } from '../commands/host'
@@ -9,7 +5,6 @@ import type { Ended } from '../commands/types'
 import type { Provider } from '../providers'
 
 const written = vi.hoisted(() => [] as string[])
-/** Each thread's helpers as it was written down, by id. */
 const lists = vi.hoisted(() => new Map<string, string[]>())
 
 vi.mock('../chat/threads', async (importOriginal) => ({
@@ -25,7 +20,6 @@ vi.mock('../../workspace.svelte', () => ({
   workspace: { spaces: [{ id: 'Notes', root: '/n' }], activeSpace: null, leftOutOf: () => [] },
 }))
 
-// The space's search: one note in Inbox/.
 vi.mock('../../search/space', () => ({
   searchSpace: (
     _root: string,
@@ -58,7 +52,6 @@ const CLAUDE: Provider = { id: 'claude-code', kind: 'claude-code', name: '', mod
 const CODEX: Provider = { id: 'codex', kind: 'codex', name: '', model: '' }
 const stopped: Ended = { stop: 'stopped', turn: null, usage: null }
 
-/** Turns that run until they are stopped, each heard with its thread and signal. */
 const turns: {
   thread: Thread
   signal: AbortSignal | undefined
@@ -113,7 +106,6 @@ const asked = (from: Thread) => ({
   mode: from.mode,
 })
 
-/** An edit of the helper's, on its own provider, its call naming its thread. */
 const editBy = (thread: string) => ({
   id: 'nib-codex:1',
   agent: 'nib-codex',
@@ -123,7 +115,6 @@ const editBy = (thread: string) => ({
   thread,
 })
 
-/** The thread of the last turn started. */
 async function started(count: number): Promise<Thread> {
   await vi.waitFor(() => expect(turns).toHaveLength(count))
   const last = turns.at(-1)?.thread
@@ -149,7 +140,6 @@ describe('the review of the top thread', () => {
 
     expect(thread.helpers).toEqual([sub.id, helper.id])
     expect(changesOf(thread, [editBy(helper.id)], () => null, new Set())).toHaveLength(1)
-    // Its list is written down now, not only at its next turn.
     expect(written).toContain(thread.id)
     helpers.stopUnder(thread.id)
   })
@@ -184,8 +174,6 @@ describe('stopping the top thread', () => {
 })
 
 describe('work the reader starts later', () => {
-  /** A `/fork` copy is a chat of the reader's own, and a helper thread whose task has
-   *  ended is one they may carry on: what they start there is not the top thread's. */
   test('in a /fork copy is not the top thread’s to stop or review', async () => {
     const thread = top()
     thread.turns = [{ id: 'u1', role: 'you', at: 1, parts: [] }]
@@ -242,8 +230,6 @@ describe('a branch', () => {
 })
 
 describe('what is written down', () => {
-  /** The command writes its parent before the helper starts: a relaunch while the copy
-   *  works, or after it, still finds the copy in the parent's review. */
   test('after /fork with a prompt holds the copy in the parent’s list', async () => {
     const thread = top()
     thread.turns = [{ id: 'u1', role: 'you', at: 1, parts: [] }]

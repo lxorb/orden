@@ -1,25 +1,3 @@
-/** The thread engine for a reader's own plan: Claude Code or Codex on this machine,
- *  running the loop themselves with `nib mcp` as their only tool (docs/ai-sidebar.md 4.4,
- *  5.1). The same `Engine` the API loop is, so the panel cannot tell the roads apart.
- *
- *  **A session per thread.** A thread's first send opens one (session.ts) and every
- *  later send is a turn in it, so the program keeps the conversation, its cache and its
- *  compaction. A session that ended - idle for ten minutes, the program gone, the mode
- *  changed (a mode is the tools the program was started with) - is opened again at the
- *  next send and seeded from Orden's own transcript, written into that first message
- *  together with the space's instructions. Model, effort and Fast are said to the live
- *  session as they change.
- *
- *  **What a turn becomes.** The program's lines are read by its own reader (claude.ts,
- *  codex.ts) into parts: words, thinking, a row per call of nib's tools with its answer,
- *  and the counts the ring draws, the window learnt from the program where the model
- *  list did not say. A stop interrupts the turn and keeps what arrived.
- *
- *  **The program's own goal.** A goal set or resumed is a send whose first words are the
- *  goal (goal.ts says which), read on past the end of each turn for as long as the
- *  program goes on with it: every turn it takes is a model turn of its own, under the
- *  reader's one message. */
-
 import { t } from '../../i18n.svelte'
 import { userStep } from '../chat/transcript'
 import type {
@@ -65,55 +43,40 @@ import {
 import { plans } from './status.svelte'
 import { troubleOf } from './trouble'
 
-/** What the engine needs from the app around it: the API engine's `Setup`, read. */
 export interface LocalSetup {
   provider(id: string): Provider | null
-  /** The questions a call raises and the reader's answers; the crate's by default. */
   answers?: Answers
-  /** The space's instructions (`AGENTS.md`) and the reader's own. */
   instructions?(thread: Thread): Promise<string>
 }
 
-/** How long a stopped turn is given to say it stopped before its program is ended. */
 const STOPPING = 10_000
 
-/** One thread's session, and what it was last told. */
 interface Live {
   session: Session
   mode: Mode
   model: string
   effort: Effort
   fast: boolean
-  /** The account it was opened in. */
   account: string
-  /** Who hears its lines: the send in flight, or nobody between sends. */
   hear: ((said: Heard) => void) | null
-  /** What it said before anybody heard: the first send hears it, a later one not. */
   early: Heard[]
 }
 
-/** A send in flight, which a steer reaches. */
 interface Running {
   thread: Thread
   on: (event: EngineEvent) => void
-  /** Steered messages Claude Code has yet to answer: it answers each with a turn of its
-   *  own, so the model turn is split at each end rather than at once. */
   pending: number
   steered: (text: string) => void
 }
 
-/** A send that is a goal: what sets it, where the program last said it stands, and the
- *  goal said after the first turn where a seeded session had to answer that first. */
 interface Pursuit {
   said: Say
   state: GoalState | null
   after: Say | null
 }
 
-/** The level a program is told, or nothing for the model's own default. */
 function levelOf(kind: LocalKind, effort: Effort): Level | null {
   if (effort === 'auto') return null
-  // Claude Code has no level below low; the popover never offers one there.
   if (kind === 'claude-code' && (effort === 'off' || effort === 'minimal')) return null
   return effort
 }
@@ -122,7 +85,6 @@ function fresh(): string {
   return crypto.randomUUID()
 }
 
-/** The words of a model turn, for a transcript. */
 function wordsOf(turn: Turn): string {
   return turn.parts
     .map((part) => (part.kind === 'text' ? part.text : ''))
@@ -130,8 +92,6 @@ function wordsOf(turn: Turn): string {
     .trim()
 }
 
-/** The conversation so far as one message: the instructions, the earlier turns, and the
- *  reader's message, for a session that starts in the middle of a thread. */
 function seeded(thread: Thread, instructions: string, message: string): string {
   const said: Message[] = []
   if (instructions) said.push({ role: 'system', content: instructions })
@@ -147,12 +107,10 @@ function seeded(thread: Thread, instructions: string, message: string): string {
   return promptFor(said)
 }
 
-/** Builds the engine for one program. */
 export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
   const sessions = new Map<string, Live>()
   const running = new Map<string, Running>()
   const answers = setup.answers ?? crateAnswers
-  /** Windows learnt from the program's own counts, by model. */
   const windows = new Map<string, number>()
   let listed: ModelInfo[] = []
 
@@ -162,18 +120,14 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     return provider
   }
 
-  /** The thread's session, opened now if it has none that fits its mode. */
   async function liveFor(thread: Thread, provider: Provider): Promise<[Live, boolean]> {
     const held = sessions.get(thread.id)
-    // A session is the account's it was opened in: after a switch of account, the next
-    // send opens one in the new account, seeded from the thread as after an idle end.
     const fits = held?.mode === thread.mode && held.account === provider.id
     if (held && !held.session.ended && fits) return [held, false]
     if (held) await held.session.close()
 
     let session: Session
     const early: Heard[] = []
-    // Filled in once the session answers; a line before that waits in `early`.
     const box: { live?: Live } = {}
     try {
       session = await openSession(
@@ -213,7 +167,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     return [live, true]
   }
 
-  /** Tells a live session what changed on the chip since it last heard. */
   async function retell(live: Live, thread: Thread): Promise<void> {
     if (thread.model && thread.model !== live.model) {
       await live.session.say({ kind: 'model', model: thread.model })
@@ -229,7 +182,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     }
   }
 
-  /** A send - or, with `pursuit`, a goal - answered: how it ended. */
   async function run(
     thread: Thread,
     message: Draft,
@@ -285,11 +237,8 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     let named = false
     let thinkingAt = 0
     let stopping = false
-    /** Between two turns of a goal: the next thing the program says opens a model turn. */
     let between = false
     let quiet: ReturnType<typeof setTimeout> | undefined
-    /** Ends the send from outside the lines: a stop between two turns of a goal, which
-     *  no turn is running to say it stopped. */
     let closing: ((stop: Stop) => void) | null = null
 
     const finished = new Promise<{ stop: Stop; error?: string }>((resolve) => {
@@ -304,8 +253,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       const ended = (how: NonNullable<Read['ended']>) => {
         const flight = running.get(thread.id)
         if (how === 'end' && flight && flight.pending > 0) {
-          // Claude Code answered the turn before the steered words: the steered words'
-          // answer is a model turn of its own.
           flight.pending--
           turn = modelTurn(thread)
           thread.turns.push(turn)
@@ -317,7 +264,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
           return
         }
         if (how === 'end' && pursuit?.after) {
-          // A seeded session answered the transcript; the goal is set now.
           const after = pursuit.after
           pursuit.after = null
           between = true
@@ -354,7 +300,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
         const said = read(text)
         if (said.goal && pursuit) {
           pursuit.state = said.goal
-          // Codex said the goal is over between two turns: there is no next one.
           if (between && said.goal !== 'pursuing') {
             close('end')
             return
@@ -373,8 +318,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
           on({ type: 'model', model: said.model })
         }
         if (said.limit) {
-          // A refusal's words say the limit and seldom when it resets; the plan's own
-          // word before them, at its limit, did.
           const until =
             said.limit.until ?? (heard.limit?.state === 'reached' ? heard.limit.until : null)
           heard.limit = { ...said.limit, until }
@@ -474,8 +417,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
         }
       }
       live.hear = hear
-      // What a session said while it was being opened is this send's; what an older one
-      // said between sends is nobody's.
       const early = live.early.splice(0)
       if (opened) for (const said of early) hear(said)
     })
@@ -493,7 +434,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       thread.turns.push(said)
       on({ type: 'turn', turn: said })
       if (kind === 'codex') {
-        // Codex takes the words into the turn that is running.
         turn = modelTurn(thread)
         thread.turns.push(turn)
         on({ type: 'turn', turn })
@@ -501,8 +441,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     }
     running.set(thread.id, { thread, on, pending: 0, steered })
 
-    // A call that asks the reader holds its program's tool call open (`nib mcp` waits for
-    // the answer): its row becomes the question, answered there (chat/approvals.ts).
     const agent = agentOf(provider.id)
     const unhear = await answers
       .asked((asked) => {
@@ -533,15 +471,12 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
 
     const stop = () => {
       stopping = true
-      // A goal stopped is a goal held, or the program would start its next turn.
       if (pursuit) void live.session.say(goalHeld(kind)).catch(() => undefined)
-      // Between two of its turns nothing is running to interrupt or to say it stopped.
       if (between) {
         closing?.('stopped')
         return
       }
       void live.session.say({ kind: 'interrupt' }).catch(() => undefined)
-      // A program that does not say it stopped is ended, and the next send starts over.
       setTimeout(() => {
         if (running.get(thread.id)?.thread === thread) void live.session.close()
       }, STOPPING)
@@ -561,8 +496,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
         await live.session.say(pursuit.said)
         await live.session.say(turnSaid)
       } else if (seeding) {
-        // A goal is set by a message of its own, which cannot carry the conversation:
-        // the session hears the transcript first, and the goal once it has answered.
         pursuit.after = pursuit.said
         await live.session.say(turnSaid)
       } else await live.session.say(pursuit.said)
@@ -584,7 +517,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       return 'error'
     } finally {
       unhear()
-      // A question still open when the turn ended is no longer anybody's to answer yes.
       for (const part of turn.parts)
         if (part.kind === 'tool' && part.state === 'asking' && part.result?.approval) {
           void answers.answer(part.result.approval, false)
@@ -623,7 +555,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       )
       if (stop === 'stopped') return 'paused'
       if (stop !== 'end') return null
-      // Claude Code says nothing of where its goal stands, only that it stopped working.
       return goesOn(kind) ? pursuit.state : null
     },
     async steer(thread, text) {
@@ -633,7 +564,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       if (kind === 'codex') {
         await live.session.say({ kind: 'steer', text })
       } else {
-        // Claude Code reads a message sent mid-turn after the turn, as a turn of its own.
         flight.pending++
         await live.session.say({ kind: 'turn', text, images: [] })
       }
@@ -645,7 +575,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       if (!live || live.session.ended || running.has(thread.id)) return
       await new Promise<void>((resolve) => {
         const read: (line: string) => Read = kind === 'claude-code' ? claudeReader() : codexReader()
-        // A compaction that never says it finished lets go after two minutes.
         const timer = setTimeout(() => {
           done()
         }, 120_000)
@@ -665,8 +594,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       })
     },
     rewound(thread) {
-      // The program remembers turns the thread no longer has: it is ended, and the
-      // next send opens a session seeded from what the thread says now.
       const live = sessions.get(thread.id)
       if (!live || running.has(thread.id)) return
       sessions.delete(thread.id)
@@ -675,12 +602,10 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
   }
 }
 
-/** Whether a line says a compaction is over. */
 function finished(heard: Read): boolean {
   return !!heard.compacted || !!heard.ended
 }
 
-/** A model turn, empty. */
 function modelTurn(thread: Thread): Turn {
   return {
     id: fresh(),
@@ -693,7 +618,6 @@ function modelTurn(thread: Thread): Turn {
   }
 }
 
-/** Adds a request's counts to what the thread spent. */
 function spend(thread: Thread, usage: Usage): void {
   const before = thread.spent ?? { input: 0, output: 0 }
   thread.spent = {

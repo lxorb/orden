@@ -1,7 +1,4 @@
 <script lang="ts">
-  /** What a chip or an `@` row is, by its shape: a page, a folder, a hash, a globe, a
-   *  caret in words, a pad, a speech mark, a picture. The chip says nothing else about
-   *  its kind. */
   import type { MentionKind } from './mentions'
 
   const { kind }: { kind: MentionKind } = $props()

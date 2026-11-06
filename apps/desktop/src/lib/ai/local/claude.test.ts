@@ -1,6 +1,3 @@
-/** Claude Code's stream-json, as 2.1.280 printed it for "say ok" on 2026-09-30, trimmed
- *  to the fields that are read and with its ids made up. */
-
 import { describe, expect, test } from 'vitest'
 import { claudeReader } from './claude'
 import type { Heard } from './heard'

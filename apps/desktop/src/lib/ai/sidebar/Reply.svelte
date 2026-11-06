@@ -1,19 +1,4 @@
 <script lang="ts">
-  /** Everything that answered one message, in the order it arrived, as the Codex
-   *  sidebar draws a turn (docs/ai-sidebar.md 4.3): the work as compact steps - folded
-   *  thinking, tool rows, reads in a row as one Explored step, the words between - and
-   *  once the answer is in, all of it folded behind "Worked for 1m 23s" over the last
-   *  words (steps.ts). One-line notices stay in their place (another model from here,
-   *  compacted, stopped, the provider's error). Across the whole width with no bubble.
-   *  Ask's citations are buttons that open their passage, and the notes they cite are a
-   *  row of chips under the words: each opens its note beside.
-   *
-   *  Under it, while it is pointed at: copy, insert at the caret, ask again (whose menu
-   *  asks another model) and "..." for the rest.
-   *
-   *  The words are the model's, which are nobody's markup: drawn through ai/drawn.ts
-   *  the way a note is read, with raw HTML escaped and nothing loaded the reader did not
-   *  ask for. */
   import { SvelteSet } from 'svelte/reactivity'
   import type { EditorView } from '@orden/editor'
   import { dollarMaths } from '@orden/markdown/streamed'
@@ -60,7 +45,6 @@
     ongoto?: ((line: number) => void) | undefined
   } = $props()
 
-  /** The words of the turn, every text part in order. */
   const words = $derived(
     turn.parts.flatMap((part) => (part.kind === 'text' ? [part.text] : [])).join(''),
   )
@@ -68,7 +52,6 @@
   type Notice = Extract<Part, { kind: 'notice' }>
 
   const blocks = $derived(blocksOf(turn.parts))
-  /** Once it is done, the steps fold into "Worked for" over the last words (steps.ts). */
   const fold = $derived(foldOf(blocks, live))
   let working = $state(false)
   const showWork = $derived(working || chat.unfolded)
@@ -76,14 +59,11 @@
     turn.took ? t('Worked for {time}', { time: lasted(turn.took, i18n.language) }) : t('Worked'),
   )
 
-  /** The pictures from elsewhere the reader asked to see; see ai/drawn.ts. */
   const pictures = new SvelteSet<string>()
   const show = (src: string) => pictures.add(src)
 
   function drawn(text: string, still: boolean): string {
     const source = citationLinks(text, sources.length)
-    // The panel's note as the path a tab holds, which is what `targetOf` reads: a note
-    // of another space resolves in its own space, where following goes.
     const from = workspace.panelTab?.path ?? null
     return answerHtml(source, {
       resolveLink: (link) => {
@@ -99,7 +79,6 @@
     })
   }
 
-  /** The notes the answer cited, each once, with the first passage cited of each. */
   const cited = $derived.by(() => {
     const out: Source[] = []
     for (const n of citedIn(words, sources.length)) {
@@ -110,7 +89,6 @@
   })
 
   async function openAt(source: Source, press: MouseEvent) {
-    // A source is a path in the thread's own space; see `root` in chat.svelte.ts.
     const root = chat.root
     if (!root) return
     const ask = tabAsk(press)
@@ -119,7 +97,6 @@
     if (ask !== 'behind') ongoto?.(source.line)
   }
 
-  /** A press inside the words: a citation, a wikilink, or an address. */
   function follow(event: MouseEvent) {
     if (!opensLink(event)) return
     const anchor = (event.target as Element | null)?.closest('a')
@@ -137,7 +114,6 @@
       return
     }
     if (event.button === MIDDLE && !anchor.classList.contains('wikilink')) return
-    // In the panel note's space, where `drawn` resolved it.
     followNote(
       { path: href, target: href, heading: null, block: null, page: null },
       event,
@@ -145,15 +121,10 @@
     )
   }
 
-  /** The answer as a note writes it: its formulas spelled a note's way, so what is
-   *  copied, inserted or saved draws in the note as it drew here. */
   const spelled = $derived(dollarMaths(words))
   const asNote = $derived(linkedAnswer(spelled, sources))
   const view = $derived<EditorView | undefined>(views.of(workspace.panes.focusedId))
 
-  /** What Insert writes in the focused note: `asNote`, whose wikilinks find the notes
-   *  cited, where that note is in the thread's own space; in another one they would
-   *  find its note of the same name or none, so there each citation is the name alone. */
   function inserted(): string {
     const root = chat.root
     const into = workspace.active?.path ?? null
@@ -175,7 +146,6 @@
     editor.focus()
   }
 
-  // In the thread's own space, where the sources `asNote` links to are.
   const saveAsNote = () => chat.noteFrom(asNote)
 
   let copied = $state(false)
@@ -187,8 +157,6 @@
     copying = setTimeout(() => (copied = false), 1600)
   }
 
-  /** Ask again, ChatGPT's "Try again": the same model first, and under it every model
-   *  the provider has, to compare two answers (claude.ai's and Raycast's way too). */
   function againMenu(event: MouseEvent) {
     const provider = chat.provider
     if (!provider) return
@@ -203,7 +171,6 @@
     })
   }
 
-  /** The rest of what can be done with an answer, behind "...". */
   function moreMenu(event: MouseEvent) {
     menu.show(event, [
       ...(answered ? [{ label: t('Save as a note'), run: () => void saveAsNote() }] : []),
@@ -211,7 +178,6 @@
     ])
   }
 
-  /** What a notice says, in the catalogue's words or the provider's own. */
   function noticeOf(part: Notice): string {
     switch (part.code) {
       case 'compacted':
@@ -241,7 +207,6 @@
     turn.parts.some((part) => part.kind === 'notice' && part.code === 'error'),
   )
   const answered = $derived(!!words.trim())
-  /** When the open chat's plan resets, where this answer ended at its limit. */
   const reset = $derived(chat.head ? chat.resets[chat.head.id] : undefined)
 </script>
 
@@ -292,8 +257,6 @@
   {/each}
 
   {#if fold.work.length}
-    <!-- Codex's "Worked for": the way to the answer, folded once it is done, with a
-         hairline across to the end as the line between the work and the answer. -->
     <div class="worked">
       <StepLine verb={worked} open={showWork} onpress={() => (working = !working)} />
     </div>
@@ -408,8 +371,6 @@
     overflow-wrap: anywhere;
   }
 
-  /* Another model answers from here: a rule across with its name in it, the line
-     between messages Claude Code draws. */
   .notice.model {
     display: flex;
     align-items: center;
@@ -424,8 +385,6 @@
     background: var(--line);
   }
 
-  /* A command's own lines (a goal that ended, /status, /usage): already worded, a row
-     a line, and never sent to the model. */
   .notice.said {
     color: var(--muted-strong);
     white-space: pre-wrap;
@@ -467,9 +426,6 @@
     }
   }
 
-  /* Under the words while the answer is pointed at, Codex's hover-revealed actions, in
-     their place all along, so a long thread is neither a column of buttons nor a thread
-     that jumps as the pointer crosses it. */
   .acts {
     gap: 0;
     margin-inline-start: -6px;

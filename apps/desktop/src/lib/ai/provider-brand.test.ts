@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { accountBrand, providerBrand } from './provider-brand'
 
-/** #1089: a chat's row wears the logo of whose model it talks to. */
 describe('whose model a chat talks to', () => {
   test('is said by the model where its name says it', () => {
     expect(providerBrand('anthropic', 'claude-sonnet-4-5')).toBe('claude')
@@ -13,7 +12,6 @@ describe('whose model a chat talks to', () => {
     expect(providerBrand('compatible', 'deepseek-chat')).toBe('deepseek')
   })
 
-  /** Claude Code's and Codex's sessions name a model the program picked, or none. */
   test('and by the provider where the model says nothing', () => {
     expect(providerBrand('claude-code', 'default')).toBe('claude')
     expect(providerBrand('codex', '')).toBe('openai')

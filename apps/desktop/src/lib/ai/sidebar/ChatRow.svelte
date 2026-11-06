@@ -1,24 +1,8 @@
 <script lang="ts" module>
-  /** A pin, its head and its point. */
   const PIN = 'M5 1.8h3l-.4 3.1 1.9 1.8v.9H3.5v-.9l1.9-1.8zM6.5 7.6v3.6'
 </script>
 
 <script lang="ts">
-  /** One chat in a list of them (#1089), the same row in every list: the panel's home
-   *  and the list of all of them (Threads.svelte). On the left whose model it talks to,
-   *  as that brand's logo; then the title, stronger where something came the reader has
-   *  not seen; at the end its state's mark and how long ago it moved. Pointed at, Pin and
-   *  Archive at its end, where the time was, and the list's own "..." after them where
-   *  the list has a menu.
-   *
-   *  The end is one group at the row's own spacing (#1101): the state, then one place
-   *  that holds the time and the actions on top of each other, as wide as the wider of
-   *  the two. Pointed at, the actions take the time's place right after the state - no
-   *  room kept for them past the end, which left a gap the width of three buttons
-   *  between the state and the buttons, and nothing moves sideways between the two,
-   *  since the place is as wide either way. The title has the rest and gives way to the
-   *  group. On a touch screen, which points at nothing, the actions are there and the
-   *  time is not. */
   import { agoShort } from '../../ago'
   import Icon from '../../Icon.svelte'
   import { brandIcon, readIcon } from '../../icons'
@@ -49,7 +33,6 @@
     unread: boolean
     open?: boolean
     lit?: boolean
-    /** `option` inside a listbox. */
     role?: 'option'
     onopen: () => void
     onpin: () => void
@@ -134,9 +117,6 @@
 </li>
 
 <style>
-  /* Two columns: the title's, which takes what is left, and the end group's, as wide as
-     it is. The row's button lies under both, so the whole width is one press and one
-     highlight; the group sits over its own column, and only its buttons take a press. */
   .item {
     position: relative;
     display: grid;
@@ -164,7 +144,6 @@
     transition: background var(--dur-fast) var(--ease-out);
   }
 
-  /* What the row says, in the first column: the logo, the unread dot, the title. */
   .main {
     grid-column: 1;
     display: flex;
@@ -187,15 +166,11 @@
     color: var(--muted);
   }
 
-  /* Unread (#1064): quiet but there, a dot in the accent before a stronger title. */
   .row.is-unread .title {
     color: var(--text-strong);
     font-weight: var(--weight-strong);
   }
 
-  /* Whose model, in the ink of the row: a brand's mark is drawn in the text's colour,
-     so it reads on either theme (#1082). The box is kept where there is no logo, so
-     every title starts at the same place. */
   .logo {
     flex: none;
     display: block;
@@ -228,9 +203,6 @@
     color: var(--muted);
   }
 
-  /* The end group: the state and the place after it, at the row's own gap, and the
-     row's own padding at its end. A press on it reaches the row under it, but for its
-     buttons. */
   .tail {
     grid-column: 2;
     grid-row: 1;
@@ -241,8 +213,6 @@
     pointer-events: none;
   }
 
-  /* The time and the actions in one cell, so it is as wide as the wider and the state
-     before it never moves. */
   .slot {
     display: grid;
     align-items: center;
@@ -260,8 +230,6 @@
     white-space: nowrap;
   }
 
-  /* Faded rather than hidden at rest, so the keyboard still reaches them, and they
-     show as it does. */
   .acts {
     display: flex;
     gap: 1px;

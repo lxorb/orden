@@ -1,5 +1,3 @@
-// /loop's words and its pacing, against a fake turn.
-
 import { describe, expect, test } from 'vitest'
 import type { Turn } from '../chat/types'
 import {

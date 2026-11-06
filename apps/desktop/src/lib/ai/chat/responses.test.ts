@@ -1,6 +1,3 @@
-/** The Responses adapter against OpenAI's own recorded streams: a call, then its answer
- *  sent back the way this adapter sends it, which OpenAI accepted. */
-
 import { describe, expect, test } from 'vitest'
 import { events } from './recorded/read'
 import { itemsOf, responses } from './responses'
@@ -98,7 +95,6 @@ describe('the request', () => {
           name: 'read_note',
           description: 'Reads a note.',
           parameters: { type: 'object' },
-          // Its optional arguments stay optional (#325).
           strict: false,
         },
       ],

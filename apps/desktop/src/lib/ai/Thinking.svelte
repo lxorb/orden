@@ -1,7 +1,4 @@
 <script lang="ts">
-  /** One dot breathing while an answer's first words are on their way, ChatGPT's: the
-   *  same dot that then rides at the end of the words as they arrive (Answer.svelte), so
-   *  waiting and streaming read as one thing. Nothing needs saying about it. */
 </script>
 
 <div class="thinking" aria-hidden="true"><span></span></div>

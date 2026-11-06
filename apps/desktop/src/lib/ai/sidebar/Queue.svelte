@@ -1,9 +1,4 @@
 <script lang="ts">
-  /** What waits behind a running answer (Enter while it runs), Copilot's and Cursor's
-   *  queue: each message a row over the field, sent in order when the answer is done.
-   *  Dragged to reorder; pressed to take it back into the field and change it; its arrow
-   *  sends it into the running answer now (Steer); its cross takes it away. A stop
-   *  pauses the queue rather than emptying it. */
   import { cubicOut } from 'svelte/easing'
   import { flip } from 'svelte/animate'
   import { fly } from 'svelte/transition'

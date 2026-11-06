@@ -1,14 +1,6 @@
-/** What a tool row says: one verb and one object, "Read Herons", "Opened example.org",
- *  "Edited Reading/Birds" (docs/ai-sidebar.md 4.3). The verb is a word of the
- *  catalogues, picked by the tool's name; the object is the note's name, the page's
- *  host or the search's words, read from the call's arguments. A tool this table does
- *  not know says its own name, which is better than a guess. Pure. */
-
 import { key } from '../../i18n.svelte'
 import { nameOf } from '../../space-paths'
 
-/** The verb each of Orden's tools is said with, past tense: the row is drawn as the
- *  call goes and stays once it is done, and a pulse says which are still going. */
 const VERBS: Record<string, string> = {
   read_note: key('Read'),
   read_canvas: key('Read'),
@@ -69,12 +61,10 @@ const VERBS: Record<string, string> = {
   agent_result: key('Waited'),
 }
 
-/** A tool's own name, whichever road called it: Claude Code says `mcp__nib__read_note`. */
 export function bareName(verb: string): string {
   return verb.replace(/^mcp__.+?__/, '')
 }
 
-/** The catalogue key the row's verb is, or null for a tool this table does not know. */
 export function verbOf(verb: string): string | null {
   return VERBS[bareName(verb)] ?? null
 }
@@ -91,12 +81,10 @@ function host(url: string): string {
   }
 }
 
-/** A note's path as the row names it: the name, without its extension. */
 function noteName(path: string): string {
   return nameOf(path).replace(/\.(?:md|markdown|canvas|pdf)$/i, '')
 }
 
-/** What the call was about, in a few words, or the empty string. */
 export function objectOf(args: unknown): string {
   const said = record(args)
   for (const field of ['path', 'to', 'from', 'note', 'file']) {
@@ -112,9 +100,6 @@ export function objectOf(args: unknown): string {
   return ''
 }
 
-/** The helper's thread a `run_agent` or `agent_result` row is about, so the step opens
- *  it (#1062): what the API loop wrote with the answer, or the agent named in the answer
- *  a program's session had back through `nib mcp`. Null for any other row. */
 export function helperOf(part: {
   verb: string
   result?: { text: string; agent?: string } | undefined

@@ -1,23 +1,12 @@
-/** The commands of docs/ai-sidebar.md section 3, as a table: each row's name, the
- *  vendors' other names for it, its arguments, its group and its few words for the menu.
- *
- *  The names are Claude Code's first and Codex's where they differ, so a habit from
- *  either works here; table.test.ts reads the document's own tables and holds this one
- *  to them, row for row, and holds section 3.7's names out. What each row does is
- *  index.ts's; whether it can run for a provider is available.ts's. Pure data. */
-
 import { key } from '../../i18n.svelte'
 
-/** The sections of the document's table, in its order. */
 type Group = 'conversation' | 'model' | 'modes' | 'context' | 'words' | 'app'
 
 export interface Row {
   name: string
   synonyms: readonly string[]
-  /** What may follow the name, as the menu shows it. */
   args?: string
   group: Group
-  /** A few words for the menu: a key, translated where it is drawn. */
   description: string
 }
 
@@ -30,7 +19,6 @@ const row = (
 ): Row => ({ name, synonyms, group, description, ...(args ? { args } : {}) })
 
 export const ROWS: readonly Row[] = [
-  // 3.1 Conversation
   row('conversation', 'new', ['clear', 'reset'], key('New thread'), '[name]'),
   row('conversation', 'resume', ['continue', 'history'], key('Open a past thread'), '[name]'),
   row('conversation', 'rename', ['title'], key('Rename the thread'), '[name]'),
@@ -51,13 +39,11 @@ export const ROWS: readonly Row[] = [
   row('conversation', 'focus', [], key('Fold tools and thinking')),
   row('conversation', 'help', [], key('Commands and keys')),
 
-  // 3.2 Model
   row('model', 'model', ['models'], key('Choose the model'), '[name]'),
   row('model', 'effort', ['reasoning', 'think'], key('How hard it thinks'), '[level|auto]'),
   row('model', 'fast', [], key('The faster tier'), '[on|off]'),
   row('model', 'output-style', ['personality', 'style'], key('How answers read'), '[style]'),
 
-  // 3.3 Modes and long work
   row('modes', 'approve', ['ask'], key('Approve mode'), '[task]'),
   row('modes', 'plan', [], key('Plan mode'), '[task]'),
   row('modes', 'auto', ['agent'], key('Auto mode'), '[task]'),
@@ -71,7 +57,6 @@ export const ROWS: readonly Row[] = [
   row('modes', 'batch', [], key('One instruction over many notes'), '<instruction>'),
   row('modes', 'deep-research', ['research'], key('A cited report'), '<question>'),
 
-  // 3.4 Context and instructions
   row('context', 'mention', ['add', 'attach'], key('Attach something'), '<thing>'),
   row('context', 'add-space', ['add-dir'], key('Reach another space'), '<space>'),
   row('context', 'memory', ['memories', 'instructions', 'rules'], key('Instructions and memory')),
@@ -79,7 +64,6 @@ export const ROWS: readonly Row[] = [
   row('context', 'skills', ['commands', 'prompts'], key('Your own commands'), '[name]'),
   row('context', 'mcp', ['tools'], key('Tools')),
 
-  // 3.5 On words
   row('words', 'shorter', [], key('Shorter')),
   row('words', 'longer', [], key('Longer')),
   row('words', 'fix', ['grammar'], key('Fix grammar')),
@@ -89,7 +73,6 @@ export const ROWS: readonly Row[] = [
   row('words', 'review', ['code-review'], key('Review'), '[note|changes]'),
   row('words', 'diff', ['changes'], key('What it changed')),
 
-  // 3.6 Account and app
   row('app', 'tasks', [], key('To-dos'), '[filter|words]'),
   row('app', 'today', ['plan-day'], key('Plan my day'), '[wishes]'),
   row('app', 'catchup', [], key('What I missed in chats'), '[chat]'),
@@ -106,10 +89,8 @@ export const ROWS: readonly Row[] = [
   row('app', 'voice', [], key('Dictate'), '[on|off]'),
 ]
 
-/** `/goal`'s word for ending it, and Claude Code's five others for the same. */
 export const GOAL_CLEAR: readonly string[] = ['clear', 'stop', 'off', 'reset', 'none', 'cancel']
 
-/** Every name and synonym the table takes, which a custom command may not. */
 export function takenNames(): Set<string> {
   return new Set(ROWS.flatMap((one) => [one.name, ...one.synonyms]))
 }

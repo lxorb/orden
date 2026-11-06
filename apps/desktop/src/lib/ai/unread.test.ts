@@ -1,6 +1,3 @@
-/** The ✦ tab's dot after a restart, the panel not opened (#1064): read from the kept
- *  chats' heads, a helper's answer its chat's, and left to the panel once it is loaded. */
-
 import { beforeEach, expect, test, vi } from 'vitest'
 
 const heads = vi.hoisted(() => new Map<string, unknown[]>())

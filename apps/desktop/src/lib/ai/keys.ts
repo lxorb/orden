@@ -1,48 +1,13 @@
-/** Where a provider's API key lives on a device.
- *
- *  A key is the reader's own and worth money to whoever takes it, so Orden puts it
- *  where the platform puts secrets and keeps it out of everything that can be
- *  copied: not in the note, not in the space, never in a log or an error. It reaches
- *  the reader's other devices only sealed end to end, inside the AI vault, which the
- *  account holds as ciphertext it cannot open (vault/vault.svelte.ts). The account
- *  holds one OpenAI key in the clear for the glasses, a different key for a
- *  different thing; the AI pane says so.
- *
- *  Three platforms, three stores, one pair of calls:
- *
- *  - The desktop app: through the Rust commands, the Credential Manager on Windows and
- *    the Secret Service on Linux, and on macOS a file of Orden's own, the owner's alone,
- *    never the keychain, which kept asking for its password (#1090). See
- *    src-tauri/src/secrets.rs.
- *  - The phone app: `EncryptedSharedPreferences`, which is a file encrypted with a
- *    key held in the phone's hardware Keystore, reached through the activity. See
- *    the Secrets bridge in MainActivity.kt.
- *  - A browser: IndexedDB, which is the browser's own storage and is not a secret
- *    store at all. Anything else would be worse - a key in the page's memory only
- *    is a key retyped on every reload - so it is kept there and the pane says
- *    plainly that the browser is holding it.
- *
- *  Read back rather than write-only, because the request is made by the page: a
- *  store that could not be read would mean Orden could not ask anything. */
-
 import { frameWord, NoWord } from '../mobile/bridge'
 import { isMobile, isNative, invoke } from '../tauri'
 import type { Provider } from './providers'
 
-/** What the activity puts in the page; see MainActivity.kt.
- *
- *  Each takes the word the activity says to the page and to nothing else. The bridge
- *  object is injected into every frame of the webview - a page a note embeds, a block
- *  of a note's own HTML - and without the word a framed page could ask for every key
- *  on the phone. See `frameWord` in mobile/bridge.ts. */
 interface Secrets {
   secretRead(said: string, name: string): string | null
   secretWrite(said: string, name: string, secret: string): void
   secretForget(said: string, name: string): void
 }
 
-/** The activity's side of the bridge, or nothing anywhere else. Checked member by
- *  member, so the cast only names a shape that has just been shown to be there. */
 function bridge(): Secrets | undefined {
   const found: unknown = (globalThis as { __NIB_SYSTEM__?: unknown }).__NIB_SYSTEM__
   if (typeof found !== 'object' || found === null) return undefined
@@ -55,48 +20,32 @@ function bridge(): Secrets | undefined {
     : undefined
 }
 
-/** The word for a call about a secret, or `NoWord`. The activity drops a call with no
- *  word and says nothing, so without this a key would look saved that never was, or
- *  missing when it is there (B456). */
 async function word(): Promise<string> {
   const said = await frameWord()
   if (!said) throw new NoWord()
   return said
 }
 
-/** Whether the key is kept somewhere the operating system guards, as opposed to in
- *  the browser's own storage. What the pane says one line about. */
 export function keysAreGuarded(): boolean {
   return isNative
 }
 
-/** The key a provider is reached with, or the empty string where it has none - a
- *  local model, or one whose key has not been typed yet.
- *
- *  Never cached. A key read once and held in a variable is a key in the heap for as
- *  long as the app is open, and every reader of this awaits a request anyway. */
 export async function readKey(provider: Provider): Promise<string> {
   const found = await read(provider.id)
   return found ?? ''
 }
 
-/** Whether a key is on this device for that provider, without handing it back. What
- *  the pane shows: "set", and never the key. */
 export async function hasKey(id: string): Promise<boolean> {
   return !!(await read(id))
 }
 
-/** Who hears that a key was typed or taken away: the vault, which carries it to the
- *  reader's other devices. Not told of what the vault itself put here. */
 const moved = new Set<() => void>()
 
-/** Hears every key the reader typed or took away. Answers how to stop. */
 export function keysMoved(listener: () => void): () => void {
   moved.add(listener)
   return () => moved.delete(listener)
 }
 
-/** `quiet` is the vault's own writing: a key that arrived from another device. */
 export async function writeKey(id: string, secret: string, quiet = false): Promise<void> {
   const trimmed = secret.trim()
   if (!trimmed) {
@@ -115,21 +64,16 @@ export async function forgetKey(id: string, quiet = false): Promise<void> {
   if (!quiet) for (const one of moved) one()
 }
 
-/** Any secret of the app's own under a name of its own: a key, or the vault's device
- *  key. */
 export async function writeSecret(id: string, secret: string): Promise<void> {
   const phone = isMobile ? bridge() : undefined
   if (phone) phone.secretWrite(await word(), id, secret)
   else await invoke<null>('secret_write', { name: id, secret })
 }
 
-/** The same, read back. */
 export function readSecret(id: string): Promise<string | null> {
   return read(id)
 }
 
-/** One read, whichever store answers it. The value crossing the bridge is unknown
- *  until it has been looked at, however sure the signature above is. */
 async function read(id: string): Promise<string | null> {
   const phone = isMobile ? bridge() : undefined
   const found: unknown = phone

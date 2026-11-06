@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { insertion } from './quick'
 
 describe('where an answer goes into the note', () => {
-  /** The note with the answer in it. */
   const put = (doc: string, at: number, answer: string) => {
     const { from, insert } = insertion(doc, at, answer)
     return doc.slice(0, from) + insert + doc.slice(from)

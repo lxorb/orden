@@ -1,17 +1,3 @@
-/** The review of what the sidebar's agent changed (docs/ai-sidebar.md 4.5): the
- *  changes of each thread, Keep and Undo, the marks in the notes, rewinding to a
- *  message, Redo, and editing a message.
- *
- *  Nothing underneath is new. An agent's edits are live transactions, each a step of
- *  its own that can be taken back through whatever was typed since
- *  (lib/agents/docs/track.ts); this reads those steps, says which thread made each
- *  one (changes.ts), and takes some of them back through the same machinery the
- *  palette's "Undo edits by" uses. Keep only says the reader has read a change: the
- *  edit was already in the note.
- *
- *  Like the steps it reads, it lasts the session. Fetched with the panel; nothing of
- *  it is in the first paint. */
-
 import { SvelteSet } from 'svelte/reactivity'
 import { carryIntoEditors, type SharedDoc, StateEffect } from '@orden/editor'
 import {
@@ -57,13 +43,10 @@ import { type FileChange, fileChangesOf, spaceNamed } from './files'
 import { type Choice, type Made, planFor, type Plan, type Step } from './plan'
 import { summarized } from './summary'
 
-/** What the review needs of the panel: the field, a send, and a thread changed
- *  outside a send drawn again and written down (docs/ai-sidebar.md 6.6). */
 export interface ReviewPanel {
   send(text: string): void
   text?: string
   touched?(thread: Thread): void
-  /** A change in the field let go before the review writes the field. */
   release?(): void
 }
 
@@ -72,7 +55,6 @@ type Taken =
   | { kind: 'made'; id: string; path: string; words: string }
   | { kind: 'file'; file: FileChange }
 
-/** What a rewind took back, to put back with Redo until the next message. */
 interface Redo {
   thread: string
   taken: Taken[]
@@ -84,49 +66,33 @@ function saidShort(): void {
   busy.failed(t('Part of this could not be undone'))
 }
 
-/** How long a kept change's tint takes to fade: `--dur-stage`. */
 const FADE = 170
 
-/** The note a document is of, as the agents' steps name it. */
 function keyOf(note: NoteDoc): string {
   return note.path ?? `unsaved:${note.key}`
 }
 
-/** The open document a note is, by the key above. */
 function documentOf(path: string): NoteDoc | null {
   return workspace.documents.find((one) => keyOf(one) === path) ?? null
 }
 
-/** A turn's words, put back into the field. */
 function wordsOf(turn: Turn): string {
   return turn.draft?.text ?? ''
 }
 
 class Review {
-  /** Moves whenever any agent's edits change. */
   private version = $state(0)
-  /** The changes the reader kept, by id. */
   readonly kept = new SvelteSet<string>()
-  /** The file changes kept or taken back, by their call's id. */
   readonly filesDone = new SvelteSet<string>()
-  /** Kept a moment ago, still fading out of the note. */
   private readonly fading = new SvelteSet<string>()
-  /** The changes list, open for this thread. */
   listing = $state<string | null>(null)
-  /** The rewind sheet: the thread, the panel that asked, and the message picked. */
   sheet = $state.raw<{ thread: Thread; panel: ReviewPanel | null; turn: string | null } | null>(
     null,
   )
-  /** What the last rewind can put back. */
   redo = $state.raw<Redo | null>(null)
-  /** A few words the bar says for a moment: "and 1 after it". */
   said = $state<string | null>(null)
-  /** The threads whose edits bring their note to the front as they land (Follow, Zed's
-   *  word; off unless the reader turns it on). */
   readonly following = new SvelteSet<string>()
 
-  /** The newest edit heard in each note, by agent and note: what tells an edit landing
-   *  from one taken back, for Follow. */
   private readonly landed = new Map<string, { id: string; at: number }>()
   private marked = new WeakSet<NoteDoc>()
   private readonly draw = onceAFrame(() => this.pushMarks())
@@ -143,11 +109,8 @@ class Review {
     onSend((thread) => {
       if (this.redo?.thread === thread) this.forgetRedo()
     })
-    // A note moved or deleted is read off the turn, which is whole once its send ends.
     onSent(() => this.version++)
     setReviewSource((doc) => this.marksOfDoc(doc))
-    // The marks are fetched with the review: every editor made from now on carries
-    // them, and every note open now is handed them.
     carryIntoEditors(reviewMarks())
     for (const note of workspace.documents)
       note.live.announce([StateEffect.appendConfig.of(reviewMarks())])
@@ -159,10 +122,6 @@ class Review {
     })
   }
 
-  // ── Reading ─────────────────────────────────────────────
-
-  /** Every edit of the sidebar's agents still there to take back, open notes brought
-   *  up to date first. */
   edits(agents = trackedAgents().filter((one) => providerOf(one) !== null), aside = false): Edit[] {
     this.heard()
     const edits: Edit[] = []
@@ -187,34 +146,24 @@ class Review {
     return edits
   }
 
-  /** A thread's changes the reader has not kept, oldest first. */
   changes(thread: Reviewed, deleted = true): Change[] {
-    // A helper works on any provider in use (`run_agent`), so a thread with helpers reads
-    // every built-in agent's edits; `changesOf` keeps those of its own threads.
     const agents = thread.helpers?.length ? undefined : providersOf(thread).map(agentOf)
     return changesOf(thread, this.edits(agents, deleted), answeringAt, this.kept)
   }
 
-  /** The same by note, for the card: not those of a note deleted, which have nothing to
-   *  be taken back in until the note is back. */
   notes(thread: Reviewed): NoteChanges[] {
     return byNote(this.changes(thread, false))
   }
 
-  /** The notes a thread moved or deleted that the reader has not kept, oldest first. */
   files(thread: Pick<Thread, 'turns'>): FileChange[] {
     this.heard()
     return fileChangesOf(thread.turns, this.filesDone)
   }
 
-  /** What rewinding a thread to its message `turn` would do. */
   plan(thread: Thread, turn: string): Plan | null {
     return planFor(thread, turn, this.changes(thread), this.filesDone)
   }
 
-  // ── Keep and Undo ──────────────────────────────────────
-
-  /** The reader has read these: their marks fade and they leave the list. */
   keep(changes: readonly Change[] | readonly Edit[]): void {
     for (const change of changes) {
       this.kept.add(change.id)
@@ -227,9 +176,6 @@ class Review {
     }, dur(FADE))
   }
 
-  /** These taken back, each through everything since. Answers how many later edits
-   *  went with them because they rewrote their words, and says so for a moment. A note
-   *  that could not be reached keeps nothing of the others from going, and is said. */
   async undo(changes: readonly Edit[], token?: string): Promise<number> {
     const { more, short } = await this.take(changes, token)
     if (more) this.say(plural(more, { one: 'and {count} after it', other: 'and {count} after it' }))
@@ -268,13 +214,10 @@ class Review {
     this.keepFiles(files)
   }
 
-  /** Moves and deletes the reader has read: they leave the list. */
   keepFiles(files: readonly FileChange[]): void {
     for (const one of files) this.filesDone.add(one.id)
   }
 
-  /** Moves and deletes taken back, newest first, so a note moved twice goes back the
-   *  way it came. Answers those that were. */
   async undoFiles(thread: Thread, files: readonly FileChange[]): Promise<FileChange[]> {
     const undone: FileChange[] = []
     for (const one of [...files].reverse()) {
@@ -285,8 +228,6 @@ class Review {
     return undone
   }
 
-  /** Changes by the agent and the note they are in now, which is what one take is of: a
-   *  step taken back before them may have moved the note since they were read. */
   private grouped(changes: readonly Edit[]): [string, Edit[]][] {
     const groups: Record<string, Edit[]> = {}
     for (const change of changes) {
@@ -296,7 +237,6 @@ class Review {
     return Object.entries(groups)
   }
 
-  /** Reads the version, so whatever asked is asked again when an agent's edits change. */
   private heard(): number {
     return this.version
   }
@@ -307,7 +247,6 @@ class Review {
     this.saidTimer = setTimeout(() => (this.said = null), 3000)
   }
 
-  /** Opens the note a change is in, at the change. */
   async show(change: Pick<Edit, 'path' | 'spots'>): Promise<void> {
     if (change.path.startsWith('unsaved:')) return
     await workspace.open(change.path)
@@ -320,7 +259,6 @@ class Review {
       }
   }
 
-  /** Follow on or off for a thread. */
   toggleFollow(thread: Pick<Thread, 'id'>): void {
     if (this.following.has(thread.id)) this.following.delete(thread.id)
     else this.following.add(thread.id)
@@ -333,13 +271,8 @@ class Review {
     this.landed.set(`${agent}\n${path}`, seen)
   }
 
-  /** A note an agent just wrote in, brought to the front where the thread answering
-   *  for it follows: only in the space in front, so an agent working in another space
-   *  never moves the reader there (docs/agent-native.md 8.6). */
   private follow(agent: string, path: string): void {
     const provider = providerOf(agent)
-    // Heard for a step taken back as well as for one made: only an edit newer than any
-    // heard before in the note is one landing.
     const track = tracksOf(agent).get(path)
     const last = track?.ids.at(-1)
     const key = `${agent}\n${path}`
@@ -354,9 +287,6 @@ class Review {
     if (workspace.active?.path !== path) void workspace.open(path)
   }
 
-  // ── Marks in the notes ─────────────────────────────────
-
-  /** The changes the reader has not kept in one note, as the editor draws them. */
   private marksOf(path: string): ReviewMark[] {
     const marks: ReviewMark[] = []
     for (const edit of this.edits()) {
@@ -381,7 +311,6 @@ class Review {
     return note ? this.marksOf(keyOf(note)) : []
   }
 
-  /** Every open note told what it has now. */
   private pushMarks(): void {
     for (const note of workspace.documents) {
       const marks = this.marksOf(keyOf(note))
@@ -392,9 +321,6 @@ class Review {
     }
   }
 
-  // ── Rewind ─────────────────────────────────────────────
-
-  /** The rewind sheet for a thread, at a message where one was named. */
   openRewind(thread: Thread, panel: ReviewPanel | null, turn: string | null = null): void {
     this.listing = null
     this.sheet = { thread, panel, turn }
@@ -404,7 +330,6 @@ class Review {
     this.sheet = null
   }
 
-  /** Rewinds `thread` to before its message `turn`, the way `choice` says. */
   async rewind(
     thread: Thread,
     turn: string,
@@ -457,8 +382,6 @@ class Review {
     if (redo.taken.length || redo.turns) this.redo = redo
   }
 
-  /** The conversation cut: a compaction of turns now gone forgotten, a program that
-   *  remembers them told, the message back in the field, the thread drawn again. */
   private cut(thread: Thread, panel: ReviewPanel | null, turn: Turn): void {
     const upTo = thread.compaction?.upTo
     if (upTo && !thread.turns.some((one) => one.id === upTo)) delete thread.compaction
@@ -524,15 +447,10 @@ class Review {
     return { path, words }
   }
 
-  /** Whether the open thread has a rewind to put back. */
   canRedo(thread: Pick<Thread, 'id'> | null): boolean {
     return !!thread && this.redo?.thread === thread.id
   }
 
-  /** Puts back what the last rewind took, the other way round from how it went: the
-   *  notes it sent to Recently deleted, the moves and deletes, the edits through what was
-   *  typed since, and the conversation. What fails stays in `redo` with what is left, to
-   *  try again; none of it is lost. */
   async putBack(thread: Thread, panel: ReviewPanel | null): Promise<void> {
     const redo = this.redo
     if (redo?.thread !== thread.id || this.puttingBack) return
@@ -570,8 +488,6 @@ class Review {
       return false
     }
     if (one.kind === 'made') {
-      // Only where nothing is at the name. A file there that will not read - another
-      // encoding, a lock - reads as null too, and writing into it wrote over it.
       if ((await workspace.noteText(one.path).catch(() => null)) !== null) return true
       if (await onDisk(one.path)) return true
       await writeFile(one.path, one.words)
@@ -608,10 +524,6 @@ class Review {
     }
   }
 
-  // ── Editing a message ──────────────────────────────────
-
-  /** The reader's message `turn` sent again as `text`: the notes and the conversation
-   *  back to before it, what followed kept as a branch, and the new words sent. */
   async edit(thread: Thread, turn: string, text: string, panel: ReviewPanel): Promise<void> {
     const plan = this.plan(thread, turn)
     if (!plan) return
@@ -627,8 +539,6 @@ class Review {
   }
 }
 
-/** Tells the engine a thread's turns were cut, where it keeps a conversation of its
- *  own (Claude Code, Codex). The panel's engines, found through its setup. */
 async function rewound(thread: Thread): Promise<void> {
   const setup = Object.values(import.meta.glob<SetupModule>('../sidebar/setup.ts'))[0]
   if (!setup) return

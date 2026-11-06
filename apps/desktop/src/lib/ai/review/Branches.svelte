@@ -1,9 +1,4 @@
 <script lang="ts">
-  /** The arrows under a message that was edited and sent again (claude.ai's way): the
-   *  branch shown, of how many, and a step either way. Only the conversation moves;
-   *  the notes stay as they are. The panel draws this under each of the reader's
-   *  messages, with the live thread and itself; it draws nothing where the message
-   *  was never edited. */
   import { t } from '../../i18n.svelte'
   import type { Thread } from '../chat/types'
   import { forkAt, switchBranch } from './branches'
@@ -15,7 +10,6 @@
     panel = null,
   }: { thread: Thread; turn: string; panel?: ReviewPanel | null } = $props()
 
-  // Asked again whenever the panel draws the message, which it does after a switch.
   const fork = $derived(forkAt(thread, turn))
 
   function step(by: number) {

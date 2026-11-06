@@ -1,6 +1,3 @@
-/** Chat completions against OpenAI's own recorded stream: two calls arriving in pieces
- *  by index, and the usage asked for at the end. */
-
 import { describe, expect, test } from 'vitest'
 import { chatMessagesOf, completions } from './completions'
 import { events } from './recorded/read'

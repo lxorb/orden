@@ -1,5 +1,3 @@
-/** The panel's two kinds of number, in the reader's language. */
-
 import { describe, expect, test } from 'vitest'
 import { lasted, minutes, seconds, tokens } from './numbers'
 

@@ -1,12 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { expect, test, vi } from 'vitest'
 
-/** A helper is in no list of chats (#1062), so the step that started it is the way to
- *  it: a row each, opening the helper's thread; a batch's many wait behind Show all,
- *  and one deleted is not drawn.
- *
- *  In the jsdom project because the rows are drawn. */
-
 const panel = vi.hoisted(() => ({
   every: [
     { id: 'h1', title: '↳ Aufgabe 5', space: 'work' },

@@ -1,11 +1,3 @@
-/** The commands about what the model knows and how it works (docs/ai-sidebar.md 3.2 to
- *  3.4): instructions and memory, `/init`, the reader's own commands, agent profiles and
- *  output styles.
- *
- *  Everything here is a note of the reader's: the space's `AGENTS.md`, a note with
- *  `command:`, `agent:` or `output-style:` in its front matter. Nothing is kept anywhere a
- *  reader cannot open. */
-
 import { t } from '../../i18n.svelte'
 import { onDisk } from '../../on-disk'
 import { canWriteAt } from '../../sharing.svelte'
@@ -17,7 +9,6 @@ import { type Host, sendHere } from './host'
 import { type Held, setRemembers, STYLES } from './instructions'
 import { commandName } from './notes'
 
-/** The space's instructions, at its root. */
 const AGENTS = 'AGENTS.md'
 
 function rootOf(thread: Thread | null): string | null {
@@ -25,9 +16,6 @@ function rootOf(thread: Thread | null): string | null {
   return space?.root ?? workspace.activeSpace?.root ?? null
 }
 
-/** `/memory [on|off]`: remembering switched, or the space's `AGENTS.md` opened, which is
- *  its field in the space's settings. Made first where there is none, with the heading
- *  remembering writes under; asked for by name, unlike opening the settings. */
 export async function memory(host: Host, thread: Thread | null, args: string): Promise<void> {
   const word = args.trim().toLowerCase()
   if (word === 'on' || word === 'off') {
@@ -48,7 +36,6 @@ export async function memory(host: Host, thread: Thread | null, args: string): P
   await workspace.open(path)
 }
 
-/** What `/init` asks. Not translated: the model's to read. */
 const INIT = [
   'Write AGENTS.md at the root of this space: the instructions an assistant should follow here.',
   'First look around with your tools: the folders and what goes in each, the tags in use, the templates, how notes are named and linked, the languages they are written in, and the habits they show.',
@@ -60,19 +47,15 @@ export function init(host: Host, thread: Thread | null): void {
   sendHere(host, thread, INIT, { mode: 'auto' })
 }
 
-/** `/mention <thing>`, `/add-space <space>`: what `@` would attach, with the menu of
- *  matches open in the field. */
 export function mention(host: Host, thing: string): void {
   const { panel } = host
   if (panel.text !== undefined) panel.text = `@${thing.trim().replace(/^@/, '')}`
 }
 
-/** The names a list line shows, the chosen one marked. */
 function listed(names: readonly string[], chosen?: string, prefix = ''): string {
   return names.map((name) => `${name === chosen ? '● ' : ''}${prefix}${name}`).join('  ') || '∅'
 }
 
-/** `/skills [name]`: the reader's own commands, or one of them opened to edit. */
 export async function skills(host: Host, thread: Thread | null, args: string): Promise<void> {
   const notes = (await found()).filter((one) => one.kind === 'command')
   const name = commandName(args)
@@ -92,15 +75,11 @@ export async function skills(host: Host, thread: Thread | null, args: string): P
     )
 }
 
-/** The notes of the thread's own space, which is where its profile and style are
- *  looked up on every turn; none where that space is not on this device. */
 async function inThreadSpace(thread: Thread) {
   const root = rootOfSpace(thread.space)
   return root ? await found(root) : []
 }
 
-/** `/agents [name]`: the thread's profile chosen (its model, effort and mode with it),
- *  cleared with `none`, or listed. */
 export async function agents(host: Host, thread: Thread | null, args: string): Promise<void> {
   const open = thread ?? host.panel.ensure?.() ?? null
   if (!open) return
@@ -127,13 +106,10 @@ export async function agents(host: Host, thread: Thread | null, args: string): P
   held.agent = profile.name
   if (profile.model) host.panel.modelNamed(profile.model)
   if (profile.effort) host.panel.setEffort(profile.effort)
-  // A profile chosen stays on the thread for every turn after, so one somebody else may
-  // have written moves no mode at all: not even down, which they could time.
   if (profile.mode && !(await fromOthers(profile.path))) host.panel.setMode(profile.mode)
   host.touched(open)
 }
 
-/** `/output-style [style]`: how answers read, chosen or listed. */
 export async function outputStyle(host: Host, thread: Thread | null, args: string): Promise<void> {
   const open = thread ?? host.panel.ensure?.() ?? null
   if (!open) return

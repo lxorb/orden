@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { sseJson, sseLines, SSE_DONE } from './stream'
 
-/** Feeds a whole stream in pieces of `size` and answers the payloads that came
- *  out, which is what a slow connection does to a provider's reply. */
 function inPieces(stream: string, size: number): string[] {
   let held = ''
   const out: string[] = []

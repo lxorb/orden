@@ -12,7 +12,6 @@ import {
   statesOf,
 } from './session-state'
 
-/** #1089: every chat is always exactly one state, moved by one machine. */
 describe('the state a chat moves to', () => {
   test('a send starts it, from wherever it was', () => {
     for (const state of SESSION_STATES) expect(next(state, { type: 'start' })).toBe('running')
@@ -21,7 +20,6 @@ describe('the state a chat moves to', () => {
   test('a question stops it on the reader, and the answer sets it going again', () => {
     expect(next('running', { type: 'ask' })).toBe('needs-input')
     expect(next('needs-input', { type: 'answered' })).toBe('running')
-    // Nothing was asked of a chat that is done, so nothing is answered.
     expect(next('done', { type: 'ask' })).toBe('done')
     expect(next('running', { type: 'answered' })).toBe('running')
   })
@@ -36,12 +34,10 @@ describe('the state a chat moves to', () => {
     expect(end({ type: 'end', stop: 'refusal', busy: false })).toBe('error')
   })
 
-  /** Waiting is on something outside the reader: work it left running, a timer. */
   test('work left running out of sight keeps it waiting, until the last of it ends', () => {
     expect(next('running', { type: 'end', stop: 'end', busy: true })).toBe('waiting')
     expect(next('done', { type: 'wait' })).toBe('waiting')
     expect(next('waiting', { type: 'idle' })).toBe('done')
-    // Not over a question, and not while it is at work itself.
     expect(next('needs-input', { type: 'wait' })).toBe('needs-input')
     expect(next('running', { type: 'wait' })).toBe('running')
   })
@@ -60,7 +56,6 @@ describe('the state a chat moves to', () => {
     expect(next('archived', { type: 'unarchive' })).toBe('done')
   })
 
-  /** Never told by colour alone: each has its own mark too. */
   test('each state has its own mark and a colour', () => {
     expect(new Set(SESSION_STATES.map((one) => STATE_MARKS[one])).size).toBe(SESSION_STATES.length)
     for (const one of SESSION_STATES) expect(STATE_COLOURS[one], one).toBeTruthy()
@@ -124,15 +119,12 @@ describe('the order chats are listed in', () => {
     ])
   })
 
-  /** A chat written before there were states reads as done. */
   test('one with no state is done', () => {
     expect(stateOf(head('old'))).toBe('done')
     expect(stateOf(head('old', { archived: true }))).toBe('archived')
   })
 })
 
-/** #1062, #1089: a helper is no row and has no state of its own in the list; its chat
- *  carries it, and a question the helper asks is the chat's. */
 describe('a helper', () => {
   test('waiting on the reader puts its chat on them', () => {
     const heads = [

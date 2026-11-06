@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** `/memory`: the file a space's instructions are in is made if it is not there, with the
- *  heading remembering writes under, and the reader lands on its field. */
-
 const disk = vi.hoisted(() => ({
   files: new Map<string, string>(),
   writable: true,

@@ -1,7 +1,4 @@
 <script lang="ts">
-  /** A chat's state as its row shows it (#1089): its own mark in its own colour, so none
-   *  of the seven is told by colour alone, and the running one turning. The word is the
-   *  tooltip, and the row's name says it to a screen reader (marks.ts). */
   import { accentColour } from '../../accents'
   import { t } from '../../i18n.svelte'
   import { theme } from '../../theme.svelte'

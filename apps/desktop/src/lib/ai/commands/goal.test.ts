@@ -1,6 +1,3 @@
-// The goal loop against a fake turn and a fake evaluator: met, impossible, the budget,
-// no progress, an error the reader must fix, errors tried again, and a stop.
-
 import { describe, expect, test } from 'vitest'
 import type { Goal, Part, Turn } from '../chat/types'
 import { verdictIn, type Verdict } from './evaluate'
@@ -35,7 +32,6 @@ const talked = (): Ended => ({
   usage: null,
 })
 
-/** A road whose turns and verdicts are scripted, one per turn; the last repeats. */
 function scripted(turns: (() => Ended)[], verdicts: (Verdict | Error)[]) {
   const sent: string[] = []
   const lines: string[] = []

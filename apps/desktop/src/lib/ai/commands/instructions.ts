@@ -1,32 +1,15 @@
-/** What the commands add to what a thread's model is told (docs/ai-sidebar.md 4.6, 3.2,
- *  3.3): the output style `/output-style` chose, the agent profile `/agents` chose, and
- *  how remembering works while memory is on.
- *
- *  The panel's engine setup appends `instructionsFor(thread)` to the space's own
- *  instructions (6.5), so every road gets the same lines: Orden's own loop as part of the
- *  system prompt, Claude Code and Codex as the fixed style slot the crate appends.
- *  Nothing here is text from a page: a style or a profile is a note in the thread's
- *  space the reader picked by name, and the rest is Orden's own. One from a space
- *  somebody else can reach goes inside the untrusted mark, as its words are theirs. Not translated: nobody reads it but the model. */
-
 import { isBoolean, keepJson, stored } from '../../stored'
 import type { Thread } from '../chat/types'
 import { foundNamed, rootOfSpace, wordsOf } from './found'
 import { actsAlone } from '../modes'
 
-/** The fields the commands keep on a thread, beside lane 1's. Written down with it:
- *  the thread store keeps every field it does not check (chat/threads.ts). */
 interface Kept {
-  /** `/output-style`: a built-in style's id, or a style note's name. */
   style?: string
-  /** `/agents`: the profile note's name. */
   agent?: string
 }
 
 export type Held = Thread & Kept
 
-/** The styles every reader has, Claude Code's and Codex's between them. `default` is
- *  no line at all. */
 export const STYLES: Readonly<Record<string, string>> = {
   default: '',
   concise:
@@ -39,7 +22,6 @@ export const STYLES: Readonly<Record<string, string>> = {
 
 const MEMORY_KEY = 'nib:ai-memory'
 
-/** Whether the model may remember (`/memory on|off`). On unless turned off. */
 function remembers(): boolean {
   const value = stored(MEMORY_KEY)
   return isBoolean(value) ? value : true
@@ -49,24 +31,18 @@ export function setRemembers(on: boolean): void {
   keepJson(MEMORY_KEY, on)
 }
 
-/** How remembering is done: an edit to a note the reader can read, never a hidden
- *  store (4.6). */
 const REMEMBERING = [
   'When the reader asks you to remember something, or you learn a lasting preference of theirs,',
   'append it as one line under a `## Memory` heading in AGENTS.md at the root of the space',
   '(make the heading, or the note, if there is none), with edit_note. Never keep it anywhere else.',
 ].join(' ')
 
-/** A style's line: a built-in's, or a style note's body, from the thread's own space. */
 async function styleLine(style: string | undefined, root: string | null): Promise<string> {
   if (!style) return ''
   if (style in STYLES) return STYLES[style] ?? ''
   return root ? await wordsOf(await foundNamed('output-style', style, root)) : ''
 }
 
-/** Everything the commands add for this thread, or nothing. A profile or a style is
- *  looked up by name in the thread's own space, not the one in front, and one from a
- *  space somebody else can reach is sent as their words (`wordsOf`). */
 export async function instructionsFor(thread: Thread): Promise<string> {
   const held = thread as Held
   const root = rootOfSpace(thread.space)

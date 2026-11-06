@@ -1,8 +1,4 @@
 <script lang="ts">
-  /** One line of an answer's work (docs/ai-sidebar.md 4.3), Codex's: a caret, a verb and
-   *  its object, "Read Herons", "Ran pnpm test", "Edited Birds +3 −2", "Worked for 12s".
-   *  Muted, a size under the words, so the work reads as the way to the answer and the
-   *  answer as what was asked for. A step still going breathes rather than spins. */
   import Tally from '../review/Tally.svelte'
 
   const {
@@ -20,7 +16,6 @@
     open: boolean
     going?: boolean
     failed?: boolean
-    /** The object is a command, in the code face. */
     code?: boolean
     change?: { added: number; removed: number } | undefined
     onpress: () => void

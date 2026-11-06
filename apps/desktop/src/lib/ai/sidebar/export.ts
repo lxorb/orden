@@ -1,13 +1,7 @@
-/** A thread as a note (`/export`, docs/ai-sidebar.md 3.1): the title as its heading,
- *  each message quoted, each answer as the model wrote it with its citations made the
- *  wikilinks they point at, and nothing of the tool rows, the thinking or the notices,
- *  which are how the answer was reached rather than what it said. Pure. */
-
 import { linkedAnswer } from '../retrieve'
 import type { Thread } from '../chat/types'
 import { sourcesFor } from './citations'
 
-/** A message, quoted line by line, so a heading or a list in it stays inside the quote. */
 function quoted(text: string): string {
   return text
     .trim()
@@ -16,7 +10,6 @@ function quoted(text: string): string {
     .join('\n')
 }
 
-/** The answer's words, its parts joined in the order they arrived. */
 function answerOf(thread: Thread, at: number): string {
   const turn = thread.turns[at]
   const words = (turn?.parts ?? [])

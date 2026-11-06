@@ -1,15 +1,3 @@
-/** One question asked of Claude Code or Codex on this machine, through the crate.
- *
- *  Claude Code is started with the crate's own fixed arguments and the question on
- *  stdin, and every line it prints is streamed back, then how it ended (see
- *  src-tauri/src/ai_cli.rs). Codex is asked on its app-server, as a thread with no tool
- *  that is closed once it has answered (session.ts). Either way the lines are read with
- *  the program's own reader; the answer is handed on as it grows, the model answering is
- *  named, where the plan stands is kept for the pane, and an ending that is not an
- *  answer becomes Orden's sentence. A stop ends the program's turn, and is thrown as the
- *  same `AbortError` a stopped request is, so no caller tells the two roads apart.
- *  Fetched by the first question that needs it. */
-
 import { t } from '../../i18n.svelte'
 import { identifier } from '../../identifier'
 import { Channel } from '../../native'
@@ -24,14 +12,12 @@ import { heardIn, openSession, type Session } from './session'
 import { plans } from './status.svelte'
 import { type Ending, troubleOf } from './trouble'
 
-/** Which plan each program spends. */
 export const PLANS: Record<LocalKind, string> = { 'claude-code': 'Claude', codex: 'ChatGPT' }
 
 function stopped(): DOMException {
   return new DOMException('The question was stopped.', 'AbortError')
 }
 
-/** What a question heard so far, kept as each line is read. */
 class Listening {
   heard: Heard = {}
   answer = ''
@@ -43,7 +29,6 @@ class Listening {
     private readonly read: (line: string) => Heard,
   ) {}
 
-  /** One line; answers how the turn ended, once it has. */
   line(line: string): Heard['ended'] {
     const said = this.read(line)
     if (said.model) this.model = said.model
@@ -54,7 +39,6 @@ class Listening {
     if (said.trouble) this.heard.trouble = said.trouble
     if (said.signedOut) this.heard.signedOut = true
     if (said.text) {
-      // The model is said once, before the first words, as every provider says it.
       if (!this.answer) this.ask.named?.(this.model || this.ask.model || KIND_NAMES[this.kind])
       this.answer += said.text
       this.ask.stream?.(said.text)
@@ -62,7 +46,6 @@ class Listening {
     return said.ended
   }
 
-  /** The answer, or the sentence the run ended on. */
   finish(end: Ending): string {
     if (end.stopped || this.ask.signal?.aborted) throw stopped()
     if (this.heard.signedOut) plans.signedOut(this.ask.provider.id)
@@ -73,7 +56,6 @@ class Listening {
   }
 }
 
-/** The crate's refusal to start a program, as nib's sentence. */
 function startError(error: unknown, kind: LocalKind): Error {
   const said = error instanceof Error ? error.message : String(error)
   if (said === 'missing')
@@ -81,7 +63,6 @@ function startError(error: unknown, kind: LocalKind): Error {
   return new Error(said, { cause: error })
 }
 
-/** Asks, and answers with the whole of what came back; throws a sentence otherwise. */
 export async function askLocal(ask: Ask & { provider: { kind: LocalKind } }): Promise<string> {
   if (!isDesktop) throw new Error(t('Only in the desktop app.'))
   if (ask.signal?.aborted) throw stopped()
@@ -115,8 +96,6 @@ async function askClaude(ask: Ask): Promise<string> {
     } catch (error) {
       throw startError(error, 'claude-code')
     }
-    // A stop pressed while the program was still being started reached a crate that
-    // had nothing to stop yet; now there is.
     if (ask.signal?.aborted) stop()
     return listening.finish(await ended)
   } finally {
@@ -124,7 +103,6 @@ async function askClaude(ask: Ask): Promise<string> {
   }
 }
 
-/** Codex: a thread with no tool on the window's app-server, closed once it answered. */
 async function askCodex(ask: Ask): Promise<string> {
   const listening = new Listening('codex', ask, codexReader())
   let done: (end: Ending) => void = () => undefined

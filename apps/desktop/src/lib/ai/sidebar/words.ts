@@ -1,6 +1,3 @@
-/** The words each level of effort is said in: keys of the catalogues, translated where
- *  they are drawn. A mode's are ../modes.ts's. */
-
 import { key } from '../../i18n.svelte'
 import type { Effort } from '../chat/types'
 

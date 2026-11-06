@@ -1,8 +1,3 @@
-/** The engine for Claude Code and Codex, against a stand-in for the crate: sessions are
- *  opened and talked to through `invoke`, and each program's lines arrive on the channel
- *  the way `ai_cli_open`'s do. What a program prints is the shape claude.ts and codex.ts
- *  read, measured on 2.1.280 and generated from the app-server's own protocol. */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Draft, Engine, EngineEvent, GoalTo, Thread } from '../chat/types'
 import type { Provider } from '../providers'
@@ -19,7 +14,6 @@ interface Open {
   closed: boolean
 }
 
-/** Every session opened, and how each test has the program answer a turn. */
 let opened: Open[] = []
 let answer: (open: Open, said: Record<string, unknown>) => string[] = () => []
 let listed: unknown = null
@@ -48,7 +42,6 @@ async function fakeInvoke(command: string, args: Record<string, unknown> = {}): 
   if (command === 'ai_cli_say') {
     const said = args.say as Record<string, unknown>
     open.said.push(said)
-    // Lines arrive after the command answered, as the crate's do.
     setTimeout(() => {
       for (const one of answer(open, said)) line(open.channel, one)
     }, 0)
@@ -92,7 +85,6 @@ function thread(provider: Provider, extra: Partial<Thread> = {}): Thread {
 
 const draft = (text: string): Draft => ({ text, attachments: [] })
 
-/** Questions nobody raises: the crate's listener is not in a test. */
 const QUIET = {
   answer: () => Promise.resolve(),
   answered: () => Promise.resolve(false),
@@ -170,7 +162,6 @@ beforeEach(() => {
 })
 
 describe('a call that asks the reader, in a program’s session', () => {
-  /** The crate's questions, raised by hand; the answers given, written down. */
   function questions() {
     let hear:
       ((asked: { id: string; agent: string; verb: string; category: string }) => void) | null = null
@@ -198,8 +189,6 @@ describe('a call that asks the reader, in a program’s session', () => {
     }
   }
 
-  /** The turn up to the call, then the rest - or only its end, a stopped turn's - once
-   *  the test says. */
   function held(stopped = false) {
     const lines = claudeTurn('Herons wait.')
     let rest: () => void = () => undefined
@@ -291,7 +280,6 @@ describe('a switch of account', () => {
     const work: Provider & { kind: 'claude-code' } = { ...CLAUDE, id: 'cc-2', name: 'Work' }
     let answering: Provider = CLAUDE
     const built = createLocalEngine('claude-code', {
-      // Every account of the provider answers with the one in use, as `ai.provider` does.
       provider: () => answering,
       answers: QUIET,
       instructions: () => Promise.resolve(''),
@@ -303,7 +291,6 @@ describe('a switch of account', () => {
 
     expect(opened.map((one) => one.opening.account)).toEqual(['cc', 'cc-2'])
     expect(opened.map((one) => (one.opening.agent as { id: string }).id)).toEqual(['cc', 'cc-2'])
-    // The new session hears the thread so far, as after an idle end.
     const seed = opened[1]?.said[0] as { text?: string } | undefined
     expect(seed?.text).toContain('one')
   })
@@ -348,7 +335,6 @@ describe('a Claude Code thread', () => {
     expect(opened[0]?.said.map((one) => one.kind)).toEqual(['turn', 'model', 'effort', 'turn'])
     expect(opened[0]?.said[1]).toEqual({ kind: 'model', model: 'sonnet' })
     expect(opened[0]?.said[2]).toEqual({ kind: 'effort', effort: 'max' })
-    // The second message is the reader's words alone: the session has the rest.
     expect(opened[0]?.said[3]).toEqual({ kind: 'turn', text: 'two', images: [] })
   })
 
@@ -418,7 +404,6 @@ describe('a Claude Code thread', () => {
     ]
     const on = thread(CLAUDE)
     const events = await send(CLAUDE, on, 'hi')
-    // The refusal's words name no time; the plan's word before them did, and it stays.
     expect(events.filter((one) => one.type === 'limit').at(-1)).toEqual({
       type: 'limit',
       limit: { state: 'reached', until: 1790819400_000, untilWords: null },
@@ -607,7 +592,6 @@ describe('a question put to Codex', () => {
   })
 })
 
-/** What Codex says of its own goal: `thread/goal/updated` with the goal's status. */
 const codexGoal = (status: string) =>
   JSON.stringify({
     method: 'thread/goal/updated',
@@ -618,7 +602,6 @@ const codexGoal = (status: string) =>
     },
   })
 
-/** A goal asked of an engine, with what it said on the way. */
 async function pursue(
   built: Engine,
   on: Thread,
@@ -643,8 +626,6 @@ describe('a program’s own goal', () => {
     answer = (_, said) => {
       if (said.kind === 'goal') return [codexGoal('active')]
       if (said.kind !== 'turn') return []
-      // Codex starts the next turn by itself while the goal is active, and the model
-      // marks it complete inside the last.
       const last = codexTurn(' Done.')
       return [
         ...codexTurn('Filed.'),
@@ -712,7 +693,6 @@ describe('a program’s own goal', () => {
     const { state } = await going
 
     expect(state).toBe('paused')
-    // Held first, so the turn the interrupt ends is not followed by another.
     expect(opened[0]?.said.slice(-2)).toEqual([
       { kind: 'goal', goal: { do: 'pause' } },
       { kind: 'interrupt' },
@@ -720,7 +700,6 @@ describe('a program’s own goal', () => {
   })
 
   test('a stop between two of its turns holds it at once, and keeps the session', async () => {
-    // A turn, and then nothing yet: Codex is about to start the next one.
     answer = (_, said) => (said.kind === 'turn' ? codexTurn('Filed.') : [])
     const stopper = new AbortController()
     const on = thread(CODEX)
@@ -765,7 +744,6 @@ describe('a program’s own goal', () => {
     })
 
     expect(state).toBeNull()
-    // No budget: Claude Code keeps none.
     expect(opened[0]?.said.at(-1)).toEqual({
       kind: 'goal',
       goal: { do: 'set', objective: 'tests pass' },

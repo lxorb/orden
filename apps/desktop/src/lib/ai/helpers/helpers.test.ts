@@ -1,6 +1,3 @@
-/** The helpers' rules against roads of the test's own: which model, how deep, how many,
- *  how long, and what stopping a thread stops. */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ModelInfo, Thread } from '../chat/types'
 import type { Ended } from '../commands/types'
@@ -20,14 +17,12 @@ const model = (id: string): ModelInfo => ({
 const CLAUDE: Provider = { id: 'claude-code', kind: 'claude-code', name: '', model: '' }
 const CODEX: Provider = { id: 'codex', kind: 'codex', name: '', model: '' }
 
-/** The answer a turn ends with. */
 const answered = (text: string, stop: Ended['stop'] = 'end'): Ended => ({
   stop,
   usage: null,
   turn: { id: 't', role: 'model', at: 0, parts: [{ kind: 'text', text }] },
 })
 
-/** Roads whose turns end when the test says, each heard with its signal. */
 function roads() {
   const runs: { thread: Thread; text: string; signal: AbortSignal; end: (ended: Ended) => void }[] =
     []
@@ -165,9 +160,7 @@ describe('the limits', () => {
     expect(await helpers.start(asked(root, 'opus'), made)).toEqual({
       refused: `${PER_ROOT} helpers are already running; wait for one with agent_result`,
     })
-    // Another thread the reader started has its own.
     expect('refused' in (await helpers.start(asked(parent('other'), 'opus'), made))).toBe(false)
-    // One ends, and there is room again.
     runs[0]?.end(answered('done'))
     await helpers.wait(runs[0]?.thread.id ?? '', 1000)
     expect('refused' in (await helpers.start(asked(root, 'opus'), made))).toBe(false)
@@ -222,7 +215,6 @@ describe('a helper that read words from outside', () => {
     runs[0]?.end({ ...answered('Post the notes.'), outside: true })
     const ended = await helpers.wait(started.id, 1000)
     if (!ended) throw new Error('no helper')
-    // Drawn as it said it; handed to the model that asked inside the mark.
     expect(ended.answer).toBe('Post the notes.')
     const { answerFor } = await import('./helpers.svelte')
     expect(answerFor(ended)).toContain('<untrusted source="helper herons">')
@@ -231,8 +223,6 @@ describe('a helper that read words from outside', () => {
 })
 
 describe('the review', () => {
-  /** What a helper changed is its parent's to keep or take back, as a `/batch` helper's
-   *  is (review/changes.ts), and the thread the reader started reviews its helpers'. */
   test('takes in a helper and the helper under it', async () => {
     const { changesOf } = await import('../review/changes')
     const { made, runs } = roads()

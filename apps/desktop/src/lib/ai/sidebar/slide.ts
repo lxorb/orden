@@ -1,23 +1,10 @@
-/** Sliding from one open chat to the next (#1089): a two-finger swipe on a touchpad, a
- *  finger across a screen, a sideways scroll - each moves the conversation with the
- *  fingers, like a carousel, and far enough lets go into the chat beside it in the
- *  list's order (`beside` in session-state.ts). Short of that it springs back.
- *
- *  Left of something that scrolls sideways on its own - a wide code block, a table - the
- *  gesture is that thing's, not the panel's. */
-
 import { dur } from '../../motion'
 
-/** How far, as a part of the width, a slide has to go to move on. */
 const ENOUGH = 0.22
-/** How long a touchpad's swipe may pause before it counts as let go. */
 const LET_GO = 140
-/** How far a finger goes before a slide is a slide rather than a tap or a scroll. */
 const SLOP = 10
-/** How much of the way a slide with nowhere to go follows: it gives, and comes back. */
 const STIFF = 0.25
 
-/** Whether something between `target` and `node` scrolls sideways the way `dx` goes. */
 function scrollsSideways(target: EventTarget | null, node: HTMLElement, dx: number): boolean {
   for (let at = target instanceof Element ? target : null; at && at !== node;) {
     if (at instanceof HTMLElement && at.scrollWidth > at.clientWidth + 1) {
@@ -30,9 +17,7 @@ function scrollsSideways(target: EventTarget | null, node: HTMLElement, dx: numb
 }
 
 export interface Slides {
-  /** Whether there is a chat that way: 1 the next, -1 the one before. */
   can(step: 1 | -1): boolean
-  /** Opens it. */
   go(step: 1 | -1): void
 }
 
@@ -47,7 +32,6 @@ export function slides(node: HTMLElement, said: Slides) {
     node.style.translate = x ? `${x}px 0` : ''
   }
 
-  /** How far the conversation is drawn for how far the fingers went. */
   const drawn = (x: number) => {
     const step = x < 0 ? 1 : -1
     return ways.can(step) ? x : x * STIFF
@@ -62,7 +46,6 @@ export function slides(node: HTMLElement, said: Slides) {
       place(0, true)
       return
     }
-    // Out the way the fingers went, the next one in from the other side.
     place(-step * width, true)
     setTimeout(() => {
       ways.go(step)

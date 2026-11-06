@@ -51,9 +51,6 @@ describe('where a provider lives', () => {
     expect(apiRoot(local('https://gateway.example/v2'))).toBe('https://gateway.example/v2')
   })
 
-  /** The content policy names `http://localhost:*` and no other plain-http origin,
-   *  and a policy reads `127.0.0.1` as a different host; see src/csp.ts and the
-   *  comment on `LOOPBACK`. Typing either spelling has to reach the same server. */
   test('every way of writing this machine becomes the one the policy allows', () => {
     expect(apiRoot(local('http://127.0.0.1:11434'))).toBe('http://localhost:11434/v1')
     expect(apiRoot(local('http://127.0.0.1:11434/v1'))).toBe('http://localhost:11434/v1')
@@ -62,8 +59,6 @@ describe('where a provider lives', () => {
   })
 
   test('leaves an address that only begins like one alone', () => {
-    // A host of somebody else's that starts with those digits, and the same
-    // address over https, which the policy allows anywhere.
     expect(apiRoot(local('http://127.0.0.100:80'))).toBe('http://127.0.0.100:80/v1')
     expect(apiRoot(local('https://127.0.0.1:8443'))).toBe('https://127.0.0.1:8443/v1')
   })
@@ -83,15 +78,6 @@ describe('whether a provider can be asked', () => {
   })
 })
 
-/** Whether asking this provider for its list of models can go anywhere yet.
- *
- *  The pane offers the list as the first thing that tells somebody their key
- *  works, and it offered it before there was a key: pressing it sent an
- *  unauthenticated request to Anthropic's own server and showed the 401 it came
- *  back with. A request nobody can be answered is a request that should not
- *  leave, on an app whose whole claim about models is that nothing goes anywhere
- *  it was not sent. A model on this machine is the other case: it wants no key,
- *  and the reader typed its address themselves. */
 describe('whether there is any point asking for the models', () => {
   test('the hosted two want a key first', () => {
     expect(reachable(claude, false)).toBe(false)
@@ -133,7 +119,6 @@ describe('what a request carries', () => {
   })
 
   test('a local model with no key gets no authorisation header at all', () => {
-    // An empty one is worse than none: some servers refuse it outright.
     expect(headersFor(local('http://localhost:11434'), '')).not.toHaveProperty('authorization')
   })
 })
@@ -231,8 +216,6 @@ describe('the models a provider listed', () => {
   })
 })
 
-/** #325: a key given to OpenAI started on babbage-002, the first name its list sorts to,
- *  which cannot call a tool, so a task done with AI could do nothing. */
 describe('the model a provider starts on', () => {
   const OPENAI = [
     'babbage-002',

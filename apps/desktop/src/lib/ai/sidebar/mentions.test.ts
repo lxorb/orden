@@ -1,5 +1,3 @@
-/** What `@` and a few letters mean. */
-
 import { describe, expect, test } from 'vitest'
 import { type Mention, mentionAt, ranked, sameMention } from './mentions'
 

@@ -1,8 +1,3 @@
-/** The vault, started on this device: its roads out (the account's routes, the secret
- *  store, the AI store and the plans' sign-ins) and when it reads again - a sign-in, a
- *  word from the hub or the hub open again, a change made here, the window coming back,
- *  and every few minutes besides. Fetched with the AI store, after the first paint. */
-
 import { mount, unmount, untrack } from 'svelte'
 import { account } from '../../account.svelte'
 import { request } from '../../api'
@@ -18,27 +13,17 @@ import type { Base, Contents } from './merge'
 import { Vault, type VaultWorld } from './vault.svelte'
 import VaultApprove from './VaultApprove.svelte'
 
-/** How long a run of changes is waited out before the vault is written once. */
 const SETTLE = 800
-/** How often it reads again with nothing said. */
 const EVERY = 5 * 60_000
 
-/** Whether an account of this kind is reached with a key of its own. */
 const keyed = (kind: ProviderKind) => !isLocal(kind) && kind !== 'chatgpt'
 
 const baseKey = (id: string) => `nib:ai-vault-base:${id}`
 
-/** Whether a browser keeps its keys in the vault: never until the reader says so. A
- *  browser's storage is no secret store, and a browser let in holds every device's keys
- *  there, where a script that got into the page could read them (docs/ai.md, "Every
- *  device"). A desktop and a phone keep them in the platform's secret store, and are in
- *  the vault once somebody signs in. */
 const BROWSER_KEY = 'nib:ai-vault-browser'
 
 export const browserVault = $state({ on: storedText(BROWSER_KEY) === 'yes' })
 
-/** Turns this browser's place in the vault on or off. Off lets go of its device on the
- *  account, so the key wrapped to it goes with it, and keeps what is on this browser. */
 export async function keepBrowserInVault(on: boolean): Promise<void> {
   browserVault.on = on
   if (on) keep(BROWSER_KEY, 'yes')
@@ -50,7 +35,6 @@ export async function keepBrowserInVault(on: boolean): Promise<void> {
   await vault.leave()
 }
 
-/** Who each program and ChatGPT says is signed in here, where it has said. */
 async function signIns(): Promise<Record<string, string>> {
   if (__EVEN_PLUGIN__) return {}
   const { plans } = await import('../local/status.svelte')
@@ -82,8 +66,6 @@ const world: VaultWorld = {
     const keys: Record<string, string> = {}
     for (const one of ai.accounts) {
       if (!keyed(one.kind)) continue
-      // A key the phone would not read yet is not a key gone: carried on as one, the
-      // vault would take it off every other device.
       const key = await readSecret(one.id).catch((error: unknown) => {
         if (error instanceof NoWord) throw error
         return null
@@ -112,7 +94,6 @@ export const vault = new Vault(world)
 
 let started = false
 
-/** Starts the vault, once. */
 export function startVault(): void {
   if (started) return
   started = true
@@ -125,18 +106,14 @@ export function startVault(): void {
   ai.onLocalChange(soon)
   keysMoved(soon)
   hub.on('ai', () => void vault.refresh())
-  // And on every connect: a word said while the hub was not open is never said again,
-  // and a phone that has just signed in is answered before its hub is up.
   hub.opened(() => void vault.refresh())
   setInterval(() => void vault.refresh(), EVERY)
-  // A phone that would not say its word yet read no secret; read again once it has.
   void wordSaid().then(() => vault.refresh())
   if (typeof window !== 'undefined') {
     window.addEventListener('focus', () => void vault.refresh())
   }
 
   $effect.root(() => {
-    // A sign-in reads the vault; signing out stops reading it.
     $effect(() => {
       const who = account.user?.id ?? null
       untrack(() => {
@@ -145,7 +122,6 @@ export function startVault(): void {
       })
     })
 
-    // A device asking for the key: the bubble, while one asks.
     const asking = $derived(vault.asking.length > 0)
     $effect(() => {
       if (!asking) return

@@ -1,5 +1,3 @@
-/** The open thread's copy: new where it changed, the same object where it did not. */
-
 import { describe, expect, test } from 'vitest'
 import type { Turn } from '../chat/types'
 import { snapshot } from './snapshot'

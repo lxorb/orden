@@ -1,6 +1,3 @@
-/** A Mac that had AI keys in the keychain is told once to type them again (#1090);
- *  a Mac with nothing missing, and every other machine, is told nothing. */
-
 import { beforeEach, expect, test, vi } from 'vitest'
 
 const { memoryStorage } = await import('../../../test/disk')

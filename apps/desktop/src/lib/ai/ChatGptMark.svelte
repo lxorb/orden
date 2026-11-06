@@ -1,7 +1,4 @@
 <script lang="ts">
-  /** The ChatGPT mark, which OpenAI asks the "Continue with ChatGPT" button to wear
-   *  (https://developers.openai.com/siwc/ui-ux-guidelines). Drawn in the ink of whatever
-   *  it sits in, so it is the button's own colour in either theme. */
 </script>
 
 <svg viewBox="0 0 21 21" width="16" height="16" aria-hidden="true">

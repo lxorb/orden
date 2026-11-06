@@ -1,21 +1,3 @@
-/** Claude Code's stream-json, read line by line: a question's answer, and a session's
- *  turns.
- *
- *  `claude -p --output-format stream-json --include-partial-messages` prints one event
- *  per line (measured against 2.1.280): `system/init` with the model, `stream_event`
- *  wrapping the Messages API's own events - `content_block_delta` with a `text_delta` is
- *  the answer arriving, a `thinking_delta` the thinking, `message_start` and
- *  `message_delta` the request's counts - then the whole `assistant` message (where a
- *  tool call is read, whole), a `user` message carrying each tool's answer, a
- *  `rate_limit_event` saying where the plan stands, and a `result` last, `is_error` set
- *  when it failed and `modelUsage` naming the model's window. A session prints the same
- *  for every turn, and `system/compact_boundary` where it compacted.
- *
- *  A version without partial messages prints the `assistant` message and no deltas, so
- *  that message is the answer where no delta came before it, and skipped where one did.
- *  An event of a subagent's (`parent_tool_use_id` set) is never the answer; with no tool
- *  but Orden's there are none, and the rule costs nothing. */
-
 import {
   type Counted,
   eventIn,
@@ -26,12 +8,8 @@ import {
   type ToolHeard,
 } from './heard'
 
-/** The prefix Claude Code gives the tools of the app's own server: `orden`, or `nib`
- *  where the crate still names it as it did before the rename. */
 const OWN = /^mcp__(?:orden|nib)__/
 
-/** A reader for one run or session, which remembers whether the message being read
- *  streamed and what the request so far has counted. */
 export function claudeReader(): (line: string) => Heard {
   let streamed = false
   let counted: Counted = {}
@@ -101,8 +79,6 @@ export function claudeReader(): (line: string) => Heard {
     const window = windowIn(record(event.modelUsage))
     const usage: Heard = window ? { usage: { ...counted, window } } : {}
     if (event.is_error !== true) return { ...usage, ended: 'end' }
-    // A turn that was interrupted ends as `error_during_execution` too; the engine knows
-    // whether it asked for that.
     const words =
       typeof event.result === 'string' && event.result
         ? event.result
@@ -123,14 +99,11 @@ function record(value: unknown): Record<string, unknown> | null {
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null
 }
 
-/** The model an event names, without the `[1m]` a long-context model's name carries in
- *  Claude Code's own spelling. */
 function named(model: unknown): Heard {
   if (typeof model !== 'string' || !model) return {}
   return { model: model.replace(/\[[^\]]*\]$/, '') }
 }
 
-/** The words of a message's content blocks. */
 function textOf(content: unknown): string {
   if (!Array.isArray(content)) return ''
   return content
@@ -141,7 +114,6 @@ function textOf(content: unknown): string {
     .join('')
 }
 
-/** A call of one of Orden's tools in an `assistant` message. */
 function toolUse(content: unknown): ToolHeard | null {
   if (!Array.isArray(content)) return null
   for (const block of content) {
@@ -153,7 +125,6 @@ function toolUse(content: unknown): ToolHeard | null {
   return null
 }
 
-/** A tool's answer in a `user` message. */
 function toolResult(content: unknown): ToolHeard | null {
   if (!Array.isArray(content)) return null
   for (const block of content) {
@@ -170,8 +141,6 @@ function toolResult(content: unknown): ToolHeard | null {
   return null
 }
 
-/** A request's counts as the Messages API gives them: what was sent is the fresh input,
- *  the cache read and the cache written. */
 function countsIn(usage: Record<string, unknown> | null): Counted {
   if (!usage) return {}
   const number = (key: string) => (typeof usage[key] === 'number' ? usage[key] : 0)
@@ -180,7 +149,6 @@ function countsIn(usage: Record<string, unknown> | null): Counted {
   return { input, cached, output: number('output_tokens') }
 }
 
-/** The model's window, from a result's `modelUsage`. */
 function windowIn(usage: Record<string, unknown> | null): number | null {
   if (!usage) return null
   for (const one of Object.values(usage)) {
@@ -190,8 +158,6 @@ function windowIn(usage: Record<string, unknown> | null): number | null {
   return null
 }
 
-/** Where the plan stands, out of a `rate_limit_info`: `allowed`, `allowed_warning` or
- *  `rejected`, with the moment the window resets in seconds. */
 function limitIn(info: Record<string, unknown> | null): Limit | null {
   if (!info) return null
   const state =

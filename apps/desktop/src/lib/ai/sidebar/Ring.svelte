@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** The context ring beside the model chip (docs/ai-sidebar.md 4.10, Cursor's ring with
-   *  Claude Code's and Codex's real counts): it fills to the model's window with what the
-   *  provider counted after the last answer and what the next message is about to add, a
-   *  tick marks where compaction happens on its own, and past four fifths it takes the
-   *  warning colour. A model whose window nobody has said shows the count and no circle
-   *  rather than a guess.
-   *
-   *  Pressed, its tray: the bands the window is made of, the next message's ≈, and
-   *  Compact now. Hovered, the numbers in one line. */
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
   import { i18n, key, t } from '../../i18n.svelte'
@@ -21,7 +12,6 @@
   const { next }: { next: number } = $props()
 
   const here = hostHere()
-  /** Up only in the place used last, where the panel is in two (host.ts). */
   const open = $derived(chat.popover === 'context' && chat.host === here)
   const head = $derived(chat.head)
   const bands = $derived.by(() => {
@@ -40,7 +30,6 @@
 
   const say = (count: number) => tokens(count, i18n.language)
 
-  /** The hover's line: used of the window, and what the thread spent where it said. */
   const summary = $derived.by(() => {
     if (!bands) return ''
     const used = bands.window ? `${say(bands.used)} / ${say(bands.window)}` : say(bands.used)
@@ -49,7 +38,6 @@
     return spent ? `${used} · ↑${say(spent.input)} ↓${say(spent.output)}${cost}` : used
   })
 
-  /** The circle: a full turn is the window, the fill what is used, the ≈ the draft. */
   const R = 5.25
   const LENGTH = 2 * Math.PI * R
   const usedArc = $derived(bands?.window ? Math.min(1, bands.used / bands.window) * LENGTH : 0)

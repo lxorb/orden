@@ -1,12 +1,3 @@
-/** A session of Claude Code or Codex on this machine, through the crate: the AI
- *  sidebar's thread when the reader's plan answers it (docs/ai-sidebar.md 5.2), and
- *  every question Codex is asked.
- *
- *  The crate starts the program and writes everything it reads; this side names a tool,
- *  a provider, a mode, a model and an effort, says one of the things say.rs lists, and
- *  hears back each line the program printed, the answers to what it asked, and the end
- *  (see src-tauri/src/ai_cli.rs). Nothing here is a flag or a protocol message. */
-
 import { identifier } from '../../identifier'
 import { Channel } from '../../native'
 import { invoke } from '../../tauri'
@@ -15,35 +6,26 @@ import type { Mode } from '../modes'
 import type { LocalKind } from '../providers'
 import type { Ending } from './trouble'
 
-/** The tools a thread may use: a mode of the sidebar's, or none for words only. */
 type ToolsOf = Mode | null
 
-/** nib's effort scale as the crate takes it: `null` is the model's own default. */
 export type Level = 'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max'
 
-/** How a session starts. */
 export interface Opening {
   tool: LocalKind
-  /** The provider in Settings > AI whose built-in grant the tools are asked as. */
   agent: { id: string; name: string }
   mode: ToolsOf
   model: string | null
   effort: Level | null
-  /** Codex: a copy of another open session's thread. */
   forkOf?: string
-  /** The thread it is for, which the helpers it starts belong to. */
   thread?: string
-  /** The tools its `nib mcp` does not list nor answer, whatever the mode reaches (#325). */
   without?: string[]
 }
 
-/** A picture with a message. */
 interface Picture {
   mime: string
   data: string
 }
 
-/** What may be said to a session; see src-tauri/src/ai_cli/say.rs. */
 export type Say =
   | { kind: 'turn'; text: string; images: Picture[] }
   | { kind: 'steer'; text: string }
@@ -60,14 +42,11 @@ export type Say =
         | { do: 'pause' | 'resume' | 'clear' | 'get' }
     }
 
-/** What a session says back. */
 export type Heard =
   | { kind: 'line'; line: string }
   | { kind: 'reply'; to: string; result: unknown; error: string | null }
   | { kind: 'end'; end: Ending }
 
-/** One message off the crate's channel, read rather than trusted. A question's channel
- *  (`ai_cli_ask`) carries the same `line` and `end`. */
 export function heardIn(value: unknown): Heard | null {
   if (typeof value !== 'object' || value === null) return null
   const said = value as Record<string, unknown>
@@ -93,18 +72,14 @@ export function heardIn(value: unknown): Heard | null {
   }
 }
 
-/** An open session. */
 export interface Session {
   readonly id: string
   readonly opening: Opening
-  /** Whether it has ended, by itself or by `close`. */
   readonly ended: boolean
   say(say: Say): Promise<void>
   close(): Promise<void>
 }
 
-/** Opens a session; everything it says goes to `heard`, its end last. A refusal to
- *  start is thrown with the crate's words (`missing`: not installed). */
 export async function openSession(
   opening: Opening,
   heard: (said: Heard) => void,
@@ -122,14 +97,11 @@ export async function openSession(
     id,
     opening: {
       tool: opening.tool,
-      // The grant as the API loop makes it (lib/ai/chat/tools.ts): whichever road a
-      // provider's thread takes first, the grant is the same.
       agent: { ...opening.agent, readerTabs: READER_TABS },
       mode: opening.mode,
       model: opening.model,
       effort: opening.effort,
       ...(opening.forkOf ? { forkOf: opening.forkOf } : {}),
-      // The account is the one the grant is the provider's for: its home, where it has one.
       account: opening.agent.id,
       ...(opening.thread ? { thread: opening.thread } : {}),
       ...(opening.without?.length ? { without: opening.without } : {}),
@@ -152,7 +124,6 @@ export async function openSession(
   }
 }
 
-/** The models a program offers, as it lists them; see models.ts. */
 export async function listedModels(tool: LocalKind, account: string): Promise<unknown> {
   return await invoke<unknown>('ai_cli_models', { tool, account })
 }

@@ -1,10 +1,4 @@
 <script lang="ts">
-  /** A call that waits for the reader (docs/ai-sidebar.md 4.4): in Approve every change,
-   *  in any mode paying. Drawn as a card in the call's own step, Codex's - what it would
-   *  change, then Approve, Always and Deny in Codex's order (once, from now on, no) -
-   *  and answered there or in the agent's session, whichever comes first. Always says
-   *  yes to this tool for the rest of the thread, as far as `alwaysOffered` goes: a
-   *  question it does not cover has no such button. */
   import { t } from '../../i18n.svelte'
   import { alwaysOffered, crateAnswers, sayAlways } from '../chat/approvals'
   import type { Part, Thread } from '../chat/types'
@@ -46,8 +40,6 @@
 </div>
 
 <style>
-  /* Codex's question: a card in the step that asks, on the accent's hairline, so the
-     one thing waiting for the reader is the thing that stands out. */
   .approval {
     display: flex;
     flex-direction: column;

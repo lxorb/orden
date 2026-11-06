@@ -1,25 +1,4 @@
 <script lang="ts">
-  /** The AI panel (docs/ai-sidebar.md): a conversation with any model the reader has,
-   *  about what is on screen, in the right side's last tab, on Ctrl+Shift+A. It replaced
-   *  the Ask panel, and Ask is its first mode: answers from the notes, each passage cited
-   *  by a number that opens it.
-   *
-   *  Laid out as the Codex extension's sidebar is in VS Code (docs/ai-sidebar.md 4.1): a
-   *  thin header with the thread's title and its menu (and in a tab the threads' and New
-   *  chat's buttons, which a side has in its own row of tabs, where Codex has them in
-   *  its view's title); the conversation, each message and then the work that answered
-   *  it as compact steps that fold into "Worked for" once the answer is in, and what it
-   *  changed as a card; the composer at the foot, always. A thread with nothing in it
-   *  yet is Codex's home: the latest threads, and the way to all of them.
-   *
-   *  Two places draw it: the right side (`wide` false), where the threads take the
-   *  conversation's place as Codex's task history does, and a tab of its own ("Open in
-   *  new tab", `wide`), where they are the rail down the left and the conversation is a
-   *  centred column. Both show the one open thread; see host.ts.
-   *
-   *  Fetched the first time the panel is shown, and the engine with it; none of it is in
-   *  the first paint or in the glasses' plugin. See surfaces.svelte.ts and
-   *  test/weight.test.ts. */
   import { door } from '@orden/markdown/door'
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
@@ -53,25 +32,16 @@
   let root = $state<HTMLElement>()
   let railed = $state(railOpen())
 
-  /** Whether anything can be asked: a provider set up for Ask, or any at all. */
   const ready = $derived(ai.providerFor('ask') !== null)
   const head = $derived(chat.head)
-  /** The threads in the conversation's place: the side's drawer, never a tab's. */
   const listing = $derived(chat.listing && !wide)
   const empty = $derived(!chat.turns.length && !chat.busy && !chat.pending[head?.id ?? ''])
-  /** An outside agent's session in the conversation's place, chosen in the list (#1120). */
   const session = $derived(listing ? null : agentOpen.id)
   const agentSession = door(() => import('../../agents/ui/AgentSession.svelte'))
-  // A session asked for from outside the list - its question's notification - is shown
-  // rather than the list the panel was left on.
   $effect(() => {
     if (agentOpen.id !== null) untrack(() => (chat.listing = false))
   })
 
-  // Which spaces there are, the one in front and the provider Ask uses are the store's
-  // to follow, drawn or not (#1115); see the end of chat.svelte.ts.
-
-  /** A tab's rail shown or put away. */
   function toggleRail() {
     railed = !railed
     rememberRail(railed)
@@ -81,20 +51,17 @@
     const thread = chat.thread
     menu.show(event, [
       { label: t('Rename'), asks: true, run: () => void chat.rename() },
-      // Follow (Zed's word): the notes the thread edits come to the front as it edits.
       ...(thread
         ? [{ label: t('Follow'), checked: following(thread), run: () => toggleFollow(thread) }]
         : []),
       { label: t('Branch'), run: () => chat.branch() },
       { label: t('Save as a note'), run: () => void chat.exportThread() },
-      // The same thread in a pane of its own, for a long session beside two notes.
       ...(wide ? [] : [{ label: t('Open in new tab'), run: chatToTab }]),
       { label: t('Archive'), run: () => chat.archive() },
       { label: t('Delete'), danger: true, run: () => void chat.remove() },
     ])
   }
 
-  /** This place is the one being used: the keyboard and the popovers come here. */
   function claim() {
     if (chat.host !== host) {
       chat.popover = null
@@ -104,8 +71,6 @@
 
   onMount(() => {
     chat.host = host
-    // Ctrl+Shift+A pressed again with the field in hand is the thread list: the side's
-    // drawer, or a tab's rail with the keyboard in its search.
     hearAgain(() => {
       const at = document.activeElement
       const box = root
@@ -117,9 +82,6 @@
       }
       return true
     })
-    // A key that opened this panel put the keyboard in its body while the panel was on
-    // its way; the field, or the way to Settings, takes it from there. See
-    // `revealPanel` in focus.ts.
     const body = root?.closest('[data-panel]')
     if (body && body === document.activeElement) {
       root?.querySelector<HTMLElement>(ready ? 'textarea' : '.empty-text .link')?.focus()
@@ -152,10 +114,6 @@
   {/if}
 
   <div class="main">
-    <!-- The header: at a side, the thread's title and its menu, the side's own row
-         over it holding New chat and Chats, as Codex's view title holds them; in a tab,
-         the whole bar - the rail's button, the title, and New chat while the rail that
-         has it is put away. -->
     {#if wide || (head?.kept && !listing && session === null)}
       <header class="top">
         {#if wide}
@@ -174,7 +132,6 @@
           </button>
         {/if}
         {#if !wide && head?.kept && !listing}
-          <!-- Codex's back chevron: out of the thread to the home and its latest chats. -->
           <button
             class="nib-glyph"
             title={t('Back')}
@@ -215,7 +172,6 @@
     {:else if session !== null}
       {#if !wide}
         <header class="top">
-          <!-- Back to the list the session was chosen in. -->
           <button
             class="nib-glyph"
             title={t('Back')}
@@ -243,10 +199,6 @@
 </div>
 
 <style>
-  /* A column with one thing that scrolls in it: the conversation grows and the field
-     at the foot stays put. The body this sits in gives up its own scrolling and
-     padding for it; see Sidebar.svelte. */
-  /* `--ground` is what the panel is drawn on, which a row's buttons stand on over its end. */
   .ask {
     --ground: var(--side-bar-bg-color);
 
@@ -256,8 +208,6 @@
     display: flex;
   }
 
-  /* A tab of its own: the page's ground, and the conversation and the composer in a
-     column of a reading measure down the middle. */
   .ask.wide {
     --column: 48rem;
     --ground: var(--bg);

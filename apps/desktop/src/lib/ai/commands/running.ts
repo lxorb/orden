@@ -1,7 +1,3 @@
-/** `/goal` and `/loop` put on their road: the panel's turns, the provider's evaluator,
- *  the thread's task list and its lines. goal.ts and loop.ts are the loops; this is
- *  what they run on. */
-
 import { t } from '../../i18n.svelte'
 import { readOutside } from '../chat/transcript'
 import type { Goal, GoalState, Thread } from '../chat/types'
@@ -12,7 +8,6 @@ import { type Host, waitFor } from './host'
 import { loopAsk, loopPrompt, runLoop } from './loop'
 import { tasks } from './tasks.svelte'
 
-/** The word a goal's line starts with, by how it ended. */
 function goalWord(state: GoalState): string {
   switch (state) {
     case 'met':
@@ -30,7 +25,6 @@ function goalWord(state: GoalState): string {
   }
 }
 
-/** A goal as `/goal` with nothing after it shows it. */
 function goalStatus(goal: Goal, now: number): string {
   const minutes = Math.round((now - goal.started) / 60_000)
   return [
@@ -54,7 +48,6 @@ function road(host: Host, thread: Thread, signal: AbortSignal): GoalRoad {
   }
 }
 
-/** Runs the thread's goal on the task list, from `first`. */
 function start(host: Host, thread: Thread, goal: Goal, first?: string): void {
   tasks.stop(thread.id, 'goal')
   const stopper = new AbortController()
@@ -62,7 +55,6 @@ function start(host: Host, thread: Thread, goal: Goal, first?: string): void {
     thread: thread.id,
     kind: 'goal',
     label: goal.condition,
-    // A goal stopped from outside (`/stop`, `/goal pause`) is paused, not lost.
     stop: () => {
       stopper.abort()
       if (goal.state === 'pursuing') {
@@ -76,7 +68,6 @@ function start(host: Host, thread: Thread, goal: Goal, first?: string): void {
   )
 }
 
-/** `/goal [condition|pause|resume|clear]`. */
 export function goal(host: Host, thread: Thread, args: string): void {
   const asked = goalAsk(args)
   const held = thread.goal
@@ -111,7 +102,6 @@ export function goal(host: Host, thread: Thread, args: string): void {
   }
 }
 
-/** `/loop [interval] [prompt]`. */
 export function loop(host: Host, thread: Thread, args: string): void {
   const asked = loopAsk(args)
   const prompt = loopPrompt(asked, thread)

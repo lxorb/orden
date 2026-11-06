@@ -1,6 +1,4 @@
 <script lang="ts">
-  /** How many lines a change adds and takes away, in the version history's colours:
-   *  `+3 −1`. A side with nothing to count is left out. */
   const { added, removed }: { added: number; removed: number } = $props()
 </script>
 

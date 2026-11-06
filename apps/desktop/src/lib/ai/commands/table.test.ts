@@ -1,7 +1,3 @@
-// The registry against docs/ai-sidebar.md section 3, read from the document itself: every
-// row of 3.1 to 3.6 is registered with exactly its synonyms and arguments, nothing of
-// 3.7 is, no name is taken twice, and every row answers for each kind of provider.
-
 import { readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
 import type { ProviderKind } from '../providers'
@@ -10,7 +6,6 @@ import { GOAL_CLEAR, ROWS, takenNames } from './table'
 
 const DOC = readFileSync(new URL('../../../../../../docs/ai-sidebar.md', import.meta.url), 'utf8')
 
-/** The lines of a part of the document, from one heading to the next. */
 function section(from: string, to: string): string[] {
   const start = DOC.indexOf(from)
   const end = DOC.indexOf(to, start + from.length)
@@ -18,7 +13,6 @@ function section(from: string, to: string): string[] {
   return DOC.slice(start, end < 0 ? undefined : end).split('\n')
 }
 
-/** A table row's cells, `\|` kept inside its cell. */
 const cells = (line: string) =>
   line
     .split(/(?<!\\)\|/)
@@ -31,7 +25,6 @@ interface DocRow {
   name: string
   args: string
   synonyms: string[]
-  /** Words that follow the command rather than replace it: `/goal clear`'s others. */
   argSynonyms: string[]
 }
 

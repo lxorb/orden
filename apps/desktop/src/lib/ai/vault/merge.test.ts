@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { activated, added, type Accounts, NONE, removed, updated } from '../accounts'
 import { baseOf, type Contents, merged, type Side } from './merge'
 
-/** Fingerprints that are the keys themselves: the merge only compares them. */
 const side = (contents: Contents): Side => ({ contents, prints: { ...contents.keys } })
 
 const two: Accounts = added(added(NONE, 'anthropic').state, 'anthropic').state

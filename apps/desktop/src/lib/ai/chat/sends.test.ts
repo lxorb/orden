@@ -15,9 +15,6 @@ function fakeEngine(): Engine & { extra: () => string } {
 const thread = (id: string, provider: string) => ({ id, provider }) as Thread
 
 describe('which thread was answering when', () => {
-  // A clock of its own: a send is stamped as it starts and as it ends, and a real
-  // clock could tick between the test reading it and the send stamping it, which a
-  // loaded machine did.
   beforeEach(() => {
     vi.useFakeTimers({ now: 1_000_000 })
   })

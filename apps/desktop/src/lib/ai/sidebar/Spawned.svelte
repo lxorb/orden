@@ -1,19 +1,13 @@
 <script lang="ts">
-  /** The helpers a step of the thread started (#1062): `run_agent`'s row, the line a
-   *  `/subtask`, `/deep-research` or `/batch` answered with. Each is a row that opens the
-   *  helper's own thread, which is what it did; its answer stays in the step. A helper is
-   *  in no list of chats, so this is the way to it. */
   import { t } from '../../i18n.svelte'
   import { chat } from './chat.svelte'
 
   const { threads }: { threads: readonly string[] } = $props()
 
-  /** Rows drawn before the rest wait behind Show all: a batch is a helper a note. */
   const MOST = 3
 
   let all = $state(false)
 
-  /** The ones still kept, with what they are called. */
   const rows = $derived(
     threads.flatMap((id) => {
       const title = chat.threadOf(id)?.title ?? chat.every.find((one) => one.id === id)?.title

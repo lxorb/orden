@@ -21,11 +21,6 @@ import {
   uncited,
 } from './retrieve'
 
-/** What the Ask panel hands a model: numbered passages of the reader's notes, bounded
- *  and relevant, and nothing of what the space leaves out. And the citations read back
- *  out of an answer. Everything here is arithmetic on strings except `retrieve`, which
- *  is driven with a space of strings and a search that answers from them. */
-
 function hit(path: string, line: number, text: string, ranges = [{ from: 0, to: 1 }]): Hit {
   return { path, name: path.split('/').pop() ?? path, line, text, ranges }
 }
@@ -256,8 +251,6 @@ describe('the citations in an answer', () => {
 })
 
 describe('asking the space', () => {
-  /** A space of strings, searched the way the crate searches: every line that says
-   *  any of the words, skipping what it is told to leave out before reading it. */
   function spaceOf(notes: Record<string, string>, extra: Partial<Space> = {}) {
     const asked: { excluded: readonly string[] }[] = []
     const search: NonNullable<Space['search']> = (

@@ -1,17 +1,4 @@
 <script lang="ts">
-  /** The foot of the panel (docs/ai-sidebar.md 4.1), Codex's composer: what is queued
-   *  and the rewind over it, then one rounded box holding the chips that go with the
-   *  next message (the note in front and the selection, Codex's IDE context), the
-   *  field, and a row under the words - "+" (files, web search, dictation, `@` and `/`)
-   *  and the mode at its start, Codex's permissions; the context ring, the model and its
-   *  effort, and one round button at its end, the arrow, and the stop while an answer
-   *  arrives.
-   *
-   *  Keyboard first. Enter sends, and queues behind a running answer; Ctrl+Enter sends
-   *  into the running answer; Escape stops it; Shift+Tab steps the mode, Alt+P opens the
-   *  model, Alt+T steps the effort, Ctrl+O opens every row, Ctrl+N starts a new chat.
-   *  Each is a row of the keyboard registry, so it can be changed in Settings. `@` lists
-   *  what can go along, `/` the commands; a picture pasted or dropped is a chip. */
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
   import { i18n, t } from '../../i18n.svelte'
@@ -51,15 +38,11 @@
   let field = $state<HTMLTextAreaElement>()
   let caret = $state(0)
   let lit = $state(0)
-  /** The menu put away with Escape, until the text changes again. */
   let hushed = $state('')
   let commands = $state<readonly PanelCommand[]>([])
   let picker = $state<HTMLInputElement>()
   const here = hostHere()
 
-  /** The field as dictation sees it (#1128): the names a message here is likely to say -
-   *  the thread's title, the note in front, what is going along - and the panel's own
-   *  line for a failure. */
   const voiceField: Dictates = {
     field: () => field,
     words: () => [
@@ -72,18 +55,9 @@
 
   const head = $derived(chat.head)
   const busy = $derived(chat.busy)
-  /** The folder of the space the thread works in, which is not the one in front once a
-   *  thread with turns is carried to another (`root` in chat.svelte.ts): what goes with
-   *  a message is that space's, so its citations open there. */
   const root = $derived(chat.root)
-  /** Whether the space in front is the thread's, which is the space the `@` list's
-   *  notes, folders and tags are read from. */
   const home = $derived(root !== null && root === workspace.activeSpace?.root)
 
-  // ── What goes along on its own ─────────────────────────
-
-  /** The note in front, while it is a note of this space: the one reading every place a
-   *  chat starts from shares (around.ts, #1115). */
   const front = $derived.by((): (Front & { key: string }) | null => {
     const note = noteInFront(root)
     return note ? { ...note, key: `note:${note.path}` } : null
@@ -94,7 +68,6 @@
   const frontOn = $derived(!!front && !chat.dropped.includes(front.key))
   const selectionOn = $derived(!!selection.trim() && !chat.dropped.includes(selectionKey))
 
-  /** What the panel says is around the field, read at the moment of sending. */
   function around() {
     const on = front && !chat.dropped.includes(front.key) ? front : null
     const picked = selectionHere()
@@ -108,15 +81,12 @@
   }
   chat.around = around
 
-  /** The chips that go with the next send: the selection as one where it is on. */
   function sentChips(): Mention[] {
     const chips = chat.chips.filter((one) => one.kind !== 'picture' || chat.model?.images !== false)
     return selectionOn && !chips.some((one) => one.kind === 'selection')
       ? [...chips, SELECTION_CHIP]
       : chips
   }
-
-  // ── The ring's ≈ ──────────────────────────────────────
 
   const next = $derived.by(() => {
     let sum = estimateText(chat.text)
@@ -130,12 +100,9 @@
     return sum
   })
 
-  // ── `@` and `/` ───────────────────────────────────────
-
   const mention = $derived(mentionAt(chat.text, caret))
   const slash = $derived(/^\/[\w-]*$/.test(chat.text) ? chat.text.slice(1) : null)
 
-  /** Every folder of the space, from the tree the file list draws. */
   function folders(): Entry[] {
     const out: Entry[] = []
     const walk = (entry: Entry) => {
@@ -149,7 +116,6 @@
     return out
   }
 
-  /** Everything `@` can name here, the ones there is one of first. */
   function candidates(): Mention[] {
     const out: Mention[] = []
     if (views.chosen > 0)
@@ -173,8 +139,6 @@
 
   const found = $derived(mention && hushed !== chat.text ? ranked(candidates(), mention.query) : [])
 
-  /** Whether the `/` menu is open, which is when its rows are asked for: each time,
-   *  since commands written as notes are found in the background (6.5). */
   const slashing = $derived(slash !== null)
 
   $effect(() => {
@@ -208,16 +172,13 @@
     }))
   })
 
-  /** Reads values for their own sake, so the effect around them follows them. */
   const follows = (..._values: unknown[]) => undefined
 
-  // A new list starts on its first row.
   $effect(() => {
     follows(rows)
     lit = 0
   })
 
-  /** A note's folder inside the space, or nothing for one at its root. */
   function folderIn(path: string): string {
     const inside = root ? withinSpace(root, path) : null
     const at = inside?.lastIndexOf('/') ?? -1
@@ -226,9 +187,6 @@
 
   let foot = $state<HTMLElement>()
 
-  /** A popover is put away by a press anywhere but on it and what opens it, by the
-   *  window losing the focus, and by Escape; see overlays.ts. Escape wherever the
-   *  keyboard is in the foot is the foot's own, below, which hands the keyboard back. */
   $effect(() =>
     chat.popover
       ? overlays.show(
@@ -253,8 +211,6 @@
   function pick(index: number, complete = false) {
     const command = commandRows[index]
     if (command) {
-      // Tab, a row that needs its words first (`/goal <condition>`), or one not offered
-      // here: the name into the field, for the reader to go on from.
       const offered = command.available(chat.provider?.kind ?? 'compatible') === true
       if (complete || !offered || command.args?.startsWith('<')) {
         chat.text = `/${command.name} `
@@ -269,8 +225,6 @@
     const at = mention
     if (!chosen || !at) return
     addChip(chosen)
-    // The `@` and its letters leave the field, and the space before them with them
-    // where the words go on after, so the chip stands for them without a gap.
     const before = chat.text.slice(0, at.from)
     const after = chat.text.slice(caret)
     const joined = before.endsWith(' ') && after.startsWith(' ') ? before.slice(0, -1) : before
@@ -286,7 +240,6 @@
     })
   }
 
-  /** A typed command, `/name args`, run where one is named; false where none is. */
   async function runTyped(): Promise<boolean> {
     const typed = commandIn(chat.text)
     if (!typed) return false
@@ -308,8 +261,6 @@
     chat.chips = sentChips()
     chat.submit(around())
   }
-
-  // ── Keys ──────────────────────────────────────────────
 
   function onKey(event: KeyboardEvent) {
     if (event.isComposing) return
@@ -340,7 +291,6 @@
     if (shortcuts.pressed('ai.model', event))
       return run(() => (chat.popover = chat.popover === 'model' ? null : 'model'))
     if (shortcuts.pressed('ai.effort', event)) return run(() => chat.setEffort('next'))
-    // Into the running answer; with nothing running, the field's own send, as Enter.
     if (shortcuts.pressed('ai.steer', event))
       return run(() => (busy ? chat.steer() : void submit()))
     if (shortcuts.pressed('ai.unfold', event)) return run(() => chat.toggleFolded())
@@ -353,11 +303,8 @@
     }
     if (event.key === 'Enter' && !event.shiftKey) return run(() => void submit())
     const empty = !chat.text.trim()
-    // Up on an empty field: the last message, to change and send again.
     if (event.key === 'ArrowUp' && empty && !event.altKey && !event.ctrlKey && !event.metaKey)
       return run(() => chat.startEdit())
-    // Escape: out of an edit; on an empty field of a thread with messages, twice is the
-    // rewind sheet, so the first is held for the second rather than leaving the panel.
     if (event.key === 'Escape' && chat.changing) return run(() => chat.cancelEdit())
     if (event.key === 'Escape' && empty && head?.kept) {
       const now = Date.now()
@@ -374,9 +321,6 @@
     caret = field?.selectionStart ?? 0
   }
 
-  // ── Pictures and files ────────────────────────────────
-
-  /** A file as a chip: a picture as itself, a text file as its words. */
   function take(file: File) {
     const reader = new FileReader()
     if (file.type.startsWith('image/')) {
@@ -396,7 +340,6 @@
     if (file.size > 2_000_000) return
     reader.onload = () => {
       const text = typeof reader.result === 'string' ? reader.result : ''
-      // Words a person can read, which is what a model can be sent; anything else stays.
       if (text.includes('\u0000')) return
       addChip({ kind: 'words', id: file.name, label: file.name, text })
     }
@@ -417,13 +360,6 @@
     files.forEach(take)
   }
 
-  // ── Mode ──────────────────────────────────────────────
-
-  /** The modes as rows, the one in force ticked, Codex's approval menu: the three
-   *  permission modes, least to most, then Plan under a rule. Full permissions is a row
-   *  like the others and never red (#372): it is chosen on purpose, and the button's
-   *  tooltip says it asks for nothing. The key that steps them is the button's tooltip
-   *  rather than a hint on every row. */
   function modeMenu(event: MouseEvent) {
     const row = (mode: Mode) => ({
       label: t(modeWord(mode)),
@@ -437,8 +373,6 @@
 
   const mode = $derived(head?.mode ?? FIRST_MODE)
 
-  // ── "+" ───────────────────────────────────────────────
-
   const searching = $derived(chat.chips.some((one) => one.kind === 'web'))
 
   function toggleWeb() {
@@ -446,8 +380,6 @@
     else addChip({ kind: 'web', id: 'web', label: t('Web search'), word: 'web' })
   }
 
-  /** Codex's "+": files first, then what else can go along, then what the field's own
-   *  keys do, for whoever has not met `@` and `/` yet. */
   function plusMenu(event: MouseEvent) {
     menu.show(event, [
       { label: t('Add photos and files'), asks: true, run: () => picker?.click() },
@@ -459,7 +391,6 @@
     ])
   }
 
-  /** A key's character typed for the reader where the caret is, opening its list. */
   function typeAt(mark: string) {
     const at = field?.selectionStart ?? chat.text.length
     const before = chat.text.slice(0, at)
@@ -475,15 +406,8 @@
     chat.focus()
   }
 
-  // ── The round button ──────────────────────────────────
-
-  /** What the one round button is now, Codex's: the stop while an answer arrives and
-   *  the field is empty, and the arrow otherwise. Dictation has a button of its own
-   *  beside it. */
   const button = $derived.by((): 'stop' | 'send' => (busy && !chat.text.trim() ? 'stop' : 'send'))
 
-  // `/voice` and "+ > Dictate" press this composer's microphone while it is the one in
-  // use (host.ts).
   $effect(() => {
     if (chat.host !== here) return
     dictation.field = voiceField
@@ -492,24 +416,14 @@
     }
   })
 
-  // ── Focus ─────────────────────────────────────────────
-
-  // Only in the place used last, where the panel is in two (host.ts).
   $effect(() => {
     if (chat.focusAsked && chat.host === here) requestAnimationFrame(() => field?.focus())
   })
 
-  /** The open thread itself, the live one the engine writes into, for the review's bar:
-   *  asked again whenever the panel draws another thread. */
   const thread = $derived(chat.head ? chat.thread : null)
 
-  /** When Escape was last pressed on an empty field, for Esc Esc. */
   let escaped = 0
 
-  // ── The goal ──────────────────────────────────────────
-
-  /** The goal's chip while it is being worked toward or is paused (6.5): ◎, how long,
-   *  its turns of its budget, its tokens; the last reason a press away. */
   const goal = $derived(
     head?.goal && (head.goal.state === 'pursuing' || head.goal.state === 'paused')
       ? head.goal
@@ -592,8 +506,6 @@
         onlight={(index: number) => (lit = index)}
       />
     {/if}
-    <!-- One box, Codex's: a press anywhere in it that is not a control is a press in
-         the field. -->
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
       class="composer nib-field"
@@ -627,8 +539,6 @@
               >
             </span>
           {/if}
-          <!-- Keyed by the chip itself: two can name one thing, a command's words sent as
-               two chips of one label (B505). -->
           {#each chat.chips as chip (chip)}
             <span
               class="chip"
@@ -688,7 +598,6 @@
         >
           <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M6.5 2.5v8M2.5 6.5h8" /></svg>
         </button>
-        <!-- How much the agent may do without asking, Codex's permissions beside "+". -->
         <button
           class="mode"
           title={mode === 'full'
@@ -734,8 +643,6 @@
 </div>
 
 <style>
-  /* The composer's column: the panel's width at a side, a reading measure down the
-     middle of a tab (`--column`, set by the panel). */
   .foot {
     position: relative;
     flex: none;
@@ -839,8 +746,6 @@
     position: relative;
   }
 
-  /* The box, Codex's: rounded, the chips, the words and the controls all inside it.
-     A field (`.nib-field`), so it answers the keyboard as every box in the app does. */
   .composer {
     flex-direction: column;
     align-items: stretch;
@@ -877,7 +782,6 @@
       border-color var(--dur-fast) var(--ease-out);
   }
 
-  /* Offered by the panel rather than added by hand: quieter until pointed at. */
   .chip.implicit {
     border-style: dashed;
     opacity: 0.7;
@@ -899,7 +803,6 @@
     white-space: nowrap;
   }
 
-  /* The selection, quoted: what it is says itself. */
   .quoted::before {
     content: '\201C';
   }
@@ -943,8 +846,6 @@
     }
   }
 
-  /* Grows to a few lines and then scrolls: a message is sometimes a paragraph, and the
-     conversation above it is what the room is for. */
   .composer textarea {
     flex: none;
     width: 100%;
@@ -980,8 +881,6 @@
     stroke-width: 1.4;
   }
 
-  /* The mode, always said, since a mode is never none and one of them acts on its own:
-     its mark, its name and the caret of a menu, as the model is said beside it. */
   .mode {
     flex: none;
     display: inline-flex;
@@ -1008,8 +907,6 @@
     }
   }
 
-  /* A narrow side keeps the model's name whole and says the mode by its mark alone,
-     its name a hover away (the tooltip and the menu). */
   @container (max-width: 17rem) {
     .mode span {
       display: none;
@@ -1026,8 +923,6 @@
     stroke-linejoin: round;
   }
 
-  /* The one round button: filled while it can do something, its glyph changing with
-     what that is. */
   .go {
     flex: none;
     display: grid;

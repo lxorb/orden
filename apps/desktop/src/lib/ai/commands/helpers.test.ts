@@ -1,5 +1,3 @@
-// What /batch fans out over, what /export and /copy take, and /autocompact's words.
-
 import { describe, expect, test } from 'vitest'
 import type { Turn } from '../chat/types'
 import { autocompactIn, markdownOf, nthAnswer } from './conversation'

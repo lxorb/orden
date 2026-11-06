@@ -1,12 +1,3 @@
-/** The commands on words (docs/ai-sidebar.md 3.5): on the selection, else the note in
- *  front, and answered as a change to keep rather than a reply to copy.
- *
- *  The four rewrites are the rewrite menu's own (rewrite.ts): the same sheet, with the
- *  diff beside the words and Keep or nothing, opened on the selection or, with nothing
- *  selected, on the whole of the note below its front matter. `/summarize` and `/review`
- *  are the agent's edits, which land on the changes card to keep or undo; `/explain` is the
- *  one that is a reply. The prompts are the model's to read and are not translated. */
-
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { views } from '../../views.svelte'
 import { workspace } from '../../workspace.svelte'
@@ -14,8 +5,6 @@ import { languageNames, type Verb } from '../rewrite'
 import type { Thread } from '../chat/types'
 import { type Host, sendHere } from './host'
 
-/** A language as typed - `de`, `Deutsch`, `German` - as the rewrite sheet's id, or
- *  null for one it does not offer. */
 export function languageIn(
   typed: string,
   inEnglish: (id: string) => string = englishName,
@@ -39,8 +28,6 @@ function englishName(id: string): string {
   }
 }
 
-/** A rewrite on the selection, or on the note in front where nothing is selected. False
- *  where no note is open to write in. */
 export async function rewrite(verb: Verb, language = ''): Promise<boolean> {
   const view = views.of(workspace.panes.focusedId)
   if (!view || view.state.readOnly) return false
@@ -58,8 +45,6 @@ export async function rewrite(verb: Verb, language = ''): Promise<boolean> {
   return true
 }
 
-/** What the words are about, for a prompt: a named note, or the selection or the note
- *  in front. */
 function about(named: string): string {
   const name = named.trim().replace(/^\[\[|\]\]$/g, '')
   return name

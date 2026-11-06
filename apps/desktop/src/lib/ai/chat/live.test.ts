@@ -1,11 +1,3 @@
-/** The engine against OpenAI itself, read-only and only when asked: a key in
- *  `NIB_OPENAI_LIVE_KEY`, read at call time and never written anywhere. Skipped
- *  everywhere else, CI included, the way `cargo test real_claude -- --ignored` is.
- *
- *  It proves what a recording cannot: that a request built here is one the provider
- *  accepts - the replayed items, the namespace-free tools, the effort refused and
- *  stepped, the compaction swapped in. */
-
 import { describe, expect, test, vi } from 'vitest'
 
 const KEY = process.env.NIB_OPENAI_LIVE_KEY ?? ''

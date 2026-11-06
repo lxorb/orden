@@ -1,18 +1,3 @@
-/** Commands, agents and output styles written as notes (docs/ai-sidebar.md 4.7).
- *
- *  A note whose front matter says `command: weekly` is `/weekly`: its body is the prompt,
- *  `description:` its words in the menu, and `model:`, `effort:` and `mode:` what that one
- *  send does differently. `agent: researcher` is a profile for `/agents`, its body the
- *  instructions and `model:`, `effort:`, `mode:` and `tools:` its defaults.
- *  `output-style: terse` is a style for `/output-style`, its body the line the model is
- *  told. Obsidian Copilot's and Raycast's way: the reader's own extensions are text they
- *  can read, sync and version, not a folder of the program's.
- *
- *  Arguments are Claude Code's: `$ARGUMENTS` for everything after the name,
- *  `$ARGUMENTS[0]` for the first word, `$1`, `$2` for the first and second, and a name
- *  from `arguments:` for its place. A body that asks for none gets them on the end. Pure:
- *  found.ts is what finds the notes. */
-
 import { frontMatterList, frontMatterValue, stripFrontMatter } from '@orden/markdown/front-matter'
 import { isEffort } from '../chat/effort'
 import type { Effort } from '../chat/types'
@@ -20,23 +5,18 @@ import { type Mode, modeIn } from '../modes'
 
 export type NoteKind = 'command' | 'agent' | 'output-style'
 
-/** The front matter keys each kind is found by, which are also its kind. */
 export const NOTE_KEYS: readonly NoteKind[] = ['command', 'agent', 'output-style']
 
 export interface NoteCommand {
   kind: NoteKind
-  /** The name it answers to, without the slash, folded to lower case. */
   name: string
   path: string
-  /** The prompt, the instructions or the style's line. */
   body: string
   description?: string
   model?: string
   effort?: Effort
   mode?: Mode
-  /** A command's named arguments, in their order. */
   arguments: string[]
-  /** An agent's tools, by name; empty for all of them. */
   tools: string[]
 }
 
@@ -44,7 +24,6 @@ function withMode(mode: Mode | null): { mode?: Mode } {
   return mode ? { mode } : {}
 }
 
-/** A name as a command can be typed: no slash, no spaces, lower case. */
 export function commandName(value: string): string {
   return value
     .trim()
@@ -54,7 +33,6 @@ export function commandName(value: string): string {
     .replace(/[^\p{L}\p{N}_-]/gu, '')
 }
 
-/** What a note is, for each of the three keys it carries. */
 export function rolesOf(path: string, text: string): NoteCommand[] {
   const body = stripFrontMatter(text).trim()
   const value = (name: string) => frontMatterValue(text, name) ?? undefined
@@ -78,8 +56,6 @@ export function rolesOf(path: string, text: string): NoteCommand[] {
   })
 }
 
-/** The words after a command's name, split as a shell splits them: on spaces, with
- *  quoted words kept whole. */
 export function splitArgs(args: string): string[] {
   const out: string[] = []
   for (const found of args.matchAll(/"([^"]*)"|'([^']*)'|(\S+)/g)) {
@@ -88,7 +64,6 @@ export function splitArgs(args: string): string[] {
   return out
 }
 
-/** A command's body with its arguments in place. */
 export function expand(command: Pick<NoteCommand, 'body' | 'arguments'>, args: string): string {
   const words = splitArgs(args)
   const used = { any: false }
