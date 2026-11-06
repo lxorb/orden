@@ -153,7 +153,7 @@ async function mounted(root: string, folder: string) {
   letGo.set(root, await mountInternal(root, folder, { foldsCase: foldsCase() }))
 }
 
-function freeName(wanted: string, taken: readonly string[]): string {
+export function freeName(wanted: string, taken: readonly string[]): string {
   const used = (one: string) => taken.some((name) => same(name, one))
   if (!used(wanted)) return wanted
   for (let counter = 2; ; counter += 1) {

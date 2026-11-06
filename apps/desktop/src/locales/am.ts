@@ -1233,6 +1233,9 @@ export const am: Dictionary = {
   'Share {name}': '{name} አጋራ',
   'Share this space': 'ይህን ቦታ አጋራ',
   'Export this space as Markdown and folders': 'ይህን ቦታ እንደ Markdown እና አቃፊዎች ላክ',
+  'Moving {name} into Orden’s storage': '{name} ወደ Orden ማከማቻ በመዛወር ላይ',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    '{names}ን ገና ወደ Orden ማከማቻ ማዛወር አልተቻለም። ምንም አልጠፋም፦ ለአሁን አቃፊዎች ሆነው ይቆያሉ፣ Orden በሚቀጥለው ሲጀምር እንደገና ይሞክራል።',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden {folder} ን ከእንግዲህ በቦታው አይከፍትም። ቦታዎቹ አሁን በOrden ውስጥ ተቀምጠዋል፤ አቃፊው እንደነበረ ቀርቷል። ተጨማሪ ከእሱ ለማምጣት «አምጣ»ን ይጠቀሙ።',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

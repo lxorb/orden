@@ -6,8 +6,11 @@ class Busy {
   private depth = $state(0)
   label = $state<string | null>(null)
 
+  told = $state<string | null>(null)
+
   trouble = $state<string | null>(null)
   private readonly clearing = afterQuiet(() => (this.trouble = null), TROUBLE_SHOWN)
+  private shownFor: ReturnType<typeof setTimeout> | undefined
 
   get active(): boolean {
     return this.depth > 0
@@ -22,17 +25,33 @@ class Busy {
       return await work()
     } finally {
       this.depth -= 1
-      if (this.depth === 0) this.label = null
+      if (this.depth === 0) {
+        this.label = null
+        this.told = null
+      }
     }
   }
 
-  failed(reason: string) {
+  tell(said: string | null) {
+    this.told = said
+  }
+
+  failed(reason: string, shown?: number) {
     this.trouble = reason
-    this.clearing()
+    clearTimeout(this.shownFor)
+    if (shown === undefined) {
+      this.clearing()
+      return
+    }
+    this.clearing.cancel()
+    this.shownFor = setTimeout(() => {
+      if (this.trouble === reason) this.trouble = null
+    }, shown)
   }
 
   clear() {
     this.clearing.cancel()
+    clearTimeout(this.shownFor)
     this.trouble = null
   }
 

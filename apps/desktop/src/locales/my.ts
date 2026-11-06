@@ -1244,6 +1244,9 @@ export const my: Dictionary = {
   'Share {name}': '{name} မျှဝေပါ',
   'Share this space': 'ဤနေရာကို မျှဝေပါ',
   'Export this space as Markdown and folders': 'ဤနေရာကို Markdown နှင့် ဖိုင်တွဲများအဖြစ် ထုတ်ယူပါ',
+  'Moving {name} into Orden’s storage': '{name} ကို Orden ၏ သိုလှောင်ရာသို့ ရွှေ့နေသည်',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    '{names} ကို Orden ၏ သိုလှောင်ရာသို့ မရွှေ့နိုင်သေးပါ။ ဘာမှ မပျောက်ပါ - ယခုအတွက် ဖိုင်တွဲများအဖြစ် ကျန်နေမည်ဖြစ်ပြီး Orden နောက်တစ်ကြိမ် စတင်သောအခါ ထပ်ကြိုးစားမည်။',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden သည် {folder} ကို ၎င်းရှိရာနေရာတွင် မဖွင့်တော့ပါ။ ၎င်း၏နေရာများကို ယခု Orden ထဲတွင် သိမ်းထားပြီး ဖိုင်တွဲကို မူလအတိုင်း ထားခဲ့ပါသည်။ ၎င်းမှ ထပ်ယူလိုပါက သွင်းပါ ကို သုံးပါ။',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

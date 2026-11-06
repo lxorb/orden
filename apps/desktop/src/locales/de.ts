@@ -1262,6 +1262,9 @@ export const de: Dictionary = {
   'Share {name}': '{name} teilen',
   'Share this space': 'Diesen Bereich teilen',
   'Export this space as Markdown and folders': 'Diesen Bereich als Markdown und Ordner exportieren',
+  'Moving {name} into Orden’s storage': '{name} wird in den Speicher von Orden verschoben',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    'Noch nicht in den Speicher von Orden verschoben: {names}. Nichts ging verloren: Sie bleiben vorerst Ordner, und Orden versucht es beim nächsten Start noch einmal.',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden öffnet {folder} nicht mehr an Ort und Stelle. Seine Bereiche liegen jetzt in Orden, und der Ordner bleibt, wie er war. Um mehr daraus zu holen, nutze Importieren.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

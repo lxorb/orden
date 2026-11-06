@@ -1289,6 +1289,9 @@ export const ru: Dictionary = {
   'Share {name}': 'Поделиться {name}',
   'Share this space': 'Поделиться пространством',
   'Export this space as Markdown and folders': 'Экспортировать пространство в Markdown и папки',
+  'Moving {name} into Orden’s storage': 'Перенос {name} в хранилище Orden',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    'Пока не удалось перенести {names} в хранилище Orden. Ничего не потеряно: пока это остаются папки, и Orden попробует снова при следующем запуске.',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden больше не открывает {folder} на месте. Его пространства теперь хранятся в Orden, а папка осталась как была. Чтобы перенести из неё что-то ещё, используйте Импорт.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

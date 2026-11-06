@@ -1259,6 +1259,9 @@ export const kn: Dictionary = {
   'Share this space': 'ಈ ಸ್ಪೇಸ್ ಹಂಚಿ',
   'Export this space as Markdown and folders':
     'ಈ ಸ್ಪೇಸ್ ಅನ್ನು Markdown ಮತ್ತು ಫೋಲ್ಡರ್‌ಗಳಾಗಿ ರಫ್ತು ಮಾಡಿ',
+  'Moving {name} into Orden’s storage': '{name} ಅನ್ನು Orden ನ ಸಂಗ್ರಹಕ್ಕೆ ಸರಿಸಲಾಗುತ್ತಿದೆ',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    '{names} ಅನ್ನು ಇನ್ನೂ Orden ನ ಸಂಗ್ರಹಕ್ಕೆ ಸರಿಸಲಾಗಲಿಲ್ಲ. ಏನೂ ಕಳೆದುಹೋಗಿಲ್ಲ: ಸದ್ಯಕ್ಕೆ ಅವು ಫೋಲ್ಡರ್‌ಗಳಾಗಿಯೇ ಇರುತ್ತವೆ, ಮತ್ತು Orden ಮುಂದಿನ ಬಾರಿ ಆರಂಭವಾದಾಗ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸುತ್ತದೆ.',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden ಇನ್ನು {folder} ಅನ್ನು ಅದರ ಸ್ಥಳದಲ್ಲೇ ತೆರೆಯುವುದಿಲ್ಲ. ಅದರ ಸ್ಪೇಸ್‌ಗಳು ಈಗ Orden ನಲ್ಲಿ ಇವೆ, ಮತ್ತು ಫೋಲ್ಡರ್ ಹಾಗೆಯೇ ಉಳಿದಿದೆ. ಅದರಿಂದ ಇನ್ನಷ್ಟು ತರಲು ಇಂಪೋರ್ಟ್ ಬಳಸಿ.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

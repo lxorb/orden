@@ -1262,6 +1262,9 @@ export const ptBR: Dictionary = {
   'Share {name}': 'Compartilhar {name}',
   'Share this space': 'Compartilhar este espaço',
   'Export this space as Markdown and folders': 'Exportar este espaço como Markdown e pastas',
+  'Moving {name} into Orden’s storage': 'Movendo {name} para o armazenamento do Orden',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    'Ainda não foi possível mover {names} para o armazenamento do Orden. Nada foi perdido: por enquanto continuam como pastas, e o Orden tentará de novo na próxima vez que iniciar.',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'O Orden não abre mais {folder} no lugar. Os espaços dela agora ficam no Orden, e a pasta ficou como estava. Para trazer mais dela, use Importar.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

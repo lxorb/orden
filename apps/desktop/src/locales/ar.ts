@@ -1297,6 +1297,9 @@ export const ar: Dictionary = {
   'Share {name}': 'مشاركة {name}',
   'Share this space': 'مشاركة هذه المساحة',
   'Export this space as Markdown and folders': 'تصدير هذه المساحة بصيغة Markdown ومجلدات',
+  'Moving {name} into Orden’s storage': 'جارٍ نقل {name} إلى تخزين Orden',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    'تعذّر نقل {names} إلى تخزين Orden بعد. لم يُفقد شيء: تبقى مجلدات حاليًا، وسيحاول Orden مجددًا عند تشغيله في المرة القادمة.',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'لم يعد Orden يفتح {folder} في مكانه. مساحاته محفوظة الآن في Orden، وتُرك المجلد كما كان. لجلب المزيد منه، استخدم «استيراد».',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
