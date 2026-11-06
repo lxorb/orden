@@ -399,7 +399,7 @@ mod tests {
         }
         let total: usize = sizes.values().sum();
         assert!(
-            total < 40_700,
+            total < 41_400,
             "the tools are {total} characters: {sizes:?}"
         );
         for (name, size) in &sizes {

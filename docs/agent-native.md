@@ -1250,6 +1250,29 @@ the `applications` scope, which the reader's own agents hold and a third party i
 - Left out for now: the accessibility tree (AT-SPI) the plan names, and the clipboard,
   which `text` stands in for.
 
+### 8.19 File explorers
+
+`explorer_tabs` is the reader's file explorers (#1164; docs/explorer.md), folders anywhere on
+the computer in a tab. It is the `files` scope, the same as files anywhere (8.11), and asks the
+way that does (`agents/workspace/explorer.ts`).
+
+- `list` names the explorer tabs: the folder each shows and what is picked. `open` puts a
+  folder (absolute, or under `~/`) in a new tab behind the one in front. `go` moves a tab to
+  another folder, and `select` picks paths in it. Each answer gives the folder's entries, at
+  most 500, marked as the disk's words (9.6).
+- `trash`, `move`, `copy`, `rename` and `mkdir` act through the tab, so each change is on the
+  reader's undo stack like their own and the tab shows it as it happens. A trash goes to the
+  system's trash.
+- **Never Orden's own folders** and **never the spaces**: a folder of Orden's own is refused
+  before it is listed, and a change in a space is refused with the note tools' names
+  (`move_file`, `trash_file`, `create_folder`), as `files` refuses it. Listing a space's
+  folder goes ahead; that only looks.
+- **Asked as #1072 decided.** Looking in a folder outside the spaces asks under *files from
+  outside your spaces*, with Always for that folder. A trash asks under *trashing*. In
+  `confirm` mode every other change asks under *writing*; otherwise under *files*. Full
+  permissions asks nothing. The crate's own judge (`explorer/reach.rs`) stands behind all of
+  it whoever asks.
+
 ---
 
 ## 9. Safety and permissions

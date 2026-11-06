@@ -1138,6 +1138,7 @@ pub mod window {
         ("ask_reader", Some(Scope::Ask)),
         ("note_editor", Some(Scope::Editor)),
         ("application_tabs", Some(Scope::Applications)),
+        ("explorer_tabs", Some(Scope::Files)),
         ("recently_deleted", Some(Scope::Tree)),
         ("list_chats", Some(Scope::ChatsRead)),
         ("read_chat", Some(Scope::ChatsRead)),

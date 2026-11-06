@@ -126,6 +126,7 @@ const VERBS: Record<string, Verb> = {
   ask_reader: needs('ask'),
   note_editor: needs('editor'),
   application_tabs: needs('applications'),
+  explorer_tabs: needs('files'),
   recently_deleted: needs('tree'),
   list_chats: needs('chats.read'),
   read_chat: needs('chats.read'),

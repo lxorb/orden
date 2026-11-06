@@ -1289,6 +1289,25 @@
     }
   },
   {
+    "name": "explorer_tabs",
+    "description": "The reader's file explorer tabs, folders on this computer. op list; open a folder (path, absolute or ~/) in a tab behind; in a tab: go to a folder, select paths, and through it trash (to the system trash), move or copy paths into to, rename a path to name, mkdir name. Each change the reader can undo. In a space use the note tools.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "type": "string",
+          "enum": ["list", "open", "go", "select", "trash", "move", "copy", "rename", "mkdir"]
+        },
+        "tab": { "type": "string" },
+        "path": { "type": "string" },
+        "paths": { "type": "array", "items": { "type": "string" } },
+        "to": { "type": "string" },
+        "name": { "type": "string" }
+      },
+      "required": ["op"]
+    }
+  },
+  {
     "name": "run_terminal",
     "description": "Run a command in a shell of its own, or with tab in that terminal, online ones too. A program not on your allowed list asks the reader first.",
     "inputSchema": {

@@ -81,6 +81,7 @@ const WORDS: Readonly<Record<string, string>> = {
   ask_reader: key('Questions'),
   note_editor: key('Editor'),
   application_tabs: key('Application'),
+  explorer_tabs: key('File explorer'),
   recently_deleted: WRITING,
   list_chats: READING,
   read_chat: READING,

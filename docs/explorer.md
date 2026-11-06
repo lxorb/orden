@@ -180,3 +180,12 @@ undone too. A folder never goes inside itself.
 
 A folder in Orden's own folders, the folder of the spaces and its trash are shown and
 offer no change.
+
+## Agents
+
+`explorer_tabs` (docs/agent-native.md 8.19) lists the explorer tabs, opens a folder in a new
+tab behind the one in front, goes, picks, and trashes, moves, copies, renames and makes
+folders through a tab, under the `files` scope and its questions. Every change it makes is
+on the reader's undo stack. It never reaches Orden's own folders and changes nothing in the
+spaces, where the note tools are.
+
