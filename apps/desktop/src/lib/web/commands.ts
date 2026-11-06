@@ -949,6 +949,9 @@ export async function webInvoke<T>(
     }
 
     case 'write_note':
+      if (args.arrived !== true && args.raw !== true && keptAway.at(path)) {
+        if (!(await keptAway.bringBack(path))) throw new Error(NOT_HERE)
+      }
       await writeNote(path, args.content as string)
       return undefined as T
 
