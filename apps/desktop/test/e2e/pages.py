@@ -761,6 +761,23 @@ def check_adding(page: Page, label: str) -> None:
 
     shot(page, f"{label}-reordered")
 
+    order = [one["id"] for one in pages_of(page)]
+    rows.nth(0).evaluate(
+        """(row) => {
+          const carried = new DataTransfer()
+          carried.setData('application/nib-page', '1')
+          carried.setData('text/nib-page', JSON.stringify({ note: '/elsewhere/Other.pages', page: 'p1' }))
+          carried.setData('text/nib-from-another-window', 'text/nib-page')
+          const box = row.getBoundingClientRect()
+          const at = { bubbles: true, cancelable: true, dataTransfer: carried, clientX: box.left + 4, clientY: box.top + 2 }
+          row.dispatchEvent(new DragEvent('dragover', at))
+          row.dispatchEvent(new DragEvent('drop', at))
+        }"""
+    )
+    page.wait_for_timeout(400)
+    if [one["id"] for one in pages_of(page)] != order:
+        fail(f"[{label}] a page dragged in from another window's list moved one of this note's pages")
+
 def check_papers(page: Page, label: str) -> None:
     say("--- the three papers ---")
 

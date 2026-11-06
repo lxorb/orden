@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import {
   carriedNothing,
   carry,
@@ -109,5 +109,49 @@ describe('rows of the file explorer, carried where files are taken', () => {
     expect(carriesFiles(transfer(['Files']))).toBe(true)
     expect(carriesFiles(transfer(['text/plain']))).toBe(false)
     carriedNothing()
+  })
+})
+
+describe('a row carried by its place in a list', () => {
+  test('is taken in the window it was picked up in', async () => {
+    const here = await import('./drag-paths')
+
+    const mark = transfer()
+    here.carryBookmark(mark, 2)
+    expect(here.isBookmarkDrag(mark)).toBe(true)
+    expect(here.draggedBookmark(mark)).toBe(2)
+
+    const section = transfer()
+    here.carrySection(section, 3)
+    expect(here.isSectionDrag(section)).toBe(true)
+    expect(here.draggedSection(section)).toBe(3)
+
+    const sheet = transfer()
+    here.carryPage(sheet, { note: '/s/a.pages', page: 'p2' })
+    expect(here.isPageDrag(sheet)).toBe(true)
+    expect(here.draggedPage(sheet)).toEqual({ note: '/s/a.pages', page: 'p2' })
+    here.carriedNothing()
+  })
+
+  test('and never in another window, whose list has other rows at those places', async () => {
+    const there = await import('./drag-paths')
+    const mark = transfer()
+    there.carryBookmark(mark, 2)
+    const section = transfer()
+    there.carrySection(section, 3)
+    const sheet = transfer()
+    there.carryPage(sheet, { note: '/s/a.pages', page: 'p2' })
+    there.carriedNothing()
+
+    vi.resetModules()
+    const here = await import('./drag-paths')
+
+    expect(here.isBookmarkDrag(mark)).toBe(false)
+    expect(here.draggedBookmark(mark)).toBeNull()
+    expect(here.isSectionDrag(section)).toBe(false)
+    expect(here.draggedSection(section)).toBeNull()
+    expect(here.isPageDrag(sheet)).toBe(false)
+    expect(here.draggedPage(sheet)).toBeNull()
+    expect(here.landing(drop(mark), 'linux')).toBeNull()
   })
 })
