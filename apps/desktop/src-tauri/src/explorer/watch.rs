@@ -1,6 +1,7 @@
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::{Mutex, PoisonError};
+use std::time::Duration;
 
 use notify::{RecommendedWatcher, RecursiveMode, Watcher as _};
 use serde::Serialize;
@@ -10,6 +11,44 @@ use super::listing::asked;
 use super::reach::Use;
 
 const CHANGED: &str = "explorer://changed";
+
+const GATHER: Duration = Duration::from_millis(200);
+
+static GATHERED: Gathered = Gathered(Mutex::new(None));
+
+struct Gathered(Mutex<Option<BTreeSet<String>>>);
+
+impl Gathered {
+    fn add(&self, folders: Vec<String>) -> bool {
+        let mut held = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        let first = held.is_none();
+        held.get_or_insert_with(BTreeSet::new).extend(folders);
+        first
+    }
+
+    fn take(&self) -> Vec<String> {
+        self.0
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .take()
+            .map(|folders| folders.into_iter().collect())
+            .unwrap_or_default()
+    }
+}
+
+fn heard(app: &AppHandle, folders: Vec<String>) {
+    if !GATHERED.add(folders) {
+        return;
+    }
+    let app = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(GATHER);
+        let folders = GATHERED.take();
+        if !folders.is_empty() {
+            let _ = app.emit(CHANGED, Changed { folders });
+        }
+    });
+}
 
 #[derive(Default)]
 pub struct Watching(Mutex<Option<(RecommendedWatcher, HashMap<PathBuf, usize>)>>);
@@ -40,15 +79,10 @@ pub fn explorer_watch(app: AppHandle, folder: String) -> Result<(), String> {
         .lock()
         .map_err(|_| "the watcher is stuck".to_owned())?;
     if held.is_none() {
-        let heard = app.clone();
+        let hearing = app.clone();
         let watcher = notify::recommended_watcher(move |event: notify::Result<notify::Event>| {
             if let Ok(event) = event {
-                let _ = heard.emit(
-                    CHANGED,
-                    Changed {
-                        folders: folders_of(&event.paths),
-                    },
-                );
+                heard(&hearing, folders_of(&event.paths));
             }
         })
         .map_err(|why| why.to_string())?;
@@ -88,8 +122,21 @@ pub fn explorer_unwatch(app: AppHandle, folder: String) {
 
 #[cfg(test)]
 mod tests {
-    use super::folders_of;
+    use super::{folders_of, Gathered};
     use std::path::PathBuf;
+    use std::sync::Mutex;
+
+    #[test]
+    fn changes_that_come_together_are_said_once() {
+        let gathered = Gathered(Mutex::new(None));
+        assert!(gathered.add(vec!["/a".to_owned()]));
+        for _ in 0..1000 {
+            assert!(!gathered.add(vec!["/a".to_owned(), "/b".to_owned()]));
+        }
+        assert_eq!(gathered.take(), ["/a", "/b"]);
+        assert!(gathered.take().is_empty());
+        assert!(gathered.add(vec!["/c".to_owned()]));
+    }
 
     #[test]
     fn a_change_is_said_of_its_folder_and_of_itself() {
