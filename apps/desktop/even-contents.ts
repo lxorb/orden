@@ -691,9 +691,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  Raised on 2026-11-06 for #1068, the file list following another device's changes by
  *  row ids, with its rows sliding into place (row-ids.ts, tree-settle.ts, Tree.svelte):
  *  the code to 6,148,200, measured 6,147,925.
+ *
+ *  Raised on 2026-11-06 for #321, the pane's branch for another chat service's
+ *  conversation, which the plugin never takes (Pane.svelte, surfaces.svelte.ts): the code
+ *  to 6,148,800, measured 6,148,448.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_148_200,
+  code: 6_148_800,
   catalogues: 1_020_700,
   styles: 293_500,
   fonts: 260_000,

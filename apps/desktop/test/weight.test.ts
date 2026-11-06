@@ -1329,8 +1329,12 @@ function holds(tail: string): boolean {
  *  Tree.svelte). Measured 3,683,326 in 400.
  *
  *  Raised on 2026-11-06, to 3,684,000, for #1137: how a page is layered is said for each
- *  page (`page.layering` in web-tab/pages.svelte.ts). Measured 3,683,701 in 400. */
-const BUDGET = 3_684_000
+ *  page (`page.layering` in web-tab/pages.svelte.ts). Measured 3,683,701 in 400.
+ *
+ *  Raised on 2026-11-06, to 3,684,800, for #321: a pane tells a tab of another chat
+ *  service's conversation from an Orden chat and fetches its own surface for it
+ *  (Pane.svelte, surfaces.svelte.ts). Measured 3,684,441 in 400. */
+const BUDGET = 3_684_800
 const MOST_FILES = 401
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
