@@ -1,6 +1,6 @@
 export function marked(name: string, value: string): HTMLElement | null {
-  const all = document.querySelectorAll<HTMLElement>(`[data-${name}]`)
-  return [...all].find((one) => one.getAttribute(`data-${name}`) === value) ?? null
+  const quoted = value.replace(/["\\]/g, '\\$&')
+  return document.querySelector<HTMLElement>(`[data-${name}="${quoted}"]`)
 }
 
 function paneBody(paneId: string): HTMLElement | null {

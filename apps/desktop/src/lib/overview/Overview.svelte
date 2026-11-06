@@ -996,20 +996,37 @@
   }
   $effect(() => closeOnBack(shown && tabOverview.open, close))
 
+  let arriving: string[] = []
+  let arrivals = $state(0)
+
+  $effect(() => {
+    if (arrivals) untrack(flyIn)
+  })
+
+  function flyIn() {
+    const come = arriving.filter((id) => elements.has(id) && !flights.has(id))
+    arriving = []
+    if (!come.length) return
+    const entries = Object.fromEntries(untrack(() => windows).map((one) => [one.tab.id, one]))
+    for (const id of come) {
+      const entry = entries[id]
+      if (!entry) continue
+      const home = out ? homeOf(entry.tab, entry.slot) : null
+      if (home) homes.set(id, home)
+      flights.set(id, new Flight(home ?? lying(entry.slot)))
+    }
+    for (const id of come) paint(id)
+    aimAll()
+  }
+
   function placed(node: HTMLElement, id: string) {
     const face = node.querySelector<HTMLElement>(':scope > .face-box')
     const chip = node.querySelector<HTMLElement>(':scope > .chip')
     const ring = node.querySelector<HTMLElement>(':scope > .ring')
     if (!face || !chip || !ring) return
     elements.set(id, { window: node, face, chip, ring })
-    const entry = windows.find((one) => one.tab.id === id)
-    if (entry && !flights.has(id)) {
-      const home = out ? homeOf(entry.tab, entry.slot) : null
-      if (home) homes.set(id, home)
-      flights.set(id, new Flight(home ?? lying(entry.slot)))
-    }
-    paint(id)
-    aimAll()
+    arriving.push(id)
+    arrivals++
     if (id === at) node.focus({ preventScroll: true })
     return {
       destroy() {
