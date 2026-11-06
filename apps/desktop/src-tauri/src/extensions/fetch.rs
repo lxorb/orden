@@ -1,26 +1,11 @@
-//! An extension's file, from its store: the store's own update service, which is what
-//! Chrome and Edge ask too, and which needs no key and no account. The download itself
-//! is addons.mozilla.org's too (amo.rs), on either engine.
-//!
-//! Two questions, one protocol (Omaha's `update2`, the GET form). `crx` asks for the file
-//! and is redirected to it; `newer` asks whether there is a version past the one here and
-//! where it is. The answer is trusted for nothing but where to look: what arrives is
-//! checked as a CRX before a byte of it is unpacked (crx.rs), so an answer from somebody
-//! in the middle - Edge's own download is plain HTTP - is a file that fails that check.
-
 #[cfg(not(feature = "cef"))]
 use super::link::Store;
 
-/// The Chromium version Orden says it is, which a store reads to decide whether an
-/// extension that asks for a newer browser may have it. A current one: Orden's engines are.
 #[cfg(not(feature = "cef"))]
 const PRODUCT_VERSION: &str = "140.0.0.0";
 
-/// The largest file taken, which is past every extension in either store.
 const MOST_BYTES: usize = 256 * 1024 * 1024;
 
-/// The service's address, with the question in `x`. AMO has none of its own of this kind;
-/// see amo.rs.
 #[cfg(not(feature = "cef"))]
 fn service(store: Store, response: &str, x: &str) -> Result<String, String> {
     match store {
@@ -34,24 +19,19 @@ fn service(store: Store, response: &str, x: &str) -> Result<String, String> {
     }
 }
 
-/// The client every request goes out on: rustls, as the updater's, with no cookies.
 pub fn client() -> Result<reqwest::Client, String> {
-    // Set once for the process; a second setting is refused harmlessly.
     let _ = rustls::crypto::ring::default_provider().install_default();
     reqwest::Client::builder()
         .build()
         .map_err(|error| error.to_string())
 }
 
-/// The newest file of extension `id`, as the store hands it out.
 #[cfg(not(feature = "cef"))]
 pub async fn crx(store: Store, id: &str) -> Result<Vec<u8>, String> {
     let x = format!("id%3D{id}%26installsource%3Dondemand%26uc");
     download(&service(store, "redirect", &x)?).await
 }
 
-/// A version newer than `version` and where to fetch it, or `None` when this is the
-/// newest.
 #[cfg(not(feature = "cef"))]
 pub async fn newer(
     store: Store,
@@ -71,7 +51,6 @@ pub async fn newer(
     Ok(update_in(&said).filter(|(found, _)| later(found, version)))
 }
 
-/// Fetches a file the service pointed at.
 pub async fn download(url: &str) -> Result<Vec<u8>, String> {
     let response = client()?
         .get(url)
@@ -92,12 +71,10 @@ pub async fn download(url: &str) -> Result<Vec<u8>, String> {
     Ok(bytes.to_vec())
 }
 
-/// What a failed request is said as.
 pub fn offline(error: reqwest::Error) -> String {
     format!("the store could not be reached: {error}")
 }
 
-/// The version and the file in an update answer, if it offers one.
 #[cfg(any(not(feature = "cef"), test))]
 fn update_in(xml: &str) -> Option<(String, String)> {
     let at = xml.find("<updatecheck")?;
@@ -113,8 +90,6 @@ fn update_in(xml: &str) -> Option<(String, String)> {
     Some((attribute("version")?, attribute("codebase")?))
 }
 
-/// Whether version `a` is past `b`, as Chromium compares them: up to four numbers, each
-/// as a number.
 #[cfg(any(not(feature = "cef"), test))]
 pub fn later(a: &str, b: &str) -> bool {
     let numbers = |version: &str| -> Vec<u64> {

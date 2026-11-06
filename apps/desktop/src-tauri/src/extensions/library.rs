@@ -1,23 +1,3 @@
-//! The extensions on this computer: one folder each, and a list of which, at which
-//! version, on or off.
-//!
-//! ```text
-//! <config>/extensions/library.json            what is installed, on or off, pinned or not
-//! <config>/extensions/applied.json            which version each engine store was given
-//! <config>/extensions/<id>/<version>/         the unpacked extension, never written again
-//! ```
-//!
-//! **A version's folder is never changed once it is written.** `WebView2` installs an
-//! unpacked extension where it lies, without copying it, and removes it from the profile
-//! the moment its files change; Chromium reads an unpacked one in place too. So an update
-//! is a new folder beside the old one, the engines are pointed at it, and the old one goes
-//! after. A folder is written under a name starting with `.` and renamed into place whole,
-//! so an install cut short leaves nothing an engine could be pointed at.
-//!
-//! One list for every store, global, per space and per site: an extension somebody
-//! installed is installed, and "install it again over there" is not a sentence this app
-//! makes anybody read.
-
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -30,10 +10,8 @@ use super::unzip;
 #[cfg(not(feature = "cef"))]
 use super::{crx, manifest};
 
-/// The list's file.
 const LIST: &str = "library.json";
 
-/// Which version each engine store has, kept per store.
 #[cfg_attr(
     not(all(windows, not(feature = "cef"))),
     allow(
@@ -43,7 +21,6 @@ const LIST: &str = "library.json";
 )]
 const APPLIED: &str = "applied.json";
 
-/// One installed extension, as the list keeps it.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Kept {
@@ -51,22 +28,15 @@ pub struct Kept {
     pub store: Store,
     pub version: String,
     pub enabled: bool,
-    /// Whether its button sits in the web bar, rather than only in the list behind the
-    /// extensions glyph. Chrome's pin, on from the start: somebody who installed an
-    /// extension with a button wants to press it.
     pub pinned: bool,
-    /// The slug addons.mozilla.org names a Firefox add-on by, which it is updated by and
-    /// which the bar's Add on its AMO page is matched against.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub addon: Option<String>,
 }
 
-/// The folder an extension's version lives in.
 pub fn folder_of(root: &Path, id: &str, version: &str) -> PathBuf {
     root.join(id).join(version)
 }
 
-/// What is installed, as written down; nothing for a computer that never installed one.
 pub fn read(root: &Path) -> Vec<Kept> {
     fs::read_to_string(root.join(LIST))
         .ok()
@@ -77,7 +47,6 @@ pub fn read(root: &Path) -> Vec<Kept> {
         .collect()
 }
 
-/// Writes the list down, whole, through a file beside it.
 pub fn write(root: &Path, list: &[Kept]) -> Result<(), String> {
     written(
         &root.join(LIST),
@@ -85,7 +54,6 @@ pub fn write(root: &Path, list: &[Kept]) -> Result<(), String> {
     )
 }
 
-/// Which version of each extension each engine store was last given: store, then id.
 #[cfg_attr(
     not(all(windows, not(feature = "cef"))),
     allow(
@@ -95,7 +63,6 @@ pub fn write(root: &Path, list: &[Kept]) -> Result<(), String> {
 )]
 pub type Applied = BTreeMap<String, BTreeMap<String, String>>;
 
-/// The versions each store was given, as written down.
 #[cfg_attr(
     not(all(windows, not(feature = "cef"))),
     allow(
@@ -110,7 +77,6 @@ pub fn applied(root: &Path) -> Applied {
         .unwrap_or_default()
 }
 
-/// Writes down the versions each store was given.
 #[cfg_attr(
     not(all(windows, not(feature = "cef"))),
     allow(
@@ -125,7 +91,6 @@ pub fn write_applied(root: &Path, applied: &Applied) -> Result<(), String> {
     )
 }
 
-/// A file written beside itself and moved into place, so a crash never leaves half.
 fn written(path: &Path, text: &str) -> Result<(), String> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|error| error.to_string())?;
@@ -135,8 +100,6 @@ fn written(path: &Path, text: &str) -> Result<(), String> {
     fs::rename(&beside, path).map_err(|error| error.to_string())
 }
 
-/// Whether a version is one a folder may be named: up to four numbers and dots, which
-/// is every version Chromium accepts.
 pub fn plain_version(version: &str) -> bool {
     !version.is_empty()
         && version.len() <= 64
@@ -146,15 +109,12 @@ pub fn plain_version(version: &str) -> bool {
             .all(|part| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit()))
 }
 
-/// Checks a store's file for extension `id` and unpacks it into its version's folder,
-/// answering the version. A version already there is kept as it is.
 #[cfg(not(feature = "cef"))]
 pub fn unpack(root: &Path, store: Store, id: &str, bytes: &[u8]) -> Result<String, String> {
     let checked = crx::checked(bytes, id, Some(store))?;
     unpack_checked(root, &checked)
 }
 
-/// The second half of `unpack`, for a file already checked.
 #[cfg(not(feature = "cef"))]
 pub fn unpack_checked(root: &Path, checked: &crx::Checked<'_>) -> Result<String, String> {
     unpack_with(root, &checked.id, checked.zip, |folder| {
@@ -162,9 +122,6 @@ pub fn unpack_checked(root: &Path, checked: &crx::Checked<'_>) -> Result<String,
     })
 }
 
-/// Unpacks a Firefox add-on's file for extension `id`, made one Chromium runs
-/// (firefox.rs), answering its version and what of it will not run. A version already
-/// there is kept as it is.
 pub fn unpack_firefox(
     root: &Path,
     id: &str,
@@ -179,15 +136,12 @@ pub fn unpack_firefox(
     Ok((version, gaps))
 }
 
-/// A zip unpacked into its version's folder, by way of a folder of its own that `finish`
-/// readies before it is moved into place.
 fn unpack_with(
     root: &Path,
     id: &str,
     zip: &[u8],
     finish: impl FnOnce(&Path) -> Result<(), String>,
 ) -> Result<String, String> {
-    // A name of its own per install, so two at once never write into one folder.
     static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
     let home = root.join(id);
@@ -226,7 +180,6 @@ fn unpack_with(
     Ok(version)
 }
 
-/// Every version folder of `id` but `keep`, and anything an install cut short left.
 pub fn prune(root: &Path, id: &str, keep: &str) {
     let Ok(entries) = fs::read_dir(root.join(id)) else {
         return;
@@ -238,17 +191,12 @@ pub fn prune(root: &Path, id: &str, keep: &str) {
     }
 }
 
-/// An extension's folders, all of them.
 pub fn forget(root: &Path, id: &str) {
     if super::link::is_id(id) {
         let _ = fs::remove_dir_all(root.join(id));
     }
 }
 
-/// Folders nothing on the list names any more, and versions an update left behind. Never
-/// while an engine may still have one of them: on `WebView2` once its stores have the
-/// list, on Orden's own Chromium the first time the list is read in a run, when the
-/// versions on it are the ones the engine loaded as it started.
 #[cfg_attr(
     not(any(windows, feature = "cef")),
     allow(
@@ -273,9 +221,6 @@ pub fn tidy(root: &Path) {
     }
 }
 
-/// The folders of the Firefox add-ons that are on, which Orden's own Chromium loads as it
-/// starts (`--load-extension`, engine.rs): it installs no folder while it runs. Only read:
-/// every process of the engine asks, and only the app's own tidies (`listed`).
 #[cfg(feature = "cef")]
 pub fn firefox_folders(root: &Path) -> Vec<PathBuf> {
     read(root)
@@ -320,7 +265,6 @@ mod tests {
         assert!(manifest.contains("\"key\""), "{manifest}");
         assert!(folder.join("popup.html").is_file());
 
-        // A second install of the same version keeps the folder as it is.
         assert_eq!(unpack_checked(&root, &checked).expect("again"), "1.2.3");
         prune(&root, &id, "1.2.3");
         assert!(folder.is_dir());
@@ -413,8 +357,6 @@ mod amo_tests {
         (bytes, listing)
     }
 
-    /// An add-on as AMO serves one (#1155): its file held to what the listing says of it,
-    /// made one Chromium runs, put on the list, updated, and the old version tidied away.
     #[test]
     fn an_amo_add_on_installs_from_its_file_and_updates() {
         let root = tempfile::tempdir().expect("a folder");

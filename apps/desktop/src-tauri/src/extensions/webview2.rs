@@ -1,26 +1,3 @@
-//! The list, handed to `WebView2`: each store's profile given exactly the extensions
-//! that are on the list, at the version on the list, on or off as the list says.
-//!
-//! A store's profile is reached through any page built in it, so the first web tab of a
-//! store in a run is where it is reconciled, and every change to the list after that is
-//! handed to every store that has a page open. A store with no page open is reconciled
-//! the next time one is built there, which is also the first time anything could run an
-//! extension in it.
-//!
-//! `WebView2` keeps what it was given across runs, in the profile, so most runs find
-//! every store already right and add nothing. It cannot say which folder or version an
-//! extension came from - only its id and whether it is on - so the version each store
-//! was handed is written down beside the list (`applied.json`), and a store whose version
-//! is behind the list's is handed the new folder, which replaces the old one by id.
-//!
-//! **Once per store** (#409): a store already holding an extension at the list's version
-//! is handed nothing, and one on its way in is not handed again until its answer is in;
-//! see given.rs. And the store is quiet while one arrives, so the page an extension opens
-//! about its own install never opens; see welcome.rs.
-//!
-//! Everything here runs on the window's own thread, where the engine's objects live and
-//! its answers arrive.
-
 use std::cell::RefCell;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::sync::Once;
@@ -38,8 +15,6 @@ use windows_core::{Interface as _, HSTRING, PWSTR};
 
 use super::library::{self, Kept};
 
-/// A store's profile, the environment it was reached through and the browser process
-/// that draws its pages.
 #[derive(Clone)]
 struct Open {
     profile: ICoreWebView2Profile7,
@@ -48,21 +23,13 @@ struct Open {
 }
 
 thread_local! {
-    /// The profile of every store with a page open this run, by store - the shared one
-    /// under the empty name - with the environment it was reached through, so a store
-    /// whose browser process ended and started again is reconciled again.
     static OPEN: RefCell<HashMap<String, Open>> = RefCell::new(HashMap::new());
 
-    /// The extensions on their way into each store, as store and id, from the moment the
-    /// folder is handed over until the engine answers.
     static ADDING: RefCell<HashSet<(String, String)>> = RefCell::new(HashSet::new());
 }
 
-/// The folders nothing names any more go once a run, off the window's thread.
 static TIDIED: Once = Once::new();
 
-/// A page was built in `store`: its profile is remembered, and handed the list if it is
-/// new to this run. Called as every web tab's page is built.
 pub fn seen(app: &AppHandle, store: Option<&str>, platform: &PlatformWebview) {
     if !super::in_store(store) {
         return;
@@ -96,7 +63,6 @@ pub fn seen(app: &AppHandle, store: Option<&str>, platform: &PlatformWebview) {
     });
 }
 
-/// Hands every open store the list as it is now.
 pub fn apply(app: &AppHandle) {
     let handle = app.clone();
     let _ = app.run_on_main_thread(move || {
@@ -111,13 +77,11 @@ pub fn apply(app: &AppHandle) {
     });
 }
 
-/// The profile a page is in, if the engine is new enough to have extensions.
 fn profile_of(platform: &PlatformWebview) -> Option<ICoreWebView2Profile7> {
     #[allow(
         unsafe_code,
         reason = "the profile is reached through WebView2's own COM interfaces, on the page's own thread"
     )]
-    // Safe: the controller is this page's, asked on the thread it was built on.
     unsafe {
         platform
             .controller()
@@ -132,11 +96,9 @@ fn profile_of(platform: &PlatformWebview) -> Option<ICoreWebView2Profile7> {
     }
 }
 
-/// The browser process drawing a page, or 0 where the engine will not say.
 #[allow(unsafe_code, reason = "WebView2's own COM interface")]
 fn browser_of(platform: &PlatformWebview) -> u32 {
     let mut browser = 0u32;
-    // Safe: the controller is this page's, asked on the thread it was built on.
     unsafe {
         if let Ok(core) = platform.controller().CoreWebView2() {
             let _ = core.BrowserProcessId(&raw mut browser);
@@ -145,7 +107,6 @@ fn browser_of(platform: &PlatformWebview) -> u32 {
     browser
 }
 
-/// Makes `store`'s profile hold what the list holds.
 #[allow(
     unsafe_code,
     reason = "the extensions are read, added, turned on and off and removed through WebView2's own COM interfaces"
@@ -186,7 +147,6 @@ fn reconcile(app: &AppHandle, store: &str, open: &Open) {
             let stale = plan.remove;
             for id in &stale {
                 if let Some(extension) = installed.get(id) {
-                    // Safe: the extension is this profile's, on the window's thread.
                     unsafe {
                         let _ = extension.Remove(&BrowserExtensionRemoveCompletedHandler::create(
                             Box::new(|_| Ok(())),
@@ -203,20 +163,17 @@ fn reconcile(app: &AppHandle, store: &str, open: &Open) {
             }
             Ok(())
         }));
-    // Safe: the profile is the page's, on the window's thread.
     unsafe {
         let _ = open.profile.GetBrowserExtensions(&handler);
     }
 }
 
-/// What a profile has, by id.
 #[allow(unsafe_code, reason = "the list is WebView2's own COM collection")]
 fn listed(
     all: &webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2BrowserExtensionList,
 ) -> HashMap<String, ICoreWebView2BrowserExtension> {
     let mut out = HashMap::new();
     let mut count = 0u32;
-    // Safe: the collection the engine handed this answer, read on the thread it arrived on.
     unsafe {
         if all.Count(&raw mut count).is_err() {
             return out;
@@ -234,11 +191,9 @@ fn listed(
     out
 }
 
-/// Turns an extension on or off, if it is not already.
 #[allow(unsafe_code, reason = "WebView2's own COM interface")]
 fn switched(extension: &ICoreWebView2BrowserExtension, enabled: bool) {
     let mut on = windows_core::BOOL::default();
-    // Safe: the extension is this profile's, on the window's thread.
     unsafe {
         if extension.IsEnabled(&raw mut on).is_ok() && on.as_bool() != enabled {
             let _ = extension.Enable(
@@ -249,12 +204,6 @@ fn switched(extension: &ICoreWebView2BrowserExtension, enabled: bool) {
     }
 }
 
-/// Hands a profile one extension's folder, and writes down the version once it took it.
-///
-/// The store is quiet from the moment the folder is handed over, and again as the engine
-/// answers, which is when the extension's `onInstalled` has run or is running; see
-/// welcome.rs. And the extension is on its way in until then, so nothing hands it over a
-/// second time meanwhile; see given.rs.
 #[allow(unsafe_code, reason = "WebView2's own COM interface")]
 fn add(
     profile: &ICoreWebView2Profile7,
@@ -301,7 +250,6 @@ fn add(
             }
             Ok(())
         }));
-    // Safe: the profile is the page's, on the window's thread.
     unsafe {
         if let Err(error) = profile.AddBrowserExtension(&HSTRING::from(folder.as_path()), &handler)
         {

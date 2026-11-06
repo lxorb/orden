@@ -1,68 +1,37 @@
-//! A CRX file, checked: the format the Chrome Web Store and Edge Add-ons hand an
-//! extension out in, and the only one Orden takes.
-//!
-//! A CRX3 file is `Cr24`, the version, a header and a zip. The header is a small protobuf
-//! of signatures over that zip, each beside the public key it was made with, and a
-//! signed id. Chromium's own checker (`components/crx_file/crx_verifier.cc`) is the rule
-//! and this is the same rule:
-//!
-//! - every signature in the header verifies, RSA and ECDSA alike, over
-//!   `"CRX3 SignedData\0"`, the signed data's length, the signed data and the zip;
-//! - one of the keys is the developer's, which is the key whose SHA-256 begins with the
-//!   signed id - and that id is the extension's, the one the store page named;
-//! - the store's own key signed it too. Both stores add a proof of their own to what
-//!   they serve, and that proof is what says the file came from the store rather than
-//!   from whoever answered the request: Edge's download is plain HTTP after a redirect.
-//!
-//! Nothing here touches the disk or the network. The verification itself is ring's, through
-//! the algorithms rustls already carries, so no crate is added for it.
-
 use rustls::pki_types::{alg_id, SignatureVerificationAlgorithm};
 use sha2::{Digest as _, Sha256};
 
 use super::link::Store;
 
-/// What every CRX file starts with.
 const MAGIC: &[u8; 4] = b"Cr24";
 
-/// What the signatures are made over, before the signed data.
 const SIGNED_PREFIX: &[u8] = b"CRX3 SignedData\0";
 
-/// The largest header taken. Chromium's own cap; a real one is a couple of kilobytes.
 const LONGEST_HEADER: usize = 1 << 18;
 
-/// The SHA-256 of the Chrome Web Store's own key, which signs every file it serves.
-/// Chromium's `kPublisherKeyHash`.
 const CHROME_PUBLISHER: [u8; 32] = [
     0x61, 0xf7, 0xf2, 0xa6, 0xbf, 0xcf, 0x74, 0xcd, 0x0b, 0xc1, 0xfe, 0x24, 0x97, 0xcc, 0x9b, 0x04,
     0x25, 0x4c, 0x65, 0x8f, 0x79, 0xf2, 0x14, 0x53, 0x92, 0x86, 0x7e, 0xa8, 0x36, 0x63, 0x67, 0xcf,
 ];
 
-/// The SHA-256 of Edge Add-ons' own ECDSA key, which signs every file it serves - read off
-/// the files it serves, since Microsoft publishes no constant for it.
 const EDGE_PUBLISHER: [u8; 32] = [
     0x67, 0x5b, 0xd8, 0xed, 0xdd, 0x38, 0x50, 0x20, 0x17, 0x7c, 0xcf, 0xed, 0xa2, 0x51, 0x03, 0x89,
     0x57, 0x99, 0xfe, 0x41, 0xec, 0xa5, 0xc9, 0x4e, 0x61, 0xdc, 0x13, 0xdf, 0x35, 0x9d, 0xa1, 0xdc,
 ];
 
-/// A CRX file that checked out: its id, the developer's key (which goes into the
-/// manifest, so the unpacked extension keeps the store's id), and the zip.
 #[derive(Debug)]
 pub struct Checked<'a> {
     pub id: String,
-    /// The developer's public key as `SubjectPublicKeyInfo`, DER.
     pub key: Vec<u8>,
     pub zip: &'a [u8],
 }
 
-/// One signature and the key it was made with.
 struct Proof<'a> {
     key: &'a [u8],
     signature: &'a [u8],
     ecdsa: bool,
 }
 
-/// `bytes`, checked as a CRX3 file for extension `id` from `store`, or why it is not one.
 pub fn checked<'a>(bytes: &'a [u8], id: &str, store: Option<Store>) -> Result<Checked<'a>, String> {
     let refused = |why: &str| Err(format!("that extension's file is not one: {why}"));
 
@@ -143,7 +112,6 @@ pub fn checked<'a>(bytes: &'a [u8], id: &str, store: Option<Store>) -> Result<Ch
         publisher |= match store {
             Some(Store::Chrome) => hash == CHROME_PUBLISHER,
             Some(Store::Edge) => hash == EDGE_PUBLISHER,
-            // AMO serves no CRX file; see amo.rs.
             Some(Store::Firefox) => false,
             None => true,
         };
@@ -151,10 +119,6 @@ pub fn checked<'a>(bytes: &'a [u8], id: &str, store: Option<Store>) -> Result<Ch
     let Some(key) = developer else {
         return refused("the developer did not sign it");
     };
-    // An extension made before 2013 has a 1024-bit RSA key, which Chromium still takes
-    // and ring will not check. Its id is still the key's hash, and the id is in the data
-    // the store signed: so a store's own signature, checked, is what vouches for it, and
-    // a file that came from no store is not taken with one.
     if !publisher || (legacy && store.is_none()) {
         return refused("the store did not sign it");
     }
@@ -166,22 +130,18 @@ pub fn checked<'a>(bytes: &'a [u8], id: &str, store: Option<Store>) -> Result<Ch
     })
 }
 
-/// The id an extension with this public key has.
 #[cfg(test)]
 pub fn id_of_key(key: &[u8]) -> String {
     super::link::id_of(&Sha256::digest(key)[..16])
 }
 
-/// What a proof's signature came to.
 #[derive(Debug, PartialEq, Eq)]
 enum Verdict {
     Good,
     Bad,
-    /// An RSA key shorter than 2048 bits, which ring does not check; see `checked`.
     Legacy,
 }
 
-/// Whether one proof's signature is good over the signed data and the zip.
 fn verified(proof: &Proof<'_>, message: &[u8], zip: &[u8]) -> Verdict {
     let Some((algorithm, key)) = spki(proof.key) else {
         return Verdict::Bad;
@@ -219,7 +179,6 @@ fn verified(proof: &Proof<'_>, message: &[u8], zip: &[u8]) -> Verdict {
     }
 }
 
-/// How long an RSA key's modulus is, in bits, out of its `RSAPublicKey`.
 fn modulus_bits(key: &[u8]) -> Option<usize> {
     let (sequence, _) = tlv(key, 0x30)?;
     let (modulus, _) = tlv(sequence, 0x02)?;
@@ -228,7 +187,6 @@ fn modulus_bits(key: &[u8]) -> Option<usize> {
     Some((modulus.len() - first - 1) * 8 + (8 - top.leading_zeros() as usize))
 }
 
-/// A `SubjectPublicKeyInfo` taken apart: the algorithm's contents and the key's bits.
 fn spki(der: &[u8]) -> Option<(&[u8], &[u8])> {
     let (outer, rest) = tlv(der, 0x30)?;
     if !rest.is_empty() {
@@ -243,7 +201,6 @@ fn spki(der: &[u8]) -> Option<(&[u8], &[u8])> {
     (unused == 0).then_some((algorithm, key))
 }
 
-/// One DER element with tag `tag`: its contents and what follows it.
 fn tlv(der: &[u8], tag: u8) -> Option<(&[u8], &[u8])> {
     let (&found, rest) = der.split_first()?;
     if found != tag {
@@ -265,12 +222,10 @@ fn tlv(der: &[u8], tag: u8) -> Option<(&[u8], &[u8])> {
     (rest.len() >= length).then(|| rest.split_at(length))
 }
 
-/// A little-endian `u32` at `at`.
 fn u32_at(bytes: &[u8], at: usize) -> u32 {
     u32::from_le_bytes([bytes[at], bytes[at + 1], bytes[at + 2], bytes[at + 3]])
 }
 
-/// A protobuf message's length-delimited fields, in order; anything else is skipped.
 fn fields(mut bytes: &[u8]) -> Result<Vec<(u64, &[u8])>, String> {
     let broken = || "that extension's file is not one: its header is broken".to_string();
     let mut out = Vec::new();
@@ -296,7 +251,6 @@ fn fields(mut bytes: &[u8]) -> Result<Vec<(u64, &[u8])>, String> {
     Ok(out)
 }
 
-/// A protobuf varint and what follows it.
 fn varint(bytes: &[u8]) -> Option<(u64, &[u8])> {
     let mut value = 0u64;
     for (at, byte) in bytes.iter().enumerate().take(10) {
@@ -318,7 +272,6 @@ pub(super) mod tests {
 
     use super::{checked, id_of_key, Store};
 
-    /// A P-256 key made for these tests and nothing else.
     const TEST_KEY: &str = "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgIrdk7wzoaVbunNe3G1WiqMyG7WAZ7uWq0bvFl1H+g4ShRANCAAQT3ZpeB5LsoVQo9FvWlzfdRjdZkizPMoz17yyjYQmhmipoU4SMgulQvveYFgxHndV9idYBLgbHDAtIZhed4Yyt";
 
     fn key() -> Arc<dyn SigningKey> {
@@ -350,7 +303,6 @@ pub(super) mod tests {
         out.extend_from_slice(value);
     }
 
-    /// A CRX3 file round `zip`, signed by the test key alone, as `(bytes, id)`.
     pub fn crx(zip: &[u8]) -> (Vec<u8>, String) {
         let key = key();
         let public = key.public_key().expect("its public half").as_ref().to_vec();
@@ -397,7 +349,6 @@ pub(super) mod tests {
     fn a_changed_byte_another_id_or_no_store_signature_is_refused() {
         let (mut bytes, id) = crx(b"PK the archive");
         assert!(checked(&bytes, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", None).is_err());
-        // Signed by its developer, but by neither store.
         assert!(checked(&bytes, &id, Some(Store::Chrome)).is_err());
         assert!(checked(&bytes, &id, Some(Store::Edge)).is_err());
 
@@ -406,8 +357,6 @@ pub(super) mod tests {
         assert!(checked(&bytes, &id, None).is_err());
     }
 
-    /// An extension from before 2013 has a 1024-bit RSA key, which is told apart so the
-    /// store's own signature can vouch for it.
     #[test]
     fn a_legacy_key_is_measured_by_its_modulus() {
         use base64::Engine as _;

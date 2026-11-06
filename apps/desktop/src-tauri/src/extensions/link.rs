@@ -1,38 +1,20 @@
-//! Which extension a link names, and which store it is in.
-//!
-//! What somebody pastes is the address of the store's own page, the one a search or a
-//! friend handed them: the Chrome Web Store's, old or new, Edge Add-ons' or
-//! addons.mozilla.org's. In a Chromium store the id is the last part of it that is one -
-//! thirty-two letters from `a` to `p`, which is how Chromium writes the first sixteen
-//! bytes of a key's hash - and the store is the host. A bare id is taken too, as the
-//! Chrome Web Store's, which is where nearly every one comes from. On addons.mozilla.org
-//! an add-on is named by the part after `addon/`, its slug, which is what is taken bare
-//! too; the id it has in Orden is made from its AMO id once AMO has said it (firefox.rs).
-
 use serde::{Deserialize, Serialize};
 use tauri::Url;
 
-/// Where an extension comes from, and so where it is fetched and updated from.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Store {
-    /// The Chrome Web Store.
     Chrome,
-    /// Microsoft Edge Add-ons.
     Edge,
-    /// addons.mozilla.org, whose add-ons run through Orden's Firefox layer (firefox.rs).
     Firefox,
 }
 
-/// How long an extension's id is.
 const ID_LENGTH: usize = 32;
 
-/// Whether `word` is an extension id: thirty-two letters from `a` to `p`.
 pub fn is_id(word: &str) -> bool {
     word.len() == ID_LENGTH && word.bytes().all(|byte| (b'a'..=b'p').contains(&byte))
 }
 
-/// How Chromium writes sixteen bytes as an id: each half-byte a letter from `a`.
 pub fn id_of(bytes: &[u8]) -> String {
     bytes
         .iter()
@@ -41,8 +23,6 @@ pub fn id_of(bytes: &[u8]) -> String {
         .collect()
 }
 
-/// Whether `word` is how AMO names an add-on in its addresses: its slug, its AMO id
-/// (`name@domain` or a braced UUID) or its number. Only what an address carries as it is.
 pub fn is_slug(word: &str) -> bool {
     !word.is_empty()
         && word.len() <= 200
@@ -55,8 +35,6 @@ pub fn is_slug(word: &str) -> bool {
             .all(|byte| byte.is_ascii_alphanumeric() || b"-_.@{}%~".contains(&byte))
 }
 
-/// The store and the extension a link or an id names, or `None` for anything else. For
-/// addons.mozilla.org the extension is its slug.
 pub fn named(said: &str) -> Option<(Store, String)> {
     let said = said.trim();
     if is_id(said) {
@@ -73,18 +51,15 @@ pub fn named(said: &str) -> Option<(Store, String)> {
     let store = store_of(&url)?;
     let parts: Vec<&str> = url.path_segments()?.filter(|one| !one.is_empty()).collect();
     if store == Store::Firefox {
-        // `/<language>/firefox/addon/<slug>/` and the shorter ones AMO redirects.
         let addon = parts.iter().position(|one| *one == "addon")?;
         let slug = parts.get(addon + 1).filter(|one| is_slug(one))?;
         return Some((store, (*slug).to_owned()));
     }
-    // The detail page and nothing else: a search or a category is no extension.
     let detail = parts.iter().position(|one| *one == "detail")?;
     let id = parts[detail + 1..].iter().rev().find(|one| is_id(one))?;
     Some((store, (*id).to_owned()))
 }
 
-/// The store a page is in, judged by its host and its first folder.
 fn store_of(url: &Url) -> Option<Store> {
     let host = url.host_str()?.to_ascii_lowercase();
     let first = url.path_segments()?.next().unwrap_or_default();
@@ -97,8 +72,6 @@ fn store_of(url: &Url) -> Option<Store> {
     }
 }
 
-/// The store's own page for an extension: where nib's own Chromium sends a pasted link,
-/// for the store's own button to install it.
 #[cfg_attr(
     not(feature = "cef"),
     allow(
@@ -186,7 +159,6 @@ mod tests {
             assert_eq!(named(link), None, "{link}");
         }
         assert!(!is_slug(".."));
-        // Thirty-two letters that are not an id are a slug, never the Chrome Web Store's.
         assert_eq!(
             named("ddkjiahejlhfcafbddmgiahcphecmpfz").map(|one| one.0),
             Some(Store::Firefox)

@@ -1,33 +1,13 @@
-//! An extension's zip, written out into its folder - and nothing outside it.
-//!
-//! The zip inside a CRX file is a plain one: stored or deflated entries, no encryption,
-//! no zip64. That is the whole of what is read, with flate2, which the crate already has;
-//! the zip crate in the lock file is the updater's and built without deflate.
-//!
-//! Every name is judged before a byte is written, because the archive is somebody
-//! else's: no absolute path, no drive, no `..`, no backslash, nothing a file system
-//! would read as something else. And every size is held to: what an entry says it
-//! unpacks to is what it may unpack to, and the whole is capped, so a small file that
-//! inflates to fill the disk stops at the cap.
-//!
-//! `_metadata` is left out. It is the store's own record of the files' hashes, which a
-//! browser reads for an extension it installed itself, and an unpacked extension with a
-//! folder whose name starts with `_` other than `_locales` is refused by Chromium.
-
 use std::fs;
 use std::io::Read as _;
 use std::path::{Path, PathBuf};
 
-/// The most an extension may unpack to, all its files together.
 const MOST_BYTES: u64 = 512 * 1024 * 1024;
 
-/// The most files an extension may have.
 const MOST_FILES: usize = 50_000;
 
-/// The folder Chromium keeps for itself, never written.
 const SKIPPED: &str = "_metadata";
 
-/// One entry of the central directory.
 struct Entry<'a> {
     name: &'a str,
     method: u16,
@@ -37,7 +17,6 @@ struct Entry<'a> {
     at: usize,
 }
 
-/// Writes `zip` into `into`, which must not exist yet and is made here.
 pub fn unzip(zip: &[u8], into: &Path) -> Result<(), String> {
     let entries = entries(zip)?;
     if entries.len() > MOST_FILES {
@@ -69,8 +48,6 @@ pub fn unzip(zip: &[u8], into: &Path) -> Result<(), String> {
     Ok(())
 }
 
-/// Where an entry goes inside the folder, `None` for one that is left out, or an error
-/// for a name that reaches anywhere else.
 fn place(name: &str) -> Result<Option<PathBuf>, String> {
     let refused = || {
         Err(format!(
@@ -102,7 +79,6 @@ fn place(name: &str) -> Result<Option<PathBuf>, String> {
     Ok(Some(parts.iter().collect()))
 }
 
-/// What one entry unpacks to, checked against its own size and CRC.
 fn contents(zip: &[u8], entry: &Entry<'_>) -> Result<Vec<u8>, String> {
     let broken = || format!("that extension's archive is broken at {}", entry.name);
     let header = zip.get(entry.at..entry.at + 30).ok_or_else(broken)?;
@@ -141,10 +117,8 @@ fn contents(zip: &[u8], entry: &Entry<'_>) -> Result<Vec<u8>, String> {
     Ok(out)
 }
 
-/// The central directory's entries, in order.
 fn entries(zip: &[u8]) -> Result<Vec<Entry<'_>>, String> {
     let broken = || "that extension's archive is broken".to_string();
-    // The end record is the last 22 bytes and a comment of up to 64 kB.
     let from = zip.len().saturating_sub(22 + usize::from(u16::MAX));
     let end = (from..zip.len().saturating_sub(21))
         .rev()
@@ -183,14 +157,12 @@ fn entries(zip: &[u8]) -> Result<Vec<Entry<'_>>, String> {
     Ok(entries)
 }
 
-/// A little-endian `u16` at `at`, or nought past the end.
 fn u16_at(bytes: &[u8], at: usize) -> u16 {
     bytes
         .get(at..at + 2)
         .map_or(0, |two| u16::from_le_bytes([two[0], two[1]]))
 }
 
-/// A little-endian `u32` at `at`, or nought past the end.
 fn u32_at(bytes: &[u8], at: usize) -> u32 {
     bytes.get(at..at + 4).map_or(0, |four| {
         u32::from_le_bytes([four[0], four[1], four[2], four[3]])
@@ -203,7 +175,6 @@ pub(super) mod tests {
 
     use super::{place, unzip};
 
-    /// A zip of `files`, each deflated, as a test writes one.
     pub fn zip(files: &[(&str, &[u8])]) -> Vec<u8> {
         let mut out = Vec::new();
         let mut central = Vec::new();
@@ -298,7 +269,6 @@ pub(super) mod tests {
         let dir = scratch("bad");
         assert!(unzip(b"not a zip", &dir).is_err());
         let mut bytes = zip(&[("a.js", b"let a = 1")]);
-        // A byte of the packed data changed: the CRC no longer matches.
         bytes[40] ^= 0xff;
         assert!(unzip(&bytes, &dir).is_err());
         let _ = std::fs::remove_dir_all(&dir);

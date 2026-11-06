@@ -1,45 +1,22 @@
-//! What an extension says about itself, read out of its `manifest.json`: what to call
-//! it, its picture, the page its button opens, its options page and what it may do.
-//!
-//! Manifest V3 and V2 alike, because the Edge store still serves V2 and an `action` and
-//! a `browser_action` are the same button. A name written as `__MSG_name__` is looked up
-//! in the extension's own words, in the language it says is its default - which is what
-//! Chromium shows when it has none of the reader's.
-//!
-//! And the one thing written back: the developer's key, as `key`. An unpacked extension's
-//! id is its folder's hash unless its manifest carries a key, and an extension whose id
-//! is not the store's breaks wherever it names itself - its own pages, its messages, its
-//! updates. Chromium writes the same field when it installs from a CRX.
-
 use std::fs;
 use std::path::Path;
 
 use serde::Serialize;
 use serde_json::{Map, Value};
 
-/// What Orden needs to know about an extension, out of its manifest.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct About {
     pub name: String,
-    /// The version its manifest says. Never sent: a row's version is the list's, and a
-    /// manifest with none, or with a number, wrote an empty one over it.
     #[serde(skip_serializing)]
     pub version: String,
-    /// The largest picture it names, as a path inside its folder.
     pub icon: Option<String>,
-    /// The page its button opens, as a path inside its folder.
     pub popup: Option<String>,
-    /// Its options page, as a path inside its folder.
     pub options: Option<String>,
-    /// Whether it has a button at all: an action, with or without a page.
     pub action: bool,
-    /// What it asks to be allowed, as Chromium names it: `storage`, `tabs`,
-    /// `<all_urls>`, `https://*.example.com/*`.
     pub permissions: Vec<String>,
 }
 
-/// Reads the manifest in `folder`.
 pub fn read(folder: &Path) -> Result<About, String> {
     let text = fs::read_to_string(folder.join("manifest.json"))
         .map_err(|_| "that extension has no manifest".to_string())?;
@@ -48,7 +25,6 @@ pub fn read(folder: &Path) -> Result<About, String> {
     Ok(about(&manifest, |key| message(folder, &manifest, key)))
 }
 
-/// Writes the developer's key into the manifest in `folder`, as base64 of its DER.
 #[cfg(not(feature = "cef"))]
 pub fn keyed(folder: &Path, key: &[u8]) -> Result<(), String> {
     use base64::Engine as _;
@@ -67,7 +43,6 @@ pub fn keyed(folder: &Path, key: &[u8]) -> Result<(), String> {
     fs::write(&path, written).map_err(|error| error.to_string())
 }
 
-/// The fields, out of a parsed manifest, with `__MSG_` names looked up by `lookup`.
 fn about(manifest: &Value, lookup: impl Fn(&str) -> Option<String>) -> About {
     let words = |field: &str| {
         let said = manifest
@@ -139,7 +114,6 @@ fn about(manifest: &Value, lookup: impl Fn(&str) -> Option<String>) -> About {
     }
 }
 
-/// The path of the largest picture in a `{"16": "a.png", "128": "b.png"}` map.
 fn largest(icons: Option<&Value>) -> Option<String> {
     icons?
         .as_object()?
@@ -149,8 +123,6 @@ fn largest(icons: Option<&Value>) -> Option<String> {
         .and_then(|(_, path)| inside(path))
 }
 
-/// A path the manifest names, if it stays inside the extension's folder: no leading
-/// slash, no `..`, and no address of another page.
 fn inside(path: &str) -> Option<String> {
     let path = path.trim_start_matches('/');
     let page = path.split(['?', '#']).next().unwrap_or_default();
@@ -161,8 +133,6 @@ fn inside(path: &str) -> Option<String> {
     fine.then(|| path.to_owned())
 }
 
-/// One of the extension's own words, in its default language: `_locales/<lang>/messages.json`,
-/// whose keys are matched without regard to case.
 fn message(folder: &Path, manifest: &Value, key: &str) -> Option<String> {
     let language = manifest.get("default_locale").and_then(Value::as_str)?;
     if language.contains(['/', '\\', '.']) {

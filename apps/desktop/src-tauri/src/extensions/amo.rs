@@ -1,44 +1,25 @@
-//! An add-on's file, from addons.mozilla.org: AMO's own API, which Firefox's add-ons
-//! manager asks too, and which needs no key and no account (#1155).
-//!
-//! One question: what the add-on is now - its AMO id, whether it is an extension or a
-//! theme, its version, and its file with the SHA-256 and the size AMO keeps of it. The API
-//! is asked over HTTPS on AMO's own host, and the file is held to that hash and size before
-//! a byte of it is unpacked, so a file from anywhere else - a mirror, somebody in the
-//! middle of the download - is one that fails the check. Every file AMO serves is signed
-//! by Mozilla; that its signature files are in it is checked too, while the signature
-//! itself, PKCS #7 over Mozilla's own root, is Firefox's to verify and is not done here:
-//! the hash, read over AMO's TLS, is what vouches for the file.
-
 use serde_json::Value;
 use sha2::{Digest as _, Sha256};
 
-/// Where AMO answers what an add-on is.
 const API: &str = "https://addons.mozilla.org/api/v5/addons/addon";
 
-/// What an add-on is to Orden.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Kind {
     Extension,
-    /// A static theme: colours and pictures for Firefox's window, which become Orden's.
     Theme,
 }
 
-/// What AMO says of an add-on now.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Listing {
-    /// Its AMO id, which Orden's id for it is made from.
     pub guid: String,
     pub slug: String,
     pub kind: Kind,
     pub version: String,
     pub url: String,
-    /// The SHA-256 of its file, in lowercase hexadecimal.
     pub hash: String,
     pub size: u64,
 }
 
-/// The question about the add-on `slug` names.
 pub fn address(slug: &str) -> String {
     let slug = slug
         .replace('{', "%7B")
@@ -47,7 +28,6 @@ pub fn address(slug: &str) -> String {
     format!("{API}/{slug}/?app=firefox&lang=en-US")
 }
 
-/// What AMO's answer says, or why it is not an add-on Orden installs.
 pub fn listing_of(said: &Value) -> Result<Listing, String> {
     let kind = match said["type"].as_str() {
         Some("extension") => Kind::Extension,
@@ -84,7 +64,6 @@ pub fn listing_of(said: &Value) -> Result<Listing, String> {
     })
 }
 
-/// What AMO says of the add-on `slug` names.
 pub async fn listing(slug: &str) -> Result<Listing, String> {
     let response = super::fetch::client()?
         .get(address(slug))
@@ -105,15 +84,12 @@ pub async fn listing(slug: &str) -> Result<Listing, String> {
     listing_of(&said)
 }
 
-/// The file `listing` names, checked against it.
 pub async fn file(listing: &Listing) -> Result<Vec<u8>, String> {
     let bytes = super::fetch::download(&listing.url).await?;
     checked(&bytes, listing)?;
     Ok(bytes)
 }
 
-/// Whether `bytes` is the file AMO described, signed: its size, its hash, and Mozilla's
-/// signature files in it.
 pub fn checked(bytes: &[u8], listing: &Listing) -> Result<(), String> {
     if listing.size != 0 && bytes.len() as u64 != listing.size {
         return Err("that add-on's file is not the one addons.mozilla.org lists".into());
@@ -131,7 +107,6 @@ pub fn checked(bytes: &[u8], listing: &Listing) -> Result<(), String> {
     Ok(())
 }
 
-/// Bytes as lowercase hexadecimal.
 fn hex(bytes: &[u8]) -> String {
     use std::fmt::Write as _;
     bytes.iter().fold(String::new(), |mut out, byte| {
