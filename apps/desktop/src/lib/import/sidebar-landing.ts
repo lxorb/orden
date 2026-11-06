@@ -1,9 +1,3 @@
-/** A browser's spaces written into Orden's: each into the space of its name, made where
- *  there is none, and an import that has been done before bringing only what is new.
- *  Every browser's, Zen's first; zen-landing.ts says why a space of the same name is
- *  the same space and what a second import brings. See sidebar-plan.ts for what
- *  becomes what. */
-
 import { busy } from '../busy.svelte'
 import { t } from '../i18n.svelte'
 import { relativeTo } from '../space-paths'
@@ -16,15 +10,11 @@ import type { Lost, Planned } from './plan'
 import { worthKnowing } from './plan'
 import type { SpacePlan } from './sidebar-plan'
 
-/** The planned spaces, written one after the other, and what stayed behind said once
- *  they are. Answers the first of them, to land in; `none` is what is said when
- *  there is not one. */
 export async function landSpaces(
   spaces: readonly SpacePlan[],
   lost: readonly Lost[],
   none: string,
 ): Promise<Space> {
-  // One after the other: each is the open space while it is written.
   const landed: Space[] = []
   for (const plan of spaces) {
     const space = await landSpace(plan)
@@ -37,10 +27,6 @@ export async function landSpaces(
   return first
 }
 
-/** One planned space, landed; null where the space of its name is one shared with
- *  this account to be read. That one is somebody else's, which an import before could
- *  not have made: nothing lands in it, and it is not opened, arranged or bookmarked.
- *  Fetched, as sharing.svelte.ts reads the workspace. */
 async function landSpace(plan: SpacePlan): Promise<Space | null> {
   const held = workspace.spaces.find(
     (one) => nameKey(asFolder(one.name)) === nameKey(asFolder(plan.name)),
@@ -49,13 +35,11 @@ async function landSpace(plan: SpacePlan): Promise<Space | null> {
   if (held && !canWriteAt(held.root)) return null
   const space = held ?? (await workspace.addSpace(plan.name))
   if (!space) throw new Error(t('That import could not be written.'))
-  // What follows is the open space's: the file list, its order, its bookmarks.
   if (workspace.activeSpaceId !== space.id) await workspace.selectSpace(space.id)
 
   const root = space.root
   const files = held ? await unseen(root, plan.files) : plan.files
   const landed = files.length ? await applyImport({ files }, { root, folder: '' }) : { paths: [] }
-  // Where each file went, which is where it was planned unless a name was taken.
   const went = new Map(
     files.map((file, at) => {
       const path = landed.paths[at]
@@ -86,13 +70,8 @@ async function landSpace(plan: SpacePlan): Promise<Space | null> {
   return space
 }
 
-/** The longest name a space's folder takes, as the crate cuts it. */
 const LONGEST_SPACE = 64
 
-/** A space's name as the crate names its folder, which is the name the space then has
- *  (`folder_name` in spaces.rs): what a folder cannot be called a space, runs of space
- *  one, no dot or space at either end. A browser's space called `Work: Client` is the
- *  space `Work Client` the import made of it the time before. */
 function asFolder(name: string): string {
   const cleaned = name
     .replace(/[<>:"/\\|?*\p{Cc}]/gu, ' ')
@@ -103,9 +82,6 @@ function asFolder(name: string): string {
   return Array.from(cleaned.replace(ends, '')).slice(0, LONGEST_SPACE).join('').replace(ends, '')
 }
 
-/** The files the space does not already hold: a web note at the same place pointing
- *  at the same page, or an empty note where one already is, is left as it is. A file
- *  there that is something else stays too, and the import's steps aside from it. */
 async function unseen(root: string, files: readonly Planned[]): Promise<Planned[]> {
   const there = await Promise.all(
     files.map((file) =>

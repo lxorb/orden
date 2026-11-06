@@ -1,8 +1,3 @@
-/** Todoist, from a recorded API answer and from its documented CSV: never the real API
- *  with anybody's account. The answer's shapes are the API's own (`/api/v1`, its OpenAPI
- *  examples: `{results, next_cursor}` pages, `due {date, string, is_recurring,
- *  timezone}`, `deadline {date}`, `duration {amount, unit}`, priority 4 as p1). */
-
 import { renderMarkdown } from '@orden/markdown'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { sourceOf } from './sources'
@@ -18,7 +13,6 @@ import {
   tagOf,
 } from './todoist'
 
-/** The account, as the API answered it, page by page. */
 const RECORDED: Record<string, unknown[]> = {
   '/projects': [
     {
@@ -162,7 +156,6 @@ const RECORDED: Record<string, unknown[]> = {
   ],
 }
 
-/** A fetch that answers from the recording, and says what it was asked with. */
 function recorded() {
   const asked: { url: string; auth: string }[] = []
   const served = new Map<string, number>()
@@ -197,7 +190,6 @@ describe('from the account', () => {
       'Projects/Work/Thesis.md',
     ])
     expect(plan.inbox).toBe('Inbox.md')
-    // Every request carried the token, and nothing else was told it.
     expect(asked.every((one) => one.auth === 'Bearer secret')).toBe(true)
     expect(asked.some((one) => one.url.includes('cursor=c1'))).toBe(true)
   })
@@ -208,7 +200,6 @@ describe('from the account', () => {
     const work = plan.files.find((one) => one.path === 'Projects/Work/Work.md')
     expect(work?.kind === 'note' ? work.text : '').toBe(
       [
-        // Todoist's date is the day it starts, `🛫`; its deadline a deadline (#371).
         '- [ ] Call the bank [time:: 16:00] [duration:: 30m] [deadline:: 2026-10-10] [remind:: 15m, 2026-10-06 09:00] [assignee:: Lucile] #admin #phone-calls 🔺 🛫 2026-10-06',
         '  Their number is on the card.',
         '  2026-10-01: Asked at the counter [card.png](https://files.todoist.com/card.png)',
@@ -241,7 +232,6 @@ describe('from the account', () => {
     )
   })
 
-  /** A second account, in the shapes the API's own SDKs record. */
   const ANSWERED: Record<string, unknown> = {
     '/projects': {
       results: [{ id: 'p-1', name: 'Home', description: 'Everything about the flat.' }],
@@ -345,8 +335,6 @@ describe('a task done and a comment posted in the evening, west of Greenwich', (
     vi.unstubAllEnvs()
   })
 
-  /** Seven in the evening of the 30th and eight in the evening of the 1st in Los
-   *  Angeles, both already the next day in UTC. */
   const LATE: Record<string, unknown> = {
     '/projects': { results: [{ id: 'p-1', name: 'Home' }], next_cursor: null },
     '/sections': { results: [], next_cursor: null },
@@ -404,7 +392,6 @@ describe('a task done and a comment posted in the evening, west of Greenwich', (
   })
 })
 
-/** Todoist's documented CSV, as a project export writes it. */
 const CSV = [
   'TYPE,CONTENT,DESCRIPTION,PRIORITY,INDENT,AUTHOR,RESPONSIBLE,DATE,DATE_LANG,TIMEZONE,DURATION,DURATION_UNIT,DEADLINE,DEADLINE_LANG',
   'task,Plan the launch @work,Everything for Monday,1,1,Evan (14781400),,2026-10-06,en,Europe/Zurich,60,minute,2026-10-09,en',
@@ -483,7 +470,6 @@ describe('from a CSV', () => {
         '  Quote: [quote (1).pdf](<https://files.todoist.com/a/quote (1).pdf>)',
         '- [ ] Clean the house [time:: 13:00] 🔁 every month',
         '- [ ] Take out the trash [time:: 19:00] 🔁 every week on Friday',
-        // A day the calendar does not have stays as it was written.
         '- [ ] Book it',
         '  Todoist: 2026-02-30',
         '',

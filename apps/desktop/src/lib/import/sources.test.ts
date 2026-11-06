@@ -5,7 +5,6 @@ import { insideFolder, sourcesFrom, type Picked } from './sources'
 
 const words = (body: string) => new TextEncoder().encode(body)
 
-/** A file the browser hands over from a picked folder. */
 function picked(path: string, bytes: Uint8Array): Picked {
   return {
     name: path.split('/').pop() ?? path,
@@ -14,7 +13,6 @@ function picked(path: string, bytes: Uint8Array): Picked {
   }
 }
 
-/** A file picked on its own. */
 function loose(name: string, bytes: Uint8Array): Picked {
   return { name, webkitRelativePath: '', arrayBuffer: async () => bytes.slice().buffer }
 }

@@ -1,13 +1,3 @@
-/** A Zen sidebar as `zen-sessions.jsonlz4` holds one, for the tests: three spaces,
- *  an Essential, pinned tabs, folders inside folders, an empty folder, a split view,
- *  a tab in a container, a tab on a settings page, a peeked page and a folder's
- *  stand-in tab. The fields and their spelling are Zen's own; see zen.ts.
- *
- *  `scripts/zen-import-probe.py` writes a sidebar of the same shape into a profile
- *  of its own for the app to find. */
-
-/** Bytes as a `.jsonlz4`: the header and one LZ4 block of nothing but literals,
- *  which is a block like any other to a reader. */
 export function mozLz4Of(bytes: Uint8Array): Uint8Array {
   const length: number[] = []
   if (bytes.length >= 15) {

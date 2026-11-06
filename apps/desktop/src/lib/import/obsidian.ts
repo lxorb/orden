@@ -1,16 +1,3 @@
-/** An Obsidian vault: markdown in folders, which the plain reader already reads,
- *  and `.obsidian/`, which says how the reader liked to write.
- *
- *  The notes need nothing of their own. Wikilinks, embeds, callouts, block ids,
- *  `%%comments%%`, `==highlights==`, `.canvas` and `.base` files are all Orden's own
- *  spelling already, which is why the vault is read by plain.ts and only named here.
- *
- *  What is Obsidian's alone is its settings folder. Most of it comes along, so the
- *  space is still a vault Obsidian opens - `templates.json` is even read by nib; see
- *  views/templates.ts - except the parts that are about one machine rather than the
- *  vault: which panes were open, the plugins' code, and Obsidian's own trash. And
- *  `app.json` is read on the way past, for the habits it records; see carry.ts. */
-
 import type { PropertiesMode } from '@orden/markdown/properties'
 import type { AttachmentFolder } from '../attachments'
 import { key } from '../i18n.svelte'
@@ -20,23 +7,8 @@ import { isJunk } from './folder'
 import type { Lost } from './plan'
 import type { Source } from './sources'
 
-/** Where the settings folder sits: at the top, or one folder down for a zip whose
- *  one entry is the vault. */
 const SETTINGS = /^(?:[^/]+\/)?\.obsidian\//
 
-/** The vault's files with the folder around it taken off, for a zip whose one
- *  entry is the vault: `Brain/Home.md` is `Home.md`. The space is named after the
- *  zip, so the folder again inside it would be a folder holding a folder of its own
- *  name, `.obsidian/` would not be at the top where Obsidian and views/templates.ts
- *  look for it, and every path a `.canvas` or `.base` names from the top of the
- *  vault would point at nothing. A vault already at the top comes back as it was.
- *
- *  Only when the vault's folder is all there is, the desktop's rubbish aside, and the
- *  hidden files beside it as well, which stay behind wherever they sit: a phone's
- *  `.nomedia` is not somebody's notes. A folder holding two vaults, or a vault beside
- *  notes of its own, is somebody's folder of things, and each of them arrives where
- *  it sat: taking one vault's folder off would pour its notes over everything
- *  beside it. */
 export function atVaultTop(sources: readonly Source[]): Source[] {
   if (sources.some((one) => one.path.startsWith('.obsidian/'))) return [...sources]
 
@@ -54,20 +26,7 @@ export function atVaultTop(sources: readonly Source[]): Source[] {
   )
 }
 
-/** Left behind: the open panes and recent files of the machine it came off
- *  (`workspace.json`, `workspace-mobile.json`), installed plugins and themes, which
- *  are code and styles for another app, a cache, and `.trash/`, which Obsidian
- *  keeps for "Move to Obsidian trash" and which nobody kept on purpose. Every
- *  other hidden file or folder is another program's business, `.git` among them,
- *  and so is `node_modules`: the same as the vault list leaves behind in
- *  obsidian_vaults.rs, so a vault picked as a folder or a zip arrives the same. */
 export function leftInVault(path: string): boolean {
-  // Only the vault's own settings, at the top once `atVaultTop` has had the paths:
-  // an older vault kept one folder down has its `.obsidian/` left behind like any
-  // other hidden folder, the way obsidian_vaults.rs leaves it.
-  // `workspaces.json` is not among them: it holds the layouts somebody saved by name,
-  // which travel with the vault. A hidden file in there is the desktop's rubbish, as
-  // it is anywhere else in the vault.
   if (path.startsWith('.obsidian/')) {
     const rest = path.slice('.obsidian/'.length)
     return (
@@ -82,15 +41,8 @@ export function leftInVault(path: string): boolean {
   return name.startsWith('.') || parts.some((one) => one.startsWith('.') || one === 'node_modules')
 }
 
-/** What iCloud leaves in place of a file it took off the Mac to save space, on
- *  macOS 13 and earlier: `.Plan.md.icloud` stands for `Plan.md`. */
 const IN_ICLOUD = /^\.[^/]+\.icloud$/
 
-/** What the vault holds and cannot bring, one line each: the files iCloud keeps
- *  rather than this Mac. Their placeholders are hidden files, which stay behind
- *  like any other, but each stands for one of the reader's own notes or pictures,
- *  so how many there are is said out loud rather than dropped in silence. Only
- *  those in the vault's own folders: one in `.trash/` was thrown away already. */
 export function lostInVault(sources: readonly Source[]): Lost[] {
   const away = sources.filter((one) => {
     const parts = one.path.split('/')
@@ -107,10 +59,6 @@ export function lostInVault(sources: readonly Source[]): Lost[] {
   ]
 }
 
-/** The habits the vault's `app.json` records. Read from what was picked rather
- *  than from the disk, so a vault that arrived as a zip says as much as one that
- *  arrived as a folder. The one at the top of the vault, wherever it sorts: an older
- *  vault kept inside this one has an `app.json` of its own. */
 export async function obsidianCarries(sources: readonly Source[]): Promise<Carried> {
   const app = atVaultTop(sources).find((one) => one.path === '.obsidian/app.json')
   let said: unknown = {}
@@ -126,36 +74,25 @@ export async function obsidianCarries(sources: readonly Source[]): Promise<Carri
   return fromAppJson(said)
 }
 
-/** `app.json`, as Orden's answers. A key the file does not have is Obsidian's
- *  default, because that is what the reader was looking at: Obsidian writes a key
- *  only once it is changed. */
 export function fromAppJson(said: unknown): Carried {
   const app = said !== null && typeof said === 'object' ? (said as Record<string, unknown>) : {}
 
   return {
     linkFormat: linkFormatOf(app.useMarkdownLinks, app.newLinkFormat),
-    // Obsidian's switch is the other way round: strict means a single newline is
-    // not a break, and it is off unless somebody turned it on.
     hardBreaks: app.strictLineBreaks !== true,
     attachments: attachmentsOf(app.attachmentFolderPath),
     properties: propertiesOf(app.propertiesInDocument),
     vim: app.vimMode === true,
-    // Live Preview shows the marks around the cursor, which is Orden's own default.
     quietMarks: false,
     keys: 'obsidian',
   }
 }
 
-/** Obsidian's two settings are one question in nib; see link-format.ts. */
 function linkFormatOf(markdown: unknown, format: unknown): LinkFormat {
   if (markdown !== true) return 'wikilink'
   return format === 'relative' || format === 'absolute' ? format : 'shortest'
 }
 
-/** Where Obsidian puts a pasted picture, as the nearest of Orden's three. `/` is
- *  the top of the vault and a bare name a folder there, both of which Orden answers
- *  with the space's own `assets/`; `./` is beside the note and `./name` a folder
- *  beside it, which is the note's own folder in Orden. */
 function attachmentsOf(path: unknown): AttachmentFolder {
   if (typeof path !== 'string') return 'space'
   return path.startsWith('./') ? 'note' : 'space'

@@ -1,26 +1,3 @@
-/** A Notion export, which is the one most people arrive with.
- *
- *  Notion writes a folder per page that has pages under it, a file per page, and
- *  an id on the end of every single name: `Plan 1a2b...7890.md` beside
- *  `Plan 1a2b...7890/`. Take the ids off and that is exactly Orden's own shape - a
- *  note and a folder of the same name, the note standing for the folder - so a
- *  Notion workspace arrives as the tree it looked like in Notion, with nothing
- *  rearranged.
- *
- *  A database is a CSV beside a folder of the rows' own pages. The CSV becomes
- *  the folder's note, holding the table as a base over the rows, and the rows
- *  come in as the notes they already were: the database is one thing in the file
- *  list that opens into its rows, and a row edited is the table edited. See
- *  notion-database.ts. Notion writes the table twice, once as the view that was
- *  on screen and once as every row; this reads the second, because a filtered
- *  view is a question somebody asked on a Tuesday and the rows are the data.
- *
- *  Each page carries its properties as lines under the title, which become front
- *  matter: that is where Orden keeps a note's properties, and it is what makes them
- *  searchable with `[key:value]`. A row's values are written as what their column
- *  holds - a date as a date, a checkbox as a yes-or-no, a relation as links - so
- *  the base can sort, sum and group them. */
-
 import { htmlToMarkdown } from '@orden/markdown/from-html'
 
 import { key } from '../i18n.svelte'
@@ -44,13 +21,8 @@ const HTML = /\.html?$/i
 const MARKDOWN = /\.(md|markdown)$/i
 const CSV = /\.csv$/i
 
-/** A line under the title that says what the page's property held. Notion writes
- *  the name exactly as the property was called, so a colon and a space is all
- *  there is to go on; the shape of the name is what keeps a sentence out. */
 const PROPERTY = /^([A-Z][^:\n.]{0,39}): *(.*)$/
 
-/** The property names that are the page's own dates rather than something
- *  somebody added. */
 const MADE = /^(created|created time|created at|date)$/i
 const CHANGED = /^(last edited time|last edited|last modified|updated)$/i
 const LABELS = /^(tags?|multi-select|select|labels?)$/i
@@ -60,8 +32,6 @@ export async function readNotion(exported: readonly Source[]): Promise<ImportPla
   const html = sources.filter((one) => HTML.test(one.path)).length
   const markdown = sources.filter((one) => MARKDOWN.test(one.path)).length
 
-  // Notion offers both, and its HTML export is the one that keeps a page's look.
-  // Which arrived is a fact about the file rather than a choice to be made.
   if (html > markdown) return readNotionHtml(sources)
 
   const names = new Names()
@@ -69,15 +39,12 @@ export async function readNotion(exported: readonly Source[]): Promise<ImportPla
   const paths = new Set(sources.map((one) => one.path))
   let views = 0
 
-  // Every database is read before any page is, because a row's page is written
-  // with what its column holds, and that is only known from the whole column.
   const databases = new Map<string, Database>()
   const folders = rowFolders(sources, kept)
   const folderOf = (csv: string) => folders.get(csv) ?? csv.replace(/(_all)?\.csv$/i, '')
   for (const source of sources) {
     if (kept.has(source.path)) databases.set(folderOf(source.path), databaseOf(await source.text()))
   }
-  // Where each database's folder note went, for the rows that have no page.
   const placed = new Map<string, string>()
 
   const plan = await folderPlan(sources, {
@@ -91,8 +58,6 @@ export async function readNotion(exported: readonly Source[]): Promise<ImportPla
           return { to: null }
         }
 
-        // Named after the folder its rows are in, so it is that folder's note:
-        // the folder's name made the way every folder's is, with `.md` after it.
         const path = names.free(
           `${safeParts(`${folderOf(source.path)}/-`, withoutNotionId).slice(0, -2)}.md`,
         )
@@ -135,8 +100,6 @@ export async function readNotion(exported: readonly Source[]): Promise<ImportPla
   if (views) {
     plan.lost.push({
       text: key('{count} saved views are left out, and every row is in the table'),
-      // Not a row of its own: a count is filed under its `other` form, and the
-      // forms a language wants sit in the catalogue under it. See i18n.svelte.ts.
       one: '{count} saved view is left out, and every row is in the table',
       values: { count: views },
     })
@@ -145,19 +108,8 @@ export async function readNotion(exported: readonly Source[]): Promise<ImportPla
   return plan
 }
 
-/** A name Notion wrote with the page's id on the end, and the id. */
 const NAMED = /^(.*) ([0-9a-f]{32})$/i
 
-/** The folder each database's rows are in, in the export, by its CSV.
- *
- *  Notion has named it three ways. It was the CSV's own name without the `_all`
- *  and the extension, id and all: `Tasks 1a2b...7890/`. It is now the title
- *  alone, `Tasks/`, with the start and end of the id after it only where two
- *  folders beside each other would otherwise share a name: `Tasks 1a2b-7890/`.
- *  And a database of several sources is named for both, `Tasks <id>_Bugs <id>`,
- *  its rows in `Tasks/Bugs/`. So each spelling is looked for among the folders
- *  the export has, and the first that is there is the one; a database whose rows
- *  came in no folder at all keeps the first spelling. */
 function rowFolders(sources: readonly Source[], kept: ReadonlySet<string>): Map<string, string> {
   const folders = new Set<string>()
   for (const one of sources) {
@@ -199,14 +151,8 @@ function parentOf(path: string): string {
   return at === -1 ? '' : path.slice(0, at)
 }
 
-/** The folder Notion puts the whole export in, inside the zip it downloads:
- *  `Export-` and the export's own id, which is nothing anybody named. */
 const WRAPPER = /^Export-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}(?:-Part-\d+)?\//i
 
-/** The export without that folder, so the workspace lands as its pages rather
- *  than one folder called after an id. Only when every file is in one: a large
- *  export comes as several parts, each in its own, and a page in one part links
- *  to a page in another by a path that leaves the folder out. */
 function unwrapped(sources: readonly Source[]): readonly Source[] {
   const wrapped = sources.filter((one) => !isJunk(one.path))
   if (!wrapped.length || !wrapped.every((one) => WRAPPER.test(one.path))) return sources
@@ -218,18 +164,10 @@ function unwrapped(sources: readonly Source[]): readonly Source[] {
   }))
 }
 
-/** The page Notion writes at the top of an export to list what is in it, which
- *  the folders themselves already are. */
 function isIndex(path: string): boolean {
   return /^index\.html$/i.test(path)
 }
 
-/** A link to a database, which Notion writes to the CSV of the view that was on
- *  screen, goes to the table the database is read from: its `_all` beside it.
- *  Where the export holds no CSV of that name at all, only a page, the database
- *  is a linked view of one somewhere else, which the export writes as a page
- *  under the same name and id, and the link goes to that page rather than to a
- *  file that is not there. */
 function viewsFollowed(text: string, from: string, paths: ReadonlySet<string>): string {
   const folder = parentOf(from)
   return text.replace(/\]\(([^()\s]+)\.csv\)/gi, (whole, target: string) => {
@@ -246,16 +184,6 @@ function viewsFollowed(text: string, from: string, paths: ReadonlySet<string>): 
   })
 }
 
-/** The rows the CSV has and no page of the export stands for, as notes of their
- *  own, so that a row is never in Notion's table and missing from Orden's. A page
- *  is matched to its row by name, the way Notion named the file after the row's
- *  title; Notion writes a page for every row, so this is usually nothing.
- *
- *  A title that is a mention of a date is the one place the two names part: the
- *  file is named the way the mention read on the day it was exported, `@Today`,
- *  and the CSV writes the day itself, `@August 6, 2025`. So a row no page is
- *  named after is matched by what it holds instead, a page whose properties are
- *  the row's values, before it is taken for a row that has no page. */
 async function missingRows(
   database: Database,
   folder: string,
@@ -305,28 +233,10 @@ async function missingRows(
   return out
 }
 
-/** A name with nothing in it a file system or an exporter might have changed. */
 function matchable(name: string): string {
   return name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '')
 }
 
-/** The key each column is written under, the same in every row's front matter and
- *  in the base: the page's own dates and its labels under Orden's names for them,
- *  every other column under its own.
- *
- *  The page's own date is the column that says when each row was made, the
- *  `Created` one, whatever stands before it, and failing that the first date
- *  column whose every value reads as a day: a `Date` of ranges, or one left blank
- *  in some rows, ahead of a `Created` would otherwise take the key and leave those
- *  rows with no date at all. The last-edited day is the first such column of its
- *  kind. Two columns
- *  that come out as one key - a `Created` and a `Date`, or `Status` and `Status?`
- *  - would be one property written twice, so the second steps aside as `date-2`,
- *  and a column whose name has nothing in it to keep is called after its place, as
- *  a CSV's are (see table.ts). `date` and `updated` are kept for the page's own
- *  even where no column reads, so no column of words is written as the note's
- *  date. Every label column is the one list of tags, and is asked first so that no
- *  column of words takes the name. The title is the note's name and has no key. */
 function keysOf(database: Database): Map<string, string> {
   const columns = database.columns.slice(1)
   const keys = new Map<string, string>()
@@ -356,24 +266,16 @@ function keysOf(database: Database): Map<string, string> {
   return keys
 }
 
-/** Whether a column says a day in some row and nothing but a day in any. */
 function readsAsDays(database: Database, column: string): boolean {
   const said = database.rows.map((row) => (row[column] ?? '').trim()).filter(Boolean)
   return said.length > 0 && said.every((one) => dayOf(one) !== null)
 }
 
-/** Whether a CSV is a database's table, which Notion names with the database's id
- *  as it names every page, before the `_all` where there is one. A CSV without one
- *  is a file somebody attached to a page, brought as the file it was: read as a
- *  database it became a note of rows, and the link to it led nowhere. */
 function isTable(path: string): boolean {
   const name = (path.split('/').pop() ?? path).replace(/_all(\.csv)$/i, '$1')
   return CSV.test(name) && hasNotionId(name)
 }
 
-/** Which of the CSVs to read. Notion writes `Table id.csv` for the view that was
- *  on screen and `Table id_all.csv` for every row; where both are there the
- *  second is the one that holds the database. */
 function usefulCsvs(sources: readonly Source[]): Set<string> {
   const csvs = sources.filter((one) => isTable(one.path)).map((one) => one.path)
   const alls = new Set(
@@ -383,23 +285,6 @@ function usefulCsvs(sources: readonly Source[]): Set<string> {
   return new Set(csvs.filter((one) => /_all\.csv$/i.test(one) || !alls.has(one.replace(CSV, ''))))
 }
 
-/** A page's properties out of the lines under its title, and the words that are
- *  left.
- *
- *  What counts as the property block is the lines directly under the title, up to
- *  the first blank one, each of them `Name: value`. That is exactly where Notion
- *  writes them, and its export always leaves a blank line between the title and
- *  the page's own words - so a page that has no properties has a blank line there
- *  and nothing is taken from it. One line that is not a property makes the whole
- *  block words again, since half a block of properties is a page that has lost a
- *  sentence.
- *
- *  A row of a database read here is the exception, because Notion's export of
- *  one does leave a blank line under the title, and writes its properties after
- *  it: `# Dune`, a blank line, `Pages: 412`. There the columns are known, so the
- *  first block after the title is the row's properties when every line of it
- *  names one of them, and words otherwise. A column is known by its whole name,
- *  so one called `due date` or `📅 Due` is read as well as `Due` is. */
 export function notionPage(
   text: string,
   kinds?: ReadonlyMap<string, Kind>,
@@ -411,8 +296,6 @@ export function notionPage(
   return { body: found.body, meta: metaOf(found.said, kinds, keys) }
 }
 
-/** The property block of a page, as `notionPage` finds it, and the page without
- *  it. Null for a page that has none. */
 function propertiesOf(
   text: string,
   kinds?: ReadonlyMap<string, Kind>,
@@ -420,7 +303,6 @@ function propertiesOf(
   const lines = text.split('\n').map((line) => line.replace(/\r$/, ''))
   let at = 0
 
-  // The title is already the file's name, and Orden keeps it as the heading.
   const title = lines[at]?.startsWith('# ') ? lines[at] : null
   if (title !== null) at += 1
 
@@ -435,8 +317,6 @@ function propertiesOf(
   return { said: found.said, body }
 }
 
-/** The lines from `at` up to the first blank one, when every one of them is a
- *  property, and where they end. */
 function blockAt(
   lines: readonly string[],
   at: number,
@@ -459,9 +339,6 @@ function blockAt(
   return said.length ? { said, end } : null
 }
 
-/** A line's property and its value: a column of the database by its whole name
- *  where the page is a row of one, and a name of the shape `PROPERTY` reads
- *  otherwise. */
 function propertyIn(line: string, kinds?: ReadonlyMap<string, Kind>): [string, string] | null {
   let known = ''
   for (const name of kinds?.keys() ?? []) {
@@ -473,15 +350,6 @@ function propertyIn(line: string, kinds?: ReadonlyMap<string, Kind>): [string, s
   return found ? [found[1] ?? '', found[2] ?? ''] : null
 }
 
-/** A page's properties as front matter: its own dates and labels under Orden's
- *  names, and every other one as what its column holds. A row of a database read
- *  here is written under its columns' keys (see `keysOf`); a page that is not one
- *  has its values judged one by one.
- *
- *  A date is the page's own only where a day can be read out of it and no date
- *  before it was: a range, `May 1, 2026 → May 3, 2026`, or a `Date` under a
- *  `Created`, is a property like any other rather than a value that is taken out
- *  of the page and written nowhere. */
 function metaOf(
   said: readonly [string, string][],
   kinds?: ReadonlyMap<string, Kind>,
@@ -525,12 +393,6 @@ function metaOf(
   return meta
 }
 
-/** An HTML export: the same tree of pages, each a web page rather than markdown.
- *  Its words are converted the way any HTML page is (see plain.ts), with the two
- *  things only Notion writes read first. A row's properties are a table at the
- *  top of its page, which become front matter as a Markdown export's lines do;
- *  and a to-do is a list item with a box drawn in front of it, which becomes a
- *  task, ticked or not. */
 async function readNotionHtml(sources: readonly Source[]): Promise<ImportPlan> {
   const names = new Names()
   let pages = 0
@@ -563,8 +425,6 @@ async function readNotionHtml(sources: readonly Source[]): Promise<ImportPlan> {
     },
   })
 
-  // Said out loud because it is the one thing a reader of an HTML export has to
-  // know: what the HTML did not hold was not in the export either.
   if (pages) {
     plan.lost.push({
       text: key('{count} pages came as HTML, so their words are kept and their look is not'),
@@ -575,12 +435,8 @@ async function readNotionHtml(sources: readonly Source[]): Promise<ImportPlan> {
   return plan
 }
 
-/** The box Notion draws in front of a to-do, ticked or not. */
 const BOX = /<div class="checkbox checkbox-(on|off)"><\/div>(\s*<span class="to-do-children)?/g
 
-/** A page of an HTML export, its properties table taken out as front matter and
- *  its to-dos made tasks. A box anywhere else, in a cell of a database's table,
- *  is the yes or no the Markdown export writes there. */
 function notionHtml(text: string): { html: string; meta: Meta } {
   let html = text
   let meta: Meta = {}
@@ -589,7 +445,6 @@ function notionHtml(text: string): { html: string; meta: Meta } {
     if (tag.closing || tag.name !== 'table' || !/\bproperties\b/.test(tag.attributes.class ?? ''))
       continue
 
-    // A table nothing closes is a page cut short, whose words are all kept.
     const end = closingOf(text, 'table', tag.to)
     const close = text.indexOf('>', end)
     if (close === -1) break
@@ -605,9 +460,6 @@ function notionHtml(text: string): { html: string; meta: Meta } {
   return { html: tasks, meta }
 }
 
-/** The rows of a page's properties table as front matter. Each row says what
- *  kind of property it is in its class, so a value is written as that kind
- *  rather than judged from its words. */
 function propertiesTable(table: string): Meta {
   const meta: Meta = {}
   const extra: [string, Property][] = []
@@ -633,8 +485,6 @@ function propertiesTable(table: string): Meta {
 
     if (MADE.test(name) || CHANGED.test(name)) {
       const day = notionDate(plain)?.slice(0, 10) ?? dayOf(plain)
-      // Only the first date of each kind is the page's own, and one that does not
-      // read as a day is kept as the property it was; see `metaOf`.
       if (day && MADE.test(name) && !meta.date) {
         meta.date = day
         continue
@@ -662,8 +512,6 @@ function propertiesTable(table: string): Meta {
   return meta
 }
 
-/** A relation's pages as links, by the names their notes have once the ids are
- *  off. Null when a link in it is not to a page of the export. */
 function relationIn(cell: string): string[] | null {
   const links: string[] = []
   for (const one of elements(cell, 'a')) {
@@ -680,7 +528,6 @@ function relationIn(cell: string): string[] | null {
   return links.length ? links : null
 }
 
-/** What some HTML says, as one line of words. */
 function words(html: string): string {
   return unescapeXml(html.replace(/<[^>]*>/g, ' '))
     .replace(/\s+/g, ' ')

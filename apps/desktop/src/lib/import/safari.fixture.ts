@@ -1,10 +1,3 @@
-/** Safari's files as the crate hands them over (safari.rs), for the reader's and the
- *  landing's tests. Written by hand after Apple's own shapes, since no Mac wrote them
- *  here: `Bookmarks.plist`'s keys as Safari writes them, and `SafariTabs.db`'s rows in
- *  the layout a macOS 15.4 Safari keeps (a root, a profile, tab groups, a group's
- *  `TopScopedBookmarkList` of pinned tabs, the window's own `Local`), as DLEAPP's
- *  Safari Tabs parser read it off a public extraction. */
-
 const leaf = (url: string, title: string, more: Record<string, unknown> = {}) => ({
   WebBookmarkType: 'WebBookmarkTypeLeaf',
   WebBookmarkUUID: `uuid-${title}`,

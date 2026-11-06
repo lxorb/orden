@@ -24,7 +24,6 @@ function noteAt(plan: ImportPlan, path: string): string {
   return found.text
 }
 
-/** What a ` ```base ` fence in a note holds. */
 function fenced(note: string): string {
   const found = /```base\n([\s\S]*?)\n```/.exec(note)
   if (!found) throw new Error('no base in the note')
@@ -40,8 +39,6 @@ describe('a Notion export', () => {
     ])
 
     expect(pathsOf(plan)).toEqual(['Plan.md', 'Plan/Kit list.md', 'Plan/tent.png'])
-    // A note and a folder of the same name is how Orden nests, so the page that
-    // had pages under it still stands for them.
     expect(noteAt(plan, 'Plan.md')).toContain('[[Kit list]]')
   })
 
@@ -70,8 +67,6 @@ describe('a Notion export', () => {
       file(`Tasks ${TASKS}/One ${ROW}.md`, '# One\nStatus: Done\n\nWords.\n'),
     ])
 
-    // Two, which has no page of its own in the export, is a note all the same,
-    // so no row is in Notion's table and missing from Orden's.
     expect(pathsOf(plan)).toEqual(['Tasks.md', 'Tasks/One.md', 'Tasks/Two.md'])
 
     const base = readBase(fenced(noteAt(plan, 'Tasks.md')))
@@ -116,7 +111,6 @@ describe('a Notion export', () => {
     expect(dune).toContain('started: 2026-01-02T15:30\n')
     expect(dune).toContain('genre: [Sci-fi, Classic]\n')
     expect(dune).toContain("author: ['[[Herbert]]']\n")
-    // A leading zero is a code, and a column with one in it is words throughout.
     expect(dune).toContain("code: '007'\n")
     expect(dune).toContain('note: Long, and worth it\n')
     expect(noteAt(plan, 'Books/Ubik.md')).toContain('read: false\n')
@@ -147,12 +141,10 @@ describe('a Notion export', () => {
     const wrap = 'Export-d2b14fbf-86de-4508-a1b2-6515ff8d7aab'
     const plan = await readNotion([
       file(`${wrap}/Plan ${PLAN}.md`, `# Plan\n\n[Kit](Plan%20${PLAN}/Kit%20${SUB}.md)\n`),
-      // A large export comes in parts, each in a folder of its own.
       file(`${wrap}-Part-2/Plan ${PLAN}/Kit ${SUB}.md`, '# Kit\n'),
       file(`${wrap}/index.html`, '<ul><li>Plan</li></ul>'),
     ])
 
-    // The index lists what the folders already hold, and is left behind.
     expect(pathsOf(plan)).toEqual(['Plan.md', 'Plan/Kit.md'])
     expect(noteAt(plan, 'Plan.md')).toContain('[[Kit]]')
   })
@@ -164,7 +156,6 @@ describe('a Notion export', () => {
         `Habits ${TASKS}/@May 1, 2026 ${ROW}.md`,
         '# @May 1, 2026\n\nRan today: Yes\n📅 Due: May 2, 2026\n\nWords.\n',
       ),
-      // A page that is not a row keeps a line like that as the words it is.
       file(`Plan ${PLAN}.md`, '# Plan\n\nOne thing: it works.\n'),
     ])
 
@@ -182,7 +173,6 @@ describe('a Notion export', () => {
       file(`Habits ${TASKS}/@Today ${ROW}.md`, '# @Today\n\nRan: August 6, 2025 6:21 AM\n'),
     ])
 
-    // One note, not the page and a second one made for a row with no page.
     expect(pathsOf(plan)).toEqual(['Habits.md', 'Habits/@Today.md'])
   })
 
@@ -333,7 +323,6 @@ describe('a Notion export', () => {
       ),
     ])
 
-    // A Date that reads as days but is blank in a row still leaves the row its date.
     expect(noteAt(plan, 'Visits/One.md')).toContain('date: 2026-01-02\n')
     expect(noteAt(plan, 'Visits/One.md')).toContain('date-2: 2026-03-05\n')
     expect(noteAt(plan, 'Visits/Two.md')).toContain('date: 2026-01-03\n')
@@ -393,8 +382,6 @@ describe('a Notion export', () => {
 
 describe('what counts as a page of properties', () => {
   test('is the block directly under the title, which is where Notion writes it', () => {
-    // Every Notion export leaves a blank line between the title and the page's
-    // own words, so words separated from the title are words.
     const text = '# Plan\n\nOne thing: it works.\n\nMore.\n'
 
     expect(notionPage(text).body).toBe(text)

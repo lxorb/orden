@@ -1,43 +1,21 @@
-/** The shape most of these exports have: a folder of files.
- *
- *  Notion, Bear, Logseq, Craft, OneNote and a plain folder of markdown all arrive
- *  as files in folders, and all of them need the same three things done: decide
- *  where each file goes, turn the notes into nib's markdown, and make the links
- *  between them point at where they went. Only the first two differ per format,
- *  so only those are handed in.
- *
- *  The formats that are not folders - a single `.enex`, Keep's one file per note,
- *  a Roam JSON - build their plans themselves, because there is nothing to map. */
-
 import type { Meta } from './meta'
 import { keptText, noteText } from './meta'
 import type { FormatId, ImportPlan, Lost, Planned } from './plan'
 import { canvasFollowed, ExportFiles, isCanvas, rewriteLinks } from './rewrite'
 import type { Source } from './sources'
 
-// Asked by read.ts before any reader is loaded, so it lives with the names.
 export { isJunk } from './names'
 
-/** What a note's file says, once the format has had a look at it. */
 interface Written {
   text: string
-  /** The title, for a note whose file name is not it. Null leaves the words as
-   *  they are, which is right for a format that already writes its own heading. */
   title?: string | null
   meta?: Meta
-  /** The words are a file an app kept for itself rather than an export it wrote,
-   *  so nothing goes above them and nothing around them is tidied. */
   kept?: boolean
-  /** The words are Markdown somebody wrote in an app whose notes can open with a
-   *  block of properties, so a block they open with is the note's own. */
   own?: boolean
 }
 
 interface Placement {
-  /** Where it goes inside the import, or null to leave it out. */
   to: string | null
-  /** How the file's text becomes a note. Left out for a file that is copied as
-   *  it is, which is every picture and every paper. */
   read?: (text: string, source: Source) => Promise<Written> | Written
 }
 
@@ -53,12 +31,8 @@ export async function folderPlan(
 ): Promise<ImportPlan> {
   const placed: { source: Source; to: string; read: Placement['read'] }[] = []
   const files = new ExportFiles()
-  // What the import renamed on the way in, by the path the export gave it, which is
-  // how a canvas in the export names it.
   const renamed = new Map<string, string>()
 
-  // Everything is placed before anything is read, because a link in the first
-  // note can point at the last file in the export.
   for (const source of sources) {
     const placement = options.place(source)
     if (!placement.to) continue
@@ -97,22 +71,15 @@ export async function folderPlan(
   return { format: options.format, files: written, lost: [...(options.lost ?? [])] }
 }
 
-/** The name a wikilink writes for a file: its own, without the extension. */
 function nameFor(path: string): string {
   const name = path.split('/').pop() ?? path
   return name.replace(/\.(md|markdown|mdown|mkd|txt)$/i, '')
 }
 
-/** Whether this file is one whose words become a note. `.txt` is in: Tomboy,
- *  Keep and Apple's own exporters all write plain text, and a text file in a
- *  space is a note that happens to have no markdown in it. */
 export function isNoteFile(path: string): boolean {
   return /\.(md|markdown|mdown|mkd|txt)$/i.test(path)
 }
 
-/** Whether a file is hidden, or inside a hidden folder: `.git` and its objects, a
- *  `.gitignore`, the `.trash/` Obsidian keeps for notes thrown away. Another
- *  program's business, which the space's file list and sync leave out as well. */
 export function isHidden(path: string): boolean {
   return path.split('/').some((part) => part.startsWith('.'))
 }

@@ -1,23 +1,7 @@
-/** One Zen sidebar as three versions of Zen wrote it, for the tests: a profile made in
- *  Zen 1.24 and in Zen 1.17.15 by hand - two spaces, Home and Work; three Essentials,
- *  Mail, Calendar and Chat, the third made while Work was open; a folder, Docs, of two
- *  pinned tabs in Work; a pinned tab in each space; an open one in each - and read
- *  back out of the files those versions wrote. Every field and its spelling is the
- *  file's own, the ids shortened; see zen.ts for what each says.
- *
- *  - `ZEN_1_24` is `zen-sessions.jsonlz4` of Zen 1.18 on.
- *  - `ZEN_TWILIGHT` is the same file as twilight builds wrote it between window sync
- *    and 1.18 (December 2025 to January 2026): an Essential's `zenEssential` the
- *    attribute's `"true"`, and an ordinary tab's `null`.
- *  - `ZEN_1_17` is `sessionstore.jsonlz4` of a Zen up to 1.17, which has no spaces
- *    and lost the pinned tabs of the space that was not open, and `ZEN_1_17_PLACES` the
- *    rows of `places.sqlite` that hold them, as zen_profiles.rs reads them. */
-
 const HOME = '{d12f5e21-86dc-4ab6-aa68-5179e3c6578d}'
 const WORK = '{90bb2d5f-4e6e-4d01-80cf-84d545dda229}'
 const DOCS = '1793911194239-60'
 
-/** A tab as Zen 1.24's TabState writes it. */
 function tab(
   id: string,
   url: string,
@@ -149,7 +133,6 @@ export const ZEN_TWILIGHT = {
   })),
 }
 
-/** A tab as Zen 1.17's TabState writes it. */
 function oldTab(
   pin: string | null,
   url: string,
@@ -233,7 +216,6 @@ export const ZEN_1_17 = {
   savedGroups: [],
 }
 
-/** A row of `zen_pins`, every column of it. */
 function pin(
   id: number,
   uuid: string,
@@ -308,7 +290,6 @@ export const ZEN_1_17_PLACES = {
     pin(10, '{9337aadc}', 'Example Domain', 'https://example.org/chat', null, 2, {
       is_essential: 1,
     }),
-    // Pinned before it had loaded: the pin says nothing, the session's tab where it is.
     pin(11, '{519add78}', 'example.net/board', 'about:blank', OLD_WORK, 6),
     pin(12, '{96ffe3c8}', 'The guide', 'https://example.com/docs/guide', OLD_WORK, 4, {
       edited_title: 1,

@@ -54,7 +54,6 @@ describe("Firefox's tabs and bookmarks as nib's", () => {
   })
 
   test('reads a group open and saved at once as the open one alone', () => {
-    // Firefox saves a window's open groups as it quits, and both are in the file.
     const session = {
       ...SESSION,
       savedGroups: [
@@ -111,7 +110,6 @@ describe("Firefox's tabs and bookmarks as nib's", () => {
             { guid: 's1', type: 'text/x-moz-place-separator' },
           ],
         },
-        // Roots known by the name of the root they are, with no id of their own.
         {
           title: 'Bookmarks Toolbar',
           root: 'toolbarFolder',

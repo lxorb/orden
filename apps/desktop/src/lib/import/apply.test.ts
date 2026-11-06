@@ -2,21 +2,14 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import type { ImportPlan, Planned } from './plan'
 
-/** Every write the import made: the command and the path it was handed. The
- *  point of the last two tests is that this stays empty. */
 const wrote: { command: string; path: string }[] = []
 
-/** A path the disk refuses, for the import that fails partway. */
 let refusing: string | null = null
 
-/** What the import handed the undo stack. */
 const recorded: unknown[] = []
 
-/** What each note was written as. */
 const said = new Map<string, string>()
 
-/** What is on the disk already, which the file list may not show: a picture, a file
- *  in a hidden folder, a file of a space that is not the one open. */
 const onDisk = new Set<string>()
 
 vi.mock('../tauri', () => ({
@@ -24,7 +17,6 @@ vi.mock('../tauri', () => ({
     if (command === 'file_stamp') {
       return Promise.resolve(onDisk.has(String(args.path)) ? { modified: 1, len: 1 } : null)
     }
-    // The browser has no stamps; its listing answers. See on-disk.ts.
     if (command === 'path_exists') return Promise.resolve(onDisk.has(String(args.path)))
     if ((command === 'read_note' || command === 'read_asset') && onDisk.has(String(args.path))) {
       return Promise.resolve('')
@@ -38,13 +30,10 @@ vi.mock('../tauri', () => ({
     wrote.push({ command, path: String(args.path) })
     return Promise.resolve()
   },
-  // Enough of the real one for a test; which separator a platform writes is not
-  // what any of this is about.
   joinPath: (dir: string, relative: string) => `${dir}/${relative}`,
   isNative: false,
 }))
 
-/** Each file the import said it made, as a file operation. */
 const came: string[] = []
 
 vi.mock('../workspace.svelte', () => ({
@@ -59,7 +48,6 @@ vi.mock('../workspace.svelte', () => ({
   },
 }))
 
-/** What the link index was told, in order. */
 const heard: string[] = []
 
 vi.mock('../link-index.svelte', () => ({
@@ -70,7 +58,6 @@ vi.mock('../link-index.svelte', () => ({
 }))
 vi.mock('../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 
-/** The roots of the spaces shared with this account to be read. */
 const readOnly = new Set<string>()
 vi.mock('../sharing.svelte', () => ({
   canWriteAt: (path: string) =>
@@ -299,8 +286,6 @@ describe('a name that is already taken', () => {
   })
 })
 
-/** A vault read and then landed in the folder `Inbox` of a space that already holds
- *  `taken`. */
 async function vaultLanded(taken: string[], ...files: [string, string?][]): Promise<Planned[]> {
   const { readAs } = await import('./read')
   const { sourceOf } = await import('./sources')
@@ -392,7 +377,6 @@ describe('a vault landed beside notes of the same name', () => {
 
 describe('an import into a space that already holds an earlier copy', () => {
   test('does not write over a picture the file list does not show', async () => {
-    // A picture is not in the file list, which lists only what a tab can hold.
     onDisk.add('/Space/Brain/photo.png')
     onDisk.add('/Space/Brain/.obsidian/app.json')
     const landed = await applyImport(
@@ -424,7 +408,6 @@ describe('an import into a space that already holds an earlier copy', () => {
   })
 
   test('does not write over notes of a space that is not the one open', async () => {
-    // The file list is the open space's; this one is only on the disk.
     onDisk.add('/Other/Brain/Home.md')
     onDisk.add('/Other/Brain/Home 2.md')
     const landed = await applyImport(planOf([note('Home.md', '# Home, the new copy\n')]), {
@@ -437,8 +420,6 @@ describe('an import into a space that already holds an earlier copy', () => {
 })
 
 describe('a page note and its paper', () => {
-  // A page note `X.pages` holds `X.pages.pdf` beside it as its paper: hidden from the
-  // file list, and trashed with the note. Either landing beside the other paired them.
   test('a PDF named as a page note’s paper steps aside from the note already there', () => {
     const stamped = restamped(planOf([file('Report.pages.pdf')]), new Set(['Report.pages']), '')
 
@@ -491,10 +472,6 @@ describe('a page note and its paper', () => {
   })
 })
 
-/** The write site judges what it is about to write, whatever the reader handed
- *  it. Every format reader puts each part of a name through `safeName`, so a path
- *  that climbs out of the space means a reader forwarded a zip entry's own name -
- *  a bug, and one nothing further along would have caught. */
 describe('a path no space would take', () => {
   const target = { root: '/Work', folder: '' }
 
@@ -534,9 +511,6 @@ describe('a path no space would take', () => {
     expect(heard).toEqual(['saved /Work/Plan.md', 'came back /Work/assets/x.png'])
   })
 
-  /** Said as file operations, so sync v2 has an entry for each where no watcher reads
-   *  the folder: in a browser an imported paper's page note never reached the account
-   *  (#551). */
   test('and says each of them was made, as every file operation is said', async () => {
     came.length = 0
     await applyImport(planOf([note('Plan.md', '# Plan'), file('assets/x.png')]), {
@@ -549,9 +523,6 @@ describe('a path no space would take', () => {
 })
 
 describe('an import that fails partway', () => {
-  /** A full disk on the third of three files. The sheet says it failed; what
-   *  had already landed used to be on the disk with no undo that could take it
-   *  back. */
   test('is still one thing to undo for what it wrote', async () => {
     refusing = '/Space/C.md'
 
@@ -572,9 +543,6 @@ describe('an import that fails partway', () => {
   })
 })
 
-/** A space shared with this account to be read takes no import: the copy here would
- *  stop being the space's, and the sync refuses it on every pass (B280). Asked here, as
- *  every import lands through here: the sheet, a browser's spaces, a share on a phone. */
 describe('a space shared to be read', () => {
   test('is refused before a single file is written', async () => {
     readOnly.add('/Theirs')

@@ -1,39 +1,11 @@
-/** What Arc's sidebar says, read into a browser's sidebar (sidebar.ts): its spaces, each
- *  with its pinned tabs and folders and its open tabs, and its Favorites.
- *
- *  Arc keeps all of it in `StorableSidebar.json`, beside its user data folder, one file
- *  for every profile (chromium_profiles.rs): `sidebar.containers`, of which the one
- *  after `{ global }` holds `spaces` and `items`, each a list of ids and objects one
- *  after the other.
- *
- *  - **A space** is `{ id, title, profile, customInfo, newContainerIDs }`: its profile
- *    is `{ default }` or `{ custom: { _0: { directoryBasename } } }`, the profile's
- *    folder, and only the spaces of the profile being imported come. Its icon is an
- *    emoji (`customInfo.iconType.emoji_v2`); `newContainerIDs` (`containerIDs` before)
- *    names its two lists of items, `pinned` and `unpinned`.
- *  - **An item** is `{ id, parentID, childrenIds, title, data }`: a tab
- *    (`data.tab.savedURL`, `savedTitle`), a folder (`data.list`), a split view
- *    (`data.splitView`, its tabs side by side), or a list of a space or of the
- *    Favorites (`data.itemContainer`). Its children come in `childrenIds`' order.
- *  - **The Favorites** are the items of the container `topAppsContainerIDs` names for
- *    the profile, which Arc shows above every space as Zen shows its Essentials, and
- *    which are Orden's Essentials too.
- *
- *  A pinned tab is a pinned tab, an open one a tab of the day, a folder a folder, as
- *  Zen's are (zen-plan.ts). An easel or a note of Arc's is not a page, and stays; a
- *  line says so. Pure: the file as it was parsed, the sidebar out. */
-
 import type { Sidebar, SidebarFolder, SidebarSpace, SidebarTab } from './sidebar'
 import { isObject, list, type Said, text } from './sidebar-made'
 
-/** What came of the file: the sidebar, and how many easels and notes stayed. */
 export interface ArcRead {
   sidebar: Sidebar
   stayed: number
 }
 
-/** The profile's spaces out of Arc's sidebar; `folder` is the profile's folder in the
- *  user data, `Default` for Arc's first. Null where the file holds none of them. */
 export function arcSidebar(said: unknown, folder: string): ArcRead | null {
   const sidebar = isObject(said) && isObject(said.sidebar) ? said.sidebar : null
   const containers = list(sidebar?.containers)
@@ -81,11 +53,8 @@ interface Reading {
   stayed: number
 }
 
-/** What a list's tabs are. */
 type Row = 'essential' | 'pinned' | 'open'
 
-/** The id a list of markers and ids gives after the marker `wanted` picks: Arc writes
- *  `[marker, id, marker, id]`, a marker an object or, in an older file, a word. */
 function listOf(value: unknown, wanted: (marker: unknown) => boolean): string | null {
   if (!Array.isArray(value)) return null
   for (let at = 0; at + 1 < value.length; at += 2) {
@@ -98,7 +67,6 @@ function isKey(marker: unknown, key: string): boolean {
   return marker === key || (isObject(marker) && key in marker)
 }
 
-/** Whether a space's or the Favorites' profile is the one being read. */
 function profileIs(profile: unknown, folder: string): boolean {
   if (!isObject(profile)) return folder === 'Default'
   if ('default' in profile) return folder === 'Default'
@@ -106,7 +74,6 @@ function profileIs(profile: unknown, folder: string): boolean {
   return isObject(custom) && text(custom.directoryBasename) === folder
 }
 
-/** A space's emoji: `emoji_v2`, or before it the emoji's code point. */
 function iconOf(info: unknown): string | null {
   const kind = isObject(info) && isObject(info.iconType) ? info.iconType : null
   if (!kind) return null
@@ -118,10 +85,8 @@ function iconOf(info: unknown): string | null {
     : null
 }
 
-/** Deeper than anybody nests, and a stop for a sidebar that goes round. */
 const DEEPEST = 64
 
-/** The rows under the item `id`, in their order: tabs, and folders of rows. */
 function rows(
   read: Reading,
   id: string,

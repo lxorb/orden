@@ -1,24 +1,8 @@
-/** A Zen space's or folder's icon, and its theme's colour, as Orden writes them.
- *
- *  Zen offers an emoji or one of its own drawings, which a session writes as
- *  `chrome://browser/skin/zen-icons/selectable/rocket.svg`: Ionicons' names, which
- *  are the everyday names Lucide draws the same things under, give or take a word.
- *  So an emoji stays the emoji, a drawing becomes Lucide's of the same thing, and a
- *  drawing Lucide has nothing for leaves the space wearing its initial, which is
- *  what an Orden space with no icon wears anyway.
- *
- *  The colour is the theme's main dot, as the nearest accent Orden offers: an icon's
- *  tint is one of those and never a colour of its own (see `isIconTint`). */
-
 import { ACCENTS } from '../accents'
 import { readIcon } from '../icons'
 
-/** Where Zen's own drawings are, and the name each is filed under. */
 const DRAWING = /^chrome:\/\/browser\/skin\/zen-icons\/(?:[\w-]+\/)*([\w-]+)\.svg$/i
 
-/** Zen's names that are not Lucide's for the same picture. Every other name of
- *  Zen's is Lucide's own, `rocket` and `leaf` among them; a name in neither is not
- *  drawn. See zen-icons.test.ts, which holds every one to the library. */
 const LUCIDE: Record<string, string> = {
   airplane: 'plane',
   basket: 'shopping-basket',
@@ -62,7 +46,6 @@ const LUCIDE: Record<string, string> = {
   weight: 'dumbbell',
 }
 
-/** Zen's names that are Lucide's as they stand. */
 const SAME = new Set([
   'bed',
   'bell',
@@ -111,7 +94,6 @@ const SAME = new Set([
   'wallet',
 ])
 
-/** The icon Orden writes for what Zen wrote, or null where Orden has nothing to draw. */
 export function zenIcon(value: string | null): string | null {
   if (!value) return null
 
@@ -125,12 +107,8 @@ export function zenIcon(value: string | null): string | null {
   return read?.kind === 'emoji' ? read.text : null
 }
 
-/** Every name a drawing of Zen's may become, for the test that holds them to Lucide. */
 export const ZEN_DRAWINGS: readonly string[] = [...Object.values(LUCIDE), ...SAME]
 
-/** The accent nearest a colour, by hue: the accents are a wheel of hues and two
- *  greys of it, so a grey is slate and every other colour is the hue it is closest
- *  to. Null for no colour. */
 export function zenTint(colour: readonly [number, number, number] | null): string | null {
   if (!colour) return null
 
@@ -156,7 +134,6 @@ function rgbOf(hex: string): [number, number, number] {
   return [(said >> 16) & 255, (said >> 8) & 255, said & 255]
 }
 
-/** Hue in degrees and saturation from nought to one. */
 function hsl([r, g, b]: readonly [number, number, number]): [number, number] {
   const [red, green, blue] = [r / 255, g / 255, b / 255]
   const most = Math.max(red, green, blue)

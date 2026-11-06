@@ -83,7 +83,6 @@ describe("Zen's spaces as nib's", () => {
       url: 'https://news.example.com/today',
       home: 'https://news.example.com/',
       title: 'News today',
-      // An address of a mark would be a request to the site at every launch.
       icon: null,
       added: NOW.toISOString(),
     })

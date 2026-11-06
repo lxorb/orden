@@ -11,7 +11,6 @@ vi.mock('../tauri', () => ({
     if (command === 'read_obsidian_file' && args.path === 'Home.md') {
       return Promise.resolve(btoa('# Home'))
     }
-    // A Tauri command's error arrives as the bare string the crate returned.
     // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
     return Promise.reject(
       `/home/me/Brain/${String(args.path)} could not be read: Permission denied`,

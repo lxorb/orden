@@ -1,17 +1,6 @@
-/** The browsers on this machine the import can read, and one of their files.
- *
- *  The crate lists them out of each browser's own list of profiles and hands over the
- *  bytes of a file it has judged to be one of theirs; see browser_profiles.rs. What
- *  the bytes say is read here and in each browser's reader (firefox.ts, chromium.ts);
- *  Safari's files the crate reads whole and hands over as JSON (safari.ts). Desktop
- *  only: everywhere else there are no profiles to read. */
-
 import { fromBase64 } from '../bytes'
 import { invoke, isDesktop } from '../tauri'
 
-/** The browsers the import reads besides Zen, in the order the rows show them: Safari,
- *  a Mac's own, first. Chrome and the rest are Chromium, and read alike (chromium.ts);
- *  Arc keeps its sidebar in a file of its own (arc.ts). */
 export type BrowserId =
   | 'safari'
   | 'firefox'
@@ -24,7 +13,6 @@ export type BrowserId =
   | 'opera-gx'
   | 'arc'
 
-/** A browser's name is its name in every language, as an app's is in the import. */
 export const BROWSER_NAMES: Record<BrowserId, string> = {
   safari: 'Safari',
   firefox: 'Firefox',
@@ -42,19 +30,15 @@ export interface BrowserProfile {
   browser: BrowserId
   name: string
   path: string
-  /** The files of it the import reads, the one to read first in front. */
   files: string[]
 }
 
-/** One browser and its profiles, the one it opens first in front. */
 export interface FoundBrowser {
   browser: BrowserId
-  /** What its row says. */
   name: string
   profiles: BrowserProfile[]
 }
 
-/** Every browser on this machine with anything to import. None off the desktop. */
 export async function foundBrowsers(): Promise<FoundBrowser[]> {
   if (!isDesktop) return []
   try {
@@ -74,8 +58,6 @@ export async function foundBrowsers(): Promise<FoundBrowser[]> {
   }
 }
 
-/** One of a profile's listed files, or null where it could not be read: a file the
- *  browser was halfway through writing is a file to step past, not a refusal. */
 export async function browserFile(
   profile: BrowserProfile,
   file: string,

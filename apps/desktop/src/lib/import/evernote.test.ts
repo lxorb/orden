@@ -6,7 +6,6 @@ import { md5 } from './md5'
 import type { ImportPlan } from './plan'
 import { sourceOf, type Source } from './sources'
 
-/** Four bytes, so the hash in the fixture is the hash of something real. */
 const PICTURE = Uint8Array.from([1, 2, 3, 4])
 const BASE64 = 'AQIDBA=='
 const HASH = md5(PICTURE)
@@ -97,9 +96,6 @@ describe('an Evernote export', () => {
     expect(text).toContain('- [ ] Socks')
   })
 
-  // Evernote draws a checklist as one checkbox per line, each in a div of its own.
-  // Read as a list per line, the lines came out a blank line apart - one loose list,
-  // spaced like paragraphs - where the note had been a checklist.
   test('checkboxes one under another are one checklist', async () => {
     const list = `  <note>
     <title>Packing</title>
@@ -150,7 +146,6 @@ describe('an Evernote export', () => {
       'Travel/Trip to Iceland.md',
       'Work/Trip to Iceland.md',
     ])
-    // A note in a folder still points at the picture, which is a level up.
     expect(noteAt(several, 'Travel/Trip to Iceland.md')).toContain('![](../assets/glacier.png)')
 
     const one = await readEvernote([file('Travel.enex', enex(NOTE))])
@@ -176,7 +171,6 @@ describe('an Evernote export', () => {
   })
 })
 
-/** A note with just this body, and whatever else goes in the note after it. */
 function bodied(title: string, body: string, rest = ''): string {
   return `  <note>
     <title>${title}</title>
@@ -193,8 +187,6 @@ function picture(data = BASE64, name = ''): string {
 }
 
 describe('an Evernote export that is not quite what the format says', () => {
-  // `atob` throws on anything that is not base64, and the throw took every note
-  // in the file with it.
   test('an attachment that is not base64 is that attachment lost, not the import', async () => {
     const damaged = bodied(
       'Damaged',
@@ -209,8 +201,6 @@ describe('an Evernote export that is not quite what the format says', () => {
     expect(plan.lost[0]?.text).toContain('attachments')
   })
 
-  // A picture whose attachment is not in the file used to vanish from the note
-  // without a word.
   test('a picture whose attachment the export left out is counted', async () => {
     const plan = await readEvernote([
       file(
@@ -247,8 +237,6 @@ describe('an Evernote export that is not quite what the format says', () => {
     expect(noteAt(plan, 'Quoted.md')).toContain(`![](assets/${HASH.slice(0, 16)}.png)`)
   })
 
-  // An attachment has a `source-url` of its own, and a clipped note with no
-  // address of its own took its picture's as the page it came from.
   test('the source is the note’s own, and its author comes too', async () => {
     const clipped = bodied(
       'Clipped',
@@ -264,8 +252,6 @@ describe('an Evernote export that is not quite what the format says', () => {
     expect(text).toContain('author: Ann Smith')
   })
 
-  // Every note Evernote exports says `<reminder-order>0</reminder-order>`, so
-  // every import said every note had had a reminder.
   test('a reminder order of nought is no reminder', async () => {
     const none = bodied(
       'None',
@@ -333,8 +319,6 @@ describe('the markup of an Evernote note', () => {
       .trimEnd()
   }
 
-  // ENML is XML, where `<div/>` is empty; as HTML it opens a div that never
-  // closes, and a clipped page with thousands of them overflowed the stack.
   test('an empty div written the XML way holds nothing', async () => {
     expect(await body('<div/>first<div/>second')).toBe('first\n\nsecond')
     expect(await body(`${'<div/>'.repeat(4000)}<div>end</div>`)).toBe('end')
@@ -344,8 +328,6 @@ describe('the markup of an Evernote note', () => {
     expect(await body('<div>if a &lt;b&gt; c</div>')).toContain('if a \\<b> c')
   })
 
-  // The current Evernote writes a checklist as a list marked `--en-todo`, with
-  // a list inside it beside the item it belongs to rather than inside it.
   test('a checklist the current Evernote wrote keeps its boxes and its nesting', async () => {
     const list =
       '<ul style="--en-todo:true;"><li style="--en-checked:true;"><div>Pack</div></li>' +
@@ -390,8 +372,6 @@ describe('the markup of an Evernote note', () => {
   })
 })
 
-/** A checkbox's words are somebody's words: an emoji and a date after it, a `#`, are
- *  what the task reader takes apart, and Evernote meant none of it. */
 describe('an Evernote checkbox', () => {
   test('reads none of its words as a field of the task', async () => {
     const list = `  <note>

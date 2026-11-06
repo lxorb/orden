@@ -1,10 +1,3 @@
-/** A browser's sidebar as Orden's: what each of its spaces becomes before anything is
- *  written. What becomes what is Zen's picture, which every browser's sidebar is read
- *  into (sidebar.ts); see zen-plan.ts for why each thing becomes what it does. A tab
- *  a browser says when it kept, a bookmark, says that day as the day it was kept.
- *
- *  Pure: the sidebar in, the plans out. See sidebar-landing.ts for the writing. */
-
 import { Names, safeName } from './names'
 import type { Lost, Planned } from './plan'
 import type { Sidebar, SidebarFolder, SidebarSpace, SidebarTab } from './sidebar'
@@ -13,19 +6,13 @@ import { isWebAddress } from '../web-tab/address'
 import { writeShortcut } from '@orden/scan/shortcut'
 import { readIcon, takesTint } from '../icons'
 
-/** One of the browser's spaces as an Orden space. */
 export interface SpacePlan {
   name: string
   icon: string | null
-  /** Only with a stroked icon: an emoji has its own colours. */
   tint: string | null
-  /** Every web note and empty note, as paths inside the space, in the sidebar's order. */
   files: Planned[]
-  /** Each folder's rows in the sidebar's order, by the folder's path ('' for the top). */
   order: Record<string, string[]>
-  /** The Essentials, as paths of their web notes. */
   bookmarks: string[]
-  /** The icons the browser's folders wore, by the folder's path. */
   folderIcons: Record<string, string>
 }
 
@@ -34,20 +21,12 @@ interface SidebarImport {
   lost: Lost[]
 }
 
-/** The largest site mark kept in a web note: a favicon is a few kilobytes, and a
- *  picture past this is a page's screenshot somebody's session kept by accident. */
 const LONGEST_MARK = 64 * 1024
 
-/** What Orden makes of a sidebar. `now` is when the web notes say they were kept, where
- *  the browser did not say; `containers` is the line that says containers stayed
- *  behind, in the browser's name, or null for a browser that has none. */
 export function sidebarImport(session: Sidebar, now: Date, containers: Lost | null): SidebarImport {
   const first = session.spaces[0]
-  // A tab whose space is not in the list is in the first one, which is where Zen
-  // shows a tab it has lost the space of.
   const homeOf = (tab: SidebarTab): string | undefined => {
     const own = session.spaces.find((space) => space.id === tab.space)
-    // Essentials are shown in every space, or in every space of their container.
     const contained =
       tab.essential && tab.container
         ? session.spaces.find((space) => space.container === tab.container)
@@ -72,7 +51,6 @@ export function sidebarImport(session: Sidebar, now: Date, containers: Lost | nu
   }
 }
 
-/** A row of the sidebar: a tab, or a folder of rows. */
 type Row = { tab: SidebarTab } | { folder: SidebarFolder; rows: Row[] }
 
 function spacePlan(
@@ -97,10 +75,6 @@ function spacePlan(
   return plan
 }
 
-/** The space's rows as the sidebar nests them. Essentials first, which is where
- *  they are drawn, then everything else in the session's order: a folder sits where
- *  its first tab does, and a folder of nothing at the end of the folder it is in,
- *  in the order the folders are listed. A page is in one place once. */
 function rowsOf(
   space: SidebarSpace,
   folders: readonly SidebarFolder[],
@@ -110,9 +84,6 @@ function rowsOf(
   const top: Row[] = []
   const made = new Map<string, Row[]>()
 
-  /** The rows of a folder, made in its parent's rows the first time it is asked. A
-   *  split view is not a folder: its rows are its folder's. A chain that loops, or
-   *  a folder of another space, ends at the top. */
   const rowsIn = (id: string | null, seen = new Set<string>()): Row[] => {
     const folder = id ? byId.get(id) : undefined
     if (!folder || seen.has(folder.id) || (folder.space && folder.space !== space.id)) return top
@@ -127,8 +98,6 @@ function rowsOf(
     return rows
   }
 
-  // A page twice in one place is one web note: the same tab open in two windows of a
-  // browser that keeps no id for it, a pinned tab that is an Essential too.
   const pages = new WeakMap<Row[], Set<string>>()
   const add = (rows: Row[], tab: SidebarTab) => {
     const held = pages.get(rows) ?? new Set<string>()
@@ -145,7 +114,6 @@ function rowsOf(
   return top
 }
 
-/** The rows as files, each folder's order written down as they go. */
 function write(rows: readonly Row[], folder: string, plan: SpacePlan, names: Names, now: Date) {
   const order: string[] = []
   const inside = (name: string) => (folder ? `${folder}/${name}` : name)
@@ -161,8 +129,6 @@ function write(rows: readonly Row[], folder: string, plan: SpacePlan, names: Nam
 
     const name = safeName(row.folder.name)
     if (!row.rows.length) {
-      // Its name is taken as a folder's too: a note beside a folder of the same name
-      // is the note Orden nests into that folder (folder-notes.ts), not a second one.
       const path = names.free(`${names.free(inside(name))}.md`)
       plan.files.push({ kind: 'note', path, text: '' })
       order.push(nameIn(path))
@@ -183,8 +149,6 @@ function nameIn(path: string): string {
   return path.slice(path.lastIndexOf('/') + 1)
 }
 
-/** A tab as a web note: its page now, the address it was pinned on, and its mark
- *  where the session kept it as a picture. */
 function shortcutOf(tab: SidebarTab, now: Date): string {
   const home = tab.home && isWebAddress(tab.home) ? tab.home : null
   const mark =

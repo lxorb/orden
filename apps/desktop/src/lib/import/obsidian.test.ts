@@ -11,7 +11,6 @@ function file(path: string, body = 'x'): Source {
   return sourceOf(path, new TextEncoder().encode(body))
 }
 
-/** What a note says once a vault holding it and these other files is read. */
 async function noteFrom(path: string, ...files: Source[]): Promise<string> {
   const plan = await readAs('obsidian', [file('.obsidian/app.json', '{}'), ...files])
   const found = plan.files.find((one) => one.path === path)
@@ -24,11 +23,9 @@ describe('an Obsidian vault', () => {
     await expect(detect([file('.obsidian/app.json', '{}'), file('A.md', '# A')])).resolves.toBe(
       'obsidian',
     )
-    // A vault with a `pages/` folder is still a vault, not a Logseq graph.
     await expect(
       detect([file('.obsidian/app.json', '{}'), file('pages/A.md', '# A')]),
     ).resolves.toBe('obsidian')
-    // An old Evernote or Tomboy export kept in a vault is one of its files.
     await expect(
       detect([
         file('.obsidian/app.json', '{}'),
@@ -37,7 +34,6 @@ describe('an Obsidian vault', () => {
         file('Archive/Old.note', '<note/>'),
       ]),
     ).resolves.toBe('obsidian')
-    // A zip whose one entry is the vault.
     await expect(
       detect([file('Vault/.obsidian/app.json', '{}'), file('Vault/A.md', '# A')]),
     ).resolves.toBe('obsidian')
@@ -50,7 +46,6 @@ describe('an Obsidian vault', () => {
     expect(leftInVault('.obsidian/themes/Minimal/theme.css')).toBe(true)
     expect(leftInVault('.trash/Old.md')).toBe(true)
     expect(leftInVault('Vault/.trash/Old.md')).toBe(true)
-    // Another program's, as the vault list leaves them; see obsidian_vaults.rs.
     expect(leftInVault('.git/HEAD')).toBe(true)
     expect(leftInVault('.git/objects/ab/cdef0123')).toBe(true)
     expect(leftInVault('.stversions/A.md')).toBe(true)
@@ -61,7 +56,6 @@ describe('an Obsidian vault', () => {
     expect(leftInVault('.obsidian/snippets/._wide.css')).toBe(true)
 
     expect(leftInVault('.obsidian/app.json')).toBe(false)
-    // The layouts saved by name with the Workspaces plugin are the vault's own.
     expect(leftInVault('.obsidian/workspaces.json')).toBe(false)
     expect(leftInVault('.obsidian/templates.json')).toBe(false)
     expect(leftInVault('Notes/workspace.json')).toBe(false)
@@ -177,7 +171,6 @@ describe('what a vault carries into the settings', () => {
     ])
 
     expect(carried).toMatchObject({ vim: false, linkFormat: 'wikilink' })
-    // A zip whose one entry is the vault still has its settings read.
     await expect(
       obsidianCarries([file('Brain/.obsidian/app.json', '{"vimMode":true}')]),
     ).resolves.toMatchObject({ vim: true })
@@ -233,7 +226,6 @@ describe('the links in a vault', () => {
       'See [[Work/Meeting|work]].\n',
     )
     await expect(linked('![[Work/photo.png|200]]\n')).resolves.toBe('![[Work/photo.png|200]]\n')
-    // A name only one file has stays as short as it was written.
     await expect(
       noteFrom('A.md', file('Work/Plan.md', '# Plan\n'), file('A.md', 'See [[Work/Plan]].\n')),
     ).resolves.toBe('See [[Plan]].\n')
@@ -246,13 +238,9 @@ describe('the links in a vault', () => {
       file('Projects/Index.md', '# Projects\n'),
       file('Projects/Alpha.md', 'Back to [Home](../Index.md), or [[Index|here]].\n'),
     )
-    // nib reads `[[Index]]` from Projects as the Index beside it, so the markdown link
-    // stays, while the wikilink meant the one beside it all along and is left as it was.
     expect(text).toBe('Back to [Home](../Index.md), or [[Index|here]].\n')
   })
 
-  // Found by importing the Obsidian Hub vault, where a person, a plugin and a theme
-  // often share one name and differ only in case.
   test('to a name two notes share stay as written and go where nib reads them', async () => {
     const text = await noteFrom(
       'People/benf.md',
@@ -268,8 +256,6 @@ describe('the links in a vault', () => {
       file('People/BookFusion.md', '- [[bookfusion|BookFusion]]\n'),
       file('Plugins/bookfusion.md', 'Developed by: [[BookFusion]]\n'),
     ]
-    // Not the note the link is written in, whose name differs only in case: nib
-    // reads a name without regard to case, so the folder is written in.
     await expect(noteFrom('People/BookFusion.md', ...files)).resolves.toBe(
       '- [[Plugins/bookfusion|BookFusion]]\n',
     )
@@ -313,7 +299,6 @@ describe('the links in a vault', () => {
 
     await expect(noteFrom('A.md', file('A.md', fenced), kit)).resolves.toBe(fenced)
     await expect(noteFrom('A.md', file('A.md', inline), kit)).resolves.toBe(inline)
-    // A fence nobody closed is code to the end of the note.
     await expect(noteFrom('A.md', file('A.md', '~~~\n[[kit]]\n'), kit)).resolves.toBe(
       '~~~\n[[kit]]\n',
     )
@@ -326,8 +311,6 @@ describe('the links in a vault', () => {
 
     await expect(noteFrom('A.md', file('A.md', indented), kit)).resolves.toBe(indented)
     await expect(noteFrom('A.md', file('A.md', callout), kit)).resolves.toBe(callout)
-    // Under a paragraph or a list item an indented line is more of it, and its link
-    // is a link.
     await expect(
       noteFrom('A.md', file('A.md', 'Some words\n    and [[kit]]\n'), kit),
     ).resolves.toBe('Some words\n    and [[kit]]\n')
@@ -345,7 +328,6 @@ describe('the links in a vault', () => {
     await expect(noteFrom('A.md', file('A.md', indented), plan)).resolves.toBe(indented)
     await expect(noteFrom('A.md', file('A.md', tabbed), plan)).resolves.toBe(tabbed)
     await expect(noteFrom('A.md', file('A.md', opened), plan)).resolves.toBe(opened)
-    // Once the fence closes, the item's words are words again.
     await expect(
       noteFrom('A.md', file('A.md', `${opened}   and [the plan](Plan.md)\n`), plan),
     ).resolves.toBe(`${opened}   and [[Plan|the plan]]\n`)
@@ -395,7 +377,6 @@ describe('the links in a vault', () => {
     await expect(noteFrom('A.md', file('A.md', table('[[plan\\|the plan]]')), plan)).resolves.toBe(
       table('[[plan\\|the plan]]'),
     )
-    // Outside a table the `|` is the link's own.
     await expect(noteFrom('A.md', file('A.md', 'See [the plan](Plan.md).\n'), plan)).resolves.toBe(
       'See [[Plan|the plan]].\n',
     )
@@ -403,7 +384,6 @@ describe('the links in a vault', () => {
 
   test('in a table under a list item keep the cell whole', async () => {
     const plan = file('Plan.md', '# Plan\n')
-    // Obsidian writes a list item's contents a tab in; four spaces do the same.
     const tabbed = '- Steps\n\t| step | note |\n\t| --- | --- |\n\t| one | [[Plan\\|the plan]] |\n'
     const spaced = (link: string) =>
       `1. Steps\n    | step | note |\n    | --- | --- |\n    | one | ${link} |\n`
@@ -439,7 +419,6 @@ describe('the links in a vault', () => {
     await expect(
       noteFrom('A.md', file('A.md', '[![badge](pic.png)](https://example.com)\n'), pic),
     ).resolves.toBe('[![badge](attachments/pic.png)](https://example.com)\n')
-    // The note keeps a markdown link, since a wikilink cannot show a picture.
     await expect(
       noteFrom(
         'A.md',
@@ -466,7 +445,6 @@ describe('the links in a vault', () => {
         file('C# basics.md', '# C# basics\n'),
       ),
     ).resolves.toBe('See [basics](C%23%20basics.md).\n')
-    // A wikilink is read as written, never as percent encoding.
     await expect(
       noteFrom(
         'A.md',
@@ -495,7 +473,6 @@ describe('the links in a vault', () => {
         file('Attachments/pic.png', 'png'),
       ),
     ).resolves.toBe('![see [1]](../Attachments/pic.png)\n')
-    // A wikilink with words after it in brackets is still a wikilink.
     await expect(
       noteFrom('A.md', file('A.md', 'See [[Plan]](draft).\n'), file('Plan.md', '# Plan')),
     ).resolves.toBe('See [[Plan]](draft).\n')
@@ -557,7 +534,6 @@ describe('the links in a vault', () => {
 
     await expect(noteFrom('A.md', file('A.md', wiki), beta)).resolves.toBe(wiki)
     await expect(noteFrom('A.md', file('A.md', markdown), beta)).resolves.toBe(markdown)
-    // The end of a path is enough, the way Obsidian reads it.
     await expect(noteFrom('A.md', file('A.md', 'Call [[Beta/Contacts]].\n'), beta)).resolves.toBe(
       'Call [[Contacts]].\n',
     )
@@ -670,7 +646,6 @@ describe('the links in a vault', () => {
       file('assets/chart.png'),
       file('Projects/Plan.md', '# Plan'),
     )
-    // A wikilink cannot run over a line, so the note is reached by its path.
     expect(out).toBe(
       'The chart below is the one\n![sales by quarter, as sent to the\nboard](../assets/chart.png)\n\nSee [the whole\nplan](../Projects/Plan.md) for the rest.\n',
     )
@@ -742,8 +717,6 @@ describe('the links in a vault', () => {
   })
 
   test('to a root note by its relative or rooted path still go there past a namesake beside them', async () => {
-    // Obsidian's "Relative path to file" and "Absolute path in vault" formats write
-    // these; Orden reads a bare `[[Plan]]` from `Projects/` as the one beside it.
     const vault = [file('Plan.md', '# Root plan\n'), file('Projects/Plan.md', '# Project plan\n')]
     await expect(
       noteFrom('Projects/A.md', ...vault, file('Projects/A.md', 'See [[../Plan]].\n')),
@@ -768,8 +741,6 @@ describe('the links in a vault', () => {
   })
 
   test('on the line after a table are not escaped as if in a cell', async () => {
-    // A list item, a heading, or the end of a callout ends a table, and Orden reads
-    // `[[Plan\\|x]]` outside one as a link to a note called `Plan\\`.
     const plan = file('Plan.md', '# Plan\n')
     const listed = '| Day | Hours |\n| --- | --- |\n| Mon | 3 |\n- see [[Plan|the plan]]\n'
     await expect(noteFrom('Log.md', plan, file('Log.md', listed))).resolves.toBe(listed)
@@ -781,7 +752,6 @@ describe('the links in a vault', () => {
       '> [!info] Stats\n> | a | b |\n> |---|---|\n> | 1 | 2 |\nAfter the callout, [[Plan|the plan]].\n'
     await expect(noteFrom('Log.md', plan, file('Log.md', callout))).resolves.toBe(callout)
 
-    // A row that is only words still belongs to the table, and its link is escaped.
     const ran = '| a | b |\n| --- | --- |\nsee [[Plan|the plan]]\n'
     await expect(noteFrom('Log.md', plan, file('Log.md', ran))).resolves.toBe(
       '| a | b |\n| --- | --- |\nsee [[Plan\\|the plan]]\n',
@@ -789,7 +759,6 @@ describe('the links in a vault', () => {
   })
 })
 
-/** A file the browser hands over from a picked folder. */
 function picked(path: string, bytes: Uint8Array): Picked {
   return {
     name: path.split('/').pop() ?? path,
@@ -798,14 +767,11 @@ function picked(path: string, bytes: Uint8Array): Picked {
   }
 }
 
-/** Every path a plan writes, in order. */
 async function pathsFrom(sources: readonly Source[]): Promise<string[]> {
   const plan = await readAs('obsidian', sources)
   return plan.files.map((one) => one.path).sort()
 }
 
-/** A zip as Windows' "Compressed (zipped) folder" writes one: stored, its names in
- *  the machine's code page as they are given and not marked UTF-8. */
 function windowsZip(entries: [Uint8Array, string][]): Uint8Array {
   const u16 = (n: number) => [n & 0xff, (n >> 8) & 0xff]
   const u32 = (n: number) => [...u16(n & 0xffff), ...u16(n >>> 16)]
@@ -1087,7 +1053,6 @@ describe('the files in a vault', () => {
   })
 
   test('keep a name that needs no change when another is renamed onto it', async () => {
-    // `*` sorts before `.`, which is the order the vault list walks them in.
     const plan = await readAs('obsidian', [
       file('.obsidian/app.json', '{}'),
       file('Why*.png', 'star picture'),
@@ -1112,7 +1077,6 @@ describe('the files in a vault', () => {
       file('Inbox.md', 'the other inbox'),
     ])
     const notes = plan.files.flatMap((one) => (one.kind === 'note' ? [[one.path, one.text]] : []))
-    // The one whose name needs no change keeps it, and the link still means it.
     expect(notes).toEqual([
       ['Home.md', 'See [[Inbox]].\n'],
       ['Inbox 2.md', 'pinned inbox\n'],
@@ -1131,8 +1095,6 @@ describe('the files in a vault', () => {
   })
 
   test('whose names a Mac wrote with their accents apart are found by a link typed whole', async () => {
-    // As Finder or Preview saves a name, with each accent apart from its letter; a
-    // link typed or completed holds them together, and Obsidian reads both as one.
     const embedded = await noteFrom(
       'Notes/Job.md',
       file(`Attachments/${'R\u00e9sum\u00e9'.normalize('NFD')}.pdf`, '%PDF-1.7'),
@@ -1140,7 +1102,6 @@ describe('the files in a vault', () => {
     )
     expect(embedded.normalize('NFC')).toBe('![](../Attachments/R\u00e9sum\u00e9.pdf)\n')
 
-    // The same file renamed for Windows on the way in, its link following it.
     const renamed = await noteFrom(
       'Notes/Quiz.md',
       file(`Pics/${'R\u00e9ponse'.normalize('NFD')}?.png`, 'png'),
@@ -1190,7 +1151,6 @@ describe('the files in a vault', () => {
 
   test('keep their accented names from a zip Windows made', async () => {
     const ascii = (said: string) => [...new TextEncoder().encode(said)]
-    // `é` is 0x82 in code page 437, and the bytes are not UTF-8.
     const cafe = (before: string, after: string) =>
       new Uint8Array([...ascii(`${before}Caf`), 0x82, ...ascii(after)])
     const zip = windowsZip([
@@ -1198,7 +1158,6 @@ describe('the files in a vault', () => {
       [new Uint8Array(ascii('Brain/Home.md')), 'See [[Café]] and ![[Café.png]]\n'],
       [cafe('Brain/', '.md'), '# Café\n'],
       [cafe('Brain/Attachments/', '.png'), 'png'],
-      // A name macOS wrote, UTF-8 that does not say so, reads as UTF-8.
       [new Uint8Array(ascii('Brain/Crème.md')), '# Crème\n'],
     ])
 
@@ -1217,7 +1176,6 @@ describe('the files in a vault', () => {
 
   test('keep their Japanese names from a zip a Japanese Windows made', async () => {
     const ascii = (said: string) => [...new TextEncoder().encode(said)]
-    // `メモ` in code page 932 (Shift-JIS), the code page a Japanese Windows writes in.
     const memo = [0x83, 0x81, 0x83, 0x82]
     const zip = windowsZip([
       [new Uint8Array(ascii('Brain/.obsidian/app.json')), '{}'],
@@ -1264,7 +1222,6 @@ describe('the files in a vault', () => {
         file('Personal/Home.md', '# Personal home'),
       ]),
     ).resolves.toEqual(['Personal/Home.md', 'Work/Home.md'])
-    // A vault one folder down beside notes of the folder's own is not poured over them.
     await expect(
       notes([
         file('Home.md', '# Loose home'),

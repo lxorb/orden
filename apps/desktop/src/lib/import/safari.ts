@@ -1,50 +1,16 @@
-/** What Safari keeps on a Mac, read into a browser's sidebar (sidebar.ts): its open
- *  tabs, its pinned ones, its tab groups, its bookmarks and its Reading List. The crate
- *  hands the files over as JSON (safari.rs); this reads them.
- *
- *  The tabs are `SafariTabs.db`'s rows (Safari 15 on), a tree of folders (type 1) and
- *  tabs (type 0) in `order_index` order:
- *
- *  - **A tab group** is a folder that holds tabs, and becomes a folder of its name.
- *  - **Pinned tabs** are kept in a tab group's `TopScopedBookmarkList`, and are the
- *    Essentials, as Firefox's and Chrome's pinned tabs are.
- *  - **A window's own tabs**, the group nobody named, are in a folder Safari calls
- *    `Local`, and come at the top of the space rather than in a folder.
- *  - Folders that only hold folders - the root, a profile - hold nothing of their own,
- *    and a row marked deleted, or a folder of Safari's own (`com.apple.…`), is nothing.
- *  - Private Browsing's tabs, which Safari keeps in folders of their own (`private`,
- *    and `privatepinned` for its pinned ones), are nobody's to keep, as a private
- *    window is not in any browser's import.
- *
- *  Before Safari 15 the open windows are `LastSession.plist`: `SessionWindows`, each
- *  with its `TabStates`, the pinned ones `IsAppTab`, a private window never.
- *
- *  The bookmarks are `Bookmarks.plist`, a tree of lists (`WebBookmarkTypeList`, a
- *  `Title` and `Children`) and bookmarks (`WebBookmarkTypeLeaf`, a `URLString` and a
- *  `URIDictionary.title`), and come as Firefox's and Chrome's do: a folder called
- *  Bookmarks after the tabs, with Favorites (Safari's own name for its bar) and the
- *  Bookmarks menu in it, and every other list of the root by its title. The Reading
- *  List, the root's `com.apple.ReadingList`, is a folder of its own after that, each
- *  page kept on the day it was added. History is a list of the root too, and stays.
- *
- *  Pure: the files as the crate read them, the sidebar out. */
-
 import type { Sidebar } from './sidebar'
 import { type FolderWords, isObject, list, Made, type Said, text } from './sidebar-made'
 
-/** What the crate read: each file, or null where it was not there. */
 export interface SafariFiles {
   bookmarks: unknown
   tabs: unknown
   session: unknown
 }
 
-/** Safari's folders in `SafariTabs.db` that are not tab groups. */
 const PINNED = 'TopScopedBookmarkList'
 const LOCAL = 'Local'
 const PRIVATE = new Set(['private', 'privatepinned'])
 
-/** The root's lists in `Bookmarks.plist`, by their fixed titles. */
 const BAR = 'BookmarksBar'
 const MENU = 'BookmarksMenu'
 const READING_LIST = 'com.apple.ReadingList'
@@ -52,7 +18,6 @@ const READING_LIST = 'com.apple.ReadingList'
 const FOLDER = 1
 const TAB = 0
 
-/** Safari as one space named `name`. */
 export function safariSidebar(files: SafariFiles, name: string, words: FolderWords): Sidebar {
   const made = new Made()
   if (Array.isArray(files.tabs)) readTabs(files.tabs.filter(isObject), made, words)
@@ -61,7 +26,6 @@ export function safariSidebar(files: SafariFiles, name: string, words: FolderWor
   return made.sidebar(name)
 }
 
-/** One row of `SafariTabs.db`, as the crate reads it. */
 interface Row {
   id: number
   parent: number | null
@@ -81,11 +45,8 @@ function rowOf(said: Said): Row | null {
   }
 }
 
-/** Deeper than Safari nests, and a stop for a table whose parents go round. */
 const DEEPEST = 16
 
-/** The tab groups and their tabs, walked from the rows nothing holds. The crate reads
- *  them in Safari's order, so a folder's children are in the order Safari shows them. */
 function readTabs(said: Said[], made: Made, words: FolderWords) {
   const rows = said.map(rowOf).filter((one): one is Row => one !== null)
   const ids = new Set(rows.map((one) => one.id))
@@ -119,7 +80,6 @@ function readTabs(said: Said[], made: Made, words: FolderWords) {
   walk(null, 0)
 }
 
-/** A tab as a page of the sidebar; one with no address is a blank tab, and nothing. */
 function page(made: Made, tab: Row, where: { folder?: string; essential?: boolean }) {
   if (!tab.url) return
   made.tab({
@@ -133,7 +93,6 @@ function page(made: Made, tab: Row, where: { folder?: string; essential?: boolea
   })
 }
 
-/** An older Safari's windows. */
 function readSession(session: Said, made: Made) {
   for (const window of list(session.SessionWindows)) {
     if (window.IsPrivateWindow === true) continue
@@ -154,7 +113,6 @@ function readSession(session: Said, made: Made) {
   }
 }
 
-/** The bookmarks under Bookmarks, and the Reading List after them. */
 function readBookmarks(root: Said, made: Made, words: FolderWords) {
   const lists = list(root.Children).filter((one) => one.WebBookmarkType === 'WebBookmarkTypeList')
   const named = (title: string | null) =>
@@ -198,7 +156,6 @@ function walk(folder: Said, id: string, made: Made, words: FolderWords, depth: n
   })
 }
 
-/** The day a page was put on the Reading List, as the crate writes a date. */
 function addedOf(value: unknown): { added?: Date } {
   if (typeof value !== 'string') return {}
   const when = new Date(value)

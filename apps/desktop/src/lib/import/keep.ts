@@ -1,22 +1,3 @@
-/** A Google Keep export, out of Takeout.
- *
- *  Takeout writes a folder with three files per note: a JSON with everything in
- *  it, an HTML copy of the same thing, and the attachments beside them. The JSON
- *  is the one to read, and the HTML is left where it is.
- *
- *  Keep's notes are a list or a paragraph, and the list is the interesting half:
- *  every item carries whether it was ticked, which is exactly a task list. So a
- *  Keep shopping list arrives as a shopping list with the boxes in the state it
- *  was left in.
- *
- *  Labels become tags. Colours do not come: a colour is how a note was found on
- *  the Keep wall, and the wall is what Orden's search, tags and picture of the space
- *  are for. Pinning does not come either, for the same reason.
- *
- *  What was in the bin stays in the bin. Takeout puts deleted notes in the export
- *  and Keep would have thrown them away within the week; importing them would be
- *  the one act of this whole feature that nobody asked for. The count is said. */
-
 import { escapeText, plainWords } from '@orden/markdown/escapes'
 import { plainTaskWords } from '@orden/markdown/task-line'
 import { key } from '../i18n.svelte'
@@ -28,8 +9,6 @@ import type { Source } from './sources'
 
 const ASSETS = 'assets'
 
-/** Where an archived note goes: a folder of its own, because an archive is a
- *  place rather than a property, and nothing in Orden reads a property saying so. */
 const ARCHIVE = 'Archive'
 
 interface KeepNote {
@@ -50,7 +29,6 @@ export async function readKeep(sources: readonly Source[]): Promise<ImportPlan> 
   const written: Planned[] = []
   const lost: Lost[] = []
   const attachments = new Map<string, Source>()
-  // Where each attachment went, so a picture two notes share is written once.
   const copied = new Map<Source, string>()
   let trashed = 0
   let archived = 0
@@ -84,8 +62,6 @@ export async function readKeep(sources: readonly Source[]): Promise<ImportPlan> 
 
     const text =
       typeof note.textContent === 'string' ? note.textContent.replace(/\r\n?/g, '\n').trim() : ''
-    // Keep is plain text, so its words are written to read back as themselves:
-    // `$5-$10` is two prices rather than a formula; see `plainWords`.
     if (text) words.push(plainWords(text))
 
     const items = listItems(note.listContent)
@@ -115,8 +91,6 @@ export async function readKeep(sources: readonly Source[]): Promise<ImportPlan> 
 
     const body = words.join('\n\n')
     const said = typeof note.title === 'string' ? note.title.trim() : ''
-    // A note with no title is named after its words, or a list after its first
-    // item: never after the box in front of it or the address of a picture.
     const title =
       (said ? safeName(said) : (titleFrom(text) ?? titleFrom(items[0]?.text ?? ''))) ?? 'Untitled'
 
@@ -170,9 +144,6 @@ export async function readKeep(sources: readonly Source[]): Promise<ImportPlan> 
   return { format: 'keep', files: written, lost }
 }
 
-/** A note's JSON, null for a file that is not one - Takeout drops a couple of
- *  its own JSONs into the same folder - and `broken` for one that is not JSON
- *  at all, which is a note cut short rather than one of Takeout's. */
 function parsed(text: string): (KeepNote & { color?: unknown }) | null | 'broken' {
   let said: unknown
   try {
@@ -189,7 +160,6 @@ function parsed(text: string): (KeepNote & { color?: unknown }) | null | 'broken
   return looksLikeOne ? note : null
 }
 
-/** A ticked list as a task list, which is what it was. */
 function listItems(said: unknown): Item[] {
   if (!Array.isArray(said)) return []
 
@@ -197,7 +167,6 @@ function listItems(said: unknown): Item[] {
   for (const one of said) {
     if (!one || typeof one !== 'object') continue
     const item = one as { text?: unknown; isChecked?: unknown }
-    // An item is one line in Keep, whatever was pasted into it.
     const text = typeof item.text === 'string' ? item.text.replace(/\s+/g, ' ').trim() : ''
     if (!text) continue
 
@@ -212,15 +181,10 @@ interface Item {
   text: string
 }
 
-/** An item's words are text in Keep, as a note's are, and none of them a field of
- *  the task (`plainTaskWords`). */
 function taskLine(item: Item): string {
   return `- [${item.checked ? 'x' : ' '}] ${plainTaskWords(item.text)}`
 }
 
-/** The pages Keep shows under a note as cards. A card for an address the words
- *  already hold needs nothing more; one for a page shared into the note from
- *  elsewhere is in no other place, so it comes as a link. */
 function linksOf(said: unknown, text: string): string[] {
   if (!Array.isArray(said)) return []
 
@@ -232,7 +196,6 @@ function linksOf(said: unknown, text: string): string[] {
     if (!/^[a-z][a-z0-9+.-]*:[^\s<>]+$/i.test(url) || text.includes(url)) continue
 
     const title = typeof card.title === 'string' ? card.title.replace(/\s+/g, ' ').trim() : ''
-    // A link's text, where nothing autolinks: words escaped as words.
     const shown = escapeText(title, { addresses: false })
     links.push(shown ? `- [${shown}](<${url}>)` : `- <${url}>`)
   }
@@ -240,8 +203,6 @@ function linksOf(said: unknown, text: string): string[] {
   return links
 }
 
-/** A file's path as a link's target: the characters a target cannot hold as
- *  themselves encoded, the way the import's own link rewriting writes them. */
 function encoded(path: string): string {
   return path
     .replace(/%/g, '%25')
@@ -281,9 +242,6 @@ function asNumber(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
 
-/** The attachment a note names, looked for beside the note first and anywhere in
- *  the export after: Takeout keeps them together, and a reader who picked only
- *  some of the files should still get the pictures they picked. */
 function beside(
   files: ReadonlyMap<string, Source>,
   notePath: string,
@@ -299,8 +257,6 @@ function beside(
     [...files.entries()].find(([path]) => path.endsWith(`/${name.toLowerCase()}`))?.[1]
   if (found) return found
 
-  // Takeout's JSON says `.jpeg` of a picture it wrote as `.jpg`, so one is also
-  // looked for beside the note by its name with any other picture's extension.
   const stem = /^(.+)\.(jpe?g|png|gif|webp|heic|heif)$/i.exec(name)?.[1]?.toLowerCase()
   if (!stem) return null
 

@@ -40,7 +40,6 @@ describe('which app an export came out of', () => {
     const plan = await readAs('markdown', sources)
     const read = plan.files.find((one) => one.path === 'Standup.md')
     expect(read?.kind === 'note' && read.text).toBe(standup)
-    // An HTML export's own index carries no id, and the pages still say Notion.
     await expect(
       detect([
         file('index.html', '<html></html>'),
@@ -89,7 +88,6 @@ describe('which app an export came out of', () => {
       detect([file('journals/2026_01_02.md', '- x'), file('pages/A.md', '- y')]),
     ).resolves.toBe('logseq')
     await expect(detect([file('pages/A.md', '- y')])).resolves.toBe('logseq')
-    // A zip whose one entry is the graph.
     await expect(detect([file('Graph/pages/A.md', '- y')])).resolves.toBe('logseq')
   })
 
@@ -110,7 +108,6 @@ describe('which app an export came out of', () => {
       'Journals/2024/02/2024-02-01.md',
       'Projects/Plan.md',
     ])
-    // Logseq's own folder still says it is a graph, journals and all.
     await expect(
       detect([file('journals/2026_01_02.md', '- x'), file('logseq/config.edn', '{}')]),
     ).resolves.toBe('logseq')
@@ -168,7 +165,6 @@ describe('which app an export came out of', () => {
 
   test('a CSV on its own is a table', async () => {
     await expect(detect([file('Books.csv', 'Name\nDune')])).resolves.toBe('table')
-    // With notes beside it, it is part of whatever those notes are.
     await expect(detect([file('Books.csv', 'Name\nDune'), file('A.md', '# A')])).resolves.toBe(
       'markdown',
     )
@@ -206,7 +202,6 @@ describe('reading as a format', () => {
   })
 
   test('a folder of notes leaves its hidden files behind, git and a trash among them', async () => {
-    // A vault kept in git whose `.obsidian/` was never committed: a folder of notes.
     const sources = [
       file('Home.md', '# Home\n\nSee [[Plan]]'),
       file('Plan.md', '# Plan'),

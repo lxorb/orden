@@ -8,10 +8,6 @@ function file(path: string, body: string): Source {
   return sourceOf(path, new TextEncoder().encode(body))
 }
 
-/** One entry, in the shape Journal's own export writes: the date in a div of its
- *  own, the title in another, a card per photo, video and mood, and the words in
- *  `bodyText`. Apple writes the date in the language of the phone, which is why
- *  the file's name is what the day is read from. */
 const ENTRY = `<!DOCTYPE html>
 <html>
 <head>
@@ -44,8 +40,6 @@ const ENTRY = `<!DOCTYPE html>
 </html>
 `
 
-/** A second entry the same day, with no title at all, which is what an entry
- *  somebody only wrote in looks like. */
 const BARE = `<html><body>
 <div class="pageHeader">Friday, September 4, 2026</div>
 <div class="bodyText"><p class="p2"><span class="s2">Rained all afternoon.</span></p></div>
@@ -87,8 +81,6 @@ describe('an Apple Journal export', () => {
   })
 
   test('is not read as an HTML folder, which it also looks like', async () => {
-    // The words kept and the look lost is what the HTML reader says; a Journal
-    // export says more than that, so the more specific reader has to win.
     expect(await detect([anExport()[1]!])).toBe('journal')
   })
 
@@ -97,8 +89,6 @@ describe('an Apple Journal export', () => {
     const paths = plan.files.map((one) => one.path)
 
     expect(paths).toContain('2026-09-04 Evening on the lake.md')
-    // The second entry of the same day has no title, so the day is its name, and
-    // it steps aside from nothing since the first note's name is longer.
     expect(paths).toContain('2026-09-04.md')
     expect(plan.format).toBe('journal')
   })
@@ -109,8 +99,6 @@ describe('an Apple Journal export', () => {
 
     expect(note.startsWith('---\ndate: 2026-09-04\n---\n')).toBe(true)
     expect(note).toContain('# Evening on the lake')
-    // The date line and the title are not said twice: they are the two things
-    // lifted out of the document before it was converted.
     expect(note).not.toContain('Friday, September 4, 2026')
     expect(note.match(/Evening on the lake/g)).toHaveLength(1)
   })
@@ -131,8 +119,6 @@ describe('an Apple Journal export', () => {
     expect(paths).toContain('assets/A1B2C3D4-1111-2222-3333-444455556666.heic')
     expect(paths).toContain('assets/B2C3D4E5-1111-2222-3333-444455556666.mov')
 
-    // The picture comes through the HTML converter; the video does not, because
-    // markdown has no player, so it is written as a link to the file instead.
     expect(note).toContain('![](assets/A1B2C3D4-1111-2222-3333-444455556666.heic)')
     expect(note).toContain('(assets/B2C3D4E5-1111-2222-3333-444455556666.mov)')
   })

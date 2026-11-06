@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest'
 
 import { chromiumEngine, mozillaEngine, safariEngine } from './search-engines'
 
-/** `search.json.mozlz4` as Zen 1.24 wrote it once DuckDuckGo was chosen and Kagi added. */
 const ZEN = {
   version: 14,
   engines: [

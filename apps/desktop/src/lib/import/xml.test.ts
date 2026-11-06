@@ -93,8 +93,6 @@ describe('entities', () => {
     expect(plainText('one <![CDATA[& two]]> &amp; three')).toBe('one & two & three')
   })
 
-  // An Evernote body is markup inside CDATA, where `&lt;` is the words "<".
-  // Resolved a second time it was a tag, and the converter dropped the words.
   test('what is inside CDATA is taken as written, entities and all', () => {
     expect(plainText('<![CDATA[<div>a &lt; b &amp;&amp; c</div>]]> &amp;')).toBe(
       '<div>a &lt; b &amp;&amp; c</div> &',

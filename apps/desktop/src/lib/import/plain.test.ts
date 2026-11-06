@@ -94,7 +94,6 @@ describe('a folder of markdown', () => {
   })
 
   test("a note saved in Windows' own code page arrives with its accents", async () => {
-    // `Café` as Windows-1252 writes it: the `é` is one byte, and not UTF-8.
     const bytes = Uint8Array.of(0x43, 0x61, 0x66, 0xe9)
     const plan = await readPlain([sourceOf('Old.txt', bytes)])
 
@@ -117,8 +116,6 @@ describe('a folder of markdown', () => {
     expect(plan.files[0]?.path).toBe('Note.md')
   })
 
-  /** Plain text never meant markdown: Tomboy, Keep and Apple's own exporters write
-   *  it, and its words have to read back as the characters they are. */
   test("and a text file's words read back as themselves, not as markdown", async () => {
     const plan = await readPlain([
       file('Note.txt', 'Costs $5-$10\nFine <img src=x onerror=alert(1)>\nTitle\n---\n'),
@@ -130,8 +127,6 @@ describe('a folder of markdown', () => {
     expect(text).not.toMatch(/^---$/m)
   })
 
-  /** iA Writer, Ulysses, Simplenote, nvALT and Drafts all write markdown into a
-   *  `.txt`, so a text file that reads as markdown stays markdown. */
   test('but a text file written in markdown keeps its markdown', async () => {
     const draft =
       '# Chapter one\n\nIt was *quiet*. See [notes](Notes.txt) and [[Notes]].\n\n> A quote\n'
@@ -140,8 +135,6 @@ describe('a folder of markdown', () => {
     expect(noteAt(plan, 'Draft.md')).toBe(draft)
   })
 
-  /** Simplenote, Drafts and nvALT checklists often have nothing else markdown in
-   *  them, and escaped boxes would be bullets that are no longer tasks. */
   test.each([
     ['a checklist', 'Groceries\n\n- [ ] milk\n- [x] eggs\n'],
     ['a nested task', 'Todo\n  * [X] call #work\n'],

@@ -93,7 +93,6 @@ describe("Safari's tabs, bookmarks and Reading List as nib's", () => {
     const { space: safari } = space({ session: SESSION })
     expect(safari?.order['']).toEqual(['Mail.url', 'News.url'])
     expect(safari?.bookmarks).toEqual(['Mail.url'])
-    // The tab database wins where both are there.
     expect(space({ tabs: TABS, session: SESSION }).space?.order['']).not.toContain('News.url')
   })
 

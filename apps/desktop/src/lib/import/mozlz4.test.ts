@@ -21,13 +21,11 @@ describe('a mozLz4 file', () => {
   })
 
   test('copies a match from behind it, overlapping what it writes', () => {
-    // "abc", then a match two back, six long: "abcbcbcbc"; then "!" alone.
     const block = new Uint8Array([0x32, 0x61, 0x62, 0x63, 0x02, 0x00, 0x10, 0x21])
     expect(read(lz4Block(block, 10))).toBe('abcbcbcbc!')
   })
 
   test('reads a match length that runs past its half of the token', () => {
-    // "a", then a match one back of 15 + 4 + 2 = 21, then "b".
     const block = new Uint8Array([0x1f, 0x61, 0x01, 0x00, 0x02, 0x10, 0x62])
     expect(read(lz4Block(block, 23))).toBe(`${'a'.repeat(22)}b`)
   })
@@ -36,7 +34,6 @@ describe('a mozLz4 file', () => {
     expect(() => unmozLz4(words('{"windows":[]}'))).toThrow()
     const whole = mozLz4Of(words('a session that was being written'))
     expect(() => unmozLz4(whole.subarray(0, whole.length - 5))).toThrow()
-    // A match pointing before the start of the block.
     expect(() => lz4Block(new Uint8Array([0x10, 0x61, 0x05, 0x00]), 5)).toThrow()
   })
 })

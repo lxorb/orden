@@ -45,9 +45,7 @@ describe('a title as a file name', () => {
   test('kept from disk keeps a dot or a space before its extension, which Windows keeps', () => {
     expect(keptName('Wait for it...', '.md')).toBe('Wait for it...')
     expect(keptName('Draft ', '.md')).toBe('Draft ')
-    // A space that stands in for a forbidden character at the end still comes off.
     expect(keptName('Why?', '.md')).toBe('Why')
-    // A folder's name has nothing after it, so Windows would drop them there.
     expect(keptName('Drafts.')).toBe('Drafts')
   })
 
@@ -82,7 +80,6 @@ describe('the id Notion sticks on every name', () => {
   test("is recognised, which is how a zip is known to be Notion's", () => {
     expect(hasNotionId('Plan 1a2b3c4d5e6f78901a2b3c4d5e6f7890.md')).toBe(true)
     expect(hasNotionId('Plan.md')).toBe(false)
-    // Sixteen hex characters is not an id, and neither is a word.
     expect(hasNotionId('Plan 1a2b3c4d5e6f7890.md')).toBe(false)
   })
 })
@@ -134,8 +131,6 @@ describe("keeping an import's own names apart", () => {
   })
 
   test('a folder with a dot in its name keeps it', () => {
-    // This counted the last dot of the whole path, so a note with no extension
-    // under such a folder stepped into a folder nobody had: `v1 2.2/Note`.
     const names = new Names()
     names.free('v1.2/Note')
 

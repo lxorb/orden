@@ -10,7 +10,6 @@ import * as safariFiles from './safari.fixture'
 import type { Planned } from './plan'
 import { mozLz4Of } from './zen.fixture'
 
-/** What each of the crate's answers is, by command, and what it was asked. */
 const files = new Map<string, unknown>()
 let places: unknown = BOOKMARKS
 let safari: unknown = null
@@ -19,11 +18,9 @@ let marksOf: Record<string, string> = {}
 let history: unknown[] = []
 const asked: string[] = []
 
-/** The history folded in, by book, and the engine as Settings holds it. */
 const brought: { book: string; rows: unknown }[] = []
 const engine = { id: 'google', custom: '', chosen: false }
 
-/** Every import written, space by space. */
 const written: { root: string; files: Planned[] }[] = []
 const spaces: { id: string; name: string; root: string }[] = []
 const said: string[] = []
@@ -112,7 +109,6 @@ vi.mock('../web-tab/search-engine.svelte', () => ({
     },
   },
 }))
-// Every space here is the reader's own; one shared to be read is zen-landing.test.ts's.
 vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
 
 vi.mock('../workspace.svelte', () => {
@@ -148,7 +144,6 @@ vi.mock('../workspace.svelte', () => {
 
 const { landBrowser } = await import('./browser-landing')
 
-/** `search.json.mozlz4` once DuckDuckGo was chosen. */
 const ENGINES = {
   version: 14,
   engines: [{ id: 'ddg', _name: 'DuckDuckGo', _isConfigEngine: true, _metaData: {} }],
@@ -196,9 +191,7 @@ describe('a Firefox profile brought into nib', () => {
     expect(paths).toContain('Saved groups/Trip/Hotel.url')
     expect(paths).toContain('Bookmarks/Bookmarks toolbar/Work/Board.url')
     expect(marks).toEqual([{ kind: 'note', path: 'Mail.url', text: '' }])
-    // The settings page and the bookmarklet are not on the web.
     expect(said).toEqual(['Containers stay in Firefox 2 pages not on the web stay behind'])
-    // The running session's file was tried first, and was not there.
     expect(asked[0]).toBe('read_browser_file sessionstore-backups/recovery.jsonlz4')
   })
 
@@ -332,7 +325,6 @@ describe('an Arc profile brought into nib', () => {
     expect(spaces.map((one) => one.name)).toEqual(['Personal', 'Work'])
     expect(marks.map((one) => one.path)).toEqual(['Inbox.url', 'Calendar.url'])
     expect(said).toEqual(['Easels and notes stay in Arc'])
-    // The sidebar lists every open tab; the session is not read as well.
     expect(asked).not.toContain('read_browser_file Sessions/Session_13436813666016900')
   })
 

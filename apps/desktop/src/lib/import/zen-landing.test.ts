@@ -6,18 +6,14 @@ import type { Planned } from './plan'
 import { mozLz4Of, SIDEBAR } from './zen.fixture'
 import { ZEN_1_17, ZEN_1_17_PLACES } from './zen-versions.fixture'
 
-/** What is on the disk, by path. */
 const disk = new Map<string, string>()
 
-/** Every import written, space by space. */
 const written: { root: string; files: Planned[] }[] = []
 
-/** The spaces Orden has, and what was done to each. */
 const spaces: { id: string; name: string; root: string }[] = []
 const done: string[] = []
 const marks: { kind: string; path: string; text: string }[] = []
 
-/** What Zen's session file holds, and Firefox's beside it, and Places. */
 let sidebar: unknown = SIDEBAR
 let firefoxSession: unknown = null
 let places: unknown = null
@@ -57,7 +53,6 @@ vi.mock('./apply', () => ({
   },
 }))
 
-/** The roots of the spaces shared with this account to be read. */
 const readOnly = new Set<string>()
 vi.mock('../sharing.svelte', () => ({
   canWriteAt: (path: string) =>
@@ -77,7 +72,6 @@ vi.mock('../workspace.svelte', () => {
         return active
       },
       addSpace: (asked: string) => {
-        // The crate names the folder, and so the space, without what a folder cannot hold.
         const name = asked.replace(/[:/]/g, ' ').replace(/\s+/g, ' ').trim()
         const space = { id: name, name, root: `/spaces/${name}` }
         spaces.push(space)
@@ -147,7 +141,6 @@ describe('Zen brought into nib', () => {
 
   test('brings only what is new the second time, into the spaces it made', async () => {
     await landZen(PROFILE)
-    // A week of browsing later: one tab moved on, one the space has but somewhere else.
     disk.set(
       '/spaces/Work/Board.url',
       writeShortcut(
@@ -170,7 +163,6 @@ describe('Zen brought into nib', () => {
     expect(written.map((one) => [one.root, one.files.map((file) => file.path)])).toEqual([
       ['/spaces/Work', ['b - Search.url']],
     ])
-    // A space that was there keeps the order and the icon it has.
     expect(done.filter((one) => one.startsWith('order') || one.startsWith('icon'))).toEqual([])
     expect(marks).toHaveLength(1)
   })
@@ -212,9 +204,6 @@ describe('a Zen up to 1.17 brought into nib', () => {
   })
 })
 
-/** A space of the same name that somebody shared with this account to be read is
- *  theirs, not the one an import made before: nothing lands in it, and it is not
- *  opened, arranged or bookmarked as one would be (B280). */
 describe('a space of the same name shared to be read', () => {
   test('is passed over, while the rest still land', async () => {
     spaces.push({ id: 'Work', name: 'Work', root: '/spaces/Work' })

@@ -36,7 +36,6 @@ describe('reading a CSV', () => {
   test('finds the separator the file actually used', () => {
     expect(delimiterOf('a;b;c\n1;2;3')).toBe(';')
     expect(delimiterOf('a\tb\tc\n1\t2\t3')).toBe('\t')
-    // A table of prose has commas in the cells but is still tab separated.
     expect(delimiterOf('Title\tNote\nA\tone, two, three')).toBe('\t')
     expect(delimiterOf('one value\nanother')).toBe(',')
   })

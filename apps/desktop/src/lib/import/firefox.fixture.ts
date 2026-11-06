@@ -1,8 +1,3 @@
-/** A Firefox profile as its files say it, for the reader's and the landing's tests:
- *  a session with two windows - one private - a pinned tab, a tab group, a tab in a
- *  container and a saved group, and the bookmark tree its daily backup holds. Shaped
- *  after Firefox's SessionStore.sys.mjs and PlacesBackups.sys.mjs. */
-
 export const page = (url: string, title: string) => ({ entries: [{ url, title }], index: 1 })
 
 export const SESSION = {

@@ -3,8 +3,6 @@ import { describe, expect, test, vi } from 'vitest'
 import { readPdfPages } from './pdf-pages'
 import { sourceOf, type Source } from './sources'
 
-// pdf.js wants its worker, which a test has no page to start; a paper here is any
-// file that starts the way a PDF does.
 vi.mock('../pdf/document', () => ({
   pageSizes: (bytes: Uint8Array) =>
     new TextDecoder().decode(bytes.slice(0, 4)) === '%PDF'

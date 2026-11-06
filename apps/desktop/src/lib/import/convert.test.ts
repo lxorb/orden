@@ -25,7 +25,6 @@ describe("Bear's closed tags", () => {
   })
 
   test('a fence is closed only by its own kind of fence', () => {
-    // The tildes are a line of the code, and the backticks are what close it.
     const said = convertTags('```\n~~~\n#a b#\n```\n#c d#')
 
     expect(said.text).toBe('```\n~~~\n#a b#\n```\n#c-d')
@@ -113,9 +112,6 @@ describe('both rewrites together', () => {
   })
 })
 
-/** The importer's own rules, run on a note that is already here: `roamText` is what
- *  an imported Roam page is written with, and a note pasted out of Roam holds exactly
- *  the same markup. See import/roam.test.ts for what each spelling becomes. */
 describe("Roam's own spellings in a note", () => {
   const roam = (text: string) => convertRoam(text)
 

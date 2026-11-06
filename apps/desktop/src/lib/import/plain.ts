@@ -1,15 +1,3 @@
-/** A folder of notes, which is what most apps write when asked for one.
- *
- *  Craft, Ulysses, iA Writer, Obsidian, a Bear markdown export and a OneNote or
- *  Google Docs HTML export are all this: files in folders, some of them notes and
- *  the rest the pictures those notes point at. So they are all read here, and the
- *  only difference between them is what the sheet calls the import afterwards.
- *
- *  A TextBundle is a folder too, and it is unwrapped on the way past: the bundle's
- *  `text.md` becomes a note named after the bundle, and its assets come with it.
- *  That is Bear's and Craft's usual answer, and a folder called `Trip.textbundle`
- *  sitting in a space would be a folder nothing opens. */
-
 import { plainWords } from '@orden/markdown/escapes'
 import { htmlToMarkdown } from '@orden/markdown/from-html'
 
@@ -22,17 +10,10 @@ import type { Source } from './sources'
 
 const HTML = /\.(html?|xhtml)$/i
 
-/** A text file, which may be plain text or markdown; see `textWords`. */
 const TEXT = /\.txt$/i
 
-/** The exports whose text files are only ever plain text: Apple's own. */
 const PLAIN_TEXT: ReadonlySet<FormatId> = new Set(['apple-notes'])
 
-/** What only markdown writes, one line or one span at a time: a heading, a fence, a
- *  quote, a link of either kind, a task, a phrase in bold, in stars, in underscores
- *  or struck through. A list and a line of dashes are left out, since plain text
- *  writes those as well, and so are inline code and a table, which plain text keeps
- *  as they are anyway. */
 const MARKDOWN_SAYS = [
   /^#{1,6}[ \t]+\S/m,
   /^(`{3,}|~{3,})/m,
@@ -41,41 +22,24 @@ const MARKDOWN_SAYS = [
   /\[\[[^\]\n]+\]\]/,
   /(\*\*|__)\S[^\n]*?\S\1/,
   /(^|\s)\*\S(?:[^*\n]*\S)?\*(?=[\s.,;:!?)]|$)/m,
-  // Two characters at least between, since ` _o_ ` is someone cheering.
   /(^|[\s("'])_\S[^_\n]*\S_(?=[\s.,;:!?)"'\]-]|$)/m,
   /(^|[\s("'])~~\S(?:[^~\n]*\S)?~~(?=[\s.,;:!?)"'\]-]|$)/m,
   /^[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+\[[ xX]\](?=[ \t]|$)/m,
 ]
 
-/** A text file's words as a note may hold them. iA Writer, Ulysses, Simplenote, nvALT
- *  and Drafts write markdown into a `.txt`, and that stays markdown; Tomboy, Keep and
- *  Apple write plain text, which is written to read back as the characters it is, so
- *  `$5-$10` is two prices rather than a formula and a tag is words. Which one a file
- *  is, the export says where it knows, and the words say where it does not. */
 function textWords(text: string, format: FormatId | undefined): string {
   const plain = format !== undefined && PLAIN_TEXT.has(format)
   if (!plain && MARKDOWN_SAYS.some((pattern) => pattern.test(text))) return text
   return plainWords(text)
 }
 
-/** Where a bundle's own text file sits, whichever of the two names it uses. */
 const BUNDLE_TEXT = /\.textbundle\/text\.(md|markdown|txt)$/i
 
 export interface PlainOptions {
   format?: FormatId
-  /** Names the format does not want carried over. */
   skip?: (path: string) => boolean
-  /** A last look at a note's words: Bear rewrites its tags here, Logseq its
-   *  properties. */
   words?: (text: string, source: Source) => string
-  /** What the export knew about a note beside its words: Bear's dates, which a
-   *  bundle keeps in its `info.json`. */
   meta?: (source: Source) => Meta | undefined
-  /** Files an app keeps for itself rather than an export it wrote: an Obsidian
-   *  vault. Their names are the reader's own, so no exporter's id is taken off
-   *  them and none is shortened or respaced, since the vault's canvases name them
-   *  too, a note's words are kept to the byte, and an HTML file is a page
-   *  somebody saved, copied as it is rather than read as a note. */
   asTheyAre?: boolean
 }
 
@@ -86,19 +50,12 @@ export async function readPlain(
   const names = new Names()
   let html = 0
 
-  // A vault's notes are its markdown and nothing else: Obsidian keeps a `.txt` as a
-  // file it does not open, and links name it with its extension, so it stays one.
   const note = (path: string) =>
     options.asTheyAre ? /\.(md|markdown)$/i.test(path) : isNoteFile(path)
 
-  /** Where a file goes, or null for one that is left behind. */
   const target = (source: Source): string | null => {
     if (isJunk(source.path) || options.skip?.(source.path)) return null
 
-    // A space in front of the whole path, which a vault uses to sort a note
-    // first, is one the space trims off when the file is written (see
-    // automation/inside.ts), so it comes off here, where a name it then shares
-    // with another file still steps aside and the links follow it.
     const path = options.asTheyAre
       ? (placedPath(source.path, undefined, keptName)?.trimStart() ?? null)
       : placedPath(source.path, withoutNotionId)
@@ -108,9 +65,6 @@ export async function readPlain(
     return note(path) ? path.replace(/\.txt$/i, '.md') : path
   }
 
-  // A file whose name needs no change keeps it, whichever comes first: `Why?.png`
-  // made into `Why.png` for Windows is the one that steps aside from the vault's
-  // own `Why.png`, since a canvas, a base or another app names that one by it.
   for (const source of sources) {
     if (target(source) === source.path) names.keep(source.path)
   }
@@ -143,7 +97,6 @@ export async function readPlain(
       return {
         to,
         read: (text, at) => {
-          // A vault keeps a `.txt` as a file, so this is never one of its notes.
           const said = TEXT.test(at.path) ? textWords(text, options.format) : text
           return {
             text: options.words?.(said, at) ?? said,
@@ -157,8 +110,6 @@ export async function readPlain(
     },
   })
 
-  // Said out loud because it is the one thing a reader of an HTML export has to
-  // know: what the HTML did not hold was not in the export either.
   if (html) {
     plan.lost.push({
       text: key('{count} pages came as HTML, so their words are kept and their look is not'),
@@ -169,20 +120,12 @@ export async function readPlain(
   return plan
 }
 
-/** Where a file in the export goes, or null for one that is only packaging.
- *
- *  The folders are kept as they are, since somebody arranged them, and a name
- *  that no file may have is argued with one part at a time so a folder full of
- *  notes stays one folder. `each` is done to every part first: for an export, the
- *  id Notion leaves on the end of names is taken off wherever it appears, since a
- *  folder of markdown might have come from there through some other tool. */
 function placedPath(
   path: string,
   each?: (part: string) => string,
   named: (part: string, extension?: string) => string = safeName,
 ): string | null {
   if (BUNDLE_TEXT.test(path)) {
-    // `Trips/Iceland.textbundle/text.md` is the note `Trips/Iceland.md`.
     const bundle = path.replace(/\/text\.(md|markdown|txt)$/i, '')
     return `${safeParts(bundle.replace(/\.textbundle$/i, ''), each, named)}.md`
   }
@@ -190,7 +133,6 @@ function placedPath(
   const inside = /\.textbundle\/(.*)$/i.exec(path)
   if (inside) {
     const rest = inside[1] ?? ''
-    // A bundle's own metadata says what wrote it, which the note does not need.
     if (/^info\.json$/i.test(rest)) return null
     return safeParts(rest, each, named)
   }

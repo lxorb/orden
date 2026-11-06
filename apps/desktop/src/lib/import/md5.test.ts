@@ -19,14 +19,12 @@ describe('md5', () => {
 
   test('runs over more than one block, and over the lengths that pad awkwardly', () => {
     expect(hashOf('a'.repeat(1000))).toBe('cabe45dcc9ae5b66ba86600cca6b8ba8')
-    // 55, 56 and 64 bytes are where the padding has to start a block of its own.
     expect(hashOf('a'.repeat(55))).toBe('ef1772b6dff9a122358552954ad0df65')
     expect(hashOf('a'.repeat(56))).toBe('3b0c8ac703f828b04c6c197006d17218')
     expect(hashOf('a'.repeat(64))).toBe('014842d480b571495a4a0363793f7367')
   })
 
   test('hashes bytes rather than characters', () => {
-    // A picture's bytes are not text, and every byte value has to survive.
     const bytes = Uint8Array.from({ length: 256 }, (_one, at) => at)
     expect(md5(bytes)).toBe('e2c865db4162bed963bfaa9ef6ac18f0')
   })

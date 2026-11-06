@@ -9,8 +9,6 @@ function file(path: string, body: string): Source {
   return sourceOf(path, new TextEncoder().encode(body))
 }
 
-/** What the crate answers, in the shape it answers it: notes with the path they
- *  had in Notes, the attachments as bytes, and a count of what could not come. */
 function read(): AppleNotes {
   return {
     notes: [
@@ -18,7 +16,6 @@ function read(): AppleNotes {
         path: 'Groceries.md',
         title: 'Groceries',
         text: '# Groceries\n\n- [x] Milk\n- [ ] Eggs\n',
-        // 2026-09-04 and 2026-09-05, as seconds since 1970.
         created: 1_788_480_000,
         modified: 1_788_566_400,
       },
@@ -73,7 +70,6 @@ describe("Apple Notes off the Mac's own database", () => {
     const note = noteAt(await planFor(read()), 'Work/No title at all.md')
 
     expect(note).not.toContain('date:')
-    // The title is on the row rather than in the words, so the heading is added.
     expect(note).toContain('# No title at all')
   })
 
@@ -81,7 +77,6 @@ describe("Apple Notes off the Mac's own database", () => {
     const note = noteAt(await planFor(read()), 'Work/Ideas.md')
 
     expect(note).toContain('[[Groceries]]')
-    // Written from `Work/`, which is where that note went.
     expect(note).toContain('![](../assets/photo.png)')
   })
 
@@ -103,8 +98,6 @@ describe("Apple Notes off the Mac's own database", () => {
     expect(note).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
   })
 
-  /** The crate encodes what a title may hold and a link may not, so `Re: lunch` is
-   *  not read as an address in a scheme called `Re`. */
   test('a link to a note whose title has a colon in it still finds it', async () => {
     const plan = await planFor({
       ...read(),
@@ -152,10 +145,6 @@ describe("Apple Notes off the Mac's own database", () => {
   })
 })
 
-/** What an exporter hands over: a folder per notebook, a file per note, and the
- *  note's rich text as macOS writes rich text. The attachment is pointed at by
- *  the address it had on the machine it was exported from, which is what Notes
- *  puts in the HTML it hands out. */
 const EXPORTED = `<html>
 <head><meta name="Generator" content="Cocoa HTML Writer"></head>
 <body>
@@ -208,10 +197,6 @@ describe('a folder an Apple Notes exporter wrote', () => {
     expect(note?.kind === 'note' && note.text).toContain('file:///Users/emil/elsewhere.png')
   })
 
-  /** Notes writes its own scheme for a link between two notes, and an exporter hands
-   *  that scheme over as it stands. It is a fact about where the note used to live, so
-   *  it stays a link rather than arriving as the words with the address thrown away;
-   *  see `appTargets` in @orden/markdown. */
   test("a link in Apple's own scheme stays a link", async () => {
     const plan = await readAs('apple-notes', [
       file(

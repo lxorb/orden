@@ -14,7 +14,6 @@ describe("Bear's closed tags", () => {
   })
 
   test('are left alone where they are not tags', () => {
-    // A hash in the middle of a word, and a pair around nothing nameable.
     expect(bearTags('a#b#c')).toBe('a#b#c')
     expect(bearTags('#  #')).toBe('#  #')
   })
@@ -42,7 +41,6 @@ describe("Bear's other spellings", () => {
     expect(bearWords('~under~ and ~~struck~~ and `~/path~`')).toBe(
       '<u>under</u> and ~~struck~~ and `~/path~`',
     )
-    // The tildes in an address are the address.
     expect(bearWords('https://example.com/~me/~notes')).toBe('https://example.com/~me/~notes')
   })
 
@@ -51,7 +49,6 @@ describe("Bear's other spellings", () => {
   })
 })
 
-/** A backup's bundle: its words, and the `info.json` Bear writes beside them. */
 function bundle(name: string, text: string, bear: Record<string, unknown>): Source[] {
   const info = JSON.stringify({
     creatorIdentifier: 'net.shinyfrog.bear',
@@ -137,7 +134,6 @@ describe('a Bear backup', () => {
         '# Welcome\n[[Guide/Step one|Start here]] [[Guide/Step two]] [[Trips/Iceland]]\n',
       ),
       file('Guide.md', '# Guide\n## Step one\n## Step two\n'),
-      // A note in a folder is still a note in a folder.
       file('Trips/Iceland.md', '# Iceland\n'),
       file('Trips.md', '# Trips\n'),
     ])

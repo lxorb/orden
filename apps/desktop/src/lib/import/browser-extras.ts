@@ -1,12 +1,3 @@
-/** What a browser's profile brings besides its sidebar, every browser's alike: the marks
- *  of the sites its tabs are on, out of its own store of them, since a session seldom
- *  keeps a mark as a picture; its history, into the one every page shares here
- *  (web-tab/visited.ts); and its search engine, where somebody chose one there and has
- *  chosen none here (search-engines.ts). The databases are the crate's to read
- *  (browser_data.rs); a profile without one brings the rest. And the lines that say
- *  what a profile holds that stays behind, and the names of the folders an import
- *  makes, which every browser's says alike. */
-
 import { key, t } from '../i18n.svelte'
 import { invoke } from '../tauri'
 import type { Lost } from './plan'
@@ -14,15 +5,12 @@ import type { BrowserEngine } from './search-engines'
 import type { Sidebar } from './sidebar'
 import { type FolderWords, isObject, text } from './sidebar-made'
 
-/** The browser a profile is, as the crate names it. */
 type Browser = string
 
-/** Whether a tab already wears a picture of its mark. */
 function marked(icon: string | null): boolean {
   return icon?.startsWith('data:image/') ?? false
 }
 
-/** The sidebar with every tab's mark the profile keeps a picture of. */
 export async function withMarks(
   sidebar: Sidebar,
   browser: Browser,
@@ -45,8 +33,6 @@ export async function withMarks(
   }
 }
 
-/** The profile's history folded into the one every page shares. Quiet where there is
- *  none to read. */
 export async function bringHistory(browser: Browser, profile: string): Promise<void> {
   const rows = await invoke<string>('read_browser_history', { browser, profile })
     .then((said) => JSON.parse(said) as unknown)
@@ -60,8 +46,6 @@ export async function bringHistory(browser: Browser, profile: string): Promise<v
   visited.brought(webData.history(), rows)
 }
 
-/** The browser's engine taken where nobody chose one here; where somebody did, a line
- *  says which the browser's was, for Settings. */
 export async function takeEngine(engine: BrowserEngine | null, browser: string): Promise<Lost[]> {
   if (!engine) return []
   const { CUSTOM, searchEngine } = await import('../web-tab/search-engine.svelte')
@@ -84,21 +68,18 @@ export async function takeEngine(engine: BrowserEngine | null, browser: string):
   ]
 }
 
-/** The line that counts the pages left behind for not being on the web, where any were. */
 export function droppedLine(sidebar: Sidebar): Lost[] {
   const count = sidebar.dropped ?? 0
   if (!count) return []
   return [
     {
       text: key('{count} pages not on the web stay behind'),
-      // Filed under its `other` form; see notion.ts and i18n.svelte.ts.
       one: '{count} page not on the web stays behind',
       values: { count },
     },
   ]
 }
 
-/** The names of the folders the import makes, in the reader's language. */
 export function folderWords(): FolderWords {
   return {
     bookmarks: t('Bookmarks'),

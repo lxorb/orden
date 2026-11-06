@@ -1,9 +1,3 @@
-/** Arc's `StorableSidebar.json`, for the tests: the Favorites of the first profile, two
- *  spaces of it - Personal with a pinned folder, a split view, an easel and an open
- *  tab; Work with a pinned tab - and a space of a second profile. The fields and their
- *  spelling are Arc's own, as `newContainerIDs`, `childrenIds` and the lists of ids and
- *  objects one after the other are; see arc.ts. */
-
 const FAVORITES = 'C-TOP-DEFAULT'
 const OTHER_FAVORITES = 'C-TOP-P1'
 

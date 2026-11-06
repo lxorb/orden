@@ -1,18 +1,3 @@
-/** Tomboy and Gnote notes: one `.note` file each, XML, with the words in a
- *  `<note-content>`.
- *
- *  The content is not HTML. It is Tomboy's own markup - `<bold>`, `<italic>`,
- *  `<highlight>`, `<list>` and `<link:internal>` - so it is walked here rather
- *  than handed to the HTML converter, which would drop every one of those tags and
- *  leave the words in a heap.
- *
- *  `<link:internal>Another note</link:internal>` is a link to another note by its
- *  title, which is exactly a wikilink, so those come over whole: a Tomboy notebook
- *  arrives with its links still working.
- *
- *  A notebook is a tag of the form `system:notebook:Work`, which becomes a folder,
- *  because that is what a notebook is. Every other tag is a tag. */
-
 import { plainWords } from '@orden/markdown/escapes'
 import { asWords, OPENS_MARKUP } from '@orden/markdown/words'
 
@@ -24,15 +9,10 @@ import type { ImportPlan, Lost, Planned } from './plan'
 import type { Source } from './sources'
 import { closingOf, element, tagsIn, textOf, textsOf, unescapeXml } from './xml'
 
-/** What Tomboy calls a notebook membership. */
 const NOTEBOOK = /^system:notebook:(.*)$/i
 
-/** Tomboy's own tags, `system:template` for a notebook's template, which are a
- *  tag by the name after the prefix. */
 const SYSTEM = /^system:/i
 
-/** The tags that wrap words, and what they are in markdown. Tomboy writes a line
- *  through as `strikethrough`, tomboy-ng as `strikeout`. */
 const AROUND: Record<string, string> = {
   bold: '**',
   italic: '*',
@@ -42,12 +22,8 @@ const AROUND: Record<string, string> = {
   monospace: '`',
 }
 
-/** What a wikilink cannot hold in its name: a `]` or a `|` ends it, and a `#` or
- *  a `^` would point into the note rather than at it. */
 const UNLINKABLE = /[[\]|#^]/
 
-/** One note, read before any is written, since a link names its target by title
- *  and the target's file name is only known once every name has been given out. */
 interface Read {
   content: string
   title: string
@@ -68,7 +44,6 @@ export async function readTomboy(sources: readonly Source[]): Promise<ImportPlan
     const said = textOf(xml, 'title')?.trim() ?? ''
     const words = element(xml, 'note-content')
 
-    // Neither a title nor any words: not a note, or one cut short before either.
     if (!said && !words) {
       unreadable += 1
       continue
@@ -98,8 +73,6 @@ export async function readTomboy(sources: readonly Source[]): Promise<ImportPlan
     if (said && !byTitle.has(nameKey(said))) byTitle.set(nameKey(said), path)
   }
 
-  // How many notes a bare name would reach, so a link to one of two notes of the
-  // same name in two notebooks names its folder too.
   const named = new Map<string, number>()
   for (const note of notes) {
     const key = nameKey(fileName(note.path))
@@ -134,39 +107,17 @@ export async function readTomboy(sources: readonly Source[]): Promise<ImportPlan
   return { format: 'tomboy', files: written, lost }
 }
 
-/** Tomboy's markup as markdown.
- *
- *  A walk over the tags, because the lists nest and the emphasis is inside them.
- *  Anything this does not know about is dropped and its words are kept, which is
- *  the same thing the HTML converter does with a tag nobody has heard of.
- *
- *  `link` writes a link to the note of that title; a wikilink by the title as it
- *  is, unless told otherwise. */
 export function tomboyMarkdown(
   content: string,
   link: (title: string) => string = (title) => `[[${title}]]`,
 ): string {
-  // What is written so far, in pieces: a mark wraps the pieces since it opened
-  // and a list looks at the last few, so a long note is not copied once per item.
   const out: string[] = []
   let at = 0
   let depth = 0
-  // Where the last list at the top closed, so a list straight after it is the
-  // same list carried on rather than a new one after a gap.
   let listEnd = -1
   const open: { name: string; from: number }[] = []
-  // Whether the words of a list item are still to come, whose spaces in front
-  // would otherwise push them far enough in to read as code.
   let item = false
 
-  // Tomboy is plain text, so its words are written to read back as themselves:
-  // `$5-$10` is two prices rather than a formula; see `plainWords`. Monospace takes
-  // its escapes back off as it becomes code; see `unescaped`.
-  //
-  // Escaped a run at a time, two runs a dropped tag joined - a size, a link to a
-  // page - met unescaped: `&lt;` before a size and `img …&gt;` inside it were a
-  // live tag, `%` and `%d` a comment. So the words wait here until something of
-  // the note's own shape is written, and are escaped as the one run they are.
   let words = ''
 
   const flush = () => {
@@ -179,7 +130,6 @@ export function tomboyMarkdown(
     if (text) out.push(text)
   }
 
-  /** The end of what is written, which is all a line ending is looked for in. */
   const tail = () => {
     flush()
     let end = ''
@@ -187,7 +137,6 @@ export function tomboyMarkdown(
     return end
   }
 
-  /** The last `count` characters taken off again. */
   const cut = (count: number) => {
     flush()
     let left = count
@@ -217,7 +166,6 @@ export function tomboyMarkdown(
 
     const name = tag.name.toLowerCase()
     const mark = AROUND[name]
-    // Everything below writes the note's shape, and the words before it end there.
     if (mark || name === 'list' || name === 'list-item' || name === 'link:internal') flush()
 
     if (mark) {
@@ -240,9 +188,6 @@ export function tomboyMarkdown(
       if (!tag.closing) {
         depth += 1
         if (depth === 1) {
-          // The blank line is what makes the first item a list rather than the
-          // tail of the paragraph above it. Tomboy-ng writes each item as a
-          // list of its own, which is still one list.
           const between = listEnd >= 0 && listEnd <= out.length ? out.slice(listEnd).join('') : null
           if (between !== null && /^[ \t]*(\n[ \t]*){0,2}$/.test(between)) {
             out.length = listEnd
@@ -253,8 +198,6 @@ export function tomboyMarkdown(
       } else {
         depth = Math.max(0, depth - 1)
         if (depth === 0) {
-          // And a blank line after it, so the words that follow are not taken
-          // for more of the last item.
           if (!tail().endsWith('\n')) write('\n')
           listEnd = out.length
           write('\n')
@@ -264,8 +207,6 @@ export function tomboyMarkdown(
     }
 
     if (name === 'list-item') {
-      // An item's own line ending is inside it, so a new item only starts a line
-      // where the last one did not end one.
       if (!tag.closing) {
         cut(/[ \t]*$/.exec(tail())?.[0].length ?? 0)
         if (out.length && !tail().endsWith('\n')) write('\n')
@@ -283,9 +224,6 @@ export function tomboyMarkdown(
       at = after < 0 ? content.length : after + 1
       continue
     }
-
-    // A size is how big Tomboy drew it, which markdown has no word for outside a
-    // heading, and a heading in the middle of a note would be a change of shape.
   }
 
   said(unescapeXml(content.slice(at)))
@@ -298,10 +236,6 @@ export function tomboyMarkdown(
     .trim()
 }
 
-/** Words wrapped in a mark, a line at a time, since emphasis in markdown does not
- *  run over a line break, and with the spaces at either end left outside it,
- *  since `** bold **` is not bold. A list item's dash stays in front. Nothing at
- *  all is marked where there are no words. */
 function marked(text: string, mark: string): string {
   return text
     .split('\n')
@@ -313,15 +247,10 @@ function marked(text: string, mark: string): string {
     .join('\n')
 }
 
-/** Words as they were before `plainWords`, for inside code, which reads no markup
- *  and would show the backslash. Every escape `plainWords` writes is a backslash in
- *  front of a punctuation mark, the words' own backslash included, so taking each
- *  pair back to its mark, left to right, gives back what the words had. */
 function unescaped(words: string): string {
   return words.replace(/\\([!-/:-@[-`{-~])/g, '$1')
 }
 
-/** Words as inline code, fenced with more backticks than they hold in a row. */
 function code(words: string): string {
   const longest = Math.max(0, ...(words.match(/`+/g) ?? []).map((run) => run.length))
   const fence = '`'.repeat(longest + 1)
@@ -329,9 +258,6 @@ function code(words: string): string {
   return `${fence}${pad}${words}${pad}${fence}`
 }
 
-/** Tomboy writes the title again as the first line of the content, which would
- *  otherwise be said twice in the note. Taken off the markup rather than the
- *  markdown, so a title Tomboy drew underlined or bold is still found. */
 function withoutTitle(content: string, title: string): string {
   if (!title) return content
 
@@ -342,19 +268,14 @@ function withoutTitle(content: string, title: string): string {
   return end < 0 ? '' : content.slice(end + 1)
 }
 
-/** A path without its `.md`. */
 function stem(path: string): string {
   return path.replace(/\.md$/i, '')
 }
 
-/** The name a wikilink calls the note at a path by. */
 function fileName(path: string): string {
   return stem(path.split('/').pop() ?? path)
 }
 
-/** A link from the note at `from` to the one at `to`, showing the title it had.
- *  A wikilink by the file's name, or its path where another note shares it; a
- *  markdown link where the name holds what a wikilink cannot. */
 function linkTo(to: string, from: string, title: string, shared: boolean): string {
   const name = shared ? stem(to) : fileName(to)
 
@@ -366,13 +287,8 @@ function linkTo(to: string, from: string, title: string, shared: boolean): strin
   return `[${asWords(title.replace(LITERAL, (one) => `\\${one}`))}](${encoded(relative(to, from))})`
 }
 
-/** What a link's words escape themselves before `asWords`: a bracket, which would
- *  end them, and a backslash, which would escape what comes after it. Not the run
- *  of backslashes in front of a tag, which `asWords` doubles itself, and doubling
- *  it twice would show two backslashes for the one the title had. */
 const LITERAL = new RegExp(`\\\\(?!\\\\*${OPENS_MARKUP.source})|[[\\]]`, 'g')
 
-/** Where `to` is from the folder of the note at `from`. */
 function relative(to: string, from: string): string {
   const here = from.split('/').slice(0, -1)
   const there = to.split('/')
@@ -382,8 +298,6 @@ function relative(to: string, from: string): string {
   return [...here.slice(same).map(() => '..'), ...there.slice(same)].join('/')
 }
 
-/** A path as a link's target: the characters a target cannot hold as themselves
- *  encoded, the way the import's own link rewriting writes them. */
 function encoded(path: string): string {
   return path
     .replace(/%/g, '%25')

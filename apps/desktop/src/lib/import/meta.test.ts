@@ -190,7 +190,6 @@ describe('the day a date lands on', () => {
     expect(dayOf('2026-01-02T12:00:00.000Z')).toBe('2026-01-02')
     expect(dayOf('2026_01_02')).toBe('2026-01-02')
     expect(dayOf('January 2, 2026')).toBe('2026-01-02')
-    // Keep counts microseconds and Roam counts milliseconds.
     expect(dayOf(1767355200000000)).toBe('2026-01-02')
     expect(dayOf(1767355200000)).toBe('2026-01-02')
     expect(dayOf('1767355200')).toBe('2026-01-02')
@@ -205,8 +204,6 @@ describe('the day a date lands on', () => {
   })
 })
 
-/** Half past six in the evening in Los Angeles, which is already the next day in UTC.
- *  Every shape of that one instant is the evening's day, as Keep's count of it is. */
 describe('the day an instant lands on, west of Greenwich', () => {
   beforeAll(() => {
     vi.stubEnv('TZ', 'America/Los_Angeles')
@@ -231,10 +228,6 @@ describe('the day an instant lands on, west of Greenwich', () => {
   })
 })
 
-/** A title another app kept is somebody's words, typed where nothing read markdown,
- *  and the heading it becomes reads markdown: dollars as maths, `==` as a highlight,
- *  `#work` as a tag, `[[Other]]` as a link, tildes as a subscript, a `#` at the end
- *  as the heading's own closing mark. Each title reads back as itself. */
 describe('a title as the note heading', () => {
   const TITLES = [
     'Tickets $5-$10',

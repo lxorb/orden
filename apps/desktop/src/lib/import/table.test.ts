@@ -57,8 +57,6 @@ describe('a CSV as one table', () => {
     expect(table.split('\n')[2]).toBe('| one \\| two |')
   })
 
-  /** A spreadsheet's text is plain text: a `<b>` somebody typed into a cell is the
-   *  words they typed, never a tag the note would render. */
   test('a tag typed into a cell or a column name opens no markup', () => {
     const table = tableOf(
       ['<b>Name</b>'],
@@ -83,8 +81,6 @@ describe('a CSV as one note per row', () => {
     const text = noteAt(plan, 'Books/Dune.md')
     expect(text).toContain('# Dune')
     expect(text).toContain('status: Read')
-    // Quoted, so the column stays the words it held rather than becoming a
-    // number; single quotes, because those need no escapes inside them.
     expect(text).toContain("pages: '412'")
     expect(text).toContain('date: 2026-01-02')
     expect(text).not.toContain('name: Dune')
@@ -208,8 +204,6 @@ describe('what a spreadsheet holds that a database does not', () => {
   })
 })
 
-/** The row's title is a cell somebody typed: written as the heading, it reads back as
- *  the words it was, with no maths, highlight or subscript in it. */
 describe('a row note with words of its own', () => {
   test.each(['Tickets $5-$10', 'a==b and c==d', 'H~2~O'])('is headed by %s as words', (title) => {
     const note = rowNote(['Name', 'Notes'], { Name: title, Notes: 'One line\nAnother line' })

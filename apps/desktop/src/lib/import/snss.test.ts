@@ -4,7 +4,6 @@ import { fromBase64 } from '../bytes'
 import { LOCKED, SESSION } from './chromium.fixture'
 import { readSnss } from './snss'
 
-/** Little-endian 32-bit numbers, as Chromium's fixed commands are written. */
 function ints(...values: number[]): Uint8Array {
   const out = new Uint8Array(values.length * 4)
   const view = new DataView(out.buffer)
@@ -12,8 +11,6 @@ function ints(...values: number[]): Uint8Array {
   return out
 }
 
-/** A page of a tab's history as Chromium writes it: a pickle of the tab, the
- *  page's place, its address and an empty title. */
 function navigation(tab: number, index: number, url: string): [number, Uint8Array] {
   const address = new TextEncoder().encode(url)
   const padded = Math.ceil(address.length / 4) * 4
@@ -23,7 +20,6 @@ function navigation(tab: number, index: number, url: string): [number, Uint8Arra
   return [6, new Uint8Array([...ints(body.length), ...body])]
 }
 
-/** A session file of these commands, in the clear. */
 function snss(...commands: [number, Uint8Array][]): Uint8Array {
   const bytes: number[] = [0x53, 0x4e, 0x53, 0x53, 3, 0, 0, 0]
   for (const [id, said] of commands) {
@@ -53,7 +49,6 @@ describe("Chromium's session file", () => {
     expect(later).not.toBe(docs)
     expect(read.groups.get(docs ?? '')).toBe('Docs')
     expect(read.groups.get(later ?? '')).toBe('')
-    // Written before the pages had drawn their titles, which a session catches up on.
     expect(tabs[1]?.title).toBe('')
   })
 
@@ -63,8 +58,6 @@ describe("Chromium's session file", () => {
   })
 
   test('follows a history Chromium cut, to the page the tab is on now', () => {
-    // A tab at the most pages Chromium keeps loses its oldest; the rest move down,
-    // and going back then lands on the page that is now first.
     const read = readSnss(
       snss(
         [0, ints(1, 7)],
@@ -75,7 +68,6 @@ describe("Chromium's session file", () => {
         [7, ints(7, 2)],
         [11, ints(7, 1)],
         [7, ints(7, 0)],
-        // A second tab went back from its third page to its first and on to another.
         [0, ints(1, 8)],
         [2, ints(8, 1)],
         navigation(8, 0, 'https://d.example.com/'),

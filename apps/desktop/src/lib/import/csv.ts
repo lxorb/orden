@@ -1,32 +1,12 @@
-/** A CSV read properly, because two of these exports are CSV.
- *
- *  Notion writes one per database and Airtable writes one per table, and both
- *  hold cells with commas in them, cells with quotes in them, and cells with
- *  whole paragraphs and their newlines in them. The editor's paste already
- *  splits a pasted table on commas, but that is a different job: what is pasted
- *  is usually three tidy columns out of a spreadsheet, and what is exported is a
- *  database somebody has been typing into for four years.
- *
- *  So: RFC 4180, with the one liberty every reader takes, which is that a lone
- *  quote in the middle of an unquoted cell is a quote and not an error. */
-
-/** The three characters a spreadsheet might have separated cells with. The
- *  header row is asked which, because a table of prose is full of commas and a
- *  table of European numbers is full of semicolons. */
 const MAYBE = [',', ';', '\t'] as const
 
-/** The line Excel writes above the header to say which separator follows, and
- *  reads to know it: `sep=;`. */
 const SEP = /^"?sep=(.)"?[^\S\r\n]*(\r\n|\r|\n|$)/i
 
 export function readCsv(text: string): string[][] {
   return parsed(text).rows
 }
 
-/** The rows, and the separator that divided them. */
 function parsed(text: string): { rows: string[][]; delimiter: string } {
-  // Excel writes a byte order mark in front of the header, which would otherwise
-  // become part of the first column's name and so of every row's first property.
   const body = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text
   const said = SEP.exec(body)
   if (said) {
@@ -38,9 +18,6 @@ function parsed(text: string): { rows: string[][]; delimiter: string } {
   return { rows: rows(body, delimiter), delimiter }
 }
 
-/** Which separator the file uses: whichever divides the first line into the
- *  most cells, counting only the ones outside quotes. A tie goes to the comma,
- *  which is what the C in CSV is. */
 export function delimiterOf(text: string): string {
   const first = firstLine(text)
   let best = ','
@@ -57,8 +34,6 @@ export function delimiterOf(text: string): string {
   return best
 }
 
-/** The first line with a word on it, counting a quoted newline as part of the
- *  line it is in: the header, under the blank rows a spreadsheet may start with. */
 function firstLine(text: string): string {
   let quoted = false
   let start = 0
@@ -86,7 +61,6 @@ function rows(
   let cell = ''
   let quoted = false
   let at = 0
-  // Where the open quote was, for a file that ends inside it.
   let opened = -1
 
   const endCell = () => {
@@ -105,7 +79,6 @@ function rows(
 
     if (quoted) {
       if (one === '"') {
-        // Two quotes inside a quoted cell are one quote in the text.
         if (text[at + 1] === '"') {
           cell += '"'
           at += 2
@@ -144,27 +117,15 @@ function rows(
     at += 1
   }
 
-  // A quote that opens a cell and is never closed would make one cell of the rest
-  // of the file, every row after it inside it. No later quote closed it, so it can
-  // only have been a quote somebody typed: the file is read again with that one
-  // quote as a character.
   if (quoted) return rows(text, delimiter, new Set([...literal, opened]))
 
-  // A file that ends with a newline has no last row; one that does not, does.
   if (cell || row.length) endRow()
 
   return out
 }
 
-/** The rows as records under the header's own names, which is what a database
- *  row is: a note's worth of properties. A column with no name and nothing in it
- *  is dropped, so a trailing comma in the header does not become a property called
- *  nothing; one with no name and something in it is `Column 2` after where it
- *  stands, since what somebody typed under it is theirs whatever the header says. */
 export function recordsOf(text: string): { columns: string[]; rows: Record<string, string>[] } {
   const { rows: read, delimiter } = parsed(text)
-  // The header is the first row with anything in it: a spreadsheet saved with an
-  // empty row or two above its table writes them as lines of nothing, or of commas.
   const table = read.slice(
     Math.max(
       0,
@@ -174,8 +135,6 @@ export function recordsOf(text: string): { columns: string[]; rows: Record<strin
   const head = table[0]
   if (!head) return { columns: [], rows: [] }
 
-  // Two columns of one name would be one property, and the second would write over
-  // the first in every row: the second is `Notes 2`, the way a note's name steps aside.
   const seen = new Set<string>()
   const free = (name: string) => {
     let one = name
@@ -184,24 +143,17 @@ export function recordsOf(text: string): { columns: string[]; rows: Record<strin
     return one
   }
   const named = head.map((one) => (one.trim() ? free(one.trim()) : ''))
-  // The columns the header left blank are named only once every name it gave is
-  // taken, so a `Column 2` of its own keeps its name.
   const columns = named.map((name, at) =>
     name || !table.slice(1).some((line) => line[at]?.trim()) ? name : free(`Column ${at + 1}`),
   )
   const found: Record<string, string>[] = []
 
   for (const line of table.slice(1)) {
-    // A row of nothing is what a blank line at the end of the file looks like.
     if (line.every((cell) => !cell.trim())) continue
 
     const record: Record<string, string> = {}
     for (const [at, column] of columns.entries()) if (column) record[column] = line[at] ?? ''
 
-    // More cells than the header has columns is a separator somebody typed into a
-    // cell that was not quoted, nearly always in the last one, where the free text
-    // goes. The cells over are put back into it as they were written rather than
-    // left out.
     const over = line.slice(columns.length)
     while (over.length && !over[over.length - 1]?.trim()) over.pop()
     const last = columns[columns.length - 1]

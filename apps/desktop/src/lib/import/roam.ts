@@ -1,41 +1,3 @@
-/** A Roam Research export, which is one JSON file holding the whole graph.
- *
- *  Roam has no notes and no paragraphs: it has pages, and a page is a tree of
- *  blocks. So a page becomes a note whose words are a nested list, which is what
- *  the tree already looked like on screen and what markdown has for it. A block
- *  of several lines, a code block most often, stays inside its list item.
- *
- *  Roam's own spellings, turned into the ones everything else reads:
- *
- *  `((uid))` points at one block. Written out as the words that block said, for
- *  the same reason as in a Logseq graph: the reader was looking at those words,
- *  and nothing outside Roam knows the uid. `[these words](((uid)))` showed its
- *  own words, which it keeps.
- *
- *  `{{[[TODO]]}}` and `{{[[DONE]]}}`, or `{{TODO}}` and `{{DONE}}`, are checkboxes,
- *  so the block becomes a task.
- *
- *  `^^text^^` is a highlight, which is `==text==` everywhere else, and `__text__`
- *  is Roam's italics, which is `*text*`: markdown reads the underscores as bold.
- *
- *  `{{[[embed]]: ((uid))}}` is another block shown in place, which is its words,
- *  and the blocks under it when it stands alone. `{{[[embed]]: [[Page]]}}` is a
- *  page shown in place, which is Orden's `![[Page]]`.
- *
- *  `[these words]([[Page]])` is a link to a page that shows other words, which is
- *  `[[Page|these words]]`.
- *
- *  A daily page is called `September 11th, 2026`, which sorts by month name and
- *  is a different name in every language. It becomes `2026-09-11`, in a folder of
- *  its own, so a year of them reads down the file list in order, and a link to a
- *  day says that date too.
- *
- *  A title with a slash in it, `roam/css`, is a page in a folder, the way a link
- *  to it already reads. A title the import could not keep as a file name answers
- *  to it as an alias, so the links to it still find it.
- *
- *  Code, fenced or inline, is kept exactly as it was written. */
-
 import { foldName } from '@orden/markdown/links'
 import { asWords } from '@orden/markdown/words'
 
@@ -46,10 +8,8 @@ import { Names, safeName } from './names'
 import type { ImportPlan, Lost, Planned } from './plan'
 import type { Source } from './sources'
 
-/** Where the days go, so they are not mixed in with the pages somebody named. */
 const JOURNALS = 'Journals'
 
-/** `September 11th, 2026`, which is the only shape Roam names a day. */
 const DAY =
   /^(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2})(?:st|nd|rd|th),\s+(\d{4})$/
 
@@ -68,17 +28,12 @@ const MONTHS = [
   'december',
 ]
 
-/** Every spelling of an embed Roam has written: with brackets or without, and
- *  `embed-path`, which shows the path to the block above it as well. */
 const EMBED = String.raw`\{\{\s*(?:\[\[)?embed(?:-path)?(?:\]\])?\s*:\s*`
 
-/** An embed of one block, standing alone or in a sentence. */
 const BLOCK_EMBED = new RegExp(`${EMBED}\\(\\(([^()\\s]+)\\)\\)\\s*\\}\\}`, 'g')
 
-/** A block that is nothing but an embed of another. */
 const ALONE = new RegExp(`^\\s*${BLOCK_EMBED.source}\\s*$`)
 
-/** An embed of a whole page. */
 const PAGE_EMBED = new RegExp(`${EMBED}\\[\\[([^\\]\\n]+)\\]\\]\\s*\\}\\}`, 'g')
 
 interface RoamBlock {
@@ -94,11 +49,8 @@ interface RoamPage extends RoamBlock {
   'edit-time'?: unknown
 }
 
-/** What the rest of the graph knows that one block needs. */
 interface Graph {
-  /** What every block says, by its uid. */
   known: ReadonlyMap<string, string>
-  /** The blocks under each block, by its uid, for an embed that shows them. */
   under: ReadonlyMap<string, unknown>
   counted: () => void
 }
@@ -155,7 +107,6 @@ export async function readRoam(sources: readonly Source[]): Promise<ImportPlan> 
   return { format: 'roam', files: written, lost }
 }
 
-/** The pages of a Roam export, or null for a JSON that is not one. */
 function asPages(text: string): RoamPage[] | null {
   try {
     const said: unknown = JSON.parse(text)
@@ -171,8 +122,6 @@ function asPages(text: string): RoamPage[] | null {
   }
 }
 
-/** What every block says, by its uid, for the references, and what is under it,
- *  for the embeds. */
 function blocksIn(pages: readonly RoamPage[]): Pick<Graph, 'known' | 'under'> {
   const known = new Map<string, string>()
   const under = new Map<string, unknown>()
@@ -195,10 +144,6 @@ function blocksIn(pages: readonly RoamPage[]): Pick<Graph, 'known' | 'under'> {
   return { known, under }
 }
 
-/** A page's blocks as a nested markdown list. A block with children is a list
- *  item with a list under it, which is the shape it had. `embedding` is the
- *  blocks being shown in place on the way here, so a block that embeds its own
- *  parent is shown once rather than forever. */
 function linesOf(
   blocks: unknown,
   depth: number,
@@ -217,16 +162,11 @@ function linesOf(
     const uid = typeof block.uid === 'string' ? block.uid : ''
     const here = uid ? new Set([...embedding, uid]) : embedding
 
-    // A block that is nothing but an embed shows the embedded block's own
-    // children under it, as Roam did.
     const embedded = ALONE.exec(said)?.[1]
     const shown = embedded && graph.known.has(embedded) && !here.has(embedded) ? embedded : null
     const words = roamText(said, graph.known, graph.counted, new Set(uid ? [uid] : []))
     const indent = '  '.repeat(depth)
 
-    // A heading is a heading rather than a bullet, but only at the top: a
-    // heading three lists deep is not a heading anybody can read. What is under
-    // it is the list that follows it, rather than a list under nothing.
     const heading = depth === 0 && typeof block.heading === 'number' ? block.heading : 0
     let next = depth
     if (words.trim()) {
@@ -248,9 +188,6 @@ function linesOf(
   return out
 }
 
-/** A block's words as the text of a list item: every line after the first sits
- *  inside the item, and a code block's closing fence, which Roam writes on the
- *  end of its last line, has a line of its own. */
 function itemText(words: string, indent: string): string {
   const fenced = words.replace(/^(\s*```[^\n]*\n[\s\S]*?[^\n])```\s*$/, '$1\n```')
   return fenced
@@ -259,27 +196,20 @@ function itemText(words: string, indent: string): string {
     .join('\n')
 }
 
-/** One block's words, in the spellings everything else reads. */
 export function roamText(
   said: string,
   known: ReadonlyMap<string, string> = new Map(),
   counted: () => void = () => undefined,
   showing: ReadonlySet<string> = new Set(),
 ): string {
-  // The block's words are Roam's own spellings too, and are written out the same
-  // way, except where a block points back at one already being written out.
   const block = (whole: string, uid: string, as?: () => string) => {
     const words = known.get(uid)
     if (words === undefined || showing.has(uid)) return whole
     counted()
     return as ? as() : roamText(words, known, counted, new Set([...showing, uid]))
   }
-  // A daily page is named by its date now, so a link to it says that date.
   const page = (name: string) => dayName(name.trim()) ?? name
 
-  // Roam shows a tag in a block as text, so it is words here too rather than markup
-  // the note would render. Roam's own spellings below make none of their own, and an
-  // embedded block's words are made words on their own way through.
   return outsideCode(said, (text) =>
     asWords(text)
       .replace(/\{\{(?:\[\[)?TODO(?:\]\])?\}\}\s*/g, '[ ] ')
@@ -301,7 +231,6 @@ export function roamText(
   )
 }
 
-/** A block's words with `change` made everywhere but in its code. */
 function outsideCode(text: string, change: (text: string) => string): string {
   let out = ''
   let at = 0
@@ -312,11 +241,6 @@ function outsideCode(text: string, change: (text: string) => string): string {
   return out + change(text.slice(at))
 }
 
-/** Where the code is in a block's words, fenced or inline, read the way the note
- *  will read it: a run of backticks opens code only where no backslash escapes it,
- *  and the code ends at the next run just as long. A regex that only looked for
- *  backticks would call `` \`<b>` `` code and leave the tag in it, where the note
- *  shows a backtick and then renders the tag. */
 function codeIn(text: string): [number, number][] {
   const found: [number, number][] = []
   let at = 0
@@ -342,7 +266,6 @@ function codeIn(text: string): [number, number][] {
       end += run
     }
 
-    // A run nothing closes is backticks, and what comes after it is words again.
     if (closes < 0) {
       at += opens
       continue
@@ -353,15 +276,12 @@ function codeIn(text: string): [number, number][] {
   return found
 }
 
-/** How many backticks there are in a row from `at`. */
 function runAt(text: string, at: number): number {
   let end = at
   while (text[end] === '`') end += 1
   return end - at
 }
 
-/** A Roam daily page's name as the date it is, or null for a page somebody
- *  named. */
 export function dayName(title: string): string | null {
   const found = DAY.exec(title)
   if (!found) return null

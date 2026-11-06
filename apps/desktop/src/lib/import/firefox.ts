@@ -1,32 +1,3 @@
-/** What Firefox's own files say, read into a browser's sidebar (sidebar.ts): its open
- *  tabs, the pinned ones, its tab groups and the groups it saved, and its bookmarks.
- *
- *  Firefox has no spaces, so a profile is one space. Of its session - `{ windows,
- *  savedGroups }` out of `recovery.jsonlz4` - every window that is not private is
- *  read, the tabs in their order, each tab's page the one its history is on:
- *
- *  - **A pinned tab** is one of the Essentials, which is what Orden's are for: what
- *    stays put above everything else.
- *  - **A tab group** is a folder of its name (`groups: [{ id, name, color }]` on the
- *    window, `groupId` on its tabs), where its first tab is. Its colour has nothing to
- *    become.
- *  - **A saved group**, one closed and kept, is a folder of its name in a folder
- *    called Saved groups, after the open tabs.
- *  - **The bookmarks** are a folder called Bookmarks after everything else, with a
- *    folder for each of Firefox's roots that holds any - the toolbar, the menu, the
- *    other bookmarks and the phone's - and every folder in them a folder, each
- *    bookmark a web note kept on the day it was bookmarked. The tags, which list the
- *    same bookmarks again, and the separators are not anything.
- *
- *  Only pages on the web: an `about:` page, a file, an extension's page, a smart
- *  folder's `place:` query and a bookmarklet are not somewhere a web note can point.
- *  A folder with none of those in it is not made. Containers are the tab's
- *  `userContextId`, which sidebar-plan.ts says stay behind.
- *
- *  Pure: the files as they were parsed in, the sidebar out. The bookmarks are the tree
- *  Firefox writes its daily backups as, which is also what the crate reads out of
- *  `places.sqlite` (firefox_profiles.rs). Anything not recognised is stepped over. */
-
 import type { Sidebar } from './sidebar'
 import {
   type FolderWords,
@@ -39,7 +10,6 @@ import {
   text,
 } from './sidebar-made'
 
-/** Firefox's roots, by their fixed ids, in the order its library shows them. */
 const ROOTS: [string, keyof FolderWords][] = [
   ['toolbar_____', 'toolbar'],
   ['menu________', 'menu'],
@@ -48,9 +18,6 @@ const ROOTS: [string, keyof FolderWords][] = [
 ]
 const TAGS = 'tags________'
 
-/** A profile as one space named `name`: its session's tabs and groups, then its
- *  saved groups, then its bookmarks. Either may be null, for a file that was not
- *  there or did not read. */
 export function firefoxSidebar(
   session: unknown,
   bookmarks: unknown,
@@ -67,8 +34,6 @@ export function firefoxSidebar(
   return made.sidebar(name)
 }
 
-/** The open windows' tabs in their order, and the groups they are in. Never a private
- *  window's, nor a popup's. Answers the groups that are open, by their ids. */
 function readWindows(session: Said, made: Made, words: FolderWords): Set<string> {
   const open = new Set<string>()
   const windows = list(session.windows).filter((one) => !one.isPrivate && !one.isPopup)
@@ -101,9 +66,6 @@ function readWindows(session: Said, made: Made, words: FolderWords): Set<string>
   return open
 }
 
-/** The groups Firefox saved, each a folder in Saved groups, its tabs in it. A group
- *  that is open too is the one already read: Firefox saves the open groups of a
- *  window as it closes, and takes them off the saved list once they are open again. */
 function readSaved(saved: Said[], open: Set<string>, made: Made, words: FolderWords) {
   for (const group of saved) {
     const id = text(group.id)
@@ -112,7 +74,6 @@ function readSaved(saved: Said[], open: Set<string>, made: Made, words: FolderWo
     made.folder(`saved:${id}`, text(group.name) ?? words.group, 'saved')
 
     for (const one of list(group.tabs)) {
-      // A saved tab is kept the way a closed one is: its state beside what was said of it.
       const tab = isObject(one.state) ? one.state : one
       const page = pageOf(tab)
       if (!page) continue
@@ -126,8 +87,6 @@ function readSaved(saved: Said[], open: Set<string>, made: Made, words: FolderWo
   }
 }
 
-/** A tab's page: its history is `entries`, and `index` counts from one to the page it
- *  is on. A tab that never loaded says what was typed into it. */
 function pageOf(tab: Said): { title: string; url: string; icon: string | null } | null {
   const entries = list(tab.entries)
   const index = Math.min(Math.max(Number(tab.index) || entries.length, 1), entries.length)
@@ -137,13 +96,11 @@ function pageOf(tab: Said): { title: string; url: string; icon: string | null } 
   return { title: text(entry?.title) ?? url, url, icon: siteMark(tab.image) }
 }
 
-/** A container's number, which Firefox calls a user context: nought is none. */
 function containerOf(value: unknown): number {
   const said = Number(value)
   return Number.isInteger(said) && said > 0 ? said : 0
 }
 
-/** The roots by the names an older Firefox's backups give them instead of an id. */
 const ROOT_NAMES: Record<string, string> = {
   toolbarFolder: 'toolbar_____',
   bookmarksMenuFolder: 'menu________',
@@ -152,19 +109,13 @@ const ROOT_NAMES: Record<string, string> = {
   tagsFolder: TAGS,
 }
 
-/** Which of Firefox's roots a node is, by its id or the name of the root it is. */
 function rootOf(node: Said): string | null {
   const named = typeof node.root === 'string' ? ROOT_NAMES[node.root] : undefined
   return named ?? text(node.guid)
 }
 
-/** Which space a bookmark or a folder of them goes to, by its guid, given the space
- *  of the folder it is in. Firefox has one space; Zen shows a bookmark in the spaces
- *  it is assigned to (zen.ts). */
 export type Spacing = (guid: string | null, around: string) => string
 
-/** The bookmark tree, each of Firefox's roots a folder in Bookmarks. Zen's is the
- *  same tree. */
 export function readBookmarks(
   root: Said,
   made: Made,
@@ -187,7 +138,6 @@ export function readBookmarks(
   }
 }
 
-/** Deeper than anybody nests, and a stop for a tree that goes round. */
 const DEEPEST = 64
 
 function walk(
@@ -227,8 +177,6 @@ function walk(
 const BOOKMARK = 1
 const FOLDER = 2
 
-/** What a node of the tree is: its `typeCode`, or in a backup an older Firefox wrote
- *  without one, the kind its `type` names, which is how Firefox reads one back. */
 function kindOf(node: Said): number | null {
   if (typeof node.typeCode === 'number') return node.typeCode
   if (node.type === 'text/x-moz-place') return BOOKMARK
@@ -236,7 +184,6 @@ function kindOf(node: Said): number | null {
   return null
 }
 
-/** When a bookmark was made: Firefox counts microseconds since 1970. */
 function addedOf(value: unknown): { added?: Date } {
   const micro = Number(value)
   if (!Number.isFinite(micro) || micro <= 0) return {}

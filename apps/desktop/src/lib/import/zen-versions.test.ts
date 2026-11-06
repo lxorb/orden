@@ -89,8 +89,6 @@ const WORDS: FolderWords = {
   readingList: 'Reading List',
 }
 
-/** Zen's bookmarks as places.sqlite holds them: a folder on the toolbar shown in Work
- *  alone, and a bookmark shown everywhere. */
 const PLACES: ZenPlaces = {
   spaces: [],
   pins: [],

@@ -1,13 +1,3 @@
-/** A Chromium profile as its files say it, for the reader's and the landing's tests,
- *  written by a Chromium itself rather than by hand: Chrome for Testing 156 as
- *  Playwright runs it (the `chromium` channel, headless), with an extension of a few
- *  lines that pinned a tab, put two tabs in a group named Docs and one in a group with
- *  no name, and made the bookmarks below; a seventh tab was opened and closed again,
- *  and News went on to a second page. `SESSION` is the `Sessions/Session_*` it wrote, `BOOKMARKS` its
- *  `Bookmarks` as it wrote them, and `LOCKED` the first bytes of the copy it wrote into
- *  `Sessions_Encrypted/`. */
-
-/** The session file's bytes, as base64. */
 export const SESSION = [
   'U05TUwMAAAAJAAnPa/gnAAAAAA0ADwgAAADPa/gnAAAAAA0AHwgAAADPa/gnAAAAAA0AFwgAAADPa/gnAAAAAAkAIM9r+CcA',
   'AAAANQAiMAAAAM9r+CccAAAAdmVydGljYWxfdGFiX3N0cmlwX2NvbGxhcHNlZAUAAABmYWxzZQAAADkAIjQAAADPa/gnJAAA',

@@ -38,8 +38,6 @@ describe('a Tomboy note', () => {
     expect(text).toContain('updated: 2026-03-04')
     expect(text).toContain('# Start Here')
     expect(text).toContain('Some words')
-    // The content repeats the title as its first line, which would otherwise be
-    // said twice: once as the heading and once again under it.
     expect(text.match(/Start Here/g)).toHaveLength(1)
   })
 
@@ -91,7 +89,6 @@ describe("Tomboy's own markup", () => {
     const content =
       'Before<list><list-item dir="ltr">one<list><list-item dir="ltr">under</list-item></list></list-item><list-item dir="ltr">two</list-item></list>'
 
-    // A blank line before the first item, so it is a list whatever came before.
     expect(tomboyMarkdown(content).split('\n')).toEqual([
       'Before',
       '',
@@ -105,9 +102,6 @@ describe("Tomboy's own markup", () => {
     expect(tomboyMarkdown('a <size:large>big</size:large> word')).toBe('a big word')
   })
 
-  /** A size is dropped and its words kept, so the words on either side of it are one
-   *  run of text and are escaped as one: escaped a run at a time, two halves that are
-   *  harmless apart met as a tag, a comment or an autolink. */
   test('words a dropped size joins are escaped as the one run they become', () => {
     const tag = tomboyMarkdown('a &lt;<size:large>img src=x onerror=alert(1)&gt;</size:large> b')
     expect(tag).not.toMatch(/(?<!\\)<img/)
@@ -118,7 +112,6 @@ describe("Tomboy's own markup", () => {
     expect(percent).not.toMatch(/(?<!\\)%%/)
     expect(percent).toContain('kept')
 
-    // The address in its brackets, as the same words written in one run say it.
     const address = tomboyMarkdown('&lt;<link:url>https://x.com/a</link:url>&gt;')
     expect(address).toBe(tomboyMarkdown('&lt;https://x.com/a&gt;'))
   })
@@ -219,7 +212,6 @@ describe('links between Tomboy notes', () => {
     ])
 
     expect(plan.files.map((one) => one.path)).toContain('ZugFerd factur-x #4343.md')
-    // A `#` in a wikilink would point at a heading, so this one is a markdown link.
     expect(noteAt(plan, 'Index.md')).toContain(
       'See [ZugFerd / factur-x #4343](ZugFerd%20factur-x%20%234343.md)',
     )

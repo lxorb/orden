@@ -1,64 +1,16 @@
-/** What Zen's own session file says: its spaces, its folders and its tabs, in the
- *  order its sidebar draws them.
- *
- *  Zen is Firefox underneath, and keeps the sidebar - every space, pinned tab,
- *  Essential and folder - in `zen-sessions.jsonlz4` in the profile, one object
- *  `{ spaces, tabs, folders, groups }` shared by every window. Before that file
- *  existed, and in Firefox's own `recovery.jsonlz4` still, the same four lists sit
- *  on each window, `{ windows: [{ spaces, tabs, folders }] }`; both are read here,
- *  so a profile that has not yet written the newer file still imports. See Zen's
- *  ZenSessionManager.sys.mjs, TabState.sys.mjs and ZenFolders.mjs.
- *
- *  - **A space** is `{ uuid, name, icon, position, containerTabId, theme }`. The
- *    icon is an emoji or one of Zen's own drawings, a `chrome://` address.
- *  - **A tab** is Firefox's tab state with Zen's fields on it: `zenWorkspace` (its
- *    space), `zenEssential`, `pinned`, `groupId` (the folder it is in),
- *    `zenStaticLabel` (a name somebody gave it), `zenIsEmpty` (the stand-in an
- *    empty folder holds), `zenIsGlance` (a page peeked at over another), and
- *    `_zenPinnedInitialState`, the address a pinned tab goes back to.
- *  - **A folder** is a tab group with `{ id, name, parentId, userIcon, workspaceId }`;
- *    a split view inside a folder is listed among them as `splitViewGroup`.
- *
- *  Zen up to 1.17 kept less of it there. Its session has the tabs and the folders
- *  but no spaces, and wrote `zenEssential` as the attribute's own `"true"` (as a
- *  twilight build of 1.18 still did in `zen-sessions.jsonlz4`), its tab's id as
- *  `zenPinnedId` and the address a pinned tab goes back to as `zenPinnedEntry`. The
- *  spaces are rows of `zen_workspaces` in `places.sqlite`, and every pinned tab and
- *  Essential a row of `zen_pins` - the only place a pinned tab of a space not open
- *  as the session was written is - which the crate reads (zen_profiles.rs) and
- *  which come in here as `ZenPlaces`.
- *
- *  Zen's bookmarks are Firefox's, and come as Firefox's do (firefox.ts), in a folder
- *  called Bookmarks: in the first space, or for one Zen shows only in some spaces
- *  (`zen_bookmarks_workspaces`), in the first of those.
- *
- *  Pure: the crate hands over the bytes, mozlz4.ts unpacks them, and this reads
- *  what came out. Anything it does not recognise is stepped over rather than
- *  refused, because the file is another program's and it changes with its releases.
- *  What it reads into is every browser's one shape; see sidebar.ts. */
-
 import { readBookmarks } from './firefox'
 import type { Sidebar, SidebarFolder, SidebarSpace, SidebarTab } from './sidebar'
 import { type FolderWords, isObject, list, Made, type Said, siteMark, text } from './sidebar-made'
 
 export type ZenSession = Sidebar
 
-/** What Zen keeps in `places.sqlite`, each a table's rows by their column names; see
- *  zen_profiles.rs. Any of them empty where the table is not there. */
 export interface ZenPlaces {
-  /** `zen_workspaces`: the spaces, up to 1.17. */
   spaces: unknown[]
-  /** `zen_pins`: the pinned tabs, the Essentials and the folders, up to 1.17. */
   pins: unknown[]
-  /** The bookmarks, as firefox_profiles.rs reads them. */
   bookmarks: unknown
-  /** `zen_bookmarks_workspaces`: which spaces a bookmark is shown in. */
   assigned: unknown[]
 }
 
-/** The sidebar out of what was in the file, or null when it holds no spaces: a
- *  session from a Firefox, or a file Zen had not finished writing. `places` is
- *  what a Zen up to 1.17 kept its spaces and pins in. */
 export function readZenSession(said: unknown, places: ZenPlaces | null = null): ZenSession | null {
   if (!isObject(said)) return null
 
@@ -82,8 +34,6 @@ export function readZenSession(said: unknown, places: ZenPlaces | null = null): 
   return pinnedIn(spaces, folders, tabs, list(places.pins))
 }
 
-/** The sidebar with Zen's bookmarks after everything else, each in the space it is
- *  shown in; see the top of this file. */
 export function withBookmarks(
   sidebar: ZenSession,
   places: ZenPlaces | null,
@@ -114,8 +64,6 @@ export function withBookmarks(
   }
 }
 
-/** The spaces in the order the switcher shows them: by their position, where they
- *  have one, and in the order they were listed. */
 function inOrder(spaces: Said[]): Said[] {
   return spaces
     .map((one, at) => ({ one, at, position: Number(one.position) }))
@@ -127,11 +75,6 @@ function inOrder(spaces: Said[]): Said[] {
     .map(({ one }) => one)
 }
 
-/** The sidebar's lists off the windows of a Firefox session: the spaces and the
- *  folders of the first window that has any, which every window shares, and the
- *  tabs of all of them, since a window may hold tabs another does not. A Zen up to
- *  1.17 wrote no spaces there, and then the first window's folders are the ones.
- *  Never a private window's: nothing of one is anybody's to keep. */
 function fromWindows(windows: Said[]): Said | null {
   const normal = windows.filter((one) => !one.isPrivate && !one.isPopup && !one.isTaskbarTab)
   const first = normal.find((one) => list(one.spaces).length) ?? normal[0]
@@ -144,7 +87,6 @@ function fromWindows(windows: Said[]): Said | null {
   }
 }
 
-/** A row of `zen_workspaces` as the space a session would have written. */
 function spaceRow(row: Said): Said {
   return {
     uuid: row.uuid,
@@ -178,9 +120,6 @@ function spaceOf(one: Said): SidebarSpace | null {
   }
 }
 
-/** The theme's main colour: the dot marked primary, or the first one. Each is
- *  `{ c: [r, g, b] }`; a colour somebody typed is a CSS string, which says nothing
- *  a tint could use. */
 function colourOf(theme: unknown): [number, number, number] | null {
   if (!isObject(theme)) return null
 
@@ -207,27 +146,19 @@ function folderOf(one: Said): SidebarFolder | null {
   }
 }
 
-/** A flag as Zen wrote it: `true`, or the attribute's own `"true"` before 1.18. */
 function flag(value: unknown): boolean {
   return value === true || value === 'true' || value === 1
 }
 
-/** A tab's own id, which it keeps in every window: `zenSyncId`, or `zenPinnedId`
- *  before 1.18, which only a pinned tab had. */
 function idOf(one: Said): string | null {
   return text(one.zenSyncId) ?? text(one.zenPinnedId)
 }
 
-/** Every tab worth a row, each once. A tab is in the file once per window that
- *  holds it, under one id, and the copy that has a page wins over a blank one,
- *  which is how Zen chooses too. The stand-in an empty folder keeps and a page
- *  peeked at over another are not tabs anybody opened. */
 function tabsOf(tabs: Said[]): SidebarTab[] {
   const kept = new Map<string, SidebarTab | null>()
 
   tabs.forEach((one, at) => {
     if (flag(one.zenIsEmpty) || flag(one.zenIsGlance)) return
-    // A tab with no id of its own is a tab of its own.
     const key = idOf(one) ?? `#${at}`
     if (!kept.get(key)) kept.set(key, tabOf(one))
   })
@@ -235,8 +166,6 @@ function tabsOf(tabs: Said[]): SidebarTab[] {
   return [...kept.values()].filter((one): one is SidebarTab => one !== null)
 }
 
-/** The address a pinned tab goes back to: `_zenPinnedInitialState`'s entry, or
- *  before 1.18 `zenPinnedEntry`, the same entry written out as JSON. */
 function pinnedEntry(one: Said): Said | null {
   const initial = isObject(one._zenPinnedInitialState) ? one._zenPinnedInitialState : null
   if (initial && isObject(initial.entry)) return initial.entry
@@ -244,8 +173,6 @@ function pinnedEntry(one: Said): Said | null {
   return isObject(older) ? older : null
 }
 
-/** One tab, or null for one with no page: Firefox's `entries` are the tab's
- *  history and `index` counts from one to the page it is on. */
 function tabOf(one: Said): SidebarTab | null {
   const entries = list(one.entries)
   const index = Math.min(Math.max(Number(one.index) || entries.length, 1), entries.length)
@@ -272,12 +199,7 @@ function tabOf(one: Said): SidebarTab | null {
   }
 }
 
-/** A Zen up to 1.17's sidebar: its pinned tabs and Essentials out of `zen_pins`, in
- *  their order, each with the page its tab in the session is on where it has one,
- *  then the session's other tabs. A pinned folder is a pin too (`is_group`), which
- *  the session's folder names by its `pinId`. */
 function pinnedIn(spaces: SidebarSpace[], folders: Said[], tabs: Said[], pins: Said[]): Sidebar {
-  // The session's folders by the pin each is, which is what a pin's folder is called.
   const pinOf = new Map<string, string>()
   for (const one of folders) {
     const id = text(one.id)
@@ -357,7 +279,6 @@ function pinFolderOf(pin: Said): SidebarFolder[] {
   ]
 }
 
-/** A container's number, which Firefox calls a user context: nought is none. */
 function containerOf(value: unknown): number {
   const said = Number(value)
   return Number.isInteger(said) && said > 0 ? said : 0

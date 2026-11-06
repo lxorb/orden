@@ -303,8 +303,6 @@ describe('what a real Takeout does', () => {
   })
 })
 
-/** An item is words typed into Keep, and the task reader takes more apart than a note
- *  does: an emoji and a date after it are a field, a `#` a tag. None of it was. */
 describe('a Keep list item', () => {
   test('reads none of its words as a field of the task', async () => {
     const plan = await readKeep([

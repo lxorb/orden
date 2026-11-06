@@ -1,28 +1,19 @@
-/** What every browser without spaces of its own is read into on the way to a sidebar
- *  (sidebar.ts): one space, its folders and its tabs as the reader finds them, and only
- *  the folders that end up holding a page. firefox.ts and chromium.ts read into it. */
-
 import { isWebAddress } from '../web-tab/address'
 import type { Sidebar, SidebarFolder, SidebarTab } from './sidebar'
 
-/** The names of the folders the import makes, in the reader's language. */
 export interface FolderWords {
   bookmarks: string
   savedGroups: string
-  /** A tab group with no name of its own. */
   group: string
-  /** Firefox's bookmarks toolbar, and Chromium's bar. */
   toolbar: string
   bar: string
   menu: string
   other: string
   mobile: string
-  /** Safari's name for its bar, and its Reading List. */
   favorites: string
   readingList: string
 }
 
-/** What a browser's JSON said, read field by field. */
 export type Said = Record<string, unknown>
 
 export function isObject(value: unknown): value is Said {
@@ -37,9 +28,6 @@ export function text(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value.trim() : null
 }
 
-/** A site's mark as a session kept it. Firefox writes one a page process drew as
- *  `moz-remote-image://?url=…`, the picture it wraps in the address, which is the
- *  mark itself; see Zen's ZenSpacesSyncModel.sys.mjs. */
 export function siteMark(value: unknown): string | null {
   const said = text(value)
   if (!said?.startsWith('moz-remote-image:')) return said
@@ -47,8 +35,6 @@ export function siteMark(value: unknown): string | null {
   return said.includes('?') ? text(new URLSearchParams(query).get('url')) : null
 }
 
-/** What a page with no title of its own is called: where it is, without the scheme,
- *  which a session written before the page drew its title often says. */
 function untitled(url: string): string {
   try {
     const { host, pathname, search } = new URL(url)
@@ -58,23 +44,18 @@ function untitled(url: string): string {
   }
 }
 
-/** The one space a profile is. */
 const SPACE = 'browser'
 
-/** A folder as a walk down a tree finds it: what it is told apart by, and its name. */
 export interface Step {
   key: string
   name: string
 }
 
-/** The folders and tabs as they are read, and which folders end up holding a page. */
 export class Made {
   readonly folders: SidebarFolder[] = []
   readonly tabs: SidebarTab[] = []
-  /** Pages left behind for not being on the web: a browser's own, a file, a bookmarklet. */
   dropped = 0
 
-  /** `space` is the space everything goes to that is not said to go elsewhere. */
   constructor(readonly space = SPACE) {}
 
   folder(id: string, name: string, parent: string | null, space = this.space) {
@@ -82,8 +63,6 @@ export class Made {
     this.folders.push({ id, name, icon: null, parent, space, split: false })
   }
 
-  /** The folders of a walk, outermost first, made in `space`; answers the innermost.
-   *  Another space's are folders of their own, of the same names. */
   within(steps: readonly Step[], space = this.space): string | null {
     let parent: string | null = null
     for (const step of steps) {
@@ -111,7 +90,6 @@ export class Made {
     })
   }
 
-  /** The folders some page is in, at whatever depth. */
   kept(): SidebarFolder[] {
     const byId = new Map(this.folders.map((one) => [one.id, one]))
     const full = new Set<string>()
@@ -124,7 +102,6 @@ export class Made {
     return this.folders.filter((one) => full.has(one.id))
   }
 
-  /** All of it as the one space named `name`. */
   sidebar(name: string): Sidebar {
     return {
       spaces: [{ id: this.space, name, icon: null, colour: null, container: 0 }],
