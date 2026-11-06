@@ -336,14 +336,14 @@ def drive_pencil(browser) -> None:
         check_hover(page, cdp, "pencil")
 
         tool(page, "d")
-        pen_stroke(page, cdp, line(page, steps=12, span=200))
+        was = len(ink_of(page))
+        pen_stroke(page, cdp, line(page, steps=12, span=200, down=-140))
         settled(page)
-        before = len(ink_of(page))
         tool(page, "e")
-        pen_stroke(page, cdp, line(page, steps=12, span=200))
+        pen_stroke(page, cdp, line(page, steps=12, span=200, down=-140))
         settled(page)
 
-        if len(ink_of(page)) >= before:
+        if len(ink_of(page)) != was:
             fail("the eraser off the bar rubbed nothing out for a pen with no button")
         else:
             say("the eraser off the bar rubs out, which is a Pencil's only way to")
@@ -440,19 +440,20 @@ def drive_surface(browser) -> None:
 
         wipe(page)
         tool(page, "d")
-        pen_stroke(page, cdp, line(page))
+        was = len(ink_of(page))
+        pen_stroke(page, cdp, line(page, down=-140))
         settled(page)
-        if not ink_of(page):
+        if len(ink_of(page)) == was:
             fail("nothing to rub out with the eraser end")
 
         raw_stroke(
             page,
-            line(page),
+            line(page, down=-140),
             {"button": 5, "buttons": 32, "pressure": 0.5, "tiltX": 0, "tiltY": 0},
             "the eraser end",
         )
         settled(page)
-        if ink_of(page):
+        if len(ink_of(page)) != was:
             fail("a pen turned over onto its eraser end did not rub out")
         else:
             say("a pen turned over onto its eraser end rubs out")
