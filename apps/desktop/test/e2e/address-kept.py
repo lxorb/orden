@@ -92,10 +92,8 @@ def drive(browser: Browser, scheme: str) -> None:
     tab_of(page, note).click()
     DRIVE.wait_for(page, f"window.nibApp.workspace.active?.id === {note!r}", "the note in front")
     page.wait_for_timeout(300)
-    tab_of(page, fresh).click()
-    DRIVE.wait_for(page, f"window.nibApp.workspace.active?.id === {fresh!r}", "the fresh tab again")
-    page.wait_for_timeout(500)
-    check(f"[{scheme}] a field that had the keyboard has it back", page.evaluate(STATE)["focused"])
+    check(f"[{scheme}] a new tab nothing was done with goes once it is left", tab_of(page, fresh).count() == 0)
+    check(f"[{scheme}] and the one with words in it stays", tab_of(page, web).count() == 1)
     page.context.close()
 
 def main() -> int:
