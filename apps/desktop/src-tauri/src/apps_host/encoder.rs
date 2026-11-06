@@ -1,28 +1,8 @@
-//! Which encoder makes an application's picture (issue 1063, step 4; docs/apps.md): the
-//! computer's own hardware where ffmpeg has an encoder for it that works and the viewer
-//! decodes what it makes, and libvpx's VP8 in software everywhere else.
-//!
-//! **Asked once, by doing.** Every encoder is tried on one frame of a test picture the
-//! first time a picture is asked for, and only those that make it are kept: ffmpeg lists
-//! encoders its build has, not those the machine's GPU and driver can run.
-//!
-//! **What the viewer decodes decides.** Hardware H.264 (NVENC, VAAPI, Quick Sync) goes to a
-//! viewer that offers H.264 - `WebView2` and `WKWebView` - and hardware VP9 or VP8 to any,
-//! Orden's own CEF included, which has no H.264. Each is told to hold nothing back: no
-//! B-frames, no look-ahead, its lowest-latency mode.
-//!
-//! **Fed frame by frame** (step 5): the picture is read off the display as it changes
-//! (`capture.rs`) and written to the encoder raw, each frame stamped with the time it
-//! came, so a still screen makes no frames at all. A key frame comes first, then only
-//! when the viewer asks for one - its picture broken by a loss on the way - and, as a
-//! net under that, after ten seconds' worth of frames.
-
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::sync::OnceLock;
 use std::time::{Duration, Instant};
 
-/// The codec an encoder makes, as the viewer negotiates it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Made {
     Vp8,
@@ -30,22 +10,15 @@ pub enum Made {
     H264,
 }
 
-/// The hardware an encoder runs on, which decides how frames get there.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Hardware {
-    /// The processor: libvpx.
     None,
-    /// Intel's and AMD's, through the render node.
     Vaapi,
-    /// Intel's Quick Sync.
     Qsv,
-    /// NVIDIA's.
     Nvenc,
-    /// AMD's, on Windows.
     Amf,
 }
 
-/// One of ffmpeg's encoders.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Encoder {
     pub name: &'static str,
@@ -53,8 +26,6 @@ pub struct Encoder {
     pub hardware: Hardware,
 }
 
-/// Every encoder tried, best first: hardware before software, and within the hardware
-/// H.264 first, which every GPU of the last ten years has.
 pub const ALL: [Encoder; 8] = [
     one("h264_nvenc", Made::H264, Hardware::Nvenc),
     one("h264_vaapi", Made::H264, Hardware::Vaapi),
@@ -66,7 +37,6 @@ pub const ALL: [Encoder; 8] = [
     SOFTWARE,
 ];
 
-/// libvpx's VP8, which every viewer decodes and every ffmpeg has.
 pub const SOFTWARE: Encoder = one("libvpx", Made::Vp8, Hardware::None);
 
 const fn one(name: &'static str, made: Made, hardware: Hardware) -> Encoder {
@@ -77,13 +47,9 @@ const fn one(name: &'static str, made: Made, hardware: Hardware) -> Encoder {
     }
 }
 
-/// The render node VAAPI encodes on.
 const RENDER_NODE: &str = "/dev/dri/renderD128";
-/// How long one encoder has to make its one frame.
 const TRY_FOR: Duration = Duration::from_secs(5);
 
-/// The best encoder that works here for what the viewer decodes: None if it decodes
-/// nothing this can make.
 pub fn chosen(working: &[Encoder], decodes: &[Made]) -> Option<Encoder> {
     working
         .iter()
@@ -91,7 +57,6 @@ pub fn chosen(working: &[Encoder], decodes: &[Made]) -> Option<Encoder> {
         .find(|one| decodes.contains(&one.made))
 }
 
-/// The encoders that work on this computer, tried once.
 pub fn working() -> &'static [Encoder] {
     static FOUND: OnceLock<Vec<Encoder>> = OnceLock::new();
     FOUND.get_or_init(|| {
@@ -101,14 +66,11 @@ pub fn working() -> &'static [Encoder] {
             .filter(|one| one.hardware != Hardware::None)
             .filter(|one| works(*one))
             .collect();
-        // libvpx is not tried: an ffmpeg without it is one the viewer is told about.
         found.push(SOFTWARE);
         found
     })
 }
 
-/// Where ffmpeg is: on `PATH`, or where winget puts the links to what it installs, which
-/// a window started before the install has no `PATH` for yet.
 pub fn ffmpeg() -> Option<PathBuf> {
     static FOUND: OnceLock<Option<PathBuf>> = OnceLock::new();
     FOUND
@@ -122,13 +84,11 @@ pub fn ffmpeg() -> Option<PathBuf> {
         .clone()
 }
 
-/// ffmpeg, to be started: with no console window of its own on Windows.
 pub fn command() -> Command {
     let command = Command::new(ffmpeg().unwrap_or_else(|| PathBuf::from("ffmpeg")));
     #[cfg(windows)]
     let command = {
         use std::os::windows::process::CommandExt as _;
-        /// `CREATE_NO_WINDOW`.
         const NO_WINDOW: u32 = 0x0800_0000;
         let mut command = command;
         command.creation_flags(NO_WINDOW);
@@ -137,8 +97,6 @@ pub fn command() -> Command {
     command
 }
 
-/// Whether an encoder makes one frame of a test picture, told everything a picture's
-/// encoder is told: an option it does not take is an encoder that does not work.
 fn works(encoder: Encoder) -> bool {
     if encoder.hardware == Hardware::Vaapi && !std::path::Path::new(RENDER_NODE).exists() {
         return false;
@@ -173,12 +131,10 @@ fn works(encoder: Encoder) -> bool {
     }
 }
 
-/// A line of ffmpeg's arguments, none of which has a space in it, as its words.
 fn words(line: &str) -> Vec<String> {
     line.split_whitespace().map(str::to_owned).collect()
 }
 
-/// The device a hardware encoder is opened on, before the input.
 fn device_args(hardware: Hardware) -> Vec<String> {
     let words: &[&str] = match hardware {
         Hardware::Vaapi => &[
@@ -193,8 +149,6 @@ fn device_args(hardware: Hardware) -> Vec<String> {
     words.iter().map(|&one| one.to_owned()).collect()
 }
 
-/// How frames reach the encoder: uploaded to the GPU in NV12 for VAAPI and Quick Sync,
-/// handed over in system memory for NVENC and libvpx.
 fn upload_args(hardware: Hardware) -> Vec<String> {
     let words: &[&str] = match hardware {
         Hardware::Vaapi => &["-vf", "format=nv12,hwupload"],
@@ -204,8 +158,6 @@ fn upload_args(hardware: Hardware) -> Vec<String> {
     words.iter().map(|&one| one.to_owned()).collect()
 }
 
-/// Each encoder's way of holding nothing back, and its profile: H.264's constrained
-/// baseline, which every viewer that offers H.264 decodes.
 fn tuning_args(encoder: Encoder, threads: usize) -> Vec<String> {
     let words: &[&str] = match encoder.name {
         "libvpx" => &[
@@ -273,8 +225,6 @@ fn tuning_args(encoder: Encoder, threads: usize) -> Vec<String> {
     args
 }
 
-/// How each frame is written: IVF for VP8 and VP9, H.264's own stream with an access
-/// unit delimiter before every frame, which is where one frame ends and the next begins.
 fn output_args(made: Made) -> Vec<String> {
     let words: &[&str] = match made {
         Made::Vp8 | Made::Vp9 => &["-f", "ivf"],
@@ -283,7 +233,6 @@ fn output_args(made: Made) -> Vec<String> {
     words.iter().map(|&one| one.to_owned()).collect()
 }
 
-/// The frame rate the display is read at: the holder's refresh rate, at most 60.
 #[allow(
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss,
@@ -297,16 +246,11 @@ pub fn frame_rate(hz: f64) -> u32 {
     }
 }
 
-/// The bits a second the picture is given: about a tenth of a bit a pixel a frame, which
-/// keeps text sharp, between 1 and 20 megabits.
 pub fn bit_rate(width: u32, height: u32, fps: u32) -> u64 {
     let pixels = u64::from(width) * u64::from(height) * u64::from(fps);
     (pixels / 10).clamp(1_000_000, 20_000_000)
 }
 
-/// What ffmpeg is told: read raw frames of this size off its input as they come, each at
-/// the time it came, encode them with this encoder holding no frame back, and write each
-/// frame to the pipe the moment it is made.
 pub fn encoder_args(encoder: Encoder, width: u16, height: u16, fps: u32) -> Vec<String> {
     let rate = bit_rate(u32::from(width), u32::from(height), fps);
     let threads = std::thread::available_parallelism()
@@ -332,7 +276,6 @@ pub fn encoder_args(encoder: Encoder, width: u16, height: u16, fps: u32) -> Vec<
         (rate / 2).to_string(),
         "-g".to_owned(),
         (fps * 10).to_string(),
-        // A frame for each one written, at its own time: none made up for a still screen.
         "-fps_mode".to_owned(),
         "passthrough".to_owned(),
     ]);
@@ -341,18 +284,13 @@ pub fn encoder_args(encoder: Encoder, width: u16, height: u16, fps: u32) -> Vec<
     args
 }
 
-/// H.264's stream cut into frames: everything from one access unit delimiter to the
-/// next. Bytes are taken as they come; a frame is handed out once the next one begins.
 #[derive(Debug, Default)]
 pub struct AccessUnits {
     kept: Vec<u8>,
 }
 
 impl AccessUnits {
-    /// Takes bytes off the stream; answers the frames they finished.
     pub fn take(&mut self, bytes: &[u8]) -> Vec<Vec<u8>> {
-        // From a little before the new bytes, for a delimiter that came in two halves;
-        // never the delimiter the kept frame begins with, which is at its first two bytes.
         let mut from = self.kept.len().saturating_sub(4).max(2);
         self.kept.extend_from_slice(bytes);
         let mut frames = Vec::new();
@@ -363,21 +301,15 @@ impl AccessUnits {
         frames
     }
 
-    /// The frame kept so far, whole once no more bytes have come for a moment: ffmpeg
-    /// writes each frame at once, so a pause after it is its end, and the last frame
-    /// before a still screen is not kept waiting for the next one.
     pub fn flush(&mut self) -> Option<Vec<u8>> {
         (self.kept.len() > 4).then(|| std::mem::take(&mut self.kept))
     }
 }
 
-/// Where the next access unit delimiter begins, its three-byte start code found at or
-/// after `from` (or a four-byte one's last three) and a NAL of type 9.
 fn next_delimiter(bytes: &[u8], from: usize) -> Option<usize> {
     let mut at = from;
     while at + 3 < bytes.len() {
         if bytes[at..at + 3] == [0, 0, 1] && (bytes[at + 3] & 0x1f) == 9 {
-            // A four-byte start code belongs to the frame it starts.
             return Some(if at > 0 && bytes[at - 1] == 0 {
                 at - 1
             } else {
@@ -398,7 +330,6 @@ mod tests {
         let named = |name: &str| *ALL.iter().find(|one| one.name == name).unwrap();
         let nvenc = named("h264_nvenc");
         let vp9 = named("vp9_vaapi");
-        // A Mac's viewer offers H.264; Orden's CEF does not.
         assert_eq!(
             chosen(&[nvenc, vp9, SOFTWARE], &[Made::Vp8, Made::H264]),
             Some(nvenc)

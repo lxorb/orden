@@ -1,26 +1,3 @@
-//! The window manager of an application's own display (issue 1063, step 5; docs/apps.md):
-//! what makes the application fill the holder's tab, and the keyboard reach it.
-//!
-//! An Xvfb has no window manager, so an application's window opens at whatever size it
-//! likes in a corner of the screen, and keeps it when the screen changes. This is the
-//! least one that serves a tab:
-//!
-//! - **A main window fills the screen**, and fills it again whenever the screen is made
-//!   another size (`display.rs`): a window that is not transient for another, not a
-//!   dialog, splash, utility or other kind of its own, and that may be as large as the
-//!   screen. What such a window asks for its size is answered with the screen's, as a
-//!   tiling window manager answers it.
-//! - **Any other window keeps its size**, within the screen, and opens in the middle of
-//!   it. Menus and tooltips, which no window manager places, are left alone.
-//! - **The keyboard goes to the newest window**, and to whichever one is clicked, which
-//!   comes to the front; a window that goes gives it back to the one below.
-//! - **The ratio is told to the toolkits** as a desktop tells it: GTK reads the scale and
-//!   the dots an inch from XSETTINGS, which this owns and changes live, and Qt, Electron
-//!   and the rest read `Xft.dpi` from the screen's resources.
-//!
-//! It draws no frames: a tab is the frame. Its thread hands the clipboard its events
-//! too (`clipboard.rs`, step 6).
-
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 
@@ -40,7 +17,6 @@ use x11rb::{CURRENT_TIME, NONE};
 use super::clipboard::Clipboard;
 
 x11rb::atom_manager! {
-    /// The names this asks the server for once.
     pub Atoms: AtomsCookie {
         WM_PROTOCOLS,
         WM_TAKE_FOCUS,
@@ -55,20 +31,16 @@ x11rb::atom_manager! {
     }
 }
 
-/// A display's window manager: its connection, which the display's resizing shares, and
-/// the window that owns its settings. Its thread ends with the display.
 pub struct Desk {
     connection: Arc<RustConnection>,
     root: Window,
     owner: Window,
     atoms: Atoms,
-    /// Counted up by every change of the settings, as XSETTINGS asks.
     serial: AtomicU32,
     clipboard: Arc<Clipboard>,
 }
 
 impl Desk {
-    /// Becomes the display's window manager and its settings' owner, at this ratio.
     pub fn open(display: &str, dpr: f64) -> Result<Desk, String> {
         let said = |error: &dyn std::fmt::Display| error.to_string();
         let (connection, screen) = x11rb::connect(Some(display)).map_err(|e| said(&e))?;
@@ -82,7 +54,6 @@ impl Desk {
             .map_err(|e| said(&e))?
             .reply()
             .map_err(|e| said(&e))?;
-        // Only one client may redirect the root's children: the window manager.
         connection
             .change_window_attributes(
                 root,
@@ -146,23 +117,18 @@ impl Desk {
         Ok(desk)
     }
 
-    /// The display's clipboard.
     pub fn clipboard(&self) -> &Arc<Clipboard> {
         &self.clipboard
     }
 
-    /// The connection, as the display's resizing uses it.
     pub fn connection(&self) -> &RustConnection {
         &self.connection
     }
 
-    /// The screen's root window.
     pub fn root(&self) -> Window {
         self.root
     }
 
-    /// Tells the toolkits the ratio: XSETTINGS for GTK, which follows it live, and the
-    /// screen's resources for the rest.
     pub fn scale(&self, dpr: f64) {
         let serial = self.serial.fetch_add(1, Ordering::SeqCst) + 1;
         let x = &self.connection;
@@ -185,9 +151,6 @@ impl Desk {
     }
 }
 
-/// The scale GTK draws at, a whole number, and the dots an inch it lays text out at
-/// within it, as a desktop says them for a ratio: 1.5 is a scale of 1 at 144 dots, 2 a
-/// scale of 2 at 96.
 #[allow(
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss,
@@ -199,8 +162,6 @@ pub fn gtk_scale(dpr: f64) -> (u32, f64) {
     (scale, 96.0 * dpr / f64::from(scale))
 }
 
-/// The XSETTINGS property for a ratio (the XSETTINGS specification): its byte order,
-/// serial and settings, each a type, a name, the serial it last changed at and a value.
 #[allow(
     clippy::cast_possible_truncation,
     clippy::cast_possible_wrap,
@@ -229,20 +190,17 @@ pub fn settings(dpr: f64, serial: u32) -> Vec<u8> {
     out
 }
 
-/// One window this manages: whether it fills the screen.
 #[derive(Clone, Copy, Debug)]
 struct Managed {
     window: Window,
     fills: bool,
 }
 
-/// The window manager's loop, until the display ends.
 fn manage(x: &RustConnection, root: Window, atoms: Atoms, clipboard: &Clipboard) {
     let Some(at) = x.get_geometry(root).ok().and_then(|one| one.reply().ok()) else {
         return;
     };
     let mut screen = (at.width, at.height);
-    // In stacking order: the last is in front.
     let mut managed: Vec<Managed> = Vec::new();
     loop {
         let Ok(event) = x.wait_for_event() else {
@@ -258,8 +216,6 @@ fn manage(x: &RustConnection, root: Window, atoms: Atoms, clipboard: &Clipboard)
                 managed.retain(|one| one.window != window);
                 managed.push(Managed { window, fills });
                 place(x, window, fills, screen);
-                // A click on it brings it forward and gives it the keyboard; the click
-                // itself goes on to the window.
                 let _ = x.grab_button(
                     false,
                     window,
@@ -317,7 +273,6 @@ fn manage(x: &RustConnection, root: Window, atoms: Atoms, clipboard: &Clipboard)
     }
 }
 
-/// A window gone: the keyboard back to the one in front of what is left.
 fn forget(x: &RustConnection, atoms: &Atoms, managed: &mut Vec<Managed>, window: Window) {
     let was = managed.len();
     managed.retain(|one| one.window != window);
@@ -328,8 +283,6 @@ fn forget(x: &RustConnection, atoms: &Atoms, managed: &mut Vec<Managed>, window:
     }
 }
 
-/// Whether a window is a main one, which fills the screen: not transient for another,
-/// of no kind but the normal one, and allowed to be as large as the screen.
 fn fills(x: &RustConnection, atoms: &Atoms, window: Window, screen: (u16, u16)) -> bool {
     let transient = x
         .get_property(
@@ -370,14 +323,12 @@ fn fills(x: &RustConnection, atoms: &Atoms, window: Window, screen: (u16, u16)) 
     may_fill(most, screen)
 }
 
-/// Whether a window whose hints say it may be at most `most` may fill the screen.
 fn may_fill(most: Option<(i32, i32)>, screen: (u16, u16)) -> bool {
     most.is_none_or(|(wide, high)| {
         (wide <= 0 || wide >= i32::from(screen.0)) && (high <= 0 || high >= i32::from(screen.1))
     })
 }
 
-/// Where a window goes: the whole screen, or its own size within it, in the middle.
 pub fn placed(fills: bool, size: (u16, u16), screen: (u16, u16)) -> (i16, i16, u16, u16) {
     if fills {
         return (0, 0, screen.0.max(1), screen.1.max(1));
@@ -407,8 +358,6 @@ fn place(x: &RustConnection, window: Window, fills: bool, screen: (u16, u16)) {
     );
 }
 
-/// What a window that asked for another size is told it has, as ICCCM asks of a
-/// window manager that does not do what it asked.
 fn tell_where(x: &RustConnection, window: Window, screen: (u16, u16)) {
     let event = ConfigureNotifyEvent {
         response_type: CONFIGURE_NOTIFY_EVENT,
@@ -426,8 +375,6 @@ fn tell_where(x: &RustConnection, window: Window, screen: (u16, u16)) {
     let _ = x.send_event(false, window, EventMask::STRUCTURE_NOTIFY, event);
 }
 
-/// Brings a window forward and gives it the keyboard, as it asks to be given it: by the
-/// server, or by being told to take it (`WM_TAKE_FOCUS`), or both.
 fn focus(x: &RustConnection, atoms: &Atoms, window: Window) {
     let _ = x.configure_window(
         window,
@@ -497,7 +444,6 @@ mod tests {
         assert_eq!(bytes[0], u8::from(cfg!(target_endian = "big")));
         assert_eq!(&bytes[4..8], &7_u32.to_ne_bytes());
         assert_eq!(&bytes[8..12], &3_u32.to_ne_bytes());
-        // The first setting: an integer, its name, padded to four, its serial, its value.
         assert_eq!(bytes[12], 0);
         assert_eq!(&bytes[14..16], &23_u16.to_ne_bytes());
         assert_eq!(&bytes[16..39], b"Gdk/WindowScalingFactor");
@@ -508,10 +454,6 @@ mod tests {
         assert_eq!(&bytes[end - 4..], &(192 * 1024_i32).to_ne_bytes());
     }
 
-    /// On a real Xvfb: a main window opened in a corner fills the screen, and fills it
-    /// again when the screen changes; a dialog keeps its size in the middle; the newest
-    /// has the keyboard, and the one below has it back when it goes. CI installs Xvfb;
-    /// elsewhere the test says nothing without it.
     #[test]
     #[allow(
         clippy::too_many_lines,
@@ -576,7 +518,6 @@ mod tests {
             let main = open(300, 200, None);
             assert_eq!(settle(main, (0, 0, 800, 600)), (0, 0, 800, 600));
             assert_eq!(focused(), main);
-            // Asking for another size is answered with the screen's.
             x.configure_window(main, &ConfigureWindowAux::new().width(100).height(100))
                 .unwrap();
             x.flush().unwrap();
@@ -599,7 +540,6 @@ mod tests {
             }
             assert_eq!(focused(), main);
 
-            // The ratio, as GTK reads it.
             let owner = x
                 .get_selection_owner(atoms._XSETTINGS_S0)
                 .unwrap()

@@ -1,22 +1,3 @@
-//! What this computer has installed, for New application's chooser (issue 1063, step 3),
-//! each with its own icon: as many as the system's own list of applications shows.
-//!
-//! - **Linux**: the desktop entries of the XDG data folders (`applications/*.desktop`, and
-//!   Flatpak's and Snap's exports), read as the freedesktop.org Desktop Entry
-//!   Specification says: the first folder that has an id wins, an entry that is hidden,
-//!   not shown in menus, or not shown on this desktop (`OnlyShowIn`, `NotShowIn`) is left
-//!   out, and so is one that runs in a terminal or whose `TryExec` is not there. Its name
-//!   is the reader's language's where it has one. Its icon is looked up as the Icon Theme
-//!   Specification says: the reader's theme, the themes it inherits, hicolor, `pixmaps`.
-//! - **Windows**: what the Start menu's All apps holds (`windows.rs`): the reader's and the
-//!   machine's Start menu shortcuts to programs, the Store's applications, and the
-//!   programs `App Paths` names, each once; not uninstallers, help, documents or links.
-//! - **macOS**: the bundles in the Applications folders, the system's and the reader's,
-//!   by their own names, with the icons their bundles hold (`macos.rs`).
-//!
-//! An application is started by the id this module found and the command its entry
-//! holds, never by a command line from the window; see `find`.
-
 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows", test))]
 mod icons;
 #[cfg(any(target_os = "macos", test))]
@@ -31,7 +12,6 @@ use std::path::Path;
 
 use serde::Serialize;
 
-/// One application, as the window lists it.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct Listed {
     pub id: String,
@@ -40,9 +20,6 @@ pub struct Listed {
     pub icon: Option<String>,
 }
 
-/// One application, as it is started: its listing, the program with its arguments, the
-/// folder it starts in where its entry says one, and whether it is a Store application,
-/// which Windows starts itself and only on the reader's own desktop.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Entry {
     pub listed: Listed,
@@ -52,7 +29,6 @@ pub struct Entry {
 }
 
 impl Entry {
-    /// A program and its arguments, started in the folder the caller chooses.
     #[cfg(any(target_os = "linux", target_os = "macos", test))]
     fn program(listed: Listed, argv: Vec<String>) -> Entry {
         Entry {
@@ -64,15 +40,12 @@ impl Entry {
     }
 }
 
-/// Everything installed, by name, each with its icon.
 pub fn installed() -> Vec<Listed> {
     let mut all: Vec<Listed> = entries(true).into_iter().map(|one| one.listed).collect();
     all.sort_by_key(|one| one.name.to_lowercase());
     all
 }
 
-/// The application of this id, read afresh: a list from a minute ago is not what runs.
-/// Its icon is not looked for.
 pub fn find(id: &str) -> Option<Entry> {
     entries(false).into_iter().find(|one| one.listed.id == id)
 }
@@ -99,13 +72,10 @@ fn entries(_icons: bool) -> Vec<Entry> {
     Vec::new()
 }
 
-/// Whether a program is there to run: a path that is a file, or a name on `PATH`.
 pub fn on_path(program: &str) -> bool {
     which(program).is_some()
 }
 
-/// Where a program is: the path itself where it names a file, or the first folder on
-/// `PATH` that has it - on Windows as `.exe` too, as a shell would run it.
 pub fn which(program: &str) -> Option<std::path::PathBuf> {
     let named = Path::new(program);
     let candidates = |at: std::path::PathBuf| {
@@ -127,9 +97,6 @@ pub fn which(program: &str) -> Option<std::path::PathBuf> {
 }
 
 #[cfg(any(target_os = "linux", test))]
-/// What the Desktop Entry Specification reads out of one file: the `[Desktop Entry]`
-/// group's keys, a translated one (`Name[de]`) as a key of its own; and any such file's
-/// groups, as an icon theme's `index.theme` is read.
 pub(crate) mod desktop {
     use std::collections::HashMap;
 
@@ -141,7 +108,6 @@ pub(crate) mod desktop {
             .unwrap_or_default()
     }
 
-    /// Every group, in order, with its keys: the first of a key in a group counts.
     pub fn groups(text: &str) -> Vec<(String, HashMap<String, String>)> {
         let mut groups: Vec<(String, HashMap<String, String>)> = Vec::new();
         for line in text.lines() {
@@ -167,8 +133,6 @@ pub(crate) mod desktop {
         groups
     }
 
-    /// A key in the reader's language, as the specification picks it: `key[ll_CC]`, then
-    /// `key[ll]`, then the key itself. `languages` are the reader's, `ll_CC` or `ll`.
     pub fn localized<'a>(
         keys: &'a HashMap<String, String>,
         key: &str,
@@ -181,7 +145,6 @@ pub(crate) mod desktop {
             .filter(|one| !one.is_empty())
     }
 
-    /// A string value's escapes: `\s`, `\n`, `\t`, `\r` and `\\`.
     fn unescape(value: &str) -> String {
         let mut out = String::with_capacity(value.len());
         let mut chars = value.chars();
@@ -207,11 +170,6 @@ pub(crate) mod desktop {
         out
     }
 
-    /// An `Exec` line as the program and its arguments: split where the line is not
-    /// quoted, the quoted parts' `\"`, `` \` ``, `\$` and `\\` read as the characters,
-    /// and the field codes taken out - nothing is opened with it, so `%f`, `%u` and the
-    /// rest stand for nothing, `%c` is the name, `%k` the entry's own file and `%%` a
-    /// percent sign. Null for a line that does not close its quotes.
     pub fn exec(line: &str, name: &str, file: &str) -> Option<Vec<String>> {
         let mut words: Vec<(String, bool)> = Vec::new();
         let mut word = String::new();
@@ -270,7 +228,6 @@ pub(crate) mod desktop {
         (!argv.is_empty()).then_some(argv)
     }
 
-    /// The field codes inside a word.
     fn codes(word: &str, name: &str, file: &str) -> String {
         let mut out = String::new();
         let mut chars = word.chars();
@@ -289,7 +246,6 @@ pub(crate) mod desktop {
         out
     }
 
-    /// Whether a boolean key says true.
     pub fn yes(keys: &HashMap<String, String>, key: &str) -> bool {
         keys.get(key).is_some_and(|value| value == "true")
     }
@@ -301,8 +257,6 @@ pub(crate) mod linux {
     use std::collections::{HashMap, HashSet};
     use std::path::PathBuf;
 
-    /// The XDG data folders, the reader's own first, and Flatpak's and Snap's exports
-    /// where a session started without them has not named them.
     #[cfg(target_os = "linux")]
     pub fn data_dirs() -> Vec<PathBuf> {
         let mut folders = Vec::new();
@@ -340,8 +294,6 @@ pub(crate) mod linux {
         folders
     }
 
-    /// What reading the entries depends on besides the folders: the desktop the reader
-    /// is on, their languages, and the icons, if they are wanted.
     pub struct Reading {
         pub desktops: Vec<String>,
         pub languages: Vec<String>,
@@ -349,8 +301,6 @@ pub(crate) mod linux {
     }
 
     impl Reading {
-        /// This session's: `XDG_CURRENT_DESKTOP`, the locale's language, and the
-        /// reader's icon theme.
         #[cfg(target_os = "linux")]
         pub fn here(folders: &[PathBuf], icons: bool) -> Reading {
             let desktops = std::env::var("XDG_CURRENT_DESKTOP")
@@ -371,8 +321,6 @@ pub(crate) mod linux {
         }
     }
 
-    /// A locale's languages as desktop entries name them: `de_CH.UTF-8@euro` is `de_CH`,
-    /// then `de`.
     pub fn languages(locale: &str) -> Vec<String> {
         let bare = locale.split(['.', '@']).next().unwrap_or_default();
         if bare.is_empty() || bare == "C" || bare == "POSIX" {
@@ -385,8 +333,6 @@ pub(crate) mod linux {
         all
     }
 
-    /// The icon theme the reader chose: KDE's, GNOME's or GTK's setting, by the desktop
-    /// they are on; hicolor where none says.
     #[cfg(target_os = "linux")]
     fn current_theme() -> String {
         let config = dirs::config_dir();
@@ -431,7 +377,6 @@ pub(crate) mod linux {
         found.unwrap_or_else(|| "hicolor".to_owned())
     }
 
-    /// One folder of an icon theme, as its `index.theme` describes it.
     #[derive(Clone, Debug, PartialEq)]
     struct ThemeDir {
         path: String,
@@ -439,8 +384,6 @@ pub(crate) mod linux {
         scalable: bool,
     }
 
-    /// The icon themes looked in, in order, each with its folders the best for the
-    /// chooser first, and the folders themes are in.
     pub struct Icons {
         bases: Vec<PathBuf>,
         themes: Vec<(String, Vec<ThemeDir>)>,
@@ -448,8 +391,6 @@ pub(crate) mod linux {
     }
 
     impl Icons {
-        /// The theme named, the themes it inherits, and hicolor, read from these data
-        /// folders and `~/.icons`.
         pub fn new(folders: &[PathBuf], theme: &str) -> Icons {
             let mut bases: Vec<PathBuf> = Vec::new();
             if let Some(home) = dirs::home_dir() {
@@ -471,7 +412,6 @@ pub(crate) mod linux {
                     continue;
                 };
                 let (dirs, inherits) = theme_dirs(&index);
-                // Depth first, as the specification walks `Inherits`.
                 next.extend(inherits.into_iter().rev());
                 themes.push((name, dirs));
             }
@@ -489,8 +429,6 @@ pub(crate) mod linux {
             }
         }
 
-        /// An icon by its entry's `Icon`: a path as it is, else the name in the themes
-        /// and then `pixmaps`; sent as a small picture where one of its files makes one.
         pub fn find(&self, icon: &str) -> Option<String> {
             let named = Path::new(icon);
             if named.is_absolute() {
@@ -531,7 +469,6 @@ pub(crate) mod linux {
         }
     }
 
-    /// The folders hicolor has where its `index.theme` is missing.
     fn hicolor_fallback() -> Vec<ThemeDir> {
         let mut dirs: Vec<ThemeDir> = [32, 48, 64, 128, 256, 24, 16]
             .iter()
@@ -550,9 +487,6 @@ pub(crate) mod linux {
         dirs
     }
 
-    /// A theme's folders that hold applications' icons, best first, and the themes it
-    /// inherits. A theme that says no folder is for applications has all of them looked
-    /// in.
     fn theme_dirs(index: &str) -> (Vec<ThemeDir>, Vec<String>) {
         let groups = desktop::groups(index);
         let head = groups
@@ -612,8 +546,6 @@ pub(crate) mod linux {
         (dirs, inherits)
     }
 
-    /// Best first: a picture at least `SIDE` across, the nearest to it first; then a
-    /// scalable one; then the smaller ones, the largest first.
     fn sort_dirs(dirs: &mut [ThemeDir]) {
         let side = icons::SIDE;
         dirs.sort_by_key(|one| {
@@ -627,8 +559,6 @@ pub(crate) mod linux {
         });
     }
 
-    /// An icon's file as the picture sent: a PNG made small, or an SVG small enough as it
-    /// is. Nothing for any other kind, or a file too large to be an icon.
     fn picture(path: &Path) -> Option<String> {
         let kind = path.extension()?.to_str()?.to_ascii_lowercase();
         if std::fs::metadata(path).ok()?.len() > icons::MOST_FILE {
@@ -644,7 +574,6 @@ pub(crate) mod linux {
         }
     }
 
-    /// Every desktop entry in these folders that is an application to offer.
     pub fn entries(folders: &[PathBuf], reading: &Reading) -> Vec<Entry> {
         let mut seen = HashSet::new();
         let mut found = Vec::new();
@@ -654,8 +583,6 @@ pub(crate) mod linux {
             walk(&root, &root, 0, &mut files);
             files.sort();
             for (id, path) in files {
-                // The first folder that has an id is the one that counts, shown or not:
-                // a hidden copy in the reader's own folder hides the system's.
                 if !seen.insert(id.clone()) {
                     continue;
                 }
@@ -667,8 +594,6 @@ pub(crate) mod linux {
         found
     }
 
-    /// The `.desktop` files under `root`, by their ids: the path below `applications/`
-    /// with `/` written as `-`.
     fn walk(root: &Path, folder: &Path, depth: usize, files: &mut Vec<(String, PathBuf)>) {
         let Ok(read) = std::fs::read_dir(folder) else {
             return;
@@ -692,8 +617,6 @@ pub(crate) mod linux {
         }
     }
 
-    /// Whether an entry is shown on the reader's desktop: `OnlyShowIn` names it, or is
-    /// not said; `NotShowIn` does not name it.
     fn shown_here(keys: &HashMap<String, String>, desktops: &[String]) -> bool {
         let names = |key: &str| -> Vec<String> {
             keys.get(key)
@@ -731,7 +654,6 @@ pub(crate) mod linux {
         let plain = keys.get("Name").filter(|one| !one.is_empty())?;
         let name = desktop::localized(&keys, "Name", &reading.languages).unwrap_or(plain);
         let file = path.to_string_lossy();
-        // `%c` is the name the specification means: the one shown, in the reader's language.
         let argv = desktop::exec(keys.get("Exec")?, name, &file)?;
         let icon = reading
             .icons
@@ -803,7 +725,6 @@ mod tests {
         assert_eq!(argv("%f"), None);
     }
 
-    /// A PNG of one opaque pixel.
     fn tiny_png() -> Vec<u8> {
         let mut out = Vec::new();
         let mut encoder = png::Encoder::new(&mut out, 1, 1);
@@ -931,7 +852,6 @@ mod tests {
             "[Desktop Entry]\nType=Link\nName=Docs\nURL=x\n",
         );
         write(&mine, "okular.desktop", &app("mine", ""));
-        // The reader's own copy hides the system's.
         write(&mine, "kde-okular.desktop", &app("okular", "Hidden=true\n"));
         std::fs::create_dir_all(system.join("icons/hicolor/48x48/apps")).unwrap();
         std::fs::write(system.join("icons/hicolor/48x48/apps/gimp.png"), tiny_png()).unwrap();

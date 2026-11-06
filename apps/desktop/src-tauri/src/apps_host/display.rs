@@ -1,20 +1,3 @@
-//! A display of an application's own (issue 1063, step 3): an X server with no screen,
-//! Xvfb, so the application draws where nothing of the reader's desktop is and nothing
-//! it does reaches their mouse or keyboard. Its picture is read off it as it changes
-//! (`capture.rs`).
-//!
-//! X11 rather than a headless Wayland compositor for now: GTK, Qt, SDL and Electron all
-//! still speak it, every Wayland desktop runs X11 applications through Xwayland anyway,
-//! and one kind of display is one capture to write. A program that speaks only Wayland
-//! is the reason to add weston's headless backend later.
-//!
-//! **Its size is the holder's tab's** (step 5), in device pixels, and follows it live:
-//! the tab resized, moved to another monitor, or taken over by another device. Xvfb's
-//! screen cannot grow once it has started, so it is made at the largest size it may take
-//! (at least `ROOM` on each side, more if the first view is larger), and `RandR` sets the
-//! part of it in use, which is what applications and the picture see. The window manager
-//! (`wm.rs`) fits the application's windows to it, and says the ratio to the toolkits.
-
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
@@ -29,40 +12,25 @@ use x11rb::protocol::xproto::ConnectionExt as _;
 use super::clipboard::Clipboard;
 use super::wm::Desk;
 
-/// The display numbers tried, clear of the ones a desktop and `ssh -X` use.
 const NUMBERS: std::ops::Range<u32> = 100..400;
-/// How long Xvfb has to put its socket down.
 const READY_WITHIN: Duration = Duration::from_secs(5);
-/// The room a display is made with on each side, whatever its first view: a 4K monitor's
-/// whole width either way up. Xvfb fills its whole screen as it starts, so this is memory
-/// taken (64 MiB) for as long as the application runs.
 const ROOM: u32 = 4096;
-/// The most a side may be, as X counts it.
 const MOST: u32 = 8192;
-/// The smallest a side is made.
 const LEAST: u32 = 64;
-/// How many numbers a display tries before it gives up.
 const TRIES: usize = 8;
 
-/// Why one try at a display did not start it.
 enum Starting {
-    /// Its number was another display's, which began at the same moment.
     Taken,
     Failed(String),
 }
 
-/// A running display: its number, the server, and its window manager.
 pub struct Display {
     pub number: u32,
     server: Child,
-    /// The size its screen was made at, which it is never made larger than.
     room: (u32, u32),
     desk: Option<Desk>,
 }
 
-/// The first number nobody holds: no lock file, no lock being made (a server's
-/// `.tX` file, which one ended as it began leaves behind) and no socket under `root`
-/// (`/tmp`).
 pub fn free_number(root: &Path) -> Option<u32> {
     NUMBERS.into_iter().find(|number| {
         !root.join(format!(".X{number}-lock")).exists()
@@ -71,8 +39,6 @@ pub fn free_number(root: &Path) -> Option<u32> {
     })
 }
 
-/// The size the screen is made in device pixels, for a view in CSS pixels at a ratio:
-/// even, since encoders want it so, and at least a small window's.
 #[allow(
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss,
@@ -86,19 +52,15 @@ pub fn screen(width: f64, height: f64, dpr: f64) -> (u32, u32) {
     (side(width), side(height))
 }
 
-/// The room a display is made with for its first size: `ROOM` a side, or the size itself
-/// where that is larger.
 pub fn room(width: u32, height: u32) -> (u32, u32) {
     (width.clamp(ROOM, MOST), height.clamp(ROOM, MOST))
 }
 
-/// A size kept within the room, even.
 pub fn within(size: (u32, u32), room: (u32, u32)) -> (u32, u32) {
     let even = |one: u32, most: u32| one.clamp(LEAST, most) & !1;
     (even(size.0, room.0), even(size.1, room.1))
 }
 
-/// Dots an inch at a ratio, as X and the toolkits read them: 96 at 1.
 #[allow(
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss,
@@ -108,7 +70,6 @@ pub fn dpi(dpr: f64) -> u32 {
     (96.0 * ratio(dpr)).round() as u32
 }
 
-/// A ratio a display may be given.
 pub fn ratio(dpr: f64) -> f64 {
     if dpr.is_finite() {
         dpr.clamp(0.5, 8.0)
@@ -117,7 +78,6 @@ pub fn ratio(dpr: f64) -> f64 {
     }
 }
 
-/// Millimetres a side of so many pixels is at a ratio, which `RandR` is told.
 #[allow(
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss,
@@ -127,15 +87,11 @@ fn millimetres(pixels: u32, dpr: f64) -> u32 {
     (f64::from(pixels) * 25.4 / f64::from(dpi(dpr))).round() as u32
 }
 
-/// Whether Xvfb is installed.
 pub fn available() -> bool {
     super::installed::on_path("Xvfb")
 }
 
 impl Display {
-    /// Starts one at this size and ratio, waits for its socket, and starts its window
-    /// manager. A number taken by another display starting at the same moment - two
-    /// applications at once - is given up for the next.
     pub fn start(width: u32, height: u32, dpr: f64) -> Result<Display, String> {
         for _ in 0..TRIES {
             match Display::start_once(width, height, dpr) {
@@ -162,8 +118,6 @@ impl Display {
             .stderr(Stdio::null())
             .spawn()
             .map_err(|error| Starting::Failed(format!("Xvfb: {error}")))?;
-        // Ready once its socket is down and the lock is its own: a socket and a lock of
-        // another display that took the number first are not this one's.
         let socket = root.join(format!(".X11-unix/X{number}"));
         let lock = root.join(format!(".X{number}-lock"));
         let began = Instant::now();
@@ -181,8 +135,6 @@ impl Display {
                 return Err(Starting::Taken);
             }
             if began.elapsed() > READY_WITHIN {
-                // Waiting on a number something else holds in a way not seen here: the
-                // next one is tried.
                 let _ = server.kill();
                 let _ = server.wait();
                 return Err(Starting::Taken);
@@ -200,18 +152,14 @@ impl Display {
         Ok(display)
     }
 
-    /// What an application is told its display is.
     pub fn name(&self) -> String {
         format!(":{}", self.number)
     }
 
-    /// Its clipboard (`clipboard.rs`).
     pub fn clipboard(&self) -> Option<Arc<Clipboard>> {
         self.desk.as_ref().map(|desk| desk.clipboard().clone())
     }
 
-    /// Makes the screen this size, within its room, at this ratio: `RandR`'s screen and
-    /// its one monitor, and the window manager told, which fits the windows to it.
     pub fn fit(&self, width: u32, height: u32, dpr: f64) -> Result<(), String> {
         let desk = self
             .desk
@@ -223,8 +171,6 @@ impl Display {
         Ok(())
     }
 
-    /// Ends the server, and takes away the lock and the socket it leaves when it is
-    /// ended this way, or every display would leave its number taken for good.
     pub fn end(&mut self) {
         if let Ok(None) = self.server.try_wait() {
             let _ = self.server.kill();
@@ -243,10 +189,6 @@ impl Drop for Display {
     }
 }
 
-/// Sets `RandR`'s screen and its one monitor to a size, with a mode of that size made if
-/// there is none, and the modes made before for other sizes taken away. The screen must
-/// hold the monitor at every moment, so it grows first, then the monitor changes, then
-/// it shrinks.
 fn resize(
     desk: &Desk,
     width: u32,
@@ -285,7 +227,6 @@ fn resize(
             .reply()?
             .mode
     };
-    // Already the monitor's, or added now; an error here says it already was.
     let _ = checked(x, x.randr_add_output_mode(output, mode)?);
 
     let now = x.get_geometry(root)?.reply()?;
@@ -319,8 +260,6 @@ fn resize(
         x.randr_set_screen_size(root, wide, high, millis_wide, millis_high)?,
     )?;
 
-    // The modes of the sizes it had before, which nothing shows now. Xvfb's own, the
-    // room's, is kept.
     let made_at = x
         .setup()
         .roots
@@ -337,12 +276,6 @@ fn resize(
     Ok(())
 }
 
-/// A request's error, or none, on a connection another thread reads events off, as the
-/// window manager's does. x11rb 0.13.2's `check()` waits for a packet later than the
-/// request and asks for one only while no reply is expected that late; an event the
-/// request itself caused, read first by the other thread, counts as that reply, so the
-/// check waited on a server with nothing more to say (issue 1160). A request with a
-/// reply right after it is that later packet.
 pub fn checked<C: RequestConnection>(x: &C, cookie: VoidCookie<'_, C>) -> Result<(), ReplyError> {
     let after = x.get_input_focus()?;
     let said = cookie.check();
@@ -354,9 +287,6 @@ pub fn checked<C: RequestConnection>(x: &C, cookie: VoidCookie<'_, C>) -> Result
 mod tests {
     use super::*;
 
-    /// The window manager's loop reads the event a request makes before the request's
-    /// check is asked: the check still answers. CI installs Xvfb; elsewhere the test
-    /// says nothing without it.
     #[test]
     fn a_check_answers_though_the_requests_own_event_was_read_first() {
         use x11rb::protocol::xproto::{AtomEnum, ChangeWindowAttributesAux, EventMask, PropMode};
@@ -438,8 +368,6 @@ mod tests {
         assert_eq!(millimetres(1920, 1.0), 508);
     }
 
-    /// A real Xvfb, made at one size and fitted to others: larger, smaller, past its
-    /// room. CI installs Xvfb; elsewhere the test says nothing without it.
     #[test]
     fn fits_the_screen_to_the_view_as_it_changes() {
         super::super::in_time(|| {
@@ -468,7 +396,6 @@ mod tests {
             assert_eq!(size(), (800, 600));
             display.fit(9000, 600, 1.0).unwrap();
             assert_eq!(size(), (4096, 600));
-            // The monitor is the screen's size too, as toolkits read it.
             let resources = x
                 .randr_get_screen_resources_current(root)
                 .unwrap()

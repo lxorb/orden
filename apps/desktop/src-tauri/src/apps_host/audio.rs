@@ -1,34 +1,16 @@
-//! An application's sound (issue 1063, step 6; docs/apps.md): played into a sink of its
-//! own on this computer's sound server, never out of its speakers, and sent to the
-//! holder's tab as Opus beside the picture.
-//!
-//! **A sink of its own**: `PulseAudio`'s null sink, made with `pactl` as the application
-//! starts - `PipeWire`'s pulse server makes one too - and named to the application as
-//! `PULSE_SINK`, which every toolkit's sound and ALSA's pulse plugin go by. Where there is
-//! no sound server, or no `pactl` and `parec` to speak to it, the application is given
-//! none at all (`PULSE_SERVER` names nowhere), so it never plays on this computer.
-//!
-//! **Read and encoded**: `parec` reads the sink's monitor as raw samples, 10 ms at a
-//! time, and ffmpeg encodes them as Opus in its low-delay mode, 10 ms a packet, written
-//! as Ogg a page a packet; each packet goes on the connection as it comes, timed by the
-//! samples it holds.
-
 use std::io::{self, Read};
 use std::process::{Child, ChildStdout, Command, Stdio};
 
-/// Whether this computer can give an application a sink of its own and read it.
 pub fn available() -> bool {
     super::installed::on_path("pactl") && super::installed::on_path("parec")
 }
 
-/// A sink of an application's own on the sound server, taken away when dropped.
 pub struct Sink {
     module: u32,
     name: String,
 }
 
 impl Sink {
-    /// A sink for the application on display `number`; none without a sound server.
     pub fn make(number: u32) -> Option<Sink> {
         if !available() {
             return None;
@@ -52,7 +34,6 @@ impl Sink {
         Some(Sink { module, name })
     }
 
-    /// Its monitor, which is what it plays, to read.
     pub fn monitor(&self) -> String {
         format!("{}.monitor", self.name)
     }
@@ -69,7 +50,6 @@ impl Drop for Sink {
     }
 }
 
-/// What the application's process is told of sound: its own sink, or no server at all.
 pub fn environment(sink: Option<&Sink>) -> Vec<(&'static str, String)> {
     match sink {
         Some(sink) => vec![("PULSE_SINK", sink.name.clone())],
@@ -83,18 +63,15 @@ pub fn environment(sink: Option<&Sink>) -> Vec<(&'static str, String)> {
     }
 }
 
-/// The sink's sound being read and encoded: Opus packets off the encoder, as they come.
 pub struct Sound {
     reader: Child,
     encoder: Child,
     packets: ChildStdout,
     pages: Pages,
-    /// Packets read so far, the first two of which are Ogg's Opus header and tags.
     read: u64,
 }
 
 impl Sound {
-    /// Starts reading a sink's monitor.
     pub fn start(monitor: &str) -> Option<Sound> {
         let mut reader = Command::new("parec")
             .args([
@@ -142,7 +119,6 @@ impl Sound {
         })
     }
 
-    /// The next Opus packet and the samples it holds; None once the encoder has ended.
     pub fn next(&mut self) -> Option<(Vec<u8>, u32)> {
         loop {
             let packet = self.pages.packet(&mut self.packets).ok()?;
@@ -165,8 +141,6 @@ impl Drop for Sound {
     }
 }
 
-/// What ffmpeg is told: 48 kHz stereo samples in, Opus out in its low-delay mode, 10 ms a
-/// packet, each packet on an Ogg page of its own, written the moment it is made.
 pub fn encoder_args() -> Vec<String> {
     "-hide_banner -loglevel error -nostdin -f s16le -ar 48000 -ac 2 -i pipe:0 \
      -c:a libopus -application lowdelay -frame_duration 10 -b:a 128000 \
@@ -176,20 +150,15 @@ pub fn encoder_args() -> Vec<String> {
         .collect()
 }
 
-/// Ogg's pages read into the packets they carry.
 #[derive(Debug, Default)]
 pub struct Pages {
-    /// A packet begun on one page and going on on the next.
     partial: Vec<u8>,
-    /// Packets finished on the last page read, not yet taken.
     ready: std::collections::VecDeque<Vec<u8>>,
 }
 
-/// The largest page Ogg makes: its header, 255 segments, 255 bytes each.
 const LARGEST_PAGE: usize = 27 + 255 + 255 * 255;
 
 impl Pages {
-    /// The next whole packet, reading pages as it needs them.
     pub fn packet(&mut self, from: &mut impl Read) -> io::Result<Vec<u8>> {
         loop {
             if let Some(packet) = self.ready.pop_front() {
@@ -199,8 +168,6 @@ impl Pages {
         }
     }
 
-    /// One page: `OggS`, its header, its table of segments, and their bytes, each
-    /// segment shorter than 255 ending a packet.
     fn page(&mut self, from: &mut impl Read) -> io::Result<()> {
         let mut header = [0_u8; 27];
         from.read_exact(&mut header)?;
@@ -227,17 +194,12 @@ impl Pages {
     }
 }
 
-/// The samples at 48 kHz an Opus packet holds, from its first byte (RFC 6716, 3.1):
-/// the frame's length its configuration says, times the frames its code says.
 pub fn opus_samples(packet: &[u8]) -> Option<u32> {
     let toc = *packet.first()?;
     let config = toc >> 3;
     let frame = match config {
-        // SILK: 10, 20, 40, 60 ms.
         0..=11 => [480, 960, 1920, 2880][usize::from(config % 4)],
-        // Hybrid: 10, 20 ms.
         12..=15 => [480, 960][usize::from(config % 2)],
-        // CELT: 2.5, 5, 10, 20 ms.
         _ => [120, 240, 480, 960][usize::from(config % 4)],
     };
     let frames = match toc & 0b11 {
@@ -279,11 +241,8 @@ mod tests {
 
     #[test]
     fn times_a_packet_by_the_samples_its_first_byte_says() {
-        // CELT at 10 ms, one frame: what the encoder is asked for.
         assert_eq!(opus_samples(&[30 << 3]), Some(480));
-        // CELT at 20 ms, two frames.
         assert_eq!(opus_samples(&[(31 << 3) | 1]), Some(1920));
-        // SILK at 60 ms, code 3 with three frames.
         assert_eq!(opus_samples(&[(3 << 3) | 3, 3]), Some(8640));
         assert_eq!(opus_samples(&[]), None);
     }

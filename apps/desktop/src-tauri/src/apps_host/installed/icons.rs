@@ -1,24 +1,13 @@
-//! An application's icon as the chooser draws it: a PNG of `SIDE` pixels at most, as a
-//! data URL. Whatever each system hands over - a theme's PNG, a bundle's `icns`, a shell's
-//! bitmap - is made this one size here, so a catalogue of hundreds stays small enough to
-//! keep on the account (`MOST_CATALOGUE` in `@orden/online/apps`).
-
 use base64::Engine;
 
-/// The side of an icon sent, in pixels: the chooser's mark box at twice its size.
 pub const SIDE: u32 = 32;
 
 #[cfg(any(target_os = "linux", target_os = "macos", test))]
-/// The largest icon file read at all, in bytes: past that it is a poster, not an icon.
 pub const MOST_FILE: u64 = 4 * 1024 * 1024;
 
 #[cfg(any(target_os = "linux", target_os = "macos", test))]
-/// The largest SVG sent as it is, in bytes: an SVG cannot be scaled here, and its data
-/// URL is at most `MOST_ICON` in `@orden/online/apps`, 48 KiB, which base64 makes of
-/// about 36 KiB.
 pub const MOST_SVG: usize = 35 * 1024;
 
-/// Bytes as a data URL of their kind.
 pub fn data_url(kind: &str, bytes: &[u8]) -> String {
     format!(
         "data:{kind};base64,{}",
@@ -27,8 +16,6 @@ pub fn data_url(kind: &str, bytes: &[u8]) -> String {
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos", test))]
-/// A PNG's bytes as the data URL sent: as they are where the picture is `SIDE` or less
-/// across, otherwise read and made that size.
 pub fn png_url(bytes: &[u8]) -> Option<String> {
     let (width, height) = png_size(bytes)?;
     if width <= SIDE && height <= SIDE {
@@ -39,7 +26,6 @@ pub fn png_url(bytes: &[u8]) -> Option<String> {
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos", test))]
-/// The size a PNG's header says, without reading the picture.
 pub fn png_size(bytes: &[u8]) -> Option<(u32, u32)> {
     if bytes.get(..8)? != b"\x89PNG\r\n\x1a\n" || bytes.get(12..16)? != b"IHDR" {
         return None;
@@ -50,7 +36,6 @@ pub fn png_size(bytes: &[u8]) -> Option<(u32, u32)> {
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos", test))]
-/// A PNG's picture as straight RGBA, eight bits a channel.
 fn read_png(bytes: &[u8]) -> Option<(Vec<u8>, u32, u32)> {
     let mut decoder = png::Decoder::new(std::io::Cursor::new(bytes));
     decoder.set_transformations(png::Transformations::EXPAND | png::Transformations::STRIP_16);
@@ -99,9 +84,6 @@ fn read_png(bytes: &[u8]) -> Option<(Vec<u8>, u32, u32)> {
     (rgba.len() == count * 4).then_some((rgba, width, height))
 }
 
-/// Straight RGBA of `width` by `height`, made at most `SIDE` across and encoded as a PNG.
-/// Each pixel sent is the mean of the ones it covers, weighed by how opaque each is, so
-/// the transparent edge of an icon does not darken it.
 pub fn rgba_png(rgba: &[u8], width: u32, height: u32) -> Option<Vec<u8>> {
     let (w, h) = (usize::try_from(width).ok()?, usize::try_from(height).ok()?);
     if w == 0 || h == 0 || rgba.len() < w * h * 4 {
@@ -155,7 +137,6 @@ pub fn rgba_png(rgba: &[u8], width: u32, height: u32) -> Option<Vec<u8>> {
     Some(png)
 }
 
-/// A side in whole pixels, at least one.
 #[allow(
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss,
@@ -197,7 +178,6 @@ mod tests {
 
     #[test]
     fn a_transparent_edge_does_not_darken_what_it_is_mixed_with() {
-        // Two pixels side by side, one white and opaque, one black and transparent.
         let shrunk = rgba_png(&[255, 255, 255, 255, 0, 0, 0, 0], 2, 1).unwrap();
         assert_eq!(png_size(&shrunk), Some((2, 1)));
         let wide: Vec<u8> = [[255, 255, 255, 255], [0, 0, 0, 0]].repeat(64).concat();

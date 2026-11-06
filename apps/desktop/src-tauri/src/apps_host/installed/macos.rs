@@ -1,12 +1,3 @@
-//! A Mac's applications: the bundles in the system's and the reader's Applications
-//! folders and the folders inside them, as Launchpad shows them - by the name each
-//! bundle gives itself, once each, and with the icon its bundle holds.
-//!
-//! The icon is the bundle's `CFBundleIconFile` in its Resources, an `icns`: a list of
-//! pictures of one icon at many sizes, most of them PNGs since macOS 10.7. The smallest
-//! PNG that is at least `SIDE` across is sent, made that size; a bundle whose icon is
-//! only in an asset catalogue, or only in the old formats, goes without one.
-
 #[cfg(target_os = "macos")]
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -15,7 +6,6 @@ use super::icons;
 #[cfg(target_os = "macos")]
 use super::{Entry, Listed};
 
-/// Where applications are kept: the reader's, the machine's and the system's own.
 #[cfg(target_os = "macos")]
 fn roots() -> Vec<PathBuf> {
     let mut roots = vec![
@@ -28,7 +18,6 @@ fn roots() -> Vec<PathBuf> {
     roots
 }
 
-/// Every application bundle in the Applications folders, the first of each bundle id.
 #[cfg(target_os = "macos")]
 pub fn entries(with_icons: bool) -> Vec<Entry> {
     let mut seen = HashSet::new();
@@ -55,8 +44,6 @@ pub fn entries(with_icons: bool) -> Vec<Entry> {
     found
 }
 
-/// The `.app` bundles in a folder and in the folders inside it, two deep: Utilities, and
-/// a suite's own folder. A bundle's insides are not looked in.
 pub fn bundles(root: &Path) -> Vec<PathBuf> {
     let mut found = Vec::new();
     let mut folders = vec![(root.to_path_buf(), 0)];
@@ -78,15 +65,12 @@ pub fn bundles(root: &Path) -> Vec<PathBuf> {
     found
 }
 
-/// What a bundle's `Info.plist` says: what it is called, what it is known by, and its
-/// icon.
 pub struct Bundle {
     pub name: String,
     pub key: String,
     pub icon: Option<String>,
 }
 
-/// A bundle, unless it is one that runs in the background with nothing to show.
 pub fn read(path: &Path, with_icons: bool) -> Option<Bundle> {
     let contents = path.join("Contents");
     let info = plist::Value::from_file(contents.join("Info.plist")).ok()?;
@@ -129,8 +113,6 @@ pub fn read(path: &Path, with_icons: bool) -> Option<Bundle> {
     Some(Bundle { name, key, icon })
 }
 
-/// The picture an `icns` sends: of the PNGs in it, the smallest at least `SIDE` across,
-/// or the largest where none is, made `SIDE` across.
 pub fn icns_icon(bytes: &[u8]) -> Option<String> {
     if bytes.get(..4)? != b"icns" {
         return None;
@@ -199,7 +181,6 @@ mod tests {
             (b"icp5", right.clone()),
         ]);
         assert_eq!(icns_icon(&file), Some(icons::data_url("image/png", &right)));
-        // Only small ones: the largest of them.
         assert_eq!(
             icns_icon(&icns(&[(b"icp4", small.clone())])),
             Some(icons::data_url("image/png", &small))

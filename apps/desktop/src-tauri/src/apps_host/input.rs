@@ -1,26 +1,3 @@
-//! What the device holding an application does with its mouse and keyboard, played into
-//! the application's own display and no other (issue 1063, step 4; docs/apps.md).
-//!
-//! The holder's tab sends it over the picture's data channel, `input`, one JSON message
-//! for each thing done (`@orden/online/apps`, `InputEvent`): the pointer moved to a point
-//! of the display in its own pixels, a button pressed or let go, the wheel turned, a key
-//! pressed or let go by the character it gave and the key it was. They are played with
-//! XTEST on a connection of this module's own to the application's Xvfb, which no one's
-//! real mouse or keyboard reaches.
-//!
-//! **Keys by what they give.** A key is pressed as the keysym its character or its name
-//! is, on the key of the display's keymap that gives that keysym with Shift as it is
-//! held; a character the keymap gives no such way is put on a spare key first, on every
-//! level of it, as `xdotool` does. So the holder's own layout decides what is typed,
-//! whatever the display's is, and `AltGraph` is not passed on: the character it chose is.
-//! What was pressed for a key is what is let go for it, even if the character changed
-//! meanwhile (a Shift let go first). Everything still held is let go when the picture
-//! ends.
-//!
-//! **Text an input method made** (step 5) - a word composed in Japanese, a letter made
-//! of a dead key and another - comes as the text itself, once it is chosen, and each of
-//! its characters is typed as a key that gives it, pressed and let go.
-
 use std::collections::HashMap;
 
 use x11rb::connection::Connection as _;
@@ -33,11 +10,8 @@ use x11rb::rust_connection::RustConnection;
 
 pub use super::events::InputEvent;
 
-/// The most characters one message of text types.
 const MOST_TEXT: usize = 1000;
 
-/// The X button a pointer's button is: 1 the main one, 2 the middle, 3 the other, and
-/// 8 and 9 back and forward.
 pub fn x_button(button: u8) -> Option<u8> {
     match button {
         0 => Some(1),
@@ -49,8 +23,6 @@ pub fn x_button(button: u8) -> Option<u8> {
     }
 }
 
-/// The keysym a key gives: its character's (Latin-1 as itself, the rest of Unicode at
-/// `0x0100_0000` on), or its name's. None for a name the display has no key for.
 pub fn keysym(key: &str) -> Option<Keysym> {
     let mut chars = key.chars();
     if let (Some(one), None) = (chars.next(), chars.next()) {
@@ -91,13 +63,11 @@ pub fn keysym(key: &str) -> Option<Keysym> {
     Some(named)
 }
 
-/// F1 to F24.
 fn function_key(key: &str) -> Option<Keysym> {
     let number: u32 = key.strip_prefix('F')?.parse().ok()?;
     (1..=24).contains(&number).then(|| 0xffbe + number - 1)
 }
 
-/// The right-hand one of a modifier, by the key it was: the display tells them apart.
 fn sided(keysym: Keysym, code: &str) -> Keysym {
     if !code.ends_with("Right") {
         return keysym;
@@ -111,21 +81,15 @@ fn sided(keysym: Keysym, code: &str) -> Keysym {
     }
 }
 
-/// A display's keymap: which key gives which keysym, unshifted and shifted, and the keys
-/// with none, which a character the keymap lacks is put on.
 #[derive(Debug, Default)]
 pub struct Keymap {
-    /// By keysym and whether Shift is held.
     keys: HashMap<(Keysym, bool), Keycode>,
     spare: Vec<Keycode>,
-    /// The spare keys given a keysym, by it, so one is put on a key once.
     lent: HashMap<Keysym, Keycode>,
-    /// The next spare key to lend once all are lent: the oldest is taken back.
     next: usize,
 }
 
 impl Keymap {
-    /// The keymap from `GetKeyboardMapping`'s answer for the keys from `first`.
     pub fn of(first: Keycode, per_key: u8, keysyms: &[Keysym]) -> Keymap {
         let mut keymap = Keymap::default();
         let per_key = usize::from(per_key.max(1));
@@ -142,7 +106,6 @@ impl Keymap {
                     keymap.keys.entry((sym, level == 1)).or_insert(keycode);
                 }
             }
-            // A key with one keysym gives it shifted too, as X reads a lone keysym.
             if syms.get(1).is_none_or(|&one| one == 0) && syms[0] != 0 {
                 keymap.keys.entry((syms[0], true)).or_insert(keycode);
             }
@@ -150,8 +113,6 @@ impl Keymap {
         keymap
     }
 
-    /// The key that gives a keysym with Shift held or not, and whether a spare key had to
-    /// be given it first.
     pub fn key_for(&mut self, sym: Keysym, shifted: bool) -> Option<(Keycode, bool)> {
         let known = self.keys.get(&(sym, shifted)).copied();
         if let Some(keycode) = known.or_else(|| self.lent.get(&sym).copied()) {
@@ -168,19 +129,16 @@ impl Keymap {
     }
 }
 
-/// The application's display, as the holder's input reaches it.
 pub struct Input {
     connection: RustConnection,
     root: Window,
     keymap: Keymap,
     per_key: u8,
-    /// What was pressed for each key still down, by the key it was.
     held_keys: HashMap<String, Keycode>,
     held_buttons: Vec<u8>,
 }
 
 impl Input {
-    /// A connection to the display, and its keymap.
     pub fn open(display: &str) -> Result<Input, String> {
         let connected = x11rb::connect(Some(display));
         let (connection, screen) = connected.map_err(|error| error.to_string())?;
@@ -208,7 +166,6 @@ impl Input {
         })
     }
 
-    /// Plays one thing the holder did.
     pub fn play(&mut self, event: InputEvent) {
         match event {
             InputEvent::Move { x, y } => {
@@ -259,7 +216,6 @@ impl Input {
             return;
         };
         if let Some(was) = self.held_keys.insert(code, keycode) {
-            // Pressed again without being let go: a key repeating.
             if was != keycode {
                 self.fake(KEY_RELEASE_EVENT, was, 0, 0);
             }
@@ -267,8 +223,6 @@ impl Input {
         self.fake(KEY_PRESS_EVENT, keycode, 0, 0);
     }
 
-    /// The key that gives a keysym with Shift as it is held, a spare one lent it first
-    /// where the keymap has none.
     fn key_giving(&mut self, sym: Keysym) -> Option<Keycode> {
         let shifted = self
             .held_keys
@@ -284,7 +238,6 @@ impl Input {
         Some(keycode)
     }
 
-    /// Types text, a key for each character that has one, pressed and let go.
     fn text(&mut self, text: &str) {
         for one in text.chars().take(MOST_TEXT) {
             let Some(sym) = keysym(one.encode_utf8(&mut [0; 4])) else {
@@ -298,7 +251,6 @@ impl Input {
         }
     }
 
-    /// Lets go of every key and button still held: the picture is ending.
     pub fn let_go(&mut self) {
         let keys: Vec<Keycode> = self.held_keys.drain().map(|(_, keycode)| keycode).collect();
         for keycode in keys {
@@ -323,7 +275,6 @@ impl Drop for Input {
     }
 }
 
-/// A point of the display, in its pixels, as X takes it.
 #[allow(
     clippy::cast_possible_truncation,
     reason = "clamped to what X takes first"
@@ -399,16 +350,13 @@ mod tests {
 
     #[test]
     fn finds_a_keysym_on_its_key_or_lends_it_a_spare_one() {
-        // Keys 8 to 11: `a A`, `Return`, nothing, nothing.
         let mut keymap = Keymap::of(8, 2, &[0x61, 0x41, 0xff0d, 0, 0, 0, 0, 0]);
         assert_eq!(keymap.key_for(0x41, true), Some((8, false)));
         assert_eq!(keymap.key_for(0x61, false), Some((8, false)));
         assert_eq!(keymap.key_for(0xff0d, true), Some((9, false)));
-        // `A` with no Shift held is no key's, so a spare one is lent it.
         assert_eq!(keymap.key_for(0x41, false), Some((10, true)));
         assert_eq!(keymap.key_for(0x0100_4e2d, false), Some((11, true)));
         assert_eq!(keymap.key_for(0x0100_4e2d, true), Some((11, false)));
-        // All lent: the oldest is taken back.
         assert_eq!(keymap.key_for(0xfc, false), Some((10, true)));
         assert_eq!(keymap.key_for(0x41, false), Some((11, true)));
         assert_eq!(Keymap::of(8, 1, &[0x61]).key_for(0xe9, false), None);

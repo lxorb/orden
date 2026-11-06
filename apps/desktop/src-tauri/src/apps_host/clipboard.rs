@@ -1,18 +1,3 @@
-//! The clipboard between an application's display and the device holding it (issue
-//! 1063, step 6; docs/apps.md): text, both ways, while the holder shares it.
-//!
-//! **The application copies**: whoever owns the display's `CLIPBOARD` changes (XFIXES
-//! says so), and this asks the new owner for its text, which is handed to the picture's
-//! connection, which sends it to the holder's tab.
-//!
-//! **The holder pastes**: the tab sends its clipboard's text as the paste is pressed,
-//! and this takes the display's `CLIPBOARD` and gives that text to whoever asks for it,
-//! as every X application asks: by `TARGETS`, `UTF8_STRING`, `STRING`, `TEXT` and the
-//! MIME types.
-//!
-//! It runs on the window manager's connection and thread (`wm.rs`), which hand it every
-//! event; nothing here waits.
-
 use std::sync::{Arc, Mutex};
 
 use x11rb::connection::Connection as _;
@@ -26,12 +11,9 @@ use x11rb::rust_connection::RustConnection;
 use x11rb::wrapper::ConnectionExt as _;
 use x11rb::{CURRENT_TIME, NONE};
 
-/// The most text taken or given, in bytes: what one message on a data channel carries
-/// in every engine (256 KiB), with room for its envelope.
 pub const MOST: usize = 200 * 1024;
 
 x11rb::atom_manager! {
-    /// The names the clipboard asks the server for once.
     pub Atoms: AtomsCookie {
         CLIPBOARD,
         TARGETS,
@@ -44,28 +26,23 @@ x11rb::atom_manager! {
     }
 }
 
-/// Who hears what the application copied.
 pub type Listener = Arc<dyn Fn(String) + Send + Sync>;
 
-/// The display's clipboard, as this computer holds it for the holder.
 pub struct Clipboard {
     x: Arc<RustConnection>,
     window: Window,
     atoms: Atoms,
-    /// The holder's text, given to whoever asks while this owns `CLIPBOARD`.
     given: Mutex<Option<String>>,
     listener: Mutex<Option<Listener>>,
 }
 
 impl Clipboard {
-    /// The clipboard of the display `x` is connected to.
     pub fn open(x: Arc<RustConnection>, root: Window) -> Result<Clipboard, String> {
         let said = |error: &dyn std::fmt::Display| error.to_string();
         let atoms = Atoms::new(x.as_ref())
             .map_err(|e| said(&e))?
             .reply()
             .map_err(|e| said(&e))?;
-        // XFIXES has to be asked its version on a connection before it is used there.
         x.xfixes_query_version(5, 0)
             .map_err(|e| said(&e))?
             .reply()
@@ -101,7 +78,6 @@ impl Clipboard {
         })
     }
 
-    /// Who hears what the application copies from now on, or nobody.
     pub fn listen(&self, listener: Option<Listener>) {
         *self
             .listener
@@ -109,7 +85,6 @@ impl Clipboard {
             .unwrap_or_else(std::sync::PoisonError::into_inner) = listener;
     }
 
-    /// The holder's text, given to the application's paste: this takes `CLIPBOARD`.
     pub fn give(&self, text: &str) {
         let text: String = clipped(text).to_owned();
         *self
@@ -122,12 +97,10 @@ impl Clipboard {
         let _ = self.x.flush();
     }
 
-    /// One event of the display's; answers whether it was the clipboard's.
     pub fn heard(&self, event: &Event) -> bool {
         match event {
             Event::XfixesSelectionNotify(changed) if changed.selection == self.atoms.CLIPBOARD => {
                 if changed.owner != NONE && changed.owner != self.window {
-                    // Somebody else's now: ours is no longer what a paste gets.
                     *self
                         .given
                         .lock()
@@ -167,8 +140,6 @@ impl Clipboard {
         }
     }
 
-    /// The text the owner put on our window's property, taken off it. A transfer in
-    /// pieces (`INCR`), which only text larger than X's largest request needs, is let go.
     fn read(&self, property: Atom) -> Option<String> {
         let most = u32::try_from(MOST / 4).unwrap_or(u32::MAX);
         let reply = self
@@ -183,9 +154,7 @@ impl Clipboard {
         Some(String::from_utf8_lossy(&reply.value).into_owned())
     }
 
-    /// Answers one application's paste: the text in the form it asked for, or a refusal.
     fn serve(&self, asked: &SelectionRequestEvent) {
-        // A client of the oldest kind names no property; the target is used instead.
         let property = if asked.property == NONE {
             asked.target
         } else {
@@ -246,7 +215,6 @@ impl Clipboard {
     }
 }
 
-/// Text cut to `MOST` bytes, at a character's edge.
 pub fn clipped(text: &str) -> &str {
     if text.len() <= MOST {
         return text;
@@ -258,7 +226,6 @@ pub fn clipped(text: &str) -> &str {
     &text[..end]
 }
 
-/// Text as X's `STRING`, Latin-1: a character outside it is a question mark.
 pub fn latin1(text: &str) -> Vec<u8> {
     text.chars()
         .map(|one| u8::try_from(u32::from(one)).unwrap_or(b'?'))
@@ -277,9 +244,6 @@ mod tests {
         assert_eq!(clipped("short"), "short");
     }
 
-    /// On a real Xvfb, against a client of the test's own as the application: what it
-    /// copies is heard, and what the holder gives is what its paste gets. CI installs
-    /// Xvfb; elsewhere the test says nothing without it.
     #[test]
     #[allow(
         clippy::too_many_lines,
@@ -322,7 +286,6 @@ mod tests {
             )
             .unwrap();
 
-            // The application copies: it takes the clipboard and answers the request.
             x.set_selection_owner(window, atoms.CLIPBOARD, CURRENT_TIME)
                 .unwrap();
             x.flush().unwrap();
@@ -365,7 +328,6 @@ mod tests {
                 Ok("von der Anwendung")
             );
 
-            // The holder pastes: the application asks, and gets the holder's text.
             clipboard.give("vom Halter: 日本");
             let until = Instant::now() + Duration::from_secs(5);
             while x

@@ -1,20 +1,3 @@
-//! The picture of an application's desktop on Windows (issue 1063, step 8; docs/apps.md),
-//! with the same face as Linux's `capture.rs`.
-//!
-//! **Drawn window by window.** A desktop nobody looks at is not composed by the system, so
-//! each of its windows is asked for its own picture with `PrintWindow` (with
-//! `PW_RENDERFULLCONTENT`, which Chromium, Electron and `DirectComposition` applications
-//! answer) and they are laid on one canvas the size of the view, the back one first.
-//!
-//! **Only what changed is news.** Nothing says when a window on another desktop draws, so
-//! the canvas is drawn again a few dozen times a second and compared with the last: the
-//! same picture is no news, and a still application sends nothing.
-//!
-//! **The pointer** is not drawn and its shape is not sent: the holder's own pointer is over
-//! the tab.
-//!
-//! One thread on the desktop draws; it ends when the capture does or the desktop.
-
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Condvar, Mutex};
@@ -31,35 +14,25 @@ use windows::Win32::UI::WindowsAndMessaging::PW_RENDERFULLCONTENT;
 
 use super::{place_of, shown, Desk};
 
-/// How often the desktop is drawn again to see whether anything changed.
 const DRAW_EVERY: Duration = Duration::from_millis(33);
-/// How long the first picture is waited for.
 const FIRST_WITHIN: Duration = Duration::from_secs(5);
 
-/// What the thread that reads the picture hears, as on Linux.
 #[derive(Debug, PartialEq)]
 pub enum News {
-    /// Something was drawn.
     Drawn,
-    /// The view was made another size.
     Resized,
-    /// The pointer's shape changed. Never said here.
     #[allow(dead_code, reason = "the Linux capture's news, which the stream reads")]
     Pointer(String),
-    /// The holder's tab asked for a whole picture.
     Whole,
-    /// The desktop has gone.
     Gone,
 }
 
-/// The last picture drawn, and its size.
 #[derive(Default)]
 struct Shot {
     pixels: Vec<u8>,
     size: (u16, u16),
 }
 
-/// The desktop's picture, drawn as it changes.
 pub struct Capture {
     shot: Arc<(Mutex<Option<Shot>>, Condvar)>,
     stop: Arc<AtomicBool>,
@@ -68,7 +41,6 @@ pub struct Capture {
 }
 
 impl Capture {
-    /// Watches a desktop of ours, saying what it sees to `seen`.
     pub fn open(display: &str, seen: Sender<News>) -> Result<Capture, String> {
         let desk = super::desk(display).ok_or("no such desktop")?;
         let shot = Arc::new((Mutex::new(None), Condvar::new()));
@@ -83,8 +55,6 @@ impl Capture {
         })
     }
 
-    /// The view as it was last drawn, four bytes a pixel (blue, green, red, unused), and
-    /// its size; the first picture is waited for.
     pub fn grab(&mut self) -> Result<(&[u8], (u16, u16)), String> {
         let (lock, came) = &*self.shot;
         let held = lock
@@ -111,7 +81,6 @@ impl Drop for Capture {
     }
 }
 
-/// The thread on the desktop: the canvas drawn again and again, and what changed said.
 fn draw(
     desk: &Desk,
     shot: &(Mutex<Option<Shot>>, Condvar),
@@ -162,7 +131,6 @@ fn draw(
     }
 }
 
-/// A bitmap in memory with a device context drawing into it, and its pixels.
 struct Surface {
     dc: HDC,
     bitmap: HBITMAP,
@@ -172,7 +140,6 @@ struct Surface {
 }
 
 impl Surface {
-    /// A surface of `width` by `height`, top row first, four bytes a pixel.
     #[allow(unsafe_code, reason = "a bitmap in memory is made with GDI")]
     fn new(width: i32, height: i32) -> Option<Surface> {
         let info = BITMAPINFO {
@@ -188,8 +155,6 @@ impl Surface {
             ..Default::default()
         };
         let mut bits: *mut core::ffi::c_void = std::ptr::null_mut();
-        // SAFETY: a device context and a bitmap made for this surface and deleted on drop;
-        // the bits are the bitmap's, valid while it is.
         unsafe {
             let dc = CreateCompatibleDC(HDC::default());
             if dc.is_invalid() {
@@ -217,7 +182,6 @@ impl Surface {
         }
     }
 
-    /// Its pixels, once everything drawn into it has been.
     #[allow(
         unsafe_code,
         reason = "a bitmap's memory is read once GDI has drawn into it"
@@ -226,8 +190,6 @@ impl Surface {
         let length = usize::try_from(self.size.0).unwrap_or(0)
             * usize::try_from(self.size.1).unwrap_or(0)
             * 4;
-        // SAFETY: GDI's queue flushed first; the bits are the bitmap's, of this length, and
-        // live as long as `self`.
         unsafe {
             let _ = GdiFlush();
             std::slice::from_raw_parts(self.bits, length)
@@ -241,7 +203,6 @@ impl Drop for Surface {
         reason = "a bitmap and its device context are deleted with GDI"
     )]
     fn drop(&mut self) {
-        // SAFETY: the context and bitmap this made, each deleted once.
         unsafe {
             SelectObject(self.dc, self.old);
             let _ = DeleteObject(self.bitmap);
@@ -250,7 +211,6 @@ impl Drop for Surface {
     }
 }
 
-/// The canvas the view is drawn on, and a scratch surface each window draws itself into.
 #[derive(Default)]
 struct Canvas {
     view: Option<Surface>,
@@ -258,7 +218,6 @@ struct Canvas {
 }
 
 impl Canvas {
-    /// The view of `size`, every window on it drawn the back one first.
     #[allow(
         unsafe_code,
         reason = "windows are asked to draw themselves with Win32 calls"
@@ -273,7 +232,6 @@ impl Canvas {
             self.view = Some(Surface::new(width, height)?);
         }
         let view = self.view.as_ref()?;
-        // SAFETY: the canvas's own context.
         unsafe {
             let _ = PatBlt(view.dc, 0, 0, width, height, BLACKNESS);
         }
@@ -297,7 +255,6 @@ impl Canvas {
             let (Some(scratch), Some(view)) = (self.scratch.as_ref(), self.view.as_ref()) else {
                 continue;
             };
-            // SAFETY: a window just listed, drawn into this canvas's own contexts.
             unsafe {
                 let drawn =
                     PrintWindow(window, scratch.dc, PRINT_WINDOW_FLAGS(PW_RENDERFULLCONTENT));
@@ -316,7 +273,6 @@ mod tests {
     use super::super::Desktop;
     use super::*;
 
-    /// Notepad on a desktop of its own is drawn, and its picture changes as it is typed in.
     #[test]
     fn draws_a_desktop_nobody_looks_at() {
         let notepad = std::path::PathBuf::from(std::env::var("SystemRoot").unwrap())
@@ -334,7 +290,6 @@ mod tests {
             .unwrap();
         let (tell, news) = std::sync::mpsc::channel();
         let mut capture = Capture::open(&desktop.name(), tell).unwrap();
-        // Until notepad's window is drawn: anything but black.
         let until = std::time::Instant::now() + Duration::from_secs(20);
         let mut lit = false;
         while std::time::Instant::now() < until && !lit {
