@@ -1,6 +1,6 @@
 import type { Input } from '@lezer/common'
 import { tags } from '@lezer/highlight'
-import type { BlockContext, Line, MarkdownConfig } from '@lezer/markdown'
+import type { BlockContext, InlineContext, Line, MarkdownConfig } from '@lezer/markdown'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { parseWikilink, shownSpan } from '@orden/markdown/links'
 import { tagAt } from '@orden/markdown/tags'
@@ -115,6 +115,38 @@ const Hashtag: MarkdownConfig = {
   ],
 }
 
+interface Closing {
+  from: number
+  until: number
+  at: number
+}
+
+const closings = new WeakMap<object, Closing>()
+
+function closingDollar(cx: InlineContext, pos: number): number {
+  const known = closings.get(cx)
+  if (known && pos >= known.from && pos < known.until) return known.at
+
+  for (let i = pos + 1; i < cx.end; i++) {
+    const code = cx.char(i)
+    if (code === NEWLINE) {
+      closings.set(cx, { from: pos, until: i, at: -1 })
+      return -1
+    }
+    if (code === BACKSLASH) {
+      i++
+      continue
+    }
+    if (code === DOLLAR && !isSpace(cx.char(i - 1))) {
+      closings.set(cx, { from: pos, until: i, at: i })
+      return i
+    }
+  }
+
+  closings.set(cx, { from: pos, until: cx.end, at: -1 })
+  return -1
+}
+
 const InlineMath: MarkdownConfig = {
   defineNodes: [
     { name: 'InlineMath', style: markTags.math },
@@ -128,24 +160,15 @@ const InlineMath: MarkdownConfig = {
         if (next !== DOLLAR || cx.char(pos + 1) === DOLLAR) return -1
         if (isSpace(cx.char(pos + 1))) return -1
 
-        for (let i = pos + 1; i < cx.end; i++) {
-          const code = cx.char(i)
-          if (code === NEWLINE) return -1
-          if (code === BACKSLASH) {
-            i++
-            continue
-          }
-          if (code === DOLLAR && !isSpace(cx.char(i - 1))) {
-            if (isDigit(cx.char(i + 1))) return -1
-            return cx.addElement(
-              cx.elt('InlineMath', pos, i + 1, [
-                cx.elt('MathMark', pos, pos + 1),
-                cx.elt('MathMark', i, i + 1),
-              ]),
-            )
-          }
-        }
-        return -1
+        const close = closingDollar(cx, pos)
+        if (close < 0 || isDigit(cx.char(close + 1))) return -1
+
+        return cx.addElement(
+          cx.elt('InlineMath', pos, close + 1, [
+            cx.elt('MathMark', pos, pos + 1),
+            cx.elt('MathMark', close, close + 1),
+          ]),
+        )
       },
     },
   ],

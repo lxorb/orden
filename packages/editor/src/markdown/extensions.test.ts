@@ -493,6 +493,31 @@ describe('a long paragraph', () => {
     expect(long.took / short.took).toBeLessThan(9)
   })
 
+  test('full of dollar signs that close nothing parses in time that grows with its length', () => {
+    const parser = markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }).language
+      .parser
+    const timed = (count: number) => {
+      const doc = `${'$5 and '.repeat(count)}or 1$2\n\n$x$\n`
+      let least = Infinity
+      let maths = 0
+      for (let round = 0; round < 2; round++) {
+        maths = 0
+        const start = performance.now()
+        parser.parse(doc).iterate({
+          enter: (node) => {
+            if (node.name === 'InlineMath') maths++
+          },
+        })
+        least = Math.min(least, performance.now() - start)
+      }
+      return { maths, took: least }
+    }
+    const short = timed(2_000)
+    const long = timed(8_000)
+    expect(long.maths).toBe(1)
+    expect(long.took / short.took).toBeLessThan(9)
+  })
+
   test('still ends an address at the bracket of the link it is in', () => {
     expect(tree('[a [b](c) www.example.com] and [see www.example.com]').match(/URL ".*"/g)).toEqual(
       ['URL "c"', 'URL "www.example.com"', 'URL "www.example.com"'],
