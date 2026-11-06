@@ -2798,4 +2798,6 @@ export const zhHantHK: Dictionary = {
   '{way} could not be asked: {reason}': '無法詢問 {way}：{reason}',
   '{way} did not confirm it was you': '{way} 未確認是你本人',
   'That could not be protected: {reason}': '無法保護：{reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '未加入 {name}：聊天只接受圖片和 2 MB 以內的文字檔。',
 }

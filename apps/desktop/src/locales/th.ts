@@ -2830,4 +2830,6 @@ export const th: Dictionary = {
   '{way} could not be asked: {reason}': 'ถาม {way} ไม่ได้: {reason}',
   '{way} did not confirm it was you': '{way} ไม่ได้ยืนยันว่าเป็นคุณ',
   'That could not be protected: {reason}': 'ป้องกันไม่ได้: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    'ไม่ได้เพิ่ม {name}: แชตรับรูปภาพและไฟล์ข้อความขนาดไม่เกิน 2 MB',
 }

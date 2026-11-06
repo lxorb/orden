@@ -3017,4 +3017,6 @@ export const uk: Dictionary = {
   '{way} could not be asked: {reason}': 'Не вдалося звернутися до {way}: {reason}',
   '{way} did not confirm it was you': '{way} не підтвердив, що це ви',
   'That could not be protected: {reason}': 'Не вдалося захистити: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} не додано: чат приймає зображення й текстові файли до 2 МБ.',
 }

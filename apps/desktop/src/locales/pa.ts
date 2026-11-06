@@ -2921,4 +2921,6 @@ export const pa: Dictionary = {
   '{way} could not be asked: {reason}': '{way} ਨੂੰ ਪੁੱਛਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ: {reason}',
   '{way} did not confirm it was you': '{way} ਨੇ ਪੁਸ਼ਟੀ ਨਹੀਂ ਕੀਤੀ ਕਿ ਇਹ ਤੁਸੀਂ ਹੋ',
   'That could not be protected: {reason}': 'ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} ਸ਼ਾਮਲ ਨਹੀਂ ਕੀਤੀ ਗਈ: ਚੈਟ ਵਿੱਚ ਤਸਵੀਰਾਂ ਅਤੇ 2 MB ਤੱਕ ਦੀਆਂ ਟੈਕਸਟ ਫ਼ਾਈਲਾਂ ਹੀ ਜੋੜੀਆਂ ਜਾ ਸਕਦੀਆਂ ਹਨ।',
 }

@@ -2888,4 +2888,6 @@ export const ms: Dictionary = {
   '{way} could not be asked: {reason}': '{way} tidak dapat ditanya: {reason}',
   '{way} did not confirm it was you': '{way} tidak mengesahkan bahawa ini anda',
   'That could not be protected: {reason}': 'Tidak dapat dilindungi: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} tidak ditambah: sembang menerima gambar dan fail teks sehingga 2 MB.',
 }

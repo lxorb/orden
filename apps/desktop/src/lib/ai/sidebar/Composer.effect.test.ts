@@ -16,6 +16,7 @@ const panel = vi.hoisted(() => ({
   root: null,
   queue: [],
   focusAsked: 0,
+  trouble: null as string | null,
   taken: vi.fn(() => (panel.text = '')),
   submit: vi.fn(),
   steer: vi.fn(),
@@ -58,6 +59,7 @@ beforeEach(() => {
   panel.submit.mockClear()
   panel.chips = []
   panel.heads = []
+  panel.trouble = null
   panel.steer.mockClear()
   target = document.createElement('div')
   document.body.append(target)
@@ -158,4 +160,32 @@ test('Ctrl+Enter with nothing running runs a typed command', async () => {
   await vi.waitFor(() => expect(ran).toEqual(['export:to the desk']))
   expect(panel.steer).not.toHaveBeenCalled()
   expect(panel.submit).not.toHaveBeenCalled()
+})
+
+function pasted(field: HTMLTextAreaElement, files: File[]) {
+  const event = new Event('paste', { bubbles: true, cancelable: true })
+  Object.defineProperty(event, 'clipboardData', { value: { files } })
+  field.dispatchEvent(event)
+}
+
+test('a file too large or not text says why it was not added', async () => {
+  const field = composer()
+
+  pasted(field, [new File(['x'.repeat(2_000_001)], 'huge.log', { type: 'text/plain' })])
+  expect(panel.trouble).toContain('huge.log was not added')
+  expect(panel.chips).toEqual([])
+
+  panel.trouble = null
+  pasted(field, [new File(['a\u0000b'], 'tool.bin')])
+  await vi.waitFor(() => expect(panel.trouble).toContain('tool.bin was not added'))
+  expect(panel.chips).toEqual([])
+
+  panel.trouble = null
+  pasted(field, [new File(['plain words'], 'notes.txt', { type: 'text/plain' })])
+  await vi.waitFor(() =>
+    expect(panel.chips).toEqual([
+      { kind: 'words', id: 'notes.txt', label: 'notes.txt', text: 'plain words' },
+    ]),
+  )
+  expect(panel.trouble).toBeNull()
 })

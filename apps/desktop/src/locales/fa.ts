@@ -2916,4 +2916,6 @@ export const fa: Dictionary = {
   '{way} could not be asked: {reason}': 'نشد از {way} پرسید: {reason}',
   '{way} did not confirm it was you': '{way} تأیید نکرد که خودتان هستید',
   'That could not be protected: {reason}': 'محافظت نشد: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} افزوده نشد: گفتگو تصویر و پرونده‌های متنی تا 2 MB را می‌پذیرد.',
 }

@@ -2907,4 +2907,6 @@ export const bn: Dictionary = {
   '{way} could not be asked: {reason}': '{way}-কে জিজ্ঞাসা করা যায়নি: {reason}',
   '{way} did not confirm it was you': '{way} নিশ্চিত করেনি যে এটি আপনি',
   'That could not be protected: {reason}': 'সুরক্ষিত করা যায়নি: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} যোগ করা হয়নি: চ্যাটে ছবি এবং 2 MB পর্যন্ত টেক্সট ফাইল নেওয়া যায়।',
 }

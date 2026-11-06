@@ -323,25 +323,33 @@
   }
 
   function take(file: File) {
-    const reader = new FileReader()
+    const name = file.name || t('Picture')
+    const refused = () => {
+      chat.trouble = t('{name} was not added: a chat takes pictures, and text files up to 2 MB.', {
+        name,
+      })
+    }
+    const unread = () => {
+      chat.trouble = t('{name} could not be read.', { name })
+    }
     if (file.type.startsWith('image/')) {
       void chatPicture(file).then((image) => {
-        if (!image) return
-        addChip({
-          kind: 'picture',
-          id: crypto.randomUUID(),
-          label: file.name || t('Picture'),
-          image,
-        })
+        if (image) addChip({ kind: 'picture', id: crypto.randomUUID(), label: name, image })
+        else unread()
       })
       return
     }
-    if (file.size > 2_000_000) return
+    if (file.size > 2_000_000) {
+      refused()
+      return
+    }
+    const reader = new FileReader()
     reader.onload = () => {
       const text = typeof reader.result === 'string' ? reader.result : ''
-      if (text.includes('\u0000')) return
-      addChip({ kind: 'words', id: file.name, label: file.name, text })
+      if (text.includes('\u0000')) refused()
+      else addChip({ kind: 'words', id: file.name, label: file.name, text })
     }
+    reader.onerror = unread
     reader.readAsText(file)
   }
 

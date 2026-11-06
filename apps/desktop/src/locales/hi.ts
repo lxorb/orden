@@ -2913,4 +2913,6 @@ export const hi: Dictionary = {
   '{way} could not be asked: {reason}': '{way} से पूछा नहीं जा सका: {reason}',
   '{way} did not confirm it was you': '{way} ने पुष्टि नहीं की कि यह आप हैं',
   'That could not be protected: {reason}': 'सुरक्षित नहीं किया जा सका: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} नहीं जोड़ा गया: चैट में चित्र और 2 MB तक की टेक्स्ट फ़ाइलें ही जोड़ी जा सकती हैं।',
 }

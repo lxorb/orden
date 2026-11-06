@@ -2890,4 +2890,6 @@ export const id: Dictionary = {
   '{way} could not be asked: {reason}': '{way} tidak dapat ditanya: {reason}',
   '{way} did not confirm it was you': '{way} tidak memastikan bahwa ini Anda',
   'That could not be protected: {reason}': 'Tidak dapat dilindungi: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} tidak ditambahkan: obrolan menerima gambar dan file teks hingga 2 MB.',
 }

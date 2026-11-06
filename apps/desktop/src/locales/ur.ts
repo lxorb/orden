@@ -2907,4 +2907,6 @@ export const ur: Dictionary = {
   '{way} could not be asked: {reason}': '{way} سے پوچھا نہیں جا سکا: {reason}',
   '{way} did not confirm it was you': '{way} نے تصدیق نہیں کی کہ یہ آپ ہیں',
   'That could not be protected: {reason}': 'محفوظ نہیں کیا جا سکا: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} شامل نہیں کیا گیا: چیٹ تصاویر اور 2 MB تک کی متنی فائلیں لیتی ہے۔',
 }

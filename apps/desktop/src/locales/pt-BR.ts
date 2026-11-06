@@ -2974,4 +2974,6 @@ export const ptBR: Dictionary = {
   '{way} could not be asked: {reason}': 'Não foi possível consultar {way}: {reason}',
   '{way} did not confirm it was you': '{way} não confirmou que era você',
   'That could not be protected: {reason}': 'Não foi possível proteger: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} não foi adicionado: um chat aceita imagens e arquivos de texto de até 2 MB.',
 }

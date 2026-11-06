@@ -3009,4 +3009,6 @@ export const fr: Dictionary = {
   '{way} could not be asked: {reason}': '{way} n’a pas pu être sollicité : {reason}',
   '{way} did not confirm it was you': '{way} n’a pas confirmé que c’était vous',
   'That could not be protected: {reason}': 'Impossible de protéger : {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} n’a pas été ajouté : une discussion accepte les images et les fichiers texte jusqu’à 2 Mo.',
 }

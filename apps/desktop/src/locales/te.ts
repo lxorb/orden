@@ -2925,4 +2925,6 @@ export const te: Dictionary = {
   '{way} could not be asked: {reason}': '{way}‌ను అడగలేకపోయాం: {reason}',
   '{way} did not confirm it was you': 'ఇది మీరేనని {way} నిర్ధారించలేదు',
   'That could not be protected: {reason}': 'రక్షించలేకపోయాం: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} జోడించబడలేదు: చాట్ చిత్రాలను మరియు 2 MB వరకు ఉన్న టెక్స్ట్ ఫైల్‌లను తీసుకుంటుంది.',
 }

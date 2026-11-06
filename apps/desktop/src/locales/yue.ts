@@ -2790,4 +2790,6 @@ export const yue: Dictionary = {
   '{way} could not be asked: {reason}': '問唔到 {way}：{reason}',
   '{way} did not confirm it was you': '{way} 冇確認係你',
   'That could not be protected: {reason}': '保護唔到：{reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '冇加到 {name}：傾偈只收圖片同 2 MB 以內嘅文字檔。',
 }
