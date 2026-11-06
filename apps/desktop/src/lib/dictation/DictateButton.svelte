@@ -1,15 +1,4 @@
 <script lang="ts">
-  /** The microphone beside a field that takes dictation (#1128): the one control the chat
-   *  composer, quick add and the quick question all draw.
-   *
-   *  A click starts and a second click finishes; pressed and held past `HOLD` it is
-   *  push-to-talk, and letting go finishes, as the key does (keys.ts). While it listens
-   *  it wears the accent and a ring that follows the voice, so a silent microphone and
-   *  a working one look different; while the final words are being heard it breathes.
-   *  The press never takes the keyboard from the field, which is where the words go.
-   *
-   *  The first press with no engine chosen opens the chooser instead (EngineChooser):
-   *  nothing is recorded before the reader has said where their voice may go. */
   import { t } from '../i18n.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import EngineChooser from './EngineChooser.svelte'
@@ -21,8 +10,6 @@
     below = false,
   }: {
     owner: Dictates
-    /** Whether the chooser opens under the button, for a field near the top of the
-     *  window; over it otherwise. */
     below?: boolean
   } = $props()
 
@@ -41,7 +28,6 @@
 
   function down(event: PointerEvent) {
     if (event.button !== 0) return
-    // The field keeps the keyboard: the words land at its caret.
     event.preventDefault()
     pressed = { at: performance.now(), started: hearing === 'idle' }
     if (hearing === 'idle') void voice.start(owner)
@@ -55,7 +41,6 @@
     else if (performance.now() - was.at >= HOLD && voice.asking !== owner) void voice.finish()
   }
 
-  /** A press from the keyboard, which has no hold: on, or off again. */
   function clicked(event: MouseEvent) {
     if (event.detail === 0) void voice.toggle(owner)
   }
@@ -113,7 +98,6 @@
     stroke-width: 1.4;
   }
 
-  /* Listening: the accent, and a ring as wide as the voice is loud. */
   .mic.listening,
   .mic.listening:hover {
     background: var(--accent);

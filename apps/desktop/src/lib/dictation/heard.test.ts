@@ -34,7 +34,6 @@ describe('the prompt', () => {
   })
 })
 
-/** What silence came back as when #1128 was measured, and what it must not eat. */
 describe('an answer', () => {
   test('loses the credits Whisper writes for a quiet room', () => {
     expect(cleaned('Untertitel der Amara.org-Community', '', 0)).toBe('')

@@ -1,7 +1,4 @@
 <script lang="ts">
-  /** Which road dictation's sound takes, asked on the first press (#1128): each road the
-   *  device has, and where a voice goes along it. Chosen once per device; Settings > AI
-   *  changes it. Nothing is recorded while this is open. */
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
   import { transcriberNow } from '../ai/hears'
@@ -17,10 +14,6 @@
 
   let layer = $state<HTMLElement>()
 
-  /** Where it stands: fixed to the window under or over the button, its end at the
-   *  button's end, and never wider than the room to the button's left. Fixed rather than
-   *  beside the button, because a field in a side panel is inside a box that clips
-   *  whatever leaves it, and the chooser is wider than a narrow panel. */
   const place = $derived.by(() => {
     const at = button.getBoundingClientRect()
     const gap = 6
@@ -42,7 +35,6 @@
     ),
   )
 
-  /** What each road is called and where it sends a voice. */
   function said(engine: Engine): { name: string; where: string } {
     if (engine === 'auto') {
       const fallback = engines.offered().find((one) => one === 'provider' || one === 'account')
@@ -83,7 +75,6 @@
     return t('Stays on this computer. Downloads a {size} speech model once', { size: size() })
   }
 
-  /** The model's size on the disk, as a reader reads one. */
   function size(): string {
     return `${Math.round((local.machine?.model.bytes ?? 0) / 1e6)} MB`
   }

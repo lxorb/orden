@@ -1,25 +1,3 @@
-/** One dictation, from the microphone opening to the final words in the field (#1128).
- *
- *  Two kinds of pass over the same samples, both through the road the reader chose
- *  (recorder/transcribe.ts, or the model on this computer, #1151):
- *
- *  - **Live words**, while the voice goes on: the stretch since the last pause is heard
- *    again, a moment after each new bit of speech, and drawn in the field as words still
- *    being heard. A stretch ends at a pause (speech.ts) and is heard once more as a
- *    whole, which is what it then says until the end. One request at a time, never
- *    more often than the road can bear: the account's route is shared with every other
- *    voice on the account, so it is asked half as often as the reader's own provider.
- *  - **The final words**, once: the whole utterance, cut only where it must be, heard
- *    with what comes before the caret. They replace the live words in one edit.
- *
- *  The live words cannot be the final ones. Measured for #1128, the same sentences cut
- *  into short pieces came back five to twenty-five times worse than heard whole: a
- *  model hearing half a sentence guesses the other half. So the live words show that
- *  the voice is arriving, and the final pass is what stays.
- *
- *  A live pass that fails stops the live passes and nothing else; a final pass that
- *  fails leaves the live words as plain text and says why. */
-
 import { key, message } from '../i18n.svelte'
 import { heardPiece } from '../recorder/transcribe'
 import { RATE, wavOf } from '../recorder/wav'
@@ -30,45 +8,31 @@ import { local } from './local.svelte'
 import { Ear, FRAME, meter } from './speech'
 import { type Field, Spot } from './spot'
 
-/** The roads that hear a stretch whole; the device's own recogniser is device.ts. */
 export type Road = Exclude<Taken, 'device'>
 
-/** How long after one live pass the next may start, by road. This computer's model
- *  hears a stretch in a fraction of its length and costs nobody a request. */
 const LIVE_EVERY: Record<Road, number> = { local: 300, provider: 1_200, account: 2_500 }
 
-/** How much new speech a live pass waits for: a quarter of a second, in frames. */
 const NEW_SPEECH = 8
 
-/** The longest piece of a final pass: sixty seconds, in frames, which is what one
- *  request carries comfortably (recorder/transcribe.ts). */
 const PIECE = 2_000
 
-/** How many times a final piece is tried, and a live one. */
 const FINAL_TRIES = 3
 const LIVE_TRIES = 1
 
-/** What a dictation tells the field it writes for. */
 export interface Hooks {
-  /** The voice's level, nought to one, a few times a second. */
   level: (level: number) => void
-  /** Five minutes heard: the caller finishes. */
   full: () => void
-  /** The reader typed into the words, which ends the dictation with them as they are. */
   ended: () => void
   trouble: (said: string) => void
 }
 
-/** A dictation under way. */
 export interface Listening {
   finish: () => Promise<void>
   cancel: () => void
 }
 
-/** A road from samples to words, as the passes ask for them. */
 type Hears = (samples: Float32Array, prompt: string, tries: number) => Promise<string>
 
-/** Opens the microphone over a field and starts listening into it. */
 export async function listen(
   field: Field,
   engine: Road,
@@ -86,9 +50,6 @@ export async function listen(
   return { finish: () => session.finish(), cancel: () => session.cancel() }
 }
 
-/** This computer's model, opened for the dictation: a stretch goes to it as one body,
- *  the names around the field, one a line, and then the samples (`dictation_local_hear`).
- *  Exported for its tests. */
 export async function hearsHere(words: readonly string[]): Promise<Hears> {
   if (!local.ready) {
     void local.fetch()
@@ -97,8 +58,6 @@ export async function hearsHere(words: readonly string[]): Promise<Hears> {
   await local.open()
   const { invoke } = await import('../native')
   const names = new TextEncoder().encode(words.join('\n'))
-  // The names go with the final pass alone: biasing the model towards them is a second
-  // pass of it (src-tauri/src/dictation/sherpa.rs), which a live pass can do without.
   return (samples, _prompt, tries) => {
     const said = tries === FINAL_TRIES ? names : new Uint8Array()
     const body = new Uint8Array(4 + said.length + samples.byteLength)
@@ -112,19 +71,13 @@ export async function hearsHere(words: readonly string[]): Promise<Hears> {
   }
 }
 
-/** Everything one dictation holds. Exported for its tests, which hand it a road and
- *  samples of their own. */
 export class Session {
   private readonly ear = new Ear()
   private readonly spot: Spot
   private microphone: Capture | null = null
-  /** What the stretches that have ended say, in order. */
   private readonly settled: string[] = []
-  /** What the stretch under way says so far. */
   private live = ''
-  /** The frame the stretch under way began at. */
   private from = 0
-  /** The last frame the last live pass heard, and when it started. */
   private heardTo = 0
   private heardAt = -Infinity
   private passing = false
@@ -155,19 +108,16 @@ export class Session {
     }
   }
 
-  /** The samples so far, as a block arrives. */
   heard(samples: Float32Array): void {
     if (this.over) return
     this.ear.hear(samples)
     const recent = this.ear.levels.slice(-4)
     const level = meter(recent.length ? Math.max(...recent) : 0)
-    // Up at once, down slowly, as a meter on a mixing desk falls.
     this.shown = level > this.shown ? level : this.shown * 0.6 + level * 0.4
     this.hooks.level(this.shown)
     this.tick(samples)
   }
 
-  /** Starts the next live pass, where one is due. */
   private tick(samples: Float32Array): void {
     if (this.over || this.passing || !this.liveOn) return
     const now = this.ear.levels.length
@@ -197,7 +147,6 @@ export class Session {
       }
       this.spot.show(this.saidNow(), true)
     } catch {
-      // The final pass is still to come, and it is what stays.
       this.liveOn = false
     } finally {
       this.passing = false
@@ -205,7 +154,6 @@ export class Session {
     if (this.microphone) this.tick(this.microphone.samples())
   }
 
-  /** The words between two frames, or nothing where nobody spoke in them. */
   private async hear(
     samples: Float32Array,
     from: number,
@@ -229,7 +177,6 @@ export class Session {
     return [...this.settled, this.live].filter(Boolean).join(' ')
   }
 
-  /** The final words, once, in place of the live ones. */
   async finish(): Promise<void> {
     if (this.over) return
     this.over = true
@@ -254,7 +201,6 @@ export class Session {
     }
   }
 
-  /** Stops, and puts the field back. */
   cancel(): void {
     if (this.over) return
     this.over = true

@@ -1,10 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** What a stretch is sent to this computer's model as (#1151): the model opened first,
- *  then one body per pass, the names around the field and the samples, which
- *  dictation.rs reads back (`framed`). Nothing opened or sent while the model is still
- *  downloading, which that starts instead. */
-
 const world = vi.hoisted(() => ({
   ready: true,
   calls: [] as { command: string; body: unknown }[],

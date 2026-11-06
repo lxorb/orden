@@ -1,10 +1,6 @@
 import { afterEach, describe, expect, test } from 'vitest'
 import { Spot, spacedIn } from './spot'
 
-/** Where dictated words land in a field (#1128): at the caret or over the selection,
- *  spaced from their neighbours, following the reader's typing around them. In the
- *  jsdom project because it is a real field with a caret. */
-
 let box: HTMLElement
 
 function field(value: string, from: number, to = from): HTMLTextAreaElement {
@@ -13,14 +9,12 @@ function field(value: string, from: number, to = from): HTMLTextAreaElement {
   one.value = value
   box.append(one)
   document.body.append(box)
-  // jsdom lays nothing out, so the field says where it sits for the wash to be drawn.
   Object.defineProperty(one, 'offsetParent', { get: () => box })
   one.focus()
   one.setSelectionRange(from, to)
   return one
 }
 
-/** The reader typing: the value set and an input raised, as a keystroke does. */
 function typed(one: HTMLTextAreaElement, value: string, caret: number) {
   one.value = value
   one.setSelectionRange(caret, caret)

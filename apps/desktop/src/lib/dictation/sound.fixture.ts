@@ -1,6 +1,3 @@
-/** Sound made to order for dictation's tests: a room's hiss, and a voice-loud tone where
- *  somebody speaks, at the rate the microphone is read at. */
-
 export const RATE = 16_000
 
 export function room(seconds: number, loud = 0.002): Float32Array {

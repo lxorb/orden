@@ -4,7 +4,6 @@ import { Ear, FRAME, meter } from './speech'
 
 function heard(samples: Float32Array): Ear {
   const ear = new Ear()
-  // In blocks, as the microphone hands them over.
   for (let at = 2048; at < samples.length + 2048; at += 2048) ear.hear(samples.subarray(0, at))
   return ear
 }
@@ -29,7 +28,6 @@ describe('the ear', () => {
     expect(ear.saysAnything(0, all)).toBe(true)
     const span = ear.trimmed(0, all)
     expect(span).not.toBeNull()
-    // Starts a little before 2 s and ends a little after 3.5 s.
     expect(span!.from).toBeGreaterThan(frames(1.5))
     expect(span!.from).toBeLessThan(frames(2))
     expect(span!.to).toBeGreaterThan(frames(3.5))

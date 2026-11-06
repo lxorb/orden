@@ -3,11 +3,6 @@ import type { Capture } from './capture'
 import { Session } from './listening'
 import { joined, RATE, room, voice } from './sound.fixture'
 
-/** One dictation from the first sound to the final words (#1128): live words while the
- *  voice goes on, drawn as live; the final pass replacing them; nothing sent for
- *  silence; Escape putting the field back; a failure keeping what was heard. The road
- *  and the microphone are stood in for, so what is asked of each is what is checked. */
-
 interface Asked {
   seconds: number
   prompt: string
@@ -100,7 +95,6 @@ describe('a dictation', () => {
 
     expect(stopped).toBe(true)
     expect(asked).toHaveLength(1)
-    // Trimmed to the speech, with a little either side, and tried as a final pass is.
     expect(asked[0]!.seconds).toBeGreaterThan(3)
     expect(asked[0]!.seconds).toBeLessThan(4)
     expect(asked[0]!.tries).toBe(3)
@@ -184,7 +178,6 @@ describe('a dictation', () => {
     await one.open()
     feeding?.(joined(room(0.5), voice(3)))
     await settled()
-    // The first pass goes at once; the rest of the voice is in the same 2.5 s.
     expect(asked).toHaveLength(1)
     vi.restoreAllMocks()
   })

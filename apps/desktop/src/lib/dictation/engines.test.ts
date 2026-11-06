@@ -1,12 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Which roads dictation offers and takes (#1128): only those that can be taken here,
- *  the reader's own provider first; none taken before one is chosen; and the device's
- *  own recogniser only where one works, which a desktop's WebView2 and CEF do not.
- *  And this computer's own model (#1151): offered with "Auto" where the computer can run
- *  it, downloaded only once one of the two is chosen, and taken by "Auto" once it is here
- *  and keeps up. */
-
 const world = vi.hoisted(() => ({
   token: null as string | null,
   provider: null as object | null,
@@ -58,7 +51,6 @@ const { local } = await import('./local.svelte')
 
 const PARAKEET = { id: 'parakeet', name: 'Parakeet TDT 0.6B v3', bytes: 670_000_000 }
 
-/** A desktop whose model is as said. */
 function computer(fit: 'fits' | 'cores', installed: boolean, pace: number | null = null) {
   world.desktop = true
   world.native = true

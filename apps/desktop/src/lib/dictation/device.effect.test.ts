@@ -1,11 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { DeviceSession } from './device'
 
-/** Dictation through the device's own recogniser (#1128): Android's through the
- *  activity, the web's elsewhere. Partial words drawn as live, sentences kept, the
- *  meter fed, Escape putting the field back, and a recogniser that ends on its own
- *  started again while dictation is on. Both recognisers are stood in for. */
-
 interface Fake {
   continuous: boolean
   interimResults: boolean

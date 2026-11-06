@@ -1,23 +1,5 @@
-/** The place in a field where dictated words go, and the words while they are live.
- *
- *  At the caret, or over the selection, as typing would: the words of a dictation are a
- *  stretch of the field that this keeps and rewrites while the live words change, and
- *  writes once more with the final words. A space goes either side where the words
- *  would otherwise touch the text beside them.
- *
- *  Through the field itself rather than through whatever state the field is bound to:
- *  the value is set and an `input` event raised, which is what a binding listens for and
- *  what every host's own handlers already answer, so the chat composer, quick add and
- *  the quick question take dictated words the way they take typed ones.
- *
- *  The field stays the reader's. Typing before or after the stretch moves it along;
- *  typing into it ends the dictation with the words as they stand (`broken`), because the
- *  reader has started editing them. Escape puts back what was there (`restore`). */
-
-/** A field words can be dictated into. */
 export type Field = HTMLTextAreaElement | HTMLInputElement
 
-/** What the text either side of a stretch needs between it and the words. */
 export function spacedIn(before: string, words: string, after: string): string {
   if (!words) return ''
   const left = before && !/\s$/.test(before) ? ' ' : ''
@@ -25,7 +7,6 @@ export function spacedIn(before: string, words: string, after: string): string {
   return `${left}${words}${right}`
 }
 
-/** Where a change to a field's text was: what stayed the same at each end. */
 function changed(was: string, now: string): { from: number; was: number; now: number } {
   let from = 0
   const most = Math.min(was.length, now.length)
@@ -36,19 +17,15 @@ function changed(was: string, now: string): { from: number; was: number; now: nu
 }
 
 export class Spot {
-  /** Where the stretch is, in the field's text now. */
   from: number
   to: number
-  /** What the stretch replaced, which Escape puts back. */
   private readonly original: string
-  /** The text the field held after this last wrote it. */
   private written: string
   private writing = false
   private readonly mark: Mark
 
   constructor(
     private readonly field: Field,
-    /** Called once when the reader types into the stretch itself. */
     private readonly broken: () => void,
   ) {
     const value = field.value
@@ -60,12 +37,10 @@ export class Spot {
     field.addEventListener('input', this.typed)
   }
 
-  /** The text before the stretch: what the words continue. */
   before(): string {
     return this.field.value.slice(0, this.from)
   }
 
-  /** Writes words into the stretch; `live` marks them as words still being heard. */
   show(words: string, live: boolean): void {
     const value = this.field.value
     const before = value.slice(0, this.from)
@@ -77,8 +52,6 @@ export class Spot {
 
     this.write(before + put + after)
     this.to = this.from + put.length
-    // Setting the value moves the caret to the end, so it is put back: after the words
-    // where it was in them, moved along where it was after them, and left where before.
     const at = caret >= this.from && caret <= end ? this.to : caret > end ? caret + shift : caret
     this.field.setSelectionRange(at, at)
 
@@ -86,7 +59,6 @@ export class Spot {
     else this.mark.hide()
   }
 
-  /** Puts back what the stretch replaced. */
   restore(): void {
     this.mark.hide()
     const value = this.field.value
@@ -95,7 +67,6 @@ export class Spot {
     this.field.setSelectionRange(this.to, this.to)
   }
 
-  /** Lets go of the field: no mark, and no more following its edits. */
   release(): void {
     this.mark.hide()
     this.field.removeEventListener('input', this.typed)
@@ -110,7 +81,6 @@ export class Spot {
     this.writing = false
   }
 
-  /** The reader's own typing, which moves the stretch or ends the dictation. */
   private readonly typed = () => {
     if (this.writing) return
     const now = this.field.value
@@ -128,10 +98,6 @@ export class Spot {
   }
 }
 
-/** The live words' wash: a copy of the field's text under it, invisible but for the
- *  stretch, which is drawn with the accent's soft tint and a dotted line. A textarea
- *  draws its text in one colour, so the difference is drawn beside it, by a mirror laid
- *  exactly over it, and never in the text itself. */
 class Mark {
   private layer: HTMLDivElement | null = null
   shown = false
@@ -172,8 +138,6 @@ class Mark {
     return layer
   }
 
-  /** Over the field, in its font, its padding and its wrapping, so each letter of the
-   *  copy falls on the letter it copies. */
   private place(layer: HTMLDivElement): void {
     const field = this.field
     const style = getComputedStyle(field)

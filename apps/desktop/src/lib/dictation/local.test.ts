@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** This computer's model as the window keeps it (#1151): asked about once and only on a
- *  desktop, downloaded with its progress shown and a failure said, removed again, and
- *  its pace kept so "Auto" knows whether it keeps up. */
-
 const world = vi.hoisted(() => ({
   desktop: true,
   calls: [] as string[],

@@ -1,12 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The fields that take dictation draw the one control and read its keys (#1128):
- *  quick add and the new-todo editor built on it, on both of its fields, and never the
- *  global quick add window over other apps. What the control does is
- *  voice.effect.test.ts; this is that each field has it, wired to itself. */
-
-/** A provider that transcribes, or none; the account stays signed out throughout. */
 const world = vi.hoisted((): { provider: object | null } => ({
   provider: { id: 'p', kind: 'openai', name: 'OpenAI', model: '' },
 }))
@@ -107,7 +101,6 @@ describe('quick add', () => {
     )
     await settle()
     expect(voice.asking?.field()).toBe(line)
-    // The names a task is likely to say go along: its labels and the space's notes.
     expect(voice.asking?.words?.()).toEqual(expect.arrayContaining(['errand', 'Launch']))
   })
 
@@ -146,7 +139,6 @@ describe('the quick question', () => {
     )
     await settle()
     expect(voice.asking?.field()).toBe(field)
-    // What goes along is the name it is most likely to say.
     expect(voice.asking?.words?.()).toEqual(['Quarterly plan'])
   })
 })

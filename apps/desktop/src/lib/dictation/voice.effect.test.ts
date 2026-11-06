@@ -1,12 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The one dictation control every field draws (#1128), and which road it takes: the
- *  microphone button and the key read a tap and a hold the same way, Escape cancels,
- *  Enter finishes and is then the field's Enter, and nothing is opened - let alone sent
- *  - before the reader has chosen where a voice goes. The work itself is stood in for;
- *  listening.effect.test.ts is that. */
-
 const world = vi.hoisted(() => ({
   token: null as string | null,
   provider: null as null | { id: string; kind: string; name: string; baseUrl?: string },
@@ -100,7 +94,6 @@ let action: { destroy: () => void } | undefined
 let entered: number
 const owner = { field: () => field, words: () => ['Sync Worker'] }
 
-/** Long enough for the fetched half of dictation to arrive and answer. */
 const settle = async () => {
   for (let one = 0; one < 3; one++) await new Promise((resolve) => setTimeout(resolve, 0))
   flushSync()
@@ -129,7 +122,6 @@ beforeEach(() => {
   field = document.createElement('textarea')
   target.append(field)
   entered = 0
-  // The host's own keys, where Svelte hears them: further up, as a delegated handler.
   target.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') entered++
   })
@@ -290,7 +282,6 @@ describe('with an engine chosen', () => {
     press(0)
     await settle()
     key('keydown', { key: 'Enter' })
-    // The press itself is held back until the final words are in.
     expect(entered).toBe(0)
     await settle()
     expect(world.finished).toBe(1)
