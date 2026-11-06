@@ -1,6 +1,3 @@
-/** How urgent each conversation is (#321): four levels by default, asked of the reader's
- *  own AI from the newest messages, and learnt from every level the reader changes. */
-
 export type Level = 'urgent' | 'important' | 'if-time' | 'unimportant'
 
 export const LEVELS: readonly Level[] = ['urgent', 'important', 'if-time', 'unimportant']
@@ -12,11 +9,9 @@ export function isLevel(value: unknown): value is Level {
 export interface Assigned {
   level: Level
   by: 'ai' | 'reader'
-  /** When the newest message it was given for arrived. */
   at: number
 }
 
-/** A level the reader moved a conversation to: what the next ask learns from. */
 export interface Lesson {
   title: string
   from: string
@@ -44,8 +39,6 @@ function clip(text: string, most: number): string {
   return flat.length > most ? `${flat.slice(0, most)}…` : flat
 }
 
-/** What the model is asked: the levels, the lessons, and the conversation's newest
- *  messages. It answers with one level's name. */
 export function priorityAsk(
   title: string,
   said: readonly Said[],
@@ -72,7 +65,6 @@ export function priorityAsk(
   ]
 }
 
-/** The level a reply names, or null for one that names none. */
 export function levelIn(reply: string): Level | null {
   const said = reply.toLowerCase().replace(/[^a-z-]+/g, ' ')
   const found = LEVELS.map((level) => ({ level, at: said.search(new RegExp(`\\b${level}\\b`)) }))
@@ -83,30 +75,22 @@ export function levelIn(reply: string): Level | null {
 
 export interface Waiting {
   level: Level | null
-  /** When the oldest message the reader has not read arrived; null for none. */
   since: number | null
 }
 
-/** Higher levels first; within a level, whatever has waited longest. Conversations
- *  without a level come last. */
 export function byPriority(a: Waiting, b: Waiting): number {
   const rank = (one: Waiting) => (one.level ? LEVELS.indexOf(one.level) : LEVELS.length)
   return rank(a) - rank(b) || (a.since ?? Infinity) - (b.since ?? Infinity)
 }
 
-/** Which levels notify, by default: Urgent and Important; only Urgent vibrates. */
 export const NOTIFY_DEFAULT: readonly Level[] = ['urgent', 'important']
 export const VIBRATE: readonly Level[] = ['urgent']
 
-/** What the AI suggests for a conversation: a reply written as the reader writes, and a
- *  task, either of them none. */
 export interface Suggestion {
   reply: string | null
   todo: { title: string; priority?: number; tags?: string[]; due?: string } | null
 }
 
-/** What the model is asked for a suggestion: the reader's own messages as the style to
- *  write in, the conversation's newest, and today for a task's date. */
 export function suggestionAsk(
   title: string,
   said: readonly Said[],
@@ -130,7 +114,6 @@ export function suggestionAsk(
   ]
 }
 
-/** The suggestion a reply holds, or null for one that holds none. */
 export function suggestionIn(reply: string): Suggestion | null {
   const start = reply.indexOf('{')
   const end = reply.lastIndexOf('}')

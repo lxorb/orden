@@ -4,7 +4,6 @@ import type { Message, Who } from './types'
 
 const TODAY = '2026-10-07'
 
-/** A query with nothing in it but what a test names. */
 function query(fields: Partial<SearchQuery>): SearchQuery {
   return {
     words: [],
@@ -111,8 +110,6 @@ describe('parseSearch', () => {
     expect(hasModifiers(parseSearch('before:2026-01-01', TODAY))).toBe(true)
   })
 })
-
-// ---------------------------------------------------------------------------
 
 const EMIL: Who = 'user:emil'
 const LUCILE: Who = 'user:lucile'

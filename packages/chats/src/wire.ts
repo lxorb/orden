@@ -1,17 +1,3 @@
-/** Everything chats say over HTTP, over a chat's socket and through the hub, as types
- *  and as checks (docs/chats.md 4.4).
- *
- *  One module for every end, for the reason `@orden/sync-core/wire` gives: the app, the
- *  Worker's `ChatLog` and the hub read what another end wrote, and a shape spelled twice
- *  is two shapes a year later. Every frame is JSON text: a chat carries no bytes of its
- *  own (files go up as blobs and are named by their hash), so nothing here needs the
- *  framed envelope.
- *
- *  Every check turns `unknown` into the type or into null, and copies only the fields it
- *  knows, so whatever else a sender put in a value goes no further. Nothing is coerced:
- *  a number where text was meant is a client's mistake, and saying so is more use than
- *  guessing. The limits are ./limits', the same numbers `ChatLog` refuses past. */
-
 import {
   LONGEST_ANSWER,
   LONGEST_QUESTION,
@@ -45,17 +31,10 @@ import type {
   Wording,
 } from './types'
 
-// ---------------------------------------------------------------------------
-// The socket, `GET /v2/chats/:chat/socket`
-
-/** The socket's address for a chat. */
 export function socketPath(chat: string): string {
   return `/v2/chats/${encodeURIComponent(chat)}/socket`
 }
 
-/** Why `ChatLog` would not take an event: no role that may (4.6); the chat or the
- *  message is gone; only the owner posts; slowmode; a rate limit; past a limit of size;
- *  an event that does not check. */
 export type Refusal = 'role' | 'gone' | 'posting' | 'slow' | 'rate' | 'large' | 'invalid'
 
 export const REFUSALS: readonly Refusal[] = [
@@ -68,20 +47,12 @@ export const REFUSALS: readonly Refusal[] = [
   'invalid',
 ]
 
-/** What a device says on a chat's socket. `hello` opens, with the last `seq` the device
- *  holds; `send` is an event from the outbox; `typing` at most every `TYPING_EVERY`;
- *  `read` the newest `seq` that has been on screen. */
 export type ClientFrame =
   | { t: 'hello'; since?: number }
   | { t: 'send'; event: Event }
   | { t: 'typing'; parent?: string }
   | { t: 'read'; seq: number }
 
-/** What `ChatLog` says. `events` after a `hello` or as they are placed; `behind` when
- *  the device is too far behind for events (the log's head is `seq`; it pages by HTTP);
- *  `placed` to the sender of an event; `refused` to the sender of one it would not take
- *  (`id` null for a frame it could not read); `typing`, `read` and `here` about the
- *  people in the chat; `profile` when one of them changed theirs. */
 export type ServerFrame =
   | { t: 'events'; events: Logged[] }
   | { t: 'behind'; seq: number }
@@ -92,17 +63,10 @@ export type ServerFrame =
   | { t: 'here'; who: Who[] }
   | { t: 'profile'; who: Who }
 
-/** A frame of either side, as it goes on the socket. */
 export function text(frame: ClientFrame | ServerFrame | ChatPoke): string {
   return JSON.stringify(frame)
 }
 
-// ---------------------------------------------------------------------------
-// The hub
-
-/** The hub's frame to a member with no socket open to a chat that moved on (4.4):
- *  where its log is now, when and by whom, and whether the member was called. Never
- *  words: the app pulls them when it tells the reader or opens the chat. */
 export interface ChatPoke {
   t: 'chat'
   chat: string
@@ -112,16 +76,9 @@ export interface ChatPoke {
   mention: boolean
 }
 
-// ---------------------------------------------------------------------------
-// HTTP
-
-/** One row of `GET /v2/chats`: every chat the account reaches, with what the Chats
- *  panel draws before any chat is opened. `notify` null is the default for the chat's
- *  size (4.11). */
 export interface ChatRow {
   id: string
   space: string
-  /** The asker's role in the chat's space, which `may` decides by. */
   role: Role
   members: number
   lastSeq: number
@@ -134,26 +91,19 @@ export interface ChatRow {
   meta: Meta
 }
 
-/** `GET /v2/chats`. */
 export interface ChatList {
   chats: ChatRow[]
 }
 
-/** `POST /v2/chats`: a new chat in a space the asker writes in; answered with the
- *  pointer its `.chat` file holds. */
 export interface NewChat {
   space: string
 }
 
-/** `GET /v2/chats/:chat/events?after=|before=|around=&limit=`, in `seq` order. */
 export interface EventsPage {
   events: Logged[]
   more: boolean
 }
 
-/** `GET /v2/chats/:chat/state?before=`: messages as they stand, newest first, for a first
- *  copy; `next` is the `before` of the following page, null on the last. `seq` is the
- *  log's head when the page was read, from which the device goes on by events. */
 export interface StatePage {
   messages: Message[]
   meta: Meta
@@ -161,34 +111,24 @@ export interface StatePage {
   next: number | null
 }
 
-/** `POST /v2/chats/:chat/events`: events from an outbox, in order, idempotent by id. */
 export interface PostEvents {
   events: Event[]
 }
 
-/** The answer per event: its place, or why it was refused. */
 export type Result = { id: string; seq: number; at: number } | { id: string; refused: Refusal }
 
 export interface Results {
   results: Result[]
 }
 
-// ---------------------------------------------------------------------------
-// Checks
-
-/** An id a device or a program makes: a ULID, or anything of the same alphabet. */
 const ID = /^[0-9A-Za-z_-]{1,64}$/
 
-/** A person, guest or program by the account's id for them. */
 const WHO = /^(user|guest|program):[0-9A-Za-z_-]{1,64}$/
 
-/** A blob's name: sha256, lower-case hex. */
 const HASH = /^[0-9a-f]{64}$/
 
-/** The longest emoji: a sequence with every modifier, or a space's own `:name:`. */
 const LONGEST_EMOJI = 64
 
-/** The longest file name, media type, link or line of a preview anything carries. */
 const LONGEST_NAME = 255
 const LONGEST_URL = 2048
 const LONGEST_TITLE = 300
@@ -197,13 +137,10 @@ const LONGEST_TEXT = 1000
 const LONGEST_AGENT = 100
 const LONGEST_DEVICE = 200
 
-/** The largest side of a picture or video anything states. */
 const MOST_PIXELS = 100_000
 
-/** The longest a video or a sound may say it lasts: a day. */
 const MOST_SECONDS = 24 * 60 * 60
 
-/** Earlier wordings one message carries in a state page. */
 const MOST_HISTORY = 100
 
 type Fields = Record<string, unknown>
@@ -216,7 +153,6 @@ function isId(value: unknown): value is string {
   return typeof value === 'string' && ID.test(value)
 }
 
-/** Whether a value is a person, guest or program as the account names them. */
 export function isWho(value: unknown): value is Who {
   return typeof value === 'string' && WHO.test(value)
 }
@@ -257,7 +193,6 @@ function oneOf<T>(list: readonly T[], value: unknown): value is T {
   return list.some((one) => one === value)
 }
 
-/** A list of checked things, no longer than `most`; null if any one fails. */
 function listOf<T>(value: unknown, most: number, check: (one: unknown) => T | null): T[] | null {
   if (!Array.isArray(value) || value.length > most) return null
   const out: T[] = []
@@ -269,8 +204,6 @@ function listOf<T>(value: unknown, most: number, check: (one: unknown) => T | nu
   return out
 }
 
-/** An optional field: absent is fine, present must check. `undefined` for absent, null
- *  for one that failed. */
 function optional<T>(value: unknown, check: (one: unknown) => T | null): T | null | undefined {
   return value === undefined ? undefined : check(value)
 }
@@ -295,12 +228,10 @@ function parsed(raw: string): unknown {
   try {
     return JSON.parse(raw)
   } catch {
-    // Not JSON: not a frame, and the caller drops it.
     return undefined
   }
 }
 
-/** A file a message names. */
 export function fileRefOf(value: unknown): FileRef | null {
   if (!isRecord(value)) return null
   const { hash, name, size, type } = value
@@ -405,8 +336,6 @@ function metaKeysOf(value: Fields): Partial<Meta> | null {
   return meta
 }
 
-/** An event as a device or a program sent it, checked against every limit; null for
- *  one `ChatLog` would refuse as `invalid` or `large`. */
 export function eventOf(value: unknown): Event | null {
   if (!isRecord(value) || !isId(value.id)) return null
   const { id } = value
@@ -450,7 +379,6 @@ export function eventOf(value: unknown): Event | null {
   }
 }
 
-/** An event with its place, as a device reads one from the account. */
 export function loggedOf(value: unknown): Logged | null {
   if (!isRecord(value)) return null
   const { seq, at, author, device, madeAt } = value
@@ -493,7 +421,6 @@ function reactionsOf(value: unknown): Record<string, Who[]> | null {
   return Object.fromEntries(reactions)
 }
 
-/** A message as it stands, as a device reads one from a state page. */
 export function messageOf(value: unknown): Message | null {
   if (!isRecord(value)) return null
   const { id, seq, at, author, body, alsoToChat, pinned, deleted, replies } = value
@@ -558,7 +485,6 @@ function metaOf(value: unknown): Meta | null {
   return { topic, posting, slowmode }
 }
 
-/** A text frame from a device, as `ChatLog` reads it. */
 export function clientFrameOf(raw: string): ClientFrame | null {
   const value = parsed(raw)
   if (!isRecord(value)) return null
@@ -580,7 +506,6 @@ export function clientFrameOf(raw: string): ClientFrame | null {
   }
 }
 
-/** A text frame from `ChatLog`, as a device reads it. */
 export function serverFrameOf(raw: string): ServerFrame | null {
   const value = parsed(raw)
   if (!isRecord(value)) return null
@@ -618,7 +543,6 @@ export function serverFrameOf(raw: string): ServerFrame | null {
   }
 }
 
-/** The hub's `chat` frame, as the app reads it: already parsed, as the hub's frames are. */
 export function chatPokeOf(value: unknown): ChatPoke | null {
   if (!isRecord(value) || value.t !== 'chat') return null
   const { chat, seq, at, by, mention } = value
@@ -627,7 +551,6 @@ export function chatPokeOf(value: unknown): ChatPoke | null {
   return { t: 'chat', chat, seq, at, by, mention }
 }
 
-/** One row of `GET /v2/chats`, as a device reads it. */
 export function chatRowOf(value: unknown): ChatRow | null {
   if (!isRecord(value)) return null
   const { id, space, members, lastSeq, lastAt, lastBy, readSeq, mentions, notify, mutedUntil } =
@@ -662,8 +585,6 @@ export function chatRowOf(value: unknown): ChatRow | null {
   }
 }
 
-/** `GET /v2/chats`, as a device reads it. A row that does not check is left out rather
- *  than costing the reader every other chat. */
 export function chatListOf(value: unknown): ChatList | null {
   if (!isRecord(value) || !Array.isArray(value.chats)) return null
   const chats: ChatRow[] = []
@@ -674,19 +595,16 @@ export function chatListOf(value: unknown): ChatList | null {
   return { chats }
 }
 
-/** `POST /v2/chats`, as the account reads it. */
 export function newChatOf(value: unknown): NewChat | null {
   return isRecord(value) && isLine(value.space, LONGEST_DEVICE) ? { space: value.space } : null
 }
 
-/** A page of events, as a device reads it. */
 export function eventsPageOf(value: unknown): EventsPage | null {
   if (!isRecord(value) || typeof value.more !== 'boolean') return null
   const events = listOf(value.events, MOST_PAGE, loggedOf)
   return events && { events, more: value.more }
 }
 
-/** A page of messages as they stand, as a device reads it. */
 export function statePageOf(value: unknown): StatePage | null {
   if (!isRecord(value) || !isCount(value.seq) || !(value.next === null || isCount(value.next)))
     return null
@@ -695,8 +613,6 @@ export function statePageOf(value: unknown): StatePage | null {
   return messages && meta && { messages, meta, seq: value.seq, next: value.next }
 }
 
-/** `POST /v2/chats/:chat/events`, as the account reads it: null for a body past the
- *  batch or with any event that does not check, which is refused whole. */
 export function postEventsOf(value: unknown): PostEvents | null {
   if (!isRecord(value)) return null
   const events = listOf(value.events, MOST_POSTED, eventOf)
@@ -713,7 +629,6 @@ function resultOf(value: unknown): Result | null {
     : null
 }
 
-/** The answer to `POST /v2/chats/:chat/events`, as a device reads it. */
 export function resultsOf(value: unknown): Results | null {
   if (!isRecord(value)) return null
   const results = listOf(value.results, MOST_POSTED, resultOf)

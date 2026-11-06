@@ -1,44 +1,19 @@
-/** The search language of chats (docs/chats.md 4.12): words, and Slack's modifiers.
- *
- *  `parseSearch` reads what was typed into a query; `matches` answers it for one message,
- *  which is what the browser build, the account's route and the tests ask; the desktop's
- *  store answers the same query through FTS5 and its own columns, and `hasOf` is what
- *  those columns hold, so every end means one thing by `has:image`.
- *
- *  A date in a query is the reader's own calendar day: "on Thursday" is Thursday where
- *  the reader is. So the parser answers days, `since` (inclusive) and `until` (not), and
- *  never instants; whoever holds the reader's zone turns a message's time into its day
- *  (`dayOf`). `today` is the parser's only clock, which keeps it pure.
- *
- *  Nothing typed is lost: a modifier the language does not know, or one whose value it
- *  cannot read, is searched for as a word, as Slack does. */
-
 import type { Message, Who } from './types'
 
-/** What a message can have. */
 export type Has = 'link' | 'file' | 'image' | 'video' | 'voice' | 'poll' | 'pin' | 'reaction'
 
 const HAS: readonly Has[] = ['link', 'file', 'image', 'video', 'voice', 'poll', 'pin', 'reaction']
 
-/** A query, read. Each list is "any of" within itself, and every part must hold. */
 export interface SearchQuery {
-  /** Words every hit has, each as the start of one of its words. */
   words: string[]
-  /** Runs of words every hit has as they are written. */
   phrases: string[]
-  /** Words or phrases no hit has. */
   without: string[]
-  /** Names of authors without the `@`, or `me`. */
   from: string[]
-  /** Names of chats without the `#`. */
   in: string[]
   has: Has[]
   isReply: boolean
-  /** Names called by the message without the `@`, or `me`. */
   mentions: string[]
-  /** The first day a hit may be on, `YYYY-MM-DD`. */
   since?: string
-  /** The first day after the last a hit may be on. */
   until?: string
 }
 
@@ -59,12 +34,8 @@ const MONTHS = [
 
 const DAY = /^(\d{4})-(\d{2})-(\d{2})$/
 
-/** A token: `key:"two words"`, `-"two words"`, `"two words"`, or a run of non-space. An
- *  unclosed quote runs to the end. */
 const TOKEN = /([A-Za-z]+):"([^"]*)"?|(-?)"([^"]*)"?|(\S+)/g
 
-/** `query` read as the language, with `today` (`YYYY-MM-DD`, the reader's) for the
- *  modifiers that name a day by where it is from today. */
 export function parseSearch(query: string, today: string): SearchQuery {
   const out: SearchQuery = {
     words: [],
@@ -92,7 +63,6 @@ export function parseSearch(query: string, today: string): SearchQuery {
   return out
 }
 
-/** Whether a query asks anything but words: the search panel shows messages only then. */
 export function hasModifiers(query: SearchQuery): boolean {
   return (
     query.from.length > 0 ||
@@ -106,7 +76,6 @@ export function hasModifiers(query: SearchQuery): boolean {
 }
 
 function word(out: SearchQuery, token: string, today: string) {
-  // A dash or a quote alone finds nothing, so it asks nothing.
   if (!/[\p{L}\p{N}]/u.test(token)) return
   if (token.length > 1 && token.startsWith('-')) {
     out.without.push(token.slice(1))
@@ -121,7 +90,6 @@ function word(out: SearchQuery, token: string, today: string) {
   out.words.push(token)
 }
 
-/** Applies one modifier; false for a key or value the language does not read. */
 function modifier(out: SearchQuery, key: string, value: string, today: string): boolean {
   if (!value) return false
   switch (key) {
@@ -164,7 +132,6 @@ function named(list: string[], value: string, mark: string): boolean {
   return true
 }
 
-/** The days a date modifier allows. */
 function rangeOf(
   key: string,
   value: string,
@@ -181,15 +148,12 @@ function rangeOf(
   return { since: day, until: plusDays(day, 1) }
 }
 
-/** A day by its date, or `today` or `yesterday`. */
 function dayNamed(value: string, today: string): string | null {
   if (value === 'today') return today
   if (value === 'yesterday') return plusDays(today, -1)
   return isDay(value) ? value : null
 }
 
-/** The days of a day, a month (`2026-10`, `october`, `oct`) or a year, as [first, after
- *  the last). A month by its name alone is the latest one not after this month. */
 function spanOf(value: string, today: string): [string, string] | null {
   const day = dayNamed(value, today)
   if (day) return [day, plusDays(day, 1)]
@@ -234,14 +198,8 @@ function dayText(year: number, month: number, day: number): string {
   return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
 
-// ---------------------------------------------------------------------------
-// Answering a query
-
 const LINK = /\bhttps?:\/\/\S/i
 
-/** What a message has, for `has:`: a link in its words or a preview, files, and of
- *  those pictures, video and sound, a poll, a pin, a reaction. A deleted message has
- *  nothing. */
 export function hasOf(message: Message): Has[] {
   if (message.deleted) return []
   const has: Has[] = []
@@ -256,9 +214,6 @@ export function hasOf(message: Message): Has[] {
   return has
 }
 
-/** One message as a query sees it: the chat's name, who is asking, the names each
- *  person answers to (their account's name and nickname), and the reader's day of a
- *  time. */
 export interface Hit {
   message: Message
   chat: string
@@ -267,7 +222,6 @@ export interface Hit {
   dayOf: (at: number) => string
 }
 
-/** Whether a message answers a query. */
 export function matches(query: SearchQuery, hit: Hit): boolean {
   const { message } = hit
   if (message.deleted) return false
@@ -309,8 +263,6 @@ export function matches(query: SearchQuery, hit: Hit): boolean {
   return query.until === undefined || day < query.until
 }
 
-/** Text as a search compares it: without case, and without accents, so `cafe` finds
- *  `Café`. */
 function folded(text: string): string {
   return text.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase()
 }

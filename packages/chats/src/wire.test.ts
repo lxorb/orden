@@ -84,7 +84,6 @@ const EVENTS: Event[] = [
   },
 ]
 
-/** A value as it arrives from the other end: JSON there and back. */
 function wired(value: unknown): unknown {
   return JSON.parse(JSON.stringify(value))
 }

@@ -8,7 +8,6 @@ const LUCILE: Who = 'user:lucile'
 const MIA: Who = 'user:mia'
 const PAUL: Who = 'user:paul'
 
-/** A log written in order: each event placed at the next seq, a second apart. */
 function log(...events: [Who, Event][]): Logged[] {
   return events.map(([author, event], index) => ({
     ...event,
@@ -279,8 +278,6 @@ describe('reactions, pins and votes', () => {
         [PAUL, { kind: 'vote', id: 'v5', target: 'm1', answers: [1] }],
       ),
     )
-    // Mia's two answers are refused by a poll of one, Emil's names no answer, and Paul's
-    // came after the poll ended; Lucile's later vote stands over her first.
     expect(message(state, 'm1').poll?.votes).toEqual({ [LUCILE]: [2] })
   })
 
@@ -330,9 +327,6 @@ describe('settings', () => {
     expect(state.messages.size).toBe(0)
   })
 })
-
-// ---------------------------------------------------------------------------
-// Any order of the same placed events gives one state.
 
 const PEOPLE: Who[] = [EMIL, LUCILE, MIA]
 const IDS = ['m1', 'm2', 'm3', 'm4']
@@ -425,7 +419,6 @@ const anEvent: fc.Arbitrary<[Who, Event]> = fc.oneof(
   aMeta,
 )
 
-/** A log, and the same log in another order with some events delivered twice. */
 const shuffled = fc
   .array(anEvent, { minLength: 1, maxLength: 40 })
   .map((events) => log(...events))

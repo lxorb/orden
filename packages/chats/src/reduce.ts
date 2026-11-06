@@ -1,42 +1,12 @@
-/** The one reducer: a chat's log made into its messages (docs/chats.md 4.3, 4.5).
- *
- *  `ChatLog` applies every event with it in the transaction that appends it, and every
- *  device applies the same events with it to its store, so what a device shows and what
- *  the account keeps are the same rules. Those rules are small because a message has
- *  one author:
- *
- *  - **An edit is the author's**, and the latest by `seq` stands; an edit by anybody
- *    else is no edit. Every earlier wording is kept as the message's history.
- *  - **A delete stands over an edit in either order**, and over everything else said
- *    about the message: its words, files, reactions, pin and poll go, its place and its
- *    replies' count stay, so the replies keep their place.
- *  - **A reaction is a set per person and emoji**, the later `on` or off standing; a
- *    vote is a set per person, the later standing; a pin, the later.
- *  - **The chat's settings are last writer per key.**
- *
- *  And one rule over all of them: **the same placed events give the same state in any
- *  order.** A device catching up applies pages as they come, a socket can deliver an
- *  event before the page that precedes it, and a resend is the same event twice. So
- *  nothing here depends on what came first: every message is built afresh from what is
- *  known about it (`Marks`), and what is known only grows - the lowest `seq` for a post,
- *  the highest for each register, the union of edits, deletes and replies. An edit, a
- *  reaction or a reply that arrives before its message waits in the marks for it, and a
- *  lower `seq` arriving late never undoes a higher one. The property test holds it.
- *
- *  A `schedule` is not a message until the object places its post, as a post of its
- *  own, at its time, so it changes nothing here. */
-
 import type { FileRef, Logged, Message, Meta, Placed, Post, Who, Wording } from './types'
 
 type LoggedPost = Post & Placed
 
-/** One value of a register and the place of the event that set it. */
 interface Register<T> {
   seq: number
   value: T
 }
 
-/** One wording of a message: its post's or an edit's. */
 interface Version {
   seq: number
   at: number
@@ -45,24 +15,16 @@ interface Version {
   files?: FileRef[]
 }
 
-/** Everything known about one message id, whether or not its post has arrived. */
 interface Marks {
-  /** The post with the lowest `seq` for this id: a resend placed twice is placed once. */
   post?: LoggedPost
-  /** Every edit of it, by anybody: whose counts is decided once the post is known. */
   edits: Map<number, Version>
   deleted: boolean
   pin?: Register<boolean>
-  /** A reaction per person and emoji, keyed `emoji` NUL `who`. */
   reactions: Map<string, Register<boolean> & { emoji: string; who: Who }>
-  /** A vote per person, with when it arrived, which an ended poll is judged by. */
   votes: Map<Who, Register<number[]> & { at: number }>
-  /** The ids of every post that named this one as its parent. */
   children: Set<string>
 }
 
-/** A chat as its events have made it: every message as it stands, the settings, and the
- *  highest `seq` applied. `marks` and `metaSeqs` are the reducer's own. */
 export interface ChatState {
   readonly messages: Map<string, Message>
   meta: Meta
@@ -71,7 +33,6 @@ export interface ChatState {
   readonly metaSeqs: Record<keyof Meta, number>
 }
 
-/** A chat before any event: no messages, a topic of nothing, every writer posting. */
 export function chatState(): ChatState {
   return {
     messages: new Map(),
@@ -82,9 +43,6 @@ export function chatState(): ChatState {
   }
 }
 
-/** Applies one placed event, and answers every message it changed as it now stands: a
- *  reply changes its parent's count too. A settings change, a schedule, or an event
- *  about a message that has not arrived yet answers none. */
 export function apply(state: ChatState, event: Logged): Message[] {
   state.seq = Math.max(state.seq, event.seq)
   switch (event.kind) {
@@ -141,7 +99,6 @@ export function apply(state: ChatState, event: Logged): Message[] {
   }
 }
 
-/** A post: kept if it is the first placing of its message, and its parent told. */
 function posted(state: ChatState, event: LoggedPost): Message[] {
   const marks = marksOf(state, event.message)
   const before = marks.post
@@ -181,7 +138,6 @@ function marksOf(state: ChatState, id: string): Marks {
   return marks
 }
 
-/** Builds each named message afresh and puts it in the state; answers those that exist. */
 function rebuilt(state: ChatState, ids: readonly (string | undefined)[]): Message[] {
   const out: Message[] = []
   for (const id of new Set(ids)) {
@@ -194,7 +150,6 @@ function rebuilt(state: ChatState, ids: readonly (string | undefined)[]): Messag
   return out
 }
 
-/** One message as everything known about it makes it, or null before its post. */
 function built(state: ChatState, id: string): Message | null {
   const marks = state.marks.get(id)
   const post = marks?.post
@@ -235,29 +190,24 @@ function built(state: ChatState, id: string): Message | null {
   return message
 }
 
-/** The author's own edits after the post, in order. */
 function wordings(post: LoggedPost, marks: Marks): Version[] {
   return [...marks.edits.values()]
     .filter((edit) => edit.author === post.author && edit.seq > post.seq)
     .sort((a, b) => a.seq - b.seq)
 }
 
-/** The files after every edit that named files: an edit without them keeps them. */
 function filesOf(versions: readonly Version[], post: LoggedPost): FileRef[] {
   let files = post.files ?? []
   for (const version of versions) if (version.files) files = version.files
   return files
 }
 
-/** Every wording but the one shown, oldest first. */
 function historyOf(post: LoggedPost, versions: readonly Version[]): Wording[] {
   if (versions.length === 0) return []
   const earlier = [{ body: post.body, at: post.at }, ...versions.slice(0, -1)]
   return earlier.map((one) => ({ body: one.body, at: one.at }))
 }
 
-/** Who reacted with what, each emoji in the order it was first put on, each person in
- *  the order they put it on. */
 function reactionsOf(marks: Marks): Record<string, Who[]> {
   const reactions = new Map<string, Who[]>()
   const on = [...marks.reactions.values()].filter((one) => one.value).sort((a, b) => a.seq - b.seq)
@@ -265,8 +215,6 @@ function reactionsOf(marks: Marks): Record<string, Who[]> {
   return Object.fromEntries(reactions)
 }
 
-/** Each person's standing vote, in the order they last voted, where it is a vote this
- *  poll takes: answers it has, one unless it takes several, cast before it ended. */
 function votesOf(post: LoggedPost, marks: Marks): Record<Who, number[]> {
   const poll = post.poll
   const votes: Record<Who, number[]> = {}
@@ -288,7 +236,6 @@ function votesOf(post: LoggedPost, marks: Marks): Record<Who, number[]> {
   return votes
 }
 
-/** The replies that stand under a message, and when the latest arrived. */
 function repliesOf(state: ChatState, id: string, message: Message) {
   const marks = state.marks.get(id)
   if (!marks) return

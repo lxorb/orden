@@ -1,13 +1,5 @@
-/** Who may do what in a chat (docs/chats.md 4.6, the table).
- *
- *  The space's three roles answer it, with one setting per chat: who may post. The
- *  object refuses by this and the app hides what it says no to, so a button is never
- *  drawn for an event the account would refuse. A guest is a person at their role. */
-
 import type { Event, Posting, Role } from './types'
 
-/** One row of the table. `post` is posting, replying, reacting and voting alike: a
- *  reaction is a write, so a space shared to read is a chat to read. */
 export type Action =
   | 'read'
   | 'post'
@@ -19,8 +11,6 @@ export type Action =
   | 'posting'
   | 'slowmode'
 
-/** Whether somebody at `role` (null for nobody) may do `action` in a chat that lets
- *  `posting` post. */
 export function may(role: Role | null, action: Action, posting: Posting): boolean {
   if (role === null) return false
   switch (action) {
@@ -40,9 +30,6 @@ export function may(role: Role | null, action: Action, posting: Posting): boolea
   }
 }
 
-/** What an event asks to do. `mine` is whether the message it is about is the asker's
- *  own, which an edit has to be and a delete decides by. A `meta` asks for the
- *  strictest of the keys it sets. */
 export function actionsOf(event: Event, mine: boolean): Action[] {
   switch (event.kind) {
     case 'post':
@@ -66,9 +53,6 @@ export function actionsOf(event: Event, mine: boolean): Action[] {
   }
 }
 
-/** Whether somebody at `role` may send `event`: every action it asks for is theirs.
- *  An edit of somebody else's message asks for nothing anybody holds, and a `meta`
- *  that sets nothing is no event. */
 export function mayEvent(
   role: Role | null,
   event: Event,

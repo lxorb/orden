@@ -19,11 +19,8 @@ const ME = 'user:me'
 const LUCILE = 'user:lucile'
 const NOW = 1_790_000_000_000
 
-/** Tuesday 14:00 on the reader's calendar. */
 const TUESDAY_TWO = { now: NOW, day: 2, minute: 14 * 60 }
 
-/** A message from Lucile with nothing in it for anybody, in a chat of three where the
- *  reader chose nothing, seen by nobody, on a Tuesday afternoon. */
 function asked(change: {
   author?: Asked['message']['author']
   body?: string
@@ -66,8 +63,6 @@ function asked(change: {
 const WORKING: Hours = { days: [1, 2, 3, 4, 5], from: 9 * 60, to: 18 * 60 }
 
 describe('decide', () => {
-  // Every row of the table: the level, mute, do not disturb, the hours and focus, each
-  // against a message that calls for the reader and one that does not.
   it.each<[string, Parameters<typeof asked>[0], Ping]>([
     ['a message in a small chat', {}, 'show'],
     ['your own message', { author: ME }, 'own'],

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { type Action, may, mayEvent } from './roles'
 import type { Event, Posting, Role } from './types'
 
-/** 4.6's table, row by row: read, write and owner, with writers posting and without. */
 const TABLE: [Action, Posting, [boolean, boolean, boolean]][] = [
   ['read', 'writers', [true, true, true]],
   ['read', 'owner', [true, true, true]],
