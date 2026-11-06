@@ -29,20 +29,14 @@ describe('reading a chart out of a fence', () => {
     expect(readChart('series:\n  - data: [1, 2]\n')?.kind).toBe('bar')
     expect(readChart('type: line\nseries:\n  - data: [1]\n')?.kind).toBe('line')
     expect(readChart('type: pie\nseries:\n  - data: [1]\n')?.kind).toBe('pie')
-    // Chart.js spells it one way and people type the other.
     expect(readChart('type: doughnut\nseries:\n  - data: [1]\n')?.kind).toBe('donut')
     expect(readChart('type: donut\nseries:\n  - data: [1]\n')?.kind).toBe('donut')
     expect(readChart('type: scatter\nseries:\n  - data: [1]\n')?.kind).toBe('scatter')
     expect(readChart('type: radar\nseries:\n  - data: [1]\n')?.kind).toBe('radar')
     expect(readChart('type: polar\nseries:\n  - data: [1]\n')?.kind).toBe('polar')
-    // Chart.js's own spelling of the last one.
     expect(readChart('type: polarArea\nseries:\n  - data: [1]\n')?.kind).toBe('polar')
   })
 
-  /** A kind nothing can draw used to come out as a bar chart, which is the right
-   *  numbers saying the wrong thing about themselves and nothing a reader can see
-   *  happen. Nothing is drawn instead: the fence keeps its own characters, which is
-   *  what a diagram that will not draw does. */
   test('and nothing at all for a kind nothing here draws', () => {
     expect(readChart('type: bubble\nseries:\n  - data: [1]\n')).toBeNull()
     expect(chartFigure('type: candlestick\nseries:\n  - data: [1]\n')).toBeNull()
@@ -126,19 +120,15 @@ describe('drawing it', () => {
     expect(svg.match(/<rect class="chart-bar"/g)).toHaveLength(6)
     expect(svg).toContain('fill="var(--accent, #5b4be0)"')
     expect(svg).toContain('fill="var(--canvas-4, #08b94e)"')
-    // The scale is drawn, and the labels along the bottom.
     expect(svg).toContain('class="chart-grid"')
     expect(svg).toContain('>Jan<')
   })
 
   test('the scale lands on numbers somebody would have chosen', () => {
-    // Three, five and two over four equal parts reads 5 / 3.33 / 1.67 / 0, and a
-    // reader who has to work out what 3.33 is doing there has stopped looking.
     const svg = chartSvg(readChart(SALES)!)
     for (const tick of ['>0<', '>2<', '>4<', '>6<']) expect(svg, tick).toContain(tick)
     expect(svg).not.toContain('3.33')
 
-    // Whatever the size of the numbers.
     const big = chartSvg(readChart('series:\n  - data: [1200, 3700]\n')!)
     for (const tick of ['>0<', '>1,000<', '>4,000<']) expect(big, tick).toContain(tick)
 
@@ -160,7 +150,6 @@ describe('drawing it', () => {
   test('a slice per number, and a donut has a hole in it', () => {
     const pie = chartSvg(readChart('type: pie\nlabels: [a, b]\nseries:\n  - data: [1, 3]\n')!)
     expect(pie.match(/<path class="chart-slice"/g)).toHaveLength(2)
-    // A pie's slices meet at the middle; a donut's do not.
     expect(pie).toContain('M 320,')
     const donut = chartSvg(readChart('type: donut\nseries:\n  - data: [1, 3]\n')!)
     expect(donut.match(/<path class="chart-slice"/g)).toHaveLength(2)
@@ -168,7 +157,6 @@ describe('drawing it', () => {
   })
 
   test('a single value fills the whole circle rather than drawing nothing', () => {
-    // An arc from a point to the same point is drawn as no arc at all.
     const svg = chartSvg(readChart('type: pie\nseries:\n  - data: [7]\n')!)
     expect(svg.match(/<path class="chart-slice"/g)).toHaveLength(1)
     expect(svg).toContain('A ')
@@ -247,10 +235,6 @@ describe('a chart in a note', () => {
   })
 })
 
-/** A thousand is `1,234.5` in English and `1.234,5` in German, and which of the
- *  two a reader sees is the language the app is set to rather than the language of
- *  the machine under it. The numbers are the labels down the axis and every hover
- *  title. */
 describe('the language the numbers are written in', () => {
   const THOUSANDS = 'series:\n  - title: Sales\n    data: [1234.5, 2000]\n'
 
@@ -271,26 +255,19 @@ describe('the language the numbers are written in', () => {
     expect(chartFigure(THOUSANDS)).toContain('1,234.5')
   })
 
-  /** What the Worker that publishes a note passes, per render: one isolate serves
-   *  many sites, so it cannot say it once the way the app does. */
   test('through a render option, which reaches a chart inside the note', () => {
     const fence = '```chart\n' + THOUSANDS + '```\n'
     expect(renderMarkdown(fence, { locale: 'de' })).toContain('1.234,5')
     expect(renderMarkdown(fence, { locale: 'en-US' })).toContain('1,234.5')
-    // A published page renders with four other options set; the language has to
-    // survive the company.
     expect(renderMarkdown(fence, { locale: 'de', escapeHtml: true, toc: true })).toContain(
       '1.234,5',
     )
   })
 
-  /** What the app says once, from the language it is set to, for the five surfaces
-   *  that draw a chart with no option between them. */
   test('or once, for every caller that names none', () => {
     try {
       setChartLocale('de')
       expect(chartFigure(THOUSANDS)).toContain('1.234,5')
-      // An option still wins, so the Worker is never at the mercy of this.
       expect(chartFigure(THOUSANDS, { locale: 'en-US' })).toContain('1,234.5')
     } finally {
       setChartLocale('')
@@ -303,22 +280,15 @@ describe('the language the numbers are written in', () => {
   })
 })
 
-/** The three kinds that used to be silently drawn as something else: a radar, a
- *  polar area and a scatter plot. Each of them is a picture a note can hold - the
- *  grounds for leaving them out were about prose, and a chart somebody asked for by
- *  name and got a different chart of is worse than any of them. */
 describe('the kinds that were drawn as a bar chart', () => {
   const THREE = 'labels: [a, b, c]\nseries:\n  - title: One\n    data: [3, 1, 2]\n'
 
   test('a radar draws its web, its spokes and a shape per series', () => {
     const svg = chartSvg(readChart(`type: radar\n${THREE}`)!)
 
-    // The rings of the scale as polygons, which is what makes it a web rather than a
-    // set of circles, and one spoke per label with the label at its end.
     expect(svg).toContain('<polygon class="chart-grid"')
     expect(svg).toContain('<polygon class="chart-area"')
     expect(svg.match(/class="chart-label"/g)?.length).toBe(3)
-    // And not the grid a bar chart is drawn against.
     expect(svg).not.toContain('<line class="chart-grid" x1="48"')
   })
 
@@ -333,7 +303,6 @@ describe('the kinds that were drawn as a bar chart', () => {
     const svg = chartSvg(readChart(`type: polar\n${THREE}`)!)
 
     expect(svg.match(/class="chart-slice"/g)?.length).toBe(3)
-    // Slices of its own rather than a pie's: a pie's three slices all reach the rim.
     expect(svg).not.toContain('<polygon')
   })
 
@@ -342,8 +311,6 @@ describe('the kinds that were drawn as a bar chart', () => {
 
     expect(svg.match(/class="chart-dot"/g)?.length).toBe(3)
     expect(svg).not.toContain('chart-line')
-    // Against the same grid a line chart is drawn against, so the numbers read the
-    // same way.
     expect(svg).toContain('class="chart-grid"')
   })
 
@@ -366,8 +333,6 @@ describe('a kind an object would answer from its prototype', () => {
   })
 })
 
-// The numbers a fence can hold are every finite double, so the arithmetic of the scale
-// is what has to hold: a NaN in an attribute is a chart that draws nothing, or half.
 describe('numbers at the ends of what a number can be', () => {
   const DATA = [
     '0, 0',

@@ -4,7 +4,6 @@ import { lexMarkdown } from './index'
 import { isDeck } from './slide-breaks'
 import { deckOf, slideAt } from './slides'
 
-/** The shown markdown of every slide, which is most of what a test asserts. */
 const shown = (source: string) => deckOf(source).map((slide) => slide.markdown)
 
 describe('breaking a note into slides', () => {
@@ -23,8 +22,6 @@ describe('breaking a note into slides', () => {
   })
 
   test('a rule under a line of text is the underline of a heading, not a break', () => {
-    // CommonMark reads this as `<h2>One</h2>`, and so must this: a break here
-    // would present a note differently from the way every renderer shows it.
     expect(shown('One\n---\n\nTwo')).toEqual(['One\n---\n\nTwo'])
     expect(isDeck('One\n---\n\nTwo')).toBe(false)
   })
@@ -85,14 +82,11 @@ describe('breaking a note into slides', () => {
   })
 
   test('an indented rule is not a break', () => {
-    // Four spaces make it code; three would still be a rule, so the line here
-    // is indented past that.
     expect(deckOf('One\n\n    ---\n\nTwo')).toHaveLength(1)
   })
 })
 
 describe('whether a note is a deck at all', () => {
-  /** The cheap answer has to be the same as the whole one, whatever the note. */
   const notes = [
     '',
     '# One',
@@ -185,8 +179,6 @@ describe('list items that wait for a click', () => {
   })
 
   test('a plus among hyphens is the only step', () => {
-    // Two lists, since the marker is what tells one list from the next: the
-    // items still come out in the order they are written.
     expect(deckOf('# One\n\n- a\n\n+ b')[0]?.fragments).toEqual([1])
   })
 
@@ -200,10 +192,6 @@ describe('list items that wait for a click', () => {
   })
 
   test('an embedded note holds none of the slide`s own items', () => {
-    // The renderer puts the embedded note's list on the page too, so the places
-    // counted here have to be the places among the slide's own items and no
-    // others. Whatever shows them skips the embed the same way; see the fragment
-    // effect in Slides.svelte and `marks` in deck.ts.
     expect(deckOf('# One\n\n![[Other]]\n\n+ mine')[0]?.fragments).toEqual([0])
   })
 })
@@ -253,8 +241,6 @@ describe('where a slide sits in the note', () => {
   })
 })
 
-/** The list items the renderer's own grammar finds, in the order it emits them.
- *  What `fragments` is counted against, reached the expensive way. */
 function itemsThroughTheRenderer(markdown: string): string[] {
   const found: string[] = []
 
@@ -278,9 +264,6 @@ function itemsThroughTheRenderer(markdown: string): string[] {
 }
 
 describe('the grammar the fragments are counted with', () => {
-  /** Every shape where a lighter grammar could disagree with the renderer's about
-   *  which lines are list items: a construct that swallows lines, and one that
-   *  does not. */
   const notes = [
     '# One\n\n+ a\n+ b',
     '# One\n\n- a\n  - b\n- c\n\n+ d',

@@ -9,16 +9,11 @@ describe('a comment in the source', () => {
     expect(withoutComments('before <!-- aside --> after')).toBe('before  after')
   })
 
-  /** Line for line: what it held goes and the lines stay, which is the same rule
-   *  as the one below and keeps a blank line where a block used to be. */
   test('goes when it spans several lines', () => {
     expect(withoutComments('one\n<!-- a\nb\nc -->\ntwo')).toBe('one\n\n\n\ntwo')
   })
 
   test('leaves the line it had to itself behind, empty', () => {
-    // A comment on its own line already ends the paragraph above it in
-    // CommonMark, so dropping the line as well would join two paragraphs that
-    // were never one.
     expect(withoutComments('one\n\n<!-- note -->\n\ntwo')).toBe('one\n\n\n\ntwo')
   })
 
@@ -42,8 +37,6 @@ describe('a comment in the source', () => {
   })
 
   test('that never closes takes the rest of the note with it', () => {
-    // Which is what a browser does with it too, and what CommonMark says of an
-    // HTML block nothing closes.
     expect(withoutComments('one\n\n<!-- open\ntwo\nthree')).toBe('one\n\n\n\n')
   })
 
@@ -57,9 +50,6 @@ describe('a comment in the source', () => {
   })
 })
 
-/** Obsidian's spelling of the same thing, read by the same scan. */
-/** A backslash in front of a character is that character as words, which is how
- *  a conversion writes a page's own `<!--` - and how anybody writes one by hand. */
 describe('an escaped comment marker', () => {
   test('opens no comment, and the rest of the note stays', () => {
     const source = 'Write \\<!-- to open a comment.\n\nSecond paragraph.'
@@ -135,9 +125,6 @@ describe('a comment on the page', () => {
     expect(html).toContain('Words.')
   })
 
-  /** The bug: publishing escapes a note's HTML, because a blog shares a domain
-   *  with every other blog, and the escape turned a comment into a line of prose
-   *  on the page. */
   test('is not shown as text on a published page', () => {
     const html = renderMarkdown('<!-- private -->\n\nWords.\n', { escapeHtml: true })
     expect(html).not.toContain('private')
@@ -158,8 +145,6 @@ describe('a comment on the page', () => {
     expect(html).not.toContain('hidden')
   })
 
-  /** A deck's speaker notes are a `Note:` line, not a comment, so they are
-   *  untouched by any of this; see slides.ts. */
   test('leaves a deck’s speaker notes alone', () => {
     const html = renderMarkdown('# Slide\n\n<!-- gone -->\n\nNote: said out loud\n')
     expect(html).not.toContain('gone')
@@ -167,7 +152,6 @@ describe('a comment on the page', () => {
   })
 })
 
-/** #493: each of these let a comment through to the page. */
 describe('a comment after code that only looks like a fence', () => {
   test('goes after a line of inline code in three backticks', () => {
     const html = renderMarkdown('```inline```\n\n%%secret%%\n\nmore <!-- hidden -->', {

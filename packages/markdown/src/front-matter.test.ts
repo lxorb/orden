@@ -17,10 +17,6 @@ import { addProperty, renameProperty, writeProperty } from './property-edits'
 import { renderMarkdown } from './index'
 import { bodyStart } from './slide-breaks'
 
-/** What the block is read as. The three readers of it - an export, a search and
- *  the icon a row wears - all come through these. */
-/** The notes both this package and front_matter.rs are held to, each with whether it
- *  opens with a block. */
 const TABLE = table as [string, boolean][]
 
 describe('what counts as front matter', () => {
@@ -112,7 +108,6 @@ describe('reading the front matter', () => {
   test('the block, and nothing where a note has none', () => {
     expect(frontMatter('---\ntitle: Hi\n---\n\nBody')).toBe('title: Hi')
     expect(frontMatter('No front matter')).toBeNull()
-    // A rule in the middle of a note did not open a block.
     expect(frontMatter('# Title\n\n---\n\nmore')).toBeNull()
   })
 
@@ -121,25 +116,18 @@ describe('reading the front matter', () => {
     expect(frontMatter('---\ntitle: Hi\n--- and more\n\nBody')).toBeNull()
   })
 
-  /** Obsidian's rule, and the twin of "an indented opening fence opens nothing"
-   *  in front_matter.rs, which used to take an indented one and so read a note
-   *  the browser build read as prose. */
   test('an opening fence stands at the left margin', () => {
     expect(frontMatter('  ---\ntitle: Hi\n---\n\nBody')).toBeNull()
     expect(frontMatter('\t---\ntitle: Hi\n---\n\nBody')).toBeNull()
-    // Space after the fence is nothing at all, though.
     expect(frontMatter('---  \ntitle: Hi\n---\n\nBody')).toBe('title: Hi')
   })
 
-  /** A file saved by Notepad opens with a byte order mark, and a block read past it
-   *  is a block edited in place rather than a second one opened above it. */
   test('a byte order mark in front of the fence', () => {
     const source = '\uFEFF---\ntitle: a\n---\nbody\n'
     expect(frontMatterValue(source, 'title')).toBe('a')
     expect(stripFrontMatter(source)).toBe('body\n')
 
     expect(frontMatterEdit(source, 'title', 'b')).toEqual({ from: 11, to: 13, insert: ' b' })
-    // Taking the block away keeps the mark the file was saved with.
     expect(frontMatterEdit(source, 'title', null)).toEqual({ from: 1, to: 18, insert: '' })
   })
 
@@ -161,8 +149,6 @@ describe('reading the front matter', () => {
     expect(frontMatterValue('---\nicon:\n---\n', 'icon')).toBeNull()
   })
 
-  /** YAML's comment, which is no part of the value and stays where it was written
-   *  when the value is set. */
   test('a comment after the value', () => {
     expect(frontMatterValue('---\ntitle: a # note\n---\n', 'title')).toBe('a')
     expect(frontMatterValue("---\ntitle: 'a # b' # note\n---\n", 'title')).toBe('a # b')
@@ -189,8 +175,6 @@ describe('the keys a block holds', () => {
   })
 })
 
-/** The shapes a note may write a list in. Obsidian writes `aliases` all three
- *  ways depending on how it was typed, so all three are read. */
 describe('reading a key as a list', () => {
   const front = (body: string) => `---\n${body}\n---\n\nWords.\n`
 
@@ -229,8 +213,6 @@ describe('reading a key as a list', () => {
   })
 })
 
-/** The surgery. Every case is one edit of the characters that moved, so a note
- *  open in a pane takes it without a caret in it going anywhere. */
 describe('setting a key', () => {
   const applied = (source: string, key: string, value: string | null) => {
     const edit = frontMatterEdit(source, key, value)
@@ -263,13 +245,9 @@ describe('setting a key', () => {
   test('a key already saying it is not written again', () => {
     expect(frontMatterEdit('---\nicon: rocket\n---\n', 'icon', 'rocket')).toBeNull()
     expect(frontMatterEdit('---\nicon: "rocket"\n---\n', 'icon', 'rocket')).toBeNull()
-    // A value handed already quoted as a scalar, the way a property row writes one.
     expect(frontMatterEdit("---\nstatus: 'yes'\n---\n", 'status', "'yes'")).toBeNull()
-    // In the other quotes it is still the same words, and no write either.
     expect(frontMatterEdit('---\nstatus: "yes"\n---\n', 'status', "'yes'")).toBeNull()
-    // Bare it was a boolean, so the quoted words are a change.
     expect(frontMatterEdit('---\nstatus: yes\n---\n', 'status', "'yes'")).not.toBeNull()
-    // And quoted it was the word, so the bare boolean or number is a change too.
     expect(frontMatterEdit('---\ndone: "true"\n---\n', 'done', 'true')).not.toBeNull()
     expect(frontMatterEdit("---\ncount: '3'\n---\n", 'count', '3')).not.toBeNull()
   })
@@ -347,8 +325,6 @@ describe('taking a key away', () => {
     )
   })
 
-  /** A blank line inside a `|` or `>` value is part of it: what is indented after it is
-   *  still the value, and left behind it would be read as more of the key above. */
   test('takes a value of paragraphs whole, blank lines and all', () => {
     const source = '---\nsummary: short\nnotes: |\n  first\n\n  second\nstatus: done\n---\nbody'
     expect(applied(source, 'notes')).toBe('---\nsummary: short\nstatus: done\n---\nbody')
@@ -366,9 +342,6 @@ describe('taking a key away', () => {
   })
 })
 
-/** Several keys in one write. What it is for: an icon and the colour it is drawn in
- *  are two keys so that another app reading the note still finds the icon, and one
- *  write so that choosing an icon is one thing to undo. */
 describe('setting several keys at once', () => {
   const applied = (source: string, keys: readonly (readonly [string, string | null])[]) => {
     const edit = frontMatterEdits(source, keys)
@@ -417,7 +390,6 @@ describe('setting several keys at once', () => {
       ['icon-color', 'violet'],
     ])
 
-    // The words below the block are outside it, which is what keeps a caret in them.
     expect(edit).not.toBeNull()
     expect(edit?.to).toBeLessThan('---\ntitle: Plan\n---\n'.length)
   })

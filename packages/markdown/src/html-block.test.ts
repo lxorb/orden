@@ -8,9 +8,6 @@ describe('a block of the note’s own HTML that does something', () => {
     const card = htmlBlockCard(BLOCK) ?? ''
     expect(card).toContain('class="embed-web embed-html"')
     expect(card).toContain('HTML')
-    // The block travels in an attribute, where no parser reads it and nothing
-    // fetches it. Not a tag on the page: a `<script>` on the page is the one
-    // thing this whole arrangement exists to avoid.
     expect(card).toContain('data-srcdoc="&lt;div id=&quot;dial&quot;')
     expect(card).not.toContain('<script')
     expect(card).not.toContain('<div')
@@ -28,16 +25,11 @@ describe('a block of the note’s own HTML that does something', () => {
   })
 
   test('HTML that only shows something is markup like any other', () => {
-    // A `<div>`, a `<details>`, a styled span: nothing to run, so nothing to ask
-    // about, and the renderer passes it through as it always has.
     for (const html of [
       '<div class="two-up">text</div>',
       '<details><summary>More</summary>text</details>',
       '<span style="color:red">red</span>',
       '<img src="x.png">',
-      // Half a script is not a program: marked hands out a lone opening tag when
-      // one turns up mid-sentence, and a card in place of it would swallow the
-      // words after it.
       '<script>',
       '</script>',
       '',

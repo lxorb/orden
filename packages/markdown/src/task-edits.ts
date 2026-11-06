@@ -1,22 +1,3 @@
-/** A task line changed as the smallest edits that change it.
- *
- *  A date picked on a chip, a box ticked in a view, a priority set by an agent: each
- *  is a change of one field, and each comes out as an edit of the characters that
- *  field is written in. A field that is there has its value rewritten and keeps its
- *  key and its form; a field that goes takes the blank before it with it; a field
- *  that comes is put where Orden's order says it belongs, which is the order the Tasks
- *  plugin reads in:
- *
- *    words, Orden's bracket fields, tags, then the Tasks plugin's fields in its own
- *    order (id, depends on, priority, repeat, on completion, created, start,
- *    scheduled, due, cancelled, done), then a block id.
- *
- *  The plugin reads its fields from the end of the line and stops at the first
- *  thing it does not know, so Orden's brackets stand before its fields and never
- *  after them. A line written in Dataview's format (its Tasks fields in brackets
- *  and none as emoji) gets new Tasks fields in brackets too, so it stays one
- *  format. See task-line.ts for the reading. */
-
 import { appliedEdits, type TextEdit } from './edits'
 import { codeSpans, inCode, tagAt } from './tags'
 import {
@@ -43,10 +24,8 @@ import {
   writeRemind,
 } from './task-line'
 
-/** A change to a task: a field given is set, a field given as null goes. */
 export type TaskChange = { [K in keyof TaskFields]?: TaskFields[K] | null }
 
-/** Where each kind of field stands on a line, lowest first. */
 const RANK: Record<FieldToken['field'], number> = {
   time: 10,
   duration: 11,
@@ -69,11 +48,8 @@ const RANK: Record<FieldToken['field'], number> = {
   tag: 20,
 }
 
-/** The fields the writer sets, in the order a whole line is written. */
 const WRITTEN: readonly FieldName[] = [...NIB_FIELDS, ...TASKS_FIELDS, 'block']
 
-/** A field's value as it is written after its key or emoji, or null for a value
- *  that means the field is not there. */
 function valueText(
   field: FieldName,
   fields: Partial<TaskFields>,
@@ -112,7 +88,6 @@ function valueText(
   }
 }
 
-/** The whole field as it is written: `📅 2026-10-06`, `[time:: 16:00]`, `^abc`. */
 function fieldText(field: FieldName, value: string, form: 'emoji' | 'bracket'): string {
   if (field === 'block') return `^${value}`
   if (form === 'bracket' || NIB_FIELDS.includes(field)) return `[${KEY_BY_FIELD[field]}:: ${value}]`
@@ -143,7 +118,6 @@ function fieldText(field: FieldName, value: string, form: 'emoji' | 'bracket'): 
   }
 }
 
-/** Whether the line keeps its Tasks fields in Dataview's brackets. */
 function bracketStyle(parsed: ParsedTask): boolean {
   const tasks = parsed.tokens.filter(
     (token) =>
@@ -152,8 +126,6 @@ function bracketStyle(parsed: ParsedTask): boolean {
   return tasks.length > 0 && tasks.every((token) => token.form !== 'emoji')
 }
 
-/** The edit that takes a span out of the line with the blank in front of it, or
- *  the blank after it when it opens the words. */
 function removal(line: string, from: number, to: number, wordsFrom: number): TextEdit {
   let start = from
   while (start > wordsFrom && /[ \t]/.test(line.charAt(start - 1))) start--
@@ -164,11 +136,6 @@ function removal(line: string, from: number, to: number, wordsFrom: number): Tex
   return { from, to: end, insert: '' }
 }
 
-/** The edits that take several spans out of the line, each with its blank, as
- *  edits that never overlap. Spans with nothing but blanks between them go as one:
- *  two fields side by side at the opening of the words would otherwise both claim
- *  the blank between them, the first taking it after itself and the second before,
- *  and the blank after the second would be left in front of the words. */
 function removals(
   line: string,
   spans: readonly { from: number; to: number }[],
@@ -184,12 +151,10 @@ function removals(
   return runs.map((run) => removal(line, run.from, run.to, wordsFrom))
 }
 
-/** Two values of a field the same, lists and reminders by what they hold. */
 function same(a: unknown, b: unknown): boolean {
   return JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
 }
 
-/** The box's character after the change, or null when it stays. */
 function nextStatus(fields: TaskFields, change: TaskChange): string | null {
   let status = fields.status
   if (change.status != null) status = change.status
@@ -200,24 +165,17 @@ function nextStatus(fields: TaskFields, change: TaskChange): string | null {
   return status === fields.status ? null : status
 }
 
-/** Whether the change sets the field this token holds. A token among the words
- *  that a change of the words would carry over is put back with its new value
- *  instead. */
 function touches(change: TaskChange, token: FieldToken): boolean {
   if (token.field === 'other') return change.fields != null
   if (token.field === 'tag') return false
   return token.field in change || (token.field === 'time' && 'zone' in change)
 }
 
-/** A field to put on the line, by its rank. */
 interface Arrival {
   rank: number
   text: string
 }
 
-/** The edits that turn `line` into the line with `change` made, smallest first,
- *  in line order, never overlapping, offsets into the line. None for a line that is
- *  not a task, or a change that changes nothing. */
 export function writeTask(line: string, asked: TaskChange): TextEdit[] {
   const parsed = parseTask(line)
   if (!parsed) return []
@@ -227,9 +185,6 @@ export function writeTask(line: string, asked: TaskChange): TextEdit[] {
   const edits: TextEdit[] = []
   const gone = new Set<FieldToken>()
   const arriving: Arrival[] = []
-  // Every span taken off the line, whichever field it holds, goes through one
-  // `removals`: a tag and a field side by side would otherwise each claim the
-  // blank between them, in edits that overlap.
   const taking: { from: number; to: number }[] = []
   const form = bracketStyle(parsed) ? 'bracket' : 'emoji'
 
@@ -238,7 +193,6 @@ export function writeTask(line: string, asked: TaskChange): TextEdit[] {
     edits.push({ from: parsed.box + 1, to: parsed.box + 1 + fields.status.length, insert: status })
 
   const textChanges = change.text != null && change.text !== fields.text
-  /** The new words, the tokens among the old ones that stay included. */
   let newWords = ''
   if (textChanges) {
     const inline = tokens.filter((token) => token.inline)
@@ -247,8 +201,6 @@ export function writeTask(line: string, asked: TaskChange): TextEdit[] {
       .map((token) => line.slice(token.from, token.to))
     const words = [change.text, ...kept].filter((part) => part !== '').join(' ')
     newWords = words
-    // Words where there were none stand between the box and a field, a blank apart
-    // from each.
     const open = words !== '' && /\S/.test(line.charAt(parsed.wordsFrom - 1)) ? ' ' : ''
     const close = words !== '' && /\S/.test(line.charAt(parsed.wordsTo)) ? ' ' : ''
     edits.push({ from: parsed.wordsFrom, to: parsed.wordsTo, insert: open + words + close })
@@ -257,10 +209,6 @@ export function writeTask(line: string, asked: TaskChange): TextEdit[] {
 
   if (change.tags != null && !same(change.tags, fields.tags)) {
     const next = change.tags
-    // Every place the tag is written, in the fields at the end and among the words:
-    // a tag written twice is one tag to the reading, and a copy left behind would
-    // keep it on the line. Among the words only when the words stay, since new
-    // words are written in their place.
     const spans: { from: number; to: number }[] = []
     for (const tag of fields.tags.filter((one) => !next.includes(one))) {
       for (const token of tokens) {
@@ -279,9 +227,6 @@ export function writeTask(line: string, asked: TaskChange): TextEdit[] {
     }
   }
 
-  // A tag written among the old words goes with them, so one the change still holds
-  // is put back at the end where the new words and the fields there do not hold it:
-  // the task edit field reads `Buy #milk now` as `Buy now` and the tag `milk`.
   if (textChanges && change.tags != null) {
     const onLine = new Set([
       ...tagsIn(newWords),
@@ -311,9 +256,6 @@ export function writeTask(line: string, asked: TaskChange): TextEdit[] {
     if (field === 'priority' && given === null) after.priority = NO_PRIORITY
     if ((field === 'remind' || field === 'dependsOn') && given === null) after[field] = []
 
-    // The last of the field written, because that is the one the reading keeps, as
-    // the Tasks plugin does; see trailingTokens in task-line.ts. A change made to an
-    // earlier one would leave the line saying what it said before.
     const written = tokens.filter((one) => one.field === field && !gone.has(one))
     const token = written.at(-1)
     const was = token
@@ -324,8 +266,6 @@ export function writeTask(line: string, asked: TaskChange): TextEdit[] {
     if (value === was || (token === undefined && value === null)) continue
 
     if (token && value === null) {
-      // Every one of them, the copies among the words the reading set aside as other
-      // fields included, or the one left behind would be read in its place.
       const every = tokens.filter(
         (one) =>
           !gone.has(one) &&
@@ -352,8 +292,6 @@ export function writeTask(line: string, asked: TaskChange): TextEdit[] {
   return ordered(edits)
 }
 
-/** The edits for Dataview fields Orden has no name for. The ones taken off are put
- *  among `taking`, to go with the rest; see `writeTask`. */
 function unknownFieldEdits(
   parsed: ParsedTask,
   change: TaskChange,
@@ -366,8 +304,6 @@ function unknownFieldEdits(
   const next = change.fields
   const before = parsed.fields.fields
 
-  // The keys are the writer's, so neither record may answer one from its
-  // prototype: `toString` is a field like any other.
   const own = (fields: Record<string, string>, key: string) =>
     Object.hasOwn(fields, key) ? fields[key] : undefined
 
@@ -393,7 +329,6 @@ function unknownFieldEdits(
   return edits
 }
 
-/** Where each time a tag is written among the words starts. */
 function tagsAmongWords(line: string, tag: string, from: number, to: number): number[] {
   const words = line.slice(from, to)
   const code = codeSpans(words)
@@ -406,8 +341,6 @@ function tagsAmongWords(line: string, tag: string, from: number, to: number): nu
   return found
 }
 
-/** The insertions for the fields that arrive: each before the first field that
- *  ranks after it, or after the last field when none does. */
 function arrivals(
   line: string,
   parsed: ParsedTask,
@@ -443,18 +376,14 @@ function arrivals(
   return edits
 }
 
-/** Edits in line order, an insertion before a removal at the same place. */
 function ordered(edits: TextEdit[]): TextEdit[] {
   return edits.sort((a, b) => a.from - b.from || a.to - a.from - (b.to - b.from))
 }
 
 const DATES = ['due', 'start', 'scheduled', 'deadline'] as const
 
-/** Whether a date a change gives is one it takes away: null or nothing. `undefined`
- *  leaves the date as it is, as everywhere in `writeTask`. */
 const takes = (value: string | null | undefined) => value === null || value === ''
 
-/** Whether the change takes away the last date the task had. */
 export function lastDateTaken(fields: TaskFields, change: TaskChange): boolean {
   if (!DATES.some((date) => fields[date] !== undefined)) return false
   return !DATES.some((date) => {
@@ -463,10 +392,6 @@ export function lastDateTaken(fields: TaskFields, change: TaskChange): boolean {
   })
 }
 
-/** The change, with a repeat and a time taken away where it takes away the last date
- *  the task had: they belong to that date, and Todoist holds no repeat without one. A
- *  task that never had a date keeps them, and so does a change that gives them itself
- *  (the agent refuses that one; see `editedTask`). */
 function withoutOrphans(fields: TaskFields, change: TaskChange): TaskChange {
   if (fields.recurrence === undefined && fields.time === undefined) return change
   if (!lastDateTaken(fields, change)) return change
@@ -476,12 +401,10 @@ function withoutOrphans(fields: TaskFields, change: TaskChange): TaskChange {
   return out
 }
 
-/** The line with the change made. */
 export function changedTask(line: string, change: TaskChange): string {
   return appliedEdits(line, writeTask(line, change))
 }
 
-/** A whole task line, written in Orden's order: the shape a new line takes. */
 export function taskLine(fields: TaskFields, prefix = '- '): string {
   const parts = [fields.text]
   for (const field of NIB_FIELDS) {
@@ -501,7 +424,6 @@ export function taskLine(fields: TaskFields, prefix = '- '): string {
   return `${prefix}[${fields.status}] ${parts.filter((part) => part !== '').join(' ')}`
 }
 
-/** The tags the words already carry. */
 function tagsWritten(text: string): string[] {
   return parseTask(`- [ ] ${text}`)?.fields.tags ?? []
 }

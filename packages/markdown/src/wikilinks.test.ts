@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest'
 import type { Wikilink } from './links'
 import { renderMarkdown } from './index'
 
-/** A space of three notes, published under `/notes/`. */
 const NOTES: Record<string, string> = {
   plan: '/notes/plan',
   spark: '/notes/spark',
@@ -129,10 +128,6 @@ describe('what a wikilink cannot do to the page', () => {
   })
 
   test('a note cannot write the marker an embed is put in place of', () => {
-    // Two answers to the same attempt. The marker is stamped with a number the
-    // note could not have guessed, and a comment a note writes never reaches the
-    // page at all - see comments.ts - so the plausible one written here is simply
-    // gone and the real embed is unaffected.
     const html = renderMarkdown('<!--nib:embed:0-->\n\n![[plan]]', { resolveEmbed })
     expect(html).not.toContain('nib:embed:0')
     expect(html).toContain('The plan')
@@ -157,8 +152,6 @@ describe('an embed on a page', () => {
   test('a block names the paragraph, without the marker itself', () => {
     const html = renderMarkdown('![[spark#^abc123]]', { resolveEmbed })
     expect(html).toContain('<p>A single idea.</p>')
-    // The name marks the block; it is not a word of it. The caption still says
-    // what the link said, which is where the name belongs.
     expect(html).not.toContain('idea. ^abc123')
     expect(html).toContain('<figcaption>spark#^abc123</figcaption>')
     expect(html).not.toContain('Another paragraph.')
@@ -229,8 +222,6 @@ describe('an embed on a page', () => {
   })
 
   test('a picture named as an embed is a picture', () => {
-    // Pointed at the path the note wrote, which is what every surface already
-    // knows how to swap for something it can load; see sources.ts.
     const html = renderMarkdown('![[shot.png]]', { resolveEmbed, resolveLink })
     expect(html).toContain('<img src="shot.png" alt="">')
     expect(html).not.toContain('<figure')
@@ -259,7 +250,6 @@ describe('a file embedded in a note', () => {
   test('a player is what it is inside a sentence as well', () => {
     const html = renderMarkdown('before ![[clip.mp3]] after\n')
     expect(html).toContain('<audio')
-    // Inside the paragraph, not in place of it.
     expect(html).toContain('before ')
     expect(html).toContain(' after')
   })
@@ -284,17 +274,12 @@ describe('a file embedded in a note', () => {
   })
 
   test('and says which page of which file a surface should draw in it', () => {
-    // The card is what a published page keeps, because a published page runs no
-    // script; in the app these two are what the drawing is made from, so the one
-    // piece of markup serves both readings. See `card`.
     const html = renderMarkdown('![[paper.pdf#page=3]]\n', { resolveLink })
     expect(html).toContain('data-file="paper.pdf"')
     expect(html).toContain('data-page="3"')
   })
 
   test('a paper whose link names no page carries none', () => {
-    // Which page a paper opens at when the link is silent is the business of
-    // whatever asks pdf.js for one, and is said once there.
     expect(renderMarkdown('![[paper.pdf]]\n', { resolveLink })).not.toContain('data-page')
   })
 
@@ -322,14 +307,10 @@ describe('a file embedded in a note', () => {
   })
 
   test('a card is never left inside a paragraph', () => {
-    // A `<figure>` closes the `<p>` around it, which would leave the frame in
-    // pieces; the same rule an embedded note goes by.
     expect(renderMarkdown('![[paper.pdf]]\n')).not.toContain('<p><figure')
   })
 
   test('a file is never read as a note', () => {
-    // `resolveEmbed` answers for every name here, so a target that reached it
-    // would come back as a framed note rather than as what it is.
     const every = () => '# Something else'
     for (const name of ['a.png', 'a.mp3', 'a.mp4', 'a.pdf', 'a.canvas']) {
       expect(renderMarkdown(`![[${name}]]\n`, { resolveEmbed: every }), name).not.toContain(
@@ -339,7 +320,6 @@ describe('a file embedded in a note', () => {
   })
 
   test('a target that could not go into an attribute is not written into one', () => {
-    // The name reads as words, which is what an unresolvable embed does anyway.
     const html = renderMarkdown('![[javascript:alert(1)//x.mp3]]\n')
     expect(html).not.toContain('<audio')
     expect(html).not.toContain('src=')

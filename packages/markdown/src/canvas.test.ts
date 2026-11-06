@@ -18,10 +18,6 @@ import {
 import { mergeCanvasFiles } from './canvas-merge'
 import { emptyPages, pagesFromPdf } from './pages'
 
-/** A canvas written the way the spec's own examples are: every node type, every
- *  optional field, and edges naming their sides and their ends.
- *
- *  https://jsoncanvas.org/spec/1.0/ */
 const SPEC_EXAMPLE = {
   nodes: [
     { id: 'a', type: 'text', x: 0, y: 0, width: 250, height: 60, text: '# Hello', color: '1' },
@@ -279,7 +275,6 @@ describe('writing a canvas', () => {
       icon: null,
       iconColor: null,
     })
-    // Nothing of Orden's in a canvas that has none of Orden's in it.
     expect(blankCanvas()).not.toContain('nib')
     expect(blankCanvas().endsWith('\n')).toBe(true)
   })
@@ -316,14 +311,6 @@ describe('a fresh id', () => {
   })
 })
 
-/** What Orden keeps beyond the spec, and where.
- *
- *  Obsidian's own reader was checked to settle this: an unknown top-level key is
- *  kept whole through a load and a save, an unknown key on a node is swept into
- *  `unknownData` and written back, but a node whose `type` it does not know is
- *  skipped on load and gone from the file on the next save, taking its edges
- *  with it. So ink and shapes go under one top-level key and never into `nodes`,
- *  and these tests hold that line. */
 describe('what Orden keeps beyond the spec', () => {
   const drawn: Canvas = {
     nodes: [
@@ -378,9 +365,6 @@ describe('what Orden keeps beyond the spec', () => {
     ])
   })
 
-  /** Seven shapes, and a body that can hold a name. A shape in a diagram is a shape
-   *  with a name in it far more often than it is a shape, and all of it stays under
-   *  `nib`: to every other reader of the format the file is the spec exactly. */
   test('keeps all seven shapes, and the words inside one', () => {
     const diagram: Canvas = {
       nodes: SHAPES.map((shape, at) => ({
@@ -424,8 +408,6 @@ describe('what Orden keeps beyond the spec', () => {
   })
 
   test('a shape with no size falls back to the same box a card does', () => {
-    // The height fell back to the default *width*, so a shape from a file that
-    // recorded no size came in four times as tall as it should be.
     const canvas = readCanvas(
       JSON.stringify({ nodes: [], nib: { shapes: [{ id: 'a', shape: 'rect', x: 0, y: 0 }] } }),
     )
@@ -453,8 +435,6 @@ describe('what Orden keeps beyond the spec', () => {
     expect(canvas.ink).toEqual([])
   })
 
-  /** One point is a dot, which is what a pen tapped once on the plane leaves.
-   *  It reads back as the stroke it is; a shape with no shape does not. */
   test('keeps a stroke of one point and drops a shape with no shape', () => {
     const canvas = readCanvas(
       JSON.stringify({
@@ -502,10 +482,6 @@ describe('what Orden keeps beyond the spec', () => {
   })
 })
 
-/** How much of the colour a stroke lands is the pen's, not the tool's: a hand
- *  that turned a highlighter solid or a biro faint has said something about that
- *  stroke, and the file has to carry it. A stroke that says nothing goes on
- *  meaning "however this kind of pen comes", so an old canvas is untouched. */
 describe('how translucent a stroke was drawn', () => {
   const one = (over: Record<string, unknown> = {}) =>
     JSON.stringify({
@@ -583,11 +559,6 @@ describe('how translucent a stroke was drawn', () => {
   })
 })
 
-/** A canvas can arrive from a share, a room or a paste, so what it says about
- *  where things are is a claim and not a fact. A coordinate from past the plane
- *  turns every sum after it into infinity - the box round the canvas, the camera
- *  that frames it, every hit test from then on - so it is brought back to
- *  somewhere a canvas can be looked at. */
 describe('a canvas from somewhere else', () => {
   test('brings a node from beyond the plane back onto it', () => {
     const canvas = readCanvas(
@@ -655,9 +626,6 @@ describe('a canvas from somewhere else', () => {
   })
 })
 
-/** The icon a canvas wears. A note keeps its own in front matter; JSON has none,
- *  so a canvas keeps it under the one key the spec leaves for what is ours - which
- *  is what makes it the canvas's own rather than this machine's note about it. */
 describe('the icon a canvas wears', () => {
   const applied = (text: string, name: string | null, tint: string | null = null) => {
     const edit = canvasIconEdit(text, name, tint)
@@ -694,9 +662,6 @@ describe('the icon a canvas wears', () => {
     expect(writeCanvas(readCanvas(written))).toBe(written)
   })
 
-  /** Somebody's Obsidian vault: a node of a plugin's own type, an edge to it, a field
-   *  Advanced Canvas keeps on a card and a key beside the lists. Setting the icon used
-   *  to read the file as a canvas and write it back, which left all four out (#501). */
   test('changes nothing in the file but the icon', () => {
     const vault = {
       nodes: [
@@ -740,14 +705,11 @@ describe('the icon a canvas wears', () => {
     })
   })
 
-  /** The twin of `frontMatterEdit`: what changes is written and not the whole file,
-   *  so an open canvas takes the change without being replaced under its reader. */
   test('goes in as an edit of the few characters that moved', () => {
     const before = blankCanvas()
     const edit = canvasIconEdit(before, 'rocket')
 
     expect(edit).not.toBeNull()
-    // The spec half is untouched: the cut starts past `"edges": []`.
     expect(before.slice(0, edit?.from ?? 0)).toContain('"edges"')
     expect(edit?.insert).toContain('"icon": "rocket"')
     expect(readCanvas(applied(before, 'rocket') ?? '').icon).toBe('rocket')
@@ -772,8 +734,6 @@ describe('the icon a canvas wears', () => {
     expect(canvasIconEdit(blankCanvas(), null)).toBeNull()
   })
 
-  /** An unreadable file reads as an empty canvas, which is what lets a truncated
-   *  one be drawn on. Writing that back would be writing over somebody's file. */
   test('is refused on a file that is not JSON, rather than written over it', () => {
     expect(canvasIconEdit('not json at all', 'rocket')).toBeNull()
     expect(canvasIconEdit('[1, 2, 3]', 'rocket')).toBeNull()
@@ -821,7 +781,6 @@ describe('the icon a canvas wears', () => {
 })
 
 describe('writing a canvas a piece at a time', () => {
-  /** A plane of `count` strokes with a card, a shape, an icon and times on it. */
   function plane(count: number): Canvas {
     const ink = Array.from({ length: count }, (_, at) => ({
       id: `s${String(at)}`,
@@ -840,8 +799,6 @@ describe('writing a canvas a piece at a time', () => {
       ],
       edges: [{ id: 'e', fromNode: 'card', toNode: 'box' }],
       ink,
-      // Ids that read as numbers are the ones a JSON object puts first, whatever
-      // order they were written in.
       at: Object.fromEntries([
         ...ink.map((one) => [one.id, 5]),
         ['12', 7],
@@ -855,8 +812,6 @@ describe('writing a canvas a piece at a time', () => {
     }
   }
 
-  /** What `JSON.stringify` prints for the same file, which is what the pieces must
-   *  come to character for character. */
   const printed = (text: string) => `${JSON.stringify(JSON.parse(text), null, '\t')}\n`
 
   test.each([
@@ -918,8 +873,6 @@ describe('writing a canvas a piece at a time', () => {
     )
     printing.mockRestore()
 
-    // The new stroke and the two maps of times, a line an id: never the two hundred
-    // strokes that were printed the last time.
     expect(characters).toBeLessThan(written.length / 5)
     expect(written).toBe(printed(written))
   })
@@ -1026,8 +979,6 @@ describe('something locked in place (#643)', () => {
   })
 })
 
-/** What a file holds that this module does not read rides on the canvas it reads, and
- *  comes back out of every write of it, an edit's included (#780). */
 describe('a canvas holding another app’s things', () => {
   const VAULT = JSON.stringify(
     {

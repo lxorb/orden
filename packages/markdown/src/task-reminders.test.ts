@@ -109,9 +109,6 @@ describe('momentOf', () => {
   })
 })
 
-// The app reads a floating time on the machine's clock and the Worker in the reader's
-// zone, so the two have to say the same moment for every wall time, the ones a clock
-// change skips or repeats above all.
 describe('a clock change', () => {
   const machine = process.env.TZ
   afterEach(() => {
@@ -136,7 +133,6 @@ describe('a clock change', () => {
   const iso = (moment: number) => new Date(moment).toISOString().slice(0, 10)
   const DAY = 86_400_000
 
-  /** The days of two years whose clock changes on this machine, with the day either side. */
   function daysAroundChanges(): string[] {
     const days = new Set<string>()
     for (let day = Date.UTC(2026, 0, 1); day < Date.UTC(2028, 0, 1); day += DAY) {
@@ -191,9 +187,6 @@ describe('a clock change', () => {
     expect(momentOf(wall, 'Europe/Zurich')).toBe(Date.UTC(2026, 9, 25, 0, 30))
   })
 
-  // On the wall clock 01:30 comes twice that night: the reminder counted back from
-  // 02:00 is the second, the one written as 01:30 the first. Two moments, so two rings,
-  // and two ids, since every place that holds a reminder holds it by its id.
   test('a counted reminder and a written one on a minute it repeats both ring', () => {
     process.env.TZ = 'America/New_York'
     const line = '- [ ] a [time:: 02:00] [remind:: 30m, 1:30] 🛫 2026-11-01'
@@ -205,7 +198,6 @@ describe('a clock change', () => {
       ])
       const ids = walls.map((one) => reminderId('s', 'n.md', 'h', one))
       expect(new Set(ids).size).toBe(2)
-      // The written one keeps the id it always had.
       expect(ids).toContain(reminderId('s', 'n.md', 'h', { date: '2026-11-01', time: '01:30' }))
     }
   })
@@ -227,7 +219,6 @@ describe('a clock change', () => {
     const one = task('- [ ] a [time:: 03:15 Europe/Zurich] [remind:: 30m] 🛫 2026-03-29')
     const [wall] = remindTimes(one, null)
     expect(wall && momentOf(wall)).toBe(Date.UTC(2026, 2, 29, 0, 45))
-    // The id stays the wall minute it always was, on every device.
     expect(wall).toMatchObject({ date: '2026-03-29', time: '02:45' })
   })
 })

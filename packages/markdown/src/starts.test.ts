@@ -59,8 +59,6 @@ describe('the first place a construct could be', () => {
   })
 
   test('is nothing when the literal is past the paragraph', () => {
-    // Marked cuts the paragraph it is about to read; a place beyond that
-    // paragraph would change nothing, and looking for it is what cost the time.
     expect(at('a paragraph\n\nand then xy')).toBeUndefined()
   })
 
@@ -75,7 +73,6 @@ describe('the first place a construct could be', () => {
   })
 
   test('confirms against the whole document, not the paragraph', () => {
-    // A construct that starts inside the paragraph may run past it.
     const src = 'one\nxy tail\n\nrest'
     const found = firstStart(src, ['xy'], (whole, found) =>
       whole.slice(found).startsWith('xy tail\n\nrest') ? found : null,
@@ -112,9 +109,6 @@ describe('matching at one place', () => {
   })
 })
 
-/** The block starts used to hand marked a place for anything that merely looked
- *  like their construct, and marked cut the paragraph in two there. The seam
- *  showed as a newline in the words, which a browser reads as a space. */
 describe('a mark in the middle of a sentence leaves the sentence alone', () => {
   test('a footnote reference', () => {
     const html = renderMarkdown('A sentence with a note[^1] in it.\n\n[^1]: The note.\n', {
@@ -183,8 +177,6 @@ describe('a construct on a line of its own still ends the paragraph above it', (
   })
 })
 
-/** #546: every inline `start` read the rest of the paragraph at every break in it,
- *  and the hashtag tokenizer flattened the text before it to read one character. */
 describe('a paragraph of many breaks', () => {
   const quick = (source: string) => {
     const started = performance.now()

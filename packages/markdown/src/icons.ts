@@ -1,31 +1,14 @@
-/** The few Lucide icons that are part of what a note *is* rather than part of
- *  the app around it: a callout's own mark, and the chevron that says a block
- *  can be folded.
- *
- *  Here rather than in the app because three different things draw them - the
- *  renderer writes HTML, the editor builds DOM, the Worker publishes a page -
- *  and a chevron drawn twice is two chevrons that drift apart. Data and not a
- *  drawing, because a Worker has no `document`.
- *
- *  One file each from Lucide, so nothing that touches this package pulls in the
- *  whole set. */
-
 import ChevronRight from 'lucide/dist/esm/icons/chevron-right.mjs'
 import ExternalLink from 'lucide/dist/esm/icons/external-link.mjs'
 import FileText from 'lucide/dist/esm/icons/file-text.mjs'
 import Play from 'lucide/dist/esm/icons/play.mjs'
 import Shapes from 'lucide/dist/esm/icons/shapes.mjs'
 
-/** An icon as data: the elements it is drawn from, in order. Lucide's own
- *  shape, restated without its name so nothing has to import the library to
- *  read one. */
 export type IconParts = readonly (readonly [
   string,
   Readonly<Record<string, string | number | undefined>>,
 ])[]
 
-/** How an icon's own `<svg>` is dressed, so markup written here and elements
- *  built elsewhere are the same drawing. */
 export const ICON_ATTRIBUTES: Readonly<Record<string, string>> = {
   viewBox: '0 0 24 24',
   fill: 'none',
@@ -36,25 +19,14 @@ export const ICON_ATTRIBUTES: Readonly<Record<string, string>> = {
   'aria-hidden': 'true',
 }
 
-/** The mark that says there is more behind this: pointing at what it holds shut,
- *  and turned by the stylesheet to point down at what it has let out. The
- *  editor draws the same one in the margin beside anything that folds. */
 export const CHEVRON: IconParts = ChevronRight
 
-/** What an embedded PDF and an embedded canvas are drawn as. A paper and a plane
- *  cannot be shown where they stand - one is pages and the other is a surface -
- *  so an embed of either is a card that says which file it is and opens it. */
 export const DOCUMENT: IconParts = FileText
 export const PLANE: IconParts = Shapes
 
-/** What the card standing in for a page somewhere else says it will do. Two marks
- *  and not one: a video is played and a map is opened, and a triangle over a map
- *  would be a small lie told ten times a note. See providers.ts. */
 export const PLAY: IconParts = Play
 export const OPEN: IconParts = ExternalLink
 
-/** The marks a web embed's card can carry, by name, so the renderer and the
- *  editor pick from one list. */
 export const MARKS: Readonly<Record<'play' | 'open', IconParts>> = { play: PLAY, open: OPEN }
 
 function attributes(written: Readonly<Record<string, string | number | undefined>>): string {
@@ -64,10 +36,6 @@ function attributes(written: Readonly<Record<string, string | number | undefined
     .join('')
 }
 
-/** An icon as markup: one `<svg>`, its children self-closed.
- *
- *  Self-closed because an EPUB is read by an XML parser, which takes a `<path>`
- *  as an element left open and refuses the book. */
 export function iconMarkup(parts: IconParts, className: string): string {
   const dress = attributes({ ...ICON_ATTRIBUTES, class: className })
   const drawn = parts.map(([tag, own]) => `<${tag}${attributes(own)} />`).join('')

@@ -25,13 +25,10 @@ describe('what a fence says', () => {
     expect(captionIn("js title='setup.js'")).toBe('setup.js')
     expect(captionIn('js title=setup.js')).toBe('setup.js')
     expect(captionIn('js TITLE="Shouting"')).toBe('Shouting')
-    // The language is still the language, whatever follows it.
     expect(languageIn('js title="setup.js"')).toBe('js')
   })
 
   test('leaves anything else as the words it is', () => {
-    // Only a lone `title=` is unwrapped: a caption that happens to mention one
-    // is a caption.
     expect(captionIn('js the title= line')).toBe('the title= line')
     expect(captionIn('js title="a" and more')).toBe('title="a" and more')
   })

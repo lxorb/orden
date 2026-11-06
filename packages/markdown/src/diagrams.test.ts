@@ -20,7 +20,6 @@ describe('which fences are a picture', () => {
     expect(isDiagram('mermaid')).toBe(true)
     expect(isDiagram('Mermaid')).toBe(true)
     expect(isDiagram('SEQUENCE')).toBe(true)
-    // A chart is built as a string of SVG on every surface and needs no picture.
     expect(isDiagram('chart')).toBe(false)
     expect(isDiagram('ts')).toBe(false)
     expect(isDiagram('')).toBe(false)
@@ -63,9 +62,6 @@ describe('what a diagram is named by', () => {
     )
   })
 
-  /** The one property that is about safety rather than about caching: the name is
-   *  derived from text a reader of the page can see, so what keeps a stranger from
-   *  computing it and writing their own picture under it is the space's own id. */
   test('is a different name in another space, so nobody can compute it off the page', async () => {
     const other = '7d1f4e8c-0000-4000-8000-000000000002'
 

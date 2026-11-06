@@ -1,4 +1,3 @@
-/** The GFM plugin ships no types. It only adds rules to a Turndown instance. */
 declare module 'turndown-plugin-gfm' {
   import type TurndownService from 'turndown'
   export const gfm: TurndownService.Plugin

@@ -14,7 +14,6 @@ import { SELECTED } from './snapshot'
 
 const PAGE = 'https://site.example/section/page.html'
 
-/** A document holding the given body, as jsdom would hand one over. */
 function pageOf(body: string, head = ''): Document {
   document.head.innerHTML = head
   document.body.innerHTML = body
@@ -99,9 +98,6 @@ describe('making addresses absolute', () => {
     expect(page.querySelector('a')?.hasAttribute('href')).toBe(false)
   })
 
-  // A browser reads a scheme with tabs and newlines inside it as the scheme, so
-  // whether a link runs code is a question about the address it resolves to and
-  // not about the characters the markup spelled it with.
   test('sees through a scheme written with something in the middle of it', () => {
     for (const href of [
       'java\tscript:alert(1)',
@@ -189,10 +185,6 @@ describe('cleaning', () => {
     expect(page.body.innerHTML).toBe('<p>keep</p>')
   })
 
-  /** A page writes a formula out of sight and draws a picture of it instead, and
-   *  both copies used to go: the extractor drops what a reader cannot see and the
-   *  picture says it is decoration, so the sentence around the formula was left
-   *  with a hole in it. */
   test('brings a hidden formula back into sight, wrapper and all', () => {
     const page = pageOf(
       '<p>the equality <span class="mathml" style="display: none;">' +
@@ -215,9 +207,6 @@ describe('cleaning', () => {
     expect(page.querySelectorAll('math')).toHaveLength(0)
   })
 
-  /** A second lock: nothing downstream keeps an attribute, but the rule that hands
-   *  a node back verbatim is a library's, and what it hands back carries every
-   *  attribute the page wrote. */
   test('takes the page’s handlers and styles off what it keeps', () => {
     const page = pageOf(
       '<div onmouseover="run()" style="position:fixed" class="prose">' +
@@ -232,7 +221,6 @@ describe('cleaning', () => {
     expect(html).not.toContain('onerror')
     expect(html).not.toContain('onfocus')
     expect(html).not.toContain('style=')
-    // And keeps what the conversion reads.
     expect(html).toContain('class="prose"')
     expect(html).toContain('src="a.png"')
     expect(html).toContain('alt="a"')
@@ -350,10 +338,6 @@ describe('what to clip', () => {
     expect(source.html).toContain('Three words only.')
   })
 
-  // Readability keeps an ordinary `img` and throws a `<picture>` away, so the
-  // candidates have to be on the image before it runs. Without that the article
-  // arrives with its photographs missing, which is how the publications that
-  // serve them this way would all have come out.
   test('an article keeps the photograph a picture element held', () => {
     const page = pageOf(
       `<article><p>${'An ordinary sentence of an ordinary article. '.repeat(12)}</p>
@@ -369,9 +353,6 @@ describe('what to clip', () => {
     expect(source.html).not.toContain('<picture')
   })
 
-  // The browser resolves the page's own relative addresses against its base, so
-  // a clip that resolved them against the address instead would point every one
-  // of them somewhere the reader never was.
   test('resolves against the base a page named rather than its own address', () => {
     const page = pageOf(
       `<article><p>${'An ordinary sentence of an ordinary article. '.repeat(12)}</p>

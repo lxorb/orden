@@ -3,8 +3,6 @@ import { HIGHLIGHT_COLOURS, highlightTone, readHighlight, writeHighlight } from 
 import { highlight } from './extensions'
 import { renderMarkdown, setHardBreaks } from './index'
 
-/** The markup is Obsidian's, and this is the whole of the claim: a colour emoji
- *  at the start of the highlight, which 1.14.0 added on 2026-09-02. */
 describe('the colour a highlight names', () => {
   test('is the five emoji Obsidian writes, and nothing Orden invented', () => {
     expect(HIGHLIGHT_COLOURS.map((one) => one.emoji)).toEqual([null, '🔴', '🟠', '🟢', '🔵', '🟣'])
@@ -38,9 +36,6 @@ describe('the colour a highlight names', () => {
     expect(highlightTone(null).emoji).toBeNull()
   })
 
-  /** There is no yellow, and that is deliberate: Obsidian writes no yellow emoji
-   *  because a plain highlight is already its yellow. A tone Orden could write and
-   *  Obsidian could not read would not be Obsidian-compatible. */
   test('skips the yellow tone, which has no emoji to write it with', () => {
     expect(HIGHLIGHT_COLOURS.map((one) => one.tone)).toEqual([null, 1, 2, 4, 5, 6])
   })
@@ -109,9 +104,6 @@ describe('whether a single newline breaks the line', () => {
   })
 })
 
-/** #494: `/^==(?=\S)([\s\S]*?\S)==/` scanned to the end of the paragraph at every
- *  `==` that never closed. Marked asks at every position with what is left of the
- *  run and the same token list, which is what this does. */
 describe('a paragraph of highlights that never close', () => {
   const tokenizer = (
     highlight.extensions?.[0] as { tokenizer: (src: string, tokens: []) => unknown }

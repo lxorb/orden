@@ -1,7 +1,3 @@
-/** A part fetched when first asked for: one fetch however many ask, tried twice, and
- *  forgotten when both failed, so a dropped request is not every later ask's answer. */
-
-/** Long enough for a dropped request's network to be back, short enough to wait on. */
 const AGAIN_AFTER = 800
 
 export function door<T>(load: () => Promise<T>): () => Promise<T> {

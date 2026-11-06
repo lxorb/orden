@@ -10,8 +10,6 @@ import {
 } from './task-dates'
 import { readTask } from './task-line'
 
-/** A task's start date and deadline, as each kind of space reads them (#371). */
-
 const TODAY = '2026-10-18'
 const line = (text: string) => {
   const task = readTask(`- [ ] ${text}`)
@@ -25,7 +23,6 @@ describe("in a space of Orden's own", () => {
 
     expect(startOf(task)).toBe('2026-10-06')
     expect(deadlineOf(task)).toBeUndefined()
-    // Past, and no deadline: started, and not late.
     expect(hasStarted(task, TODAY)).toBe(true)
     expect(isLate(task, TODAY)).toBe(false)
   })

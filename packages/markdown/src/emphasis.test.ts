@@ -2,8 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { renderMarkdown } from './index'
 import { deckOf } from './slides'
 
-/** #547: marked walked the rest of the paragraph for every `*` or `_` that nothing
- *  closed - 162 seconds for `*a ` a hundred thousand characters long. */
 describe('emphasis nothing closes', () => {
   const quick = (source: string) => {
     const started = performance.now()
@@ -16,11 +14,8 @@ describe('emphasis nothing closes', () => {
     expect(quick('*a '.repeat(33_000))).not.toContain('<em>')
     expect(quick('_a '.repeat(33_000))).not.toContain('<em>')
     expect(quick('**a '.repeat(25_000))).not.toContain('<strong>')
-    // One closer at the end, which every opener before it would need.
     quick(`${'*a '.repeat(33_000)}a*`)
-    // Closers that the rule of three makes neither, for an opener of one.
     quick(`${'*a '.repeat(16_000)}${'a**b '.repeat(16_000)}`)
-    // Openers inside the words of another construct, read in the middle of a run.
     quick('a ~b *j '.repeat(12_000))
   })
 

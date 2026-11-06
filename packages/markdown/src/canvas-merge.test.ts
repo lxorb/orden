@@ -38,9 +38,6 @@ describe('stamping an edit', () => {
     expect(after.at).toEqual({ a: 100, b: 100 })
   })
 
-  /** The whole reason the times can be kept honest in one place: an edit hands
-   *  back the very same objects for what it did not touch, so "what changed" is
-   *  a handful of identity comparisons. */
   test('leaves the time of anything the edit handed straight back', () => {
     const a = card('a')
     const b = card('b')
@@ -52,8 +49,6 @@ describe('stamping an edit', () => {
 
   test('buries what the edit took away, and only that', () => {
     const before = stamped(plane(), plane({ nodes: [card('a'), card('b')] }), 100)
-    // The very same object for the card that stayed, which is what every edit
-    // hands back and what lets the time stand.
     const after = stamped(before, { ...before, nodes: [before.nodes[0]!] }, 200)
 
     expect(after.gone).toEqual({ b: 200 })
@@ -83,7 +78,6 @@ describe('stamping an edit', () => {
 })
 
 describe('merging two copies of a canvas', () => {
-  /** The case the whole design is for: two devices drawing at the same time. */
   test('keeps everything both sides added', () => {
     const shared = stamped(plane(), plane({ nodes: [card('shared')] }), 100)
     const ours = stamped(shared, { ...shared, nodes: [...shared.nodes, card('mine')] }, 200)
@@ -123,8 +117,6 @@ describe('merging two copies of a canvas', () => {
     expect(merged(ours, theirs, 1000).gone.b).toBe(300)
   })
 
-  /** The other half of the rule, and the one that stops a delete being a
-   *  one-way door: put the card back and putting it back is the newer word. */
   test('lets an edit made after a delete bring the card back', () => {
     const shared = stamped(plane(), plane({ nodes: [card('a'), card('b')] }), 100)
     const deleted = stamped(shared, { ...shared, nodes: [shared.nodes[0]!] }, 200)
@@ -148,8 +140,6 @@ describe('merging two copies of a canvas', () => {
       250,
     )
 
-    // Written out rather than compared as objects, because the file is the
-    // thing two devices have to agree on.
     expect(writeCanvas(merged(ours, theirs, 1000))).toBe(writeCanvas(merged(theirs, ours, 1000)))
   })
 
@@ -167,9 +157,6 @@ describe('merging two copies of a canvas', () => {
     expect(merged(ours, shared, 1000).edges).toEqual([])
   })
 
-  /** Recoloured on one device after it was erased on the other: kept, and kept
-   *  with its time, or the next merge reads it as never touched and the same
-   *  tombstone takes it after all (#500). */
   test('keeps the time of an edge or a stroke it kept over a tombstone', () => {
     const now = 10_000_000
     const ours = plane({
@@ -266,8 +253,6 @@ describe('merging two canvas files', () => {
     expect(mergeCanvasFiles(ours, ours)).toBe(ours)
   })
 
-  /** A file that got truncated on one device is never a reason to lose the
-   *  drawing on the other. */
   test('takes the side that has something when the other has nothing at all', () => {
     const ours = writeCanvas(stamped(plane(), plane({ nodes: [card('a')] }), 100))
 
@@ -288,10 +273,6 @@ describe('merging two canvas files', () => {
   })
 })
 
-/** The one thing on a canvas there is only one of. It is not a card and has no
- *  time of its own, so it is merged by the rule the rest of the file already
- *  follows: everything on either side is kept, and a tie goes to whichever sorts
- *  first, so two devices reach the same file without talking. */
 describe('the icon two copies of a canvas wear', () => {
   test('is kept from whichever side has one', () => {
     expect(merged(plane({ icon: 'rocket' }), plane(), 1000).icon).toBe('rocket')
@@ -314,8 +295,6 @@ describe('the icon two copies of a canvas wear', () => {
     const ours = plane({ icon: 'anchor', iconColor: 'teal' })
     const theirs = plane({ icon: 'rocket', iconColor: 'violet' })
 
-    // `anchor` sorts first, so both devices keep it - and teal with it, because
-    // violet was chosen for a picture that is no longer there.
     expect(merged(ours, theirs, 1000)).toMatchObject({ icon: 'anchor', iconColor: 'teal' })
     expect(merged(theirs, ours, 1000)).toMatchObject({ icon: 'anchor', iconColor: 'teal' })
   })
@@ -328,8 +307,6 @@ describe('the icon two copies of a canvas wear', () => {
     expect(merged(theirs, ours, 1000).iconColor).toBe('violet')
   })
 
-  /** A canvas nobody has drawn on is not a truncated file, and the icon somebody
-   *  chose for it is a reason to keep it rather than take the other side whole. */
   test('survives a merge with a copy that has cards and no icon', () => {
     const ours = writeCanvas(plane({ icon: 'rocket' }))
     const theirs = writeCanvas(stamped(plane(), plane({ nodes: [card('a')] }), 120))
@@ -340,20 +317,7 @@ describe('the icon two copies of a canvas wear', () => {
   })
 })
 
-/** What stamping an edit costs, counted.
- *
- *  Every gesture ends in one of these, and an eraser ends in one per point of the
- *  drag. It used to build two maps over every node, every edge and every stroke and
- *  look each one up: on a plane of ten thousand strokes the browser blamed the
- *  pointer coming up for a hundred and fifty milliseconds, and three of the walks in
- *  it were here.
- *
- *  What changed is found by identity - the operations hand back the very same objects
- *  for what they did not touch - so what is counted is the ids compared. A stroke
- *  drawn on a plane of six hundred compares one, not twelve hundred. A count rather
- *  than a clock, for the reason the rest of this suite gives. */
 describe('what stamping an edit compares', () => {
-  /** A plane of `count` strokes whose ids say how often they were read. */
   function counted(count: number) {
     const reads = { ids: 0 }
     const ink = Array.from({ length: count }, (_, at) => {
@@ -378,12 +342,8 @@ describe('what stamping an edit compares', () => {
     reads.ids = 0
     const after = stamped(before, { ...before, ink: [...before.ink, drawn] }, 2000)
 
-    // Six hundred and one ids on the plane, and the walk that writes a time against
-    // each of them reads every one. What it no longer does is read them all again
-    // twice over to work out which one moved: the comparison is the one stroke.
     expect(reads.ids).toBeLessThanOrEqual(ink.length + 2)
     expect(after.at.drawn).toBe(2000)
-    // And every other stroke keeps the time it had.
     expect(after.at.s0).toBe(1000)
     expect(after.at.s599).toBe(1000)
   })
@@ -400,7 +360,6 @@ describe('what stamping an edit compares', () => {
   })
 
   test('a plane read from a file gets a time against everything on it', () => {
-    // Another app's canvas, or one written before any of this: no times at all.
     const arrived = plane({ nodes: [card('a'), card('b')], at: {} })
     const stampedNow = stamped(arrived, { ...arrived, nodes: [...arrived.nodes, card('c')] }, 3000)
 
@@ -408,9 +367,6 @@ describe('what stamping an edit compares', () => {
   })
 })
 
-/** The ids are the file's own, and a plain object answers `constructor` and
- *  `__proto__` from its prototype: a time that was never written turned up as a
- *  function, and the file written after it was not JSON. */
 describe('ids an object would answer from its prototype', () => {
   const OBSIDIAN = JSON.stringify({
     nodes: [
@@ -450,9 +406,6 @@ describe('ids an object would answer from its prototype', () => {
   })
 })
 
-/** What a canvas file holds that Orden does not read - another app's node and the edges
- *  ending at it, a field the spec does not name, a key beside the lists - kept through a
- *  merge of two copies (#501). */
 describe('merging two canvas files somebody else wrote in too', () => {
   const drawing = {
     id: 'x',
@@ -539,16 +492,10 @@ describe('merging two canvas files somebody else wrote in too', () => {
   })
 })
 
-/** #781. What Orden does not read says nothing of when it changed, and Orden never
- *  changes it, so the file counts: a write records each such thing's fingerprint and
- *  generation, and the next read counts what another app changed or threw away since a
- *  generation on. Two copies put together keep the higher generation, either way round,
- *  through any number of writes. */
 describe('merging two copies after another app changed one of them', () => {
   const drawing = { id: 'x', type: 'excalidraw', x: 100, y: 0, width: 200, height: 100 }
   const card = { id: 'c', type: 'text', text: 'hello', x: 300, y: 0, width: 200, height: 60 }
 
-  /** The file as Orden last wrote it, on every device. */
   const written = writeCanvas(
     readCanvas(
       JSON.stringify({
@@ -564,7 +511,6 @@ describe('merging two copies after another app changed one of them', () => {
     nib: Record<string, unknown>
   }
   const parse = (text: string) => JSON.parse(text) as File
-  /** What another app does to a file: it edits the JSON, keeping what it does not know. */
   const outside = (text: string, edit: (file: File) => void) => {
     const file = parse(text)
     edit(file)
@@ -582,7 +528,6 @@ describe('merging two copies after another app changed one of them', () => {
   test('records what it wrote, and counts nothing changed in its own file', () => {
     expect(parse(written).nib.outside).toBeDefined()
     const extras = readCanvas(written).extras
-    // The drawing, the edge to it, and the card's own field.
     expect([...(extras?.generations ?? [])].sort()).toEqual([
       ['edge:e', 0],
       ['field:c', 0],
@@ -592,7 +537,6 @@ describe('merging two copies after another app changed one of them', () => {
   })
 
   test('keeps the version another app changed, whichever side asks', () => {
-    // 50 sorts after 100, so a tie would keep the old place.
     const moved = outside(written, (file) => {
       moveTo(50)(file)
       const other = file.nodes.find((one) => one.id === 'c')
@@ -637,7 +581,6 @@ describe('merging two copies after another app changed one of them', () => {
     ]) {
       expect(parse(again).nodes.find((node) => node.id === 'x')?.x).toBe(50)
     }
-    // And a burial outlives its write the same way.
     const gone = mergeCanvasFiles(written, outside(written, throwAway), 300)
     for (const again of [
       mergeCanvasFiles(gone, written, 400),
@@ -658,8 +601,6 @@ describe('merging two copies after another app changed one of them', () => {
   })
 })
 
-/** The stack: the order is the z order, and moving something in it is an edit that has
- *  to reach the other copy like any other (#504, #783). */
 describe('the order of the stack', () => {
   const base = (...ids: string[]) => {
     const things = ids.map((id) => card(id))
@@ -793,10 +734,6 @@ describe('the order of the stack', () => {
     expect(order(merged(theirs, ours, 100))).toEqual(['x'])
   })
 
-  /** A drag is stamped as an edit, as it has been since the merge was written, and a
-   *  merge takes one whole object. So a stale copy dragged later still beats real words.
-   *  Splitting it needs a time per kind of field and a merge that puts one object together
-   *  out of two: a design change for the owner. Expected to fail until then. */
   test.fails('words typed on one side outlive a later drag of a stale copy', () => {
     const start = { ...plane({ nodes: [card('x', 'draft')] }), at: { x: 1 } }
     const a = stamped(start, { ...start, nodes: [card('x', 'draft', 50)] }, 3)

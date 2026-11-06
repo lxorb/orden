@@ -17,9 +17,6 @@ describe('stepping a name that is taken', () => {
   })
 
   test('leaves a folder with a dot in its name alone', () => {
-    // The import's own copy of this counted the last dot of the whole path, so a
-    // note with no extension under such a folder stepped aside into a folder
-    // nobody had: `v1 2.2/Note`.
     expect(numbered('v1.2/Idea.md', 2)).toBe('v1.2/Idea 2.md')
     expect(numbered('v1.2/Note', 2)).toBe('v1.2/Note 2')
   })
@@ -77,7 +74,6 @@ describe('where the other copy goes', () => {
 
     expect(conflictPath('Notes', on)).toBe('Notes (from another device 2026-09-13)')
     expect(conflictPath('notes/README', on)).toBe('notes/README (from another device 2026-09-13)')
-    // The dot of a folder is not the file's.
     expect(conflictPath('v1.2/README', on)).toBe('v1.2/README (from another device 2026-09-13)')
     expect(conflictPath('C:\\v1.2\\README', on)).toBe(
       'C:\\v1.2\\README (from another device 2026-09-13)',
@@ -91,9 +87,6 @@ describe('where the other copy goes', () => {
   })
 
   test('steps aside by number when that name is taken too', () => {
-    // Two copies of one note in one day: the same rule every other taken name
-    // goes through. The service walks these in order; see `noteBeside` in
-    // services/sync/src/notes.ts.
     const beside = conflictPath('Plan.md', new Date('2026-09-13T10:00:00Z'))
 
     expect(beside).toBe('Plan (from another device 2026-09-13).md')

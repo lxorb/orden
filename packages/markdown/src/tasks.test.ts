@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { taskAt } from './tasks'
 
-/** The words of the task, which is what `marker` is for. */
 const words = (line: string) => {
   const task = taskAt(line)
   return task ? line.slice(task.marker) : null
@@ -20,8 +19,6 @@ describe('a task item', () => {
   test('is done when the box holds anything but a space', () => {
     expect(taskAt('- [x] buy milk')?.done).toBe(true)
     expect(taskAt('- [X] buy milk')?.done).toBe(true)
-    // What a theme gives a task of its own: cancelled, started, forwarded. All of
-    // them are a task nobody is waiting on.
     expect(taskAt('- [-] buy milk')?.done).toBe(true)
     expect(taskAt('- [/] buy milk')?.done).toBe(true)
   })
@@ -57,9 +54,6 @@ describe('a task item', () => {
 
 describe('where a tick is written', () => {
   test('the box, so one character changes and the rest of the line does not', () => {
-    // Every caller edits the file at an offset rather than rewriting the line:
-    // the editor dispatches a one-character change and the app records one for
-    // undo. So what this package answers with is where the box is.
     const task = taskAt('  * [x] buy milk')
     expect(task?.box).toBe(4)
     expect(task?.done).toBe(true)

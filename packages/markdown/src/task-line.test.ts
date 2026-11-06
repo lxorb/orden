@@ -8,8 +8,6 @@ import {
   type TaskFields,
 } from './task-line'
 
-/** The Tasks plugin's own documented lines (docs/Reference/Task Formats/Tasks Emoji
- *  Format.md and Dataview Format.md), and what each one says. */
 const PLUGIN_LINES: [string, Partial<TaskFields>][] = [
   [
     '- [ ] #task Has a created date ➕ 2023-04-13',
@@ -56,7 +54,6 @@ const PLUGIN_LINES: [string, Partial<TaskFields>][] = [
     '- [ ] #task do this after first and some other task  [dependsOn:: dcf64c,0h17ye]',
     { dependsOn: ['dcf64c', '0h17ye'] },
   ],
-  // The recurring examples of docs/Getting Started/Recurring Tasks.md.
   [
     '- [ ] take out the trash 🔁 every Sunday 📅 2021-04-25',
     { text: 'take out the trash', recurrence: 'every Sunday', due: '2021-04-25' },
@@ -141,7 +138,6 @@ describe('a task line read the way the Tasks plugin reads it', () => {
   })
 
   test('stops at the first thing that is not a field', () => {
-    // A due date in the middle of the words is words, as in the plugin.
     const task = readTask('- [ ] pay 📅 2026-10-06 the rent')
     expect(task?.due).toBeUndefined()
     expect(task?.text).toBe('pay 📅 2026-10-06 the rent')
@@ -150,7 +146,6 @@ describe('a task line read the way the Tasks plugin reads it', () => {
   test('keeps tags among the words and after them', () => {
     const task = readTask('- [ ] #work call #mum about #home/garden 📅 2026-10-06 #later')
     expect(task?.tags).toEqual(['work', 'mum', 'home/garden', 'later'])
-    // The tag right before the fields is one of them, as the plugin reads it.
     expect(task?.text).toBe('#work call #mum about')
   })
 
@@ -181,7 +176,6 @@ describe('a task line read the way the Tasks plugin reads it', () => {
       dependsOn: ['x1', 'y2'],
       fields: {},
     })
-    // The one at the end is the one read, as for any field written twice.
     expect(readTask('- [ ] a [remind:: 1h] b [remind:: 15m]')).toMatchObject({
       remind: [{ before: 15 }],
       fields: { remind: '1h' },
@@ -256,8 +250,6 @@ describe("the values of Orden's fields", () => {
   })
 })
 
-/** Field names and priority words are the writer's, and a plain object answered
- *  `constructor` from its prototype: a priority became a function and was lost. */
 describe('words an object would answer from its prototype', () => {
   test('are unknown fields, kept as written', () => {
     const task = readTask('- [ ] Pay [constructor:: 1] [__proto__:: 2] [toString:: 3]')
@@ -275,8 +267,6 @@ describe('words an object would answer from its prototype', () => {
   })
 })
 
-/** #499: patterns that gave the same blanks to more than one quantifier, timed on
- *  lines that took from seconds to hours before. */
 describe('a line built to make the reader backtrack', () => {
   const quick = (line: string) => {
     const started = performance.now()
@@ -314,9 +304,6 @@ describe('words written as a task that no field is read from', () => {
   })
 })
 
-/** `\[due:: 2026-01-01\]` is what an importer and `escapeText` write for somebody's
- *  words that look like a field: brackets meant as brackets. Read as a field, the
- *  task got a due date its writer never set and its text a stray backslash. */
 describe('an escaped bracket in a task', () => {
   test('opens no field', () => {
     const task = readTask('- [ ] a \\[due:: 2026-01-01\\]')
@@ -331,8 +318,6 @@ describe('an escaped bracket in a task', () => {
   })
 })
 
-/** Code in a task shows what is in it as written, backslashes and all, and reads as
- *  no field and no tag. So nothing in it needs an escape, and none is written. */
 describe('code in a task', () => {
   test('is left as it is by taskWords', () => {
     expect(taskWords('use `std::move` on `x #b` now')).toBe('use `std::move` on `x #b` now')
@@ -363,8 +348,6 @@ describe('code in a task', () => {
   })
 })
 
-/** Two colons that open no field: an address's, after a colon of its own. Escaping
- *  one there kept a backslash in the address the note links to. */
 test('an address with two colons in it is left as it is by taskWords', () => {
   expect(taskWords('see https://example.com/a::b')).toBe('see https://example.com/a::b')
 })

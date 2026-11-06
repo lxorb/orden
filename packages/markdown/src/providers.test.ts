@@ -79,8 +79,6 @@ describe('the addresses a note can show rather than link to', () => {
   })
 
   test('nothing a link wrote reaches a frame address unchecked', () => {
-    // A piece of somebody else's path carrying a `?`, a `/` or a `#` would be a
-    // frame pointed somewhere the table never named.
     expect(frame('https://youtu.be/abc?x=1/../../evil')).toBe(
       'https://www.youtube-nocookie.com/embed/abc',
     )
@@ -113,10 +111,6 @@ describe('the addresses a note can show rather than link to', () => {
 })
 
 describe('the broad list, for the places nobody wrote a row for by hand', () => {
-  /** One address apiece on the seven Notion shows where Orden used to show a link.
-   *  Four of them - Drive, Twitch, the gist and the form - are in no oEmbed
-   *  registry at all, which is the reason the list cannot simply be the registry
-   *  and has to be a table of embed addresses instead. */
   const listed = [
     ['https://drive.google.com/file/d/1A2b3C4d5E6f7G8hI9j/view?usp=sharing', 'drive'],
     ['https://miro.com/app/board/uXjVNZvHEJI=/', 'miro'],
@@ -141,16 +135,11 @@ describe('the broad list, for the places nobody wrote a row for by hand', () => 
   })
 
   test('a row nobody measured gets scripts and nothing more', () => {
-    // The nine rows above may ask for a narrower sandbox and a player's
-    // permissions, because somebody drove each of those frames both ways round.
-    // A row off the list has promised only that this address turns into that
-    // frame, so it gets the same bargain an `<iframe>` a note wrote by hand gets.
     for (const [address] of listed) {
       const card = webCard(address) ?? ''
       expect(card, address).toContain('data-sandbox="allow-scripts"')
       expect(card, address).not.toContain('allow-same-origin')
       expect(card, address).not.toContain('data-allow=')
-      // Nothing a provider said, and nothing a browser would fetch on its own.
       expect(card, address).not.toContain('<iframe')
       expect(card, address).not.toContain('src=')
     }
@@ -196,7 +185,6 @@ describe('the card an address is shown as', () => {
     expect(card).toContain('data-frame="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"')
     expect(card).toContain('data-sandbox="allow-scripts allow-same-origin allow-presentation"')
     expect(card).toContain('YouTube')
-    // Nothing that a browser would fetch on its own.
     expect(card).not.toContain('<iframe')
     expect(card).not.toContain('src=')
   })
@@ -230,8 +218,6 @@ describe('the card an <iframe> a note wrote becomes', () => {
   })
 
   test('and gets scripts and nothing else, having promised nothing', () => {
-    // A provider's row may ask for more, because the table says what that frame
-    // needs. An address a note wrote by hand has said nothing about itself.
     const card = iframeCard('<iframe src="https://x.test/a"></iframe>') ?? ''
     expect(card).toContain('data-sandbox="allow-scripts"')
     expect(card).not.toContain('allow-same-origin')
@@ -248,7 +234,6 @@ describe('the card an <iframe> a note wrote becomes', () => {
     expect(iframeCard('<iframe src="https://x.test/a" height="240"></iframe>')).toContain(
       '--embed-height: 240px',
     )
-    // Nothing, too little and far too much all mean sixteen by nine instead.
     for (const height of ['', ' height="4"', ' height="99999"', ' height="50%"']) {
       expect(iframeCard(`<iframe src="https://x.test/a"${height}></iframe>`), height).toContain(
         'embed-wide',
@@ -279,7 +264,6 @@ describe('the card an <iframe> a note wrote becomes', () => {
   })
 
   test('and nothing the tag carried besides the address comes with it', () => {
-    // A handler on the tag is the whole reason the tag is not passed through.
     const card = iframeCard('<iframe src="https://x.test/a" onload="alert(1)"></iframe>') ?? ''
     expect(card).not.toContain('onload')
     expect(card).not.toContain('alert')

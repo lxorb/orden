@@ -80,8 +80,6 @@ describe('a note read as rows', () => {
   })
 
   test('yes and no are words, not a checkbox', () => {
-    // YAML 1.1 reads them as booleans. A `status: no` that came back as a
-    // cleared checkbox would be a note lied to about itself.
     expect(said('---\nstatus: no\n---\n')?.[0]?.kind).toBe('text')
   })
 
@@ -95,8 +93,6 @@ describe('a note read as rows', () => {
   })
 
   test('a list at the key’s own margin, which is YAML too', () => {
-    // `frontMatterList` has always read this shape, so the reading view drawing
-    // the source instead of rows for the same block was the two disagreeing.
     expect(said('---\naliases:\n- One\n- Two\n---\n\nWords.\n')).toEqual([
       { key: 'aliases', kind: 'list', value: '', items: ['One', 'Two'] },
     ])
@@ -104,8 +100,6 @@ describe('a note read as rows', () => {
 })
 
 describe('a key', () => {
-  /** The writers take these, so the rows have to read them: a key they could not read
-   *  turned the whole block into source and every row went. */
   const NAMES = [
     'priorität',
     'a.b',
@@ -161,17 +155,11 @@ describe('a key', () => {
 describe('a block this cannot draw', () => {
   test('is left as source, whole', () => {
     for (const block of [
-      // A line that is not a key at all.
       '---\njust some words\n---\n',
-      // A comment somebody is keeping notes in.
       '---\n# why this is here\ntitle: A plan\n---\n',
-      // And one after a value, which a row would show as part of it.
       '---\ntitle: A plan # for now\n---\n',
-      // A list under a key that also has a value.
       '---\ntags: one\n  - two\n---\n',
-      // Items and pairs under one key, which is not something YAML means.
       '---\nexport:\n  - one\n  paper: A4\n---\n',
-      // Something indented that is neither.
       '---\nexport:\n  ???\n---\n',
     ]) {
       expect(readProperties(block), block).toBe(null)
@@ -179,8 +167,6 @@ describe('a block this cannot draw', () => {
   })
 
   test('a block longer than any note’s metadata is source, whichever rows it holds', () => {
-    // The ceiling used to sit after the two shapes that read their value off the
-    // key's own line, so a thousand of those drew a thousand rows.
     const many = (line: (at: number) => string) =>
       ['---', ...Array.from({ length: 200 }, (_, at) => line(at)), '---', ''].join('\n')
 
@@ -190,13 +176,10 @@ describe('a block this cannot draw', () => {
   })
 
   test('rather than a table with a row missing', () => {
-    // The whole point: half a table is a table that lies about the file.
     expect(readProperties('---\ntitle: A plan\nweird:\n  ~ what\n---\n')).toBe(null)
   })
 
   test('but Orden’s own page setup is a shape it knows, so those notes keep rows', () => {
-    // `export:` with a paper size under it is what page-setup.ts reads. Without
-    // this every note that prints on anything but the default went back to YAML.
     expect(said('---\ntitle: A plan\nexport:\n  paper: A4\n  margin: 15mm\n---\n')).toEqual([
       { key: 'title', kind: 'text', value: 'A plan', items: [] },
       { key: 'export', kind: 'map', value: '', items: ['paper: A4', 'margin: 15mm'] },
@@ -252,8 +235,6 @@ describe('the rows as markup', () => {
   })
 })
 
-/** The three answers a surface gives about a note's front matter, which is one
- *  setting read by the editor and by the reading view. */
 describe('the three answers', () => {
   const NOTE = '---\ntitle: A note\ntags: [one]\n---\n\n# Head\n'
 
@@ -284,8 +265,6 @@ describe('the three answers', () => {
   })
 
   test('fall back to the source for a block the rows cannot read', () => {
-    // Which is the answer the editor already gives, and the reason the reading view
-    // has a source of its own to fall back to now rather than nothing.
     const query = '---\ntitle: A note\n# a comment\n---\n\n# Head\n'
     expect(readProperties(query)).toBeNull()
     expect(renderMarkdown(query, { properties: 'properties' })).toContain(

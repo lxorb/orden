@@ -67,8 +67,6 @@ describe('what is between the brackets', () => {
     expect(parseWikilink('Note|a | b')?.alias).toBe('a | b')
   })
 
-  /** Obsidian's spelling inside a table, where a bare bar would end the cell. The
-   *  table renders `[[Note|shown]]`, and a rename has to find `Note` too. */
   test('a bar escaped for a table cell', () => {
     expect(parseWikilink('Note\\|shown')).toMatchObject({ target: 'Note', alias: 'shown' })
     expect(parseWikilink('Note#Part\\|shown')?.heading).toBe('Part')
@@ -237,7 +235,6 @@ describe('what kind of thing an embed names', () => {
   test('a container either can be in is read as what it usually holds', () => {
     expect(embedKind('a.webm')).toBe('video')
     expect(embedKind('a.weba')).toBe('audio')
-    // Ogg went the other way round: `.ogg` meant sound before `.ogv` existed.
     expect(embedKind('a.ogg')).toBe('audio')
     expect(embedKind('a.ogv')).toBe('video')
   })
@@ -376,8 +373,6 @@ describe('finding the links in a note', () => {
   })
 
   test('a block closes on its own mark and on nothing else', () => {
-    // A block showing tildes, and a block naming a language: neither of those
-    // lines ends the block above it, so the links in between are still code.
     const shown = '```\n~~~\n[[Inside]]\n~~~\n```\n[[Real]]'
     expect(findLinks(shown).map((one) => one.target)).toEqual(['Real'])
 
@@ -387,7 +382,6 @@ describe('finding the links in a note', () => {
   })
 
   test('a block in a quote, in a list item or indented is code too', () => {
-    // The twins of the crate's cases in links.rs.
     const targets = (text: string) => findLinks(text).map((one) => one.target)
     expect(targets('> ```\n> [[Example]]\n> ```\n\n[[Real]]\n')).toEqual(['Real'])
     expect(targets('Words.\n\n    [[Example]]\n\n[[Real]]\n')).toEqual(['Real'])
@@ -500,7 +494,6 @@ describe('the headings a note holds', () => {
   })
 
   test('keeping a hash that is a letter of the last word', () => {
-    // The closing run needs a blank in front of it, or `F#` is not what it says.
     expect(headingsOf('# C# and F#\n')).toEqual(['C# and F#'])
   })
 
@@ -550,8 +543,6 @@ describe('the part of a note a link points into', () => {
   })
 })
 
-/** A note arrives from a share, a room, a folder somebody synced or a page somebody
- *  clipped, and every surface that renders one holds what this answers. */
 describe('how many links one note is read for', () => {
   test('is the same ceiling the crate keeps', () => {
     expect(MOST_LINKS).toBe(5000)
@@ -561,8 +552,6 @@ describe('how many links one note is read for', () => {
     const many = findLinks(['[[A]] '.repeat(4000), '[[B]] '.repeat(4000), ''].join('\n'))
 
     expect(many).toHaveLength(MOST_LINKS)
-    // What is there is still read properly: the ceiling stops the reading rather
-    // than changing it.
     expect(many[0]?.target).toBe('A')
   })
 
@@ -571,8 +560,6 @@ describe('how many links one note is read for', () => {
   })
 })
 
-/** A Mac can hand a note over under a decomposed name: `U` and a combining
- *  diaeresis where a keyboard types one `Ü`. Both spellings are one name. */
 describe('a name as something to compare', () => {
   const composed = 'Übersicht'
   const decomposed = 'U\u0308bersicht'
@@ -599,8 +586,6 @@ describe('links after code that only looks like a fence', () => {
   })
 })
 
-/** #494: a `\s*` either side of the optional title shared out the blanks of a link
- *  nothing closed every way there is - thirteen seconds for a hundred thousand. */
 describe('a markdown link that never closes', () => {
   test('is turned away in linear time, however many blanks follow it', () => {
     const started = performance.now()

@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { lexMarkdown, renderMarkdown } from './index'
 import { isTagName, opensTag, tagNameAt } from './tags'
 
-/** The tags a render drew, by the name each carries. */
 function drawn(source: string, options: Parameters<typeof renderMarkdown>[1] = {}): string[] {
   const html = renderMarkdown(source, options)
   return [...html.matchAll(/class="tag"[^>]*data-tag="([^"]*)"/g)].map((found) => found[1] ?? '')
@@ -41,8 +40,6 @@ describe('what a tag is', () => {
     expect(opensTag('/')).toBe(false)
   })
 
-  /** What opens a run the page reads afresh: emphasis, strike, highlight, a
-   *  cell. The same rule as search/tags.ts and tags.rs. */
   test('and inside emphasis, strike, highlight or a cell', () => {
     for (const before of ['*', '_', '~~', '==', 'x **', '(**']) expect(opensTag(before)).toBe(true)
   })
@@ -59,9 +56,6 @@ describe('what a tag is', () => {
   })
 })
 
-/** What the page draws, row by row. The same rows are asked of the index in the
- *  app's search/tags.test.ts and of tags.rs (`reads_the_parity_rows`), so the
- *  page, the index and a rename agree on every one. */
 const PARITY: [string, string[]][] = [
   ['see https://x.test/?q=#x', []],
   ['[link](https://x.test/?q=#x)', []],
@@ -95,9 +89,6 @@ describe('a tag on a page', () => {
     expect(drawn('words (#aside) more')).toEqual(['aside'])
   })
 
-  /** The same notes as "inside emphasis, strike, highlight or a cell" and "a
-   *  link to a heading is no tag" in the app's search/tags.test.ts, so what the
-   *  page draws is what the index holds. */
   test('inside emphasis, strike, highlight or a cell, and never as a link target', () => {
     expect(drawn('**#a** *#b* ~~#d~~ ==#e== call')).toEqual(['a', 'b', 'd', 'e'])
     expect(drawn('| x | y |\n| - | - |\n|#f|#g|')).toEqual(['f', 'g'])

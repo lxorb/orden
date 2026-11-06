@@ -1,76 +1,40 @@
-/** What a task line says beyond its box: the dates, the priority, the rule it
- *  repeats by, and the fields Orden adds, read the way the Obsidian Tasks plugin
- *  reads them so a space opened in either app means the same thing.
- *
- *  The Tasks plugin reads a line from its end backwards, taking one field at a time
- *  until it meets something it does not know, and puts tags it passed on the way
- *  back into the words. This does the same, in the same order, with two additions:
- *  Dataview's bracket fields (`[time:: 16:00]`, and the round `(time:: 16:00)`) are
- *  fields too, wherever they stand, and every field remembers where it was written,
- *  so the writer (task-edits.ts) can change one value as one small edit and leave
- *  every other character of the line alone.
- *
- *  Pure, and in this package because the window, the search, the editor's chips and
- *  the rows engine all ask it about the same line. `taskAt` (tasks.ts) still answers
- *  the narrower question of where the box is. */
-
 import { plainWords } from './escapes'
 import { taskAt } from './tasks'
 import { codeAndWords, codeSpans, inCode, opensTag, opensTagAt, tagAt } from './tags'
 
-/** p1 to p4 as Todoist numbers them, then the Tasks plugin's two low ones: sorting
- *  ascending puts the most urgent first and the low ones after the ones with none. */
 export type Priority = 1 | 2 | 3 | 4 | 5 | 6
 
-/** No priority, Todoist's p4. */
 export const NO_PRIORITY: Priority = 4
 
-/** A reminder: some minutes before the task's time, at a time on the task's own
- *  day, or at a moment of its own. */
 export type Remind = { before: number } | { time: string } | { at: string; time: string }
 
 export interface TaskFields {
-  /** The words, without the fields and without the tags written after them. */
   text: string
-  /** The character in the box, as written. */
   status: string
-  /** `[x]` or `[X]`. */
   done: boolean
-  /** `[-]`. */
   cancelled: boolean
   due?: string
   scheduled?: string
   start?: string
   created?: string
-  /** The `✅` date. */
   completed?: string
-  /** The `❌` date. */
   cancelledOn?: string
-  /** `HH:MM`, the time of the due date, or of the scheduled one where there is no due. */
   time?: string
-  /** An IANA zone written after the time; a time without one is floating. */
   zone?: string
-  /** Minutes. */
   duration?: number
   deadline?: string
   remind: Remind[]
   priority: Priority
-  /** The rule as written, `when done` included: `every week on Monday when done`. */
   recurrence?: string
-  /** The Tasks plugin's `🏁 delete` or `🏁 keep`. */
   onCompletion?: string
-  /** Every tag on the line, without its `#`. */
   tags: string[]
   assignee?: string
   id?: string
   dependsOn: string[]
-  /** A block id, `^abc`, without its caret. */
   block?: string
-  /** Inline fields Orden has no name for, by key as written, so nothing read is lost. */
   fields: Record<string, string>
 }
 
-/** A field a line can carry, by the name TaskFields gives it. */
 export type FieldName =
   | 'due'
   | 'scheduled'
@@ -90,42 +54,27 @@ export type FieldName =
   | 'assignee'
   | 'block'
 
-/** How a field was written: the Tasks plugin's emoji, Dataview's brackets or
- *  parentheses, a trailing tag, or the block id's caret. */
 export type FieldForm = 'emoji' | 'bracket' | 'paren' | 'tag' | 'caret'
 
-/** One field as it stands on the line. Offsets are into the line. `from` is where
- *  the field's first character is, never the blank before it. */
 export interface FieldToken {
-  /** The field's name, `tag` for a trailing tag, or `other` for a field Orden does
-   *  not know. */
   field: FieldName | 'tag' | 'other'
   form: FieldForm
   from: number
   to: number
-  /** Where the value sits, so a change rewrites the value and keeps the key. */
   valueFrom: number
   valueTo: number
-  /** The key as written, for a bracket field. */
   key?: string
-  /** Whether it stood among the words rather than in the run of fields at the end. */
   inline: boolean
 }
 
-/** A task line taken apart: its fields, and the spans the writer needs. */
 export interface ParsedTask {
   fields: TaskFields
-  /** Where the box's character is. */
   box: number
-  /** Where the words start: after the marker and the box. */
   wordsFrom: number
-  /** Where the words end: before the run of fields at the end of the line. */
   wordsTo: number
-  /** Every field, in the order they stand on the line. */
   tokens: FieldToken[]
 }
 
-/** The priorities by emoji, and back. */
 const PRIORITY_BY_EMOJI: ReadonlyMap<string, Priority> = new Map(
   Object.entries({
     '🔺': 1,
@@ -145,7 +94,6 @@ export const EMOJI_BY_PRIORITY: Record<Priority, string> = {
   6: '⏬',
 }
 
-/** Dataview's words for a priority, the ones the Tasks plugin writes in that format. */
 const PRIORITY_BY_WORD: ReadonlyMap<string, Priority> = new Map(
   Object.entries({
     highest: 1,
@@ -167,8 +115,6 @@ export const WORD_BY_PRIORITY: Record<Priority, string> = {
   6: 'lowest',
 }
 
-/** The date fields by their emoji, the alternatives the Tasks plugin also reads
- *  included. */
 const DATE_BY_EMOJI: ReadonlyMap<string, FieldName> = new Map(
   Object.entries({
     '✅': 'completed',
@@ -183,7 +129,6 @@ const DATE_BY_EMOJI: ReadonlyMap<string, FieldName> = new Map(
   } satisfies Record<string, FieldName>),
 )
 
-/** The emoji Orden writes for each date field. */
 export const EMOJI_BY_DATE: Partial<Record<FieldName, string>> = {
   completed: '✅',
   cancelledOn: '❌',
@@ -193,13 +138,11 @@ export const EMOJI_BY_DATE: Partial<Record<FieldName, string>> = {
   created: '➕',
 }
 
-/** The emoji of the other Tasks fields. */
 export const RECURRENCE_EMOJI = '🔁'
 export const ON_COMPLETION_EMOJI = '🏁'
 export const ID_EMOJI = '🆔'
 export const DEPENDS_EMOJI = '⛔'
 
-/** A bracket field's key, read the way Dataview reads it: case and blanks aside. */
 const FIELD_BY_KEY: ReadonlyMap<string, FieldName> = new Map(
   Object.entries({
     due: 'due',
@@ -221,7 +164,6 @@ const FIELD_BY_KEY: ReadonlyMap<string, FieldName> = new Map(
   } satisfies Record<string, FieldName>),
 )
 
-/** The key each field is written under in Dataview's format. */
 export const KEY_BY_FIELD: Record<FieldName, string> = {
   due: 'due',
   scheduled: 'scheduled',
@@ -242,8 +184,6 @@ export const KEY_BY_FIELD: Record<FieldName, string> = {
   block: 'block',
 }
 
-/** The fields only Orden writes, always as brackets: the Tasks plugin has no emoji
- *  for them. */
 export const NIB_FIELDS: readonly FieldName[] = [
   'time',
   'duration',
@@ -252,7 +192,6 @@ export const NIB_FIELDS: readonly FieldName[] = [
   'assignee',
 ]
 
-/** The Tasks plugin's fields. */
 export const TASKS_FIELDS: readonly FieldName[] = [
   'id',
   'dependsOn',
@@ -270,47 +209,26 @@ export const TASKS_FIELDS: readonly FieldName[] = [
 const VARIANT = '️?'
 const DATE = String.raw`(\d{4}-\d{2}-\d{2})`
 
-/** The fields the Tasks plugin takes off the end of a line, each anchored there.
- *  The patterns are the plugin's own (DefaultTaskSerializer.ts). */
 const AT_END = {
   block: /(?<=\s)\^([A-Za-z0-9-]+)$/u,
   priority: new RegExp(`(🔺|⏫|🔼|🔽|⏬)${VARIANT}$`, 'u'),
   date: new RegExp(`(✅|❌|📅|📆|🗓|⏳|⌛|🛫|➕)${VARIANT} *${DATE}$`, 'u'),
-  // The words start on something other than a blank, or ` *` and the words would
-  // share the blanks between them and a long run of them takes seconds to fail.
   recurrence: new RegExp(`🔁${VARIANT} *([a-zA-Z0-9,!][a-zA-Z0-9, !]*)$`, 'u'),
   onCompletion: new RegExp(`🏁${VARIANT} *([a-zA-Z]+)$`, 'u'),
   tag: /(?<=^|\s)#[^ !@#$%^&*(),.?":{}|<>]+$/u,
   id: new RegExp(`🆔${VARIANT} *([a-zA-Z0-9-_]+)$`, 'u'),
-  // The plugin's own has ` *` on both sides of each comma and after each id, so
-  // the blanks could be shared out any number of ways, and a list that did not end
-  // as expected tried every one of them: eight seconds for a line of 125 (#499).
   dependsOn: new RegExp(`⛔${VARIANT} *([a-zA-Z0-9-_]+(?: *, *[a-zA-Z0-9-_]+)*) *$`, 'u'),
 }
 
-/** A bracket or round field, `[key:: value]` or `(key:: value)`, as far as its two
- *  colons. The key is everything before the first colon. */
 const FIELD_KEY = { '[': /\[([^[\]():]+?)::/uy, '(': /\(([^[\]():]+?)::/uy }
 
-/** What a field is read as: the whole of it at `index`, then its key and value. */
 interface Found {
   index: number
   0: string
   [group: number]: string | undefined
 }
 
-/** The field that opens at `at`, if one does. Its value is what stands between the
- *  colons and the first closing mark after them, blanks at either end aside.
- *
- *  Read by hand, not by a pattern. `\[([^[\]:]+?)::[ \t]*([^\]]*?)[ \t]*\]` gave
- *  the blanks inside to three quantifiers at once, which is cubic - twenty seconds
- *  for one field of four thousand spaces - and, for an opening that nothing
- *  closes, scanned to the end of the line once per opening (#499). `last` is where
- *  the last closing mark of its kind stands, so such an opening is turned away
- *  without a scan at all. */
 function fieldAt(text: string, at: number, last: number): Found | null {
-  // A bracket behind a backslash is a bracket, which is how `escapeText` and every
-  // importer write somebody's `[due:: 2026-01-01]` that was never a field.
   if (escaped(text, at)) return null
   const open = text[at] === '[' ? '[' : '('
   const key = FIELD_KEY[open]
@@ -327,7 +245,6 @@ function fieldAt(text: string, at: number, last: number): Found | null {
   return { index: at, 0: text.slice(at, end + 1), 1: found[1], 2: text.slice(from, to) }
 }
 
-/** Whether the character at `at` stands behind an odd run of backslashes. */
 function escaped(text: string, at: number): boolean {
   let before = at
   while (before > 0 && text[before - 1] === '\\') before--
@@ -338,8 +255,6 @@ function isBlank(character: string | undefined): boolean {
   return character === ' ' || character === '\t'
 }
 
-/** The field `head` ends with, if it ends with one. A field holds no closing mark
- *  but its own last one, so it opens after the one before that. */
 function fieldAtEnd(head: string): Found | null {
   const shut = head.at(-1)
   if (shut !== ']' && shut !== ')') return null
@@ -357,16 +272,12 @@ function fieldAtEnd(head: string): Found | null {
   return null
 }
 
-/** Where the next field could open in `text`, at or after `at`. */
 const OPENS = /[[(]/g
 
-/** A hash, which may open a tag; see `tagAt` in tags.ts. */
 const HASH = /#/g
 
-/** The Tasks plugin gives up after this many fields; so does this. */
 const MOST_FIELDS = 40
 
-/** A key the way Dataview compares keys. */
 function keyOf(written: string): string {
   return written
     .trim()
@@ -374,12 +285,10 @@ function keyOf(written: string): string {
     .replace(/[\s_-]+/g, '')
 }
 
-/** The field a bracket field's key names, if Orden knows one by it. */
 export function fieldOfKey(key: string): FieldName | undefined {
   return FIELD_BY_KEY.get(keyOf(key))
 }
 
-/** `16:00`, `9:05`, `16:00 Europe/Zurich`, `16:00 Etc/GMT+5`. */
 const TIME = /^(\d{1,2}):(\d{2})(?::\d{2})?(?:\s+([A-Za-z_][\w+-]*(?:\/[\w+-]+)*))?$/
 
 export function readTime(value: string): { time: string; zone?: string } | null {
@@ -392,7 +301,6 @@ export function readTime(value: string): { time: string; zone?: string } | null 
   return found[3] ? { time, zone: found[3] } : { time }
 }
 
-/** `45m`, `2h`, `1h30m`, `1h 30m`, `1.5h`, `90 min`, `90`: minutes, or null. */
 export function readDuration(value: string): number | null {
   const written = value.trim().toLowerCase()
   if (/^\d+$/.test(written)) return Number(written)
@@ -407,7 +315,6 @@ export function readDuration(value: string): number | null {
   return Math.round(hours * 60) + Number(found[2] ?? '0')
 }
 
-/** Minutes as Orden writes them: `45m`, `2h`, `1h30m`. */
 export function writeDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60)
   const rest = minutes % 60
@@ -415,7 +322,6 @@ export function writeDuration(minutes: number): string {
   return rest === 0 ? `${hours}h` : `${hours}h${rest}m`
 }
 
-/** A span of time before, written `15m`, `1h`, `1d`, `1h30m`: minutes, or null. */
 function readBefore(value: string): number | null {
   const found = /^(?:(\d+)d)?\s*(?:(\d+)h)?\s*(?:(\d+)m)?$/.exec(value.trim().toLowerCase())
   if (!found || (found[1] === undefined && found[2] === undefined && found[3] === undefined)) {
@@ -429,7 +335,6 @@ function writeBefore(minutes: number): string {
   return writeDuration(minutes)
 }
 
-/** `15m, 2026-10-06 09:00, 9:00`, or null when any of it is not a reminder. */
 export function readRemind(value: string): Remind[] | null {
   const out: Remind[] = []
   for (const part of value.split(',')) {
@@ -463,7 +368,6 @@ export function writeRemind(remind: readonly Remind[]): string {
     .join(', ')
 }
 
-/** An ISO date, and only a real one. */
 export function isDate(value: string): boolean {
   const found = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
   if (!found) return false
@@ -472,7 +376,6 @@ export function isDate(value: string): boolean {
   return date.getUTCMonth() === month - 1 && date.getUTCDate() === day
 }
 
-/** The fields of a line with nothing set. */
 function emptyFields(status: string): TaskFields {
   return {
     text: '',
@@ -483,14 +386,10 @@ function emptyFields(status: string): TaskFields {
     priority: NO_PRIORITY,
     tags: [],
     dependsOn: [],
-    // Keys are the writer's, and `[__proto__:: x]` on a plain object would set
-    // its prototype rather than keep the field.
     fields: Object.create(null) as Record<string, string>,
   }
 }
 
-/** Puts a value read under a field's name into the fields. False when the value is
- *  not one that field can hold, which keeps it as an unknown field instead. */
 function setField(fields: TaskFields, field: FieldName, value: string): boolean {
   switch (field) {
     case 'due':
@@ -550,7 +449,6 @@ function setField(fields: TaskFields, field: FieldName, value: string): boolean 
   }
 }
 
-/** The fields that hold a date, and only its first ten characters; see setField. */
 const DATE_FIELDS: ReadonlySet<FieldToken['field']> = new Set([
   'due',
   'scheduled',
@@ -561,16 +459,10 @@ const DATE_FIELDS: ReadonlySet<FieldToken['field']> = new Set([
   'deadline',
 ])
 
-/** How much of a value as written the field holds. All of it, but for a date: a
- *  field holds the date, and what is written after it - `[due:: 2026-10-06T10:00]`
- *  has a time there - is not the field's to rewrite when the date moves. The value
- *  as matched has no blank in front, so the date is where it starts. */
 function heldLength(field: FieldToken['field'], value: string): number {
   return DATE_FIELDS.has(field) ? Math.min(10, value.length) : value.length
 }
 
-/** The run of fields at the end of the line, read backwards as the Tasks plugin
- *  reads them. Answers the tokens in line order and where the words end. */
 function trailingTokens(
   line: string,
   from: number,
@@ -580,7 +472,6 @@ function trailingTokens(
   const tokens: FieldToken[] = []
   let end = line.trimEnd().length
 
-  /** Takes the match off the end, as a token of this field. */
   const take = (
     found: Found,
     field: FieldToken['field'],
@@ -608,8 +499,6 @@ function trailingTokens(
     end = line.slice(0, start).trimEnd().length
   }
 
-  /** Reads a value into a field the first time the field is met: the Tasks plugin
-   *  keeps the last one written, which is the first one read from the end. */
   const read = (field: FieldName, value: string) => {
     if (seen.has(field)) return true
     seen.add(field)
@@ -662,7 +551,6 @@ function trailingTokens(
   return { tokens, end: Math.max(end, from) }
 }
 
-/** The bracket fields among the words: Dataview reads a field wherever it stands. */
 function inlineTokens(
   line: string,
   from: number,
@@ -678,7 +566,6 @@ function inlineTokens(
 
   for (OPENS.lastIndex = 0; OPENS.exec(words);) {
     const at = OPENS.lastIndex - 1
-    // Code holds no field: it is shown as written. Read on after it.
     const inside = code.find(([from, to]) => at >= from && at < to)
     if (inside) {
       OPENS.lastIndex = inside[1]
@@ -713,7 +600,6 @@ function inlineTokens(
   return tokens
 }
 
-/** Every tag in a run of text, without its `#`, in the order written. */
 export function tagsIn(text: string): string[] {
   const out: string[] = []
   const code = codeSpans(text)
@@ -724,7 +610,6 @@ export function tagsIn(text: string): string[] {
   return out
 }
 
-/** The line taken apart, or null for a line that is not a task. */
 export function parseTask(line: string): ParsedTask | null {
   const item = taskAt(line)
   if (!item) return null
@@ -759,24 +644,13 @@ export function parseTask(line: string): ParsedTask | null {
   }
 }
 
-/** The fields of a task line, or null for a line that is not one. */
 export function readTask(line: string): TaskFields | null {
   return parseTask(line)?.fields ?? null
 }
 
-/** The emoji the Tasks plugin reads a field from: the priorities, the dates, a
- *  recurrence, what happens on completion, an id and what a task waits on. */
 const FIELD_EMOJI = /(🔺|⏫|🔼|🔽|⏬|✅|❌|📅|📆|🗓|⏳|⌛|🛫|➕|🔁|🏁|🆔|⛔)\uFE0F?/gu
 
-/** Words somebody else wrote, as a task line's text that reads back as exactly
- *  those words: the escapes `plainWords` would write are the caller's, and this adds
- *  what only the task reader would take apart. A `#` that would open a tag is
- *  escaped, as is the second colon of a `[key:: value]` field, and every field emoji
- *  is followed by a word joiner, which draws nothing and leaves the emoji, the date
- *  or the words after it read as none of the patterns at the end of a line. */
 export function taskWords(words: string): string {
-  // Code shows what is in it as written and the reader takes nothing out of it, so it
-  // is passed over: an escape there would be drawn as a backslash.
   let before = ''
   return codeAndWords(words)
     .map((one) => {
@@ -787,7 +661,6 @@ export function taskWords(words: string): string {
     .join('')
 }
 
-/** `taskWords` for words that are not code, `before` the character in front of them. */
 function taskWordsAfter(words: string, before: string): string {
   let out = ''
   for (let at = 0; at < words.length; at++) {
@@ -801,9 +674,6 @@ function taskWordsAfter(words: string, before: string): string {
   return out.replace(FIELD_EMOJI, '$&\u2060')
 }
 
-/** Whether the colon at `colon` closes a field's key: a bracket that opens one before
- *  it, not escaped, and a key between with no colon or bracket in it. An address's
- *  `https://a/x::y` has a colon of its own in the way, so it is left as written. */
 function endsKey(words: string, colon: number): boolean {
   for (let back = colon - 1; back >= 0; back--) {
     const char = words.charAt(back)
@@ -813,10 +683,6 @@ function endsKey(words: string, colon: number): boolean {
   return false
 }
 
-/** Plain words typed in another app, as a task line's text that reads back as them:
- *  `plainWords` for what a note would read in them, then `taskWords` for what only
- *  the task reader would. The one way in for every importer's checklist item and a
- *  task shared from another app, so none of them can miss half of it. */
 export function plainTaskWords(words: string): string {
   return taskWords(plainWords(words))
 }

@@ -1,51 +1,17 @@
-/** A deck as a page that stands on its own.
- *
- *  Two places need one and neither can borrow the app's: a deck exported as a
- *  single HTML file, which has to work from an email attachment with no network
- *  at all, and a published note read as slides, which is served by the Worker.
- *  Both put the same markup on the page and run the same handful of lines to
- *  move through it, so they are here rather than written twice.
- *
- *  The markup carries no behaviour of its own: without the script every slide is
- *  simply on the page, one after another, which is exactly what printing wants
- *  and how a deck becomes a PDF of one page per slide. */
-
 import type { SlideShape } from './slides'
 
-/** A slide already rendered by `renderMarkdown`. */
 export interface RenderedSlide {
   html: string
   shape: SlideShape
-  /** Whether the slide continues the one before it downwards, which is the only
-   *  thing it changes: the direction the deck moves in when it arrives. */
   vertical: boolean
-  /** Which list items wait for a click, by their place among the items the
-   *  slide renders. */
   fragments: readonly number[]
 }
 
-/** The stage, in CSS pixels. Sixteen by nine, and the same numbers the app's own
- *  stage uses; see apps/desktop/src/lib/slides/stage.ts. */
 export const DECK_WIDTH = 1280
 export const DECK_HEIGHT = 720
 
-/** The sizes a slide's text is allowed to take, largest first.
- *
- *  A ladder rather than a number worked out from the height, because the text has
- *  to be measured to know whether it fits at all: a picture, a table and a fenced
- *  block all take the room they take. Ten rungs reach a third of the size, which
- *  holds a slide nobody should have written.
- *
- *  Here rather than beside the app's own stage, because a slide has to come out
- *  the same size on all three: on screen, in an exported file, and on a published
- *  page. The app imports it; the script below is given it as a literal. */
 export const FIT_STEPS = [1, 0.92, 0.84, 0.76, 0.68, 0.6, 0.52, 0.45, 0.38, 0.32] as const
 
-/** The whole deck as markup: one stage per slide, in order.
- *
- *  Every slide is on the page rather than swapped in, so the file holds the deck
- *  whether or not any script runs - a printer, a reader with scripting off and a
- *  crawler all get the words. */
 export function deckBody(slides: readonly RenderedSlide[]): string {
   const stages = slides.map((slide) => {
     const fragments = slide.fragments.join(',')
@@ -71,14 +37,6 @@ export function deckBody(slides: readonly RenderedSlide[]): string {
   ].join('\n')
 }
 
-/** Everything a deck on a page of its own has to do before anybody looks at it:
- *  find its slides, scale the stage to the window, and shrink each slide's text
- *  until it fits.
- *
- *  Shared source rather than a second copy, because both scripts below need it
- *  and a deck that fitted one way on screen and another on paper would be two
- *  decks. Written as text so it can be inlined into a file with no network
- *  behind it, and with no syntax a bundler would have to touch. */
 const STAGE_SOURCE = `
   var deck = document.querySelector('.deck')
   var stages = deck ? Array.prototype.slice.call(deck.querySelectorAll('.stage')) : []
@@ -121,11 +79,6 @@ const STAGE_SOURCE = `
   }
 `
 
-/** A deck that turns no pages: it lays itself out and stops there.
- *
- *  What a deck on its way to a printer gets. Every slide is on the page and the
- *  print rules give each of them a sheet, so every one of them has to be fitted
- *  rather than only whichever was on screen. */
 export const DECK_LAYOUT_SCRIPT = `(function () {
 ${STAGE_SOURCE}
   if (!stages.length) return
@@ -136,12 +89,6 @@ ${STAGE_SOURCE}
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit)
 })()`
 
-/** Moving through a deck on a page of its own.
- *
- *  The same gestures the app answers to: the arrows, space, the page keys, Home
- *  and End, a number then Enter, and a click on either half of the screen. A key
- *  held with a modifier is the browser's - Alt and an arrow is the way back - and
- *  is left alone. */
 export const DECK_SCRIPT = `(function () {
 ${STAGE_SOURCE}
   if (!stages.length) return
@@ -295,10 +242,6 @@ ${STAGE_SOURCE}
   draw(null)
 })()`
 
-/** What the markup above needs on top of the prose stylesheet, for a page that
- *  has no app around it. The app's own stage is dressed by
- *  packages/themes/src/slides.css, which this leans on: only the two things a
- *  standalone page adds are here. */
 export const DECK_PAGE_CSS = `
 .deck .stage.away { display: none; }
 @media print { .deck .stage.away { display: block; } }

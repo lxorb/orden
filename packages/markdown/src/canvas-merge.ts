@@ -1,72 +1,22 @@
-/** Two copies of one canvas, put back together.
- *
- *  The rule is one sentence: everything on either side is kept, by id; where
- *  both sides have the same thing the one touched later wins; and a thing thrown
- *  away stays thrown away unless it was touched again afterwards. Two people
- *  drawing on one plane at the same time therefore both keep everything they
- *  added, which is the only behaviour a shared canvas can have. Nobody's card is
- *  ever a "conflict copy" they have to go and find.
- *
- *  It works because everything on a canvas already has an id and now has a time
- *  as well. `stamped` keeps the times honest by comparing a canvas with the one
- *  before it: every edit in the app replaces the objects it touches and leaves
- *  the rest as the very same objects, so "what changed" is a handful of
- *  identity comparisons rather than a deep diff, and no edit has to remember to
- *  write a timestamp.
- *
- *  Symmetric on purpose. Merging ours with theirs and theirs with ours gives the
- *  same file, so it does not matter whether the client or the worker does it, or
- *  which device gets there first. */
-
 import { type Canvas, noTimes, readCanvas, type Thing, timeIn, writeCanvas } from './canvas'
 import { holdsExtras, mergedExtras } from './canvas-extras'
 
-/** How long a tombstone is kept, in milliseconds. Long enough that a tablet left
- *  in a drawer for a month cannot bring a deleted card back, short enough that a
- *  canvas edited for years does not carry a list of everything ever removed. */
 export const TOMBSTONE_KEPT = 90 * 24 * 60 * 60 * 1000
 
 function byId<T extends Thing>(things: readonly T[]): Map<string, T> {
   return new Map(things.map((thing) => [thing.id, thing]))
 }
 
-/** The canvas with its times brought up to date, given what it looked like
- *  before the edit.
- *
- *  Called once, where an edit is recorded, so nothing else in the app has to
- *  know that a canvas has times at all. What changed is worked out by identity:
- *  the operations that make a new canvas hand back the very same objects for
- *  everything they did not touch.
- *
- *  Something that comes back after being thrown away - an undo, or a paste of
- *  what was just deleted - loses its tombstone, or the merge would delete it
- *  again the moment the file reached another device. */
 export function stamped(before: Canvas, after: Canvas, now: number): Canvas {
   const changed: string[] = []
   const removed: string[] = []
   const shifted: string[] = []
   const touched = { changed, removed, shifted }
 
-  // A list at a time, and only the lists that are not the very same list. Drawing
-  // one stroke on a plane of ten thousand touches the ink and leaves the nodes and
-  // the edges exactly as they were, so there is nothing to compare in two of the
-  // three; and the ink itself is the old list with one more on the end, which a walk
-  // of references finds without building anything.
-  //
-  // What that was worth: this used to build two maps over every node, edge and
-  // stroke and then look every one of them up, on every edit - which for an eraser
-  // is every point of a drag. The browser blamed the pointer coming up for a
-  // hundred and fifty milliseconds on a plane of ten thousand strokes, and this was
-  // three of the walks in it.
   diff(before.nodes, after.nodes, touched)
   diff(before.edges, after.edges, touched)
   diff(before.ink, after.ink, touched)
 
-  // A time against everything on the plane, which is what makes this the one place
-  // that has to be right: a thing with no time loses every merge, and a time left
-  // behind for something that is no longer there would keep a tombstone from being
-  // written. So the plane is still walked once and the record still built from it -
-  // what has gone is the two maps over all of it and the lookup per thing.
   const touchedIds = new Set(changed)
   const at = noTimes()
   const when = (id: string) => (touchedIds.has(id) ? now : (timeIn(before.at, id) ?? now))
@@ -87,7 +37,6 @@ export function stamped(before: Canvas, after: Canvas, now: number): Canvas {
   const gone = noTimes()
 
   for (const [id, since] of Object.entries(before.gone)) {
-    // A tombstone for something that is on the plane again is no longer true.
     if (at[id] !== undefined || now - since >= TOMBSTONE_KEPT) continue
     gone[id] = since
   }
@@ -104,9 +53,6 @@ export function stamped(before: Canvas, after: Canvas, now: number): Canvas {
   return out
 }
 
-/** When things moved, for what is still here, apart from `at`: see `Canvas.moved`. The
- *  very same record where nothing moved and nothing it names went, so a pen on a plane
- *  of many moved cards neither walks it nor has it written to the room again. */
 function movesAfter(
   was: Record<string, number> | undefined,
   shifted: readonly string[],
@@ -126,16 +72,6 @@ function movesAfter(
   return Object.keys(moved).length ? moved : undefined
 }
 
-/** What changed between two versions of one list, by identity.
- *
- *  The operations that make a new canvas hand back the very same objects for
- *  everything they did not touch, so identity is the whole test. Two lists that are
- *  the same list changed nothing; otherwise the common prefix and the common suffix
- *  are walked off the ends - which is the whole of an append, an insert or one thing
- *  replaced - and only what is left between them is put into maps.
- *
- *  `changed` collects what is on the plane now and was not there in this form
- *  before; `removed` collects what has gone; `shifted` what sits in another place. */
 function diff<T extends Thing>(
   before: readonly T[],
   after: readonly T[],
@@ -158,8 +94,6 @@ function diff<T extends Thing>(
   const wasMiddle = before.slice(head, before.length - tail)
   const isMiddle = after.slice(head, after.length - tail)
 
-  // The common case is one of the two being empty: a stroke added, or a stroke
-  // erased. A map is built only where both ends have something in them.
   if (wasMiddle.length === 0) {
     for (const thing of isMiddle) touched.changed.push(thing.id)
     return
@@ -181,9 +115,6 @@ function diff<T extends Thing>(
     if (!is.has(id)) touched.removed.push(id)
   }
 
-  // And what moved. The list is the stack, so that is an edit of its own, whatever else
-  // happened to the thing. Only those that have to have moved for the rest to read the
-  // same: a time on something nobody moved would beat somebody's move of it in a merge.
   const places = new Map(wasMiddle.map((thing, index) => [thing.id, index]))
   const both = isMiddle.filter((thing) => places.has(thing.id))
   const stayed = standing(
@@ -195,16 +126,10 @@ function diff<T extends Thing>(
   }
 }
 
-/** Which of `items` can stay where they are, by index, for the list to be in the order
- *  `before` says: the longest run already in that order, which leaves the fewest to
- *  move. The earlier of two equally long ones, so of two things that swapped, the one
- *  that came forward over the other is the one that moved. */
 export function standing<T extends object>(
   items: readonly T[],
   before: (one: T, other: T) => boolean,
 ): Set<number> {
-  // Walked from the end: for each length of run, the index of the item that starts the
-  // best one so far, and for each item the one its run goes on to.
   const starts: number[] = []
   const next: number[] = []
 
@@ -235,15 +160,10 @@ export function standing<T extends object>(
   return out
 }
 
-/** When something last changed, on one side. Zero for something that side has
- *  never seen, which loses to any time at all. */
 function timeOf(canvas: Canvas, id: string): number {
   return timeIn(canvas.at, id) ?? 0
 }
 
-/** Which of two versions of one thing to keep. The later one; and for two with
- *  the same time, the one whose written form sorts first, so both devices reach
- *  the same answer without talking to each other. */
 function later<T extends Thing>(ours: T, ourTime: number, theirs: T, theirTime: number): T {
   if (ourTime !== theirTime) return ourTime > theirTime ? ours : theirs
   if (ours === theirs) return ours
@@ -251,22 +171,6 @@ function later<T extends Thing>(ours: T, ourTime: number, theirs: T, theirTime: 
   return JSON.stringify(ours) <= JSON.stringify(theirs) ? ours : theirs
 }
 
-/** One list merged: the union by id, each entry the later of the two versions,
- *  and anything a tombstone outlives left out.
- *
- *  The order is the same on both sides because it is worked out from both, and apart
- *  from what each thing says: a thing sits where the side that moved it later put it,
- *  and its words are whichever side edited it later, which may be the other. What neither
- *  side moved later is what they share and what the rest is placed against: everything
- *  else sits between the same two of those as it does on its own side, so a list that grew
- *  on one side does not push a move on the other out of place. Two things that come to
- *  sit in one gap go in the order they got there, which puts a card brought to the front
- *  over what was added before that and under what was added after, and by their ids at
- *  one moment. That is what makes the z order of a merged canvas the same on every
- *  device.
- *
- *  Two moves of one thing are one place, the later: the other is dropped, on both devices
- *  alike. */
 function mergeList<T extends Thing>(
   ours: readonly T[],
   theirs: readonly T[],
@@ -280,7 +184,6 @@ function mergeList<T extends Thing>(
   const theirMove = (id: string) => timeIn(theirCanvas.moved ?? {}, id) ?? 0
   const shared = (id: string) => mine.has(id) && yours.has(id) && ourMove(id) === theirMove(id)
 
-  // Each id once, from the maps: a file written by hand may name one twice.
   const ourList = [...mine.values()]
   const theirList = [...yours.values()]
   const anchors = settled(
@@ -290,8 +193,6 @@ function mergeList<T extends Thing>(
     (id) => timeOf(ourCanvas, id),
     (id) => timeOf(theirCanvas, id),
   )
-  // What the other side does not hold stands on this one, whatever that side says of its
-  // moves: only a tombstone takes a thing off the plane.
   const ourGaps = gapsIn(ourList, shared, (id) => !yours.has(id) || ourMove(id) >= theirMove(id))
   const theirGaps = gapsIn(theirList, shared, (id) => !mine.has(id) || theirMove(id) >= ourMove(id))
   const touchedAt = (id: string) =>
@@ -303,8 +204,6 @@ function mergeList<T extends Thing>(
     const ourTime = timeOf(ourCanvas, id)
     const theirTime = timeOf(theirCanvas, id)
 
-    // A delete beats an edit made before it, and loses to one made after: the
-    // card was put back, and putting it back is the newer word on the matter.
     if (buried !== undefined && buried >= Math.max(ourTime, theirTime)) return
 
     const one = mine.get(id)
@@ -342,11 +241,6 @@ function mergeList<T extends Thing>(
   return out
 }
 
-/** What both sides share, in one order. The order they both have, which is nearly
- *  always. Two that disagree have no time of a move to go on, as in a file an older
- *  build wrote, which stamped a move as an edit: so each thing goes where the side that
- *  touched it later put it, and where neither did so later, where it sits on the side
- *  that has it earlier; by id where that is one place. */
 function settled(
   ours: readonly Thing[],
   theirs: readonly Thing[],
@@ -372,8 +266,6 @@ function settled(
   })
 }
 
-/** One side's own things that stand, in the gaps its shared ones leave: the first gap
- *  is what sits under the first shared thing, the last what sits over the last. */
 function gapsIn(
   list: readonly Thing[],
   shared: (id: string) => boolean,
@@ -388,8 +280,6 @@ function gapsIn(
   return gaps
 }
 
-/** Two canvases as one. Neither side is the base and neither is preferred: this
- *  is the whole of the conflict rule, and it is the same rule wherever it runs. */
 export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
   const gone = noTimes()
 
@@ -405,17 +295,11 @@ export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
   const kept = keptIcon(ours.icon ?? null, theirs.icon ?? null)
   const nodes = mergeList(ours.nodes, theirs.nodes, ours, theirs, gone)
   const cards = new Set(nodes.map((node) => node.id))
-  // An edge whose card the merge dropped has nowhere to be, and the format
-  // has no place to put one that ends in the air.
   const edges = mergeList(ours.edges, theirs.edges, ours, theirs, gone).filter(
     (edge) => cards.has(edge.fromNode) && cards.has(edge.toNode),
   )
   const ink = mergeList(ours.ink, theirs.ink, ours, theirs, gone)
 
-  // Everything kept keeps its time, edges and ink as much as cards. A stroke kept
-  // over a tombstone because it was recoloured after the erase, and written back
-  // without its time, read as never touched at the next merge - and lost to that
-  // same tombstone there (#500).
   const held = new Set([...cards, ...edges.map((edge) => edge.id), ...ink.map((one) => one.id)])
 
   const at = noTimes()
@@ -442,20 +326,12 @@ export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
     icon: kept,
     iconColor: keptTint(ours, theirs, kept),
     ...(Object.keys(moved).length ? { moved } : {}),
-    // What either side held that is not read, kept: another app's nodes, the edges
-    // ending at them, the fields and keys the spec does not name (#501, #780).
     ...(holdsExtras(ours.extras) || holdsExtras(theirs.extras)
       ? { extras: mergedExtras(ours.extras, theirs.extras) }
       : {}),
   }
 }
 
-/** The colour the merged file's icon is drawn in.
- *
- *  A colour belongs to the icon it colours, so only a side whose icon survived has
- *  anything to say: the other side chose its colour for a different picture. Where
- *  both named the same icon the same rule decides again, which is what keeps the two
- *  devices agreeing. */
 function keptTint(ours: Canvas, theirs: Canvas, kept: string | null): string | null {
   const mine = (ours.icon ?? null) === kept ? (ours.iconColor ?? null) : null
   const yours = (theirs.icon ?? null) === kept ? (theirs.iconColor ?? null) : null
@@ -463,16 +339,6 @@ function keptTint(ours: Canvas, theirs: Canvas, kept: string | null): string | n
   return keptIcon(mine, yours)
 }
 
-/** The icon the merged file wears: the one either side names, and where both name
- *  one and they differ, the one that sorts first.
- *
- *  The same rule as everything else in here, read for a thing there is only one
- *  of: nothing on either side is lost, and the tie is broken the way `later`
- *  breaks one, so both devices reach the same file without talking. Which does
- *  mean an icon taken away on one device comes back if the other still had it -
- *  exactly what happens to a card deleted on one device and moved on the other,
- *  and for the same reason. Choosing an icon on an open canvas does not go through
- *  here at all; see `follow` in the app's canvas store. */
 function keptIcon(ours: string | null, theirs: string | null): string | null {
   if (ours === null || ours === theirs) return theirs
   if (theirs === null) return ours
@@ -480,12 +346,6 @@ function keptIcon(ours: string | null, theirs: string | null): string | null {
   return ours <= theirs ? ours : theirs
 }
 
-/** Two canvas files as one file. What the sync client and the worker both call,
- *  so the rule cannot differ between them.
- *
- *  Text that is not a canvas at all reads as an empty one, and an empty one
- *  merges to whatever the other side had: a truncated file on one device is
- *  never a reason to lose the drawing on the other. */
 export function mergeCanvasFiles(ours: string, theirs: string, now = Date.now()): string {
   if (ours === theirs) return ours
 
@@ -504,9 +364,6 @@ function weighs(canvas: Canvas): boolean {
     canvas.nodes.length > 0 ||
     canvas.ink.length > 0 ||
     Object.keys(canvas.gone).length > 0 ||
-    // An icon is the one thing an empty canvas can carry that a truncated file
-    // cannot: unreadable text reads as an empty canvas wearing nothing, so a plane
-    // nobody has drawn on yet still keeps the icon somebody chose for it.
     !!canvas.icon
   )
 }

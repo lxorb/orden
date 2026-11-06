@@ -23,12 +23,10 @@ import {
   settled,
 } from './pages'
 
-/** A page with an id nobody has to read, so a test can name it. */
 function page(id: string, extra: Partial<PageNode> = {}): PageNode {
   return { ...newPage(), id, ...extra }
 }
 
-/** Pages laid out with a card and a stroke 20 into each, both named `on:` the page. */
 function carrying(pages: PageNode[]) {
   const placed = laidOut(pages)
   const at = (one: PageNode) => ({ x: one.x + 20, y: one.y + 20 })
@@ -40,7 +38,6 @@ function carrying(pages: PageNode[]) {
   return { ...emptyCanvas(), nodes: [...placed, ...cards], ink }
 }
 
-/** The cards and strokes that are no longer on the page they were put on. */
 function strays(canvas: ReturnType<typeof emptyCanvas>): string[] {
   const off = (id: string, point: { x: number; y: number } | undefined) =>
     !point || pageAt(pagesOf(canvas), point)?.id !== id.slice(3)
@@ -61,9 +58,6 @@ describe('a page note as a file', () => {
   })
 
   test('starts on the paper it was asked for, which is what a new one is given', () => {
-    // A4 where nothing says otherwise, and whatever the reader chose where something
-    // does: the size of the paper somebody writes on is a decision about their printer
-    // and their country, and every page note used to start on A4 whatever they said.
     for (const paper of ['a4', 'letter', 'long'] as const) {
       const pages = pagesOf(readCanvas(blankPages(paper)))
 
@@ -84,7 +78,6 @@ describe('a page note as a file', () => {
     expect(written.nodes[0]?.type).toBe('group')
     expect(written.nodes[0]?.label).toBe('Page 1')
     expect(written.nib.pages).toHaveLength(1)
-    // The record and the node are two halves of one page, joined by the id.
     expect(written.nib.pages[0]?.id).toBe(written.nodes[0]?.id)
   })
 
@@ -302,7 +295,6 @@ describe('reordering', () => {
     const card = swapped.nodes.find((node) => node.id === 'card')
 
     expect(pagesOf(swapped)[0]?.id).toBe(second.id)
-    // The page it was on is now first, so what was on it is 20 from the top.
     expect(card?.y).toBe(20)
   })
 
@@ -334,7 +326,6 @@ describe('a long page', () => {
     const height = pagesOf(taller)[0]?.height ?? 0
 
     expect(height).toBeGreaterThan(PAPERS.a4.height)
-    // In whole screenfuls, so the page grows in steps a scroll can follow.
     expect((height - PAPERS.a4.height) % GROWTH).toBe(0)
   })
 
@@ -428,14 +419,11 @@ describe('a page out of a PDF', () => {
     const canvas = pagesFromPdf('Paper.pdf', [
       { width: PAPERS.letter.width, height: PAPERS.letter.height },
       { width: PAPERS.a4.width, height: PAPERS.a4.height },
-      // Neither, which is most of the papers in the world: the page is its own size
-      // and the name falls back to the one every other page note starts as.
       { width: 400, height: 1200 },
     ])
     const pages = pagesOf(canvas)
 
     expect(pages.map((one) => one.paper)).toEqual(['letter', 'a4', 'a4'])
-    // And the size is still the paper's own, whatever it is called.
     expect(pages[2]).toMatchObject({ width: 400, height: 1200 })
   })
 

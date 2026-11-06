@@ -1,13 +1,4 @@
 // @vitest-environment jsdom
-/** The extractor over four saved pages, the kinds clipped most: a news article, a page of
- *  documentation with code in three languages, a Wikipedia article with maths, and a
- *  page whose point is a table.
- *
- *  Each goes through `extract` as a live page's DOM, and
- *  through `readSnapshot` as a web tab hands it the page written down, and the two must
- *  agree to the character - that is what "the same page clips to the same note from
- *  both" comes to. What is checked beyond that is the markdown, because that is what
- *  lands in the note. */
 
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -21,9 +12,6 @@ function pageOf(name: string, url: string): Document {
   return new JSDOM(html, { url }).window.document
 }
 
-/** The page written down the way a tab's reader writes it, minus the selection: the
- *  doctype, the base resolved, and the rest as it stands. The reader itself is the
- *  app's, and the app's test runs the real one over these same pages. */
 function snapshotOf(page: Document): string {
   const copy = page.documentElement.cloneNode(true) as HTMLElement
   const base = page.createElement('base')

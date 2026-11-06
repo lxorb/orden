@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { oneEdit } from './edits'
 
-/** The span two versions of a file differ by. Small on purpose: it is what a note open
- *  in a pane is handed, and every caret outside it stays where its reader left it. */
 describe('the one edit two texts differ by', () => {
   const applied = (before: string, after: string) => {
     const edit = oneEdit(before, after)
@@ -34,9 +32,6 @@ describe('the one edit two texts differ by', () => {
     expect(oneEdit('abc', 'xyz')).toEqual({ from: 0, to: 3, insert: 'xyz' })
   })
 
-  /** The property that matters: whatever it says, applying it gets you there. The
-   *  cases that catch a greedy suffix are the ones where the same characters appear
-   *  on both sides of the change. */
   test('always lands on the text it was asked for', () => {
     const pairs: [string, string][] = [
       ['aaa', 'aa'],

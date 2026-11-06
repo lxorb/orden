@@ -15,8 +15,6 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<a href="https://x.dev">site</a>')).toBe('[site](https://x.dev)')
   })
 
-  /** The reading view draws a tag as a link a press follows, and Obsidian's pages do
-   *  too; copied out and pasted into a note, it is the tag again. */
   test('a tag comes back as the tag, whichever element drew it', () => {
     const read = renderMarkdown('Filed #work/nib and #reading', { tagHref: (tag) => `#${tag}` })
     expect(htmlToMarkdown(read)).toBe('Filed #work/nib and #reading')
@@ -32,20 +30,13 @@ describe('a page as markdown', () => {
     )
   })
 
-  /** A note outlives the page it was clipped from, and every surface refuses these
-   *  when it renders one - so the file does not carry them either. The words stay,
-   *  which is what an unresolvable link is anywhere. */
   test('a target no surface would follow is not written down', () => {
     expect(htmlToMarkdown('<a href="javascript:alert(1)">click</a>')).toBe('click')
     expect(htmlToMarkdown('<a href="data:text/html,<b>hi">click</a>')).toBe('click')
     expect(htmlToMarkdown('<a href="vbscript:msgbox">click</a>')).toBe('click')
-    // Written with a character a browser skips while it reads a scheme.
     expect(htmlToMarkdown('<a href="java&#9;script:alert(1)">click</a>')).toBe('click')
   })
 
-  /** An address into the app a note came from is a fact about where the note used to
-   *  live. Only for an import, which is the one caller reading an export; see
-   *  `appTargets`. */
   describe('a link into the app the note came from', () => {
     test('is words for a clip and a paste, which have no app to point back at', () => {
       expect(htmlToMarkdown('<a href="applenotes:note/ideas">Ideas</a>')).toBe('Ideas')
@@ -94,15 +85,11 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<img src="data:image/svg+xml,<svg onload=x>" alt="a">')).toBe('')
     expect(htmlToMarkdown('<img src="javascript:alert(1)" alt="a">')).toBe('')
 
-    // A small picture may still travel inside the document.
     expect(htmlToMarkdown('<img src="data:image/png;base64,AAA" alt="a">')).toBe(
       '![a](data:image/png;base64,AAA)',
     )
   })
 
-  /** The imports are the one caller whose addresses are not finished: macOS writes
-   *  `file:///Users/…/photo.png` into the HTML it hands out, and the file is usually
-   *  one of the files arriving beside the note. */
   test('and a file on the old machine survives for the caller that resolves one', () => {
     const html = '<p><img src="file:///Users/emil/photo.png"></p>'
 
@@ -116,8 +103,6 @@ describe('a page as markdown', () => {
     )
   })
 
-  /** An export's video, recording or embedded paper is a file that arrives beside the
-   *  note, and the note is the one place left that says where it was. */
   test('and a video, a recording or an embedded file is a link for the caller that keeps them', () => {
     const html = [
       '<p>Before</p>',
@@ -142,8 +127,6 @@ describe('a page as markdown', () => {
     )
   })
 
-  /** The name is somebody else's words: an export can call a file anything, and
-   *  `%3C` and `%0A` decode to a tag and a line break the note would read as its own. */
   test('and the name such a link shows opens no markup and breaks no line', () => {
     const html =
       '<video src="media/%3Cstyle%3E*%7Bdisplay:none%7D%3C%2Fstyle%3E%0A%0A%23 x.mp4"></video>'
@@ -167,11 +150,6 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<a href="tel:+41000">ring</a>')).toBe('[ring](tel:+41000)')
   })
 
-  /** An address is an address whichever attribute carried it. Turndown escapes the
-   *  one in an `href` rather than encoding it, and a `\` the page put there
-   *  escaped the escape: the destination ended at the bracket after it and the
-   *  rest of the attribute became a link of the page's own, pointing wherever the
-   *  page said. */
   test('an address cannot write a link of its own', () => {
     expect(htmlToMarkdown('<a href="https://x.test/a\\)[click](https://evil.test)">text</a>')).toBe(
       '[text](https://x.test/a%5C%29[click]%28https://evil.test%29)',
@@ -182,12 +160,6 @@ describe('a page as markdown', () => {
     )
   })
 
-  /** The words a link shows arrive as markdown - the emphasis inside it, or a
-   *  picture of its own - and their text has been escaped on the way, backslash
-   *  and brackets together. So they are written as they came, and a page cannot
-   *  close the brackets early from inside them. */
-  /** Nothing autolinks inside a link's brackets, so an address there is words like
-   *  any other and is escaped like them. */
   test("an address as a link's own text is drawn as its characters", () => {
     const cases = [
       'https://github.com/x/y/blob/main/pkg/__init__.py',
@@ -244,10 +216,6 @@ describe('a page as markdown', () => {
     )
   })
 
-  /** A link keeps the title the page gave it, where a picture drops it: a link's
-   *  address is the page's own, so there is no numbered placeholder for a title to
-   *  stand in front of. Escaping the quote is not enough on its own - a title
-   *  ending in `\` escaped the quote that was to close it. */
   test('a title cannot end its own quotes', () => {
     expect(htmlToMarkdown('<a href="https://x.test/ok" title="he said &quot;hi&quot;">t</a>')).toBe(
       '[t](https://x.test/ok "he said \\"hi\\"")',
@@ -258,9 +226,6 @@ describe('a page as markdown', () => {
     )
   })
 
-  /** The markers are the editor's own: one space after a bullet, not three. Both
-   *  converters used to have their own opinion about this, and a page pasted into
-   *  a note came out differently from the same page clipped into one. */
   test('lists get the markers the editor itself writes', () => {
     expect(htmlToMarkdown('<ul><li>one</li><li>two</li></ul>')).toBe('- one\n- two')
   })
@@ -271,29 +236,10 @@ describe('a page as markdown', () => {
     )
   })
 
-  /** A long list is a page somebody pastes, and every item of it has to know its
-   *  place among the others. Looked up by walking the list, that was a walk per
-   *  item: five thousand items cost 93 ms on the machine this was written on and
-   *  41 ms once each list is counted out once, and ten thousand of them 415 ms
-   *  against 206 ms.
-   *
-   *  Counted rather than timed. This held a stopwatch to the conversion and asked
-   *  for under a second; a runner with the rest of the suite on it answered
-   *  1,400 ms and failed a test that had found nothing wrong, and the same commit
-   *  had passed on its own minutes earlier. A wall-clock figure here measures the
-   *  queue in front of the code as much as the code, while `workDone` in
-   *  from-html.ts says what the numbering actually did - and says it the same way
-   *  on a loaded machine as on an idle one.
-   *
-   *  What it says is the whole point of the test: one list counted out once, every
-   *  item asking it where it sits, and the list walked its own length between them
-   *  rather than its length for each line of it. */
   test('a list of five thousand items is numbered without a pass each', () => {
     const items = 5000
     const html = `<ol>${Array.from({ length: items }, (_, at) => `<li>item ${at}</li>`).join('')}</ol>`
 
-    // Whatever an earlier conversion left counted, dropped, so what comes back is
-    // this one's own.
     workDone()
     const lines = htmlToMarkdown(html).split('\n')
     const work = workDone()
@@ -302,11 +248,8 @@ describe('a page as markdown', () => {
     expect(lines[0]).toBe('1. item 0')
     expect(lines.at(-1)).toBe(`${items}. item ${items - 1}`)
 
-    // One list, counted out once, and every item of it asking where it sits.
     expect(work.lists).toBe(1)
     expect(work.items).toBe(items)
-    // And the list walked exactly once over: a return to a walk per item would
-    // make this twenty five million rather than five thousand.
     expect(work.walked).toBe(items)
   })
 
@@ -343,9 +286,6 @@ describe('a page as markdown', () => {
     )
   })
 
-  /** What the highlighters write now. Shiki puts the language in an attribute and
-   *  in no class at all, and the docs of half the tools anybody clips are built
-   *  with it, so the fence used to come out bare. */
   test('the attribute the highlighters name the language in reads as well', () => {
     expect(
       htmlToMarkdown('<pre data-language="js" class="shiki"><code>let x = 1</code></pre>'),
@@ -356,10 +296,6 @@ describe('a page as markdown', () => {
     )
   })
 
-  /** The language comes off the page's own markup, so a clipped article decides what
-   *  kind of block the note holds - and two of them are not blocks that show
-   *  something: a `query` fence searches the reader's own space as the note renders,
-   *  and an `ai` fence reads its body as a prompt and offers to send it. */
   test('a language of the app’s own is not a page’s to choose', () => {
     expect(htmlToMarkdown('<pre data-language="query"><code>path:Salary</code></pre>')).toBe(
       '```\npath:Salary\n```',
@@ -367,13 +303,9 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<pre class="language-ai"><code>Summarise @note</code></pre>')).toBe(
       '```\nSummarise @note\n```',
     )
-    // Whatever the case it was written in.
     expect(htmlToMarkdown('<pre data-lang="QUERY"><code>x</code></pre>')).toBe('```\nx\n```')
   })
 
-  /** And the drawn and runnable ones are left alone on purpose: a clipped page of
-   *  developer documentation is the commonest clip there is, and taking the language
-   *  off its fences would cost the highlighting and the diagrams on every one. */
   test('while the languages a page really is written in are kept', () => {
     for (const [language, kept] of [
       ['js', '```js'],
@@ -403,10 +335,6 @@ describe('a page as markdown', () => {
     ).toBe('```go\nx := 1\n```')
   })
 
-  /** The GFM rules keep a table whose first row is not headings as the page's own
-   *  raw HTML - classes, styles, attributes and whatever is nested inside them -
-   *  and a note's markup is rendered as the note's own. A clipped page is somebody
-   *  else's, so the table becomes a table. */
   test('a table with no headings becomes a table rather than the page markup', () => {
     const html =
       '<table class="layout"><tr><td>1</td><td>2</td></tr><tr><td>3</td><td>4</td></tr></table>'
@@ -422,9 +350,6 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown(html)).not.toContain('<td')
   })
 
-  /** A second `tbody` was a way past both rules at once: this one said the table
-   *  was headed and the GFM rules said it was not, so neither claimed it and
-   *  turndown handed back the page's own markup. */
   test('nor from a table whose rows sit in a tbody of their own', () => {
     const html =
       '<table class="layout"><tbody></tbody><tbody><tr><th>Col</th></tr>' +
@@ -454,8 +379,6 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown(html)).toBe('|  |  |\n| --- | --- |\n| one two | a \\| b |')
   })
 
-  /** Not styling lost but the number: every one of these said a different quantity
-   *  from the one the page stated. */
   test('raised and lowered text keep their markers', () => {
     expect(htmlToMarkdown('<p>x<sup>2</sup> and H<sub>2</sub>O</p>')).toBe('x^2^ and H~2~O')
   })
@@ -474,9 +397,6 @@ describe('a page as markdown', () => {
     )
   })
 
-  /** What the renderer leaves off the end of an address is words again, and an
-   *  underscore or a star there is escaped as words are: the escape is no part of
-   *  the address, so neither is its backslash. */
   test('an escape right after a bare web address stays out of the link', () => {
     const page = htmlToMarkdown('<p>(see https://a.test/a_b_) and *https://a.test/x*</p>')
     expect(page).toBe('(see https://a.test/a_b\\_) and \\*https://a.test/x\\*')
@@ -490,7 +410,6 @@ describe('a page as markdown', () => {
     const code = htmlToMarkdown('<p>if a==b or c==d then, and **x==y** too</p>')
     expect(code).toBe('if a=\\=b or c=\\=d then, and \\*\\*x=\\=y\\*\\* too')
     expect(renderMarkdown(code)).toBe('<p>if a==b or c==d then, and **x==y** too</p>\n')
-    // A line through still needs both of its tildes, and neither is left to it.
     const struck = htmlToMarkdown('<p>a ~~b~~ c</p>')
     expect(renderMarkdown(struck)).toBe('<p>a ~~b~~ c</p>\n')
   })
@@ -509,8 +428,6 @@ describe('a page as markdown', () => {
     expect(renderMarkdown(prices)).toBe('<p>Tickets cost $5-$10 each</p>\n')
   })
 
-  /** The converter's own formula is written as `$…$` and is not the page's words,
-   *  so it stays maths with the page's dollars escaped on either side of it. */
   test('a formula between dollars in words stays a formula', () => {
     const both = htmlToMarkdown('<p>$5 for <math alttext="x^2"><mi>x</mi></math> or $10</p>')
     expect(both).toBe('\\$5 for $x^2$ or \\$10')
@@ -530,7 +447,6 @@ describe('a page as markdown', () => {
     expect(powers).toBe('2\\^10 and 3\\^4')
     expect(renderMarkdown(powers)).toBe('<p>2^10 and 3^4</p>\n')
 
-    // Nor a line through, which two of them would otherwise draw.
     const doubled = htmlToMarkdown('<p>~~kept~~ and a ~ b</p>')
     expect(doubled).toBe('\\~\\~kept\\~~ and a ~ b')
     expect(renderMarkdown(doubled)).toBe('<p>~~kept~~ and a ~ b</p>\n')
@@ -547,9 +463,6 @@ describe('a page as markdown', () => {
     )
   })
 
-  /** MathML says what a formula means and markdown cannot write that down, but the
-   *  TeX it was built from travels inside it. Without this a formula arrived as the
-   *  letters it happened to be made of, or as nothing at all. */
   test('a formula arrives as the TeX the page built it from', () => {
     const html =
       '<p>the equality <math alttext="e^{i\\pi}+1=0"><semantics>' +
@@ -563,9 +476,6 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<p>a <math alttext="x^2"><mi>x</mi></math> b</p>')).toBe('a $x^2$ b')
   })
 
-  /** A formula with a whole block to itself is a block, and one a sentence runs
-   *  through is part of the sentence however the page draws it: `$$` in the middle
-   *  of a line is a formula to nobody. */
   test('a formula alone in its block is written as a block', () => {
     const html = '<p>words</p><p><math alttext="e^{i\\pi}+1=0"><mi>e</mi></math></p><p>after</p>'
 
@@ -579,16 +489,11 @@ describe('a page as markdown', () => {
   test('a dollar inside a formula cannot close it early', () => {
     expect(htmlToMarkdown('<p>a <math alttext="x=$5"><mi>x</mi></math> b</p>')).toBe('a $x=\\$5$ b')
 
-    // One the page had already escaped stays as it is; escaping it again would
-    // leave a backslash of its own in the formula.
     expect(htmlToMarkdown('<p>a <math alttext="x=\\$5"><mi>x</mi></math> b</p>')).toBe(
       'a $x=\\$5$ b',
     )
   })
 
-  /** The rule writes the formula rather than escaping it, so what an `alttext`
-   *  says is the one string on a clipped page that nothing else looks at - and a
-   *  tag in a note of the reader's own is markup the app renders. */
   test('a tag inside a formula is written as TeX rather than as a tag', () => {
     const html =
       '<p>see <math alttext="<a href=javascript:run()>click</a> \\"><mi>q</mi></math> ok</p>'
@@ -607,17 +512,8 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<p>a <math><mi>x</mi></math> b</p>')).toBe('a x b')
   })
 
-  /** A page does not put MathML on the clipboard on its own: it puts what a
-   *  renderer drew, which is the glyphs and the MathML side by side, the glyphs
-   *  marked `aria-hidden` because they are letters rather than maths. Both used to
-   *  land, the formula and then again `Br(x)=B(x,r):={y∈Rn∣∥x−y∥<r}` after it.
-   *
-   *  Drawn by KaTeX here rather than written out, because the shape being read is
-   *  a real renderer's and not one anybody remembered. */
   describe('a formula that has been drawn', () => {
     const TEX = String.raw`B_r(x) = B(x, r) := \left\{ y \in \mathbb{R}^n \;\middle|\; \|x - y\| < r \right\}`
-    /** The same TeX, with the one character a tag can begin with written as TeX
-     *  writes it anyway; see `angled`. */
     const KEPT = TEX.replace('<', String.raw`\lt `)
 
     test('arrives as the TeX it was drawn from, and never as the glyphs it drew', () => {
@@ -642,10 +538,6 @@ describe('a page as markdown', () => {
       )
     })
 
-    /** The same bug from the other end: a formula copied out of a note and pasted
-     *  back into one. Orden draws the glyphs and keeps the source on the element it
-     *  draws them into, so the note gets its own equation back rather than the
-     *  symbols it was drawn as. */
     test('and a formula this app drew pastes back into a note as itself', async () => {
       const note = `$$${TEX}$$`
       await loadFor(note)
@@ -661,10 +553,6 @@ describe('a page as markdown', () => {
     })
   })
 
-  /** Hidden is not on its own a reason to drop anything: a page takes what is
-   *  behind a dialog out of the reading order, and the words in it are still the
-   *  page's words. Only a formula's own drawing goes, and only where the formula
-   *  itself is beside it. */
   test('a page that hides something from a reader still says what it says', () => {
     expect(htmlToMarkdown('<p><span aria-hidden="true">Kapitel</span> eins</p>')).toBe(
       'Kapitel eins',
@@ -700,8 +588,6 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<mark>kept</mark>')).toBe('==kept==')
   })
 
-  /** The colour has a markdown form too, so a highlight copied out of the reading
-   *  view and pasted back is still the colour it was; see highlights.ts. */
   test('a coloured highlight comes back as the colour it was', () => {
     expect(htmlToMarkdown('<mark class="tone-1">kept</mark>')).toBe('==\u{1F534} kept==')
     expect(htmlToMarkdown('<mark class="tone-6">kept</mark>')).toBe('==\u{1F7E3} kept==')
@@ -722,10 +608,6 @@ describe('a page as markdown', () => {
     expect(markdown).toBe('text')
   })
 
-  /** Five of them cannot be given words to lose: an HTML parser moves what the head
-   *  holds out of the body before any converter sees it, and `embed` is void, so
-   *  words written after it are the paragraph's rather than its own. The head is
-   *  answered by the test above instead. */
   test('every element on the list is refused', () => {
     const childless = new Set(['head', 'meta', 'link', 'title', 'embed'])
 
@@ -743,10 +625,6 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<img src="a.png" alt="a [b] c">')).toBe('![a \\[b\\] c](a.png)')
   })
 
-  /** The backslash was the way out of the brackets that was left. Escaping only
-   *  the brackets, alt text ending in one escaped the escape instead: the words
-   *  closed early, the address the picture came with became the text after them,
-   *  and the picture in the note pointed at the host the alt text named. */
   test('a backslash in alt text cannot escape the escaping', () => {
     expect(
       htmlToMarkdown('<img src="https://x.test/ok.png" alt="a\\](https://evil.test/b.png)![b">'),
@@ -757,11 +635,6 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<p>before<img alt="none">after</p>')).toBe('beforeafter')
   })
 
-  /** A page's own words are words, and a page showing what a tag looks like is
-   *  the commonest thing anyone copies. Left alone, the `<` came through as
-   *  markup: the note then held a tag its writer never wrote, and the reading
-   *  view, an export and a canvas card all render a note's own HTML. So a `<`
-   *  that would open a tag arrives escaped, which is how markdown writes one. */
   test('text that looks like a tag stays text', () => {
     expect(htmlToMarkdown('<p>a &lt;img src=q onerror=alert(1)&gt; b</p>')).toBe(
       'a \\<img src=q onerror=alert(1)> b',
@@ -772,17 +645,10 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<h1>&lt;b&gt;shout&lt;/b&gt;</h1>')).toBe('# \\<b>shout\\</b>')
   })
 
-  /** Only a `<` that would open something. `a < b` is arithmetic, and escaping
-   *  it would put a backslash in front of every comparison a note quotes. */
   test('a lone angle bracket is left as it was typed', () => {
     expect(htmlToMarkdown('<p>1 &lt; 2 and 3 &gt; 2</p>')).toBe('1 < 2 and 3 > 2')
   })
 
-  /** The note this was reported from. A course page's prose showed the characters
-   *  `**kurz**`, they were pasted into a note, and what landed was
-   *  `\*\*kurz\*\*` - which renders as asterisks and can never be bold, which is
-   *  what was asked for. The rule is escapes.ts and the reasoning is there; these
-   *  are the words that arrived, along the road they arrived by. */
   describe('a page whose own words are markdown', () => {
     test('a doubled marker around plain words is kept, and reads as markdown', () => {
       expect(htmlToMarkdown('<p>dann überfliegen Sie **kurz** das Dokument</p>')).toBe(
@@ -795,9 +661,6 @@ describe('a page as markdown', () => {
       expect(htmlToMarkdown('<p>run `npm run dev` first</p>')).toBe('run `npm run dev` first')
     })
 
-    /** An escape that changes nothing is a backslash the note carries for no
-     *  reason. `cx_out` is the one out of somebody's own note: an underscore
-     *  inside a word opens no emphasis in any reader of markdown. */
     test('and an escape no reader would have needed is not written at all', () => {
       expect(htmlToMarkdown('<p>plt.savefig("./cx_out/pic.png")</p>')).toBe(
         'plt.savefig("./cx_out/pic.png")',
@@ -806,9 +669,6 @@ describe('a page as markdown', () => {
       expect(htmlToMarkdown('<p>C:\\Users\\me\\notes</p>')).toBe('C:\\Users\\me\\notes')
     })
 
-    /** The other half of the same paste, and it stays escaped: the page's
-     *  paragraph began with a plus, and a plus at the start of a line is a
-     *  bullet. What the escape buys there is the paragraph the page showed. */
     test('a marker that would open a block of its own is still escaped', () => {
       expect(htmlToMarkdown('<p>+ Lesen und üben Sie die Aufgaben</p>')).toBe(
         '\\+ Lesen und üben Sie die Aufgaben',
@@ -817,17 +677,11 @@ describe('a page as markdown', () => {
       expect(htmlToMarkdown('<p>&gt; sagte sie</p>')).toBe('\\> sagte sie')
     })
 
-    /** A single marker is punctuation as often as it is emphasis, and the two
-     *  mistakes are not the same size: a backslash too many is visible and can be
-     *  deleted, a phrase eaten by a pair of stars is not. So prose keeps its. */
     test('a single marker is prose, and keeps its escape', () => {
       expect(htmlToMarkdown('<p>rename *.md to *.txt</p>')).toBe('rename \\*.md to \\*.txt')
       expect(htmlToMarkdown('<p>the _config_ file</p>')).toBe('the \\_config\\_ file')
     })
 
-    /** What is kept is a phrase in bold, never a way for a page to put markup of
-     *  its own into somebody's note: the words inside the markers may hold
-     *  nothing the escaping was protecting the note from. */
     test('and never a run with markup inside it', () => {
       expect(htmlToMarkdown('<p>**&lt;img src=q onerror=alert(1)&gt;**</p>')).toBe(
         '\\*\\*\\<img src=q onerror=alert(1)>\\*\\*',
@@ -837,19 +691,12 @@ describe('a page as markdown', () => {
       )
     })
 
-    /** A page that means emphasis says so in its own tags, and that road is
-     *  untouched: the markers below are written by the rules, not left by the
-     *  escaping. */
     test('and a page that means emphasis still gets it from its tags', () => {
       expect(htmlToMarkdown('<p><strong>kurz</strong> und <em>gut</em></p>')).toBe(
         '**kurz** und *gut*',
       )
     })
 
-    /** The whole section, as the course page writes it and as the note should
-     *  have held it. The rest of the page is untouched by any of this - the
-     *  heading keeps its link, the list is numbered by the list rule - and the
-     *  three lines that were wrong are the three lines below. */
     test('and the section it was reported from arrives as the note it should be', () => {
       const page = [
         '<h3><a href="https://moodle.test/section.php?id=1">Vor der Ersten Vorlesung</a></h3>',
@@ -873,18 +720,12 @@ describe('a page as markdown', () => {
     })
   })
 
-  /** Code says what it says. Turndown hands a fence its own text rather than the
-   *  escaped kind, and the fence keeps it that way. */
   test('a tag inside code keeps its brackets', () => {
     expect(htmlToMarkdown('<pre><code>&lt;img src=q&gt;</code></pre>')).toBe(
       '```\n<img src=q>\n```',
     )
   })
 
-  /** The address is the other way text reached the page as markup: a `)` ends the
-   *  destination early, and whatever followed it in the attribute was written
-   *  into the note as its own markdown - a second picture, pointing at a host the
-   *  pasted HTML chose. Percent encoded, the whole attribute is one address. */
   test('an address cannot break out of its own brackets', () => {
     expect(
       htmlToMarkdown('<img alt="a" src="https://x.test/a.png)![](https://evil.test/b.png">'),
@@ -895,36 +736,23 @@ describe('a page as markdown', () => {
     )
   })
 
-  /** Escaping the brackets left the escape itself: a `\` the page put in the
-   *  address escaped the backslash that was protecting the bracket, and the
-   *  bracket ended the destination after all. */
   test('a backslash in an address cannot escape the escaping', () => {
     expect(
       htmlToMarkdown('<img alt="a" src="https://x.test/a.png\\)![](https://evil.test/b.png">'),
     ).toBe('![a](https://x.test/a.png%5C%29![]%28https://evil.test/b.png)')
   })
 
-  /** An address with brackets in it is ordinary rather than adversarial -
-   *  Wikipedia writes them - and the note has to hold it as the one address it
-   *  is. Encoded rather than escaped, because what is being written is a URL and
-   *  a URL says the same thing either way. */
   test('the brackets an ordinary address carries survive as one address', () => {
     expect(htmlToMarkdown('<img alt="a" src="https://x.test/File_(1).png">')).toBe(
       '![a](https://x.test/File_%281%29.png)',
     )
   })
 
-  /** And an address with a space in it is one address, not an address and a
-   *  title: written bare it used to leave the picture as four words of prose. A
-   *  tab or a control character ends a destination the same way. */
   test('a blank in an address cannot end it', () => {
     expect(htmlToMarkdown('<img alt="a" src="my picture.png">')).toBe('![a](my%20picture.png)')
     expect(htmlToMarkdown('<img alt="a" src="a&#9;b.png">')).toBe('![a](a%09b.png)')
   })
 
-  /** An address that already carries escapes is left as the address it was: the
-   *  percent is not encoded again, so `a%20b.png` stays one file rather than
-   *  becoming a name with `%2520` in it. */
   test('an address that is already encoded is not encoded twice', () => {
     expect(htmlToMarkdown('<img alt="a" src="https://x.test/a%20b.png">')).toBe(
       '![a](https://x.test/a%20b.png)',
@@ -937,18 +765,12 @@ describe('a page as markdown', () => {
     )
   })
 
-  /** A picture says two things here and no more. A title would be a third string
-   *  to break out of, and the quote that opens it is on any page that quotes
-   *  somebody; it would also sit between the brackets a caller fills its
-   *  numbers in by. So the page's own is dropped. */
   test('a title is not markdown a page can write', () => {
     expect(
       htmlToMarkdown('<img alt="a" src="a.png" title="he said &quot;hi&quot;) ![](b.png">'),
     ).toBe('![a](a.png)')
   })
 
-  /** What a caller with no address for a picture yet needs: it numbers the pictures
-   *  and fills the addresses in afterwards. */
   test('a caller can say what a picture becomes', () => {
     const seen: string[] = []
     const markdown = htmlToMarkdown(
@@ -969,9 +791,6 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<p>one</p><p></p><p></p><p>two</p>')).toBe('one\n\ntwo')
   })
 
-  /** Code is the one place every character is the author's: a diff clipped off a
-   *  page is only a diff while its blank lines and its trailing blanks are where
-   *  they were. The tidying is for the prose around it. */
   test('the blank lines and trailing blanks inside code are left as they were', () => {
     const code = 'one  \n\n\n\ntwo\t\n   \nthree'
 
@@ -981,18 +800,11 @@ describe('a page as markdown', () => {
     )
   })
 
-  /** Two blanks at the end of a line are how turndown writes a `<br>`, and taking
-   *  them off made the two lines one. */
   test('a line break inside a paragraph is still a line break', () => {
     expect(htmlToMarkdown('<p>line one<br>line two</p>')).toBe('line one  \nline two')
   })
 })
 
-/** A to-do from another app - a Notion page's, an Evernote note's - is somebody's
- *  words, and the task reader takes more apart than a note does: an emoji and a
- *  date after it are a field, a `#` a tag. An importer that knows its words are plain
- *  says so, and they come in as words. A rendered task list pasted back is the
- *  opposite case: what it draws as a tag or a field is one. */
 describe('a checked list item', () => {
   test('reads none of its words as a field of the task', async () => {
     const { readTask } = await import('./task-line')
@@ -1034,7 +846,6 @@ describe('a rendered task list pasted back', () => {
       expect(after?.priority).toBe(before?.priority)
       expect(after?.fields).toEqual(before?.fields)
     }
-    // An escaped bracket that a link would follow stays escaped.
     expect(lines[2]).toContain('\\[a:: b\\](see)')
   })
 })

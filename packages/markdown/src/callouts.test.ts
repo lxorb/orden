@@ -27,8 +27,6 @@ describe('a callout’s opening line', () => {
     expect(found?.label).toBe('Recipe')
   })
 
-  /** #492: the looks were an object, and `constructor` answered from its
-   *  prototype, so one line of a shared note broke the whole of it for everyone. */
   test('leaves a type an object would answer from its prototype without a look', () => {
     for (const word of ['constructor', 'Constructor', '__proto__', 'toString', 'hasOwnProperty']) {
       const found = calloutOf(`[!${word}] T`)
@@ -37,10 +35,6 @@ describe('a callout’s opening line', () => {
     }
   })
 
-  /** These two were Orden's own looks before Orden had any of the others, and an
-   *  `[!important]` came out violet here where Obsidian draws it green. Obsidian's
-   *  thirteen types with Obsidian's aliases is one list, so these are in it: the word
-   *  survives in `data-callout`, and what it wears is what it wears over there. */
   test('folds the two GitHub alert kinds in, the way Obsidian does', () => {
     expect(calloutOf('[!important]')?.look).toBe('tip')
     expect(calloutOf('[!important]')?.type).toBe('important')
@@ -48,8 +42,6 @@ describe('a callout’s opening line', () => {
     expect(calloutOf('[!caution]')?.type).toBe('caution')
   })
 
-  /** Thirteen looks and twelve more words for them, which is Obsidian's list
-   *  exactly: a callout written in either app is the same callout in both. */
   test('knows the thirteen types Obsidian has, and every alias of them', () => {
     const types = [
       'note',
@@ -130,7 +122,6 @@ describe('a callout’s icon', () => {
     expect(icon.startsWith('<svg')).toBe(true)
     expect(icon.endsWith('</svg>')).toBe(true)
     expect(icon).toContain(' />')
-    // Nothing but the svg itself is left open.
     expect(/<(?!svg|\/svg)[a-z]+[^>]*[^/]>/.exec(icon)).toBeNull()
   })
 

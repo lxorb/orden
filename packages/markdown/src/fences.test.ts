@@ -47,7 +47,6 @@ describe('what closes a fence', () => {
   })
 })
 
-/** #493: CommonMark 4.5 - a backtick fence's info string holds no backtick. */
 describe('a line of inline code in three backticks', () => {
   test('is not a fence, however many backticks', () => {
     expect(fenceMark('```inline```')).toBeNull()
@@ -73,9 +72,6 @@ describe('the run that closes a code span', () => {
   })
 })
 
-/** The twin of these is the tests in code_blocks.rs: the same notes, the same
- *  answers. One letter a line: `w` for words, `c` for code, `o` for a fence that
- *  opens. */
 function walk(note: string): string {
   const code = new CodeBlocks()
   const letters = { [WORDS]: 'w', [CODE]: 'c', [OPENS]: 'o' }

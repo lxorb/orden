@@ -1,7 +1,4 @@
 import { describe, expect, test } from 'vitest'
-// Both heavy libraries handed over outright, the way the Worker has them, because
-// every render below is synchronous and the app's own lazy loading is engines.test.ts's
-// subject rather than this file's. See engines.ts.
 import './eager'
 import {
   codeBlocks,
@@ -27,11 +24,6 @@ describe('front matter', () => {
     expect(stripFrontMatter('# Title')).toBe('# Title')
   })
 
-  /** Obsidian's rule, and so the app's: the block has to close. A note that opens
-   *  with a fence and never closes it opens with a rule, so the renderer draws
-   *  those lines as the words they are and the properties table stays away. The
-   *  same note is searched in search/match.test.ts and in matcher.rs, which is
-   *  what the fixture is for: three readers, one answer. */
   test('a block nobody closed is the note’s own words', () => {
     const open = '---\nstatus: done\n\n# Plan\n'
     const html = renderMarkdown(open, { properties: 'properties' })
@@ -63,9 +55,6 @@ describe('titles', () => {
   })
 })
 
-/** A single newline. Prose flows, so CommonMark makes a space of it; a slide is
- *  a poster, so a deck keeps the break. One flag, asked for per render, so the
- *  two shared renderers serve both without one leaking into the other. */
 describe('a single newline', () => {
   test('is a space, which is what CommonMark says', () => {
     expect(renderMarkdown('one\ntwo')).toContain('one\ntwo')
@@ -77,8 +66,6 @@ describe('a single newline', () => {
   })
 
   test('and asking does not change the next render that does not', () => {
-    // The two plain renderers are built once and shared; a flag written into one
-    // of them would turn every note in the app into a poster.
     renderMarkdown('one\ntwo', { breaks: true })
     expect(renderMarkdown('one\ntwo')).not.toContain('<br>')
   })
@@ -144,18 +131,6 @@ describe('GitHub-flavoured basics', () => {
   })
 })
 
-/** Where a plain `[words](../Other note.md)` points, on a surface that knows.
- *
- *  A wikilink has always been resolved by the caller, because only the caller
- *  knows where a note lives. A markdown link naming a note in the same space was
- *  left exactly as written - which is right in the app, where a click is read at
- *  the moment it happens, and wrong on a published page, where the HTML is all a
- *  stranger gets: the site serves `/public/two` and the link said
- *  `../Public/Two.md`, so following one answered 404.
- *
- *  So: a surface that can say where a note is published says so through
- *  `resolveNoteHref`, and a surface that cannot passes nothing and the link is
- *  left as it was written. */
 describe('a markdown link that names a note', () => {
   const resolveNoteHref = (target: string) =>
     target.toLowerCase().endsWith('two.md') ? '/public/two' : null
@@ -238,9 +213,6 @@ describe('headings and the table of contents', () => {
     expect(renderMarkdown('[toc]\n\ntext', { toc: true })).not.toContain('<nav')
   })
 
-  /** A dollar in a heading is a dollar. The contents are put in where `[toc]` was,
-   *  and a `$&` or a `$'` read as a pattern would put the marker, or the whole of
-   *  the page after it, inside the list. */
   test('keep a heading that says $& or $’ as it is written', () => {
     const html = renderMarkdown("# Costs $& prices\n\n[toc]\n\n## Before $' after\n\nText", {
       toc: true,
@@ -251,7 +223,6 @@ describe('headings and the table of contents', () => {
     expect(html.match(/<p>Text<\/p>/g)).toHaveLength(1)
   })
 
-  /** The same for a note an embed brings in, which is put in where its marker was. */
   test('keep an embedded note that says $` or $’ as it is written', () => {
     const html = renderMarkdown('Before\n\n![[Note]]\n\nAfter', {
       resolveEmbed: () => "cost $` and $' here\n",
@@ -262,8 +233,6 @@ describe('headings and the table of contents', () => {
     expect(html.match(/<p>Before<\/p>/g)).toHaveLength(1)
   })
 
-  /** A note the reader trusts can embed one somebody else wrote: that one's HTML is
-   *  words, whatever the page around it is. */
   test('show the HTML of an embedded note that asks for it as words, and only there', () => {
     const html = renderMarkdown('<b>mine</b>\n\n![[Theirs]]\n\n![[Mine]]', {
       resolveEmbed: (link) =>
@@ -311,7 +280,6 @@ describe('code fences', () => {
   })
 
   test('are listed under the language alone, whatever else the fence says', () => {
-    // What a caller loads a parser for, and what it matches a drawing against.
     expect(codeBlocks('```ts src/main.ts\nlet a\n```')).toEqual([{ language: 'ts', code: 'let a' }])
   })
 
@@ -320,8 +288,6 @@ describe('code fences', () => {
 
     expect(html).toContain('<figure class="code">')
     expect(html).toContain('<figcaption>src/main.ts</figcaption>')
-    // The language is the first word, so the block is coloured as TypeScript
-    // rather than as a language nobody has.
     expect(html).toContain('<code class="language-ts">')
   })
 
@@ -365,9 +331,6 @@ describe('Typora extensions', () => {
     expect(html).toContain('math-block')
   })
 
-  /** A whole line of `$$…$$` is how a formula is usually typed, and every other
-   *  editor reads it that way. It used to come out as an inline formula with a
-   *  literal dollar on each side of it. */
   test('block math written on one line', () => {
     const html = renderMarkdown('$$E = mc^2$$\n')
 
@@ -376,7 +339,6 @@ describe('Typora extensions', () => {
     expect(html).not.toContain('$')
   })
 
-  // #498: Pandoc's rule, a closing dollar straight before a digit closes nothing.
   test('a range of prices is not a formula', () => {
     const html = renderMarkdown('From $5-$10 a head.\n')
 
@@ -393,10 +355,6 @@ describe('Typora extensions', () => {
     expect(html).toContain('<p>After.</p>')
   })
 
-  /** With no blank line above it, which is what the editor's parser used to need
-   *  and this one never did. The two have to say the same thing about the same
-   *  note, or a formula written under a line of prose is a formula while it is
-   *  being written and two dollars around an inline one once it is published. */
   test('block math straight under a line of prose, in both shapes', () => {
     for (const doc of ['Before.\n$$E = mc^2$$\nAfter.\n', 'Before.\n$$\nE = mc^2\n$$\nAfter.\n']) {
       const html = renderMarkdown(doc)
@@ -409,7 +367,6 @@ describe('Typora extensions', () => {
   })
 
   test('a one line block that is not the whole line is left alone', () => {
-    // Display maths is a block; `$$` part way along a line is somebody's prose.
     const html = renderMarkdown('The sum $$E = mc^2$$ sits here.\n')
 
     expect(html).not.toContain('math-block')
@@ -422,7 +379,6 @@ describe('Typora extensions', () => {
   test('renders chemical equations', () => {
     const html = renderMarkdown('$\\ce{H2O}$')
     expect(html).toContain('katex')
-    // mhchem splits the formula into atoms and a subscript.
     expect(html).toContain('H')
     expect(html).not.toContain('ParseError')
   })
@@ -431,15 +387,7 @@ describe('Typora extensions', () => {
     expect(renderMarkdown('costs $5 and $9')).not.toContain('katex')
   })
 
-  /** A formula says how big its own rules and struts are, and a note is not
-   *  always the reader's own: one arrives from a share, from a room, or is
-   *  published to strangers. Left uncapped, one line of TeX was a box tens of
-   *  thousands of ems tall, which is a page nobody can read or scroll. */
   test('a formula cannot ask for a box bigger than the page', () => {
-    // Read off the drawing rather than off the whole of the HTML: the element
-    // around it carries the formula's own source, and `99999em` in there is the
-    // characters somebody typed rather than a size anything is laid out at. See
-    // `drawing` in extensions.ts.
     const html = renderMarkdown('$$\\rule{99999em}{99999em}$$').replace(/ data-tex="[^"]*"/g, '')
 
     expect(html).toContain('katex')
@@ -539,9 +487,6 @@ describe('Typora extensions', () => {
     expect(html).not.toContain('callout')
   })
 
-  /** Only an opening paragraph names a type: code that starts with the marker
-   *  is code, and has no inline tokens to cut the marker out of. It used to
-   *  throw, which took the whole note down with it. */
   test.each([
     ['indented code', '>     [!note] T\n'],
     ['tab-indented code', '> \t[!note] T\n'],
@@ -555,8 +500,6 @@ describe('Typora extensions', () => {
     expect(html).not.toContain('callout')
   })
 
-  /** marked reads a marker line with `---` or `===` under it as a setext heading,
-   *  and that heading is still the line that opens the callout. */
   test.each([
     ['a rule under the title', '> [!note] Title\n> ---\n> body\n', 'Title'],
     ['a heading under the marker', '> [!note]\n> Heading\n> ---\n> body\n', 'Note'],
@@ -578,15 +521,11 @@ describe('Typora extensions', () => {
 })
 
 describe('raw HTML', () => {
-  // Typora passes inline HTML through, and so does this - embeds are a feature
-  // of a local document.
   test('is preserved for local use', () => {
     expect(renderMarkdown('<u>underlined</u>')).toContain('<u>underlined</u>')
     expect(renderMarkdown('<video src="clip.mp4"></video>')).toContain('<video')
   })
 
-  // A published note is served to strangers, and every blog on the shared
-  // domain would otherwise be able to script every other one.
   test('is shown as text when publishing', () => {
     const html = renderMarkdown('<script>alert(1)</script>', { escapeHtml: true })
     expect(html).not.toContain('<script>')
@@ -612,9 +551,6 @@ describe('raw HTML', () => {
 describe('an <iframe> a note wrote', () => {
   const TAG = '<iframe src="https://field.example.test/plan" height="300"></iframe>'
 
-  // Both surfaces, because the claim is that there is one card: the frame is
-  // never in the markup, so a note that mentions a page tells that page nothing
-  // until a reader asks it to.
   test('is the same card whether the note is the reader’s own or a public page', () => {
     for (const options of [{}, { escapeHtml: true }]) {
       const html = renderMarkdown(`${TAG}\n`, options)
@@ -636,8 +572,6 @@ describe('an <iframe> a note wrote', () => {
   test('inside a sentence as well as on a line of its own', () => {
     const html = renderMarkdown(`See ${TAG} for the plan.\n`)
     expect(html).toContain('class="embed-web embed-page"')
-    // The closing half goes with the opening one. Left behind it is a tag the
-    // parser drops without a word here and four characters of text on a page.
     expect(html).not.toContain('iframe>')
     expect(renderMarkdown(`See ${TAG} for the plan.\n`, { escapeHtml: true })).not.toContain(
       'iframe',
@@ -645,9 +579,6 @@ describe('an <iframe> a note wrote', () => {
   })
 
   test('and a tag pointing where a browser will not frame is nothing at all', () => {
-    // The card or nothing, and never the tag: a frame at `javascript:`, at a page
-    // of this app's own, or at plain http is a frame a note may not have, and one
-    // left in the markup would be a real frame in a document that is trusted.
     for (const tag of [
       '<iframe src="javascript:alert(1)"></iframe>',
       '<iframe src="/index.html"></iframe>',
@@ -660,9 +591,6 @@ describe('an <iframe> a note wrote', () => {
     }
   })
 
-  /** The card is a construct that builds its own markup out of the note, which is
-   *  the family of thing `HOSTILE` below is a sweep over; this is that sweep for
-   *  the one construct made out of a tag rather than out of markdown. */
   test('and nothing a tag carried can run on a page built from it', () => {
     for (const tag of [
       '<iframe src="javascript:alert(1)"></iframe>',
@@ -675,10 +603,6 @@ describe('an <iframe> a note wrote', () => {
     }
   })
 
-  /** A block of HTML runs on to the next blank line, so a caption written straight
-   *  under the frame is in the same block as it. The card is the frame's, and
-   *  what follows is the note's own markup like any other: words in a document
-   *  from outside, markup in the reader's own - and never simply gone. */
   test('and what follows the frame in the same block is still there', () => {
     const source = `${TAG}\n<p>My caption paragraph</p>\n\nnext\n`
 
@@ -695,11 +619,6 @@ describe('an <iframe> a note wrote', () => {
   })
 })
 
-/** A document of the reader's own is markup, and it is put into the app's own page,
- *  so nothing in it may make a frame, a navigation or a program there. Each of these
- *  ran in the app under its content policy, measured in headless Chromium: the
- *  policy stops a handler and a script that arrived through `innerHTML`, and none
- *  of these is either. See `ownMarkup` in html-block.ts. */
 describe('the markup of a document that is the reader’s own', () => {
   test('makes no frame inside a block, only the card a frame on its own is', () => {
     const html = renderMarkdown('<div>\n<iframe src="https://x.dev/a"></iframe>\n</div>\n')
@@ -744,8 +663,6 @@ describe('the markup of a document that is the reader’s own', () => {
       '<a href="javascript:parent.ran=1">x</a>\n',
       '<a href="&#106;avascript:parent.ran=1">x</a>\n',
       '<a href="&#x6A;avascript:parent.ran=1">x</a>\n',
-      // No semicolon, and the letter after the number is a hex digit: a browser
-      // ends a decimal reference at the first character that is not a digit.
       '<a href="&#106avascript:parent.ran=1">x</a>\n',
       '<a href="javascript&colon;parent.ran=1">x</a>\n',
       '<a href="java&Tab;script:parent.ran=1">x</a>\n',
@@ -771,10 +688,6 @@ describe('the markup of a document that is the reader’s own', () => {
   })
 })
 
-/** The one place a note's own code runs, and the two answers about whose note it
- *  is. `escapeHtml` is how the app says which: a document of the reader's own is
- *  markup, and one in a room, in a shared space or on a published page is the
- *  characters it is made of. See `apps/desktop/src/lib/trust.ts`. */
 describe('a block of HTML that does something', () => {
   const BLOCK = '<div id="dial">nothing yet</div>\n<script>alert(1)</script>\n'
 
@@ -782,7 +695,6 @@ describe('a block of HTML that does something', () => {
     const html = renderMarkdown(BLOCK)
     expect(html).toContain('class="embed-web embed-html"')
     expect(html).toContain('data-srcdoc=')
-    // Not on the page: not the div, not the script, not one character of either.
     expect(html).not.toContain('<script')
     expect(html).not.toContain('<div id="dial"')
   })
@@ -839,8 +751,6 @@ describe('definition lists', () => {
 describe('abbreviations', () => {
   const SOURCE = '*[HTML]: HyperText Markup Language\n\nI write HTML every day.\n'
 
-  // #498: `\b` knows ASCII letters only, so a term ending in `+` and one in another
-  // script were never marked.
   test('marks a term of any script or ending in a symbol, and none inside a longer word', () => {
     const html = renderMarkdown(
       '*[C++]: a language\n*[日本]: Japan\n*[UN]: United Nations\n\nC++ and 日本 and UN, not UNIX.\n',
@@ -865,8 +775,6 @@ describe('abbreviations', () => {
     expect(html).toContain('<abbr title="HyperText Markup Language">HTML</abbr>')
   })
 
-  /** A character reference is one character, written as a word. Wrapping the
-   *  word inside it breaks it into an `&`, a tag and a stray `;`. */
   test('leaves the name inside a character reference alone', () => {
     const html = renderMarkdown('*[amp]: ampersand\n\nTom & Jerry, and amp on its own\n')
     expect(html).toContain('Tom &amp; Jerry')
@@ -875,8 +783,6 @@ describe('abbreviations', () => {
   })
 
   test('is defined after a fence that ended with the list item it was in', () => {
-    // The fence is the item's, so the line at the margin ends both: the
-    // definition under them is words, and the page reads it as one.
     const html = renderMarkdown(
       '- a\n  ```\n  code\n\n*[HTML]: HyperText Markup Language\n\nI write HTML.\n',
     )
@@ -911,27 +817,17 @@ describe('abbreviations', () => {
   })
 
   test('a definition inside a fence defines nothing', () => {
-    // A note explaining the syntax shows the syntax, and showing it must not
-    // also do it - which is the rule the block tokenizer already follows.
     const html = renderMarkdown('```\n*[HTML]: Markup\n```\n\nHTML here.\n')
     expect(html).not.toContain('<abbr')
     expect(html).toContain('*[HTML]: Markup')
   })
 
   test('a fence carrying a language does not close the fence above it', () => {
-    // A note showing two blocks: the second ``` line names a language, which
-    // CommonMark allows only on the line that opens a block. Read as a closing
-    // fence it let the lines after it define words the note was only showing.
     const html = renderMarkdown('```\n*[A]: one\n```ts\n*[B]: two\n```\n\nA and B.\n')
     expect(html).not.toContain('<abbr')
   })
 })
 
-/** Everything a note contains is written by whoever wrote the note, and a
- *  published one is served to strangers from a domain shared with every other
- *  blog. Escaping raw HTML is not enough on its own: a construct that builds
- *  its own markup out of the source, or writes a target the author chose into
- *  an attribute, is a way straight past it. Each case below was one. */
 describe('what a note cannot do to the page around it', () => {
   const published = (source: string) => renderMarkdown(source, { escapeHtml: true })
 
@@ -947,9 +843,6 @@ describe('what a note cannot do to the page around it', () => {
     expect(html).toContain('<sup>2</sup>')
   })
 
-  /** No element carries an event handler. The name itself may well appear in
-   *  the page, as the words of the link a footnote shows; what matters is that
-   *  it stays inside the attribute, or inside the text, it was put in. */
   const noHandlers = (html: string) => expect(html).not.toMatch(/<[a-z]+[^>]*\son[a-z]+\s*=/i)
 
   test('a footnote name cannot break out of the attribute it sits in', () => {
@@ -984,9 +877,6 @@ describe('what a note cannot do to the page around it', () => {
   })
 
   test('an entity in a target cannot grow into a scheme', () => {
-    // These name no scheme as written, and would name one by the time anyone
-    // clicked them. What stops them is the ampersand itself being escaped, so
-    // the entity never forms.
     for (const target of ['javascript&colon;alert(1)', '&#106;avascript:alert(1)']) {
       const html = published(`[click](${target})`)
       expect(html, target).toContain('&amp;')
@@ -1014,9 +904,6 @@ describe('what a note cannot do to the page around it', () => {
   })
 
   test('a link with no target yet is words, not a link to this page', () => {
-    // `insertLink` writes `[label]()` and puts the caret in the empty target, so
-    // a note saved mid-edit has one. An `href=""` points at the page it is on,
-    // which is a worse answer than showing the label.
     const html = published('[label]()')
     expect(html).toContain('label')
     expect(html).not.toContain('href')
@@ -1029,10 +916,6 @@ describe('what a note cannot do to the page around it', () => {
   })
 })
 
-/** Every construct that can put a target or a piece of markup into the page,
- *  each with something hostile in it, and one check applied to all of them. A
- *  sweep rather than a case: it says nothing about what the output looks like,
- *  only that nothing in it can run. New constructs belong on this list. */
 const HOSTILE = [
   '[a](javascript:alert(1))',
   '[a](  javascript:alert(1))',
@@ -1061,13 +944,8 @@ const HOSTILE = [
   ':IMG:',
 ]
 
-/** What `IMG` in the list above stands for. Written as a placeholder so the
- *  list can also be run through the trusting renderer, which passes raw HTML
- *  through on purpose - a source that carries a tag proves nothing there. */
 const IMG = '<img src=x onerror=alert(1)>'
 
-/** No element carries an event handler, and no target names a scheme a browser
- *  would run. */
 function running(html: string): string[] {
   const found: string[] = []
   if (/<[a-z]+[^>]*\son[a-z]+\s*=/i.test(html)) found.push('an element with an event handler')
@@ -1090,9 +968,6 @@ describe('the whole sweep', () => {
   })
 
   test('nor when rendering for a local export, raw HTML aside', () => {
-    // Raw HTML passes through here by design, so `IMG` stands for words instead:
-    // what is left under test is every construct that builds its own markup, and
-    // none of those has raw HTML as an excuse.
     for (const source of HOSTILE) {
       const html = renderMarkdown(source.replaceAll('IMG', 'plain words'), {
         footnotes: true,

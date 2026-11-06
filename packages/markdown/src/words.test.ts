@@ -10,8 +10,6 @@ describe('somebody else’s words in a note', () => {
     expect(asWords('<?php')).toBe('\\<?php')
   })
 
-  /** A backslash of their own in front of the bracket would escape the escape:
-   *  `\\<img>` read as a literal backslash and then a tag. */
   test('even behind a backslash of their own', () => {
     for (const text of ['\\<img src=x>', 'a \\\\<style>x</style>', '\\</div>']) {
       const html = renderMarkdown(asWords(text))

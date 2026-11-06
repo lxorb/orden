@@ -2,8 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { changedTask, lastDateTaken, taskLine, type TaskChange, writeTask } from './task-edits'
 import { readTask } from './task-line'
 
-/** Lines already in Orden's order, which a read and a whole write give back byte for
- *  byte: the Tasks plugin's documented emoji lines and the design's examples. */
 const CANONICAL = [
   '- [ ] #task Has a created date ➕ 2023-04-13',
   '- [ ] #task Has a scheduled date ⏳ 2023-04-14',
@@ -52,7 +50,6 @@ describe('a canonical line', () => {
   })
 })
 
-/** Changes, and the line each one leaves. */
 const CHANGES: [string, TaskChange, string][] = [
   ['- [ ] a', { due: '2026-10-06' }, '- [ ] a 📅 2026-10-06'],
   ['- [ ] a 📅 2026-10-06', { due: '2026-10-07' }, '- [ ] a 📅 2026-10-07'],
@@ -95,21 +92,15 @@ const CHANGES: [string, TaskChange, string][] = [
   ['- [ ] a 📅 2026-10-06 ^blk', { priority: 3 }, '- [ ] a 🔼 📅 2026-10-06 ^blk'],
   ['- [ ] a ^blk', { due: '2026-10-06' }, '- [ ] a 📅 2026-10-06 ^blk'],
   ['- [ ] a', { id: 'x1', dependsOn: ['y2'] }, '- [ ] a 🆔 x1 ⛔ y2'],
-  // Fields out of Orden's order stay where they are; a new one goes before the first
-  // that ranks after it.
   ['- [ ] a 📅 2026-10-06 ⏫', { start: '2026-10-01' }, '- [ ] a 🛫 2026-10-01 📅 2026-10-06 ⏫'],
-  // A line in Dataview's format stays in it.
   ['- [ ] a  [due:: 2026-10-06]', { priority: 2 }, '- [ ] a  [priority:: high] [due:: 2026-10-06]'],
   ['- [ ] a  [due:: 2026-10-06]', { due: '2026-10-07' }, '- [ ] a  [due:: 2026-10-07]'],
   ['- [ ] a  [priority:: high]', { priority: 1 }, '- [ ] a  [priority:: highest]'],
-  // Unknown fields are kept, and can be set.
   ['- [ ] a [effort:: big] 📅 2026-10-06', { due: null }, '- [ ] a [effort:: big]'],
   ['- [ ] a [effort:: big]', { fields: { effort: 'small' } }, '- [ ] a [effort:: small]'],
   ['- [ ] a [effort:: big]', { fields: {} }, '- [ ] a'],
-  // Fields among the words are carried over a change of the words.
   ['- [ ] a [assignee:: Lucile] b', { text: 'c' }, '- [ ] c [assignee:: Lucile]'],
   ['- [ ] a [assignee:: Lucile] b', { text: 'c', assignee: 'Emil' }, '- [ ] c [assignee:: Emil]'],
-  // An empty task gets its fields after the box.
   ['- [ ] ', { due: '2026-10-06' }, '- [ ] 📅 2026-10-06'],
   ['  * [ ] nested', { due: '2026-10-06' }, '  * [ ] nested 📅 2026-10-06'],
 ]
@@ -119,10 +110,6 @@ describe('a change', () => {
     expect(changedTask(line, change)).toBe(after)
   })
 
-  /** A tag and a field taken off together at the opening of the words, side by
-   *  side: each would claim the blank between them, the first after itself and the
-   *  second before, and an editor handed edits that overlap leaves a blank behind
-   *  in front of the words. */
   test.each([
     ['- [ ] #a [due:: 2026-10-01] Buy milk', { tags: [], due: null }],
     ['- [ ] [due:: 2026-10-01] #a Buy milk', { tags: [], due: null }],
@@ -147,10 +134,6 @@ describe('a change', () => {
     expect(writeTask('- [ ] a', { done: true })).toEqual([{ from: 3, to: 4, insert: 'x' }])
   })
 
-  // The Tasks plugin keeps the last of a field written twice, and so does the
-  // reading; a change made to the first one would leave the line saying what it
-  // said before. And a field taken off goes from everywhere it is written, or the
-  // one left behind would be read in its place.
   test('of a field written twice is made to the one that is read', () => {
     const line = '- [ ] a 📅 2026-10-01 📅 2026-10-05'
     const moved = changedTask(line, { due: '2026-11-01' })
@@ -158,7 +141,6 @@ describe('a change', () => {
     expect(readTask(moved)?.due).toBe('2026-11-01')
 
     expect(changedTask(line, { due: null })).toBe('- [ ] a')
-    // With no words in front, both would take the blank between them.
     expect(changedTask('- [ ] 📅 2026-10-01 📅 2026-10-05', { due: null })).toBe('- [ ] ')
   })
 
@@ -169,8 +151,6 @@ describe('a change', () => {
     expect(readTask(changedTask(timed, { time: null }))?.time).toBeUndefined()
   })
 
-  // A date field holds its first ten characters, the date, and what is written
-  // after it is somebody's own - a time, most often - which moving the date keeps.
   test('of a date written with a time moves the date and keeps the time', () => {
     expect(changedTask('- [ ] a [due:: 2026-10-06T10:00]', { due: '2026-10-13' })).toBe(
       '- [ ] a [due:: 2026-10-13T10:00]',
@@ -180,9 +160,6 @@ describe('a change', () => {
     )
   })
 
-  // A tag written twice is one tag to the reading, so taking it off takes off
-  // every time it is written, among the words and in the fields at the end, or the
-  // copy left behind would put it back.
   test('takes off a tag written twice everywhere it is written', () => {
     expect(changedTask('- [ ] a #x #x', { tags: [] })).toBe('- [ ] a')
     expect(changedTask('- [ ] #x a #x', { tags: [] })).toBe('- [ ] a')
@@ -191,18 +168,15 @@ describe('a change', () => {
   })
 
   test('of new words keeps a tag the words held and the change still holds', () => {
-    // The task edit field reads `#milk` out of the words and hands it back as a tag.
     expect(changedTask('- [ ] Buy #milk now', { text: 'Buy now', tags: ['milk'] })).toBe(
       '- [ ] Buy now #milk',
     )
     expect(
       readTask(changedTask('- [ ] Buy #milk now', { text: 'Buy now', tags: ['milk'] })),
     ).toMatchObject({ text: 'Buy now', tags: ['milk'] })
-    // Written once: not again where the new words or the fields at the end hold it.
     expect(
       changedTask('- [ ] Buy #milk now #shop', { text: 'Get #milk', tags: ['milk', 'shop'] }),
     ).toBe('- [ ] Get #milk #shop')
-    // One the change takes away stays away.
     expect(changedTask('- [ ] Buy #milk now', { text: 'Buy now', tags: [] })).toBe('- [ ] Buy now')
   })
 
@@ -261,7 +235,6 @@ describe('code in a task', () => {
         deadline: null,
       }),
     ).toBe('- [ ] Pay')
-    // A date left on the line keeps them, and so does a task that never had one.
     expect(changedTask('- [ ] Pay 🔁 every month 🛫 2026-09-28 📅 2026-10-01', { due: null })).toBe(
       '- [ ] Pay 🔁 every month 🛫 2026-09-28',
     )

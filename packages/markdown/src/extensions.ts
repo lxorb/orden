@@ -8,19 +8,8 @@ import { escape, fragment } from './html'
 import { firstStart, lineStart, matchesAt } from './starts'
 import { remembering } from './tags'
 
-/** Only the three that matter in element content, which is where the source of
- *  an equation that would not parse ends up. */
 const ESCAPED_IN_ERROR: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;' }
 
-/** Renders TeX, or shows the source when it will not parse.
- *
- *  And shows the source, plainly, when the engine is not here yet: the whole of it
- *  is three quarters of a megabyte and it is loaded when a note turns out to have a
- *  formula in it rather than when the app starts, so a caller that can wait says
- *  `await loadFor(source)` first and this never happens to it. The one that cannot
- *  is the clipboard's HTML flavour, written inside a copy event - and what it writes
- *  then is the formula's own source, which is what the plain-text flavour beside it
- *  carries anyway. See engines.ts. */
 function math(tex: string, display: boolean): string {
   const engine = mathsEngine()
   const escaped = () => tex.replace(/[&<>]/g, (c) => ESCAPED_IN_ERROR[c] ?? c)
@@ -42,20 +31,8 @@ function math(tex: string, display: boolean): string {
   }
 }
 
-/** What is known of where highlights close in one run of inline text, by the
- *  run's own token list: how far from the end of the run the closer stands, or -1
- *  for none at all. */
 const CLOSERS = new WeakMap<Token[], number>()
 
-/** Where the `==` closing a highlight that opens `src` stands, or -1: the first
- *  at index 3 or later with no blank before it, which is what
- *  `/^==(?=\S)([\s\S]*?\S)==/` matched - found once per run, not once per `==`.
- *
- *  That pattern scanned to the end of the paragraph at every `==` that never
- *  closed, so a paragraph of them took seconds (#494). Marked asks again at every
- *  position with what is left of the run, and the same list of tokens, so what is
- *  left only ever shrinks from the front: a closer found for one ask is the first
- *  for every later ask that starts before it, and none for one is none for all. */
 function highlightEnd(src: string, tokens: Token[] | undefined): number {
   const left = tokens ? CLOSERS.get(tokens) : undefined
   if (left === -1) return -1
@@ -67,18 +44,6 @@ function highlightEnd(src: string, tokens: Token[] | undefined): number {
   return at
 }
 
-/** `==marked==`, and `==🔴 marked==` for one of the five colours Obsidian writes.
- *
- *  The colour comes off the front of the words before they are tokenized, so it
- *  never reaches the page as an emoji and never reaches the glasses, an export or
- *  a search as one either: what the reader sees is the words, tinted. See
- *  highlights.ts, which is also what the editor reads.
- *
- *  The token carries the palette tone as the number it is, not as the class it is
- *  drawn in: one representation, so the page's `<mark class="tone-4">` and the
- *  Word highlight and the RTF colour a document export writes are all read off
- *  the same answer. See `documentOf` in apps/desktop/src/lib/export/document.ts,
- *  the other reader. */
 export const highlight: MarkedExtension = remembering({
   extensions: [
     {
@@ -110,14 +75,6 @@ export const highlight: MarkedExtension = remembering({
   ],
 })
 
-/** `H~2~O` and `X^2^`
- *
- *  Both tokenize what is between the marks and render it through the parser,
- *  the way `highlight` above does. Interpolating the source text straight into
- *  the tag was a way past the escaping a published note relies on - `~<img
- *  src=x onerror=...>~` is not a raw HTML token, so nothing else would have
- *  caught it - and it also meant that emphasis inside a subscript came out as
- *  its own asterisks. */
 export const scripts: MarkedExtension = remembering({
   extensions: [
     {
@@ -159,15 +116,6 @@ export const scripts: MarkedExtension = remembering({
   ],
 })
 
-/** A formula, drawn, with the source it was drawn from on the element around it.
- *
- *  A drawing says nothing about the TeX behind it: KaTeX writes glyph by glyph,
- *  and `\left\{ y \in \mathbb{R}^n \right\}` comes out as boxes holding `{`, `y`,
- *  `∈` and `Rn`. So a formula copied out of a note and pasted back into one used
- *  to arrive as the symbols it had been drawn as, which is nobody's idea of a
- *  paste. The source travels with the drawing instead, and the converter reads it
- *  back off the element; see `texOf` in from-html.ts. MathML carries its own the
- *  same way, which is how a formula from anybody else's page survives the trip. */
 function drawing(token: Tokens.Generic, display: boolean): string {
   const tex = String(token.text ?? '')
   const tag = display ? 'div' : 'span'
@@ -176,11 +124,6 @@ function drawing(token: Tokens.Generic, display: boolean): string {
   return `<${tag} class="${named}" data-tex="${escape(tex)}">${math(tex, display)}</${tag}>`
 }
 
-/** `$inline$`, and a `$$` block written either way. Where the block begins and
- *  ends is blocks.ts, which slides.ts reads without any of this.
- *
- *  A closing `$` straight before a digit closes nothing, which is Pandoc's rule: `$5-$10`
- *  is two prices, and was drawn as the formula `5-` with the `10` after it (#498). */
 export const maths: MarkedExtension = remembering({
   extensions: [
     {
@@ -201,14 +144,6 @@ export const maths: MarkedExtension = remembering({
   ],
 })
 
-/** The opening paragraph of a callout with its marker line taken off.
- *
- *  Counted in source characters against the tokens' own `raw`, because by the
- *  time a renderer sees a blockquote the lexer has already been over its words,
- *  and lexing what is left again here would lose every extension the instance
- *  was built with - the maths, the emoji, the wikilinks. The marker is at the
- *  very start, so the token it ends inside is the first one and is plain text;
- *  anything else is dropped whole, which is the marker's own characters going. */
 function afterMarker(tokens: Token[], cut: number): Token[] {
   const out: Token[] = []
   let left = cut
@@ -233,28 +168,9 @@ function afterMarker(tokens: Token[], cut: number): Token[] {
   return out
 }
 
-/** A callout: a blockquote whose first line names a type.
- *
- *  Which types there are, what each is called and which icon it wears is
- *  callouts.ts - the one place that knows. Here is only what the markup looks
- *  like: the type as written on `data-callout`, so a theme can reach any of
- *  them including one Orden has never heard of, and the look Orden does know as a
- *  class, so a stylesheet needs the fifteen names rather than the thirty.
- *
- *  A fold sign in the note makes it a `<details>`, open unless the sign was the
- *  `-` that says otherwise. Native, so a page that has been read, printed,
- *  published or put in an EPUB folds without a line of script following it
- *  around - and so the sign the writer put in the file means the same thing
- *  everywhere the note is read. A callout with no sign is not foldable, which
- *  is what the file says and what Obsidian does; in the editor every block
- *  folds, because there the chevron in the margin is how editing works rather
- *  than something the note asked for. */
 export const callouts: MarkedExtension = {
   renderer: {
     blockquote(token: Tokens.Blockquote) {
-      // Only an opening paragraph, or the setext heading one becomes over a rule,
-      // can be the marker line: code or a `#` heading that starts with `[!note]`
-      // is that code or heading, and code has no inline tokens to cut it out of.
       const first = token.tokens[0]
       const opening = first && opensCallout(first) ? (first as Tokens.Paragraph) : null
       const found = opening ? calloutOf(opening.text) : null
@@ -285,7 +201,6 @@ export const callouts: MarkedExtension = {
   },
 }
 
-/** `:smile:` becomes the character it names. */
 export const emoji: MarkedExtension = remembering({
   extensions: [
     {
@@ -296,10 +211,6 @@ export const emoji: MarkedExtension = remembering({
         const match = /^:([a-z0-9_+-]+):/i.exec(src)
         if (!match?.[1]) return undefined
 
-        // The table is a quarter of a megabyte and arrives when a note turns out to
-        // have a shortcode in it; until it does, `:smile:` is the characters it is
-        // written with, which is also what an unknown name has always shown. See
-        // engines.ts.
         const table = emojiTable()
         if (!table) {
           void loadEmoji()
@@ -316,7 +227,6 @@ export const emoji: MarkedExtension = remembering({
   ],
 })
 
-/** A definition list, drawn. What one is, and how far it reaches, is blocks.ts. */
 export const definitionLists: MarkedExtension = {
   extensions: [
     {
@@ -341,15 +251,12 @@ export const definitionLists: MarkedExtension = {
   ],
 }
 
-/** An abbreviation being defined, wherever the `*[` the caller found sits. */
 const DEFINITION = /\*\[[^\]\n]+\]:/y
 
 function definition(src: string, at: number): number | null {
   return matchesAt(DEFINITION, src, at) ? at : null
 }
 
-/** `*[HTML]: HyperText Markup Language` defines it; every later mention of
- *  `HTML` in the document then carries the expansion. */
 export const abbreviations: MarkedExtension = {
   extensions: [
     {
@@ -367,7 +274,6 @@ export const abbreviations: MarkedExtension = {
           title: (match[2] ?? '').trim(),
         }
       },
-      // The definition itself is not shown; it only teaches the document a word.
       renderer: () => '',
     },
   ],
@@ -375,22 +281,8 @@ export const abbreviations: MarkedExtension = {
 
 const ABBREV_DEF = /^\*\[([^\]\n]+)\]:[ \t]*(.*)$/
 
-/** Collects the abbreviations a document defines, so the rendered HTML can be
- *  marked up afterwards - the definition may come after its first use.
- *
- *  Read line by line rather than with one pass of the whole source, so that
- *  fenced code can be stepped over. The block tokenizer above never sees a line
- *  inside a fence, and this has to agree with it: a note showing what a
- *  definition looks like would otherwise teach itself the word. What a fence is
- *  and what closes one comes from fences.ts, which is what makes the two agree -
- *  the reading here used to take ```` ```ts ```` for a closing fence, and read
- *  the code after it as prose. It is `CodeBlocks` there, which keeps the quote or
- *  the list item a fence is in, so a fence that ends with its item ends here too. */
 export function collectAbbreviations(source: string): Map<string, string> {
   const found = new Map<string, string>()
-  // One scan of the bytes for a note that defines none, which is nearly every
-  // note: every definition opens with the mark, so a source without it is never
-  // read line by line at all. This runs on every render of every note.
   if (!source.includes('*[')) return found
 
   const code = new CodeBlocks()
@@ -408,10 +300,6 @@ export function collectAbbreviations(source: string): Map<string, string> {
   return found
 }
 
-/** A footnote being defined rather than referred to: the colon is the whole
- *  difference. Confirmed for the same reason the maths block is - a `[^1]` in the
- *  middle of a sentence used to cut the paragraph in two just before it, which
- *  left a space in front of every footnote mark in the document. */
 const FOOTNOTE_DEF = /\[\^[^\]\s]+\]:\s*\S/y
 
 function footnoteDefinition(src: string, at: number): number | null {
@@ -419,7 +307,6 @@ function footnoteDefinition(src: string, at: number): number | null {
   return line !== null && matchesAt(FOOTNOTE_DEF, src, at) ? line : null
 }
 
-/** `[^1]` in the text, `[^1]: …` at the bottom. */
 export const footnotes: MarkedExtension = remembering({
   extensions: [
     {

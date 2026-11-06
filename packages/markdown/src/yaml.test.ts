@@ -21,8 +21,6 @@ describe('a quoted value', () => {
   })
 
   test('reads its escapes the way YAML does', () => {
-    // Doubled inside single quotes, backslashed inside double ones, and nothing at
-    // all in a plain value.
     expect(unquoted("'It''s'")).toBe("It's")
     expect(unquoted('"say \\"hi\\""')).toBe('say "hi"')
     expect(unquoted('"a\\\\b"')).toBe('a\\b')
@@ -30,8 +28,6 @@ describe('a quoted value', () => {
   })
 
   test('and keeps a backslash no escape reads, rather than failing', () => {
-    // Written by hand, a Windows path in double quotes: YAML itself refuses `\U`,
-    // and the characters are a better answer than nothing.
     expect(unquoted('"C:\\Users\\me"')).toBe('C:\\Users\\me')
   })
 })
@@ -55,8 +51,6 @@ describe('a flow sequence', () => {
   })
 
   test('a comma inside quotes is part of the item, in either quotes', () => {
-    // What `flowItem` writes for a value holding a comma, and what Obsidian and
-    // every YAML reader read as one item: this came back as three.
     expect(flowItems(`["a, b", c]`)).toEqual(['a, b', 'c'])
     expect(flowItems(`['a, b', c]`)).toEqual(['a, b', 'c'])
     expect(flowItems(`[c, 'one, two, three']`)).toEqual(['c', 'one, two, three'])
@@ -136,7 +130,6 @@ describe('a value being written', () => {
     expect(scalar('# hash')).toBe("'# hash'")
     expect(scalar('- not a list')).toBe("'- not a list'")
     expect(scalar('')).toBe("''")
-    // Numbers however YAML spells them: a part number `1e3` is not a thousand.
     expect(scalar('1e3')).toBe("'1e3'")
     expect(scalar('2E-5')).toBe("'2E-5'")
     expect(scalar('0x1F')).toBe("'0x1F'")
@@ -146,17 +139,12 @@ describe('a value being written', () => {
   })
 
   test('and comes back out of the reader as what was written', () => {
-    // The two writers this replaced each quoted the other's case in a way this
-    // package's own reader could not undo: `'It''s'` came back doubled, and
-    // `"say \"hi\""` came back with its backslashes.
     for (const value of ['say "hi"', "It's: here", 'plain', 'one: two', '# hash', 'yes']) {
       expect(unquoted(scalar(value)), value).toBe(value)
     }
   })
 
   test('takes single quotes unless it holds an apostrophe of its own', () => {
-    // A quote inside a value is not syntax, so a value needing quotes for another
-    // reason keeps it: `'"quoted"'` starts with one and does need them.
     expect(scalar('say "hi": really')).toBe(`'say "hi": really'`)
     expect(scalar('"quoted"')).toBe(`'"quoted"'`)
     expect(scalar("It's: here")).toBe(`"It's: here"`)

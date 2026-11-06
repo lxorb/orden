@@ -1,20 +1,3 @@
-/** HTML into the markdown Orden writes.
- *
- *  The other direction, and the same opinions read backwards: the markers here
- *  are the ones the editor's own formatting commands produce, so a page pasted
- *  into a note, an article a web tab clipped and a note typed by hand are the
- *  same kind of file. Turndown does the walking, with the GFM rules on top for
- *  tables, task lists and strikethrough.
- *
- *  One copy of it, because there were two: the editor's paste and the browser
- *  extension Orden used to have had each grown their own set of rules, and a page pasted into the app came
- *  out with three spaces after every bullet while the same page clipped came out
- *  with one. Whoever needs it imports it from here.
- *
- *  Pictures are the one thing a caller decides (`image`): one that has no address
- *  for them yet can number them and fill the addresses in afterwards; a paste has
- *  the addresses already and keeps them. */
-
 import TurndownService from 'turndown'
 import { gfm } from 'turndown-plugin-gfm'
 import { escapeText } from './escapes'
@@ -23,21 +6,12 @@ import { appHref, safeHref, safeSrc } from './html'
 import { tagNameAt } from './tags'
 import { taskWords } from './task-line'
 
-/** A field the escaping wrote as two brackets, `\\[due:: 2026-10-01\\]`, and nothing
- *  after it that would make it a link's words. */
 const ESCAPED_FIELD = /\\\[([^[\]\\]*?::[^[\]\\]*?)\\\](?!\()/g
 
-/** A pasted to-do's words with its fields as fields again. */
 function withFields(words: string): string {
   return words.replace(ESCAPED_FIELD, '[$1]')
 }
 
-/** What a note never contains.
- *
- *  Chrome, layout and interaction, none of which survives the trip into
- *  markdown: a script's source would arrive as a paragraph of code, a stylesheet
- *  as a paragraph of rules, a page's `<title>` as a line of prose above the
- *  heading it repeats. */
 export const NEVER = [
   'script',
   'style',
@@ -87,59 +61,16 @@ export function formSays(form: Node): boolean {
 }
 
 export interface FromHtmlOptions {
-  /** What a picture becomes. The default writes the address the page gave it. */
   image?: (source: string, alt: string) => string
-  /** Whether a `file:` target is the caller's to resolve.
-   *
-   *  Off by default, which is what a clip and a paste want: the note is the finished
-   *  thing, and an address on somebody else's disk is not one it can follow.
-   *
-   *  On for the imports, where it is the whole point. macOS writes
-   *  `file:///Users/…/photo.png` into the HTML it hands out for every attachment,
-   *  and that file is usually one of the files arriving beside the note - so the
-   *  address has to survive the conversion for the pass afterwards to point it at
-   *  where the file landed, and to leave it alone where the file was not in the
-   *  export. See `isAddress` in apps/desktop/src/lib/import/rewrite.ts, which is the
-   *  other half of this. */
   fileTargets?: boolean
 
-  /** Whether a link into the app the note came from is kept as it was written.
-   *
-   *  Off by default, which is what a clip and a paste want: a scheme the app has
-   *  never heard of is noise in a note written from a web page.
-   *
-   *  On for the imports, where the address is the note's own history. Apple Notes
-   *  writes `applenotes:note/…` for a link between two notes, Bear writes `bear://`,
-   *  Evernote `evernote:///` - and a link to something the export did not carry is a
-   *  fact about where the note used to live rather than something to throw away. See
-   *  docs/import.md, which promises exactly that, and `appHref` in html.ts, which is
-   *  what the schemes are held to: the ones that run code or serve a document of the
-   *  author's own are refused whoever is asking. */
   appTargets?: boolean
 
-  /** Whether a video, a recording or an embedded file is written as a link to it.
-   *
-   *  Off by default, which is what a clip and a paste want: a page's player is
-   *  chrome, and the file behind it stays on the page's own server.
-   *
-   *  On for the imports, where that file arrives beside the note and the element is
-   *  the one place that says the note held it. A note is markdown and markdown has
-   *  no player, so it becomes a link, held to the same rule as any other; see
-   *  `mayPointAt`. */
   mediaLinks?: boolean
 
-  /** Whether a to-do's words are plain text that meant nothing to the task reader.
-   *
-   *  Off by default, which is what a paste wants: a task list drawn by this app or
-   *  by Obsidian says its tags, dates and fields as itself, and pasted back they are
-   *  that task's again. On for the imports, where a Notion or Evernote checkbox is
-   *  somebody's sentence and a `#` or an emoji and a date in it is no field
-   *  (`taskWords`). */
   plainTasks?: boolean
 }
 
-/** The elements of `NEVER` that point at a file, and the attribute each says it in.
- *  A video or a recording may name it in a `<source>` inside instead. */
 const MEDIA: Record<string, string> = {
   video: 'src',
   audio: 'src',
@@ -148,8 +79,6 @@ const MEDIA: Record<string, string> = {
   object: 'data',
 }
 
-/** A video, a recording or an embedded file as a link to the file, named by the
- *  file's own name; nothing where it names no file a note may point at. */
 function mediaLink(node: Element, options: FromHtmlOptions): string {
   const attribute = MEDIA[node.nodeName.toLowerCase()] ?? 'src'
   const source = (
@@ -167,23 +96,10 @@ function mediaLink(node: Element, options: FromHtmlOptions): string {
     // Not an escape after all; the name is shown as it was written.
   }
 
-  // The name is the export's words, not the note's: it goes through what a page's
-  // prose does, so a `%3C` in it opens no tag and a `%0A` ends no paragraph.
   const words = escapeText((shown || source).replace(/\s+/g, ' '))
   return `\n\n[${words}](${destination(source)})\n\n`
 }
 
-/** The TeX a formula carries about itself.
- *
- *  MathML says what a formula means and markdown has no way of writing that down,
- *  but every renderer that emits MathML keeps the source it was built from - as an
- *  annotation inside it, which is where the MathML standard puts it, or as
- *  `alttext` on the element. KaTeX, MathJax and MediaWiki all write both.
- *
- *  `data-tex` is this app's own, and is asked first because it is the outer
- *  element's own statement about itself: a note draws its formulas with no MathML
- *  at all - glyph by glyph, which is all a reader needs - and keeps the source on
- *  the element it drew them into. See `drawing` in extensions.ts. */
 function texOf(maths: Element): string {
   const said =
     maths.getAttribute('data-tex') ??
@@ -194,43 +110,16 @@ function texOf(maths: Element): string {
   return angled(said.replace(/\s+/g, ' ').trim())
 }
 
-/** Whether an element says which formula it holds: MathML, or one of this app's
- *  own with the source on it. */
 function saysAFormula(node: Element): boolean {
   return node.nodeName.toLowerCase() === 'math' || node.hasAttribute('data-tex')
 }
 
-/** Whether this is a formula's drawing rather than a formula.
- *
- *  A renderer emits both: the glyphs it drew, and beside them the MathML that says
- *  what they mean with the TeX inside it. The drawing is marked `aria-hidden`,
- *  because what a reader is meant to be given is the maths and not the letters it
- *  was drawn with - and a note holds it for the same reason. Without this a formula
- *  copied off a page arrived twice, as `$e^{i\pi}+1=0$` and then as `eiπ+1=0`.
- *
- *  Only where the formula itself is beside it, which is what keeps this narrow.
- *  Hidden is not on its own a reason to drop anything: a page takes what is behind
- *  a dialog out of the reading order, a carousel hides the slides that are not
- *  showing, and the words in either are still the page's words. */
 function drawnBeside(node: Element): boolean {
   if (node.getAttribute('aria-hidden') !== 'true') return false
   return !!node.parentElement?.querySelector('math, [data-tex]')
 }
 
-/** Whether a subtree puts any words into the note.
- *
- *  A formula's own drawing puts none: the glyphs are the letters the maths was
- *  drawn with, and the note keeps the maths instead; see `drawnBeside`. That is
- *  the whole reason this is asked by hand rather than off `textContent`, which
- *  counts the drawing - and counting it left a page's display equation looking
- *  like part of a line rather than a block of its own.
- *
- *  Answered at the first word rather than gathered up, because what wants to know
- *  is whether anything shares a block with a formula. Walked from sibling to
- *  sibling: a browser's `NodeList` can be iterated and the small DOM turndown
- *  carries for node cannot. */
 function saysWords(node: Node): boolean {
-  // Read from `nodeType` rather than from the tag, because a text node has none.
   if (node.nodeType === 3) return !!node.nodeValue?.trim()
   if (node.nodeType !== 1 || drawnBeside(node as Element)) return false
 
@@ -241,7 +130,6 @@ function saysWords(node: Node): boolean {
   return false
 }
 
-/** Whether the only thing this element holds that says anything is the one child. */
 function holdsOnly(parent: Element, one: Node): boolean {
   for (let kid = parent.firstChild; kid; kid = kid.nextSibling) {
     if (kid !== one && saysWords(kid)) return false
@@ -250,24 +138,10 @@ function holdsOnly(parent: Element, one: Node): boolean {
   return true
 }
 
-/** A formula's own `<` and `>`, as TeX also writes them.
- *
- *  The formula is written into the note by the rule rather than as text, because
- *  text is escaped and every `\` in a formula would come back doubled - so nothing
- *  else is looking at what an `alttext` says. And a page chooses what that says: a
- *  formula whose TeX was `<img src=x onerror=…>` put a tag into the note, and a
- *  tag in a note of the reader's own is markup the app renders. So the two
- *  characters a tag can begin with are written the way TeX writes them anyway.
- *  KaTeX draws `\lt` and `\gt` as the same glyphs, and the note then holds nothing
- *  a markdown reader can see a tag in, whether or not the formula around them
- *  parses. */
 function angled(tex: string): string {
   return tex.replace(/</g, '\\lt ').replace(/>/g, '\\gt ')
 }
 
-/** Whether this is the table's first `tbody`, which is where the GFM rules will
- *  look for a heading row outside a `thead`. An empty `thead` in front of it does
- *  not count against it; anything else does. */
 function firstBody(element: Element | null): boolean {
   if (element?.nodeName !== 'TBODY') return false
 
@@ -275,21 +149,6 @@ function firstBody(element: Element | null): boolean {
   return before === null || (before.nodeName === 'THEAD' && !before.textContent.trim())
 }
 
-/** Whether the first row of a table is its headings, which is what the GFM rules
- *  ask before they will convert one at all: a row in a `thead`, or the first row
- *  of the table or of its first `tbody` with nothing but `th` in it.
- *
- *  Asked here as well, because the answer decides whether the table needs a
- *  heading row written for it - and it has to be the *same* answer, or the row
- *  rule and this one would disagree about what the table already says.
- *
- *  The `tbody` half of it is what was missing, and it was a way to get a page's
- *  own markup into a note: a table whose rows sit in a second `tbody` looked
- *  headed here and did not to the plugin, so neither rule claimed the table, and
- *  what turndown does with a node no rule claims is hand back its `outerHTML` -
- *  classes, handlers, nested tags, an `<img>` pointing at the page's own host and
- *  all. The rule below now claims every table, so a disagreement could only ever
- *  cost a line of dashes; this keeps the two agreeing anyway. */
 function headed(table: HTMLTableElement): boolean {
   const first = table.rows[0]
   if (!first) return false
@@ -361,45 +220,23 @@ function gapsOf(table: HTMLTableElement): Gaps {
 
 const ALIGNED: Readonly<Record<string, string>> = { left: ':--', right: '--:', center: ':-:' }
 
-/** The heading row markdown writes for a table that has none: as many empty cells
- *  as the table has columns, and the line of dashes under them. */
 function emptyHeading(table: HTMLTableElement): string {
   const across = [...(table.rows[0]?.cells ?? [])].reduce((sum, one) => sum + spanOf(one), 0)
 
   return `|${'  |'.repeat(across)}\n|${' --- |'.repeat(across)}`
 }
 
-/** The elements a formula can have a line of its own inside. Turndown's own list
- *  of what a blank line goes around, narrowed to the ones a page's prose nests a
- *  formula in; a heading is deliberately not among them, because a formula in a
- *  heading is part of the heading and not a block under it. */
 const OWNS_A_LINE = new Set(['P', 'DIV', 'DD', 'LI', 'TD', 'TH', 'BLOCKQUOTE', 'SECTION', 'BODY'])
 
 const HEADING = /^H[1-6]$/
 
-/** Whether the formula is the whole of the block it sits in.
- *
- *  What decides between the two ways of writing one down, and the page's own
- *  `display` is not it: a site draws a formula on a line of its own with CSS while
- *  leaving it inside the sentence it belongs to, and `$$` in the middle of a
- *  sentence is not a formula to any reader of markdown. So the question is whether
- *  anything else shares the block - the words before and after it, in the page's
- *  own tree.
- *
- *  Asked of what sits beside the formula on the way up rather than of the block's
- *  own text, which is the same answer read off a great deal less of the page: a
- *  block is as long as somebody's article, and reading the whole of it for every
- *  formula in it is the article read once per equation. */
 function standsAlone(maths: Element): boolean {
-  // A formula drawn into a block of its own is that block: this app writes a
-  // `$$` into a `<div>` and a `$…$` into a `<span>`, and MathML is neither.
   if (OWNS_A_LINE.has(maths.nodeName)) return true
 
   let one: Element = maths
   let over: Element | null = maths.parentElement
 
   while (over) {
-    // A heading is deliberately not a block a formula can own; see `OWNS_A_LINE`.
     if (HEADING.test(over.nodeName)) return false
     if (!holdsOnly(over, one)) return false
     if (OWNS_A_LINE.has(over.nodeName)) return true
@@ -411,49 +248,15 @@ function standsAlone(maths: Element): boolean {
   return false
 }
 
-/** A fence long enough to hold the code, whatever backticks the code contains. */
 function fenceFor(code: string): string {
   const longest = [...code.matchAll(/`+/g)].reduce((most, run) => Math.max(most, run[0].length), 0)
   return '`'.repeat(Math.max(3, longest + 1))
 }
 
-/** What a fence's language may look like: a word, a version, a `c++` or a `c#`.
- *  Anything else a page wrote in the attribute is not a language. */
 const A_LANGUAGE = /^[\w+#.-]{1,24}$/
 
-/** The two languages a page does not get to choose for somebody's note.
- *
- *  A fence's language comes off the page's own markup, so a clipped article decides
- *  what kind of block the note holds - and these two are not blocks that show
- *  something. ` ```query ` runs a search over the reader's own space the moment the
- *  note is rendered, with nothing pressed; ` ```ai ` reads its own body as a prompt
- *  and puts an Ask glyph on the fence, so the body a page wrote is a question the
- *  reader is invited to send, with their note attached. Neither is a page's decision
- *  about somebody's note, so a clip naming one arrives as a fence with no language at
- *  all - the characters, which is what a clip is.
- *
- *  What is deliberately *not* here: `js` and its spellings, and the drawn ones -
- *  `mermaid`, `chart`, `flow`, `sequence`. A clipped page of developer documentation
- *  is the commonest clip there is, and its fences say `js` and `mermaid`; taking the
- *  language off them would cost the highlighting and the diagram on every one of them
- *  to prevent a glyph the reader has to press, which runs in a frame sandboxed with
- *  `allow-scripts` and nothing else (see packages/editor/src/run/run.ts) - the same
- *  thing that happens when somebody types a fence themselves. A page writing the
- *  characters of a `js` block into a note it was clipped from is the clip working.
- *
- *  Written here rather than imported because the editor owns the runners and it is
- *  this package's dependent, not its dependency; `packages/editor`'s languages.test.ts
- *  is what holds the two sides to each other. */
 const THE_APP_S_OWN = new Set(['ai', 'query'])
 
-/** The language a code block names, from the class or the attribute either half
- *  of it carries.
- *
- *  `language-ts` is the convention and `lang-ts` the older spelling, and both
- *  turn up on the same sites. `data-language` is what the highlighters now write
- *  instead: Shiki names it there and nowhere else, and Shiki is what the docs of
- *  half the tools a note is about are built with, so a clipped snippet used to
- *  arrive as a fence with no language on it and no highlighting anywhere after. */
 function languageOf(pre: Element): string {
   const code = pre.querySelector('code')
 
@@ -467,33 +270,14 @@ function languageOf(pre: Element): string {
   return named_(/(?:language|lang)-(\S+)/.exec(classes)?.[1] ?? '')
 }
 
-/** The language as the note may write it, or nothing at all: a word of the shape a
- *  language has, and not one of the app's own. */
 function named_(said: string): string {
   const language = said.toLowerCase()
   return A_LANGUAGE.test(language) && !THE_APP_S_OWN.has(language) ? said : ''
 }
 
-/** What numbering the lists of a conversion did, counted.
- *
- *  Here for from-html.test.ts, which asserts these rather than a stopwatch. A
- *  five thousand item list used to be held to a wall-clock budget of a second and
- *  answered 1,400 ms on a runner with the rest of the suite on it, failing a test
- *  that had found nothing wrong; the same commit passed on its own minutes
- *  earlier. A timing is a proxy for the work done and a poor one, because what it
- *  measures is partly the queue in front of the code. These three are the same
- *  numbers on a busy machine as on an idle one, and between them they say the
- *  thing the test is about: one count per list rather than one per item.
- *
- *  Three adds over a conversion that walks a whole page. */
 export interface Work {
-  /** Lists counted out: one per parent, however many items hang off it. */
   lists: number
-  /** Items that asked where they sit among their siblings. */
   items: number
-  /** Siblings stepped over while counting those lists out. The one worth
-   *  catching: a list is walked once, so this is the length of the list, and a
-   *  return to a walk for every item makes it the length squared. */
   walked: number
 }
 
@@ -503,22 +287,12 @@ function nothing(): Work {
 
 const work = nothing()
 
-/** What the conversions since this was last asked did, and zero from here. */
 export function workDone(): Work {
   const done = { ...work }
   Object.assign(work, nothing())
   return done
 }
 
-/** Where a node sits among its parent's elements, which is what numbers an item
- *  of an ordered list.
- *
- *  One count per parent, not per child: the walk this used to do over the
- *  parent's children was a walk for every item, so numbering a list cost a pass
- *  over the list for each line of it. The first item counts its siblings out and
- *  the rest read the answer. Counted out rather than spread: a browser's
- *  `HTMLCollection` can be iterated and the small DOM turndown carries for node
- *  cannot. */
 function indexer(): (parent: Element | null, node: Node) => number {
   const counted = new WeakMap<Element, Map<Node, number>>()
 
@@ -546,11 +320,6 @@ function indexer(): (parent: Element | null, node: Node) => number {
   }
 }
 
-/** Alt text that cannot break out of its own brackets.
- *
- *  A backslash is one of the ways out, and the one that was left: alt text
- *  ending in `\` had its escaped bracket escaped instead, the words closed early
- *  and the address after them was the page's rather than the picture's. */
 function altOf(image: Element): string {
   const words = (image.getAttribute('alt') ?? '').replace(/\s+/g, ' ').trim()
   if (image.closest('a')) {
@@ -560,34 +329,10 @@ function altOf(image: Element): string {
   return words.replace(/([\\[\]])/g, '\\$1')
 }
 
-/** Everything markdown reads inside a destination: the brackets that end one,
- *  the angle brackets that open and close the other spelling of one, the
- *  backslash that escapes any of them, the quote that opens a title, and the
- *  blanks and control characters that end a bare destination. */
 const IN_DESTINATION = /[\s\p{Cc}()<>\\"]/gu
 
-/** The two `encodeURIComponent` keeps, which are the two that end a destination. */
 const KEPT: Record<string, string> = { '(': '%28', ')': '%29' }
 
-/** An address as a markdown destination that cannot be broken out of.
- *
- *  Percent encoded rather than escaped with backslashes. Escaping is what
- *  turndown does for a link and what this copied, and it left the escape itself:
- *  a `\` the page put in the address escaped the backslash turndown wrote, the
- *  destination ended at the bracket after it, and the rest of the attribute was
- *  written into the note as markdown of its own - a second picture, pointing at
- *  whatever host the pasted HTML named. An address is a URL and a URL says the
- *  same thing percent encoded, so there is nothing left to escape and nothing
- *  left to end early. `File_(1).png`, which Wikipedia writes, comes out as one
- *  address rather than as an address and a bracket of prose.
- *
- *  Exported because a caller that fills picture placeholders in after the
- *  conversion has to say an address the same way. The browser extension Orden used
- *  to have had its own copy built on `encodeURI`, which
- *  escapes the percent as well: an address the page had already escaped came back
- *  escaping its own escapes, and `a%20b.png` was saved as `a%2520b.png`. The
- *  percent is not touched here - an address that already carries escapes stays the
- *  address it was. */
 export function destination(address: string): string {
   return address.replace(IN_DESTINATION, (character) => {
     return KEPT[character] ?? encodeURIComponent(character)
@@ -678,15 +423,6 @@ function linkedBlocks(content: string, target: string): string {
   return `\n\n${blocks.join('\n\n')}\n\n`
 }
 
-/** What a link says about itself, in the quotes markdown gives a title, or
- *  nothing at all.
- *
- *  Escaping the quote is what turndown does and it left the backslash that
- *  escapes the quote: a title ending in `\` closed nothing, and what followed the
- *  link was read as more of the title. A link keeps its title where a picture has
- *  none, because a link's address is the page's own - only a picture goes through
- *  a caller's hook, so there is no numbered placeholder here for a title to stand
- *  in front of. */
 function titleOf(link: Element): string {
   const title = (link.getAttribute('title') ?? '')
     .replace(/\s+/g, ' ')
@@ -696,15 +432,6 @@ function titleOf(link: Element): string {
   return title ? ` "${title}"` : ''
 }
 
-/** Whether a target may be written into the note at all.
- *
- *  The same question `safeHref` and `safeSrc` answer for a renderer, asked before the
- *  file is written rather than after: a note outlives the page it came from, so a
- *  `javascript:` or a `data:` document in one is a target nothing will ever follow
- *  and every surface has to refuse again. The exceptions are a caller resolving its
- *  own `file:` addresses and an import keeping a link into the app the note came from;
- *  see `fileTargets` and `appTargets`. Neither of them reaches the schemes that run
- *  code, which is the whole of what this is for. */
 function mayPointAt(said: string, options: FromHtmlOptions, picture = false): boolean {
   if (options.fileTargets === true && /^file:/i.test(said.trim())) return true
   if (picture) return safeSrc(said)
@@ -722,9 +449,6 @@ function converter(options: FromHtmlOptions): TurndownService {
     emDelimiter: '*',
     strongDelimiter: '**',
     linkStyle: 'inlined',
-    // Turndown hands an element with no words in it here rather than to a rule, and
-    // an `<object>` holds none; see `mediaLinks`. Anything else is what turndown's
-    // own does with it, from the `isBlock` turndown marks every node it walks with.
     blankReplacement: (_content, node) => {
       if (options.mediaLinks === true && node.nodeName === 'OBJECT') return mediaLink(node, options)
       return (node as { isBlock?: boolean }).isBlock ? '\n\n' : ''
@@ -733,44 +457,22 @@ function converter(options: FromHtmlOptions): TurndownService {
 
   service.use(gfm)
 
-  // What a page's own text is written as, which is escapes.ts and not turndown's
-  // own: the same markers, escaped where the escape changes what is rendered and
-  // left alone where a run of the page's words already is markdown. Hung on the
-  // instance because that is where turndown looks it up - and it looks it up only
-  // for text that is not inside code, which is what keeps a fence's brackets.
-  //
-  // Except that an address is kept as written only outside a link: inside one the
-  // renderer autolinks nothing and the address is words; see `escapeText`. turndown
-  // hands `escape` the text alone, so the link rule says when it is inside one: its
-  // filter is asked once for an element, just before that element's words are
-  // converted, and its replacement once they have been.
   let insideLinks = 0
   service.escape = (text) => escapeText(text, { addresses: insideLinks === 0 })
 
-  // A filter rather than the list itself, because `svg` is not an HTML tag and
-  // the list is one. For a clip this is a second line of defence behind the
-  // extractor's own DOM cleaning; for a paste it is the only one, since a clipboard's HTML
-  // arrives as a whole document with a head on it.
   service.remove((node) => {
     const name = node.nodeName.toLowerCase()
     return NEVER.includes(name) || (name === 'form' && !formSays(node))
   })
 
-  // Turndown asks its rules before what it removes, so the elements of the list
-  // that point at a file are links instead for the caller that keeps the files.
   if (options.mediaLinks === true)
     service.addRule('media', {
       filter: (node) => node.nodeName.toLowerCase() in MEDIA,
       replacement: (_content, node) => mediaLink(node, options),
     })
 
-  // A formula's drawing, which the formula beside it already says; see
-  // `drawnBeside`. The note keeps the maths rather than the letters it was drawn
-  // with, whichever of the two the page put first.
   service.remove((node) => drawnBeside(node))
 
-  // Kept for the one conversion, because the tree it counts lives for one
-  // conversion.
   const indexIn = indexer()
 
   service.addRule('emphasis', {
@@ -818,10 +520,6 @@ function converter(options: FromHtmlOptions): TurndownService {
     replacement: (_content, node) => ((node as HTMLInputElement).checked ? '[x] ' : '[ ] '),
   })
 
-  // A list item, with one space after its marker rather than turndown's three.
-  // Orden writes `- item`, and a note full of `-   item` is a note that looks like
-  // it came from somewhere else. Nested lines line up under the text, which is
-  // what makes the nesting readable in the source.
   service.addRule('listItem', {
     filter: 'li',
     replacement: (content, node, settings) => {
@@ -837,13 +535,7 @@ function converter(options: FromHtmlOptions): TurndownService {
         .replace(/^\n+/, '')
         .replace(/\n+$/, '\n')
         .replace(/\n/g, `\n${indent}`)
-        // A ticked item brings its box and the space the page had after it; one
-        // space between the box and the words is what markdown wants.
         .replace(/^(\[[ x]\])\s*/, '$1 ')
-        // A to-do's first line: words an importer knows are plain are written as none
-        // of the task's fields (`taskWords`, see `plainTasks`); a pasted task list
-        // keeps the `[key:: value]` fields it drew as itself, which the escaping took
-        // for brackets - but never one a link's address follows.
         .replace(
           /^(\[[ x]\] )([^\n]*)/,
           (_, box: string, words: string) =>
@@ -855,18 +547,11 @@ function converter(options: FromHtmlOptions): TurndownService {
     },
   })
 
-  // GitHub's own spelling, which is the one the editor's format bar writes. The
-  // plugin still says `~single~`, which this editor's parser reads as subscript.
   service.addRule('struck', {
     filter: ['del', 's'],
     replacement: (content) => (content ? `~~${content}~~` : ''),
   })
 
-  // Highlighted text has a markdown form here, so keep it rather than drop it -
-  // and its colour has one too, so a highlight copied out of the reading view and
-  // pasted back is still the colour it was. The class is the one the renderer
-  // writes; a `<mark>` from anywhere else is a highlight with no colour of its
-  // own, which is what it looks like.
   service.addRule('highlight', {
     filter: ['mark'],
     replacement: (content, node) => {
@@ -878,17 +563,11 @@ function converter(options: FromHtmlOptions): TurndownService {
     },
   })
 
-  // Underline has none, so the tag itself is the markdown; the editor renders it.
   service.addRule('underline', {
     filter: ['u'],
     replacement: (content) => (content ? `<u>${content}</u>` : ''),
   })
 
-  // Raised and lowered text, which this editor has markers for and a page says in
-  // tags. Neither was kept, and what was lost was not styling but the number:
-  // `x²` arrived as `x2`, `H₂O` as `H2O` and `10⁶` as `106`, each of them a
-  // different quantity from the one the page stated. A body the marker cannot hold
-  // - one with the marker's own character in it - keeps the tag, as underline does.
   service.addRule('scripts', {
     filter: ['sup', 'sub'],
     replacement: (content, node) => {
@@ -902,10 +581,6 @@ function converter(options: FromHtmlOptions): TurndownService {
     },
   })
 
-  // A cell, and one line of it. Markdown has no way to write a newline inside a
-  // cell, so a cell holding a paragraph, a list or a table of its own ended the
-  // table where the newline was and left the rows after it as loose pipes; and a
-  // cell whose own words contain a pipe used to split itself in two.
   service.addRule('cell', {
     filter: ['th', 'td'],
     replacement: (content, node) => {
@@ -939,13 +614,6 @@ function converter(options: FromHtmlOptions): TurndownService {
     },
   })
 
-  // Every table, because a table no rule claims is the page's own raw HTML: the
-  // GFM rules hand one back verbatim - its classes, its styles, its attributes and
-  // whatever is nested inside them - straight into the note, which the app then
-  // renders as the note's own markup. A clipped page is somebody else's and none
-  // of it is kept verbatim, so a table becomes a table: the rows as the row rules
-  // wrote them, under the empty heading row markdown writes for a table that has
-  // no headings of its own.
   service.addRule('table', {
     filter: (node) => node.nodeName === 'TABLE',
     replacement: (content, node) => {
@@ -957,9 +625,6 @@ function converter(options: FromHtmlOptions): TurndownService {
     },
   })
 
-  // One rule for every preformatted block, whether or not it wraps a `code`.
-  // Turndown's own fenced rule wants the pair, and a bare `pre` would otherwise
-  // come out as a paragraph with its indentation collapsed.
   service.addRule('preformatted', {
     filter: 'pre',
     replacement: (_content, node) => {
@@ -971,16 +636,6 @@ function converter(options: FromHtmlOptions): TurndownService {
     },
   })
 
-  // A formula, as the `$…$` this editor and Obsidian both draw. MathML is what a
-  // page renders one as, and the TeX it was built from travels inside it, so the
-  // note keeps the formula rather than the letters it was made of: a clipped
-  // Euler's identity is `e^{i\pi}+1=0` and not `eiπ+1=0`. A formula this app drew
-  // says the same thing on the element around the drawing; see `saysAFormula`.
-  //
-  // Written by the rule rather than as text, because text is escaped: every `\`
-  // in the formula would come back doubled and the note would draw nothing.
-  // Named through a function rather than as a tag, because `math` is MathML and
-  // turndown's own list of tags is HTML's.
   service.addRule('maths', {
     filter: (node) => saysAFormula(node),
     replacement: (content, node) => {
@@ -989,41 +644,20 @@ function converter(options: FromHtmlOptions): TurndownService {
 
       if (standsAlone(node)) return `\n\n$$\n${tex}\n$$\n\n`
 
-      // A dollar inside the formula is the one thing that would close it early,
-      // and `\$` is how TeX writes one anyway. One that the page had already
-      // escaped is left alone, or the escape would come back escaping itself.
       return `$${tex.replace(/(?<!\\)\$/g, '\\$')}$`
     },
   })
 
-  // An address is an address whether a picture or a link carries it, and
-  // turndown escapes the one in an `href` the way this used to escape the one in
-  // a `src`: a `\` on the page ended the destination early, and the rest of the
-  // attribute became a link of the page's own after it. So a link is written here
-  // too, through the same encoder.
-  //
-  // One rule for both of turndown's, which are an inlined link and a referenced
-  // one; the converter asks for inlined, and a rule added here answers before
-  // either of them whatever it asks for.
-  //
-  // The words keep the escaping they arrive with. A link's text is markdown by
-  // the time it reaches this - the emphasis inside it, or a picture of its own -
-  // and its text nodes have been through `escape` above, which is where a
-  // backslash and the brackets are already dealt with.
   service.addRule('link', {
     filter: (node) => {
       const href = node.nodeName === 'A' ? node.getAttribute('href') : null
       if (!href) return false
-      // Words that stay words, where the target may not be written down, are prose
-      // and keep their addresses.
       if (mayPointAt(href, options)) insideLinks += 1
       return true
     },
     replacement: (content, node) => {
       const href = node.getAttribute('href') ?? ''
       if (mayPointAt(href, options)) insideLinks -= 1
-      // The words stay where the target may not be written down, which is what an
-      // unresolvable link is anywhere; see `mayPointAt`.
       if (!mayPointAt(href, options)) return content
 
       const target = `${destination(href)}${titleOf(node)}`
@@ -1035,13 +669,6 @@ function converter(options: FromHtmlOptions): TurndownService {
     },
   })
 
-  // A tag, as this renderer draws one and as Obsidian's pages do: the words it is
-  // written with. The reading view draws one as a link, because a press there asks
-  // the space about it, and the rule above would have written that link down as
-  // `[#work](#work)` - a copy out of the reading view pasted into a note came back
-  // as a link to a place that is not one. Only an element whose words are one whole
-  // tag, so a `tag` class on anything else is left to the rules it always met.
-  // Added after the link rule, which is what makes it answer first.
   service.addRule('tag', {
     filter: (node) => {
       const words = node.textContent
@@ -1050,19 +677,10 @@ function converter(options: FromHtmlOptions): TurndownService {
     replacement: (_content, node) => node.textContent,
   })
 
-  // The two things a picture says, and no `title`, which is the one place it
-  // differs from a link: a caller's address may arrive after the conversion, filled in
-  // by the shape `](nib:0)`, so a title written
-  // between them would leave the placeholder in the note. A page's own goes with
-  // the rest of the attributes, and there is no third string here to break out
-  // of a title's quotes.
   service.addRule('picture', {
     filter: 'img',
     replacement: (_content, node) => {
       const source = node.getAttribute('src') ?? ''
-      // The same rule a link goes through, and the one difference a picture makes: a
-      // small one may travel inside the document as a `data:` image, and an SVG is a
-      // document rather than a picture so it is not one of those.
       if (!source || !mayPointAt(source, options, true)) return ''
 
       const alt = altOf(node)
@@ -1073,14 +691,6 @@ function converter(options: FromHtmlOptions): TurndownService {
   return service
 }
 
-/** Blank lines are how markdown separates blocks, and more than one of them says
- *  nothing extra. Trailing spaces on a line mean a hard break, so only the ones
- *  on otherwise empty lines go.
- *
- *  None of it inside a fence, where every character is the code's own: a diff
- *  clipped off a page is only a diff while its blank lines and its trailing
- *  blanks are where they were. A fence closes on a run of at least as many
- *  backticks as opened it, which is what `fenceFor` writes. */
 function tidy(markdown: string): string {
   const kept: string[] = []
   let fence: string | null = null
@@ -1094,10 +704,7 @@ function tidy(markdown: string): string {
 
     fence = /^\s*(`{3,})/.exec(line)?.[1] ?? null
 
-    // A line of nothing but blanks, and not the blanks after words: two of those
-    // are how turndown writes a `<br>`.
     const tidied = line.replace(/^[ \t]+$/, '')
-    // One blank line between blocks, however many the conversion left there.
     if (fence === null && tidied === '' && kept.at(-1) === '') continue
     kept.push(tidied)
   }

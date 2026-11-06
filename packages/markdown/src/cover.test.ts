@@ -86,8 +86,6 @@ describe('the banner every surface draws', () => {
   })
 })
 
-/** The one renderer answers it, so the reading view, the HTML export, the ePub and
- *  a published page cannot disagree about whether a note has a banner. */
 describe('a rendered note', () => {
   const source = withCover('title: Note\ncover: assets/wide.jpg\ncover-position: 30')
 

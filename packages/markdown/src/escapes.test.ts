@@ -12,12 +12,6 @@ import {
 import { renderMarkdown } from './index'
 import { readTask } from './task-line'
 
-/** One text node at a time, which is how turndown hands a page's words over.
- *  from-html.test.ts is the same rule seen through a conversion; what is here is
- *  the rule itself, including the edges a page rarely reaches and an adversarial
- *  one aims for. */
-/** Words typed in another app that never meant markdown, a line at a time: they
- *  read back as themselves, but a line that is a list item stays one. */
 describe('plain text, as a note may hold it', () => {
   test('a dollar, a tilde, a caret and two percent signs are the characters', () => {
     expect(plainWords('Tickets $5-$10\nwait ~5 min or ~10 min\nx^2 and format is %%d')).toBe(
@@ -41,8 +35,6 @@ describe('plain text, as a note may hold it', () => {
     )
   })
 
-  /** Up to three spaces in front change nothing about what a line opens, and four
-   *  make it code, where an escape is shown as a backslash. */
   test('an indented line keeps its meaning', () => {
     const NBSP = '\u00a0'
     expect(plainWords('   # x\n  > x\nfoo\n   ---')).toBe('   \\# x\n  \\> x\nfoo\n   \\---')
@@ -81,7 +73,6 @@ describe('plain text, as a note may hold it', () => {
   })
 })
 
-/** A page's prose, where the renderer autolinks a bare address. */
 const PROSE = { addresses: true }
 
 describe('a page’s text, as a note may hold it', () => {
@@ -106,7 +97,6 @@ describe('a page’s text, as a note may hold it', () => {
     test('and is still written where the underscore can open emphasis', () => {
       expect(escapeText('_start and end_')).toBe('\\_start and end\\_')
       expect(escapeText('a _ b')).toBe('a \\_ b')
-      // The ends of the text are the next node's business, so they are escaped.
       expect(escapeText('_out')).toBe('\\_out')
       expect(escapeText('out_')).toBe('out\\_')
     })
@@ -128,7 +118,6 @@ describe('a page’s text, as a note may hold it', () => {
 
     test('and is still written where the backslash would eat the marker after it', () => {
       expect(escapeText('C:\\*.md')).toBe('C:\\\\\\*.md')
-      // At the end of the text, whatever the next node starts with.
       expect(escapeText('ends in \\')).toBe('ends in \\\\')
     })
   })
@@ -169,17 +158,12 @@ describe('a page’s text, as a note may hold it', () => {
       expect(escapeText('[1] **kurz** *lang*')).toBe('\\[1\\] **kurz** \\*lang\\*')
     })
 
-    /** A page is somebody else's to fill with whatever it likes, and a run of
-     *  backticks with no end to it is the shape that would have the engine try
-     *  every length of it. Three is every code span anybody writes. */
     test('and a wall of markers is escaped rather than read', () => {
       expect(escapeText('````x````')).toBe('\\`\\`\\`\\`x\\`\\`\\`\\`')
       expect(escapeText(`${'`'.repeat(2000)}x`)).toBe(`${'\\`'.repeat(2000)}x`)
     })
   })
 
-  /** Only at the start of the text, which is where turndown looked for these too:
-   *  a marker in the middle of a line opens nothing. */
   describe('a marker that would open a block of its own', () => {
     test('is escaped where the text begins', () => {
       expect(escapeText('+ Lesen und üben Sie')).toBe('\\+ Lesen und üben Sie')
@@ -202,8 +186,6 @@ describe('a page’s text, as a note may hold it', () => {
     })
   })
 
-  /** The rule the whole escaping was written for, and the one a kept run must not
-   *  be a way around: a note's own HTML is markup, so a page's `<` is not. */
   test('a bracket that would open a tag is escaped wherever it is', () => {
     expect(escapeText('a <img src=x onerror=alert(1)> b')).toBe(
       'a \\<img src=x onerror=alert(1)> b',
@@ -214,8 +196,6 @@ describe('a page’s text, as a note may hold it', () => {
     expect(escapeText('a < b')).toBe('a < b')
   })
 
-  /** Obsidian's comment opens on two percent signs and closes on the next two, so
-   *  a page quoting `printf("%%d")` twice would lose every word between them. */
   test('a percent sign that would open or close a comment is escaped', () => {
     expect(escapeText('printf("%%d") and then printf("%%s") again')).toBe(
       'printf("%\\%d") and then printf("%\\%s") again',
@@ -225,8 +205,6 @@ describe('a page’s text, as a note may hold it', () => {
     expect(escapeText('100% sure, 50 % off')).toBe('100% sure, 50 % off')
   })
 
-  /** The renderer links a bare address as it is written, backslashes and all, so an
-   *  escape inside one is a broken link rather than a safer one. */
   test('a bare web address is kept as it was written', () => {
     expect(escapeText('see https://www.cs.cmu.edu/~bob/ now', PROSE)).toBe(
       'see https://www.cs.cmu.edu/~bob/ now',
@@ -234,25 +212,17 @@ describe('a page’s text, as a note may hold it', () => {
     expect(escapeText('https://ex.com/page#:~:text=hello', PROSE)).toBe(
       'https://ex.com/page#:~:text=hello',
     )
-    // But for its brackets and backticks, which could close or open something
-    // around it where the address is a link's text. The renderer reads past those.
     expect(escapeText('at www.example.com/_next/x and https://ex.com/a?b=[1]&c=`d`.', PROSE)).toBe(
       'at www.example.com/_next/x and https://ex.com/a?b=\\[1\\]&c=\\`d\\`.',
     )
     expect(escapeText('a <https://ex.com/x>', PROSE)).toBe('a \\<https://ex.com/x>')
-    // What the renderer leaves off the end of an address is words again.
     expect(escapeText('(https://ex.com/a_b) and *ftp://ex.com/x*', PROSE)).toBe(
       '(https://ex.com/a_b) and \\*ftp://ex.com/x\\*',
     )
-    // Not an address: nothing after the scheme, or no scheme the renderer links.
     expect(escapeText('https:// and mailto:a_b [x]', PROSE)).toBe('https:// and mailto:a_b \\[x\\]')
-    // Nor one that holds a comment's two percent signs, which no writing keeps.
     expect(escapeText('https://ex.com/a%%b', PROSE)).toBe('https://ex.com/a%\\%b')
   })
 
-  /** Inline maths opens on a dollar with something other than a blank after it
-   *  and closes on the next one with something other than a blank before it, so
-   *  two prices in a sentence would draw the words between as a formula. */
   test('a dollar that would open or close maths is escaped', () => {
     expect(escapeText('Tickets cost $5-$10 each', PROSE)).toBe('Tickets cost \\$5-\\$10 each')
     expect(escapeText('5$ or 10$', PROSE)).toBe('5\\$ or 10\\$')
@@ -260,15 +230,10 @@ describe('a page’s text, as a note may hold it', () => {
     expect(escapeText('a $ b', PROSE)).toBe('a $ b')
   })
 
-  /** A kept run is written as it is, so a dollar inside one would be a dollar the
-   *  rule above never saw: `**$5** and **$6**` would be maths from one to the other. */
   test('a doubled marker around a dollar is escaped rather than kept', () => {
     expect(escapeText('**$5** and **$6**', PROSE)).toBe('\\*\\*\\$5\\*\\* and \\*\\*\\$6\\*\\*')
   })
 
-  /** Only a caller that knows its words are prose asks for addresses to be kept. A
-   *  link's text written by hand around the result - a media link's name, a card's
-   *  title - is inside brackets, where nothing autolinks. */
   test('an address is words unless the words are said to be prose', () => {
     const name = escapeText('https://player.test/v/__ab__/')
     expect(name).toBe('https://player.test/v/\\_\\_ab\\_\\_/')
@@ -282,8 +247,6 @@ describe('a page’s text, as a note may hold it', () => {
   })
 })
 
-/** A task's words in a field of their own: shown as the characters they say, and
- *  written back with the escapes they need, so the round trip changes nothing. */
 describe('words shown and written back', () => {
   test('the escapes come off, except in code', () => {
     expect(shownWords('Prices \\$5-\\$10 \\~5 a=\\=b x\\\\y `a\\$b`')).toBe(
@@ -304,9 +267,6 @@ describe('words shown and written back', () => {
   })
 })
 
-/** A task's title edited in its field: the words the reader sees, changed, written
- *  back. Every escape the line had stays where the words around it were not touched,
- *  so an edit is never what turns the words into a field, a tag, a link or emphasis. */
 describe('a title edited and written back', () => {
   const cases = [
     ['read \\[key:\\: value\\] later', 'read', 'reread'],
@@ -332,7 +292,6 @@ describe('a title edited and written back', () => {
   test('what is typed new gets the escapes it needs, and an unchanged title is the line', () => {
     expect(editedWords('milk \\$3', 'milk $3')).toBe('milk \\$3')
     expect(editedWords('milk \\$3', 'milk $3 or ~5')).toBe('milk \\$3 or \\~5')
-    // The line's own markup is not what was typed, and stays as it was.
     expect(editedWords('a ~~b~~ ==c== x^2^', 'a ~~b~~ ==c== x^2^ d')).toBe('a ~~b~~ ==c== x^2^ d')
   })
 })
@@ -347,8 +306,6 @@ describe('where the escapes taken off were', () => {
   })
 })
 
-/** A backtick with a backslash in front of it is the character, as the renderer
- *  reads it, and opens no code span for any reader here either. */
 describe('an escaped backtick', () => {
   test('opens no code', () => {
     expect(shownWords('1 \\` 2 \\` 3')).toBe('1 ` 2 ` 3')
@@ -363,9 +320,6 @@ describe('an escaped backtick', () => {
   })
 })
 
-/** Lines with backticks, backslashes and markers, each shown, edited at one place and
- *  written back: the line read again says the edited words, whatever the edit did to
- *  the code spans and escapes around it. A seeded run, so a failure is the same again. */
 test('an edit anywhere in a line with backticks reads back as the edit', () => {
   const ALPHABET = ['a', ' ', '\\', '`', '$', '~', '^', '=', '%', '<', '#']
   let seed = 11

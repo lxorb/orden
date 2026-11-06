@@ -1,8 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { door } from './door'
 
-/** A load that fails the first `failures` times it is called and then hands back what
- *  it was asked for, counting every call: a simulated import. */
 function flaky<T>(value: T, failures: number) {
   const load = vi.fn(() =>
     load.mock.calls.length <= failures
