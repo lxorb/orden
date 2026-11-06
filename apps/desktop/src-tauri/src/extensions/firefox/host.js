@@ -43,6 +43,7 @@ function said(value) {
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== PORT || port.sender?.id !== chrome.runtime.id) return
   const heard = new Map()
+  const opened = new Map()
 
   port.onMessage.addListener(async (asked) => {
     if (asked.kind === 'call') {
@@ -80,6 +81,47 @@ chrome.runtime.onConnect.addListener((port) => {
       }
       return
     }
+    if (asked.kind === 'open') {
+      const key = asked.key
+      const close = (error) => {
+        opened.delete(key)
+        try {
+          port.postMessage({ kind: 'closed', key, ...(error ? { error } : {}) })
+        } catch {
+          // The page has gone, and every port it opened with it.
+        }
+      }
+      try {
+        const { owner, at } = resolve(asked.path)
+        const one = at.apply(owner, asked.args)
+        opened.set(key, one)
+        one.onMessage.addListener((message) => {
+          try {
+            port.postMessage({ kind: 'port', key, message })
+          } catch {
+            // As above.
+          }
+        })
+        one.onDisconnect.addListener(() => close(chrome.runtime.lastError?.message))
+      } catch (error) {
+        close(String(error?.message ?? error))
+      }
+      return
+    }
+    if (asked.kind === 'post') {
+      try {
+        opened.get(asked.key)?.postMessage(asked.message)
+      } catch (error) {
+        opened.delete(asked.key)
+        port.postMessage({ kind: 'closed', key: asked.key, error: String(error?.message ?? error) })
+      }
+      return
+    }
+    if (asked.kind === 'close') {
+      opened.get(asked.key)?.disconnect()
+      opened.delete(asked.key)
+      return
+    }
     if (asked.kind === 'unlisten') {
       const one = heard.get(asked.key)
       if (one) one.at.removeListener(one.send)
@@ -90,6 +132,8 @@ chrome.runtime.onConnect.addListener((port) => {
   port.onDisconnect.addListener(() => {
     for (const one of heard.values()) one.at.removeListener(one.send)
     heard.clear()
+    for (const one of opened.values()) one.disconnect()
+    opened.clear()
   })
 })
 

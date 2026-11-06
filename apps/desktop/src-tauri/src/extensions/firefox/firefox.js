@@ -35,6 +35,36 @@
   const withOurs = (files) => [
     ...new Set([...OURS, ...files.map((one) => String(one).replace(/^\//, ''))]),
   ]
+  /** A file a call names, as Firefox finds it: from the page that calls, unless it starts
+   *  at the add-on's root. */
+  const fileOf = (file) =>
+    page
+      ? decodeURIComponent(new URL(String(file), globalThis.location.href).pathname).slice(1)
+      : String(file).replace(/^\//, '')
+
+  /** Whether `url` is an address one of the match patterns `patterns` matches. */
+  const matching = (patterns, url) => {
+    let address
+    try {
+      address = new URL(url)
+    } catch {
+      return false
+    }
+    return [].concat(patterns).some((pattern) => {
+      if (pattern === '<all_urls>') return /^(https?|wss?|ftp|file|data):$/.test(address.protocol)
+      const parts = /^(\*|[a-z][a-z0-9+.-]*):\/\/([^/]*)(\/.*)$/.exec(String(pattern))
+      if (!parts) return false
+      const [, scheme, host, path] = parts
+      const schemes = scheme === '*' ? ['http:', 'https:', 'ws:', 'wss:'] : [`${scheme}:`]
+      if (!schemes.includes(address.protocol)) return false
+      const own = host.includes(':') ? address.host : address.hostname
+      const name = host.startsWith('*.') ? host.slice(2) : host
+      if (host !== '*' && own !== name && !(host.startsWith('*.') && own.endsWith(`.${name}`)))
+        return false
+      const glob = path.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')
+      return new RegExp(`^${glob}$`).test(address.pathname + address.search)
+    })
+  }
 
   // A refusal a callback is handed, as `runtime.lastError`, which is where the polyfill
   // looks for one.
@@ -143,8 +173,20 @@
     chrome.i18n.getMessage = (name, ...rest) => own(plainName(name), ...rest)
   }
 
-  // Its own manifest, as Firefox answers it, rather than the one Chromium was handed.
-  if (LAYER.manifest) chrome.runtime.getManifest = () => JSON.parse(JSON.stringify(LAYER.manifest))
+  // Its own manifest, as Firefox answers it, rather than the one Chromium was handed: in its
+  // own words, where it names a message.
+  const worded = (value) => {
+    if (typeof value === 'string')
+      return value.replace(
+        /__MSG_([A-Za-z0-9_@]+)__/g,
+        (said, name) => chrome.i18n?.getMessage?.(name) || said,
+      )
+    if (Array.isArray(value)) return value.map(worded)
+    if (value && typeof value === 'object')
+      return Object.fromEntries(Object.entries(value).map(([key, one]) => [key, worded(one)]))
+    return value
+  }
+  if (LAYER.manifest) chrome.runtime.getManifest = () => worded(LAYER.manifest)
 
   // The browser it is, as an add-on asks Firefox.
   put(
@@ -204,6 +246,7 @@
         },
       ])
       return {
+        id,
         unregister: promised(() => chrome.scripting.unregisterContentScripts({ ids: [id] })),
       }
     }),
@@ -548,6 +591,7 @@
         if (filter?.tabId !== undefined && filter.tabId !== tabId) return
         if (filter?.windowId !== undefined && filter.windowId !== tab?.windowId) return
         if (filter?.properties && !filter.properties.some((name) => name in change)) return
+        if (filter?.urls && !matching(filter.urls, tab?.url)) return
         listener(tabId, change, dressed(tab, new Set()))
       },
       extra: [],
@@ -579,7 +623,7 @@
             throw new Error('Running a string of code in a tab is not supported in Orden.')
           const results = await chrome.scripting.executeScript({
             target: await into(tabId, details),
-            files: withOurs([details.file]),
+            files: withOurs([fileOf(details.file)]),
             injectImmediately: details.runAt === 'document_start',
           })
           return results.map((one) => one.result)
@@ -596,9 +640,7 @@
             const [tabId, details] = split(args)
             await chrome.scripting[own]({
               target: await into(tabId, details),
-              ...(details.file
-                ? { files: [details.file.replace(/^\//, '')] }
-                : { css: details.code }),
+              ...(details.file ? { files: [fileOf(details.file)] } : { css: details.code }),
               origin: details.cssOrigin === 'user' ? 'USER' : 'AUTHOR',
             })
           }),
@@ -739,11 +781,26 @@
       'onCompleted',
       'onErrorOccurred',
     ]
+    // The kinds of request only Firefox names, as the kind Chromium has for each.
+    const KINDS = {
+      beacon: 'ping',
+      imageset: 'image',
+      object_subrequest: 'object',
+      xml_dtd: 'other',
+      xslt: 'other',
+      web_manifest: 'other',
+      speculative: 'other',
+      json: 'other',
+    }
+    const kinds = (filter) =>
+      Array.isArray(filter?.types)
+        ? { ...filter, types: [...new Set(filter.types.map((one) => KINDS[one] ?? one))] }
+        : filter
     for (const name of EVENTS) {
       filtered(chrome.webRequest[name], (listener, [filter, spec]) => ({
         listener: (details) => void listener(details),
         extra: [
-          filter ?? { urls: ['<all_urls>'] },
+          kinds(filter) ?? { urls: ['<all_urls>'] },
           ...(spec ? [spec.filter((one) => one !== 'blocking' && one !== 'asyncBlocking')] : []),
         ],
       }))

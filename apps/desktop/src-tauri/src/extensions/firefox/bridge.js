@@ -60,6 +60,8 @@
   let next = 0
   const waiting = new Map()
   const listening = new Map()
+  // The ports the page opened to a tab, each made in the worker.
+  const ports = new Map()
 
   function connect() {
     port = native.runtime.connect({ name: PORT })
@@ -75,10 +77,16 @@
         if (one) for (const listener of [...one.listeners]) listener(...(said.args ?? []))
       } else if (said.kind === 'refused') {
         console.error(`Listening to ${listening.get(said.key)?.name}:`, said.error)
+      } else if (said.kind === 'port') {
+        const one = ports.get(said.key)
+        if (one) one.onMessage.fire(said.message, one)
+      } else if (said.kind === 'closed') {
+        closed(said.key, said.error)
       }
     })
     port.onDisconnect.addListener(() => {
       port = null
+      for (const key of [...ports.keys()]) closed(key, 'The extension restarted.')
       for (const one of waiting.values()) one.refuse(new Error('The extension restarted.'))
       waiting.clear()
       // The worker stopped; it is started again, and told again what the page listens to.
@@ -110,10 +118,10 @@
     })
   }
 
-  function call(path) {
+  function call(path, answer = (value) => value) {
     return function (...args) {
       const callback = typeof args[args.length - 1] === 'function' ? args.pop() : null
-      const answered = ask(path, args)
+      const answered = ask(path, args).then(answer)
       if (!callback) return answered
       answered.then(
         (value) => callback(value),
@@ -163,6 +171,52 @@
     }
   }
 
+  /** An event of the page's own, which the bridge fires. */
+  function local() {
+    const listeners = new Set()
+    return {
+      addListener: (listener) => void listeners.add(listener),
+      removeListener: (listener) => void listeners.delete(listener),
+      hasListener: (listener) => listeners.has(listener),
+      hasListeners: () => listeners.size > 0,
+      fire: (...args) => {
+        for (const listener of [...listeners]) listener(...args)
+      },
+    }
+  }
+
+  function closed(key, error) {
+    const one = ports.get(key)
+    if (!one) return
+    ports.delete(key)
+    if (error) one.error = { message: error }
+    one.onDisconnect.fire(one)
+  }
+
+  /** A port to a tab, which no port carries: the worker opens it, and what is said on it
+   *  is passed along. */
+  function connecting(path) {
+    return function (...args) {
+      const key = `port#${++next}`
+      const one = {
+        name: String(args[1]?.name ?? ''),
+        error: null,
+        onMessage: local(),
+        onDisconnect: local(),
+        postMessage(message) {
+          if (!ports.has(key)) throw new Error('Attempting to use a disconnected port object')
+          send({ kind: 'post', key, message })
+        },
+        disconnect() {
+          if (ports.delete(key) && port) send({ kind: 'close', key })
+        },
+      }
+      ports.set(key, one)
+      send({ kind: 'open', key, path, args })
+      return one
+    }
+  }
+
   // A menu item's id, which Firefox answers at once, and what pressing it runs, which no
   // port carries.
   let items = 0
@@ -196,6 +250,31 @@
     }
   }
 
+  // A file a call puts in a tab, found as Firefox finds it: from the background page, or
+  // the add-on's root for the page Orden writes round its scripts.
+  const FILED = new Set(['tabs.executeScript', 'tabs.insertCSS', 'tabs.removeCSS'])
+  function filed(path) {
+    const made = call(path)
+    return function (...args) {
+      const at = typeof args[0] === 'object' && args[0] !== null ? 0 : 1
+      const details = args[at]
+      if (typeof details?.file === 'string' && !details.file.startsWith('/')) {
+        const base = location.pathname.startsWith('/orden/') ? '/' : location.pathname
+        args[at] = {
+          ...details,
+          file: decodeURIComponent(new URL(details.file, new URL(base, location.href)).pathname),
+        }
+      }
+      return made(...args)
+    }
+  }
+
+  // A content script registered in the worker, which the page takes away again there.
+  const registered = (one) => ({
+    unregister: (...args) =>
+      call(['scripting', 'unregisterContentScripts'], () => undefined)({ ids: [one?.id] }, ...args),
+  })
+
   /** A namespace: what is asked of it is made the first time and kept. */
   function namespace(path) {
     const made = {}
@@ -217,6 +296,9 @@
           value = namespace(inner)
         else if (name === 'create' && (dotted === 'menus' || dotted === 'contextMenus'))
           value = menu(path)
+        else if (FILED.has(at)) value = filed(inner)
+        else if (at === 'tabs.connect') value = connecting(inner)
+        else if (at === 'contentScripts.register') value = call(inner, registered)
         else value = call(inner)
         target[name] = value
         return value
@@ -300,7 +382,7 @@
     for (const [key, held] of Object.entries(entry.placeholders ?? {})) {
       text = text.replace(new RegExp(`\\$${key}\\$`, 'gi'), held.content ?? '')
     }
-    return text.replace(/\$(\d)/g, (_, at) => given[Number(at) - 1] ?? '').replace(/\$\$/g, '$')
+    return text.replace(/\$(\$|\d)/g, (_, at) => (at === '$' ? '$' : (given[Number(at) - 1] ?? '')))
   }
 
   const i18n = native.i18n ?? {
@@ -313,7 +395,11 @@
   const extension = {
     getURL: (path) => runtime.getURL(path),
     getBackgroundPage: () => window,
-    getViews: () => [window],
+    // The page is no popup, tab or sidebar, and in no window.
+    getViews: (filter = {}) =>
+      filter.type === undefined && filter.windowId === undefined && filter.tabId === undefined
+        ? [window]
+        : [],
     inIncognitoContext: false,
     isAllowedIncognitoAccess: call(['extension', 'isAllowedIncognitoAccess']),
     isAllowedFileSchemeAccess: call(['extension', 'isAllowedFileSchemeAccess']),

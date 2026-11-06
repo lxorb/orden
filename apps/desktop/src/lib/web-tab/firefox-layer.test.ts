@@ -71,9 +71,36 @@ function engine() {
   })
   const created: unknown[] = []
   const executed: unknown[] = []
+  const registered: any[] = []
+  const unregistered: unknown[] = []
+  // Chromium's own kinds of request; a listener for any other is refused.
+  const KINDS = [
+    'main_frame',
+    'sub_frame',
+    'stylesheet',
+    'script',
+    'image',
+    'font',
+    'object',
+    'xmlhttprequest',
+    'ping',
+    'csp_report',
+    'media',
+    'websocket',
+    'webbundle',
+    'other',
+  ]
+  const requests = event()
+  const filters: unknown[] = []
+  // The ports the engine opened to a tab, each with what was posted on it.
+  const opened: any[] = []
   return {
+    opened,
     created,
     executed,
+    registered,
+    unregistered,
+    filters,
     chrome: {
       runtime: {
         id: 'abcdefghijklmnopabcdefghijklmnop',
@@ -98,6 +125,22 @@ function engine() {
           return { id: 3, windowId: 1 }
         }),
         update: api((id: number) => ({ id, windowId: 1 })),
+        connect: (tabId: number, info: { name?: string } = {}) => {
+          const one = {
+            tabId,
+            name: info.name ?? '',
+            posted: [] as unknown[],
+            closed: false,
+            onMessage: event(),
+            onDisconnect: event(),
+            postMessage: (message: unknown) => void one.posted.push(message),
+            disconnect: () => {
+              one.closed = true
+            },
+          }
+          opened.push(one)
+          return one
+        },
         onUpdated: event(),
         onCreated: event(),
         onActivated: event(),
@@ -108,6 +151,20 @@ function engine() {
           executed.push(injection)
           return [{ result: 'done' }]
         }),
+        registerContentScripts: api((scripts: unknown[]) => void registered.push(...scripts)),
+        unregisterContentScripts: api((filter: unknown) => void unregistered.push(filter)),
+      },
+      webRequest: {
+        onBeforeRequest: {
+          ...requests,
+          addListener: (listener: Listener, filter: { types?: string[] }, spec?: string[]) => {
+            const wrong = filter.types?.find((one) => !KINDS.includes(one))
+            if (wrong) throw new Error(`Value must be one of ${KINDS.join(', ')}: ${wrong}`)
+            if (spec?.includes('blocking')) throw new Error('No blocking listeners.')
+            filters.push(filter)
+            requests.addListener(listener)
+          },
+        },
       },
       action: { setTitle: api(() => undefined), enable: api(() => undefined) },
       contextMenus: {
@@ -126,17 +183,17 @@ function engine() {
 }
 
 /** A page of the add-on's own, as the layer and the polyfill leave it. */
-function page() {
+function page(path = 'popup.html', layer: object = LAYER) {
   const made = engine()
   const dom = new JSDOM('<p>popup</p>', {
-    url: 'chrome-extension://abcdefghijklmnopabcdefghijklmnop/popup.html',
+    url: `chrome-extension://abcdefghijklmnopabcdefghijklmnop/${path}`,
     runScripts: 'outside-only',
   })
   const inside = dom.window as unknown as Record<string, any> & { eval: (code: string) => unknown }
   inside.chrome = made.chrome
   // Chromium's own `browser`, which is `chrome` without the layer.
   inside.browser = { runtime: { id: made.chrome.runtime.id } }
-  inside.eval(TOLD + FIREFOX)
+  inside.eval(`globalThis.__ordenLayer = ${JSON.stringify(layer)};\n${FIREFOX}`)
   inside.eval(POLYFILL)
   return { ...made, browser: inside.browser, window: inside }
 }
@@ -225,6 +282,58 @@ describe('a page of the add-on', () => {
     await expect(browser.dns.resolve('example.com')).rejects.toThrow('not supported')
   })
 
+  test('hears a tab change only at the addresses it asked for', () => {
+    const made = page()
+    const heard: number[] = []
+    made.browser.tabs.onUpdated.addListener((id: number) => heard.push(id), {
+      urls: ['*://*.example.com/*'],
+    })
+    const fire = made.chrome.tabs.onUpdated as unknown as { fire: (...args: unknown[]) => void }
+    fire.fire(1, { status: 'complete' }, { id: 1, windowId: 1, url: 'https://other.org/' })
+    fire.fire(2, { status: 'complete' }, { id: 2, windowId: 1, url: 'https://www.example.com/a' })
+    fire.fire(3, { status: 'complete' }, { id: 3, windowId: 1, url: 'https://example.com/' })
+    fire.fire(4, { status: 'complete' }, { id: 4, windowId: 1 })
+    expect(heard).toEqual([2, 3])
+  })
+
+  test('listens to requests of a kind only Firefox names', () => {
+    const { browser, filters } = page()
+    expect(() =>
+      browser.webRequest.onBeforeRequest.addListener(
+        () => undefined,
+        { urls: ['<all_urls>'], types: ['main_frame', 'imageset', 'beacon', 'object_subrequest'] },
+        ['blocking'],
+      ),
+    ).not.toThrow()
+    expect(filters).toEqual([
+      { urls: ['<all_urls>'], types: ['main_frame', 'image', 'ping', 'object'] },
+    ])
+  })
+
+  test('puts a file in a tab by a path from its own page, as Firefox does', async () => {
+    const { browser, executed } = page('popup/popup.html')
+    await browser.tabs.executeScript(1, { file: 'content.js' })
+    await browser.tabs.executeScript(1, { file: '/top.js' })
+    expect(executed).toMatchObject([
+      { files: ['orden/firefox.js', 'orden/browser-polyfill.js', 'popup/content.js'] },
+      { files: ['orden/firefox.js', 'orden/browser-polyfill.js', 'top.js'] },
+    ])
+  })
+
+  test('reads its own manifest in its own words, as Firefox answers it', () => {
+    const manifest = {
+      name: '__MSG_name__',
+      browser_action: { default_title: '__MSG_title__ (beta)' },
+      permissions: ['tabs'],
+    }
+    const { browser } = page('popup.html', { ...LAYER, manifest })
+    expect(browser.runtime.getManifest()).toEqual({
+      name: '[name]',
+      browser_action: { default_title: '[title] (beta)' },
+      permissions: ['tabs'],
+    })
+  })
+
   test('reads a message by the name Firefox takes', () => {
     const { browser } = page()
     expect(browser.i18n.getMessage('onboarding-1-header')).toBe('[onboarding_1_header]')
@@ -271,7 +380,7 @@ function ports() {
 }
 
 describe('the background page and the service worker it calls through', () => {
-  function both() {
+  function both(path = 'orden/background.html') {
     const made = engine()
     const { page: pageEnd, worker: workerEnd } = ports()
 
@@ -298,7 +407,7 @@ describe('the background page and the service worker it calls through', () => {
 
     // The offscreen document: the engine's messaging and nothing else.
     const dom = new JSDOM('', {
-      url: 'chrome-extension://abcdefghijklmnopabcdefghijklmnop/orden/background.html',
+      url: `chrome-extension://abcdefghijklmnopabcdefghijklmnop/${path}`,
       runScripts: 'outside-only',
     })
     const inside = dom.window as unknown as Record<string, any> & {
@@ -308,6 +417,7 @@ describe('the background page and the service worker it calls through', () => {
       '/manifest.json': JSON.stringify({ manifest_version: 3, default_locale: 'en' }),
       '/_locales/en/messages.json': JSON.stringify({
         greeting: { message: 'Hello $who$', placeholders: { who: { content: '$1' } } },
+        price: { message: 'costs $$5 for $1' },
       }),
     }
     inside.XMLHttpRequest = class {
@@ -381,5 +491,57 @@ describe('the background page and the service worker it calls through', () => {
   test('reads its own words at once', () => {
     const { browser } = both()
     expect(browser.i18n.getMessage('greeting', 'you')).toBe('Hello you')
+    expect(browser.i18n.getMessage('price', 'two')).toBe('costs $5 for two')
+  })
+
+  test('is not taken for a popup or a tab of its own', () => {
+    const { browser } = both()
+    expect(browser.extension.getViews().length).toBe(1)
+    expect(browser.extension.getViews({ type: 'popup' }).length).toBe(0)
+    expect(browser.extension.getViews({ windowId: 1 }).length).toBe(0)
+  })
+
+  test('talks to a tab over a port of its own', async () => {
+    const { browser, opened } = both()
+    const port = browser.tabs.connect(1, { name: 'talk' })
+    const heard: unknown[] = []
+    port.onMessage.addListener((message: unknown) => heard.push(message))
+    let gone = false
+    port.onDisconnect.addListener(() => (gone = true))
+    port.postMessage({ hi: 1 })
+    await new Promise((done) => setTimeout(done, 10))
+    expect(opened).toMatchObject([{ tabId: 1, name: 'talk', posted: [{ hi: 1 }] }])
+    opened[0].onMessage.fire({ back: 2 })
+    await new Promise((done) => setTimeout(done, 10))
+    expect(heard).toEqual([{ back: 2 }])
+    opened[0].onDisconnect.fire(opened[0])
+    await new Promise((done) => setTimeout(done, 10))
+    expect(gone).toBe(true)
+    const again = browser.tabs.connect(1)
+    again.disconnect()
+    await new Promise((done) => setTimeout(done, 10))
+    expect(opened[1].closed).toBe(true)
+  })
+
+  test('registers a content script it can take away again', async () => {
+    const { browser, registered, unregistered } = both()
+    const one = await browser.contentScripts.register({
+      matches: ['<all_urls>'],
+      js: [{ file: '/c.js' }],
+    })
+    expect(registered).toHaveLength(1)
+    await one.unregister()
+    expect(unregistered).toEqual([{ ids: [registered[0].id] }])
+  })
+
+  test('puts a file in a tab by a path from its own page', async () => {
+    const own = both('js/background/index.html')
+    await own.browser.tabs.executeScript(1, { file: 'content.js' })
+    const written = both()
+    await written.browser.tabs.executeScript(1, { file: 'content.js' })
+    expect([...own.executed, ...written.executed]).toMatchObject([
+      { files: ['orden/firefox.js', 'orden/browser-polyfill.js', 'js/background/content.js'] },
+      { files: ['orden/firefox.js', 'orden/browser-polyfill.js', 'content.js'] },
+    ])
   })
 })
